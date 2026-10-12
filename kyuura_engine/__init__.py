@@ -1,4 +1,4 @@
-"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.2d）。
+"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.2e）。
 
 ルールは「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』
 pp.306〜326）。カードデータの正本は kyuura（https://github.com/moheronemy/kyuura）。
@@ -32,7 +32,7 @@ from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
 from .state import TERMINAL_PHASES, AttachedTrainer, GameResult, GameState, PendingDecision, Phase, TrainerInUse
 
-__version__ = "0.2.0d0"
+__version__ = "0.2.0e0"
 
 __all__ = [
     "AttachEnergy",

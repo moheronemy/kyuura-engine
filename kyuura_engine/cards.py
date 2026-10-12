@@ -261,13 +261,13 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1・pool_v0_2b・pool_v0_2c・pool_v0_2d）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1・pool_v0_2b・pool_v0_2c・pool_v0_2d・pool_v0_2e）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
 
 # 写しの中の、対戦用のカードの組（参照カード reference_only はデッキに入れない）
-POOL_KEYS = ("pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d")
+POOL_KEYS = ("pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e")
 
 
 def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> CardPool:

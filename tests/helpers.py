@@ -60,6 +60,7 @@ POTION = "PMCG1-071"  # きずぐすり
 SWITCH = "PMCG1-073"  # ポケモンいれかえ
 BILL = "PMCG1-074"  # マサキ
 PLUSPOWER = "PMCG1-081"  # プラスパワー（v0.2c で対応）
+DEFENDER = "PMCG1-079"  # ディフェンダー（v0.2e で対応）
 SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
@@ -333,7 +334,8 @@ def trainer_command(state: GameState):
 def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
     """``scripted_command`` に、トレーナーを使う手順と、トレーナーの決定への答えを加えたもの（統合テスト用）。
 
-    プラスパワー（v0.2c）は、ワザを使う直前に、手札にあるだけつける。
+    プラスパワー（v0.2c）は、ワザを使う直前に、手札にあるだけつける。ディフェンダー（v0.2e）は、ワザを使う・番を
+    終える直前に、手札にあるだけ自分の対戦ポケモンにつける（相手の番にワザを受けるのはバトル場のポケモン）。
 
     決定には、扱いを決められるもののうち、きずぐすりならダメージのいちばん多いポケモン、
     それ以外は最初のものを選ぶ。
@@ -350,6 +352,13 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
         if command is not None:
             return command
         scripted = scripted_command(state, janken_winner=janken_winner)
+        if isinstance(scripted, (UseAttack, EndTurn)):
+            # 番を終える前に、手札のディフェンダーをすべてつける（v0.2e。決定では最初の選べるもの = 対戦ポケモンを選ぶ。
+            # ディフェンダーのないデッキでは何もしない）
+            p = state.players[state.current_player]
+            defender = next((u for u in p.hand if state.cards[u].card_id == DEFENDER), None)
+            if defender is not None:
+                return PlayTrainer(state.current_player, defender)
         if isinstance(scripted, UseAttack):
             # ワザを使う直前に、手札のプラスパワーをすべてつける（v0.2c。プラスパワーのないデッキでは何もしない）
             p = state.players[state.current_player]
@@ -395,6 +404,15 @@ def coin_events(state: GameState, since: int = 0) -> list[dict]:
 def coin_results(state: GameState, since: int = 0) -> list[str]:
     return [e["result"] for e in coin_events(state, since)]
 
+
+# ディフェンダー（v0.2e）を入れた 60 枚のデッキ（プラスパワー・ドードー・ほかのトレーナーと組み合わせる）
+DEFENDER_DECK = expand_decklist({
+    DODUO: 4, GROWLITHE: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, BILL: 4, POTION: 2, SWITCH: 2, PLUSPOWER: 4, DEFENDER: 4,
+    FIRE: 24,
+})
+DEFENDER_DECK_B = expand_decklist({
+    STARYU: 4, SEEL: 4, DIGLETT: 4, MACHOP: 4, HITMONCHAN: 4, BILL: 2, PLUSPOWER: 2, DEFENDER: 4, WATER: 16, FIGHTING: 16,
+})
 
 # ドードー（v0.2d）を入れた 60 枚のデッキ（たねポケモン 20 枚 + トレーナー + 基本エネルギー）
 DODUO_DECK = expand_decklist({DODUO: 4, GROWLITHE: 4, PONYTA: 4, RATTATA: 4, VOLTORB: 4, FIRE: 40})

@@ -61,6 +61,8 @@ from .state import (
 from .zones import draw_cards
 
 PLAYERS = (0, 1)
+# 対戦準備の段階（番はまだ始まっていない）
+SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
 
 
 # ---------------------------------------------------------------- 対戦の開始
@@ -881,6 +883,12 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append(f"番のプレイヤー {state.current_player!r} が正しくない")
         if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn:
             problems.append(f"この番にエネルギーをつけた回数 {state.energy_attachments_this_turn} が正しくない")
+    if state.first_player is not None and phase not in SETUP_PHASES:
+        # 番は先攻から 1 番ずつ交互に進む（p.309）。有効期限（「次の相手の番の終わり」= 今の番 + 1）の前提（v0.2e）
+        if state.first_player not in PLAYERS or not isinstance(state.turn_number, int) or state.turn_number < 1:
+            problems.append(f"先攻 {state.first_player!r}・番 {state.turn_number!r} が正しくない")
+        elif state.current_player != turn_owner(state, state.turn_number):
+            problems.append(f"{state.turn_number} 番はプレイヤー {turn_owner(state, state.turn_number)} の番なのに、番のプレイヤーが {state.current_player!r}")
     problems.extend(_decision_problems(state))
     problems.extend(_trainer_problems(state))
     if phase is Phase.SETUP_MULLIGAN_DRAW and not any(p.mulligan_draws_remaining for p in state.players):
@@ -975,9 +983,29 @@ def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonIn
         entry = state.effects.trainer_entry(definition.id)
         if entry is None or not entry.effect.stays_in_play:
             problems.append(f"ついているトレーナー {attached.card}（{definition.id}）に、場に残る実装が登録されていない")
-        if state.phase not in TERMINAL_PHASES and attached.discard_at_end_of_turn < state.turn_number:
+        if state.phase in TERMINAL_PHASES:
+            continue
+        if attached.discard_at_end_of_turn < state.turn_number:
             problems.append(f"ついているトレーナー {attached.card} の有効期限（{attached.discard_at_end_of_turn} 番の終わり）が過ぎている")
+        elif entry is not None and entry.effect.stays_in_play:
+            # 有効期限は、使った番 + discard_turn_offset（v0.2e）。使った番は今の番より後ではなく、使ったプレイヤーの番
+            offset = entry.effect.discard_turn_offset
+            used_on = attached.discard_at_end_of_turn - offset
+            if used_on > state.turn_number:
+                problems.append(
+                    f"ついているトレーナー {attached.card} の有効期限（{attached.discard_at_end_of_turn} 番の終わり）が、"
+                    f"今の番 {state.turn_number} から {offset} 番より先"
+                )
+            elif state.first_player in PLAYERS and turn_owner(state, used_on) != attached.player:
+                problems.append(
+                    f"ついているトレーナー {attached.card} を使った番（{used_on} 番）が、使ったプレイヤー {attached.player} の番ではない"
+                )
     return problems
+
+
+def turn_owner(state: GameState, turn_number: int) -> int:
+    """``turn_number`` 番目の番のプレイヤー。1 番目は先攻（ジャンケンの勝者）で、交互に進む（p.308・p.309）。"""
+    return state.first_player if turn_number % 2 == 1 else 1 - state.first_player
 
 
 def _trainer_problems(state: GameState) -> list[str]:

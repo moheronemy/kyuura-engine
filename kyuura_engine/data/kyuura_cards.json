@@ -71,6 +71,9 @@
   "pool_v0_2d": [
     "PMCG1-061"
   ],
+  "pool_v0_2e": [
+    "PMCG1-079"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1311,6 +1314,43 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-065-dodo/"
+      }
+    },
+    {
+      "id": "PMCG1-079",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": "Defender"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "次の相手の番の終わりまで、「ワザ」によって受けるダメージを、「-20」できる。自分の場のポケモンにつけて使い、次の自分の番の最初にはがしてすてる。",
+          "en": "Attach Defender to 1 of your Pokémon. At the end of your opponent's next turn, discard Defender. Damage done to that Pokémon by attacks is reduced by 20 (after applying Weakness and Resistance)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-079",
+        "pokemontcg": [
+          "base1-80"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-079-defender/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-079-defender/"
       }
     },
     {

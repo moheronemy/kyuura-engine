@@ -11,7 +11,7 @@ from pathlib import Path
 from kyuura_engine import EnergyType, can_pay_cost, load_card_pool
 from kyuura_engine.cards import read_extract, read_verification
 
-from tests.helpers import BILL, CHARMANDER, DIGLETT, DODUO, PLUSPOWER, PONYTA, POTION, RATTATA, SUPER_POTION, SWITCH, VENUSAUR
+from tests.helpers import BILL, CHARMANDER, DEFENDER, DIGLETT, DODUO, PLUSPOWER, PONYTA, POTION, RATTATA, SUPER_POTION, SWITCH, VENUSAUR
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,10 +26,11 @@ class CardPoolTest(unittest.TestCase):
 
     def test_v0_1_pool_is_ten_basic_pokemon_and_six_basic_energy(self):
         pool = load_card_pool()
-        # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）、v0.2d でドードー（pool_v0_2d）を
-        # 加えた。v0.1 の組（トレーナーと v0.2d のポケモン以外）は変わらない
+        # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）、v0.2d でドードー（pool_v0_2d）、
+        # v0.2e でディフェンダー（pool_v0_2e）を加えた。v0.1 の組（トレーナーと v0.2d のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
-        self.assertEqual(trainers, [POTION, SWITCH, BILL, PLUSPOWER])
+        self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
+        self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2d"], [DODUO])
         self.assertTrue(pool.is_playable(DODUO))
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c != DODUO]

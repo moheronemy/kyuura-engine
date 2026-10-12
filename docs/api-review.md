@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1〜v0.2d）
+# 公開 API のレビュー（v0.1〜v0.2e）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md) のアーキテクチャにあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a・v0.2b・v0.2c・v0.2d で加えた公開 API
+## 2. v0.2a〜v0.2e で加えた公開 API
 
 ### v0.2a
 
@@ -78,6 +78,17 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `RULE_REFERENCES` | `coin_toss`・`attack_text`・`attack_failure` |
 
 コマンド・段階・状態の項目・書き出しの形式は増やしていません。コインの結果を指定するコマンド・引数はありません（[architecture-v0.2d.md 3 章](architecture-v0.2d.md)）。
+
+### v0.2e
+
+| もの | 内容 |
+|---|---|
+| ディフェンダー（PMCG1-079） | `PlayTrainer` で使い、`select_pokemon` の決定（自分の場のポケモンの番号）に `ResolveDecision` で答える |
+| `effects.AttachedDamageReduction` | ディフェンダーの実装（7 段階の −amount、`discard_turn_offset = 1`）。実装を加える人向け |
+| `TrainerEffect.discard_turn_offset`・`TrainerEffect.attachment_discard_turn(state)` | 場に残るトレーナーの有効期限（使った番からいくつ後の番の終わりにトラッシュするか）。場に残る実装はこれを宣言する（不変条件が確かめる） |
+| `engine.turn_owner(state, turn_number)` | その番号の番のプレイヤー（奇数番は先攻） |
+
+コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式は増やしていません。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -160,6 +171,15 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - `DamageCalculation.modifiers` は、2 段階のあとで計算を終えたときは、計算に使った 2 段階の効果だけになった（v0.2c までの対応カードでは起こらない）
 - 新しいクライアントへの推奨: コインの結果はログの `coin_flip` から表示する。対戦を保存して再開するときは、乱数の状態を `rng.rng_state_to_json` で保存する（ゲーム状態全体の読み込みは未実装）。
 
+### v0.2d → v0.2e
+
+- 対戦の結果（v0.1 の参照データ）・乱数とコインの固定値・既存のコマンドとログは変わりません。ディフェンダーを使わない対戦では、新しいイベント・項目は出ません。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.2e` になり、トレーナーの登録にディフェンダーが加わった（形式 2 以上の `effects` の値が変わる。test_coin_games.py の固定値は、この id を除いてハッシュを取るようにした）
+  - 写しの対戦用のカードの組に、ディフェンダー（`pool_v0_2e`）が加わった
+  - 不変条件が増えた: 番のプレイヤーがその番号の番の持ち主であること、ついているトレーナーの有効期限が「今の番 + `discard_turn_offset`」より先でないこと、使った番が使ったプレイヤーの番であること。場に残るトレーナーの実装を自分で加える場合は、`discard_turn_offset` を宣言する
+- 新しいクライアントへの推奨: 状態の辞書は形式 4 を使う（ディフェンダーは相手の番もついている）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -216,7 +236,7 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 `game_created`, `shuffle`, `draw`, `mulligan`（見せた手札）, `halted`, `place_starting_pokemon`, `set_prizes`, `mulligan_draw`, `janken`, `reveal_pokemon`, `turn_start`, `deck_out`, `play_to_bench`, `attach_energy`, `retreat`, `attack`, `damage`（計算の段階を含む）, `knock_out`, `take_prize`, `promote_active`, `end_turn_without_attack`, `turn_end`, `pokemon_check`, `game_end`
 
-v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discard_at_end_of_turn`）, `discard_attached_trainer`（同じ項目と `reason`＝`end_of_turn`）。`damage` に `modifiers`（`(段階, カードの uid, 加えた数)`。変更効果があるときだけ）、`knock_out` に `discarded_trainers`（ついていたトレーナーがあるときだけ）
+v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discard_at_end_of_turn`）, `discard_attached_trainer`（同じ項目と `reason`＝`end_of_turn`）。v0.2e のディフェンダーも同じイベントを使う（`discard_at_end_of_turn` は使った番 + 1。`damage` の `modifiers` に `(7, カードの uid, -20)`）。`damage` に `modifiers`（`(段階, カードの uid, 加えた数)`。変更効果があるときだけ）、`knock_out` に `discarded_trainers`（ついていたトレーナーがあるときだけ）
 
 v0.2d: `coin_flip`（`player`・`source`＝`attack`・`effect`＝`AttackKey` の文字列・`card`＝カードの uid・`pokemon_id`・`number`＝何枚目（1 から）・`count`＝投げる枚数・`result`＝`heads`/`tails`）。`damage` に `stopped_after_step_2`（2 段階のあとで計算を終えたときだけ。「おもて」0 枚のみだれづきなど）
 

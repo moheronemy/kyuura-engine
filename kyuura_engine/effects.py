@@ -20,6 +20,9 @@
 - つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
+- つけて使うトレーナー（v0.2e）: ディフェンダー ``AttachedDamageReduction``（p.257 の最新の説明。
+  docs/defender-v0.2e.md）。自分の場のポケモンを選んでつけ、ついているポケモンがワザで受けるダメージを
+  7 段階で減らし、次の相手の番の終わりにエンジンがトラッシュする
 
 ポケモンパワー・特殊エネルギー・ほかの効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
 """
@@ -249,13 +252,16 @@ class TrainerEffect:
 
     手札から出す・相手に見せる・使い終わったらトラッシュする・番の続きにもどる、はエンジンが行う。
 
-    つけて使うトレーナー（v0.2c）は ``stays_in_play = True`` にし、``resolve`` でカードを場のポケモンに
-    つける（``zones.attach_trainer``）。使い終わってもトラッシュせず、ついている間 ``damage_modifiers`` で
-    ダメージ計算に効果を出す。トラッシュは、つけたときに決めた番の終わりに、エンジンが行う。
+    つけて使うトレーナー（v0.2c）は ``stays_in_play = True`` にし、``resolve``（対象を選ぶなら ``resume``）で
+    カードを場のポケモンにつける（``zones.attach_trainer``）。使い終わってもトラッシュせず、ついている間
+    ``damage_modifiers`` でダメージ計算に効果を出す。トラッシュは、つけたときに決めた番の終わりに、エンジンが
+    行う。その番は ``attachment_discard_turn``（使った番 + ``discard_turn_offset``）。番は 1 番ずつ交互に
+    進む（p.309）ので、0 は使った番（自分の番）、1 は次の相手の番（v0.2e）。
     """
 
     implementation_id = "abstract"
     stays_in_play = False  # True: 使い終わったら場に残る（つけて使うトレーナー）。False: 使いすて（p.310）
+    discard_turn_offset = 0  # つけて使うトレーナーをトラッシュする番: 使った番から数えていくつ後の番の終わりか
 
     def check(self, definition: CardDefinition) -> list[str]:
         if definition.trainer_kinds:
@@ -274,6 +280,10 @@ class TrainerEffect:
     def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
         """ついているポケモンがワザを使う（``role="attacker"``）・受ける（``"defender"``）ときの変更効果。"""
         return []
+
+    def attachment_discard_turn(self, state: GameState) -> int:
+        """今つけるなら、トラッシュする番（``GameState.turn_number``）。"""
+        return state.turn_number + self.discard_turn_offset
 
 
 @dataclass(frozen=True)
@@ -416,13 +426,53 @@ class AttachedAttackBonus(TrainerEffect):
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         active = state.players[use.player].active
-        attach_trainer(state, use.player, use.card, active, discard_at_end_of_turn=state.turn_number)
+        attach_trainer(state, use.player, use.card, active, discard_at_end_of_turn=self.attachment_discard_turn(state))
 
     def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
         if role != "attacker":
             return []
         name = state.card_def(attached.card).name_ja
         return [DamageModifier(step=5, amount=self.amount, label=name, source=attached.card)]
+
+
+@dataclass(frozen=True)
+class AttachedDamageReduction(TrainerEffect):
+    """自分の場のポケモンを 1 匹選んでつけ、次の相手の番の終わりにトラッシュする。つけているポケモンが
+    ワザによるダメージを受けるとき、そのダメージは ``-amount``（ディフェンダー。p.257 の最新の説明
+    「このカードは、あなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードを
+    つけているポケモンがワザによるダメージを受けるとき、そのダメージは「-20」される。」。docs/defender-v0.2e.md）。
+
+    - つけるのは自分の場（バトル場とベンチ。p.312・p.313）のポケモン。1 匹でも選ぶ決定を出す（場のポケモンの番号）。
+    - 効果はダメージ計算の 7 段階（ワザを受けるポケモンについているカードの効果。p.321 がディフェンダーを例に
+      挙げる）。弱点・抵抗力・5 段階（プラスパワー）のあと。途中の 0・マイナスはそのまま続ける。2 段階までで
+      0 以下なら計算を終える（7 段階に進まない）。
+    - 有効期限は次の相手の番の終わり（``discard_turn_offset = 1``）。効果はカードがついている間だけあり、
+      カードをトラッシュする時点で終わる（最新の説明では、効果の終わりとトラッシュの時点が同じ）。
+    - ワザで受けるダメージだけを減らす（ワザを使うときのダメージは変えない。どくのダメージは変えない。p.322）。
+      自分のワザで自分が受けるダメージにも効く（p.257 の解説）が、そのワザはまだない。今は、相手のワザで
+      対戦ポケモンが受けるダメージ（``attack_damage_modifiers`` の ``role="defender"``）にだけ使う。
+    """
+
+    amount: int
+    implementation_id = "attached_damage_reduction"
+    stays_in_play = True
+    discard_turn_offset = 1
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        own = state.players[use.player].in_play()
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in own])
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        owner, pokemon = state.find_pokemon(choices[0])
+        if owner != use.player:
+            raise RuntimeError(f"相手の場のポケモン {choices[0]} にディフェンダーをつけようとした（エンジンの不具合）")
+        attach_trainer(state, use.player, use.card, pokemon, discard_at_end_of_turn=self.attachment_discard_turn(state))
+
+    def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
+        if role != "defender":
+            return []
+        name = state.card_def(attached.card).name_ja
+        return [DamageModifier(step=7, amount=-self.amount, label=name, source=attached.card)]
 
 
 @dataclass(frozen=True)
@@ -568,11 +618,11 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
-# トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）は p.257、ドードーの「みだれづき」（v0.2d）は p.231 の
-# 画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・docs/pluspower-v0.2c.md・
-# docs/coin-attacks-v0.2d.md）。
+# トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
+# （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
+# docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.2d",
+    "kyuura-engine-0.2e",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -622,6 +672,13 @@ DEFAULT_EFFECTS = EffectRegistry(
             "山札からカードを2枚引いて、手札に加える。",
             "山札からカードを2枚引いて、手札に加える。",
             "P43 p.254",
+        ),
+        "PMCG1-079": TrainerEntry(
+            AttachedDamageReduction(amount=20),
+            "ディフェンダー",
+            "次の相手の番の終わりまで、「ワザ」によって受けるダメージを、「-20」できる。自分の場のポケモンにつけて使い、次の自分の番の最初にはがしてすてる。",
+            "このカードは、あなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受けるとき、そのダメージは「-20」される。",
+            "P43 p.257",
         ),
         "PMCG1-081": TrainerEntry(
             AttachedAttackBonus(amount=10),

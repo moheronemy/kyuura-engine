@@ -22,6 +22,7 @@ from kyuura_engine import (
     AttachEnergy, EndTurn, EngineError, Phase, PlayTrainer, ResolveDecision, Retreat, UseAttack, apply_command,
     check_invariants, new_game, state_to_dict,
 )
+from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint, rng_from_json, rng_state_to_json
 
 from tests.helpers import (
@@ -187,8 +188,12 @@ class GoldenCoinGameTest(unittest.TestCase):
         self.assertEqual((len(commands), state.turn_number, state.result.winner), (115, 39, 1))
         coins = "".join("H" if e["result"] == "heads" else "T" for e in coin_events(state))
         self.assertEqual(coins, "HHHHHTTHHHHHHHHHTHHHTTHTTH")
-        text = json.dumps(full(state), sort_keys=True, ensure_ascii=False)
-        self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), "afe80cb4a1f3b39721b1b636860e71ed07b12185cc2f90f845f0b1eaf36b5887")
+        # 効果の登録表の id（版の名前）は、登録を加えるたびに変わるので、ハッシュに入れずに別に確かめる（v0.2e）。
+        # ハッシュの値は、v0.2d のコミット e66390a のエンジンで同じ対戦から計算した値と同じ（対戦の中身は変わっていない）
+        data = full(state)
+        self.assertEqual(data.pop("effects"), DEFAULT_EFFECTS.id)
+        text = json.dumps(data, sort_keys=True, ensure_ascii=False)
+        self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), "d0cd41e260f89d547898fcff3e605f0d5c946a1af487cc481d910d007135cc90")
 
 
 class RandomCommandsWithCoinsTest(unittest.TestCase):

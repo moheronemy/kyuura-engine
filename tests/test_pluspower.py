@@ -455,9 +455,10 @@ class KnockOutWithAttachedTrainerTest(unittest.TestCase):
     class UntilNextTurn(TrainerEffect):
         implementation_id = "test_until_next_turn"
         stays_in_play = True
+        discard_turn_offset = 1  # v0.2e から、場に残る実装は有効期限（使った番からいくつ後の番か）を宣言する
 
         def resolve(self, state, use):
-            attach_trainer(state, use.player, use.card, state.players[use.player].active, state.turn_number + 1)
+            attach_trainer(state, use.player, use.card, state.players[use.player].active, self.attachment_discard_turn(state))
 
     def test_attached_card_goes_to_the_discard_with_the_pokemon(self):
         definition = load_card_pool().get(SUPER_POTION)

@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    BILL, FIRE, GROWLITHE, MACHOP, PLUSPOWER, PONYTA, POTION, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
+    BILL, DEFENDER, FIRE, GROWLITHE, MACHOP, PLUSPOWER, PONYTA, POTION, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
     build_test_state,
 )
 
@@ -66,11 +66,12 @@ class TrainerRegistryTest(unittest.TestCase):
 
     def test_default_registry_has_exactly_the_registered_cards(self):
         # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）。
-        # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。トレーナーの登録は v0.2c と同じ
-        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, PLUSPOWER))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2d")
+        # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。v0.2e でディフェンダーを加えた
+        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, DEFENDER, PLUSPOWER))
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2e")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
-        self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus"})
+        self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus",
+                                           "attached_damage_reduction"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -134,7 +135,7 @@ class TrainerRegistryTest(unittest.TestCase):
         added = DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-014", 1): AttackEntry(DAMAGE_ONLY, "ひのこ")})
         self.assertEqual(added.trainer_ids(), trainers)  # ワザを加えてもトレーナーの登録は残る
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
-        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL, PLUSPOWER))  # PLUSPOWER は v0.2c
+        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL, DEFENDER, PLUSPOWER))  # PLUSPOWER は v0.2c、DEFENDER は v0.2e
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

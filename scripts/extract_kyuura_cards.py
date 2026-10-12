@@ -68,6 +68,11 @@ POOL_V0_2D = [
     "PMCG1-061",  # ドードー（みだれづき）
 ]
 
+# v0.2e で加えたトレーナー（相手の番の終わりまでつくトレーナー）。『オフィシャルブック2000』p.257 と照合した
+POOL_V0_2E = [
+    "PMCG1-079",  # ディフェンダー
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
     "PMCG1-011",  # フシギバナ（2進化・ポケモンパワー）
@@ -130,10 +135,10 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -153,6 +158,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_2b": POOL_V0_2B,
         "pool_v0_2c": POOL_V0_2C,
         "pool_v0_2d": POOL_V0_2D,
+        "pool_v0_2e": POOL_V0_2E,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -178,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 
