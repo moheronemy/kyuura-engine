@@ -1,0 +1,1364 @@
+{
+  "format": "kyuura-engine card extract 1",
+  "description": "kyuura の data/cards.json から、kyuura-engine v0.1 が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
+  "source": {
+    "repository": "https://github.com/moheronemy/kyuura",
+    "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+    "path": "data/cards.json",
+    "schema_version": 2
+  },
+  "fields_copied": [
+    "id",
+    "jp_set",
+    "category",
+    "name",
+    "name_ja_confidence",
+    "pokemon",
+    "trainer",
+    "energy",
+    "jp_en_differences",
+    "notes",
+    "source_ids",
+    "ja_text_source",
+    "jp_print"
+  ],
+  "fields_used_by_engine": [
+    "id",
+    "category",
+    "name.ja",
+    "pokemon.stage",
+    "pokemon.hp",
+    "pokemon.types",
+    "pokemon.weaknesses",
+    "pokemon.resistances",
+    "pokemon.retreat_cost",
+    "pokemon.rules_text",
+    "pokemon.powers",
+    "pokemon.attacks[].name",
+    "pokemon.attacks[].cost",
+    "pokemon.attacks[].damage",
+    "pokemon.attacks[].text",
+    "trainer",
+    "energy.kind",
+    "energy.provides"
+  ],
+  "pool_v0_1": [
+    "PMCG1-016",
+    "PMCG1-018",
+    "PMCG1-025",
+    "PMCG1-029",
+    "PMCG1-037",
+    "PMCG1-052",
+    "PMCG1-053",
+    "PMCG1-058",
+    "PMCG1-060",
+    "PMCG1-065",
+    "PMCG1-097",
+    "PMCG1-098",
+    "PMCG1-099",
+    "PMCG1-100",
+    "PMCG1-101",
+    "PMCG1-102"
+  ],
+  "reference_only": [
+    "PMCG1-011",
+    "PMCG1-014",
+    "PMCG1-061",
+    "PMCG1-071"
+  ],
+  "cards": [
+    {
+      "id": "PMCG1-016",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポニータ",
+        "en": "Ponyta"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          77
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けりとばす",
+              "en": "Smash Kick"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおのしっぽ",
+              "en": "Flame Tail"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-016",
+        "pokemontcg": [
+          "base1-60"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-021-ponyta/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-021-ponyta/"
+      }
+    },
+    {
+      "id": "PMCG1-018",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ガーディ",
+        "en": "Growlithe"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          58
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのお",
+              "en": "Flare"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-018",
+        "pokemontcg": [
+          "base1-28"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-019-gardie/",
+      "jp_print": {
+        "level": 18,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-019-gardie/"
+      }
+    },
+    {
+      "id": "PMCG1-025",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒトデマン",
+        "en": "Staryu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          120
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひらてうち",
+              "en": "Slap"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-025",
+        "pokemontcg": [
+          "base1-65"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-031-hitodeman/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-031-hitodeman/"
+      }
+    },
+    {
+      "id": "PMCG1-029",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "パウワウ",
+        "en": "Seel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          86
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ずつき",
+              "en": "Headbutt"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-029",
+        "pokemontcg": [
+          "base1-41"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-029-pawou/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-029-pawou/"
+      }
+    },
+    {
+      "id": "PMCG1-037",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ビリリダマ",
+        "en": "Voltorb"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          100
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-037",
+        "pokemontcg": [
+          "base1-67"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-039-biriridama/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-039-biriridama/"
+      }
+    },
+    {
+      "id": "PMCG1-052",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ディグダ",
+        "en": "Diglett"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          50
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あなをほる",
+              "en": "Dig"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どろかけ",
+              "en": "Mud Slap"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-052",
+        "pokemontcg": [
+          "base1-47"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-052-digda/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-052-digda/"
+      }
+    },
+    {
+      "id": "PMCG1-053",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ワンリキー",
+        "en": "Machop"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          66
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けたぐり",
+              "en": "Low Kick"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-053",
+        "pokemontcg": [
+          "base1-52"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-054-wanriky/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-054-wanriky/"
+      }
+    },
+    {
+      "id": "PMCG1-058",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "エビワラー",
+        "en": "Hitmonchan"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          107
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ジャブ",
+              "en": "Jab"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "スペシャルパンチ",
+              "en": "Special Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-058",
+        "pokemontcg": [
+          "base1-7"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-058-ebiwalar/",
+      "jp_print": {
+        "level": 33,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-058-ebiwalar/"
+      }
+    },
+    {
+      "id": "PMCG1-060",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コラッタ",
+        "en": "Rattata"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          19
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-060",
+        "pokemontcg": [
+          "base1-61"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-061-koratta/",
+      "jp_print": {
+        "level": 9,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-061-koratta/"
+      }
+    },
+    {
+      "id": "PMCG1-065",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミニリュウ",
+        "en": "Dratini"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          147
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はたく",
+              "en": "Pound"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-065",
+        "pokemontcg": [
+          "base1-26"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-068-miniryu/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-068-miniryu/"
+      }
+    },
+    {
+      "id": "PMCG1-097",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "草エネルギー",
+        "en": "Grass Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "grass"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-097",
+        "pokemontcg": [
+          "base1-99"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-098",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "炎エネルギー",
+        "en": "Fire Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "fire"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-098",
+        "pokemontcg": [
+          "base1-98"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-099",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "水エネルギー",
+        "en": "Water Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "water"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-099",
+        "pokemontcg": [
+          "base1-102"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-100",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "雷エネルギー",
+        "en": "Lightning Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "lightning"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-100",
+        "pokemontcg": [
+          "base1-100"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-101",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "超エネルギー",
+        "en": "Psychic Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "psychic"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-101",
+        "pokemontcg": [
+          "base1-101"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-102",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "闘エネルギー",
+        "en": "Fighting Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "basic",
+        "provides": [
+          "fighting"
+        ],
+        "text": null
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "旧裏期は「〇エネルギー」。「基本〇エネルギー」への改称は LEGEND 期（ポケモンWiki）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-102",
+        "pokemontcg": [
+          "base1-97"
+        ]
+      },
+      "ja_text_source": null,
+      "jp_print": null
+    },
+    {
+      "id": "PMCG1-011",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギバナ",
+        "en": "Venusaur"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          3
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "フシギソウ",
+          "en": "Ivysaur"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジートランス",
+              "en": "Energy Trans"
+            },
+            "text": {
+              "ja": "フシギバナは自分の場にある「草」エネルギーを好きなだけ移動させることができる。「ねむり・マヒ・こんらん」状態の時には使えない。",
+              "en": "As often as you like during your turn (before your attack), you may take 1 Grass Energy card attached to 1 of your Pokémon and attach it to a different one. This power can't be used if Venusaur is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ソーラービーム",
+              "en": "Solarbeam"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-011",
+        "pokemontcg": [
+          "base1-15"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-003-fushigibana/",
+      "jp_print": {
+        "level": 67,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "特殊能力が「特種能力」と表記されている",
+          "初版は「図鑑ナンバー」に誤表記（「No.068」はカイリキーのもの）"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-003-fushigibana/"
+      }
+    },
+    {
+      "id": "PMCG1-014",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒトカゲ",
+        "en": "Charmander"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          4
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": "Scratch"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ひのこ",
+              "en": "Ember"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Charmander in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-014",
+        "pokemontcg": [
+          "base1-46"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-014-hitokage/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-014-hitokage/"
+      }
+    },
+    {
+      "id": "PMCG1-061",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドードー",
+        "en": "Doduo"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          84
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれづき",
+              "en": "Fury Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×10のダメージをあたえる。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-061",
+        "pokemontcg": [
+          "base1-48"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-065-dodo/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-065-dodo/"
+      }
+    },
+    {
+      "id": "PMCG1-071",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": "Potion"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のポケモンにのっているダメージカウンターを2個まで、とりのぞくことができる。",
+          "en": "Remove up to 2 damage counters from 1 of your Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-071",
+        "pokemontcg": [
+          "base1-94"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-074-kizugusuri/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-074-kizugusuri/"
+      }
+    }
+  ]
+}
