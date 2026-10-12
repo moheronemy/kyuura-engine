@@ -45,8 +45,10 @@ def extract_with_other_diglett():
 
 class DefaultRegistryTest(unittest.TestCase):
     def test_every_v0_1_attack_is_registered_explicitly_as_damage_only(self):
+        # v0.2d でコインを投げるワザのドードー（pool_v0_2d）が対戦に使えるようになったので、v0.1 の組で確かめる
+        # （ドードーは tests/test_coin_attacks.py）
         pool = load_card_pool()
-        for card_id in sorted(pool.playable_ids):
+        for card_id in sorted(set(pool.playable_ids) & set(read_extract()["pool_v0_1"])):
             for attack in pool.get(card_id).attacks:
                 entry = DEFAULT_EFFECTS.attack_entry(card_id, attack.index)
                 self.assertIsNotNone(entry, (card_id, attack.index))
@@ -68,6 +70,30 @@ class DefaultRegistryTest(unittest.TestCase):
         records = read_verification()["cards"]
         for key in DEFAULT_EFFECTS.attack_keys():
             self.assertIn(records.get(key.card_id, {}).get("status"), ("一致", "不一致あり"), key)
+
+    def test_attacks_with_text_follow_the_verified_latest_description(self):
+        """説明文のあるワザの登録（v0.2d から）は、照合した説明文・最新の説明・出典を持ち、照合の記録と合う。
+
+        説明文のないワザ（DamageOnly）の登録は、どれも None のまま。
+        """
+        from kyuura_engine.cards import read_verification
+
+        records = read_verification()["cards"]
+        pool = load_card_pool()
+        with_text = []
+        for key in DEFAULT_EFFECTS.attack_keys():
+            entry = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index)
+            attack = pool.get(key.card_id).attacks[key.attack_index]
+            self.assertEqual(entry.text_ja, attack.text_ja, key)
+            if attack.text_ja is None:
+                self.assertEqual((entry.play_text_ja, entry.source), (None, None), key)
+                continue
+            with_text.append(key)
+            record = records[key.card_id]
+            self.assertEqual(entry.play_text_ja, record["latest_description_ja"], key)
+            self.assertEqual(entry.source, f"P43 p.{record['page']}", key)
+            self.assertEqual(record["pdf_page"], record["page"] + 2)
+        self.assertEqual(with_text, [AttackKey("PMCG1-061", 0)])  # ドードーの「みだれづき」（p.231）
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -112,7 +138,10 @@ class UnregisteredTest(unittest.TestCase):
 class RegisteredWithTextTest(unittest.TestCase):
     def test_attack_with_text_is_supported_when_an_implementation_is_registered(self):
         """説明文があっても、実装が登録されていれば使える。処理は登録した実装が行う（説明文から推測しない）。"""
-        effects = DEFAULT_EFFECTS.with_attacks("test-ember", {AttackKey(CHARMANDER, 1): AttackEntry(RECORDING, "ひのこ")})
+        # v0.2d から、説明文のあるワザの登録には、照合した説明文（kyuura の写しの値）を書く
+        ember_text = load_card_pool().get(CHARMANDER).attacks[1].text_ja
+        effects = DEFAULT_EFFECTS.with_attacks(
+            "test-ember", {AttackKey(CHARMANDER, 1): AttackEntry(RECORDING, "ひのこ", text_ja=ember_text)})
         pool = pool_from_extract(read_extract(), effects)
         self.assertTrue(pool.get(CHARMANDER).attacks[1].supported)
         self.assertTrue(pool.get(CHARMANDER).supported)
@@ -124,8 +153,9 @@ class RegisteredWithTextTest(unittest.TestCase):
 
     def test_attack_with_text_cannot_be_registered_as_damage_only(self):
         """効果のあるワザを、効果のないワザ（DamageOnly）として登録しても使えない（登録の誤りを見つける）。"""
-        effects = DEFAULT_EFFECTS.with_attacks("test-bad", {AttackKey(CHARMANDER, 1): AttackEntry(DAMAGE_ONLY, "ひのこ")})
         ember = load_card_pool().get(CHARMANDER).attacks[1]
+        effects = DEFAULT_EFFECTS.with_attacks(
+            "test-bad", {AttackKey(CHARMANDER, 1): AttackEntry(DAMAGE_ONLY, "ひのこ", text_ja=ember.text_ja)})
         self.assertIn("説明文のあるワザを、効果のないワザとして登録している", effects.attack_problem(CHARMANDER, ember))
         self.assertIsNone(effects.attack_effect(CHARMANDER, ember))
 
@@ -164,7 +194,7 @@ class RegistryImmutabilityTest(unittest.TestCase):
         DEFAULT_EFFECTS.with_attacks("x", {AttackKey(CHARMANDER, 1): AttackEntry(RECORDING, "ひのこ")})
         DEFAULT_EFFECTS.without_attacks("y", keys)
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), keys)
-        self.assertEqual(len(keys), 14)
+        self.assertEqual(len(keys), 15)  # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）
 
 
 if __name__ == "__main__":

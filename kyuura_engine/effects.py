@@ -12,7 +12,8 @@
 
 登録している実装:
 
-- ワザ: ``DamageOnly``（説明のないワザ）
+- ワザ: ``DamageOnly``（説明のないワザ）、``CoinFlipDamage``（v0.2d。コインを投げ、「おもて」の数×の
+  ダメージ。ドードーの「みだれづき」。p.231 の最新の説明。docs/coin-attacks-v0.2d.md）
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -20,7 +21,7 @@
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
 
-ポケモンパワー・特殊エネルギー・効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
+ポケモンパワー・特殊エネルギー・ほかの効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
+from .coins import flip_coins
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
@@ -102,30 +104,86 @@ class DamageOnly(AttackEffect):
         return problems
 
     def resolve(self, state: GameState, use: AttackUse) -> None:
-        owner, attacker = state.find_pokemon(use.pokemon_id)
-        attacker_def = state.card_def(attacker.card)
-        attack = attacker_def.attacks[use.key.attack_index]
-        opponent = 1 - use.player
-        defender = state.players[opponent].active
-        defender_def = state.card_def(defender.card)
-        modifiers = attack_damage_modifiers(state, attacker, defender)
-        calc = calculate_attack_damage(attack.damage, attacker_def, defender_def, state.rules, modifiers)
-        defender.damage += calc.final
-        extra = {}
-        if calc.modifiers:
-            # v0.2c: どのカードの効果を、どの段階で計算したか（変更効果がないときは v0.1 と同じ形）
-            extra["modifiers"] = tuple((m.step, m.source, m.amount) for m in calc.modifiers)
-        state.add_event(
-            "damage",
-            player=opponent,
-            pokemon=defender.card,
-            amount=calc.final,
-            steps=calc.steps,
-            weakness=calc.weakness_applied,
-            resistance=calc.resistance_applied,
-            total_damage=defender.damage,
-            **extra,
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        damage_opponent_active(state, use, attack.damage)
+
+
+@dataclass(frozen=True)
+class CoinFlipDamage(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数 × ``damage_per_heads`` のダメージを、相手の対戦ポケモンに与える
+    （v0.2d。ドードーの「みだれづき」。p.231 の最新の説明「コインを2枚投げ、「おもて」の数×10のダメージ。」）。
+
+    - ダメージの目安に「×」があるワザは、ワザの説明にしたがって計算した数のダメージを与える。0 倍になり、
+      ダメージがなくなることもある（p.320）。ダメージを受けるのは、説明で特に指定されていないので、相手の
+      対戦ポケモン（p.320）。
+    - コインはワザの説明にしたがう処理（p.309 の手順 6）の中で投げる。必要なエネルギーの確認（手順 2）など、
+      ワザを使えるかの確認は、エンジンが投げる前に済ませている。
+    - 「おもて」の数 × ``damage_per_heads`` が p.321 の 1 段階（基本となるダメージ）。「おもて」が 0 枚なら 0 で、
+      2 段階までで 0 以下なので計算を終え、「ダメージを与えなかった」（弱点・抵抗力・プラスパワーは計算しない）。
+      これはワザの「失敗」（p.323）ではない（説明に「失敗」とは書かれていない）。どちらでも、ワザは使ったことになる。
+    """
+
+    coins: int
+    damage_per_heads: int
+    implementation_id = "coin_flip_damage"
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.coins, int) or isinstance(self.coins, bool) or self.coins < 1:
+            raise ValueError(f"コインの枚数は 1 以上の整数（{self.coins!r}）")
+        if type(self.damage_per_heads) is not int or self.damage_per_heads <= 0 or self.damage_per_heads % 10:
+            raise ValueError(f"「おもて」1 枚あたりのダメージは 10 の倍数の正の数（{self.damage_per_heads!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier != "×":
+            problems.append("ダメージの目安に「×」のないワザを、「おもて」の数×のワザとして登録している")
+        if attack.damage != self.damage_per_heads:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した「おもて」1 枚あたりのダメージ {self.damage_per_heads} が違う")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、コインを投げるワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        flips = flip_coins(
+            state, use.player, self.coins, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
         )
+        damage_opponent_active(state, use, flips.heads * self.damage_per_heads)
+
+
+def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> None:
+    """ワザで、相手の対戦ポケモンに、基本となるダメージ ``base`` から p.321 の順番で計算したダメージを与える。
+
+    計算は ``damage.calculate_attack_damage``。ログの ``damage`` は v0.1 と同じ形で、変更効果を計算したとき
+    だけ ``modifiers``（v0.2c）、2 段階までで 0 以下になって計算を終えたときだけ ``stopped_after_step_2``（v0.2d）を加える。
+    """
+    _, attacker = state.find_pokemon(use.pokemon_id)
+    attacker_def = state.card_def(attacker.card)
+    opponent = 1 - use.player
+    defender = state.players[opponent].active
+    defender_def = state.card_def(defender.card)
+    modifiers = attack_damage_modifiers(state, attacker, defender)
+    calc = calculate_attack_damage(base, attacker_def, defender_def, state.rules, modifiers)
+    defender.damage += calc.final
+    extra = {}
+    if calc.modifiers:
+        # v0.2c: どのカードの効果を、どの段階で計算したか（変更効果がないときは v0.1 と同じ形）
+        extra["modifiers"] = tuple((m.step, m.source, m.amount) for m in calc.modifiers)
+    if calc.stopped_after_step_2:
+        # v0.2d: 基本となるダメージ（と 2 段階）で 0 以下。弱点・抵抗力・5〜8 段階は計算していない（p.321）
+        extra["stopped_after_step_2"] = True
+    state.add_event(
+        "damage",
+        player=opponent,
+        pokemon=defender.card,
+        amount=calc.final,
+        steps=calc.steps,
+        weakness=calc.weakness_applied,
+        resistance=calc.resistance_applied,
+        total_damage=defender.damage,
+        **extra,
+    )
 
 
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
@@ -147,10 +205,21 @@ DAMAGE_ONLY = DamageOnly()
 
 @dataclass(frozen=True)
 class AttackEntry:
-    """登録の 1 件: 実装と、登録したときに確かめたワザ名。"""
+    """登録の 1 件: 実装と、登録したときに確かめたワザ名。
+
+    説明文のあるワザ（v0.2d から）は、次も書く（説明文のないワザは None のまま）。
+
+    - ``text_ja``: 登録したときに照合した kyuura の写しの説明文（データが変わったら使えなくなる。
+      印刷の文面で、処理の根拠ではない）
+    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」）
+    - ``source``: ``play_text_ja`` の出典（誌面のページ）
+    """
 
     effect: AttackEffect
     name_ja: str
+    text_ja: str | None = None
+    play_text_ja: str | None = None
+    source: str | None = None
 
 
 # ---------------------------------------------------------------- トレーナー（v0.2b）
@@ -420,6 +489,8 @@ class EffectRegistry:
             return f"ワザの効果の実装が登録されていない{detail}"
         if entry.name_ja != attack.name_ja:
             return f"登録したワザ名「{entry.name_ja}」と、データのワザ名「{attack.name_ja}」が違う"
+        if entry.text_ja != attack.text_ja:
+            return "登録したときに照合した説明文と、データの説明文が違う（データが変わった。照合し直す必要がある）"
         problems = entry.effect.check(attack)
         return "; ".join(problems) or None
 
@@ -478,7 +549,11 @@ class EffectRegistry:
     def describe(self) -> dict[str, Any]:
         return {
             "id": self.id,
-            "attacks": {str(k): {"implementation": e.effect.implementation_id, "name_ja": e.name_ja} for k, e in sorted(self._attacks.items())},
+            "attacks": {
+                str(k): {"implementation": e.effect.implementation_id, "name_ja": e.name_ja}
+                | ({} if e.source is None else {"source": e.source})
+                for k, e in sorted(self._attacks.items())
+            },
             "trainers": {
                 k: {"implementation": e.effect.implementation_id, "name_ja": e.name_ja, "source": e.source}
                 for k, e in sorted(self._trainers.items())
@@ -493,10 +568,11 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
-# トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）は p.257 の画像で「最新の説明」を確かめた
-# （同じファイル。docs/trainers-v0.2b.md・docs/pluspower-v0.2c.md）。
+# トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）は p.257、ドードーの「みだれづき」（v0.2d）は p.231 の
+# 画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・docs/pluspower-v0.2c.md・
+# docs/coin-attacks-v0.2d.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.2c",
+    "kyuura-engine-0.2d",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -514,7 +590,17 @@ DEFAULT_EFFECTS = EffectRegistry(
         # ヒトカゲ（参照カード。デッキには入らない）の「ひっかく」。p.63 で説明文がないことを確かめた。
         # もう 1 つのワザ「ひのこ」は効果があり、登録していない（カードは未対応のまま）
         ("PMCG1-014", 0, "ひっかく"),
-    ]),
+    ])
+    | {
+        # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
+        AttackKey("PMCG1-061", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "みだれづき",
+            text_ja="コインを2枚投げて「おもて」の数×10のダメージをあたえる。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×10のダメージ。",
+            source="P43 p.231",
+        ),
+    },
     {
         "PMCG1-071": TrainerEntry(
             RemoveDamageCounters(counters=2),

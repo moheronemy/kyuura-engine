@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1〜v0.2c）
+# 公開 API のレビュー（v0.1〜v0.2d）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md) のアーキテクチャにあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -17,9 +17,9 @@ data4 = state_to_dict(state, format_version=4)        # 形式 4（ついてい�
 command = command_from_dict({"type": "end_turn", "player": 0})
 ```
 
-対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
+対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a・v0.2b・v0.2c で加えた公開 API
+## 2. v0.2a・v0.2b・v0.2c・v0.2d で加えた公開 API
 
 ### v0.2a
 
@@ -66,6 +66,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 コマンドは増やしていません（プラスパワーも `PlayTrainer` で使う）。
 
+### v0.2d
+
+| もの | 内容 |
+|---|---|
+| `CoinSide`（`kyuura_engine` から import できる） | コインの結果（`HEADS`＝`"heads"` おもて、`TAILS`＝`"tails"` うら）。ログ `coin_flip` の `result` の値 |
+| `coins.flip_coins`・`coins.CoinFlips` | 効果の実装向け（内部。クライアントは使わない）。コインを投げ、ログを残す |
+| `effects.CoinFlipDamage`・`effects.damage_opponent_active` | コインを投げるワザの実装・相手の対戦ポケモンにダメージを与える処理（実装を加える人向け） |
+| `AttackEntry.text_ja`・`play_text_ja`・`source` | 説明文のあるワザの登録の照合と出典（省略時は None） |
+| ログ | `coin_flip`（1 枚ごと）、`damage` の `stopped_after_step_2`（2 段階のあとで計算を終えたときだけ） |
+| `RULE_REFERENCES` | `coin_toss`・`attack_text`・`attack_failure` |
+
+コマンド・段階・状態の項目・書き出しの形式は増やしていません。コインの結果を指定するコマンド・引数はありません（[architecture-v0.2d.md 3 章](architecture-v0.2d.md)）。
+
 ## 3. 公開すべきもの・内部として隠すべきもの
 
 | もの | 今 | 分類 | 理由・提案 |
@@ -77,7 +90,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `state_to_dict` | 公開 | **公開**（形式ごとに固定する） | 形式 1 は v0.1 と同じに固定。形式 2 は v0.2a、形式 3 は v0.2b で加えた。どれも内部の完全な状態で、見る人ごとに絞る形が要る（M6、[アーキテクチャ 8 章](architecture-v0.2a.md#8-非公開の情報方針未実装)） |
 | `GameState` の読み取り（`phase`・`current_player`・`turn_number`・`result`・`halt`・`decision`・各ゾーン） | 公開（書き換えもできる） | **読み取りだけ公開** | 可変の dataclass なので、呼び出し側が書き換えられる（書き換えた状態は `StateIntegrityError` になることがある）。読み取り専用の見え方を用意したい |
 | `GameState(...)` を直接作る | できる（v0.2a から `effects` が必要） | **内部** | 正式な入口は `new_game`。テストの `build_test_state` だけが直接作る |
-| `GameState.rng`・`clone()`・`add_event()` | 公開 | **内部** | 乱数を外から進めると再現性が崩れる。`clone()` は `apply_command` が使う。`add_event()` はエンジンだけが使う |
+| `GameState.rng`・`clone()`・`add_event()` | 公開 | **内部** | 乱数を外から進めたり差し替えたりすると、再現性が崩れ、この先のコインの結果も変わる（v0.2d。テストは結果を決めるために差し替えるが、通常の使い方ではない）。`clone()` は `apply_command` が使う。`add_event()` はエンジンだけが使う |
 | `GameState.pending_prizes`・`pending_promotions` | 読み取り専用の値（v0.2a。決定から作る） | **互換のためだけに残す** | 新しいコードは `decision` を見る |
 | `GameState.mulligan_rounds` | 公開 | **読み取りだけ公開** | 切り直しの経過（HALTED の理由の説明に使う） |
 | `PendingDecision` | 公開（frozen） | **公開** | 画面・AI が「何を選ぶか」を知るための情報。`resume`・`context` はエンジンの続きの情報なので、クライアントは読まなくてよい |
@@ -137,6 +150,16 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - `PokemonInPlay` に `trainers`、`DamageCalculation` に `modifiers` が加わった（どちらも既定値あり）
 - 新しいクライアントへの推奨: 状態の辞書は形式 4 を使う。
 
+### v0.2c → v0.2d
+
+- 対戦の結果（v0.1 の参照データ）・固定値・既存のコマンドとログは変わりません。コインを投げるワザを使わない対戦では、乱数の使い方も、新しいイベント・項目もありません。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.2d` になり、ワザの登録にドードーの「みだれづき」（PMCG1-061#0）が加わった
+  - 写しの対戦用のカードの組に、ドードー（`pool_v0_2d`）が加わった（参照カードから移った）
+  - 説明文のあるワザの登録は、`AttackEntry.text_ja` にデータと同じ説明文を書かないと使えない（データが変わったことに気づくため。トレーナーの `TrainerEntry.text_ja` と同じ）
+  - `DamageCalculation.modifiers` は、2 段階のあとで計算を終えたときは、計算に使った 2 段階の効果だけになった（v0.2c までの対応カードでは起こらない）
+- 新しいクライアントへの推奨: コインの結果はログの `coin_flip` から表示する。対戦を保存して再開するときは、乱数の状態を `rng.rng_state_to_json` で保存する（ゲーム状態全体の読み込みは未実装）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -194,6 +217,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 `game_created`, `shuffle`, `draw`, `mulligan`（見せた手札）, `halted`, `place_starting_pokemon`, `set_prizes`, `mulligan_draw`, `janken`, `reveal_pokemon`, `turn_start`, `deck_out`, `play_to_bench`, `attach_energy`, `retreat`, `attack`, `damage`（計算の段階を含む）, `knock_out`, `take_prize`, `promote_active`, `end_turn_without_attack`, `turn_end`, `pokemon_check`, `game_end`
 
 v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discard_at_end_of_turn`）, `discard_attached_trainer`（同じ項目と `reason`＝`end_of_turn`）。`damage` に `modifiers`（`(段階, カードの uid, 加えた数)`。変更効果があるときだけ）、`knock_out` に `discarded_trainers`（ついていたトレーナーがあるときだけ）
+
+v0.2d: `coin_flip`（`player`・`source`＝`attack`・`effect`＝`AttackKey` の文字列・`card`＝カードの uid・`pokemon_id`・`number`＝何枚目（1 から）・`count`＝投げる枚数・`result`＝`heads`/`tails`）。`damage` に `stopped_after_step_2`（2 段階のあとで計算を終えたときだけ。「おもて」0 枚のみだれづきなど）
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

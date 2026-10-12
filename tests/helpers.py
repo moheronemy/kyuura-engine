@@ -5,6 +5,8 @@
   通らないので、対戦準備・デッキのテストには使わない。
 - ``scripted_command``: 統合テストで 1 試合を最後まで進めるための、決まった手順の操作。
   対戦相手の AI ではない（強さや戦略は考えていない）。
+- ``with_coin_results``（v0.2d）: テストの中だけで、次に投げるコインの結果を決める（状態の乱数を、
+  その結果になる乱数に差し替える）。エンジンの API にはコインの結果を指定する方法はない。
 """
 
 from __future__ import annotations
@@ -51,7 +53,7 @@ LIGHTNING = "PMCG1-100"
 PSYCHIC = "PMCG1-101"
 FIGHTING = "PMCG1-102"
 CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
-DODUO = "PMCG1-061"
+DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -119,6 +121,7 @@ def build_test_state(
     seed: int = 0,
     energy_attachments_this_turn: int = 0,
     effects=None,
+    pool=None,
 ) -> GameState:
     """テスト専用: 正式な対戦開始を通さずに MAIN の盤面を作る。
 
@@ -127,8 +130,9 @@ def build_test_state(
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
+    pool: カードの定義を引くカードの組（省略時は同梱の写し。テスト専用のカードを使うとき）
     """
-    pool = load_card_pool()
+    pool = pool or load_card_pool()
     cards: dict[int, CardInstance] = {}
 
     def new_uid(card_id: str, owner: int) -> int:
@@ -354,3 +358,46 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
                 return PlayTrainer(state.current_player, pluspower)
         return scripted
     return scripted_command(state, janken_winner=janken_winner)
+
+
+# ---------------------------------------------------------------- コイン（v0.2d。テスト専用の乱数の制御）
+
+from kyuura_engine.coins import CoinSide  # noqa: E402
+
+H, T = CoinSide.HEADS, CoinSide.TAILS
+
+
+def rng_for_coins(*sides: CoinSide, start: int = 0) -> random.Random:
+    """次に ``getrandbits(1)`` を len(sides) 回使うと、その結果（1 = おもて）になる乱数（テスト専用）。
+
+    seed を 0 から順に探すので、毎回同じ乱数になる。エンジンのコインは 1 枚につき ``getrandbits(1)`` を 1 回
+    使う（kyuura_engine/coins.py）。
+    """
+    wanted = [1 if side is CoinSide.HEADS else 0 for side in sides]
+    for seed in range(start, start + 100000):
+        probe = random.Random(seed)
+        if [probe.getrandbits(1) for _ in wanted] == wanted:
+            return random.Random(seed)
+    raise AssertionError("条件に合う乱数が見つからない")
+
+
+def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:
+    """テスト専用: 次に投げるコインの結果を ``sides`` にした状態（複製。渡した状態は変えない）。"""
+    new = state.clone()
+    new.rng = rng_for_coins(*sides)
+    return new
+
+
+def coin_events(state: GameState, since: int = 0) -> list[dict]:
+    return [dict(e) for e in state.log[since:] if e["kind"] == "coin_flip"]
+
+
+def coin_results(state: GameState, since: int = 0) -> list[str]:
+    return [e["result"] for e in coin_events(state, since)]
+
+
+# ドードー（v0.2d）を入れた 60 枚のデッキ（たねポケモン 20 枚 + トレーナー + 基本エネルギー）
+DODUO_DECK = expand_decklist({DODUO: 4, GROWLITHE: 4, PONYTA: 4, RATTATA: 4, VOLTORB: 4, FIRE: 40})
+DODUO_TRAINER_DECK = expand_decklist({
+    DODUO: 4, GROWLITHE: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, BILL: 4, POTION: 2, SWITCH: 2, PLUSPOWER: 4, FIRE: 28,
+})

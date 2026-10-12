@@ -23,6 +23,7 @@
 - 未実装のカード効果を、効果がないものとして処理しないでください。対応していないカード・ワザ・操作は、分類（cards.py）・デッキの検査（deck.py）・`UnsupportedError` で明示的に拒否します。
 - ワザを使えるのは、効果の登録表（kyuura_engine/effects.py の `DEFAULT_EFFECTS`）に（カード id, ワザの位置）で実装が登録されているときだけです（v0.2a）。説明文が空なことを実装がある証拠にしないでください。登録するカードは、先に『オフィシャルブック2000』のページと照合し、`kyuura_engine/data/card_verification.json` に記録します（tests/test_effects.py が確かめる）。
 - トレーナーも同じです（v0.2b）。カード id で `TrainerEntry` を登録し、kyuura の写しの名前・文面（照合用）と、実装がしたがう『オフィシャルブック2000』の「最新の説明」（`play_text_ja`）・出典を書きます。照合の記録には `latest_description_ja` を書きます（tests/test_trainers.py が確かめる）。英語版の文面や現代のカードの文面で日本語版の処理を決めないでください。
+- 説明文のあるワザ（v0.2d から）は、`AttackEntry` に kyuura の写しの説明文（`text_ja`。照合用）と、実装がしたがう「最新の説明」（`play_text_ja`）・出典（`source`）を書き、照合の記録に `latest_description_ja` を書きます（tests/test_effects.py `test_attacks_with_text_follow_the_verified_latest_description` が確かめる）。登録した説明文とデータの説明文が違えば、そのワザは使えません。
 - カード効果の中で原典で決められない場合は、成功を仮定せず `UnsupportedError`（コードは `UNRESOLVED_…`）で止めます。使えるかどうかなら `TrainerEffect.check_playable`、決定の選択なら `push_trainer_decision` の `unresolved_choices` を使います。テストは「止まること・状態が変わらないこと」を確かめ、仮定に基づく成功のテストは書きません。決めた根拠と未解決の事項は docs/trainers-v0.2b.md のように、原典の記述・分類（CONFIRMED・SUPPORTED・UNRESOLVED・CONFLICT）・コード・テストを対応づけて書きます。
 
 ## 状態の作り（v0.2a）
@@ -34,6 +35,7 @@
 - トレーナーを使っている最中（決定を待つ間）のカードは `GameState.trainer_in_use` にあります（カードの保存則の対象）。この状態は形式 1・2 では書き出せないので、トレーナーのある対戦のテストは形式 3 以上で比べます。
 - ポケモンについて場に残るトレーナー（v0.2c。プラスパワーなど）は `PokemonInPlay.trainers`（`AttachedTrainer`）にあります。使用中（`trainer_in_use`）とは別の領域です。実装は `TrainerEffect.stays_in_play = True` にし、`zones.attach_trainer` でつけます。有効期限（`discard_at_end_of_turn`）の番の終わりにエンジンがトラッシュし、きぜつしたらポケモンといっしょにトラッシュします。勝敗が決まった番は番の終わりが来ないので、何もしません。形式 1〜3 は、ついているトレーナーを書き出せない（`ValueError`）ので、形式 4 で比べます。
 - ダメージを変えるカードの効果は、`damage.DamageModifier`（段階と加える数）で p.321 の段階に渡します。最終ダメージに直接足さないでください。加算でない効果を加えるときは、同じ段階の順番を決めるプレイヤー（`DAMAGE_STEP_CHOOSER`）に決定で選ばせます。
+- コイン（v0.2d）は `kyuura_engine/coins.py` の `flip_coins` だけで投げます（1 枚 1 回 `GameState.rng.getrandbits(1)`、1 なら「おもて」。1 枚ごとにログ `coin_flip`）。コインの結果をコマンドや引数で指定する口を作らないでください。テストで結果を決めるときは、tests/helpers.py の `with_coin_results`（状態の乱数を差し替える）を使います。コインを投げる効果は、投げる前に使えるかどうか・原典で決められない場合を確かめ終えておきます。コインの使い方（回数・順番）を変えると、tests/test_coins.py・tests/test_coin_games.py の固定値が変わります。
 - ログは内部の完全な記録です（引いたカードなどの隠れた情報を含む）。イベントを加えるときは、隠す情報を決まった項目にだけ入れます（docs/architecture-v0.2b.md 9 章）。
 
 ## 変更するとき

@@ -12,7 +12,11 @@
   再現するために使う。``GameState.clone()``・``copy.deepcopy``・``pickle`` は、これと同じ状態を
   そのまま複製する。
 
-v0.2a のエンジンは、対戦準備（山札を切る）のあとは乱数を使いません。コインは未実装です。
+エンジンが乱数を使うのは、対戦準備で山札を切るときと、コインを投げるとき（v0.2d。``coins.flip_coins``。
+コイン 1 枚につき ``getrandbits(1)`` を 1 回）だけです。
+
+ゲーム状態全体を JSON から読み込む機能はまだありません（``state_to_dict`` は乱数の指紋だけを持つ）。
+乱数だけは、ここの ``rng_state_to_json``・``rng_from_json`` で保存・復元できます。
 """
 
 from __future__ import annotations

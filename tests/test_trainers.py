@@ -65,9 +65,10 @@ class TrainerRegistryTest(unittest.TestCase):
     """トレーナーの実装はカード id で登録する。名前・説明文の有無では決めない。"""
 
     def test_default_registry_has_exactly_the_registered_cards(self):
-        # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）
+        # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）。
+        # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。トレーナーの登録は v0.2c と同じ
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, PLUSPOWER))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2c")
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2d")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
         self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus"})
 

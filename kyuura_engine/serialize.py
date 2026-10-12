@@ -13,6 +13,9 @@
 カードを落とさない）。同じように、形式 1〜3 はポケモンについているトレーナー（プラスパワーなど）を
 表せないので、ついているトレーナーがあると ``ValueError`` にする。トレーナーを使う対戦では形式 4 を使う。
 
+コインの結果（v0.2d）は、ログの ``coin_flip`` にだけ残る（状態に残る値はない）。ログはどの形式にも入るので、
+コインのための新しい形式はない。この先のコインの結果を決める乱数の状態は ``rng_state_sha256``（指紋）。
+
 どれも、エンジンの内部の完全な状態の写しで、隠れた情報（山札の順番・相手の手札・サイドの中身）を
 すべて含みます。プレイヤー・観戦者に見せる形ではありません（その形はまだありません。
 docs/architecture-v0.2a.md の「非公開の情報」）。乱数の状態は指紋だけで、そこから乱数はもどせません
@@ -75,7 +78,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         "rules": state.rules.id,
         "card_data": {"repository": state.card_data.repository, "commit": state.card_data.commit, "path": state.card_data.path},
         "seed": state.seed,
-        # 乱数の状態（今後のコイン・山札を切る処理の結果を決める）。同じ値なら同じ乱数の続きになる
+        # 乱数の状態（この先のコインの結果などを決める）。同じ値なら同じ乱数の続きになる
         "rng_state_sha256": rng_fingerprint(state.rng),
         "phase": state.phase.value,
         "turn_number": state.turn_number,

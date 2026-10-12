@@ -51,7 +51,10 @@ class RngStateTest(unittest.TestCase):
         self.assertNotEqual(rng_fingerprint(other), fingerprint)
 
     def test_engine_does_not_use_randomness_after_setup(self):
-        """v0.2a は対戦準備（山札を切る）のあとは乱数を使わない（コインは未実装）。"""
+        """コインを投げるワザのないデッキでは、対戦準備（山札を切る）のあとは乱数を使わない。
+
+        v0.2d からコインを投げるワザ（ドードー）がある。そのデッキで乱数を使うのはコインだけ（tests/test_coin_games.py）。
+        """
         fingerprint = rng_fingerprint(self.state.rng)
         end, _ = play_until_end(self.state)
         self.assertEqual(rng_fingerprint(end.rng), fingerprint)
@@ -84,8 +87,9 @@ class SerializeFormatTest(unittest.TestCase):
                 if a is not None:
                     self.assertEqual({k: v for k, v in b.items() if k != "pokemon_id"}, a)
                     self.assertGreaterEqual(b["pokemon_id"], 1)
-        # 登録表の id は、登録を加えるたびに変わる（v0.2b: "kyuura-engine-0.2b"、v0.2c: プラスパワー）
-        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.2c"))
+        # 登録表の id は、登録を加えるたびに変わる（v0.2b: "kyuura-engine-0.2b"、v0.2c: プラスパワー、
+        # v0.2d: ドードーの「みだれづき」）
+        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.2d"))
         json.dumps(v2)
 
     def test_decision_is_serialized(self):

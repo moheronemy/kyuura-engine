@@ -18,6 +18,9 @@
 v0.2c で、2・5〜8 段階のダメージの変更を ``DamageModifier`` で渡せるようにした。今の対応カードで
 値を持つのは 5 段階のプラスパワーだけ。変更効果はカードの実装（``effects``）が作り、ここには
 段階と数値だけが来る（プラスパワーをここに直接書かない）。
+
+1 段階の「基本となるダメージ」は、ワザの実装が説明にしたがって計算して ``base`` に渡す（v0.2d の
+「みだれづき」は「おもて」の数 × 10。0 もある）。
 """
 
 from __future__ import annotations
@@ -63,7 +66,7 @@ class DamageCalculation:
     stopped_after_step_2: bool
     final: int  # 相手に与えるダメージ。0 なら「ダメージを与えなかった」
     steps: tuple[tuple[str, int], ...]
-    modifiers: tuple[DamageModifier, ...] = ()  # 計算に使った変更効果（v0.2c）
+    modifiers: tuple[DamageModifier, ...] = ()  # 計算に使った変更効果（v0.2c）。2 段階で終えたら 2 段階のものだけ（v0.2d）
 
 
 def calculate_attack_damage(
@@ -95,7 +98,11 @@ def calculate_attack_damage(
     # ここまでで 0 以下なら計算を終え、「ダメージを与えなかった」ことになる
     amount = apply(2, amount)
     if amount <= 0:
-        return DamageCalculation(base, False, False, True, 0, tuple(steps), used)
+        # 3 段階から先は計算しないので、5〜8 段階の変更効果（プラスパワーなど）は使っていない（v0.2d。
+        # 「おもて」の数×のワザで「おもて」が 0 枚のときなど。p.257 の解説「ワザのダメージが与えられなかったら、
+        # 「プラスパワー」の効果はなくなります」）
+        applied = tuple(m for m in used if m.step == 2)
+        return DamageCalculation(base, False, False, True, 0, tuple(steps), applied)
 
     # 3. ワザを使うポケモンのタイプが、ワザを受けるポケモンの「弱点」のタイプなら 2 倍（p.315, p.321）
     weakness_applied = defender.weakness is not None and attacker.pokemon_type == defender.weakness

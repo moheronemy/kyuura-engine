@@ -10,8 +10,8 @@
   渡した状態はそのまま使えます。
 - ``new_game`` と ``apply_command`` は、返す状態を必ず ``check_invariants`` で確かめます。
   カードの保存則などが破れていたら、状態を返さずに ``StateIntegrityError`` を投げます。
-- 乱数（山札を切る）は ``seed`` から作った乱数だけを使います。同じデッキ・同じ seed・同じ操作の
-  列なら、同じ結果になります。
+- 乱数（山札を切る・コインを投げる（v0.2d））は ``seed`` から作った乱数だけを使います。同じデッキ・
+  同じ seed・同じ操作の列なら、同じ結果になります。コインの結果を操作で指定する方法はありません。
 - ジャンケンの結果は外から受け取ります（``ReportJankenResult``）。
 
 ページ番号は『ポケモンカードオフィシャルブック2000』[P43] の公式ルールのノンブルです。
@@ -455,6 +455,10 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
 
     ワザの処理は、効果の登録表（``state.effects``）に登録された実装が行う。登録がないワザは使えない。
     処理が終わったら（決定待ちがなければ）、きぜつ・サイド・交代のあと、自分の番は自動的に終わる。
+
+    ワザを使えるかの確認（番・ワザの位置・登録・必要なエネルギー）は、ワザの処理の前にすべて済ませる。
+    ワザの説明にあるコイン（v0.2d）は、処理（p.309 の手順 6）の中で投げるので、拒否した操作では乱数を
+    使わない（そもそも ``apply_command`` は複製した状態で処理する）。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
@@ -470,7 +474,7 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
 
     state.add_event("attack", player=cmd.player, pokemon=attacker.card, attack=attack.name_ja, attack_index=cmd.attack_index)
-    # ワザの説明にしたがって処理する（p.309 の手順 6）。v0.2a の実装は DamageOnly だけ。
+    # ワザの説明にしたがって処理する（p.309 の手順 6）。実装は DamageOnly・CoinFlipDamage（v0.2d）。
     # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける
     effect.resolve(state, AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index)))
     if state.decision is None:

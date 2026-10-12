@@ -26,11 +26,13 @@ class CardPoolTest(unittest.TestCase):
 
     def test_v0_1_pool_is_ten_basic_pokemon_and_six_basic_energy(self):
         pool = load_card_pool()
-        # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）を加えた。
-        # v0.1 の組（トレーナー以外）は変わらない
+        # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）、v0.2d でドードー（pool_v0_2d）を
+        # 加えた。v0.1 の組（トレーナーと v0.2d のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, PLUSPOWER])
-        playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers]
+        self.assertEqual(read_extract()["pool_v0_2d"], [DODUO])
+        self.assertTrue(pool.is_playable(DODUO))
+        playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c != DODUO]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
         self.assertEqual(sum(d.is_basic_energy for d in playable), 6)
@@ -38,8 +40,9 @@ class CardPoolTest(unittest.TestCase):
             EnergyType.GRASS, EnergyType.FIRE, EnergyType.WATER, EnergyType.LIGHTNING, EnergyType.PSYCHIC, EnergyType.FIGHTING})
 
     def test_every_playable_attack_has_no_effect_text(self):
+        """v0.1 の組のワザは、どれも説明文がない（v0.2d のドードーは説明文のあるワザ。tests/test_coin_attacks.py）。"""
         pool = load_card_pool()
-        for card_id in pool.playable_ids:
+        for card_id in set(pool.playable_ids) & set(read_extract()["pool_v0_1"]):
             for attack in pool.get(card_id).attacks:
                 self.assertTrue(attack.supported, (card_id, attack.name_ja))
                 self.assertIsNone(attack.text_ja)
@@ -72,9 +75,20 @@ class ClassificationTest(unittest.TestCase):
         self.assertFalse(load_card_pool().is_playable(CHARMANDER))
 
     def test_damage_modifier_is_unsupported(self):
-        doduo = load_card_pool().get(DODUO)
+        """「×」のダメージのワザも、実装が登録されていなければ未対応。
+
+        v0.2d でドードーの「みだれづき」を登録したので、その登録を除いた登録表で確かめる（v0.2c までは
+        既定の登録表で未対応だった）。
+        """
+        from kyuura_engine.cards import pool_from_extract
+        from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
+
+        effects = DEFAULT_EFFECTS.without_attacks("test-no-doduo", [AttackKey(DODUO, 0)])
+        pool = pool_from_extract(read_extract(), effects)
+        doduo = pool.get(DODUO)
         self.assertFalse(doduo.attacks[0].supported)
         self.assertIn("×", doduo.attacks[0].unsupported_reason)
+        self.assertFalse(pool.is_playable(DODUO))
 
     def test_trainer_evolution_and_power_are_unsupported(self):
         pool = load_card_pool()
