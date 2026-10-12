@@ -471,6 +471,23 @@ class ThreeCardStructureTest(unittest.TestCase):
                 self.assertEqual(len(state.players[0].active.evolution_stack), 2)
                 self.assertNotIn(999, state.players[0].active.energy)
 
+    def test_copies_with_a_pending_decision_and_after_a_knock_out(self):
+        """決定を待つ間（スピアーのダブルニードルで相手のスピアーがきぜつし、サイドを取る決定）と、2 進化ポケモンのきぜつの
+        あと（3 枚がトラッシュ）の状態も、clone・deepcopy・pickle で同じ状態・同じ乱数の続きになり、同じ決定を選べば
+        同じ結果になる。"""
+        state = board(beedrill(energy=[GRASS, GRASS, GRASS]), opponent=beedrill(damage=30), opponent_bench=(RATTATA,), turn=7)
+        knocked = state.players[1].active
+        pending, _ = run(with_coin_results(state, H, H), UseAttack(0, 0))
+        self.assertEqual((pending.phase, pending.decision.kind), (Phase.TAKE_PRIZE, "take_prize"))
+        self.assertTrue(set(knocked.cards()) <= set(pending.players[1].discard))
+        results = set()
+        for copied in (pending.clone(), copy.deepcopy(pending), pickle.loads(pickle.dumps(pending))):
+            with self.subTest(copied=type(copied)):
+                self.assertEqual((full(copied), rng_fingerprint(copied.rng)), (full(pending), rng_fingerprint(pending.rng)))
+                after, _ = run(copied, ResolveDecision(0, copied.decision.id, (0,)))
+                results.add(json.dumps(full(after), sort_keys=True, ensure_ascii=False))
+        self.assertEqual(len(results), 1)
+
     def test_serialization_keeps_format_8(self):
         """形式 7・8 は重なりを下から順のリストで書く（2 つになるだけで、項目と意味は v0.4a と同じ）。形式 1〜6 は重なりを
         表せないので ValueError。新しい形式（9）は加えていない。"""

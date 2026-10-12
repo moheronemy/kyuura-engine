@@ -145,7 +145,7 @@ PokemonInPlay(
 }
 ```
 
-形式 1〜6 は重なりを表せないので、進化しているポケモン（1 進化でも 2 進化でも）がいれば `ValueError`（v0.4a のまま）。1 進化した番は書き出さない（状態に持たない。ログにある）。`clone`・`copy.deepcopy`・`pickle` は、2 進化した状態・持続する効果のある状態・2 進化ポケモンのきぜつのあと・決定を待つ間でも、同じ状態と同じ乱数の続きになる（`ThreeCardStructureTest.test_copies_are_independent`・`TwineedleTest.test_rng_is_reproducible`）。
+形式 1〜6 は重なりを表せないので、進化しているポケモン（1 進化でも 2 進化でも）がいれば `ValueError`（v0.4a のまま）。1 進化した番は書き出さない（状態に持たない。ログにある）。`clone`・`copy.deepcopy`・`pickle` は、2 進化した状態・持続する効果のある状態・2 進化ポケモンのきぜつのあと・決定を待つ間でも、同じ状態と同じ乱数の続きになる（`ThreeCardStructureTest.test_copies_are_independent`・`test_copies_with_a_pending_decision_and_after_a_knock_out`・`TwineedleTest.test_rng_is_reproducible`）。
 
 ## 11. ログ
 
