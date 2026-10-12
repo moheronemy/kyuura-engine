@@ -237,7 +237,8 @@ def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reas
 def clear_special_conditions(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:
     """バトル場からベンチに戻ったポケモン・進化したポケモン（``reason`` が ``EVOLVE``。v0.4a）の特殊状態を、すべて消す
     （p.310・p.311・p.322）。特殊状態がなければ何もしない。にげるの失敗の記録（``retreat_failed_turn``）は特殊状態では
-    ないので、ここでは変えない（進化で記録を消すのは ``engine._evolve_pokemon``）。
+    ないので、ここでは変えない（進化で記録を消すのは ``engine._evolve_pokemon``）。ワザによる持続する効果（v0.4b）も特殊状態
+    ではないので、ここでは変えない（``persistent.remove_persistent_effects`` を呼び出し側が別に呼ぶ）。
 
     「ベンチに戻ったら、そのポケモンの「どく」「ねむり」「マヒ」「こんらん」状態や、「持続する効果」は、すべて消えて
     なくなります」（p.311）。「どく」なら、どくマーカーを取りのぞくことにあたる（p.322）。ダメージカウンター・

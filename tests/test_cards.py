@@ -12,8 +12,8 @@ from kyuura_engine import EnergyType, can_pay_cost, load_card_pool
 from kyuura_engine.cards import read_extract, read_verification
 
 from tests.helpers import (
-    BILL, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA, POTION, RATTATA,
-    SUPER_POTION, SWITCH, VENUSAUR, VULPIX, WEEDLE,
+    BILL, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
+    POTION, RATTATA, SUPER_POTION, SWITCH, VENUSAUR, VULPIX, WEEDLE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -32,7 +32,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）、v0.2d でドードー（pool_v0_2d）、
         # v0.2e でディフェンダー（pool_v0_2e）、v0.2f でピカチュウ（pool_v0_2f）、v0.3a でビードル（pool_v0_3a）、
         # v0.3b でキャタピー・パラス（pool_v0_3b）、v0.3c でロコン（pool_v0_3c）、v0.4a で 1 進化のパラセクト・ジュゴン
-        # （pool_v0_4a）を加えた。v0.1 の組（トレーナーと v0.2d 以降のポケモン以外）は変わらない
+        # （pool_v0_4a）、v0.4b で 1 進化のトランセル・コクーン（pool_v0_4b）を加えた。v0.1 の組（トレーナーと v0.2d 以降の
+        # ポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
@@ -48,7 +49,9 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(pool.is_playable(DODUO))
         self.assertEqual(read_extract()["pool_v0_4a"], [PARASECT, DEWGONG])  # v0.4a で 1 進化
         self.assertTrue(pool.is_playable(PARASECT) and pool.is_playable(DEWGONG))
-        later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG)
+        self.assertEqual(read_extract()["pool_v0_4b"], [METAPOD, KAKUNA])  # v0.4b で 1 進化（かたまる）
+        self.assertTrue(pool.is_playable(METAPOD) and pool.is_playable(KAKUNA))
+        later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

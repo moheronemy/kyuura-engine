@@ -36,6 +36,7 @@ from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.state import (
     ASLEEP,
     CONFUSED,
+    PreventDamage,
     CardInstance,
     DataSource,
     Paralyzed,
@@ -72,6 +73,8 @@ PARAS = "PMCG2-003"  # パラス（v0.3b で対応。ひっかく 20、キノコ
 VULPIX = "PMCG1-015"  # ロコン（v0.3c で対応。あやしいひかり 10・「おもて」なら相手をこんらん状態に。炎・弱点 水・にげる 1）
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
+METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
+KAKUNA = "PMCG1-009"  # コクーン（v0.4b。ビードルから進化。かたまる・どくのこな）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -147,12 +150,15 @@ def build_test_state(
     players[i] のキー（どれも省略できる。active は必須）:
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
               "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番,
-              "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番}
+              "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番,
+              "prevent_damage": 効果を与えた番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
               2 つ以上は書けない。"evolved_from" は進化しているポケモン（v0.4a。"card" が 1 進化ポケモン）。"evolved_turn" を
-              省略すると、3 番以降の持ち主の番のうち、今の番より前の最後の番（なければ今の番）。"played_turn" の既定は 0（対戦準備で出した））
+              省略すると、3 番以降の持ち主の番のうち、今の番より前の最後の番（なければ今の番）。"played_turn" の既定は 0（対戦準備で出した）。
+              "prevent_damage" は、その番に「かたまる」などで受けた持続する効果 ``PreventDamage``（v0.4b。はたらく番は次の番）。
+              効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する））
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -201,6 +207,9 @@ def build_test_state(
                 raise ValueError("ねむり・マヒ・こんらんは重複しない（p.322）")
             exclusive = CONFUSED
         result.retreat_failed_turn = spec.get("retreat_failed_turn")
+        if "prevent_damage" in spec:
+            created = spec["prevent_damage"]
+            result.persistent_effects = (PreventDamage(result.card, owner, created, created + 1),)
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
@@ -245,6 +254,18 @@ def build_test_state(
         for pokemon in p.in_play():
             if pokemon.retreat_failed_turn is not None:
                 state.add_event("retreat_failed", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, discarded=())
+    # "prevent_damage" を書いたポケモンには、効果を与えた番のログも置く（v0.4b の不変条件: 持続する効果はログと対応する）
+    for owner, p in enumerate(states):
+        for pokemon in p.in_play():
+            for effect in pokemon.persistent_effects:
+                current = state.turn_number
+                state.turn_number = effect.created_turn  # ログの turn は効果を与えた番
+                state.add_event(
+                    "persistent_effect_added", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id,
+                    persistent_effect=effect.kind, source_card=effect.source_card, source_player=effect.source_player,
+                    active_turn=effect.active_turn, effect="test",
+                )
+                state.turn_number = current
     return state
 
 

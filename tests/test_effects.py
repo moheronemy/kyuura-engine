@@ -90,15 +90,20 @@ class DefaultRegistryTest(unittest.TestCase):
                 continue
             with_text.append(key)
             record = records[key.card_id]
-            self.assertEqual(entry.play_text_ja, record["latest_description_ja"], key)
+            latest = record["latest_description_ja"]
+            if isinstance(latest, dict):  # 説明文のあるワザが 2 つあるカード（v0.4b）は、ワザの位置ごと
+                latest = latest[str(key.attack_index)]
+            self.assertEqual(entry.play_text_ja, latest, key)
             self.assertEqual(entry.source, f"P43 p.{record['page']}", key)
             self.assertEqual(record["pdf_page"], record["page"] + 2)
         # ピカチュウの「でんげき」（p.125。v0.2f）、ドードーの「みだれづき」（p.231。v0.2d）
         # ビードルの「どくばり」（p.19。v0.3a）、キャタピーの「いとをはく」（p.17）・パラスの「キノコのほうし」（p.38。v0.3b）、
-        # ロコンの「あやしいひかり」（p.67。v0.3c）、ジュゴンの「れいとうビーム」（p.102）・パラセクトの「キノコのほうし」（p.39。v0.4a）
-        self.assertEqual(with_text, [AttackKey("PMCG1-002", 0), AttackKey("PMCG1-004", 0), AttackKey("PMCG1-015", 0),
-                                     AttackKey("PMCG1-030", 1), AttackKey("PMCG1-035", 1), AttackKey("PMCG1-061", 0),
-                                     AttackKey("PMCG2-003", 1), AttackKey("PMCG2-010", 0)])
+        # ロコンの「あやしいひかり」（p.67。v0.3c）、ジュゴンの「れいとうビーム」（p.102）・パラセクトの「キノコのほうし」（p.39。v0.4a）、
+        # トランセルの「かたまる」・「しびれごな」（p.18）・コクーンの「かたまる」・「どくのこな」（p.21。v0.4b）
+        self.assertEqual(with_text, [AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+                                     AttackKey("PMCG1-004", 0), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
+                                     AttackKey("PMCG1-015", 0), AttackKey("PMCG1-030", 1), AttackKey("PMCG1-035", 1),
+                                     AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1), AttackKey("PMCG2-010", 0)])
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -201,8 +206,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), keys)
         # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）+ ピカチュウの 2 つ（v0.2f）
         # + ビードルの「どくばり」（v0.3a）+ キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」（v0.3b）
-        # + ロコンの「あやしいひかり」（v0.3c）+ パラセクトの 2 つ・ジュゴンの 2 つ（v0.4a）
-        self.assertEqual(len(keys), 26)
+        # + ロコンの「あやしいひかり」（v0.3c）+ パラセクトの 2 つ・ジュゴンの 2 つ（v0.4a）+ トランセルの 2 つ・コクーンの 2 つ（v0.4b）
+        self.assertEqual(len(keys), 30)
 
 
 if __name__ == "__main__":

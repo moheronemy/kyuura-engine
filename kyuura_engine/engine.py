@@ -56,8 +56,10 @@ from .damage import calculate_confusion_damage
 from .effects import AttackKey, AttackUse, TrainerUse, attack_damage_modifiers
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
+from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
+    PERSISTENT_EFFECT_TYPES,
     TERMINAL_PHASES,
     Asleep,
     CardInstance,
@@ -385,8 +387,14 @@ def _end_turn(state: GameState) -> None:
 
     こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``）は、番の終わりに消す。「今の自分の番では、
     もう「にげる」を宣言することができません」「次の自分の番になれば、再び「にげる」を宣言することができます」（p.311。v0.3c）。
+
+    ワザによる持続する効果（v0.4b）のうち、はたらく番（``active_turn``。「次の相手の番」）が今の番のものも、番の終わりに消す
+    （p.236・p.18 のワザ解説「効果の持続：次の相手の番の最後」。``persistent.remove_expired_persistent_effects``）。ついている
+    トレーナーのトラッシュとは別の処理（持続する効果はカードではない）。ポケモンチェックの前なので、ポケモンチェックの
+    どくのダメージは防がない（ポケモンチェックはどちらの番でもない。p.323）。
     """
     _discard_expired_attachments(state)
+    remove_expired_persistent_effects(state)
     for p in state.players:
         for pokemon in p.in_play():
             pokemon.retreat_failed_turn = None
@@ -598,7 +606,7 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
 
     手順（p.310）: 1・2. 進化カードを手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。
     いちばん上のカードの内容がそのポケモンを表す）→ 3. 特殊状態と持続する効果から回復させる（``clear_special_conditions``
-    の ``EVOLVE``。持続する効果は対応カードにない）→ 4. マーカー・カウンター（ダメージカウンター以外）を取りのぞく
+    の ``EVOLVE`` と、v0.4b の ``persistent.remove_persistent_effects`` の ``EVOLVE``。別々の処理）→ 4. マーカー・カウンター（ダメージカウンター以外）を取りのぞく
     （対応カードにない）→ 5. 進化によって引き起こされる特殊なことがら（対応カードにない）。
 
     受け継ぐもの: ダメージカウンター・エネルギーカード・ついているトレーナーカード（p.310）。場のポケモンの番号も変えない
@@ -665,8 +673,11 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
         to_card=cmd.card,
         to_card_id=definition.id,
     )
-    # 3. 特殊状態から回復させる（持続する効果は対応カードにない）
+    # 3. 特殊状態から回復させる
     clear_special_conditions(state, cmd.player, target, EVOLVE)
+    # 3. その他の「持続する効果」から回復させる（p.310・p.323。v0.4b）。特殊状態とは別の処理。ついているトレーナーは
+    # 受け継ぐ（p.310。持続する効果ではない。v0.4a の E8'）
+    remove_persistent_effects(state, cmd.player, target, EVOLVE)
     # 進化したポケモンは別のポケモンなので、にげるの失敗の記録を消す（特殊状態の解除とは別）
     if target.retreat_failed_turn is not None:
         target.retreat_failed_turn = None
@@ -755,6 +766,8 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active)
     # ベンチに戻ったら、特殊状態はすべて消える（p.311・p.322。v0.3a）
     clear_special_conditions(state, cmd.player, active, RETREAT)
+    # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
+    remove_persistent_effects(state, cmd.player, active, RETREAT)
 
 
 def _use_attack(state: GameState, cmd: UseAttack) -> None:
@@ -944,6 +957,8 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneou
     if timing is not None:
         extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
+    # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
+    remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
 
 
 def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None) -> None:
@@ -1236,6 +1251,8 @@ def check_invariants(state: GameState) -> list[str]:
     - 特殊状態（v0.3a）: 特殊状態があるのはバトル場のポケモンだけ。どくのダメージは 10 の倍数の正の数。
     - 進化（v0.4a）: 重なっているカードも場のカードとして数える（カードの保存則）。重なりの形・場に出た番・進化した番
       （``_evolution_problems``）。
+    - ワザによる持続する効果（v0.4b）: 型・発生源・番・期限・置き場所（バトル場だけ）・重複・ログとの対応
+      （``_persistent_effect_problems``）。持続する効果はカードではないので、カードの保存則には数えない。
     - 番の進行（v0.3a）: 番と番のあいだに、番の終わりとポケモンチェックがちょうど 1 回ずつ、この順にある。
       ポケモンチェックの途中の決定（続きが次の番）なら、今の番のあとに 1 回ずつ。番の途中なら、まだない。
     """
@@ -1284,6 +1301,7 @@ def check_invariants(state: GameState) -> list[str]:
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
             problems.extend(_evolution_problems(state, player, pokemon))
             problems.extend(_condition_problems(state, player, p, pokemon))
+            problems.extend(_persistent_effect_problems(state, player, p, pokemon))
         if len(p.bench) > rules.max_bench:
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
         if len(p.prizes) > rules.prize_count:
@@ -1456,6 +1474,83 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
     if conditions.names() and pokemon is not p.active:
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} が特殊状態 {conditions.names()} になっている（p.322）")
     return problems
+
+
+def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, pokemon: PokemonInPlay) -> list[str]:
+    """場のポケモンが受けているワザによる持続する効果（``PokemonInPlay.persistent_effects``。v0.4b。p.322・p.323）。
+
+    - ``PERSISTENT_EFFECT_TYPES``（v0.4b は ``PreventDamage`` だけ）の値のタプルで、番の項目は整数
+    - 置き場所: バトル場のポケモンだけ（ベンチに戻ったら消える。p.311・p.322。v0.4b の効果は、のせるタイプの
+      カウンター・マーカーではない）。対戦準備の段階にはない
+    - ``PreventDamage``（「かたまる」）は自分自身に与える効果なので、発生源はこのポケモンのいまのカード・持ち主
+      （進化したら消えるので、いちばん上のカードが変わったあとに残らない。p.310・p.323）
+    - 番: 効果を与えた番（``created_turn``）は持ち主の番で、いまの姿になった番以後・今の番まで。はたらく番（``active_turn``）
+      は次の相手の番（``created_turn + 1``）。期限が過ぎていない（今の番がはたらく番より後なら、その番の終わりに
+      消しているはず。はたらく番の終わり（ログ ``turn_end``）のあとにも残らない）
+    - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）
+    - ログとの対応: 同じポケモン・種類・番の ``persistent_effect_added`` があり、そのあとに、この効果を消したはずの
+      イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``）がない
+    """
+    effects = pokemon.persistent_effects
+    where = f"ポケモン {pokemon.pokemon_id} の持続する効果"
+    if not isinstance(effects, tuple) or any(type(e) not in PERSISTENT_EFFECT_TYPES for e in effects):
+        return [f"{where} {effects!r} が {PERSISTENT_EFFECT_TYPES} の値のタプルではない"]
+    if not effects:
+        return []
+    if state.phase in SETUP_PHASES:
+        return [f"{where} が対戦準備の段階（{state.phase.value}）にある"]
+    problems = []
+    if pokemon is not p.active:
+        problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} に持続する効果が残っている（p.311・p.322）")
+    kinds = [e.kind for e in effects]
+    if len(set(kinds)) != len(kinds):
+        problems.append(f"{where} に同じ種類の効果が重なっている {kinds}")
+    recent = _events_since_turn_start(state)
+    turn_ended = any(event["kind"] == "turn_end" for event in recent)
+    for effect in effects:
+        fields = (effect.source_card, effect.source_player, effect.created_turn, effect.active_turn)
+        if any(type(value) is not int for value in fields):
+            problems.append(f"{where} {effect!r} の項目が整数ではない")
+            continue
+        if effect.source_player != player or effect.source_card != pokemon.card:
+            problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
+        if effect.active_turn != effect.created_turn + 1:
+            problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の次の番（次の相手の番）ではない")
+        if not pokemon.current_form_turn <= effect.created_turn <= state.turn_number:
+            problems.append(
+                f"{where} {effect!r} を与えた番が、いまの姿になった番 {pokemon.current_form_turn}〜今の番 {state.turn_number} ではない"
+            )
+        elif state.first_player in PLAYERS and turn_owner(state, effect.created_turn) != player:
+            problems.append(f"{where} {effect!r} を、持ち主の番でない {effect.created_turn} 番に与えている")
+        if state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
+            problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
+        problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
+    return problems
+
+
+def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """持続する効果が、それを与えたログ（``persistent_effect_added``）と対応し、そのあとに消したはずのイベントがないか（v0.4b）。"""
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "persistent_effect_added":
+            if (
+                event.get("pokemon_id") == pokemon.pokemon_id
+                and event.get("persistent_effect") == effect.kind
+                and event["turn"] == effect.created_turn
+                and event.get("active_turn") == effect.active_turn
+                and event.get("source_card") == effect.source_card
+            ):
+                return []
+            continue
+        if kind == "persistent_effect_removed" and event.get("pokemon_id") == pokemon.pokemon_id and event.get("persistent_effect") == effect.kind:
+            return [f"{where} {effect!r} が、消したあと（ログ persistent_effect_removed）にも残っている"]
+        if kind == "evolve" and event.get("pokemon_id") == pokemon.pokemon_id:
+            return [f"{where} {effect!r} が、進化（ログ evolve）の前の効果のまま残っている（p.310・p.323）"]
+        if (kind == "retreat" and event.get("old_active") == pokemon.card) or (
+            kind == "switch" and event.get("old_active_pokemon_id") == pokemon.pokemon_id
+        ):
+            return [f"{where} {effect!r} が、ベンチに戻った（ログ {kind}）あとにも残っている（p.311・p.322）"]
+    return [f"{where} {effect!r} に対応するログ persistent_effect_added がない"]
 
 
 def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:

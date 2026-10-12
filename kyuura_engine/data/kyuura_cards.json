@@ -92,6 +92,10 @@
     "PMCG2-010",
     "PMCG1-030"
   ],
+  "pool_v0_4b": [
+    "PMCG1-003",
+    "PMCG1-009"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1962,6 +1966,192 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-030-jugon/"
+      }
+    },
+    {
+      "id": "PMCG1-003",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "トランセル",
+        "en": "Metapod"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          11
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キャタピー",
+          "en": "Caterpie"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かたまる",
+              "en": "Stiffen"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番にうけるダメージが0になる。",
+              "en": "Flip a coin. If heads, prevent all damage done to Metapod during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "しびれごな",
+              "en": "Stun Spore"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-003",
+        "pokemontcg": [
+          "base1-54"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-005-transel/",
+      "jp_print": {
+        "level": 21,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-005-transel/"
+      }
+    },
+    {
+      "id": "PMCG1-009",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コクーン",
+        "en": "Kakuna"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          14
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビードル",
+          "en": "Weedle"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かたまる",
+              "en": "Stiffen"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番にうけるダメージが0になる。",
+              "en": "Flip a coin. If heads, prevent all damage done to Kakuna during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-009",
+        "pokemontcg": [
+          "base1-33"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-007-cocoon/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-007-cocoon/"
       }
     },
     {

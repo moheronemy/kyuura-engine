@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 7 つあります（``format_version``）。
+形式は 8 つあります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -18,6 +18,10 @@
   ``{"card": uid, "card_id": id}``。進化していなければ ``[]``）・``played_turn``（場に出た番。対戦準備なら 0）・
   ``evolved_turn``（いまの姿に進化した番。進化していなければ ``None``）を加えたもの（v0.4a）。``card``・``card_id``・
   ``name``・``hp`` はいちばん上のカード（そのポケモンを表すカード。p.310）。
+- 8: 7 に、場のポケモンごとの ``persistent_effects``（ワザによる持続する効果。v0.4b。p.322・p.323）を加えたもの。
+  1 つにつき ``{"effect": 種類, "source_card": uid, "source_card_id": id, "source_player": プレイヤー,
+  "created_turn": 効果を与えた番, "active_turn": はたらく番}``。v0.4b の種類は ``"prevent_damage"``（「かたまる」の
+  「次の相手の番、このカードはダメージを受けない」。はたらく番の終わりに消える）だけ。なければ ``[]``。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -27,7 +31,9 @@
 形式 1〜5 は「にげる」に失敗した記録（v0.3c）を表せないので、記録のあるポケモンがいると ``ValueError`` にする
 （形式 6 を使う。記録は番の終わりに消えるので、その番の間だけ）。
 形式 1〜6 は進化したポケモンのカードの重なり（v0.4a）を表せないので、進化したポケモンがいると ``ValueError`` にする
-（形式 7 を使う）。進化していないポケモンの場に出た番（``played_turn``）は、どの形式にも入るログ（対戦準備の
+（形式 7 を使う）。形式 1〜7 はワザによる持続する効果（v0.4b）を表せないので、持続する効果を受けているポケモンがいると
+``ValueError`` にする（形式 8 を使う。効果は次の相手の番の終わりに消えるので、その間だけ）。持続する効果のない状態の
+形式 1〜7 の書き出しは v0.4a と同じ。進化していないポケモンの場に出た番（``played_turn``）は、どの形式にも入るログ（対戦準備の
 ``place_starting_pokemon``・``play_to_bench`` の番）から分かるので、形式 1〜6 の書き出しは v0.3d と同じ。
 形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「ポケモンチェックの
 残りをして次の番を始める」。決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると
@@ -49,7 +55,7 @@ from typing import Any
 from .rng import rng_fingerprint
 from .state import Asleep, Confused, GameState, Paralyzed, PokemonInPlay
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -101,6 +107,18 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["evolution_stack"] = [{"card": uid, "card_id": state.cards[uid].card_id} for uid in pokemon.evolution_stack]
         data["played_turn"] = pokemon.played_turn
         data["evolved_turn"] = pokemon.evolved_turn
+    if format_version >= 8:
+        data["persistent_effects"] = [
+            {
+                "effect": e.kind,
+                "source_card": e.source_card,
+                "source_card_id": state.cards[e.source_card].card_id,
+                "source_player": e.source_player,
+                "created_turn": e.created_turn,
+                "active_turn": e.active_turn,
+            }
+            for e in pokemon.persistent_effects
+        ]
     return data
 
 
@@ -125,6 +143,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、こんらん状態で「にげる」に失敗した記録を表せない（format_version=6 を使う）")
     if format_version < 7 and any(pokemon.evolution_stack for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、進化したポケモンのカードの重なりを表せない（format_version=7 を使う）")
+    if format_version < 8 and any(pokemon.persistent_effects for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、ワザによる持続する効果を表せない（format_version=8 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     data = {

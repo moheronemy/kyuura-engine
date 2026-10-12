@@ -41,11 +41,12 @@ from .state import (
     PendingDecision,
     Phase,
     Poison,
+    PreventDamage,
     SpecialConditions,
     TrainerInUse,
 )
 
-__version__ = "0.4.0a0"
+__version__ = "0.4.0b0"
 
 __all__ = [
     "Asleep",
@@ -71,6 +72,7 @@ __all__ = [
     "PendingDecision",
     "Phase",
     "Poison",
+    "PreventDamage",
     "PlaceStartingPokemon",
     "PlayBasicToBench",
     "PlayTrainer",

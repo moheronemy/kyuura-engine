@@ -274,7 +274,7 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4a）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4b）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
@@ -282,7 +282,7 @@ class CardPool:
 # 写しの中の、対戦用のカードの組（参照カード reference_only はデッキに入れない）
 POOL_KEYS = (
     "pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c",
-    "pool_v0_4a",
+    "pool_v0_4a", "pool_v0_4b",
 )
 
 

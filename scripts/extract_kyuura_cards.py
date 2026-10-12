@@ -3,7 +3,7 @@
 
 kyuura（https://github.com/moheronemy/kyuura）がカードデータの正本です。
 このスクリプトは、固定したコミットの ``data/cards.json`` を ``git show`` で読み、
-対戦で使うカード（v0.1 のたねポケモン・基本エネルギー、v0.2b 以降のトレーナー・ポケモン、v0.4a の 1 進化ポケモン）と、
+対戦で使うカード（v0.1 のたねポケモン・基本エネルギー、v0.2b 以降のトレーナー・ポケモン、v0.4a・v0.4b の 1 進化ポケモン）と、
 分類のテストに使う参照カードの記録を ``kyuura_engine/data/kyuura_cards.json`` に書き出します。
 
 - kyuura の作業ツリーや履歴は書き換えません（``git show`` で読むだけ）。
@@ -102,6 +102,13 @@ POOL_V0_4A = [
     "PMCG1-030",  # ジュゴン（パウワウから進化。オーロラビーム・れいとうビーム）
 ]
 
+# v0.4b で加えた 1 進化ポケモン（ワザによる持続する効果「かたまる」を持つ）。『オフィシャルブック2000』p.18（トランセル）・
+# p.21（コクーン）と照合した。進化元（キャタピー・ビードル）は v0.3b・v0.3a の組にある
+POOL_V0_4B = [
+    "PMCG1-003",  # トランセル（キャタピーから進化。かたまる・しびれごな）
+    "PMCG1-009",  # コクーン（ビードルから進化。かたまる・どくのこな）
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
     "PMCG1-011",  # フシギバナ（2進化・ポケモンパワー）
@@ -165,10 +172,10 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -194,6 +201,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_3b": POOL_V0_3B,
         "pool_v0_3c": POOL_V0_3C,
         "pool_v0_4a": POOL_V0_4A,
+        "pool_v0_4b": POOL_V0_4B,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -219,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

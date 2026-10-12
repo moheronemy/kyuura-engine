@@ -24,8 +24,8 @@ from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import turn_owner
 
 from tests.helpers import (
-    CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, LIGHTNING, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC, RATTATA,
-    T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
+    CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, LIGHTNING, METAPOD, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC,
+    RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -38,10 +38,15 @@ ATTACKS = [
     (CATERPIE, 0),  # ParalyzeOnHeads
     (PARAS, 1),  # PutToSleep
     (VULPIX, 0),  # ConfuseOnHeads
+    (METAPOD, 0),  # PreventDamageOnHeads（v0.4b。トランセルの「かたまる」。1 進化なので、キャタピーから進化したものとして置く）
 ]
+# 1 進化のポケモン（v0.4b）は進化したものとして置く。進化した番は持ち主の 3 番以降の番なので、盤面を 2 番あとにずらす（v0.4b）
+EVOLVED_FROM = {METAPOD: CATERPIE}
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},
-                   {"poison": 10, "confusion": True}]
+                   {"poison": 10, "confusion": True},
+                   # v0.4b: 相手の対戦ポケモンが、前の番（相手の番）に「かたまる」で「ダメージを受けない」状態になっている
+                   {"prevent_damage": 2}, {"prevent_damage": 2, "poison": 10}]
 COINS = list(itertools.product((H, T), repeat=3))  # こんらん 1 枚 + ワザの説明 2 枚まで
 
 
@@ -68,17 +73,28 @@ class CoinIndependenceTest(unittest.TestCase):
             ATTACKS, ATTACKER_STATES, DEFENDER_STATES, (False, True), (False, True)
         ):
             hp = load_card_pool().get(GROWLITHE).hp
+            shift = 2 if card in EVOLVED_FROM else 0  # 盤面の番をずらす（v0.4b）
+            attacker = {"card": card, "energy": energy_for(card, index), **attacker_state}
+            if card in EVOLVED_FROM:
+                attacker.update(evolved_from=EVOLVED_FROM[card], evolved_turn=3)
+            defender = {"card": GROWLITHE, "damage": hp - 10 if near_ko else 0, **defender_state}
+            for key in ("paralysis", "prevent_damage"):
+                if key in defender:
+                    defender[key] += shift
             state = build_test_state([
-                {"active": {"card": card, "energy": energy_for(card, index), **attacker_state}, "bench": [PONYTA],
-                 "hand": [PLUSPOWER] if pluspower else []},
-                {"active": {"card": GROWLITHE, "damage": hp - 10 if near_ko else 0, **defender_state}, "bench": [RATTATA]},
-            ])
+                {"active": attacker, "bench": [PONYTA], "hand": [PLUSPOWER] if pluspower else []},
+                {"active": defender, "bench": [RATTATA]},
+            ], turn_number=3 + shift)
             if pluspower:
                 state = apply_command(state, PlayTrainer(0, state.players[0].hand[0]))
             results = {outcome(with_coin_results(state, *coins), UseAttack(0, index)) for coins in COINS}
             with self.subTest(card=card, attacker=attacker_state, defender=defender_state, near_ko=near_ko, pluspower=pluspower):
                 self.assertEqual(len(results), 1, results)
-                if pluspower and attacker_state.get("confusion"):
+                if card == DODUO and "prevent_damage" in defender_state:
+                    # v0.4b: コインでダメージの量を決めるワザの要素が無効になるとき、そのコインを投げるかは決められない
+                    # （p.321。docs/persistent-damage-v0.4b.md 5 章）。こんらんのコインの前に止める
+                    self.assertEqual(results, {"UNRESOLVED_PREVENTED_COIN_DAMAGE"})
+                elif pluspower and attacker_state.get("confusion"):
                     self.assertEqual(results, {"UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"})
                 else:
                     self.assertEqual(results, {"accepted"})

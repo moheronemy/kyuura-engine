@@ -22,7 +22,9 @@
   「いとをはく」。p.17 の最新の説明）、``PutToSleep``（v0.3b。ダメージを与えず、相手をねむり状態に。パラスの
   「キノコのほうし」。p.38 の最新の説明）。docs/cards-v0.3b.md・docs/sleep-paralysis-v0.3b.md、
   ``ConfuseOnHeads``（v0.3c。相手にダメージのあと、コインが「おもて」なら相手をこんらん状態に。ロコンの
-  「あやしいひかり」。p.67 の最新の説明）。docs/confusion-v0.3c.md
+  「あやしいひかり」。p.67 の最新の説明）。docs/confusion-v0.3c.md、
+  ``PreventDamageOnHeads``（v0.4b。コインが「おもて」なら、次の相手の番、自分は「ダメージを受けない」状態（持続する
+  効果）。トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明。docs/harden-v0.4b.md）
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -46,6 +48,8 @@ from .conditions import SWITCH, clear_special_conditions, confuse, paralysis_pro
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
+from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects
+from .state import PreventDamage
 from .zones import attach_trainer, draw_cards
 
 if TYPE_CHECKING:
@@ -149,6 +153,26 @@ class CoinFlipDamage(AttackEffect):
     damage_per_heads: int
     implementation_id = "coin_flip_damage"
 
+    def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
+        """相手の対戦ポケモンが「ダメージを受けない」状態（v0.4b。「かたまる」など）なら、原典で決められない。
+
+        p.321 は「それを受けたポケモンが「ダメージを受けない」状態だったら、そのポケモンにダメージを与える「ワザの要素」は
+        無効」と書く。このワザの要素は「コインを2枚投げ、「おもて」の数×10のダメージ」の 1 つだけで、コインはダメージの
+        量を決めるためだけに投げる。無効になった要素のコインを投げるか（投げても結果は使わない）は書かれていない。
+        投げるかどうかで乱数の続き（この先のコインの結果）が変わるので、こんらんのコインも含め、コインを投げる前に止める
+        （docs/persistent-damage-v0.4b.md 5 章）。
+        """
+        target = state.players[1 - use.player].active
+        prevention = None if target is None else damage_prevention(state, target)
+        if prevention is None:
+            return None
+        return UnsupportedError(
+            "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+            f"相手の対戦ポケモン {target.pokemon_id} は、この番「ダメージを受けない」状態（{prevention.kind}）。ダメージの量を"
+            "コインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・"
+            "p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）",
+        )
+
     def __post_init__(self) -> None:
         if not isinstance(self.coins, int) or isinstance(self.coins, bool) or self.coins < 1:
             raise ValueError(f"コインの枚数は 1 以上の整数（{self.coins!r}）")
@@ -208,11 +232,31 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
     ログの ``damage`` は v0.1 と同じ形（相手の対戦ポケモンへのダメージ）。変更効果を計算したときだけ ``modifiers``
     （v0.2c）、2 段階までで 0 以下になって計算を終えたときだけ ``stopped_after_step_2``（v0.2d）を加える。
     自分へのダメージ（v0.2f）には、``target``（``"self"``）・``pokemon_id``（受けたポケモン）・``effect``（ワザ）を加える。
+
+    受けるポケモンが「ダメージを受けない」状態（v0.4b。持続する効果 ``PreventDamage``。「かたまる」）なら、このダメージの
+    要素は無効（p.321「それを受けたポケモンが「ダメージを受けない」状態だったら、そのポケモンにダメージを与える「ワザの
+    要素」は無効になります」）。ダメージを計算せず（p.321 の 8 段階のどれかで 0 にするのではない。変更効果・弱点・抵抗力も
+    計算しない）、ダメージも変えず、ログ ``damage_prevented``（``player``・``pokemon``・``pokemon_id``・``target``・``effect``
+    （ワザ）・``persistent_effect``・``source_card``）だけを残す。計算しないので、防いだダメージの量はない（ログに書かない）。
+    ほかのポケモンへのダメージの要素・ダメージ以外の効果の要素は有効（p.321。ワザの実装が続けて処理する）。
     """
     _, attacker = state.find_pokemon(use.pokemon_id)
     attacker_def = state.card_def(attacker.card)
     receiver = damage_receiver(state, use, target)
     receiver_player = use.player if target == SELF else 1 - use.player
+    prevention = damage_prevention(state, receiver)
+    if prevention is not None:
+        state.add_event(
+            "damage_prevented",
+            player=receiver_player,
+            pokemon=receiver.card,
+            pokemon_id=receiver.pokemon_id,
+            target=target,
+            effect=str(use.key),
+            persistent_effect=prevention.kind,
+            source_card=prevention.source_card,
+        )
+        return
     receiver_def = state.card_def(receiver.card)
     modifiers = attack_damage_modifiers(state, attacker, receiver)
     calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers)
@@ -461,6 +505,50 @@ class ConfuseOnHeads(AttackEffect):
             confuse(state, opponent, target, effect=str(use.key))
 
 
+@dataclass(frozen=True)
+class PreventDamageOnHeads(AttackEffect):
+    """コインを 1 枚投げ、「おもて」なら、次の相手の番、このワザを使ったポケモンは「ダメージを受けない」状態になる
+    （v0.4b。トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明「コインを投げて「おもて」なら、次の相手の番、
+    このカードはダメージを受けない。（ダメージ以外の効果は受ける）」。docs/harden-v0.4b.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる。ダメージの要素はなく、p.320 の効果の
+      分類の (3)「このワザを使うポケモンへの効果（次の番にワザを受けない…など）」だけ。コインは 1 枚（説明の「コインを
+      投げて」）。「うら」なら何もしない（説明にない。ワザは使ったことになり、番は終わる。ワザの「失敗」（p.323）ではない）。
+    - 「おもて」なら、持続する効果 ``PreventDamage`` を自分（ワザを使ったポケモン）に与える（p.322「「ラッキー」の「まる
+      まる」などのようなワザは、自分自身に「持続する効果」を与えます」。p.236 のワザ解説は「まるまる」と同じタイプのワザに
+      「かたまる」を挙げる）。効果がはたらくのは次の相手の番（今の番 + 1。番は交互に進む）で、その番の終わりに消える
+      （``persistent.remove_expired_persistent_effects``）。ダメージの扱いは ``deal_attack_damage``（p.321）。
+    - 「おもて」でなくても、今ある持続する効果は消さない（説明にない。p.323「別の「持続する効果」を受けたからといって、
+      それまで受けていた「持続する効果」が消えることはありません」）。
+    - こんらん状態のポケモンが使ったら、エンジンが先にこんらんのコインを投げ、「おもて」のときだけここに来る（p.309 の
+      手順 5・6）。「うら」ならこのコインは投げない。
+    """
+
+    implementation_id = "prevent_damage_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、ダメージを与えずに「ダメージを受けない」状態になるワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、「ダメージを受けない」状態になるワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        flips = flip_coins(
+            state, use.player, 1, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
+        )
+        if flips.results[0] is CoinSide.HEADS:
+            effect = PreventDamage(
+                source_card=attacker.card,
+                source_player=use.player,
+                created_turn=state.turn_number,
+                active_turn=state.turn_number + 1,  # 次の相手の番（番は先攻から 1 つずつ交互に進む。不変条件で確かめている）
+            )
+            add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
+
+
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
     """ワザでダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
 
@@ -650,6 +738,7 @@ class SwitchWithBench(TrainerEffect):
       ベンチに戻ったら…消えてなくなります」。v0.3a。「にげる」と同じ ``conditions.clear_special_conditions``）。
     - ねむり・マヒ状態（「にげる」を宣言できない。p.311）のポケモンでも入れ替える（p.325「「にげる」がおこなえない
       状態のポケモンでも、「そのポケモンを入れ替える」と指示されたときは、入れ替えをおこないます」。v0.3b）。
+    - ベンチに戻ったもとの対戦ポケモンが受けていたワザによる持続する効果も消える（p.322。v0.4b。特殊状態とは別の処理）。
 
     原典で決められないので扱わない（``UnsupportedError``）: 控えポケモンがいないときに使えるか。
     """
@@ -685,6 +774,8 @@ class SwitchWithBench(TrainerEffect):
         )
         # ベンチに戻ったポケモンの特殊状態はすべて消える（p.322。「にげる」と同じ処理。v0.3a）
         clear_special_conditions(state, use.player, old, SWITCH)
+        # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
+        remove_persistent_effects(state, use.player, old, SWITCH)
 
 
 @dataclass(frozen=True)
@@ -898,15 +989,15 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし、
-# v0.3c のあやしいひかり、v0.4a のパラセクトのキノコのほうし・ジュゴンのれいとうビーム）は、
-# カードのページと照合した最新の説明・出典とともに登録する。
+# v0.3c のあやしいひかり、v0.4a のパラセクトのキノコのほうし・ジュゴンのれいとうビーム、v0.4b のトランセル・コクーンの
+# かたまる・しびれごな・どくのこな）は、カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.4a",
+    "kyuura-engine-0.4b",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -987,6 +1078,43 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
             play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
             source="P43 p.102",
+        ),
+        # トランセル（v0.4b。キャタピーから進化）p.18。かたまる: ダメージの目安の数字がない。コインが「おもて」なら、次の
+        # 相手の番、自分は「ダメージを受けない」状態。カードに印刷された説明（kyuura の写し）と最新の説明は違う（最新の説明に
+        # 「（ダメージ以外の効果は受ける）」がある。実装は最新の説明にしたがう。docs/harden-v0.4b.md）
+        AttackKey("PMCG1-003", 0): AttackEntry(
+            PreventDamageOnHeads(),
+            "かたまる",
+            text_ja="コインを投げて「おもて」なら、次の相手の番にうけるダメージが0になる。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
+            source="P43 p.18",
+        ),
+        # トランセル p.18。しびれごな: 相手に 20（目安の数字）、コインが「おもて」なら相手をマヒ状態に（キャタピーの
+        # 「いとをはく」（p.17）と同じ最新の説明。p.18 の解説「20ダメージを与え、コイントスで表を出せば相手の対戦ポケモンを
+        # マヒ状態にすることができます」）
+        AttackKey("PMCG1-003", 1): AttackEntry(
+            ParalyzeOnHeads(),
+            "しびれごな",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source="P43 p.18",
+        ),
+        # コクーン（v0.4b。ビードルから進化）p.21。かたまる: トランセルの「かたまる」と同じ印刷の説明・最新の説明（カードごとに照合した）
+        AttackKey("PMCG1-009", 0): AttackEntry(
+            PreventDamageOnHeads(),
+            "かたまる",
+            text_ja="コインを投げて「おもて」なら、次の相手の番にうけるダメージが0になる。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
+            source="P43 p.21",
+        ),
+        # コクーン p.21。どくのこな: 相手に 20（目安の数字）、コインが「おもて」なら相手をどく状態に（ビードルの「どくばり」
+        # （p.19）と同じ最新の説明。p.21 の解説「20ダメージを与えつつ…コイントス表で相手がどく状態になったら」）
+        AttackKey("PMCG1-009", 1): AttackEntry(
+            PoisonOnHeads(),
+            "どくのこな",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source="P43 p.21",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

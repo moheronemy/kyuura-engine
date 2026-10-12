@@ -158,6 +158,38 @@ class SpecialConditions:
         return isinstance(self.exclusive, Confused)
 
 
+@dataclass(frozen=True)
+class PreventDamage:
+    """ワザによる「持続する効果」（v0.4b。p.322「11 特殊状態以外の「持続する効果」」）のうち、「次の相手の番、このカードは
+    ダメージを受けない。（ダメージ以外の効果は受ける）」（トランセル・コクーンの「かたまる」の最新の説明。p.18・p.21）。
+
+    特殊状態（``SpecialConditions``）でも、ついているトレーナーカード（``AttachedTrainer``）でもない。物理的なカードではない
+    ので、カードの uid を持たず、効果を受けている場のポケモン（``PokemonInPlay.persistent_effects``）が持つ。
+
+    - ``source_card``: 効果を与えたワザを使ったポケモンのカード（いちばん上のカードの uid）。「かたまる」は自分自身に与える
+      （p.236 のワザ解説「効果の対象：ワザを使ったポケモン自身」）ので、効果を受けているポケモンのカードと同じ
+    - ``source_player``: 効果を与えたプレイヤー
+    - ``created_turn``: ワザを使った番（``GameState.turn_number``）
+    - ``active_turn``: 効果がはたらく番（「次の相手の番」= ``created_turn + 1``。番は先攻から交互に進む）。この番の間、
+      このポケモンは「ダメージを受けない」状態（p.321: このポケモンにダメージを与えるワザの要素は無効、ダメージ以外の
+      効果のワザの要素は有効）。この番の終わりに消える（p.236・p.18 のワザ解説「効果の持続：次の相手の番の最後」）。
+      ポケモンチェックはどちらの番でもないので、どくのダメージは防がない（p.323）
+
+    ベンチに戻ったら（p.311・p.322）・場をはなれたら（p.322）・進化したら（p.310・p.323）消える。一度消えたら復活しない
+    （p.322）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "prevent_damage"
+
+
+# ワザによる持続する効果の型（v0.4b）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+PERSISTENT_EFFECT_TYPES = (PreventDamage,)
+
+
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
@@ -180,8 +212,8 @@ class PokemonInPlay:
 
     ``pokemon_id`` が同じでも、ルールの上で同じポケモンとは限らない: 進化したポケモンは「進化前のポケモンとは、別の
     ポケモンとしてあつかわれます」（p.310）。その帰結（進化前のワザを使えない、その番の最初には場にいなかったことに
-    なる、特殊状態が消える、にげるの失敗の記録が消える）は、``card``・``evolved_turn``・``conditions``・
-    ``retreat_failed_turn`` で表す（docs/evolution-state-v0.4a.md）。
+    なる、特殊状態が消える、にげるの失敗の記録が消える、持続する効果が消える（v0.4b））は、``card``・``evolved_turn``・
+    ``conditions``・``retreat_failed_turn``・``persistent_effects`` で表す（docs/evolution-state-v0.4a.md）。
 
     進化（v0.4a）:
 
@@ -192,6 +224,13 @@ class PokemonInPlay:
       ベンチからバトル場に出すことでは変わらない（場をはなれていない。p.313）
     - ``evolved_turn``: いまの姿に進化した番。進化していなければ None。「その番の最初から場に出ていた」（p.310）かは、
       いまの姿になった番（``evolved_turn``、なければ ``played_turn``）が今の番より前かで決まる
+
+    ワザによる持続する効果（v0.4b）:
+
+    - ``persistent_effects``: このポケモンが受けている、ワザによる持続する効果（``PreventDamage`` など。frozen の値の
+      タプル）。特殊状態（``conditions``）・ついているトレーナー（``trainers``）とは別に持つ。持続する効果は重複する
+      ことがある（p.323）ので複数を持てる形にしているが、v0.4b の対応カードで受けるのは「かたまる」だけ。変えるときは
+      新しいタプルに置きかえる（複製で共有してよい）。docs/persistent-effects-v0.4b.md
     """
 
     card: int
@@ -207,6 +246,7 @@ class PokemonInPlay:
     evolution_stack: tuple[int, ...] = ()  # v0.4a
     played_turn: int = 0  # v0.4a
     evolved_turn: int | None = None  # v0.4a
+    persistent_effects: tuple[PreventDamage, ...] = ()  # v0.4b
 
     @property
     def current_form_turn(self) -> int:
@@ -229,6 +269,7 @@ class PokemonInPlay:
             self.evolution_stack,
             self.played_turn,
             self.evolved_turn,
+            self.persistent_effects,
         )
 
 
