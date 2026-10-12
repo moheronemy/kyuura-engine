@@ -110,6 +110,19 @@ class Paralyzed:
 
 
 @dataclass(frozen=True)
+class Confused:
+    """こんらん状態（v0.3c。p.322「4. こんらん状態」）。持つ情報はない。
+
+    - ワザを使うとき、持ち主がコインを投げ、「うら」ならワザがこんらんする（もとのワザの内容に関わらず、ワザを使った
+      ポケモン自身に 20 ダメージ。「弱点・抵抗力」の影響を受ける。p.309 の手順 5・p.322）。
+    - 「にげる」をおこなうとき、エネルギーをトラッシュしてからコインを投げ、「うら」なら「にげる」は失敗（p.311 の手順 3）。
+    - 自然に回復しない（p.322）。ポケモンチェックですることはない（p.323）。
+    """
+
+    name: ClassVar[str] = "confusion"
+
+
+@dataclass(frozen=True)
 class SpecialConditions:
     """場のポケモンの特殊状態（v0.3a）。物理的なカードではないので、カードの uid ではなく、場のポケモン
     （``PokemonInPlay``。番号は ``pokemon_id``）が持つ。
@@ -117,18 +130,18 @@ class SpecialConditions:
     p.322 の規定にしたがって分けて持つ:
 
     - ``poison``: どく状態（``Poison``）か None。どく状態は、ほかの特殊状態と重複する（p.322「特殊状態の重複」）。
-    - ``exclusive``: ねむり（``Asleep``）・マヒ（``Paralyzed``）のどれか 1 つか None（v0.3b）。ねむり・マヒ・こんらんは
-      「重複することはありません」（p.322）ので 1 つの項目に持つ。こんらんは未実装（加えるときはここに入る）。
+    - ``exclusive``: ねむり（``Asleep``）・マヒ（``Paralyzed``）・こんらん（``Confused``。v0.3c）のどれか 1 つか None
+      （v0.3b）。ねむり・マヒ・こんらんは「重複することはありません」（p.322）ので 1 つの項目に持つ。
 
     特殊状態になるのはバトル場のポケモンだけ（p.322）。バトル場をはなれたら（ベンチに戻ったら）すべて
     消える（p.311・p.322）。進化しても消える（p.322。進化は未実装）。
     """
 
     poison: Poison | None = None
-    exclusive: Asleep | Paralyzed | None = None
+    exclusive: Asleep | Paralyzed | Confused | None = None
 
     def names(self) -> tuple[str, ...]:
-        """今かかっている特殊状態の名前（ログ・書き出し用。p.322 の順: どく・ねむり・マヒ）。"""
+        """今かかっている特殊状態の名前（ログ・書き出し用。p.322 の順: どく・ねむり・マヒ・こんらん）。"""
         names = ("poison",) if self.poison is not None else ()
         return names + ((self.exclusive.name,) if self.exclusive is not None else ())
 
@@ -140,11 +153,17 @@ class SpecialConditions:
     def paralyzed(self) -> bool:
         return isinstance(self.exclusive, Paralyzed)
 
+    @property
+    def confused(self) -> bool:
+        return isinstance(self.exclusive, Confused)
+
 
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
 ASLEEP = Asleep()
+# こんらん状態（同じ。v0.3c）
+CONFUSED = Confused()
 
 
 @dataclass
@@ -166,9 +185,15 @@ class PokemonInPlay:
     pokemon_id: int = 0
     trainers: list[AttachedTrainer] = field(default_factory=list)  # ついているトレーナーカード（v0.2c）
     conditions: SpecialConditions = NO_SPECIAL_CONDITIONS  # 特殊状態（v0.3a。frozen なので複製でも共有してよい）
+    # こんらん状態で「にげる」に失敗した番（v0.3c）。「一度「にげる」に失敗したこんらん状態のポケモンは、今の自分の番では、
+    # もう「にげる」を宣言することができません」（p.311）。特殊状態ではないので ``conditions`` に入れない（ベンチに戻っても
+    # 消さない）。番の終わりに消す（「次の自分の番になれば、再び「にげる」を宣言することができます」）
+    retreat_failed_turn: int | None = None
 
     def clone(self) -> PokemonInPlay:
-        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers), self.conditions)
+        return PokemonInPlay(
+            self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers), self.conditions, self.retreat_failed_turn
+        )
 
 
 @dataclass

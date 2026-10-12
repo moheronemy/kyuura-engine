@@ -13,7 +13,7 @@ from kyuura_engine.cards import read_extract, read_verification
 
 from tests.helpers import (
     BILL, CATERPIE, CHARMANDER, DEFENDER, DIGLETT, DODUO, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, RATTATA, SUPER_POTION, SWITCH,
-    VENUSAUR, WEEDLE,
+    VENUSAUR, VULPIX, WEEDLE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -31,7 +31,8 @@ class CardPoolTest(unittest.TestCase):
         pool = load_card_pool()
         # v0.2b でトレーナー 3 枚（pool_v0_2b）、v0.2c でプラスパワー（pool_v0_2c）、v0.2d でドードー（pool_v0_2d）、
         # v0.2e でディフェンダー（pool_v0_2e）、v0.2f でピカチュウ（pool_v0_2f）、v0.3a でビードル（pool_v0_3a）、
-        # v0.3b でキャタピー・パラス（pool_v0_3b）を加えた。v0.1 の組（トレーナーと v0.2d 以降のポケモン以外）は変わらない
+        # v0.3b でキャタピー・パラス（pool_v0_3b）、v0.3c でロコン（pool_v0_3c）を加えた。v0.1 の組（トレーナーと
+        # v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
@@ -41,9 +42,11 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(pool.is_playable(WEEDLE))
         self.assertEqual(read_extract()["pool_v0_3b"], [CATERPIE, PARAS])  # v0.3b でキャタピー・パラス
         self.assertTrue(pool.is_playable(CATERPIE) and pool.is_playable(PARAS))
+        self.assertEqual(read_extract()["pool_v0_3c"], [VULPIX])  # v0.3c でロコン
+        self.assertTrue(pool.is_playable(VULPIX))
         self.assertEqual(read_extract()["pool_v0_2d"], [DODUO])
         self.assertTrue(pool.is_playable(DODUO))
-        playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS)]
+        playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX)]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
         self.assertEqual(sum(d.is_basic_energy for d in playable), 6)

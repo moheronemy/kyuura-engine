@@ -125,3 +125,29 @@ def calculate_attack_damage(
     # 最終的に 0 以下なら「ダメージを与えなかった」（p.319, p.321）
     final = amount if amount > 0 else 0
     return DamageCalculation(base, weakness_applied, resistance_applied, False, final, tuple(steps), used)
+
+
+def calculate_confusion_damage(pokemon: CardDefinition, rules: RuleSet, base: int) -> DamageCalculation:
+    """こんらん状態のポケモンのワザがこんらんしたとき（コインが「うら」）、ワザを使ったポケモン自身が受けるダメージ（v0.3c）。
+
+    - 基本は 20（p.309 の手順 5「もとのワザの内容に関わらず、ワザを使ったポケモン自身が20ダメージを受けます」）。
+    - 「このダメージは「弱点・抵抗力」の影響を受けます」（p.322。CONFIRMED）。ダメージを与えるのも受けるのも同じポケモン
+      なので、そのポケモンのタイプが自分の弱点のタイプなら 2 倍、抵抗力のタイプなら抵抗力の数字をマイナスする（p.321 の
+      3・4 段階の定義をそのまま当てはめる。SUPPORTED）。0 以下なら 0（「ダメージを受けなかった」。p.321）。
+    - これは ``calculate_attack_damage``（「ワザによるダメージ」の 8 段階。p.321「8」「9」）とは別の計算にしている。こんらんの
+      ダメージが「ワザによるダメージ」かは原典に書かれていないので、プラスパワー（5 段階）・ディフェンダー（7 段階）などを
+      計算するかは決められない（UNRESOLVED）。ワザを使うポケモンにそれらがついているときは、エンジンがコインを投げる前に
+      止める（``engine._confusion_damage_problem``）ので、ここには変更効果が来ない。
+    """
+    steps: list[tuple[str, int]] = [("こんらん", base)]
+    amount = base
+    weakness_applied = pokemon.weakness is not None and pokemon.pokemon_type == pokemon.weakness
+    if weakness_applied:
+        amount *= rules.weakness_multiplier
+        steps.append(("弱点", amount))
+    resistance_applied = pokemon.resistance is not None and pokemon.pokemon_type == pokemon.resistance
+    if resistance_applied:
+        amount -= pokemon.resistance_value
+        steps.append(("抵抗力", amount))
+    final = amount if amount > 0 else 0
+    return DamageCalculation(base, weakness_applied, resistance_applied, False, final, tuple(steps))

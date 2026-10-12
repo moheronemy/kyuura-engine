@@ -1,4 +1,4 @@
-# 公開 API のレビュー（v0.1〜v0.3b）
+# 公開 API のレビュー（v0.1〜v0.3c）
 
 将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md)・[v0.3a](architecture-v0.3a.md)・[v0.3b](architecture-v0.3b.md) のアーキテクチャにあります。
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.3b で加えた公開 API
+## 2. v0.2a〜v0.3c で加えた公開 API
 
 ### v0.2a
 
@@ -129,6 +129,26 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | ポケモンチェック | 2（どく）→ きぜつ・サイド・交代 → 3（ねむりのコイン。持ち主が投げる）→ 4（マヒの回復）→ 次の番。ポケモンチェックの中の決定の `then` は v0.3a と同じ `"next_turn"` |
 | `state.turn_owner` | 番の番号から番のプレイヤー（`engine.turn_owner` と同じもの） |
 | `state_to_dict(state, format_version=5)` | `special_conditions` に `sleep: {}`・`paralysis: {"turn": n}` が加わった |
+
+コマンド・段階・決定の種類は増やしていません。
+
+### v0.3c
+
+| もの | 内容 |
+|---|---|
+| ロコン（PMCG1-015）の「あやしいひかり」（`UseAttack(…, 0)`） | 相手に 10 → コイン 1 枚 → 「おもて」なら相手をこんらん状態に |
+| `Confused`（`kyuura_engine` から） | `SpecialConditions.exclusive` の値（こんらん。ねむり・マヒと重複しない。持つ情報はない） |
+| `SpecialConditions.confused` | 状態を調べる性質 |
+| `PokemonInPlay.retreat_failed_turn` | こんらん状態で「にげる」に失敗した番（なければ None）。番の終わりに None に戻る。そのポケモンはその番の間「にげる」を宣言できない |
+| `kyuura_engine.conditions` | `confuse`、`CONFUSION`・`CONFUSION_DAMAGE`（実装を加える人向け） |
+| `damage.calculate_confusion_damage` | こんらんの 20 の計算（弱点・抵抗力だけ） |
+| `effects.ConfuseOnHeads`、`AttackEffect.problem` | あやしいひかりの実装。ワザを使う前に分かる、原典で決められない場合を返す口（既定は None。エンジンがこんらんのコインの前に聞く） |
+| こんらん状態のポケモンの `UseAttack` | 宣言のあとでコイン（`source: "confusion"`）。「うら」なら自分に 20（`confusion_damage`）で番が終わる。拒否ではない（`apply_command` は新しい状態を返す） |
+| こんらん状態のポケモンの `Retreat` | エネルギーをトラッシュしてからコイン。「うら」なら `retreat_failed`（番は続く）。拒否ではない |
+| 再宣言の拒否 | `IllegalActionError` の `RETREAT_ALREADY_FAILED`（状態も乱数も変えない） |
+| 原典で決められない場合 | `UnsupportedError` の `UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`（ダメージを変えるカードがついたこんらんのポケモンのワザ）・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`（失敗のあとこんらんが消えて戻ったポケモンの「にげる」） |
+| `state_to_dict(state, format_version=5)` | `special_conditions` に `confusion: {}` が加わった |
+| `state_to_dict(state, format_version=6)` | 5 に、場のポケモンごとの `retreat_failed_turn` を加えた形 |
 
 コマンド・段階・決定の種類は増やしていません。
 
@@ -262,6 +282,22 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - 不変条件が増えた（`exclusive` の型、マヒの番、期限の過ぎたマヒ）
 - 新しいクライアントへの推奨: ワザ・にげるのボタンは `special_conditions` の `sleep`・`paralysis` を見て無効にする（送っても拒否される）。ねむりのコインはログの `coin_flip`（`source: "pokemon_check"`）と `sleep_check` で表示する。マヒの回復する番は `special_condition` の `recovery_turn`（または `paralysis.turn` と `first_player`）で表示する。
 
+### v0.3b → v0.3c
+
+- こんらんを使わない対戦の結果・ログ・乱数の状態・拒否は変わりません。v0.3b のコミット `0516c05` と、特殊状態を使わない既存のデッキ 7 組・ビードル・キャタピー・パラス・v0.3b の混ぜたデッキ（直す／直さない）・どくを直さないビードルのミラーの 1,140 局（104,295 コマンド。`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` で止まる 9 局を含む）と、でたらめな操作を混ぜた 16 局を同じ手順で動かして比べ、終わった状態（形式 5。登録表の id を除く）・ログ・乱数・拒否のコードの列がすべて同じでした。60 局は途中のすべての状態（ポケモンチェックの中の決定を含む）も同じでした（[architecture-v0.3c.md 13 章](architecture-v0.3c.md)）。
+- v0.3b のテスト 613 件を v0.3c のコードで実行すると、失敗するのは登録表の id・登録したワザ・カードの組・形式の一覧を確かめる 6 件だけ。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.3c` になり、ワザの登録にロコンのあやしいひかり（PMCG1-015#0）が加わった。写しの対戦用のカードの組に `pool_v0_3c`
+  - 形式 5 の `special_conditions` に `confusion` の項目が加わった。v0.3b の形式 5 だけを知るクライアントは、知らない項目があれば拒否すること
+  - 形式 6 が加わった（`FORMAT_VERSIONS` は 1〜6）。「にげる」に失敗した記録のある状態は形式 1〜5 で書き出せない（`ValueError`）
+  - `SpecialConditions.exclusive` の値に `Confused` が加わった。`PokemonInPlay` に `retreat_failed_turn`（キーワード引数。既定は None）が加わった
+  - こんらん状態のポケモンの `UseAttack`・`Retreat` は、宣言が正しければ必ず受け付け、コインの結果で処理が変わる（「うら」でも例外にならない）
+  - エラーコード `RETREAT_ALREADY_FAILED`（`IllegalActionError`）、`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`（`UnsupportedError`）が加わった
+  - ログに `confusion_check`・`confusion_damage`・`retreat_failed` と、`coin_flip` の `source: "confusion"` が加わった
+  - 不変条件が増えた（`Confused` の型、失敗の記録の番・持ち主・番の終わり）
+  - `AttackEffect` に `problem` が加わった（既定は None。`SelfDamageOnTails` は v0.2f の未解決を、ワザを使う前に返す）
+- 新しいクライアントへの推奨: こんらん状態のポケモンのワザ・にげるのボタンは無効にしない（コインを投げる）。`retreat_failed_turn` が今の番のポケモンの「にげる」は無効にする（送っても拒否される）。こんらんのコインはログの `coin_flip`（`source: "confusion"`）と `confusion_check`（`action`・`succeeded`）、自分への 20 は `confusion_damage` で表示する。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -307,8 +343,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 | 例外 | コード |
 |---|---|
-| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -327,6 +363,8 @@ v0.2f: `damage` に、相手の対戦ポケモン以外へのダメージのと�
 v0.3a: `special_condition`（`player`＝特殊状態になったポケモンの持ち主・`pokemon`・`pokemon_id`・`condition`＝`poison`・`damage`・`effect`＝効果の識別子、もうその状態なら `already`）, `special_conditions_removed`（`player`・`pokemon`・`pokemon_id`・`conditions`・`reason`＝`retreat`/`switch`）, `poison_damage`（ポケモンチェックの「どく」。`player`・`pokemon`・`pokemon_id`・`amount`・`total_damage`。ワザの `damage` とは別）。`knock_out` に、ポケモンチェックの中のきぜつなら `timing`（`pokemon_check`）。`halted` はポケモンチェックで止めたときも出る（`code` だけ）。どく状態のポケモンがいなければ、`pokemon_check` のあとに新しいイベントは出ない
 
 v0.3b: `special_condition` の `condition` に `sleep`・`paralysis`（マヒなら `paralyzed_turn`＝マヒ状態になった番・`recovery_turn`＝回復する番）。`special_conditions_removed` の `reason` に `sleep_coin`（ねむりのコインの「おもて」）・`paralysis_end`（マヒの回復）・`replaced`（ねむり・マヒが置きかわった）。`coin_flip` の `source` に `pokemon_check`（`effect`＝`sleep`、`player`＝ねむりのポケモンの持ち主、`card`・`pokemon_id`＝ねむりのポケモン）。`sleep_check`（`player`・`pokemon`・`pokemon_id`・`result`・`recovered`）。ねむり・マヒのポケモンがいなければ、v0.3a と同じログ
+
+v0.3c: `special_condition` の `condition` に `confusion`。`special_conditions_removed` の `conditions` に `confusion`（`reason` は `retreat`・`switch`・`replaced`）。`coin_flip` の `source` に `confusion`（`effect`＝ワザの `AttackKey` の文字列か `retreat`、`player`＝こんらん状態のポケモンの持ち主、`card`・`pokemon_id`＝そのポケモン）。`confusion_check`（`player`・`pokemon`・`pokemon_id`・`action`＝`attack`/`retreat`・`result`・`succeeded`）。`confusion_damage`（ワザがこんらんしたときの自分への 20。`player`・`pokemon`・`pokemon_id`・`effect`・`amount`・`steps`・`weakness`・`resistance`・`total_damage`。ワザによるダメージの `damage` とは別）。`retreat_failed`（`player`・`pokemon`・`pokemon_id`・`discarded`）。こんらんのポケモンがいなければ、v0.3b と同じログ
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

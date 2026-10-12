@@ -84,6 +84,9 @@
     "PMCG1-002",
     "PMCG2-003"
   ],
+  "pool_v0_3c": [
+    "PMCG1-015"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1688,6 +1691,80 @@
         "series": "ポケモンジャングル",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg02-008-paras/"
+      }
+    },
+    {
+      "id": "PMCG1-015",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ロコン",
+        "en": "Vulpix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          37
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-015",
+        "pokemontcg": [
+          "base1-68"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-017-rokon/",
+      "jp_print": {
+        "level": 11,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-017-rokon/"
       }
     },
     {

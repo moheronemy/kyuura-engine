@@ -1,13 +1,15 @@
-"""特殊状態（v0.3a・v0.3b。p.322「10 ポケモンの特殊状態」）を付ける・消す処理。
+"""特殊状態（v0.3a〜v0.3c。p.322「10 ポケモンの特殊状態」）を付ける・消す処理。
 
-v0.3a で「どく」、v0.3b で「ねむり」「マヒ」を加えた。こんらんは状態の項目もなく、付ける効果もない（未実装）。
+v0.3a で「どく」、v0.3b で「ねむり」「マヒ」、v0.3c で「こんらん」を加えた。こんらんによるワザのコイン・20 ダメージ・
+にげるのコインはエンジン（``engine._use_attack``・``_retreat``）が行う（ここにあるのは付ける処理と、20 ダメージの量）。
 
 - 特殊状態になるのはバトル場のポケモン（対戦ポケモン）だけ。ベンチのポケモンは特殊状態にならない（p.322）。
 - 特殊状態のポケモンがバトル場をはなれたら（ベンチに戻ったら）、すべての特殊状態は消える（p.311・p.322）。
   にげる・ポケモンいれかえ（どちらも「ポケモンの入れ替え」。p.325）は、ここの ``clear_special_conditions`` を呼ぶ。
   きぜつしたポケモンは場からいなくなるので、特殊状態もいっしょになくなる（場のポケモンが持つため）。
-- どく状態のポケモンが再びどく状態になる効果を受けても、二重のどく状態にはならない（p.322）。ねむり・マヒも同じ
-  （p.322「ねむり状態が積み重なることはありません」「マヒ状態が積み重なることはありません」）。
+- どく状態のポケモンが再びどく状態になる効果を受けても、二重のどく状態にはならない（p.322）。ねむり・マヒ・こんらんも同じ
+  （p.322「ねむり状態が積み重なることはありません」「マヒ状態が積み重なることはありません」「こんらん状態が積み重なることは
+  ありません」）。
 - 「ねむり」「マヒ」「こんらん」は重複しない（p.322「特殊状態の重複」）。p.322 の例「マヒ状態のポケモンがねむり状態に
   なったら、マヒ状態から自動的に回復して、ねむり状態になります」のとおり、新しい状態が前の状態に置きかわる
   （``SpecialConditions.exclusive``。前の状態は ``REPLACED`` の理由で消えたとログに残す）。どくはほかの特殊状態と
@@ -31,7 +33,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from .errors import UnsupportedError
-from .state import ASLEEP, NO_SPECIAL_CONDITIONS, Paralyzed, Poison, turn_owner
+from .state import ASLEEP, CONFUSED, NO_SPECIAL_CONDITIONS, Paralyzed, Poison, turn_owner
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -39,6 +41,10 @@ if TYPE_CHECKING:
 POISON = "poison"
 SLEEP = "sleep"  # v0.3b
 PARALYSIS = "paralysis"  # v0.3b
+CONFUSION = "confusion"  # v0.3c
+# こんらん状態のポケモンのワザがこんらんしたとき（コインが「うら」）、ワザを使ったポケモン自身が受けるダメージ（p.309 の
+# 手順 5「もとのワザの内容に関わらず、ワザを使ったポケモン自身が20ダメージを受けます」・p.322。v0.3c）
+CONFUSION_DAMAGE = 20
 # 通常のどく（p.322「ポケモンチェックのたびに、「弱点」「抵抗力」に関係なく、10ダメージを受けます。」）
 NORMAL_POISON = Poison(damage=10)
 
@@ -87,7 +93,8 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
 
     - もうねむり状態なら、二重のねむり状態にはならない（p.322「ねむり状態が積み重なることはありません」）。
       ねむり状態は持つ情報がないので、状態は変わらない（ログに ``already``）。
-    - マヒ状態なら、マヒ状態から自動的に回復して、ねむり状態になる（p.322「特殊状態の重複」の例）。
+    - マヒ状態なら、マヒ状態から自動的に回復して、ねむり状態になる（p.322「特殊状態の重複」の例）。こんらん状態でも、
+      こんらんは消えてねむり状態になる（同じ規定。v0.3c）。
     - どく状態はそのまま（どくはほかの特殊状態と重複する。p.322）。
     """
     _require_active(state, owner, pokemon, SLEEP)
@@ -104,6 +111,35 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
         pokemon=pokemon.card,
         pokemon_id=pokemon.pokemon_id,
         condition=SLEEP,
+        effect=effect,
+        **extra,
+    )
+
+
+def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
+    """``owner`` の対戦ポケモン ``pokemon`` を、こんらん状態にする（v0.3c。p.322「4. こんらん状態」）。
+
+    - もうこんらん状態なら、二重のこんらん状態にはならない（p.322「こんらん状態が積み重なることはありません」）。
+      こんらん状態は持つ情報がないので、状態は変わらない（ログに ``already``）。
+    - ねむり・マヒ状態なら、それは消えてこんらん状態になる（p.322「「ねむり」「マヒ」「こんらん」状態が重複することは
+      ありません」と、マヒからねむりの例から。docs/confusion-v0.3c.md）。
+    - どく状態はそのまま（p.322「こんらん状態のポケモンがどく状態になったら、そのポケモンは「どく」と「こんらん」の両方の
+      状態になります」）。
+    """
+    _require_active(state, owner, pokemon, CONFUSION)
+    current = pokemon.conditions.exclusive
+    already = pokemon.conditions.confused
+    if not already:
+        if current is not None:
+            _remove_exclusive(state, owner, pokemon, REPLACED)
+        pokemon.conditions = replace(pokemon.conditions, exclusive=CONFUSED)
+    extra = {"already": True} if already else {}
+    state.add_event(
+        "special_condition",
+        player=owner,
+        pokemon=pokemon.card,
+        pokemon_id=pokemon.pokemon_id,
+        condition=CONFUSION,
         effect=effect,
         **extra,
     )
@@ -156,7 +192,7 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
       （ログに ``already``）。変わる場合は原典で決められないので ``UnsupportedError``（``paralysis_problem``）。
       コインを投げる効果は、投げる前に ``paralysis_problem`` を確かめておくこと。
     - ねむり状態なら、ねむり状態は消えてマヒ状態になる（p.322「「ねむり」「マヒ」「こんらん」状態が重複することは
-      ありません」と、マヒからねむりの例から。docs/sleep-paralysis-v0.3b.md）。
+      ありません」と、マヒからねむりの例から。docs/sleep-paralysis-v0.3b.md）。こんらん状態でも同じ（v0.3c）。
     - どく状態はそのまま（p.322）。
     """
     _require_active(state, owner, pokemon, PARALYSIS)
@@ -199,7 +235,7 @@ def recover_from_paralysis(state: GameState, owner: int, pokemon: PokemonInPlay)
 
 
 def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:
-    """「ねむり」「マヒ」（``SpecialConditions.exclusive``）だけを消す。どく状態は残す（p.322 の重複の規定）。"""
+    """「ねむり」「マヒ」「こんらん」（``SpecialConditions.exclusive``）だけを消す。どく状態は残す（p.322 の重複の規定）。"""
     name = pokemon.conditions.exclusive.name
     pokemon.conditions = replace(pokemon.conditions, exclusive=None)
     state.add_event(

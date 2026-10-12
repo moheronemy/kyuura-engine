@@ -35,6 +35,7 @@ from kyuura_engine import (
 from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.state import (
     ASLEEP,
+    CONFUSED,
     CardInstance,
     DataSource,
     Paralyzed,
@@ -68,6 +69,7 @@ PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、で�
 WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「おもて」なら相手をどく状態に）
 CATERPIE = "PMCG1-002"  # キャタピー（v0.3b で対応。いとをはく 10・「おもて」なら相手をマヒ状態に）
 PARAS = "PMCG2-003"  # パラス（v0.3b で対応。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に）
+VULPIX = "PMCG1-015"  # ロコン（v0.3c で対応。あやしいひかり 10・「おもて」なら相手をこんらん状態に。炎・弱点 水・にげる 1）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -142,9 +144,11 @@ def build_test_state(
 
     players[i] のキー（どれも省略できる。active は必須）:
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
-              "paralysis": マヒ状態になった番}
+              "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
-              ベンチに書くと不変条件で拒否される。"sleep" と "paralysis" は重複しないので両方は書けない）
+              "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
+              特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
+              2 つ以上は書けない）
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -174,6 +178,11 @@ def build_test_state(
             if exclusive is not None:
                 raise ValueError("ねむりとマヒは重複しない（p.322）")
             exclusive = Paralyzed(turn=spec["paralysis"])
+        if spec.get("confusion"):
+            if exclusive is not None:
+                raise ValueError("ねむり・マヒ・こんらんは重複しない（p.322）")
+            exclusive = CONFUSED
+        result.retreat_failed_turn = spec.get("retreat_failed_turn")
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)

@@ -20,7 +20,9 @@
   「どくばり」。p.19 の最新の説明。docs/weedle-v0.3a.md・docs/special-conditions-v0.3a.md）、
   ``ParalyzeOnHeads``（v0.3b。相手にダメージのあと、コインが「おもて」なら相手をマヒ状態に。キャタピーの
   「いとをはく」。p.17 の最新の説明）、``PutToSleep``（v0.3b。ダメージを与えず、相手をねむり状態に。パラスの
-  「キノコのほうし」。p.38 の最新の説明）。docs/cards-v0.3b.md・docs/sleep-paralysis-v0.3b.md
+  「キノコのほうし」。p.38 の最新の説明）。docs/cards-v0.3b.md・docs/sleep-paralysis-v0.3b.md、
+  ``ConfuseOnHeads``（v0.3c。相手にダメージのあと、コインが「おもて」なら相手をこんらん状態に。ロコンの
+  「あやしいひかり」。p.67 の最新の説明）。docs/confusion-v0.3c.md
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -40,7 +42,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 from .coins import CoinSide, flip_coins
-from .conditions import SWITCH, clear_special_conditions, paralysis_problem, paralyze, poison, put_to_sleep
+from .conditions import SWITCH, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
@@ -79,6 +81,9 @@ class AttackEffect:
     - ``resolve``: ワザの処理（p.309 の手順 6「ワザの説明にしたがって処理」）。途中でプレイヤーの
       決定が要るときは、``decisions.push_decision`` で決定を出して戻る。
     - ``resume``: 出した決定が選ばれたあとの続き。さらに決定を出してもよい（複数段階の選択）。
+    - ``problem``（v0.3c）: このワザの処理が、原典で決められない場合なら、その理由（``UnsupportedError``）。
+      エンジンがワザの宣言の前（こんらんのコインの前）に聞く。ワザを使うポケモンのタイプなど、ワザを使う前に
+      分かることだけで決める。
 
     決定がなくなったら、エンジンがワザの後の処理（きぜつ・サイド・番の終わり）を続ける。
     """
@@ -87,6 +92,9 @@ class AttackEffect:
 
     def check(self, attack: Attack) -> list[str]:
         return []
+
+    def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
+        return None
 
     def resolve(self, state: GameState, use: AttackUse) -> None:
         raise NotImplementedError
@@ -289,6 +297,10 @@ class SelfDamageOnTails(AttackEffect):
             problems.append("説明文のないワザを、自分へのダメージのあるワザとして登録している")
         return problems
 
+    def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
+        # v0.3c: エンジンがこんらんのコインの前にも聞く（「おもて」のあとで止まる形にしない）
+        return self_damage_problem(state, use)
+
     def resolve(self, state: GameState, use: AttackUse) -> None:
         # 原典で決められない場合は、ダメージ・コインの前に止める（不正な・決められない操作で乱数を使わない）
         problem = self_damage_problem(state, use)
@@ -424,6 +436,51 @@ class PutToSleep(AttackEffect):
     def resolve(self, state: GameState, use: AttackUse) -> None:
         opponent = 1 - use.player
         put_to_sleep(state, opponent, state.players[opponent].active, effect=str(use.key))
+
+
+@dataclass(frozen=True)
+class ConfuseOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを 1 枚投げ、「おもて」なら相手の
+    対戦ポケモンをこんらん状態にする（v0.3c。ロコンの「あやしいひかり」。p.67 の最新の説明
+    「コインを投げて「おもて」なら、相手を「こんらん」状態にする。」。docs/confusion-v0.3c.md）。
+
+    - ダメージの目安に「×」「+」「−」がないので、説明の最初の「相手の対戦ポケモンに 10 ダメージ。」が省略されて
+      いる（p.320）。ワザの要素は書いてある順番に処理する（p.309・p.320）: 相手へのダメージ → コイン → こんらん。
+    - こんらん状態にするのは「効果」で、ダメージではない。相手へのダメージが 0（ディフェンダーなど）でも、「おもて」
+      ならこんらん状態にする。
+    - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないのでコインを投げない（p.309・p.323。
+      ``PoisonOnHeads``・``ParalyzeOnHeads`` と同じ）。
+    - もうこんらん状態なら二重にならない。ねむり・マヒ状態なら、それが消えてこんらん状態になる。どく状態はそのまま
+      （p.322。``conditions.confuse``）。
+    - このコインは、ワザの説明のコイン（``source: "attack"``）。ワザを使うポケモン自身がこんらん状態のときの
+      判定のコイン（``source: "confusion"``。エンジンが投げる）とは別。
+    """
+
+    implementation_id = "confuse_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier is not None:
+            problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、こんらん状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        damage_opponent_active(state, use, attack.damage)
+        opponent = 1 - use.player
+        target = state.players[opponent].active
+        if target.damage >= state.card_def(target.card).hp:
+            return  # 相手の対戦ポケモンはきぜつした。こんらん状態にする内容は対象がいないので無視する（p.309・p.323）
+        flips = flip_coins(
+            state, use.player, 1, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
+        )
+        if flips.results[0] is CoinSide.HEADS:
+            confuse(state, opponent, target, effect=str(use.key))
 
 
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
@@ -862,7 +919,8 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 
 
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
-# 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし）は、
+# 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし、
+# v0.3c のあやしいひかり）は、
 # カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
@@ -870,7 +928,7 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.3b",
+    "kyuura-engine-0.3c",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -915,6 +973,14 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
             play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
             source="P43 p.17",
+        ),
+        # ロコン（v0.3c）p.67。相手に 10（目安の数字）、コインが「おもて」なら相手をこんらん状態に
+        AttackKey("PMCG1-015", 0): AttackEntry(
+            ConfuseOnHeads(),
+            "あやしいひかり",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source="P43 p.67",
         ),
         # パラス（v0.3b）p.38。ダメージの目安の数字がない。ダメージを与えず、相手をねむり状態に
         AttackKey("PMCG2-003", 1): AttackEntry(

@@ -5,7 +5,7 @@
 - 基準のルール: 「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]、kyuura `NEO-2000-OFFICIAL-RULES`）
 - 照合の方法: Internet Archive のスキャン [J38] の PDF からページを画像にし（200〜300dpi）、目で読んだ（2026-10-12）。OCR の文字は位置を探すのに使っただけ
 - 読んだページ: p.309（ワザを使う手順 6）、p.320（ワザの説明・ワザの要素）、p.321（8 ワザによるダメージと効果、9 ワザによるダメージ計算の順番）、p.322（こんらん）、p.257（プラスパワー・ディフェンダーの解説）、p.315（弱点・抵抗力の定義）
-- kyuura の参照コミットの data/rule_history.json・rule_differences.json に、2000年のルールでのワザによる自分へのダメージの記録はない（`confusion_attack` は 1997〜1998年のこんらんの記録）
+- kyuura の参照コミットの data/rule_history.json・rule_differences.json に、2000年のルールでのワザによる自分へのダメージの記録はない（`confusion_attack` はこんらんの記録。v0.3c で確かめると、rule_differences の `confusion_attack` には 2000年2月（P43）の行もある。この文書の初めの版では「1997〜1998年のこんらんの記録」と書いていた）
 
 分類は CONFIRMED（原典に直接の根拠がある）・SUPPORTED（確定した規則から導出できる）・UNRESOLVED（決められない）・CONFLICT（資料のあいだで矛盾）です。
 

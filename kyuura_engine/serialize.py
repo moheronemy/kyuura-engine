@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 5 つあります（``format_version``）。
+形式は 6 つあります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -11,13 +11,17 @@
   なければ ``{}``）を加えたもの（v0.3a）。v0.3b で、ねむり ``"sleep": {}``・マヒ ``"paralysis": {"turn": n}``
   （``n`` はマヒ状態になった番。回復する番はここから決まる）の項目を加えた。どくだけの状態・特殊状態のない状態の
   書き出しは v0.3a と同じ（項目の意味を変えていないので形式 6 にはしていない。知らない項目のある辞書は、読む側が
-  拒否すること）。
+  拒否すること）。v0.3c で、こんらん ``"confusion": {}`` の項目を同じ理由で加えた。
+- 6: 5 に、場のポケモンごとの ``retreat_failed_turn``（こんらん状態で「にげる」に失敗した番。なければ ``None``。
+  そのポケモンは、その番の間「にげる」を宣言できない。p.311）を加えたもの（v0.3c）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
 カードを落とさない）。同じように、形式 1〜3 はポケモンについているトレーナー（プラスパワーなど）を
 表せないので、ついているトレーナーがあると ``ValueError`` にする。トレーナーを使う対戦では形式 4 を使う。
 形式 1〜4 は特殊状態（v0.3a）を表せないので、特殊状態のポケモンがいると ``ValueError`` にする（形式 5 を使う）。
+形式 1〜5 は「にげる」に失敗した記録（v0.3c）を表せないので、記録のあるポケモンがいると ``ValueError`` にする
+（形式 6 を使う。記録は番の終わりに消えるので、その番の間だけ）。
 形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「ポケモンチェックの
 残りをして次の番を始める」。決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると
 ``ValueError`` にする。
@@ -36,13 +40,13 @@ from __future__ import annotations
 from typing import Any
 
 from .rng import rng_fingerprint
-from .state import Asleep, GameState, Paralyzed, PokemonInPlay
+from .state import Asleep, Confused, GameState, Paralyzed, PokemonInPlay
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
-    """形式 5 の ``special_conditions``（p.322 の順: どく・ねむり・マヒ）。"""
+    """形式 5 の ``special_conditions``（p.322 の順: どく・ねむり・マヒ・こんらん）。"""
     conditions = pokemon.conditions
     data: dict[str, Any] = {}
     if conditions.poison is not None:
@@ -51,6 +55,10 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
         data["sleep"] = {}
     elif isinstance(conditions.exclusive, Paralyzed):
         data["paralysis"] = {"turn": conditions.exclusive.turn}
+    elif isinstance(conditions.exclusive, Confused):
+        data["confusion"] = {}
+    elif conditions.exclusive is not None:
+        raise ValueError(f"書き出せない特殊状態 {conditions.exclusive!r}")
     return data
 
 
@@ -80,6 +88,8 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         ]
     if format_version >= 5:
         data["special_conditions"] = _special_conditions(pokemon)
+    if format_version >= 6:
+        data["retreat_failed_turn"] = pokemon.retreat_failed_turn
     return data
 
 
@@ -99,7 +109,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 4 and any(pokemon.trainers for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、ポケモンについているトレーナーカードを表せない（format_version=4 を使う）")
     if format_version < 5 and any(pokemon.conditions.names() for p in state.players for pokemon in p.in_play()):
-        raise ValueError(f"形式 {format_version} は、特殊状態（どく・ねむり・マヒ）を表せない（format_version=5 を使う）")
+        raise ValueError(f"形式 {format_version} は、特殊状態（どく・ねむり・マヒ・こんらん）を表せない（format_version=5 以上を使う）")
+    if format_version < 6 and any(pokemon.retreat_failed_turn is not None for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、こんらん状態で「にげる」に失敗した記録を表せない（format_version=6 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     data = {

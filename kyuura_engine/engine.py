@@ -26,6 +26,7 @@ from . import judge
 from .cards import CardPool, can_pay_cost, load_card_pool
 from .coins import CoinSide, flip_coins
 from .conditions import (
+    CONFUSION_DAMAGE,
     RETREAT,
     clear_special_conditions,
     paralysis_recovery_turn,
@@ -49,7 +50,8 @@ from .commands import (
     UseAttack,
 )
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
-from .effects import AttackKey, AttackUse, TrainerUse
+from .damage import calculate_confusion_damage
+from .effects import AttackKey, AttackUse, TrainerUse, attack_damage_modifiers
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULES_2000_02_14, RuleSet
@@ -57,6 +59,7 @@ from .state import (
     TERMINAL_PHASES,
     Asleep,
     CardInstance,
+    Confused,
     DataSource,
     GameResult,
     GameState,
@@ -373,8 +376,14 @@ def _end_turn(state: GameState) -> None:
     勝敗が決まって対戦が終わったとき（``_finish``）は番の終わりが来ないので、ここは通らない。
     次の番を始めるのはポケモンチェック（``_pokemon_check``）の最後。ポケモンチェックの中できぜつがあれば、
     サイド・判定・交代のあとで始める（v0.3a）。
+
+    こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``）は、番の終わりに消す。「今の自分の番では、
+    もう「にげる」を宣言することができません」「次の自分の番になれば、再び「にげる」を宣言することができます」（p.311。v0.3c）。
     """
     _discard_expired_attachments(state)
+    for p in state.players:
+        for pokemon in p.in_play():
+            pokemon.retreat_failed_turn = None
     state.add_event("turn_end", player=state.current_player)
     _pokemon_check(state)
 
@@ -588,13 +597,34 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     ベンチに戻ったポケモンの特殊状態はすべて消える（p.311・p.322）。どく状態でもにげられる。
     ねむり状態・マヒ状態のポケモンは「にげる」を宣言できない（p.311・p.322。v0.3b）。宣言できないので、エネルギーを
     トラッシュする前に拒否する（``POKEMON_ASLEEP``・``POKEMON_PARALYZED``）。「ポケモンいれかえ」はにげるではない
-    （p.325）ので、この制限を受けない。こんらん（にげるときのコイン）は未実装。
+    （p.325）ので、この制限を受けない。
+
+    こんらん状態（v0.3c。p.310〜311 の手順）: 1. 宣言 → 2. にげるエネルギーの数ぶんトラッシュ → 3. 持ち主がコインを 1 枚
+    投げ、「うら」なら「にげる」は失敗（トラッシュしたエネルギーは取り戻せない）→ 4. 失敗でなければ控えと入れ替える。
+    失敗したら入れ替えず（こんらん・ダメージ・ついているカードはそのまま）、そのポケモンは今の番ではもう「にげる」を宣言
+    できない（``retreat_failed_turn``。番の終わりに消す）。番は終わらない。失敗は宣言した「にげる」の結果で、不正な
+    コマンドではない（エネルギーのトラッシュとコインは状態に残る）。にげるエネルギーが 0 でもコインは投げる（手順 3 に
+    例外がない）。入れ替える控え（手順 4 で選ぶ）はコマンドで先に指定するが、コインの結果で選べるものは変わらない。
     """
     p = _require_turn(state, cmd.player)
     active = p.active
     if not p.bench:
         raise IllegalActionError("NO_BENCH", "控えポケモンがいないので、にげるを宣言できない")
     _require_not_asleep_or_paralyzed(active, "「にげる」を宣言できない（p.311・p.322）")
+    if active.retreat_failed_turn == state.turn_number:
+        if active.conditions.confused:
+            raise IllegalActionError(
+                "RETREAT_ALREADY_FAILED",
+                f"バトル場のポケモン {active.pokemon_id} は、この番にこんらんで「にげる」に失敗したので、もう宣言できない（p.311）",
+            )
+        # 失敗したあとにベンチに戻り（こんらんが消え）、同じ番にバトル場に戻ったポケモン。p.311 の「一度「にげる」に失敗した
+        # こんらん状態のポケモン」に、こんらんでなくなったポケモンが含まれるかは原典で決められない
+        raise UnsupportedError(
+            "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED",
+            f"バトル場のポケモン {active.pokemon_id} は、この番にこんらんで「にげる」に失敗したあと、こんらんが消えている。"
+            "p.311「一度「にげる」に失敗したこんらん状態のポケモンは、今の自分の番では、もう「にげる」を宣言することができません」が"
+            "こんらんでなくなったポケモンにもかかるかは『オフィシャルブック2000』から決められないので扱わない",
+        )
     index = p.bench_index(cmd.new_active)
     if index is None:
         raise IllegalActionError("NOT_ON_BENCH", f"{cmd.new_active!r} は自分のベンチにいない")
@@ -610,6 +640,13 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
+    if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
+        # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
+        active.retreat_failed_turn = state.turn_number
+        state.add_event(
+            "retreat_failed", player=cmd.player, pokemon=active.card, pokemon_id=active.pokemon_id, discarded=discard,
+        )
+        return
     # ついているカード・ダメージはいっしょに移動する（p.311）
     p.active, p.bench[index] = p.bench[index], active
     state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active)
@@ -629,7 +666,18 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
 
     p.309 の手順: 1. ワザを使うことができなくなる効果を受けているかをチェック（ねむり・マヒ状態のポケモンは
     「ワザの使用を宣言できません」（手順 3）。p.322 も「ワザを使うことができません」。v0.3b） → 2. 必要なエネルギー
-    → 3. 宣言 → 4・5（ワザの失敗・こんらん。対応カードにない） → 6. ワザの説明にしたがって処理。
+    → 3. 宣言 → 4.（ワザを失敗させたり内容を変える効果。対応カードにない）→ 5. こんらん状態なら、持ち主がコインを 1 枚
+    投げ、「うら」ならワザがこんらんする（v0.3c）→ 6. ワザの説明にしたがって処理。
+
+    こんらん（v0.3c）: こんらん状態のポケモンもワザの使用を宣言できる（手順 1・3 にこんらんはない）。宣言（ログ ``attack``）の
+    あとでコインを投げ（``confusion_check``）、「おもて」ならワザにこんらんの影響はなく、手順 6 へ進む。「うら」ならワザが
+    こんらんし、もとのワザの内容に関わらず（ダメージ・効果・ワザ自身のコインはない）、ワザを使ったポケモン自身に 20
+    ダメージ（``_confusion_damage``。「弱点・抵抗力」の影響を受ける。p.322）。どちらの場合もワザは使ったことになり、
+    きぜつ・サイド・交代のあと番は終わる（p.309・p.322「ワザを使ったポケモン自身」・p.323「12」）。ワザの宣言が正しく
+    成り立ったあとのことなので、こんらんしたワザは不正なコマンド（``IllegalActionError``）ではない。
+
+    原典で決められない場合は、コインを投げる前に止める: ワザの説明の処理が決められない（``AttackEffect.problem``）、
+    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
@@ -644,13 +692,91 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
         raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
     if not can_pay_cost(attack.cost, state.energy_types(attacker)):
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
+    use = AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index))
+    problem = effect.problem(state, use)
+    if problem is None and attacker.conditions.confused:
+        problem = _confusion_damage_problem(state, attacker)
+    if problem is not None:
+        raise problem
 
     state.add_event("attack", player=cmd.player, pokemon=attacker.card, attack=attack.name_ja, attack_index=cmd.attack_index)
+    if attacker.conditions.confused and not _confusion_check(state, cmd.player, attacker, action="attack", effect=str(use.key)):
+        # ワザがこんらんした（p.309 の手順 5）。もとのワザの内容は処理しない
+        _confusion_damage(state, cmd.player, attacker, effect=str(use.key))
+        _finish_attack(state)
+        return
     # ワザの説明にしたがって処理する（p.309 の手順 6）。実装は DamageOnly・CoinFlipDamage（v0.2d）。
     # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける
-    effect.resolve(state, AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index)))
+    effect.resolve(state, use)
     if state.decision is None:
         _finish_attack(state)
+
+
+def _confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
+    """こんらん状態のポケモンがワザを使う・にげるときのコイン（v0.3c。p.309 の手順 5・p.311 の手順 3・p.322）。
+
+    持ち主（ワザを使う・「にげる」を宣言したポケモン側のプレイヤー）がコインを 1 枚投げ、「おもて」なら成功（True）。
+    ログ ``coin_flip``（``source: "confusion"``、``effect`` はワザなら ``AttackKey`` の文字列、にげるなら ``"retreat"``）と
+    ``confusion_check``（``player``・``pokemon``・``pokemon_id``・``action``（``attack``／``retreat``）・``result``・
+    ``succeeded``）。ワザの説明のコイン（``source: "attack"``）・ねむりのコイン（``"pokemon_check"``）と区別できる。
+    """
+    flips = flip_coins(state, player, 1, source="confusion", effect=effect, card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    succeeded = flips.results[0] is CoinSide.HEADS
+    state.add_event(
+        "confusion_check",
+        player=player,
+        pokemon=pokemon.card,
+        pokemon_id=pokemon.pokemon_id,
+        action=action,
+        result=flips.results[0].value,
+        succeeded=succeeded,
+    )
+    return succeeded
+
+
+def _confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
+    """こんらんしたワザの 20 ダメージを、原典で決められる形で計算できないなら、その理由（v0.3c）。
+
+    p.322 は「このダメージは「弱点・抵抗力」の影響を受けます」とだけ書く。こんらんのダメージが「ワザによるダメージ」
+    （p.321「8」）かは書かれていないので、ワザを使うポケモンについているプラスパワー（「このカードをつけているポケモンの
+    ワザが…ダメージを与えるとき」）・ディフェンダー（「ワザによるダメージを受けるとき」。p.257）の効果を計算するかを決め
+    られない。それらのカードがついていなければ問題はない。ついていれば、コインを投げる前に止める（コインが「おもて」なら
+    問題はないが、投げる前には分からない）。
+    """
+    modifiers = attack_damage_modifiers(state, pokemon, pokemon)
+    if not modifiers:
+        return None
+    return UnsupportedError(
+        "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+        f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
+        "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
+        "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
+    )
+
+
+def _confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> None:
+    """ワザがこんらんしたとき、ワザを使ったポケモン自身に 20 ダメージ（v0.3c。p.309 の手順 5・p.322）。
+
+    弱点・抵抗力の影響を受ける（``damage.calculate_confusion_damage``）。ワザの説明による自分へのダメージ
+    （``effects.deal_attack_damage`` の ``SELF``。v0.2f）とは別の規定なので、そちらを通さない。ログは ``confusion_damage``
+    （``player``・``pokemon``・``pokemon_id``・``effect``（こんらんしたワザの ``AttackKey``）・``amount``・``steps``・
+    ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
+    きぜつはワザのあとと同じ ``_finish_attack`` で判定する（サイドは相手が取る。p.323）。
+    """
+    calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
+    pokemon.damage += calc.final
+    state.add_event(
+        "confusion_damage",
+        player=player,
+        pokemon=pokemon.card,
+        pokemon_id=pokemon.pokemon_id,
+        effect=effect,
+        amount=calc.final,
+        steps=calc.steps,
+        weakness=calc.weakness_applied,
+        resistance=calc.resistance_applied,
+        total_damage=pokemon.damage,
+    )
 
 
 def _require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
@@ -1121,9 +1247,13 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
     """場のポケモンの特殊状態（v0.3a・v0.3b）。特殊状態になるのはバトル場のポケモンだけで、ベンチに戻ったら消える（p.311・p.322）。
 
     - どく（``poison``）: ``Poison`` で、ダメージは 10 の倍数の正の数
-    - ねむり・マヒ（``exclusive``。v0.3b）: ``Asleep`` か ``Paralyzed`` の 1 つだけ（重複しない。p.322）
+    - ねむり・マヒ・こんらん（``exclusive``。v0.3b・v0.3c）: ``Asleep``・``Paralyzed``・``Confused`` の 1 つだけ
+      （重複しない。p.322）
     - マヒ状態になった番は 1 以上・今の番まで。回復する番（``conditions.paralysis_recovery_turn``）が今の番より前なら、
       そのポケモンチェックで回復していないので違反（期限の過ぎたマヒが残らない。p.323 の 4）
+    - こんらん状態で「にげる」に失敗した記録（``retreat_failed_turn``。v0.3c）: なければ None。あれば今の番の番号で、
+      持ち主が番のプレイヤー（「今の自分の番では」。p.311）。番の終わりに消すので、対戦準備の段階・ほかの番・
+      番の終わりのあと（ポケモンチェックの途中の決定）には残らない
     """
     conditions = pokemon.conditions
     if not isinstance(conditions, SpecialConditions):
@@ -1132,9 +1262,10 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
     poison = conditions.poison
     if poison is not None and (not isinstance(poison, Poison) or type(poison.damage) is not int or poison.damage <= 0 or poison.damage % 10):
         problems.append(f"ポケモン {pokemon.pokemon_id} のどく状態 {poison!r} が正しくない（ダメージは 10 の倍数の正の数）")
+    problems.extend(_retreat_failure_problems(state, player, pokemon))
     exclusive = conditions.exclusive
-    if exclusive is not None and type(exclusive) not in (Asleep, Paralyzed):
-        return problems + [f"ポケモン {pokemon.pokemon_id} のねむり・マヒの項目 {exclusive!r} が Asleep・Paralyzed ではない"]
+    if exclusive is not None and type(exclusive) not in (Asleep, Paralyzed, Confused):
+        return problems + [f"ポケモン {pokemon.pokemon_id} のねむり・マヒ・こんらんの項目 {exclusive!r} が Asleep・Paralyzed・Confused ではない"]
     if isinstance(exclusive, Paralyzed):
         turn = exclusive.turn
         if type(turn) is not int or not 1 <= turn <= state.turn_number:
@@ -1147,6 +1278,31 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
     if conditions.names() and pokemon is not p.active:
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} が特殊状態 {conditions.names()} になっている（p.322）")
     return problems
+
+
+def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
+    """こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``。v0.3c。p.311）の整合。"""
+    failed = pokemon.retreat_failed_turn
+    if failed is None:
+        return []
+    where = f"ポケモン {pokemon.pokemon_id} の「にげる」に失敗した番 {failed!r}"
+    if state.phase in SETUP_PHASES or type(failed) is not int:
+        return [f"{where} が正しくない（{state.phase.value}）"]
+    if failed != state.turn_number or player != state.current_player:
+        return [f"{where} が今の番（{state.turn_number} 番、プレイヤー {state.current_player!r}）の持ち主の記録ではない（番の終わりに消す）"]
+    if _turn_has_ended(state):
+        return [f"{where} が番の終わりのあとに残っている"]
+    return []
+
+
+def _turn_has_ended(state: GameState) -> bool:
+    """今の番の ``turn_end`` が、最後の ``turn_start`` のあとのログにあるか。"""
+    for event in reversed(state.log):
+        if event["kind"] == "turn_end":
+            return True
+        if event["kind"] == "turn_start":
+            return False
+    return False
 
 
 def _progress_problems(state: GameState) -> list[str]:

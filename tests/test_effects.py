@@ -94,9 +94,10 @@ class DefaultRegistryTest(unittest.TestCase):
             self.assertEqual(entry.source, f"P43 p.{record['page']}", key)
             self.assertEqual(record["pdf_page"], record["page"] + 2)
         # ピカチュウの「でんげき」（p.125。v0.2f）、ドードーの「みだれづき」（p.231。v0.2d）
-        # ビードルの「どくばり」（p.19。v0.3a）、キャタピーの「いとをはく」（p.17）・パラスの「キノコのほうし」（p.38。v0.3b）
-        self.assertEqual(with_text, [AttackKey("PMCG1-002", 0), AttackKey("PMCG1-004", 0), AttackKey("PMCG1-035", 1),
-                                     AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1)])
+        # ビードルの「どくばり」（p.19。v0.3a）、キャタピーの「いとをはく」（p.17）・パラスの「キノコのほうし」（p.38。v0.3b）、
+        # ロコンの「あやしいひかり」（p.67。v0.3c）
+        self.assertEqual(with_text, [AttackKey("PMCG1-002", 0), AttackKey("PMCG1-004", 0), AttackKey("PMCG1-015", 0),
+                                     AttackKey("PMCG1-035", 1), AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1)])
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -199,7 +200,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), keys)
         # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）+ ピカチュウの 2 つ（v0.2f）
         # + ビードルの「どくばり」（v0.3a）+ キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」（v0.3b）
-        self.assertEqual(len(keys), 21)
+        # + ロコンの「あやしいひかり」（v0.3c）
+        self.assertEqual(len(keys), 22)
 
 
 if __name__ == "__main__":
