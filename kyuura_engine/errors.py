@@ -32,3 +32,14 @@ class DeckValidationError(EngineError):
     def __init__(self, problems: list[str]):
         super().__init__("INVALID_DECK", "; ".join(problems))
         self.problems = list(problems)
+
+
+class StateIntegrityError(EngineError):
+    """処理の結果の状態が不変条件（カードの保存則・場の形など）を満たさない。
+
+    ルール上の不正ではなく、エンジンの不具合か、呼び出し側が状態を直接書き換えたことを示す。
+    """
+
+    def __init__(self, problems: list[str]):
+        super().__init__("STATE_INTEGRITY", "; ".join(problems))
+        self.problems = list(problems)

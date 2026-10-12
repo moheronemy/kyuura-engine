@@ -46,7 +46,7 @@ python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check
 
 ## 使い方
 
-ゲームの状態は `GameState`、プレイヤーの操作はコマンド（`commands.py` の dataclass）です。`apply_command` はコマンドを検査してから新しい状態を返し、渡した状態は変えません。不正な操作は `IllegalActionError`、v0.1 で未対応のものは `UnsupportedError` になります。
+ゲームの状態は `GameState`、プレイヤーの操作はコマンド（`commands.py` の dataclass）です。`apply_command` はコマンドを検査してから新しい状態を返し、渡した状態は変えません。不正な操作は `IllegalActionError`、v0.1 で未対応のものは `UnsupportedError` になります。返す状態は毎回、カードの保存則などの不変条件で確かめ、破れていれば `StateIntegrityError` を投げます（エンジンの不具合か、呼び出し側が状態を書き換えたことを示す）。
 
 ```python
 from kyuura_engine import (
@@ -73,7 +73,9 @@ print(state_to_dict(state)["phase"], state.turn_number)
 ```
 
 - カード 1 枚ごとに対戦内の番号（uid）があり、コマンドは uid でカード・ポケモンを指定します。
-- 乱数は `seed` だけから作ります。同じデッキ・同じ seed・同じ操作の列なら、同じ結果になります。
+- 乱数は `seed`（0 以上の整数）だけから作ります。同じデッキ・同じ seed・同じ操作の列なら、同じ結果になります（Python 3.11・3.12・3.13 で同じ値になることを固定値のテストで確かめています）。
+- 状態は `copy.deepcopy`・`pickle` できます。状態どうしを比べるときは `==` ではなく `state_to_dict` の結果を比べてください。
+- 対戦が終わったかどうかは `state.phase` で判断します（`game_over`・`sudden_death`・`halted`）。`halted` のときは `state.result` が `None` です。
 - ジャンケンの結果は外から渡します（エンジンは決めません）。
 - `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。
 
@@ -145,5 +147,5 @@ kyuura_engine/
   data/card_verification.json  『オフィシャルブック2000』との照合の記録
 scripts/extract_kyuura_cards.py  kyuura から写しを作る
 tests/                           自動テスト（unittest）
-docs/                            ルールの仕様、実装状況、データの由来
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー
 ```

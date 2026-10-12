@@ -4,7 +4,6 @@
 ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 の data/cards.json。照合は kyuura_engine/data/card_verification.json。
 """
 
-import json
 import subprocess
 import unittest
 from pathlib import Path

@@ -121,6 +121,12 @@ class KnockOutTest(unittest.TestCase):
         self.assertEqual(state.phase, Phase.PROMOTE_ACTIVE)
         self.assertEqual(state.pending_promotions, [1])
 
+    def test_prize_index_out_of_range(self):
+        for index in (-1, len(self.state.players[0].prizes)):
+            with self.assertRaises(IllegalActionError) as ctx:
+                apply_command(self.state, TakePrize(0, index))
+            self.assertEqual(ctx.exception.code, "INVALID_PRIZE_INDEX")
+
     def test_defender_promotes_from_bench_then_turn_passes(self):
         """ベンチからすぐに代わりのポケモンを出す（p.313）。その後、番が終わる（p.309）。"""
         state = apply_command(self.state, TakePrize(0, 0))

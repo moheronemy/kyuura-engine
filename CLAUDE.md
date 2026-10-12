@@ -28,5 +28,7 @@
 - 対戦のテストは、正式な開始（`new_game`、60 枚のデッキ、サイド 6 枚）を使います。盤面を直接作る `tests/helpers.py` の `build_test_state` は、1 か所の規定を確かめるテストだけに使い、対戦準備やデッキのテストには使いません。
 - 乱数は `GameState.rng`（seed から作る）だけを使います。
 - `apply_command` は渡された状態を変えません（clone してから処理する）。この性質を壊さないでください。
+- `new_game`・`apply_command` は、返す状態を `check_invariants` で確かめます（破れていれば `StateIntegrityError`）。ゾーン・段階・保留中の決定を加えたら、その不変条件も `check_invariants` に加えます。段階やコマンドの種類を加えたら、tests/test_state_integrity.py の `ALLOWED`・`sample_commands` も更新します。
+- 乱数・カードの番号の付け方・状態の形を変えると、tests/test_reproducibility.py の固定値が変わります。意図した変更のときだけ値を更新し、理由をコミットに書きます。
 - docs（README.md、docs/implementation-status.md など）を実態に合わせます。対応していないものを対応済みと書かないでください。
 - テスト: `python3 -m unittest`（リポジトリの直下。標準ライブラリだけ）。

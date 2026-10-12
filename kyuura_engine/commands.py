@@ -184,7 +184,7 @@ def command_to_dict(command) -> dict:
 def command_from_dict(data: dict):
     data = dict(data)
     name = data.pop("type", None)
-    cls = COMMAND_TYPES.get(name)
+    cls = COMMAND_TYPES.get(name) if isinstance(name, str) else None
     if cls is None:
         raise IllegalActionError("UNKNOWN_COMMAND", f"知らないコマンドの種類 {name!r}")
     names = {f.name for f in fields(cls)}

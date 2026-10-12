@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 from .state import GameState, PokemonInPlay
@@ -38,6 +39,8 @@ def state_to_dict(state: GameState) -> dict[str, Any]:
         "rules": state.rules.id,
         "card_data": {"repository": state.card_data.repository, "commit": state.card_data.commit, "path": state.card_data.path},
         "seed": state.seed,
+        # 乱数の状態（今後のコイン・山札を切る処理の結果を決める）。同じ値なら同じ乱数の続きになる
+        "rng_state_sha256": hashlib.sha256(repr(state.rng.getstate()).encode("ascii")).hexdigest(),
         "phase": state.phase.value,
         "turn_number": state.turn_number,
         "current_player": state.current_player,

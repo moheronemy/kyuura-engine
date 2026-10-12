@@ -14,7 +14,6 @@ uid になります。ゾーン（山札・手札など）は uid のリスト�
 
 from __future__ import annotations
 
-import copy
 import random
 from dataclasses import dataclass, field
 from enum import Enum
@@ -34,9 +33,11 @@ class Phase(str, Enum):
     PROMOTE_ACTIVE = "promote_active"  # バトル場のポケモンがいなくなったプレイヤーがベンチから出す
     GAME_OVER = "game_over"
     SUDDEN_DEATH = "sudden_death"  # サドン・デスに移った（延長戦の開始は v0.1 では未実装）
-    HALTED = "halted"  # 未解決の裁定に当たったので止めた
+    HALTED = "halted"  # 未解決の裁定に当たったので止めた（終端。再開する API はない）
 
 
+# この段階になったら、どのコマンドも受け付けない。GAME_OVER・SUDDEN_DEATH は result、HALTED は halt を持つ
+# （HALTED の result は None なので、「result が None なら続いている」とは判断できない）
 TERMINAL_PHASES = frozenset({Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED})
 
 
@@ -152,13 +153,30 @@ class GameState:
     log: tuple[Mapping[str, Any], ...] = ()
 
     def clone(self) -> GameState:
-        new = copy.copy(self)
+        new = object.__new__(type(self))
+        new.__dict__.update(self.__dict__)
         new.rng = random.Random()
         new.rng.setstate(self.rng.getstate())
         new.players = [p.clone() for p in self.players]
         new.pending_prizes = dict(self.pending_prizes)
         new.pending_promotions = list(self.pending_promotions)
         return new
+
+    # copy.deepcopy・pickle のため。読み取り専用の Mapping（MappingProxyType）はそのままでは
+    # pickle できないので、普通の dict にして渡し、もどすときに読み取り専用にもどす。
+    def __getstate__(self) -> dict[str, Any]:
+        data = dict(self.__dict__)
+        data["cards"] = dict(self.cards)
+        data["definitions"] = dict(self.definitions)
+        data["log"] = tuple(dict(event) for event in self.log)
+        return data
+
+    def __setstate__(self, data: dict[str, Any]) -> None:
+        data = dict(data)
+        data["cards"] = freeze_mapping(data["cards"])
+        data["definitions"] = freeze_mapping(data["definitions"])
+        data["log"] = tuple(MappingProxyType(dict(event)) for event in data["log"])
+        self.__dict__.update(data)
 
     # --- 読み取り用 ---
 

@@ -1,5 +1,8 @@
 """再現性と状態の独立（同じデッキ・同じ seed・同じ操作列なら同じ結果になる）。"""
 
+import hashlib
+import json
+import random
 import unittest
 
 from kyuura_engine import AttachEnergy, EndTurn, apply_command, new_game, state_to_dict
@@ -26,6 +29,55 @@ class ReproducibilityTest(unittest.TestCase):
     def test_seed_must_be_an_integer(self):
         with self.assertRaises(TypeError):
             new_game(FIRE_DECK, WATER_FIGHTING_DECK, "42")
+
+    def test_negative_seed_is_rejected(self):
+        """random.Random は負の seed を絶対値として扱うので、-5 と 5 が同じ対戦になってしまう。受け付けない。"""
+        with self.assertRaises(ValueError):
+            new_game(FIRE_DECK, WATER_FIGHTING_DECK, -5)
+
+    def test_serialized_state_includes_rng_state(self):
+        """state_to_dict が同じなら、乱数の状態も同じ（今後のコイン・山札を切る処理の結果が同じ）であること。"""
+        a = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
+        b = a.clone()
+        b.rng.random()
+        self.assertNotEqual(state_to_dict(a), state_to_dict(b))
+
+
+class GoldenValueTest(unittest.TestCase):
+    """乱数の結果を固定値と比べる（Python 3.11・3.12・3.13 で同じ値になることを確かめた）。
+
+    ここが失敗したら、同じ seed・同じ操作列で以前と違う対戦になっている。記録した対戦を再生できなく
+    なるので、乱数の使い方・カードの番号の付け方・状態の形を意図して変えたのでない限り、エンジンの不具合。
+    意図した変更なら、値を更新し、その理由をコミットに書く。
+    """
+
+    def test_opening_deal_for_a_fixed_seed(self):
+        state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 12345)
+        self.assertEqual(state.players[0].hand, [37, 18, 53, 45, 8, 3, 15])
+        self.assertEqual(state.players[1].hand, [118, 96, 64, 114, 77, 116, 88])
+        self.assertEqual(state.players[0].deck[:5], [49, 21, 34, 1, 30])
+        self.assertEqual(state.players[1].deck[:5], [86, 78, 105, 106, 100])
+
+    def test_scripted_game_for_a_fixed_seed(self):
+        state, commands = play_until_end(new_game(FIRE_DECK, WATER_FIGHTING_DECK, 42))
+        self.assertEqual((len(commands), state.result.winner, state.turn_number), (37, 1, 12))
+        self.assertEqual(state.result.conditions, ((1, "OPPONENT_CANNOT_FIELD_ACTIVE"),))
+        text = json.dumps(state_to_dict(state), sort_keys=True, ensure_ascii=False)
+        self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), "83f9ccbfc48be56325d17b6b33debedd781d41f2647f7eacee5fca8190355bf3")
+
+
+class GlobalRandomTest(unittest.TestCase):
+    """エンジンはモジュールの random（グローバルな乱数）を使わない。"""
+
+    def test_global_random_is_neither_used_nor_consulted(self):
+        results = []
+        for global_seed in (1, 2):
+            random.seed(global_seed)
+            before = random.getstate()
+            state, _ = play_until_end(new_game(FIRE_DECK, WATER_FIGHTING_DECK, 3))
+            self.assertEqual(random.getstate(), before)
+            results.append(state_to_dict(state))
+        self.assertEqual(results[0], results[1])
 
 
 class IndependenceTest(unittest.TestCase):
@@ -57,6 +109,7 @@ class IndependenceTest(unittest.TestCase):
     def test_two_games_from_the_same_decks_are_independent(self):
         deck0, deck1 = list(FIRE_DECK), list(WATER_FIGHTING_DECK)
         a = new_game(deck0, deck1, 5)
+        self.assertEqual((deck0, deck1), (FIRE_DECK, WATER_FIGHTING_DECK))  # new_game は渡したリストを変えない
         deck0.clear()
         b = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 5)
         self.assertEqual(state_to_dict(a), state_to_dict(b))

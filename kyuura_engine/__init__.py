@@ -24,7 +24,7 @@ from .commands import (
 )
 from .deck import deck_problems, expand_decklist, validate_deck
 from .engine import apply_command, check_invariants, new_game
-from .errors import DeckValidationError, EngineError, IllegalActionError, UnsupportedError
+from .errors import DeckValidationError, EngineError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
 from .state import GameResult, GameState, Phase
@@ -54,6 +54,7 @@ __all__ = [
     "ReportJankenResult",
     "Retreat",
     "RuleSet",
+    "StateIntegrityError",
     "TakePrize",
     "UnsupportedError",
     "UseAttack",

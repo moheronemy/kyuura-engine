@@ -8,6 +8,8 @@
 
 - ``apply_command`` は渡された状態を変えず、新しい状態を返します。操作が不正なら例外を投げ、
   渡した状態はそのまま使えます。
+- ``new_game`` と ``apply_command`` は、返す状態を必ず ``check_invariants`` で確かめます。
+  カードの保存則などが破れていたら、状態を返さずに ``StateIntegrityError`` を投げます。
 - 乱数（山札を切る）は ``seed`` から作った乱数だけを使います。同じデッキ・同じ seed・同じ操作の
   列なら、同じ結果になります。
 - ジャンケンの結果は外から受け取ります（``ReportJankenResult``）。
@@ -38,9 +40,10 @@ from .commands import (
 )
 from .damage import calculate_attack_damage
 from .deck import deck_problems
-from .errors import DeckValidationError, IllegalActionError, UnsupportedError
+from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
+    TERMINAL_PHASES,
     CardInstance,
     DataSource,
     GameResult,
@@ -69,6 +72,8 @@ def new_game(
     """デッキを検査し、山札を切り、手札を 7 枚ずつ配り、切り直しまで済ませた状態を返す（p.308）。
 
     この後は ``PlaceStartingPokemon`` で両方のプレイヤーがポケモンを出す。
+    ``seed`` は 0 以上の整数。切り直しの補償が原文で決められない場合は、``Phase.HALTED`` の状態を返す
+    （例外は投げない。``state.phase`` を確かめること）。
     """
     pool = pool or load_card_pool()
     problems = [f"player {p}: {problem}" for p, deck in enumerate((deck0, deck1)) for problem in deck_problems(deck, pool, rules)]
@@ -76,6 +81,9 @@ def new_game(
         raise DeckValidationError(problems)
     if not isinstance(seed, int) or isinstance(seed, bool):
         raise TypeError("seed は整数")
+    if seed < 0:
+        # random.Random は負の seed を絶対値として扱うので、-5 と 5 が同じ対戦になってしまう
+        raise ValueError("seed は 0 以上の整数")
 
     cards: dict[int, CardInstance] = {}
     players = []
@@ -105,6 +113,7 @@ def new_game(
     for player in PLAYERS:
         _shuffle_deck(state, player)
     _deal_opening_hands(state)
+    _require_integrity(state)
     return state
 
 
@@ -179,7 +188,12 @@ def _deal_opening_hands(state: GameState) -> None:
 
 
 def apply_command(state: GameState, command) -> GameState:
-    """コマンドを処理した新しい状態を返す。渡した ``state`` は変えない。"""
+    """コマンドを処理した新しい状態を返す。渡した ``state`` は変えない。
+
+    - ルール上できない操作: ``IllegalActionError``
+    - v0.1 で未対応の操作・終わった（止めた）対戦への操作: ``UnsupportedError`` / ``IllegalActionError``（GAME_OVER）
+    - 処理の結果が不変条件を満たさない（エンジンの不具合か、渡した状態が壊れている）: ``StateIntegrityError``
+    """
     if isinstance(command, UNSUPPORTED_COMMANDS):
         raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は v0.1 では未対応")
     handler = _HANDLERS.get(type(command))
@@ -194,7 +208,15 @@ def apply_command(state: GameState, command) -> GameState:
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
     handler(new, command)
+    _require_integrity(new)
     return new
+
+
+def _require_integrity(state: GameState) -> None:
+    """返す状態がカードの保存則・場の形を満たすことを確かめる。満たさなければ返さない。"""
+    problems = check_invariants(state)
+    if problems:
+        raise StateIntegrityError(problems)
 
 
 def _require_phase(state: GameState, *phases: Phase) -> None:
@@ -541,16 +563,34 @@ _HANDLERS: dict[type, Callable[[GameState, object], None]] = {
 
 
 def check_invariants(state: GameState) -> list[str]:
-    """状態の整合性の問題を返す（テスト用）。各カードがちょうど 1 か所にあること、など。"""
+    """状態の不変条件の問題を返す。問題がなければ空のリスト。
+
+    ``new_game`` と ``apply_command`` は、返す前に必ずこれで確かめる（StateIntegrityError）。
+
+    - カードの保存則: 対戦のすべてのカード（``state.cards``）が、持ち主のゾーンのどこか 1 か所にだけある。
+      未知の番号のカードはない。``new_game`` で作った対戦では、カードの組がデッキリストと同じ。
+    - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満、
+      ベンチは 5 匹まで、サイドはルールの枚数まで。
+    - 段階との対応: 番の途中は両方のバトル場にポケモンがいる。サイドを取る・バトル場に出す段階には、
+      それを待っているプレイヤーがいる。終わった段階には結果か止めた理由がある。
+    """
     problems: list[str] = []
+    rules = state.rules
     seen: dict[int, str] = {}
+
+    for uid, card in state.cards.items():
+        if card.uid != uid or card.owner not in PLAYERS:
+            problems.append(f"カードの表の {uid} 番が {card} になっている")
 
     def place(uid: int, player: int, zone: str) -> None:
         where = f"プレイヤー {player} の {zone}"
+        if uid not in state.cards:
+            problems.append(f"未知のカード {uid!r} が {where} にある")
+            return
         if uid in seen:
             problems.append(f"カード {uid} が {seen[uid]} と {where} の 2 か所にある")
         seen[uid] = where
-        if uid in state.cards and state.cards[uid].owner != player:
+        if state.cards[uid].owner != player:
             problems.append(f"カード {uid} が持ち主でない {where} にある")
 
     for player, p in enumerate(state.players):
@@ -561,17 +601,72 @@ def check_invariants(state: GameState) -> list[str]:
             place(pokemon.card, player, "場")
             for uid in pokemon.energy:
                 place(uid, player, "場（ついているエネルギー）")
-                if not state.card_def(uid).is_basic_energy:
-                    problems.append(f"エネルギーでないカード {uid} がポケモンについている")
+                if uid in state.cards and not state.card_def(uid).is_basic_energy:
+                    problems.append(f"基本エネルギーでないカード {uid} がポケモンについている")
+            if pokemon.card not in state.cards:
+                continue
+            definition = state.card_def(pokemon.card)
+            if definition.category != "pokemon":
+                problems.append(f"ポケモンでないカード {pokemon.card} が場にポケモンとしてある")
+                continue
             if pokemon.damage < 0 or pokemon.damage % 10:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
-            if pokemon.damage >= state.card_def(pokemon.card).hp:
+            if pokemon.damage >= definition.hp:
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
-        if len(p.bench) > state.rules.max_bench:
+        if len(p.bench) > rules.max_bench:
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
-        if state.phase is Phase.MAIN and p.active is None:
-            problems.append(f"プレイヤー {player} のバトル場にポケモンがいないまま番が進んでいる")
+        if len(p.prizes) > rules.prize_count:
+            problems.append(f"プレイヤー {player} のサイドが {len(p.prizes)} 枚（{rules.prize_count} 枚まで）")
+        if p.mulligan_draws_remaining < 0:
+            problems.append(f"プレイヤー {player} の切り直しの補償の残りが負")
     missing = set(state.cards) - set(seen)
     if missing:
         problems.append(f"どこにもないカード {sorted(missing)}")
+
+    # new_game で作った対戦は、カードの組が対戦開始時のデッキリストと同じ
+    if any(state.decklists):
+        for owner in PLAYERS:
+            ids = sorted(c.card_id for c in state.cards.values() if c.owner == owner)
+            if ids != sorted(state.decklists[owner]):
+                problems.append(f"プレイヤー {owner} のカードの組が対戦開始時のデッキと違う")
+
+    phase = state.phase
+    if phase in TERMINAL_PHASES:
+        if phase is Phase.HALTED and state.halt is None:
+            problems.append("止めた理由がないまま HALTED になっている")
+        if phase is not Phase.HALTED and state.result is None:
+            problems.append("結果がないまま対戦が終わっている")
+        return problems
+    if state.result is not None or state.halt is not None:
+        problems.append(f"結果か止めた理由があるのに {phase.value} になっている")
+
+    for player, p in enumerate(state.players):
+        if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE):
+            problems.append(f"プレイヤー {player} のバトル場にポケモンがいないまま {phase.value} になっている")
+    if phase is Phase.MAIN:
+        if state.current_player not in PLAYERS:
+            problems.append(f"番のプレイヤー {state.current_player!r} が正しくない")
+        if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn:
+            problems.append(f"この番にエネルギーをつけた回数 {state.energy_attachments_this_turn} が正しくない")
+    if phase is Phase.TAKE_PRIZE:
+        if not state.pending_prizes:
+            problems.append("サイドを取る段階なのに、サイドを取るプレイヤーがいない")
+        for player, count in state.pending_prizes.items():
+            if player not in PLAYERS or not 0 < count <= len(state.players[player].prizes):
+                problems.append(f"サイドを取る枚数 {player}: {count} が正しくない")
+    elif state.pending_prizes:
+        problems.append(f"{phase.value} なのに、取るサイドが残っている")
+    if phase is Phase.PROMOTE_ACTIVE:
+        if not state.pending_promotions:
+            problems.append("バトル場に出す段階なのに、出すプレイヤーがいない")
+        for player in state.pending_promotions:
+            if player not in PLAYERS or state.players[player].active is not None or not state.players[player].bench:
+                problems.append(f"バトル場に出すプレイヤー {player} の場の形が正しくない")
+        for player in PLAYERS:
+            if player not in state.pending_promotions and state.players[player].active is None:
+                problems.append(f"プレイヤー {player} のバトル場にポケモンがいないのに、出す順番に入っていない")
+    elif state.pending_promotions:
+        problems.append(f"{phase.value} なのに、バトル場に出すプレイヤーが残っている")
+    if phase is Phase.SETUP_MULLIGAN_DRAW and not any(p.mulligan_draws_remaining for p in state.players):
+        problems.append("切り直しの補償を引く段階なのに、引く権利のあるプレイヤーがいない")
     return problems

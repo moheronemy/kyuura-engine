@@ -10,7 +10,7 @@ from kyuura_engine import (
 
 from tests.helpers import (
     DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, HITMONCHAN, MACHOP, PONYTA, RATTATA, STARYU, WATER,
-    WATER_FIGHTING_DECK, active, build_test_state, energy_in_hand, find_seed, finish_setup, place_all,
+    WATER_FIGHTING_DECK, active, build_test_state, find_seed, finish_setup, place_all,
 )
 
 
@@ -98,6 +98,17 @@ class TurnOwnershipTest(unittest.TestCase):
         self.assertEqual(ctx.exception.code, "INVALID_PLAYER")
 
 
+class AfterTurnEndTest(unittest.TestCase):
+    def test_previous_player_cannot_act_after_end_turn(self):
+        state = build_test_state([{"active": GROWLITHE, "hand": [FIRE, PONYTA]}, {"active": STARYU}])
+        fire, ponyta = state.players[0].hand
+        state = apply_command(state, EndTurn(0))
+        for command in (EndTurn(0), PlayBasicToBench(0, ponyta), AttachEnergy(0, fire, active(state, 0).card), UseAttack(0, 0)):
+            with self.assertRaises(IllegalActionError) as ctx:
+                apply_command(state, command)
+            self.assertEqual(ctx.exception.code, "NOT_YOUR_TURN", command)
+
+
 class BenchTest(unittest.TestCase):
     """ベンチは5匹まで。1回の番で出す数に制限はない（p.309）。"""
 
@@ -113,6 +124,14 @@ class BenchTest(unittest.TestCase):
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, PlayBasicToBench(0, hand[5]))
         self.assertEqual(ctx.exception.code, "BENCH_FULL")
+
+    def test_same_card_cannot_be_played_twice(self):
+        state = build_test_state([{"active": GROWLITHE, "hand": [PONYTA]}, {"active": STARYU}])
+        ponyta = state.players[0].hand[0]
+        state = apply_command(state, PlayBasicToBench(0, ponyta))
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(state, PlayBasicToBench(0, ponyta))
+        self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
 
     def test_energy_cannot_go_to_bench(self):
         state = build_test_state([{"active": GROWLITHE, "hand": [FIRE]}, {"active": STARYU}])
@@ -229,6 +248,29 @@ class RetreatTest(unittest.TestCase):
             apply_command(state, Retreat(0, tuple(active(state, 0).energy), 999))
         self.assertEqual(ctx.exception.code, "NO_BENCH")
 
+    def test_retreat_with_full_bench(self):
+        """ベンチが控えポケモンでいっぱい（5 匹）でも、にげられる（p.311）。"""
+        state = build_test_state([
+            {"active": {"card": GROWLITHE, "energy": [FIRE]}, "bench": [PONYTA, RATTATA, DIGLETT, MACHOP, STARYU]},
+            {"active": STARYU},
+        ])
+        target = state.players[0].bench[2].card
+        state = apply_command(state, Retreat(0, tuple(active(state, 0).energy), target))
+        self.assertEqual(active(state, 0).card, target)
+        self.assertEqual(len(state.players[0].bench), 5)
+
+    def test_not_enough_energy_to_retreat(self):
+        """にげるエネルギーぶんのエネルギーがついていなければ、にげられない（p.310）。"""
+        state = build_test_state([
+            {"active": {"card": HITMONCHAN, "energy": [FIGHTING]}, "bench": [DIGLETT]},  # にげる 2
+            {"active": STARYU},
+        ])
+        diglett = state.players[0].bench[0].card
+        for discard in ((), tuple(active(state, 0).energy)):
+            with self.assertRaises(IllegalActionError) as ctx:
+                apply_command(state, Retreat(0, discard, diglett))
+            self.assertEqual(ctx.exception.code, "WRONG_RETREAT_COST")
+
     def test_cannot_retreat_on_opponents_turn(self):
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(self.state, Retreat(1, (), 0))
@@ -289,6 +331,13 @@ class CommandDictTest(unittest.TestCase):
             command_from_dict({"type": "use_attack", "player": 0})
         self.assertEqual(ctx.exception.code, "BAD_COMMAND")
 
+    def test_non_string_type_is_unknown_command(self):
+        """JSON から来た type が文字列でない（リストなど）ときも、TypeError ではなくエンジンの例外にする。"""
+        for name in (["use_attack"], None, 3):
+            with self.assertRaises(IllegalActionError) as ctx:
+                command_from_dict({"type": name, "player": 0})
+            self.assertEqual(ctx.exception.code, "UNKNOWN_COMMAND")
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -297,7 +346,8 @@ if __name__ == "__main__":
 class CommandFieldTypeTest(unittest.TestCase):
     def test_bool_or_string_is_not_a_uid(self):
         state = build_test_state([{"active": GROWLITHE, "hand": [PONYTA, FIRE]}, {"active": STARYU}])
-        for command in (PlayBasicToBench(0, True), UseAttack(0, "0"), Retreat(0, [1], 2), EndTurn(False)):
+        for command in (PlayBasicToBench(0, True), UseAttack(0, "0"), Retreat(0, [1], 2), EndTurn(False),
+                        PlayBasicToBench(0, PONYTA)):  # カード id（文字列）は uid ではない
             with self.assertRaises(IllegalActionError) as ctx:
                 apply_command(state, command)
             self.assertEqual(ctx.exception.code, "BAD_COMMAND", command)

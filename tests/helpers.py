@@ -58,6 +58,11 @@ VENUSAUR = "PMCG1-011"
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
 WATER_FIGHTING_DECK = expand_decklist({STARYU: 4, SEEL: 4, DIGLETT: 4, MACHOP: 4, HITMONCHAN: 4, WATER: 20, FIGHTING: 20})
+# たねポケモン 40 枚（10 種 × 4）+ エネルギー 20 枚。手札がたねポケモンだけになる seed を探すのに使う
+MANY_BASICS = expand_decklist({p: 4 for p in (PONYTA, GROWLITHE, STARYU, SEEL, VOLTORB, DIGLETT, MACHOP, HITMONCHAN, RATTATA, DRATINI)} | {FIRE: 20})
+# たねポケモンが少ない 60 枚のデッキ（切り直しが起こりやすい）
+ONE_BASIC = expand_decklist({MACHOP: 1, FIGHTING: 59})
+FEW_BASICS = expand_decklist({SEEL: 4, WATER: 56})
 
 
 def find_seed(deck0, deck1, predicate, start: int = 0, limit: int = 5000) -> int:

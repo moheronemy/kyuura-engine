@@ -7,19 +7,14 @@ import unittest
 
 from kyuura_engine import (
     DrawMulliganCards, IllegalActionError, Phase, PlaceStartingPokemon, ReportJankenResult, UnsupportedError,
-    apply_command, check_invariants, expand_decklist, new_game, state_to_dict,
+    apply_command, check_invariants, new_game, state_to_dict,
 )
 
 from tests.helpers import (
-    DIGLETT, DRATINI, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, HITMONCHAN, MACHOP, PONYTA, RATTATA, SEEL, STARYU,
-    VOLTORB, WATER, WATER_FIGHTING_DECK, basics_in_hand, energy_in_hand, find_seed, finish_setup, place_all,
+    FEW_BASICS, FIRE_DECK, MANY_BASICS, ONE_BASIC, WATER_FIGHTING_DECK, basics_in_hand, energy_in_hand, find_seed,
+    finish_setup, place_all,
 )
 
-# たねポケモン 40 枚（10 種 × 4）+ エネルギー 20 枚。手札がたねポケモンだけになる seed を探すのに使う
-MANY_BASICS = expand_decklist({p: 4 for p in (PONYTA, GROWLITHE, STARYU, SEEL, VOLTORB, DIGLETT, MACHOP, HITMONCHAN, RATTATA, DRATINI)} | {FIRE: 20})
-# たねポケモンが少ないデッキ（切り直しが起こりやすい）
-ONE_BASIC = expand_decklist({MACHOP: 1, FIGHTING: 59})
-FEW_BASICS = expand_decklist({SEEL: 4, WATER: 56})
 
 
 def no_mulligan(state):
@@ -36,6 +31,13 @@ class OpeningHandTest(unittest.TestCase):
             self.assertEqual(len(p.hand), 7)
             self.assertEqual(len(p.deck), 53)
         self.assertEqual(check_invariants(state), [])
+        # 対戦開始の時点で、各プレイヤーのカードはデッキの 60 枚そのまま
+        self.assertEqual(len(state.cards), 120)
+        for player, deck in enumerate((FIRE_DECK, WATER_FIGHTING_DECK)):
+            owned = sorted(c.card_id for c in state.cards.values() if c.owner == player)
+            self.assertEqual(owned, sorted(deck))
+            in_zones = state.players[player].hand + state.players[player].deck
+            self.assertEqual(sorted(state.cards[u].card_id for u in in_zones), sorted(deck))
 
     def test_hand_keeps_basic_pokemon(self):
         """切り直しは、手札にたねポケモンが来るまでくりかえす（p.308）。"""
@@ -82,6 +84,13 @@ class PlacementTest(unittest.TestCase):
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, PlaceStartingPokemon(0, state.players[0].deck[0]))
         self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
+
+    def test_same_card_cannot_be_active_and_bench(self):
+        basics = basics_in_hand(self.state, 0)
+        for command in (PlaceStartingPokemon(0, basics[0], (basics[0],)), PlaceStartingPokemon(0, basics[0], (basics[1], basics[1]))):
+            with self.assertRaises(IllegalActionError) as ctx:
+                apply_command(self.state, command)
+            self.assertEqual(ctx.exception.code, "DUPLICATE_CARD")
 
     def test_cannot_place_twice(self):
         state = place_all(self.state, 0)
@@ -150,13 +159,17 @@ class MulliganTest(unittest.TestCase):
             apply_command(state, DrawMulliganCards(0, 1))
         self.assertEqual(ctx.exception.code, "NO_MULLIGAN_DRAW")
 
+        self.assertEqual([len(p.deck) for p in state.players], [47, 47])
         hand = len(state.players[1].hand)
-        counts = [2, 0, 1] + [2] * mulligans  # 2 枚・引かない・1 枚もよい
-        drawn = 0
-        for count in counts[:mulligans]:
+        counts = [2, 0] + [1] * (mulligans - 2)  # 2 枚・引かない・1 枚のどれでもよい
+        drawn = []
+        for count in counts:
+            top = state.players[1].deck[:count]
             state = apply_command(state, DrawMulliganCards(1, count))
-            drawn += count
-        self.assertEqual(len(state.players[1].hand), hand + drawn)
+            drawn += top  # 山札の一番上から引く
+        self.assertEqual(state.players[1].hand[hand:], drawn)
+        self.assertEqual(len(state.players[1].deck), 47 - len(drawn))
+        self.assertEqual(len(state.players[0].deck), 47)  # 切り直したプレイヤーは引かない
         self.assertEqual(state.phase, Phase.SETUP_FIRST_PLAYER)
         self.assertEqual(check_invariants(state), [])
 
@@ -183,6 +196,32 @@ class MulliganTest(unittest.TestCase):
             place_all(state, 0)
         self.assertEqual(ctx.exception.code, "UNRESOLVED_MULLIGAN_COMPENSATION")
         self.assertEqual(state_to_dict(state), before)
+
+    def test_halted_state_is_consistent_and_terminal(self):
+        """止めるのは new_game の中（切り直しが終わった時点、ポケモンを出す前）。状態は壊れておらず、再開はできない。"""
+        seed = find_seed(FEW_BASICS, FEW_BASICS, lambda s: s.phase is Phase.HALTED)
+        state = new_game(FEW_BASICS, FEW_BASICS, seed)
+        self.assertEqual(check_invariants(state), [])
+        self.assertIsNone(state.result)  # 勝敗は決まっていない（終わったかどうかは phase で判断する）
+        self.assertEqual(state.mulligan_rounds[0], (0, 1))
+        self.assertEqual(len(state.mulligan_rounds[-1]), 1)
+        for player in (0, 1):
+            p = state.players[player]
+            self.assertEqual((len(p.hand), len(p.deck), p.prizes, p.active, p.bench), (7, 53, [], None, []))
+            self.assertTrue(basics_in_hand(state, player))  # 切り直しの手順そのものは最後まで済んでいる
+            self.assertEqual(p.mulligan_draws_remaining, 0)
+        self.assertEqual([p.mulligans for p in state.players], [
+            sum(1 for r in state.mulligan_rounds if player in r) for player in (0, 1)])
+        self.assertEqual(state.log[-1]["kind"], "halted")
+        # どのコマンドも受け付けない（ルール上の正しい操作でも）
+        basic = basics_in_hand(state, 0)[0]
+        for command in (PlaceStartingPokemon(0, basic), DrawMulliganCards(1, 2), ReportJankenResult(0)):
+            with self.assertRaises(UnsupportedError) as ctx:
+                apply_command(state, command)
+            self.assertEqual(ctx.exception.code, "UNRESOLVED_MULLIGAN_COMPENSATION")
+        # 複製しても止まったまま
+        with self.assertRaises(UnsupportedError):
+            apply_command(state.clone(), PlaceStartingPokemon(0, basic))
 
 
 if __name__ == "__main__":

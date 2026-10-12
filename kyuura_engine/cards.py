@@ -16,7 +16,8 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
 from importlib import resources
-from typing import Iterable
+from types import MappingProxyType
+from typing import Any, Iterable, Mapping
 
 
 class EnergyType(str, Enum):
@@ -222,9 +223,9 @@ def classify_record(record: dict) -> CardDefinition:
 class CardPool:
     """読み込んだカードの定義と、出典の情報。"""
 
-    definitions: dict[str, CardDefinition]
+    definitions: Mapping[str, CardDefinition]
     playable_ids: frozenset[str]
-    source: dict
+    source: Mapping[str, Any]
 
     def get(self, card_id: str) -> CardDefinition:
         return self.definitions[card_id]
@@ -239,7 +240,12 @@ def pool_from_extract(extract: dict) -> CardPool:
     playable = frozenset(
         card_id for card_id in extract["pool_v0_1"] if definitions[card_id].supported
     )
-    return CardPool(definitions=definitions, playable_ids=playable, source=dict(extract["source"]))
+    # load_card_pool の結果はプロセス内で共有されるので、書き換えられないようにする
+    return CardPool(
+        definitions=MappingProxyType(definitions),
+        playable_ids=playable,
+        source=MappingProxyType(dict(extract["source"])),
+    )
 
 
 def read_extract() -> dict:
