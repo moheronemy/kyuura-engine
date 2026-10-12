@@ -17,9 +17,11 @@ from dataclasses import fields
 
 from kyuura_engine import (
     AttachEnergy, DrawMulliganCards, EndTurn, EvolvePokemon, IllegalActionError, Phase, PlaceStartingPokemon,
-    PlayBasicToBench, PlayTrainer, PromoteActive, ReportJankenResult, Retreat, TakePrize, UnsupportedError, UseAttack,
-    UsePokemonPower, apply_command, check_invariants, load_card_pool, new_game, state_to_dict,
+    PlayBasicToBench, PlayTrainer, PromoteActive, ReportJankenResult, ResolveDecision, Retreat, TakePrize,
+    UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, load_card_pool, new_game,
+    state_to_dict,
 )
+from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.commands import COMMAND_TYPES
 from kyuura_engine.errors import StateIntegrityError
 from kyuura_engine.state import PokemonInPlay
@@ -27,6 +29,7 @@ from kyuura_engine.state import PokemonInPlay
 from tests.helpers import (
     FEW_BASICS, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, HITMONCHAN, MACHOP, ONE_BASIC, PONYTA, RATTATA, SEEL, STARYU,
     WATER, WATER_FIGHTING_DECK, build_test_state, find_seed, place_all, play_until_end, replay, scripted_command,
+    two_step_effects,
 )
 
 
@@ -153,8 +156,9 @@ ALLOWED = {
     Phase.SETUP_MULLIGAN_DRAW: {DrawMulliganCards},
     Phase.SETUP_FIRST_PLAYER: {ReportJankenResult},
     Phase.MAIN: {PlayBasicToBench, AttachEnergy, Retreat, UseAttack, EndTurn},
-    Phase.TAKE_PRIZE: {TakePrize},
-    Phase.PROMOTE_ACTIVE: {PromoteActive},
+    Phase.TAKE_PRIZE: {TakePrize, ResolveDecision},
+    Phase.PROMOTE_ACTIVE: {PromoteActive, ResolveDecision},
+    Phase.DECISION: {ResolveDecision},  # v0.2a（ワザの効果の途中の決定。製品のカードでは起こらない）
 }
 
 
@@ -179,8 +183,19 @@ def states_in_every_phase():
             found[Phase.TAKE_PRIZE] = seen[Phase.TAKE_PRIZE]
             found[Phase.PROMOTE_ACTIVE] = seen[Phase.PROMOTE_ACTIVE]
             found[Phase.GAME_OVER] = state
+            break
+    else:
+        raise AssertionError("各段階を通る試合が見つからない")
+    # v0.2a: ワザの効果の途中の決定（Phase.DECISION）。テスト専用の登録表で、正式な開始から作る
+    pool = pool_from_extract(read_extract(), two_step_effects())
+    for seed in range(100):
+        state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, seed, pool=pool)
+        while state.phase not in (Phase.DECISION, Phase.GAME_OVER, Phase.HALTED):
+            state = apply_command(state, scripted_command(state, janken_winner=1))
+        if state.phase is Phase.DECISION:
+            found[Phase.DECISION] = state
             return found
-    raise AssertionError("各段階を通る試合が見つからない")
+    raise AssertionError("決定を待つ段階を通る試合が見つからない")
 
 
 def sample_commands(state):
@@ -192,7 +207,8 @@ def sample_commands(state):
     return [
         PlaceStartingPokemon(p, card), DrawMulliganCards(p, 0), ReportJankenResult(0), PlayBasicToBench(p, card),
         AttachEnergy(p, card, pokemon), Retreat(p, (), pokemon), UseAttack(p, 0), EndTurn(p), TakePrize(p, 0),
-        PromoteActive(p, pokemon), EvolvePokemon(p, card, pokemon), PlayTrainer(p, card), UsePokemonPower(p, pokemon),
+        PromoteActive(p, pokemon), ResolveDecision(p, 1, (0,)),
+        EvolvePokemon(p, card, pokemon), PlayTrainer(p, card), UsePokemonPower(p, pokemon),
     ]
 
 

@@ -99,6 +99,21 @@ class PromoteActive:
     pokemon: int
 
 
+@dataclass(frozen=True)
+class ResolveDecision:
+    """保留中の決定（``GameState.decision``）に答える（v0.2a）。
+
+    ``decision`` は答える決定の番号（``PendingDecision.id``）、``choices`` は選んだもの
+    （``PendingDecision.options`` の中から、``min_choices``〜``max_choices`` 個。重ねない）。
+    どの種類の決定にも使える。サイドを取る決定には ``TakePrize``、バトル場に出す決定には
+    ``PromoteActive`` も使える（v0.1 からある形。ポケモンはカードの uid で指す）。
+    """
+
+    player: int
+    decision: int
+    choices: tuple[int, ...]
+
+
 # --- ルールにはあるが v0.1 では対応していない操作。受け取ると UnsupportedError を投げる ---
 
 
@@ -132,6 +147,7 @@ COMMAND_TYPES: dict[str, type] = {
     "end_turn": EndTurn,
     "take_prize": TakePrize,
     "promote_active": PromoteActive,
+    "resolve_decision": ResolveDecision,
     "evolve_pokemon": EvolvePokemon,
     "play_trainer": PlayTrainer,
     "use_pokemon_power": UsePokemonPower,
@@ -152,6 +168,7 @@ Command = (
     | EndTurn
     | TakePrize
     | PromoteActive
+    | ResolveDecision
     | EvolvePokemon
     | PlayTrainer
     | UsePokemonPower

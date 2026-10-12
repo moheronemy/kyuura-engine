@@ -34,11 +34,13 @@ from .commands import (
     PlayBasicToBench,
     PromoteActive,
     ReportJankenResult,
+    ResolveDecision,
     Retreat,
     TakePrize,
     UseAttack,
 )
-from .damage import calculate_attack_damage
+from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
+from .effects import AttackKey, AttackUse
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULES_2000_02_14, RuleSet
@@ -106,6 +108,7 @@ def new_game(
         decklists=(tuple(deck0), tuple(deck1)),
         players=players,
         phase=Phase.SETUP_PLACEMENT,
+        effects=pool.effects,
     )
     state.add_event("game_created", rules=rules.id, seed=seed, card_data_commit=pool.source["commit"])
 
@@ -265,8 +268,8 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
             raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {uid} はたねポケモンではない")
     for uid in chosen:
         p.hand.remove(uid)
-    p.active = PokemonInPlay(cmd.active)
-    p.bench = [PokemonInPlay(uid) for uid in cmd.bench]
+    p.active = _enter_play(state, cmd.active)
+    p.bench = [_enter_play(state, uid) for uid in cmd.bench]
     p.placed_starting_pokemon = True
     state.add_event("place_starting_pokemon", player=player, active=cmd.active, bench=tuple(cmd.bench))
 
@@ -278,6 +281,13 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
             del q.deck[: state.rules.prize_count]
             state.add_event("set_prizes", player=pl, count=len(q.prizes))
         _after_prizes(state)
+
+
+def _enter_play(state: GameState, uid: int) -> PokemonInPlay:
+    """カードを場のポケモンにする。場のポケモンの番号を新しく付ける（前に使った番号は使わない）。"""
+    pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id)
+    state.next_pokemon_id += 1
+    return pokemon
 
 
 def _after_prizes(state: GameState) -> None:
@@ -360,7 +370,7 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
     if len(p.bench) >= state.rules.max_bench:
         raise IllegalActionError("BENCH_FULL", f"ベンチは {state.rules.max_bench} 匹まで")
     p.hand.remove(cmd.card)
-    p.bench.append(PokemonInPlay(cmd.card))
+    p.bench.append(_enter_play(state, cmd.card))
     state.add_event("play_to_bench", player=cmd.player, card=cmd.card)
 
 
@@ -416,7 +426,8 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
 def _use_attack(state: GameState, cmd: UseAttack) -> None:
     """ワザを使う（p.309「バトル場にいるポケモンのワザを使う」、p.320、p.321）。
 
-    使い終わったら、自分の番は自動的に終わる。
+    ワザの処理は、効果の登録表（``state.effects``）に登録された実装が行う。登録がないワザは使えない。
+    処理が終わったら（決定待ちがなければ）、きぜつ・サイド・交代のあと、自分の番は自動的に終わる。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
@@ -424,39 +435,42 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     if not 0 <= cmd.attack_index < len(attacker_def.attacks):
         raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
     attack = attacker_def.attacks[cmd.attack_index]
-    if not attack.supported:
-        raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は v0.1 では未対応（{attack.unsupported_reason}）")
+    effect = state.effects.attack_effect(attacker_def.id, attack)
+    if effect is None:
+        problem = state.effects.attack_problem(attacker_def.id, attack)
+        raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
     if not can_pay_cost(attack.cost, state.energy_types(attacker)):
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
 
-    opponent = 1 - cmd.player
-    defender = state.players[opponent].active
-    defender_def = state.card_def(defender.card)
     state.add_event("attack", player=cmd.player, pokemon=attacker.card, attack=attack.name_ja, attack_index=cmd.attack_index)
+    # ワザの説明にしたがって処理する（p.309 の手順 6）。v0.2a の実装は DamageOnly だけ。
+    # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける
+    effect.resolve(state, AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index)))
+    if state.decision is None:
+        _finish_attack(state)
 
-    # ワザの説明がない場合は、ダメージの目安の数字ぶんのダメージを相手の対戦ポケモンに与える（p.309, p.320）
-    calc = calculate_attack_damage(attack.damage, attacker_def, defender_def, state.rules)
-    defender.damage += calc.final
-    state.add_event(
-        "damage",
-        player=opponent,
-        pokemon=defender.card,
-        amount=calc.final,
-        steps=calc.steps,
-        weakness=calc.weakness_applied,
-        resistance=calc.resistance_applied,
-        total_damage=defender.damage,
-    )
 
-    # HP 以上のダメージを受けたら、きぜつ（p.315, p.319, p.323）
-    if defender.damage >= defender_def.hp:
-        _knock_out(state, opponent, defender)
-    _after_knockouts(state)
+def _finish_attack(state: GameState) -> None:
+    """ワザの処理のあと: HP 以上のダメージを受けたポケモンはきぜつ（p.315, p.319, p.323）→ サイド → 交代 → 番の終わり。
+
+    1 つのワザで複数のポケモンがきぜつしたら「同時」（p.324）。相手のポケモン（バトル場 → ベンチ）、
+    自分のポケモンの順に処理する。v0.1 のカードでは、きぜつするのは相手のバトル場のポケモンだけ。
+    """
+    attacker_side = state.current_player
+    prize_takers = []
+    for owner in (1 - attacker_side, attacker_side):
+        for pokemon in state.players[owner].in_play():
+            if pokemon.damage >= state.card_def(pokemon.card).hp:
+                _knock_out(state, owner, pokemon)
+                prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤーがサイドを取る
+    _after_knockouts(state, prize_takers)
 
 
 def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
-    """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする。
-    相手はサイドを 1 枚取る（p.323）。"""
+    """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
+
+    場を離れたので、このポケモンの番号（pokemon_id）は無効になる。
+    """
     p = state.players[owner]
     if p.active is pokemon:
         p.active = None
@@ -465,19 +479,35 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
     p.discard.append(pokemon.card)
     p.discard.extend(pokemon.energy)
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy))
-    taker = 1 - owner
-    state.pending_prizes[taker] = state.pending_prizes.get(taker, 0) + 1
 
 
-def _after_knockouts(state: GameState) -> None:
-    """ワザの処理の後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 番の終わり。"""
-    for player in PLAYERS:
-        remaining = len(state.players[player].prizes)
-        if state.pending_prizes.get(player, 0) > remaining:
-            state.pending_prizes[player] = remaining
-    state.pending_prizes = {p: n for p, n in state.pending_prizes.items() if n > 0}
-    if state.pending_prizes:
-        state.phase = Phase.TAKE_PRIZE
+def _after_knockouts(state: GameState, prize_takers=()) -> None:
+    """ワザの処理の後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 番の終わり。
+
+    ``prize_takers`` はサイドを 1 枚取るプレイヤーの並び（きぜつ 1 匹につき 1 つ）。番のプレイヤーが先
+    （同じタイミングのことがらの順番は番のプレイヤーが決める（p.325）が、その選択は未実装。v0.1 の
+    カードでは、サイドを取るのはワザを使ったプレイヤーだけ）。残りのサイドより多くは取らない。
+    """
+    budget = {player: len(state.players[player].prizes) for player in PLAYERS}
+    queue = []
+    for player in prize_takers:
+        if budget[player] > 0:
+            queue.append(player)
+            budget[player] -= 1
+    _next_prize_or_judge(state, tuple(queue))
+
+
+def _next_prize_or_judge(state: GameState, queue: tuple[int, ...]) -> None:
+    if queue:
+        player = queue[0]
+        push_decision(
+            state,
+            kind=TAKE_PRIZE,
+            player=player,
+            options=range(len(state.players[player].prizes)),  # サイドの位置（表は見ない）
+            resume="take_prize",
+            context=(("remaining", queue[1:]),),
+        )
         return
 
     result = judge.decide(
@@ -489,45 +519,114 @@ def _after_knockouts(state: GameState) -> None:
         return
 
     # 両方同時なら、番でないプレイヤーが先に出す（pp.323-324）
-    order = [1 - state.current_player, state.current_player]
-    state.pending_promotions = [p for p in order if state.players[p].active is None]
-    if state.pending_promotions:
-        state.phase = Phase.PROMOTE_ACTIVE
+    order = (1 - state.current_player, state.current_player)
+    _next_promotion_or_end(state, tuple(p for p in order if state.players[p].active is None))
+
+
+def _next_promotion_or_end(state: GameState, queue: tuple[int, ...]) -> None:
+    if queue:
+        player = queue[0]
+        push_decision(
+            state,
+            kind=PROMOTE_ACTIVE,
+            player=player,
+            options=[pokemon.pokemon_id for pokemon in state.players[player].bench],
+            resume="promote_active",
+            context=(("remaining", queue[1:]),),
+        )
         return
     _end_turn(state)
 
 
-def _take_prize(state: GameState, cmd: TakePrize) -> None:
+def _resume_take_prize(state: GameState, decision, choices: tuple[int, ...]) -> None:
     """サイドカードから表を見ないで 1 枚を選び、手札に加える（p.312, p.323）。"""
+    player = decision.player
+    prizes = state.players[player].prizes
+    uid = prizes.pop(choices[0])
+    state.players[player].hand.append(uid)
+    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
+    _next_prize_or_judge(state, decision.context_value("remaining", ()))
+
+
+def _resume_promote_active(state: GameState, decision, choices: tuple[int, ...]) -> None:
+    """ベンチから新しいバトル場のポケモンを出す（p.313, p.323）。"""
+    p = state.players[decision.player]
+    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
+    p.active = p.bench.pop(index)
+    state.add_event("promote_active", player=decision.player, pokemon=p.active.card)
+    _next_promotion_or_end(state, decision.context_value("remaining", ()))
+
+
+def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None:
+    """ワザの効果の途中で出した決定の続き。決定がなくなったら、ワザの後の処理に進む。"""
+    player, pokemon_id, card_id, attack_index = decision.context_value("use")
+    use = AttackUse(player, pokemon_id, AttackKey(card_id, attack_index))
+    entry = state.effects.attack_entry(card_id, attack_index)
+    entry.effect.resume(state, use, decision, choices)
+    if state.decision is None:
+        _finish_attack(state)
+
+
+_RESUMERS = {
+    "take_prize": _resume_take_prize,
+    "promote_active": _resume_promote_active,
+    "attack": _resume_attack,
+}
+
+
+def _current_decision(state: GameState):
+    """決定を待つ段階の、保留中の決定。段階と決定が合わない状態（呼び出し側が書き換えた）は受け付けない。"""
+    if state.decision is None:
+        raise StateIntegrityError([f"{state.phase.value} なのに決定がない"])
+    return state.decision
+
+
+def _resolve(state: GameState, choices: tuple[int, ...]) -> None:
+    """確かめ終わった選択で、保留中の決定を閉じ、再開先から処理を続ける。"""
+    decision = state.decision
+    state.decision = None
+    # 決定そのものはログに残さない（v0.1 のログの形を保つ。選んだ結果は再開した処理がログに残す）
+    _RESUMERS[decision.resume](state, decision, choices)
+
+
+def _resolve_decision(state: GameState, cmd: ResolveDecision) -> None:
+    """保留中の決定に答える（どの種類の決定にも使える）。"""
+    _require_phase(state, *DECISION_PHASES)
+    player = _require_player(cmd.player)
+    decision = _current_decision(state)
+    if decision.player != player:
+        raise IllegalActionError("NOT_YOUR_DECISION", f"この決定をするのはプレイヤー {decision.player}")
+    if cmd.decision != decision.id:
+        raise IllegalActionError("WRONG_DECISION", f"今の決定の番号は {decision.id}（{cmd.decision} を指している）")
+    check_choices(decision, cmd.choices)
+    _resolve(state, cmd.choices)
+
+
+def _take_prize(state: GameState, cmd: TakePrize) -> None:
+    """サイドを取る決定に、サイドの位置で答える（v0.1 からある形。``ResolveDecision`` と同じ処理）。"""
     _require_phase(state, Phase.TAKE_PRIZE)
     player = _require_player(cmd.player)
-    if state.pending_prizes.get(player, 0) <= 0:
+    decision = _current_decision(state)
+    if decision.player != player:
         raise IllegalActionError("NOT_YOUR_DECISION", f"プレイヤー {player} が取るサイドはない")
-    prizes = state.players[player].prizes
-    if not 0 <= cmd.index < len(prizes):
-        raise IllegalActionError("INVALID_PRIZE_INDEX", f"サイドの位置は 0〜{len(prizes) - 1}")
-    uid = prizes.pop(cmd.index)
-    state.players[player].hand.append(uid)
-    state.pending_prizes[player] -= 1
-    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
-    _after_knockouts(state)
+    if cmd.index not in decision.options:
+        raise IllegalActionError("INVALID_PRIZE_INDEX", f"サイドの位置は 0〜{len(decision.options) - 1}")
+    _resolve(state, (cmd.index,))
 
 
 def _promote_active(state: GameState, cmd: PromoteActive) -> None:
-    """ベンチから新しいバトル場のポケモンを出す（p.313, p.323）。"""
+    """バトル場に出す決定に、ベンチのポケモンのカードの uid で答える（v0.1 からある形。
+    ``ResolveDecision`` では場のポケモンの番号で答える）。"""
     _require_phase(state, Phase.PROMOTE_ACTIVE)
     player = _require_player(cmd.player)
-    if not state.pending_promotions or state.pending_promotions[0] != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"今バトル場にポケモンを出すのはプレイヤー {state.pending_promotions[:1]}")
+    decision = _current_decision(state)
+    if decision.player != player:
+        raise IllegalActionError("NOT_YOUR_DECISION", f"今バトル場にポケモンを出すのはプレイヤー {decision.player}")
     p = state.players[player]
     index = p.bench_index(cmd.pokemon)
     if index is None:
         raise IllegalActionError("NOT_ON_BENCH", f"{cmd.pokemon!r} は自分のベンチにいない")
-    p.active = p.bench.pop(index)
-    state.pending_promotions.pop(0)
-    state.add_event("promote_active", player=player, pokemon=cmd.pokemon)
-    if not state.pending_promotions:
-        _end_turn(state)
+    _resolve(state, (p.bench[index].pokemon_id,))
 
 
 def _end_turn_command(state: GameState, cmd: EndTurn) -> None:
@@ -540,8 +639,7 @@ def _end_turn_command(state: GameState, cmd: EndTurn) -> None:
 def _finish(state: GameState, result: GameResult) -> None:
     state.result = result
     state.phase = Phase.SUDDEN_DEATH if result.outcome == "sudden_death" else Phase.GAME_OVER
-    state.pending_prizes = {}
-    state.pending_promotions = []
+    state.decision = None
     state.add_event("game_end", outcome=result.outcome, winner=result.winner, conditions=result.conditions)
 
 
@@ -556,6 +654,7 @@ _HANDLERS: dict[type, Callable[[GameState, object], None]] = {
     EndTurn: _end_turn_command,
     TakePrize: _take_prize,
     PromoteActive: _promote_active,
+    ResolveDecision: _resolve_decision,
 }
 
 
@@ -623,6 +722,14 @@ def check_invariants(state: GameState) -> list[str]:
     if missing:
         problems.append(f"どこにもないカード {sorted(missing)}")
 
+    # 場のポケモンの番号: 付いていて、重ならず、まだ配っていない番号ではない
+    pokemon_ids = [pokemon.pokemon_id for p in state.players for pokemon in p.in_play()]
+    for pokemon_id in pokemon_ids:
+        if type(pokemon_id) is not int or not 1 <= pokemon_id < state.next_pokemon_id:
+            problems.append(f"場のポケモンの番号 {pokemon_id!r} が正しくない（次に付ける番号 {state.next_pokemon_id}）")
+    if len(set(pokemon_ids)) != len(pokemon_ids):
+        problems.append(f"場のポケモンの番号が重なっている {sorted(pokemon_ids)}")
+
     # new_game で作った対戦は、カードの組が対戦開始時のデッキリストと同じ
     if any(state.decklists):
         for owner in PLAYERS:
@@ -631,7 +738,12 @@ def check_invariants(state: GameState) -> list[str]:
                 problems.append(f"プレイヤー {owner} のカードの組が対戦開始時のデッキと違う")
 
     phase = state.phase
+    if not isinstance(phase, Phase):
+        problems.append(f"段階 {phase!r} が Phase ではない")
+        return problems
     if phase in TERMINAL_PHASES:
+        if state.decision is not None:
+            problems.append("対戦が終わっているのに、決定が残っている")
         if phase is Phase.HALTED and state.halt is None:
             problems.append("止めた理由がないまま HALTED になっている")
         if phase is not Phase.HALTED and state.result is None:
@@ -639,6 +751,8 @@ def check_invariants(state: GameState) -> list[str]:
         return problems
     if state.result is not None or state.halt is not None:
         problems.append(f"結果か止めた理由があるのに {phase.value} になっている")
+    if not 1 <= state.next_decision_id:
+        problems.append(f"次の決定の番号 {state.next_decision_id!r} が正しくない")
 
     for player, p in enumerate(state.players):
         if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE):
@@ -648,25 +762,66 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append(f"番のプレイヤー {state.current_player!r} が正しくない")
         if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn:
             problems.append(f"この番にエネルギーをつけた回数 {state.energy_attachments_this_turn} が正しくない")
-    if phase is Phase.TAKE_PRIZE:
-        if not state.pending_prizes:
+    problems.extend(_decision_problems(state))
+    if phase is Phase.SETUP_MULLIGAN_DRAW and not any(p.mulligan_draws_remaining for p in state.players):
+        problems.append("切り直しの補償を引く段階なのに、引く権利のあるプレイヤーがいない")
+    return problems
+
+
+def _decision_problems(state: GameState) -> list[str]:
+    """保留中の決定と段階・場の形の整合性。"""
+    problems: list[str] = []
+    phase = state.phase
+    d = state.decision
+    if phase not in DECISION_PHASES:
+        if d is not None:
+            problems.append(f"{phase.value} なのに、決定が残っている")
+        return problems
+    if d is None:
+        if phase is Phase.TAKE_PRIZE:
             problems.append("サイドを取る段階なのに、サイドを取るプレイヤーがいない")
-        for player, count in state.pending_prizes.items():
-            if player not in PLAYERS or not 0 < count <= len(state.players[player].prizes):
-                problems.append(f"サイドを取る枚数 {player}: {count} が正しくない")
-    elif state.pending_prizes:
-        problems.append(f"{phase.value} なのに、取るサイドが残っている")
-    if phase is Phase.PROMOTE_ACTIVE:
-        if not state.pending_promotions:
+        elif phase is Phase.PROMOTE_ACTIVE:
             problems.append("バトル場に出す段階なのに、出すプレイヤーがいない")
-        for player in state.pending_promotions:
+        else:
+            problems.append("決定を待つ段階なのに、決定がない")
+        return problems
+    if phase_for(d.kind) is not phase:
+        problems.append(f"決定の種類 {d.kind} と段階 {phase.value} が合わない")
+    if d.player not in PLAYERS:
+        problems.append(f"決定するプレイヤー {d.player!r} が正しくない")
+        return problems
+    if not 1 <= d.id < state.next_decision_id:
+        problems.append(f"決定の番号 {d.id} が正しくない（次に付ける番号 {state.next_decision_id}）")
+    # 選ぶ数の上限は選べるものの数を超えてよい（「2 匹まで選ぶ」で 1 匹しかいない場合）。下限は選べる数まで
+    if len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
+        problems.append(f"決定の選べるもの {d.options} と選ぶ数 {d.min_choices}〜{d.max_choices} が合わない")
+    if d.resume not in _RESUMERS:
+        problems.append(f"決定の再開先 {d.resume!r} がない")
+    remaining = d.context_value("remaining", ())
+    if d.kind == TAKE_PRIZE:
+        prizes = state.players[d.player].prizes
+        queue = (d.player, *remaining)
+        if d.options != tuple(range(len(prizes))):
+            problems.append(f"サイドを取る決定の選べる位置 {d.options} が、サイドの枚数 {len(prizes)} と合わない")
+        for player in PLAYERS:
+            if queue.count(player) > len(state.players[player].prizes):
+                problems.append(f"プレイヤー {player} がサイドを取る回数が、残りのサイドより多い")
+        if any(player not in PLAYERS for player in remaining):
+            problems.append(f"サイドを取るプレイヤーの並び {queue} が正しくない")
+    if d.kind == PROMOTE_ACTIVE:
+        queue = (d.player, *remaining)
+        for player in queue:
             if player not in PLAYERS or state.players[player].active is not None or not state.players[player].bench:
                 problems.append(f"バトル場に出すプレイヤー {player} の場の形が正しくない")
         for player in PLAYERS:
-            if player not in state.pending_promotions and state.players[player].active is None:
+            if player not in queue and state.players[player].active is None:
                 problems.append(f"プレイヤー {player} のバトル場にポケモンがいないのに、出す順番に入っていない")
-    elif state.pending_promotions:
-        problems.append(f"{phase.value} なのに、バトル場に出すプレイヤーが残っている")
-    if phase is Phase.SETUP_MULLIGAN_DRAW and not any(p.mulligan_draws_remaining for p in state.players):
-        problems.append("切り直しの補償を引く段階なのに、引く権利のあるプレイヤーがいない")
+        if d.options != tuple(pokemon.pokemon_id for pokemon in state.players[d.player].bench):
+            problems.append(f"バトル場に出す決定の選べるもの {d.options} が、ベンチのポケモンと合わない")
+    if d.resume == "attack":
+        use = d.context_value("use")
+        if not (isinstance(use, tuple) and len(use) == 4 and state.find_pokemon(use[1]) is not None):
+            problems.append(f"ワザの決定の続きの情報 {use!r} が正しくない")
+        elif state.effects.attack_entry(use[2], use[3]) is None:
+            problems.append(f"ワザの決定の続きのワザ {use[2]}#{use[3]} が効果の登録表にない")
     return problems

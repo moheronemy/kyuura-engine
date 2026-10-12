@@ -113,6 +113,7 @@ def build_test_state(
     turn_number: int = 3,
     seed: int = 0,
     energy_attachments_this_turn: int = 0,
+    effects=None,
 ) -> GameState:
     """テスト専用: 正式な対戦開始を通さずに MAIN の盤面を作る。
 
@@ -130,10 +131,13 @@ def build_test_state(
         cards[uid] = CardInstance(uid, card_id, owner)
         return uid
 
+    next_pokemon_id = [1]
+
     def pokemon(spec, owner: int) -> PokemonInPlay:
         if isinstance(spec, str):
             spec = {"card": spec}
-        result = PokemonInPlay(new_uid(spec["card"], owner))
+        result = PokemonInPlay(new_uid(spec["card"], owner), pokemon_id=next_pokemon_id[0])
+        next_pokemon_id[0] += 1
         result.energy = [new_uid(e, owner) for e in spec.get("energy", [])]
         result.damage = spec.get("damage", 0)
         return result
@@ -168,6 +172,8 @@ def build_test_state(
         current_player=current_player,
         first_player=0,
         energy_attachments_this_turn=energy_attachments_this_turn,
+        next_pokemon_id=next_pokemon_id[0],
+        effects=effects or pool.effects,
     )
 
 
@@ -247,3 +253,41 @@ def replay(state: GameState, commands: Iterable) -> GameState:
     for command in commands:
         state = apply_command(state, command)
     return state
+
+
+# ---------------------------------------------------------------- テスト専用のワザの効果（製品の登録表には入れない）
+
+from kyuura_engine.decisions import push_attack_decision  # noqa: E402
+from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey  # noqa: E402
+
+
+class TwoStepTestEffect(AttackEffect):
+    """テスト専用: 2 段階の決定を出すワザの効果（保留中の決定の仕組みを確かめるため）。
+
+    1. ワザを使ったプレイヤーが、相手の場のポケモンを 1〜2 匹選ぶ（場のポケモンの番号）
+    2. 同じプレイヤーが、与えるダメージ 10 か 20 を選ぶ
+    選んだポケモンに、選んだダメージをそのまま与える（弱点・抵抗力は計算しない。実在のワザではない）。
+    """
+
+    implementation_id = "test_two_step"
+
+    def resolve(self, state, use):
+        targets = [pokemon.pokemon_id for pokemon in state.players[1 - use.player].in_play()]
+        push_attack_decision(state, use, kind="test_choose_targets", player=use.player, options=targets,
+                             min_choices=1, max_choices=2, context=(("step", 1),))
+
+    def resume(self, state, use, decision, choices):
+        if decision.context_value("step") == 1:
+            push_attack_decision(state, use, kind="test_choose_amount", player=use.player, options=(10, 20),
+                                 context=(("step", 2), ("targets", tuple(choices))))
+            return
+        amount = choices[0]
+        for pokemon_id in decision.context_value("targets"):
+            _, pokemon = state.find_pokemon(pokemon_id)
+            pokemon.damage += amount
+        state.add_event("test_two_step", targets=decision.context_value("targets"), amount=amount)
+
+
+def two_step_effects():
+    """ワンリキー（PMCG1-053）の「けたぐり」を、テスト専用の 2 段階の効果に置き換えた登録表。"""
+    return DEFAULT_EFFECTS.with_attacks("test-two-step", {AttackKey(MACHOP, 0): AttackEntry(TwoStepTestEffect(), "けたぐり")})

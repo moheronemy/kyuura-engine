@@ -1,6 +1,9 @@
 # kyuura-engine
 
-旧裏ポケモンカードゲーム（1996〜2001年のメディアファクトリー版）の対戦エンジンです。v0.1 は、**「ポケットモンスターカードゲーム公式ルール 2000.02.14版」**（『ポケモンカードオフィシャルブック2000』pp.306〜326）に基づき、少数のカードで 1 試合を最後まで進められる最小の構成です。
+旧裏ポケモンカードゲーム（1996〜2001年のメディアファクトリー版）の対戦エンジンです。**「ポケットモンスターカードゲーム公式ルール 2000.02.14版」**（『ポケモンカードオフィシャルブック2000』pp.306〜326）に基づき、少数のカードで 1 試合を最後まで進められる最小の構成です。
+
+- v0.1: 最小の対戦（対戦準備・番の進行・効果のないワザ・きぜつ・勝敗）
+- v0.2a（今の版）: v0.1 と同じルール・カード・対戦の結果のまま、カード効果を実装するための構造を整えた（効果の登録表、保留中の決定、場のポケモンの番号、乱数の状態の保存）。[docs/architecture-v0.2a.md](docs/architecture-v0.2a.md)
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -46,7 +49,7 @@ python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check
 
 ## 使い方
 
-ゲームの状態は `GameState`、プレイヤーの操作はコマンド（`commands.py` の dataclass）です。`apply_command` はコマンドを検査してから新しい状態を返し、渡した状態は変えません。不正な操作は `IllegalActionError`、v0.1 で未対応のものは `UnsupportedError` になります。返す状態は毎回、カードの保存則などの不変条件で確かめ、破れていれば `StateIntegrityError` を投げます（エンジンの不具合か、呼び出し側が状態を書き換えたことを示す）。
+ゲームの状態は `GameState`、プレイヤーの操作はコマンド（`commands.py` の dataclass）です。`apply_command` はコマンドを検査してから新しい状態を返し、渡した状態は変えません。不正な操作は `IllegalActionError`、未対応のものは `UnsupportedError` になります。返す状態は毎回、カードの保存則などの不変条件で確かめ、破れていれば `StateIntegrityError` を投げます（エンジンの不具合か、呼び出し側が状態を書き換えたことを示す）。
 
 ```python
 from kyuura_engine import (
@@ -72,12 +75,15 @@ state = apply_command(state, UseAttack(0, 0))    # ワザを使うと番が終�
 print(state_to_dict(state)["phase"], state.turn_number)
 ```
 
-- カード 1 枚ごとに対戦内の番号（uid）があり、コマンドは uid でカード・ポケモンを指定します。
+- カード 1 枚ごとに対戦内の番号（uid）があり、コマンドは uid でカード・ポケモンを指定します。場のポケモンには、カードの uid とは別に、場に出たときに番号（`pokemon_id`）が付きます。にげる・交代では変わらず、場を離れると無効になります。
+- 処理の途中でプレイヤーの選択が要るとき（v0.1 のカードでは、きぜつさせたときのサイドと、バトル場に出すポケモン）、`state.decision` に保留中の決定が入ります。決定する人は `decision.player`、選べるものは `decision.options` です。`ResolveDecision(player, decision.id, choices)` で答えます（サイドは `TakePrize`、バトル場に出すポケモンは `PromoteActive` でも答えられる）。決定を待っている間は、ほかの操作は受け付けません。
+- ワザを使えるのは、効果の登録表（`DEFAULT_EFFECTS`）に、カード id とワザの位置で実装が登録されているときだけです。説明文が空なことは、使える根拠にしません。
 - 乱数は `seed`（0 以上の整数）だけから作ります。同じデッキ・同じ seed・同じ操作の列なら、同じ結果になります（Python 3.11・3.12・3.13 で同じ値になることを固定値のテストで確かめています）。
 - 状態は `copy.deepcopy`・`pickle` できます。状態どうしを比べるときは `==` ではなく `state_to_dict` の結果を比べてください。
 - 対戦が終わったかどうかは `state.phase` で判断します（`game_over`・`sudden_death`・`halted`）。`halted` のときは `state.result` が `None` です。
 - ジャンケンの結果は外から渡します（エンジンは決めません）。
-- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。
+- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが加わります。どちらも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。
+- 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。
 
 ### 操作（コマンド）
 
@@ -93,7 +99,8 @@ print(state_to_dict(state)["phase"], state.turn_number)
 | `EndTurn(player)` | ワザを使わずに番を終える |
 | `TakePrize(player, index)` | きぜつさせたとき、サイドを 1 枚選んで取る |
 | `PromoteActive(player, pokemon)` | バトル場のポケモンがいなくなったとき、ベンチから出す |
-| `EvolvePokemon`・`PlayTrainer`・`UsePokemonPower` | v0.1 では未対応（`UnsupportedError`） |
+| `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a） |
+| `EvolvePokemon`・`PlayTrainer`・`UsePokemonPower` | 未対応（`UnsupportedError`） |
 
 ## 現在の対応ルール（公式ルール 2000.02.14版）
 
@@ -122,11 +129,11 @@ print(state_to_dict(state)["phase"], state.turn_number)
 | PMCG1-037 | ビリリダマ | PMCG1-097〜102 | 草・炎・水・雷・超・闘エネルギー |
 | PMCG1-052 | ディグダ | | |
 
-これ以外のカード（効果のあるワザを持つポケモン、進化、トレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。
+これ以外のカード（効果のあるワザを持つポケモン、進化、トレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。
 
 ## 未実装の機能
 
-進化・退化、特殊状態、ポケモンパワー、トレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（コインを使うワザなど）、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
+進化・退化、特殊状態、ポケモンパワー、トレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（コインを使うワザなど）、コイン、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
 
 原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。
 
@@ -136,16 +143,21 @@ print(state_to_dict(state)["phase"], state.turn_number)
 kyuura_engine/
   rules.py       ルールの組（2000.02.14版の数値）と根拠の一覧
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
+  effects.py     効果の登録表（カード id・ワザの位置 → 実装）。v0.2a
   deck.py        デッキの検査
   state.py       ゲームの状態（ゾーン、場のポケモン、番、結果）
   commands.py    プレイヤーの操作
+  decisions.py   保留中の決定（出す・確かめる）。v0.2a
   engine.py      対戦の進行（new_game・apply_command）
   damage.py      ワザのダメージ計算
   judge.py       勝ち負けの判定（p.311 の表）
-  serialize.py   状態を辞書にする
+  serialize.py   状態を辞書にする（形式 1・2）
+  rng.py         乱数の状態の指紋・保存・復元。v0.2a
   data/kyuura_cards.json       kyuura のカードデータの写し（生成物）
   data/card_verification.json  『オフィシャルブック2000』との照合の記録
 scripts/extract_kyuura_cards.py  kyuura から写しを作る
+scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
 tests/                           自動テスト（unittest）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー
+tests/fixtures/                  v0.1 の対戦結果の参照データ（互換性のテスト用）
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a のアーキテクチャ
 ```

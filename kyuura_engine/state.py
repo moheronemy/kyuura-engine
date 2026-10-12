@@ -18,9 +18,13 @@ import random
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from .cards import CardDefinition, EnergyType
+from .rng import copy_rng
+
+if TYPE_CHECKING:
+    from .effects import EffectRegistry
 from .rules import RuleSet
 
 
@@ -29,8 +33,9 @@ class Phase(str, Enum):
     SETUP_MULLIGAN_DRAW = "setup_mulligan_draw"  # 相手の切り直しのぶん、最大 2 枚ずつ引く
     SETUP_FIRST_PLAYER = "setup_first_player"  # ジャンケンの結果を受け取る
     MAIN = "main"  # 番のプレイヤーの操作
-    TAKE_PRIZE = "take_prize"  # きぜつさせたプレイヤーがサイドを選んで取る
-    PROMOTE_ACTIVE = "promote_active"  # バトル場のポケモンがいなくなったプレイヤーがベンチから出す
+    TAKE_PRIZE = "take_prize"  # 決定待ち: きぜつさせたプレイヤーがサイドを選んで取る
+    PROMOTE_ACTIVE = "promote_active"  # 決定待ち: バトル場のポケモンがいなくなったプレイヤーがベンチから出す
+    DECISION = "decision"  # 決定待ち: 上の 2 つ以外の決定（ワザの効果の途中の選択など。v0.2a のカードでは起こらない）
     GAME_OVER = "game_over"
     SUDDEN_DEATH = "sudden_death"  # サドン・デスに移った（延長戦の開始は v0.1 では未実装）
     HALTED = "halted"  # 未解決の裁定に当たったので止めた（終端。再開する API はない）
@@ -50,14 +55,24 @@ class CardInstance:
 
 @dataclass
 class PokemonInPlay:
-    """場にいるポケモン。v0.1 は進化がないので、ポケモンのカード 1 枚とついているエネルギーカード。"""
+    """場にいるポケモン。v0.1 は進化がないので、ポケモンのカード 1 枚とついているエネルギーカード。
+
+    識別子は 2 つあります。
+
+    - ``card``: いちばん上のポケモンのカードの uid（物理的なカード。対戦中に変わらない番号だが、
+      進化するといちばん上のカードが変わる）
+    - ``pokemon_id``: 場のポケモンそのものの番号。場に出たときに ``GameState.next_pokemon_id`` から
+      付ける。場にいるあいだ（にげる・入れ替え、将来の進化・退化でも）変わらない。場を離れたら無効になり、
+      同じカードがもう一度場に出ても前の番号は使わない。0 は「付けていない」（不変条件で拒否する）
+    """
 
     card: int
     energy: list[int] = field(default_factory=list)
     damage: int = 0
+    pokemon_id: int = 0
 
     def clone(self) -> PokemonInPlay:
-        return PokemonInPlay(self.card, list(self.energy), self.damage)
+        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id)
 
 
 @dataclass
@@ -100,6 +115,41 @@ class PlayerState:
                 return i
         return None
 
+    def find_by_pokemon_id(self, pokemon_id: int) -> PokemonInPlay | None:
+        for pokemon in self.in_play():
+            if pokemon.pokemon_id == pokemon_id:
+                return pokemon
+        return None
+
+
+@dataclass(frozen=True)
+class PendingDecision:
+    """保留中の決定（v0.2a）。処理の途中でプレイヤーの選択を待つ。仕組みは ``decisions`` を参照。
+
+    - ``id``: 決定の通し番号（``GameState.next_decision_id`` から）。古い決定への答えを見分ける
+    - ``kind``: 決定の種類（``decisions.TAKE_PRIZE`` など）
+    - ``player``: 決定するプレイヤー
+    - ``options``: 選べるもの（意味は種類による。サイドなら位置、ポケモンなら場のポケモンの番号）
+    - ``min_choices``・``max_choices``: 選ぶ数
+    - ``resume``: 選んだあとに処理を続ける場所の名前
+    - ``context``: 続きに必要な情報（(名前, 値) の組。値は整数・文字列とそのタプル）
+    """
+
+    id: int
+    kind: str
+    player: int
+    options: tuple[int, ...]
+    min_choices: int
+    max_choices: int
+    resume: str
+    context: tuple[tuple[str, Any], ...] = ()
+
+    def context_value(self, key: str, default: Any = None) -> Any:
+        for name, value in self.context:
+            if name == key:
+                return value
+        return default
+
 
 @dataclass(frozen=True)
 class GameResult:
@@ -141,26 +191,46 @@ class GameState:
     decklists: tuple[tuple[str, ...], tuple[str, ...]]
     players: list[PlayerState]
     phase: Phase
+    effects: EffectRegistry  # この対戦で使う効果の登録表（変わらない。複製では共有する）
     turn_number: int = 0
     current_player: int | None = None
     first_player: int | None = None
     energy_attachments_this_turn: int = 0
-    pending_prizes: dict[int, int] = field(default_factory=dict)
-    pending_promotions: list[int] = field(default_factory=list)
     mulligan_rounds: tuple[tuple[int, ...], ...] = ()
     result: GameResult | None = None
     halt: Halt | None = None
     log: tuple[Mapping[str, Any], ...] = ()
+    next_pokemon_id: int = 1
+    decision: PendingDecision | None = None  # 保留中の決定（一度に 1 つ）
+    next_decision_id: int = 1
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
         new.__dict__.update(self.__dict__)
-        new.rng = random.Random()
-        new.rng.setstate(self.rng.getstate())
+        new.rng = copy_rng(self.rng)
         new.players = [p.clone() for p in self.players]
-        new.pending_prizes = dict(self.pending_prizes)
-        new.pending_promotions = list(self.pending_promotions)
         return new
+
+    # --- v0.1 との互換のための読み取り専用の値（保留中の決定から作る） ---
+
+    @property
+    def pending_prizes(self) -> dict[int, int]:
+        """サイドを取る決定を待っているプレイヤーと、取る枚数（v0.1 の pending_prizes と同じ形）。"""
+        d = self.decision
+        if d is None or d.kind != "take_prize":
+            return {}
+        counts: dict[int, int] = {}
+        for player in (d.player, *d.context_value("remaining", ())):
+            counts[player] = counts.get(player, 0) + 1
+        return counts
+
+    @property
+    def pending_promotions(self) -> list[int]:
+        """バトル場にポケモンを出す決定を待っているプレイヤーの順番（v0.1 の pending_promotions と同じ形）。"""
+        d = self.decision
+        if d is None or d.kind != "promote_active":
+            return []
+        return [d.player, *d.context_value("remaining", ())]
 
     # copy.deepcopy・pickle のため。読み取り専用の Mapping（MappingProxyType）はそのままでは
     # pickle できないので、普通の dict にして渡し、もどすときに読み取り専用にもどす。
@@ -182,6 +252,14 @@ class GameState:
 
     def card_def(self, uid: int) -> CardDefinition:
         return self.definitions[self.cards[uid].card_id]
+
+    def find_pokemon(self, pokemon_id: int) -> tuple[int, PokemonInPlay] | None:
+        """場のポケモンの番号から、(持ち主, ポケモン) を返す。場にいなければ None。"""
+        for player, p in enumerate(self.players):
+            pokemon = p.find_by_pokemon_id(pokemon_id)
+            if pokemon is not None:
+                return player, pokemon
+        return None
 
     def energy_types(self, pokemon: PokemonInPlay) -> list[EnergyType]:
         return [self.card_def(e).provides for e in pokemon.energy]

@@ -3,21 +3,28 @@
 カードの定義は対戦中に変わらない値だけを持ちます（HP・ワザ・弱点など）。
 ダメージやついているエネルギーなど、対戦中の状態は ``state.py`` が持ちます。
 
-読み込むときに、各カード・各ワザが v0.1 で処理できるかを分類します。処理できないものは
-``supported=False`` と理由を持たせ、デッキに入れられないようにします。効果のあるワザを
-「ダメージだけのワザ」として扱うことはしません。
+読み込むときに、各カード・各ワザが対戦で使えるかを分類します（``supported`` と理由）。分類は、
+データの値ではなく、エンジンが実装しているかで決めます。
+
+- エンジンの中心部分で扱える形か（たねポケモン・タイプ 1 つ・弱点 ×2 など。進化・ポケモンパワーは未実装）
+- ワザ・トレーナーの効果の実装が、効果の登録表（``effects.EffectRegistry``）に登録されているか
+
+説明文が空であることは、実装がある証拠にしません。使えないカードはデッキに入れられません。
 """
 
 from __future__ import annotations
 
 import json
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from functools import lru_cache
 from importlib import resources
 from types import MappingProxyType
-from typing import Any, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, Iterable, Mapping
+
+if TYPE_CHECKING:
+    from .effects import EffectRegistry
 
 
 class EnergyType(str, Enum):
@@ -59,8 +66,9 @@ class Attack:
     damage_display: str | None
     text_ja: str | None
     text_en: str | None
-    supported: bool
+    supported: bool  # 効果の登録表に実装があり、データと合うか（登録表は CardPool.effects）
     unsupported_reason: str | None
+    damage_modifier: str | None = None  # データの damage.modifier（「+」「×」など）
 
 
 @dataclass(frozen=True)
@@ -111,21 +119,11 @@ def can_pay_cost(cost: Iterable[EnergyType], provided: Iterable[EnergyType]) -> 
     return sum(have.values()) >= sum(need.values())
 
 
-def _classify_attack(index: int, raw: dict) -> Attack:
+def _parse_attack(index: int, raw: dict) -> Attack:
+    """ワザのデータだけを読む。使えるかどうかは ``classify_record`` が効果の登録表で決める。"""
     name = raw["name"]
     text = raw.get("text") or {}
     damage = raw.get("damage")
-    reasons: list[str] = []
-    if text.get("ja") is not None or text.get("en") is not None:
-        reasons.append("ワザの効果（説明文）は未実装")
-    if damage is None or damage.get("base") is None:
-        reasons.append("ダメージの数字がないワザは未実装")
-    elif damage.get("modifier") is not None:
-        reasons.append(f"ダメージの「{damage['modifier']}」（説明文で変わるダメージ）は未実装")
-    elif damage["base"] <= 0 or damage["base"] % 10 != 0:
-        reasons.append("ダメージが 10 の倍数の正の数ではない")
-    if name.get("ja") is None:
-        reasons.append("日本語のワザ名がない")
     return Attack(
         index=index,
         name_ja=name.get("ja") or "",
@@ -135,25 +133,35 @@ def _classify_attack(index: int, raw: dict) -> Attack:
         damage_display=None if damage is None else damage.get("display"),
         text_ja=text.get("ja"),
         text_en=text.get("en"),
-        supported=not reasons,
-        unsupported_reason="; ".join(reasons) or None,
+        supported=False,
+        unsupported_reason="効果の登録表で確かめていない",
+        damage_modifier=None if damage is None else damage.get("modifier"),
     )
 
 
-def classify_record(record: dict) -> CardDefinition:
-    """kyuura の data/cards.json の 1 件から、カードの定義を作る。"""
+def classify_record(record: dict, effects: EffectRegistry | None = None) -> CardDefinition:
+    """kyuura の data/cards.json の 1 件から、カードの定義を作る。
+
+    値はデータのまま持つ。使えるかどうか（``supported``）は、エンジンの中心部分で扱える形かと、
+    効果の登録表 ``effects``（省略時は ``effects.DEFAULT_EFFECTS``）に実装があるかで決める。
+    """
+    if effects is None:
+        from .effects import DEFAULT_EFFECTS as effects
     name = record["name"]
     category = record["category"]
     common = dict(id=record["id"], name_ja=name.get("ja") or "", name_en=name.get("en"), category=category)
 
     if category == "trainer":
-        return CardDefinition(**common, supported=False, unsupported_reasons=("トレーナーカードの効果は未実装",))
+        # トレーナーの実装を登録する仕組みは、最初のトレーナーを実装するときに加える（v0.2a では登録できない）
+        return CardDefinition(**common, supported=False, unsupported_reasons=("トレーナーカードの効果の実装が登録されていない",))
 
     if category == "energy":
+        # 基本エネルギーは効果を持たず、公式ルールの規定（p.310・p.318・p.320）だけで扱う（エンジンの中心部分）。
+        # 特殊エネルギーは効果の実装が要るが、v0.2a では登録できないので未対応
         energy = record["energy"]
         reasons = []
         if energy["kind"] != "basic":
-            reasons.append("特殊エネルギーは未実装")
+            reasons.append("特殊エネルギーの効果の実装が登録されていない")
         if len(energy["provides"]) != 1:
             reasons.append("1 種類のエネルギーを 1 個出す基本エネルギーではない")
         provides = EnergyType(energy["provides"][0]) if len(energy["provides"]) == 1 else None
@@ -198,7 +206,7 @@ def classify_record(record: dict) -> CardDefinition:
             reasons.append("抵抗力が「-」ではない")
         resistance = EnergyType(r["type"])
         resistance_value = r["value"]
-    attacks = tuple(_classify_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
+    attacks = tuple(_annotate_attack(record["id"], _parse_attack(i, a), effects) for i, a in enumerate(pokemon["attacks"]))
     if not attacks:
         reasons.append("ワザがない")
     for attack in attacks:
@@ -219,13 +227,19 @@ def classify_record(record: dict) -> CardDefinition:
     )
 
 
+def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry) -> Attack:
+    problem = effects.attack_problem(card_id, attack)
+    return replace(attack, supported=problem is None, unsupported_reason=problem)
+
+
 @dataclass(frozen=True)
 class CardPool:
-    """読み込んだカードの定義と、出典の情報。"""
+    """読み込んだカードの定義と、出典の情報。``effects`` は分類に使った効果の登録表（対戦でも同じものを使う）。"""
 
     definitions: Mapping[str, CardDefinition]
     playable_ids: frozenset[str]
     source: Mapping[str, Any]
+    effects: EffectRegistry
 
     def get(self, card_id: str) -> CardDefinition:
         return self.definitions[card_id]
@@ -235,8 +249,10 @@ class CardPool:
         return card_id in self.playable_ids
 
 
-def pool_from_extract(extract: dict) -> CardPool:
-    definitions = {record["id"]: classify_record(record) for record in extract["cards"]}
+def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> CardPool:
+    if effects is None:
+        from .effects import DEFAULT_EFFECTS as effects
+    definitions = {record["id"]: classify_record(record, effects) for record in extract["cards"]}
     playable = frozenset(
         card_id for card_id in extract["pool_v0_1"] if definitions[card_id].supported
     )
@@ -245,6 +261,7 @@ def pool_from_extract(extract: dict) -> CardPool:
         definitions=MappingProxyType(definitions),
         playable_ids=playable,
         source=MappingProxyType(dict(extract["source"])),
+        effects=effects,
     )
 
 

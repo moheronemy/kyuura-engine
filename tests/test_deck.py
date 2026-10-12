@@ -5,6 +5,7 @@ import unittest
 
 from kyuura_engine import DeckValidationError, deck_problems, expand_decklist, new_game, validate_deck
 from kyuura_engine.cards import pool_from_extract, read_extract
+from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 
 from tests.helpers import (
     CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, POTION, WATER_FIGHTING_DECK,
@@ -53,7 +54,13 @@ class SameNameTest(unittest.TestCase):
         other["pokemon"]["hp"] = 40
         extract["cards"].append(other)
         extract["pool_v0_1"].append(other["id"])
-        pool = pool_from_extract(extract)
+        # v0.2a から、効果の登録表に登録していないカードは使えない（M5）。テスト用のカードのワザを、
+        # 効果のないワザとしてテスト用の登録表に登録する
+        effects = DEFAULT_EFFECTS.with_attacks("test-other-print", {
+            AttackKey(other["id"], 0): AttackEntry(DAMAGE_ONLY, "あなをほる"),
+            AttackKey(other["id"], 1): AttackEntry(DAMAGE_ONLY, "どろかけ"),
+        })
+        pool = pool_from_extract(extract, effects)
         deck = expand_decklist({DIGLETT: 3, "TEST-DIGLETT-OTHER-PRINT": 2, FIGHTING: 55})
         self.assertEqual(codes(deck_problems(deck, pool)), ["TOO_MANY_COPIES"])
 
