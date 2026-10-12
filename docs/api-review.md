@@ -97,7 +97,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | ピカチュウ（PMCG1-035）の「かじる」（`UseAttack(…, 0)`）・「でんげき」（`UseAttack(…, 1)`） | でんげきは相手に 30 → コイン 1 枚 → 「うら」なら自分に 10。きぜつ・サイド・交代は v0.2a の決定（`take_prize`・`promote_active`）で、同時のきぜつでは 2 つずつ順に出る |
 | `effects.OPPONENT_ACTIVE`・`effects.SELF`・`effects.DAMAGE_TARGETS` | ワザのダメージを受けるポケモンの種類（p.320 のダメージの (1)・(3)）。実装を加える人向け |
 | `effects.deal_attack_damage(state, use, target, base)` | ワザのダメージを 1 つ与える（受けるポケモンを決め、p.321 の順番で計算し、ログを残す）。ダメージを与えるワザの実装はこれを使う |
-| `effects.damage_receiver(state, use, target)`・`effects.self_damage_problem(state, use)` | 受けるポケモン、自分へのダメージを原典で決められる形で計算できるか（できなければ `UnsupportedError`） |
+| `effects.damage_receiver(state, use, target)`・`effects.self_damage_problem(state, use)` | 受けるポケモン、自分へのダメージを原典で決められる形で計算できるか（できなければ `UnsupportedError`）。`self_damage_problem` は v0.3d で外した |
 | `effects.SelfDamageOnTails(self_damage)` | でんげきの実装 |
 
 コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式は増やしていません。ログの `damage`（自分へのダメージ）と `knock_out`（同時のきぜつ）に項目を加えました（7 章）。
@@ -151,6 +151,18 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `state_to_dict(state, format_version=6)` | 5 に、場のポケモンごとの `retreat_failed_turn` を加えた形 |
 
 コマンド・段階・決定の種類は増やしていません。
+
+### v0.3d
+
+公開するものは増やしていません（コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式・エラーコードは同じ）。変わったのは次のものです。
+
+| もの | 内容 |
+|---|---|
+| `effects.self_damage_problem` | 外した（v0.2f の未解決が p.90 の解説で決まった。[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) 6 章） |
+| `effects.deal_attack_damage(state, use, SELF, base)` | 自分へのダメージにも弱点・抵抗力を計算する（ワザを使うポケモンのタイプと自分の弱点・抵抗力）。`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE` はもう出ない |
+| `SelfDamageOnTails.problem` | 既定（None）。v0.3d の対応カードのワザの実装は、どれも `problem` が None（[effect-preflight-v0.3d.md](effect-preflight-v0.3d.md)） |
+| `check_invariants` | にげるの失敗の記録が、今の番のログの `retreat_failed`（同じ `pokemon_id`）と対応しないと違反（v0.3d） |
+| `kyuura_engine.__version__` | `0.3.0d0`。効果の登録表の id は `kyuura-engine-0.3c` のまま（登録の内容が同じ。[architecture-v0.3d.md](architecture-v0.3d.md) 8 章） |
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -298,6 +310,16 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - `AttackEffect` に `problem` が加わった（既定は None。`SelfDamageOnTails` は v0.2f の未解決を、ワザを使う前に返す）
 - 新しいクライアントへの推奨: こんらん状態のポケモンのワザ・にげるのボタンは無効にしない（コインを投げる）。`retreat_failed_turn` が今の番のポケモンの「にげる」は無効にする（送っても拒否される）。こんらんのコインはログの `coin_flip`（`source: "confusion"`）と `confusion_check`（`action`・`succeeded`）、自分への 20 は `confusion_damage` で表示する。
 
+### v0.3c → v0.3d
+
+- 対戦の結果・ログ・乱数の状態・拒否は変わりません。v0.3c のコミット `a4c66e2` と、既存のデッキの 1,340 局（121,420 コマンド）・でたらめな操作を混ぜた 32 局（8,162 コマンド、4,437 回の拒否）・v0.3d の 4 種類を混ぜたデッキの 300 局（44,122 コマンド）を同じ手順で動かして比べ、終わった状態（形式 6。登録表の id を除く）・ログ・乱数・拒否のコードの列がすべて同じでした（[architecture-v0.3d.md 9 章](architecture-v0.3d.md)）。
+- v0.3c のテスト 687 件を v0.3d のコードで実行すると、失敗するのは 5 件だけ（自分へのダメージの弱点・抵抗力の停止を確かめる 3 件、失敗の記録を直接書いて不変条件を確かめる 2 件）。
+- 互換でない変更:
+  - 自分のタイプが自分の弱点・抵抗力のタイプのポケモンの、ワザによる自分へのダメージは、`UnsupportedError`（`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）ではなく、弱点・抵抗力を計算して処理する（対応カードでは起こらない。テスト専用の登録で起こる）
+  - `effects.self_damage_problem` を外した
+  - 不変条件が増えた（失敗の記録とログの対応）。状態を直接作るテストは、記録に対応するログ `retreat_failed` も置くこと（tests/helpers.py の `build_test_state` は自動で置く）
+- 新しいクライアントへの推奨: 変更なし。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -322,7 +344,7 @@ v0.2a で、ワザの途中・きぜつのあとの決定は `state.decision` �
 
 ### 5.4 場のポケモンの識別子の移行
 
-v0.1 からあるコマンドは、場のポケモンをカードの uid で指します。v0.2a で場のポケモンの番号（`pokemon_id`）を加え、`ResolveDecision` の選べるものは番号になりました。進化を実装するときの移行の手順は [アーキテクチャ 5 章](architecture-v0.2a.md#コマンドの移行の方針) にあります。
+v0.1 からあるコマンドは、場のポケモンをカードの uid で指します。v0.2a で場のポケモンの番号（`pokemon_id`）を加え、`ResolveDecision` の選べるものは番号になりました。進化を実装するときの移行の手順は [アーキテクチャ 5 章](architecture-v0.2a.md#コマンドの移行の方針) にあります。v0.3d の調査（[evolution-readiness-v0.4.md](evolution-readiness-v0.4.md) 3 章）では、進化しても `pokemon_id` を変えない案と、`EvolvePokemon.target` を `pokemon_id` にする案を推奨しています。
 
 ### 5.5 デッキの問題点・ルールの組
 
@@ -344,7 +366,7 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 | 例外 | コード |
 |---|---|
 | `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 

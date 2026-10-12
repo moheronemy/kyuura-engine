@@ -79,7 +79,7 @@ knock_out  {…[, simultaneous: true]}   ← きぜつしたポケモンごと�
 | かじる・でんげきの基本、要素の順番、コイン 1 枚 | `SelfDamageOnTails.resolve` | `ThunderJoltTest` |
 | プラスパワー・ディフェンダーとの組み合わせ | `effects.deal_attack_damage`・`attack_damage_modifiers` | `SelfDamageModifierTest` |
 | 自分のきぜつ | `engine._finish_attack` | `SelfKnockOutTest` |
-| 弱点・抵抗力が関係する場合は止める | `effects.self_damage_problem` | `UnresolvedSelfWeaknessTest` |
+| 弱点・抵抗力が関係する場合は止める（v0.3d で計算するように変えた。ピカチュウでは結果は同じ） | `effects.self_damage_problem`（v0.3d で外した） | `UnresolvedSelfWeaknessTest`（v0.3d: `SelfWeaknessResistanceTest`） |
 | 不正な操作は状態も乱数も変えない | `engine.apply_command` | `InvalidCommandsTest` |
 | 同時のきぜつ | — | test_simultaneous_ko.py |
 | 正式な対戦開始から勝敗まで・負荷 | — | test_pikachu_games.py |

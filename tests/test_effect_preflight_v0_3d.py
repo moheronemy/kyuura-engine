@@ -1,0 +1,173 @@
+"""コインの前の検証（v0.3d。docs/effect-preflight-v0.3d.md）。
+
+正しく宣言したワザが、原典で決められない場合に当たるかどうかは、コインの結果で変わってはいけない（コインを投げてから
+「決められない」と分かる形だと、拒否されるかどうかでこの先のコインの結果が分かってしまう。CLAUDE.md「コインを投げる効果
+は、投げる前に使えるかどうか・原典で決められない場合を確かめ終えておきます」）。ここでは次を確かめる。
+
+- 対応カードのワザの実装ごとに、ワザを使うポケモン・相手のポケモンの特殊状態・ダメージ・プラスパワーの組み合わせで、
+  コインの結果の全通りについて、受け付けるか・どのコードで拒否するかが同じ
+- マヒにするワザ（``ParalyzeOnHeads``）の再付与の確認（``paralysis_problem``）は、不変条件を満たすどの状態でも
+  相手の対戦ポケモンには働かない（コインのあとで見つかることがない）ことの証明
+- エンジンは ``AttackEffect.problem`` を、宣言（ログ ``attack``）とこんらんのコインの前に聞き、こんらんの「うら」なら
+  ワザの処理（``resolve``）を呼ばない
+
+根拠のページ: p.309（ワザを使う手順 1〜6）、p.322（こんらん・マヒ）、p.323（ポケモンチェックの 4）。
+"""
+
+import itertools
+import unittest
+
+from kyuura_engine import EngineError, PlayTrainer, UseAttack, apply_command, check_invariants, load_card_pool
+from kyuura_engine.conditions import paralysis_problem, paralysis_recovery_turn
+from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEntry, AttackKey, ConfuseOnHeads
+from kyuura_engine.rng import rng_fingerprint
+from kyuura_engine.state import turn_owner
+
+from tests.helpers import (
+    CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, LIGHTNING, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC, RATTATA,
+    T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
+)
+
+ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
+# 実装ごとに 1 つ（v0.3d の登録表のワザの実装はこの 7 種類）
+ATTACKS = [
+    (GROWLITHE, 0),  # DamageOnly
+    (DODUO, 0),  # CoinFlipDamage（コイン 2 枚）
+    (PIKACHU, 1),  # SelfDamageOnTails
+    (WEEDLE, 0),  # PoisonOnHeads
+    (CATERPIE, 0),  # ParalyzeOnHeads
+    (PARAS, 1),  # PutToSleep
+    (VULPIX, 0),  # ConfuseOnHeads
+]
+ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
+DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},
+                   {"poison": 10, "confusion": True}]
+COINS = list(itertools.product((H, T), repeat=3))  # こんらん 1 枚 + ワザの説明 2 枚まで
+
+
+def energy_for(card_id, index):
+    definition = load_card_pool().get(card_id)
+    own = definition.pokemon_type.value if definition.pokemon_type.value in ENERGY else "fire"
+    return [ENERGY[own if cost.value == "colorless" else cost.value] for cost in definition.attacks[index].cost]
+
+
+def outcome(state, command):
+    try:
+        new = apply_command(state, command)
+    except EngineError as error:
+        return error.code
+    assert check_invariants(new) == []
+    return "accepted"
+
+
+class CoinIndependenceTest(unittest.TestCase):
+    def test_acceptance_does_not_depend_on_the_coins(self):
+        """受け付けるか・拒否のコードが、コインの結果（8 通り）で変わらない。"""
+        checked = 0
+        for (card, index), attacker_state, defender_state, near_ko, pluspower in itertools.product(
+            ATTACKS, ATTACKER_STATES, DEFENDER_STATES, (False, True), (False, True)
+        ):
+            hp = load_card_pool().get(GROWLITHE).hp
+            state = build_test_state([
+                {"active": {"card": card, "energy": energy_for(card, index), **attacker_state}, "bench": [PONYTA],
+                 "hand": [PLUSPOWER] if pluspower else []},
+                {"active": {"card": GROWLITHE, "damage": hp - 10 if near_ko else 0, **defender_state}, "bench": [RATTATA]},
+            ])
+            if pluspower:
+                state = apply_command(state, PlayTrainer(0, state.players[0].hand[0]))
+            results = {outcome(with_coin_results(state, *coins), UseAttack(0, index)) for coins in COINS}
+            with self.subTest(card=card, attacker=attacker_state, defender=defender_state, near_ko=near_ko, pluspower=pluspower):
+                self.assertEqual(len(results), 1, results)
+                if pluspower and attacker_state.get("confusion"):
+                    self.assertEqual(results, {"UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"})
+                else:
+                    self.assertEqual(results, {"accepted"})
+            checked += 1
+        self.assertEqual(checked, len(ATTACKS) * len(ATTACKER_STATES) * len(DEFENDER_STATES) * 4)
+
+
+class ReparalysisProofTest(unittest.TestCase):
+    """``ParalyzeOnHeads`` は相手の対戦ポケモンだけをマヒにする。番 T（番のプレイヤー p）に相手のポケモンがマヒ状態で
+    残っているのは、マヒ状態になった番 t の回復する番（t より後の、相手の最初の番）が T 以上のとき、つまり t = T か
+    t = T − 1 のときだけで（それより前なら、相手の番 T − 1 の終わりに回復している。不変条件で確かめている）、どちらも
+    回復する番は T + 1。再付与の番（T）から数えても T + 1 なので同じになり、``paralysis_problem`` は働かない
+    （p.322・p.323。docs/effect-preflight-v0.3d.md 4 章）。"""
+
+    def test_opponent_paralysis_never_needs_the_unresolved_ruling(self):
+        checked = 0
+        for turn in range(2, 12):
+            player = turn_owner(build_test_state([{"active": GROWLITHE}, {"active": RATTATA}]), turn)
+            opponent = 1 - player
+            for paralyzed_turn in range(1, turn + 1):
+                specs = [{"active": GROWLITHE}, {"active": RATTATA}]
+                specs[opponent] = {"active": {"card": RATTATA, "paralysis": paralyzed_turn}}
+                state = build_test_state(specs, current_player=player, turn_number=turn)
+                target = state.players[opponent].active
+                if paralysis_recovery_turn(state, opponent, paralyzed_turn) < turn:
+                    # 回復しているはずのマヒが残っている状態は作れない（不変条件の違反）
+                    self.assertTrue(check_invariants(state))
+                    continue
+                self.assertEqual(check_invariants(state), [])
+                self.assertIn(paralyzed_turn, (turn - 1, turn))
+                self.assertIsNone(paralysis_problem(state, opponent, target))
+                checked += 1
+        self.assertGreater(checked, 0)
+
+    def test_own_pokemon_can_need_it(self):
+        """自分のポケモンを自分の番にマヒにする効果なら、回復する番が変わることがある（v0.3d の対応カードにはない）。"""
+        state = build_test_state([{"active": {"card": GROWLITHE, "paralysis": 2}}, {"active": RATTATA}])
+        self.assertIsNotNone(paralysis_problem(state, 0, state.players[0].active))
+
+
+class PreflightOrderTest(unittest.TestCase):
+    """エンジンが ``problem`` を聞く位置と、こんらんの「うら」で ``resolve`` を呼ばないこと。"""
+
+    def spy_registry(self, calls, problem=None):
+        class Spy(ConfuseOnHeads):
+            implementation_id = "test_spy"
+
+            def problem(self, state, use):
+                calls.append(("problem", len(state.log), rng_fingerprint(state.rng)))
+                return problem
+
+            def resolve(self, state, use):
+                calls.append(("resolve", len(state.log), rng_fingerprint(state.rng)))
+                super().resolve(state, use)
+
+        text = load_card_pool().get(VULPIX).attacks[0].text_ja
+        return DEFAULT_EFFECTS.with_attacks("test-spy", {AttackKey(VULPIX, 0): AttackEntry(Spy(), "あやしいひかり", text_ja=text)})
+
+    def board(self, effects, *sides, confused=False):
+        state = build_test_state([
+            {"active": {"card": VULPIX, "energy": [FIRE, FIRE], **({"confusion": True} if confused else {})}, "bench": [PONYTA]},
+            {"active": GROWLITHE, "bench": [RATTATA]},
+        ], effects=effects)
+        return with_coin_results(state, *sides)
+
+    def test_problem_is_asked_before_the_declaration_and_any_coin(self):
+        for confused in (False, True):
+            for side in (H, T):
+                with self.subTest(confused=confused, side=side):
+                    calls = []
+                    state = self.board(self.spy_registry(calls), side, side, confused=confused)
+                    start, fingerprint = len(state.log), rng_fingerprint(state.rng)
+                    apply_command(state, UseAttack(0, 0))
+                    self.assertEqual(calls[0], ("problem", start, fingerprint))  # 宣言の前・乱数を使う前
+                    resolved = [c for c in calls if c[0] == "resolve"]
+                    self.assertEqual(len(resolved), 0 if confused and side is T else 1)  # 「うら」なら手順 6 はない
+
+    def test_problem_stops_without_resolving(self):
+        from kyuura_engine import UnsupportedError
+
+        for confused in (False, True):
+            with self.subTest(confused=confused):
+                calls = []
+                effects = self.spy_registry(calls, problem=UnsupportedError("UNRESOLVED_TEST", "テスト専用"))
+                state = self.board(effects, H, H, confused=confused)
+                with self.assertRaises(UnsupportedError):
+                    apply_command(state, UseAttack(0, 0))
+                self.assertEqual([c[0] for c in calls], ["problem"])
+
+
+if __name__ == "__main__":
+    unittest.main()

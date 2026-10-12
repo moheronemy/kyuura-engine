@@ -274,7 +274,7 @@ class SelfKnockOutTest(unittest.TestCase):
         self.assertEqual((state.phase, state.result.winner, state.result.conditions), (Phase.GAME_OVER, 1, ((1, "ALL_PRIZES_TAKEN"),)))
 
 
-# ---------------------------------------------------------------- 原典で決められない場合（自分の弱点・抵抗力）
+# ---------------------------------------------------------------- 自分の弱点・抵抗力（v0.2f〜v0.3c は未解決、v0.3d で決めた）
 
 
 def self_typed_pool():
@@ -296,41 +296,75 @@ def self_typed_pool():
     return pool_from_extract(extract, effects), effects
 
 
-class UnresolvedSelfWeaknessTest(unittest.TestCase):
-    """自分へのワザのダメージに弱点・抵抗力を計算するかは原典で決められない（p.320〜322）。関係する場合は止める。"""
+class SelfWeaknessResistanceTest(unittest.TestCase):
+    """自分へのワザのダメージも弱点・抵抗力の影響を受ける（v0.3d で原典を読み直して決めた。SUPPORTED）。
 
-    def test_stops_before_any_damage_or_coin(self):
-        """コインを投げる前に止める。「おもて」が出る乱数でも止まる（「おもて」なら自分へのダメージがないことを理由に、
-        投げてから使えるかどうかを決めない。CLAUDE.md のコインの約束）。"""
+    根拠: p.90 のわるいカメックス（第4弾ロケット団）の解説「「ロケットタックル」を使うときに忘れてはならないことが
+    あります。このワザによって、自分自身が受けるダメージは、「プラスパワー」、弱点・抵抗力などの影響を受けることです。」
+    （ロケットタックルの最新の説明は「自分にも10ダメージ。…」で、でんげきと同じ形の自分へのダメージ）。p.207 のプテラ
+    （拡張シート第2弾赤版）の「きりもみアタック」は「自分にも、「弱点・抵抗力」に関係なく、10ダメージ。」と、関係しない
+    ときに明記している。計算は p.321 の 3・4 段階（ワザを使うポケモンのタイプ、ワザを受ける（ここでは自分の）ポケモンの
+    弱点・抵抗力）。v0.2f〜v0.3c では UNRESOLVED（UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE）として止めていた。
+    docs/unresolved-rulings-v0.3d.md。対戦に使えるカード（ピカチュウ）では結果は変わらない（雷・弱点 闘）。"""
+
+    def jolt(self, card, *sides, pluspowers=0):
         pool, effects = self_typed_pool()
-        for card, side in ((SELF_WEAK, T), (SELF_WEAK, H), (SELF_RESISTANT, T), (SELF_RESISTANT, H)):
-            with self.subTest(card=card, side=side):
-                state = pikachu_vs(GROWLITHE, side, card=card, pool=pool, effects=effects)
-                before, fingerprint = full(state), rng_fingerprint(state.rng)
-                with self.assertRaises(UnsupportedError) as ctx:
-                    apply_command(state, UseAttack(0, THUNDER_JOLT))
-                self.assertEqual(ctx.exception.code, "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE")
-                self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
+        state = pikachu_vs(GROWLITHE, card=card, pool=pool, effects=effects, hand_cards=[PLUSPOWER] * pluspowers)
+        state = with_coin_results(play_all(state, PLUSPOWER), *sides)
+        return thunder_jolt(state)
+
+    def test_own_weakness_doubles_the_self_damage(self):
+        state, events, opponent, own = self.jolt(SELF_WEAK, T)
+        self.assertEqual((own["amount"], own["weakness"], own["resistance"]), (20, True, False))
+        self.assertEqual([value for _, value in own["steps"]], [10, 20])
+        self.assertEqual(opponent["amount"], 30)  # 相手（ガーディ。弱点 水）へのダメージは変わらない
+        self.assertEqual(state.players[0].active.damage, 20)
+
+    def test_own_resistance_reduces_the_self_damage(self):
+        """10 − 30 → 0（「ダメージを受けなかった」。p.321）。"""
+        state, events, _, own = self.jolt(SELF_RESISTANT, T)
+        self.assertEqual((own["amount"], own["weakness"], own["resistance"]), (0, False, True))
+        self.assertEqual(state.players[0].active.damage, 0)
+
+    def test_pluspower_and_weakness_in_the_p321_order(self):
+        """3 弱点（×2）→ 5 プラスパワー（+10）: (10 × 2) + 10 = 30（p.321 の順番。p.90 の解説はプラスパワーと弱点・抵抗力の
+        両方に触れる）。"""
+        _, _, _, own = self.jolt(SELF_WEAK, T, pluspowers=1)
+        self.assertEqual([value for _, value in own["steps"]], [10, 20, 30])
+        self.assertEqual(own["amount"], 30)
+
+    def test_heads_has_no_self_damage(self):
+        _, events, _, own = self.jolt(SELF_WEAK, H)
+        self.assertIsNone(own)
+        self.assertEqual([e["result"] for e in events if e["kind"] == "coin_flip"], ["heads"])
+
+
+class ErrorAfterCoinAtomicityTest(unittest.TestCase):
+    """効果の処理の途中（コインのあと）で例外になっても、渡した状態と乱数は変わらない（``apply_command`` は複製した状態で
+    処理する）。v0.2f〜v0.3c は、自分の弱点のポケモンの「でんげき」で止まる例で確かめていたが、v0.3d でその場合は原典で
+    決まった（``SelfWeaknessResistanceTest``）ので、テスト専用の効果（コインのあとで ``UnsupportedError``）で確かめる。"""
 
     def test_error_after_the_coin_keeps_the_original_state(self):
-        """コインを投げたあとで止まっても、渡した状態と乱数は変わらない（テスト専用の効果: 投げる前の確認を省いた）。"""
-
-        class NoPreCheck(SelfDamageOnTails):
-            implementation_id = "test_no_pre_check"
+        class FailsAfterCoin(SelfDamageOnTails):
+            implementation_id = "test_fails_after_coin"
 
             def resolve(self, state, use):
                 damage_opponent_active(state, use, 30)
                 flip_coins(state, use.player, 1, source="attack", effect=str(use.key), card=0)
                 deal_attack_damage(state, use, SELF, self.self_damage)
+                raise UnsupportedError("UNRESOLVED_TEST_AFTER_COIN", "テスト専用: コインとダメージのあとで止まる")
 
-        pool, effects = self_typed_pool()
         text = load_card_pool().get(PIKACHU).attacks[THUNDER_JOLT].text_ja
-        effects = effects.with_attacks("test-no-pre-check", {AttackKey(SELF_WEAK, THUNDER_JOLT): AttackEntry(NoPreCheck(10), "でんげき", text_ja=text)})
-        state = pikachu_vs(GROWLITHE, T, card=SELF_WEAK, pool=pool, effects=effects)
-        before, fingerprint = full(state), rng_fingerprint(state.rng)
-        with self.assertRaises(UnsupportedError):
-            apply_command(state, UseAttack(0, THUNDER_JOLT))
-        self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
+        effects = DEFAULT_EFFECTS.with_attacks("test-fails-after-coin", {
+            AttackKey(PIKACHU, THUNDER_JOLT): AttackEntry(FailsAfterCoin(10), "でんげき", text_ja=text),
+        })
+        for side in (H, T):
+            with self.subTest(side=side):
+                state = pikachu_vs(GROWLITHE, side, effects=effects)
+                before, fingerprint = full(state), rng_fingerprint(state.rng)
+                with self.assertRaises(UnsupportedError):
+                    apply_command(state, UseAttack(0, THUNDER_JOLT))
+                self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
 
 
 # ---------------------------------------------------------------- 不正な操作は状態も乱数も変えない

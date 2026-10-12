@@ -82,8 +82,10 @@ class AttackEffect:
       決定が要るときは、``decisions.push_decision`` で決定を出して戻る。
     - ``resume``: 出した決定が選ばれたあとの続き。さらに決定を出してもよい（複数段階の選択）。
     - ``problem``（v0.3c）: このワザの処理が、原典で決められない場合なら、その理由（``UnsupportedError``）。
-      エンジンがワザの宣言の前（こんらんのコインの前）に聞く。ワザを使うポケモンのタイプなど、ワザを使う前に
-      分かることだけで決める。
+      エンジンがワザの宣言の前（こんらんのコインの前）に聞く。ワザを使う前の状態だけで決める（コインの結果で
+      変わる条件も、ここで先に確かめる。「おもて」なら決められない、を投げてから見つけない）。v0.3d の対応カードの
+      実装は、どれも既定（None）でよい（docs/effect-preflight-v0.3d.md。v0.3c の ``SelfDamageOnTails`` の確認は、
+      v0.3d で原典の根拠が見つかり不要になった）。
 
     決定がなくなったら、エンジンがワザの後の処理（きぜつ・サイド・番の終わり）を続ける。
     """
@@ -188,46 +190,25 @@ def damage_receiver(state: GameState, use: AttackUse, target: str) -> PokemonInP
     raise ValueError(f"ワザのダメージを受けるポケモンの種類 {target!r} は未実装（{DAMAGE_TARGETS}）")
 
 
-def self_damage_problem(state: GameState, use: AttackUse) -> UnsupportedError | None:
-    """自分へのワザのダメージを、原典で決められる形で計算できないなら、その理由（v0.2f）。
-
-    自分へのワザのダメージ（p.320 のダメージ (3)）に弱点・抵抗力を計算するかは、原典に書かれていない
-    （こんらんで自分が受ける 20 ダメージには「「弱点・抵抗力」の影響を受けます」と書かれている（p.322）が、
-    ワザの説明による自分へのダメージには書かれていない）。ワザを使うポケモンのタイプが、自分の弱点・抵抗力の
-    タイプと違えば、どちらに決めても結果は同じなので計算できる（ピカチュウ: 雷・弱点 闘）。同じなら決められない。
-    """
-    attacker_def = state.card_def(state.find_pokemon(use.pokemon_id)[1].card)
-    own_type = attacker_def.pokemon_type
-    if own_type is not None and own_type in (attacker_def.weakness, attacker_def.resistance):
-        return UnsupportedError(
-            "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE",
-            f"{attacker_def.name_ja} のタイプ（{own_type.value}）が自分の弱点か抵抗力のタイプ。ワザの説明による自分への"
-            "ダメージに弱点・抵抗力を計算するかは、『オフィシャルブック2000』（p.320〜322）から決められないので扱わない",
-        )
-    return None
-
-
 def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> None:
     """ワザのダメージを 1 つ与える: 受けるポケモンを決め、基本となるダメージ ``base`` から p.321 の順番で計算する。
 
     - ダメージを与えるのは、いつもワザを使うポケモン（発生源。弱点・抵抗力はそのタイプで見る。p.321 の 3・4 段階）。
     - 受けるポケモンは ``target``（``OPPONENT_ACTIVE`` か ``SELF``）。自分へのダメージも「ワザによるダメージ」
-      （p.321「8 ワザによるダメージと効果」）なので、同じ順番で計算する。
+      （p.321「8 ワザによるダメージと効果」）なので、同じ順番で計算する。弱点・抵抗力（3・4 段階）は、ワザを使う
+      ポケモンのタイプと、受けるポケモン（自分へのダメージなら自分）の弱点・抵抗力で見る（v0.3d。p.90 のわるい
+      カメックスの解説「このワザによって、自分自身が受けるダメージは、「プラスパワー」、弱点・抵抗力などの影響を
+      受けることです」。SUPPORTED。v0.2f〜v0.3c では、自分のタイプが自分の弱点・抵抗力のタイプなら止めていた）。
     - 変更効果は ``attack_damage_modifiers``: ワザを使うポケモンについているカードは 5 段階（プラスパワー）、
       受けるポケモンについているカードは 7 段階（ディフェンダー）。自分へのダメージでは同じポケモンが両方の
       立場になるが、カードはそれぞれ自分の立場でだけ効果を出す（プラスパワーは使う側、ディフェンダーは受ける側）
       ので、同じカードを二重に計算しない。p.257 の解説どおり、自分へのダメージはプラスパワーで +10、
       ディフェンダーで −20 される。
-    - 自分へのダメージで弱点・抵抗力が関係する場合（``self_damage_problem``）は ``UnsupportedError``。
 
     ログの ``damage`` は v0.1 と同じ形（相手の対戦ポケモンへのダメージ）。変更効果を計算したときだけ ``modifiers``
     （v0.2c）、2 段階までで 0 以下になって計算を終えたときだけ ``stopped_after_step_2``（v0.2d）を加える。
     自分へのダメージ（v0.2f）には、``target``（``"self"``）・``pokemon_id``（受けたポケモン）・``effect``（ワザ）を加える。
     """
-    if target == SELF:
-        problem = self_damage_problem(state, use)
-        if problem is not None:
-            raise problem
     _, attacker = state.find_pokemon(use.pokemon_id)
     attacker_def = state.card_def(attacker.card)
     receiver = damage_receiver(state, use, target)
@@ -277,7 +258,8 @@ class SelfDamageOnTails(AttackEffect):
     - 相手のポケモンがこのワザできぜつしても、自分へのダメージの要素は無視しない（p.309「それ以降の内容を無視
       してはいけません」）。きぜつ・サイド・交代・勝敗は、ワザの処理のあとでエンジンがまとめて行う
       （1 つのワザできぜつしたポケモンは「同時」。p.324）。
-    - 自分へのダメージで弱点・抵抗力が関係する場合は原典で決められないので、コインを投げる前に止める。
+    - 自分へのダメージも弱点・抵抗力の影響を受ける（v0.3d。p.90 の解説。``deal_attack_damage``）。v0.2f〜v0.3c では、
+      自分のタイプが自分の弱点・抵抗力のタイプなら原典で決められないとして止めていた（ピカチュウでは起こらない）。
     """
 
     self_damage: int
@@ -297,15 +279,7 @@ class SelfDamageOnTails(AttackEffect):
             problems.append("説明文のないワザを、自分へのダメージのあるワザとして登録している")
         return problems
 
-    def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
-        # v0.3c: エンジンがこんらんのコインの前にも聞く（「おもて」のあとで止まる形にしない）
-        return self_damage_problem(state, use)
-
     def resolve(self, state: GameState, use: AttackUse) -> None:
-        # 原典で決められない場合は、ダメージ・コインの前に止める（不正な・決められない操作で乱数を使わない）
-        problem = self_damage_problem(state, use)
-        if problem is not None:
-            raise problem
         _, attacker = state.find_pokemon(use.pokemon_id)
         attack = state.card_def(attacker.card).attacks[use.key.attack_index]
         damage_opponent_active(state, use, attack.damage)
@@ -374,7 +348,11 @@ class ParalyzeOnHeads(AttackEffect):
     - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないのでコインを投げない（p.309・p.323。
       ``PoisonOnHeads`` と同じ）。
     - マヒ状態のポケモンが再びマヒ状態になる効果を受けて、回復する番が原典で決められない場合は、コインを投げる前に
-      止める（``conditions.paralysis_problem``。v0.3b の対応カードでは起こらない）。
+      止める（``conditions.paralysis_problem``）。このワザ（相手の対戦ポケモンだけをマヒにする）では、不変条件を満たす
+      どの状態でも起こらない（v0.3d で証明した: 相手のマヒは、相手の番の終わりまでに回復するので、自分の番に残っている
+      のは今の番か前の番（相手の番）にマヒ状態になった場合だけで、どちらも回復する番は今の番 + 1 になり、同じ）。
+      そのため ``problem`` は持たない（こんらんの「おもて」のあとでこの確認が働くこともない）。
+      docs/effect-preflight-v0.3d.md・tests/test_effect_preflight_v0_3d.py。
     - ねむり状態の相手なら、ねむりは消えてマヒ状態になる。どく状態はそのまま（p.322。``conditions.paralyze``）。
     """
 

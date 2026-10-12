@@ -33,7 +33,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from .errors import UnsupportedError
-from .state import ASLEEP, CONFUSED, NO_SPECIAL_CONDITIONS, Paralyzed, Poison, turn_owner
+from .state import ASLEEP, CONFUSED, NO_SPECIAL_CONDITIONS, Asleep, Confused, Paralyzed, Poison, turn_owner
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -75,17 +75,7 @@ def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str)
     _require_active(state, owner, pokemon, POISON)
     already = pokemon.conditions.poison is not None
     pokemon.conditions = replace(pokemon.conditions, poison=NORMAL_POISON)
-    extra = {"already": True} if already else {}
-    state.add_event(
-        "special_condition",
-        player=owner,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        condition=POISON,
-        damage=NORMAL_POISON.damage,
-        effect=effect,
-        **extra,
-    )
+    _log_applied(state, owner, pokemon, POISON, effect, already, damage=NORMAL_POISON.damage)
 
 
 def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -98,22 +88,8 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
     - どく状態はそのまま（どくはほかの特殊状態と重複する。p.322）。
     """
     _require_active(state, owner, pokemon, SLEEP)
-    current = pokemon.conditions.exclusive
-    already = pokemon.conditions.asleep
-    if not already:
-        if current is not None:
-            _remove_exclusive(state, owner, pokemon, REPLACED)
-        pokemon.conditions = replace(pokemon.conditions, exclusive=ASLEEP)
-    extra = {"already": True} if already else {}
-    state.add_event(
-        "special_condition",
-        player=owner,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        condition=SLEEP,
-        effect=effect,
-        **extra,
-    )
+    already = _set_exclusive(state, owner, pokemon, ASLEEP)
+    _log_applied(state, owner, pokemon, SLEEP, effect, already)
 
 
 def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -127,22 +103,8 @@ def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str
       状態になります」）。
     """
     _require_active(state, owner, pokemon, CONFUSION)
-    current = pokemon.conditions.exclusive
-    already = pokemon.conditions.confused
-    if not already:
-        if current is not None:
-            _remove_exclusive(state, owner, pokemon, REPLACED)
-        pokemon.conditions = replace(pokemon.conditions, exclusive=CONFUSED)
-    extra = {"already": True} if already else {}
-    state.add_event(
-        "special_condition",
-        player=owner,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        condition=CONFUSION,
-        effect=effect,
-        **extra,
-    )
+    already = _set_exclusive(state, owner, pokemon, CONFUSED)
+    _log_applied(state, owner, pokemon, CONFUSION, effect, already)
 
 
 def paralysis_recovery_turn(state: GameState, owner: int, turn: int) -> int:
@@ -199,24 +161,12 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
     problem = paralysis_problem(state, owner, pokemon)
     if problem is not None:
         raise problem
-    current = pokemon.conditions.exclusive
-    already = isinstance(current, Paralyzed)
-    if not already:
-        if current is not None:
-            _remove_exclusive(state, owner, pokemon, REPLACED)
-        pokemon.conditions = replace(pokemon.conditions, exclusive=Paralyzed(turn=state.turn_number))
+    # もうマヒなら、最初の「マヒ状態になった番」のまま（回復する番が変わらないことは paralysis_problem で確かめた）
+    already = _set_exclusive(state, owner, pokemon, Paralyzed(turn=state.turn_number))
     paralyzed = pokemon.conditions.exclusive
-    extra = {"already": True} if already else {}
-    state.add_event(
-        "special_condition",
-        player=owner,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        condition=PARALYSIS,
-        paralyzed_turn=paralyzed.turn,
-        recovery_turn=paralysis_recovery_turn(state, owner, paralyzed.turn),
-        effect=effect,
-        **extra,
+    _log_applied(
+        state, owner, pokemon, PARALYSIS, effect, already,
+        paralyzed_turn=paralyzed.turn, recovery_turn=paralysis_recovery_turn(state, owner, paralyzed.turn),
     )
 
 
@@ -232,6 +182,41 @@ def recover_from_paralysis(state: GameState, owner: int, pokemon: PokemonInPlay)
     if not pokemon.conditions.paralyzed:
         raise RuntimeError(f"マヒ状態でないポケモン {pokemon.pokemon_id} をマヒから回復させようとした（エンジンの不具合）")
     _remove_exclusive(state, owner, pokemon, PARALYSIS_END)
+
+
+def _set_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, value: Asleep | Paralyzed | Confused) -> bool:
+    """ねむり・マヒ・こんらん（``SpecialConditions.exclusive``）を ``value`` にする共通の処理（v0.3d）。
+
+    - もう同じ種類の状態なら、状態を変えずに True（二重にならない。p.322。ログの ``already``）を返す。
+    - ほかの種類（ねむり・マヒ・こんらん）なら、それを ``REPLACED`` の理由で消してから ``value`` にする（p.322「特殊状態の
+      重複」。前の状態の消えたログが、新しい状態のログより先に出る）。
+    - どく（``SpecialConditions.poison``）は変えない（どくはほかの特殊状態と重複する。p.322）。
+    """
+    current = pokemon.conditions.exclusive
+    if type(current) is type(value):
+        return True
+    if current is not None:
+        _remove_exclusive(state, owner, pokemon, REPLACED)
+    pokemon.conditions = replace(pokemon.conditions, exclusive=value)
+    return False
+
+
+def _log_applied(
+    state: GameState, owner: int, pokemon: PokemonInPlay, condition: str, effect: str, already: bool, **fields: object
+) -> None:
+    """特殊状態を付けた（または、もうその状態だった）ログ ``special_condition``。項目の順は v0.3a〜v0.3c と同じ
+    （``player``・``pokemon``・``pokemon_id``・``condition``・状態ごとの項目・``effect``・``already``）。"""
+    extra = {"already": True} if already else {}
+    state.add_event(
+        "special_condition",
+        player=owner,
+        pokemon=pokemon.card,
+        pokemon_id=pokemon.pokemon_id,
+        condition=condition,
+        **fields,
+        effect=effect,
+        **extra,
+    )
 
 
 def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:

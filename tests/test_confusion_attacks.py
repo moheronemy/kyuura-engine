@@ -311,8 +311,29 @@ class ConfusedAttackOrderTest(unittest.TestCase):
         assert_unchanged_rejection(self, state, UseAttack(0, CONFUSE_RAY), "NOT_YOUR_TURN")  # 番は終わっている
 
     def test_unresolved_attack_is_stopped_before_the_confusion_coin(self):
-        """ワザの説明の処理が原典で決められない場合（自分の弱点・抵抗力のタイプのポケモンの「でんげき」。v0.2f）は、こんらんの
-        コインの前に止める（「うら」なら決められなくてもよい、と投げてから決めない）。"""
+        """ワザの説明の処理が原典で決められない場合（``AttackEffect.problem``）は、こんらんのコインの前に止める（「うら」なら
+        決められなくてもよい、と投げてから決めない。結果がコインで変わると、拒否されるかどうかでコインの結果が分かって
+        しまう）。v0.3c はこの例に v0.2f の未解決（自分の弱点のポケモンの「でんげき」）を使っていたが、v0.3d でその裁定は
+        決まった（test_self_damage.py ``SelfWeaknessResistanceTest``）ので、テスト専用の効果で確かめる。"""
+
+        class Undecidable(ConfuseOnHeads):
+            implementation_id = "test_undecidable"
+
+            def problem(self, state, use):
+                return UnsupportedError("UNRESOLVED_TEST_PREFLIGHT", "テスト専用: ワザを使う前に分かる、決められない場合")
+
+        text = load_card_pool().get(VULPIX).attacks[CONFUSE_RAY].text_ja
+        effects = DEFAULT_EFFECTS.with_attacks("test-preflight", {
+            AttackKey(VULPIX, CONFUSE_RAY): AttackEntry(Undecidable(), "あやしいひかり", text_ja=text),
+        })
+        for side in (H, T):
+            with self.subTest(side=side):
+                state = confused(VULPIX, side, effects=effects)
+                assert_unchanged_rejection(self, state, UseAttack(0, CONFUSE_RAY), "UNRESOLVED_TEST_PREFLIGHT", UnsupportedError)
+
+    def test_self_typed_pikachu_resolves_after_heads(self):
+        """v0.3d: 自分の弱点のタイプのポケモンの「でんげき」は止まらない（p.90 の解説）。こんらんの「おもて」→ でんげき →
+        「うら」なら自分に 10 × 2（弱点）。こんらんの「うら」なら、でんげきの内容はなく、こんらんの 20 × 2。"""
         extract = copy.deepcopy(read_extract())
         source = next(c for c in extract["cards"] if c["id"] == PIKACHU)
         weak = copy.deepcopy(source)
@@ -322,10 +343,12 @@ class ConfusedAttackOrderTest(unittest.TestCase):
         text = source["pokemon"]["attacks"][1]["text"]["ja"]
         effects = DEFAULT_EFFECTS.with_attacks("test", {AttackKey(weak["id"], 1): AttackEntry(SelfDamageOnTails(10), "でんげき", text_ja=text)})
         pool = pool_from_extract(extract, effects)
-        for side in (H, T):
-            with self.subTest(side=side):
-                state = confused(weak["id"], side, energy=(LIGHTNING, FIRE), pool=pool, effects=effects)
-                assert_unchanged_rejection(self, state, UseAttack(0, 1), "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE", UnsupportedError)
+        new, events = attack(confused(weak["id"], H, T, energy=(LIGHTNING, FIRE), pool=pool, effects=effects), 1)
+        own = [e for e in events if e["kind"] == "damage" and e.get("target") == "self"]
+        self.assertEqual([(e["amount"], e["weakness"]) for e in own], [(20, True)])
+        new, events = attack(confused(weak["id"], T, energy=(LIGHTNING, FIRE), pool=pool, effects=effects), 1)
+        own = next(e for e in events if e["kind"] == "confusion_damage")
+        self.assertEqual((own["amount"], own["weakness"]), (40, True))
 
 
 # ---------------------------------------------------------------- 20 ダメージ（6 章）

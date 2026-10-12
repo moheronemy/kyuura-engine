@@ -53,7 +53,7 @@
 | 「にげる」に失敗したあと、ベンチに戻ってこんらんが消え、同じ番にバトル場に戻ったポケモンが「にげる」を宣言できるか | p.311 の主語は「一度「にげる」に失敗したこんらん状態のポケモン」。こんらんでなくなったポケモンが含まれるかは書かれていない | 宣言を `UnsupportedError`（`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`）で止める（エネルギーもコインも使わない）。次の番には記録が消えるので宣言できる。[retreat-confusion-v0.3c.md](retreat-confusion-v0.3c.md) 3 章 R14 |
 | ワザの説明にエネルギーをトラッシュするなどのコストがあるワザで、こんらんの「うら」のときにコストを払うか | 2000.02.14版に書かれていない（kyuura の第5版の行の二次資料は「払わない」とするが、基準にしない） | 対応カードにない（v0.3c の対応カードのワザに、説明によるコストはない）。そのワザを加えるときに照合する |
 
-v0.2f の未解決（ワザの説明による自分へのダメージに弱点・抵抗力を計算するか。`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）は、こんらんの規定（p.322「このダメージは」はこんらんのダメージを指す）では決まらないので、変えていません。v0.2b のベンチがないときのポケモンいれかえ（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）、v0.3a・v0.3b の止める 3 つ（`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`）も変えていません（こんらんがあっても同じ条件で止まることをテストで確かめた）。
+v0.2f の未解決（ワザの説明による自分へのダメージに弱点・抵抗力を計算するか。`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）は、こんらんの規定（p.322「このダメージは」はこんらんのダメージを指す）では決まらないので、変えていません（v0.3d で p.90 の解説から SUPPORTED にした。[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) 6 章）。v0.2b のベンチがないときのポケモンいれかえ（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）、v0.3a・v0.3b の止める 3 つ（`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`）も変えていません（こんらんがあっても同じ条件で止まることをテストで確かめた）。
 
 ## 4. 状態の持ち方
 

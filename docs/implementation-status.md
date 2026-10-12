@@ -1,8 +1,8 @@
-# 実装状況（v0.1〜v0.3c）
+# 実装状況（v0.1〜v0.3d）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
-v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん) にあります。
+v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定) にあります。
 
 状態の区分:
 
@@ -107,7 +107,6 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | きずぐすり: 自分の場にダメージカウンターののったポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_POTION_WITHOUT_DAMAGE`）で拒否。カードは手札に残る。test_trainers.py `test_no_damaged_pokemon_is_unresolved` |
 | きずぐすり: ダメージカウンターののっていないポケモンを選べるか（v0.2b） | 選ぶと `UnsupportedError`（`UNRESOLVED_POTION_UNDAMAGED_TARGET`）。決定は残る。test_trainers.py `test_undamaged_target_is_unresolved` |
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
-| ワザで自分に与えるダメージに弱点・抵抗力を計算するか（ワザを使うポケモンのタイプが自分の弱点・抵抗力のタイプのとき）（v0.2f） | `UseAttack` を `UnsupportedError`（`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）で拒否（コインの前。状態も乱数も変わらない）。対応カード（ピカチュウ）では起こらない。test_self_damage.py `UnresolvedSelfWeaknessTest` |
 | ポケモンチェックの「どく」で、両方のプレイヤーのポケモンがきぜつする（v0.3a） | ダメージを与える前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）。以後のコマンドは `UnsupportedError`。test_pokemon_check.py `DoubleKnockOutTest` |
 | 特殊などく状態の重ね方（通常のどくのポケモンが特殊などくを受ける、特殊などく同士。v0.3a） | 特殊などくの効果は未実装（起こらない） |
 | ポケモンチェックで、両方の対戦ポケモンがねむり状態のときのコインの順番（v0.3b） | コインを投げる前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）。対応カード（パラス）では起こらない。test_pokemon_check_v0_3b.py `BothAsleepTest` |
@@ -115,6 +114,8 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | こんらんしたワザの 20 ダメージに、ワザを使うポケモンについているプラスパワー・ディフェンダーを計算するか（v0.3c） | ついていれば、こんらんのコインを投げる前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`）で拒否。自然な対戦 36 局で 2 回起こった。test_confusion_attacks.py `UnresolvedModifierTest` |
 | 「にげる」に失敗したあとベンチに戻り（こんらんが消え）、同じ番にバトル場に戻ったポケモンが「にげる」を宣言できるか（v0.3c） | `Retreat` を `UnsupportedError`（`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`。エネルギー・コインの前）で拒否。次の番には宣言できる。test_confusion_retreat.py `test_failed_pokemon_back_in_the_battle_field_is_unresolved` |
 | ワザの説明にコスト（エネルギーのトラッシュなど）があるワザで、こんらんの「うら」のときにコストを払うか（v0.3c） | 対応カードにない（決めていない。そのワザを加えるときに照合する） |
+
+v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
 根拠と検討は [trainers-v0.2b.md](trainers-v0.2b.md)、[self-damage-v0.2f.md](self-damage-v0.2f.md)、[pokemon-check-v0.3a.md](pokemon-check-v0.3a.md)、[special-conditions-v0.3a.md](special-conditions-v0.3a.md)、[sleep-paralysis-v0.3b.md](sleep-paralysis-v0.3b.md)、[confusion-v0.3c.md](confusion-v0.3c.md)、[confusion-attacks-v0.3c.md](confusion-attacks-v0.3c.md)、[retreat-confusion-v0.3c.md](retreat-confusion-v0.3c.md)、[pokemon-check-v0.3b.md](pokemon-check-v0.3b.md)。
 
@@ -357,7 +358,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 
 | 項目 | 状況 |
 |---|---|
-| ワザで自分に与えるダメージの弱点・抵抗力 | 関係しない場合（自分のタイプが自分の弱点・抵抗力のタイプと違う）は計算する（どちらに決めても同じ）。関係する場合は `UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE` で止める。対応カード（ピカチュウ）では止まる場面はない |
+| ワザで自分に与えるダメージの弱点・抵抗力 | v0.2f〜v0.3c: 関係しない場合（自分のタイプが自分の弱点・抵抗力のタイプと違う）は計算し、関係する場合は `UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE` で止めた。**v0.3d から、いつも計算する**（p.90 の解説。SUPPORTED）。対応カード（ピカチュウ）では結果は同じ |
 
 ### 実装済み・テスト限定
 
@@ -531,3 +532,39 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 - UNRESOLVED: こんらんの 20 とプラスパワー・ディフェンダー。こんらんが消えたあとの「にげる」の再宣言。ワザの説明のコストとこんらん（対応カードにない）。v0.2f（自分へのワザのダメージの弱点・抵抗力）・v0.2b（ベンチがないときのポケモンいれかえ）・v0.3a・v0.3b の未解決は変えていない。
 - p.67 の図版の版（レアリティマークの有無）は画像から読めない（文面は一致。処理に関係しない）。
 - kyuura に、こんらんとねむり・マヒの置きかえ・こんらんの 20 とプラスパワー・ディフェンダー・失敗のあとこんらんが消えたポケモンの再宣言・にげるエネルギー 0 のときのコインの記録がない（[ルールの仕様 6章の「kyuura の記録との違い」](rules-2000-02-14.md#kyuura-の記録との違い報告事項)）。
+
+## v0.3d で確かめたこと（特殊状態の総合検証・未解決の裁定）
+
+カード・ルール・コマンド・状態の形・書き出しの形式は加えていません。設計は [architecture-v0.3d.md](architecture-v0.3d.md)、検証の記録は [special-conditions-audit-v0.3d.md](special-conditions-audit-v0.3d.md)・[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)・[effect-preflight-v0.3d.md](effect-preflight-v0.3d.md) にあります。
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 8 つの特殊状態（なし・どく・ねむり・どく + ねむり・マヒ・どく + マヒ・こんらん・どく + こんらん）が不変条件を満たし、形式 5・6 で書き出せ、複製で保たれ、形式 1〜4 では `ValueError`。ベンチにはない | p.322 | test_special_conditions_matrix_v0_3d.py `EightStatesTest` |
+| ねむり・マヒ・こんらんの 3 × 3 の上書き（どくのあり・なし）。同じなら `already`、違えば前の状態を `replaced` で消してから付ける。どくは残る。マヒの再付与で回復する番が変わる場合は止め、状態は変わらない | p.322 | `OverwriteMatrixTest` |
+| 8 つの状態 × ワザ・にげる・ポケモンいれかえ・トレーナー・エネルギー・ベンチに出す・決定を待つ間の操作（コインは「おもて」「うら」） | p.309、pp.310〜311、p.322、p.325 | `AttackMatrixTest`・`RetreatMatrixTest`・`OtherActionsMatrixTest`・`PendingDecisionMatrixTest` |
+| 8 つの状態 × ポケモンチェック（どく 10 → ねむりのコイン → マヒの回復、こんらんは何もしない、1 回だけ）、どくのきぜつで特殊状態がなくなりコインを投げない | p.322、p.323 | `PokemonCheckMatrixTest` |
+| 自分へのワザのダメージの弱点・抵抗力（自分の弱点で ×2・抵抗力で −30・プラスパワーと弱点の順番）（v0.3d で UNRESOLVED → SUPPORTED） | p.90 の解説、p.321 | test_self_damage.py `SelfWeaknessResistanceTest`、test_confusion_attacks.py `test_self_typed_pikachu_resolves_after_heads` |
+| 原典で決められない 5 件の境界（止まる・止まらない・状態と乱数が変わらない） | [unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) | test_unresolved_rulings_v0_3d.py |
+| 受け付けるか・拒否のコードが、コインの結果で変わらない（7 種類の実装 × 112 の盤面 × コイン 8 通り）。マヒの再付与の確認が相手の対戦ポケモンには働かないことの証明。エンジンが `problem` を宣言と乱数の前に聞くこと | p.309、p.322、p.323 | test_effect_preflight_v0_3d.py |
+| にげるの失敗の記録が、今の番のログの `retreat_failed` と対応する（不変条件） | p.311 | test_confusion.py `test_retreat_failure_record_needs_the_failure_in_the_log` |
+| 4 種類を混ぜた 60 枚のデッキで、正式な対戦開始から勝敗まで（44 局）。どく 123・ねむり 271・マヒ 142・こんらん 68 回、どく + ねむり／マヒ／こんらんの重なり、ワザ・にげるの拒否、こんらんの成功・失敗、ポケモンチェックのきぜつ 52。止まった対戦 0。固定値（Python 3.11〜3.13 で同じ）。でたらめな操作を混ぜる検査（12 局） | — | test_status_games_v0_3d.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 自分のタイプが自分の弱点・抵抗力のタイプのポケモンの、ワザによる自分へのダメージ | 対戦に使えるカードにない。テスト専用のカード（ピカチュウの記録を写して弱点・抵抗力を雷にしたもの）で確かめた |
+| ねむり・マヒ・こんらんのあいだの置きかえ | 統合テストの 44 局では起こらない。負荷テスト（400 局）で 11 回。単体テストで確かめた |
+
+### 未実装
+
+- 進化（v0.4 の予定）。準備の調査は [evolution-readiness-v0.4.md](evolution-readiness-v0.4.md)。`EvolvePokemon` は `UNSUPPORTED_ACTION`、進化カードはデッキに入れられない
+- そのほかは v0.3c と同じ
+
+### 原典未確認・未解決
+
+- UNRESOLVED のまま（調べ直しても決まらない）: こんらんの 20 とプラスパワー・ディフェンダー、失敗のあとこんらんが消えたポケモンの再宣言、ポケモンチェックの両方のどくのきぜつ・両方のねむり、マヒの再付与で回復する番が変わる場合。v0.1・v0.2b の未解決も変わらない。
+- 分類を上げたもの: 自分へのワザのダメージの弱点・抵抗力（UNRESOLVED → SUPPORTED）、こんらんの 20 の抵抗力・0 以下（SUPPORTED → CONFIRMED（解説））、こんらんの「うら」でもワザを使ったことになる（SUPPORTED → CONFIRMED）。[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) 6・7 章。
+- kyuura に、p.90・p.207・p.238 の解説の記述、こんらんの未解決 2 件、進化したポケモンが「別のポケモン」であることの記録がない（[ルールの仕様 6章の「kyuura の記録との違い」](rules-2000-02-14.md#kyuura-の記録との違い報告事項)）。

@@ -1,5 +1,8 @@
 # v0.3c のアーキテクチャ（こんらん: ワザ・にげるのコインと失敗）
 
+> **v0.3d の見直し**: 特殊状態の総合検証・未解決の裁定の再調査・コインの前の検証は [architecture-v0.3d.md](architecture-v0.3d.md) にあります。v0.3d で、`SelfDamageOnTails` の `self_damage_problem` を外し（p.90 の解説）、にげるの失敗の記録とログの対応を不変条件に加えました。15 章のトレードオフ（`resolve` に残る確認）は、v0.3d の対応カードでは起こらないことを確かめました（[effect-preflight-v0.3d.md](effect-preflight-v0.3d.md)）。
+
+
 v0.3c は、v0.3b の特殊状態の基盤に「こんらん」を加え、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ・自分のきぜつ）と「にげる」（コイン・エネルギー・同じ番の再宣言の制限）を実装した版です。対応カードはロコン（PMCG1-015）の「あやしいひかり」です。原典の照合と裁定は [confusion-v0.3c.md](confusion-v0.3c.md)（こんらん状態）、[confusion-attacks-v0.3c.md](confusion-attacks-v0.3c.md)（ワザ・ロコン）、[retreat-confusion-v0.3c.md](retreat-confusion-v0.3c.md)（にげる）にあります。v0.3b の設計（[architecture-v0.3b.md](architecture-v0.3b.md)）の上に作っています。
 
 ## 1. 目的と範囲
@@ -24,7 +27,7 @@ v0.3c は、v0.3b の特殊状態の基盤に「こんらん」を加え、こ�
 | にげる | 確認 → トラッシュ → 入れ替え | 確認（失敗の記録を含む）→ トラッシュ → こんらんならコイン →「おもて」入れ替え／「うら」失敗の記録（番は続く） |
 | 番の終わり | ついているトレーナーのトラッシュ → `turn_end` | その間に、場のすべてのポケモンの失敗の記録を消す |
 | ダメージ | `calculate_attack_damage`（8 段階） | `calculate_confusion_damage`（20 → 弱点 → 抵抗力 → 0 で止める）を加えた |
-| ワザの効果 | `AttackEffect.check`・`resolve`・`resume` | `AttackEffect.problem`（既定は None。`SelfDamageOnTails` は `self_damage_problem`）、`ConfuseOnHeads`（あやしいひかり） |
+| ワザの効果 | `AttackEffect.check`・`resolve`・`resume` | `AttackEffect.problem`（既定は None。`SelfDamageOnTails` は `self_damage_problem`。v0.3d で外した）、`ConfuseOnHeads`（あやしいひかり） |
 | エラーコード | — | `RETREAT_ALREADY_FAILED`（`IllegalActionError`）、`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`（`UnsupportedError`） |
 | ログ | `coin_flip` の `source` は `attack`・`pokemon_check` | `source: "confusion"` を加えた。`confusion_check`・`confusion_damage`・`retreat_failed` を加えた |
 | 効果の登録表 | id `kyuura-engine-0.3b`、ワザ 21 | id `kyuura-engine-0.3c`、ワザ 22（あやしいひかり）。トレーナーは同じ 5 枚 |

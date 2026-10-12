@@ -1,5 +1,8 @@
 # 自分へのワザのダメージ（v0.2f）: 原典照合と実装
 
+> **v0.3d の見直し**: 2 章 #3（自分へのダメージの弱点・抵抗力）は、p.90（わるいカメックス「ハイドロキャノン」）の解説から **SUPPORTED** にし、`self_damage_problem`・`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE` を外しました（弱点・抵抗力を計算する）。この文書の #3 と、それに対応するコード・テストの記述は v0.2f の時点のものです。今の扱いは [unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) 6 章にあります。
+
+
 ワザを使ったポケモンが、そのワザで自分自身に与えるダメージ（ピカチュウの「でんげき」の「「うら」なら、自分にも10ダメージ」など）について、原典で確かめたこと、決められなかったこと、実装、テストを対応づけた記録です。カードの照合は [pikachu-v0.2f.md](pikachu-v0.2f.md)、同時のきぜつは [simultaneous-ko-v0.2f.md](simultaneous-ko-v0.2f.md)、設計は [architecture-v0.2f.md](architecture-v0.2f.md) にあります。
 
 - 基準のルール: 「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]、kyuura `NEO-2000-OFFICIAL-RULES`）
@@ -28,7 +31,7 @@
 |---|---|---|---|---|
 | 1 | 自分へのダメージは「ワザのダメージ」か | CONFIRMED | p.320 のダメージの (3)、p.321「8」 | ワザの要素の「ダメージ」で、「ワザによるダメージ」。ワザの「効果」ではない |
 | 2 | 計算の順番 | SUPPORTED | p.321「9」はワザによるダメージの計算の順番 | 相手へのダメージと同じ 8 段階で計算する（`deal_attack_damage`）。ダメージを与えるのはワザを使うポケモン、受けるのはそのポケモン自身 |
-| 3 | 弱点・抵抗力 | **UNRESOLVED**（関係する場合だけ） | p.321 の 3・4 段階は「ワザを使うポケモンのタイプが、ワザを受けるポケモンの弱点（抵抗力）のタイプなら」。こんらんの自分へのダメージは「弱点・抵抗力」の影響を受けると明記（p.322）。ワザの説明による自分へのダメージには書かれていない | ワザを使うポケモンのタイプが自分の弱点・抵抗力のタイプと違えば、どちらに決めても結果は同じ（計算できる）。同じなら決められないので `UnsupportedError`（`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）。コインを投げる前に止める。ピカチュウ（雷・弱点 闘・抵抗力なし）では起こらない |
+| 3 | 弱点・抵抗力 | **UNRESOLVED**（関係する場合だけ）→ v0.3d で **SUPPORTED**（p.90 の解説。計算する） | p.321 の 3・4 段階は「ワザを使うポケモンのタイプが、ワザを受けるポケモンの弱点（抵抗力）のタイプなら」。こんらんの自分へのダメージは「弱点・抵抗力」の影響を受けると明記（p.322）。ワザの説明による自分へのダメージには書かれていない | ワザを使うポケモンのタイプが自分の弱点・抵抗力のタイプと違えば、どちらに決めても結果は同じ（計算できる）。同じなら決められないので `UnsupportedError`（`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）。コインを投げる前に止める。ピカチュウ（雷・弱点 闘・抵抗力なし）では起こらない |
 | 4 | プラスパワー | CONFIRMED（解説） | p.257 の解説、最新の説明（自分の対戦ポケモンも「対戦ポケモン」）、p.321 の 5 段階（ワザを使うポケモンについているカード）。v0.2c の [pluspower-v0.2c.md](pluspower-v0.2c.md) #4b は、最新の説明からの導出として SUPPORTED と分類した。解説に明記されているので、ここでは CONFIRMED（解説）とする（ディフェンダーの [defender-v0.2e.md](defender-v0.2e.md) #13 と同じ扱い） | 自分へのダメージも 5 段階で +10（複数枚ならそれぞれ）。控えへのダメージには加えない（最新の説明。控えへのダメージは未実装） |
 | 5 | ディフェンダー | CONFIRMED（解説） | p.257 の解説、最新の説明、p.321「8」（自分へのダメージもワザによるダメージ）、7 段階（ワザを受けるポケモンについているカード） | ワザを使うポケモン自身についているディフェンダーは、自分へのダメージを 7 段階で −20（複数枚ならそれぞれ）。使った番から効く（同じ番のでんげきの自分へのダメージにも、次の相手の番のワザにも。p.257 の解説の「2度にわたりその効果を受ける」、[defender-v0.2e.md](defender-v0.2e.md) #13）。相手についているディフェンダーは自分へのダメージを変えない |
 | 6 | 同じポケモンにプラスパワーとディフェンダー | SUPPORTED | p.321 は 5 段階を「ワザを使うポケモンについている」、7 段階を「ワザを受けるポケモンについている」で分ける | 自分へのダメージでは同じポケモンが両方の立場になる。プラスパワーは使う側（5 段階）、ディフェンダーは受ける側（7 段階）の効果で、それぞれ 1 回だけ計算する（二重に数えない） |
@@ -47,7 +50,7 @@
 | `effects.OPPONENT_ACTIVE`・`SELF` | ダメージを受けるポケモンの種類（p.320 のダメージの (1)・(3)）。控え（(2)・(4)）は未実装 |
 | `effects.deal_attack_damage(state, use, target, base)` | ワザのダメージを 1 つ与える。発生源はいつもワザを使うポケモン。受けるポケモンは `target` で決める。変更効果は `attack_damage_modifiers(attacker, receiver)`（自分へのダメージでは同じポケモン）。p.321 の順番で計算し、ダメージカウンターをのせ、ログを残す |
 | `effects.damage_opponent_active` | `deal_attack_damage(…, OPPONENT_ACTIVE, …)`（v0.2c からの関数。ログの形は同じ） |
-| `effects.self_damage_problem` | 自分へのダメージに弱点・抵抗力が関係する場合の `UnsupportedError` |
+| `effects.self_damage_problem` | 自分へのダメージに弱点・抵抗力が関係する場合の `UnsupportedError`（v0.3d で外した） |
 | `effects.SelfDamageOnTails` | でんげきの実装（相手 → コイン → 「うら」なら自分） |
 
 ログ: 自分へのダメージの `damage` には、`target: "self"`・`pokemon_id`（受けたポケモン）・`effect`（ワザの識別子）が加わります。相手の対戦ポケモンへのダメージの記録は v0.1 と同じ形のままです（`target` は出ない）。
@@ -58,7 +61,7 @@
 |---|---|---|
 | 自分へのダメージの計算（順番・0 以下） | `deal_attack_damage` | test_self_damage.py `ThunderJoltTest`・`SelfDamageModifierTest` |
 | プラスパワー・ディフェンダー（1・2 枚、組み合わせ、相手のディフェンダー） | `attack_damage_modifiers` | `SelfDamageModifierTest` |
-| 弱点・抵抗力が関係する場合は止める（コインの前・後） | `self_damage_problem` | `UnresolvedSelfWeaknessTest` |
+| 弱点・抵抗力が関係する場合は止める（コインの前・後）（v0.3d で計算するように変えた） | `self_damage_problem`（v0.3d: `deal_attack_damage`） | `UnresolvedSelfWeaknessTest`（v0.3d: `SelfWeaknessResistanceTest`・`ErrorAfterCoinAtomicityTest`） |
 | 要素の順番、相手にダメージを与えなかったときも自分へのダメージを処理 | `SelfDamageOnTails.resolve` | `test_tails_self_damage_in_the_order_written`・`test_opponent_weakness_and_resistance` |
 | 自分のきぜつ・相手側のプレイヤーがサイドを取る・最後のサイド・出せなければ負け | `engine._finish_attack`・`_after_knockouts` | `SelfKnockOutTest` |
 | 正式な対戦開始から | — | test_pikachu_games.py `test_thunder_jolt_elements` |

@@ -1,5 +1,8 @@
 # v0.2f のアーキテクチャ（自分へのダメージと同時のきぜつ）
 
+> **v0.3d の見直し**: この版で加えた `self_damage_problem`（`UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）は、v0.3d で原典の根拠（p.90 の解説）が見つかったので外しました。自分へのダメージにも弱点・抵抗力を計算します（[architecture-v0.3d.md](architecture-v0.3d.md) 4 章）。以下は v0.2f の時点の記述です。
+
+
 v0.2f は、ワザを使ったポケモンが自分自身にダメージを与える処理と、1 つのワザで両方のプレイヤーのポケモンがきぜつする処理（同時のきぜつ）を加えた版です。最初のカードはピカチュウ（PMCG1-035）の「かじる」「でんげき」です。原典の照合と裁定は [self-damage-v0.2f.md](self-damage-v0.2f.md)（自分へのダメージ）、[simultaneous-ko-v0.2f.md](simultaneous-ko-v0.2f.md)（同時のきぜつ）、[pikachu-v0.2f.md](pikachu-v0.2f.md)（カード）にあります。v0.2e の設計（[architecture-v0.2e.md](architecture-v0.2e.md)）の上に作っています。
 
 ## 1. 目的と範囲

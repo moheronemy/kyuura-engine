@@ -1281,7 +1281,11 @@ def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: 
 
 
 def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
-    """こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``。v0.3c。p.311）の整合。"""
+    """こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``。v0.3c。p.311）の整合。
+
+    v0.3d で、記録が今の番のログの ``retreat_failed``（同じ ``pokemon_id``）と対応することも確かめる（失敗していない
+    ポケモンに記録が付いていない。特殊状態を消す処理（ポケモンいれかえ・将来の進化など）が記録を書きかえない前提の確認）。
+    """
     failed = pokemon.retreat_failed_turn
     if failed is None:
         return []
@@ -1290,19 +1294,22 @@ def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInP
         return [f"{where} が正しくない（{state.phase.value}）"]
     if failed != state.turn_number or player != state.current_player:
         return [f"{where} が今の番（{state.turn_number} 番、プレイヤー {state.current_player!r}）の持ち主の記録ではない（番の終わりに消す）"]
-    if _turn_has_ended(state):
+    recent = _events_since_turn_start(state)
+    if any(event["kind"] == "turn_end" for event in recent):
         return [f"{where} が番の終わりのあとに残っている"]
+    if not any(event["kind"] == "retreat_failed" and event.get("pokemon_id") == pokemon.pokemon_id for event in recent):
+        return [f"{where} に対応する、今の番の「にげる」の失敗（ログ retreat_failed）がない"]
     return []
 
 
-def _turn_has_ended(state: GameState) -> bool:
-    """今の番の ``turn_end`` が、最後の ``turn_start`` のあとのログにあるか。"""
+def _events_since_turn_start(state: GameState) -> list:
+    """最後の ``turn_start`` より後のログ（新しい順）。``turn_start`` がなければログ全体。"""
+    recent = []
     for event in reversed(state.log):
-        if event["kind"] == "turn_end":
-            return True
         if event["kind"] == "turn_start":
-            return False
-    return False
+            break
+        recent.append(event)
+    return recent
 
 
 def _progress_problems(state: GameState) -> list[str]:

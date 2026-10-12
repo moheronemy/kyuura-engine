@@ -69,6 +69,12 @@ def board(attacker, defender_spec, *sides, energy=(FIRE, FIRE)):
     return with_coin_results(state, *sides) if sides else state
 
 
+def record_failure(state, pokemon, player=0):
+    """テスト用: ``pokemon`` がこの番に「にげる」に失敗した記録と、それに対応するログ（v0.3d の不変条件）を置く。"""
+    pokemon.retreat_failed_turn = state.turn_number
+    state.add_event("retreat_failed", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, discarded=())
+
+
 def confused_board(*, bench=(PONYTA,), hand_cards=(), poisoned=False, energy=(FIRE,)):
     """プレイヤー 0（3 番の番）の対戦ポケモンのロコンがこんらん状態。"""
     spec = {"card": VULPIX, "energy": list(energy), "confusion": True}
@@ -373,7 +379,7 @@ class SerializationTest(unittest.TestCase):
 
     def test_clone_deepcopy_pickle_keep_confusion_and_retreat_record(self):
         state = confused_board()
-        state.players[0].active.retreat_failed_turn = 3
+        record_failure(state, state.players[0].active)
         self.assertEqual(check_invariants(state), [])
         for copied in (state.clone(), copy.deepcopy(state), pickle.loads(pickle.dumps(state))):
             with self.subTest(copied=type(copied)):
@@ -419,16 +425,27 @@ class InvariantTest(unittest.TestCase):
     def test_retreat_failure_record(self):
         """「にげる」に失敗した記録は、今の番の、番のプレイヤーのポケモンにだけある（p.311「今の自分の番では」）。"""
         ok = confused_board()
-        ok.players[0].active.retreat_failed_turn = 3
+        record_failure(ok, ok.players[0].active)
         self.assertEqual(check_invariants(ok), [])
         bench = confused_board()
-        bench.players[0].bench[0].retreat_failed_turn = 3  # ベンチに戻ったあと（ポケモンいれかえ）も、その番の間は残る
+        record_failure(bench, bench.players[0].bench[0])  # ベンチに戻ったあと（ポケモンいれかえ）も、その番の間は残る
         self.assertEqual(check_invariants(bench), [])
         for player, where, value in ((0, "active", 2), (0, "active", 4), (1, "active", 3), (0, "active", "3"), (0, "active", True)):
             with self.subTest(player=player, value=value):
                 state = confused_board()
                 getattr(state.players[player], where).retreat_failed_turn = value
                 self.assertTrue(any("「にげる」に失敗した番" in problem for problem in check_invariants(state)))
+
+    def test_retreat_failure_record_needs_the_failure_in_the_log(self):
+        """v0.3d: 記録は、今の番のログの ``retreat_failed``（同じ場のポケモン）と対応する。失敗していないポケモンに記録が
+        付いていたら違反（記録を書きかえる・付け間違える不具合を見つける）。"""
+        state = confused_board()
+        state.players[0].active.retreat_failed_turn = 3
+        self.assertTrue(any("retreat_failed" in problem for problem in check_invariants(state)))
+        other = confused_board()
+        record_failure(other, other.players[0].bench[0])
+        other.players[0].active.retreat_failed_turn = 3  # 失敗したのはベンチのポニータで、バトル場のロコンではない
+        self.assertTrue(any("retreat_failed" in problem for problem in check_invariants(other)))
 
     def test_retreat_failure_record_does_not_survive_the_end_of_turn(self):
         state = confused_board()

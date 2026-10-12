@@ -1,5 +1,8 @@
 # こんらん状態のポケモンのワザ（v0.3c）: コイン・20 ダメージ・自分のきぜつ、ロコンの「あやしいひかり」
 
+> **v0.3d の見直し**: A6 の根拠を加え、A9（抵抗力）・A10・A12 の分類を上げました（p.207・p.238 の解説。処理は変わらない）。A11（こんらんの 20 とプラスパワー・ディフェンダー）は調べ直しても決まらないので UNRESOLVED のままです。5 章の「v0.2f の自分へのダメージ」の弱点・抵抗力は、v0.3d で p.90 の解説から SUPPORTED になりましたが、こんらんの 20 とは別の計算のままです。[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md) 2・6・7 章。
+
+
 こんらん状態のポケモンがワザを使うときの規定と、ロコン（PMCG1-015）の「あやしいひかり」について、原典で確かめたこと、実装、テストを対応づけた記録です。原典の記述の全文とこんらん状態そのものの分類（C1〜）は [confusion-v0.3c.md](confusion-v0.3c.md)、にげるときは [retreat-confusion-v0.3c.md](retreat-confusion-v0.3c.md)、設計は [architecture-v0.3c.md](architecture-v0.3c.md) にあります。
 
 ## 1. 原典の記述（要点）
@@ -39,17 +42,17 @@
 | A3 | 投げるのは、ワザを使うポケモン側のプレイヤー（持ち主） | CONFIRMED | p.309「ワザを使うポケモン側のプレイヤーは」、p.322「こんらん状態のポケモンを持っているプレイヤーは」 | `flip_coins(state, cmd.player, 1, source="confusion", …)` |
 | A4 | コインは 1 枚 | CONFIRMED | p.309 | 1 枚 |
 | A5 | 「おもて」なら、こんらんの影響はない（ワザの説明どおり） | CONFIRMED | p.322 | 手順 6 へ。ワザの説明のコインは、こんらんのコインのあとで投げる |
-| A6 | 「うら」なら、もとのワザの内容（ダメージ・効果・ワザの説明のコイン）を処理しない | SUPPORTED | p.309「ワザがこんらんすると、もとのワザの内容に関わらず…20ダメージ」、p.322「そのワザの内容がどのようなものであっても」と、「おもて」のときの「影響は出ません」との対比。手順 6 を処理するとは書かれていない | 手順 6 を処理しない。乱数はこんらんのコイン 1 枚だけ |
+| A6 | 「うら」なら、もとのワザの内容（ダメージ・効果・ワザの説明のコイン）を処理しない | SUPPORTED（v0.3d: 根拠を追加。p.295「ワザの種類に関係なく」・p.238「ワザが失敗」） | p.309「ワザがこんらんすると、もとのワザの内容に関わらず…20ダメージ」、p.322「そのワザの内容がどのようなものであっても」と、「おもて」のときの「影響は出ません」との対比。手順 6 を処理するとは書かれていない | 手順 6 を処理しない。乱数はこんらんのコイン 1 枚だけ |
 | A7 | 「うら」なら、ワザを使ったポケモン自身に 20 ダメージ | CONFIRMED | p.309・p.322 | `CONFUSION_DAMAGE = 20` |
 | A8 | このダメージは弱点・抵抗力の影響を受ける | CONFIRMED | p.322 | `damage.calculate_confusion_damage` |
-| A9 | 弱点・抵抗力は、そのポケモン自身のタイプと、そのポケモン自身の弱点・抵抗力で見る | SUPPORTED | p.321 の 3・4 段階の定義（ワザを使うポケモンのタイプと、ダメージを受けるポケモンの弱点・抵抗力）。こんらんではどちらも同じポケモン | 自分のタイプ = 自分の弱点なら ×2、= 自分の抵抗力なら −抵抗力の数字。相手のタイプは関係しない |
-| A10 | 計算の結果 0 以下なら「ダメージを受けなかった」（0） | SUPPORTED | p.321「9」の冒頭（計算の結果が 0 やマイナスなら） | `final = max(0, …)`。ログの `amount` は 0 |
+| A9 | 弱点・抵抗力は、そのポケモン自身のタイプと、そのポケモン自身の弱点・抵抗力で見る | SUPPORTED（v0.3d: 抵抗力は **CONFIRMED（解説）**。p.207 プテラの解説。弱点は SUPPORTED のまま） | p.321 の 3・4 段階の定義（ワザを使うポケモンのタイプと、ダメージを受けるポケモンの弱点・抵抗力）。こんらんではどちらも同じポケモン | 自分のタイプ = 自分の弱点なら ×2、= 自分の抵抗力なら −抵抗力の数字。相手のタイプは関係しない |
+| A10 | 計算の結果 0 以下なら「ダメージを受けなかった」（0） | SUPPORTED（v0.3d: **CONFIRMED（解説）**。p.207 プテラの解説「20ダメージを受けなくてすみます」） | p.321「9」の冒頭（計算の結果が 0 やマイナスなら） | `final = max(0, …)`。ログの `amount` は 0 |
 | A11 | こんらんの 20 にプラスパワー・ディフェンダー（ワザを使うポケモンについているもの）を計算するか | **UNRESOLVED** | こんらんのダメージが「ワザによるダメージ」（p.321「8」）か、プラスパワーの「ワザが…ダメージを与えるとき」・ディフェンダーの「ワザによるダメージを受けるとき」（p.257）にあたるかが書かれていない。p.257 の解説は、ワザの内容による自分へのダメージ（「自分自身へもダメージを与えるワザ」）についてのもので、「もとのワザの内容に関わらず」与えるこんらんのダメージには触れていない | ワザを使うこんらん状態のポケモンにダメージを変えるカードがついていれば、コインを投げる前に `UnsupportedError`（`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`）。「おもて」なら問題がない場合でも、投げる前には分からないので止める。相手のポケモンについているカードは関係しない（受けるのは自分） |
-| A12 | 「うら」でも、ワザは使ったことになり、番が終わる | SUPPORTED | ワザの使用は宣言している（手順 3）。p.309「ワザを使ったら…自分の番は自動的に終わります」。p.323「ワザが失敗した場合でも…使ったことになります」（「こんらんする」は「失敗」とは別の言葉だが、同じく宣言したワザの結果） | `_finish_attack`（きぜつ・サイド・交代 → 番の終わり） |
+| A12 | 「うら」でも、ワザは使ったことになり、番が終わる | SUPPORTED（v0.3d: **CONFIRMED**。p.238 ケンタロスの解説がこんらんの「うら」を「ワザが失敗」と書き、p.323「12」が失敗でも使ったことになると書く） | ワザの使用は宣言している（手順 3）。p.309「ワザを使ったら…自分の番は自動的に終わります」。p.323「ワザが失敗した場合でも…使ったことになります」（「こんらんする」は「失敗」とは別の言葉だが、同じく宣言したワザの結果） | `_finish_attack`（きぜつ・サイド・交代 → 番の終わり） |
 | A13 | ワザに必要なエネルギーはトラッシュしない | CONFIRMED | p.309「ワザを使っても、ワザに必要なエネルギーは、そのポケモンについたままです」 | エネルギーは動かない |
 | A14 | ワザの説明にエネルギーをトラッシュするなどのコストがあるとき、「うら」でコストを払うか | UNRESOLVED（対応カードにない） | 2000.02.14版に書かれていない（kyuura の第5版の行の二次資料は「払わない」） | v0.3c の対応カードのワザに、説明によるコストはない。そのワザを加えるときに照合する |
 | A15 | 20 ダメージで HP 以上になったらきぜつ。サイドを取るのは相手側（番でないプレイヤー）。持ち主が新しい対戦ポケモンを出す（出せなければ負け）。相手が最後のサイドを取れば相手の勝ち | CONFIRMED | p.311・p.323 | ワザのあとと同じ `_finish_attack`・`_after_knockouts`（v0.2f の自分のきぜつと同じ流れ） |
-| A16 | ワザの説明の処理が原典で決められない場合は、こんらんのコインの前に止める | 設計（CLAUDE.md のコインの約束） | 「うら」なら決められなくても進められる、と投げてから決めない | `AttackEffect.problem`（`SelfDamageOnTails` は `self_damage_problem`）。`effect.resolve` の中の確認は、こんらんの「おもて」のあとで起こっても `apply_command` が複製した状態で処理するので、渡した状態・乱数は変わらない（v0.3c の対応カードで、状態によって決まる確認は `ParalyzeOnHeads` の再付与だけで、こんらんのポケモンのワザでは起こらない） |
+| A16 | ワザの説明の処理が原典で決められない場合は、こんらんのコインの前に止める | 設計（CLAUDE.md のコインの約束） | 「うら」なら決められなくても進められる、と投げてから決めない | `AttackEffect.problem`（v0.3c の `SelfDamageOnTails` は `self_damage_problem`。v0.3d で外した。[effect-preflight-v0.3d.md](effect-preflight-v0.3d.md)）。`effect.resolve` の中の確認は、こんらんの「おもて」のあとで起こっても `apply_command` が複製した状態で処理するので、渡した状態・乱数は変わらない（v0.3c の対応カードで、状態によって決まる確認は `ParalyzeOnHeads` の再付与だけで、こんらんのポケモンのワザでは起こらない） |
 
 ## 4. 20 ダメージの計算（`damage.calculate_confusion_damage`）
 
@@ -70,7 +73,7 @@ v0.3c で対戦に使えるカードには、自分のタイプが自分の弱�
 | | ワザの説明による自分へのダメージ（v0.2f。ピカチュウの「でんげき」） | こんらんの 20 ダメージ（v0.3c） |
 |---|---|---|
 | 原典 | p.320 のダメージ (3)「このワザを使うポケモンへのダメージ」。p.321「8」でワザによるダメージ | p.309 手順 5・p.322。ワザによるダメージかは書かれていない |
-| 弱点・抵抗力 | 書かれていない（関係するときは `UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`） | 「影響を受けます」（CONFIRMED） |
+| 弱点・抵抗力 | v0.3c: 書かれていない（関係するときは `UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE`）。v0.3d: 影響を受ける（p.90 の解説。SUPPORTED） | 「影響を受けます」（CONFIRMED） |
 | プラスパワー・ディフェンダー | p.257 の解説どおり計算する（CONFIRMED（解説）） | 決められない（ついていれば `UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`） |
 | 計算 | `deal_attack_damage(…, SELF, …)`（8 段階） | `calculate_confusion_damage`（20 → 弱点 → 抵抗力 → 0 で止める） |
 | ログ | `damage`（`target: "self"`） | `confusion_damage` |
@@ -136,7 +139,7 @@ turn_end / pokemon_check / turn_start …
 | あやしいひかり | `effects.ConfuseOnHeads` | `ConfuseRayTest`、test_confusion.py `OverlapTest.test_attacks_overwrite_in_play` |
 | A1〜A6・A12 手順と「おもて」「うら」 | `engine._use_attack`・`_confusion_check` | `ConfusedAttackOrderTest`（登録しているワザ 7 種類すべてで「おもて」「うら」） |
 | A2・拒否はコインの前 | `engine._use_attack` | `test_rejected_commands_flip_no_coin` |
-| A16 ワザの未解決はコインの前 | `AttackEffect.problem`・`SelfDamageOnTails.problem` | `test_unresolved_attack_is_stopped_before_the_confusion_coin` |
+| A16 ワザの未解決はコインの前 | `AttackEffect.problem`（v0.3c は `SelfDamageOnTails.problem`。v0.3d はテスト専用の効果で確かめる） | `test_unresolved_attack_is_stopped_before_the_confusion_coin` |
 | A7〜A10 20 ダメージの計算 | `damage.calculate_confusion_damage`・`engine._confusion_damage` | `ConfusionDamageTest.test_weakness_and_resistance`・`test_the_opponent_type_does_not_matter`・`test_opponent_attached_cards_do_not_matter` |
 | A11 プラスパワー・ディフェンダー | `engine._confusion_damage_problem` | `UnresolvedModifierTest` |
 | A15 自分のきぜつ・サイド・勝敗 | `_finish_attack`・`_after_knockouts` | `test_knock_out_thresholds`・`test_self_knock_out_gives_the_opponent_a_prize`・`test_self_knock_out_ends_the_game` |

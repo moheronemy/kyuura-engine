@@ -204,7 +204,7 @@ def build_test_state(
         states.append(p)
 
     used = {c.card_id for c in cards.values()}
-    return GameState(
+    state = GameState(
         rules=RULES_2000_02_14,
         card_data=DataSource(pool.source["repository"], pool.source["commit"], pool.source["path"]),
         seed=seed,
@@ -221,6 +221,13 @@ def build_test_state(
         next_pokemon_id=next_pokemon_id[0],
         effects=effects or pool.effects,
     )
+    # "retreat_failed_turn" を書いたポケモンには、その番の「にげる」の失敗のログも置く（v0.3d の不変条件: 記録はログの
+    # retreat_failed と対応する）。テスト専用の盤面なので、トラッシュしたエネルギーは空にしておく
+    for owner, p in enumerate(states):
+        for pokemon in p.in_play():
+            if pokemon.retreat_failed_turn is not None:
+                state.add_event("retreat_failed", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, discarded=())
+    return state
 
 
 def active(state: GameState, player: int) -> PokemonInPlay:
