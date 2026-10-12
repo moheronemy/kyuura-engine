@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.4b で加えた公開 API
+## 2. v0.2a〜v0.4c で加えた公開 API
 
 ### v0.2a
 
@@ -192,6 +192,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `kyuura_engine.__version__` | `0.4.0b0`。効果の登録表の id は `kyuura-engine-0.4b` |
 
 コマンド・段階・決定の種類は増やしていません。
+
+### v0.4c
+
+| もの | 内容 |
+|---|---|
+| `EvolvePokemon(player, card, target)` | 同じコマンドで、手札の 2 進化カードを自分の場の 1 進化ポケモンに重ねる（1 進化 → 2 進化）。今の番に 1 進化したポケモンは `EVOLVED_THIS_TURN` |
+| スピアー（PMCG1-012） | 2 進化（`pool_v0_4c`。コクーンから進化）。ダブルニードル（0）・どくばり（1） |
+| `CardDefinition.is_stage2_pokemon`・`is_evolution_pokemon` | 2 進化のカードか・エンジンが進化の手順で扱う進化カード（1 進化・2 進化）か |
+| `kyuura_engine.cards.EVOLUTION_STAGES` | 進化の重なりの下から順の段階 `("basic", "stage1", "stage2")` |
+| `PokemonInPlay.evolution_stack` | 0〜2 枚（2 進化なら たねポケモン・1 進化ポケモンの順）。項目は v0.4a と同じ |
+| `kyuura_engine.__version__` | `0.4.0c0`。効果の登録表の id は `kyuura-engine-0.4c` |
+
+コマンド・段階・決定の種類・状態の項目・書き出しの形式（形式 8 のまま）・ログのイベントは増やしていません。エラーコード `EVOLUTION_STAGE_MISMATCH` を加えました（6 章）。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -373,6 +386,17 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - エラーコード（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）とログのイベント（`persistent_effect_added`・`persistent_effect_removed`・`damage_prevented`）が加わった（6・7 章）
 - 新しいクライアントへの推奨: 状態の辞書は形式 8 を使う。「ダメージを受けない」状態は、場のポケモンの `persistent_effects` のうち `active_turn` が今の番のもの。ドードーの「みだれづき」を「ダメージを受けない」ポケモンに使うと `UnsupportedError`（原典で決められない）になるので、ボタンを無効にするか、拒否を表示する。
 
+### v0.4b → v0.4c
+
+- 2 進化のカード（スピアー）を使わない対戦の結果・ログ・乱数の状態・拒否・保留中の決定は変わりません。v0.4b のコミット `d21369a` と、既存のデッキの 1,340 局（121,420 コマンド）・でたらめな操作の 32 局・4 種類を混ぜたデッキの 300 局（44,122 コマンド）・1 進化を使う 40 局（5,964 コマンド）と、でたらめな進化の 12 局・「かたまる」を使う 40 局（5,880 コマンド。途中の状態と保留中の決定をすべて形式 8 で）と、でたらめな操作の 16 局を同じ手順で動かして比べ、出力がすべて同じでした（[architecture-v0.4c.md 13 章](architecture-v0.4c.md)）。
+- v0.4b のテスト 825 件を v0.4c のコードで実行すると、失敗するのは 9 件だけ（登録表の id・ワザの数・説明文のあるワザの一覧・カードの組・フシギバナの未対応の理由を固定したもの）。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.4c` になり、ワザの登録にスピアーの 2 つが加わった。写しの対戦用のカードの組に `pool_v0_4c`
+  - 2 進化のカードの未対応の理由から「2 進化」がなくなった（フシギバナはポケモンパワーと登録のないワザで未対応のまま）
+  - `PokemonInPlay.evolution_stack` が 2 枚になることがある（形式 7・8 の `evolution_stack` のリストが 2 つになる。項目は同じ）
+  - エラーコード `EVOLUTION_STAGE_MISMATCH`（実在のカードの組では起こらない）
+- 新しいクライアントへの推奨: 進化のボタンは、手札の進化カード（1 進化・2 進化）と、名前の合う場のポケモン（2 進化なら 1 進化ポケモン）のうち、`current_form_turn` が今の番より前のものだけを有効にする。同じ番に 1 進化させたポケモンは、その番には 2 進化できない。スピアーの「ダブルニードル」を「ダメージを受けない」ポケモンに使うと、みだれづきと同じく `UnsupportedError`。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -418,7 +442,7 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 | 例外 | コード |
 |---|---|
-| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, NOT_EVOLUTION_CARD・FIRST_TURN_EVOLUTION・EVOLUTION_NAME_MISMATCH・PLAYED_THIS_TURN・EVOLVED_THIS_TURN（v0.4a）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
+| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, NOT_EVOLUTION_CARD・FIRST_TURN_EVOLUTION・EVOLUTION_NAME_MISMATCH・PLAYED_THIS_TURN・EVOLVED_THIS_TURN（v0.4a）, EVOLUTION_STAGE_MISMATCH（v0.4c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
 | `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNRESOLVED_EVOLUTION_HP（v0.4a）, UNRESOLVED_PREVENTED_COIN_DAMAGE（v0.4b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_EVOLUTION（v0.4a）, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
@@ -444,6 +468,8 @@ v0.3c: `special_condition` の `condition` に `confusion`。`special_conditions
 v0.4a: `evolve`（`player`・`pokemon_id`・`from_card`＝進化前のいちばん上のカードの uid・`from_card_id`・`to_card`＝進化カードの uid・`to_card_id`。番はログの `turn`）。`special_conditions_removed` の `reason` に `evolve`。`retreat_failure_cleared`（`player`・`pokemon`・`pokemon_id`・`reason`＝`evolve`。こんらんで「にげる」に失敗した記録が進化で消えた）。`knock_out` に、進化したポケモンのきぜつなら `evolution_stack`（下のカードの uid。`pokemon` はいちばん上のカード）。進化しない対戦では、v0.3d と同じログ
 
 v0.4b: `persistent_effect_added`（`player`・`pokemon`・`pokemon_id`・`persistent_effect`＝種類（`prevent_damage`）・`source_card`・`source_player`・`active_turn`＝はたらく番・`effect`＝ワザの `AttackKey`。効果を与えた番はログの `turn`）。`persistent_effect_removed`（`player`・`pokemon`・`pokemon_id`・`persistent_effect`・`source_card`・`created_turn`・`active_turn`・`reason`＝`expired`・`retreat`・`switch`・`evolve`・`knock_out`）。`damage_prevented`（`player`・`pokemon`・`pokemon_id`・`target`・`effect`＝ワザ・`persistent_effect`・`source_card`。「ダメージを受けない」状態のポケモンへのダメージの要素が無効になった。計算しないので量はない）。持続する効果を使わない対戦では、v0.4a と同じログ
+
+v0.4c: 新しいイベント・項目はない。2 進化の `evolve` は、`from_card` が 1 進化ポケモン（コクーン）、`to_card` が 2 進化カード（スピアー）。2 進化ポケモンの `knock_out` の `evolution_stack` は下の 2 枚（たねポケモン・1 進化ポケモンの順）
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

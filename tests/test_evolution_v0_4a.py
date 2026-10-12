@@ -134,7 +134,9 @@ class EvolutionCardsTest(unittest.TestCase):
         """2 進化（フシギバナ）・ワザの登録がない 1 進化は、デッキに入れられない（効果がないものとして扱わない）。"""
         pool = load_card_pool()
         self.assertFalse(pool.get(VENUSAUR).supported)
-        self.assertIn("2 進化", pool.get(VENUSAUR).unsupported_reasons[0])
+        # v0.4a は理由の最初が「2 進化」だった。v0.4c で 2 進化の段階を扱えるようにしたので、フシギバナはポケモンパワー
+        # （と登録のないワザ）で未対応のまま（tests/test_stage2_v0_4c.py）
+        self.assertIn("ポケモンパワー", pool.get(VENUSAUR).unsupported_reasons[0])
         effects = DEFAULT_EFFECTS.without_attacks("test-no-dewgong", [AttackKey(DEWGONG, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(DEWGONG))

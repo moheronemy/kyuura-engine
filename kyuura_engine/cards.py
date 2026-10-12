@@ -72,6 +72,11 @@ class Attack:
     damage_modifier: str | None = None  # データの damage.modifier（「+」「×」など）
 
 
+# 進化の重なりの、下から順の段階（v0.4c。p.316・p.319 の「たねポケモンカード」+「進化カード」+「進化カード」）。
+# いちばん下はたねポケモン、その上は 1 進化、その上は 2 進化。ベイビィ（p.319 の C・D）は未対応
+EVOLUTION_STAGES = ("basic", "stage1", "stage2")
+
+
 @dataclass(frozen=True)
 class CardDefinition:
     id: str
@@ -81,7 +86,7 @@ class CardDefinition:
     supported: bool
     unsupported_reasons: tuple[str, ...]
     # ポケモン
-    stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）。"stage2"・"baby" は未対応
+    stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）・"stage2"（2 進化。v0.4c）。"baby" は未対応
     evolves_from: str | None = None  # 進化カードの「○○○○から進化」の名前（kyuura の pokemon.evolves_from.ja。v0.4a）
     hp: int | None = None
     pokemon_type: EnergyType | None = None
@@ -107,6 +112,16 @@ class CardDefinition:
     def is_stage1_pokemon(self) -> bool:
         """1 進化ポケモンのカード（v0.4a）。手札から「○○○○から進化」の名前のたねポケモンに重ねる（p.309・p.310）。"""
         return self.category == "pokemon" and self.stage == "stage1"
+
+    @property
+    def is_stage2_pokemon(self) -> bool:
+        """2 進化ポケモンのカード（v0.4c）。手札から「○○○○から進化」の名前の 1 進化ポケモンに重ねる（p.309・p.316・p.319）。"""
+        return self.category == "pokemon" and self.stage == "stage2"
+
+    @property
+    def is_evolution_pokemon(self) -> bool:
+        """エンジンが進化の手順で扱う段階の進化カード（1 進化・2 進化。v0.4c）。ベイビィは含まない。"""
+        return self.is_stage1_pokemon or self.is_stage2_pokemon
 
     @property
     def is_basic_energy(self) -> bool:
@@ -202,12 +217,13 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
     pokemon = record["pokemon"]
     reasons = []
     evolves_from = (pokemon.get("evolves_from") or {}).get("ja")
-    if pokemon["stage"] == "stage1":
-        # 1 進化（v0.4a）。「○○○○から進化」の名前がなければ、何に重ねるか決まらない（p.309）
+    if pokemon["stage"] in ("stage1", "stage2"):
+        # 1 進化（v0.4a）・2 進化（v0.4c）。「○○○○から進化」の名前がなければ、何に重ねるか決まらない（p.309・p.324）。
+        # 2 進化の段階だからといって一括で対応にはしない（ワザの登録・ポケモンパワーなど、ほかの条件はカードごと）
         if not evolves_from:
-            reasons.append("1 進化なのに進化元の名前がない")
+            reasons.append(f"{'1' if pokemon['stage'] == 'stage1' else '2'} 進化なのに進化元の名前がない")
     elif pokemon["stage"] != "basic":
-        reasons.append(f"{pokemon['stage']}（2 進化・ベイビィ）は未実装")
+        reasons.append(f"{pokemon['stage']}（ベイビィなど）は未実装")
     if pokemon["powers"]:
         reasons.append("ポケモンパワー（特殊能力）は未実装")
     if pokemon.get("rules_text") is not None:
@@ -274,7 +290,7 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4b）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4c）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
@@ -282,7 +298,7 @@ class CardPool:
 # 写しの中の、対戦用のカードの組（参照カード reference_only はデッキに入れない）
 POOL_KEYS = (
     "pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c",
-    "pool_v0_4a", "pool_v0_4b",
+    "pool_v0_4a", "pool_v0_4b", "pool_v0_4c",
 )
 
 

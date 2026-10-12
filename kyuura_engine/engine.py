@@ -23,7 +23,7 @@ import random
 from typing import Callable, Sequence
 
 from . import judge
-from .cards import CardPool, can_pay_cost, load_card_pool
+from .cards import EVOLUTION_STAGES, CardPool, can_pay_cost, load_card_pool
 from .coins import CoinSide, flip_coins
 from .conditions import (
     CONFUSION_DAMAGE,
@@ -588,21 +588,30 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
 def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     """手札の進化カードを、自分の場のポケモンに重ねて進化させる（p.309「場にいるポケモンを進化させる」・p.310。v0.4a）。
 
-    v0.4a は、たねポケモン → 1 進化ポケモンだけ。確かめること（どれも状態を変える前。拒否しても状態も乱数も変わらない）:
+    v0.4a は、たねポケモン → 1 進化ポケモン。v0.4c で、1 進化ポケモン → 2 進化ポケモンも同じコマンド・同じ手順で
+    扱う（p.319「場にいる「たねポケモン」または「進化ポケモン」に進化カードを重ねて進化させたとき」。重なりは 3 枚まで）。
+    確かめること（どれも状態を変える前。拒否しても状態も乱数も変わらない）:
 
     - 自分の番（MAIN）。決定を待つ間（トレーナーの途中を含む）は進化させられない（p.310「進化させている最中は…」の
       裏返しで、ほかのことの最中にも進化はできない。``_require_turn``）
-    - ``cmd.card`` が手札にあり、1 進化ポケモンのカード（``NOT_EVOLUTION_CARD``）。対応していない進化カード（2 進化・
-      ベイビィ・登録のないワザを持つカード）は ``UNSUPPORTED_EVOLUTION``（デッキには入らないので、テストの盤面だけ）
+    - ``cmd.card`` が手札にあり、進化カード（``NOT_EVOLUTION_CARD``）。対応していない進化カード（ベイビィ・登録のない
+      ワザやポケモンパワーを持つカード。2 進化の段階だからといって対応にはしない）は ``UNSUPPORTED_EVOLUTION``
+      （デッキには入らないので、テストの盤面だけ）
     - ``cmd.target`` が自分の場のポケモンの番号（``TARGET_NOT_IN_PLAY``・``TARGET_NOT_YOURS``）。バトル場でもベンチでもよい
     - おたがいのプレイヤーの最初の番ではない（p.310。``FIRST_TURN_EVOLUTION``）
     - 進化カードの「○○○○から進化」の名前が、そのポケモン（いちばん上のカード）の名前と同じ（p.309・p.324「書かれて
-      いない組み合わせでカードを重ねてはいけません」。``EVOLUTION_NAME_MISMATCH``）
+      いない組み合わせでカードを重ねてはいけません」。``EVOLUTION_NAME_MISMATCH``）。たねポケモンに 2 進化カードを
+      直接重ねること（ビードルにスピアー）も、名前が違うのでここで拒否する
     - そのポケモンが「その番の最初から場に出ていた」（p.310）: 今の番に場に出したポケモン（``PLAYED_THIS_TURN``）・
       今の番に進化したポケモン（別のポケモンとしてあつかわれ、その番の最初には場にいなかったことになる。
-      ``EVOLVED_THIS_TURN``）は進化させられない
+      ``EVOLVED_THIS_TURN``。v0.4c: 今の番に 1 進化したポケモンを同じ番に 2 進化させることもこれで拒否する）は
+      進化させられない。制限は 1 匹ごとで、ほかのポケモンは進化させられる
+    - 段階が合う（v0.4c。1 進化カードはたねポケモンに、2 進化カードは 1 進化ポケモンに重ねる。p.316・p.319 の
+      「たね + 進化 + 進化」）。名前が合えば実際のカードの組では段階も合うので、カードのデータが名前と段階で食い違う
+      テスト専用のカードだけで起こる（``EVOLUTION_STAGE_MISMATCH``。進化の重なりの不変条件を破る状態を作らない）
     - 進化したあとの HP が、のっているダメージ以下になる場合は、きぜつの扱いが原典で決められないので止める
-      （``UNRESOLVED_EVOLUTION_HP``。v0.4a の対応カードでは HP が増えるので起こらない）
+      （``UNRESOLVED_EVOLUTION_HP``。v0.4a の対応カードでは HP が増え、v0.4c のコクーン → スピアーは HP が同じ 80
+      なので、きぜつしていないポケモンでは起こらない）
 
     手順（p.310）: 1・2. 進化カードを手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。
     いちばん上のカードの内容がそのポケモンを表す）→ 3. 特殊状態と持続する効果から回復させる（``clear_special_conditions``
@@ -610,9 +619,10 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     （対応カードにない）→ 5. 進化によって引き起こされる特殊なことがら（対応カードにない）。
 
     受け継ぐもの: ダメージカウンター・エネルギーカード・ついているトレーナーカード（p.310）。場のポケモンの番号も変えない
-    （エンジンの内部の識別子。docs/evolution-state-v0.4a.md）。ついているトレーナー（プラスパワー・ディフェンダー）の効果と
-    有効期限は変わらない（カードの効果で、進化で消える「持続する効果」ではない。p.321 の 5・7 段階、p.322。SUPPORTED。
-    docs/evolution-rules-v0.4a.md）。
+    （エンジンの内部の識別子。docs/evolution-state-v0.4a.md）。下に重なったカード（2 進化ならたねポケモンと 1 進化
+    ポケモンの 2 枚。下から順）と場に出た番（``played_turn``）もそのまま（v0.4c。docs/stage2-state-v0.4c.md）。
+    ついているトレーナー（プラスパワー・ディフェンダー）の効果と有効期限は変わらない（カードの効果で、進化で消える
+    「持続する効果」ではない。p.321 の 5・7 段階、p.322。SUPPORTED。docs/evolution-rules-v0.4a.md）。
 
     にげるの失敗の記録（``retreat_failed_turn``。v0.3c）: 進化したポケモンは別のポケモン（p.310）で、こんらんも消える
     （p.322）。p.311 の「一度「にげる」に失敗したこんらん状態のポケモン」をどちらの意味に読んでも、進化したポケモンは
@@ -626,7 +636,7 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     definition = state.card_def(cmd.card)
     if definition.category != "pokemon" or definition.stage == "basic":
         raise IllegalActionError("NOT_EVOLUTION_CARD", f"カード {cmd.card}（{definition.name_ja}）は進化カードではない")
-    if not definition.is_stage1_pokemon or not definition.supported:
+    if not definition.is_evolution_pokemon or not definition.supported:
         reasons = "; ".join(definition.unsupported_reasons) or f"{definition.stage} の進化は未実装"
         raise UnsupportedError("UNSUPPORTED_EVOLUTION", f"進化カード「{definition.name_ja}」は未対応（{reasons}）")
     target = p.find_by_pokemon_id(cmd.target)
@@ -650,6 +660,13 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
             )
         raise IllegalActionError(
             "PLAYED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に場に出したので、進化させられない（p.310）"
+        )
+    below_stage = "basic" if definition.is_stage1_pokemon else "stage1"
+    if current.stage != below_stage:
+        raise IllegalActionError(
+            "EVOLUTION_STAGE_MISMATCH",
+            f"「{definition.name_ja}」（{definition.stage}）は {below_stage} のポケモンに重ねる。場のポケモン {target.pokemon_id} の"
+            f"「{current.name_ja}」は {current.stage}（p.316・p.319）",
         )
     if target.damage >= definition.hp:
         raise UnsupportedError(
@@ -931,9 +948,9 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneou
     """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
 
     場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
-    進化ポケモン（v0.4a）は、重なっているカード（たねポケモンと進化カード）をすべてトラッシュする。きぜつしたのは 1 匹
-    なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` はいちばん上のカード、
-    ``evolution_stack`` は下のカード（進化していれば）。
+    進化ポケモン（v0.4a）は、重なっているカード（たねポケモンと進化カード。2 進化（v0.4c）なら 3 枚）をすべてトラッシュ
+    する。きぜつしたのは 1 匹なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` は
+    いちばん上のカード、``evolution_stack`` は下のカード（進化していれば。下から順）。
     ``timing``: ポケモンチェックの中のきぜつなら ``"pokemon_check"``（ログに書く。v0.3a）。ワザのあとは None。
     """
     p = state.players[owner]
@@ -1259,6 +1276,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems: list[str] = []
     rules = state.rules
     seen: dict[int, str] = {}
+    evolve_events = None  # 進化のログ（v0.4c。進化しているポケモンがいれば読む）
 
     for uid, card in state.cards.items():
         if card.uid != uid or card.owner not in PLAYERS:
@@ -1299,7 +1317,9 @@ def check_invariants(state: GameState) -> list[str]:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
             if pokemon.damage >= definition.hp:
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
-            problems.extend(_evolution_problems(state, player, pokemon))
+            if pokemon.evolution_stack and evolve_events is None:
+                evolve_events = _evolve_events_by_pokemon(state)  # 進化しているポケモンがいるときだけ、ログを 1 回読む（v0.4c）
+            problems.extend(_evolution_problems(state, player, pokemon, evolve_events))
             problems.extend(_condition_problems(state, player, p, pokemon))
             problems.extend(_persistent_effect_problems(state, player, p, pokemon))
         if len(p.bench) > rules.max_bench:
@@ -1377,15 +1397,25 @@ def check_invariants(state: GameState) -> list[str]:
     return problems
 
 
-def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
-    """場のポケモンのカードの重なりと、場に出た番・進化した番（v0.4a。p.309・p.310・p.319・p.324）。
+def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, evolve_events: dict | None = None) -> list[str]:
+    """場のポケモンのカードの重なりと、場に出た番・進化した番（v0.4a。v0.4c で 2 進化まで。p.309・p.310・p.316・p.319・p.324）。
 
-    - 重なり（``evolution_stack``）: 整数のタプルで、v0.4a は 0 枚か 1 枚（1 進化まで）。進化していなければ、いちばん上の
-      カードはたねポケモン。進化していれば、いちばん下はたねポケモン、いちばん上は 1 進化ポケモンで、その「○○○○から
-      進化」の名前が下のカードの名前（書かれていない組み合わせで重ねない。p.324）
+    - 重なり（``evolution_stack``）: 整数のタプルで、0〜2 枚（重なったカードは全部で 3 枚まで。p.319 の「1枚のたね
+      ポケモンカードと、1または2枚の進化カードの合計2枚または3枚」。ベイビィ（C・D）は未対応）。重なりの長さで、
+      下から順の段階が決まる: たね → 1 進化 → 2 進化。いちばん下はたねポケモン、そこから上の各カードは決まった段階で、
+      その「○○○○から進化」の名前がすぐ下のカードの名前（すべての隣り合う 2 枚を確かめる。書かれていない組み合わせで
+      重ねない。p.324）
     - 場に出た番（``played_turn``）: 0（対戦準備）〜今の番
-    - 進化した番（``evolved_turn``）: 進化していなければ None。進化していれば、場に出た番より後・今の番まで・持ち主の番・
-      おたがいの最初の番（1・2 番）ではない（p.310）
+    - 進化した番（``evolved_turn``。いまの姿に進化した番）: 進化していなければ None。進化していれば、場に出た番より後・
+      今の番まで・持ち主の番・おたがいの最初の番（1・2 番）ではない（p.310）
+    - 2 進化しているポケモン（v0.4c）: 1 進化した番は状態に持たない（``evolved_turn`` は 2 進化した番）。1 進化は
+      場に出た番より後・2 進化した番より前（同じ番に二度は進化できない。p.310）の、3 番以降の持ち主の番なので、その
+      ような番があることを確かめる（状態だけで確かめられる必要条件）
+    - ログとの対応（v0.4c）: このポケモンの進化のログ ``evolve``（``evolve_events``。同じ ``pokemon_id``。番号は使い回さない
+      ので、ほかのポケモンのログは混ざらない）は、重なりのいちばん上の側の移り変わり（下のカード → 上のカード）と
+      順番どおりに対応し、番は場に出た番より後で、同じ番に二度進化しておらず（番が増えていく）、最後のログの番が
+      ``evolved_turn``。``new_game`` から始めた対戦（ログが対戦の最初からある）では、すべての移り変わりにログがある。
+      テスト専用に盤面を作った状態（``build_test_state``）は、作った重なりのログがないので、あるログだけを確かめる
     - 今の番に進化したポケモンに、進化のあとで付けられていない特殊状態が残っていない（進化で消える。p.310・p.322）
     """
     where = f"ポケモン {pokemon.pokemon_id}"
@@ -1401,21 +1431,33 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay) -
         return []  # 未知のカードはカードの保存則のほうで数える
     top = state.card_def(pokemon.card)
     problems = []
-    if len(stack) > 1:
-        problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（v0.4a は 1 進化まで）")
     if not stack:
         if not top.is_basic_pokemon:
             problems.append(f"{where} は進化していないのに、いちばん上のカード {pokemon.card}（{top.name_ja}）がたねポケモンではない")
         if evolved is not None:
             problems.append(f"{where} は進化していないのに、進化した番 {evolved} がある")
         return problems
-    below = state.card_def(stack[-1])
-    if not state.card_def(stack[0]).is_basic_pokemon:
-        problems.append(f"{where} のいちばん下のカード {stack[0]} がたねポケモンではない")
-    if not top.is_stage1_pokemon or top.evolves_from != below.name_ja:
-        problems.append(
-            f"{where} のカードの重なりが正しくない（{below.name_ja} の上に {top.name_ja}。{top.name_ja} は {top.evolves_from!r} から進化）"
-        )
+    if len(stack) > len(EVOLUTION_STAGES) - 1:
+        problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（2 進化までの 3 枚まで。p.319）")
+    chain = (*stack, pokemon.card)
+    for position, uid in enumerate(chain):
+        definition = state.card_def(uid)
+        expected = EVOLUTION_STAGES[min(position, len(EVOLUTION_STAGES) - 1)]
+        if definition.category != "pokemon" or definition.stage != expected:
+            if position == 0:
+                problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない")
+            else:
+                problems.append(
+                    f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
+                    f" {definition.stage!r} で、{expected} ではない）"
+                )
+        if position:
+            below = state.card_def(chain[position - 1])
+            if definition.evolves_from != below.name_ja:
+                problems.append(
+                    f"{where} のカードの重なりが正しくない（{below.name_ja} の上に {definition.name_ja}。{definition.name_ja} は"
+                    f" {definition.evolves_from!r} から進化）"
+                )
     if evolved is None:
         problems.append(f"{where} は進化しているのに、進化した番がない")
         return problems
@@ -1425,6 +1467,15 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay) -
         problems.append(f"{where} がおたがいの最初の番（{evolved} 番）に進化している（p.310）")
     elif state.first_player in PLAYERS and turn_owner(state, evolved) != player:
         problems.append(f"{where} が持ち主の番でない {evolved} 番に進化している")
+    elif len(stack) >= 2 and state.first_player in PLAYERS:
+        # 2 進化（v0.4c）: 1 進化した番は、場に出た番・2 番より後で、2 進化した番より前の持ち主の番（同じ番には進化できない）
+        if not any(turn_owner(state, turn) == player for turn in range(max(played, 2) + 1, evolved)):
+            problems.append(
+                f"{where} は {evolved} 番に 2 進化しているが、場に出た番 {played} のあと {evolved} 番より前に、1 進化できる持ち主の番がない"
+                "（同じ番に二度は進化できない。p.310）"
+            )
+    if evolve_events is not None:
+        problems.extend(_evolution_log_problems(state, player, pokemon, chain, evolve_events.get(pokemon.pokemon_id, ())))
     if evolved == state.turn_number and pokemon.conditions.names():
         applied_after = False
         for event in _events_since_turn_start(state):
@@ -1436,6 +1487,45 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay) -
                 applied_after = True
         if not applied_after:
             problems.append(f"{where} は今の番に進化したのに、進化の前の特殊状態 {pokemon.conditions.names()} が残っている（p.310・p.322）")
+    return problems
+
+
+def _evolve_events_by_pokemon(state: GameState) -> dict[int, list]:
+    """ログの進化のイベント ``evolve`` を、場のポケモンの番号ごとに古い順に集める（v0.4c。不変条件で 1 回だけ読む）。"""
+    events: dict[int, list] = {}
+    for event in state.log:
+        if event["kind"] == "evolve":
+            events.setdefault(event.get("pokemon_id"), []).append(event)
+    return events
+
+
+def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPlay, chain: tuple, events) -> list[str]:
+    """進化しているポケモンの重なりと、そのポケモンの進化のログ ``evolve`` の対応（v0.4c。``_evolution_problems`` の説明）。"""
+    where = f"ポケモン {pokemon.pokemon_id}"
+    transitions = len(chain) - 1
+    if len(events) > transitions:
+        return [f"{where} の進化のログが {len(events)} 回あるのに、重なりは {transitions} 回ぶん（{len(chain)} 枚）"]
+    if any(state.decklists) and len(events) != transitions:
+        # new_game から始めた対戦は、ログが対戦の最初からあるので、すべての進化にログがある
+        return [f"{where} は {transitions} 回進化した重なり（{len(chain)} 枚）なのに、進化のログが {len(events)} 回"]
+    problems = []
+    previous_turn = pokemon.played_turn
+    for offset, event in enumerate(events):
+        index = len(chain) - len(events) + offset  # この進化でいちばん上になったカードの位置
+        expected = (chain[index - 1], chain[index])
+        if (event.get("from_card"), event.get("to_card")) != expected or event.get("player") != player:
+            problems.append(
+                f"{where} の進化のログ（{event.get('from_card')!r} → {event.get('to_card')!r}、プレイヤー {event.get('player')!r}）が、"
+                f"重なり（{expected[0]} → {expected[1]}、プレイヤー {player}）と対応しない"
+            )
+        if event["turn"] <= previous_turn:
+            problems.append(
+                f"{where} が {event['turn']} 番に進化しているが、場に出た番・前の進化の番（{previous_turn} 番）より後ではない"
+                "（同じ番に二度は進化できない。p.310）"
+            )
+        previous_turn = event["turn"]
+    if events and events[-1]["turn"] != pokemon.evolved_turn:
+        problems.append(f"{where} の最後の進化のログは {events[-1]['turn']} 番なのに、進化した番が {pokemon.evolved_turn}")
     return problems
 
 

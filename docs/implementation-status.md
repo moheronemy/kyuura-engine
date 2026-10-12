@@ -1,8 +1,8 @@
-# 実装状況（v0.1〜v0.4b）
+# 実装状況（v0.1〜v0.4c）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
-v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる) にあります。
+v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。v0.4c は、1 進化ポケモン → 2 進化ポケモンの進化（たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.4c.md)、[2 進化のルール](stage2-evolution-v0.4c.md)、[スピアー](beedrill-v0.4c.md)、[状態](stage2-state-v0.4c.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる)・[v0.4c の章](#v04c-で加えたもの2-進化とスピアー) にあります。
 
 状態の区分:
 
@@ -67,7 +67,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 
 ルールにはあるが、まだないものです。対応するカードはデッキに入れられず（UNSUPPORTED_CARD）、対応する操作は `UnsupportedError` になります。
 
-- 2 進化・退化・ベイビィポケモンの進化（たねポケモン → 1 進化は v0.4a で対応した）。進化に関わるポケモンパワー・トレーナー
+- 退化・ベイビィポケモンの進化（たねポケモン → 1 進化は v0.4a、1 進化 → 2 進化は v0.4c で対応した。2 進化のカードはスピアーだけ）。進化に関わるポケモンパワー・トレーナー
 - 特殊状態のうち、ポケモンチェックの 1、特殊などく、特殊状態を回復するカード（どく・ねむり・マヒ・こんらんとこんらんのコインは v0.3a〜v0.3c で対応した）
 - ポケモンパワー（特殊能力、`UsePokemonPower`）
 - トレーナーカード（v0.2b・v0.2c・v0.2e で対応した 5 枚のほか）、スタジアム、ポケモンのどうぐなど（ダメージ計算の 5 段階のプラスパワーは v0.2c、7 段階のディフェンダーは v0.2e で対応。2・6・8 段階の効果を持つカードはない）
@@ -114,8 +114,8 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | こんらんしたワザの 20 ダメージに、ワザを使うポケモンについているプラスパワー・ディフェンダーを計算するか（v0.3c） | ついていれば、こんらんのコインを投げる前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`）で拒否。自然な対戦 36 局で 2 回起こった。test_confusion_attacks.py `UnresolvedModifierTest` |
 | 「にげる」に失敗したあとベンチに戻り（こんらんが消え）、同じ番にバトル場に戻ったポケモンが「にげる」を宣言できるか（v0.3c） | `Retreat` を `UnsupportedError`（`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`。エネルギー・コインの前）で拒否。次の番には宣言できる。test_confusion_retreat.py `test_failed_pokemon_back_in_the_battle_field_is_unresolved` |
 | ワザの説明にコスト（エネルギーのトラッシュなど）があるワザで、こんらんの「うら」のときにコストを払うか（v0.3c） | 対応カードにない（決めていない。そのワザを加えるときに照合する） |
-| 進化したあとの HP が、のっているダメージ以下になる場合（きぜつするか・いつ判定するか）（v0.4a） | `EvolvePokemon` を `UnsupportedError`（`UNRESOLVED_EVOLUTION_HP`）で拒否（状態を変える前）。対応カード（パラセクト・ジュゴン）は HP が増えるので起こらない。test_evolution_v0_4a.py `test_damage_at_or_above_the_new_hp_is_unresolved` |
-| 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
+| 進化したあとの HP が、のっているダメージ以下になる場合（きぜつするか・いつ判定するか）（v0.4a） | `EvolvePokemon` を `UnsupportedError`（`UNRESOLVED_EVOLUTION_HP`）で拒否（状態を変える前）。対応カード（パラセクト・ジュゴン）は HP が増えるので起こらない。v0.4c のコクーン（HP 80）→ スピアー（HP 80）は HP が同じで、きぜつしていないコクーンでは起こらない（2 進化でも同じ止め方。HP 70 にしたテスト専用のスピアーで確かめた）。test_evolution_v0_4a.py `test_damage_at_or_above_the_new_hp_is_unresolved`・test_stage2_v0_4c.py `test_same_hp_evolution_and_the_unresolved_hp_case` |
+| 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -596,7 +596,7 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 
 | 項目 | 状況 |
 |---|---|
-| 今の番に進化したポケモンの 2 回目の進化（`EVOLVED_THIS_TURN`） | 対応カードに 2 進化がないので、テスト専用のカード（パラセクトから進化）で確かめた |
+| 今の番に進化したポケモンの 2 回目の進化（`EVOLVED_THIS_TURN`） | 対応カードに 2 進化がないので、テスト専用のカード（パラセクトから進化）で確かめた（v0.4c 注: 実在のカード（ビードル → コクーン → スピアー）で、単体テストと自然な対戦（40 局で 51 回）で確かめた。[v0.4c の章](#v04c-で加えたもの2-進化とスピアー)） |
 | 進化したあとの HP がダメージ以下になる場合（`UNRESOLVED_EVOLUTION_HP`） | 対応カードでは起こらない。HP 30 にしたテスト専用のパラセクトで確かめた |
 | こんらんで「にげる」に失敗したポケモンの進化 | 総合テストの 40 局では起こらない（負荷テストの 400 局で 1 回）。盤面からの単体テストで確かめた |
 
@@ -643,7 +643,7 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 ### 未実装
 
 - 相手のポケモンに与える持続する効果（「すなかけ」「からまるいと」など）、カウンター・マーカーをのせるタイプ、「効果を受けない」状態（p.321）、持続する効果を消すカード、退化での解除
-- 2 進化（バタフリー・スピアー）。ほかの 1 進化ポケモン（ライチュウなど。効果が未実装）
+- 2 進化（バタフリー・スピアー）。ほかの 1 進化ポケモン（ライチュウなど。効果が未実装）（v0.4c 注: スピアーは v0.4c で対応した。バタフリーは未実装）
 
 ### 原典未確認・未解決
 
@@ -651,3 +651,48 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 - v0.4a までの未解決（`UNRESOLVED_EVOLUTION_HP`・`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`・切り直しの補償・きずぐすり・ポケモンいれかえ）は変えていない。
 - 実装上の仮定: 「次の相手の番」は効果を与えた番の番号 + 1（番は交互に進む）。期限切れは番の終わりのうち、ついているトレーナーのトラッシュのあと・`turn_end` の前。「ダメージを受けない」状態のダメージの要素は計算しない（防いだ量はログにない）。
 - kyuura に、「かたまる」の印刷の文面と最新の説明を区別した記録と、持続する効果の規定（ベンチ・場をはなれる・復活しない・重複・ポケモンチェック）の記録がない（[ルールの仕様 6章の「kyuura の記録との違い」](rules-2000-02-14.md#kyuura-の記録との違い報告事項)・[data-provenance.md](data-provenance.md)）。
+
+## v0.4c で加えたもの（2 進化とスピアー）
+
+対応したカードは、スピアー（PMCG1-012。コクーンから進化する 2 進化。p.21）です。たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモンを、v0.4a の `EvolvePokemon`・`evolution_stack` と v0.4b の持続する効果の上で扱います（状態の項目・コマンド・段階・ワザの実装・書き出しの形式は増やしていない）。原典照合・裁定の分類・コード・テストの対応は [stage2-evolution-v0.4c.md](stage2-evolution-v0.4c.md)（ルール）、[beedrill-v0.4c.md](beedrill-v0.4c.md)（カード）、[stage2-state-v0.4c.md](stage2-state-v0.4c.md)（状態）、設計は [architecture-v0.4c.md](architecture-v0.4c.md) にあります。
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| スピアーの登録（ダブルニードル `CoinFlipDamage(coins=2, damage_per_heads=30)`・どくばり `PoisonOnHeads`。照合した印刷の文面・最新の説明・出典 p.21）。ビードルのどくばりとは別に、スピアーのカード id で登録。2 進化の段階だけでは対応にしない（フシギバナは未対応のまま） | p.21、p.316 | test_stage2_v0_4c.py `BeedrillCardTest`、test_effects.py |
+| `EvolvePokemon` で 1 進化ポケモン → 2 進化ポケモン（同じコマンド）。バトル場・ベンチ。1 回の番に複数のポケモン | p.309、p.310、p.316、p.319、p.324 | `Stage2EvolveTest` |
+| 同じ番に 1 進化したポケモンは 2 進化できない（`EVOLVED_THIS_TURN`）。次の自分の番にはできる。制限は 1 匹ごと | p.310 | `test_weedle_kakuna_beedrill_over_two_turns`・`test_bench_and_several_pokemon_in_one_turn` |
+| 進化できない場合: たね → 2 進化（`EVOLUTION_NAME_MISMATCH`）、名前の違う 1 進化・2 進化、最初の番、今の番に出したポケモン、相手のポケモン、未対応の 2 進化（`UNSUPPORTED_EVOLUTION`）、決定を待つ間、終わった・止めた対戦。2 進化カードは場に直接出せない。どれも手札・重なり・特殊状態・持続する効果・乱数・ログを変えない | p.308、p.309、p.310、p.324 | `Stage2EvolveTest`・`AtomicityTest` |
+| 3 枚の重なり（下から ビードル・コクーン、いちばん上がスピアー）・`cards()`・場のポケモンの番号・カードの定義の切り替え（HP・弱点・抵抗力・にげる 0・ワザ）。下のカードのワザは使えない | p.310、p.313、p.319 | `ThreeCardStructureTest` |
+| 受け継ぐもの: ダメージ・エネルギー・プラスパワー・ディフェンダー（効果と有効期限）・場に出た番。HP が同じ（80 → 80）でも進化できる | p.310 | `InheritanceTest`・`test_same_hp_evolution_and_the_unresolved_hp_case` |
+| 8 つの特殊状態のどれから 2 進化しても、特殊状態はすべて消える（ダメージは消えない。どくのダメージもない）。進化したあとで受けた特殊状態は不変条件で拒否しない | p.310、p.322 | `SpecialConditionsTest` |
+| にげるの失敗の記録は 2 進化でも消える（SUPPORTED）。進化しないで戻った場合は未解決のまま | p.310、p.311、p.322 | `RetreatFailureTest` |
+| ダブルニードル: コイン 2 枚、「おもて」の数 × 30（0・30・60。0 はワザの失敗ではない）、弱点・抵抗力・プラスパワー・ディフェンダー・きぜつ・サイド、こんらんならこんらんのコインが先、同じ seed・複製・pickle で同じ結果 | p.21、p.309、p.320、p.321 | `TwineedleTest` |
+| どくばり: 40 → コイン → 「おもて」ならどく。必要なエネルギー草 3、相手がきぜつしたらコインなし、二重のどくにならない、ポケモンチェックのどくでのきぜつ | p.21、p.309、p.322、p.323 | `PoisonStingTest` |
+| 「かたまる」の相手: ダブルニードルは `UNRESOLVED_PREVENTED_COIN_DAMAGE`（コインの前。こんらんのコインも投げない）、効果が消えれば使える。どくばりはダメージが無効・コインとどくは有効 | p.321 | `PreventedTargetTest`、test_effect_preflight_v0_3d.py `CoinIndependenceTest` |
+| 2 進化ポケモンのきぜつ（相手のワザ・こんらん・どく・自分へのダメージ・相手のスピアーのワザ）: 3 枚・エネルギー・ついているトレーナーをすべてトラッシュ。持続する効果はトラッシュに置かない。サイドは 1 枚。交代・勝敗 | p.313、p.319、p.323 | `Stage2KnockOutTest` |
+| 不変条件: 3 枚まで・下から順の段階・すべての隣り合う 2 枚の名前・重複・保存則・番号・2 進化の前の 1 進化の番・ログ `evolve` との対応 | p.310、p.319、p.324 | `Stage2InvariantTest`、test_stage2_games_v0_4c.py `test_log_must_cover_every_evolution` |
+| 状態の保存: 形式 7・8 のまま（重なりが 2 つ）。形式 1〜6 は `ValueError`。clone・deepcopy・pickle | — | `test_serialization_keeps_format_8`・`test_copies_are_independent` |
+| ビードル・コクーン・スピアーを入れた 60 枚のデッキで、正式な対戦開始から勝敗まで（40 局）。2 進化 79（バトル場 31・ベンチ 48）、同じ番の再進化の拒否 51、ダブルニードル 71、どくばり 55（どく 14）、ダブルニードルの未解決 5、スピアーのきぜつ 24（3 枚のトラッシュ 24）。でたらめな操作を混ぜる検査（12 局） | — | test_stage2_games_v0_4c.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 持続する効果（「かたまる」）を受けたコクーンの 2 進化での解除 | 効果は相手の番だけにはたらくので、自然な対戦では起こらない。盤面を直接作った単体テストで確かめた（`PersistentEffectsTest`） |
+| 名前は合うが段階が合わない組み合わせ（`EVOLUTION_STAGE_MISMATCH`） | 実在のカードの組では名前の確認が先に拒否する。テスト専用のカードで確かめた |
+| ワザによる自分へのダメージでの 2 進化ポケモンのきぜつ | 対応カードに自分へのダメージのワザを持つ 2 進化はない。テスト専用のカードで確かめた |
+| 草の抵抗力を持つ相手へのダブルニードル | 対応カードに草の抵抗力を持つものはない。テスト専用のカードで確かめた |
+| 進化した番に自分のポケモンが特殊状態になる | 対応カードにない。どくにする処理を直接呼んで確かめた |
+
+### 未実装
+
+- バタフリー（PMCG2-007。ふきとばし・メガドレイン）。写しにも入れていない（[architecture-v0.4c.md](architecture-v0.4c.md) 14 章に v0.4d の準備）
+- 退化、ベイビィポケモン、進化を助ける・妨げるトレーナーとポケモンパワー（フシギバナなど）
+
+### 原典未確認・未解決
+
+- 2 進化で新しく決められなくなった事項はない。v0.4b までの未解決（`UNRESOLVED_PREVENTED_COIN_DAMAGE`・`UNRESOLVED_EVOLUTION_HP`・`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`・切り直しの補償・きずぐすり・ポケモンいれかえ・特殊などく・サドン・デスの延長戦）は変えていない。`UNRESOLVED_PREVENTED_COIN_DAMAGE` はダブルニードルにも当てはまる。
+- 実装上の仮定: 場のポケモンの番号は 2 進化しても変えない。1 進化した番は状態に持たず、不変条件はログ `evolve` と照らす（盤面を直接作ったテストでは、作った重なりのログがないので状態だけの必要条件まで）。段階の不一致を `EVOLUTION_STAGE_MISMATCH` にした。
+- kyuura に、2 進化に固有の記録（3 枚の構成・同じ番の 1 進化 → 2 進化）と、ダブルニードルの印刷の文面と最新の説明を区別した記録がない（[data-provenance.md](data-provenance.md)・[stage2-evolution-v0.4c.md](stage2-evolution-v0.4c.md) 5 章）。

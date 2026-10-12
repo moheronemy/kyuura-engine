@@ -24,12 +24,12 @@ from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import turn_owner
 
 from tests.helpers import (
-    CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, LIGHTNING, METAPOD, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC,
-    RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
+    BEEDRILL, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, KAKUNA, LIGHTNING, METAPOD, PARAS, PIKACHU, PLUSPOWER, PONYTA,
+    PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
-# 実装ごとに 1 つ（v0.3d の登録表のワザの実装はこの 7 種類）
+# 実装ごとに 1 つ（v0.3d の登録表のワザの実装はこの 7 種類。v0.4b で「かたまる」、v0.4c で 2 進化のスピアーの 2 つを加えた）
 ATTACKS = [
     (GROWLITHE, 0),  # DamageOnly
     (DODUO, 0),  # CoinFlipDamage（コイン 2 枚）
@@ -39,9 +39,13 @@ ATTACKS = [
     (PARAS, 1),  # PutToSleep
     (VULPIX, 0),  # ConfuseOnHeads
     (METAPOD, 0),  # PreventDamageOnHeads（v0.4b。トランセルの「かたまる」。1 進化なので、キャタピーから進化したものとして置く）
+    (BEEDRILL, 0),  # CoinFlipDamage（v0.4c。スピアーの「ダブルニードル」。2 進化なので、ビードル → コクーンと進化したものとして置く）
+    (BEEDRILL, 1),  # PoisonOnHeads（v0.4c。スピアーの「どくばり」）
 ]
-# 1 進化のポケモン（v0.4b）は進化したものとして置く。進化した番は持ち主の 3 番以降の番なので、盤面を 2 番あとにずらす（v0.4b）
-EVOLVED_FROM = {METAPOD: CATERPIE}
+# 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
+# その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
+EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA)}
+COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0)}  # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage）
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},
                    {"poison": 10, "confusion": True},
@@ -73,10 +77,10 @@ class CoinIndependenceTest(unittest.TestCase):
             ATTACKS, ATTACKER_STATES, DEFENDER_STATES, (False, True), (False, True)
         ):
             hp = load_card_pool().get(GROWLITHE).hp
-            shift = 2 if card in EVOLVED_FROM else 0  # 盤面の番をずらす（v0.4b）
+            shift = 2 * len(EVOLVED_FROM.get(card, ()))  # 盤面の番をずらす（v0.4b・v0.4c）
             attacker = {"card": card, "energy": energy_for(card, index), **attacker_state}
             if card in EVOLVED_FROM:
-                attacker.update(evolved_from=EVOLVED_FROM[card], evolved_turn=3)
+                attacker.update(evolved_from=list(EVOLVED_FROM[card]), evolved_turn=1 + shift)
             defender = {"card": GROWLITHE, "damage": hp - 10 if near_ko else 0, **defender_state}
             for key in ("paralysis", "prevent_damage"):
                 if key in defender:
@@ -90,7 +94,7 @@ class CoinIndependenceTest(unittest.TestCase):
             results = {outcome(with_coin_results(state, *coins), UseAttack(0, index)) for coins in COINS}
             with self.subTest(card=card, attacker=attacker_state, defender=defender_state, near_ko=near_ko, pluspower=pluspower):
                 self.assertEqual(len(results), 1, results)
-                if card == DODUO and "prevent_damage" in defender_state:
+                if (card, index) in COIN_DAMAGE and "prevent_damage" in defender_state:
                     # v0.4b: コインでダメージの量を決めるワザの要素が無効になるとき、そのコインを投げるかは決められない
                     # （p.321。docs/persistent-damage-v0.4b.md 5 章）。こんらんのコインの前に止める
                     self.assertEqual(results, {"UNRESOLVED_PREVENTED_COIN_DAMAGE"})

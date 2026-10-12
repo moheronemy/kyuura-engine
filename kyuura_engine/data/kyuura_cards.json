@@ -96,6 +96,9 @@
     "PMCG1-003",
     "PMCG1-009"
   ],
+  "pool_v0_4c": [
+    "PMCG1-012"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -2152,6 +2155,111 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-007-cocoon/"
+      }
+    },
+    {
+      "id": "PMCG1-012",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "スピアー",
+        "en": "Beedrill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          15
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "コクーン",
+          "en": "Kakuna"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ダブルニードル",
+              "en": "Twineedle"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の出た数×30のダメージ。",
+              "en": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": "Poison Sting"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-012",
+        "pokemontcg": [
+          "base1-17"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-008-spear/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-008-spear/"
       }
     },
     {

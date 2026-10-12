@@ -17,7 +17,8 @@
 - 7: 6 に、場のポケモンごとの ``evolution_stack``（いちばん上のカードの下に重なっているポケモンのカード。下から順に
   ``{"card": uid, "card_id": id}``。進化していなければ ``[]``）・``played_turn``（場に出た番。対戦準備なら 0）・
   ``evolved_turn``（いまの姿に進化した番。進化していなければ ``None``）を加えたもの（v0.4a）。``card``・``card_id``・
-  ``name``・``hp`` はいちばん上のカード（そのポケモンを表すカード。p.310）。
+  ``name``・``hp`` はいちばん上のカード（そのポケモンを表すカード。p.310）。v0.4c の 2 進化では ``evolution_stack`` が
+  2 つ（たねポケモン・1 進化ポケモンの順）になるだけで、項目と意味は同じ（形式 8 のまま。docs/stage2-state-v0.4c.md）。
 - 8: 7 に、場のポケモンごとの ``persistent_effects``（ワザによる持続する効果。v0.4b。p.322・p.323）を加えたもの。
   1 つにつき ``{"effect": 種類, "source_card": uid, "source_card_id": id, "source_player": プレイヤー,
   "created_turn": 効果を与えた番, "active_turn": はたらく番}``。v0.4b の種類は ``"prevent_damage"``（「かたまる」の

@@ -75,6 +75,7 @@ PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
 KAKUNA = "PMCG1-009"  # コクーン（v0.4b。ビードルから進化。かたまる・どくのこな）
+BEEDRILL = "PMCG1-012"  # スピアー（v0.4c。コクーンから進化する 2 進化。HP 80・草・弱点 炎・抵抗力 闘 -30・にげる 0。ダブルニードル・どくばり 40）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -155,8 +156,11 @@ def build_test_state(
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
-              2 つ以上は書けない。"evolved_from" は進化しているポケモン（v0.4a。"card" が 1 進化ポケモン）。"evolved_turn" を
-              省略すると、3 番以降の持ち主の番のうち、今の番より前の最後の番（なければ今の番）。"played_turn" の既定は 0（対戦準備で出した）。
+              2 つ以上は書けない。"evolved_from" は進化しているポケモン（v0.4a。"card" が 1 進化ポケモン）。v0.4c から、
+              2 進化ポケモンは "evolved_from" に下のカードのリスト [たねポケモン, 1 進化ポケモン]（下から順）を書く。
+              "evolved_turn" はいまの姿に進化した番で、省略すると、3 番以降の持ち主の番（2 進化ならその 2 つ目以降）の
+              うち、今の番より前の最後の番（なければ今の番）。1 進化した番は書かない（状態に持たないので、不変条件は
+              その前に 1 進化できる番があることだけを確かめる。進化のログは置かない）。"played_turn" の既定は 0（対戦準備で出した）。
               "prevent_damage" は、その番に「かたまる」などで受けた持続する効果 ``PreventDamage``（v0.4b。はたらく番は次の番）。
               効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する））
       bench:  active と同じ形のリスト
@@ -177,7 +181,9 @@ def build_test_state(
     def pokemon(spec, owner: int) -> PokemonInPlay:
         if isinstance(spec, str):
             spec = {"card": spec}
-        stack = (new_uid(spec["evolved_from"], owner),) if "evolved_from" in spec else ()
+        below = spec.get("evolved_from", ())
+        below = (below,) if isinstance(below, str) else tuple(below)  # 2 進化（v0.4c）は [たね, 1 進化]（下から順）
+        stack = tuple(new_uid(card_id, owner) for card_id in below)
         result = PokemonInPlay(new_uid(spec["card"], owner), pokemon_id=next_pokemon_id[0])
         next_pokemon_id[0] += 1
         result.played_turn = spec.get("played_turn", 0)
@@ -186,8 +192,10 @@ def build_test_state(
             evolved_turn = spec.get("evolved_turn")
             if evolved_turn is None:
                 # 先攻はプレイヤー 0（奇数の番）。おたがいの最初の番（1・2 番）には進化できない。今の番より前の持ち主の番の
-                # うち最後の番（なければ今の番）
+                # うち最後の番（なければ今の番）。2 進化（v0.4c）は、その前に 1 進化した持ち主の番がいる（同じ番に二度は
+                # 進化できない。p.310）ので、その 2 つ目から（場に出た番は見ない。v0.4a と同じ）
                 owned = [t for t in range(3, turn_number + 1) if t % 2 == (1 if owner == 0 else 0)]
+                owned = owned[len(stack) - 1:]
                 if not owned:
                     raise ValueError("進化した番を決められない（turn_number を大きくするか evolved_turn を書く）")
                 earlier = [t for t in owned if t < turn_number]
