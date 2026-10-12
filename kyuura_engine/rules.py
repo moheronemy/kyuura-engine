@@ -29,6 +29,7 @@ class RuleSet:
     first_player_draws_on_first_turn: bool
     energy_attachments_per_turn: int
     weakness_multiplier: int
+    damage_per_counter: int  # ダメージカウンター 1 個が表すダメージ（p.319）
 
 
 RULES_2000_02_14 = RuleSet(
@@ -44,6 +45,7 @@ RULES_2000_02_14 = RuleSet(
     first_player_draws_on_first_turn=True,
     energy_attachments_per_turn=1,
     weakness_multiplier=2,
+    damage_per_counter=10,
 )
 
 
@@ -80,5 +82,11 @@ RULE_REFERENCES: dict[str, RuleReference] = {
         RuleReference("win_conditions", "サイドを取り終えた、バトル場に出せるポケモンがいない、番の最初に山札がない。同時に満たしたら勝敗の表（条件の数が多いほうの勝ち、同じならサドン・デス）", "p.309, p.311, p.312", ("NEO-2000-OFFICIAL-RULES", "sudden_death")),
         RuleReference("sudden_death", "サドン・デスは、カードをすべてデッキにもどし、サイド 1 枚で最初から対戦をやり直す", "p.324", ("NEO-2000-OFFICIAL-RULES", "sudden_death")),
         RuleReference("pokemon_check", "ポケモンチェックはどちらの番でもない。指示されたこと → どく → ねむり → マヒ。きぜつの判定は手順にない", "p.323", ("NEO-2000-OFFICIAL-RULES", "knockout_timing")),
+        # v0.2b（トレーナー）
+        RuleReference("trainer", "手札のトレーナーカードを自分の番に使える。1 番に何枚でも。手札から出して見せ、名前を伝え、使うための条件・説明の順にしたがう。使ったカードはトラッシュ（使いすて）。使っている最中はほかのことはできない。番の最初に引く前・ワザの最中は使えない", "p.309, p.310", ("NEO-2000-OFFICIAL-RULES", "first_turn_actions")),
+        RuleReference("draw_by_effect", "「カードを引く」は自分の山札の一番上を手札に。引いたカードは見せなくてよい。トレーナー・ワザの効果で引くときは、山札が足りなくても負けにならず、引けるだけ引く。最後の 1 枚を引いて山札がなくなっても負けではない", "p.311, p.312", ("NEO-2000-OFFICIAL-RULES",)),
+        RuleReference("damage_counter", "ダメージは 10 の倍数で、ダメージカウンター 1 個が 10 ダメージ。回復はダメージカウンターをとりのぞくこと。すべてとりのぞいたら、それ以上は回復しない", "p.319, p.320", ("NEO-2000-OFFICIAL-RULES",)),
+        RuleReference("switch", "対戦ポケモンと控えポケモンを入れ替えることを「ポケモンの入れ替え」と呼ぶ。「にげる」もその一つ。移動するポケモンのカード・カウンターはいっしょに移動する", "p.311, p.325", ("NEO-2000-OFFICIAL-RULES",)),
+        RuleReference("same_timing", "同じタイミングで複数のことがらが起こったら、特に指示がないかぎり、番のプレイヤーが処理の順番を決める", "p.325", ("NEO-2000-OFFICIAL-RULES",)),
     ]
 }

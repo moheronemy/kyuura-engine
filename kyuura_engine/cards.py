@@ -91,6 +91,10 @@ class CardDefinition:
     # エネルギー
     energy_kind: str | None = None
     provides: EnergyType | None = None
+    # トレーナー（kyuura の trainer.text・trainer.kinds。効果の処理には使わず、登録した実装との照合に使う）
+    trainer_text_ja: str | None = None
+    trainer_text_en: str | None = None
+    trainer_kinds: tuple[str, ...] = ()
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -152,12 +156,24 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
     common = dict(id=record["id"], name_ja=name.get("ja") or "", name_en=name.get("en"), category=category)
 
     if category == "trainer":
-        # トレーナーの実装を登録する仕組みは、最初のトレーナーを実装するときに加える（v0.2a では登録できない）
-        return CardDefinition(**common, supported=False, unsupported_reasons=("トレーナーカードの効果の実装が登録されていない",))
+        # トレーナーは、効果の登録表にカード id で実装が登録され、登録したときに照合した名前・文面と
+        # データが合うときだけ使える（v0.2b）。説明文の有無や名前では決めない
+        trainer = record["trainer"]
+        text = trainer.get("text") or {}
+        definition = CardDefinition(
+            **common,
+            supported=False,
+            unsupported_reasons=(),
+            trainer_text_ja=text.get("ja"),
+            trainer_text_en=text.get("en"),
+            trainer_kinds=tuple(trainer.get("kinds") or ()),
+        )
+        problem = effects.trainer_problem(definition)
+        return replace(definition, supported=problem is None, unsupported_reasons=() if problem is None else (problem,))
 
     if category == "energy":
         # 基本エネルギーは効果を持たず、公式ルールの規定（p.310・p.318・p.320）だけで扱う（エンジンの中心部分）。
-        # 特殊エネルギーは効果の実装が要るが、v0.2a では登録できないので未対応
+        # 特殊エネルギーは効果の実装が要るが、登録表に特殊エネルギーの欄がまだないので未対応
         energy = record["energy"]
         reasons = []
         if energy["kind"] != "basic":
@@ -245,8 +261,13 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """v0.1 の対戦（デッキ）に使えるか。v0.1 のカードの組に入っていて、すべての要素に対応していること。"""
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1・pool_v0_2b）に入っていて、
+        すべての要素に対応していること。"""
         return card_id in self.playable_ids
+
+
+# 写しの中の、対戦用のカードの組（参照カード reference_only はデッキに入れない）
+POOL_KEYS = ("pool_v0_1", "pool_v0_2b")
 
 
 def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> CardPool:
@@ -254,7 +275,7 @@ def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> C
         from .effects import DEFAULT_EFFECTS as effects
     definitions = {record["id"]: classify_record(record, effects) for record in extract["cards"]}
     playable = frozenset(
-        card_id for card_id in extract["pool_v0_1"] if definitions[card_id].supported
+        card_id for key in POOL_KEYS for card_id in extract.get(key, ()) if definitions[card_id].supported
     )
     # load_card_pool の結果はプロセス内で共有されるので、書き換えられないようにする
     return CardPool(

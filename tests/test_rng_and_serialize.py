@@ -84,7 +84,8 @@ class SerializeFormatTest(unittest.TestCase):
                 if a is not None:
                     self.assertEqual({k: v for k, v in b.items() if k != "pokemon_id"}, a)
                     self.assertGreaterEqual(b["pokemon_id"], 1)
-        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.2a"))
+        # 登録表の id は v0.2b でトレーナーを登録して変わった（"kyuura-engine-0.2a" → "kyuura-engine-0.2b"）
+        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.2b"))
         json.dumps(v2)
 
     def test_decision_is_serialized(self):
@@ -98,9 +99,9 @@ class SerializeFormatTest(unittest.TestCase):
 
     def test_unknown_format_is_rejected(self):
         state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
-        self.assertEqual(FORMAT_VERSIONS, (1, 2))
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3))  # 3 は v0.2b で加えた（trainer_in_use）
         with self.assertRaises(ValueError):
-            state_to_dict(state, format_version=3)
+            state_to_dict(state, format_version=4)
 
 
 if __name__ == "__main__":

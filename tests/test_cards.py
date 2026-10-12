@@ -11,7 +11,7 @@ from pathlib import Path
 from kyuura_engine import EnergyType, can_pay_cost, load_card_pool
 from kyuura_engine.cards import read_extract, read_verification
 
-from tests.helpers import CHARMANDER, DIGLETT, DODUO, PONYTA, POTION, RATTATA, VENUSAUR
+from tests.helpers import BILL, CHARMANDER, DIGLETT, DODUO, PONYTA, POTION, RATTATA, SUPER_POTION, SWITCH, VENUSAUR
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent
@@ -26,7 +26,10 @@ class CardPoolTest(unittest.TestCase):
 
     def test_v0_1_pool_is_ten_basic_pokemon_and_six_basic_energy(self):
         pool = load_card_pool()
-        playable = [pool.get(c) for c in sorted(pool.playable_ids)]
+        # v0.2b でトレーナー 3 枚（pool_v0_2b）を加えた。v0.1 の組（トレーナー以外）は変わらない
+        trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
+        self.assertEqual(trainers, [POTION, SWITCH, BILL])
+        playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
         self.assertEqual(sum(d.is_basic_energy for d in playable), 6)
@@ -74,7 +77,8 @@ class ClassificationTest(unittest.TestCase):
 
     def test_trainer_evolution_and_power_are_unsupported(self):
         pool = load_card_pool()
-        self.assertIn("トレーナー", pool.get(POTION).unsupported_reasons[0])
+        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる
+        self.assertIn("トレーナー", pool.get(SUPER_POTION).unsupported_reasons[0])
         reasons = " ".join(pool.get(VENUSAUR).unsupported_reasons)
         self.assertIn("進化", reasons)
         self.assertIn("ポケモンパワー", reasons)

@@ -155,7 +155,7 @@ ALLOWED = {
     Phase.SETUP_PLACEMENT: {PlaceStartingPokemon},
     Phase.SETUP_MULLIGAN_DRAW: {DrawMulliganCards},
     Phase.SETUP_FIRST_PLAYER: {ReportJankenResult},
-    Phase.MAIN: {PlayBasicToBench, AttachEnergy, Retreat, UseAttack, EndTurn},
+    Phase.MAIN: {PlayBasicToBench, AttachEnergy, Retreat, UseAttack, EndTurn, PlayTrainer},  # PlayTrainer は v0.2b
     Phase.TAKE_PRIZE: {TakePrize, ResolveDecision},
     Phase.PROMOTE_ACTIVE: {PromoteActive, ResolveDecision},
     Phase.DECISION: {ResolveDecision},  # v0.2a（ワザの効果の途中の決定。製品のカードでは起こらない）
@@ -226,7 +226,7 @@ class PhaseCommandMatrixTest(unittest.TestCase):
                 with self.subTest(phase=phase.value, command=type(command).__name__):
                     with self.assertRaises((IllegalActionError, UnsupportedError)) as ctx:
                         apply_command(state, command)
-                    if isinstance(command, (EvolvePokemon, PlayTrainer, UsePokemonPower)):
+                    if isinstance(command, (EvolvePokemon, UsePokemonPower)):  # PlayTrainer は v0.2b で対応
                         expected = "UNSUPPORTED_ACTION"
                     elif phase is Phase.GAME_OVER:
                         expected = "GAME_OVER"

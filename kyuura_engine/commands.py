@@ -114,7 +114,20 @@ class ResolveDecision:
     choices: tuple[int, ...]
 
 
-# --- ルールにはあるが v0.1 では対応していない操作。受け取ると UnsupportedError を投げる ---
+@dataclass(frozen=True)
+class PlayTrainer:
+    """手札のトレーナーカードを使う（p.310。v0.2b）。``card`` はトレーナーカードの uid。
+
+    使えるのは、効果の登録表に実装が登録されたトレーナーだけ（``EffectRegistry.trainer_effect``）。
+    効果の途中で対象を選ぶカードは、決定（``GameState.decision``）を出す。``ResolveDecision`` で答えると
+    続きを処理し、使い終わったカードをトラッシュして、番の続きにもどる。
+    """
+
+    player: int
+    card: int
+
+
+# --- ルールにはあるが、まだ対応していない操作。受け取ると UnsupportedError を投げる ---
 
 
 @dataclass(frozen=True)
@@ -122,12 +135,6 @@ class EvolvePokemon:
     player: int
     card: int
     target: int
-
-
-@dataclass(frozen=True)
-class PlayTrainer:
-    player: int
-    card: int
 
 
 @dataclass(frozen=True)
@@ -153,7 +160,7 @@ COMMAND_TYPES: dict[str, type] = {
     "use_pokemon_power": UsePokemonPower,
 }
 
-UNSUPPORTED_COMMANDS = (EvolvePokemon, PlayTrainer, UsePokemonPower)
+UNSUPPORTED_COMMANDS = (EvolvePokemon, UsePokemonPower)
 
 _TYPE_NAMES = {cls: name for name, cls in COMMAND_TYPES.items()}
 

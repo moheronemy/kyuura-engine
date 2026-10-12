@@ -307,14 +307,21 @@ class IllegalCommandsDoNotChangeStateTest(unittest.TestCase):
 
 
 class UnsupportedActionsTest(unittest.TestCase):
-    """v0.1 で未対応の操作は、黙って無視せず UnsupportedError にする。"""
+    """未対応の操作は、黙って無視せず UnsupportedError にする。
+
+    v0.2b で PlayTrainer を対応にしたので、この一覧から外した（トレーナーの検査は test_trainers.py）。
+    """
 
     def test_unsupported_commands(self):
         state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
-        for command in (EvolvePokemon(0, 0, 1), PlayTrainer(0, 0), UsePokemonPower(0, 0)):
+        for command in (EvolvePokemon(0, 0, 1), UsePokemonPower(0, 0)):
             with self.assertRaises(UnsupportedError) as ctx:
                 apply_command(state, command)
             self.assertEqual(ctx.exception.code, "UNSUPPORTED_ACTION")
+        # PlayTrainer は v0.2b から処理する（手札にないカードは CARD_NOT_IN_HAND）
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(state, PlayTrainer(0, 0))
+        self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
 
 
 class CommandDictTest(unittest.TestCase):

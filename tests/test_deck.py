@@ -8,7 +8,7 @@ from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, POTION, WATER_FIGHTING_DECK,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, SUPER_POTION, WATER_FIGHTING_DECK,
 )
 
 
@@ -75,7 +75,8 @@ class SupportedCardsTest(unittest.TestCase):
     """未対応のカードはデッキに入れられない（効果がないものとして扱わない）。"""
 
     def test_unsupported_cards_are_rejected(self):
-        deck = expand_decklist({CHARMANDER: 1, POTION: 1, PONYTA: 4, FIRE: 54})
+        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる
+        deck = expand_decklist({CHARMANDER: 1, SUPER_POTION: 1, PONYTA: 4, FIRE: 54})
         problems = deck_problems(deck)
         self.assertEqual(codes(problems), ["UNSUPPORTED_CARD", "UNSUPPORTED_CARD"])
         self.assertIn("ひのこ", problems[0])

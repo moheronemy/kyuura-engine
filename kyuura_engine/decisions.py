@@ -15,22 +15,29 @@
 - ``"take_prize"``・``"promote_active"``: エンジンの中のきぜつのあとの処理（``engine`` が持つ）
 - ``"attack"``: ワザの効果の続き。``context`` の ``"use"`` から、効果の登録表の実装を引き、
   その ``resume`` を呼ぶ（``effects.AttackEffect.resume``）
+- ``"trainer"``: トレーナーの効果の続き（v0.2b）。``context`` の ``"use"`` から実装を引き、
+  ``effects.TrainerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンがカードをトラッシュする
+
+選べるもののうち、原典で処理を決められないもの（v0.2b）: カードの文面では選べるが、選んだときの扱いを
+原典で決められないものは、``context`` の ``"unresolved_choices"`` に入れる。それを選ぶと、状態を変えずに
+``UnsupportedError``（``"unresolved_code"``・``"unresolved_reason"``）になる。推測で処理しないため。
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable
 
-from .errors import IllegalActionError
+from .errors import IllegalActionError, UnsupportedError
 from .state import PendingDecision, Phase
 
 if TYPE_CHECKING:
-    from .effects import AttackUse
+    from .effects import AttackUse, TrainerUse
     from .state import GameState
 
 # 決定の種類（kind）。v0.1 からある 2 つは、段階（phase）も v0.1 と同じものを使う
 TAKE_PRIZE = "take_prize"  # きぜつさせたプレイヤーが、サイドの位置を 1 つ選ぶ（p.312, p.323）
 PROMOTE_ACTIVE = "promote_active"  # バトル場のポケモンがいなくなったプレイヤーが、ベンチのポケモンを 1 匹選ぶ（p.313, p.323）
+SELECT_POKEMON = "select_pokemon"  # 効果の対象の場のポケモンを選ぶ（v0.2b。選べるものは場のポケモンの番号）
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -98,8 +105,47 @@ def push_attack_decision(
     )
 
 
+def push_trainer_decision(
+    state: GameState,
+    use: TrainerUse,
+    *,
+    kind: str,
+    player: int,
+    options: Iterable[int],
+    context: Iterable[tuple[str, Any]] = (),
+    min_choices: int = 1,
+    max_choices: int = 1,
+    unresolved_choices: Iterable[int] = (),
+    unresolved_code: str = "UNRESOLVED_RULING",
+    unresolved_reason: str = "",
+) -> PendingDecision:
+    """トレーナーの効果の途中で決定を出す（v0.2b）。選ばれたら、そのトレーナーの実装の ``resume`` が呼ばれる。
+
+    ``unresolved_choices``: ``options`` のうち、選んだときの扱いを原典で決められないもの（選ぶと
+    ``UnsupportedError(unresolved_code, unresolved_reason)``）。
+    """
+    entries = [("use", (use.player, use.card, use.card_id))]
+    unresolved = tuple(unresolved_choices)
+    if unresolved:
+        entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    return push_decision(
+        state,
+        kind=kind,
+        player=player,
+        options=options,
+        resume="trainer",
+        context=(*entries, *tuple(context)),
+        min_choices=min_choices,
+        max_choices=max_choices,
+    )
+
+
 def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:
-    """選択が決定に合っているかを確かめる。合わなければ IllegalActionError（状態は変えない）。"""
+    """選択が決定に合っているかを確かめる（状態は変えない）。
+
+    合わなければ ``IllegalActionError``。選べるものの中でも、原典で扱いを決められないもの
+    （``context`` の ``"unresolved_choices"``）を選んだら ``UnsupportedError``。
+    """
     if not decision.min_choices <= len(choices) <= decision.max_choices:
         raise IllegalActionError(
             "INVALID_CHOICE_COUNT", f"選ぶ数は {decision.min_choices}〜{decision.max_choices}（{len(choices)} 個選んでいる）"
@@ -109,3 +155,10 @@ def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:
     for choice in choices:
         if choice not in decision.options:
             raise IllegalActionError("INVALID_CHOICE", f"{choice!r} はこの決定で選べるものではない（{decision.options}）")
+    unresolved = decision.context_value("unresolved_choices", ())
+    for choice in choices:
+        if choice in unresolved:
+            raise UnsupportedError(
+                decision.context_value("unresolved_code", "UNRESOLVED_RULING"),
+                decision.context_value("unresolved_reason", "") or f"{choice!r} を選んだときの扱いは原典で決められない",
+            )

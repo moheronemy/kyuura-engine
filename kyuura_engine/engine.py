@@ -32,6 +32,7 @@ from .commands import (
     EndTurn,
     PlaceStartingPokemon,
     PlayBasicToBench,
+    PlayTrainer,
     PromoteActive,
     ReportJankenResult,
     ResolveDecision,
@@ -40,7 +41,7 @@ from .commands import (
     UseAttack,
 )
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
-from .effects import AttackKey, AttackUse
+from .effects import AttackKey, AttackUse, TrainerUse
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULES_2000_02_14, RuleSet
@@ -54,8 +55,10 @@ from .state import (
     Phase,
     PlayerState,
     PokemonInPlay,
+    TrainerInUse,
     freeze_mapping,
 )
+from .zones import draw_cards
 
 PLAYERS = (0, 1)
 
@@ -126,11 +129,7 @@ def _shuffle_deck(state: GameState, player: int) -> None:
 
 
 def _draw(state: GameState, player: int, count: int) -> None:
-    p = state.players[player]
-    drawn = p.deck[:count]
-    del p.deck[:count]
-    p.hand.extend(drawn)
-    state.add_event("draw", player=player, cards=tuple(drawn))
+    draw_cards(state, player, count)
 
 
 def _hand_has_basic(state: GameState, player: int) -> bool:
@@ -194,11 +193,12 @@ def apply_command(state: GameState, command) -> GameState:
     """コマンドを処理した新しい状態を返す。渡した ``state`` は変えない。
 
     - ルール上できない操作: ``IllegalActionError``
-    - v0.1 で未対応の操作・終わった（止めた）対戦への操作: ``UnsupportedError`` / ``IllegalActionError``（GAME_OVER）
+    - 未対応の操作・原典で決められない場合・終わった（止めた）対戦への操作: ``UnsupportedError`` /
+      ``IllegalActionError``（GAME_OVER）
     - 処理の結果が不変条件を満たさない（エンジンの不具合か、渡した状態が壊れている）: ``StateIntegrityError``
     """
     if isinstance(command, UNSUPPORTED_COMMANDS):
-        raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は v0.1 では未対応")
+        raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
     handler = _HANDLERS.get(type(command))
     if handler is None:
         raise IllegalActionError("UNKNOWN_COMMAND", f"知らないコマンド {command!r}")
@@ -567,10 +567,71 @@ def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None
         _finish_attack(state)
 
 
+# ---------------------------------------------------------------- トレーナー（v0.2b）
+
+
+def _play_trainer(state: GameState, cmd: PlayTrainer) -> None:
+    """手札のトレーナーカードを使う（p.310「トレーナーカードを使う」）。
+
+    - 自分の番（番の最初に引いたあと、ワザの前）に、1 番に何枚でも使える（p.309, p.310）。
+      決定を待っている間（別のトレーナーの途中を含む）は使えない（p.310「その…起こることをすべて
+      すませてからでないと、他のことはできません」）。
+    - 効果の登録表に実装が登録されたトレーナーだけ使える。使うための条件・原典で決められない場合の
+      確認（``TrainerEffect.check_playable``）を通ってから、手札から出す。
+    - 手札から出して相手に見せ、名前を伝え（ログの ``play_trainer``）、説明にしたがう。説明が終わったら
+      トラッシュする（``_finish_trainer``）。途中で決定を待つ間、カードは ``state.trainer_in_use`` にある。
+    """
+    p = _require_turn(state, cmd.player)
+    _require_in_hand(state, cmd.player, cmd.card)
+    definition = state.card_def(cmd.card)
+    if definition.category != "trainer":
+        raise IllegalActionError("NOT_TRAINER", f"カード {cmd.card} はトレーナーカードではない")
+    effect = state.effects.trainer_effect(definition)
+    if effect is None:
+        problem = state.effects.trainer_problem(definition)
+        raise UnsupportedError("UNSUPPORTED_TRAINER", f"「{definition.name_ja}」は未対応（{problem}）")
+    use = TrainerUse(cmd.player, cmd.card, definition.id)
+    effect.check_playable(state, use)
+
+    # 1・2. 手札から出して相手プレイヤーに見えるようにし、名前を伝える（p.310）
+    p.hand.remove(cmd.card)
+    state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
+    state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
+    # 3・4. 使うための条件と、残りの説明にしたがう。決定を出したら、ここで止まり _resume_trainer から続ける
+    effect.resolve(state, use)
+    if state.decision is None:
+        _finish_trainer(state)
+
+
+def _finish_trainer(state: GameState) -> None:
+    """使ったトレーナーカードをトラッシュし（特に記述がないかぎり「使いすて」。p.310）、番の続きにもどる。
+
+    v0.2b のトレーナーは、きぜつ・勝敗を起こさないので、使い終わったら自分の番（MAIN）にもどる。
+    """
+    used = state.trainer_in_use
+    state.trainer_in_use = None
+    state.players[used.player].discard.append(used.card)
+    state.add_event("discard_trainer", player=used.player, card=used.card)
+    state.phase = Phase.MAIN
+
+
+def _resume_trainer(state: GameState, decision, choices: tuple[int, ...]) -> None:
+    """トレーナーの効果の途中で出した決定の続き。決定がなくなったら、カードをトラッシュして番にもどる。"""
+    player, card, card_id = decision.context_value("use")
+    entry = state.effects.trainer_entry(card_id)
+    entry.effect.resume(state, TrainerUse(player, card, card_id), decision, choices)
+    if state.decision is None:
+        _finish_trainer(state)
+
+
+# ---------------------------------------------------------------- 保留中の決定に答える
+
+
 _RESUMERS = {
     "take_prize": _resume_take_prize,
     "promote_active": _resume_promote_active,
     "attack": _resume_attack,
+    "trainer": _resume_trainer,
 }
 
 
@@ -655,6 +716,7 @@ _HANDLERS: dict[type, Callable[[GameState, object], None]] = {
     TakePrize: _take_prize,
     PromoteActive: _promote_active,
     ResolveDecision: _resolve_decision,
+    PlayTrainer: _play_trainer,
 }
 
 
@@ -718,6 +780,15 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append(f"プレイヤー {player} のサイドが {len(p.prizes)} 枚（{rules.prize_count} 枚まで）")
         if p.mulligan_draws_remaining < 0:
             problems.append(f"プレイヤー {player} の切り直しの補償の残りが負")
+    # 使っている最中のトレーナーカード（v0.2b）も、持ち主のゾーンの 1 つとして数える
+    used = state.trainer_in_use
+    if used is not None:
+        if used.player not in PLAYERS:
+            problems.append(f"使用中のトレーナーの持ち主 {used.player!r} が正しくない")
+        else:
+            place(used.card, used.player, "使用中のトレーナー")
+            if used.card in state.cards and state.card_def(used.card).category != "trainer":
+                problems.append(f"トレーナーカードでないカード {used.card} が使用中のトレーナーになっている")
     missing = set(state.cards) - set(seen)
     if missing:
         problems.append(f"どこにもないカード {sorted(missing)}")
@@ -744,6 +815,8 @@ def check_invariants(state: GameState) -> list[str]:
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
+        if state.trainer_in_use is not None:
+            problems.append("対戦が終わっているのに、使用中のトレーナーが残っている")
         if phase is Phase.HALTED and state.halt is None:
             problems.append("止めた理由がないまま HALTED になっている")
         if phase is not Phase.HALTED and state.result is None:
@@ -763,6 +836,7 @@ def check_invariants(state: GameState) -> list[str]:
         if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn:
             problems.append(f"この番にエネルギーをつけた回数 {state.energy_attachments_this_turn} が正しくない")
     problems.extend(_decision_problems(state))
+    problems.extend(_trainer_problems(state))
     if phase is Phase.SETUP_MULLIGAN_DRAW and not any(p.mulligan_draws_remaining for p in state.players):
         problems.append("切り直しの補償を引く段階なのに、引く権利のあるプレイヤーがいない")
     return problems
@@ -824,4 +898,44 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"ワザの決定の続きの情報 {use!r} が正しくない")
         elif state.effects.attack_entry(use[2], use[3]) is None:
             problems.append(f"ワザの決定の続きのワザ {use[2]}#{use[3]} が効果の登録表にない")
+    # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
+    unresolved = d.context_value("unresolved_choices", ())
+    if unresolved:
+        if not set(unresolved) <= set(d.options):
+            problems.append(f"扱いを決められない選択 {unresolved} が、選べるもの {d.options} にない")
+        if len(set(d.options) - set(unresolved)) < max(d.min_choices, 1):
+            problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
+    return problems
+
+
+def _trainer_problems(state: GameState) -> list[str]:
+    """使用中のトレーナー（v0.2b）と、決定・段階の整合性。
+
+    トレーナーカードが使用中なのは、そのトレーナーの効果が決定を待っている間だけ（決定がなければ、
+    説明にしたがい終わってトラッシュしている）。
+    """
+    problems: list[str] = []
+    used = state.trainer_in_use
+    d = state.decision
+    waiting = d is not None and d.resume == "trainer"
+    if used is None:
+        if waiting:
+            problems.append("トレーナーの決定を待っているのに、使用中のトレーナーがない")
+        return problems
+    if not waiting:
+        problems.append(f"使用中のトレーナー {used.card} があるのに、その効果の決定を待っていない")
+        return problems
+    if used.player != state.current_player:
+        problems.append(f"使用中のトレーナーの持ち主 {used.player} が、番のプレイヤー {state.current_player} ではない")
+    use = d.context_value("use")
+    if not (isinstance(use, tuple) and len(use) == 3):
+        problems.append(f"トレーナーの決定の続きの情報 {use!r} が正しくない")
+        return problems
+    player, card, card_id = use
+    if (player, card) != (used.player, used.card):
+        problems.append(f"トレーナーの決定の続きの情報 {use!r} が、使用中のトレーナー {used} と違う")
+    if card in state.cards and state.cards[card].card_id != card_id:
+        problems.append(f"トレーナーの決定の続きのカード id {card_id} が、カード {card} と違う")
+    if state.effects.trainer_entry(card_id) is None:
+        problems.append(f"トレーナーの決定の続きのカード {card_id} が効果の登録表にない")
     return problems

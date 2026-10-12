@@ -52,8 +52,12 @@ PSYCHIC = "PMCG1-101"
 FIGHTING = "PMCG1-102"
 CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
 DODUO = "PMCG1-061"
-POTION = "PMCG1-071"
 VENUSAUR = "PMCG1-011"
+# トレーナー（v0.2b で対応）
+POTION = "PMCG1-071"  # きずぐすり
+SWITCH = "PMCG1-073"  # ポケモンいれかえ
+BILL = "PMCG1-074"  # マサキ
+SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -291,3 +295,51 @@ class TwoStepTestEffect(AttackEffect):
 def two_step_effects():
     """ワンリキー（PMCG1-053）の「けたぐり」を、テスト専用の 2 段階の効果に置き換えた登録表。"""
     return DEFAULT_EFFECTS.with_attacks("test-two-step", {AttackKey(MACHOP, 0): AttackEntry(TwoStepTestEffect(), "けたぐり")})
+
+
+# ---------------------------------------------------------------- トレーナーを使う決まった手順（v0.2b）
+
+from kyuura_engine import PlayTrainer, ResolveDecision  # noqa: E402
+
+
+def trainer_command(state: GameState):
+    """番のプレイヤーが、決まった手順でトレーナーを使うなら、そのコマンド。使わないなら None。
+
+    - マサキ: 手札にあれば使う（山札が 0 枚でも使える。p.312）
+    - きずぐすり: 自分の場にダメージカウンターののったポケモンがいれば使う
+    - ポケモンいれかえ: 控えがいて、バトル場のポケモンにダメージがあり、それよりダメージの少ない控えがいれば使う
+    """
+    player = state.current_player
+    p = state.players[player]
+
+    def in_hand(card_id):
+        return next((u for u in p.hand if state.cards[u].card_id == card_id), None)
+
+    bill, potion, switch = in_hand(BILL), in_hand(POTION), in_hand(SWITCH)
+    if bill is not None:
+        return PlayTrainer(player, bill)
+    if potion is not None and any(pokemon.damage for pokemon in p.in_play()):
+        return PlayTrainer(player, potion)
+    if switch is not None and p.bench and p.active.damage and min(b.damage for b in p.bench) < p.active.damage:
+        return PlayTrainer(player, switch)
+    return None
+
+
+def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
+    """``scripted_command`` に、トレーナーを使う手順と、トレーナーの決定への答えを加えたもの（統合テスト用）。
+
+    決定には、扱いを決められるもののうち、きずぐすりならダメージのいちばん多いポケモン、
+    それ以外は最初のものを選ぶ。
+    """
+    if state.phase is Phase.DECISION:
+        d = state.decision
+        unresolved = d.context_value("unresolved_choices", ())
+        options = [o for o in d.options if o not in unresolved]
+        if d.context_value("use", (None, None, None))[2] == POTION:
+            options.sort(key=lambda pid: -state.find_pokemon(pid)[1].damage)
+        return ResolveDecision(d.player, d.id, (options[0],))
+    if state.phase is Phase.MAIN:
+        command = trainer_command(state)
+        if command is not None:
+            return command
+    return scripted_command(state, janken_winner=janken_winner)

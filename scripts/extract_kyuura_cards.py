@@ -3,8 +3,8 @@
 
 kyuura（https://github.com/moheronemy/kyuura）がカードデータの正本です。
 このスクリプトは、固定したコミットの ``data/cards.json`` を ``git show`` で読み、
-v0.1 の対戦で使うカードと、分類のテストに使う参照カードの記録を
-``kyuura_engine/data/kyuura_cards.json`` に書き出します。
+対戦で使うカード（v0.1 のたねポケモン・基本エネルギーと、v0.2b のトレーナー）と、
+分類のテストに使う参照カードの記録を ``kyuura_engine/data/kyuura_cards.json`` に書き出します。
 
 - kyuura の作業ツリーや履歴は書き換えません（``git show`` で読むだけ）。
 - kyuura の checkout がどのコミットにあっても、KYUURA_COMMIT の内容を読みます。
@@ -49,12 +49,20 @@ POOL_V0_1 = [
     "PMCG1-102",  # 闘エネルギー
 ]
 
+# v0.2b で加えたトレーナー（kyuura docs/engine-readiness.md 5章の段階 1 の残り）。
+# 『オフィシャルブック2000』p.254 と照合した（kyuura_engine/data/card_verification.json）
+POOL_V0_2B = [
+    "PMCG1-071",  # きずぐすり
+    "PMCG1-073",  # ポケモンいれかえ
+    "PMCG1-074",  # マサキ
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
     "PMCG1-011",  # フシギバナ（2進化・ポケモンパワー）
     "PMCG1-014",  # ヒトカゲ（効果のないワザと、効果のあるワザ「ひのこ」を持つ）
     "PMCG1-061",  # ドードー（「×」のダメージ）
-    "PMCG1-071",  # きずぐすり（トレーナー）
+    "PMCG1-075",  # いいきずぐすり（実装を登録していないトレーナー）
 ]
 
 # コピーする項目（kyuura の記録のキー。値は書き換えない）
@@ -112,14 +120,14 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
-            "kyuura の data/cards.json から、kyuura-engine v0.1 が使うカードの記録を抜き出した写し。"
+            "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。"
             "カード情報の正本は kyuura。値は書き換えていない。"
             "生成: scripts/extract_kyuura_cards.py（手で編集しない）。"
         ),
@@ -132,6 +140,7 @@ def build_extract(source: dict) -> dict:
         "fields_copied": FIELDS,
         "fields_used_by_engine": FIELDS_USED_BY_ENGINE,
         "pool_v0_1": POOL_V0_1,
+        "pool_v0_2b": POOL_V0_2B,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -157,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

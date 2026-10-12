@@ -9,15 +9,25 @@ scripts/make_compat_fixture.py が作ったもの。各場面について、デ�
 - 受け付けられたコマンドは今も受け付けられ、拒否されたコマンドは同じエラーコードで拒否される
 - 最後の状態（イベントログの内容と順序を含む）が完全に同じ
 ことを確かめる。テストが通ることとは別に、v0.1 の結果そのものと比べるためのテスト。
+
+v0.1 で未対応だった操作を、その後の版で対応にしたもの（``NOW_SUPPORTED``）は、エラーコードだけが
+変わる。v0.1 の参照データのデッキにはトレーナーが入っていないので、``play_trainer`` は今もすべて
+拒否される（状態は変わらない）。拒否の理由が「未対応（UNSUPPORTED_ACTION）」から、ルールによる
+拒否（手札にない・トレーナーでない・番でない、など）に変わる。この場合は、ルールによる拒否
+（``IllegalActionError``）であることを確かめ、最後の状態の完全な一致は同じように確かめる。
+参照データ（v0.1 の記録）は変えていない。
 """
 
 import json
 import unittest
 from pathlib import Path
 
-from kyuura_engine import EngineError, apply_command, command_from_dict, new_game, state_to_dict
+from kyuura_engine import EngineError, IllegalActionError, apply_command, command_from_dict, new_game, state_to_dict
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "v0_1_reference.json"
+
+# v0.1 で UNSUPPORTED_ACTION だったが、その後の版で対応にしたコマンドの種類（v0.2b: トレーナー）
+NOW_SUPPORTED = {"play_trainer"}
 
 
 def plain(value):
@@ -34,6 +44,7 @@ class V01CompatibilityTest(unittest.TestCase):
         self.assertGreaterEqual(len(self.data["scenarios"]), 15)
 
     def test_replay_gives_the_same_results_as_v0_1(self):
+        changed_codes = set()
         for scenario in self.data["scenarios"]:
             with self.subTest(scenario=scenario["name"]):
                 state = new_game(scenario["deck0"], scenario["deck1"], scenario["seed"])
@@ -42,10 +53,16 @@ class V01CompatibilityTest(unittest.TestCase):
                     if "error" in step:
                         with self.assertRaises(EngineError, msg=(number, step)) as ctx:
                             apply_command(state, command)
-                        self.assertEqual(ctx.exception.code, step["error"], (number, step))
+                        if step["command"]["type"] in NOW_SUPPORTED and step["error"] == "UNSUPPORTED_ACTION":
+                            self.assertIsInstance(ctx.exception, IllegalActionError, (number, step))
+                            changed_codes.add(ctx.exception.code)
+                        else:
+                            self.assertEqual(ctx.exception.code, step["error"], (number, step))
                     else:
                         state = apply_command(state, command)
                 self.assertEqual(plain(state_to_dict(state)), scenario["final_state"])
+        # 変わったのは、ルールによる拒否のコードだけ（未対応・整合性の破れではない）
+        self.assertLessEqual(changed_codes, {"WRONG_PHASE", "INVALID_PLAYER", "NOT_YOUR_TURN", "CARD_NOT_IN_HAND", "NOT_TRAINER", "GAME_OVER"})
 
 
 if __name__ == "__main__":

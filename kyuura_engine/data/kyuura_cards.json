@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine card extract 1",
-  "description": "kyuura の data/cards.json から、kyuura-engine v0.1 が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
+  "description": "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。カード情報の正本は kyuura。値は書き換えていない。生成: scripts/extract_kyuura_cards.py（手で編集しない）。",
   "source": {
     "repository": "https://github.com/moheronemy/kyuura",
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -60,11 +60,16 @@
     "PMCG1-101",
     "PMCG1-102"
   ],
+  "pool_v0_2b": [
+    "PMCG1-071",
+    "PMCG1-073",
+    "PMCG1-074"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
     "PMCG1-061",
-    "PMCG1-071"
+    "PMCG1-075"
   ],
   "cards": [
     {
@@ -1059,6 +1064,117 @@
       "jp_print": null
     },
     {
+      "id": "PMCG1-071",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": "Potion"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のポケモンにのっているダメージカウンターを2個まで、とりのぞくことができる。",
+          "en": "Remove up to 2 damage counters from 1 of your Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-071",
+        "pokemontcg": [
+          "base1-94"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-074-kizugusuri/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-074-kizugusuri/"
+      }
+    },
+    {
+      "id": "PMCG1-073",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": "Switch"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場の対戦ポケモンと控えポケモンを入れ替える。「にげる」ためのエネルギーを支払う必要はない。",
+          "en": "Switch 1 of your own Benched Pokémon with your Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-073",
+        "pokemontcg": [
+          "base1-95"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-086-pokemonirekae/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-086-pokemonirekae/"
+      }
+    },
+    {
+      "id": "PMCG1-074",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキ",
+        "en": "Bill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "山札からカードを2枚引いて、手札に加える。",
+          "en": "Draw 2 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-074",
+        "pokemontcg": [
+          "base1-91"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-093-masaki/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-093-masaki/"
+      }
+    },
+    {
       "id": "PMCG1-011",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -1324,40 +1440,40 @@
       }
     },
     {
-      "id": "PMCG1-071",
+      "id": "PMCG1-075",
       "jp_set": "PMCG1",
       "category": "trainer",
       "name": {
-        "ja": "きずぐすり",
-        "en": "Potion"
+        "ja": "いいきずぐすり",
+        "en": "Super Potion"
       },
       "name_ja_confidence": "有力",
       "pokemon": null,
       "trainer": {
         "kinds": [],
         "text": {
-          "ja": "自分の場のポケモンにのっているダメージカウンターを2個まで、とりのぞくことができる。",
-          "en": "Remove up to 2 damage counters from 1 of your Pokémon."
+          "ja": "自分のポケモン1匹のエネルギーカードを1枚はがしてすてることによって、そのポケモンのダメージカウンターを4個までとりのぞくことができる。",
+          "en": "Discard 1 Energy card attached to your own Pokémon in order to remove up to 4 damage counters from that Pokémon."
         }
       },
       "energy": null,
       "jp_en_differences": [],
       "notes": [],
       "source_ids": {
-        "tcgdex": "PMCG1-071",
+        "tcgdex": "PMCG1-075",
         "pokemontcg": [
-          "base1-94"
+          "base1-90"
         ]
       },
-      "ja_text_source": "https://nazonobasho.com/pmcg01-074-kizugusuri/",
+      "ja_text_source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/",
       "jp_print": {
         "level": null,
-        "rarity": "●(C)",
+        "rarity": "♦(U)",
         "series": "第1弾拡張パック、スターターパック",
         "remarks": [
           "初版はレアリティマークなし"
         ],
-        "source": "https://nazonobasho.com/pmcg01-074-kizugusuri/"
+        "source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/"
       }
     }
   ]

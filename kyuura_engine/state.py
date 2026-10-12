@@ -35,7 +35,7 @@ class Phase(str, Enum):
     MAIN = "main"  # 番のプレイヤーの操作
     TAKE_PRIZE = "take_prize"  # 決定待ち: きぜつさせたプレイヤーがサイドを選んで取る
     PROMOTE_ACTIVE = "promote_active"  # 決定待ち: バトル場のポケモンがいなくなったプレイヤーがベンチから出す
-    DECISION = "decision"  # 決定待ち: 上の 2 つ以外の決定（ワザの効果の途中の選択など。v0.2a のカードでは起こらない）
+    DECISION = "decision"  # 決定待ち: 上の 2 つ以外の決定（トレーナー・ワザの効果の途中の選択など）
     GAME_OVER = "game_over"
     SUDDEN_DEATH = "sudden_death"  # サドン・デスに移った（延長戦の開始は v0.1 では未実装）
     HALTED = "halted"  # 未解決の裁定に当たったので止めた（終端。再開する API はない）
@@ -152,6 +152,20 @@ class PendingDecision:
 
 
 @dataclass(frozen=True)
+class TrainerInUse:
+    """使っている最中のトレーナーカード（v0.2b）。
+
+    トレーナーカードは手札から出して相手に見せ、説明にしたがい、使い終わったらトラッシュする（p.310）。
+    説明の途中でプレイヤーの決定を待つあいだ、そのカードは手札にもトラッシュにもない。この間だけ、
+    ここにある（カードの保存則の対象。``check_invariants``）。1 枚のトレーナーを使っている最中に別の
+    トレーナーは使えない（p.310）ので、一度に 1 枚だけ。
+    """
+
+    player: int
+    card: int
+
+
+@dataclass(frozen=True)
 class GameResult:
     """対戦の結果。``conditions`` は満たした勝利条件の (そのプレイヤー, 条件) の組。
 
@@ -203,6 +217,7 @@ class GameState:
     next_pokemon_id: int = 1
     decision: PendingDecision | None = None  # 保留中の決定（一度に 1 つ）
     next_decision_id: int = 1
+    trainer_in_use: TrainerInUse | None = None  # 使っている最中のトレーナーカード（決定を待っている間だけ）
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
