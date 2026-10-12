@@ -54,6 +54,7 @@ PSYCHIC = "PMCG1-101"
 FIGHTING = "PMCG1-102"
 CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
 DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
+PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、でんげき 30・「うら」なら自分にも 10）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -412,6 +413,14 @@ DEFENDER_DECK = expand_decklist({
 })
 DEFENDER_DECK_B = expand_decklist({
     STARYU: 4, SEEL: 4, DIGLETT: 4, MACHOP: 4, HITMONCHAN: 4, BILL: 2, PLUSPOWER: 2, DEFENDER: 4, WATER: 16, FIGHTING: 16,
+})
+
+# ピカチュウ（v0.2f）を入れた 60 枚のデッキ（両方にピカチュウ。プラスパワー・ディフェンダー・ドードーと組み合わせる）
+PIKACHU_DECK = expand_decklist({
+    PIKACHU: 4, RATTATA: 4, VOLTORB: 4, DRATINI: 4, DODUO: 4, PLUSPOWER: 4, DEFENDER: 4, BILL: 2, LIGHTNING: 30,
+})
+PIKACHU_DECK_B = expand_decklist({
+    PIKACHU: 4, DIGLETT: 4, MACHOP: 4, HITMONCHAN: 4, RATTATA: 4, PLUSPOWER: 2, DEFENDER: 2, LIGHTNING: 18, FIGHTING: 18,
 })
 
 # ドードー（v0.2d）を入れた 60 枚のデッキ（たねポケモン 20 枚 + トレーナー + 基本エネルギー）

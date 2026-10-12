@@ -486,20 +486,28 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
 def _finish_attack(state: GameState) -> None:
     """ワザの処理のあと: HP 以上のダメージを受けたポケモンはきぜつ（p.315, p.319, p.323）→ サイド → 交代 → 番の終わり。
 
-    1 つのワザで複数のポケモンがきぜつしたら「同時」（p.324）。相手のポケモン（バトル場 → ベンチ）、
-    自分のポケモンの順に処理する。v0.1 のカードでは、きぜつするのは相手のバトル場のポケモンだけ。
+    ワザの要素（相手へのダメージ・コイン・自分へのダメージなど）をすべて処理してから、場のすべてのポケモンを
+    確かめる。相手のポケモンがワザの途中で HP 以上のダメージを受けても、残りの要素は処理する（p.309「それ以降の
+    内容を無視してはいけません」）。1 つのワザで複数のポケモンがきぜつしたら「同時に『きぜつ』した」（p.324）
+    ので、ログの ``knock_out`` に ``simultaneous`` を加える（1 匹だけなら v0.1 と同じ形）。
+    トラッシュには順番がない（p.312）ので、相手のポケモン（バトル場 → ベンチ）、自分のポケモンの順に処理する。
+    自分のワザで自分のポケモンがきぜつするのは v0.2f から（ピカチュウの「でんげき」）。
     """
     attacker_side = state.current_player
+    knocked = [
+        (owner, pokemon)
+        for owner in (1 - attacker_side, attacker_side)
+        for pokemon in state.players[owner].in_play()
+        if pokemon.damage >= state.card_def(pokemon.card).hp
+    ]
     prize_takers = []
-    for owner in (1 - attacker_side, attacker_side):
-        for pokemon in state.players[owner].in_play():
-            if pokemon.damage >= state.card_def(pokemon.card).hp:
-                _knock_out(state, owner, pokemon)
-                prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤーがサイドを取る
+    for owner, pokemon in knocked:
+        _knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
+        prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤーがサイドを取る（p.323）
     _after_knockouts(state, prize_takers)
 
 
-def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False) -> None:
     """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
 
     場を離れたので、このポケモンの番号（pokemon_id）は無効になる。
@@ -517,15 +525,23 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
         for attached in pokemon.trainers:
             state.players[attached.player].discard.append(attached.card)
         extra["discarded_trainers"] = tuple(t.card for t in pokemon.trainers)
+    if simultaneous:
+        extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
 
 
 def _after_knockouts(state: GameState, prize_takers=()) -> None:
-    """ワザの処理の後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 番の終わり。
+    """ワザの処理の後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 番の終わり（p.323 の記述の順）。
 
-    ``prize_takers`` はサイドを 1 枚取るプレイヤーの並び（きぜつ 1 匹につき 1 つ）。番のプレイヤーが先
-    （同じタイミングのことがらの順番は番のプレイヤーが決める（p.325）が、その選択は未実装。v0.1 の
-    カードでは、サイドを取るのはワザを使ったプレイヤーだけ）。残りのサイドより多くは取らない。
+    ``prize_takers`` はサイドを 1 枚取るプレイヤーの並び（きぜつ 1 匹につき 1 つ。きぜつしたポケモンの相手側の
+    プレイヤー。p.323）。残りのサイドより多くは取らない。勝ち負けは、すべてのサイドを取ってから p.311 の表で
+    判定する（両方が同時にサイドを取り終えたらサドン・デス。p.311・p.323）。
+
+    サイドを取る順番: 同時にきぜつしたとき（p.324）、両方のプレイヤーがサイドを取る。その順番は、同じタイミングの
+    ことがらとして番のプレイヤーが決める（p.325）。ただし、サイドは表を見ないで選び（p.312）、取ったカードは
+    取ったプレイヤーの手札に入る（相手に見えない）ので、どちらが先に取っても、選べるもの・見える情報・結果
+    （勝ち負けはすべて取ってから判定する）は変わらない。そのため、順番を選ぶ決定は出さず、番のプレイヤーから
+    取る並びに正規化している（相手のポケモンのきぜつのぶんが先。docs/simultaneous-ko-v0.2f.md）。
     """
     budget = {player: len(state.players[player].prizes) for player in PLAYERS}
     queue = []
@@ -557,7 +573,7 @@ def _next_prize_or_judge(state: GameState, queue: tuple[int, ...]) -> None:
         _finish(state, result)
         return
 
-    # 両方同時なら、番でないプレイヤーが先に出す（pp.323-324）
+    # 両方同時なら、番でないプレイヤーが先に出し、番のプレイヤーはそれを見てから出す（pp.323-324。決定の順番）
     order = (1 - state.current_player, state.current_player)
     _next_promotion_or_end(state, tuple(p for p in order if state.players[p].active is None))
 

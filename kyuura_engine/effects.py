@@ -13,7 +13,9 @@
 登録している実装:
 
 - ワザ: ``DamageOnly``（説明のないワザ）、``CoinFlipDamage``（v0.2d。コインを投げ、「おもて」の数×の
-  ダメージ。ドードーの「みだれづき」。p.231 の最新の説明。docs/coin-attacks-v0.2d.md）
+  ダメージ。ドードーの「みだれづき」。p.231 の最新の説明。docs/coin-attacks-v0.2d.md）、
+  ``SelfDamageOnTails``（v0.2f。相手にダメージのあと、コインが「うら」なら自分にもダメージ。ピカチュウの
+  「でんげき」。p.125 の最新の説明。docs/pikachu-v0.2f.md・docs/self-damage-v0.2f.md）
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -32,7 +34,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
-from .coins import flip_coins
+from .coins import CoinSide, flip_coins
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
@@ -155,20 +157,71 @@ class CoinFlipDamage(AttackEffect):
         damage_opponent_active(state, use, flips.heads * self.damage_per_heads)
 
 
-def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> None:
-    """ワザで、相手の対戦ポケモンに、基本となるダメージ ``base`` から p.321 の順番で計算したダメージを与える。
+# ワザのダメージを受けるポケモン（p.320「ワザの要素」のダメージの分類）。今は (1) と (3) だけを扱う。
+# (2) 相手の控えポケモン・(4) 自分の控えポケモンへのダメージは未実装（受けるポケモンを選ぶ手順と、計算の
+# 手順（プラスパワーは控えへのダメージを変えない p.257 など）を原典で確かめてから加える）
+OPPONENT_ACTIVE = "opponent_active"  # (1) 相手の対戦ポケモンへのダメージ
+SELF = "self"  # (3) このワザを使うポケモンへのダメージ（v0.2f）
+DAMAGE_TARGETS = (OPPONENT_ACTIVE, SELF)
 
-    計算は ``damage.calculate_attack_damage``。ログの ``damage`` は v0.1 と同じ形で、変更効果を計算したとき
-    だけ ``modifiers``（v0.2c）、2 段階までで 0 以下になって計算を終えたときだけ ``stopped_after_step_2``（v0.2d）を加える。
+
+def damage_receiver(state: GameState, use: AttackUse, target: str) -> PokemonInPlay:
+    """ワザのダメージを受けるポケモン。``target`` は ``OPPONENT_ACTIVE`` か ``SELF``。"""
+    if target == OPPONENT_ACTIVE:
+        return state.players[1 - use.player].active
+    if target == SELF:
+        return state.find_pokemon(use.pokemon_id)[1]
+    raise ValueError(f"ワザのダメージを受けるポケモンの種類 {target!r} は未実装（{DAMAGE_TARGETS}）")
+
+
+def self_damage_problem(state: GameState, use: AttackUse) -> UnsupportedError | None:
+    """自分へのワザのダメージを、原典で決められる形で計算できないなら、その理由（v0.2f）。
+
+    自分へのワザのダメージ（p.320 のダメージ (3)）に弱点・抵抗力を計算するかは、原典に書かれていない
+    （こんらんで自分が受ける 20 ダメージには「「弱点・抵抗力」の影響を受けます」と書かれている（p.322）が、
+    ワザの説明による自分へのダメージには書かれていない）。ワザを使うポケモンのタイプが、自分の弱点・抵抗力の
+    タイプと違えば、どちらに決めても結果は同じなので計算できる（ピカチュウ: 雷・弱点 闘）。同じなら決められない。
     """
+    attacker_def = state.card_def(state.find_pokemon(use.pokemon_id)[1].card)
+    own_type = attacker_def.pokemon_type
+    if own_type is not None and own_type in (attacker_def.weakness, attacker_def.resistance):
+        return UnsupportedError(
+            "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE",
+            f"{attacker_def.name_ja} のタイプ（{own_type.value}）が自分の弱点か抵抗力のタイプ。ワザの説明による自分への"
+            "ダメージに弱点・抵抗力を計算するかは、『オフィシャルブック2000』（p.320〜322）から決められないので扱わない",
+        )
+    return None
+
+
+def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> None:
+    """ワザのダメージを 1 つ与える: 受けるポケモンを決め、基本となるダメージ ``base`` から p.321 の順番で計算する。
+
+    - ダメージを与えるのは、いつもワザを使うポケモン（発生源。弱点・抵抗力はそのタイプで見る。p.321 の 3・4 段階）。
+    - 受けるポケモンは ``target``（``OPPONENT_ACTIVE`` か ``SELF``）。自分へのダメージも「ワザによるダメージ」
+      （p.321「8 ワザによるダメージと効果」）なので、同じ順番で計算する。
+    - 変更効果は ``attack_damage_modifiers``: ワザを使うポケモンについているカードは 5 段階（プラスパワー）、
+      受けるポケモンについているカードは 7 段階（ディフェンダー）。自分へのダメージでは同じポケモンが両方の
+      立場になるが、カードはそれぞれ自分の立場でだけ効果を出す（プラスパワーは使う側、ディフェンダーは受ける側）
+      ので、同じカードを二重に計算しない。p.257 の解説どおり、自分へのダメージはプラスパワーで +10、
+      ディフェンダーで −20 される。
+    - 自分へのダメージで弱点・抵抗力が関係する場合（``self_damage_problem``）は ``UnsupportedError``。
+
+    ログの ``damage`` は v0.1 と同じ形（相手の対戦ポケモンへのダメージ）。変更効果を計算したときだけ ``modifiers``
+    （v0.2c）、2 段階までで 0 以下になって計算を終えたときだけ ``stopped_after_step_2``（v0.2d）を加える。
+    自分へのダメージ（v0.2f）には、``target``（``"self"``）・``pokemon_id``（受けたポケモン）・``effect``（ワザ）を加える。
+    """
+    if target == SELF:
+        problem = self_damage_problem(state, use)
+        if problem is not None:
+            raise problem
     _, attacker = state.find_pokemon(use.pokemon_id)
     attacker_def = state.card_def(attacker.card)
-    opponent = 1 - use.player
-    defender = state.players[opponent].active
-    defender_def = state.card_def(defender.card)
-    modifiers = attack_damage_modifiers(state, attacker, defender)
-    calc = calculate_attack_damage(base, attacker_def, defender_def, state.rules, modifiers)
-    defender.damage += calc.final
+    receiver = damage_receiver(state, use, target)
+    receiver_player = use.player if target == SELF else 1 - use.player
+    receiver_def = state.card_def(receiver.card)
+    modifiers = attack_damage_modifiers(state, attacker, receiver)
+    calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers)
+    receiver.damage += calc.final
     extra = {}
     if calc.modifiers:
         # v0.2c: どのカードの効果を、どの段階で計算したか（変更効果がないときは v0.1 と同じ形）
@@ -176,23 +229,82 @@ def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> None:
     if calc.stopped_after_step_2:
         # v0.2d: 基本となるダメージ（と 2 段階）で 0 以下。弱点・抵抗力・5〜8 段階は計算していない（p.321）
         extra["stopped_after_step_2"] = True
+    if target != OPPONENT_ACTIVE:
+        # v0.2f: 相手の対戦ポケモン以外へのダメージ。受けたポケモン（場のポケモンの番号）とワザを書く
+        extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(use.key))
     state.add_event(
         "damage",
-        player=opponent,
-        pokemon=defender.card,
+        player=receiver_player,
+        pokemon=receiver.card,
         amount=calc.final,
         steps=calc.steps,
         weakness=calc.weakness_applied,
         resistance=calc.resistance_applied,
-        total_damage=defender.damage,
+        total_damage=receiver.damage,
         **extra,
     )
 
 
-def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
-    """ワザで相手の対戦ポケモンにダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
+def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> None:
+    """ワザで、相手の対戦ポケモンに、基本となるダメージ ``base`` から p.321 の順番で計算したダメージを与える。"""
+    deal_attack_damage(state, use, OPPONENT_ACTIVE, base)
 
-    ワザを使うポケモンについているカードは 5 段階、ワザを受けるポケモンについているカードは 7 段階（p.321）。
+
+@dataclass(frozen=True)
+class SelfDamageOnTails(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを 1 枚投げ、「うら」なら自分にも
+    ``self_damage`` ダメージ（v0.2f。ピカチュウの「でんげき」。p.125 の最新の説明
+    「コインを投げて「うら」なら、自分にも10ダメージ。」。docs/pikachu-v0.2f.md・docs/self-damage-v0.2f.md）。
+
+    - ダメージの目安に「×」「+」「−」がないので、説明の最初の「相手の対戦ポケモンに 30 ダメージ。」が省略されて
+      いる（p.320）。ワザの要素は書いてある順番に処理する（p.320）: 相手へのダメージ → コイン → 自分へのダメージ。
+    - 自分へのダメージは、p.320 のダメージの分類の (3)「このワザを使うポケモンへのダメージ」。ワザによるダメージ
+      （p.321）なので、相手へのダメージと同じ p.321 の順番で計算する（``deal_attack_damage``）。
+    - 相手のポケモンがこのワザできぜつしても、自分へのダメージの要素は無視しない（p.309「それ以降の内容を無視
+      してはいけません」）。きぜつ・サイド・交代・勝敗は、ワザの処理のあとでエンジンがまとめて行う
+      （1 つのワザできぜつしたポケモンは「同時」。p.324）。
+    - 自分へのダメージで弱点・抵抗力が関係する場合は原典で決められないので、コインを投げる前に止める。
+    """
+
+    self_damage: int
+    implementation_id = "self_damage_on_tails"
+
+    def __post_init__(self) -> None:
+        if type(self.self_damage) is not int or self.self_damage <= 0 or self.self_damage % 10:
+            raise ValueError(f"自分へのダメージは 10 の倍数の正の数（{self.self_damage!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier is not None:
+            problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、自分へのダメージのあるワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        # 原典で決められない場合は、ダメージ・コインの前に止める（不正な・決められない操作で乱数を使わない）
+        problem = self_damage_problem(state, use)
+        if problem is not None:
+            raise problem
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        damage_opponent_active(state, use, attack.damage)
+        flips = flip_coins(
+            state, use.player, 1, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
+        )
+        if flips.results[0] is CoinSide.TAILS:
+            deal_attack_damage(state, use, SELF, self.self_damage)
+
+
+def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
+    """ワザでダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
+
+    ワザを使うポケモン（``attacker``）についているカードは ``role="attacker"``（プラスパワーの 5 段階）、ダメージを
+    受けるポケモン（``defender``）についているカードは ``role="defender"``（ディフェンダーの 7 段階）で聞く（p.321）。
+    自分へのダメージ（v0.2f）では、``attacker`` と ``defender`` が同じポケモンになる。それぞれのカードは自分の
+    立場でだけ効果を返すので、同じカードの効果を二重に数えない。
     効果の内容は、ついているカードのカード id で効果の登録表から引く（エンジンはカードの種類を知らない）。
     """
     modifiers: list[DamageModifier] = []
@@ -616,13 +728,14 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 
 
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
+# 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき）は、カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.2e",
+    "kyuura-engine-0.2f",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -640,6 +753,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         # ヒトカゲ（参照カード。デッキには入らない）の「ひっかく」。p.63 で説明文がないことを確かめた。
         # もう 1 つのワザ「ひのこ」は効果があり、登録していない（カードは未対応のまま）
         ("PMCG1-014", 0, "ひっかく"),
+        ("PMCG1-035", 0, "かじる"),  # ピカチュウ（v0.2f）p.125。「ワザ」欄は「●かじる」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -649,6 +763,14 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを2枚投げて「おもて」の数×10のダメージをあたえる。",
             play_text_ja="コインを2枚投げ、「おもて」の数×10のダメージ。",
             source="P43 p.231",
+        ),
+        # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
+        AttackKey("PMCG1-035", 1): AttackEntry(
+            SelfDamageOnTails(self_damage=10),
+            "でんげき",
+            text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            play_text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            source="P43 p.125",
         ),
     },
     {

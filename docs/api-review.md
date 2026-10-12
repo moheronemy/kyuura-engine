@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1〜v0.2e）
+# 公開 API のレビュー（v0.1〜v0.2f）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md) のアーキテクチャにあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.2e で加えた公開 API
+## 2. v0.2a〜v0.2f で加えた公開 API
 
 ### v0.2a
 
@@ -89,6 +89,18 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `engine.turn_owner(state, turn_number)` | その番号の番のプレイヤー（奇数番は先攻） |
 
 コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式は増やしていません。
+
+### v0.2f
+
+| もの | 内容 |
+|---|---|
+| ピカチュウ（PMCG1-035）の「かじる」（`UseAttack(…, 0)`）・「でんげき」（`UseAttack(…, 1)`） | でんげきは相手に 30 → コイン 1 枚 → 「うら」なら自分に 10。きぜつ・サイド・交代は v0.2a の決定（`take_prize`・`promote_active`）で、同時のきぜつでは 2 つずつ順に出る |
+| `effects.OPPONENT_ACTIVE`・`effects.SELF`・`effects.DAMAGE_TARGETS` | ワザのダメージを受けるポケモンの種類（p.320 のダメージの (1)・(3)）。実装を加える人向け |
+| `effects.deal_attack_damage(state, use, target, base)` | ワザのダメージを 1 つ与える（受けるポケモンを決め、p.321 の順番で計算し、ログを残す）。ダメージを与えるワザの実装はこれを使う |
+| `effects.damage_receiver(state, use, target)`・`effects.self_damage_problem(state, use)` | 受けるポケモン、自分へのダメージを原典で決められる形で計算できるか（できなければ `UnsupportedError`） |
+| `effects.SelfDamageOnTails(self_damage)` | でんげきの実装 |
+
+コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式は増やしていません。ログの `damage`（自分へのダメージ）と `knock_out`（同時のきぜつ）に項目を加えました（7 章）。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -180,6 +192,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - 不変条件が増えた: 番のプレイヤーがその番号の番の持ち主であること、ついているトレーナーの有効期限が「今の番 + `discard_turn_offset`」より先でないこと、使った番が使ったプレイヤーの番であること。場に残るトレーナーの実装を自分で加える場合は、`discard_turn_offset` を宣言する
 - 新しいクライアントへの推奨: 状態の辞書は形式 4 を使う（ディフェンダーは相手の番もついている）。
 
+### v0.2e → v0.2f
+
+- 対戦の結果・ログ・状態（形式 4。登録表の id を除く）は、ピカチュウを使わない対戦では変わりません。v0.2e のコミット `2c3db11` と、既存のデッキ 6 組 × 40 seed（240 局、23,332 コマンド）を同じ方針で対戦させて比べ、すべて同じでした。v0.1 の参照データ・乱数とコインの固定値（test_reproducibility.py・test_coins.py・test_coin_games.py）も変わりません。
+- v0.2e のテスト 401 件を v0.2f のコードで実行すると、失敗するのは登録表の id・登録したワザ・カードの組を確かめる 5 件だけ（[architecture-v0.2f.md 11 章](architecture-v0.2f.md) の表）。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.2f` になり、ワザの登録にピカチュウの 2 つ（PMCG1-035#0・#1）が加わった
+  - 写しの対戦用のカードの組に、ピカチュウ（`pool_v0_2f`）が加わった
+  - エラーコード `UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE` が加わった（対応カードでは起こらない）
+  - 自分のワザで自分のポケモンがきぜつするようになった（相手がサイドを取る）。同時のきぜつでは、サイドの決定が両方のプレイヤーに、バトル場の決定が両方のプレイヤーに出る。クライアントは、決定のプレイヤーが番のプレイヤーと限らないことを前提にする（v0.1 の `PromoteActive` でも相手が答える場面はあった）
+  - 対戦の中でサドン・デス（`Phase.SUDDEN_DEATH`）になることがある（v0.2e までの対応カードでは起こらなかった）
+- `effects.damage_opponent_active` は残した（中身は `deal_attack_damage(…, OPPONENT_ACTIVE, …)`。ログの形は同じ）。
+- 新しいクライアントへの推奨: ダメージの表示はログの `damage` の `player`・`pokemon`（`target` が `self` なら自分へのダメージ）を使う。同時のきぜつは `knock_out.simultaneous` で分かる。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -226,7 +251,7 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 | 例外 | コード |
 |---|---|
 | `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -239,6 +264,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discard_at_end_of_turn`）, `discard_attached_trainer`（同じ項目と `reason`＝`end_of_turn`）。v0.2e のディフェンダーも同じイベントを使う（`discard_at_end_of_turn` は使った番 + 1。`damage` の `modifiers` に `(7, カードの uid, -20)`）。`damage` に `modifiers`（`(段階, カードの uid, 加えた数)`。変更効果があるときだけ）、`knock_out` に `discarded_trainers`（ついていたトレーナーがあるときだけ）
 
 v0.2d: `coin_flip`（`player`・`source`＝`attack`・`effect`＝`AttackKey` の文字列・`card`＝カードの uid・`pokemon_id`・`number`＝何枚目（1 から）・`count`＝投げる枚数・`result`＝`heads`/`tails`）。`damage` に `stopped_after_step_2`（2 段階のあとで計算を終えたときだけ。「おもて」0 枚のみだれづきなど）
+
+v0.2f: `damage` に、相手の対戦ポケモン以外へのダメージのときだけ `target`（`self`）・`pokemon_id`（受けたポケモン）・`effect`（ワザの識別子。例 `PMCG1-035#1`）。`player` は受けたポケモンの持ち主（自分へのダメージならワザを使ったプレイヤー）。`knock_out` に、1 つのワザで 2 匹以上きぜつしたときだけ `simultaneous`（`true`）
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

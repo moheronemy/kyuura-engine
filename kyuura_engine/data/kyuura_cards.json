@@ -74,6 +74,9 @@
   "pool_v0_2e": [
     "PMCG1-079"
   ],
+  "pool_v0_2f": [
+    "PMCG1-035"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1351,6 +1354,99 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-079-defender/"
+      }
+    },
+    {
+      "id": "PMCG1-035",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かじる",
+              "en": "Gnaw"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "でんげき",
+              "en": "Thunder Jolt"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分にも10ダメージ。",
+              "en": "Flip a coin. If tails, Pikachu does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-035",
+        "pokemontcg": [
+          "base1-58"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-035-pikachu/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-035-pikachu/"
       }
     },
     {
