@@ -134,7 +134,7 @@ class SpecialConditions:
       （v0.3b）。ねむり・マヒ・こんらんは「重複することはありません」（p.322）ので 1 つの項目に持つ。
 
     特殊状態になるのはバトル場のポケモンだけ（p.322）。バトル場をはなれたら（ベンチに戻ったら）すべて
-    消える（p.311・p.322）。進化しても消える（p.322。進化は未実装）。
+    消える（p.311・p.322）。進化しても消える（p.310 の進化の手順 3・p.322。v0.4a）。
     """
 
     poison: Poison | None = None
@@ -168,15 +168,30 @@ CONFUSED = Confused()
 
 @dataclass
 class PokemonInPlay:
-    """場にいるポケモン。v0.1 は進化がないので、ポケモンのカード 1 枚とついているエネルギーカード。
+    """場にいるポケモン（1 匹）。ポケモンのカード（進化していれば重なった 2 枚。v0.4a）と、ついているカード。
 
     識別子は 2 つあります。
 
-    - ``card``: いちばん上のポケモンのカードの uid（物理的なカード。対戦中に変わらない番号だが、
-      進化するといちばん上のカードが変わる）
-    - ``pokemon_id``: 場のポケモンそのものの番号。場に出たときに ``GameState.next_pokemon_id`` から
-      付ける。場にいるあいだ（にげる・入れ替え、将来の進化・退化でも）変わらない。場を離れたら無効になり、
-      同じカードがもう一度場に出ても前の番号は使わない。0 は「付けていない」（不変条件で拒否する）
+    - ``card``: いちばん上のポケモンのカードの uid（物理的なカード）。このカードの内容（名前・HP・タイプ・弱点・抵抗力・
+      にげる・ワザ）が、そのポケモンを表す（p.310 の進化の手順 2）。進化するといちばん上のカードが変わる
+    - ``pokemon_id``: 場のポケモンそのものの番号（エンジンの内部の識別子）。場に出たときに ``GameState.next_pokemon_id``
+      から付ける。場にいるあいだ（にげる・入れ替え・進化（v0.4a））変わらない。場を離れたら無効になり、同じカードが
+      もう一度場に出ても前の番号は使わない。0 は「付けていない」（不変条件で拒否する）
+
+    ``pokemon_id`` が同じでも、ルールの上で同じポケモンとは限らない: 進化したポケモンは「進化前のポケモンとは、別の
+    ポケモンとしてあつかわれます」（p.310）。その帰結（進化前のワザを使えない、その番の最初には場にいなかったことに
+    なる、特殊状態が消える、にげるの失敗の記録が消える）は、``card``・``evolved_turn``・``conditions``・
+    ``retreat_failed_turn`` で表す（docs/evolution-state-v0.4a.md）。
+
+    進化（v0.4a）:
+
+    - ``evolution_stack``: いちばん上のカードの下に重なっているポケモンのカードの uid（下から順。いちばん下がたね
+      ポケモン）。進化していなければ空。下のカードはトラッシュしない（p.310）が、場のポケモンとして数えず、内容も
+      使わない。v0.4a は 1 進化だけなので、0 枚か 1 枚。変えるときは新しいタプルに置きかえる（複製で共有してよい）
+    - ``played_turn``: このポケモンが場に出た番（``GameState.turn_number``。対戦準備で出したら 0）。にげる・入れ替え・
+      ベンチからバトル場に出すことでは変わらない（場をはなれていない。p.313）
+    - ``evolved_turn``: いまの姿に進化した番。進化していなければ None。「その番の最初から場に出ていた」（p.310）かは、
+      いまの姿になった番（``evolved_turn``、なければ ``played_turn``）が今の番より前かで決まる
     """
 
     card: int
@@ -189,10 +204,31 @@ class PokemonInPlay:
     # もう「にげる」を宣言することができません」（p.311）。特殊状態ではないので ``conditions`` に入れない（ベンチに戻っても
     # 消さない）。番の終わりに消す（「次の自分の番になれば、再び「にげる」を宣言することができます」）
     retreat_failed_turn: int | None = None
+    evolution_stack: tuple[int, ...] = ()  # v0.4a
+    played_turn: int = 0  # v0.4a
+    evolved_turn: int | None = None  # v0.4a
+
+    @property
+    def current_form_turn(self) -> int:
+        """いまの姿（いちばん上のカード）になった番（進化した番、進化していなければ場に出た番。v0.4a）。"""
+        return self.played_turn if self.evolved_turn is None else self.evolved_turn
+
+    def cards(self) -> tuple[int, ...]:
+        """このポケモンを作っているポケモンのカード（下から順。いちばん上が ``card``）。ついているカードは含まない。"""
+        return (*self.evolution_stack, self.card)
 
     def clone(self) -> PokemonInPlay:
         return PokemonInPlay(
-            self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers), self.conditions, self.retreat_failed_turn
+            self.card,
+            list(self.energy),
+            self.damage,
+            self.pokemon_id,
+            list(self.trainers),
+            self.conditions,
+            self.retreat_failed_turn,
+            self.evolution_stack,
+            self.played_turn,
+            self.evolved_turn,
         )
 
 

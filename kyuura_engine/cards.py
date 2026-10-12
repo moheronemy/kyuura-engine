@@ -6,7 +6,8 @@
 読み込むときに、各カード・各ワザが対戦で使えるかを分類します（``supported`` と理由）。分類は、
 データの値ではなく、エンジンが実装しているかで決めます。
 
-- エンジンの中心部分で扱える形か（たねポケモン・タイプ 1 つ・弱点 ×2 など。進化・ポケモンパワーは未実装）
+- エンジンの中心部分で扱える形か（たねポケモンと 1 進化ポケモン（v0.4a）・タイプ 1 つ・弱点 ×2 など。2 進化・ベイビィ・
+  ポケモンパワーは未実装）
 - ワザ・トレーナーの効果の実装が、効果の登録表（``effects.EffectRegistry``）に登録されているか
 
 説明文が空であることは、実装がある証拠にしません。使えないカードはデッキに入れられません。
@@ -80,7 +81,8 @@ class CardDefinition:
     supported: bool
     unsupported_reasons: tuple[str, ...]
     # ポケモン
-    stage: str | None = None
+    stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）。"stage2"・"baby" は未対応
+    evolves_from: str | None = None  # 進化カードの「○○○○から進化」の名前（kyuura の pokemon.evolves_from.ja。v0.4a）
     hp: int | None = None
     pokemon_type: EnergyType | None = None
     weakness: EnergyType | None = None
@@ -100,6 +102,11 @@ class CardDefinition:
     def is_basic_pokemon(self) -> bool:
         # ベイビィポケモンも対戦準備ではたねポケモンと同様に扱う（p.308）が、ベイビィは v0.1 では未対応
         return self.category == "pokemon" and self.stage == "basic"
+
+    @property
+    def is_stage1_pokemon(self) -> bool:
+        """1 進化ポケモンのカード（v0.4a）。手札から「○○○○から進化」の名前のたねポケモンに重ねる（p.309・p.310）。"""
+        return self.category == "pokemon" and self.stage == "stage1"
 
     @property
     def is_basic_energy(self) -> bool:
@@ -194,8 +201,13 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
 
     pokemon = record["pokemon"]
     reasons = []
-    if pokemon["stage"] != "basic":
-        reasons.append(f"{pokemon['stage']}（進化・ベイビィ）は未実装")
+    evolves_from = (pokemon.get("evolves_from") or {}).get("ja")
+    if pokemon["stage"] == "stage1":
+        # 1 進化（v0.4a）。「○○○○から進化」の名前がなければ、何に重ねるか決まらない（p.309）
+        if not evolves_from:
+            reasons.append("1 進化なのに進化元の名前がない")
+    elif pokemon["stage"] != "basic":
+        reasons.append(f"{pokemon['stage']}（2 進化・ベイビィ）は未実装")
     if pokemon["powers"]:
         reasons.append("ポケモンパワー（特殊能力）は未実装")
     if pokemon.get("rules_text") is not None:
@@ -233,6 +245,7 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         supported=not reasons,
         unsupported_reasons=tuple(reasons),
         stage=pokemon["stage"],
+        evolves_from=evolves_from,
         hp=pokemon["hp"],
         pokemon_type=EnergyType(pokemon["types"][0]) if pokemon["types"] else None,
         weakness=weakness,
@@ -261,13 +274,16 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_3c）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4a）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
 
 # 写しの中の、対戦用のカードの組（参照カード reference_only はデッキに入れない）
-POOL_KEYS = ("pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c")
+POOL_KEYS = (
+    "pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c",
+    "pool_v0_4a",
+)
 
 
 def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> CardPool:

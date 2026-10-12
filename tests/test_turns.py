@@ -291,7 +291,7 @@ class IllegalCommandsDoNotChangeStateTest(unittest.TestCase):
             AttachEnergy(1, state.players[1].hand[0], active(state, 1).card),  # 相手の番
             Retreat(0, (), 12345),  # ベンチなし
             PlayBasicToBench(0, state.players[0].hand[0]),  # エネルギーはベンチに出せない
-            EvolvePokemon(0, 1, 2),  # 未対応
+            EvolvePokemon(0, 1, 2),  # カード 1 は手札にない（v0.4a から進化を処理する。v0.3d までは未対応）
         ]
         for command in bad:
             with self.assertRaises((IllegalActionError, UnsupportedError)):
@@ -309,15 +309,19 @@ class IllegalCommandsDoNotChangeStateTest(unittest.TestCase):
 class UnsupportedActionsTest(unittest.TestCase):
     """未対応の操作は、黙って無視せず UnsupportedError にする。
 
-    v0.2b で PlayTrainer を対応にしたので、この一覧から外した（トレーナーの検査は test_trainers.py）。
+    v0.2b で PlayTrainer、v0.4a で EvolvePokemon を対応にしたので、この一覧から外した（トレーナーの検査は
+    test_trainers.py、進化の検査は test_evolution_v0_4a.py）。
     """
 
     def test_unsupported_commands(self):
         state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
-        for command in (EvolvePokemon(0, 0, 1), UsePokemonPower(0, 0)):
-            with self.assertRaises(UnsupportedError) as ctx:
-                apply_command(state, command)
-            self.assertEqual(ctx.exception.code, "UNSUPPORTED_ACTION")
+        with self.assertRaises(UnsupportedError) as ctx:
+            apply_command(state, UsePokemonPower(0, 0))
+        self.assertEqual(ctx.exception.code, "UNSUPPORTED_ACTION")
+        # EvolvePokemon は v0.4a から処理する（手札にないカードは CARD_NOT_IN_HAND）
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(state, EvolvePokemon(0, 0, 1))
+        self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
         # PlayTrainer は v0.2b から処理する（手札にないカードは CARD_NOT_IN_HAND）
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, PlayTrainer(0, 0))

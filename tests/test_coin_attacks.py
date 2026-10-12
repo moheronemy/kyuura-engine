@@ -312,7 +312,8 @@ class InvalidCommandsUseNoRandomnessTest(unittest.TestCase):
             (PlayTrainer(0, 999), "CARD_NOT_IN_HAND"),
             (ResolveDecision(0, 1, (1,)), "WRONG_PHASE"),
             (TakePrize(0, 0), "WRONG_PHASE"),
-            (EvolvePokemon(0, energy, state.players[0].active.card), "UNSUPPORTED_ACTION"),
+            # v0.4a から進化を処理する（手札のエネルギーは進化カードではない。v0.3d までは UNSUPPORTED_ACTION）
+            (EvolvePokemon(0, energy, state.players[0].active.pokemon_id), "NOT_EVOLUTION_CARD"),
             (UsePokemonPower(0, state.players[0].active.card), "UNSUPPORTED_ACTION"),
         ]
         for command, code in cases:

@@ -27,6 +27,7 @@
     "category",
     "name.ja",
     "pokemon.stage",
+    "pokemon.evolves_from.ja",
     "pokemon.hp",
     "pokemon.types",
     "pokemon.weaknesses",
@@ -86,6 +87,10 @@
   ],
   "pool_v0_3c": [
     "PMCG1-015"
+  ],
+  "pool_v0_4a": [
+    "PMCG2-010",
+    "PMCG1-030"
   ],
   "reference_only": [
     "PMCG1-011",
@@ -1765,6 +1770,198 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-017-rokon/"
+      }
+    },
+    {
+      "id": "PMCG2-010",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "パラセクト",
+        "en": "Parasect"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          47
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パラス",
+          "en": "Paras"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "キノコのほうし",
+              "en": "Spore"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "きりさく",
+              "en": "Slash"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-010",
+        "pokemontcg": [
+          "base2-41"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-009-parasect/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-009-parasect/"
+      }
+    },
+    {
+      "id": "PMCG1-030",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ジュゴン",
+        "en": "Dewgong"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          87
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パウワウ",
+          "en": "Seel"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "オーロラビーム",
+              "en": "Aurora Beam"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "れいとうビーム",
+              "en": "Ice Beam"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-030",
+        "pokemontcg": [
+          "base1-25"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-030-jugon/",
+      "jp_print": {
+        "level": 42,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-030-jugon/"
       }
     },
     {

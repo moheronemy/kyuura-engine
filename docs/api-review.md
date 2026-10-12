@@ -164,6 +164,21 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `check_invariants` | にげるの失敗の記録が、今の番のログの `retreat_failed`（同じ `pokemon_id`）と対応しないと違反（v0.3d） |
 | `kyuura_engine.__version__` | `0.3.0d0`。効果の登録表の id は `kyuura-engine-0.3c` のまま（登録の内容が同じ。[architecture-v0.3d.md](architecture-v0.3d.md) 8 章） |
 
+### v0.4a
+
+| もの | 内容 |
+|---|---|
+| `EvolvePokemon(player, card, target)` | 手札の 1 進化カード（`card`）を、自分の場のポケモン（`target`＝場のポケモンの番号 `pokemon_id`。カードの uid ではない）に重ねて進化させる。決定は出さず、乱数を使わず、番は続く。v0.3d まで `UNSUPPORTED_ACTION` だった |
+| パラセクト（PMCG2-010）・ジュゴン（PMCG1-030） | 1 進化（`pool_v0_4a`）。パラセクトは キノコのほうし（0）・きりさく（1）、ジュゴンは オーロラビーム（0）・れいとうビーム（1） |
+| `PokemonInPlay.evolution_stack`・`played_turn`・`evolved_turn`・`current_form_turn`・`cards()` | 下のカード（下から順のタプル）・場に出た番・進化した番。`card` はいちばん上のカード |
+| `CardDefinition.evolves_from`・`is_stage1_pokemon` | 「○○から進化」の名前・1 進化のカードか |
+| `kyuura_engine.conditions.EVOLVE` | 特殊状態が進化で消えた理由（ログの `reason`） |
+| `state_to_dict(state, format_version=7)` | 6 に、場のポケモンごとの `evolution_stack`・`played_turn`・`evolved_turn` を加えた形 |
+| `RULE_REFERENCES` | `evolution`・`evolved_pokemon` |
+| `kyuura_engine.__version__` | `0.4.0a0`。効果の登録表の id は `kyuura-engine-0.4a` |
+
+段階・決定の種類は増やしていません。
+
 ## 3. 公開すべきもの・内部として隠すべきもの
 
 | もの | 今 | 分類 | 理由・提案 |
@@ -320,6 +335,18 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - 不変条件が増えた（失敗の記録とログの対応）。状態を直接作るテストは、記録に対応するログ `retreat_failed` も置くこと（tests/helpers.py の `build_test_state` は自動で置く）
 - 新しいクライアントへの推奨: 変更なし。
 
+### v0.3d → v0.4a
+
+- 進化カードを使わない対戦の結果・ログ・乱数の状態・拒否は変わりません。v0.3d のコミット `3654be2` と、既存のデッキの 1,340 局（121,420 コマンド）・でたらめな操作を混ぜた 32 局（8,162 コマンド、4,437 回の拒否）・v0.3d の 4 種類を混ぜたデッキの 300 局（44,122 コマンド）を同じ手順で動かして比べ、終わった状態（形式 6。登録表の id を除く）・途中の状態・ログ・乱数・拒否のコードの列がすべて同じでした（[architecture-v0.4a.md 9 章](architecture-v0.4a.md)）。
+- v0.3d のテスト 726 件を v0.4a のコードで実行すると、失敗するのは 11 件だけ（進化が未対応であること・登録表・形式の一覧を確かめるもの）。
+- 互換でない変更:
+  - `EvolvePokemon` を受け付ける（`UNSUPPORTED_COMMANDS` は `UsePokemonPower` だけ）。進化カードのない対戦では、進化のコマンドはルールによる拒否（`CARD_NOT_IN_HAND`・`NOT_EVOLUTION_CARD`・`WRONG_PHASE` など）になる。v0.1 の参照データの 43 回の進化のコマンドの拒否のコードが変わる（状態は同じ）
+  - 効果の登録表の id が `kyuura-engine-0.4a` になり、ワザの登録にパラセクト・ジュゴンの 4 つが加わった。写しの対戦用のカードの組に `pool_v0_4a`
+  - 形式 7 が加わった（`FORMAT_VERSIONS` は 1〜7）。進化したポケモンのいる状態は形式 1〜6 で書き出せない（`ValueError`）
+  - `PokemonInPlay` に `evolution_stack`・`played_turn`・`evolved_turn`（キーワード引数。既定は `()`・0・None）。たねポケモン以外のポケモンのカードが進化していない場のポケモンになっていると、不変条件の違反
+  - エラーコードとログのイベントが加わった（6・7 章）
+- 新しいクライアントへの推奨: 状態の辞書は形式 7 を使う。進化のボタンは、手札の 1 進化カードと、名前の合う場のポケモンのうち、`played_turn`・`evolved_turn`（`current_form_turn`）が今の番より前のものだけを有効にする（1・2 番は無効）。場のポケモンを指すときは `pokemon_id` を使う（進化するといちばん上のカードの uid が変わる）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -344,7 +371,7 @@ v0.2a で、ワザの途中・きぜつのあとの決定は `state.decision` �
 
 ### 5.4 場のポケモンの識別子の移行
 
-v0.1 からあるコマンドは、場のポケモンをカードの uid で指します。v0.2a で場のポケモンの番号（`pokemon_id`）を加え、`ResolveDecision` の選べるものは番号になりました。進化を実装するときの移行の手順は [アーキテクチャ 5 章](architecture-v0.2a.md#コマンドの移行の方針) にあります。v0.3d の調査（[evolution-readiness-v0.4.md](evolution-readiness-v0.4.md) 3 章）では、進化しても `pokemon_id` を変えない案と、`EvolvePokemon.target` を `pokemon_id` にする案を推奨しています。
+v0.1 からあるコマンドは、場のポケモンをカードの uid で指します。v0.2a で場のポケモンの番号（`pokemon_id`）を加え、`ResolveDecision` の選べるものは番号になりました。進化を実装するときの移行の手順は [アーキテクチャ 5 章](architecture-v0.2a.md#コマンドの移行の方針) にあります。v0.4a で、進化しても `pokemon_id` を変えず、`EvolvePokemon.target` を `pokemon_id` にしました（v0.3d の調査の推奨。[evolution-state-v0.4a.md](evolution-state-v0.4a.md) 2 章）。v0.1 からのコマンドの uid は、いちばん上のカードの uid だけで指します（重なりの下のカードでは指せない）。
 
 ### 5.5 デッキの問題点・ルールの組
 
@@ -365,8 +392,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 | 例外 | コード |
 |---|---|
-| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, NOT_EVOLUTION_CARD・FIRST_TURN_EVOLUTION・EVOLUTION_NAME_MISMATCH・PLAYED_THIS_TURN・EVOLVED_THIS_TURN（v0.4a）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNRESOLVED_EVOLUTION_HP（v0.4a）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_EVOLUTION（v0.4a）, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -388,6 +415,8 @@ v0.3b: `special_condition` の `condition` に `sleep`・`paralysis`（マヒな
 
 v0.3c: `special_condition` の `condition` に `confusion`。`special_conditions_removed` の `conditions` に `confusion`（`reason` は `retreat`・`switch`・`replaced`）。`coin_flip` の `source` に `confusion`（`effect`＝ワザの `AttackKey` の文字列か `retreat`、`player`＝こんらん状態のポケモンの持ち主、`card`・`pokemon_id`＝そのポケモン）。`confusion_check`（`player`・`pokemon`・`pokemon_id`・`action`＝`attack`/`retreat`・`result`・`succeeded`）。`confusion_damage`（ワザがこんらんしたときの自分への 20。`player`・`pokemon`・`pokemon_id`・`effect`・`amount`・`steps`・`weakness`・`resistance`・`total_damage`。ワザによるダメージの `damage` とは別）。`retreat_failed`（`player`・`pokemon`・`pokemon_id`・`discarded`）。こんらんのポケモンがいなければ、v0.3b と同じログ
 
+v0.4a: `evolve`（`player`・`pokemon_id`・`from_card`＝進化前のいちばん上のカードの uid・`from_card_id`・`to_card`＝進化カードの uid・`to_card_id`。番はログの `turn`）。`special_conditions_removed` の `reason` に `evolve`。`retreat_failure_cleared`（`player`・`pokemon`・`pokemon_id`・`reason`＝`evolve`。こんらんで「にげる」に失敗した記録が進化で消えた）。`knock_out` に、進化したポケモンのきぜつなら `evolution_stack`（下のカードの uid。`pokemon` はいちばん上のカード）。進化しない対戦では、v0.3d と同じログ
+
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 
-ログはテストでも使っているので、事実上の API です。種類と各項目を変えるときは、この一覧、test_reproducibility.py の固定値、v0.1 の参照データ（tests/fixtures）との関係を合わせて見直してください。場のポケモンを指す項目は、今はカードの uid です（進化を実装するときに `pokemon_id` を加える予定）。
+ログはテストでも使っているので、事実上の API です。種類と各項目を変えるときは、この一覧、test_reproducibility.py の固定値、v0.1 の参照データ（tests/fixtures）との関係を合わせて見直してください。場のポケモンを指す項目は、v0.1 からのイベントはいちばん上のカードの uid です（進化するとそのポケモンのいちばん上の uid は変わる）。v0.2c 以降のイベントと進化のイベントは `pokemon_id` も持ちます。

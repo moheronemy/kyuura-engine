@@ -2,7 +2,8 @@
 
 コマンドは「何をしたいか」だけを持つ値で、検査と処理は ``engine.apply_command`` が行います。
 カードやポケモンは uid（``GameState.cards`` の番号）で指定します。場のポケモンは、
-そのポケモンのカードの uid で指定します。
+そのポケモンのカード（いちばん上のカード）の uid で指定します。v0.4a の ``EvolvePokemon`` だけは、
+進化させる場のポケモンを場のポケモンの番号（``pokemon_id``）で指定します。
 
 ``command_to_dict`` / ``command_from_dict`` は、ほかの言語や画面から JSON で操作を渡すための
 変換です。
@@ -127,14 +128,22 @@ class PlayTrainer:
     card: int
 
 
-# --- ルールにはあるが、まだ対応していない操作。受け取ると UnsupportedError を投げる ---
-
-
 @dataclass(frozen=True)
 class EvolvePokemon:
+    """手札の進化カードを、自分の場のポケモンに重ねて進化させる（p.309・p.310。v0.4a）。
+
+    - ``card``: 手札の進化カードの uid（v0.4a は 1 進化ポケモンのカード）
+    - ``target``: 進化させる自分の場のポケモンの番号（``PokemonInPlay.pokemon_id``）。カードの uid ではない
+      （v0.1 からのコマンドは場のポケモンをカードの uid で指すが、このコマンドは v0.4a で初めて受け付けるので、
+      場のポケモンの番号で指す。進化するといちばん上のカードの uid が変わるため）
+    """
+
     player: int
     card: int
     target: int
+
+
+# --- ルールにはあるが、まだ対応していない操作。受け取ると UnsupportedError を投げる ---
 
 
 @dataclass(frozen=True)
@@ -160,7 +169,7 @@ COMMAND_TYPES: dict[str, type] = {
     "use_pokemon_power": UsePokemonPower,
 }
 
-UNSUPPORTED_COMMANDS = (EvolvePokemon, UsePokemonPower)
+UNSUPPORTED_COMMANDS = (UsePokemonPower,)  # EvolvePokemon は v0.4a で対応
 
 _TYPE_NAMES = {cls: name for name, cls in COMMAND_TYPES.items()}
 

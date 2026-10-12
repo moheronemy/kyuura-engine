@@ -12,7 +12,8 @@
 - v0.3a: 特殊状態の共通基盤と「どく」、番と番のあいだにエンジンが自動で行うポケモンチェック（どくのダメージ・それによるきぜつ・サイド・交代のあとで次の番）を、ビードルの「どくばり」とともに実装した。にげる・ポケモンいれかえでどくが消える。[docs/special-conditions-v0.3a.md](docs/special-conditions-v0.3a.md)（特殊状態・どくの原典照合）、[docs/pokemon-check-v0.3a.md](docs/pokemon-check-v0.3a.md)（ポケモンチェック）、[docs/weedle-v0.3a.md](docs/weedle-v0.3a.md)（カード）、[docs/architecture-v0.3a.md](docs/architecture-v0.3a.md)（設計）
 - v0.3b: 「ねむり」「マヒ」と、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの自動回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに実装した。どくのきぜつ・サイド・交代のあとで 3・4 を行う。原典で決められない場合（両方の対戦ポケモンがねむり、マヒの再付与で回復する番が変わる）は、コインの前に止める。[docs/sleep-paralysis-v0.3b.md](docs/sleep-paralysis-v0.3b.md)（ねむり・マヒの原典照合）、[docs/pokemon-check-v0.3b.md](docs/pokemon-check-v0.3b.md)（ポケモンチェック）、[docs/cards-v0.3b.md](docs/cards-v0.3b.md)（カード）、[docs/architecture-v0.3b.md](docs/architecture-v0.3b.md)（設計）
 - v0.3c: 「こんらん」と、こんらん状態のポケモンのワザ（宣言のあとにコインを投げ、「うら」ならワザの内容の代わりに自分に 20 ダメージ。弱点・抵抗力の影響を受ける）・にげる（エネルギーをトラッシュしてからコインを投げ、「うら」なら失敗。失敗したポケモンはその番もう宣言できない）を、ロコンの「あやしいひかり」とともに実装した。正しく宣言した行動がルールで失敗すること（コイン・エネルギー・番の終わりが残る）と、不正なコマンド（拒否し、状態も乱数も変えない）を分ける。原典で決められない場合（こんらんの 20 とプラスパワー・ディフェンダー、失敗のあとこんらんが消えたポケモンの再宣言）は、コインの前に止める。[docs/confusion-v0.3c.md](docs/confusion-v0.3c.md)（こんらんの原典照合）、[docs/confusion-attacks-v0.3c.md](docs/confusion-attacks-v0.3c.md)（ワザ・ロコン）、[docs/retreat-confusion-v0.3c.md](docs/retreat-confusion-v0.3c.md)（にげる）、[docs/architecture-v0.3c.md](docs/architecture-v0.3c.md)（設計）
-- v0.3d（今の版）: カード・ルールを加えず、特殊状態 4 種類のすべての組み合わせ（8 つの状態 × 付与・上書き・解除・操作・ポケモンチェック）を、新しい対戦からの総合テスト・負荷テスト・変異テストとともに確かめた。原典で決められないとして止めていた裁定を調べ直し、5 件（こんらんの 20 とプラスパワー・ディフェンダー、失敗のあとの再宣言、ポケモンチェックの両方のどくのきぜつ・両方のねむり、マヒの再付与）は決められないので止めたまま、v0.2f の自分へのワザのダメージの弱点・抵抗力は p.90 の解説で決まった（SUPPORTED。計算する）。コインの前に確かめ終えていることを、コインの結果で受け付けるかが変わらない性質として確かめた。進化（v0.4）の準備を調べた（実装していない）。[docs/special-conditions-audit-v0.3d.md](docs/special-conditions-audit-v0.3d.md)（総合検証）、[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)（未解決の裁定）、[docs/effect-preflight-v0.3d.md](docs/effect-preflight-v0.3d.md)（コインの前の検証）、[docs/architecture-v0.3d.md](docs/architecture-v0.3d.md)（設計）、[docs/evolution-readiness-v0.4.md](docs/evolution-readiness-v0.4.md)（進化の準備）
+- v0.3d: カード・ルールを加えず、特殊状態 4 種類のすべての組み合わせ（8 つの状態 × 付与・上書き・解除・操作・ポケモンチェック）を、新しい対戦からの総合テスト・負荷テスト・変異テストとともに確かめた。原典で決められないとして止めていた裁定を調べ直し、5 件（こんらんの 20 とプラスパワー・ディフェンダー、失敗のあとの再宣言、ポケモンチェックの両方のどくのきぜつ・両方のねむり、マヒの再付与）は決められないので止めたまま、v0.2f の自分へのワザのダメージの弱点・抵抗力は p.90 の解説で決まった（SUPPORTED。計算する）。コインの前に確かめ終えていることを、コインの結果で受け付けるかが変わらない性質として確かめた。進化（v0.4）の準備を調べた（実装していない）。[docs/special-conditions-audit-v0.3d.md](docs/special-conditions-audit-v0.3d.md)（総合検証）、[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)（未解決の裁定）、[docs/effect-preflight-v0.3d.md](docs/effect-preflight-v0.3d.md)（コインの前の検証）、[docs/architecture-v0.3d.md](docs/architecture-v0.3d.md)（設計）、[docs/evolution-readiness-v0.4.md](docs/evolution-readiness-v0.4.md)（進化の準備）
+- v0.4a（今の版）: 進化（たねポケモン → 1 進化ポケモン）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに実装した。進化の条件（名前・最初の番・場に出た番・進化した番。p.309・p.310）、重なったカードの管理、ダメージ・エネルギー・ついているトレーナーの引き継ぎ、特殊状態の回復（p.322）、進化したポケモンのきぜつ（重なったカードをすべてトラッシュ、サイドは 1 枚）。こんらんで「にげる」に失敗したポケモンが進化したら、失敗の記録を消す（SUPPORTED）。進化したあとの HP がダメージ以下になる場合は原典で決められないので止める（`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない）。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)（進化のルールの原典照合）、[docs/evolution-cards-v0.4a.md](docs/evolution-cards-v0.4a.md)（カード）、[docs/evolution-state-v0.4a.md](docs/evolution-state-v0.4a.md)（状態の持ち方・検証）、[docs/architecture-v0.4a.md](docs/architecture-v0.4a.md)（設計）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -92,7 +93,7 @@ print(state_to_dict(state)["phase"], state.turn_number)
 - 状態は `copy.deepcopy`・`pickle` できます。状態どうしを比べるときは `==` ではなく `state_to_dict` の結果を比べてください。
 - 対戦が終わったかどうかは `state.phase` で判断します（`game_over`・`sudden_death`・`halted`）。`halted` のときは `state.result` が `None` です。
 - ジャンケンの結果は外から渡します（エンジンは決めません）。
-- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が加わります（トレーナーのある対戦では形式 4 を使う。古い形式は、表せないカードがある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
+- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が、`format_version=5` で特殊状態（v0.3a〜v0.3c）が、`format_version=6` でこんらんで「にげる」に失敗した記録（v0.3c）が、`format_version=7` で進化の重なり・場に出た番・進化した番（v0.4a）が加わります（いまの対戦は形式 7 を使う。古い形式は、表せないもの（カード・特殊状態・失敗の記録・進化）がある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
 - 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。ゲーム状態全体を JSON から読み込む処理はまだありません。
 
 ### トレーナーカードを使う（v0.2b）
@@ -400,6 +401,64 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 - 「おもて」が 1 枚以上なら、弱点・抵抗力・プラスパワーは、今までどおり p.321 の段階で計算します。
 - エネルギーが足りないなど、ワザを使えない操作は拒否され、コインは投げません（渡した状態も乱数も変わらない）。
 
+### 進化（v0.4a）
+
+手札の 1 進化カードを、「○○から進化」の名前の自分の場のポケモン（バトル場・ベンチ）に重ねます（p.309・p.310）。`EvolvePokemon(player, card, target)` の `target` は場のポケモンの番号（`pokemon_id`）で、進化しても番号は変わりません。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, EvolvePokemon, IllegalActionError, PlaceStartingPokemon, ReportJankenResult, UseAttack,
+    apply_command, expand_decklist, new_game, state_to_dict,
+)
+
+deck0 = expand_decklist({"PMCG2-003": 4, "PMCG2-010": 4, "PMCG1-016": 4, "PMCG1-060": 4, "PMCG1-037": 4,
+                         "PMCG1-097": 40})   # パラス（PMCG2-003）・パラセクト（PMCG2-010）4 枚ずつ、草エネルギー 40 枚
+deck1 = expand_decklist({"PMCG1-025": 4, "PMCG1-029": 4, "PMCG1-052": 4, "PMCG1-053": 4, "PMCG1-058": 4,
+                         "PMCG1-099": 20, "PMCG1-102": 20})
+state = new_game(deck0, deck1, seed=8)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+state = apply_command(state, PlaceStartingPokemon(0, in_hand(0, "PMCG2-003")))   # パラスをバトル場に
+basics = [uid for uid in state.players[1].hand if state.card_def(uid).is_basic_pokemon]
+state = apply_command(state, PlaceStartingPokemon(1, basics[0], tuple(basics[1:6])))   # ヒトデマンと控え
+state = apply_command(state, ReportJankenResult(winner=0))
+paras = state.players[0].active.pokemon_id      # 場のポケモンの番号。進化しても変わらない
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), state.players[0].active.card))
+try:   # おたがいの最初の番には進化できない（p.310）
+    apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG2-010"), paras))
+except IllegalActionError as error:
+    print(error.code)   # FIRST_TURN_EVOLUTION
+state = apply_command(state, EndTurn(0))
+state = apply_command(state, AttachEnergy(1, in_hand(1, "PMCG1-099"), state.players[1].active.card))
+state = apply_command(state, UseAttack(1, 0))   # ヒトデマンのワザでパラスに 20
+
+# 3 番: パラスをパラセクトに進化させる。ダメージ・エネルギーはそのまま
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG2-010"), paras))
+parasect = state.players[0].active
+print(state.card_def(parasect.card).name_ja, parasect.pokemon_id == paras, parasect.damage, len(parasect.energy))
+# パラセクト True 20 1
+print([state.cards[uid].card_id for uid in parasect.evolution_stack], parasect.played_turn, parasect.evolved_turn)
+# ['PMCG2-003'] 0 3（下のカード、場に出た番（対戦準備は 0）、進化した番）
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), parasect.card))
+state = apply_command(state, UseAttack(0, 0))   # パラセクトのキノコのほうし: 相手をねむりにする
+print(state.players[1].active.conditions.asleep)   # True（ポケモンチェックのねむりのコインは「うら」）
+print(state_to_dict(state, format_version=7)["players"][0]["active"]["evolution_stack"])
+# [{'card': 0, 'card_id': 'PMCG2-003'}]
+try:   # 形式 1〜6 は進化しているポケモンを書き出せない
+    state_to_dict(state, format_version=6)
+except ValueError:
+    print("形式 6 では書き出せない")
+```
+
+- おたがいの最初の番（1 番・2 番）には進化できません（`FIRST_TURN_EVOLUTION`）。その番に場に出したポケモン・その番に進化したポケモンも進化できません（`PLAYED_THIS_TURN`・`EVOLVED_THIS_TURN`。p.310）。名前が違えば `EVOLUTION_NAME_MISMATCH` です。1 回の番に何匹進化させてもかまいません。
+- ダメージ・エネルギー・ついているトレーナー（プラスパワー・ディフェンダーの効果と有効期限も）はそのまま受け継ぎます（p.310）。HP・タイプ・弱点・抵抗力・にげる・ワザは、いちばん上のカードのものになります。
+- 特殊状態はすべて消えます（p.322。ログ `special_conditions_removed`、`reason: "evolve"`）。こんらんで「にげる」に失敗したポケモンが進化したら、失敗の記録も消え（ログ `retreat_failure_cleared`）、同じ番にまた「にげる」を宣言できます（p.310・p.311・p.322 から導いた。SUPPORTED）。
+- 進化したポケモンがきぜつしたら、重なったカードもすべてトラッシュし（p.313）、相手が取るサイドは 1 枚です（p.323）。
+- 進化したあとの HP が、のっているダメージ以下になる場合は、原典で決められないので、状態を変えずに `UnsupportedError`（`UNRESOLVED_EVOLUTION_HP`）です（対応カードは HP が増えるので起こらない）。
+- 対応している進化カードは、パラセクト（PMCG2-010）とジュゴン（PMCG1-030）だけです。2 進化・ベイビィ・退化は未実装です。
+
 ### 操作（コマンド）
 
 | コマンド | 内容 |
@@ -416,7 +475,8 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | `PromoteActive(player, pokemon)` | バトル場のポケモンがいなくなったとき、ベンチから出す |
 | `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a） |
 | `PlayTrainer(player, card)` | 手札のトレーナーカードを使う（v0.2b。対応した 5 枚だけ。プラスパワーは v0.2c、ディフェンダーは v0.2e） |
-| `EvolvePokemon`・`UsePokemonPower` | 未対応（`UnsupportedError`） |
+| `EvolvePokemon(player, card, target)` | 手札の 1 進化カードで、自分の場のポケモン（`target` は場のポケモンの番号）を進化させる（v0.4a。対応した 2 枚だけ） |
+| `UsePokemonPower` | 未対応（`UnsupportedError`） |
 
 ## 現在の対応ルール（公式ルール 2000.02.14版）
 
@@ -437,10 +497,11 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 - ついているトレーナー（v0.2c）: ポケモンのいる場所にある（p.313）。にげるときはいっしょに移り（p.311）、きぜつしたらいっしょにトラッシュ（p.323）。ダメージ計算の 5 段階（p.321）
 - ディフェンダー（v0.2e）: 自分の場のポケモンにつけ、次の相手の番の終わりにトラッシュ。ワザで受けるダメージを 7 段階（p.321）で −20
 - コイントス（v0.2d）: 「おもて」か「うら」（p.319）。ワザの説明のコインは、ワザを使う手順 6 で投げる（p.309）。「×」のダメージは説明にしたがって計算し、0 倍もある（p.320）
+- 進化（v0.4a）: 手札の「○○から進化」の進化カードを、その名前の自分の場のポケモンに重ねる（p.309・p.324）。おたがいの最初の番・その番に場に出した・進化したポケモンはできない（p.310）。ダメージ・エネルギー・ついているトレーナーを受け継ぎ、特殊状態は消える（p.310・p.322）。進化したポケモンがきぜつしたら、重なったカードもすべてトラッシュ（p.313）。たねポケモン → 1 進化だけ
 
 ## 現在の対応カード
 
-第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
+第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）、1 進化ポケモンのパラセクト・ジュゴン（v0.4a）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
 
 | id | カード | id | カード |
 |---|---|---|---|
@@ -452,7 +513,8 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | PMCG1-052 | ディグダ | PMCG1-061 | ドードー（v0.2d。みだれづき: コイン 2 枚、「おもて」の数×10。p.231） |
 | PMCG1-035 | ピカチュウ（v0.2f。かじる 10、でんげき 30・コインが「うら」なら自分にも 10。p.125） | PMCG1-004 | ビードル（v0.3a。どくばり 10・コインが「おもて」なら相手をどく状態に。p.19） |
 | PMCG1-002 | キャタピー（v0.3b。いとをはく 10・コインが「おもて」なら相手をマヒ状態に。p.17） | PMCG2-003 | パラス（v0.3b。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に。p.38） |
-| PMCG1-015 | ロコン（v0.3c。あやしいひかり 10・コインが「おもて」なら相手をこんらん状態に。p.67） | | |
+| PMCG1-015 | ロコン（v0.3c。あやしいひかり 10・コインが「おもて」なら相手をこんらん状態に。p.67） | PMCG2-010 | パラセクト（v0.4a。パラスから進化。キノコのほうし（ダメージなし）で相手をねむり状態に、きりさく 30。p.39） |
+| PMCG1-030 | ジュゴン（v0.4a。パウワウから進化。オーロラビーム 50、れいとうビーム 30・コインが「おもて」なら相手をマヒ状態に。p.102） | | |
 
 | id | トレーナー（v0.2b） | 処理（『オフィシャルブック2000』p.254 の最新の説明） | 原典で決められないため止める場合 |
 |---|---|---|---|
@@ -462,31 +524,31 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | PMCG1-079 | ディフェンダー（v0.2e。p.257） | 自分の場のポケモンを1匹選んでつけ、次の相手の番の終わりにトラッシュ。ついているポケモンがワザで受けるダメージを 7 段階で −20 | なし |
 | PMCG1-081 | プラスパワー（v0.2c。p.257） | 自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュ。ついているポケモンのワザが対戦ポケモンに与えるダメージを 5 段階で +10（控えへのダメージは変えない） | なし |
 
-これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）だけを、照合した説明文とともに登録しています。
+これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、ほかの進化カード・2 進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）、パラセクトの「キノコのほうし」・ジュゴンの「れいとうビーム」（v0.4a）だけを、照合した説明文とともに登録しています（パラセクトのキノコのほうしは、パラスと同じ名前なので同じとは決めず、p.39 で照合した）。
 
 ## 未実装の機能
 
-進化・退化、ポケモンチェックの 1（指示されたこと）、特殊などく、ポケモンパワー、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
+2 進化・退化・パラセクトとジュゴンのほかの進化カード、ポケモンチェックの 1（指示されたこと）、特殊などく、ポケモンパワー、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
 
-原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)）。
+原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)。v0.4a でも変えていない）。進化したあとの HP が、のっているダメージ以下になる場合（v0.4a。`UnsupportedError`、`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)）。
 
 ## ディレクトリ
 
 ```
 kyuura_engine/
   rules.py       ルールの組（2000.02.14版の数値）と根拠の一覧
-  conditions.py  特殊状態（どく・ねむり・マヒ・こんらん）を付ける・置きかえる・回復する・ベンチに戻ったら消す。v0.3a〜v0.3c
+  conditions.py  特殊状態（どく・ねむり・マヒ・こんらん）を付ける・置きかえる・回復する・ベンチに戻ったら・進化したら消す。v0.3a〜v0.4a
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかりの実装、ワザのダメージを与える処理（相手・自分。v0.2f）。v0.2a〜v0.3c
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビームの実装、ワザのダメージを与える処理（相手・自分。v0.2f）。v0.2a〜v0.4a
   coins.py       コイントス（対戦の乱数で決め、1 枚ごとにログに残す）。v0.2d
   deck.py        デッキの検査
-  state.py       ゲームの状態（ゾーン、場のポケモン、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、結果）
+  state.py       ゲームの状態（ゾーン、場のポケモン、進化の重なり・場に出た番・進化した番（v0.4a）、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、結果）
   commands.py    プレイヤーの操作
   decisions.py   保留中の決定（出す・確かめる）。v0.2a
-  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）
+  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）、進化（v0.4a）
   damage.py      ワザのダメージ計算（p.321 の 8 段階。2・5〜8 段階の変更効果は v0.2c）、こんらんの 20 の計算（v0.3c）
   judge.py       勝ち負けの判定（p.311 の表）
-  serialize.py   状態を辞書にする（形式 1〜6）
+  serialize.py   状態を辞書にする（形式 1〜7）
   zones.py       山札から引く・トレーナーをポケモンにつける処理（エンジンとトレーナーで共通）。v0.2b・v0.2c
   rng.py         乱数の状態の指紋・保存・復元。v0.2a（コインも同じ乱数）
   data/kyuura_cards.json       kyuura のカードデータの写し（生成物）
@@ -495,5 +557,5 @@ scripts/extract_kyuura_cards.py  kyuura から写しを作る
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
 tests/                           自動テスト（unittest）
 tests/fixtures/                  v0.1 の対戦結果の参照データ（互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.3d のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.4a のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）
 ```

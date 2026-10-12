@@ -24,7 +24,7 @@ v0.3a で「どく」、v0.3b で「ねむり」「マヒ」、v0.3c で「こ�
   ``effect``、どくなら ``damage``、マヒなら ``paralyzed_turn``（マヒ状態になった番）・``recovery_turn``（回復する番）。
   もうその状態だったときだけ ``already``）
 - ``special_conditions_removed``: 特殊状態が消えた（``player``・``pokemon``・``pokemon_id``・``conditions``・``reason``）。
-  ``reason`` は ``RETREAT``・``SWITCH``（v0.3a）、``SLEEP_COIN``・``PARALYSIS_END``・``REPLACED``（v0.3b）
+  ``reason`` は ``RETREAT``・``SWITCH``（v0.3a）、``SLEEP_COIN``・``PARALYSIS_END``・``REPLACED``（v0.3b）、``EVOLVE``（v0.4a）
 """
 
 from __future__ import annotations
@@ -54,6 +54,7 @@ SWITCH = "switch"  # トレーナーの効果によるポケモンの入れ替�
 SLEEP_COIN = "sleep_coin"  # ポケモンチェックの 3 のコインが「おもて」でねむりから回復した（p.322・p.323。v0.3b）
 PARALYSIS_END = "paralysis_end"  # ポケモンチェックの 4 でマヒから自動的に回復した（p.322・p.323。v0.3b）
 REPLACED = "replaced"  # ほかの「ねむり」「マヒ」「こんらん」になったので消えた（p.322「特殊状態の重複」。v0.3b）
+EVOLVE = "evolve"  # 進化した（p.310 の進化の手順 3・p.322「特殊状態になっているポケモンが進化したら」。v0.4a）
 
 
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:
@@ -234,7 +235,9 @@ def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reas
 
 
 def clear_special_conditions(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:
-    """バトル場からベンチに戻ったポケモンの特殊状態を、すべて消す（p.311・p.322）。特殊状態がなければ何もしない。
+    """バトル場からベンチに戻ったポケモン・進化したポケモン（``reason`` が ``EVOLVE``。v0.4a）の特殊状態を、すべて消す
+    （p.310・p.311・p.322）。特殊状態がなければ何もしない。にげるの失敗の記録（``retreat_failed_turn``）は特殊状態では
+    ないので、ここでは変えない（進化で記録を消すのは ``engine._evolve_pokemon``）。
 
     「ベンチに戻ったら、そのポケモンの「どく」「ねむり」「マヒ」「こんらん」状態や、「持続する効果」は、すべて消えて
     なくなります」（p.311）。「どく」なら、どくマーカーを取りのぞくことにあたる（p.322）。ダメージカウンター・

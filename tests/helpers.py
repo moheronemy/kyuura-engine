@@ -70,6 +70,8 @@ WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「�
 CATERPIE = "PMCG1-002"  # キャタピー（v0.3b で対応。いとをはく 10・「おもて」なら相手をマヒ状態に）
 PARAS = "PMCG2-003"  # パラス（v0.3b で対応。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に）
 VULPIX = "PMCG1-015"  # ロコン（v0.3c で対応。あやしいひかり 10・「おもて」なら相手をこんらん状態に。炎・弱点 水・にげる 1）
+PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
+DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -144,11 +146,13 @@ def build_test_state(
 
     players[i] のキー（どれも省略できる。active は必須）:
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
-              "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番}
+              "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番,
+              "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
-              2 つ以上は書けない）
+              2 つ以上は書けない。"evolved_from" は進化しているポケモン（v0.4a。"card" が 1 進化ポケモン）。"evolved_turn" を
+              省略すると、3 番以降の持ち主の番のうち、今の番より前の最後の番（なければ今の番）。"played_turn" の既定は 0（対戦準備で出した））
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -167,8 +171,22 @@ def build_test_state(
     def pokemon(spec, owner: int) -> PokemonInPlay:
         if isinstance(spec, str):
             spec = {"card": spec}
+        stack = (new_uid(spec["evolved_from"], owner),) if "evolved_from" in spec else ()
         result = PokemonInPlay(new_uid(spec["card"], owner), pokemon_id=next_pokemon_id[0])
         next_pokemon_id[0] += 1
+        result.played_turn = spec.get("played_turn", 0)
+        if stack:
+            result.evolution_stack = stack
+            evolved_turn = spec.get("evolved_turn")
+            if evolved_turn is None:
+                # 先攻はプレイヤー 0（奇数の番）。おたがいの最初の番（1・2 番）には進化できない。今の番より前の持ち主の番の
+                # うち最後の番（なければ今の番）
+                owned = [t for t in range(3, turn_number + 1) if t % 2 == (1 if owner == 0 else 0)]
+                if not owned:
+                    raise ValueError("進化した番を決められない（turn_number を大きくするか evolved_turn を書く）")
+                earlier = [t for t in owned if t < turn_number]
+                evolved_turn = earlier[-1] if earlier else owned[-1]
+            result.evolved_turn = evolved_turn
         result.energy = [new_uid(e, owner) for e in spec.get("energy", [])]
         result.damage = spec.get("damage", 0)
         exclusive = None

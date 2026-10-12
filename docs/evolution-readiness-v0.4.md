@@ -2,6 +2,23 @@
 
 v0.3d で、進化（v0.4 の予定）を実装する前に、原典の規定・今の状態の持ち方との関係・決めなければならないことを調べた記録です。**v0.3d では進化を実装していません。** 進化カードは登録しておらず、`EvolvePokemon` は v0.1 から `UnsupportedError`（`UNSUPPORTED_ACTION`）のまま、進化カードは分類（cards.py）でデッキに入れられません。
 
+> **v0.4a での確認結果（追記）**: この調査をもとに、v0.4a で進化（たねポケモン → 1 進化ポケモン）を実装しました。下の本文は v0.3d の時点の記録のまま残し、v0.4a で原典と照合し直した結果と、採った案をこの表に書きます。詳しくは [evolution-rules-v0.4a.md](evolution-rules-v0.4a.md)（規定・分類・コード・テスト）、[evolution-cards-v0.4a.md](evolution-cards-v0.4a.md)（カード）、[evolution-state-v0.4a.md](evolution-state-v0.4a.md)（状態の持ち方・検証）、[architecture-v0.4a.md](architecture-v0.4a.md)（設計）。
+>
+> | 論点 | v0.4a の結果 |
+> |---|---|
+> | 1 章 E1〜E20 | p.309・p.310・p.313・p.316・p.319・p.321・p.322・p.323・p.324 を画像で読み直し、分類は変わらない（E2・E13・E18 は範囲外。E20 は 1 進化だけ実装）。新しく E3'（進化カードの内容がそのポケモンを表す）・E4'（バトル場とベンチの行き来は場に出た番を変えない。SUPPORTED）・E8'（ついているトレーナーの効果は続く。SUPPORTED）・E17'（サイドは 1 枚）を分けて書いた |
+> | Q1 `pokemon_id` | 案 A（変えない。実装上の仮定）を採った。「別のポケモン」は、いちばん上のカード・`evolved_turn`・特殊状態と失敗の記録を消すことで表す |
+> | Q2 失敗の記録 | 進化したら消す（SUPPORTED。R1。ログ `retreat_failure_cleared`。`clear_special_conditions` には含めない）。ベンチで進化してからバトル場に戻った場合も、進化したポケモンは「別のポケモン」でこんらんでもないので、同じく宣言できる（SUPPORTED。p.310・p.311・p.322 で照合した）。進化しないでベンチに戻った場合は `UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED` のまま（R2。変えていない） |
+> | Q3 その番の最初から | `played_turn`（場に出た番。対戦準備は 0）と `evolved_turn`（いまの姿に進化した番）を持ち、どちらかが今の番なら `PLAYED_THIS_TURN`・`EVOLVED_THIS_TURN`。最初の番は 1 番・2 番（`FIRST_TURN_EVOLUTION`） |
+> | Q4 ついているトレーナー | p.257（「このカードをつけているポケモン」）・p.321（7 段階のついているカードの効果と、8 段階のポケモンが持っている効果を分ける）・p.322（持続する効果の例は「すなかけ」「まるまる」）から、効果も有効期限も続く（SUPPORTED。E8'）。進化を止める案は採らなかった |
+> | Q5 コマンド | 案 A（`target` は場のポケモンの番号） |
+> | Q6 書き出し | 形式 7 を加え、`evolution_stack`・`played_turn`・`evolved_turn` を書く。形式 1〜6 は進化しているポケモンがいれば `ValueError`。進化していない状態は形式 1〜6 で今までと同じ |
+> | Q7 ログ | `evolve`（`player`・`pokemon_id`・`from_card`・`from_card_id`・`to_card`・`to_card_id`）、`special_conditions_removed`（`reason: "evolve"`）、`retreat_failure_cleared`（新しいイベント）。きぜつの `knock_out` に、進化していれば `evolution_stack` |
+> | Q8 不変条件 | `engine._evolution_problems`（重なりは 1 枚まで・いちばん下はたねポケモン・名前・進化した番の範囲と持ち主の番・進化した番の特殊状態はログ `evolve` のあと）と、カードの保存則（重なりのカード）、失敗の記録（進化の前の失敗の記録が残っていない）を加えた |
+> | 新しく見つけた論点 | 進化したあとの HP がのっているダメージ以下になる場合（H1）は、進化の手順にきぜつの確認がなく原典で決められないので、状態を変える前に止める（`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない） |
+> | 4 章 候補のカード | ジュゴン（p.102）・パラセクト（p.39）をページと照合し、どちらも kyuura の記録と一致、説明文が登録済みの実装（`ParalyzeOnHeads`・`PutToSleep`）の最新の説明と一字一句同じだったので登録した。写しには `pool_v0_4a` を加えた（フシギバナ PMCG1-011 は参照用のまま）。ほかの候補は今もできない |
+> | 5 章 範囲 | 推奨どおり。2 進化・ベイビィ・退化・ポケモンパワー・進化に関わる効果は含めていない |
+
 ## 0. 照合の条件
 
 | 項目 | 内容 |

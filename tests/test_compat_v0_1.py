@@ -15,6 +15,8 @@ v0.1 で未対応だった操作を、その後の版で対応にしたもの（
 拒否される（状態は変わらない）。拒否の理由が「未対応（UNSUPPORTED_ACTION）」から、ルールによる
 拒否（手札にない・トレーナーでない・番でない、など）に変わる。この場合は、ルールによる拒否
 （``IllegalActionError``）であることを確かめ、最後の状態の完全な一致は同じように確かめる。
+v0.4a で ``evolve_pokemon`` も対応にした。参照データの 43 回の進化のコマンドは、どれもルールによる拒否に変わる
+（CARD_NOT_IN_HAND 4・INVALID_PLAYER 16・NOT_YOUR_TURN 8・WRONG_PHASE 15。参照データのデッキに進化カードはない）。
 参照データ（v0.1 の記録）は変えていない。
 """
 
@@ -26,8 +28,8 @@ from kyuura_engine import EngineError, IllegalActionError, apply_command, comman
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "v0_1_reference.json"
 
-# v0.1 で UNSUPPORTED_ACTION だったが、その後の版で対応にしたコマンドの種類（v0.2b: トレーナー）
-NOW_SUPPORTED = {"play_trainer"}
+# v0.1 で UNSUPPORTED_ACTION だったが、その後の版で対応にしたコマンドの種類（v0.2b: トレーナー、v0.4a: 進化）
+NOW_SUPPORTED = {"play_trainer", "evolve_pokemon"}
 
 
 def plain(value):
