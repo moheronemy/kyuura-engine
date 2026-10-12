@@ -99,6 +99,9 @@
   "pool_v0_4c": [
     "PMCG1-012"
   ],
+  "pool_v0_4d": [
+    "PMCG2-007"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -2260,6 +2263,109 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-008-spear/"
+      }
+    },
+    {
+      "id": "PMCG2-007",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "バタフリー",
+        "en": "Butterfree"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          12
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "トランセル",
+          "en": "Metapod"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふきとばし",
+              "en": "Whirlwind"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手を控えポケモンと入れ替える。控えポケモンは相手プレイヤーがえらぶ。相手プレイヤーに控えポケモンがいないときには入れ替えはおこらない。",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "メガドレイン",
+              "en": "Mega Drain"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手に与えたダメージの半分(切り上げ)のダメージカウンターを自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Butterfree equal to half the damage done to the Defending Pokémon (after applying Weakness and Resistance) (rounded up to the nearest 10)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-007",
+        "pokemontcg": [
+          "base2-33"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-001-butterfree/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-001-butterfree/"
       }
     },
     {

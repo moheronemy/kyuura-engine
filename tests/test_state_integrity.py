@@ -220,7 +220,8 @@ class PhaseCommandMatrixTest(unittest.TestCase):
         found = states_in_every_phase()
         self.assertEqual(set(found), set(ALLOWED) | {Phase.GAME_OVER, Phase.HALTED})
         for phase, state in found.items():
-            before = state_to_dict(state)
+            # v0.4d: 形式 1 はワザの途中の決定（Phase.DECISION）を表せない（ValueError）ので、すべての段階を形式 8 で比べる
+            before = state_to_dict(state, format_version=8)
             for command in sample_commands(state):
                 if type(command) in ALLOWED.get(phase, set()):
                     continue
@@ -236,7 +237,7 @@ class PhaseCommandMatrixTest(unittest.TestCase):
                     else:
                         expected = "WRONG_PHASE"
                     self.assertEqual(ctx.exception.code, expected)
-            self.assertEqual(state_to_dict(state), before)
+            self.assertEqual(state_to_dict(state, format_version=8), before)
 
 
 class OpponentCardsTest(unittest.TestCase):

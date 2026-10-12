@@ -24,7 +24,8 @@ v0.3a で「どく」、v0.3b で「ねむり」「マヒ」、v0.3c で「こ�
   ``effect``、どくなら ``damage``、マヒなら ``paralyzed_turn``（マヒ状態になった番）・``recovery_turn``（回復する番）。
   もうその状態だったときだけ ``already``）
 - ``special_conditions_removed``: 特殊状態が消えた（``player``・``pokemon``・``pokemon_id``・``conditions``・``reason``）。
-  ``reason`` は ``RETREAT``・``SWITCH``（v0.3a）、``SLEEP_COIN``・``PARALYSIS_END``・``REPLACED``（v0.3b）、``EVOLVE``（v0.4a）
+  ``reason`` は ``RETREAT``・``SWITCH``（v0.3a）、``SLEEP_COIN``・``PARALYSIS_END``・``REPLACED``（v0.3b）、``EVOLVE``（v0.4a）、
+  ``FORCED_SWITCH``（v0.4d。相手のワザ「ふきとばし」でベンチにもどされた）
 """
 
 from __future__ import annotations
@@ -55,6 +56,9 @@ SLEEP_COIN = "sleep_coin"  # ポケモンチェックの 3 のコインが「お
 PARALYSIS_END = "paralysis_end"  # ポケモンチェックの 4 でマヒから自動的に回復した（p.322・p.323。v0.3b）
 REPLACED = "replaced"  # ほかの「ねむり」「マヒ」「こんらん」になったので消えた（p.322「特殊状態の重複」。v0.3b）
 EVOLVE = "evolve"  # 進化した（p.310 の進化の手順 3・p.322「特殊状態になっているポケモンが進化したら」。v0.4a）
+# 相手のワザの効果でベンチにもどされた（バタフリーの「ふきとばし」。p.19・p.213「相手の対戦ポケモンをベンチにもどす」・
+# p.311・p.322。v0.4d）。トレーナーの効果による入れ替え（SWITCH）とは理由を分ける
+FORCED_SWITCH = "forced_switch"
 
 
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:

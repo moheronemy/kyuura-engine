@@ -14,7 +14,10 @@
 
 - ``"take_prize"``・``"promote_active"``: エンジンの中のきぜつのあとの処理（``engine`` が持つ）
 - ``"attack"``: ワザの効果の続き。``context`` の ``"use"`` から、効果の登録表の実装を引き、
-  その ``resume`` を呼ぶ（``effects.AttackEffect.resume``）
+  その ``resume`` を呼ぶ（``effects.AttackEffect.resume``）。決定するのは、ふつうはワザを使ったプレイヤー。v0.4d から、
+  ワザを使われた側のプレイヤーが決定する種類（``FORCED_SWITCH``）がある。どちらの場合も番のプレイヤー
+  （``GameState.current_player``）はワザを使ったプレイヤーのまま。ワザの実装は、自分が出す決定の形を
+  ``AttackEffect.decision_problems`` で宣言し、不変条件（``engine._decision_problems``）が確かめる
 - ``"trainer"``: トレーナーの効果の続き（v0.2b）。``context`` の ``"use"`` から実装を引き、
   ``effects.TrainerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンがカードをトラッシュする
 
@@ -38,6 +41,10 @@ if TYPE_CHECKING:
 TAKE_PRIZE = "take_prize"  # きぜつさせたプレイヤーが、サイドの位置を 1 つ選ぶ（p.312, p.323）
 PROMOTE_ACTIVE = "promote_active"  # バトル場のポケモンがいなくなったプレイヤーが、ベンチのポケモンを 1 匹選ぶ（p.313, p.323）
 SELECT_POKEMON = "select_pokemon"  # 効果の対象の場のポケモンを選ぶ（v0.2b。選べるものは場のポケモンの番号）
+# ワザの効果で相手の対戦ポケモンをベンチにもどすとき、入れ替わる控えポケモンを、入れ替えられるプレイヤー（ワザを使った
+# プレイヤーの相手）が選ぶ（v0.4d。バタフリーの「ふきとばし」。p.19 の最新の説明「入れ替わるポケモンは、相手が選ぶ。」・
+# p.213 のワザ解説。選べるものは相手のベンチのポケモンの番号。段階は Phase.DECISION）
+FORCED_SWITCH = "forced_switch"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

@@ -1,8 +1,8 @@
-# 実装状況（v0.1〜v0.4c）
+# 実装状況（v0.1〜v0.4d）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
-v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。v0.4c は、1 進化ポケモン → 2 進化ポケモンの進化（たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.4c.md)、[2 進化のルール](stage2-evolution-v0.4c.md)、[スピアー](beedrill-v0.4c.md)、[状態](stage2-state-v0.4c.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる)・[v0.4c の章](#v04c-で加えたもの2-進化とスピアー) にあります。
+v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。v0.4c は、1 進化ポケモン → 2 進化ポケモンの進化（たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.4c.md)、[2 進化のルール](stage2-evolution-v0.4c.md)、[スピアー](beedrill-v0.4c.md)、[状態](stage2-state-v0.4c.md)）。v0.4d は、ワザの途中で相手プレイヤーの決定を待って同じワザを再開する処理（相手の強制交代）と、ワザが与えたダメージの結果を後の要素に渡して回復する処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」「メガドレイン」とともに加えた版です（[アーキテクチャ](architecture-v0.4d.md)、[強制交代](forced-switch-v0.4d.md)、[与えたダメージと回復](damage-drain-v0.4d.md)、[バタフリー](butterfree-v0.4d.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる)・[v0.4c の章](#v04c-で加えたもの2-進化とスピアー)・[v0.4d の章](#v04d-で加えたもの相手の強制交代与えたダメージによる回復バタフリー) にあります。
 
 状態の区分:
 
@@ -67,7 +67,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 
 ルールにはあるが、まだないものです。対応するカードはデッキに入れられず（UNSUPPORTED_CARD）、対応する操作は `UnsupportedError` になります。
 
-- 退化・ベイビィポケモンの進化（たねポケモン → 1 進化は v0.4a、1 進化 → 2 進化は v0.4c で対応した。2 進化のカードはスピアーだけ）。進化に関わるポケモンパワー・トレーナー
+- 退化・ベイビィポケモンの進化（たねポケモン → 1 進化は v0.4a、1 進化 → 2 進化は v0.4c で対応した。2 進化のカードはスピアー（v0.4c）とバタフリー（v0.4d）だけ）。進化に関わるポケモンパワー・トレーナー
 - 特殊状態のうち、ポケモンチェックの 1、特殊などく、特殊状態を回復するカード（どく・ねむり・マヒ・こんらんとこんらんのコインは v0.3a〜v0.3c で対応した）
 - ポケモンパワー（特殊能力、`UsePokemonPower`）
 - トレーナーカード（v0.2b・v0.2c・v0.2e で対応した 5 枚のほか）、スタジアム、ポケモンのどうぐなど（ダメージ計算の 5 段階のプラスパワーは v0.2c、7 段階のディフェンダーは v0.2e で対応。2・6・8 段階の効果を持つカードはない）
@@ -688,7 +688,7 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 
 ### 未実装
 
-- バタフリー（PMCG2-007。ふきとばし・メガドレイン）。写しにも入れていない（[architecture-v0.4c.md](architecture-v0.4c.md) 14 章に v0.4d の準備）
+- バタフリー（PMCG2-007。ふきとばし・メガドレイン）。写しにも入れていない（[architecture-v0.4c.md](architecture-v0.4c.md) 14 章に v0.4d の準備）（v0.4d 注: v0.4d で対応した。[v0.4d の章](#v04d-で加えたもの相手の強制交代与えたダメージによる回復バタフリー)）
 - 退化、ベイビィポケモン、進化を助ける・妨げるトレーナーとポケモンパワー（フシギバナなど）
 
 ### 原典未確認・未解決
@@ -696,3 +696,46 @@ v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しまし�
 - 2 進化で新しく決められなくなった事項はない。v0.4b までの未解決（`UNRESOLVED_PREVENTED_COIN_DAMAGE`・`UNRESOLVED_EVOLUTION_HP`・`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`・切り直しの補償・きずぐすり・ポケモンいれかえ・特殊などく・サドン・デスの延長戦）は変えていない。`UNRESOLVED_PREVENTED_COIN_DAMAGE` はダブルニードルにも当てはまる。
 - 実装上の仮定: 場のポケモンの番号は 2 進化しても変えない。1 進化した番は状態に持たず、不変条件はログ `evolve` と照らす（盤面を直接作ったテストでは、作った重なりのログがないので状態だけの必要条件まで）。段階の不一致を `EVOLUTION_STAGE_MISMATCH` にした。
 - kyuura に、2 進化に固有の記録（3 枚の構成・同じ番の 1 進化 → 2 進化）と、ダブルニードルの印刷の文面と最新の説明を区別した記録がない（[data-provenance.md](data-provenance.md)・[stage2-evolution-v0.4c.md](stage2-evolution-v0.4c.md) 5 章）。
+
+## v0.4d で加えたもの（相手の強制交代・与えたダメージによる回復・バタフリー）
+
+対応したカードは、バタフリー（PMCG2-007。トランセルから進化する 2 進化。p.19）です。ワザの途中で相手プレイヤーの決定（`forced_switch`）を待ち、答えのあとで同じワザの続きを処理する（v0.2a のワザの途中の決定を、相手が決定する形で初めて製品のカードで使った）ことと、ワザのダメージの要素の結果（`DamageResult`）を後の要素に渡すことを加えました（コマンド・段階・状態の項目・書き出しの形式は増やしていない）。原典照合・裁定の分類・コード・テストの対応は [forced-switch-v0.4d.md](forced-switch-v0.4d.md)（ふきとばし）、[damage-drain-v0.4d.md](damage-drain-v0.4d.md)（メガドレイン）、[butterfree-v0.4d.md](butterfree-v0.4d.md)（カード）、設計は [architecture-v0.4d.md](architecture-v0.4d.md) にあります。
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| バタフリーの登録（ふきとばし `DamageAndForceSwitch`・メガドレイン `DamageAndDrain`。照合した印刷の文面・最新の説明・出典 p.19）。2 つのワザがどちらも登録されているときだけ対応 | p.19 | test_butterfree_v0_4d.py `ButterfreeCardTest`、test_effects.py |
+| キャタピー → トランセル → バタフリー（v0.4c の 2 進化の処理のまま）。同じ番の再進化・たね → 2 進化・最初の番は拒否。3 枚の重なり・受け継ぐもの・消えるもの・きぜつで 3 枚とサイド 1 枚 | p.310、p.313、p.319、p.323 | `ButterfreeEvolutionTest`・`ButterfreeKnockOutTest` |
+| ふきとばし: 20 → 相手の決定（決定するのは相手、番のプレイヤーは変えない、選べるものは相手のベンチのポケモンの番号）→ 入れ替え → ワザのあとの処理（1 回だけ） | p.19、p.89、p.213、p.309 | test_forced_switch_v0_4d.py `WhirlwindFlowTest` |
+| 控え 0 匹（入れ替えない・決定なし）・1 匹（決定を出す）・2 匹以上（どれでも選べる） | p.19 | 同上 |
+| 誤った答え（ワザを使ったプレイヤー・ない番号・相手のバトル場・自分のベンチ・古い番号・複数・重複・空・決定なし）と、決定を待つ間のほかの操作の拒否。状態・決定・乱数・ログを変えない | p.309 | `InvalidAnswerTest`、test_butterfree_games_v0_4d.py `RandomCommandsWithButterfreeTest` |
+| 20 で相手がきぜつするなら入れ替えない（SUPPORTED）。サイド・交代・勝ち（控えなし・最後のサイド） | p.309、p.323、p.89、p.213 | `KnockOutTest` |
+| 強制交代: 番号・ダメージ・エネルギー・ついているトレーナー（有効期限も）・重なり・場に出た番・進化した番は変わらない。特殊状態（4 種類と組み合わせ）・持続する効果は消える（理由 `forced_switch`）。にげるエネルギー・こんらんのコインはない。にげるの失敗の記録は付かない | p.311、p.322、p.325 | `InheritanceTest` |
+| 「ダメージを受けない」相手・最終ダメージ 0 の相手も入れ替える | p.321 | `test_persistent_effect_is_removed`・`test_zero_damage_still_switches` |
+| `DamageResult`: 受けたポケモン・防いだか・最終ダメージ（防いだら None）・きぜつするか。ログ・ダメージの値は v0.4c と同じ | p.319、p.321 | test_damage_drain_v0_4d.py `DamageResultTest` |
+| メガドレイン: 与えた最終ダメージ（弱点・抵抗力・プラスパワー・ディフェンダーのあと。HP で上限を付けない）の半分を 10 単位に切り上げ、バタフリーから、のっている数までとりのぞく。与えなかった（0・防いだ）ら回復しない | p.19、p.319、p.320、p.321 | `MegaDrainTest` |
+| こんらん状態のバタフリー: 「おもて」ならワザを処理、「うら」なら入れ替え・ダメージ・回復なし（自分に 20） | p.309 | `ConfusedButterfreeTest`・`ConfusedMegaDrainTest` |
+| 不変条件: ワザの決定の共通の確認（番のプレイヤー・バトル場のポケモン・カード id・今の番のワザのログ）と、ふきとばしの決定の形（`decision_problems`）。持続する効果のログとの対応に `forced_switch` | — | `PendingDecisionStateTest.test_invariants_reject_broken_decisions` |
+| 決定を待つ状態の clone・deepcopy・pickle（写しで同じ答え → 同じ結果）。書き出しは形式 8 のまま（形式 1 は `ValueError`） | — | `PendingDecisionStateTest`・`ButterfreeCopyTest` |
+| 正式な対戦開始から 40 局: バタフリーへの進化 72、ふきとばし 133（相手の選択 82、控えなし 11、きぜつ 38、特殊状態の解除 4、持続する効果の解除 6）、メガドレイン 39（回復 32、0 個 7）、バタフリーのきぜつ 20（どれも 3 枚） | — | test_butterfree_games_v0_4d.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 「ダメージを受けない」状態の相手へのメガドレイン（回復しない） | 自然な対戦 40 局では起こらなかった。盤面を直接作ったテストで確かめた（`test_prevented_damage_no_heal`） |
+| 最終ダメージ 0 のメガドレイン（抵抗力 草 −30 とディフェンダー） | 対応カードに草の抵抗力を持つものはない。テスト専用のカードで確かめた（`test_no_damage_dealt_no_heal`・`test_dealt_damage_table`） |
+| こんらんで「にげる」に失敗したバタフリーのふきとばし（バタフリーの記録はそのまま、番の終わりに消える） | 盤面を直接作ったテストで確かめた（`test_retreat_failure_record_is_not_touched`） |
+
+### 未実装
+
+- ほかの「相手の強制交代」「与えたダメージによる回復」のワザを持つカード（同じ実装で登録できるかは、カードごとに照合してから）
+- 控えポケモンへのダメージ（p.320 の (2)・(4)）、退化、ベイビィポケモン、ポケモンパワー、特殊エネルギー、スタジアム
+
+### 原典未確認・未解決
+
+- v0.4d で新しく決められなくなった事項はない（[forced-switch-v0.4d.md](forced-switch-v0.4d.md) 9 章・[damage-drain-v0.4d.md](damage-drain-v0.4d.md) 8 章）。v0.4c までの未解決（`UNRESOLVED_PREVENTED_COIN_DAMAGE`・`UNRESOLVED_EVOLUTION_HP`・`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`・`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`・`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`・`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`・切り直しの補償・きずぐすりの 2 つ・`UNRESOLVED_SWITCH_WITHOUT_BENCH`・特殊などく・サドン・デスの延長戦）は変えていない。
+- SUPPORTED（原典から導いた）: ふきとばしの 20 で相手がきぜつするなら入れ替えない、「ダメージを受けない」相手へのメガドレインは回復しない、メガドレインで相手がきぜつしても回復する。
+- 実装上の仮定: 控えが 1 匹でもふきとばしの決定を出す。ベンチにもどったポケモンは選ばれた控えの位置に入る。ワザの効果による相手の入れ替えのログは `forced_switch`。
+- kyuura に、バタフリーの 2 つのワザの印刷の文面と最新の説明を区別した記録と、ワザの効果による相手の入れ替え・「与えたダメージ」の記録がない（[data-provenance.md](data-provenance.md)・[butterfree-v0.4d.md](butterfree-v0.4d.md) 5 章）。

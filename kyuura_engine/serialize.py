@@ -38,7 +38,13 @@
 ``place_starting_pokemon``・``play_to_bench`` の番）から分かるので、形式 1〜6 の書き出しは v0.3d と同じ。
 形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「ポケモンチェックの
 残りをして次の番を始める」。決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると
-``ValueError`` にする。
+``ValueError`` にする。同じように、ワザの途中の決定（``resume`` が ``"attack"``。v0.4d の「ふきとばし」で相手が選ぶ控え）も
+形式 1 では ``ValueError`` にする（v0.4c までは、製品の登録表のワザはこの決定を出さなかった）。
+
+ワザの途中の決定（v0.4d）は、形式 2 以上の ``decision``（``id``・``kind``・``player``（決定するプレイヤー。「ふきとばし」では
+ワザを使われた側）・``options``（場のポケモンの番号）・``min_choices``・``max_choices``・``resume``（``"attack"``）・``context``
+（``use`` = [プレイヤー, 場のポケモンの番号, カード id, ワザの位置]、``target`` = 入れ替える相手の対戦ポケモンの番号））と、
+``current_player``（ワザを使ったプレイヤーのまま）・``turn_number`` で表せるので、新しい形式はない（形式 8 のまま）。
 
 コインの結果（v0.2d）は、ログの ``coin_flip`` にだけ残る（状態に残る値はない）。ログはどの形式にも入るので、
 コインのための新しい形式はない。この先のコインの結果を決める乱数の状態は ``rng_state_sha256``（指紋）。
@@ -148,6 +154,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、ワザによる持続する効果を表せない（format_version=8 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
+    if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
+        # v0.4d: v0.1 の形には、ワザの途中の決定（「ふきとばし」で相手が選ぶ控えなど）の項目がない（段階 "decision" だけが残り、
+        # 決定するプレイヤー・選べるもの・続きの情報が落ちる）。黙って落とさない
+        raise ValueError("形式 1 は、ワザの途中の決定を表せない（format_version=2 以上を使う）")
     data = {
         "rules": state.rules.id,
         "card_data": {"repository": state.card_data.repository, "commit": state.card_data.commit, "path": state.card_data.path},

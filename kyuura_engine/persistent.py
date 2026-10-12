@@ -14,6 +14,8 @@ v0.4b で扱う効果は ``PreventDamage``（「次の相手の番、このカ�
   相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``engine._end_turn``）でポケモンチェックの前に消す
 - ``RETREAT``・``SWITCH``: バトル場からベンチに戻った（p.311「ベンチに戻ったら、そのポケモンの…「持続する効果」は、
   すべて消えてなくなります」・p.322）。「にげる」に失敗した（こんらん）ポケモンはベンチに戻っていないので消えない
+- ``FORCED_SWITCH``（v0.4d）: 相手のワザの効果（バタフリーの「ふきとばし」）でベンチにもどされた（p.311・p.322。p.89 の
+  わるいカメールの「こうらがえし」の解説は、「ふきとばし」でベンチにもどったポケモンの持続する効果が消える例）
 - ``EVOLVE``: 進化した（p.310 の進化の手順 3・p.323「「持続する効果」を受けているポケモンが進化したら…消えてなくなります」）
 - ``KNOCK_OUT``: きぜつして場をはなれた（p.322「「持続する効果」を受けているポケモンが場をはなれたら…消えてなくなります」）
 
@@ -25,7 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .conditions import EVOLVE, RETREAT, SWITCH
+from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import PreventDamage
 
 if TYPE_CHECKING:
@@ -33,7 +35,7 @@ if TYPE_CHECKING:
 
 EXPIRED = "expired"  # 効果がはたらく番の終わり（p.236・p.18 のワザ解説）
 KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
-REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT)
+REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage, *, attack: str) -> None:

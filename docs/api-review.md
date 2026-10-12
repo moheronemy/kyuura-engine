@@ -1,4 +1,4 @@
-# 公開 API のレビュー（v0.1〜v0.3c）
+# 公開 API のレビュー（v0.1〜v0.4d）
 
 将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md)・[v0.3a](architecture-v0.3a.md)・[v0.3b](architecture-v0.3b.md) のアーキテクチャにあります。
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.4c で加えた公開 API
+## 2. v0.2a〜v0.4d で加えた公開 API
 
 ### v0.2a
 
@@ -205,6 +205,20 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `kyuura_engine.__version__` | `0.4.0c0`。効果の登録表の id は `kyuura-engine-0.4c` |
 
 コマンド・段階・決定の種類・状態の項目・書き出しの形式（形式 8 のまま）・ログのイベントは増やしていません。エラーコード `EVOLUTION_STAGE_MISMATCH` を加えました（6 章）。
+
+### v0.4d
+
+| もの | 内容 |
+|---|---|
+| バタフリー（PMCG2-007） | 2 進化（`pool_v0_4d`。トランセルから進化）。ふきとばし（0）・メガドレイン（1） |
+| 決定の種類 `forced_switch`（`decisions.FORCED_SWITCH`） | ワザ（ふきとばし）の途中で、ワザを使われた側のプレイヤーが、入れ替わる控えを選ぶ。`decision.player` は相手で、`state.current_player` はワザを使ったプレイヤーのまま。段階は `Phase.DECISION`。答えは `ResolveDecision(相手, decision.id, (pokemon_id,))` |
+| `effects.DamageResult` | `deal_attack_damage`・`damage_opponent_active` の戻り値（`target`・`player`・`pokemon_id`・`prevented`・`amount`（防いだら None）・`knocked_out`、`dealt`）。効果の実装を加える人向け |
+| `AttackEffect.decision_problems(state, use, decision)` | ワザが出した決定を待つ状態の、効果ごとの不変条件。既定は「決定するのはワザを使ったプレイヤー」。相手が決定する効果は上書きする（効果の実装を加える人向け） |
+| `effects.DamageAndForceSwitch`・`DamageAndDrain` | ふきとばし・メガドレインの実装（効果の実装を加える人向け）。`effects.TARGET_KNOCKED_OUT`・`NO_BENCH`（ログ `forced_switch_skipped` の理由） |
+| `conditions.FORCED_SWITCH`・`persistent.REMOVAL_REASONS` | 特殊状態・持続する効果が消える理由に `forced_switch` |
+| `kyuura_engine.__version__` | `0.4.0d0`。効果の登録表の id は `kyuura-engine-0.4d` |
+
+コマンド・段階・状態の項目・エラーコード・書き出しの形式（形式 8 のまま）は増やしていません。`state_to_dict(state)`（形式 1）は、ワザの途中の決定があると `ValueError` になりました（4 章）。ログのイベント `forced_switch`・`forced_switch_skipped`・`drain_heal` を加えました（7 章）。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -397,6 +411,17 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - エラーコード `EVOLUTION_STAGE_MISMATCH`（実在のカードの組では起こらない）
 - 新しいクライアントへの推奨: 進化のボタンは、手札の進化カード（1 進化・2 進化）と、名前の合う場のポケモン（2 進化なら 1 進化ポケモン）のうち、`current_form_turn` が今の番より前のものだけを有効にする。同じ番に 1 進化させたポケモンは、その番には 2 進化できない。スピアーの「ダブルニードル」を「ダメージを受けない」ポケモンに使うと、みだれづきと同じく `UnsupportedError`。
 
+### v0.4c → v0.4d
+
+- バタフリーを使わない対戦の結果・ログ・乱数の状態・拒否・保留中の決定は変わりません。v0.4c のコミット `7ed8ef5` と、既存のデッキの 1,340 局（121,420 コマンド）・でたらめな操作の 32 局・4 種類を混ぜたデッキの 300 局（44,122 コマンド）・1 進化を使う 40 局とでたらめな進化の 12 局・「かたまる」を使う 40 局（5,880 コマンド）とでたらめな操作の 16 局・2 進化を使う 40 局（4,369 コマンド。途中の状態と保留中の決定をすべて形式 8 で）とでたらめな操作の 16 局・テスト専用のワザの途中の決定を使う 60 局を同じ手順で動かして比べ、出力がすべて同じでした（[architecture-v0.4d.md 14 章](architecture-v0.4d.md)）。
+- v0.4c のテスト 892 件を v0.4d のコードで実行すると、失敗するのは 10 件だけ（登録表の id・ワザの数・説明文のあるワザの一覧・カードの組を固定したもの 9 件と、形式 1 でワザの途中の決定を書き出していた 1 件）。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.4d` になり、ワザの登録にバタフリーの 2 つが加わった。写しの対戦用のカードの組に `pool_v0_4d`
+  - `state_to_dict(state, format_version=1)` は、ワザの途中の決定（`decision.resume == "attack"`）があると `ValueError`（v0.4c までは段階 `decision` だけが書き出され、決定の中身が落ちていた。製品のカードでは起こらなかった）。形式 2 以上を使う
+  - `deal_attack_damage`・`damage_opponent_active` が `None` ではなく `DamageResult` を返す
+  - 決定を待つ状態で、`decision.player` が番のプレイヤーと違うことがある（`forced_switch`）。「決定するのは番のプレイヤー」と決めつけていたクライアントは直す必要がある
+- 新しいクライアントへの推奨: 決定の表示・答えは、いつも `state.decision.player` を見て、そのプレイヤーに求める（番のプレイヤーではない）。`forced_switch` の選べるもの（`options`）は相手のベンチのポケモンの番号。決定を待つ間は、どちらのプレイヤーにも通常の操作のボタンを出さない。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -468,6 +493,8 @@ v0.3c: `special_condition` の `condition` に `confusion`。`special_conditions
 v0.4a: `evolve`（`player`・`pokemon_id`・`from_card`＝進化前のいちばん上のカードの uid・`from_card_id`・`to_card`＝進化カードの uid・`to_card_id`。番はログの `turn`）。`special_conditions_removed` の `reason` に `evolve`。`retreat_failure_cleared`（`player`・`pokemon`・`pokemon_id`・`reason`＝`evolve`。こんらんで「にげる」に失敗した記録が進化で消えた）。`knock_out` に、進化したポケモンのきぜつなら `evolution_stack`（下のカードの uid。`pokemon` はいちばん上のカード）。進化しない対戦では、v0.3d と同じログ
 
 v0.4b: `persistent_effect_added`（`player`・`pokemon`・`pokemon_id`・`persistent_effect`＝種類（`prevent_damage`）・`source_card`・`source_player`・`active_turn`＝はたらく番・`effect`＝ワザの `AttackKey`。効果を与えた番はログの `turn`）。`persistent_effect_removed`（`player`・`pokemon`・`pokemon_id`・`persistent_effect`・`source_card`・`created_turn`・`active_turn`・`reason`＝`expired`・`retreat`・`switch`・`evolve`・`knock_out`）。`damage_prevented`（`player`・`pokemon`・`pokemon_id`・`target`・`effect`＝ワザ・`persistent_effect`・`source_card`。「ダメージを受けない」状態のポケモンへのダメージの要素が無効になった。計算しないので量はない）。持続する効果を使わない対戦では、v0.4a と同じログ
+
+v0.4d: `forced_switch`（`player`＝入れ替えられたプレイヤー・`attacker`＝ワザを使ったプレイヤー・`attacker_pokemon_id`・`effect`＝ワザの `AttackKey`・`old_active`・`new_active`・`old_active_pokemon_id`・`new_active_pokemon_id`）、`forced_switch_skipped`（`player`・`attacker`・`attacker_pokemon_id`・`effect`・`pokemon`・`pokemon_id`・`reason`＝`knocked_out`/`no_bench`）、`drain_heal`（`player`・`pokemon`・`pokemon_id`・`effect`・`dealt`＝回復の計算のもとにした与えたダメージ・`drain_counters`＝半分の切り上げ・`counters`＝とりのぞいた数・`amount`・`damage_before`・`total_damage`）。`special_conditions_removed`・`persistent_effect_removed` の `reason` に `forced_switch`。既存のイベント（`switch`・`remove_damage_counters`・`damage`・`damage_prevented` など）の形は変えていない。
 
 v0.4c: 新しいイベント・項目はない。2 進化の `evolve` は、`from_card` が 1 進化ポケモン（コクーン）、`to_card` が 2 進化カード（スピアー）。2 進化ポケモンの `knock_out` の `evolution_stack` は下の 2 枚（たねポケモン・1 進化ポケモンの順）
 

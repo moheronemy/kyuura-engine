@@ -195,7 +195,8 @@ class BeedrillCardTest(unittest.TestCase):
     def test_stage2_is_not_supported_as_a_whole(self):
         """2 進化の段階を扱えるようになっても、カードごとの条件（ワザの登録・ポケモンパワーなし・進化元の名前）は変わらない。
         フシギバナ（ポケモンパワー・登録のないワザ）は未対応のまま。ワザの登録がないスピアーはデッキに入らない。バタフリー
-        は写しに入れていない（ワザが未実装。docs/architecture-v0.4c.md の v0.4d の準備）。"""
+        は v0.4c では写しに入れていなかった（ワザが未実装。docs/architecture-v0.4c.md の v0.4d の準備）。v0.4d で 2 つのワザを
+        登録して写し（pool_v0_4d）に加えた（tests/test_butterfree_v0_4d.py）。"""
         pool = load_card_pool()
         self.assertTrue(pool.get(VENUSAUR).is_stage2_pokemon)
         self.assertFalse(pool.is_playable(VENUSAUR))
@@ -208,8 +209,8 @@ class BeedrillCardTest(unittest.TestCase):
         self.assertEqual(deck_problems(deck, load_card_pool()), [])
         self.assertTrue(any(BEEDRILL in problem for problem in deck_problems(deck, unregistered)))
         extract = read_extract()
-        self.assertNotIn("PMCG2-007", [c["id"] for c in extract["cards"]])  # バタフリー
         self.assertEqual(extract["pool_v0_4c"], [BEEDRILL])
+        self.assertEqual(extract["pool_v0_4d"], ["PMCG2-007"])  # バタフリー（v0.4d）
 
     def test_stage2_without_a_name_or_baby_is_unsupported(self):
         """「○○○○から進化」の名前のない 2 進化、ベイビィ（p.319 の C・D）は未対応（テスト専用のカード）。"""

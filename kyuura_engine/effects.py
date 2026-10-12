@@ -24,7 +24,12 @@
   ``ConfuseOnHeads``（v0.3c。相手にダメージのあと、コインが「おもて」なら相手をこんらん状態に。ロコンの
   「あやしいひかり」。p.67 の最新の説明）。docs/confusion-v0.3c.md、
   ``PreventDamageOnHeads``（v0.4b。コインが「おもて」なら、次の相手の番、自分は「ダメージを受けない」状態（持続する
-  効果）。トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明。docs/harden-v0.4b.md）
+  効果）。トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明。docs/harden-v0.4b.md）、
+  ``DamageAndForceSwitch``（v0.4d。相手にダメージのあと、相手の対戦ポケモンをベンチにもどし、相手が選んだ控えと入れ替える。
+  決定するのは相手。バタフリーの「ふきとばし」。p.19 の最新の説明・p.213 のワザ解説。docs/forced-switch-v0.4d.md）、
+  ``DamageAndDrain``（v0.4d。相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを自分からとりのぞく。
+  バタフリーの「メガドレイン」。p.19 の最新の説明・p.319。docs/damage-drain-v0.4d.md）。v0.4d から ``deal_attack_damage`` が
+  ダメージの要素の結果（``DamageResult``）を返す
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -44,9 +49,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 from .coins import CoinSide, flip_coins
+from .conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from .conditions import SWITCH, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from .damage import DamageModifier, calculate_attack_damage
-from .decisions import SELECT_POKEMON, push_trainer_decision
+from .decisions import FORCED_SWITCH, SELECT_POKEMON, push_attack_decision, push_trainer_decision
 from .errors import UnsupportedError
 from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects
 from .state import PreventDamage
@@ -91,6 +97,12 @@ class AttackEffect:
       実装は、どれも既定（None）でよい（docs/effect-preflight-v0.3d.md。v0.3c の ``SelfDamageOnTails`` の確認は、
       v0.3d で原典の根拠が見つかり不要になった）。
 
+    - ``decision_problems``（v0.4d）: このワザが出した決定（``resume`` が ``"attack"``）を待っている状態の、効果ごとの
+      不変条件の問題。既定は「決定するのはワザを使ったプレイヤー」だけを確かめる。ワザを使われた側のプレイヤーが決定する
+      効果（「ふきとばし」の ``FORCED_SWITCH``）は、上書きして決定の形（種類・決定するプレイヤー・選べるもの・続きの情報）を
+      宣言する。エンジンの ``check_invariants`` が、どのワザの決定にも共通の確認（続きの情報・番のプレイヤー・ワザを使った
+      ポケモン・今の番のワザのログ）のあとで呼ぶ。
+
     決定がなくなったら、エンジンがワザの後の処理（きぜつ・サイド・番の終わり）を続ける。
     """
 
@@ -107,6 +119,14 @@ class AttackEffect:
 
     def resume(self, state: GameState, use: AttackUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         raise NotImplementedError(f"{self.implementation_id} は決定を出さない")
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.player != use.player:
+            return [
+                f"ワザ {use.key} の決定 {decision.kind} をするのがプレイヤー {decision.player} で、ワザを使ったプレイヤー {use.player} では"
+                "ない（相手が決定する効果は decision_problems で宣言する）"
+            ]
+        return []
 
 
 @dataclass(frozen=True)
@@ -214,7 +234,40 @@ def damage_receiver(state: GameState, use: AttackUse, target: str) -> PokemonInP
     raise ValueError(f"ワザのダメージを受けるポケモンの種類 {target!r} は未実装（{DAMAGE_TARGETS}）")
 
 
-def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> None:
+@dataclass(frozen=True)
+class DamageResult:
+    """ワザのダメージの要素 1 つを処理した結果（v0.4d）。``deal_attack_damage`` が返す。
+
+    ワザの後の要素（「ふきとばし」の入れ替え、「メガドレイン」の回復）が、直前のダメージの要素の結果を知るためのもの。
+    ログを読み直して推定しない（ログは記録で、ルールの判断に使わない）。状態には残さない（ワザの処理の中だけで使う）。
+
+    - ``target``: 受けるポケモンの種類（``OPPONENT_ACTIVE``・``SELF``）
+    - ``player``・``pokemon_id``: 受けたポケモンの持ち主と、場のポケモンの番号。ダメージを与えたのは、いつもワザを使う
+      ポケモン（``AttackUse.pokemon_id``。発生源なので、ここには重ねて持たない）
+    - ``prevented``: 受けるポケモンが「ダメージを受けない」状態（v0.4b。持続する効果）で、この要素が無効になった。
+      ダメージを計算していない（p.321）
+    - ``amount``: p.321 の順番で計算した最終ダメージ（0 以下なら 0）。HP で上限を付けない（p.319「HPが30しかないから
+      といって、「与えたダメージ」が30になるのではありません」）。``prevented`` なら None（計算していないので、量はない。
+      計算した結果の 0 と区別する）
+    - ``knocked_out``: この要素を処理したあと、受けたポケモンのダメージが HP 以上（p.323 できぜつする）。きぜつの処理
+      （トラッシュ・サイド・交代）は、ワザの要素をすべて処理したあとでエンジンが行う（``engine._finish_attack``）
+    """
+
+    target: str
+    player: int
+    pokemon_id: int
+    prevented: bool
+    amount: int | None
+    knocked_out: bool
+
+    @property
+    def dealt(self) -> int:
+        """与えたダメージ。最終ダメージ（``amount``）。防いだとき・最終ダメージが 0 のときは 0（p.319「「0ダメージを受けた
+        （与えた）」…のではなく、「ダメージを受けなかった（与えなかった）」ことになります」）。"""
+        return 0 if self.amount is None else self.amount
+
+
+def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> DamageResult:
     """ワザのダメージを 1 つ与える: 受けるポケモンを決め、基本となるダメージ ``base`` から p.321 の順番で計算する。
 
     - ダメージを与えるのは、いつもワザを使うポケモン（発生源。弱点・抵抗力はそのタイプで見る。p.321 の 3・4 段階）。
@@ -239,6 +292,9 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
     計算しない）、ダメージも変えず、ログ ``damage_prevented``（``player``・``pokemon``・``pokemon_id``・``target``・``effect``
     （ワザ）・``persistent_effect``・``source_card``）だけを残す。計算しないので、防いだダメージの量はない（ログに書かない）。
     ほかのポケモンへのダメージの要素・ダメージ以外の効果の要素は有効（p.321。ワザの実装が続けて処理する）。
+
+    v0.4d から、処理の結果（``DamageResult``）を返す。ログ・ダメージの値・計算・乱数（使わない）は v0.4c と同じで、戻り値を
+    使わない呼び出し側（v0.4c までのワザの実装）の動きは変わらない。
     """
     _, attacker = state.find_pokemon(use.pokemon_id)
     attacker_def = state.card_def(attacker.card)
@@ -256,7 +312,7 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
             persistent_effect=prevention.kind,
             source_card=prevention.source_card,
         )
-        return
+        return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= state.card_def(receiver.card).hp)
     receiver_def = state.card_def(receiver.card)
     modifiers = attack_damage_modifiers(state, attacker, receiver)
     calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers)
@@ -282,11 +338,12 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
         total_damage=receiver.damage,
         **extra,
     )
+    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)
 
 
-def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> None:
-    """ワザで、相手の対戦ポケモンに、基本となるダメージ ``base`` から p.321 の順番で計算したダメージを与える。"""
-    deal_attack_damage(state, use, OPPONENT_ACTIVE, base)
+def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> DamageResult:
+    """ワザで、相手の対戦ポケモンに、基本となるダメージ ``base`` から p.321 の順番で計算したダメージを与える（v0.4d から結果を返す）。"""
+    return deal_attack_damage(state, use, OPPONENT_ACTIVE, base)
 
 
 @dataclass(frozen=True)
@@ -547,6 +604,212 @@ class PreventDamageOnHeads(AttackEffect):
                 active_turn=state.turn_number + 1,  # 次の相手の番（番は先攻から 1 つずつ交互に進む。不変条件で確かめている）
             )
             add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
+
+
+# 「ふきとばし」で入れ替えなかった理由（ログ forced_switch_skipped の reason。v0.4d）
+TARGET_KNOCKED_OUT = "knocked_out"  # 相手の対戦ポケモンがこのワザのダメージできぜつする（効果の対象がいない。p.309・p.213）
+NO_BENCH = "no_bench"  # 相手に控えポケモンがいない（最新の説明「相手に控えがいないとき、入れ替えはおこらない」）
+
+
+def _check_damage_then_effect(attack: Attack, what: str) -> list[str]:
+    """ダメージの目安の数字ぶんのダメージのあとに効果のあるワザの、データの形の確認（v0.4d）。"""
+    problems = []
+    if attack.damage_modifier is not None:
+        problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+    if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+        problems.append("ダメージが 10 の倍数の正の数ではない")
+    if attack.text_ja is None:
+        problems.append(f"説明文のないワザを、{what}ワザとして登録している")
+    return problems
+
+
+@dataclass(frozen=True)
+class DamageAndForceSwitch(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと、相手の対戦ポケモンをベンチにもどし、相手が選んだ
+    控えポケモンと入れ替える（v0.4d。バタフリーの「ふきとばし」。p.19 の最新の説明「相手を控えポケモンと入れ替える。入れ替わる
+    ポケモンは、相手が選ぶ。（相手に控えがいないとき、入れ替えはおこらない）」。docs/forced-switch-v0.4d.md）。
+
+    - ダメージの目安に「×」「+」「−」がないので、説明の最初の「相手の対戦ポケモンに 20 ダメージ。」が省略されている（p.320）。
+      ダメージと効果の両方があるので、ダメージの処理をしてから入れ替える（p.309 の手順 6「まず、ダメージの処理をおこない、次に
+      「それ以外の効果」を処理してください」。p.89 の解説「「ふきとばし」のダメージを受けたタイミングでは、まだバトル場にいる」）。
+    - 効果の対象は相手の対戦ポケモンで、効果はそれをベンチにもどすこと（p.213 のワザ解説「このワザの効果は、相手の対戦ポケモン
+      が対象であり、相手の対戦ポケモンをベンチにもどすというものです。入れ替えることが効果ではありません」。p.159 も
+      「「ふきとばし」は、相手の対戦ポケモンへの効果です」）。もどしたあと、相手が控えポケモンから 1 匹を選んでバトル場に
+      出す（p.213「相手プレイヤーは、ベンチの控えポケモンから1匹を選んでバトル場に出す」。p.19 の解説「入れ替える相手のポケモン
+      は自分で選べないからです」）。選ぶのは相手なので、決定
+      （``FORCED_SWITCH``）の ``player`` は相手。番のプレイヤーはワザを使ったプレイヤーのまま。選べるものは相手のベンチの
+      ポケモンの番号（もどしたポケモンは選べない）。控えが 1 匹でも決定を出す（実装上の仮定。結果は同じで、きぜつのあとの
+      交代（``PROMOTE_ACTIVE``）と同じ形）。
+    - 相手に控えポケモンがいなければ、入れ替えはおこらない（最新の説明）。決定を出さず、ダメージだけでワザを終える。
+      トレーナーの「ポケモンいれかえ」の ``UNRESOLVED_SWITCH_WITHOUT_BENCH``（使えるかが決められない）とは別の規定。
+    - 相手の対戦ポケモンが、このワザのダメージで HP 以上のダメージを受けたら、きぜつする（p.323）。効果の対象（相手の対戦
+      ポケモン）がいなくなったので、入れ替える内容は無視する（p.309「処理の対象がなくなってしまっている場合、その内容は無視
+      して」。p.89「そのダメージできぜつしなければ「スターブーメラン」の効果で手札にもどる」。SUPPORTED。``PoisonOnHeads`` と
+      同じ扱い）。決定は出さず、ワザのあとのきぜつ・サイド・交代（相手がバトル場に出すポケモンを選ぶ）はエンジンが行う。
+      入れ替えてからきぜつさせる読み方でも、相手が控えから選んだポケモンがバトル場に出て、きぜつしたポケモンをトラッシュし、
+      サイドを 1 枚取る結果は同じ（docs/forced-switch-v0.4d.md 4 章）。
+    - 「ダメージを受けない」状態（v0.4b）の相手なら、ダメージの要素は無効だが、入れ替えは「ダメージ以外の効果」なので有効
+      （p.321。「かたまる」の最新の説明「（ダメージ以外の効果は受ける）」）。最終ダメージが 0 でも入れ替える（入れ替えはダメージを
+      与えたことを条件にしていない）。
+    - 入れ替えは「にげる」ではない（p.325）。にげるエネルギーを払わず、こんらんのコインを投げず、「にげる」の失敗の記録も
+      付けない。ねむり・マヒ状態のポケモンも入れ替える（p.325「「にげる」がおこなえない状態のポケモンでも、「そのポケモンを
+      入れ替える」と指示されたときは、入れ替えをおこないます」）。
+    - ベンチにもどったポケモンの特殊状態（p.311・p.322）とワザによる持続する効果（p.311・p.322・p.89）は消える（理由
+      ``FORCED_SWITCH``）。ダメージ・エネルギー・ついているトレーナー（有効期限も）・進化の重なり・場のポケモンの番号・場に出た番・
+      進化した番は変わらない（p.311「ついているカード・ダメージカウンターは、いっしょに移動する」）。こんらんで「にげる」に失敗
+      した記録（``retreat_failed_turn``）は、ワザを使った番には相手のポケモンにない（記録は番のプレイヤーのポケモンにだけ付き、
+      番の終わりに消える。不変条件で確かめている）ので、ここでは扱わない。
+    - ログ: 入れ替えたら ``forced_switch``（``player``（入れ替えられたプレイヤー）・``attacker``（ワザを使ったプレイヤー）・
+      ``attacker_pokemon_id``・``effect``（ワザの ``AttackKey``）・``old_active``・``new_active``・``old_active_pokemon_id``・
+      ``new_active_pokemon_id``）。入れ替えなかったら ``forced_switch_skipped``（``player``・``attacker``・``attacker_pokemon_id``・
+      ``effect``・``pokemon``・``pokemon_id``・``reason``（``TARGET_KNOCKED_OUT``・``NO_BENCH``））。トレーナーの ``switch`` の
+      ログの形は変えない。
+    """
+
+    implementation_id = "damage_and_force_switch"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "相手を控えポケモンと入れ替える")
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        result = damage_opponent_active(state, use, attack.damage)
+        opponent = 1 - use.player
+        p = state.players[opponent]
+        target = p.active
+        if result.knocked_out:
+            # 相手の対戦ポケモンはきぜつした。ベンチにもどす内容は対象がいないので無視する（p.309・p.323・p.213・p.89）
+            self._skip(state, use, target, TARGET_KNOCKED_OUT)
+            return
+        if not p.bench:
+            self._skip(state, use, target, NO_BENCH)  # 「相手に控えがいないとき、入れ替えはおこらない」（最新の説明）
+            return
+        push_attack_decision(
+            state,
+            use,
+            kind=FORCED_SWITCH,
+            player=opponent,
+            options=[pokemon.pokemon_id for pokemon in p.bench],
+            context=(("target", target.pokemon_id),),
+        )
+
+    def resume(self, state: GameState, use: AttackUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - use.player
+        p = state.players[opponent]
+        old = p.active
+        if old is None or old.pokemon_id != decision.context_value("target"):
+            raise RuntimeError(f"「ふきとばし」の対象 {decision.context_value('target')} が相手のバトル場にいない（エンジンの不具合）")
+        index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
+        # 場のポケモンごと入れ替えるので、ダメージ・エネルギー・ついているカード・重なり・番号はいっしょに移る（p.311）
+        p.active, p.bench[index] = p.bench[index], old
+        state.add_event(
+            "forced_switch",
+            player=opponent,
+            attacker=use.player,
+            attacker_pokemon_id=use.pokemon_id,
+            effect=str(use.key),
+            old_active=old.card,
+            new_active=p.active.card,
+            old_active_pokemon_id=old.pokemon_id,
+            new_active_pokemon_id=p.active.pokemon_id,
+        )
+        # ベンチにもどったポケモンの特殊状態と、ワザによる持続する効果は消える（p.311・p.322。別々の処理）
+        clear_special_conditions(state, opponent, old, FORCED_SWITCH_REASON)
+        remove_persistent_effects(state, opponent, old, FORCED_SWITCH_REASON)
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        """「ふきとばし」の決定を待っている状態の確認: 種類は ``FORCED_SWITCH``、決定するのは相手（ワザを使ったプレイヤーではない）、
+        1 匹だけ選ぶ、対象（``context`` の ``"target"``）が相手のバトル場のポケモン、選べるものが相手のベンチのポケモンの番号と同じ。"""
+        opponent = 1 - use.player
+        p = state.players[opponent]
+        problems = []
+        if decision.kind != FORCED_SWITCH:
+            problems.append(f"「ふきとばし」の決定の種類が {decision.kind!r}（{FORCED_SWITCH} のはず）")
+        if decision.player != opponent:
+            problems.append(f"「ふきとばし」で入れ替わるポケモンを選ぶのが、相手 {opponent} ではなくプレイヤー {decision.player}")
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"「ふきとばし」で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 匹のはず）")
+        if p.active is None or p.active.pokemon_id != decision.context_value("target"):
+            problems.append(f"「ふきとばし」の対象 {decision.context_value('target')!r} が、相手のバトル場のポケモンではない")
+        if not p.bench or decision.options != tuple(pokemon.pokemon_id for pokemon in p.bench):
+            problems.append(f"「ふきとばし」の決定の選べるもの {decision.options} が、相手のベンチのポケモンと合わない")
+        return problems
+
+    @staticmethod
+    def _skip(state: GameState, use: AttackUse, target: PokemonInPlay, reason: str) -> None:
+        state.add_event(
+            "forced_switch_skipped",
+            player=1 - use.player,
+            attacker=use.player,
+            attacker_pokemon_id=use.pokemon_id,
+            effect=str(use.key),
+            pokemon=target.card,
+            pokemon_id=target.pokemon_id,
+            reason=reason,
+        )
+
+
+@dataclass(frozen=True)
+class DamageAndDrain(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手にダメージを与えたら、与えたダメージの半分（ダメージカウンターの
+    単位で切り上げ）のダメージカウンターを、ワザを使ったポケモン自身からとりのぞく（v0.4d。バタフリーの「メガドレイン」。p.19 の
+    最新の説明「相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを、自分からとりのぞく。」。
+    docs/damage-drain-v0.4d.md）。
+
+    - ダメージの要素は ``damage_opponent_active``（p.321 の順番。弱点・抵抗力・プラスパワー・ディフェンダーを計算する）。
+    - 「与えたダメージ」は最終ダメージ（``DamageResult.dealt``）。相手の残りの HP で上限を付けない（p.319「HPが30のポケモンに
+      対して50ダメージを与えるワザを使ったとき、「与えたダメージ」はあくまでも50です」）。相手がきぜつしても回復する（回復の
+      対象は自分で、いなくなっていない。p.309。SUPPORTED）。
+    - 最終ダメージが 0 以下なら「ダメージを与えなかった」（p.319）ので、「相手にダメージを与えたら」を満たさず、回復しない
+      （CONFIRMED）。相手が「ダメージを受けない」状態（v0.4b）でダメージの要素が無効なら、ダメージを与えていないので回復しない
+      （p.321・p.319。SUPPORTED。ダメージ以外の効果は有効という規定（p.321）は、この回復の条件を満たすことにはならない）。
+      どちらもログ ``drain_heal`` を残さない（ダメージの要素のログ ``damage``（``amount`` 0）・``damage_prevented`` が理由を示す）。
+    - 回復するダメージカウンターの数は、与えたダメージの半分を、ダメージカウンター 1 個 = 10 ダメージ（p.319）の単位で切り上げ
+      たもの（与えたダメージのカウンターの数 n の半分の切り上げ ``(n + 1) // 2`` と同じ。40 → 2 個、30 → 2 個、10 → 1 個）。
+    - とりのぞけるのは、ワザを使ったポケモン（場のポケモンの番号 ``AttackUse.pokemon_id``。進化していれば重なりのいちばん上の
+      カードが表すポケモン。p.19 の解説「この「バタフリー」自身からとりのぞける」）にのっているダメージカウンターだけ。のっている数より多くはとりのぞかない（p.320「ポケモンからすべての
+      ダメージカウンターを取りのぞいてしまったら、もうそれ以上の回復はできません」）。のっていなければ 0 個（ログは残す）。
+    - 回復はワザの要素の 1 つで、きぜつの判定はワザのあと（``engine._finish_attack``）。乱数は使わない。
+    - ログ ``drain_heal``（``player``・``pokemon``・``pokemon_id``・``effect``（ワザ）・``dealt``（回復の計算のもとにした与えた
+      ダメージ）・``drain_counters``（半分の切り上げ）・``counters``（実際にとりのぞいた数）・``amount``（とりのぞいたダメージ）・
+      ``damage_before``・``total_damage``（とりのぞいたあと））。トレーナーの「きずぐすり」のログ ``remove_damage_counters`` の
+      形は変えない。
+    - こんらん状態のバタフリーがワザを使い、こんらんのコインが「うら」なら、エンジンがこのワザの処理を呼ばない（ダメージも回復も
+      ない。p.309 の手順 5）。
+    """
+
+    implementation_id = "damage_and_drain"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "与えたダメージの半分を回復する")
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        result = damage_opponent_active(state, use, attack.damage)
+        if result.dealt <= 0:
+            return  # ダメージを与えなかった（防いだ・最終ダメージ 0）。回復の条件「相手にダメージを与えたら」を満たさない
+        per_counter = state.rules.damage_per_counter
+        if result.dealt % per_counter:
+            raise RuntimeError(f"与えたダメージ {result.dealt} がダメージカウンターの単位 {per_counter} の倍数ではない（エンジンの不具合）")
+        drain_counters = (result.dealt // per_counter + 1) // 2  # 与えたダメージの半分（カウンターの単位で切り上げ）
+        before = attacker.damage
+        removed = min(drain_counters, before // per_counter)
+        attacker.damage = before - removed * per_counter
+        state.add_event(
+            "drain_heal",
+            player=use.player,
+            pokemon=attacker.card,
+            pokemon_id=attacker.pokemon_id,
+            effect=str(use.key),
+            dealt=result.dealt,
+            drain_counters=drain_counters,
+            counters=removed,
+            amount=removed * per_counter,
+            damage_before=before,
+            total_damage=attacker.damage,
+        )
 
 
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
@@ -990,15 +1253,15 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし、
 # v0.3c のあやしいひかり、v0.4a のパラセクトのキノコのほうし・ジュゴンのれいとうビーム、v0.4b のトランセル・コクーンの
-# かたまる・しびれごな・どくのこな、v0.4c のスピアーのダブルニードル・どくばり）は、カードのページと照合した最新の説明・
-# 出典とともに登録する。
+# かたまる・しびれごな・どくのこな、v0.4c のスピアーのダブルニードル・どくばり、v0.4d のバタフリーのふきとばし・メガドレイン）は、
+# カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.4c",
+    "kyuura-engine-0.4d",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -1135,6 +1398,27 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
             play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
             source="P43 p.21",
+        ),
+        # バタフリー（v0.4d。トランセルから進化する 2 進化ポケモン）p.19。ふきとばし: 相手に 20（目安の数字）、相手の対戦ポケモンを
+        # ベンチにもどし、相手が選んだ控えポケモンと入れ替える（控えがいなければ入れ替えない）。印刷の説明（kyuura の写し）と最新の
+        # 説明は書き方が違う（「控えポケモンは相手プレイヤーがえらぶ」／「入れ替わるポケモンは、相手が選ぶ」）。処理は最新の説明と
+        # p.213 のワザ解説にしたがう（docs/butterfree-v0.4d.md・docs/forced-switch-v0.4d.md）
+        AttackKey("PMCG2-007", 0): AttackEntry(
+            DamageAndForceSwitch(),
+            "ふきとばし",
+            text_ja="相手を控えポケモンと入れ替える。控えポケモンは相手プレイヤーがえらぶ。相手プレイヤーに控えポケモンがいないときには入れ替えはおこらない。",
+            play_text_ja="相手を控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。（相手に控えがいないとき、入れ替えはおこらない）",
+            source="P43 p.19",
+        ),
+        # バタフリー p.19。メガドレイン: 相手に 40（目安の数字）、ダメージを与えたら、その半分（切り上げ）のダメージカウンターを自分から
+        # とりのぞく。印刷の説明は「相手に与えたダメージの半分（切り上げ）の…」、最新の説明は「相手にダメージを与えたら、その半分…」
+        # （与えなかったときに回復しないことがはっきり書かれている。docs/damage-drain-v0.4d.md）
+        AttackKey("PMCG2-007", 1): AttackEntry(
+            DamageAndDrain(),
+            "メガドレイン",
+            text_ja="相手に与えたダメージの半分(切り上げ)のダメージカウンターを自分からとりのぞく。",
+            play_text_ja="相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを、自分からとりのぞく。",
+            source="P43 p.19",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

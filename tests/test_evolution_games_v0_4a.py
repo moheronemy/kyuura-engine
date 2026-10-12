@@ -238,7 +238,7 @@ class GoldenEvolutionGameTest(unittest.TestCase):
         counted = count_events(state)
         self.assertGreater(counted["evolve"], 0)
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.4c")  # v0.4b・v0.4c で登録表の id だけ変わった（結果は同じ）
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.4d")  # v0.4b・v0.4c・v0.4d で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

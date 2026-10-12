@@ -838,8 +838,10 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
         _confusion_damage(state, cmd.player, attacker, effect=str(use.key))
         _finish_attack(state)
         return
-    # ワザの説明にしたがって処理する（p.309 の手順 6）。実装は DamageOnly・CoinFlipDamage（v0.2d）。
-    # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける
+    # ワザの説明にしたがって処理する（p.309 の手順 6）。実装は効果の登録表の AttackEffect。
+    # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける（v0.4d の「ふきとばし」は
+    # 相手が決定する。番のプレイヤーは変えない。決定を待つ間は Phase.DECISION なので、ほかのコマンドは _require_turn で拒否する。
+    # p.309「ワザを使っている最中に、他のことをしてはいけません」）
     effect.resolve(state, use)
     if state.decision is None:
         _finish_attack(state)
@@ -1080,7 +1082,13 @@ def _resume_promote_active(state: GameState, decision, choices: tuple[int, ...])
 
 
 def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None:
-    """ワザの効果の途中で出した決定の続き。決定がなくなったら、ワザの後の処理に進む。"""
+    """ワザの効果の途中で出した決定の続き。決定がなくなったら、ワザの後の処理に進む。
+
+    ワザの宣言・エネルギーの確認・こんらんのコイン・それまでの要素（ダメージなど）は、決定を出す前に済んでいるので、ここでは
+    繰り返さない（実装の ``resume`` が決定のあとの要素だけを処理する）。決定は ``_resolve`` が閉じてから呼ぶので、同じ決定で
+    二度は来ない。決定をしたのが相手（v0.4d の ``FORCED_SWITCH``）でも、ワザのあとの処理（きぜつ・サイド・交代・番の終わり）は
+    番のプレイヤーのワザのあととして ``_finish_attack`` が 1 回だけ行う。
+    """
     player, pokemon_id, card_id, attack_index = decision.context_value("use")
     use = AttackUse(player, pokemon_id, AttackKey(card_id, attack_index))
     entry = state.effects.attack_entry(card_id, attack_index)
@@ -1579,7 +1587,7 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
       消しているはず。はたらく番の終わり（ログ ``turn_end``）のあとにも残らない）
     - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）
     - ログとの対応: 同じポケモン・種類・番の ``persistent_effect_added`` があり、そのあとに、この効果を消したはずの
-      イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``）がない
+      イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``・``forced_switch``（v0.4d））がない
     """
     effects = pokemon.persistent_effects
     where = f"ポケモン {pokemon.pokemon_id} の持続する効果"
@@ -1637,7 +1645,7 @@ def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, ef
         if kind == "evolve" and event.get("pokemon_id") == pokemon.pokemon_id:
             return [f"{where} {effect!r} が、進化（ログ evolve）の前の効果のまま残っている（p.310・p.323）"]
         if (kind == "retreat" and event.get("old_active") == pokemon.card) or (
-            kind == "switch" and event.get("old_active_pokemon_id") == pokemon.pokemon_id
+            kind in ("switch", "forced_switch") and event.get("old_active_pokemon_id") == pokemon.pokemon_id  # forced_switch は v0.4d
         ):
             return [f"{where} {effect!r} が、ベンチに戻った（ログ {kind}）あとにも残っている（p.311・p.322）"]
     return [f"{where} {effect!r} に対応するログ persistent_effect_added がない"]
@@ -1779,11 +1787,7 @@ def _decision_problems(state: GameState) -> list[str]:
         if d.options != tuple(pokemon.pokemon_id for pokemon in state.players[d.player].bench):
             problems.append(f"バトル場に出す決定の選べるもの {d.options} が、ベンチのポケモンと合わない")
     if d.resume == "attack":
-        use = d.context_value("use")
-        if not (isinstance(use, tuple) and len(use) == 4 and state.find_pokemon(use[1]) is not None):
-            problems.append(f"ワザの決定の続きの情報 {use!r} が正しくない")
-        elif state.effects.attack_entry(use[2], use[3]) is None:
-            problems.append(f"ワザの決定の続きのワザ {use[2]}#{use[3]} が効果の登録表にない")
+        problems.extend(_attack_decision_problems(state, d))
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
     if unresolved:
@@ -1792,6 +1796,36 @@ def _decision_problems(state: GameState) -> list[str]:
         if len(set(d.options) - set(unresolved)) < max(d.min_choices, 1):
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
     return problems
+
+
+def _attack_decision_problems(state: GameState, d) -> list[str]:
+    """ワザの効果の途中の決定（``resume`` が ``"attack"``。v0.2a。v0.4d で強めた）の整合性。
+
+    どのワザの決定にも共通: 続きの情報（``context`` の ``"use"`` = (プレイヤー, 場のポケモンの番号, カード id, ワザの位置)）が
+    あり、ワザが効果の登録表にある。ワザを使ったプレイヤーは番のプレイヤー（相手が決定していても番は変わらない。v0.4d）で、
+    ワザを使ったポケモンはそのプレイヤーのバトル場にいて、いちばん上のカードが続きの情報のカード id。今の番に、そのポケモンの
+    そのワザのログ ``attack`` がちょうど 1 回ある（ワザは 1 番に 1 回。決定はワザの途中なので、番の終わりのログはまだない）。
+    そのあとで、効果ごとの形（決定するプレイヤー・種類・選べるもの）を、ワザの実装の ``decision_problems`` で確かめる。
+    """
+    use = d.context_value("use")
+    if not (isinstance(use, tuple) and len(use) == 4 and state.find_pokemon(use[1]) is not None):
+        return [f"ワザの決定の続きの情報 {use!r} が正しくない"]
+    player, pokemon_id, card_id, attack_index = use
+    entry = state.effects.attack_entry(card_id, attack_index)
+    if entry is None:
+        return [f"ワザの決定の続きのワザ {card_id}#{attack_index} が効果の登録表にない"]
+    owner, attacker = state.find_pokemon(pokemon_id)
+    if player != state.current_player or owner != player or state.players[player].active is not attacker:
+        return [f"ワザの決定の続きの情報 {use!r} が、番のプレイヤー {state.current_player!r} のバトル場のポケモンのワザではない"]
+    if attacker.card not in state.cards or state.cards[attacker.card].card_id != card_id:
+        return [f"ワザの決定の続きのカード id {card_id} が、ワザを使ったポケモン {pokemon_id} のカード {attacker.card} と違う"]
+    attacks = [
+        event for event in _events_since_turn_start(state)
+        if event["kind"] == "attack" and event.get("player") == player
+    ]
+    if len(attacks) != 1 or attacks[0].get("pokemon") != attacker.card or attacks[0].get("attack_index") != attack_index:
+        return [f"ワザの決定の続き {use!r} に対応する、今の番のワザのログ attack がない（{len(attacks)} 回）"]
+    return entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
 
 
 def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonInPlay, place) -> list[str]:
