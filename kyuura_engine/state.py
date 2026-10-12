@@ -53,6 +53,24 @@ class CardInstance:
     owner: int
 
 
+@dataclass(frozen=True)
+class AttachedTrainer:
+    """ポケモンについているトレーナーカード（v0.2c。プラスパワーなど「つけて使う」トレーナー）。
+
+    ポケモンにつけて使うトレーナーカードは、それをつけているポケモンのいる場所にあることになる
+    （p.313）。そのため、ついているポケモン（``PokemonInPlay.trainers``）が持つ。にげる・入れ替えでは
+    ポケモンといっしょに移り（p.311）、きぜつしたらポケモンといっしょにトラッシュする（p.323）。
+
+    - ``card``: トレーナーカードの uid（効果の発生源。効果の内容はカード id で効果の登録表から引く）
+    - ``player``: 使ったプレイヤー（カードの持ち主）
+    - ``discard_at_end_of_turn``: この番（``GameState.turn_number``）の終わりにトラッシュする（有効期限）
+    """
+
+    card: int
+    player: int
+    discard_at_end_of_turn: int
+
+
 @dataclass
 class PokemonInPlay:
     """場にいるポケモン。v0.1 は進化がないので、ポケモンのカード 1 枚とついているエネルギーカード。
@@ -70,9 +88,10 @@ class PokemonInPlay:
     energy: list[int] = field(default_factory=list)
     damage: int = 0
     pokemon_id: int = 0
+    trainers: list[AttachedTrainer] = field(default_factory=list)  # ついているトレーナーカード（v0.2c）
 
     def clone(self) -> PokemonInPlay:
-        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id)
+        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers))
 
 
 @dataclass

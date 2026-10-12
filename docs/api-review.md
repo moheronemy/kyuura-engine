@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1・v0.2a・v0.2b）
+# 公開 API のレビュー（v0.1〜v0.2c）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a のアーキテクチャ](architecture-v0.2a.md) と [v0.2b のアーキテクチャ](architecture-v0.2b.md) にあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -12,13 +12,14 @@ if state.decision is not None:                        # 決定を待っている
     state = apply_command(state, ResolveDecision(d.player, d.id, (d.options[0],)))
 data = state_to_dict(state)                           # JSON にできる辞書（形式 1。隠れた情報も含む）
 data2 = state_to_dict(state, format_version=2)        # 形式 2（場のポケモンの番号・決定などを加えた）
-data3 = state_to_dict(state, format_version=3)        # 形式 3（使用中のトレーナーを加えた。v0.2b。トレーナーのある対戦ではこれ）
+data3 = state_to_dict(state, format_version=3)        # 形式 3（使用中のトレーナーを加えた。v0.2b）
+data4 = state_to_dict(state, format_version=4)        # 形式 4（ついているトレーナーを加えた。v0.2c。トレーナーのある対戦ではこれ）
 command = command_from_dict({"type": "end_turn", "player": 0})
 ```
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a・v0.2b で加えた公開 API
+## 2. v0.2a・v0.2b・v0.2c で加えた公開 API
 
 ### v0.2a
 
@@ -51,6 +52,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `RuleSet.damage_per_counter` | ダメージカウンター 1 個のダメージ（10。p.319） |
 | `kyuura_engine.zones.draw_cards` | 山札から引く（内部。エンジンと効果の実装で共通） |
 | エラーコード | `NOT_TRAINER`、`UNSUPPORTED_TRAINER`、`UNRESOLVED_POTION_WITHOUT_DAMAGE`、`UNRESOLVED_POTION_UNDAMAGED_TARGET`、`UNRESOLVED_SWITCH_WITHOUT_BENCH`（6 章） |
+
+### v0.2c
+
+| もの | 内容 |
+|---|---|
+| `AttachedTrainer`・`PokemonInPlay.trainers` | ポケモンについているトレーナーカード（カードの uid・使ったプレイヤー・`discard_at_end_of_turn`） |
+| `state_to_dict(state, format_version=4)` | 形式 4（場のポケモンごとの `trainers`）。形式 1〜3 は、ついているトレーナーがあると `ValueError` |
+| `damage.DamageModifier`・`calculate_attack_damage(..., modifiers=())`・`DAMAGE_STEP_CHOOSER` | ダメージ計算の 2・5〜8 段階の加算の変更効果（既存の呼び方はそのまま使える） |
+| `TrainerEffect.stays_in_play`・`TrainerEffect.damage_modifiers`・`AttachedAttackBonus`・`effects.attack_damage_modifiers` | 場に残るトレーナーの実装を加える人向け |
+| `zones.attach_trainer` | 使用中のトレーナーを場のポケモンにつける（効果の実装向け。内部） |
+| ログ | `attach_trainer`・`discard_attached_trainer`、`damage` の `modifiers`・`knock_out` の `discarded_trainers`（あるときだけ） |
+
+コマンドは増やしていません（プラスパワーも `PlayTrainer` で使う）。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -113,6 +127,16 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - `EffectRegistry(...)` の第 3 引数（`trainers`、省略可）が加わった
 - 新しいクライアントへの推奨: 状態の辞書は形式 3 を使う。決定の `options` から選ぶときは `context` の `unresolved_choices` を除く。
 
+### v0.2b → v0.2c
+
+- 対戦の結果（v0.1 の参照データ）・固定値・既存のコマンドとログは変わりません。ついているトレーナーがない対戦では、新しいイベント・項目は出ません。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.2c` になり、トレーナーの登録にプラスパワーが加わった
+  - 写しの対戦用のカードの組に、プラスパワー（`pool_v0_2c`）が加わった
+  - 形式 1〜3 は、ついているトレーナーがある状態を書き出さない（`ValueError`）
+  - `PokemonInPlay` に `trainers`、`DamageCalculation` に `modifiers` が加わった（どちらも既定値あり）
+- 新しいクライアントへの推奨: 状態の辞書は形式 4 を使う。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -168,6 +192,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 `state.log` の各要素は読み取り専用の辞書で、`kind` と `turn`（その時点の番数）を持ちます。v0.2a で、製品の処理が出すイベントは変わっていません（決定そのものはログに残さない）。v0.2b でトレーナーのイベントを加えました（既存のイベントの形は変えていない）。ログは内部の完全な記録で、隠れた情報（`draw` の `cards` など）を含みます。見る人ごとのログはありません（[v0.2b のアーキテクチャ 9 章](architecture-v0.2b.md#9-非公開の情報とログ)）。
 
 `game_created`, `shuffle`, `draw`, `mulligan`（見せた手札）, `halted`, `place_starting_pokemon`, `set_prizes`, `mulligan_draw`, `janken`, `reveal_pokemon`, `turn_start`, `deck_out`, `play_to_bench`, `attach_energy`, `retreat`, `attack`, `damage`（計算の段階を含む）, `knock_out`, `take_prize`, `promote_active`, `end_turn_without_attack`, `turn_end`, `pokemon_check`, `game_end`
+
+v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discard_at_end_of_turn`）, `discard_attached_trainer`（同じ項目と `reason`＝`end_of_turn`）。`damage` に `modifiers`（`(段階, カードの uid, 加えた数)`。変更効果があるときだけ）、`knock_out` に `discarded_trainers`（ついていたトレーナーがあるときだけ）
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

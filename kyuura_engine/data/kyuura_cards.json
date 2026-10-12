@@ -65,6 +65,9 @@
     "PMCG1-073",
     "PMCG1-074"
   ],
+  "pool_v0_2c": [
+    "PMCG1-081"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1172,6 +1175,61 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-093-masaki/"
+      }
+    },
+    {
+      "id": "PMCG1-081",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "プラスパワー",
+        "en": "PlusPower"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の対戦ポケモンの「ワザ」によって与えるダメージを「+10」できる。自分の対戦ポケモンにつけて使い、自分の番の終わりに、はがしてすてる。",
+          "en": "Attach PlusPower to your Active Pokémon. At the end of your turn, discard PlusPower. If this Pokémon's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "errata",
+          "summary": "プラスパワーの +10 がかかる範囲（日本の当初の扱いと、1998年の再録の文面、2000年のエラッタ）",
+          "ja": "日本の当初の扱いでは、ワザで相手の対戦ポケモンとベンチの控えポケモンにそれぞれダメージを与えるとき、それぞれのダメージに +10 できた [P1]。次の 3 つは分けて考える必要がある。(1) 変更の予告: 『ポケモンカード・ファンクラブ』Vol.4 p.27（1998年2月28日発行）は「公式ルールとしての発表はまだですが」として、+10 を対戦ポケモンへのダメージに限る変更を予告した [P1]。(2) 新しい文面の印刷: ポケモンジム第2弾「タマムシシティジム」（1998年7月25日 [P34]）の再録は「(控えポケモンへのダメージは、そのまま)」と印刷している [N3]。(3) 既存のカード（第1弾の版）にも新しい文面を使う公式の指定: 『ポケモンカードオフィシャルブック2000』（2000年2月29日発行）p.257 は、収録に「ポケモンカード第1弾」を挙げて「(控えポケモンへのダメージは、そのまま)」を含む「最新の説明」を載せ、p.6 で「わからない内容があれば、この記述にしたがってください」とする [P43]。本は「エラッタ」とは呼ばず、あいまいな表現の書き直しとしている。会報 Vol.4 からこの本までのあいだの告知は見つかっていない。旧裏 wiki [J1] と Bulbapedia [X52] は会報 Vol.4 でエラッタが告知されたとするが、誌面は予告。当初の版で自分自身へのダメージにも +10 されたか（Bulbapedia はされたとする）は未確認（2000年の扱いでは、本の解説が「自分自身へもダメージを与えるワザを使うときに「プラスパワー」をつけると、そのダメージもプラス10される」とする [P43]）。以前の版は、検索結果の要約から「自分のバトルポケモンが受けるダメージにも 10 加わった」とする資料があるとしていた [X1] が、旧裏 wiki の本文にこの記述はない。なぞのばしょの第1弾の文面は「自分の対戦ポケモンの『ワザ』によって与えるダメージを『+10』できる」[N1]（docs/rules/errata-history.md の ERR-PLUSPOWER）",
+          "en": "相手のバトルポケモンに与えるダメージだけを 10 増やす（日本のエラッタ後と同じ）",
+          "confidence": "確実",
+          "sources": [
+            "P1",
+            "N3",
+            "P34",
+            "J1",
+            "X52",
+            "X1",
+            "N1",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-081",
+        "pokemontcg": [
+          "base1-84"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-085-pluspower/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-085-pluspower/"
       }
     },
     {

@@ -57,6 +57,7 @@ VENUSAUR = "PMCG1-011"
 POTION = "PMCG1-071"  # きずぐすり
 SWITCH = "PMCG1-073"  # ポケモンいれかえ
 BILL = "PMCG1-074"  # マサキ
+PLUSPOWER = "PMCG1-081"  # プラスパワー（v0.2c で対応）
 SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
@@ -328,6 +329,8 @@ def trainer_command(state: GameState):
 def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
     """``scripted_command`` に、トレーナーを使う手順と、トレーナーの決定への答えを加えたもの（統合テスト用）。
 
+    プラスパワー（v0.2c）は、ワザを使う直前に、手札にあるだけつける。
+
     決定には、扱いを決められるもののうち、きずぐすりならダメージのいちばん多いポケモン、
     それ以外は最初のものを選ぶ。
     """
@@ -342,4 +345,12 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
         command = trainer_command(state)
         if command is not None:
             return command
+        scripted = scripted_command(state, janken_winner=janken_winner)
+        if isinstance(scripted, UseAttack):
+            # ワザを使う直前に、手札のプラスパワーをすべてつける（v0.2c。プラスパワーのないデッキでは何もしない）
+            p = state.players[state.current_player]
+            pluspower = next((u for u in p.hand if state.cards[u].card_id == PLUSPOWER), None)
+            if pluspower is not None:
+                return PlayTrainer(state.current_player, pluspower)
+        return scripted
     return scripted_command(state, janken_winner=janken_winner)

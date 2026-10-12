@@ -346,10 +346,37 @@ def _begin_turn(state: GameState, player: int) -> None:
 
 
 def _end_turn(state: GameState) -> None:
-    """番を終え、ポケモンチェックをして、相手の番にする（p.309）。"""
+    """番を終え、ポケモンチェックをして、相手の番にする（p.309）。
+
+    番の終わりに、この番の終わりにトラッシュすると決めたついているトレーナー（プラスパワーなど）を
+    トラッシュする（v0.2c）。ポケモンチェックはどちらの番でもない（p.323）ので、その前に行う。
+    勝敗が決まって対戦が終わったとき（``_finish``）は番の終わりが来ないので、ここは通らない。
+    """
+    _discard_expired_attachments(state)
     state.add_event("turn_end", player=state.current_player)
     _pokemon_check(state)
     _begin_turn(state, 1 - state.current_player)
+
+
+def _discard_expired_attachments(state: GameState) -> None:
+    """有効期限（``AttachedTrainer.discard_at_end_of_turn``）が今の番のついているトレーナーをトラッシュする。
+
+    番のプレイヤーの場（バトル場 → ベンチ）、相手の場の順。トラッシュにあるカードには順番がない（p.312）。
+    """
+    for owner in (state.current_player, 1 - state.current_player):
+        for pokemon in state.players[owner].in_play():
+            expired = [t for t in pokemon.trainers if t.discard_at_end_of_turn == state.turn_number]
+            for attached in expired:
+                pokemon.trainers.remove(attached)
+                state.players[attached.player].discard.append(attached.card)
+                state.add_event(
+                    "discard_attached_trainer",
+                    player=attached.player,
+                    card=attached.card,
+                    pokemon=pokemon.card,
+                    pokemon_id=pokemon.pokemon_id,
+                    reason="end_of_turn",
+                )
 
 
 def _pokemon_check(state: GameState) -> None:
@@ -478,7 +505,13 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
         p.bench.remove(pokemon)
     p.discard.append(pokemon.card)
     p.discard.extend(pokemon.energy)
-    state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy))
+    # ついていたトレーナーカードもいっしょにトラッシュする（「それについていたすべてのカード」p.323。v0.2c）
+    extra = {}
+    if pokemon.trainers:
+        for attached in pokemon.trainers:
+            state.players[attached.player].discard.append(attached.card)
+        extra["discarded_trainers"] = tuple(t.card for t in pokemon.trainers)
+    state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
 
 
 def _after_knockouts(state: GameState, prize_takers=()) -> None:
@@ -600,18 +633,26 @@ def _play_trainer(state: GameState, cmd: PlayTrainer) -> None:
     # 3・4. 使うための条件と、残りの説明にしたがう。決定を出したら、ここで止まり _resume_trainer から続ける
     effect.resolve(state, use)
     if state.decision is None:
-        _finish_trainer(state)
+        _finish_trainer(state, effect)
 
 
-def _finish_trainer(state: GameState) -> None:
-    """使ったトレーナーカードをトラッシュし（特に記述がないかぎり「使いすて」。p.310）、番の続きにもどる。
+def _finish_trainer(state: GameState, effect) -> None:
+    """トレーナーを使い終えて、番の続きにもどる。
 
-    v0.2b のトレーナーは、きぜつ・勝敗を起こさないので、使い終わったら自分の番（MAIN）にもどる。
+    - 使いすて（特に記述がないかぎり。p.310）: 使ったカードをトラッシュする。
+    - つけて使うトレーナー（``effect.stays_in_play``。v0.2c）: 説明にしたがってポケモンについたので、
+      トラッシュしない（``resolve`` が ``zones.attach_trainer`` で使用中から場に移した）。
+
+    今のトレーナーは、きぜつ・勝敗を起こさないので、使い終わったら自分の番（MAIN）にもどる。
     """
     used = state.trainer_in_use
-    state.trainer_in_use = None
-    state.players[used.player].discard.append(used.card)
-    state.add_event("discard_trainer", player=used.player, card=used.card)
+    if effect.stays_in_play:
+        if used is not None:
+            raise RuntimeError(f"つけて使うトレーナー {used.card} が、使い終わっても場についていない（エンジンの不具合）")
+    else:
+        state.trainer_in_use = None
+        state.players[used.player].discard.append(used.card)
+        state.add_event("discard_trainer", player=used.player, card=used.card)
     state.phase = Phase.MAIN
 
 
@@ -621,7 +662,7 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...]) -> Non
     entry = state.effects.trainer_entry(card_id)
     entry.effect.resume(state, TrainerUse(player, card, card_id), decision, choices)
     if state.decision is None:
-        _finish_trainer(state)
+        _finish_trainer(state, entry.effect)
 
 
 # ---------------------------------------------------------------- 保留中の決定に答える
@@ -764,6 +805,7 @@ def check_invariants(state: GameState) -> list[str]:
                 place(uid, player, "場（ついているエネルギー）")
                 if uid in state.cards and not state.card_def(uid).is_basic_energy:
                     problems.append(f"基本エネルギーでないカード {uid} がポケモンについている")
+            problems.extend(_attached_trainer_problems(state, player, pokemon, place))
             if pokemon.card not in state.cards:
                 continue
             definition = state.card_def(pokemon.card)
@@ -905,6 +947,32 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"扱いを決められない選択 {unresolved} が、選べるもの {d.options} にない")
         if len(set(d.options) - set(unresolved)) < max(d.min_choices, 1):
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
+    return problems
+
+
+def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonInPlay, place) -> list[str]:
+    """ポケモンについているトレーナーカード（v0.2c）。
+
+    ついているトレーナーは、そのポケモンのいる場所にある（p.313）ので、ポケモンの持ち主の場のカードとして
+    数える。効果の登録表に、場に残る実装（``stays_in_play``）が登録されたトレーナーだけがつく。
+    有効期限が過ぎたもの（番の終わりにトラッシュしていないもの）は残らない（終わった対戦は除く）。
+    """
+    problems: list[str] = []
+    for attached in pokemon.trainers:
+        place(attached.card, player, "場（ついているトレーナー）")
+        if attached.card not in state.cards:
+            continue
+        definition = state.card_def(attached.card)
+        if definition.category != "trainer":
+            problems.append(f"トレーナーカードでないカード {attached.card} がトレーナーとしてポケモンについている")
+            continue
+        if attached.player != player:
+            problems.append(f"ついているトレーナー {attached.card} の使ったプレイヤー {attached.player} が、ポケモンの持ち主 {player} と違う")
+        entry = state.effects.trainer_entry(definition.id)
+        if entry is None or not entry.effect.stays_in_play:
+            problems.append(f"ついているトレーナー {attached.card}（{definition.id}）に、場に残る実装が登録されていない")
+        if state.phase not in TERMINAL_PHASES and attached.discard_at_end_of_turn < state.turn_number:
+            problems.append(f"ついているトレーナー {attached.card} の有効期限（{attached.discard_at_end_of_turn} 番の終わり）が過ぎている")
     return problems
 
 

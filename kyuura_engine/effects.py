@@ -16,6 +16,9 @@
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
+- つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
+  docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
+  ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
 
 ポケモンパワー・特殊エネルギー・効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
 """
@@ -25,14 +28,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
-from .damage import calculate_attack_damage
+from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
-from .zones import draw_cards
+from .zones import attach_trainer, draw_cards
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition
-    from .state import GameState, PendingDecision
+    from .state import AttachedTrainer, GameState, PendingDecision, PokemonInPlay
 
 
 @dataclass(frozen=True, order=True)
@@ -105,8 +108,13 @@ class DamageOnly(AttackEffect):
         opponent = 1 - use.player
         defender = state.players[opponent].active
         defender_def = state.card_def(defender.card)
-        calc = calculate_attack_damage(attack.damage, attacker_def, defender_def, state.rules)
+        modifiers = attack_damage_modifiers(state, attacker, defender)
+        calc = calculate_attack_damage(attack.damage, attacker_def, defender_def, state.rules, modifiers)
         defender.damage += calc.final
+        extra = {}
+        if calc.modifiers:
+            # v0.2c: どのカードの効果を、どの段階で計算したか（変更効果がないときは v0.1 と同じ形）
+            extra["modifiers"] = tuple((m.step, m.source, m.amount) for m in calc.modifiers)
         state.add_event(
             "damage",
             player=opponent,
@@ -116,7 +124,22 @@ class DamageOnly(AttackEffect):
             weakness=calc.weakness_applied,
             resistance=calc.resistance_applied,
             total_damage=defender.damage,
+            **extra,
         )
+
+
+def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
+    """ワザで相手の対戦ポケモンにダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
+
+    ワザを使うポケモンについているカードは 5 段階、ワザを受けるポケモンについているカードは 7 段階（p.321）。
+    効果の内容は、ついているカードのカード id で効果の登録表から引く（エンジンはカードの種類を知らない）。
+    """
+    modifiers: list[DamageModifier] = []
+    for holder, role in ((attacker, "attacker"), (defender, "defender")):
+        for attached in holder.trainers:
+            entry = state.effects.trainer_entry(state.cards[attached.card].card_id)
+            modifiers.extend(entry.effect.damage_modifiers(state, attached, role))
+    return tuple(modifiers)
 
 
 DAMAGE_ONLY = DamageOnly()
@@ -156,9 +179,14 @@ class TrainerEffect:
     - ``resume``: 出した決定が選ばれたあとの続き。さらに決定を出してもよい（複数段階の選択）。
 
     手札から出す・相手に見せる・使い終わったらトラッシュする・番の続きにもどる、はエンジンが行う。
+
+    つけて使うトレーナー（v0.2c）は ``stays_in_play = True`` にし、``resolve`` でカードを場のポケモンに
+    つける（``zones.attach_trainer``）。使い終わってもトラッシュせず、ついている間 ``damage_modifiers`` で
+    ダメージ計算に効果を出す。トラッシュは、つけたときに決めた番の終わりに、エンジンが行う。
     """
 
     implementation_id = "abstract"
+    stays_in_play = False  # True: 使い終わったら場に残る（つけて使うトレーナー）。False: 使いすて（p.310）
 
     def check(self, definition: CardDefinition) -> list[str]:
         if definition.trainer_kinds:
@@ -173,6 +201,10 @@ class TrainerEffect:
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         raise NotImplementedError(f"{self.implementation_id} は決定を出さない")
+
+    def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
+        """ついているポケモンがワザを使う（``role="attacker"``）・受ける（``"defender"``）ときの変更効果。"""
+        return []
 
 
 @dataclass(frozen=True)
@@ -293,6 +325,35 @@ class SwitchWithBench(TrainerEffect):
             old_active_pokemon_id=old.pokemon_id,
             new_active_pokemon_id=p.active.pokemon_id,
         )
+
+
+@dataclass(frozen=True)
+class AttachedAttackBonus(TrainerEffect):
+    """自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュする。つけているポケモンのワザが
+    対戦ポケモンにダメージを与えるとき、そのダメージは ``+amount``（プラスパワー。p.257 の最新の説明）。
+
+    - つけるのは自分の対戦ポケモン（バトル場のポケモン）。選ぶものはないので決定は出さない。
+    - 効果はダメージ計算の 5 段階（弱点・抵抗力のあと。p.321）。計算の途中の 0・マイナスはそのまま続ける。
+      2 段階までで 0 以下なら計算を終える（ダメージを与えないワザには効果がない）。
+    - 有効期限は、使った番の終わり。カードはついているポケモンといっしょに移り（にげる・入れ替え。p.311）、
+      きぜつしたらいっしょにトラッシュする（p.323）。
+    - 控えポケモンへのダメージは変えない（最新の説明）。自分自身へのダメージ（p.257 の解説では +10 される）
+      を与えるワザはまだないので、``attack_damage_modifiers`` は相手の対戦ポケモンへのダメージにだけ使う。
+    """
+
+    amount: int
+    implementation_id = "attached_attack_bonus"
+    stays_in_play = True
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        active = state.players[use.player].active
+        attach_trainer(state, use.player, use.card, active, discard_at_end_of_turn=state.turn_number)
+
+    def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
+        if role != "attacker":
+            return []
+        name = state.card_def(attached.card).name_ja
+        return [DamageModifier(step=5, amount=self.amount, label=name, source=attached.card)]
 
 
 @dataclass(frozen=True)
@@ -432,9 +493,10 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
-# トレーナー（v0.2b）は p.254 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md）。
+# トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）は p.257 の画像で「最新の説明」を確かめた
+# （同じファイル。docs/trainers-v0.2b.md・docs/pluspower-v0.2c.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.2b",
+    "kyuura-engine-0.2c",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -474,6 +536,13 @@ DEFAULT_EFFECTS = EffectRegistry(
             "山札からカードを2枚引いて、手札に加える。",
             "山札からカードを2枚引いて、手札に加える。",
             "P43 p.254",
+        ),
+        "PMCG1-081": TrainerEntry(
+            AttachedAttackBonus(amount=10),
+            "プラスパワー",
+            "自分の対戦ポケモンの「ワザ」によって与えるダメージを「+10」できる。自分の対戦ポケモンにつけて使い、自分の番の終わりに、はがしてすてる。",
+            "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
+            "P43 p.257",
         ),
     },
 )

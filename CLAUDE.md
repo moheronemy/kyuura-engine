@@ -31,7 +31,9 @@
 - 場のポケモンは `pokemon_id`（場に出たときに付ける番号。進化しても同じ、場を離れたら無効、使い回さない）で指します。カードの uid はカードの番号で、場のポケモンの番号ではありません。v0.1 のコマンド（`PromoteActive` など）はカードの uid のまま受け付けます。
 - 状態の書き出しは `state_to_dict(state)` が v0.1 の形（`format_version` 1）、`state_to_dict(state, format_version=2)` が v0.2a の項目を加えた形です。既定の形を変えると固定値と互換性のテストが変わります。
 - tests/fixtures/v0_1_reference.json は v0.1 の結果の参照データです。互換性を確かめるためのものなので、scripts/make_compat_fixture.py で作り直さないでください（作り直すと v0.1 との比較ではなくなります）。v0.1 で未対応だった操作を対応にしたら、参照データは変えずに tests/test_compat_v0_1.py の `NOW_SUPPORTED` に加え、エラーコードが変わる件数と内訳を docs に書きます（v0.2b の `play_trainer`）。
-- トレーナーを使っている最中（決定を待つ間）のカードは `GameState.trainer_in_use` にあります（カードの保存則の対象）。この状態は形式 1・2 では書き出せないので、トレーナーのある対戦のテストは `state_to_dict(state, format_version=3)` で比べます。
+- トレーナーを使っている最中（決定を待つ間）のカードは `GameState.trainer_in_use` にあります（カードの保存則の対象）。この状態は形式 1・2 では書き出せないので、トレーナーのある対戦のテストは形式 3 以上で比べます。
+- ポケモンについて場に残るトレーナー（v0.2c。プラスパワーなど）は `PokemonInPlay.trainers`（`AttachedTrainer`）にあります。使用中（`trainer_in_use`）とは別の領域です。実装は `TrainerEffect.stays_in_play = True` にし、`zones.attach_trainer` でつけます。有効期限（`discard_at_end_of_turn`）の番の終わりにエンジンがトラッシュし、きぜつしたらポケモンといっしょにトラッシュします。勝敗が決まった番は番の終わりが来ないので、何もしません。形式 1〜3 は、ついているトレーナーを書き出せない（`ValueError`）ので、形式 4 で比べます。
+- ダメージを変えるカードの効果は、`damage.DamageModifier`（段階と加える数）で p.321 の段階に渡します。最終ダメージに直接足さないでください。加算でない効果を加えるときは、同じ段階の順番を決めるプレイヤー（`DAMAGE_STEP_CHOOSER`）に決定で選ばせます。
 - ログは内部の完全な記録です（引いたカードなどの隠れた情報を含む）。イベントを加えるときは、隠す情報を決まった項目にだけ入れます（docs/architecture-v0.2b.md 9 章）。
 
 ## 変更するとき

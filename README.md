@@ -4,7 +4,8 @@
 
 - v0.1: 最小の対戦（対戦準備・番の進行・効果のないワザ・きぜつ・勝敗）
 - v0.2a: v0.1 と同じルール・カード・対戦の結果のまま、カード効果を実装するための構造を整えた（効果の登録表、保留中の決定、場のポケモンの番号、乱数の状態の保存）。[docs/architecture-v0.2a.md](docs/architecture-v0.2a.md)
-- v0.2b（今の版）: トレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を、『オフィシャルブック2000』の「最新の説明」と照合して実装した。[docs/trainers-v0.2b.md](docs/trainers-v0.2b.md)（原典照合）、[docs/architecture-v0.2b.md](docs/architecture-v0.2b.md)（設計）
+- v0.2b: トレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を、『オフィシャルブック2000』の「最新の説明」と照合して実装した。[docs/trainers-v0.2b.md](docs/trainers-v0.2b.md)（原典照合）、[docs/architecture-v0.2b.md](docs/architecture-v0.2b.md)（設計）
+- v0.2c（今の版）: プラスパワーを実装し、ポケモンについて場に残るトレーナー・有効期限（番の終わり）・ダメージ計算の段階（p.321 の 5 段階）への効果の適用を加えた。[docs/pluspower-v0.2c.md](docs/pluspower-v0.2c.md)（原典照合）、[docs/architecture-v0.2c.md](docs/architecture-v0.2c.md)（設計）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -84,7 +85,7 @@ print(state_to_dict(state)["phase"], state.turn_number)
 - 状態は `copy.deepcopy`・`pickle` できます。状態どうしを比べるときは `==` ではなく `state_to_dict` の結果を比べてください。
 - 対戦が終わったかどうかは `state.phase` で判断します（`game_over`・`sudden_death`・`halted`）。`halted` のときは `state.result` が `None` です。
 - ジャンケンの結果は外から渡します（エンジンは決めません）。
-- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが加わります（トレーナーのある対戦では形式 3 を使う。形式 1・2 は、トレーナーの決定を待っている状態を書き出せない）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
+- `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が加わります（トレーナーのある対戦では形式 4 を使う。古い形式は、表せないカードがある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
 - 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。
 
 ### トレーナーカードを使う（v0.2b）
@@ -119,6 +120,33 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 - トレーナーは自分の番（`main`）に、1 番に何枚でも使えます。使ったカードはトラッシュします（p.310）。
 - 対象を選ぶトレーナーは決定を出します。決定を待っている間（`decision` の段階）は、決定に答える `ResolveDecision` しか受け付けません（別のトレーナーも使えない）。
 - マサキは山札が足りなければ引けるだけ引きます（負けにはならない。p.312）。きずぐすりは選んだ 1 匹のダメージカウンターを 2 個（1 個なら 1 個）とりのぞきます。ポケモンいれかえは、にげるエネルギーを払わずに入れ替えます。
+- プラスパワー（v0.2c）は、`PlayTrainer` で使うと自分の対戦ポケモンにつきます（`state.players[p].active.trainers`）。そのポケモンのワザのダメージは、ダメージ計算の 5 段階（弱点・抵抗力のあと）で +10 されます（p.321）。使った番の終わりにトラッシュします。にげる・入れ替えではポケモンといっしょに移ります。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, PlaceStartingPokemon, PlayTrainer, ReportJankenResult, UseAttack,
+    apply_command, expand_decklist, new_game,
+)
+
+deck0 = expand_decklist({"PMCG1-018": 4, "PMCG1-016": 4, "PMCG1-060": 4, "PMCG1-065": 4, "PMCG1-037": 4,
+                         "PMCG1-081": 4, "PMCG1-098": 36})   # プラスパワー（PMCG1-081）4 枚
+deck1 = expand_decklist({"PMCG1-025": 4, "PMCG1-029": 4, "PMCG1-052": 4, "PMCG1-053": 4, "PMCG1-058": 4,
+                         "PMCG1-099": 20, "PMCG1-102": 20})
+state = new_game(deck0, deck1, seed=1)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+state = apply_command(state, PlaceStartingPokemon(0, in_hand(0, "PMCG1-060")))   # コラッタをバトル場に
+basics = [uid for uid in state.players[1].hand if state.card_def(uid).is_basic_pokemon]
+state = apply_command(state, PlaceStartingPokemon(1, basics[0], tuple(basics[1:6])))
+state = apply_command(state, ReportJankenResult(winner=0))
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-098"), state.players[0].active.card))
+state = apply_command(state, PlayTrainer(0, in_hand(0, "PMCG1-081")))  # 自分の対戦ポケモンにつく
+state = apply_command(state, UseAttack(0, 0))                          # かみつく 20 → 5 段階で +10
+damage = [e for e in state.log if e["kind"] == "damage"][-1]
+print(damage["steps"])  # (('1 基本となる計算', 20), ('5 プラスパワー', 30))
+```
 
 ### 操作（コマンド）
 
@@ -135,7 +163,7 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 | `TakePrize(player, index)` | きぜつさせたとき、サイドを 1 枚選んで取る |
 | `PromoteActive(player, pokemon)` | バトル場のポケモンがいなくなったとき、ベンチから出す |
 | `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a） |
-| `PlayTrainer(player, card)` | 手札のトレーナーカードを使う（v0.2b。対応した 3 枚だけ） |
+| `PlayTrainer(player, card)` | 手札のトレーナーカードを使う（v0.2b。対応した 4 枚だけ。プラスパワーは v0.2c） |
 | `EvolvePokemon`・`UsePokemonPower` | 未対応（`UnsupportedError`） |
 
 ## 現在の対応ルール（公式ルール 2000.02.14版）
@@ -152,10 +180,11 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 - HP 以上のダメージできぜつ、サイドを 1 枚選んで取る、ベンチから代わりを出す
 - 勝ち負け: サイドを取り終えた、バトル場に出せるポケモンがいない、番の最初に山札がない。同時に満たしたら p.311 の表
 - トレーナーカード（v0.2b）: 自分の番に何枚でも使える、使ったらトラッシュ、使っている最中はほかのことができない（p.310）。効果で引くときは山札が足りなくても負けにならない（p.312）
+- ついているトレーナー（v0.2c）: ポケモンのいる場所にある（p.313）。にげるときはいっしょに移り（p.311）、きぜつしたらいっしょにトラッシュ（p.323）。ダメージ計算の 5 段階（p.321）
 
 ## 現在の対応カード
 
-第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 3 種（v0.2b）です（kyuura docs/engine-readiness.md 5章の段階 1）。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえの文面に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
+第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 4 種（v0.2b・v0.2c）です（kyuura docs/engine-readiness.md 5章の段階 1）。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえの文面に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
 
 | id | カード | id | カード |
 |---|---|---|---|
@@ -171,8 +200,9 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 | PMCG1-074 | マサキ | 山札からカードを2枚引いて、手札に加える（足りなければ引けるだけ） | なし |
 | PMCG1-071 | きずぐすり | 自分の場のポケモンを1匹選び、ダメージカウンターを2個とりのぞく | ダメージのあるポケモンがいない、ダメージのないポケモンを選ぶ |
 | PMCG1-073 | ポケモンいれかえ | 自分の控えポケモンを1匹選び、対戦ポケモンと入れ替える | 控えポケモンがいない |
+| PMCG1-081 | プラスパワー（v0.2c。p.257） | 自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュ。ついているポケモンのワザが対戦ポケモンに与えるダメージを 5 段階で +10（控えへのダメージは変えない） | なし |
 
-これ以外のカード（効果のあるワザを持つポケモン、進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 3 枚だけが使えます（v0.2b）。
+これ以外のカード（効果のあるワザを持つポケモン、進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 4 枚だけが使えます（v0.2b・v0.2c）。
 
 ## 未実装の機能
 
@@ -186,16 +216,16 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 kyuura_engine/
   rules.py       ルールの組（2000.02.14版の数値）と根拠の一覧
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 3 枚の実装。v0.2a・v0.2b
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 4 枚の実装。v0.2a〜v0.2c
   deck.py        デッキの検査
   state.py       ゲームの状態（ゾーン、場のポケモン、番、結果）
   commands.py    プレイヤーの操作
   decisions.py   保留中の決定（出す・確かめる）。v0.2a
   engine.py      対戦の進行（new_game・apply_command）
-  damage.py      ワザのダメージ計算
+  damage.py      ワザのダメージ計算（p.321 の 8 段階。2・5〜8 段階の変更効果は v0.2c）
   judge.py       勝ち負けの判定（p.311 の表）
-  serialize.py   状態を辞書にする（形式 1・2・3）
-  zones.py       山札から引く処理（エンジンとトレーナーで共通）。v0.2b
+  serialize.py   状態を辞書にする（形式 1〜4）
+  zones.py       山札から引く・トレーナーをポケモンにつける処理（エンジンとトレーナーで共通）。v0.2b・v0.2c
   rng.py         乱数の状態の指紋・保存・復元。v0.2a
   data/kyuura_cards.json       kyuura のカードデータの写し（生成物）
   data/card_verification.json  『オフィシャルブック2000』との照合の記録
@@ -203,5 +233,5 @@ scripts/extract_kyuura_cards.py  kyuura から写しを作る
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
 tests/                           自動テスト（unittest）
 tests/fixtures/                  v0.1 の対戦結果の参照データ（互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a・v0.2b のアーキテクチャ、トレーナーの原典照合
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.2c のアーキテクチャ、トレーナーの原典照合
 ```

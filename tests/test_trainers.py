@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    BILL, FIRE, GROWLITHE, MACHOP, PONYTA, POTION, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
+    BILL, FIRE, GROWLITHE, MACHOP, PLUSPOWER, PONYTA, POTION, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
     build_test_state,
 )
 
@@ -64,11 +64,12 @@ class RejectsMixin:
 class TrainerRegistryTest(unittest.TestCase):
     """トレーナーの実装はカード id で登録する。名前・説明文の有無では決めない。"""
 
-    def test_default_registry_has_exactly_the_three_cards(self):
-        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2b")
+    def test_default_registry_has_exactly_the_registered_cards(self):
+        # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）
+        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, PLUSPOWER))
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2c")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
-        self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench"})
+        self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -87,9 +88,12 @@ class TrainerRegistryTest(unittest.TestCase):
             record = records[card_id]
             entry = DEFAULT_EFFECTS.trainer_entry(card_id)
             self.assertIn(record["status"], ("一致", "不一致あり"))
-            self.assertEqual((record["page"], record["pdf_page"]), (254, 256))
+            self.assertEqual(record["pdf_page"], record["page"] + 2)
             self.assertEqual(entry.play_text_ja, record["latest_description_ja"], card_id)
-            self.assertEqual(entry.source, "P43 p.254")
+            # 出典のページは照合したページ（v0.2b の 3 枚は p.254、v0.2c のプラスパワーは p.257）
+            self.assertEqual(entry.source, f"P43 p.{record['page']}")
+        self.assertEqual(records[POTION]["page"], 254)
+        self.assertEqual(records[PLUSPOWER]["page"], 257)
         # きずぐすりは kyuura の写し（第1弾の印刷の転記）と最新の説明が違う。処理は最新の説明（1匹・2個）
         self.assertNotEqual(DEFAULT_EFFECTS.trainer_entry(POTION).text_ja, DEFAULT_EFFECTS.trainer_entry(POTION).play_text_ja)
 
@@ -129,7 +133,7 @@ class TrainerRegistryTest(unittest.TestCase):
         added = DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-014", 1): AttackEntry(DAMAGE_ONLY, "ひのこ")})
         self.assertEqual(added.trainer_ids(), trainers)  # ワザを加えてもトレーナーの登録は残る
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
-        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL))
+        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL, PLUSPOWER))  # PLUSPOWER は v0.2c
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)
