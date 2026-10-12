@@ -16,7 +16,8 @@
 - v0.4a: 進化（たねポケモン → 1 進化ポケモン）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに実装した。進化の条件（名前・最初の番・場に出た番・進化した番。p.309・p.310）、重なったカードの管理、ダメージ・エネルギー・ついているトレーナーの引き継ぎ、特殊状態の回復（p.322）、進化したポケモンのきぜつ（重なったカードをすべてトラッシュ、サイドは 1 枚）。こんらんで「にげる」に失敗したポケモンが進化したら、失敗の記録を消す（SUPPORTED）。進化したあとの HP がダメージ以下になる場合は原典で決められないので止める（`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない）。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)（進化のルールの原典照合）、[docs/evolution-cards-v0.4a.md](docs/evolution-cards-v0.4a.md)（カード）、[docs/evolution-state-v0.4a.md](docs/evolution-state-v0.4a.md)（状態の持ち方・検証）、[docs/architecture-v0.4a.md](docs/architecture-v0.4a.md)（設計）
 - v0.4b: ワザによる持続する効果（番をまたいで残り、期限・ベンチに戻る・進化・きぜつで消える。特殊状態・ついているトレーナーとは別に持つ）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」（コインが「おもて」なら、次の相手の番、ダメージを受けない。ダメージ以外の効果は受ける）とともに実装した。「ダメージを受けない」状態のポケモンへのワザのダメージの要素は無効（計算しない。p.321）で、どく・マヒ・こんらんなどの効果の要素は有効。ポケモンチェックのどくのダメージは受ける（p.323）。コインでダメージの量を決めるワザ（みだれづき）をそのポケモンに使う場合は、コインを投げるかが原典で決められないので止める（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）。[docs/persistent-effects-v0.4b.md](docs/persistent-effects-v0.4b.md)（持続する効果の原典照合）、[docs/harden-v0.4b.md](docs/harden-v0.4b.md)（カード・かたまる）、[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md)（ダメージ計算）、[docs/architecture-v0.4b.md](docs/architecture-v0.4b.md)（設計）
 - v0.4c: 2 進化（1 進化ポケモン → 2 進化ポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」（コイン 2 枚、「おもて」の数 × 30）・「どくばり」（40、「おもて」なら相手をどく状態に）とともに実装した。たねポケモン・1 進化ポケモン・2 進化ポケモンの 3 枚で構成される 1 匹のポケモンを、v0.4a の `EvolvePokemon`・`evolution_stack` の上で扱う（状態の項目・コマンド・書き出しの形式は増やしていない）。同じ番に 1 進化したポケモンは 2 進化できない（`EVOLVED_THIS_TURN`。p.310）、たねポケモンに 2 進化カードを直接重ねられない、2 進化ポケモンがきぜつしたら 3 枚すべてをトラッシュしてサイドは 1 枚。「かたまる」の相手へのダブルニードルは v0.4b と同じく止める（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）。[docs/stage2-evolution-v0.4c.md](docs/stage2-evolution-v0.4c.md)（2 進化のルールの原典照合）、[docs/beedrill-v0.4c.md](docs/beedrill-v0.4c.md)（スピアー）、[docs/stage2-state-v0.4c.md](docs/stage2-state-v0.4c.md)（3 枚の重なりの状態・検証）、[docs/architecture-v0.4c.md](docs/architecture-v0.4c.md)（設計・v0.4d の準備）
-- v0.4d（今の版）: ワザの途中で相手プレイヤーの決定を待ち、答えのあとで同じワザを再開する処理と、ワザが与えたダメージの結果（`DamageResult`）を後の要素に渡す処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」（20 のあと、相手の対戦ポケモンを相手が選んだ控えと入れ替える）・「メガドレイン」（40。与えたダメージの半分（切り上げ）のダメージカウンターを自分からとりのぞく）とともに実装した。決定するのは相手（`decision.player`）で、番のプレイヤーは変わらない（決定の種類 `forced_switch`。段階・コマンド・状態の項目・書き出しの形式は増やしていない）。相手に控えがいなければ入れ替えない、20 で相手がきぜつするなら入れ替えない（対象がいない。p.309・p.89・p.213）。ベンチにもどったポケモンの特殊状態・持続する効果は消える。「与えたダメージ」は最終ダメージ（HP で上限を付けない。0・「ダメージを受けない」相手なら与えていないので回復しない。p.319）。新しい未解決の裁定はない。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md)（強制交代）、[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md)（与えたダメージと回復）、[docs/butterfree-v0.4d.md](docs/butterfree-v0.4d.md)（バタフリー）、[docs/architecture-v0.4d.md](docs/architecture-v0.4d.md)（設計）
+- v0.4d: ワザの途中で相手プレイヤーの決定を待ち、答えのあとで同じワザを再開する処理と、ワザが与えたダメージの結果（`DamageResult`）を後の要素に渡す処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」（20 のあと、相手の対戦ポケモンを相手が選んだ控えと入れ替える）・「メガドレイン」（40。与えたダメージの半分（切り上げ）のダメージカウンターを自分からとりのぞく）とともに実装した。決定するのは相手（`decision.player`）で、番のプレイヤーは変わらない（決定の種類 `forced_switch`。段階・コマンド・状態の項目・書き出しの形式は増やしていない）。相手に控えがいなければ入れ替えない、20 で相手がきぜつするなら入れ替えない（対象がいない。p.309・p.89・p.213）。ベンチにもどったポケモンの特殊状態・持続する効果は消える。「与えたダメージ」は最終ダメージ（HP で上限を付けない。0・「ダメージを受けない」相手なら与えていないので回復しない。p.319）。新しい未解決の裁定はない。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md)（強制交代）、[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md)（与えたダメージと回復）、[docs/butterfree-v0.4d.md](docs/butterfree-v0.4d.md)（バタフリー）、[docs/architecture-v0.4d.md](docs/architecture-v0.4d.md)（設計）
+- v0.4e（今の版）: カード・ルールを加えず、v0.4a〜v0.4d（進化・持続する効果・2 進化・強制交代・与えたダメージ・メガドレイン）の総合監査をした。組み合わせの表（段階 × 場所 × 特殊状態 8 通り × 持続する効果 × ついているカード × ダメージ × 決定。1,147 の subTest）、壊した状態の検出、ログだけから組み立て直した状態と状態の一致、書き出しの形式 1〜8 の監査、原典で決められない 11 件の範囲、変異テスト（24 個すべて検出）。不変条件の検出の漏れ 5 件（トレーナーの決定の形・サイドと交代の決定・サイドを取る人・交代の順番・番の番号）を直した（ルールの処理・ログ・書き出しは v0.4d と同じ）。前の版との比較（`tools/compare_engine_versions.py`）とストレス実行（`tools/stress_engine.py`）をリポジトリの道具にした。[docs/integration-audit-v0.4e.md](docs/integration-audit-v0.4e.md)（監査）、[docs/interaction-matrix-v0.4e.md](docs/interaction-matrix-v0.4e.md)（組み合わせの表）、[docs/compatibility-v0.4e.md](docs/compatibility-v0.4e.md)（互換性）、[docs/unresolved-audit-v0.4e.md](docs/unresolved-audit-v0.4e.md)（未解決の範囲）、[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md)（設計）、[docs/v0.5-readiness.md](docs/v0.5-readiness.md)（ポケモンパワーの準備）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -58,6 +59,15 @@ python3 -m unittest
 ```sh
 git clone https://github.com/moheronemy/kyuura.git ../kyuura
 python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check
+```
+
+ふだんのテスト（`python3 -m unittest`）には、速い単体テスト（段階 A）と、決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行（段階 B）が入っています。大きな実行（段階 C）は明示的に走らせます（v0.4e。[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md) 4 章）:
+
+```sh
+# 前の版（v0.4d の 4bd97bf）と今の作業ツリーを、同じ入力で別々のプロセスで動かして比べる（約 4 分。ネットワーク不要）
+python3 tools/compare_engine_versions.py --base 4bd97bf --report report.json
+# 大規模なストレス実行（でたらめな操作を混ぜ、結果を分類して数える。問題のある seed を報告する）
+python3 tools/stress_engine.py --seeds 100 --steps 600 --report stress.json
 ```
 
 ## 使い方
@@ -744,13 +754,13 @@ kyuura_engine/
   conditions.py  特殊状態（どく・ねむり・マヒ・こんらん）を付ける・置きかえる・回復する・ベンチに戻ったら・進化したら消す。v0.3a〜v0.4a
   persistent.py  ワザによる持続する効果（「かたまる」の「ダメージを受けない」）を付ける・期限・ベンチ・進化・きぜつで消す・はたらいているか。v0.4b
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。v0.2a〜v0.4d
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。決定を出すトレーナーの決定の形の宣言（`decision_problems`。v0.4e）。v0.2a〜v0.4e
   coins.py       コイントス（対戦の乱数で決め、1 枚ごとにログに残す）。v0.2d
   deck.py        デッキの検査
   state.py       ゲームの状態（ゾーン、場のポケモン、進化の重なり（v0.4a。v0.4c から 2 進化の 3 枚まで）・場に出た番・進化した番（v0.4a）、ワザによる持続する効果（v0.4b）、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、結果）
   commands.py    プレイヤーの操作
   decisions.py   保留中の決定（出す・確かめる）。v0.2a
-  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）、進化（v0.4a。2 進化は v0.4c）
+  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）、進化（v0.4a。2 進化は v0.4c）、不変条件（v0.4e でトレーナーの決定・サイドと交代の決定・番の番号を強めた）
   damage.py      ワザのダメージ計算（p.321 の 8 段階。2・5〜8 段階の変更効果は v0.2c）、こんらんの 20 の計算（v0.3c）
   judge.py       勝ち負けの判定（p.311 の表）
   serialize.py   状態を辞書にする（形式 1〜8）
@@ -760,7 +770,10 @@ kyuura_engine/
   data/card_verification.json  『オフィシャルブック2000』との照合の記録
 scripts/extract_kyuura_cards.py  kyuura から写しを作る
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
-tests/                           自動テスト（unittest）
-tests/fixtures/                  v0.1 の対戦結果の参照データ（互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.4d のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）
+tools/compat_driver.py           版の比較の駆動（公開の API だけで 1 つの版を動かし、1 手ごとの記録を作る）。v0.4e
+tools/compare_engine_versions.py 2 つの版の比較（git archive で取り出し、版ごとに別のプロセス。最初の食い違いを診断）。v0.4e
+tools/stress_engine.py           大規模なストレス実行（ふだんのテストでは走らせない）。v0.4e
+tests/                           自動テスト（unittest）。tests/log_audit.py はログと書き出しの監査の道具（v0.4e。テストではない）
+tests/fixtures/                  v0.1 の対戦結果の参照データ、v0.4d（4bd97bf）の記録の指紋（v0.4e。互換性のテスト用）
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.4e のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）、総合監査・組み合わせの表・互換性・未解決の範囲・v0.5 の準備（v0.4e）
 ```

@@ -1693,6 +1693,7 @@ def _events_since_turn_start(state: GameState) -> list:
 def _progress_problems(state: GameState) -> list[str]:
     """番の進行とポケモンチェックの整合（v0.3a）。ログの最後の 2 つの ``turn_start`` から後ろだけを見る。
 
+    - 今の番の番号と番のプレイヤーが、最後の ``turn_start`` の番とプレイヤーと同じ（v0.4e）。
     - 前の番の始まりから今の番の始まりまでに、``turn_end`` → ``pokemon_check`` がちょうど 1 回ずつ（p.309。
       ポケモンチェックを二度しない・飛ばさない）。
     - 今の番の始まりのあと: 番の途中（ワザのあとのサイド・交代の決定を含む）ならどちらもない。ポケモンチェックの
@@ -1713,6 +1714,14 @@ def _progress_problems(state: GameState) -> list[str]:
         return [log[j]["kind"] for j in range(begin, end) if log[j]["kind"] in ("turn_end", "pokemon_check")]
 
     problems = []
+    last_start = log[starts[0]]
+    if last_start.get("turn") != state.turn_number or last_start.get("player") != state.current_player:
+        # 番は 1 つずつ交互に進み、番の番号と番のプレイヤーは番の始まりで決まる（p.309。v0.4e。番の番号を偶数だけずらした
+        # 状態は、番のプレイヤーの確認だけでは見つからなかった）
+        problems.append(
+            f"今の番 {state.turn_number!r}（プレイヤー {state.current_player!r}）が、最後の番の始まり（ログ turn_start の"
+            f" {last_start.get('turn')!r} 番、プレイヤー {last_start.get('player')!r}）と違う"
+        )
     if len(starts) == 2 and marks(starts[1] + 1, starts[0]) != ["turn_end", "pokemon_check"]:
         problems.append(f"番と番のあいだの番の終わり・ポケモンチェックが {marks(starts[1] + 1, starts[0])}（1 回ずつ、この順のはず）")
     tail = marks(starts[0] + 1, len(log))
@@ -1759,6 +1768,11 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.append(f"決定の再開先 {d.resume!r} がない")
     remaining = d.context_value("remaining", ())
     then = d.context_value("then")
+    if (d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) or d.resume in (TAKE_PRIZE, PROMOTE_ACTIVE)) and d.resume != d.kind:
+        # v0.1 からある種類の決定は、その種類の再開先で続ける（v0.4e。それまではポケモンチェックの中の決定だけ確かめていた）
+        problems.append(f"決定 {d.kind} の再開先 {d.resume!r} が種類と合わない")
+    if d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) and (d.min_choices, d.max_choices) != (1, 1):
+        problems.append(f"決定 {d.kind} で選ぶ数が {d.min_choices}〜{d.max_choices}（サイド 1 枚・ポケモン 1 匹のはず。p.312・p.313）")
     if then is not None:
         # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代だけで、交代は 1 人だけ
         # （両方のバトル場が空になる場合は、出す順番が決まらないので止めている）
@@ -1776,11 +1790,16 @@ def _decision_problems(state: GameState) -> list[str]:
                 problems.append(f"プレイヤー {player} がサイドを取る回数が、残りのサイドより多い")
         if any(player not in PLAYERS for player in remaining):
             problems.append(f"サイドを取るプレイヤーの並び {queue} が正しくない")
+        else:
+            problems.extend(_prize_queue_problems(state, queue))
     if d.kind == PROMOTE_ACTIVE:
         queue = (d.player, *remaining)
         for player in queue:
             if player not in PLAYERS or state.players[player].active is not None or not state.players[player].bench:
                 problems.append(f"バトル場に出すプレイヤー {player} の場の形が正しくない")
+        if len(queue) > 1 and queue != (1 - state.current_player, state.current_player):
+            # 両方が出すときは、今が番でないプレイヤーが先（pp.323〜324。_next_prize_or_judge。v0.4e）
+            problems.append(f"バトル場に出す順番 {queue} が、番でないプレイヤー {1 - state.current_player!r} からではない（pp.323〜324）")
         for player in PLAYERS:
             if player not in queue and state.players[player].active is None:
                 problems.append(f"プレイヤー {player} のバトル場にポケモンがいないのに、出す順番に入っていない")
@@ -1796,6 +1815,49 @@ def _decision_problems(state: GameState) -> list[str]:
         if len(set(d.options) - set(unresolved)) < max(d.min_choices, 1):
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
     return problems
+
+
+def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]:
+    """サイドを取るプレイヤーの並び（決定するプレイヤーと残り。v0.4e）が、直前のきぜつから決まるか。
+
+    ``_after_knockouts``: きぜつ 1 匹につき、きぜつしたポケモンの相手側のプレイヤーが 1 枚（p.323）。残りのサイドより多くは
+    取らない。ログの終わりから、取ったサイド（``take_prize``）・きぜつ（``knock_out``。あいだの ``persistent_effect_removed`` は
+    きぜつで消えた持続する効果）の順に読み、取ったサイドと今の並びをあわせたものが、きぜつから決まる「だれが何枚取るか」と
+    同じかを確かめる。同時のきぜつ（p.324）で両方が取る順番は番のプレイヤーが選べる（p.325。エンジンは番のプレイヤーからに
+    正規化している。v0.2f）ので、順番は確かめない（正規化と違う順番の状態も、ルール上は正しい）。ログにきぜつがない状態は、
+    盤面を直接作ったテスト専用の状態（``new_game`` からの対戦では違反）だけ。
+    """
+    taken: list[int] = []
+    knocked: list[int] = []
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "take_prize" and not knocked:
+            taken.append(event.get("player"))
+        elif kind == "knock_out":
+            knocked.append(event.get("player"))
+        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+            continue
+        else:
+            break
+    if not knocked:
+        if any(state.decklists):
+            return [f"サイドを取る決定 {queue} の前に、きぜつ（ログ knock_out）がない"]
+        return []
+    taken.reverse()
+    knocked.reverse()
+    budget = {player: len(state.players[player].prizes) + taken.count(player) for player in PLAYERS}
+    expected = []
+    for owner in knocked:
+        taker = 1 - owner if owner in PLAYERS else None
+        if taker in budget and budget[taker] > 0:
+            expected.append(taker)
+            budget[taker] -= 1
+    if sorted(expected) != sorted((*taken, *queue)):
+        return [
+            f"サイドを取るプレイヤーの並び {queue}（取ったあと {tuple(taken)}）が、きぜつしたポケモンの持ち主 {tuple(knocked)} から"
+            f"決まるサイドを取るプレイヤー {tuple(expected)} と違う（きぜつしたポケモンの相手側のプレイヤーが取る。p.323・p.324）"
+        ]
+    return []
 
 
 def _attack_decision_problems(state: GameState, d) -> list[str]:
@@ -1873,7 +1935,9 @@ def _trainer_problems(state: GameState) -> list[str]:
     """使用中のトレーナー（v0.2b）と、決定・段階の整合性。
 
     トレーナーカードが使用中なのは、そのトレーナーの効果が決定を待っている間だけ（決定がなければ、
-    説明にしたがい終わってトラッシュしている）。
+    説明にしたがい終わってトラッシュしている）。共通の確認（使用中のトレーナー・続きの情報・番のプレイヤー）のあとで、
+    決定の形（決定するプレイヤー・種類・選ぶ数・選べるもの）を、トレーナーの実装の ``decision_problems`` で確かめる（v0.4e。
+    それまでは確かめておらず、相手の場のポケモンが選べるものに入った壊れた状態を見つけられなかった）。
     """
     problems: list[str] = []
     used = state.trainer_in_use
@@ -1897,6 +1961,11 @@ def _trainer_problems(state: GameState) -> list[str]:
         problems.append(f"トレーナーの決定の続きの情報 {use!r} が、使用中のトレーナー {used} と違う")
     if card in state.cards and state.cards[card].card_id != card_id:
         problems.append(f"トレーナーの決定の続きのカード id {card_id} が、カード {card} と違う")
-    if state.effects.trainer_entry(card_id) is None:
+    entry = state.effects.trainer_entry(card_id)
+    if entry is None:
         problems.append(f"トレーナーの決定の続きのカード {card_id} が効果の登録表にない")
+        return problems
+    if not problems:
+        # 効果ごとの決定の形（決定するプレイヤー・種類・選ぶ数・選べるもの。v0.4e。ワザの決定の decision_problems と同じ考え方）
+        problems.extend(entry.effect.decision_problems(state, TrainerUse(player, card, card_id), d))
     return problems

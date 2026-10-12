@@ -35,6 +35,7 @@ from kyuura_engine import (
 from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.state import (
     ASLEEP,
+    AttachedTrainer,
     CONFUSED,
     PreventDamage,
     CardInstance,
@@ -163,7 +164,9 @@ def build_test_state(
               うち、今の番より前の最後の番（なければ今の番）。1 進化した番は書かない（状態に持たないので、不変条件は
               その前に 1 進化できる番があることだけを確かめる。進化のログは置かない）。"played_turn" の既定は 0（対戦準備で出した）。
               "prevent_damage" は、その番に「かたまる」などで受けた持続する効果 ``PreventDamage``（v0.4b。はたらく番は次の番）。
-              効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する））
+              効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する）。
+              "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
+              トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -203,6 +206,7 @@ def build_test_state(
                 evolved_turn = earlier[-1] if earlier else owned[-1]
             result.evolved_turn = evolved_turn
         result.energy = [new_uid(e, owner) for e in spec.get("energy", [])]
+        result.trainers = [AttachedTrainer(new_uid(card_id, owner), owner, discard_at) for card_id, discard_at in spec.get("trainers", [])]
         result.damage = spec.get("damage", 0)
         exclusive = None
         if spec.get("sleep"):

@@ -883,6 +883,12 @@ class TrainerEffect:
     ``damage_modifiers`` でダメージ計算に効果を出す。トラッシュは、つけたときに決めた番の終わりに、エンジンが
     行う。その番は ``attachment_discard_turn``（使った番 + ``discard_turn_offset``）。番は 1 番ずつ交互に
     進む（p.309）ので、0 は使った番（自分の番）、1 は次の相手の番（v0.2e）。
+
+    - ``decision_problems``（v0.4e）: このトレーナーが出した決定（``resume`` が ``"trainer"``）を待っている状態の、効果ごとの
+      不変条件の問題。既定は「決定するのはトレーナーを使ったプレイヤー」だけを確かめる。決定を出す実装は、上書きして決定の形
+      （種類・選ぶ数・選べるもの・原典で決められない選択）を宣言する（ワザの ``AttackEffect.decision_problems``（v0.4d）と同じ
+      考え方）。決定を待つ間は場が変わらないので、選べるものは決定を出したときと同じ。エンジンの ``check_invariants`` が、
+      どのトレーナーの決定にも共通の確認（使用中のトレーナー・続きの情報・番のプレイヤー）のあとで呼ぶ。
     """
 
     implementation_id = "abstract"
@@ -902,6 +908,11 @@ class TrainerEffect:
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         raise NotImplementedError(f"{self.implementation_id} は決定を出さない")
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        if decision.player != use.player:
+            return [f"トレーナー {use.card_id} の決定 {decision.kind} を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない"]
+        return []
 
     def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
         """ついているポケモンがワザを使う（``role="attacker"``）・受ける（``"defender"``）ときの変更効果。"""
@@ -928,6 +939,31 @@ class DrawCards(TrainerEffect):
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         deck = state.players[use.player].deck
         draw_cards(state, use.player, min(self.count, len(deck)))
+
+
+def _select_own_pokemon_problems(
+    decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = ()
+) -> list[str]:
+    """トレーナーを使ったプレイヤーが自分の場のポケモンを 1 匹選ぶ決定（``SELECT_POKEMON``）の形の問題（v0.4e）。
+
+    ``expected`` は選べるもの（場のポケモンの番号。決定を出したときと同じ並び）、``unresolved`` は、そのうち原典で扱いを
+    決められない選択（``context`` の ``"unresolved_choices"``）。"""
+    problems = []
+    if decision.player != use.player:
+        problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+    if decision.kind != SELECT_POKEMON:
+        problems.append(f"{what}の決定の種類が {decision.kind!r}（{SELECT_POKEMON} のはず）")
+    if (decision.min_choices, decision.max_choices) != (1, 1):
+        problems.append(f"{what}の決定で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 匹のはず）")
+    expected = tuple(expected)
+    if decision.options != expected:
+        problems.append(f"{what}の決定の選べるもの {decision.options} が、選べる自分の場のポケモン {expected} と合わない")
+    unresolved = tuple(unresolved)
+    if tuple(decision.context_value("unresolved_choices", ())) != unresolved:
+        problems.append(
+            f"{what}の決定の扱いを決められない選択 {decision.context_value('unresolved_choices', ())} が、{unresolved} と合わない"
+        )
+    return problems
 
 
 @dataclass(frozen=True)
@@ -988,6 +1024,15 @@ class RemoveDamageCounters(TrainerEffect):
             total_damage=pokemon.damage,
         )
 
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """選べるのは自分の場のポケモン（バトル場 → ベンチ）。ダメージカウンターののっていないものは原典で扱いを決められない
+        選択（v0.2b）。"""
+        own = state.players[use.player].in_play()
+        return _select_own_pokemon_problems(
+            decision, use, (pokemon.pokemon_id for pokemon in own), "「きずぐすり」",
+            unresolved=(pokemon.pokemon_id for pokemon in own if pokemon.damage == 0),
+        )
+
 
 @dataclass(frozen=True)
 class SwitchWithBench(TrainerEffect):
@@ -1039,6 +1084,11 @@ class SwitchWithBench(TrainerEffect):
         clear_special_conditions(state, use.player, old, SWITCH)
         # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
         remove_persistent_effects(state, use.player, old, SWITCH)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """選べるのは自分のベンチのポケモン（控えポケモン）。"""
+        bench = state.players[use.player].bench
+        return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in bench), "「ポケモンいれかえ」")
 
 
 @dataclass(frozen=True)
@@ -1102,6 +1152,11 @@ class AttachedDamageReduction(TrainerEffect):
         if owner != use.player:
             raise RuntimeError(f"相手の場のポケモン {choices[0]} にディフェンダーをつけようとした（エンジンの不具合）")
         attach_trainer(state, use.player, use.card, pokemon, discard_at_end_of_turn=self.attachment_discard_turn(state))
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """選べるのは自分の場のポケモン（バトル場 → ベンチ）。"""
+        own = state.players[use.player].in_play()
+        return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in own), "「ディフェンダー」")
 
     def damage_modifiers(self, state: GameState, attached: AttachedTrainer, role: str) -> list[DamageModifier]:
         if role != "defender":

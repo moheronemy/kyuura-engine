@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.4d で加えた公開 API
+## 2. v0.2a〜v0.4e で加えた公開 API
 
 ### v0.2a
 
@@ -219,6 +219,17 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `kyuura_engine.__version__` | `0.4.0d0`。効果の登録表の id は `kyuura-engine-0.4d` |
 
 コマンド・段階・状態の項目・エラーコード・書き出しの形式（形式 8 のまま）は増やしていません。`state_to_dict(state)`（形式 1）は、ワザの途中の決定があると `ValueError` になりました（4 章）。ログのイベント `forced_switch`・`forced_switch_skipped`・`drain_heal` を加えました（7 章）。
+
+### v0.4e
+
+| もの | 内容 |
+|---|---|
+| `TrainerEffect.decision_problems(state, use, decision)` | トレーナーが出した決定を待つ状態の、効果ごとの不変条件（v0.4d のワザの `AttackEffect.decision_problems` と同じ考え方）。既定は「決定するのはトレーナーを使ったプレイヤー」。決定を出す実装（きずぐすり・ポケモンいれかえ・ディフェンダー）は種類・選ぶ数・選べるもの・原典で決められない選択を宣言する（効果の実装を加える人向け） |
+| `check_invariants` | トレーナーの決定の形、サイド・交代の決定の再開先と選ぶ数、サイドを取る「だれが何枚」、両方が出すときの順番、番の番号と番の始まりのログを確かめるようになった（[architecture-v0.4e.md](architecture-v0.4e.md)）。`new_game`・`apply_command` が返す状態では、v0.4d と同じく問題はない |
+| tools/compare_engine_versions.py・tools/compat_driver.py・tools/stress_engine.py | 前の版との比較・ストレス実行の道具（パッケージの API ではない。リポジトリの直下で実行する） |
+| `kyuura_engine.__version__` | `0.4.0e0`。効果の登録表の id は `kyuura-engine-0.4d` のまま（登録の中身を変えていない） |
+
+コマンド・段階・状態の項目・エラーコード・ログのイベント・書き出しの形式（形式 8 のまま）は増やしていません。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -421,6 +432,12 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - `deal_attack_damage`・`damage_opponent_active` が `None` ではなく `DamageResult` を返す
   - 決定を待つ状態で、`decision.player` が番のプレイヤーと違うことがある（`forced_switch`）。「決定するのは番のプレイヤー」と決めつけていたクライアントは直す必要がある
 - 新しいクライアントへの推奨: 決定の表示・答えは、いつも `state.decision.player` を見て、そのプレイヤーに求める（番のプレイヤーではない）。`forced_switch` の選べるもの（`options`）は相手のベンチのポケモンの番号。決定を待つ間は、どちらのプレイヤーにも通常の操作のボタンを出さない。
+
+### v0.4d → v0.4e
+
+- 受け付ける操作・拒否のコード・状態・ログ・乱数の状態・保留中の決定・形式 1〜8 の書き出しは、v0.4d（`4bd97bf`）と同じです。リポジトリの道具（tools/compare_engine_versions.py）で、8 組 50 局・11,377 手を版ごとに別のプロセスで動かして比べ、食い違いは 0 でした（[compatibility-v0.4e.md](compatibility-v0.4e.md)）。
+- v0.4d のテスト 958 件は、v0.4e のコードで変更なしにすべて通ります。
+- 互換でない変更: `check_invariants` が、v0.4d では見つけなかった壊れた状態（呼び出し側が書き換えたトレーナーの決定・サイドと交代の決定・番の番号）を問題として返す。そのような状態を `apply_command` に渡していたクライアントは、壊れた状態を作らないように直す必要がある（正しい状態は変わらず受け付ける）。
 
 ## 5. 提案（まだ実装していない）
 
