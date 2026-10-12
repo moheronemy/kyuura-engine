@@ -69,7 +69,7 @@ class TrainerRegistryTest(unittest.TestCase):
         # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。v0.2e でディフェンダーを加えた。
         # トレーナーの登録は v0.2e と同じ
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, DEFENDER, PLUSPOWER))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.2f")  # v0.2f はワザ（ピカチュウ）を加えた
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.3a")  # v0.2f・v0.3a はワザ（ピカチュウ・ビードル）を加えた
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
         self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus",
                                            "attached_damage_reduction"})

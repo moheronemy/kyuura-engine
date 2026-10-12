@@ -1,4 +1,4 @@
-"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.2f）。
+"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.3a）。
 
 ルールは「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』
 pp.306〜326）。カードデータの正本は kyuura（https://github.com/moheronemy/kyuura）。
@@ -30,9 +30,19 @@ from .engine import apply_command, check_invariants, new_game
 from .errors import DeckValidationError, EngineError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
-from .state import TERMINAL_PHASES, AttachedTrainer, GameResult, GameState, PendingDecision, Phase, TrainerInUse
+from .state import (
+    TERMINAL_PHASES,
+    AttachedTrainer,
+    GameResult,
+    GameState,
+    PendingDecision,
+    Phase,
+    Poison,
+    SpecialConditions,
+    TrainerInUse,
+)
 
-__version__ = "0.2.0f0"
+__version__ = "0.3.0a0"
 
 __all__ = [
     "AttachEnergy",
@@ -54,6 +64,7 @@ __all__ = [
     "IllegalActionError",
     "PendingDecision",
     "Phase",
+    "Poison",
     "PlaceStartingPokemon",
     "PlayBasicToBench",
     "PlayTrainer",
@@ -68,6 +79,7 @@ __all__ = [
     "TERMINAL_PHASES",
     "TakePrize",
     "TrainerEntry",
+    "SpecialConditions",
     "TrainerInUse",
     "UnsupportedError",
     "UseAttack",

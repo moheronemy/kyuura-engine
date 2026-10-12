@@ -33,7 +33,7 @@ from kyuura_engine import (
     new_game,
 )
 from kyuura_engine.rules import RULES_2000_02_14
-from kyuura_engine.state import CardInstance, DataSource, PlayerState, PokemonInPlay, freeze_mapping
+from kyuura_engine.state import CardInstance, DataSource, PlayerState, Poison, PokemonInPlay, SpecialConditions, freeze_mapping
 
 # カード id（kyuura data/cards.json の id）
 PONYTA = "PMCG1-016"
@@ -55,6 +55,7 @@ FIGHTING = "PMCG1-102"
 CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
 DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
 PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、でんげき 30・「うら」なら自分にも 10）
+WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「おもて」なら相手をどく状態に）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -128,7 +129,8 @@ def build_test_state(
     """テスト専用: 正式な対戦開始を通さずに MAIN の盤面を作る。
 
     players[i] のキー（どれも省略できる。active は必須）:
-      active: カード id、または {"card": id, "damage": n, "energy": [id, ...]}
+      active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ}
+              （"poison" はバトル場のポケモンのどく状態。v0.3a。ベンチに書くと不変条件で拒否される）
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -151,6 +153,8 @@ def build_test_state(
         next_pokemon_id[0] += 1
         result.energy = [new_uid(e, owner) for e in spec.get("energy", [])]
         result.damage = spec.get("damage", 0)
+        if "poison" in spec:
+            result.conditions = SpecialConditions(poison=Poison(spec["poison"]))
         return result
 
     states = []

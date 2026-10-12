@@ -71,6 +71,49 @@ class AttachedTrainer:
     discard_at_end_of_turn: int
 
 
+@dataclass(frozen=True)
+class Poison:
+    """どく状態（v0.3a。p.322「1. どく状態」、p.323 のポケモンチェックの 2）。
+
+    - ``damage``: ポケモンチェックの「どく」で受けるダメージ。通常のどくは 10（p.322・p.323）。
+      p.322 は、どくのダメージを変える効果（「このワザによって、どく状態になったポケモンがポケモンチェックで
+      受ける「どく」のダメージは「20」。」など）を「どく状態にかかるもの」としてあつかうと書くので、
+      ダメージの量をどく状態の性質として持つ。そのような効果のカードは未実装（量は今は 10 だけ）。
+
+    どく状態にしたポケモン（発生源）は持たない。発生源が場をはなれても、変化しても、受けた特殊状態は
+    消えたり変化したりしない（p.322）ので、処理に使わないため。どく状態は重ならない（p.322）ので、
+    1 匹のポケモンに 1 つだけ。
+    """
+
+    damage: int = 10
+
+
+@dataclass(frozen=True)
+class SpecialConditions:
+    """場のポケモンの特殊状態（v0.3a）。物理的なカードではないので、カードの uid ではなく、場のポケモン
+    （``PokemonInPlay``。番号は ``pokemon_id``）が持つ。
+
+    p.322 の規定にしたがって分けて持つ:
+
+    - ``poison``: どく状態（``Poison``）か None。どく状態は、ほかの特殊状態と重複する（p.322「特殊状態の重複」）。
+    - ねむり・マヒ・こんらんは「重複することはありません」（p.322）。v0.3b 以降で、3 つのうち 1 つを持つ
+      項目を加える（今は扱わない）。
+
+    特殊状態になるのはバトル場のポケモンだけ（p.322）。バトル場をはなれたら（ベンチに戻ったら）すべて
+    消える（p.311・p.322）。進化しても消える（p.322。進化は未実装）。
+    """
+
+    poison: Poison | None = None
+
+    def names(self) -> tuple[str, ...]:
+        """今かかっている特殊状態の名前（ログ・書き出し用。p.322 の順）。"""
+        return ("poison",) if self.poison is not None else ()
+
+
+# 特殊状態のないポケモン（共有してよい。frozen）
+NO_SPECIAL_CONDITIONS = SpecialConditions()
+
+
 @dataclass
 class PokemonInPlay:
     """場にいるポケモン。v0.1 は進化がないので、ポケモンのカード 1 枚とついているエネルギーカード。
@@ -89,9 +132,10 @@ class PokemonInPlay:
     damage: int = 0
     pokemon_id: int = 0
     trainers: list[AttachedTrainer] = field(default_factory=list)  # ついているトレーナーカード（v0.2c）
+    conditions: SpecialConditions = NO_SPECIAL_CONDITIONS  # 特殊状態（v0.3a。frozen なので複製でも共有してよい）
 
     def clone(self) -> PokemonInPlay:
-        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers))
+        return PokemonInPlay(self.card, list(self.energy), self.damage, self.pokemon_id, list(self.trainers), self.conditions)
 
 
 @dataclass

@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1〜v0.2f）
+# 公開 API のレビュー（v0.1〜v0.3a）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md) のアーキテクチャにあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md)・[v0.3a](architecture-v0.3a.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.2f で加えた公開 API
+## 2. v0.2a〜v0.3a で加えた公開 API
 
 ### v0.2a
 
@@ -101,6 +101,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `effects.SelfDamageOnTails(self_damage)` | でんげきの実装 |
 
 コマンド・段階・決定の種類・ログの種類・状態の項目・書き出しの形式は増やしていません。ログの `damage`（自分へのダメージ）と `knock_out`（同時のきぜつ）に項目を加えました（7 章）。
+
+### v0.3a
+
+| もの | 内容 |
+|---|---|
+| ビードル（PMCG1-004）の「どくばり」（`UseAttack(…, 0)`） | 相手に 10 → コイン 1 枚 → 「おもて」なら相手をどく状態に |
+| `Poison`・`SpecialConditions`（`kyuura_engine` から） | 場のポケモンの特殊状態（`PokemonInPlay.conditions`。frozen） |
+| `kyuura_engine.conditions` | `poison`・`clear_special_conditions`（特殊状態を付ける・消す。実装を加える人向け） |
+| `effects.PoisonOnHeads` | どくばりの実装 |
+| ポケモンチェック | 番の終わりのあと、エンジンが自動で行う（どくのダメージ・きぜつ・サイド・交代）。ポケモンチェックの中のきぜつでは、サイド・交代の決定（`take_prize`・`promote_active`）が出て、`context` の `then` が `"next_turn"`（`engine.NEXT_TURN`） |
+| `state_to_dict(state, format_version=5)` | 場のポケモンごとの `special_conditions` を加えた形 |
+
+コマンド・段階・決定の種類は増やしていません。
 
 ## 3. 公開すべきもの・内部として隠すべきもの
 
@@ -205,6 +218,19 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 - `effects.damage_opponent_active` は残した（中身は `deal_attack_damage(…, OPPONENT_ACTIVE, …)`。ログの形は同じ）。
 - 新しいクライアントへの推奨: ダメージの表示はログの `damage` の `player`・`pokemon`（`target` が `self` なら自分へのダメージ）を使う。同時のきぜつは `knock_out.simultaneous` で分かる。
 
+### v0.2f → v0.3a
+
+- どくのない対戦の結果・ログ・状態（形式 4。登録表の id を除く）は変わりません。v0.2f のコミット `5ce4d4e` と、既存のデッキ 7 組 × 40 seed（280 局、26,715 コマンド）を同じ手順で対戦させて比べ、すべて同じでした。どく状態のポケモンがいなければ、ポケモンチェックのログは今までどおり `pokemon_check` だけです。v0.1 の参照データ・乱数とコインの固定値も変わりません。
+- v0.2f のテスト 449 件を v0.3a のコードで実行すると、失敗するのは登録表の id・登録したワザ・カードの組・知らない形式の例（5 が形式になった）を確かめる 6 件だけ（[architecture-v0.3a.md 12 章](architecture-v0.3a.md)）。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.3a` になり、ワザの登録にビードルのどくばり（PMCG1-004#0）が加わった。写しの対戦用のカードの組に `pool_v0_3a`
+  - 書き出しの形式 5 が加わった（`FORMAT_VERSIONS` は 1〜5）。形式 1〜4 は特殊状態のポケモンがいると `ValueError`。形式 1 はポケモンチェックの中の決定も `ValueError`
+  - `_end_turn` のあとに次の番がすぐ始まるとは限らない（ポケモンチェックの中のきぜつの決定を待つ）。そのあいだの `current_player` は番を終えたプレイヤー
+  - エラーコード `UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`（`Phase.HALTED`）が加わった。正式な対戦で起こる（どくを直さないミラーでまれに）
+  - `PokemonInPlay` の項目に `conditions` が加わった（位置引数の最後。既定は特殊状態なし）
+  - 不変条件が増えた（特殊状態・番の進行・決定の続き）。ログを書きかえた状態や、ベンチのポケモンに特殊状態を付けた状態は `StateIntegrityError`
+- 新しいクライアントへの推奨: 状態の辞書は形式 5 を使う。どくのダメージはログの `poison_damage` で、ワザの `damage` とは別に表示する。決定の `context` の `then` が `"next_turn"` なら、ポケモンチェックの中（次の番はまだ始まっていない）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -251,7 +277,7 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 | 例外 | コード |
 |---|---|
 | `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -266,6 +292,8 @@ v0.2c: `attach_trainer`（`player`・`card`・`pokemon`・`pokemon_id`・`discar
 v0.2d: `coin_flip`（`player`・`source`＝`attack`・`effect`＝`AttackKey` の文字列・`card`＝カードの uid・`pokemon_id`・`number`＝何枚目（1 から）・`count`＝投げる枚数・`result`＝`heads`/`tails`）。`damage` に `stopped_after_step_2`（2 段階のあとで計算を終えたときだけ。「おもて」0 枚のみだれづきなど）
 
 v0.2f: `damage` に、相手の対戦ポケモン以外へのダメージのときだけ `target`（`self`）・`pokemon_id`（受けたポケモン）・`effect`（ワザの識別子。例 `PMCG1-035#1`）。`player` は受けたポケモンの持ち主（自分へのダメージならワザを使ったプレイヤー）。`knock_out` に、1 つのワザで 2 匹以上きぜつしたときだけ `simultaneous`（`true`）
+
+v0.3a: `special_condition`（`player`＝特殊状態になったポケモンの持ち主・`pokemon`・`pokemon_id`・`condition`＝`poison`・`damage`・`effect`＝効果の識別子、もうその状態なら `already`）, `special_conditions_removed`（`player`・`pokemon`・`pokemon_id`・`conditions`・`reason`＝`retreat`/`switch`）, `poison_damage`（ポケモンチェックの「どく」。`player`・`pokemon`・`pokemon_id`・`amount`・`total_damage`。ワザの `damage` とは別）。`knock_out` に、ポケモンチェックの中のきぜつなら `timing`（`pokemon_check`）。`halted` はポケモンチェックで止めたときも出る（`code` だけ）。どく状態のポケモンがいなければ、`pokemon_check` のあとに新しいイベントは出ない
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

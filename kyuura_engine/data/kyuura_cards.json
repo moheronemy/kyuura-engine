@@ -77,6 +77,9 @@
   "pool_v0_2f": [
     "PMCG1-035"
   ],
+  "pool_v0_3a": [
+    "PMCG1-004"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1447,6 +1450,79 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-035-pikachu/"
+      }
+    },
+    {
+      "id": "PMCG1-004",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ビードル",
+        "en": "Weedle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          13
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": "Poison Sting"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-004",
+        "pokemontcg": [
+          "base1-69"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-006-beedle/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-006-beedle/"
       }
     },
     {
