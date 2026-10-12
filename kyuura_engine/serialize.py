@@ -8,15 +8,19 @@
 - 3: 2 に ``trainer_in_use``（使っている最中のトレーナーカード）を加えたもの（v0.2b）。
 - 4: 3 に、場のポケモンごとの ``trainers``（ついているトレーナーカード）を加えたもの（v0.2c）。
 - 5: 4 に、場のポケモンごとの ``special_conditions``（特殊状態。どくなら ``{"poison": {"damage": 10}}``、
-  なければ ``{}``）を加えたもの（v0.3a）。
+  なければ ``{}``）を加えたもの（v0.3a）。v0.3b で、ねむり ``"sleep": {}``・マヒ ``"paralysis": {"turn": n}``
+  （``n`` はマヒ状態になった番。回復する番はここから決まる）の項目を加えた。どくだけの状態・特殊状態のない状態の
+  書き出しは v0.3a と同じ（項目の意味を変えていないので形式 6 にはしていない。知らない項目のある辞書は、読む側が
+  拒否すること）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
 カードを落とさない）。同じように、形式 1〜3 はポケモンについているトレーナー（プラスパワーなど）を
 表せないので、ついているトレーナーがあると ``ValueError`` にする。トレーナーを使う対戦では形式 4 を使う。
 形式 1〜4 は特殊状態（v0.3a）を表せないので、特殊状態のポケモンがいると ``ValueError`` にする（形式 5 を使う）。
-形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「次の番を始める」。
-決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると ``ValueError`` にする。
+形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「ポケモンチェックの
+残りをして次の番を始める」。決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると
+``ValueError`` にする。
 
 コインの結果（v0.2d）は、ログの ``coin_flip`` にだけ残る（状態に残る値はない）。ログはどの形式にも入るので、
 コインのための新しい形式はない。この先のコインの結果を決める乱数の状態は ``rng_state_sha256``（指紋）。
@@ -32,9 +36,22 @@ from __future__ import annotations
 from typing import Any
 
 from .rng import rng_fingerprint
-from .state import GameState, PokemonInPlay
+from .state import Asleep, GameState, Paralyzed, PokemonInPlay
 
 FORMAT_VERSIONS = (1, 2, 3, 4, 5)
+
+
+def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
+    """形式 5 の ``special_conditions``（p.322 の順: どく・ねむり・マヒ）。"""
+    conditions = pokemon.conditions
+    data: dict[str, Any] = {}
+    if conditions.poison is not None:
+        data["poison"] = {"damage": conditions.poison.damage}
+    if isinstance(conditions.exclusive, Asleep):
+        data["sleep"] = {}
+    elif isinstance(conditions.exclusive, Paralyzed):
+        data["paralysis"] = {"turn": conditions.exclusive.turn}
+    return data
 
 
 def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: int) -> dict[str, Any] | None:
@@ -62,8 +79,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
             for t in pokemon.trainers
         ]
     if format_version >= 5:
-        conditions = pokemon.conditions
-        data["special_conditions"] = {} if conditions.poison is None else {"poison": {"damage": conditions.poison.damage}}
+        data["special_conditions"] = _special_conditions(pokemon)
     return data
 
 
@@ -83,7 +99,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 4 and any(pokemon.trainers for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、ポケモンについているトレーナーカードを表せない（format_version=4 を使う）")
     if format_version < 5 and any(pokemon.conditions.names() for p in state.players for pokemon in p.in_play()):
-        raise ValueError(f"形式 {format_version} は、特殊状態（どくなど）を表せない（format_version=5 を使う）")
+        raise ValueError(f"形式 {format_version} は、特殊状態（どく・ねむり・マヒ）を表せない（format_version=5 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     data = {

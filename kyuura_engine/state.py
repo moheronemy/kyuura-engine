@@ -18,7 +18,7 @@ import random
 from dataclasses import dataclass, field
 from enum import Enum
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, Mapping
 
 from .cards import CardDefinition, EnergyType
 from .rng import copy_rng
@@ -89,6 +89,27 @@ class Poison:
 
 
 @dataclass(frozen=True)
+class Asleep:
+    """ねむり状態（v0.3b。p.322「2. ねむり状態」）。ワザを使えず、にげるを宣言できない。ポケモンチェックの
+    たびに持ち主がコインを投げ、「おもて」なら回復する（p.322・p.323 の 3）。持つ情報はない。"""
+
+    name: ClassVar[str] = "sleep"
+
+
+@dataclass(frozen=True)
+class Paralyzed:
+    """マヒ状態（v0.3b。p.322「3. マヒ状態」）。ワザを使えず、にげるを宣言できない。
+
+    - ``turn``: マヒ状態になった番（``GameState.turn_number``）。マヒは「マヒ状態になった番の「次の自分（そのポケモンの
+      持ち主）の番」の終わりのポケモンチェックで自動的に回復」する（p.323 の 4・p.322）ので、回復する番を決めるのに
+      要る（``conditions.paralysis_recovery_turn``）。番の数だけで決めず、持ち主の番を数える。
+    """
+
+    turn: int
+    name: ClassVar[str] = "paralysis"
+
+
+@dataclass(frozen=True)
 class SpecialConditions:
     """場のポケモンの特殊状態（v0.3a）。物理的なカードではないので、カードの uid ではなく、場のポケモン
     （``PokemonInPlay``。番号は ``pokemon_id``）が持つ。
@@ -96,22 +117,34 @@ class SpecialConditions:
     p.322 の規定にしたがって分けて持つ:
 
     - ``poison``: どく状態（``Poison``）か None。どく状態は、ほかの特殊状態と重複する（p.322「特殊状態の重複」）。
-    - ねむり・マヒ・こんらんは「重複することはありません」（p.322）。v0.3b 以降で、3 つのうち 1 つを持つ
-      項目を加える（今は扱わない）。
+    - ``exclusive``: ねむり（``Asleep``）・マヒ（``Paralyzed``）のどれか 1 つか None（v0.3b）。ねむり・マヒ・こんらんは
+      「重複することはありません」（p.322）ので 1 つの項目に持つ。こんらんは未実装（加えるときはここに入る）。
 
     特殊状態になるのはバトル場のポケモンだけ（p.322）。バトル場をはなれたら（ベンチに戻ったら）すべて
     消える（p.311・p.322）。進化しても消える（p.322。進化は未実装）。
     """
 
     poison: Poison | None = None
+    exclusive: Asleep | Paralyzed | None = None
 
     def names(self) -> tuple[str, ...]:
-        """今かかっている特殊状態の名前（ログ・書き出し用。p.322 の順）。"""
-        return ("poison",) if self.poison is not None else ()
+        """今かかっている特殊状態の名前（ログ・書き出し用。p.322 の順: どく・ねむり・マヒ）。"""
+        names = ("poison",) if self.poison is not None else ()
+        return names + ((self.exclusive.name,) if self.exclusive is not None else ())
+
+    @property
+    def asleep(self) -> bool:
+        return isinstance(self.exclusive, Asleep)
+
+    @property
+    def paralyzed(self) -> bool:
+        return isinstance(self.exclusive, Paralyzed)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
+# ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
+ASLEEP = Asleep()
 
 
 @dataclass
@@ -343,8 +376,20 @@ class GameState:
         return [self.card_def(e).provides for e in pokemon.energy]
 
     def add_event(self, kind: str, **data: Any) -> None:
+        if "turn" in data:
+            # ログの "turn" はいつも今の番（v0.3b で、イベントの項目が上書きしないように確かめる）
+            raise ValueError(f"イベント {kind} の項目に turn は使えない（ログの番の番号と重なる）")
         self.log = self.log + (MappingProxyType({"kind": kind, "turn": self.turn_number, **data}),)
 
 
 def freeze_mapping(mapping: Mapping) -> Mapping:
     return MappingProxyType(dict(mapping))
+
+
+def turn_owner(state: GameState, turn_number: int) -> int:
+    """``turn_number`` 番目の番のプレイヤー。1 番目は先攻（ジャンケンの勝者）で、交互に進む（p.308・p.309）。
+
+    番は先攻から 1 つずつ交互に進む（不変条件で確かめている）ので、番の番号だけで決まる。
+    ``engine.turn_owner`` と同じもの（v0.3b でマヒの回復する番を決めるのに使うため、ここに移した）。
+    """
+    return state.first_player if turn_number % 2 == 1 else 1 - state.first_player

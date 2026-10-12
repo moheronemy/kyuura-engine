@@ -17,7 +17,10 @@
   ``SelfDamageOnTails``（v0.2f。相手にダメージのあと、コインが「うら」なら自分にもダメージ。ピカチュウの
   「でんげき」。p.125 の最新の説明。docs/pikachu-v0.2f.md・docs/self-damage-v0.2f.md）、
   ``PoisonOnHeads``（v0.3a。相手にダメージのあと、コインが「おもて」なら相手をどく状態に。ビードルの
-  「どくばり」。p.19 の最新の説明。docs/weedle-v0.3a.md・docs/special-conditions-v0.3a.md）
+  「どくばり」。p.19 の最新の説明。docs/weedle-v0.3a.md・docs/special-conditions-v0.3a.md）、
+  ``ParalyzeOnHeads``（v0.3b。相手にダメージのあと、コインが「おもて」なら相手をマヒ状態に。キャタピーの
+  「いとをはく」。p.17 の最新の説明）、``PutToSleep``（v0.3b。ダメージを与えず、相手をねむり状態に。パラスの
+  「キノコのほうし」。p.38 の最新の説明）。docs/cards-v0.3b.md・docs/sleep-paralysis-v0.3b.md
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -37,7 +40,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
 from .coins import CoinSide, flip_coins
-from .conditions import SWITCH, clear_special_conditions, poison
+from .conditions import SWITCH, clear_special_conditions, paralysis_problem, paralyze, poison, put_to_sleep
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import SELECT_POKEMON, push_trainer_decision
 from .errors import UnsupportedError
@@ -345,6 +348,84 @@ class PoisonOnHeads(AttackEffect):
             poison(state, opponent, target, effect=str(use.key))
 
 
+@dataclass(frozen=True)
+class ParalyzeOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを 1 枚投げ、「おもて」なら相手の
+    対戦ポケモンをマヒ状態にする（v0.3b。キャタピーの「いとをはく」。p.17 の最新の説明
+    「コインを投げて「おもて」なら、相手を「マヒ」状態にする。」。docs/cards-v0.3b.md）。
+
+    - ダメージの目安に「×」「+」「−」がないので、説明の最初の「相手の対戦ポケモンに 10 ダメージ。」が省略されて
+      いる（p.320。シードラの「あわ」の例: 「相手（太字）に10ダメージ。コインを投げて『おもて』なら、相手を『マヒ』状態に
+      する。」）。ワザの要素は書いてある順番に処理する（p.309・p.320）: 相手へのダメージ → コイン → マヒ。
+    - マヒ状態にするのは「効果」で、ダメージではない。相手へのダメージが 0（ディフェンダーなど）でも、「おもて」なら
+      マヒ状態にする。
+    - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないのでコインを投げない（p.309・p.323。
+      ``PoisonOnHeads`` と同じ）。
+    - マヒ状態のポケモンが再びマヒ状態になる効果を受けて、回復する番が原典で決められない場合は、コインを投げる前に
+      止める（``conditions.paralysis_problem``。v0.3b の対応カードでは起こらない）。
+    - ねむり状態の相手なら、ねむりは消えてマヒ状態になる。どく状態はそのまま（p.322。``conditions.paralyze``）。
+    """
+
+    implementation_id = "paralyze_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier is not None:
+            problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、マヒ状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        damage_opponent_active(state, use, attack.damage)
+        opponent = 1 - use.player
+        target = state.players[opponent].active
+        if target.damage >= state.card_def(target.card).hp:
+            return  # 相手の対戦ポケモンはきぜつした。マヒ状態にする内容は対象がいないので無視する（p.309・p.323）
+        # 原典で決められない場合は、コインの前に止める（apply_command は複製した状態で処理するので、ダメージも残らない）
+        problem = paralysis_problem(state, opponent, target)
+        if problem is not None:
+            raise problem
+        flips = flip_coins(
+            state, use.player, 1, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
+        )
+        if flips.results[0] is CoinSide.HEADS:
+            paralyze(state, opponent, target, effect=str(use.key))
+
+
+@dataclass(frozen=True)
+class PutToSleep(AttackEffect):
+    """ダメージを与えず、相手の対戦ポケモンをねむり状態にする（v0.3b。パラスの「キノコのほうし」。p.38 の最新の説明
+    「相手を「ねむり」状態にする。」。docs/cards-v0.3b.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる。「ダメージ 0」のワザ
+      （``DamageOnly`` に 0 を渡すこと）とは違い、ダメージの要素がない: ダメージの計算（p.321）をせず、``damage`` の
+      ログもない。p.320 のとおり、説明の最初に省略されている「相手に○○ダメージ。」は、目安の数字があるときのもの。
+      p.38 の解説も「相手の対戦ポケモンを確実にねむり状態にできるのですが、ダメージを与えることはできません」。
+    - コインは投げない（説明にない）。ワザの「失敗」（p.323）もない。
+    - もうねむり状態なら二重にならない。マヒ状態なら、マヒは消えてねむり状態になる。どく状態はそのまま（p.322。
+      ``conditions.put_to_sleep``）。
+    """
+
+    implementation_id = "put_to_sleep"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、ダメージを与えずにねむり状態にするワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、ねむり状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        opponent = 1 - use.player
+        put_to_sleep(state, opponent, state.players[opponent].active, effect=str(use.key))
+
+
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
     """ワザでダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
 
@@ -532,6 +613,8 @@ class SwitchWithBench(TrainerEffect):
       場のポケモン（``PokemonInPlay``）ごと入れ替えるので、カードの uid・場のポケモンの番号も変わらない。
     - ベンチに戻ったもとの対戦ポケモンの特殊状態は、すべて消える（p.322「特殊状態になっているポケモンが
       ベンチに戻ったら…消えてなくなります」。v0.3a。「にげる」と同じ ``conditions.clear_special_conditions``）。
+    - ねむり・マヒ状態（「にげる」を宣言できない。p.311）のポケモンでも入れ替える（p.325「「にげる」がおこなえない
+      状態のポケモンでも、「そのポケモンを入れ替える」と指示されたときは、入れ替えをおこないます」。v0.3b）。
 
     原典で決められないので扱わない（``UnsupportedError``）: 控えポケモンがいないときに使えるか。
     """
@@ -779,14 +862,15 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 
 
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
-# 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり）は、カードのページと照合した最新の説明・出典とともに登録する。
+# 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし）は、
+# カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.3a",
+    "kyuura-engine-0.3b",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -805,6 +889,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         # もう 1 つのワザ「ひのこ」は効果があり、登録していない（カードは未対応のまま）
         ("PMCG1-014", 0, "ひっかく"),
         ("PMCG1-035", 0, "かじる"),  # ピカチュウ（v0.2f）p.125。「ワザ」欄は「●かじる」で説明文なし
+        ("PMCG2-003", 0, "ひっかく"),  # パラス（v0.3b）p.38。「ワザ」欄は「●ひっかく」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -822,6 +907,22 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
             play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
             source="P43 p.19",
+        ),
+        # キャタピー（v0.3b）p.17。相手に 10（目安の数字）、コインが「おもて」なら相手をマヒ状態に
+        AttackKey("PMCG1-002", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "いとをはく",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source="P43 p.17",
+        ),
+        # パラス（v0.3b）p.38。ダメージの目安の数字がない。ダメージを与えず、相手をねむり状態に
+        AttackKey("PMCG2-003", 1): AttackEntry(
+            PutToSleep(),
+            "キノコのほうし",
+            text_ja="相手を「ねむり」状態にする。",
+            play_text_ja="相手を「ねむり」状態にする。",
+            source="P43 p.38",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

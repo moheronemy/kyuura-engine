@@ -24,7 +24,14 @@ from typing import Callable, Sequence
 
 from . import judge
 from .cards import CardPool, can_pay_cost, load_card_pool
-from .conditions import RETREAT, clear_special_conditions
+from .coins import CoinSide, flip_coins
+from .conditions import (
+    RETREAT,
+    clear_special_conditions,
+    paralysis_recovery_turn,
+    recover_from_paralysis,
+    recover_from_sleep,
+)
 from .commands import (
     UNSUPPORTED_COMMANDS,
     check_command_fields,
@@ -48,11 +55,13 @@ from .errors import DeckValidationError, IllegalActionError, StateIntegrityError
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     TERMINAL_PHASES,
+    Asleep,
     CardInstance,
     DataSource,
     GameResult,
     GameState,
     Halt,
+    Paralyzed,
     Phase,
     PlayerState,
     PokemonInPlay,
@@ -60,11 +69,14 @@ from .state import (
     SpecialConditions,
     TrainerInUse,
     freeze_mapping,
+    turn_owner,
 )
 from .zones import draw_cards
 
 PLAYERS = (0, 1)
-# きぜつのあとの決定の続き（context の "then"）: ポケモンチェックのあとなら次の番を始める（v0.3a）
+# きぜつのあとの決定の続き（context の "then"）: ポケモンチェックの中（2 の「どく」）のきぜつのあとの決定（v0.3a）。
+# 交代が終わったら、ポケモンチェックの残り（3 の「ねむり」・4 の「マヒ」。v0.3b）をしてから次の番を始める。
+# 値は v0.3a と同じ（ポケモンチェックの中で、次の番はまだ始まっていないことを表す。書き出しの形を変えないため）
 NEXT_TURN = "next_turn"
 # 対戦準備の段階（番はまだ始まっていない）
 SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
@@ -397,12 +409,14 @@ def _pokemon_check(state: GameState) -> None:
     1. 「ポケモンチェックで○○する」と指示されたこと: 対応カードにない
     2. 「どく」のダメージ: どく状態のポケモンに、それぞれ ``Poison.damage``（通常は 10）ダメージ。ワザによる
        ダメージではない（p.321「8」）ので、弱点・抵抗力・プラスパワー・ディフェンダーは関係しない（p.322）
-    3. 「ねむり」 4. 「マヒ」: v0.3a では特殊状態はどくだけなので、することはない
+    3. 「ねむり」からさめるかどうか・4. 「マヒ」がなおるかどうか: ``_pokemon_check_sleep_and_paralysis``（v0.3b）
 
-    きぜつ: HP 以上のダメージを受けたポケモンはきぜつする（p.323）。ポケモンチェックの手順にきぜつの段階はない
-    （p.323。kyuura knockout_timing）。v0.3a では 3・4 ですることがないので、2 のダメージをすべて与えてから、
-    きぜつ・サイド・判定・交代を行い（ワザのあとと同じ処理。``_after_knockouts``）、そのあとで次の番を始める
-    （決定の ``context`` の ``"then"`` が ``NEXT_TURN``）。
+    きぜつ: HP 以上のダメージを受けたポケモンはきぜつしてトラッシュに置かれ（p.323「16」）、対戦ポケモンが
+    いなくなったら、ベンチから代わりの対戦ポケモンを「すぐに」出す（p.311・p.313）。ポケモンチェックの手順に
+    きぜつの段階はない（p.323。kyuura knockout_timing）。2 のダメージをすべて与えてから、きぜつ・サイド・判定・交代を
+    行い（ワザのあとと同じ処理。``_after_knockouts``）、そのあとで 3・4 に進む（決定の ``context`` の ``"then"`` が
+    ``NEXT_TURN``）。きぜつしたポケモンは場にいないので、3・4 の対象にならない（ねむりのコインも投げない）。
+    代わりに出たポケモンはベンチにいたので特殊状態がない（p.322）。勝敗が決まったら対戦は終わり、3・4 はしない。
 
     両方のプレイヤーのポケモンが「どく」できぜつする場合は、原典で決められない（「同時」かどうか（p.324）、
     同時ならバトル場に出す順番（pp.323〜324 は「今が自分の番でないプレイヤー」が先とするが、ポケモンチェックは
@@ -448,7 +462,6 @@ def _pokemon_check(state: GameState) -> None:
             amount=amount,
             total_damage=pokemon.damage,
         )
-    # 3. 「ねむり」・4. 「マヒ」: v0.3a では、することはない
 
     knocked = [
         (owner, pokemon)
@@ -457,13 +470,75 @@ def _pokemon_check(state: GameState) -> None:
         if pokemon.damage >= state.card_def(pokemon.card).hp
     ]
     if not knocked:
-        _begin_turn(state, 1 - state.current_player)
+        _pokemon_check_sleep_and_paralysis(state)
         return
     prize_takers = []
     for owner, pokemon in knocked:
         _knock_out(state, owner, pokemon, timing="pokemon_check")
         prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤー（p.323）。番のプレイヤーではない
     _after_knockouts(state, prize_takers, then=NEXT_TURN)
+
+
+def _pokemon_check_sleep_and_paralysis(state: GameState) -> None:
+    """ポケモンチェックの 3（ねむり）・4（マヒ）をして、次の番を始める（v0.3b。p.322・p.323）。
+
+    2 の「どく」のあと（きぜつがあれば、サイド・判定・交代のあと）に 1 回だけ呼ぶ。3・4 ではダメージを与えないので、
+    きぜつは起こらず、プレイヤーの決定も出ない。
+
+    3. ねむり状態のポケモンの側のプレイヤーが、コインを 1 枚投げる（``flip_coins``。``source`` は ``"pokemon_check"``、
+       ``effect`` は ``"sleep"``）。「おもて」ならねむり状態から回復し、「うら」ならねむり状態は続く（p.322・p.323）。
+       どちらのプレイヤーの番のあとのポケモンチェックでも投げる（p.322「ポケモンチェックのたびに」）。
+       ログ ``sleep_check``（``player``・``pokemon``・``pokemon_id``・``result``・``recovered``）。
+       両方のプレイヤーの対戦ポケモンがねむり状態なら、どちらが先にコインを投げるか（順番を決める人がいるか）が
+       原典で決まらず、順番で乱数の割り当て（どちらのコインがどの結果になるか）が変わるので、コインを投げる前に
+       対戦を止める（``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER``）。v0.3b の対応カードでは起こらない
+       （docs/pokemon-check-v0.3b.md）。
+    4. マヒ状態のポケモンは、マヒ状態になった番の「次の自分（そのポケモンの持ち主）の番」の終わりのポケモンチェックで
+       自動的に回復する（p.322・p.323）。コインは投げない。回復する番は ``conditions.paralysis_recovery_turn``。
+    """
+    order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
+    # 3. 「ねむり」からさめるかどうか（特殊状態になるのはバトル場のポケモンだけ。p.322）
+    asleep = [
+        (owner, state.players[owner].active)
+        for owner in order
+        if state.players[owner].active is not None and state.players[owner].active.conditions.asleep
+    ]
+    if len(asleep) > 1:
+        _halt(
+            state,
+            Halt(
+                code="UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
+                message=(
+                    "ポケモンチェックで、両方のプレイヤーの対戦ポケモンがねむり状態。p.323 の 3 は「ねむり状態になっている"
+                    "ポケモンの側のプレイヤーは、コインを投げます」とだけ書き、どちらが先に投げるか（順番を決めるプレイヤー）を"
+                    "公式ルール 2000.02.14版から決められない（ポケモンチェックはどちらの番でもない。p.323・p.325）。投げる順番で"
+                    "乱数の割り当てが変わるので、コインを投げる前に対戦を止める。"
+                ),
+                references=("P43 p.322", "P43 p.323", "P43 p.325", "NEO-2000-OFFICIAL-RULES"),
+            ),
+        )
+        return
+    for owner, pokemon in asleep:
+        flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+        recovered = flips.results[0] is CoinSide.HEADS
+        state.add_event(
+            "sleep_check",
+            player=owner,
+            pokemon=pokemon.card,
+            pokemon_id=pokemon.pokemon_id,
+            result=flips.results[0].value,
+            recovered=recovered,
+        )
+        if recovered:
+            recover_from_sleep(state, owner, pokemon)
+    # 4. 「マヒ」がなおるかどうか
+    for owner in order:
+        pokemon = state.players[owner].active
+        if pokemon is None or not pokemon.conditions.paralyzed:
+            continue
+        if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
+            recover_from_paralysis(state, owner, pokemon)
+    _begin_turn(state, 1 - state.current_player)
 
 
 def _halt(state: GameState, halt: Halt) -> None:
@@ -510,13 +585,16 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     """にげる（pp.310-311）。1 番に何度でも。控えがいなければ宣言できない。
 
     にげるエネルギーの数ぶん、そのポケモンについているエネルギーを選んでトラッシュし、控えと入れ替える。
-    ベンチに戻ったポケモンの特殊状態はすべて消える（p.311・p.322）。どく状態でもにげられる（にげられないのは
-    ねむり・マヒ。p.311）。ねむり・マヒ・こんらんは未実装なので、その確認（にげられない・こんらんのコイン）はない。
+    ベンチに戻ったポケモンの特殊状態はすべて消える（p.311・p.322）。どく状態でもにげられる。
+    ねむり状態・マヒ状態のポケモンは「にげる」を宣言できない（p.311・p.322。v0.3b）。宣言できないので、エネルギーを
+    トラッシュする前に拒否する（``POKEMON_ASLEEP``・``POKEMON_PARALYZED``）。「ポケモンいれかえ」はにげるではない
+    （p.325）ので、この制限を受けない。こんらん（にげるときのコイン）は未実装。
     """
     p = _require_turn(state, cmd.player)
     active = p.active
     if not p.bench:
         raise IllegalActionError("NO_BENCH", "控えポケモンがいないので、にげるを宣言できない")
+    _require_not_asleep_or_paralyzed(active, "「にげる」を宣言できない（p.311・p.322）")
     index = p.bench_index(cmd.new_active)
     if index is None:
         raise IllegalActionError("NOT_ON_BENCH", f"{cmd.new_active!r} は自分のベンチにいない")
@@ -545,15 +623,20 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     ワザの処理は、効果の登録表（``state.effects``）に登録された実装が行う。登録がないワザは使えない。
     処理が終わったら（決定待ちがなければ）、きぜつ・サイド・交代のあと、自分の番は自動的に終わる。
 
-    ワザを使えるかの確認（番・ワザの位置・登録・必要なエネルギー）は、ワザの処理の前にすべて済ませる。
+    ワザを使えるかの確認（番・ワザの位置・特殊状態・登録・必要なエネルギー）は、ワザの処理の前にすべて済ませる。
     ワザの説明にあるコイン（v0.2d）は、処理（p.309 の手順 6）の中で投げるので、拒否した操作では乱数を
     使わない（そもそも ``apply_command`` は複製した状態で処理する）。
+
+    p.309 の手順: 1. ワザを使うことができなくなる効果を受けているかをチェック（ねむり・マヒ状態のポケモンは
+    「ワザの使用を宣言できません」（手順 3）。p.322 も「ワザを使うことができません」。v0.3b） → 2. 必要なエネルギー
+    → 3. 宣言 → 4・5（ワザの失敗・こんらん。対応カードにない） → 6. ワザの説明にしたがって処理。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
     attacker_def = state.card_def(attacker.card)
     if not 0 <= cmd.attack_index < len(attacker_def.attacks):
         raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
+    _require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
     attack = attacker_def.attacks[cmd.attack_index]
     effect = state.effects.attack_effect(attacker_def.id, attack)
     if effect is None:
@@ -568,6 +651,14 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     effect.resolve(state, AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index)))
     if state.decision is None:
         _finish_attack(state)
+
+
+def _require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
+    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。"""
+    if pokemon.conditions.asleep:
+        raise IllegalActionError("POKEMON_ASLEEP", f"バトル場のポケモン {pokemon.pokemon_id} はねむり状態なので、{what}")
+    if pokemon.conditions.paralyzed:
+        raise IllegalActionError("POKEMON_PARALYZED", f"バトル場のポケモン {pokemon.pokemon_id} はマヒ状態なので、{what}")
 
 
 def _finish_attack(state: GameState) -> None:
@@ -636,8 +727,9 @@ def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None)
     取る並びに正規化している（相手のポケモンのきぜつのぶんが先。docs/simultaneous-ko-v0.2f.md）。
 
     ``then``: 交代のあとの続き。None ならワザのあと（番を終える ``_end_turn``）、``NEXT_TURN`` ならポケモンチェックの
-    あと（次の番を始める ``_begin_turn``。v0.3a）。決定の ``context`` の ``"then"`` に書いて、再開したときに使う
-    （ポケモンチェックを二度しない・番の終わりを二度しないため）。ワザのあとの決定には書かない（v0.2f と同じ形）。
+    2 のあと（3・4 をして次の番を始める ``_pokemon_check_sleep_and_paralysis``。v0.3a は次の番を始めるだけだった）。
+    決定の ``context`` の ``"then"`` に書いて、再開したときに使う（ポケモンチェックを二度しない・番の終わりを二度しない
+    ため）。ワザのあとの決定には書かない（v0.2f と同じ形）。
     """
     budget = {player: len(state.players[player].prizes) for player in PLAYERS}
     queue = []
@@ -695,8 +787,8 @@ def _next_promotion_or_end(state: GameState, queue: tuple[int, ...], then: str |
         )
         return
     if then == NEXT_TURN:
-        # ポケモンチェックの中のきぜつ・交代が終わった。次の番を始める（番の終わり・ポケモンチェックはもうした）
-        _begin_turn(state, 1 - state.current_player)
+        # ポケモンチェックの 2 のきぜつ・交代が終わった。3・4 をして次の番を始める（番の終わり・2 はもうした。v0.3b）
+        _pokemon_check_sleep_and_paralysis(state)
     else:
         _end_turn(state)
 
@@ -949,7 +1041,7 @@ def check_invariants(state: GameState) -> list[str]:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
             if pokemon.damage >= definition.hp:
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
-            problems.extend(_condition_problems(player, p, pokemon))
+            problems.extend(_condition_problems(state, player, p, pokemon))
         if len(p.bench) > rules.max_bench:
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
         if len(p.prizes) > rules.prize_count:
@@ -1025,8 +1117,14 @@ def check_invariants(state: GameState) -> list[str]:
     return problems
 
 
-def _condition_problems(player: int, p: PlayerState, pokemon: PokemonInPlay) -> list[str]:
-    """場のポケモンの特殊状態（v0.3a）。特殊状態になるのはバトル場のポケモンだけで、ベンチに戻ったら消える（p.311・p.322）。"""
+def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: PokemonInPlay) -> list[str]:
+    """場のポケモンの特殊状態（v0.3a・v0.3b）。特殊状態になるのはバトル場のポケモンだけで、ベンチに戻ったら消える（p.311・p.322）。
+
+    - どく（``poison``）: ``Poison`` で、ダメージは 10 の倍数の正の数
+    - ねむり・マヒ（``exclusive``。v0.3b）: ``Asleep`` か ``Paralyzed`` の 1 つだけ（重複しない。p.322）
+    - マヒ状態になった番は 1 以上・今の番まで。回復する番（``conditions.paralysis_recovery_turn``）が今の番より前なら、
+      そのポケモンチェックで回復していないので違反（期限の過ぎたマヒが残らない。p.323 の 4）
+    """
     conditions = pokemon.conditions
     if not isinstance(conditions, SpecialConditions):
         return [f"ポケモン {pokemon.pokemon_id} の特殊状態 {conditions!r} が SpecialConditions ではない"]
@@ -1034,6 +1132,18 @@ def _condition_problems(player: int, p: PlayerState, pokemon: PokemonInPlay) -> 
     poison = conditions.poison
     if poison is not None and (not isinstance(poison, Poison) or type(poison.damage) is not int or poison.damage <= 0 or poison.damage % 10):
         problems.append(f"ポケモン {pokemon.pokemon_id} のどく状態 {poison!r} が正しくない（ダメージは 10 の倍数の正の数）")
+    exclusive = conditions.exclusive
+    if exclusive is not None and type(exclusive) not in (Asleep, Paralyzed):
+        return problems + [f"ポケモン {pokemon.pokemon_id} のねむり・マヒの項目 {exclusive!r} が Asleep・Paralyzed ではない"]
+    if isinstance(exclusive, Paralyzed):
+        turn = exclusive.turn
+        if type(turn) is not int or not 1 <= turn <= state.turn_number:
+            problems.append(f"ポケモン {pokemon.pokemon_id} がマヒ状態になった番 {turn!r} が正しくない（1〜今の番 {state.turn_number}）")
+        elif state.first_player in PLAYERS and paralysis_recovery_turn(state, player, turn) < state.turn_number:
+            problems.append(
+                f"ポケモン {pokemon.pokemon_id} のマヒ状態（{turn} 番から）は {paralysis_recovery_turn(state, player, turn)} 番の終わりの"
+                f"ポケモンチェックで回復しているはずなのに、{state.turn_number} 番に残っている（p.323）"
+            )
     if conditions.names() and pokemon is not p.active:
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} が特殊状態 {conditions.names()} になっている（p.322）")
     return problems
@@ -1190,11 +1300,6 @@ def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonIn
                     f"ついているトレーナー {attached.card} を使った番（{used_on} 番）が、使ったプレイヤー {attached.player} の番ではない"
                 )
     return problems
-
-
-def turn_owner(state: GameState, turn_number: int) -> int:
-    """``turn_number`` 番目の番のプレイヤー。1 番目は先攻（ジャンケンの勝者）で、交互に進む（p.308・p.309）。"""
-    return state.first_player if turn_number % 2 == 1 else 1 - state.first_player
 
 
 def _trainer_problems(state: GameState) -> list[str]:

@@ -1,6 +1,6 @@
-# 公開 API のレビュー（v0.1〜v0.3a）
+# 公開 API のレビュー（v0.1〜v0.3b）
 
-将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md)・[v0.3a](architecture-v0.3a.md) のアーキテクチャにあります。
+将来、CLI・GUI・Web API・AI プレイヤー・ほかの言語のクライアントから使うことを想定して、公開 API を評価したものです。v0.1 のレビューで書いた提案のうち、v0.2a で実装したものと、まだ提案のままのものを分けて書いています。構造の説明は [v0.2a](architecture-v0.2a.md)・[v0.2b](architecture-v0.2b.md)・[v0.2c](architecture-v0.2c.md)・[v0.2d](architecture-v0.2d.md)・[v0.2e](architecture-v0.2e.md)・[v0.2f](architecture-v0.2f.md)・[v0.3a](architecture-v0.3a.md)・[v0.3b](architecture-v0.3b.md) のアーキテクチャにあります。
 
 ## 1. 今の使い方
 
@@ -19,7 +19,7 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 対戦の記録は「デッキ 2 つ・seed・コマンドの列」（とエンジンの版・kyuura のコミット・効果の登録表の id）で十分です。同じものからは同じ状態になります（Python 3.11〜3.13 で確認）。コインの結果（v0.2d）も seed から決まるので、記録に加える必要はありません（コマンドで結果を指定する方法もない）。状態を辞書からもどす関数（`state_from_dict`）はありません（[アーキテクチャ 6 章](architecture-v0.2a.md#6-乱数)）。
 
-## 2. v0.2a〜v0.3a で加えた公開 API
+## 2. v0.2a〜v0.3b で加えた公開 API
 
 ### v0.2a
 
@@ -112,6 +112,23 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 | `effects.PoisonOnHeads` | どくばりの実装 |
 | ポケモンチェック | 番の終わりのあと、エンジンが自動で行う（どくのダメージ・きぜつ・サイド・交代）。ポケモンチェックの中のきぜつでは、サイド・交代の決定（`take_prize`・`promote_active`）が出て、`context` の `then` が `"next_turn"`（`engine.NEXT_TURN`） |
 | `state_to_dict(state, format_version=5)` | 場のポケモンごとの `special_conditions` を加えた形 |
+
+コマンド・段階・決定の種類は増やしていません。
+
+### v0.3b
+
+| もの | 内容 |
+|---|---|
+| キャタピー（PMCG1-002）の「いとをはく」（`UseAttack(…, 0)`） | 相手に 10 → コイン 1 枚 → 「おもて」なら相手をマヒ状態に |
+| パラス（PMCG2-003）の「ひっかく」「キノコのほうし」（`UseAttack(…, 0)`・`UseAttack(…, 1)`） | ひっかく 20。キノコのほうしはダメージを与えず、相手をねむり状態に |
+| `Asleep`・`Paralyzed`（`kyuura_engine` から） | `SpecialConditions.exclusive` の値（ねむり・マヒ。たがいに重複しない）。`Paralyzed.turn` はマヒ状態になった番 |
+| `SpecialConditions.asleep`・`paralyzed`・`names()` | 状態を調べる性質 |
+| `kyuura_engine.conditions` | `put_to_sleep`・`paralyze`・`recover_from_sleep`・`recover_from_paralysis`・`paralysis_recovery_turn`・`paralysis_problem`、理由の定数 `SLEEP_COIN`・`PARALYSIS_END`・`REPLACED`（実装を加える人向け） |
+| `effects.ParalyzeOnHeads`・`PutToSleep` | いとをはく・キノコのほうしの実装 |
+| ワザ・にげるの拒否 | `IllegalActionError` の `POKEMON_ASLEEP`・`POKEMON_PARALYZED`（状態も乱数も変えない） |
+| ポケモンチェック | 2（どく）→ きぜつ・サイド・交代 → 3（ねむりのコイン。持ち主が投げる）→ 4（マヒの回復）→ 次の番。ポケモンチェックの中の決定の `then` は v0.3a と同じ `"next_turn"` |
+| `state.turn_owner` | 番の番号から番のプレイヤー（`engine.turn_owner` と同じもの） |
+| `state_to_dict(state, format_version=5)` | `special_conditions` に `sleep: {}`・`paralysis: {"turn": n}` が加わった |
 
 コマンド・段階・決定の種類は増やしていません。
 
@@ -231,6 +248,20 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - 不変条件が増えた（特殊状態・番の進行・決定の続き）。ログを書きかえた状態や、ベンチのポケモンに特殊状態を付けた状態は `StateIntegrityError`
 - 新しいクライアントへの推奨: 状態の辞書は形式 5 を使う。どくのダメージはログの `poison_damage` で、ワザの `damage` とは別に表示する。決定の `context` の `then` が `"next_turn"` なら、ポケモンチェックの中（次の番はまだ始まっていない）。
 
+### v0.3a → v0.3b
+
+- ねむり・マヒを使わない対戦の結果・ログ・乱数の状態は変わりません。v0.3a のコミット `1577bff` と、特殊状態を使わない既存のデッキ 7 組 × 40 seed、ビードルのデッキ × 40 seed、どくを直さないビードルのミラー × 400 seed（`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` で止まる 5 局を含む）の 720 局（57,901 コマンド）を同じ手順で対戦させて比べ、終わった状態（形式 4・5。登録表の id を除く）がすべて同じでした。ビードルの 20 局は途中のすべての状態（ポケモンチェックの中の決定を含む）も同じでした。
+- v0.3a のテスト 522 件を v0.3b のコードで実行すると、失敗するのは登録表の id・登録したワザ・カードの組を確かめる 5 件だけ（[architecture-v0.3b.md 12 章](architecture-v0.3b.md)）。
+- 互換でない変更:
+  - 効果の登録表の id が `kyuura-engine-0.3b` になり、ワザの登録にキャタピーのいとをはく（PMCG1-002#0）、パラスのひっかく（PMCG2-003#0）・キノコのほうし（PMCG2-003#1）が加わった。写しの対戦用のカードの組に `pool_v0_3b`
+  - 形式 5 の `special_conditions` に `sleep`・`paralysis` の項目が加わった（どくだけの状態は v0.3a と同じ形）。v0.3a の形式 5 だけを知るクライアントは、知らない項目があれば拒否すること
+  - `SpecialConditions` の項目に `exclusive` が加わった（キーワード引数。既定は None）
+  - エラーコード `POKEMON_ASLEEP`・`POKEMON_PARALYZED`（`IllegalActionError`）、`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`（`UnsupportedError`）、止めるコード `UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`（`Phase.HALTED`）が加わった。後の 2 つは対応カードでは起こらない
+  - ポケモンチェックの中の決定（`then = "next_turn"`）のあと、次の番の前に 3・4 を行う（ねむりのコインを投げることがある）
+  - `GameState.add_event` に `turn` の項目を渡すと `ValueError`（ログの番を上書きさせない）
+  - 不変条件が増えた（`exclusive` の型、マヒの番、期限の過ぎたマヒ）
+- 新しいクライアントへの推奨: ワザ・にげるのボタンは `special_conditions` の `sleep`・`paralysis` を見て無効にする（送っても拒否される）。ねむりのコインはログの `coin_flip`（`source: "pokemon_check"`）と `sleep_check` で表示する。マヒの回復する番は `special_condition` の `recovery_turn`（または `paralysis.turn` と `first_player`）で表示する。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -276,8 +307,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 | 例外 | コード |
 |---|---|
-| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
+| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_TRAINER（v0.2b） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -294,6 +325,8 @@ v0.2d: `coin_flip`（`player`・`source`＝`attack`・`effect`＝`AttackKey` の
 v0.2f: `damage` に、相手の対戦ポケモン以外へのダメージのときだけ `target`（`self`）・`pokemon_id`（受けたポケモン）・`effect`（ワザの識別子。例 `PMCG1-035#1`）。`player` は受けたポケモンの持ち主（自分へのダメージならワザを使ったプレイヤー）。`knock_out` に、1 つのワザで 2 匹以上きぜつしたときだけ `simultaneous`（`true`）
 
 v0.3a: `special_condition`（`player`＝特殊状態になったポケモンの持ち主・`pokemon`・`pokemon_id`・`condition`＝`poison`・`damage`・`effect`＝効果の識別子、もうその状態なら `already`）, `special_conditions_removed`（`player`・`pokemon`・`pokemon_id`・`conditions`・`reason`＝`retreat`/`switch`）, `poison_damage`（ポケモンチェックの「どく」。`player`・`pokemon`・`pokemon_id`・`amount`・`total_damage`。ワザの `damage` とは別）。`knock_out` に、ポケモンチェックの中のきぜつなら `timing`（`pokemon_check`）。`halted` はポケモンチェックで止めたときも出る（`code` だけ）。どく状態のポケモンがいなければ、`pokemon_check` のあとに新しいイベントは出ない
+
+v0.3b: `special_condition` の `condition` に `sleep`・`paralysis`（マヒなら `paralyzed_turn`＝マヒ状態になった番・`recovery_turn`＝回復する番）。`special_conditions_removed` の `reason` に `sleep_coin`（ねむりのコインの「おもて」）・`paralysis_end`（マヒの回復）・`replaced`（ねむり・マヒが置きかわった）。`coin_flip` の `source` に `pokemon_check`（`effect`＝`sleep`、`player`＝ねむりのポケモンの持ち主、`card`・`pokemon_id`＝ねむりのポケモン）。`sleep_check`（`player`・`pokemon`・`pokemon_id`・`result`・`recovered`）。ねむり・マヒのポケモンがいなければ、v0.3a と同じログ
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

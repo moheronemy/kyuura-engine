@@ -2,6 +2,8 @@
 
 特殊状態（どく・ねむり・マヒ・こんらん）の共通の規定と「どく」について、原典で確かめたこと、決められなかったこと、実装、テストを対応づけた記録です。v0.3a で動くのは「どく」だけです。ポケモンチェック（いつ・どの順に処理するか、きぜつ）は [pokemon-check-v0.3a.md](pokemon-check-v0.3a.md)、カード（ビードル「どくばり」）は [weedle-v0.3a.md](weedle-v0.3a.md)、設計は [architecture-v0.3a.md](architecture-v0.3a.md) にあります。
 
+> v0.3b で、ねむり・マヒ（`SpecialConditions.exclusive`）を加えました（[sleep-paralysis-v0.3b.md](sleep-paralysis-v0.3b.md)）。この文書は v0.3a の時点の記録です。
+
 ## 0. 対象時期と資料
 
 | 項目 | 内容 |

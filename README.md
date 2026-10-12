@@ -9,7 +9,8 @@
 - v0.2d: コイントス（p.319）と、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を実装した。コインは対戦の乱数（seed から作る）だけで決まり、1 枚ごとにログに残る。[docs/coin-rules-v0.2d.md](docs/coin-rules-v0.2d.md)（コイントスの原典照合）、[docs/coin-attacks-v0.2d.md](docs/coin-attacks-v0.2d.md)（みだれづき）、[docs/architecture-v0.2d.md](docs/architecture-v0.2d.md)（設計）
 - v0.2e: ディフェンダーを実装し、自分の場のポケモンを選んでつけるトレーナー・防御側のダメージ変更（p.321 の 7 段階）・相手の番の終わりまで続く有効期限を加えた。[docs/defender-v0.2e.md](docs/defender-v0.2e.md)（原典照合）、[docs/architecture-v0.2e.md](docs/architecture-v0.2e.md)（設計）
 - v0.2f: ワザで自分に与えるダメージ（ダメージの発生源と受けるポケモンを分け、p.321 の順番で計算する）と、1 つのワザで両方のプレイヤーのポケモンがきぜつする同時のきぜつ（サイド・勝ち負け・交代の順番）を、ピカチュウの「かじる」「でんげき」とともに実装した。[docs/self-damage-v0.2f.md](docs/self-damage-v0.2f.md)（自分へのダメージの原典照合）、[docs/simultaneous-ko-v0.2f.md](docs/simultaneous-ko-v0.2f.md)（同時のきぜつ）、[docs/pikachu-v0.2f.md](docs/pikachu-v0.2f.md)（カード）、[docs/architecture-v0.2f.md](docs/architecture-v0.2f.md)（設計）
-- v0.3a（今の版）: 特殊状態の共通基盤と「どく」、番と番のあいだにエンジンが自動で行うポケモンチェック（どくのダメージ・それによるきぜつ・サイド・交代のあとで次の番）を、ビードルの「どくばり」とともに実装した。にげる・ポケモンいれかえでどくが消える。[docs/special-conditions-v0.3a.md](docs/special-conditions-v0.3a.md)（特殊状態・どくの原典照合）、[docs/pokemon-check-v0.3a.md](docs/pokemon-check-v0.3a.md)（ポケモンチェック）、[docs/weedle-v0.3a.md](docs/weedle-v0.3a.md)（カード）、[docs/architecture-v0.3a.md](docs/architecture-v0.3a.md)（設計）
+- v0.3a: 特殊状態の共通基盤と「どく」、番と番のあいだにエンジンが自動で行うポケモンチェック（どくのダメージ・それによるきぜつ・サイド・交代のあとで次の番）を、ビードルの「どくばり」とともに実装した。にげる・ポケモンいれかえでどくが消える。[docs/special-conditions-v0.3a.md](docs/special-conditions-v0.3a.md)（特殊状態・どくの原典照合）、[docs/pokemon-check-v0.3a.md](docs/pokemon-check-v0.3a.md)（ポケモンチェック）、[docs/weedle-v0.3a.md](docs/weedle-v0.3a.md)（カード）、[docs/architecture-v0.3a.md](docs/architecture-v0.3a.md)（設計）
+- v0.3b（今の版）: 「ねむり」「マヒ」と、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの自動回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに実装した。どくのきぜつ・サイド・交代のあとで 3・4 を行う。原典で決められない場合（両方の対戦ポケモンがねむり、マヒの再付与で回復する番が変わる）は、コインの前に止める。[docs/sleep-paralysis-v0.3b.md](docs/sleep-paralysis-v0.3b.md)（ねむり・マヒの原典照合）、[docs/pokemon-check-v0.3b.md](docs/pokemon-check-v0.3b.md)（ポケモンチェック）、[docs/cards-v0.3b.md](docs/cards-v0.3b.md)（カード）、[docs/architecture-v0.3b.md](docs/architecture-v0.3b.md)（設計）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -214,7 +215,7 @@ state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), state.play
 state = apply_command(state, UseAttack(0, 0))   # どくばり: 相手に 10 → コイン → 「おもて」ならどく。番が終わり、ポケモンチェック
 print([e["kind"] for e in state.log[-9:]])
 # ['attack', 'damage', 'coin_flip', 'special_condition', 'turn_end', 'pokemon_check', 'poison_damage', 'turn_start', 'draw']
-print(state.players[1].active.damage, state.players[1].active.conditions)   # 20 SpecialConditions(poison=Poison(damage=10))
+print(state.players[1].active.damage, state.players[1].active.conditions)   # 20 SpecialConditions(poison=Poison(damage=10), exclusive=None)
 state = apply_command(state, EndTurn(1))        # 相手の番の終わりのポケモンチェックでも 10
 print(state.players[1].active.damage)   # 30
 ```
@@ -224,6 +225,51 @@ print(state.players[1].active.damage)   # 30
 - どく状態のポケモンがにげる・ポケモンいれかえでベンチに戻ると、どくは消えます（p.311・p.322）。どくは積み重ならず、自然には回復しません。きずぐすりでも消えません。
 - 両方のプレイヤーのポケモンが同じポケモンチェックのどくできぜつする場合は、原典で決められないので対戦を止めます（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`。[docs/pokemon-check-v0.3a.md](docs/pokemon-check-v0.3a.md) 3 章）。
 - 特殊状態は形式 5 の `state_to_dict(state, format_version=5)` で書き出せます（形式 1〜4 は特殊状態があると `ValueError`）。
+
+### ねむり・マヒ（v0.3b）
+
+キャタピー（PMCG1-002）の「いとをはく」は、相手の対戦ポケモンに 10 ダメージを与え、コインを投げて「おもて」なら相手をマヒ状態にします（p.17）。パラス（PMCG2-003）の「キノコのほうし」は、ダメージを与えずに相手をねむり状態にします（p.38）。ねむり・マヒのポケモンはワザを使えず、にげるを宣言できません（p.309・p.311・p.322）。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, IllegalActionError, PlaceStartingPokemon, ReportJankenResult, UseAttack,
+    apply_command, expand_decklist, new_game,
+)
+
+deck0 = expand_decklist({"PMCG1-002": 4, "PMCG2-003": 4, "PMCG1-018": 4, "PMCG1-060": 4, "PMCG1-037": 4,
+                         "PMCG1-097": 40})   # キャタピー（PMCG1-002）・パラス（PMCG2-003）各 4 枚、草エネルギー 40 枚
+deck1 = expand_decklist({"PMCG1-025": 4, "PMCG1-029": 4, "PMCG1-052": 4, "PMCG1-053": 4, "PMCG1-058": 4,
+                         "PMCG1-099": 20, "PMCG1-102": 20})
+state = new_game(deck0, deck1, seed=1)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+state = apply_command(state, PlaceStartingPokemon(0, in_hand(0, "PMCG1-002")))   # キャタピーをバトル場に
+basics = [uid for uid in state.players[1].hand if state.card_def(uid).is_basic_pokemon]
+state = apply_command(state, PlaceStartingPokemon(1, basics[0], tuple(basics[1:6])))
+state = apply_command(state, ReportJankenResult(winner=0))
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), state.players[0].active.card))
+state = apply_command(state, UseAttack(0, 0))   # いとをはく: 相手に 10 → コイン → 「おもて」ならマヒ
+print([e["kind"] for e in state.log[-8:]])
+# ['attack', 'damage', 'coin_flip', 'special_condition', 'turn_end', 'pokemon_check', 'turn_start', 'draw']
+print(state.players[1].active.conditions)   # SpecialConditions(poison=None, exclusive=Paralyzed(turn=1))
+try:
+    apply_command(state, UseAttack(1, 0))   # マヒのあいだはワザを使えない（にげるも同じ）
+except IllegalActionError as error:
+    print(error.code)   # POKEMON_PARALYZED
+state = apply_command(state, EndTurn(1))   # 持ち主の次の番（2 番）の終わりのポケモンチェックで自動的に回復
+print([(e["kind"], e.get("reason")) for e in state.log if e["kind"] == "special_conditions_removed"])
+# [('special_conditions_removed', 'paralysis_end')]
+```
+
+- マヒは、マヒ状態になった番の「次の自分（そのポケモンの持ち主）の番」の終わりのポケモンチェックで、コインなしで回復します（p.323）。マヒ状態は、なった番（`Paralyzed.turn`）を持ち、回復する番は持ち主の番を数えて決めます（番の数 + 1 ではない）。
+- ねむりは、ポケモンチェックのたびに持ち主がコインを投げ、「おもて」なら回復します（p.322・p.323）。ログは `coin_flip`（`source: "pokemon_check"`、`effect: "sleep"`）と `sleep_check`（`recovered`）です。
+- ねむり・マヒ・こんらんは重複しません。マヒのポケモンがねむりになったら、マヒは消えてねむりになります（p.322。ログ `special_conditions_removed` の `reason` は `replaced`）。どくはほかの特殊状態と重複します。
+- ねむり・マヒのポケモンでも、ポケモンいれかえでは入れ替えます（p.325）。ベンチに戻ったら特殊状態はすべて消えます（p.311・p.322）。エネルギーをつける・ベンチに出す・トレーナーを使うことはできます（p.322）。
+- ポケモンチェックでは、どくのダメージ（2）→ どくのきぜつ・サイド・交代 → ねむりのコイン（3）→ マヒの回復（4）→ 次の番の順に行います。どくできぜつしたポケモンのねむりのコインは投げません（[docs/pokemon-check-v0.3b.md](docs/pokemon-check-v0.3b.md)）。
+- 両方の対戦ポケモンがねむりのときは、どちらが先にコインを投げるかが原典で決まらないので、コインを投げる前に対戦を止めます（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`。対応カードでは起こらない）。
+- ねむり・マヒは形式 5（`special_conditions` の `sleep: {}`・`paralysis: {"turn": n}`）で書き出せます。
 
 ### 自分へのダメージと同時のきぜつ（v0.2f）
 
@@ -306,8 +352,8 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | `ReportJankenResult(winner)` | 対戦準備: ジャンケンの勝者（先攻） |
 | `PlayBasicToBench(player, card)` | 手札のたねポケモンをベンチに出す |
 | `AttachEnergy(player, energy, target)` | エネルギーをつける（1 番に 1 枚） |
-| `Retreat(player, discard, new_active)` | にげる（何度でも） |
-| `UseAttack(player, attack_index)` | ワザを使う（番が終わる）。コインを投げるワザ（v0.2d・v0.2f・v0.3a）は、エンジンがコインを投げる。番の終わりのあと、エンジンがポケモンチェックをする（v0.3a） |
+| `Retreat(player, discard, new_active)` | にげる（何度でも）。ねむり・マヒのポケモンは宣言できない（`POKEMON_ASLEEP`・`POKEMON_PARALYZED`。v0.3b） |
+| `UseAttack(player, attack_index)` | ワザを使う（番が終わる）。コインを投げるワザ（v0.2d・v0.2f・v0.3a・v0.3b）は、エンジンがコインを投げる。番の終わりのあと、エンジンがポケモンチェックをする（v0.3a）。ねむり・マヒのポケモンは使えない（v0.3b） |
 | `EndTurn(player)` | ワザを使わずに番を終える（そのあとポケモンチェック。v0.3a） |
 | `TakePrize(player, index)` | 相手のポケモンがきぜつしたとき、サイドを 1 枚選んで取る（自分のワザで自分のポケモンがきぜつしたら相手が取る。v0.2f） |
 | `PromoteActive(player, pokemon)` | バトル場のポケモンがいなくなったとき、ベンチから出す |
@@ -327,7 +373,7 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 - ワザは必要なエネルギー（無色はどの色でも）があれば使え、使うと番が終わる
 - ダメージ計算: 基本 → 弱点（2 倍）→ 抵抗力（−30）。0 以下なら 0
 - HP 以上のダメージできぜつ、サイドを 1 枚選んで取る、ベンチから代わりを出す
-- 特殊状態（v0.3a）: どくだけ。バトル場のポケモンだけがなり、ベンチに戻ったら消える。ポケモンチェック（番と番のあいだ。指示されたこと → どく → ねむり → マヒ。p.323）で、どくは 10（弱点・抵抗力・プラスパワー・ディフェンダーは関係しない。p.322）
+- 特殊状態（v0.3a・v0.3b）: どく・ねむり・マヒ（こんらんは未実装）。バトル場のポケモンだけがなり、ベンチに戻ったら消える。ねむり・マヒ・こんらんは重複せず、どくはほかと重複する（p.322）。ねむり・マヒはワザ・にげるができない（p.309・p.311）。ポケモンチェック（番と番のあいだ。指示されたこと → どく → ねむり → マヒ。p.323）で、どくは 10（弱点・抵抗力・プラスパワー・ディフェンダーは関係しない。p.322）、ねむりは持ち主のコインで回復、マヒは持ち主の次の番の終わりに回復
 - 自分へのワザのダメージ（v0.2f）: p.320 のワザの要素の順番、p.321 の計算の順番。きぜつしたらきぜつしたポケモンの相手側がサイドを取る（p.323）。1 つのワザで複数がきぜつしたら同時（p.324）。両方の対戦ポケモンがきぜつしたら番でないプレイヤーが先に出す（pp.323〜324）
 - 勝ち負け: サイドを取り終えた、バトル場に出せるポケモンがいない、番の最初に山札がない。同時に満たしたら p.311 の表
 - トレーナーカード（v0.2b）: 自分の番に何枚でも使える、使ったらトラッシュ、使っている最中はほかのことができない（p.310）。効果で引くときは山札が足りなくても負けにならない（p.312）
@@ -337,7 +383,7 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 
 ## 現在の対応カード
 
-第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
+第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
 
 | id | カード | id | カード |
 |---|---|---|---|
@@ -348,6 +394,7 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | PMCG1-037 | ビリリダマ | PMCG1-097〜102 | 草・炎・水・雷・超・闘エネルギー |
 | PMCG1-052 | ディグダ | PMCG1-061 | ドードー（v0.2d。みだれづき: コイン 2 枚、「おもて」の数×10。p.231） |
 | PMCG1-035 | ピカチュウ（v0.2f。かじる 10、でんげき 30・コインが「うら」なら自分にも 10。p.125） | PMCG1-004 | ビードル（v0.3a。どくばり 10・コインが「おもて」なら相手をどく状態に。p.19） |
+| PMCG1-002 | キャタピー（v0.3b。いとをはく 10・コインが「おもて」なら相手をマヒ状態に。p.17） | PMCG2-003 | パラス（v0.3b。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に。p.38） |
 
 | id | トレーナー（v0.2b） | 処理（『オフィシャルブック2000』p.254 の最新の説明） | 原典で決められないため止める場合 |
 |---|---|---|---|
@@ -357,28 +404,28 @@ print([e for e in state.log if e["kind"] == "damage"][-1]["steps"])   # (('1 基
 | PMCG1-079 | ディフェンダー（v0.2e。p.257） | 自分の場のポケモンを1匹選んでつけ、次の相手の番の終わりにトラッシュ。ついているポケモンがワザで受けるダメージを 7 段階で −20 | なし |
 | PMCG1-081 | プラスパワー（v0.2c。p.257） | 自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュ。ついているポケモンのワザが対戦ポケモンに与えるダメージを 5 段階で +10（控えへのダメージは変えない） | なし |
 
-これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）だけを、照合した説明文とともに登録しています。
+これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、進化、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）だけを、照合した説明文とともに登録しています。
 
 ## 未実装の機能
 
-進化・退化、特殊状態のうちねむり・マヒ・こんらん（どくは v0.3a）、ポケモンチェックの 1（指示されたこと）・3・4、特殊などく、ポケモンパワー、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
+進化・退化、特殊状態のうちこんらん（どくは v0.3a、ねむり・マヒは v0.3b）、ポケモンチェックの 1（指示されたこと）、特殊などく、ポケモンパワー、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
 
-原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合と、自分のタイプが自分の弱点・抵抗力のタイプのポケモンの自分へのダメージ（v0.2f。対応カードにはない）（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。
+原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合と、自分のタイプが自分の弱点・抵抗力のタイプのポケモンの自分へのダメージ（v0.2f。対応カードにはない）（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。
 
 ## ディレクトリ
 
 ```
 kyuura_engine/
   rules.py       ルールの組（2000.02.14版の数値）と根拠の一覧
-  conditions.py  特殊状態（どく）を付ける・ベンチに戻ったら消す。v0.3a
+  conditions.py  特殊状態（どく・ねむり・マヒ）を付ける・置きかえる・回復する・ベンチに戻ったら消す。v0.3a・v0.3b
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばりの実装、ワザのダメージを与える処理（相手・自分。v0.2f）。v0.2a〜v0.3a
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうしの実装、ワザのダメージを与える処理（相手・自分。v0.2f）。v0.2a〜v0.3b
   coins.py       コイントス（対戦の乱数で決め、1 枚ごとにログに残す）。v0.2d
   deck.py        デッキの検査
-  state.py       ゲームの状態（ゾーン、場のポケモン、特殊状態（v0.3a）、番、結果）
+  state.py       ゲームの状態（ゾーン、場のポケモン、特殊状態（v0.3a・v0.3b）、番、結果）
   commands.py    プレイヤーの操作
   decisions.py   保留中の決定（出す・確かめる）。v0.2a
-  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a）
+  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）
   damage.py      ワザのダメージ計算（p.321 の 8 段階。2・5〜8 段階の変更効果は v0.2c）
   judge.py       勝ち負けの判定（p.311 の表）
   serialize.py   状態を辞書にする（形式 1〜5）
@@ -390,5 +437,5 @@ scripts/extract_kyuura_cards.py  kyuura から写しを作る
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
 tests/                           自動テスト（unittest）
 tests/fixtures/                  v0.1 の対戦結果の参照データ（互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.3a のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードルの原典照合
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.3b のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラスの原典照合
 ```

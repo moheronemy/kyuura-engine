@@ -88,8 +88,9 @@ class SerializeFormatTest(unittest.TestCase):
                     self.assertEqual({k: v for k, v in b.items() if k != "pokemon_id"}, a)
                     self.assertGreaterEqual(b["pokemon_id"], 1)
         # 登録表の id は、登録を加えるたびに変わる（v0.2b: "kyuura-engine-0.2b"、v0.2c: プラスパワー、
-        # v0.2d: ドードーの「みだれづき」、v0.2e: ディフェンダー、v0.2f: ピカチュウ、v0.3a: ビードル）
-        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.3a"))
+        # v0.2d: ドードーの「みだれづき」、v0.2e: ディフェンダー、v0.2f: ピカチュウ、v0.3a: ビードル、
+        # v0.3b: キャタピー・パラス）
+        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.3b"))
         json.dumps(v2)
 
     def test_decision_is_serialized(self):

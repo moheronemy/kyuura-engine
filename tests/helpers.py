@@ -33,7 +33,17 @@ from kyuura_engine import (
     new_game,
 )
 from kyuura_engine.rules import RULES_2000_02_14
-from kyuura_engine.state import CardInstance, DataSource, PlayerState, Poison, PokemonInPlay, SpecialConditions, freeze_mapping
+from kyuura_engine.state import (
+    ASLEEP,
+    CardInstance,
+    DataSource,
+    Paralyzed,
+    PlayerState,
+    Poison,
+    PokemonInPlay,
+    SpecialConditions,
+    freeze_mapping,
+)
 
 # カード id（kyuura data/cards.json の id）
 PONYTA = "PMCG1-016"
@@ -56,6 +66,8 @@ CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひの�
 DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
 PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、でんげき 30・「うら」なら自分にも 10）
 WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「おもて」なら相手をどく状態に）
+CATERPIE = "PMCG1-002"  # キャタピー（v0.3b で対応。いとをはく 10・「おもて」なら相手をマヒ状態に）
+PARAS = "PMCG2-003"  # パラス（v0.3b で対応。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に）
 VENUSAUR = "PMCG1-011"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
@@ -129,8 +141,10 @@ def build_test_state(
     """テスト専用: 正式な対戦開始を通さずに MAIN の盤面を作る。
 
     players[i] のキー（どれも省略できる。active は必須）:
-      active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ}
-              （"poison" はバトル場のポケモンのどく状態。v0.3a。ベンチに書くと不変条件で拒否される）
+      active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
+              "paralysis": マヒ状態になった番}
+              （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
+              ベンチに書くと不変条件で拒否される。"sleep" と "paralysis" は重複しないので両方は書けない）
       bench:  active と同じ形のリスト
       hand / deck / discard: カード id のリスト（deck は先頭が一番上）
       prizes: カード id のリスト、または枚数（枚数なら炎エネルギーで埋める）
@@ -153,8 +167,16 @@ def build_test_state(
         next_pokemon_id[0] += 1
         result.energy = [new_uid(e, owner) for e in spec.get("energy", [])]
         result.damage = spec.get("damage", 0)
-        if "poison" in spec:
-            result.conditions = SpecialConditions(poison=Poison(spec["poison"]))
+        exclusive = None
+        if spec.get("sleep"):
+            exclusive = ASLEEP
+        if "paralysis" in spec:
+            if exclusive is not None:
+                raise ValueError("ねむりとマヒは重複しない（p.322）")
+            exclusive = Paralyzed(turn=spec["paralysis"])
+        poison = Poison(spec["poison"]) if "poison" in spec else None
+        if poison is not None or exclusive is not None:
+            result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
         return result
 
     states = []
@@ -200,13 +222,17 @@ def active(state: GameState, player: int) -> PokemonInPlay:
 
 
 def best_affordable_attack(state: GameState, player: int) -> int | None:
+    """使えるワザのうち、ダメージの目安の数字がいちばん大きいもの（同じなら後のワザ）。
+
+    ダメージの目安の数字がないワザ（パラスの「キノコのほうし」。v0.3b）は 0 として比べる（それまでの対応カードには
+    ないので、既存の対戦の手順は変わらない）。"""
     pokemon = state.players[player].active
     definition = state.card_def(pokemon.card)
     provided = state.energy_types(pokemon)
     best = None
     for attack in definition.attacks:
         if attack.supported and can_pay_cost(attack.cost, provided):
-            if best is None or attack.damage >= definition.attacks[best].damage:
+            if best is None or (attack.damage or 0) >= (definition.attacks[best].damage or 0):
                 best = attack.index
     return best
 

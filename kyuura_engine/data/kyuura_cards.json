@@ -80,6 +80,10 @@
   "pool_v0_3a": [
     "PMCG1-004"
   ],
+  "pool_v0_3b": [
+    "PMCG1-002",
+    "PMCG2-003"
+  ],
   "reference_only": [
     "PMCG1-011",
     "PMCG1-014",
@@ -1523,6 +1527,167 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-006-beedle/"
+      }
+    },
+    {
+      "id": "PMCG1-002",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "キャタピー",
+        "en": "Caterpie"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          10
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いとをはく",
+              "en": "String Shot"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-002",
+        "pokemontcg": [
+          "base1-45"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-004-caterpie/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-004-caterpie/"
+      }
+    },
+    {
+      "id": "PMCG2-003",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "パラス",
+        "en": "Paras"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          46
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": "Scratch"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "キノコのほうし",
+              "en": "Spore"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-003",
+        "pokemontcg": [
+          "base2-59"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-008-paras/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-008-paras/"
       }
     },
     {
