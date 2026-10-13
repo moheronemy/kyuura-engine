@@ -10,6 +10,7 @@
     python3 tools/stress_engine.py --scenario alakazam --scenario alakazam_mixed    # v0.7（ダメージスワップ）
     python3 tools/stress_engine.py --scenario muk --scenario muk_mixed              # v0.8（かがくへんかガス）
     python3 tools/stress_engine.py --scenario haunter --scenario haunter_muk        # v0.9（とうめい）
+    python3 tools/stress_engine.py --scenario machamp --scenario machamp_mixed      # v0.10（はんげき）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -46,6 +47,13 @@
   確かめ、判定・「おもて」「うら」・受けなかった要素・ガスや特殊状態で消えていたゴーストへのワザを数える。``UNRESOLVED_EVADED_EFFECT_COIN``
   で止めたら、相手の対戦ポケモンの「とうめい」がはたらいていることを確かめる。エナジーへんかんの決定には、駆動が 0〜2 枚で答える（0 枚は
   ``UNRESOLVED_RECOVER_ZERO_ENERGY`` で止まり、状態は変わらない）。``POWER_USERS`` の最後に加えたので、ゴーストのいない組の操作は v0.8 と同じ。
+- v0.10: カイリキーの組（``machamp``・``machamp_mixed``。``machamp_mixed`` は両方のデッキにカイリキー、一方にベトベトン、もう一方にゴースト）を
+  加えた。自分の場にカイリキーがいる番は、ときどき「はんげき」の使用を試す（自動的にはたらいて宣言しないので ``POWER_NOT_DECLARABLE`` に
+  なるはず）。ワザ（と決定の答え）を受け付けるたびに、ワザの前の場の ``working_counterattack_power``（エンジンの公開の問い合わせ）と比べて、
+  相手のワザのダメージ（0 より大きい）を、はたらいている「はんげき」を持つポケモンが受けたときだけ ``counterattack``（か
+  ``counterattack_skipped``）があり、与える相手がワザを使ったポケモン・量が 10 であることを確かめ、回数・きぜつ・きぜつしたカイリキーの
+  反撃・ベンチ・ガスや特殊状態で消えていたカイリキーへのワザを数える。``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`` で止めたら、相手の
+  対戦ポケモンの「はんげき」がはたらいていることを確かめる。``POWER_USERS`` の最後に加えたので、カイリキーのいない組の操作は v0.9 と同じ。
 """
 
 from __future__ import annotations
@@ -140,12 +148,31 @@ POWER_SCENARIOS += (
                      driver.BILL: 2, PSYCHIC: 25, driver.GRASS: 10},
                     tuple(range(6)), tags=("ゴースト", "とうめい", "ベトベトン", "かがくへんかガス", "特殊状態")),
 )
+MACHOKE, MACHAMP = "PMCG1-055", "PMCG1-057"
+POWER_SCENARIOS += (
+    # カイリキー（v0.10。はんげき）: 相手はダメージだけ（ケーシィの弱点 2 倍・ユンゲラー）・でんげき（ピカチュウ。自分へのダメージ）・
+    # ふきとばし・メガドレイン（バタフリー）・やどりぎのタネ・どくのこな（フシギダネ・フシギソウ）・いとをはく（キャタピー）・
+    # みだれづき（ドードー）・ディフェンダー・プラスパワー
+    driver.Scenario("machamp", {driver.MACHOP: 4, MACHOKE: 4, MACHAMP: 4, driver.HITMONCHAN: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 2, driver.PLUSPOWER: 2, driver.DEFENDER: 2, driver.FIGHTING: 35},
+                    {driver.PIKACHU: 3, driver.CATERPIE: 3, driver.METAPOD: 2, driver.BUTTERFREE: 2, BULBASAUR: 3, IVYSAUR: 2, ABRA: 3,
+                     KADABRA: 2, driver.DODUO: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, driver.GRASS: 18,
+                     driver.LIGHTNING: 6, PSYCHIC: 8},
+                    tuple(range(6)), tags=("カイリキー", "はんげき", "メガドレイン", "ふきとばし", "特殊状態")),
+    # 両方のデッキにカイリキー（ミラー。「はんげき」のダメージで「はんげき」ははたらかない）、一方にベトベトン（かがくへんかガスで消える）・
+    # ロコン（こんらん）、もう一方にゴースト（とうめい・抵抗力。「はんげき」は受ける）・ビードル（どく）・パラス（ねむり）
+    driver.Scenario("machamp_mixed", {driver.MACHOP: 4, MACHOKE: 3, MACHAMP: 3, GRIMER: 3, MUK: 3, driver.VULPIX: 2, driver.SWITCH: 2,
+                                      driver.POTION: 2, driver.FIGHTING: 26, driver.GRASS: 12},
+                    {driver.MACHOP: 4, MACHOKE: 3, MACHAMP: 3, GASTLY: 3, HAUNTER: 2, driver.WEEDLE: 3, driver.PARAS: 2,
+                     driver.DEFENDER: 2, driver.BILL: 2, driver.FIGHTING: 20, PSYCHIC: 10, driver.GRASS: 6},
+                    tuple(range(6)), tags=("カイリキー", "はんげき", "ベトベトン", "かがくへんかガス", "ゴースト", "とうめい", "特殊状態")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴーストがいる番で、ポケモンパワーを試す割合
-# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ、ゴーストの
-# いない組は v0.8 と同じ
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER)
-HAUNTER_DECLARE_SKIP = 0.75  # ゴーストを選んだときに、宣言を試さずに駆動の操作にする割合（ゴーストのいない組の乱数の使い方は変えない）
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキーがいる番で、ポケモンパワーを試す割合
+# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ、
+# ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP)
+HAUNTER_DECLARE_SKIP = 0.75  # ゴースト・カイリキーを選んだときに、宣言を試さずに駆動の操作にする割合（いない組の乱数の使い方は変えない）
 
 
 def choose_command(state, rng: random.Random, illegal_rate: float):
@@ -160,10 +187,11 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
-    if kind == HAUNTER and rng.random() < HAUNTER_DECLARE_SKIP:
-        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9）
-    if kind in (MUK, HAUNTER):
-        # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」は自動的にはたらいて（v0.9）宣言しない（POWER_NOT_DECLARABLE になるはず）
+    if kind in (HAUNTER, MACHAMP) and rng.random() < HAUNTER_DECLARE_SKIP:
+        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9・v0.10）
+    if kind in (MUK, HAUNTER, MACHAMP):
+        # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」（v0.9）・「はんげき」（v0.10）は自動的にはたらいて宣言しない
+        # （POWER_NOT_DECLARABLE になるはず）
         user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == kind])
         return engine.UsePokemonPower(player, user.pokemon_id, 0)
     if kind == ALAKAZAM:
@@ -352,6 +380,61 @@ def _observe_attack(state, new, evasion, counted, problems, index, command) -> N
                 counted["observed:haunter_attacked_working"] += 1
 
 
+def _counter_before(state) -> dict[int, object]:
+    """場のポケモンの番号 → 今はたらいている「はんげき」（v0.10。エンジンの公開の問い合わせ ``working_counterattack_power``）。"""
+    return {pk.pokemon_id: engine.working_counterattack_power(state, pk.pokemon_id) for p in state.players for pk in p.in_play()}
+
+
+def _observe_counterattack(state, new, before, counted, problems, index, command) -> None:
+    """受け付けたワザ（とその決定の答え）のログを、ワザの前の場の「はんげき」と比べる（v0.10）。エンジンとは別に、ダメージのログから
+    「はんげき」がはたらくはずのポケモンを求める。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    attack = next((e for e in reversed(state.log + new.log[len(state.log):]) if e["kind"] == "attack"), None)
+    attacker_player = state.current_player
+    expected = []
+    owners = {pk.pokemon_id: player for player, p in enumerate(state.players) for pk in p.in_play()}
+    cards = {pk.card: pk.pokemon_id for p in state.players for pk in p.in_play()}
+    for e in events:
+        if e["kind"] == "damage" and e["amount"] > 0:
+            pid = e.get("pokemon_id", cards.get(e["pokemon"]))
+            if before.get(pid) is not None and owners.get(pid) != attacker_player:
+                expected.append(pid)
+                hp = state.card_def(e["pokemon"]).hp
+                counted["observed:counter_trigger"] += 1
+                if e["total_damage"] >= hp:
+                    counted["observed:counter_trigger_knocked_out_machamp"] += 1
+                if state.players[owners[pid]].active is None or state.players[owners[pid]].active.pokemon_id != pid:
+                    counted["observed:counter_trigger_bench"] += 1
+        elif e["kind"] in ("counterattack", "counterattack_skipped"):
+            counted[f"observed:{e['kind']}"] += 1
+            if not expected or expected[0] != e["pokemon_id"]:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: はたらくはずのない「はんげき」 {e}")
+                continue
+            expected.pop(0)
+            if attack is None or e["attacker_pokemon_id"] != state.players[attacker_player].active.pokemon_id:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の相手がワザを使ったポケモンではない {e}")
+            if e["kind"] == "counterattack":
+                counted["observed:counter_damage_total"] += e["amount"]
+                if e["amount"] != 10:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の量が 10 ではない {e}")
+                if e["knocked_out"]:
+                    counted["observed:counter_knock_out"] += 1
+        elif e["kind"] == "knock_out" and e.get("simultaneous"):
+            counted["observed:simultaneous_knock_out"] += 1
+    if expected:
+        problems.append(f"{index} 手目 {engine.command_to_dict(command)}: はたらいた「はんげき」（ポケモン {expected}）のログがない")
+    if isinstance(command, engine.UseAttack):
+        target = state.players[1 - state.current_player].active
+        if target is not None and state.cards[target.card].card_id == MACHAMP:
+            c = target.conditions
+            if c.asleep or c.paralyzed or c.confused:
+                counted["observed:machamp_attacked_while_blocked"] += 1
+            elif before.get(target.pokemon_id) is None:
+                counted["observed:machamp_attacked_under_gas"] += 1
+            else:
+                counted["observed:machamp_attacked_working"] += 1
+
+
 def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_every: int) -> tuple[Counter, list[str]]:
     """1 局を進め、数えた結果と問題を返す。"""
     counted, problems = Counter(), []
@@ -374,6 +457,7 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
         command = choose_command(state, rng, illegal_rate)
         suppression = _suppression_of(state, command) if isinstance(command, engine.UsePokemonPower) else None
         evasion = _evasion_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision)) else None
+        counter = _counter_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision)) else None
         before = engine.state_to_dict(state, format_version=9)
         fingerprint, log = rng_fingerprint(state.rng), state.log
         try:
@@ -389,6 +473,10 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 拒否（{error.code}）で渡した状態が変わった")
             if error.code == "POWER_SUPPRESSED" and not suppression:
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: かがくへんかガスがはたらいていないのに POWER_SUPPRESSED")
+            if error.code == "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT":
+                target = state.players[1 - state.current_player].active
+                if target is None or engine.working_counterattack_power(state, target.pokemon_id) is None:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」がはたらいていないのに UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT")
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:
@@ -413,6 +501,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             counted["accepted:recover"] += 1  # ユンゲラーの「じこさいせい」（決定に答えて処理した）
         if evasion is not None:
             _observe_attack(state, new, evasion, counted, problems, index, command)
+        if counter is not None:
+            _observe_counterattack(state, new, counter, counted, problems, index, command)
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -467,7 +557,9 @@ def main(argv=None) -> int:
           f"かがくへんかガスで拒否 {counts.get('code:POWER_SUPPRESSED', 0)}（はたらいている MAIN {counts.get('observed:gas_working', 0)}・"
           f"消えている MAIN {counts.get('observed:gas_off_with_muk', 0)}・切り替わり {counts.get('observed:gas_toggled', 0)}）・"
           f"とうめいの判定 {counts.get('observed:evade_check', 0)}（おもて {counts.get('observed:evade_heads', 0)}・"
-          f"うら {counts.get('observed:evade_tails', 0)}）"
+          f"うら {counts.get('observed:evade_tails', 0)}）・"
+          f"はんげき {counts.get('observed:counterattack', 0)}（与えなかった {counts.get('observed:counterattack_skipped', 0)}・"
+          f"きぜつさせた {counts.get('observed:counter_knock_out', 0)}・きぜつしたカイリキーの {counts.get('observed:counter_trigger_knocked_out_machamp', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

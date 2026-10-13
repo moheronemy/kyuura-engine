@@ -3,7 +3,8 @@ docs/unresolved-audit-v0.4e.md）。
 
 v0.4e の時点でエンジンが止める 11 件のコード（v0.6 で 1 件加えて 12 件。``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
 docs/rain-dance-v0.6.md の R13。v0.9 で 2 件加えて 14 件。``UNRESOLVED_EVADED_EFFECT_COIN``（docs/transparency-v0.9.md の T19b）・
-``UNRESOLVED_RECOVER_ZERO_ENERGY``（docs/haunter-line-v0.9.md の H4））のそれぞれについて、
+``UNRESOLVED_RECOVER_ZERO_ENERGY``（docs/haunter-line-v0.9.md の H4）。v0.10 で 1 件加えて 15 件。
+``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``（docs/counterattack-v0.10.md の C18））のそれぞれについて、
 
 - 止まる場合: 止め方（コマンドの拒否 ``UnsupportedError`` か、対戦を止める ``Phase.HALTED`` か）とコード。拒否なら渡した状態・
   乱数・ログは変わらない（拒否と HALTED を同じものとして扱わない: 拒否は状態を返さず、HALTED は止めた状態を返す）。どちらも
@@ -29,6 +30,7 @@ from tests.helpers import (
     BEEDRILL, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FEW_BASICS, GRASS, GROWLITHE, H, KAKUNA, METAPOD, PARAS, PLUSPOWER,
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
     BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
+    DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -39,6 +41,7 @@ ALL_CODES = (
     "UNRESOLVED_EVOLUTION_HP", "UNRESOLVED_PREVENTED_COIN_DAMAGE",
     "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",  # v0.6
     "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_RECOVER_ZERO_ENERGY",  # v0.9
+    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",  # v0.10
 )
 TURN = 7
 
@@ -475,6 +478,68 @@ class RecoverZeroEnergyBoundaryTest(BoundaryTestCase):
         empty = self.assert_proceeds(self.board([POTION]), UseAttack(0, 1))
         self.assertIsNone(empty.decision)
         self.assertEqual(empty.players[0].active.damage, 10)
+
+
+class CounterattackDoubleKnockoutBoundaryTest(BoundaryTestCase):
+    """p.192（カイリキーの「はんげき」の最新の説明「（それによってこのカードが「きぜつ」しても、）ダメージを与えたポケモンに、…10ダメージ」）・
+    p.324（「1つのワザや特殊能力などによって引き起こされることがらによって複数のポケモンが「きぜつ」した場合、…同時に」）。v0.10
+    （docs/counterattack-v0.10.md の C18）。
+
+    止まる場合（ワザの宣言の前の拒否。こんらんのコインの前）: ワザのダメージで「はんげき」がはたらいているカイリキーがきぜつし、かつ「はんげき」
+    の 10 でワザを使ったポケモンがきぜつする（コインのどれかの結果でそうなりうる）。ワザによるきぜつと特殊能力によるきぜつが同時かが
+    決められない（サイド・バトル場に出す順番と勝ち負けが変わる）。
+
+    隣の止まらない場合: カイリキーがねむり（はたらかない。C19）・かがくへんかガス（C24）・カイリキーがきぜつしない（「はんげき」だけで
+    ワザを使ったポケモンがきぜつする 1 匹のきぜつ）・ワザを使ったポケモンが「はんげき」のあとも HP 未満・ワザを使ったポケモンが自分への
+    ダメージですでにきぜつ（「はんげき」は与えない。1 つのワザによる同時のきぜつ。C15）・ディフェンダーでカイリキーがきぜつしない。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, machamp=None, mine_bench=()):
+        champ = {"card": MACHAMP, "evolved_from": [MACHOP, MACHOKE], **(machamp or {})}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": champ, "bench": [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        hitmonchan = {"card": HITMONCHAN, "damage": 60, "energy": [FIGHTING] * 3}  # HP 70。スペシャルパンチ 40
+        pikachu = {"card": PIKACHU, "damage": 30, "energy": [LIGHTNING] * 3}  # HP 40。でんげき 30（「うら」なら自分にも 10）
+        triggers = (
+            (hitmonchan, 1, {"damage": 80}),
+            ({**hitmonchan, "confusion": True}, 1, {"damage": 80}),  # こんらんのコインの前に止める
+            (pikachu, 1, {"damage": 70}),  # 「おもて」なら自分へのダメージがなく「はんげき」できぜつ（「うら」なら自分へのダメージできぜつ）
+            ({"card": MACHOKE, "evolved_from": MACHOP, "damage": 50, "energy": [FIGHTING] * 4}, 1, {"damage": 40}),  # じごくぐるま 60・自分に 20
+        )
+        for attacker, index, machamp in triggers:
+            with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker, machamp=machamp), UseAttack(0, index), "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT")
+        # 止めない 1: ねむりのカイリキー（「はんげき」ははたらかない）。カイリキーだけがきぜつする
+        asleep = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 80, "sleep": True}), UseAttack(0, 1))
+        self.assertNotIn("counterattack", [e["kind"] for e in asleep.log])
+        # 止めない 2: かがくへんかガス（自分の場のベトベトン）
+        gassed = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 80}, mine_bench=[{"card": MUK, "evolved_from": GRIMER}]),
+                                      UseAttack(0, 1))
+        self.assertNotIn("counterattack", [e["kind"] for e in gassed.log])
+        # 止めない 3: カイリキーはきぜつしない（ワザを使ったポケモンだけが「はんげき」できぜつする。1 匹のきぜつ）
+        single = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([(e["kind"], e["player"]) for e in single.log if e["kind"] == "knock_out"], [("knock_out", 0)])
+        # 止めない 4: ワザを使ったポケモンは「はんげき」のあとも HP 未満（カイリキーだけがきぜつする）
+        survivor = self.assert_proceeds(self.board({**hitmonchan, "damage": 50}, machamp={"damage": 80}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in survivor.log if e["kind"] == "knock_out"], [1])
+        self.assertEqual(survivor.players[0].active.damage, 60)
+        # 止めない 5: じごくぐるまの自分への 20 ですでにきぜつ（「はんげき」は与えない。1 つのワザによる同時のきぜつ。p.324）
+        machoke = {"card": MACHOKE, "evolved_from": MACHOP, "damage": 60, "energy": [FIGHTING] * 4}
+        both = self.assert_proceeds(self.board(machoke, machamp={"damage": 40}), UseAttack(0, 1))
+        self.assertIn("counterattack_skipped", [e["kind"] for e in both.log])
+        self.assertEqual([e.get("simultaneous") for e in both.log if e["kind"] == "knock_out"], [True, True])
+        # 止めない 6: ディフェンダーで 40 - 20 = 20（カイリキーはきぜつしない。「はんげき」でワザを使ったポケモンがきぜつ）
+        defended = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 70, "trainers": [(DEFENDER, TURN)]}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in defended.log if e["kind"] == "knock_out"], [0])
+        # 止めない 7: 最終ダメージが 0（ディグダのあなをほる 10 - ディフェンダー 20）。「はんげき」ははたらかない
+        zero = self.assert_proceeds(self.board({"card": DIGLETT, "damage": 30, "energy": [FIGHTING]}, machamp={"damage": 90, "trainers": [(DEFENDER, TURN)]}),
+                                    UseAttack(0, 0))
+        self.assertNotIn("counterattack", [e["kind"] for e in zero.log])
 
 
 class CodeListTest(unittest.TestCase):

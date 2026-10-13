@@ -106,7 +106,16 @@ def push_attack_decision(
     min_choices: int = 1,
     max_choices: int = 1,
 ) -> PendingDecision:
-    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。"""
+    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
+
+    v0.10: そのワザのダメージではたらいた「はんげき」（``AttackUse.counterattacks``）は、決定を出す前に与えていなければならない
+    （決定はダメージ以外の効果。「はんげき」のダメージは、ダメージの処理のあと、効果の前。p.89）。決定をまたぐと ``AttackUse`` は
+    新しくなり、まだ与えていない「はんげき」が失われるので、残っていればエンジンの不具合として止める。
+    """
+    if getattr(use, "counterattacks", None):
+        raise RuntimeError(
+            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
+        )
     use_context = ("use", (use.player, use.pokemon_id, use.key.card_id, use.key.attack_index))
     return push_decision(
         state,

@@ -27,7 +27,7 @@ from tests.helpers import (
     BEEDRILL, BULBASAUR, BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, IVYSAUR, KAKUNA, LIGHTNING, METAPOD, PARAS, PIKACHU,
     PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
-    BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER,
+    BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER, MACHOP, MACHOKE, MACHAMP,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -70,12 +70,15 @@ ATTACKS = [
     (GASTLY, 0),  # ParalyzeOnHeads（v0.9。化石の秘密のゴースの「したでなめる」）
     (GASTLY, 1),  # RecoverEnergyAndSelfDamage（v0.9。「エナジーへんかん」。トラッシュは空なので決定を出さない）
     (HAUNTER, 0),  # SleepOpponent（v0.9。化石の秘密のゴーストの「あくむ」。ゴースから進化したものとして置く）
+    (MACHOKE, 0),  # DamageReducedByOwnCounters（v0.10。ゴーリキーの「からてチョップ」。ワンリキーから進化したものとして置く）
+    (MACHOKE, 1),  # DamageAndSelfDamage（v0.10。ゴーリキーの「じごくぐるま」）
+    (MACHAMP, 0),  # DamageOnly（v0.10。カイリキーの「ちきゅうなげ」。ワンリキー → ゴーリキーと進化したものとして置く）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
 EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (CATERPIE, METAPOD), IVYSAUR: (BULBASAUR,),
                 BLASTOISE: (SQUIRTLE, WARTORTLE), KADABRA: (ABRA,), ALAKAZAM: (ABRA, KADABRA), MUK: (GRIMER,),
-                HAUNTER: (GASTLY,)}
+                HAUNTER: (GASTLY,), MACHOKE: (MACHOP,), MACHAMP: (MACHOP, MACHOKE)}
 COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0)}  # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage）
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},

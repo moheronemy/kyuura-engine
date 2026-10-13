@@ -105,14 +105,15 @@ class DefaultRegistryTest(unittest.TestCase):
         # ゼニガメの「あわ」・「からにこもる」（p.87）・カメールの「からにこもる」（p.88）・カメックスの「ハイドロポンプ」（p.90。v0.6）、
         # ケーシィの「ねんりき」（p.149）・ユンゲラーの「じこさいせい」（p.151）・フーディンの「あやしいひかり」（p.153。v0.7）、
         # ベトベトンの「ヘドロこうげき」（p.48）・ロケット団のベトベターの「どくガス」「ねばりつく」（p.45。v0.8）、
-        # 化石の秘密のゴースの「したでなめる」「エナジーへんかん」（p.158）・ゴーストの「あくむ」（p.160。v0.9）
+        # 化石の秘密のゴースの「したでなめる」「エナジーへんかん」（p.158）・ゴーストの「あくむ」（p.160。v0.9）、
+        # ゴーリキーの「からてチョップ」「じごくぐるま」（p.190。v0.10。カイリキーの「ちきゅうなげ」は説明文なし）
         self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
                                      AttackKey("PMCG1-023", 0), AttackKey("PMCG1-023", 1), AttackKey("PMCG1-027", 0),
                                      AttackKey("PMCG1-030", 1), AttackKey("PMCG1-032", 0), AttackKey("PMCG1-035", 1),
                                      AttackKey("PMCG1-043", 0), AttackKey("PMCG1-046", 0), AttackKey("PMCG1-049", 0),
-                                     AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1), AttackKey("PMCG2-007", 0), AttackKey("PMCG2-007", 1),
+                                     AttackKey("PMCG1-055", 0), AttackKey("PMCG1-055", 1), AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1), AttackKey("PMCG2-007", 0), AttackKey("PMCG2-007", 1),
                                      AttackKey("PMCG2-010", 0), AttackKey("PMCG3-007", 0), AttackKey("PMCG3-029", 0),
                                      AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-004", 0),
                                      AttackKey("PMCG4-004", 1)])
@@ -222,16 +223,18 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + スピアーの 2 つ（v0.4c）+ バタフリーの 2 つ（v0.4d）+ フシギダネの 1 つ・フシギソウの 2 つ・フシギバナの 1 つ（v0.5）
         # + ゼニガメの 2 つ・カメールの 2 つ・カメックスの 1 つ（v0.6）+ ケーシィの 1 つ・ユンゲラーの 2 つ・フーディンの 1 つ（v0.7）
         # + ロケット団のベトベターの 2 つ・ベトベトンの 1 つ（v0.8）+ 化石の秘密のゴースの 2 つ・ゴーストの 1 つ（v0.9）
-        self.assertEqual(len(keys), 53)
+        # + ゴーリキーの 2 つ・カイリキーの 1 つ（v0.10）
+        self.assertEqual(len(keys), 56)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
         DEFAULT_EFFECTS.with_powers("w", {PowerKey(CHARMANDER, 0): DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)})
         self.assertEqual(DEFAULT_EFFECTS.power_keys(), powers)
         # フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）
-        # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）を加えた
-        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0), PowerKey("PMCG3-007", 0),
-                                  PowerKey("PMCG3-030", 0)))
+        # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
+        # （PMCG1-057）を加えた
+        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0), PowerKey("PMCG1-057", 0),
+                                  PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0)))
 
 
 if __name__ == "__main__":

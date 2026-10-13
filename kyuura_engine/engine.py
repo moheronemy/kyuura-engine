@@ -54,7 +54,16 @@ from .commands import (
 )
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
 from .damage import calculate_confusion_damage
-from .effects import AttackKey, AttackUse, PowerKey, PowerUse, TrainerUse, attack_damage_modifiers
+from .effects import (
+    AttackKey,
+    AttackUse,
+    PowerKey,
+    PowerUse,
+    TrainerUse,
+    attack_damage_modifiers,
+    counterattack_double_knockout_problem,
+    finish_damage_elements,
+)
 from .continuous import suppressors_of
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
@@ -826,7 +835,14 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     成り立ったあとのことなので、こんらんしたワザは不正なコマンド（``IllegalActionError``）ではない。
 
     原典で決められない場合は、コインを投げる前に止める: ワザの説明の処理が決められない（``AttackEffect.problem``）、
-    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）。
+    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）、相手の「はんげき」（v0.10）で
+    ワザによるきぜつと特殊能力によるきぜつが重なりうるか（``effects.counterattack_double_knockout_problem``。
+    ``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``。docs/counterattack-v0.10.md の C18）。
+
+    v0.10: 相手のワザのダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」）のダメージは、ワザのダメージの処理が
+    すべて終わったところで与える（``effects.finish_damage_elements``。p.89）。ダメージ以外の効果のあるワザの実装は、効果の前に自分で
+    呼ぶ。ダメージの要素だけのワザのため、``resolve`` のあとにもここで呼ぶ（与えるものがなければ何もしない）。きぜつ・サイド・交代は、
+    そのあとの ``_finish_attack``。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
@@ -845,6 +861,8 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     problem = effect.problem(state, use)
     if problem is None and attacker.conditions.confused:
         problem = _confusion_damage_problem(state, attacker)
+    if problem is None:
+        problem = counterattack_double_knockout_problem(state, use, effect)  # v0.10
     if problem is not None:
         raise problem
 
@@ -859,6 +877,7 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     # 相手が決定する。番のプレイヤーは変えない。決定を待つ間は Phase.DECISION なので、ほかのコマンドは _require_turn で拒否する。
     # p.309「ワザを使っている最中に、他のことをしてはいけません」）
     effect.resolve(state, use)
+    finish_damage_elements(state, use)  # v0.10: ダメージの要素だけのワザの「はんげき」（決定を出したワザは、出す前に与えている）
     if state.decision is None:
         _finish_attack(state)
 
@@ -1109,6 +1128,7 @@ def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None
     use = AttackUse(player, pokemon_id, AttackKey(card_id, attack_index))
     entry = state.effects.attack_entry(card_id, attack_index)
     entry.effect.resume(state, use, decision, choices)
+    finish_damage_elements(state, use)  # v0.10: 決定のあとのダメージの要素の「はんげき」（今の対応カードでは起こらない）
     if state.decision is None:
         _finish_attack(state)
 
@@ -1200,7 +1220,9 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
       いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
     - v0.8: 常にはたらいている特殊能力（``effects.SuppressOtherPowers``。ベトベトンの「かがくへんかガス」）は宣言しないので、使おうと
       したら ``POWER_NOT_DECLARABLE``（v0.9 の自動的にはたらく特殊能力 ``effects.AttackImmunityOnHeads``（ゴーストの「とうめい」）も
-      同じ。ワザを受けるときにワザの処理の中で評価する。``effects.attack_reaches``）。宣言する特殊能力は、登録の確認のあと、
+      同じ。ワザを受けるときにワザの処理の中で評価する。``effects.attack_reaches``。v0.10 のダメージを受けたときに自動的にはたらく
+      特殊能力 ``effects.CounterattackDamage``（カイリキーの「はんげき」）も同じ。``effects.deal_attack_damage``・
+      ``effects.finish_damage_elements``）。宣言する特殊能力は、登録の確認のあと、
       パワーごとの確認（``check_usable``）の前に、今はたらいている「かがくへんかガス」に消されていないかを今の状態から求めて
       （``continuous.suppressors_of``）、消されていれば ``POWER_SUPPRESSED``（「使えず、その力も消える」。p.48・p.323）。p.311 の
       「そのとき使うことのできるもの」を、宣言の前に確かめる（宣言もない。状態・乱数・ログは変わらない）。自分の場・相手の場の
@@ -1357,7 +1379,8 @@ def check_invariants(state: GameState) -> list[str]:
 
     - カードの保存則: 対戦のすべてのカード（``state.cards``）が、持ち主のゾーンのどこか 1 か所にだけある。
       未知の番号のカードはない。``new_game`` で作った対戦では、カードの組がデッキリストと同じ。
-    - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満、
+    - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満（v0.10: ワザの途中の
+      決定を待つ間の、相手の「はんげき」で HP 以上になったワザを使ったポケモンだけを除く。``_counter_knocked_out_attacker_awaiting``）、
       ベンチは 5 匹まで、サイドはルールの枚数まで。
     - 段階との対応: 番の途中は両方のバトル場にポケモンがいる。サイドを取る・バトル場に出す段階には、
       それを待っているプレイヤーがいる。終わった段階には結果か止めた理由がある。
@@ -1413,7 +1436,7 @@ def check_invariants(state: GameState) -> list[str]:
                 continue
             if pokemon.damage < 0 or pokemon.damage % 10:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
-            if pokemon.damage >= definition.hp:
+            if pokemon.damage >= definition.hp and not _counter_knocked_out_attacker_awaiting(state, player, pokemon):
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
             if pokemon.evolution_stack and evolve_events is None:
                 evolve_events = _evolve_events_by_pokemon(state)  # 進化しているポケモンがいるときだけ、ログを 1 回読む（v0.4c）
@@ -1769,6 +1792,27 @@ def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInP
             # 進化したポケモンは別のポケモンなので、進化の前の失敗の記録は消している（v0.4a。p.310）
             return [f"{where} が、進化（ログ evolve）の前の失敗の記録のまま残っている"]
     return [f"{where} に対応する、今の番の「にげる」の失敗（ログ retreat_failed）がない"]
+
+
+def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemon: PokemonInPlay) -> bool:
+    """v0.10: ワザの途中の決定（相手が答える「ふきとばし」の入れ替えなど）を待つ間だけ、そのワザを使ったポケモンは、相手の「はんげき」の
+    ダメージで HP 以上になっていても場に残る（きぜつの処理はワザの要素をすべて処理したあと。p.309・p.89。docs/counterattack-v0.10.md
+    の C16・C30）。ほかのポケモン・ほかの段階・決定のないときは、これまでどおり HP 以上のダメージで場に残ることを許さない。
+
+    決定の続きの情報（``context`` の ``"use"``）がこのポケモンを指し、今の番のログで、最後のワザの宣言（``attack``）のあとに、このポケモンを
+    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。"""
+    d = state.decision
+    if state.phase is not Phase.DECISION or d is None or d.resume != "attack":
+        return False
+    use = d.context_value("use")
+    if not isinstance(use, tuple) or len(use) < 2 or (use[0], use[1]) != (player, pokemon.pokemon_id):
+        return False
+    for event in _events_since_turn_start(state):  # 新しい順
+        if event["kind"] == "attack":
+            return False
+        if event["kind"] == "counterattack" and event["attacker_pokemon_id"] == pokemon.pokemon_id and event["knocked_out"]:
+            return True
+    return False
 
 
 def _events_since_turn_start(state: GameState) -> list:

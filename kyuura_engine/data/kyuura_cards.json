@@ -125,12 +125,17 @@
     "PMCG3-029",
     "PMCG3-030"
   ],
+  "pool_v0_10": [
+    "PMCG1-055",
+    "PMCG1-057"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
     "PMCG1-075",
     "PMCG3-003",
-    "PMCG1-047"
+    "PMCG1-047",
+    "PMCG6-061"
   ],
   "cards": [
     {
@@ -3543,6 +3548,198 @@
       }
     },
     {
+      "id": "PMCG1-055",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴーリキー",
+        "en": "Machoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          67
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ワンリキー",
+          "en": "Machop"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "からてチョップ",
+              "en": "Karate Chop"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": "-",
+              "display": "50-"
+            },
+            "text": {
+              "ja": "自分のダメージカウンター×10だけ、相手にあたえるダメージがへる。",
+              "en": "Does 50 damage minus 10 damage for each damage counter on Machoke."
+            }
+          },
+          {
+            "name": {
+              "ja": "じごくぐるま",
+              "en": "Submission"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": "Machoke does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-055",
+        "pokemontcg": [
+          "base1-34"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-055-goriky/",
+      "jp_print": {
+        "level": 40,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-055-goriky/"
+      }
+    },
+    {
+      "id": "PMCG1-057",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カイリキー",
+        "en": "Machamp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          68
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ゴーリキー",
+          "en": "Machoke"
+        },
+        "hp": 100,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "はんげき",
+              "en": "Strikes Back"
+            },
+            "text": {
+              "ja": "カイリキーがダメージをうけたときには、かならず10ダメージを相手にあたえる。このダメージは、弱点・抵抗力の影響を受けず、常に「10」である。「ねむり・マヒ・こんらん」状態のときにはつかえない。",
+              "en": "Whenever your opponent's attack damages Machamp (even if Machamp is Knocked Out), this power does 10 damage to the attacking Pokémon. (Don't apply Weakness and Resistance.) This power can't be used if Machamp is Asleep, Confused, or Paralyzed when your opponent attacks."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちきゅうなげ",
+              "en": "Seismic Toss"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-057",
+        "pokemontcg": [
+          "base1-8"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-056-kairiky/",
+      "jp_print": {
+        "level": 67,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "特殊能力が「特種能力」と表記されている"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-056-kairiky/"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -3960,6 +4157,95 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-047-ghost/"
+      }
+    },
+    {
+      "id": "PMCG6-061",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのカイリキー",
+        "en": "Giovanni's Machamp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          68
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サカキのゴーリキー",
+          "en": "Giovanni's Machoke"
+        },
+        "hp": 100,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "こんじょう",
+              "en": "Fortitude"
+            },
+            "text": {
+              "ja": "この力は、相手のワザによるダメージで、このカードが「きぜつ」する時、使える。コインを投げて「おもて」なら、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "If Giovanni's Machamp would be Knocked Out by an opponent's attack, flip a coin. If heads, Giovanni's Machamp is not Knocked Out and its remaining HP become 10 instead. This power can't be used if Giovanni's Machamp is already Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハリケーンパンチ",
+              "en": "Hurricane Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip 4 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-061",
+        "pokemontcg": [
+          "gym2-6"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 50,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     }
   ]
