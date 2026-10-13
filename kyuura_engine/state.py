@@ -420,6 +420,11 @@ class GameState:
     decision: PendingDecision | None = None  # 保留中の決定（一度に 1 つ）
     next_decision_id: int = 1
     trainer_in_use: TrainerInUse | None = None  # 使っている最中のトレーナーカード（決定を待っている間だけ）
+    # この番に、ポケモンパワー（特殊能力）の効果で手札から場のポケモンにつけたエネルギーカードの枚数（v0.6。カメックスの
+    # 「あまごい」）。手札からつける通常の操作（p.310。``energy_attachments_this_turn``）とは別に数える。番の最初に 0 にする。
+    # 通常の操作でまだつけていない番に、この数が 1 以上なら、通常の操作は原典で決められない（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
+    # docs/rain-dance-v0.6.md の R13）。書き出しは形式 9 だけが表せる（0 でなければ形式 1〜8 は ``ValueError``）
+    energy_attached_by_powers_this_turn: int = 0
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

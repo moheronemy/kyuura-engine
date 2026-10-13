@@ -465,9 +465,11 @@ class PendingDecisionStateTest(unittest.TestCase):
 
     def test_serialization_keeps_format_8(self):
         """決定を待つ状態は、形式 2〜8 の decision（id・kind・player・options・resume・context）と current_player・turn_number で
-        表せる（新しい形式は要らない）。形式 1 はワザの途中の決定を表せないので ValueError（黙って落とさない）。"""
+        表せる（新しい形式は要らない）。形式 1 はワザの途中の決定を表せないので ValueError（黙って落とさない）。v0.6 で加えた形式 9
+        （あまごいで手札からつけた枚数）でも、決定の項目は同じ。"""
         d = self.state.decision
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8))
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9))  # v0.4d では 8 まで。9 は v0.6
+        self.assertEqual(state_to_dict(self.state, format_version=9)["decision"], full(self.state)["decision"])
         data = full(self.state)
         self.assertEqual(data["decision"], {
             "id": d.id, "kind": FORCED_SWITCH, "player": 1, "options": list(d.options), "min_choices": 1, "max_choices": 1,
@@ -485,7 +487,7 @@ class PendingDecisionStateTest(unittest.TestCase):
                                  effects=two_step_effects())
         plain = apply_command(plain, UseAttack(0, 0))
         self.assertEqual(plain.phase, Phase.DECISION)
-        for version in range(2, 9):
+        for version in range(2, 10):
             self.assertEqual(state_to_dict(plain, format_version=version)["decision"]["resume"], "attack")
         with self.assertRaises(ValueError):
             state_to_dict(plain)

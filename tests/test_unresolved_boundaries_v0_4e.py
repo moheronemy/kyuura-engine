@@ -1,7 +1,10 @@
 """原典で決められない裁定（``UNRESOLVED_…``）が、ちょうど決められない場合だけを止めることの監査（v0.4e。
 docs/unresolved-audit-v0.4e.md）。
 
-v0.4e の時点でエンジンが止める 11 件のコードのそれぞれについて、
+v0.4e の時点でエンジンが止める 11 件のコード（v0.6 で 1 件加えて 12 件。``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
+docs/rain-dance-v0.6.md の R13。v0.9 で 2 件加えて 14 件。``UNRESOLVED_EVADED_EFFECT_COIN``（docs/transparency-v0.9.md の T19b）・
+``UNRESOLVED_RECOVER_ZERO_ENERGY``（docs/haunter-line-v0.9.md の H4）。v0.10 で 1 件加えて 15 件。
+``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``（docs/counterattack-v0.10.md の C18））のそれぞれについて、
 
 - 止まる場合: 止め方（コマンドの拒否 ``UnsupportedError`` か、対戦を止める ``Phase.HALTED`` か）とコード。拒否なら渡した状態・
   乱数・ログは変わらない（拒否と HALTED を同じものとして扱わない: 拒否は状態を返さず、HALTED は止めた状態を返す）。どちらも
@@ -16,8 +19,8 @@ v0.4e の時点でエンジンが止める 11 件のコードのそれぞれに�
 import unittest
 
 from kyuura_engine import (
-    EndTurn, EngineError, EvolvePokemon, IllegalActionError, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack,
-    apply_command, check_invariants, new_game, state_to_dict,
+    AttachEnergy, EndTurn, EngineError, EvolvePokemon, IllegalActionError, PlayTrainer, ResolveDecision, Retreat, UnsupportedError,
+    UseAttack, UsePokemonPower, apply_command, check_invariants, new_game, state_to_dict,
 )
 from kyuura_engine.conditions import paralysis_problem
 from kyuura_engine.rng import rng_fingerprint
@@ -26,6 +29,8 @@ from kyuura_engine.state import Phase
 from tests.helpers import (
     BEEDRILL, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FEW_BASICS, GRASS, GROWLITHE, H, KAKUNA, METAPOD, PARAS, PLUSPOWER,
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
+    BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
+    DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -34,6 +39,9 @@ ALL_CODES = (
     "UNRESOLVED_SWITCH_WITHOUT_BENCH", "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT", "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
     "UNRESOLVED_REPARALYSIS_RECOVERY_TURN", "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS", "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED",
     "UNRESOLVED_EVOLUTION_HP", "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",  # v0.6
+    "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_RECOVER_ZERO_ENERGY",  # v0.9
+    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",  # v0.10
 )
 TURN = 7
 
@@ -43,14 +51,19 @@ def full(state):
 
 
 class BoundaryTestCase(unittest.TestCase):
+    format_version = 8  # 比べる書き出しの形式（v0.6 のあまごいの盤面は 9）
+
     def assert_rejected(self, state, command, code):
         """コマンドの拒否（``UnsupportedError``。状態を返さない）。渡した状態・乱数・ログは変わらない。"""
-        before, fingerprint, log = full(state), rng_fingerprint(state.rng), state.log
+        def written(s):
+            return state_to_dict(s, format_version=self.format_version)
+
+        before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with self.assertRaises(UnsupportedError) as ctx:
             apply_command(state, command)
         self.assertIs(type(ctx.exception), UnsupportedError)
         self.assertEqual(ctx.exception.code, code)
-        self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
+        self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 
     def assert_halted(self, state, code):
@@ -306,6 +319,227 @@ class PreventedCoinDamageBoundaryTest(BoundaryTestCase):
         self.assertIsNotNone(poisoned.players[1].active.conditions.poison)
         whirlwind = {"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]}
         self.assertEqual(self.assert_proceeds(self.board(whirlwind), UseAttack(0, 0)).phase, Phase.DECISION)
+
+
+class AttachAfterPowerAttachBoundaryTest(BoundaryTestCase):
+    """p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに1枚だけです」・p.307（カードの記述を優先）・
+    p.90（カメックスの「あまごい」の最新の説明）。v0.6（docs/rain-dance-v0.6.md の R11〜R13）。
+
+    止まる場合: この番に「あまごい」で手札からエネルギーをつけていて、手札からつける通常の操作をまだしていない番の、通常の操作
+    （拒否。カードを動かす前）。あまごいでつけたカードを p.310 の「1枚」に数えるかが原典に書かれていないので、受け付けるとも
+    拒否する（ENERGY_ALREADY_ATTACHED）とも決めない。ここでは「止まること・状態が変わらないこと」だけを確かめる（裁定を
+    テストで決めない）。
+
+    隣の止まらない場合: 通常の操作のあとのあまごい（R12。どちらの読み方でも使える）・エナジートランス（場のエネルギーのつけかえ。
+    手札からつけない）のあとの通常の操作・前の自分の番にあまごいを使った番の通常の操作（番の最初に数を 0 にする）・拒否された
+    あまごい（状態を変えない）のあとの通常の操作。"""
+
+    format_version = 9
+
+    def board(self, *, active=None, bench=(), hand=(WATER, WATER, FIRE), attached=0):
+        blastoise = {"card": BLASTOISE, "evolved_from": [SQUIRTLE, WARTORTLE]}
+        return build_test_state([
+            {"active": active or blastoise, "bench": list(bench) or [RATTATA], "hand": list(hand)}, {"active": GROWLITHE},
+        ], turn_number=TURN, energy_attachments_this_turn=attached)
+
+    def rain_dance(self, state, energy, target=None):
+        me = state.players[0]
+        user = next(pk for pk in me.in_play() if state.cards[pk.card].card_id == BLASTOISE)
+        return UsePokemonPower(0, user.pokemon_id, 0, energy, None, (target or me.active).pokemon_id)
+
+    def test_trigger_and_neighbours(self):
+        state = self.board()
+        waters = uids(state, 0, "hand", WATER)
+        fire = uids(state, 0, "hand", FIRE)[0]
+        once = self.assert_proceeds(state, self.rain_dance(state, waters[0]))
+        twice = self.assert_proceeds(once, self.rain_dance(once, waters[1]))
+        rattata = state.players[0].bench[0].card
+        for powered in (once, twice):
+            for command in (AttachEnergy(0, fire, powered.players[0].active.card), AttachEnergy(0, fire, rattata)):
+                with self.subTest(uses=powered.energy_attached_by_powers_this_turn, target=command.target):
+                    self.assert_rejected(powered, command, "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH")
+        self.assert_rejected(once, AttachEnergy(0, waters[1], once.players[0].active.card), "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH")
+        # ほかの理由で正しくない通常の操作は、その理由で拒否する（手札にない・相手のポケモン）。止めるのは、ほかの確認が通ったときだけ
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(once, AttachEnergy(0, waters[0], rattata))
+        self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(once, AttachEnergy(0, fire, once.players[1].active.card))
+        self.assertEqual(ctx.exception.code, "TARGET_NOT_YOURS")
+
+        # 止めない 1: 通常の操作のあとのあまごい（R12）。そのあとの 2 回目の通常の操作は、1 番に 1 枚の規定で拒否（ENERGY_ALREADY_ATTACHED）
+        attached = self.assert_proceeds(state, AttachEnergy(0, fire, rattata))
+        powered = self.assert_proceeds(attached, self.rain_dance(attached, waters[0]))
+        self.assertEqual((powered.energy_attachments_this_turn, powered.energy_attached_by_powers_this_turn), (1, 1))
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(powered, AttachEnergy(0, waters[1], rattata))
+        self.assertEqual(ctx.exception.code, "ENERGY_ALREADY_ATTACHED")
+        # 止めない 2: 前の自分の番にあまごいを使っても、次の自分の番の通常の操作は止めない（番の最初に 0）
+        later = self.assert_proceeds(once, EndTurn(0))
+        later = self.assert_proceeds(later, EndTurn(1))
+        self.assertEqual((later.current_player, later.energy_attached_by_powers_this_turn), (0, 0))
+        self.assert_proceeds(later, AttachEnergy(0, fire, later.players[0].active.card))
+        # 止めない 3: 拒否されたあまごい（相手のポケモンへ）のあとの通常の操作
+        with self.assertRaises(IllegalActionError):
+            apply_command(state, self.rain_dance(state, waters[0], state.players[1].active))
+        self.assert_proceeds(state, AttachEnergy(0, fire, rattata))
+        # 止めない 4: エナジートランス（場のエネルギーのつけかえ。手札からつけない）のあとの通常の操作
+        venusaur = {"card": VENUSAUR, "evolved_from": [BULBASAUR, IVYSAUR], "energy": [GRASS, GRASS]}
+        trans = build_test_state([{"active": venusaur, "bench": [BULBASAUR], "hand": [GRASS]}, {"active": GROWLITHE}], turn_number=TURN)
+        me = trans.players[0]
+        moved = self.assert_proceeds(trans, UsePokemonPower(0, me.active.pokemon_id, 0, me.active.energy[0], me.active.pokemon_id,
+                                                            me.bench[0].pokemon_id))
+        self.assertEqual(moved.energy_attached_by_powers_this_turn, 0)
+        self.assert_proceeds(moved, AttachEnergy(0, uids(moved, 0, "hand", GRASS)[0], me.active.card))
+
+
+class EvadedEffectCoinBoundaryTest(BoundaryTestCase):
+    """p.160（ゴーストの「とうめい」の最新の説明）・p.159（特殊能力解説）・p.309・p.321。v0.9（docs/transparency-v0.9.md の T19b）。
+
+    止まる場合: 相手の対戦ポケモンの「とうめい」がはたらいていて、「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザの
+    ダメージの要素の最終ダメージが 0 より大きい（受ける要素で「とうめい」のコインを投げうる）とき。「おもて」なら、そのあとのワザの
+    コインが「受けない」ポケモンへの効果だけを決めるが、それを投げるかが原典に書かれていない。拒否はこんらんのコインの前（ワザを
+    使うポケモンがこんらんでも同じ。コインの結果で受け付けるかが変わらない）。
+
+    隣の止まらない場合: ゴーストがねむり（力が消える。T9）・かがくへんかガスがはたらいている（T14）・相手の対戦ポケモンが
+    「とうめい」を持たない（ゴース）・ゴーストがベンチ（ワザの要素はバトル場のポケモンにだけ）・最終ダメージが 0（ディフェンダー。
+    T21。ワザのコインのあとで「とうめい」のコイン）・コインを使わずに特殊状態にするワザ（「あくむ」。T4 の 1 回のコインで決まる）。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, defender=None, bench=(), mine_bench=()):
+        haunter = {"card": HAUNTER, "evolved_from": GASTLY}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": defender or haunter, "bench": list(bench) or [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        weedle = {"card": WEEDLE, "energy": [GRASS]}
+        gastly = {"card": GASTLY, "energy": [PSYCHIC]}
+        vulpix = {"card": VULPIX, "energy": [FIRE, FIRE]}
+        caterpie = {"card": CATERPIE, "energy": [GRASS]}
+        attackers = ((weedle, 0), (gastly, 0), (vulpix, 0), (caterpie, 0), ({**weedle, "confusion": True}, 0))
+        for attacker, index in attackers:
+            with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker), UseAttack(0, index), "UNRESOLVED_EVADED_EFFECT_COIN")
+        haunter = {"card": HAUNTER, "evolved_from": GASTLY}
+        # 止めない 1: ねむりのゴースト（「とうめい」の力が消えている。T9）。ワザのコインだけ
+        asleep = self.assert_proceeds(with_coin_results(self.board(weedle, defender={**haunter, "sleep": True}), H), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in asleep.log])
+        self.assertIsNotNone(asleep.players[1].active.conditions.poison)
+        # 止めない 2: かがくへんかガス（場のどこかのベトベトン。T14）
+        muk = {"card": MUK, "evolved_from": GRIMER}
+        gassed = self.assert_proceeds(with_coin_results(self.board(weedle, mine_bench=[muk]), T), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in gassed.log])
+        # 止めない 3: 相手の対戦ポケモンが「とうめい」を持たない（ゴース）。ベンチのゴーストはワザを受けない
+        plain = self.assert_proceeds(with_coin_results(self.board(weedle, defender=GASTLY, bench=[haunter]), T), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in plain.log])
+        # 止めない 4: 最終ダメージが 0（ディフェンダーで 10 - 20）。ワザのコイン（「おもて」）→ どくを受けるときに「とうめい」のコイン
+        defended = {**haunter, "trainers": [(DEFENDER, TURN)]}
+        late = self.assert_proceeds(with_coin_results(self.board(weedle, defender=defended), H, T), UseAttack(0, 0))
+        coins = [e for e in late.log if e["kind"] == "coin_flip"]
+        self.assertEqual([c["source"] for c in coins[-2:]], ["attack", "power"])
+        self.assertIsNotNone(late.players[1].active.conditions.poison)
+        # 止めない 5: コインを使わずにねむりにする「あくむ」（受ける要素で 1 回だけ投げ、結果をねむりにも使う。T4）
+        nightmare = {"card": HAUNTER, "evolved_from": GASTLY, "energy": [PSYCHIC, PSYCHIC]}
+        evaded = self.assert_proceeds(with_coin_results(self.board(nightmare), H), UseAttack(0, 0))
+        self.assertEqual([e["element"] for e in evaded.log if e["kind"] == "attack_evaded"], ["damage", "sleep"])
+
+
+class RecoverZeroEnergyBoundaryTest(BoundaryTestCase):
+    """p.158（化石の秘密のゴースの「エナジーへんかん」の最新の説明「自分のトラッシュから、「エネルギーカード」を最大2枚選び出し、
+    手札に加える。その後、自分に10ダメージ。」）。v0.9（docs/haunter-line-v0.9.md の H4）。
+
+    止まる場合: トラッシュにエネルギーカードがあるのに 0 枚を選ぶ（決定に答える ``ResolveDecision`` の拒否。決定は待ったまま）。
+    「最大2枚」が 0 枚を含むかが書かれていないので、受け付けるとも拒否する（INVALID_CHOICE_COUNT）とも決めない。
+
+    隣の止まらない場合: 1 枚・2 枚を選ぶ・トラッシュにエネルギーカードがない（決定を出さずに自分へのダメージだけ。H5）。"""
+
+    format_version = 9
+
+    def board(self, discard):
+        gastly = {"card": GASTLY, "energy": [PSYCHIC, PSYCHIC]}
+        return build_test_state([{"active": gastly, "bench": [RATTATA], "discard": list(discard)}, {"active": GROWLITHE}],
+                                turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        state = self.assert_proceeds(self.board([FIRE, PSYCHIC, POTION, WATER]), UseAttack(0, 1))
+        self.assertEqual((state.phase, state.decision.min_choices, state.decision.max_choices), (Phase.DECISION, 0, 2))
+        decision = state.decision.id
+        self.assert_rejected(state, ResolveDecision(0, decision, ()), "UNRESOLVED_RECOVER_ZERO_ENERGY")
+        energies = state.decision.options
+        self.assertEqual(len(energies), 3)
+        for choices in ((energies[0],), energies[1:]):
+            with self.subTest(choices=choices):
+                done = self.assert_proceeds(state, ResolveDecision(0, decision, choices))
+                self.assertTrue(set(choices) <= set(done.players[0].hand))
+                self.assertEqual(done.players[0].active.damage, 10)
+        empty = self.assert_proceeds(self.board([POTION]), UseAttack(0, 1))
+        self.assertIsNone(empty.decision)
+        self.assertEqual(empty.players[0].active.damage, 10)
+
+
+class CounterattackDoubleKnockoutBoundaryTest(BoundaryTestCase):
+    """p.192（カイリキーの「はんげき」の最新の説明「（それによってこのカードが「きぜつ」しても、）ダメージを与えたポケモンに、…10ダメージ」）・
+    p.324（「1つのワザや特殊能力などによって引き起こされることがらによって複数のポケモンが「きぜつ」した場合、…同時に」）。v0.10
+    （docs/counterattack-v0.10.md の C18）。
+
+    止まる場合（ワザの宣言の前の拒否。こんらんのコインの前）: ワザのダメージで「はんげき」がはたらいているカイリキーがきぜつし、かつ「はんげき」
+    の 10 でワザを使ったポケモンがきぜつする（コインのどれかの結果でそうなりうる）。ワザによるきぜつと特殊能力によるきぜつが同時かが
+    決められない（サイド・バトル場に出す順番と勝ち負けが変わる）。
+
+    隣の止まらない場合: カイリキーがねむり（はたらかない。C19）・かがくへんかガス（C24）・カイリキーがきぜつしない（「はんげき」だけで
+    ワザを使ったポケモンがきぜつする 1 匹のきぜつ）・ワザを使ったポケモンが「はんげき」のあとも HP 未満・ワザを使ったポケモンが自分への
+    ダメージですでにきぜつ（「はんげき」は与えない。1 つのワザによる同時のきぜつ。C15）・ディフェンダーでカイリキーがきぜつしない。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, machamp=None, mine_bench=()):
+        champ = {"card": MACHAMP, "evolved_from": [MACHOP, MACHOKE], **(machamp or {})}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": champ, "bench": [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        hitmonchan = {"card": HITMONCHAN, "damage": 60, "energy": [FIGHTING] * 3}  # HP 70。スペシャルパンチ 40
+        pikachu = {"card": PIKACHU, "damage": 30, "energy": [LIGHTNING] * 3}  # HP 40。でんげき 30（「うら」なら自分にも 10）
+        triggers = (
+            (hitmonchan, 1, {"damage": 80}),
+            ({**hitmonchan, "confusion": True}, 1, {"damage": 80}),  # こんらんのコインの前に止める
+            (pikachu, 1, {"damage": 70}),  # 「おもて」なら自分へのダメージがなく「はんげき」できぜつ（「うら」なら自分へのダメージできぜつ）
+            ({"card": MACHOKE, "evolved_from": MACHOP, "damage": 50, "energy": [FIGHTING] * 4}, 1, {"damage": 40}),  # じごくぐるま 60・自分に 20
+        )
+        for attacker, index, machamp in triggers:
+            with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker, machamp=machamp), UseAttack(0, index), "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT")
+        # 止めない 1: ねむりのカイリキー（「はんげき」ははたらかない）。カイリキーだけがきぜつする
+        asleep = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 80, "sleep": True}), UseAttack(0, 1))
+        self.assertNotIn("counterattack", [e["kind"] for e in asleep.log])
+        # 止めない 2: かがくへんかガス（自分の場のベトベトン）
+        gassed = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 80}, mine_bench=[{"card": MUK, "evolved_from": GRIMER}]),
+                                      UseAttack(0, 1))
+        self.assertNotIn("counterattack", [e["kind"] for e in gassed.log])
+        # 止めない 3: カイリキーはきぜつしない（ワザを使ったポケモンだけが「はんげき」できぜつする。1 匹のきぜつ）
+        single = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([(e["kind"], e["player"]) for e in single.log if e["kind"] == "knock_out"], [("knock_out", 0)])
+        # 止めない 4: ワザを使ったポケモンは「はんげき」のあとも HP 未満（カイリキーだけがきぜつする）
+        survivor = self.assert_proceeds(self.board({**hitmonchan, "damage": 50}, machamp={"damage": 80}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in survivor.log if e["kind"] == "knock_out"], [1])
+        self.assertEqual(survivor.players[0].active.damage, 60)
+        # 止めない 5: じごくぐるまの自分への 20 ですでにきぜつ（「はんげき」は与えない。1 つのワザによる同時のきぜつ。p.324）
+        machoke = {"card": MACHOKE, "evolved_from": MACHOP, "damage": 60, "energy": [FIGHTING] * 4}
+        both = self.assert_proceeds(self.board(machoke, machamp={"damage": 40}), UseAttack(0, 1))
+        self.assertIn("counterattack_skipped", [e["kind"] for e in both.log])
+        self.assertEqual([e.get("simultaneous") for e in both.log if e["kind"] == "knock_out"], [True, True])
+        # 止めない 6: ディフェンダーで 40 - 20 = 20（カイリキーはきぜつしない。「はんげき」でワザを使ったポケモンがきぜつ）
+        defended = self.assert_proceeds(self.board(hitmonchan, machamp={"damage": 70, "trainers": [(DEFENDER, TURN)]}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in defended.log if e["kind"] == "knock_out"], [0])
+        # 止めない 7: 最終ダメージが 0（ディグダのあなをほる 10 - ディフェンダー 20）。「はんげき」ははたらかない
+        zero = self.assert_proceeds(self.board({"card": DIGLETT, "damage": 30, "energy": [FIGHTING]}, machamp={"damage": 90, "trainers": [(DEFENDER, TURN)]}),
+                                    UseAttack(0, 0))
+        self.assertNotIn("counterattack", [e["kind"] for e in zero.log])
 
 
 class CodeListTest(unittest.TestCase):

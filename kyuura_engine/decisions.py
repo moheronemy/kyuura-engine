@@ -45,6 +45,14 @@ SELECT_POKEMON = "select_pokemon"  # 効果の対象の場のポケモンを選�
 # プレイヤーの相手）が選ぶ（v0.4d。バタフリーの「ふきとばし」。p.19 の最新の説明「入れ替わるポケモンは、相手が選ぶ。」・
 # p.213 のワザ解説。選べるものは相手のベンチのポケモンの番号。段階は Phase.DECISION）
 FORCED_SWITCH = "forced_switch"
+# ワザの効果で、ワザを使うポケモン自身についているエネルギーカードを 1 枚トラッシュするとき、どのカードかを、ワザを使った
+# プレイヤーが選ぶ（v0.7。ユンゲラーの「じこさいせい」。p.151 の最新の説明「自分についている「超」エネルギーカードを1枚
+# トラッシュして…」。選べるものはカードの uid（ついている順）。段階は Phase.DECISION）
+DISCARD_ENERGY = "discard_energy"
+# ワザの効果で、自分のトラッシュのエネルギーカードを手札に加えるとき、どのカードを何枚加えるかを、ワザを使ったプレイヤーが選ぶ
+# （v0.9。化石の秘密のゴースの「エナジーへんかん」。p.158 の最新の説明「自分のトラッシュから、「エネルギーカード」を最大2枚
+# 選び出し、手札に加える。」。選べるものはカードの uid（トラッシュの順）。0 枚を選ぶと原典で決められないので止める。段階は Phase.DECISION）
+RECOVER_ENERGY = "recover_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -98,7 +106,16 @@ def push_attack_decision(
     min_choices: int = 1,
     max_choices: int = 1,
 ) -> PendingDecision:
-    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。"""
+    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
+
+    v0.10: そのワザのダメージではたらいた「はんげき」（``AttackUse.counterattacks``）は、決定を出す前に与えていなければならない
+    （決定はダメージ以外の効果。「はんげき」のダメージは、ダメージの処理のあと、効果の前。p.89）。決定をまたぐと ``AttackUse`` は
+    新しくなり、まだ与えていない「はんげき」が失われるので、残っていればエンジンの不具合として止める。
+    """
+    if getattr(use, "counterattacks", None):
+        raise RuntimeError(
+            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
+        )
     use_context = ("use", (use.player, use.pokemon_id, use.key.card_id, use.key.attack_index))
     return push_decision(
         state,

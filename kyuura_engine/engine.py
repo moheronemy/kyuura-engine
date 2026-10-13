@@ -54,7 +54,17 @@ from .commands import (
 )
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
 from .damage import calculate_confusion_damage
-from .effects import AttackKey, AttackUse, PowerKey, PowerUse, TrainerUse, attack_damage_modifiers
+from .effects import (
+    AttackKey,
+    AttackUse,
+    PowerKey,
+    PowerUse,
+    TrainerUse,
+    attack_damage_modifiers,
+    counterattack_double_knockout_problem,
+    finish_damage_elements,
+)
+from .continuous import suppressors_of
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
@@ -79,7 +89,7 @@ from .state import (
     freeze_mapping,
     turn_owner,
 )
-from .zones import draw_cards
+from .zones import attach_energy_from_hand, draw_cards
 
 PLAYERS = (0, 1)
 # きぜつのあとの決定の続き（context の "then"）: ポケモンチェックの中（2 の「どく」）のきぜつのあとの決定（v0.3a）。
@@ -365,6 +375,7 @@ def _begin_turn(state: GameState, player: int) -> None:
     state.turn_number += 1
     state.current_player = player
     state.energy_attachments_this_turn = 0
+    state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
@@ -704,7 +715,14 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
 
 
 def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
-    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。"""
+    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。
+
+    v0.6: この番に、ポケモンパワー（「あまごい」）の効果で手札からエネルギーをつけていて、通常の操作ではまだつけていなければ、
+    この操作を受け付けるかは原典で決められない（p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに
+    1枚だけです」が、パワーでつけたカードも数えるのかが書かれていない。p.307・p.90。docs/rain-dance-v0.6.md の R13）。
+    ほかの確認がすべて通ったあと、状態を変える前に ``UnsupportedError``（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）で止める。
+    通常の操作でつけたあとの「あまごい」は受け付ける（どちらの読み方でも同じ。R12）。
+    """
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.energy)
     if not state.card_def(cmd.energy).is_basic_energy:
@@ -716,8 +734,14 @@ def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
         if state.players[1 - cmd.player].find_in_play(cmd.target) is not None:
             raise IllegalActionError("TARGET_NOT_YOURS", "相手の場のポケモンにはつけられない")
         raise IllegalActionError("TARGET_NOT_IN_PLAY", f"{cmd.target!r} は自分の場のポケモンではない")
-    p.hand.remove(cmd.energy)
-    target.energy.append(cmd.energy)
+    if state.energy_attached_by_powers_this_turn > 0:
+        raise UnsupportedError(
+            "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",
+            f"この番にポケモンパワーの効果で手札からエネルギーを {state.energy_attached_by_powers_this_turn} 枚つけたあとで、手札から"
+            "エネルギーをつける（通常の操作）ことができるかは『オフィシャルブック2000』から決められない（p.310 の「1回の自分の番ごとに"
+            "1枚だけ」にパワーでつけたカードを数えるかが書かれていない）ので扱わない",
+        )
+    attach_energy_from_hand(state, cmd.player, cmd.energy, target)
     state.energy_attachments_this_turn += 1
     state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target)
 
@@ -811,7 +835,14 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     成り立ったあとのことなので、こんらんしたワザは不正なコマンド（``IllegalActionError``）ではない。
 
     原典で決められない場合は、コインを投げる前に止める: ワザの説明の処理が決められない（``AttackEffect.problem``）、
-    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）。
+    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）、相手の「はんげき」（v0.10）で
+    ワザによるきぜつと特殊能力によるきぜつが重なりうるか（``effects.counterattack_double_knockout_problem``。
+    ``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``。docs/counterattack-v0.10.md の C18）。
+
+    v0.10: 相手のワザのダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」）のダメージは、ワザのダメージの処理が
+    すべて終わったところで与える（``effects.finish_damage_elements``。p.89）。ダメージ以外の効果のあるワザの実装は、効果の前に自分で
+    呼ぶ。ダメージの要素だけのワザのため、``resolve`` のあとにもここで呼ぶ（与えるものがなければ何もしない）。きぜつ・サイド・交代は、
+    そのあとの ``_finish_attack``。
     """
     p = _require_turn(state, cmd.player)
     attacker = p.active
@@ -830,6 +861,8 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     problem = effect.problem(state, use)
     if problem is None and attacker.conditions.confused:
         problem = _confusion_damage_problem(state, attacker)
+    if problem is None:
+        problem = counterattack_double_knockout_problem(state, use, effect)  # v0.10
     if problem is not None:
         raise problem
 
@@ -844,6 +877,7 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     # 相手が決定する。番のプレイヤーは変えない。決定を待つ間は Phase.DECISION なので、ほかのコマンドは _require_turn で拒否する。
     # p.309「ワザを使っている最中に、他のことをしてはいけません」）
     effect.resolve(state, use)
+    finish_damage_elements(state, use)  # v0.10: ダメージの要素だけのワザの「はんげき」（決定を出したワザは、出す前に与えている）
     if state.decision is None:
         _finish_attack(state)
 
@@ -1094,6 +1128,7 @@ def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None
     use = AttackUse(player, pokemon_id, AttackKey(card_id, attack_index))
     entry = state.effects.attack_entry(card_id, attack_index)
     entry.effect.resume(state, use, decision, choices)
+    finish_damage_elements(state, use)  # v0.10: 決定のあとのダメージの要素の「はんげき」（今の対応カードでは起こらない）
     if state.decision is None:
         _finish_attack(state)
 
@@ -1170,7 +1205,7 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     """自分の場のポケモンの特殊能力（ポケモンパワー）の使用を宣言し、説明にしたがって処理する（p.311「ポケモンの特殊能力を使う」・
     p.323「14 ポケモンの特殊能力」。v0.5）。
 
-    - 使えるのは、使用を宣言して使う特殊能力だけ（自動的にはたらく・常にはたらいている特殊能力は宣言しない。p.311・p.323。未対応）。
+    - 使えるのは、使用を宣言して使う特殊能力だけ（自動的にはたらく・常にはたらいている特殊能力は宣言しない。p.311・p.323）。
       効果の登録表に実装が登録された特殊能力だけ（``EffectRegistry.power_effect``。登録がなければ ``UNSUPPORTED_POKEMON_POWER``）。
     - 自分の番（``Phase.MAIN``）だけ（``_require_turn``）。番の最初に引くまでは何もできず（p.309）、ワザを使ったら番は終わり（p.309）、
       決定を待つ間（トレーナー・ワザ・きぜつのあとの決定）はほかのことをしない（p.309・p.310・p.311）。v0.5 の対応カード（エナジート
@@ -1183,6 +1218,18 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
       前に済ませるので、拒否したら状態・乱数・ログは変わらない。
     - 使っても番は終わらない（``Phase.MAIN`` のまま。``_finish_attack`` を呼ばない）。「特に指示されていないかぎり、特殊能力は
       いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
+    - v0.8: 常にはたらいている特殊能力（``effects.SuppressOtherPowers``。ベトベトンの「かがくへんかガス」）は宣言しないので、使おうと
+      したら ``POWER_NOT_DECLARABLE``（v0.9 の自動的にはたらく特殊能力 ``effects.AttackImmunityOnHeads``（ゴーストの「とうめい」）も
+      同じ。ワザを受けるときにワザの処理の中で評価する。``effects.attack_reaches``。v0.10 のダメージを受けたときに自動的にはたらく
+      特殊能力 ``effects.CounterattackDamage``（カイリキーの「はんげき」）も同じ。``effects.deal_attack_damage``・
+      ``effects.finish_damage_elements``）。宣言する特殊能力は、登録の確認のあと、
+      パワーごとの確認（``check_usable``）の前に、今はたらいている「かがくへんかガス」に消されていないかを今の状態から求めて
+      （``continuous.suppressors_of``）、消されていれば ``POWER_SUPPRESSED``（「使えず、その力も消える」。p.48・p.323）。p.311 の
+      「そのとき使うことのできるもの」を、宣言の前に確かめる（宣言もない。状態・乱数・ログは変わらない）。自分の場・相手の場の
+      どちらのかがくへんかガスでも同じ（p.48 の解説）。
+    - v0.7 のダメージスワップ（``effects.MoveDamageCounter``）は、のせかえでポケモンがきぜつするなら ``check_usable`` で拒否するので、
+      特殊能力の処理のあとにきぜつの処理（トラッシュ・サイド・交代）はない。もし処理のあとに HP 以上のダメージのポケモンがいれば、
+      ``apply_command`` の不変条件（場のポケモンのダメージは HP より小さい）が ``StateIntegrityError`` にする。
     """
     p = _require_turn(state, cmd.player)
     user = p.find_by_pokemon_id(cmd.pokemon)
@@ -1200,6 +1247,18 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     if effect is None:
         problem = state.effects.power_problem(definition.id, power)
         raise UnsupportedError("UNSUPPORTED_POKEMON_POWER", f"特殊能力「{power.name_ja}」は未対応（{problem}）")
+    if not effect.declared:
+        raise IllegalActionError(
+            "POWER_NOT_DECLARABLE",
+            f"特殊能力「{power.name_ja}」は使用を宣言しない（常にはたらく・決められたときに自動的にはたらく特殊能力。p.311・p.323）",
+        )
+    suppressors = suppressors_of(state, power)
+    if suppressors:
+        names = "・".join(f"{pid}（{state.card_def(state.find_pokemon(pid)[1].card).name_ja}）" for pid in suppressors)
+        raise IllegalActionError(
+            "POWER_SUPPRESSED",
+            f"場のポケモン {names}の特殊能力がはたらいているので、特殊能力「{power.name_ja}」は使えず、その力も消えている（p.48・p.323）",
+        )
     use = PowerUse(cmd.player, user.pokemon_id, PowerKey(definition.id, cmd.power), cmd.energy, cmd.source, cmd.target)
     effect.check_usable(state, use)
 
@@ -1209,7 +1268,7 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     )
     effect.resolve(state, use)
     if state.decision is not None or state.phase is not Phase.MAIN:
-        raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5 の特殊能力は決定を出さない。エンジンの不具合）")
+        raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5〜v0.7 の特殊能力は決定を出さない。エンジンの不具合）")
 
 
 # ---------------------------------------------------------------- 保留中の決定に答える
@@ -1320,7 +1379,8 @@ def check_invariants(state: GameState) -> list[str]:
 
     - カードの保存則: 対戦のすべてのカード（``state.cards``）が、持ち主のゾーンのどこか 1 か所にだけある。
       未知の番号のカードはない。``new_game`` で作った対戦では、カードの組がデッキリストと同じ。
-    - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満、
+    - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満（v0.10: ワザの途中の
+      決定を待つ間の、相手の「はんげき」で HP 以上になったワザを使ったポケモンだけを除く。``_counter_knocked_out_attacker_awaiting``）、
       ベンチは 5 匹まで、サイドはルールの枚数まで。
     - 段階との対応: 番の途中は両方のバトル場にポケモンがいる。サイドを取る・バトル場に出す段階には、
       それを待っているプレイヤーがいる。終わった段階には結果か止めた理由がある。
@@ -1331,6 +1391,8 @@ def check_invariants(state: GameState) -> list[str]:
       （``_persistent_effect_problems``）。持続する効果はカードではないので、カードの保存則には数えない。
     - 番の進行（v0.3a）: 番と番のあいだに、番の終わりとポケモンチェックがちょうど 1 回ずつ、この順にある。
       ポケモンチェックの途中の決定（続きが次の番）なら、今の番のあとに 1 回ずつ。番の途中なら、まだない。
+    - ポケモンパワーで手札からつけたエネルギーの数（v0.6）: 今の番のログの ``power_attach_energy`` の数と同じ
+      （``_power_attachment_problems``）。
     """
     problems: list[str] = []
     rules = state.rules
@@ -1374,7 +1436,7 @@ def check_invariants(state: GameState) -> list[str]:
                 continue
             if pokemon.damage < 0 or pokemon.damage % 10:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
-            if pokemon.damage >= definition.hp:
+            if pokemon.damage >= definition.hp and not _counter_knocked_out_attacker_awaiting(state, player, pokemon):
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
             if pokemon.evolution_stack and evolve_events is None:
                 evolve_events = _evolve_events_by_pokemon(state)  # 進化しているポケモンがいるときだけ、ログを 1 回読む（v0.4c）
@@ -1420,6 +1482,7 @@ def check_invariants(state: GameState) -> list[str]:
         problems.append(f"段階 {phase!r} が Phase ではない")
         return problems
     problems.extend(_progress_problems(state))
+    problems.extend(_power_attachment_problems(state))
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
@@ -1731,6 +1794,27 @@ def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInP
     return [f"{where} に対応する、今の番の「にげる」の失敗（ログ retreat_failed）がない"]
 
 
+def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemon: PokemonInPlay) -> bool:
+    """v0.10: ワザの途中の決定（相手が答える「ふきとばし」の入れ替えなど）を待つ間だけ、そのワザを使ったポケモンは、相手の「はんげき」の
+    ダメージで HP 以上になっていても場に残る（きぜつの処理はワザの要素をすべて処理したあと。p.309・p.89。docs/counterattack-v0.10.md
+    の C16・C30）。ほかのポケモン・ほかの段階・決定のないときは、これまでどおり HP 以上のダメージで場に残ることを許さない。
+
+    決定の続きの情報（``context`` の ``"use"``）がこのポケモンを指し、今の番のログで、最後のワザの宣言（``attack``）のあとに、このポケモンを
+    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。"""
+    d = state.decision
+    if state.phase is not Phase.DECISION or d is None or d.resume != "attack":
+        return False
+    use = d.context_value("use")
+    if not isinstance(use, tuple) or len(use) < 2 or (use[0], use[1]) != (player, pokemon.pokemon_id):
+        return False
+    for event in _events_since_turn_start(state):  # 新しい順
+        if event["kind"] == "attack":
+            return False
+        if event["kind"] == "counterattack" and event["attacker_pokemon_id"] == pokemon.pokemon_id and event["knocked_out"]:
+            return True
+    return False
+
+
 def _events_since_turn_start(state: GameState) -> list:
     """最後の ``turn_start`` より後のログ（新しい順）。``turn_start`` がなければログ全体。"""
     recent = []
@@ -1739,6 +1823,27 @@ def _events_since_turn_start(state: GameState) -> list:
             break
         recent.append(event)
     return recent
+
+
+def _power_attachment_problems(state: GameState) -> list[str]:
+    """この番にポケモンパワーで手札からつけたエネルギーの数（v0.6。``energy_attached_by_powers_this_turn``）。
+
+    0 以上の整数で、今の番（最後の ``turn_start`` のあと）のログの ``power_attach_energy`` の数と同じ（番の最初に 0 にし、
+    「あまごい」で 1 枚つけるごとに 1 増やすので）。対戦準備の段階（番がまだない）では 0。ログは記録で、エンジンはこの数を
+    ログから決めない（ここでは、状態とログが食い違っていないかだけを確かめる）。
+    """
+    count = state.energy_attached_by_powers_this_turn
+    if type(count) is not int or count < 0:
+        return [f"この番にポケモンパワーでつけたエネルギーの数 {count!r} が正しくない"]
+    logged = 0
+    for event in reversed(state.log):
+        if event["kind"] == "turn_start":
+            break
+        if event["kind"] == "power_attach_energy":
+            logged += 1
+    if count != logged:
+        return [f"この番にポケモンパワーでつけたエネルギーの数 {count} が、今の番のログの power_attach_energy の数 {logged} と違う"]
+    return []
 
 
 def _progress_problems(state: GameState) -> list[str]:

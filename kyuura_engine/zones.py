@@ -30,6 +30,22 @@ def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:
     return tuple(drawn)
 
 
+def attach_energy_from_hand(state: GameState, player: int, energy: int, pokemon: PokemonInPlay) -> None:
+    """手札のエネルギーカード ``energy`` を、場のポケモン ``pokemon`` につける（同じ uid のまま、手札から取りのぞいて
+    ``pokemon.energy`` の最後に加える。v0.6）。
+
+    手札からつける通常の操作（p.310。``engine._attach_energy``）と、ポケモンパワーの効果で手札からつける処理（v0.6 の
+    「あまごい」）で共通。カードを動かすだけで、つけてよいか（番・段階・1 番に 1 枚・カードの種類・対象）の確認、回数の記録、
+    ログは呼ぶ側が行う（確認は、ここを呼ぶ前にすべて済ませる）。カードが手札にない・持ち主が違う・ポケモンの持ち主が違うなら、
+    確認の漏れなので ``RuntimeError``（状態を変える前）。
+    """
+    p = state.players[player]
+    if energy not in p.hand or state.cards[energy].owner != player or not any(x is pokemon for x in p.in_play()):
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {energy} を、自分の場のポケモンにつけられない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(energy)
+    pokemon.energy.append(energy)
+
+
 def attach_trainer(state: GameState, player: int, card: int, pokemon: PokemonInPlay, discard_at_end_of_turn: int) -> AttachedTrainer:
     """使っている最中のトレーナーカードを、場のポケモンにつける（v0.2c。「つけて使う」トレーナー）。
 

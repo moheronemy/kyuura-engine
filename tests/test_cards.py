@@ -9,11 +9,13 @@ import unittest
 from pathlib import Path
 
 from kyuura_engine import EnergyType, can_pay_cost, load_card_pool
-from kyuura_engine.cards import read_extract, read_verification
+from kyuura_engine.cards import pool_from_extract, read_extract, read_verification
+from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
-    POTION, RATTATA, SUPER_POTION, SWITCH, BLASTOISE, BULBASAUR, IVYSAUR, VENUSAUR, VULPIX, WEEDLE,
+    POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
+    WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -33,7 +35,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.2e でディフェンダー（pool_v0_2e）、v0.2f でピカチュウ（pool_v0_2f）、v0.3a でビードル（pool_v0_3a）、
         # v0.3b でキャタピー・パラス（pool_v0_3b）、v0.3c でロコン（pool_v0_3c）、v0.4a で 1 進化のパラセクト・ジュゴン
         # （pool_v0_4a）、v0.4b で 1 進化のトランセル・コクーン（pool_v0_4b）、v0.4c で 2 進化のスピアー（pool_v0_4c）、
-        # v0.4d で 2 進化のバタフリー（pool_v0_4d）、v0.5 でフシギダネ・フシギソウ・フシギバナ（pool_v0_5）を加えた。v0.1 の組
+        # v0.4d で 2 進化のバタフリー（pool_v0_4d）、v0.5 でフシギダネ・フシギソウ・フシギバナ（pool_v0_5）、v0.6 でゼニガメ・
+        # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
@@ -58,8 +61,21 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(pool.is_playable(BUTTERFREE) and pool.get(BUTTERFREE).is_stage2_pokemon)
         self.assertEqual(read_extract()["pool_v0_5"], [BULBASAUR, IVYSAUR, VENUSAUR])  # v0.5（ポケモンパワーのエナジートランス）
         self.assertTrue(all(pool.is_playable(c) for c in (BULBASAUR, IVYSAUR, VENUSAUR)))
+        self.assertEqual(read_extract()["pool_v0_6"], [SQUIRTLE, WARTORTLE, BLASTOISE])  # v0.6（ポケモンパワーのあまごい）
+        self.assertTrue(all(pool.is_playable(c) for c in (SQUIRTLE, WARTORTLE, BLASTOISE)))
+        self.assertEqual(read_extract()["pool_v0_7"], [ABRA, KADABRA, ALAKAZAM])  # v0.7（ポケモンパワーのダメージスワップ）
+        self.assertTrue(all(pool.is_playable(c) for c in (ABRA, KADABRA, ALAKAZAM)))
+        self.assertEqual(read_extract()["pool_v0_8"], [GRIMER, MUK])  # v0.8（常にはたらくポケモンパワーのかがくへんかガス）
+        self.assertTrue(all(pool.is_playable(c) for c in (GRIMER, MUK)))
+        self.assertEqual(read_extract()["pool_v0_9"], [GASTLY, HAUNTER])  # v0.9（ワザを受けるときに自動的にはたらくポケモンパワーのとうめい）
+        self.assertTrue(all(pool.is_playable(c) for c in (GASTLY, HAUNTER)))
+        self.assertFalse(pool.is_playable(BASE_HAUNTER))  # 同じ名前の第1弾のゴースト（参照カード。ゆめくいが未実装）
+        self.assertEqual(read_extract()["pool_v0_10"], [MACHOKE, MACHAMP])  # v0.10（ダメージを受けたときに自動的にはたらくポケモンパワーのはんげき）
+        self.assertTrue(all(pool.is_playable(c) for c in (MACHOP, MACHOKE, MACHAMP)))  # ワンリキーは v0.1 から
+        self.assertFalse(pool.is_playable(GIOVANNIS_MACHAMP))  # 名前に「カイリキー」を含む別のカード（参照カード。こんじょうが未実装）
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
-                 BULBASAUR, IVYSAUR, VENUSAUR)
+                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
+                 MACHOKE, MACHAMP)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -124,13 +140,20 @@ class ClassificationTest(unittest.TestCase):
         self.assertIn("トレーナー", pool.get(SUPER_POTION).unsupported_reasons[0])
         # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のカードは段階ではなく、ポケモンパワーと登録のないワザで未対応に
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
-        # ソーラービーム）で確かめていた。v0.5 でフシギバナを対応にしたので、カメックス（登録のないポケモンパワー「あまごい」・
-        # ワザ「ハイドロポンプ」）で確かめる
-        reasons = " ".join(pool.get(BLASTOISE).unsupported_reasons)
-        self.assertTrue(pool.get(BLASTOISE).is_stage2_pokemon)
+        # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。
+        # v0.6 ではフーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」）で確かめていた。v0.7 で
+        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる
+        reasons = " ".join(pool.get(CHARIZARD).unsupported_reasons)
+        self.assertTrue(pool.get(CHARIZARD).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
-        self.assertIn("ポケモンパワー「あまごい」", reasons)
-        self.assertIn("ハイドロポンプ", reasons)
+        self.assertIn("ポケモンパワー「エナジーバーン」", reasons)
+        self.assertIn("ほのおのうず", reasons)
+        # 名前が同じワザでも、カードごとの登録がなければ未対応（v0.6 までフーディンの「あやしいひかり」（ロコンの PMCG1-015 と同じ
+        # 名前）で確かめていたこと。v0.7 でフーディンの位置に別の登録を加えたので、登録を除いた登録表で確かめる）
+        without = pool_from_extract(read_extract(), DEFAULT_EFFECTS.without_attacks("test-no-alakazam-attack", [AttackKey(ALAKAZAM, 0)]))
+        self.assertFalse(without.get(ALAKAZAM).supported)
+        self.assertIn("あやしいひかり", " ".join(without.get(ALAKAZAM).unsupported_reasons))
+        self.assertTrue(without.get(VULPIX).supported)
 
 
 class CostTest(unittest.TestCase):
