@@ -71,8 +71,9 @@ class TrainerRegistryTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, DEFENDER, PLUSPOWER))
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
-        # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.6")
+        # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
+        # ポケモンパワー（ケーシィ・ユンゲラー・フーディン）を加えた
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.7")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
         self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus",
                                            "attached_damage_reduction"})

@@ -45,6 +45,10 @@ SELECT_POKEMON = "select_pokemon"  # 効果の対象の場のポケモンを選�
 # プレイヤーの相手）が選ぶ（v0.4d。バタフリーの「ふきとばし」。p.19 の最新の説明「入れ替わるポケモンは、相手が選ぶ。」・
 # p.213 のワザ解説。選べるものは相手のベンチのポケモンの番号。段階は Phase.DECISION）
 FORCED_SWITCH = "forced_switch"
+# ワザの効果で、ワザを使うポケモン自身についているエネルギーカードを 1 枚トラッシュするとき、どのカードかを、ワザを使った
+# プレイヤーが選ぶ（v0.7。ユンゲラーの「じこさいせい」。p.151 の最新の説明「自分についている「超」エネルギーカードを1枚
+# トラッシュして…」。選べるものはカードの uid（ついている順）。段階は Phase.DECISION）
+DISCARD_ENERGY = "discard_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

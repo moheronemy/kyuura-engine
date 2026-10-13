@@ -116,7 +116,12 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
     def test_the_stop_is_needed_for_every_playable_pokemon(self):
         """対戦に使えるポケモンでは、プラスパワー・ディフェンダーが 1 枚でもついていれば、読み方によって 20 の結果が変わる
         （0〜2 枚の組み合わせで確かめた）。結果が同じになる場合だけを処理する、という正規化の余地はない（止める範囲は
-        広すぎない）。ついていなければ読み方は 1 通り（弱点・抵抗力だけ）。"""
+        広すぎない）。ついていなければ読み方は 1 通り（弱点・抵抗力だけ。p.322「このダメージは「弱点・抵抗力」の影響を受けます」）。
+
+        v0.6 までは、ついていないときの値を 20 と固定していた（対戦に使えるポケモンに、自分のタイプを弱点に持つものがなかった）。
+        v0.7 で対応にしたケーシィ・ユンゲラー・フーディン（超・弱点 超）は、こんらんの 20 が自分の弱点で 40 になる（v0.3c の
+        ``calculate_confusion_damage``。p.149・p.151・p.153 の図版の弱点）ので、期待値を 1 通りの読み方の値にした（読み方が 1 通りで
+        あることは変えていない）。"""
         pool = load_card_pool()
         pokemon = [pool.get(c) for c in sorted(pool.playable_ids) if pool.get(c).category == "pokemon"]
         self.assertGreater(len(pokemon), 10)
@@ -125,9 +130,14 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                 with self.subTest(pokemon=definition.id, pluspowers=pluspowers, defenders=defenders):
                     results = confusion_interpretations(definition, pluspowers, defenders)
                     if pluspowers == defenders == 0:
-                        self.assertEqual(set(results.values()), {20})
+                        self.assertEqual(set(results.values()), {calculate_confusion_damage(definition, RULES_2000_02_14, 20).final})
                     else:
                         self.assertGreater(len(set(results.values())), 1, results)
+        # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン）は 40、それ以外は 20（対戦に使えるポケモンに抵抗力で自分のタイプを
+        # 減らすものはない）
+        doubled = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 40}
+        self.assertEqual(doubled, {"PMCG1-043", "PMCG1-046", "PMCG1-049"})
+        self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled))
 
 
 

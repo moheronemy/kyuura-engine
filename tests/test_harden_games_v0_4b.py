@@ -233,7 +233,7 @@ class GoldenHardenGameTest(unittest.TestCase):
         self.assertEqual((len(commands), state.turn_number, state.phase), GOLDEN_SHAPE)
         self.assertGreater(count_events(state)["damage_prevented"], 0)
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.6")  # v0.4c・v0.4d・v0.5・v0.6 で登録表の id だけ変わった（結果は同じ）
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.7")  # v0.4c・v0.4d・v0.5・v0.6・v0.7 で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

@@ -141,11 +141,20 @@ POOL_V0_6 = [
     "PMCG1-032",  # カメックス（カメールから進化。ポケモンパワー あまごい・ハイドロポンプ）
 ]
 
+# v0.7 で加えたケーシィ → ユンゲラー → フーディン（ポケモンパワー「ダメージスワップ」を持つ 2 進化）。『オフィシャルブック2000』
+# p.149（ケーシィ）・p.151（ユンゲラー）・p.153（フーディン）・p.319・p.320・p.307〜p.311・p.322・p.323 と照合した（300dpi。カードの
+# 図版は 600dpi）。フーディンは v0.6 まで参照カード（REFERENCE_ONLY）だった
+POOL_V0_7 = [
+    "PMCG1-043",  # ケーシィ（ねんりき）
+    "PMCG1-046",  # ユンゲラー（ケーシィから進化。じこさいせい・ちょうねんりき）
+    "PMCG1-049",  # フーディン（ユンゲラーから進化。ポケモンパワー ダメージスワップ・あやしいひかり）
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
-    # フーディン（2進化・実装を登録していないポケモンパワー「ダメージスワップ」と、ロコンと同じ名前でも登録していないワザ
-    # 「あやしいひかり」。v0.6 でカメックスの代わりに加えた。v0.5 ではカメックスがフシギバナの代わりだった）
-    "PMCG1-049",
+    # リザードン（2進化・実装を登録していないポケモンパワー「エナジーバーン」と、登録していないワザ「ほのおのうず」。v0.7 でフーディンの
+    # 代わりに加えた。v0.6 ではフーディンがカメックスの、v0.5 ではカメックスがフシギバナの代わりだった）
+    "PMCG1-021",
     "PMCG1-014",  # ヒトカゲ（効果のないワザと、効果のあるワザ「ひのこ」を持つ）
     "PMCG1-075",  # いいきずぐすり（実装を登録していないトレーナー）
 ]
@@ -206,10 +215,10 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -240,6 +249,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_4d": POOL_V0_4D,
         "pool_v0_5": POOL_V0_5,
         "pool_v0_6": POOL_V0_6,
+        "pool_v0_7": POOL_V0_7,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -265,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

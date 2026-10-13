@@ -91,8 +91,8 @@ class SerializeFormatTest(unittest.TestCase):
         # v0.2d: ドードーの「みだれづき」、v0.2e: ディフェンダー、v0.2f: ピカチュウ、v0.3a: ビードル、
         # v0.3b: キャタピー・パラス、v0.3c: ロコン、v0.4a: パラセクト・ジュゴン、v0.4b: トランセル・コクーン、v0.4c: スピアー、
         # v0.4d: バタフリー、v0.5: フシギダネ・フシギソウ・フシギバナ（ポケモンパワーの登録を加えた）、v0.6: ゼニガメ・カメール・
-        # カメックス（ポケモンパワー「あまごい」））
-        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.6"))
+        # カメックス（ポケモンパワー「あまごい」）、v0.7: ケーシィ・ユンゲラー・フーディン（ポケモンパワー「ダメージスワップ」））
+        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.7"))
         json.dumps(v2)
 
     def test_decision_is_serialized(self):

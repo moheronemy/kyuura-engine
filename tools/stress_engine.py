@@ -7,6 +7,7 @@
     python3 tools/stress_engine.py --scenario butterfree --start 1000 --seeds 50
     python3 tools/stress_engine.py --scenario venusaur --scenario venusaur_status   # v0.5（ポケモンパワー）
     python3 tools/stress_engine.py --scenario blastoise --scenario blastoise_mixed  # v0.6（あまごい）
+    python3 tools/stress_engine.py --scenario alakazam --scenario alakazam_mixed    # v0.7（ダメージスワップ）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -25,6 +26,12 @@
   水でないポケモン・相手のポケモン・移動元の指定・番でない・ない番号）も）を混ぜる。フシギバナ・カメックスのどちらもいない組では
   駆動とまったく同じ操作になり、フシギバナだけの組では v0.5 と同じ操作になる（乱数の使い方を変えていない）。拒否の前後の比較と
   書き出しの監査は形式 9（v0.6 の ``energy_attached_by_powers_this_turn`` を含む）。
+- v0.7: フーディンの組（``alakazam``・``alakazam_mixed``。``alakazam_mixed`` はフシギバナ・カメックス・フーディンを同じデッキに入れる）を
+  加え、自分の場にフーディンがいる番に、ダメージスワップの使用（自分の場のダメージカウンターがのったポケモンから、自分の場の別の
+  ポケモンへ 1 個。わざと不正なもの（同じポケモン・カウンターのないポケモン・きぜつする移動先・相手のポケモン・エネルギーの指定・
+  選ばせるものの不足・番でない・ない番号・ない位置・パワーのないポケモン）も）を混ぜる。ユンゲラーの「じこさいせい」の決定
+  （``DISCARD_ENERGY``）は駆動がほかの決定と同じに答える。フーディンのいない組では v0.6 と同じ操作になる（乱数の使い方を変えていない。
+  ポケモンパワーを持つポケモンの種類の並び ``POWER_USERS`` の最後に加えたので、フシギバナ・カメックスだけの組の選び方は同じ）。
 """
 
 from __future__ import annotations
@@ -73,14 +80,27 @@ POWER_SCENARIOS += (
                      driver.BUTTERFREE: 2, driver.METAPOD: 2, driver.POTION: 2, driver.WATER: 15, driver.GRASS: 10, driver.FIRE: 6},
                     tuple(range(6)), tags=("カメックス", "フシギバナ", "特殊状態", "ふきとばし")),
 )
+ALAKAZAM, KADABRA, ABRA, PSYCHIC = "PMCG1-049", "PMCG1-046", "PMCG1-043", "PMCG1-101"
+POWER_SCENARIOS += (
+    driver.Scenario("alakazam", {ABRA: 4, KADABRA: 4, ALAKAZAM: 4, driver.DODUO: 3, driver.RATTATA: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                 driver.BILL: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, PSYCHIC: 28, driver.FIRE: 4},
+                    {ABRA: 4, KADABRA: 3, ALAKAZAM: 3, driver.VULPIX: 3, driver.WEEDLE: 3, driver.CATERPIE: 3, driver.DEFENDER: 2,
+                     driver.BILL: 2, PSYCHIC: 25, driver.GRASS: 6, driver.FIRE: 6}, tuple(range(6)), tags=("フーディン", "ダメージスワップ")),
+    driver.Scenario("alakazam_mixed", {BULBASAUR: 3, IVYSAUR: 2, VENUSAUR: 2, SQUIRTLE: 3, WARTORTLE: 2, BLASTOISE: 2, ABRA: 3, KADABRA: 3,
+                                       ALAKAZAM: 3, driver.SWITCH: 2, driver.POTION: 2, driver.GRASS: 11, driver.WATER: 11, PSYCHIC: 11},
+                    {driver.VULPIX: 4, driver.PARAS: 4, driver.CATERPIE: 4, driver.WEEDLE: 4, ABRA: 3, KADABRA: 3, ALAKAZAM: 2,
+                     driver.BUTTERFREE: 2, driver.METAPOD: 2, driver.POTION: 2, PSYCHIC: 14, driver.GRASS: 10, driver.FIRE: 6},
+                    tuple(range(6)), tags=("フーディン", "カメックス", "フシギバナ", "特殊状態", "ふきとばし")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックスがいる番で、ポケモンパワーを試す割合
-POWER_USERS = (VENUSAUR, BLASTOISE)
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディンがいる番で、ポケモンパワーを試す割合
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM)
 
 
 def choose_command(state, rng: random.Random, illegal_rate: float):
-    """駆動の操作に、ポケモンパワー（エナジートランス・あまごい）の使用を混ぜる。自分の番（MAIN）に自分の場にフシギバナ・カメックスが
-    いなければ、駆動と同じ（v0.4e と同じ）。フシギバナだけがいれば v0.5 と同じ（乱数の使い方も同じ）。"""
+    """駆動の操作に、ポケモンパワー（エナジートランス・あまごい・ダメージスワップ）の使用を混ぜる。自分の番（MAIN）に自分の場に
+    フシギバナ・カメックス・フーディンがいなければ、駆動と同じ（v0.4e と同じ）。フシギバナだけがいれば v0.5 と同じ、フシギバナ・
+    カメックスだけなら v0.6 と同じ（乱数の使い方も同じ）。"""
     player = state.current_player
     if state.phase is not engine.Phase.MAIN or player not in (0, 1):
         return driver.choose_command(engine, state, rng, illegal_rate)
@@ -89,7 +109,50 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
+    if kind == ALAKAZAM:
+        return _damage_swap_command(state, rng)
     return _power_command(state, rng) if kind == VENUSAUR else _rain_dance_command(state, rng)
+
+
+def _damage_swap_command(state, rng: random.Random):
+    """ダメージスワップの使用（v0.7）: たいていはルール上できそうなもの（自分のフーディン・ダメージカウンターがのった自分のポケモン・
+    1 個のせてもきぜつしない自分の別のポケモン）、ときどき不正なもの（同じポケモン・カウンターのないポケモン・きぜつする移動先・
+    相手のポケモン・エネルギーの指定・選ばせるものの不足・番でない・ない番号・ない位置・パワーのないポケモン）。"""
+    player = state.current_player
+    mine, theirs = state.players[player].in_play(), state.players[1 - player].in_play()
+    user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == ALAKAZAM])
+    damaged = [pk for pk in mine if pk.damage]
+    source = rng.choice(damaged or mine)
+    room = [pk for pk in mine if pk is not source and pk.damage + 10 < state.card_def(pk.card).hp]
+    target = rng.choice(room or [pk for pk in mine if pk is not source] or mine)
+    command = engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, target.pokemon_id)
+    if rng.random() < 0.7:
+        return command
+    full = [pk for pk in mine if pk.damage + 10 >= state.card_def(pk.card).hp]
+    clean = [pk for pk in mine if not pk.damage]
+    odd = [
+        engine.UsePokemonPower(player, user.pokemon_id),  # 選ばせるものがない
+        engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id),  # 移動先がない
+        engine.UsePokemonPower(player, user.pokemon_id, 0, rng.choice(sorted(state.cards)), source.pokemon_id, target.pokemon_id),  # エネルギー
+        engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, source.pokemon_id),  # 同じポケモン
+        engine.UsePokemonPower(player, user.pokemon_id, 1, None, source.pokemon_id, target.pokemon_id),  # ない位置
+        engine.UsePokemonPower(1 - player, user.pokemon_id, 0, None, source.pokemon_id, target.pokemon_id),  # 番でない
+        engine.UsePokemonPower(player, user.pokemon_id, 0, None, 999, target.pokemon_id),
+        engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, 999),
+        engine.UsePokemonPower(player, rng.choice(mine).pokemon_id, 0, None, source.pokemon_id, target.pokemon_id),  # パワーのないポケモンかも
+    ]
+    if full:
+        odd.append(engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, rng.choice(full).pokemon_id))  # きぜつするかも
+    if clean:
+        odd.append(engine.UsePokemonPower(player, user.pokemon_id, 0, None, rng.choice(clean).pokemon_id, target.pokemon_id))  # カウンターなし
+    if theirs:
+        other = rng.choice(theirs)
+        odd += [
+            engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, other.pokemon_id),  # 相手のポケモンへ
+            engine.UsePokemonPower(player, user.pokemon_id, 0, None, other.pokemon_id, target.pokemon_id),  # 相手のポケモンから
+            engine.UsePokemonPower(player, other.pokemon_id, 0, None, source.pokemon_id, target.pokemon_id),  # 相手のポケモンのパワー
+        ]
+    return rng.choice(odd)
 
 
 def _rain_dance_command(state, rng: random.Random):
@@ -213,6 +276,10 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
         counted[f"accepted:{type(command).__name__}"] += 1
         if isinstance(command, engine.UsePokemonPower) and new.log[-1]["kind"] == "power_attach_energy":
             counted["accepted:rain_dance"] += 1
+        if isinstance(command, engine.UsePokemonPower) and new.log[-1]["kind"] == "move_damage_counter":
+            counted["accepted:damage_swap"] += 1
+        if any(e["kind"] == "discard_energy" for e in new.log[len(state.log):]):
+            counted["accepted:recover"] += 1  # ユンゲラーの「じこさいせい」（決定に答えて処理した）
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -262,7 +329,8 @@ def main(argv=None) -> int:
           f"未対応 {counts.get('rejected_unsupported', 0)}・原典で決められない（拒否） {counts.get('rejected_unresolved', 0)}・"
           f"HALTED {sum(v for k, v in counts.items() if k.startswith('final_halted:'))}・GAME_OVER {counts.get('final:game_over', 0)}・"
           f"SUDDEN_DEATH {counts.get('final:sudden_death', 0)}・内部の誤り {counts.get('internal_error', 0) + counts.get('internal_state_integrity', 0)}・"
-          f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}（うちあまごい {counts.get('accepted:rain_dance', 0)}）"
+          f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}（うちあまごい {counts.get('accepted:rain_dance', 0)}・"
+          f"ダメージスワップ {counts.get('accepted:damage_swap', 0)}）・じこさいせい {counts.get('accepted:recover', 0)}"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

@@ -112,8 +112,13 @@
     "PMCG1-027",
     "PMCG1-032"
   ],
+  "pool_v0_7": [
+    "PMCG1-043",
+    "PMCG1-046",
+    "PMCG1-049"
+  ],
   "reference_only": [
-    "PMCG1-049",
+    "PMCG1-021",
     "PMCG1-014",
     "PMCG1-075"
   ],
@@ -2919,6 +2924,173 @@
       }
     },
     {
+      "id": "PMCG1-043",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ケーシィ",
+        "en": "Abra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          63
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねんりき",
+              "en": "Psyshock"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて、「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-043",
+        "pokemontcg": [
+          "base1-43"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-043-casey/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-043-casey/"
+      }
+    },
+    {
+      "id": "PMCG1-046",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ユンゲラー",
+        "en": "Kadabra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          64
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ケーシィ",
+          "en": "Abra"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じこさいせい",
+              "en": "Recover"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の「超」エネルギーカードを1枚はがしてすてることによってダメージカウンターを全てとりのぞく。",
+              "en": "Discard 1 Psychic Energy card attached to Kadabra in order to use this attack. Remove all damage counters from Kadabra."
+            }
+          },
+          {
+            "name": {
+              "ja": "ちょうねんりき",
+              "en": "Super Psy"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-046",
+        "pokemontcg": [
+          "base1-32"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-044-yungerer/",
+      "jp_print": {
+        "level": 38,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-044-yungerer/"
+      }
+    },
+    {
       "id": "PMCG1-049",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -3007,6 +3179,118 @@
           "特殊能力が「特種能力」と表記されている"
         ],
         "source": "https://nazonobasho.com/pmcg01-045-foodin/"
+      }
+    },
+    {
+      "id": "PMCG1-021",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "リザードン",
+        "en": "Charizard"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          6
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "リザード",
+          "en": "Charmeleon"
+        },
+        "hp": 120,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーバーン",
+              "en": "Energy Burn"
+            },
+            "text": {
+              "ja": "リザードンは、「炎」以外の自分のエネルギーを「炎」エネルギーとして扱うことができる。「こんらん」状態のときには使えない。",
+              "en": "As often as you like during your turn (before your attack), you may turn all Energy attached to Charizard into Fire Energy for the rest of the turn. This power can't be used if Charizard is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのうず",
+              "en": "Fire Spin"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分のエネルギーカードを2枚はがしてすてる。",
+              "en": "Discard 2 Energy cards attached to Charizard in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "errata",
+          "summary": "ポケモンパワー エナジーバーン（Energy Burn）が使えなくなる状態（日本の当初の文面とエラッタ）",
+          "ja": "第1弾の印刷は「『こんらん』状態のときには使えない」と、こんらんだけを挙げている（カードの画像で確認）。1998年2月の「とりかえっこプリーズ」のプロモは「ねむり・マヒ・こんらん」に書き換えられ [N3]、『ポケモンカードオフィシャルブック2000』（2000年2月29日発行）p.66 は第1弾の版も「ねむり・マヒ・こんらん」状態のとき使えないとする「最新の説明」で載せている [P43]（docs/rules/errata-history.md の TXT-CHARIZARD）",
+          "en": "ねむり・こんらん・マヒのときは使えない（日本のエラッタ後と同じ）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-021",
+        "pokemontcg": [
+          "base1-4"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-016-lizardon/",
+      "jp_print": {
+        "level": 76,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "特殊能力が「特種能力」と表記されている",
+          "初版は「ポケモンの分類」「身長」「体重」に誤表記（「かいりきポケモン、身長1.5m、体重70.5kg」はゴーリキーのもの）"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-016-lizardon/"
       }
     },
     {

@@ -427,7 +427,7 @@ class GoldenVenusaurGameTest(unittest.TestCase):
         for key in ("evolve_to_PMCG1-011", "move_energy"):
             self.assertGreater(counted[key], 0, (key, counted))
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.6")  # v0.6 で登録表の id だけ変わった（結果は同じ）
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.7")  # v0.6・v0.7 で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

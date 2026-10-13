@@ -9,11 +9,13 @@ import unittest
 from pathlib import Path
 
 from kyuura_engine import EnergyType, can_pay_cost, load_card_pool
-from kyuura_engine.cards import read_extract, read_verification
+from kyuura_engine.cards import pool_from_extract, read_extract, read_verification
+from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
-    POTION, RATTATA, SUPER_POTION, SWITCH, ALAKAZAM, BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, VULPIX, WARTORTLE, WEEDLE,
+    POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
+    WARTORTLE, WEEDLE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -33,7 +35,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.2e でディフェンダー（pool_v0_2e）、v0.2f でピカチュウ（pool_v0_2f）、v0.3a でビードル（pool_v0_3a）、
         # v0.3b でキャタピー・パラス（pool_v0_3b）、v0.3c でロコン（pool_v0_3c）、v0.4a で 1 進化のパラセクト・ジュゴン
         # （pool_v0_4a）、v0.4b で 1 進化のトランセル・コクーン（pool_v0_4b）、v0.4c で 2 進化のスピアー（pool_v0_4c）、
-        # v0.4d で 2 進化のバタフリー（pool_v0_4d）、v0.5 でフシギダネ・フシギソウ・フシギバナ（pool_v0_5）を加えた。v0.1 の組
+        # v0.4d で 2 進化のバタフリー（pool_v0_4d）、v0.5 でフシギダネ・フシギソウ・フシギバナ（pool_v0_5）、v0.6 でゼニガメ・
+        # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
@@ -60,8 +63,10 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(all(pool.is_playable(c) for c in (BULBASAUR, IVYSAUR, VENUSAUR)))
         self.assertEqual(read_extract()["pool_v0_6"], [SQUIRTLE, WARTORTLE, BLASTOISE])  # v0.6（ポケモンパワーのあまごい）
         self.assertTrue(all(pool.is_playable(c) for c in (SQUIRTLE, WARTORTLE, BLASTOISE)))
+        self.assertEqual(read_extract()["pool_v0_7"], [ABRA, KADABRA, ALAKAZAM])  # v0.7（ポケモンパワーのダメージスワップ）
+        self.assertTrue(all(pool.is_playable(c) for c in (ABRA, KADABRA, ALAKAZAM)))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
-                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE)
+                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -127,13 +132,19 @@ class ClassificationTest(unittest.TestCase):
         # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のカードは段階ではなく、ポケモンパワーと登録のないワザで未対応に
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
         # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。
-        # v0.6 でカメックスを対応にしたので、フーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」。
-        # ロコンの「あやしいひかり」（PMCG1-015）と名前が同じでも、カードごとの登録がなければ未対応）で確かめる
-        reasons = " ".join(pool.get(ALAKAZAM).unsupported_reasons)
-        self.assertTrue(pool.get(ALAKAZAM).is_stage2_pokemon)
+        # v0.6 ではフーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」）で確かめていた。v0.7 で
+        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる
+        reasons = " ".join(pool.get(CHARIZARD).unsupported_reasons)
+        self.assertTrue(pool.get(CHARIZARD).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
-        self.assertIn("ポケモンパワー「ダメージスワップ」", reasons)
-        self.assertIn("あやしいひかり", reasons)
+        self.assertIn("ポケモンパワー「エナジーバーン」", reasons)
+        self.assertIn("ほのおのうず", reasons)
+        # 名前が同じワザでも、カードごとの登録がなければ未対応（v0.6 までフーディンの「あやしいひかり」（ロコンの PMCG1-015 と同じ
+        # 名前）で確かめていたこと。v0.7 でフーディンの位置に別の登録を加えたので、登録を除いた登録表で確かめる）
+        without = pool_from_extract(read_extract(), DEFAULT_EFFECTS.without_attacks("test-no-alakazam-attack", [AttackKey(ALAKAZAM, 0)]))
+        self.assertFalse(without.get(ALAKAZAM).supported)
+        self.assertIn("あやしいひかり", " ".join(without.get(ALAKAZAM).unsupported_reasons))
+        self.assertTrue(without.get(VULPIX).supported)
 
 
 class CostTest(unittest.TestCase):

@@ -10,9 +10,13 @@
   手札（引いた・取ったサイド → 場に出した・つけた・使った）と、特殊能力（あまごい）で手札からつけたエネルギー
   （``power_attach_energy``。直前に同じポケモンの宣言が 1 つ。手札にあった自分のカードを自分の場のポケモンへ）も組み立て直し、
   手札からつける通常の操作（``attach_energy``）が 1 番に 1 回までで、特殊能力でつけたあと（通常の操作をまだしていない番）に
-  ないこと（R13 はエンジンが止める）も確かめる。宣言（``pokemon_power``）のすぐあとには、その処理（``move_energy`` か
-  ``power_attach_energy``）が 1 つある（v0.5・v0.6 の特殊能力は決定を出さず、1 回の宣言で 1 回処理する。p.311）。ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として
-  報告する）。
+  ないこと（R13 はエンジンが止める）も確かめる。宣言（``pokemon_power``）のすぐあとには、その処理（``move_energy``・
+  ``power_attach_energy``・``move_damage_counter``）が 1 つある（v0.5〜v0.7 の特殊能力は決定を出さず、1 回の宣言で 1 回処理する。
+  p.311）。v0.7 から、特殊能力（ダメージスワップ）のダメージカウンターの移動（``move_damage_counter``。移動元から 1 個へり、
+  移動先に 1 個ふえる。自分の場のポケモンのあいだだけ・移動元と移動先が別・移動元にカウンターがあった・移動先がきぜつしない・
+  登録された実装がダメージカウンターを移す特殊能力）と、ワザ（じこさいせい）のエネルギーのトラッシュ（``discard_energy``）・
+  ダメージカウンターをすべてとりのぞく処理（``remove_all_damage_counters``）も組み立て直しに含める。ログは記録で、状態の正本では
+  ない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
 """
@@ -150,15 +154,19 @@ def log_problems(state) -> list[str]:
                 problems.append(f"1 回のワザで同じポケモンへのダメージの要素が 2 回以上 {dict(window)}")
             if window["confusion_damage"] and (window["damage:opponent"] or window["damage:self"] or window["prevented:opponent_active"]):
                 problems.append("こんらんしたワザに、もとのワザのダメージの要素がある")
-            for once in ("forced_switch", "drain_heal", "confusion_check", "confusion_damage", "persistent_effect_added"):
+            for once in ("forced_switch", "drain_heal", "confusion_check", "confusion_damage", "persistent_effect_added", "discard_energy",
+                         "remove_all_damage_counters"):
                 if window[once] > 1:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
+            if window["discard_energy"] != window["remove_all_damage_counters"]:
+                problems.append("1 回のワザで、エネルギーのトラッシュとダメージカウンターをすべてとりのぞく処理の数が違う（じこさいせい）")
             window = None
             continue
-        if kind in ("pokemon_power", "move_energy", "power_attach_energy"):
-            # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない（v0.6 のあまごいも）
+        if kind in ("pokemon_power", "move_energy", "power_attach_energy", "move_damage_counter"):
+            # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない（v0.6 のあまごい・
+            # v0.7 のダメージスワップも）
             problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
         if kind == "damage":
             window["damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
@@ -208,9 +216,12 @@ def log_problems(state) -> list[str]:
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     for e in log:
         kind = e["kind"]
-        if kind not in ("move_energy", "power_attach_energy"):
+        if kind not in ("move_energy", "power_attach_energy", "move_damage_counter"):
             if declared is not None:
-                problems.append(f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のすぐあとに、その処理（move_energy・power_attach_energy）がない")
+                problems.append(
+                    f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のすぐあとに、その処理（move_energy・power_attach_energy・"
+                    "move_damage_counter）がない"
+                )
             declared = None
         if kind == "turn_start":
             turn_player = e["player"]
@@ -235,9 +246,9 @@ def log_problems(state) -> list[str]:
             ids[e["to_card"]] = e["pokemon_id"]
             top[e["pokemon_id"]] = e["to_card"]
             evolve_turns.setdefault(e["pokemon_id"], []).append(e["turn"])
-        elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters"):
+        elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters", "remove_all_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
-            if kind == "drain_heal":
+            if kind in ("drain_heal", "remove_all_damage_counters"):
                 damage[pid] -= e["amount"]
             elif kind == "remove_damage_counters":
                 damage[pid] -= e["counters"] * state.rules.damage_per_counter
@@ -294,6 +305,43 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} が「{effect.energy_type.ja}」エネルギーではない")
                 if state.card_def(top[target]).pokemon_type is not effect.pokemon_type:
                     problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} のつける先 {target} が「{effect.pokemon_type.ja}」ポケモンではない")
+        elif kind == "move_damage_counter":
+            # v0.7: 特殊能力（ダメージスワップ）で、自分の場のポケモンのダメージカウンターを、自分の場の別のポケモンへ（1 回に 1 個）
+            if declared != (e["turn"], e["player"], e["pokemon_id"]):
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
+            declared = None  # 1 回の宣言で 1 個（v0.7 のダメージスワップ。実装上の仮定）
+            source, target, count = e["from_pokemon_id"], e["to_pokemon_id"], e["count"]
+            card_id, _, index = e["power"].partition("@power")
+            entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
+            if entry is None or entry.effect.implementation_id != "move_damage_counter" or state.cards[top[e["pokemon_id"]]].card_id != card_id:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動の特殊能力 {e['power']} が、使ったポケモンのダメージカウンターを移す特殊能力ではない")
+            if count != 1:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動が 1 回に {count} 個（1 個のはず）")
+            if pokemon_owner.get(source) != e["player"] or pokemon_owner.get(target) != e["player"]:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動（{source} → {target}）が、自分の場のポケモンのあいだではない")
+            if source == target or source not in in_play or target not in in_play:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動（{source} → {target}）が、ログから組み立てた場と合わない")
+                continue
+            amount = count * state.rules.damage_per_counter
+            if damage[source] < amount:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動元 {source} に、ログから組み立てたダメージ {damage[source]} しかない")
+            damage[source] -= amount
+            damage[target] += amount
+            if (damage[source], damage[target]) != (e["from_total_damage"], e["to_total_damage"]):
+                problems.append(
+                    f"{e['turn']} 番のダメージカウンターの移動のあとのダメージ {(e['from_total_damage'], e['to_total_damage'])} が、ログから"
+                    f"組み立てた {(damage[source], damage[target])} と違う"
+                )
+            if damage[target] >= state.card_def(top[target]).hp:
+                problems.append(f"{e['turn']} 番のダメージカウンターの移動で、移動先 {target} がきぜつするダメージ {damage[target]} になった")
+        elif kind == "discard_energy":
+            # v0.7: ワザ（じこさいせい）で、ワザを使ったポケモンについているエネルギーカードをトラッシュ
+            pid = e["pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or e["energy"] not in energy.get(pid, []):
+                problems.append(f"{e['turn']} 番のエネルギーのトラッシュ {e['energy']} が、ログから組み立てたポケモン {pid} のエネルギーにない")
+            else:
+                energy[pid].remove(e["energy"])
+                discard[e["player"]].append(e["energy"])
         elif kind in ("retreat", "retreat_failed"):
             pid = e["pokemon_id"] if kind == "retreat_failed" else ids[e["old_active"]]
             for uid in e["discarded"]:

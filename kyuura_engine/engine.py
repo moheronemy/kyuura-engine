@@ -1197,6 +1197,9 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
       前に済ませるので、拒否したら状態・乱数・ログは変わらない。
     - 使っても番は終わらない（``Phase.MAIN`` のまま。``_finish_attack`` を呼ばない）。「特に指示されていないかぎり、特殊能力は
       いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
+    - v0.7 のダメージスワップ（``effects.MoveDamageCounter``）は、のせかえでポケモンがきぜつするなら ``check_usable`` で拒否するので、
+      特殊能力の処理のあとにきぜつの処理（トラッシュ・サイド・交代）はない。もし処理のあとに HP 以上のダメージのポケモンがいれば、
+      ``apply_command`` の不変条件（場のポケモンのダメージは HP より小さい）が ``StateIntegrityError`` にする。
     """
     p = _require_turn(state, cmd.player)
     user = p.find_by_pokemon_id(cmd.pokemon)
@@ -1223,7 +1226,7 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     )
     effect.resolve(state, use)
     if state.decision is not None or state.phase is not Phase.MAIN:
-        raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5 の特殊能力は決定を出さない。エンジンの不具合）")
+        raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5〜v0.7 の特殊能力は決定を出さない。エンジンの不具合）")
 
 
 # ---------------------------------------------------------------- 保留中の決定に答える

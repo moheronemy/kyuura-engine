@@ -43,7 +43,7 @@ from kyuura_engine.effects import (
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
-    ALAKAZAM, BLASTOISE, BULBASAUR, FIRE, FIRE_DECK, GRASS, HITMONCHAN, IVYSAUR, LIGHTNING, POTION, RATTATA, SEEL, SQUIRTLE, STARYU,
+    ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, FIRE, FIRE_DECK, GRASS, HITMONCHAN, IVYSAUR, LIGHTNING, POTION, RATTATA, SEEL, SQUIRTLE, STARYU,
     SWITCH, VENUSAUR, WARTORTLE, WATER, WATER_FIGHTING_DECK, build_test_state,
 )
 from tests.log_audit import serialization_problems
@@ -136,7 +136,9 @@ class RainDanceRegistrationTest(unittest.TestCase):
         extract = read_extract()
         self.assertEqual(extract["pool_v0_6"], [SQUIRTLE, WARTORTLE, BLASTOISE])
         self.assertNotIn(BLASTOISE, extract["reference_only"])  # v0.5 までは参照カード
-        self.assertIn(ALAKAZAM, extract["reference_only"])  # 参照カードの役はフーディンへ
+        # 参照カードの役は v0.6 でフーディンへ移り、v0.7 でフーディンを対応にしたのでリザードンへ移った
+        self.assertNotIn(ALAKAZAM, extract["reference_only"])
+        self.assertIn(CHARIZARD, extract["reference_only"])
 
     def test_registered_entry_matches_the_verification(self):
         """登録（PowerKey("PMCG1-032", 0)）は、照合した印刷の文面・最新の説明（p.90）と同じ。実装は手札から「水」エネルギーを「水」
@@ -153,7 +155,7 @@ class RainDanceRegistrationTest(unittest.TestCase):
         self.assertEqual([m["field"] for m in record["mismatches"]], ["pokemon.powers[0].text.ja", "pokemon.attacks[0].text.ja"])
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG1-032@power0"],
                          {"implementation": "attach_energy_from_hand", "name_ja": "あまごい", "source": "P43 p.90"})
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.6")
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.7")  # v0.7 でフーディンの登録を加えた（あまごいの登録は同じ）
 
     def test_power_is_not_an_attack_nor_an_energy_transfer(self):
         """あまごいはワザ（AttackEffect）でも、場のエネルギーをつけかえるエナジートランスでもない（別の実装・別のログ）。"""
