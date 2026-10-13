@@ -13,6 +13,7 @@
     python3 tools/stress_engine.py --scenario machamp --scenario machamp_mixed      # v0.10（はんげき）
     python3 tools/stress_engine.py --scenario giovanni --scenario giovanni_mixed    # v0.11（こんじょう）
     python3 tools/stress_engine.py --scenario moltres --scenario moltres_mixed      # v0.12（ふしちょう・ほのおのかべ）
+    python3 tools/stress_engine.py --scenario wartortle --scenario wartortle_mixed  # v0.13（こうらがえし）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -77,6 +78,17 @@
   へのダメージの基本となるダメージが 10 であることを確かめ、決定・使う・使わない・回収・特殊状態やガスで使えない・効果・はたらいた・
   ダメージ・期限で消えたを数える。``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` で止めたら、相手の対戦ポケモンに今の番にはたらく
   「ほのおのかべ」があることを確かめる。``POWER_USERS`` の最後に加えたので、R団のファイヤーのいない組の操作は v0.11 と同じ。
+- v0.13: わるいカメールの組（``wartortle``・``wartortle_mixed``。``wartortle`` はわるいカメールのデッキと、わるいカメールに使うワザ・特殊能力の
+  種類を多くしたデッキ（ピカチュウ（わるいカメールの弱点 雷）・ポニータ・ガーディ（弱点 水）・カイリキー・ゴースト・バタフリー・ビードル・
+  ベトベトン・サカキのカイリキー）、``wartortle_mixed`` は両方のデッキにわるいカメール、一方に R団のファイヤー・ポニータ・ロコン、もう一方に
+  ピカチュウ・ドードー・バタフリー）を加えた。わるいカメールはポケモンパワーを持たないので ``POWER_USERS`` は変えていない（ほかの組の操作は
+  v0.12 と同じ。組ごとの乱数は組の名前から作る）。操作を受け付けるたびに、操作の前の場とログから、今の番にはたらく「こうらがえし」を持つ
+  ポケモンが相手のワザのダメージを受けたら「こうらがえし」があること・受けたダメージ（received_damage）と基本となるダメージがそのダメージの
+  最終ダメージと同じこと・返すダメージの基本となる計算がその値で、受けたのがワザを使ったポケモンであることを確かめ（``_observe_shell``）、
+  効果・はたらいた・受けたダメージの合計・返したダメージ（合計・弱点・抵抗力・ディフェンダー・きぜつ）・「とうめい」・期限で消えた・S37 を
+  数える。``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` で止めたら、相手の対戦ポケモンに今の番にはたらく「ほのおのかべ」か「こうらがえし」が
+  あることを確かめる。``_observe_moltres`` は「ほのおのかべ」（効果を与えたワザが R団のファイヤーの位置 0）のログだけを数える（R団のファイヤーの
+  組の数は v0.12 と同じ）。
 """
 
 from __future__ import annotations
@@ -226,6 +238,25 @@ POWER_SCENARIOS += (
                     {ROCKETS_MOLTRES: 4, driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, driver.CATERPIE: 3, driver.METAPOD: 2, driver.BUTTERFREE: 2,
                      driver.DEFENDER: 2, driver.BILL: 2, driver.FIRE: 18, driver.FIGHTING: 12, driver.GRASS: 8},
                     tuple(range(6)), tags=("R団のファイヤー", "ふしちょう", "ほのおのかべ", "はんげき", "ふきとばし", "とうめい", "かがくへんかガス")),
+)
+ROCKET_SQUIRTLE, DARK_WARTORTLE = "PMCG4-018", "PMCG4-021"
+POWER_SCENARIOS += (
+    # わるいカメール（v0.13。こうらがえし・おうふくびんた。ポケモンパワーを持たないので POWER_USERS には加えない）: 相手はピカチュウ（わるいカメールの
+    # 弱点 雷）・ポニータ・ガーディ（弱点 水）・カイリキー（はんげき）・ゴースト（とうめい・あくむ）・バタフリー（ふきとばし・メガドレイン）・
+    # ビードル（どくばり）・ベトベトン（かがくへんかガス）・サカキのカイリキー（こんじょう・ハリケーンパンチ）・ディフェンダー・プラスパワー
+    driver.Scenario("wartortle", {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, driver.STARYU: 3, driver.SEEL: 2, driver.SWITCH: 2,
+                                  driver.POTION: 2, driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.WATER: 35},
+                    {driver.PIKACHU: 3, driver.PONYTA: 2, driver.GROWLITHE: 2, driver.MACHOP: 2, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2,
+                     driver.CATERPIE: 2, driver.METAPOD: 1, driver.BUTTERFREE: 1, driver.WEEDLE: 2, GRIMER: 1, MUK: 1, GIOVANNIS_MACHOP: 1,
+                     GIOVANNIS_MACHOKE: 1, GIOVANNIS_MACHAMP: 1, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, driver.LIGHTNING: 6,
+                     driver.FIRE: 5, driver.FIGHTING: 7, PSYCHIC: 4, driver.GRASS: 4},
+                    tuple(range(6)), tags=("わるいカメール", "こうらがえし", "おうふくびんた", "はんげき", "とうめい", "こんじょう", "ディフェンダー")),
+    # 両方のデッキにわるいカメール（ミラー）、一方に R団のファイヤー（ほのおのかべ・ふしちょう）・ポニータ・ロコン、もう一方にピカチュウ・ドードー・バタフリー
+    driver.Scenario("wartortle_mixed", {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, ROCKETS_MOLTRES: 2, driver.PONYTA: 2, driver.VULPIX: 2,
+                                        driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2, driver.WATER: 24, driver.FIRE: 16},
+                    {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, driver.PIKACHU: 3, driver.DODUO: 2, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.PLUSPOWER: 2, driver.BILL: 2, driver.WATER: 22, driver.LIGHTNING: 10, driver.GRASS: 7},
+                    tuple(range(6)), tags=("わるいカメール", "こうらがえし", "ほのおのかべ", "ふしちょう", "ふきとばし", "ミラー")),
 )
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
 POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキー・R団のファイヤーがいる番で、ポケモンパワーを試す割合
@@ -559,6 +590,61 @@ def _rebirth_field(state) -> dict[int, tuple[str, str | None]]:
             for p in state.players for pk in p.in_play()}
 
 
+FIRE_WALL = f"{ROCKETS_MOLTRES}#0"
+SHELL = f"{DARK_WARTORTLE}#1"
+SHELL_KIND = "retaliation_received_damage"
+
+
+def _observe_shell(state, new, counted, problems, index, command) -> None:
+    """受け付けた操作のログを、操作の前の場から求めた「こうらがえし」と比べる（v0.13）: 今の番にはたらく「こうらがえし」を持つポケモンが相手の
+    ワザのダメージ（0 より大きい）を受けたら、その直後の処理に「こうらがえし」（retaliation か retaliation_skipped）があり、受けたダメージ
+    （received_damage）と基本となるダメージ（amount）がそのダメージの最終ダメージと同じで、返すダメージの基本となる計算がその値で、受けたのは
+    ワザを使ったポケモン（番のプレイヤーのバトル場）であること。効果・はたらいた・返したダメージ・弱点・ディフェンダー・きぜつ・期限で消えたを数える。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    where = f"{index} 手目 {engine.command_to_dict(command)}"
+    by_card = {pk.card: pk for p in state.players for pk in p.in_play()}
+    pending = []  # (場のポケモンの番号, 受けたダメージ)
+    expected_base = None
+    for e in events:
+        kind = e["kind"]
+        if kind == "persistent_effect_added" and e["persistent_effect"] == SHELL_KIND:
+            counted["observed:shell_effect_added"] += 1
+        if kind == "persistent_effect_removed" and e["persistent_effect"] == SHELL_KIND:
+            counted[f"observed:shell_effect_removed_{e['reason']}"] += 1
+        if kind == "damage" and e["amount"] > 0 and not e.get("retaliation"):
+            pid = e.get("pokemon_id", by_card[e["pokemon"]].pokemon_id if e["pokemon"] in by_card else None)
+            holder = state.find_pokemon(pid) if pid is not None else None
+            if holder is not None and holder[0] != state.current_player and any(
+                x.kind == SHELL_KIND and x.active_turn == state.turn_number for x in holder[1].persistent_effects
+            ):
+                pending.append((pid, e["amount"]))
+        if kind in ("retaliation", "retaliation_skipped") and e["effect"] == SHELL:
+            counted[f"observed:shell_{kind}"] += 1
+            if not pending or pending[0][0] != e["pokemon_id"]:
+                problems.append(f"{where}: はたらくはずのない「こうらがえし」 {e}")
+                continue
+            _, received = pending.pop(0)
+            if kind == "retaliation":
+                if (e.get("basis"), e.get("received_damage"), e["amount"]) != ("received_damage", received, received):
+                    problems.append(f"{where}: 「こうらがえし」の受けたダメージ・基本となるダメージが {received} ではない {e}")
+                counted["observed:shell_received_total"] += received
+                expected_base = received
+        if kind == "damage" and e.get("retaliation") and e["effect"] == SHELL:
+            counted["observed:shell_damage"] += 1
+            counted["observed:shell_damage_total"] += e["amount"]
+            counted["observed:shell_weakness"] += bool(e["weakness"])
+            counted["observed:shell_resistance"] += bool(e["resistance"])
+            counted["observed:shell_modifiers"] += bool(e.get("modifiers"))
+            if e["steps"][0][1] != expected_base or e["pokemon_id"] != state.players[state.current_player].active.pokemon_id:
+                problems.append(f"{where}: 「こうらがえし」の返すダメージの基本となるダメージ・相手が違う {e}")
+            if e["total_damage"] >= new.card_def(e["pokemon"]).hp:
+                counted["observed:shell_knock_out"] += 1
+        if kind == "attack_evaded" and e.get("effect") == SHELL:
+            counted["observed:shell_evaded"] += 1
+    if pending:
+        problems.append(f"{where}: はたらいた「こうらがえし」（ポケモン {[p for p, _ in pending]}）のログがない")
+
+
 def _observe_moltres(state, new, counted, problems, index, command) -> None:
     """受け付けた操作のログと決定を、操作の前の場から求めた「ふしちょう」「ほのおのかべ」と比べる（v0.12）。きぜつするときの特殊状態・
     かがくへんかガスは、操作の前の場をこの操作のログ（special_condition・special_conditions_removed・knock_out）で進めて求める。"""
@@ -584,6 +670,8 @@ def _observe_moltres(state, new, counted, problems, index, command) -> None:
     pending_retaliation = []
     for position, e in enumerate(events):
         kind = e["kind"]
+        if kind in ("retaliation", "retaliation_skipped") and e["effect"] != FIRE_WALL:
+            continue  # v0.13: 「こうらがえし」は _observe_shell で確かめる
         if kind in ("post_knockout_power_declined", "post_knockout_power_declared", "return_to_hand", "retaliation", "retaliation_skipped",
                     "persistent_effect_skipped"):
             counted[f"observed:{kind}"] += 1
@@ -611,7 +699,7 @@ def _observe_moltres(state, new, counted, problems, index, command) -> None:
                 problems.append(f"{where}: はたらくはずのない「ほのおのかべ」 {e}")
             else:
                 pending_retaliation.pop(0)
-        if kind == "damage" and e.get("retaliation"):
+        if kind == "damage" and e.get("retaliation") and e["effect"] == FIRE_WALL:
             counted["observed:retaliation_damage"] += 1
             counted["observed:retaliation_damage_total"] += e["amount"]
             if e["steps"][0][1] != 10 or e["pokemon_id"] != state.players[state.current_player].active.pokemon_id:
@@ -698,8 +786,12 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                     problems.append(f"{index} 手目 {engine.command_to_dict(command)}: サカキのカイリキー・R団のファイヤーでないのに POWER_NOT_USABLE_NOW")
             if error.code == "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT":
                 target = state.players[1 - state.current_player].active
-                if target is None or not any(x.kind == "retaliation" and x.active_turn == state.turn_number for x in target.persistent_effects):
-                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「ほのおのかべ」がはたらいていないのに UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT")
+                active = [x for x in (target.persistent_effects if target is not None else ())
+                          if x.kind in ("retaliation", SHELL_KIND) and x.active_turn == state.turn_number]
+                if not active:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「ほのおのかべ」「こうらがえし」がはたらいていないのに UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT")
+                elif active[0].kind == SHELL_KIND:
+                    counted["observed:shell_stopped_w24"] += 1  # v0.13: S37（W24 と同じ問い）
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:
@@ -730,6 +822,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             _observe_guts(state, new, guts, counted, problems, index, command)
         if any(state.cards[uid].card_id == ROCKETS_MOLTRES for uid in state.cards):
             _observe_moltres(state, new, counted, problems, index, command)  # v0.12
+        if any(state.cards[uid].card_id == DARK_WARTORTLE for uid in state.cards):
+            _observe_shell(state, new, counted, problems, index, command)  # v0.13
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -798,7 +892,13 @@ def main(argv=None) -> int:
           f"対戦の終わり {counts.get('observed:rebirth_not_offered_game_over', 0)}）・"
           f"ほのおのかべ {counts.get('observed:retaliation_effect_added', 0)}（はたらいた {counts.get('observed:retaliation', 0)}・"
           f"ダメージ {counts.get('observed:retaliation_damage', 0)}・期限 {counts.get('observed:retaliation_effect_removed_expired', 0)}・"
-          f"W24 {counts.get('code:UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT', 0)}）"
+          f"W24 {counts.get('code:UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT', 0)}）・"
+          f"こうらがえし {counts.get('observed:shell_effect_added', 0)}（はたらいた {counts.get('observed:shell_retaliation', 0)}・"
+          f"受けたダメージの合計 {counts.get('observed:shell_received_total', 0)}・返したダメージ {counts.get('observed:shell_damage', 0)}"
+          f"（合計 {counts.get('observed:shell_damage_total', 0)}・弱点 {counts.get('observed:shell_weakness', 0)}・"
+          f"抵抗力 {counts.get('observed:shell_resistance', 0)}・ディフェンダー {counts.get('observed:shell_modifiers', 0)}・"
+          f"きぜつ {counts.get('observed:shell_knock_out', 0)}）・とうめい {counts.get('observed:shell_evaded', 0)}・"
+          f"期限 {counts.get('observed:shell_effect_removed_expired', 0)}・S37 {counts.get('observed:shell_stopped_w24', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

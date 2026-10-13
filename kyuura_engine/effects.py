@@ -87,7 +87,7 @@ from .damage import DamageModifier, calculate_attack_damage
 from .decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, SELECT_POKEMON, push_attack_decision, push_trainer_decision
 from .errors import IllegalActionError, UnsupportedError
 from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects, retaliation
-from .state import PreventDamage, Retaliation
+from .state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, PreventDamage, Retaliation
 from .zones import attach_energy_from_hand, attach_trainer, draw_cards, return_discard_to_hand
 
 if TYPE_CHECKING:
@@ -558,7 +558,8 @@ def deal_attack_damage(
     v0.12: 同じく相手のワザのダメージ（最終ダメージが 0 より大きい）をのせたら、受けたポケモンに、今の番にはたらく「相手のワザによる
     ダメージを受けたとき、相手にダメージを与える」持続する効果（「ほのおのかべ」。``persistent.retaliation``）があれば
     ``AttackUse.retaliations`` に加える（docs/rocket-moltres-v0.12.md の W11〜W13・W21）。与えるのは ``finish_damage_elements``。
-    持続する効果はワザの効果なので、特殊状態・かがくへんかガスでは止まらない（W7・W18）。乱数は使わない。
+    持続する効果はワザの効果なので、特殊状態・かがくへんかガスでは止まらない（W7・W18）。乱数は使わない。v0.13: 受けたダメージ（この
+    最終ダメージ。HP で上限をつけない）もいっしょに記録する（「こうらがえし」の「同じダメージ」。docs/shell-attack-v0.13.md の S9・S10）。
     ``log_extra``（v0.12）: ログ ``damage`` に加える項目（「ほのおのかべ」のダメージ（``_apply_retaliation``）の ``retaliation``・
     ``effect``・``pokemon_id``）。ほかの呼び出しは渡さない（ログの形は v0.11 と同じ）。
     """
@@ -631,7 +632,9 @@ def deal_attack_damage(
             PendingCounterattack(receiver_player, receiver.pokemon_id, receiver.card, power_key, power_effect.amount)
         )
     if retaliation_effect is not None:
-        use.retaliations.append(PendingRetaliation(receiver_player, receiver.pokemon_id, receiver.card, retaliation_effect))
+        use.retaliations.append(
+            PendingRetaliation(receiver_player, receiver.pokemon_id, receiver.card, retaliation_effect, calc.final)
+        )
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)
 
 
@@ -864,6 +867,10 @@ def finish_damage_elements(state: GameState, use: AttackUse) -> None:
     「ほのおのかべ」のダメージ（``_apply_retaliation``）は R団のファイヤーのワザによるダメージなので、それを受けたポケモンの「はんげき」
     がはたらく。その「はんげき」は、そのダメージの処理のあと（ここから呼ぶ ``finish_damage_elements`` の中）で与える（連鎖は、発生源の
     分類で止まる。「はんげき」のダメージはワザによるダメージではないので、R団のファイヤーの「ほのおのかべ」ははたらかない）。
+
+    v0.13: わるいカメールの「こうらがえし」（``Retaliation.basis`` が ``RETALIATION_RECEIVED``。受けたダメージと同じダメージを返す）も同じ
+    時点で与える（p.89 のワザ解説は、このワザそのものの解説。docs/shell-attack-v0.13.md の S34）。返すダメージで別の「こうらがえし」
+    「ほのおのかべ」がはたらくことはない（番のプレイヤーのポケモンの効果は今の番にはたらかない。S45。``_apply_retaliation`` が確かめる）。
     """
     pending_counters = tuple(use.counterattacks)
     pending_retaliations = tuple(use.retaliations)
@@ -1003,7 +1010,10 @@ class PendingRetaliation:
     - ``player``・``pokemon_id``・``card``: ダメージを受けたポケモン（R団のファイヤー。効果を持つポケモン）の持ち主・場のポケモンの番号・
       いちばん上のカード
     - ``effect``: はたらいた持続する効果（``Retaliation``。与えるダメージ ``amount``・効果を与えたワザの位置 ``attack_index``）
-    与える相手は、いつも「そのダメージを与えた相手の対戦ポケモン」（p.82 の解説。ワザを使ったポケモン。``AttackUse.pokemon_id``）
+    - ``received``（v0.13）: このポケモンがそのダメージの要素で受けたダメージ（p.321 で計算した最終ダメージ。0 より大きい。HP で上限を
+      つけない）。「こうらがえし」（``Retaliation.basis`` が ``RETALIATION_RECEIVED``）の与えるダメージの基本となるダメージ（S9・S10）。
+      ワザ 1 回の中の値で、状態に持たない（``AttackUse.retaliations`` は比較・表示に含めない）
+    与える相手は、いつも「そのダメージを与えた相手の対戦ポケモン」（p.82・p.89 の解説。ワザを使ったポケモン。``AttackUse.pokemon_id``）
     なので、ここには持たない。
     """
 
@@ -1011,6 +1021,12 @@ class PendingRetaliation:
     pokemon_id: int
     card: int
     effect: Retaliation
+    received: int
+
+    @property
+    def base_damage(self) -> int:
+        """与えるダメージの基本となるダメージ（p.321 の 1 段階。「ほのおのかべ」は 10、「こうらがえし」は受けたダメージ）。"""
+        return self.effect.base_damage(self.received)
 
 
 def retaliation_use(
@@ -1048,6 +1064,14 @@ def _apply_retaliation(state: GameState, use: AttackUse, pending: PendingRetalia
       （効果を与えたワザ）・``trigger``（きっかけのワザ）・``attacker``・``attacker_pokemon``・``attacker_pokemon_id``・``amount``（基本と
       なるダメージ））のあとに、ダメージの要素のログ（``damage`` に ``retaliation``・``effect``・``pokemon_id`` を加えたもの。または
       ``damage_prevented``・``evade_check``・``attack_evaded``）。
+
+    v0.13: わるいカメールの「こうらがえし」（``Retaliation.basis`` が ``RETALIATION_RECEIVED``。p.89 の最新の説明「…そのポケモンにも同じ
+    ダメージを与える。（ダメージ以外の効果は与えない）」。docs/shell-attack-v0.13.md）も同じ処理で与える。違うのは基本となるダメージだけで、
+    受けたダメージ（``PendingRetaliation.received``。弱点・抵抗力・プラスパワー・ディフェンダーを計算した最終ダメージ。HP で上限を
+    つけない。S9〜S17）。返すダメージは「こうらがえし」のワザによるダメージ（p.321「8」の例。S20。CONFIRMED）なので、わるいカメールを
+    発生源として、受けるポケモンの弱点・抵抗力・ディフェンダー・「とうめい」を p.321 の順番でもう一度計算する（p.89 の解説「2倍に
+    なって相手に返ります」。S21〜S24）。ダメージ以外の効果（元のワザのコイン・特殊状態・入れ替え）は返さない（S41）。ログ
+    ``retaliation`` に ``basis``・``received_damage`` を加える（``amount`` は基本となるダメージ = 受けたダメージ）。
     """
     found = state.find_pokemon(use.pokemon_id)
     if found is None or found[0] != use.player:
@@ -1076,11 +1100,25 @@ def _apply_retaliation(state: GameState, use: AttackUse, pending: PendingRetalia
     if attacker.damage >= state.card_def(attacker.card).hp:
         state.add_event("retaliation_skipped", **base, reason=RETALIATION_TARGET_KNOCKED_OUT)
         return
-    state.add_event("retaliation", **base, amount=pending.effect.amount)
+    amount = pending.base_damage
+    if pending.effect.basis == RETALIATION_FIXED:
+        state.add_event("retaliation", **base, amount=amount)  # v0.12 と同じ形
+    else:
+        # v0.13: 「こうらがえし」。受けたダメージ（received_damage）と同じ量を基本となるダメージ（amount）にする（S9・S10）。最終
+        # ダメージ（弱点・抵抗力などを計算した値）は、このあとのログ damage の amount
+        state.add_event("retaliation", **base, amount=amount, basis=pending.effect.basis, received_damage=pending.received)
     deal_attack_damage(
-        state, fire_use, OPPONENT_ACTIVE, pending.effect.amount,
+        state, fire_use, OPPONENT_ACTIVE, amount,
         log_extra={"retaliation": True, "effect": str(fire_use.key), "pokemon_id": attacker.pokemon_id},
     )
+    if fire_use.retaliations:
+        # v0.13: 返すダメージを受けるのは番のプレイヤーのポケモンで、その持続する効果がはたらくのは持ち主の相手の番（与えた番 + 1。不変条件で
+        # 確かめている）なので、返すダメージで別の効果がはたらくことはない（docs/variable-retaliation-v0.13.md 6 章の B5）。回数の上限で
+        # 止めるのではなく、起こらないはずのことが起きたらエンジンの不具合として止める
+        raise RuntimeError(
+            f"返すダメージ（{fire_use.key}）を受けたポケモン {attacker.pokemon_id} で、ダメージを返す効果がはたらいた（番の進み方の前提に反する。"
+            "エンジンの不具合）"
+        )
     finish_damage_elements(state, fire_use)  # 「ほのおのかべ」のダメージを受けたポケモンの「はんげき」（W20。p.89・p.192）
     knocked = [
         pokemon.pokemon_id
@@ -1111,6 +1149,11 @@ def retaliation_double_knockout_problem(state: GameState, use: AttackUse, effect
     ほうを仮定する（受けない結果もありうるが、受ける結果がありうるので止める）。ワザを使ったポケモンが自分へのダメージですでにきぜつ
     するなら、「ほのおのかべ」は与えない（W23・v0.10 の C15）ので、2 匹のきぜつは 1 つのワザによる同時のきぜつ（p.324）で、止めない。
     「こんじょう」（v0.11）で解決したことにはしない（v0.11 の G39 と同じ）。
+
+    v0.13: わるいカメールの「こうらがえし」（受けたダメージと同じダメージを返す）でも同じ問いになる（docs/shell-attack-v0.13.md の S37。
+    わるいカメールがこのワザのダメージできぜつし、ワザを使ったポケモンが返すダメージできぜつする）ので、同じコードで止める（新しい未解決の
+    裁定にしない）。返すダメージは、ダメージの組ごとに、わるいカメールが受ける最終ダメージを基本となるダメージにして計算する
+    （``Retaliation.base_damage``）。
     """
     holder = state.players[1 - use.player].active
     if holder is None:
@@ -1120,32 +1163,39 @@ def retaliation_double_knockout_problem(state: GameState, use: AttackUse, effect
         return None
     _, attacker = state.find_pokemon(use.pokemon_id)
     fire_use = retaliation_use(state, 1 - use.player, holder, found)
-    retaliation_final = preview_attack_damage(state, fire_use, OPPONENT_ACTIVE, found.amount)
-    if retaliation_final is None or retaliation_final <= 0:
-        return None  # ワザを使ったポケモンが「ほのおのかべ」のダメージを受けない（抵抗力・ディフェンダーで 0）
-    counter = counterattack_power(state, attacker)  # 「ほのおのかべ」のダメージで、ワザを使ったポケモンの「はんげき」がはたらく
+    counter = counterattack_power(state, attacker)  # 返すダメージで、ワザを使ったポケモンの「はんげき」がはたらく
     counter_amount = 0 if counter is None else counter[1].amount
     holder_hp = state.card_def(holder.card).hp
     attacker_hp = state.card_def(attacker.card).hp
     for opponent, own in effect.damage_profile(state, use).pairs():
         final = None if opponent is None else preview_attack_damage(state, use, OPPONENT_ACTIVE, opponent)
         if final is None or final <= 0:
-            continue  # R団のファイヤーがこのワザのダメージを受けない。「ほのおのかべ」ははたらかない（W13）
+            continue  # 効果を持つポケモンがこのワザのダメージを受けない。効果ははたらかない（W13・S15・S16）
+        # 返すダメージ（v0.13: 「こうらがえし」は受けたダメージ final を基本となるダメージにする。S9・S10。「ほのおのかべ」は 10）。
+        # 発生源は効果を持つポケモン、受けるのはワザを使ったポケモン（弱点・抵抗力・ディフェンダーを計算する。S21〜S23）
+        retaliation_final = preview_attack_damage(state, fire_use, OPPONENT_ACTIVE, found.base_damage(final))
+        if retaliation_final is None or retaliation_final <= 0:
+            continue  # ワザを使ったポケモンが返すダメージを受けない（抵抗力・ディフェンダーで 0）
         own_final = 0 if own <= 0 else (preview_attack_damage(state, use, SELF, own) or 0)
         attacker_damage = attacker.damage + own_final
         if attacker_damage >= attacker_hp:
-            continue  # 自分へのダメージですでにきぜつする。「ほのおのかべ」は与えない（W23）
+            continue  # 自分へのダメージですでにきぜつする。返すダメージは与えない（W23）
         if attacker_damage + retaliation_final < attacker_hp:
-            continue  # ワザを使ったポケモンは「ほのおのかべ」ではきぜつしない
+            continue  # ワザを使ったポケモンは返すダメージではきぜつしない
         if holder.damage + final + counter_amount >= holder_hp:
             return UnsupportedError(
                 "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",
-                f"このワザのダメージで相手の対戦ポケモン {holder.pokemon_id} がきぜつしうるうえ、その「{found.kind}」（ほのおのかべ）の"
+                f"このワザのダメージで相手の対戦ポケモン {holder.pokemon_id} がきぜつしうるうえ、その「{found.kind}」（{_retaliation_name(found)}）の"
                 f" {retaliation_final} ダメージでワザを使ったポケモン {attacker.pokemon_id} がきぜつしうる。このワザによるきぜつと、前の番のワザの"
                 "効果のダメージによるきぜつが「同時に「きぜつ」した」ことになるか（p.324）が『オフィシャルブック2000』（p.82・p.89・p.311・"
                 "p.321・p.323〜p.325）から決められないので扱わない（サイド・バトル場に出す順番と勝ち負けが変わる）",
             )
     return None
+
+
+def _retaliation_name(effect: Retaliation) -> str:
+    """理由の文に書く効果の名前（v0.13）。"""
+    return "ほのおのかべ" if effect.basis == RETALIATION_FIXED else "こうらがえし"
 
 
 def ko_prevention_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, PreventKnockOutOnHeads] | None:
@@ -1729,7 +1779,7 @@ class DamageAndRetaliation(AttackEffect):
                 player=use.player,
                 pokemon=attacker.card,
                 pokemon_id=attacker.pokemon_id,
-                persistent_effect=Retaliation.kind,
+                persistent_effect=RETALIATION_KINDS[RETALIATION_FIXED],
                 effect=str(use.key),
                 reason=EFFECT_TARGET_KNOCKED_OUT,
             )
@@ -1743,6 +1793,55 @@ class DamageAndRetaliation(AttackEffect):
             amount=self.retaliation,
         )
         add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
+
+    def retaliation_terms(self) -> tuple[str, int | None]:
+        """このワザが与える ``Retaliation`` の決め方と量（v0.13。不変条件・ログの監査が、状態の効果と登録表を照らす）。"""
+        return RETALIATION_FIXED, self.retaliation
+
+
+@dataclass(frozen=True)
+class ReturnReceivedDamage(AttackEffect):
+    """ダメージの要素のないワザ。ワザを使ったポケモン自身に、「次の相手の番、このカードが相手のワザによってダメージを受けたとき、
+    （それによってこのカードが「きぜつ」しても、）そのポケモンにも同じダメージを与える。（ダメージ以外の効果は与えない）」持続する効果
+    （``state.Retaliation``。``basis`` は ``RETALIATION_RECEIVED``）を与える（v0.13。わるいカメールの「こうらがえし」。p.89 の最新の説明。
+    docs/shell-attack-v0.13.md・docs/variable-retaliation-v0.13.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる（S2。カードの図版・最新の説明にダメージがない）。
+      コインもない（S1）。p.320 の効果の分類の (3)「このワザを使うポケモンへの効果」だけ。p.89 のワザ解説「効果の対象：ワザを使った
+      ポケモン自身」「効果の持続：次の相手の番の最後」。効果がはたらくのは次の相手の番（今の番 + 1。番は交互に進む。不変条件で確かめて
+      いる）で、その番の終わりに消える（``persistent.remove_expired_persistent_effects``。S3・S4・S33）。
+    - 与えるダメージは効果を与えたときには決まらない（受けたダメージで決まる）ので、効果に量を持たない（``amount`` None）。受けた
+      ダメージはワザ 1 回の中の値（``PendingRetaliation.received``）で、状態に持たない（docs/variable-retaliation-v0.13.md 3 章）。
+    - ダメージの要素がないので、相手の「はんげき」・「ほのおのかべ」ははたらかない（効果の前に、ワザを使ったポケモンがきぜつすることは
+      ない）。乱数は使わない。こんらん状態でワザがこんらんしたら、エンジンがこのワザの処理を呼ばない（効果もない。p.309 の手順 5）。
+    """
+
+    implementation_id = "return_received_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、ダメージを与えずに受けたダメージを返す効果のワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、受けたダメージを返す効果のワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        effect = Retaliation(
+            source_card=attacker.card,
+            source_player=use.player,
+            created_turn=state.turn_number,
+            active_turn=state.turn_number + 1,  # 次の相手の番（番は先攻から 1 つずつ交互に進む。不変条件で確かめている）
+            attack_index=use.key.attack_index,
+            amount=None,
+            basis=RETALIATION_RECEIVED,
+        )
+        add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
+
+    def retaliation_terms(self) -> tuple[str, int | None]:
+        """このワザが与える ``Retaliation`` の決め方と量（量は受けたダメージで決まるので None）。"""
+        return RETALIATION_RECEIVED, None
 
 
 # 「ふきとばし」で入れ替えなかった理由（ログ forced_switch_skipped の reason。v0.4d）
@@ -3520,7 +3619,7 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.12",
+    "kyuura-engine-0.13",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -3550,6 +3649,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG1-046", 1, "ちょうねんりき"),  # ユンゲラー（v0.7。1 進化）p.151。「ワザ」欄は「●ちょうねんりき」で説明文なし
         ("PMCG1-057", 0, "ちきゅうなげ"),  # カイリキー（v0.10。2 進化）p.192。「ワザ」欄は「●ちきゅうなげ」で説明文なし
         ("PMCG6-057", 0, "チョップ"),  # サカキのワンリキー（v0.11）p.189。「ワザ」欄は「●チョップ」で説明文なし
+        ("PMCG4-018", 0, "こうらアタック"),  # 第4弾のゼニガメ（v0.13）p.88。「ワザ」欄は「●こうらアタック」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -3877,6 +3977,25 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)相手にも10ダメージ。",
             play_text_ja="次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。",
             source="P43 p.82",
+        ),
+        # わるいカメール（v0.13。ゼニガメから進化）p.89。おうふくびんた（水。10×）: コイン 2 枚の「おもて」の数 × 10（ドードーの「みだれづき」と
+        # 同じ説明。印刷の文面（kyuura の写し）は「…投げて…」）
+        AttackKey("PMCG4-021", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "おうふくびんた",
+            text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×10のダメージ。",
+            source="P43 p.89",
+        ),
+        # こうらがえし（水無。ダメージなし）: 次の相手の番、このカードが相手のワザによってダメージを受けたとき、そのポケモンにも同じダメージを
+        # 与える（持続する効果。受けたダメージで量が決まる。p.89 のワザ解説の「相手の番ではたらく効果」。docs/shell-attack-v0.13.md）。印刷の
+        # 文面（kyuura の写し）は「次の相手の番で、…受けた時、(このカードが「きぜつ」するしないにかかわらず、)…」
+        AttackKey("PMCG4-021", 1): AttackEntry(
+            ReturnReceivedDamage(),
+            "こうらがえし",
+            text_ja="次の相手の番で、このカードが相手のワザによってダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)そのポケモンにも同じダメージを与える。(ダメージ以外の効果は与えない)",
+            play_text_ja="次の相手の番、このカードが相手のワザによってダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）そのポケモンにも同じダメージを与える。（ダメージ以外の効果は与えない）",
+            source="P43 p.89",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

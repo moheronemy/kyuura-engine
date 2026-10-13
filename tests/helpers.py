@@ -39,6 +39,7 @@ from kyuura_engine.state import (
     CONFUSED,
     PreventDamage,
     Retaliation,
+    RETALIATION_RECEIVED,
     CardInstance,
     DataSource,
     Paralyzed,
@@ -108,6 +109,12 @@ GIOVANNIS_MACHOP = "PMCG6-057"  # サカキのワンリキー（v0.11。HP 50・
 # R団のファイヤー（v0.12。ジム拡張第1弾。たね。HP 60・炎・弱点なし・抵抗力 闘 −30・にげる 2。ポケモンパワー ふしちょう（このカードが「きぜつ」
 # したとき、使える。トラッシュから手札に加える）・ほのおのかべ（炎炎炎）40（次の相手の番、相手のワザによるダメージを受けたとき、相手に 10））
 ROCKETS_MOLTRES = "PMCG5-020"
+# 第4弾（ロケット団）のゼニガメ（v0.13。たね。HP 50・水・弱点 雷・にげる 1。こうらアタック（無無）20。第1弾のゼニガメ（SQUIRTLE）と同じ名前の
+# 別のカード。どちらからでもわるいカメールに進化できる）
+ROCKET_SQUIRTLE = "PMCG4-018"
+# わるいカメール（v0.13。ゼニガメから進化する 1 進化。HP 60・水・弱点 雷・抵抗力なし・にげる 1。おうふくびんた（水）10×・こうらがえし（水無）
+# ダメージなし（次の相手の番、相手のワザによってダメージを受けたとき、そのポケモンにも同じダメージを与える））
+DARK_WARTORTLE = "PMCG4-021"
 # リザードン（参照カード。リザードから進化する 2 進化。実装を登録していないポケモンパワー「エナジーバーン」とワザ「ほのおのうず」を
 # 持つ。v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 ではフーディンが「ポケモンパワーを持つので未対応」の参照カードだった。
 # v0.7 でフーディンを対応にしたので、その役を引き継ぐ）
@@ -187,7 +194,7 @@ def build_test_state(
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
               "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番,
               "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番,
-              "prevent_damage": 効果を与えた番, "retaliation": 効果を与えた番}
+              "prevent_damage": 効果を与えた番, "retaliation": 効果を与えた番, "retaliation_received": 効果を与えた番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
@@ -200,6 +207,8 @@ def build_test_state(
               効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する）。
               "retaliation" は、その番に「ほのおのかべ」で受けた持続する効果 ``Retaliation``（v0.12。ワザの位置 0・与えるダメージ 10。
               カードは R団のファイヤー。ログも "prevent_damage" と同じく置く）。
+              "retaliation_received" は、その番に「こうらがえし」で受けた持続する効果 ``Retaliation``（v0.13。ワザの位置 1・決め方
+              ``RETALIATION_RECEIVED``（受けたダメージと同じダメージを返す）・量 None。カードはわるいカメール。ログも同じく置く）。
               "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
               トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
       bench:  active と同じ形のリスト
@@ -261,6 +270,11 @@ def build_test_state(
         if "retaliation" in spec:
             created = spec["retaliation"]
             result.persistent_effects = (*result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 0, 10))
+        if "retaliation_received" in spec:
+            created = spec["retaliation_received"]
+            result.persistent_effects = (
+                *result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 1, None, RETALIATION_RECEIVED)
+            )
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)

@@ -28,7 +28,7 @@ from tests.helpers import (
     PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
     BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER, MACHOP, MACHOKE, MACHAMP,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKET_SQUIRTLE, DARK_WARTORTLE,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -80,15 +80,18 @@ ATTACKS = [
     (GIOVANNIS_MACHOKE, 1),  # CoinBonusDamageAndParalyze（v0.11。「じごくがため」）
     (GIOVANNIS_MACHAMP, 0),  # CoinFlipDamage（v0.11。サカキのカイリキーの「ハリケーンパンチ」。コイン 4 枚。サカキのワンリキー → ゴーリキーと進化したもの）
     (ROCKETS_MOLTRES, 0),  # DamageAndRetaliation（v0.12。R団のファイヤーの「ほのおのかべ」。相手に 40、自分に次の相手の番の効果。乱数なし）
+    (ROCKET_SQUIRTLE, 0),  # DamageOnly（v0.13。第4弾のゼニガメの「こうらアタック」）
+    (DARK_WARTORTLE, 0),  # CoinFlipDamage（v0.13。わるいカメールの「おうふくびんた」。コイン 2 枚。第4弾のゼニガメから進化したものとして置く）
+    (DARK_WARTORTLE, 1),  # ReturnReceivedDamage（v0.13。「こうらがえし」。ダメージなし・コインなし。自分に次の相手の番の効果）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
 EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (CATERPIE, METAPOD), IVYSAUR: (BULBASAUR,),
                 BLASTOISE: (SQUIRTLE, WARTORTLE), KADABRA: (ABRA,), ALAKAZAM: (ABRA, KADABRA), MUK: (GRIMER,),
                 HAUNTER: (GASTLY,), MACHOKE: (MACHOP,), MACHAMP: (MACHOP, MACHOKE), GIOVANNIS_MACHOKE: (GIOVANNIS_MACHOP,),
-                GIOVANNIS_MACHAMP: (GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE)}
+                GIOVANNIS_MACHAMP: (GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE), DARK_WARTORTLE: (ROCKET_SQUIRTLE,)}
 # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage。v0.11 のいかりのスーパーパンチ（CoinHeadsDamagePerOwnCounter）も）
-COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0), (GIOVANNIS_MACHOP, 1), (GIOVANNIS_MACHAMP, 0)}
+COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0), (GIOVANNIS_MACHOP, 1), (GIOVANNIS_MACHAMP, 0), (DARK_WARTORTLE, 0)}
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},
                    {"poison": 10, "confusion": True},

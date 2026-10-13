@@ -589,6 +589,30 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - 形式 1 の書き出しは、`resume` が `post_knockout` の決定、または `context` に `post_knockout` を持つサイドを取る決定があると `ValueError`
 - 新しいクライアントへの推奨: 決定 `post_knockout_power` を受けたら、持ち主に「ふしちょうを使う（手札にもどす）／使わない」を選ばせ、答えのあとのログ（`post_knockout_power_declared` → `return_to_hand`、または `post_knockout_power_declined`）を示す。「ふしちょう」のボタンを自分の番の特殊能力として出さない。「ほのおのかべ」の効果は、場のポケモンの `persistent_effects` の `Retaliation`（`active_turn` が今の番のときだけはたらく）で示せる。`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT` で拒否されたワザは、ほかのワザ・番の終わりを選ばせる（状態は変わらない）。
 
+### v0.12 → v0.13
+
+- わるいカメールを使わない対戦の、受け付ける操作・拒否のコード・状態・ログ・乱数の状態・保留中の決定・形式 1〜8 の書き出しは、v0.12（`b8054af`）と同じです。tools/compare_engine_versions.py で、8 組 50 局・11,377 手を版ごとに別のプロセスで動かして比べ、食い違いは 0 でした（比べないのは効果の登録表の id だけ）。R団のファイヤーの自然な対戦 100 局・12,266 手を v0.12 と v0.13 で再生し、手ごとの状態（形式 9。登録表の id を除く）と乱数も同じでした。わるいカメールのいない 24 組（22 組 × 40 seed・R団のファイヤーの 2 組 × 200 seed）のストレス実行も、v0.12 の結果と同じ数でした（[v0.13-verification.md](v0.13-verification.md)）。
+- v0.12 のテストを v0.13 のコードで実行した結果は [v0.13-verification.md](v0.13-verification.md) 4.3 です。21 件の失敗は、どれも次のどれかです。
+  - 登録表の id（17 件）
+  - 対応の一覧の固定値（3 件）
+  - v0.12 のログの監査が、v0.13 の効果の種類を知らないこと（1 件。新しいストレス実行の組 `wartortle_mixed`）
+- 加えた公開の API:
+  - `Retaliation` の項目 `basis`（既定 `"fixed"`）・`base_damage(received)`
+  - 定数 `state.RETALIATION_FIXED`・`RETALIATION_RECEIVED`・`RETALIATION_KINDS`
+  - 内部の部品（安定した API とは約束しない）: `effects.ReturnReceivedDamage`・`effects.PendingRetaliation.received`・`retaliation_terms()`。効果の実装を書くためのもの。
+- 互換でない変更:
+  - `Retaliation.kind` はクラスの値から、決め方から求める property になった。インスタンスから読む値は、固定の量なら v0.12 と同じ `"retaliation"`。クラスから `Retaliation.kind` を読むコードは、`RETALIATION_KINDS[RETALIATION_FIXED]` にすること。
+  - `Retaliation` の `repr` に `basis='fixed'` が加わった。
+  - `Retaliation(...)` は、決め方と量の組が合わなければ `ValueError`。
+  - 効果の登録表の id が `kyuura-engine-0.13` になり、ワザの登録が 3 つ加わった。第4弾のゼニガメ（PMCG4-018）・わるいカメール（PMCG4-021）が使えるカードになった（v0.12 の写しにはなかった）。
+  - 持続する効果の種類 `retaliation_received_damage` が加わった。書き出し（形式 8・9）の `persistent_effects` の要素に、`attack_index` だけを持つ（`amount` のない）種類が入ることがある。形式の番号は 9 のまま。知らない種類の効果のある辞書は拒否すること。
+  - ログ `retaliation` に `basis`・`received_damage` が入ることがある（こうらがえし）。そのあとの `damage`（`retaliation` True）の `effect` は `PMCG4-021#1`。
+  - 両方がそろってきぜつしうるワザは、`UseAttack` が既存の `UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`（v0.12 ではわるいカメールを使えないので、v0.12 で受け付けた操作が拒否に変わることはない）。
+- 新しいクライアントへの推奨:
+  - こうらがえしの効果は、場のポケモンの `persistent_effects` の `Retaliation`（`basis` が `received_damage`。`active_turn` が今の番のときだけはたらく）で示せる。
+  - 返した量は `retaliation` の `received_damage`（受けたダメージ）と、すぐあとの `damage` の `amount`（返したダメージ。弱点などを計算したあと）で示す。
+  - `UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT` で拒否されたワザは、ほかのワザ・番の終わりを選ばせる（状態は変わらない）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -680,6 +704,8 @@ v0.10: `counterattack`（`player`＝「はんげき」を持つポケモンの�
 v0.11: `ko_prevention_declined`（`player`＝「こんじょう」を持つポケモンの持ち主・`pokemon`・`pokemon_id`・`power`＝`PowerKey` の文字列（`PMCG6-061@power0`）・`total_damage`。使わないと答えた）、`ko_prevention_declared`（同じ項目と `hp`。使うと答えた。p.311 の宣言）、そのすぐあとに `coin_flip`（`source`＝`power`・`effect`＝`PowerKey`・`player`＝持ち主・`pokemon_id`）、そのすぐあとに `ko_prevented`（`player`・`pokemon`・`pokemon_id`・`power`・`result`・`damage_before`・`total_damage`＝HP − 10・`remaining_hp`＝10。「おもて」）か `ko_prevention_failed`（`player`・`pokemon`・`pokemon_id`・`power`・`result`・`total_damage`。「うら」。そのあと `knock_out`）。どれもワザのあと（番の終わりの前）。決定そのものはログに残さない。`pokemon_power`（自分の番の宣言）は使わない
 
 v0.12: `post_knockout_power_declined`（`player`＝「ふしちょう」を持つカードの持ち主・`card`＝トラッシュのカードの uid・`card_id`・`power`＝`PowerKey` の文字列（`PMCG5-020@power0`）。使わないと答えた）、`post_knockout_power_declared`（同じ項目。使うと答えた。p.311 の宣言）、そのすぐあとに `return_to_hand`（`player`・`card`・`card_id`・`power`・`revealed`＝True。トラッシュから手札に加え、相手に見せた）。どれもきぜつの処理（`knock_out`）・サイド（`take_prize`）のあと、バトル場に出す前。`retaliation`（`player`＝「ほのおのかべ」の効果を持つポケモンの持ち主・`pokemon`・`pokemon_id`・`persistent_effect`＝`retaliation`・`source_card`・`effect`＝効果を与えたワザの `AttackKey` の文字列・`trigger`＝きっかけのワザ・`attacker`・`attacker_pokemon`・`attacker_pokemon_id`・`amount`＝基本となるダメージ）、そのすぐあとにダメージの要素のログ（`damage` に `retaliation`＝True・`effect`・`pokemon_id` を加えたもの、または `damage_prevented`・`evade_check`・`attack_evaded`）。`retaliation_skipped`（`retaliation` と同じ項目から `amount` を除き `reason`＝`knocked_out`。ワザを使ったポケモンがすでに HP 以上）。`persistent_effect_skipped`（`player`・`pokemon`・`pokemon_id`・`persistent_effect`・`effect`・`reason`＝`knocked_out`。「ほのおのかべ」のあと相手の「はんげき」で HP 以上になったので効果を与えない）。効果の追加・消去は v0.4b の `persistent_effect_added`・`persistent_effect_removed`（`persistent_effect`＝`retaliation`）
+
+v0.13: 新しいイベントはない。`retaliation` に、こうらがえし（`persistent_effect` が `retaliation_received_damage`）のときだけ `basis`（`received_damage`）・`received_damage`（受けたダメージ = 直前の効果を持つポケモンへの `damage` の `amount`）を加えた。`amount` はどちらの種類でも、返すダメージの基本となるダメージ（ほのおのかべは 10、こうらがえしは受けたダメージ）。持続する効果のログ（`persistent_effect_added`・`persistent_effect_removed`）の `persistent_effect` に `retaliation_received_damage` が入ることがある。
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

@@ -114,7 +114,8 @@ def damage_prevention(state: GameState, pokemon: PokemonInPlay) -> PreventDamage
 
 def retaliation(state: GameState, pokemon: PokemonInPlay) -> Retaliation | None:
     """今の番に ``pokemon`` の「相手のワザによるダメージを受けたとき、相手にダメージを与える」効果（``Retaliation``。v0.12 の
-    「ほのおのかべ」）がはたらいているなら、その効果。そうでなければ None。
+    「ほのおのかべ」、v0.13 の「こうらがえし」（与えるダメージは受けたダメージ。``Retaliation.basis``））がはたらいているなら、その効果。
+    そうでなければ None。
 
     はたらくのは ``active_turn``（次の相手の番）の間だけ（``damage_prevention`` と同じ）。効果を与えた番の残り（ワザなので、その番は
     すぐに終わる）と、ポケモンチェック（どちらの番でもない。p.323）でははたらかない（ポケモンチェックのどくのダメージはワザによる

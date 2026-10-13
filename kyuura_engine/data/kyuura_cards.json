@@ -137,6 +137,10 @@
   "pool_v0_12": [
     "PMCG5-020"
   ],
+  "pool_v0_13": [
+    "PMCG4-018",
+    "PMCG4-021"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4104,6 +4108,168 @@
         "series": "リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%A4%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-018",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゼニガメ",
+        "en": "Squirtle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          7
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こうらアタック",
+              "en": "Shell Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-018",
+        "pokemontcg": [
+          "base5-68"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-018-zenigame/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-018-zenigame/"
+      }
+    },
+    {
+      "id": "PMCG4-021",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいカメール",
+        "en": "Dark Wartortle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          8
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ゼニガメ",
+          "en": "Squirtle"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おうふくびんた",
+              "en": "Doubleslap"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×10のダメージ。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうらがえし",
+              "en": "Mirror Shell"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番で、このカードが相手のワザによってダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)そのポケモンにも同じダメージを与える。(ダメージ以外の効果は与えない)",
+              "en": "If an attack does damage to Dark Wartortle during your opponent's next turn (even if Dark Wartortle is Knocked Out), Dark Wartortle attacks the Defending Pokémon for an equal amount of damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-021",
+        "pokemontcg": [
+          "base5-46"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-019-warui-kameil/",
+      "jp_print": {
+        "level": 21,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-019-warui-kameil/"
       }
     },
     {

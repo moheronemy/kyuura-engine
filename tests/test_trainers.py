@@ -75,7 +75,8 @@ class TrainerRegistryTest(unittest.TestCase):
         # ポケモンパワー（ケーシィ・ユンゲラー・フーディン）を加えた。v0.8 はワザとポケモンパワー（ロケット団のベトベター・ベトベトン）を加えた。
         # v0.9 はワザとポケモンパワー（化石の秘密のゴース・ゴースト）を加えた。v0.10 はワザとポケモンパワー（ゴーリキー・カイリキー）を加えた
         # v0.11 はワザとポケモンパワー（サカキのワンリキー・ゴーリキー・カイリキー）、v0.12 はワザとポケモンパワー（R団のファイヤー）を加えた
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.12")
+        # v0.13 はワザ（第4弾のゼニガメ・わるいカメール）を加えた
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
         self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus",
                                            "attached_damage_reduction"})

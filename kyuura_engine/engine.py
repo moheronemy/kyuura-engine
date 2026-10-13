@@ -1966,6 +1966,7 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
       イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``・``forced_switch``（v0.4d））がない
     - v0.12 の ``Retaliation``（「ほのおのかべ」）: ``PreventDamage`` と同じ確認（自分自身・持ち主の番・次の相手の番・期限・バトル場だけ）に
       加えて、``attack_index`` がこのカードのワザの位置で、そのワザに ``DamageAndRetaliation`` が登録され、``amount`` がその実装の値
+      （v0.13: 「こうらがえし」（``ReturnReceivedDamage``）も同じ確認で、決め方 ``basis`` と量（None）を登録された実装と照らす）
     """
     effects = pokemon.persistent_effects
     where = f"ポケモン {pokemon.pokemon_id} の持続する効果"
@@ -2007,16 +2008,17 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
 
 
 def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Retaliation, where: str) -> list[str]:
-    """「ほのおのかべ」の持続する効果（v0.12）の、ワザの位置と与えるダメージが、このポケモンのカードの登録されたワザと合うか。"""
-    from .effects import DamageAndRetaliation  # engine の読み込みの順番に関わらず、使うときに読み込む
-
-    if type(effect.attack_index) is not int or type(effect.amount) is not int:
+    """「ほのおのかべ」（v0.12）・「こうらがえし」（v0.13）の持続する効果の、ワザの位置と与えるダメージの決め方・量が、このポケモンの
+    カードの登録されたワザと合うか（登録された実装の ``retaliation_terms``。「ほのおのかべ」は (``fixed``, 10)、「こうらがえし」は
+    (``received_damage``, None)）。"""
+    if type(effect.attack_index) is not int or (effect.amount is not None and type(effect.amount) is not int):
         return [f"{where} {effect!r} のワザの位置・与えるダメージが整数ではない"]
     definition = state.card_def(pokemon.card)
     if not 0 <= effect.attack_index < len(definition.attacks):
         return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
     entry = state.effects.attack_entry(definition.id, effect.attack_index)
-    if entry is None or not isinstance(entry.effect, DamageAndRetaliation) or entry.effect.retaliation != effect.amount:
+    terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
+    if terms is None or terms() != (effect.basis, effect.amount):
         return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
     return []
 

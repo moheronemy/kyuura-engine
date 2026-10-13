@@ -109,7 +109,8 @@ class DefaultRegistryTest(unittest.TestCase):
         # ゴーリキーの「からてチョップ」「じごくぐるま」（p.190。v0.10。カイリキーの「ちきゅうなげ」は説明文なし）、
         # サカキのワンリキーの「いかりのスーパーパンチ」（p.189）・サカキのゴーリキーの「いちかばちか」「じごくがため」（p.191）・
         # サカキのカイリキーの「ハリケーンパンチ」（p.193。v0.11。サカキのワンリキーの「チョップ」は説明文なし）、
-        # R団のファイヤーの「ほのおのかべ」（p.82。v0.12）
+        # R団のファイヤーの「ほのおのかべ」（p.82。v0.12）、わるいカメールの「おうふくびんた」「こうらがえし」（p.89。v0.13。第4弾の
+        # ゼニガメの「こうらアタック」は説明文なし）
         self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
@@ -119,7 +120,8 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG1-055", 0), AttackKey("PMCG1-055", 1), AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1), AttackKey("PMCG2-007", 0), AttackKey("PMCG2-007", 1),
                                      AttackKey("PMCG2-010", 0), AttackKey("PMCG3-007", 0), AttackKey("PMCG3-029", 0),
                                      AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-004", 0),
-                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG5-020", 0), AttackKey("PMCG6-057", 1),
+                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG4-021", 0), AttackKey("PMCG4-021", 1),
+                                     AttackKey("PMCG5-020", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0)])
 
     def test_pool_and_game_use_the_same_registry(self):
@@ -228,8 +230,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + ゼニガメの 2 つ・カメールの 2 つ・カメックスの 1 つ（v0.6）+ ケーシィの 1 つ・ユンゲラーの 2 つ・フーディンの 1 つ（v0.7）
         # + ロケット団のベトベターの 2 つ・ベトベトンの 1 つ（v0.8）+ 化石の秘密のゴースの 2 つ・ゴーストの 1 つ（v0.9）
         # + ゴーリキーの 2 つ・カイリキーの 1 つ（v0.10）+ サカキのワンリキーの 2 つ・サカキのゴーリキーの 2 つ・サカキのカイリキーの 1 つ（v0.11）
-        # + R団のファイヤーの 1 つ（v0.12）
-        self.assertEqual(len(keys), 62)
+        # + R団のファイヤーの 1 つ（v0.12）+ 第4弾のゼニガメの 1 つ・わるいカメールの 2 つ（v0.13）
+        self.assertEqual(len(keys), 65)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

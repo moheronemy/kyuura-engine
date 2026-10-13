@@ -155,7 +155,7 @@ class RainDanceRegistrationTest(unittest.TestCase):
         self.assertEqual([m["field"] for m in record["mismatches"]], ["pokemon.powers[0].text.ja", "pokemon.attacks[0].text.ja"])
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG1-032@power0"],
                          {"implementation": "attach_energy_from_hand", "name_ja": "あまごい", "source": "P43 p.90"})
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.12")  # v0.7 でフーディン、v0.8 でベトベター・ベトベトン、v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤーの登録を加えた（あまごいの登録は同じ）
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.7 でフーディン、v0.8 でベトベター・ベトベトン、v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（あまごいの登録は同じ）
 
     def test_power_is_not_an_attack_nor_an_energy_transfer(self):
         """あまごいはワザ（AttackEffect）でも、場のエネルギーをつけかえるエナジートランスでもない（別の実装・別のログ）。"""
