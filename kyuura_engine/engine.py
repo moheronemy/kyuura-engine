@@ -55,6 +55,7 @@ from .commands import (
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
 from .damage import calculate_confusion_damage
 from .effects import AttackKey, AttackUse, PowerKey, PowerUse, TrainerUse, attack_damage_modifiers
+from .continuous import suppressors_of
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
@@ -1197,6 +1198,11 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
       前に済ませるので、拒否したら状態・乱数・ログは変わらない。
     - 使っても番は終わらない（``Phase.MAIN`` のまま。``_finish_attack`` を呼ばない）。「特に指示されていないかぎり、特殊能力は
       いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
+    - v0.8: 常にはたらいている特殊能力（``effects.SuppressOtherPowers``。ベトベトンの「かがくへんかガス」）は宣言しないので、使おうと
+      したら ``POWER_NOT_DECLARABLE``。宣言する特殊能力は、登録の確認のあと、パワーごとの確認（``check_usable``）の前に、今はたらいて
+      いる「かがくへんかガス」に消されていないかを今の状態から求めて（``continuous.suppressors_of``）、消されていれば ``POWER_SUPPRESSED``
+      （「使えず、その力も消える」。p.48・p.323）。p.311 の「そのとき使うことのできるもの」を、宣言の前に確かめる（宣言もない。状態・
+      乱数・ログは変わらない）。自分の場・相手の場のどちらのかがくへんかガスでも同じ（p.48 の解説）。
     - v0.7 のダメージスワップ（``effects.MoveDamageCounter``）は、のせかえでポケモンがきぜつするなら ``check_usable`` で拒否するので、
       特殊能力の処理のあとにきぜつの処理（トラッシュ・サイド・交代）はない。もし処理のあとに HP 以上のダメージのポケモンがいれば、
       ``apply_command`` の不変条件（場のポケモンのダメージは HP より小さい）が ``StateIntegrityError`` にする。
@@ -1217,6 +1223,17 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     if effect is None:
         problem = state.effects.power_problem(definition.id, power)
         raise UnsupportedError("UNSUPPORTED_POKEMON_POWER", f"特殊能力「{power.name_ja}」は未対応（{problem}）")
+    if not effect.declared:
+        raise IllegalActionError(
+            "POWER_NOT_DECLARABLE", f"特殊能力「{power.name_ja}」は常にはたらいていて、使用を宣言しない（p.311・p.323）"
+        )
+    suppressors = suppressors_of(state, power)
+    if suppressors:
+        names = "・".join(f"{pid}（{state.card_def(state.find_pokemon(pid)[1].card).name_ja}）" for pid in suppressors)
+        raise IllegalActionError(
+            "POWER_SUPPRESSED",
+            f"場のポケモン {names}の特殊能力がはたらいているので、特殊能力「{power.name_ja}」は使えず、その力も消えている（p.48・p.323）",
+        )
     use = PowerUse(cmd.player, user.pokemon_id, PowerKey(definition.id, cmd.power), cmd.energy, cmd.source, cmd.target)
     effect.check_usable(state, use)
 

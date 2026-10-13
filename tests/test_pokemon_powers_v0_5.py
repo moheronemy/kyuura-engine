@@ -44,6 +44,7 @@ ENERGY_TRANS_LATEST = ("この力は、自分の番の中で何度でも使え�
 ENERGY_TRANS = PowerKey(VENUSAUR, 0)
 RAIN_DANCE = PowerKey(BLASTOISE, 0)  # v0.6 で登録（tests/test_rain_dance_v0_6.py）
 DAMAGE_SWAP = PowerKey(ALAKAZAM, 0)  # v0.7 で登録（tests/test_damage_swap_v0_7.py）
+CHEMICAL_GAS = PowerKey("PMCG3-007", 0)  # v0.8 で登録（ベトベトンの「かがくへんかガス」。常にはたらく。tests/test_chemical_gas_v0_8.py）
 
 
 def full(state):
@@ -125,8 +126,9 @@ class PowerRegistryTest(unittest.TestCase):
     def test_default_registry_registers_only_energy_trans(self):
         """v0.5 で登録したポケモンパワーは、フシギバナの「エナジートランス」だけ（ポケモンパワーを持つカードを一括で対応にしない）。
         v0.6 でカメックスの「あまごい」を、カードのページ（p.90）と照合して加えた（2 つ。tests/test_rain_dance_v0_6.py）。
-        v0.7 でフーディンの「ダメージスワップ」を、カードのページ（p.153）と照合して加えた（3 つ。tests/test_damage_swap_v0_7.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP))
+        v0.7 でフーディンの「ダメージスワップ」を、カードのページ（p.153）と照合して加えた（3 つ。tests/test_damage_swap_v0_7.py）。
+        v0.8 でベトベトンの「かがくへんかガス」（常にはたらく）を、カードのページ（p.48）と照合して加えた（4 つ。tests/test_chemical_gas_v0_8.py）。"""
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, CHEMICAL_GAS))
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -137,7 +139,7 @@ class PowerRegistryTest(unittest.TestCase):
         self.assertIsNone(DEFAULT_EFFECTS.power_entry(VENUSAUR, 1))
         # 登録のないパワーの例: v0.5 ではカメックス（v0.6 で登録した）、v0.6 ではフーディン（v0.7 で登録した）
         self.assertIsNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
-        self.assertIn("3 powers", repr(DEFAULT_EFFECTS))  # v0.5 は 1、v0.6 は 2
+        self.assertIn("4 powers", repr(DEFAULT_EFFECTS))  # v0.5 は 1、v0.6 は 2、v0.7 は 3
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -218,7 +220,14 @@ class PowerRegistryTest(unittest.TestCase):
             entry = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index)
             card_record = read_verification()["cards"][key.card_id]
             self.assertEqual(entry.play_text_ja, card_record["power_latest_description_ja"][str(key.power_index)])
-            self.assertEqual(entry.text_ja, card_record["power_card_image_text_ja"][str(key.power_index)])
+            image = card_record["power_card_image_text_ja"][str(key.power_index)]
+            if image != entry.text_ja:
+                # v0.8: 図版の印刷の文面が kyuura の写しと違うと読めた（ベトベトンの「すべて／全て」）ときは、照合の記録の不一致
+                # （mismatches）に、kyuura の写しの値と図版の読みが書いてある（登録の照合は kyuura の写しの値のまま）
+                recorded = [m for m in card_record.get("mismatches", ()) if m["field"] == f"pokemon.powers[{key.power_index}].text.ja"]
+                self.assertEqual(len(recorded), 1, key)
+                self.assertEqual(recorded[0]["kyuura"], entry.text_ja, key)
+                self.assertIn(image, recorded[0]["official_book_2000"], key)
             self.assertEqual(entry.text_ja, load_card_pool().get(key.card_id).powers[key.power_index].text_ja)
 
     def test_registry_methods_keep_the_other_registrations(self):
@@ -227,12 +236,13 @@ class PowerRegistryTest(unittest.TestCase):
             DEFAULT_EFFECTS.with_attacks("a", {}), DEFAULT_EFFECTS.without_attacks("b", []), DEFAULT_EFFECTS.with_trainers("c", {}),
             DEFAULT_EFFECTS.without_trainers("d", []),
         ):
-            self.assertEqual(registry.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP))  # v0.5 は (ENERGY_TRANS,)、v0.6 は 2 つ
-        removed = DEFAULT_EFFECTS.without_powers("e", [ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP])
+            # v0.5 は (ENERGY_TRANS,)、v0.6 は 2 つ、v0.7 は 3 つ
+            self.assertEqual(registry.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, CHEMICAL_GAS))
+        removed = DEFAULT_EFFECTS.without_powers("e", [ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, CHEMICAL_GAS])
         self.assertEqual((removed.power_keys(), removed.attack_keys(), removed.trainer_ids()),
                          ((), DEFAULT_EFFECTS.attack_keys(), DEFAULT_EFFECTS.trainer_ids()))
-        self.assertEqual(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS]).power_keys(), (RAIN_DANCE, DAMAGE_SWAP))
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP))  # 元の登録表は変わらない
+        self.assertEqual(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS]).power_keys(), (RAIN_DANCE, DAMAGE_SWAP, CHEMICAL_GAS))
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, CHEMICAL_GAS))  # 元の登録表は変わらない
 
 
 # ---------------------------------------------------------------- コマンドの形

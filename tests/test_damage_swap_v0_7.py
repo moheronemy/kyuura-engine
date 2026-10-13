@@ -199,7 +199,7 @@ class DamageSwapRegistrationTest(unittest.TestCase):
         self.assertEqual([m["field"] for m in record["mismatches"]], ["pokemon.powers[0].text.ja"])
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG1-049@power0"],
                          {"implementation": "move_damage_counter", "name_ja": "ダメージスワップ", "source": "P43 p.153"})
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.7")
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.8")  # v0.8 でベトベター・ベトベトンの登録を加えた（ダメージスワップの登録は同じ）
 
     def test_power_is_not_an_attack_nor_an_energy_power(self):
         """ダメージスワップはワザ（AttackEffect）でも、エネルギーを動かすパワー（エナジートランス・あまごい）でもない（別の実装・別のログ）。"""

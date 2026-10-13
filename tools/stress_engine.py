@@ -8,6 +8,7 @@
     python3 tools/stress_engine.py --scenario venusaur --scenario venusaur_status   # v0.5（ポケモンパワー）
     python3 tools/stress_engine.py --scenario blastoise --scenario blastoise_mixed  # v0.6（あまごい）
     python3 tools/stress_engine.py --scenario alakazam --scenario alakazam_mixed    # v0.7（ダメージスワップ）
+    python3 tools/stress_engine.py --scenario muk --scenario muk_mixed              # v0.8（かがくへんかガス）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -32,6 +33,11 @@
   選ばせるものの不足・番でない・ない番号・ない位置・パワーのないポケモン）も）を混ぜる。ユンゲラーの「じこさいせい」の決定
   （``DISCARD_ENERGY``）は駆動がほかの決定と同じに答える。フーディンのいない組では v0.6 と同じ操作になる（乱数の使い方を変えていない。
   ポケモンパワーを持つポケモンの種類の並び ``POWER_USERS`` の最後に加えたので、フシギバナ・カメックスだけの組の選び方は同じ）。
+- v0.8: ベトベトンの組（``muk``・``muk_mixed``。``muk_mixed`` は両方のデッキにベトベトン）を加えた。自分の場にベトベトンがいる番は、
+  ときどき「かがくへんかガス」の使用を試す（常にはたらいていて宣言しないので ``POWER_NOT_DECLARABLE`` になるはず）。特殊能力の使用の
+  たびに、エンジンとは別に、その時点の場からかがくへんかガスに消されているか（``power_suppressors``）を求め、消されているのに受け付けた・
+  消されていないのに ``POWER_SUPPRESSED`` で拒否した、を問題として数える。MAIN の手ごとに、かがくへんかガスがはたらいているか・
+  ベトベトンがいるのに消えているか・切り替わったかを数える。``POWER_USERS`` の最後に加えたので、ベトベトンのいない組の操作は v0.7 と同じ。
 """
 
 from __future__ import annotations
@@ -92,9 +98,26 @@ POWER_SCENARIOS += (
                      driver.BUTTERFREE: 2, driver.METAPOD: 2, driver.POTION: 2, PSYCHIC: 14, driver.GRASS: 10, driver.FIRE: 6},
                     tuple(range(6)), tags=("フーディン", "カメックス", "フシギバナ", "特殊状態", "ふきとばし")),
 )
+MUK, GRIMER = "PMCG3-007", "PMCG4-004"
+POWER_SCENARIOS += (
+    # ベトベトン（v0.8。かがくへんかガス）: 自分のフシギバナ・相手のフーディン・カメックスの特殊能力を消す。相手はロコン（こんらん）・
+    # キャタピー（マヒ）・パラス（ねむり）・ケーシィ（マヒ）でベトベトンの力を消し、ポケモンいれかえ・にげるで特殊状態が消える
+    driver.Scenario("muk", {GRIMER: 4, MUK: 4, BULBASAUR: 3, IVYSAUR: 3, VENUSAUR: 3, driver.SWITCH: 2, driver.POTION: 2, driver.BILL: 2,
+                            driver.DEFENDER: 2, driver.GRASS: 35},
+                    {ABRA: 3, KADABRA: 3, ALAKAZAM: 3, SQUIRTLE: 3, WARTORTLE: 2, BLASTOISE: 2, driver.VULPIX: 3, driver.CATERPIE: 3,
+                     driver.PARAS: 3, driver.SWITCH: 2, PSYCHIC: 14, driver.WATER: 10, driver.GRASS: 4, driver.FIRE: 5},
+                    tuple(range(6)), tags=("ベトベトン", "かがくへんかガス", "フシギバナ", "フーディン", "カメックス", "特殊状態")),
+    # 両方のデッキにベトベトン（両方のかがくへんかガス・どちらかだけがはたらいている場面）
+    driver.Scenario("muk_mixed", {GRIMER: 4, MUK: 3, ABRA: 3, KADABRA: 3, ALAKAZAM: 3, driver.VULPIX: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                  driver.GRASS: 18, PSYCHIC: 15, driver.FIRE: 4},
+                    {GRIMER: 4, MUK: 3, SQUIRTLE: 3, WARTORTLE: 3, BLASTOISE: 3, driver.CATERPIE: 3, driver.PARAS: 3, driver.DEFENDER: 2,
+                     driver.BILL: 2, driver.GRASS: 18, driver.WATER: 16},
+                    tuple(range(6)), tags=("ベトベトン", "かがくへんかガス", "フーディン", "カメックス", "特殊状態")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディンがいる番で、ポケモンパワーを試す割合
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM)
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトンがいる番で、ポケモンパワーを試す割合
+# 並びの最後にベトベトン（v0.8）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK)
 
 
 def choose_command(state, rng: random.Random, illegal_rate: float):
@@ -109,6 +132,10 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
+    if kind == MUK:
+        # かがくへんかガスは常にはたらいていて宣言しない（v0.8。POWER_NOT_DECLARABLE になるはず）
+        user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == MUK])
+        return engine.UsePokemonPower(player, user.pokemon_id, 0)
     if kind == ALAKAZAM:
         return _damage_swap_command(state, rng)
     return _power_command(state, rng) if kind == VENUSAUR else _rain_dance_command(state, rng)
@@ -245,15 +272,38 @@ def classify(error: Exception) -> str:
     return "internal_error"
 
 
+def _suppression_of(state, command):
+    """コマンドの特殊能力を、今消している場のポケモンの番号（v0.8。エンジンとは別に、場から求める。使う特殊能力が分からなければ None）。"""
+    found = state.find_pokemon(command.pokemon) if isinstance(command.pokemon, int) else None
+    if found is None or found[0] != command.player or not isinstance(command.power, int):
+        return None
+    definition = state.card_def(found[1].card)
+    if not 0 <= command.power < len(definition.powers):
+        return None
+    return engine.power_suppressors(state, command.pokemon, command.power)
+
+
 def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_every: int) -> tuple[Counter, list[str]]:
     """1 局を進め、数えた結果と問題を返す。"""
     counted, problems = Counter(), []
     rng = random.Random(f"kyuura-stress:{scenario.name}:{seed}")
     state = engine.new_game(driver._deck(scenario.deck0), driver._deck(scenario.deck1), seed)
+    gas_before = ()
     for index in range(steps):
         if state.phase in engine.TERMINAL_PHASES:
             break
+        gas = engine.working_power_suppressors(state)
+        if state.phase is engine.Phase.MAIN:
+            muk_in_play = any(state.cards[pk.card].card_id == MUK for p in state.players for pk in p.in_play())
+            if gas:
+                counted["observed:gas_working"] += 1
+            elif muk_in_play:
+                counted["observed:gas_off_with_muk"] += 1
+            if bool(gas) != bool(gas_before):
+                counted["observed:gas_toggled"] += 1  # かがくへんかガスがはたらく／消えるが切り替わった（前に見た MAIN の手から）
+            gas_before = gas
         command = choose_command(state, rng, illegal_rate)
+        suppression = _suppression_of(state, command) if isinstance(command, engine.UsePokemonPower) else None
         before = engine.state_to_dict(state, format_version=9)
         fingerprint, log = rng_fingerprint(state.rng), state.log
         try:
@@ -267,6 +317,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                 break
             if engine.state_to_dict(state, format_version=9) != before or rng_fingerprint(state.rng) != fingerprint or state.log is not log:
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 拒否（{error.code}）で渡した状態が変わった")
+            if error.code == "POWER_SUPPRESSED" and not suppression:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: かがくへんかガスがはたらいていないのに POWER_SUPPRESSED")
             continue
         except Exception as error:  # noqa: BLE001  内部の誤り
             counted["internal_error"] += 1
@@ -274,6 +326,11 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             break
         counted["accepted"] += 1
         counted[f"accepted:{type(command).__name__}"] += 1
+        if isinstance(command, engine.UsePokemonPower):
+            if suppression:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: かがくへんかガス（{suppression}）がはたらいているのに特殊能力を受け付けた")
+            if any(state.cards[pk.card].card_id == MUK for p in state.players for pk in p.in_play()):
+                counted["accepted:power_with_muk_in_play"] += 1  # ベトベトンが場にいるが、力が消えている（ねむり・マヒ・こんらん）
         if isinstance(command, engine.UsePokemonPower) and new.log[-1]["kind"] == "power_attach_energy":
             counted["accepted:rain_dance"] += 1
         if isinstance(command, engine.UsePokemonPower) and new.log[-1]["kind"] == "move_damage_counter":
@@ -330,7 +387,9 @@ def main(argv=None) -> int:
           f"HALTED {sum(v for k, v in counts.items() if k.startswith('final_halted:'))}・GAME_OVER {counts.get('final:game_over', 0)}・"
           f"SUDDEN_DEATH {counts.get('final:sudden_death', 0)}・内部の誤り {counts.get('internal_error', 0) + counts.get('internal_state_integrity', 0)}・"
           f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}（うちあまごい {counts.get('accepted:rain_dance', 0)}・"
-          f"ダメージスワップ {counts.get('accepted:damage_swap', 0)}）・じこさいせい {counts.get('accepted:recover', 0)}"
+          f"ダメージスワップ {counts.get('accepted:damage_swap', 0)}）・じこさいせい {counts.get('accepted:recover', 0)}・"
+          f"かがくへんかガスで拒否 {counts.get('code:POWER_SUPPRESSED', 0)}（はたらいている MAIN {counts.get('observed:gas_working', 0)}・"
+          f"消えている MAIN {counts.get('observed:gas_off_with_muk', 0)}・切り替わり {counts.get('observed:gas_toggled', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

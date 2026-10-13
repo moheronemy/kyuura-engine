@@ -27,7 +27,7 @@ from tests.helpers import (
     BEEDRILL, BULBASAUR, BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, IVYSAUR, KAKUNA, LIGHTNING, METAPOD, PARAS, PIKACHU,
     PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
-    BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA,
+    BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -37,7 +37,9 @@ ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, 
 # キャタピーの「いとをはく」・トランセルの「かたまる」と同じだが、別のカードの登録なので加える）と、2 進化のカメックスの
 # 「ハイドロポンプ」（ついている「水」エネルギーの数でダメージを追加する新しい実装。コインなし）を加えた。v0.7 でケーシィの「ねんりき」・
 # 1 進化のユンゲラーの「じこさいせい」（エネルギーをトラッシュしてダメージカウンターをすべてとりのぞく新しい実装。ワザを使ったプレイヤーの
-# 決定を待つ状態で受け付ける。コインなし）・「ちょうねんりき」・2 進化のフーディンの「あやしいひかり」を加えた）
+# 決定を待つ状態で受け付ける。コインなし）・「ちょうねんりき」・2 進化のフーディンの「あやしいひかり」を加えた。v0.8 でロケット団の
+# ベトベターの「どくガス」（ダメージなしでどく。新しい実装）・「ねばりつく」（コインで 20 を追加してマヒ。新しい実装）と、1 進化の
+# ベトベトンの「ヘドロこうげき」を加えた）
 ATTACKS = [
     (GROWLITHE, 0),  # DamageOnly
     (DODUO, 0),  # CoinFlipDamage（コイン 2 枚）
@@ -60,11 +62,14 @@ ATTACKS = [
     (KADABRA, 0),  # DiscardEnergyAndRemoveAllCounters（v0.7。ユンゲラーの「じこさいせい」。ケーシィから進化したものとして置く）
     (KADABRA, 1),  # DamageOnly（v0.7。ユンゲラーの「ちょうねんりき」）
     (ALAKAZAM, 0),  # ConfuseOnHeads（v0.7。フーディンの「あやしいひかり」。ケーシィ → ユンゲラーと進化したものとして置く）
+    (GRIMER, 0),  # PoisonWithoutDamage（v0.8。ロケット団のベトベターの「どくガス」。ダメージなし・コインなし）
+    (GRIMER, 1),  # CoinBonusDamageAndParalyze（v0.8。ロケット団のベトベターの「ねばりつく」。コインの前に確かめる。「ダメージを受けない」相手にも投げる）
+    (MUK, 0),  # PoisonOnHeads（v0.8。ベトベトンの「ヘドロこうげき」。ベトベターから進化したものとして置く）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
 EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (CATERPIE, METAPOD), IVYSAUR: (BULBASAUR,),
-                BLASTOISE: (SQUIRTLE, WARTORTLE), KADABRA: (ABRA,), ALAKAZAM: (ABRA, KADABRA)}
+                BLASTOISE: (SQUIRTLE, WARTORTLE), KADABRA: (ABRA,), ALAKAZAM: (ABRA, KADABRA), MUK: (GRIMER,)}
 COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0)}  # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage）
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},

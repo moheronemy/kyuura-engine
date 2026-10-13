@@ -58,7 +58,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 
 from .cards import EnergyType
 from .coins import CoinSide, flip_coins
@@ -540,6 +540,60 @@ class ParalyzeOnHeads(AttackEffect):
 
 
 @dataclass(frozen=True)
+class CoinBonusDamageAndParalyze(AttackEffect):
+    """コインを 1 枚投げ、「おもて」なら、ダメージの目安の数字に ``bonus`` を加えたダメージを相手の対戦ポケモンに与えて、相手の対戦
+    ポケモンをマヒ状態にする。「うら」なら目安の数字ぶんのダメージだけ（v0.8。ロケット団のベトベターの「ねばりつく」。p.45 の最新の説明
+    「コインを投げて「おもて」なら、20ダメージを追加して、相手を「マヒ」状態にする。」、ダメージの目安「10+」。docs/grimer-line-v0.8.md）。
+
+    - ダメージの目安に「×」がないので、説明の最初の「相手（太字）に10ダメージ。」が省略されている。「+」は、説明にしたがって書かれた
+      数字よりダメージが大きくなることがある印（p.320）。「おもて」の 20 の追加は、説明にしたがって計算する基本となるダメージ
+      （p.321 の 1 段階）。弱点・抵抗力・プラスパワー・ディフェンダーはそのあと（v0.6 のハイドロポンプと同じ）。
+    - ダメージの量がコインで決まるので、コインはダメージの計算の前に投げる（「おもて」なら 30、「うら」なら 10）。
+    - マヒ状態にするのは「効果」で、ダメージではない。最終ダメージが 0 でも、相手が「ダメージを受けない」状態（v0.4b。ダメージの
+      要素は無効、「ダメージ以外の効果は受ける」）でも、「おもて」ならマヒ状態にする。このワザのコインはマヒにするかも決めるので、
+      「ダメージを受けない」相手にもコインを投げる（``CoinFlipDamage`` の ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` は、コインがダメージの
+      量だけを決めるワザの問題で、このワザには当てはまらない）。
+    - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないのでマヒ状態にしない（p.309・p.323。
+      ``ParalyzeOnHeads`` と同じ。コインは投げたあと）。
+    - マヒの再付与で回復する番が原典で決められない場合（``conditions.paralysis_problem``）は、受け付けるかがコインの結果で変わら
+      ないように、コインの前に確かめる。相手の対戦ポケモンだけをマヒにするワザでは、不変条件を満たすどの状態でも起こらない
+      （v0.3d の証明。``ParalyzeOnHeads``）。
+    """
+
+    bonus: int
+    implementation_id = "coin_bonus_damage_and_paralyze"
+
+    def __post_init__(self) -> None:
+        if type(self.bonus) is not int or self.bonus <= 0 or self.bonus % 10:
+            raise ValueError(f"「おもて」のときに追加するダメージは 10 の倍数の正の数（{self.bonus!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier != "+":
+            problems.append("ダメージの目安に「+」のないワザを、コインでダメージを追加するワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、コインでダメージを追加してマヒ状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        opponent = 1 - use.player
+        problem = paralysis_problem(state, opponent, state.players[opponent].active)
+        if problem is not None:
+            raise problem
+        flips = flip_coins(
+            state, use.player, 1, source="attack", effect=str(use.key), card=attacker.card, pokemon_id=attacker.pokemon_id
+        )
+        heads = flips.results[0] is CoinSide.HEADS
+        result = damage_opponent_active(state, use, attack.damage + (self.bonus if heads else 0))
+        if heads and not result.knocked_out:
+            paralyze(state, opponent, state.players[opponent].active, effect=str(use.key))
+
+
+@dataclass(frozen=True)
 class PutToSleep(AttackEffect):
     """ダメージを与えず、相手の対戦ポケモンをねむり状態にする（v0.3b。パラスの「キノコのほうし」。p.38 の最新の説明
     「相手を「ねむり」状態にする。」。docs/cards-v0.3b.md）。
@@ -566,6 +620,34 @@ class PutToSleep(AttackEffect):
     def resolve(self, state: GameState, use: AttackUse) -> None:
         opponent = 1 - use.player
         put_to_sleep(state, opponent, state.players[opponent].active, effect=str(use.key))
+
+
+@dataclass(frozen=True)
+class PoisonWithoutDamage(AttackEffect):
+    """ダメージを与えず、コインを投げずに相手の対戦ポケモンをどく状態にする（v0.8。ロケット団のベトベターの「どくガス」。p.45 の
+    最新の説明「相手を「どく」状態にする。」・解説「「どくガス」は、コイントスなしで相手の対戦ポケモンを必ずどく状態にします。」。
+    docs/grimer-line-v0.8.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる（``PutToSleep`` と同じ）。ダメージの要素がない
+      ので、ダメージの計算（p.321）をせず、``damage`` のログもない。ダメージの目安のあるワザの ``PoisonOpponent``（v0.5。フシギソウの
+      「どくのこな」）とは別の実装。
+    - コインは投げない（説明にない）ので、乱数を使わない。
+    - もうどく状態のポケモンなら、二重のどく状態にはならない（p.322。``conditions.poison`` がログに ``already``）。
+    """
+
+    implementation_id = "poison_without_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、ダメージを与えずにどく状態にするワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、どく状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        opponent = 1 - use.player
+        poison(state, opponent, state.players[opponent].active, effect=str(use.key))
 
 
 @dataclass(frozen=True)
@@ -1471,10 +1553,16 @@ class PowerEffect:
     v0.5 のパワーは決定を出さない（説明が選ばせるものはコマンドで指定する）。決定を出すパワーを加えるときは、``resume`` と、決定の形を
     宣言する ``decision_problems``（ワザ（v0.4d）・トレーナー（v0.4e）と同じ考え方）と、エンジンの再開先を加える。使用回数の制限
     （「1 番に 1 回」など）があるパワーを加えるときは、回数を状態に持つ（ログから数えない）。自動的にはたらくパワー・常にはたらいている
-    パワー（p.311・p.323）は、宣言しないので、この実装の形では扱わない（未対応）。
+    パワー（p.311・p.323）は、宣言しないので、``UsePokemonPower`` の形では扱わない（自動的にはたらくパワーは未対応。常にはたらく
+    パワーは下の ``declared``）。
+
+    v0.8: ``declared`` は、使用を宣言して使う特殊能力なら True（v0.5〜v0.7 の実装はどれも True）。常にはたらいている特殊能力
+    （``SuppressOtherPowers``。ベトベトンの「かがくへんかガス」）は False で、エンジンは ``UsePokemonPower`` を ``POWER_NOT_DECLARABLE``
+    で拒否する（``check_usable``・``resolve`` を呼ばない）。常にはたらいている効果は状態から求める（``continuous.py``）。
     """
 
     implementation_id = "abstract"
+    declared: ClassVar[bool] = True
 
     def check(self, power: Power) -> list[str]:
         return []
@@ -1740,6 +1828,49 @@ class MoveDamageCounter(PowerEffect):
 
 
 @dataclass(frozen=True)
+class SuppressOtherPowers(PowerEffect):
+    """常にはたらいていて、ほかの特殊能力を使えなくし、その力も消す特殊能力（v0.8。ベトベトンの「かがくへんかガス」。p.48 の最新の説明
+    「このカードが場にいるかぎり、「かがくへんかガス」以外のすべての「特殊能力」は使えず、その力も消える。このカードが「ねむり・マヒ・
+    こんらん」状態のとき、この力は消える。」・p.323 の例。docs/chemical-gas-v0.8.md・docs/continuous-effects-v0.8.md）。
+
+    - 宣言しない（``declared`` が False）: 「常にはたらいているため、使用を宣言しない特殊能力もあります」（p.311・p.323）。
+      ``UsePokemonPower`` で使おうとしたら、エンジンが ``POWER_NOT_DECLARABLE`` で拒否する（``check_usable``・``resolve`` は呼ばない）。
+    - はたらいているか（``is_working``）は、今の状態だけで決める: このカード（いちばん上のカード。p.310）が場（バトル場・ベンチ。p.308）に
+      いて、ねむり・マヒ・こんらんでないこと。どくは挙げられていないので関係しない（SUPPORTED）。ベンチのポケモンは特殊状態にならない
+      （p.322）ので、ベンチのこのカードはいつもはたらいている。状態を覚えておかないので、回復・進化・きぜつ・ベンチに戻ること・保存と
+      復元のあとも、その時点の状態から同じ答えになる（``continuous.py``）。
+    - 消すのは、名前が ``exempt_name``（「かがくへんかガス」）でない、すべての特殊能力（両方のプレイヤーの場のポケモン。p.48 の解説
+      「自分のほうも特殊能力を使えなくなる」）。ワザ・トレーナー・手札からつける通常の操作は特殊能力ではないので消さない。
+    - 「かがくへんかガス」どうしは消し合わない（名前で除かれる）。そのため、はたらいているかの判定がほかの特殊能力の判定に依存せず、
+      循環しない（``check`` が、この実装を「かがくへんかガス」という名前のパワーだけに登録できることを確かめる）。
+    """
+
+    exempt_name: str
+    implementation_id = "suppress_other_powers"
+    declared = False
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、ポケモンパワー（特殊能力）として登録している")
+        if power.text_ja is None:
+            problems.append("説明文のないポケモンパワーを、ほかの特殊能力を消すパワーとして登録している")
+        if power.name_ja != self.exempt_name:
+            # 自分自身を消さないこと（「「かがくへんかガス」以外の」）を名前の除外で表しているので、除外する名前のパワーにだけ登録できる
+            problems.append(f"除外する名前「{self.exempt_name}」と違う名前のパワー「{power.name_ja}」に登録している（自分自身を消してしまう）")
+        return problems
+
+    def is_working(self, pokemon: PokemonInPlay) -> bool:
+        """場のポケモン ``pokemon``（このパワーを持つカードがいちばん上）のこの力がはたらいているか。ねむり・マヒ・こんらんなら消えている。"""
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def suppresses(self, power: Power) -> bool:
+        """特殊能力 ``power`` を消すか（「かがくへんかガス」以外のすべて）。"""
+        return power.name_ja != self.exempt_name
+
+
+@dataclass(frozen=True)
 class PowerEntry:
     """ポケモンパワーの登録の 1 件（v0.5）。
 
@@ -1932,7 +2063,7 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.7",
+    "kyuura-engine-0.8",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -2178,6 +2309,30 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
             source="P43 p.153",
         ),
+        # ロケット団のベトベター（v0.8。たね）p.45。どくガス（草。ダメージの目安なし）: コインを投げずに相手をどく状態に
+        AttackKey("PMCG4-004", 0): AttackEntry(
+            PoisonWithoutDamage(),
+            "どくガス",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source="P43 p.45",
+        ),
+        # ねばりつく（草草。10+）: コインが「おもて」なら 20 を追加して（30）、相手をマヒ状態に。「うら」なら 10
+        AttackKey("PMCG4-004", 1): AttackEntry(
+            CoinBonusDamageAndParalyze(bonus=20),
+            "ねばりつく",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加して、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加して、相手を「マヒ」状態にする。",
+            source="P43 p.45",
+        ),
+        # ベトベトン（v0.8。1 進化）p.48。ヘドロこうげき（草草草）: 相手に 30（目安の数字）、コインが「おもて」なら相手をどく状態に
+        AttackKey("PMCG3-007", 0): AttackEntry(
+            PoisonOnHeads(),
+            "ヘドロこうげき",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source="P43 p.48",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
@@ -2254,6 +2409,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             "自分の場に出ているポケモンのダメージカウンターを、ポケモンが「きぜつ」しない範囲で自由に移動できる。「ねむり・マヒ・こんらん」状態の時は使えない。",
             "この力は、自分の番の中で何度でも使える。この力によってポケモンが「きぜつ」しないかぎり、自分の場にいるポケモンにのっているダメージカウンターを、自分の場にいる別のポケモンにのせかえる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
             "P43 p.153",
+        ),
+        # ベトベトン（v0.8）p.48・p.323。「かがくへんかガス」: 常にはたらいていて（宣言しない）、「かがくへんかガス」以外のすべての特殊能力を
+        # 使えなくし、その力も消す。このカードがねむり・マヒ・こんらんなら消えている（docs/chemical-gas-v0.8.md）
+        PowerKey("PMCG3-007", 0): PowerEntry(
+            SuppressOtherPowers(exempt_name="かがくへんかガス"),
+            "かがくへんかガス",
+            "ベトベトンが場にいる限り、場にいるすべてのポケモンの特殊能力は使えず、その力も消える。(ただし、この「かがくへんかガス」という特殊能力は除く)「ねむり・マヒ・こんらん」状態の時、この「かがくへんかガス」の力は消える。",
+            "このカードが場にいるかぎり、「かがくへんかガス」以外のすべての「特殊能力」は使えず、その力も消える。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は消える。",
+            "P43 p.48",
         ),
     },
 )

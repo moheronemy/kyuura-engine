@@ -15,7 +15,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
-    WARTORTLE, WEEDLE,
+    WARTORTLE, WEEDLE, GRIMER, MUK,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -65,8 +65,10 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(all(pool.is_playable(c) for c in (SQUIRTLE, WARTORTLE, BLASTOISE)))
         self.assertEqual(read_extract()["pool_v0_7"], [ABRA, KADABRA, ALAKAZAM])  # v0.7（ポケモンパワーのダメージスワップ）
         self.assertTrue(all(pool.is_playable(c) for c in (ABRA, KADABRA, ALAKAZAM)))
+        self.assertEqual(read_extract()["pool_v0_8"], [GRIMER, MUK])  # v0.8（常にはたらくポケモンパワーのかがくへんかガス）
+        self.assertTrue(all(pool.is_playable(c) for c in (GRIMER, MUK)))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
-                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM)
+                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

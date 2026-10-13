@@ -15,8 +15,11 @@
   p.311）。v0.7 から、特殊能力（ダメージスワップ）のダメージカウンターの移動（``move_damage_counter``。移動元から 1 個へり、
   移動先に 1 個ふえる。自分の場のポケモンのあいだだけ・移動元と移動先が別・移動元にカウンターがあった・移動先がきぜつしない・
   登録された実装がダメージカウンターを移す特殊能力）と、ワザ（じこさいせい）のエネルギーのトラッシュ（``discard_energy``）・
-  ダメージカウンターをすべてとりのぞく処理（``remove_all_damage_counters``）も組み立て直しに含める。ログは記録で、状態の正本では
-  ない（状態とログが食い違えば、どちらかの不具合として報告する）。
+  ダメージカウンターをすべてとりのぞく処理（``remove_all_damage_counters``）も組み立て直しに含める。v0.8 から、場のポケモンの
+  ねむり・マヒ・こんらん（``special_condition``・``special_conditions_removed``・きぜつ）も組み立て直し、特殊能力の宣言
+  （``pokemon_power``）のたびに、その時点の場（いちばん上のカード・特殊状態）から、はたらいている「かがくへんかガス」
+  （``SuppressOtherPowers``）を求めて、消されている特殊能力・宣言しない特殊能力の宣言がないことを確かめる（最後の状態だけから過去の
+  使用を決めない）。ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
 """
@@ -26,6 +29,7 @@ from __future__ import annotations
 from collections import Counter
 
 from kyuura_engine import state_to_dict
+from kyuura_engine.effects import SuppressOtherPowers
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import Phase
 
@@ -195,6 +199,18 @@ def log_problems(state) -> list[str]:
     hand: dict[int, list[int]] = {0: [], 1: []}  # 手札（v0.6。引いた・取ったサイド → 場に出した・つけた・使った）
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
+    exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
+
+    def working_gases() -> list[tuple[int, SuppressOtherPowers]]:
+        """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
+        found = []
+        for pid in sorted(in_play):
+            definition = state.card_def(top[pid])
+            for power in definition.powers:
+                effect = state.effects.power_effect(definition.id, power)
+                if isinstance(effect, SuppressOtherPowers) and pid not in exclusive:
+                    found.append((pid, effect))
+        return found
 
     def enter(uid: int) -> None:
         nonlocal next_id
@@ -269,7 +285,29 @@ def log_problems(state) -> list[str]:
             declared = (e["turn"], e["player"], e["pokemon_id"])
             if e["player"] != turn_player or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
                 problems.append(f"{e['turn']} 番の特殊能力の宣言（ポケモン {e['pokemon_id']}）が、番のプレイヤーの場のポケモンではない")
+                continue
+            # v0.8: 宣言した時点の場で、宣言しない特殊能力でないこと・はたらいているかがくへんかガスに消されていないこと
+            definition = state.card_def(top[e["pokemon_id"]])
+            power = definition.powers[e["power_index"]] if 0 <= e["power_index"] < len(definition.powers) else None
+            if power is None or power.name_ja != e["power"]:
+                problems.append(f"{e['turn']} 番の特殊能力の宣言 {e['power']!r} が、ポケモン {e['pokemon_id']} のいちばん上のカードの特殊能力ではない")
+                continue
+            effect = state.effects.power_effect(definition.id, power)
+            if effect is not None and not effect.declared:
+                problems.append(f"{e['turn']} 番に、常にはたらいていて宣言しない特殊能力「{power.name_ja}」の宣言がある")
+            gases = [pid for pid, gas in working_gases() if gas.suppresses(power)]
+            if gases:
+                problems.append(f"{e['turn']} 番に、はたらいている「かがくへんかガス」（ポケモン {gases}）に消されている特殊能力「{power.name_ja}」を使った")
             continue
+        elif kind == "special_condition":
+            # v0.8: ねむり・マヒ・こんらんは重複しない（ほかのものは、その前に special_conditions_removed（replaced）で消える）
+            if e["condition"] in ("sleep", "paralysis", "confusion") and not e.get("already"):
+                if e["pokemon_id"] in exclusive:
+                    problems.append(f"{e['turn']} 番に、{exclusive[e['pokemon_id']]} のポケモン {e['pokemon_id']} が、それを消さずに {e['condition']} になった")
+                exclusive[e["pokemon_id"]] = e["condition"]
+        elif kind == "special_conditions_removed":
+            if exclusive.get(e["pokemon_id"]) in e["conditions"]:
+                del exclusive[e["pokemon_id"]]
         elif kind == "move_energy":
             # v0.5: 特殊能力（エナジートランス）で、同じ uid のエネルギーを移動元から移動先へ（トラッシュには置かない）
             if declared != (e["turn"], e["player"], e["pokemon_id"]):
@@ -358,6 +396,7 @@ def log_problems(state) -> list[str]:
             if damage[pid] < state.card_def(e["pokemon"]).hp:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
             in_play.discard(pid)
+            exclusive.pop(pid, None)
             knocked[e["player"]] += 1
             discard[e["player"]].extend([*e.get("evolution_stack", ()), e["pokemon"], *e["discarded_energy"]])
             if sorted(e["discarded_energy"]) != sorted(energy.get(pid, [])):
@@ -387,6 +426,9 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場のポケモン {pid} のエネルギー {pokemon.energy} が、ログから組み立てた {energy[pid]} と違う")
             if ids.get(pokemon.card) != pid:
                 problems.append(f"場のポケモン {pid} のいちばん上のカード {pokemon.card} が、ログの進化と対応しない")
+            state_exclusive = pokemon.conditions.exclusive
+            if (None if state_exclusive is None else state_exclusive.name) != exclusive.get(pid):
+                problems.append(f"場のポケモン {pid} のねむり・マヒ・こんらん {state_exclusive!r} が、ログから組み立てた {exclusive.get(pid)!r} と違う")
         if sorted(p.hand) != sorted(hand[p_index]):
             problems.append(f"プレイヤー {p_index} の手札 {sorted(p.hand)} が、ログから組み立てた {sorted(hand[p_index])} と違う")
         if sorted(p.discard) != sorted(discard[p_index]):

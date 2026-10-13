@@ -335,7 +335,7 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_7）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_8）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
@@ -347,6 +347,7 @@ POOL_KEYS = (
     "pool_v0_5",  # v0.5（フシギダネ・フシギソウ・フシギバナ）
     "pool_v0_6",  # v0.6（ゼニガメ・カメール・カメックス）
     "pool_v0_7",  # v0.7（ケーシィ・ユンゲラー・フーディン）
+    "pool_v0_8",  # v0.8（ロケット団のベトベター・ベトベトン）
 )
 
 

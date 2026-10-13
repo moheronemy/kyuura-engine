@@ -117,10 +117,15 @@
     "PMCG1-046",
     "PMCG1-049"
   ],
+  "pool_v0_8": [
+    "PMCG4-004",
+    "PMCG3-007"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
-    "PMCG1-075"
+    "PMCG1-075",
+    "PMCG3-003"
   ],
   "cards": [
     {
@@ -3182,6 +3187,182 @@
       }
     },
     {
+      "id": "PMCG4-004",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベトベター",
+        "en": "Grimer"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          88
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくガス",
+              "en": "Poison Gas"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "ねばりつく",
+              "en": "Sticky Hands"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加して、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage and the Defending Pokémon is now Paralyzed; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-004",
+        "pokemontcg": [
+          "base5-57"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-008-betbeter/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-008-betbeter/"
+      }
+    },
+    {
+      "id": "PMCG3-007",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベトベトン",
+        "en": "Muk"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          89
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ベトベター",
+          "en": "Grimer"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かがくへんかガス",
+              "en": "Toxic Gas"
+            },
+            "text": {
+              "ja": "ベトベトンが場にいる限り、場にいるすべてのポケモンの特殊能力は使えず、その力も消える。(ただし、この「かがくへんかガス」という特殊能力は除く)「ねむり・マヒ・こんらん」状態の時、この「かがくへんかガス」の力は消える。",
+              "en": "Ignore all Pokémon Powers other than Toxic Gases. This power stops working while Muk is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヘドロこうげき",
+              "en": "Sludge"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-007",
+        "pokemontcg": [
+          "base3-13",
+          "base3-28"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-006-betbeton/",
+      "jp_print": {
+        "level": 34,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-006-betbeton/"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -3421,6 +3602,92 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/"
+      }
+    },
+    {
+      "id": "PMCG3-003",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベトベター",
+        "en": "Grimer"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          88
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ベトベト",
+              "en": "Nasty Goo"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "ちいさくなる",
+              "en": "Minimize"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番でこのカードが受けるダメージは20へる。(ダメージ以外の効果はそのまま)",
+              "en": "All damage done by attacks to Grimer during your opponent's next turn is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-003",
+        "pokemontcg": [
+          "base3-48"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-005-betbeter/",
+      "jp_print": {
+        "level": 17,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-005-betbeter/"
       }
     }
   ]
