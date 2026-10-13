@@ -1,4 +1,4 @@
-"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.11）。
+"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.12）。
 
 ルールは「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』
 pp.306〜326）。カードデータの正本は kyuura（https://github.com/moheronemy/kyuura）。
@@ -53,11 +53,12 @@ from .state import (
     Phase,
     Poison,
     PreventDamage,
+    Retaliation,
     SpecialConditions,
     TrainerInUse,
 )
 
-__version__ = "0.11.0"
+__version__ = "0.12.0"
 
 __all__ = [
     "Asleep",
@@ -86,6 +87,7 @@ __all__ = [
     "Phase",
     "Poison",
     "PreventDamage",
+    "Retaliation",
     "PlaceStartingPokemon",
     "PlayBasicToBench",
     "PlayTrainer",

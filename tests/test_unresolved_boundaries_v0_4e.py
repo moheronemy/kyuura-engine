@@ -32,7 +32,7 @@ from tests.helpers import (
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
     BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
     DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -45,6 +45,7 @@ ALL_CODES = (
     "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_RECOVER_ZERO_ENERGY",  # v0.9
     "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",  # v0.10
     "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT",  # v0.11
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",  # v0.12
 )
 TURN = 7
 
@@ -599,6 +600,67 @@ class KoPreventionAttackEffectTest(BoundaryTestCase):
         # 止めない 6: 相手に効果を与えないワザ（スペシャルパンチ 40）。「こんじょう」を使うかの決定を出す
         offered = self.assert_proceeds(self.board({"card": HITMONCHAN, "energy": [FIGHTING] * 3}, machamp={"damage": 80}), UseAttack(0, 1))
         self.assertEqual(offered.decision.kind, "ko_prevention")
+
+
+class RetaliationDoubleKnockoutBoundaryTest(BoundaryTestCase):
+    """p.82（R団のファイヤーの「ほのおのかべ」の最新の説明「次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによって
+    このカードが「きぜつ」しても、）相手に10ダメージを与える。」）・p.89（同じ「相手の番ではたらく効果」の「こうらがえし」のワザ解説）・p.321「8」・
+    p.324（「1つのワザや特殊能力などによって引き起こされることがらによって複数のポケモンが「きぜつ」した場合、…同時に」）。v0.12
+    （docs/rocket-moltres-v0.12.md の W24）。
+
+    止まる場合（ワザの宣言の前の拒否。こんらんのコインの前）: 相手の対戦ポケモン（R団のファイヤー）に今の番にはたらく「ほのおのかべ」があり、
+    このワザのダメージ（と、「ほのおのかべ」のダメージではたらくワザを使ったポケモンの「はんげき」）で R団のファイヤーがきぜつし、かつ
+    「ほのおのかべ」のダメージでワザを使ったポケモンがきぜつする（コインのどれかの結果でそうなりうる。「とうめい」は受けるほうを仮定）。
+    このワザによるきぜつと、前の番のワザの効果のダメージによるきぜつが同時かが決められない。かがくへんかガス・R団のファイヤーの特殊状態
+    では止めをはずさない（ワザの効果。W7・W18）。
+
+    隣の止まらない場合: 効果がない（期限・まだ与えていない）・R団のファイヤーがきぜつしない（ワザを使ったポケモンだけが「ほのおのかべ」で
+    きぜつする）・ワザを使ったポケモンが「ほのおのかべ」のあとも HP 未満・ワザを使ったポケモンが自分へのダメージですでにきぜつ（「ほのおの
+    かべ」は与えない。1 つのワザによる同時のきぜつ。W23）・ディフェンダーで「ほのおのかべ」のダメージが 0。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, moltres=None, mine_bench=(), effect=True):
+        holder = {"card": ROCKETS_MOLTRES, **({"retaliation": TURN - 1} if effect else {}), **(moltres or {})}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": holder, "bench": [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        code = "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT"
+        hitmonchan = {"card": HITMONCHAN, "damage": 60, "energy": [FIGHTING] * 3}  # HP 70。スペシャルパンチ 40（抵抗力 闘 −30 で 10）
+        pikachu = {"card": PIKACHU, "damage": 30, "energy": [LIGHTNING] * 3}  # HP 40。でんげき 30（「うら」なら自分にも 10）
+        machamp = {"card": MACHAMP, "evolved_from": [MACHOP, MACHOKE], "damage": 90, "energy": [FIGHTING] * 4}  # ちきゅうなげ 60 → 30
+        triggers = (
+            (hitmonchan, 1, {"damage": 50}, ()),
+            ({**hitmonchan, "confusion": True}, 1, {"damage": 50}, ()),  # こんらんのコインの前に止める
+            (pikachu, 1, {"damage": 30}, ()),  # 「おもて」なら自分へのダメージがなく「ほのおのかべ」できぜつ（「うら」なら自分へのダメージ）
+            (machamp, 0, {"damage": 20}, ()),  # 30 で 50、「はんげき」の 10 で 60（R団のファイヤーのきぜつは「はんげき」）
+            (hitmonchan, 1, {"damage": 50, "sleep": True}, ()),  # ねむりの R団のファイヤーでも効果ははたらく（W7）
+            (hitmonchan, 1, {"damage": 50}, [{"card": MUK, "evolved_from": GRIMER}]),  # かがくへんかガスでも（W18）
+        )
+        for attacker, index, moltres, bench in triggers:
+            with self.subTest(attacker=attacker["card"], moltres=moltres, gas=bool(bench), confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker, moltres=moltres, mine_bench=bench), UseAttack(0, index), code)
+        # 止めない 1: 効果がない（R団のファイヤーだけがきぜつする）
+        plain = self.assert_proceeds(self.board(hitmonchan, moltres={"damage": 50}, effect=False), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in plain.log if e["kind"] == "knock_out"], [1])
+        # 止めない 2: R団のファイヤーはきぜつしない（ワザを使ったポケモンだけが「ほのおのかべ」できぜつする）
+        single = self.assert_proceeds(self.board(hitmonchan, moltres={"damage": 0}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in single.log if e["kind"] == "knock_out"], [0])
+        # 止めない 3: ワザを使ったポケモンは「ほのおのかべ」のあとも HP 未満（R団のファイヤーだけがきぜつする）
+        survivor = self.assert_proceeds(self.board({**hitmonchan, "damage": 50}, moltres={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in survivor.log if e["kind"] == "knock_out"], [1])
+        self.assertEqual(survivor.players[0].active.damage, 60)
+        # 止めない 4: じごくぐるまの自分への 20 ですでにきぜつ（「ほのおのかべ」は与えない。1 つのワザによる同時のきぜつ。p.324・W23）
+        machoke = {"card": MACHOKE, "evolved_from": MACHOP, "damage": 60, "energy": [FIGHTING] * 4}
+        both = self.assert_proceeds(self.board(machoke, moltres={"damage": 30}), UseAttack(0, 1))
+        self.assertIn("retaliation_skipped", [e["kind"] for e in both.log])
+        self.assertEqual([e.get("simultaneous") for e in both.log if e["kind"] == "knock_out"], [True, True])
+        # 止めない 5: ディフェンダーで「ほのおのかべ」の 10 - 20 = 0（ワザを使ったポケモンはきぜつしない。R団のファイヤーだけがきぜつ）
+        defended = self.assert_proceeds(self.board({**hitmonchan, "trainers": [(DEFENDER, TURN + 1)]}, moltres={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in defended.log if e["kind"] == "knock_out"], [1])
 
 
 class CodeListTest(unittest.TestCase):

@@ -22,7 +22,10 @@
 - 8: 7 に、場のポケモンごとの ``persistent_effects``（ワザによる持続する効果。v0.4b。p.322・p.323）を加えたもの。
   1 つにつき ``{"effect": 種類, "source_card": uid, "source_card_id": id, "source_player": プレイヤー,
   "created_turn": 効果を与えた番, "active_turn": はたらく番}``。v0.4b の種類は ``"prevent_damage"``（「かたまる」の
-  「次の相手の番、このカードはダメージを受けない」。はたらく番の終わりに消える）だけ。なければ ``[]``。
+  「次の相手の番、このカードはダメージを受けない」。はたらく番の終わりに消える）だけ。なければ ``[]``。v0.12 で種類
+  ``"retaliation"``（R団のファイヤーの「ほのおのかべ」の「次の相手の番、このカードが相手のワザによるダメージを受けたとき、…相手に
+  10ダメージを与える」。はたらく番の終わりに消える）を加え、その種類だけ ``"attack_index"``（効果を与えたワザの位置）・``"amount"``
+  （与えるダメージ）を加える（項目の意味を変えていないので形式 9 のまま。docs/architecture-v0.12.md 5 章）。
 - 9: 8 に、``energy_attached_by_powers_this_turn``（この番に、ポケモンパワーの効果で手札から場のポケモンにつけたエネルギー
   カードの枚数。v0.6 のカメックスの「あまごい」。手札からつける通常の操作の回数 ``energy_attachments_this_turn`` とは別。
   番の最初に 0）を加えたもの（v0.6。docs/architecture-v0.6.md 5 章）。この数が 1 以上の番には、通常の操作が原典で決められない
@@ -57,6 +60,12 @@
 まま）。決定を待つ間、対象のポケモンは HP 以上のダメージのまま場にいる（``players`` の場のポケモンの ``damage``）。コインは決定の
 あとで投げるので、乱数の状態（``rng_state_sha256``）は決定を出したときのまま。形式 1 では ``ValueError``。
 
+きぜつしたときに「ふしちょう」を使うかの決定（v0.12。``kind`` が ``"post_knockout_power"``、``resume`` が ``"post_knockout"``、
+``min_choices`` 0・``max_choices`` 1、``options`` はトラッシュにあるそのカードの uid、``context`` は ``power`` = [カード id, パワーの位置]
+（ポケモンチェックの中のきぜつなら ``then`` も））と、その前のサイドを取る決定の ``context`` の ``post_knockout``（= [[持ち主, カードの
+uid, カード id, パワーの位置]]。候補があるときだけ）も、形式 2 以上の ``decision`` で表せるので、新しい形式はない（形式 9 のまま）。
+形式 1 では ``ValueError``。
+
 コインの結果（v0.2d）は、ログの ``coin_flip`` にだけ残る（状態に残る値はない）。ログはどの形式にも入るので、
 コインのための新しい形式はない。この先のコインの結果を決める乱数の状態は ``rng_state_sha256``（指紋）。
 
@@ -71,7 +80,7 @@ from __future__ import annotations
 from typing import Any
 
 from .rng import rng_fingerprint
-from .state import Asleep, Confused, GameState, Paralyzed, PokemonInPlay
+from .state import Asleep, Confused, GameState, Paralyzed, PokemonInPlay, PreventDamage, Retaliation
 
 FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -90,6 +99,26 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
         data["confusion"] = {}
     elif conditions.exclusive is not None:
         raise ValueError(f"書き出せない特殊状態 {conditions.exclusive!r}")
+    return data
+
+
+def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation) -> dict[str, Any]:
+    """形式 8 の ``persistent_effects`` の 1 つ。v0.12 の ``"retaliation"``（「ほのおのかべ」）には、``attack_index``（効果を与えた
+    ワザの位置）と ``amount``（与えるダメージの基本となるダメージ）を加える（ほかの種類の形は v0.4b と同じ。v0.3b の特殊状態の項目と同じく、
+    種類の値を加えただけなので形式は変えない。知らない種類のある辞書は、読む側が拒否すること）。"""
+    data: dict[str, Any] = {
+        "effect": effect.kind,
+        "source_card": effect.source_card,
+        "source_card_id": state.cards[effect.source_card].card_id,
+        "source_player": effect.source_player,
+        "created_turn": effect.created_turn,
+        "active_turn": effect.active_turn,
+    }
+    if isinstance(effect, Retaliation):
+        data["attack_index"] = effect.attack_index
+        data["amount"] = effect.amount
+    elif not isinstance(effect, PreventDamage):
+        raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
 
 
@@ -126,17 +155,7 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["played_turn"] = pokemon.played_turn
         data["evolved_turn"] = pokemon.evolved_turn
     if format_version >= 8:
-        data["persistent_effects"] = [
-            {
-                "effect": e.kind,
-                "source_card": e.source_card,
-                "source_card_id": state.cards[e.source_card].card_id,
-                "source_player": e.source_player,
-                "created_turn": e.created_turn,
-                "active_turn": e.active_turn,
-            }
-            for e in pokemon.persistent_effects
-        ]
+        data["persistent_effects"] = [_persistent_effect(state, e) for e in pokemon.persistent_effects]
     return data
 
 
@@ -177,6 +196,12 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         # v0.11: v0.1 の形には、ワザのあとのきぜつの判定で「こんじょう」を使うかの決定（決定するプレイヤー・選べるもの・選ぶ数 0〜1・
         # 続きの情報）の項目がない。黙って落とさない
         raise ValueError("形式 1 は、「こんじょう」を使うかの決定を表せない（format_version=2 以上を使う）")
+    if format_version == 1 and state.decision is not None and (
+        state.decision.resume == "post_knockout" or state.decision.context_value("post_knockout") is not None
+    ):
+        # v0.12: v0.1 の形には、「ふしちょう」を使うかの決定（決定するプレイヤー・トラッシュのカード・選ぶ数 0〜1）の項目も、サイドを取る
+        # 決定のあとに「ふしちょう」の決定が続くこと（context の post_knockout）を表す項目もない。黙って落とさない
+        raise ValueError("形式 1 は、「ふしちょう」を使うかの決定（とその前のサイドを取る決定）を表せない（format_version=2 以上を使う）")
     data = {
         "rules": state.rules.id,
         "card_data": {"repository": state.card_data.repository, "commit": state.card_data.commit, "path": state.card_data.path},

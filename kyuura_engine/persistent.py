@@ -6,7 +6,10 @@
 に持ち、付ける・消す処理もここに分ける（docs/persistent-effects-v0.4b.md）。
 
 v0.4b で扱う効果は ``PreventDamage``（「次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）」。
-トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明）だけ。
+トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明）だけ。v0.12 で ``Retaliation``（「次の相手の番、このカードが相手のワザに
+よるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。」。R団のファイヤーの「ほのおのかべ」。
+p.82 の最新の説明。p.89 のワザ解説の「相手の番ではたらく効果」）を加えた。どちらも自分自身に与え、次の相手の番の終わりに消える。消える
+契機・ログ・置き場所は同じで、はたらき方（ダメージを受けない・ダメージを受けたら与える）だけが違う（docs/temporary-attack-effects-v0.12.md）。
 
 消える契機（どれもログ ``persistent_effect_removed`` の ``reason``）:
 
@@ -28,7 +31,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
-from .state import PreventDamage
+from .state import PreventDamage, Retaliation
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -38,7 +41,7 @@ KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
 
 
-def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage, *, attack: str) -> None:
+def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage | Retaliation, *, attack: str) -> None:
     """``pokemon``（``owner`` の場のポケモン）に、ワザ ``attack``（``AttackKey`` の文字列）による持続する効果を与える。
 
     ログ ``persistent_effect_added``（``player``・``pokemon``・``pokemon_id``・``persistent_effect``（種類）・``source_card``・
@@ -59,7 +62,7 @@ def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, 
 
 
 def remove_persistent_effects(
-    state: GameState, owner: int, pokemon: PokemonInPlay, reason: str, effects: tuple[PreventDamage, ...] | None = None
+    state: GameState, owner: int, pokemon: PokemonInPlay, reason: str, effects: tuple[PreventDamage | Retaliation, ...] | None = None
 ) -> None:
     """``pokemon`` の持続する効果（``effects`` を省略したらすべて）を消す。1 つにつきログ ``persistent_effect_removed``
     （``player``・``pokemon``・``pokemon_id``・``persistent_effect``・``source_card``・``created_turn``・``active_turn``・``reason``）。
@@ -105,5 +108,20 @@ def damage_prevention(state: GameState, pokemon: PokemonInPlay) -> PreventDamage
     """
     for effect in pokemon.persistent_effects:
         if isinstance(effect, PreventDamage) and effect.active_turn == state.turn_number:
+            return effect
+    return None
+
+
+def retaliation(state: GameState, pokemon: PokemonInPlay) -> Retaliation | None:
+    """今の番に ``pokemon`` の「相手のワザによるダメージを受けたとき、相手にダメージを与える」効果（``Retaliation``。v0.12 の
+    「ほのおのかべ」）がはたらいているなら、その効果。そうでなければ None。
+
+    はたらくのは ``active_turn``（次の相手の番）の間だけ（``damage_prevention`` と同じ）。効果を与えた番の残り（ワザなので、その番は
+    すぐに終わる）と、ポケモンチェック（どちらの番でもない。p.323）でははたらかない（ポケモンチェックのどくのダメージはワザによる
+    ダメージでもない。p.321）。同じポケモンが 2 つ持つことはない（はたらく番の終わりに消えてから、次のワザを使える。不変条件で確かめて
+    いる）。
+    """
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, Retaliation) and effect.active_turn == state.turn_number:
             return effect
     return None

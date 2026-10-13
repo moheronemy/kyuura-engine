@@ -134,6 +134,9 @@
     "PMCG6-059",
     "PMCG6-061"
   ],
+  "pool_v0_12": [
+    "PMCG5-020"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4016,6 +4019,91 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-020",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "R団のファイヤー",
+        "en": "Rocket's Moltres"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          146
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ふしちょう",
+              "en": "Rebirth"
+            },
+            "text": {
+              "ja": "この力は、このカードが「きぜつ」した時だけ、使える。このカードをトラッシュからとり出し、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
+              "en": "When Rocket's Moltres is Knocked Out, you may return it to your hand after discarding it. This power can't be used if Rocket's Moltres is Asleep, Confused, or Paralyzed when it is Knocked Out."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのかべ",
+              "en": "Fire Wall"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)相手にも10ダメージ。",
+              "en": "If an attack does damage to Rocket's Moltres during your opponent's next turn (even if Rocket's Moltres is Knocked Out), Rocket's Moltres attacks your opponent's Active Pokémon for 10 damage. (Apply Weakness and Resistance.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-020",
+        "pokemontcg": [
+          "gym1-12"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%A4%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 26,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%83%95%E3%82%A1%E3%82%A4%E3%83%A4%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

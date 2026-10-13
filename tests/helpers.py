@@ -38,6 +38,7 @@ from kyuura_engine.state import (
     AttachedTrainer,
     CONFUSED,
     PreventDamage,
+    Retaliation,
     CardInstance,
     DataSource,
     Paralyzed,
@@ -104,6 +105,9 @@ MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化�
 GIOVANNIS_MACHAMP = "PMCG6-061"
 GIOVANNIS_MACHOKE = "PMCG6-059"  # サカキのゴーリキー（v0.11。サカキのワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 2。いちかばちか 60・じごくがため 20+）
 GIOVANNIS_MACHOP = "PMCG6-057"  # サカキのワンリキー（v0.11。HP 50・闘・弱点 超・にげる 1。チョップ 10・いかりのスーパーパンチ 20×）
+# R団のファイヤー（v0.12。ジム拡張第1弾。たね。HP 60・炎・弱点なし・抵抗力 闘 −30・にげる 2。ポケモンパワー ふしちょう（このカードが「きぜつ」
+# したとき、使える。トラッシュから手札に加える）・ほのおのかべ（炎炎炎）40（次の相手の番、相手のワザによるダメージを受けたとき、相手に 10））
+ROCKETS_MOLTRES = "PMCG5-020"
 # リザードン（参照カード。リザードから進化する 2 進化。実装を登録していないポケモンパワー「エナジーバーン」とワザ「ほのおのうず」を
 # 持つ。v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 ではフーディンが「ポケモンパワーを持つので未対応」の参照カードだった。
 # v0.7 でフーディンを対応にしたので、その役を引き継ぐ）
@@ -183,7 +187,7 @@ def build_test_state(
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
               "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番,
               "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番,
-              "prevent_damage": 効果を与えた番}
+              "prevent_damage": 効果を与えた番, "retaliation": 効果を与えた番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
@@ -194,6 +198,8 @@ def build_test_state(
               その前に 1 進化できる番があることだけを確かめる。進化のログは置かない）。"played_turn" の既定は 0（対戦準備で出した）。
               "prevent_damage" は、その番に「かたまる」などで受けた持続する効果 ``PreventDamage``（v0.4b。はたらく番は次の番）。
               効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する）。
+              "retaliation" は、その番に「ほのおのかべ」で受けた持続する効果 ``Retaliation``（v0.12。ワザの位置 0・与えるダメージ 10。
+              カードは R団のファイヤー。ログも "prevent_damage" と同じく置く）。
               "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
               トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
       bench:  active と同じ形のリスト
@@ -252,6 +258,9 @@ def build_test_state(
         if "prevent_damage" in spec:
             created = spec["prevent_damage"]
             result.persistent_effects = (PreventDamage(result.card, owner, created, created + 1),)
+        if "retaliation" in spec:
+            created = spec["retaliation"]
+            result.persistent_effects = (*result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 0, 10))
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)

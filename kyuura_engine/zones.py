@@ -66,3 +66,19 @@ def attach_trainer(state: GameState, player: int, card: int, pokemon: PokemonInP
         discard_at_end_of_turn=discard_at_end_of_turn,
     )
     return attached
+
+
+def return_discard_to_hand(state: GameState, player: int, cards: tuple[int, ...]) -> None:
+    """自分のトラッシュのカード ``cards`` を、同じ uid のまま 1 枚ずつ手札の最後に加える（v0.12。トラッシュから手札に加える処理で共通。
+    v0.9 のゴースの「エナジーへんかん」（エネルギーカード）と、v0.12 の R団のファイヤーの「ふしちょう」（きぜつしたこのカード））。
+
+    カードを動かすだけで、動かしてよいか（決定・特殊能力の条件・選んだカードの種類）の確認とログは呼ぶ側が行う（確認は、ここを呼ぶ前に
+    すべて済ませる）。カードがそのプレイヤーのトラッシュにない・持ち主が違う・同じカードを 2 回渡したなら、確認の漏れなので
+    ``RuntimeError``（状態を変える前）。トラッシュにはカードの順番がない（p.312）ので、残りのカードの並びは変えない。
+    """
+    p = state.players[player]
+    if len(set(cards)) != len(cards) or any(uid not in p.discard or state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} のトラッシュのカード {cards} を手札に加えられない（確認の漏れ。エンジンの不具合）")
+    for uid in cards:
+        p.discard.remove(uid)
+        p.hand.append(uid)

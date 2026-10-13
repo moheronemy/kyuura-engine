@@ -42,7 +42,10 @@
   カードを最大 2 枚手札に加え、その後、自分にダメージ。化石の秘密のゴースの「エナジーへんかん」。p.158。docs/haunter-line-v0.9.md）。
   ``CoinHeadsDamagePerOwnCounter``（v0.11。コインが「おもて」なら自分のダメージカウンターの数 × n。サカキのワンリキーの「いかりの
   スーパーパンチ」。p.189）・``SelfDamageInsteadOnTails``（v0.11。コインが「うら」なら相手にはダメージを与えず自分にダメージ。
-  サカキのゴーリキーの「いちかばちか」。p.191。docs/giovanni-machamp-line-v0.11.md）
+  サカキのゴーリキーの「いちかばちか」。p.191。docs/giovanni-machamp-line-v0.11.md）。``DamageAndRetaliation``（v0.12。相手にダメージの
+  あと、自分に「次の相手の番、このカードが相手のワザによるダメージを受けたとき、相手に10ダメージを与える」持続する効果（``state.Retaliation``）。
+  R団のファイヤーの「ほのおのかべ」。p.82。そのダメージは ``deal_attack_damage`` が記録し、``finish_damage_elements`` が R団のファイヤーの
+  ワザによるダメージとして与える（``_apply_retaliation``）。docs/rocket-moltres-v0.12.md・docs/temporary-attack-effects-v0.12.md）
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -63,7 +66,10 @@
   ``CounterattackDamage``（相手のワザによってダメージを受けたときに自動的にはたらく。宣言しない。``finish_damage_elements`` が
   与える。docs/counterattack-v0.10.md）、v0.11 でサカキのカイリキーの「こんじょう」 ``PreventKnockOutOnHeads``（相手のワザによる
   ダメージで「きぜつ」するとき、使える。宣言する特殊能力で、ワザのあとのきぜつの判定でエンジンが持ち主に決定で使うかを聞く。
-  p.193・p.311。docs/guts-v0.11.md・docs/ko-prevention-v0.11.md）を加えた
+  p.193・p.311。docs/guts-v0.11.md・docs/ko-prevention-v0.11.md）、v0.12 で R団のファイヤーの「ふしちょう」 ``ReturnToHandOnKnockOut``
+  （このカードが「きぜつ」したとき、使える。宣言する特殊能力で、きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあと、対戦が続くなら
+  エンジンが持ち主に決定で使うかを聞く。使えばこのカードをトラッシュから手札に加える。p.82・p.311。docs/phoenix-v0.12.md・
+  docs/post-knockout-powers-v0.12.md）を加えた
 
 ほかのポケモンパワー・特殊エネルギー・ほかの効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
 """
@@ -80,9 +86,9 @@ from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_speci
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, SELECT_POKEMON, push_attack_decision, push_trainer_decision
 from .errors import IllegalActionError, UnsupportedError
-from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects
-from .state import PreventDamage
-from .zones import attach_energy_from_hand, attach_trainer, draw_cards
+from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects, retaliation
+from .state import PreventDamage, Retaliation
+from .zones import attach_energy_from_hand, attach_trainer, draw_cards, return_discard_to_hand
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition, Power
@@ -124,6 +130,13 @@ class AttackUse:
     ``deal_attack_damage`` が記録し、ワザのあとのきぜつの判定（``engine._finish_attack``）で使う。``reception`` と同じく、ワザの処理の中
     だけの値（状態に持たない。比較・ハッシュに含めない）。決定をまたぐと失われるので、ワザの途中の決定のあとで「こんじょう」を使える
     ポケモンが HP 以上になっている状態は、エンジンの不具合として止める（今の対応カードでは起こらない。G37 の止める処理が先にはたらく）。
+
+    ``retaliations``（v0.12）: このワザのダメージの要素で、ダメージを受けたポケモンの「相手のワザによるダメージを受けたとき、相手に
+    ダメージを与える」持続する効果（R団のファイヤーの「ほのおのかべ」。``state.Retaliation``）がはたらいたもの（``PendingRetaliation``）で、
+    まだ与えていないもの。``counterattacks`` と同じく、ダメージを受けたときに ``deal_attack_damage`` が加え、ワザのダメージの処理がすべて
+    終わったところ（``finish_damage_elements``。p.89 のワザ解説「「こうらがえし」によって与えるダメージのタイミングは、相手のワザによる
+    ダメージの処理を行った後で…」）で与えて空にする。ワザの処理の中だけの値（状態に持たない。比較・ハッシュに含めない）。決定を出す前に
+    空になっている（``decisions.push_attack_decision`` が確かめる）ので、決定をまたがない。
     """
 
     player: int
@@ -132,6 +145,7 @@ class AttackUse:
     reception: dict[int, bool] = field(default_factory=dict, compare=False, repr=False)
     counterattacks: list[PendingCounterattack] = field(default_factory=list, compare=False, repr=False)
     ko_prevention_able: dict[int, bool] = field(default_factory=dict, compare=False, repr=False)
+    retaliations: list[PendingRetaliation] = field(default_factory=list, compare=False, repr=False)
 
 
 class AttackEffect:
@@ -493,7 +507,9 @@ class DamageResult:
         return 0 if self.amount is None else self.amount
 
 
-def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> DamageResult:
+def deal_attack_damage(
+    state: GameState, use: AttackUse, target: str, base: int, *, log_extra: Mapping[str, Any] | None = None
+) -> DamageResult:
     """ワザのダメージを 1 つ与える: 受けるポケモンを決め、基本となるダメージ ``base`` から p.321 の順番で計算する。
 
     - ダメージを与えるのは、いつもワザを使うポケモン（発生源。弱点・抵抗力はそのタイプで見る。p.321 の 3・4 段階）。
@@ -538,6 +554,13 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
     （``PreventKnockOutOnHeads.is_able``）を ``AttackUse.ko_prevention_able`` に記録する（最新の説明「ダメージを受けるとき、すでにこの
     カードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない」。docs/guts-v0.11.md の G25〜G29）。使うかどうか・コインは、
     ワザの要素をすべて処理したあとのきぜつの判定（``engine._finish_attack``）。ここでは乱数もログも使わない。
+
+    v0.12: 同じく相手のワザのダメージ（最終ダメージが 0 より大きい）をのせたら、受けたポケモンに、今の番にはたらく「相手のワザによる
+    ダメージを受けたとき、相手にダメージを与える」持続する効果（「ほのおのかべ」。``persistent.retaliation``）があれば
+    ``AttackUse.retaliations`` に加える（docs/rocket-moltres-v0.12.md の W11〜W13・W21）。与えるのは ``finish_damage_elements``。
+    持続する効果はワザの効果なので、特殊状態・かがくへんかガスでは止まらない（W7・W18）。乱数は使わない。
+    ``log_extra``（v0.12）: ログ ``damage`` に加える項目（「ほのおのかべ」のダメージ（``_apply_retaliation``）の ``retaliation``・
+    ``effect``・``pokemon_id``）。ほかの呼び出しは渡さない（ログの形は v0.11 と同じ）。
     """
     _, attacker = state.find_pokemon(use.pokemon_id)
     attacker_def = state.card_def(attacker.card)
@@ -575,6 +598,9 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
         guard = ko_prevention_power(state, receiver)
         if guard is not None:
             use.ko_prevention_able[receiver.pokemon_id] = guard[1].is_able(receiver)
+    retaliation_effect = None
+    if receiver_player != use.player and calc.final > 0:
+        retaliation_effect = retaliation(state, receiver)  # v0.12: 「ほのおのかべ」（相手のワザによるダメージを受けたとき。W11・W13）
     receiver.damage += calc.final
     extra = {}
     if calc.modifiers:
@@ -586,6 +612,8 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
     if target != OPPONENT_ACTIVE:
         # v0.2f: 相手の対戦ポケモン以外へのダメージ。受けたポケモン（場のポケモンの番号）とワザを書く
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(use.key))
+    if log_extra:
+        extra.update(log_extra)
     state.add_event(
         "damage",
         player=receiver_player,
@@ -602,6 +630,8 @@ def deal_attack_damage(state: GameState, use: AttackUse, target: str, base: int)
         use.counterattacks.append(
             PendingCounterattack(receiver_player, receiver.pokemon_id, receiver.card, power_key, power_effect.amount)
         )
+    if retaliation_effect is not None:
+        use.retaliations.append(PendingRetaliation(receiver_player, receiver.pokemon_id, receiver.card, retaliation_effect))
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)
 
 
@@ -803,10 +833,11 @@ def working_counterattack_power(state: GameState, pokemon_id: int) -> PowerKey |
 def _require_damage_elements_finished(use: AttackUse, what: str) -> None:
     """ダメージ以外の効果の要素（``what``）の前の確認（v0.10）: このワザのダメージの処理で、はたらいた「はんげき」がまだ与えられて
     いないなら、ワザの実装が ``finish_damage_elements`` を呼んでいない（「はんげき」のダメージは、相手のワザのダメージの処理の
-    あと、ダメージ以外の効果の処理の前。p.89 の解説）。エンジンの不具合として止める（順番を黙って変えない）。"""
-    if use.counterattacks:
+    あと、ダメージ以外の効果の処理の前。p.89 の解説）。エンジンの不具合として止める（順番を黙って変えない）。v0.12 から、はたらいた
+    「ほのおのかべ」（``AttackUse.retaliations``）も同じ（p.89 の同じ解説）。"""
+    if use.counterattacks or getattr(use, "retaliations", None):
         raise RuntimeError(
-            f"ワザ {use.key} の{what}の前に、はたらいた「はんげき」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
+            f"ワザ {use.key} の{what}の前に、はたらいた「はんげき」「ほのおのかべ」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
         )
 
 
@@ -823,15 +854,30 @@ def finish_damage_elements(state: GameState, use: AttackUse) -> None:
     1 つのワザで 2 つ以上の「はんげき」がはたらく（複数のポケモンがダメージを受けるワザ・同じポケモンが 2 回ダメージを受けるワザ）と、
     与える順番が原典で決められない（C34・C35）が、今の対応カードでは起こらない（ダメージを受けるのは相手の対戦ポケモンと自分だけで、
     1 回ずつ）。起こったらエンジンの不具合として止める（そのようなワザを加えるときに、宣言の前に止める処理を加える）。
+
+    v0.12: 相手のワザによるダメージを受けたときにはたらく持続する効果（「ほのおのかべ」。``AttackUse.retaliations``）も、同じ時点で
+    与える（``_apply_retaliation``。p.89 の「こうらがえし」の解説は、まさにこの「相手の番ではたらく効果」のワザの解説）。「はんげき」と
+    「ほのおのかべ」が同じワザでどちらもはたらく場合も、与える順番が原典で決められない（C34・C35 と同じ問い）が、今の対応カードでは
+    起こらない（「ほのおのかべ」の効果を持つのは R団のファイヤーだけで、「はんげき」を持たない。自分へのダメージは相手のワザではない）
+    ので、合わせて 2 つ以上ならエンジンの不具合として止める。
+
+    「ほのおのかべ」のダメージ（``_apply_retaliation``）は R団のファイヤーのワザによるダメージなので、それを受けたポケモンの「はんげき」
+    がはたらく。その「はんげき」は、そのダメージの処理のあと（ここから呼ぶ ``finish_damage_elements`` の中）で与える（連鎖は、発生源の
+    分類で止まる。「はんげき」のダメージはワザによるダメージではないので、R団のファイヤーの「ほのおのかべ」ははたらかない）。
     """
-    pending = tuple(use.counterattacks)
+    pending_counters = tuple(use.counterattacks)
+    pending_retaliations = tuple(use.retaliations)
     use.counterattacks.clear()
-    if len(pending) > 1:
+    use.retaliations.clear()
+    if len(pending_counters) + len(pending_retaliations) > 1:
         raise RuntimeError(
-            f"ワザ {use.key} で「はんげき」が {len(pending)} 回はたらいた（与える順番が原典で決められない。今の対応カードでは起こらない。エンジンの不具合）"
+            f"ワザ {use.key} で「はんげき」が {len(pending_counters)} 回、「ほのおのかべ」が {len(pending_retaliations)} 回はたらいた"
+            "（与える順番が原典で決められない。今の対応カードでは起こらない。エンジンの不具合）"
         )
-    for counter in pending:
+    for counter in pending_counters:
         _apply_counterattack(state, use, counter)
+    for pending in pending_retaliations:
+        _apply_retaliation(state, use, pending)
 
 
 def _apply_counterattack(state: GameState, use: AttackUse, counter: PendingCounterattack) -> None:
@@ -942,6 +988,164 @@ def counterattack_double_knockout_problem(state: GameState, use: AttackUse, effe
         "ことになるか（p.324）が『オフィシャルブック2000』（p.89・p.192・p.311・p.323〜p.325）から決められないので扱わない"
         "（サイド・バトル場に出す順番と勝ち負けが変わる）",
     )
+
+
+# ---------------------------------------------------------------- 相手の番ではたらくワザの効果（v0.12。「ほのおのかべ」）
+
+# 「ほのおのかべ」のダメージを与えなかった理由（ログ retaliation_skipped の reason）。「はんげき」（C15）と同じ
+RETALIATION_TARGET_KNOCKED_OUT = COUNTERATTACK_TARGET_KNOCKED_OUT
+
+
+@dataclass(frozen=True)
+class PendingRetaliation:
+    """ワザのダメージを受けてはたらいた「ほのおのかべ」（``state.Retaliation``）で、まだ与えていないもの（v0.12。``AttackUse.retaliations``）。
+
+    - ``player``・``pokemon_id``・``card``: ダメージを受けたポケモン（R団のファイヤー。効果を持つポケモン）の持ち主・場のポケモンの番号・
+      いちばん上のカード
+    - ``effect``: はたらいた持続する効果（``Retaliation``。与えるダメージ ``amount``・効果を与えたワザの位置 ``attack_index``）
+    与える相手は、いつも「そのダメージを与えた相手の対戦ポケモン」（p.82 の解説。ワザを使ったポケモン。``AttackUse.pokemon_id``）
+    なので、ここには持たない。
+    """
+
+    player: int
+    pokemon_id: int
+    card: int
+    effect: Retaliation
+
+
+def retaliation_use(
+    state: GameState, player: int, holder: PokemonInPlay, effect: Retaliation, *, ko_prevention_able: dict[int, bool] | None = None
+) -> AttackUse:
+    """「ほのおのかべ」のダメージの要素を処理するための ``AttackUse``（v0.12）: ワザを使ったのは効果を持つポケモン（``holder``。持ち主
+    ``player``）、ワザは効果を与えたワザ（``Retaliation.attack_index``）。そのダメージは R団のファイヤーのワザによるダメージ（p.321「8」・
+    p.89「「こうらがえし」で返すダメージは「ワザによるダメージ」なので」・p.82「この10ダメージは、弱点・抵抗力の影響を受けます」）なので、
+    ``deal_attack_damage`` の発生源（弱点・抵抗力・プラスパワー）はこのポケモン、受けるのは相手の対戦ポケモン（``OPPONENT_ACTIVE``）。
+    ``ko_prevention_able`` を渡したら、その記録を共有する（ダメージを受けたポケモンの「こんじょう」は、きっかけのワザのあとのきぜつの
+    判定で使う。``engine._finish_attack``）。"""
+    key = AttackKey(state.cards[effect.source_card].card_id, effect.attack_index)
+    if ko_prevention_able is None:
+        return AttackUse(player, holder.pokemon_id, key)
+    return AttackUse(player, holder.pokemon_id, key, ko_prevention_able=ko_prevention_able)
+
+
+def _apply_retaliation(state: GameState, use: AttackUse, pending: PendingRetaliation) -> None:
+    """「ほのおのかべ」のダメージを、ダメージを与えた相手の対戦ポケモン（ワザを使ったポケモン）に与える（v0.12。最新の説明（p.82）「次の
+    相手の番、このカードが相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。」。
+    docs/rocket-moltres-v0.12.md の W11〜W25）。
+
+    - R団のファイヤーのワザによるダメージ（W20。v0.10 の「はんげき」（特殊能力によるダメージ）とは分類が違う）。``deal_attack_damage``
+      （``retaliation_use``）で p.321 の順番で計算する: 弱点・抵抗力（W15・W16。p.82 の解説）・ディフェンダー（受けるポケモンについて
+      いれば。W17）・「とうめい」（受けるポケモンがゴースト。W19。コインはゴースト側）。ダメージを受けたポケモンの「はんげき」・「こんじょう」
+      の記録（``ko_prevention_able`` はこのワザと共有する）もそこで行い、「はんげき」はこの処理の最後（``finish_damage_elements``）。
+    - R団のファイヤーがこのワザのダメージで HP 以上になっていても与える（「それによってこのカードが「きぜつ」しても」。W22。CONFIRMED）。
+      きぜつの処理はワザのあとでエンジンが行う（``engine._finish_attack``）。
+    - ワザを使ったポケモンが、そのワザの自分へのダメージですでに HP 以上なら、対象がいないので与えない（p.309「処理の対象がなくなって
+      しまっている場合、その内容は無視して」・p.89。v0.10 の C15 と同じ。ログ ``retaliation_skipped``）。
+    - このダメージでワザを使ったポケモンがきぜつし、R団のファイヤーもきぜつするなら、同時のきぜつか（p.324）が原典で決められない（W24）ので、
+      エンジンがワザの宣言の前に止めている（``retaliation_double_knockout_problem``）。ここに来たらエンジンの不具合として止める。
+    - かがくへんかガス・R団のファイヤーの特殊状態では止まらない（ワザの効果。W7・W18）。乱数は「とうめい」のコインだけ（``attack_reaches``）。
+    - ログ ``retaliation``（``player``・``pokemon``・``pokemon_id``（効果を持つポケモン）・``persistent_effect``・``source_card``・``effect``
+      （効果を与えたワザ）・``trigger``（きっかけのワザ）・``attacker``・``attacker_pokemon``・``attacker_pokemon_id``・``amount``（基本と
+      なるダメージ））のあとに、ダメージの要素のログ（``damage`` に ``retaliation``・``effect``・``pokemon_id`` を加えたもの。または
+      ``damage_prevented``・``evade_check``・``attack_evaded``）。
+    """
+    found = state.find_pokemon(use.pokemon_id)
+    if found is None or found[0] != use.player:
+        raise RuntimeError(f"「ほのおのかべ」を与えるワザを使ったポケモン {use.pokemon_id} が場にいない（今の対応カードでは起こらない。エンジンの不具合）")
+    _, attacker = found
+    holder_found = state.find_pokemon(pending.pokemon_id)
+    if holder_found is None or holder_found[0] != pending.player:
+        raise RuntimeError(f"「ほのおのかべ」の効果を持つポケモン {pending.pokemon_id} が場にいない（きぜつの処理はワザのあと。エンジンの不具合）")
+    holder = holder_found[1]
+    # 「こんじょう」の記録（ダメージを受けるときの特殊状態）は、きっかけのワザのきぜつの判定（engine._finish_attack）で使うので共有する
+    fire_use = retaliation_use(state, pending.player, holder, pending.effect, ko_prevention_able=use.ko_prevention_able)
+    if state.players[1 - pending.player].active is not attacker:
+        raise RuntimeError(f"「ほのおのかべ」を与える相手の対戦ポケモンが、ワザを使ったポケモン {attacker.pokemon_id} ではない（エンジンの不具合）")
+    base = {
+        "player": pending.player,
+        "pokemon": pending.card,
+        "pokemon_id": pending.pokemon_id,
+        "persistent_effect": pending.effect.kind,
+        "source_card": pending.effect.source_card,
+        "effect": str(fire_use.key),
+        "trigger": str(use.key),
+        "attacker": use.player,
+        "attacker_pokemon": attacker.card,
+        "attacker_pokemon_id": attacker.pokemon_id,
+    }
+    if attacker.damage >= state.card_def(attacker.card).hp:
+        state.add_event("retaliation_skipped", **base, reason=RETALIATION_TARGET_KNOCKED_OUT)
+        return
+    state.add_event("retaliation", **base, amount=pending.effect.amount)
+    deal_attack_damage(
+        state, fire_use, OPPONENT_ACTIVE, pending.effect.amount,
+        log_extra={"retaliation": True, "effect": str(fire_use.key), "pokemon_id": attacker.pokemon_id},
+    )
+    finish_damage_elements(state, fire_use)  # 「ほのおのかべ」のダメージを受けたポケモンの「はんげき」（W20。p.89・p.192）
+    knocked = [
+        pokemon.pokemon_id
+        for player in state.players
+        for pokemon in player.in_play()
+        if pokemon.damage >= state.card_def(pokemon.card).hp
+    ]
+    if attacker.damage >= state.card_def(attacker.card).hp and len(knocked) > 1:
+        raise RuntimeError(
+            f"「ほのおのかべ」でワザを使ったポケモン {attacker.pokemon_id} がきぜつし、ほかのポケモン {knocked} もきぜつする（ワザの宣言の前に"
+            "retaliation_double_knockout_problem で止めるはず。エンジンの不具合）"
+        )
+
+
+def retaliation_double_knockout_problem(state: GameState, use: AttackUse, effect: AttackEffect) -> UnsupportedError | None:
+    """ワザ ``use``（実装 ``effect``）で、原典で決められない場合になりうるなら、その理由（v0.12。docs/rocket-moltres-v0.12.md の W24）。
+
+    相手の対戦ポケモン（R団のファイヤー）に今の番にはたらく「ほのおのかべ」があり、このワザのダメージ（と、「ほのおのかべ」のダメージで
+    はたらくワザを使ったポケモンの「はんげき」）で R団のファイヤーがきぜつし、かつ「ほのおのかべ」のダメージでワザを使ったポケモンが
+    きぜつする（同じワザの自分へのダメージではきぜつしない）と、2 匹のきぜつが「同時に「きぜつ」した」こと（p.324「1つのワザや特殊能力
+    などによって引き起こされることがら」）になるかが決められない（1 匹はこのワザ、もう 1 匹は前の番の R団のファイヤーのワザの効果の
+    ダメージできぜつする。v0.10 の C18 と同じ問い）。同時かどうかで、サイドを取る・バトル場に出す決定の順番と、勝ち負け（p.311・p.323・
+    p.325）が変わるので、推測で決めない。
+
+    エンジンがワザの宣言の前（こんらんのコインの前）に聞く。ワザのダメージの候補（``AttackEffect.damage_profile`` の
+    ``DamageProfile.pairs``。同じコインの結果でいっしょに起こりうる組）のどれかでそうなりうるなら止める（コインの結果で受け付けるかが
+    変わらない）。「ほのおのかべ」のダメージは ``preview_attack_damage``（``retaliation_use``）で計算し、「とうめい」のコインは「受ける」
+    ほうを仮定する（受けない結果もありうるが、受ける結果がありうるので止める）。ワザを使ったポケモンが自分へのダメージですでにきぜつ
+    するなら、「ほのおのかべ」は与えない（W23・v0.10 の C15）ので、2 匹のきぜつは 1 つのワザによる同時のきぜつ（p.324）で、止めない。
+    「こんじょう」（v0.11）で解決したことにはしない（v0.11 の G39 と同じ）。
+    """
+    holder = state.players[1 - use.player].active
+    if holder is None:
+        return None
+    found = retaliation(state, holder)
+    if found is None:
+        return None
+    _, attacker = state.find_pokemon(use.pokemon_id)
+    fire_use = retaliation_use(state, 1 - use.player, holder, found)
+    retaliation_final = preview_attack_damage(state, fire_use, OPPONENT_ACTIVE, found.amount)
+    if retaliation_final is None or retaliation_final <= 0:
+        return None  # ワザを使ったポケモンが「ほのおのかべ」のダメージを受けない（抵抗力・ディフェンダーで 0）
+    counter = counterattack_power(state, attacker)  # 「ほのおのかべ」のダメージで、ワザを使ったポケモンの「はんげき」がはたらく
+    counter_amount = 0 if counter is None else counter[1].amount
+    holder_hp = state.card_def(holder.card).hp
+    attacker_hp = state.card_def(attacker.card).hp
+    for opponent, own in effect.damage_profile(state, use).pairs():
+        final = None if opponent is None else preview_attack_damage(state, use, OPPONENT_ACTIVE, opponent)
+        if final is None or final <= 0:
+            continue  # R団のファイヤーがこのワザのダメージを受けない。「ほのおのかべ」ははたらかない（W13）
+        own_final = 0 if own <= 0 else (preview_attack_damage(state, use, SELF, own) or 0)
+        attacker_damage = attacker.damage + own_final
+        if attacker_damage >= attacker_hp:
+            continue  # 自分へのダメージですでにきぜつする。「ほのおのかべ」は与えない（W23）
+        if attacker_damage + retaliation_final < attacker_hp:
+            continue  # ワザを使ったポケモンは「ほのおのかべ」ではきぜつしない
+        if holder.damage + final + counter_amount >= holder_hp:
+            return UnsupportedError(
+                "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",
+                f"このワザのダメージで相手の対戦ポケモン {holder.pokemon_id} がきぜつしうるうえ、その「{found.kind}」（ほのおのかべ）の"
+                f" {retaliation_final} ダメージでワザを使ったポケモン {attacker.pokemon_id} がきぜつしうる。このワザによるきぜつと、前の番のワザの"
+                "効果のダメージによるきぜつが「同時に「きぜつ」した」ことになるか（p.324）が『オフィシャルブック2000』（p.82・p.89・p.311・"
+                "p.321・p.323〜p.325）から決められないので扱わない（サイド・バトル場に出す順番と勝ち負けが変わる）",
+            )
+    return None
 
 
 def ko_prevention_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, PreventKnockOutOnHeads] | None:
@@ -1479,6 +1683,68 @@ class PreventDamageOnHeads(AttackEffect):
             add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
 
 
+# 持続する効果を与えなかった理由（ログ persistent_effect_skipped の reason。v0.12）
+EFFECT_TARGET_KNOCKED_OUT = "knocked_out"  # 効果の対象（ワザを使ったポケモン自身）が、相手の「はんげき」のダメージですでに HP 以上
+
+
+@dataclass(frozen=True)
+class DamageAndRetaliation(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと、ワザを使ったポケモン自身に、「次の相手の番、このカードが相手の
+    ワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に ``retaliation`` ダメージを与える」持続する効果
+    （``state.Retaliation``）を与える（v0.12。R団のファイヤーの「ほのおのかべ」。p.82 の最新の説明。docs/rocket-moltres-v0.12.md・
+    docs/temporary-attack-effects-v0.12.md）。
+
+    - ダメージの要素は ``damage_opponent_active``（p.321 の順番）。そのあと ``finish_damage_elements``（相手の「はんげき」。p.89）。
+    - 効果は p.320 の効果の分類の (3)「このワザを使うポケモンへの効果」。p.89 のワザ解説（「こうらがえし」。同じ「相手の番ではたらく効果」）
+      の「効果の対象：ワザを使ったポケモン自身」「効果の持続：次の相手の番の最後」。効果がはたらくのは次の相手の番（今の番 + 1。番は交互に
+      進む。不変条件で確かめている）で、その番の終わりに消える（``persistent.remove_expired_persistent_effects``。W4・W5）。
+    - 相手へのダメージを与えたかに関わらず与える（説明に「ダメージを与えたら」がない。相手が「ダメージを受けない」状態・「とうめい」で
+      受けなかった・最終ダメージ 0 でも与える）。
+    - ワザを使ったポケモンが、相手の「はんげき」のダメージ（このワザのダメージの処理のあと、この効果の前）で HP 以上になっていたら、
+      きぜつするので与えない（p.89 のワザ解説「その後、相手はそのダメージできぜつしなければ「スターブーメラン」の効果で手札にもどる」・
+      p.309。v0.10 の C16 と同じ。与えても、きぜつで場をはなれて消える（p.322）ので、ほかの結果は変わらない）。ログ
+      ``persistent_effect_skipped``（``reason`` ``knocked_out``）。
+    - 乱数は使わない。こんらん状態でワザがこんらんしたら、エンジンがこのワザの処理を呼ばない（ダメージも効果もない。p.309 の手順 5）。
+    """
+
+    retaliation: int
+    implementation_id = "damage_and_retaliation"
+
+    def __post_init__(self) -> None:
+        if type(self.retaliation) is not int or self.retaliation <= 0 or self.retaliation % 10:
+            raise ValueError(f"与えるダメージは 10 の倍数の正の数（{self.retaliation!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "次の相手の番にダメージを受けたら相手にダメージを与える")
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        damage_opponent_active(state, use, attack.damage)
+        finish_damage_elements(state, use)  # 相手の「はんげき」（ダメージの処理のあと、効果の前。p.89）
+        _require_damage_elements_finished(use, "効果の要素（持続する効果）")
+        if attacker.damage >= state.card_def(attacker.card).hp:
+            state.add_event(
+                "persistent_effect_skipped",
+                player=use.player,
+                pokemon=attacker.card,
+                pokemon_id=attacker.pokemon_id,
+                persistent_effect=Retaliation.kind,
+                effect=str(use.key),
+                reason=EFFECT_TARGET_KNOCKED_OUT,
+            )
+            return
+        effect = Retaliation(
+            source_card=attacker.card,
+            source_player=use.player,
+            created_turn=state.turn_number,
+            active_turn=state.turn_number + 1,  # 次の相手の番（番は先攻から 1 つずつ交互に進む。不変条件で確かめている）
+            attack_index=use.key.attack_index,
+            amount=self.retaliation,
+        )
+        add_persistent_effect(state, use.player, attacker, effect, attack=str(use.key))
+
+
 # 「ふきとばし」で入れ替えなかった理由（ログ forced_switch_skipped の reason。v0.4d）
 TARGET_KNOCKED_OUT = "knocked_out"  # 相手の対戦ポケモンがこのワザのダメージできぜつする（効果の対象がいない。p.309・p.213）
 NO_BENCH = "no_bench"  # 相手に控えポケモンがいない（最新の説明「相手に控えがいないとき、入れ替えはおこらない」）
@@ -1987,14 +2253,11 @@ class RecoverEnergyAndSelfDamage(AttackEffect):
                 "トラッシュにエネルギーカードがあるときに 0 枚を選べるか（「最大2枚選び出し」が 0 枚を含むか）は『オフィシャルブック2000』"
                 "（p.158）から決められないので扱わない。1 枚以上を選ぶ",
             )
-        p = state.players[use.player]
         for uid in choices:
             if uid not in self._candidates(state, use.player):
                 raise RuntimeError(f"手札に加えるカード {uid} が、ワザを使ったプレイヤーのトラッシュのエネルギーカードではない（エンジンの不具合）")
-        # 1. 選んだエネルギーカードを、トラッシュから手札に加える（同じ uid のカードを動かす）
-        for uid in choices:
-            p.discard.remove(uid)
-            p.hand.append(uid)
+        # 1. 選んだエネルギーカードを、トラッシュから手札に加える（同じ uid のカードを動かす。v0.12 から zones の共通の関数）
+        return_discard_to_hand(state, use.player, tuple(choices))
         _, attacker = state.find_pokemon(use.pokemon_id)
         state.add_event(
             "recover_energy", player=use.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(use.key), cards=tuple(choices)
@@ -2996,6 +3259,75 @@ class PreventKnockOutOnHeads(PowerEffect):
 
 
 @dataclass(frozen=True)
+class ReturnToHandOnKnockOut(PowerEffect):
+    """このカードが「きぜつ」したとき、使える特殊能力。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える
+    （v0.12。R団のファイヤーの「ふしちょう」。p.82 の最新の説明「この力は、このカードが「きぜつ」したとき、使える。このカードをトラッシュ
+    からとり出し、相手プレイヤーに見せてから、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」するとき、この力は
+    使えない。」。docs/phoenix-v0.12.md・docs/post-knockout-powers-v0.12.md）。
+
+    - 使用を宣言して使う特殊能力（``declared`` は True）。最新の説明・印刷の文面とも「使える」で、宣言するかはプレイヤーが決める（p.311
+      「かならずしも特殊能力の使用を宣言する必要はありません」。P1・P2）。決められたとき（このカードが「きぜつ」したとき。p.311「決められた
+      ときにしか使用を宣言できないものもあります」）にだけ使える。そのときは、きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあと、
+      対戦が続くなら、エンジンが持ち主に決定（``decisions.POST_KNOCKOUT_POWER``。選ばない = 使わない）を出す（``engine._after_knockouts``）。
+      場にいるときに ``UsePokemonPower`` で使おうとしたら ``check_usable`` が ``POWER_NOT_USABLE_NOW`` で拒否する。
+    - きぜつの原因は問わない（説明は「「きぜつ」したとき」だけ。v0.11 の「こんじょう」（相手のワザによるダメージで「きぜつ」する「とき」）
+      とは条件も時点も違う。P5〜P10）。
+    - 使えないのは、このカード（いちばん上のカード）が「きぜつ」するときにねむり・マヒ・こんらんだったとき（``is_able``。どくは挙げられて
+      いない。P13〜P17）と、かがくへんかガス（v0.8）に消されているとき（P18。「すべての「特殊能力」は使えず」。きぜつの処理の前の場で
+      ``continuous.suppressors_of`` を聞く）。どちらも、きぜつの処理（トラッシュ）の前に求めて決定の候補にする（場をはなれたあとの状態で
+      決めない。B2）。
+    - 使ったら（``recover``）、このカード（きぜつしたポケモンのいちばん上のカード。同じ uid）だけをトラッシュから手札に加える（P22〜P24）。
+      ついていたエネルギー・トレーナーはトラッシュに残る。乱数は使わない。
+    """
+
+    implementation_id = "return_to_hand_on_knock_out"
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、ポケモンパワー（特殊能力）として登録している")
+        if power.text_ja is None:
+            problems.append("説明文のないポケモンパワーを、きぜつしたときにトラッシュから手札に加えるパワーとして登録している")
+        return problems
+
+    def is_able(self, pokemon: PokemonInPlay) -> bool:
+        """場のポケモン ``pokemon``（このパワーを持つカードがいちばん上）が今「きぜつ」するとして、特殊状態の条件（「このカードが「ねむり・
+        マヒ・こんらん」状態のまま「きぜつ」するとき、この力は使えない」）に当たらないか。かがくへんかガスは別に見る。"""
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError(
+            "POWER_NOT_USABLE_NOW",
+            f"特殊能力 {use.key} は、このカードが「きぜつ」したときにだけ使える（p.82・p.311。そのときはエンジンが決定 post_knockout_power を出す）",
+        )
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        raise RuntimeError(f"特殊能力 {use.key} は UsePokemonPower では使わない（check_usable が拒否する。エンジンの不具合）")
+
+    def recover(self, state: GameState, owner: int, card: int, key: PowerKey) -> None:
+        """使用を宣言したあとの処理（p.311 の手順 3）: このカード ``card``（持ち主 ``owner`` のトラッシュにある）をトラッシュからとり出し、
+        相手プレイヤーに見せてから、手札に加える。ログ ``return_to_hand``（``player``・``card``・``card_id``・``power``・``revealed``）。
+        宣言のログ（``post_knockout_power_declared``）はエンジン（``engine._resume_post_knockout``）。"""
+        return_discard_to_hand(state, owner, (card,))
+        state.add_event(
+            "return_to_hand", player=owner, card=card, card_id=state.cards[card].card_id, power=str(key), revealed=True
+        )
+
+
+def post_knockout_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, ReturnToHandOnKnockOut] | None:
+    """場のポケモン ``pokemon`` の（いちばん上のカードの。p.310）特殊能力のうち、このカードが「きぜつ」したときに使えるもの
+    （``ReturnToHandOnKnockOut``。R団のファイヤーの「ふしちょう」。v0.12）。特殊状態・かがくへんかガスは見ない（持っているかだけ）。
+    なければ None。状態を変えず、乱数を使わない。"""
+    definition = state.card_def(pokemon.card)
+    for index, power in enumerate(definition.powers):
+        effect = state.effects.power_effect(definition.id, power)
+        if isinstance(effect, ReturnToHandOnKnockOut):
+            return PowerKey(definition.id, index), effect
+    return None
+
+
+@dataclass(frozen=True)
 class PowerEntry:
     """ポケモンパワーの登録の 1 件（v0.5）。
 
@@ -3188,7 +3520,7 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.11",
+    "kyuura-engine-0.12",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -3536,6 +3868,16 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを4枚投げ、「おもて」の数×30のダメージ。",
             source="P43 p.193",
         ),
+        # R団のファイヤー（v0.12。たね）p.82。ほのおのかべ（炎炎炎。40）: 相手に 40。そのあと、次の相手の番、このカードが相手のワザによる
+        # ダメージを受けたとき、相手に 10 ダメージを与える（持続する効果。p.89 のワザ解説の「相手の番ではたらく効果」）。印刷の文面（kyuura の
+        # 写し）は「…受けた時、(このカードが「きぜつ」するしないにかかわらず)相手にも10ダメージ。」（docs/rocket-moltres-v0.12.md）
+        AttackKey("PMCG5-020", 0): AttackEntry(
+            DamageAndRetaliation(retaliation=10),
+            "ほのおのかべ",
+            text_ja="次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)相手にも10ダメージ。",
+            play_text_ja="次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。",
+            source="P43 p.82",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
@@ -3650,6 +3992,17 @@ DEFAULT_EFFECTS = EffectRegistry(
             "この力は、相手のワザによるダメージで、このカードが「きぜつ」する時、使える。コインを投げて「おもて」なら、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
             "この力は、相手のワザによるダメージで、このカードが「きぜつ」するとき、使える。コインを投げて「おもて」なら、このカードは「きぜつ」せず、このカードの残りHPが「10」になる。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
             "P43 p.193",
+        ),
+        # R団のファイヤー（v0.12）p.82。「ふしちょう」: このカードが「きぜつ」したとき、使える（宣言する。使うかは持ち主が決める）。このカードを
+        # トラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。ねむり・マヒ・こんらんのまま「きぜつ」するときは使えない。
+        # 印刷の文面（kyuura の写し）は「…した時だけ、使える。このカードをトラッシュからとり出し、手札に加える。…する時、…」
+        # （docs/phoenix-v0.12.md）
+        PowerKey("PMCG5-020", 0): PowerEntry(
+            ReturnToHandOnKnockOut(),
+            "ふしちょう",
+            "この力は、このカードが「きぜつ」した時だけ、使える。このカードをトラッシュからとり出し、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
+            "この力は、このカードが「きぜつ」したとき、使える。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」するとき、この力は使えない。",
+            "P43 p.82",
         ),
     },
 )

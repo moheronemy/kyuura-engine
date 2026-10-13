@@ -229,7 +229,7 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0)})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.11")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキーの登録を加えた（かがくへんかガスの登録は同じ）
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.12")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤーの登録を加えた（かがくへんかガスの登録は同じ）
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG3-007@power0"],
                          {"implementation": "suppress_other_powers", "name_ja": "かがくへんかガス", "source": "P43 p.48"})
         record = read_verification()["cards"][MUK]

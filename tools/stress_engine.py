@@ -12,6 +12,7 @@
     python3 tools/stress_engine.py --scenario haunter --scenario haunter_muk        # v0.9（とうめい）
     python3 tools/stress_engine.py --scenario machamp --scenario machamp_mixed      # v0.10（はんげき）
     python3 tools/stress_engine.py --scenario giovanni --scenario giovanni_mixed    # v0.11（こんじょう）
+    python3 tools/stress_engine.py --scenario moltres --scenario moltres_mixed      # v0.12（ふしちょう・ほのおのかべ）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -65,6 +66,17 @@
   使えるのに決定がないままきぜつしていないことを確かめ、決定・使う・使わない・「おもて」「うら」・ガスや特殊状態で使えずにきぜつ・どく
   できぜつを数える。``UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`` で止めたら、相手の対戦ポケモンの「こんじょう」を使えることを確かめる。
   ``POWER_USERS`` の最後に加えたので、サカキのカイリキーのいない組の操作は v0.10 と同じ。
+- v0.12: R団のファイヤーの組（``moltres``・``moltres_mixed``。``moltres`` は R団のファイヤーと炎のたねポケモンのデッキと、R団のファイヤーに
+  使うワザ・特殊能力の種類を多くしたデッキ（カイリキー・ゴースト・ベトベトン・バタフリー・ビードル・ユンゲラー・ピカチュウ・サカキのカイリキー）、
+  ``moltres_mixed`` は両方のデッキに R団のファイヤー、一方にベトベトン・ゴースト・ロコン、もう一方にカイリキー・バタフリー）を加えた。自分の場に
+  R団のファイヤーがいる番は、ときどき UsePokemonPower で「ふしちょう」を試す（場にいるときは使えないので ``POWER_NOT_USABLE_NOW``、
+  かがくへんかガスがはたらいていれば ``POWER_SUPPRESSED`` になるはず）。「ふしちょう」を使うかの決定（``POST_KNOCKOUT_POWER``。選ぶ数 0〜1）
+  には、駆動がほかの決定と同じに答える（使う・使わない）。操作を受け付けるたびに、操作の前の場（特殊状態・かがくへんかガス）とログから、
+  R団のファイヤーがきぜつしたら（対戦が終わらなければ）決定が出ること・使えないのに決定が出ないこと・回収したのはそのカードだけで手札に
+  あること、今の番にはたらく「ほのおのかべ」を持つポケモンが相手のワザのダメージを受けたら「ほのおのかべ」があること・ワザを使ったポケモン
+  へのダメージの基本となるダメージが 10 であることを確かめ、決定・使う・使わない・回収・特殊状態やガスで使えない・効果・はたらいた・
+  ダメージ・期限で消えたを数える。``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` で止めたら、相手の対戦ポケモンに今の番にはたらく
+  「ほのおのかべ」があることを確かめる。``POWER_USERS`` の最後に加えたので、R団のファイヤーのいない組の操作は v0.11 と同じ。
 """
 
 from __future__ import annotations
@@ -196,11 +208,31 @@ POWER_SCENARIOS += (
                      driver.VULPIX: 2, driver.DEFENDER: 2, driver.BILL: 2, driver.FIGHTING: 34, driver.FIRE: 4},
                     tuple(range(6)), tags=("サカキのカイリキー", "こんじょう", "はんげき", "ベトベトン", "かがくへんかガス", "ゴースト", "特殊状態")),
 )
+ROCKETS_MOLTRES = "PMCG5-020"
+POWER_SCENARIOS += (
+    # R団のファイヤー（v0.12。ふしちょう・ほのおのかべ）: 相手はカイリキー（はんげき）・ゴースト（とうめい・あくむ）・ベトベター・ベトベトン
+    # （どくガス・かがくへんかガス）・キャタピー・トランセル・バタフリー（ふきとばし・メガドレイン。弱点 炎）・ビードル（どくばり）・ユンゲラー
+    # （ちょうねんりき）・ピカチュウ（でんげき）・サカキのカイリキー（こんじょう）・ディフェンダー
+    driver.Scenario("moltres", {ROCKETS_MOLTRES: 4, driver.PONYTA: 3, driver.GROWLITHE: 3, driver.VULPIX: 2, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.FIRE: 36},
+                    {driver.MACHOP: 2, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2, GRIMER: 2, MUK: 1, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.WEEDLE: 2, ABRA: 2, KADABRA: 2, driver.PIKACHU: 2, GIOVANNIS_MACHOP: 1, GIOVANNIS_MACHOKE: 1,
+                     GIOVANNIS_MACHAMP: 1, ROCKETS_MOLTRES: 2, driver.PLUSPOWER: 2, driver.BILL: 4, driver.DEFENDER: 2, driver.FIGHTING: 6,
+                     PSYCHIC: 8, driver.GRASS: 6, driver.LIGHTNING: 2},
+                    tuple(range(6)), tags=("R団のファイヤー", "ふしちょう", "ほのおのかべ", "はんげき", "とうめい", "かがくへんかガス", "特殊状態")),
+    # 両方のデッキに R団のファイヤー（ミラー）、一方にベトベトン・ゴースト・ロコン（こんらん）、もう一方にカイリキー・バタフリー
+    driver.Scenario("moltres_mixed", {ROCKETS_MOLTRES: 4, GRIMER: 3, MUK: 2, GASTLY: 2, HAUNTER: 2, driver.VULPIX: 2, driver.SWITCH: 2,
+                                      driver.POTION: 2, driver.FIRE: 22, PSYCHIC: 8, driver.GRASS: 9, driver.BILL: 2},
+                    {ROCKETS_MOLTRES: 4, driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, driver.CATERPIE: 3, driver.METAPOD: 2, driver.BUTTERFREE: 2,
+                     driver.DEFENDER: 2, driver.BILL: 2, driver.FIRE: 18, driver.FIGHTING: 12, driver.GRASS: 8},
+                    tuple(range(6)), tags=("R団のファイヤー", "ふしちょう", "ほのおのかべ", "はんげき", "ふきとばし", "とうめい", "かがくへんかガス")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキーがいる番で、ポケモンパワーを試す割合
-# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）・サカキのカイリキー（v0.11）を加えた。ベトベトンのいない組の選び方
-# （乱数の使い方）は v0.7 と同じ、ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ、サカキのカイリキーのいない組は v0.10 と同じ
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP)
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキー・R団のファイヤーがいる番で、ポケモンパワーを試す割合
+# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）・サカキのカイリキー（v0.11）・R団のファイヤー（v0.12）を加えた。ベトベトンの
+# いない組の選び方（乱数の使い方）は v0.7 と同じ、ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ、サカキのカイリキーのいない組は
+# v0.10 と同じ、R団のファイヤーのいない組は v0.11 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES)
 HAUNTER_DECLARE_SKIP = 0.75  # ゴースト・カイリキーを選んだときに、宣言を試さずに駆動の操作にする割合（いない組の乱数の使い方は変えない）
 
 
@@ -216,12 +248,13 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
-    if kind in (HAUNTER, MACHAMP, GIOVANNIS_MACHAMP) and rng.random() < HAUNTER_DECLARE_SKIP:
-        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9・v0.10・v0.11）
-    if kind in (MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP):
+    if kind in (HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES) and rng.random() < HAUNTER_DECLARE_SKIP:
+        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9〜v0.12）
+    if kind in (MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES):
         # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」（v0.9）・「はんげき」（v0.10）は自動的にはたらいて宣言しない
         # （POWER_NOT_DECLARABLE になるはず）。「こんじょう」（v0.11）は決められたとき（相手のワザのダメージできぜつするとき。決定で答える）
-        # にしか使えない（POWER_NOT_USABLE_NOW になるはず）
+        # にしか使えない（POWER_NOT_USABLE_NOW になるはず）。「ふしちょう」（v0.12）は、このカードが「きぜつ」したとき（決定で答える）にしか
+        # 使えない（POWER_NOT_USABLE_NOW になるはず）
         user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == kind])
         return engine.UsePokemonPower(player, user.pokemon_id, 0)
     if kind == ALAKAZAM:
@@ -482,7 +515,9 @@ def _observe_guts(state, new, before, counted, problems, index, command) -> None
         pid = d.options[0]
         pokemon = new.find_pokemon(pid)
         counted["observed:guts_offered"] += 1
-        if (before.get(pid) is None or owners.get(pid) == state.current_player or pokemon is None
+        # v0.12: 番のプレイヤーのポケモンは、相手の「ほのおのかべ」のダメージ（相手のワザによるダメージ）を受けたときだけ
+        by_retaliation = any(e["kind"] == "damage" and e.get("retaliation") and e.get("pokemon_id") == pid for e in events)
+        if (before.get(pid) is None or (owners.get(pid) == state.current_player and not by_retaliation) or pokemon is None
                 or pokemon[1].damage < new.card_def(pokemon[1].card).hp):
             problems.append(f"{where}: 使えないはずの「こんじょう」の決定 {d}")
         elif state.players[owners[pid]].active is None or state.players[owners[pid]].active.pokemon_id != pid:
@@ -506,7 +541,9 @@ def _observe_guts(state, new, before, counted, problems, index, command) -> None
             c = pokemon.conditions
             if e.get("timing") == "pokemon_check":
                 counted["observed:guts_not_applicable_poison"] += 1
-            elif owners[pokemon.pokemon_id] == state.current_player:
+            elif owners[pokemon.pokemon_id] == state.current_player and not any(
+                g["kind"] == "damage" and g.get("retaliation") and g.get("pokemon_id") == pokemon.pokemon_id for g in events
+            ):
                 counted["observed:guts_not_applicable_own_turn"] += 1  # 自分のワザ・こんらん・「はんげき」
             elif c.asleep or c.paralyzed or c.confused:
                 counted["observed:guts_blocked_by_condition"] += 1
@@ -514,6 +551,98 @@ def _observe_guts(state, new, before, counted, problems, index, command) -> None
                 counted["observed:guts_suppressed_by_gas"] += 1
             else:
                 problems.append(f"{where}: 「こんじょう」を使えるのに決定がないまま、きぜつした {e}")
+
+
+def _rebirth_field(state) -> dict[int, tuple[str, str | None]]:
+    """場のポケモンの番号 → (カード id, ねむり・マヒ・こんらん)（v0.12。「ふしちょう」を使えるかを、エンジンの関数を使わずに求めるため）。"""
+    return {pk.pokemon_id: (state.cards[pk.card].card_id, None if pk.conditions.exclusive is None else pk.conditions.exclusive.name)
+            for p in state.players for pk in p.in_play()}
+
+
+def _observe_moltres(state, new, counted, problems, index, command) -> None:
+    """受け付けた操作のログと決定を、操作の前の場から求めた「ふしちょう」「ほのおのかべ」と比べる（v0.12）。きぜつするときの特殊状態・
+    かがくへんかガスは、操作の前の場をこの操作のログ（special_condition・special_conditions_removed・knock_out）で進めて求める。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    where = f"{index} 手目 {engine.command_to_dict(command)}"
+    by_card = {pk.card: pk for p in state.players for pk in p.in_play()}
+    field = _rebirth_field(state)
+    d = new.decision
+    if d is not None and d.kind == "post_knockout_power":
+        counted["observed:rebirth_offered"] += 1
+    if state.decision is not None and state.decision.kind == "take_prize" and state.decision.context_value("post_knockout") is not None \
+            and new.phase in engine.TERMINAL_PHASES:
+        counted["observed:rebirth_not_offered_game_over"] += 1
+    batches, batch = [], set()
+    for e in events:
+        if e["kind"] == "knock_out" and e["pokemon"] in by_card:
+            batch.add(by_card[e["pokemon"]].pokemon_id)
+        elif e["kind"] != "persistent_effect_removed" and batch:
+            batches.append(batch)
+            batch = set()
+    if batch:
+        batches.append(batch)
+    pending_retaliation = []
+    for position, e in enumerate(events):
+        kind = e["kind"]
+        if kind in ("post_knockout_power_declined", "post_knockout_power_declared", "return_to_hand", "retaliation", "retaliation_skipped",
+                    "persistent_effect_skipped"):
+            counted[f"observed:{kind}"] += 1
+        if kind == "return_to_hand":
+            card = e["card"]
+            if state.cards[card].card_id != ROCKETS_MOLTRES or (new.phase not in engine.TERMINAL_PHASES and card not in new.players[e["player"]].hand):
+                problems.append(f"{where}: 回収したカードが R団のファイヤーでない・手札にない {e}")
+        if kind == "special_condition" and e["condition"] in ("sleep", "paralysis", "confusion") and e["pokemon_id"] in field:
+            field[e["pokemon_id"]] = (field[e["pokemon_id"]][0], e["condition"])
+        if kind == "special_conditions_removed" and e["pokemon_id"] in field and field[e["pokemon_id"]][1] in e["conditions"]:
+            field[e["pokemon_id"]] = (field[e["pokemon_id"]][0], None)
+        if kind == "persistent_effect_added" and e["persistent_effect"] == "retaliation":
+            counted["observed:retaliation_effect_added"] += 1
+        if kind == "persistent_effect_removed" and e["persistent_effect"] == "retaliation":
+            counted[f"observed:retaliation_effect_removed_{e['reason']}"] += 1
+        if kind == "damage" and e["amount"] > 0 and not e.get("retaliation"):
+            pid = e.get("pokemon_id", by_card[e["pokemon"]].pokemon_id if e["pokemon"] in by_card else None)
+            holder = state.find_pokemon(pid) if pid is not None else None
+            if holder is not None and holder[0] != state.current_player and any(
+                x.kind == "retaliation" and x.active_turn == state.turn_number for x in holder[1].persistent_effects
+            ):
+                pending_retaliation.append(pid)
+        if kind in ("retaliation", "retaliation_skipped"):
+            if not pending_retaliation or pending_retaliation[0] != e["pokemon_id"]:
+                problems.append(f"{where}: はたらくはずのない「ほのおのかべ」 {e}")
+            else:
+                pending_retaliation.pop(0)
+        if kind == "damage" and e.get("retaliation"):
+            counted["observed:retaliation_damage"] += 1
+            counted["observed:retaliation_damage_total"] += e["amount"]
+            if e["steps"][0][1] != 10 or e["pokemon_id"] != state.players[state.current_player].active.pokemon_id:
+                problems.append(f"{where}: 「ほのおのかべ」のダメージ・相手が違う {e}")
+            if e["total_damage"] >= new.card_def(e["pokemon"]).hp:
+                counted["observed:retaliation_knock_out"] += 1
+        if kind == "knock_out" and e["pokemon"] in by_card:
+            pokemon = by_card[e["pokemon"]]
+            knocked = next(b for b in batches if pokemon.pokemon_id in b)
+            card_id, condition = field.pop(pokemon.pokemon_id)
+            if card_id != ROCKETS_MOLTRES:
+                continue
+            counted["observed:rockets_moltres_knocked_out"] += 1
+            snapshot = {**_rebirth_field(state), **field}
+            gases = [pid for pid, (kind_id, exclusive) in snapshot.items() if kind_id == MUK and exclusive is None]
+            answered = any(r["kind"] in ("post_knockout_power_declined", "post_knockout_power_declared") and r["card"] == e["pokemon"]
+                           for r in events)
+            waiting = d is not None and (d.options == (e["pokemon"],) and d.kind == "post_knockout_power" or any(
+                c[1] == e["pokemon"] for c in d.context_value("post_knockout", ())))
+            if condition is not None:
+                counted["observed:rebirth_blocked_condition"] += 1
+                if answered or waiting:
+                    problems.append(f"{where}: ねむり・マヒ・こんらんのまま「きぜつ」したのに「ふしちょう」の決定 {e}")
+            elif gases and any(pid not in knocked for pid in gases):
+                counted["observed:rebirth_blocked_gas"] += 1
+                if answered or waiting:
+                    problems.append(f"{where}: かがくへんかガスがはたらいているのに「ふしちょう」の決定 {e}")
+            elif not (answered or waiting) and new.phase not in engine.TERMINAL_PHASES:
+                problems.append(f"{where}: 「ふしちょう」を使えるのに決定がないまま {e}")
+    if pending_retaliation:
+        problems.append(f"{where}: はたらいた「ほのおのかべ」（ポケモン {pending_retaliation}）のログがない")
 
 
 def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_every: int) -> tuple[Counter, list[str]]:
@@ -565,8 +694,12 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                     problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「こんじょう」を使えないのに UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT")
             if error.code == "POWER_NOT_USABLE_NOW":
                 found = state.find_pokemon(command.pokemon) if isinstance(command, engine.UsePokemonPower) else None
-                if found is None or state.cards[found[1].card].card_id != GIOVANNIS_MACHAMP:
-                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: サカキのカイリキーでないのに POWER_NOT_USABLE_NOW")
+                if found is None or state.cards[found[1].card].card_id not in (GIOVANNIS_MACHAMP, ROCKETS_MOLTRES):
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: サカキのカイリキー・R団のファイヤーでないのに POWER_NOT_USABLE_NOW")
+            if error.code == "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT":
+                target = state.players[1 - state.current_player].active
+                if target is None or not any(x.kind == "retaliation" and x.active_turn == state.turn_number for x in target.persistent_effects):
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「ほのおのかべ」がはたらいていないのに UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT")
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:
@@ -595,6 +728,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             _observe_counterattack(state, new, counter, counted, problems, index, command)
         if guts is not None:
             _observe_guts(state, new, guts, counted, problems, index, command)
+        if any(state.cards[uid].card_id == ROCKETS_MOLTRES for uid in state.cards):
+            _observe_moltres(state, new, counted, problems, index, command)  # v0.12
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -656,7 +791,14 @@ def main(argv=None) -> int:
           f"使わない {counts.get('observed:ko_prevention_declined', 0)}・おもて {counts.get('observed:ko_prevented', 0)}・"
           f"うら {counts.get('observed:ko_prevention_failed', 0)}・ベンチ {counts.get('observed:guts_offered_on_bench', 0)}・"
           f"ガスで使えずきぜつ {counts.get('observed:guts_suppressed_by_gas', 0)}・特殊状態で使えずきぜつ {counts.get('observed:guts_blocked_by_condition', 0)}・"
-          f"G37 {counts.get('code:UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT', 0)}）"
+          f"G37 {counts.get('code:UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT', 0)}）・"
+          f"R団のファイヤーのきぜつ {counts.get('observed:rockets_moltres_knocked_out', 0)}（ふしちょうの決定 {counts.get('observed:rebirth_offered', 0)}・"
+          f"使う {counts.get('observed:post_knockout_power_declared', 0)}・使わない {counts.get('observed:post_knockout_power_declined', 0)}・"
+          f"特殊状態 {counts.get('observed:rebirth_blocked_condition', 0)}・ガス {counts.get('observed:rebirth_blocked_gas', 0)}・"
+          f"対戦の終わり {counts.get('observed:rebirth_not_offered_game_over', 0)}）・"
+          f"ほのおのかべ {counts.get('observed:retaliation_effect_added', 0)}（はたらいた {counts.get('observed:retaliation', 0)}・"
+          f"ダメージ {counts.get('observed:retaliation_damage', 0)}・期限 {counts.get('observed:retaliation_effect_removed_expired', 0)}・"
+          f"W24 {counts.get('code:UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

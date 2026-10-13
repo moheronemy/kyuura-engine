@@ -23,7 +23,12 @@
 - ``"knock_out"``: ワザのあとのきぜつの判定の続き（v0.11）。相手のワザによるダメージで「きぜつ」するときに使える特殊能力
   （サカキのカイリキーの「こんじょう」）を使うかを、そのポケモンの持ち主が決める（``KO_PREVENTION``）。選んだら宣言・コイン・
   残り HP、選ばなければ何もせず、そのあと、まだ HP 以上のポケモンをきぜつさせる（``engine._resume_knock_out``）。番のプレイヤーは
-  ワザを使ったプレイヤーのまま。``context`` は ``"attack"``（ワザ）と ``"power"``（特殊能力）
+  ワザを使ったプレイヤーのまま。``context`` は ``"attack"``（ワザ）と ``"power"``（特殊能力）。v0.12 から、番のプレイヤーのワザを使った
+  ポケモンが、相手の「ほのおのかべ」（相手のワザによるダメージ）で「きぜつ」するときにも出す（決定するのは番のプレイヤー）
+- ``"post_knockout"``: きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあとの続き（v0.12）。ポケモンが「きぜつ」したときに使える
+  特殊能力（R団のファイヤーの「ふしちょう」）を使うかを、そのカードの持ち主が決める（``POST_KNOCKOUT_POWER``）。選んだら宣言して、
+  そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
+  ``context`` は ``"power"``（特殊能力）と、ポケモンチェックの中のきぜつなら ``"then"``
 
 選べるもののうち、原典で処理を決められないもの（v0.2b）: カードの文面では選べるが、選んだときの扱いを
 原典で決められないものは、``context`` の ``"unresolved_choices"`` に入れる。それを選ぶと、状態を変えずに
@@ -63,6 +68,12 @@ RECOVER_ENERGY = "recover_energy"
 # 宣言する必要はありません」）か 1 個（使用を宣言する）。コインはこの決定のあと（宣言のあと。p.311 の手順）なので、選ぶ前に結果は
 # 決まっていない。再開先は "knock_out"。段階は Phase.DECISION
 KO_PREVENTION = "ko_prevention"
+# ポケモンが「きぜつ」したときに使える特殊能力（v0.12。R団のファイヤーの「ふしちょう」。p.82 の最新の説明「この力は、このカードが「きぜつ」
+# したとき、使える。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。」）を使うかを、そのカードの持ち主が
+# 決める。選べるものはトラッシュにあるそのカードの uid 1 つで、0 個（使わない。p.311）か 1 個（使用を宣言する）。きぜつの処理（トラッシュ・
+# サイド・勝ち負けの判定）のあと、対戦が続くときだけ、バトル場にポケモンを出す前に出す（docs/post-knockout-powers-v0.12.md）。再開先は
+# "post_knockout"。段階は Phase.DECISION
+POST_KNOCKOUT_POWER = "post_knockout_power"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -122,9 +133,9 @@ def push_attack_decision(
     （決定はダメージ以外の効果。「はんげき」のダメージは、ダメージの処理のあと、効果の前。p.89）。決定をまたぐと ``AttackUse`` は
     新しくなり、まだ与えていない「はんげき」が失われるので、残っていればエンジンの不具合として止める。
     """
-    if getattr(use, "counterattacks", None):
+    if getattr(use, "counterattacks", None) or getattr(use, "retaliations", None):
         raise RuntimeError(
-            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
+            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」「ほのおのかべ」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
         )
     use_context = ("use", (use.player, use.pokemon_id, use.key.card_id, use.key.attack_index))
     return push_decision(

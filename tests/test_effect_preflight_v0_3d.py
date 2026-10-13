@@ -28,7 +28,7 @@ from tests.helpers import (
     PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
     BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER, MACHOP, MACHOKE, MACHAMP,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -79,6 +79,7 @@ ATTACKS = [
     (GIOVANNIS_MACHOKE, 0),  # SelfDamageInsteadOnTails（v0.11。サカキのゴーリキーの「いちかばちか」。サカキのワンリキーから進化したものとして置く）
     (GIOVANNIS_MACHOKE, 1),  # CoinBonusDamageAndParalyze（v0.11。「じごくがため」）
     (GIOVANNIS_MACHAMP, 0),  # CoinFlipDamage（v0.11。サカキのカイリキーの「ハリケーンパンチ」。コイン 4 枚。サカキのワンリキー → ゴーリキーと進化したもの）
+    (ROCKETS_MOLTRES, 0),  # DamageAndRetaliation（v0.12。R団のファイヤーの「ほのおのかべ」。相手に 40、自分に次の相手の番の効果。乱数なし）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす

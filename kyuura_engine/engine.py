@@ -52,13 +52,23 @@ from .commands import (
     UseAttack,
     UsePokemonPower,
 )
-from .decisions import DECISION_PHASES, KO_PREVENTION, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
+from .decisions import (
+    DECISION_PHASES,
+    KO_PREVENTION,
+    POST_KNOCKOUT_POWER,
+    PROMOTE_ACTIVE,
+    TAKE_PRIZE,
+    check_choices,
+    phase_for,
+    push_decision,
+)
 from .damage import calculate_confusion_damage
 from .effects import (
     AttackKey,
     AttackUse,
     PowerKey,
     PowerUse,
+    ReturnToHandOnKnockOut,
     TrainerUse,
     attack_damage_modifiers,
     counterattack_double_knockout_problem,
@@ -66,6 +76,8 @@ from .effects import (
     ko_prevention_attack_effect_problem,
     ko_prevention_power,
     ko_prevention_suppressors,
+    post_knockout_power,
+    retaliation_double_knockout_problem,
 )
 from .continuous import suppressors_of
 from .deck import deck_problems
@@ -74,6 +86,7 @@ from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_per
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    Retaliation,
     TERMINAL_PHASES,
     Asleep,
     CardInstance,
@@ -510,11 +523,12 @@ def _pokemon_check(state: GameState) -> None:
     if not knocked:
         _pokemon_check_sleep_and_paralysis(state)
         return
+    candidates = _post_knockout_candidates(state, knocked)  # v0.12: 「ふしちょう」（どくのきぜつでも使える。P9・P16）
     prize_takers = []
     for owner, pokemon in knocked:
         _knock_out(state, owner, pokemon, timing="pokemon_check")
         prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤー（p.323）。番のプレイヤーではない
-    _after_knockouts(state, prize_takers, then=NEXT_TURN)
+    _after_knockouts(state, prize_takers, then=NEXT_TURN, post_knockout=candidates)
 
 
 def _pokemon_check_sleep_and_paralysis(state: GameState) -> None:
@@ -840,7 +854,10 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     原典で決められない場合は、コインを投げる前に止める: ワザの説明の処理が決められない（``AttackEffect.problem``）、
     こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）、相手の「はんげき」（v0.10）で
     ワザによるきぜつと特殊能力によるきぜつが重なりうるか（``effects.counterattack_double_knockout_problem``。
-    ``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``。docs/counterattack-v0.10.md の C18）。
+    ``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``。docs/counterattack-v0.10.md の C18）、相手の「こんじょう」で生き残ったポケモンが同じ
+    ワザの効果を受けるか（v0.11。``UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT``。G37）、相手の R団のファイヤーの「ほのおのかべ」で、ワザに
+    よるきぜつと前の番のワザの効果のダメージによるきぜつが重なりうるか（v0.12。``effects.retaliation_double_knockout_problem``。
+    ``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT``。docs/rocket-moltres-v0.12.md の W24）。
 
     v0.10: 相手のワザのダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」）のダメージは、ワザのダメージの処理が
     すべて終わったところで与える（``effects.finish_damage_elements``。p.89）。ダメージ以外の効果のあるワザの実装は、効果の前に自分で
@@ -868,6 +885,8 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
         problem = counterattack_double_knockout_problem(state, use, effect)  # v0.10
     if problem is None:
         problem = ko_prevention_attack_effect_problem(state, use, effect)  # v0.11
+    if problem is None:
+        problem = retaliation_double_knockout_problem(state, use, effect)  # v0.12
     if problem is not None:
         raise problem
 
@@ -1000,27 +1019,35 @@ def _ko_prevention_offer(state: GameState, use: AttackUse) -> tuple[int, Pokemon
     があり、そのダメージを受けたときにねむり・マヒ・こんらんでなく（``AttackUse.ko_prevention_able``。G25〜G29）、今はたらいている
     かがくへんかガスに消されていない（v0.8 の ``continuous.suppressors_of``。G31）もの。場所は見ない（G8）。
 
-    番のプレイヤーのポケモンは、自分の番にワザのダメージを受けても自分のワザ（自分へのダメージ）か「はんげき」（特殊能力のダメージ）か
-    こんらんなので、当たらない（G4・G5）。番でないプレイヤーのポケモンが HP 以上になるのは、このワザのダメージを受けたときだけ（ほかの
+    番のプレイヤーのポケモンは、自分の番にワザのダメージを受けても、ふつうは自分のワザ（自分へのダメージ）か「はんげき」（特殊能力の
+    ダメージ）かこんらんなので、当たらない（G4・G5）。v0.12 から、番のプレイヤーのワザを使ったポケモンが、相手の R団のファイヤーの
+    「ほのおのかべ」のダメージ（前の番の相手のワザの効果のダメージなので「相手のワザによるダメージ」。p.321「8」・p.89。
+    docs/rocket-moltres-v0.12.md の W20）を受けて HP 以上になったら当たる（記録は「ほのおのかべ」のダメージの要素が、このワザと共有して
+    残す。``effects._apply_retaliation``）。番のプレイヤーのポケモンで記録がないものは、相手のワザのダメージで HP 以上になったのでは
+    ないので当たらない。番でないプレイヤーのポケモンが HP 以上になるのは、このワザのダメージを受けたときだけ（ほかの
     ダメージは番の途中に起こらない）なので、記録がなければエンジンの不具合として止める（決定をまたいで記録が失われた場合など。今の対応
     カードでは G37 の止める処理が先にはたらく）。2 匹以上いる場合は、宣言の順番が原典で決められない（G16・G40）が、今の対応カードでは
-    ワザのダメージを受ける相手のポケモンはバトル場の 1 匹だけなので起こらない。起こったらエンジンの不具合として止める。
+    ワザのダメージを受ける相手のポケモンはバトル場の 1 匹だけで、そのポケモンと、「ほのおのかべ」を受けたワザを使ったポケモンが
+    そろって HP 以上になる場合はワザの宣言の前に止めている（W24）ので起こらない。起こったらエンジンの不具合として止める。
     """
-    owner = 1 - state.current_player
     offers = []
-    for pokemon in state.players[owner].in_play():
-        if pokemon.damage < state.card_def(pokemon.card).hp:
-            continue
-        found = ko_prevention_power(state, pokemon)
-        if found is None:
-            continue
-        if pokemon.pokemon_id not in use.ko_prevention_able:
-            raise RuntimeError(
-                f"「こんじょう」を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、このワザ {use.key} のダメージを受けた記録がない（エンジンの不具合）"
-            )
-        key, _ = found
-        if use.ko_prevention_able[pokemon.pokemon_id] and not ko_prevention_suppressors(state, pokemon, key):
-            offers.append((owner, pokemon, key))
+    for owner in (1 - state.current_player, state.current_player):
+        for pokemon in state.players[owner].in_play():
+            if pokemon.damage < state.card_def(pokemon.card).hp:
+                continue
+            found = ko_prevention_power(state, pokemon)
+            if found is None:
+                continue
+            able = use.ko_prevention_able.get(pokemon.pokemon_id)
+            if able is None:
+                if owner == state.current_player:
+                    continue  # 自分のワザ・相手の「はんげき」のダメージで HP 以上（相手のワザによるダメージではない。G4・G5）
+                raise RuntimeError(
+                    f"「こんじょう」を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、このワザ {use.key} のダメージを受けた記録がない（エンジンの不具合）"
+                )
+            key, _ = found
+            if able and not ko_prevention_suppressors(state, pokemon, key):
+                offers.append((owner, pokemon, key))
     if len(offers) > 1:
         raise RuntimeError(
             f"「こんじょう」を使えるポケモンが {len(offers)} 匹いる（宣言の順番が原典で決められない。今の対応カードでは起こらない。エンジンの不具合）"
@@ -1066,6 +1093,7 @@ def _knock_out_after_attack(state: GameState) -> None:
     トラッシュには順番がない（p.312）ので、相手のポケモン（バトル場 → ベンチ）、自分のポケモンの順に処理する。
     自分のワザで自分のポケモンがきぜつするのは v0.2f から（ピカチュウの「でんげき」）。
     v0.11: 「こんじょう」の「おもて」で残り HP 10 になったポケモンは HP 未満なので、ここではきぜつしない（数えない）。
+    v0.12: きぜつの処理（トラッシュ）の前に、きぜつしたときに使える特殊能力（「ふしちょう」）の候補を求める（``_post_knockout_candidates``）。
     """
     attacker_side = state.current_player
     knocked = [
@@ -1074,11 +1102,58 @@ def _knock_out_after_attack(state: GameState) -> None:
         for pokemon in state.players[owner].in_play()
         if pokemon.damage >= state.card_def(pokemon.card).hp
     ]
+    candidates = _post_knockout_candidates(state, knocked)
     prize_takers = []
     for owner, pokemon in knocked:
         _knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
         prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤーがサイドを取る（p.323）
-    _after_knockouts(state, prize_takers)
+    _after_knockouts(state, prize_takers, post_knockout=candidates)
+
+
+def _post_knockout_candidates(state: GameState, knocked) -> tuple[tuple[int, int, str, int], ...]:
+    """きぜつするポケモン ``knocked``（(持ち主, ポケモン) の並び。まだ場にいる）のうち、「きぜつ」したときに使える特殊能力（R団のファイヤーの
+    「ふしちょう」。``effects.ReturnToHandOnKnockOut``）を使えるもの（v0.12。docs/phoenix-v0.12.md の P5〜P19）。(持ち主, カードの uid,
+    カード id, パワーの位置) の並び。
+
+    きぜつの処理（トラッシュ）の前の場で求める（B2。場をはなれたあとの場の状態で、過去の特殊状態・抑止を判断しない）:
+
+    - 特殊能力はいちばん上のカードのもの（p.310）。きぜつの原因は問わない（ワザ・自分のワザ・こんらん・「はんげき」・どく。P5〜P10）。
+    - 「ねむり・マヒ・こんらん」状態のまま「きぜつ」するときは使えない（P13〜P15・P17。今の特殊状態 = きぜつするときの特殊状態。ワザで
+      HP 以上になった相手のポケモンには、そのあとの効果を与えない（v0.4d）ので、HP 以上になってからきぜつの処理までに特殊状態は変わら
+      ない）。どくは関係しない（P16）。
+    - かがくへんかガス（v0.8）: はたらいているかがくへんかガスが場に残る（いっしょにきぜつしない）なら使えない（P18。「すべての「特殊
+      能力」は使えず」）。はたらいているかがくへんかガスを持つポケモンがすべて同じきぜつの判定できぜつする場合は、ガスがきぜつの時点で
+      はたらいているか、手札に加える時点で消えているかが原典で決められない（P19。UNRESOLVED）。今の対応カードでは、そうなりうる場合は
+      どれも先に止めている（ワザのあとは W24・ポケモンチェックは ``UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT``）ので起こらない。起こったら
+      エンジンの不具合として止める。
+    - 2 つ以上使える場合の順番（p.325「同じタイミングで…番をおこなっているプレイヤーが決めます」）は、今の対応カードでは起こらない（R団の
+      ファイヤーが 2 匹同時にきぜつするのは、W24・C18・ポケモンチェックの両方のきぜつのどれかで、すべて先に止めている）。起こったら
+      エンジンの不具合として止める。
+    """
+    knocked_ids = {pokemon.pokemon_id for _, pokemon in knocked}
+    candidates = []
+    for owner, pokemon in knocked:
+        found = post_knockout_power(state, pokemon)
+        if found is None:
+            continue
+        key, effect = found
+        if not effect.is_able(pokemon):
+            continue  # ねむり・マヒ・こんらんのまま「きぜつ」する（P13〜P15）
+        suppressors = suppressors_of(state, state.card_def(pokemon.card).powers[key.power_index])
+        if suppressors and all(pokemon_id in knocked_ids for pokemon_id in suppressors):
+            raise RuntimeError(
+                f"「{key}」を持つポケモン {pokemon.pokemon_id} と、それを消しているかがくへんかガスのポケモン {suppressors} がそろってきぜつする"
+                "（P19。原典で決められない。今の対応カードでは先に止めている。エンジンの不具合）"
+            )
+        if suppressors:
+            continue  # はたらいているかがくへんかガスが場に残る（P18）
+        candidates.append((owner, pokemon.card, key.card_id, key.power_index))
+    if len(candidates) > 1:
+        raise RuntimeError(
+            f"きぜつしたときに使える特殊能力の候補が {len(candidates)} つある（順番は番のプレイヤーが決める（p.325）が、今の対応カードでは起こらない。"
+            "エンジンの不具合）"
+        )
+    return tuple(candidates)
 
 
 def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None) -> None:
@@ -1115,7 +1190,7 @@ def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneou
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
 
 
-def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None) -> None:
+def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None, post_knockout=()) -> None:
     """きぜつの後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 続き（p.323 の記述の順）。
 
     ワザの処理の後（続きは番の終わり）と、ポケモンチェックの中のきぜつの後（v0.3a。続きは次の番の始まり）で使う。
@@ -1134,6 +1209,20 @@ def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None)
     2 のあと（3・4 をして次の番を始める ``_pokemon_check_sleep_and_paralysis``。v0.3a は次の番を始めるだけだった）。
     決定の ``context`` の ``"then"`` に書いて、再開したときに使う（ポケモンチェックを二度しない・番の終わりを二度しない
     ため）。ワザのあとの決定には書かない（v0.2f と同じ形）。
+
+    ``post_knockout``（v0.12）: きぜつしたときに使える特殊能力（「ふしちょう」）の候補（``_post_knockout_candidates``。(持ち主, カードの
+    uid, カード id, パワーの位置) の並び）。サイドを取る決定の ``context`` の ``"post_knockout"`` に書いて運び（候補があるときだけ。
+    ないときの決定の形は v0.11 と同じ）、勝ち負けの判定で対戦が続くなら、バトル場に出す前に、持ち主に使うかを決めさせる
+    （``_offer_post_knockout``）。対戦が終わるなら決めさせない。
+
+    順番の正規化（v0.12。docs/post-knockout-powers-v0.12.md 3 章）: 「ふしちょう」の宣言・サイドを取る・バトル場に出す・勝ち負けの判定の
+    順番は、きぜつしたことから起こる同じタイミングのことがらとして番のプレイヤーが決める（p.325）とも、きぜつの処理の手順（p.323）の
+    中とも書かれていない（P27・P28・P30。UNRESOLVED）。ただし、手札に加えたカードはサイド・バトル場に出せるポケモン（ベンチ）・山札・
+    勝ち負けの条件（p.311 の表）のどれにも関わらない（手札のたねポケモンはバトル場に出せない。p.311）ので、どの順番でも、だれがどの
+    カードを選べるか・勝ち負けとその理由は変わらない。v0.2f のサイドを取る順番と同じく、選ばせずに「サイド → 勝ち負けの判定 → （対戦が
+    続くなら）ふしちょう → バトル場に出す」の順に正規化している（ルールの裁定ではない）。対戦が終わる場合（すべてのサイドを取った・
+    出せるポケモンがいない。p.311「そこで…対戦は終了します」）は、決めさせずに終える（勝ち負けより先に「ふしちょう」を宣言できるとは
+    決めない。手札に加えても勝ち負けは変わらない）。
     """
     budget = {player: len(state.players[player].prizes) for player in PLAYERS}
     queue = []
@@ -1141,14 +1230,19 @@ def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None)
         if budget[player] > 0:
             queue.append(player)
             budget[player] -= 1
-    _next_prize_or_judge(state, tuple(queue), then)
+    _next_prize_or_judge(state, tuple(queue), then, tuple(post_knockout))
 
 
 def _then_context(then: str | None) -> tuple[tuple[str, str], ...]:
     return () if then is None else (("then", then),)
 
 
-def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | None = None) -> None:
+def _post_knockout_context(post_knockout: tuple) -> tuple[tuple[str, tuple], ...]:
+    """サイドを取る決定の ``context`` に書く「ふしちょう」の候補（v0.12）。候補がなければ何も書かない（v0.11 と同じ形）。"""
+    return () if not post_knockout else (("post_knockout", tuple(post_knockout)),)
+
+
+def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | None = None, post_knockout: tuple = ()) -> None:
     if queue:
         player = queue[0]
         push_decision(
@@ -1157,7 +1251,7 @@ def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | N
             player=player,
             options=range(len(state.players[player].prizes)),  # サイドの位置（表は見ない）
             resume="take_prize",
-            context=(("remaining", queue[1:]), *_then_context(then)),
+            context=(("remaining", queue[1:]), *_then_context(then), *_post_knockout_context(post_knockout)),
         )
         return
 
@@ -1168,7 +1262,14 @@ def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | N
     if result is not None:
         _finish(state, result)
         return
+    if post_knockout:
+        _offer_post_knockout(state, post_knockout, then)  # v0.12: 「ふしちょう」を使うか（バトル場に出す前。正規化した順番）
+        return
+    _promotions_after_judge(state, then)
 
+
+def _promotions_after_judge(state: GameState, then: str | None) -> None:
+    """勝ち負けの判定で対戦が続くとき、バトル場にポケモンがいないプレイヤーに出させる（v0.12 で ``_next_prize_or_judge`` から分けた）。"""
     # 両方同時なら、番でないプレイヤーが先に出し、番のプレイヤーはそれを見てから出す（pp.323-324。決定の順番）
     order = (1 - state.current_player, state.current_player)
     queue = tuple(p for p in order if state.players[p].active is None)
@@ -1176,6 +1277,53 @@ def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | N
         # ポケモンチェックの中では、出す順番が決まらない（どちらの番でもない）。その場合は _pokemon_check が止める
         raise RuntimeError("ポケモンチェックのあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
     _next_promotion_or_end(state, queue, then)
+
+
+def _offer_post_knockout(state: GameState, post_knockout: tuple, then: str | None) -> None:
+    """きぜつしたときに使える特殊能力（「ふしちょう」）を使うかを、そのカードの持ち主に決めさせる（v0.12。p.82・p.311。P1〜P4）。
+
+    決定 ``POST_KNOCKOUT_POWER``（選べるものはトラッシュにあるそのカードの uid 1 つ。選ぶ数 0〜1。選ばない = 使わない）。再開先は
+    ``"post_knockout"``、``context`` は ``"power"``（カード id, パワーの位置）と、ポケモンチェックの中なら ``"then"``。番のプレイヤー・
+    番の番号は変えない。決定を出す時点では乱数を使わない。候補は ``_post_knockout_candidates`` が 1 つまでにしている。"""
+    if len(post_knockout) != 1:
+        raise RuntimeError(f"「ふしちょう」の候補 {post_knockout!r} が 1 つではない（エンジンの不具合）")
+    owner, card, card_id, power_index = post_knockout[0]
+    if card not in state.players[owner].discard:
+        raise RuntimeError(f"「ふしちょう」の候補のカード {card} が、持ち主 {owner} のトラッシュにない（エンジンの不具合）")
+    push_decision(
+        state,
+        kind=POST_KNOCKOUT_POWER,
+        player=owner,
+        options=(card,),
+        resume="post_knockout",
+        context=(("power", (card_id, power_index)), *_then_context(then)),
+        min_choices=0,
+        max_choices=1,
+    )
+
+
+def _resume_post_knockout(state: GameState, decision, choices: tuple[int, ...]) -> None:
+    """「ふしちょう」を使うかの決定の続き（v0.12。p.311「ポケモンの特殊能力を使う」・p.82）。
+
+    - 選ばなかった（0 個）: 使用を宣言しない（p.311「かならずしも特殊能力の使用を宣言する必要はありません」。P2）。ログ
+      ``post_knockout_power_declined``。カードはトラッシュに残る。
+    - 選んだ（そのカードの uid）: 1. 使用を宣言する（ログ ``post_knockout_power_declared``。p.311 の手順 1）→ 2. 使うための条件（決定を
+      出す前に確かめた）→ 3. 説明にしたがって処理する（``ReturnToHandOnKnockOut.recover``。トラッシュから手札に加え、相手に見せる）。
+    どちらのあとも、同じきぜつで再び決めさせない。そのあとバトル場にポケモンを出す（``_promotions_after_judge``）。乱数は使わない。
+    """
+    owner = decision.player
+    card = decision.options[0]
+    card_id, power_index = decision.context_value("power")
+    key = PowerKey(card_id, power_index)
+    definition = state.card_def(card)
+    effect = state.effects.power_effect(definition.id, definition.powers[power_index])
+    base = {"player": owner, "card": card, "card_id": card_id, "power": str(key)}
+    if not choices:
+        state.add_event("post_knockout_power_declined", **base)
+    else:
+        state.add_event("post_knockout_power_declared", **base)
+        effect.recover(state, owner, card, key)
+    _promotions_after_judge(state, decision.context_value("then"))
 
 
 def _next_promotion_or_end(state: GameState, queue: tuple[int, ...], then: str | None = None) -> None:
@@ -1204,7 +1352,9 @@ def _resume_take_prize(state: GameState, decision, choices: tuple[int, ...]) -> 
     uid = prizes.pop(choices[0])
     state.players[player].hand.append(uid)
     state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
-    _next_prize_or_judge(state, decision.context_value("remaining", ()), decision.context_value("then"))
+    _next_prize_or_judge(
+        state, decision.context_value("remaining", ()), decision.context_value("then"), decision.context_value("post_knockout", ())
+    )
 
 
 def _resume_promote_active(state: GameState, decision, choices: tuple[int, ...]) -> None:
@@ -1380,6 +1530,7 @@ _RESUMERS = {
     "attack": _resume_attack,
     "trainer": _resume_trainer,
     "knock_out": _resume_knock_out,  # v0.11: 「こんじょう」を使うかの決定のあと、ワザのあとのきぜつの処理
+    "post_knockout": _resume_post_knockout,  # v0.12: 「ふしちょう」を使うかの決定のあと、バトル場に出す
 }
 
 
@@ -1483,8 +1634,12 @@ def check_invariants(state: GameState) -> list[str]:
     - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満（v0.10: ワザの途中の
       決定を待つ間の、相手の「はんげき」で HP 以上になったワザを使ったポケモンだけを除く。``_counter_knocked_out_attacker_awaiting``。
       v0.11: 「こんじょう」を使うかの決定を待つ間の、その対象のポケモンと、同じワザで HP 以上になったワザを使ったポケモンを除く。
-      ``_ko_prevention_awaiting``）、
+      ``_ko_prevention_awaiting``。v0.12: ワザの途中の決定を待つ間の、相手の「ほのおのかべ」で HP 以上になったワザを使ったポケモンも
+      ``_counter_knocked_out_attacker_awaiting`` で除く）、
       ベンチは 5 匹まで、サイドはルールの枚数まで。
+    - 「ふしちょう」を使うかの決定（v0.12。再開先 ``"post_knockout"``）を待つ間は、バトル場が空のプレイヤーがいてよい（きぜつの処理のあと、
+      バトル場に出す前）。決定と、その前のサイドを取る決定の候補（``context`` の ``"post_knockout"``）は
+      ``_post_knockout_decision_problems``・``_post_knockout_candidate_problems`` が確かめる。
     - 段階との対応: 番の途中は両方のバトル場にポケモンがいる。サイドを取る・バトル場に出す段階には、
       それを待っているプレイヤーがいる。終わった段階には結果か止めた理由がある。
     - 特殊状態（v0.3a）: 特殊状態があるのはバトル場のポケモンだけ。どくのダメージは 10 の倍数の正の数。
@@ -1603,8 +1758,10 @@ def check_invariants(state: GameState) -> list[str]:
     if not 1 <= state.next_decision_id:
         problems.append(f"次の決定の番号 {state.next_decision_id!r} が正しくない")
 
+    # v0.12: 「ふしちょう」を使うかの決定（きぜつの処理のあと、バトル場に出す前。再開先 "post_knockout"）を待つ間も、バトル場が空のことがある
+    after_knockout = phase is Phase.DECISION and state.decision is not None and state.decision.resume == "post_knockout"
     for player, p in enumerate(state.players):
-        if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE):
+        if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE) and not after_knockout:
             problems.append(f"プレイヤー {player} のバトル場にポケモンがいないまま {phase.value} になっている")
     if phase is Phase.MAIN:
         if state.current_player not in PLAYERS:
@@ -1807,6 +1964,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）
     - ログとの対応: 同じポケモン・種類・番の ``persistent_effect_added`` があり、そのあとに、この効果を消したはずの
       イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``・``forced_switch``（v0.4d））がない
+    - v0.12 の ``Retaliation``（「ほのおのかべ」）: ``PreventDamage`` と同じ確認（自分自身・持ち主の番・次の相手の番・期限・バトル場だけ）に
+      加えて、``attack_index`` がこのカードのワザの位置で、そのワザに ``DamageAndRetaliation`` が登録され、``amount`` がその実装の値
     """
     effects = pokemon.persistent_effects
     where = f"ポケモン {pokemon.pokemon_id} の持続する効果"
@@ -1841,8 +2000,25 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} を、持ち主の番でない {effect.created_turn} 番に与えている")
         if state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
             problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
+        if isinstance(effect, Retaliation):
+            problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
+
+
+def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Retaliation, where: str) -> list[str]:
+    """「ほのおのかべ」の持続する効果（v0.12）の、ワザの位置と与えるダメージが、このポケモンのカードの登録されたワザと合うか。"""
+    from .effects import DamageAndRetaliation  # engine の読み込みの順番に関わらず、使うときに読み込む
+
+    if type(effect.attack_index) is not int or type(effect.amount) is not int:
+        return [f"{where} {effect!r} のワザの位置・与えるダメージが整数ではない"]
+    definition = state.card_def(pokemon.card)
+    if not 0 <= effect.attack_index < len(definition.attacks):
+        return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
+    entry = state.effects.attack_entry(definition.id, effect.attack_index)
+    if entry is None or not isinstance(entry.effect, DamageAndRetaliation) or entry.effect.retaliation != effect.amount:
+        return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
 
 
 def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
@@ -1905,7 +2081,10 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
     の C16・C30）。ほかのポケモン・ほかの段階・決定のないときは、これまでどおり HP 以上のダメージで場に残ることを許さない。
 
     決定の続きの情報（``context`` の ``"use"``）がこのポケモンを指し、今の番のログで、最後のワザの宣言（``attack``）のあとに、このポケモンを
-    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。"""
+    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。
+
+    v0.12: 相手の R団のファイヤーの「ほのおのかべ」のダメージ（ログ ``damage`` の ``retaliation``。このポケモンの番号で、今のダメージ）で
+    HP 以上になった場合も同じ（「ほのおのかべ」のダメージもダメージの処理のあと、効果の前。p.89 の「ふきとばし」の例。W23）。"""
     d = state.decision
     if state.phase is not Phase.DECISION or d is None or d.resume != "attack":
         return False
@@ -1916,6 +2095,9 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
         if event["kind"] == "attack":
             return False
         if event["kind"] == "counterattack" and event["attacker_pokemon_id"] == pokemon.pokemon_id and event["knocked_out"]:
+            return True
+        if (event["kind"] == "damage" and event.get("retaliation") and event.get("pokemon_id") == pokemon.pokemon_id
+                and event.get("total_damage") == pokemon.damage):
             return True
     return False
 
@@ -1950,7 +2132,9 @@ def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPla
 def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
     """「こんじょう」を使うかの決定（v0.11。``KO_PREVENTION``・再開先 ``"knock_out"``）の整合性。
 
-    - 種類と再開先の組、選ぶ数（0〜1）、選べるもの（ポケモン 1 匹）、決定するのはワザを使われた側（番でないプレイヤー）。
+    - 種類と再開先の組、選ぶ数（0〜1）、選べるもの（ポケモン 1 匹）、決定するのはワザを使われた側（番でないプレイヤー）。v0.12 から、
+      番のプレイヤーのワザを使ったポケモンが、相手の「ほのおのかべ」のダメージ（ログ ``damage`` の ``retaliation``）で HP 以上になった
+      場合は、番のプレイヤーが決定する（対象はワザを使ったポケモン）。
     - ``"attack"``（ワザ）: 番のプレイヤーのバトル場のポケモンで、いちばん上のカードがそのカード。今の番にそのワザのログ ``attack`` が
       ちょうど 1 回。
     - 対象のポケモン: 決定するプレイヤーの場にいて、いちばん上のカードの ``"power"`` の位置に「こんじょう」（``PreventKnockOutOnHeads``）が
@@ -1964,9 +2148,13 @@ def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
         return [f"決定 {d.kind} の再開先 {d.resume!r} が合わない（「こんじょう」の決定は ko_prevention・knock_out の組）"]
     if (d.min_choices, d.max_choices) != (0, 1) or len(d.options) != 1:
         problems.append(f"「こんじょう」の決定の選ぶ数 {d.min_choices}〜{d.max_choices}・選べるもの {d.options} が正しくない（0〜1 個・1 匹）")
-    if d.player != 1 - state.current_player:
-        problems.append(f"「こんじょう」の決定をするのがプレイヤー {d.player}（ワザを使われた側 {1 - state.current_player!r} のはず）")
     attack = d.context_value("attack")
+    by_attacker = d.player == state.current_player  # v0.12: 「ほのおのかべ」のダメージで HP 以上になったワザを使ったポケモン
+    if d.player not in PLAYERS or (by_attacker and not (isinstance(attack, tuple) and len(attack) == 4 and d.options == (attack[1],))):
+        problems.append(
+            f"「こんじょう」の決定をするのがプレイヤー {d.player}（ワザを使われた側 {1 - state.current_player!r}、または「ほのおのかべ」を"
+            "受けたワザを使ったポケモンの持ち主のはず）"
+        )
     power = d.context_value("power")
     if not (isinstance(attack, tuple) and len(attack) == 4 and isinstance(power, tuple) and len(power) == 2):
         return problems + [f"「こんじょう」の決定の続きの情報 {attack!r}・{power!r} が正しくない"]
@@ -2002,10 +2190,95 @@ def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
         if event["kind"] in ("knock_out", "ko_prevention_declined", "ko_prevention_declared", "ko_prevented", "ko_prevention_failed"):
             problems.append(f"「こんじょう」の決定の前に、同じワザのあとの {event['kind']} がある（同じきぜつの判定で 2 度決めさせない）")
         if (received is None and event["kind"] == "damage" and event.get("player") == d.player and event.get("pokemon") == pokemon.card
-                and event.get("target", "opponent_active") == "opponent_active"):
+                and event.get("target", "opponent_active") == "opponent_active" and bool(event.get("retaliation")) == by_attacker):
             received = event
     if received is None or received.get("total_damage") != pokemon.damage:
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} が、今の番のワザのダメージで今のダメージになったログがない")
+    return problems
+
+
+def _post_knockout_candidate_problems(state: GameState, candidates) -> list[str]:
+    """サイドを取る決定の ``context`` の ``"post_knockout"``（「ふしちょう」の候補。v0.12）の整合性。
+
+    形（(持ち主, カードの uid, カード id, パワーの位置) が 1 つ）と、そのカードが持ち主のトラッシュにあり、そのパワーの位置に「ふしちょう」
+    （``ReturnToHandOnKnockOut``）が登録され、直前のきぜつ（ログ ``knock_out``。サイドを取る決定の前の、きぜつ・取ったサイドの並び）の
+    ポケモンのカードであること。特殊状態・かがくへんかガスはきぜつしたあとの状態からは確かめられない（ログの監査が組み立て直して確かめる）。
+    """
+    if not (isinstance(candidates, tuple) and len(candidates) == 1 and isinstance(candidates[0], tuple) and len(candidates[0]) == 4):
+        return [f"「ふしちょう」の候補 {candidates!r} の形が正しくない（(持ち主, カード, カード id, パワーの位置) が 1 つ）"]
+    owner, card, card_id, power_index = candidates[0]
+    problems = _post_knockout_card_problems(state, owner, card, card_id, power_index)
+    knocked = []
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "take_prize" and not knocked:
+            continue
+        if kind == "knock_out":
+            knocked.append(event.get("pokemon"))
+        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+            continue
+        else:
+            break
+    if card not in knocked:
+        problems.append(f"「ふしちょう」の候補のカード {card} が、直前にきぜつしたポケモン {tuple(knocked)} のカードではない")
+    return problems
+
+
+def _post_knockout_card_problems(state: GameState, owner, card, card_id, power_index) -> list[str]:
+    """「ふしちょう」の候補・決定のカードが、持ち主のトラッシュにあり、そのパワーの位置に「ふしちょう」が登録されたカードか（v0.12）。"""
+    if owner not in PLAYERS or card not in state.cards or state.cards[card].owner != owner:
+        return [f"「ふしちょう」のカード {card!r} の持ち主 {owner!r} が正しくない"]
+    problems = []
+    if card not in state.players[owner].discard:
+        problems.append(f"「ふしちょう」のカード {card} が、持ち主 {owner} のトラッシュにない")
+    definition = state.card_def(card)
+    if definition.id != card_id or not isinstance(power_index, int) or not 0 <= power_index < len(definition.powers):
+        return problems + [f"「ふしちょう」のパワー {card_id}@power{power_index!r} が、カード {card}（{definition.id}）のパワーではない"]
+    effect = state.effects.power_effect(definition.id, definition.powers[power_index])
+    if not isinstance(effect, ReturnToHandOnKnockOut):
+        problems.append(f"「ふしちょう」のパワー {card_id}@power{power_index} に、きぜつしたときに使える特殊能力の実装が登録されていない")
+    return problems
+
+
+def _post_knockout_decision_problems(state: GameState, d) -> list[str]:
+    """「ふしちょう」を使うかの決定（v0.12。``POST_KNOCKOUT_POWER``・再開先 ``"post_knockout"``）の整合性。
+
+    - 種類と再開先の組、選ぶ数（0〜1）、選べるもの（カード 1 枚）。決定するのはそのカードの持ち主（番のプレイヤーでもよい。きぜつの
+      原因を問わない）。
+    - ``"power"``: そのカードの、そのパワーの位置に「ふしちょう」が登録されている。カードは持ち主のトラッシュにある。
+    - 対戦は続いている（勝ち負けが決まる場合は決めさせない。``_next_prize_or_judge``）。かがくへんかガスに消されていない（P18）。
+    - ログ: 最後のきぜつ（``knock_out``）のどれかがこのカードで、そのあとは取ったサイド（``take_prize``）だけ（同じきぜつで 2 度決めさせない。
+      バトル場に出すのはこの決定のあと）。
+    """
+    if d.kind != POST_KNOCKOUT_POWER or d.resume != "post_knockout":
+        return [f"決定 {d.kind} の再開先 {d.resume!r} が合わない（「ふしちょう」の決定は post_knockout_power・post_knockout の組）"]
+    problems = []
+    if (d.min_choices, d.max_choices) != (0, 1) or len(d.options) != 1:
+        return [f"「ふしちょう」の決定の選ぶ数 {d.min_choices}〜{d.max_choices}・選べるもの {d.options} が正しくない（0〜1 個・カード 1 枚）"]
+    power = d.context_value("power")
+    if not (isinstance(power, tuple) and len(power) == 2):
+        return [f"「ふしちょう」の決定の続きの情報 {power!r} が正しくない"]
+    card = d.options[0]
+    card_id, power_index = power
+    problems.extend(_post_knockout_card_problems(state, d.player, card, card_id, power_index))
+    if problems:
+        return problems
+    definition = state.card_def(card)
+    if suppressors_of(state, definition.powers[power_index]):
+        problems.append(f"「ふしちょう」の決定のカード {card} の特殊能力が、かがくへんかガスに消されている（P18）")
+    knocked = []
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "take_prize" and not knocked:
+            continue
+        if kind == "knock_out":
+            knocked.append(event.get("pokemon"))
+        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+            continue
+        else:
+            break
+    if card not in knocked:
+        problems.append(f"「ふしちょう」の決定のカード {card} が、直前にきぜつしたポケモン {tuple(knocked)} のカードではない（ログ）")
     return problems
 
 
@@ -2124,9 +2397,10 @@ def _decision_problems(state: GameState) -> list[str]:
     if d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) and (d.min_choices, d.max_choices) != (1, 1):
         problems.append(f"決定 {d.kind} で選ぶ数が {d.min_choices}〜{d.max_choices}（サイド 1 枚・ポケモン 1 匹のはず。p.312・p.313）")
     if then is not None:
-        # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代だけで、交代は 1 人だけ
+        # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代（v0.12 から「ふしちょう」も）だけで、交代は 1 人だけ
         # （両方のバトル場が空になる場合は、出す順番が決まらないので止めている）
-        if then != NEXT_TURN or d.kind not in (TAKE_PRIZE, PROMOTE_ACTIVE) or d.resume != d.kind:
+        kinds = {TAKE_PRIZE: TAKE_PRIZE, PROMOTE_ACTIVE: PROMOTE_ACTIVE, POST_KNOCKOUT_POWER: "post_knockout"}
+        if then != NEXT_TURN or kinds.get(d.kind) != d.resume:
             problems.append(f"決定 {d.kind} の続き {then!r} が正しくない")
         if d.kind == PROMOTE_ACTIVE and remaining:
             problems.append(f"ポケモンチェックのあとにバトル場に出すプレイヤーが複数いる {(d.player, *remaining)}")
@@ -2142,6 +2416,11 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"サイドを取るプレイヤーの並び {queue} が正しくない")
         else:
             problems.extend(_prize_queue_problems(state, queue))
+        candidates = d.context_value("post_knockout")
+        if candidates is not None:
+            problems.extend(_post_knockout_candidate_problems(state, candidates))  # v0.12
+    elif d.context_value("post_knockout") is not None:
+        problems.append(f"サイドを取る決定でない {d.kind} に、「ふしちょう」の候補が書かれている")
     if d.kind == PROMOTE_ACTIVE:
         queue = (d.player, *remaining)
         for player in queue:
@@ -2159,6 +2438,8 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.extend(_attack_decision_problems(state, d))
     if d.kind == KO_PREVENTION or d.resume == "knock_out":
         problems.extend(_ko_prevention_decision_problems(state, d))  # v0.11
+    if d.kind == POST_KNOCKOUT_POWER or d.resume == "post_knockout":
+        problems.extend(_post_knockout_decision_problems(state, d))  # v0.12
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
     if unresolved:

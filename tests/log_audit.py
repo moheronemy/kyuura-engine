@@ -59,7 +59,9 @@ from kyuura_engine.effects import (
     FORCED_SWITCH_ELEMENT,
     AttackImmunityOnHeads,
     CounterattackDamage,
+    DamageAndRetaliation,
     PreventKnockOutOnHeads,
+    ReturnToHandOnKnockOut,
     SuppressOtherPowers,
 )
 from kyuura_engine.serialize import FORMAT_VERSIONS
@@ -70,7 +72,7 @@ TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
     "special_condition", "forced_switch", "forced_switch_skipped", "drain_heal", "drain_heal_skipped", "knock_out", "turn_end", "game_end",
-    "halted", "recover_energy", "discard_energy", "remove_all_damage_counters", "persistent_effect_added",
+    "halted", "recover_energy", "discard_energy", "remove_all_damage_counters", "persistent_effect_added", "persistent_effect_skipped",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -122,7 +124,9 @@ def required_format(state) -> tuple[int, bool]:
     if state.energy_attached_by_powers_this_turn:
         needed = max(needed, 9)
     d = state.decision
-    not_v0_1 = d is not None and (d.context_value("then") is not None or d.resume in ("attack", "knock_out"))
+    not_v0_1 = d is not None and (
+        d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout") or d.context_value("post_knockout") is not None
+    )
     return needed, not_v0_1
 
 
@@ -150,6 +154,12 @@ def serialization_problems(state) -> list[str]:
     except ValueError:
         pass
     return problems
+
+
+def _attack_key(text: str) -> tuple[str, int]:
+    """ログのワザ（``AttackKey`` の文字列 ``"カード id#位置"``）を (カード id, 位置) にする（v0.12）。"""
+    card_id, _, index = text.partition("#")
+    return card_id, int(index) if index.isdigit() else -1
 
 
 def log_problems(state) -> list[str]:
@@ -217,6 +227,11 @@ def log_problems(state) -> list[str]:
                 problems.append(f"1 回のワザで「こんじょう」を使うかの決定が {window['ko_prevention_declined'] + window['ko_prevention_declared']} 回（G14・G40）")
             if window["ko_prevented"] + window["ko_prevention_failed"] != window["ko_prevention_declared"]:
                 problems.append("1 回のワザで「こんじょう」の宣言と結果（ko_prevented・ko_prevention_failed）の数が違う")
+            # v0.12: 「ほのおのかべ」はワザ 1 回につき 1 回まで（ダメージを受ける相手のポケモンは 1 匹。W25）。そのダメージの要素も 1 回まで
+            if window["retaliation"] + window["retaliation_skipped"] > 1 or window["damage:retaliation"] > window["retaliation"]:
+                problems.append(f"1 回のワザで「ほのおのかべ」が {window['retaliation'] + window['retaliation_skipped']} 回・そのダメージが {window['damage:retaliation']} 回")
+            if window["post_knockout_power_declined"] + window["post_knockout_power_declared"] > 1:
+                problems.append("1 回のワザのあとで「ふしちょう」を使うかの答えが 2 回以上")
             window = None
             continue
         if kind in ("pokemon_power", "move_energy", "power_attach_energy", "move_damage_counter"):
@@ -224,7 +239,7 @@ def log_problems(state) -> list[str]:
             # v0.7 のダメージスワップも）
             problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
         if kind == "damage":
-            window["damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
+            window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":
             window[f"prevented:{e['target']}"] += 1
         else:
@@ -255,6 +270,12 @@ def log_problems(state) -> list[str]:
     attack_window: dict | None = None  # 今の番のワザ（attack から番の終わりまで。v0.9）: 使ったプレイヤー・ポケモン・ワザ・受けるかの判定
     expect: tuple | None = None  # 直前の evade_check のすぐあとに続くはずの処理（場のポケモンの番号, 要素, 受けるか。v0.9）
     previous: dict | None = None  # 1 つ前のイベント（v0.9。evade_check の直前のコイン）
+    # v0.12: ログから組み立てた、今ある持続する効果（(場のポケモンの番号, 与えた番) → 種類・はたらく番・ワザ）
+    alive: dict[tuple[int, int], dict] = {}
+    # v0.12: 直前のきぜつで「ふしちょう」を使えた・使えなかったカード（答えを待つもの）と、その答えのあとの状態
+    rebirth_pending: list[dict] = []
+    rebirth_answered: dict | None = None  # 直前の答え（宣言なら、すぐあとに return_to_hand が続くはず）
+    batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
 
     def working_gases() -> list[tuple[int, SuppressOtherPowers]]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
@@ -310,12 +331,62 @@ def log_problems(state) -> list[str]:
                 return f"{definition.id}@power{index}", effect, power
         return None, None, None
 
+    def rebirth_power(uid: int) -> tuple[str | None, object | None]:
+        """カード ``uid`` の「ふしちょう」（v0.12。``ReturnToHandOnKnockOut``）: (PowerKey の文字列, 特殊能力の定義)。なければ (None, None)。"""
+        definition = state.card_def(uid)
+        for index, power in enumerate(definition.powers):
+            if isinstance(state.effects.power_effect(definition.id, power), ReturnToHandOnKnockOut):
+                return f"{definition.id}@power{index}", power
+        return None, None
+
+    def active_retaliation(pid: int, turn: int) -> dict | None:
+        """ログから組み立てた、ポケモン ``pid`` の今の番 ``turn`` にはたらく「ほのおのかべ」の効果（v0.12）。"""
+        for (effect_pid, _), info in alive.items():
+            if effect_pid == pid and info["kind"] == "retaliation" and info["active_turn"] == turn:
+                return info
+        return None
+
+    def retaliation_damage_problems(e: dict, ret: dict) -> list[str]:
+        """「ほのおのかべ」のダメージのログ（v0.12）: 基本となるダメージが効果の量で、弱点・抵抗力は R団のファイヤーのタイプと、受けた
+        ポケモン（いちばん上のカード）の弱点・抵抗力で計算した（W15・W16。p.82「この10ダメージは、弱点・抵抗力の影響を受けます」）。"""
+        found = []
+        pid = e.get("pokemon_id")
+        steps = e.get("steps") or ()
+        if not steps or tuple(steps[0]) != ("1 基本となる計算", ret["amount"]):
+            found.append(f"{e['turn']} 番の「ほのおのかべ」のダメージの基本となるダメージ {steps[:1]} が {ret['amount']} ではない（W14）")
+        if pid in top and ret["pokemon_id"] in top:
+            attacker_type = state.card_def(top[ret["pokemon_id"]]).pokemon_type
+            receiver = state.card_def(top[pid])
+            if e["weakness"] != (receiver.weakness is not None and receiver.weakness is attacker_type):
+                found.append(f"{e['turn']} 番の「ほのおのかべ」のダメージの弱点 {e['weakness']} が、タイプと弱点に合わない（W15）")
+            if e["resistance"] != (receiver.resistance is not None and receiver.resistance is attacker_type):
+                found.append(f"{e['turn']} 番の「ほのおのかべ」のダメージの抵抗力 {e['resistance']} が、タイプと抵抗力に合わない（W16）")
+        return found
+
+    def source_of(e: dict) -> dict | None:
+        """イベント ``e``（判定・ダメージ・はんげき）を起こしたワザ（v0.12）: 今の番のワザ（attack_window）か、その中の「ほのおのかべ」
+        （attack_window["ret"]。ワザを使ったポケモンは R団のファイヤー）。どちらでもなければ None。"""
+        if attack_window is None:
+            return None
+        keys = (e.get("effect"), e.get("attacker"), e.get("attacker_pokemon_id"))
+        if keys == (attack_window["effect"], attack_window["player"], attack_window["pokemon_id"]):
+            return attack_window
+        ret = attack_window["ret"]
+        if ret is not None and keys == (ret["effect"], ret["player"], ret["pokemon_id"]):
+            return ret
+        return None
+
     def received(e: dict, pid: int, element: str, *, blocked: str | None = None) -> None:
         """ワザの要素 ``element`` のダメージ・効果を、ポケモン ``pid`` が受けた（v0.9）。はたらいている「とうめい」があれば、その前に
         このワザでの判定があって「受ける」こと。"""
         if attack_window is None or pid not in in_play:
             return
         reception = attack_window["reception"]
+        if e.get("retaliation"):
+            # v0.12: 「ほのおのかべ」のダメージは R団のファイヤーのワザによるダメージ（「とうめい」の判定は、そのワザで 1 回）
+            if attack_window["ret"] is None:
+                return
+            reception = attack_window["ret"]["reception"]
         if reception.get(pid) is False:
             problems.append(f"{e['turn']} 番のワザで「とうめい」により受けないと決まったポケモン {pid} が {element} を受けた（{e['kind']}）")
         elif pid not in reception:
@@ -351,6 +422,38 @@ def log_problems(state) -> list[str]:
                     "move_damage_counter）がない"
                 )
             declared = None
+        # v0.12: 「ふしちょう」。きぜつ（knock_out）のあと、サイド（take_prize）のあとに答え（post_knockout_power_declined・
+        # post_knockout_power_declared）が 1 つ。対戦が終わるなら答えはない。宣言のすぐあとに、そのカードの return_to_hand
+        if rebirth_answered is not None:
+            answered, rebirth_answered = rebirth_answered, None
+            if answered["kind"] == "post_knockout_power_declared" and not (
+                kind == "return_to_hand" and e["card"] == answered["card"] and e["player"] == answered["player"] and e["power"] == answered["power"]
+            ):
+                problems.append(f"{answered['turn']} 番の「ふしちょう」の宣言（カード {answered['card']}）のすぐあとに、そのカードの return_to_hand がない（{kind}）")
+        if kind == "return_to_hand" and (previous is None or previous["kind"] != "post_knockout_power_declared"):
+            problems.append(f"{e['turn']} 番にトラッシュから手札に加えた {e['card']} の直前に、「ふしちょう」の宣言がない（使わなかった・宣言のない回収）")
+        if batch_answered and kind in ("take_prize", "knock_out", "game_end"):
+            problems.append(f"{e['turn']} 番の「ふしちょう」の答えのあとに {kind} がある（答えは、サイドを取り、対戦が続くと決まったあと。正規化した順番）")
+        if kind in ("post_knockout_power_declined", "post_knockout_power_declared"):
+            match = next((r for r in rebirth_pending if r["card"] == e["card"]), None)
+            if match is None:
+                problems.append(f"{e['turn']} 番の「ふしちょう」の答え（カード {e['card']}）が、直前のきぜつの処理の中にない")
+            else:
+                rebirth_pending.remove(match)
+                if match["blocked"] is not None:
+                    problems.append(f"{e['turn']} 番に、使えない「ふしちょう」（カード {e['card']}。{match['blocked']}）を使うかを決めた（P13〜P18）")
+                if (e["player"], e["power"]) != (match["player"], match["power"]):
+                    problems.append(f"{e['turn']} 番の「ふしちょう」の答え（カード {e['card']}）のプレイヤー・特殊能力が、きぜつしたカードの持ち主・特殊能力と違う")
+            rebirth_answered = e
+            batch_answered = True
+        elif rebirth_pending and kind not in ("knock_out", "persistent_effect_removed", "take_prize"):
+            if kind != "game_end":
+                for r in rebirth_pending:
+                    if r["blocked"] is None:
+                        problems.append(f"{r['turn']} 番にきぜつした「ふしちょう」を使えるカード {r['card']} に、使うかの答えがないまま {kind} になった（P1・P2）")
+            rebirth_pending = []
+        if batch_answered and kind in ("promote_active", "turn_end", "pokemon_check", "turn_start"):
+            batch_answered = False
         # v0.9: ワザを受けるときに自動的にはたらく特殊能力（ゴーストの「とうめい」）
         if previous is not None and previous["kind"] == "coin_flip" and previous["source"] == "power" and kind not in (
             "evade_check", "ko_prevented", "ko_prevention_failed"
@@ -391,15 +494,38 @@ def log_problems(state) -> list[str]:
             due = attack_window["due"]
             if kind == "damage":
                 pid = e.get("pokemon_id", ids.get(e["pokemon"]))
+                source = attack_window
+                if e.get("retaliation"):
+                    # v0.12: 「ほのおのかべ」のダメージ（R団のファイヤーのワザによるダメージ。ワザを使ったポケモンへ）
+                    source = attack_window["ret"]
+                    if source is None or source["damage_seen"]:
+                        problems.append(f"{e['turn']} 番の「ほのおのかべ」のダメージ（ポケモン {pid}）の前に、その「ほのおのかべ」（retaliation）がない・2 回目")
+                        source = attack_window
+                    else:
+                        source["damage_seen"] = True
+                        if (pid, e["player"], e.get("effect")) != (attack_window["pokemon_id"], attack_window["player"], source["effect"]):
+                            problems.append(f"{e['turn']} 番の「ほのおのかべ」のダメージを受けたのが、ダメージを与えた相手の対戦ポケモン {attack_window['pokemon_id']} ではない（{pid}。W14）")
+                        problems.extend(retaliation_damage_problems(e, source))
+                elif attack_window["ret_seen"]:
+                    problems.append(f"{e['turn']} 番のワザで、「ほのおのかべ」のあとにワザのダメージの要素（ポケモン {pid}）がある（ダメージの処理のあとに与えるはず。p.89・W21）")
                 if attack_window["counter_seen"]:
                     problems.append(f"{e['turn']} 番のワザで、「はんげき」のあとにダメージの要素（ポケモン {pid}）がある（ダメージの処理のあとに与えるはず。p.89）")
-                if e["amount"] > 0 and pid in in_play and pokemon_owner.get(pid) != attack_window["player"]:
+                if e["amount"] > 0 and pid in in_play and pokemon_owner.get(pid) != source["player"]:
                     key, amount, blocked_by = counter_power(pid)
                     if key is not None and blocked_by is None:
                         due.append((pid, key, amount))
                     if guts_power(pid)[0] is not None:
                         # v0.11: 「こんじょう」を持つポケモンが、相手のワザのダメージを受けたときのねむり・マヒ・こんらん（None なら使える。G29）
                         attack_window["ko_able"][pid] = exclusive.get(pid)
+                    info = None if e.get("retaliation") else active_retaliation(pid, e["turn"])
+                    if info is not None:
+                        attack_window["ret_due"].append((pid, info))  # v0.12: 「ほのおのかべ」がはたらく（W11・W13）
+            elif attack_window["ret_due"] and (
+                kind in COUNTER_BARRIERS or (kind == "special_conditions_removed" and e["reason"] == "replaced")
+                or (kind == "coin_flip" and e["source"] == "attack" and attack_window["counter_after_coin"])
+            ):
+                problems.append(f"{e['turn']} 番のワザで、はたらいた「ほのおのかべ」（ポケモン {[d[0] for d in attack_window['ret_due']]}）より先に {kind} がある（p.89・W21）")
+                attack_window["ret_due"].clear()
             elif due and (
                 kind in COUNTER_BARRIERS or (kind == "special_conditions_removed" and e["reason"] == "replaced")
                 or (kind == "coin_flip" and e["source"] == "attack" and attack_window["counter_after_coin"])
@@ -425,6 +551,8 @@ def log_problems(state) -> list[str]:
                 # v0.11: 「こんじょう」を持つポケモンが相手のワザのダメージを受けたときの特殊状態（ko_able）・決定のあったポケモン（ko_offer）・
                 # その結果（declined・declared・heads・tails）・このワザのあとにきぜつしたポケモン（knocked）
                 "ko_able": {}, "ko_offer": None, "ko_result": None, "knocked": set(),
+                # v0.12: はたらいた「ほのおのかべ」（(場のポケモンの番号, 効果)）・処理中の「ほのおのかべ」（ワザを使ったのは R団のファイヤー）
+                "ret_due": [], "ret": None, "ret_seen": False,
                 "counter_after_coin": state.effects.attack_entry(state.cards[e["pokemon"]].card_id, e["attack_index"]) is not None
                 and state.effects.attack_entry(state.cards[e["pokemon"]].card_id, e["attack_index"]).effect.implementation_id in EFFECT_COIN_AFTER_DAMAGE,
             }
@@ -440,11 +568,10 @@ def log_problems(state) -> list[str]:
             attack_window = None
         elif kind == "evade_check":
             pid = e["pokemon_id"]
-            if attack_window is None or (e["effect"], e["attacker"], e["attacker_pokemon_id"]) != (
-                attack_window["effect"], attack_window["player"], attack_window["pokemon_id"]
-            ):
+            source = source_of(e)  # v0.12: 「ほのおのかべ」のダメージ（R団のファイヤーのワザ）の判定もある
+            if source is None:
                 problems.append(f"{e['turn']} 番の「とうめい」の判定（ポケモン {pid}）が、ワザ（{e['effect']}）の処理の中にない")
-            elif pid in attack_window["reception"]:
+            elif pid in source["reception"]:
                 problems.append(f"{e['turn']} 番のワザで、ポケモン {pid} の「とうめい」の判定が 2 回以上（1 つのワザにつき 1 回。T4）")
             if pid not in in_play or pokemon_owner.get(pid) != e["player"] or ids.get(e["pokemon"]) != pid:
                 problems.append(f"{e['turn']} 番の「とうめい」の判定（ポケモン {pid}）が、判定したプレイヤーの場のポケモンではない（T33）")
@@ -463,13 +590,17 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の「とうめい」の判定（ポケモン {pid}）の直前に、ゴースト側のプレイヤーの同じ結果のコインがない")
             if e["evaded"] != (e["result"] == "heads") or e["element"] not in ATTACK_ELEMENTS:
                 problems.append(f"{e['turn']} 番の「とうめい」の判定（ポケモン {pid}）の結果 {e['result']}・{e['evaded']}・{e['element']} が合わない")
-            if attack_window is not None:
-                attack_window["reception"].setdefault(pid, not e["evaded"])
+            if source is not None:
+                source["reception"].setdefault(pid, not e["evaded"])
             expect = (pid, e["element"], not e["evaded"])
         elif kind == "attack_evaded":
             pid = e["pokemon_id"]
-            if attack_window is None or attack_window["reception"].get(pid) is not False or e["effect"] != attack_window["effect"]:
+            ret = None if attack_window is None else attack_window["ret"]
+            source = ret if ret is not None and e["effect"] == ret["effect"] and pid == attack_window["pokemon_id"] else attack_window
+            if source is None or source["reception"].get(pid) is not False or e["effect"] != source["effect"]:
                 problems.append(f"{e['turn']} 番のポケモン {pid} の受けなかった要素 {e['element']} の前に、そのワザの「おもて」の判定がない")
+            if source is not None and source is ret:
+                ret["damage_seen"] = True  # 「ほのおのかべ」のダメージの要素を受けなかった（W19）
             if e["element"] == DAMAGE_ELEMENT and not e.get("amount", 0) > 0:
                 problems.append(f"{e['turn']} 番のポケモン {pid} の受けなかったダメージが {e.get('amount')}（0 より大きいはず。T21）")
         elif kind == "damage" and e["amount"] > 0:
@@ -510,9 +641,8 @@ def log_problems(state) -> list[str]:
         elif kind in ("counterattack", "counterattack_skipped"):
             # v0.10: 「はんげき」のダメージ（ワザを使ったポケモンへ。ワザによるダメージではない）
             target = e["attacker_pokemon_id"]
-            if attack_window is None or (e["effect"], e["attacker"], target) != (
-                attack_window["effect"], attack_window["player"], attack_window["pokemon_id"]
-            ):
+            if source_of(e) is None:
+                # v0.12: 「ほのおのかべ」のダメージ（R団のファイヤーのワザ）を受けたポケモンの「はんげき」は、R団のファイヤーに与える
                 problems.append(f"{e['turn']} 番の「はんげき」（ポケモン {e['pokemon_id']}）が、ダメージを与えたワザの処理の中にない（与える相手はワザを使ったポケモン）")
             amount = None
             if attack_window is not None:
@@ -542,14 +672,63 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の「はんげき」のきぜつの印 {e['knocked_out']} が、ログから組み立てたダメージ {damage[target]} と合わない")
             if damage[target] >= hp and attack_window is not None:
                 attack_window["counter_ko"] = target
+        elif kind in ("retaliation", "retaliation_skipped"):
+            # v0.12: 「ほのおのかべ」（相手のワザによるダメージを受けたとき、ダメージを与えた相手の対戦ポケモンに 10。R団のファイヤーのワザ）
+            holder, target = e["pokemon_id"], e["attacker_pokemon_id"]
+            if attack_window is None or (e["trigger"], e["attacker"], target) != (
+                attack_window["effect"], attack_window["player"], attack_window["pokemon_id"]
+            ):
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」（ポケモン {holder}）が、ダメージを与えたワザの処理の中にない（W14）")
+                continue
+            if not attack_window["ret_due"] or attack_window["ret_due"][0][0] != holder:
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」（ポケモン {holder}）が、はたらく理由（相手のワザのダメージを、効果がはたらいているポケモンが受けた）なしにある（W4・W11・W13）")
+                info = active_retaliation(holder, e["turn"])
+            else:
+                info = attack_window["ret_due"].pop(0)[1]
+            if info is None or pokemon_owner.get(holder) != e["player"] or ids.get(e["pokemon"]) != holder or info["source_card"] != e["source_card"]:
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」（ポケモン {holder}）に、今の番にはたらく効果（ログの persistent_effect_added）がない（W4・W5）")
+            elif e["effect"] != info["effect"]:
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」のワザ {e['effect']} が、効果を与えたワザ {info['effect']} と違う")
+            if target not in in_play:
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」を与える相手 {target} が場にいない")
+                continue
+            hp = state.card_def(top[target]).hp
+            if kind == "retaliation_skipped":
+                if e["reason"] != "knocked_out" or damage[target] < hp:
+                    problems.append(f"{e['turn']} 番に、きぜつしていない相手 {target}（ダメージ {damage[target]}）に「ほのおのかべ」を与えなかった（{e['reason']}）")
+                continue
+            if damage[target] >= hp:
+                problems.append(f"{e['turn']} 番に、すでに HP 以上のダメージの相手 {target} に「ほのおのかべ」を与えた（対象がいない。W23）")
+            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+            if entry is None or not isinstance(entry.effect, DamageAndRetaliation) or e["amount"] != entry.effect.retaliation:
+                problems.append(f"{e['turn']} 番の「ほのおのかべ」の量 {e['amount']} が、ワザ {e['effect']} の登録と違う（W14）")
+            attack_window["ret"] = {
+                "effect": e["effect"], "player": e["player"], "pokemon_id": holder, "reception": {}, "amount": e["amount"], "damage_seen": False,
+            }
+            attack_window["ret_seen"] = True
+        elif kind == "persistent_effect_skipped":
+            # v0.12: ワザを使ったポケモンが相手の「はんげき」で HP 以上になったので、自分に与える持続する効果を与えなかった
+            pid = e["pokemon_id"]
+            if attack_window is None or pid != attack_window["pokemon_id"] or pid not in in_play or damage[pid] < state.card_def(top[pid]).hp:
+                problems.append(f"{e['turn']} 番に、きぜつしていないポケモン {pid} の持続する効果（{e['persistent_effect']}）を与えなかった")
+        elif kind == "return_to_hand":
+            # v0.12: 「ふしちょう」でトラッシュから手札に加えたカード（きぜつしたポケモンのカード 1 枚だけ。P22〜P24）
+            if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or state.card_def(e["card"]).category != "pokemon":
+                problems.append(f"{e['turn']} 番に手札に加えたカード {e['card']} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのポケモンのカードにない")
+            else:
+                discard[e["player"]].remove(e["card"])
+                hand[e["player"]].append(e["card"])
         elif kind in ("ko_prevention_declined", "ko_prevention_declared", "ko_prevented", "ko_prevention_failed"):
             # v0.11: 相手のワザによるダメージで「きぜつ」するときに使える特殊能力（サカキのカイリキーの「こんじょう」）
             pid = e["pokemon_id"]
             if attack_window is None:
                 problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、相手のワザのあとのきぜつの判定の中にない（G3・G7）")
                 continue
-            if pid not in in_play or ids.get(e["pokemon"]) != pid or pokemon_owner.get(pid) != e["player"] or e["player"] == attack_window["player"]:
-                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、ワザを使われた側のプレイヤーの場のポケモンではない（G4・G15）")
+            by_attacker = e["player"] == attack_window["player"]  # v0.12: 「ほのおのかべ」のダメージで HP 以上になったワザを使ったポケモン
+            if pid not in in_play or ids.get(e["pokemon"]) != pid or pokemon_owner.get(pid) != e["player"] or (
+                by_attacker and (pid != attack_window["pokemon_id"] or attack_window["ret"] is None)
+            ):
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、相手のワザ（「ほのおのかべ」を含む）のダメージを受けた場のポケモンではない（G4・G15）")
                 continue
             gkey, geffect, gpower = guts_power(pid)
             hp = state.card_def(top[pid]).hp
@@ -739,7 +918,7 @@ def log_problems(state) -> list[str]:
                 attack_window["knocked"].add(pid)
                 if attack_window["ko_offer"] == pid and attack_window["ko_result"] == "heads":
                     problems.append(f"{e['turn']} 番に「こんじょう」が「おもて」のポケモン {pid} がきぜつした（G18・G33）")
-                if attack_window["ko_offer"] != pid and attack_window["ko_able"].get(pid, "なし") is None and pokemon_owner.get(pid) != attack_window["player"]:
+                if attack_window["ko_offer"] != pid and attack_window["ko_able"].get(pid, "なし") is None:
                     gkey, _, gpower = guts_power(pid)
                     if gkey is not None and not [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(gpower)]:
                         problems.append(
@@ -748,6 +927,12 @@ def log_problems(state) -> list[str]:
                         )
             if damage[pid] < state.card_def(e["pokemon"]).hp:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
+            rkey, rpower = rebirth_power(e["pokemon"])
+            if rkey is not None and pid in in_play:
+                # v0.12: 「ふしちょう」を使えるか（きぜつするときのねむり・マヒ・こんらん（P13〜P17）・はたらいているかがくへんかガス（P18））
+                gases = [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(rpower) and gas_pid != pid]
+                blocked = f"{exclusive[pid]} 状態" if pid in exclusive else f"かがくへんかガス（ポケモン {gases}）" if gases else None
+                rebirth_pending.append({"card": e["pokemon"], "player": e["player"], "power": rkey, "turn": e["turn"], "blocked": blocked})
             in_play.discard(pid)
             exclusive.pop(pid, None)
             knocked[e["player"]] += 1
@@ -762,8 +947,21 @@ def log_problems(state) -> list[str]:
             hand[e["player"]].append(e["card"])
         elif kind == "persistent_effect_added":
             added[(e["pokemon_id"], e["turn"])] = added.get((e["pokemon_id"], e["turn"]), 0) + 1
+            # v0.12: はたらく番は次の相手の番（与えた番 + 1）。その番の終わりまで残り、そのあとは残らない
+            alive[(e["pokemon_id"], e["turn"])] = {
+                "kind": e["persistent_effect"], "active_turn": e["active_turn"], "effect": e["effect"], "source_card": e["source_card"],
+            }
+            if e["active_turn"] != e["turn"] + 1:
+                problems.append(f"{e['turn']} 番の持続する効果（ポケモン {e['pokemon_id']}）のはたらく番 {e['active_turn']} が、次の相手の番ではない")
         elif kind == "persistent_effect_removed":
             removed[(e["pokemon_id"], e["created_turn"])] += 1
+            info = alive.pop((e["pokemon_id"], e["created_turn"]), None)
+            if info is not None and e["reason"] == "expired" and e["turn"] != info["active_turn"]:
+                problems.append(f"{e['turn']} 番に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {e['pokemon_id']}）が期限で消えた（早すぎる・遅すぎる）")
+        if kind == "turn_end":
+            for (pid, created), info in alive.items():
+                if info["active_turn"] <= e["turn"]:
+                    problems.append(f"{e['turn']} 番の終わり（turn_end）に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {pid}・{created} 番）が残っている")
 
     if declared is not None:
         problems.append(f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のあとに、その処理がない（ログの最後）")
@@ -771,6 +969,23 @@ def log_problems(state) -> list[str]:
         problems.append(f"「とうめい」の判定（ポケモン {expect[0]}）のあとに、その要素の処理がない（ログの最後）")
     if attack_window is not None and attack_window["due"]:
         problems.append(f"はたらいた「はんげき」（ポケモン {[d[0] for d in attack_window['due']]}）がない（ログの最後。決定の前に与えるはず）")
+    if attack_window is not None and attack_window["ret_due"]:
+        problems.append(f"はたらいた「ほのおのかべ」（ポケモン {[d[0] for d in attack_window['ret_due']]}）がない（ログの最後。決定の前に与えるはず）")
+    if rebirth_answered is not None and rebirth_answered["kind"] == "post_knockout_power_declared":
+        problems.append(f"「ふしちょう」の宣言（カード {rebirth_answered['card']}）のあとに、手札に加えた記録がない（ログの最後）")
+    d = state.decision
+    for r in rebirth_pending:
+        waiting = d is not None and d.resume == "post_knockout" and d.options == (r["card"],)
+        waiting_prize = d is not None and d.kind == "take_prize" and (r["player"], r["card"]) in [
+            (c[0], c[1]) for c in d.context_value("post_knockout", ())
+        ]
+        if r["blocked"] is None and not (waiting or waiting_prize or state.phase in TERMINAL):
+            problems.append(f"きぜつした「ふしちょう」を使えるカード {r['card']} の答えも、それを待つ決定もない（ログの最後）")
+        if r["blocked"] is not None and (waiting or waiting_prize):
+            problems.append(f"使えない「ふしちょう」（カード {r['card']}。{r['blocked']}）を使うかの決定を出している")
+    for (pid, created), info in alive.items():
+        if pid not in in_play:
+            problems.append(f"場をはなれたポケモン {pid} の持続する効果（{created} 番）を消したログがない（p.322）")
     for p_index, p in enumerate(state.players):
         for pokemon in p.in_play():
             pid = pokemon.pokemon_id
