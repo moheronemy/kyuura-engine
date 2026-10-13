@@ -5,7 +5,8 @@
 説明文が空であることは、実装がある証拠として扱いません（説明文のないワザも、効果のないワザとして
 明示的に登録します）。
 
-識別子は、ワザなら ``AttackKey``（カード id とワザの位置）、トレーナーならカード id です。
+識別子は、ワザなら ``AttackKey``（カード id とワザの位置）、トレーナーならカード id、ポケモンパワー（v0.5）なら
+``PowerKey``（カード id とパワーの位置）です。
 名前は識別子にしません。同じ名前でも、カードが違えば別の登録です。登録するときに確かめた名前・文面
 （``AttackEntry.name_ja``、``TrainerEntry.name_ja``・``text_ja``）は、データが変わったときに
 気づくための照合にだけ使います。
@@ -29,7 +30,10 @@
   決定するのは相手。バタフリーの「ふきとばし」。p.19 の最新の説明・p.213 のワザ解説。docs/forced-switch-v0.4d.md）、
   ``DamageAndDrain``（v0.4d。相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを自分からとりのぞく。
   バタフリーの「メガドレイン」。p.19 の最新の説明・p.319。docs/damage-drain-v0.4d.md）。v0.4d から ``deal_attack_damage`` が
-  ダメージの要素の結果（``DamageResult``）を返す
+  ダメージの要素の結果（``DamageResult``）を返す。
+  ``DamageAndRemoveCounters``（v0.5。相手にダメージを与えたら、自分のダメージカウンターを決まった数とりのぞく。フシギダネの
+  「やどりぎのタネ」。p.13 の最新の説明）、``PoisonOpponent``（v0.5。相手にダメージのあと、コインを投げずに相手をどく状態に。
+  フシギソウの「どくのこな」。p.14 の最新の説明）。docs/bulbasaur-line-v0.5.md
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
@@ -39,8 +43,11 @@
 - つけて使うトレーナー（v0.2e）: ディフェンダー ``AttachedDamageReduction``（p.257 の最新の説明。
   docs/defender-v0.2e.md）。自分の場のポケモンを選んでつけ、ついているポケモンがワザで受けるダメージを
   7 段階で減らし、次の相手の番の終わりにエンジンがトラッシュする
+- ポケモンパワー（特殊能力。v0.5）: フシギバナの「エナジートランス」 ``EnergyTransfer``（p.16・p.323 の最新の説明。
+  docs/pokemon-powers-v0.5.md・docs/energy-transfer-v0.5.md）。ワザとは別の登録（``PowerKey`` → ``PowerEntry``）と
+  実装の基底（``PowerEffect``）。エンジンの ``_use_pokemon_power`` が、共通の確認のあとで ``check_usable``・``resolve`` を呼ぶ
 
-ポケモンパワー・特殊エネルギー・ほかの効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
+ほかのポケモンパワー・特殊エネルギー・ほかの効果のあるワザ・ほかのトレーナーは、実装を登録するまで未対応です。
 """
 
 from __future__ import annotations
@@ -48,18 +55,19 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Iterable, Mapping
 
+from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from .conditions import SWITCH, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import FORCED_SWITCH, SELECT_POKEMON, push_attack_decision, push_trainer_decision
-from .errors import UnsupportedError
+from .errors import IllegalActionError, UnsupportedError
 from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects
 from .state import PreventDamage
 from .zones import attach_trainer, draw_cards
 
 if TYPE_CHECKING:
-    from .cards import Attack, CardDefinition
+    from .cards import Attack, CardDefinition, Power
     from .state import AttachedTrainer, GameState, PendingDecision, PokemonInPlay
 
 
@@ -436,6 +444,44 @@ class PoisonOnHeads(AttackEffect):
 
 
 @dataclass(frozen=True)
+class PoisonOpponent(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと、コインを投げずに相手の対戦ポケモンをどく状態にする
+    （v0.5。フシギソウの「どくのこな」。p.14 の最新の説明「相手を「どく」状態にする。」・解説「確実に対戦ポケモンをどく状態に
+    する「どくのこな」」。docs/bulbasaur-line-v0.5.md）。
+
+    - ダメージの目安に「×」「+」「−」がないので、説明の最初の「相手の対戦ポケモンに 20 ダメージ。」が省略されている（p.320）。
+      ダメージの処理をしてから、どく状態にする（p.309 の手順 6）。
+    - コインを投げない（説明にコインがない）ので、乱数を使わない。コインを投げる ``PoisonOnHeads``（v0.3a）とは別の実装。
+    - どく状態にするのは「効果」で、ダメージではない。最終ダメージが 0（ディフェンダーなど）でも、「ダメージを受けない」状態
+      （v0.4b。「（ダメージ以外の効果は受ける）」）でも、どく状態にする（p.321）。
+    - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないので、どく状態にしない（p.309・p.323。
+      ``PoisonOnHeads`` と同じ）。
+    - もうどく状態のポケモンなら、二重のどく状態にはならない（p.322。``conditions.poison`` がログに ``already``）。
+    """
+
+    implementation_id = "poison_opponent"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier is not None:
+            problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、どく状態にするワザとして登録している")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        result = damage_opponent_active(state, use, attack.damage)
+        if result.knocked_out:
+            return  # 相手の対戦ポケモンはきぜつした。どく状態にする内容は対象がいないので無視する（p.309・p.323）
+        opponent = 1 - use.player
+        poison(state, opponent, state.players[opponent].active, effect=str(use.key))
+
+
+@dataclass(frozen=True)
 class ParalyzeOnHeads(AttackEffect):
     """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを 1 枚投げ、「おもて」なら相手の
     対戦ポケモンをマヒ状態にする（v0.3b。キャタピーの「いとをはく」。p.17 の最新の説明
@@ -794,22 +840,66 @@ class DamageAndDrain(AttackEffect):
         if result.dealt % per_counter:
             raise RuntimeError(f"与えたダメージ {result.dealt} がダメージカウンターの単位 {per_counter} の倍数ではない（エンジンの不具合）")
         drain_counters = (result.dealt // per_counter + 1) // 2  # 与えたダメージの半分（カウンターの単位で切り上げ）
-        before = attacker.damage
-        removed = min(drain_counters, before // per_counter)
-        attacker.damage = before - removed * per_counter
-        state.add_event(
-            "drain_heal",
-            player=use.player,
-            pokemon=attacker.card,
-            pokemon_id=attacker.pokemon_id,
-            effect=str(use.key),
-            dealt=result.dealt,
-            drain_counters=drain_counters,
-            counters=removed,
-            amount=removed * per_counter,
-            damage_before=before,
-            total_damage=attacker.damage,
-        )
+        _remove_attacker_counters(state, use, attacker, result.dealt, drain_counters)
+
+
+def _remove_attacker_counters(state: GameState, use: AttackUse, attacker: PokemonInPlay, dealt: int, counters: int) -> None:
+    """ワザを使ったポケモン自身から、ダメージカウンターを ``counters`` 個まで（のっている数まで）とりのぞき、ログ ``drain_heal`` を
+    残す（v0.4d のメガドレイン。v0.5 のやどりぎのタネも同じ形。``drain_counters`` は説明が決めた数、``counters`` は実際にとりのぞいた
+    数）。のっている数より多くはとりのぞかない（p.320）。"""
+    per_counter = state.rules.damage_per_counter
+    before = attacker.damage
+    removed = min(counters, before // per_counter)
+    attacker.damage = before - removed * per_counter
+    state.add_event(
+        "drain_heal",
+        player=use.player,
+        pokemon=attacker.card,
+        pokemon_id=attacker.pokemon_id,
+        effect=str(use.key),
+        dealt=dealt,
+        drain_counters=counters,
+        counters=removed,
+        amount=removed * per_counter,
+        damage_before=before,
+        total_damage=attacker.damage,
+    )
+
+
+@dataclass(frozen=True)
+class DamageAndRemoveCounters(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手にダメージを与えたら、ワザを使ったポケモン自身にのっている
+    ダメージカウンターを ``counters`` 個とりのぞく（v0.5。フシギダネの「やどりぎのタネ」。p.13 の最新の説明「相手にダメージを
+    与えたら、自分にのっているダメージカウンターを1個とりのぞく。」。docs/bulbasaur-line-v0.5.md）。
+
+    - 「与えたダメージ」は v0.4d の ``DamageResult.dealt``（最終ダメージ）。最終ダメージが 0 以下・「ダメージを受けない」状態で
+      ダメージを与えなかったら、とりのぞかない（p.319・p.321。p.13 の解説「このワザはダメージを与えないと、自分のダメージ
+      カウンターを取れないので、相手のポケモンが「ディフェンダー」などを使ってダメージを与えられなかった場合は、ダメージ
+      カウンターを取りのぞくことができません」。CONFIRMED（解説））。
+    - とりのぞく数は与えたダメージの量によらず ``counters``（1 個）。のっている数より多くはとりのぞかない（p.320）。のっていな
+      ければ 0 個（ログは残す）。印刷の文面は「…とりのぞくことができる」だが、最新の説明は「とりのぞく」なので、選ばずにとり
+      のぞく（最新の説明にしたがう）。
+    - 相手がきぜつしても、とりのぞく（対象は自分で、いなくなっていない。p.309。メガドレインと同じ。SUPPORTED）。
+    - ログはメガドレインと同じ ``drain_heal``（``drain_counters`` は ``counters``）。乱数は使わない。
+    """
+
+    counters: int
+    implementation_id = "damage_and_remove_counters"
+
+    def __post_init__(self) -> None:
+        if type(self.counters) is not int or self.counters < 1:
+            raise ValueError(f"とりのぞくダメージカウンターの数は 1 以上の整数（{self.counters!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "ダメージを与えたら自分のダメージカウンターをとりのぞく")
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        result = damage_opponent_active(state, use, attack.damage)
+        if result.dealt <= 0:
+            return  # ダメージを与えなかった（防いだ・最終ダメージ 0）。とりのぞく条件「相手にダメージを与えたら」を満たさない
+        _remove_attacker_counters(state, use, attacker, result.dealt, self.counters)
 
 
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
@@ -1183,15 +1273,175 @@ class TrainerEntry:
     source: str
 
 
+# ---------------------------------------------------------------- ポケモンパワー（特殊能力。v0.5）
+
+
+@dataclass(frozen=True, order=True)
+class PowerKey:
+    """ポケモンパワーの安定した識別子: カード id とパワーの位置（カードに印刷された順、0 から）。ワザの ``AttackKey`` とは別。"""
+
+    card_id: str
+    power_index: int
+
+    def __str__(self) -> str:
+        return f"{self.card_id}@power{self.power_index}"
+
+
+@dataclass(frozen=True)
+class PowerUse:
+    """ポケモンパワーを 1 回使ったときの情報（``UsePokemonPower`` の値）。効果の処理（``check_usable``・``resolve``）に渡す。
+
+    ``energy``・``source``・``target`` は、パワーの説明が選ばせるもの（使わないパワーでは None）。
+    """
+
+    player: int
+    pokemon_id: int  # パワーを使うポケモン（場のポケモンの番号）
+    key: PowerKey
+    energy: int | None = None
+    source: int | None = None
+    target: int | None = None
+
+
+class PowerEffect:
+    """使用を宣言して使うポケモンパワー（特殊能力）の実装の基底（v0.5）。
+
+    エンジン（``engine._use_pokemon_power``）が、公式ルールの「ポケモンの特殊能力を使う」（p.311）の順番で呼ぶ。ワザ（``AttackEffect``）
+    とは別のもの: パワーの使用は番を終わらせず（p.309 で番が終わるのはワザのあと）、こんらんのコイン（ワザ・にげるの規定。p.309・
+    p.311）もない。使えない特殊状態はパワーの説明ごとに書かれている（p.323 の最新の説明の例）ので、実装が ``check_usable`` で確かめる
+    （ワザ・にげるの制限（``engine._require_not_asleep_or_paralyzed``）は流用しない）。
+
+    - ``check``: カードのデータ（印刷の文面）が、この実装で処理できる形かを確かめ、問題を返す（登録の誤りを見つけるため）。
+    - ``check_usable``: 使えるかと、説明が選ばせるもの（``PowerUse``）が正しいかを確かめる。状態は変えない。使えない・選んだものが
+      正しくないなら ``IllegalActionError``、原典で決められない場合は ``UnsupportedError``（コードは ``UNRESOLVED_…``）。
+    - ``resolve``: パワーの説明にしたがって処理する（p.311 の手順 3）。
+
+    v0.5 のパワーは決定を出さない（説明が選ばせるものはコマンドで指定する）。決定を出すパワーを加えるときは、``resume`` と、決定の形を
+    宣言する ``decision_problems``（ワザ（v0.4d）・トレーナー（v0.4e）と同じ考え方）と、エンジンの再開先を加える。使用回数の制限
+    （「1 番に 1 回」など）があるパワーを加えるときは、回数を状態に持つ（ログから数えない）。自動的にはたらくパワー・常にはたらいている
+    パワー（p.311・p.323）は、宣言しないので、この実装の形では扱わない（未対応）。
+    """
+
+    implementation_id = "abstract"
+
+    def check(self, power: Power) -> list[str]:
+        return []
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class EnergyTransfer(PowerEffect):
+    """自分の場のポケモンについている ``energy_type`` のエネルギーカードを 1 枚、自分の場の別のポケモンにつけかえる（v0.5。フシギバナの
+    「エナジートランス」。p.16・p.323 の最新の説明「この力は、自分の番の中で何度でも使える。自分の場にいるポケモンについている
+    「草」エネルギーを、自分の場にいる別のポケモンにつけかえる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。」。
+    docs/venusaur-v0.5.md・docs/energy-transfer-v0.5.md）。
+
+    - 使えるのは自分の番の中（エンジンが番のプレイヤーの ``Phase.MAIN`` だけで受け付ける）。何度でも使える（回数を数えない）。
+    - 使えないのは、このパワーを持つポケモン（「このカード」）がねむり・マヒ・こんらんのとき（``POKEMON_ASLEEP``・
+      ``POKEMON_PARALYZED``・``POKEMON_CONFUSED``）。どくだけなら使える（説明に挙げられていない。p.323「特に記述されていない
+      かぎり、特殊能力はいつでも、何度でも使用を宣言することができます」）。ベンチのポケモンは特殊状態にならない（p.322）。
+    - 移すのは基本エネルギーカード（物理的なカード。同じ uid）で、``energy_type``（草）を出すものだけ。移動元・移動先は自分の場の
+      ポケモン（バトル場・ベンチ、パワーを持つポケモン自身を含む）で、移動先は移動元と別のポケモン（「別のポケモン」）。移動元・
+      移動先の特殊状態は関係しない。
+    - 1 回の使用で 1 枚（実装上の仮定。説明は枚数を書かないが、何度でも使えるので、何枚移しても 1 枚ずつ移した結果と同じ）。
+    - つけかえは手札からエネルギーをつけること（p.310。1 番に 1 枚）ではないので、その回数（``energy_attachments_this_turn``）は変えない
+      （SUPPORTED。p.16 の解説「すでに場に出ているので、その移動で10ダメージを受けることはありません」）。
+    - 乱数は使わない。ログ ``move_energy``（``player``・``pokemon``・``pokemon_id``（パワーを使ったポケモン）・``power``（``PowerKey``
+      の文字列）・``energy``・``from_pokemon_id``・``to_pokemon_id``）。手札からつけたログ ``attach_energy`` とは別。
+    """
+
+    energy_type: EnergyType
+    implementation_id = "energy_transfer"
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、使用を宣言するポケモンパワーとして登録している")
+        if power.text_ja is None:
+            problems.append("説明文のないポケモンパワーを、エネルギーをつけかえるパワーとして登録している")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        conditions = user.conditions
+        for blocked, code, name in ((conditions.asleep, "POKEMON_ASLEEP", "ねむり"), (conditions.paralyzed, "POKEMON_PARALYZED", "マヒ"),
+                                    (conditions.confused, "POKEMON_CONFUSED", "こんらん")):
+            if blocked:
+                raise IllegalActionError(code, f"ポケモン {use.pokemon_id} は{name}状態なので、このポケモンパワーは使えない（p.323 の最新の説明）")
+        if use.energy is None or use.source is None or use.target is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "つけかえるエネルギー（energy）・移動元（source）・移動先（target）を指定する")
+        source = self._own_pokemon(state, use, use.source, "SOURCE")
+        self._own_pokemon(state, use, use.target, "TARGET")
+        if use.source == use.target:
+            raise IllegalActionError("SAME_POKEMON", "エネルギーは、ついているポケモンとは別のポケモンにつけかえる（「別のポケモン」）")
+        if use.energy not in source.energy:
+            raise IllegalActionError("ENERGY_NOT_ATTACHED", f"エネルギー {use.energy!r} は移動元のポケモン {use.source} についていない")
+        definition = state.card_def(use.energy)
+        if not definition.is_basic_energy or definition.provides is not self.energy_type:
+            raise IllegalActionError(
+                "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつけかえる）"
+            )
+
+    @staticmethod
+    def _own_pokemon(state: GameState, use: PowerUse, pokemon_id: int, role: str) -> PokemonInPlay:
+        found = state.find_pokemon(pokemon_id)
+        if found is None:
+            raise IllegalActionError(f"{role}_NOT_IN_PLAY", f"場のポケモンの番号 {pokemon_id!r} は場にいない")
+        owner, pokemon = found
+        if owner != use.player:
+            raise IllegalActionError(f"{role}_NOT_YOURS", f"場のポケモン {pokemon_id} は相手の場のポケモン（自分の場のポケモンだけ）")
+        return pokemon
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        _, source = state.find_pokemon(use.source)
+        _, target = state.find_pokemon(use.target)
+        # 同じ uid のカードを移す（複製しない・トラッシュしない・持ち主は変わらない）
+        source.energy.remove(use.energy)
+        target.energy.append(use.energy)
+        state.add_event(
+            "move_energy",
+            player=use.player,
+            pokemon=user.card,
+            pokemon_id=user.pokemon_id,
+            power=str(use.key),
+            energy=use.energy,
+            from_pokemon_id=source.pokemon_id,
+            to_pokemon_id=target.pokemon_id,
+        )
+
+
+@dataclass(frozen=True)
+class PowerEntry:
+    """ポケモンパワーの登録の 1 件（v0.5）。
+
+    - ``effect``: 実装
+    - ``name_ja``・``text_ja``: 登録したときに照合した kyuura の写しのパワーの名前・印刷の文面（データが変わったら使えなくなる。
+      処理の根拠ではない）
+    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」）
+    - ``source``: ``play_text_ja`` の出典（誌面のページ）
+    """
+
+    effect: PowerEffect
+    name_ja: str
+    text_ja: str
+    play_text_ja: str
+    source: str
+
+
 # ---------------------------------------------------------------- 登録表
 
 
 class EffectRegistry:
     """カードの効果の実装の登録表。対戦ごとに 1 つ使う（``GameState.effects``）。
 
-    ワザ（``AttackKey`` → ``AttackEntry``）と、トレーナー（カード id → ``TrainerEntry``、v0.2b）を
-    登録できます。ポケモンパワー・特殊エネルギーの実装は、それを加えるときに同じ形（安定した識別子 →
-    実装）で欄を加えます。それまでは、これらのカードは未対応です。登録表は変えられません
+    ワザ（``AttackKey`` → ``AttackEntry``）と、トレーナー（カード id → ``TrainerEntry``、v0.2b）と、ポケモンパワー
+    （``PowerKey`` → ``PowerEntry``、v0.5）を登録できます。特殊エネルギーの実装は、それを加えるときに同じ形（安定した
+    識別子 → 実装）で欄を加えます。それまでは、これらのカードは未対応です。登録表は変えられません
     （``with_*``・``without_*`` は新しい登録表を返す）。
     """
 
@@ -1200,13 +1450,15 @@ class EffectRegistry:
         registry_id: str,
         attacks: Mapping[AttackKey, AttackEntry] | Iterable[tuple[AttackKey, AttackEntry]],
         trainers: Mapping[str, TrainerEntry] | Iterable[tuple[str, TrainerEntry]] = (),
+        powers: Mapping[PowerKey, PowerEntry] | Iterable[tuple[PowerKey, PowerEntry]] = (),
     ):
         self.id = registry_id
         self._attacks: dict[AttackKey, AttackEntry] = dict(attacks)
         self._trainers: dict[str, TrainerEntry] = dict(trainers)
+        self._powers: dict[PowerKey, PowerEntry] = dict(powers)
 
     def __repr__(self) -> str:
-        return f"EffectRegistry({self.id!r}, {len(self._attacks)} attacks, {len(self._trainers)} trainers)"
+        return f"EffectRegistry({self.id!r}, {len(self._attacks)} attacks, {len(self._trainers)} trainers, {len(self._powers)} powers)"
 
     # --- ワザ ---
 
@@ -1242,12 +1494,12 @@ class EffectRegistry:
 
     def with_attacks(self, registry_id: str, attacks: Mapping[AttackKey, AttackEntry]) -> EffectRegistry:
         """登録を加えた新しい登録表（元の登録表は変えない）。テストや、実装を段階的に加えるときに使う。"""
-        return EffectRegistry(registry_id, {**self._attacks, **attacks}, self._trainers)
+        return EffectRegistry(registry_id, {**self._attacks, **attacks}, self._trainers, self._powers)
 
     def without_attacks(self, registry_id: str, keys: Iterable[AttackKey]) -> EffectRegistry:
         """登録を除いた新しい登録表（元の登録表は変えない）。"""
         removed = set(keys)
-        return EffectRegistry(registry_id, {k: v for k, v in self._attacks.items() if k not in removed}, self._trainers)
+        return EffectRegistry(registry_id, {k: v for k, v in self._attacks.items() if k not in removed}, self._trainers, self._powers)
 
     # --- トレーナー（v0.2b） ---
 
@@ -1279,12 +1531,47 @@ class EffectRegistry:
 
     def with_trainers(self, registry_id: str, trainers: Mapping[str, TrainerEntry]) -> EffectRegistry:
         """トレーナーの登録を加えた新しい登録表（元の登録表は変えない）。"""
-        return EffectRegistry(registry_id, self._attacks, {**self._trainers, **trainers})
+        return EffectRegistry(registry_id, self._attacks, {**self._trainers, **trainers}, self._powers)
 
     def without_trainers(self, registry_id: str, card_ids: Iterable[str]) -> EffectRegistry:
         """トレーナーの登録を除いた新しい登録表（元の登録表は変えない）。"""
         removed = set(card_ids)
-        return EffectRegistry(registry_id, self._attacks, {k: v for k, v in self._trainers.items() if k not in removed})
+        return EffectRegistry(registry_id, self._attacks, {k: v for k, v in self._trainers.items() if k not in removed}, self._powers)
+
+    # --- ポケモンパワー（v0.5） ---
+
+    def power_keys(self) -> tuple[PowerKey, ...]:
+        return tuple(sorted(self._powers))
+
+    def power_entry(self, card_id: str, power_index: int) -> PowerEntry | None:
+        return self._powers.get(PowerKey(card_id, power_index))
+
+    def power_problem(self, card_id: str, power: Power) -> str | None:
+        """このポケモンパワーを使えない理由。使えるなら None。名前や説明文の有無では決めない（ワザと同じ）。"""
+        entry = self.power_entry(card_id, power.index)
+        if entry is None:
+            return "ポケモンパワーの効果の実装が登録されていない"
+        if entry.name_ja != power.name_ja:
+            return f"登録したパワーの名前「{entry.name_ja}」と、データの名前「{power.name_ja}」が違う"
+        if entry.text_ja != power.text_ja:
+            return "登録したときに照合した文面と、データの文面が違う（データが変わった。照合し直す必要がある）"
+        problems = entry.effect.check(power)
+        return "; ".join(problems) or None
+
+    def power_effect(self, card_id: str, power: Power) -> PowerEffect | None:
+        """使えるポケモンパワーなら実装を返す。登録がない・データと合わないなら None。"""
+        if self.power_problem(card_id, power) is not None:
+            return None
+        return self.power_entry(card_id, power.index).effect
+
+    def with_powers(self, registry_id: str, powers: Mapping[PowerKey, PowerEntry]) -> EffectRegistry:
+        """ポケモンパワーの登録を加えた新しい登録表（元の登録表は変えない）。"""
+        return EffectRegistry(registry_id, self._attacks, self._trainers, {**self._powers, **powers})
+
+    def without_powers(self, registry_id: str, keys: Iterable[PowerKey]) -> EffectRegistry:
+        """ポケモンパワーの登録を除いた新しい登録表（元の登録表は変えない）。"""
+        removed = set(keys)
+        return EffectRegistry(registry_id, self._attacks, self._trainers, {k: v for k, v in self._powers.items() if k not in removed})
 
     def describe(self) -> dict[str, Any]:
         return {
@@ -1297,6 +1584,10 @@ class EffectRegistry:
             "trainers": {
                 k: {"implementation": e.effect.implementation_id, "name_ja": e.name_ja, "source": e.source}
                 for k, e in sorted(self._trainers.items())
+            },
+            "powers": {
+                str(k): {"implementation": e.effect.implementation_id, "name_ja": e.name_ja, "source": e.source}
+                for k, e in sorted(self._powers.items())
             },
         }
 
@@ -1316,7 +1607,7 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.4d",
+    "kyuura-engine-0.5",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -1338,6 +1629,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG2-003", 0, "ひっかく"),  # パラス（v0.3b）p.38。「ワザ」欄は「●ひっかく」で説明文なし
         ("PMCG2-010", 1, "きりさく"),  # パラセクト（v0.4a。1 進化）p.39。「ワザ」欄は「●きりさく」で説明文なし
         ("PMCG1-030", 0, "オーロラビーム"),  # ジュゴン（v0.4a。1 進化）p.102。「ワザ」欄は「●オーロラビーム」で説明文なし
+        # フシギソウ（v0.5。1 進化）p.14。「ワザ」欄は「●つるのむち」で説明文なし。kyuura の名前は「つるのムチ」（図版・ワザ欄は
+        # ひらがなの「むち」。kyuura との食い違い。data-provenance.md）。登録の照合は kyuura の写しの値
+        ("PMCG1-008", 0, "つるのムチ"),
+        ("PMCG1-011", 0, "ソーラービーム"),  # フシギバナ（v0.5。2 進化）p.16。「ワザ」欄は「●ソーラービーム」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -1475,6 +1770,24 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="相手にダメージを与えたら、その半分（切り上げ）のダメージカウンターを、自分からとりのぞく。",
             source="P43 p.19",
         ),
+        # フシギダネ（v0.5）p.13。やどりぎのタネ: 相手に 20（目安の数字）、ダメージを与えたら自分のダメージカウンターを 1 個とりのぞく。
+        # 印刷の文面は「…とりのぞくことができる」、最新の説明は「…1個とりのぞく」（docs/bulbasaur-line-v0.5.md）
+        AttackKey("PMCG1-001", 0): AttackEntry(
+            DamageAndRemoveCounters(counters=1),
+            "やどりぎのタネ",
+            text_ja="相手にダメージをあたえることができたら、その時点で自分のダメージカウンターを1つとりのぞくことができる。",
+            play_text_ja="相手にダメージを与えたら、自分にのっているダメージカウンターを1個とりのぞく。",
+            source="P43 p.13",
+        ),
+        # フシギソウ（v0.5。フシギダネから進化）p.14。どくのこな: 相手に 20（目安の数字）、コインを投げずに相手をどく状態に
+        # （p.14 の解説「確実に対戦ポケモンをどく状態にする「どくのこな」」。コクーンの「どくのこな」（v0.4b。コインあり）とは別のワザ）
+        AttackKey("PMCG1-008", 1): AttackEntry(
+            PoisonOpponent(),
+            "どくのこな",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source="P43 p.14",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
@@ -1519,6 +1832,18 @@ DEFAULT_EFFECTS = EffectRegistry(
             "自分の対戦ポケモンの「ワザ」によって与えるダメージを「+10」できる。自分の対戦ポケモンにつけて使い、自分の番の終わりに、はがしてすてる。",
             "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
             "P43 p.257",
+        ),
+    },
+    {
+        # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の
+        # 番の中で何度でも、自分の場のポケモンについている「草」エネルギーを、自分の場の別のポケモンにつけかえる。印刷の文面（kyuura の写し）
+        # は「…好きなだけ移動させることができる。…状態の時には使えない。」（docs/venusaur-v0.5.md）
+        PowerKey("PMCG1-011", 0): PowerEntry(
+            EnergyTransfer(energy_type=EnergyType.GRASS),
+            "エナジートランス",
+            "フシギバナは自分の場にある「草」エネルギーを好きなだけ移動させることができる。「ねむり・マヒ・こんらん」状態の時には使えない。",
+            "この力は、自分の番の中で何度でも使える。自分の場にいるポケモンについている「草」エネルギーを、自分の場にいる別のポケモンにつけかえる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+            "P43 p.16・p.323",
         ),
     },
 )

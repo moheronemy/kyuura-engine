@@ -5,8 +5,9 @@
 - ``log_problems(state)``: ``new_game`` から進めた対戦のログ（内部の完全な記録）だけから、場のポケモンのダメージ・ついている
   エネルギー・トラッシュ・サイドの枚数を組み立て直し、状態と同じかを確かめる。番の進行（番の始まりが 1 つずつ交互・番と番の
   あいだに番の終わりとポケモンチェックが 1 回ずつ）・ワザ 1 回あたりの要素の数（同じポケモンへのダメージの要素は 1 回）・
-  サイドとカードの重複・持続する効果の付与と解除の対応・進化の番も確かめる。ログは記録で、状態の正本ではない（状態と
-  ログが食い違えば、どちらかの不具合として報告する）。
+  サイドとカードの重複・持続する効果の付与と解除の対応・進化の番も確かめる。v0.5 から、特殊能力（エナジートランス）の
+  エネルギーの移動（``move_energy``。直前に同じポケモンの宣言 ``pokemon_power`` が 1 つ）も組み立て直しに含める。ログは記録で、
+  状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜8 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 8 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 9 はない。
 """
@@ -143,6 +144,9 @@ def log_problems(state) -> list[str]:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
             window = None
             continue
+        if kind in ("pokemon_power", "move_energy"):
+            # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない
+            problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
         if kind == "damage":
             window["damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":
@@ -164,16 +168,25 @@ def log_problems(state) -> list[str]:
     added: dict[tuple, int] = {}
     removed: Counter = Counter()
 
+    pokemon_owner: dict[int, int] = {}  # 場のポケモンの番号 → 持ち主（v0.5。エネルギーの移動は自分の場のポケモンのあいだだけ）
+    turn_player: int | None = None  # 今の番のプレイヤー（最後の turn_start）
+
     def enter(uid: int) -> None:
         nonlocal next_id
         ids[uid] = next_id
         energy[next_id] = []
         in_play.add(next_id)
+        pokemon_owner[next_id] = owner[uid]
         next_id += 1
 
     owner = {uid: card.owner for uid, card in state.cards.items()}
+    declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     for e in log:
         kind = e["kind"]
+        if kind != "move_energy":
+            declared = None
+        if kind == "turn_start":
+            turn_player = e["player"]
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
                 enter(uid)
@@ -194,6 +207,24 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "attach_energy":
             energy[ids[e["target"]]].append(e["energy"])
+        elif kind == "pokemon_power":
+            declared = (e["turn"], e["player"], e["pokemon_id"])
+            if e["player"] != turn_player or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
+                problems.append(f"{e['turn']} 番の特殊能力の宣言（ポケモン {e['pokemon_id']}）が、番のプレイヤーの場のポケモンではない")
+            continue
+        elif kind == "move_energy":
+            # v0.5: 特殊能力（エナジートランス）で、同じ uid のエネルギーを移動元から移動先へ（トラッシュには置かない）
+            if declared != (e["turn"], e["player"], e["pokemon_id"]):
+                problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']} の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
+            declared = None  # 1 回の宣言で 1 枚（v0.5 のエナジートランス）
+            source, target = e["from_pokemon_id"], e["to_pokemon_id"]
+            if pokemon_owner.get(source) != e["player"] or pokemon_owner.get(target) != e["player"] or owner.get(e["energy"]) != e["player"]:
+                problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']}（{source} → {target}）が、自分の場のポケモンのあいだではない")
+            if source == target or source not in in_play or target not in in_play or e["energy"] not in energy.get(source, []):
+                problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']}（{source} → {target}）が、ログから組み立てた場と合わない")
+            else:
+                energy[source].remove(e["energy"])
+                energy[target].append(e["energy"])
         elif kind in ("retreat", "retreat_failed"):
             pid = e["pokemon_id"] if kind == "retreat_failed" else ids[e["old_active"]]
             for uid in e["discarded"]:

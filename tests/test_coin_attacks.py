@@ -314,7 +314,8 @@ class InvalidCommandsUseNoRandomnessTest(unittest.TestCase):
             (TakePrize(0, 0), "WRONG_PHASE"),
             # v0.4a から進化を処理する（手札のエネルギーは進化カードではない。v0.3d までは UNSUPPORTED_ACTION）
             (EvolvePokemon(0, energy, state.players[0].active.pokemon_id), "NOT_EVOLUTION_CARD"),
-            (UsePokemonPower(0, state.players[0].active.card), "UNSUPPORTED_ACTION"),
+            # v0.5 からポケモンパワーを処理する（ドードーに特殊能力はない。v0.4e までは UNSUPPORTED_ACTION。v0.5 から場のポケモンの番号で指す）
+            (UsePokemonPower(0, state.players[0].active.pokemon_id), "NO_POKEMON_POWER"),
         ]
         for command, code in cases:
             with self.subTest(command=command):

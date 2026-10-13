@@ -13,10 +13,10 @@ from kyuura_engine import (
     new_game, state_to_dict,
 )
 from kyuura_engine.cards import pool_from_extract, read_extract
-from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey
+from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey, PowerKey
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, WATER_FIGHTING_DECK, active,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, VENUSAUR, WATER_FIGHTING_DECK, active,
     build_test_state,
 )
 
@@ -100,9 +100,10 @@ class DefaultRegistryTest(unittest.TestCase):
         # ビードルの「どくばり」（p.19。v0.3a）、キャタピーの「いとをはく」（p.17）・パラスの「キノコのほうし」（p.38。v0.3b）、
         # ロコンの「あやしいひかり」（p.67。v0.3c）、ジュゴンの「れいとうビーム」（p.102）・パラセクトの「キノコのほうし」（p.39。v0.4a）、
         # トランセルの「かたまる」・「しびれごな」（p.18）・コクーンの「かたまる」・「どくのこな」（p.21。v0.4b）、
-        # スピアーの「ダブルニードル」・「どくばり」（p.21。v0.4c）、バタフリーの「ふきとばし」・「メガドレイン」（p.19。v0.4d）
-        self.assertEqual(with_text, [AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
-                                     AttackKey("PMCG1-004", 0), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
+        # スピアーの「ダブルニードル」・「どくばり」（p.21。v0.4c）、バタフリーの「ふきとばし」・「メガドレイン」（p.19。v0.4d）、
+        # フシギダネの「やどりぎのタネ」（p.13）・フシギソウの「どくのこな」（p.14。v0.5）
+        self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+                                     AttackKey("PMCG1-004", 0), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0), AttackKey("PMCG1-030", 1), AttackKey("PMCG1-035", 1),
                                      AttackKey("PMCG1-061", 0), AttackKey("PMCG2-003", 1), AttackKey("PMCG2-007", 0), AttackKey("PMCG2-007", 1),
                                      AttackKey("PMCG2-010", 0)])
@@ -209,8 +210,14 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）+ ピカチュウの 2 つ（v0.2f）
         # + ビードルの「どくばり」（v0.3a）+ キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」（v0.3b）
         # + ロコンの「あやしいひかり」（v0.3c）+ パラセクトの 2 つ・ジュゴンの 2 つ（v0.4a）+ トランセルの 2 つ・コクーンの 2 つ（v0.4b）
-        # + スピアーの 2 つ（v0.4c）+ バタフリーの 2 つ（v0.4d）
-        self.assertEqual(len(keys), 34)
+        # + スピアーの 2 つ（v0.4c）+ バタフリーの 2 つ（v0.4d）+ フシギダネの 1 つ・フシギソウの 2 つ・フシギバナの 1 つ（v0.5）
+        self.assertEqual(len(keys), 38)
+        # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
+        powers = DEFAULT_EFFECTS.power_keys()
+        DEFAULT_EFFECTS.without_powers("z", powers)
+        DEFAULT_EFFECTS.with_powers("w", {PowerKey(CHARMANDER, 0): DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)})
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), powers)
+        self.assertEqual(powers, (PowerKey(VENUSAUR, 0),))  # フシギバナの「エナジートランス」だけ
 
 
 if __name__ == "__main__":

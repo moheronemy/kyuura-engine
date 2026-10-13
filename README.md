@@ -17,7 +17,8 @@
 - v0.4b: ワザによる持続する効果（番をまたいで残り、期限・ベンチに戻る・進化・きぜつで消える。特殊状態・ついているトレーナーとは別に持つ）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」（コインが「おもて」なら、次の相手の番、ダメージを受けない。ダメージ以外の効果は受ける）とともに実装した。「ダメージを受けない」状態のポケモンへのワザのダメージの要素は無効（計算しない。p.321）で、どく・マヒ・こんらんなどの効果の要素は有効。ポケモンチェックのどくのダメージは受ける（p.323）。コインでダメージの量を決めるワザ（みだれづき）をそのポケモンに使う場合は、コインを投げるかが原典で決められないので止める（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）。[docs/persistent-effects-v0.4b.md](docs/persistent-effects-v0.4b.md)（持続する効果の原典照合）、[docs/harden-v0.4b.md](docs/harden-v0.4b.md)（カード・かたまる）、[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md)（ダメージ計算）、[docs/architecture-v0.4b.md](docs/architecture-v0.4b.md)（設計）
 - v0.4c: 2 進化（1 進化ポケモン → 2 進化ポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」（コイン 2 枚、「おもて」の数 × 30）・「どくばり」（40、「おもて」なら相手をどく状態に）とともに実装した。たねポケモン・1 進化ポケモン・2 進化ポケモンの 3 枚で構成される 1 匹のポケモンを、v0.4a の `EvolvePokemon`・`evolution_stack` の上で扱う（状態の項目・コマンド・書き出しの形式は増やしていない）。同じ番に 1 進化したポケモンは 2 進化できない（`EVOLVED_THIS_TURN`。p.310）、たねポケモンに 2 進化カードを直接重ねられない、2 進化ポケモンがきぜつしたら 3 枚すべてをトラッシュしてサイドは 1 枚。「かたまる」の相手へのダブルニードルは v0.4b と同じく止める（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）。[docs/stage2-evolution-v0.4c.md](docs/stage2-evolution-v0.4c.md)（2 進化のルールの原典照合）、[docs/beedrill-v0.4c.md](docs/beedrill-v0.4c.md)（スピアー）、[docs/stage2-state-v0.4c.md](docs/stage2-state-v0.4c.md)（3 枚の重なりの状態・検証）、[docs/architecture-v0.4c.md](docs/architecture-v0.4c.md)（設計・v0.4d の準備）
 - v0.4d: ワザの途中で相手プレイヤーの決定を待ち、答えのあとで同じワザを再開する処理と、ワザが与えたダメージの結果（`DamageResult`）を後の要素に渡す処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」（20 のあと、相手の対戦ポケモンを相手が選んだ控えと入れ替える）・「メガドレイン」（40。与えたダメージの半分（切り上げ）のダメージカウンターを自分からとりのぞく）とともに実装した。決定するのは相手（`decision.player`）で、番のプレイヤーは変わらない（決定の種類 `forced_switch`。段階・コマンド・状態の項目・書き出しの形式は増やしていない）。相手に控えがいなければ入れ替えない、20 で相手がきぜつするなら入れ替えない（対象がいない。p.309・p.89・p.213）。ベンチにもどったポケモンの特殊状態・持続する効果は消える。「与えたダメージ」は最終ダメージ（HP で上限を付けない。0・「ダメージを受けない」相手なら与えていないので回復しない。p.319）。新しい未解決の裁定はない。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md)（強制交代）、[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md)（与えたダメージと回復）、[docs/butterfree-v0.4d.md](docs/butterfree-v0.4d.md)（バタフリー）、[docs/architecture-v0.4d.md](docs/architecture-v0.4d.md)（設計）
-- v0.4e（今の版）: カード・ルールを加えず、v0.4a〜v0.4d（進化・持続する効果・2 進化・強制交代・与えたダメージ・メガドレイン）の総合監査をした。組み合わせの表（段階 × 場所 × 特殊状態 8 通り × 持続する効果 × ついているカード × ダメージ × 決定。1,147 の subTest）、壊した状態の検出、ログだけから組み立て直した状態と状態の一致、書き出しの形式 1〜8 の監査、原典で決められない 11 件の範囲、変異テスト（24 個すべて検出）。不変条件の検出の漏れ 5 件（トレーナーの決定の形・サイドと交代の決定・サイドを取る人・交代の順番・番の番号）を直した（ルールの処理・ログ・書き出しは v0.4d と同じ）。前の版との比較（`tools/compare_engine_versions.py`）とストレス実行（`tools/stress_engine.py`）をリポジトリの道具にした。[docs/integration-audit-v0.4e.md](docs/integration-audit-v0.4e.md)（監査）、[docs/interaction-matrix-v0.4e.md](docs/interaction-matrix-v0.4e.md)（組み合わせの表）、[docs/compatibility-v0.4e.md](docs/compatibility-v0.4e.md)（互換性）、[docs/unresolved-audit-v0.4e.md](docs/unresolved-audit-v0.4e.md)（未解決の範囲）、[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md)（設計）、[docs/v0.5-readiness.md](docs/v0.5-readiness.md)（ポケモンパワーの準備）
+- v0.4e: カード・ルールを加えず、v0.4a〜v0.4d（進化・持続する効果・2 進化・強制交代・与えたダメージ・メガドレイン）の総合監査をした。組み合わせの表（段階 × 場所 × 特殊状態 8 通り × 持続する効果 × ついているカード × ダメージ × 決定。1,147 の subTest）、壊した状態の検出、ログだけから組み立て直した状態と状態の一致、書き出しの形式 1〜8 の監査、原典で決められない 11 件の範囲、変異テスト（24 個すべて検出）。不変条件の検出の漏れ 5 件（トレーナーの決定の形・サイドと交代の決定・サイドを取る人・交代の順番・番の番号）を直した（ルールの処理・ログ・書き出しは v0.4d と同じ）。前の版との比較（`tools/compare_engine_versions.py`）とストレス実行（`tools/stress_engine.py`）をリポジトリの道具にした。[docs/integration-audit-v0.4e.md](docs/integration-audit-v0.4e.md)（監査）、[docs/interaction-matrix-v0.4e.md](docs/interaction-matrix-v0.4e.md)（組み合わせの表）、[docs/compatibility-v0.4e.md](docs/compatibility-v0.4e.md)（互換性）、[docs/unresolved-audit-v0.4e.md](docs/unresolved-audit-v0.4e.md)（未解決の範囲）、[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md)（設計）、[docs/v0.5-readiness.md](docs/v0.5-readiness.md)（ポケモンパワーの準備）
+- v0.5（今の版）: ポケモンパワー（2000.02.14 版の用語では「特殊能力」）の基盤（`UsePokemonPower`・パワーの登録表）を、フシギバナ（PMCG1-011）の「エナジートランス」と、進化元のフシギダネ（やどりぎのタネ）・フシギソウ（つるのむち・どくのこな（コインなし））とともに実装した。一般の規定（p.309〜p.311・p.322・p.323）とカードのページ（p.13・p.14・p.16）を画像で照合した。使っても番は終わらず、何度でも・ベンチからも使え、使うフシギバナがねむり・マヒ・こんらんなら使えない（どくなら使える）。つけかえは手札からつけること（1 番に 1 回）ではなく、乱数を使わない。前の版（v0.4e）との比較で、フシギバナのいない対戦の結果は同じ。[docs/pokemon-powers-v0.5.md](docs/pokemon-powers-v0.5.md)（規定）、[docs/venusaur-v0.5.md](docs/venusaur-v0.5.md)（フシギバナ）、[docs/bulbasaur-line-v0.5.md](docs/bulbasaur-line-v0.5.md)（フシギダネ・フシギソウ）、[docs/energy-transfer-v0.5.md](docs/energy-transfer-v0.5.md)（処理）、[docs/architecture-v0.5.md](docs/architecture-v0.5.md)（設計）、[docs/v0.5-verification.md](docs/v0.5-verification.md)（確かめた結果）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -64,10 +65,12 @@ python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check
 ふだんのテスト（`python3 -m unittest`）には、速い単体テスト（段階 A）と、決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行（段階 B）が入っています。大きな実行（段階 C）は明示的に走らせます（v0.4e。[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md) 4 章）:
 
 ```sh
-# 前の版（v0.4d の 4bd97bf）と今の作業ツリーを、同じ入力で別々のプロセスで動かして比べる（約 4 分。ネットワーク不要）
-python3 tools/compare_engine_versions.py --base 4bd97bf --report report.json
+# 前の版（v0.4e の c1e13ec。v0.4e では v0.4d の 4bd97bf）と今の作業ツリーを、同じ入力で別々のプロセスで動かして比べる（約 4 分。ネットワーク不要）
+python3 tools/compare_engine_versions.py --base c1e13ec --report report.json
 # 大規模なストレス実行（でたらめな操作を混ぜ、結果を分類して数える。問題のある seed を報告する）
 python3 tools/stress_engine.py --seeds 100 --steps 600 --report stress.json
+# フシギバナの組だけ（エナジートランスの使用を混ぜる。v0.5）
+python3 tools/stress_engine.py --scenario venusaur --scenario venusaur_status
 ```
 
 ## 使い方
@@ -668,6 +671,66 @@ for e in state.log[before:]:
 - メガドレインの「与えたダメージ」は、弱点・抵抗力・プラスパワー・ディフェンダーを計算した最終ダメージで、相手の残りの HP で上限を付けません（p.319）。最終ダメージが 0 のとき・「ダメージを受けない」状態の相手のときは、ダメージを与えていないので回復しません。
 - 状態の辞書は形式 8 のままで、決定は `decision`（`player`・`options`・`context`）に入ります。形式 1 はワザの途中の決定を表せないので `ValueError` です。
 
+### ポケモンパワー・エナジートランス（v0.5）
+
+自分の番に、自分の場のポケモン（バトル場・ベンチ）の特殊能力（ポケモンパワー）を使います（`UsePokemonPower`。p.311）。対応している特殊能力はフシギバナ（PMCG1-011）の「エナジートランス」だけで、1 回の使用で、自分の場のポケモンについている「草」の基本エネルギーカード 1 枚（`energy`）を、そのポケモン（`source`）から自分の場の別のポケモン（`target`）につけかえます（ポケモンは場のポケモンの番号で指す）。使っても番は終わらず、何度でも使えます。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, EvolvePokemon, IllegalActionError, PlaceStartingPokemon, ReportJankenResult, UseAttack,
+    UsePokemonPower, apply_command, expand_decklist, new_game,
+)
+
+deck0 = expand_decklist({"PMCG1-001": 4, "PMCG1-008": 4, "PMCG1-011": 4, "PMCG1-097": 48})
+# フシギダネ（PMCG1-001）・フシギソウ（PMCG1-008）・フシギバナ（PMCG1-011）4 枚ずつ、草エネルギー 48 枚
+deck1 = expand_decklist({"PMCG1-025": 4, "PMCG1-029": 4, "PMCG1-052": 4, "PMCG1-053": 4, "PMCG1-058": 4,
+                         "PMCG1-099": 20, "PMCG1-102": 20})
+state = new_game(deck0, deck1, seed=130)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+bulbasaurs = [uid for uid in state.players[0].hand if state.cards[uid].card_id == "PMCG1-001"]
+state = apply_command(state, PlaceStartingPokemon(0, bulbasaurs[0], tuple(bulbasaurs[1:2])))   # バトル場とベンチにフシギダネ
+basics = [uid for uid in state.players[1].hand if state.card_def(uid).is_basic_pokemon]
+state = apply_command(state, PlaceStartingPokemon(1, basics[0], tuple(basics[1:6])))
+state = apply_command(state, ReportJankenResult(winner=0))
+active, bench = state.players[0].active.pokemon_id, state.players[0].bench[0].pokemon_id
+for player, energy in ((0, "PMCG1-097"), (1, "PMCG1-099")):   # 1 番・2 番: エネルギーをつけて番を終える
+    state = apply_command(state, AttachEnergy(player, in_hand(player, energy), state.players[player].active.card))
+    state = apply_command(state, EndTurn(player))
+# 3 番: バトル場のフシギダネをフシギソウに進化。ベンチのフシギダネに草エネルギー
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG1-008"), active))
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), state.players[0].bench[0].card))
+state = apply_command(state, EndTurn(0))
+state = apply_command(state, EndTurn(1))
+
+# 5 番: フシギソウをフシギバナに進化（2 進化）。その番にエナジートランスを使える
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG1-011"), active))
+state = apply_command(state, AttachEnergy(0, in_hand(0, "PMCG1-097"), state.players[0].active.card))
+venusaur = state.players[0].active
+print(state.card_def(venusaur.card).name_ja, [p.name_ja for p in state.card_def(venusaur.card).powers], len(venusaur.energy))
+# フシギバナ ['エナジートランス'] 2
+grass = state.players[0].bench[0].energy[0]   # ベンチのフシギダネの草エネルギー
+before = len(state.log)
+state = apply_command(state, UsePokemonPower(0, venusaur.pokemon_id, 0, energy=grass, source=bench, target=active))
+print([e["kind"] for e in state.log[before:]], state.current_player, state.energy_attachments_this_turn)
+# ['pokemon_power', 'move_energy'] 0 1      番は続き、手札からつけた回数（この番は 1）は変わらない
+print(len(state.players[0].active.energy), state.players[0].bench[0].energy)
+# 3 []
+try:
+    apply_command(state, UsePokemonPower(0, venusaur.pokemon_id, 0, energy=grass, source=active, target=active))
+except IllegalActionError as error:
+    print(error.code)   # SAME_POKEMON（移動先は、移動元と別のポケモン）
+```
+
+- 使えるのは番のプレイヤーの通常の段階（`Phase.MAIN`）だけです。決定を待つ間は `WRONG_PHASE`、ワザを使ったあとは相手の番なので `NOT_YOUR_TURN` です。
+- 特殊能力を使うフシギバナがねむり・マヒ・こんらんなら `POKEMON_ASLEEP`・`POKEMON_PARALYZED`・`POKEMON_CONFUSED` です（コインは投げない）。どくだけなら使えます。ベンチのフシギバナは特殊状態にならないので、いつでも使えます。移動元・移動先の特殊状態は関係しません。
+- 「草」でないエネルギーは `WRONG_ENERGY_TYPE`、相手のポケモンは `SOURCE_NOT_YOURS`・`TARGET_NOT_YOURS`、移動元についていないエネルギーは `ENERGY_NOT_ATTACHED`、選ぶものが足りなければ `POWER_CHOICE_MISSING` です。特殊能力のないポケモン（進化前のフシギソウなど）は `NO_POKEMON_POWER`、実装を登録していない特殊能力は `UNSUPPORTED_POKEMON_POWER`（`UnsupportedError`）です。どれも状態・乱数・ログを変えません。
+- つけかえは手札からエネルギーをつけること（1 番に 1 回）ではないので、`energy_attachments_this_turn` は変わりません。乱数も使いません。ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決まります。
+- ログは `pokemon_power`（宣言）のすぐあとに `move_energy`（`energy`・`from_pokemon_id`・`to_pokemon_id`）です。手札からつけた `attach_energy` とは別です。
+- 1 回の使用で 1 枚は実装上の仮定です（何度でも使えるので、何枚まとめて移しても結果は同じ。[docs/energy-transfer-v0.5.md](docs/energy-transfer-v0.5.md) 3 章）。
+
 ### 操作（コマンド）
 
 | コマンド | 内容 |
@@ -685,7 +748,7 @@ for e in state.log[before:]:
 | `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a）。答えるのは `decision.player`（v0.4d のふきとばしでは、ワザを使われた側のプレイヤー） |
 | `PlayTrainer(player, card)` | 手札のトレーナーカードを使う（v0.2b。対応した 5 枚だけ。プラスパワーは v0.2c、ディフェンダーは v0.2e） |
 | `EvolvePokemon(player, card, target)` | 手札の進化カードで、自分の場のポケモン（`target` は場のポケモンの番号）を進化させる（v0.4a。v0.4c から 1 進化 → 2 進化も。対応した進化カードだけ） |
-| `UsePokemonPower` | 未対応（`UnsupportedError`） |
+| `UsePokemonPower(player, pokemon, power=0, energy=None, source=None, target=None)` | 自分の場のポケモン（`pokemon` は場のポケモンの番号）の特殊能力を使う（v0.5。番は終わらない。対応した特殊能力だけ。エナジートランスは `energy`・`source`・`target` を指定する） |
 
 ## 現在の対応ルール（公式ルール 2000.02.14版）
 
@@ -709,11 +772,12 @@ for e in state.log[before:]:
 - 進化（v0.4a）: 手札の「○○から進化」の進化カードを、その名前の自分の場のポケモンに重ねる（p.309・p.324）。おたがいの最初の番・その番に場に出した・進化したポケモンはできない（p.310）。ダメージ・エネルギー・ついているトレーナーを受け継ぎ、特殊状態は消える（p.310・p.322）。進化したポケモンがきぜつしたら、重なったカードもすべてトラッシュ（p.313）。たねポケモン → 1 進化（v0.4a）と 1 進化 → 2 進化（v0.4c。重なりは 3 枚まで。p.319。同じ番の 1 進化 → 2 進化はできない）
 - ワザの途中の相手の決定（v0.4d）: ワザの説明が相手に選ばせるとき（ふきとばし）、ワザの途中で相手の決定を待ち、答えのあとで同じワザの続きだけを処理する。待つ間はどちらのプレイヤーもほかの操作をできない（p.309）。相手の強制交代では、ベンチにもどったポケモンの特殊状態・持続する効果が消える（p.311・p.322）
 - 与えたダメージ（v0.4d）: 最終ダメージ（HP で上限を付けない。0 以下・「ダメージを受けない」なら与えていない。p.319・p.321）。メガドレインはその半分（10 単位に切り上げ）を自分から回復する
+- ポケモンの特殊能力（v0.5）: 自分の場のポケモン（ベンチも）の特殊能力のうち、そのとき使えるものを宣言して使う。特に指示されていないかぎり、何度でも・エネルギーなしでも使え、使っても番は終わらない。進化前の特殊能力は使えない。宣言したら、すべてすませてから（p.311・p.323）。特殊状態の制限は特殊能力の説明ごと（エナジートランスは「このカード」のねむり・マヒ・こんらん）
 - ワザによる持続する効果（v0.4b）: ワザが与え、番をまたいで残る（p.322）。「かたまる」の効果（次の相手の番、ダメージを受けない）は、そのポケモンへのダメージの要素を無効にし（p.321）、次の相手の番の終わりに消える。ベンチに戻る・場をはなれる・進化で消え、復活しない（p.311・p.322・p.323）。ポケモンチェックははたらかない（p.323）
 
 ## 現在の対応カード
 
-第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）、1 進化ポケモンのパラセクト・ジュゴン（v0.4a）・トランセル・コクーン（v0.4b）、2 進化ポケモンのスピアー（v0.4c）・バタフリー（v0.4d）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
+第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）、1 進化ポケモンのパラセクト・ジュゴン（v0.4a）・トランセル・コクーン（v0.4b）、2 進化ポケモンのスピアー（v0.4c）・バタフリー（v0.4d）、ポケモンパワーを持つ 2 進化ポケモンのフシギバナとその進化元のフシギダネ・フシギソウ（v0.5）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータ・フシギソウのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
 
 | id | カード | id | カード |
 |---|---|---|---|
@@ -728,7 +792,8 @@ for e in state.log[before:]:
 | PMCG1-015 | ロコン（v0.3c。あやしいひかり 10・コインが「おもて」なら相手をこんらん状態に。p.67） | PMCG2-010 | パラセクト（v0.4a。パラスから進化。キノコのほうし（ダメージなし）で相手をねむり状態に、きりさく 30。p.39） |
 | PMCG1-030 | ジュゴン（v0.4a。パウワウから進化。オーロラビーム 50、れいとうビーム 30・コインが「おもて」なら相手をマヒ状態に。p.102） | PMCG1-003 | トランセル（v0.4b。キャタピーから進化。かたまる（コインが「おもて」なら次の相手の番ダメージを受けない）、しびれごな 20・コインが「おもて」なら相手をマヒ状態に。p.18） |
 | PMCG1-009 | コクーン（v0.4b。ビードルから進化。かたまる、どくのこな 20・コインが「おもて」なら相手をどく状態に。p.21） | PMCG1-012 | スピアー（v0.4c。コクーンから進化する 2 進化。ダブルニードル 30×（コイン 2 枚の「おもて」の数 × 30）、どくばり 40・コインが「おもて」なら相手をどく状態に。p.21） |
-| PMCG2-007 | バタフリー（v0.4d。トランセルから進化する 2 進化。ふきとばし 20・相手の対戦ポケモンを相手が選んだ控えと入れ替える、メガドレイン 40・与えたダメージの半分（切り上げ）のダメージカウンターを自分からとりのぞく。p.19） | | |
+| PMCG2-007 | バタフリー（v0.4d。トランセルから進化する 2 進化。ふきとばし 20・相手の対戦ポケモンを相手が選んだ控えと入れ替える、メガドレイン 40・与えたダメージの半分（切り上げ）のダメージカウンターを自分からとりのぞく。p.19） | PMCG1-001 | フシギダネ（v0.5。やどりぎのタネ 20・ダメージを与えたら自分のダメージカウンターを 1 個とりのぞく。p.13） |
+| PMCG1-008 | フシギソウ（v0.5。フシギダネから進化。つるのむち 30、どくのこな 20・コインなしで相手をどく状態に。p.14） | PMCG1-011 | フシギバナ（v0.5。フシギソウから進化する 2 進化。ポケモンパワー「エナジートランス」: 自分の番の中で何度でも、自分の場のポケモンについている「草」エネルギーを別の自分のポケモンにつけかえる、ソーラービーム 60。p.16・p.323） |
 
 | id | トレーナー（v0.2b） | 処理（『オフィシャルブック2000』p.254 の最新の説明） | 原典で決められないため止める場合 |
 |---|---|---|---|
@@ -738,13 +803,13 @@ for e in state.log[before:]:
 | PMCG1-079 | ディフェンダー（v0.2e。p.257） | 自分の場のポケモンを1匹選んでつけ、次の相手の番の終わりにトラッシュ。ついているポケモンがワザで受けるダメージを 7 段階で −20 | なし |
 | PMCG1-081 | プラスパワー（v0.2c。p.257） | 自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュ。ついているポケモンのワザが対戦ポケモンに与えるダメージを 5 段階で +10（控えへのダメージは変えない） | なし |
 
-これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、ほかの進化カード（スピアー・バタフリーのほかの 2 進化を含む）、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）、パラセクトの「キノコのほうし」・ジュゴンの「れいとうビーム」（v0.4a）、トランセル・コクーンの「かたまる」「しびれごな」「どくのこな」（v0.4b。かたまるはカードごとに照合し、印刷の文面ではなく最新の説明にしたがう）、スピアーの「ダブルニードル」「どくばり」（v0.4c。ビードルのどくばりとは別に、スピアーのカード id で登録）、バタフリーの「ふきとばし」「メガドレイン」（v0.4d。印刷の文面ではなく最新の説明にしたがう）だけを、照合した説明文とともに登録しています（パラセクトのキノコのほうしは、パラスと同じ名前なので同じとは決めず、p.39 で照合した）。
+これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、ほかの進化カード（スピアー・バタフリー・フシギバナのほかの 2 進化を含む）、エナジートランスのほかのポケモンパワーを持つカード、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）、パラセクトの「キノコのほうし」・ジュゴンの「れいとうビーム」（v0.4a）、トランセル・コクーンの「かたまる」「しびれごな」「どくのこな」（v0.4b。かたまるはカードごとに照合し、印刷の文面ではなく最新の説明にしたがう）、スピアーの「ダブルニードル」「どくばり」（v0.4c。ビードルのどくばりとは別に、スピアーのカード id で登録）、バタフリーの「ふきとばし」「メガドレイン」（v0.4d。印刷の文面ではなく最新の説明にしたがう）、フシギダネの「やどりぎのタネ」・フシギソウの「どくのこな」（v0.5。どくのこなはコクーンのものと違いコインを投げない）だけを、照合した説明文とともに登録しています。ポケモンパワーは、フシギバナの「エナジートランス」（v0.5）だけを、照合した文面とともに登録しています（パラセクトのキノコのほうしは、パラスと同じ名前なので同じとは決めず、p.39 で照合した）。
 
 ## 未実装の機能
 
-退化・パラセクト・ジュゴン・トランセル・コクーン・スピアー・バタフリーのほかの進化カード、ほかの相手の強制交代・与えたダメージによる回復のワザ、「かたまる」のほかのワザによる持続する効果（すなかけ・からまるいと・マーカーをのせる効果など）、ポケモンチェックの 1（指示されたこと）、特殊などく、ポケモンパワー、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
+退化・パラセクト・ジュゴン・トランセル・コクーン・スピアー・バタフリー・フシギソウ・フシギバナのほかの進化カード、ほかの相手の強制交代・与えたダメージによる回復のワザ、「かたまる」のほかのワザによる持続する効果（すなかけ・からまるいと・マーカーをのせる効果など）、ポケモンチェックの 1（指示されたこと）、特殊などく、エナジートランスのほかのポケモンパワー（自動的にはたらく・常にはたらく・回数の制限のある・特殊能力を止める・決定を出す特殊能力。[docs/architecture-v0.5.md](docs/architecture-v0.5.md) 9 章）、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
 
-原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)。v0.4a〜v0.4c でも変えていない）。進化したあとの HP が、のっているダメージ以下になる場合（v0.4a。`UnsupportedError`、`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)）。「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決めるワザ（みだれづき、v0.4c からスピアーのダブルニードルも）を使う場合（v0.4b。`UnsupportedError`、`UNRESOLVED_PREVENTED_COIN_DAMAGE`。コインの前。[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md) 5 章）。2 進化で新しく止める場合はありません（v0.4c）。相手の強制交代・与えたダメージによる回復（v0.4d）でも、新しく止める場合はありません（ふきとばしの致死ダメージ・「ダメージを受けない」相手へのメガドレインは原典から導けた。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md) 4 章・[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md) 4 章）。
+原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)。v0.4a〜v0.4c でも変えていない）。進化したあとの HP が、のっているダメージ以下になる場合（v0.4a。`UnsupportedError`、`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)）。「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決めるワザ（みだれづき、v0.4c からスピアーのダブルニードルも）を使う場合（v0.4b。`UnsupportedError`、`UNRESOLVED_PREVENTED_COIN_DAMAGE`。コインの前。[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md) 5 章）。2 進化で新しく止める場合はありません（v0.4c）。相手の強制交代・与えたダメージによる回復（v0.4d）でも、新しく止める場合はありません（ふきとばしの致死ダメージ・「ダメージを受けない」相手へのメガドレインは原典から導けた。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md) 4 章・[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md) 4 章）。ポケモンパワー・エナジートランス・やどりぎのタネ・どくのこな（v0.5）でも、新しく止める場合はありません（[docs/pokemon-powers-v0.5.md](docs/pokemon-powers-v0.5.md) 3 章）。
 
 ## ディレクトリ
 
@@ -754,7 +819,7 @@ kyuura_engine/
   conditions.py  特殊状態（どく・ねむり・マヒ・こんらん）を付ける・置きかえる・回復する・ベンチに戻ったら・進化したら消す。v0.3a〜v0.4a
   persistent.py  ワザによる持続する効果（「かたまる」の「ダメージを受けない」）を付ける・期限・ベンチ・進化・きぜつで消す・はたらいているか。v0.4b
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。決定を出すトレーナーの決定の形の宣言（`decision_problems`。v0.4e）。v0.2a〜v0.4e
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。決定を出すトレーナーの決定の形の宣言（`decision_problems`。v0.4e）。ポケモンパワーの登録（カード id・パワーの位置 → 実装）とエナジートランス、やどりぎのタネ・どくのこな（コインなし）の実装（v0.5）。v0.2a〜v0.5
   coins.py       コイントス（対戦の乱数で決め、1 枚ごとにログに残す）。v0.2d
   deck.py        デッキの検査
   state.py       ゲームの状態（ゾーン、場のポケモン、進化の重なり（v0.4a。v0.4c から 2 進化の 3 枚まで）・場に出た番・進化した番（v0.4a）、ワザによる持続する効果（v0.4b）、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、結果）
@@ -772,8 +837,8 @@ scripts/extract_kyuura_cards.py  kyuura から写しを作る
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
 tools/compat_driver.py           版の比較の駆動（公開の API だけで 1 つの版を動かし、1 手ごとの記録を作る）。v0.4e
 tools/compare_engine_versions.py 2 つの版の比較（git archive で取り出し、版ごとに別のプロセス。最初の食い違いを診断）。v0.4e
-tools/stress_engine.py           大規模なストレス実行（ふだんのテストでは走らせない）。v0.4e
+tools/stress_engine.py           大規模なストレス実行（ふだんのテストでは走らせない）。v0.4e。v0.5 でフシギバナの組（エナジートランスの使用を混ぜる）
 tests/                           自動テスト（unittest）。tests/log_audit.py はログと書き出しの監査の道具（v0.4e。テストではない）
 tests/fixtures/                  v0.1 の対戦結果の参照データ、v0.4d（4bd97bf）の記録の指紋（v0.4e。互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.4e のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）、総合監査・組み合わせの表・互換性・未解決の範囲・v0.5 の準備（v0.4e）
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.5 のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）、総合監査・組み合わせの表・互換性・未解決の範囲・v0.5 の準備（v0.4e）、ポケモンパワーの規定・フシギバナ・フシギダネとフシギソウ・エナジートランスの処理・確かめた結果（v0.5）
 ```

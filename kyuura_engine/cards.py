@@ -6,9 +6,10 @@
 読み込むときに、各カード・各ワザが対戦で使えるかを分類します（``supported`` と理由）。分類は、
 データの値ではなく、エンジンが実装しているかで決めます。
 
-- エンジンの中心部分で扱える形か（たねポケモンと 1 進化ポケモン（v0.4a）・タイプ 1 つ・弱点 ×2 など。2 進化・ベイビィ・
-  ポケモンパワーは未実装）
-- ワザ・トレーナーの効果の実装が、効果の登録表（``effects.EffectRegistry``）に登録されているか
+- エンジンの中心部分で扱える形か（たねポケモンと 1 進化ポケモン（v0.4a）・2 進化ポケモン（v0.4c）・タイプ 1 つ・弱点 ×2
+  など。ベイビィは未実装）
+- ワザ・トレーナー・ポケモンパワー（特殊能力。v0.5）の効果の実装が、効果の登録表（``effects.EffectRegistry``）に登録されて
+  いるか。ポケモンパワーを持つカードは、すべてのパワーが登録されているときだけ使える（パワーを持つカードを一括で対応にしない）
 
 説明文が空であることは、実装がある証拠にしません。使えないカードはデッキに入れられません。
 """
@@ -72,6 +73,24 @@ class Attack:
     damage_modifier: str | None = None  # データの damage.modifier（「+」「×」など）
 
 
+@dataclass(frozen=True)
+class Power:
+    """ポケモンパワー（特殊能力。p.311・p.323。v0.5）の印刷された情報（kyuura の ``pokemon.powers`` の 1 件）。
+
+    ``kind`` は kyuura の値（旧裏の範囲では ``"pokemon_power"``）。``text_ja`` は印刷の文面（照合用。処理の根拠ではない）。
+    使えるか（``supported``）は、効果の登録表に実装があり、データと合うかで決める（``Attack`` と同じ）。
+    """
+
+    index: int
+    name_ja: str
+    name_en: str | None
+    kind: str
+    text_ja: str | None
+    text_en: str | None
+    supported: bool
+    unsupported_reason: str | None
+
+
 # 進化の重なりの、下から順の段階（v0.4c。p.316・p.319 の「たねポケモンカード」+「進化カード」+「進化カード」）。
 # いちばん下はたねポケモン、その上は 1 進化、その上は 2 進化。ベイビィ（p.319 の C・D）は未対応
 EVOLUTION_STAGES = ("basic", "stage1", "stage2")
@@ -95,6 +114,7 @@ class CardDefinition:
     resistance_value: int = 0
     retreat_cost: int | None = None
     attacks: tuple[Attack, ...] = ()
+    powers: tuple[Power, ...] = ()  # ポケモンパワー（v0.5）。カードに印刷された順
     # エネルギー
     energy_kind: str | None = None
     provides: EnergyType | None = None
@@ -224,8 +244,11 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
             reasons.append(f"{'1' if pokemon['stage'] == 'stage1' else '2'} 進化なのに進化元の名前がない")
     elif pokemon["stage"] != "basic":
         reasons.append(f"{pokemon['stage']}（ベイビィなど）は未実装")
-    if pokemon["powers"]:
-        reasons.append("ポケモンパワー（特殊能力）は未実装")
+    # ポケモンパワー（v0.5）: 1 つずつ、効果の登録表に実装があり、データと合うか（説明文の有無・名前では決めない）
+    powers = tuple(_annotate_power(record["id"], _parse_power(i, w), effects) for i, w in enumerate(pokemon["powers"]))
+    for power in powers:
+        if not power.supported:
+            reasons.append(f"ポケモンパワー「{power.name_ja}」: {power.unsupported_reason}")
     if pokemon.get("rules_text") is not None:
         reasons.append("ルール文のあるポケモンは未実装")
     if len(pokemon["types"]) != 1:
@@ -269,12 +292,34 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         resistance_value=resistance_value,
         retreat_cost=pokemon["retreat_cost"],
         attacks=attacks,
+        powers=powers,
     )
 
 
 def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry) -> Attack:
     problem = effects.attack_problem(card_id, attack)
     return replace(attack, supported=problem is None, unsupported_reason=problem)
+
+
+def _parse_power(index: int, raw: dict) -> Power:
+    """ポケモンパワーのデータだけを読む（v0.5）。使えるかどうかは効果の登録表で決める。"""
+    name = raw["name"]
+    text = raw.get("text") or {}
+    return Power(
+        index=index,
+        name_ja=name.get("ja") or "",
+        name_en=name.get("en"),
+        kind=raw.get("kind") or "",
+        text_ja=text.get("ja"),
+        text_en=text.get("en"),
+        supported=False,
+        unsupported_reason="効果の登録表で確かめていない",
+    )
+
+
+def _annotate_power(card_id: str, power: Power, effects: EffectRegistry) -> Power:
+    problem = effects.power_problem(card_id, power)
+    return replace(power, supported=problem is None, unsupported_reason=problem)
 
 
 @dataclass(frozen=True)
@@ -290,7 +335,7 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_4d）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_5）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
@@ -299,6 +344,7 @@ class CardPool:
 POOL_KEYS = (
     "pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c",
     "pool_v0_4a", "pool_v0_4b", "pool_v0_4c", "pool_v0_4d",  # pool_v0_4d は v0.4d（バタフリー）
+    "pool_v0_5",  # v0.5（フシギダネ・フシギソウ・フシギバナ）
 )
 
 

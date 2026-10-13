@@ -165,14 +165,13 @@ class TrainerDecisionInRealGameTest(unittest.TestCase):
             AttachEnergy(0, card, pokemon), Retreat(0, (), pokemon), UseAttack(0, 0), EndTurn(0), TakePrize(0, 0),
             PromoteActive(0, pokemon), PlayTrainer(state.current_player, card),
             EvolvePokemon(0, card, p.active.pokemon_id),  # v0.4a から処理する（決定を待つ間は進化できない）
+            # v0.5 から処理する（決定を待つ間は特殊能力の使用を宣言できない。p.311。v0.4e までは UNSUPPORTED_ACTION）
+            UsePokemonPower(state.current_player, p.active.pokemon_id),
         ):
             with self.subTest(command=type(command).__name__):
                 with self.assertRaises(EngineError) as ctx:
                     apply_command(state, command)
                 self.assertEqual(ctx.exception.code, "WRONG_PHASE")
-        with self.assertRaises(EngineError) as ctx:
-            apply_command(state, UsePokemonPower(0, pokemon))
-        self.assertEqual(ctx.exception.code, "UNSUPPORTED_ACTION")
         self.assertEqual(full(state), before)
         done = apply_command(state, trainer_policy_command(state))
         self.assertEqual(done.phase, Phase.MAIN)

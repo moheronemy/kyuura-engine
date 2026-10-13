@@ -50,7 +50,7 @@
 - ダメージの目安の数字がないワザ（パラスの「キノコのほうし」）は、ダメージの要素がないワザとして実装します（`PutToSleep`。ダメージの計算も `damage` のログもない）。`DamageOnly` に 0 を渡す登録にしないでください（docs/sleep-paralysis-v0.3b.md 4 章）。
 - ログのイベントに `turn` の項目を渡さないでください（`add_event` が `ValueError`。ログの `turn` はいつも今の番。マヒの番は `paralyzed_turn`）。
 - ログは内部の完全な記録です（引いたカードなどの隠れた情報を含む）。イベントを加えるときは、隠す情報を決まった項目にだけ入れます（docs/architecture-v0.2b.md 9 章）。
-- 進化（v0.4a）は、たねポケモン → 1 進化ポケモン、v0.4c から 1 進化ポケモン → 2 進化ポケモンも、同じ `EvolvePokemon(player, card, target)`（`engine._evolve_pokemon`）で扱います。退化・ベイビィ・ポケモンパワー・進化に関わるカードの効果は未実装で、ベイビィのカードは分類（cards.py）で拒否します。2 進化のカードは段階では拒否せず、1 進化と同じカードごとの条件（進化元の名前・ワザの登録・ポケモンパワーなし）で分類します（2 進化の段階だからといって一括で対応にしない。フシギバナは未対応のまま）。確かめる順番とコードは docs/evolution-rules-v0.4a.md 3 章と docs/stage2-evolution-v0.4c.md 3 章のとおりで、どれも状態を変える前に拒否します。名前は合うが段階が合わない組み合わせ（テスト専用のカードだけで起こる）は `EVOLUTION_STAGE_MISMATCH`（v0.4c）。
+- 進化（v0.4a）は、たねポケモン → 1 進化ポケモン、v0.4c から 1 進化ポケモン → 2 進化ポケモンも、同じ `EvolvePokemon(player, card, target)`（`engine._evolve_pokemon`）で扱います。退化・ベイビィ・進化に関わるカードの効果は未実装で、ベイビィのカードは分類（cards.py）で拒否します。2 進化のカードは段階では拒否せず、1 進化と同じカードごとの条件（進化元の名前・ワザの登録・ポケモンパワーの登録）で分類します（2 進化の段階だからといって一括で対応にしない）。v0.4c〜v0.4e は「ポケモンパワーなし」が条件で、フシギバナは未対応でした。v0.5 でポケモンパワーの登録表を加え、フシギバナのパワー（エナジートランス）とワザ（ソーラービーム）を登録したので、フシギバナは対応になりました（下の「ポケモンパワー（v0.5）」。未対応のパワーを持つ 2 進化の例はカメックス PMCG1-032）。確かめる順番とコードは docs/evolution-rules-v0.4a.md 3 章と docs/stage2-evolution-v0.4c.md 3 章のとおりで、どれも状態を変える前に拒否します。名前は合うが段階が合わない組み合わせ（テスト専用のカードだけで起こる）は `EVOLUTION_STAGE_MISMATCH`（v0.4c）。
 - 進化しているポケモンは、いちばん上のカードを `PokemonInPlay.card`、下に重なったカードを `PokemonInPlay.evolution_stack`（下から順。進化していなければ `()`）に持ちます。場のポケモンの番号（`pokemon_id`）は進化しても変えません（実装上の仮定）。p.310 の「別のポケモン」は、いちばん上のカード・`evolved_turn`（いまの姿に進化した番）・特殊状態と失敗の記録と持続する効果（v0.4b）を消すことで表します。進化の条件の「その番の最初から場に出ていた」は `played_turn`（場に出た番。対戦準備は 0。`_enter_play` だけで決める。にげる・交代では変えない）と `evolved_turn` で確かめます（`current_form_turn`）。HP・タイプ・弱点・抵抗力・にげる・ワザは、どの処理もいちばん上のカードの定義を使い、下のカードの定義を見ないでください。
 - 進化ではダメージ・エネルギー・ついているトレーナー（`PokemonInPlay.trainers`。効果と有効期限も）を変えません（p.310。ついているトレーナーの効果が続くのは SUPPORTED。docs/evolution-rules-v0.4a.md の E8'）。進化で消える「持続する効果」（p.322・p.323）を持つワザを加えるときは、進化の処理で消します（ついているカードの効果とは分ける）。
 - 進化したポケモンがきぜつしたら、`PokemonInPlay.cards()`（重なったカードすべて）をトラッシュします（p.313）。サイドは 1 匹につき 1 枚のままです。
@@ -93,3 +93,17 @@
 - 乱数・カードの番号の付け方・状態の形を変えると、tests/test_reproducibility.py の固定値が変わります。意図した変更のときだけ値を更新し、理由をコミットに書きます。
 - docs（README.md、docs/implementation-status.md など）を実態に合わせます。対応していないものを対応済みと書かないでください。
 - テスト: `python3 -m unittest`（リポジトリの直下。標準ライブラリだけ）。
+
+## ポケモンパワー（v0.5）
+
+- 2000.02.14 版の公式ルールの用語は「特殊能力」です（p.311・p.323）。一般の規定は docs/pokemon-powers-v0.5.md で誌面と照合しました。kyuura の rule_history.json・rule_differences.json のポケモンパワーの記録は第4版の冊子（ed4）のもので、2000.02.14 版の規定として使わないでください。英語版の文面・後年の英語版の規定（`EN-2002-STATUS-POWERS`）・現代の「特性」のルールで日本語版の処理を決めないでください。
+- ポケモンパワーはワザ（`AttackEffect`）の一種として扱わないでください。`effects.PowerKey`（カード id, パワーの位置）で `PowerEntry`（実装 `PowerEffect`・照合した kyuura の写しの名前と印刷の文面・実装がしたがう最新の説明 `play_text_ja`・出典）を登録します。登録がない・データ（名前・文面・種類）と合わないパワーを持つカードは使えません（cards.py が分類し、使用は `UNSUPPORTED_POKEMON_POWER`）。パワーを持つカードを一括で対応にしないでください。照合の記録は `card_verification.json` の `power_card_image_text_ja`・`power_latest_description_ja`（パワーの位置ごと。tests/test_pokemon_powers_v0_5.py が確かめる）。
+- 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
+- どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。
+- 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの形式 9 と不変条件が要る）。v0.5 のパワーは決定を出しません。決定を出すパワーを加えるときは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先を加えます。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（未対応。docs/architecture-v0.5.md 9 章）。
+- エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
+- ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
+- やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
+- ストレス実行（tools/stress_engine.py）は、フシギバナの組（`POWER_SCENARIOS`）でエナジートランスの使用を混ぜます。比較の駆動（tools/compat_driver.py）は変えていません（参照データ compat_base_4bd97bf.json と結びついているため）。駆動にパワーの操作を加えるときは、参照データを基準の版から作り直します。
+- 対応にしたフシギバナの代わりに、未対応のポケモンパワーを持つカードの例はカメックス（PMCG1-032。写しの参照カード）を使います。登録を除いた登録表（`DEFAULT_EFFECTS.without_powers(...)`）でも作れます。

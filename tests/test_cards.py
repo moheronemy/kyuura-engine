@@ -13,7 +13,7 @@ from kyuura_engine.cards import read_extract, read_verification
 
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
-    POTION, RATTATA, SUPER_POTION, SWITCH, VENUSAUR, VULPIX, WEEDLE,
+    POTION, RATTATA, SUPER_POTION, SWITCH, BLASTOISE, BULBASAUR, IVYSAUR, VENUSAUR, VULPIX, WEEDLE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -33,7 +33,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.2e でディフェンダー（pool_v0_2e）、v0.2f でピカチュウ（pool_v0_2f）、v0.3a でビードル（pool_v0_3a）、
         # v0.3b でキャタピー・パラス（pool_v0_3b）、v0.3c でロコン（pool_v0_3c）、v0.4a で 1 進化のパラセクト・ジュゴン
         # （pool_v0_4a）、v0.4b で 1 進化のトランセル・コクーン（pool_v0_4b）、v0.4c で 2 進化のスピアー（pool_v0_4c）、
-        # v0.4d で 2 進化のバタフリー（pool_v0_4d）を加えた。v0.1 の組（トレーナーと v0.2d 以降のポケモン以外）は変わらない
+        # v0.4d で 2 進化のバタフリー（pool_v0_4d）、v0.5 でフシギダネ・フシギソウ・フシギバナ（pool_v0_5）を加えた。v0.1 の組
+        # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
@@ -55,7 +56,10 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(pool.is_playable(BEEDRILL) and pool.get(BEEDRILL).is_stage2_pokemon)
         self.assertEqual(read_extract()["pool_v0_4d"], [BUTTERFREE])  # v0.4d で 2 進化（ふきとばし・メガドレイン）
         self.assertTrue(pool.is_playable(BUTTERFREE) and pool.get(BUTTERFREE).is_stage2_pokemon)
-        later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE)
+        self.assertEqual(read_extract()["pool_v0_5"], [BULBASAUR, IVYSAUR, VENUSAUR])  # v0.5（ポケモンパワーのエナジートランス）
+        self.assertTrue(all(pool.is_playable(c) for c in (BULBASAUR, IVYSAUR, VENUSAUR)))
+        later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
+                 BULBASAUR, IVYSAUR, VENUSAUR)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -118,13 +122,15 @@ class ClassificationTest(unittest.TestCase):
         pool = load_card_pool()
         # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる
         self.assertIn("トレーナー", pool.get(SUPER_POTION).unsupported_reasons[0])
-        reasons = " ".join(pool.get(VENUSAUR).unsupported_reasons)
-        # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のフシギバナは段階ではなく、ポケモンパワーと登録のないワザで
-        # 未対応のまま（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）
-        self.assertTrue(pool.get(VENUSAUR).is_stage2_pokemon)
+        # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のカードは段階ではなく、ポケモンパワーと登録のないワザで未対応に
+        # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
+        # ソーラービーム）で確かめていた。v0.5 でフシギバナを対応にしたので、カメックス（登録のないポケモンパワー「あまごい」・
+        # ワザ「ハイドロポンプ」）で確かめる
+        reasons = " ".join(pool.get(BLASTOISE).unsupported_reasons)
+        self.assertTrue(pool.get(BLASTOISE).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
-        self.assertIn("ポケモンパワー", reasons)
-        self.assertIn("ソーラービーム", reasons)
+        self.assertIn("ポケモンパワー「あまごい」", reasons)
+        self.assertIn("ハイドロポンプ", reasons)
 
 
 class CostTest(unittest.TestCase):

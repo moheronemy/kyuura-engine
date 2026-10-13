@@ -50,10 +50,11 @@ from .commands import (
     Retreat,
     TakePrize,
     UseAttack,
+    UsePokemonPower,
 )
 from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
 from .damage import calculate_confusion_damage
-from .effects import AttackKey, AttackUse, TrainerUse, attack_damage_modifiers
+from .effects import AttackKey, AttackUse, PowerKey, PowerUse, TrainerUse, attack_damage_modifiers
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
@@ -1162,6 +1163,55 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...]) -> Non
         _finish_trainer(state, entry.effect)
 
 
+# ---------------------------------------------------------------- ポケモンパワー（特殊能力。v0.5）
+
+
+def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
+    """自分の場のポケモンの特殊能力（ポケモンパワー）の使用を宣言し、説明にしたがって処理する（p.311「ポケモンの特殊能力を使う」・
+    p.323「14 ポケモンの特殊能力」。v0.5）。
+
+    - 使えるのは、使用を宣言して使う特殊能力だけ（自動的にはたらく・常にはたらいている特殊能力は宣言しない。p.311・p.323。未対応）。
+      効果の登録表に実装が登録された特殊能力だけ（``EffectRegistry.power_effect``。登録がなければ ``UNSUPPORTED_POKEMON_POWER``）。
+    - 自分の番（``Phase.MAIN``）だけ（``_require_turn``）。番の最初に引くまでは何もできず（p.309）、ワザを使ったら番は終わり（p.309）、
+      決定を待つ間（トレーナー・ワザ・きぜつのあとの決定）はほかのことをしない（p.309・p.310・p.311）。v0.5 の対応カード（エナジート
+      ランス）の説明は「自分の番の中で」。相手の番・ポケモンチェック（どちらの番でもない。p.323）に使う特殊能力は未対応。
+    - 特殊能力を使うポケモンは、自分の場（バトル場・ベンチ）のポケモンの番号（``cmd.pokemon``）。「特に指示されていないかぎり、
+      ベンチにいるポケモンも特殊能力を使うことができます」「エネルギーカードをつけていなくても」（p.311・p.323）。どの特殊能力が
+      あるかは、いちばん上のカードで決める（進化したら進化前の特殊能力は使えない。p.310）。
+    - 手順（p.311）: 1. 使うポケモンを示し、名前を伝えて宣言する（ログ ``pokemon_power``）→ 2. 使うための条件にしたがう（実装の
+      ``check_usable``。したがえなければ使えない）→ 3. 説明にしたがって処理する（実装の ``resolve``）。確かめることはどれも宣言の
+      前に済ませるので、拒否したら状態・乱数・ログは変わらない。
+    - 使っても番は終わらない（``Phase.MAIN`` のまま。``_finish_attack`` を呼ばない）。「特に指示されていないかぎり、特殊能力は
+      いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
+    """
+    p = _require_turn(state, cmd.player)
+    user = p.find_by_pokemon_id(cmd.pokemon)
+    if user is None:
+        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.pokemon) is not None:
+            raise IllegalActionError("POKEMON_NOT_YOURS", "相手の場のポケモンの特殊能力は使えない")
+        raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
+    definition = state.card_def(user.card)
+    if not 0 <= cmd.power < len(definition.powers):
+        raise IllegalActionError(
+            "NO_POKEMON_POWER", f"場のポケモン {user.pokemon_id}（{definition.name_ja}）に {cmd.power!r} 番目の特殊能力はない"
+        )
+    power = definition.powers[cmd.power]
+    effect = state.effects.power_effect(definition.id, power)
+    if effect is None:
+        problem = state.effects.power_problem(definition.id, power)
+        raise UnsupportedError("UNSUPPORTED_POKEMON_POWER", f"特殊能力「{power.name_ja}」は未対応（{problem}）")
+    use = PowerUse(cmd.player, user.pokemon_id, PowerKey(definition.id, cmd.power), cmd.energy, cmd.source, cmd.target)
+    effect.check_usable(state, use)
+
+    # 1. 宣言（p.311）。2. の条件は check_usable で確かめた。3. 説明にしたがって処理する
+    state.add_event(
+        "pokemon_power", player=cmd.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=power.name_ja, power_index=cmd.power
+    )
+    effect.resolve(state, use)
+    if state.decision is not None or state.phase is not Phase.MAIN:
+        raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5 の特殊能力は決定を出さない。エンジンの不具合）")
+
+
 # ---------------------------------------------------------------- 保留中の決定に答える
 
 
@@ -1256,6 +1306,7 @@ _HANDLERS: dict[type, Callable[[GameState, object], None]] = {
     ResolveDecision: _resolve_decision,
     PlayTrainer: _play_trainer,
     EvolvePokemon: _evolve_pokemon,
+    UsePokemonPower: _use_pokemon_power,
 }
 
 

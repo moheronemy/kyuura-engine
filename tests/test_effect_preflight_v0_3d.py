@@ -24,13 +24,15 @@ from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import turn_owner
 
 from tests.helpers import (
-    BEEDRILL, BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, KAKUNA, LIGHTNING, METAPOD, PARAS, PIKACHU, PLUSPOWER, PONYTA,
+    BEEDRILL, BULBASAUR, BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, IVYSAUR, KAKUNA, LIGHTNING, METAPOD, PARAS, PIKACHU,
+    PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
 # 実装ごとに 1 つ（v0.3d の登録表のワザの実装はこの 7 種類。v0.4b で「かたまる」、v0.4c で 2 進化のスピアーの 2 つ、v0.4d で
-# 2 進化のバタフリーの 2 つ（「ふきとばし」は相手の決定を待つ状態で受け付ける）を加えた）
+# 2 進化のバタフリーの 2 つ（「ふきとばし」は相手の決定を待つ状態で受け付ける）、v0.5 でフシギダネの「やどりぎのタネ」・1 進化の
+# フシギソウの「どくのこな」（どちらもコインを投げない新しい実装）を加えた）
 ATTACKS = [
     (GROWLITHE, 0),  # DamageOnly
     (DODUO, 0),  # CoinFlipDamage（コイン 2 枚）
@@ -44,10 +46,12 @@ ATTACKS = [
     (BEEDRILL, 1),  # PoisonOnHeads（v0.4c。スピアーの「どくばり」）
     (BUTTERFREE, 0),  # DamageAndForceSwitch（v0.4d。バタフリーの「ふきとばし」。相手が決定する。キャタピー → トランセルと進化したものとして置く）
     (BUTTERFREE, 1),  # DamageAndDrain（v0.4d。バタフリーの「メガドレイン」）
+    (BULBASAUR, 0),  # DamageAndRemoveCounters（v0.5。フシギダネの「やどりぎのタネ」）
+    (IVYSAUR, 1),  # PoisonOpponent（v0.5。フシギソウの「どくのこな」。コインなし。1 進化なので、フシギダネから進化したものとして置く）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
-EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (CATERPIE, METAPOD)}
+EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (CATERPIE, METAPOD), IVYSAUR: (BULBASAUR,)}
 COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0)}  # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage）
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},

@@ -43,7 +43,7 @@ from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt
 
 from tests.helpers import (
     BEEDRILL, CATERPIE, DEFENDER, DEWGONG, DIGLETT, FIGHTING, FIRE, GRASS, GROWLITHE, H, HITMONCHAN, KAKUNA, MACHOP, METAPOD, PARAS,
-    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, VENUSAUR, WATER, WEEDLE, build_test_state, coin_events,
+    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, BLASTOISE, WATER, WEEDLE, build_test_state, coin_events,
     expand_decklist, with_coin_results,
 )
 
@@ -194,13 +194,15 @@ class BeedrillCardTest(unittest.TestCase):
 
     def test_stage2_is_not_supported_as_a_whole(self):
         """2 進化の段階を扱えるようになっても、カードごとの条件（ワザの登録・ポケモンパワーなし・進化元の名前）は変わらない。
-        フシギバナ（ポケモンパワー・登録のないワザ）は未対応のまま。ワザの登録がないスピアーはデッキに入らない。バタフリー
+        実装を登録していないポケモンパワーを持つ 2 進化は未対応のまま。ワザの登録がないスピアーはデッキに入らない。バタフリー
         は v0.4c では写しに入れていなかった（ワザが未実装。docs/architecture-v0.4c.md の v0.4d の準備）。v0.4d で 2 つのワザを
-        登録して写し（pool_v0_4d）に加えた（tests/test_butterfree_v0_4d.py）。"""
+        登録して写し（pool_v0_4d）に加えた（tests/test_butterfree_v0_4d.py）。v0.4e まではフシギバナ（ポケモンパワー・登録の
+        ないワザ）で確かめていた。v0.5 でフシギバナのパワーとワザを登録して対応にしたので、カメックス（登録のないポケモン
+        パワー「あまごい」）で確かめる（2 進化だから一括で対応にしたのではない。tests/test_venusaur_v0_5.py）。"""
         pool = load_card_pool()
-        self.assertTrue(pool.get(VENUSAUR).is_stage2_pokemon)
-        self.assertFalse(pool.is_playable(VENUSAUR))
-        self.assertIn("ポケモンパワー", " ".join(pool.get(VENUSAUR).unsupported_reasons))
+        self.assertTrue(pool.get(BLASTOISE).is_stage2_pokemon)
+        self.assertFalse(pool.is_playable(BLASTOISE))
+        self.assertIn("ポケモンパワー", " ".join(pool.get(BLASTOISE).unsupported_reasons))
         effects = DEFAULT_EFFECTS.without_attacks("test-no-sting", [AttackKey(BEEDRILL, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(BEEDRILL))
@@ -328,10 +330,10 @@ class Stage2EvolveTest(unittest.TestCase):
         assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, "TEST-STAGE1-FROM-KAKUNA"), kakuna_pk.pokemon_id), "EVOLUTION_STAGE_MISMATCH")
 
     def test_unsupported_stage2_cards(self):
-        """対応していない 2 進化カード（フシギバナ・ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は
-        ``UNSUPPORTED_EVOLUTION``。"""
-        state = board(hand=(VENUSAUR,))
-        assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, VENUSAUR), state.players[0].active.pokemon_id),
+        """対応していない 2 進化カード（未対応のポケモンパワーを持つカメックス（v0.4e まではフシギバナ。v0.5 で対応にした）・
+        ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は ``UNSUPPORTED_EVOLUTION``。"""
+        state = board(hand=(BLASTOISE,))
+        assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, BLASTOISE), state.players[0].active.pokemon_id),
                         "UNSUPPORTED_EVOLUTION", UnsupportedError)
         effects = DEFAULT_EFFECTS.without_attacks("test-no-twineedle", [AttackKey(BEEDRILL, 0)])
         state = board(pool=pool_from_extract(read_extract(), effects), effects=effects)
@@ -1091,11 +1093,12 @@ class AtomicityTest(unittest.TestCase):
     def test_rejected_stage2_evolutions_change_nothing(self):
         """不正な 2 進化は、手札・カード・重なり・進化した番・特殊状態・持続する効果・乱数・ログを変えない（どく・こんらん・
         「かたまる」の効果を受けたコクーンは、盤面を直接作った）。"""
-        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, VENUSAUR))
+        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, BLASTOISE))
         target = state.players[0].active.pokemon_id
         for command, code, error in (
             (EvolvePokemon(0, uid_of(state, 0, KAKUNA), target), "EVOLUTION_NAME_MISMATCH", IllegalActionError),
-            (EvolvePokemon(0, uid_of(state, 0, VENUSAUR), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
+            # 未対応の 2 進化（v0.4e まではフシギバナ。v0.5 で対応にしたので、未対応のポケモンパワーを持つカメックス）
+            (EvolvePokemon(0, uid_of(state, 0, BLASTOISE), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
             (EvolvePokemon(1, uid_of(state, 0, BEEDRILL), target), "NOT_YOUR_TURN", IllegalActionError),
             (EvolvePokemon(0, uid_of(state, 0, BEEDRILL), state.players[1].active.pokemon_id), "TARGET_NOT_YOURS", IllegalActionError),
         ):

@@ -155,7 +155,8 @@ ALLOWED = {
     Phase.SETUP_PLACEMENT: {PlaceStartingPokemon},
     Phase.SETUP_MULLIGAN_DRAW: {DrawMulliganCards},
     Phase.SETUP_FIRST_PLAYER: {ReportJankenResult},
-    Phase.MAIN: {PlayBasicToBench, AttachEnergy, Retreat, UseAttack, EndTurn, PlayTrainer, EvolvePokemon},  # PlayTrainer は v0.2b、EvolvePokemon は v0.4a
+    # PlayTrainer は v0.2b、EvolvePokemon は v0.4a、UsePokemonPower は v0.5（自分の番の中だけ。p.311・p.323）
+    Phase.MAIN: {PlayBasicToBench, AttachEnergy, Retreat, UseAttack, EndTurn, PlayTrainer, EvolvePokemon, UsePokemonPower},
     Phase.TAKE_PRIZE: {TakePrize, ResolveDecision},
     Phase.PROMOTE_ACTIVE: {PromoteActive, ResolveDecision},
     Phase.DECISION: {ResolveDecision},  # v0.2a（ワザの効果の途中の決定。製品のカードでは起こらない）
@@ -204,12 +205,12 @@ def sample_commands(state):
     pl = state.players[p]
     card = pl.hand[0] if pl.hand else 0
     pokemon = pl.active.card if pl.active else (pl.bench[0].card if pl.bench else 0)
-    pokemon_id = pl.active.pokemon_id if pl.active else (pl.bench[0].pokemon_id if pl.bench else 0)  # v0.4a: 進化の対象
+    pokemon_id = pl.active.pokemon_id if pl.active else (pl.bench[0].pokemon_id if pl.bench else 0)  # v0.4a: 進化の対象、v0.5: パワーを使うポケモン
     return [
         PlaceStartingPokemon(p, card), DrawMulliganCards(p, 0), ReportJankenResult(0), PlayBasicToBench(p, card),
         AttachEnergy(p, card, pokemon), Retreat(p, (), pokemon), UseAttack(p, 0), EndTurn(p), TakePrize(p, 0),
         PromoteActive(p, pokemon), ResolveDecision(p, 1, (0,)),
-        EvolvePokemon(p, card, pokemon_id), PlayTrainer(p, card), UsePokemonPower(p, pokemon),
+        EvolvePokemon(p, card, pokemon_id), PlayTrainer(p, card), UsePokemonPower(p, pokemon_id),
     ]
 
 
@@ -228,9 +229,9 @@ class PhaseCommandMatrixTest(unittest.TestCase):
                 with self.subTest(phase=phase.value, command=type(command).__name__):
                     with self.assertRaises((IllegalActionError, UnsupportedError)) as ctx:
                         apply_command(state, command)
-                    if isinstance(command, UsePokemonPower):  # PlayTrainer は v0.2b、EvolvePokemon は v0.4a で対応
-                        expected = "UNSUPPORTED_ACTION"
-                    elif phase is Phase.GAME_OVER:
+                    # v0.4e までは UsePokemonPower はどの段階でも UNSUPPORTED_ACTION だった。v0.5 で対応にしたので、ほかの
+                    # コマンドと同じく段階で拒否する（PlayTrainer は v0.2b、EvolvePokemon は v0.4a で同じ変更をした）
+                    if phase is Phase.GAME_OVER:
                         expected = "GAME_OVER"
                     elif phase is Phase.HALTED:
                         expected = "UNRESOLVED_MULLIGAN_COMPENSATION"

@@ -7,9 +7,12 @@ from kyuura_engine import (
     UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, command_from_dict,
     command_to_dict, new_game, state_to_dict,
 )
+from kyuura_engine.cards import pool_from_extract, read_extract
+from kyuura_engine.commands import UNSUPPORTED_COMMANDS
+from kyuura_engine.effects import DEFAULT_EFFECTS, PowerKey
 
 from tests.helpers import (
-    DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, HITMONCHAN, MACHOP, PONYTA, RATTATA, STARYU, WATER,
+    BULBASAUR, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, HITMONCHAN, IVYSAUR, MACHOP, PONYTA, RATTATA, STARYU, VENUSAUR, WATER,
     WATER_FIGHTING_DECK, active, build_test_state, find_seed, finish_setup, place_all,
 )
 
@@ -309,15 +312,27 @@ class IllegalCommandsDoNotChangeStateTest(unittest.TestCase):
 class UnsupportedActionsTest(unittest.TestCase):
     """未対応の操作は、黙って無視せず UnsupportedError にする。
 
-    v0.2b で PlayTrainer、v0.4a で EvolvePokemon を対応にしたので、この一覧から外した（トレーナーの検査は
-    test_trainers.py、進化の検査は test_evolution_v0_4a.py）。
+    v0.2b で PlayTrainer、v0.4a で EvolvePokemon、v0.5 で UsePokemonPower を対応にしたので、この一覧から外した（トレーナーの
+    検査は test_trainers.py、進化の検査は test_evolution_v0_4a.py、ポケモンパワーの検査は test_pokemon_powers_v0_5.py）。
+    未対応の操作のコマンドの種類はなくなった（``commands.UNSUPPORTED_COMMANDS`` は空）。v0.5 からは、実装を登録していない
+    ポケモンパワーの使用が ``UnsupportedError``（``UNSUPPORTED_POKEMON_POWER``）になる。
     """
 
     def test_unsupported_commands(self):
-        state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
-        with self.assertRaises(UnsupportedError) as ctx:
+        # エナジートランスの登録を除いた登録表（実装を登録していないポケモンパワーを持つ場のポケモンを作るため。盤面を直接作った）
+        effects = DEFAULT_EFFECTS.without_powers("test-no-energy-trans", [PowerKey(VENUSAUR, 0)])
+        venusaur = {"card": VENUSAUR, "evolved_from": [BULBASAUR, IVYSAUR]}
+        state = build_test_state([{"active": GROWLITHE, "bench": [venusaur]}, {"active": STARYU}], turn_number=5, effects=effects,
+                                 pool=pool_from_extract(read_extract(), effects))
+        self.assertEqual(UNSUPPORTED_COMMANDS, ())
+        # UsePokemonPower は v0.5 から処理する（v0.4e までは UNSUPPORTED_ACTION）。場にいない番号は POKEMON_NOT_IN_PLAY
+        with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, UsePokemonPower(0, 0))
-        self.assertEqual(ctx.exception.code, "UNSUPPORTED_ACTION")
+        self.assertEqual(ctx.exception.code, "POKEMON_NOT_IN_PLAY")
+        # 実装を登録していないポケモンパワーは、効果がないものとして処理しない
+        with self.assertRaises(UnsupportedError) as ctx:
+            apply_command(state, UsePokemonPower(0, state.players[0].bench[0].pokemon_id))
+        self.assertEqual(ctx.exception.code, "UNSUPPORTED_POKEMON_POWER")
         # EvolvePokemon は v0.4a から処理する（手札にないカードは CARD_NOT_IN_HAND）
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, EvolvePokemon(0, 0, 1))

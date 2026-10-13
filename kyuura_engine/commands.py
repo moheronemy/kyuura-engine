@@ -2,8 +2,8 @@
 
 コマンドは「何をしたいか」だけを持つ値で、検査と処理は ``engine.apply_command`` が行います。
 カードやポケモンは uid（``GameState.cards`` の番号）で指定します。場のポケモンは、
-そのポケモンのカード（いちばん上のカード）の uid で指定します。v0.4a の ``EvolvePokemon`` だけは、
-進化させる場のポケモンを場のポケモンの番号（``pokemon_id``）で指定します。
+そのポケモンのカード（いちばん上のカード）の uid で指定します。v0.4a の ``EvolvePokemon`` と v0.5 の
+``UsePokemonPower`` は、場のポケモンを場のポケモンの番号（``pokemon_id``）で指定します。
 
 ``command_to_dict`` / ``command_from_dict`` は、ほかの言語や画面から JSON で操作を渡すための
 変換です。
@@ -143,13 +143,31 @@ class EvolvePokemon:
     target: int
 
 
-# --- ルールにはあるが、まだ対応していない操作。受け取ると UnsupportedError を投げる ---
-
-
 @dataclass(frozen=True)
 class UsePokemonPower:
+    """自分の場のポケモンの特殊能力（ポケモンパワー）の使用を宣言し、その説明にしたがって処理する（p.311「ポケモンの
+    特殊能力を使う」・p.323「14 ポケモンの特殊能力」。v0.5）。
+
+    - ``pokemon``: 特殊能力を使う自分の場のポケモンの番号（``PokemonInPlay.pokemon_id``）。カードの uid ではない（v0.1 から
+      あるコマンドだが、v0.4e までは受け付けなかった（``UNSUPPORTED_ACTION``）ので、v0.4a の ``EvolvePokemon`` と同じく場の
+      ポケモンの番号で指す）。バトル場でもベンチでもよい（p.311「特に指示されていないかぎり、ベンチにいるポケモンも特殊能力を
+      使うことができます」）
+    - ``power``: 特殊能力の位置（カードに印刷された順、0 から）。v0.5 の対応カード（フシギバナ）は特殊能力が 1 つなので 0
+    - ``energy``・``source``・``target``: 特殊能力の説明が選ばせるもの。v0.5 の「エナジートランス」は、移す「草」エネルギー
+      カードの uid（``energy``）、それがついている自分の場のポケモンの番号（``source``）、つけかえる先の自分の場の別のポケモンの
+      番号（``target``）。1 回の使用で 1 枚をつけかえる（実装上の仮定。docs/energy-transfer-v0.5.md）。使わない特殊能力では
+      None のまま
+
+    v0.4e までの 2 つの項目（``player``・``pokemon``）だけの形（``command_from_dict`` の辞書）も読める（ほかの項目は既定の値）。
+    説明が選ばせるものが足りなければ、状態を変えずに拒否する。
+    """
+
     player: int
     pokemon: int
+    power: int = 0
+    energy: int | None = None
+    source: int | None = None
+    target: int | None = None
 
 
 COMMAND_TYPES: dict[str, type] = {
@@ -169,7 +187,8 @@ COMMAND_TYPES: dict[str, type] = {
     "use_pokemon_power": UsePokemonPower,
 }
 
-UNSUPPORTED_COMMANDS = (UsePokemonPower,)  # EvolvePokemon は v0.4a で対応
+# ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
+UNSUPPORTED_COMMANDS: tuple[type, ...] = ()
 
 _TYPE_NAMES = {cls: name for name, cls in COMMAND_TYPES.items()}
 
@@ -200,6 +219,8 @@ def check_command_fields(command) -> None:
         value = getattr(command, f.name)
         if f.type == "int":
             ok = type(value) is int
+        elif f.type == "int | None":  # v0.5（UsePokemonPower の選ばせるもの。使わない特殊能力では None）
+            ok = value is None or type(value) is int
         else:  # "tuple[int, ...]"
             ok = isinstance(value, tuple) and all(type(v) is int for v in value)
         if not ok:
