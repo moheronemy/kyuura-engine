@@ -51,6 +51,12 @@
 （``use`` = [プレイヤー, 場のポケモンの番号, カード id, ワザの位置]、``target`` = 入れ替える相手の対戦ポケモンの番号））と、
 ``current_player``（ワザを使ったプレイヤーのまま）・``turn_number`` で表せるので、新しい形式はない（形式 8 のまま）。
 
+ワザのあとのきぜつの判定で「こんじょう」を使うかの決定（v0.11。``kind`` が ``"ko_prevention"``、``resume`` が ``"knock_out"``、
+``min_choices`` 0・``max_choices`` 1、``options`` は対象のポケモンの番号、``context`` は ``attack`` = [プレイヤー, 場のポケモンの番号,
+カード id, ワザの位置]・``power`` = [カード id, パワーの位置]）も、形式 2 以上の ``decision`` で表せるので、新しい形式はない（形式 9 の
+まま）。決定を待つ間、対象のポケモンは HP 以上のダメージのまま場にいる（``players`` の場のポケモンの ``damage``）。コインは決定の
+あとで投げるので、乱数の状態（``rng_state_sha256``）は決定を出したときのまま。形式 1 では ``ValueError``。
+
 コインの結果（v0.2d）は、ログの ``coin_flip`` にだけ残る（状態に残る値はない）。ログはどの形式にも入るので、
 コインのための新しい形式はない。この先のコインの結果を決める乱数の状態は ``rng_state_sha256``（指紋）。
 
@@ -167,6 +173,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         # v0.4d: v0.1 の形には、ワザの途中の決定（「ふきとばし」で相手が選ぶ控えなど）の項目がない（段階 "decision" だけが残り、
         # 決定するプレイヤー・選べるもの・続きの情報が落ちる）。黙って落とさない
         raise ValueError("形式 1 は、ワザの途中の決定を表せない（format_version=2 以上を使う）")
+    if format_version == 1 and state.decision is not None and state.decision.resume == "knock_out":
+        # v0.11: v0.1 の形には、ワザのあとのきぜつの判定で「こんじょう」を使うかの決定（決定するプレイヤー・選べるもの・選ぶ数 0〜1・
+        # 続きの情報）の項目がない。黙って落とさない
+        raise ValueError("形式 1 は、「こんじょう」を使うかの決定を表せない（format_version=2 以上を使う）")
     data = {
         "rules": state.rules.id,
         "card_data": {"repository": state.card_data.repository, "commit": state.card_data.commit, "path": state.card_data.path},

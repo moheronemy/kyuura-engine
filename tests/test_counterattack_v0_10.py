@@ -27,7 +27,8 @@ from kyuura_engine import (
 )
 from kyuura_engine.decisions import FORCED_SWITCH, push_attack_decision
 from kyuura_engine.effects import (
-    DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackKey, AttackUse, CounterattackDamage, DamageProfile, PendingCounterattack,
+    DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackKey, AttackUse, CoinFlipDamage, CoinHeadsDamagePerOwnCounter, CounterattackDamage,
+    DamageProfile, PendingCounterattack,
     attack_reaches, counterattack_power, deal_attack_damage, finish_damage_elements,
 )
 from kyuura_engine.rng import rng_fingerprint
@@ -192,12 +193,13 @@ class BasicTest(unittest.TestCase):
             working_counterattack_power(state, 999)
 
     def test_other_machamp_is_not_strikes_back(self):
-        """名前に「カイリキー」を含む別のカード（サカキのカイリキー。PMCG6-061）は「はんげき」を持たず、デッキにも入らない（参照カード）。
-        登録はカード id（PowerKey）で引く（名前では引かない）。"""
+        """名前に「カイリキー」を含む別のカード（サカキのカイリキー。PMCG6-061）は「はんげき」を持たない（v0.10 では参照カード。v0.11 で
+        こんじょう（``PreventKnockOutOnHeads``）を登録して対戦に使えるようにした。tests/test_guts_v0_11.py）。登録はカード id（PowerKey）で
+        引く（名前では引かない）。"""
         pool = load_card_pool()
-        self.assertFalse(pool.is_playable(GIOVANNIS_MACHAMP))
+        self.assertTrue(pool.is_playable(GIOVANNIS_MACHAMP))
         self.assertEqual([p.name_ja for p in pool.get(GIOVANNIS_MACHAMP).powers], ["こんじょう"])
-        self.assertIsNone(DEFAULT_EFFECTS.power_entry(GIOVANNIS_MACHAMP, 0))
+        self.assertNotIsInstance(DEFAULT_EFFECTS.power_entry(GIOVANNIS_MACHAMP, 0).effect, CounterattackDamage)
         self.assertTrue(pool.is_playable(MACHAMP))
 
 
@@ -599,6 +601,11 @@ class CoinIndependenceTest(unittest.TestCase):
             "×": [heads * attack.damage for heads in range(3)], "+": [attack.damage, attack.damage + 20],
             "-": [attack.damage - 10 * ((load_card_pool().get(card).hp - 10) // 10)],
         }.get(attack.damage_modifier, [attack.damage])
+        implementation = DEFAULT_EFFECTS.attack_entry(card, index).effect
+        if isinstance(implementation, CoinFlipDamage):  # v0.11: ハリケーンパンチはコイン 4 枚（みだれづき・ダブルニードルは 2 枚）
+            bases = [heads * implementation.damage_per_heads for heads in range(implementation.coins + 1)]
+        if isinstance(implementation, CoinHeadsDamagePerOwnCounter):  # v0.11: いかりのスーパーパンチ（自分のカウンターの数 × 20）
+            bases = [0, (load_card_pool().get(card).hp - 10) // 10 * implementation.damage_per_counter]
         if card == "PMCG1-032":  # ハイドロポンプ（必要な数ちょうどの水エネルギー）
             bases = [attack.damage]
         weak = 2 if load_card_pool().get(card).pokemon_type.value == "psychic" else 1

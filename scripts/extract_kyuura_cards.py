@@ -3,8 +3,8 @@
 
 kyuura（https://github.com/moheronemy/kyuura）がカードデータの正本です。
 このスクリプトは、固定したコミットの ``data/cards.json`` を ``git show`` で読み、
-対戦で使うカード（v0.1 のたねポケモン・基本エネルギー、v0.2b 以降のトレーナー・ポケモン、v0.4a・v0.4b の 1 進化ポケモン、
-v0.4c・v0.4d の 2 進化ポケモン）と、
+対戦で使うカード（v0.1 のたねポケモン・基本エネルギー、v0.2b 以降のトレーナー・ポケモン、v0.4a 以降の 1 進化ポケモン、
+v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・サカキのゴーリキー・サカキのカイリキー）と、
 分類のテストに使う参照カードの記録を ``kyuura_engine/data/kyuura_cards.json`` に書き出します。
 
 - kyuura の作業ツリーや履歴は書き換えません（``git show`` で読むだけ）。
@@ -179,6 +179,16 @@ POOL_V0_10 = [
     "PMCG1-057",  # カイリキー（ゴーリキーから進化。ポケモンパワー はんげき・ちきゅうなげ）
 ]
 
+# v0.11: サカキのカイリキーの系統（ジム拡張第2弾 闇からの挑戦）。『ポケモンカードオフィシャルブック2000』p.189（サカキのワンリキー）・
+# p.191（サカキのゴーリキー）・p.193（サカキのカイリキー）を画像で照合した（600dpi。docs/giovanni-machamp-line-v0.11.md）。サカキの
+# カイリキーは v0.10 まで参照カード（REFERENCE_ONLY）だった。第1弾のワンリキー・ゴーリキー・カイリキー（PMCG1-053・055・057）とは名前が
+# 違う別のカードで、たがいに進化できない（p.310）
+POOL_V0_11 = [
+    "PMCG6-057",  # サカキのワンリキー（たね。チョップ・いかりのスーパーパンチ）
+    "PMCG6-059",  # サカキのゴーリキー（サカキのワンリキーから進化。いちかばちか・じごくがため）
+    "PMCG6-061",  # サカキのカイリキー（サカキのゴーリキーから進化。ポケモンパワー こんじょう・ハリケーンパンチ）
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
     # リザードン（2進化・実装を登録していないポケモンパワー「エナジーバーン」と、登録していないワザ「ほのおのうず」。v0.7 でフーディンの
@@ -192,9 +202,7 @@ REFERENCE_ONLY = [
     # 第1弾のゴースト（v0.9。化石の秘密のゴースト（PMCG3-030）と同じ名前の別のカード。「ゆめくい」（相手がねむり状態でないとき失敗する）は
     # 未実装。特殊能力「とうめい」を持たない）
     "PMCG1-047",
-    # サカキのカイリキー（v0.10。第1弾のカイリキー（PMCG1-057）と別のカード。進化元はサカキのゴーリキー。実装を登録していないポケモンパワー
-    # 「こんじょう」と、登録していないワザ「ハリケーンパンチ」を持つ。「はんげき」を持たない）
-    "PMCG6-061",
+    # サカキのカイリキー（PMCG6-061）は v0.10 では参照カードだった。v0.11 で対戦用（POOL_V0_11）にした
 ]
 
 # コピーする項目（kyuura の記録のキー。値は書き換えない）
@@ -253,10 +261,10 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -291,6 +299,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_8": POOL_V0_8,
         "pool_v0_9": POOL_V0_9,
         "pool_v0_10": POOL_V0_10,
+        "pool_v0_11": POOL_V0_11,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -316,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

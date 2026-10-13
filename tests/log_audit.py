@@ -34,6 +34,15 @@
   ない）で、ダメージ以外の効果（特殊状態・入れ替え・回復）・きぜつの前（p.89）・ダメージの組み立て直し・与えなかったのは相手が
   すでに HP 以上のとき（C15）・「はんげき」できぜつしたポケモンへの回復がない（C16）・「はんげき」できぜつしたワザのときに、
   ほかのポケモンのきぜつがない（C18。エンジンが止めるはず）。
+  v0.11 から、相手のワザによるダメージで「きぜつ」するときに使える特殊能力（サカキのカイリキーの「こんじょう」。
+  ``PreventKnockOutOnHeads``）のログ（``ko_prevention_declined``・``ko_prevention_declared``・``ko_prevented``・
+  ``ko_prevention_failed``）を、その時点の場と比べる: 相手のワザのダメージ（0 より大きい）を受けたときにねむり・マヒ・こんらんで
+  なく（G25〜G29）、ワザのあと HP 以上で、かがくへんかガスに消されていない（G31）なら、きぜつの前に答えが 1 つある（G2・G10）・
+  答えはワザのあと・持ち主・登録がこんじょう・相手のワザのダメージを受けた（G3〜G7）・答えはワザ 1 回につき 1 回まで（G14）・
+  宣言のすぐあとに持ち主の ``source: "power"`` のコイン（1 枚）とその結果があり、結果がコインと同じ（G13・G17）・使わない答えの
+  あとにコインがない（G11）・「おもて」なら残り HP 10（G18・G20）で、そのワザのあときぜつしない（サイドもない。G33）・「うら」・
+  使わないならきぜつする（G19・G34）・ダメージの組み立て直しに ``ko_prevented`` を含める。決定の中身はログにない（v0.2a）ので、
+  答えと決定の対応はエンジンの不変条件で確かめる。
   ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
@@ -50,6 +59,7 @@ from kyuura_engine.effects import (
     FORCED_SWITCH_ELEMENT,
     AttackImmunityOnHeads,
     CounterattackDamage,
+    PreventKnockOutOnHeads,
     SuppressOtherPowers,
 )
 from kyuura_engine.serialize import FORMAT_VERSIONS
@@ -112,7 +122,7 @@ def required_format(state) -> tuple[int, bool]:
     if state.energy_attached_by_powers_this_turn:
         needed = max(needed, 9)
     d = state.decision
-    not_v0_1 = d is not None and (d.context_value("then") is not None or d.resume == "attack")
+    not_v0_1 = d is not None and (d.context_value("then") is not None or d.resume in ("attack", "knock_out"))
     return needed, not_v0_1
 
 
@@ -201,6 +211,12 @@ def log_problems(state) -> list[str]:
                 problems.append(f"1 回のワザで「はんげき」が {window['counterattack'] + window['counterattack_skipped']} 回（今の対応カードでは 1 回まで）")
             if window["drain_heal"] + window["drain_heal_skipped"] > 1:
                 problems.append("1 回のワザで回復の結果が 2 回以上")
+            # v0.11: 「こんじょう」を使うかの決定はワザ 1 回につき 1 回まで（今の対応カードでは、ワザのダメージを受ける相手のポケモンは 1 匹）。
+            # 宣言 1 回につき結果（ko_prevented・ko_prevention_failed）が 1 回
+            if window["ko_prevention_declined"] + window["ko_prevention_declared"] > 1:
+                problems.append(f"1 回のワザで「こんじょう」を使うかの決定が {window['ko_prevention_declined'] + window['ko_prevention_declared']} 回（G14・G40）")
+            if window["ko_prevented"] + window["ko_prevention_failed"] != window["ko_prevention_declared"]:
+                problems.append("1 回のワザで「こんじょう」の宣言と結果（ko_prevented・ko_prevention_failed）の数が違う")
             window = None
             continue
         if kind in ("pokemon_power", "move_energy", "power_attach_energy", "move_damage_counter"):
@@ -284,6 +300,16 @@ def log_problems(state) -> list[str]:
                 return key, effect.amount, None
         return None, None, None
 
+    def guts_power(pid: int) -> tuple[str | None, PreventKnockOutOnHeads | None, object | None]:
+        """ログから組み立てた今の場の、ポケモン ``pid`` の「こんじょう」（v0.11）: (持っている特殊能力の PowerKey の文字列, 実装,
+        特殊能力の定義)。持っていなければ (None, None, None)。"""
+        definition = state.card_def(top[pid])
+        for index, power in enumerate(definition.powers):
+            effect = state.effects.power_effect(definition.id, power)
+            if isinstance(effect, PreventKnockOutOnHeads):
+                return f"{definition.id}@power{index}", effect, power
+        return None, None, None
+
     def received(e: dict, pid: int, element: str, *, blocked: str | None = None) -> None:
         """ワザの要素 ``element`` のダメージ・効果を、ポケモン ``pid`` が受けた（v0.9）。はたらいている「とうめい」があれば、その前に
         このワザでの判定があって「受ける」こと。"""
@@ -317,6 +343,7 @@ def log_problems(state) -> list[str]:
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     for e in log:
         kind = e["kind"]
+        prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
         if kind not in ("move_energy", "power_attach_energy", "move_damage_counter"):
             if declared is not None:
                 problems.append(
@@ -325,8 +352,22 @@ def log_problems(state) -> list[str]:
                 )
             declared = None
         # v0.9: ワザを受けるときに自動的にはたらく特殊能力（ゴーストの「とうめい」）
-        if previous is not None and previous["kind"] == "coin_flip" and previous["source"] == "power" and kind != "evade_check":
-            problems.append(f"{previous['turn']} 番の特殊能力のコイン（{previous['effect']}）のすぐあとに、「とうめい」の判定（evade_check）がない")
+        if previous is not None and previous["kind"] == "coin_flip" and previous["source"] == "power" and kind not in (
+            "evade_check", "ko_prevented", "ko_prevention_failed"
+        ):
+            # v0.9 の「とうめい」の判定・v0.11 の「こんじょう」の結果
+            problems.append(
+                f"{previous['turn']} 番の特殊能力のコイン（{previous['effect']}）のすぐあとに、その結果（「とうめい」の判定 evade_check・"
+                "「こんじょう」の ko_prevented・ko_prevention_failed）がない"
+            )
+        # v0.11: 「こんじょう」の宣言のすぐあとに持ち主のコイン 1 枚（p.311 の手順。G13・G17）。使わなかったらコインはない（G11）
+        if prior is not None and prior["kind"] == "ko_prevention_declared" and not (
+            kind == "coin_flip" and e["source"] == "power" and e["player"] == prior["player"] and e["pokemon_id"] == prior["pokemon_id"]
+            and e["effect"] == prior["power"]
+        ):
+            problems.append(f"{prior['turn']} 番の「こんじょう」の宣言（ポケモン {prior['pokemon_id']}）のすぐあとに、持ち主の「こんじょう」のコインがない（{kind}）")
+        if prior is not None and prior["kind"] == "ko_prevention_declined" and kind == "coin_flip":
+            problems.append(f"{prior['turn']} 番に「こんじょう」を使わなかった（ポケモン {prior['pokemon_id']}）のに、コインを投げた（G11）")
         if expect is not None:
             pid, element, reaches = expect
             expect = None
@@ -356,6 +397,9 @@ def log_problems(state) -> list[str]:
                     key, amount, blocked_by = counter_power(pid)
                     if key is not None and blocked_by is None:
                         due.append((pid, key, amount))
+                    if guts_power(pid)[0] is not None:
+                        # v0.11: 「こんじょう」を持つポケモンが、相手のワザのダメージを受けたときのねむり・マヒ・こんらん（None なら使える。G29）
+                        attack_window["ko_able"][pid] = exclusive.get(pid)
             elif due and (
                 kind in COUNTER_BARRIERS or (kind == "special_conditions_removed" and e["reason"] == "replaced")
                 or (kind == "coin_flip" and e["source"] == "attack" and attack_window["counter_after_coin"])
@@ -378,10 +422,21 @@ def log_problems(state) -> list[str]:
                 # v0.10: はたらいた「はんげき」（場のポケモンの番号, PowerKey, 量）・「はんげき」のログがあったか・「はんげき」で
                 # きぜつしたポケモン・効果のコインより前に「はんげき」があるはずか（ダメージのあとのコインが効果を決めるワザ）
                 "due": [], "counter_seen": False, "counter_ko": None,
+                # v0.11: 「こんじょう」を持つポケモンが相手のワザのダメージを受けたときの特殊状態（ko_able）・決定のあったポケモン（ko_offer）・
+                # その結果（declined・declared・heads・tails）・このワザのあとにきぜつしたポケモン（knocked）
+                "ko_able": {}, "ko_offer": None, "ko_result": None, "knocked": set(),
                 "counter_after_coin": state.effects.attack_entry(state.cards[e["pokemon"]].card_id, e["attack_index"]) is not None
                 and state.effects.attack_entry(state.cards[e["pokemon"]].card_id, e["attack_index"]).effect.implementation_id in EFFECT_COIN_AFTER_DAMAGE,
             }
         elif kind in ("turn_end", "game_end", "halted"):
+            if attack_window is not None and attack_window["ko_offer"] is not None:
+                pid, result = attack_window["ko_offer"], attack_window["ko_result"]
+                if result == "declared":
+                    problems.append(f"{e['turn']} 番の「こんじょう」の宣言（ポケモン {pid}）のあとに結果（ko_prevented・ko_prevention_failed）がない")
+                elif result in ("tails", "declined") and pid not in attack_window["knocked"]:
+                    problems.append(
+                        f"{e['turn']} 番に「こんじょう」が{'「うら」' if result == 'tails' else 'ないまま（使わなかった）'}のポケモン {pid} がきぜつしていない（G11・G19・G34）"
+                    )
             attack_window = None
         elif kind == "evade_check":
             pid = e["pokemon_id"]
@@ -487,6 +542,57 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の「はんげき」のきぜつの印 {e['knocked_out']} が、ログから組み立てたダメージ {damage[target]} と合わない")
             if damage[target] >= hp and attack_window is not None:
                 attack_window["counter_ko"] = target
+        elif kind in ("ko_prevention_declined", "ko_prevention_declared", "ko_prevented", "ko_prevention_failed"):
+            # v0.11: 相手のワザによるダメージで「きぜつ」するときに使える特殊能力（サカキのカイリキーの「こんじょう」）
+            pid = e["pokemon_id"]
+            if attack_window is None:
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、相手のワザのあとのきぜつの判定の中にない（G3・G7）")
+                continue
+            if pid not in in_play or ids.get(e["pokemon"]) != pid or pokemon_owner.get(pid) != e["player"] or e["player"] == attack_window["player"]:
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、ワザを使われた側のプレイヤーの場のポケモンではない（G4・G15）")
+                continue
+            gkey, geffect, gpower = guts_power(pid)
+            hp = state.card_def(top[pid]).hp
+            if gkey is None or gkey != e["power"]:
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind} の特殊能力 {e['power']} が、ポケモン {pid} のいちばん上のカードの「こんじょう」ではない")
+                continue
+            if kind in ("ko_prevention_declined", "ko_prevention_declared"):
+                if attack_window["ko_offer"] is not None:
+                    problems.append(f"{e['turn']} 番のワザで、「こんじょう」を使うかの決定が 2 回以上（ポケモン {attack_window['ko_offer']}・{pid}。G14）")
+                if attack_window["knocked"]:
+                    problems.append(f"{e['turn']} 番のワザで、きぜつの処理（ポケモン {sorted(attack_window['knocked'])}）のあとに「こんじょう」の {kind} がある（G32）")
+                attack_window["ko_offer"] = pid
+                attack_window["ko_result"] = "declined" if kind == "ko_prevention_declined" else "declared"
+                if pid not in attack_window["ko_able"]:
+                    problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）の前に、そのワザのダメージを受けたログがない（G3〜G7）")
+                elif attack_window["ko_able"][pid] is not None:
+                    problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）: ダメージを受けるとき {attack_window['ko_able'][pid]} 状態だった（使えない。G25〜G27）")
+                gases = [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(gpower)]
+                if gases:
+                    problems.append(f"{e['turn']} 番に、はたらいている「かがくへんかガス」（ポケモン {gases}）に消されている「こんじょう」（ポケモン {pid}）の {kind} がある（G31）")
+                if damage[pid] < hp:
+                    problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）: ログから組み立てたダメージ {damage[pid]} が HP {hp} 未満（G2）")
+                if e["total_damage"] != damage[pid]:
+                    problems.append(f"{e['turn']} 番の {kind} のダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+                continue
+            coin = prior or {}
+            if attack_window["ko_offer"] != pid or attack_window["ko_result"] != "declared":
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）の前に、そのワザでの宣言（ko_prevention_declared）がない")
+            attack_window["ko_result"] = "heads" if kind == "ko_prevented" else "tails"
+            if (coin.get("kind"), coin.get("source"), coin.get("player"), coin.get("pokemon_id"), coin.get("effect"), coin.get("result")) != (
+                "coin_flip", "power", e["player"], pid, e["power"], e["result"]
+            ) or e["result"] != attack_window["ko_result"]:
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）の直前に、持ち主の同じ結果のコインがない・結果が合わない（G15・G17〜G19）")
+            if damage[pid] < hp:
+                problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）: ログから組み立てたダメージ {damage[pid]} が HP {hp} 未満")
+            if kind == "ko_prevented":
+                if e["damage_before"] != damage[pid]:
+                    problems.append(f"{e['turn']} 番の ko_prevented の前のダメージ {e['damage_before']} が、ログから組み立てた {damage[pid]} と違う")
+                damage[pid] = e["total_damage"]
+                if e["total_damage"] != hp - geffect.remaining_hp or e.get("remaining_hp") != geffect.remaining_hp:
+                    problems.append(f"{e['turn']} 番の「こんじょう」の「おもて」のあとのダメージ {e['total_damage']} が、残り HP {geffect.remaining_hp}（ダメージ {hp - geffect.remaining_hp}）ではない（G18・G20）")
+            elif e["total_damage"] != damage[pid]:
+                problems.append(f"{e['turn']} 番の ko_prevention_failed のダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う（「うら」はダメージを変えない。G19）")
         elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters", "remove_all_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
             if kind in ("drain_heal", "remove_all_damage_counters"):
@@ -628,6 +734,18 @@ def log_problems(state) -> list[str]:
             pid = ids[e["pokemon"]]
             if pid not in in_play:
                 problems.append(f"場にいないポケモン {pid} がきぜつした")
+            if attack_window is not None and pid in in_play:
+                # v0.11: 「こんじょう」の「おもて」のポケモンはきぜつしない。使えたのに決定がないまま、きぜつしない（使うかは持ち主が決める）
+                attack_window["knocked"].add(pid)
+                if attack_window["ko_offer"] == pid and attack_window["ko_result"] == "heads":
+                    problems.append(f"{e['turn']} 番に「こんじょう」が「おもて」のポケモン {pid} がきぜつした（G18・G33）")
+                if attack_window["ko_offer"] != pid and attack_window["ko_able"].get(pid, "なし") is None and pokemon_owner.get(pid) != attack_window["player"]:
+                    gkey, _, gpower = guts_power(pid)
+                    if gkey is not None and not [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(gpower)]:
+                        problems.append(
+                            f"{e['turn']} 番に「こんじょう」を使えるポケモン {pid} が、使うかの決定（ko_prevention_declined・ko_prevention_declared）"
+                            "がないまま、きぜつした（G10・A4）"
+                        )
             if damage[pid] < state.card_def(e["pokemon"]).hp:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
             in_play.discard(pid)

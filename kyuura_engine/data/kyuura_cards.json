@@ -129,13 +129,17 @@
     "PMCG1-055",
     "PMCG1-057"
   ],
+  "pool_v0_11": [
+    "PMCG6-057",
+    "PMCG6-059",
+    "PMCG6-061"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
     "PMCG1-075",
     "PMCG3-003",
-    "PMCG1-047",
-    "PMCG6-061"
+    "PMCG1-047"
   ],
   "cards": [
     {
@@ -3740,6 +3744,281 @@
       }
     },
     {
+      "id": "PMCG6-057",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのワンリキー",
+        "en": "Giovanni's Machop"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          66
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "チョップ",
+              "en": "Chop"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのスーパーパンチ",
+              "en": "Fury Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分にのっているダメージカウンターの数×20のダメージ。",
+              "en": "Flip a coin. If heads, this attack does 20 damage times the number of damage counters on Giovanni's Machop."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-057",
+        "pokemontcg": [
+          "gym2-72"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%AF%E3%83%B3%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 18,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%AF%E3%83%B3%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-059",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのゴーリキー",
+        "en": "Giovanni's Machoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          67
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "サカキのワンリキー",
+          "en": "Giovanni's Machop"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いちかばちか",
+              "en": "Risky Attack"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、相手にはダメージを与えず、自分に100ダメージ。",
+              "en": "Flip a coin. If tails, this attack does no damage to the Defending Pokémon and Giovanni's Machoke does 100 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "じごくがため",
+              "en": "Headlock"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加して、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 20 more damage and the Defending Pokémon is now Paralyzed. If tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-059",
+        "pokemontcg": [
+          "gym2-42"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%B4%E3%83%BC%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%B4%E3%83%BC%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-061",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのカイリキー",
+        "en": "Giovanni's Machamp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          68
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サカキのゴーリキー",
+          "en": "Giovanni's Machoke"
+        },
+        "hp": 100,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "こんじょう",
+              "en": "Fortitude"
+            },
+            "text": {
+              "ja": "この力は、相手のワザによるダメージで、このカードが「きぜつ」する時、使える。コインを投げて「おもて」なら、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "If Giovanni's Machamp would be Knocked Out by an opponent's attack, flip a coin. If heads, Giovanni's Machamp is not Knocked Out and its remaining HP become 10 instead. This power can't be used if Giovanni's Machamp is already Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハリケーンパンチ",
+              "en": "Hurricane Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip 4 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-061",
+        "pokemontcg": [
+          "gym2-6"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 50,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -4157,95 +4436,6 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-047-ghost/"
-      }
-    },
-    {
-      "id": "PMCG6-061",
-      "jp_set": "PMCG6",
-      "category": "pokemon",
-      "name": {
-        "ja": "サカキのカイリキー",
-        "en": "Giovanni's Machamp"
-      },
-      "name_ja_confidence": "有力",
-      "pokemon": {
-        "dex": [
-          68
-        ],
-        "stage": "stage2",
-        "evolves_from": {
-          "ja": "サカキのゴーリキー",
-          "en": "Giovanni's Machoke"
-        },
-        "hp": 100,
-        "types": [
-          "fighting"
-        ],
-        "weaknesses": [
-          {
-            "type": "psychic",
-            "operator": "×",
-            "value": 2
-          }
-        ],
-        "resistances": [],
-        "retreat_cost": 3,
-        "rules_text": null,
-        "powers": [
-          {
-            "kind": "pokemon_power",
-            "name": {
-              "ja": "こんじょう",
-              "en": "Fortitude"
-            },
-            "text": {
-              "ja": "この力は、相手のワザによるダメージで、このカードが「きぜつ」する時、使える。コインを投げて「おもて」なら、このカードは「きぜつ」せず、このカードの残りHPは「10」になる。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
-              "en": "If Giovanni's Machamp would be Knocked Out by an opponent's attack, flip a coin. If heads, Giovanni's Machamp is not Knocked Out and its remaining HP become 10 instead. This power can't be used if Giovanni's Machamp is already Asleep, Confused, or Paralyzed."
-            }
-          }
-        ],
-        "attacks": [
-          {
-            "name": {
-              "ja": "ハリケーンパンチ",
-              "en": "Hurricane Punch"
-            },
-            "cost": [
-              "fighting",
-              "fighting",
-              "fighting",
-              "colorless"
-            ],
-            "cost_total": 4,
-            "damage": {
-              "base": 30,
-              "modifier": "×",
-              "display": "30×"
-            },
-            "text": {
-              "ja": "コインを4枚投げ、「おもて」の数×30のダメージ。",
-              "en": "Flip 4 coins. This attack does 30 damage times the number of heads."
-            }
-          }
-        ]
-      },
-      "trainer": null,
-      "energy": null,
-      "jp_en_differences": [],
-      "notes": [],
-      "source_ids": {
-        "tcgdex": "PMCG6-061",
-        "pokemontcg": [
-          "gym2-6"
-        ]
-      },
-      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
-      "jp_print": {
-        "level": 50,
-        "rarity": "★(R)",
-        "series": "闇からの挑戦",
-        "remarks": [],
-        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     }
   ]

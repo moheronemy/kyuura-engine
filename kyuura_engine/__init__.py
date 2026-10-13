@@ -1,4 +1,4 @@
-"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.9）。
+"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.11）。
 
 ルールは「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』
 pp.306〜326）。カードデータの正本は kyuura（https://github.com/moheronemy/kyuura）。
@@ -33,6 +33,7 @@ from .effects import (
     PowerEntry,
     PowerKey,
     TrainerEntry,
+    available_ko_prevention_power,
     working_counterattack_power,
     working_evasion_power,
 )
@@ -56,7 +57,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.10.0"
+__version__ = "0.11.0"
 
 __all__ = [
     "Asleep",
@@ -105,6 +106,7 @@ __all__ = [
     "UseAttack",
     "UsePokemonPower",
     "apply_command",
+    "available_ko_prevention_power",
     "can_pay_cost",
     "check_invariants",
     "command_from_dict",

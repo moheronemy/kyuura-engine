@@ -15,7 +15,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
-    WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP,
+    WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -72,10 +72,12 @@ class CardPoolTest(unittest.TestCase):
         self.assertFalse(pool.is_playable(BASE_HAUNTER))  # 同じ名前の第1弾のゴースト（参照カード。ゆめくいが未実装）
         self.assertEqual(read_extract()["pool_v0_10"], [MACHOKE, MACHAMP])  # v0.10（ダメージを受けたときに自動的にはたらくポケモンパワーのはんげき）
         self.assertTrue(all(pool.is_playable(c) for c in (MACHOP, MACHOKE, MACHAMP)))  # ワンリキーは v0.1 から
-        self.assertFalse(pool.is_playable(GIOVANNIS_MACHAMP))  # 名前に「カイリキー」を含む別のカード（参照カード。こんじょうが未実装）
+        # v0.11（相手のワザによるダメージできぜつするときに使えるポケモンパワーのこんじょう）。サカキのカイリキーは v0.10 では参照カード
+        self.assertEqual(read_extract()["pool_v0_11"], [GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP])
+        self.assertTrue(all(pool.is_playable(c) for c in (GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP)))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
-                 MACHOKE, MACHAMP)
+                 MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
