@@ -49,6 +49,10 @@ FORCED_SWITCH = "forced_switch"
 # プレイヤーが選ぶ（v0.7。ユンゲラーの「じこさいせい」。p.151 の最新の説明「自分についている「超」エネルギーカードを1枚
 # トラッシュして…」。選べるものはカードの uid（ついている順）。段階は Phase.DECISION）
 DISCARD_ENERGY = "discard_energy"
+# ワザの効果で、自分のトラッシュのエネルギーカードを手札に加えるとき、どのカードを何枚加えるかを、ワザを使ったプレイヤーが選ぶ
+# （v0.9。化石の秘密のゴースの「エナジーへんかん」。p.158 の最新の説明「自分のトラッシュから、「エネルギーカード」を最大2枚
+# 選び出し、手札に加える。」。選べるものはカードの uid（トラッシュの順）。0 枚を選ぶと原典で決められないので止める。段階は Phase.DECISION）
+RECOVER_ENERGY = "recover_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

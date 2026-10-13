@@ -2,7 +2,8 @@
 docs/unresolved-audit-v0.4e.md）。
 
 v0.4e の時点でエンジンが止める 11 件のコード（v0.6 で 1 件加えて 12 件。``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
-docs/rain-dance-v0.6.md の R13）のそれぞれについて、
+docs/rain-dance-v0.6.md の R13。v0.9 で 2 件加えて 14 件。``UNRESOLVED_EVADED_EFFECT_COIN``（docs/transparency-v0.9.md の T19b）・
+``UNRESOLVED_RECOVER_ZERO_ENERGY``（docs/haunter-line-v0.9.md の H4））のそれぞれについて、
 
 - 止まる場合: 止め方（コマンドの拒否 ``UnsupportedError`` か、対戦を止める ``Phase.HALTED`` か）とコード。拒否なら渡した状態・
   乱数・ログは変わらない（拒否と HALTED を同じものとして扱わない: 拒否は状態を返さず、HALTED は止めた状態を返す）。どちらも
@@ -27,7 +28,7 @@ from kyuura_engine.state import Phase
 from tests.helpers import (
     BEEDRILL, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FEW_BASICS, GRASS, GROWLITHE, H, KAKUNA, METAPOD, PARAS, PLUSPOWER,
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
-    BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE,
+    BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -37,6 +38,7 @@ ALL_CODES = (
     "UNRESOLVED_REPARALYSIS_RECOVERY_TURN", "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS", "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED",
     "UNRESOLVED_EVOLUTION_HP", "UNRESOLVED_PREVENTED_COIN_DAMAGE",
     "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",  # v0.6
+    "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_RECOVER_ZERO_ENERGY",  # v0.9
 )
 TURN = 7
 
@@ -386,6 +388,93 @@ class AttachAfterPowerAttachBoundaryTest(BoundaryTestCase):
                                                             me.bench[0].pokemon_id))
         self.assertEqual(moved.energy_attached_by_powers_this_turn, 0)
         self.assert_proceeds(moved, AttachEnergy(0, uids(moved, 0, "hand", GRASS)[0], me.active.card))
+
+
+class EvadedEffectCoinBoundaryTest(BoundaryTestCase):
+    """p.160（ゴーストの「とうめい」の最新の説明）・p.159（特殊能力解説）・p.309・p.321。v0.9（docs/transparency-v0.9.md の T19b）。
+
+    止まる場合: 相手の対戦ポケモンの「とうめい」がはたらいていて、「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザの
+    ダメージの要素の最終ダメージが 0 より大きい（受ける要素で「とうめい」のコインを投げうる）とき。「おもて」なら、そのあとのワザの
+    コインが「受けない」ポケモンへの効果だけを決めるが、それを投げるかが原典に書かれていない。拒否はこんらんのコインの前（ワザを
+    使うポケモンがこんらんでも同じ。コインの結果で受け付けるかが変わらない）。
+
+    隣の止まらない場合: ゴーストがねむり（力が消える。T9）・かがくへんかガスがはたらいている（T14）・相手の対戦ポケモンが
+    「とうめい」を持たない（ゴース）・ゴーストがベンチ（ワザの要素はバトル場のポケモンにだけ）・最終ダメージが 0（ディフェンダー。
+    T21。ワザのコインのあとで「とうめい」のコイン）・コインを使わずに特殊状態にするワザ（「あくむ」。T4 の 1 回のコインで決まる）。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, defender=None, bench=(), mine_bench=()):
+        haunter = {"card": HAUNTER, "evolved_from": GASTLY}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": defender or haunter, "bench": list(bench) or [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        weedle = {"card": WEEDLE, "energy": [GRASS]}
+        gastly = {"card": GASTLY, "energy": [PSYCHIC]}
+        vulpix = {"card": VULPIX, "energy": [FIRE, FIRE]}
+        caterpie = {"card": CATERPIE, "energy": [GRASS]}
+        attackers = ((weedle, 0), (gastly, 0), (vulpix, 0), (caterpie, 0), ({**weedle, "confusion": True}, 0))
+        for attacker, index in attackers:
+            with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker), UseAttack(0, index), "UNRESOLVED_EVADED_EFFECT_COIN")
+        haunter = {"card": HAUNTER, "evolved_from": GASTLY}
+        # 止めない 1: ねむりのゴースト（「とうめい」の力が消えている。T9）。ワザのコインだけ
+        asleep = self.assert_proceeds(with_coin_results(self.board(weedle, defender={**haunter, "sleep": True}), H), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in asleep.log])
+        self.assertIsNotNone(asleep.players[1].active.conditions.poison)
+        # 止めない 2: かがくへんかガス（場のどこかのベトベトン。T14）
+        muk = {"card": MUK, "evolved_from": GRIMER}
+        gassed = self.assert_proceeds(with_coin_results(self.board(weedle, mine_bench=[muk]), T), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in gassed.log])
+        # 止めない 3: 相手の対戦ポケモンが「とうめい」を持たない（ゴース）。ベンチのゴーストはワザを受けない
+        plain = self.assert_proceeds(with_coin_results(self.board(weedle, defender=GASTLY, bench=[haunter]), T), UseAttack(0, 0))
+        self.assertNotIn("evade_check", [e["kind"] for e in plain.log])
+        # 止めない 4: 最終ダメージが 0（ディフェンダーで 10 - 20）。ワザのコイン（「おもて」）→ どくを受けるときに「とうめい」のコイン
+        defended = {**haunter, "trainers": [(DEFENDER, TURN)]}
+        late = self.assert_proceeds(with_coin_results(self.board(weedle, defender=defended), H, T), UseAttack(0, 0))
+        coins = [e for e in late.log if e["kind"] == "coin_flip"]
+        self.assertEqual([c["source"] for c in coins[-2:]], ["attack", "power"])
+        self.assertIsNotNone(late.players[1].active.conditions.poison)
+        # 止めない 5: コインを使わずにねむりにする「あくむ」（受ける要素で 1 回だけ投げ、結果をねむりにも使う。T4）
+        nightmare = {"card": HAUNTER, "evolved_from": GASTLY, "energy": [PSYCHIC, PSYCHIC]}
+        evaded = self.assert_proceeds(with_coin_results(self.board(nightmare), H), UseAttack(0, 0))
+        self.assertEqual([e["element"] for e in evaded.log if e["kind"] == "attack_evaded"], ["damage", "sleep"])
+
+
+class RecoverZeroEnergyBoundaryTest(BoundaryTestCase):
+    """p.158（化石の秘密のゴースの「エナジーへんかん」の最新の説明「自分のトラッシュから、「エネルギーカード」を最大2枚選び出し、
+    手札に加える。その後、自分に10ダメージ。」）。v0.9（docs/haunter-line-v0.9.md の H4）。
+
+    止まる場合: トラッシュにエネルギーカードがあるのに 0 枚を選ぶ（決定に答える ``ResolveDecision`` の拒否。決定は待ったまま）。
+    「最大2枚」が 0 枚を含むかが書かれていないので、受け付けるとも拒否する（INVALID_CHOICE_COUNT）とも決めない。
+
+    隣の止まらない場合: 1 枚・2 枚を選ぶ・トラッシュにエネルギーカードがない（決定を出さずに自分へのダメージだけ。H5）。"""
+
+    format_version = 9
+
+    def board(self, discard):
+        gastly = {"card": GASTLY, "energy": [PSYCHIC, PSYCHIC]}
+        return build_test_state([{"active": gastly, "bench": [RATTATA], "discard": list(discard)}, {"active": GROWLITHE}],
+                                turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        state = self.assert_proceeds(self.board([FIRE, PSYCHIC, POTION, WATER]), UseAttack(0, 1))
+        self.assertEqual((state.phase, state.decision.min_choices, state.decision.max_choices), (Phase.DECISION, 0, 2))
+        decision = state.decision.id
+        self.assert_rejected(state, ResolveDecision(0, decision, ()), "UNRESOLVED_RECOVER_ZERO_ENERGY")
+        energies = state.decision.options
+        self.assertEqual(len(energies), 3)
+        for choices in ((energies[0],), energies[1:]):
+            with self.subTest(choices=choices):
+                done = self.assert_proceeds(state, ResolveDecision(0, decision, choices))
+                self.assertTrue(set(choices) <= set(done.players[0].hand))
+                self.assertEqual(done.players[0].active.damage, 10)
+        empty = self.assert_proceeds(self.board([POTION]), UseAttack(0, 1))
+        self.assertIsNone(empty.decision)
+        self.assertEqual(empty.players[0].active.damage, 10)
 
 
 class CodeListTest(unittest.TestCase):

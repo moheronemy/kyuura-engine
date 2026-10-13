@@ -9,6 +9,7 @@
     python3 tools/stress_engine.py --scenario blastoise --scenario blastoise_mixed  # v0.6（あまごい）
     python3 tools/stress_engine.py --scenario alakazam --scenario alakazam_mixed    # v0.7（ダメージスワップ）
     python3 tools/stress_engine.py --scenario muk --scenario muk_mixed              # v0.8（かがくへんかガス）
+    python3 tools/stress_engine.py --scenario haunter --scenario haunter_muk        # v0.9（とうめい）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -38,6 +39,13 @@
   たびに、エンジンとは別に、その時点の場からかがくへんかガスに消されているか（``power_suppressors``）を求め、消されているのに受け付けた・
   消されていないのに ``POWER_SUPPRESSED`` で拒否した、を問題として数える。MAIN の手ごとに、かがくへんかガスがはたらいているか・
   ベトベトンがいるのに消えているか・切り替わったかを数える。``POWER_USERS`` の最後に加えたので、ベトベトンのいない組の操作は v0.7 と同じ。
+- v0.9: ゴーストの組（``haunter``・``haunter_muk``。``haunter_muk`` は両方のデッキにゴースト、一方にベトベトン）を加えた。自分の場にゴースト
+  がいる番は、ときどき「とうめい」の使用を試す（自動的にはたらいていて宣言しないので ``POWER_NOT_DECLARABLE`` になるはず）。ワザを
+  受け付けるたびに、ワザの前の場の ``working_evasion_power``（エンジンの公開の問い合わせ）と比べて、「とうめい」の判定（``evade_check``）は
+  はたらいているゴーストだけ・コインはゴースト側のプレイヤー・はたらいているバトル場のゴーストが判定なしでダメージを受けていないことを
+  確かめ、判定・「おもて」「うら」・受けなかった要素・ガスや特殊状態で消えていたゴーストへのワザを数える。``UNRESOLVED_EVADED_EFFECT_COIN``
+  で止めたら、相手の対戦ポケモンの「とうめい」がはたらいていることを確かめる。エナジーへんかんの決定には、駆動が 0〜2 枚で答える（0 枚は
+  ``UNRESOLVED_RECOVER_ZERO_ENERGY`` で止まり、状態は変わらない）。``POWER_USERS`` の最後に加えたので、ゴーストのいない組の操作は v0.8 と同じ。
 """
 
 from __future__ import annotations
@@ -114,10 +122,30 @@ POWER_SCENARIOS += (
                      driver.BILL: 2, driver.GRASS: 18, driver.WATER: 16},
                     tuple(range(6)), tags=("ベトベトン", "かがくへんかガス", "フーディン", "カメックス", "特殊状態")),
 )
+GASTLY, HAUNTER = "PMCG3-029", "PMCG3-030"
+POWER_SCENARIOS += (
+    # ゴースト（v0.9。とうめい）: 相手はダメージだけ・ダメージとどく（フシギソウ）・ふきとばし・メガドレイン（バタフリー）・キノコのほうし
+    # （パラス）・でんげき（ピカチュウ）・抵抗力で 0（ワンリキー）・みだれづき（ドードー）・どくばり（ビードル。T19b で止まる）・どくガス・
+    # ねばりつく（ロケット団のベトベター）
+    driver.Scenario("haunter", {GASTLY: 4, HAUNTER: 4, driver.RATTATA: 3, driver.DODUO: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 2, driver.DEFENDER: 2, PSYCHIC: 30, driver.FIRE: 8},
+                    {BULBASAUR: 3, IVYSAUR: 3, driver.CATERPIE: 3, driver.METAPOD: 2, driver.BUTTERFREE: 2, driver.PARAS: 3,
+                     driver.PIKACHU: 2, driver.MACHOP: 2, driver.WEEDLE: 2, GRIMER: 2, driver.PLUSPOWER: 2, driver.GRASS: 28,
+                     driver.LIGHTNING: 3, driver.FIGHTING: 3},
+                    tuple(range(6)), tags=("ゴースト", "とうめい", "特殊状態", "ふきとばし")),
+    # 両方のデッキにゴースト（あくむ）、一方にベトベトン（かがくへんかガスで「とうめい」が消える）・ロコン・キャタピー（特殊状態で消える）
+    driver.Scenario("haunter_muk", {GASTLY: 4, HAUNTER: 3, GRIMER: 3, MUK: 3, driver.VULPIX: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                    PSYCHIC: 20, driver.GRASS: 16, driver.FIRE: 4},
+                    {GASTLY: 4, HAUNTER: 3, ABRA: 3, KADABRA: 2, driver.CATERPIE: 3, driver.PARAS: 3, driver.RATTATA: 3, driver.DEFENDER: 2,
+                     driver.BILL: 2, PSYCHIC: 25, driver.GRASS: 10},
+                    tuple(range(6)), tags=("ゴースト", "とうめい", "ベトベトン", "かがくへんかガス", "特殊状態")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトンがいる番で、ポケモンパワーを試す割合
-# 並びの最後にベトベトン（v0.8）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK)
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴーストがいる番で、ポケモンパワーを試す割合
+# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ、ゴーストの
+# いない組は v0.8 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER)
+HAUNTER_DECLARE_SKIP = 0.75  # ゴーストを選んだときに、宣言を試さずに駆動の操作にする割合（ゴーストのいない組の乱数の使い方は変えない）
 
 
 def choose_command(state, rng: random.Random, illegal_rate: float):
@@ -132,9 +160,11 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
-    if kind == MUK:
-        # かがくへんかガスは常にはたらいていて宣言しない（v0.8。POWER_NOT_DECLARABLE になるはず）
-        user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == MUK])
+    if kind == HAUNTER and rng.random() < HAUNTER_DECLARE_SKIP:
+        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9）
+    if kind in (MUK, HAUNTER):
+        # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」は自動的にはたらいて（v0.9）宣言しない（POWER_NOT_DECLARABLE になるはず）
+        user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == kind])
         return engine.UsePokemonPower(player, user.pokemon_id, 0)
     if kind == ALAKAZAM:
         return _damage_swap_command(state, rng)
@@ -283,6 +313,45 @@ def _suppression_of(state, command):
     return engine.power_suppressors(state, command.pokemon, command.power)
 
 
+def _evasion_before(state) -> dict[int, object]:
+    """場のポケモンの番号 → 今はたらいている「とうめい」（v0.9。エンジンの公開の問い合わせ ``working_evasion_power``）。"""
+    return {pk.pokemon_id: engine.working_evasion_power(state, pk.pokemon_id) for p in state.players for pk in p.in_play()}
+
+
+def _observe_attack(state, new, evasion, counted, problems, index, command) -> None:
+    """受け付けたワザ（とその決定の答え）のログを、ワザの前の場の「とうめい」と比べる（v0.9）。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    checked = set()
+    for position, e in enumerate(events):
+        if e["kind"] == "evade_check":
+            counted["observed:evade_check"] += 1
+            counted[f"observed:evade_{e['result']}"] += 1
+            checked.add(e["pokemon_id"])
+            owner = state.find_pokemon(e["pokemon_id"])
+            coin = events[position - 1] if position else {}
+            if evasion.get(e["pokemon_id"]) is None or owner is None or owner[0] != e["player"] or coin.get("player") != e["player"]:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: はたらいていない「とうめい」・ゴースト側でないプレイヤーの判定 {e}")
+        elif e["kind"] == "attack_evaded":
+            counted[f"observed:evaded_{e['element']}"] += 1
+        elif e["kind"] == "recover_energy":
+            counted["observed:recover_energy"] += 1
+            counted[f"observed:recover_energy_{len(e['cards'])}"] += 1
+        elif e["kind"] == "damage" and e["amount"] > 0 and e.get("target") != "self":
+            pid = next((pk.pokemon_id for p in state.players for pk in p.in_play() if pk.card == e["pokemon"]), None)
+            if evasion.get(pid) is not None and pid not in checked:
+                problems.append(f"{index} 手目 {engine.command_to_dict(command)}: はたらいている「とうめい」のポケモン {pid} が判定なしでダメージを受けた")
+    if isinstance(command, engine.UseAttack):
+        target = state.players[1 - state.current_player].active
+        if target is not None and state.cards[target.card].card_id == HAUNTER:
+            c = target.conditions
+            if c.asleep or c.paralyzed or c.confused:
+                counted["observed:haunter_attacked_while_blocked"] += 1
+            elif evasion.get(target.pokemon_id) is None:
+                counted["observed:haunter_attacked_under_gas"] += 1
+            else:
+                counted["observed:haunter_attacked_working"] += 1
+
+
 def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_every: int) -> tuple[Counter, list[str]]:
     """1 局を進め、数えた結果と問題を返す。"""
     counted, problems = Counter(), []
@@ -304,6 +373,7 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             gas_before = gas
         command = choose_command(state, rng, illegal_rate)
         suppression = _suppression_of(state, command) if isinstance(command, engine.UsePokemonPower) else None
+        evasion = _evasion_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision)) else None
         before = engine.state_to_dict(state, format_version=9)
         fingerprint, log = rng_fingerprint(state.rng), state.log
         try:
@@ -319,6 +389,10 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 拒否（{error.code}）で渡した状態が変わった")
             if error.code == "POWER_SUPPRESSED" and not suppression:
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: かがくへんかガスがはたらいていないのに POWER_SUPPRESSED")
+            if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
+                target = state.players[1 - state.current_player].active
+                if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「とうめい」がはたらいていないのに UNRESOLVED_EVADED_EFFECT_COIN")
             continue
         except Exception as error:  # noqa: BLE001  内部の誤り
             counted["internal_error"] += 1
@@ -337,6 +411,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             counted["accepted:damage_swap"] += 1
         if any(e["kind"] == "discard_energy" for e in new.log[len(state.log):]):
             counted["accepted:recover"] += 1  # ユンゲラーの「じこさいせい」（決定に答えて処理した）
+        if evasion is not None:
+            _observe_attack(state, new, evasion, counted, problems, index, command)
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -389,7 +465,9 @@ def main(argv=None) -> int:
           f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}（うちあまごい {counts.get('accepted:rain_dance', 0)}・"
           f"ダメージスワップ {counts.get('accepted:damage_swap', 0)}）・じこさいせい {counts.get('accepted:recover', 0)}・"
           f"かがくへんかガスで拒否 {counts.get('code:POWER_SUPPRESSED', 0)}（はたらいている MAIN {counts.get('observed:gas_working', 0)}・"
-          f"消えている MAIN {counts.get('observed:gas_off_with_muk', 0)}・切り替わり {counts.get('observed:gas_toggled', 0)}）"
+          f"消えている MAIN {counts.get('observed:gas_off_with_muk', 0)}・切り替わり {counts.get('observed:gas_toggled', 0)}）・"
+          f"とうめいの判定 {counts.get('observed:evade_check', 0)}（おもて {counts.get('observed:evade_heads', 0)}・"
+          f"うら {counts.get('observed:evade_tails', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")

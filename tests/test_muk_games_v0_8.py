@@ -362,7 +362,7 @@ class GoldenMukGameTest(unittest.TestCase):
         for key in (f"suppressed_{VENUSAUR}", f"suppressed_{BLASTOISE}", f"suppressed_{ALAKAZAM}", "power_after_gas_gone", "power_with_muk_in_play"):
             self.assertGreater(observed[key], 0, (key, observed))
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.8")
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.9")
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

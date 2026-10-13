@@ -289,7 +289,7 @@ class GoldenStage2GameTest(unittest.TestCase):
         for key in ("evolve_to_PMCG1-012", "beedrill_ダブルニードル", "knock_out_3_cards"):
             self.assertGreater(counted[key], 0, (key, counted))
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.8")  # v0.4d・v0.5・v0.6・v0.7・v0.8 で登録表の id だけ変わった（結果は同じ）
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.9")  # v0.4d・v0.5・v0.6・v0.7・v0.8 で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

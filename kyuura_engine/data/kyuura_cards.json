@@ -121,11 +121,16 @@
     "PMCG4-004",
     "PMCG3-007"
   ],
+  "pool_v0_9": [
+    "PMCG3-029",
+    "PMCG3-030"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
     "PMCG1-075",
-    "PMCG3-003"
+    "PMCG3-003",
+    "PMCG1-047"
   ],
   "cards": [
     {
@@ -3363,6 +3368,181 @@
       }
     },
     {
+      "id": "PMCG3-029",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴース",
+        "en": "Gastly"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          92
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "したでなめる",
+              "en": "Lick"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "エナジーへんかん",
+              "en": "Energy Conversion"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分のトラッシュから最大2枚のエネルギーカードを選び、手札に加える。その後、自分に10ダメージ。",
+              "en": "Put up to 2 Energy cards from your discard pile into your hand. Gastly does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-029",
+        "pokemontcg": [
+          "base3-33"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-029-ghos/",
+      "jp_print": {
+        "level": 17,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-029-ghos/"
+      }
+    },
+    {
+      "id": "PMCG3-030",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴースト",
+        "en": "Haunter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          93
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ゴース",
+          "en": "Gastly"
+        },
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "とうめい",
+              "en": "Transparency"
+            },
+            "text": {
+              "ja": "このカードがワザによるダメージや効果を受ける時、コインを投げ、「おもて」ならこのカードはダメージや効果を受けない。「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "Whenever an attack does anything to Haunter, flip a coin. If heads, prevent all effects of that attack, including damage, done to Haunter. This power stops working while Haunter is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あくむ",
+              "en": "Nightmare"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-030",
+        "pokemontcg": [
+          "base3-6",
+          "base3-21"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-030-ghost/",
+      "jp_print": {
+        "level": 17,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-030-ghost/"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -3688,6 +3868,98 @@
         "series": "化石の秘密",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg03-005-betbeter/"
+      }
+    },
+    {
+      "id": "PMCG1-047",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴースト",
+        "en": "Haunter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          93
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ゴース",
+          "en": "Gastly"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "さいみんじゅつ",
+              "en": "Hypnosis"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "ゆめくい",
+              "en": "Dream Eater"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "相手が「ねむり」状態のときだけ、ダメージをあたえる。",
+              "en": "You can't use this attack unless the Defending Pokémon is Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-047",
+        "pokemontcg": [
+          "base1-29"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-047-ghost/",
+      "jp_print": {
+        "level": 22,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-047-ghost/"
       }
     }
   ]
