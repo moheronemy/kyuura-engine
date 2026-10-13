@@ -155,8 +155,11 @@ class UsePokemonPower:
     - ``power``: 特殊能力の位置（カードに印刷された順、0 から）。v0.5 の対応カード（フシギバナ）は特殊能力が 1 つなので 0
     - ``energy``・``source``・``target``: 特殊能力の説明が選ばせるもの。v0.5 の「エナジートランス」は、移す「草」エネルギー
       カードの uid（``energy``）、それがついている自分の場のポケモンの番号（``source``）、つけかえる先の自分の場の別のポケモンの
-      番号（``target``）。1 回の使用で 1 枚をつけかえる（実装上の仮定。docs/energy-transfer-v0.5.md）。使わない特殊能力では
-      None のまま
+      番号（``target``）。1 回の使用で 1 枚をつけかえる（実装上の仮定。docs/energy-transfer-v0.5.md）。v0.6 の「あまごい」は、
+      つける自分の手札の「水」エネルギーカードの uid（``energy``）と、つける先の自分の場の「水」ポケモンの番号（``target``）で、
+      ``source`` は使わない（None。指定したら ``POWER_CHOICE_NOT_USED``）。1 回の使用で 1 枚をつける（実装上の仮定。
+      docs/rain-dance-v0.6.md の R3）。使わない特殊能力では None のまま。項目の意味はパワーごとに決まり、パワーの実装
+      （``PowerEffect.check_usable``）が確かめる
 
     v0.4e までの 2 つの項目（``player``・``pokemon``）だけの形（``command_from_dict`` の辞書）も読める（ほかの項目は既定の値）。
     説明が選ばせるものが足りなければ、状態を変えずに拒否する。

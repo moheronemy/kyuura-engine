@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 8 つあります（``format_version``）。
+形式は 9 つあります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -23,6 +23,11 @@
   1 つにつき ``{"effect": 種類, "source_card": uid, "source_card_id": id, "source_player": プレイヤー,
   "created_turn": 効果を与えた番, "active_turn": はたらく番}``。v0.4b の種類は ``"prevent_damage"``（「かたまる」の
   「次の相手の番、このカードはダメージを受けない」。はたらく番の終わりに消える）だけ。なければ ``[]``。
+- 9: 8 に、``energy_attached_by_powers_this_turn``（この番に、ポケモンパワーの効果で手札から場のポケモンにつけたエネルギー
+  カードの枚数。v0.6 のカメックスの「あまごい」。手札からつける通常の操作の回数 ``energy_attachments_this_turn`` とは別。
+  番の最初に 0）を加えたもの（v0.6。docs/architecture-v0.6.md 5 章）。この数が 1 以上の番には、通常の操作が原典で決められない
+  （``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）ので、状態に持ち、書き出しで表す。形式 1〜8 は、この数が 0 でなければ
+  ``ValueError``（0 なら形式 1〜8 の書き出しは v0.5 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -62,7 +67,7 @@ from typing import Any
 from .rng import rng_fingerprint
 from .state import Asleep, Confused, GameState, Paralyzed, PokemonInPlay
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -152,6 +157,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、進化したポケモンのカードの重なりを表せない（format_version=7 を使う）")
     if format_version < 8 and any(pokemon.persistent_effects for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、ワザによる持続する効果を表せない（format_version=8 を使う）")
+    if format_version < 9 and state.energy_attached_by_powers_this_turn != 0:
+        raise ValueError(
+            f"形式 {format_version} は、この番にポケモンパワーで手札からつけたエネルギーの枚数を表せない（format_version=9 を使う）"
+        )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -226,4 +235,6 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         "card": used.card,
         "card_id": state.cards[used.card].card_id,
     }
+    if format_version >= 9:
+        data["energy_attached_by_powers_this_turn"] = state.energy_attached_by_powers_this_turn
     return data

@@ -1,7 +1,8 @@
 """原典で決められない裁定（``UNRESOLVED_…``）が、ちょうど決められない場合だけを止めることの監査（v0.4e。
 docs/unresolved-audit-v0.4e.md）。
 
-v0.4e の時点でエンジンが止める 11 件のコードのそれぞれについて、
+v0.4e の時点でエンジンが止める 11 件のコード（v0.6 で 1 件加えて 12 件。``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
+docs/rain-dance-v0.6.md の R13）のそれぞれについて、
 
 - 止まる場合: 止め方（コマンドの拒否 ``UnsupportedError`` か、対戦を止める ``Phase.HALTED`` か）とコード。拒否なら渡した状態・
   乱数・ログは変わらない（拒否と HALTED を同じものとして扱わない: 拒否は状態を返さず、HALTED は止めた状態を返す）。どちらも
@@ -16,8 +17,8 @@ v0.4e の時点でエンジンが止める 11 件のコードのそれぞれに�
 import unittest
 
 from kyuura_engine import (
-    EndTurn, EngineError, EvolvePokemon, IllegalActionError, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack,
-    apply_command, check_invariants, new_game, state_to_dict,
+    AttachEnergy, EndTurn, EngineError, EvolvePokemon, IllegalActionError, PlayTrainer, ResolveDecision, Retreat, UnsupportedError,
+    UseAttack, UsePokemonPower, apply_command, check_invariants, new_game, state_to_dict,
 )
 from kyuura_engine.conditions import paralysis_problem
 from kyuura_engine.rng import rng_fingerprint
@@ -26,6 +27,7 @@ from kyuura_engine.state import Phase
 from tests.helpers import (
     BEEDRILL, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FEW_BASICS, GRASS, GROWLITHE, H, KAKUNA, METAPOD, PARAS, PLUSPOWER,
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
+    BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -34,6 +36,7 @@ ALL_CODES = (
     "UNRESOLVED_SWITCH_WITHOUT_BENCH", "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT", "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
     "UNRESOLVED_REPARALYSIS_RECOVERY_TURN", "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS", "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED",
     "UNRESOLVED_EVOLUTION_HP", "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",  # v0.6
 )
 TURN = 7
 
@@ -43,14 +46,19 @@ def full(state):
 
 
 class BoundaryTestCase(unittest.TestCase):
+    format_version = 8  # 比べる書き出しの形式（v0.6 のあまごいの盤面は 9）
+
     def assert_rejected(self, state, command, code):
         """コマンドの拒否（``UnsupportedError``。状態を返さない）。渡した状態・乱数・ログは変わらない。"""
-        before, fingerprint, log = full(state), rng_fingerprint(state.rng), state.log
+        def written(s):
+            return state_to_dict(s, format_version=self.format_version)
+
+        before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with self.assertRaises(UnsupportedError) as ctx:
             apply_command(state, command)
         self.assertIs(type(ctx.exception), UnsupportedError)
         self.assertEqual(ctx.exception.code, code)
-        self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
+        self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 
     def assert_halted(self, state, code):
@@ -306,6 +314,78 @@ class PreventedCoinDamageBoundaryTest(BoundaryTestCase):
         self.assertIsNotNone(poisoned.players[1].active.conditions.poison)
         whirlwind = {"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]}
         self.assertEqual(self.assert_proceeds(self.board(whirlwind), UseAttack(0, 0)).phase, Phase.DECISION)
+
+
+class AttachAfterPowerAttachBoundaryTest(BoundaryTestCase):
+    """p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに1枚だけです」・p.307（カードの記述を優先）・
+    p.90（カメックスの「あまごい」の最新の説明）。v0.6（docs/rain-dance-v0.6.md の R11〜R13）。
+
+    止まる場合: この番に「あまごい」で手札からエネルギーをつけていて、手札からつける通常の操作をまだしていない番の、通常の操作
+    （拒否。カードを動かす前）。あまごいでつけたカードを p.310 の「1枚」に数えるかが原典に書かれていないので、受け付けるとも
+    拒否する（ENERGY_ALREADY_ATTACHED）とも決めない。ここでは「止まること・状態が変わらないこと」だけを確かめる（裁定を
+    テストで決めない）。
+
+    隣の止まらない場合: 通常の操作のあとのあまごい（R12。どちらの読み方でも使える）・エナジートランス（場のエネルギーのつけかえ。
+    手札からつけない）のあとの通常の操作・前の自分の番にあまごいを使った番の通常の操作（番の最初に数を 0 にする）・拒否された
+    あまごい（状態を変えない）のあとの通常の操作。"""
+
+    format_version = 9
+
+    def board(self, *, active=None, bench=(), hand=(WATER, WATER, FIRE), attached=0):
+        blastoise = {"card": BLASTOISE, "evolved_from": [SQUIRTLE, WARTORTLE]}
+        return build_test_state([
+            {"active": active or blastoise, "bench": list(bench) or [RATTATA], "hand": list(hand)}, {"active": GROWLITHE},
+        ], turn_number=TURN, energy_attachments_this_turn=attached)
+
+    def rain_dance(self, state, energy, target=None):
+        me = state.players[0]
+        user = next(pk for pk in me.in_play() if state.cards[pk.card].card_id == BLASTOISE)
+        return UsePokemonPower(0, user.pokemon_id, 0, energy, None, (target or me.active).pokemon_id)
+
+    def test_trigger_and_neighbours(self):
+        state = self.board()
+        waters = uids(state, 0, "hand", WATER)
+        fire = uids(state, 0, "hand", FIRE)[0]
+        once = self.assert_proceeds(state, self.rain_dance(state, waters[0]))
+        twice = self.assert_proceeds(once, self.rain_dance(once, waters[1]))
+        rattata = state.players[0].bench[0].card
+        for powered in (once, twice):
+            for command in (AttachEnergy(0, fire, powered.players[0].active.card), AttachEnergy(0, fire, rattata)):
+                with self.subTest(uses=powered.energy_attached_by_powers_this_turn, target=command.target):
+                    self.assert_rejected(powered, command, "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH")
+        self.assert_rejected(once, AttachEnergy(0, waters[1], once.players[0].active.card), "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH")
+        # ほかの理由で正しくない通常の操作は、その理由で拒否する（手札にない・相手のポケモン）。止めるのは、ほかの確認が通ったときだけ
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(once, AttachEnergy(0, waters[0], rattata))
+        self.assertEqual(ctx.exception.code, "CARD_NOT_IN_HAND")
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(once, AttachEnergy(0, fire, once.players[1].active.card))
+        self.assertEqual(ctx.exception.code, "TARGET_NOT_YOURS")
+
+        # 止めない 1: 通常の操作のあとのあまごい（R12）。そのあとの 2 回目の通常の操作は、1 番に 1 枚の規定で拒否（ENERGY_ALREADY_ATTACHED）
+        attached = self.assert_proceeds(state, AttachEnergy(0, fire, rattata))
+        powered = self.assert_proceeds(attached, self.rain_dance(attached, waters[0]))
+        self.assertEqual((powered.energy_attachments_this_turn, powered.energy_attached_by_powers_this_turn), (1, 1))
+        with self.assertRaises(IllegalActionError) as ctx:
+            apply_command(powered, AttachEnergy(0, waters[1], rattata))
+        self.assertEqual(ctx.exception.code, "ENERGY_ALREADY_ATTACHED")
+        # 止めない 2: 前の自分の番にあまごいを使っても、次の自分の番の通常の操作は止めない（番の最初に 0）
+        later = self.assert_proceeds(once, EndTurn(0))
+        later = self.assert_proceeds(later, EndTurn(1))
+        self.assertEqual((later.current_player, later.energy_attached_by_powers_this_turn), (0, 0))
+        self.assert_proceeds(later, AttachEnergy(0, fire, later.players[0].active.card))
+        # 止めない 3: 拒否されたあまごい（相手のポケモンへ）のあとの通常の操作
+        with self.assertRaises(IllegalActionError):
+            apply_command(state, self.rain_dance(state, waters[0], state.players[1].active))
+        self.assert_proceeds(state, AttachEnergy(0, fire, rattata))
+        # 止めない 4: エナジートランス（場のエネルギーのつけかえ。手札からつけない）のあとの通常の操作
+        venusaur = {"card": VENUSAUR, "evolved_from": [BULBASAUR, IVYSAUR], "energy": [GRASS, GRASS]}
+        trans = build_test_state([{"active": venusaur, "bench": [BULBASAUR], "hand": [GRASS]}, {"active": GROWLITHE}], turn_number=TURN)
+        me = trans.players[0]
+        moved = self.assert_proceeds(trans, UsePokemonPower(0, me.active.pokemon_id, 0, me.active.energy[0], me.active.pokemon_id,
+                                                            me.bench[0].pokemon_id))
+        self.assertEqual(moved.energy_attached_by_powers_this_turn, 0)
+        self.assert_proceeds(moved, AttachEnergy(0, uids(moved, 0, "hand", GRASS)[0], me.active.card))
 
 
 class CodeListTest(unittest.TestCase):

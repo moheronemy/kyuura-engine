@@ -107,8 +107,13 @@
     "PMCG1-008",
     "PMCG1-011"
   ],
+  "pool_v0_6": [
+    "PMCG1-023",
+    "PMCG1-027",
+    "PMCG1-032"
+  ],
   "reference_only": [
-    "PMCG1-032",
+    "PMCG1-049",
     "PMCG1-014",
     "PMCG1-075"
   ],
@@ -2640,6 +2645,189 @@
       }
     },
     {
+      "id": "PMCG1-023",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゼニガメ",
+        "en": "Squirtle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          7
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あわ",
+              "en": "Bubble"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "からにこもる",
+              "en": "Withdraw"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番に受けるダメージが0になる。",
+              "en": "Flip a coin. If heads, prevent all damage done to Squirtle during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-023",
+        "pokemontcg": [
+          "base1-63"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-023-zenigame/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-023-zenigame/"
+      }
+    },
+    {
+      "id": "PMCG1-027",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カメール",
+        "en": "Wartortle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          8
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ゼニガメ",
+          "en": "Squirtle"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "からにこもる",
+              "en": "Withdraw"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番に受けるダメージが0になる。",
+              "en": "Flip a coin. If heads, prevent all damage done to Wartortle during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-027",
+        "pokemontcg": [
+          "base1-42"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-024-kameil/",
+      "jp_print": {
+        "level": 22,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-024-kameil/"
+      }
+    },
+    {
       "id": "PMCG1-032",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -2728,6 +2916,97 @@
           "特殊能力が「特種能力」と表記されている"
         ],
         "source": "https://nazonobasho.com/pmcg01-025-kamex/"
+      }
+    },
+    {
+      "id": "PMCG1-049",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フーディン",
+        "en": "Alakazam"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          65
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ユンゲラー",
+          "en": "Kadabra"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ダメージスワップ",
+              "en": "Damage Swap"
+            },
+            "text": {
+              "ja": "自分の場に出ているポケモンのダメージカウンターを、ポケモンが「きぜつ」しない範囲で自由に移動できる。「ねむり・マヒ・こんらん」状態の時は使えない。",
+              "en": "As often as you like during your turn (before your attack), you may move 1 damage counter from 1 of your Pokémon to another as long as you don't Knock Out that Pokémon. This power can't be used if Alakazam is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-049",
+        "pokemontcg": [
+          "base1-1"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-045-foodin/",
+      "jp_print": {
+        "level": 42,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "特殊能力が「特種能力」と表記されている"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-045-foodin/"
       }
     },
     {

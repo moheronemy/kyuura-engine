@@ -33,7 +33,7 @@ from kyuura_engine.effects import (
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
-    BLASTOISE, BULBASAUR, FIRE, GRASS, GROWLITHE, HITMONCHAN, IVYSAUR, POTION, RATTATA, VENUSAUR, build_test_state, expand_decklist,
+    ALAKAZAM, BLASTOISE, BULBASAUR, FIRE, GRASS, GROWLITHE, HITMONCHAN, IVYSAUR, POTION, RATTATA, VENUSAUR, build_test_state, expand_decklist,
 )
 from tests.log_audit import serialization_problems
 
@@ -41,6 +41,7 @@ ENERGY_TRANS_PRINTED = "フシギバナは自分の場にある「草」エネ�
 ENERGY_TRANS_LATEST = ("この力は、自分の番の中で何度でも使える。自分の場にいるポケモンについている「草」エネルギーを、自分の場にいる別の"
                        "ポケモンにつけかえる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。")
 ENERGY_TRANS = PowerKey(VENUSAUR, 0)
+RAIN_DANCE = PowerKey(BLASTOISE, 0)  # v0.6 で登録（tests/test_rain_dance_v0_6.py）
 
 
 def full(state):
@@ -120,18 +121,19 @@ def pool_with(records, powers):
 
 class PowerRegistryTest(unittest.TestCase):
     def test_default_registry_registers_only_energy_trans(self):
-        """v0.5 で登録したポケモンパワーは、フシギバナの「エナジートランス」だけ（ポケモンパワーを持つカードを一括で対応にしない）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS,))
+        """v0.5 で登録したポケモンパワーは、フシギバナの「エナジートランス」だけ（ポケモンパワーを持つカードを一括で対応にしない）。
+        v0.6 でカメックスの「あまごい」を、カードのページ（p.90）と照合して加えた（2 つ。tests/test_rain_dance_v0_6.py）。"""
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE))
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source),
                          ("エナジートランス", ENERGY_TRANS_PRINTED, ENERGY_TRANS_LATEST, "P43 p.16・p.323"))
-        self.assertEqual(DEFAULT_EFFECTS.describe()["powers"],
-                         {"PMCG1-011@power0": {"implementation": "energy_transfer", "name_ja": "エナジートランス", "source": "P43 p.16・p.323"}})
+        self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG1-011@power0"],
+                         {"implementation": "energy_transfer", "name_ja": "エナジートランス", "source": "P43 p.16・p.323"})
         self.assertIsNone(DEFAULT_EFFECTS.power_entry(VENUSAUR, 1))
-        self.assertIsNone(DEFAULT_EFFECTS.power_entry(BLASTOISE, 0))
-        self.assertIn("1 powers", repr(DEFAULT_EFFECTS))
+        self.assertIsNone(DEFAULT_EFFECTS.power_entry(ALAKAZAM, 0))  # v0.5 ではカメックス（v0.6 で登録した）
+        self.assertIn("2 powers", repr(DEFAULT_EFFECTS))  # v0.5 は 1
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -164,17 +166,20 @@ class PowerRegistryTest(unittest.TestCase):
                 self.assertTrue(unregistered.is_playable(BULBASAUR) and unregistered.is_playable(IVYSAUR))
 
     def test_unregistered_power_of_another_card_stays_unsupported(self):
-        """登録のないポケモンパワーを持つカード（カメックスの「あまごい」）は使えない。名前や説明文の有無では決めない。"""
+        """登録のないポケモンパワーを持つカードは使えない。名前や説明文の有無では決めない。v0.5 ではカメックスの「あまごい」で
+        確かめていた。v0.6 であまごいを登録したので、フーディン（PMCG1-049。参照カード）の「ダメージスワップ」で確かめる。"""
         pool = load_card_pool()
-        d = pool.get(BLASTOISE)
-        self.assertFalse(pool.is_playable(BLASTOISE))
+        d = pool.get(ALAKAZAM)
+        self.assertFalse(pool.is_playable(ALAKAZAM))
         self.assertEqual([(w.name_ja, w.supported, w.unsupported_reason) for w in d.powers],
-                         [("あまごい", False, "ポケモンパワーの効果の実装が登録されていない")])
-        # エナジートランスの登録をカメックスの位置に写しても、名前が違うので使えない（データとの照合）
-        effects = DEFAULT_EFFECTS.with_powers("test-copied", {PowerKey(BLASTOISE, 0): DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)})
-        copied = pool_from_extract(read_extract(), effects)
-        self.assertFalse(copied.get(BLASTOISE).powers[0].supported)
-        self.assertIn("名前", copied.get(BLASTOISE).powers[0].unsupported_reason)
+                         [("ダメージスワップ", False, "ポケモンパワーの効果の実装が登録されていない")])
+        # エナジートランス・あまごいの登録をフーディンの位置に写しても、名前が違うので使えない（データとの照合）
+        for source in (ENERGY_TRANS, RAIN_DANCE):
+            entry = DEFAULT_EFFECTS.power_entry(source.card_id, source.power_index)
+            effects = DEFAULT_EFFECTS.with_powers("test-copied", {PowerKey(ALAKAZAM, 0): entry})
+            copied = pool_from_extract(read_extract(), effects)
+            self.assertFalse(copied.get(ALAKAZAM).powers[0].supported)
+            self.assertIn("名前", copied.get(ALAKAZAM).powers[0].unsupported_reason)
 
     def test_text_mismatch_makes_the_power_unsupported(self):
         """登録したときに照合した文面とデータの文面が違えば（データが変わったら）、使えない。"""
@@ -217,11 +222,12 @@ class PowerRegistryTest(unittest.TestCase):
             DEFAULT_EFFECTS.with_attacks("a", {}), DEFAULT_EFFECTS.without_attacks("b", []), DEFAULT_EFFECTS.with_trainers("c", {}),
             DEFAULT_EFFECTS.without_trainers("d", []),
         ):
-            self.assertEqual(registry.power_keys(), (ENERGY_TRANS,))
-        removed = DEFAULT_EFFECTS.without_powers("e", [ENERGY_TRANS])
+            self.assertEqual(registry.power_keys(), (ENERGY_TRANS, RAIN_DANCE))  # v0.5 は (ENERGY_TRANS,)
+        removed = DEFAULT_EFFECTS.without_powers("e", [ENERGY_TRANS, RAIN_DANCE])
         self.assertEqual((removed.power_keys(), removed.attack_keys(), removed.trainer_ids()),
                          ((), DEFAULT_EFFECTS.attack_keys(), DEFAULT_EFFECTS.trainer_ids()))
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS,))
+        self.assertEqual(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS]).power_keys(), (RAIN_DANCE,))
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE))  # 元の登録表は変わらない
 
 
 # ---------------------------------------------------------------- コマンドの形
@@ -386,7 +392,10 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(check_invariants(new), [])
 
     def test_copies_and_serialization(self):
-        """使ったあとの状態は、clone・deepcopy・pickle で同じものになり、形式 1〜8 の書き出しの監査に通る（形式 9 はない）。"""
+        """使ったあとの状態は、clone・deepcopy・pickle で同じものになり、形式 1〜8 の書き出しの監査に通る（v0.5 では形式 9 はなかった）。
+
+        v0.6 で形式 9（ポケモンパワーで手札からつけた枚数 ``energy_attached_by_powers_this_turn``）を加えた。エナジートランスは手札から
+        つけないので、その数は 0 のまま（形式 7・8 で書き出せる）。形式 9 は、形式 8 にその項目（0）を加えたもの。"""
         state = board()
         me = state.players[0]
         new = apply_command(state, transfer(state, me.active.energy[0], me.active, me.bench[0]))
@@ -396,8 +405,10 @@ class AtomicityTest(unittest.TestCase):
                                                    copied.players[0].bench[0]))
             self.assertEqual(check_invariants(again), [])
         self.assertEqual(serialization_problems(new), [])
+        self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
+        self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=9)
+            state_to_dict(new, format_version=10)
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

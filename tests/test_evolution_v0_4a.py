@@ -36,7 +36,7 @@ from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt, Poison, SpecialCond
 
 from tests.helpers import (
     DEFENDER, DEWGONG, DIGLETT, FIRE, GRASS, GROWLITHE, H, PARAS, PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL,
-    SWITCH, T, BLASTOISE, WATER, build_test_state, expand_decklist, with_coin_results,
+    SWITCH, T, ALAKAZAM, WATER, build_test_state, expand_decklist, with_coin_results,
 )
 
 SPORE = "相手を「ねむり」状態にする。"
@@ -136,9 +136,10 @@ class EvolutionCardsTest(unittest.TestCase):
         pool = load_card_pool()
         # v0.4a〜v0.4e はフシギバナで確かめていた。v0.4a は理由の最初が「2 進化」、v0.4c で 2 進化の段階を扱えるようにしてからは
         # ポケモンパワー（と登録のないワザ）だった。v0.5 でフシギバナ（エナジートランス・ソーラービーム）を対応にしたので、実装を
-        # 登録していないポケモンパワー「あまごい」を持つ 2 進化のカメックスで確かめる（tests/test_venusaur_v0_5.py）
-        self.assertFalse(pool.get(BLASTOISE).supported)
-        self.assertIn("ポケモンパワー", pool.get(BLASTOISE).unsupported_reasons[0])
+        # 登録していないポケモンパワー「あまごい」を持つ 2 進化のカメックスで確かめていた（tests/test_venusaur_v0_5.py）。v0.6 で
+        # カメックスを対応にしたので、登録していないポケモンパワー「ダメージスワップ」を持つ 2 進化のフーディンで確かめる
+        self.assertFalse(pool.get(ALAKAZAM).supported)
+        self.assertIn("ポケモンパワー", pool.get(ALAKAZAM).unsupported_reasons[0])
         effects = DEFAULT_EFFECTS.without_attacks("test-no-dewgong", [AttackKey(DEWGONG, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(DEWGONG))
@@ -239,7 +240,7 @@ class EvolveTest(unittest.TestCase):
 
     def test_rejected_commands(self):
         """不正な進化は、状態も乱数も変えない（カードは手札に、進化元は場に残る）。"""
-        state = board(hand=[PARASECT, PARAS, GRASS, SWITCH, BLASTOISE], opponent=PARAS)
+        state = board(hand=[PARASECT, PARAS, GRASS, SWITCH, ALAKAZAM], opponent=PARAS)
         target = state.players[0].active.pokemon_id
         parasect = uid_of(state, 0, PARASECT)
         opponent = state.players[1].active
@@ -247,8 +248,9 @@ class EvolveTest(unittest.TestCase):
             (EvolvePokemon(0, uid_of(state, 0, PARAS), target), "NOT_EVOLUTION_CARD", IllegalActionError),  # たねポケモン
             (EvolvePokemon(0, uid_of(state, 0, GRASS), target), "NOT_EVOLUTION_CARD", IllegalActionError),
             (EvolvePokemon(0, uid_of(state, 0, SWITCH), target), "NOT_EVOLUTION_CARD", IllegalActionError),
-            # 未対応の 2 進化（v0.4e まではフシギバナ。v0.5 で対応にしたので、未対応のポケモンパワーを持つカメックス）
-            (EvolvePokemon(0, uid_of(state, 0, BLASTOISE), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
+            # 未対応の 2 進化（v0.4e まではフシギバナ、v0.5 ではカメックス。v0.6 でカメックスを対応にしたので、未対応のポケモンパワー
+            # を持つフーディン）
+            (EvolvePokemon(0, uid_of(state, 0, ALAKAZAM), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
             (EvolvePokemon(0, state.players[0].deck[0], target), "CARD_NOT_IN_HAND", IllegalActionError),
             (EvolvePokemon(0, parasect, opponent.pokemon_id), "TARGET_NOT_YOURS", IllegalActionError),  # 相手のパラス
             (EvolvePokemon(0, parasect, 999), "TARGET_NOT_IN_PLAY", IllegalActionError),

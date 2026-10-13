@@ -6,10 +6,15 @@
   エネルギー・トラッシュ・サイドの枚数を組み立て直し、状態と同じかを確かめる。番の進行（番の始まりが 1 つずつ交互・番と番の
   あいだに番の終わりとポケモンチェックが 1 回ずつ）・ワザ 1 回あたりの要素の数（同じポケモンへのダメージの要素は 1 回）・
   サイドとカードの重複・持続する効果の付与と解除の対応・進化の番も確かめる。v0.5 から、特殊能力（エナジートランス）の
-  エネルギーの移動（``move_energy``。直前に同じポケモンの宣言 ``pokemon_power`` が 1 つ）も組み立て直しに含める。ログは記録で、
-  状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
-- ``serialization_problems(state)``: 形式 1〜8 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
-  形式 8 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 9 はない。
+  エネルギーの移動（``move_energy``。直前に同じポケモンの宣言 ``pokemon_power`` が 1 つ）も組み立て直しに含める。v0.6 から、
+  手札（引いた・取ったサイド → 場に出した・つけた・使った）と、特殊能力（あまごい）で手札からつけたエネルギー
+  （``power_attach_energy``。直前に同じポケモンの宣言が 1 つ。手札にあった自分のカードを自分の場のポケモンへ）も組み立て直し、
+  手札からつける通常の操作（``attach_energy``）が 1 番に 1 回までで、特殊能力でつけたあと（通常の操作をまだしていない番）に
+  ないこと（R13 はエンジンが止める）も確かめる。宣言（``pokemon_power``）のすぐあとには、その処理（``move_energy`` か
+  ``power_attach_energy``）が 1 つある（v0.5・v0.6 の特殊能力は決定を出さず、1 回の宣言で 1 回処理する。p.311）。ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として
+  報告する）。
+- ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
+  形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
 """
 
 from __future__ import annotations
@@ -27,12 +32,16 @@ POKEMON_FIELDS_SINCE = {
     "pokemon_id": 2, "trainers": 4, "special_conditions": 5, "retreat_failed_turn": 6, "evolution_stack": 7, "played_turn": 7,
     "evolved_turn": 7, "persistent_effects": 8,
 }
-TOP_FIELDS_SINCE = {"format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3}
+TOP_FIELDS_SINCE = {
+    "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
+    "energy_attached_by_powers_this_turn": 9,
+}
+LATEST_FORMAT = 9
 
 
-def _project(data8: dict, version: int) -> dict:
-    """形式 8 の書き出しから、形式 ``version`` にない項目を除いたもの。"""
-    data = {k: v for k, v in data8.items() if TOP_FIELDS_SINCE.get(k, 1) <= version}
+def _project(data_latest: dict, version: int) -> dict:
+    """最新の形式（9）の書き出しから、形式 ``version`` にない項目を除いたもの。"""
+    data = {k: v for k, v in data_latest.items() if TOP_FIELDS_SINCE.get(k, 1) <= version}
     if "format_version" in data:
         data["format_version"] = version
 
@@ -40,7 +49,7 @@ def _project(data8: dict, version: int) -> dict:
         return None if p is None else {k: v for k, v in p.items() if POKEMON_FIELDS_SINCE.get(k, 1) <= version}
 
     data["players"] = [
-        {**player, "active": pokemon(player["active"]), "bench": [pokemon(b) for b in player["bench"]]} for player in data8["players"]
+        {**player, "active": pokemon(player["active"]), "bench": [pokemon(b) for b in player["bench"]]} for player in data_latest["players"]
     ]
     return data
 
@@ -61,6 +70,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 7)
     if any(pokemon.persistent_effects for pokemon in in_play):
         needed = max(needed, 8)
+    if state.energy_attached_by_powers_this_turn:
+        needed = max(needed, 9)
     d = state.decision
     not_v0_1 = d is not None and (d.context_value("then") is not None or d.resume == "attack")
     return needed, not_v0_1
@@ -69,7 +80,9 @@ def required_format(state) -> tuple[int, bool]:
 def serialization_problems(state) -> list[str]:
     problems = []
     needed, not_v0_1 = required_format(state)
-    data8 = state_to_dict(state, format_version=8)
+    if max(FORMAT_VERSIONS) != LATEST_FORMAT:
+        problems.append(f"形式の一覧 {FORMAT_VERSIONS} の最後が、監査の知っている形式 {LATEST_FORMAT} ではない（監査を更新する）")
+    data_latest = state_to_dict(state, format_version=LATEST_FORMAT)
     for version in FORMAT_VERSIONS:
         expected = version >= needed and not (version == 1 and not_v0_1)
         try:
@@ -80,11 +93,11 @@ def serialization_problems(state) -> list[str]:
             continue
         if not expected:
             problems.append(f"形式 {version} で表せない状態（要る形式 {needed}）を書き出した（黙って落とした）")
-        elif data != _project(data8, version):
-            problems.append(f"形式 {version} の書き出しが、形式 8 から後の項目を除いたものと違う")
+        elif data != _project(data_latest, version):
+            problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
-        state_to_dict(state, format_version=9)
-        problems.append("形式 9 を書き出せた（v0.4e では形式 9 を加えない）")
+        state_to_dict(state, format_version=LATEST_FORMAT + 1)
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.6 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -144,8 +157,8 @@ def log_problems(state) -> list[str]:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
             window = None
             continue
-        if kind in ("pokemon_power", "move_energy"):
-            # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない
+        if kind in ("pokemon_power", "move_energy", "power_attach_energy"):
+            # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない（v0.6 のあまごいも）
             problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
         if kind == "damage":
             window["damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
@@ -169,7 +182,11 @@ def log_problems(state) -> list[str]:
     removed: Counter = Counter()
 
     pokemon_owner: dict[int, int] = {}  # 場のポケモンの番号 → 持ち主（v0.5。エネルギーの移動は自分の場のポケモンのあいだだけ）
+    top: dict[int, int] = {}  # 場のポケモンの番号 → いちばん上のカードの uid（v0.6。つける先のタイプを見る）
     turn_player: int | None = None  # 今の番のプレイヤー（最後の turn_start）
+    hand: dict[int, list[int]] = {0: [], 1: []}  # 手札（v0.6。引いた・取ったサイド → 場に出した・つけた・使った）
+    attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
+    power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
 
     def enter(uid: int) -> None:
         nonlocal next_id
@@ -177,23 +194,46 @@ def log_problems(state) -> list[str]:
         energy[next_id] = []
         in_play.add(next_id)
         pokemon_owner[next_id] = owner[uid]
+        top[next_id] = uid
         next_id += 1
+
+    def from_hand(e: dict, player: int, uid: int) -> None:
+        """手札から出たカード（v0.6）。ログから組み立てた手札になければ報告する。"""
+        if uid in hand[player]:
+            hand[player].remove(uid)
+        else:
+            problems.append(f"{e['turn']} 番の {e['kind']} のカード {uid} が、ログから組み立てたプレイヤー {player} の手札にない")
 
     owner = {uid: card.owner for uid, card in state.cards.items()}
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     for e in log:
         kind = e["kind"]
-        if kind != "move_energy":
+        if kind not in ("move_energy", "power_attach_energy"):
+            if declared is not None:
+                problems.append(f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のすぐあとに、その処理（move_energy・power_attach_energy）がない")
             declared = None
         if kind == "turn_start":
             turn_player = e["player"]
+            attached_this_turn = power_attached_this_turn = 0
+        if kind == "draw":
+            hand[e["player"]].extend(e["cards"])
+        elif kind == "mulligan":
+            if sorted(e["revealed_hand"]) != sorted(hand[e["player"]]):
+                problems.append(f"プレイヤー {e['player']} の切り直しで見せた手札が、ログから組み立てた手札と違う")
+            hand[e["player"]] = []
+        elif kind == "play_trainer":
+            from_hand(e, e["player"], e["card"])
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
+                from_hand(e, e["player"], uid)
                 enter(uid)
         elif kind == "play_to_bench":
+            from_hand(e, e["player"], e["card"])
             enter(e["card"])
         elif kind == "evolve":
+            from_hand(e, e["player"], e["to_card"])
             ids[e["to_card"]] = e["pokemon_id"]
+            top[e["pokemon_id"]] = e["to_card"]
             evolve_turns.setdefault(e["pokemon_id"], []).append(e["turn"])
         elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
@@ -206,7 +246,14 @@ def log_problems(state) -> list[str]:
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "attach_energy":
+            from_hand(e, e["player"], e["energy"])
             energy[ids[e["target"]]].append(e["energy"])
+            attached_this_turn += 1
+            if attached_this_turn > state.rules.energy_attachments_per_turn:
+                problems.append(f"{e['turn']} 番に手札からエネルギーをつける通常の操作が {attached_this_turn} 回")
+            if attached_this_turn == 1 and power_attached_this_turn:
+                # v0.6 の R13（原典で決められない。エンジンは UNRESOLVED_ATTACH_AFTER_POWER_ATTACH で止める）
+                problems.append(f"{e['turn']} 番に、特殊能力で手札からつけたあとで通常の操作でつけた（R13 は止めるはず）")
         elif kind == "pokemon_power":
             declared = (e["turn"], e["player"], e["pokemon_id"])
             if e["player"] != turn_player or pokemon_owner.get(e["pokemon_id"]) != e["player"] or e["pokemon_id"] not in in_play:
@@ -225,6 +272,28 @@ def log_problems(state) -> list[str]:
             else:
                 energy[source].remove(e["energy"])
                 energy[target].append(e["energy"])
+        elif kind == "power_attach_energy":
+            # v0.6: 特殊能力（あまごい）で、手札の同じ uid のエネルギーカードを自分の場のポケモンへ
+            if declared != (e["turn"], e["player"], e["pokemon_id"]):
+                problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
+            declared = None  # 1 回の宣言で 1 枚（v0.6 のあまごい。実装上の仮定）
+            target = e["to_pokemon_id"]
+            power_attached_this_turn += 1
+            if pokemon_owner.get(target) != e["player"] or owner.get(e["energy"]) != e["player"] or target not in in_play:
+                problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']}（→ {target}）が、自分のカードを自分の場のポケモンにつけていない")
+                continue
+            from_hand(e, e["player"], e["energy"])
+            energy[target].append(e["energy"])
+            card_id, _, index = e["power"].partition("@power")
+            entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
+            effect = None if entry is None else entry.effect
+            if effect is None or not hasattr(effect, "energy_type"):
+                problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} の特殊能力 {e['power']} が、手札からつける特殊能力として登録されていない")
+            else:
+                if state.card_def(e["energy"]).provides is not effect.energy_type:
+                    problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} が「{effect.energy_type.ja}」エネルギーではない")
+                if state.card_def(top[target]).pokemon_type is not effect.pokemon_type:
+                    problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} のつける先 {target} が「{effect.pokemon_type.ja}」ポケモンではない")
         elif kind in ("retreat", "retreat_failed"):
             pid = e["pokemon_id"] if kind == "retreat_failed" else ids[e["old_active"]]
             for uid in e["discarded"]:
@@ -250,11 +319,14 @@ def log_problems(state) -> list[str]:
         elif kind == "take_prize":
             prizes_taken[e["player"]] += 1
             taken_cards.append(e["card"])
+            hand[e["player"]].append(e["card"])
         elif kind == "persistent_effect_added":
             added[(e["pokemon_id"], e["turn"])] = added.get((e["pokemon_id"], e["turn"]), 0) + 1
         elif kind == "persistent_effect_removed":
             removed[(e["pokemon_id"], e["created_turn"])] += 1
 
+    if declared is not None:
+        problems.append(f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のあとに、その処理がない（ログの最後）")
     for p_index, p in enumerate(state.players):
         for pokemon in p.in_play():
             pid = pokemon.pokemon_id
@@ -267,6 +339,8 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場のポケモン {pid} のエネルギー {pokemon.energy} が、ログから組み立てた {energy[pid]} と違う")
             if ids.get(pokemon.card) != pid:
                 problems.append(f"場のポケモン {pid} のいちばん上のカード {pokemon.card} が、ログの進化と対応しない")
+        if sorted(p.hand) != sorted(hand[p_index]):
+            problems.append(f"プレイヤー {p_index} の手札 {sorted(p.hand)} が、ログから組み立てた {sorted(hand[p_index])} と違う")
         if sorted(p.discard) != sorted(discard[p_index]):
             problems.append(f"プレイヤー {p_index} のトラッシュ {sorted(p.discard)} が、ログから組み立てた {sorted(discard[p_index])} と違う")
         if starts and len(p.prizes) != state.rules.prize_count - prizes_taken[p_index]:

@@ -600,7 +600,9 @@ class SerializationTest(unittest.TestCase):
             "created_turn": 3, "active_turn": 4,
         }])
         self.assertEqual(full(state)["players"][0]["bench"][0]["persistent_effects"], [])
-        self.assertEqual(FORMAT_VERSIONS[-1], 8)
+        # v0.4b では 8 が最後。v0.6 で形式 9（あまごいで手札からつけた枚数）を加えた。持続する効果の項目は形式 9 でも同じ
+        self.assertEqual(FORMAT_VERSIONS[-1], 9)
+        self.assertEqual(state_to_dict(state, format_version=9)["players"], full(state)["players"])
 
     def test_older_formats_refuse_effects(self):
         state = protected({"card": RATTATA, "energy": [FIRE]})

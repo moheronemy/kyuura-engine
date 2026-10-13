@@ -43,7 +43,7 @@ from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt
 
 from tests.helpers import (
     BEEDRILL, CATERPIE, DEFENDER, DEWGONG, DIGLETT, FIGHTING, FIRE, GRASS, GROWLITHE, H, HITMONCHAN, KAKUNA, MACHOP, METAPOD, PARAS,
-    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, BLASTOISE, WATER, WEEDLE, build_test_state, coin_events,
+    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, ALAKAZAM, WATER, WEEDLE, build_test_state, coin_events,
     expand_decklist, with_coin_results,
 )
 
@@ -198,11 +198,12 @@ class BeedrillCardTest(unittest.TestCase):
         は v0.4c では写しに入れていなかった（ワザが未実装。docs/architecture-v0.4c.md の v0.4d の準備）。v0.4d で 2 つのワザを
         登録して写し（pool_v0_4d）に加えた（tests/test_butterfree_v0_4d.py）。v0.4e まではフシギバナ（ポケモンパワー・登録の
         ないワザ）で確かめていた。v0.5 でフシギバナのパワーとワザを登録して対応にしたので、カメックス（登録のないポケモン
-        パワー「あまごい」）で確かめる（2 進化だから一括で対応にしたのではない。tests/test_venusaur_v0_5.py）。"""
+        パワー「あまごい」）で確かめていた（2 進化だから一括で対応にしたのではない。tests/test_venusaur_v0_5.py）。v0.6 でカメックスの
+        パワーとワザを登録して対応にしたので、フーディン（登録のないポケモンパワー「ダメージスワップ」）で確かめる。"""
         pool = load_card_pool()
-        self.assertTrue(pool.get(BLASTOISE).is_stage2_pokemon)
-        self.assertFalse(pool.is_playable(BLASTOISE))
-        self.assertIn("ポケモンパワー", " ".join(pool.get(BLASTOISE).unsupported_reasons))
+        self.assertTrue(pool.get(ALAKAZAM).is_stage2_pokemon)
+        self.assertFalse(pool.is_playable(ALAKAZAM))
+        self.assertIn("ポケモンパワー", " ".join(pool.get(ALAKAZAM).unsupported_reasons))
         effects = DEFAULT_EFFECTS.without_attacks("test-no-sting", [AttackKey(BEEDRILL, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(BEEDRILL))
@@ -330,10 +331,10 @@ class Stage2EvolveTest(unittest.TestCase):
         assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, "TEST-STAGE1-FROM-KAKUNA"), kakuna_pk.pokemon_id), "EVOLUTION_STAGE_MISMATCH")
 
     def test_unsupported_stage2_cards(self):
-        """対応していない 2 進化カード（未対応のポケモンパワーを持つカメックス（v0.4e まではフシギバナ。v0.5 で対応にした）・
-        ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は ``UNSUPPORTED_EVOLUTION``。"""
-        state = board(hand=(BLASTOISE,))
-        assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, BLASTOISE), state.players[0].active.pokemon_id),
+        """対応していない 2 進化カード（未対応のポケモンパワーを持つフーディン（v0.4e まではフシギバナ、v0.5 ではカメックス。どちらも
+        対応にした）・ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は ``UNSUPPORTED_EVOLUTION``。"""
+        state = board(hand=(ALAKAZAM,))
+        assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, ALAKAZAM), state.players[0].active.pokemon_id),
                         "UNSUPPORTED_EVOLUTION", UnsupportedError)
         effects = DEFAULT_EFFECTS.without_attacks("test-no-twineedle", [AttackKey(BEEDRILL, 0)])
         state = board(pool=pool_from_extract(read_extract(), effects), effects=effects)
@@ -493,10 +494,11 @@ class ThreeCardStructureTest(unittest.TestCase):
 
     def test_serialization_keeps_format_8(self):
         """形式 7・8 は重なりを下から順のリストで書く（2 つになるだけで、項目と意味は v0.4a と同じ）。形式 1〜6 は重なりを
-        表せないので ValueError。新しい形式（9）は加えていない。"""
+        表せないので ValueError。2 進化のために新しい形式（9）は加えていない（v0.6 で加えた形式 9 は、あまごいで手札からつけた
+        枚数のためのもので、重なりの項目は形式 7〜9 で同じ）。"""
         state = self.evolved()
         me = state.players[0].active
-        for version in (7, 8):
+        for version in (7, 8, 9):
             with self.subTest(version=version):
                 data = state_to_dict(state, format_version=version)
                 pokemon = data["players"][0]["active"]
@@ -509,7 +511,7 @@ class ThreeCardStructureTest(unittest.TestCase):
             with self.subTest(version=version):
                 with self.assertRaises(ValueError):
                     state_to_dict(state, format_version=version)
-        self.assertEqual(max(FORMAT_VERSIONS), 8)
+        self.assertEqual(max(FORMAT_VERSIONS), 9)  # v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）
 
     def test_attach_energy_to_a_card_below_is_rejected(self):
         """場のポケモンはいちばん上のカードの uid で指す（v0.1 からのコマンド）。下の 2 枚は場のポケモンではない。"""
@@ -1093,12 +1095,13 @@ class AtomicityTest(unittest.TestCase):
     def test_rejected_stage2_evolutions_change_nothing(self):
         """不正な 2 進化は、手札・カード・重なり・進化した番・特殊状態・持続する効果・乱数・ログを変えない（どく・こんらん・
         「かたまる」の効果を受けたコクーンは、盤面を直接作った）。"""
-        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, BLASTOISE))
+        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, ALAKAZAM))
         target = state.players[0].active.pokemon_id
         for command, code, error in (
             (EvolvePokemon(0, uid_of(state, 0, KAKUNA), target), "EVOLUTION_NAME_MISMATCH", IllegalActionError),
-            # 未対応の 2 進化（v0.4e まではフシギバナ。v0.5 で対応にしたので、未対応のポケモンパワーを持つカメックス）
-            (EvolvePokemon(0, uid_of(state, 0, BLASTOISE), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
+            # 未対応の 2 進化（v0.4e まではフシギバナ、v0.5 ではカメックス。v0.6 でカメックスを対応にしたので、未対応のポケモンパワー
+            # を持つフーディン）
+            (EvolvePokemon(0, uid_of(state, 0, ALAKAZAM), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
             (EvolvePokemon(1, uid_of(state, 0, BEEDRILL), target), "NOT_YOUR_TURN", IllegalActionError),
             (EvolvePokemon(0, uid_of(state, 0, BEEDRILL), state.players[1].active.pokemon_id), "TARGET_NOT_YOURS", IllegalActionError),
         ):

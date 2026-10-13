@@ -245,6 +245,20 @@ command = command_from_dict({"type": "end_turn", "player": 0})
 
 段階・状態の項目・書き出しの形式（形式 8 のまま）は増やしていません。エラーコード（6 章）とログのイベント `pokemon_power`・`move_energy`（7 章）を加えました。
 
+### v0.6
+
+| もの | 内容 |
+|---|---|
+| `UsePokemonPower`（項目・型は v0.5 と同じ） | カメックスの「あまごい」は、`energy` に自分の手札の「水」エネルギーカードの uid、`target` につける先の自分の場の「水」ポケモンの番号を指定する（`source` は None。指定したら `POWER_CHOICE_NOT_USED`）。1 回の使用で 1 枚。項目の意味はパワーごとに違う（エナジートランスの `energy` はついているカード）ので、クライアントはパワーごとに選ばせるものを決める（[architecture-v0.6.md](architecture-v0.6.md) 1 章） |
+| `GameState.energy_attached_by_powers_this_turn` | 加えた（整数。既定 0）。この番にポケモンパワーの効果で手札からつけた枚数。番の最初に 0。手札からつける通常の操作の回数 `energy_attachments_this_turn` とは別 |
+| `state_to_dict(state, format_version=9)` | 加えた。形式 8 に上の段の `energy_attached_by_powers_this_turn` を加えたもの。形式 1〜8 は、その数が 0 でなければ `ValueError`（0 なら v0.5 と同じ） |
+| `effects.AttachEnergyFromHand`・`ExtraEnergyDamage` | あまごい・ハイドロポンプの実装（効果の実装を加える人向け） |
+| `zones.attach_energy_from_hand(state, player, energy, pokemon)` | 手札のエネルギーカードを場のポケモンにつける共通の処理（エンジンの内部。確かめることは呼ぶ側が先に済ませる） |
+| ゼニガメ（PMCG1-023）・カメール（PMCG1-027）・カメックス（PMCG1-032） | 対戦用のカード（`pool_v0_6`）。参照カードはカメックスからフーディン（PMCG1-049）に替えた |
+| `kyuura_engine.__version__` | `0.6.0`。効果の登録表の id は `kyuura-engine-0.6` |
+
+段階・コマンドの種類・決定の種類は増やしていません。エラーコード `WRONG_POKEMON_TYPE`・`POWER_CHOICE_NOT_USED`・`UNRESOLVED_ATTACH_AFTER_POWER_ATTACH`（6 章）とログのイベント `power_attach_energy`（7 章）を加えました。
+
 ## 3. 公開すべきもの・内部として隠すべきもの
 
 | もの | 今 | 分類 | 理由・提案 |
@@ -464,6 +478,18 @@ command = command_from_dict({"type": "end_turn", "player": 0})
   - フシギバナ（PMCG1-011）は参照カードではなくなった（対戦で使える）。参照カードはカメックス（PMCG1-032）
 - 新しいクライアントへの推奨: 特殊能力のボタンは、自分の番の `Phase.MAIN` で、自分の場のポケモンのうち `state.card_def(pokemon.card).powers` があり `supported` のものに出す。エナジートランスは、移すエネルギー（自分の場のポケモンについている「草」の基本エネルギー）と移動先（移動元以外の自分の場のポケモン）を選ばせて、1 枚ごとに 1 つのコマンドを送る。
 
+### v0.5 → v0.6
+
+- ゼニガメ・カメール・カメックスを使わない対戦の、受け付ける操作・拒否のコード・状態・ログ・乱数の状態・保留中の決定・形式 1〜8 の書き出しは、v0.5（`0fbc3ab`）と同じです。tools/compare_engine_versions.py で、8 組 50 局・11,377 手を版ごとに別のプロセスで動かして比べ、食い違いは 0 でした（比べないのは効果の登録表の id だけ。[v0.6-verification.md](v0.6-verification.md)）。
+- v0.5 のテスト 1,093 件を v0.6 のコードで実行すると、失敗・エラーが 25 件でした（登録表の id・ワザとパワーの数・カードの組を固定したもの、カメックスを未対応の例にしたもの、形式の一覧を 8 までと固定したもの、未解決のコードの一覧）。どれも意図を変えずに直しました（[architecture-v0.6.md](architecture-v0.6.md) 11 章）。
+- 互換でない変更:
+  - あまごいでつけた枚数が 0 でない状態（あまごいを使った番のあいだ）は、形式 1〜8 で書き出せない（`ValueError`）。形式 9 を使う
+  - あまごいでつけたあと、その番にまだ通常の操作をしていないときの `AttachEnergy` は `UnsupportedError`（`UNRESOLVED_ATTACH_AFTER_POWER_ATTACH`）。v0.5 にはこの状態がない
+  - 効果の登録表の id が `kyuura-engine-0.6` になり、ワザの登録が 5 つ、パワーの登録が 1 つ加わった
+  - カメックス（PMCG1-032）は参照カードではなくなった（対戦で使える）。参照カードはフーディン（PMCG1-049）
+  - エナジートランスの特殊状態の拒否のメッセージの文（コードは同じ）
+- 新しいクライアントへの推奨: あまごいは、手札の「水」の基本エネルギーと、自分の場の「水」ポケモン（`state.card_def(pokemon.card).pokemon_type`）を選ばせて、1 枚ごとに 1 つのコマンドを送る。あまごいを使った番に、まだ通常の操作でつけていなければ、通常の操作のボタンは出さない（原典で決められないので、エンジンは止める）。
+
 ## 5. 提案（まだ実装していない）
 
 ### 5.1 状態を書き換えられないようにする
@@ -509,8 +535,8 @@ v0.1 からあるコマンドは、場のポケモンをカードの uid で指�
 
 | 例外 | コード |
 |---|---|
-| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, NOT_EVOLUTION_CARD・FIRST_TURN_EVOLUTION・EVOLUTION_NAME_MISMATCH・PLAYED_THIS_TURN・EVOLVED_THIS_TURN（v0.4a）, EVOLUTION_STAGE_MISMATCH（v0.4c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST, NO_POKEMON_POWER（v0.5）, POKEMON_NOT_IN_PLAY（v0.5）, POKEMON_NOT_YOURS（v0.5）, POKEMON_CONFUSED（v0.5。エナジートランス）, POWER_CHOICE_MISSING（v0.5）, SOURCE_NOT_IN_PLAY（v0.5）, SOURCE_NOT_YOURS（v0.5）, SAME_POKEMON（v0.5）, WRONG_ENERGY_TYPE（v0.5）。POKEMON_ASLEEP・POKEMON_PARALYZED・TARGET_NOT_IN_PLAY・TARGET_NOT_YOURS・ENERGY_NOT_ATTACHED は v0.5 のエナジートランスでも使う |
-| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNRESOLVED_EVOLUTION_HP（v0.4a）, UNRESOLVED_PREVENTED_COIN_DAMAGE（v0.4b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_EVOLUTION（v0.4a）, UNSUPPORTED_TRAINER（v0.2b）, UNSUPPORTED_POKEMON_POWER（v0.5。登録のないポケモンパワー）。UNSUPPORTED_ACTION は v0.5 から出ない（`UNSUPPORTED_COMMANDS` が空） |
+| `IllegalActionError` | ALREADY_PLACED, BAD_COMMAND, BENCH_FULL, CARD_NOT_IN_HAND, DUPLICATE_CARD, DUPLICATE_CHOICE（v0.2a）, ENERGY_ALREADY_ATTACHED, ENERGY_NOT_ATTACHED, GAME_OVER, INSUFFICIENT_ENERGY, INVALID_ATTACK, INVALID_CHOICE（v0.2a）, INVALID_CHOICE_COUNT（v0.2a）, INVALID_DRAW_COUNT, INVALID_PLAYER, INVALID_PRIZE_INDEX, NOT_BASIC_ENERGY, NOT_BASIC_POKEMON, NOT_ON_BENCH, NOT_TRAINER（v0.2b）, NOT_YOUR_DECISION, NOT_YOUR_TURN, NO_BENCH, NO_MULLIGAN_DRAW, POKEMON_ASLEEP（v0.3b）, POKEMON_PARALYZED（v0.3b）, RETREAT_ALREADY_FAILED（v0.3c）, NOT_EVOLUTION_CARD・FIRST_TURN_EVOLUTION・EVOLUTION_NAME_MISMATCH・PLAYED_THIS_TURN・EVOLVED_THIS_TURN（v0.4a）, EVOLUTION_STAGE_MISMATCH（v0.4c）, SETUP_BENCH_LIMIT, TARGET_NOT_IN_PLAY, TARGET_NOT_YOURS, UNKNOWN_COMMAND, WRONG_DECISION（v0.2a）, WRONG_PHASE, WRONG_RETREAT_COST, NO_POKEMON_POWER（v0.5）, POKEMON_NOT_IN_PLAY（v0.5）, POKEMON_NOT_YOURS（v0.5）, POKEMON_CONFUSED（v0.5。エナジートランス）, POWER_CHOICE_MISSING（v0.5）, SOURCE_NOT_IN_PLAY（v0.5）, SOURCE_NOT_YOURS（v0.5）, SAME_POKEMON（v0.5）, WRONG_ENERGY_TYPE（v0.5）, WRONG_POKEMON_TYPE（v0.6。あまごいのつける先が「水」ポケモンでない）, POWER_CHOICE_NOT_USED（v0.6。パワーが使わない項目を指定した）。POKEMON_ASLEEP・POKEMON_PARALYZED・TARGET_NOT_IN_PLAY・TARGET_NOT_YOURS・ENERGY_NOT_ATTACHED は v0.5 のエナジートランスでも使う。v0.6 のあまごいは POKEMON_ASLEEP・POKEMON_PARALYZED・POKEMON_CONFUSED・POWER_CHOICE_MISSING・CARD_NOT_IN_HAND・NOT_BASIC_ENERGY・WRONG_ENERGY_TYPE・TARGET_NOT_IN_PLAY・TARGET_NOT_YOURS も使う |
+| `UnsupportedError` | SUDDEN_DEATH_NOT_IMPLEMENTED, UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS（v0.3c）, UNRESOLVED_MULLIGAN_COMPENSATION, UNRESOLVED_POTION_UNDAMAGED_TARGET（v0.2b）, UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT（v0.3a。HALTED）, UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER（v0.3b。HALTED）, UNRESOLVED_POTION_WITHOUT_DAMAGE（v0.2b）, UNRESOLVED_REPARALYSIS_RECOVERY_TURN（v0.3b）, UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED（v0.3c）, UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE（v0.2f〜v0.3c。v0.3d から出ない）, UNRESOLVED_SWITCH_WITHOUT_BENCH（v0.2b）, UNRESOLVED_EVOLUTION_HP（v0.4a）, UNRESOLVED_PREVENTED_COIN_DAMAGE（v0.4b）, UNSUPPORTED_ACTION, UNSUPPORTED_ATTACK, UNSUPPORTED_EVOLUTION（v0.4a）, UNSUPPORTED_TRAINER（v0.2b）, UNSUPPORTED_POKEMON_POWER（v0.5。登録のないポケモンパワー）, UNRESOLVED_ATTACH_AFTER_POWER_ATTACH（v0.6。あまごいでつけたあとの通常の操作）。UNSUPPORTED_ACTION は v0.5 から出ない（`UNSUPPORTED_COMMANDS` が空） |
 | `DeckValidationError` | INVALID_DECK（`problems` の各行の先頭: DECK_SIZE, UNKNOWN_CARD, UNSUPPORTED_CARD, TOO_MANY_COPIES, NO_BASIC_POKEMON） |
 | `StateIntegrityError` | STATE_INTEGRITY（エンジンの不具合か、呼び出し側が状態を書き換えた） |
 
@@ -541,6 +567,8 @@ v0.4d: `forced_switch`（`player`＝入れ替えられたプレイヤー・`atta
 v0.4c: 新しいイベント・項目はない。2 進化の `evolve` は、`from_card` が 1 進化ポケモン（コクーン）、`to_card` が 2 進化カード（スピアー）。2 進化ポケモンの `knock_out` の `evolution_stack` は下の 2 枚（たねポケモン・1 進化ポケモンの順）
 
 v0.5: `pokemon_power`（`player`・`pokemon`＝使うポケモンのいちばん上のカードの uid・`pokemon_id`・`power`＝特殊能力の名前・`power_index`。p.311 の宣言）、`move_energy`（`player`・`pokemon`・`pokemon_id`＝特殊能力を使ったポケモン・`power`＝`PowerKey` の文字列（`PMCG1-011@power0`）・`energy`＝移したエネルギーの uid・`from_pokemon_id`・`to_pokemon_id`）。1 回の使用で `pokemon_power` のすぐあとに `move_energy` が 1 つ。手札からつけた `attach_energy` とは別のイベント。やどりぎのタネは v0.4d のメガドレインと同じ `drain_heal`（`drain_counters` は 1）、どくのこなは `special_condition`（`effect`＝`PMCG1-008#1`）。
+
+v0.6: `power_attach_energy`（`player`・`pokemon`・`pokemon_id`＝特殊能力を使ったポケモン・`power`＝`PowerKey` の文字列（`PMCG1-032@power0`）・`energy`＝手札からつけたエネルギーの uid・`to_pokemon_id`）。1 回の使用で `pokemon_power` のすぐあとに 1 つ。手札からつける通常の操作の `attach_energy`・エナジートランスの `move_energy` とは別のイベント。ゼニガメの「あわ」は `special_condition`（`effect`＝`PMCG1-023#0`）、「からにこもる」は v0.4b の `persistent_effect_added`。ハイドロポンプは `damage` だけ（追加のダメージは基本となるダメージに入る）。
 
 v0.2b: `play_trainer`（`player`・`card`・`trainer`＝名前）, `remove_damage_counters`（`pokemon`・`pokemon_id`・`counters`＝とりのぞいた個数・`total_damage`）, `switch`（`old_active`・`new_active`・それぞれの `pokemon_id`）, `discard_trainer`（`player`・`card`）。マサキの引いたカードは `draw`（番の最初のドローと同じ形）
 

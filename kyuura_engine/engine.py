@@ -79,7 +79,7 @@ from .state import (
     freeze_mapping,
     turn_owner,
 )
-from .zones import draw_cards
+from .zones import attach_energy_from_hand, draw_cards
 
 PLAYERS = (0, 1)
 # きぜつのあとの決定の続き（context の "then"）: ポケモンチェックの中（2 の「どく」）のきぜつのあとの決定（v0.3a）。
@@ -365,6 +365,7 @@ def _begin_turn(state: GameState, player: int) -> None:
     state.turn_number += 1
     state.current_player = player
     state.energy_attachments_this_turn = 0
+    state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
@@ -704,7 +705,14 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
 
 
 def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
-    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。"""
+    """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。
+
+    v0.6: この番に、ポケモンパワー（「あまごい」）の効果で手札からエネルギーをつけていて、通常の操作ではまだつけていなければ、
+    この操作を受け付けるかは原典で決められない（p.310「ポケモンにつけることのできるエネルギーカードの数は、1回の自分の番ごとに
+    1枚だけです」が、パワーでつけたカードも数えるのかが書かれていない。p.307・p.90。docs/rain-dance-v0.6.md の R13）。
+    ほかの確認がすべて通ったあと、状態を変える前に ``UnsupportedError``（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）で止める。
+    通常の操作でつけたあとの「あまごい」は受け付ける（どちらの読み方でも同じ。R12）。
+    """
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.energy)
     if not state.card_def(cmd.energy).is_basic_energy:
@@ -716,8 +724,14 @@ def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
         if state.players[1 - cmd.player].find_in_play(cmd.target) is not None:
             raise IllegalActionError("TARGET_NOT_YOURS", "相手の場のポケモンにはつけられない")
         raise IllegalActionError("TARGET_NOT_IN_PLAY", f"{cmd.target!r} は自分の場のポケモンではない")
-    p.hand.remove(cmd.energy)
-    target.energy.append(cmd.energy)
+    if state.energy_attached_by_powers_this_turn > 0:
+        raise UnsupportedError(
+            "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",
+            f"この番にポケモンパワーの効果で手札からエネルギーを {state.energy_attached_by_powers_this_turn} 枚つけたあとで、手札から"
+            "エネルギーをつける（通常の操作）ことができるかは『オフィシャルブック2000』から決められない（p.310 の「1回の自分の番ごとに"
+            "1枚だけ」にパワーでつけたカードを数えるかが書かれていない）ので扱わない",
+        )
+    attach_energy_from_hand(state, cmd.player, cmd.energy, target)
     state.energy_attachments_this_turn += 1
     state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target)
 
@@ -1331,6 +1345,8 @@ def check_invariants(state: GameState) -> list[str]:
       （``_persistent_effect_problems``）。持続する効果はカードではないので、カードの保存則には数えない。
     - 番の進行（v0.3a）: 番と番のあいだに、番の終わりとポケモンチェックがちょうど 1 回ずつ、この順にある。
       ポケモンチェックの途中の決定（続きが次の番）なら、今の番のあとに 1 回ずつ。番の途中なら、まだない。
+    - ポケモンパワーで手札からつけたエネルギーの数（v0.6）: 今の番のログの ``power_attach_energy`` の数と同じ
+      （``_power_attachment_problems``）。
     """
     problems: list[str] = []
     rules = state.rules
@@ -1420,6 +1436,7 @@ def check_invariants(state: GameState) -> list[str]:
         problems.append(f"段階 {phase!r} が Phase ではない")
         return problems
     problems.extend(_progress_problems(state))
+    problems.extend(_power_attachment_problems(state))
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
@@ -1739,6 +1756,27 @@ def _events_since_turn_start(state: GameState) -> list:
             break
         recent.append(event)
     return recent
+
+
+def _power_attachment_problems(state: GameState) -> list[str]:
+    """この番にポケモンパワーで手札からつけたエネルギーの数（v0.6。``energy_attached_by_powers_this_turn``）。
+
+    0 以上の整数で、今の番（最後の ``turn_start`` のあと）のログの ``power_attach_energy`` の数と同じ（番の最初に 0 にし、
+    「あまごい」で 1 枚つけるごとに 1 増やすので）。対戦準備の段階（番がまだない）では 0。ログは記録で、エンジンはこの数を
+    ログから決めない（ここでは、状態とログが食い違っていないかだけを確かめる）。
+    """
+    count = state.energy_attached_by_powers_this_turn
+    if type(count) is not int or count < 0:
+        return [f"この番にポケモンパワーでつけたエネルギーの数 {count!r} が正しくない"]
+    logged = 0
+    for event in reversed(state.log):
+        if event["kind"] == "turn_start":
+            break
+        if event["kind"] == "power_attach_energy":
+            logged += 1
+    if count != logged:
+        return [f"この番にポケモンパワーでつけたエネルギーの数 {count} が、今の番のログの power_attach_energy の数 {logged} と違う"]
+    return []
 
 
 def _progress_problems(state: GameState) -> list[str]:

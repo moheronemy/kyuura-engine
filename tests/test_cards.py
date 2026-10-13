@@ -13,7 +13,7 @@ from kyuura_engine.cards import read_extract, read_verification
 
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
-    POTION, RATTATA, SUPER_POTION, SWITCH, BLASTOISE, BULBASAUR, IVYSAUR, VENUSAUR, VULPIX, WEEDLE,
+    POTION, RATTATA, SUPER_POTION, SWITCH, ALAKAZAM, BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, VULPIX, WARTORTLE, WEEDLE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -58,8 +58,10 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(pool.is_playable(BUTTERFREE) and pool.get(BUTTERFREE).is_stage2_pokemon)
         self.assertEqual(read_extract()["pool_v0_5"], [BULBASAUR, IVYSAUR, VENUSAUR])  # v0.5（ポケモンパワーのエナジートランス）
         self.assertTrue(all(pool.is_playable(c) for c in (BULBASAUR, IVYSAUR, VENUSAUR)))
+        self.assertEqual(read_extract()["pool_v0_6"], [SQUIRTLE, WARTORTLE, BLASTOISE])  # v0.6（ポケモンパワーのあまごい）
+        self.assertTrue(all(pool.is_playable(c) for c in (SQUIRTLE, WARTORTLE, BLASTOISE)))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
-                 BULBASAUR, IVYSAUR, VENUSAUR)
+                 BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -124,13 +126,14 @@ class ClassificationTest(unittest.TestCase):
         self.assertIn("トレーナー", pool.get(SUPER_POTION).unsupported_reasons[0])
         # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のカードは段階ではなく、ポケモンパワーと登録のないワザで未対応に
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
-        # ソーラービーム）で確かめていた。v0.5 でフシギバナを対応にしたので、カメックス（登録のないポケモンパワー「あまごい」・
-        # ワザ「ハイドロポンプ」）で確かめる
-        reasons = " ".join(pool.get(BLASTOISE).unsupported_reasons)
-        self.assertTrue(pool.get(BLASTOISE).is_stage2_pokemon)
+        # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。
+        # v0.6 でカメックスを対応にしたので、フーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」。
+        # ロコンの「あやしいひかり」（PMCG1-015）と名前が同じでも、カードごとの登録がなければ未対応）で確かめる
+        reasons = " ".join(pool.get(ALAKAZAM).unsupported_reasons)
+        self.assertTrue(pool.get(ALAKAZAM).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
-        self.assertIn("ポケモンパワー「あまごい」", reasons)
-        self.assertIn("ハイドロポンプ", reasons)
+        self.assertIn("ポケモンパワー「ダメージスワップ」", reasons)
+        self.assertIn("あやしいひかり", reasons)
 
 
 class CostTest(unittest.TestCase):

@@ -345,6 +345,7 @@ POOL_KEYS = (
     "pool_v0_1", "pool_v0_2b", "pool_v0_2c", "pool_v0_2d", "pool_v0_2e", "pool_v0_2f", "pool_v0_3a", "pool_v0_3b", "pool_v0_3c",
     "pool_v0_4a", "pool_v0_4b", "pool_v0_4c", "pool_v0_4d",  # pool_v0_4d は v0.4d（バタフリー）
     "pool_v0_5",  # v0.5（フシギダネ・フシギソウ・フシギバナ）
+    "pool_v0_6",  # v0.6（ゼニガメ・カメール・カメックス）
 )
 
 

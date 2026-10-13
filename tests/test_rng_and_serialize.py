@@ -90,8 +90,9 @@ class SerializeFormatTest(unittest.TestCase):
         # 登録表の id は、登録を加えるたびに変わる（v0.2b: "kyuura-engine-0.2b"、v0.2c: プラスパワー、
         # v0.2d: ドードーの「みだれづき」、v0.2e: ディフェンダー、v0.2f: ピカチュウ、v0.3a: ビードル、
         # v0.3b: キャタピー・パラス、v0.3c: ロコン、v0.4a: パラセクト・ジュゴン、v0.4b: トランセル・コクーン、v0.4c: スピアー、
-        # v0.4d: バタフリー、v0.5: フシギダネ・フシギソウ・フシギバナ（ポケモンパワーの登録を加えた））
-        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.5"))
+        # v0.4d: バタフリー、v0.5: フシギダネ・フシギソウ・フシギバナ（ポケモンパワーの登録を加えた）、v0.6: ゼニガメ・カメール・
+        # カメックス（ポケモンパワー「あまごい」））
+        self.assertEqual((v2["format_version"], v2["effects"]), (2, "kyuura-engine-0.6"))
         json.dumps(v2)
 
     def test_decision_is_serialized(self):
@@ -107,8 +108,8 @@ class SerializeFormatTest(unittest.TestCase):
         state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
         # 3 は v0.2b（trainer_in_use）、4 は v0.2c（ついているトレーナー）、5 は v0.3a（特殊状態）、
         # 6 は v0.3c（こんらん状態で「にげる」に失敗した記録）
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8))  # 7 は v0.4a、8 は v0.4b
-        for unknown in (0, 9, "5", None):
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9))  # 7 は v0.4a、8 は v0.4b、9 は v0.6（あまごい）
+        for unknown in (0, 10, "5", None):
             with self.subTest(format_version=unknown), self.assertRaises(ValueError):
                 state_to_dict(state, format_version=unknown)
 

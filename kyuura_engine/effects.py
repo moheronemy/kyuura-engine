@@ -64,7 +64,7 @@ from .decisions import FORCED_SWITCH, SELECT_POKEMON, push_attack_decision, push
 from .errors import IllegalActionError, UnsupportedError
 from .persistent import add_persistent_effect, damage_prevention, remove_persistent_effects
 from .state import PreventDamage
-from .zones import attach_trainer, draw_cards
+from .zones import attach_energy_from_hand, attach_trainer, draw_cards
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition, Power
@@ -902,6 +902,54 @@ class DamageAndRemoveCounters(AttackEffect):
         _remove_attacker_counters(state, use, attacker, result.dealt, self.counters)
 
 
+@dataclass(frozen=True)
+class ExtraEnergyDamage(AttackEffect):
+    """ワザに必要なエネルギーよりも多く ``energy_type`` のエネルギーがついているとき、多いエネルギー 1 個につき ``per_energy``
+    ダメージを、``max_extra`` 個ぶんまで追加する（v0.6。カメックスの「ハイドロポンプ」。p.90 の最新の説明「ワザに必要なエネルギー
+    よりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。」。
+    docs/rain-dance-v0.6.md 4 章）。
+
+    - ダメージの目安「40+」の「+」は、説明にしたがって目安の数字より大きくなることがある（p.320）。説明にしたがった計算が
+      p.321 の 1 段階（基本となるダメージ）で、そのあと弱点・抵抗力・プラスパワーなどを計算する（v0.2d の「×」と同じ）。
+    - 多いエネルギーの数は、ついている ``energy_type`` のエネルギーの数から、ワザに必要なエネルギーの数を引いたもの（0 より
+      少なければ 0）。必要なエネルギーがすべて ``energy_type`` のワザだけを登録できる（``check``。無色が混ざると、どのエネルギーで
+      払ったかで「多い」数が変わりうるので、この実装では扱わない）。p.88 の解説（サザンアイランドのカメールのページ）「「カメックス」に
+      進化して「ハイドロポンプ」を使えば、同じ水エネルギー4個で50ダメージ」「水エネルギー5個までなら…「ハイドロポンプ」で活用できる」
+      と合う。
+    - ついているエネルギーは基本エネルギーだけ（1 枚 1 個）。乱数は使わない。
+    """
+
+    energy_type: EnergyType
+    per_energy: int
+    max_extra: int
+    implementation_id = "extra_energy_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.per_energy) is not int or self.per_energy <= 0 or self.per_energy % 10:
+            raise ValueError(f"エネルギー 1 個あたりの追加のダメージは 10 の倍数の正の数（{self.per_energy!r}）")
+        if type(self.max_extra) is not int or self.max_extra < 1:
+            raise ValueError(f"追加するエネルギーの上限は 1 以上の整数（{self.max_extra!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier != "+":
+            problems.append("ダメージの目安に「+」のないワザを、エネルギーの数でダメージを追加するワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、エネルギーの数でダメージを追加するワザとして登録している")
+        if not attack.cost or any(cost is not self.energy_type for cost in attack.cost):
+            problems.append(f"必要なエネルギーが「{self.energy_type.ja}」だけではないワザを登録している（多いエネルギーの数え方が決まらない）")
+        return problems
+
+    def resolve(self, state: GameState, use: AttackUse) -> None:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = state.card_def(attacker.card).attacks[use.key.attack_index]
+        attached = sum(1 for uid in attacker.energy if state.card_def(uid).provides is self.energy_type)
+        extra = min(max(0, attached - len(attack.cost)), self.max_extra)
+        damage_opponent_active(state, use, attack.damage + extra * self.per_energy)
+
+
 def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
     """ワザでダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
 
@@ -1333,6 +1381,30 @@ class PowerEffect:
         raise NotImplementedError
 
 
+def _require_user_not_asleep_paralyzed_confused(state: GameState, use: PowerUse) -> None:
+    """パワーの説明「このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない」の確認（v0.5 のエナジートランス・v0.6 の
+    あまごいは、どちらも最新の説明にこの文がある。p.16・p.90・p.323）。パワーを使うポケモン（「このカード」）だけを見る。どくは
+    挙げられていないので制限しない。特殊状態の制限はパワーの説明ごとなので、この文のないパワーには使わない（ワザ・にげるの制限
+    ``engine._require_not_asleep_or_paralyzed`` とは別）。"""
+    _, user = state.find_pokemon(use.pokemon_id)
+    conditions = user.conditions
+    for blocked, code, name in ((conditions.asleep, "POKEMON_ASLEEP", "ねむり"), (conditions.paralyzed, "POKEMON_PARALYZED", "マヒ"),
+                                (conditions.confused, "POKEMON_CONFUSED", "こんらん")):
+        if blocked:
+            raise IllegalActionError(code, f"ポケモン {use.pokemon_id} は{name}状態なので、このポケモンパワーは使えない（最新の説明）")
+
+
+def _own_pokemon(state: GameState, use: PowerUse, pokemon_id: int, role: str) -> PokemonInPlay:
+    """パワーの説明が選ばせる「自分の場のポケモン」（``role`` は ``SOURCE``・``TARGET``。コードの接頭辞）。"""
+    found = state.find_pokemon(pokemon_id)
+    if found is None:
+        raise IllegalActionError(f"{role}_NOT_IN_PLAY", f"場のポケモンの番号 {pokemon_id!r} は場にいない")
+    owner, pokemon = found
+    if owner != use.player:
+        raise IllegalActionError(f"{role}_NOT_YOURS", f"場のポケモン {pokemon_id} は相手の場のポケモン（自分の場のポケモンだけ）")
+    return pokemon
+
+
 @dataclass(frozen=True)
 class EnergyTransfer(PowerEffect):
     """自分の場のポケモンについている ``energy_type`` のエネルギーカードを 1 枚、自分の場の別のポケモンにつけかえる（v0.5。フシギバナの
@@ -1366,16 +1438,11 @@ class EnergyTransfer(PowerEffect):
         return problems
 
     def check_usable(self, state: GameState, use: PowerUse) -> None:
-        _, user = state.find_pokemon(use.pokemon_id)
-        conditions = user.conditions
-        for blocked, code, name in ((conditions.asleep, "POKEMON_ASLEEP", "ねむり"), (conditions.paralyzed, "POKEMON_PARALYZED", "マヒ"),
-                                    (conditions.confused, "POKEMON_CONFUSED", "こんらん")):
-            if blocked:
-                raise IllegalActionError(code, f"ポケモン {use.pokemon_id} は{name}状態なので、このポケモンパワーは使えない（p.323 の最新の説明）")
+        _require_user_not_asleep_paralyzed_confused(state, use)
         if use.energy is None or use.source is None or use.target is None:
             raise IllegalActionError("POWER_CHOICE_MISSING", "つけかえるエネルギー（energy）・移動元（source）・移動先（target）を指定する")
-        source = self._own_pokemon(state, use, use.source, "SOURCE")
-        self._own_pokemon(state, use, use.target, "TARGET")
+        source = _own_pokemon(state, use, use.source, "SOURCE")
+        _own_pokemon(state, use, use.target, "TARGET")
         if use.source == use.target:
             raise IllegalActionError("SAME_POKEMON", "エネルギーは、ついているポケモンとは別のポケモンにつけかえる（「別のポケモン」）")
         if use.energy not in source.energy:
@@ -1385,16 +1452,6 @@ class EnergyTransfer(PowerEffect):
             raise IllegalActionError(
                 "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつけかえる）"
             )
-
-    @staticmethod
-    def _own_pokemon(state: GameState, use: PowerUse, pokemon_id: int, role: str) -> PokemonInPlay:
-        found = state.find_pokemon(pokemon_id)
-        if found is None:
-            raise IllegalActionError(f"{role}_NOT_IN_PLAY", f"場のポケモンの番号 {pokemon_id!r} は場にいない")
-        owner, pokemon = found
-        if owner != use.player:
-            raise IllegalActionError(f"{role}_NOT_YOURS", f"場のポケモン {pokemon_id} は相手の場のポケモン（自分の場のポケモンだけ）")
-        return pokemon
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         _, user = state.find_pokemon(use.pokemon_id)
@@ -1411,6 +1468,80 @@ class EnergyTransfer(PowerEffect):
             power=str(use.key),
             energy=use.energy,
             from_pokemon_id=source.pokemon_id,
+            to_pokemon_id=target.pokemon_id,
+        )
+
+
+@dataclass(frozen=True)
+class AttachEnergyFromHand(PowerEffect):
+    """自分の手札から ``energy_type`` のエネルギーカードを 1 枚出して、自分の場の ``pokemon_type`` のポケモンにつける（v0.6。
+    カメックスの「あまごい」。p.90 の最新の説明「この力は、自分の番の中で何度でも使える。自分の手札から「水」エネルギーカードを
+    出して、自分の場の「水」ポケモンにつける。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。」。
+    docs/rain-dance-v0.6.md）。
+
+    - 使えるのは自分の番の中（エンジンが番のプレイヤーの ``Phase.MAIN`` だけで受け付ける）。何度でも使える（回数を数えない）。
+    - 使えないのは、このパワーを持つポケモン（「このカード」）がねむり・マヒ・こんらんのとき（どくは使える。v0.5 と同じ）。
+    - 選ばせるもの: 手札のエネルギーカードの uid（``energy``）と、つける自分の場のポケモンの番号（``target``）。移動元はない
+      （手札）ので ``source`` は None（指定したら ``POWER_CHOICE_NOT_USED``）。
+    - つけるのは自分の手札の基本エネルギーカードで、``energy_type``（水）を出すもの。p.298 の解説（レインボーエネルギーは手札では
+      色を持たないので「あまごい」で水エネルギーとしてつけられない）。特殊エネルギーは未実装。
+    - つける先は自分の場（バトル場・ベンチ。カメックス自身を含む）の ``pokemon_type``（水）のポケモン。タイプはいちばん上のカード
+      で決める（p.310）。相手の場のポケモンにはつけない（説明「自分の場の」・p.310）。つける先の特殊状態は関係しない。
+    - 1 回の使用で 1 枚（実装上の仮定。印刷の文面「1度に何枚でも」・最新の説明「何度でも使える」のどちらでも、何枚つけても
+      1 枚ずつつけた結果と同じ。v0.5 のエナジートランスと同じ扱い）。
+    - 手札からつける通常の操作（p.310。1 番に 1 枚）の回数 ``energy_attachments_this_turn`` は変えず、確かめない（通常の操作で
+      つけたあとでも使える。p.307・p.90。R12 SUPPORTED）。この効果でつけた枚数を ``energy_attached_by_powers_this_turn`` に数える
+      （そのあとの通常の操作は原典で決められないので、エンジンが止める。R13 UNRESOLVED）。
+    - 乱数は使わない。ログ ``power_attach_energy``（``player``・``pokemon``・``pokemon_id``（パワーを使ったポケモン）・``power``
+      （``PowerKey`` の文字列）・``energy``・``to_pokemon_id``）。手札からつけた通常のログ ``attach_energy``・場のエネルギーを
+      つけかえたログ ``move_energy``（エナジートランス）とは別。
+    """
+
+    energy_type: EnergyType
+    pokemon_type: EnergyType
+    implementation_id = "attach_energy_from_hand"
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、使用を宣言するポケモンパワーとして登録している")
+        if power.text_ja is None:
+            problems.append("説明文のないポケモンパワーを、手札からエネルギーをつけるパワーとして登録している")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        if use.energy is None or use.target is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "つけるエネルギー（energy。手札のカード）とつける先（target）を指定する")
+        if use.source is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "このポケモンパワーは手札からつけるので、移動元（source）は指定しない")
+        if use.energy not in state.players[use.player].hand:
+            raise IllegalActionError("CARD_NOT_IN_HAND", f"カード {use.energy!r} はプレイヤー {use.player} の手札にない")
+        definition = state.card_def(use.energy)
+        if not definition.is_basic_energy:
+            raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {use.energy} は基本エネルギーカードではない")
+        if definition.provides is not self.energy_type:
+            raise IllegalActionError(
+                "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつける）"
+            )
+        target = _own_pokemon(state, use, use.target, "TARGET")
+        if state.card_def(target.card).pokemon_type is not self.pokemon_type:
+            raise IllegalActionError(
+                "WRONG_POKEMON_TYPE", f"場のポケモン {use.target} は「{self.pokemon_type.ja}」ポケモンではない（「{self.pokemon_type.ja}」ポケモンにだけつける）"
+            )
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        _, target = state.find_pokemon(use.target)
+        attach_energy_from_hand(state, use.player, use.energy, target)  # 同じ uid のカードを手札から場へ
+        state.energy_attached_by_powers_this_turn += 1
+        state.add_event(
+            "power_attach_energy",
+            player=use.player,
+            pokemon=user.card,
+            pokemon_id=user.pokemon_id,
+            power=str(use.key),
+            energy=use.energy,
             to_pokemon_id=target.pokemon_id,
         )
 
@@ -1599,15 +1730,16 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # 登録。ワザは v0.1 で使えたワザ（説明文のない固定ダメージのワザ）を、効果のないワザとして登録する。
 # 説明文のあるワザ（v0.2d のみだれづき、v0.2f のでんげき、v0.3a のどくばり、v0.3b のいとをはく・キノコのほうし、
 # v0.3c のあやしいひかり、v0.4a のパラセクトのキノコのほうし・ジュゴンのれいとうビーム、v0.4b のトランセル・コクーンの
-# かたまる・しびれごな・どくのこな、v0.4c のスピアーのダブルニードル・どくばり、v0.4d のバタフリーのふきとばし・メガドレイン）は、
-# カードのページと照合した最新の説明・出典とともに登録する。
+# かたまる・しびれごな・どくのこな、v0.4c のスピアーのダブルニードル・どくばり、v0.4d のバタフリーのふきとばし・メガドレイン、
+# v0.5 のやどりぎのタネ・フシギソウのどくのこな、v0.6 のゼニガメのあわ・からにこもる、カメールのからにこもる、カメックスの
+# ハイドロポンプ）は、カードのページと照合した最新の説明・出典とともに登録する。
 # どれも『ポケモンカードオフィシャルブック2000』のカードのページで、「ワザ」欄に説明文がないことを
 # 画像で確かめた（kyuura_engine/data/card_verification.json）。ワザ名は kyuura の写しの値（照合用）。
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
 DEFAULT_EFFECTS = EffectRegistry(
-    "kyuura-engine-0.5",
+    "kyuura-engine-0.6",
     _damage_only([
         ("PMCG1-016", 0, "けりとばす"),  # ポニータ。p.75 は「けとばす」（kyuura との食い違い。data-provenance.md）
         ("PMCG1-016", 1, "ほのおのしっぽ"),
@@ -1633,6 +1765,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         # ひらがなの「むち」。kyuura との食い違い。data-provenance.md）。登録の照合は kyuura の写しの値
         ("PMCG1-008", 0, "つるのムチ"),
         ("PMCG1-011", 0, "ソーラービーム"),  # フシギバナ（v0.5。2 進化）p.16。「ワザ」欄は「●ソーラービーム」で説明文なし
+        ("PMCG1-027", 1, "かみつく"),  # カメール（v0.6。1 進化）p.88。「ワザ」欄は「●かみつく」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -1788,6 +1921,41 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="相手を「どく」状態にする。",
             source="P43 p.14",
         ),
+        # ゼニガメ（v0.6）p.87。あわ: 相手に 10（目安の数字）、コインが「おもて」なら相手をマヒ状態に（キャタピーの「いとをはく」と同じ形。
+        # p.87 の解説「10ダメージを与えて、コイントスが表なら相手の対戦ポケモンをマヒ状態にします」）
+        AttackKey("PMCG1-023", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "あわ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source="P43 p.87",
+        ),
+        # ゼニガメ（v0.6）p.87・カメール（v0.6。ゼニガメから進化）p.88。からにこもる: ダメージの目安なし。コインが「おもて」なら、次の相手の番、
+        # このカードはダメージを受けない（トランセル・コクーンの「かたまる」（v0.4b）と同じ最新の説明。印刷の文面「…受けるダメージが0になる。」
+        # にはしたがわない。docs/rain-dance-v0.6.md 5 章）
+        AttackKey("PMCG1-023", 1): AttackEntry(
+            PreventDamageOnHeads(),
+            "からにこもる",
+            text_ja="コインを投げて「おもて」なら、次の相手の番に受けるダメージが0になる。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
+            source="P43 p.87",
+        ),
+        AttackKey("PMCG1-027", 0): AttackEntry(
+            PreventDamageOnHeads(),
+            "からにこもる",
+            text_ja="コインを投げて「おもて」なら、次の相手の番に受けるダメージが0になる。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
+            source="P43 p.88",
+        ),
+        # カメックス（v0.6。カメールから進化）p.90。ハイドロポンプ: ダメージの目安「40+」。必要なエネルギー（水 3）よりも多い「水」エネルギー
+        # 1 個につき 10 を、2 個ぶんまで追加（p.88 の解説「水エネルギー5個までなら…「ハイドロポンプ」で活用できる」）
+        AttackKey("PMCG1-032", 0): AttackEntry(
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "ハイドロポンプ",
+            text_ja="「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",
+            source="P43 p.90",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
@@ -1844,6 +2012,16 @@ DEFAULT_EFFECTS = EffectRegistry(
             "フシギバナは自分の場にある「草」エネルギーを好きなだけ移動させることができる。「ねむり・マヒ・こんらん」状態の時には使えない。",
             "この力は、自分の番の中で何度でも使える。自分の場にいるポケモンについている「草」エネルギーを、自分の場にいる別のポケモンにつけかえる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
             "P43 p.16・p.323",
+        ),
+        # カメックス（v0.6）p.90。あまごい: 自分の番の中で何度でも、自分の手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンに
+        # つける。印刷の文面（kyuura の写し）は「…手札の「水」エネルギーを1度に何枚でもつけることができる。…状態の時は使えない。」。
+        # 手札からつける通常の操作（p.310。1 番に 1 枚）との関係は docs/rain-dance-v0.6.md の R11〜R13
+        PowerKey("PMCG1-032", 0): PowerEntry(
+            AttachEnergyFromHand(energy_type=EnergyType.WATER, pokemon_type=EnergyType.WATER),
+            "あまごい",
+            "カメックスは自分の「水」ポケモンに対して、手札の「水」エネルギーを1度に何枚でもつけることができる。「ねむり・マヒ・こんらん」状態の時は使えない。",
+            "この力は、自分の番の中で何度でも使える。自分の手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンにつける。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+            "P43 p.90",
         ),
     },
 )

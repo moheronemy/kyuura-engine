@@ -6,6 +6,7 @@
     python3 tools/stress_engine.py --seeds 200 --steps 800 --report stress.json
     python3 tools/stress_engine.py --scenario butterfree --start 1000 --seeds 50
     python3 tools/stress_engine.py --scenario venusaur --scenario venusaur_status   # v0.5（ポケモンパワー）
+    python3 tools/stress_engine.py --scenario blastoise --scenario blastoise_mixed  # v0.6（あまごい）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -19,6 +20,11 @@
 - v0.5: ポケモンパワーの組（``POWER_SCENARIOS``。フシギバナのデッキ）を加えた。駆動（tools/compat_driver.py）は版の比較の参照データと
   結びついているので変えず、ここで、自分の番に場にフシギバナがいるときだけ、エナジートランスの使用（ルール上できそうなものと、
   わざと不正なもの）を混ぜる（``choose_command``）。フシギバナのいない組では駆動とまったく同じ操作になる（駆動用の乱数も同じに使う）。
+- v0.6: カメックスの組（``blastoise``・``blastoise_mixed``）を加え、自分の場にカメックスがいる番に、あまごいの使用（手札の「水」
+  エネルギーを自分の「水」ポケモンへ。わざと不正なもの（手札にないカード・相手の手札のカード・つけたカード・水でないエネルギー・
+  水でないポケモン・相手のポケモン・移動元の指定・番でない・ない番号）も）を混ぜる。フシギバナ・カメックスのどちらもいない組では
+  駆動とまったく同じ操作になり、フシギバナだけの組では v0.5 と同じ操作になる（乱数の使い方を変えていない）。拒否の前後の比較と
+  書き出しの監査は形式 9（v0.6 の ``energy_attached_by_powers_this_turn`` を含む）。
 """
 
 from __future__ import annotations
@@ -55,19 +61,77 @@ POWER_SCENARIOS = (
                     {driver.VULPIX: 4, driver.PARAS: 4, driver.CATERPIE: 4, driver.WEEDLE: 4, BULBASAUR: 3, IVYSAUR: 3, VENUSAUR: 2,
                      driver.POTION: 2, driver.GRASS: 26, driver.FIRE: 8}, tuple(range(6)), tags=("フシギバナ", "特殊状態", "ふきとばし")),
 )
+BLASTOISE, WARTORTLE, SQUIRTLE = "PMCG1-032", "PMCG1-027", "PMCG1-023"
+POWER_SCENARIOS += (
+    driver.Scenario("blastoise", {SQUIRTLE: 4, WARTORTLE: 4, BLASTOISE: 4, driver.SEEL: 3, driver.DEWGONG: 2, driver.STARYU: 3,
+                                  driver.SWITCH: 2, driver.POTION: 2, driver.BILL: 2, driver.PLUSPOWER: 2, driver.WATER: 28, driver.FIRE: 4},
+                    {SQUIRTLE: 4, WARTORTLE: 3, BLASTOISE: 3, driver.PIKACHU: 4, driver.VULPIX: 3, driver.CATERPIE: 3, driver.DEFENDER: 2,
+                     driver.BILL: 2, driver.WATER: 24, driver.LIGHTNING: 6, driver.FIRE: 6}, tuple(range(6)), tags=("カメックス", "あまごい")),
+    driver.Scenario("blastoise_mixed", {SQUIRTLE: 4, WARTORTLE: 3, BLASTOISE: 3, BULBASAUR: 3, IVYSAUR: 2, VENUSAUR: 2, driver.SEEL: 2,
+                                        driver.SWITCH: 2, driver.DEFENDER: 2, driver.WATER: 25, driver.GRASS: 12},
+                    {driver.VULPIX: 4, driver.PARAS: 4, driver.CATERPIE: 4, driver.WEEDLE: 4, SQUIRTLE: 3, WARTORTLE: 2, BLASTOISE: 2,
+                     driver.BUTTERFREE: 2, driver.METAPOD: 2, driver.POTION: 2, driver.WATER: 15, driver.GRASS: 10, driver.FIRE: 6},
+                    tuple(range(6)), tags=("カメックス", "フシギバナ", "特殊状態", "ふきとばし")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナがいる番で、エナジートランスを試す割合
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックスがいる番で、ポケモンパワーを試す割合
+POWER_USERS = (VENUSAUR, BLASTOISE)
 
 
 def choose_command(state, rng: random.Random, illegal_rate: float):
-    """駆動の操作に、エナジートランスの使用を混ぜる。自分の番（MAIN）に自分の場にフシギバナがいなければ、駆動と同じ（v0.4e と同じ）。"""
+    """駆動の操作に、ポケモンパワー（エナジートランス・あまごい）の使用を混ぜる。自分の番（MAIN）に自分の場にフシギバナ・カメックスが
+    いなければ、駆動と同じ（v0.4e と同じ）。フシギバナだけがいれば v0.5 と同じ（乱数の使い方も同じ）。"""
     player = state.current_player
     if state.phase is not engine.Phase.MAIN or player not in (0, 1):
         return driver.choose_command(engine, state, rng, illegal_rate)
     mine = state.players[player].in_play()
-    if not any(state.cards[pk.card].card_id == VENUSAUR for pk in mine) or rng.random() >= POWER_RATE:
+    kinds = [card_id for card_id in POWER_USERS if any(state.cards[pk.card].card_id == card_id for pk in mine)]
+    if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
-    return _power_command(state, rng)
+    kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
+    return _power_command(state, rng) if kind == VENUSAUR else _rain_dance_command(state, rng)
+
+
+def _rain_dance_command(state, rng: random.Random):
+    """あまごいの使用（v0.6）: たいていはルール上できそうなもの（自分のカメックス・手札の「水」エネルギー・自分の「水」ポケモン）、
+    ときどき不正なもの（手札にないカード・相手の手札・場についたカード・水でないエネルギー・水でないポケモン・相手のポケモン・
+    移動元の指定・選ばせるものの不足・番でない・ない番号・ない位置）。"""
+    player = state.current_player
+    p, q = state.players[player], state.players[1 - player]
+    mine, theirs = p.in_play(), q.in_play()
+    user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == BLASTOISE])
+    waters = [u for u in p.hand if state.card_def(u).is_basic_energy and state.card_def(u).provides is engine.EnergyType.WATER]
+    water_pokemon = [pk for pk in mine if state.card_def(pk.card).pokemon_type is engine.EnergyType.WATER]
+    energy = rng.choice(waters) if waters else rng.choice(sorted(state.cards))
+    target = rng.choice(water_pokemon or mine)
+    command = engine.UsePokemonPower(player, user.pokemon_id, 0, energy, None, target.pokemon_id)
+    if rng.random() < 0.7:
+        return command
+    attached = [u for pk in mine for u in pk.energy]
+    others = [u for u in p.hand if u not in waters]
+    odd = [
+        engine.UsePokemonPower(player, user.pokemon_id),  # 選ばせるものがない
+        engine.UsePokemonPower(player, user.pokemon_id, 0, energy, user.pokemon_id, target.pokemon_id),  # 移動元を指定した
+        engine.UsePokemonPower(player, user.pokemon_id, 1, energy, None, target.pokemon_id),  # ない位置
+        engine.UsePokemonPower(1 - player, user.pokemon_id, 0, energy, None, target.pokemon_id),  # 番でない
+        engine.UsePokemonPower(player, user.pokemon_id, 0, rng.choice(sorted(state.cards)), None, target.pokemon_id),  # 手札にないかも
+        engine.UsePokemonPower(player, user.pokemon_id, 0, energy, None, rng.choice(mine).pokemon_id),  # 水でないポケモンかも
+        engine.UsePokemonPower(player, user.pokemon_id, 0, energy, None, 999),
+        engine.UsePokemonPower(player, rng.choice(mine).pokemon_id, 0, energy, None, target.pokemon_id),  # パワーのないポケモンかも
+    ]
+    if attached:
+        odd.append(engine.UsePokemonPower(player, user.pokemon_id, 0, rng.choice(attached), None, target.pokemon_id))  # 場のカード
+    if others:
+        odd.append(engine.UsePokemonPower(player, user.pokemon_id, 0, rng.choice(others), None, target.pokemon_id))  # 水でないカード
+    if q.hand:
+        odd.append(engine.UsePokemonPower(player, user.pokemon_id, 0, rng.choice(q.hand), None, target.pokemon_id))  # 相手の手札
+    if theirs:
+        other = rng.choice(theirs)
+        odd += [
+            engine.UsePokemonPower(player, user.pokemon_id, 0, energy, None, other.pokemon_id),  # 相手のポケモンへ
+            engine.UsePokemonPower(player, other.pokemon_id, 0, energy, None, target.pokemon_id),  # 相手のポケモンのパワー
+        ]
+    return rng.choice(odd)
 
 
 def _power_command(state, rng: random.Random):
@@ -127,7 +191,7 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
         if state.phase in engine.TERMINAL_PHASES:
             break
         command = choose_command(state, rng, illegal_rate)
-        before = engine.state_to_dict(state, format_version=8)
+        before = engine.state_to_dict(state, format_version=9)
         fingerprint, log = rng_fingerprint(state.rng), state.log
         try:
             new = engine.apply_command(state, command)
@@ -138,7 +202,7 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             if category.startswith("internal"):
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: {error}")
                 break
-            if engine.state_to_dict(state, format_version=8) != before or rng_fingerprint(state.rng) != fingerprint or state.log is not log:
+            if engine.state_to_dict(state, format_version=9) != before or rng_fingerprint(state.rng) != fingerprint or state.log is not log:
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 拒否（{error.code}）で渡した状態が変わった")
             continue
         except Exception as error:  # noqa: BLE001  内部の誤り
@@ -147,6 +211,8 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             break
         counted["accepted"] += 1
         counted[f"accepted:{type(command).__name__}"] += 1
+        if isinstance(command, engine.UsePokemonPower) and new.log[-1]["kind"] == "power_attach_energy":
+            counted["accepted:rain_dance"] += 1
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -196,7 +262,7 @@ def main(argv=None) -> int:
           f"未対応 {counts.get('rejected_unsupported', 0)}・原典で決められない（拒否） {counts.get('rejected_unresolved', 0)}・"
           f"HALTED {sum(v for k, v in counts.items() if k.startswith('final_halted:'))}・GAME_OVER {counts.get('final:game_over', 0)}・"
           f"SUDDEN_DEATH {counts.get('final:sudden_death', 0)}・内部の誤り {counts.get('internal_error', 0) + counts.get('internal_state_integrity', 0)}・"
-          f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}"
+          f"ポケモンパワー（受け付けた） {counts.get('accepted:UsePokemonPower', 0)}（うちあまごい {counts.get('accepted:rain_dance', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")
