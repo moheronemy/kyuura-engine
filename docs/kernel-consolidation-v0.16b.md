@@ -62,7 +62,7 @@ v0.13 の経路（`engine.py` の旧ワザ解決経路・旧きぜつの処理�
 
 ### 3.4 宣言の前の確認と制限
 
-- アダプタで処理するワザの宣言の前の確認は、v0.13 の約束どおり実装の宣言です（`preflight.legacy`。`effect.problem` → こんらんのダメージ → C18 → G37 → W24 の順。解決の記録には先読みの方法 `contract` と残す）。先読み `derived`・`derived_full` は使いません（`resolve` の中身は KERNEL から見えず、副作用のある `resolve` を複製の上で何度も呼ばないため。v0.13・v0.15 でこれらの実装に行っていた確認と同じ）。要求した先読みの方法によりません。
+- アダプタで処理するワザの宣言の前の確認は、v0.13 の約束どおり実装の宣言です（`preflight.legacy`。v0.16c から `resolution/v013_checks.py` の `check`。`effect.problem` → こんらんのダメージ → C18 → G37 → W24 の順。解決の記録には先読みの方法 `contract` と残す）。先読み `derived`・`derived_full` は使いません（`resolve` の中身は KERNEL から見えず、副作用のある `resolve` を複製の上で何度も呼ばないため。v0.13・v0.15 でこれらの実装に行っていた確認と同じ）。要求した先読みの方法によりません。
 - **制限**: 宣言が足りない実装（たとえば相手に効果を与えるのに `opponent_effect_elements` を宣言しない）では、受け付けるかがコインの結果で変わりうる（v0.13・v0.15 と同じ）。KERNEL が実際の処理の中で原典で決められない場合に当たれば、その時点で止めます（コマンドは複製した状態で処理するので、渡した状態・乱数は変わらない）。実装の中で状態を直接書きかえる部分（`TwoStepTestEffect` のダメージなど）は、KERNEL の窓を通りません（要素の並びの独自の要素でも同じ。独自のコードの責任）。
 - **`AttackUse` の項目**: `reception`・`ko_prevention_able` は KERNEL の値を読む項目（枠の外では `RuntimeError`）にし、`counterattacks`・`retaliations`（まだ与えていない送る効果。KERNEL の `kernel.Deferred` と形が違い、ワザの実装が読み書きするものではない）は外しました。`AttackUse` は新しく `runtime`（比較・ハッシュ・表示に含めない）を持ちます。これらが拡張の約束で変わった点のすべてです（4 つの項目を直接読み書きしていたのは、旧ダメージ処理境界の単体テストだけでした）。
 - 枠の外（`runtime` のない `AttackUse`）で補助関数を呼ぶと `RuntimeError`（KERNEL を通らずにダメージをのせない）。単体テストは `resolution.open_attack(state, player)` で枠を開いて呼びます。

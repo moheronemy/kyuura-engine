@@ -8,26 +8,19 @@
   （先読みの範囲）に使ったコインを記録する）、まだ試していない結果だけを状態の複製の上で試す（``after_real_run``。docs 2 章）。どれかの
   結果で当たれば止める（実際の処理の結果は捨てる）。
 - ``derived_full``: v0.14 の方法（``derived``）。実際の処理の前に、すべての結果を状態の複製の上で試す。``derived`` と比べるための基準。
-- ``legacy``: v0.13 の止める関数を、v0.13 の ``engine._use_attack`` と同じ順番でそのまま呼ぶ（比べるため）。
+- ``legacy``: v0.13 の止める関数を、v0.13 の ``engine._use_attack`` と同じ順番でそのまま呼ぶ（比べるため。v0.16c から
+  ``v013_checks.check``）。
 
 状態の複製の上で試すときは乱数を使いません（複製の乱数を ``Oracle`` に差しかえる）。渡した状態は変えません。1 回の先読みで試す結果の数は
 ``MAX_BRANCHES`` までです。超えたら途中までの結果を使わず（「当たる問いがない」証拠にも、問いを選ぶ材料にもしない）、v0.13 の止める関数で
-確かめたワザの実装（``LEGACY_VERIFIED``）なら v0.13 の止める関数で確かめ、ほかは拒否します（``UNSUPPORTED_PREFLIGHT_LIMIT``）。
+確かめたワザの実装（``v013_checks.VERIFIED``）なら v0.13 の止める関数で確かめ、ほかは拒否します（``UNSUPPORTED_PREFLIGHT_LIMIT``。
+``flow._use_attack`` の ``on_limit``）。v0.13 の止める関数（``v013_checks``）は、この先読みとは別の、限定的な互換の判定です（v0.16c。
+docs/preflight-consolidation-v0.16c.md）。この部品は v0.13 の止める関数を使いません。
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
-
-from .. import effects as E
-from ..effects import (
-    AttackUse,
-    counterattack_double_knockout_problem,
-    ko_prevention_attack_effect_problem,
-    retaliation_double_knockout_problem,
-)
-from ..errors import UnsupportedError
-from ..procedures import confusion_damage_problem
 
 from .events import PreflightResult, Trace
 from .kernel import DryRunComplete, Resolution
@@ -40,17 +33,6 @@ if TYPE_CHECKING:
 
 PREFLIGHT_MODES = ("derived", "legacy", "derived_full")
 MAX_BRANCHES = 4096  # 1 回の先読みで試す結果の数の上限（docs/preflight-optimization-v0.15c.md 4 章）
-
-# v0.13 の止める関数（``legacy``）で宣言の前の確認ができると確かめたワザの実装（v0.13 の 24 種類。v0.14・v0.15 の比較で ``derived`` と同じ
-# 答え）。試す結果の数が上限を超えたときだけ使う。ワザの実装を加えても自動では加えない（v0.13 の止める関数で足りるかを確かめてから加える）
-LEGACY_VERIFIED: frozenset[type] = frozenset({
-    E.DamageOnly, E.CoinFlipDamage, E.CoinHeadsDamagePerOwnCounter, E.SelfDamageInsteadOnTails, E.SelfDamageOnTails, E.PoisonOnHeads,
-    E.PoisonOpponent, E.SleepOpponent, E.ParalyzeOnHeads, E.CoinBonusDamageAndParalyze, E.PutToSleep, E.PoisonWithoutDamage,
-    E.ConfuseOnHeads, E.PreventDamageOnHeads, E.DamageAndRetaliation, E.ReturnReceivedDamage, E.DamageAndForceSwitch, E.DamageAndDrain,
-    E.DamageAndRemoveCounters, E.ExtraEnergyDamage, E.DiscardEnergyAndRemoveAllCounters, E.RecoverEnergyAndSelfDamage,
-    E.DamageReducedByOwnCounters, E.DamageAndSelfDamage,
-})
-
 
 class NeedToken(Exception):
     """先読みの台本が足りない（ここで ``n`` 通りに分かれる）。"""
@@ -219,19 +201,3 @@ def after_real_run(state: GameState, original: GameState, body: Callable[[Resolu
     _raise_found(found)
     if error is not None:
         raise error
-
-
-def legacy(state: GameState, use: AttackUse, effect, attacker, trace: Trace, *, mode: str = "legacy") -> None:
-    """v0.13 の ``engine._use_attack`` の確認（止める関数 5 つ）を、同じ順番でそのまま呼ぶ。"""
-    problem: UnsupportedError | None = effect.problem(state, use)
-    if problem is None and attacker.conditions.confused:
-        problem = confusion_damage_problem(state, attacker)
-    if problem is None:
-        problem = counterattack_double_knockout_problem(state, use, effect)
-    if problem is None:
-        problem = ko_prevention_attack_effect_problem(state, use, effect)
-    if problem is None:
-        problem = retaliation_double_knockout_problem(state, use, effect)
-    trace.record(PreflightResult(mode, 0, () if problem is None else (problem.code,)))
-    if problem is not None:
-        raise problem

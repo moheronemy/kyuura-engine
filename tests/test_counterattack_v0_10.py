@@ -790,13 +790,13 @@ class InvariantTest(unittest.TestCase):
         """宣言の前の確認を外しても、「はんげき」できぜつするところで止める（黙って同時のきぜつにしない）。渡した状態は変わらない。
 
         v0.16b: v0.13 の経路（確認を外すと、「はんげき」を与えるところで ``RuntimeError``）を外したので、解決の基盤で確かめる。解決の基盤は、
-        先読み（``preflight.derived``・``preflight.legacy``）を外しても、実際の処理のきぜつの判定で同じ検出（原因の枠が分かれたきぜつ）を
+        先読み（``preflight.derived``・``v013_checks.check``）を外しても、実際の処理のきぜつの判定で同じ検出（原因の枠が分かれたきぜつ）を
         するので、宣言の前と同じコード（``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``）で止める（tests/test_kernel_integration_v0_15.py の
         ``KernelGuardTest`` と同じ考え方）。"""
         state = board({**HITMONCHAN_JAB, "damage": 60}, machamp(damage=80), bench0=[RATTATA])
         before, fingerprint = written(state), rng_fingerprint(state.rng)
         with mock.patch("kyuura_engine.resolution.preflight.derived", lambda *args, **kwargs: None), \
-                mock.patch("kyuura_engine.resolution.preflight.legacy", lambda *args, **kwargs: None):
+                mock.patch("kyuura_engine.resolution.v013_checks.check", lambda *args, **kwargs: None):
             for mode in ("derived_full", "legacy"):
                 with self.subTest(mode=mode), self.assertRaises(UnsupportedError) as ctx:
                     apply_kernel(state, UseAttack(0, 1), preflight=mode)

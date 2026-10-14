@@ -377,7 +377,7 @@ class KernelGuardTest(unittest.TestCase):
     def test_questions_are_detected_in_the_real_run(self):
         no_preflight = contextlib.ExitStack()
         no_preflight.enter_context(mock.patch("kyuura_engine.resolution.preflight.derived", lambda *args, **kwargs: None))
-        no_preflight.enter_context(mock.patch("kyuura_engine.resolution.preflight.legacy", lambda *args, **kwargs: None))
+        no_preflight.enter_context(mock.patch("kyuura_engine.resolution.v013_checks.check", lambda *args, **kwargs: None))
         with no_preflight:
             for name, (make, command, code) in UnresolvedTest.CASES.items():
                 state = with_coin_results(make(), *self.COINS.get(name, ()))

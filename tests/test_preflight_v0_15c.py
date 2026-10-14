@@ -27,7 +27,7 @@ from kyuura_engine import DEFAULT_EFFECTS, EngineError, UnsupportedError, UseAtt
 from kyuura_engine import effects as E
 from kyuura_engine.effects import AttackEntry, AttackKey
 from kyuura_engine.engine import apply_command_traced
-from kyuura_engine.resolution import events, preflight, programs
+from kyuura_engine.resolution import events, programs, v013_checks
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
@@ -296,7 +296,7 @@ class LimitTest(unittest.TestCase):
             with self.assertRaises(UnsupportedError) as ctx:
                 apply_kernel(state, UseAttack(0, 0))
             self.assertEqual(ctx.exception.code, "UNSUPPORTED_PREFLIGHT_LIMIT")
-            with mock.patch.object(preflight, "LEGACY_VERIFIED", preflight.LEGACY_VERIFIED | {ManyCoins}):
+            with mock.patch.object(v013_checks, "VERIFIED", v013_checks.VERIFIED | {ManyCoins}):
                 for mode in ("derived", "derived_full"):
                     with self.subTest(mode=mode), self.assertRaises(UnsupportedError) as ctx:
                         apply_kernel(state, UseAttack(0, 0), preflight=mode)
@@ -305,7 +305,7 @@ class LimitTest(unittest.TestCase):
     def test_verified_fallback_accepts_like_the_v0_13_route(self):
         """v0.13 の止める関数で確かめた実装として扱うと、上限を超えても v0.13 の止める関数で確かめ、v0.13 の経路と同じ結果になる。"""
         state = with_coin_results(self.board(13), *([H] * 13))
-        with many_coins_patch(), mock.patch.object(preflight, "LEGACY_VERIFIED", preflight.LEGACY_VERIFIED | {ManyCoins}):
+        with many_coins_patch(), mock.patch.object(v013_checks, "VERIFIED", v013_checks.VERIFIED | {ManyCoins}):
             for mode in ("derived", "derived_full"):
                 with self.subTest(mode=mode):
                     self.assertEqual(legacy_reference.outcome_of(apply_kernel, state, UseAttack(0, 0), preflight=mode),
@@ -325,8 +325,8 @@ class LimitTest(unittest.TestCase):
     def test_verified_implementations_are_the_v0_13_ones(self):
         """上限を超えたときに v0.13 の止める関数で確かめる実装は、v0.13 の 24 種類（製品の登録表のワザの実装）だけ。"""
         registered = {type(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect) for k in DEFAULT_EFFECTS.attack_keys()}
-        self.assertEqual(preflight.LEGACY_VERIFIED, registered)
-        self.assertEqual(len(preflight.LEGACY_VERIFIED), 24)
+        self.assertEqual(v013_checks.VERIFIED, registered)
+        self.assertEqual(len(v013_checks.VERIFIED), 24)
 
 
 if __name__ == "__main__":

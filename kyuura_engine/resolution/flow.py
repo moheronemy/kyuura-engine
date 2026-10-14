@@ -31,6 +31,7 @@ from ..state import GameState
 from . import catalog as C
 from . import codec
 from . import preflight as P
+from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked_out, ko_prevention_offers, track_ko
@@ -109,25 +110,25 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
         （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。"""
-        if type(effect) not in P.LEGACY_VERIFIED:
+        if type(effect) not in v013_checks.VERIFIED:
             raise UnsupportedError(
                 "UNSUPPORTED_PREFLIGHT_LIMIT",
                 f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
                 "ないことを確かめられないので扱わない",
             )
-        P.legacy(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
+        v013_checks.check(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
 
     if is_contract(program):
         # v0.13 の約束で書いた実装（v0.16b のアダプタ。contract.py）: 宣言の前の確認は実装の宣言（problem と v0.13 の止める関数）だけ。
         # resolve の中身は先読みから見えず、副作用のある resolve を何度も呼ばない（v0.13・v0.15 と同じ確認。先読みの方法によらない）
-        P.legacy(state, use, effect, attacker, ctx.trace, mode="contract")
+        v013_checks.check(state, use, effect, attacker, ctx.trace, mode="contract")
         body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
         return
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
     if ctx.preflight == "legacy":
-        P.legacy(state, use, effect, attacker, ctx.trace)
+        v013_checks.check(state, use, effect, attacker, ctx.trace, mode="legacy")
     else:
         try:
             P.derived(state, body, ctx.catalog, ctx.trace)
