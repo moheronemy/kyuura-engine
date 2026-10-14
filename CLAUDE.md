@@ -28,7 +28,7 @@
 
 ## 状態の作り（v0.2a）
 
-- プレイヤーの選択を待つ処理は、`kyuura_engine/decisions.py` の `push_decision` で保留中の決定（`GameState.decision`）を作り、engine.py の再開先（`_RESUMERS`）で続けます。段階や保留中のリストを別に増やさないでください。決定は一度に 1 つです。
+- プレイヤーの選択を待つ処理は、`kyuura_engine/decisions.py` の `push_decision` で保留中の決定（`GameState.decision`）を作り、engine.py の再開先（`_RESUMERS`。v0.16b から `engine._answer_decision` が、再開先が `resolution.RESUMES` なら解決の基盤、`trainer` なら `_resume_trainer` に振り分ける）で続けます。段階や保留中のリストを別に増やさないでください。決定は一度に 1 つです。
 - 場のポケモンは `pokemon_id`（場に出たときに付ける番号。進化しても同じ、場を離れたら無効、使い回さない）で指します。カードの uid はカードの番号で、場のポケモンの番号ではありません。v0.1 のコマンド（`PromoteActive` など）はカードの uid のまま受け付けます。v0.4a の `EvolvePokemon.target` は場のポケモンの番号です。
 - 状態の書き出しは `state_to_dict(state)` が v0.1 の形（`format_version` 1）、`state_to_dict(state, format_version=2)` が v0.2a の項目を加えた形です。既定の形を変えると固定値と互換性のテストが変わります。
 - tests/fixtures/v0_1_reference.json は v0.1 の結果の参照データです。互換性を確かめるためのものなので、scripts/make_compat_fixture.py で作り直さないでください（作り直すと v0.1 との比較ではなくなります）。v0.1 で未対応だった操作を対応にしたら、参照データは変えずに tests/test_compat_v0_1.py の `NOW_SUPPORTED` に加え、エラーコードが変わる件数と内訳を docs に書きます（v0.2b の `play_trainer`）。
@@ -266,3 +266,4 @@
 - 先読みの上限の前後（1・2・16・4,096・4,097 以上・8,192 通り）は tests/test_preflight_consolidation_v0_16c.py の `BranchLimitBoundaryTest` が確かめます。上限を超えたら、途中までの結果で当たった問い・当たらなかったことを答えに使わないでください。製品のワザで試す結果の数のいちばん多い場合（こんらんのエナジーへんかんで 1 + 57² = 3,250）が上限に届かないことは `ProductBoundTest` が確かめます。決定の選択肢が増えるワザ・コインの多いワザを加えたら、docs 3 章の上界を見直してください。
 - 決定への答えを拒否する理由の文（`WRONG_PHASE`）の段階の並びは `decisions.DECISION_PHASE_ORDER`（段階の定義の順）です（v0.16d。v0.15 までは `frozenset` の並びで、プロセスごとに変わっていた）。理由の文に集合の並びを書かないでください。固定した v0.13・v0.15 との比較では、この並びの差だけを `wrong_phase_order_only` として数えます（docs/legacy-test-migration-v0.16d.md 5 章）。
 - 移したテストの対応表・重複する処理の調査・互換の層を外した理由は docs/legacy-test-migration-v0.16d.md です。v0.13 の約束の補助関数・実装の `resolve` を直接呼ぶテストは、`resolution.open_attack` で枠を開いてください（枠の外の `RuntimeError` で、確かめたい理由と違う所で通ってしまう。v0.16d で 1 件直した）。故障を注入するテストは、注入した誤りそのものが出たことを確かめてください。
+- 最終監査（v0.16e。版 0.16.0）は docs/kernel-consolidation-verification-v0.16e.md です。固定した v0.13（`8facf3a`）・v0.15（`aa551ab`）と、別の木・別のプロセスで 2,560 対戦・350,533 歩を比べて食い違い 0（許した差は `WRONG_PHASE` の段階の並び 202 件）。解決の基盤・先読み・振り分け・アダプタ・`v013_checks` を変えたら、同じ比較（`tools/engine_lockstep.py`。2 章の手順）と変異試験（5 章の 34 の変異）をやり直してください。

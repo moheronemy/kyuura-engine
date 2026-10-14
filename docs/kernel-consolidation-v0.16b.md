@@ -96,6 +96,7 @@ v0.13 の経路（`engine.py` の旧ワザ解決経路・旧きぜつの処理�
 | `AttackUse.counterattacks`・`retaliations` | 枠の送る効果の列（`FrameState.pending`。`kernel.Deferred`） |
 | 標準の実装の `resolve`・`resume` | `programs.BUILDERS` の要素の並び |
 | `engine.Route`・`apply_command_via` | なし（`apply_command_with`） |
+| `engine._RESUMERS`（決定の再開先の表） | `engine._answer_decision`（再開先が `resolution.RESUMES` なら `resolution.resume_decision`、`trainer` なら `_resume_trainer`。不変条件の一覧は `engine.DECISION_RESUMES`） |
 
 ## 6. テストの移行（このコミットで、消した関数を使っていたテストを移した）
 

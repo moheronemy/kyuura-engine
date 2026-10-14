@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.15）
+# 実装状況（v0.1〜v0.16）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -1197,3 +1197,24 @@ v0.15 は、v0.14 のプロトタイプを本番の内部の部品（`kyuura_eng
 
 - v0.13 の `WRONG_PHASE` の理由の文（決定への答えの段階の違い）は、`frozenset` の並びで書くので、プロセスごと（文字列のハッシュの乱数化）に段階の並びが変わる。状態・ログ・乱数には影響しない。エンジンは変えていない（v0.16 への提案。[統合](kernel-integration-v0.15b.md) 7 章）。
 - v0.14 の先読みは、エナジーへんかんの答えを枚数ごとの代表だけで試していた。v0.15c で、すべての答えを試すようにした（今の対応カードでは結果は同じ）。
+
+## v0.16 で変えたこと（旧経路の撤去と解決の基盤の一本化）
+
+v0.16 は、v0.13 のワザの解決の経路を外し、ワザ・番の終わり・きぜつのあとの決定の解決を、解決の基盤（`kyuura_engine/resolution/`）だけで処理するようにした版です（版 0.16.0）。対応するカード・ルール・裁定・未解決の事項（エンジンが止める `UNRESOLVED_…` 17 件・未解決の裁定 22 件）・書き出しの形式 9・ログ・乱数の使い方は v0.13・v0.15 と同じです（[監査](legacy-removal-audit-v0.16a.md)、[撤去](kernel-consolidation-v0.16b.md)、[先読み](preflight-consolidation-v0.16c.md)、[テストの移行](legacy-test-migration-v0.16d.md)、[最終監査](kernel-consolidation-verification-v0.16e.md)）。
+
+| 項目 | 状況 | 文書・テスト |
+|---|---|---|
+| 公開の `apply_command(state, command)` | 呼び方・約束は同じ。経路（`Route`・`apply_command_via`）はない。解決の設定（先読みの方法）を選ぶ内部の入口は `engine.apply_command_with`・`apply_command_traced` | tests/test_kernel_integration_v0_15.py の `EntryTest` |
+| 解決の基盤が処理するコマンド | ワザ・番の終わり（`resolution.COMMANDS`）と、再開先が `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定への答え（`resolution.RESUMES`）。トレーナーの決定と範囲外のコマンドは engine.py | [撤去](kernel-consolidation-v0.16b.md) 4 章 |
+| v0.13 の約束で書いたワザの実装（`AttackEffect.resolve`・`resume`） | 解決の基盤の枠の中のアダプタ（`resolution/contract.py`）で処理する。どちらも持たない実装は `UNSUPPORTED_ATTACK` で拒否（効果のないワザにしない）。製品の 24 種類は要素の並び | tests/test_contract_adapter_v0_16.py、[撤去](kernel-consolidation-v0.16b.md) 3 章 |
+| v0.13 の止める関数 | 限定的な互換の部品 `resolution/v013_checks.py` の 3 つの使い道（アダプタ・上限を超えたとき・比べる方法 `legacy`）だけ | tests/test_preflight_consolidation_v0_16c.py、[先読み](preflight-consolidation-v0.16c.md) |
+| 先読みの上限 | 4,096。`derived` も実際の処理の結果を数える（v0.15c はちょうど 4,097 通りのコインだけの木を受け付けていた。v0.16c で直した。製品のカードでは起こらない） | [先読み](preflight-consolidation-v0.16c.md) 4 章 |
+| `WRONG_PHASE`（決定への答え）の理由の文 | 段階の並びを決まった順番にした（v0.15 まではプロセスごとに変わっていた） | tests/test_wrong_phase_message_v0_16d.py、[テストの移行](legacy-test-migration-v0.16d.md) 5 章 |
+| 実験用の互換の層（`experiments/`） | 外した | [テストの移行](legacy-test-migration-v0.16d.md) 4 章 |
+| 固定した v0.13・v0.15 との比較 | 2,560 対戦・350,533 歩を別のプロセスで比べ、どちらとも食い違い 0（許した差は `WRONG_PHASE` の段階の並び 202 件だけ） | [最終監査](kernel-consolidation-verification-v0.16e.md) 3 章 |
+| 性能 | 固定した v0.13 の 1.28 倍（解決の基盤が受け持つコマンド全体）・1.46 倍（受け付けたワザ）。v0.15 より 7〜8% 速い | [最終監査](kernel-consolidation-verification-v0.16e.md) 6 章 |
+
+### 見つけた事項
+
+- v0.15c の先読み `derived` は、結果がちょうど 4,097 通りのコインだけの木で、実際の処理の結果を上限に数えず受け付けていた（`derived_full` は拒否）。v0.16c で直した（製品のカードのコインだけの木は 64 通り以下で起こらない）。
+- 移したテストのうち 1 件（じこさいせいの K3）は、v0.16b〜v0.16c のあいだ、解決の基盤の枠の外の誤りで通っていて、K3 を確かめていなかった。v0.16d で直した（[テストの移行](legacy-test-migration-v0.16d.md) 7 章）。
