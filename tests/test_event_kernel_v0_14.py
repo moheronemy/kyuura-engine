@@ -1,7 +1,8 @@
 """v0.14: 汎用のイベント・効果の解決の仕組みのプロトタイプ（experiments/event_kernel）の単体テスト（docs/event-prototype-verification-v0.14.md）。
 
 どのテストも、同じ状態・同じ乱数・同じコマンドを v0.13 のエンジン（v0.15 からは経路 ``Route.LEGACY``）とプロトタイプ（v0.15 からは本番の解決の基盤。経路 ``KERNEL``）に渡し、状態（形式 9。
-ログ・乱数の指紋・決定を含む）か拒否（例外の種類とコード）が同じことを確かめる（``Both``）。そのうえで、プロトタイプの解決の記録（内部の
+ログ・乱数の指紋・決定を含む）か拒否（例外の種類とコード）が同じことを確かめる（``Both``）。v0.16a から、v0.13 の結果は、旧経路がある木で
+記録した参照データ（tests/legacy_reference.py。呼び出しごとの盤面の指紋と旧経路の結果）と比べる（v0.16 で旧経路を外しても比べられる）。そのうえで、プロトタイプの解決の記録（内部の
 イベント）で、共通の仕組みが窓・枠・候補を管理したことを確かめる。原典の根拠は v0.9〜v0.13 の各文書（裁定の番号）で、プロトタイプは
 裁定を変えない。
 
@@ -25,13 +26,13 @@ from kyuura_engine import (
 )
 from kyuura_engine.decisions import FORCED_SWITCH, KO_PREVENTION, POST_KNOCKOUT_POWER
 from kyuura_engine.effects import AttackKey
-from kyuura_engine.engine import Route, apply_command_via
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     BUTTERFREE, DARK_WARTORTLE, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, GRASS, H,
     HAUNTER, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC, RATTATA,
     ROCKET_SQUIRTLE, ROCKETS_MOLTRES, T, WEEDLE, build_test_state, with_coin_results,
 )
+from tests import legacy_reference
 from tests.log_audit import log_problems, serialization_problems
 
 from experiments import event_kernel as K
@@ -58,11 +59,6 @@ METAPOD_ = {"card": METAPOD, "evolved_from": CATERPIE_}
 PONYTA_ = {"card": PONYTA, "energy": [FIRE, FIRE]}  # けりとばす 20・ほのおのしっぽ 30（炎。弱点 水）
 
 
-def apply_command(state, command):
-    """比較の基準: v0.13 の経路（v0.15b から。標準の経路が KERNEL になっても、v0.13 の経路と比べる）。"""
-    return apply_command_via(state, command, route=Route.LEGACY)
-
-
 def full(state):
     return state_to_dict(state, format_version=9)
 
@@ -79,24 +75,20 @@ class Both(unittest.TestCase):
 
     def both(self, state, command, *, mode="derived"):
         before, rng = full(state), rng_fingerprint(state.rng)
-        try:
-            expected, expected_error = apply_command(state, command), None
-        except EngineError as error:
-            expected, expected_error = None, error
+        expected = legacy_reference.expected(self, state, command)  # v0.13 の結果（v0.16a から参照データ）
         try:
             (actual, trace), actual_error = K.apply_command_traced(state, command, preflight=mode), None
         except EngineError as error:
             actual, trace, actual_error = None, None, error
         self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, rng), "渡した状態が変わった")
-        if expected_error is not None:
-            self.assertIsNotNone(actual_error, f"v0.13 は {expected_error.code} で拒否したが、プロトタイプは受け付けた")
-            self.assertEqual((type(actual_error), actual_error.code), (type(expected_error), expected_error.code))
-            # v0.15b: 理由の文も同じ（止める理由の文を effects の共通の関数で作る。docs/kernel-integration-v0.15b.md 5 章）
-            self.assertEqual(actual_error.message, expected_error.message)
-            return None, None, expected_error
+        if expected[0] == "error":
+            self.assertIsNotNone(actual_error, f"v0.13 は {expected[2]} で拒否したが、プロトタイプは受け付けた")
+            # 例外の種類・コード・理由の文（v0.15b から理由の文も同じ。止める理由の文を effects の共通の関数で作る。
+            # docs/kernel-integration-v0.15b.md 5 章）
+            self.assertEqual(legacy_reference.error_outcome(actual_error), expected)
+            return None, None, actual_error
         self.assertIsNone(actual_error, f"v0.13 は受け付けたが、プロトタイプは {actual_error!r}")
-        self.assertEqual(full(actual), full(expected))
-        self.assertEqual(rng_fingerprint(actual.rng), rng_fingerprint(expected.rng))
+        self.assertEqual(("ok", legacy_reference.digest(actual)), expected)  # 形式 9 の全体（ログ・乱数の指紋・決定を含む）
         return actual, trace, None
 
     def activated(self, trace, window=None):
@@ -594,30 +586,40 @@ class CatalogTest(unittest.TestCase):
 
 
 class GameTest(unittest.TestCase):
-    def play(self, scenario, seed, steps=400, *, kernel=True):
+    def play(self, scenario, seed, steps=400, *, chain=None):
+        """``chain`` を渡すと、1 歩ごとの結果を v0.13 の結果の連なり（参照データ。v0.16a）と比べる（記録するときは旧経路で進めて記録する）。"""
         import compat_driver as driver
         import stress_engine as stress
         rng = random.Random(f"kyuura-stress:{scenario}:{seed}")
         spec = next(s for s in stress.ALL_SCENARIOS if s.name == scenario)
         state = __import__("kyuura_engine").new_game(driver._deck(spec.deck0), driver._deck(spec.deck1), seed)
-        apply = K.apply_command if kernel else apply_command
+        apply = legacy_reference.legacy_apply_for_recording if chain is not None and legacy_reference.recording() else K.apply_command
         for _ in range(steps):
             if state.phase in (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED):
                 break
             command = stress.choose_command(state, rng, 0.05)
             try:
-                state = apply(state, command)
-            except EngineError:
+                new = apply(state, command)
+            except EngineError as error:
+                if chain is not None:
+                    chain.add(state, command, legacy_reference.error_outcome(error))
                 continue
+            if chain is not None:
+                chain.add(state, command, ("ok", legacy_reference.digest(new)))
+            state = new
+        if chain is not None:
+            chain.finish()
         return state
 
     def test_reproducible_and_audited(self):
-        """同じ seed で同じ結果（プロトタイプだけで進めても v0.13 と同じ）。ログの監査・書き出しの監査・不変条件に問題がない。"""
+        """同じ seed で同じ結果（プロトタイプだけで進めても v0.13 と同じ。v0.16a から、v0.13 の 1 歩ごとの結果は参照データ）。ログの監査・
+        書き出しの監査・不変条件に問題がない。"""
         for scenario, seed in (("machamp_mixed", 1), ("moltres_mixed", 2), ("wartortle_mixed", 3), ("giovanni_mixed", 4), ("haunter_muk", 5)):
             with self.subTest(scenario=scenario, seed=seed):
                 a, b = self.play(scenario, seed), self.play(scenario, seed)
                 self.assertEqual(full(a), full(b))
-                self.assertEqual(full(a), full(self.play(scenario, seed, kernel=False)))
+                reference = self.play(scenario, seed, chain=legacy_reference.Chain(f"{self.id()}:{scenario}:{seed}"))
+                self.assertEqual(full(a), full(reference))
                 self.assertEqual(log_problems(a), [])
                 self.assertEqual(serialization_problems(a), [])
                 self.assertEqual(check_invariants(a), [])

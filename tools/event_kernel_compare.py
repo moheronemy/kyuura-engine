@@ -78,13 +78,27 @@ def _run(apply, state, command):
 class Comparator:
     """1 歩を本番と、プロトタイプ（``modes`` の先読みそれぞれ）で処理して比べる。数を ``counts`` に足す。"""
 
-    def __init__(self, modes=("derived",), *, mixed=False, timing=False, counts: Counter | None = None):
+    def __init__(self, modes=("derived",), *, mixed=False, timing=False, counts: Counter | None = None, reference: str | None = None):
         self.modes = tuple(modes)
         self.mixed = mixed
         self.timing = timing
         self.counts = counts if counts is not None else Counter()
         self.time = Counter()
         self.step = 0
+        # v0.16a: ``reference`` を渡すと、対戦ごとに v0.13 の 1 歩ごとの結果の連なりを参照データ（tests/legacy_reference.py）と比べる
+        # （名前は ``reference`` + 対戦の名前）。旧経路を外したあとも、v0.13 の結果と比べるため
+        self.reference = reference
+        self.chain = None
+
+    def begin(self, game: str) -> None:
+        if self.reference is not None:
+            from tests import legacy_reference
+            self.chain = legacy_reference.Chain(f"{self.reference}:{game}")
+
+    def end(self) -> None:
+        if self.chain is not None:
+            chain, self.chain = self.chain, None
+            chain.finish()
 
     def __call__(self, state, command):
         before, rng = full(state), rng_fingerprint(state.rng)
@@ -92,6 +106,10 @@ class Comparator:
         t0 = time.perf_counter()
         expected, expected_error = _run(_legacy_apply, state, command)
         t1 = time.perf_counter()
+        if self.chain is not None:
+            from tests import legacy_reference
+            self.chain.add(state, command, ("ok", legacy_reference.digest(expected)) if expected_error is None else
+                           legacy_reference.error_outcome(expected_error))
         results = []
         for mode in self.modes:
             t2 = time.perf_counter()
@@ -157,6 +175,7 @@ def stress_game(comparator: Comparator, scenario, seed: int, *, steps: int = 600
     import stress_engine as stress
     rng = random.Random(f"kyuura-stress:{scenario.name}:{seed}")
     state = engine.new_game(driver._deck(scenario.deck0), driver._deck(scenario.deck1), seed)
+    comparator.begin(f"stress:{scenario.name}:{seed}")
     for _ in range(steps):
         if state.phase in engine.TERMINAL_PHASES:
             break
@@ -165,6 +184,7 @@ def stress_game(comparator: Comparator, scenario, seed: int, *, steps: int = 600
             state = comparator(state, command)
         except engine.EngineError:
             continue
+    comparator.end()
     comparator.counts["games"] += 1
     return state
 
@@ -176,9 +196,12 @@ def natural_games(comparator: Comparator, module_name: str, seeds) -> None:
     module.apply_command = comparator
     try:
         for seed in seeds:
+            comparator.begin(f"natural:{module_name}:{seed}")
             module.play_game(seed)
+            comparator.end()
             comparator.counts["games"] += 1
     finally:
+        comparator.chain = None
         module.apply_command = original
 
 

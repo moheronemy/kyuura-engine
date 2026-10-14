@@ -31,9 +31,10 @@ from kyuura_engine.resolution import events, preflight, programs
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
-    BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GASTLY, GRASS, H, MACHOP, METAPOD, PSYCHIC, RATTATA, T, WATER, apply_kernel, apply_legacy,
+    BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GASTLY, GRASS, H, MACHOP, METAPOD, PSYCHIC, RATTATA, T, WATER, apply_kernel,
     build_test_state, with_coin_results,
 )
+from tests import legacy_reference
 from tests.test_event_kernel_v0_14 import MACHAMP_, PONYTA_, TURN, UnresolvedTest, board
 from tests.test_kernel_integration_v0_15 import MessageTest
 
@@ -128,9 +129,9 @@ class EquivalenceTest(unittest.TestCase):
                 with self.subTest(case=name, coins=sides):
                     state = with_coin_results(make(), *sides)
                     self.assertEqual(check_invariants(state), [])
-                    expected = outcome(apply_legacy, state, command)
-                    self.assertEqual(outcome(apply_kernel, state, command, preflight="derived"), expected)
-                    self.assertEqual(outcome(apply_kernel, state, command, preflight="derived_full"), expected)
+                    expected = legacy_reference.expected(self, state, command)  # v0.13 の経路の結果（参照データ。v0.16a）
+                    self.assertEqual(legacy_reference.outcome_of(apply_kernel, state, command, preflight="derived"), expected)
+                    self.assertEqual(legacy_reference.outcome_of(apply_kernel, state, command, preflight="derived_full"), expected)
                     compared += 1
         self.assertGreater(compared, 900)
 
@@ -148,10 +149,9 @@ class EquivalenceTest(unittest.TestCase):
                     self.assertIs(type(new.rng), random.Random)
                     flips = [e for e in new.log[len(seeded.log):] if e["kind"] == "coin_flip"]
                     draws = new.rng.getstate() != seeded.rng.getstate()
-                    legacy = apply_legacy(seeded, command)
-                    self.assertEqual([e for e in legacy.log[len(seeded.log):] if e["kind"] == "coin_flip"], flips)
-                    self.assertEqual(rng_fingerprint(new.rng), rng_fingerprint(legacy.rng))
-                    self.assertEqual(draws, legacy.rng.getstate() != seeded.rng.getstate())
+                    # v0.13 の経路と同じ結果（形式 9 の全体。コインのログ・乱数の指紋を含む。参照データ。v0.16a）
+                    self.assertEqual(("ok", legacy_reference.digest(new)), legacy_reference.expected(self, seeded, command))
+                    self.assertEqual(draws, bool(flips))  # コインを投げたときだけ乱数が進む
                     pickle.loads(pickle.dumps(new))
 
 
@@ -308,7 +308,8 @@ class LimitTest(unittest.TestCase):
         with many_coins_patch(), mock.patch.object(preflight, "LEGACY_VERIFIED", preflight.LEGACY_VERIFIED | {ManyCoins}):
             for mode in ("derived", "derived_full"):
                 with self.subTest(mode=mode):
-                    self.assertEqual(outcome(apply_kernel, state, UseAttack(0, 0), preflight=mode), outcome(apply_legacy, state, UseAttack(0, 0)))
+                    self.assertEqual(legacy_reference.outcome_of(apply_kernel, state, UseAttack(0, 0), preflight=mode),
+                                     legacy_reference.expected(self, state, UseAttack(0, 0)))  # v0.13 の経路の結果（参照データ。v0.16a）
             (result, fallback) = preflight_results(state, UseAttack(0, 0))
             self.assertEqual((result.strategy, fallback.mode), ("limit", "legacy_after_limit"))
 

@@ -2,7 +2,8 @@
 docs/event-prototype-verification-v0.14.md 3 章）。大きな比較は ``python3 tools/event_kernel_compare.py``（C 段階）。
 
 - 1 歩ごとに、拒否するか（例外の種類とコード）・受け付けた状態（書き出しの形式 9。ログ・乱数の指紋・決定を含む）が同じで、渡した状態が
-  変わらない（tools/event_kernel_compare.py の ``Comparator``）。先読みは 2 つ（``derived``・``legacy``）の両方。
+  変わらない（tools/event_kernel_compare.py の ``Comparator``）。先読みは 2 つ（``derived``・``legacy``）の両方。v0.16a から、v0.13 の
+  1 歩ごとの結果の連なりを、対戦ごとに参照データ（tests/legacy_reference.py）とも比べる（v0.16 で旧経路を外しても比べられる）。
 - 次の歩の状態を、v0.13 とプロトタイプの結果から交互に選ぶ（``mixed``。どちらの状態からでも、どちらのエンジンで続けても同じ）。
 - 特殊能力・番をまたぐ効果の組（とうめい・はんげき・こんじょう・ふしちょう・ほのおのかべ・こうらがえし・かがくへんかガス）と、それぞれの
   対戦のテスト（tests/test_*_games_v0_*.py の方針）を使う。比べた場面の数（窓・枠・決定）が 0 でないことも確かめる。
@@ -34,7 +35,7 @@ class LockstepGamesTest(unittest.TestCase):
     def test_stress_scenarios_in_both_modes_with_mixed_states(self):
         """tools/stress_engine.py の組（拒否されるコマンドを混ぜる）。2 つの先読み・交互の状態で、どの歩も同じ。"""
         counts: Counter = Counter()
-        comparator = compare.Comparator(compare.MODES, mixed=True, counts=counts)
+        comparator = compare.Comparator(compare.MODES, mixed=True, counts=counts, reference=self.id())
         by_name = {s.name: s for s in stress.ALL_SCENARIOS}
         for name in STRESS:
             for seed in range(2):
@@ -51,7 +52,7 @@ class LockstepGamesTest(unittest.TestCase):
     def test_natural_policies_in_both_modes(self):
         """対戦のテストの方針（play_game）。テスト自身の確認（不変条件・ログの監査）もそのまま走る。"""
         counts: Counter = Counter()
-        comparator = compare.Comparator(compare.MODES, counts=counts)
+        comparator = compare.Comparator(compare.MODES, counts=counts, reference=self.id())
         for name in NATURAL:
             with self.subTest(module=name):
                 compare.natural_games(comparator, name, range(2))
@@ -62,7 +63,7 @@ class LockstepGamesTest(unittest.TestCase):
 
     def test_natural_policies_with_mixed_states(self):
         """次の歩の状態を交互に選んでも、対戦のテストの確認が通り、どの歩も同じ。"""
-        comparator = compare.Comparator(("derived",), mixed=True)
+        comparator = compare.Comparator(("derived",), mixed=True, reference=self.id())
         for name in ("test_giovanni_games_v0_11", "test_moltres_games_v0_12"):
             with self.subTest(module=name):
                 compare.natural_games(comparator, name, range(2))

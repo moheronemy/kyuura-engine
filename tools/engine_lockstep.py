@@ -12,7 +12,13 @@
 だけで、``--route``・``--preflight`` を付けたときだけ v0.15 の内部の入口（``engine.apply_command_via``）を使う（付けなければ、その木の
 ``apply_command`` = 標準の経路）。
 
-``compare``: 2 つの記録を対戦ごと・歩ごとに比べ、最初の食い違いを報告する。
+``compare``: 2 つの記録を対戦ごと・歩ごとに比べ、最初の食い違いを報告する。v0.16 から、決定への答えの ``WRONG_PHASE`` の拒否は理由の文
+そのもの（``m``）も記録し、2 つの文が「今の段階が同じで、並べた段階の名前の集まりが同じ（並びだけが違う）」ときだけ、食い違いではなく
+許した差（``WRONG_PHASE`` の並び。v0.16d で並びを決まったものにした。docs/legacy-test-migration-v0.16d.md）として数える。ほかの
+理由の文の違い・``m`` のない記録の違いは、すべて食い違い。
+
+``tree``（v0.16）: 固定した前の版のコミットを、このリポジトリから ``git archive`` で展開した木を作る（比べる木の作り方を決まったものに
+する。docs/legacy-removal-audit-v0.16a.md 8 章）。
 
 ``record`` は、文字列のハッシュの乱数化を止めた（``PYTHONHASHSEED=0``）プロセスで動く（乱数化されていれば、``PYTHONHASHSEED=0``・
 ``-P -s`` で自分を起動し直す。``-P`` は ``-I`` と同じく、この道具がある木の ``kyuura_engine`` を読まないため）。v0.13 の拒否の理由の文には、
@@ -36,7 +42,10 @@ import json
 import os
 import pickle
 import random
+import re
+import subprocess
 import sys
+import tarfile
 import time
 from collections import Counter
 from pathlib import Path
@@ -103,6 +112,8 @@ class Recorder:
         record = {"g": self.game, "i": self.step, "c": hashlib.sha1(cmd.encode()).hexdigest()[:16], "o": outcome}
         if error is None:
             record["h"] = self.digest(new)
+        elif error.code == "WRONG_PHASE":
+            record["m"] = error.message  # v0.16: 並びの違いだけを許すかを、文そのもので確かめる（compare）
         self.out.write(json.dumps(record, ensure_ascii=False) + "\n")
         self.step += 1
         self.counts["steps"] += 1
@@ -219,29 +230,91 @@ def _read(path: str):
     return order, games, summary
 
 
+_WRONG_PHASE = re.compile(r"今は (\S+)。この操作は (.+) のときだけ")
+
+
+def wrong_phase_order_only(ra: dict, rb: dict) -> bool:
+    """2 つの歩の記録の違いが、決定への答えの ``WRONG_PHASE`` の理由の文の、段階の名前の並びだけか（v0.16）。
+
+    同じ歩・同じコマンド・どちらも ``WRONG_PHASE`` の ``IllegalActionError``・理由の文（``m``）がどちらも記録され、今の段階が同じで、
+    並べた段階の名前の集まり（重なりも含めて）が同じときだけ真。理由の文の指紋（``o`` の 3 つめ）以外の項目が違えば偽。"""
+    if set(ra) != set(rb) or {k: v for k, v in ra.items() if k not in ("o", "m")} != {k: v for k, v in rb.items() if k not in ("o", "m")}:
+        return False
+    oa, ob = ra.get("o"), rb.get("o")
+    if not (isinstance(oa, list) and isinstance(ob, list) and oa[:2] == ob[:2] == ["IllegalActionError", "WRONG_PHASE"]):
+        return False
+    ma, mb = _WRONG_PHASE.fullmatch(ra.get("m", "")), _WRONG_PHASE.fullmatch(rb.get("m", ""))
+    if ma is None or mb is None or ma.group(1) != mb.group(1):
+        return False
+    if sorted(ma.group(2).split(", ")) != sorted(mb.group(2).split(", ")):
+        return False
+    # 理由の文の指紋は、記録した文そのものの指紋（文と指紋が食い違う記録は許さない）
+    return all(o[2] == hashlib.sha1(r["m"].encode()).hexdigest()[:12] for o, r in ((oa, ra), (ob, rb)))
+
+
 def compare(args) -> int:
     order_a, a, sa = _read(args.a)
     order_b, b, sb = _read(args.b)
     divergences = 0
     steps = 0
+    allowed: Counter = Counter()
+    examples: list[str] = []
     if order_a != order_b:
         print(f"対戦の並びが違う（{len(order_a)} と {len(order_b)}）")
         divergences += 1
     for game in order_a:
         ra, rb = a.get(game, []), b.get(game, [])
         n = min(len(ra), len(rb))
-        first = next((i for i in range(n) if ra[i] != rb[i]), None)
+        first = None
+        for i in range(n):
+            if ra[i] == rb[i]:
+                continue
+            if wrong_phase_order_only(ra[i], rb[i]):
+                allowed["WRONG_PHASE の段階の名前の並び"] += 1
+                if len(examples) < 3:
+                    examples.append(f"{game} 歩 {ra[i]['i']}: {ra[i]['m']!r} / {rb[i]['m']!r}")
+                continue
+            first = i
+            break
         steps += sum(1 for item in ra[:n] if item.get("i") != "init") if first is None else 0
         if first is None and len(ra) != len(rb):
             first = n
         if first is not None:
             divergences += 1
             print(f"DIVERGENCE {game} 歩 {first}: {ra[first] if first < len(ra) else None} / {rb[first] if first < len(rb) else None}")
-    print(f"対戦 {len(order_a)}・一致した歩 {steps}・食い違い {divergences}")
+    print(f"対戦 {len(order_a)}・一致した歩 {steps}・食い違い {divergences}・許した差 {sum(allowed.values())} {dict(allowed)}")
+    for example in examples:
+        print(f"  許した差の例: {example}")
     for label, s in (("a", sa), ("b", sb)):
         if s is not None:
             print(label, json.dumps({k: s[k] for k in ("root", "route", "preflight", "version", "elapsed", "errors")}, ensure_ascii=False))
     return 1 if divergences else 0
+
+
+def tree(args) -> int:
+    """固定した前の版のコミットを ``git archive`` で ``--out`` に展開する（v0.16）。``--out`` は空か、まだないこと。展開した木の
+    ``kyuura_engine.__version__`` と、展開したコミットを表示する（別のプロセスで読む。この道具がある木の ``kyuura_engine`` を読まない）。"""
+    out = Path(args.out).resolve()
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"{out} は空ではない（固定した木を上書きしない）")
+    out.mkdir(parents=True, exist_ok=True)
+    repo = Path(__file__).resolve().parent.parent
+    commit = subprocess.run(["git", "rev-parse", "--verify", f"{args.commit}^{{commit}}"], cwd=repo, check=True, capture_output=True,
+                            text=True).stdout.strip()
+    archive = out / ".archive.tar"
+    with open(archive, "wb") as f:
+        subprocess.run(["git", "archive", "--format=tar", commit], cwd=repo, check=True, stdout=f)
+    with tarfile.open(archive) as tar:
+        if hasattr(tarfile, "data_filter"):
+            tar.extractall(out, filter="data")
+        else:  # 古い 3.11（自分のリポジトリの git archive なので、展開するのは木のファイルだけ）
+            tar.extractall(out)
+    archive.unlink()
+    probe = f"import sys; sys.path.insert(0, {str(out)!r}); import kyuura_engine; print(kyuura_engine.__version__)"
+    version = subprocess.run([sys.executable, "-I", "-c", probe], cwd=out, check=True, capture_output=True, text=True).stdout.strip()
+    (out / "FIXED_COMMIT").write_text(f"{commit}\n{version}\n", encoding="utf-8")
+    print(json.dumps({"out": str(out), "commit": commit, "version": version}, ensure_ascii=False))
+    return 0
 
 
 def _rerun_without_hash_randomization(argv) -> None:
@@ -272,10 +345,13 @@ def main(argv=None) -> int:
     c = sub.add_parser("compare")
     c.add_argument("a")
     c.add_argument("b")
+    t = sub.add_parser("tree")
+    t.add_argument("--commit", required=True)
+    t.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     if args.action == "record" and sys.flags.hash_randomization:
         _rerun_without_hash_randomization(sys.argv[1:] if argv is None else argv)
-    return record(args) if args.action == "record" else compare(args)
+    return {"record": record, "compare": compare, "tree": tree}[args.action](args)
 
 
 if __name__ == "__main__":

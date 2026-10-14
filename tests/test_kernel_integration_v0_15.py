@@ -41,6 +41,7 @@ from tests.helpers import (
     BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, H, MACHOP, METAPOD, PSYCHIC, RATTATA, T, WATER, WEEDLE, apply_kernel, apply_legacy,
     build_test_state, two_step_effects, with_coin_results,
 )
+from tests import legacy_reference
 from tests import test_counterattack_v0_10 as CA
 from tests import test_transparency_v0_9 as TR
 from tests.test_event_kernel_v0_14 import DARK_, GIOVANNI_, MACHAMP_, PONYTA_, TURN, UnresolvedTest, board
@@ -210,15 +211,18 @@ class DispatchTest(unittest.TestCase):
             {"active": RATTATA, "bench": [RATTATA]},
         ], effects=two_step_effects())
         self.assertFalse(resolution.handles(state, UseAttack(0, 0)))
-        legacy, kernel = apply_legacy(state, UseAttack(0, 0)), apply_kernel(state, UseAttack(0, 0))
-        self.assertEqual(full(kernel), full(legacy))
+        # v0.13 の処理の結果は参照データ（tests/legacy_reference.py。v0.16a）
+        expected = legacy_reference.expected(self, state, UseAttack(0, 0))
+        kernel = apply_kernel(state, UseAttack(0, 0))
+        self.assertEqual(("ok", legacy_reference.digest(kernel)), expected)
         for step in range(2):
             decision = kernel.decision
             command = ResolveDecision(0, decision.id, (decision.options[0],))
             self.assertEqual(decision.resume, codec.ATTACK)
             self.assertFalse(resolution.handles(kernel, command))
-            legacy, kernel = apply_legacy(legacy, command), apply_kernel(kernel, command)
-            self.assertEqual(full(kernel), full(legacy))
+            expected = legacy_reference.expected(self, kernel, command)
+            kernel = apply_kernel(kernel, command)
+            self.assertEqual(("ok", legacy_reference.digest(kernel)), expected)
         self.assertEqual([e["kind"] for e in kernel.log if e["kind"] == "test_two_step"], ["test_two_step"])
 
     def test_subclass_of_a_table_entry_is_not_compiled(self):
@@ -229,8 +233,9 @@ class DispatchTest(unittest.TestCase):
             {"active": RATTATA, "bench": [RATTATA]},
         ], effects=effects)
         self.assertFalse(resolution.handles(state, UseAttack(0, 0)))
+        expected = legacy_reference.expected(self, state, UseAttack(0, 0))  # v0.13 の処理の結果（参照データ。v0.16a）
         new = apply_kernel(state, UseAttack(0, 0))
-        self.assertEqual(full(new), full(apply_legacy(state, UseAttack(0, 0))))
+        self.assertEqual(("ok", legacy_reference.digest(new)), expected)
         self.assertIn("test_subclassed_damage", [e["kind"] for e in new.log])
 
 
@@ -254,15 +259,16 @@ class MessageTest(unittest.TestCase):
                        UseAttack(0, 0))
 
     def test_stop_messages_are_the_same_on_both_routes(self):
-        """原典で決められない場合に止めるときの例外の種類・コード・理由の文が、v0.13 の経路と同じ（2 つの先読みとも）。"""
+        """原典で決められない場合に止めるときの例外の種類・コード・理由の文が、v0.13 の経路と同じ（2 つの先読みとも）。v0.13 の経路の
+        結果は参照データ（tests/legacy_reference.py。v0.16a）。"""
         stopped = 0
         for name, make, command in self.cases():
             with self.subTest(case=name):
                 self.assertEqual(check_invariants(make()), [])
-                expected = outcome(apply_legacy, make(), command)
-                stopped += expected[0] == "rejected"
+                expected = legacy_reference.expected(self, make(), command)
+                stopped += expected[0] == "error"
                 for mode in resolution.PREFLIGHT_MODES:
-                    self.assertEqual(outcome(apply_kernel, make(), command, preflight=mode), expected, mode)
+                    self.assertEqual(legacy_reference.outcome_of(apply_kernel, make(), command, preflight=mode), expected, mode)
         self.assertGreaterEqual(stopped, 30)
 
     def test_refused_chain_names_the_assumption(self):
