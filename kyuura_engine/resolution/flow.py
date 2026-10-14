@@ -127,9 +127,12 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
-    if ctx.preflight == "legacy":
+    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED:
         v013_checks.check(state, use, effect, attacker, ctx.trace, mode="legacy")
     else:
+        # derived_full。v0.17d から、比べる方法 legacy でも、v0.13 の止める関数で確かめていない型（VERIFIED にない。v0.17 から加えた型）は
+        # ここで確かめる（v0.13 の止める関数は v0.17 の問い（Z23 など）を知らず、コインの結果で受け付けるかが変わってしまう。
+        # docs/card-extensibility-verification-v0.17d.md 6 章）
         try:
             P.derived(state, body, ctx.catalog, ctx.trace)
         except P.BranchLimit:

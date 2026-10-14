@@ -31,13 +31,13 @@ from kyuura_engine.cards import CardPool, load_card_pool, pool_from_extract, rea
 from kyuura_engine.conditions import SLEEP
 from kyuura_engine.decisions import FORCED_SWITCH
 from kyuura_engine.resolution import catalog as C
-from kyuura_engine.resolution import contract, programs
+from kyuura_engine.resolution import PREFLIGHT_MODES, contract, programs
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import PreventDamage
 from tests.helpers import (
     ABRA, ALAKAZAM, BILL, BUTTERFREE, CATERPIE, DARK_WARTORTLE, DEFENDER, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MEOWTH, GRASS,
     GRIMER, H, HAUNTER, KADABRA, KOGAS_MUK, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PIKACHU, PLUSPOWER, POTION, PSYCHIC,
-    RATTATA, ROCKET_SQUIRTLE, ROCKETS_MOLTRES, ROCKETS_SNORLAX, SWITCH, T, build_test_state, coin_events, expand_decklist,
+    RATTATA, ROCKET_SQUIRTLE, ROCKETS_MOLTRES, ROCKETS_SNORLAX, SWITCH, T, apply_kernel, build_test_state, coin_events, expand_decklist,
     with_coin_results,
 )
 from tests.log_audit import log_problems, serialization_problems
@@ -385,6 +385,21 @@ class TumbleTest(unittest.TestCase):
         new = apply_command(with_coin_results(board(snorlax(trainers=[(PLUSPOWER, TURN)]), {"card": MACHOP, "trainers": [(DEFENDER, TURN)]}), T),
                             UseAttack(0, 0))
         self.assertEqual((events(new, 0, "damage")[-1]["amount"], new.players[0].active.conditions.asleep), (10, True))
+
+    def test_no_damage_stops_in_every_preflight_mode(self):
+        """v0.17d: 宣言の前の先読みの方法（derived・derived_full・比べる方法 legacy）のどれでも、「とうめい」のコインの結果によらず Z23 で止める
+        （状態は変わらない）。legacy は v0.13 の止める関数で確かめた型（``v013_checks.VERIFIED``）だけにそれを使い、たおれこむ（VERIFIED に
+        ない）はすべての結果を試す方法で確かめる。v0.13 の止める関数は Z23 を知らないので、使うと「うら」のときだけ受け付けてしまう
+        （docs/card-extensibility-verification-v0.17d.md 6 章）。"""
+        for mode in PREFLIGHT_MODES:
+            for side in (H, T):
+                with self.subTest(mode=mode, coin=side):
+                    state = with_coin_results(board(snorlax(), {"card": HAUNTER, "evolved_from": GASTLY}), side)
+                    before = snapshot(state)
+                    with self.assertRaises(UnsupportedError) as ctx:
+                        apply_kernel(state, UseAttack(0, 0), preflight=mode)
+                    self.assertEqual(ctx.exception.code, NO_DAMAGE)
+                    self.assertEqual(snapshot(state), before)
 
     def test_both_actives_asleep_halts_the_pokemon_check(self):
         """相手の対戦ポケモンもねむりなら、ポケモンチェックのねむりのコインの順番が決まらない（既存の UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER。Z29）。"""
