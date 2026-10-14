@@ -62,7 +62,7 @@ v0.15d で標準の経路になった解決の基盤（`kyuura_engine/resolution
 | `apply_command_via` | engine 1・experiments 3・tests 14（4 ファイル）・tools 4（2 ファイル） | C・D | 先読みの方法・効果の定義の対応表をテストで選ぶ入口も兼ねている | 経路の引数のない内部の入口（先読みの方法・対応表を選ぶ）に置きかえる。解決の記録の入口 `apply_command_traced` は残す |
 | `resolution.handles` | engine 2・experiments 2・tests 11（2 ファイル） | E・C | 受け持たないコマンドを旧経路に回すための判定。旧経路を消せば、ワザは「対応表の要素の並び」か「アダプタ」で必ず KERNEL が処理する | v0.16b で外す（決定の振り分けは 2 章のとおり） |
 | `resolution.PREFLIGHT_MODES` | engine 1・resolution 6・experiments 1・tests 7（2 ファイル） | A・C | 先読みの方法（`derived`・`derived_full`・`legacy`）。経路とは別のもの | 残す（v0.16c で `legacy` の扱いを決める） |
-| `LEGACY_VERIFIED` | resolution 3・tests 4（1 ファイル） | A | 上限を超えたときに v0.13 の止める関数で確かめてよい 24 種類 | v0.16c で決める |
+| `LEGACY_VERIFIED` | resolution 3・tests 4（1 ファイル） | A | 上限を超えたときに v0.13 の止める関数で確かめてよい 24 種類 | v0.16c で決める（→ `resolution/v013_checks.py` の `VERIFIED` に移して残した。[preflight-consolidation-v0.16c.md](preflight-consolidation-v0.16c.md)） |
 
 ### 3.2 旧ダメージ処理境界（`effects.py`）
 
@@ -80,7 +80,7 @@ v0.15d で標準の経路になった解決の基盤（`kyuura_engine/resolution
 | `damage_profile`・`DamageProfile` | effects 33・tests 22（6 ファイル） | A・C・F | 先読み `legacy`・上限を超えたときの確かめ（C18・W24・G37 の止める関数）が使う | 残す（v0.16c） |
 | `opponent_effect_elements` | effects 14・resolution 2・tests 5（2 ファイル） | A・C・F | G37 の止める関数（`legacy`）が使う。KERNEL は要素の並びから求める（`programs.opponent_effect_elements`） | 残す（v0.16c） |
 | `preview_attack_damage`・`damage_receiver` | effects だけ | A | 止める関数（C18・W24・G37・T19b）が使う | 残す（v0.16c） |
-| `counterattack_double_knockout_problem`・`ko_prevention_attack_effect_problem`・`retaliation_double_knockout_problem` | engine 8・resolution 6（`preflight.legacy`）・tests 1 | A・E | 旧経路の `_use_attack` と先読みの `legacy`（比べる・上限を超えたとき） | 残す（v0.16c で置き場所を決める）。理由の文の関数（`…_error`）は両方が使う（A） |
+| `counterattack_double_knockout_problem`・`ko_prevention_attack_effect_problem`・`retaliation_double_knockout_problem` | engine 8・resolution 6（`preflight.legacy`）・tests 1 | A・E | 旧経路の `_use_attack` と先読みの `legacy`（比べる・上限を超えたとき） | 残す（v0.16c で置き場所を決める → `resolution/v013_checks.py` だけが使う）。理由の文の関数（`…_error`）は両方が使う（A） |
 | `prevented_coin_damage_problem`・`evaded_effect_coin_problem` | effects だけ（`CoinFlipDamage.problem` などの実装の `problem`） | A | 上の止める関数と同じ | 残す |
 | `evasion_power`・`counterattack_power`・`ko_prevention_power`・`post_knockout_power`・`ko_prevention_suppressors` | effects・engine（不変条件）・resolution（説明）・tests | A・B | 不変条件・公開の問い合わせ（`working_evasion_power` など）・止める関数が使う。KERNEL の対応表（`catalog`）は効果の型で探すので、これらを呼ばない | 残す |
 | `DamageResult` | effects 10・resolution 5・tests 4 | A | `kernel.deal_damage` が返す | 残す |

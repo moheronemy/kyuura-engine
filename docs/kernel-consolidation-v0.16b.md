@@ -125,6 +125,6 @@ v0.13 の経路（`engine.py` の旧ワザ解決経路・旧きぜつの処理�
 
 ## 8. していないこと
 
-- 宣言の前の先読みの方法 `legacy` と `LEGACY_VERIFIED` の扱い（v0.16c）。
+- 宣言の前の先読みの方法 `legacy` と `LEGACY_VERIFIED` の扱い（v0.16c → [preflight-consolidation-v0.16c.md](preflight-consolidation-v0.16c.md)。案 A で `resolution/v013_checks.py` に分けて残した）。
 - 重複の整理・`experiments/event_kernel/__init__.py` を残すか・`WRONG_PHASE` の並び（v0.16d）。
 - 全体の規模の比較・性能・変異試験（v0.16e）。

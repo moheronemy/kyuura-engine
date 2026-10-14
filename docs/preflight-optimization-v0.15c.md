@@ -61,6 +61,8 @@ v0.15c の `derived`（標準の先読み。`preflight.after_real_run`）は、�
 
 1 回の先読み（`preflight.explore` の 1 回の呼び出し）で試す結果の数（葉の数）は `MAX_BRANCHES` = 4,096 までです。超えたら（`BranchLimit`）:
 
+（v0.16c の注: `derived` の `siblings` は、v0.15c では実際の処理の結果を上限に数えず、ちょうど 4,097 通りのコインだけの木を受け付けていました。v0.16c で実際の処理の結果も数えるように直し、`LEGACY_VERIFIED` は `resolution/v013_checks.py` の `VERIFIED` に移しました。[preflight-consolidation-v0.16c.md](preflight-consolidation-v0.16c.md) 2 章・4.2 節。）
+
 - 途中までの結果は使いません。「当たる問いがない」証拠にも、途中までに当たった問いを止める理由にもしません（どの問いで止めるかは、すべての結果がそろわないと決まらない）。
 - ワザの実装が `preflight.LEGACY_VERIFIED`（v0.13 の止める関数で宣言の前の確認ができると確かめた 24 種類。v0.14・v0.15 の比較で `derived` と同じ答え）にあれば、v0.13 の止める関数で確かめます（コマンドの入口に渡された状態で。記録は `legacy_after_limit`）。止めなければ実際の処理を続け、実際の処理が自分の結果で問いに当たれば止めます。
 - なければ、推測で受け付けず `UnsupportedError("UNSUPPORTED_PREFLIGHT_LIMIT")` で拒否します（渡した状態は変わらない）。
@@ -124,4 +126,4 @@ v0.15c の `derived`（標準の先読み。`preflight.after_real_run`）は、�
 | `derived_full` | v0.14 の方法（すべての結果を先に試す）。決定の答えは 3 章のとおりすべて | 比べる基準 |
 | `legacy` | v0.13 の止める関数 | 比べる基準 |
 
-`derived` と `derived_full` は、上限を超えたときの扱い（4 章）も同じです。
+`derived` と `derived_full` は、上限を超えたときの扱い（4 章）も同じです（v0.16c の注: ちょうど 4,097 通りのコインだけの木だけは違っていた。v0.16c で直した。[preflight-consolidation-v0.16c.md](preflight-consolidation-v0.16c.md) 4.2 節）。
