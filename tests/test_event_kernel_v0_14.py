@@ -1,4 +1,5 @@
-"""v0.14: 汎用のイベント・効果の解決の仕組みのプロトタイプ（experiments/event_kernel）の単体テスト（docs/event-prototype-verification-v0.14.md）。
+"""v0.14: 汎用のイベント・効果の解決の仕組みのプロトタイプ（v0.14 は experiments/event_kernel。v0.15b から本番の解決の基盤
+``kyuura_engine.resolution``。v0.16d で v0.14 の名前の互換の層を外した）の単体テスト（docs/event-prototype-verification-v0.14.md）。
 
 どのテストも、同じ状態・同じ乱数・同じコマンドを v0.13 のエンジン（v0.15 からは経路 ``Route.LEGACY``）とプロトタイプ（v0.15 からは本番の解決の基盤。経路 ``KERNEL``）に渡し、状態（形式 9。
 ログ・乱数の指紋・決定を含む）か拒否（例外の種類とコード）が同じことを確かめる（``Both``）。v0.16a から、v0.13 の結果は、旧経路がある木で
@@ -35,12 +36,14 @@ from tests.helpers import (
 from tests import legacy_reference
 from tests.log_audit import log_problems, serialization_problems
 
-from experiments import event_kernel as K
-from experiments.event_kernel import catalog as C
-from experiments.event_kernel import codec
-from experiments.event_kernel import events as EV
-from experiments.event_kernel import kernel as KN
-from experiments.event_kernel.questions import QUESTIONS
+# v0.16d: v0.14 の名前の互換の層（experiments.event_kernel）を外したので、本番の解決の基盤と内部の入口を直接使う
+from kyuura_engine.engine import apply_command_traced, apply_command_with
+from kyuura_engine.resolution import BUILDERS, PREFLIGHT_MODES
+from kyuura_engine.resolution import catalog as C
+from kyuura_engine.resolution import codec
+from kyuura_engine.resolution import events as EV
+from kyuura_engine.resolution import kernel as KN
+from kyuura_engine.resolution.questions import QUESTIONS
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT / "tools") not in sys.path:
@@ -77,7 +80,7 @@ class Both(unittest.TestCase):
         before, rng = full(state), rng_fingerprint(state.rng)
         expected = legacy_reference.expected(self, state, command)  # v0.13 の結果（v0.16a から参照データ）
         try:
-            (actual, trace), actual_error = K.apply_command_traced(state, command, preflight=mode), None
+            (actual, trace), actual_error = apply_command_traced(state, command, preflight=mode), None
         except EngineError as error:
             actual, trace, actual_error = None, None, error
         self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, rng), "渡した状態が変わった")
@@ -427,7 +430,7 @@ class UnresolvedTest(Both):
 
     def test_same_code_in_both_modes(self):
         for name, (make, command, code) in self.CASES.items():
-            for mode in K.PREFLIGHT_MODES:
+            for mode in PREFLIGHT_MODES:
                 with self.subTest(case=name, mode=mode):
                     _, _, error = self.both(make(), command, mode=mode)
                     self.assertIsNotNone(error)
@@ -437,13 +440,13 @@ class UnresolvedTest(Both):
         """先読みは、コインのすべての結果を試し、当たった問いを解決の記録に残す（勝者・順番を推測で決めない）。"""
         make, command, code = self.CASES["C18"]
         with self.assertRaises(EngineError):
-            K.apply_command_traced(make(), command)
-        from experiments.event_kernel import preflight as P
+            apply_command_traced(make(), command)
+        from kyuura_engine.resolution import preflight as P
         state = make()
 
         def body(res):
-            from experiments.event_kernel.flow import _attack_body
-            from experiments.event_kernel.programs import compile_attack
+            from kyuura_engine.resolution.flow import _attack_body
+            from kyuura_engine.resolution.programs import compile_attack
             attacker = res.state.players[0].active
             attack = res.state.card_def(attacker.card).attacks[1]
             effect = res.state.effects.attack_effect(PONYTA, attack)
@@ -458,13 +461,13 @@ class UnresolvedTest(Both):
         """2 つの問いに当たる（こんらんの「うら」でこんらんの変更効果、「おもて」で C18）ときは、v0.13 の確認の順番（こんらんの変更効果が
         先）のコードで止める。勝者・順番を決めるための優先ではなく、どのコードで止めるかだけを決める。"""
         attacker = {**PONYTA_, "damage": 30, "confusion": True, "trainers": [(PLUSPOWER, TURN)]}
-        for mode in K.PREFLIGHT_MODES:
+        for mode in PREFLIGHT_MODES:
             with self.subTest(mode=mode):
                 _, _, error = self.both(board(attacker, {**MACHAMP_, "damage": 80}), UseAttack(0, 1), mode=mode)
                 self.assertEqual(error.code, "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS")
-        from experiments.event_kernel import preflight as P
-        from experiments.event_kernel.flow import _attack_body
-        from experiments.event_kernel.programs import compile_attack
+        from kyuura_engine.resolution import preflight as P
+        from kyuura_engine.resolution.flow import _attack_body
+        from kyuura_engine.resolution.programs import compile_attack
         state = board(attacker, {**MACHAMP_, "damage": 80})
 
         def body(res):
@@ -511,11 +514,11 @@ class ChainAndAtomicityTest(Both):
         EV.SPAWNS[EV.FrameKind.RETALIATION] = frozenset()
         try:
             with self.assertRaises(RuntimeError):
-                K.apply_command(state, UseAttack(0, 0))
+                apply_command_with(state, UseAttack(0, 0))
         finally:
             EV.SPAWNS[EV.FrameKind.RETALIATION] = original
         self.assertEqual(full(state), before)
-        K.apply_command(state, UseAttack(0, 0))  # 表をもどせば受け付ける
+        apply_command_with(state, UseAttack(0, 0))  # 表をもどせば受け付ける
 
     def test_illegal_commands_are_atomic(self):
         """不正なコマンドは、v0.13 と同じコードで拒否し、状態・乱数・ログを変えない。"""
@@ -546,7 +549,7 @@ class ChainAndAtomicityTest(Both):
         KN.ACTIONS["power_damage_to_damage_source"] = broken
         try:
             with self.assertRaises(RuntimeError):
-                K.apply_command(state, UseAttack(0, 1))
+                apply_command_with(state, UseAttack(0, 1))
         finally:
             KN.ACTIONS["power_damage_to_damage_source"] = original
         self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, rng))
@@ -554,8 +557,8 @@ class ChainAndAtomicityTest(Both):
     def test_trace_is_not_part_of_the_state(self):
         """解決の記録（内部のイベント）は状態に入らない。公開のログは v0.13 と同じ。"""
         state = board(PONYTA_, MACHAMP_)
-        a = K.apply_command(state, UseAttack(0, 1))
-        b, trace = K.apply_command_traced(state, UseAttack(0, 1))
+        a = apply_command_with(state, UseAttack(0, 1))
+        b, trace = apply_command_traced(state, UseAttack(0, 1))
         self.assertEqual(full(a), full(b))
         self.assertGreater(len(trace), 0)
         self.assertNotIn("trace", full(a))
@@ -570,7 +573,7 @@ class CatalogTest(unittest.TestCase):
         """登録表のワザの実装（24 種類）はすべて要素の並びに置きかえられる（効果のないワザとして処理するものはない）。"""
         kinds = {type(entry.effect) for key in DEFAULT_EFFECTS.attack_keys() for entry in [DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index)]}
         self.assertEqual(len(kinds), 24)
-        self.assertEqual(kinds - set(K.BUILDERS), set())
+        self.assertEqual(kinds - set(BUILDERS), set())
 
     def test_automatic_optional_and_continuous_powers_are_in_the_catalog(self):
         """宣言しない・決められたときに使う特殊能力は、対応表の 1 か所にある。宣言して使う特殊能力（v0.13 のエンジンが扱う）はない。"""
@@ -593,7 +596,7 @@ class GameTest(unittest.TestCase):
         rng = random.Random(f"kyuura-stress:{scenario}:{seed}")
         spec = next(s for s in stress.ALL_SCENARIOS if s.name == scenario)
         state = __import__("kyuura_engine").new_game(driver._deck(spec.deck0), driver._deck(spec.deck1), seed)
-        apply = legacy_reference.legacy_apply_for_recording if chain is not None and legacy_reference.recording() else K.apply_command
+        apply = legacy_reference.legacy_apply_for_recording if chain is not None and legacy_reference.recording() else apply_command_with
         for _ in range(steps):
             if state.phase in (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED):
                 break

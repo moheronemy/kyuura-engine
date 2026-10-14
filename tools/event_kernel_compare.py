@@ -44,8 +44,9 @@ for path in (ROOT, ROOT / "tools"):
 import kyuura_engine as engine  # noqa: E402
 from kyuura_engine.rng import rng_fingerprint  # noqa: E402
 
-from experiments import event_kernel as K  # noqa: E402
-from experiments.event_kernel import events as EV  # noqa: E402
+from kyuura_engine import resolution  # noqa: E402
+from kyuura_engine.engine import apply_command_traced  # noqa: E402
+from kyuura_engine.resolution import events as EV  # noqa: E402
 
 NATURAL_MODULES = (
     "test_alakazam_games_v0_7", "test_blastoise_games_v0_6", "test_bulbasaur_games_v0_5", "test_butterfree_games_v0_4d",
@@ -110,7 +111,7 @@ class Comparator:
 
     def __call__(self, state, command):
         before, rng = full(state), rng_fingerprint(state.rng)
-        owned = K.owned(state, command)
+        owned = resolution.processes(state, command)
         t0 = time.perf_counter()
         expected, expected_error = _run(_baseline_apply, state, command)
         t1 = time.perf_counter()
@@ -122,7 +123,7 @@ class Comparator:
         for mode in self.modes:
             t2 = time.perf_counter()
             try:
-                (actual, trace), error = K.apply_command_traced(state, command, preflight=mode), None
+                (actual, trace), error = apply_command_traced(state, command, preflight=mode), None
             except engine.EngineError as caught:
                 actual, trace, error = None, None, caught
             t3 = time.perf_counter()

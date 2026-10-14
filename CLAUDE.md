@@ -232,7 +232,7 @@
 ## 汎用のイベント・効果の解決の試作（v0.14）
 
 - （v0.15b で、プロトタイプは本番の内部の部品 `kyuura_engine/resolution/` になった。下の「解決の基盤の本番への統合（v0.15）」。この節は v0.14 の時点の約束で、v0.15 の節が優先する。）
-- `experiments/event_kernel/` は本番ではありません（設計の試作。docs/event-model-v0.14.md）。本番（`kyuura_engine/`）の規則（「汎用のイベントの仕組み（購読・発行）にしない」など）は v0.14 では変えていません。本番のコードから `experiments` を読み込まないでください。
+- `experiments/event_kernel/` は本番ではありませんでした（設計の試作。docs/event-model-v0.14.md。v0.15b で本番の部品になり、v0.16d で v0.14 の名前の互換の層ごと外した）。本番（`kyuura_engine/`）の規則（「汎用のイベントの仕組み（購読・発行）にしない」など）は v0.14 では変えていません。
 - プロトタイプは v0.13 の状態の型・書き出しの形式 9・ログ・決定の形をそのまま使い、ワザ・番の終わりと、再開先 `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定だけを処理します（ほかのコマンドは `kyuura_engine.apply_command` に渡す。`flow.owned`）。本番の非公開の関数を 14 直接呼んでいる（docs/event-prototype-verification-v0.14.md 1 章）ので、それらの意味を変えたら比較のテストで確かめてください。
 - tests/test_event_kernel_v0_14.py・tests/test_event_kernel_games_v0_14.py は、同じ入力で本番とプロトタイプの結果（形式 9 の全体・乱数の指紋・拒否の例外とコード）が同じことを確かめます。本番のワザ・ダメージ・きぜつ・番の終わりの動きを変えたら（カードを加えたときも）失敗することがあります。そのときは、プロトタイプの対応表（`programs.BUILDERS`・`catalog` の定義と対応表）を合わせるか、比べない範囲を docs に書いてください。比較のテストの期待を本番に合わせて弱めないでください。
 - 窓の順番・枠の表（`events.SPAWNS`）・問いの表（`questions.QUESTIONS`）は、原典の処理の順番と裁定を表します。表にない連鎖・問いは `RuntimeError` で止めます。回数の上限・購読の順番・優先度の数値で処理の順番を決める形にしないでください（問いの `priority` は v0.13 の確認の順番を写したもので、2 つ以上の問いに当たったときにどのコードで止めるかだけを決める）。
@@ -242,7 +242,7 @@
 ## 解決の基盤の本番への統合（v0.15）
 
 - 確認（`checks.py`）と状態を変える共通の手続き（`procedures.py`）は、v0.13 の経路と解決の基盤の両方が使います（v0.15a。docs/integration-dependencies-v0.15a.md）。どちらも `engine.py` を読み込まないでください。共通の部品を変えると両方の経路が同じように変わるので、同じ木の中の比較では見つかりません。固定した前の版の木と別のプロセスで比べてください（`tools/engine_lockstep.py`。C 段階。ふだんのテストで走らせない）。
-- 解決の基盤は `kyuura_engine/resolution/` です（v0.15b。docs/kernel-integration-v0.15b.md）。`engine.py` を読み込まないでください（依存の向きは engine → resolution → checks・procedures。tests/test_kernel_integration_v0_15.py の `DependencyTest` が確かめる）。`experiments/event_kernel/__init__.py` は v0.14 のテスト・道具の名前をつなぐだけの互換の層で、コードを加えないでください。本番のコードから `experiments` を読み込まないでください。
+- 解決の基盤は `kyuura_engine/resolution/` です（v0.15b。docs/kernel-integration-v0.15b.md）。`engine.py` を読み込まないでください（依存の向きは engine → resolution → checks・procedures。tests/test_kernel_integration_v0_15.py の `DependencyTest` が確かめる）。v0.14 の名前の互換の層（`experiments/event_kernel/__init__.py`）は v0.16d で外しました（テスト・道具は `kyuura_engine.resolution` と `engine` の内部の入口を直接使う）。互換のための別名（`sys.modules` への登録）・コードの複製を戻さないでください（`DependencyTest.test_no_copy_of_the_kernel_remains`）。
 - （v0.16b で経路（`engine.Route`・`DEFAULT_ROUTE`・`apply_command_via`・`resolution.handles`）と v0.13 の経路を外した。下の「旧経路の撤去と解決の基盤の一本化（v0.16）」。）公開の `apply_command(state, command)` の呼び方を変えないでください。解決の設定（先読みの方法・効果の定義の対応表）を選ぶときは内部の入口 `engine.apply_command_with(..., preflight=..., catalog=...)`（tests/helpers.py の `apply_kernel`）か `apply_command_traced` を使い、グローバルな可変フラグ・処理の途中で書きかえる値で切り替えないでください。
 - 解決の基盤が処理するのは、ワザ・番の終わり（`resolution.COMMANDS`）と、再開先が `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active`（`resolution.RESUMES`）の決定への答えです。トレーナーの決定（`trainer`）への答えは engine.py（`_answer_decision` → `_resume_trainer`）です。`ResolveDecision` をすべて解決の基盤に送らないでください。製品の登録表にワザの実装を加えたら、`BUILDERS` に要素の並びを加えてください（tests/test_kernel_integration_v0_15.py が製品の登録表のすべてを確かめる。製品のワザに v0.13 の約束のアダプタを使わない）。
 - 原典で決められない場合に止める理由の文は、`effects` の共通の関数（`prevented_coin_damage_error`・`evaded_effect_coin_error`・`counterattack_double_knockout_error`・`retaliation_double_knockout_error`・`ko_prevention_attack_effect_error`）で作ります（解決の基盤と v0.13 の止める関数が同じ関数を使う）。解決の基盤は文に書く値を枠の値（`FrameState` の `origin`・`applied`・`evaded`）から読み、解決の記録（`Trace`）からは読みません（比較のテスト・参照データ・道具は理由の文も比べる）。

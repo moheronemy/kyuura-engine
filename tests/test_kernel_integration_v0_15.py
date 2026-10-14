@@ -172,13 +172,21 @@ class DependencyTest(unittest.TestCase):
         }
         self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine"})
 
-    def test_compatibility_layer_is_not_a_copy(self):
-        """v0.14 の名前（``experiments.event_kernel``）は本番の部品そのものを指す（コードの複製がない）。"""
-        from experiments import event_kernel as K
-        from experiments.event_kernel import kernel
-        self.assertIs(kernel, resolution.kernel)
-        self.assertIs(K.BUILDERS, resolution.BUILDERS)
-        self.assertEqual(sorted(p.name for p in (ROOT / "experiments" / "event_kernel").glob("*.py")), ["__init__.py"])
+    def test_no_copy_of_the_kernel_remains(self):
+        """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層
+        （``experiments/event_kernel/__init__.py``。``sys.modules`` に同じモジュールを別の名前で登録していた）があったが、v0.16d で外し、
+        テスト・道具は本番の部品と内部の入口を直接使う。どのコードも ``experiments`` を読み込まず、本番のモジュールを別の名前で
+        ``sys.modules`` に登録しない（読み込んだあとのすべてのモジュールで、登録の名前とモジュールの名前が同じ）。"""
+        self.assertFalse((ROOT / "experiments").exists())
+        roots = [PACKAGE, ROOT / "tests", ROOT / "tools", ROOT / "scripts"]
+        for path in sorted(p for root in roots if root.exists() for p in root.rglob("*.py")):
+            with self.subTest(module=path.relative_to(ROOT).as_posix()):
+                self.assertFalse([name for name in imports_of(path) if name == "experiments" or name.startswith("experiments.")])
+        import sys
+        aliases = sorted(name for name, module in list(sys.modules.items())
+                         if getattr(module, "__name__", name).startswith("kyuura_engine") and module.__name__ != name)
+        self.assertEqual(aliases, [])
+        self.assertIn("kyuura_engine.resolution.kernel", sys.modules)  # 解決の基盤のモジュールを読み込んだあとで確かめている
 
 
 # ---------------------------------------------------------------- コマンドの振り分け
