@@ -151,13 +151,6 @@ class ElementStarted:
 
 
 @dataclass(frozen=True)
-class ElementSkipped:
-    frame: int
-    element: str
-    reason: str
-
-
-@dataclass(frozen=True)
 class CandidateFound:
     window: Window
     definition: str
@@ -195,11 +188,6 @@ class Suspended:
     resume: str
     kind: str
     player: int
-
-
-@dataclass(frozen=True)
-class Delegated:
-    command: str
 
 
 @dataclass(frozen=True)
