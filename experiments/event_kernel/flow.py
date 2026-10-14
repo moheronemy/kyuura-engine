@@ -20,15 +20,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from kyuura_engine import engine as ENG
-from kyuura_engine import judge
-from kyuura_engine.cards import can_pay_cost
+from kyuura_engine import apply_command as v013_apply_command
+from kyuura_engine import check_invariants, judge
+from kyuura_engine import procedures as PR
+from kyuura_engine.checks import PLAYERS, attack_request, decision_choices, require_turn
 from kyuura_engine.commands import UNSUPPORTED_COMMANDS, EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack, check_command_fields
-from kyuura_engine.decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices
+from kyuura_engine.decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from kyuura_engine.effects import AttackKey, AttackUse, PowerKey, attack_damage_modifiers
-from kyuura_engine.errors import IllegalActionError, UnsupportedError
-from kyuura_engine.persistent import remove_expired_persistent_effects
-from kyuura_engine.state import Halt, Phase
+from kyuura_engine.errors import IllegalActionError, StateIntegrityError, UnsupportedError
+from kyuura_engine.state import Phase
 
 from . import catalog as C
 from . import codec
@@ -39,7 +39,7 @@ from .programs import AttackRun, compile_attack, decision_index, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = ("derived", "legacy")
-NEXT_TURN = ENG.NEXT_TURN
+NEXT_TURN = PR.NEXT_TURN
 
 
 @dataclass
@@ -70,7 +70,7 @@ def apply_command_traced(state, command, *, preflight: str = "derived", catalog:
     trace = Trace()
     if not owned(state, command):
         trace.record(Delegated(type(command).__name__))
-        return ENG.apply_command(state, command), trace
+        return v013_apply_command(state, command), trace
     if isinstance(command, UNSUPPORTED_COMMANDS):
         raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
     check_command_fields(command)
@@ -86,7 +86,9 @@ def apply_command_traced(state, command, *, preflight: str = "derived", catalog:
         _HANDLERS[type(command)](ctx, new, command)
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
-    ENG._require_integrity(new)
+    problems = check_invariants(new)
+    if problems:
+        raise StateIntegrityError(problems)
     return new, trace
 
 
@@ -95,21 +97,9 @@ def apply_command_traced(state, command, *, preflight: str = "derived", catalog:
 
 def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     """v0.13 の ``engine._use_attack`` と同じ確認（同じ順番・同じコード）のあと、先読みと解決。"""
-    p = ENG._require_turn(state, cmd.player)
-    attacker = p.active
-    attacker_def = state.card_def(attacker.card)
-    if not 0 <= cmd.attack_index < len(attacker_def.attacks):
-        raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
-    ENG._require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
-    attack = attacker_def.attacks[cmd.attack_index]
-    effect = state.effects.attack_effect(attacker_def.id, attack)
-    if effect is None:
-        problem = state.effects.attack_problem(attacker_def.id, attack)
-        raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
-    if not can_pay_cost(attack.cost, state.energy_types(attacker)):
-        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
+    request = attack_request(state, cmd)  # v0.13 の経路と同じ確認（checks.attack_request）
+    attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
     program = compile_attack(effect)
-    key = AttackKey(attacker_def.id, cmd.attack_index)
     pid = attacker.pokemon_id
 
     def body(res: Resolution) -> None:
@@ -126,12 +116,12 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     state = res.state
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
-    if attacker.conditions.confused and not ENG._confusion_check(state, player, attacker, action="attack", effect=str(key)):
+    if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
         if attack_damage_modifiers(state, attacker, attacker):
             raise res.question("confusion_damage_modifiers", f"ポケモン {attacker.pokemon_id}")
         before = attacker.damage
-        ENG._confusion_damage(state, player, attacker, effect=str(key))
+        PR.confusion_damage(state, player, attacker, effect=str(key))
         track_ko(res, fs, attacker, before)
         _finish_attack(res, use)
         return
@@ -164,7 +154,7 @@ def _knock_out_after_attack(res: Resolution) -> None:
     candidates = capture_post_knockout(res, knocked)
     prize_takers = []
     for owner, pokemon in knocked:
-        ENG._knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
+        PR.knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
         prize_takers.append(1 - owner)
     _after_knockouts(res, prize_takers, None, candidates)
 
@@ -174,7 +164,7 @@ def _knock_out_after_attack(res: Resolution) -> None:
 
 def _after_knockouts(res: Resolution, prize_takers, then, post_knockout) -> None:
     state = res.state
-    budget = {player: len(state.players[player].prizes) for player in ENG.PLAYERS}
+    budget = {player: len(state.players[player].prizes) for player in PLAYERS}
     queue = []
     for player in prize_takers:
         if budget[player] > 0:
@@ -190,11 +180,11 @@ def _next_prize_or_judge(res: Resolution, queue: tuple, then, post_knockout: tup
         res.trace.record(Suspended(TAKE_PRIZE, TAKE_PRIZE, queue[0]))
         return
     result = judge.decide(
-        all_prizes_taken=[not state.players[p].prizes for p in ENG.PLAYERS],
-        cannot_field_active=[state.players[p].active is None and not state.players[p].bench for p in ENG.PLAYERS],
+        all_prizes_taken=[not state.players[p].prizes for p in PLAYERS],
+        cannot_field_active=[state.players[p].active is None and not state.players[p].bench for p in PLAYERS],
     )
     if result is not None:
-        ENG._finish(state, result)
+        PR.finish(state, result)
         return
     if post_knockout:
         _offer_post_knockout(res, post_knockout, then)
@@ -231,69 +221,40 @@ def _next_promotion_or_end(res: Resolution, queue: tuple, then) -> None:
         res.trace.record(Suspended(PROMOTE_ACTIVE, PROMOTE_ACTIVE, queue[0]))
         return
     if then == NEXT_TURN:
-        ENG._pokemon_check_sleep_and_paralysis(state)  # ポケモンチェックの 3・4 と次の番（v0.13 の部品）
+        PR.pokemon_check_sleep_and_paralysis(state)  # ポケモンチェックの 3・4 と次の番（v0.13 の部品）
     else:
         _end_turn(res)
 
 
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック
 
-POKEMON_CHECK_DOUBLE_KNOCKOUT = Halt(
-    code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
-    message=(
-        "ポケモンチェックの「どく」のダメージで、両方のプレイヤーのポケモンがきぜつする。"
-        "同時のきぜつか（p.324）、バトル場に出す順番（pp.323〜324。ポケモンチェックはどちらの番でもない。p.323）、"
-        "サイドを取る順番を決めるプレイヤー（p.325）が公式ルール 2000.02.14版から決められないので、対戦を止める。"
-    ),
-    references=("P43 p.322", "P43 p.323", "P43 p.324", "P43 p.325", "NEO-2000-OFFICIAL-RULES", "knockout_timing"),
-)
-
-
 def _end_turn(res: Resolution) -> None:
     """番の終わりの窓（期限: ついているトレーナー → 持続する効果 → にげるの失敗の記録。v0.13 と同じ順番）→ ポケモンチェック。"""
     state = res.state
     res.trace.record(WindowOpened(Window.TURN_END, None))
-    ENG._discard_expired_attachments(state)
-    remove_expired_persistent_effects(state)
-    for p in state.players:
-        for pokemon in p.in_play():
-            pokemon.retreat_failed_turn = None
-    state.add_event("turn_end", player=state.current_player)
+    PR.expire_at_turn_end(state)  # v0.13 の経路と同じ手続き
     _pokemon_check(res)
 
 
 def _pokemon_check(res: Resolution) -> None:
     """ポケモンチェック（p.323）。どくのきぜつのあとは、ワザのあとと同じきぜつの処理の窓（ふしちょうの写し）を通る。"""
     state = res.state
-    state.add_event("pokemon_check")
-    order = (state.current_player, 1 - state.current_player)
-    poisoned = [(owner, pokemon) for owner in order for pokemon in state.players[owner].in_play() if pokemon.conditions.poison is not None]
-    knocked_owners = {
-        owner for owner, pokemon in poisoned if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
-    }
-    if len(knocked_owners) > 1:
-        ENG._halt(state, POKEMON_CHECK_DOUBLE_KNOCKOUT)
+    knocked = PR.pokemon_check_poison(state)  # 始まり・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
+    if knocked is None:
         return
-    for owner, pokemon in poisoned:
-        amount = pokemon.conditions.poison.damage
-        pokemon.damage += amount
-        state.add_event("poison_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, amount=amount,
-                        total_damage=pokemon.damage)
-    knocked = [(owner, pokemon) for owner in order for pokemon in state.players[owner].in_play()
-               if pokemon.damage >= state.card_def(pokemon.card).hp]
     if not knocked:
-        ENG._pokemon_check_sleep_and_paralysis(state)
+        PR.pokemon_check_sleep_and_paralysis(state)
         return
     candidates = capture_post_knockout(res, knocked)
     prize_takers = []
     for owner, pokemon in knocked:
-        ENG._knock_out(state, owner, pokemon, timing="pokemon_check")
+        PR.knock_out(state, owner, pokemon, timing="pokemon_check")
         prize_takers.append(1 - owner)
     _after_knockouts(res, prize_takers, NEXT_TURN, candidates)
 
 
 def _end_turn_command(ctx: Context, state, cmd: EndTurn) -> None:
-    ENG._require_turn(state, cmd.player)
+    require_turn(state, cmd.player)
     state.add_event("end_turn_without_attack", player=cmd.player)
     _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
@@ -301,40 +262,8 @@ def _end_turn_command(ctx: Context, state, cmd: EndTurn) -> None:
 # ---------------------------------------------------------------- 決定への答え（v0.13 と同じ確認のあと、続きの情報から再開）
 
 
-def _resolve_decision(ctx: Context, state, cmd: ResolveDecision) -> None:
-    ENG._require_phase(state, *DECISION_PHASES)
-    player = ENG._require_player(cmd.player)
-    decision = ENG._current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"この決定をするのはプレイヤー {decision.player}")
-    if cmd.decision != decision.id:
-        raise IllegalActionError("WRONG_DECISION", f"今の決定の番号は {decision.id}（{cmd.decision} を指している）")
-    check_choices(decision, cmd.choices)
-    _resume(ctx, state, cmd.choices)
-
-
-def _take_prize(ctx: Context, state, cmd: TakePrize) -> None:
-    ENG._require_phase(state, Phase.TAKE_PRIZE)
-    player = ENG._require_player(cmd.player)
-    decision = ENG._current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"プレイヤー {player} が取るサイドはない")
-    if cmd.index not in decision.options:
-        raise IllegalActionError("INVALID_PRIZE_INDEX", f"サイドの位置は 0〜{len(decision.options) - 1}")
-    _resume(ctx, state, (cmd.index,))
-
-
-def _promote_active(ctx: Context, state, cmd: PromoteActive) -> None:
-    ENG._require_phase(state, Phase.PROMOTE_ACTIVE)
-    player = ENG._require_player(cmd.player)
-    decision = ENG._current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"今バトル場にポケモンを出すのはプレイヤー {decision.player}")
-    p = state.players[player]
-    index = p.bench_index(cmd.pokemon)
-    if index is None:
-        raise IllegalActionError("NOT_ON_BENCH", f"{cmd.pokemon!r} は自分のベンチにいない")
-    _resume(ctx, state, (p.bench[index].pokemon_id,))
+def _answer(ctx: Context, state, cmd) -> None:
+    _resume(ctx, state, decision_choices(state, cmd))  # v0.13 の経路と同じ確認（checks.decision_choices）
 
 
 def _resume(ctx: Context, state, choices: tuple[int, ...]) -> None:
@@ -446,7 +375,7 @@ OFFER_ACTIONS = {
 _HANDLERS = {
     UseAttack: _use_attack,
     EndTurn: _end_turn_command,
-    ResolveDecision: _resolve_decision,
-    TakePrize: _take_prize,
-    PromoteActive: _promote_active,
+    ResolveDecision: _answer,
+    TakePrize: _answer,
+    PromoteActive: _answer,
 }

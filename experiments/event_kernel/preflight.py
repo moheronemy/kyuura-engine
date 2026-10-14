@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from kyuura_engine import engine as ENG
+from kyuura_engine.procedures import confusion_damage_problem
 from kyuura_engine.effects import (
     AttackUse,
     counterattack_double_knockout_problem,
@@ -105,7 +105,7 @@ def legacy(state: GameState, use: AttackUse, effect, attacker, trace: Trace) -> 
     """v0.13 の ``engine._use_attack`` の確認（engine.py:881-891）を、同じ順番でそのまま呼ぶ。"""
     problem: UnsupportedError | None = effect.problem(state, use)
     if problem is None and attacker.conditions.confused:
-        problem = ENG._confusion_damage_problem(state, attacker)
+        problem = confusion_damage_problem(state, attacker)
     if problem is None:
         problem = counterattack_double_knockout_problem(state, use, effect)
     if problem is None:

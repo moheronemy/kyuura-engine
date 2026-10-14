@@ -23,16 +23,12 @@ import random
 from typing import Callable, Sequence
 
 from . import judge
-from .cards import EVOLUTION_STAGES, CardPool, can_pay_cost, load_card_pool
-from .coins import CoinSide, flip_coins
+from .cards import EVOLUTION_STAGES, CardPool, load_card_pool
 from .conditions import (
-    CONFUSION_DAMAGE,
     EVOLVE,
     RETREAT,
     clear_special_conditions,
     paralysis_recovery_turn,
-    recover_from_paralysis,
-    recover_from_sleep,
 )
 from .commands import (
     UNSUPPORTED_COMMANDS,
@@ -58,11 +54,9 @@ from .decisions import (
     POST_KNOCKOUT_POWER,
     PROMOTE_ACTIVE,
     TAKE_PRIZE,
-    check_choices,
     phase_for,
     push_decision,
 )
-from .damage import calculate_confusion_damage
 from .effects import (
     AttackKey,
     AttackUse,
@@ -70,7 +64,6 @@ from .effects import (
     PowerUse,
     ReturnToHandOnKnockOut,
     TrainerUse,
-    attack_damage_modifiers,
     counterattack_double_knockout_problem,
     finish_damage_elements,
     ko_prevention_attack_effect_problem,
@@ -82,7 +75,7 @@ from .effects import (
 from .continuous import suppressors_of
 from .deck import deck_problems
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
+from .persistent import KNOCK_OUT, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
@@ -92,7 +85,6 @@ from .state import (
     CardInstance,
     Confused,
     DataSource,
-    GameResult,
     GameState,
     Halt,
     Paralyzed,
@@ -107,11 +99,23 @@ from .state import (
 )
 from .zones import attach_energy_from_hand, draw_cards
 
-PLAYERS = (0, 1)
-# きぜつのあとの決定の続き（context の "then"）: ポケモンチェックの中（2 の「どく」）のきぜつのあとの決定（v0.3a）。
-# 交代が終わったら、ポケモンチェックの残り（3 の「ねむり」・4 の「マヒ」。v0.3b）をしてから次の番を始める。
-# 値は v0.3a と同じ（ポケモンチェックの中で、次の番はまだ始まっていないことを表す。書き出しの形を変えないため）
-NEXT_TURN = "next_turn"
+# v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
+# v0.13 の経路のコードを変えないため、v0.13 の名前で読み込む
+from .checks import PLAYERS, attack_request, promote_active_choices, resolve_decision_choices, take_prize_choices
+from .checks import require_not_asleep_or_paralyzed as _require_not_asleep_or_paralyzed
+from .checks import require_phase as _require_phase
+from .checks import require_player as _require_player
+from .checks import require_turn as _require_turn
+from .procedures import NEXT_TURN, expire_at_turn_end, pokemon_check_poison
+from .procedures import begin_turn as _begin_turn
+from .procedures import confusion_check as _confusion_check
+from .procedures import confusion_damage as _confusion_damage
+from .procedures import confusion_damage_problem as _confusion_damage_problem
+from .procedures import finish as _finish
+from .procedures import knock_out as _knock_out
+from .procedures import pokemon_check_sleep_and_paralysis as _pokemon_check_sleep_and_paralysis
+
+# PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
 # 対戦準備の段階（番はまだ始まっていない）
 SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
 
@@ -275,26 +279,6 @@ def _require_integrity(state: GameState) -> None:
         raise StateIntegrityError(problems)
 
 
-def _require_phase(state: GameState, *phases: Phase) -> None:
-    if state.phase not in phases:
-        names = ", ".join(p.value for p in phases)
-        raise IllegalActionError("WRONG_PHASE", f"今は {state.phase.value}。この操作は {names} のときだけ")
-
-
-def _require_player(player) -> int:
-    if player not in PLAYERS:
-        raise IllegalActionError("INVALID_PLAYER", f"プレイヤーは 0 か 1（{player!r}）")
-    return player
-
-
-def _require_turn(state: GameState, player) -> PlayerState:
-    _require_phase(state, Phase.MAIN)
-    _require_player(player)
-    if player != state.current_player:
-        raise IllegalActionError("NOT_YOUR_TURN", f"今はプレイヤー {state.current_player} の番")
-    return state.players[player]
-
-
 def _require_in_hand(state: GameState, player: int, uid) -> None:
     if uid not in state.players[player].hand:
         raise IllegalActionError("CARD_NOT_IN_HAND", f"カード {uid!r} はプレイヤー {player} の手札にない")
@@ -386,23 +370,6 @@ def _report_janken_result(state: GameState, cmd: ReportJankenResult) -> None:
 # ---------------------------------------------------------------- 番の進行
 
 
-def _begin_turn(state: GameState, player: int) -> None:
-    """番の最初に山札から必ず 1 枚引く。引けなければその時点で負け（p.309）。"""
-    state.turn_number += 1
-    state.current_player = player
-    state.energy_attachments_this_turn = 0
-    state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
-    state.phase = Phase.MAIN
-    state.add_event("turn_start", player=player)
-    if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
-        return
-    if not state.players[player].deck:
-        state.add_event("deck_out", player=player)
-        _finish(state, judge.deck_out(player))
-        return
-    _draw(state, player, 1)
-
-
 def _end_turn(state: GameState) -> None:
     """番を終え、ポケモンチェックをして、相手の番にする（p.309「先攻プレイヤーの番が終わったら、ポケモンチェックを
     おこない、後攻プレイヤーの番になります」）。
@@ -421,34 +388,8 @@ def _end_turn(state: GameState) -> None:
     トレーナーのトラッシュとは別の処理（持続する効果はカードではない）。ポケモンチェックの前なので、ポケモンチェックの
     どくのダメージは防がない（ポケモンチェックはどちらの番でもない。p.323）。
     """
-    _discard_expired_attachments(state)
-    remove_expired_persistent_effects(state)
-    for p in state.players:
-        for pokemon in p.in_play():
-            pokemon.retreat_failed_turn = None
-    state.add_event("turn_end", player=state.current_player)
+    expire_at_turn_end(state)  # v0.15a: 期限の処理は procedures.expire_at_turn_end（同じ順番）
     _pokemon_check(state)
-
-
-def _discard_expired_attachments(state: GameState) -> None:
-    """有効期限（``AttachedTrainer.discard_at_end_of_turn``）が今の番のついているトレーナーをトラッシュする。
-
-    番のプレイヤーの場（バトル場 → ベンチ）、相手の場の順。トラッシュにあるカードには順番がない（p.312）。
-    """
-    for owner in (state.current_player, 1 - state.current_player):
-        for pokemon in state.players[owner].in_play():
-            expired = [t for t in pokemon.trainers if t.discard_at_end_of_turn == state.turn_number]
-            for attached in expired:
-                pokemon.trainers.remove(attached)
-                state.players[attached.player].discard.append(attached.card)
-                state.add_event(
-                    "discard_attached_trainer",
-                    player=attached.player,
-                    card=attached.card,
-                    pokemon=pokemon.card,
-                    pokemon_id=pokemon.pokemon_id,
-                    reason="end_of_turn",
-                )
 
 
 def _pokemon_check(state: GameState) -> None:
@@ -474,52 +415,9 @@ def _pokemon_check(state: GameState) -> None:
     どちらの番でもない）、サイドの順番を決めるプレイヤー（p.325「そのとき番をおこなっているプレイヤー」））ので、
     ダメージを与える前に対戦を止める（``Phase.HALTED``、``UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT``）。
     """
-    state.add_event("pokemon_check")
-    order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
-
-    # 2. 「どく」のダメージ（特殊状態になるのはバトル場のポケモンだけ。p.322）
-    poisoned = [
-        (owner, pokemon)
-        for owner in order
-        for pokemon in state.players[owner].in_play()
-        if pokemon.conditions.poison is not None
-    ]
-    knocked_owners = {
-        owner for owner, pokemon in poisoned
-        if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
-    }
-    if len(knocked_owners) > 1:
-        _halt(
-            state,
-            Halt(
-                code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
-                message=(
-                    "ポケモンチェックの「どく」のダメージで、両方のプレイヤーのポケモンがきぜつする。"
-                    "同時のきぜつか（p.324）、バトル場に出す順番（pp.323〜324。ポケモンチェックはどちらの番でもない。p.323）、"
-                    "サイドを取る順番を決めるプレイヤー（p.325）が公式ルール 2000.02.14版から決められないので、対戦を止める。"
-                ),
-                references=("P43 p.322", "P43 p.323", "P43 p.324", "P43 p.325", "NEO-2000-OFFICIAL-RULES", "knockout_timing"),
-            ),
-        )
+    knocked = pokemon_check_poison(state)  # v0.15a: 始まり・2 の「どく」・両方のきぜつで止める処理は procedures.pokemon_check_poison
+    if knocked is None:
         return
-    for owner, pokemon in poisoned:
-        amount = pokemon.conditions.poison.damage
-        pokemon.damage += amount
-        state.add_event(
-            "poison_damage",
-            player=owner,
-            pokemon=pokemon.card,
-            pokemon_id=pokemon.pokemon_id,
-            amount=amount,
-            total_damage=pokemon.damage,
-        )
-
-    knocked = [
-        (owner, pokemon)
-        for owner in order
-        for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp
-    ]
     if not knocked:
         _pokemon_check_sleep_and_paralysis(state)
         return
@@ -529,76 +427,6 @@ def _pokemon_check(state: GameState) -> None:
         _knock_out(state, owner, pokemon, timing="pokemon_check")
         prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤー（p.323）。番のプレイヤーではない
     _after_knockouts(state, prize_takers, then=NEXT_TURN, post_knockout=candidates)
-
-
-def _pokemon_check_sleep_and_paralysis(state: GameState) -> None:
-    """ポケモンチェックの 3（ねむり）・4（マヒ）をして、次の番を始める（v0.3b。p.322・p.323）。
-
-    2 の「どく」のあと（きぜつがあれば、サイド・判定・交代のあと）に 1 回だけ呼ぶ。3・4 ではダメージを与えないので、
-    きぜつは起こらず、プレイヤーの決定も出ない。
-
-    3. ねむり状態のポケモンの側のプレイヤーが、コインを 1 枚投げる（``flip_coins``。``source`` は ``"pokemon_check"``、
-       ``effect`` は ``"sleep"``）。「おもて」ならねむり状態から回復し、「うら」ならねむり状態は続く（p.322・p.323）。
-       どちらのプレイヤーの番のあとのポケモンチェックでも投げる（p.322「ポケモンチェックのたびに」）。
-       ログ ``sleep_check``（``player``・``pokemon``・``pokemon_id``・``result``・``recovered``）。
-       両方のプレイヤーの対戦ポケモンがねむり状態なら、どちらが先にコインを投げるか（順番を決める人がいるか）が
-       原典で決まらず、順番で乱数の割り当て（どちらのコインがどの結果になるか）が変わるので、コインを投げる前に
-       対戦を止める（``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER``）。v0.3b の対応カードでは起こらない
-       （docs/pokemon-check-v0.3b.md）。
-    4. マヒ状態のポケモンは、マヒ状態になった番の「次の自分（そのポケモンの持ち主）の番」の終わりのポケモンチェックで
-       自動的に回復する（p.322・p.323）。コインは投げない。回復する番は ``conditions.paralysis_recovery_turn``。
-    """
-    order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
-    # 3. 「ねむり」からさめるかどうか（特殊状態になるのはバトル場のポケモンだけ。p.322）
-    asleep = [
-        (owner, state.players[owner].active)
-        for owner in order
-        if state.players[owner].active is not None and state.players[owner].active.conditions.asleep
-    ]
-    if len(asleep) > 1:
-        _halt(
-            state,
-            Halt(
-                code="UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
-                message=(
-                    "ポケモンチェックで、両方のプレイヤーの対戦ポケモンがねむり状態。p.323 の 3 は「ねむり状態になっている"
-                    "ポケモンの側のプレイヤーは、コインを投げます」とだけ書き、どちらが先に投げるか（順番を決めるプレイヤー）を"
-                    "公式ルール 2000.02.14版から決められない（ポケモンチェックはどちらの番でもない。p.323・p.325）。投げる順番で"
-                    "乱数の割り当てが変わるので、コインを投げる前に対戦を止める。"
-                ),
-                references=("P43 p.322", "P43 p.323", "P43 p.325", "NEO-2000-OFFICIAL-RULES"),
-            ),
-        )
-        return
-    for owner, pokemon in asleep:
-        flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
-        recovered = flips.results[0] is CoinSide.HEADS
-        state.add_event(
-            "sleep_check",
-            player=owner,
-            pokemon=pokemon.card,
-            pokemon_id=pokemon.pokemon_id,
-            result=flips.results[0].value,
-            recovered=recovered,
-        )
-        if recovered:
-            recover_from_sleep(state, owner, pokemon)
-    # 4. 「マヒ」がなおるかどうか
-    for owner in order:
-        pokemon = state.players[owner].active
-        if pokemon is None or not pokemon.conditions.paralyzed:
-            continue
-        if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
-            recover_from_paralysis(state, owner, pokemon)
-    _begin_turn(state, 1 - state.current_player)
-
-
-def _halt(state: GameState, halt: Halt) -> None:
-    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。"""
-    state.phase = Phase.HALTED
-    state.halt = halt
-    state.decision = None
-    state.add_event("halted", code=halt.code)
 
 
 def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
@@ -864,20 +692,9 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     呼ぶ。ダメージの要素だけのワザのため、``resolve`` のあとにもここで呼ぶ（与えるものがなければ何もしない）。きぜつ・サイド・交代は、
     そのあとの ``_finish_attack``。
     """
-    p = _require_turn(state, cmd.player)
-    attacker = p.active
-    attacker_def = state.card_def(attacker.card)
-    if not 0 <= cmd.attack_index < len(attacker_def.attacks):
-        raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
-    _require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
-    attack = attacker_def.attacks[cmd.attack_index]
-    effect = state.effects.attack_effect(attacker_def.id, attack)
-    if effect is None:
-        problem = state.effects.attack_problem(attacker_def.id, attack)
-        raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
-    if not can_pay_cost(attack.cost, state.energy_types(attacker)):
-        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
-    use = AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index))
+    request = attack_request(state, cmd)  # v0.15a: 確認（番・位置・ねむり・マヒ・登録・エネルギー）は checks.attack_request（同じ順番・同じコード）
+    attacker, attack, effect = request.attacker, request.attack, request.effect
+    use = AttackUse(cmd.player, attacker.pokemon_id, request.key)
     problem = effect.problem(state, use)
     if problem is None and attacker.conditions.confused:
         problem = _confusion_damage_problem(state, attacker)
@@ -904,81 +721,6 @@ def _use_attack(state: GameState, cmd: UseAttack) -> None:
     finish_damage_elements(state, use)  # v0.10: ダメージの要素だけのワザの「はんげき」（決定を出したワザは、出す前に与えている）
     if state.decision is None:
         _finish_attack(state, use)
-
-
-def _confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
-    """こんらん状態のポケモンがワザを使う・にげるときのコイン（v0.3c。p.309 の手順 5・p.311 の手順 3・p.322）。
-
-    持ち主（ワザを使う・「にげる」を宣言したポケモン側のプレイヤー）がコインを 1 枚投げ、「おもて」なら成功（True）。
-    ログ ``coin_flip``（``source: "confusion"``、``effect`` はワザなら ``AttackKey`` の文字列、にげるなら ``"retreat"``）と
-    ``confusion_check``（``player``・``pokemon``・``pokemon_id``・``action``（``attack``／``retreat``）・``result``・
-    ``succeeded``）。ワザの説明のコイン（``source: "attack"``）・ねむりのコイン（``"pokemon_check"``）と区別できる。
-    """
-    flips = flip_coins(state, player, 1, source="confusion", effect=effect, card=pokemon.card, pokemon_id=pokemon.pokemon_id)
-    succeeded = flips.results[0] is CoinSide.HEADS
-    state.add_event(
-        "confusion_check",
-        player=player,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        action=action,
-        result=flips.results[0].value,
-        succeeded=succeeded,
-    )
-    return succeeded
-
-
-def _confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
-    """こんらんしたワザの 20 ダメージを、原典で決められる形で計算できないなら、その理由（v0.3c）。
-
-    p.322 は「このダメージは「弱点・抵抗力」の影響を受けます」とだけ書く。こんらんのダメージが「ワザによるダメージ」
-    （p.321「8」）かは書かれていないので、ワザを使うポケモンについているプラスパワー（「このカードをつけているポケモンの
-    ワザが…ダメージを与えるとき」）・ディフェンダー（「ワザによるダメージを受けるとき」。p.257）の効果を計算するかを決め
-    られない。それらのカードがついていなければ問題はない。ついていれば、コインを投げる前に止める（コインが「おもて」なら
-    問題はないが、投げる前には分からない）。
-    """
-    modifiers = attack_damage_modifiers(state, pokemon, pokemon)
-    if not modifiers:
-        return None
-    return UnsupportedError(
-        "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
-        f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
-        "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
-        "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
-    )
-
-
-def _confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> None:
-    """ワザがこんらんしたとき、ワザを使ったポケモン自身に 20 ダメージ（v0.3c。p.309 の手順 5・p.322）。
-
-    弱点・抵抗力の影響を受ける（``damage.calculate_confusion_damage``）。ワザの説明による自分へのダメージ
-    （``effects.deal_attack_damage`` の ``SELF``。v0.2f）とは別の規定なので、そちらを通さない。ログは ``confusion_damage``
-    （``player``・``pokemon``・``pokemon_id``・``effect``（こんらんしたワザの ``AttackKey``）・``amount``・``steps``・
-    ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
-    きぜつはワザのあとと同じ ``_finish_attack`` で判定する（サイドは相手が取る。p.323）。
-    """
-    calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
-    pokemon.damage += calc.final
-    state.add_event(
-        "confusion_damage",
-        player=player,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        effect=effect,
-        amount=calc.final,
-        steps=calc.steps,
-        weakness=calc.weakness_applied,
-        resistance=calc.resistance_applied,
-        total_damage=pokemon.damage,
-    )
-
-
-def _require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
-    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。"""
-    if pokemon.conditions.asleep:
-        raise IllegalActionError("POKEMON_ASLEEP", f"バトル場のポケモン {pokemon.pokemon_id} はねむり状態なので、{what}")
-    if pokemon.conditions.paralyzed:
-        raise IllegalActionError("POKEMON_PARALYZED", f"バトル場のポケモン {pokemon.pokemon_id} はマヒ状態なので、{what}")
 
 
 def _finish_attack(state: GameState, use: AttackUse) -> None:
@@ -1154,40 +896,6 @@ def _post_knockout_candidates(state: GameState, knocked) -> tuple[tuple[int, int
             "エンジンの不具合）"
         )
     return tuple(candidates)
-
-
-def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None) -> None:
-    """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
-
-    場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
-    進化ポケモン（v0.4a）は、重なっているカード（たねポケモンと進化カード。2 進化（v0.4c）なら 3 枚）をすべてトラッシュ
-    する。きぜつしたのは 1 匹なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` は
-    いちばん上のカード、``evolution_stack`` は下のカード（進化していれば。下から順）。
-    ``timing``: ポケモンチェックの中のきぜつなら ``"pokemon_check"``（ログに書く。v0.3a）。ワザのあとは None。
-    """
-    p = state.players[owner]
-    if p.active is pokemon:
-        p.active = None
-    else:
-        p.bench.remove(pokemon)
-    # 進化していれば、重なっているポケモンのカードもすべてトラッシュする（p.313・p.319・p.323。v0.4a）。サイドは 1 匹ぶん
-    p.discard.extend(pokemon.cards())
-    p.discard.extend(pokemon.energy)
-    # ついていたトレーナーカードもいっしょにトラッシュする（「それについていたすべてのカード」p.323。v0.2c）
-    extra = {}
-    if pokemon.evolution_stack:
-        extra["evolution_stack"] = pokemon.evolution_stack  # v0.4a: いちばん上のカード（pokemon）の下にあったカード
-    if pokemon.trainers:
-        for attached in pokemon.trainers:
-            state.players[attached.player].discard.append(attached.card)
-        extra["discarded_trainers"] = tuple(t.card for t in pokemon.trainers)
-    if simultaneous:
-        extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
-    if timing is not None:
-        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした
-    state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
-    # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
-    remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
 
 
 def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None, post_knockout=()) -> None:
@@ -1534,13 +1242,6 @@ _RESUMERS = {
 }
 
 
-def _current_decision(state: GameState):
-    """決定を待つ段階の、保留中の決定。段階と決定が合わない状態（呼び出し側が書き換えた）は受け付けない。"""
-    if state.decision is None:
-        raise StateIntegrityError([f"{state.phase.value} なのに決定がない"])
-    return state.decision
-
-
 def _resolve(state: GameState, choices: tuple[int, ...]) -> None:
     """確かめ終わった選択で、保留中の決定を閉じ、再開先から処理を続ける。"""
     decision = state.decision
@@ -1550,43 +1251,19 @@ def _resolve(state: GameState, choices: tuple[int, ...]) -> None:
 
 
 def _resolve_decision(state: GameState, cmd: ResolveDecision) -> None:
-    """保留中の決定に答える（どの種類の決定にも使える）。"""
-    _require_phase(state, *DECISION_PHASES)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"この決定をするのはプレイヤー {decision.player}")
-    if cmd.decision != decision.id:
-        raise IllegalActionError("WRONG_DECISION", f"今の決定の番号は {decision.id}（{cmd.decision} を指している）")
-    check_choices(decision, cmd.choices)
-    _resolve(state, cmd.choices)
+    """保留中の決定に答える（どの種類の決定にも使える）。確認は ``checks.resolve_decision_choices``（v0.15a）。"""
+    _resolve(state, resolve_decision_choices(state, cmd))
 
 
 def _take_prize(state: GameState, cmd: TakePrize) -> None:
-    """サイドを取る決定に、サイドの位置で答える（v0.1 からある形。``ResolveDecision`` と同じ処理）。"""
-    _require_phase(state, Phase.TAKE_PRIZE)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"プレイヤー {player} が取るサイドはない")
-    if cmd.index not in decision.options:
-        raise IllegalActionError("INVALID_PRIZE_INDEX", f"サイドの位置は 0〜{len(decision.options) - 1}")
-    _resolve(state, (cmd.index,))
+    """サイドを取る決定に、サイドの位置で答える（v0.1 からある形。``ResolveDecision`` と同じ処理）。確認は ``checks.take_prize_choices``。"""
+    _resolve(state, take_prize_choices(state, cmd))
 
 
 def _promote_active(state: GameState, cmd: PromoteActive) -> None:
     """バトル場に出す決定に、ベンチのポケモンのカードの uid で答える（v0.1 からある形。
-    ``ResolveDecision`` では場のポケモンの番号で答える）。"""
-    _require_phase(state, Phase.PROMOTE_ACTIVE)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"今バトル場にポケモンを出すのはプレイヤー {decision.player}")
-    p = state.players[player]
-    index = p.bench_index(cmd.pokemon)
-    if index is None:
-        raise IllegalActionError("NOT_ON_BENCH", f"{cmd.pokemon!r} は自分のベンチにいない")
-    _resolve(state, (p.bench[index].pokemon_id,))
+    ``ResolveDecision`` では場のポケモンの番号で答える）。確認は ``checks.promote_active_choices``。"""
+    _resolve(state, promote_active_choices(state, cmd))
 
 
 def _end_turn_command(state: GameState, cmd: EndTurn) -> None:
@@ -1594,13 +1271,6 @@ def _end_turn_command(state: GameState, cmd: EndTurn) -> None:
     _require_turn(state, cmd.player)
     state.add_event("end_turn_without_attack", player=cmd.player)
     _end_turn(state)
-
-
-def _finish(state: GameState, result: GameResult) -> None:
-    state.result = result
-    state.phase = Phase.SUDDEN_DEATH if result.outcome == "sudden_death" else Phase.GAME_OVER
-    state.decision = None
-    state.add_event("game_end", outcome=result.outcome, winner=result.winner, conditions=result.conditions)
 
 
 _HANDLERS: dict[type, Callable[[GameState, object], None]] = {
