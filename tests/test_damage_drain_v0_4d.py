@@ -24,10 +24,11 @@ import unittest
 from kyuura_engine import EndTurn, Phase, PlayTrainer, ResolveDecision, UseAttack, apply_command, check_invariants, state_to_dict
 from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.effects import (
-    DEFAULT_EFFECTS, OPPONENT_ACTIVE, SELF, AttackKey, AttackUse, DamageAndDrain, DamageResult, deal_attack_damage,
+    DEFAULT_EFFECTS, OPPONENT_ACTIVE, SELF, AttackKey, DamageAndDrain, DamageResult, deal_attack_damage,
 )
 from kyuura_engine.rng import rng_fingerprint
 
+from kyuura_engine.resolution import open_attack
 from tests.helpers import (
     BUTTERFREE, CATERPIE, DEFENDER, DIGLETT, GRASS, GROWLITHE, H, METAPOD, PLUSPOWER, PONYTA, RATTATA, T, build_test_state,
     with_coin_results,
@@ -98,7 +99,10 @@ class DamageResultTest(unittest.TestCase):
     v0.4c と同じ（戻り値を使わない呼び出し側は変わらない）。"""
 
     def use(self, state):
-        return AttackUse(0, state.players[0].active.pokemon_id, AttackKey(BUTTERFREE, MEGA_DRAIN))
+        # v0.16b: 解決の基盤のワザの枠（v0.13 の約束の補助関数は、枠の中でだけ使える）
+        use = open_attack(state, 0, attack_index=MEGA_DRAIN)
+        self.assertEqual(use.key, AttackKey(BUTTERFREE, MEGA_DRAIN))
+        return use
 
     def test_normal_damage(self):
         state = board()

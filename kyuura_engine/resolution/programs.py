@@ -9,9 +9,13 @@ v0.13 のワザの実装（24 種類）は、それぞれの ``resolve`` の中�
   コイン（どくばりの「おもて」なら）は、その要素に属する。決定を出す要素も効果の要素。
 - ``Phase.NEUTRAL``: ワザ全体のコイン（ねばりつく・いちかばちか。ダメージと効果の両方を決める）と、ワザの前の確認。ダメージの要素より前に
   だけ置く（送る効果が残っていれば不具合として止める）。
+- ``Phase.CONTRACT``（v0.16b）: v0.13 の約束（``AttackEffect.resolve``・``resume``）で書いたワザの実装を 1 つの要素として処理するアダプタ
+  （``contract.Contract``。docs/kernel-consolidation-v0.16b.md）。中でダメージと効果を混ぜるので、「ダメージの要素のあと」の窓は実装が
+  ``finish_damage_elements`` で開き、最後に仕組みが開く（v0.13 の約束と同じ）。並びの中でこの要素だけを置く。
 
 効果の中身（量の求め方・特殊状態の付け方・回復）はふつうの Python で書き、DSL にはしません。量の数値は v0.13 の実装の値を読みます。
-対応表（``BUILDERS``）にないワザの実装は、プロトタイプでは扱いません（``UnsupportedByKernel``。効果のないワザとして処理しない）。
+対応表（``BUILDERS``）にないワザの実装は ``compile_attack`` では扱いません（``UnsupportedByKernel``。効果のないワザとして処理しない）。
+v0.16b から、対応表にない実装をどう扱うか（v0.13 の約束のアダプタか、拒否か）は ``contract.program_for`` が決めます。
 """
 
 from __future__ import annotations
@@ -52,6 +56,7 @@ class Phase(str, Enum):
     DAMAGE = "damage"
     EFFECT = "effect"
     NEUTRAL = "neutral"
+    CONTRACT = "contract"  # v0.16b: v0.13 の約束で書いた実装のアダプタ（contract.Contract）
 
 
 OPP = E.OPPONENT_ACTIVE
@@ -141,8 +146,9 @@ def run_elements(run: AttackRun, start: int) -> bool:
         if element.run(run):
             if not res.dry_run:
                 return True
-            decision, run.suspended = run.suspended, None
-            element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
+            while run.suspended is not None:  # 先読み: 決定の答えを選んで続ける（答えのあとでもう一度決定を出す要素もある）
+                decision, run.suspended = run.suspended, None
+                element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
     fire_pending(res, run.fs)
     return False
 
@@ -160,7 +166,7 @@ def opponent_effect_elements(program: tuple) -> tuple[str, ...]:
 
 def decision_index(program: tuple, kind: str) -> int:
     """決定の種類から、決定を出した要素の位置（並びの中で決定を出す要素は 1 つ）。"""
-    found = [i for i, element in enumerate(program) if element.decision_kind == kind]
+    found = [i for i, element in enumerate(program) if element.decides(kind)]
     if len(found) != 1:
         raise RuntimeError(f"決定 {kind} を出す要素が {len(found)} つ（エンジンの不具合）")
     return found[0]
@@ -256,7 +262,12 @@ class Element:
     def run(self, run: AttackRun) -> bool:
         raise NotImplementedError
 
+    def decides(self, kind: str) -> bool:
+        """決定の種類 ``kind`` を出す要素か（再開する要素を決定の種類から探す。v0.16b から要素が答える）。"""
+        return self.decision_kind is not None and self.decision_kind == kind
+
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        """決定の答えのあと。v0.16b から、``resume`` がもう一度決定を出してもよい（``run.suspended``。v0.13 の約束の 2 段階の決定）。"""
         raise NotImplementedError(f"{type(self).__name__} は決定を出さない")
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:

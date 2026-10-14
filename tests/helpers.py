@@ -548,20 +548,15 @@ def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:
     return new
 
 
-# ---------------------------------------------------------------- 経路の指定（v0.15b。docs/kernel-integration-v0.15b.md）
+# ---------------------------------------------------------------- 解決の設定の指定（v0.15b。v0.16b から経路はない）
 
-from kyuura_engine.engine import Route, apply_command_via  # noqa: E402
-
-
-def apply_legacy(state: GameState, command):
-    """経路 ``Route.LEGACY``（v0.13 の経路）で処理する。v0.13 の経路の内部の関数を差しかえて確かめるテストが使う（標準の経路で
-    差しかえると、差しかえた関数を通らない経路で処理されて、確かめたいことを確かめられない）。"""
-    return apply_command_via(state, command, route=Route.LEGACY)
+from kyuura_engine.engine import apply_command_with  # noqa: E402
 
 
 def apply_kernel(state: GameState, command, **options):
-    """経路 ``Route.KERNEL``（解決の基盤）で処理する（``options`` は ``preflight``・``catalog``）。"""
-    return apply_command_via(state, command, route=Route.KERNEL, **options)
+    """解決の設定（``options`` は ``preflight``・``catalog``）を指定して処理する（``engine.apply_command_with``）。v0.15b では経路 ``KERNEL`` を
+    選ぶ入口だった。v0.16b で v0.13 の経路（``apply_legacy``）を外したので、経路はなく、解決の基盤だけが処理する。"""
+    return apply_command_with(state, command, **options)
 
 
 def coin_events(state: GameState, since: int = 0) -> list[dict]:

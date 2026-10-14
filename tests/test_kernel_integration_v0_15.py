@@ -1,10 +1,11 @@
 """v0.15b: 解決の基盤（``kyuura_engine/resolution``）の本番への統合（docs/kernel-integration-v0.15b.md）。
 
-- 経路（``engine.Route``。v0.13 の経路 ``LEGACY``・解決の基盤 ``KERNEL``）は、公開の ``apply_command`` の呼び方を変えずに、内部の入口
-  ``engine.apply_command_via`` で明示して選ぶ。先読みの方法（``derived``・``legacy``）とは別のもの。
-- 依存の向き: engine → resolution → checks・procedures（解決の基盤は engine を読み込まない。v0.13 の経路の処理は解決の基盤を使わない）。
-- 受け持つコマンドの振り分け（``resolution.handles``）: ワザの実装の型が要素の並びの対応表（``BUILDERS``）にないワザは v0.13 の経路。
-- 止める理由の文は両方の経路で同じ（``effects`` の共通の関数で作る）。
+- v0.16b: 経路（v0.15b の ``engine.Route``）を外した。公開の ``apply_command`` の呼び方は変えず、解決の設定（先読みの方法）は内部の入口
+  ``engine.apply_command_with`` で明示して選ぶ。v0.13 の経路の名前が戻っていないことも確かめる。
+- 依存の向き: engine → resolution → checks・procedures（解決の基盤は engine を読み込まない。範囲外のコマンドの処理は解決の基盤を使わない）。
+- コマンドの振り分け: ワザ・番の終わりと、再開先が ``resolution.RESUMES`` の決定への答えは解決の基盤。対応表（``BUILDERS``）にないワザの
+  実装は v0.13 の約束のアダプタ（v0.16b。``resolution.contract``）。
+- 止める理由の文は v0.13 と同じ（``effects`` の共通の関数で作る。参照データと比べる）。
 - 解決の基盤の経路の原子性と、先読みを外しても推測で進めないこと（v0.13 の経路の内部の関数を差しかえるテスト（v0.9・v0.10）の、解決の
   基盤の経路での対応）。
 
@@ -25,20 +26,20 @@ from unittest import mock
 
 import kyuura_engine
 from kyuura_engine import (
-    DEFAULT_EFFECTS, AttachEnergy, EndTurn, EngineError, PromoteActive, ResolveDecision, TakePrize, UnsupportedError, UseAttack,
-    UsePokemonPower, check_invariants, state_to_dict,
+    DEFAULT_EFFECTS, EndTurn, EngineError, ResolveDecision, UnsupportedError, UseAttack,
+    check_invariants, state_to_dict,
 )
 from kyuura_engine import engine
 from kyuura_engine import resolution
 from kyuura_engine.conditions import POISON, SLEEP
 from kyuura_engine.effects import AttackEntry, AttackKey, DamageOnly
-from kyuura_engine.engine import Route, apply_command_traced, apply_command_via
-from kyuura_engine.resolution import codec, events, programs
+from kyuura_engine.engine import apply_command_traced, apply_command_with
+from kyuura_engine.resolution import codec, contract, events, programs
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import GameState
 
 from tests.helpers import (
-    BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, H, MACHOP, METAPOD, PSYCHIC, RATTATA, T, WATER, WEEDLE, apply_kernel, apply_legacy,
+    BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GRASS, H, MACHOP, METAPOD, POTION, PSYCHIC, RATTATA, T, WATER, WEEDLE, apply_kernel,
     build_test_state, two_step_effects, with_coin_results,
 )
 from tests import legacy_reference
@@ -78,50 +79,68 @@ def imports_of(path: Path) -> set[str]:
     return found
 
 
-# ---------------------------------------------------------------- 経路の選び方
+# ---------------------------------------------------------------- 入口（v0.16b から経路はない）
+
+# v0.16b で外した v0.13 の経路の名前（engine.py）と旧ダメージ処理境界の実装（effects.py）。戻っていないことを確かめる
+REMOVED_ENGINE_NAMES = (
+    "Route", "DEFAULT_ROUTE", "apply_command_via", "_use_attack", "_resume_attack", "_finish_attack", "_ko_prevention_offer",
+    "_resume_knock_out", "_knock_out_after_attack", "_post_knockout_candidates", "_after_knockouts", "_then_context",
+    "_post_knockout_context", "_next_prize_or_judge", "_promotions_after_judge", "_offer_post_knockout", "_resume_post_knockout",
+    "_next_promotion_or_end", "_resume_take_prize", "_resume_promote_active", "_end_turn_command", "_end_turn", "_pokemon_check",
+    "_resolve", "_resolve_decision", "_take_prize", "_promote_active", "_RESUMERS",
+)
+REMOVED_EFFECTS_NAMES = (
+    "PendingCounterattack", "PendingRetaliation", "_apply_counterattack", "_apply_retaliation", "_require_damage_elements_finished",
+    "_skip_heal_of_knocked_out_attacker", "_remove_attacker_counters",
+)
 
 
-class RouteTest(unittest.TestCase):
+class EntryTest(unittest.TestCase):
+    """v0.16b: 経路（``Route``）を外し、公開の ``apply_command`` はいつも解決の基盤を使う。解決の設定（先読みの方法・効果の定義の対応表）を
+    選ぶ内部の入口は ``engine.apply_command_with``・``apply_command_traced``（v0.15b の ``RouteTest`` の確かめを、経路のない形で引き継ぐ）。"""
+
     def test_public_apply_command_is_unchanged(self):
-        """公開の ``apply_command`` の呼び方（引数）は変えない。経路を選ぶ入口は公開の API に加えない。"""
+        """公開の ``apply_command`` の呼び方（引数）は変えない。内部の入口は公開の API に加えない。v0.13 の経路の名前は残っていない。"""
         self.assertEqual(list(inspect.signature(kyuura_engine.apply_command).parameters), ["state", "command"])
         self.assertIs(kyuura_engine.apply_command, engine.apply_command)
-        for name in ("Route", "apply_command_via", "apply_command_traced", "DEFAULT_ROUTE", "resolution"):
+        for name in ("apply_command_with", "apply_command_traced", "resolution", "Route", "apply_command_via"):
             self.assertNotIn(name, kyuura_engine.__all__)
-        self.assertIsInstance(engine.DEFAULT_ROUTE, Route)
+        for name in REMOVED_ENGINE_NAMES:
+            with self.subTest(engine=name):
+                self.assertFalse(hasattr(engine, name))
+        for name in REMOVED_EFFECTS_NAMES:
+            with self.subTest(effects=name):
+                self.assertFalse(hasattr(kyuura_engine.effects, name))
 
-    def test_routes_are_chosen_explicitly(self):
-        """経路は引数で選ぶ（名前の文字列でも同じ）。標準の経路は ``DEFAULT_ROUTE``。知らない経路・先読みの方法は ValueError。"""
+    def test_settings_are_chosen_explicitly(self):
+        """先読みの方法は引数で選ぶ。公開の ``apply_command`` は標準の先読み（``derived``）と同じ結果。知らない方法は ValueError。"""
         state = board(PONYTA_, MACHAMP_)
         command = UseAttack(0, 1)
-        legacy = outcome(apply_command_via, state, command, route=Route.LEGACY)
-        for route in (Route.LEGACY, "legacy", Route.KERNEL, "kernel"):
-            with self.subTest(route=route):
-                self.assertEqual(outcome(apply_command_via, state, command, route=route), legacy)
-        self.assertEqual(outcome(lambda s, c: kyuura_engine.apply_command(s, c), state, command),
-                         outcome(apply_command_via, state, command, route=engine.DEFAULT_ROUTE))
-        for bad in ({"route": "other"}, {"route": Route.KERNEL, "preflight": "fast"}, {"route": Route.LEGACY, "preflight": "fast"}):
-            with self.subTest(bad=bad), self.assertRaises(ValueError):
-                apply_command_via(state, command, **bad)
+        public = outcome(lambda s, c: kyuura_engine.apply_command(s, c), state, command)
+        for mode in resolution.PREFLIGHT_MODES:
+            with self.subTest(mode=mode):
+                self.assertEqual(outcome(apply_command_with, state, command, preflight=mode), public)
+        self.assertEqual(outcome(apply_command_with, state, command), public)
+        with self.assertRaises(ValueError):
+            apply_command_with(state, command, preflight="fast")
 
-    def test_route_and_preflight_are_different_settings(self):
-        """経路と先読みの方法は別の設定: どの組み合わせも同じ結果。解決の記録は解決の基盤の経路だけが作り、先読みの方法を記録する。"""
+    def test_preflight_modes_give_the_same_result(self):
+        """どの先読みの方法も同じ結果。解決の記録は先読みの方法を記録する。"""
         state = board({**PONYTA_, "damage": 30}, {**MACHAMP_, "damage": 80})  # C18 で止まる
         accepted = board(PONYTA_, MACHAMP_)
         for sample, command in ((state, UseAttack(0, 1)), (accepted, UseAttack(0, 1)), (accepted, EndTurn(0))):
-            results = [outcome(apply_command_via, sample, command, route=route, preflight=mode)
-                       for route in Route for mode in resolution.PREFLIGHT_MODES]
+            results = [outcome(apply_command_with, sample, command, preflight=mode) for mode in resolution.PREFLIGHT_MODES]
             self.assertTrue(all(result == results[0] for result in results))
         for mode in resolution.PREFLIGHT_MODES:
             _, trace = apply_command_traced(accepted, UseAttack(0, 1), preflight=mode)
             self.assertEqual([e.mode for e in trace.of(events.PreflightResult)], [mode])
 
-    def test_no_module_state_selects_the_route(self):
-        """経路を選んでも、モジュールの値（標準の経路など）は変わらない（グローバルな可変フラグで切り替えない）。"""
+    def test_no_module_state_changes(self):
+        """設定を選んでも、モジュールの値は変わらない（グローバルな可変フラグで切り替えない）。"""
         names = dict(vars(engine))
         resolution_names = dict(vars(resolution))
-        for route in Route:
-            apply_command_via(board(PONYTA_, MACHAMP_), UseAttack(0, 1), route=route)
+        for mode in resolution.PREFLIGHT_MODES:
+            apply_command_with(board(PONYTA_, MACHAMP_), UseAttack(0, 1), preflight=mode)
         self.assertEqual({k: v for k, v in vars(engine).items() if names.get(k) is not v}, {})
         self.assertEqual({k: v for k, v in vars(resolution).items() if resolution_names.get(k) is not v}, {})
 
@@ -142,16 +161,16 @@ class DependencyTest(unittest.TestCase):
             with self.subTest(shared=path.name):
                 self.assertFalse(any(name.startswith("kyuura_engine.resolution") for name in imports_of(path)))
 
-    def test_legacy_handlers_do_not_use_the_kernel(self):
-        """v0.13 の経路の処理（engine.py のコマンドの処理）は解決の基盤を使わない。``resolution`` を使うのは、経路を選ぶ入口だけ
-        （型の注釈を含む）。"""
+    def test_out_of_scope_handlers_do_not_use_the_kernel(self):
+        """範囲外のコマンドの処理（engine.py のトレーナー・特殊能力・進化・にげる・エネルギー・対戦準備）は解決の基盤を使わない。
+        ``resolution`` を使うのは、入口と振り分け（型の注釈を含む）だけ（v0.15b の「v0.13 の経路の処理は解決の基盤を使わない」の引き継ぎ）。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         users = {
             function.name
             for function in tree.body if isinstance(function, ast.FunctionDef)
             for node in ast.walk(function) if isinstance(node, ast.Name) and node.id == "resolution"
         }
-        self.assertEqual(users, {"_apply", "_kernel_options", "apply_command_via", "apply_command_traced"})
+        self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine"})
 
     def test_compatibility_layer_is_not_a_copy(self):
         """v0.14 の名前（``experiments.event_kernel``）は本番の部品そのものを指す（コードの複製がない）。"""
@@ -162,11 +181,13 @@ class DependencyTest(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in (ROOT / "experiments" / "event_kernel").glob("*.py")), ["__init__.py"])
 
 
-# ---------------------------------------------------------------- 受け持つコマンドの振り分け
+# ---------------------------------------------------------------- コマンドの振り分け
 
 
 class SubclassedDamage(DamageOnly):
-    """テスト専用: 要素の並びの対応表にある実装（DamageOnly）の部分型。対応表は型が完全に一致するものだけなので、v0.13 の経路で処理する。"""
+    """テスト専用: 要素の並びの対応表にある実装（DamageOnly）の部分型。対応表は型が完全に一致するものだけなので、親の型の並びとしては
+    処理しない。v0.16b から、v0.13 の約束のアダプタ（``resolution.contract``）で ``resolve`` を処理し、``super().resolve`` は親の型の要素の
+    並びを今の枠の中で処理する（v0.15 までは v0.13 の経路）。"""
 
     implementation_id = "test_subclassed_damage"
 
@@ -177,40 +198,50 @@ class SubclassedDamage(DamageOnly):
 
 class DispatchTest(unittest.TestCase):
     def test_every_registered_attack_is_handled_by_the_kernel(self):
-        """製品の登録表のワザの実装は、どれも解決の基盤が受け持つ（v0.13 の経路にまかせるのは、試験の登録表の実装だけ）。"""
+        """製品の登録表のワザの実装は、どれも要素の並びの対応表にある（v0.13 の約束のアダプタを使うのは、試験の登録表の実装だけ）。"""
         for key in DEFAULT_EFFECTS.attack_keys():
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
             with self.subTest(attack=str(key)):
                 self.assertIn(type(effect), resolution.BUILDERS)
+                self.assertFalse(contract.is_contract(resolution.program_for(effect)))
 
     def test_opponent_effect_elements_come_from_the_program(self):
         """G37 の理由の文に書く効果の要素の種類は、解決の基盤では要素の並びから求める。どの登録されたワザでも、v0.13 の実装の宣言
-        （``AttackEffect.opponent_effect_elements``。v0.11）と同じ（G37 の判定と理由の文が両方の経路で同じになる前提）。"""
+        （``AttackEffect.opponent_effect_elements``。v0.11）と同じ（G37 の判定と理由の文が、上限を超えたときの v0.13 の止める関数と同じ）。"""
         for key in DEFAULT_EFFECTS.attack_keys():
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
             with self.subTest(attack=str(key)):
                 self.assertEqual(programs.opponent_effect_elements(resolution.compile_attack(effect)), effect.opponent_effect_elements)
 
     def test_target_commands(self):
-        """受け持つのは、ワザ・番の終わり・再開先が attack・knock_out・post_knockout・take_prize・promote_active の決定への答えだけ。"""
-        state = board(PONYTA_, MACHAMP_)
-        self.assertTrue(resolution.handles(state, UseAttack(0, 1)))
-        self.assertTrue(resolution.handles(state, UseAttack(1, 0)))  # 確認で拒否されるワザも受け持つ（同じ checks で拒否する）
-        self.assertTrue(resolution.handles(state, EndTurn(0)))
-        for command in (AttachEnergy(0, 0, 0), UsePokemonPower(0, 1, 0), ResolveDecision(0, 1, ()), TakePrize(0, 0), PromoteActive(0, 0)):
-            with self.subTest(command=type(command).__name__):
-                self.assertFalse(resolution.handles(state, command))
-        waiting = apply_legacy(board(PONYTA_, {**GIOVANNI_, "damage": 80}), UseAttack(0, 1))  # こんじょうの決定（knock_out）
+        """解決の基盤が処理するのは、ワザ・番の終わり（``resolution.COMMANDS``）と、再開先が ``resolution.RESUMES``（attack・knock_out・
+        post_knockout・take_prize・promote_active）の決定への答え。トレーナーの決定（trainer）への答えと、範囲外のコマンドは engine.py。"""
+        self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
+        self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "promote_active"})
+        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer"})
+        for command in (UseAttack, EndTurn):
+            self.assertIs(engine._HANDLERS[command], resolution.handle)
+        waiting = kyuura_engine.apply_command(board(PONYTA_, {**GIOVANNI_, "damage": 80}), UseAttack(0, 1))  # こんじょうの決定（knock_out）
         self.assertEqual(waiting.decision.resume, codec.KNOCK_OUT)
-        self.assertTrue(resolution.handles(waiting, ResolveDecision(1, waiting.decision.id, ())))
+        _, trace = apply_command_traced(waiting, ResolveDecision(1, waiting.decision.id, ()))
+        self.assertTrue(trace.events)  # 解決の基盤が続けた
+        potion = build_test_state([
+            {"active": {"card": MACHOP, "energy": [FIGHTING], "damage": 20}, "hand": [POTION]},
+            {"active": RATTATA},
+        ])
+        potion = kyuura_engine.apply_command(potion, kyuura_engine.PlayTrainer(0, potion.players[0].hand[0]))
+        self.assertEqual(potion.decision.resume, "trainer")
+        _, trace = apply_command_traced(potion, ResolveDecision(0, potion.decision.id, (potion.decision.options[0],)))
+        self.assertEqual(trace.events, [])  # トレーナーの決定は engine.py が続ける（解決の記録は空）
 
     def test_effects_outside_the_table_use_the_v0_13_path(self):
-        """対応表にない実装（試験の 2 段階の決定）は、経路 KERNEL でも v0.13 の処理になり、決定の答えも v0.13 の処理で続く。"""
+        """対応表にない実装（試験の 2 段階の決定。v0.13 の約束の ``resolve``・``resume``）は、v0.16b から v0.13 の約束のアダプタで解決の基盤が
+        処理し、決定の答え（2 段階）も解決の基盤で続く。結果は v0.13 の処理（参照データ。v0.15 までは v0.13 の経路で処理していた）と同じ。"""
         state = build_test_state([
             {"active": {"card": MACHOP, "energy": [FIGHTING]}, "bench": [RATTATA]},
             {"active": RATTATA, "bench": [RATTATA]},
         ], effects=two_step_effects())
-        self.assertFalse(resolution.handles(state, UseAttack(0, 0)))
+        self.assertTrue(contract.is_contract(resolution.program_for(state.effects.attack_entry(MACHOP, 0).effect)))
         # v0.13 の処理の結果は参照データ（tests/legacy_reference.py。v0.16a）
         expected = legacy_reference.expected(self, state, UseAttack(0, 0))
         kernel = apply_kernel(state, UseAttack(0, 0))
@@ -219,20 +250,20 @@ class DispatchTest(unittest.TestCase):
             decision = kernel.decision
             command = ResolveDecision(0, decision.id, (decision.options[0],))
             self.assertEqual(decision.resume, codec.ATTACK)
-            self.assertFalse(resolution.handles(kernel, command))
             expected = legacy_reference.expected(self, kernel, command)
             kernel = apply_kernel(kernel, command)
             self.assertEqual(("ok", legacy_reference.digest(kernel)), expected)
         self.assertEqual([e["kind"] for e in kernel.log if e["kind"] == "test_two_step"], ["test_two_step"])
 
     def test_subclass_of_a_table_entry_is_not_compiled(self):
-        """対応表の型の部分型は、親の型の並びで処理しない（部分型の resolve を使う。v0.13 の経路）。"""
+        """対応表の型の部分型は、親の型の並びとしては処理しない（部分型の resolve をアダプタで使う。v0.16b。v0.15 までは v0.13 の経路）。
+        ``super().resolve`` は親の型の要素の並び。結果は v0.13 の処理と同じ（参照データ）。"""
         effects = DEFAULT_EFFECTS.with_attacks("test-subclass", {AttackKey(MACHOP, 0): AttackEntry(SubclassedDamage(), "けたぐり")})
         state = build_test_state([
             {"active": {"card": MACHOP, "energy": [FIGHTING]}, "bench": [RATTATA]},
             {"active": RATTATA, "bench": [RATTATA]},
         ], effects=effects)
-        self.assertFalse(resolution.handles(state, UseAttack(0, 0)))
+        self.assertTrue(contract.is_contract(resolution.program_for(SubclassedDamage())))
         expected = legacy_reference.expected(self, state, UseAttack(0, 0))  # v0.13 の処理の結果（参照データ。v0.16a）
         new = apply_kernel(state, UseAttack(0, 0))
         self.assertEqual(("ok", legacy_reference.digest(new)), expected)
@@ -278,9 +309,8 @@ class MessageTest(unittest.TestCase):
             {"active": {**DARK_, "retaliation_received": TURN - 1}, "bench": [PONYTA_["card"]]},
         ], turn_number=TURN)
         before = full(state)
-        for apply in (apply_legacy, apply_kernel):
-            with self.subTest(route=apply.__name__), self.assertRaisesRegex(RuntimeError, "番の進み方の前提"):
-                apply(with_coin_results(state, H, H), UseAttack(0, 0))
+        with self.assertRaisesRegex(RuntimeError, "番の進み方の前提"):  # v0.15 までは v0.13 の経路も同じ前提の RuntimeError
+            apply_kernel(with_coin_results(state, H, H), UseAttack(0, 0))
         self.assertEqual(full(state), before)
 
 

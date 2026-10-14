@@ -150,17 +150,19 @@ class SimultaneousKnockOutOrderTest(unittest.TestCase):
     """両方の対戦ポケモンが同時にきぜつしたら、今が自分の番でないプレイヤーが先に出す（pp.323-324）。
 
     v0.1 の対応カードでは同時のきぜつは起こらない（ワザは相手のバトル場のポケモンにしかダメージを
-    与えない）。ここでは、ワザの処理の後の手順（engine._after_knockouts）を直接呼んで順番だけを確かめる。
+    与えない）。ここでは、ワザの処理の後の手順（v0.16b から解決の基盤の ``flow._after_knockouts``。v0.15 までは v0.13 の経路の
+    ``engine._after_knockouts``）を直接呼んで順番だけを確かめる。
     """
 
     def test_non_turn_player_promotes_first(self):
-        from kyuura_engine import engine
+        from kyuura_engine.resolution import flow
+        from kyuura_engine.resolution.kernel import Resolution
 
         state = build_test_state([
             {"active": None, "bench": [GROWLITHE]},
             {"active": None, "bench": [STARYU]},
         ], current_player=0)
-        engine._after_knockouts(state)
+        flow._after_knockouts(Resolution(state), (), None, ())
         self.assertEqual((state.phase, state.pending_promotions), (Phase.PROMOTE_ACTIVE, [1, 0]))
         with self.assertRaises(IllegalActionError) as ctx:
             apply_command(state, PromoteActive(0, state.players[0].bench[0].card))
@@ -171,10 +173,11 @@ class SimultaneousKnockOutOrderTest(unittest.TestCase):
 
     def test_both_cannot_field_is_sudden_death_and_not_continued(self):
         """両方とも出せないときはサドン・デス（p.311, p.324）。延長戦の開始は v0.1 では未実装。"""
-        from kyuura_engine import engine
+        from kyuura_engine.resolution import flow
+        from kyuura_engine.resolution.kernel import Resolution
 
         state = build_test_state([{"active": None}, {"active": None}], current_player=0)
-        engine._after_knockouts(state)
+        flow._after_knockouts(Resolution(state), (), None, ())
         self.assertEqual(state.phase, Phase.SUDDEN_DEATH)
         self.assertEqual(state.result.outcome, "sudden_death")
         with self.assertRaises(UnsupportedError) as ctx:

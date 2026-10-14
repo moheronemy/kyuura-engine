@@ -69,20 +69,40 @@ class LockstepGamesTest(unittest.TestCase):
                 compare.natural_games(comparator, name, range(2))
 
     def test_a_divergence_is_reported(self):
-        """比べる関数自身の確認: プロトタイプの答えを変えると ``Divergence``（比較が何も見ていない、を防ぐ）。"""
-        from experiments.event_kernel import kernel as KN
+        """比べる関数自身の確認（比較が何も見ていない、を防ぐ）。
+
+        1. 解決の基盤の答えを変えると、v0.13 の 1 歩ごとの結果の連なり（参照データ）と違うと報告する（v0.16b: v0.13 の経路を外したので、
+           v0.13 との比較は参照データ。v0.15 までは同じ木の v0.13 の経路と比べて ``Divergence``）。
+        2. 先読みの方法の 1 つ（``derived_full``）の答えだけを変えると ``Divergence``。"""
+        from kyuura_engine.resolution import kernel as KN
+        from kyuura_engine.resolution import preflight
+
         original = KN.ACTIONS["power_damage_to_damage_source"]
 
         def noisy(res, fs, deferred):
             original(res, fs, deferred)
-            res.state.add_event("note", text="prototype only")  # 公開のログに 1 つ多い
+            res.state.add_event("note", text="changed")  # 公開のログに 1 つ多い
 
+        reference = "tests.test_event_kernel_games_v0_14.LockstepGamesTest.test_natural_policies_in_both_modes"
         KN.ACTIONS["power_damage_to_damage_source"] = noisy
         try:
-            with self.assertRaises(compare.Divergence):
-                compare.natural_games(compare.Comparator(("derived",)), "test_machamp_games_v0_10", range(3))
+            with self.assertRaisesRegex(AssertionError, "旧経路の記録と違う"):
+                compare.natural_games(compare.Comparator(("derived",), reference=reference), "test_machamp_games_v0_10", range(2))
         finally:
             KN.ACTIONS["power_damage_to_damage_source"] = original
+
+        derived_full = preflight.derived
+
+        def noisy_full(state, *args, **kwargs):
+            derived_full(state, *args, **kwargs)
+            state.add_event("note", text="derived_full only")
+
+        preflight.derived = noisy_full
+        try:
+            with self.assertRaises(compare.Divergence):
+                compare.natural_games(compare.Comparator(("derived", "derived_full")), "test_machamp_games_v0_10", range(3))
+        finally:
+            preflight.derived = derived_full
 
 
 if __name__ == "__main__":

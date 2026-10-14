@@ -14,7 +14,7 @@ p.82 の最新の説明。p.89 のワザ解説の「相手の番ではたらく�
 消える契機（どれもログ ``persistent_effect_removed`` の ``reason``）:
 
 - ``EXPIRED``: 効果がはたらく番（``active_turn``。「次の相手の番」）の終わり（p.236・p.18 のワザ解説「効果の持続：次の
-  相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``engine._end_turn``）でポケモンチェックの前に消す
+  相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``procedures.expire_at_turn_end``）でポケモンチェックの前に消す
 - ``RETREAT``・``SWITCH``: バトル場からベンチに戻った（p.311「ベンチに戻ったら、そのポケモンの…「持続する効果」は、
   すべて消えてなくなります」・p.322）。「にげる」に失敗した（こんらん）ポケモンはベンチに戻っていないので消えない
 - ``FORCED_SWITCH``（v0.4d）: 相手のワザの効果（バタフリーの「ふきとばし」）でベンチにもどされた（p.311・p.322。p.89 の
@@ -104,7 +104,7 @@ def damage_prevention(state: GameState, pokemon: PokemonInPlay) -> PreventDamage
 
     効果がはたらくのは ``active_turn``（次の相手の番）の間だけ。効果を与えた番の残り（「かたまる」はワザなので、その番は
     すぐに終わる）と、ポケモンチェック（どちらの番でもない。p.323）でははたらかない。ポケモンチェックのどくのダメージは
-    ここを通さない（``engine._pokemon_check``）。
+    ここを通さない（``procedures.pokemon_check_poison``）。
     """
     for effect in pokemon.persistent_effects:
         if isinstance(effect, PreventDamage) and effect.active_turn == state.turn_number:

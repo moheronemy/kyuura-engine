@@ -33,9 +33,9 @@ import kyuura_engine as engine
 from kyuura_engine import EngineError, state_to_dict
 from kyuura_engine.decisions import DECISION_PHASES
 from kyuura_engine.effects import working_counterattack_power, working_evasion_power
-from kyuura_engine.engine import apply_command_traced
+from kyuura_engine.engine import apply_command_traced, apply_command_with
 from kyuura_engine.persistent import damage_prevention, retaliation
-from kyuura_engine.resolution import codec, events, handles
+from kyuura_engine.resolution import codec, events, processes
 from kyuura_engine.resolution.events import FrameKind, Window
 from kyuura_engine.rng import rng_fingerprint
 
@@ -187,12 +187,12 @@ class Recorder:
 
     def __call__(self, state, command):
         before_full, before_rng, before_log = full(state), rng_fingerprint(state.rng), state.log
-        owned = handles(state, command)
+        owned = processes(state, command)
         # 12. 解決の記録は結果に影響しない（記録をとらずに処理した結果と比べる。拒否も、例外の種類・コード・理由の文を比べる）
         quiet = None
         if owned:
             with mock.patch.object(events.Trace, "record", lambda self, event: None):
-                quiet = outcome(lambda: engine.engine.apply_command_via(state, command, route=engine.engine.Route.KERNEL))
+                quiet = outcome(lambda: apply_command_with(state, command))
         try:
             after, trace = apply_command_traced(state, command)
         except EngineError as error:

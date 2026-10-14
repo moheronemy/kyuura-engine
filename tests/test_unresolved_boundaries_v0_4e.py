@@ -666,13 +666,15 @@ class RetaliationDoubleKnockoutBoundaryTest(BoundaryTestCase):
 class CodeListTest(unittest.TestCase):
     def test_every_code_in_the_engine_is_covered_here(self):
         """エンジンの中の ``UNRESOLVED_…`` のコード（既定の UNRESOLVED_RULING を除く）が、このファイルの一覧と同じ。新しいコードを
-        加えたら、ここに止まる場合と隣の止まらない場合を加える。"""
+        加えたら、ここに止まる場合と隣の止まらない場合を加える。v0.16b: 解決の基盤（``kyuura_engine/resolution/``）もエンジンの中なので
+        数える（v0.13 の経路を外して、エナジーへんかんの 0 枚の ``UNRESOLVED_RECOVER_ZERO_ENERGY`` は解決の基盤の ``programs.py`` だけに
+        なった。v0.15 までは ``effects.py`` にも同じコードがあった）。"""
         import pathlib
         import re
 
         root = pathlib.Path(__file__).resolve().parent.parent / "kyuura_engine"
         found = set()
-        for path in root.glob("*.py"):
+        for path in root.rglob("*.py"):
             found.update(re.findall(r'"(UNRESOLVED_[A-Z_]+)"', path.read_text(encoding="utf-8")))
         found.discard("UNRESOLVED_RULING")
         self.assertEqual(found, set(ALL_CODES))

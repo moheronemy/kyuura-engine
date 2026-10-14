@@ -25,19 +25,25 @@ from kyuura_engine import (
     DEFAULT_EFFECTS, EndTurn, EngineError, IllegalActionError, PowerKey, ResolveDecision, UnsupportedError, UseAttack,
     UsePokemonPower, apply_command, check_invariants, load_card_pool, state_to_dict, working_counterattack_power,
 )
+from kyuura_engine.conditions import POISON
 from kyuura_engine.decisions import FORCED_SWITCH, push_attack_decision
 from kyuura_engine.effects import (
     DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackKey, AttackUse, CoinFlipDamage, CoinHeadsDamagePerOwnCounter, CounterattackDamage,
-    DamageProfile, PendingCounterattack,
+    DamageProfile,
     attack_reaches, counterattack_power, deal_attack_damage, finish_damage_elements,
 )
+from kyuura_engine.resolution import catalog as C
+from kyuura_engine.resolution import codec, open_attack, programs
+from kyuura_engine.resolution.events import Window
+from kyuura_engine.resolution.kernel import Deferred
+from kyuura_engine.resolution.questions import OpenQuestion
 from kyuura_engine.rng import rng_fingerprint
-from kyuura_engine.state import Asleep, Phase
+from kyuura_engine.state import Asleep, GameState, Phase
 
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DIGLETT, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GRASS, GRIMER,
     H, HAUNTER, HITMONCHAN, KADABRA, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PARAS, PIKACHU, PONYTA,
-    PSYCHIC, RATTATA, T, WEEDLE, apply_legacy, build_test_state, coin_events, with_coin_results,
+    PSYCHIC, RATTATA, T, WEEDLE, apply_kernel, build_test_state, coin_events, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 from tests.test_transparency_v0_9 import contextlib_exit, rng_draws
@@ -339,13 +345,14 @@ class ConditionTest(unittest.TestCase):
         self.assertEqual(sum(1 for e in second.log if e["kind"] == "counterattack"), 1)
 
     def test_evaluated_when_receiving_not_at_declaration(self):
-        """はたらくかは、ダメージを受けるときの状態で決める（関数で確かめる。``deal_attack_damage`` の中でねむりにすると加えない）。"""
+        """はたらくかは、ダメージを受けるときの状態で決める（関数で確かめる。``deal_attack_damage`` の中でねむりにすると加えない）。
+        v0.16b: 解決の基盤のワザの枠（``resolution.open_attack``）で、送る効果の列（``runtime.pending``）を見る。"""
         state = board(HITMONCHAN_JAB)
-        use = AttackUse(0, state.players[0].active.pokemon_id, AttackKey(HITMONCHAN, 0))
+        use = open_attack(state, 0)
         target = state.players[1].active
         target.conditions = dataclasses.replace(target.conditions, exclusive=Asleep())
         deal_attack_damage(state, use, "opponent_active", 20)
-        self.assertEqual(use.counterattacks, [])
+        self.assertEqual(use.runtime.pending, ())
 
 
 class GasTest(unittest.TestCase):
@@ -631,30 +638,31 @@ class AtomicityTest(unittest.TestCase):
         self.assertIs(state.log, log)
 
     def test_internal_error_after_the_counter(self):
-        """「はんげき」のダメージをのせたあと（ログ・回復・入れ替えの決定）で内部の誤りが起きても、渡した状態は変わらない。
+        """「はんげき」のダメージをのせたあと（ログ・回復・入れ替えの決定・特殊状態）で内部の誤りが起きても、渡した状態は変わらない。
 
-        v0.15b: v0.13 の経路の内部の関数（``effects._remove_attacker_counters`` など）を差しかえるので、経路 ``LEGACY`` を指定する。
-        解決の基盤の経路の同じ確かめは tests/test_kernel_integration_v0_15.py の ``KernelAtomicityTest``。"""
+        v0.16b: v0.13 の経路を外したので、解決の基盤の同じ所（ログ ``counterattack``・回復のログ ``drain_heal``・決定を出す
+        ``codec.push_decision``・特殊状態を付ける ``programs.APPLY_CONDITION``）に誤りを注入する（v0.15 までは v0.13 の経路の
+        ``effects._remove_attacker_counters``・``effects.push_attack_decision``・``effects.poison``）。"""
         def boom(*args, **kwargs):
             raise RuntimeError("注入した誤り")
 
-        state = board(HITMONCHAN_JAB)
-        original = type(state).add_event
+        def failing_event(kind):
+            original = GameState.add_event
 
-        def add_event(self, kind, **data):
-            if kind == "counterattack":
-                raise RuntimeError("注入した誤り")
-            return original(self, kind, **data)
+            def add_event(self, event_kind, **data):
+                if event_kind == kind:
+                    raise RuntimeError("注入した誤り")
+                return original(self, event_kind, **data)
 
-        self.assert_unchanged(state, UseAttack(0, 0), RuntimeError, mock.patch.object(type(state), "add_event", add_event), apply=apply_legacy)
+            return mock.patch.object(GameState, "add_event", add_event)
+
+        self.assert_unchanged(board(HITMONCHAN_JAB), UseAttack(0, 0), RuntimeError, failing_event("counterattack"))
         drain = board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS] * 4})
-        self.assert_unchanged(drain, UseAttack(0, 1), RuntimeError, mock.patch("kyuura_engine.effects._remove_attacker_counters", boom),
-                              apply=apply_legacy)
+        self.assert_unchanged(drain, UseAttack(0, 1), RuntimeError, failing_event("drain_heal"))
         whirlwind = board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]})
-        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom),
-                              apply=apply_legacy)
+        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch.object(codec, "push_decision", boom))
         poison = with_coin_results(board({"card": WEEDLE, "energy": [GRASS]}), H)
-        self.assert_unchanged(poison, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.poison", boom), apply=apply_legacy)
+        self.assert_unchanged(poison, UseAttack(0, 0), RuntimeError, mock.patch.dict(programs.APPLY_CONDITION, {POISON: boom}))
 
     def test_invalid_commands_do_not_change_anything(self):
         """不正なコマンド（宣言・エネルギーの足りないワザ・番でないプレイヤー）は、状態・乱数・ログを変えない。"""
@@ -674,32 +682,46 @@ class AtomicityTest(unittest.TestCase):
 
 
 class DirectTest(unittest.TestCase):
-    """ワザの処理の部品を直接呼ぶ（対応カードのワザでは起こらない場合。C34・C35・ガード）。"""
+    """ワザの処理の部品を直接呼ぶ（対応カードのワザでは起こらない場合。C34・C35・ガード）。
+
+    v0.16b: v0.13 の約束の補助関数は解決の基盤のワザの枠に委ねるので、``resolution.open_attack`` で枠を開いた ``AttackUse`` で呼び、
+    まだ与えていない「はんげき」は枠の送る効果の列（``runtime.pending``。``kernel.Deferred``）で見る（v0.15 までは
+    ``AttackUse.counterattacks``）。"""
 
     def use(self, state):
-        pokemon = state.players[0].active
-        return AttackUse(0, pokemon.pokemon_id, AttackKey(state.cards[pokemon.card].card_id, 0))
+        return open_attack(state, 0)
+
+    def pending_targets(self, use):
+        return [deferred.instance.pokemon_id for deferred in use.runtime.pending]
 
     def test_pending_is_applied_at_the_end_of_the_damage_elements(self):
         state = board(HITMONCHAN_JAB)
         use = self.use(state)
         deal_attack_damage(state, use, "opponent_active", 20)
-        self.assertEqual([c.pokemon_id for c in use.counterattacks], [state.players[1].active.pokemon_id])
+        self.assertEqual(self.pending_targets(use), [state.players[1].active.pokemon_id])
         self.assertEqual(state.players[0].active.damage, 0)  # ダメージの要素の中では与えない
         finish_damage_elements(state, use)
-        self.assertEqual((use.counterattacks, state.players[0].active.damage), ([], 10))
+        self.assertEqual((self.pending_targets(use), state.players[0].active.damage), ([], 10))
         finish_damage_elements(state, use)  # 2 回呼んでも与えない
         self.assertEqual(state.players[0].active.damage, 10)
 
     def test_two_pending_counters_are_not_ordered(self):
         """1 つのワザで 2 つ以上の「はんげき」（複数のポケモンが受けるワザ）は、順番が決められない（C34・C35）。今の対応カードでは
-        起こらないので、エンジンの不具合として止める。"""
+        起こらないので、エンジンの不具合として止める（解決の基盤はコードのない問い ``multiple_deferred_effects`` として見つけ、コマンドの
+        入口で ``RuntimeError`` にする。``questions.to_error``）。"""
         state = board(HITMONCHAN_JAB, bench1=[machamp()])
         use = self.use(state)
+        fs = use.runtime.run.fs
         for target in (state.players[1].active, state.players[1].bench[0]):
-            use.counterattacks.append(PendingCounterattack(1, target.pokemon_id, target.card, STRIKES_BACK, 10))
-        with self.assertRaises(RuntimeError):
+            (instance,) = [i for i in C.in_window(state, Window.DAMAGE_RECEIVING, 1, target, C.DEFAULT_CATALOG)
+                           if i.definition.timing is C.Timing.DEFER]
+            fs.pending.append(Deferred(instance, fs.frame.id, 20))
+        with self.assertRaises(OpenQuestion) as caught:
             finish_damage_elements(state, use)
+        self.assertEqual(caught.exception.key, "multiple_deferred_effects")
+        from kyuura_engine.resolution.questions import to_error
+        with self.assertRaisesRegex(RuntimeError, "C34・C35"):
+            to_error(caught.exception.key)
 
     def test_effects_and_decisions_need_the_counter_first(self):
         """まだ与えていない「はんげき」があるまま、効果の要素（``attack_reaches``）・決定（``push_attack_decision``）に進むとエンジンの不具合
@@ -723,20 +745,23 @@ class DirectTest(unittest.TestCase):
         use.reception[target.pokemon_id] = False
         result = deal_attack_damage(state, use, "opponent_active", 20)
         self.assertTrue(result.evaded)
-        self.assertEqual((use.counterattacks, target.damage), ([], 0))
+        self.assertEqual((self.pending_targets(use), target.damage), ([], 0))
         prevented = board(HITMONCHAN_JAB, machamp(prevent_damage=TURN - 1))
         use = self.use(prevented)
         self.assertTrue(deal_attack_damage(prevented, use, "opponent_active", 20).prevented)
-        self.assertEqual(use.counterattacks, [])
+        self.assertEqual(self.pending_targets(use), [])
 
     def test_memo_is_not_state(self):
-        """``AttackUse.counterattacks`` はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（書き出しの形式は 9 のまま）。"""
-        key = AttackKey(HITMONCHAN, 0)
-        a, b = AttackUse(0, 1, key), AttackUse(0, 1, key)
-        a.counterattacks.append(PendingCounterattack(1, 2, 3, STRIKES_BACK, 10))
+        """まだ与えていない「はんげき」はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（書き出しの形式は 9 のまま）。v0.16b:
+        値は解決の基盤の枠が持ち、``AttackUse`` は枠への入口（``runtime``）を比較・ハッシュ・表示に含めない。"""
+        state = board(HITMONCHAN_JAB)
+        a = self.use(state)
+        deal_attack_damage(state, a, "opponent_active", 20)
+        self.assertEqual(len(a.runtime.pending), 1)
+        b = AttackUse(a.player, a.pokemon_id, a.key)
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
-        self.assertNotIn("counterattacks", repr(a))
+        self.assertNotIn("runtime", repr(a))
 
 
 class InvariantTest(unittest.TestCase):
@@ -762,16 +787,20 @@ class InvariantTest(unittest.TestCase):
         self.assertTrue(any("HP 以上" in p for p in check_invariants(bench)))
 
     def test_double_knock_out_guard_after_the_preflight(self):
-        """宣言の前の確認（``counterattack_double_knockout_problem``）を外しても、「はんげき」を与えるところでエンジンの不具合として止める
-        （黙って同時のきぜつにしない）。渡した状態は変わらない。
+        """宣言の前の確認を外しても、「はんげき」できぜつするところで止める（黙って同時のきぜつにしない）。渡した状態は変わらない。
 
-        v0.15b: v0.13 の経路の宣言の前の確認を外すので、経路 ``LEGACY`` を指定する。解決の基盤の経路の同じ確かめ（先読みを外しても、
-        きぜつの判定で止める）は tests/test_kernel_integration_v0_15.py の ``KernelGuardTest``。"""
+        v0.16b: v0.13 の経路（確認を外すと、「はんげき」を与えるところで ``RuntimeError``）を外したので、解決の基盤で確かめる。解決の基盤は、
+        先読み（``preflight.derived``・``preflight.legacy``）を外しても、実際の処理のきぜつの判定で同じ検出（原因の枠が分かれたきぜつ）を
+        するので、宣言の前と同じコード（``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``）で止める（tests/test_kernel_integration_v0_15.py の
+        ``KernelGuardTest`` と同じ考え方）。"""
         state = board({**HITMONCHAN_JAB, "damage": 60}, machamp(damage=80), bench0=[RATTATA])
         before, fingerprint = written(state), rng_fingerprint(state.rng)
-        with mock.patch("kyuura_engine.engine.counterattack_double_knockout_problem", lambda *args: None):
-            with self.assertRaises(RuntimeError):
-                apply_legacy(state, UseAttack(0, 1))
+        with mock.patch("kyuura_engine.resolution.preflight.derived", lambda *args, **kwargs: None), \
+                mock.patch("kyuura_engine.resolution.preflight.legacy", lambda *args, **kwargs: None):
+            for mode in ("derived_full", "legacy"):
+                with self.subTest(mode=mode), self.assertRaises(UnsupportedError) as ctx:
+                    apply_kernel(state, UseAttack(0, 1), preflight=mode)
+                self.assertEqual(ctx.exception.code, "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT")
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
 
 

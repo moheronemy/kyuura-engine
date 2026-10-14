@@ -1,4 +1,9 @@
-"""v0.14: v0.13 の経路（``Route.LEGACY``）と解決の基盤（``Route.KERNEL``。v0.14 のプロトタイプ）を、同じ対戦の 1 歩ごとに比べる（C 段階の道具）。
+"""v0.14: 同じ対戦の 1 歩ごとに、解決の基盤の先読みの方法どうしを比べる（C 段階の道具）。
+
+v0.14〜v0.15 は v0.13 の経路（``Route.LEGACY``）と解決の基盤を同じ木の中で比べていました。v0.16b で v0.13 の経路を外したので、基準は
+公開の ``apply_command``（標準の先読み ``derived``）にし、``--mode`` の先読みの方法の結果がそれと同じことを確かめます。v0.13 の結果との
+比較は、別の木・別のプロセスで比べる ``tools/engine_lockstep.py``（固定した v0.13・v0.15）と、旧経路の結果の参照データ
+（tests/legacy_reference.py。``Comparator(reference=…)`` の対戦ごとの連なり）で行います。
 
 ふだんのテスト（``python3 -m unittest``）では走らせません。B 段階の小さな比較は tests/test_event_kernel_games_v0_14.py です。
 
@@ -38,7 +43,6 @@ for path in (ROOT, ROOT / "tools"):
 
 import kyuura_engine as engine  # noqa: E402
 from kyuura_engine.rng import rng_fingerprint  # noqa: E402
-from kyuura_engine.engine import Route, apply_command_via  # noqa: E402
 
 from experiments import event_kernel as K  # noqa: E402
 from experiments.event_kernel import events as EV  # noqa: E402
@@ -56,16 +60,20 @@ GROUPS = {"both": ("derived", "legacy"), "all": MODES}
 
 
 class Divergence(BaseException):
-    """本番とプロトタイプの答えが違う（``BaseException`` なので、対戦のテストの ``except EngineError`` を通り抜ける）。"""
+    """基準と先読みの方法の答え（または参照データ）が違う（``BaseException`` なので、対戦のテストの ``except EngineError`` を通り抜ける）。"""
 
 
 def full(state):
     return engine.state_to_dict(state, format_version=9)
 
 
-def _legacy_apply(state, command):
-    """比較の基準: v0.13 の経路（v0.15b から。標準の経路が KERNEL になっても、v0.13 の経路と比べる）。"""
-    return apply_command_via(state, command, route=Route.LEGACY)
+def _baseline_apply(state, command):
+    """比較の基準: 公開の ``apply_command``（v0.16b から。v0.15 までは v0.13 の経路）。参照データを記録するとき（旧経路がある木だけ）は
+    旧経路。"""
+    from tests import legacy_reference
+    if legacy_reference.recording():
+        return legacy_reference.legacy_apply_for_recording(state, command)
+    return engine.apply_command(state, command)
 
 
 def _run(apply, state, command):
@@ -104,7 +112,7 @@ class Comparator:
         before, rng = full(state), rng_fingerprint(state.rng)
         owned = K.owned(state, command)
         t0 = time.perf_counter()
-        expected, expected_error = _run(_legacy_apply, state, command)
+        expected, expected_error = _run(_baseline_apply, state, command)
         t1 = time.perf_counter()
         if self.chain is not None:
             from tests import legacy_reference
@@ -129,7 +137,7 @@ class Comparator:
         for mode, actual, trace, error in results:
             if (expected_error is None) != (error is None) or (
                     error is not None and (type(error), error.code, error.message) != (type(expected_error), expected_error.code, expected_error.message)):
-                raise Divergence(f"[{mode}] {engine.command_to_dict(command)}: v0.13={expected_error!r} prototype={error!r}")
+                raise Divergence(f"[{mode}] {engine.command_to_dict(command)}: 基準={expected_error!r} 先読み {mode}={error!r}")
             if expected_error is None and full(actual) != full(expected):
                 raise Divergence(f"[{mode}] {engine.command_to_dict(command)}: 状態が違う ({_first_difference(expected, actual)})")
         self.counts["steps"] += 1
@@ -166,7 +174,7 @@ def _first_difference(expected, actual):
     keys = [k for k in a if a.get(k) != b.get(k)]
     la, lb = expected.log, actual.log
     n = next((i for i in range(min(len(la), len(lb))) if dict(la[i]) != dict(lb[i])), min(len(la), len(lb)))
-    return f"項目 {keys}; ログの最初の違い {n}: v0.13={dict(la[n]) if n < len(la) else None} prototype={dict(lb[n]) if n < len(lb) else None}"
+    return f"項目 {keys}; ログの最初の違い {n}: 基準={dict(la[n]) if n < len(la) else None} 先読み={dict(lb[n]) if n < len(lb) else None}"
 
 
 def stress_game(comparator: Comparator, scenario, seed: int, *, steps: int = 600, illegal_rate: float = 0.05):

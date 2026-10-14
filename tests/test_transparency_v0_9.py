@@ -26,13 +26,16 @@ from kyuura_engine.effects import (
     DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackImmunityOnHeads, AttackKey, AttackUse, ConfuseOnHeads, ParalyzeOnHeads,
     PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
 )
+from kyuura_engine.conditions import SLEEP
+from kyuura_engine.resolution import codec, open_attack, programs
+from kyuura_engine.resolution.questions import OpenQuestion
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import Asleep
 
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
     KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, apply_legacy, build_test_state, coin_events, uids, with_coin_results,
+    WEEDLE, BASE_HAUNTER, LIGHTNING, build_test_state, coin_events, uids, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -459,15 +462,17 @@ class SelfHit(AttackEffect):
 
 
 class DirectReceptionTest(unittest.TestCase):
-    """``attack_reaches`` を直接呼ぶ（対応カードのワザでは起こらない場合。T7・T8・T24〜T27）。"""
+    """``attack_reaches`` を直接呼ぶ（対応カードのワザでは起こらない場合。T7・T8・T24〜T27）。
+
+    v0.16b: v0.13 の約束の補助関数は解決の基盤のワザの枠に委ねるので、``resolution.open_attack`` で枠を開いた ``AttackUse`` で呼ぶ
+    （1 つの枠 = 1 つのワザ）。"""
 
     def board(self):
         return build_test_state([{"active": {"card": RATTATA, "energy": [FIRE]}, "bench": [haunter()]},
                                  {"active": haunter(), "bench": [haunter(), GASTLY]}], turn_number=TURN)
 
     def use(self, state, player=0):
-        pokemon = state.players[player].active
-        return AttackUse(player, pokemon.pokemon_id, AttackKey(state.cards[pokemon.card].card_id, 0))
+        return open_attack(state, player)
 
     def test_bench_haunter_flips(self):
         """ベンチのゴーストもはたらく（p.159「バトル場でもベンチでもはたらきます」。T7・T25）。"""
@@ -485,19 +490,26 @@ class DirectReceptionTest(unittest.TestCase):
         self.assertEqual([e["player"] for e in coin_events(state)], [0])
 
     def test_each_haunter_flips_once_per_attack(self):
-        """複数のポケモンが受けるなら、それぞれ別に決める（T26・T27 の「それぞれ投げる」）。同じワザの同じポケモンは 1 回だけ（T4）。
-        新しいワザ（新しい ``AttackUse``）では投げ直す。ゴースは投げない。"""
+        """同じワザの同じポケモンは 1 回だけ（T4）。新しいワザ（新しい枠）では投げ直す。ゴースは投げない。
+
+        1 つのワザで 2 匹目の「とうめい」を評価すると、コインの順番が原典で決められない（T27。docs/transparency-v0.9.md・CLAUDE.md
+        「1 つのワザで複数の「とうめい」のポケモンが受ける場合のコインの順番（T27）は原典で決められません」）ので、解決の基盤は 2 匹目の前に
+        止める（コードのない問い ``multiple_evasion``。今の対応カードでは起こらないので、コマンドの入口で ``RuntimeError``）。v0.16b: v0.15 までの
+        補助関数（v0.13 の ``attack_reaches``）は 2 匹目も評価していた（対応カードでは起こらない）。解決の基盤の検出にそろえた。"""
         state = with_coin_results(self.board(), H, T, H)
         use = self.use(state)
         active, bench, gastly = state.players[1].active, state.players[1].bench[0], state.players[1].bench[1]
         self.assertFalse(attack_reaches(state, use, 1, active, DAMAGE_ELEMENT, amount=20))
-        self.assertTrue(attack_reaches(state, use, 1, bench, DAMAGE_ELEMENT, amount=20))
-        self.assertTrue(attack_reaches(state, use, 1, gastly, DAMAGE_ELEMENT, amount=20))
-        self.assertFalse(attack_reaches(state, use, 1, active, "sleep"))
-        self.assertTrue(attack_reaches(state, use, 1, bench, "sleep"))
-        self.assertEqual(len(coin_events(state)), 2)
-        self.assertEqual(use.reception, {active.pokemon_id: False, bench.pokemon_id: True})
-        self.assertFalse(attack_reaches(state, self.use(state), 1, active, DAMAGE_ELEMENT, amount=20))  # 3 枚目（H）
+        self.assertTrue(attack_reaches(state, use, 1, gastly, DAMAGE_ELEMENT, amount=20))  # ゴースは「とうめい」を持たない
+        self.assertFalse(attack_reaches(state, use, 1, active, "sleep"))  # 同じワザの同じポケモンは投げ直さない（T4）
+        self.assertEqual(len(coin_events(state)), 1)
+        self.assertEqual(use.reception, {active.pokemon_id: False})
+        with self.assertRaises(OpenQuestion) as caught:
+            attack_reaches(state, use, 1, bench, DAMAGE_ELEMENT, amount=20)  # 2 匹目の「とうめい」（T27）
+        self.assertEqual(caught.exception.key, "multiple_evasion")
+        self.assertEqual(len(coin_events(state)), 1)  # 2 匹目のコインは投げない
+        self.assertTrue(attack_reaches(state, self.use(state), 1, bench, DAMAGE_ELEMENT, amount=20))  # 新しいワザ（2 枚目 T）
+        self.assertFalse(attack_reaches(state, self.use(state), 1, active, DAMAGE_ELEMENT, amount=20))  # 新しいワザ（3 枚目 H）
         self.assertEqual(len(coin_events(state)), 3)
 
     def test_not_working_is_not_recorded(self):
@@ -513,10 +525,12 @@ class DirectReceptionTest(unittest.TestCase):
         self.assertIsNone(evasion_power(state, active))
 
     def test_attack_use_memo_is_not_state(self):
-        """記録はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（状態に持たない。書き出しの形式は 9 のまま）。"""
-        key = AttackKey(RATTATA, 0)
-        a, b = AttackUse(0, 1, key), AttackUse(0, 1, key)
+        """記録はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（状態に持たない。書き出しの形式は 9 のまま）。v0.16b: 記録は
+        解決の基盤の枠が持ち（``AttackUse.reception`` はそれを読む）、``AttackUse`` は枠への入口を比較・ハッシュ・表示に含めない。"""
+        a = self.use(self.board())
+        b = AttackUse(a.player, a.pokemon_id, a.key)
         a.reception[3] = False
+        self.assertEqual(a.runtime.reception, {3: False})
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
         self.assertNotIn("reception", repr(a))
@@ -690,16 +704,16 @@ class AtomicityTest(unittest.TestCase):
         """「とうめい」のコインを投げたあとの処理（ねむりにする・入れ替えの決定・ダメージのログ）で内部の誤りが起きても、渡した状態は
         変わらない。
 
-        v0.15b: v0.13 の経路の内部の関数（``effects.put_to_sleep``・``effects.push_attack_decision``）を差しかえるので、経路 ``LEGACY`` を
-        指定する。解決の基盤の経路の同じ確かめは tests/test_kernel_integration_v0_15.py の ``KernelAtomicityTest``。"""
+        v0.16b: v0.13 の経路を外したので、解決の基盤の同じ所（特殊状態を付ける ``programs.APPLY_CONDITION``・決定を出す
+        ``codec.push_decision``・ログ ``attack_evaded``）に誤りを注入する（v0.15 までは v0.13 の経路の ``effects.put_to_sleep``・
+        ``effects.push_attack_decision``）。"""
         def boom(*args, **kwargs):
             raise RuntimeError("注入した誤り")
 
         nightmare = with_coin_results(board(haunter(energy=[PSYCHIC, PSYCHIC])), T)
-        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.put_to_sleep", boom), apply=apply_legacy)
+        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch.dict(programs.APPLY_CONDITION, {SLEEP: boom}))
         whirlwind = with_coin_results(board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]}), T)
-        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom),
-                              apply=apply_legacy)
+        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch.object(codec, "push_decision", boom))
         heads = with_coin_results(board({"card": RATTATA, "energy": [FIRE]}), H)
         original = type(heads).add_event
 
@@ -708,7 +722,7 @@ class AtomicityTest(unittest.TestCase):
                 raise RuntimeError("注入した誤り")
             return original(self, kind, **data)
 
-        self.assert_unchanged(heads, UseAttack(0, 0), RuntimeError, mock.patch.object(type(heads), "add_event", add_event), apply=apply_legacy)
+        self.assert_unchanged(heads, UseAttack(0, 0), RuntimeError, mock.patch.object(type(heads), "add_event", add_event))
 
     def test_accepted_command_does_not_change_the_input(self):
         state = with_coin_results(board({"card": RATTATA, "energy": [FIRE]}), H)

@@ -75,7 +75,8 @@ v0.15d で標準の経路になった解決の基盤（`kyuura_engine/resolution
 | `finish_damage_elements` | effects 23・engine 5・tests 6（2 ファイル） | E・C・F | KERNEL は `kernel.fire_pending`（窓を開く位置は `run_elements` が決める） | `kernel.fire_pending` に委ねる入口にする |
 | `push_attack_decision`（decisions） | effects 6・tests 10（4 ファイル） | E・C・F | KERNEL は `AttackRun.suspend`（同じ決定の形。`codec.attack_decision`） | `AttackRun.suspend` に委ねる入口にする |
 | `_apply_counterattack`・`_apply_retaliation`・`retaliation_use`・`PendingCounterattack`・`PendingRetaliation`・`_require_damage_elements_finished` | effects だけ（tests: `PendingCounterattack` 3） | E・C | KERNEL は `kernel.power_damage_to_damage_source`・`attack_damage_to_damage_source`・`Deferred` | v0.16b で外す（約 210 行） |
-| `_skip_heal_of_knocked_out_attacker`・`_remove_attacker_counters`・`_check_damage_then_effect` | effects だけ（tests: `_remove_attacker_counters` の差しかえ 1） | E | 24 の `resolve` だけが使う。KERNEL は `programs.Drain`（同じ結果・ログ） | `resolve` といっしょに外す。v0.16d の「ダメージに応じた回復」の重複は、このとき重複でなくなる |
+| `_skip_heal_of_knocked_out_attacker`・`_remove_attacker_counters` | effects だけ（tests: `_remove_attacker_counters` の差しかえ 1） | E | 24 の `resolve` だけが使う。KERNEL は `programs.Drain`（同じ結果・ログ） | `resolve` といっしょに外す。v0.16d の「ダメージに応じた回復」の重複は、このとき重複でなくなる |
+| `_check_damage_then_effect` | effects だけ | A（v0.16b で訂正） | v0.16a では E と分類したが、実際は登録の照合（5 つの実装の `check`）が使う（v0.16b で消した写しで見つかった。docs/kernel-consolidation-v0.16b.md 1 章） | 残す |
 | `damage_profile`・`DamageProfile` | effects 33・tests 22（6 ファイル） | A・C・F | 先読み `legacy`・上限を超えたときの確かめ（C18・W24・G37 の止める関数）が使う | 残す（v0.16c） |
 | `opponent_effect_elements` | effects 14・resolution 2・tests 5（2 ファイル） | A・C・F | G37 の止める関数（`legacy`）が使う。KERNEL は要素の並びから求める（`programs.opponent_effect_elements`） | 残す（v0.16c） |
 | `preview_attack_damage`・`damage_receiver` | effects だけ | A | 止める関数（C18・W24・G37・T19b）が使う | 残す（v0.16c） |
@@ -225,7 +226,7 @@ v0.14・v0.15 の比較のテストは、同じ盤面・同じコマンドを旧
 
 | 段階 | 消す・移すもの | 残すもの |
 |---|---|---|
-| v0.16b | `engine.py` の旧経路（2 章の 24 の関数と `Route`・`DEFAULT_ROUTE`・`apply_command_via`・`resolution.handles`）。`effects.py` の旧ダメージ処理境界の実装（`deal_attack_damage`・`attack_reaches`・`finish_damage_elements` の中身、`_apply_counterattack`・`_apply_retaliation`・`retaliation_use`・`Pending*`・`_require_damage_elements_finished`）と、24 の実装の `resolve`・`resume`、それだけが使う補助（`_skip_heal_of_knocked_out_attacker`・`_remove_attacker_counters`・`_check_damage_then_effect`）。アダプタ（7.2 節）を加える。消す関数を直接使うテストを、そのコミットで移す | 効果の登録と照合・クラスの定義・`check`・`problem`・`damage_profile`・`opponent_effect_elements`・`decision_problems`・`retaliation_terms`・ダメージの計算・コイン・特殊状態・決定の保存と復元・持続する効果・常にはたらく効果・トレーナー・宣言する特殊能力・不変条件の問い合わせ・公開の問い合わせ・補助関数の入口 |
+| v0.16b | `engine.py` の旧経路（2 章の 24 の関数と `Route`・`DEFAULT_ROUTE`・`apply_command_via`・`resolution.handles`）。`effects.py` の旧ダメージ処理境界の実装（`deal_attack_damage`・`attack_reaches`・`finish_damage_elements` の中身、`_apply_counterattack`・`_apply_retaliation`・`retaliation_use`・`Pending*`・`_require_damage_elements_finished`）と、24 の実装の `resolve`・`resume`、それだけが使う補助（`_skip_heal_of_knocked_out_attacker`・`_remove_attacker_counters`。`_check_damage_then_effect` は登録の照合が使うので残す。v0.16b で訂正）。アダプタ（7.2 節）を加える。消す関数を直接使うテストを、そのコミットで移す | 効果の登録と照合・クラスの定義・`check`・`problem`・`damage_profile`・`opponent_effect_elements`・`decision_problems`・`retaliation_terms`・ダメージの計算・コイン・特殊状態・決定の保存と復元・持続する効果・常にはたらく効果・トレーナー・宣言する特殊能力・不変条件の問い合わせ・公開の問い合わせ・補助関数の入口 |
 | v0.16c | 宣言の前の先読みの方法 `legacy`・`LEGACY_VERIFIED` の扱いを比べて決める（A: 限定的なモジュールに残す、B: 新しい共通の判定、C: 一律に拒否）。上限の前後の試験 | 決めたもの |
 | v0.16d | 重複（回復・きぜつの処理・きぜつしたあとの候補・決定の再開）の整理、経路を選ぶテスト・道具の移行、`experiments/event_kernel/__init__.py` を残すか、`WRONG_PHASE` の並び（別のコミット） | — |
 

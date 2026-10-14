@@ -127,27 +127,18 @@ def push_attack_decision(
     min_choices: int = 1,
     max_choices: int = 1,
 ) -> PendingDecision:
-    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
+    """ワザの効果の途中で決定を出す（v0.13 の約束の補助関数）。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
 
-    v0.10: そのワザのダメージではたらいた「はんげき」（``AttackUse.counterattacks``）は、決定を出す前に与えていなければならない
-    （決定はダメージ以外の効果。「はんげき」のダメージは、ダメージの処理のあと、効果の前。p.89）。決定をまたぐと ``AttackUse`` は
-    新しくなり、まだ与えていない「はんげき」が失われるので、残っていればエンジンの不具合として止める。
+    決定の形は v0.13 と同じ（再開先 ``"attack"``、``context`` は ``("use", (プレイヤー, 場のポケモンの番号, カード id, ワザの位置))`` と
+    ``context``）。v0.16b から、解決の基盤のワザの枠（``use.runtime``）に委ねる（``AttackRun.suspend``。決定を出す前に、そのワザの
+    ダメージではたらいた「ダメージを受けたとき」の効果が残っていれば ``RuntimeError``。``finish_damage_elements`` のあとに出す。p.89）。
+    ``use.runtime`` がなければ ``RuntimeError``。
     """
-    if getattr(use, "counterattacks", None) or getattr(use, "retaliations", None):
-        raise RuntimeError(
-            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」「ほのおのかべ」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
-        )
-    use_context = ("use", (use.player, use.pokemon_id, use.key.card_id, use.key.attack_index))
-    return push_decision(
-        state,
-        kind=kind,
-        player=player,
-        options=options,
-        resume="attack",
-        context=(use_context, *tuple(context)),
-        min_choices=min_choices,
-        max_choices=max_choices,
-    )
+    runtime = getattr(use, "runtime", None)
+    if runtime is None:
+        raise RuntimeError(f"ワザ {use.key} の決定は、解決の基盤がワザを処理している間だけ出せる（AttackUse に解決の基盤の入口がない）")
+    return runtime.push_decision(state, kind=kind, player=player, options=options, context=tuple(context), min_choices=min_choices,
+                                 max_choices=max_choices)
 
 
 def push_trainer_decision(

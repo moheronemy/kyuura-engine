@@ -213,7 +213,7 @@ class Retaliation:
       ``RETALIATION_RECEIVED``（わるいカメールの「こうらがえし」の最新の説明（p.89）「次の相手の番、このカードが相手のワザによって
       ダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）そのポケモンにも同じダメージを与える。（ダメージ以外の効果は
       与えない）」。受けたダメージ（p.321 で計算した最終ダメージ。HP で上限をつけない）。docs/shell-attack-v0.13.md・
-      docs/variable-retaliation-v0.13.md）。受けたダメージはワザ 1 回の中の値（``effects.PendingRetaliation.received``）で、状態に
+      docs/variable-retaliation-v0.13.md）。受けたダメージはワザ 1 回の中の値（解決の基盤の ``kernel.Deferred.received``）で、状態に
       持たない
 
     はたらくのは ``active_turn`` の間に、このポケモンが相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けたとき

@@ -20,7 +20,6 @@ docs/ko-prevention-v0.11.md）。
 import copy
 import inspect
 import pickle
-import re
 import unittest
 
 from kyuura_engine import (
@@ -30,10 +29,11 @@ from kyuura_engine import (
 from kyuura_engine import effects as effects_module
 from kyuura_engine.decisions import KO_PREVENTION
 from kyuura_engine.effects import (
-    ATTACK_ELEMENTS, DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackKey, AttackUse, DamageProfile, PreventKnockOutOnHeads,
+    ATTACK_ELEMENTS, DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackKey, DamageProfile, PreventKnockOutOnHeads,
     available_ko_prevention_power, deal_attack_damage, damage_opponent_active, ko_prevention_power,
 )
-from kyuura_engine.engine import _ko_prevention_offer
+from kyuura_engine.resolution import programs
+from kyuura_engine.resolution.kernel import Resolution, ko_prevention_offers
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import Phase
 
@@ -376,11 +376,11 @@ class SourceTest(unittest.TestCase):
 
     def test_offer_needs_this_attacks_damage(self):
         """HP 以上の「こんじょう」のポケモンに、このワザのダメージを受けた記録がなければ、エンジンの不具合として止める（推測で決めない）。
-        盤面を直接作った（自然な対戦では、番の途中に HP 以上のポケモンは場にいない）。"""
+        盤面を直接作った（自然な対戦では、番の途中に HP 以上のポケモンは場にいない）。v0.16b: きぜつの判定の窓の候補を求める解決の基盤の
+        関数（``kernel.ko_prevention_offers``。v0.15 までは v0.13 の経路の ``engine._ko_prevention_offer``）で確かめる。"""
         state = board(SPECIAL_PUNCH, gmachamp(damage=100))
-        use = AttackUse(0, state.players[0].active.pokemon_id, AttackKey(HITMONCHAN, 1))
         with self.assertRaises(RuntimeError):
-            _ko_prevention_offer(state, use)
+            ko_prevention_offers(Resolution(state))
 
 
 class ConditionAndGasTest(unittest.TestCase):
@@ -453,11 +453,11 @@ class ConditionAndGasTest(unittest.TestCase):
         ワザのダメージを与えるワザは対応カードにないので、きぜつの判定の関数で確かめる（盤面を直接作った。自然な対戦では起こらない）。"""
         state = board(SPECIAL_PUNCH, RATTATA, bench1=[gmachamp(damage=110)])
         bench = state.players[1].bench[0]
-        use = AttackUse(0, state.players[0].active.pokemon_id, AttackKey(HITMONCHAN, 1))
-        use.ko_prevention_able[bench.pokemon_id] = True
-        self.assertEqual(_ko_prevention_offer(state, use), (1, bench, GUTS))
-        use.ko_prevention_able[bench.pokemon_id] = False  # ダメージを受けたときにねむり・マヒ・こんらんだった
-        self.assertIsNone(_ko_prevention_offer(state, use))
+        res = Resolution(state)  # v0.16b: 解決の基盤のきぜつの判定の窓（v0.15 までは engine._ko_prevention_offer）
+        res.ko_prevention_able[bench.pokemon_id] = True
+        self.assertEqual([(owner, pokemon, instance.power_key) for owner, pokemon, instance in ko_prevention_offers(res)], [(1, bench, GUTS)])
+        res.ko_prevention_able[bench.pokemon_id] = False  # ダメージを受けたときにねむり・マヒ・こんらんだった
+        self.assertEqual(ko_prevention_offers(res), [])
 
 
 class KnockOutAndPrizeTest(unittest.TestCase):
@@ -567,18 +567,19 @@ class G37Test(unittest.TestCase):
         self.assertEqual((guts(events), new.decision.kind), ([], "take_prize"))
 
     def test_declared_elements_match_the_implementations(self):
-        """``opponent_effect_elements`` を宣言した実装の組と、実装の中で相手の対戦ポケモンに効果（ダメージ以外の要素）を与える
-        ``attack_reaches`` を呼んでいる実装の組が同じ（宣言の書き忘れで G37 を見落とさない）。要素の種類も同じ。"""
+        """``opponent_effect_elements`` を宣言した実装の組と、相手の対戦ポケモンに効果（ダメージ以外の要素）を与える実装の組が同じ（宣言の
+        書き忘れで G37 を見落とさない）。要素の種類も同じ。v0.16b: 標準の実装は ``resolve`` を持たない（解決の基盤の要素の並びで処理する）
+        ので、効果を与えるかは、登録されたワザの実装の要素の並び（``programs.opponent_effect_elements``）から求める（v0.15 までは実装の
+        ``resolve`` の中の ``attack_reaches`` の呼び出しを読んでいた）。"""
         declared, found = {}, {}
         for name, cls in inspect.getmembers(effects_module, inspect.isclass):
-            if not issubclass(cls, AttackEffect) or cls is AttackEffect:
-                continue
-            if cls.opponent_effect_elements:
+            if issubclass(cls, AttackEffect) and cls is not AttackEffect and cls.opponent_effect_elements:
                 declared[name] = set(cls.opponent_effect_elements)
-            source = inspect.getsource(cls)
-            elements = set(re.findall(r"attack_reaches\(state, use, opponent, target, (\w+)\)", source))
+        for key in DEFAULT_EFFECTS.attack_keys():
+            effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
+            elements = set(programs.opponent_effect_elements(programs.compile_attack(effect)))
             if elements:
-                found[name] = {getattr(effects_module, element) for element in elements}
+                found[type(effect).__name__] = elements
         self.assertEqual(declared, found)
         self.assertTrue(all(elements <= set(ATTACK_ELEMENTS) - {DAMAGE_ELEMENT} for elements in declared.values()))
         self.assertEqual(len(declared), 9)

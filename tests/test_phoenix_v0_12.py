@@ -24,7 +24,18 @@ from kyuura_engine import (
 from kyuura_engine.cards import load_card_pool
 from kyuura_engine.decisions import POST_KNOCKOUT_POWER
 from kyuura_engine.effects import AttackEffect, AttackEntry, ReturnToHandOnKnockOut, SELF, deal_attack_damage, post_knockout_power
-from kyuura_engine.engine import _post_knockout_candidates
+from kyuura_engine.resolution.kernel import Resolution, capture_post_knockout
+from kyuura_engine.resolution.questions import OpenQuestion, to_error
+
+
+def _post_knockout_candidates(state, knocked):
+    """きぜつしたときに使える特殊能力の候補（v0.16b: 解決の基盤のきぜつの処理の窓 ``kernel.capture_post_knockout``。v0.15 までは v0.13 の
+    経路の ``engine._post_knockout_candidates``）。原典で決められない場合（P19・P32。コードのない問い）は、コマンドの入口と同じく
+    ``RuntimeError``（``questions.to_error``）にする。"""
+    try:
+        return capture_post_knockout(Resolution(state), knocked)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     ALAKAZAM, ABRA, DEFENDER, FIRE, GRASS, GRIMER, H, HAUNTER, GASTLY, KADABRA, MACHAMP, MACHOKE, MACHOP, MUK, PONYTA, PSYCHIC,

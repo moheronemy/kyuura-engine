@@ -1,16 +1,16 @@
-"""コマンドの処理（解決の基盤の入口。v0.15b）。docs/kernel-integration-v0.15b.md・docs/event-model-v0.14.md 3 章・5 章。
+"""コマンドの処理（解決の基盤の入口。v0.15b）。docs/kernel-integration-v0.15b.md・docs/kernel-consolidation-v0.16b.md・docs/event-model-v0.14.md 3 章・5 章。
 
-解決の基盤が受け持つのは、効果の解決の流れが通るコマンドだけです（``handles``）。
+v0.16b から、ワザ・番の終わり・きぜつのあとの決定は、この基盤だけが処理します（v0.13 の経路は外した）。
 
-- ``UseAttack``: 確認（``checks.attack_request``）→ 先読み → 宣言 → こんらん → ワザの要素（``programs``）→ きぜつの判定 → きぜつの処理 →
-  サイド・勝ち負け・ふしちょう・交代 → 番の終わり（ポケモンチェック）
-- ``EndTurn``: 番の終わり（期限）→ ポケモンチェック（どく → きぜつ → … → ねむり・マヒ）→ 次の番
-- 再開先が ``attack``・``knock_out``・``take_prize``・``post_knockout``・``promote_active`` の決定への答え（``ResolveDecision``・
-  ``TakePrize``・``PromoteActive``。確認は ``checks.decision_choices``）
+- ``UseAttack``（``handle``）: 確認（``checks.attack_request``）→ 要素の並び（``contract.program_for``。対応表になく、v0.13 の約束でも処理
+  できない実装は拒否）→ 先読み → 宣言 → こんらん → ワザの要素（``programs``）→ きぜつの判定 → きぜつの処理 → サイド・勝ち負け・
+  ふしちょう・交代 → 番の終わり（ポケモンチェック）
+- ``EndTurn``（``handle``）: 番の終わり（期限）→ ポケモンチェック（どく → きぜつ → … → ねむり・マヒ）→ 次の番
+- 再開先が ``attack``・``knock_out``・``take_prize``・``post_knockout``・``promote_active``（``RESUMES``）の決定への答え
+  （``resume_decision``。``ResolveDecision``・``TakePrize``・``PromoteActive`` の確認 ``checks.decision_choices`` は ``engine.py`` が済ませる）
 
-コマンドの入口（未対応のコマンド・項目の型・終わった対戦・状態の複製・不変条件の確認）は ``engine.py`` が、どちらの経路（v0.13 の
-``LEGACY``・この基盤の ``KERNEL``）にも同じように行い、受け持つコマンドだけを ``handle`` に渡します（受け持たないコマンドは、どちらの
-経路でも v0.13 の処理）。``handle`` は、渡された状態（コマンドの入口が作った複製）を変えます。
+コマンドの入口（未対応のコマンド・項目の型・終わった対戦・状態の複製・不変条件の確認）と、トレーナーの決定（再開先 ``trainer``）への
+答えは ``engine.py`` が行います。``handle``・``resume_decision`` は、渡された状態（コマンドの入口が作った複製）を変えます。
 
 この基盤は ``engine.py`` を読み込みません（``checks``・``procedures`` と、効果・状態の部品だけを使う。docs/integration-dependencies-v0.15a.md）。
 """
@@ -21,23 +21,25 @@ from dataclasses import dataclass, field
 
 from .. import judge
 from .. import procedures as PR
-from ..checks import PLAYERS, attack_request, decision_choices, require_turn
+from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..effects import AttackKey, AttackUse, PowerKey
-from ..errors import EngineError, UnsupportedError
+from ..errors import UnsupportedError
 from ..state import GameState
 
 from . import catalog as C
 from . import codec
 from . import preflight as P
+from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked_out, ko_prevention_offers, track_ko
-from .programs import BUILDERS, AttackRun, compile_attack, decision_index, run_elements
+from .programs import AttackRun, decision_index, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
 NEXT_TURN = PR.NEXT_TURN
+RESUMES = codec.RESUMES  # この基盤が続ける決定の再開先（ほかは engine.py。トレーナーの ``trainer``）
 
 
 @dataclass
@@ -46,7 +48,7 @@ class Context:
 
     - ``original``: コマンドの入口に渡された状態（変えない。v0.15c の先読み ``derived`` は、実際の処理のあと、これの複製の上で、まだ
       試していない結果を試す。上限を超えたときの v0.13 の止める関数もこれで確かめる）
-    - ``preflight``: 先読みの方法（``PREFLIGHT_MODES``。経路（``engine.Route``）とは別のもの）
+    - ``preflight``: 先読みの方法（``PREFLIGHT_MODES``。v0.13 の約束で書いたワザの実装（アダプタ）には使わない。v0.16b）
     - ``catalog``: 効果の定義の対応表（試験で差しかえる。既定は ``DEFAULT_CATALOG``）
     - ``trace``: 解決の記録（状態に保存しない）
     """
@@ -61,44 +63,31 @@ class Context:
             raise ValueError(f"先読みの方法 {self.preflight!r} は {PREFLIGHT_MODES} のどれか")
 
 
-def handles(state: GameState, command) -> bool:
-    """この基盤が受け持つコマンドか（状態は変えない）。受け持たないものは、どちらの経路でも v0.13 の処理。
+def handle(state: GameState, command, ctx: Context) -> None:
+    """ワザ・番の終わり（``UseAttack``・``EndTurn``）を、渡された状態（コマンドの入口が作った複製）の上で処理する。原典で決められない
+    場合に当たったら、v0.13 と同じ ``UnsupportedError``（コードのない問いはエンジンの不具合として ``RuntimeError``）。"""
+    try:
+        _HANDLERS[type(command)](ctx, state, command)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
 
-    ワザ（``UseAttack`` と再開先 ``attack`` の決定への答え）は、ワザの実装の型が要素の並びの対応表（``programs.BUILDERS``）にあるときだけ
-    受け持つ。対応表にない実装（v0.13 の ``AttackEffect.resolve`` の約束だけで書いた実装。試験の登録表など）は、v0.13 の処理にまかせる
-    （効果の登録表に実装を加える方法を変えない。黙って効果のないワザとして処理しない）。決定の形は両方の経路で同じなので、どちらが出した
-    決定も、どちらでも続けられる（docs/kernel-integration-v0.15b.md 3 章）。確認で拒否されるワザは受け持つ（どちらの経路も同じ
-    ``checks.attack_request`` で拒否する）。"""
-    if isinstance(command, EndTurn):
+
+def processes(state: GameState, command) -> bool:
+    """この基盤が処理するコマンドか（ワザ・番の終わりと、再開先が ``RESUMES`` の決定への答え）。数を数える・試験のための問い合わせで、
+    振り分けには使わない（振り分けは ``engine.py`` の ``_HANDLERS`` と ``_answer_decision``）。状態を変えない。"""
+    if isinstance(command, COMMANDS):
         return True
-    if isinstance(command, UseAttack):
-        try:
-            effect = attack_request(state, command).effect
-        except EngineError:
-            return True
-        return type(effect) in BUILDERS
     if isinstance(command, (ResolveDecision, TakePrize, PromoteActive)):
-        decision = state.decision
-        if decision is None or decision.resume not in codec.RESUMES:
-            return False
-        if decision.resume == codec.ATTACK:
-            return type(_continued_attack_effect(state, decision)) in BUILDERS
-        return True
+        return state.decision is not None and state.decision.resume in RESUMES
     return False
 
 
-def _continued_attack_effect(state: GameState, decision):
-    """ワザの途中の決定の、ワザの実装（続きの情報の ``use`` から登録表を引く）。"""
-    _, _, card_id, attack_index = codec.decode(decision).use
-    entry = state.effects.attack_entry(card_id, attack_index)
-    return None if entry is None else entry.effect
-
-
-def handle(state: GameState, command, ctx: Context) -> None:
-    """受け持つコマンドを、渡された状態（コマンドの入口が作った複製）の上で処理する。原典で決められない場合に当たったら、v0.13 と同じ
-    ``UnsupportedError``（コードのない問いはエンジンの不具合として ``RuntimeError``）。"""
+def resume_decision(state: GameState, choices: tuple[int, ...], ctx: Context) -> None:
+    """再開先が ``RESUMES`` の決定に、確かめ終わった選択（``checks.decision_choices``）で答え、続きから処理する。"""
+    if state.decision is None or state.decision.resume not in RESUMES:
+        raise RuntimeError(f"この基盤が続けない決定 {state.decision!r}（engine.py の振り分けの誤り）")
     try:
-        _HANDLERS[type(command)](ctx, state, command)
+        _resume(ctx, state, choices)
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
 
@@ -110,7 +99,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     """v0.13 の ``engine._use_attack`` と同じ確認（同じ順番・同じコード）のあと、先読みと解決。"""
     request = attack_request(state, cmd)  # v0.13 の経路と同じ確認（checks.attack_request）
     attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
-    program = compile_attack(effect)
+    program = program_for(effect, attack.name_ja)  # 対応表にもなく v0.13 の約束でも処理できない実装は、ここで拒否（状態を変える前）
     pid = attacker.pokemon_id
     use = AttackUse(cmd.player, pid, key)
 
@@ -128,6 +117,12 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
             )
         P.legacy(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
 
+    if is_contract(program):
+        # v0.13 の約束で書いた実装（v0.16b のアダプタ。contract.py）: 宣言の前の確認は実装の宣言（problem と v0.13 の止める関数）だけ。
+        # resolve の中身は先読みから見えず、副作用のある resolve を何度も呼ばない（v0.13・v0.15 と同じ確認。先読みの方法によらない）
+        P.legacy(state, use, effect, attacker, ctx.trace, mode="contract")
+        body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
+        return
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
@@ -293,10 +288,6 @@ def _end_turn_command(ctx: Context, state, cmd: EndTurn) -> None:
 # ---------------------------------------------------------------- 決定への答え（v0.13 と同じ確認のあと、続きの情報から再開）
 
 
-def _answer(ctx: Context, state, cmd) -> None:
-    _resume(ctx, state, decision_choices(state, cmd))  # v0.13 の経路と同じ確認（checks.decision_choices）
-
-
 def _resume(ctx: Context, state, choices: tuple[int, ...]) -> None:
     decision = state.decision
     state.decision = None
@@ -320,14 +311,16 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     player, pokemon_id, card_id, attack_index = cont.use
     key = AttackKey(card_id, attack_index)
     entry = state.effects.attack_entry(card_id, attack_index)
-    program = compile_attack(entry.effect)
     _, attacker = state.find_pokemon(pokemon_id)
     attack = state.card_def(attacker.card).attacks[attack_index]
+    program = program_for(entry.effect, attack.name_ja)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=pokemon_id, attack_key=key)
     run = AttackRun(res, fs, program, attack)
     run.carried = dict(cont.extra)  # 要素の値は続きの情報から読む（決定の context を直接読まない）
     index = decision_index(program, decision.kind)
     program[index].resume(run, decision, choices)
+    if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
+        return
     if run_elements(run, index + 1):
         return
     _finish_attack(res, cont.use)
@@ -406,7 +399,5 @@ OFFER_ACTIONS = {
 _HANDLERS = {
     UseAttack: _use_attack,
     EndTurn: _end_turn_command,
-    ResolveDecision: _answer,
-    TakePrize: _answer,
-    PromoteActive: _answer,
 }
+COMMANDS = tuple(_HANDLERS)  # ``handle`` が処理するコマンド（決定への答えは ``resume_decision``）

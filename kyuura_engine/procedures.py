@@ -9,8 +9,8 @@ v0.13 まで ``engine.py`` の中にあった、状態を変える手続きの�
 - こんらん: ``confusion_check``・``confusion_damage``・``confusion_damage_problem``
 - きぜつ・対戦の終わり・止める: ``knock_out``・``finish``・``halt``
 
-きぜつのあとの流れ（サイド・勝ち負け・交代・決定）は、経路ごとに持ちます（v0.13 の経路は ``engine.py``、新しい基盤は
-``resolution``）。v0.16 で v0.13 の経路を外すときに、この区別を見直します。
+きぜつのあとの流れ（サイド・勝ち負け・交代・決定）は、解決の基盤（``resolution/flow.py``）が持ちます（v0.16b で v0.13 の経路
+（``engine.py``）を外し、1 つになった）。
 """
 
 from __future__ import annotations
@@ -262,7 +262,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     （``effects.deal_attack_damage`` の ``SELF``。v0.2f）とは別の規定なので、そちらを通さない。ログは ``confusion_damage``
     （``player``・``pokemon``・``pokemon_id``・``effect``（こんらんしたワザの ``AttackKey``）・``amount``・``steps``・
     ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
-    きぜつはワザのあとと同じ ``_finish_attack`` で判定する（サイドは相手が取る。p.323）。
+    きぜつはワザのあとと同じきぜつの判定（解決の基盤の ``flow._finish_attack``）で判定する（サイドは相手が取る。p.323）。
     """
     calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
     pokemon.damage += calc.final

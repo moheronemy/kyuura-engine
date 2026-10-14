@@ -9,8 +9,8 @@
 その歩ごとに状態を pickle で保存・復元してから続ける（両方の木で同じことをする）。
 
 ``record`` が使う API は v0.13 の公開の API（``new_game``・``apply_command``・``state_to_dict``・``command_to_dict``・``EngineError``）
-だけで、``--route``・``--preflight`` を付けたときだけ v0.15 の内部の入口（``engine.apply_command_via``）を使う（付けなければ、その木の
-``apply_command`` = 標準の経路）。
+だけで、``--route``・``--preflight`` を付けたときだけ内部の入口（v0.15 の木は ``engine.apply_command_via``、v0.16b からの木は経路のない
+``engine.apply_command_with``）を使う（付けなければ、その木の ``apply_command``）。
 
 ``compare``: 2 つの記録を対戦ごと・歩ごとに比べ、最初の食い違いを報告する。v0.16 から、決定への答えの ``WRONG_PHASE`` の拒否は理由の文
 そのもの（``m``）も記録し、2 つの文が「今の段階が同じで、並べた段階の名前の集まりが同じ（並びだけが違う）」ときだけ、食い違いではなく
@@ -129,15 +129,26 @@ class Recorder:
 
 
 def _apply_function(engine_module, route: str | None, preflight: str | None):
+    """その木の公開の ``apply_command``。``--route``・``--preflight`` を付けたときだけ内部の入口: v0.15 の木は ``engine.apply_command_via``
+    （経路と先読み）、v0.16b からの木は ``engine.apply_command_with``（先読みだけ。経路はない）。"""
     if route is None and preflight is None:
         return engine_module.apply_command
-    from kyuura_engine import engine as E  # v0.15 の木だけにある内部の入口
-    chosen = E.Route(route) if route is not None else E.DEFAULT_ROUTE
+    from kyuura_engine import engine as E
+    options = {"preflight": preflight} if preflight else {}
+    if hasattr(E, "Route"):  # v0.15 の木
+        chosen = E.Route(route) if route is not None else E.DEFAULT_ROUTE
 
-    def apply(state, command):
-        return E.apply_command_via(state, command, route=chosen, **({"preflight": preflight} if preflight else {}))
+        def apply(state, command):
+            return E.apply_command_via(state, command, route=chosen, **options)
 
-    return apply
+        return apply
+    if route is not None:
+        raise SystemExit("この木には経路がない（v0.16b で v0.13 の経路を外した）。--route を付けずに比べる")
+
+    def apply_with(state, command):
+        return E.apply_command_with(state, command, **options)
+
+    return apply_with
 
 
 def record(args) -> int:
