@@ -275,6 +275,22 @@ POWER_SCENARIOS += (
                      driver.WATER: 22, driver.FIRE: 23},
                     tuple(range(6)), tags=("R団のカビゴン", "モンジャラ", "サカキのニャース", "こうらがえし", "ほのおのかべ")),
 )
+SABRINAS_SLOWPOKE = "PMCG6-044"
+POWER_SCENARIOS += (
+    # ナツメのヤドン（v0.18c。ぐうたらこうげき。たおれこむと同じ DamageAndSelfSleep）: 相手は抵抗力 超 の R団のカビゴン・サカキのニャース・コラッタ
+    # （Z23-b）・ゴースト（とうめい。Z23-c）・トランセル（かたまる。Z23-a）・ワンリキー（超の弱点）・ディフェンダー・プラスパワー
+    driver.Scenario("slowpoke", {SABRINAS_SLOWPOKE: 4, GIOVANNIS_MEOWTH: 3, driver.RATTATA: 3, driver.DODUO: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                 driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, PSYCHIC: 35},
+                    {ROCKETS_SNORLAX: 3, GIOVANNIS_MEOWTH: 2, driver.RATTATA: 2, GASTLY: 2, HAUNTER: 2, driver.CATERPIE: 2, driver.METAPOD: 2,
+                     driver.MACHOP: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, PSYCHIC: 12, driver.GRASS: 12, driver.FIGHTING: 13},
+                    tuple(range(6)), tags=("ナツメのヤドン", "ぐうたらこうげき", "抵抗力", "とうめい", "かたまる", "わるいねぞう", "ディフェンダー")),
+    # ナツメのヤドン・R団のカビゴン・モンジャラと、わるいカメール（こうらがえし）・R団のファイヤー（ほのおのかべ）
+    driver.Scenario("slowpoke_mixed", {SABRINAS_SLOWPOKE: 4, ROCKETS_SNORLAX: 2, TANGELA: 2, driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2,
+                                       driver.PLUSPOWER: 2, PSYCHIC: 24, driver.GRASS: 20},
+                    {ROCKET_SQUIRTLE: 3, DARK_WARTORTLE: 3, ROCKETS_MOLTRES: 3, driver.PONYTA: 2, driver.PLUSPOWER: 2, driver.BILL: 2,
+                     driver.WATER: 22, driver.FIRE: 23},
+                    tuple(range(6)), tags=("ナツメのヤドン", "R団のカビゴン", "モンジャラ", "こうらがえし", "ほのおのかべ")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
 POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキー・R団のファイヤーがいる番で、ポケモンパワーを試す割合
 # 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）・サカキのカイリキー（v0.11）・R団のファイヤー（v0.12）を加えた。ベトベトンの
@@ -816,15 +832,24 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                 elif active[0].kind == SHELL_KIND:
                     counted["observed:shell_stopped_w24"] += 1  # v0.13: S37（W24 と同じ問い）
             if error.code == "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE":
-                # v0.17b（Z23）: たおれこむで、相手にディフェンダー（プラスパワーがなければ 0）・今の番にはたらく「ダメージを受けない」状態・はたらいて
-                # いる「とうめい」のどれかがある（エンジンの止める関数とは別に、場から確かめる）
+                # v0.17b（Z23）: たおれこむ・v0.18c のぐうたらこうげきで、p.321 の計算（弱点・抵抗力・プラスパワー・ディフェンダー）の最終ダメージが 0・
+                # 今の番にはたらく「ダメージを受けない」状態・はたらいている「とうめい」のどれかがある（エンジンの止める関数とは別に、場から確かめる）
                 me, target = state.players[state.current_player].active, state.players[1 - state.current_player].active
-                defender = any(state.cards[t.card].card_id == driver.DEFENDER for t in target.trainers)
-                plus = any(state.cards[t.card].card_id == driver.PLUSPOWER for t in me.trainers)
+                attacker_def, target_def = state.card_def(me.card), state.card_def(target.card)
+                amount = attacker_def.attacks[0].damage or 0
+                if target_def.weakness is attacker_def.pokemon_type:
+                    amount *= 2
+                resisted = target_def.resistance is attacker_def.pokemon_type
+                if resisted:
+                    amount -= target_def.resistance_value
+                amount += 10 * sum(state.cards[t.card].card_id == driver.PLUSPOWER for t in me.trainers)
+                amount -= 20 * sum(state.cards[t.card].card_id == driver.DEFENDER for t in target.trainers)
                 prevented = any(x.kind == "prevent_damage" and x.active_turn == state.turn_number for x in target.persistent_effects)
                 evades = engine.working_evasion_power(state, target.pokemon_id) is not None
-                if state.cards[me.card].card_id != ROCKETS_SNORLAX or not ((defender and not plus) or prevented or evades):
+                if state.cards[me.card].card_id not in (ROCKETS_SNORLAX, SABRINAS_SLOWPOKE) or not (amount <= 0 or prevented or evades):
                     problems.append(f"{index} 手目 {engine.command_to_dict(command)}: ダメージを与えないことがないのに UNRESOLVED_EFFECT_AFTER_NO_DAMAGE")
+                elif amount <= 0 and resisted and not prevented:
+                    counted["observed:z23_resistance"] += 1  # v0.18c: 抵抗力で 0（Z23-b。ぐうたらこうげきで起こる）
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:

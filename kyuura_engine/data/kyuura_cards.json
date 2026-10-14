@@ -148,6 +148,9 @@
   "pool_v0_17b": [
     "PMCG6-073"
   ],
+  "pool_v0_18c": [
+    "PMCG6-044"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4558,6 +4561,78 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%AB%E3%83%93%E3%82%B4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-044",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのヤドン",
+        "en": "Sabrina's Slowpoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          79
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぐうたらこうげき",
+              "en": "Lazy Attack"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分を「ねむり」状態にする。",
+              "en": "Sabrina's Slowpoke is now Asleep (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-044",
+        "pokemontcg": [
+          "gym1-95"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

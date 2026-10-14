@@ -3363,6 +3363,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
             source="P43 p.245",
         ),
+        # ナツメのヤドン（v0.18c）p.155。ぐうたらこうげき（超無）30: たおれこむと同じ説明（最新の説明・kyuura の写しとも「ダメージを与えた後、…」）。
+        # 既存の DamageAndSelfSleep で処理する（新しい要素・型・分岐はない）。ダメージを与えなかったときは Z23 で止める（docs/kernel-reuse-v0.18c.md）
+        AttackKey("PMCG6-044", 0): AttackEntry(
+            DamageAndSelfSleep(),
+            "ぐうたらこうげき",
+            text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
+            play_text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
+            source="P43 p.155",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
