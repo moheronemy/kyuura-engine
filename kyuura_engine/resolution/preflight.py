@@ -185,9 +185,12 @@ def after_real_run(state: GameState, original: GameState, body: Callable[[Resolu
         strategy, roots = "single", ()
     found: dict[str, OpenQuestion] = {}
     branches = 0
+    # 上限は derived_full と同じ「試す結果の数（葉の数）」: siblings は実際の処理の結果も 1 つと数える（v0.16c。v0.15c では数えず、
+    # ちょうど 4,097 通りのコインだけの木を、derived_full が拒否するのに受け付けていた。docs/preflight-consolidation-v0.16c.md 4 章）
+    limit = MAX_BRANCHES - (1 if strategy == "siblings" else 0)
     try:
         if roots:
-            found, branches = explore(original, body, catalog, roots=roots)
+            found, branches = explore(original, body, catalog, roots=roots, limit=limit)
         if found and strategy == "siblings":
             strategy = "siblings+full"
             found, branches = explore(original, body, catalog)
