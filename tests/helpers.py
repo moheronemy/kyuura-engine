@@ -115,6 +115,12 @@ ROCKET_SQUIRTLE = "PMCG4-018"
 # わるいカメール（v0.13。ゼニガメから進化する 1 進化。HP 60・水・弱点 雷・抵抗力なし・にげる 1。おうふくびんた（水）10×・こうらがえし（水無）
 # ダメージなし（次の相手の番、相手のワザによってダメージを受けたとき、そのポケモンにも同じダメージを与える））
 DARK_WARTORTLE = "PMCG4-021"
+# モンジャラ（v0.17a。第1弾。たね。HP 50・草・弱点 炎・にげる 2。しめつける（草無）20（コインで「おもて」ならマヒ）・どくのこな（草草草）20（どく）。
+# 既存の実装（ParalyzeOnHeads・PoisonOpponent）だけで登録）
+TANGELA = "PMCG1-007"
+# サカキのニャース（v0.17a。ジム拡張第2弾。たね。HP 50・無色・弱点 闘・抵抗力 超 −30・にげる 2。ねこノミ（無）ダメージなし（コインで「おもて」なら
+# こんらん）・ねこキック（無無無）30。ねこノミは既存の要素 Status の新しい並び（ConfuseOnHeadsWithoutDamage））
+GIOVANNIS_MEOWTH = "PMCG6-063"
 # リザードン（参照カード。リザードから進化する 2 進化。実装を登録していないポケモンパワー「エナジーバーン」とワザ「ほのおのうず」を
 # 持つ。v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 ではフーディンが「ポケモンパワーを持つので未対応」の参照カードだった。
 # v0.7 でフーディンを対応にしたので、その役を引き継ぐ）
@@ -420,6 +426,13 @@ def replay(state: GameState, commands: Iterable) -> GameState:
 
 from kyuura_engine.decisions import push_attack_decision  # noqa: E402
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey  # noqa: E402
+from kyuura_engine import effects as _effects  # noqa: E402
+
+# v0.17 から製品の登録表に加えたワザの実装の型（v0.13 の 24 種類のあと）。解決の基盤の要素の並び（programs.BUILDERS）で処理し、v0.13 の
+# 約束（resolve・resume）を持たない。v0.13 の止める関数で確かめる型（v013_checks.VERIFIED）には入れない（v0.16c。自動では加えない）
+ATTACK_TYPES_SINCE_V0_17 = (
+    _effects.ConfuseOnHeadsWithoutDamage,  # v0.17a: サカキのニャースの「ねこノミ」（既存の要素 Status の新しい並び）
+)
 
 
 class TwoStepTestEffect(AttackEffect):

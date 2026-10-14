@@ -32,7 +32,7 @@ from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
     BUTTERFREE, CATERPIE, DODUO, FIGHTING, FIRE, GASTLY, GRASS, H, MACHOP, METAPOD, PSYCHIC, RATTATA, T, WATER, apply_kernel,
-    build_test_state, with_coin_results,
+    ATTACK_TYPES_SINCE_V0_17, build_test_state, with_coin_results,
 )
 from tests import legacy_reference
 from tests.test_event_kernel_v0_14 import MACHAMP_, PONYTA_, TURN, UnresolvedTest, board
@@ -323,10 +323,12 @@ class LimitTest(unittest.TestCase):
             self.assertEqual((result.strategy, result.branches), ("siblings", 4096))
 
     def test_verified_implementations_are_the_v0_13_ones(self):
-        """上限を超えたときに v0.13 の止める関数で確かめる実装は、v0.13 の 24 種類（製品の登録表のワザの実装）だけ。"""
+        """上限を超えたときに v0.13 の止める関数で確かめる実装は、v0.13 の 24 種類（製品の登録表のワザの実装）だけ。v0.17 から加えた型
+        （``ATTACK_TYPES_SINCE_V0_17``）は入れない（v0.13 の止める関数で確かめていない。上限を超えたら ``UNSUPPORTED_PREFLIGHT_LIMIT``）。"""
         registered = {type(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect) for k in DEFAULT_EFFECTS.attack_keys()}
-        self.assertEqual(v013_checks.VERIFIED, registered)
+        self.assertEqual(v013_checks.VERIFIED, registered - set(ATTACK_TYPES_SINCE_V0_17))
         self.assertEqual(len(v013_checks.VERIFIED), 24)
+        self.assertFalse(v013_checks.VERIFIED & set(ATTACK_TYPES_SINCE_V0_17))
 
 
 if __name__ == "__main__":

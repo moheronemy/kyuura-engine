@@ -1185,6 +1185,35 @@ class ConfuseOnHeads(AttackEffect):
 
 
 @dataclass(frozen=True)
+class ConfuseOnHeadsWithoutDamage(AttackEffect):
+    """ダメージを与えず、コインを 1 枚投げて「おもて」なら相手の対戦ポケモンをこんらん状態にする（v0.17a。サカキのニャースの「ねこノミ」。
+    p.229 の最新の説明「コインを投げて「おもて」なら、相手を「こんらん」状態にする。」。docs/card-implementation-v0.17a.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる（``PutToSleep``・``PoisonWithoutDamage`` と同じ）。
+      ダメージの要素がないので、ダメージの計算（p.321）をせず、``damage`` のログもない。ダメージの目安のあるワザの ``ConfuseOnHeads``
+      （v0.3c。ロコンの「あやしいひかり」）とは別の実装。
+    - 解決の基盤の要素の並びは、既存の要素だけ（``programs.Status(CONFUSION, local_coin=HEADS)``。v0.3c からの ``ConfuseOnHeads`` の
+      こんらんの要素と同じ）。コイン → 「おもて」なら、効果を与える直前に「とうめい」の評価（T19・T22）→ こんらん。ダメージの要素がない
+      ので、「とうめい」で受けないと決まったあとのコイン（T19b）は起こらない。
+    - もうこんらん状態なら二重にならない。ねむり・マヒ状態なら、それが消えてこんらん状態になる。どく状態はそのまま（p.322。
+      ``conditions.confuse``）。
+    - v0.13 の約束（``resolve``・``resume``）は持たない。宣言の前の確認は解決の基盤の先読み（``derived``）だけで、v0.13 の止める関数の型
+      （``v013_checks.VERIFIED``）には入れていない（ワザの実装を加えても自動では加えない。v0.16c）。
+    """
+
+    implementation_id = "confuse_on_heads_without_damage"
+    opponent_effect_elements = (CONFUSION,)  # v0.11: 相手の対戦ポケモンに与える効果の要素（ko_prevention_attack_effect_problem）
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、ダメージを与えずにこんらん状態にするワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、こんらん状態にするワザとして登録している")
+        return problems
+
+
+@dataclass(frozen=True)
 class PreventDamageOnHeads(AttackEffect):
     """コインを 1 枚投げ、「おもて」なら、次の相手の番、このワザを使ったポケモンは「ダメージを受けない」状態になる
     （v0.4b。トランセル・コクーンの「かたまる」。p.18・p.21 の最新の説明「コインを投げて「おもて」なら、次の相手の番、
@@ -2872,6 +2901,7 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG1-057", 0, "ちきゅうなげ"),  # カイリキー（v0.10。2 進化）p.192。「ワザ」欄は「●ちきゅうなげ」で説明文なし
         ("PMCG6-057", 0, "チョップ"),  # サカキのワンリキー（v0.11）p.189。「ワザ」欄は「●チョップ」で説明文なし
         ("PMCG4-018", 0, "こうらアタック"),  # 第4弾のゼニガメ（v0.13）p.88。「ワザ」欄は「●こうらアタック」で説明文なし
+        ("PMCG6-063", 1, "ねこキック"),  # サカキのニャース（v0.17a）p.229。「ワザ」欄は「●ねこキック」で説明文なし
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -3218,6 +3248,32 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="次の相手の番で、このカードが相手のワザによってダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)そのポケモンにも同じダメージを与える。(ダメージ以外の効果は与えない)",
             play_text_ja="次の相手の番、このカードが相手のワザによってダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）そのポケモンにも同じダメージを与える。（ダメージ以外の効果は与えない）",
             source="P43 p.89",
+        ),
+        # モンジャラ（v0.17a）p.55。既存の実装だけで登録（docs/card-implementation-v0.17a.md）。しめつける（草無）: 相手に 20（目安の
+        # 数字）、コインが「おもて」なら相手をマヒ状態に（ParalyzeOnHeads。マヒの再付与の確認・T19b の確認も同じ）。どくのこな（草草草）:
+        # 相手に 20、コインなしで相手をどく状態に（PoisonOpponent）。最新の説明は kyuura の写しと同じ
+        AttackKey("PMCG1-007", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "しめつける",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source="P43 p.55",
+        ),
+        AttackKey("PMCG1-007", 1): AttackEntry(
+            PoisonOpponent(),
+            "どくのこな",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source="P43 p.55",
+        ),
+        # サカキのニャース（v0.17a）p.229。ねこノミ（無。ダメージの目安なし）: コインが「おもて」なら相手をこんらん状態に
+        # （ConfuseOnHeadsWithoutDamage。既存の要素 Status の新しい並び）。最新の説明は kyuura の写しと同じ
+        AttackKey("PMCG6-063", 0): AttackEntry(
+            ConfuseOnHeadsWithoutDamage(),
+            "ねこノミ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source="P43 p.229",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

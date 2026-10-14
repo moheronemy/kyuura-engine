@@ -31,7 +31,7 @@ from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     BUTTERFREE, DARK_WARTORTLE, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, GRASS, H,
     HAUNTER, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC, RATTATA,
-    ROCKET_SQUIRTLE, ROCKETS_MOLTRES, T, WEEDLE, build_test_state, with_coin_results,
+    ROCKET_SQUIRTLE, ROCKETS_MOLTRES, T, WEEDLE, ATTACK_TYPES_SINCE_V0_17, build_test_state, with_coin_results,
 )
 from tests import legacy_reference
 from tests.log_audit import log_problems, serialization_problems
@@ -570,9 +570,11 @@ class ChainAndAtomicityTest(Both):
 
 class CatalogTest(unittest.TestCase):
     def test_every_registered_attack_has_a_program(self):
-        """登録表のワザの実装（24 種類）はすべて要素の並びに置きかえられる（効果のないワザとして処理するものはない）。"""
+        """登録表のワザの実装（v0.13 の 24 種類と、v0.17 から加えた型）はすべて要素の並びに置きかえられる（効果のないワザとして処理する
+        ものはない）。"""
         kinds = {type(entry.effect) for key in DEFAULT_EFFECTS.attack_keys() for entry in [DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index)]}
-        self.assertEqual(len(kinds), 24)
+        self.assertEqual(len(kinds), 24 + len(ATTACK_TYPES_SINCE_V0_17))
+        self.assertTrue(set(ATTACK_TYPES_SINCE_V0_17) <= kinds)
         self.assertEqual(kinds - set(BUILDERS), set())
 
     def test_automatic_optional_and_continuous_powers_are_in_the_catalog(self):

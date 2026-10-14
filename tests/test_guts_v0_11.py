@@ -582,7 +582,7 @@ class G37Test(unittest.TestCase):
                 found[type(effect).__name__] = elements
         self.assertEqual(declared, found)
         self.assertTrue(all(elements <= set(ATTACK_ELEMENTS) - {DAMAGE_ELEMENT} for elements in declared.values()))
-        self.assertEqual(len(declared), 9)
+        self.assertEqual(len(declared), 10)  # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた
 
 
 class DecisionTest(unittest.TestCase):

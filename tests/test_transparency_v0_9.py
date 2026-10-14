@@ -622,7 +622,8 @@ class EvadedEffectCoinTest(unittest.TestCase):
         keys = self.keys()
         names = sorted(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).name_ja for k in keys)
         self.assertEqual(names, sorted(["どくばり", "いとをはく", "しびれごな", "あわ", "れいとうビーム", "ねんりき", "あやしいひかり", "あやしいひかり",
-                                        "どくのこな", "どくばり", "ヘドロこうげき", "したでなめる"]))
+                                        "どくのこな", "どくばり", "ヘドロこうげき", "したでなめる",
+                                        "しめつける"]))  # v0.17a: モンジャラの「しめつける」（ParalyzeOnHeads）
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

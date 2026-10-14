@@ -110,9 +110,10 @@ class DefaultRegistryTest(unittest.TestCase):
         # サカキのワンリキーの「いかりのスーパーパンチ」（p.189）・サカキのゴーリキーの「いちかばちか」「じごくがため」（p.191）・
         # サカキのカイリキーの「ハリケーンパンチ」（p.193。v0.11。サカキのワンリキーの「チョップ」は説明文なし）、
         # R団のファイヤーの「ほのおのかべ」（p.82。v0.12）、わるいカメールの「おうふくびんた」「こうらがえし」（p.89。v0.13。第4弾の
-        # ゼニガメの「こうらアタック」は説明文なし）
+        # ゼニガメの「こうらアタック」は説明文なし）、モンジャラの「しめつける」「どくのこな」（p.55）・サカキのニャースの「ねこノミ」
+        # （p.229。v0.17a。「ねこキック」は説明文なし）
         self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
-                                     AttackKey("PMCG1-004", 0), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
+                                     AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
                                      AttackKey("PMCG1-023", 0), AttackKey("PMCG1-023", 1), AttackKey("PMCG1-027", 0),
                                      AttackKey("PMCG1-030", 1), AttackKey("PMCG1-032", 0), AttackKey("PMCG1-035", 1),
@@ -122,7 +123,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-004", 0),
                                      AttackKey("PMCG4-004", 1), AttackKey("PMCG4-021", 0), AttackKey("PMCG4-021", 1),
                                      AttackKey("PMCG5-020", 0), AttackKey("PMCG6-057", 1),
-                                     AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0)])
+                                     AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0)])
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -231,7 +232,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + ロケット団のベトベターの 2 つ・ベトベトンの 1 つ（v0.8）+ 化石の秘密のゴースの 2 つ・ゴーストの 1 つ（v0.9）
         # + ゴーリキーの 2 つ・カイリキーの 1 つ（v0.10）+ サカキのワンリキーの 2 つ・サカキのゴーリキーの 2 つ・サカキのカイリキーの 1 つ（v0.11）
         # + R団のファイヤーの 1 つ（v0.12）+ 第4弾のゼニガメの 1 つ・わるいカメールの 2 つ（v0.13）
-        self.assertEqual(len(keys), 65)
+        # + モンジャラの 2 つ・サカキのニャースの 2 つ（v0.17a）
+        self.assertEqual(len(keys), 69)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

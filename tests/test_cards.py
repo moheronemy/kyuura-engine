@@ -16,7 +16,7 @@ from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
-    ROCKET_SQUIRTLE, DARK_WARTORTLE,
+    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -83,10 +83,13 @@ class CardPoolTest(unittest.TestCase):
         self.assertEqual(read_extract()["pool_v0_13"], [ROCKET_SQUIRTLE, DARK_WARTORTLE])
         self.assertTrue(pool.is_playable(ROCKET_SQUIRTLE) and pool.get(ROCKET_SQUIRTLE).is_basic_pokemon)
         self.assertTrue(pool.is_playable(DARK_WARTORTLE) and pool.get(DARK_WARTORTLE).is_stage1_pokemon)
+        # v0.17a（既存のワザの要素だけで実装したカード。docs/card-implementation-v0.17a.md）
+        self.assertEqual(read_extract()["pool_v0_17a"], [TANGELA, GIOVANNIS_MEOWTH])
+        self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in (TANGELA, GIOVANNIS_MEOWTH)))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
