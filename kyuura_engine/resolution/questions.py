@@ -38,6 +38,11 @@ QUESTIONS: dict[str, Question] = {
             "決められない（投げるかどうかで乱数の続きが変わる）",
         ),
         Question(
+            "effect_after_no_damage", "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE", ("Z23",), 10,
+            "説明が「ダメージを与えた後、…」の効果で、そのダメージの要素がダメージを与えなかったときに効果を与えるかは、原典（p.155・p.245・"
+            "p.309・p.319〜p.321）から決められない（v0.17b）",
+        ),
+        Question(
             "confusion_damage_modifiers", "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS", ("v0.3c",), 20,
             "こんらんしたワザの 20 ダメージに、プラスパワー・ディフェンダーの効果を計算するかは、原典（p.257・p.309・p.321・p.322）から"
             "決められない",
@@ -67,6 +72,12 @@ QUESTIONS: dict[str, Question] = {
         Question("multiple_post_knockout", None, ("P32",), 90, "きぜつしたときに使える特殊能力の候補が 2 つ以上"),
         Question("post_knockout_gas_source_knocked", None, ("P19",), 90, "かがくへんかガスの発生源が、消している特殊能力のポケモンといっしょにきぜつする"),
         Question("multiple_evasion", None, ("T27",), 90, "1 つのワザで 2 匹以上の「とうめい」を評価した"),
+        # v0.17b（docs/rocket-snorlax-v0.17b.md）
+        Question("power_damage_weakness_resistance", None, ("Z9",), 90,
+                 "説明に「弱点・抵抗力」に関係なく、と書かれていない特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ"
+                 "（弱点・抵抗力を計算するかで結果が変わる）"),
+        Question("ko_prevention_self_effect", None, ("Z22",), 90,
+                 "ワザを使ったポケモン自身への効果の前に、そのポケモンが HP 以上になり、きぜつの判定で任意の効果（こんじょう）を使える"),
     )
 }
 

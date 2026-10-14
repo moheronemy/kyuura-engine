@@ -258,12 +258,30 @@ POWER_SCENARIOS += (
                      driver.BUTTERFREE: 1, driver.PLUSPOWER: 2, driver.BILL: 2, driver.WATER: 22, driver.LIGHTNING: 10, driver.GRASS: 7},
                     tuple(range(6)), tags=("わるいカメール", "こうらがえし", "ほのおのかべ", "ふしちょう", "ふきとばし", "ミラー")),
 )
+ROCKETS_SNORLAX, TANGELA, GIOVANNIS_MEOWTH = "PMCG6-073", "PMCG1-007", "PMCG6-063"
+POWER_SCENARIOS += (
+    # R団のカビゴン（v0.17b。わるいねぞう・たおれこむ）: 相手はカイリキー（はんげき）・ゴースト（とうめい）・ベトベトン（かがくへんかガス）・
+    # バタフリー（ふきとばし・メガドレイン）・ピカチュウ（でんげき）・ワンリキー（R団のカビゴンの弱点 闘）・ディフェンダー・プラスパワー
+    driver.Scenario("snorlax", {ROCKETS_SNORLAX: 4, GIOVANNIS_MEOWTH: 3, driver.RATTATA: 3, driver.DODUO: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.FIRE: 35},
+                    {driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2, GRIMER: 1, MUK: 1, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.PIKACHU: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, driver.FIGHTING: 15,
+                     PSYCHIC: 8, driver.GRASS: 7, driver.LIGHTNING: 5},
+                    tuple(range(6)), tags=("R団のカビゴン", "わるいねぞう", "たおれこむ", "はんげき", "とうめい", "かがくへんかガス", "ディフェンダー")),
+    # R団のカビゴン・モンジャラ・サカキのニャース（v0.17a・v0.17b）と、わるいカメール（こうらがえし）・R団のファイヤー（ほのおのかべ）
+    driver.Scenario("snorlax_mixed", {ROCKETS_SNORLAX: 3, TANGELA: 3, GIOVANNIS_MEOWTH: 3, driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2,
+                                      driver.PLUSPOWER: 2, driver.GRASS: 43},
+                    {ROCKET_SQUIRTLE: 3, DARK_WARTORTLE: 3, ROCKETS_MOLTRES: 3, driver.PONYTA: 2, driver.PLUSPOWER: 2, driver.BILL: 2,
+                     driver.WATER: 22, driver.FIRE: 23},
+                    tuple(range(6)), tags=("R団のカビゴン", "モンジャラ", "サカキのニャース", "こうらがえし", "ほのおのかべ")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
 POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキー・R団のファイヤーがいる番で、ポケモンパワーを試す割合
 # 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）・サカキのカイリキー（v0.11）・R団のファイヤー（v0.12）を加えた。ベトベトンの
 # いない組の選び方（乱数の使い方）は v0.7 と同じ、ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ、サカキのカイリキーのいない組は
 # v0.10 と同じ、R団のファイヤーのいない組は v0.11 と同じ
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES)
+# v0.17b: 並びの最後に R団のカビゴン（わるいねぞう。宣言しない）を加えた。R団のカビゴンのいない組の選び方は v0.16 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX)
 HAUNTER_DECLARE_SKIP = 0.75  # ゴースト・カイリキーを選んだときに、宣言を試さずに駆動の操作にする割合（いない組の乱数の使い方は変えない）
 
 
@@ -279,9 +297,9 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
-    if kind in (HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES) and rng.random() < HAUNTER_DECLARE_SKIP:
+    if kind in (HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX) and rng.random() < HAUNTER_DECLARE_SKIP:
         return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9〜v0.12）
-    if kind in (MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES):
+    if kind in (MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX):
         # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」（v0.9）・「はんげき」（v0.10）は自動的にはたらいて宣言しない
         # （POWER_NOT_DECLARABLE になるはず）。「こんじょう」（v0.11）は決められたとき（相手のワザのダメージできぜつするとき。決定で答える）
         # にしか使えない（POWER_NOT_USABLE_NOW になるはず）。「ふしちょう」（v0.12）は、このカードが「きぜつ」したとき（決定で答える）にしか
@@ -509,8 +527,13 @@ def _observe_counterattack(state, new, before, counted, problems, index, command
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の相手がワザを使ったポケモンではない {e}")
             if e["kind"] == "counterattack":
                 counted["observed:counter_damage_total"] += e["amount"]
-                if e["amount"] != 10:
-                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の量が 10 ではない {e}")
+                # v0.17b: 量は登録の値（はんげき 10・わるいねぞう 20）。どの特殊能力かはログの power
+                card_id, _, power_index = e["power"].partition("@power")
+                registered = state.effects.power_entry(card_id, int(power_index)).effect.amount
+                if e["amount"] != registered:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」「わるいねぞう」の量が登録の {registered} ではない {e}")
+                if card_id == ROCKETS_SNORLAX:
+                    counted["observed:restless_sleep"] += 1
                 if e["knocked_out"]:
                     counted["observed:counter_knock_out"] += 1
         elif e["kind"] == "knock_out" and e.get("simultaneous"):
@@ -792,6 +815,16 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                     problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「ほのおのかべ」「こうらがえし」がはたらいていないのに UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT")
                 elif active[0].kind == SHELL_KIND:
                     counted["observed:shell_stopped_w24"] += 1  # v0.13: S37（W24 と同じ問い）
+            if error.code == "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE":
+                # v0.17b（Z23）: たおれこむで、相手にディフェンダー（プラスパワーがなければ 0）・今の番にはたらく「ダメージを受けない」状態・はたらいて
+                # いる「とうめい」のどれかがある（エンジンの止める関数とは別に、場から確かめる）
+                me, target = state.players[state.current_player].active, state.players[1 - state.current_player].active
+                defender = any(state.cards[t.card].card_id == driver.DEFENDER for t in target.trainers)
+                plus = any(state.cards[t.card].card_id == driver.PLUSPOWER for t in me.trainers)
+                prevented = any(x.kind == "prevent_damage" and x.active_turn == state.turn_number for x in target.persistent_effects)
+                evades = engine.working_evasion_power(state, target.pokemon_id) is not None
+                if state.cards[me.card].card_id != ROCKETS_SNORLAX or not ((defender and not plus) or prevented or evades):
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: ダメージを与えないことがないのに UNRESOLVED_EFFECT_AFTER_NO_DAMAGE")
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:

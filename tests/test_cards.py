@@ -16,7 +16,7 @@ from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
-    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH,
+    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -86,10 +86,14 @@ class CardPoolTest(unittest.TestCase):
         # v0.17a（既存のワザの要素だけで実装したカード。docs/card-implementation-v0.17a.md）
         self.assertEqual(read_extract()["pool_v0_17a"], [TANGELA, GIOVANNIS_MEOWTH])
         self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in (TANGELA, GIOVANNIS_MEOWTH)))
+        # v0.17b（ねむり状態でだけはたらくポケモンパワーのわるいねぞう・自分をねむりにするワザのたおれこむ）。キョウのベトベトン（v0.17c）は参照カード
+        self.assertEqual(read_extract()["pool_v0_17b"], [ROCKETS_SNORLAX])
+        self.assertTrue(pool.is_playable(ROCKETS_SNORLAX) and pool.get(ROCKETS_SNORLAX).is_basic_pokemon)
+        self.assertFalse(pool.is_playable(KOGAS_MUK) or pool.get(KOGAS_MUK).supported)
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

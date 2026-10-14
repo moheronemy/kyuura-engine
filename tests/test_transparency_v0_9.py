@@ -24,7 +24,7 @@ from kyuura_engine import (
 )
 from kyuura_engine.effects import (
     DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackImmunityOnHeads, AttackKey, AttackUse, ConfuseOnHeads, ParalyzeOnHeads,
-    PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
+    DamageAndSelfSleep, PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
 )
 from kyuura_engine.conditions import SLEEP
 from kyuura_engine.resolution import codec, open_attack, programs
@@ -681,6 +681,10 @@ class CoinIndependenceTest(unittest.TestCase):
             gassed = gas or (card == MUK and not confused)
             working = not gassed and not ({"sleep", "confusion"} & set(defender_state))
             expected = "UNRESOLVED_EVADED_EFFECT_COIN" if isinstance(effect, EFFECT_COIN_TYPES) and working and final > 0 else "accepted"
+            if isinstance(effect, DamageAndSelfSleep) and (working or final <= 0):
+                # v0.17b（Z23）: たおれこむのダメージが「とうめい」で受けない（コインのどれかの結果）・ディフェンダーで 0 なら、自分をねむりにするかが
+                # 決まらないので宣言の前に止める（docs/rocket-snorlax-v0.17b.md 5 章）
+                expected = "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
             with self.subTest(card=card, index=index, confused=confused, defender=defender_state, gas=gas):
                 self.assertEqual(results, {expected})
             stopped += expected != "accepted"

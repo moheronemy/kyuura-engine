@@ -32,6 +32,7 @@ from ..effects import (
     DamageResult,
     attack_damage_modifiers,
     counterattack_double_knockout_error,
+    power_name_and_page,
     retaliation_double_knockout_error,
 )
 from ..state import RETALIATION_FIXED
@@ -352,6 +353,13 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
     if attacker.damage >= hp:
         state.add_event("counterattack_skipped", **base, reason=COUNTERATTACK_TARGET_KNOCKED_OUT)
         return
+    if not instance.implementation.ignores_weakness_resistance:
+        # v0.17b: 説明に「弱点・抵抗力」に関係なく、がない特殊能力のダメージ（わるいねぞう）に弱点・抵抗力を計算するかは原典で決まらない（Z9）。
+        # 計算しない処理で結果が同じなのは、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプでないときだけ（今の対応カードでは起こらない）
+        source_type = state.card_def(instance.card).pokemon_type
+        target_def = state.card_def(attacker.card)
+        if source_type in (target_def.weakness, target_def.resistance):
+            raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {attacker.pokemon_id}")
     if first_void(res, fs.frame.player, attacker) is not None:
         raise RuntimeError(f"ワザを使ったポケモン {attacker.pokemon_id} が自分の番に「ダメージを受けない」状態（エンジンの不具合）")
     child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,
@@ -460,7 +468,8 @@ def _counterattack_error(res: Resolution, fs: FrameState):
     target = _damage_target(res, fs)
     if target not in fs.applied:
         return None  # 理由の文の値がない（questions の表の文を使う）
-    return counterattack_double_knockout_error(fs.frame.source_pid, fs.applied[target], target)
+    # v0.17b: 理由の文に、ダメージを与えた特殊能力の名前とページ（はんげきは v0.16 までと同じ文）
+    return counterattack_double_knockout_error(fs.frame.source_pid, fs.applied[target], target, *power_name_and_page(res.state, fs.origin.power_key))
 
 
 def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance]]:

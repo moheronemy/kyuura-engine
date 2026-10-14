@@ -305,15 +305,16 @@ def log_problems(state) -> list[str]:
         return None, None
 
     def counter_power(pid: int) -> tuple[str | None, int | None, str | None]:
-        """ログから組み立てた今の場の、ポケモン ``pid`` の「はんげき」（v0.10）: (持っている特殊能力の PowerKey の文字列, 与える量,
-        はたらいていない理由)。持っていなければ (None, None, None)。ねむり・マヒ・こんらんは、その時点（ダメージを受けるとき）の値。"""
+        """ログから組み立てた今の場の、ポケモン ``pid`` の「はんげき」（v0.10）・「わるいねぞう」（v0.17b）: (持っている特殊能力の PowerKey の
+        文字列, 与える量, はたらいていない理由)。持っていなければ (None, None, None)。ねむり・マヒ・こんらんは、その時点（ダメージを受けるとき）
+        の値で、はたらくかは実装の ``works_with`` で決める（はんげきはどれでもないとき、わるいねぞうはねむりのときだけ）。"""
         definition = state.card_def(top[pid])
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
             if isinstance(effect, CounterattackDamage):
                 key = f"{definition.id}@power{index}"
-                if exclusive.get(pid) is not None:
-                    return key, effect.amount, f"{exclusive[pid]} 状態"
+                if not effect.works_with(exclusive.get(pid)):
+                    return key, effect.amount, f"{exclusive.get(pid) or '特殊状態なし'}（ねむり・マヒ・こんらん）の状態"
                 gases = [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(power)]
                 if gases:
                     return key, effect.amount, f"かがくへんかガス（ポケモン {gases}）"

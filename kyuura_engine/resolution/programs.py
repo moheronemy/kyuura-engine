@@ -109,14 +109,17 @@ class AttackRun:
         比べる（今の対応カードでは同じ答え）。"""
         return pokemon.damage >= self.state.card_def(pokemon.card).hp
 
-    def ko_prevention_conflict(self, target: PokemonInPlay) -> None:
+    def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
         """効果の対象がきぜつして効果を飛ばすとき、その対象がきぜつの判定で任意の効果（こんじょう）を使えるなら、効果を受けるかが原典で
-        決まらない（G37）。"""
-        owner = 1 - self.player
+        決まらない（相手の対戦ポケモンは G37）。v0.17b: 対象がワザを使ったポケモン自身（``owner`` が番のプレイヤー）なら、同じ形の問いで、
+        今の対応カードでは起こらない（自分に効果を与えるワザを持つポケモンに、こんじょうはない。コードのない問い）。"""
+        owner = 1 - self.player if owner is None else owner
         for instance in C.in_window(self.state, Window.KO_CHECK, owner, target, self.res.catalog):
             if instance.definition.timing is not C.Timing.OFFER:
                 continue
             if self.res.ko_prevention_able.get(target.pokemon_id) and not C.suppressors(self.state, instance):
+                if owner == self.player:
+                    raise self.res.question("ko_prevention_self_effect", f"ポケモン {target.pokemon_id}")
                 raise self.res.question("ko_prevention_attack_effect", f"ポケモン {target.pokemon_id}",
                                         E.ko_prevention_attack_effect_error(target.pokemon_id, opponent_effect_elements(self.program)))
             break
@@ -340,28 +343,44 @@ class Damage(Element):
 
 @dataclass(frozen=True)
 class Status(Element):
-    """相手の対戦ポケモンを特殊状態にする効果の要素。``local_coin`` はこの要素のコイン（どくばり）、``gate`` はワザ全体のコイン（ねばりつく）。"""
+    """特殊状態にする効果の要素。``local_coin`` はこの要素のコイン（どくばり）、``gate`` はワザ全体のコイン（ねばりつく）。
+
+    - ``target``（v0.17b）: 対象。``OPP``（相手の対戦ポケモン。既定）か ``SELF``（ワザを使ったポケモン自身。p.320 の効果の (3)。R団のカビゴンの
+      「たおれこむ」）。自分への効果も、効果を与える直前に「とうめい」を評価する（自分のワザでもはたらく。v0.9 の T8。R団のカビゴンは持たない）。
+    - ``after_damage``（v0.17b）: 説明が「ダメージを与えた後、…」の効果で、その名前のダメージの要素の結果。そのダメージの要素がダメージを与え
+      なかった（防いだ・「とうめい」で受けなかった・最終ダメージが 0）ときに効果を与えるかは原典で決まらない（「ダメージを与えた後」が順番か
+      条件か。docs/rocket-snorlax-v0.17b.md の Z23）ので、推測せずに止める（先読みがすべての結果を試すので、宣言の前に止まる）。
+    """
 
     condition: str
     gate: tuple[str, CoinSide] | None = None
     local_coin: CoinSide | None = None
     reparalysis_check: bool = False
+    target: str = OPP
+    after_damage: str | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
 
     @property
-    def opponent_element(self) -> str:
-        return self.condition
+    def opponent_element(self) -> str | None:
+        return self.condition if self.target == OPP else None
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
-        opponent = 1 - run.player
-        target = run.opponent_active()
+        if self.after_damage is not None:
+            result = run.fs.results[self.after_damage]
+            if result.dealt <= 0:
+                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",
+                                       E.effect_after_no_damage_error(str(run.key), result, self.condition))
+        if self.target == SELF:
+            owner, target = run.player, run.attacker()
+        else:
+            owner, target = 1 - run.player, run.opponent_active()
         if run.knocked_out(target):
-            run.ko_prevention_conflict(target)
+            run.ko_prevention_conflict(target, owner)
             return False
         if self.reparalysis_check:
-            problem = paralysis_problem(run.state, opponent, target)
+            problem = paralysis_problem(run.state, owner, target)
             if problem is not None:
                 raise run.res.question("reparalysis_recovery_turn", problem.code, error=problem)
         if self.local_coin is not None:
@@ -371,8 +390,8 @@ class Status(Element):
                                        None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
             if run.flip(1).results[0] is not self.local_coin:
                 return False
-        if reaches(run.res, run.fs, opponent, target, self.condition):
-            APPLY_CONDITION[self.condition](run.state, opponent, target, effect=str(run.key))
+        if reaches(run.res, run.fs, owner, target, self.condition):
+            APPLY_CONDITION[self.condition](run.state, owner, target, effect=str(run.key))
         return False
 
 
@@ -618,6 +637,8 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndSelfDamage: lambda e: (Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
     # v0.17a: 既存の要素の新しい並び（サカキのニャースの「ねこノミ」。docs/card-implementation-v0.17a.md）
     E.ConfuseOnHeadsWithoutDamage: lambda e: (Status(CONFUSION, local_coin=HEADS),),
+    # v0.17b: 自分への特殊状態（R団のカビゴンの「たおれこむ」。docs/rocket-snorlax-v0.17b.md）
+    E.DamageAndSelfSleep: lambda e: (Damage(OPP, Printed()), Status(SLEEP, target=SELF, after_damage="damage")),
 }
 
 

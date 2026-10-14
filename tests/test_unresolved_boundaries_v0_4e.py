@@ -32,7 +32,7 @@ from tests.helpers import (
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
     BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
     DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKETS_SNORLAX,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -46,6 +46,7 @@ ALL_CODES = (
     "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",  # v0.10
     "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT",  # v0.11
     "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",  # v0.12
+    "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",  # v0.17b
 )
 TURN = 7
 
@@ -661,6 +662,38 @@ class RetaliationDoubleKnockoutBoundaryTest(BoundaryTestCase):
         # 止めない 5: ディフェンダーで「ほのおのかべ」の 10 - 20 = 0（ワザを使ったポケモンはきぜつしない。R団のファイヤーだけがきぜつ）
         defended = self.assert_proceeds(self.board({**hitmonchan, "trainers": [(DEFENDER, TURN + 1)]}, moltres={"damage": 50}), UseAttack(0, 1))
         self.assertEqual([e["player"] for e in defended.log if e["kind"] == "knock_out"], [1])
+
+
+class EffectAfterNoDamageBoundaryTest(BoundaryTestCase):
+    """p.245（R団のカビゴンの「たおれこむ」の最新の説明「ダメージを与えた後、自分を「ねむり」状態にする。」）・p.155（ナツメのヤドンの同じ文面の
+    解説「相手にダメージを与えたら、自分がねむり状態になってしまいます」）・p.320（ワザの要素の順番）・p.321（「ダメージを受けない」状態でも
+    ダメージ以外の効果の要素は有効。最終ダメージが 0 なら「ダメージを与えなかった」）。v0.17b（docs/rocket-snorlax-v0.17b.md の Z23）。
+
+    止まる場合（ワザの宣言の前。こんらんのコインの前）: たおれこむのダメージが、どれかのコインの結果で、相手にダメージを与えない（ディフェンダーで
+    0・「ダメージを受けない」状態・「とうめい」で受けない）。「ダメージを与えた後」が順番か条件かが決められない。
+
+    隣の止まらない場合: プラスパワーで 30 − 20 = 10 を与える・相手をきぜつさせる（ダメージを与えた）。"""
+
+    format_version = 9
+
+    def board(self, attacker=None, defender=None):
+        snorlax = {"card": ROCKETS_SNORLAX, "energy": [FIRE] * 3, **(attacker or {})}
+        return build_test_state([{"active": snorlax, "bench": [RATTATA]}, {"active": {"card": PONYTA, **(defender or {})}, "bench": [RATTATA]}],
+                                turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        code = "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+        defender = {"trainers": [(DEFENDER, TURN)]}  # 相手が前の番（6）に使った（次の相手の番 7 の終わりまで）
+        for attacker, target in (({}, defender), ({}, {"prevent_damage": TURN - 1}), ({"confusion": True}, defender),
+                                 ({}, {"card": HAUNTER, "evolved_from": GASTLY})):
+            with self.subTest(attacker=attacker, target=target):
+                self.assert_rejected(self.board(attacker, target), UseAttack(0, 0), code)
+        # 止めない 1: プラスパワーで 30 − 20 = 10（ダメージを与えた）。自分はねむりになる
+        boosted = self.assert_proceeds(self.board({"trainers": [(PLUSPOWER, TURN)]}, defender), UseAttack(0, 0))
+        self.assertEqual([e["condition"] for e in boosted.log if e["kind"] == "special_condition"], ["sleep"])
+        # 止めない 2: 相手をきぜつさせても、ダメージを与えたので自分はねむりになる
+        knocked = self.assert_proceeds(self.board(None, {"damage": 30}), UseAttack(0, 0))
+        self.assertIn("sleep", [e.get("condition") for e in knocked.log if e["kind"] == "special_condition"])
 
 
 class CodeListTest(unittest.TestCase):

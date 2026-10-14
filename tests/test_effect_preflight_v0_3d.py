@@ -28,7 +28,7 @@ from tests.helpers import (
     PLUSPOWER, PONYTA,
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
     BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER, MACHOP, MACHOKE, MACHAMP,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKET_SQUIRTLE, DARK_WARTORTLE, GIOVANNIS_MEOWTH,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKET_SQUIRTLE, DARK_WARTORTLE, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -84,6 +84,7 @@ ATTACKS = [
     (DARK_WARTORTLE, 0),  # CoinFlipDamage（v0.13。わるいカメールの「おうふくびんた」。コイン 2 枚。第4弾のゼニガメから進化したものとして置く）
     (DARK_WARTORTLE, 1),  # ReturnReceivedDamage（v0.13。「こうらがえし」。ダメージなし・コインなし。自分に次の相手の番の効果）
     (GIOVANNIS_MEOWTH, 0),  # ConfuseOnHeadsWithoutDamage（v0.17a。サカキのニャースの「ねこノミ」。ダメージなし・コインでこんらん）
+    (ROCKETS_SNORLAX, 0),  # DamageAndSelfSleep（v0.17b。R団のカビゴンの「たおれこむ」。ダメージを与えなかった場合は宣言の前に止める）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす
@@ -145,6 +146,10 @@ class CoinIndependenceTest(unittest.TestCase):
                     # v0.4b: コインでダメージの量を決めるワザの要素が無効になるとき、そのコインを投げるかは決められない
                     # （p.321。docs/persistent-damage-v0.4b.md 5 章）。こんらんのコインの前に止める
                     self.assertEqual(results, {"UNRESOLVED_PREVENTED_COIN_DAMAGE"})
+                elif card == ROCKETS_SNORLAX and "prevent_damage" in defender_state:
+                    # v0.17b: たおれこむのダメージが「ダメージを受けない」状態で無効なら、自分をねむりにするかは決められない（Z23）。止める問いの優先度は
+                    # ワザの実装の problem と同じ（こんらんのダメージの変更効果より先。questions の priority 10）
+                    self.assertEqual(results, {"UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"})
                 elif pluspower and attacker_state.get("confusion"):
                     self.assertEqual(results, {"UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"})
                 else:

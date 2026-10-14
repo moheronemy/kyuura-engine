@@ -145,12 +145,16 @@
     "PMCG1-007",
     "PMCG6-063"
   ],
+  "pool_v0_17b": [
+    "PMCG6-073"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
     "PMCG1-075",
     "PMCG3-003",
-    "PMCG1-047"
+    "PMCG1-047",
+    "PMCG6-023"
   ],
   "cards": [
     {
@@ -4466,6 +4470,97 @@
       }
     },
     {
+      "id": "PMCG6-073",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "R団のカビゴン",
+        "en": "Rocket's Snorlax"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          143
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "わるいねぞう",
+              "en": "Restless Sleep"
+            },
+            "text": {
+              "ja": "このカードが「ねむり」状態で、相手のワザによるダメージを受けた時、（このカードが「きぜつ」するしないにかかわらず、）ダメージを与えたポケモンに20ダメージ。",
+              "en": "If your opponent's attack does damage to Rocket's Snorlax and Rocket's Snorlax is already Asleep (even if it's Knocked Out), this power does 20 damage to the attacking Pokémon."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たおれこむ",
+              "en": "Collapse"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与えたあと、自分を「ねむり」状態にする。",
+              "en": "Rocket's Snorlax is now Asleep (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-073",
+        "pokemontcg": [
+          "gym1-33"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%AB%E3%83%93%E3%82%B4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%AB%E3%83%93%E3%82%B4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -4883,6 +4978,94 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-047-ghost/"
+      }
+    },
+    {
+      "id": "PMCG6-023",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのベトベトン",
+        "en": "Koga's Muk"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          89
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キョウのベトベター",
+          "en": "Koga's Grimer"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "だつりょくえき",
+              "en": "Energy Drain"
+            },
+            "text": {
+              "ja": "このカードが相手のワザによってダメージを受ける時、(このカードが「きぜつ」するしないにかかわらず、)コインを投げて「おもて」なら、ダメージを与えたポケモンについているエネルギーカードを1枚選び、トラッシュする。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "If an opponent's attack does damage to Koga's Muk (even if Koga's Muk is Knocked Out), flip a coin. If heads and if it has any, choose 1 Energy card attached to the attacking Pokémon and discard it. This power can't be used if Koga's Muk is already Asleep, Confused, or Paralyzed when your opponent attacks."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヘドロのうず",
+              "en": "Sludge Whirlpool"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-023",
+        "pokemontcg": [
+          "gym2-26"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%99%E3%83%88%E3%83%99%E3%83%88%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%99%E3%83%88%E3%83%99%E3%83%88%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     }
   ]

@@ -592,6 +592,19 @@ def evaded_effect_coin_problem(state: GameState, use: AttackUse) -> UnsupportedE
     return evaded_effect_coin_error(target.pokemon_id, final)
 
 
+def effect_after_no_damage_error(attack: str, result: DamageResult, condition: str) -> UnsupportedError:
+    """``UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`` の理由（v0.17b。docs/rocket-snorlax-v0.17b.md の Z23）。説明が「ダメージを与えた後、…」の効果で、
+    そのダメージの要素がダメージを与えなかった（``result``: 防いだ・「とうめい」で受けなかった・最終ダメージが 0）。"""
+    why = "「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded else "最終ダメージが 0"
+    name = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}[condition]
+    return UnsupportedError(
+        "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
+        f"ワザ {attack} のダメージの要素が、ポケモン {result.pokemon_id} にダメージを与えなかった（{why}）。説明の「ダメージを与えた後、"
+        f"…「{name}」状態にする」が要素の順番か、ダメージを与えたことの条件かは『オフィシャルブック2000』（p.245・p.155・p.309・p.319〜p.321）"
+        "から決められないので扱わない（p.321 はダメージ以外の効果の要素を有効とするが、p.155 の同じ文面の解説は「相手にダメージを与えたら」と書く）",
+    )
+
+
 def evaded_effect_coin_error(target_pid: int, final: int) -> UnsupportedError:
     """``UNRESOLVED_EVADED_EFFECT_COIN`` の理由（v0.15b で分けた。``final`` はダメージの要素の最終ダメージ）。"""
     return UnsupportedError(
@@ -682,7 +695,7 @@ def counterattack_double_knockout_problem(state: GameState, use: AttackUse, effe
     found = counterattack_power(state, defender)
     if found is None:
         return None
-    _, power_effect = found
+    power_key, power_effect = found
     _, attacker = state.find_pokemon(use.pokemon_id)
     profile = effect.damage_profile(state, use)
     defender_hp = state.card_def(defender.card).hp
@@ -701,16 +714,27 @@ def counterattack_double_knockout_problem(state: GameState, use: AttackUse, effe
     # きぜつする候補がある」という v0.10 の判定と同じ答えになる
     if not any(defender_knocked_out(opponent) and only_counterattack_knocks_out_attacker(own) for opponent, own in profile.pairs()):
         return None
-    return counterattack_double_knockout_error(defender.pokemon_id, power_effect.amount, attacker.pokemon_id)
+    return counterattack_double_knockout_error(defender.pokemon_id, power_effect.amount, attacker.pokemon_id,
+                                               *power_name_and_page(state, power_key))
 
 
-def counterattack_double_knockout_error(defender_pid: int, amount: int, attacker_pid: int) -> UnsupportedError:
-    """``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`` の理由（v0.15b で分けた。``amount`` は「はんげき」のダメージ）。"""
+def power_name_and_page(state: GameState, key: PowerKey) -> tuple[str, str]:
+    """特殊能力 ``key`` の名前と、実装がしたがう最新の説明のページ（登録の出典 ``P43 p.○○`` の ``p.○○``）。理由の文に書く（v0.17b）。"""
+    entry = state.effects.power_entry(key.card_id, key.power_index)
+    source = entry.source
+    return entry.name_ja, source.split(" ", 1)[1] if source.startswith("P43 ") else source
+
+
+def counterattack_double_knockout_error(defender_pid: int, amount: int, attacker_pid: int, power_name: str = "はんげき",
+                                        page: str = "p.192") -> UnsupportedError:
+    """``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`` の理由（v0.15b で分けた。``amount`` は特殊能力のダメージ）。v0.17b から、ダメージを与えた
+    特殊能力の名前と最新の説明のページを書く（既定ははんげき（p.192）で、v0.16 までと同じ文。R団のカビゴンの［わるいねぞう］は p.245。C18 と同じ
+    問いで、新しいコードにしない。docs/rocket-snorlax-v0.17b.md の Z13）。"""
     return UnsupportedError(
         "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",
-        f"このワザのダメージで相手の対戦ポケモン {defender_pid} がきぜつしうるうえ、その「はんげき」の {amount} ダメージで"
+        f"このワザのダメージで相手の対戦ポケモン {defender_pid} がきぜつしうるうえ、その「{power_name}」の {amount} ダメージで"
         f"ワザを使ったポケモン {attacker_pid} がきぜつしうる。ワザによるきぜつと特殊能力によるきぜつが「同時に「きぜつ」した」"
-        "ことになるか（p.324）が『オフィシャルブック2000』（p.89・p.192・p.311・p.323〜p.325）から決められないので扱わない"
+        f"ことになるか（p.324）が『オフィシャルブック2000』（p.89・{page}・p.311・p.323〜p.325）から決められないので扱わない"
         "（サイド・バトル場に出す順番と勝ち負けが変わる）",
     )
 
@@ -1683,6 +1707,28 @@ class DamageReducedByOwnCounters(AttackEffect):
 
 
 @dataclass(frozen=True)
+class DamageAndSelfSleep(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージを与えた後、ワザを使ったポケモン自身をねむり状態にする（v0.17b。R団のカビゴンの
+    「たおれこむ」。p.245 の最新の説明「ダメージを与えた後、自分を「ねむり」状態にする。」。docs/rocket-snorlax-v0.17b.md の Z21〜Z29）。
+
+    - 解決の基盤の要素の並びは、既存の要素 ``Damage`` と、ワザを使ったポケモン自身を対象にした ``Status(SLEEP, target=SELF,
+      after_damage="damage")``（v0.17b で ``Status`` に対象と「ダメージを与えた後」を加えた。カードごとの要素ではない）。
+    - 順番: 相手へのダメージ → ダメージを受けたときの効果の窓（はんげき・ほのおのかべ・こうらがえし）→ 自分をねむり（p.320・p.89。Z21）。
+      そのあいだに自分が HP 以上になったら、効果の対象がいないのでねむりにしない（p.309。Z22）。
+    - 相手へのダメージの要素がダメージを与えなかったとき（ディフェンダーで 0・「ダメージを受けない」状態・「とうめい」で受けない）に自分をねむりに
+      するかは原典で決まらない（「ダメージを与えた後」が順番か条件か。Z23。UNRESOLVED）ので、宣言の前に止める
+      （``UNRESOLVED_EFFECT_AFTER_NO_DAMAGE``）。
+    - 相手の対戦ポケモンに与える効果ではない（``opponent_effect_elements`` は空。G37 の対象外）。
+    - v0.13 の約束（``resolve``・``resume``）は持たない。v0.13 の止める関数の型（``v013_checks.VERIFIED``）にも入れない。
+    """
+
+    implementation_id = "damage_and_self_sleep"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "自分をねむり状態にする")
+
+
+@dataclass(frozen=True)
 class DamageAndSelfDamage(AttackEffect):
     """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあと、自分にも ``self_damage`` ダメージ（v0.10。ゴーリキーの
     「じごくぐるま」。p.190 の最新の説明「自分にも20ダメージ。」。docs/machamp-line-v0.10.md）。
@@ -2515,6 +2561,9 @@ class CounterattackDamage(PowerEffect):
     amount: int
     implementation_id = "counterattack_damage"
     declared = False
+    # v0.17b: 最新の説明が「「弱点・抵抗力」に関係なく」と書いているか（はんげきは書いている。書いていない力の 20 に弱点・抵抗力を計算するかは
+    # 原典で決まらない。解決の基盤の ``kernel.power_damage_to_damage_source`` が、それで結果が変わる場合を止める。docs/rocket-snorlax-v0.17b.md の Z9）
+    ignores_weakness_resistance: ClassVar[bool] = True
 
     def __post_init__(self) -> None:
         if type(self.amount) is not int or self.amount <= 0 or self.amount % 10:
@@ -2530,8 +2579,38 @@ class CounterattackDamage(PowerEffect):
 
     def is_working(self, pokemon: PokemonInPlay) -> bool:
         """場のポケモン ``pokemon``（このパワーを持つカードがいちばん上）のこの力がはたらいているか（かがくへんかガスは別に見る）。"""
-        conditions = pokemon.conditions
-        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+        exclusive = pokemon.conditions.exclusive
+        return self.works_with(None if exclusive is None else exclusive.name)
+
+    def works_with(self, exclusive: str | None) -> bool:
+        """ダメージを受けるときのねむり・マヒ・こんらん（``SpecialConditions.exclusive`` の名前。なければ None）で、この力がはたらくか
+        （どくは関係しない）。v0.17b で ``is_working`` から分けた（ログの監査がログから組み立てた特殊状態で同じ判定を使う）。はんげきは、
+        ねむり・マヒ・こんらんのどれでもないときだけ。解決の基盤は、同じ条件を効果の定義（``catalog.STRIKES_BACK`` の ``disabled_by``）で持つ。"""
+        return exclusive is None
+
+
+@dataclass(frozen=True)
+class CounterattackDamageWhileAsleep(CounterattackDamage):
+    """「ねむり」状態で相手のワザによるダメージを受けたときに自動的にはたらき、ダメージを与えたポケモンに ``amount`` ダメージを与える特殊能力
+    （v0.17b。R団のカビゴンの［わるいねぞう］。p.245 の最新の説明「このカードが「ねむり」状態で、相手のワザによるダメージを受けたとき、（それ
+    によってこのカードが「きぜつ」しても、）ダメージを与えたポケモンに、20ダメージ。」。docs/rocket-snorlax-v0.17b.md）。
+
+    - はんげき（``CounterattackDamage``）と同じ窓・同じ処理（解決の基盤の ``kernel.power_damage_to_damage_source``。特殊能力のダメージ。
+      p.245 の解説「このダメージは特殊能力によるダメージなので「ディフェンダー」ではふせげません」。Z6・Z7）で、特殊状態の条件だけが違う:
+      ダメージを受けるときにねむりのときだけはたらく（Z2）。マヒ・こんらんはねむりと重ならない（p.322）。どくは関係しない（Z3）。
+      解決の基盤は、効果の定義（``catalog.RESTLESS_SLEEP`` の ``requires``）で同じ条件を持つ。
+    - 宣言しない（Z4。``declared`` は False のまま）。かがくへんかガスで消える（Z14）。
+    - 最新の説明に「弱点・抵抗力」に関係なく、がないので、20 に弱点・抵抗力を計算するかは原典で決まらない（Z9。UNRESOLVED）。R団のカビゴンは
+      無色で、kyuura の記録（780 枚）に無色の弱点・抵抗力を持つカードはないので、結果は変わらない。結果が変わる場合は解決の基盤が止める。
+    - v0.13 の部品（``counterattack_power``・``working_counterattack_power``・v0.13 の止める関数の C18）は ``isinstance`` で探すので、この力も
+      「ダメージを受けたときにダメージを与えたポケモンにダメージを与える特殊能力」として同じに扱われる（``works_with`` で条件だけが違う）。
+    """
+
+    implementation_id = "counterattack_damage_while_asleep"
+    ignores_weakness_resistance: ClassVar[bool] = False
+
+    def works_with(self, exclusive: str | None) -> bool:
+        return exclusive == SLEEP
 
 
 @dataclass(frozen=True)
@@ -3275,6 +3354,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
             source="P43 p.229",
         ),
+        # R団のカビゴン（v0.17b）p.245。たおれこむ（無無無）20: ダメージを与えた後、自分をねむり状態に（DamageAndSelfSleep）。印刷の文面（kyuura の
+        # 写し）は「ダメージを与えたあと、…」（docs/rocket-snorlax-v0.17b.md）
+        AttackKey("PMCG6-073", 0): AttackEntry(
+            DamageAndSelfSleep(),
+            "たおれこむ",
+            text_ja="ダメージを与えたあと、自分を「ねむり」状態にする。",
+            play_text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
+            source="P43 p.245",
+        ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
             SelfDamageOnTails(self_damage=10),
@@ -3400,6 +3488,16 @@ DEFAULT_EFFECTS = EffectRegistry(
             "この力は、このカードが「きぜつ」した時だけ、使える。このカードをトラッシュからとり出し、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
             "この力は、このカードが「きぜつ」したとき、使える。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」するとき、この力は使えない。",
             "P43 p.82",
+        ),
+        # R団のカビゴン（v0.17b）p.245。「わるいねぞう」: ねむり状態で相手のワザによるダメージを受けたときに自動的にはたらき（宣言しない）、ダメージを
+        # 与えたポケモンに 20（特殊能力によるダメージ）。印刷の文面（kyuura の写し）は「…受けた時、（このカードが「きぜつ」するしないにかかわらず、）
+        # …ポケモンに20ダメージ。」（docs/rocket-snorlax-v0.17b.md）
+        PowerKey("PMCG6-073", 0): PowerEntry(
+            CounterattackDamageWhileAsleep(amount=20),
+            "わるいねぞう",
+            "このカードが「ねむり」状態で、相手のワザによるダメージを受けた時、（このカードが「きぜつ」するしないにかかわらず、）ダメージを与えたポケモンに20ダメージ。",
+            "このカードが「ねむり」状態で、相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）ダメージを与えたポケモンに、20ダメージ。",
+            "P43 p.245",
         ),
     },
 )

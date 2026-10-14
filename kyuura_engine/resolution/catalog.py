@@ -58,6 +58,8 @@ class EffectDefinition:
 
     - ``windows``: 候補になる窓
     - ``disabled_by``: この特殊状態のときははたらかない・使えない（``status_time`` の時点の特殊状態で判定する）
+    - ``requires``（v0.17b）: この特殊状態のときだけはたらく（R団のカビゴンの［わるいねぞう］はねむり。``status_time`` の時点で判定する）。
+      ``disabled_by`` と同じ ``blocked_by_status`` で判定する（ねむり・マヒ・こんらんで消える力と同じ判定に、カードごとの分岐を加えない）
     - ``status_time``: 特殊状態を判定する時点（``now``: 窓の時点、``on_damage``: ダメージを受けるとき（「すでに」）、
       ``on_knock_out``: きぜつするとき）
     - ``suppressible``: かがくへんかガスで消える（印刷された特殊能力。かがくへんかガス自身は名前で除かれる）
@@ -81,6 +83,7 @@ class EffectDefinition:
     trigger_classes: frozenset[DamageClass] = frozenset()
     by_opponent: bool = False
     decision_kind: str | None = None
+    requires: frozenset[str] = frozenset()
 
 
 TRANSPARENCY = EffectDefinition(
@@ -106,6 +109,13 @@ HARDEN = EffectDefinition(
     "harden", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
     "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
 )
+# v0.17b: R団のカビゴンの［わるいねぞう］。はんげきと同じ窓・同じ処理（特殊能力のダメージをダメージを与えたポケモンに）で、特殊状態の条件だけが違う
+# （ねむりのときだけはたらく。マヒ・こんらんはねむりと重ならないので、ねむりならマヒ・こんらんではない。どくは関係しない。p.245・p.322）
+RESTLESS_SLEEP = EffectDefinition(
+    "restless_sleep", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "damage_source", "power_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
+    requires=frozenset({"sleep"}),
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -115,6 +125,7 @@ RETALIATION = EffectDefinition(
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.AttackImmunityOnHeads, TRANSPARENCY),
     (E.CounterattackDamage, STRIKES_BACK),
+    (E.CounterattackDamageWhileAsleep, RESTLESS_SLEEP),  # v0.17b（CounterattackDamage の部分型。型の並びの順は関係しない。definition_for）
     (E.PreventKnockOutOnHeads, GUTS),
     (E.ReturnToHandOnKnockOut, REBIRTH),
     (E.SuppressOtherPowers, CHEMICAL_GAS),
@@ -176,8 +187,10 @@ def in_window(state: GameState, window: Window, owner: int, pokemon: PokemonInPl
 
 
 def blocked_by_status(instance: EffectInstance, pokemon: PokemonInPlay) -> bool:
-    """今の特殊状態で、はたらかない・使えないか（どくは関係しない。どの定義の ``disabled_by`` にもない）。"""
-    return bool(set(pokemon.conditions.names()) & instance.definition.disabled_by)
+    """今の特殊状態で、はたらかない・使えないか: ``disabled_by`` の特殊状態がある、または ``requires`` の特殊状態がない（v0.17b）。
+    どくは、どの定義の ``disabled_by``・``requires`` にもない（関係しない）。"""
+    names = set(pokemon.conditions.names())
+    return bool(names & instance.definition.disabled_by) or not instance.definition.requires <= names
 
 
 def suppressors(state: GameState, instance: EffectInstance) -> tuple[int, ...]:

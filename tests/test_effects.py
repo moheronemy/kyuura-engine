@@ -111,7 +111,7 @@ class DefaultRegistryTest(unittest.TestCase):
         # サカキのカイリキーの「ハリケーンパンチ」（p.193。v0.11。サカキのワンリキーの「チョップ」は説明文なし）、
         # R団のファイヤーの「ほのおのかべ」（p.82。v0.12）、わるいカメールの「おうふくびんた」「こうらがえし」（p.89。v0.13。第4弾の
         # ゼニガメの「こうらアタック」は説明文なし）、モンジャラの「しめつける」「どくのこな」（p.55）・サカキのニャースの「ねこノミ」
-        # （p.229。v0.17a。「ねこキック」は説明文なし）
+        # （p.229。v0.17a。「ねこキック」は説明文なし）、R団のカビゴンの「たおれこむ」（p.245。v0.17b）
         self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
@@ -123,7 +123,8 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-004", 0),
                                      AttackKey("PMCG4-004", 1), AttackKey("PMCG4-021", 0), AttackKey("PMCG4-021", 1),
                                      AttackKey("PMCG5-020", 0), AttackKey("PMCG6-057", 1),
-                                     AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0)])
+                                     AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
+                                     AttackKey("PMCG6-073", 0)])
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -232,8 +233,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + ロケット団のベトベターの 2 つ・ベトベトンの 1 つ（v0.8）+ 化石の秘密のゴースの 2 つ・ゴーストの 1 つ（v0.9）
         # + ゴーリキーの 2 つ・カイリキーの 1 つ（v0.10）+ サカキのワンリキーの 2 つ・サカキのゴーリキーの 2 つ・サカキのカイリキーの 1 つ（v0.11）
         # + R団のファイヤーの 1 つ（v0.12）+ 第4弾のゼニガメの 1 つ・わるいカメールの 2 つ（v0.13）
-        # + モンジャラの 2 つ・サカキのニャースの 2 つ（v0.17a）
-        self.assertEqual(len(keys), 69)
+        # + モンジャラの 2 つ・サカキのニャースの 2 つ（v0.17a）+ R団のカビゴンの 1 つ（v0.17b）
+        self.assertEqual(len(keys), 70)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -241,9 +242,11 @@ class RegistryImmutabilityTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.power_keys(), powers)
         # フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）
         # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
-        # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）を加えた
+        # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）、v0.17b で
+        # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0), PowerKey("PMCG1-057", 0),
-                                  PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0), PowerKey("PMCG6-061", 0)))
+                                  PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0), PowerKey("PMCG6-061", 0),
+                                  PowerKey("PMCG6-073", 0)))
 
 
 if __name__ == "__main__":
