@@ -11,6 +11,7 @@
 ## 研究資料の参照コミットを固定する
 
 - 参照する kyuura のコミットは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` です（scripts/extract_kyuura_cards.py の `KYUURA_COMMIT`）。
+- 研究の基準（裁定・論点・最新の説明・照合の記録を照らすコミット）は `adf97107ee0d9755cd7ddedae298ecb02914128e` です（v0.18a から。ブランチ `claude/engine-findings-through-v0.17`。kyuura の既定のブランチには取り込まれていない。`kyuura_engine/data/research_links.json` の `research_commit`。docs/research-alignment-v0.18a.md）。写しのコミットと分けているのは、状態がカードデータの元のコミットを持ち、上げると固定した参照データが変わるからです。エンジンが使う項目が同じことは `scripts/check_research_links.py`（v0.18e）が確かめます。
 - カードデータの写し `kyuura_engine/data/kyuura_cards.json` は手で編集せず、`python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` で作り直します。
 - 参照するコミットを上げるときは、写しを作り直し、変わった項目に対応するテストと docs を見直します。
 

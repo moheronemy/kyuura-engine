@@ -1,0 +1,704 @@
+{
+  "format": "kyuura-engine research links 1",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md",
+  "repository": "https://github.com/moheronemy/kyuura",
+  "research_commit": "adf97107ee0d9755cd7ddedae298ecb02914128e",
+  "research_branch": "claude/engine-findings-through-v0.17",
+  "research_files": [
+    "data/sidecar/rulings.json",
+    "data/sidecar/latest_descriptions.json",
+    "data/sidecar/card_checks.json"
+  ],
+  "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+  "engine_import_id": "ENGINE-D90BCE1",
+  "counts": {
+    "engine_unresolved_rulings": 24,
+    "engine_stop_codes": 18,
+    "kyuura_issues": 19
+  },
+  "stop_codes": {
+    "UNRESOLVED_MULLIGAN_COMPENSATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.1",
+          "document": "docs/rules-2000-02-14.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_POTION_WITHOUT_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.2b",
+          "document": "docs/trainers-v0.2b.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_POTION_UNDAMAGED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.2b",
+          "document": "docs/trainers-v0.2b.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_SWITCH_WITHOUT_BENCH": {
+      "engine_rulings": [
+        {
+          "version": "v0.2b",
+          "document": "docs/trainers-v0.2b.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.3a",
+          "document": "docs/pokemon-check-v0.3a.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.3b",
+          "document": "docs/pokemon-check-v0.3b.md",
+          "ruling_id": null
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z29"
+        }
+      ],
+      "kyuura_issue": "UQ-POKEMON-CHECK-SLEEP-COIN-ORDER",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_REPARALYSIS_RECOVERY_TURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.3b",
+          "document": "docs/sleep-paralysis-v0.3b.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": {
+      "engine_rulings": [
+        {
+          "version": "v0.3c",
+          "document": "docs/confusion-attacks-v0.3c.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED": {
+      "engine_rulings": [
+        {
+          "version": "v0.3c",
+          "document": "docs/retreat-confusion-v0.3c.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_EVOLUTION_HP": {
+      "engine_rulings": [
+        {
+          "version": "v0.4a",
+          "document": "docs/evolution-rules-v0.4a.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "out_of_scope"
+    },
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.4b",
+          "document": "docs/persistent-damage-v0.4b.md",
+          "ruling_id": null
+        }
+      ],
+      "kyuura_issue": "UQ-COIN-IN-NULLIFIED-ELEMENT",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH": {
+      "engine_rulings": [
+        {
+          "version": "v0.6",
+          "document": "docs/rain-dance-v0.6.md",
+          "ruling_id": "R13"
+        }
+      ],
+      "kyuura_issue": "UQ-RAIN-DANCE-ATTACH-COUNT",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_EVADED_EFFECT_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.9",
+          "document": "docs/transparency-v0.9.md",
+          "ruling_id": "T19b"
+        },
+        {
+          "version": "v0.11",
+          "document": "docs/giovanni-machamp-line-v0.11.md",
+          "ruling_id": "L5"
+        },
+        {
+          "version": "v0.11",
+          "document": "docs/giovanni-machamp-line-v0.11.md",
+          "ruling_id": "L13"
+        }
+      ],
+      "kyuura_issue": "UQ-COIN-IN-NULLIFIED-ELEMENT",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_RECOVER_ZERO_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.9",
+          "document": "docs/haunter-line-v0.9.md",
+          "ruling_id": "H4"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-CONVERSION-ZERO",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.10",
+          "document": "docs/counterattack-v0.10.md",
+          "ruling_id": "C18"
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z13"
+        }
+      ],
+      "kyuura_issue": "UQ-COUNTERATTACK-DOUBLE-KO",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT": {
+      "engine_rulings": [
+        {
+          "version": "v0.11",
+          "document": "docs/guts-v0.11.md",
+          "ruling_id": "G37"
+        },
+        {
+          "version": "v0.11",
+          "document": "docs/guts-v0.11.md",
+          "ruling_id": "G30"
+        }
+      ],
+      "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.12",
+          "document": "docs/rocket-moltres-v0.12.md",
+          "ruling_id": "W24"
+        },
+        {
+          "version": "v0.13",
+          "document": "docs/shell-attack-v0.13.md",
+          "ruling_id": "S37"
+        }
+      ],
+      "kyuura_issue": "UQ-RETALIATION-DOUBLE-KO",
+      "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z23"
+        }
+      ],
+      "kyuura_issue": "UQ-EFFECT-AFTER-NO-DAMAGE",
+      "kyuura_disposition": "issue",
+      "note": "場合（Z23-a 要素が無効・Z23-b 計算の結果が 0・Z23-c「とうめい」・Z23-d 対象がいない（起こらない））を分けて記録する。docs/unresolved-research-v0.18b.md 3 章"
+    }
+  },
+  "codeless_questions": {
+    "power_damage_weakness_resistance": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z9"
+        }
+      ],
+      "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
+      "reachable_with_current_cards": false
+    },
+    "ko_prevention_self_effect": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z22"
+        }
+      ],
+      "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
+      "reachable_with_current_cards": false
+    }
+  },
+  "unresolved_without_code": [
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.9",
+          "document": "docs/transparency-v0.9.md",
+          "ruling_id": "T27"
+        }
+      ],
+      "kyuura_issue": "UQ-TRANSPARENCY-COIN-ORDER"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.10",
+          "document": "docs/counterattack-v0.10.md",
+          "ruling_id": "C34"
+        },
+        {
+          "version": "v0.10",
+          "document": "docs/counterattack-v0.10.md",
+          "ruling_id": "C35"
+        },
+        {
+          "version": "v0.13",
+          "document": "docs/shell-attack-v0.13.md",
+          "ruling_id": "S7"
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z18"
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR18"
+        }
+      ],
+      "kyuura_issue": "UQ-MULTIPLE-DAMAGE-TRIGGERS-ONE-ATTACK"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.11",
+          "document": "docs/guts-v0.11.md",
+          "ruling_id": "G40"
+        },
+        {
+          "version": "v0.11",
+          "document": "docs/guts-v0.11.md",
+          "ruling_id": "G16"
+        }
+      ],
+      "kyuura_issue": "UQ-KO-PREVENTION-ORDER"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.12",
+          "document": "docs/phoenix-v0.12.md",
+          "ruling_id": "P19"
+        }
+      ],
+      "kyuura_issue": "UQ-PHOENIX-GAS-SOURCE-KO"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.12",
+          "document": "docs/phoenix-v0.12.md",
+          "ruling_id": "P32"
+        }
+      ],
+      "kyuura_issue": "UQ-POST-KO-POWERS-ORDER"
+    }
+  ],
+  "deferred_card_questions": [
+    {
+      "card_id": "PMCG6-023",
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR1"
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR12"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-DECLARATION"
+    },
+    {
+      "card_id": "PMCG6-023",
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR6"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-TIMING"
+    },
+    {
+      "card_id": "PMCG6-023",
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR8"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-ATTACKER-KO"
+    },
+    {
+      "card_id": "PMCG6-023",
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR13"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-NO-ENERGY"
+    }
+  ],
+  "implementation_assumptions_with_issue": [
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.12",
+          "document": "docs/phoenix-v0.12.md",
+          "ruling_id": "P27"
+        },
+        {
+          "version": "v0.12",
+          "document": "docs/phoenix-v0.12.md",
+          "ruling_id": "P28"
+        },
+        {
+          "version": "v0.12",
+          "document": "docs/phoenix-v0.12.md",
+          "ruling_id": "P30"
+        }
+      ],
+      "kyuura_issue": "UQ-PHOENIX-KO-PROCESS-ORDER",
+      "engine_handling": "順番を正規化（サイド → 勝ち負け → ふしちょう → バトル場に出す）。結果が同じことを確かめた実装上の仮定で、裁定ではない（docs/post-knockout-powers-v0.12.md 3 章）"
+    }
+  ],
+  "subcases": {
+    "Z23": [
+      {
+        "id": "Z23-a",
+        "what": "要素が無効（「ダメージを受けない」状態）",
+        "rule": "p.321",
+        "engine": "止める（UNRESOLVED_EFFECT_AFTER_NO_DAMAGE）"
+      },
+      {
+        "id": "Z23-b",
+        "what": "計算の結果が 0（ディフェンダー・抵抗力）",
+        "rule": "p.319",
+        "engine": "止める（UNRESOLVED_EFFECT_AFTER_NO_DAMAGE）"
+      },
+      {
+        "id": "Z23-c",
+        "what": "「とうめい」で受けない",
+        "rule": "p.159・p.160",
+        "engine": "止める（UNRESOLVED_EFFECT_AFTER_NO_DAMAGE）"
+      },
+      {
+        "id": "Z23-d",
+        "what": "対象がいない",
+        "rule": "p.309",
+        "engine": "起こらない（ダメージの要素が並びの最初で、コインで飛ばされない）"
+      }
+    ]
+  },
+  "classification_differences": [
+    {
+      "kyuura_ruling": "CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.13",
+          "ruling_id": "S29",
+          "classification": "到達しない"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-ENERGY-TRANS-RAINBOW",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.5",
+          "ruling_id": "V12",
+          "classification": "該当なし（未対応）"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-EFFECTS-AFTER-KO",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.5",
+          "ruling_id": "I4",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.7",
+          "ruling_id": "K1",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.7",
+          "ruling_id": "K9",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.8",
+          "ruling_id": "M8",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.9",
+          "ruling_id": "H1",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.9",
+          "ruling_id": "H12",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.11",
+          "ruling_id": "L11",
+          "classification": "CONFIRMED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-RAIN-DANCE-BENCH",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.6",
+          "ruling_id": "R6",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-HYDRO-PUMP-DAMAGE",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.6",
+          "ruling_id": "H3",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-DAMAGE-SWAP-ALAKAZAM-ITSELF",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.7",
+          "ruling_id": "S5",
+          "classification": "移動先 CONFIRMED・移動元 SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-DAMAGE-SWAP-ACTIVE-AND-BENCH",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.7",
+          "ruling_id": "S12",
+          "classification": "一部 SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-SELF-DAMAGE-IS-ATTACK-DAMAGE",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.9",
+          "ruling_id": "H7",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-KARATE-CHOP-DAMAGE",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.10",
+          "ruling_id": "M5",
+          "classification": "CONFIRMED"
+        },
+        {
+          "version": "v0.10",
+          "ruling_id": "M6",
+          "classification": "CONFIRMED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-GUTS-BENCH",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.11",
+          "ruling_id": "G8",
+          "classification": "SUPPORTED・未到達"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-PHOENIX-ANY-CAUSE",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.12",
+          "ruling_id": "P6",
+          "classification": "SUPPORTED"
+        },
+        {
+          "version": "v0.12",
+          "ruling_id": "P8",
+          "classification": "SUPPORTED"
+        },
+        {
+          "version": "v0.12",
+          "ruling_id": "P9",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-FIRE-WALL-EXPIRY",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.12",
+          "ruling_id": "W27",
+          "classification": "CONFIRMED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-RESTLESS-SLEEP-ZERO",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.17",
+          "ruling_id": "Z17",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-RESTLESS-SLEEP-NO-CHAIN",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.17",
+          "ruling_id": "Z10",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-RESTLESS-SLEEP-VS-GUTS",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.17",
+          "ruling_id": "Z19",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-ENERGY-DRAIN-ZERO",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.17",
+          "ruling_id": "DR4",
+          "classification": "SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    },
+    {
+      "kyuura_ruling": "CR-ENERGY-DRAIN-STATUS",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.17",
+          "ruling_id": "DR15",
+          "classification": "CONFIRMED・SUPPORTED"
+        }
+      ],
+      "behaviour_changed": false
+    }
+  ]
+}
