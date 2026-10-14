@@ -257,7 +257,8 @@
         }
       ],
       "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
-      "reachable_with_current_cards": false
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": true
     },
     "ko_prevention_self_effect": {
       "engine_rulings": [
@@ -268,7 +269,8 @@
         }
       ],
       "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
-      "reachable_with_current_cards": false
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
     }
   },
   "unresolved_without_code": [
@@ -699,6 +701,214 @@
         }
       ],
       "behaviour_changed": false
+    }
+  ],
+  "latest_descriptions": {
+    "registered": {
+      "PMCG1-001/attack/0": "LD-PMCG1-001-ATK0",
+      "PMCG1-011/power/0": "LD-PMCG1-011-PWR0",
+      "PMCG1-023/attack/1": "LD-PMCG1-023-ATK1",
+      "PMCG1-027/attack/0": "LD-PMCG1-027-ATK0",
+      "PMCG1-032/attack/0": "LD-PMCG1-032-ATK0",
+      "PMCG1-032/power/0": "LD-PMCG1-032-PWR0",
+      "PMCG1-046/attack/0": "LD-PMCG1-046-ATK0",
+      "PMCG1-049/power/0": "LD-PMCG1-049-PWR0",
+      "PMCG1-055/attack/0": "LD-PMCG1-055-ATK0",
+      "PMCG1-057/power/0": "LD-PMCG1-057-PWR0",
+      "PMCG3-007/power/0": "LD-PMCG3-007-PWR0",
+      "PMCG3-029/attack/1": "LD-PMCG3-029-ATK1",
+      "PMCG3-030/power/0": "LD-PMCG3-030-PWR0",
+      "PMCG4-021/attack/0": "LD-PMCG4-021-ATK0",
+      "PMCG4-021/attack/1": "LD-PMCG4-021-ATK1",
+      "PMCG5-020/attack/0": "LD-PMCG5-020-ATK0",
+      "PMCG5-020/power/0": "LD-PMCG5-020-PWR0",
+      "PMCG6-061/power/0": "LD-PMCG6-061-PWR0",
+      "PMCG6-073/attack/0": "LD-PMCG6-073-ATK0",
+      "PMCG6-073/power/0": "LD-PMCG6-073-PWR0"
+    },
+    "registered_without_kyuura_record": [
+      "PMCG1-002/attack/0",
+      "PMCG1-003/attack/0",
+      "PMCG1-003/attack/1",
+      "PMCG1-004/attack/0",
+      "PMCG1-007/attack/0",
+      "PMCG1-007/attack/1",
+      "PMCG1-008/attack/1",
+      "PMCG1-009/attack/0",
+      "PMCG1-009/attack/1",
+      "PMCG1-012/attack/0",
+      "PMCG1-012/attack/1",
+      "PMCG1-015/attack/0",
+      "PMCG1-023/attack/0",
+      "PMCG1-030/attack/1",
+      "PMCG1-035/attack/1",
+      "PMCG1-043/attack/0",
+      "PMCG1-049/attack/0",
+      "PMCG1-055/attack/1",
+      "PMCG1-061/attack/0",
+      "PMCG2-003/attack/1",
+      "PMCG2-007/attack/0",
+      "PMCG2-007/attack/1",
+      "PMCG2-010/attack/0",
+      "PMCG3-007/attack/0",
+      "PMCG3-029/attack/0",
+      "PMCG3-030/attack/0",
+      "PMCG4-004/attack/0",
+      "PMCG4-004/attack/1",
+      "PMCG6-044/attack/0",
+      "PMCG6-057/attack/1",
+      "PMCG6-059/attack/0",
+      "PMCG6-059/attack/1",
+      "PMCG6-061/attack/0",
+      "PMCG6-063/attack/0"
+    ],
+    "kyuura_records_not_registered": [
+      "LD-PMCG1-047-ATK1",
+      "LD-PMCG3-003-ATK1",
+      "LD-PMCG5-027-ATK0",
+      "LD-PMCG5-054-ATK0",
+      "LD-PMCG6-023-PWR0"
+    ],
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）→ kyuura の LD- の id。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。kyuura に記録のない登録（v0.1〜v0.4 のカード・v0.18c のナツメのヤドンなど）は registered_without_kyuura_record に挙げる"
+  },
+  "card_checks": {
+    "engine_verified": {
+      "PMCG1-001": [
+        "CC-PMCG1-001-P43"
+      ],
+      "PMCG1-007": [
+        "CC-PMCG1-007-P55"
+      ],
+      "PMCG1-008": [
+        "CC-PMCG1-008-P43"
+      ],
+      "PMCG1-011": [
+        "CC-PMCG1-011-P43"
+      ],
+      "PMCG1-023": [
+        "CC-PMCG1-023-P43"
+      ],
+      "PMCG1-027": [
+        "CC-PMCG1-027-P43"
+      ],
+      "PMCG1-032": [
+        "CC-PMCG1-032-P43"
+      ],
+      "PMCG1-043": [
+        "CC-PMCG1-043-P43"
+      ],
+      "PMCG1-046": [
+        "CC-PMCG1-046-P43"
+      ],
+      "PMCG1-047": [
+        "CC-PMCG1-047-P160"
+      ],
+      "PMCG1-049": [
+        "CC-PMCG1-049-P43"
+      ],
+      "PMCG1-053": [
+        "CC-PMCG1-053-P189"
+      ],
+      "PMCG1-055": [
+        "CC-PMCG1-055-P43"
+      ],
+      "PMCG1-057": [
+        "CC-PMCG1-057-P43"
+      ],
+      "PMCG3-003": [
+        "CC-PMCG3-003-P47"
+      ],
+      "PMCG3-007": [
+        "CC-PMCG3-007-P48"
+      ],
+      "PMCG3-029": [
+        "CC-PMCG3-029-P158"
+      ],
+      "PMCG3-030": [
+        "CC-PMCG3-030-P160"
+      ],
+      "PMCG4-004": [
+        "CC-PMCG4-004-P45"
+      ],
+      "PMCG4-018": [
+        "CC-PMCG4-018-P43"
+      ],
+      "PMCG4-021": [
+        "CC-PMCG4-021-P43"
+      ],
+      "PMCG5-020": [
+        "CC-PMCG5-020-P82"
+      ],
+      "PMCG6-023": [
+        "CC-PMCG6-023-P49"
+      ],
+      "PMCG6-057": [
+        "CC-PMCG6-057-P189"
+      ],
+      "PMCG6-059": [
+        "CC-PMCG6-059-P191"
+      ],
+      "PMCG6-061": [
+        "CC-PMCG6-061-P193"
+      ],
+      "PMCG6-063": [
+        "CC-PMCG6-063-P229"
+      ],
+      "PMCG6-073": [
+        "CC-PMCG6-073-P245"
+      ]
+    },
+    "not_in_engine": {
+      "PMCG2-041": [
+        "CC-PMCG2-041-P234"
+      ],
+      "PMCG5-048": [
+        "CC-PMCG5-048-P200"
+      ]
+    },
+    "engine_verified_without_kyuura_record": [
+      "PMCG1-002",
+      "PMCG1-003",
+      "PMCG1-004",
+      "PMCG1-009",
+      "PMCG1-012",
+      "PMCG1-014",
+      "PMCG1-015",
+      "PMCG1-016",
+      "PMCG1-018",
+      "PMCG1-025",
+      "PMCG1-029",
+      "PMCG1-030",
+      "PMCG1-035",
+      "PMCG1-037",
+      "PMCG1-052",
+      "PMCG1-058",
+      "PMCG1-060",
+      "PMCG1-061",
+      "PMCG1-065",
+      "PMCG1-071",
+      "PMCG1-073",
+      "PMCG1-074",
+      "PMCG1-079",
+      "PMCG1-081",
+      "PMCG1-097",
+      "PMCG1-098",
+      "PMCG1-099",
+      "PMCG1-100",
+      "PMCG1-101",
+      "PMCG1-102",
+      "PMCG2-003",
+      "PMCG2-007",
+      "PMCG2-010",
+      "PMCG6-044"
+    ],
+    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record"
+  },
+  "card_data_differences": [
+    {
+      "card_id": "PMCG6-023",
+      "field": "jp_en_differences",
+      "note": "kyuura が adf9710 でだつりょくえきの英語版の「if it has any」を記録した（参照カード。エンジンは使わない項目）"
     }
   ]
 }
