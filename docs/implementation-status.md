@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.16）
+# 実装状況（v0.1〜v0.17）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -127,6 +127,9 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | かがくへんかガスを持つポケモンと R団のファイヤーが同じきぜつの判定できぜつするとき、「ふしちょう」を使えるか（v0.12。ガスがきぜつの時点ではたらいているか、手札に加える時点で消えているか） | 対応カードでは起こらない（W24・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` が先に止める。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P19） |
 | 同じきぜつで、きぜつしたときに使える特殊能力（「ふしちょう」）の候補が 2 つ以上あるときの順番（v0.12） | 対応カードでは起こらない（R団のファイヤーが 2 匹同時にきぜつする場合は先に止めている。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P32） |
 | 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
+| 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（コードのない問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard` |
+| 「ダメージを与えた後、…」の効果（たおれこむ）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest` |
+| キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md) |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
