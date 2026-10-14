@@ -109,7 +109,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
 | ポケモンチェックの「どく」で、両方のプレイヤーのポケモンがきぜつする（v0.3a） | ダメージを与える前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）。以後のコマンドは `UnsupportedError`。test_pokemon_check.py `DoubleKnockOutTest` |
 | 特殊などく状態の重ね方（通常のどくのポケモンが特殊などくを受ける、特殊などく同士。v0.3a） | 特殊などくの効果は未実装（起こらない） |
-| ポケモンチェックで、両方の対戦ポケモンがねむり状態のときのコインの順番（v0.3b） | コインを投げる前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）。対応カード（パラス）では起こらない。test_pokemon_check_v0_3b.py `BothAsleepTest` |
+| ポケモンチェックで、両方の対戦ポケモンがねむり状態のときのコインの順番（v0.3b） | コインを投げる前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）。v0.3b の対応カード（パラス）では起こらなかったが、v0.17b から自分をねむりにするワザ（たおれこむ・v0.18c のぐうたらこうげき）で起こる（rocket-snorlax-v0.17b.md の Z29。v0.18 のストレス実行で 2 回。v0.18-verification.md 6.2）。test_pokemon_check_v0_3b.py `BothAsleepTest`・test_rocket_snorlax_v0_17b.py `test_both_actives_asleep_halts_the_pokemon_check` |
 | マヒ状態のポケモンが再びマヒの効果を受けたときに、回復する番が最初の番とあとの番で違う場合（v0.3b） | `UnsupportedError`（`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`。コインの前）。回復する番が同じなら処理する。対応カード（キャタピー）では起こらない。test_sleep_paralysis.py `test_reparalysis_with_a_different_recovery_turn_is_unresolved` |
 | こんらんしたワザの 20 ダメージに、ワザを使うポケモンについているプラスパワー・ディフェンダーを計算するか（v0.3c） | ついていれば、こんらんのコインを投げる前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`）で拒否。自然な対戦 36 局で 2 回起こった。test_confusion_attacks.py `UnresolvedModifierTest` |
 | 「にげる」に失敗したあとベンチに戻り（こんらんが消え）、同じ番にバトル場に戻ったポケモンが「にげる」を宣言できるか（v0.3c） | `Retreat` を `UnsupportedError`（`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`。エネルギー・コインの前）で拒否。次の番には宣言できる。test_confusion_retreat.py `test_failed_pokemon_back_in_the_battle_field_is_unresolved` |
@@ -128,8 +128,8 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 同じきぜつで、きぜつしたときに使える特殊能力（「ふしちょう」）の候補が 2 つ以上あるときの順番（v0.12） | 対応カードでは起こらない（R団のファイヤーが 2 匹同時にきぜつする場合は先に止めている。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P32） |
 | 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
 | 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（コードのない問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard` |
-| 「ダメージを与えた後、…」の効果（たおれこむ）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest` |
-| キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md) |
+| 「ダメージを与えた後、…」の効果（たおれこむ・v0.18c からナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23。v0.18b で場合を Z23-a 要素が無効・Z23-b 計算の結果が 0（ディフェンダー・抵抗力）・Z23-c「とうめい」・Z23-d 対象がいない（起こらない）に分けた） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。理由の文が場合を書く）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest`、test_unresolved_research_v0_18b.py `EffectAfterNoDamageSubcaseTest`・`TargetGoneIsUnreachableTest`、test_sabrinas_slowpoke_v0_18c.py `NoDamageStopTest` |
+| キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -1259,7 +1259,7 @@ v0.17 は、実際のカードを解決の基盤に加えて、拡張性を確�
 - キョウのベトベトン（PMCG6-023）の［だつりょくえき］と、ワザ「ヘドロのうず」。
   - 宣言する特殊能力か・処理する時点が原典で決まらず、今の解決の基盤はダメージの要素のあとの窓の中で決定を出して続けられないので、実装を延期した（DEFER）。
   - カードは分類で拒否する。延期を解く条件は [kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md) 6 章。
-- ナツメのヤドン（ぐうたらこうげき。たおれこむと同じ文面）などは加えていない。
+- ナツメのヤドン（ぐうたらこうげき。たおれこむと同じ文面）などは加えていない（v0.18c で加えた）。
 
 ### 原典未確認・未解決
 
@@ -1271,3 +1271,51 @@ v0.17 は、実際のカードを解決の基盤に加えて、拡張性を確�
 
 - 比べる方法 `legacy`（v0.13 の止める関数の先読み）は、v0.17 から加えた `VERIFIED` にない型にも v0.13 の止める関数を使っていた。そのため、たおれこむを「とうめい」のゴーストに使う歩で、コインが「うら」なら受け付けていた（Z23 を知らない）。
 - v0.17d で、`legacy` が v0.13 の止める関数を使うのを `VERIFIED` の型だけにした。公開の `apply_command`（標準の先読み）は影響を受けていない（[拡張性の検証](card-extensibility-verification-v0.17d.md) 6.4 章）。
+
+
+## v0.18 で変えたこと（研究データとの同期と解決の基盤の次の段階）
+
+v0.18 は、研究（kyuura）とエンジンが同じ出典・裁定を追跡できるようにした版です（版 0.18.0）。
+
+- [研究データとの照合](research-alignment-v0.18a.md)
+- [未解決の裁定の再調査](unresolved-research-v0.18b.md)
+- [解決の基盤の要素の再利用（ナツメのヤドン）](kernel-reuse-v0.18c.md)
+- [窓の途中の決定の設計](mid-window-decisions-v0.18d.md)
+- [検証の再現性](verification-reproducibility-v0.18e.md)
+- [最終の検証](v0.18-verification.md)
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 研究の基準 kyuura `adf9710` と、停止コード 18 件・問い・未解決の裁定・登録した最新の説明・照合の記録と kyuura の id の対応表（`research_links.json`）。エンジンの側の集合と対応表が同じ | kyuura `data/sidecar/`（研究の基準のコミット） | test_research_links_v0_18e.py |
+| 対応表を kyuura の研究の基準のコミットの記録と照らす（論点の分類・未解決の一覧・分類の違い 17 件・最新の説明 20 件の文面・照合の記録・カードデータの違い） | 同上 | `scripts/check_research_links.py`（test_research_links_v0_18e.py `test_matches_the_research_commit`。../kyuura があるとき） |
+| ナツメのヤドン（PMCG6-044。ぐうたらこうげき 30・ダメージを与えた後、自分をねむり）を、たおれこむと同じ実装の型の登録だけで使える。抵抗力で 0（Z23-b）・「ダメージを受けない」状態（Z23-a）・「とうめい」（Z23-c）では宣言の前に止める | p.155 | test_sabrinas_slowpoke_v0_18c.py |
+| Z23 の場合ごとに止まり、理由の文が場合を書く。Z23-d が起こらない形 | p.309・p.319〜p.321・p.159・p.160 | test_unresolved_research_v0_18b.py |
+| 窓の途中の決定の設計の前提（`FrameState` の項目・送る効果が残ると止まれない・決定を出す送る効果がない・キョウのベトベトンは未対応） | — | test_mid_window_decisions_v0_18d.py |
+| 変異試験の定義（50 件）が今のコードにちょうど 1 か所で入り、構文として正しく、証人のテストがある | — | test_mutation_definitions_v0_18e.py |
+| 正式な開始から勝敗まで（ナツメのヤドン 80 局。不変条件・ログの監査・書き出しの監査・乱数はコインだけ・保存と再開。固定値 1 局） | — | test_sabrinas_slowpoke_v0_18c.py `NaturalGamesTest`・`GoldenGameTest` |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| ストレス実行の組 `slowpoke`・`slowpoke_mixed` | ふだんのテストでは走らせない。`python3 tools/stress_engine.py --scenario slowpoke --scenario slowpoke_mixed` |
+| 変異試験の実行（`witness`・`full`） | C 段階。`python3 tools/run_mutants.py witness --jobs 3`・`full --jobs 3`（結果は [検証の再現性](verification-reproducibility-v0.18e.md) 3 章） |
+
+### 未実装
+
+- キョウのベトベトンの［だつりょくえき］（延期。v0.18d の結論も DEFER）。窓の途中の決定の基盤（案 B）も入れていない。
+- kyuura の論点のうち、コインの有無・順番だけが変わる 4 件（rng_only）を実装の約束として決めることは採っていない。
+
+### 原典未確認・未解決
+
+- 新しく確定した公式の裁定はない。Z9・Z23・DR1・DR6 は UNRESOLVED のまま（v0.18b）。未解決の裁定は 24 件、停止コードは 18 件のまま。
+- Z9 の新しい材料（p.314〜p.316「カードの見かた」の弱点・抵抗力の説明）、DR1・DR6 の新しい比較の材料（p.100［にげこむ］・p.104［シェルアーマー］）を、kyuura への報告事項にした。
+
+### 見つけた事項
+
+- エンジンの文書の誤り 3 件（キョウのベトベターの id・ベロリンガの文面の出典・マチスのマルマインの所在）を直した（v0.18a）。
+- カードの写しのコミットを研究の基準に上げると、状態が持つカードデータのコミットが変わり、固定した参照データがすべて変わる（試して確かめた）。写しのコミットと研究の基準を分けた。
+- v0.17c の「宣言する特殊能力なら（c）の時点」は、p.100［にげこむ］と合わない（v0.18b 5 章。v0.17c の文書に注）。
+- 両方の対戦ポケモンがねむり（`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）は、v0.17b から自分をねむりにするワザ（たおれこむ・ぐうたらこうげき）で起こる（v0.18 のストレス実行で 2 回。処理は規定どおり）。README とこの文書の「対応カードでは起こらない」を直した（[最終の検証](v0.18-verification.md) 6.2）。
