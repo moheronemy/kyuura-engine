@@ -16,6 +16,7 @@ v0.13 のワザの実装（24 種類）は、それぞれの ``resolve`` の中�
 
 from __future__ import annotations
 
+import itertools
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -259,7 +260,15 @@ class Element:
         raise NotImplementedError(f"{type(self).__name__} は決定を出さない")
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
-        return [(option,) for option in decision.options]
+        """先読みで試す答え: 決定に合うすべての答え（選ぶ数・選ぶもの・順番。v0.15c）。"""
+        return all_answers(decision)
+
+
+def all_answers(decision: PendingDecision, *, minimum: int = 0) -> list[tuple[int, ...]]:
+    """決定に合うすべての答え（``min_choices``（と ``minimum`` の大きいほう）〜``max_choices`` 個の、重ならない選択の並び。
+    ``decisions.check_choices`` が受け付けるもの）。代表を選ばない（v0.15c。docs/preflight-optimization-v0.15c.md 3 章）。"""
+    low = max(decision.min_choices, minimum)
+    return [answer for count in range(low, decision.max_choices + 1) for answer in itertools.permutations(decision.options, count)]
 
 
 @dataclass(frozen=True)
@@ -559,8 +568,10 @@ class RecoverEnergy(Element):
                             cards=tuple(choices))
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
-        # 先読み: このあとの要素（自分へのダメージ）は、選んだカードによらない。枚数ごとの代表（最初のカードから）を試す
-        return [tuple(decision.options[:count]) for count in range(1, decision.max_choices + 1)]
+        # 先読み（v0.15c）: 1 枚以上のすべての答え（選ぶカードと順番）を試す。v0.14 は枚数ごとの代表（最初のカードから）だけだった。
+        # 0 枚は試さない: 0 枚の答えは決定の答えのときに止める（H4。UNRESOLVED_RECOVER_ZERO_ENERGY。決定は待ったまま）もので、ワザの
+        # 宣言を止める理由ではない（1 枚以上を選べば処理できる）。ここで 0 枚を試すと、宣言そのものを H4 で拒否してしまう
+        return all_answers(decision, minimum=1)
 
 
 # ---------------------------------------------------------------- v0.13 の実装 → 要素の並び（24 種類）

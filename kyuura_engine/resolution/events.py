@@ -205,8 +205,9 @@ class Delegated:
 @dataclass(frozen=True)
 class PreflightResult:
     mode: str
-    branches: int
+    branches: int  # 試した結果の数（v0.15c の derived では、先に行った実際の処理の 1 つを含む）
     questions: tuple[str, ...]
+    strategy: str = "full"  # v0.15c: single・siblings・siblings+full・full・limit（docs/preflight-optimization-v0.15c.md 2 章）
 
 
 class Trace:

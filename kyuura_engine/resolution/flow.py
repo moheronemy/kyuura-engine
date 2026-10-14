@@ -25,7 +25,7 @@ from ..checks import PLAYERS, attack_request, decision_choices, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..effects import AttackKey, AttackUse, PowerKey
-from ..errors import EngineError
+from ..errors import EngineError, UnsupportedError
 from ..state import GameState
 
 from . import catalog as C
@@ -36,7 +36,7 @@ from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_sim
 from .programs import BUILDERS, AttackRun, compile_attack, decision_index, run_elements
 from .questions import OpenQuestion, to_error
 
-PREFLIGHT_MODES = ("derived", "legacy")
+PREFLIGHT_MODES = P.PREFLIGHT_MODES
 NEXT_TURN = PR.NEXT_TURN
 
 
@@ -44,11 +44,14 @@ NEXT_TURN = PR.NEXT_TURN
 class Context:
     """1 つのコマンドの解決の設定。
 
+    - ``original``: コマンドの入口に渡された状態（変えない。v0.15c の先読み ``derived`` は、実際の処理のあと、これの複製の上で、まだ
+      試していない結果を試す。上限を超えたときの v0.13 の止める関数もこれで確かめる）
     - ``preflight``: 先読みの方法（``PREFLIGHT_MODES``。経路（``engine.Route``）とは別のもの）
     - ``catalog``: 効果の定義の対応表（試験で差しかえる。既定は ``DEFAULT_CATALOG``）
     - ``trace``: 解決の記録（状態に保存しない）
     """
 
+    original: GameState
     preflight: str = "derived"
     catalog: C.Catalog = C.DEFAULT_CATALOG
     trace: Trace = field(default_factory=Trace)
@@ -109,14 +112,32 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     attacker, attack, effect, key = request.attacker, request.attack, request.effect, request.key
     program = compile_attack(effect)
     pid = attacker.pokemon_id
+    use = AttackUse(cmd.player, pid, key)
 
     def body(res: Resolution) -> None:
         _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program)
 
+    def on_limit() -> None:
+        """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
+        （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。"""
+        if type(effect) not in P.LEGACY_VERIFIED:
+            raise UnsupportedError(
+                "UNSUPPORTED_PREFLIGHT_LIMIT",
+                f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
+                "ないことを確かめられないので扱わない",
+            )
+        P.legacy(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
+
+    if ctx.preflight == "derived":
+        P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
+        return
     if ctx.preflight == "legacy":
-        P.legacy(state, AttackUse(cmd.player, pid, key), effect, attacker, ctx.trace)
+        P.legacy(state, use, effect, attacker, ctx.trace)
     else:
-        P.derived(state, body, ctx.catalog, ctx.trace)
+        try:
+            P.derived(state, body, ctx.catalog, ctx.trace)
+        except P.BranchLimit:
+            on_limit()
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
@@ -148,6 +169,7 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     offers = ko_prevention_offers(res)
     if res.dry_run:
         raise DryRunComplete()
+    res.horizon()
     if offers:
         owner, pokemon, instance = offers[0]
         cont = codec.KoCheckContinuation(use, (instance.power_key.card_id, instance.power_key.power_index))

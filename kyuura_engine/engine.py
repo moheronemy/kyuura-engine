@@ -282,20 +282,20 @@ def apply_command_via(state: GameState, command, *, route: Route = DEFAULT_ROUTE
                       catalog: resolution.Catalog | None = None) -> GameState:
     """内部の入口（v0.15b）: 経路（``route``）を指定してコマンドを処理する。比較・試験用。公開の ``apply_command`` と同じ約束
     （渡した状態を変えない・不変条件で確かめる）。``preflight``・``catalog`` は経路 ``KERNEL`` の設定（``LEGACY`` では使わない）。"""
-    return _apply(state, command, Route(route), _kernel_options(preflight, catalog))
+    return _apply(state, command, Route(route), _kernel_options(state, preflight, catalog))
 
 
 def apply_command_traced(state: GameState, command, *, preflight: str = "derived",
                          catalog: resolution.Catalog | None = None) -> tuple[GameState, resolution.Trace]:
     """内部の入口（v0.15b）: 経路 ``KERNEL`` で処理し、(新しい状態, 解決の記録) を返す。解決の記録（内部のトレース）は状態に保存しない
     （公開のログとは別のもの）。受け持たないコマンドなら、解決の記録は空。"""
-    options = _kernel_options(preflight, catalog)
+    options = _kernel_options(state, preflight, catalog)
     return _apply(state, command, Route.KERNEL, options), options.trace
 
 
-def _kernel_options(preflight: str, catalog: resolution.Catalog | None) -> resolution.Context:
-    """経路 ``KERNEL`` の設定（コマンドごとに作る。解決の記録はこの中に入る）。"""
-    return resolution.Context(preflight=preflight, catalog=resolution.DEFAULT_CATALOG if catalog is None else catalog)
+def _kernel_options(state: GameState, preflight: str, catalog: resolution.Catalog | None) -> resolution.Context:
+    """経路 ``KERNEL`` の設定（コマンドごとに作る。解決の記録はこの中に入る。``state`` はコマンドの入口に渡された状態で、変えない）。"""
+    return resolution.Context(original=state, preflight=preflight, catalog=resolution.DEFAULT_CATALOG if catalog is None else catalog)
 
 
 def _apply(state: GameState, command, route: Route, options: resolution.Context | None) -> GameState:
@@ -315,7 +315,7 @@ def _apply(state: GameState, command, route: Route, options: resolution.Context 
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
     if route is Route.KERNEL and resolution.handles(state, command):
-        resolution.handle(new, command, options if options is not None else _kernel_options("derived", None))
+        resolution.handle(new, command, options if options is not None else _kernel_options(state, "derived", None))
     else:
         handler(new, command)
     _require_integrity(new)

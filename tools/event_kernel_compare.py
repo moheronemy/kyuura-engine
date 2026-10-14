@@ -4,7 +4,8 @@
 
 比べるもの（1 歩ごと）: 拒否するか・拒否の例外の種類とコード、受け付けたら状態（書き出しの形式 9。ログ・乱数の指紋・決定・
 特殊状態・持続する効果を含む）。どちらの場合も渡した状態が変わらないこと。プロトタイプの先読みは ``--mode`` で選ぶ
-（``derived``: 仕組みの共通の検出、``legacy``: v0.13 の止める関数、``both``: 両方を走らせて 3 つを比べる）。
+（``derived``: 仕組みの共通の検出（v0.15c から、実際の処理を先に行い、試していない結果だけを試す）、``legacy``: v0.13 の止める関数、
+``derived_full``: v0.14 の方法（すべての結果を先に試す。v0.15c）、``both``: ``derived`` と ``legacy``、``all``: 3 つすべて）。
 
 対戦の作り方は 2 つ:
 
@@ -50,7 +51,8 @@ NATURAL_MODULES = (
     "test_pikachu_games", "test_pluspower_games", "test_sleep_paralysis_games", "test_stage2_games_v0_4c",
     "test_status_games_v0_3d", "test_trainer_games", "test_weedle_games",
 )
-MODES = ("derived", "legacy")
+MODES = ("derived", "legacy", "derived_full")
+GROUPS = {"both": ("derived", "legacy"), "all": MODES}
 
 
 class Divergence(BaseException):
@@ -117,6 +119,11 @@ class Comparator:
             self.counts["owned"] += 1
             if expected_error is not None:
                 self.counts[f"rejected:{expected_error.code}"] += 1
+        for mode, _, mode_trace, _ in results:  # v0.15c: 先読みの試す範囲（docs/preflight-optimization-v0.15c.md）
+            for event in () if mode_trace is None else mode_trace.of(EV.PreflightResult):
+                self.counts[f"preflight:{mode}:{event.mode}:{event.strategy}"] += 1
+                self.counts[f"preflight_branches:{mode}"] += event.branches
+                self.counts[f"preflight_max_branches:{mode}"] = max(self.counts[f"preflight_max_branches:{mode}"], event.branches)
         trace = results[0][2]
         if trace is not None:
             for event in trace.events:
@@ -183,12 +190,12 @@ def main(argv=None) -> int:
     parser.add_argument("--natural-seeds", type=int, default=20)
     parser.add_argument("--scenarios", default="", help="組の名前（, 区切り。既定はすべて）")
     parser.add_argument("--modules", default="", help="対戦のテストのモジュール（, 区切り。既定はすべて）")
-    parser.add_argument("--mode", choices=(*MODES, "both"), default="both")
+    parser.add_argument("--mode", choices=(*MODES, *GROUPS), default="both")
     parser.add_argument("--mixed", action="store_true")
     parser.add_argument("--timing", action="store_true")
     args = parser.parse_args(argv)
 
-    modes = MODES if args.mode == "both" else (args.mode,)
+    modes = GROUPS.get(args.mode, (args.mode,))
     counts: Counter = Counter()
     comparator = Comparator(modes, mixed=args.mixed, timing=args.timing, counts=counts)
     divergences = 0

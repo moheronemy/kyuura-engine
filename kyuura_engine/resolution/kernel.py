@@ -83,11 +83,13 @@ class Resolution:
       枠とも共有する）
     - ``knocked_by``: ダメージが HP 以上になった枠（場のポケモンの番号 → 枠の id）
     - ``dry_run``: 先読み（``preflight``）の中か。決定を出さず、``oracle`` が選ぶ
+    - ``on_horizon``: 実際の処理が先読みの範囲（宣言からきぜつの判定まで）の終わりに来たら呼ぶ（v0.15c の ``preflight.after_real_run``）
     """
 
     def __init__(self, state: GameState, *, catalog: C.Catalog = C.DEFAULT_CATALOG, trace: Trace | None = None,
-                 dry_run: bool = False, oracle: Any = None):
+                 dry_run: bool = False, oracle: Any = None, on_horizon: Callable[[], None] | None = None):
         self.state = state
+        self.on_horizon = on_horizon
         self.catalog = catalog
         self.trace = trace if trace is not None else Trace()
         self.dry_run = dry_run
@@ -121,6 +123,11 @@ class Resolution:
             out.append(frame)
             current = frame.parent
         return out
+
+    def horizon(self) -> None:
+        """先読みの範囲の終わり（きぜつの判定の窓の候補を求めたあと。先読みはここで ``DryRunComplete``）。実際の処理だけが呼ぶ。"""
+        if self.on_horizon is not None:
+            self.on_horizon()
 
     def question(self, key: str, detail: str = "", error=None) -> OpenQuestion:
         self.trace.record(QuestionHit(key, detail))
