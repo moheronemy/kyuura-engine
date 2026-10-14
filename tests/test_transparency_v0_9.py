@@ -695,8 +695,10 @@ class AtomicityTest(unittest.TestCase):
     def assert_unchanged(self, state, command, error_type, *patches, apply=apply_command):
         before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with contextlib_exit(patches):
-            with self.assertRaises(error_type):
+            with self.assertRaises(error_type) as ctx:
                 apply(state, command)
+        if patches:  # 注入した誤りそのものが出たこと（差しかえた所を処理が通った。v0.16d: ほかの誤りで通らないように確かめる）
+            self.assertIn("注入した誤り", str(ctx.exception))
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 

@@ -350,8 +350,9 @@ class KernelAtomicityTest(unittest.TestCase):
         for mode in resolution.PREFLIGHT_MODES:
             with self.subTest(mode=mode):
                 before, fingerprint, log = full(state), rng_fingerprint(state.rng), state.log
-                with patch, self.assertRaises(RuntimeError):
+                with patch, self.assertRaises(RuntimeError) as ctx:
                     apply_kernel(state, command, preflight=mode)
+                self.assertIn("注入した誤り", str(ctx.exception))  # 差しかえた所を処理が通った（v0.16d）
                 self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
                 self.assertIs(state.log, log)
 
