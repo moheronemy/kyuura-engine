@@ -228,3 +228,12 @@
 - 書き出しは形式 9 のままです（`persistent_effects` の種類 `retaliation_received_damage` は `attack_index` だけ。量は書かない）。監査の `LATEST_FORMAT` も 9。エンジンが止める `UNRESOLVED_…` は 17 件、未解決の裁定は 22 件のまま（v0.13 で加えていない）。
 - ログは新しいイベントを加えず、`retaliation` に `basis`・`received_damage` を加えました（こうらがえしのときだけ）。ログの監査（tests/log_audit.py）は v0.13 から、受けたダメージがきっかけのダメージのログの最終ダメージと同じこと・基本となるダメージ・効果の種類が登録と合うこと・状態の効果の種類がログで与えた種類と同じことを確かめます。量の決め方の違う返す効果（クロスカウンターなど）を加えたら、`basis`・監査・`retaliation_terms` を合わせて加えてください。
 - ストレス実行（tools/stress_engine.py）は、わるいカメールの組（`wartortle`・`wartortle_mixed`）を最後に加えました。わるいカメールはポケモンパワーを持たないので `POWER_USERS` は変えていません（ほかの組の操作は v0.12 と同じ。24 組の数が v0.12 の結果と同じことを確かめた）。`_observe_moltres` は「ほのおのかべ」のログだけを、`_observe_shell` は「こうらがえし」のログを確かめます。比較の駆動（tools/compat_driver.py）は変えていません。
+
+## 汎用のイベント・効果の解決の試作（v0.14）
+
+- `experiments/event_kernel/` は本番ではありません（設計の試作。docs/event-model-v0.14.md）。本番（`kyuura_engine/`）の規則（「汎用のイベントの仕組み（購読・発行）にしない」など）は v0.14 では変えていません。本番のコードから `experiments` を読み込まないでください。
+- プロトタイプは v0.13 の状態の型・書き出しの形式 9・ログ・決定の形をそのまま使い、ワザ・番の終わりと、再開先 `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定だけを処理します（ほかのコマンドは `kyuura_engine.apply_command` に渡す。`flow.owned`）。本番の非公開の関数を 14 直接呼んでいる（docs/event-prototype-verification-v0.14.md 1 章）ので、それらの意味を変えたら比較のテストで確かめてください。
+- tests/test_event_kernel_v0_14.py・tests/test_event_kernel_games_v0_14.py は、同じ入力で本番とプロトタイプの結果（形式 9 の全体・乱数の指紋・拒否の例外とコード）が同じことを確かめます。本番のワザ・ダメージ・きぜつ・番の終わりの動きを変えたら（カードを加えたときも）失敗することがあります。そのときは、プロトタイプの対応表（`programs.BUILDERS`・`catalog` の定義と対応表）を合わせるか、比べない範囲を docs に書いてください。比較のテストの期待を本番に合わせて弱めないでください。
+- 窓の順番・枠の表（`events.SPAWNS`）・問いの表（`questions.QUESTIONS`）は、原典の処理の順番と裁定を表します。表にない連鎖・問いは `RuntimeError` で止めます。回数の上限・購読の順番・優先度の数値で処理の順番を決める形にしないでください（問いの `priority` は v0.13 の確認の順番を写したもので、2 つ以上の問いに当たったときにどのコードで止めるかだけを決める）。
+- 先読みの `derived` は、状態の複製の上で、コインと決定の選び方のすべての結果を試し、乱数を使いません（複製の乱数を `Oracle` に差しかえ、コイン以外の乱数を使ったら止める）。比べるための `legacy` は v0.13 の止める関数をそのまま呼びます。
+- C 段階の比較は `python3 tools/event_kernel_compare.py`（ふだんのテストで走らせない）。変異試験と保守性の測定（E4）の方法・結果は docs/event-prototype-verification-v0.14.md、移行の判断（PARTIAL）・段階・中止の条件は docs/event-migration-plan-v0.14.md。
