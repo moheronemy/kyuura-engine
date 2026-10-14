@@ -261,8 +261,9 @@ class Route(str, Enum):
     KERNEL = "kernel"
 
 
-# 公開の ``apply_command`` が使う経路（変えない値。経路を選ぶには ``apply_command_via`` を使う。グローバルなフラグで切りかえない）
-DEFAULT_ROUTE = Route.LEGACY
+# 公開の ``apply_command`` が使う経路（変えない値。経路を選ぶには ``apply_command_via`` を使う。グローバルなフラグで切りかえない）。
+# v0.15d で、全体の検証（docs/event-integration-verification-v0.15d.md）のあと LEGACY から KERNEL に切り替えた
+DEFAULT_ROUTE = Route.KERNEL
 
 
 def apply_command(state: GameState, command) -> GameState:

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.14）
+# 実装状況（v0.1〜v0.15）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -1177,3 +1177,23 @@ v0.14 は、本番のエンジン（`kyuura_engine/`。版 0.13.0）を変えず
 
 - ベンチへのダメージ・複数のポケモンへのダメージ・窓の中の決定、トレーナー・宣言して使う特殊能力などほかのコマンド（v0.13 のエンジンに渡す）。
 - 本番への組み込み（v0.15 以降。移行計画の結論は PARTIAL）。
+
+## v0.15 で変えたこと（解決の基盤の本番への統合）
+
+v0.15 は、v0.14 のプロトタイプを本番の内部の部品（`kyuura_engine/resolution/`）にし、ワザ・番の終わり・きぜつのあとの決定の解決を、標準でこの基盤（経路 `KERNEL`）で処理するようにした版です（版 0.15.0）。対応するカード・ルール・裁定・未解決の事項（エンジンが止める `UNRESOLVED_…` 17 件・未解決の裁定 22 件）・書き出しの形式 9 は v0.13 と同じです（[依存の整理](integration-dependencies-v0.15a.md)、[統合](kernel-integration-v0.15b.md)、[先読み](preflight-optimization-v0.15c.md)、[検証と切り替え](event-integration-verification-v0.15d.md)）。
+
+| 項目 | 状況 | 文書・テスト |
+|---|---|---|
+| 公開の `apply_command(state, command)` | 呼び方・約束は同じ。標準の経路は `KERNEL`（v0.15d から）。経路を選ぶ内部の入口は `engine.apply_command_via` | tests/test_kernel_integration_v0_15.py |
+| 経路 `KERNEL` が受け持つコマンド | ワザ（実装の型が要素の並びの対応表にあるもの）・番の終わり・再開先が `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定への答え。ほかは v0.13 の処理 | [統合](kernel-integration-v0.15b.md) 3 章 |
+| v0.13 の経路（`LEGACY`） | 残している（比べる基準。v0.16 で外す候補） | [統合](kernel-integration-v0.15b.md) 4 章 |
+| 原典で決められない場合 | 止める条件・コード・理由の文は v0.13 と同じ（理由の文を `effects` の共通の関数にした） | [統合](kernel-integration-v0.15b.md) 5 章 |
+| 宣言の前の先読み | 実際の処理を先に行い、試していない結果だけを試す（`derived`）。決定のすべての答えを試す。上限 4,096 | [先読み](preflight-optimization-v0.15c.md) |
+| 固定した v0.13 との比較 | 2,560 対戦・350,533 歩を別のプロセスで比べ、経路 `LEGACY`・`KERNEL`（3 つの先読み）のどれも食い違い 0（受け付けたか・例外の種類とコードと理由の文・形式 9 の全体・保存と復元） | [検証と切り替え](event-integration-verification-v0.15d.md) 3 章 |
+| 解決の基盤の独立した不変条件・変異試験 | 12 の不変条件を対戦の 1 歩ごとに確かめた。20 の変異をすべて見つけた | tests/test_kernel_invariants_v0_15.py、[検証と切り替え](event-integration-verification-v0.15d.md) 4・5 章 |
+| 性能 | 固定した v0.13 の 1.32 倍（解決の基盤が受け持つコマンド全体）・1.48 倍（受け付けたワザ）。同じ機械・同じ Python・3 回の中央値 | [先読み](preflight-optimization-v0.15c.md) 5 章、[検証と切り替え](event-integration-verification-v0.15d.md) 7 章 |
+
+### 見つけた事項
+
+- v0.13 の `WRONG_PHASE` の理由の文（決定への答えの段階の違い）は、`frozenset` の並びで書くので、プロセスごと（文字列のハッシュの乱数化）に段階の並びが変わる。状態・ログ・乱数には影響しない。エンジンは変えていない（v0.16 への提案。[統合](kernel-integration-v0.15b.md) 7 章）。
+- v0.14 の先読みは、エナジーへんかんの答えを枚数ごとの代表だけで試していた。v0.15c で、すべての答えを試すようにした（今の対応カードでは結果は同じ）。
