@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-from kyuura_engine.procedures import confusion_damage_problem
-from kyuura_engine.effects import (
+from ..procedures import confusion_damage_problem
+from ..effects import (
     AttackUse,
     counterattack_double_knockout_problem,
     ko_prevention_attack_effect_problem,
@@ -26,8 +26,8 @@ from .kernel import DryRunComplete, Resolution
 from .questions import OpenQuestion, pick, to_error
 
 if TYPE_CHECKING:
-    from kyuura_engine.errors import UnsupportedError
-    from kyuura_engine.state import GameState
+    from ..errors import UnsupportedError
+    from ..state import GameState
 
     from .catalog import Catalog
 

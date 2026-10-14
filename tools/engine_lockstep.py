@@ -5,7 +5,7 @@
 ``record``: ``--root`` の木の ``kyuura_engine`` だけを読み込み（``python3 -I`` で、この道具がある木の ``kyuura_engine`` を読まない）、
 その木の対戦のテストの方針（``tests/test_*_games*.py`` の ``play_game``）か、ストレス実行の組（``tools/stress_engine.py`` の
 ``choose_command``）で対戦を進め、1 歩ごとに「コマンド・受け付けたか（拒否なら例外の種類とコード）・書き出しの形式 9 の全体の
-指紋」を記録する（gzip の JSON Lines）。形式 9 にはログ・乱数の指紋・決定・止めた理由が入っている。``--save-every`` を付けると、
+指紋」を記録する（gzip の JSON Lines。拒否の理由の文の指紋も記録する）。形式 9 にはログ・乱数の指紋・決定・止めた理由が入っている。``--save-every`` を付けると、
 その歩ごとに状態を pickle で保存・復元してから続ける（両方の木で同じことをする）。
 
 ``record`` が使う API は v0.13 の公開の API（``new_game``・``apply_command``・``state_to_dict``・``command_to_dict``・``EngineError``）
@@ -13,6 +13,11 @@
 ``apply_command`` = 標準の経路）。
 
 ``compare``: 2 つの記録を対戦ごと・歩ごとに比べ、最初の食い違いを報告する。
+
+``record`` は、文字列のハッシュの乱数化を止めた（``PYTHONHASHSEED=0``）プロセスで動く（乱数化されていれば、``PYTHONHASHSEED=0``・
+``-P -s`` で自分を起動し直す。``-P`` は ``-I`` と同じく、この道具がある木の ``kyuura_engine`` を読まないため）。v0.13 の拒否の理由の文には、
+``frozenset`` の並び（文字列のハッシュで決まる）で書くものがある（決定への答えの ``WRONG_PHASE``。``decisions.DECISION_PHASES``）ので、
+プロセスごとに並びが変わると、同じ拒否でも理由の文の指紋が違ってしまう（docs/kernel-integration-v0.15b.md 7 章）。
 
 例::
 
@@ -28,6 +33,7 @@ import gzip
 import hashlib
 import importlib
 import json
+import os
 import pickle
 import random
 import sys
@@ -88,7 +94,8 @@ class Recorder:
         except self.engine.EngineError as caught:
             new, error = None, caught
         elapsed = time.perf_counter() - t0
-        outcome = "ok" if error is None else [type(error).__name__, error.code]
+        # 拒否は例外の種類・コード・理由の文（の指紋。v0.15b から）
+        outcome = "ok" if error is None else [type(error).__name__, error.code, hashlib.sha1(error.message.encode()).hexdigest()[:12]]
         if self.timing and kind != "other":
             label = f"{kind}:{'ok' if error is None else 'rejected'}"
             self.times[label] += elapsed
@@ -183,7 +190,8 @@ def record(args) -> int:
                         except engine.EngineError:
                             continue
         summary = {"summary": dict(rec.counts), "errors": errors, "elapsed": round(time.perf_counter() - started, 1),
-                   "root": str(root), "route": args.route, "preflight": args.preflight, "version": getattr(engine, "__version__", "?")}
+                   "root": str(root), "route": args.route, "preflight": args.preflight, "version": getattr(engine, "__version__", "?"),
+                   "hash_randomization": sys.flags.hash_randomization}
         if args.timing:
             summary["times_ms"] = {k: round(v / rec.counts[f"time_n:{k}"] * 1000, 4) for k, v in rec.times.items()}
             summary["times_total_s"] = {k: round(v, 4) for k, v in rec.times.items()}
@@ -236,6 +244,13 @@ def compare(args) -> int:
     return 1 if divergences else 0
 
 
+def _rerun_without_hash_randomization(argv) -> None:
+    """文字列のハッシュの乱数化を止めて起動し直す（PYTHONPATH などの環境の値は渡さない）。"""
+    env = {key: value for key, value in os.environ.items() if not key.startswith("PYTHON")}
+    env["PYTHONHASHSEED"] = "0"
+    os.execve(sys.executable, [sys.executable, "-P", "-s", os.path.abspath(__file__), *argv], env)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="action", required=True)
@@ -258,6 +273,8 @@ def main(argv=None) -> int:
     c.add_argument("a")
     c.add_argument("b")
     args = parser.parse_args(argv)
+    if args.action == "record" and sys.flags.hash_randomization:
+        _rerun_without_hash_randomization(sys.argv[1:] if argv is None else argv)
     return record(args) if args.action == "record" else compare(args)
 
 

@@ -231,9 +231,20 @@
 
 ## 汎用のイベント・効果の解決の試作（v0.14）
 
+- （v0.15b で、プロトタイプは本番の内部の部品 `kyuura_engine/resolution/` になった。下の「解決の基盤の本番への統合（v0.15）」。この節は v0.14 の時点の約束で、v0.15 の節が優先する。）
 - `experiments/event_kernel/` は本番ではありません（設計の試作。docs/event-model-v0.14.md）。本番（`kyuura_engine/`）の規則（「汎用のイベントの仕組み（購読・発行）にしない」など）は v0.14 では変えていません。本番のコードから `experiments` を読み込まないでください。
 - プロトタイプは v0.13 の状態の型・書き出しの形式 9・ログ・決定の形をそのまま使い、ワザ・番の終わりと、再開先 `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定だけを処理します（ほかのコマンドは `kyuura_engine.apply_command` に渡す。`flow.owned`）。本番の非公開の関数を 14 直接呼んでいる（docs/event-prototype-verification-v0.14.md 1 章）ので、それらの意味を変えたら比較のテストで確かめてください。
 - tests/test_event_kernel_v0_14.py・tests/test_event_kernel_games_v0_14.py は、同じ入力で本番とプロトタイプの結果（形式 9 の全体・乱数の指紋・拒否の例外とコード）が同じことを確かめます。本番のワザ・ダメージ・きぜつ・番の終わりの動きを変えたら（カードを加えたときも）失敗することがあります。そのときは、プロトタイプの対応表（`programs.BUILDERS`・`catalog` の定義と対応表）を合わせるか、比べない範囲を docs に書いてください。比較のテストの期待を本番に合わせて弱めないでください。
 - 窓の順番・枠の表（`events.SPAWNS`）・問いの表（`questions.QUESTIONS`）は、原典の処理の順番と裁定を表します。表にない連鎖・問いは `RuntimeError` で止めます。回数の上限・購読の順番・優先度の数値で処理の順番を決める形にしないでください（問いの `priority` は v0.13 の確認の順番を写したもので、2 つ以上の問いに当たったときにどのコードで止めるかだけを決める）。
 - 先読みの `derived` は、状態の複製の上で、コインと決定の選び方のすべての結果を試し、乱数を使いません（複製の乱数を `Oracle` に差しかえ、コイン以外の乱数を使ったら止める）。比べるための `legacy` は v0.13 の止める関数をそのまま呼びます。
 - C 段階の比較は `python3 tools/event_kernel_compare.py`（ふだんのテストで走らせない）。変異試験と保守性の測定（E4）の方法・結果は docs/event-prototype-verification-v0.14.md、移行の判断（PARTIAL）・段階・中止の条件は docs/event-migration-plan-v0.14.md。
+
+## 解決の基盤の本番への統合（v0.15）
+
+- 確認（`checks.py`）と状態を変える共通の手続き（`procedures.py`）は、v0.13 の経路と解決の基盤の両方が使います（v0.15a。docs/integration-dependencies-v0.15a.md）。どちらも `engine.py` を読み込まないでください。共通の部品を変えると両方の経路が同じように変わるので、同じ木の中の比較では見つかりません。固定した前の版の木と別のプロセスで比べてください（`tools/engine_lockstep.py`。C 段階。ふだんのテストで走らせない）。
+- 解決の基盤は `kyuura_engine/resolution/` です（v0.15b。docs/kernel-integration-v0.15b.md）。`engine.py` を読み込まないでください（依存の向きは engine → resolution → checks・procedures。tests/test_kernel_integration_v0_15.py の `DependencyTest` が確かめる）。`experiments/event_kernel/__init__.py` は v0.14 のテスト・道具の名前をつなぐだけの互換の層で、コードを加えないでください。本番のコードから `experiments` を読み込まないでください。
+- 経路は `engine.Route`（`LEGACY` = v0.13 の経路、`KERNEL` = 解決の基盤）です。公開の `apply_command(state, command)` の呼び方を変えないでください。公開の `apply_command` は標準の経路 `engine.DEFAULT_ROUTE`（モジュールの定数。v0.15b は `LEGACY`）を使います。比較・試験で経路を選ぶときは内部の入口 `engine.apply_command_via(..., route=...)`（tests/helpers.py の `apply_legacy`・`apply_kernel`）を使い、グローバルな可変フラグ・処理の途中で書きかえる値で切り替えないでください。経路と先読みの方法（`derived`・`legacy`）は別のものです。
+- 経路 `KERNEL` が受け持つのは、ワザ・番の終わりと、再開先が `attack`・`knock_out`・`post_knockout`・`take_prize`・`promote_active` の決定への答えだけです（`resolution.handles`）。ワザは、実装の型が要素の並びの対応表（`programs.BUILDERS`。型が完全に一致するもの）にあるときだけ受け持ち、ないもの（テストの中で定義した実装など）は v0.13 の処理にまかせます。製品の登録表にワザの実装を加えたら、`BUILDERS` に要素の並びを加えてください（tests/test_kernel_integration_v0_15.py が製品の登録表のすべてを確かめる）。`ResolveDecision` をすべて解決の基盤に送らないでください。
+- v0.13 の経路は、v0.16 で外すまで比べる基準です。v0.13 の経路の処理（`_use_attack` など）から `resolution` を使わないでください（使うのは経路を選ぶ入口だけ）。
+- 原典で決められない場合に止める理由の文は、`effects` の共通の関数（`prevented_coin_damage_error`・`evaded_effect_coin_error`・`counterattack_double_knockout_error`・`retaliation_double_knockout_error`・`ko_prevention_attack_effect_error`）で作り、両方の経路が使います。解決の基盤は文に書く値を枠の値（`FrameState` の `origin`・`applied`・`evaded`）から読み、解決の記録（`Trace`）からは読みません。止める理由の文を加えるときも、両方の経路で同じ関数を使ってください（比較のテストと道具は理由の文も比べる）。
+- v0.13 の経路の内部の関数を差しかえて確かめるテストは、経路 `LEGACY` を指定します（標準の経路が `KERNEL` だと、差しかえた関数を通らない）。解決の基盤の経路の同じ確かめは、解決の基盤の内部（`codec.push_decision`・`programs.APPLY_CONDITION`・`kernel.ACTIONS` など）を差しかえて別に書きます（tests/test_kernel_integration_v0_15.py の `KernelAtomicityTest`・`KernelGuardTest`）。

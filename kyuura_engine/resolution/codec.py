@@ -14,11 +14,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from kyuura_engine.decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
-from kyuura_engine.state import PendingDecision
+from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE, phase_for, push_decision
+from ..state import PendingDecision
 
 if TYPE_CHECKING:
-    from kyuura_engine.state import GameState
+    from ..state import GameState
 
 ATTACK = "attack"
 KNOCK_OUT = "knock_out"

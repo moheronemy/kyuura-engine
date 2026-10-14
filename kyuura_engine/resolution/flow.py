@@ -1,41 +1,39 @@
-"""コマンドの処理（プロトタイプの入口）。docs/event-model-v0.14.md 3 章・5 章。
+"""コマンドの処理（解決の基盤の入口。v0.15b）。docs/kernel-integration-v0.15b.md・docs/event-model-v0.14.md 3 章・5 章。
 
-プロトタイプが受け持つのは、効果の解決の流れが通るコマンドだけです。
+解決の基盤が受け持つのは、効果の解決の流れが通るコマンドだけです（``handles``）。
 
-- ``UseAttack``: 宣言の前の確認 → 先読み → 宣言 → こんらん → ワザの要素（``programs``）→ きぜつの判定 → きぜつの処理 → サイド・勝ち負け・
-  ふしちょう・交代 → 番の終わり（ポケモンチェック）
+- ``UseAttack``: 確認（``checks.attack_request``）→ 先読み → 宣言 → こんらん → ワザの要素（``programs``）→ きぜつの判定 → きぜつの処理 →
+  サイド・勝ち負け・ふしちょう・交代 → 番の終わり（ポケモンチェック）
 - ``EndTurn``: 番の終わり（期限）→ ポケモンチェック（どく → きぜつ → … → ねむり・マヒ）→ 次の番
 - 再開先が ``attack``・``knock_out``・``take_prize``・``post_knockout``・``promote_active`` の決定への答え（``ResolveDecision``・
-  ``TakePrize``・``PromoteActive``）
+  ``TakePrize``・``PromoteActive``。確認は ``checks.decision_choices``）
 
-ほかのコマンド（対戦準備・ベンチ・進化・エネルギー・にげる・トレーナー・宣言する特殊能力・トレーナーの決定）は、v0.13 のエンジンの
-``apply_command`` にそのまま渡します（効果の解決の流れを通らないので、プロトタイプの比べる対象ではない）。
+コマンドの入口（未対応のコマンド・項目の型・終わった対戦・状態の複製・不変条件の確認）は ``engine.py`` が、どちらの経路（v0.13 の
+``LEGACY``・この基盤の ``KERNEL``）にも同じように行い、受け持つコマンドだけを ``handle`` に渡します（受け持たないコマンドは、どちらの
+経路でも v0.13 の処理）。``handle`` は、渡された状態（コマンドの入口が作った複製）を変えます。
 
-状態を変える部品（きぜつの処理 ``_knock_out``・勝ち負けの判定・番の始まり・ポケモンチェックの 3・4・こんらんのコイン）は v0.13 の
-エンジンの関数をそのまま呼びます（実験のため、非公開の関数を使っている。移行するなら公開の部品にする）。``apply_command`` と同じく、
-渡された状態を変えず（複製の上で処理する）、返す状態を v0.13 の不変条件（``check_invariants``）で確かめます。
+この基盤は ``engine.py`` を読み込みません（``checks``・``procedures`` と、効果・状態の部品だけを使う。docs/integration-dependencies-v0.15a.md）。
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from kyuura_engine import apply_command as v013_apply_command
-from kyuura_engine import check_invariants, judge
-from kyuura_engine import procedures as PR
-from kyuura_engine.checks import PLAYERS, attack_request, decision_choices, require_turn
-from kyuura_engine.commands import UNSUPPORTED_COMMANDS, EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack, check_command_fields
-from kyuura_engine.decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from kyuura_engine.effects import AttackKey, AttackUse, PowerKey, attack_damage_modifiers
-from kyuura_engine.errors import IllegalActionError, StateIntegrityError, UnsupportedError
-from kyuura_engine.state import Phase
+from .. import judge
+from .. import procedures as PR
+from ..checks import PLAYERS, attack_request, decision_choices, require_turn
+from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
+from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
+from ..effects import AttackKey, AttackUse, PowerKey
+from ..errors import EngineError
+from ..state import GameState
 
 from . import catalog as C
 from . import codec
 from . import preflight as P
-from .events import Delegated, FrameKind, Suspended, Trace, Window, WindowOpened
+from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked_out, ko_prevention_offers, track_ko
-from .programs import AttackRun, compile_attack, decision_index, run_elements
+from .programs import BUILDERS, AttackRun, compile_attack, decision_index, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = ("derived", "legacy")
@@ -44,52 +42,62 @@ NEXT_TURN = PR.NEXT_TURN
 
 @dataclass
 class Context:
-    preflight: str
-    catalog: C.Catalog
+    """1 つのコマンドの解決の設定。
+
+    - ``preflight``: 先読みの方法（``PREFLIGHT_MODES``。経路（``engine.Route``）とは別のもの）
+    - ``catalog``: 効果の定義の対応表（試験で差しかえる。既定は ``DEFAULT_CATALOG``）
+    - ``trace``: 解決の記録（状態に保存しない）
+    """
+
+    preflight: str = "derived"
+    catalog: C.Catalog = C.DEFAULT_CATALOG
     trace: Trace = field(default_factory=Trace)
 
+    def __post_init__(self) -> None:
+        if self.preflight not in PREFLIGHT_MODES:
+            raise ValueError(f"先読みの方法 {self.preflight!r} は {PREFLIGHT_MODES} のどれか")
 
-def owned(state, command) -> bool:
-    """プロトタイプが受け持つコマンドか（受け持たないものは v0.13 のエンジンに渡す）。"""
-    if isinstance(command, (UseAttack, EndTurn)):
+
+def handles(state: GameState, command) -> bool:
+    """この基盤が受け持つコマンドか（状態は変えない）。受け持たないものは、どちらの経路でも v0.13 の処理。
+
+    ワザ（``UseAttack`` と再開先 ``attack`` の決定への答え）は、ワザの実装の型が要素の並びの対応表（``programs.BUILDERS``）にあるときだけ
+    受け持つ。対応表にない実装（v0.13 の ``AttackEffect.resolve`` の約束だけで書いた実装。試験の登録表など）は、v0.13 の処理にまかせる
+    （効果の登録表に実装を加える方法を変えない。黙って効果のないワザとして処理しない）。決定の形は両方の経路で同じなので、どちらが出した
+    決定も、どちらでも続けられる（docs/kernel-integration-v0.15b.md 3 章）。確認で拒否されるワザは受け持つ（どちらの経路も同じ
+    ``checks.attack_request`` で拒否する）。"""
+    if isinstance(command, EndTurn):
         return True
+    if isinstance(command, UseAttack):
+        try:
+            effect = attack_request(state, command).effect
+        except EngineError:
+            return True
+        return type(effect) in BUILDERS
     if isinstance(command, (ResolveDecision, TakePrize, PromoteActive)):
-        return state.decision is not None and state.decision.resume in codec.RESUMES
+        decision = state.decision
+        if decision is None or decision.resume not in codec.RESUMES:
+            return False
+        if decision.resume == codec.ATTACK:
+            return type(_continued_attack_effect(state, decision)) in BUILDERS
+        return True
     return False
 
 
-def apply_command(state, command, *, preflight: str = "derived", catalog: C.Catalog = C.DEFAULT_CATALOG):
-    """``kyuura_engine.apply_command`` と同じ使い方。新しい状態を返し、渡した状態は変えない。"""
-    return apply_command_traced(state, command, preflight=preflight, catalog=catalog)[0]
+def _continued_attack_effect(state: GameState, decision):
+    """ワザの途中の決定の、ワザの実装（続きの情報の ``use`` から登録表を引く）。"""
+    _, _, card_id, attack_index = codec.decode(decision).use
+    entry = state.effects.attack_entry(card_id, attack_index)
+    return None if entry is None else entry.effect
 
 
-def apply_command_traced(state, command, *, preflight: str = "derived", catalog: C.Catalog = C.DEFAULT_CATALOG):
-    """``apply_command`` と同じ処理をして、(新しい状態, 解決の記録) を返す。解決の記録は状態に保存しない。"""
-    if preflight not in PREFLIGHT_MODES:
-        raise ValueError(f"先読みの方法 {preflight!r} は {PREFLIGHT_MODES} のどれか")
-    trace = Trace()
-    if not owned(state, command):
-        trace.record(Delegated(type(command).__name__))
-        return v013_apply_command(state, command), trace
-    if isinstance(command, UNSUPPORTED_COMMANDS):
-        raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
-    check_command_fields(command)
-    if state.phase is Phase.GAME_OVER:
-        raise IllegalActionError("GAME_OVER", "対戦は終わっている")
-    if state.phase is Phase.SUDDEN_DEATH:
-        raise UnsupportedError("SUDDEN_DEATH_NOT_IMPLEMENTED", "サドン・デス（延長戦）の開始は v0.1 では未実装")
-    if state.phase is Phase.HALTED:
-        raise UnsupportedError(state.halt.code, state.halt.message)
-    new = state.clone()
-    ctx = Context(preflight, catalog, trace)
+def handle(state: GameState, command, ctx: Context) -> None:
+    """受け持つコマンドを、渡された状態（コマンドの入口が作った複製）の上で処理する。原典で決められない場合に当たったら、v0.13 と同じ
+    ``UnsupportedError``（コードのない問いはエンジンの不具合として ``RuntimeError``）。"""
     try:
-        _HANDLERS[type(command)](ctx, new, command)
+        _HANDLERS[type(command)](ctx, state, command)
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
-    problems = check_invariants(new)
-    if problems:
-        raise StateIntegrityError(problems)
-    return new, trace
 
 
 # ---------------------------------------------------------------- ワザ
@@ -118,8 +126,9 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
-        if attack_damage_modifiers(state, attacker, attacker):
-            raise res.question("confusion_damage_modifiers", f"ポケモン {attacker.pokemon_id}")
+        problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
+        if problem is not None:
+            raise res.question("confusion_damage_modifiers", f"ポケモン {attacker.pokemon_id}", problem)
         before = attacker.damage
         PR.confusion_damage(state, player, attacker, effect=str(key))
         track_ko(res, fs, attacker, before)

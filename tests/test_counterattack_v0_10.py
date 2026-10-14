@@ -37,7 +37,7 @@ from kyuura_engine.state import Asleep, Phase
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DIGLETT, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GRASS, GRIMER,
     H, HAUNTER, HITMONCHAN, KADABRA, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PARAS, PIKACHU, PONYTA,
-    PSYCHIC, RATTATA, T, WEEDLE, build_test_state, coin_events, with_coin_results,
+    PSYCHIC, RATTATA, T, WEEDLE, apply_legacy, build_test_state, coin_events, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 from tests.test_transparency_v0_9 import contextlib_exit, rng_draws
@@ -622,16 +622,19 @@ class CoinIndependenceTest(unittest.TestCase):
 class AtomicityTest(unittest.TestCase):
     """拒否と、処理の途中の内部の誤り（注入した）では、渡した状態・乱数・ログは変わらない（``apply_command`` は複製して処理する）。"""
 
-    def assert_unchanged(self, state, command, error_type, *patches):
+    def assert_unchanged(self, state, command, error_type, *patches, apply=apply_command):
         before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with contextlib_exit(patches):
             with self.assertRaises(error_type):
-                apply_command(state, command)
+                apply(state, command)
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 
     def test_internal_error_after_the_counter(self):
-        """「はんげき」のダメージをのせたあと（ログ・回復・入れ替えの決定）で内部の誤りが起きても、渡した状態は変わらない。"""
+        """「はんげき」のダメージをのせたあと（ログ・回復・入れ替えの決定）で内部の誤りが起きても、渡した状態は変わらない。
+
+        v0.15b: v0.13 の経路の内部の関数（``effects._remove_attacker_counters`` など）を差しかえるので、経路 ``LEGACY`` を指定する。
+        解決の基盤の経路の同じ確かめは tests/test_kernel_integration_v0_15.py の ``KernelAtomicityTest``。"""
         def boom(*args, **kwargs):
             raise RuntimeError("注入した誤り")
 
@@ -643,13 +646,15 @@ class AtomicityTest(unittest.TestCase):
                 raise RuntimeError("注入した誤り")
             return original(self, kind, **data)
 
-        self.assert_unchanged(state, UseAttack(0, 0), RuntimeError, mock.patch.object(type(state), "add_event", add_event))
+        self.assert_unchanged(state, UseAttack(0, 0), RuntimeError, mock.patch.object(type(state), "add_event", add_event), apply=apply_legacy)
         drain = board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS] * 4})
-        self.assert_unchanged(drain, UseAttack(0, 1), RuntimeError, mock.patch("kyuura_engine.effects._remove_attacker_counters", boom))
+        self.assert_unchanged(drain, UseAttack(0, 1), RuntimeError, mock.patch("kyuura_engine.effects._remove_attacker_counters", boom),
+                              apply=apply_legacy)
         whirlwind = board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]})
-        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom))
+        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom),
+                              apply=apply_legacy)
         poison = with_coin_results(board({"card": WEEDLE, "energy": [GRASS]}), H)
-        self.assert_unchanged(poison, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.poison", boom))
+        self.assert_unchanged(poison, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.poison", boom), apply=apply_legacy)
 
     def test_invalid_commands_do_not_change_anything(self):
         """不正なコマンド（宣言・エネルギーの足りないワザ・番でないプレイヤー）は、状態・乱数・ログを変えない。"""
@@ -758,12 +763,15 @@ class InvariantTest(unittest.TestCase):
 
     def test_double_knock_out_guard_after_the_preflight(self):
         """宣言の前の確認（``counterattack_double_knockout_problem``）を外しても、「はんげき」を与えるところでエンジンの不具合として止める
-        （黙って同時のきぜつにしない）。渡した状態は変わらない。"""
+        （黙って同時のきぜつにしない）。渡した状態は変わらない。
+
+        v0.15b: v0.13 の経路の宣言の前の確認を外すので、経路 ``LEGACY`` を指定する。解決の基盤の経路の同じ確かめ（先読みを外しても、
+        きぜつの判定で止める）は tests/test_kernel_integration_v0_15.py の ``KernelGuardTest``。"""
         state = board({**HITMONCHAN_JAB, "damage": 60}, machamp(damage=80), bench0=[RATTATA])
         before, fingerprint = written(state), rng_fingerprint(state.rng)
         with mock.patch("kyuura_engine.engine.counterattack_double_knockout_problem", lambda *args: None):
             with self.assertRaises(RuntimeError):
-                apply_command(state, UseAttack(0, 1))
+                apply_legacy(state, UseAttack(0, 1))
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
 
 

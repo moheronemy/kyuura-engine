@@ -1,4 +1,4 @@
-"""v0.14: 本番のエンジン（v0.13）とプロトタイプ（experiments/event_kernel）を、同じ対戦の 1 歩ごとに比べる（C 段階の道具）。
+"""v0.14: v0.13 の経路（``Route.LEGACY``）と解決の基盤（``Route.KERNEL``。v0.14 のプロトタイプ）を、同じ対戦の 1 歩ごとに比べる（C 段階の道具）。
 
 ふだんのテスト（``python3 -m unittest``）では走らせません。B 段階の小さな比較は tests/test_event_kernel_games_v0_14.py です。
 
@@ -37,6 +37,7 @@ for path in (ROOT, ROOT / "tools"):
 
 import kyuura_engine as engine  # noqa: E402
 from kyuura_engine.rng import rng_fingerprint  # noqa: E402
+from kyuura_engine.engine import Route, apply_command_via  # noqa: E402
 
 from experiments import event_kernel as K  # noqa: E402
 from experiments.event_kernel import events as EV  # noqa: E402
@@ -58,6 +59,11 @@ class Divergence(BaseException):
 
 def full(state):
     return engine.state_to_dict(state, format_version=9)
+
+
+def _legacy_apply(state, command):
+    """比較の基準: v0.13 の経路（v0.15b から。標準の経路が KERNEL になっても、v0.13 の経路と比べる）。"""
+    return apply_command_via(state, command, route=Route.LEGACY)
 
 
 def _run(apply, state, command):
@@ -82,7 +88,7 @@ class Comparator:
         before, rng = full(state), rng_fingerprint(state.rng)
         owned = K.owned(state, command)
         t0 = time.perf_counter()
-        expected, expected_error = _run(engine.apply_command, state, command)
+        expected, expected_error = _run(_legacy_apply, state, command)
         t1 = time.perf_counter()
         results = []
         for mode in self.modes:
@@ -102,7 +108,7 @@ class Comparator:
             raise Divergence(f"渡した状態が変わった: {engine.command_to_dict(command)}")
         for mode, actual, trace, error in results:
             if (expected_error is None) != (error is None) or (
-                    error is not None and (type(error), error.code) != (type(expected_error), expected_error.code)):
+                    error is not None and (type(error), error.code, error.message) != (type(expected_error), expected_error.code, expected_error.message)):
                 raise Divergence(f"[{mode}] {engine.command_to_dict(command)}: v0.13={expected_error!r} prototype={error!r}")
             if expected_error is None and full(actual) != full(expected):
                 raise Divergence(f"[{mode}] {engine.command_to_dict(command)}: 状態が違う ({_first_difference(expected, actual)})")

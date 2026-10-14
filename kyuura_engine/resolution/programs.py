@@ -20,16 +20,16 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from kyuura_engine import effects as E
-from kyuura_engine.cards import EnergyType
-from kyuura_engine.coins import CoinFlips, CoinSide, flip_coins
-from kyuura_engine.conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
-from kyuura_engine.conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
-from kyuura_engine.decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY
-from kyuura_engine.errors import UnsupportedError
-from kyuura_engine.persistent import add_persistent_effect, remove_persistent_effects
-from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, PreventDamage, Retaliation
-from kyuura_engine.zones import return_discard_to_hand
+from .. import effects as E
+from ..cards import EnergyType
+from ..coins import CoinFlips, CoinSide, flip_coins
+from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
+from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
+from ..decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY
+from ..errors import UnsupportedError
+from ..persistent import add_persistent_effect, remove_persistent_effects
+from ..state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, PreventDamage, Retaliation
+from ..zones import return_discard_to_hand
 
 from . import catalog as C
 from . import codec
@@ -37,8 +37,8 @@ from .events import ElementStarted, Suspended, Window
 from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches
 
 if TYPE_CHECKING:
-    from kyuura_engine.cards import Attack
-    from kyuura_engine.state import GameState, PendingDecision, PokemonInPlay
+    from ..cards import Attack
+    from ..state import GameState, PendingDecision, PokemonInPlay
 
     from .events import FrameState
 
@@ -111,7 +111,8 @@ class AttackRun:
             if instance.definition.timing is not C.Timing.OFFER:
                 continue
             if self.res.ko_prevention_able.get(target.pokemon_id) and not C.suppressors(self.state, instance):
-                raise self.res.question("ko_prevention_attack_effect", f"ポケモン {target.pokemon_id}")
+                raise self.res.question("ko_prevention_attack_effect", f"ポケモン {target.pokemon_id}",
+                                        E.ko_prevention_attack_effect_error(target.pokemon_id, opponent_effect_elements(self.program)))
             break
 
     def suspend(self, *, kind: str, player: int, options, extra: tuple = (), min_choices: int = 1, max_choices: int = 1) -> None:
@@ -143,6 +144,17 @@ def run_elements(run: AttackRun, start: int) -> bool:
             element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
     fire_pending(res, run.fs)
     return False
+
+
+def opponent_effect_elements(program: tuple) -> tuple[str, ...]:
+    """並びの中で、相手の対戦ポケモンに与えるダメージ以外の効果の要素の種類（並びの順番。v0.13 の ``AttackEffect.opponent_effect_elements``
+    にあたる値を、ワザの実装の宣言ではなく並びから求める。G37 の理由の文に書く）。"""
+    found: list[str] = []
+    for element in program:
+        kind = element.opponent_element
+        if kind is not None and kind not in found:
+            found.append(kind)
+    return tuple(found)
 
 
 def decision_index(program: tuple, kind: str) -> int:
@@ -235,6 +247,11 @@ class Element:
     phase: ClassVar[Phase]
     decision_kind: ClassVar[str | None] = None
 
+    @property
+    def opponent_element(self) -> str | None:
+        """相手の対戦ポケモンに与える、ダメージ以外の効果の要素の種類（``effects.ATTACK_ELEMENTS``。なければ None）。"""
+        return None
+
     def run(self, run: AttackRun) -> bool:
         raise NotImplementedError
 
@@ -290,8 +307,10 @@ class Damage(Element):
             receiver = run.opponent_active() if self.target == OPP else run.attacker()
             from .kernel import first_void
 
-            if first_void(run.res, owner, receiver) is not None:
-                raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}")
+            void = first_void(run.res, owner, receiver)
+            if void is not None:
+                raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}",
+                                       E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
         if self.local_gate is not None and run.flip(1).results[0] is not self.local_gate:
             return False
         flips = run.flip(self.base.local_coins) if self.base.local_coins else None
@@ -309,6 +328,10 @@ class Status(Element):
     reparalysis_check: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
+    @property
+    def opponent_element(self) -> str:
+        return self.condition
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -323,7 +346,9 @@ class Status(Element):
                 raise run.res.question("reparalysis_recovery_turn", problem.code, error=problem)
         if self.local_coin is not None:
             if run.fs.reception.get(target.pokemon_id) is False:
-                raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}")
+                final = run.fs.evaded.get(target.pokemon_id)
+                raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                                       None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
             if run.flip(1).results[0] is not self.local_coin:
                 return False
         if reaches(run.res, run.fs, opponent, target, self.condition):
@@ -337,6 +362,7 @@ class ForceSwitch(Element):
 
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = FORCED_SWITCH
+    opponent_element: ClassVar[str] = E.FORCED_SWITCH_ELEMENT
 
     def run(self, run: AttackRun) -> bool:
         opponent = 1 - run.player

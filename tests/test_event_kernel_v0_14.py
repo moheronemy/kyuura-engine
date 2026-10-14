@@ -1,6 +1,6 @@
 """v0.14: 汎用のイベント・効果の解決の仕組みのプロトタイプ（experiments/event_kernel）の単体テスト（docs/event-prototype-verification-v0.14.md）。
 
-どのテストも、同じ状態・同じ乱数・同じコマンドを v0.13 のエンジン（``kyuura_engine.apply_command``）とプロトタイプに渡し、状態（形式 9。
+どのテストも、同じ状態・同じ乱数・同じコマンドを v0.13 のエンジン（v0.15 からは経路 ``Route.LEGACY``）とプロトタイプ（v0.15 からは本番の解決の基盤。経路 ``KERNEL``）に渡し、状態（形式 9。
 ログ・乱数の指紋・決定を含む）か拒否（例外の種類とコード）が同じことを確かめる（``Both``）。そのうえで、プロトタイプの解決の記録（内部の
 イベント）で、共通の仕組みが窓・枠・候補を管理したことを確かめる。原典の根拠は v0.9〜v0.13 の各文書（裁定の番号）で、プロトタイプは
 裁定を変えない。
@@ -20,11 +20,12 @@ import unittest
 from pathlib import Path
 
 from kyuura_engine import (
-    DEFAULT_EFFECTS, EndTurn, EngineError, Phase, PromoteActive, ResolveDecision, TakePrize, UseAttack, apply_command,
+    DEFAULT_EFFECTS, EndTurn, EngineError, Phase, PromoteActive, ResolveDecision, TakePrize, UseAttack,
     check_invariants, state_to_dict,
 )
 from kyuura_engine.decisions import FORCED_SWITCH, KO_PREVENTION, POST_KNOCKOUT_POWER
 from kyuura_engine.effects import AttackKey
+from kyuura_engine.engine import Route, apply_command_via
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     BUTTERFREE, DARK_WARTORTLE, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, GRASS, H,
@@ -57,6 +58,11 @@ METAPOD_ = {"card": METAPOD, "evolved_from": CATERPIE_}
 PONYTA_ = {"card": PONYTA, "energy": [FIRE, FIRE]}  # けりとばす 20・ほのおのしっぽ 30（炎。弱点 水）
 
 
+def apply_command(state, command):
+    """比較の基準: v0.13 の経路（v0.15b から。標準の経路が KERNEL になっても、v0.13 の経路と比べる）。"""
+    return apply_command_via(state, command, route=Route.LEGACY)
+
+
 def full(state):
     return state_to_dict(state, format_version=9)
 
@@ -85,6 +91,8 @@ class Both(unittest.TestCase):
         if expected_error is not None:
             self.assertIsNotNone(actual_error, f"v0.13 は {expected_error.code} で拒否したが、プロトタイプは受け付けた")
             self.assertEqual((type(actual_error), actual_error.code), (type(expected_error), expected_error.code))
+            # v0.15b: 理由の文も同じ（止める理由の文を effects の共通の関数で作る。docs/kernel-integration-v0.15b.md 5 章）
+            self.assertEqual(actual_error.message, expected_error.message)
             return None, None, expected_error
         self.assertIsNone(actual_error, f"v0.13 は受け付けたが、プロトタイプは {actual_error!r}")
         self.assertEqual(full(actual), full(expected))

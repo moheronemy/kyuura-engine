@@ -548,6 +548,22 @@ def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:
     return new
 
 
+# ---------------------------------------------------------------- 経路の指定（v0.15b。docs/kernel-integration-v0.15b.md）
+
+from kyuura_engine.engine import Route, apply_command_via  # noqa: E402
+
+
+def apply_legacy(state: GameState, command):
+    """経路 ``Route.LEGACY``（v0.13 の経路）で処理する。v0.13 の経路の内部の関数を差しかえて確かめるテストが使う（標準の経路で
+    差しかえると、差しかえた関数を通らない経路で処理されて、確かめたいことを確かめられない）。"""
+    return apply_command_via(state, command, route=Route.LEGACY)
+
+
+def apply_kernel(state: GameState, command, **options):
+    """経路 ``Route.KERNEL``（解決の基盤）で処理する（``options`` は ``preflight``・``catalog``）。"""
+    return apply_command_via(state, command, route=Route.KERNEL, **options)
+
+
 def coin_events(state: GameState, since: int = 0) -> list[dict]:
     return [dict(e) for e in state.log[since:] if e["kind"] == "coin_flip"]
 

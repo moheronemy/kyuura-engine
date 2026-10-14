@@ -32,7 +32,7 @@ from kyuura_engine.state import Asleep
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
     KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, build_test_state, coin_events, uids, with_coin_results,
+    WEEDLE, BASE_HAUNTER, LIGHTNING, apply_legacy, build_test_state, coin_events, uids, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -678,24 +678,28 @@ class AtomicityTest(unittest.TestCase):
     """拒否と、処理の途中の内部の誤り（注入した）では、渡した状態・乱数・ログは変わらない（``apply_command`` は複製して処理する）。
     受け付けた処理は、自動的にはたらく特殊能力のコインを正しく消費する。"""
 
-    def assert_unchanged(self, state, command, error_type, *patches):
+    def assert_unchanged(self, state, command, error_type, *patches, apply=apply_command):
         before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with contextlib_exit(patches):
             with self.assertRaises(error_type):
-                apply_command(state, command)
+                apply(state, command)
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 
     def test_internal_error_after_the_power_coin(self):
         """「とうめい」のコインを投げたあとの処理（ねむりにする・入れ替えの決定・ダメージのログ）で内部の誤りが起きても、渡した状態は
-        変わらない。"""
+        変わらない。
+
+        v0.15b: v0.13 の経路の内部の関数（``effects.put_to_sleep``・``effects.push_attack_decision``）を差しかえるので、経路 ``LEGACY`` を
+        指定する。解決の基盤の経路の同じ確かめは tests/test_kernel_integration_v0_15.py の ``KernelAtomicityTest``。"""
         def boom(*args, **kwargs):
             raise RuntimeError("注入した誤り")
 
         nightmare = with_coin_results(board(haunter(energy=[PSYCHIC, PSYCHIC])), T)
-        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.put_to_sleep", boom))
+        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.put_to_sleep", boom), apply=apply_legacy)
         whirlwind = with_coin_results(board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]}), T)
-        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom))
+        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom),
+                              apply=apply_legacy)
         heads = with_coin_results(board({"card": RATTATA, "energy": [FIRE]}), H)
         original = type(heads).add_event
 
@@ -704,7 +708,7 @@ class AtomicityTest(unittest.TestCase):
                 raise RuntimeError("注入した誤り")
             return original(self, kind, **data)
 
-        self.assert_unchanged(heads, UseAttack(0, 0), RuntimeError, mock.patch.object(type(heads), "add_event", add_event))
+        self.assert_unchanged(heads, UseAttack(0, 0), RuntimeError, mock.patch.object(type(heads), "add_event", add_event), apply=apply_legacy)
 
     def test_accepted_command_does_not_change_the_input(self):
         state = with_coin_results(board({"card": RATTATA, "energy": [FIRE]}), H)

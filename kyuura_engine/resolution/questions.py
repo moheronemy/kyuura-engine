@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from kyuura_engine.errors import UnsupportedError
+from ..errors import UnsupportedError
 
 
 @dataclass(frozen=True)

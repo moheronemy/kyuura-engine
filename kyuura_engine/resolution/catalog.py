@@ -18,16 +18,16 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any
 
-from kyuura_engine import effects as E
-from kyuura_engine.continuous import suppressors_of
-from kyuura_engine.decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
-from kyuura_engine.state import PreventDamage, Retaliation
+from .. import effects as E
+from ..continuous import suppressors_of
+from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
+from ..state import PreventDamage, Retaliation
 
 from .events import DamageClass, Window
 
 if TYPE_CHECKING:
-    from kyuura_engine.cards import Power
-    from kyuura_engine.state import GameState, PokemonInPlay
+    from ..cards import Power
+    from ..state import GameState, PokemonInPlay
 
 
 class Origin(str, Enum):

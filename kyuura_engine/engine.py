@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import random
+from enum import Enum
 from typing import Callable, Sequence
 
 from . import judge
@@ -114,6 +115,7 @@ from .procedures import confusion_damage_problem as _confusion_damage_problem
 from .procedures import finish as _finish
 from .procedures import knock_out as _knock_out
 from .procedures import pokemon_check_sleep_and_paralysis as _pokemon_check_sleep_and_paralysis
+from . import resolution  # v0.15b: 効果の解決の基盤（engine.py を読み込まない）
 
 # PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
 # 対戦準備の段階（番はまだ始まっていない）
@@ -246,6 +248,23 @@ def _deal_opening_hands(state: GameState) -> None:
 # ---------------------------------------------------------------- コマンドの入口
 
 
+class Route(str, Enum):
+    """コマンドを処理する経路（v0.15b。docs/kernel-integration-v0.15b.md）。先読みの方法（``resolution.PREFLIGHT_MODES``）とは別のもの。
+
+    - ``LEGACY``: v0.13 の解決の経路（この ``engine.py`` の ``_use_attack``・``_finish_attack``・``_RESUMERS`` など）。v0.16 で外すまで、
+      比較の基準として残す。
+    - ``KERNEL``: v0.15 の解決の基盤（``kyuura_engine/resolution``）。ワザ・番の終わりと、再開先が ``attack``・``knock_out``・``post_knockout``・
+      ``take_prize``・``promote_active`` の決定への答えを処理する（``resolution.handles``）。ほかのコマンドは、この経路でも v0.13 の処理。
+    """
+
+    LEGACY = "legacy"
+    KERNEL = "kernel"
+
+
+# 公開の ``apply_command`` が使う経路（変えない値。経路を選ぶには ``apply_command_via`` を使う。グローバルなフラグで切りかえない）
+DEFAULT_ROUTE = Route.LEGACY
+
+
 def apply_command(state: GameState, command) -> GameState:
     """コマンドを処理した新しい状態を返す。渡した ``state`` は変えない。
 
@@ -253,7 +272,35 @@ def apply_command(state: GameState, command) -> GameState:
     - 未対応の操作・原典で決められない場合・終わった（止めた）対戦への操作: ``UnsupportedError`` /
       ``IllegalActionError``（GAME_OVER）
     - 処理の結果が不変条件を満たさない（エンジンの不具合か、渡した状態が壊れている）: ``StateIntegrityError``
+
+    v0.15: 標準の経路（``DEFAULT_ROUTE``）で処理する。経路を選ぶ内部の入口は ``apply_command_via``。
     """
+    return _apply(state, command, DEFAULT_ROUTE, None)
+
+
+def apply_command_via(state: GameState, command, *, route: Route = DEFAULT_ROUTE, preflight: str = "derived",
+                      catalog: resolution.Catalog | None = None) -> GameState:
+    """内部の入口（v0.15b）: 経路（``route``）を指定してコマンドを処理する。比較・試験用。公開の ``apply_command`` と同じ約束
+    （渡した状態を変えない・不変条件で確かめる）。``preflight``・``catalog`` は経路 ``KERNEL`` の設定（``LEGACY`` では使わない）。"""
+    return _apply(state, command, Route(route), _kernel_options(preflight, catalog))
+
+
+def apply_command_traced(state: GameState, command, *, preflight: str = "derived",
+                         catalog: resolution.Catalog | None = None) -> tuple[GameState, resolution.Trace]:
+    """内部の入口（v0.15b）: 経路 ``KERNEL`` で処理し、(新しい状態, 解決の記録) を返す。解決の記録（内部のトレース）は状態に保存しない
+    （公開のログとは別のもの）。受け持たないコマンドなら、解決の記録は空。"""
+    options = _kernel_options(preflight, catalog)
+    return _apply(state, command, Route.KERNEL, options), options.trace
+
+
+def _kernel_options(preflight: str, catalog: resolution.Catalog | None) -> resolution.Context:
+    """経路 ``KERNEL`` の設定（コマンドごとに作る。解決の記録はこの中に入る）。"""
+    return resolution.Context(preflight=preflight, catalog=resolution.DEFAULT_CATALOG if catalog is None else catalog)
+
+
+def _apply(state: GameState, command, route: Route, options: resolution.Context | None) -> GameState:
+    """コマンドの入口（どちらの経路でも同じ確認・複製・不変条件）。経路が ``KERNEL`` で、解決の基盤が受け持つコマンドなら基盤に渡し、
+    それ以外は v0.13 の処理（``_HANDLERS``）。"""
     if isinstance(command, UNSUPPORTED_COMMANDS):
         raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
     handler = _HANDLERS.get(type(command))
@@ -267,7 +314,10 @@ def apply_command(state: GameState, command) -> GameState:
     if state.phase is Phase.HALTED:
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
-    handler(new, command)
+    if route is Route.KERNEL and resolution.handles(state, command):
+        resolution.handle(new, command, options if options is not None else _kernel_options("derived", None))
+    else:
+        handler(new, command)
     _require_integrity(new)
     return new
 

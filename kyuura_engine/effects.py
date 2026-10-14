@@ -336,9 +336,14 @@ def prevented_coin_damage_problem(state: GameState, use: AttackUse) -> Unsupport
     prevention = None if target is None else damage_prevention(state, target)
     if prevention is None:
         return None
+    return prevented_coin_damage_error(target.pokemon_id, prevention.kind)
+
+
+def prevented_coin_damage_error(target_pid: int, prevention_kind: str) -> UnsupportedError:
+    """``UNRESOLVED_PREVENTED_COIN_DAMAGE`` の理由（v0.15b で分けた。v0.13 の経路と解決の基盤が同じ文を使う）。"""
     return UnsupportedError(
         "UNRESOLVED_PREVENTED_COIN_DAMAGE",
-        f"相手の対戦ポケモン {target.pokemon_id} は、この番「ダメージを受けない」状態（{prevention.kind}）。ダメージの量を"
+        f"相手の対戦ポケモン {target_pid} は、この番「ダメージを受けない」状態（{prevention_kind}）。ダメージの量を"
         "コインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・"
         "p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）",
     )
@@ -763,9 +768,14 @@ def evaded_effect_coin_problem(state: GameState, use: AttackUse) -> UnsupportedE
     final = preview_attack_damage(state, use, OPPONENT_ACTIVE, attack.damage)
     if final is None or final <= 0:
         return None
+    return evaded_effect_coin_error(target.pokemon_id, final)
+
+
+def evaded_effect_coin_error(target_pid: int, final: int) -> UnsupportedError:
+    """``UNRESOLVED_EVADED_EFFECT_COIN`` の理由（v0.15b で分けた。``final`` はダメージの要素の最終ダメージ）。"""
     return UnsupportedError(
         "UNRESOLVED_EVADED_EFFECT_COIN",
-        f"相手の対戦ポケモン {target.pokemon_id} の「とうめい」がはたらいている。ダメージ（{final}）を受けるときのコインが「おもて」なら"
+        f"相手の対戦ポケモン {target_pid} の「とうめい」がはたらいている。ダメージ（{final}）を受けるときのコインが「おもて」なら"
         "そのワザのダメージと効果を受けないが、そのあとの、効果を与えるかを決めるワザのコインを投げるかは『オフィシャルブック2000』"
         "（p.159・p.160・p.309・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）",
     )
@@ -988,10 +998,15 @@ def counterattack_double_knockout_problem(state: GameState, use: AttackUse, effe
     # きぜつする候補がある」という v0.10 の判定と同じ答えになる
     if not any(defender_knocked_out(opponent) and only_counterattack_knocks_out_attacker(own) for opponent, own in profile.pairs()):
         return None
+    return counterattack_double_knockout_error(defender.pokemon_id, power_effect.amount, attacker.pokemon_id)
+
+
+def counterattack_double_knockout_error(defender_pid: int, amount: int, attacker_pid: int) -> UnsupportedError:
+    """``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`` の理由（v0.15b で分けた。``amount`` は「はんげき」のダメージ）。"""
     return UnsupportedError(
         "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",
-        f"このワザのダメージで相手の対戦ポケモン {defender.pokemon_id} がきぜつしうるうえ、その「はんげき」の {power_effect.amount} ダメージで"
-        f"ワザを使ったポケモン {attacker.pokemon_id} がきぜつしうる。ワザによるきぜつと特殊能力によるきぜつが「同時に「きぜつ」した」"
+        f"このワザのダメージで相手の対戦ポケモン {defender_pid} がきぜつしうるうえ、その「はんげき」の {amount} ダメージで"
+        f"ワザを使ったポケモン {attacker_pid} がきぜつしうる。ワザによるきぜつと特殊能力によるきぜつが「同時に「きぜつ」した」"
         "ことになるか（p.324）が『オフィシャルブック2000』（p.89・p.192・p.311・p.323〜p.325）から決められないので扱わない"
         "（サイド・バトル場に出す順番と勝ち負けが変わる）",
     )
@@ -1183,14 +1198,19 @@ def retaliation_double_knockout_problem(state: GameState, use: AttackUse, effect
         if attacker_damage + retaliation_final < attacker_hp:
             continue  # ワザを使ったポケモンは返すダメージではきぜつしない
         if holder.damage + final + counter_amount >= holder_hp:
-            return UnsupportedError(
-                "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",
-                f"このワザのダメージで相手の対戦ポケモン {holder.pokemon_id} がきぜつしうるうえ、その「{found.kind}」（{_retaliation_name(found)}）の"
-                f" {retaliation_final} ダメージでワザを使ったポケモン {attacker.pokemon_id} がきぜつしうる。このワザによるきぜつと、前の番のワザの"
-                "効果のダメージによるきぜつが「同時に「きぜつ」した」ことになるか（p.324）が『オフィシャルブック2000』（p.82・p.89・p.311・"
-                "p.321・p.323〜p.325）から決められないので扱わない（サイド・バトル場に出す順番と勝ち負けが変わる）",
-            )
+            return retaliation_double_knockout_error(holder.pokemon_id, found, retaliation_final, attacker.pokemon_id)
     return None
+
+
+def retaliation_double_knockout_error(holder_pid: int, effect: Retaliation, retaliation_final: int, attacker_pid: int) -> UnsupportedError:
+    """``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` の理由（v0.15b で分けた。``retaliation_final`` は返すダメージの最終ダメージ）。"""
+    return UnsupportedError(
+        "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",
+        f"このワザのダメージで相手の対戦ポケモン {holder_pid} がきぜつしうるうえ、その「{effect.kind}」（{_retaliation_name(effect)}）の"
+        f" {retaliation_final} ダメージでワザを使ったポケモン {attacker_pid} がきぜつしうる。このワザによるきぜつと、前の番のワザの"
+        "効果のダメージによるきぜつが「同時に「きぜつ」した」ことになるか（p.324）が『オフィシャルブック2000』（p.82・p.89・p.311・"
+        "p.321・p.323〜p.325）から決められないので扱わない（サイド・バトル場に出す順番と勝ち負けが変わる）",
+    )
 
 
 def _retaliation_name(effect: Retaliation) -> str:
@@ -1263,10 +1283,15 @@ def ko_prevention_attack_effect_problem(state: GameState, use: AttackUse, effect
     finals = [preview_attack_damage(state, use, OPPONENT_ACTIVE, base) for base in effect.damage_profile(state, use).opponent]
     if not any(final is not None and final > 0 and defender.damage + final >= hp for final in finals):
         return None
+    return ko_prevention_attack_effect_error(defender.pokemon_id, effect.opponent_effect_elements)
+
+
+def ko_prevention_attack_effect_error(defender_pid: int, elements: tuple[str, ...]) -> UnsupportedError:
+    """``UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`` の理由（v0.15b で分けた。``elements`` は相手の対戦ポケモンに与える効果の要素の種類）。"""
     return UnsupportedError(
         "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT",
-        f"このワザのダメージで、「こんじょう」を使える相手の対戦ポケモン {defender.pokemon_id} が HP 以上のダメージを受けうるうえ、そのあと"
-        f"同じワザで相手の対戦ポケモンに効果（{'・'.join(effect.opponent_effect_elements)}）を与える。「こんじょう」で「きぜつ」しなかった"
+        f"このワザのダメージで、「こんじょう」を使える相手の対戦ポケモン {defender_pid} が HP 以上のダメージを受けうるうえ、そのあと"
+        f"同じワザで相手の対戦ポケモンに効果（{'・'.join(elements)}）を与える。「こんじょう」で「きぜつ」しなかった"
         "ポケモンが、そのワザの効果を受けるかは『オフィシャルブック2000』（p.89・p.193・p.309・p.311・p.320〜p.324）から決められないので"
         "扱わない（特殊状態・入れ替え・乱数の続きが変わる）",
     )

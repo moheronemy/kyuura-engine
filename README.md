@@ -96,8 +96,12 @@ python3 tools/stress_engine.py --scenario giovanni --scenario giovanni_mixed
 python3 tools/stress_engine.py --scenario moltres --scenario moltres_mixed
 # わるいカメールの組だけ（「こうらがえし」の効果・受けたダメージ・返すダメージ・S37 の場面。wartortle_mixed は両方のデッキにわるいカメール、一方に R団のファイヤー。v0.13）
 python3 tools/stress_engine.py --scenario wartortle --scenario wartortle_mixed
-# v0.14 のプロトタイプ（experiments/event_kernel）と本番のエンジンを、同じ対戦の 1 歩ごとに比べる（2 つの先読み・交互の状態。約 9 分）
+# 経路 LEGACY（v0.13 の経路）と経路 KERNEL（解決の基盤。v0.15b で kyuura_engine/resolution に移した v0.14 のプロトタイプ）を、同じ対戦の 1 歩ごとに比べる（2 つの先読み・交互の状態。約 9 分）
 python3 tools/event_kernel_compare.py --stress-seeds 10 --natural-seeds 20 --mode both --mixed --timing
+# 固定した前の版の木（例: git archive 8facf3a で取り出した v0.13）と、この木を別々のプロセスで同じ対戦を進めて比べる（v0.15。1 回の記録に約 10〜20 分）
+python3 -I tools/engine_lockstep.py record --root /path/to/v013 --seeds 100 --stress-seeds 10 --save-every 7 --out a.jsonl.gz
+python3 -I tools/engine_lockstep.py record --root . --route kernel --seeds 100 --stress-seeds 10 --save-every 7 --out c.jsonl.gz
+python3 tools/engine_lockstep.py compare a.jsonl.gz c.jsonl.gz
 ```
 
 ## 使い方

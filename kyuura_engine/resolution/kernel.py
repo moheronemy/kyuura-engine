@@ -19,9 +19,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
-from kyuura_engine.coins import CoinSide, flip_coins
-from kyuura_engine.damage import calculate_attack_damage
-from kyuura_engine.effects import (
+from ..coins import CoinSide, flip_coins
+from ..damage import calculate_attack_damage
+from ..effects import (
     ATTACK_ELEMENTS,
     COUNTERATTACK_TARGET_KNOCKED_OUT,
     DAMAGE_ELEMENT,
@@ -31,11 +31,14 @@ from kyuura_engine.effects import (
     AttackKey,
     DamageResult,
     attack_damage_modifiers,
+    counterattack_double_knockout_error,
+    retaliation_double_knockout_error,
 )
-from kyuura_engine.state import RETALIATION_FIXED
+from ..state import RETALIATION_FIXED
 
 from . import catalog as C
 from .events import (
+    SPAWN_REFUSALS,
     SPAWNS,
     Activated,
     CandidateFound,
@@ -56,7 +59,7 @@ from .events import (
 from .questions import OpenQuestion
 
 if TYPE_CHECKING:
-    from kyuura_engine.state import GameState, PokemonInPlay
+    from ..state import GameState, PokemonInPlay
 
 
 class DryRunComplete(Exception):
@@ -99,7 +102,10 @@ class Resolution:
             parent_kind = self.frames[parent].frame.kind
             if kind not in SPAWNS[parent_kind]:
                 # 規定から起こらないはずの連鎖（返すダメージで返す効果など。v0.13 の S45）。回数の上限ではなく表で止める
-                raise RuntimeError(f"枠 {parent_kind.value} から枠 {kind.value} は起こらないはず（events.SPAWNS。エンジンの不具合）")
+                reason = SPAWN_REFUSALS.get((parent_kind, kind))
+                raise RuntimeError(
+                    f"枠 {parent_kind.value} から枠 {kind.value} は起こらないはず（events.SPAWNS。{reason + '。' if reason else ''}エンジンの不具合）"
+                )
         frame = Frame(self.next_frame, kind, parent, player, source_pid, attack_key)
         self.next_frame += 1
         state = FrameState(frame)
@@ -180,6 +186,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     receiver_def = state.card_def(receiver.card)
     calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, attack_damage_modifiers(state, attacker, receiver))
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
+        fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= receiver_def.hp, evaded=True)
     deferred: list[Deferred] = []
@@ -189,6 +196,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         deferred = receiving(res, fs, receiver_player, receiver, calc.final)
     before = receiver.damage
     receiver.damage += calc.final
+    fs.applied[receiver.pokemon_id] = calc.final
     extra: dict[str, Any] = {}
     if calc.modifiers:
         extra["modifiers"] = tuple((m.step, m.source, m.amount) for m in calc.modifiers)
@@ -341,8 +349,10 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
         raise RuntimeError(f"ワザを使ったポケモン {attacker.pokemon_id} が自分の番に「ダメージを受けない」状態（エンジンの不具合）")
     child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,
                            attack_key=fs.frame.attack_key)
+    child.origin = instance
     before = attacker.damage
     attacker.damage += instance.implementation.amount
+    child.applied[attacker.pokemon_id] = instance.implementation.amount
     state.add_event("counterattack", **base, amount=instance.implementation.amount, total_damage=attacker.damage,
                     knocked_out=attacker.damage >= hp)
     track_ko(res, child, attacker, before)
@@ -383,6 +393,7 @@ def attack_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: De
     else:
         state.add_event("retaliation", **base, amount=amount, basis=effect.basis, received_damage=deferred.received)
     child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id, attack_key=key)
+    child.origin = instance
     deal_damage(res, child, OPPONENT_ACTIVE, amount, log_extra={"retaliation": True, "effect": str(key), "pokemon_id": attacker.pokemon_id})
     fire_pending(res, child)
 
@@ -415,12 +426,34 @@ def check_simultaneous(res: Resolution) -> None:
     frames = {res.knocked_by[pokemon.pokemon_id] for _, pokemon in knocked_out(res.state) if pokemon.pokemon_id in res.knocked_by}
     if len(frames) < 2:
         return
-    kinds = {frame.kind for frame_id in frames for frame in res.ancestors(frame_id)}
-    if FrameKind.RETALIATION in kinds:
-        raise res.question("retaliation_double_knockout", f"枠 {sorted(frames)}")
-    if FrameKind.POWER_DAMAGE in kinds:
-        raise res.question("counterattack_double_knockout", f"枠 {sorted(frames)}")
+    involved = {frame.id: frame for frame_id in frames for frame in res.ancestors(frame_id)}
+    for kind, key, error in ((FrameKind.RETALIATION, "retaliation_double_knockout", _retaliation_error),
+                             (FrameKind.POWER_DAMAGE, "counterattack_double_knockout", _counterattack_error)):
+        found = [frame for frame in involved.values() if frame.kind is kind]
+        if found:
+            raise res.question(key, f"枠 {sorted(frames)}", error(res, res.frames[min(f.id for f in found)]))
     raise RuntimeError(f"原因の枠が分かれたきぜつ（枠 {sorted(frames)}）の問いが questions にない（エンジンの不具合）")
+
+
+def _damage_target(res: Resolution, fs: FrameState) -> int:
+    """返す効果・特殊能力のダメージの枠がダメージを与えた相手（起こした枠の、ダメージを与えたポケモン）。"""
+    return res.frames[fs.frame.parent].frame.source_pid
+
+
+def _retaliation_error(res: Resolution, fs: FrameState):
+    """W24・S37 の理由の文（v0.13 と同じ文。``effects.retaliation_double_knockout_error``）。返すダメージは、この枠でのせた最終ダメージ。"""
+    target = _damage_target(res, fs)
+    if fs.origin is None or target not in fs.applied:
+        return None  # 理由の文の値がない（questions の表の文を使う）
+    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target)
+
+
+def _counterattack_error(res: Resolution, fs: FrameState):
+    """C18 の理由の文（v0.13 と同じ文。``effects.counterattack_double_knockout_error``）。"""
+    target = _damage_target(res, fs)
+    if target not in fs.applied:
+        return None  # 理由の文の値がない（questions の表の文を使う）
+    return counterattack_double_knockout_error(fs.frame.source_pid, fs.applied[target], target)
 
 
 def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance]]:

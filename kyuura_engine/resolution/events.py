@@ -36,6 +36,14 @@ SPAWNS: dict[FrameKind, frozenset[FrameKind]] = {
     FrameKind.CONFUSION: frozenset(),
 }
 
+# 表にない連鎖が規定から起こらない理由（起こったら止めるときの理由の文。v0.15b。v0.13 の経路の同じ場合の文と同じ前提を書く）
+SPAWN_REFUSALS: dict[tuple[FrameKind, FrameKind], str] = {
+    (FrameKind.RETALIATION, FrameKind.RETALIATION): (
+        "返すダメージを受けるのは番のプレイヤーのポケモンで、その持続する効果がはたらくのは持ち主の相手の番なので、返すダメージで"
+        "ダメージを返す効果がはたらくことはない（番の進み方の前提に反する。v0.13 の S45）"
+    ),
+}
+
 FRAME_DAMAGE_CLASS = {
     FrameKind.ATTACK: DamageClass.ATTACK,
     FrameKind.RETALIATION: DamageClass.ATTACK,
@@ -83,6 +91,10 @@ class FrameState:
     reception: dict[int, bool] = field(default_factory=dict)  # 「とうめい」の結果（1 つのワザで 1 匹 1 回。T4）
     results: dict[str, Any] = field(default_factory=dict)  # 要素の結果（名前 → ``DamageResult``）
     coins: dict[str, Any] = field(default_factory=dict)  # ワザ全体のコイン（名前 → ``CoinFlips``）
+    # v0.15b: 止める理由の文（questions）に書く値。結果を変えない（記録の Trace とは別。理由の文だけに使う）
+    origin: Any = None  # 枠を起こした効果（``catalog.EffectInstance``。ワザの枠は None）
+    applied: dict[int, int] = field(default_factory=dict)  # この枠でのせたダメージ（受けたポケモンの番号 → 最終ダメージ）
+    evaded: dict[int, int] = field(default_factory=dict)  # 「とうめい」で受けなかったダメージの要素（ポケモンの番号 → 最終ダメージ）
 
 
 # ---------------------------------------------------------------- 内部のイベント（記録用）
