@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 from .cards import can_pay_cost
 from .commands import PromoteActive, ResolveDecision, TakePrize
-from .decisions import DECISION_PHASES, check_choices
+from .decisions import DECISION_PHASE_ORDER, check_choices
 from .effects import AttackKey
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
 from .state import Phase
@@ -104,7 +104,7 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
 
 def resolve_decision_choices(state: GameState, cmd: ResolveDecision) -> tuple[int, ...]:
     """``ResolveDecision`` の確認（どの種類の決定にも使える）。確かめ終わった選択を返す。"""
-    require_phase(state, *DECISION_PHASES)
+    require_phase(state, *DECISION_PHASE_ORDER)  # 理由の文の段階の並びは決まった順番（v0.16d）
     player = require_player(cmd.player)
     decision = current_decision(state)
     if decision.player != player:

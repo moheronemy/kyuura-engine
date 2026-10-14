@@ -77,8 +77,11 @@ POST_KNOCKOUT_POWER = "post_knockout_power"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
-# 決定を待っている段階
-DECISION_PHASES = frozenset({Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE, Phase.DECISION})
+# 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。
+# v0.13〜v0.15 は frozenset の並び（文字列のハッシュで決まる）で書いていたので、プロセスごとに文が変わっていた（v0.16d で決めた。
+# 受け付ける段階・例外の種類・コードは同じ。docs/legacy-test-migration-v0.16d.md 5 章）
+DECISION_PHASE_ORDER = (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE, Phase.DECISION)
+DECISION_PHASES = frozenset(DECISION_PHASE_ORDER)
 
 
 def phase_for(kind: str) -> Phase:
