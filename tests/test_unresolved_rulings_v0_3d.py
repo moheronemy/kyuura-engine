@@ -133,10 +133,10 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                         self.assertEqual(set(results.values()), {calculate_confusion_damage(definition, RULES_2000_02_14, 20).final})
                     else:
                         self.assertGreater(len(set(results.values())), 1, results)
-        # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155））は 40、それ以外は 20
-        # （対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはない）
+        # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155）・v0.28 のスリープ（超・弱点 超。
+        # p.164））は 40、それ以外は 20（対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはない）
         doubled = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 40}
-        self.assertEqual(doubled, {"PMCG1-043", "PMCG1-046", "PMCG1-049", "PMCG6-044"})
+        self.assertEqual(doubled, {"PMCG1-043", "PMCG1-045", "PMCG1-046", "PMCG1-049", "PMCG6-044"})
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled))
 
 

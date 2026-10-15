@@ -35,7 +35,7 @@ from kyuura_engine.state import Asleep
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
     KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, build_test_state, coin_events, uids, with_coin_results,
+    WEEDLE, BASE_HAUNTER, LIGHTNING, STARMIE, STARYU, build_test_state, coin_events, uids, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -607,7 +607,7 @@ class ChemicalGasTest(unittest.TestCase):
 
 # 「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザ（T19b。UNRESOLVED_EVADED_EFFECT_COIN）
 EFFECT_COIN_TYPES = (PoisonOnHeads, ParalyzeOnHeads, ConfuseOnHeads)
-EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), **EVOLVED_FROM}
+EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM}  # v0.28: スターミー
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -623,7 +623,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
         names = sorted(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).name_ja for k in keys)
         self.assertEqual(names, sorted(["どくばり", "いとをはく", "しびれごな", "あわ", "れいとうビーム", "ねんりき", "あやしいひかり", "あやしいひかり",
                                         "どくのこな", "どくばり", "ヘドロこうげき", "したでなめる",
-                                        "しめつける"]))  # v0.17a: モンジャラの「しめつける」（ParalyzeOnHeads）
+                                        "しめつける",  # v0.17a: モンジャラの「しめつける」（ParalyzeOnHeads）
+                                        # v0.28: ラプラス・スリープの「あやしいひかり」（ConfuseOnHeads）、スターミーの「スターフリーズ」・カイロスの
+                                        # 「まんりきばさみ」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                        "あやしいひかり", "あやしいひかり", "スターフリーズ", "まんりきばさみ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
