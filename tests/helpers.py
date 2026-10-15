@@ -88,6 +88,24 @@ CHANSEY = "PMCG1-068"  # ラッキー（たね・HP 120・無色・弱点 闘・
 DROWZEE = "PMCG1-045"  # スリープ（たね・HP 50・超・弱点 超・にげる 1。はたく（無）10・あやしいひかり（超超）10。p.164）
 SHELLDER = "PMCG3-012"  # シェルダー（化石の秘密。たね・HP 30・水・弱点 雷・にげる 1。ちょうおんぱ（水）・からをとじる（水）。p.103）
 V0_28_POKEMON = (LAPRAS, STARMIE, GOLDEEN, SEAKING, PINSIR, EXEGGCUTE, JIGGLYPUFF, CHANSEY, DROWZEE, SHELLDER)
+# v0.29: 既存の効果の型の登録だけで加えたポケモン（kyuura データの採用。docs/existing-effect-pokemon-v0.29.md）。どれもたねポケモン。同じ名前の
+# 第1弾のカード（VOLTORB・MACHOP・DRATINI など）とは別の id
+POLIWAG = "PMCG1-024"  # ニョロモ（第1弾。HP 40・水・弱点 草・にげる 1。みずでっぽう（水）10+）
+ROCKET_EKANS = "PMCG4-001"  # アーボ（ロケット団。HP 50・草・弱点 超・にげる 1。かみつく（無）10・どくばり（草草）20）
+ROCKET_ZUBAT = "PMCG4-002"  # ズバット（ロケット団。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。ぶつかる（無）10・かみつく（草無）20）
+ROCKET_ODDISH = "PMCG4-003"  # ナゾノクサ（ロケット団。HP 50・草・弱点 炎・にげる 1。ねむりごな（草）・どくのこな（草）。ダメージの目安なし）
+ROCKET_KOFFING = "PMCG4-005"  # ドガース（ロケット団。HP 40・草・弱点 超・にげる 1。たいあたり（無）10・どくガス（草無）20）
+ROCKET_VOLTORB = "PMCG4-027"  # ビリリダマ（ロケット団。HP 40・雷・弱点 闘・にげる 1。スピードボール（雷）20）
+ROCKET_MACHOP = "PMCG4-040"  # ワンリキー（ロケット団。HP 50・闘・弱点 超・にげる 1。パンチ（無無）20・キック（闘無無）30）
+ROCKET_DRATINI = "PMCG4-051"  # ミニリュウ（ロケット団。HP 40・無色・弱点なし・抵抗力 超 -30・にげる 1。まきつく（無無）10）
+BROCKS_ZUBAT = "PMCG5-001"  # タケシのズバット（HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。つばさでうつ（無）10・どくのきば（草無）20）
+MISTYS_GOLDEEN = "PMCG5-026"  # カスミのトサキント（HP 40・水・弱点 雷・にげる 1。みだれづき（無）10×・ちょうおんぱ（水）。ダメージの目安なし）
+LT_SURGES_MAGNEMITE = "PMCG5-037"  # マチスのコイル（HP 40・雷・弱点 闘・にげる 1。でんきショック（雷）10・たいあたり（無無）20）
+LT_SURGES_VOLTORB = "PMCG5-038"  # マチスのビリリダマ（HP 40・雷・弱点 闘・にげる 1。スピンボール（雷）20×・ダブルスピン（雷無）20×）
+BROCKS_GEODUDE = "PMCG5-046"  # タケシのイシツブテ（HP 50・闘・弱点 草・にげる 1。いしなげ（闘）10×）
+BROCKS_LICKITUNG = "PMCG5-061"  # タケシのベロリンガ（HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 3。ベロではたく（無無）20・たたきつける（無無無）30×）
+V0_29_POKEMON = (POLIWAG, ROCKET_EKANS, ROCKET_ZUBAT, ROCKET_ODDISH, ROCKET_KOFFING, ROCKET_VOLTORB, ROCKET_MACHOP, ROCKET_DRATINI,
+                 BROCKS_ZUBAT, MISTYS_GOLDEEN, LT_SURGES_MAGNEMITE, LT_SURGES_VOLTORB, BROCKS_GEODUDE, BROCKS_LICKITUNG)
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）

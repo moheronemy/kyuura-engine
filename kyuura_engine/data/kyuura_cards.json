@@ -184,6 +184,22 @@
     "PMCG1-045",
     "PMCG3-012"
   ],
+  "pool_v0_29": [
+    "PMCG1-024",
+    "PMCG4-001",
+    "PMCG4-002",
+    "PMCG4-003",
+    "PMCG4-005",
+    "PMCG4-027",
+    "PMCG4-040",
+    "PMCG4-051",
+    "PMCG5-001",
+    "PMCG5-026",
+    "PMCG5-037",
+    "PMCG5-038",
+    "PMCG5-046",
+    "PMCG5-061"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -5914,6 +5930,1211 @@
         "series": "化石の秘密",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg03-014-shellder/"
+      }
+    },
+    {
+      "id": "PMCG1-024",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニョロモ",
+        "en": "Poliwag"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          60
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": "Water Gun"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
+              "en": "Does 10 damage plus 10 more damage for each Water Energy attached to Poliwag but not used to pay for this attack's Energy cost. Extra Water Energy after the 2nd don't count."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-024",
+        "pokemontcg": [
+          "base1-59"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-026-nyoromo/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-026-nyoromo/"
+      }
+    },
+    {
+      "id": "PMCG4-001",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "アーボ",
+        "en": "Ekans"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          23
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": "Poison Sting"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-001",
+        "pokemontcg": [
+          "base5-56"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-001-arbo/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-001-arbo/"
+      }
+    },
+    {
+      "id": "PMCG4-002",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ズバット",
+        "en": "Zubat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          41
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぶつかる",
+              "en": "Ram"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-002",
+        "pokemontcg": [
+          "base5-70"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-003-zubat/",
+      "jp_print": {
+        "level": 9,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-003-zubat/"
+      }
+    },
+    {
+      "id": "PMCG4-003",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナゾノクサ",
+        "en": "Oddish"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          43
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむりごな",
+              "en": "Sleep Powder"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": "The Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-003",
+        "pokemontcg": [
+          "base5-63"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-005-nazonokusa/",
+      "jp_print": {
+        "level": 21,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-005-nazonokusa/"
+      }
+    },
+    {
+      "id": "PMCG4-005",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドガース",
+        "en": "Koffing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          109
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくガス",
+              "en": "Poison Gas"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-005",
+        "pokemontcg": [
+          "base5-58"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-010-dogars/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-010-dogars/"
+      }
+    },
+    {
+      "id": "PMCG4-027",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ビリリダマ",
+        "en": "Voltorb"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          100
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スピードボール",
+              "en": "Speed Ball"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-027",
+        "pokemontcg": [
+          "base5-69"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-028-biriridama/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-028-biriridama/"
+      }
+    },
+    {
+      "id": "PMCG4-040",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ワンリキー",
+        "en": "Machop"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          66
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "パンチ",
+              "en": "Punch"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "キック",
+              "en": "Kick"
+            },
+            "cost": [
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-040",
+        "pokemontcg": [
+          "base5-59"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-042-wanriky/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-042-wanriky/"
+      }
+    },
+    {
+      "id": "PMCG4-051",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミニリュウ",
+        "en": "Dratini"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          147
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まきつく",
+              "en": "Wrap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-051",
+        "pokemontcg": [
+          "base5-53"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-051-miniryu/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-051-miniryu/"
+      }
+    },
+    {
+      "id": "PMCG5-001",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのズバット",
+        "en": "Brock's Zubat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          41
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つばさでうつ",
+              "en": "Wing Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのきば",
+              "en": "Poison Fang"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-001",
+        "pokemontcg": [
+          "gym1-74"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%BA%E3%83%90%E3%83%83%E3%83%88LV.11_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 11,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%BA%E3%83%90%E3%83%83%E3%83%88LV.11_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-026",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのトサキント",
+        "en": "Misty's Goldeen"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          118
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれづき",
+              "en": "Fury Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×10のダメージ。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-026",
+        "pokemontcg": [
+          "gym1-85"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%88%E3%82%B5%E3%82%AD%E3%83%B3%E3%83%88LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 10,
+        "rarity": null,
+        "series": "ハナダシティジム カスミ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%88%E3%82%B5%E3%82%AD%E3%83%B3%E3%83%88LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-037",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのコイル",
+        "en": "Lt. Surge's Magnemite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          81
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-037",
+        "pokemontcg": [
+          "gym1-80"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%B3%E3%82%A4%E3%83%ABLV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "クチバシティジム マチス・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%B3%E3%82%A4%E3%83%ABLV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-038",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのビリリダマ",
+        "en": "Lt. Surge's Voltorb"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          100
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スピンボール",
+              "en": "Spin Ball"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを1枚投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip 1 coin. This attack does 20 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "ダブルスピン",
+              "en": "Double Spin"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip 2 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-038",
+        "pokemontcg": [
+          "gym1-84"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%93%E3%83%AA%E3%83%AA%E3%83%80%E3%83%9ELV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "クチバシティジム マチス・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%93%E3%83%AA%E3%83%AA%E3%83%80%E3%83%9ELV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-046",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのイシツブテ",
+        "en": "Brock's Geodude"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          74
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いしなげ",
+              "en": "Rock Toss"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-046",
+        "pokemontcg": [
+          "gym2-68"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%A4%E3%82%B7%E3%83%84%E3%83%96%E3%83%86LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%A4%E3%82%B7%E3%83%84%E3%83%96%E3%83%86LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-061",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのベロリンガ",
+        "en": "Brock's Lickitung"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          108
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ベロではたく",
+              "en": "Tongue Slap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "たたきつける",
+              "en": "Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-061",
+        "pokemontcg": [
+          "gym1-41"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%83%99%E3%83%AD%E3%83%AA%E3%83%B3%E3%82%AC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%83%99%E3%83%AD%E3%83%AA%E3%83%B3%E3%82%AC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

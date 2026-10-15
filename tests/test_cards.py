@@ -17,7 +17,7 @@ from tests.helpers import (
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
-    COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
+    COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -127,10 +127,13 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             self.assertEqual(definition.is_basic_pokemon, card_id not in (STARMIE, SEAKING), card_id)
         self.assertEqual((pool.get(STARMIE).evolves_from, pool.get(SEAKING).evolves_from), (pool.get(STARYU).name_ja, pool.get(GOLDEEN).name_ja))
+        # v0.29（既存の効果の型の登録だけで加えたポケモン 14 枚。kyuura データの採用。docs/existing-effect-pokemon-v0.29.md）。どれもたねポケモン
+        self.assertEqual(read_extract()["pool_v0_29"], list(V0_29_POKEMON))
+        self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in V0_29_POKEMON))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

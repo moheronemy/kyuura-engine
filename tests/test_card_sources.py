@@ -26,6 +26,7 @@ from unittest import mock
 from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
+from tests.helpers import V0_29_POKEMON
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -76,6 +77,7 @@ def valid_case():
         "description": "テストのための記録",
         "policy": dict(cs.POLICY),
         "cards": {
+            **copy.deepcopy(cs.load_sources()["cards"]),  # 同梱の採用の記録（v0.29 の 14 枚）はそのまま
             TANGELA: {
                 "basis": "kyuura_data",
                 "name_ja": "モンジャラ",
@@ -140,21 +142,33 @@ def run(case) -> list[str]:
 
 class ShippedRecordTest(unittest.TestCase):
     def test_shipped_records_follow_the_policy(self):
-        """同梱の記録は方針と合う。2026-10-14 までに登録したカードは、どれも過去の原典照合の記録で登録したので、採用の記録はまだない。"""
+        """同梱の記録は方針と合う。2026-10-14 までに登録したカードは、どれも過去の原典照合の記録で登録した。採用の記録は v0.29 の 14 枚
+        （docs/existing-effect-pokemon-v0.29.md）で、どれも pcg-search.com の同じ版のページと照合した（違いなし）。"""
         self.assertEqual(cs.problems(), [])
         sources = cs.load_sources()
         self.assertEqual(sources["format"], cs.FORMAT)
         self.assertEqual(sources["policy"]["since"], "2026-10-15")
-        self.assertEqual(sources["cards"], {})
-        self.assertEqual(cs.load_links()["latest_descriptions"]["adopted_printed_text"], [])
+        self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON))
+        for card_id, record in sources["cards"].items():
+            with self.subTest(card=card_id):
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, COMMIT))
+                self.assertEqual(record["kyuura_records"], [])  # 研究の基準のコミットに、このカードを指す kyuura の記録はない
+                self.assertEqual(set(record["play_text"].values()) - {cs.PRINTED_TEXT}, set())
+                [check] = record["external_checks"]
+                self.assertEqual((check["result"], check["differences"], check["checked_on"]), ("match", [], "2026-10-15"))
+        self.assertEqual(len(cs.load_links()["latest_descriptions"]["adopted_printed_text"]), 14)
 
     def test_history_is_kept(self):
-        """過去の原典照合の記録（card_verification.json）は、登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。"""
+        """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
+        v0.29 の採用の記録で登録したカードは、過去の原典照合の記録に入れない。"""
         verification = read_verification()
+        sources = cs.load_sources()
         registered = cs.registered_cards(DEFAULT_EFFECTS)
-        self.assertLessEqual(registered, set(verification["cards"]))
+        self.assertLessEqual(registered - set(V0_29_POKEMON), set(verification["cards"]))
+        self.assertFalse(set(V0_29_POKEMON) & set(verification["cards"]))
         for card_id in registered:
-            self.assertEqual(cs.registration_basis(card_id, verification, cs.load_sources()), cs.GUIDEBOOK_RECORD)
+            expected = cs.KYUURA_DATA if card_id in V0_29_POKEMON else cs.GUIDEBOOK_RECORD
+            self.assertEqual(cs.registration_basis(card_id, verification, sources), expected, card_id)
 
     def test_command_line(self):
         out, err = io.StringIO(), io.StringIO()
@@ -400,7 +414,8 @@ class ResearchCommitTest(unittest.TestCase):
         section["adopted_printed_text"].append(f"{HAUNTER}/attack/0")
         section["registered"][f"{HAUNTER}/attack/1"] = ld_id
         section["kyuura_records_not_registered"].remove(ld_id)
-        sources = {"format": cs.FORMAT, "description": "テストのための記録", "policy": dict(cs.POLICY), "cards": {HAUNTER: {
+        sources = {"format": cs.FORMAT, "description": "テストのための記録", "policy": dict(cs.POLICY), "cards": {
+            **copy.deepcopy(cs.load_sources()["cards"]), HAUNTER: {
             "basis": "kyuura_data", "name_ja": "ゴースト", "status": "adopted", "kyuura_commit": COMMIT, "recorded_on": "2026-10-16",
             "kyuura_records": [f"CC-{HAUNTER}-P160", ld_id], "play_text": {"attack/0": cs.PRINTED_TEXT, "attack/1": ld_id},
             "external_checks": [], "issues": []}}}

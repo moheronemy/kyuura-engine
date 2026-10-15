@@ -613,4 +613,18 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 - kyuura の `data/cards.json`（と同じデータの `cards.csv`）を、カードを実装するための信頼できる基本データとして扱います。カードごとの原典照合の記録がないことだけでは、実装を止めません。
 - 外部照合は pcg-search.com で行い、`kyuura_engine/data/card_sources.json` の `external_checks` に、URL・確認日・対象の版（収録・カード番号）・結果・照合した欄・違いを残します。対象の版がない・アクセスできなかったことも残します。違いを見つけても写しは直さず、kyuura への報告事項にします。
 - ガイドブックの読み直しは、通常のカード実装の手順から外しました。この文書のここまでの「『オフィシャルブック2000』と照合した」「画像で読んだ」は、2026-10-14 までの各版の作業の記録（履歴）です。
-- カードの写し（`ecb2d69`）・研究の基準（`3f34908`）・`card_verification.json` は変えていません。採用の記録はまだありません。
+- カードの写し（`ecb2d69`）・研究の基準（`3f34908`）・`card_verification.json` は変えていません。採用の記録はまだありません（v0.29 で 14 件を加えた。下の章）。
+
+## v0.29 で加えたポケモン 14 枚（kyuura データの採用・既存の効果の型の登録だけ）
+
+写しを作り直しました（`pool_v0_29`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 81 枚から 95 枚になり、ほかのカードの記録は変わっていません。
+- 2026-10-15 からのカードデータの方針（[card-data-policy.md](card-data-policy.md)）で加えた最初のカードです。根拠は `kyuura_engine/data/card_sources.json` の採用の記録（14 件。`basis: kyuura_data`・`status: adopted`・採用したデータのコミット `ecb2d69`）と、pcg-search.com の同じ版のページとの照合（14 件とも `match`。URL・版・照合した欄は [existing-effect-pokemon-v0.29.md](existing-effect-pokemon-v0.29.md) 3 章）です。『オフィシャルブック2000』は読んでいないので、`card_verification.json` には加えていません。
+- 研究の基準のコミットに、14 枚を指す kyuura の最新の説明（LD-）・エラッタ・裁定（CR-）・照合（CC-）・論点（UQ-）はありません（採用の記録の `kyuura_records` は空。`scripts/check_research_links.py` が照らす）。説明文のあるワザ 14 は、処理に使う文面を kyuura の印刷の文面にし、`research_links.json` の `latest_descriptions.adopted_printed_text` に挙げました。
+- ニョロモ（PMCG1-024）のみずでっぽうは、カメックスの記録 LD-PMCG1-032-ATK0 と kyuura の再録の分類（docs/cards/reprints.md の「書き方だけ」）にしたがって既存の `ExtraEnergyDamage` で登録しました（採用の記録の `notes`）。
+- 外部照合で違いは見つからなかったので、kyuura への報告事項はありません。カードの記録がないこと（CC-・LD-）は、方針により報告事項にしていません（kyuura のデータを信頼できる基本データとして採用した）。
+- 写しのデッキの検証用に、検証用デッキ `GW29`・`LF29`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+

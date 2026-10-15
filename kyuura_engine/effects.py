@@ -3558,6 +3558,11 @@ class EffectRegistry:
         }
 
 
+# 2026-10-15 からのカードデータの方針（docs/card-data-policy.md）で、kyuura の印刷の文面を処理に使う文面にした登録の出典（v0.29 から。
+# scripts/check_card_sources.py の PRINTED_TEXT_SOURCE と同じ）
+_KYUURA_PRINTED_TEXT = "kyuura data/cards.json"
+
+
 def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, AttackEntry]:
     return {AttackKey(card_id, index): AttackEntry(DAMAGE_ONLY, name) for card_id, index, name in entries}
 
@@ -3616,6 +3621,18 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG2-018", 1, "ハサミギロチン"),  # カイロス p.58
         ("PMCG2-035", 1, "はたく"),  # プリン p.225（kyuura の notes のとおり 2 つめは「はたく」）
         ("PMCG1-045", 0, "はたく"),  # スリープ p.164
+        # v0.29: 既存の効果の型の登録だけで加えたポケモン（kyuura データの採用。docs/existing-effect-pokemon-v0.29.md。記録は
+        # card_sources.json）。どれも kyuura の写しで説明文がなく、pcg-search.com の同じ版のページでも説明文がない
+        ("PMCG4-001", 0, "かみつく"),  # アーボ（ロケット団）
+        ("PMCG4-002", 0, "ぶつかる"),  # ズバット（ロケット団）
+        ("PMCG4-002", 1, "かみつく"),
+        ("PMCG4-005", 0, "たいあたり"),  # ドガース（ロケット団）
+        ("PMCG4-027", 0, "スピードボール"),  # ビリリダマ（ロケット団）
+        ("PMCG4-040", 0, "パンチ"),  # ワンリキー（ロケット団）
+        ("PMCG4-040", 1, "キック"),
+        ("PMCG5-001", 0, "つばさでうつ"),  # タケシのズバット
+        ("PMCG5-037", 1, "たいあたり"),  # マチスのコイル
+        ("PMCG5-061", 0, "ベロではたく"),  # タケシのベロリンガ
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -4127,6 +4144,124 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="コインを投げて「おもて」なら、次の相手の番にこのカードが受けるダメージは0になる。(ダメージ以外の効果はそのまま)",
             play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
             source="P43 p.103",
+        ),
+        # v0.29: 既存の効果の型の登録だけで加えたポケモン（kyuura データの採用。docs/existing-effect-pokemon-v0.29.md・docs/card-data-policy.md）。
+        # kyuura の研究の基準のコミットに、どのカードの最新の説明（LD-）・エラッタ・裁定もないので、処理に使う文面は kyuura の印刷の文面
+        # （play_text_ja = text_ja。出典 _KYUURA_PRINTED_TEXT）。型とパラメーターは、既存の登録の同じ文面・同じ形のワザと同じ
+        # ニョロモ（第1弾）。みずでっぽう（水。10+）: 印刷の文面はカメックスの「ハイドロポンプ」と同じ。kyuura は同じ文面を LD-PMCG1-032-ATK0 で
+        # 「何に対して追加したエネルギーを数えるかを書かない」とし、ニョロモのイントロパック（ゼニガメデッキ）の版の文面「ワザに必要なエネルギー
+        # よりも多く…」との違いを「書き方だけ」と分類している（docs/cards/reprints.md）。必要なエネルギーは「水」1 個だけ
+        AttackKey("PMCG1-024", 0): AttackEntry(
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
+            play_text_ja="「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # アーボ（ロケット団）。どくばり（草草）20: ビードルの「どくばり」と同じ文面
+        AttackKey("PMCG4-001", 1): AttackEntry(
+            PoisonOnHeads(),
+            "どくばり",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナゾノクサ（ロケット団）。ねむりごな（草。ダメージの目安なし）: パラスの「キノコのほうし」と同じ文面
+        AttackKey("PMCG4-003", 0): AttackEntry(
+            PutToSleep(),
+            "ねむりごな",
+            text_ja="相手を「ねむり」状態にする。",
+            play_text_ja="相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナゾノクサ。どくのこな（草。ダメージの目安なし）: ロケット団のベトベターの「どくガス」と同じ文面（ダメージの目安のある「どくのこな」の
+        # PoisonOpponent とは別）
+        AttackKey("PMCG4-003", 1): AttackEntry(
+            PoisonWithoutDamage(),
+            "どくのこな",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ドガース（ロケット団）。どくガス（草無）20: コインを投げる（ダメージの目安のない、ロケット団のベトベターの「どくガス」とは別の文面）
+        AttackKey("PMCG4-005", 1): AttackEntry(
+            PoisonOnHeads(),
+            "どくガス",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ミニリュウ（ロケット団）。まきつく（無無）10: キャタピーの「いとをはく」と同じ文面
+        AttackKey("PMCG4-051", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "まきつく",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのズバット。どくのきば（草無）20
+        AttackKey("PMCG5-001", 1): AttackEntry(
+            PoisonOnHeads(),
+            "どくのきば",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのトサキント。みだれづき（無。10×）: コイン 2 枚の「おもて」の数×10（ドードーの「みだれづき」と同じパラメーター）
+        AttackKey("PMCG5-026", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "みだれづき",
+            text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            play_text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのトサキント。ちょうおんぱ（水。ダメージの目安なし）: シェルダーの「ちょうおんぱ」と同じ文面
+        AttackKey("PMCG5-026", 1): AttackEntry(
+            ConfuseOnHeadsWithoutDamage(),
+            "ちょうおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのコイル。でんきショック（雷）10
+        AttackKey("PMCG5-037", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "でんきショック",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのビリリダマ。スピンボール（雷。20×）: コイン 1 枚の「おもて」の数×20
+        AttackKey("PMCG5-038", 0): AttackEntry(
+            CoinFlipDamage(coins=1, damage_per_heads=20),
+            "スピンボール",
+            text_ja="コインを1枚投げ、「おもて」の数×20のダメージ。",
+            play_text_ja="コインを1枚投げ、「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのビリリダマ。ダブルスピン（雷無。20×）: コイン 2 枚の「おもて」の数×20
+        AttackKey("PMCG5-038", 1): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=20),
+            "ダブルスピン",
+            text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのイシツブテ。いしなげ（闘。10×）: コイン 3 枚の「おもて」の数×10
+        AttackKey("PMCG5-046", 0): AttackEntry(
+            CoinFlipDamage(coins=3, damage_per_heads=10),
+            "いしなげ",
+            text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            play_text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのベロリンガ。たたきつける（無無無。30×）: コイン 2 枚の「おもて」の数×30
+        AttackKey("PMCG5-061", 1): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=30),
+            "たたきつける",
+            text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(
