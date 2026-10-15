@@ -30,6 +30,24 @@ def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:
     return tuple(drawn)
 
 
+def discard_hand(state: GameState, player: int) -> tuple[int, ...]:
+    """自分の手札をすべて、同じ uid のまま手札の並びの順に自分のトラッシュに置く（v0.19。オーキドはかせの「あなたの手札をすべてトラッシュ
+    する」。p.255）。トラッシュしたカードを返す（手札が 0 枚なら空）。
+
+    使っている最中のトレーナーカードは手札にない（p.310 の手順 1 で手札から出している。``state.trainer_in_use``）ので、含まない。
+    トラッシュにはカードの順番がない（p.312）。ログの ``"discard_hand"`` の ``cards`` は、トラッシュに置いたカードで、全員に見える
+    （トラッシュは公開の情報）。
+    """
+    p = state.players[player]
+    if any(state.cards[uid].owner != player for uid in p.hand):
+        raise RuntimeError(f"プレイヤー {player} の手札に持ち主の違うカードがある（エンジンの不具合）")
+    discarded = tuple(p.hand)
+    p.hand.clear()
+    p.discard.extend(discarded)
+    state.add_event("discard_hand", player=player, cards=discarded)
+    return discarded
+
+
 def attach_energy_from_hand(state: GameState, player: int, energy: int, pokemon: PokemonInPlay) -> None:
     """手札のエネルギーカード ``energy`` を、場のポケモン ``pokemon`` につける（同じ uid のまま、手札から取りのぞいて
     ``pokemon.energy`` の最後に加える。v0.6）。

@@ -137,6 +137,7 @@ CHARIZARD = "PMCG1-021"
 POTION = "PMCG1-071"  # きずぐすり
 SWITCH = "PMCG1-073"  # ポケモンいれかえ
 BILL = "PMCG1-074"  # マサキ
+PROFESSOR_OAK = "PMCG1-077"  # オーキドはかせ（v0.19 で対応。手札をすべてトラッシュし、その後 7 枚引く。p.255）
 PLUSPOWER = "PMCG1-081"  # プラスパワー（v0.2c で対応）
 DEFENDER = "PMCG1-079"  # ディフェンダー（v0.2e で対応）
 SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）

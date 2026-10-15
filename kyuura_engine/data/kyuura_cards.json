@@ -151,6 +151,9 @@
   "pool_v0_18c": [
     "PMCG6-044"
   ],
+  "pool_v0_19": [
+    "PMCG1-077"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4633,6 +4636,43 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-077",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "オーキドはかせ",
+        "en": "Professor Oak"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の手札を全部すてて、新たに7枚のカードを自分の山札から引いて手札にする。",
+          "en": "Discard your hand, then draw 7 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-077",
+        "pokemontcg": [
+          "base1-88"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-073-ookidohakase/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-073-ookidohakase/"
       }
     },
     {

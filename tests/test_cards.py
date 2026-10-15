@@ -16,7 +16,7 @@ from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
-    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE,
+    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -40,7 +40,7 @@ class CardPoolTest(unittest.TestCase):
         # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
-        self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
+        self.assertEqual(trainers, [POTION, SWITCH, BILL, PROFESSOR_OAK, DEFENDER, PLUSPOWER])  # オーキドはかせは v0.19（pool_v0_19）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -93,6 +93,9 @@ class CardPoolTest(unittest.TestCase):
         # v0.18c（たおれこむと同じ実装の型で加えたナツメのヤドン。docs/kernel-reuse-v0.18c.md）
         self.assertEqual(read_extract()["pool_v0_18c"], [SABRINAS_SLOWPOKE])
         self.assertTrue(pool.is_playable(SABRINAS_SLOWPOKE) and pool.get(SABRINAS_SLOWPOKE).is_basic_pokemon)
+        # v0.19（既存のトレーナーの登録・ドローの処理で加えたオーキドはかせ。docs/professor-oak-v0.19.md）
+        self.assertEqual(read_extract()["pool_v0_19"], [PROFESSOR_OAK])
+        self.assertTrue(pool.is_playable(PROFESSOR_OAK) and pool.get(PROFESSOR_OAK).category == "trainer")
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,

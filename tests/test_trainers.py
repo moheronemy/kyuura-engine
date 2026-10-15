@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    BILL, DEFENDER, FIRE, GROWLITHE, MACHOP, PLUSPOWER, PONYTA, POTION, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
+    BILL, DEFENDER, FIRE, GROWLITHE, MACHOP, PLUSPOWER, PONYTA, POTION, PROFESSOR_OAK, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
     build_test_state,
 )
 
@@ -67,8 +67,8 @@ class TrainerRegistryTest(unittest.TestCase):
     def test_default_registry_has_exactly_the_registered_cards(self):
         # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）。
         # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。v0.2e でディフェンダーを加えた。
-        # トレーナーの登録は v0.2e と同じ
-        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, DEFENDER, PLUSPOWER))
+        # トレーナーの登録は v0.2e から v0.18 まで同じ。v0.19 でオーキドはかせを加えた（登録表の id は v0.17・v0.18 と同じく変えていない）
+        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), (POTION, SWITCH, BILL, PROFESSOR_OAK, DEFENDER, PLUSPOWER))
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -79,7 +79,7 @@ class TrainerRegistryTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")
         implementations = {DEFAULT_EFFECTS.trainer_entry(c).effect.implementation_id for c in DEFAULT_EFFECTS.trainer_ids()}
         self.assertEqual(implementations, {"draw_cards", "remove_damage_counters", "switch_with_bench", "attached_attack_bonus",
-                                           "attached_damage_reduction"})
+                                           "attached_damage_reduction", "discard_hand_and_draw"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -143,7 +143,7 @@ class TrainerRegistryTest(unittest.TestCase):
         added = DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-014", 1): AttackEntry(DAMAGE_ONLY, "ひのこ")})
         self.assertEqual(added.trainer_ids(), trainers)  # ワザを加えてもトレーナーの登録は残る
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
-        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL, DEFENDER, PLUSPOWER))  # PLUSPOWER は v0.2c、DEFENDER は v0.2e
+        self.assertEqual(removed.trainer_ids(), (SWITCH, BILL, PROFESSOR_OAK, DEFENDER, PLUSPOWER))  # PLUSPOWER は v0.2c、DEFENDER は v0.2e、PROFESSOR_OAK は v0.19
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

@@ -50,6 +50,8 @@
 - トレーナー（v0.2b）: マサキ ``DrawCards``、きずぐすり ``RemoveDamageCounters``、
   ポケモンいれかえ ``SwitchWithBench``。処理は『ポケモンカードオフィシャルブック2000』p.254 の
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
+- トレーナー（v0.19）: オーキドはかせ ``DiscardHandAndDraw``（p.255 の最新の説明。手札をすべてトラッシュし、その後 7 枚引く。
+  docs/professor-oak-v0.19.md）
 - つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
@@ -88,7 +90,7 @@ from .decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, SELECT_POK
 from .errors import IllegalActionError, UnsupportedError
 from .persistent import damage_prevention, remove_persistent_effects, retaliation
 from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
-from .zones import attach_energy_from_hand, attach_trainer, draw_cards, return_discard_to_hand
+from .zones import attach_energy_from_hand, attach_trainer, discard_hand, draw_cards, return_discard_to_hand
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition, Power
@@ -1895,6 +1897,30 @@ class DrawCards(TrainerEffect):
         draw_cards(state, use.player, min(self.count, len(deck)))
 
 
+@dataclass(frozen=True)
+class DiscardHandAndDraw(TrainerEffect):
+    """手札をすべてトラッシュし、その後、山札からカードを ``count`` 枚引いて手札にする（オーキドはかせ。p.255 の最新の説明「あなたの
+    手札をすべてトラッシュする。その後、山札からカードを7枚引いて、手札にする。」。v0.19。docs/professor-oak-v0.19.md）。
+
+    - 使っているこのカードは、p.310 の手順 1 で手札から出している（``state.trainer_in_use``）ので、トラッシュする手札に含まない。
+      使い終わったらエンジンがトラッシュする（``engine._finish_trainer``。トラッシュにカードの順番はない。p.312）。
+    - トラッシュ → 引くの順（最新の説明の「その後」）。引くのは自分の山札の一番上から（p.312）。
+    - 使うための条件はない（最新の説明）。手札（このカードを除く）が 0 枚でも使え、トラッシュは 0 枚（p.255 の解説「手札が
+      「オーキドはかせ」1枚になったときが最高の場合」）。
+    - 山札が足りなくても負けにはならず、引けるだけ引く。山札が 0 枚なら 0 枚（p.312。マサキと同じ規定）。負けになるのは、番の
+      最初に引けないとき（p.309, p.312）。
+    - 引いたカードを相手に見せる必要はない（p.312）。トラッシュしたカードは公開。乱数は使わない。決定を出さない。
+    """
+
+    count: int
+    implementation_id = "discard_hand_and_draw"
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        discard_hand(state, use.player)
+        deck = state.players[use.player].deck
+        draw_cards(state, use.player, min(self.count, len(deck)))
+
+
 def _select_own_pokemon_problems(
     decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = ()
 ) -> list[str]:
@@ -3402,6 +3428,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             "山札からカードを2枚引いて、手札に加える。",
             "山札からカードを2枚引いて、手札に加える。",
             "P43 p.254",
+        ),
+        # オーキドはかせ（v0.19）p.255。図版の文面は kyuura の写しと同じ。最新の説明は「すべてトラッシュする。その後、…7枚引いて、手札に
+        # する。」（docs/professor-oak-v0.19.md）
+        "PMCG1-077": TrainerEntry(
+            DiscardHandAndDraw(count=7),
+            "オーキドはかせ",
+            "自分の手札を全部すてて、新たに7枚のカードを自分の山札から引いて手札にする。",
+            "あなたの手札をすべてトラッシュする。その後、山札からカードを7枚引いて、手札にする。",
+            "P43 p.255",
         ),
         "PMCG1-079": TrainerEntry(
             AttachedDamageReduction(amount=20),

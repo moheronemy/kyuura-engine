@@ -194,6 +194,11 @@ def check(kyuura: Path) -> list[str]:
     listed_cc = {cc_id for group in ("engine_verified", "not_in_engine") for ids in links["card_checks"][group].values() for cc_id in ids}
     if listed_cc != set(cc):
         problems.append(f"照合の記録の集合が違う: kyuura だけ {sorted(set(cc) - listed_cc)}")
+    # kyuura に照合の記録がないとしたカード（報告事項）に、kyuura の記録ができていたら、一覧を直す（v0.19）
+    for card in links["card_checks"]["engine_verified_without_kyuura_record"]:
+        found = sorted(x["id"] for x in checks if x["card_id"] == card)
+        if found:
+            problems.append(f"kyuura に照合の記録がないとしたカード {card} に、kyuura の記録 {found} がある")
     # kyuura がエンジンの照合の記録を取り込んだ記録（import_provenance）は、エンジンの記録とページ・原典の確認日が同じ
     verification = json.loads((ROOT / "kyuura_engine" / "data" / "card_verification.json").read_text(encoding="utf-8"))["cards"]
     for record in checks + descriptions:

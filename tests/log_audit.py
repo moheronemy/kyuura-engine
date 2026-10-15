@@ -922,6 +922,12 @@ def log_problems(state) -> list[str]:
             for uid in e["discarded"]:
                 energy[pid].remove(uid)
                 discard[e["player"]].append(uid)
+        elif kind == "discard_hand":
+            # v0.19: トレーナー（オーキドはかせ）の効果で、手札をすべてトラッシュする。使っているカードは手札から出ている（p.310）
+            if sorted(e["cards"]) != sorted(hand[e["player"]]):
+                problems.append(f"{e['turn']} 番にトラッシュした手札 {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札と違う")
+            discard[e["player"]].extend(e["cards"])
+            hand[e["player"]] = []
         elif kind == "discard_trainer":
             discard[e["player"]].append(e["card"])
         elif kind == "discard_attached_trainer":
