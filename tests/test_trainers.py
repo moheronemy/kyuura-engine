@@ -97,9 +97,23 @@ class TrainerRegistryTest(unittest.TestCase):
             self.assertEqual((entry.name_ja, entry.text_ja), (definition.name_ja, definition.trainer_text_ja))
 
     def test_every_registration_follows_the_verified_latest_description(self):
-        """登録した実装がしたがう文面（play_text_ja）は、p.254 で照合した「最新の説明」と同じ。"""
-        records = read_verification()["cards"]
+        """登録した実装がしたがう文面（play_text_ja）は、照合した「最新の説明」と同じ（v0.2b の 3 枚は p.254）。
+
+        2026-10-15 からの方針（docs/card-data-policy.md）で kyuura データの採用の記録（card_sources.json）によって登録したトレーナーは、
+        ガイドブックの照合の記録を求めず、採用の記録の play_text と合うことを scripts/check_card_sources.py が確かめる。登録の根拠の記録は
+        どちらか一方だけ。
+        """
+        from scripts import check_card_sources as card_sources
+
+        verification = read_verification()
+        records = verification["cards"]
+        sources = card_sources.load_sources()
         for card_id in DEFAULT_EFFECTS.trainer_ids():
+            basis = card_sources.registration_basis(card_id, verification, sources)
+            self.assertIn(basis, (card_sources.GUIDEBOOK_RECORD, card_sources.KYUURA_DATA), card_id)
+            if basis == card_sources.KYUURA_DATA:
+                self.assertIn("trainer", sources["cards"][card_id]["play_text"], card_id)
+                continue
             record = records[card_id]
             entry = DEFAULT_EFFECTS.trainer_entry(card_id)
             self.assertIn(record["status"], ("一致", "不一致あり"))

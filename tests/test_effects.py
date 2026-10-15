@@ -64,21 +64,32 @@ class DefaultRegistryTest(unittest.TestCase):
             self.assertIsNone(DEFAULT_EFFECTS.attack_problem(key.card_id, attack), key)
 
     def test_every_registration_is_backed_by_a_verification_record(self):
-        """登録したワザのカードは、『オフィシャルブック2000』と照合した記録がある（照合してから登録する）。"""
+        """登録したワザのカードは、登録の根拠の記録をちょうど 1 つ持つ: 『オフィシャルブック2000』と照合した記録（card_verification.json。
+        2026-10-14 までに登録したカード。履歴）か、kyuura データの採用の記録（card_sources.json の adopted。2026-10-15 からの方針。
+        docs/card-data-policy.md。採用の記録の中身は scripts/check_card_sources.py と tests/test_card_sources.py が確かめる）。"""
         from kyuura_engine.cards import read_verification
+        from scripts import check_card_sources as card_sources
 
-        records = read_verification()["cards"]
+        verification = read_verification()
+        sources = card_sources.load_sources()
         for key in DEFAULT_EFFECTS.attack_keys():
-            self.assertIn(records.get(key.card_id, {}).get("status"), ("一致", "不一致あり"), key)
+            basis = card_sources.registration_basis(key.card_id, verification, sources)
+            self.assertIn(basis, (card_sources.GUIDEBOOK_RECORD, card_sources.KYUURA_DATA), key)
+            if basis == card_sources.GUIDEBOOK_RECORD:
+                self.assertIn(verification["cards"][key.card_id]["status"], ("一致", "不一致あり"), key)
 
     def test_attacks_with_text_follow_the_verified_latest_description(self):
         """説明文のあるワザの登録（v0.2d から）は、照合した説明文・最新の説明・出典を持ち、照合の記録と合う。
 
-        説明文のないワザ（DamageOnly）の登録は、どれも None のまま。
+        説明文のないワザ（DamageOnly）の登録は、どれも None のまま。kyuura データの採用の記録（2026-10-15 からの方針）で登録したワザは、
+        採用の記録の play_text（根拠が kyuura の印刷の文面か kyuura の記録の id）と合うことを scripts/check_card_sources.py が確かめる
+        （ガイドブックのページを求めない）。
         """
         from kyuura_engine.cards import read_verification
+        from scripts import check_card_sources as card_sources
 
         records = read_verification()["cards"]
+        sources = card_sources.load_sources()["cards"]
         pool = load_card_pool()
         with_text = []
         for key in DEFAULT_EFFECTS.attack_keys():
@@ -89,6 +100,9 @@ class DefaultRegistryTest(unittest.TestCase):
                 self.assertEqual((entry.play_text_ja, entry.source), (None, None), key)
                 continue
             with_text.append(key)
+            if key.card_id not in records:
+                self.assertIn(f"attack/{key.attack_index}", sources[key.card_id]["play_text"], key)
+                continue
             record = records[key.card_id]
             latest = record["latest_description_ja"]
             if isinstance(latest, dict):  # 説明文のあるワザが 2 つあるカード（v0.4b）は、ワザの位置ごと

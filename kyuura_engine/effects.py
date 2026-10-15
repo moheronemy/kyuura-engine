@@ -1895,8 +1895,10 @@ class AttackEntry:
 
     - ``text_ja``: 登録したときに照合した kyuura の写しの説明文（データが変わったら使えなくなる。
       印刷の文面で、処理の根拠ではない）
-    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」）
-    - ``source``: ``play_text_ja`` の出典（誌面のページ）
+    - ``play_text_ja``: 実装がしたがう文面（2026-10-14 までの登録は『オフィシャルブック2000』の「最新の説明」。2026-10-15 からの方針
+      （docs/card-data-policy.md）で kyuura データの採用によって登録したものは、kyuura の最新の説明（LD-）・エラッタか、それがなければ
+      kyuura の印刷の文面）
+    - ``source``: ``play_text_ja`` の出典（誌面のページ。採用の記録で登録したものは、kyuura の記録の id か ``kyuura data/cards.json``）
     """
 
     effect: AttackEffect
@@ -2744,8 +2746,9 @@ class TrainerEntry:
     - ``effect``: 実装
     - ``name_ja``・``text_ja``: 登録したときに照合した kyuura の写しの名前・文面（データが変わったら
       使えなくなる。印刷の文面で、処理の根拠ではない）
-    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」）
-    - ``source``: ``play_text_ja`` の出典（誌面のページ）
+    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」。2026-10-15 からの方針の採用の記録で登録した
+      ものは ``AttackEntry`` と同じ）
+    - ``source``: ``play_text_ja`` の出典（誌面のページ。採用の記録で登録したものは ``AttackEntry`` と同じ）
     """
 
     effect: TrainerEffect
@@ -3381,8 +3384,9 @@ class PowerEntry:
     - ``effect``: 実装
     - ``name_ja``・``text_ja``: 登録したときに照合した kyuura の写しのパワーの名前・印刷の文面（データが変わったら使えなくなる。
       処理の根拠ではない）
-    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」）
-    - ``source``: ``play_text_ja`` の出典（誌面のページ）
+    - ``play_text_ja``: 実装がしたがう文面（『オフィシャルブック2000』の「最新の説明」。2026-10-15 からの方針の採用の記録で登録した
+      ものは ``AttackEntry`` と同じ）
+    - ``source``: ``play_text_ja`` の出典（誌面のページ。採用の記録で登録したものは ``AttackEntry`` と同じ）
     """
 
     effect: PowerEffect

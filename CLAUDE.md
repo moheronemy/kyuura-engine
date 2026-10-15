@@ -11,26 +11,43 @@
 ## 研究資料の参照コミットを固定する
 
 - 参照する kyuura のコミットは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` です（scripts/extract_kyuura_cards.py の `KYUURA_COMMIT`）。
-- 研究の基準（裁定・論点・最新の説明・照合の記録を照らすコミット）は `3f349085645f47d0649a6cacece3680caeae50bf` です（ブランチ `claude/cool-ptolemy-5vtgsg`。kyuura の既定のブランチには取り込まれていない。`kyuura_engine/data/research_links.json` の `research_commit`）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。docs/research-alignment-v0.18a.md）で、2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ、差分を確かめてから上げました（docs/verified-record-reuse.md）。写しのコミットと分けているのは、状態がカードデータの元のコミットを持ち、上げると固定した参照データが変わるからです。エンジンが使う項目が同じことは `scripts/check_research_links.py`（v0.18e）が確かめます。
+- 研究の基準（裁定・論点・最新の説明・照合の記録を照らすコミット）は `3f349085645f47d0649a6cacece3680caeae50bf` です（ブランチ `claude/cool-ptolemy-5vtgsg`。kyuura の既定のブランチにも、v0.25 までの記録の取り込み（kyuura の PR #1）で含まれた。`kyuura_engine/data/research_links.json` の `research_commit`）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。docs/research-alignment-v0.18a.md）で、2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ、差分を確かめてから上げました（docs/verified-record-reuse.md）。写しのコミットと分けているのは、状態がカードデータの元のコミットを持ち、上げると固定した参照データが変わるからです。エンジンが使う項目が同じことは `scripts/check_research_links.py`（v0.18e）が確かめます。
 - カードデータの写し `kyuura_engine/data/kyuura_cards.json` は手で編集せず、`python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` で作り直します。
 - 参照するコミットを上げるときは、写しを作り直し、変わった項目に対応するテストと docs を見直します。
 
+## カードデータの信頼と照合の方針（2026-10-15〜）
+
+カードの実装を速めるための方針です。docs/card-data-policy.md（手順・記録の形式・検査）と kyuura の docs/engine-readiness.md 12 章に同じ方針を書きました。この節と食い違う古い指示（下の「照合済みの記録の再利用」の原典に戻る手順・各版の文書の「画像で読み直した」など）より、この節が優先します。
+
+1. **kyuura の `data/cards.json`・`cards.csv` を、カードを実装するための信頼できる基本データとして扱います。** カードごとの原典照合の記録（kyuura の CC-）がないことだけを理由に、実装を止めたり原典を開いたりしないでください。JSON と CSV が一致することは、独立した原典照合とは数えません（同じデータの別の形式）。
+2. **カード情報の外部照合には pcg-search.com を使います。** カード名だけでなく、収録・カード番号（サイトの一覧の番号 `list_number`）で対象の版を決めます。既存の照合結果は再利用し、同じカードを毎回調べ直さないでください。kyuura の日本語の文面が pcg-search.com の転記のカード（写しの `ja_text_source`。今はプリン PMCG2-035）は、日本語の欄を同じサイトと照らしても独立した照合になりません。
+3. **公式ガイドブック（『オフィシャルブック2000』。通称 Silver Bible）のキャプチャ・OCR・画像の読み直しは、通常のカード実装の手順に入れません。** 情報の不足や矛盾があっても、自動的にガイドブックの調査に進まないでください（読み直すのは利用者が明示的に依頼したときだけ）。
+4. **すでに記録されている最新の説明・エラッタ・裁定は、引き続き使います。** 印刷の文面と、処理に適用する説明（`play_text_ja`）を区別します。pcg-search.com のカードの画像だけを根拠に、既存の裁定や最新の説明を取り消さないでください。
+5. **pcg-search.com に対象の版がない、またはアクセスできない場合は、その事実を記録します。** 外部照合ができなかったことだけでは、kyuura のデータによる実装を妨げません。挙動に影響する具体的な矛盾があるカードは、論点を記録してそのカードだけを保留にし、ほかの作業を続けます。
+
+- 記録は 3 種類を分けます: kyuura データの採用（`kyuura_engine/data/card_sources.json` の `basis: kyuura_data`。採用したデータのコミット = `KYUURA_COMMIT`・カード id・記録した日・処理に使う文面の根拠 `play_text`・研究の基準のコミットでそのカードを指す kyuura の記録の id `kyuura_records`・論点・`adopted`／`on_hold`）、pcg-search.com との照合（同じファイルの `external_checks`。URL・確認日・対象の版（収録・一覧の番号）・照らしたコミット・結果（`match`・`differences`・`edition_not_listed`・`inaccessible`）・照合した欄・違い）、過去の原典照合（`card_verification.json`。2026-10-14 までの記録。履歴として残し、書き換えない）。
+- 処理に使う文面は、kyuura の最新の説明（LD-）があればそれ（登録の `source` は LD- の id）、エラッタ（ERR-・TXT-・RUL-）があればそれ（`source` はその id）、どちらもなければ kyuura の印刷の文面（`play_text_ja` は写しの文面と同じ、`source` は `kyuura data/cards.json`、研究の対応表の `adopted_printed_text`）。裁定（CR-）にはしたがい、論点（UQ-）に当たる場合は今までどおり止めます。
+- 読んでいない原典を確かめたことにする記録を作らないでください。採用の記録・外部照合に、ガイドブックの項目（`page`・`pdf_page`・`latest_description_ja`・`card_image_text_ja` など）を書かないでください（`scripts/check_card_sources.py` が拒否する）。採用したカードを `card_verification.json` に加えないでください。
+- 各版の節の「原典で確かめる」「原典と照合する」（新しい処理・相互作用を加えるとき）は、既存の記録（kyuura の裁定・規定・最新の説明・エラッタの記録、このリポジトリの裁定の表と過去の原典照合）で確かめることと読みます。記録で決まらなければ、ガイドブックを読みに行かず、今までどおり `UNRESOLVED_…` で止めるか、そのカードを保留にします。
+- 登録したカードは、過去の原典照合の記録か採用の記録（`adopted`）のちょうど一方を持ちます。保留（`on_hold`）のカードは登録しません。外部照合で見つけた違いで、kyuura のデータ・写しを直さないでください（kyuura への報告事項）。
+- 検査: `python3 scripts/check_card_sources.py`（記録の形・登録との対応・外部照合の形）、`python3 scripts/check_research_links.py --kyuura ../kyuura`（研究の基準のコミットの kyuura の記録の見落とし・LD- の無視・データの誤り）、tests/test_card_sources.py。実装の整合性の検査（登録の名前・文面が写しと同じ、効果の型の `check` など）は今までどおりです。
+
 ## 照合済みの記録の再利用（2026-10-15）
 
-原典（『ポケモンカードオフィシャルブック2000』のスキャン [J38] など）を、同じ範囲で何度も読み直さない（撮り直さない）ための手順です。kyuura の docs/engine-readiness.md 10 章と同じ手順です（このリポジトリでの記録の場所・2026-10-15 の取り込みの結果は docs/verified-record-reuse.md）。
+既存の照合の記録を、同じ範囲で何度も調べ直さないための手順です。kyuura の docs/engine-readiness.md 10 章と同じ手順です（このリポジトリでの記録の場所・2026-10-15 の取り込みの結果は docs/verified-record-reuse.md）。2026-10-15 からのカードデータの方針（上の節）で、手順の 4・5（原典に戻る）はカードの実装の手順から外しました。
 
 1. **原典を開く前に、既存の記録を探します。** このリポジトリの `kyuura_engine/data/card_verification.json`（カードごとの照合の記録）・関連する裁定の文書（docs の各版の裁定の表・docs/rules-2000-02-14.md）・docs/data-provenance.md と、kyuura のサイドカー（`data/sidecar/` の最新の説明 LD-・照合 CC-・裁定 CR-・論点 UQ-。id は `research_links.json` で引ける）・ページごとの記録（kyuura `data/rule_history.json` の P43 の `refs`）。
 2. **対象とルールの版が一致し、必要な項目の照合の結果と出典が確かめられれば、再利用します。** 一致を見るのは、カード id・ワザ（特殊能力）の位置と名前・採用するルールの版（2000.02.14 版。最新の説明は『オフィシャルブック2000』）。出典は、資料・ページ・確認日・確認の方法・照合した項目です。
 3. **新しいセッションになった、確認日が古い、実装する人が変わった、だけを理由に原典を読み直さないでください。**
-4. **既存の記録で判断できない部分だけ、原典に戻ります。** 照合していない欄（kyuura の `fields_not_checked`・エンジンの記録にない項目）、記録のあとで変わったデータ（写しの文面と記録の文面の違い。tests/test_effects.py・tests/test_trainers.py・scripts/check_research_links.py が見つける）、記録どうしの矛盾、記録が扱っていない新しい相互作用（新しいカードの組み合わせ・新しい処理の時点）。
-5. **原典を読み直す前に、既存の記録で何が足りないかを具体的に書きます**（記録の場所と id・足りない欄や問い・記録では決まらない理由）。読み直したら、`card_verification.json` に確認日・方法・ページ・照合した項目を書きます。
+4. **既存の記録で判断できない部分があっても、ガイドブックの調査に自動で進みません。** カードデータは kyuura のデータを使い（上の節）、記録のあとで変わったデータ（写しの文面と記録の文面の違い。tests/test_effects.py・tests/test_trainers.py・scripts/check_research_links.py が見つける）・記録どうしの矛盾・記録が扱っていない新しい相互作用のうち、挙動に影響する具体的な矛盾は、論点を記録してそのカードだけを保留にします。原典の規定で決められない処理は、今までどおり `UNRESOLVED_…` で止めます。
+5. **利用者がガイドブックの調査を明示的に依頼したときは、** 読み直す前に、既存の記録で何が足りないかを具体的に書きます（記録の場所と id・足りない欄や問い・記録では決まらない理由）。読み直したら、読んだ範囲だけを記録します（2026-10-14 までの `card_verification.json` の形。確認日・方法・ページ・照合した項目）。
 
 - 再利用は、記録された確認の範囲（照合した項目・`scope`・最新の説明・画像の確認）に限ります。照合していない欄を「同じ」と読みかえないでください。
 - テストが通ったことだけを、原典と照合した証拠にしないでください。
 - 再利用で SUPPORTED・UNRESOLVED などの分類を変えないでください（分類を変えるのは、新しく読んだ資料の根拠があるときだけ。根拠の書き方は下の「ルールの扱い」の `UNRESOLVED_…` の分類を変えるときの約束）。
 - kyuura の記録は、kyuura が原典を読んだもの（`by: kyuura`）と、このリポジトリの記録を取り込んだもの（`import_provenance`。kyuura は画像を読み直していない）を区別します。取り込んだ記録を、エンジンの記録とは別に原典を確かめた証拠として数えないでください（もとはこのリポジトリの記録）。
 - 印刷の文面（kyuura の `data/cards.json`・写し）・最新の説明（`play_text_ja`・LD-）・裁定（エンジンの裁定の表・CR-）・実装上の仮定を混ぜないでください。
-- 下の「登録するカードは、先に…ページと照合し」と、各版の文書の「画像で読み直した」は、照合の記録がないとき、または上の 4 に当たるときの手順です。
+- 各版の文書の「画像で読み直した」「p.N と照合した」は、その版の作業の記録（履歴）です。今のカードの実装の手順ではありません。
 
 ## ルールの扱い
 
@@ -39,9 +56,9 @@
 - 原典で確かめた規定と、実装の都合で決めたこと（実装上の仮定）を区別して書きます（docs/rules-2000-02-14.md の 5章・6章）。
 - 原文で決められない処理は、推測で「公式ルール」として実装しません。`UnsupportedError` や `Phase.HALTED` で明示的に止め、docs/implementation-status.md の「裁定が未解決」に書きます。
 - 未実装のカード効果を、効果がないものとして処理しないでください。対応していないカード・ワザ・操作は、分類（cards.py）・デッキの検査（deck.py）・`UnsupportedError` で明示的に拒否します。
-- ワザを使えるのは、効果の登録表（kyuura_engine/effects.py の `DEFAULT_EFFECTS`）に（カード id, ワザの位置）で実装が登録されているときだけです（v0.2a）。説明文が空なことを実装がある証拠にしないでください。登録するカードは、先に『オフィシャルブック2000』のページと照合し、`kyuura_engine/data/card_verification.json` に記録します（tests/test_effects.py が確かめる）。照合の記録がすでにあれば（このリポジトリ・kyuura）、上の「照合済みの記録の再利用」の手順で、記録の範囲を再利用します。
-- トレーナーも同じです（v0.2b）。カード id で `TrainerEntry` を登録し、kyuura の写しの名前・文面（照合用）と、実装がしたがう『オフィシャルブック2000』の「最新の説明」（`play_text_ja`）・出典を書きます。照合の記録には `latest_description_ja` を書きます（tests/test_trainers.py が確かめる）。英語版の文面や現代のカードの文面で日本語版の処理を決めないでください。
-- 説明文のあるワザ（v0.2d から）は、`AttackEntry` に kyuura の写しの説明文（`text_ja`。照合用）と、実装がしたがう「最新の説明」（`play_text_ja`）・出典（`source`）を書き、照合の記録に `latest_description_ja` を書きます（tests/test_effects.py `test_attacks_with_text_follow_the_verified_latest_description` が確かめる）。登録した説明文とデータの説明文が違えば、そのワザは使えません。
+- ワザを使えるのは、効果の登録表（kyuura_engine/effects.py の `DEFAULT_EFFECTS`）に（カード id, ワザの位置）で実装が登録されているときだけです（v0.2a）。説明文が空なことを実装がある証拠にしないでください。登録するカードは、登録の根拠の記録をちょうど 1 つ持ちます: 2026-10-14 までに登録したカードは『オフィシャルブック2000』と照合した記録（`kyuura_engine/data/card_verification.json`。履歴）、2026-10-15 からは kyuura データの採用の記録（`kyuura_engine/data/card_sources.json`。上の「カードデータの信頼と照合の方針」）。tests/test_effects.py・scripts/check_card_sources.py が確かめます。
+- トレーナーも同じです（v0.2b）。カード id で `TrainerEntry` を登録し、kyuura の写しの名前・文面（照合用）と、実装がしたがう文面（`play_text_ja`）・出典を書きます。実装がしたがう文面は、過去の原典照合で登録したトレーナーは『オフィシャルブック2000』の「最新の説明」（照合の記録の `latest_description_ja`）、採用の記録で登録するトレーナーは kyuura の最新の説明・エラッタか、それがなければ kyuura の印刷の文面です（tests/test_trainers.py・scripts/check_card_sources.py が確かめる）。英語版の文面や現代のカードの文面で日本語版の処理を決めないでください。
+- 説明文のあるワザ（v0.2d から）は、`AttackEntry` に kyuura の写しの説明文（`text_ja`。照合用）と、実装がしたがう文面（`play_text_ja`）・出典（`source`）を書きます。過去の原典照合で登録したワザは照合の記録の `latest_description_ja` と、採用の記録で登録するワザは採用の記録の `play_text` の根拠（kyuura の印刷の文面・LD-・エラッタ）と合わせます（tests/test_effects.py `test_attacks_with_text_follow_the_verified_latest_description`・scripts/check_card_sources.py が確かめる）。登録した説明文とデータの説明文が違えば、そのワザは使えません。
 - カード効果の中で原典で決められない場合は、成功を仮定せず `UnsupportedError`（コードは `UNRESOLVED_…`）で止めます。使えるかどうかなら `TrainerEffect.check_playable`、決定の選択なら `push_trainer_decision` の `unresolved_choices` を使います。テストは「止まること・状態が変わらないこと」を確かめ、仮定に基づく成功のテストは書きません。決めた根拠と未解決の事項は docs/trainers-v0.2b.md のように、原典の記述・分類（CONFIRMED・SUPPORTED・UNRESOLVED・CONFLICT）・コード・テストを対応づけて書きます。
 
 ## 状態の作り（v0.2a）
@@ -103,7 +120,8 @@
 
 ## 変更するとき
 
-- 規定を加えたり直したりしたら、対応する自動テストを加えます。テストの docstring かコメントに、根拠の誌面のページと kyuura の記録 id を書きます。
+- 規定を加えたり直したりしたら、対応する自動テストを加えます。テストの docstring かコメントに、根拠（誌面のページ、または kyuura の記録 id・採用したデータ）を書きます。kyuura データの採用で加えたカードに、読んでいない誌面のページを書かないでください。
+- カードを登録したら、`python3 scripts/check_card_sources.py` と（../kyuura があれば）`python3 scripts/check_research_links.py --kyuura ../kyuura` を走らせます。
 - 対戦のテストは、正式な開始（`new_game`、60 枚のデッキ、サイド 6 枚）を使います。盤面を直接作る `tests/helpers.py` の `build_test_state` は、1 か所の規定を確かめるテストだけに使い、対戦準備やデッキのテストには使いません。
 - 乱数は `GameState.rng`（seed から作る）だけを使います。
 - `apply_command` は渡された状態を変えません（clone してから処理する）。この性質を壊さないでください。
@@ -115,7 +133,7 @@
 ## ポケモンパワー（v0.5）
 
 - 2000.02.14 版の公式ルールの用語は「特殊能力」です（p.311・p.323）。一般の規定は docs/pokemon-powers-v0.5.md で誌面と照合しました。kyuura の rule_history.json・rule_differences.json のポケモンパワーの記録は第4版の冊子（ed4）のもので、2000.02.14 版の規定として使わないでください。英語版の文面・後年の英語版の規定（`EN-2002-STATUS-POWERS`）・現代の「特性」のルールで日本語版の処理を決めないでください。
-- ポケモンパワーはワザ（`AttackEffect`）の一種として扱わないでください。`effects.PowerKey`（カード id, パワーの位置）で `PowerEntry`（実装 `PowerEffect`・照合した kyuura の写しの名前と印刷の文面・実装がしたがう最新の説明 `play_text_ja`・出典）を登録します。登録がない・データ（名前・文面・種類）と合わないパワーを持つカードは使えません（cards.py が分類し、使用は `UNSUPPORTED_POKEMON_POWER`）。パワーを持つカードを一括で対応にしないでください。照合の記録は `card_verification.json` の `power_card_image_text_ja`・`power_latest_description_ja`（パワーの位置ごと。tests/test_pokemon_powers_v0_5.py が確かめる）。
+- ポケモンパワーはワザ（`AttackEffect`）の一種として扱わないでください。`effects.PowerKey`（カード id, パワーの位置）で `PowerEntry`（実装 `PowerEffect`・照合した kyuura の写しの名前と印刷の文面・実装がしたがう最新の説明 `play_text_ja`・出典）を登録します。登録がない・データ（名前・文面・種類）と合わないパワーを持つカードは使えません（cards.py が分類し、使用は `UNSUPPORTED_POKEMON_POWER`）。パワーを持つカードを一括で対応にしないでください。照合の記録は `card_verification.json` の `power_card_image_text_ja`・`power_latest_description_ja`（パワーの位置ごと。tests/test_pokemon_powers_v0_5.py が確かめる。過去の原典照合で登録したパワー。2026-10-15 からの採用の記録で登録するパワーは、採用の記録の `play_text` で確かめる）。
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
@@ -302,7 +320,7 @@
 ## 研究データとの同期と検証の再現性（v0.18）
 
 - 研究の基準は kyuura `3f349085645f47d0649a6cacece3680caeae50bf`（v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`。2026-10-15 に上げた。上の「研究資料の参照コミットを固定する」）。エンジンの停止コード・問い・未解決の裁定・登録した最新の説明・照合の記録と、kyuura の id（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応は `kyuura_engine/data/research_links.json` に持ちます。kyuura の記録（文面・分類・根拠）を写さないでください（id の対応だけ。正本は kyuura）。docs/research-alignment-v0.18a.md。
-- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）のちょうど 1 つに挙げます（2026-10-15 から）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`。kyuura に記録ができたら検査が知らせる）。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
+- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）のちょうど 1 つに挙げます（2026-10-15 から）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`。kyuura に記録ができたら検査が知らせる）。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
 - カードの写しの元（`KYUURA_COMMIT` = `ecb2d69`）と研究の基準（`3f34908`。v0.18 は `adf9710`）は別に持ちます。状態はカードデータの元のコミット（`state.card_data.commit`・ログ `game_created`）を持ち、写しのコミットを上げると固定した参照データがすべて変わるからです。エンジンが使う項目が 2 つのコミットで同じことは、上のスクリプトが確かめます（違いは対応表の `card_data_differences` だけ）。
 - 分類（CONFIRMED・SUPPORTED）は kyuura の記録を正本にします。エンジンの過去の版の裁定の表は当時の記録として書き換えません（v0.18a の分類の違い 17 件。どれも処理は同じ）。コインの有無・順番だけが変わる論点（kyuura の rng_only）を、実装の約束として決めることは v0.18 では採っていません（docs/research-alignment-v0.18a.md 7 章）。
 - Z23 は、ダメージを与えなかった場合を Z23-a（要素が無効）・Z23-b（計算の結果が 0。ディフェンダー・抵抗力）・Z23-c（「とうめい」）・Z23-d（対象がいない。今のワザでは起こらない）に分けて記録しています（docs/unresolved-research-v0.18b.md 3 章）。どれか 1 つの答えが見つかっても、ほかの場合を同じに扱わないでください（理由の文が場合を書く。tests/test_unresolved_research_v0_18b.py）。「ダメージを与えた後」の効果のダメージの要素は、並びの最初でコインで飛ばされない形にしています（Z23-d が起こらない。崩すワザを加えるときは Z23-d を原典で確かめる）。

@@ -226,11 +226,22 @@ class PowerRegistryTest(unittest.TestCase):
 
     def test_registration_follows_the_verified_latest_description(self):
         """p.16 の「特殊能力」欄・p.323 の例の最新の説明（画像で照合）と、印刷の文面（kyuura の写し・図版）が、照合の記録と同じ。"""
-        record = read_verification()["cards"][VENUSAUR]
+        from scripts import check_card_sources as card_sources
+
+        verification = read_verification()
+        sources = card_sources.load_sources()
+        record = verification["cards"][VENUSAUR]
         self.assertEqual((record["page"], record["pdf_page"], record["rules_page"], record["status"]), (16, 18, 323, "不一致あり"))
         for key in DEFAULT_EFFECTS.power_keys():
             entry = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index)
-            card_record = read_verification()["cards"][key.card_id]
+            # 2026-10-15 からの方針（docs/card-data-policy.md）で kyuura データの採用の記録によって登録したパワーは、ガイドブックの照合の記録を
+            # 求めない（採用の記録の play_text との対応は scripts/check_card_sources.py が確かめる）。登録の根拠の記録はどちらか一方だけ
+            basis = card_sources.registration_basis(key.card_id, verification, sources)
+            self.assertIn(basis, (card_sources.GUIDEBOOK_RECORD, card_sources.KYUURA_DATA), key)
+            if basis == card_sources.KYUURA_DATA:
+                self.assertIn(f"power/{key.power_index}", sources["cards"][key.card_id]["play_text"], key)
+                continue
+            card_record = verification["cards"][key.card_id]
             self.assertEqual(entry.play_text_ja, card_record["power_latest_description_ja"][str(key.power_index)])
             image = card_record["power_card_image_text_ja"][str(key.power_index)]
             if image != entry.text_ja:

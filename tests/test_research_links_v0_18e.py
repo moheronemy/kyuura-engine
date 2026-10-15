@@ -124,12 +124,14 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertRegex(text, rf"(?<![A-Za-z0-9]){re.escape(ruling['ruling_id'])}(?![0-9])")
 
     def test_latest_descriptions_cover_every_registration(self):
-        """最新の説明を登録したワザ・特殊能力は、どれも 4 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
-        ワザの文面を照合していないもの、kyuura に記録なし）のちょうど 1 つに挙げる（登録を加えたら対応表も直す）。文面の一致は
-        scripts/check_research_links.py が kyuura で確かめる。"""
+        """最新の説明を登録したワザ・特殊能力は、どれも 5 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
+        ワザの文面を照合していないもの、kyuura に記録なし、kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（2026-10-15
+        からの方針。docs/card-data-policy.md。採用の記録 card_sources.json との対応は scripts/check_card_sources.py が確かめる））のちょうど
+        1 つに挙げる（登録を加えたら対応表も直す）。文面の一致は scripts/check_research_links.py が kyuura で確かめる。"""
         section = LINKS["latest_descriptions"]
         groups = {name: set(section[name]) for name in
-                  ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record")}
+                  ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record",
+                   "adopted_printed_text")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:

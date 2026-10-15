@@ -54,7 +54,8 @@
 
 - 参照している kyuura のコミット: `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（カードの写しの元）
 - 研究の基準にした kyuura のコミット: `3f349085645f47d0649a6cacece3680caeae50bf`（ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録。2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ上げた。[docs/verified-record-reuse.md](docs/verified-record-reuse.md)）。v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)）
-- 原典を開く前に、既存の照合の記録（このリポジトリと kyuura）を探して再利用します（`CLAUDE.md` の「照合済みの記録の再利用」）
+- カードを実装するときは、kyuura の `data/cards.json` を信頼できる基本データとして使い、すでに記録された最新の説明・エラッタ・裁定にしたがいます。外部照合は pcg-search.com で行い（収録・カード番号で版を決める。対象の版がない・アクセスできなかったことも記録する）、ガイドブック（『オフィシャルブック2000』）の読み直しは通常の手順に入れません（2026-10-15 からの方針。[docs/card-data-policy.md](docs/card-data-policy.md)、`CLAUDE.md` の「カードデータの信頼と照合の方針」）。記録は `kyuura_engine/data/card_sources.json`（採用・外部照合）で、2026-10-14 までの原典照合の記録 `kyuura_engine/data/card_verification.json` は履歴として残しています
+- 既存の照合の記録（このリポジトリと kyuura）は探して再利用し、同じ範囲を調べ直しません（`CLAUDE.md` の「照合済みの記録の再利用」）
 - カードデータは、そのコミットの `data/cards.json` から必要なカードだけを抜き出した写し（`kyuura_engine/data/kyuura_cards.json`）を同梱しています。写しはカード情報の正本ではありません。由来と照合の記録は [docs/data-provenance.md](docs/data-provenance.md)。
 - このリポジトリから kyuura を変更することはありません。資料の誤りや食い違いを見つけたら、kyuura 側で確かめて記録します。
 
@@ -122,6 +123,8 @@ python3 tools/run_mutants.py witness --jobs 3
 python3 tools/run_mutants.py full --jobs 3 --out mutants.jsonl
 # 研究の対応表（kyuura_engine/data/research_links.json）を、kyuura の研究の基準のコミットの記録と照らす（v0.18e。../kyuura が要る）
 python3 scripts/check_research_links.py --kyuura ../kyuura
+# カードデータの採用と外部照合の記録（kyuura_engine/data/card_sources.json）を確かめる（2026-10-15 からの方針。docs/card-data-policy.md）
+python3 scripts/check_card_sources.py
 # 解決の基盤の先読みの方法（derived・legacy・derived_full）どうしを、公開の apply_command を基準に同じ対戦の 1 歩ごとに比べる（交互の状態。v0.16b から
 # v0.13 の経路はないので、v0.13 との比較は下の engine_lockstep.py と参照データ tests/legacy_reference.py で行う）
 python3 tools/event_kernel_compare.py --stress-seeds 10 --natural-seeds 20 --mode all --mixed --timing

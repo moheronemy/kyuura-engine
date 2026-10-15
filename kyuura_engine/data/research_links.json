@@ -798,7 +798,7 @@
       "LD-PMCG5-054-ATK0",
       "LD-PMCG6-023-PWR0"
     ],
-    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる",
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。まだない",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
       "PMCG1-003/attack/1": "CC-PMCG1-003-P18",
@@ -831,7 +831,8 @@
     },
     "card_checks_without_text": {
       "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
-    }
+    },
+    "adopted_printed_text": []
   },
   "card_checks": {
     "engine_verified": {

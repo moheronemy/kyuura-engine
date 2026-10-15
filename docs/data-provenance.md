@@ -13,7 +13,8 @@
 | 研究の基準 | `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
-| 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録） |
+| 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
+| 採用・外部照合の記録 | `kyuura_engine/data/card_sources.json`（2026-10-15 からの方針。kyuura データの採用と pcg-search.com との照合。[card-data-policy.md](card-data-policy.md)。まだ記録はない） |
 
 ### 作り直し方
 
@@ -604,3 +605,12 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 | PMCG1-075 | いいきずぐすり | 効果の実装を登録していないトレーナー（v0.2b で、対戦用に移したきずぐすりの代わりに加えた） |
 
 これらは `tests/test_cards.py`・`tests/test_deck.py`・`tests/test_combat.py`・`tests/test_trainers.py` で、未対応として扱われる（デッキに入れられない、効果のあるワザが使えない）ことを確かめるために使います。参照カードは、ヒトカゲ（PMCG1-014、p.63 と照合。「ひっかく」を効果の登録表に登録するため、v0.2a）と化石の秘密のベトベター（PMCG3-003、p.47 と照合。v0.8）・第1弾のゴースト（PMCG1-047、p.160 と照合。v0.9）を除いて、『オフィシャルブック2000』と照合していません（未照合）。ドードー（PMCG1-061）は v0.2d で対戦用（`pool_v0_2d`）に移しました。サカキのカイリキー（PMCG6-061。v0.10 の参照カード。p.193 と照合）は v0.11 で対戦用（`pool_v0_11`）に移しました。「×」のワザが登録なしでは未対応になることは、ドードーの登録を除いた登録表で確かめています（tests/test_cards.py `test_damage_modifier_is_unsupported`）。
+
+## 2026-10-15 からのカードデータの方針（カードの写しは変えていない）
+
+カードの実装を速めるため、カードデータの信頼と照合の方針を変えました（[card-data-policy.md](card-data-policy.md)）。
+
+- kyuura の `data/cards.json`（と同じデータの `cards.csv`）を、カードを実装するための信頼できる基本データとして扱います。カードごとの原典照合の記録がないことだけでは、実装を止めません。
+- 外部照合は pcg-search.com で行い、`kyuura_engine/data/card_sources.json` の `external_checks` に、URL・確認日・対象の版（収録・カード番号）・結果・照合した欄・違いを残します。対象の版がない・アクセスできなかったことも残します。違いを見つけても写しは直さず、kyuura への報告事項にします。
+- ガイドブックの読み直しは、通常のカード実装の手順から外しました。この文書のここまでの「『オフィシャルブック2000』と照合した」「画像で読んだ」は、2026-10-14 までの各版の作業の記録（履歴）です。
+- カードの写し（`ecb2d69`）・研究の基準（`3f34908`）・`card_verification.json` は変えていません。採用の記録はまだありません。

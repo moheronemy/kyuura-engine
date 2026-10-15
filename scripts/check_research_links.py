@@ -14,6 +14,11 @@ kyuura（https://github.com/moheronemy/kyuura）の ``research_commit`` の記�
    ``card_verification.json`` の同じカードの記録とページ・PDF のページ・原典の確認日が同じ。取り込み（``engine_import_id``）が kyuura にある。
 6. カードデータ: 研究の基準のコミットの ``data/cards.json`` と、エンジンの写し（``KYUURA_COMMIT``）を、写しの項目で比べ、違いが対応表の
    ``card_data_differences`` に挙げたものだけ。
+7. kyuura データの採用（2026-10-15 からの方針。``kyuura_engine/data/card_sources.json``。docs/card-data-policy.md）: 処理に使う文面を
+   kyuura の印刷の文面にした登録（``adopted_printed_text``）は、文面が研究の基準のコミットの ``data/cards.json`` と同じで、その対象の
+   最新の説明（LD-）・データの誤りの記録（CC- の ``data_error``）がない。採用の記録の ``kyuura_records`` は、研究の基準のコミットで
+   そのカードを指す kyuura の記録（LD-・CC-・CR-・UQ-・エラッタ）とちょうど同じ（既存の記録を探して確かめたこと）。根拠にした
+   エラッタはそのカードを指す。CC- のデータの誤りの欄は、採用の記録の論点（``issues``）に挙げる。
 
 kyuura のデータの写しは作らない（id と、照らした結果だけを使う）。問題があれば終了コード 1。
 
@@ -49,9 +54,9 @@ def git_show(kyuura: Path, commit: str, path: str):
     return json.loads(result.stdout.decode("utf-8"))
 
 
-def registered_texts() -> dict[str, tuple[str, str | None]]:
+def registered_texts(registry=None) -> dict[str, tuple[str, str | None]]:
     """登録した最新の説明（カード id/種類/位置 → (play_text_ja, 出典)）。"""
-    registry = E.DEFAULT_EFFECTS
+    registry = E.DEFAULT_EFFECTS if registry is None else registry
     found = {}
     for key in registry.attack_keys():
         entry = registry.attack_entry(key.card_id, key.attack_index)
@@ -72,12 +77,17 @@ def issues_in_links(links: dict) -> set[str]:
     return found
 
 
-def check(kyuura: Path) -> list[str]:
-    links = json.loads(LINKS.read_text(encoding="utf-8"))
+def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = None, registry=None) -> list[str]:
+    """問題の一覧（なければ空）。``links``・``sources``（card_sources.json の ``cards``）・``registry`` を省くと同梱のデータと
+    ``DEFAULT_EFFECTS`` を使う（テストは差し替えて、採用の記録の確かめ方を調べる）。"""
+    links = json.loads(LINKS.read_text(encoding="utf-8")) if links is None else links
     commit = links["research_commit"]
     rulings = git_show(kyuura, commit, "data/sidecar/rulings.json")
     descriptions = git_show(kyuura, commit, "data/sidecar/latest_descriptions.json")["records"]
     checks = git_show(kyuura, commit, "data/sidecar/card_checks.json")["records"]
+    extract_script = load_extract_script()
+    cards = git_show(kyuura, commit, extract_script.KYUURA_PATH)
+    research_cards = {c["id"]: c for c in (cards["cards"] if isinstance(cards, dict) else cards)}
     problems: list[str] = []
 
     # 1. 論点
@@ -130,7 +140,7 @@ def check(kyuura: Path) -> list[str]:
         problems.append(f"分類を変えた kyuura の裁定の集合が違う: kyuura だけ {sorted(recorded - listed)}、対応表だけ {sorted(listed - recorded)}")
 
     # 4. 最新の説明
-    texts = registered_texts()
+    texts = registered_texts(registry)
     ld = {x["id"]: x for x in descriptions}
     ld_by_target = {f"{x['card_id']}/{x['target']['kind']}/{x['target']['index']}": x["id"] for x in descriptions}
     section = links["latest_descriptions"]
@@ -147,9 +157,12 @@ def check(kyuura: Path) -> list[str]:
         text, source = texts[target]
         if record["latest_description"]["text_ja"] != text:
             problems.append(f"{target}: 登録の最新の説明が kyuura の {ld_id} と違う")
-        if source != f"P43 p.{record['latest_description']['page']}" and not (source or "").startswith(f"P43 p.{record['latest_description']['page']}"):
+        # 出典は LD- のページ（過去の原典照合で登録したもの）か、LD- の id（kyuura データの採用で、最新の説明を根拠にしたもの。2026-10-15 から）
+        if source != ld_id and source != f"P43 p.{record['latest_description']['page']}" \
+                and not (source or "").startswith(f"P43 p.{record['latest_description']['page']}"):
             problems.append(f"{target}: 出典 {source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
-    in_checks = set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
+    adopted_printed = set(section.get("adopted_printed_text", []))
+    in_checks = set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
     without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
@@ -190,6 +203,26 @@ def check(kyuura: Path) -> list[str]:
     accounted = set(section["registered"]) | set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
     if set(section["registered_without_kyuura_record"]) & accounted:
         problems.append("kyuura の記録のない登録の一覧に、記録のある登録が入っている")
+    if adopted_printed & (accounted | set(section["registered_without_kyuura_record"])):
+        problems.append("adopted_printed_text の登録が、ほかの区分にも入っている")
+
+    # 4c. kyuura データの採用で、処理に使う文面を kyuura の印刷の文面にした登録（2026-10-15 からの方針）
+    data_errors = {(x["card_id"], e.get("field")) for x in checks for e in (x.get("data_error") or [])}
+    for target in sorted(adopted_printed):
+        card, kind, index = target.split("/")
+        path = f"pokemon.{'attacks' if kind == 'attack' else 'powers'}[{index}].text.ja"
+        if target not in texts:
+            problems.append(f"{target}: adopted_printed_text の登録に、処理に使う文面がない")
+            continue
+        theirs = research_cards.get(card)
+        items = ((theirs or {}).get("pokemon") or {}).get("attacks" if kind == "attack" else "powers") or []
+        printed = (items[int(index)].get("text") or {}).get("ja") if int(index) < len(items) else None
+        if printed != texts[target][0]:
+            problems.append(f"{target}: 処理に使う文面が、研究の基準のコミットの印刷の文面と違う")
+        if target in ld_by_target:
+            problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（registered に移し、最新の説明にしたがう）")
+        if (card, path) in data_errors:
+            problems.append(f"{target}: kyuura の照合の記録に、この文面のデータの誤りの記録がある（論点を記録してカードを保留にする）")
 
     # 5. 照合の記録
     cc = {x["id"]: x for x in checks}
@@ -227,12 +260,9 @@ def check(kyuura: Path) -> list[str]:
         problems.append(f"エンジンの取り込み {links['engine_import_id']} が kyuura にない")
 
     # 6. カードデータ
-    extract_script = load_extract_script()
     extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
     if extract["source"]["commit"] != links["card_data_commit"]:
         problems.append(f"写しのコミット {extract['source']['commit']} が対応表の card_data_commit と違う")
-    cards = git_show(kyuura, commit, extract_script.KYUURA_PATH)
-    research_cards = {c["id"]: c for c in (cards["cards"] if isinstance(cards, dict) else cards)}
     allowed = {(d["card_id"], d["field"]) for d in links["card_data_differences"]}
     seen = set()
     for card in extract["cards"]:
@@ -247,6 +277,34 @@ def check(kyuura: Path) -> list[str]:
                     problems.append(f"{card['id']} の {field} が研究の基準のコミットで違う（対応表の card_data_differences にない）")
     for missing in sorted(allowed - seen):
         problems.append(f"card_data_differences の {missing} は、もう違わない（対応表から外す）")
+
+    # 7. kyuura データの採用の記録と、研究の基準のコミットの kyuura の記録（2026-10-15 からの方針）
+    if sources is None:
+        sources = json.loads((ROOT / "kyuura_engine" / "data" / "card_sources.json").read_text(encoding="utf-8"))["cards"]
+    errata = git_show(kyuura, commit, "data/rule_history.json")["errata"]
+    for card, record in sources.items():
+        if not isinstance(record, dict) or record.get("basis") != "kyuura_data":
+            continue
+        found = {x["id"] for x in descriptions if x["card_id"] == card}
+        found |= {x["id"] for x in checks if x["card_id"] == card}
+        found |= {x["id"] for x in rulings["rulings"]
+                  if card in {c.get("card_id") for c in x.get("cards") or []} | set(x.get("related_cards") or [])}
+        found |= {x["id"] for x in rulings["issues"] if card in {c.get("card_id") for c in x.get("cases") or []}}
+        found |= {x["id"] for x in errata if card in (x.get("cards") or [])}
+        listed = set(record.get("kyuura_records") or [])
+        if listed != found:
+            problems.append(f"{card}: 採用の記録の kyuura_records が、研究の基準のコミットの kyuura の記録と違う"
+                            f"（kyuura だけ {sorted(found - listed)}、採用の記録だけ {sorted(listed - found)}）")
+        for target, basis in (record.get("play_text") or {}).items():
+            if isinstance(basis, str) and basis.split("-")[0] in ("ERR", "TXT", "RUL") and basis not in found:
+                problems.append(f"{card} {target}: 根拠のエラッタ {basis} が、研究の基準のコミットでこのカードを指していない")
+        noted = {f for issue in record.get("issues") or [] if isinstance(issue, dict) for f in issue.get("fields") or []}
+        for x in checks:
+            if x["card_id"] != card:
+                continue
+            for e in x.get("data_error") or []:
+                if e.get("field") not in noted:
+                    problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} が、採用の記録の論点にない")
     return problems
 
 

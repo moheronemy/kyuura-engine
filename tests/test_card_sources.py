@@ -1,0 +1,479 @@
+"""2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録 kyuura_engine/data/card_sources.json と、その検査
+scripts/check_card_sources.py。
+
+kyuura の data/cards.json を基本データとして採用したカード（``basis: kyuura_data``）は、ガイドブック（『オフィシャルブック2000』）の
+ページ・画像の照合の記録がなくても登録できる。過去の原典照合の記録（card_verification.json）は履歴として残し、ここでは書き換えない。
+検査は、新しい方針の記録を受け付け、読んでいない原典を確かめたことにする記録・形の崩れた記録を拒否する。
+
+ここで作る記録（``valid_case``）はテストのための記録で、pcg-search.com を照合した記録ではない（同梱の card_sources.json には入れない）。
+過去の原典照合で登録したカードを、写しを変えずに「採用の記録で登録したカード」に見立てる（登録表・照合の記録・研究の対応表の写しを
+テストの中だけで変える）。
+"""
+
+from __future__ import annotations
+
+import copy
+import dataclasses
+import datetime
+import io
+import json
+import pathlib
+import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from unittest import mock
+
+from kyuura_engine.cards import read_extract, read_verification
+from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
+from scripts import check_card_sources as cs
+
+TODAY = datetime.date(2026, 10, 20)
+COMMIT = read_extract()["source"]["commit"]
+TANGELA = "PMCG1-007"      # モンジャラ: 説明文のあるワザ 2 つ。処理に使う文面は印刷の文面と同じ（kyuura の印刷の文面を根拠にする場面）
+BUTTERFREE = "PMCG2-007"   # バタフリー: ワザ 2 つとも kyuura の最新の説明（LD-）がある（LD- を根拠にする場面）
+CHARIZARD = "PMCG1-021"    # リザードン: 登録していない参照カード（保留の場面）
+STARMIE = "PMCG1-026"      # スターミー: 過去の原典照合の記録で登録したカード（外部照合だけを加える場面）
+OAK = "PMCG1-077"          # オーキドはかせ: トレーナー（ポケモンの欄を照合できない場面）
+
+
+def pcg_check(**changes) -> dict:
+    check = {
+        "site": "pcg-search.com",
+        "url": "https://pcg-search.com/card/1st/1st1013.php",
+        "checked_on": "2026-10-16",
+        "kyuura_commit": COMMIT,
+        "edition": {"expansion": "第1弾 拡張パック", "list_number": "013/096"},
+        "result": "match",
+        "checked_fields": ["name.ja", "pokemon.hp", "pokemon.attacks[0].text.ja", "pokemon.attacks[1].text.ja"],
+        "differences": [],
+    }
+    check.update(changes)
+    return check
+
+
+def valid_case():
+    """方針どおりの記録の組: (sources, registry, verification, links)。"""
+    verification = copy.deepcopy(read_verification())
+    links = copy.deepcopy(cs.load_links())
+    registry = DEFAULT_EFFECTS
+    section = links["latest_descriptions"]
+    # モンジャラ: 過去の原典照合の記録を外し、出典を kyuura の印刷の文面にした登録にする
+    del verification["cards"][TANGELA]
+    changed = {}
+    for index in (0, 1):
+        entry = registry.attack_entry(TANGELA, index)
+        changed[AttackKey(TANGELA, index)] = dataclasses.replace(entry, source=cs.PRINTED_TEXT_SOURCE)
+        del section["recorded_in_card_checks"][f"{TANGELA}/attack/{index}"]
+        section["adopted_printed_text"].append(f"{TANGELA}/attack/{index}")
+    # バタフリー: 過去の原典照合の記録を外し、出典を kyuura の最新の説明（LD-）の id にした登録にする
+    del verification["cards"][BUTTERFREE]
+    for index in (0, 1):
+        entry = registry.attack_entry(BUTTERFREE, index)
+        changed[AttackKey(BUTTERFREE, index)] = dataclasses.replace(entry, source=f"LD-{BUTTERFREE}-ATK{index}")
+    registry = registry.with_attacks("test-card-sources", changed)
+    sources = {
+        "format": cs.FORMAT,
+        "description": "テストのための記録",
+        "policy": dict(cs.POLICY),
+        "cards": {
+            TANGELA: {
+                "basis": "kyuura_data",
+                "name_ja": "モンジャラ",
+                "status": "adopted",
+                "kyuura_commit": COMMIT,
+                "recorded_on": "2026-10-16",
+                "kyuura_records": ["CC-PMCG1-007-P55"],
+                "play_text": {"attack/0": cs.PRINTED_TEXT, "attack/1": cs.PRINTED_TEXT},
+                "external_checks": [
+                    pcg_check(),
+                    pcg_check(edition={"expansion": "第1弾 スターターパック", "list_number": "013/096"}, result="differences",
+                              checked_on="2026-10-17", checked_fields=["pokemon.attacks[0].name.ja"],
+                              differences=[{"field": "pokemon.attacks[0].name.ja", "kyuura": "しめつける", "pcg_search": "しめつけ",
+                                            "affects_behavior": False}]),
+                    pcg_check(edition={"expansion": "拡張シート", "list_number": None}, result="edition_not_listed",
+                              url="https://pcg-search.com/card/card_list.php", checked_fields=[], differences=[],
+                              note="一覧に対象の版がない"),
+                    pcg_check(result="inaccessible", checked_on="2026-10-18", checked_fields=[], differences=[]),
+                ],
+                "issues": [{"question": "ワザ名の表記の違いは処理に関係しない", "fields": ["pokemon.attacks[0].name.ja"],
+                            "affects_behavior": False}],
+            },
+            BUTTERFREE: {
+                "basis": "kyuura_data",
+                "name_ja": "バタフリー",
+                "status": "adopted",
+                "kyuura_commit": COMMIT,
+                "recorded_on": "2026-10-16",
+                "kyuura_records": ["CC-PMCG2-007-P19", "LD-PMCG2-007-ATK0", "LD-PMCG2-007-ATK1"],
+                "play_text": {"attack/0": "LD-PMCG2-007-ATK0", "attack/1": "LD-PMCG2-007-ATK1"},
+                "external_checks": [],
+                "issues": [],
+            },
+            CHARIZARD: {
+                "basis": "kyuura_data",
+                "name_ja": "リザードン",
+                "status": "on_hold",
+                "kyuura_commit": COMMIT,
+                "recorded_on": "2026-10-16",
+                "kyuura_records": ["TXT-CHARIZARD"],
+                "play_text": {},
+                "external_checks": [],
+                "issues": [{"question": "ほのおのうずのエネルギーの扱いが資料で食い違う", "fields": ["pokemon.attacks[0].text.ja"],
+                            "affects_behavior": True}],
+                "notes": "テストのための保留の記録",
+            },
+            STARMIE: {
+                "basis": "guidebook_record",
+                "name_ja": "スターミー",
+                "external_checks": [pcg_check(url="https://pcg-search.com/card/1st/1st1032.php",
+                                              edition={"expansion": "第1弾 拡張パック", "list_number": "032/096"})],
+            },
+        },
+    }
+    return sources, registry, verification, links
+
+
+def run(case) -> list[str]:
+    sources, registry, verification, links = case
+    return cs.problems(sources, verification=verification, registry=registry, links=links, today=TODAY)
+
+
+class ShippedRecordTest(unittest.TestCase):
+    def test_shipped_records_follow_the_policy(self):
+        """同梱の記録は方針と合う。2026-10-14 までに登録したカードは、どれも過去の原典照合の記録で登録したので、採用の記録はまだない。"""
+        self.assertEqual(cs.problems(), [])
+        sources = cs.load_sources()
+        self.assertEqual(sources["format"], cs.FORMAT)
+        self.assertEqual(sources["policy"]["since"], "2026-10-15")
+        self.assertEqual(sources["cards"], {})
+        self.assertEqual(cs.load_links()["latest_descriptions"]["adopted_printed_text"], [])
+
+    def test_history_is_kept(self):
+        """過去の原典照合の記録（card_verification.json）は、登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。"""
+        verification = read_verification()
+        registered = cs.registered_cards(DEFAULT_EFFECTS)
+        self.assertLessEqual(registered, set(verification["cards"]))
+        for card_id in registered:
+            self.assertEqual(cs.registration_basis(card_id, verification, cs.load_sources()), cs.GUIDEBOOK_RECORD)
+
+    def test_command_line(self):
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            self.assertEqual(cs.main([]), 0)
+        self.assertIn("方針と合っています", out.getvalue())
+
+    def test_command_line_rejects_a_false_record(self):
+        """ガイドブックのページを書いた採用の記録（読んでいない原典を確かめたことにする記録）を置くと、検査は終了コード 1 で失敗する。"""
+        sources = cs.load_sources()
+        sources["cards"]["PMCG1-021"] = {
+            "basis": "kyuura_data", "name_ja": "リザードン", "status": "on_hold", "kyuura_commit": COMMIT, "recorded_on": "2026-10-15",
+            "kyuura_records": ["TXT-CHARIZARD"], "play_text": {}, "external_checks": [], "page": 66,
+            "issues": [{"question": "q", "fields": [], "affects_behavior": True}]}
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "card_sources.json"
+            path.write_text(json.dumps(sources, ensure_ascii=False), encoding="utf-8")
+            out, err = io.StringIO(), io.StringIO()
+            with mock.patch.object(cs, "SOURCES", path), redirect_stdout(out), redirect_stderr(err):
+                self.assertEqual(cs.main([]), 1)
+        self.assertIn("ガイドブックの照合の項目 ['page']", err.getvalue())
+
+
+class AcceptTest(unittest.TestCase):
+    def test_policy_records_are_accepted(self):
+        """ガイドブックのページ・画像の照合の記録がなくても、kyuura データの採用の記録で登録できる（印刷の文面・LD- のどちらの根拠も）。
+        保留のカード、対象の版がない・アクセスできなかった外部照合、過去の原典照合で登録したカードへの外部照合も受け付ける。"""
+        case = valid_case()
+        self.assertEqual(run(case), [])
+        sources, registry, verification, _ = case
+        self.assertEqual(cs.registration_basis(TANGELA, verification, sources), cs.KYUURA_DATA)
+        self.assertEqual(cs.registration_basis(BUTTERFREE, verification, sources), cs.KYUURA_DATA)
+        self.assertEqual(cs.registration_basis(STARMIE, verification, sources), cs.GUIDEBOOK_RECORD)
+        self.assertIsNone(cs.registration_basis(CHARIZARD, verification, sources))
+        self.assertNotIn(TANGELA, verification["cards"])
+
+    def test_adoption_without_external_check(self):
+        """外部照合がない（できなかった）ことだけでは、採用を妨げない。"""
+        sources, *rest = valid_case()
+        sources["cards"][TANGELA]["external_checks"] = []
+        self.assertEqual(run((sources, *rest)), [])
+
+    def test_numeric_check_of_a_card_transcribed_from_the_site(self):
+        """kyuura の日本語の文面が pcg-search.com の転記のカード（プリン PMCG2-035。写しの ja_text_source）も、日本語でない欄（HP など。
+        kyuura は英語版のデータから入れた）は照合を記録できる。"""
+        sources, *rest = valid_case()
+        sources["cards"]["PMCG2-035"] = {"basis": "guidebook_record", "name_ja": "プリン", "external_checks": [
+            pcg_check(url="https://pcg-search.com/card/1st/1stintro2014.php", edition={"expansion": "イントロパック", "list_number": "014"},
+                      checked_fields=["pokemon.hp", "pokemon.retreat_cost"])]}
+        self.assertEqual(run((sources, *rest)), [])
+
+    def test_recheck_after_inaccessible_is_allowed(self):
+        """アクセスできなかった版を、あとで照合し直すことはできる（終わった照合だけを、同じ版・同じデータで調べ直さない）。"""
+        sources, *rest = valid_case()
+        checks = sources["cards"][TANGELA]["external_checks"]
+        checks[:] = [pcg_check(result="inaccessible", checked_fields=[], differences=[]), pcg_check(checked_on="2026-10-17")]
+        self.assertEqual(run((sources, *rest)), [])
+
+
+def mutate(path, value=None, *, delete=False):
+    """記録の中の 1 か所を変える（``path`` は sources の中のキーの並び）。"""
+    def apply(case):
+        sources = case[0]
+        target = sources
+        for key in path[:-1]:
+            target = target[key]
+        if delete:
+            del target[path[-1]]
+        else:
+            target[path[-1]] = value
+        return case
+    return apply
+
+
+def check_of(card, index, **changes):
+    def apply(case):
+        case[0]["cards"][card]["external_checks"][index].update(changes)
+        return case
+    return apply
+
+
+def with_registry(change):
+    def apply(case):
+        sources, registry, verification, links = case
+        return sources, change(registry), verification, links
+    return apply
+
+
+def with_links(change):
+    def apply(case):
+        change(case[3])
+        return case
+    return apply
+
+
+def with_verification(change):
+    def apply(case):
+        change(case[2])
+        return case
+    return apply
+
+
+TANGELA_CHECKS = ("cards", TANGELA, "external_checks")
+DIFFERENCE = [{"field": "pokemon.attacks[0].name.ja", "kyuura": "しめつける", "pcg_search": "しめつけ", "affects_behavior": True}]
+
+# (場面, 記録を変える関数, 問題の文に含まれる語)
+REJECTED = [
+    ("採用の記録にガイドブックのページ", mutate(("cards", TANGELA, "page"), 55), "ガイドブックの照合の項目"),
+    ("採用の記録にガイドブックの最新の説明", mutate(("cards", TANGELA, "latest_description_ja"), "…"), "ガイドブックの照合の項目"),
+    ("外部照合に PDF のページ", check_of(TANGELA, 0, pdf_page=57), "ガイドブックの照合の項目"),
+    ("ガイドブックを外部照合のサイトにする", check_of(TANGELA, 0, site="オフィシャルブック2000"), "外部照合のサイト"),
+    ("kyuura の cards.csv を外部照合のサイトにする", check_of(TANGELA, 0, site="kyuura data/cards.csv"), "外部照合のサイト"),
+    ("ほかのサイトの URL", check_of(TANGELA, 0, url="https://example.com/card/1st/1st1013.php"), "https の pcg-search.com のページではない"),
+    ("似た名前のホスト", check_of(TANGELA, 0, url="https://pcg-search.com.example.net/card/1st/1st1013.php"), "pcg-search.com のページではない"),
+    ("http の URL", check_of(TANGELA, 0, url="http://pcg-search.com/card/1st/1st1013.php"), "pcg-search.com のページではない"),
+    ("URL がない", mutate(TANGELA_CHECKS + (0, "url"), delete=True), "['url'] がない"),
+    ("確認日がない", mutate(TANGELA_CHECKS + (0, "checked_on"), delete=True), "['checked_on'] がない"),
+    ("版がない", mutate(TANGELA_CHECKS + (0, "edition"), delete=True), "['edition'] がない"),
+    ("確認日が今日より後", check_of(TANGELA, 0, checked_on="2026-10-21"), "より後"),
+    ("確認日が方針の開始日より前", check_of(TANGELA, 0, checked_on="2026-10-14"), "より前"),
+    ("確認日の形が違う", check_of(TANGELA, 0, checked_on="2026/10/16"), "日付ではない"),
+    ("照合した版の一覧の番号がない", check_of(TANGELA, 0, edition={"expansion": "第1弾 拡張パック", "list_number": None}), "一覧の番号（list_number）がない"),
+    ("版の収録がない", check_of(TANGELA, 0, edition={"expansion": "", "list_number": "013/096"}), "収録"),
+    ("版の項目が足りない", check_of(TANGELA, 0, edition={"list_number": "013/096"}), "収録（expansion）と一覧の番号"),
+    ("照らしたコミットが SHA でない", check_of(TANGELA, 0, kyuura_commit="ecb2d69"), "40 桁"),
+    ("知らない結果", check_of(TANGELA, 0, result="ok"), "結果 'ok'"),
+    ("対象の版がないのに照合した欄", check_of(TANGELA, 2, checked_fields=["name.ja"]), "照合した欄・違いを書けない"),
+    ("アクセスできないのに違い", check_of(TANGELA, 3, differences=DIFFERENCE), "照合した欄・違いを書けない"),
+    ("一致なのに違い", check_of(TANGELA, 0, differences=[dict(DIFFERENCE[0], affects_behavior=False)]), "違いがある"),
+    ("一致なのに照合した欄がない", check_of(TANGELA, 0, checked_fields=[]), "照合した欄がない"),
+    ("違いの結果なのに違いがない", check_of(TANGELA, 1, differences=[]), "違いがない"),
+    ("違いの欄が照合した欄にない", check_of(TANGELA, 1, checked_fields=["name.ja"]), "照合した欄にない"),
+    ("違いの kyuura の値を作る", check_of(TANGELA, 1, differences=[dict(DIFFERENCE[0], kyuura="からみつく", affects_behavior=False)]),
+     "写しの値と違う"),
+    ("違いの値が同じ", check_of(TANGELA, 1, differences=[dict(DIFFERENCE[0], pcg_search="しめつける", affects_behavior=False)]),
+     "違いではない"),
+    ("知らない欄", check_of(TANGELA, 0, checked_fields=["pokemon.illustrator"]), "照合できる欄ではない"),
+    ("ない位置のワザの欄", check_of(TANGELA, 0, checked_fields=["pokemon.attacks[5].text.ja"]), "写しのカードにない"),
+    ("同じ版を同じデータで調べ直す", mutate(TANGELA_CHECKS, [pcg_check(), pcg_check(checked_on="2026-10-19")]), "調べ直している"),
+    ("採用のコミットが写しと違う", mutate(("cards", TANGELA, "kyuura_commit"), "3f349085645f47d0649a6cacece3680caeae50bf"),
+     "採用したデータのコミット"),
+    ("記録した日が今日より後", mutate(("cards", TANGELA, "recorded_on"), "2027-01-01"), "記録した日"),
+    ("写しにないカード", mutate(("cards", "PMCG9-999"), {"basis": "kyuura_data"}), "写し（kyuura_cards.json）にないカード"),
+    ("名前が写しと違う", mutate(("cards", TANGELA, "name_ja"), "モンジャラX"), "名前"),
+    ("知らない項目", mutate(("cards", TANGELA, "verified_by_guidebook"), True), "知らない項目"),
+    ("知らない basis", mutate(("cards", TANGELA, "basis"), "pcg_search"), "basis"),
+    ("知らない status", mutate(("cards", TANGELA, "status"), "verified"), "status"),
+    ("kyuura の記録の id でないもの", mutate(("cards", TANGELA, "kyuura_records"), ["P43 p.55"]), "kyuura_records は"),
+    ("採用したカードに挙動に影響する違い", check_of(TANGELA, 1, differences=DIFFERENCE), "保留にする"),
+    ("採用したカードに挙動に影響する論点", mutate(("cards", TANGELA, "issues"),
+                                                  [{"question": "q", "fields": [], "affects_behavior": True}]), "保留にする"),
+    ("論点の問いがない", mutate(("cards", TANGELA, "issues"), [{"question": "", "fields": [], "affects_behavior": False}]), "問い"),
+    ("保留の理由がない", mutate(("cards", CHARIZARD, "issues"), []), "保留の理由"),
+    ("保留のカードを登録する", with_registry(lambda r: r.with_attacks("t", {AttackKey(CHARIZARD, 0): AttackEntry(DAMAGE_ONLY, "ほのおのうず")})),
+     "保留のカードが登録されている"),
+    ("採用したカードを登録しない", mutate(("cards", CHARIZARD, "status"), "adopted"), "採用したカードが登録されていない"),
+    ("過去の原典照合の記録と採用の記録が両方ある", with_verification(lambda v: v["cards"].__setitem__(TANGELA, read_verification()["cards"][TANGELA])),
+     "card_verification.json（過去の原典照合）にも記録がある"),
+    ("過去の原典照合の記録のないカードを guidebook_record にする",
+     mutate(("cards", TANGELA), {"basis": "guidebook_record", "name_ja": "モンジャラ", "external_checks": [pcg_check()]}),
+     "card_verification.json に記録がない"),
+    ("guidebook_record に採用の項目", mutate(("cards", STARMIE, "play_text"), {}), "知らない項目"),
+    ("過去の原典照合の記録がない guidebook_record", with_verification(lambda v: v["cards"].pop(STARMIE)), "card_verification.json に記録がない"),
+    ("外部照合のない guidebook_record", mutate(("cards", STARMIE, "external_checks"), []), "外部照合がない"),
+    ("文面が pcg-search.com の転記のカードの日本語の欄", mutate(("cards", "PMCG2-035"), {
+        "basis": "guidebook_record", "name_ja": "プリン", "external_checks": [
+            pcg_check(url="https://pcg-search.com/card/1st/1stintro2014.php",
+                      edition={"expansion": "イントロパック", "list_number": "014"},
+                      checked_fields=["pokemon.hp", "pokemon.attacks[0].text.ja"])]}), "独立した照合にならない"),
+    ("トレーナーにポケモンの欄", mutate(("cards", OAK), {"basis": "guidebook_record", "name_ja": "オーキドはかせ", "external_checks": [
+        pcg_check(url="https://pcg-search.com/card/1st/1st1073.php", edition={"expansion": "第1弾 拡張パック", "list_number": "073/096"},
+                  checked_fields=["pokemon.hp"])]}), "このカード（trainer）にない"),
+    ("印刷の文面が根拠なのに処理の文面が違う",
+     with_registry(lambda r: r.with_attacks("t", {AttackKey(TANGELA, 0): dataclasses.replace(r.attack_entry(TANGELA, 0), play_text_ja="別の文面")})),
+     "play_text_ja が写しの文面と違う"),
+    ("印刷の文面が根拠なのにガイドブックのページを出典にする",
+     with_registry(lambda r: r.with_attacks("t", {AttackKey(TANGELA, 0): dataclasses.replace(r.attack_entry(TANGELA, 0), source="P43 p.55")})),
+     "出典が 'P43 p.55'"),
+    ("研究の対応表の adopted_printed_text にない", with_links(lambda l: l["latest_descriptions"]["adopted_printed_text"].remove(f"{TANGELA}/attack/0")),
+     "adopted_printed_text にない"),
+    ("adopted_printed_text に採用の記録のない登録", with_links(lambda l: l["latest_descriptions"]["adopted_printed_text"].append("PMCG1-002/attack/0")),
+     "採用の記録がない"),
+    ("LD- の根拠が kyuura_records にない", mutate(("cards", BUTTERFREE, "kyuura_records"), ["CC-PMCG2-007-P19"]), "kyuura_records にない"),
+    ("LD- の根拠が研究の対応表と違う", with_links(lambda l: l["latest_descriptions"]["registered"].pop(f"{BUTTERFREE}/attack/1")),
+     "registered にない"),
+    ("LD- の根拠と出典が違う", mutate(("cards", BUTTERFREE, "play_text", "attack/0"), "LD-PMCG2-007-ATK1"), "出典が"),
+    ("登録の文面の対象が足りない", mutate(("cards", TANGELA, "play_text"), {"attack/0": cs.PRINTED_TEXT}), "play_text の対象"),
+    ("知らない根拠", mutate(("cards", TANGELA, "play_text", "attack/0"), "pcg_search"), "根拠 'pcg_search'"),
+    ("登録したカードに根拠の記録がない", mutate(("cards", TANGELA), delete=True), "ちょうど一方がない"),
+    ("形式が違う", mutate(("format",), "kyuura-engine card sources 0"), "形式"),
+    ("方針の値が違う", mutate(("policy", "external_site"), "example.com"), "方針の値"),
+]
+
+
+class RejectTest(unittest.TestCase):
+    def test_false_or_invalid_records_are_rejected(self):
+        """読んでいない原典を確かめたことにする記録・方針と合わない記録・形の崩れた記録は、どれも拒否する（場面ごとに、問題の文で確かめる）。"""
+        for name, change, expected in REJECTED:
+            with self.subTest(name=name):
+                found = run(change(valid_case()))
+                self.assertTrue(any(expected in p for p in found), (expected, found))
+
+    def test_each_case_changes_the_valid_records(self):
+        """どの場面も、変える前の記録は受け付ける（拒否は変えたところによる）。"""
+        self.assertEqual(run(valid_case()), [])
+        self.assertEqual(len({name for name, _, _ in REJECTED}), len(REJECTED))
+
+
+KYUURA = pathlib.Path(__file__).resolve().parent.parent.parent / "kyuura"
+HAUNTER = "PMCG1-047"   # 第1弾のゴースト（参照カード）: さいみんじゅつは kyuura の LD- なし、ゆめくいは LD-PMCG1-047-ATK1 がある
+ABRA = "PMCG1-043"      # ケーシィ: kyuura の CC-PMCG1-043-P43 に、ねんりきの文面のデータの誤り（読点）の記録がある
+
+
+@unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
+class ResearchCommitTest(unittest.TestCase):
+    """scripts/check_research_links.py の 4c・7（kyuura データの採用の記録を、研究の基準のコミットの kyuura の記録と照らす）。
+
+    登録していない参照カード（第1弾のゴースト）を、テストの中だけで採用の記録で登録したことにする（効果の実装は確かめない。記録の照らし方だけ。
+    同梱の記録・登録表は変えない）。
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from scripts import check_research_links as research
+
+        cls.research = research
+        cls.links = cs.load_links()
+        commit = cls.links["research_commit"]
+        cls.ld = {x["id"]: x for x in research.git_show(KYUURA, commit, "data/sidecar/latest_descriptions.json")["records"]}
+        cls.cards = {c["id"]: c for c in read_extract()["cards"]}
+
+    def case(self):
+        links = copy.deepcopy(self.links)
+        section = links["latest_descriptions"]
+        attacks = self.cards[HAUNTER]["pokemon"]["attacks"]
+        ld_id = f"LD-{HAUNTER}-ATK1"
+        registry = DEFAULT_EFFECTS.with_attacks("test-research-commit", {
+            AttackKey(HAUNTER, 0): AttackEntry(DAMAGE_ONLY, attacks[0]["name"]["ja"], text_ja=attacks[0]["text"]["ja"],
+                                               play_text_ja=attacks[0]["text"]["ja"], source=cs.PRINTED_TEXT_SOURCE),
+            AttackKey(HAUNTER, 1): AttackEntry(DAMAGE_ONLY, attacks[1]["name"]["ja"], text_ja=attacks[1]["text"]["ja"],
+                                               play_text_ja=self.ld[ld_id]["latest_description"]["text_ja"], source=ld_id),
+        })
+        section["adopted_printed_text"].append(f"{HAUNTER}/attack/0")
+        section["registered"][f"{HAUNTER}/attack/1"] = ld_id
+        section["kyuura_records_not_registered"].remove(ld_id)
+        sources = {"format": cs.FORMAT, "description": "テストのための記録", "policy": dict(cs.POLICY), "cards": {HAUNTER: {
+            "basis": "kyuura_data", "name_ja": "ゴースト", "status": "adopted", "kyuura_commit": COMMIT, "recorded_on": "2026-10-16",
+            "kyuura_records": [f"CC-{HAUNTER}-P160", ld_id], "play_text": {"attack/0": cs.PRINTED_TEXT, "attack/1": ld_id},
+            "external_checks": [], "issues": []}}}
+        return sources, registry, links
+
+    def check(self, sources, registry, links):
+        return self.research.check(KYUURA, links=links, sources=sources["cards"], registry=registry)
+
+    def test_adoption_is_accepted(self):
+        """採用の記録で登録したカード（印刷の文面を根拠にしたワザ・LD- を根拠にしたワザ）は、どちらの検査も受け付ける。"""
+        sources, registry, links = self.case()
+        self.assertEqual(self.check(sources, registry, links), [])
+        # 第1弾のゴーストには v0.9 の過去の原典照合の記録（参照カード）がある。登録の根拠は 1 つなので、テストの中だけで外す
+        verification = copy.deepcopy(read_verification())
+        del verification["cards"][HAUNTER]
+        self.assertEqual(cs.problems(sources, verification=verification, registry=registry, links=links, today=TODAY), [])
+
+    def assertProblem(self, found, expected):
+        self.assertTrue(any(expected in p for p in found), (expected, found))
+
+    def test_missing_kyuura_record_is_rejected(self):
+        """確かめた kyuura の記録の一覧に、研究の基準のコミットにある記録が足りない（既存の記録を見落とした）。"""
+        sources, registry, links = self.case()
+        sources["cards"][HAUNTER]["kyuura_records"] = [f"CC-{HAUNTER}-P160"]
+        self.assertProblem(self.check(sources, registry, links), f"kyuura だけ ['LD-{HAUNTER}-ATK1']")
+
+    def test_printed_text_over_latest_description_is_rejected(self):
+        """kyuura に最新の説明（LD-）がある対象を、印刷の文面で処理する（既存の最新の説明を取り消す）。"""
+        sources, registry, links = self.case()
+        section = links["latest_descriptions"]
+        attack = self.cards[HAUNTER]["pokemon"]["attacks"][1]
+        registry = registry.with_attacks("t", {AttackKey(HAUNTER, 1): AttackEntry(
+            DAMAGE_ONLY, attack["name"]["ja"], text_ja=attack["text"]["ja"], play_text_ja=attack["text"]["ja"], source=cs.PRINTED_TEXT_SOURCE)})
+        del section["registered"][f"{HAUNTER}/attack/1"]
+        section["adopted_printed_text"].append(f"{HAUNTER}/attack/1")
+        sources["cards"][HAUNTER]["play_text"]["attack/1"] = cs.PRINTED_TEXT
+        self.assertProblem(self.check(sources, registry, links), f"kyuura に最新の説明の記録 LD-{HAUNTER}-ATK1 がある")
+
+    def test_text_other_than_the_printed_text_is_rejected(self):
+        sources, registry, links = self.case()
+        entry = registry.attack_entry(HAUNTER, 0)
+        registry = registry.with_attacks("t", {AttackKey(HAUNTER, 0): dataclasses.replace(entry, play_text_ja=entry.play_text_ja + "（変えた）")})
+        self.assertProblem(self.check(sources, registry, links), "研究の基準のコミットの印刷の文面と違う")
+
+    def test_known_data_error_is_rejected(self):
+        """kyuura の照合の記録にデータの誤りの記録がある文面を、印刷の文面のまま採用する（ケーシィのねんりき）。論点にも挙げていない。"""
+        links = copy.deepcopy(self.links)
+        section = links["latest_descriptions"]
+        del section["recorded_in_card_checks"][f"{ABRA}/attack/0"]
+        section["adopted_printed_text"].append(f"{ABRA}/attack/0")
+        entry = DEFAULT_EFFECTS.attack_entry(ABRA, 0)
+        registry = DEFAULT_EFFECTS.with_attacks("t", {AttackKey(ABRA, 0): dataclasses.replace(
+            entry, play_text_ja=entry.text_ja, source=cs.PRINTED_TEXT_SOURCE)})
+        sources = {"cards": {ABRA: {
+            "basis": "kyuura_data", "name_ja": "ケーシィ", "status": "adopted", "kyuura_commit": COMMIT, "recorded_on": "2026-10-16",
+            "kyuura_records": [f"CC-{ABRA}-P43", "CR-EFFECTS-AFTER-KO", "CR-STATUS-AFTER-DAMAGE"],
+            "play_text": {"attack/0": cs.PRINTED_TEXT}, "external_checks": [], "issues": []}}}
+        found = self.check(sources, registry, links)
+        self.assertProblem(found, "この文面のデータの誤りの記録がある")
+        self.assertProblem(found, "データの誤りの欄 pokemon.attacks[0].text.ja が、採用の記録の論点にない")
+
+    def test_errata_must_be_listed(self):
+        """エラッタ（rule_history.json の errata）があるカード（リザードン。TXT-CHARIZARD）は、確かめた記録の一覧に挙げる。根拠にした
+        エラッタは、そのカードを指す。"""
+        sources = {"cards": {"PMCG1-021": {
+            "basis": "kyuura_data", "name_ja": "リザードン", "status": "on_hold", "kyuura_commit": COMMIT, "recorded_on": "2026-10-16",
+            "kyuura_records": [], "play_text": {}, "external_checks": [],
+            "issues": [{"question": "q", "fields": [], "affects_behavior": True}]}}}
+        self.assertProblem(self.check(sources, DEFAULT_EFFECTS, self.links), "kyuura だけ ['TXT-CHARIZARD']")
+        sources, registry, links = self.case()
+        sources["cards"][HAUNTER]["play_text"]["attack/0"] = "ERR-PLUSPOWER"
+        self.assertProblem(self.check(sources, registry, links), "根拠のエラッタ ERR-PLUSPOWER が、研究の基準のコミットでこのカードを指していない")
+
+
+if __name__ == "__main__":
+    unittest.main()
