@@ -4,6 +4,7 @@ kyuura（https://github.com/moheronemy/kyuura）の ``research_commit`` の記�
 
 1. 論点（UQ-）: 対応表に書いた論点がすべてあり、どれも UNRESOLVED。kyuura の論点はどれも対応表のどこかにある。
 2. エンジンの未解決の一覧（``engine_unresolved_index``）: 停止コードの集合が対応表と同じで、コードごとの論点と処理（issue・out_of_scope）が同じ。
+   kyuura にまだ記録がないとした停止コード（``not_in_kyuura``。v0.21）は比べる集合から除き、kyuura に記録ができていたら知らせる。
 3. 分類の違い（``classification_differences``）: kyuura の裁定（CR-）があり、分類（status）が対応表と同じで、エンジンの id を参照している。
 4. 最新の説明（LD-）: 対応表の id があり、カード・種類・位置が合い、文面がエンジンの登録の ``play_text_ja`` と同じ。印刷の文面と同じ最新の説明を
    kyuura が照合の記録（CC-）に書いたもの（``recorded_in_card_checks``）は、照合した欄の文面（またはデータの誤りの資料の値）が ``play_text_ja`` と
@@ -91,9 +92,15 @@ def check(kyuura: Path) -> list[str]:
 
     # 2. エンジンの未解決の一覧
     index = {x["stop_code"]: x for x in rulings["engine_unresolved_index"] if x.get("stop_code")}
-    if set(index) != set(links["stop_codes"]):
+    # kyuura にまだ記録がない停止コード（not_in_kyuura。kyuura への報告事項。v0.21）は、kyuura の一覧と比べる集合から除く。kyuura に記録が
+    # できていたら、対応表を直すよう知らせる（v0.19 の照合の記録と同じ）
+    pending = {code for code, v in links["stop_codes"].items() if v["kyuura_disposition"] == "not_in_kyuura"}
+    for code in sorted(pending & set(index)):
+        problems.append(f"kyuura に記録がないとした停止コード {code} が、kyuura の未解決の一覧にある（対応表を直す）")
+    expected = set(links["stop_codes"]) - pending
+    if set(index) - pending != expected:
         problems.append(f"停止コードの集合が違う: kyuura だけ {sorted(set(index) - set(links['stop_codes']))}、"
-                        f"対応表だけ {sorted(set(links['stop_codes']) - set(index))}")
+                        f"対応表だけ {sorted(expected - set(index))}")
     for code, entry in links["stop_codes"].items():
         theirs = index.get(code)
         if theirs is None:

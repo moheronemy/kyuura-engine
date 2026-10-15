@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.20）
+# 実装状況（v0.1〜v0.21）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -107,6 +107,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | きずぐすり: 自分の場にダメージカウンターののったポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_POTION_WITHOUT_DAMAGE`）で拒否。カードは手札に残る。test_trainers.py `test_no_damaged_pokemon_is_unresolved` |
 | きずぐすり: ダメージカウンターののっていないポケモンを選べるか（v0.2b） | 選ぶと `UnsupportedError`（`UNRESOLVED_POTION_UNDAMAGED_TARGET`）。決定は残る。test_trainers.py `test_undamaged_target_is_unresolved` |
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
+| 突風: 相手に控えポケモンがいないときに使えるか（v0.21。GW5） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）で拒否。カードは手札に残る。第1弾の印刷の文面の「相手に控えがいない場合は使えない」は最新の説明（p.255）にないので使わない。test_gust_v0_21.py `test_opponent_without_bench_is_unresolved` |
 | ポケモンチェックの「どく」で、両方のプレイヤーのポケモンがきぜつする（v0.3a） | ダメージを与える前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）。以後のコマンドは `UnsupportedError`。test_pokemon_check.py `DoubleKnockOutTest` |
 | 特殊などく状態の重ね方（通常のどくのポケモンが特殊などくを受ける、特殊などく同士。v0.3a） | 特殊などくの効果は未実装（起こらない） |
 | ポケモンチェックで、両方の対戦ポケモンがねむり状態のときのコインの順番（v0.3b） | コインを投げる前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）。v0.3b の対応カード（パラス）では起こらなかったが、v0.17b から自分をねむりにするワザ（たおれこむ・v0.18c のぐうたらこうげき）で起こる（rocket-snorlax-v0.17b.md の Z29。v0.18 のストレス実行で 2 回。v0.18-verification.md 6.2）。test_pokemon_check_v0_3b.py `BothAsleepTest`・test_rocket_snorlax_v0_17b.py `test_both_actives_asleep_halts_the_pokemon_check` |
@@ -1390,7 +1391,7 @@ v0.20 は、対応済みのカードだけで組んだ固定のデッキを 2 �
 ### 未実装
 
 - 人間が最後まで遊べる操作画面（GUI・Web・通信対戦）・対戦相手の AI・合法な操作の一覧を返す API。examples/start_preset_game.py は対戦の開始だけの例。
-- 突風・パソコン通信・エネルギー回収・ポケモン育て屋さん（次の作業。[preset-decks-v0.20.md](preset-decks-v0.20.md) 6 章）。
+- 突風・パソコン通信・エネルギー回収・ポケモン育て屋さん（次の作業。[preset-decks-v0.20.md](preset-decks-v0.20.md) 6 章。突風は v0.21 で対応）。
 
 ### 原典未確認・未解決
 
@@ -1399,3 +1400,41 @@ v0.20 は、対応済みのカードだけで組んだ固定のデッキを 2 �
 ### 見つけた事項
 
 - デッキ B（たねポケモン 8 枚）は、ベンチにポケモンがいないままバトル場のポケモンがきぜつして負ける局が多い（400 局の負け 272 のうち 204）。進化カードが余り、ワザを使わずに終える番が多い（[preset-decks-v0.20.md](preset-decks-v0.20.md) 4.3）。
+
+## v0.21 で加えたもの（突風）
+
+v0.21 は、トレーナーの突風（PMCG1-072）を、照合済みの記録の再利用の手順で加えた版です（版 0.21.0）。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替えます。
+
+- [突風（規定と根拠・再利用した記録・kyuura への報告事項）](gust-v0.21.md)
+- [v0.21 の検証](v0.21-verification.md)
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 突風: 使ったプレイヤーが相手のベンチのポケモンから 1 匹選び（決定 `select_pokemon`、`player` は使ったプレイヤー）、相手の対戦ポケモンと入れ替える（`SwitchOpponentWithBench`）。1 匹でも決定を出す。自分の場は関係しない | p.255 の最新の説明・解説（GW2〜GW4・GW6） | test_gust_v0_21.py `ChoiceTest`・`UsableTest` |
+| 入れ替えはポケモンいれかえと共通の `effects._switch_active_with_bench`（v0.20 の `SwitchWithBench.resume` の本体をそのまま関数にした）: にげるエネルギーを払わない・ついているカード（ディフェンダーの有効期限も）・ダメージカウンター・重なり・番号はいっしょに移る・特殊状態と持続する効果（かたまる・ほのおのかべ・こうらがえし）は消える・ねむり・マヒでも入れ替える | p.311・p.322・p.325（既存の記録を再利用。GW7〜GW12） | `SwitchedPokemonTest`・`TurnAndConservationTest.test_switch_trainer_on_own_side_is_unchanged`・既存の test_trainers.py `SwitchTest` |
+| 相手の「とうめい」ははたらかない（コインを投げない）。使っても番は続き、そのあとのワザは出た相手の対戦ポケモンに当たる | p.159（T29）・p.310（再利用） | `SwitchedPokemonTest.test_transparency_is_not_evaluated`・`TurnAndConservationTest` |
+| 決定を待つ間は使用中（`trainer_in_use`）。相手の答え・不正な選択（自分の場・相手の対戦ポケモン・場にいない・0 個・2 個）は拒否し、決定は待ったまま。宣言の拒否で状態が変わらない。カードの保存則・渡した状態を変えない・複製と pickle のあとも同じ | p.310（再利用） | `ChoiceTest`・`UsableTest`・`TurnAndConservationTest` |
+| 正式な対戦開始から（v0.20 の固定のデッキのディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキ。席を入れかえて 6 局ずつ）: 引いて使い、相手の場を入れ替え、その番のワザで出たポケモンにダメージ。不変条件・ログの監査・書き出しの監査 | — | `NaturalGamesTest` |
+| 照合の記録（p.255）・写しの組 `pool_v0_21`・研究の対応表（kyuura に記録がない照合の記録・停止コードとして挙げる） | p.255 | `RegistrationTest`・test_trainers.py・test_cards.py・test_research_links_v0_18e.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 組み合わせの対戦（tools/preset_deck_games.py の `--variant gust`） | 一時的なデッキで 40 局・200 局（[v0.21-verification.md](v0.21-verification.md) 5 章）。手順に加えたのは突風の使い方だけ。既定の `--variant preset` の結果は v0.20 と 1 局ごとに同じ |
+
+### 未実装
+
+- 「バトル場をはなれられない」状態（p.325。その状態を持つカードがない。加えるときに突風の扱いを確かめる。GW16）。
+- パソコン通信・エネルギー回収・ポケモン育て屋さん。
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定: 相手に控えがいないときの突風（GW5。`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）。未解決の裁定は 25 件・停止コードは 19 件（v0.20 までの 24 件・18 件は変えていない）。ポケモンいれかえの `UNRESOLVED_SWITCH_WITHOUT_BENCH` は別の問いとしてそのまま。
+- 図版が第1弾の版ではない可能性が高い（番号㉘。どの商品の版かは確かめていない。処理は最新の説明にしたがうので変わらない）。
+
+### 見つけた事項（kyuura への報告事項）
+
+- kyuura に、突風の照合の記録（CC-）・最新の説明・p.255 のページの記録・GW5 の論点がない。kyuura の docs/cards/reprints.md が文面の変更を「書き方だけ」と分類しているが、なくなった一文（相手に控えがいない場合は使えない）の扱いの根拠が書かれていない（[gust-v0.21.md](gust-v0.21.md) 7 章）。

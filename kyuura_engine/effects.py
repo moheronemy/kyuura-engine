@@ -52,6 +52,8 @@
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
 - トレーナー（v0.19）: オーキドはかせ ``DiscardHandAndDraw``（p.255 の最新の説明。手札をすべてトラッシュし、その後 7 枚引く。
   docs/professor-oak-v0.19.md）
+- トレーナー（v0.21）: 突風 ``SwitchOpponentWithBench``（p.255 の最新の説明。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の
+  対戦ポケモンと入れ替える。入れ替えはポケモンいれかえと共通の ``_switch_active_with_bench``。docs/gust-v0.21.md）
 - つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
@@ -1922,12 +1924,13 @@ class DiscardHandAndDraw(TrainerEffect):
 
 
 def _select_own_pokemon_problems(
-    decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = ()
+    decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = (), whose: str = "自分"
 ) -> list[str]:
-    """トレーナーを使ったプレイヤーが自分の場のポケモンを 1 匹選ぶ決定（``SELECT_POKEMON``）の形の問題（v0.4e）。
+    """トレーナーを使ったプレイヤーが場のポケモンを 1 匹選ぶ決定（``SELECT_POKEMON``）の形の問題（v0.4e）。
 
     ``expected`` は選べるもの（場のポケモンの番号。決定を出したときと同じ並び）、``unresolved`` は、そのうち原典で扱いを
-    決められない選択（``context`` の ``"unresolved_choices"``）。"""
+    決められない選択（``context`` の ``"unresolved_choices"``）。選ぶのはいつもトレーナーを使ったプレイヤーで、v0.21 の突風は
+    相手の場のポケモンを選ぶ（``whose`` は理由の文に書く、選べるポケモンの持ち主。既定は自分）。"""
     problems = []
     if decision.player != use.player:
         problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
@@ -1937,7 +1940,7 @@ def _select_own_pokemon_problems(
         problems.append(f"{what}の決定で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 匹のはず）")
     expected = tuple(expected)
     if decision.options != expected:
-        problems.append(f"{what}の決定の選べるもの {decision.options} が、選べる自分の場のポケモン {expected} と合わない")
+        problems.append(f"{what}の決定の選べるもの {decision.options} が、選べる{whose}の場のポケモン {expected} と合わない")
     unresolved = tuple(unresolved)
     if tuple(decision.context_value("unresolved_choices", ())) != unresolved:
         problems.append(
@@ -2048,27 +2051,88 @@ class SwitchWithBench(TrainerEffect):
         )
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
-        p = state.players[use.player]
-        index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-        old = p.active
-        p.active, p.bench[index] = p.bench[index], old
-        state.add_event(
-            "switch",
-            player=use.player,
-            old_active=old.card,
-            new_active=p.active.card,
-            old_active_pokemon_id=old.pokemon_id,
-            new_active_pokemon_id=p.active.pokemon_id,
-        )
-        # ベンチに戻ったポケモンの特殊状態はすべて消える（p.322。「にげる」と同じ処理。v0.3a）
-        clear_special_conditions(state, use.player, old, SWITCH)
-        # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
-        remove_persistent_effects(state, use.player, old, SWITCH)
+        _switch_active_with_bench(state, use.player, choices[0])
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         """選べるのは自分のベンチのポケモン（控えポケモン）。"""
         bench = state.players[use.player].bench
         return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in bench), "「ポケモンいれかえ」")
+
+
+def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int) -> None:
+    """トレーナーの効果で、プレイヤー ``owner`` の対戦ポケモンと、``owner`` のベンチの ``pokemon_id`` のポケモンを入れ替える。
+    ポケモンいれかえ（v0.2b。``owner`` は使ったプレイヤー）と突風（v0.21。``owner`` は相手）で共通の処理で、v0.20 までの
+    ``SwitchWithBench.resume`` の本体をそのまま関数にした（動作・ログ・順番は同じ）。選ぶ・確かめるのは呼ぶ側。
+
+    - 「にげる」ではない（p.325）。にげるエネルギーは払わず、「にげる」の失敗の記録（v0.3c）にも関わらない。
+    - 場のポケモン（``PokemonInPlay``）ごと入れ替えるので、ついているカード（エネルギー・トレーナー）・ダメージカウンター・重なり・
+      場のポケモンの番号はいっしょに移る（p.311）。もとの対戦ポケモンは、選んだポケモンがいたベンチの位置に入る。
+    - ベンチに戻ったもとの対戦ポケモンの特殊状態・ワザによる持続する効果は消える（p.322。理由は ``SWITCH``）。ねむり・マヒでも
+      入れ替える（p.325）。
+    - ログ ``switch`` の ``player`` は入れ替わる場の持ち主（ポケモンいれかえでは使ったプレイヤーと同じ。突風では相手。使った
+      プレイヤーは、その前の ``play_trainer`` の ``player``）。
+    """
+    p = state.players[owner]
+    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == pokemon_id)
+    old = p.active
+    p.active, p.bench[index] = p.bench[index], old
+    state.add_event(
+        "switch",
+        player=owner,
+        old_active=old.card,
+        new_active=p.active.card,
+        old_active_pokemon_id=old.pokemon_id,
+        new_active_pokemon_id=p.active.pokemon_id,
+    )
+    # ベンチに戻ったポケモンの特殊状態はすべて消える（p.322。「にげる」と同じ処理。v0.3a）
+    clear_special_conditions(state, owner, old, SWITCH)
+    # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
+    remove_persistent_effects(state, owner, old, SWITCH)
+
+
+@dataclass(frozen=True)
+class SwitchOpponentWithBench(TrainerEffect):
+    """相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える（突風。p.255 の最新の説明「相手の控えポケモンを1匹選び、相手の
+    対戦ポケモンと入れ替える。」。v0.21。docs/gust-v0.21.md）。
+
+    - 選ぶのは突風を使ったプレイヤー（GW2。最新の説明に「相手は」がない。p.255 の解説「相手のベンチからポケモンを選んでバトル場に
+      呼んできます」）。決定（``SELECT_POKEMON``）の ``player`` は使ったプレイヤーで、相手ではない。バタフリーの「ふきとばし」（相手が
+      選ぶ。p.19。v0.4d の F3）とは選ぶプレイヤーが違うので、その処理（``FORCED_SWITCH``・ログ ``forced_switch``）は使わない。
+    - 選べるのは相手のベンチのポケモン（場のポケモンの番号）だけ。自分の場のポケモン・相手の対戦ポケモンは選べない（GW3）。1 匹でも
+      決定を出す（ポケモンいれかえと同じ）。自分の場（ベンチの有無）は関係しない（GW6）。
+    - 入れ替えは、ポケモンいれかえと同じ ``_switch_active_with_bench`` を相手の場で行う（GW7〜GW12: にげるエネルギーを払わない・
+      ついているカードとダメージカウンターはいっしょに移る・特殊状態と持続する効果は消える・ねむり・マヒでも入れ替える）。
+    - トレーナーの効果なので「とうめい」ははたらかない（p.159。v0.9 の T29。``attack_reaches`` を呼ばない）。
+    - 乱数は使わない。使っても番は終わらない（p.310）。
+
+    原典で決められないので扱わない（``UnsupportedError``）: 相手に控えポケモンがいないときに使えるか（GW5）。
+    """
+
+    implementation_id = "switch_opponent_with_bench"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not state.players[1 - use.player].bench:
+            raise UnsupportedError(
+                "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
+                "相手に控えポケモンがいない。このときに「突風」を使えるかは、『オフィシャルブック2000』（p.255・p.310）から決められない"
+                "ので扱わない（第1弾の印刷の文面の「相手に控えがいない場合は使えない」は、p.255 の最新の説明にない）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        bench = state.players[1 - use.player].bench
+        push_trainer_decision(
+            state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in bench]
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        _switch_active_with_bench(state, 1 - use.player, choices[0])
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤーで、選べるのは相手のベンチのポケモン（控えポケモン）。"""
+        bench = state.players[1 - use.player].bench
+        return _select_own_pokemon_problems(
+            decision, use, (pokemon.pokemon_id for pokemon in bench), "「突風」", whose="相手"
+        )
 
 
 @dataclass(frozen=True)
@@ -3414,6 +3478,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             "自分の場のポケモンにのっているダメージカウンターを2個まで、とりのぞくことができる。",
             "あなたの場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。",
             "P43 p.254",
+        ),
+        # 突風（v0.21）p.255。図版の文面は最新の説明と同じ（第1弾の版ではない可能性が高い）。kyuura の写し（第1弾の印刷の転記）にある
+        # 「相手に控えがいない場合は使えない」は最新の説明にないので、控えがいないときは UNRESOLVED（docs/gust-v0.21.md の GW5）
+        "PMCG1-072": TrainerEntry(
+            SwitchOpponentWithBench(),
+            "突風",
+            "相手の場の対戦ポケモンと控えポケモンを入れ替える。どの控えポケモンを出させるかは、自分が自由に選ぶことができる。相手に控えがいない場合は使えない。",
+            "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",
+            "P43 p.255",
         ),
         "PMCG1-073": TrainerEntry(
             SwitchWithBench(),

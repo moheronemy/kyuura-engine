@@ -154,6 +154,9 @@
   "pool_v0_19": [
     "PMCG1-077"
   ],
+  "pool_v0_21": [
+    "PMCG1-072"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4673,6 +4676,43 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-073-ookidohakase/"
+      }
+    },
+    {
+      "id": "PMCG1-072",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": "Gust of Wind"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の場の対戦ポケモンと控えポケモンを入れ替える。どの控えポケモンを出させるかは、自分が自由に選ぶことができる。相手に控えがいない場合は使えない。",
+          "en": "Choose 1 of your opponent's Benched Pokémon and switch it with his or her Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-072",
+        "pokemontcg": [
+          "base1-93"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-080-toppu/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-080-toppu/"
       }
     },
     {

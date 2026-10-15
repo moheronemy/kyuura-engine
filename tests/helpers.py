@@ -135,6 +135,7 @@ SABRINAS_SLOWPOKE = "PMCG6-044"
 CHARIZARD = "PMCG1-021"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
+GUST = "PMCG1-072"  # 突風（v0.21 で対応。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える。p.255）
 SWITCH = "PMCG1-073"  # ポケモンいれかえ
 BILL = "PMCG1-074"  # マサキ
 PROFESSOR_OAK = "PMCG1-077"  # オーキドはかせ（v0.19 で対応。手札をすべてトラッシュし、その後 7 枚引く。p.255）
