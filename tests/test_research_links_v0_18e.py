@@ -5,7 +5,7 @@ kyuura（研究の正本）の記録そのものは写さず、id の対応だ�
 同じ）を確かめ、../kyuura があれば ``scripts/check_research_links.py`` で kyuura の研究の基準のコミットの記録とも照らす。
 
 停止コード・登録を加えたのに対応表に書かないと失敗する（エンジンから研究の id を引けなくなるのを防ぐ）。kyuura の記録 id: engine_unresolved_index・
-UQ-…・CR-…・LD-…・CC-…（kyuura adf9710）。
+UQ-…・CR-…・LD-…・CC-…（v0.18 は kyuura adf9710。2026-10-15 の照合の記録の取り込みのあとは kyuura 3f34908。docs/verified-record-reuse.md）。
 """
 
 from __future__ import annotations
@@ -54,9 +54,11 @@ def all_engine_rulings():
 
 class ResearchLinksTest(unittest.TestCase):
     def test_commits(self):
-        """研究の基準（kyuura adf9710）とカードの写しの元（ecb2d69）を分けて持つ。写しの元は同梱の写しのコミットと同じ。"""
+        """研究の基準（kyuura 3f34908。2026-10-15 に adf9710 から上げた。docs/verified-record-reuse.md）とカードの写しの元（ecb2d69）を
+        分けて持つ。写しの元は同梱の写しのコミットと同じ。"""
         self.assertRegex(LINKS["research_commit"], r"^[0-9a-f]{40}$")
-        self.assertEqual(LINKS["research_commit"], "adf97107ee0d9755cd7ddedae298ecb02914128e")
+        self.assertEqual(LINKS["research_commit"], "3f349085645f47d0649a6cacece3680caeae50bf")
+        self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
@@ -112,16 +114,29 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertRegex(text, rf"(?<![A-Za-z0-9]){re.escape(ruling['ruling_id'])}(?![0-9])")
 
     def test_latest_descriptions_cover_every_registration(self):
-        """最新の説明を登録したワザ・特殊能力は、どれも kyuura の LD- の id か「kyuura に記録なし」のどちらかに挙げる（登録を加えたら対応表も直す）。"""
+        """最新の説明を登録したワザ・特殊能力は、どれも 4 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
+        ワザの文面を照合していないもの、kyuura に記録なし）のちょうど 1 つに挙げる（登録を加えたら対応表も直す）。文面の一致は
+        scripts/check_research_links.py が kyuura で確かめる。"""
         section = LINKS["latest_descriptions"]
-        registered = set(section["registered"])
-        without = set(section["registered_without_kyuura_record"])
-        self.assertFalse(registered & without)
-        self.assertEqual(registered | without, registered_targets())
-        self.assertIn("PMCG6-044/attack/0", without)  # v0.18c のナツメのヤドン（kyuura に記録がない。報告事項）
+        groups = {name: set(section[name]) for name in
+                  ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record")}
+        names = list(groups)
+        for i, a in enumerate(names):
+            for b in names[i + 1:]:
+                with self.subTest(a=a, b=b):
+                    self.assertFalse(groups[a] & groups[b])
+        self.assertEqual(set().union(*groups.values()), registered_targets())
+        # v0.18c のナツメのヤドンは、2026-10-15 にエンジンの照合の記録を kyuura に取り込んだ（CC-PMCG6-044-P155。kyuura は画像を読み直していない）。
+        self.assertEqual(section["recorded_in_card_checks"]["PMCG6-044/attack/0"], "CC-PMCG6-044-P155")
+        # ドードーのみだれづきは、図版の版が決まらないので kyuura の照合の記録で文面を照合していない（docs/verified-record-reuse.md 4 章）。
+        self.assertEqual(set(section["card_checks_without_text"]), {"PMCG1-061/attack/0"})
         for target, ld_id in section["registered"].items():
             card, kind, index = target.split("/")
             self.assertEqual(ld_id, f"LD-{card}-{'ATK' if kind == 'attack' else 'PWR'}{index}")
+        for target, cc_id in {**section["recorded_in_card_checks"], **section["card_checks_without_text"]}.items():
+            card = target.split("/")[0]
+            self.assertTrue(cc_id.startswith(f"CC-{card}-P"), cc_id)
+            self.assertIn(cc_id, LINKS["card_checks"]["engine_verified"][card])
 
     def test_card_checks_cover_every_verified_card(self):
         """エンジンの照合の記録のあるカードは、kyuura の CC- の id か「kyuura に記録なし」のどちらかに挙げる。"""

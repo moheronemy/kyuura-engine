@@ -43,7 +43,8 @@
 | kyuura-engine（このリポジトリ） | 対戦処理の実装。kyuura の固定したコミットのデータとルールの記録を参照する |
 
 - 参照している kyuura のコミット: `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（カードの写しの元）
-- 研究の基準にした kyuura のコミット（v0.18 から）: `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。裁定・論点・最新の説明・照合の記録。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)）
+- 研究の基準にした kyuura のコミット: `3f349085645f47d0649a6cacece3680caeae50bf`（ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録。2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ上げた。[docs/verified-record-reuse.md](docs/verified-record-reuse.md)）。v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)）
+- 原典を開く前に、既存の照合の記録（このリポジトリと kyuura）を探して再利用します（`CLAUDE.md` の「照合済みの記録の再利用」）
 - カードデータは、そのコミットの `data/cards.json` から必要なカードだけを抜き出した写し（`kyuura_engine/data/kyuura_cards.json`）を同梱しています。写しはカード情報の正本ではありません。由来と照合の記録は [docs/data-provenance.md](docs/data-provenance.md)。
 - このリポジトリから kyuura を変更することはありません。資料の誤りや食い違いを見つけたら、kyuura 側で確かめて記録します。
 

@@ -10,7 +10,7 @@
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
 | 元のコミット | `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」とするコミット。v0.18 でも変えていない） |
-| 研究の基準（v0.18a から） | `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 研究の基準 | `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
 | 元のファイル | `data/cards.json`（schema_version 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録） |
@@ -461,6 +461,17 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 | PMCG6-044 | ナツメのヤドン（ジム拡張第2弾闇からの挑戦。たね。HP 50・超・弱点 超・抵抗力なし・にげる 1） | ぐうたらこうげき（超無）30「ダメージを与えた後、自分を「ねむり」状態にする。」 | 同じ文面 | 一致 |
 
 - 研究の基準 `adf9710` でも、このカードの記録は同じです（kyuura に最新の説明・照合の記録はない。報告事項）。
+- 2026-10-15 に、この照合の記録を kyuura に取り込みました（`CC-PMCG6-044-P155`。kyuura は画像を読み直していない。下の「2026-10-15」）。
+
+## 2026-10-15（照合の記録の kyuura への取り込みと、研究の基準の更新。写しのコミットは変えていない）
+
+エンジンの照合の記録（`kyuura_engine/data/card_verification.json`）のうち kyuura に記録のなかった 34 枚・最新の説明 34 件を、原典の画像を読み直さずに kyuura に記録し、研究の基準を kyuura `3f349085645f47d0649a6cacece3680caeae50bf` に上げました（詳しくは [verified-record-reuse.md](verified-record-reuse.md)）。カードの写しの元（`ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）・写し・`card_verification.json` は変えていません。
+
+- kyuura の記録: 照合 CC- 34 件、最新の説明 LD- 5 件（印刷の文面と違うもの）。印刷の文面と同じ最新の説明 11 件は CC- の照合した欄に入れ、すでに kyuura の CC- にあった 17 件は再利用した。ドードーのみだれづきは図版の版が決まらないので、照合した欄に入れていない。
+- 原典の確認日はエンジンの記録の日付（2026-10-12。ナツメのヤドンは 2026-10-14）で、取り込んだ日（2026-10-15）と分けて記録した（kyuura の `import_provenance`）。取り込んだ v0.1 の 15 枚はカードごとの日付がないので、ファイルの `checked_on`（v0.1 のコミット `03766e0` の値）とこの文書の v0.1 の節によります。
+- 上の「食い違い（kyuura への報告事項）」のポニータ（PMCG1-016）のワザ名は、kyuura が `CC-PMCG1-016-P75` にデータの誤りの候補として記録しました。kyuura の `data/cards.json` は直していない（kyuura の作業）ので、写しの値は「けりとばす」のままです。
+- きずぐすり（PMCG1-071）・ポケモンいれかえ（PMCG1-073）の文面の違いは、kyuura にトレーナーの最新の説明を記録する形式がないので、`CC-PMCG1-071-P254`・`CC-PMCG1-073-P254` の所見にだけあります（報告事項は残る）。
+- エンジンが使う項目は `ecb2d69` と `3f34908` で同じです（`python3 scripts/check_research_links.py --kyuura ../kyuura`。違いは対応表の `card_data_differences` だけで、v0.18a から変わっていない）。
 
 ## 分類のテストに使う参照カード（対戦には使わない）
 

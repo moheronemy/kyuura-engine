@@ -5,9 +5,12 @@ kyuura（https://github.com/moheronemy/kyuura）の ``research_commit`` の記�
 1. 論点（UQ-）: 対応表に書いた論点がすべてあり、どれも UNRESOLVED。kyuura の論点はどれも対応表のどこかにある。
 2. エンジンの未解決の一覧（``engine_unresolved_index``）: 停止コードの集合が対応表と同じで、コードごとの論点と処理（issue・out_of_scope）が同じ。
 3. 分類の違い（``classification_differences``）: kyuura の裁定（CR-）があり、分類（status）が対応表と同じで、エンジンの id を参照している。
-4. 最新の説明（LD-）: 対応表の id があり、カード・種類・位置が合い、文面がエンジンの登録の ``play_text_ja`` と同じ。kyuura の記録のない登録・
-   登録のない kyuura の記録の一覧が、実際と同じ。
-5. 照合の記録（CC-）: id があり、カードが合う。
+4. 最新の説明（LD-）: 対応表の id があり、カード・種類・位置が合い、文面がエンジンの登録の ``play_text_ja`` と同じ。印刷の文面と同じ最新の説明を
+   kyuura が照合の記録（CC-）に書いたもの（``recorded_in_card_checks``）は、照合した欄の文面（またはデータの誤りの資料の値）が ``play_text_ja`` と
+   同じで、ページが登録の出典と同じ。照合の記録はあるがワザの文面を照合していないもの（``card_checks_without_text``）は、その欄が照合していない欄に
+   ある。kyuura の記録のない登録・登録のない kyuura の記録の一覧が、実際と同じ（v0.19 の準備。2026-10-15）。
+5. 照合の記録（CC-）: id があり、カードが合う。kyuura がエンジンの照合の記録を取り込んだ記録（``import_provenance``）は、エンジンの
+   ``card_verification.json`` の同じカードの記録とページ・PDF のページ・原典の確認日が同じ。取り込み（``engine_import_id``）が kyuura にある。
 6. カードデータ: 研究の基準のコミットの ``data/cards.json`` と、エンジンの写し（``KYUURA_COMMIT``）を、写しの項目で比べ、違いが対応表の
    ``card_data_differences`` に挙げたものだけ。
 
@@ -139,14 +142,47 @@ def check(kyuura: Path) -> list[str]:
             problems.append(f"{target}: 登録の最新の説明が kyuura の {ld_id} と違う")
         if source != f"P43 p.{record['latest_description']['page']}" and not (source or "").startswith(f"P43 p.{record['latest_description']['page']}"):
             problems.append(f"{target}: 出典 {source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
-    without = sorted(t for t in texts if t not in ld_by_target)
+    in_checks = set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
+    without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
-    if sorted(set(texts) - set(without)) != sorted(section["registered"]):
-        problems.append("kyuura の記録のある登録の一覧が違う")
+    if sorted(t for t in texts if t in ld_by_target) != sorted(section["registered"]):
+        problems.append("kyuura の最新の説明（LD-）のある登録の一覧が違う")
     not_registered = sorted(ld_id for target, ld_id in ld_by_target.items() if target not in texts)
     if not_registered != sorted(section["kyuura_records_not_registered"]):
         problems.append(f"登録のない kyuura の最新の説明の一覧が違う: 実際 {not_registered}")
+
+    # 4b. kyuura の照合の記録に書かれた最新の説明（印刷の文面と同じもの）・文面を照合していない記録
+    for target, cc_id in section.get("recorded_in_card_checks", {}).items():
+        card, kind, index = target.split("/")
+        record = next((x for x in checks if x["id"] == cc_id), None)
+        if record is None or record["card_id"] != card:
+            problems.append(f"{target}: 照合の記録 {cc_id} が kyuura にない、またはカードが違う")
+            continue
+        if target not in texts:
+            problems.append(f"{target} の登録に最新の説明がない（{cc_id}）")
+            continue
+        path = f"pokemon.{'attacks' if kind == 'attack' else 'powers'}[{index}].text.ja"
+        text, source = texts[target]
+        checked = record["checked_fields"].get(path)
+        corrected = [e.get("source_value") for e in (record.get("data_error") or []) if e.get("field") == path]
+        if checked != text and text not in corrected:
+            problems.append(f"{target}: 照合の記録 {cc_id} の文面（照合した欄・データの誤りの資料の値）が登録の最新の説明と違う")
+        if source != f"P43 p.{record['page']}" and not (source or "").startswith(f"P43 p.{record['page']}"):
+            problems.append(f"{target}: 出典 {source} が kyuura の {cc_id} のページ（p.{record['page']}）と違う")
+        if target in ld_by_target:
+            problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} もある（registered に移す）")
+    for target, cc_id in section.get("card_checks_without_text", {}).items():
+        card, kind, index = target.split("/")
+        record = next((x for x in checks if x["id"] == cc_id), None)
+        path = f"pokemon.{'attacks' if kind == 'attack' else 'powers'}[{index}].text.ja"
+        if record is None or record["card_id"] != card:
+            problems.append(f"{target}: 照合の記録 {cc_id} が kyuura にない、またはカードが違う")
+        elif path in record["checked_fields"] or not any(f.startswith(path) for f in record.get("fields_not_checked", [])):
+            problems.append(f"{target}: {cc_id} で文面を照合していないとした記録と合わない（照合した欄にある、または照合していない欄にない）")
+    accounted = set(section["registered"]) | set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
+    if set(section["registered_without_kyuura_record"]) & accounted:
+        problems.append("kyuura の記録のない登録の一覧に、記録のある登録が入っている")
 
     # 5. 照合の記録
     cc = {x["id"]: x for x in checks}
@@ -158,6 +194,25 @@ def check(kyuura: Path) -> list[str]:
     listed_cc = {cc_id for group in ("engine_verified", "not_in_engine") for ids in links["card_checks"][group].values() for cc_id in ids}
     if listed_cc != set(cc):
         problems.append(f"照合の記録の集合が違う: kyuura だけ {sorted(set(cc) - listed_cc)}")
+    # kyuura がエンジンの照合の記録を取り込んだ記録（import_provenance）は、エンジンの記録とページ・原典の確認日が同じ
+    verification = json.loads((ROOT / "kyuura_engine" / "data" / "card_verification.json").read_text(encoding="utf-8"))["cards"]
+    for record in checks + descriptions:
+        if not record.get("import_provenance"):
+            continue
+        for v in record["verification"]:
+            if v.get("by") != "kyuura-engine" or v.get("document") != "kyuura_engine/data/card_verification.json":
+                continue
+            ours = verification.get(v.get("record", "").removeprefix("cards."))
+            page = record.get("page") or record.get("latest_description", {}).get("page")
+            pdf = record.get("pdf_page") or record.get("latest_description", {}).get("pdf_page")
+            if ours is None:
+                problems.append(f"{record['id']}: エンジンの照合の記録 {v.get('record')} がない")
+            elif (str(ours["page"]), ours["pdf_page"]) != (str(page), pdf):
+                problems.append(f"{record['id']}: ページが、エンジンの照合の記録 {v['record']}（p.{ours['page']}）と違う")
+            elif ours.get("checked_on") and ours["checked_on"] != v.get("source_checked_on"):
+                problems.append(f"{record['id']}: 原典の確認日が、エンジンの照合の記録 {v['record']}（{ours['checked_on']}）と違う")
+    if links["engine_import_id"] not in {x["id"] for x in rulings["engine_imports"]}:
+        problems.append(f"エンジンの取り込み {links['engine_import_id']} が kyuura にない")
 
     # 6. カードデータ
     extract_script = load_extract_script()

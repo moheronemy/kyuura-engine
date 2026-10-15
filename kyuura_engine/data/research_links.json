@@ -2,15 +2,15 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "adf97107ee0d9755cd7ddedae298ecb02914128e",
-  "research_branch": "claude/engine-findings-through-v0.17",
+  "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
+  "research_branch": "claude/cool-ptolemy-5vtgsg",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
-  "engine_import_id": "ENGINE-D90BCE1",
+  "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 24,
     "engine_stop_codes": 18,
@@ -706,7 +706,10 @@
   "latest_descriptions": {
     "registered": {
       "PMCG1-001/attack/0": "LD-PMCG1-001-ATK0",
+      "PMCG1-003/attack/0": "LD-PMCG1-003-ATK0",
+      "PMCG1-009/attack/0": "LD-PMCG1-009-ATK0",
       "PMCG1-011/power/0": "LD-PMCG1-011-PWR0",
+      "PMCG1-012/attack/0": "LD-PMCG1-012-ATK0",
       "PMCG1-023/attack/1": "LD-PMCG1-023-ATK1",
       "PMCG1-027/attack/0": "LD-PMCG1-027-ATK0",
       "PMCG1-032/attack/0": "LD-PMCG1-032-ATK0",
@@ -715,6 +718,8 @@
       "PMCG1-049/power/0": "LD-PMCG1-049-PWR0",
       "PMCG1-055/attack/0": "LD-PMCG1-055-ATK0",
       "PMCG1-057/power/0": "LD-PMCG1-057-PWR0",
+      "PMCG2-007/attack/0": "LD-PMCG2-007-ATK0",
+      "PMCG2-007/attack/1": "LD-PMCG2-007-ATK1",
       "PMCG3-007/power/0": "LD-PMCG3-007-PWR0",
       "PMCG3-029/attack/1": "LD-PMCG3-029-ATK1",
       "PMCG3-030/power/0": "LD-PMCG3-030-PWR0",
@@ -726,42 +731,7 @@
       "PMCG6-073/attack/0": "LD-PMCG6-073-ATK0",
       "PMCG6-073/power/0": "LD-PMCG6-073-PWR0"
     },
-    "registered_without_kyuura_record": [
-      "PMCG1-002/attack/0",
-      "PMCG1-003/attack/0",
-      "PMCG1-003/attack/1",
-      "PMCG1-004/attack/0",
-      "PMCG1-007/attack/0",
-      "PMCG1-007/attack/1",
-      "PMCG1-008/attack/1",
-      "PMCG1-009/attack/0",
-      "PMCG1-009/attack/1",
-      "PMCG1-012/attack/0",
-      "PMCG1-012/attack/1",
-      "PMCG1-015/attack/0",
-      "PMCG1-023/attack/0",
-      "PMCG1-030/attack/1",
-      "PMCG1-035/attack/1",
-      "PMCG1-043/attack/0",
-      "PMCG1-049/attack/0",
-      "PMCG1-055/attack/1",
-      "PMCG1-061/attack/0",
-      "PMCG2-003/attack/1",
-      "PMCG2-007/attack/0",
-      "PMCG2-007/attack/1",
-      "PMCG2-010/attack/0",
-      "PMCG3-007/attack/0",
-      "PMCG3-029/attack/0",
-      "PMCG3-030/attack/0",
-      "PMCG4-004/attack/0",
-      "PMCG4-004/attack/1",
-      "PMCG6-044/attack/0",
-      "PMCG6-057/attack/1",
-      "PMCG6-059/attack/0",
-      "PMCG6-059/attack/1",
-      "PMCG6-061/attack/0",
-      "PMCG6-063/attack/0"
-    ],
+    "registered_without_kyuura_record": [],
     "kyuura_records_not_registered": [
       "LD-PMCG1-047-ATK1",
       "LD-PMCG3-003-ATK1",
@@ -769,12 +739,54 @@
       "LD-PMCG5-054-ATK0",
       "LD-PMCG6-023-PWR0"
     ],
-    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）→ kyuura の LD- の id。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。kyuura に記録のない登録（v0.1〜v0.4 のカード・v0.18c のナツメのヤドンなど）は registered_without_kyuura_record に挙げる"
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる",
+    "recorded_in_card_checks": {
+      "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
+      "PMCG1-003/attack/1": "CC-PMCG1-003-P18",
+      "PMCG1-004/attack/0": "CC-PMCG1-004-P19",
+      "PMCG1-007/attack/0": "CC-PMCG1-007-P55",
+      "PMCG1-007/attack/1": "CC-PMCG1-007-P55",
+      "PMCG1-008/attack/1": "CC-PMCG1-008-P43",
+      "PMCG1-009/attack/1": "CC-PMCG1-009-P21",
+      "PMCG1-012/attack/1": "CC-PMCG1-012-P21",
+      "PMCG1-015/attack/0": "CC-PMCG1-015-P67",
+      "PMCG1-023/attack/0": "CC-PMCG1-023-P43",
+      "PMCG1-030/attack/1": "CC-PMCG1-030-P102",
+      "PMCG1-035/attack/1": "CC-PMCG1-035-P125",
+      "PMCG1-043/attack/0": "CC-PMCG1-043-P43",
+      "PMCG1-049/attack/0": "CC-PMCG1-049-P43",
+      "PMCG1-055/attack/1": "CC-PMCG1-055-P43",
+      "PMCG2-003/attack/1": "CC-PMCG2-003-P38",
+      "PMCG2-010/attack/0": "CC-PMCG2-010-P39",
+      "PMCG3-007/attack/0": "CC-PMCG3-007-P48",
+      "PMCG3-029/attack/0": "CC-PMCG3-029-P158",
+      "PMCG3-030/attack/0": "CC-PMCG3-030-P160",
+      "PMCG4-004/attack/0": "CC-PMCG4-004-P45",
+      "PMCG4-004/attack/1": "CC-PMCG4-004-P45",
+      "PMCG6-044/attack/0": "CC-PMCG6-044-P155",
+      "PMCG6-057/attack/1": "CC-PMCG6-057-P189",
+      "PMCG6-059/attack/0": "CC-PMCG6-059-P191",
+      "PMCG6-059/attack/1": "CC-PMCG6-059-P191",
+      "PMCG6-061/attack/0": "CC-PMCG6-061-P193",
+      "PMCG6-063/attack/0": "CC-PMCG6-063-P229"
+    },
+    "card_checks_without_text": {
+      "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
+    }
   },
   "card_checks": {
     "engine_verified": {
       "PMCG1-001": [
         "CC-PMCG1-001-P43"
+      ],
+      "PMCG1-002": [
+        "CC-PMCG1-002-P17"
+      ],
+      "PMCG1-003": [
+        "CC-PMCG1-003-P18"
+      ],
+      "PMCG1-004": [
+        "CC-PMCG1-004-P19"
       ],
       "PMCG1-007": [
         "CC-PMCG1-007-P55"
@@ -782,17 +794,50 @@
       "PMCG1-008": [
         "CC-PMCG1-008-P43"
       ],
+      "PMCG1-009": [
+        "CC-PMCG1-009-P21"
+      ],
       "PMCG1-011": [
         "CC-PMCG1-011-P43"
+      ],
+      "PMCG1-012": [
+        "CC-PMCG1-012-P21"
+      ],
+      "PMCG1-014": [
+        "CC-PMCG1-014-P63"
+      ],
+      "PMCG1-015": [
+        "CC-PMCG1-015-P67"
+      ],
+      "PMCG1-016": [
+        "CC-PMCG1-016-P75"
+      ],
+      "PMCG1-018": [
+        "CC-PMCG1-018-P72"
       ],
       "PMCG1-023": [
         "CC-PMCG1-023-P43"
       ],
+      "PMCG1-025": [
+        "CC-PMCG1-025-P110"
+      ],
       "PMCG1-027": [
         "CC-PMCG1-027-P43"
       ],
+      "PMCG1-029": [
+        "CC-PMCG1-029-P101"
+      ],
+      "PMCG1-030": [
+        "CC-PMCG1-030-P102"
+      ],
       "PMCG1-032": [
         "CC-PMCG1-032-P43"
+      ],
+      "PMCG1-035": [
+        "CC-PMCG1-035-P125"
+      ],
+      "PMCG1-037": [
+        "CC-PMCG1-037-P136"
       ],
       "PMCG1-043": [
         "CC-PMCG1-043-P43"
@@ -806,6 +851,9 @@
       "PMCG1-049": [
         "CC-PMCG1-049-P43"
       ],
+      "PMCG1-052": [
+        "CC-PMCG1-052-P182"
+      ],
       "PMCG1-053": [
         "CC-PMCG1-053-P189"
       ],
@@ -814,6 +862,60 @@
       ],
       "PMCG1-057": [
         "CC-PMCG1-057-P43"
+      ],
+      "PMCG1-058": [
+        "CC-PMCG1-058-P203"
+      ],
+      "PMCG1-060": [
+        "CC-PMCG1-060-P217"
+      ],
+      "PMCG1-061": [
+        "CC-PMCG1-061-P231"
+      ],
+      "PMCG1-065": [
+        "CC-PMCG1-065-P246"
+      ],
+      "PMCG1-071": [
+        "CC-PMCG1-071-P254"
+      ],
+      "PMCG1-073": [
+        "CC-PMCG1-073-P254"
+      ],
+      "PMCG1-074": [
+        "CC-PMCG1-074-P254"
+      ],
+      "PMCG1-079": [
+        "CC-PMCG1-079-P257"
+      ],
+      "PMCG1-081": [
+        "CC-PMCG1-081-P257"
+      ],
+      "PMCG1-097": [
+        "CC-PMCG1-097-P318"
+      ],
+      "PMCG1-098": [
+        "CC-PMCG1-098-P318"
+      ],
+      "PMCG1-099": [
+        "CC-PMCG1-099-P318"
+      ],
+      "PMCG1-100": [
+        "CC-PMCG1-100-P318"
+      ],
+      "PMCG1-101": [
+        "CC-PMCG1-101-P318"
+      ],
+      "PMCG1-102": [
+        "CC-PMCG1-102-P318"
+      ],
+      "PMCG2-003": [
+        "CC-PMCG2-003-P38"
+      ],
+      "PMCG2-007": [
+        "CC-PMCG2-007-P19"
+      ],
+      "PMCG2-010": [
+        "CC-PMCG2-010-P39"
       ],
       "PMCG3-003": [
         "CC-PMCG3-003-P47"
@@ -842,6 +944,9 @@
       "PMCG6-023": [
         "CC-PMCG6-023-P49"
       ],
+      "PMCG6-044": [
+        "CC-PMCG6-044-P155"
+      ],
       "PMCG6-057": [
         "CC-PMCG6-057-P189"
       ],
@@ -866,43 +971,8 @@
         "CC-PMCG5-048-P200"
       ]
     },
-    "engine_verified_without_kyuura_record": [
-      "PMCG1-002",
-      "PMCG1-003",
-      "PMCG1-004",
-      "PMCG1-009",
-      "PMCG1-012",
-      "PMCG1-014",
-      "PMCG1-015",
-      "PMCG1-016",
-      "PMCG1-018",
-      "PMCG1-025",
-      "PMCG1-029",
-      "PMCG1-030",
-      "PMCG1-035",
-      "PMCG1-037",
-      "PMCG1-052",
-      "PMCG1-058",
-      "PMCG1-060",
-      "PMCG1-061",
-      "PMCG1-065",
-      "PMCG1-071",
-      "PMCG1-073",
-      "PMCG1-074",
-      "PMCG1-079",
-      "PMCG1-081",
-      "PMCG1-097",
-      "PMCG1-098",
-      "PMCG1-099",
-      "PMCG1-100",
-      "PMCG1-101",
-      "PMCG1-102",
-      "PMCG2-003",
-      "PMCG2-007",
-      "PMCG2-010",
-      "PMCG6-044"
-    ],
-    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record"
+    "engine_verified_without_kyuura_record": [],
+    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（2026-10-15 に kyuura がエンジンの照合の記録を取り込んだので空。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない）"
   },
   "card_data_differences": [
     {
