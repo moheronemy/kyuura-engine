@@ -24,7 +24,6 @@ from typing import Callable, Sequence
 
 from .cards import EVOLUTION_STAGES, CardPool, load_card_pool
 from .conditions import (
-    EVOLVE,
     RETREAT,
     clear_special_conditions,
     paralysis_recovery_turn,
@@ -67,6 +66,7 @@ from .effects import (
 )
 from .continuous import suppressors_of
 from .deck import deck_problems
+from .evolution import place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import KNOCK_OUT, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
@@ -493,31 +493,9 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
             "（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から決められないので扱わない",
         )
 
-    # 1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない）
-    p.hand.remove(cmd.card)
-    previous = target.card
-    target.evolution_stack = (*target.evolution_stack, previous)
-    target.card = cmd.card
-    target.evolved_turn = state.turn_number
-    state.add_event(
-        "evolve",
-        player=cmd.player,
-        pokemon_id=target.pokemon_id,
-        from_card=previous,
-        from_card_id=state.cards[previous].card_id,
-        to_card=cmd.card,
-        to_card_id=definition.id,
-    )
-    # 3. 特殊状態から回復させる
-    clear_special_conditions(state, cmd.player, target, EVOLVE)
-    # 3. その他の「持続する効果」から回復させる（p.310・p.323。v0.4b）。特殊状態とは別の処理。ついているトレーナーは
-    # 受け継ぐ（p.310。持続する効果ではない。v0.4a の E8'）
-    remove_persistent_effects(state, cmd.player, target, EVOLVE)
-    # 進化したポケモンは別のポケモンなので、にげるの失敗の記録を消す（特殊状態の解除とは別）
-    if target.retreat_failed_turn is not None:
-        target.retreat_failed_turn = None
-        state.add_event("retreat_failure_cleared", player=cmd.player, pokemon=target.card, pokemon_id=target.pokemon_id, reason=EVOLVE)
-    # 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること: 対応カードにない
+    # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
+    # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
+    place_evolution_card(state, cmd.player, target, cmd.card)
 
 
 def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
@@ -1001,24 +979,48 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
     if len(stack) > len(EVOLUTION_STAGES) - 1:
         problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（2 進化までの 3 枚まで。p.319）")
     chain = (*stack, pokemon.card)
+    events = () if evolve_events is None else evolve_events.get(pokemon.pokemon_id, ())
     for position, uid in enumerate(chain):
         definition = state.card_def(uid)
-        expected = EVOLUTION_STAGES[min(position, len(EVOLUTION_STAGES) - 1)]
-        if definition.category != "pokemon" or definition.stage != expected:
-            if position == 0:
+        if definition.category != "pokemon" or definition.stage not in EVOLUTION_STAGES:
+            problems.append(
+                f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
+                f" 進化の段階のポケモンのカードではない）"
+            )
+            continue
+        if position == 0:
+            if not definition.is_basic_pokemon:
                 problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない")
-            else:
-                problems.append(
-                    f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
-                    f" {definition.stage!r} で、{expected} ではない）"
-                )
-        if position:
-            below = state.card_def(chain[position - 1])
+            continue
+        below = state.card_def(chain[position - 1])
+        if below.category != "pokemon" or below.stage not in EVOLUTION_STAGES:
+            continue
+        step = EVOLUTION_STAGES.index(definition.stage) - EVOLUTION_STAGES.index(below.stage)
+        if step == 1:
             if definition.evolves_from != below.name_ja:
                 problems.append(
                     f"{where} のカードの重なりが正しくない（{below.name_ja} の上に {definition.name_ja}。{definition.name_ja} は"
                     f" {definition.evolves_from!r} から進化）"
                 )
+        elif step == 2 and below.is_basic_pokemon:
+            # v0.25: 1 進化を飛ばした重なり（たねポケモン + 2 進化。トレーナーの効果。docs/pokemon-breeder-v0.25.md）。系統は、2 進化カードの進化元の
+            # 1 進化カード（写しのカードのデータ）の進化元の名前で確かめ、その移り変わりの進化のログ（evolve の trainer_card）を要る
+            # （通常の操作ではできない重ね方なので、ログのない重なりは認めない。テストの盤面（build_test_state）でも同じ）
+            if skipped_stage1_basic(definition) != below.name_ja:
+                problems.append(
+                    f"{where} の重なりが正しくない（たねポケモン {below.name_ja} の上に 2 進化の {definition.name_ja}。"
+                    f"{definition.name_ja} の進化元の 1 進化（{definition.evolves_from!r}）の進化元は {list(definition.stage1_evolves_from)}）"
+                )
+            elif not any((e.get("from_card"), e.get("to_card")) == (chain[position - 1], uid) and "trainer_card" in e for e in events):
+                problems.append(
+                    f"{where} の重なりが正しくない（たねポケモン {below.name_ja} の上に 2 進化の {definition.name_ja}。1 進化を飛ばして"
+                    "重ねるトレーナーの進化のログ（evolve の trainer_card）がない）"
+                )
+        else:
+            problems.append(
+                f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
+                f" {definition.stage!r} で、すぐ下の {below.name_ja}（{below.stage}）の次の段階ではない）"
+            )
     if evolved is None:
         problems.append(f"{where} は進化しているのに、進化した番がない")
         return problems
@@ -1079,6 +1081,7 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
                 f"{where} の進化のログ（{event.get('from_card')!r} → {event.get('to_card')!r}、プレイヤー {event.get('player')!r}）が、"
                 f"重なり（{expected[0]} → {expected[1]}、プレイヤー {player}）と対応しない"
             )
+        problems.extend(_skip_evolution_log_problems(state, player, where, event, expected))
         if event["turn"] <= previous_turn:
             problems.append(
                 f"{where} が {event['turn']} 番に進化しているが、場に出た番・前の進化の番（{previous_turn} 番）より後ではない"
@@ -1088,6 +1091,25 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
     if events and events[-1]["turn"] != pokemon.evolved_turn:
         problems.append(f"{where} の最後の進化のログは {events[-1]['turn']} 番なのに、進化した番が {pokemon.evolved_turn}")
     return problems
+
+
+def _skip_evolution_log_problems(state: GameState, player: int, where: str, event, transition: tuple[int, int]) -> list[str]:
+    """進化のログ ``evolve`` の ``trainer_card``（v0.25）: たねポケモンの上に 2 進化カードを重ねた（1 進化を飛ばした）移り変わりだけに
+    あり、そのときの番に持ち主が使った、1 進化を飛ばして進化させるトレーナー（``TrainerEffect.skips_stage1_evolution``。
+    docs/pokemon-breeder-v0.25.md）のカードの uid。通常の操作（``EvolvePokemon``）の移り変わりにはない。"""
+    lower, upper = (state.card_def(uid) if uid in state.cards else None for uid in transition)
+    skip = lower is not None and upper is not None and lower.is_basic_pokemon and upper.is_stage2_pokemon
+    trainer = event.get("trainer_card")
+    if not skip:
+        if "trainer_card" in event:
+            return [f"{where} の進化のログ（{transition[0]} → {transition[1]}）に trainer_card {trainer!r} があるが、1 進化を飛ばした進化ではない"]
+        return []
+    if type(trainer) is not int or trainer not in state.cards or state.cards[trainer].owner != player:
+        return [f"{where} の 1 進化を飛ばした進化のログの trainer_card {trainer!r} が、持ち主 {player} のカードではない"]
+    entry = state.effects.trainer_entry(state.cards[trainer].card_id)
+    if entry is None or not entry.effect.skips_stage1_evolution:
+        return [f"{where} の 1 進化を飛ばした進化のログの trainer_card {trainer}（{state.cards[trainer].card_id}）が、1 進化を飛ばして進化させるトレーナーではない"]
+    return []
 
 
 def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: PokemonInPlay) -> list[str]:

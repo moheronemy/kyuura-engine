@@ -27,6 +27,8 @@
   （``attack_evaded`` が続く。T5）、「うら」なら、その要素をすぐに処理する・``attack_evaded`` のダメージは 0 より大きい（T21）。
   ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める（v0.23 からトレーナー
   （エネルギー回収）の ``retrieve_energy`` も。基本エネルギーカード・1〜2 枚・そのトレーナーを使うためにトラッシュしたカードでないこと）。
+  v0.25 から、進化（``evolve``）の名前（通常の進化）と、``trainer_card`` のある進化（ポケモン育て屋さん。使っている最中のトレーナーの効果で、
+  たねポケモンに系統の合う 2 進化カードを重ねた）を確かめる。
   v0.24 から、トレーナー（ポケモン交換おじさん）の ``return_to_deck``（手札 → 山札）・``reveal_from_deck``（山札 → 手札）も手札の組み立て直しに
   含める（どちらもたねポケモン・進化カード。山札は組み立て直さないので、山札にあったかは持ち主・手札とトラッシュにないことで確かめる）。
   v0.10 から、ダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」。``CounterattackDamage``）のログ
@@ -66,6 +68,7 @@ from kyuura_engine.effects import (
     ReturnToHandOnKnockOut,
     SuppressOtherPowers,
 )
+from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, Phase
 
@@ -267,6 +270,7 @@ def log_problems(state) -> list[str]:
     hand: dict[int, list[int]] = {0: [], 1: []}  # 手札（v0.6。引いた・取ったサイド → 場に出した・つけた・使った）
     # v0.23: 使っている最中のトレーナーの使うための条件でトラッシュした手札（discard_from_hand から discard_trainer まで）
     trainer_discarded: dict[int, tuple[int, ...]] = {0: (), 1: ()}
+    using_trainer: dict[int, int | None] = {0: None, 1: None}  # v0.25: 使っている最中のトレーナー（play_trainer から discard_trainer まで）
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
     exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
@@ -634,6 +638,7 @@ def log_problems(state) -> list[str]:
             hand[e["player"]] = []
         elif kind == "play_trainer":
             from_hand(e, e["player"], e["card"])
+            using_trainer[e["player"]] = e["card"]
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
                 from_hand(e, e["player"], uid)
@@ -642,6 +647,20 @@ def log_problems(state) -> list[str]:
             from_hand(e, e["player"], e["card"])
             enter(e["card"])
         elif kind == "evolve":
+            # v0.25: 通常の進化は「○○○○から進化」の名前が進化前のカードの名前（p.309・p.324）。trainer_card のある進化（ポケモン育て屋さん）は、
+            # 使っている最中の 1 進化を飛ばして進化させるトレーナーの効果で、たねポケモンに系統の合う 2 進化カードを重ねた（p.259）
+            below, upper, via = state.card_def(e["from_card"]), state.card_def(e["to_card"]), e.get("trainer_card")
+            if via is None:
+                if upper.evolves_from != below.name_ja:
+                    problems.append(f"{e['turn']} 番の進化（{e['from_card']} → {e['to_card']}）で、{upper.name_ja} の進化元 {upper.evolves_from!r} が {below.name_ja} ではない")
+            else:
+                entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
+                if (entry is None or not entry.effect.skips_stage1_evolution or using_trainer.get(e["player"]) != via
+                        or not below.is_basic_pokemon or skipped_stage1_basic(upper) != below.name_ja):
+                    problems.append(
+                        f"{e['turn']} 番の 1 進化を飛ばした進化（{e['from_card']} → {e['to_card']}、trainer_card {via!r}）が、使っている最中の"
+                        "トレーナーの効果で、たねポケモンに系統の合う 2 進化カードを重ねたものではない"
+                    )
             from_hand(e, e["player"], e["to_card"])
             ids[e["to_card"]] = e["pokemon_id"]
             top[e["pokemon_id"]] = e["to_card"]
@@ -978,6 +997,7 @@ def log_problems(state) -> list[str]:
         elif kind == "discard_trainer":
             discard[e["player"]].append(e["card"])
             trainer_discarded[e["player"]] = ()
+            using_trainer[e["player"]] = None
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
         elif kind == "knock_out":

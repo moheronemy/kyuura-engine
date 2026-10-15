@@ -166,6 +166,9 @@
   "pool_v0_24": [
     "PMCG1-093"
   ],
+  "pool_v0_25": [
+    "PMCG1-094"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4849,6 +4852,57 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-088-pokemonkoukanojisan/"
+      }
+    },
+    {
+      "id": "PMCG1-094",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン育て屋さん",
+        "en": "Pokémon Breeder"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "ポケモンを進化させるときに使う。2進化カードをいきなりつけることができる。",
+          "en": "Put a Stage 2 Evolution card from your hand on the matching Basic Pokémon. You can only play this card when you would be allowed to evolve that Pokémon anyway."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "regulation",
+          "summary": "2002年の公式大会でサポーターとして扱う（日本だけ）",
+          "ja": "2002年の公式大会（バトルロード スプリング2002・サマー2002）のレギュレーションの「サポーター適用カード」で、サポーターとして扱われた。印刷の文面は変わっていない。ふだんの対戦については、2001年10月の制作者のコラムが「カードの書かれている記述の通りにプレイしてください」としていた（data/rule_history.json の MIX-SUPPORTER-ERRATA）",
+          "en": "この扱いはない（トレーナーのまま）",
+          "confidence": "確実",
+          "sources": [
+            "P7",
+            "P19",
+            "P6",
+            "X17"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-094",
+        "pokemontcg": [
+          "base1-76"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-091-pokemonsodateyasan/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-091-pokemonsodateyasan/"
       }
     },
     {

@@ -97,10 +97,11 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
 from .damage import DamageModifier, calculate_attack_damage
 from .decisions import (
-    DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, RECOVER_ENERGY, RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_POKEMON,
-    push_trainer_decision,
+    DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, RECOVER_ENERGY, RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_EVOLUTION_CARD,
+    SELECT_POKEMON, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
+from .evolution import place_evolution_card, skipped_stage1_basic
 from .persistent import damage_prevention, remove_persistent_effects, retaliation
 from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
 from .zones import (
@@ -1865,6 +1866,9 @@ class TrainerEffect:
 
     implementation_id = "abstract"
     stays_in_play = False  # True: 使い終わったら場に残る（つけて使うトレーナー）。False: 使いすて（p.310）
+    # True: 効果で、たねポケモンの上に 2 進化カードを直接重ねる（1 進化を飛ばす。v0.25 のポケモン育て屋さん）。進化の重なりの不変条件が、
+    # たねポケモン + 2 進化の重なりの進化のログ（evolve の trainer_card）のカードを、この印で確かめる（カード id では分けない）
+    skips_stage1_evolution = False
     discard_turn_offset = 0  # つけて使うトレーナーをトラッシュする番: 使った番から数えていくつ後の番の終わりか
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -2210,6 +2214,158 @@ class TradePokemonWithDeck(TrainerEffect):
             problems.append(f"「ポケモン交換おじさん」の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
         if use.card in decision.options:
             problems.append("「ポケモン交換おじさん」の決定で、使っているこのカードを選べる")
+        return problems
+
+
+# 1 進化を飛ばして 2 進化させる組（自分の場のたねポケモンと手札の 2 進化カード）の扱い（v0.25。ポケモン育て屋さん）
+SKIP_EVOLUTION_OK = "ok"  # 進化させられる
+SKIP_EVOLUTION_HP = "hp"  # 進化したあとの HP がのっているダメージ以下（UNRESOLVED_EVOLUTION_HP。v0.4a の H1）
+SKIP_EVOLUTION_UNSUPPORTED_CARD = "unsupported_card"  # 2 進化カードが未対応（UNSUPPORTED_EVOLUTION）
+SKIP_EVOLUTION_UNKNOWN_LINEAGE = "unknown_lineage"  # 写しのカードのデータで系統を確かめられない（UNSUPPORTED_EVOLUTION_LINEAGE）
+_EVOLUTION_HP_REASON = (
+    "進化すると HP がのっているダメージ以下になる。そのときにきぜつするか（いつきぜつの判定をするか）は『オフィシャルブック2000』"
+    "（p.310・p.323）から決められないので扱わない"
+)
+
+
+def skip_evolution_pairs(state: GameState, player: int) -> dict[int, list[tuple[int, str]]]:
+    """1 進化を飛ばして 2 進化させられる組（v0.25。p.259 のポケモン育て屋さん。docs/pokemon-breeder-v0.25.md の BR3〜BR10）。
+
+    自分の場（バトル場・ベンチ）のたねポケモン（重なりのないたねポケモンのカード）で、その番の最初から場に出ていたもの（p.310。今の番に
+    場に出したポケモンは進化させられない）ごとに、手札の 2 進化カードのうち系統の合うもの（2 進化カードの「○○○○から進化」の 1 進化カード
+    （写しのカードのデータ）の進化元の名前が、そのたねポケモンの名前と同じ。``evolution.skipped_stage1_basic``）と、その組の扱い
+    （``SKIP_EVOLUTION_…``）。系統を写しで確かめられない 2 進化カードは、どのたねポケモンとも「確かめられない」組にする（推測で合う・
+    合わないを決めない）。場のポケモンの番号は場の並び（バトル場 → ベンチ）、カードは手札の並び。おたがいの最初の番は呼ぶ側が確かめる。
+    """
+    p = state.players[player]
+    cards = [uid for uid in p.hand if state.card_def(uid).is_stage2_pokemon]
+    pairs: dict[int, list[tuple[int, str]]] = {}
+    for pokemon in p.in_play():
+        current = state.card_def(pokemon.card)
+        if pokemon.evolution_stack or not current.is_basic_pokemon or pokemon.current_form_turn >= state.turn_number:
+            continue
+        for uid in cards:
+            definition = state.card_def(uid)
+            basic = skipped_stage1_basic(definition)
+            if basic is None:
+                status = SKIP_EVOLUTION_UNKNOWN_LINEAGE
+            elif basic != current.name_ja:
+                continue
+            elif not definition.supported:
+                status = SKIP_EVOLUTION_UNSUPPORTED_CARD
+            elif pokemon.damage >= definition.hp:
+                status = SKIP_EVOLUTION_HP
+            else:
+                status = SKIP_EVOLUTION_OK
+            pairs.setdefault(pokemon.pokemon_id, []).append((uid, status))
+    return pairs
+
+
+def _selectable_skip_evolutions(state: GameState, player: int) -> dict[int, list[tuple[int, str]]]:
+    """決定で選べる組（進化させられる組と、原典で決められない HP の組）。エンジンが確かめられない組（未対応のカード・系統を確かめられない
+    カード）は選べるものに入れない。"""
+    selectable = {}
+    for pokemon_id, entries in skip_evolution_pairs(state, player).items():
+        kept = [(uid, status) for uid, status in entries if status in (SKIP_EVOLUTION_OK, SKIP_EVOLUTION_HP)]
+        if kept:
+            selectable[pokemon_id] = kept
+    return selectable
+
+
+@dataclass(frozen=True)
+class EvolveBasicToStage2(TrainerEffect):
+    """自分の場のたねポケモンの上に、手札の 2 進化カードを直接重ね、1 進化を飛ばして 2 進化ポケモンに進化させる（ポケモン育て屋さん。
+    p.259 の最新の説明「このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を
+    直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」。v0.25。docs/pokemon-breeder-v0.25.md の BR1〜BR22）。
+
+    - 使うための条件（BR2）: 進化させるときにだけ使える。おたがいの最初の番は ``FIRST_TURN_EVOLUTION``（p.310。BR9）。進化させられる組
+      （``skip_evolution_pairs``）がなければ使えない: 原典で決められない組（HP）だけなら ``UNRESOLVED_EVOLUTION_HP``、エンジンが
+      確かめられない組（未対応のカード・写しで系統を確かめられないカード）だけなら ``UNSUPPORTED_EVOLUTION``・
+      ``UNSUPPORTED_EVOLUTION_LINEAGE``（``UnsupportedError``）、ほかは ``IllegalActionError("NO_EVOLUTION_TARGET")``。どれも手札から
+      出す前（拒否したらカードは手札に残る）。
+    - 段階 1（BR16）: 使ったプレイヤーが、進化させる自分の場のたねポケモンを選ぶ（決定 ``SELECT_POKEMON``。p.310 の進化の手順 1 の順で、
+      ポケモンを先に示す）。段階 2: そのポケモンの上に重ねる手札の 2 進化カードを選ぶ（決定 ``SELECT_EVOLUTION_CARD``。``context`` の
+      ``"target"``）。HP の組は選べるが、選ぶと ``UNRESOLVED_EVOLUTION_HP``（``unresolved_choices``）。
+    - 進化（BR11〜BR15）: 通常の進化と同じ手順（``evolution.place_evolution_card``。特殊状態・持続する効果・にげるの失敗の記録を消し、
+      ダメージ・エネルギー・ついているトレーナー・場のポケモンの番号・場に出た番は受け継ぐ）。重なりはたねポケモン + 2 進化の 2 枚で、1 進化の
+      カードは使わない（作らない・動かさない）。ログ ``evolve`` に ``trainer_card``（このカードの uid）を書く。
+    - 通常の操作（``EvolvePokemon``）の確認（名前・段階）は変えていない。たねポケモンに 2 進化カードを直接重ねられるのは、このカードの効果だけ。
+    """
+
+    implementation_id = "evolve_basic_to_stage2"
+    skips_stage1_evolution = True
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if state.turn_number <= 2:
+            raise IllegalActionError("FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310・p.259）")
+        statuses = {status for entries in skip_evolution_pairs(state, use.player).values() for _, status in entries}
+        if SKIP_EVOLUTION_OK in statuses:
+            return
+        if SKIP_EVOLUTION_HP in statuses:
+            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", _EVOLUTION_HP_REASON)
+        if SKIP_EVOLUTION_UNSUPPORTED_CARD in statuses:
+            raise UnsupportedError("UNSUPPORTED_EVOLUTION", "1 進化を飛ばして重ねられる手札の 2 進化カードが未対応")
+        if SKIP_EVOLUTION_UNKNOWN_LINEAGE in statuses:
+            raise UnsupportedError(
+                "UNSUPPORTED_EVOLUTION_LINEAGE",
+                "手札の 2 進化カードの進化元の 1 進化カードが写しにない（または進化元が食い違う）ので、どのたねポケモンに重ねられるかを確かめられない",
+            )
+        raise IllegalActionError(
+            "NO_EVOLUTION_TARGET",
+            "自分の場に、その番の最初から場に出ていたたねポケモンと、手札にその系統の 2 進化カードの組がなく、進化させられない"
+            "（このカードは進化させるときにだけ使える。p.259）",
+        )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        selectable = _selectable_skip_evolutions(state, use.player)
+        options = list(selectable)
+        unresolved = [pid for pid in options if all(status == SKIP_EVOLUTION_HP for _, status in selectable[pid])]
+        push_trainer_decision(
+            state, use, kind=SELECT_POKEMON, player=use.player, options=options, min_choices=1, max_choices=1,
+            unresolved_choices=unresolved, unresolved_code="UNRESOLVED_EVOLUTION_HP", unresolved_reason=_EVOLUTION_HP_REASON,
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == SELECT_POKEMON:
+            (target,) = choices
+            entries = _selectable_skip_evolutions(state, use.player)[target]
+            push_trainer_decision(
+                state, use, kind=SELECT_EVOLUTION_CARD, player=use.player, options=[uid for uid, _ in entries],
+                context=(("target", target),), min_choices=1, max_choices=1,
+                unresolved_choices=[uid for uid, status in entries if status == SKIP_EVOLUTION_HP],
+                unresolved_code="UNRESOLVED_EVOLUTION_HP", unresolved_reason=_EVOLUTION_HP_REASON,
+            )
+            return
+        (card,) = choices
+        target = decision.context_value("target")
+        if (card, SKIP_EVOLUTION_OK) not in _selectable_skip_evolutions(state, use.player).get(target, []):
+            raise RuntimeError(f"場のポケモン {target} にカード {card} を 1 進化を飛ばして重ねられない（決定の確認の漏れ。エンジンの不具合）")
+        place_evolution_card(state, use.player, state.find_pokemon(target)[1], card, trainer=use.card)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は進化させられる自分の場のたねポケモン（場の並び）から 1 匹、段階 2 はそのポケモンに
+        1 進化を飛ばして重ねられる手札の 2 進化カード（手札の並び）から 1 枚。原典で決められない組（HP）は ``unresolved_choices``。"""
+        selectable = _selectable_skip_evolutions(state, use.player)
+        what = "「ポケモン育て屋さん」"
+        if decision.kind == SELECT_POKEMON:
+            unresolved = [pid for pid in selectable if all(status == SKIP_EVOLUTION_HP for _, status in selectable[pid])]
+            return _select_own_pokemon_problems(decision, use, selectable, what, unresolved)
+        if decision.kind != SELECT_EVOLUTION_CARD:
+            return [f"{what}の決定の種類が {decision.kind!r}（{SELECT_POKEMON}・{SELECT_EVOLUTION_CARD} のはず）"]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        target = decision.context_value("target", None)
+        if target not in selectable:
+            return problems + [f"{what}の 2 進化カードを選ぶ決定の target {target!r} が、進化させられる自分の場のたねポケモンではない"]
+        entries = selectable[target]
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}の決定で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 枚のはず）")
+        if decision.options != tuple(uid for uid, _ in entries):
+            problems.append(f"{what}の決定の選べるもの {decision.options} が、重ねられる手札の 2 進化カード {[uid for uid, _ in entries]} と合わない")
+        unresolved = tuple(uid for uid, status in entries if status == SKIP_EVOLUTION_HP)
+        if tuple(decision.context_value("unresolved_choices", ())) != unresolved:
+            problems.append(f"{what}の決定の扱いを決められない選択 {decision.context_value('unresolved_choices', ())} が、{unresolved} と合わない")
         return problems
 
 
@@ -3840,6 +3996,13 @@ DEFAULT_EFFECTS = EffectRegistry(
             "ポケモン交換おじさん",
             "自分の山札から好きなポケモンカードか進化カードを1枚選んで、手札のポケモンカードか進化カードと交換することができる。そのあとで、自分の山札をよくきる。交換するカードは相手に見せなければならない。",
             "手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができないとき、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+            "P43 p.259",
+        ),
+        "PMCG1-094": TrainerEntry(
+            EvolveBasicToStage2(),
+            "ポケモン育て屋さん",
+            "ポケモンを進化させるときに使う。2進化カードをいきなりつけることができる。",
+            "このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。",
             "P43 p.259",
         ),
     },
