@@ -72,6 +72,7 @@ from .persistent import KNOCK_OUT, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    NextTurnAttackDamage,
     Retaliation,
     TERMINAL_PHASES,
     Asleep,
@@ -1158,9 +1159,12 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     - ``PreventDamage``（「かたまる」）は自分自身に与える効果なので、発生源はこのポケモンのいまのカード・持ち主
       （進化したら消えるので、いちばん上のカードが変わったあとに残らない。p.310・p.323）
     - 番: 効果を与えた番（``created_turn``）は持ち主の番で、いまの姿になった番以後・今の番まで。はたらく番（``active_turn``）
-      は次の相手の番（``created_turn + 1``）。期限が過ぎていない（今の番がはたらく番より後なら、その番の終わりに
+      は次の相手の番（``created_turn + 1``。v0.27 の ``NextTurnAttackDamage`` は次の自分の番 ``created_turn + 2``。型の
+      ``turns_until_active``）。期限が過ぎていない（今の番がはたらく番より後なら、その番の終わりに
       消しているはず。はたらく番の終わり（ログ ``turn_end``）のあとにも残らない）
-    - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）
+    - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）。v0.27 の
+      ``NextTurnAttackDamage`` だけは、はたらく番の違う 2 つまで（はたらく番に「つるぎのまい」をもう一度使うと、その番の終わりまで、
+      今の番にはたらく効果と次の自分の番にはたらく効果がある）。同じ種類・同じはたらく番の効果は、どの型でも 1 つまで
     - ログとの対応: 同じポケモン・種類・番の ``persistent_effect_added`` があり、そのあとに、この効果を消したはずの
       イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``・``forced_switch``（v0.4d））がない
     - v0.12 の ``Retaliation``（「ほのおのかべ」）: ``PreventDamage`` と同じ確認（自分自身・持ち主の番・次の相手の番・期限・バトル場だけ）に
@@ -1179,7 +1183,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     if pokemon is not p.active:
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} に持続する効果が残っている（p.311・p.322）")
     kinds = [e.kind for e in effects]
-    if len(set(kinds)) != len(kinds):
+    single = [e.kind for e in effects if e.turns_until_active == 1]
+    timed = [(e.kind, e.active_turn) for e in effects]
+    if len(set(single)) != len(single) or len(set(timed)) != len(timed):
         problems.append(f"{where} に同じ種類の効果が重なっている {kinds}")
     recent = _events_since_turn_start(state)
     turn_ended = any(event["kind"] == "turn_end" for event in recent)
@@ -1190,8 +1196,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             continue
         if effect.source_player != player or effect.source_card != pokemon.card:
             problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
-        if effect.active_turn != effect.created_turn + 1:
-            problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の次の番（次の相手の番）ではない")
+        if effect.active_turn != effect.created_turn + effect.turns_until_active:
+            what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
+            problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
         if not pokemon.current_form_turn <= effect.created_turn <= state.turn_number:
             problems.append(
                 f"{where} {effect!r} を与えた番が、いまの姿になった番 {pokemon.current_form_turn}〜今の番 {state.turn_number} ではない"
@@ -1202,6 +1209,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
         if isinstance(effect, Retaliation):
             problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
+        if isinstance(effect, NextTurnAttackDamage):
+            problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -1222,6 +1231,22 @@ def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Reta
     return []
 
 
+def _next_turn_attack_damage_problems(state: GameState, pokemon: PokemonInPlay, effect: NextTurnAttackDamage, where: str) -> list[str]:
+    """「つるぎのまい」（v0.27）の持続する効果の、効果を与えたワザの位置・ダメージが変わるワザの位置・変えたあとのダメージが、このポケモンの
+    カードの登録されたワザと合うか（登録された実装の ``next_turn_terms``。「つるぎのまい」は (1, 60)）。"""
+    fields = (effect.attack_index, effect.target_attack_index, effect.amount)
+    if any(type(value) is not int for value in fields):
+        return [f"{where} {effect!r} のワザの位置・ダメージが整数ではない"]
+    definition = state.card_def(pokemon.card)
+    if not 0 <= effect.attack_index < len(definition.attacks):
+        return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
+    entry = state.effects.attack_entry(definition.id, effect.attack_index)
+    terms = getattr(entry.effect, "next_turn_terms", None) if entry is not None else None
+    if terms is None or terms() != (effect.target_attack_index, effect.amount):
+        return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
+
+
 def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
     """持続する効果が、それを与えたログ（``persistent_effect_added``）と対応し、そのあとに消したはずのイベントがないか（v0.4b）。"""
     for event in reversed(state.log):
@@ -1236,7 +1261,15 @@ def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, ef
             ):
                 return []
             continue
-        if kind == "persistent_effect_removed" and event.get("pokemon_id") == pokemon.pokemon_id and event.get("persistent_effect") == effect.kind:
+        if (
+            kind == "persistent_effect_removed"
+            and event.get("pokemon_id") == pokemon.pokemon_id
+            and event.get("persistent_effect") == effect.kind
+            # v0.27: 同じ効果（与えた番・はたらく番）を消したログ。「つるぎのまい」は、はたらく番にもう一度使うと、新しい効果を与えたあとに
+            # 前の効果が期限で消える（同じ種類の別の効果を消したログが、新しい効果を与えたログのあとにある）
+            and event.get("created_turn") == effect.created_turn
+            and event.get("active_turn") == effect.active_turn
+        ):
             return [f"{where} {effect!r} が、消したあと（ログ persistent_effect_removed）にも残っている"]
         if kind == "evolve" and event.get("pokemon_id") == pokemon.pokemon_id:
             return [f"{where} {effect!r} が、進化（ログ evolve）の前の効果のまま残っている（p.310・p.323）"]

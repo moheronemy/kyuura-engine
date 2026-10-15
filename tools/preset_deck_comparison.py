@@ -43,7 +43,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    EndTurn, IllegalActionError, Phase, UnsupportedError, UseAttack, apply_command, check_invariants, new_game, preset_deck,
+    EndTurn, IllegalActionError, Phase, UnsupportedError, UseAttack, apply_command, check_invariants, new_game,
 )
 from kyuura_engine.cards import EnergyType  # noqa: E402
 from tests.log_audit import log_problems, serialization_problems  # noqa: E402
@@ -51,6 +51,13 @@ from tools import preset_deck_games as driver  # noqa: E402
 
 DECKS = {"A1": "hitmonchan-dewgong", "A2": "hitmonchan-dewgong-v2", "B1": "venusaur-parasect", "B2": "venusaur-parasect-v2"}
 LABELS = {deck_id: label for label, deck_id in DECKS.items()}
+
+
+def label_of(deck_id, variant="preset"):
+    """デッキのラベル。v0.27 の第2版の一時的なデッキ（``driver.V2_SUBSTITUTIONS``）で置き換えたデッキは、末尾に「S」（A2S・B2S）。"""
+    if deck_id in driver.V2_SUBSTITUTIONS.get(variant, {}):
+        return LABELS[deck_id] + "S"
+    return LABELS[deck_id]
 PAIRINGS = (("A1", "B1"), ("A2", "B1"), ("A1", "B2"), ("A2", "B2"))
 OUTCOMES = ("game_over", "sudden_death", "halted", "step_limit", "unexpected_rejection", "internal_error")
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
@@ -115,7 +122,7 @@ def probe_turn_end(state, player):
 def replay(result):
     """受け付けた操作の列を new_game からやり直し、番の終わりの確かめ・ベンチの数を記録する。最後のログが元の対戦と同じか（``same``）も返す。"""
     state = result["state"]
-    decks = tuple(preset_deck(d).cards() for d in result["decks"])
+    decks = tuple(driver.deck_cards(d, result.get("variant", "preset")) for d in result["decks"])  # v0.27: 一時的なデッキも同じ 60 枚
     current = new_game(*decks, result["seed"])
     probes = {0: [], 1: []}
     empty_bench_turn_ends = Counter()
@@ -249,13 +256,18 @@ def deck_metrics(result, player, probes, empty_bench_turn_ends, max_in_play):
     return dict(m), lists
 
 
-def play_pairing(a, b, seeds, *, max_steps=8000):
-    """1 組（デッキ A・B のラベル）を、席を入れかえて ``seeds`` の seed で対戦させる。"""
+def play_pairing(a, b, seeds, *, max_steps=8000, variant="preset", extra=None):
+    """1 組（デッキ A・B のラベル）を、席を入れかえて ``seeds`` の seed で対戦させる。``variant``（v0.27）は第2版の一時的なデッキ
+    （``driver.V2_SUBSTITUTIONS``）。``extra``（v0.27）は最後の状態から 1 局の記録に加える値を求める関数（``record[name] = f(state)``）。"""
     games = []
     for seat in ((DECKS[a], DECKS[b]), (DECKS[b], DECKS[a])):
         for seed in seeds:
-            r = driver.play(seat, seed, max_steps=max_steps, keep_state=True, observe=True)
-            games.append(game_record(r))
+            r = driver.play(seat, seed, max_steps=max_steps, keep_state=True, observe=True, variant=variant)
+            record = game_record(r)
+            for name, f in (extra or {}).items():
+                if r.get("state") is not None:
+                    record[name] = f(r["state"])
+            games.append(record)
     return games
 
 
@@ -264,7 +276,10 @@ def game_record(r):
     state = r.get("state")
     record = {k: r[k] for k in ("seed", "decks", "first", "outcome", "steps", "unresolved_rejections") if k in r}
     record.update({k: r[k] for k in ("halt_code", "winner_deck", "conditions", "turns", "error") if k in r})
-    record["labels"] = [LABELS[d] for d in r["decks"]]
+    variant = r.get("variant", "preset")
+    if variant != "preset":
+        record["variant"] = variant
+    record["labels"] = [label_of(d, variant) for d in r["decks"]]
     record["policy"] = r["policy"]
     audit = Counter()
     # やり直しと監査は、play_game が終わりまで進めた局（通常の勝敗・サドンデス・停止）だけ。手数の上限・想定外の拒否・内部エラーの局は
@@ -281,7 +296,7 @@ def game_record(r):
         record["per_deck"] = {}
         for player in (0, 1):
             metrics, lists = deck_metrics(r, player, probes, empty, max_in_play)
-            record["per_deck"][LABELS[r["decks"][player]]] = {"metrics": metrics, **lists}
+            record["per_deck"][record["labels"][player]] = {"metrics": metrics, **lists}
     record["audit"] = {k: v for k, v in audit.items() if v}
     return record
 
@@ -298,7 +313,7 @@ def summarize(games):
         s["audit_failures"].update(r["audit"])
         s["audited_games"] += "per_deck" in r
         if r.get("winner_deck"):
-            s["wins"][LABELS[r["winner_deck"]]] += 1
+            s["wins"][label_of(r["winner_deck"], r.get("variant", "preset"))] += 1
         s["end_conditions"].update(r.get("conditions", []))
     for label in labels:
         played = [r for r in games if label in r.get("per_deck", {}) and r["per_deck"][label]["metrics"].get("own_turns", 0) > 0]

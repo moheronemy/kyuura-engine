@@ -70,7 +70,7 @@ from kyuura_engine.effects import (
 )
 from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.serialize import FORMAT_VERSIONS
-from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, Phase
+from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, NextTurnAttackDamage, Phase
 
 TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 
@@ -373,6 +373,32 @@ def log_problems(state) -> list[str]:
                 found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの抵抗力 {e['resistance']} が、タイプと抵抗力に合わない（W16）")
         return found
 
+    def attack_damage_set_problems(e: dict) -> list[str]:
+        """ワザのダメージのログ（v0.27）: ワザを使ったポケモンに、今の番にはたらく「つるぎのまい」の効果（ログから組み立てた）があり、そのワザが
+        効果の登録のダメージが変わるワザ（``next_turn_terms`` の位置。名前では探さない）なら、p.321 の 2 段階の記録が 1 つ（steps の 2 番目が
+        「2 <ワザ名>」でその数、``damage_set`` が (2, 発生源のカード, その数)）。そうでなければ 2 段階の記録がない（今の対応カードで 2 段階の
+        変更効果は「つるぎのまい」だけ）。"""
+        expected = None
+        for (effect_pid, _), info in alive.items():
+            if effect_pid != attack_window["pokemon_id"] or info["kind"] != NextTurnAttackDamage.kind or info["active_turn"] != e["turn"]:
+                continue
+            card_id, index = info["effect"].split("#")
+            entry = state.effects.attack_entry(card_id, int(index))
+            target_index, amount = entry.effect.next_turn_terms()
+            if attack_window["effect"] == f"{card_id}#{target_index}":
+                expected = (entry.name_ja, amount, info["source_card"])
+        steps = [tuple(step) for step in (e.get("steps") or ())]
+        step2 = [step for step in steps if str(step[0]).startswith("2 ")]
+        damage_set = tuple(tuple(m) for m in e.get("damage_set", ()))
+        if expected is None:
+            if step2 or damage_set:
+                return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージに、はたらいている効果のない 2 段階の記録 {step2}・{damage_set} がある"]
+            return []
+        name, amount, source = expected
+        if steps[1:2] != [(f"2 {name}", amount)] or step2 != [(f"2 {name}", amount)] or damage_set != ((2, source, amount),):
+            return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージの 2 段階 {step2}・{damage_set} が、「{name}」の効果（{amount}）と合わない"]
+        return []
+
     def source_of(e: dict) -> dict | None:
         """イベント ``e``（判定・ダメージ・はんげき）を起こしたワザ（v0.12）: 今の番のワザ（attack_window）か、その中の「ほのおのかべ」
         （attack_window["ret"]。ワザを使ったポケモンは R団のファイヤー）。どちらでもなければ None。"""
@@ -621,6 +647,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], e["condition"], blocked=replaced.get(e["pokemon_id"]))
         elif kind == "forced_switch":
             received(e, e["old_active_pokemon_id"], FORCED_SWITCH_ELEMENT)
+        if kind == "damage" and attack_window is not None and not e.get("retaliation"):
+            problems.extend(attack_damage_set_problems(e))  # v0.27
         if kind == "special_conditions_removed" and e["reason"] == "replaced":
             replaced[e["pokemon_id"]] = exclusive.get(e["pokemon_id"])
         elif kind == "special_condition":
@@ -1038,12 +1066,17 @@ def log_problems(state) -> list[str]:
             hand[e["player"]].append(e["card"])
         elif kind == "persistent_effect_added":
             added[(e["pokemon_id"], e["turn"])] = added.get((e["pokemon_id"], e["turn"]), 0) + 1
-            # v0.12: はたらく番は次の相手の番（与えた番 + 1）。その番の終わりまで残り、そのあとは残らない
+            # v0.12: はたらく番は次の相手の番（与えた番 + 1）。その番の終わりまで残り、そのあとは残らない。v0.27 の「つるぎのまい」は
+            # 次の自分の番（与えた番 + 2）
             alive[(e["pokemon_id"], e["turn"])] = {
                 "kind": e["persistent_effect"], "active_turn": e["active_turn"], "effect": e["effect"], "source_card": e["source_card"],
             }
-            if e["active_turn"] != e["turn"] + 1:
-                problems.append(f"{e['turn']} 番の持続する効果（ポケモン {e['pokemon_id']}）のはたらく番 {e['active_turn']} が、次の相手の番ではない")
+            offset = NextTurnAttackDamage.turns_until_active if e["persistent_effect"] == NextTurnAttackDamage.kind else 1
+            if e["active_turn"] != e["turn"] + offset:
+                problems.append(
+                    f"{e['turn']} 番の持続する効果（ポケモン {e['pokemon_id']}）のはたらく番 {e['active_turn']} が、"
+                    f"{'次の相手の番' if offset == 1 else '次の自分の番'}ではない"
+                )
         elif kind == "persistent_effect_removed":
             removed[(e["pokemon_id"], e["created_turn"])] += 1
             info = alive.pop((e["pokemon_id"], e["created_turn"]), None)

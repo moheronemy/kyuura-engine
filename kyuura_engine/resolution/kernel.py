@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import calculate_attack_damage
+from ..damage import ADD, calculate_attack_damage
 from ..effects import (
     ATTACK_ELEMENTS,
     COUNTERATTACK_TARGET_KNOCKED_OUT,
@@ -192,7 +192,9 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     receiver_def = state.card_def(receiver.card)
-    calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, attack_damage_modifiers(state, attacker, receiver))
+    calc = calculate_attack_damage(
+        base, attacker_def, receiver_def, state.rules, attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key)
+    )
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -206,8 +208,13 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     receiver.damage += calc.final
     fs.applied[receiver.pokemon_id] = calc.final
     extra: dict[str, Any] = {}
-    if calc.modifiers:
-        extra["modifiers"] = tuple((m.step, m.source, m.amount) for m in calc.modifiers)
+    added = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == ADD)
+    if added:
+        extra["modifiers"] = added
+    replaced = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation != ADD)
+    if replaced:
+        # v0.27: 「その数にする」効果（「つるぎのまい」の 2 段階）。加える数の modifiers と混ぜない（(段階, 発生源のカード, その数)）
+        extra["damage_set"] = replaced
     if calc.stopped_after_step_2:
         extra["stopped_after_step_2"] = True
     if target != OPPONENT_ACTIVE:

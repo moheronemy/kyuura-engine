@@ -51,6 +51,7 @@ from .state import (
     GameState,
     Paralyzed,
     PendingDecision,
+    NextTurnAttackDamage,
     Phase,
     Poison,
     PreventDamage,
@@ -59,7 +60,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.26.0"
+__version__ = "0.27.0"
 
 __all__ = [
     "Asleep",
@@ -89,6 +90,7 @@ __all__ = [
     "Poison",
     "PreventDamage",
     "Retaliation",
+    "NextTurnAttackDamage",
     "PlaceStartingPokemon",
     "PlayBasicToBench",
     "PlayTrainer",

@@ -184,6 +184,7 @@ class PreventDamage:
     created_turn: int
     active_turn: int
     kind: ClassVar[str] = "prevent_damage"
+    turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
 
 
 # Retaliation の与えるダメージの決め方（v0.13）。名前は書き出し・ログに出る種類（kind）と対応する
@@ -228,6 +229,7 @@ class Retaliation:
     attack_index: int
     amount: int | None
     basis: str = RETALIATION_FIXED
+    turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
 
     def __post_init__(self) -> None:
         if self.basis == RETALIATION_FIXED:
@@ -255,9 +257,44 @@ class Retaliation:
         return received
 
 
-# ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を
-# 見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation)
+@dataclass(frozen=True)
+class NextTurnAttackDamage:
+    """ワザによる「持続する効果」（v0.27。p.322「11 特殊状態以外の「持続する効果」」）のうち、「次の自分の番、このカードが使う「きりさく」の
+    ダメージは「60」になる。」（ストライクの「つるぎのまい」の最新の説明。p.56・p.321。docs/scyther-v0.27.md）。
+
+    p.57 のワザ解説「次の自分の番でつかうワザのダメージを変更する効果」: 効果の対象はワザを使ったポケモン自身、効果は「自分の番、相手の番、
+    自分の番と持続」し、効果の持続は次の自分の番の最後、ベンチにもどると消える（「突風」などで入れ替えられたときも）。``PreventDamage``・
+    ``Retaliation`` と同じく、特殊状態でもついているトレーナーカードでもない（物理的なカードではない）ので、効果を受けている場のポケモン
+    （``PokemonInPlay.persistent_effects``）が持つ。
+
+    - ``source_card``・``source_player``・``created_turn``: ``PreventDamage`` と同じ（自分自身に与えるので、``source_card`` は効果を受けて
+      いるポケモンのカード）
+    - ``active_turn``: 効果がはたらく番（「次の自分の番」= ``created_turn + 2``。番は先攻から交互に進む）。この番の終わりに消える（p.57
+      「効果の持続：次の自分の番の最後」）。あいだの相手の番には何もしない
+    - ``attack_index``: 効果を与えたワザ（「つるぎのまい」）の位置（``source_card`` のカードの）
+    - ``target_attack_index``: ダメージが変わるワザ（「きりさく」）の位置（同じカードの）。ワザの名前ではなく位置で持つ（ほかのポケモンの
+      同じ名前のワザ・このカードのほかのワザは変えない）
+    - ``amount``: そのワザのダメージを、p.321 の 2 段階（「ワザを使うポケモンの持っている「ダメージを変更する効果」」）でこの数にする
+      （「「60」になる」。足す数・掛ける数ではない。印刷の文面の「2倍」にはしたがわない）
+
+    はたらくのは ``active_turn`` の間に、このポケモンが ``target_attack_index`` のワザでダメージを計算するとき（``effects.attack_damage_modifiers``）。
+    ベンチに戻ったら（p.311・p.322・p.57）・場をはなれたら（p.322）・進化したら（p.310・p.323）消え、一度消えたら復活しない（p.322）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    target_attack_index: int
+    amount: int
+    kind: ClassVar[str] = "next_turn_attack_damage"
+    turns_until_active: ClassVar[int] = 2  # 次の自分の番
+
+
+# ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage を加えた）。加えるときは、消える契機（ベンチ・進化・
+# きぜつ・期限）と不変条件を見直す
+PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）
@@ -320,7 +357,7 @@ class PokemonInPlay:
     evolution_stack: tuple[int, ...] = ()  # v0.4a
     played_turn: int = 0  # v0.4a
     evolved_turn: int | None = None  # v0.4a
-    persistent_effects: tuple[PreventDamage | Retaliation, ...] = ()  # v0.4b（Retaliation は v0.12）
+    persistent_effects: tuple[PreventDamage | Retaliation | NextTurnAttackDamage, ...] = ()  # v0.4b（Retaliation は v0.12、NextTurnAttackDamage は v0.27）
 
     @property
     def current_form_turn(self) -> int:
