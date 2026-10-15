@@ -82,6 +82,12 @@ DISCARD_FROM_HAND = "discard_from_hand"
 # 「あなたの山札からカードを1枚選び出し、手札に加える。」。p.260）。選べるものは山札のカードの uid（山札の並びを決定に写さないよう、uid の
 # 小さい順）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない。段階は Phase.DECISION。再開先は "trainer"
 SEARCH_DECK = "search_deck"
+# トレーナーの効果で、自分のトラッシュの基本エネルギーカードを選び出して手札に加えるとき、どのカードかを、トレーナーを使ったプレイヤーが選ぶ
+# （v0.23。エネルギー回収の「あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うために
+# トラッシュしたカードを選ぶことはできない。」。p.257）。選べるものはトラッシュの基本エネルギーカードの uid（トラッシュの並び。トラッシュは
+# 公開の情報）から、このカードを使うためにトラッシュしたカード（``context`` の ``"discarded"``）を除いたもの。段階は Phase.DECISION。
+# 再開先は "trainer"。ワザ（ゴースのエナジーへんかん）の ``RECOVER_ENERGY`` とは別の決定（選べるカードの種類・除くカードが違う）
+RETRIEVE_ENERGY = "retrieve_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

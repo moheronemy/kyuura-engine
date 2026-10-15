@@ -25,7 +25,8 @@
   判定はワザ 1 回につき 1 匹 1 回（T4）・直前にゴースト側のプレイヤーの ``source: "power"`` のコインがあり結果が同じ（T33）・
   判定したポケモンがはたらいている「とうめい」を持つ（T9〜T14）・ワザの中だけ・「おもて」なら、そのワザのダメージ・効果を受けず
   （``attack_evaded`` が続く。T5）、「うら」なら、その要素をすぐに処理する・``attack_evaded`` のダメージは 0 より大きい（T21）。
-  ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める。
+  ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める（v0.23 からトレーナー
+  （エネルギー回収）の ``retrieve_energy`` も。基本エネルギーカード・1〜2 枚・そのトレーナーを使うためにトラッシュしたカードでないこと）。
   v0.10 から、ダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」。``CounterattackDamage``）のログ
   （``counterattack``・``counterattack_skipped``）を、その時点の場と比べる: 相手のワザのダメージ（0 より大きい）を、そのときに
   はたらいている「はんげき」を持つポケモン（いちばん上のカード・ねむり・マヒ・こんらんでない・かがくへんかガスに消されていない）が
@@ -262,6 +263,8 @@ def log_problems(state) -> list[str]:
     top: dict[int, int] = {}  # 場のポケモンの番号 → いちばん上のカードの uid（v0.6。つける先のタイプを見る）
     turn_player: int | None = None  # 今の番のプレイヤー（最後の turn_start）
     hand: dict[int, list[int]] = {0: [], 1: []}  # 手札（v0.6。引いた・取ったサイド → 場に出した・つけた・使った）
+    # v0.23: 使っている最中のトレーナーの使うための条件でトラッシュした手札（discard_from_hand から discard_trainer まで）
+    trainer_discarded: dict[int, tuple[int, ...]] = {0: (), 1: ()}
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
     exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
@@ -936,6 +939,20 @@ def log_problems(state) -> list[str]:
             for uid in e["cards"]:
                 from_hand(e, e["player"], uid)
                 discard[e["player"]].append(uid)
+            trainer_discarded[e["player"]] = tuple(e["cards"])
+        elif kind == "retrieve_energy":
+            # v0.23: トレーナー（エネルギー回収）の効果で、自分のトラッシュの基本エネルギーカード（最大 2 枚）を手札に加える。このカードを使う
+            # ためにトラッシュしたカードは選べない（p.257）
+            if not 1 <= len(e["cards"]) <= 2 or len(set(e["cards"])) != len(e["cards"]):
+                problems.append(f"{e['turn']} 番にトラッシュから手札に加えた基本エネルギーカード {e['cards']} の枚数・重複が合わない")
+            for uid in e["cards"]:
+                if uid not in discard[e["player"]] or owner.get(uid) != e["player"] or not state.card_def(uid).is_basic_energy:
+                    problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
+                    continue
+                if uid in trainer_discarded[e["player"]]:
+                    problems.append(f"{e['turn']} 番に、このカードを使うためにトラッシュしたカード {uid} を手札に加えた（p.257）")
+                discard[e["player"]].remove(uid)
+                hand[e["player"]].append(uid)
         elif kind == "search_deck":
             # v0.22: トレーナー（パソコン通信）の効果で、自分の山札から選び出したカードを手札に加える（「カードを引く」ではない。p.260・p.312）
             uid = e["card"]
@@ -944,6 +961,7 @@ def log_problems(state) -> list[str]:
             hand[e["player"]].append(uid)
         elif kind == "discard_trainer":
             discard[e["player"]].append(e["card"])
+            trainer_discarded[e["player"]] = ()
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
         elif kind == "knock_out":

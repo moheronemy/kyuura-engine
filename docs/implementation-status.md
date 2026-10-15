@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.22）
+# 実装状況（v0.1〜v0.23）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -108,6 +108,8 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | きずぐすり: ダメージカウンターののっていないポケモンを選べるか（v0.2b） | 選ぶと `UnsupportedError`（`UNRESOLVED_POTION_UNDAMAGED_TARGET`）。決定は残る。test_trainers.py `test_undamaged_target_is_unresolved` |
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
 | パソコン通信: 山札が 0 枚のときに使えるか（v0.22。CS6） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）で拒否（使うための条件の確認のあと。カードは手札に残る）。使うための条件は手札のトラッシュだけで、山札から選び出せないときの扱いは p.260・p.310・p.312 に書かれていない。test_computer_search_v0_22.py `test_empty_deck_is_unresolved_and_checked_after_the_condition` |
+| エネルギー回収: 使う前の自分のトラッシュに基本エネルギーカードがないときに使えるか（v0.23。ER10） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`）で拒否（使うための条件の確認のあと。カードは手札に残る）。トラッシュする手札が基本エネルギーカードでも、そのカードは選べない（ER7）ので対象は生じない。残りの説明の対象がないときの扱いは p.257・p.310 に書かれていない。test_energy_retrieval_v0_23.py `test_no_basic_energy_in_the_discard_is_unresolved` |
+| エネルギー回収: 選べる基本エネルギーカードがあるのに 0 枚を選べるか（v0.23。ER9） | 決定（`retrieve_energy`）で 0 枚を選ぶと `UnsupportedError`（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`）。決定は待ったまま（1 枚以上を選び直せる）、段階 1 のトラッシュは取り消さない。「最大2枚」が 0 枚を含むかが p.257 に書かれていない（エナジーへんかんの H4 と同じ言い回しの、別のカードの問い）。test_energy_retrieval_v0_23.py `test_zero_cards_is_unresolved_and_keeps_the_decision` |
 | 突風: 相手に控えポケモンがいないときに使えるか（v0.21。GW5） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）で拒否。カードは手札に残る。第1弾の印刷の文面の「相手に控えがいない場合は使えない」は最新の説明（p.255）にないので使わない。test_gust_v0_21.py `test_opponent_without_bench_is_unresolved` |
 | ポケモンチェックの「どく」で、両方のプレイヤーのポケモンがきぜつする（v0.3a） | ダメージを与える前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）。以後のコマンドは `UnsupportedError`。test_pokemon_check.py `DoubleKnockOutTest` |
 | 特殊などく状態の重ね方（通常のどくのポケモンが特殊などくを受ける、特殊などく同士。v0.3a） | 特殊などくの効果は未実装（起こらない） |
@@ -1392,7 +1394,7 @@ v0.20 は、対応済みのカードだけで組んだ固定のデッキを 2 �
 ### 未実装
 
 - 人間が最後まで遊べる操作画面（GUI・Web・通信対戦）・対戦相手の AI・合法な操作の一覧を返す API。examples/start_preset_game.py は対戦の開始だけの例。
-- 突風・パソコン通信・エネルギー回収・ポケモン育て屋さん（次の作業。[preset-decks-v0.20.md](preset-decks-v0.20.md) 6 章。突風は v0.21 で対応）。
+- 突風・パソコン通信・エネルギー回収・ポケモン育て屋さん（次の作業。[preset-decks-v0.20.md](preset-decks-v0.20.md) 6 章。突風は v0.21、パソコン通信は v0.22、エネルギー回収は v0.23 で対応）。
 
 ### 原典未確認・未解決
 
@@ -1429,7 +1431,7 @@ v0.21 は、トレーナーの突風（PMCG1-072）を、照合済みの記録�
 ### 未実装
 
 - 「バトル場をはなれられない」状態（p.325。その状態を持つカードがない。加えるときに突風の扱いを確かめる。GW16）。
-- パソコン通信・エネルギー回収・ポケモン育て屋さん（パソコン通信は v0.22 で対応）。
+- パソコン通信・エネルギー回収・ポケモン育て屋さん（パソコン通信は v0.22、エネルギー回収は v0.23 で対応）。
 
 ### 原典未確認・未解決
 
@@ -1469,7 +1471,7 @@ v0.22 は、トレーナーのパソコン通信（PMCG1-090）を、照合済�
 ### 未実装
 
 - 見る人ごとに伏せたログ・表示の API（`search_deck` の `card` などの非公開の項目を伏せる変換。architecture-v0.2b.md 9 章から未実装）。
-- 山札から種類を指定して選び出すカード、選んだカードを相手に見せるカード（ダウジングマシーンなど）。エネルギー回収・ポケモン交換おじさん・ポケモン育て屋さん。
+- 山札から種類を指定して選び出すカード、選んだカードを相手に見せるカード（ダウジングマシーンなど）。エネルギー回収（v0.23 で対応）・ポケモン交換おじさん・ポケモン育て屋さん。
 
 ### 原典未確認・未解決
 
@@ -1479,3 +1481,44 @@ v0.22 は、トレーナーのパソコン通信（PMCG1-090）を、照合済�
 ### 見つけた事項（kyuura への報告事項）
 
 - kyuura に、パソコン通信の照合の記録（CC-）・最新の説明・p.260 のページの記録・CS6 の論点、p.310 の「使うための条件」の例と p.312 の山札の規定（中を見る・切る）の記録がない（[computer-search-v0.22.md](computer-search-v0.22.md) 7 章）。
+
+## v0.23 で加えたもの（突風とパソコン通信の併用・エネルギー回収）
+
+v0.23 は、突風とパソコン通信を同じデッキに入れた対戦を確かめ、トレーナーのエネルギー回収（PMCG1-076）を照合済みの記録の再利用の手順で加えた版です（版 0.23.0）。エネルギー回収は、使うための条件として手札から 1 枚を選んでトラッシュし、自分のトラッシュの基本エネルギーカード（そのトラッシュしたカードを除く）を最大 2 枚選び出して手札に加えます。
+
+- [エネルギー回収（規定と根拠・再利用した記録・kyuura への報告事項・組み合わせの対戦の変種）](energy-retrieval-v0.23.md)
+- [v0.23 の検証](v0.23-verification.md)
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 使うための条件: このカードを除く手札が 1 枚以上（合計 1 枚なら `INSUFFICIENT_CARDS_IN_HAND`。手札から出す前に拒否し、カードは手札に残る）。トラッシュするカードの種類に制限はない | p.257 の最新の説明・p.310 の手順（ER2・ER3） | test_energy_retrieval_v0_23.py `UsableTest` |
+| 段階 1: 使ったプレイヤーが手札からちょうど 1 枚を選んでトラッシュする（パソコン通信と同じ `zones.discard_from_hand`・ログ `discard_from_hand`。使用中のこのカード・ほかの領域・相手のカード・0 枚・2 枚は不可） | p.257（ER4・ER5） | `DiscardStageTest` |
+| 段階 2: 使ったプレイヤーが、自分のトラッシュの基本エネルギーカードから、段階 1 でトラッシュしたカードを除いて 1〜min(2, 数) 枚を選び（同じ名前の別のカード・タイプの違うカード可。重複・トレーナー・ポケモン・相手のトラッシュ・手札・山札は不可）、手札に加える（`zones.return_discard_to_hand`。ログ `retrieve_energy` は公開） | p.257（ER6〜ER8・ER11〜ER13） | `RetrieveStageTest` |
+| 不正な答えは拒否し、決定を待ったまま（段階 2 で拒否しても段階 1 のトラッシュは取り消さない）。拒否で状態・乱数が変わらない。カードの保存則（使用中のカードを含む）・渡した状態を変えない・複製と pickle のあとも同じ | p.310（ER16） | `DiscardStageTest`・`RetrieveStageTest` |
+| 解決後: このカードをトラッシュし、番は続く。手に入れた基本エネルギーカードをその番につけられる。同じ番に 2 枚目を使える（もう 1 枚のエネルギー回収をトラッシュに選べる） | p.310（ER14・ER17） | `AfterResolutionTest` |
+| 正式な対戦開始から（`mixed`: ディフェンダー 4 枚 → 突風 2 枚・パソコン通信 2 枚。席を入れかえて 6 局ずつ）: 両方を使い、パソコン通信で山札から突風を選んでその番に使った。決定ごとの持ち主・使用中のカードが混ざらない。不変条件・ログの監査・書き出しの監査 | — | `MixedGamesTest` |
+| 正式な対戦開始から（`retrieval`: `mixed` からさらにきずぐすり 2 枚 → エネルギー回収 2 枚）: エネルギー回収を引いて使い、手に入れたエネルギーをその番につけた | — | `RetrievalGamesTest` |
+| 照合の記録（p.257）・写しの組 `pool_v0_23`・研究の対応表（kyuura に記録がない照合の記録・停止コードとして挙げる） | p.257 | `RegistrationTest`・test_trainers.py・test_cards.py・test_research_links_v0_18e.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 組み合わせの対戦（tools/preset_deck_games.py の `--variant mixed`・`--variant retrieval`） | 一時的なデッキで 40 局・200 局ずつ（[v0.23-verification.md](v0.23-verification.md) 4 章・5 章）。既定の `--variant preset`・`gust`・`computer` の結果は v0.22 と同じ |
+| 共通の処理 | `engine.py`・`resolution/`・`zones.py` は変えていない。固定した v0.22（`5844fcf`）と別の木・別のプロセスで比べ、290 対戦・48,092 歩で食い違い 0 |
+
+### 未実装
+
+- 特殊エネルギーのカード（写しにない）。エネルギー回収の選べるものに入らない規定（ER6）は実装したが、特殊エネルギーのカードで確かめるテストはない。
+- 見る人ごとに伏せたログ・表示の API（architecture-v0.2b.md 9 章から未実装）。ポケモン交換おじさん・ポケモン育て屋さん・ダウジングマシーン・超エネルギー回収。
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定: エネルギー回収で選べるものがあるのに 0 枚を選べるか（ER9。`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`）、使う前のトラッシュに基本エネルギーカードがないときに使えるか（ER10。`UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`）。未解決の裁定は 28 件・停止コードは 22 件（v0.22 までの 26 件・20 件は変えていない）。
+- 手に入れたカードの公開（ER13）は SUPPORTED（トラッシュは公開の情報。最新の説明に見せる指示はない）。
+
+### 見つけた事項（kyuura への報告事項）
+
+- kyuura に、エネルギー回収の照合の記録（CC-）・最新の説明（LD-）・ER9・ER10 の論点がない（最新の説明は rule_history.json の ERR-ENERGY-RETRIEVAL にある）。p.257 の図版は第1弾の印刷ではない版の文面（[energy-retrieval-v0.23.md](energy-retrieval-v0.23.md) 7 章）。

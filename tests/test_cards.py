@@ -17,7 +17,7 @@ from tests.helpers import (
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
-    COMPUTER_SEARCH,
+    COMPUTER_SEARCH, ENERGY_RETRIEVAL,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -41,8 +41,8 @@ class CardPoolTest(unittest.TestCase):
         # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
-        # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）
-        self.assertEqual(trainers, [POTION, GUST, SWITCH, BILL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH])
+        # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）
+        self.assertEqual(trainers, [POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -104,6 +104,10 @@ class CardPoolTest(unittest.TestCase):
         # v0.22（既存のトレーナーの登録・2 段階のトレーナーの決定・ゾーンの共通の関数で加えたパソコン通信。docs/computer-search-v0.22.md）
         self.assertEqual(read_extract()["pool_v0_22"], [COMPUTER_SEARCH])
         self.assertTrue(pool.is_playable(COMPUTER_SEARCH) and pool.get(COMPUTER_SEARCH).category == "trainer")
+        # v0.23（既存のトレーナーの登録・2 段階のトレーナーの決定・手札のトラッシュとトラッシュから手札に加える共通の関数で加えたエネルギー回収。
+        # docs/energy-retrieval-v0.23.md）
+        self.assertEqual(read_extract()["pool_v0_23"], [ENERGY_RETRIEVAL])
+        self.assertTrue(pool.is_playable(ENERGY_RETRIEVAL) and pool.get(ENERGY_RETRIEVAL).category == "trainer")
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,

@@ -160,6 +160,9 @@
   "pool_v0_22": [
     "PMCG1-090"
   ],
+  "pool_v0_23": [
+    "PMCG1-076"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4753,6 +4756,59 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-083-pasokontsuushin/"
+      }
+    },
+    {
+      "id": "PMCG1-076",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー回収",
+        "en": "Energy Retrieval"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札から1枚のカードをすてることによって、トラッシュから2枚の好きなエネルギーカードをひろって、手札に加えることができる。",
+          "en": "Trade 1 of the other cards in your hand for up to 2 basic Energy cards from your discard pile."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "errata",
+          "summary": "エネルギー回収（Energy Retrieval）で拾えるエネルギー（日本の当初の文面とエラッタ）",
+          "ja": "第1弾の印刷は「トラッシュから2枚の好きなエネルギーカードをひろって」と、基本エネルギーに限っていない（カードの画像で確認）。ジムデッキ（ポケモンジム第1弾、1998年4月26日〜）・クイックスターターギフトの再録は「基本エネルギーカードを最大2枚」と印刷されている。『ポケモンカード・ファンクラブ』Vol.5 pp.16〜17（1998年6月10日発行）は、これを「カードの解釈そのものが変更された」と説明し、これまで拾えた特殊エネルギー（無色2個エネルギーなど）は「これからはそれができなくなる」とした（大会に限るとは書かれていない）[P2]。施行日は未確認。『ポケモンカードオフィシャルブック2000』（2000年2月29日発行）p.257 は第1弾の版も「基本エネルギーカード」の最新の説明で載せ、特殊エネルギーは手札に加えられないと解説する [P43]（docs/rules/errata-history.md の ERR-ENERGY-RETRIEVAL）",
+          "en": "「up to 2 basic Energy cards」と、最初から基本エネルギーだけ（日本のエラッタ後と同じ）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3",
+            "P2",
+            "X52",
+            "J1",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-076",
+        "pokemontcg": [
+          "base1-81"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-071-energykaishu/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-071-energykaishu/"
       }
     },
     {
