@@ -107,6 +107,11 @@ class CardDefinition:
     # ポケモン
     stage: str | None = None  # "basic"（たね）・"stage1"（1 進化。v0.4a）・"stage2"（2 進化。v0.4c）。"baby" は未対応
     evolves_from: str | None = None  # 進化カードの「○○○○から進化」の名前（kyuura の pokemon.evolves_from.ja。v0.4a）
+    # 2 進化カードだけ（v0.25）: 「○○○○から進化」の名前（``evolves_from``）の 1 進化カードが、同じ写しのカードのデータで
+    # 「△△から進化」とする名前（重複を除き、並べたもの）。1 進化を飛ばして 2 進化させる効果（ポケモン育て屋さん）で、正しい系統の
+    # たねポケモンかを確かめるのに使う（docs/pokemon-breeder-v0.25.md）。写しにその名前の 1 進化カードがなければ ()（確かめられない）。
+    # 同じ写し（``pool_from_extract``）の中で求め、名前の一部・形容詞（「サカキの」など）で推測しない
+    stage1_evolves_from: tuple[str, ...] = ()
     hp: int | None = None
     pokemon_type: EnergyType | None = None
     weakness: EnergyType | None = None
@@ -335,7 +340,7 @@ class CardPool:
         return self.definitions[card_id]
 
     def is_playable(self, card_id: str) -> bool:
-        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_9）に入っていて、
+        """対戦（デッキ）に使えるか。対戦用のカードの組（写しの pool_v0_1〜pool_v0_17b）に入っていて、
         すべての要素に対応していること。"""
         return card_id in self.playable_ids
 
@@ -350,6 +355,18 @@ POOL_KEYS = (
     "pool_v0_8",  # v0.8（ロケット団のベトベター・ベトベトン）
     "pool_v0_9",  # v0.9（化石の秘密のゴース・ゴースト）
     "pool_v0_10",  # v0.10（ゴーリキー・カイリキー。ワンリキーは v0.1 から）
+    "pool_v0_11",  # v0.11（サカキのワンリキー・サカキのゴーリキー・サカキのカイリキー）
+    "pool_v0_12",  # v0.12（R団のファイヤー）
+    "pool_v0_13",  # v0.13（第4弾のゼニガメ・わるいカメール）
+    "pool_v0_17a",  # v0.17a（モンジャラ・サカキのニャース。既存のワザの要素だけで実装）
+    "pool_v0_17b",  # v0.17b（R団のカビゴン。わるいねぞう・たおれこむ）
+    "pool_v0_18c",  # v0.18c（ナツメのヤドン。ぐうたらこうげき。既存の要素だけ）
+    "pool_v0_19",  # v0.19（オーキドはかせ。トレーナー。既存のトレーナーの登録・ドローの処理）
+    "pool_v0_21",  # v0.21（突風。トレーナー。既存のトレーナーの登録・トレーナーの決定・ポケモンいれかえと同じ入れ替えの処理）
+    "pool_v0_22",  # v0.22（パソコン通信。トレーナー。既存のトレーナーの登録・2 段階のトレーナーの決定・ゾーンの共通の関数）
+    "pool_v0_23",  # v0.23（エネルギー回収。トレーナー。2 段階のトレーナーの決定・手札のトラッシュとトラッシュから手札に加える共通の関数）
+    "pool_v0_24",  # v0.24（ポケモン交換おじさん。トレーナー。2 段階のトレーナーの決定・手札から山札にもどす・山札から選び出して見せる共通の関数）
+    "pool_v0_25",  # v0.25（ポケモン育て屋さん。トレーナー。2 段階のトレーナーの決定・進化の手順の共通の関数・たね + 2 進化の重なり）
 )
 
 
@@ -357,6 +374,7 @@ def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> C
     if effects is None:
         from .effects import DEFAULT_EFFECTS as effects
     definitions = {record["id"]: classify_record(record, effects) for record in extract["cards"]}
+    definitions = _with_stage1_lineage(definitions)
     playable = frozenset(
         card_id for key in POOL_KEYS for card_id in extract.get(key, ()) if definitions[card_id].supported
     )
@@ -367,6 +385,22 @@ def pool_from_extract(extract: dict, effects: EffectRegistry | None = None) -> C
         source=MappingProxyType(dict(extract["source"])),
         effects=effects,
     )
+
+
+def _with_stage1_lineage(definitions: dict[str, CardDefinition]) -> dict[str, CardDefinition]:
+    """2 進化カードの定義に、進化元の 1 進化カードの進化元の名前（``stage1_evolves_from``）を加える（v0.25）。
+
+    同じ写しの 1 進化カード（段階が stage1 のポケモンのカード。対戦に使えるかは問わない）のうち、名前（日本語の名前の完全一致）が
+    2 進化カードの「○○○○から進化」と同じものの「○○○○から進化」を集める。名前の一部・形容詞で推測しない。"""
+    stage1 = {}
+    for definition in definitions.values():
+        if definition.is_stage1_pokemon and definition.evolves_from:
+            stage1.setdefault(definition.name_ja, set()).add(definition.evolves_from)
+    return {
+        card_id: replace(definition, stage1_evolves_from=tuple(sorted(stage1.get(definition.evolves_from, ()))))
+        if definition.is_stage2_pokemon else definition
+        for card_id, definition in definitions.items()
+    }
 
 
 def read_extract() -> dict:

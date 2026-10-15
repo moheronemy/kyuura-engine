@@ -37,12 +37,12 @@ from kyuura_engine.cards import EnergyType, load_card_pool, read_verification
 from kyuura_engine.effects import (
     DEFAULT_EFFECTS,
     AttackKey,
-    AttackUse,
     ConfuseOnHeads,
     DamageOnly,
     DiscardEnergyAndRemoveAllCounters,
     ParalyzeOnHeads,
 )
+from kyuura_engine.resolution import open_attack
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     ABRA,
@@ -301,13 +301,20 @@ class KadabraRecoverTest(unittest.TestCase):
 
     def test_unreachable_case_stops_loudly(self):
         """「トラッシュできないとき」は、必要なエネルギー（超超）を基本エネルギーでしか払えない今の対応カードでは起こらない（K3）。実装を
-        直接呼んで起こしたら、黙って処理せずに ``RuntimeError``（状態を変える前）。"""
+        直接呼んで起こしたら、黙って処理せずに ``RuntimeError``（状態を変える前）。
+
+        v0.16d: v0.16b から、じこさいせいの処理は解決の基盤の要素（``programs.DiscardEnergyHealAll``）で、実装の ``resolve`` は解決の基盤の
+        ワザの枠の中でだけ使える。枠の外で呼ぶと「枠の外」の ``RuntimeError`` になり、K3 の確かめにならない（v0.16b〜v0.16c のこのテストは
+        その理由で通っていた）ので、``resolution.open_attack`` で枠を開いて呼び、K3 の理由の文を確かめる。"""
         state = board(kadabra(energy=(WATER, WATER), damage=20))
         effect = DEFAULT_EFFECTS.attack_entry(KADABRA, 0).effect
         before = full(state)
-        with self.assertRaises(RuntimeError):
-            effect.resolve(state, AttackUse(0, state.players[0].active.pokemon_id, AttackKey(KADABRA, 0)))
+        use = open_attack(state, 0)
+        self.assertEqual(use.key, AttackKey(KADABRA, 0))
+        with self.assertRaisesRegex(RuntimeError, "「超」エネルギーカードがない"):
+            effect.resolve(state, use)
         self.assertEqual(full(state), before)
+        self.assertIsNone(state.decision)
 
     def test_super_psy(self):
         """ちょうねんりき: 説明文なしの 50（弱点 超のエビワラーには 100 できぜつ）。"""

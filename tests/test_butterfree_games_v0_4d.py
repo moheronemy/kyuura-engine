@@ -280,7 +280,7 @@ class GoldenButterfreeGameTest(unittest.TestCase):
             self.assertGreater(counted[key], 0, (key, counted))
         self.assertGreater(observed["forced_switch_chosen_by_opponent"], 0)
         data = full(state)
-        self.assertEqual(data.pop("effects"), "kyuura-engine-0.10")  # v0.5・v0.6・v0.7・v0.8・v0.9・v0.10 で登録表の id だけ変わった（結果は同じ）
+        self.assertEqual(data.pop("effects"), "kyuura-engine-0.13")  # v0.5・v0.6・v0.7・v0.8・v0.9・v0.10・v0.11・v0.12・v0.13 で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 
 

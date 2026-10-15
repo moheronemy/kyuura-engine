@@ -20,6 +20,15 @@
   ``AttackEffect.decision_problems`` で宣言し、不変条件（``engine._decision_problems``）が確かめる
 - ``"trainer"``: トレーナーの効果の続き（v0.2b）。``context`` の ``"use"`` から実装を引き、
   ``effects.TrainerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンがカードをトラッシュする
+- ``"knock_out"``: ワザのあとのきぜつの判定の続き（v0.11）。相手のワザによるダメージで「きぜつ」するときに使える特殊能力
+  （サカキのカイリキーの「こんじょう」）を使うかを、そのポケモンの持ち主が決める（``KO_PREVENTION``）。選んだら宣言・コイン・
+  残り HP、選ばなければ何もせず、そのあと、まだ HP 以上のポケモンをきぜつさせる（``engine._resume_knock_out``）。番のプレイヤーは
+  ワザを使ったプレイヤーのまま。``context`` は ``"attack"``（ワザ）と ``"power"``（特殊能力）。v0.12 から、番のプレイヤーのワザを使った
+  ポケモンが、相手の「ほのおのかべ」（相手のワザによるダメージ）で「きぜつ」するときにも出す（決定するのは番のプレイヤー）
+- ``"post_knockout"``: きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあとの続き（v0.12）。ポケモンが「きぜつ」したときに使える
+  特殊能力（R団のファイヤーの「ふしちょう」）を使うかを、そのカードの持ち主が決める（``POST_KNOCKOUT_POWER``）。選んだら宣言して、
+  そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
+  ``context`` は ``"power"``（特殊能力）と、ポケモンチェックの中のきぜつなら ``"then"``
 
 選べるもののうち、原典で処理を決められないもの（v0.2b）: カードの文面では選べるが、選んだときの扱いを
 原典で決められないものは、``context`` の ``"unresolved_choices"`` に入れる。それを選ぶと、状態を変えずに
@@ -53,11 +62,53 @@ DISCARD_ENERGY = "discard_energy"
 # （v0.9。化石の秘密のゴースの「エナジーへんかん」。p.158 の最新の説明「自分のトラッシュから、「エネルギーカード」を最大2枚
 # 選び出し、手札に加える。」。選べるものはカードの uid（トラッシュの順）。0 枚を選ぶと原典で決められないので止める。段階は Phase.DECISION）
 RECOVER_ENERGY = "recover_energy"
+# ワザのあとのきぜつの判定で、相手のワザによるダメージで「きぜつ」するときに使える特殊能力（v0.11。サカキのカイリキーの「こんじょう」。
+# p.193 の最新の説明「この力は、相手のワザによるダメージで、このカードが「きぜつ」するとき、使える。」）を使うかを、そのポケモンの持ち主
+# （ワザを使われた側のプレイヤー）が決める。選べるものはそのポケモンの番号 1 つで、0 個（使わない。p.311「かならずしも特殊能力の使用を
+# 宣言する必要はありません」）か 1 個（使用を宣言する）。コインはこの決定のあと（宣言のあと。p.311 の手順）なので、選ぶ前に結果は
+# 決まっていない。再開先は "knock_out"。段階は Phase.DECISION
+KO_PREVENTION = "ko_prevention"
+# ポケモンが「きぜつ」したときに使える特殊能力（v0.12。R団のファイヤーの「ふしちょう」。p.82 の最新の説明「この力は、このカードが「きぜつ」
+# したとき、使える。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。」）を使うかを、そのカードの持ち主が
+# 決める。選べるものはトラッシュにあるそのカードの uid 1 つで、0 個（使わない。p.311）か 1 個（使用を宣言する）。きぜつの処理（トラッシュ・
+# サイド・勝ち負けの判定）のあと、対戦が続くときだけ、バトル場にポケモンを出す前に出す（docs/post-knockout-powers-v0.12.md）。再開先は
+# "post_knockout"。段階は Phase.DECISION
+POST_KNOCKOUT_POWER = "post_knockout_power"
+# トレーナーの「使うための条件」で、使用中のカードを除く手札からトラッシュするカードを、トレーナーを使ったプレイヤーが選ぶ（v0.22。パソコン通信の
+# 「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。」。p.260・p.310）。選べるものは手札のカードの uid（手札の並び）。
+# 段階は Phase.DECISION。再開先は "trainer"
+DISCARD_FROM_HAND = "discard_from_hand"
+# トレーナーの効果で、自分の山札からカードを選び出して手札に加えるとき、どのカードかを、トレーナーを使ったプレイヤーが選ぶ（v0.22。パソコン通信の
+# 「あなたの山札からカードを1枚選び出し、手札に加える。」。p.260）。選べるものは山札のカードの uid（山札の並びを決定に写さないよう、uid の
+# 小さい順）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない。段階は Phase.DECISION。再開先は "trainer"
+SEARCH_DECK = "search_deck"
+# v0.24 からポケモン交換おじさんの「あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に
+# 加える。」（p.259）でも SEARCH_DECK を使う（選べるものは山札のたねポケモン・進化カード。uid の小さい順。山札にもどしたカードを含む）。
+# 選べるもの（山札の中身）はどちらもログに書かない。選んだカードを相手に見せるかはカードごと（パソコン通信は見せない・ポケモン交換
+# おじさんは見せる。ログのイベントが違う）
+# トレーナーの効果で、自分の手札のカードを選び、相手に見せてから山札にもどすとき、どのカードかを、トレーナーを使ったプレイヤーが選ぶ
+# （v0.24。ポケモン交換おじさんの「手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札に
+# もどす。」。p.259）。選べるものは手札のたねポケモン・進化カードの uid（手札の並び）。段階は Phase.DECISION。再開先は "trainer"
+RETURN_TO_DECK = "return_to_deck"
+# トレーナーの効果で、自分の場のポケモンを進化させるとき、その上に重ねる手札の進化カードを、トレーナーを使ったプレイヤーが選ぶ
+# （v0.25。ポケモン育て屋さんの「そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」。p.259）。
+# 進化させるポケモンは先に SELECT_POKEMON で選ぶ（p.310 の進化の手順 1 の順。ポケモンを示してから、進化させるカードを見せる）。選べるものは
+# 手札の進化カードの uid（手札の並び）。段階は Phase.DECISION。再開先は "trainer"
+SELECT_EVOLUTION_CARD = "select_evolution_card"
+# トレーナーの効果で、自分のトラッシュの基本エネルギーカードを選び出して手札に加えるとき、どのカードかを、トレーナーを使ったプレイヤーが選ぶ
+# （v0.23。エネルギー回収の「あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うために
+# トラッシュしたカードを選ぶことはできない。」。p.257）。選べるものはトラッシュの基本エネルギーカードの uid（トラッシュの並び。トラッシュは
+# 公開の情報）から、このカードを使うためにトラッシュしたカード（``context`` の ``"discarded"``）を除いたもの。段階は Phase.DECISION。
+# 再開先は "trainer"。ワザ（ゴースのエナジーへんかん）の ``RECOVER_ENERGY`` とは別の決定（選べるカードの種類・除くカードが違う）
+RETRIEVE_ENERGY = "retrieve_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
-# 決定を待っている段階
-DECISION_PHASES = frozenset({Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE, Phase.DECISION})
+# 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。
+# v0.13〜v0.15 は frozenset の並び（文字列のハッシュで決まる）で書いていたので、プロセスごとに文が変わっていた（v0.16d で決めた。
+# 受け付ける段階・例外の種類・コードは同じ。docs/legacy-test-migration-v0.16d.md 5 章）
+DECISION_PHASE_ORDER = (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE, Phase.DECISION)
+DECISION_PHASES = frozenset(DECISION_PHASE_ORDER)
 
 
 def phase_for(kind: str) -> Phase:
@@ -106,27 +157,18 @@ def push_attack_decision(
     min_choices: int = 1,
     max_choices: int = 1,
 ) -> PendingDecision:
-    """ワザの効果の途中で決定を出す。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
+    """ワザの効果の途中で決定を出す（v0.13 の約束の補助関数）。選ばれたら、そのワザの実装の ``resume`` が呼ばれる。
 
-    v0.10: そのワザのダメージではたらいた「はんげき」（``AttackUse.counterattacks``）は、決定を出す前に与えていなければならない
-    （決定はダメージ以外の効果。「はんげき」のダメージは、ダメージの処理のあと、効果の前。p.89）。決定をまたぐと ``AttackUse`` は
-    新しくなり、まだ与えていない「はんげき」が失われるので、残っていればエンジンの不具合として止める。
+    決定の形は v0.13 と同じ（再開先 ``"attack"``、``context`` は ``("use", (プレイヤー, 場のポケモンの番号, カード id, ワザの位置))`` と
+    ``context``）。v0.16b から、解決の基盤のワザの枠（``use.runtime``）に委ねる（``AttackRun.suspend``。決定を出す前に、そのワザの
+    ダメージではたらいた「ダメージを受けたとき」の効果が残っていれば ``RuntimeError``。``finish_damage_elements`` のあとに出す。p.89）。
+    ``use.runtime`` がなければ ``RuntimeError``。
     """
-    if getattr(use, "counterattacks", None):
-        raise RuntimeError(
-            f"ワザ {use.key} の決定を出す前に、はたらいた「はんげき」をまだ与えていない（ワザの実装が finish_damage_elements を呼んでいない。エンジンの不具合）"
-        )
-    use_context = ("use", (use.player, use.pokemon_id, use.key.card_id, use.key.attack_index))
-    return push_decision(
-        state,
-        kind=kind,
-        player=player,
-        options=options,
-        resume="attack",
-        context=(use_context, *tuple(context)),
-        min_choices=min_choices,
-        max_choices=max_choices,
-    )
+    runtime = getattr(use, "runtime", None)
+    if runtime is None:
+        raise RuntimeError(f"ワザ {use.key} の決定は、解決の基盤がワザを処理している間だけ出せる（AttackUse に解決の基盤の入口がない）")
+    return runtime.push_decision(state, kind=kind, player=player, options=options, context=tuple(context), min_choices=min_choices,
+                                 max_choices=max_choices)
 
 
 def push_trainer_decision(

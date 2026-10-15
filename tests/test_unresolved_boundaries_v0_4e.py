@@ -4,7 +4,8 @@ docs/unresolved-audit-v0.4e.md）。
 v0.4e の時点でエンジンが止める 11 件のコード（v0.6 で 1 件加えて 12 件。``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
 docs/rain-dance-v0.6.md の R13。v0.9 で 2 件加えて 14 件。``UNRESOLVED_EVADED_EFFECT_COIN``（docs/transparency-v0.9.md の T19b）・
 ``UNRESOLVED_RECOVER_ZERO_ENERGY``（docs/haunter-line-v0.9.md の H4）。v0.10 で 1 件加えて 15 件。
-``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``（docs/counterattack-v0.10.md の C18））のそれぞれについて、
+``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``（docs/counterattack-v0.10.md の C18）。v0.11 で 1 件加えて 16 件。
+``UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT``（docs/guts-v0.11.md の G37））のそれぞれについて、
 
 - 止まる場合: 止め方（コマンドの拒否 ``UnsupportedError`` か、対戦を止める ``Phase.HALTED`` か）とコード。拒否なら渡した状態・
   乱数・ログは変わらない（拒否と HALTED を同じものとして扱わない: 拒否は状態を返さず、HALTED は止めた状態を返す）。どちらも
@@ -31,6 +32,7 @@ from tests.helpers import (
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
     BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
     DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
+    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKETS_SNORLAX,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -42,6 +44,13 @@ ALL_CODES = (
     "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",  # v0.6
     "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_RECOVER_ZERO_ENERGY",  # v0.9
     "UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",  # v0.10
+    "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT",  # v0.11
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",  # v0.12
+    "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",  # v0.17b
+    "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",  # v0.21（止まる場合と隣の止まらない場合は tests/test_gust_v0_21.py）
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",  # v0.22（止まる場合と隣の止まらない場合は tests/test_computer_search_v0_22.py）
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",  # v0.23（ER10。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",  # v0.23（ER9。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
 )
 TURN = 7
 
@@ -542,16 +551,167 @@ class CounterattackDoubleKnockoutBoundaryTest(BoundaryTestCase):
         self.assertNotIn("counterattack", [e["kind"] for e in zero.log])
 
 
+class KoPreventionAttackEffectTest(BoundaryTestCase):
+    """p.193（サカキのカイリキーの「こんじょう」の最新の説明・解説）・p.89・p.213（ダメージできぜつしなければあとの効果）・p.309・p.311・
+    p.320〜p.324。v0.11（docs/guts-v0.11.md の G30・G37）。
+
+    止まる場合（ワザの宣言の前の拒否。こんらんのコインの前）: 相手の対戦ポケモンのサカキのカイリキーが「こんじょう」を使える（ねむり・マヒ・
+    こんらんでなく、かがくへんかガスがない）とき、そのワザのダメージのどれかの候補で HP 以上になり、同じワザで相手の対戦ポケモンに効果
+    （特殊状態・入れ替え）を与える。「おもて」で「きぜつ」しなかったポケモンがその効果を受けるかが決められない。
+
+    隣の止まらない場合: HP 以上にならない・「こんじょう」を使えない（ねむり・かがくへんかガス）・ディフェンダーで最終ダメージが 0・ダメージの
+    要素のないワザ（キノコのほうし・どくガス）・相手に効果を与えないワザ（決定を出す）。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, machamp=None, mine_bench=()):
+        champ = {"card": GIOVANNIS_MACHAMP, "evolved_from": [GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE], **(machamp or {})}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": champ, "bench": [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        caterpie = {"card": CATERPIE, "energy": [GRASS]}  # いとをはく 10（「おもて」ならマヒ）
+        triggers = (
+            (caterpie, 0, {"damage": 90}),
+            ({**caterpie, "confusion": True}, 0, {"damage": 90}),  # こんらんのコインの前に止める
+            ({"card": WEEDLE, "energy": [GRASS]}, 0, {"damage": 90}),  # どくばり 10（「おもて」ならどく）
+            ({"card": IVYSAUR, "evolved_from": BULBASAUR, "energy": [GRASS] * 3}, 1, {"damage": 80}),  # どくのこな 20（どく。コインなし）
+            ({"card": HAUNTER, "evolved_from": GASTLY, "energy": [PSYCHIC] * 2}, 0, {"damage": 80}),  # あくむ 10 × 弱点 2（ねむり）
+            ({"card": VULPIX, "energy": [FIRE] * 2}, 0, {"damage": 90}),  # あやしいひかり 10（「おもて」ならこんらん）
+            ({"card": GIOVANNIS_MACHOKE, "evolved_from": GIOVANNIS_MACHOP, "energy": [FIGHTING] * 3}, 1, {"damage": 60}),  # じごくがため（「おもて」40）
+            ({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS] * 2}, 0, {"damage": 80}),  # ふきとばし 20（入れ替え）
+            ({"card": GRIMER, "energy": [GRASS] * 2}, 1, {"damage": 70}),  # ねばりつく（「おもて」30）
+        )
+        for attacker, index, machamp in triggers:
+            with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker, machamp=machamp), UseAttack(0, index), "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT")
+        # 止めない 1: HP 以上にならない（80 + 10）。いつもどおり効果を与える
+        alive = self.assert_proceeds(with_coin_results(self.board(caterpie, machamp={"damage": 80}), H), UseAttack(0, 0))
+        self.assertTrue(alive.players[1].active.conditions.paralyzed)
+        # 止めない 2: ねむりのサカキのカイリキー（「こんじょう」を使えない）。きぜつして効果は与えない（v0.4d）
+        asleep = self.assert_proceeds(with_coin_results(self.board(caterpie, machamp={"damage": 90, "sleep": True}), H), UseAttack(0, 0))
+        self.assertEqual((asleep.decision.kind, asleep.players[1].active), ("take_prize", None))
+        # 止めない 3: かがくへんかガス（自分の場のベトベトン）
+        gassed = self.assert_proceeds(self.board(caterpie, machamp={"damage": 90}, mine_bench=[{"card": MUK, "evolved_from": GRIMER}]),
+                                      UseAttack(0, 0))
+        self.assertEqual(gassed.decision.kind, "take_prize")
+        # 止めない 4: ディフェンダーで 10 − 20 = 0（HP 以上にならない）
+        self.assert_proceeds(self.board(caterpie, machamp={"damage": 90, "trainers": [(DEFENDER, TURN)]}), UseAttack(0, 0))
+        # 止めない 5: ダメージの要素のないワザ（パラスのキノコのほうし・ロケット団のベトベターのどくガス）
+        self.assert_proceeds(self.board({"card": PARAS, "energy": [GRASS] * 2}, machamp={"damage": 90}), UseAttack(0, 1))
+        self.assert_proceeds(self.board({"card": GRIMER, "energy": [GRASS]}, machamp={"damage": 90}), UseAttack(0, 0))
+        # 止めない 6: 相手に効果を与えないワザ（スペシャルパンチ 40）。「こんじょう」を使うかの決定を出す
+        offered = self.assert_proceeds(self.board({"card": HITMONCHAN, "energy": [FIGHTING] * 3}, machamp={"damage": 80}), UseAttack(0, 1))
+        self.assertEqual(offered.decision.kind, "ko_prevention")
+
+
+class RetaliationDoubleKnockoutBoundaryTest(BoundaryTestCase):
+    """p.82（R団のファイヤーの「ほのおのかべ」の最新の説明「次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによって
+    このカードが「きぜつ」しても、）相手に10ダメージを与える。」）・p.89（同じ「相手の番ではたらく効果」の「こうらがえし」のワザ解説）・p.321「8」・
+    p.324（「1つのワザや特殊能力などによって引き起こされることがらによって複数のポケモンが「きぜつ」した場合、…同時に」）。v0.12
+    （docs/rocket-moltres-v0.12.md の W24）。
+
+    止まる場合（ワザの宣言の前の拒否。こんらんのコインの前）: 相手の対戦ポケモン（R団のファイヤー）に今の番にはたらく「ほのおのかべ」があり、
+    このワザのダメージ（と、「ほのおのかべ」のダメージではたらくワザを使ったポケモンの「はんげき」）で R団のファイヤーがきぜつし、かつ
+    「ほのおのかべ」のダメージでワザを使ったポケモンがきぜつする（コインのどれかの結果でそうなりうる。「とうめい」は受けるほうを仮定）。
+    このワザによるきぜつと、前の番のワザの効果のダメージによるきぜつが同時かが決められない。かがくへんかガス・R団のファイヤーの特殊状態
+    では止めをはずさない（ワザの効果。W7・W18）。
+
+    隣の止まらない場合: 効果がない（期限・まだ与えていない）・R団のファイヤーがきぜつしない（ワザを使ったポケモンだけが「ほのおのかべ」で
+    きぜつする）・ワザを使ったポケモンが「ほのおのかべ」のあとも HP 未満・ワザを使ったポケモンが自分へのダメージですでにきぜつ（「ほのおの
+    かべ」は与えない。1 つのワザによる同時のきぜつ。W23）・ディフェンダーで「ほのおのかべ」のダメージが 0。"""
+
+    format_version = 9
+
+    def board(self, attacker, *, moltres=None, mine_bench=(), effect=True):
+        holder = {"card": ROCKETS_MOLTRES, **({"retaliation": TURN - 1} if effect else {}), **(moltres or {})}
+        return build_test_state([
+            {"active": attacker, "bench": list(mine_bench) or [RATTATA]},
+            {"active": holder, "bench": [PONYTA]},
+        ], turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        code = "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT"
+        hitmonchan = {"card": HITMONCHAN, "damage": 60, "energy": [FIGHTING] * 3}  # HP 70。スペシャルパンチ 40（抵抗力 闘 −30 で 10）
+        pikachu = {"card": PIKACHU, "damage": 30, "energy": [LIGHTNING] * 3}  # HP 40。でんげき 30（「うら」なら自分にも 10）
+        machamp = {"card": MACHAMP, "evolved_from": [MACHOP, MACHOKE], "damage": 90, "energy": [FIGHTING] * 4}  # ちきゅうなげ 60 → 30
+        triggers = (
+            (hitmonchan, 1, {"damage": 50}, ()),
+            ({**hitmonchan, "confusion": True}, 1, {"damage": 50}, ()),  # こんらんのコインの前に止める
+            (pikachu, 1, {"damage": 30}, ()),  # 「おもて」なら自分へのダメージがなく「ほのおのかべ」できぜつ（「うら」なら自分へのダメージ）
+            (machamp, 0, {"damage": 20}, ()),  # 30 で 50、「はんげき」の 10 で 60（R団のファイヤーのきぜつは「はんげき」）
+            (hitmonchan, 1, {"damage": 50, "sleep": True}, ()),  # ねむりの R団のファイヤーでも効果ははたらく（W7）
+            (hitmonchan, 1, {"damage": 50}, [{"card": MUK, "evolved_from": GRIMER}]),  # かがくへんかガスでも（W18）
+        )
+        for attacker, index, moltres, bench in triggers:
+            with self.subTest(attacker=attacker["card"], moltres=moltres, gas=bool(bench), confused=attacker.get("confusion", False)):
+                self.assert_rejected(self.board(attacker, moltres=moltres, mine_bench=bench), UseAttack(0, index), code)
+        # 止めない 1: 効果がない（R団のファイヤーだけがきぜつする）
+        plain = self.assert_proceeds(self.board(hitmonchan, moltres={"damage": 50}, effect=False), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in plain.log if e["kind"] == "knock_out"], [1])
+        # 止めない 2: R団のファイヤーはきぜつしない（ワザを使ったポケモンだけが「ほのおのかべ」できぜつする）
+        single = self.assert_proceeds(self.board(hitmonchan, moltres={"damage": 0}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in single.log if e["kind"] == "knock_out"], [0])
+        # 止めない 3: ワザを使ったポケモンは「ほのおのかべ」のあとも HP 未満（R団のファイヤーだけがきぜつする）
+        survivor = self.assert_proceeds(self.board({**hitmonchan, "damage": 50}, moltres={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in survivor.log if e["kind"] == "knock_out"], [1])
+        self.assertEqual(survivor.players[0].active.damage, 60)
+        # 止めない 4: じごくぐるまの自分への 20 ですでにきぜつ（「ほのおのかべ」は与えない。1 つのワザによる同時のきぜつ。p.324・W23）
+        machoke = {"card": MACHOKE, "evolved_from": MACHOP, "damage": 60, "energy": [FIGHTING] * 4}
+        both = self.assert_proceeds(self.board(machoke, moltres={"damage": 30}), UseAttack(0, 1))
+        self.assertIn("retaliation_skipped", [e["kind"] for e in both.log])
+        self.assertEqual([e.get("simultaneous") for e in both.log if e["kind"] == "knock_out"], [True, True])
+        # 止めない 5: ディフェンダーで「ほのおのかべ」の 10 - 20 = 0（ワザを使ったポケモンはきぜつしない。R団のファイヤーだけがきぜつ）
+        defended = self.assert_proceeds(self.board({**hitmonchan, "trainers": [(DEFENDER, TURN + 1)]}, moltres={"damage": 50}), UseAttack(0, 1))
+        self.assertEqual([e["player"] for e in defended.log if e["kind"] == "knock_out"], [1])
+
+
+class EffectAfterNoDamageBoundaryTest(BoundaryTestCase):
+    """p.245（R団のカビゴンの「たおれこむ」の最新の説明「ダメージを与えた後、自分を「ねむり」状態にする。」）・p.155（ナツメのヤドンの同じ文面の
+    解説「相手にダメージを与えたら、自分がねむり状態になってしまいます」）・p.320（ワザの要素の順番）・p.321（「ダメージを受けない」状態でも
+    ダメージ以外の効果の要素は有効。最終ダメージが 0 なら「ダメージを与えなかった」）。v0.17b（docs/rocket-snorlax-v0.17b.md の Z23）。
+
+    止まる場合（ワザの宣言の前。こんらんのコインの前）: たおれこむのダメージが、どれかのコインの結果で、相手にダメージを与えない（ディフェンダーで
+    0・「ダメージを受けない」状態・「とうめい」で受けない）。「ダメージを与えた後」が順番か条件かが決められない。
+
+    隣の止まらない場合: プラスパワーで 30 − 20 = 10 を与える・相手をきぜつさせる（ダメージを与えた）。"""
+
+    format_version = 9
+
+    def board(self, attacker=None, defender=None):
+        snorlax = {"card": ROCKETS_SNORLAX, "energy": [FIRE] * 3, **(attacker or {})}
+        return build_test_state([{"active": snorlax, "bench": [RATTATA]}, {"active": {"card": PONYTA, **(defender or {})}, "bench": [RATTATA]}],
+                                turn_number=TURN)
+
+    def test_trigger_and_neighbours(self):
+        code = "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
+        defender = {"trainers": [(DEFENDER, TURN)]}  # 相手が前の番（6）に使った（次の相手の番 7 の終わりまで）
+        for attacker, target in (({}, defender), ({}, {"prevent_damage": TURN - 1}), ({"confusion": True}, defender),
+                                 ({}, {"card": HAUNTER, "evolved_from": GASTLY})):
+            with self.subTest(attacker=attacker, target=target):
+                self.assert_rejected(self.board(attacker, target), UseAttack(0, 0), code)
+        # 止めない 1: プラスパワーで 30 − 20 = 10（ダメージを与えた）。自分はねむりになる
+        boosted = self.assert_proceeds(self.board({"trainers": [(PLUSPOWER, TURN)]}, defender), UseAttack(0, 0))
+        self.assertEqual([e["condition"] for e in boosted.log if e["kind"] == "special_condition"], ["sleep"])
+        # 止めない 2: 相手をきぜつさせても、ダメージを与えたので自分はねむりになる
+        knocked = self.assert_proceeds(self.board(None, {"damage": 30}), UseAttack(0, 0))
+        self.assertIn("sleep", [e.get("condition") for e in knocked.log if e["kind"] == "special_condition"])
+
+
 class CodeListTest(unittest.TestCase):
     def test_every_code_in_the_engine_is_covered_here(self):
         """エンジンの中の ``UNRESOLVED_…`` のコード（既定の UNRESOLVED_RULING を除く）が、このファイルの一覧と同じ。新しいコードを
-        加えたら、ここに止まる場合と隣の止まらない場合を加える。"""
+        加えたら、ここに止まる場合と隣の止まらない場合を加える。v0.16b: 解決の基盤（``kyuura_engine/resolution/``）もエンジンの中なので
+        数える（v0.13 の経路を外して、エナジーへんかんの 0 枚の ``UNRESOLVED_RECOVER_ZERO_ENERGY`` は解決の基盤の ``programs.py`` だけに
+        なった。v0.15 までは ``effects.py`` にも同じコードがあった）。"""
         import pathlib
         import re
 
         root = pathlib.Path(__file__).resolve().parent.parent / "kyuura_engine"
         found = set()
-        for path in root.glob("*.py"):
+        for path in root.rglob("*.py"):
             found.update(re.findall(r'"(UNRESOLVED_[A-Z_]+)"', path.read_text(encoding="utf-8")))
         found.discard("UNRESOLVED_RULING")
         self.assertEqual(found, set(ALL_CODES))

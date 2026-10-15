@@ -186,8 +186,78 @@ class PreventDamage:
     kind: ClassVar[str] = "prevent_damage"
 
 
-# ワザによる持続する効果の型（v0.4b）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage,)
+# Retaliation の与えるダメージの決め方（v0.13）。名前は書き出し・ログに出る種類（kind）と対応する
+RETALIATION_FIXED = "fixed"  # 決まった量（v0.12 の「ほのおのかべ」の 10）
+RETALIATION_RECEIVED = "received_damage"  # 受けたダメージと同じ（v0.13 の「こうらがえし」）
+RETALIATION_KINDS = {RETALIATION_FIXED: "retaliation", RETALIATION_RECEIVED: "retaliation_received_damage"}
+
+
+@dataclass(frozen=True)
+class Retaliation:
+    """ワザによる「持続する効果」（v0.12。p.322「11 特殊状態以外の「持続する効果」」）のうち、「次の相手の番、このカードが相手のワザに
+    よるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。」（R団のファイヤーの「ほのおのかべ」
+    の最新の説明。p.82。docs/rocket-moltres-v0.12.md・docs/temporary-attack-effects-v0.12.md）。v0.13 で、与えるダメージを受けたダメージで
+    決める「こうらがえし」（わるいカメール。p.89）も同じ型で表す（``basis``）。
+
+    p.89 のワザ解説（わるいカメールの「こうらがえし」）の「相手の番ではたらく効果」と同じ形: 効果の対象はワザを使ったポケモン自身、
+    効果の持続は次の相手の番の最後、ベンチにもどると消える。``PreventDamage`` と同じく、特殊状態でもついているトレーナーカードでも
+    ない（物理的なカードではない）ので、効果を受けている場のポケモン（``PokemonInPlay.persistent_effects``）が持つ。
+
+    - ``source_card``・``source_player``・``created_turn``・``active_turn``: ``PreventDamage`` と同じ（自分自身に与えるので、
+      ``source_card`` は効果を受けているポケモンのカード。``active_turn`` は ``created_turn + 1``。この番の終わりに消える）
+    - ``attack_index``: 効果を与えたワザの位置（``source_card`` のカードの。ダメージを与えるときのワザ ``AttackKey`` になる。
+      与えるダメージは「ワザによるダメージ」（p.321「8」・p.89）で、ワザを使ったポケモンはこのポケモン）
+    - ``amount``: 与えるダメージの基本となるダメージ（10。p.321 の 1 段階。弱点・抵抗力などは p.321 の順番で計算する。p.82 の解説）。
+      ``basis`` が ``RETALIATION_RECEIVED`` なら None（受けたダメージで決まるので、効果を与えたときには決まっていない）
+    - ``basis``（v0.13）: 与えるダメージの基本となるダメージの決め方。``RETALIATION_FIXED``（既定。「ほのおのかべ」。``amount``）か
+      ``RETALIATION_RECEIVED``（わるいカメールの「こうらがえし」の最新の説明（p.89）「次の相手の番、このカードが相手のワザによって
+      ダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）そのポケモンにも同じダメージを与える。（ダメージ以外の効果は
+      与えない）」。受けたダメージ（p.321 で計算した最終ダメージ。HP で上限をつけない）。docs/shell-attack-v0.13.md・
+      docs/variable-retaliation-v0.13.md）。受けたダメージはワザ 1 回の中の値（解決の基盤の ``kernel.Deferred.received``）で、状態に
+      持たない
+
+    はたらくのは ``active_turn`` の間に、このポケモンが相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けたとき
+    （``effects.deal_attack_damage`` が記録し、``effects.finish_damage_elements`` が与える）。ベンチに戻ったら（p.311・p.322）・場を
+    はなれたら（p.322）・進化したら（p.310・p.323）消え、一度消えたら復活しない（p.322）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    amount: int | None
+    basis: str = RETALIATION_FIXED
+
+    def __post_init__(self) -> None:
+        if self.basis == RETALIATION_FIXED:
+            if type(self.amount) is not int:
+                raise ValueError(f"決まった量の効果には amount が要る（{self.amount!r}）")
+        elif self.basis == RETALIATION_RECEIVED:
+            if self.amount is not None:
+                raise ValueError(f"受けたダメージで決まる効果に amount は書かない（{self.amount!r}）")
+        else:
+            raise ValueError(f"知らない決め方 {self.basis!r}")
+
+    @property
+    def kind(self) -> str:
+        """持続する効果の種類（ログ ``persistent_effect_added`` などの ``persistent_effect``・書き出しの ``effect``）。決まった量は
+        v0.12 と同じ ``"retaliation"``、受けたダメージで決まるものは ``"retaliation_received_damage"``（v0.13。v0.12 の読み手は知らない
+        種類として拒否する）。"""
+        return RETALIATION_KINDS[self.basis]
+
+    def base_damage(self, received: int) -> int:
+        """与えるダメージの基本となるダメージ（p.321 の 1 段階）。``received`` はこのポケモンが受けたダメージ（相手のワザによる最終ダメージ。
+        0 より大きい）。決まった量なら ``amount``、受けたダメージで決まるなら ``received`` そのもの（p.89 の解説「100ダメージを受けたら
+        そのまま100ダメージが返る」「2倍のまま相手にダメージが返ります」）。"""
+        if self.basis == RETALIATION_FIXED:
+            return self.amount
+        return received
+
+
+# ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を
+# 見直す
+PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）
@@ -250,7 +320,7 @@ class PokemonInPlay:
     evolution_stack: tuple[int, ...] = ()  # v0.4a
     played_turn: int = 0  # v0.4a
     evolved_turn: int | None = None  # v0.4a
-    persistent_effects: tuple[PreventDamage, ...] = ()  # v0.4b
+    persistent_effects: tuple[PreventDamage | Retaliation, ...] = ()  # v0.4b（Retaliation は v0.12）
 
     @property
     def current_form_turn(self) -> int:

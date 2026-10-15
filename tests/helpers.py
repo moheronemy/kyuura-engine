@@ -38,6 +38,8 @@ from kyuura_engine.state import (
     AttachedTrainer,
     CONFUSED,
     PreventDamage,
+    Retaliation,
+    RETALIATION_RECEIVED,
     CardInstance,
     DataSource,
     Paralyzed,
@@ -99,16 +101,49 @@ HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
-GIOVANNIS_MACHAMP = "PMCG6-061"  # サカキのカイリキー（v0.10。参照カード。こんじょう・ハリケーンパンチが未実装。はんげきを持たない）
+# サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
+# こんじょう・ハリケーンパンチ 30×。はんげきを持たない）
+GIOVANNIS_MACHAMP = "PMCG6-061"
+GIOVANNIS_MACHOKE = "PMCG6-059"  # サカキのゴーリキー（v0.11。サカキのワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 2。いちかばちか 60・じごくがため 20+）
+GIOVANNIS_MACHOP = "PMCG6-057"  # サカキのワンリキー（v0.11。HP 50・闘・弱点 超・にげる 1。チョップ 10・いかりのスーパーパンチ 20×）
+# R団のファイヤー（v0.12。ジム拡張第1弾。たね。HP 60・炎・弱点なし・抵抗力 闘 −30・にげる 2。ポケモンパワー ふしちょう（このカードが「きぜつ」
+# したとき、使える。トラッシュから手札に加える）・ほのおのかべ（炎炎炎）40（次の相手の番、相手のワザによるダメージを受けたとき、相手に 10））
+ROCKETS_MOLTRES = "PMCG5-020"
+# 第4弾（ロケット団）のゼニガメ（v0.13。たね。HP 50・水・弱点 雷・にげる 1。こうらアタック（無無）20。第1弾のゼニガメ（SQUIRTLE）と同じ名前の
+# 別のカード。どちらからでもわるいカメールに進化できる）
+ROCKET_SQUIRTLE = "PMCG4-018"
+# わるいカメール（v0.13。ゼニガメから進化する 1 進化。HP 60・水・弱点 雷・抵抗力なし・にげる 1。おうふくびんた（水）10×・こうらがえし（水無）
+# ダメージなし（次の相手の番、相手のワザによってダメージを受けたとき、そのポケモンにも同じダメージを与える））
+DARK_WARTORTLE = "PMCG4-021"
+# モンジャラ（v0.17a。第1弾。たね。HP 50・草・弱点 炎・にげる 2。しめつける（草無）20（コインで「おもて」ならマヒ）・どくのこな（草草草）20（どく）。
+# 既存の実装（ParalyzeOnHeads・PoisonOpponent）だけで登録）
+TANGELA = "PMCG1-007"
+# サカキのニャース（v0.17a。ジム拡張第2弾。たね。HP 50・無色・弱点 闘・抵抗力 超 −30・にげる 2。ねこノミ（無）ダメージなし（コインで「おもて」なら
+# こんらん）・ねこキック（無無無）30。ねこノミは既存の要素 Status の新しい並び（ConfuseOnHeadsWithoutDamage））
+GIOVANNIS_MEOWTH = "PMCG6-063"
+# R団のカビゴン（v0.17b。ジム拡張第2弾。たね。HP 90・無色・弱点 闘・抵抗力 超 −30・にげる 4。ポケモンパワー わるいねぞう（ねむり状態で相手のワザに
+# よるダメージを受けたとき、ダメージを与えたポケモンに 20。特殊能力のダメージ）・たおれこむ（無無無）20（ダメージを与えた後、自分をねむり））
+ROCKETS_SNORLAX = "PMCG6-073"
+# キョウのベトベトン（v0.17c。参照カード。ポケモンパワー だつりょくえき（未実装）。分類で拒否する）
+KOGAS_MUK = "PMCG6-023"
+# ナツメのヤドン（v0.18c。ジム拡張第2弾。たね。HP 50・超・弱点 超・抵抗力なし・にげる 1。ぐうたらこうげき（超無）30（ダメージを与えた後、自分を
+# ねむり）。たおれこむと同じ DamageAndSelfSleep で、新しい要素・型はない）
+SABRINAS_SLOWPOKE = "PMCG6-044"
 # リザードン（参照カード。リザードから進化する 2 進化。実装を登録していないポケモンパワー「エナジーバーン」とワザ「ほのおのうず」を
 # 持つ。v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 ではフーディンが「ポケモンパワーを持つので未対応」の参照カードだった。
 # v0.7 でフーディンを対応にしたので、その役を引き継ぐ）
 CHARIZARD = "PMCG1-021"
 # トレーナー（v0.2b で対応）
 POTION = "PMCG1-071"  # きずぐすり
+GUST = "PMCG1-072"  # 突風（v0.21 で対応。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える。p.255）
 SWITCH = "PMCG1-073"  # ポケモンいれかえ
 BILL = "PMCG1-074"  # マサキ
+PROFESSOR_OAK = "PMCG1-077"  # オーキドはかせ（v0.19 で対応。手札をすべてトラッシュし、その後 7 枚引く。p.255）
 PLUSPOWER = "PMCG1-081"  # プラスパワー（v0.2c で対応）
+COMPUTER_SEARCH = "PMCG1-090"  # パソコン通信（v0.22 で対応。手札から 2 枚選んでトラッシュし、山札から 1 枚選び出して手札に加え、山札を切る。p.260）
+ENERGY_RETRIEVAL = "PMCG1-076"  # エネルギー回収（v0.23 で対応。手札から 1 枚選んでトラッシュし、トラッシュの基本エネルギーカードを最大 2 枚手札に加える。p.257）
+POKEMON_BREEDER = "PMCG1-094"  # ポケモン育て屋さん（v0.25 で対応。自分の場のたねポケモンに手札の 2 進化カードを直接重ね、1 進化を飛ばして進化させる。p.259）
+POKEMON_TRADER = "PMCG1-093"  # ポケモン交換おじさん（v0.24 で対応。手札のたねポケモン・進化カードを見せて山札にもどし、山札のたねポケモン・進化カードを見せて手札に加え、山札を切る。p.259）
 DEFENDER = "PMCG1-079"  # ディフェンダー（v0.2e で対応）
 SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）
 
@@ -179,7 +214,7 @@ def build_test_state(
       active: カード id、または {"card": id, "damage": n, "energy": [id, ...], "poison": ダメージ, "sleep": True,
               "paralysis": マヒ状態になった番, "confusion": True, "retreat_failed_turn": 番,
               "evolved_from": 下のたねポケモンのカード id, "evolved_turn": 進化した番, "played_turn": 場に出た番,
-              "prevent_damage": 効果を与えた番}
+              "prevent_damage": 効果を与えた番, "retaliation": 効果を与えた番, "retaliation_received": 効果を与えた番}
               （"poison" はバトル場のポケモンのどく状態。v0.3a。"sleep"・"paralysis" はねむり・マヒ状態。v0.3b。
               "confusion" はこんらん状態、"retreat_failed_turn" はこんらん状態で「にげる」に失敗した番。v0.3c。
               特殊状態をベンチに書くと不変条件で拒否される。"sleep"・"paralysis"・"confusion" は重複しないので
@@ -190,6 +225,10 @@ def build_test_state(
               その前に 1 進化できる番があることだけを確かめる。進化のログは置かない）。"played_turn" の既定は 0（対戦準備で出した）。
               "prevent_damage" は、その番に「かたまる」などで受けた持続する効果 ``PreventDamage``（v0.4b。はたらく番は次の番）。
               効果を与えたログ ``persistent_effect_added`` も、その番の記録として置く（不変条件: 効果はログと対応する）。
+              "retaliation" は、その番に「ほのおのかべ」で受けた持続する効果 ``Retaliation``（v0.12。ワザの位置 0・与えるダメージ 10。
+              カードは R団のファイヤー。ログも "prevent_damage" と同じく置く）。
+              "retaliation_received" は、その番に「こうらがえし」で受けた持続する効果 ``Retaliation``（v0.13。ワザの位置 1・決め方
+              ``RETALIATION_RECEIVED``（受けたダメージと同じダメージを返す）・量 None。カードはわるいカメール。ログも同じく置く）。
               "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
               トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
       bench:  active と同じ形のリスト
@@ -248,6 +287,14 @@ def build_test_state(
         if "prevent_damage" in spec:
             created = spec["prevent_damage"]
             result.persistent_effects = (PreventDamage(result.card, owner, created, created + 1),)
+        if "retaliation" in spec:
+            created = spec["retaliation"]
+            result.persistent_effects = (*result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 0, 10))
+        if "retaliation_received" in spec:
+            created = spec["retaliation_received"]
+            result.persistent_effects = (
+                *result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 1, None, RETALIATION_RECEIVED)
+            )
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
@@ -393,6 +440,14 @@ def replay(state: GameState, commands: Iterable) -> GameState:
 
 from kyuura_engine.decisions import push_attack_decision  # noqa: E402
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey  # noqa: E402
+from kyuura_engine import effects as _effects  # noqa: E402
+
+# v0.17 から製品の登録表に加えたワザの実装の型（v0.13 の 24 種類のあと）。解決の基盤の要素の並び（programs.BUILDERS）で処理し、v0.13 の
+# 約束（resolve・resume）を持たない。v0.13 の止める関数で確かめる型（v013_checks.VERIFIED）には入れない（v0.16c。自動では加えない）
+ATTACK_TYPES_SINCE_V0_17 = (
+    _effects.ConfuseOnHeadsWithoutDamage,  # v0.17a: サカキのニャースの「ねこノミ」（既存の要素 Status の新しい並び）
+    _effects.DamageAndSelfSleep,  # v0.17b: R団のカビゴンの「たおれこむ」（Damage と、対象を自分にした Status）
+)
 
 
 class TwoStepTestEffect(AttackEffect):
@@ -519,6 +574,17 @@ def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:
     new = state.clone()
     new.rng = rng_for_coins(*sides)
     return new
+
+
+# ---------------------------------------------------------------- 解決の設定の指定（v0.15b。v0.16b から経路はない）
+
+from kyuura_engine.engine import apply_command_with  # noqa: E402
+
+
+def apply_kernel(state: GameState, command, **options):
+    """解決の設定（``options`` は ``preflight``・``catalog``）を指定して処理する（``engine.apply_command_with``）。v0.15b では経路 ``KERNEL`` を
+    選ぶ入口だった。v0.16b で v0.13 の経路（``apply_legacy``）を外したので、経路はなく、解決の基盤だけが処理する。"""
+    return apply_command_with(state, command, **options)
 
 
 def coin_events(state: GameState, since: int = 0) -> list[dict]:

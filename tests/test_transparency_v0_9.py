@@ -24,8 +24,11 @@ from kyuura_engine import (
 )
 from kyuura_engine.effects import (
     DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackImmunityOnHeads, AttackKey, AttackUse, ConfuseOnHeads, ParalyzeOnHeads,
-    PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
+    DamageAndSelfSleep, PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
 )
+from kyuura_engine.conditions import SLEEP
+from kyuura_engine.resolution import codec, open_attack, programs
+from kyuura_engine.resolution.questions import OpenQuestion
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import Asleep
 
@@ -459,15 +462,17 @@ class SelfHit(AttackEffect):
 
 
 class DirectReceptionTest(unittest.TestCase):
-    """``attack_reaches`` を直接呼ぶ（対応カードのワザでは起こらない場合。T7・T8・T24〜T27）。"""
+    """``attack_reaches`` を直接呼ぶ（対応カードのワザでは起こらない場合。T7・T8・T24〜T27）。
+
+    v0.16b: v0.13 の約束の補助関数は解決の基盤のワザの枠に委ねるので、``resolution.open_attack`` で枠を開いた ``AttackUse`` で呼ぶ
+    （1 つの枠 = 1 つのワザ）。"""
 
     def board(self):
         return build_test_state([{"active": {"card": RATTATA, "energy": [FIRE]}, "bench": [haunter()]},
                                  {"active": haunter(), "bench": [haunter(), GASTLY]}], turn_number=TURN)
 
     def use(self, state, player=0):
-        pokemon = state.players[player].active
-        return AttackUse(player, pokemon.pokemon_id, AttackKey(state.cards[pokemon.card].card_id, 0))
+        return open_attack(state, player)
 
     def test_bench_haunter_flips(self):
         """ベンチのゴーストもはたらく（p.159「バトル場でもベンチでもはたらきます」。T7・T25）。"""
@@ -485,19 +490,26 @@ class DirectReceptionTest(unittest.TestCase):
         self.assertEqual([e["player"] for e in coin_events(state)], [0])
 
     def test_each_haunter_flips_once_per_attack(self):
-        """複数のポケモンが受けるなら、それぞれ別に決める（T26・T27 の「それぞれ投げる」）。同じワザの同じポケモンは 1 回だけ（T4）。
-        新しいワザ（新しい ``AttackUse``）では投げ直す。ゴースは投げない。"""
+        """同じワザの同じポケモンは 1 回だけ（T4）。新しいワザ（新しい枠）では投げ直す。ゴースは投げない。
+
+        1 つのワザで 2 匹目の「とうめい」を評価すると、コインの順番が原典で決められない（T27。docs/transparency-v0.9.md・CLAUDE.md
+        「1 つのワザで複数の「とうめい」のポケモンが受ける場合のコインの順番（T27）は原典で決められません」）ので、解決の基盤は 2 匹目の前に
+        止める（コードのない問い ``multiple_evasion``。今の対応カードでは起こらないので、コマンドの入口で ``RuntimeError``）。v0.16b: v0.15 までの
+        補助関数（v0.13 の ``attack_reaches``）は 2 匹目も評価していた（対応カードでは起こらない）。解決の基盤の検出にそろえた。"""
         state = with_coin_results(self.board(), H, T, H)
         use = self.use(state)
         active, bench, gastly = state.players[1].active, state.players[1].bench[0], state.players[1].bench[1]
         self.assertFalse(attack_reaches(state, use, 1, active, DAMAGE_ELEMENT, amount=20))
-        self.assertTrue(attack_reaches(state, use, 1, bench, DAMAGE_ELEMENT, amount=20))
-        self.assertTrue(attack_reaches(state, use, 1, gastly, DAMAGE_ELEMENT, amount=20))
-        self.assertFalse(attack_reaches(state, use, 1, active, "sleep"))
-        self.assertTrue(attack_reaches(state, use, 1, bench, "sleep"))
-        self.assertEqual(len(coin_events(state)), 2)
-        self.assertEqual(use.reception, {active.pokemon_id: False, bench.pokemon_id: True})
-        self.assertFalse(attack_reaches(state, self.use(state), 1, active, DAMAGE_ELEMENT, amount=20))  # 3 枚目（H）
+        self.assertTrue(attack_reaches(state, use, 1, gastly, DAMAGE_ELEMENT, amount=20))  # ゴースは「とうめい」を持たない
+        self.assertFalse(attack_reaches(state, use, 1, active, "sleep"))  # 同じワザの同じポケモンは投げ直さない（T4）
+        self.assertEqual(len(coin_events(state)), 1)
+        self.assertEqual(use.reception, {active.pokemon_id: False})
+        with self.assertRaises(OpenQuestion) as caught:
+            attack_reaches(state, use, 1, bench, DAMAGE_ELEMENT, amount=20)  # 2 匹目の「とうめい」（T27）
+        self.assertEqual(caught.exception.key, "multiple_evasion")
+        self.assertEqual(len(coin_events(state)), 1)  # 2 匹目のコインは投げない
+        self.assertTrue(attack_reaches(state, self.use(state), 1, bench, DAMAGE_ELEMENT, amount=20))  # 新しいワザ（2 枚目 T）
+        self.assertFalse(attack_reaches(state, self.use(state), 1, active, DAMAGE_ELEMENT, amount=20))  # 新しいワザ（3 枚目 H）
         self.assertEqual(len(coin_events(state)), 3)
 
     def test_not_working_is_not_recorded(self):
@@ -513,10 +525,12 @@ class DirectReceptionTest(unittest.TestCase):
         self.assertIsNone(evasion_power(state, active))
 
     def test_attack_use_memo_is_not_state(self):
-        """記録はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（状態に持たない。書き出しの形式は 9 のまま）。"""
-        key = AttackKey(RATTATA, 0)
-        a, b = AttackUse(0, 1, key), AttackUse(0, 1, key)
+        """記録はワザ 1 回の中だけの値で、比較・ハッシュ・書き出しに含めない（状態に持たない。書き出しの形式は 9 のまま）。v0.16b: 記録は
+        解決の基盤の枠が持ち（``AttackUse.reception`` はそれを読む）、``AttackUse`` は枠への入口を比較・ハッシュ・表示に含めない。"""
+        a = self.use(self.board())
+        b = AttackUse(a.player, a.pokemon_id, a.key)
         a.reception[3] = False
+        self.assertEqual(a.runtime.reception, {3: False})
         self.assertEqual(a, b)
         self.assertEqual(hash(a), hash(b))
         self.assertNotIn("reception", repr(a))
@@ -608,7 +622,8 @@ class EvadedEffectCoinTest(unittest.TestCase):
         keys = self.keys()
         names = sorted(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).name_ja for k in keys)
         self.assertEqual(names, sorted(["どくばり", "いとをはく", "しびれごな", "あわ", "れいとうビーム", "ねんりき", "あやしいひかり", "あやしいひかり",
-                                        "どくのこな", "どくばり", "ヘドロこうげき", "したでなめる"]))
+                                        "どくのこな", "どくばり", "ヘドロこうげき", "したでなめる",
+                                        "しめつける"]))  # v0.17a: モンジャラの「しめつける」（ParalyzeOnHeads）
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -666,6 +681,10 @@ class CoinIndependenceTest(unittest.TestCase):
             gassed = gas or (card == MUK and not confused)
             working = not gassed and not ({"sleep", "confusion"} & set(defender_state))
             expected = "UNRESOLVED_EVADED_EFFECT_COIN" if isinstance(effect, EFFECT_COIN_TYPES) and working and final > 0 else "accepted"
+            if isinstance(effect, DamageAndSelfSleep) and (working or final <= 0):
+                # v0.17b（Z23）: たおれこむのダメージが「とうめい」で受けない（コインのどれかの結果）・ディフェンダーで 0 なら、自分をねむりにするかが
+                # 決まらないので宣言の前に止める（docs/rocket-snorlax-v0.17b.md 5 章）
+                expected = "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
             with self.subTest(card=card, index=index, confused=confused, defender=defender_state, gas=gas):
                 self.assertEqual(results, {expected})
             stopped += expected != "accepted"
@@ -678,24 +697,30 @@ class AtomicityTest(unittest.TestCase):
     """拒否と、処理の途中の内部の誤り（注入した）では、渡した状態・乱数・ログは変わらない（``apply_command`` は複製して処理する）。
     受け付けた処理は、自動的にはたらく特殊能力のコインを正しく消費する。"""
 
-    def assert_unchanged(self, state, command, error_type, *patches):
+    def assert_unchanged(self, state, command, error_type, *patches, apply=apply_command):
         before, fingerprint, log = written(state), rng_fingerprint(state.rng), state.log
         with contextlib_exit(patches):
-            with self.assertRaises(error_type):
-                apply_command(state, command)
+            with self.assertRaises(error_type) as ctx:
+                apply(state, command)
+        if patches:  # 注入した誤りそのものが出たこと（差しかえた所を処理が通った。v0.16d: ほかの誤りで通らないように確かめる）
+            self.assertIn("注入した誤り", str(ctx.exception))
         self.assertEqual((written(state), rng_fingerprint(state.rng)), (before, fingerprint))
         self.assertIs(state.log, log)
 
     def test_internal_error_after_the_power_coin(self):
         """「とうめい」のコインを投げたあとの処理（ねむりにする・入れ替えの決定・ダメージのログ）で内部の誤りが起きても、渡した状態は
-        変わらない。"""
+        変わらない。
+
+        v0.16b: v0.13 の経路を外したので、解決の基盤の同じ所（特殊状態を付ける ``programs.APPLY_CONDITION``・決定を出す
+        ``codec.push_decision``・ログ ``attack_evaded``）に誤りを注入する（v0.15 までは v0.13 の経路の ``effects.put_to_sleep``・
+        ``effects.push_attack_decision``）。"""
         def boom(*args, **kwargs):
             raise RuntimeError("注入した誤り")
 
         nightmare = with_coin_results(board(haunter(energy=[PSYCHIC, PSYCHIC])), T)
-        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.put_to_sleep", boom))
+        self.assert_unchanged(nightmare, UseAttack(0, 0), RuntimeError, mock.patch.dict(programs.APPLY_CONDITION, {SLEEP: boom}))
         whirlwind = with_coin_results(board({"card": BUTTERFREE, "evolved_from": [CATERPIE, METAPOD], "energy": [GRASS, GRASS]}), T)
-        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch("kyuura_engine.effects.push_attack_decision", boom))
+        self.assert_unchanged(whirlwind, UseAttack(0, 0), RuntimeError, mock.patch.object(codec, "push_decision", boom))
         heads = with_coin_results(board({"card": RATTATA, "energy": [FIRE]}), H)
         original = type(heads).add_event
 

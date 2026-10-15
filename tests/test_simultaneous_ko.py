@@ -21,7 +21,8 @@ from kyuura_engine import (
     EndTurn, EngineError, IllegalActionError, Phase, PlayTrainer, PromoteActive, ResolveDecision, Retreat, TakePrize,
     UnsupportedError, UseAttack, apply_command, check_invariants, state_to_dict,
 )
-from kyuura_engine import engine
+from kyuura_engine.resolution import flow
+from kyuura_engine.resolution.kernel import Resolution
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
@@ -138,7 +139,7 @@ class PrizeOrderTest(unittest.TestCase):
         state, _ = jolt(board())
         state = state.clone()
         state.decision = None
-        engine._next_prize_or_judge(state, order)
+        flow._next_prize_or_judge(Resolution(state), tuple(order), None, ())  # v0.16b: 解決の基盤（v0.15 までは engine._next_prize_or_judge）
         options = []
         while state.decision is not None:
             d = state.decision

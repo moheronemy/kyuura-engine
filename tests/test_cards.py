@@ -15,7 +15,9 @@ from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 from tests.helpers import (
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
-    WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP,
+    WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
+    ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
+    COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -39,7 +41,9 @@ class CardPoolTest(unittest.TestCase):
         # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
-        self.assertEqual(trainers, [POTION, SWITCH, BILL, DEFENDER, PLUSPOWER])
+        # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）
+        self.assertEqual(trainers, [POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH,
+                                    POKEMON_TRADER, POKEMON_BREEDER])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -72,10 +76,50 @@ class CardPoolTest(unittest.TestCase):
         self.assertFalse(pool.is_playable(BASE_HAUNTER))  # 同じ名前の第1弾のゴースト（参照カード。ゆめくいが未実装）
         self.assertEqual(read_extract()["pool_v0_10"], [MACHOKE, MACHAMP])  # v0.10（ダメージを受けたときに自動的にはたらくポケモンパワーのはんげき）
         self.assertTrue(all(pool.is_playable(c) for c in (MACHOP, MACHOKE, MACHAMP)))  # ワンリキーは v0.1 から
-        self.assertFalse(pool.is_playable(GIOVANNIS_MACHAMP))  # 名前に「カイリキー」を含む別のカード（参照カード。こんじょうが未実装）
+        # v0.11（相手のワザによるダメージできぜつするときに使えるポケモンパワーのこんじょう）。サカキのカイリキーは v0.10 では参照カード
+        self.assertEqual(read_extract()["pool_v0_11"], [GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP])
+        self.assertTrue(all(pool.is_playable(c) for c in (GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP)))
+        # v0.12（きぜつしたときに使えるポケモンパワーのふしちょう・次の相手の番にはたらく効果のワザのほのおのかべ）
+        self.assertEqual(read_extract()["pool_v0_12"], [ROCKETS_MOLTRES])
+        self.assertTrue(pool.is_playable(ROCKETS_MOLTRES) and pool.get(ROCKETS_MOLTRES).is_basic_pokemon)
+        # v0.13（次の相手の番に受けたダメージと同じダメージを返す効果のワザのこうらがえし）。第4弾のゼニガメは第1弾のゼニガメと同じ名前
+        self.assertEqual(read_extract()["pool_v0_13"], [ROCKET_SQUIRTLE, DARK_WARTORTLE])
+        self.assertTrue(pool.is_playable(ROCKET_SQUIRTLE) and pool.get(ROCKET_SQUIRTLE).is_basic_pokemon)
+        self.assertTrue(pool.is_playable(DARK_WARTORTLE) and pool.get(DARK_WARTORTLE).is_stage1_pokemon)
+        # v0.17a（既存のワザの要素だけで実装したカード。docs/card-implementation-v0.17a.md）
+        self.assertEqual(read_extract()["pool_v0_17a"], [TANGELA, GIOVANNIS_MEOWTH])
+        self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in (TANGELA, GIOVANNIS_MEOWTH)))
+        # v0.17b（ねむり状態でだけはたらくポケモンパワーのわるいねぞう・自分をねむりにするワザのたおれこむ）。キョウのベトベトン（v0.17c）は参照カード
+        self.assertEqual(read_extract()["pool_v0_17b"], [ROCKETS_SNORLAX])
+        self.assertTrue(pool.is_playable(ROCKETS_SNORLAX) and pool.get(ROCKETS_SNORLAX).is_basic_pokemon)
+        self.assertFalse(pool.is_playable(KOGAS_MUK) or pool.get(KOGAS_MUK).supported)
+        # v0.18c（たおれこむと同じ実装の型で加えたナツメのヤドン。docs/kernel-reuse-v0.18c.md）
+        self.assertEqual(read_extract()["pool_v0_18c"], [SABRINAS_SLOWPOKE])
+        self.assertTrue(pool.is_playable(SABRINAS_SLOWPOKE) and pool.get(SABRINAS_SLOWPOKE).is_basic_pokemon)
+        # v0.19（既存のトレーナーの登録・ドローの処理で加えたオーキドはかせ。docs/professor-oak-v0.19.md）
+        self.assertEqual(read_extract()["pool_v0_19"], [PROFESSOR_OAK])
+        self.assertTrue(pool.is_playable(PROFESSOR_OAK) and pool.get(PROFESSOR_OAK).category == "trainer")
+        # v0.21（既存のトレーナーの登録・決定・ポケモンいれかえと同じ入れ替えの処理で加えた突風。docs/gust-v0.21.md）
+        self.assertEqual(read_extract()["pool_v0_21"], [GUST])
+        self.assertTrue(pool.is_playable(GUST) and pool.get(GUST).category == "trainer")
+        # v0.22（既存のトレーナーの登録・2 段階のトレーナーの決定・ゾーンの共通の関数で加えたパソコン通信。docs/computer-search-v0.22.md）
+        self.assertEqual(read_extract()["pool_v0_22"], [COMPUTER_SEARCH])
+        self.assertTrue(pool.is_playable(COMPUTER_SEARCH) and pool.get(COMPUTER_SEARCH).category == "trainer")
+        # v0.23（既存のトレーナーの登録・2 段階のトレーナーの決定・手札のトラッシュとトラッシュから手札に加える共通の関数で加えたエネルギー回収。
+        # docs/energy-retrieval-v0.23.md）
+        self.assertEqual(read_extract()["pool_v0_23"], [ENERGY_RETRIEVAL])
+        self.assertTrue(pool.is_playable(ENERGY_RETRIEVAL) and pool.get(ENERGY_RETRIEVAL).category == "trainer")
+        # v0.24（既存のトレーナーの登録・2 段階のトレーナーの決定・手札から山札にもどす・山札から選び出して見せる共通の関数で加えたポケモン交換
+        # おじさん。docs/pokemon-trader-v0.24.md）
+        self.assertEqual(read_extract()["pool_v0_24"], [POKEMON_TRADER])
+        self.assertTrue(pool.is_playable(POKEMON_TRADER) and pool.get(POKEMON_TRADER).category == "trainer")
+        # v0.25（既存のトレーナーの登録・2 段階のトレーナーの決定・進化の手順の共通の関数で加えたポケモン育て屋さん。docs/pokemon-breeder-v0.25.md）
+        self.assertEqual(read_extract()["pool_v0_25"], [POKEMON_BREEDER])
+        self.assertTrue(pool.is_playable(POKEMON_BREEDER) and pool.get(POKEMON_BREEDER).category == "trainer")
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
-                 MACHOKE, MACHAMP)
+                 MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

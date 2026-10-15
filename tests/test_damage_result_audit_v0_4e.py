@@ -2,7 +2,8 @@
 
 ``effects.deal_attack_damage`` の結果を、受けるポケモン（相手の対戦ポケモン・自分）× 計算（0・弱点・抵抗力・プラスパワー・
 ディフェンダー・防いだ）× きぜつ（ちょうど HP・HP を超える）の表で確かめる。1 つの規定（p.321 の計算と結果の値）を確かめる
-テストなので、盤面は ``build_test_state`` で直接作り、関数を直接呼ぶ（呼んだ状態は複製）。
+テストなので、盤面は ``build_test_state`` で直接作り、関数を直接呼ぶ（呼んだ状態は複製。v0.16b から、解決の基盤のワザの枠を
+``resolution.open_attack`` で開いて呼ぶ。``deal_attack_damage`` は解決の基盤の ``kernel.deal_damage`` に委ねる）。
 
 根拠: p.319（「与えたダメージ」は最終ダメージで、HP で上限を付けない。0 なら「ダメージを与えなかった」）、p.321（計算の順番。
 「ダメージを受けない」状態ならダメージを与える要素は無効）、p.257（プラスパワー・ディフェンダーは自分へのダメージにも効く）、
@@ -14,7 +15,8 @@ kyuura NEO-2000-OFFICIAL-RULES。docs/damage-drain-v0.4d.md・docs/integration-a
 import unittest
 
 from kyuura_engine import UseAttack, apply_command, check_invariants
-from kyuura_engine.effects import OPPONENT_ACTIVE, SELF, AttackKey, AttackUse, deal_attack_damage
+from kyuura_engine.effects import OPPONENT_ACTIVE, SELF, deal_attack_damage
+from kyuura_engine.resolution import open_attack
 from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
@@ -37,7 +39,7 @@ def deal(attacker, target, *, receiver=None, base, prevent=False):
         {"active": receiver},
     ], turn_number=TURN)
     work = state.clone()
-    use = AttackUse(0, work.players[0].active.pokemon_id, AttackKey(MACHOP, 0))
+    use = open_attack(work, 0)  # v0.16b: 解決の基盤のワザの枠（v0.13 の約束の補助関数は、枠の中でだけ使える）
     result = deal_attack_damage(work, use, target, base)
     return state, work, result
 

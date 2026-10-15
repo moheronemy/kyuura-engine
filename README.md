@@ -23,7 +23,23 @@
 - v0.7: フーディン（PMCG1-049）のポケモンパワー「ダメージスワップ」（自分の番の中で何度でも、この力によってポケモンが「きぜつ」しないかぎり、自分の場のポケモンにのっているダメージカウンターを自分の場の別のポケモンにのせかえる）とワザ「あやしいひかり」、進化元のケーシィ（ねんりき）・ユンゲラー（じこさいせい・ちょうねんりき）を実装した。カードのページ（p.149・p.151・p.153）とほかのカードの解説（p.98・p.235・p.248）・一般の規定（p.307〜p.311・p.319〜p.323）を画像で照合し、25 の論点（S1〜S25）ときぜつの禁止（A4）を記録した。1 回の使用で1 個（実装上の仮定。何度でも使えるので、たどりつける状態は変わらない）、のせたらきぜつする移動は状態を変える前に拒否する（`WOULD_KNOCK_OUT`）、移したカウンターは「ダメージを受けた」ことにならない（p.320）。じこさいせいでトラッシュする「超」エネルギーは、ワザを使うプレイヤーが決定で選ぶ。新しい未解決の裁定・状態の項目・書き出しの形式はない（形式 9 のまま）。v0.6 の R13 は変えていない。前の版（v0.6）との比較で、フーディンの系統のいない対戦の結果は同じ。[docs/damage-swap-v0.7.md](docs/damage-swap-v0.7.md)（原典の照合と裁定）、[docs/alakazam-line-v0.7.md](docs/alakazam-line-v0.7.md)（ケーシィ・ユンゲラー・フーディン）、[docs/architecture-v0.7.md](docs/architecture-v0.7.md)（設計）、[docs/v0.7-verification.md](docs/v0.7-verification.md)（確かめた結果）
 - v0.8: ベトベトン（PMCG3-007）のポケモンパワー「かがくへんかガス」（常にはたらいていて宣言しない。このカードが場にいるかぎり、「かがくへんかガス」以外のすべての特殊能力は使えず、その力も消える。このカードがねむり・マヒ・こんらんのとき、この力は消える）とワザ「ヘドロこうげき」、進化元のロケット団のベトベター（PMCG4-004。どくガス・ねばりつく）を実装した。カードのページ（p.45・p.47・p.48）と一般の規定（p.308・p.310・p.311・p.322〜p.324）・解説（p.265・p.277）を画像で照合し、33 の論点（G1〜G33）と「使えず」「力も消える」の区別（A4）を記録した。かがくへんかガスがはたらいているかは、状態に持たず、場・いちばん上のカード・特殊状態から問い合わせのたびに求める（進化・きぜつ・特殊状態の回復・ベンチに戻ること・保存と復元のあとも古くならない）。消された特殊能力（エナジートランス・あまごい・ダメージスワップ）は、自分・相手のどちらのベトベトンでも、宣言の前に `POWER_SUPPRESSED` で拒否する。ワザ・トレーナー・通常の操作は止めない。新しい未解決の裁定・状態の項目・書き出しの形式・ログのイベントはない（形式 9 のまま）。R13 は変えていない。前の版（v0.7）との比較で、ベトベトンのいない対戦の結果は同じ。[docs/chemical-gas-v0.8.md](docs/chemical-gas-v0.8.md)（原典の照合と裁定）、[docs/grimer-line-v0.8.md](docs/grimer-line-v0.8.md)（ベトベター・ベトベトン）、[docs/continuous-effects-v0.8.md](docs/continuous-effects-v0.8.md)（常にはたらく効果の求め方）、[docs/architecture-v0.8.md](docs/architecture-v0.8.md)（設計）、[docs/v0.8-verification.md](docs/v0.8-verification.md)（確かめた結果）
 - v0.9: ゴースト（PMCG3-030。化石の秘密）のポケモンパワー「とうめい」（ワザによってダメージや効果を受けるとき、自動的にはたらく。コインを投げて「おもて」なら、そのダメージと効果を受けない。ねむり・マヒ・こんらんのとき、この力は消える）とワザ「あくむ」、進化元のゴース（PMCG3-029。したでなめる・エナジーへんかん）を実装した。カードのページ（p.158・p.160）と特殊能力解説（p.159）・一般の規定（p.309・p.320・p.321・p.323）を画像で照合し、42 の論点（T1〜T42）と A4（1 つのワザで何回投げるか・ワザの成立・ベトベトンとの関係）、ゴースとゴーストのワザの 13 の論点（H1〜H13）を記録した。宣言しない自動的にはたらく特殊能力を、ワザの要素の処理の境界（ダメージは最終ダメージが決まってからのせる前、効果は与える前）で評価する（汎用のイベントの仕組みは作っていない）。コインはゴースト側のプレイヤーが 1 つのワザにつき 1 匹 1 枚投げ、その結果をそのワザのダメージと効果のすべてに使う（SUPPORTED）。最終ダメージが 0 なら投げない。ワザは失敗にならず（エネルギーはついたまま・番は終わる）、ワザを使う側への要素は処理する。かがくへんかガス（v0.8）がはたらいていれば「とうめい」は消える（v0.8 の判定を使う）。原典で決められない 2 件は止める（「おもて」で受けないと決まったあとのワザのコイン（T19b。`UNRESOLVED_EVADED_EFFECT_COIN`。ワザの前）・エナジーへんかんで 0 枚を選ぶ（H4。`UNRESOLVED_RECOVER_ZERO_ENERGY`））。状態の項目・書き出しの形式（9 のまま）・コマンド・段階は加えていない。R13 は変えていない。前の版（v0.8）との比較で、ゴーストのいない対戦の結果は同じ。[docs/transparency-v0.9.md](docs/transparency-v0.9.md)（原典の照合と裁定）、[docs/haunter-line-v0.9.md](docs/haunter-line-v0.9.md)（ゴース・ゴースト）、[docs/automatic-powers-v0.9.md](docs/automatic-powers-v0.9.md)（自動的にはたらく特殊能力の仕組み）、[docs/architecture-v0.9.md](docs/architecture-v0.9.md)（設計）、[docs/v0.9-verification.md](docs/v0.9-verification.md)（確かめた結果）
-- v0.10（今の版）: カイリキー（PMCG1-057。第1弾）のポケモンパワー「はんげき」（相手のワザによってダメージを受けたとき、それによってきぜつしても、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10 ダメージ。ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）とワザ「ちきゅうなげ」、進化元のゴーリキー（PMCG1-055。からてチョップ・じごくぐるま）を実装した（ワンリキーは v0.1 から）。カードのページ（p.189・p.190・p.192・p.193）と、同じ形の発動条件の解説（p.89 の「こうらがえし」・p.138［ショックボム］・p.203「クロスカウンター」・p.245［わるいねぞう］・p.20［どくのたいえき］）・一般の規定（p.309・p.319〜p.324）を画像で照合し、43 の論点（C1〜C43）と A4 の 6 つの論点、ゴーリキーの系統の 12 の論点（M1〜M12）を記録した。宣言しない自動的にはたらく特殊能力で、相手のワザのダメージの要素（`deal_attack_damage`）でダメージを受けるときの状態から判定し、そのワザのダメージの処理（自分へのダメージを含む）が終わったところ・ダメージ以外の効果の前に与える（p.89。汎用のイベントの仕組みは作っていない）。「はんげき」の 10 は特殊能力によるダメージで、弱点・抵抗力・プラスパワー・ディフェンダー・「とうめい」を計算せず、別の「はんげき」もはたらかせない（連鎖しない）。きぜつ・サイド・交代・勝ち負けは今までどおりワザのあと。かがくへんかガス（v0.8）がはたらいていれば消える。原典で決められない 1 件は止める（カイリキーがワザで、ワザを使ったポケモンが「はんげき」できぜつする場合が同時のきぜつか（C18。`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`。ワザの宣言の前））。状態の項目・書き出しの形式（9 のまま）・コマンド・段階・決定の種類は加えていない。前の版（v0.9）との比較で、カイリキーのいない対戦の結果は同じ。[docs/counterattack-v0.10.md](docs/counterattack-v0.10.md)（原典の照合と裁定）、[docs/machamp-line-v0.10.md](docs/machamp-line-v0.10.md)（ワンリキー・ゴーリキー・カイリキー）、[docs/post-damage-powers-v0.10.md](docs/post-damage-powers-v0.10.md)（ダメージを受けたあとに自動的にはたらく特殊能力の仕組み）、[docs/architecture-v0.10.md](docs/architecture-v0.10.md)（設計）、[docs/v0.10-verification.md](docs/v0.10-verification.md)（確かめた結果）
+- v0.10: カイリキー（PMCG1-057。第1弾）のポケモンパワー「はんげき」（相手のワザによってダメージを受けたとき、それによってきぜつしても、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10 ダメージ。ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）とワザ「ちきゅうなげ」、進化元のゴーリキー（PMCG1-055。からてチョップ・じごくぐるま）を実装した（ワンリキーは v0.1 から）。カードのページ（p.189・p.190・p.192・p.193）と、同じ形の発動条件の解説（p.89 の「こうらがえし」・p.138［ショックボム］・p.203「クロスカウンター」・p.245［わるいねぞう］・p.20［どくのたいえき］）・一般の規定（p.309・p.319〜p.324）を画像で照合し、43 の論点（C1〜C43）と A4 の 6 つの論点、ゴーリキーの系統の 12 の論点（M1〜M12）を記録した。宣言しない自動的にはたらく特殊能力で、相手のワザのダメージの要素（`deal_attack_damage`）でダメージを受けるときの状態から判定し、そのワザのダメージの処理（自分へのダメージを含む）が終わったところ・ダメージ以外の効果の前に与える（p.89。汎用のイベントの仕組みは作っていない）。「はんげき」の 10 は特殊能力によるダメージで、弱点・抵抗力・プラスパワー・ディフェンダー・「とうめい」を計算せず、別の「はんげき」もはたらかせない（連鎖しない）。きぜつ・サイド・交代・勝ち負けは今までどおりワザのあと。かがくへんかガス（v0.8）がはたらいていれば消える。原典で決められない 1 件は止める（カイリキーがワザで、ワザを使ったポケモンが「はんげき」できぜつする場合が同時のきぜつか（C18。`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`。ワザの宣言の前））。状態の項目・書き出しの形式（9 のまま）・コマンド・段階・決定の種類は加えていない。前の版（v0.9）との比較で、カイリキーのいない対戦の結果は同じ。[docs/counterattack-v0.10.md](docs/counterattack-v0.10.md)（原典の照合と裁定）、[docs/machamp-line-v0.10.md](docs/machamp-line-v0.10.md)（ワンリキー・ゴーリキー・カイリキー）、[docs/post-damage-powers-v0.10.md](docs/post-damage-powers-v0.10.md)（ダメージを受けたあとに自動的にはたらく特殊能力の仕組み）、[docs/architecture-v0.10.md](docs/architecture-v0.10.md)（設計）、[docs/v0.10-verification.md](docs/v0.10-verification.md)（確かめた結果）
+- v0.11: サカキのカイリキー（PMCG6-061。ジム拡張第2弾 闇からの挑戦）のポケモンパワー「こんじょう」（相手のワザによるダメージで「きぜつ」するとき、使える。コインを投げて「おもて」なら「きぜつ」せず、残り HP が 10。ダメージを受けるとき、すでにねむり・マヒ・こんらんなら使えない）とワザ「ハリケーンパンチ」、進化元のサカキのワンリキー（PMCG6-057。チョップ・いかりのスーパーパンチ）・サカキのゴーリキー（PMCG6-059。いちかばちか・じごくがため）を実装した。カードのページ（p.189・p.191・p.193）と、同じ形の特殊能力の解説（p.100［にげこむ］・p.82［ふしちょう］・p.188［ずらかる］・p.192［はんげき］）・p.285 の解説・一般の規定（p.309・p.311・p.319〜p.324）を画像で照合し、42 の論点（G1〜G42）と A4〜A6、サカキのワンリキーの系統の 14 の論点（L1〜L14）を記録した。「使える」と書かれた使用を宣言する特殊能力なので、使うかは持ち主が決める（強制にしない）。ワザの要素をすべて処理したあとのきぜつの判定と、実際のきぜつの処理（トラッシュ・サイド・交代・勝ち負け）のあいだの 1 か所の境界で、持ち主に既存の決定（`ko_prevention`。選ばなければ使わない）を出し、使うと答えたときだけコインを投げる（決定の時点ではコインを投げていない）。「おもて」なら残り HP 10 で場に残り、サイドは取られない。どく・こんらん・自分のワザ・「はんげき」（特殊能力のダメージ）・ダメージカウンターの移動によるきぜつには使えない。かがくへんかガス（v0.8）で消える。汎用のイベントの仕組みは作っていない。原典で決められない 1 件は止める（「おもて」で残ったポケモンが同じワザの効果（マヒ・入れ替えなど）を受けるか。G37。`UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`。ワザの宣言の前）。v0.10 の C18 は解決したことにしていない。状態の項目・書き出しの形式（9 のまま）・コマンド・段階は加えていない（決定の種類を 1 つ加えた）。前の版（v0.10）との比較で、サカキのカイリキーのいない対戦の結果は同じ。[docs/guts-v0.11.md](docs/guts-v0.11.md)（原典の照合と裁定）、[docs/giovanni-machamp-line-v0.11.md](docs/giovanni-machamp-line-v0.11.md)（サカキのワンリキー・ゴーリキー・カイリキー）、[docs/ko-prevention-v0.11.md](docs/ko-prevention-v0.11.md)（きぜつの判定ときぜつの処理のあいだの仕組み）、[docs/architecture-v0.11.md](docs/architecture-v0.11.md)（設計）、[docs/v0.11-verification.md](docs/v0.11-verification.md)（確かめた結果）
+- v0.12: R団のファイヤー（PMCG5-020。ジム拡張第1弾 リーダーズスタジアム）のポケモンパワー「ふしちょう」（このカードが「きぜつ」したとき、使える。このカードをトラッシュからとり出し、相手プレイヤーに見せてから、手札に加える。ねむり・マヒ・こんらんのまま「きぜつ」するときは使えない）とワザ「ほのおのかべ」（40。次の相手の番、このカードが相手のワザによるダメージを受けたとき、それによってきぜつしても、相手に 10 ダメージを与える）を実装した。カードのページ（p.82）と、同じ形の「相手の番ではたらく効果」のワザ解説（p.89 の「こうらがえし」）・一般の規定（p.311・p.319〜p.325）を画像で照合し、「ふしちょう」の 35 の論点（P1〜P35）と「ほのおのかべ」の 30 の論点（W1〜W30）を記録した。目標は、きぜつしたポケモンを正しいタイミングでトラッシュから手札にもどすこと（目標A）と、期限付きのワザの効果を保持・適用・失効させること（目標B）。「ふしちょう」は使用を宣言する任意の特殊能力で、きぜつの処理（トラッシュ）の前に「使えるか」（いちばん上のカード・きぜつするときの特殊状態・かがくへんかガス）を求め、サイドを取り、勝ち負けの判定で対戦が続くなら、バトル場に出す前に持ち主に新しい決定（`post_knockout_power`。選ばなければ使わない）を出す。使えば、そのカード（同じ uid）だけを手札にもどす（エネルギーはトラッシュに残る。相手はサイドを取る）。この順番は原典で決まらないが、どの順番でも結果が変わらないので正規化した（v0.11 の「こんじょう」の処理は流用していない）。「ほのおのかべ」は v0.4b の持続する効果に種類（`Retaliation`）を 1 つ加えたもので、次の相手の番の終わりに消え、ベンチにもどる・きぜつで消える。返す 10 は R団のファイヤーのワザによるダメージで、弱点・抵抗力・ディフェンダー・「とうめい」を計算し、受けたカイリキーの「はんげき」もはたらく（v0.10 の「はんげき」の処理は流用していない）。かがくへんかガス・特殊状態では止まらない。原典で決められない 1 件は止める（R団のファイヤーと、ワザを使ったポケモンが「ほのおのかべ」で、そろってきぜつする場合が同時のきぜつか。W24。`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`。ワザの宣言の前）。既存の未解決の裁定（C18・C34/C35・G37・G40・T27・R13 ほか）は変えていない。状態の項目・書き出しの形式（9 のまま）・コマンド・段階は加えていない（決定の種類を 1 つ加えた）。前の版（v0.11）との比較で、R団のファイヤーのいない対戦の結果は同じ。[docs/phoenix-v0.12.md](docs/phoenix-v0.12.md)（「ふしちょう」の原典の照合と裁定）、[docs/rocket-moltres-v0.12.md](docs/rocket-moltres-v0.12.md)（カードと「ほのおのかべ」）、[docs/post-knockout-powers-v0.12.md](docs/post-knockout-powers-v0.12.md)（きぜつしたあとに使う特殊能力の仕組み）、[docs/temporary-attack-effects-v0.12.md](docs/temporary-attack-effects-v0.12.md)（番をまたいではたらくワザの効果）、[docs/architecture-v0.12.md](docs/architecture-v0.12.md)（設計）、[docs/v0.12-verification.md](docs/v0.12-verification.md)（確かめた結果）
+- v0.13: わるいカメール（PMCG4-021。ポケモンカード第4弾 ロケット団。ゼニガメから進化する 1 進化）のワザ「こうらがえし」（水無。ダメージなし。次の相手の番、このカードが相手のワザによってダメージを受けたとき、それによってきぜつしても、そのポケモンにも同じダメージを与える。ダメージ以外の効果は与えない）・「おうふくびんた」（コイン 2 枚の「おもて」の数 × 10）と、進化元の第4弾のゼニガメ（PMCG4-018。こうらアタック 20）を実装した。カードのページ（p.88・p.89）と、p.89 のワザ解説（「相手の番ではたらく効果」。「ふきとばし」「スターブーメラン」の例）・p.321「8」（わるいカメールの「こうらがえし」が例。返すダメージは「こうらがえし」のワザによるダメージ）・p.203（同じタイプのワザ「クロスカウンター」）・p.279（お上品攻撃の解説）を画像で照合し、49 の論点（S1〜S49）を記録した。返す量は、わるいカメールが受けたダメージ（相手のワザのダメージの最終ダメージ。弱点・抵抗力・プラスパワー・ディフェンダーを計算したあと。HP で上限をつけない）で、元のワザの基本となるダメージではない。それを基本となるダメージにして、わるいカメールのワザによるダメージとして、ワザを使ったポケモンについて弱点・抵抗力・ディフェンダー・「とうめい」を計算し、受けたカイリキーの「はんげき」もはたらく。返すのは相手のワザのダメージの処理のあと・ダメージ以外の効果の前（p.89）。v0.12 の持続する効果 `Retaliation` に、与えるダメージの決め方 `basis`（`fixed`（ほのおのかべの 10）・`received_damage`（こうらがえし））を加える最小限の拡張で、受けたダメージはワザ 1 回の中の値（状態に持たない）。「ほのおのかべ」の値・ログ・書き出しは v0.12 と同じ。わるいカメールとワザを使ったポケモンがそろってきぜつしうる場合（S37）は v0.12 の W24 と同じ問いなので、同じコード（`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`。ワザの宣言の前）で止める（新しい未解決の裁定・コードは加えていない）。返すダメージで別の効果がはたらく連鎖は番の進み方から起こらず、起こったらエンジンの不具合として止める（回数の上限で隠さない）。書き出しの形式は 9 のまま（種類 `retaliation_received_damage` を加えた）。前の版（v0.12）との比較で、わるいカメールのいない対戦の結果は同じ。[docs/shell-attack-v0.13.md](docs/shell-attack-v0.13.md)（「こうらがえし」の原典の照合と裁定）、[docs/dark-wartortle-v0.13.md](docs/dark-wartortle-v0.13.md)（カードの照合）、[docs/variable-retaliation-v0.13.md](docs/variable-retaliation-v0.13.md)（量が受けたダメージで決まる効果の仕組み）、[docs/architecture-v0.13.md](docs/architecture-v0.13.md)（設計）、[docs/v0.13-verification.md](docs/v0.13-verification.md)（確かめた結果）
+- v0.14（設計の試作。本番のエンジンは変えていない）: カード効果ごとの専用の処理を、汎用のイベント・効果の解決の仕組みに移すのが適切かを確かめた。現行のアーキテクチャの分析、4 つの設計案の比較、イベントモデル（名前のある処理の段階（窓）・処理の枠と枠の表・効果の定義の対応表・ワザの要素の並び・原典で決められない場合の共通の先読み）を作り、本番の外（`experiments/event_kernel/`）に動くプロトタイプを実装した。プロトタイプはワザ・番の終わり・きぜつのあとの決定を処理し（ほかのコマンドは v0.13 のエンジンに渡す）、「とうめい」「はんげき」「こんじょう」「ふしちょう」「こうらがえし」「ほのおのかべ」「かたまる」「かがくへんかガス」を表す。v0.13 と 1 歩ごとに比べて（対戦のテストの方針 23 × 100 seed・ストレス実行 26 組、2 つの先読み、交互の状態）食い違いは 0。結論は PARTIAL（ワザの解決の経路だけを v0.15 から段階的に移す）。[docs/event-architecture-audit-v0.14.md](docs/event-architecture-audit-v0.14.md)（現行の分析）、[docs/event-architecture-options-v0.14.md](docs/event-architecture-options-v0.14.md)（設計案の比較）、[docs/event-model-v0.14.md](docs/event-model-v0.14.md)（イベントモデル）、[docs/event-prototype-verification-v0.14.md](docs/event-prototype-verification-v0.14.md)（検証）、[docs/event-migration-plan-v0.14.md](docs/event-migration-plan-v0.14.md)（移行計画）
+- v0.15（`kyuura_engine` の版は 0.15.0）: v0.14 のプロトタイプを本番の内部の部品（`kyuura_engine/resolution`）にし、ワザ・番の終わり・きぜつのあとの決定（サイド・交代・こんじょう・ふしちょう）の解決を、標準でこの基盤（経路 `KERNEL`）で処理するようにした。公開の API・対応するカード・ルール・裁定・原典で決められない場合に止める条件と理由の文・書き出しの形式 9・ログ・乱数の使い方は v0.13 と同じ。v0.13 の経路（`LEGACY`）は比べる基準として残した（v0.16 で外す候補）。内部の依存の整理（v0.15a）、本番への統合と経路の明示的な選択（v0.15b）、宣言の前の先読みの安全性と効率（実際の処理を先に行う・決定のすべての答え・上限 4,096。v0.15c）、固定した v0.13 との 1 歩ごとの比較・独立した不変条件・変異試験のあとの切り替え（v0.15d）。[docs/integration-dependencies-v0.15a.md](docs/integration-dependencies-v0.15a.md)（依存の整理）、[docs/kernel-integration-v0.15b.md](docs/kernel-integration-v0.15b.md)（統合）、[docs/preflight-optimization-v0.15c.md](docs/preflight-optimization-v0.15c.md)（先読み）、[docs/event-integration-verification-v0.15d.md](docs/event-integration-verification-v0.15d.md)（検証と切り替え）
+- v0.16（`kyuura_engine` の版は 0.16.0）: v0.13 のワザの解決の経路と経路の切り替え（`Route`・`apply_command_via`）を外し、ワザ・番の終わり・きぜつのあとの決定（サイド・交代・こんじょう・ふしちょう）を解決の基盤（`kyuura_engine/resolution`）だけで処理するようにした。公開の API・対応するカード・ルール・裁定・原典で決められない場合に止める条件・書き出しの形式 9・ログ・乱数の使い方は v0.13・v0.15 と同じ（決定への答えを拒否する `WRONG_PHASE` の理由の文の段階の並びだけを決まった順番にした）。v0.13 の約束（`AttackEffect.resolve`・`resume`）で書いたワザの実装は、解決の基盤の枠の中のアダプタで処理する。v0.13 の止める関数は、限定的な互換の部品（`resolution/v013_checks.py`）の 3 つの使い道だけに残した。撤去の前の監査と比較の環境（v0.16a）、旧経路の撤去（v0.16b）、先読みの整理と上限の境界（v0.16c）、重複処理の調査・テストの移行・互換の層の撤去（v0.16d）、固定した v0.13・v0.15 との 1 歩ごとの比較・変異試験・性能の最終監査（v0.16e）。[docs/legacy-removal-audit-v0.16a.md](docs/legacy-removal-audit-v0.16a.md)（監査）、[docs/kernel-consolidation-v0.16b.md](docs/kernel-consolidation-v0.16b.md)（撤去）、[docs/preflight-consolidation-v0.16c.md](docs/preflight-consolidation-v0.16c.md)（先読み）、[docs/legacy-test-migration-v0.16d.md](docs/legacy-test-migration-v0.16d.md)（テストの移行）、[docs/kernel-consolidation-verification-v0.16e.md](docs/kernel-consolidation-verification-v0.16e.md)（最終監査）
+- v0.17（`kyuura_engine` の版は 0.17.0）: 実際のカードで、解決の基盤（KERNEL）の拡張性を確かめた。既存のワザの要素だけで、モンジャラ（PMCG1-007。しめつける・どくのこな）とサカキのニャース（PMCG6-063。ねこノミ・ねこキック）を加えた（v0.17a。`engine.py`・`resolution/kernel.py`・`resolution/catalog.py` を変えていない）。既存の窓に加える新しい自動的な効果として、R団のカビゴン（PMCG6-073）の特殊能力［わるいねぞう］（ねむり状態で相手のワザによるダメージを受けたとき、それによってきぜつしても、ダメージを与えたポケモンに 20。特殊能力によるダメージ）とワザ「たおれこむ」（ダメージを与えた後、自分をねむり状態にする）を加えた（v0.17b。効果の定義の特殊状態の条件 `requires` と、自分を対象にする特殊状態の要素を一般化した）。「ダメージを与えた後」の効果を、ダメージを与えなかったときに与えるかは原典で決まらないので、宣言の前に `UNRESOLVED_EFFECT_AFTER_NO_DAMAGE` で止める（Z23）。キョウのベトベトン（PMCG6-023）の特殊能力［だつりょくえき］は、宣言する特殊能力か・処理する時点が原典で決まらず、今の KERNEL はダメージの要素のあとの窓の中で決定を出して続けられないので、設計を検証して本番の実装を延期した（v0.17c。DEFER。カードは未対応のまま）。固定した v0.16 との 1 歩ごとの比較（既存のカードの対戦）・変異試験・性能・拡張性の測定（v0.17d）。[docs/card-selection-v0.17a.md](docs/card-selection-v0.17a.md)（候補の比較と選定）、[docs/card-implementation-v0.17a.md](docs/card-implementation-v0.17a.md)（既存の要素だけのカード）、[docs/rocket-snorlax-v0.17b.md](docs/rocket-snorlax-v0.17b.md)（R団のカビゴン）、[docs/kogas-muk-event-design-v0.17c.md](docs/kogas-muk-event-design-v0.17c.md)（キョウのベトベトンの設計の検証）、[docs/card-extensibility-verification-v0.17d.md](docs/card-extensibility-verification-v0.17d.md)（拡張性の検証）
+- v0.18（`kyuura_engine` の版は 0.18.0）: 研究データ（kyuura）とエンジンが同じ出典・裁定を追跡できるようにした。研究の基準を kyuura `adf9710`（エンジン v0.17 までの研究成果の取り込み）に固定し、エンジンの未解決の裁定 24 件・停止コード 18 件と kyuura の論点 19 件・分類の違い 17 件（処理は同じ）・最新の説明 20 件（文字列まで一致）を対応づけた（v0.18a。カードの写しのコミットは変えていない）。Z9・Z23・DR1・DR6 を誌面で調べ直し、どれも UNRESOLVED のまま（Z23 はダメージを与えなかった場合を 4 つに分けた。v0.18b）。既存の実装の型（たおれこむと同じ `DamageAndSelfSleep`）だけでナツメのヤドン（PMCG6-044。ぐうたらこうげき）を加えた（v0.18c。`engine.py`・`resolution/` は変えていない。超のワザなので抵抗力で 0 になる場合（Z23-b）が起こり、宣言の前に止める）。窓の途中の決定の設計を見直し、キョウのベトベトンは延期のまま（v0.18d。DEFER）。変異試験の定義と実行の道具をリポジトリに入れ（`tools/mutants.py`・`tools/run_mutants.py`）、研究の対応表の検査（`scripts/check_research_links.py`）を加えた（v0.18e）。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)（研究との照合）、[docs/unresolved-research-v0.18b.md](docs/unresolved-research-v0.18b.md)（未解決の裁定の再調査）、[docs/kernel-reuse-v0.18c.md](docs/kernel-reuse-v0.18c.md)（ナツメのヤドン）、[docs/mid-window-decisions-v0.18d.md](docs/mid-window-decisions-v0.18d.md)（窓の途中の決定の設計）、[docs/verification-reproducibility-v0.18e.md](docs/verification-reproducibility-v0.18e.md)（検証の再現性）、[docs/v0.18-verification.md](docs/v0.18-verification.md)（最終の検証）
+- v0.19（`kyuura_engine` の版は 0.19.0）: トレーナーのオーキドはかせ（PMCG1-077。手札をすべてトラッシュし、その後、山札から 7 枚引く。p.255 の最新の説明）を、既存のトレーナーの登録・使用中のカード・ドローの処理で加えた（`engine.py`・`resolution/`・公開の API・書き出しの形式は変えていない）。照合済みの記録の再利用の手順にしたがい、トレーナーの使いかた（p.310）・効果で引くとき（p.312）・山札切れの規定は v0.2b の記録を再利用し、原典はカードのページ p.255 だけを読んだ。[docs/professor-oak-v0.19.md](docs/professor-oak-v0.19.md)（規定と根拠）、[docs/v0.19-verification.md](docs/v0.19-verification.md)（検証）
+- v0.20（`kyuura_engine` の版は 0.20.0）: 対応済みのカードだけで組んだ固定のデッキを 2 つ加え、識別子で選んで正式な対戦開始に渡せるようにした（`kyuura_engine.decks`。エビワラー・ジュゴン `hitmonchan-dewgong`、フシギバナ・パラセクト `venusaur-parasect`。最初の試作の構成で、大会のデッキや釣り合いを確かめた構成ではない）。開始だけの例（examples/start_preset_game.py）と、決まった手順で対戦させて終わり方と動きを数える道具（tools/preset_deck_games.py）を加えた。新しいカードの効果・`engine.py`・`resolution/`・書き出しの形式は変えていない。[docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)（デッキと使い方）、[docs/v0.20-verification.md](docs/v0.20-verification.md)（検証）
+- v0.21（`kyuura_engine` の版は 0.21.0）: トレーナーの突風（PMCG1-072。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える。p.255 の最新の説明）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定と、ポケモンいれかえと共通にした入れ替えの処理（`effects._switch_active_with_bench`）で加えた（`engine.py`・`resolution/`・公開の API・ログのイベントの種類・書き出しの形式は変えていない）。相手に控えがいないときに使えるかは原典で決められないので止める（`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）。固定のデッキは変えず、ディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキで対戦させた（tools/preset_deck_games.py の `--variant gust`）。[docs/gust-v0.21.md](docs/gust-v0.21.md)（規定と根拠）、[docs/v0.21-verification.md](docs/v0.21-verification.md)（検証）
+- v0.22（`kyuura_engine` の版は 0.22.0）: トレーナーのパソコン通信（PMCG1-090。p.260 の最新の説明「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、ゾーンの共通の関数（`zones.discard_from_hand`・`search_deck_to_hand`・`shuffle_deck`）で加えた（`engine.py` は山札を切る処理を `zones.shuffle_deck` に移しただけ。`resolution/`・公開の API・書き出しの形式は変えていない。ログのイベント `discard_from_hand`・`search_deck` を加えた）。山札が 0 枚のときに使えるかは原典で決められないので止める（`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）。固定のデッキは変えず、ディフェンダー 3 枚をパソコン通信 3 枚に置き換えた一時的なデッキで対戦させた（tools/preset_deck_games.py の `--variant computer`）。[docs/computer-search-v0.22.md](docs/computer-search-v0.22.md)（規定と根拠）、[docs/v0.22-verification.md](docs/v0.22-verification.md)（検証）
+- v0.23（`kyuura_engine` の版は 0.23.0）: 突風とパソコン通信を同じデッキに入れた対戦を確かめた（固定のデッキのディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に置き換えた一時的なデッキ。tools/preset_deck_games.py の `--variant mixed`。パソコン通信で山札から突風を選び、その番に使う場面を含む）。トレーナーのエネルギー回収（PMCG1-076。p.257 の最新の説明「手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、既存のゾーンの関数（`zones.discard_from_hand`・`return_discard_to_hand`）で加えた（`engine.py`・`resolution/`・`zones.py`・公開の API・書き出しの形式は変えていない。ログのイベント `retrieve_energy` と決定の種類 `retrieve_energy` を加えた）。選べるものがあるのに 0 枚を選べるか・トラッシュに基本エネルギーカードがないときに使えるかは原典で決められないので止める（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・`UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`）。さらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキで対戦させた（`--variant retrieval`）。[docs/energy-retrieval-v0.23.md](docs/energy-retrieval-v0.23.md)（規定と根拠）、[docs/v0.23-verification.md](docs/v0.23-verification.md)（検証）
+- v0.24（`kyuura_engine` の版は 0.24.0）: トレーナーのポケモン交換おじさん（PMCG1-093。p.259 の最新の説明「手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができないとき、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、山札を切る既存の関数で加えた（`engine.py`・`resolution/`・公開の API・書き出しの形式は変えていない。手札から山札にもどす・山札から選び出して見せる `zones` の関数、ログのイベント `return_to_deck`・`reveal_from_deck`（どちらも公開）、決定の種類 `return_to_deck`、拒否のコード `NO_POKEMON_CARD_IN_HAND` を加えた）。山札の中身は使うための条件にせず、もどしたカードも選び出せる（p.259 の解説）。新しい未解決はない。`--variant retrieval` の残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキで対戦させた（`--variant trader`）。[docs/pokemon-trader-v0.24.md](docs/pokemon-trader-v0.24.md)（規定と根拠）、[docs/v0.24-verification.md](docs/v0.24-verification.md)（検証）
+- v0.25（`kyuura_engine` の版は 0.25.0）: トレーナーのポケモン育て屋さん（PMCG1-094。p.259 の最新の説明「このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、通常の進化と共通にした進化の手順（`kyuura_engine/evolution.py` の `place_evolution_card`）で加えた。系統は、2 進化カードの「○○○○から進化」の 1 進化カード（同じ写しのカードのデータ）の進化元の名前と、たねポケモンの名前（完全一致）で確かめる（写しで確かめられなければ進化させない）。通常の進化の制限（おたがいの最初の番・その番に場に出したたねポケモン）は免除しない。進化の重なりの不変条件を、たねポケモン + 2 進化の 2 枚（進化のログ `evolve` に `trainer_card` があるときだけ）も扱えるようにした（通常の `EvolvePokemon` で 1 進化を飛ばせないのは変えていない）。`engine.py` は進化の手順を共通の関数に委ねただけで、カード id での分岐はない。公開の API・書き出しの形式は変えていない（決定の種類 `select_evolution_card`、ログ `evolve` の項目 `trainer_card`、拒否のコード `NO_EVOLUTION_TARGET`・`UNSUPPORTED_EVOLUTION_LINEAGE` を加えた）。新しい未解決はない。v0.24 の `trader` のデッキ B だけマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキで対戦させた（`--variant breeder`）。[docs/pokemon-breeder-v0.25.md](docs/pokemon-breeder-v0.25.md)（規定と根拠）、[docs/v0.25-verification.md](docs/v0.25-verification.md)（検証）
+- v0.26（今のエンジンの版。`kyuura_engine` の版は 0.26.0）: 固定のデッキの第2版を、第1版と別の識別子で加えた（エビワラー・ジュゴン `hitmonchan-dewgong-v2`、フシギバナ・パラセクト `venusaur-parasect-v2`。第1版 `hitmonchan-dewgong`・`venusaur-parasect` の識別子と中身は変えていない）。v0.21〜v0.25 で対応にした探す・回収するトレーナー（パソコン通信・エネルギー回収・突風、デッキ B2 はポケモン交換おじさん・ポケモン育て屋さんも）を入れ、デッキ B2 はたねポケモンを 8 枚から 10 枚（モンジャラ 2）にした。開始の例と対戦の道具（`--deck-a`・`--deck-b`）で選べ、既定は第1版のまま。同じ手順・同じ seed で 4 組（A1 対 B1・A2 対 B1・A1 対 B2・A2 対 B2）を比べる道具（tools/preset_deck_comparison.py）を加えた。初期案からデッキ A2 だけ 1 回調整した（ポケモン交換おじさん 2 → 闘・水エネルギー 1 枚ずつ）。試作の構成で、大会のデッキ・最適化したデッキ・人間どうしで釣り合いを確かめたデッキではない。新しいカードの効果・裁定・`engine.py`・`resolution/`・公開のログ・状態・書き出しの形式は変えていない。[docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md)（デッキ・比較の結果・自動操作の限界）、[docs/v0.26-verification.md](docs/v0.26-verification.md)（検証）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -34,7 +50,9 @@
 | [kyuura](https://github.com/moheronemy/kyuura) | 歴史資料の**正本**。カードデータ、ルールの版と変遷、公式エラッタ、出典と確度の記録 |
 | kyuura-engine（このリポジトリ） | 対戦処理の実装。kyuura の固定したコミットのデータとルールの記録を参照する |
 
-- 参照している kyuura のコミット: `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`
+- 参照している kyuura のコミット: `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（カードの写しの元）
+- 研究の基準にした kyuura のコミット: `3f349085645f47d0649a6cacece3680caeae50bf`（ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録。2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ上げた。[docs/verified-record-reuse.md](docs/verified-record-reuse.md)）。v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)）
+- 原典を開く前に、既存の照合の記録（このリポジトリと kyuura）を探して再利用します（`CLAUDE.md` の「照合済みの記録の再利用」）
 - カードデータは、そのコミットの `data/cards.json` から必要なカードだけを抜き出した写し（`kyuura_engine/data/kyuura_cards.json`）を同梱しています。写しはカード情報の正本ではありません。由来と照合の記録は [docs/data-provenance.md](docs/data-provenance.md)。
 - このリポジトリから kyuura を変更することはありません。資料の誤りや食い違いを見つけたら、kyuura 側で確かめて記録します。
 
@@ -70,8 +88,8 @@ python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check
 ふだんのテスト（`python3 -m unittest`）には、速い単体テスト（段階 A）と、決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行（段階 B）が入っています。大きな実行（段階 C）は明示的に走らせます（v0.4e。[docs/architecture-v0.4e.md](docs/architecture-v0.4e.md) 4 章）:
 
 ```sh
-# 前の版（v0.9 の 995504e。v0.9 では v0.8 の d057f57）と今の作業ツリーを、同じ入力で別々のプロセスで動かして比べる（約 5 分。ネットワーク不要）
-python3 tools/compare_engine_versions.py --base 995504e --report report.json
+# 前の版（v0.11 の 8bd1e5b。v0.11 では v0.10 の 43ec8ba）と今の作業ツリーを、同じ入力で別々のプロセスで動かして比べる（約 5 分。ネットワーク不要）
+python3 tools/compare_engine_versions.py --base 8bd1e5b --report report.json
 # 大規模なストレス実行（でたらめな操作を混ぜ、結果を分類して数える。問題のある seed を報告する）
 python3 tools/stress_engine.py --seeds 100 --steps 600 --report stress.json
 # フシギバナの組だけ（エナジートランスの使用を混ぜる。v0.5）
@@ -86,6 +104,30 @@ python3 tools/stress_engine.py --scenario muk --scenario muk_mixed
 python3 tools/stress_engine.py --scenario haunter --scenario haunter_muk
 # カイリキーの組だけ（「はんげき」がはたらく場面。machamp_mixed は両方のデッキにカイリキー、一方にベトベトン、もう一方にゴースト。v0.10）
 python3 tools/stress_engine.py --scenario machamp --scenario machamp_mixed
+# サカキのカイリキーの組だけ（「こんじょう」を使うかの決定・かがくへんかガス・G37 の場面。giovanni_mixed は両方のデッキにサカキのカイリキー、一方にベトベトン・ゴースト、もう一方にカイリキー・ロコン。v0.11）
+python3 tools/stress_engine.py --scenario giovanni --scenario giovanni_mixed
+# R団のファイヤーの組だけ（「ふしちょう」を使うかの決定・「ほのおのかべ」の効果と期限・W24 の場面。moltres_mixed は両方のデッキに R団のファイヤー、一方にベトベトン・ゴースト・ロコン、もう一方にカイリキー・バタフリー。v0.12）
+python3 tools/stress_engine.py --scenario moltres --scenario moltres_mixed
+# わるいカメールの組だけ（「こうらがえし」の効果・受けたダメージ・返すダメージ・S37 の場面。wartortle_mixed は両方のデッキにわるいカメール、一方に R団のファイヤー。v0.13）
+python3 tools/stress_engine.py --scenario wartortle --scenario wartortle_mixed
+# R団のカビゴンの組だけ（「わるいねぞう」・たおれこむ・Z23・C18 の場面。snorlax_mixed は一方にモンジャラ・サカキのニャース、もう一方にわるいカメール・R団のファイヤー。v0.17b）
+python3 tools/stress_engine.py --scenario snorlax --scenario snorlax_mixed
+# ナツメのヤドンの組だけ（ぐうたらこうげき・抵抗力で 0 になる Z23-b の場面。slowpoke_mixed は一方に R団のカビゴン・モンジャラ、もう一方にわるいカメール・R団のファイヤー。v0.18c）
+python3 tools/stress_engine.py --scenario slowpoke --scenario slowpoke_mixed
+# 変異試験（v0.18e から定義を版管理。tools/mutants.py）。check は定義の検査（速い）、witness は証人のテストだけ、full は全体（C 段階。1 つの変異で数分）
+python3 tools/run_mutants.py check
+python3 tools/run_mutants.py witness --jobs 3
+python3 tools/run_mutants.py full --jobs 3 --out mutants.jsonl
+# 研究の対応表（kyuura_engine/data/research_links.json）を、kyuura の研究の基準のコミットの記録と照らす（v0.18e。../kyuura が要る）
+python3 scripts/check_research_links.py --kyuura ../kyuura
+# 解決の基盤の先読みの方法（derived・legacy・derived_full）どうしを、公開の apply_command を基準に同じ対戦の 1 歩ごとに比べる（交互の状態。v0.16b から
+# v0.13 の経路はないので、v0.13 との比較は下の engine_lockstep.py と参照データ tests/legacy_reference.py で行う）
+python3 tools/event_kernel_compare.py --stress-seeds 10 --natural-seeds 20 --mode all --mixed --timing
+# 固定した前の版の木（v0.13 の 8facf3a・v0.15 の aa551ab）を展開し、この木と別々のプロセスで同じ対戦を進めて比べる（v0.15・v0.16。1 回の記録に約 10〜20 分）
+python3 tools/engine_lockstep.py tree --commit 8facf3a --out /path/to/v013
+python3 -I tools/engine_lockstep.py record --root /path/to/v013 --seeds 100 --stress-seeds 10 --save-every 7 --out a.jsonl.gz
+python3 -I tools/engine_lockstep.py record --root . --seeds 100 --stress-seeds 10 --save-every 7 --out c.jsonl.gz
+python3 tools/engine_lockstep.py compare a.jsonl.gz c.jsonl.gz   # 許す差は WRONG_PHASE の段階の名前の並びだけ（v0.16d）
 ```
 
 ## 使い方
@@ -127,6 +169,42 @@ print(state_to_dict(state)["phase"], state.turn_number)
 - `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が、`format_version=5` で特殊状態（v0.3a〜v0.3c）が、`format_version=6` でこんらんで「にげる」に失敗した記録（v0.3c）が、`format_version=7` で進化の重なり・場に出た番・進化した番（v0.4a）が、`format_version=8` でワザによる持続する効果（v0.4b）が加わります（いまの対戦は形式 8 を使う。古い形式は、表せないもの（カード・特殊状態・失敗の記録・進化・持続する効果）がある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
 - 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。ゲーム状態全体を JSON から読み込む処理はまだありません。
 
+### 固定のデッキで対戦を始める（v0.20・v0.26）
+
+```python
+from kyuura_engine import new_game, preset_deck, preset_deck_ids
+
+print(preset_deck_ids())   # ('hitmonchan-dewgong', 'venusaur-parasect', 'hitmonchan-dewgong-v2', 'venusaur-parasect-v2')
+state = new_game(preset_deck("hitmonchan-dewgong").cards(), preset_deck("venusaur-parasect").cards(), seed=1)        # 第1版
+state = new_game(preset_deck("hitmonchan-dewgong-v2").cards(), preset_deck("venusaur-parasect-v2").cards(), seed=1)  # 第2版
+```
+
+```bash
+python3 examples/start_preset_game.py --list
+python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong --deck1 venusaur-parasect --seed 1 --first 0
+python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --seed 1 --first 0
+```
+
+- `preset_deck(識別子).cards()` は `new_game` に渡せる 60 枚のカード id のリストを返します（呼ぶたびに新しいリスト）。知らない識別子は `KeyError`（例・道具では引数の誤り）です。
+- 第1版（v0.20）の中身・考え方・既知の制限は [docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)、第2版（v0.26）の中身・変更の理由・進め方・比較の結果・自動操作の限界は [docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md)。どれも試作の構成で、大会のデッキ・最適化したデッキではなく、人間どうしで勝率の釣り合いを確かめていません。
+
+| 識別子 | ポケモン | トレーナー | エネルギー |
+|---|---|---|---|
+| `hitmonchan-dewgong`（第1版） | エビワラー 4・パウワウ 4・ジュゴン 3・コラッタ 3 | オーキドはかせ 4・マサキ 4・きずぐすり 4・ポケモンいれかえ 4・プラスパワー 4・ディフェンダー 4 | 闘 12・水 10 |
+| `venusaur-parasect`（第1版） | フシギダネ 4・フシギソウ 4・フシギバナ 3・パラス 4・パラセクト 3 | オーキドはかせ 3・マサキ 4・きずぐすり 4・ポケモンいれかえ 4・プラスパワー 3・ディフェンダー 4 | 草 20 |
+| `hitmonchan-dewgong-v2`（第2版） | エビワラー 4・パウワウ 4・ジュゴン 3・コラッタ 3 | オーキドはかせ 3・マサキ 4・ポケモンいれかえ 3・きずぐすり 2・プラスパワー 4・突風 3・パソコン通信 3・エネルギー回収 2 | 闘 12・水 10 |
+| `venusaur-parasect-v2`（第2版） | フシギダネ 4・フシギソウ 2・フシギバナ 3・パラス 4・パラセクト 2・モンジャラ 2 | オーキドはかせ 3・マサキ 3・ポケモンいれかえ 3・きずぐすり 2・プラスパワー 2・突風 2・パソコン通信 3・エネルギー回収 2・ポケモン交換おじさん 2・ポケモン育て屋さん 2 | 草 19 |
+
+- 第2版の変更の理由: 必要なたね・進化先・エネルギーを探す（パソコン通信・ポケモン交換おじさん）、デッキ B のたね不足と進化カードの余りを減らす（たね 8 → 10・フシギソウ 4 → 2・パラセクト 3 → 2）、オーキドはかせなどでトラッシュしたエネルギーを戻す（エネルギー回収）、フシギバナに通常の進化（フシギソウ経由）とポケモン育て屋さんの両方で進化できるようにする。デッキ A2 は初期案（ポケモン交換おじさん 2・闘 11・水 9）から、比べた対戦でエネルギーが足りずにワザを使えない番が第1版より増えたので、1 回だけ調整した。
+- 進め方・検索先の候補・育て屋さんと通常の進化の使い分けは [docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md) 2・3 章。比較（同じ手順・同じ seed・席の入れかえ、80 局と補足の 320 局）では、デッキ B2 の引き直し・ベンチが空のまま負けた局・使わずに終わった進化カードが第1版より少なく、デッキ B2 のエネルギー不足で攻撃できなかった番は少し多かった。勝率はデッキの強さを示さない（決まった手順どうし。コラッタを交代役に使えていない・突風の選び方の偏りなど。同じ文書 9 章）。
+- examples/start_preset_game.py は、対戦準備を決まったやり方で済ませて先攻の最初の番の場を表示する、**対戦の開始だけの例**です。人間が最後まで遊べる操作画面（GUI・Web・通信対戦・対戦相手の AI）はありません。最初の番から先は `apply_command` にコマンドを渡して進めます。
+- 決まった手順どうしで対戦させ、終わり方（通常の勝敗・未解決の裁定による停止・手数の上限・想定外の拒否・内部エラー）と各デッキの動きを数える: `python3 tools/preset_deck_games.py --games 20 --out <結果の JSON>`。v0.26 から `--deck-a`・`--deck-b` でデッキ A・B を選べます（既定は第1版。第2版は変種なし（`--variant preset`）で使う）。
+- v0.26: 第1版と第2版の 4 組を同じ seed・席の入れかえ・同じ手順で比べ、終わり方・監査・各デッキの指標（攻撃できなかった番の理由はエンジンにワザを渡して確かめる）を数える: `python3 tools/preset_deck_comparison.py --seeds 10 --out <結果の JSON>`（80 局。約 7 秒）。
+- v0.21: `--variant gust` を付けると、固定のデッキのディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキどうしで対戦させ、突風を使った回数・選んだ相手・その番のワザを数えます（固定のデッキは変わりません）。v0.22: `--variant computer` はパソコン通信 3 枚に置き換え、使った回数・トラッシュした 2 枚・山札から選んだカードとその使い道を数えます。
+- v0.23: `--variant mixed` はディフェンダー 4 枚を除いて突風 2 枚・パソコン通信 2 枚を加えた一時的なデッキ、`--variant retrieval` はさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキです（`python3 tools/preset_deck_games.py --games 20 --variant mixed`）。パソコン通信で山札から突風を選んでその番に使った回数、エネルギー回収で手に入れたエネルギーの使い道、決定ごとの持ち主・使用中のカードの確かめ（`check_…`）、トレーナーを使ってからトラッシュするまでのログの確かめ（`trainer_sequence_problems`）を数えます。
+- v0.24: `--variant trader` は `retrieval` の残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキです（`python3 tools/preset_deck_games.py --games 20 --variant trader`）。ポケモン交換おじさんでもどした・手に入れたカードの段階、手に入れたカードのその後（進化・ベンチ）を数え、`retrieval` と同じ確かめ（`check_…`・`trainer_sequence_problems`）をします。
+- v0.25: `--variant breeder` は、デッキ A（エビワラー・ジュゴン）は `trader` のまま、デッキ B（フシギバナ・パラセクト）だけ `trader` のマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキです（`python3 tools/preset_deck_games.py --games 20 --variant breeder`）。ポケモン育て屋さんで進化させた回数・進化したあとの特殊能力（エナジートランス）・ワザを数え、`trader` と同じ確かめ（`check_…`・`trainer_sequence_problems`）をします。
+
 ### トレーナーカードを使う（v0.2b）
 
 ```python
@@ -158,7 +236,12 @@ print(state.phase.value, state_to_dict(state, format_version=3)["trainer_in_use"
 
 - トレーナーは自分の番（`main`）に、1 番に何枚でも使えます。使ったカードはトラッシュします（p.310）。
 - 対象を選ぶトレーナーは決定を出します。決定を待っている間（`decision` の段階）は、決定に答える `ResolveDecision` しか受け付けません（別のトレーナーも使えない）。
-- マサキは山札が足りなければ引けるだけ引きます（負けにはならない。p.312）。きずぐすりは選んだ 1 匹のダメージカウンターを 2 個（1 個なら 1 個）とりのぞきます。ポケモンいれかえは、にげるエネルギーを払わずに入れ替えます。
+- マサキは山札が足りなければ引けるだけ引きます（負けにはならない。p.312）。オーキドはかせ（v0.19）は、使ったカードを除く手札をすべてトラッシュし、その後、山札から 7 枚引きます（手札がこのカードだけでも、山札が 7 枚未満・0 枚でも使え、引けるだけ引く。p.255・p.312）。きずぐすりは選んだ 1 匹のダメージカウンターを 2 個（1 個なら 1 個）とりのぞきます。ポケモンいれかえは、にげるエネルギーを払わずに入れ替えます。
+- 突風（v0.21。`PMCG1-072`）は、使ったプレイヤーが相手の控えポケモンを 1 匹選ぶ決定を出します（`d.player` は使ったプレイヤー、`d.options` は相手のベンチのポケモンの番号）。選んだポケモンが相手のバトル場に出て、もとの対戦ポケモンはベンチにもどります（特殊状態と持続する効果は消え、ついているカードとダメージはいっしょに移る。ポケモンいれかえと同じ入れ替えの処理）。相手に控えがいないときは、使えるかが原典で決められないので `UnsupportedError`（`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）で止めます（[docs/gust-v0.21.md](docs/gust-v0.21.md)）。
+- パソコン通信（v0.22。`PMCG1-090`）は、このカードを除く手札が 2 枚以上なければ使えません（`INSUFFICIENT_CARDS_IN_HAND`。カードは手札に残る）。使うと 2 つの決定を順に出します。1 つ目（`d.kind == "discard_from_hand"`）は手札から 2 枚を選んでトラッシュ、2 つ目（`"search_deck"`）は山札から 1 枚を選んで手札に加え、そのあと山札を切ります（どちらも決定するのは使ったプレイヤー）。山札の中身は決定の選べるものにだけあり、ログには書きません（選んだカードはログ `search_deck` の非公開の項目 `card`）。山札が 0 枚のときは、使えるかが原典で決められないので `UnsupportedError`（`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）で止めます（[docs/computer-search-v0.22.md](docs/computer-search-v0.22.md)）。
+- エネルギー回収（v0.23。`PMCG1-076`）は、このカードを除く手札が 1 枚以上なければ使えません（`INSUFFICIENT_CARDS_IN_HAND`）。使うと 2 つの決定を順に出します。1 つ目（`"discard_from_hand"`）は手札から 1 枚を選んでトラッシュ、2 つ目（`"retrieve_energy"`）は自分のトラッシュの基本エネルギーカード（1 つ目でトラッシュしたカードを除く。`d.context_value("discarded")`）から 1〜2 枚を選んで手札に加えます（ログ `retrieve_energy` は公開）。2 つ目で 0 枚を選ぶと `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`（決定は待ったまま）、使う前のトラッシュに基本エネルギーカードがなければ `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET` で止めます（[docs/energy-retrieval-v0.23.md](docs/energy-retrieval-v0.23.md)）。
+- ポケモン交換おじさん（v0.24。`PMCG1-093`）は、このカードを除く手札にたねポケモン・進化カードがなければ使えません（`NO_POKEMON_CARD_IN_HAND`。山札の中身は条件にしない）。使うと 2 つの決定を順に出します。1 つ目（`"return_to_deck"`）は手札のたねポケモン・進化カードから 1 枚を選び、山札の一番下にもどします（ログ `return_to_deck` は公開）。2 つ目（`"search_deck"`）は山札のたねポケモン・進化カード（1 つ目でもどしたカードを含む。`d.context_value("returned")`）から 1 枚を選び、手札に加え（ログ `reveal_from_deck` は公開）、山札を切ります。どちらも省略できません（[docs/pokemon-trader-v0.24.md](docs/pokemon-trader-v0.24.md)）。
+- ポケモン育て屋さん（v0.25。`PMCG1-094`）は、自分の場の、その番の最初から場に出ていたたねポケモンと、手札の系統の合う 2 進化カードの組がなければ使えません（`NO_EVOLUTION_TARGET`。おたがいの最初の番は `FIRST_TURN_EVOLUTION`）。使うと 2 つの決定を順に出します。1 つ目（`"select_pokemon"`）は進化させるたねポケモン（場のポケモンの番号）、2 つ目（`"select_evolution_card"`）はその上に重ねる手札の 2 進化カード（`d.context_value("target")`）です。進化したポケモンの重なりは、たねポケモン + 2 進化の 2 枚（`evolution_stack` は 1 枚）で、ログ `evolve` に `trainer_card`（使ったポケモン育て屋さんの uid）が入ります（[docs/pokemon-breeder-v0.25.md](docs/pokemon-breeder-v0.25.md)）。
 - プラスパワー（v0.2c）は、`PlayTrainer` で使うと自分の対戦ポケモンにつきます（`state.players[p].active.trainers`）。そのポケモンのワザのダメージは、ダメージ計算の 5 段階（弱点・抵抗力のあと）で +10 されます（p.321）。使った番の終わりにトラッシュします。にげる・入れ替えではポケモンといっしょに移ります。
 
 ```python
@@ -357,7 +440,7 @@ print([(e["kind"], e.get("reason")) for e in state.log if e["kind"] == "special_
 - ねむり・マヒ・こんらんは重複しません。マヒのポケモンがねむりになったら、マヒは消えてねむりになります（p.322。ログ `special_conditions_removed` の `reason` は `replaced`）。どくはほかの特殊状態と重複します。
 - ねむり・マヒのポケモンでも、ポケモンいれかえでは入れ替えます（p.325）。ベンチに戻ったら特殊状態はすべて消えます（p.311・p.322）。エネルギーをつける・ベンチに出す・トレーナーを使うことはできます（p.322）。
 - ポケモンチェックでは、どくのダメージ（2）→ どくのきぜつ・サイド・交代 → ねむりのコイン（3）→ マヒの回復（4）→ 次の番の順に行います。どくできぜつしたポケモンのねむりのコインは投げません（[docs/pokemon-check-v0.3b.md](docs/pokemon-check-v0.3b.md)）。
-- 両方の対戦ポケモンがねむりのときは、どちらが先にコインを投げるかが原典で決まらないので、コインを投げる前に対戦を止めます（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`。対応カードでは起こらない）。
+- 両方の対戦ポケモンがねむりのときは、どちらが先にコインを投げるかが原典で決まらないので、コインを投げる前に対戦を止めます（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`）。v0.3b の対応カードでは起こりませんでしたが、v0.17b から、自分をねむりにするワザ（R団のカビゴンの「たおれこむ」・v0.18c のナツメのヤドンの「ぐうたらこうげき」）で起こります（v0.18 のストレス実行の `slowpoke` の組で 2 回。docs/v0.18-verification.md 6.2）。
 - ねむり・マヒは形式 5（`special_conditions` の `sleep: {}`・`paralysis: {"turn": n}`）で書き出せます。
 
 ### 自分へのダメージと同時のきぜつ（v0.2f）
@@ -593,7 +676,7 @@ print(state_to_dict(state, format_version=8)["players"][0]["active"]["evolution_
 ```
 
 - 同じ番に 1 進化したポケモンは、その番には 2 進化できません（`EVOLVED_THIS_TURN`）。次の自分の番にはできます。ほかのポケモンは同じ番に進化させてかまいません（制限は 1 匹ごと）。
-- たねポケモンに 2 進化カードを直接重ねることはできません（ビードルにスピアーは `EVOLUTION_NAME_MISMATCH`）。2 進化カードは手札から場に直接出せません（`NOT_BASIC_POKEMON`）。
+- たねポケモンに 2 進化カードを直接重ねることはできません（ビードルにスピアーは `EVOLUTION_NAME_MISMATCH`）。v0.25 から、トレーナーのポケモン育て屋さんの効果でだけ、1 進化を飛ばしてたねポケモンに 2 進化カードを重ねられます（`EvolvePokemon` では今までどおりできない）。2 進化カードは手札から場に直接出せません（`NOT_BASIC_POKEMON`）。
 - ダメージ・エネルギー・ついているトレーナー・場に出た番・場のポケモンの番号は受け継ぎ、特殊状態・持続する効果・にげるの失敗の記録は消えます（1 進化と同じ）。HP・ワザなどはいちばん上のスピアーのものです（コクーンと同じ HP 80）。
 - 2 進化ポケモンがきぜつしたら、ビードル・コクーン・スピアーの 3 枚と、ついているカードをすべてトラッシュし、相手が取るサイドは 1 枚です。
 - ダブルニードルを「かたまる」で「ダメージを受けない」状態のポケモンに使うと、みだれづきと同じく、コインの前に `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）です。どくばりは、ダメージの要素だけが無効で、コインとどくは有効です。
@@ -1122,6 +1205,258 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 - カイリキーがワザできぜつし、ワザを使ったポケモンが「はんげき」できぜつする（「はんげき」がなければきぜつしない）場合は、同時のきぜつか（p.324）が原典で決められないので、ワザの宣言の前に止めます（`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`。状態・乱数・ログは変わらない）。
 - ゴーリキーの「からてチョップ」は、50 から自分のダメージカウンターの数 × 10 を引いた数が基本となるダメージ（0 以下ならダメージを与えない）、「じごくぐるま」は 60 のあと自分にも 20 です。
 
+### ポケモンパワー・こんじょう（v0.11）
+
+サカキのカイリキー（PMCG6-061）の「こんじょう」は、相手のワザによるダメージで「きぜつ」するときに使える、使用を宣言する特殊能力です。使うかは持ち主が決めます。エンジンは、ワザの要素をすべて処理したあと、きぜつの処理（トラッシュ・サイド・交代・勝ち負け）の前に、持ち主に決定（`ko_prevention`。選ぶ数 0〜1）を出して止まります。選べば宣言してコインを 1 枚投げ、「おもて」なら残り HP 10（ダメージ = HP − 10）で場に残ります。選ばなければコインを投げずにきぜつします。それ以外のときに `UsePokemonPower` で使おうとすると `POWER_NOT_USABLE_NOW` です。使える状態か（ねむり・マヒ・こんらん・かがくへんかガス）は `available_ko_prevention_power(state, pokemon_id)` で、コマンドを送らずに調べられます。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, EvolvePokemon, IllegalActionError, PlaceStartingPokemon, ReportJankenResult, ResolveDecision, UseAttack,
+    UsePokemonPower, apply_command, available_ko_prevention_power, expand_decklist, new_game, state_to_dict,
+)
+
+deck0 = expand_decklist({"PMCG6-057": 4, "PMCG6-059": 4, "PMCG6-061": 4, "PMCG1-102": 48})
+# サカキのワンリキー（PMCG6-057）・サカキのゴーリキー（PMCG6-059）・サカキのカイリキー（PMCG6-061）4 枚ずつ、闘エネルギー 48 枚
+deck1 = expand_decklist({"PMCG1-058": 4, "PMCG1-102": 56})
+# エビワラー（PMCG1-058。ジャブ 20・スペシャルパンチ 40）4 枚、闘エネルギー 56 枚
+state = new_game(deck0, deck1, seed=65)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+def attach(player):
+    return apply_command(state, AttachEnergy(player, in_hand(player, "PMCG1-102"), state.players[player].active.card))
+
+def show(start, kinds):
+    for e in state.log[start:]:
+        if e["kind"] in kinds:
+            print(e["kind"], {k: e[k] for k in ("player", "amount", "result", "total_damage", "remaining_hp") if k in e})
+
+state = apply_command(state, PlaceStartingPokemon(0, in_hand(0, "PMCG6-057"), ()))  # バトル場にサカキのワンリキー
+state = apply_command(state, PlaceStartingPokemon(1, in_hand(1, "PMCG1-058"), ()))  # バトル場にエビワラー
+state = apply_command(state, ReportJankenResult(winner=0))
+machamp = state.players[0].active.pokemon_id
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+state = apply_command(state, UseAttack(1, 0))  # 2 番: ジャブ 20
+
+# 3 番: サカキのゴーリキーに、5 番: サカキのカイリキーに進化（場のポケモンの番号は変わらない。ダメージはそのまま）
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG6-059"), machamp))
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+state = apply_command(state, UseAttack(1, 0))  # 4 番: ジャブ 20
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG6-061"), machamp))
+print(available_ko_prevention_power(state, machamp), state.players[0].active.damage)
+# PMCG6-061@power0 40      使える状態（使えるのは、相手のワザによるダメージで「きぜつ」するときだけ）
+try:
+    apply_command(state, UsePokemonPower(0, machamp, 0))
+except IllegalActionError as error:
+    print(error.code)
+# POWER_NOT_USABLE_NOW
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+state = apply_command(state, UseAttack(1, 1))  # 6 番: スペシャルパンチ 40（ダメージ 80）
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+
+# 8 番: もう一度スペシャルパンチで 120（HP 100 以上）。きぜつの処理の前に、持ち主（プレイヤー 0）が使うかを決める
+state = attach(1)
+before = len(state.log)
+state = apply_command(state, UseAttack(1, 1))
+show(before, ("damage", "coin_flip", "knock_out"))
+# damage {'player': 0, 'amount': 40, 'total_damage': 120}      まだコインを投げていない・きぜつしていない
+d = state.decision
+print(d.kind, d.player, d.options, d.min_choices, d.max_choices, state.current_player)
+# ko_prevention 0 (1,) 0 1 1      選ばなければ使わない（コインを投げずにきぜつ）。番のプレイヤーは 1 のまま
+before = len(state.log)
+state = apply_command(state, ResolveDecision(0, d.id, (machamp,)))  # 使う
+show(before, ("ko_prevention_declared", "coin_flip", "ko_prevented", "ko_prevention_failed", "knock_out", "take_prize", "turn_end"))
+# ko_prevention_declared {'player': 0, 'total_damage': 120}
+# coin_flip {'player': 0, 'result': 'heads'}      コインはサカキのカイリキーの持ち主が投げる
+# ko_prevented {'player': 0, 'result': 'heads', 'total_damage': 90, 'remaining_hp': 10}
+# turn_end {'player': 1}      きぜつ・サイドはない
+print(state.players[0].active.damage, len(state.players[1].prizes), state.current_player)
+# 90 6 0      残り HP 10 でバトル場に残り、エビワラーの持ち主はサイドを取らない。番が進んだ
+print(state_to_dict(state, format_version=9)["format_version"])
+# 9      書き出しの形式は v0.10 と同じ
+```
+
+- 使えるのは相手のワザによるダメージで HP 以上になったときだけです。どくのダメージ（ポケモンチェック）・こんらんの 20・自分のワザの自分へのダメージ・「はんげき」の 10（特殊能力のダメージ）・ダメージスワップでは使えません（決定は出ない）。
+- ダメージを受けるとき、すでにねむり・マヒ・こんらんなら使えません（どくは関係しない）。かがくへんかガスがはたらいていれば使えません。バトル場でもベンチでも使えます（場所の制限はない）。
+- 決定の時点では、ワザのダメージ・コイン・「はんげき」はすべて終わっていて、こんじょうのコインはまだ投げていません。決定を待つ間は、ほかの操作はできません（`ResolveDecision` だけ）。選ばない答え・うら・「おもて」は、ログ `ko_prevention_declined`・`ko_prevention_declared` → `coin_flip` → `ko_prevention_failed`／`ko_prevented` で残ります。
+- 同じきぜつの判定で 2 度は決めません（使わなかった・「うら」のあと）。次のワザでまた HP 以上になれば、また決めます（何度でも）。
+- 「おもて」で残り HP 10 になったポケモンは、きぜつしていないので、サイドを取られず、交代もありません。「うら」・使わないときは、ふつうにきぜつします（最後のポケモンなら負け）。
+- 使えるサカキのカイリキーにワザのダメージで HP 以上のダメージを与えうるうえ、同じワザで相手に効果（どく・ねむり・マヒ・こんらん・入れ替え）を与えるワザは、「おもて」で残ったポケモンがその効果を受けるかが原典で決められないので、ワザの宣言の前に止めます（`UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`。状態・乱数・ログは変わらない）。
+- サカキのワンリキーの「いかりのスーパーパンチ」は、コインが「おもて」なら自分にのっているダメージカウンターの数 × 20、サカキのゴーリキーの「いちかばちか」は「うら」なら相手にダメージを与えず自分に 100、「じごくがため」は「おもて」なら 20 を追加して相手をマヒ、サカキのカイリキーの「ハリケーンパンチ」はコイン 4 枚の「おもて」の数 × 30 です。
+
+### ポケモンパワー・ふしちょうとワザ・ほのおのかべ（v0.12）
+
+R団のファイヤー（PMCG5-020）の「ほのおのかべ」は、相手に 40 のあと、自分に「次の相手の番、相手のワザによるダメージを受けたとき、相手に 10 ダメージを与える」持続する効果（`Retaliation`）を与えます。効果がはたらくのは次の相手の番だけで、その番の終わりに消えます（ログ `persistent_effect_removed`、`reason` `expired`）。返す 10 は R団のファイヤーのワザによるダメージで、弱点・抵抗力を計算します。「ふしちょう」は、このカードが「きぜつ」したときに使える、使用を宣言する特殊能力です。エンジンは、きぜつの処理（トラッシュ）・サイド・勝ち負けの判定のあと、対戦が続くなら、バトル場に出す前に持ち主に決定（`post_knockout_power`。選ぶ数 0〜1）を出して止まります。選べば、このカードだけをトラッシュから手札に加えます。場にいるときに `UsePokemonPower` で使おうとすると `POWER_NOT_USABLE_NOW` です。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, IllegalActionError, PlaceStartingPokemon, PlayBasicToBench, ReportJankenResult, ResolveDecision, TakePrize,
+    UseAttack, UsePokemonPower, apply_command, expand_decklist, new_game, state_to_dict,
+)
+
+deck0 = expand_decklist({"PMCG5-020": 4, "PMCG1-015": 4, "PMCG1-098": 52})
+# R団のファイヤー（PMCG5-020）・ロコン（PMCG1-015）4 枚ずつ、炎エネルギー 52 枚
+deck1 = expand_decklist({"PMCG1-018": 4, "PMCG1-098": 56})
+# ガーディ（PMCG1-018。HP 60。ほのお 20）4 枚、炎エネルギー 56 枚
+state = new_game(deck0, deck1, seed=8)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+def attach(player):
+    return apply_command(state, AttachEnergy(player, in_hand(player, "PMCG1-098"), state.players[player].active.card))
+
+def show(start, kinds):
+    for e in state.log[start:]:
+        if e["kind"] in kinds:
+            print(e["kind"], {k: e[k] for k in ("player", "persistent_effect", "reason", "amount", "total_damage") if k in e})
+
+moltres = in_hand(0, "PMCG5-020")
+state = apply_command(state, PlaceStartingPokemon(0, moltres, (in_hand(0, "PMCG1-015"),)))  # バトル場に R団のファイヤー、ベンチにロコン
+state = apply_command(state, PlaceStartingPokemon(1, in_hand(1, "PMCG1-018"), ()))  # バトル場にガーディ
+state = apply_command(state, ReportJankenResult(winner=0))
+try:
+    apply_command(state, UsePokemonPower(0, state.players[0].active.pokemon_id, 0))
+except IllegalActionError as error:
+    print(error.code)
+# POWER_NOT_USABLE_NOW      「ふしちょう」は「きぜつ」したときにだけ使える
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+state = apply_command(state, EndTurn(1))
+state = attach(0)
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+state = apply_command(state, UseAttack(1, 0))  # 4 番: ほのお 20
+
+# 5 番: ほのおのかべ（炎炎炎）。ガーディに 40。自分に、次の相手の番（6 番）にはたらく効果
+state = attach(0)
+state = apply_command(state, UseAttack(0, 0))
+print(state.players[0].active.persistent_effects)
+# (Retaliation(source_card=0, source_player=0, created_turn=5, active_turn=6, attack_index=0, amount=10, basis='fixed'),)
+
+# 6 番: ガーディの「ほのお」20。R団のファイヤーが相手のワザによるダメージを受けたので、ガーディに 10
+state = attach(1)
+before = len(state.log)
+state = apply_command(state, UseAttack(1, 0))
+show(before, ("damage", "retaliation", "persistent_effect_removed", "turn_end"))
+# damage {'player': 0, 'amount': 20, 'total_damage': 40}
+# retaliation {'player': 0, 'persistent_effect': 'retaliation', 'amount': 10}
+# damage {'player': 1, 'amount': 10, 'total_damage': 50}      R団のファイヤーのワザによるダメージ（弱点・抵抗力を計算する）
+# persistent_effect_removed {'player': 0, 'persistent_effect': 'retaliation', 'reason': 'expired'}      6 番の終わりに消える
+# turn_end {'player': 1}
+print(state.players[0].active.damage, state.players[1].active.damage, state.players[0].active.persistent_effects)
+# 40 50 ()
+
+# 7 番: ワザを使わずに番を終える。8 番: もう一度「ほのお」20。効果は消えているので、相手にダメージを与えない
+state = apply_command(state, EndTurn(0))
+state = attach(1)
+before = len(state.log)
+state = apply_command(state, UseAttack(1, 0))
+show(before, ("damage", "retaliation", "knock_out"))
+# damage {'player': 0, 'amount': 20, 'total_damage': 60}
+# knock_out {'player': 0}      きぜつしてトラッシュに置かれる
+state = apply_command(state, TakePrize(1, 0))  # 相手はサイドを取る（手札にもどしても、きぜつしたことに変わりはない）
+d = state.decision
+print(d.kind, d.player, d.options == (moltres,), d.min_choices, d.max_choices, moltres in state.players[0].discard)
+# post_knockout_power 0 True 0 1 True      対戦が続くので、バトル場に出す前に、持ち主が使うかを決める（選ばなければ使わない）
+before = len(state.log)
+state = apply_command(state, ResolveDecision(0, d.id, (moltres,)))  # 使う
+show(before, ("post_knockout_power_declared", "return_to_hand"))
+# post_knockout_power_declared {'player': 0}
+# return_to_hand {'player': 0}      このカードだけをトラッシュから手札へ（相手に見せる）
+discard = [state.cards[uid].card_id for uid in state.players[0].discard]
+print(moltres in state.players[0].hand, moltres in state.players[0].discard, discard, len(state.players[1].prizes), state.phase.value)
+# True False ['PMCG1-098', 'PMCG1-098', 'PMCG1-098'] 5 promote_active      エネルギーはトラッシュに残る。そのあとバトル場に出す
+
+# ロコンをバトル場に出し、9 番に、手札にもどった R団のファイヤーを（同じカードのまま）ベンチに出す。ダメージも効果もない
+d = state.decision
+state = apply_command(state, ResolveDecision(0, d.id, d.options))
+state = apply_command(state, PlayBasicToBench(0, moltres))
+bench = state.players[0].bench[0]
+print(state.turn_number, bench.card == moltres, bench.damage, bench.persistent_effects)
+# 9 True 0 ()
+print(state_to_dict(state, format_version=9)["format_version"])
+# 9      書き出しの形式は v0.11 と同じ
+```
+
+### わるいカメール・こうらがえし（v0.13）
+
+わるいカメール（PMCG4-021）の「こうらがえし」は、ダメージを与えず、自分に「次の相手の番、相手のワザによってダメージを受けたとき、そのポケモンにも同じダメージを与える」持続する効果（`Retaliation`。`basis` は `received_damage`、量は持たない）を与えます。返す量は、わるいカメールが受けたダメージ（相手のワザのダメージの最終ダメージ。HP で上限をつけない）です。元のワザの基本となるダメージではありません。返すダメージは「こうらがえし」のワザによるダメージで（p.321「8」）、受けたダメージを基本となるダメージにして、ワザを使ったポケモンの弱点・抵抗力などを計算します。わるいカメールとワザを使ったポケモンがそろってきぜつしうるワザは、宣言の前に `UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT` で止まります（S37。v0.12 の W24 と同じ問い）。
+
+```python
+from kyuura_engine import (
+    AttachEnergy, EndTurn, EvolvePokemon, PlaceStartingPokemon, PromoteActive, ReportJankenResult, TakePrize, UseAttack, apply_command,
+    expand_decklist, new_game,
+)
+
+deck0 = expand_decklist({"PMCG4-018": 4, "PMCG4-021": 4, "PMCG1-099": 52})
+# 第4弾のゼニガメ（PMCG4-018）・わるいカメール（PMCG4-021）4 枚ずつ、水エネルギー 52 枚
+deck1 = expand_decklist({"PMCG1-016": 4, "PMCG1-098": 56})
+# ポニータ（PMCG1-016。HP 40・弱点 水。ほのおのしっぽ（炎炎）30）4 枚、炎エネルギー 56 枚
+state = new_game(deck0, deck1, seed=18)
+
+def in_hand(player, card_id):
+    return next(uid for uid in state.players[player].hand if state.cards[uid].card_id == card_id)
+
+def attach(player, card_id):
+    return apply_command(state, AttachEnergy(player, in_hand(player, card_id), state.players[player].active.card))
+
+def show(start, kinds):
+    for e in state.log[start:]:
+        if e["kind"] in kinds:
+            print(e["kind"], {k: e[k] for k in ("player", "persistent_effect", "amount", "received_damage", "weakness", "reason", "total_damage")
+                              if k in e})
+
+ponytas = [uid for uid in state.players[1].hand if state.cards[uid].card_id == "PMCG1-016"]
+state = apply_command(state, PlaceStartingPokemon(0, in_hand(0, "PMCG4-018"), ()))  # バトル場に第4弾のゼニガメ
+state = apply_command(state, PlaceStartingPokemon(1, ponytas[0], (ponytas[1],)))  # バトル場とベンチにポニータ
+state = apply_command(state, ReportJankenResult(winner=0))
+state = attach(0, "PMCG1-099")
+state = apply_command(state, EndTurn(0))
+state = attach(1, "PMCG1-098")
+state = apply_command(state, EndTurn(1))
+
+# 3 番: わるいカメールに進化して「こうらがえし」（水無）。ダメージはなく、自分に次の相手の番（4 番）にはたらく効果（量は受けたダメージで決まる）
+state = apply_command(state, EvolvePokemon(0, in_hand(0, "PMCG4-021"), state.players[0].active.pokemon_id))
+state = attach(0, "PMCG1-099")
+state = apply_command(state, UseAttack(0, 1))
+print(state.players[0].active.persistent_effects)
+# (Retaliation(source_card=5, source_player=0, created_turn=3, active_turn=4, attack_index=1, amount=None, basis='received_damage'),)
+
+# 4 番: ポニータの「ほのおのしっぽ」30。わるいカメールが受けた 30 を基本となるダメージにして、ポニータに返す（ポニータの弱点 水で 60）
+state = attach(1, "PMCG1-098")
+before = len(state.log)
+state = apply_command(state, UseAttack(1, 1))
+show(before, ("damage", "retaliation", "knock_out"))
+# damage {'player': 0, 'amount': 30, 'weakness': False, 'total_damage': 30}
+# retaliation {'player': 0, 'persistent_effect': 'retaliation_received_damage', 'amount': 30, 'received_damage': 30}
+# damage {'player': 1, 'amount': 60, 'weakness': True, 'total_damage': 60}      「こうらがえし」のワザによるダメージ（p.321「8」）
+# knock_out {'player': 1}      きぜつの処理はワザのあと
+before = len(state.log)
+state = apply_command(state, TakePrize(0, 0))  # 返すダメージできぜつしたポニータの分、わるいカメールの持ち主がサイドを取る
+state = apply_command(state, PromoteActive(1, state.players[1].bench[0].card))  # 4 番が終わる
+show(before, ("persistent_effect_removed", "turn_end"))
+# persistent_effect_removed {'player': 0, 'persistent_effect': 'retaliation_received_damage', 'reason': 'expired'}      4 番の終わりに消える
+# turn_end {'player': 1}
+print(state.turn_number, state.players[0].active.damage, state.players[0].active.persistent_effects, len(state.players[0].prizes))
+# 5 30 () 5      わるいカメールは 30 を受けたまま。効果は消えた。サイドは 1 枚取った
+```
+
+- 「ほのおのかべ」の効果は、ワザを使った番の残り・ポケモンチェックではたらかず、次の相手の番の終わりに消えます。ベンチにもどる（ふきとばし）・きぜつで消え、「ふしちょう」で手札にもどして再び場に出しても復活しません。特殊状態・かがくへんかガスでは止まりません。
+- 相手のワザのダメージ（最終ダメージが 0 より大きい）を受けたときだけはたらきます（0 ダメージ・どく・こんらんの 20・「はんげき」の 10・ダメージスワップでは、はたらかない）。返す 10 は R団のファイヤーのワザによるダメージなので、受けるポケモンの弱点・抵抗力・ディフェンダー・「とうめい」を計算し、受けたカイリキーの「はんげき」もはたらきます（その「はんげき」で「ほのおのかべ」は再びはたらかない）。与えるのは相手のワザのダメージの処理のあと、ダメージ以外の効果の前です（p.89）。R団のファイヤーがそのダメージできぜつしても与えます。
+- R団のファイヤーがワザのダメージで、ワザを使ったポケモンが「ほのおのかべ」のダメージで、そろってきぜつしうるワザは、同時のきぜつかが原典で決められないので、ワザの宣言の前に止めます（`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`。状態・乱数・ログは変わらない）。
+- 「ふしちょう」は、きぜつの原因を問いません（相手のワザ・自分のワザ・相手の「はんげき」・ポケモンチェックのどく）。ねむり・マヒ・こんらんのまま「きぜつ」するとき・かがくへんかガスがはたらいているときは使えません（決定は出ない。どくは関係しない）。使えるかは、きぜつの処理の前の場で決めます。
+- 手札にもどしても、きぜつしたことに変わりはなく、相手はサイドを取ります。対戦が終わる場合（最後のサイド・バトル場に出せるポケモンがいない）は決めさせません（手札にもどしても勝ち負けは変わらない）。使わない答えのログは `post_knockout_power_declined` です。
+
 ### 操作（コマンド）
 
 | コマンド | 内容 |
@@ -1132,14 +1467,14 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 | `PlayBasicToBench(player, card)` | 手札のたねポケモンをベンチに出す |
 | `AttachEnergy(player, energy, target)` | エネルギーをつける（1 番に 1 枚） |
 | `Retreat(player, discard, new_active)` | にげる（何度でも）。ねむり・マヒのポケモンは宣言できない（`POKEMON_ASLEEP`・`POKEMON_PARALYZED`。v0.3b）。こんらんのポケモンはエネルギーをトラッシュしてからコイン、「うら」なら失敗し、そのポケモンはその番もう宣言できない（`RETREAT_ALREADY_FAILED`。v0.3c） |
-| `UseAttack(player, attack_index)` | ワザを使う（番が終わる）。コインを投げるワザ（v0.2d・v0.2f・v0.3a・v0.3b・v0.3c）は、エンジンがコインを投げる。番の終わりのあと、エンジンがポケモンチェックをする（v0.3a）。ねむり・マヒのポケモンは使えない（v0.3b）。こんらんのポケモンは宣言のあとでコイン、「うら」なら自分に 20 で番が終わる（v0.3c）。「ダメージを受けない」状態の相手へのダメージの要素は無効（v0.4b）。受けるポケモンの「とうめい」がはたらいていれば、受けるときにゴースト側のプレイヤーがコインを投げる（v0.9）。ダメージを受けた相手のポケモンの「はんげき」がはたらいていれば、ダメージの処理のあとにワザを使ったポケモンに 10（v0.10） |
+| `UseAttack(player, attack_index)` | ワザを使う（番が終わる）。コインを投げるワザ（v0.2d・v0.2f・v0.3a・v0.3b・v0.3c）は、エンジンがコインを投げる。番の終わりのあと、エンジンがポケモンチェックをする（v0.3a）。ねむり・マヒのポケモンは使えない（v0.3b）。こんらんのポケモンは宣言のあとでコイン、「うら」なら自分に 20 で番が終わる（v0.3c）。「ダメージを受けない」状態の相手へのダメージの要素は無効（v0.4b）。受けるポケモンの「とうめい」がはたらいていれば、受けるときにゴースト側のプレイヤーがコインを投げる（v0.9）。ダメージを受けた相手のポケモンの「はんげき」がはたらいていれば、ダメージの処理のあとにワザを使ったポケモンに 10（v0.10）。相手のワザのダメージで HP 以上になった相手の使えるサカキのカイリキーがいれば、きぜつの処理の前に持ち主の「こんじょう」の決定を待つ（v0.11） |
 | `EndTurn(player)` | ワザを使わずに番を終える（そのあとポケモンチェック。v0.3a） |
 | `TakePrize(player, index)` | 相手のポケモンがきぜつしたとき、サイドを 1 枚選んで取る（自分のワザで自分のポケモンがきぜつしたら相手が取る。v0.2f） |
 | `PromoteActive(player, pokemon)` | バトル場のポケモンがいなくなったとき、ベンチから出す |
-| `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a）。答えるのは `decision.player`（v0.4d のふきとばしでは、ワザを使われた側のプレイヤー） |
+| `ResolveDecision(player, decision, choices)` | 保留中の決定に答える（どの種類の決定にも使える。v0.2a）。答えるのは `decision.player`（v0.4d のふきとばし・v0.11 のこんじょうでは、ワザを使われた側のプレイヤー） |
 | `PlayTrainer(player, card)` | 手札のトレーナーカードを使う（v0.2b。対応した 5 枚だけ。プラスパワーは v0.2c、ディフェンダーは v0.2e） |
 | `EvolvePokemon(player, card, target)` | 手札の進化カードで、自分の場のポケモン（`target` は場のポケモンの番号）を進化させる（v0.4a。v0.4c から 1 進化 → 2 進化も。対応した進化カードだけ） |
-| `UsePokemonPower(player, pokemon, power=0, energy=None, source=None, target=None)` | 自分の場のポケモン（`pokemon` は場のポケモンの番号）の特殊能力を使う（v0.5。番は終わらない。対応した特殊能力だけ。エナジートランスは `energy`（ついているカード）・`source`・`target`、v0.6 のあまごいは `energy`（手札のカード）・`target`、v0.7 のダメージスワップは `source`・`target` を指定する。v0.8 のかがくへんかガス・v0.9 のとうめい・v0.10 のはんげきは宣言しないので `POWER_NOT_DECLARABLE`、はたらいているかがくへんかガスに消されている特殊能力は `POWER_SUPPRESSED`） |
+| `UsePokemonPower(player, pokemon, power=0, energy=None, source=None, target=None)` | 自分の場のポケモン（`pokemon` は場のポケモンの番号）の特殊能力を使う（v0.5。番は終わらない。対応した特殊能力だけ。エナジートランスは `energy`（ついているカード）・`source`・`target`、v0.6 のあまごいは `energy`（手札のカード）・`target`、v0.7 のダメージスワップは `source`・`target` を指定する。v0.8 のかがくへんかガス・v0.9 のとうめい・v0.10 のはんげきは宣言しないので `POWER_NOT_DECLARABLE`、v0.11 のこんじょうは決められたとき（決定）にしか使えないので `POWER_NOT_USABLE_NOW`、はたらいているかがくへんかガスに消されている特殊能力は `POWER_SUPPRESSED`） |
 
 ## 現在の対応ルール（公式ルール 2000.02.14版）
 
@@ -1168,11 +1503,15 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 - 常にはたらく特殊能力（v0.8。かがくへんかガス）: 使用を宣言しない（p.311・p.323）。このカードが場にいるかぎり、「かがくへんかガス」以外のすべての特殊能力は使えず、その力も消える。このカードがねむり・マヒ・こんらんのとき、この力は消える（p.48）。自分と相手の両方の特殊能力を消す。ワザ・トレーナーは止めない
 - 自動的にはたらく特殊能力（v0.9。とうめい）: 使用を宣言しない（p.323）。このカードがワザによってダメージや効果を受けるとき、コインを投げて「おもて」なら、このカードはそのダメージと効果を受けない（p.160）。1 つのワザにつき 1 回、ゴースト側のプレイヤーが投げる。バトル場でもベンチでも、相手・自分のワザのどちらでもはたらき、ワザを失敗させる効果ではない（p.159）。ねむり・マヒ・こんらん・かがくへんかガスで消える
 - ダメージを受けたときに自動的にはたらく特殊能力（v0.10。はんげき）: 使用を宣言しない（p.323）。このカードが相手のワザによってダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）ダメージを与えたポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない（p.192）。与えるのはワザのダメージの処理のあと・ダメージ以外の効果の前（p.89）。特殊能力によるダメージで、ディフェンダーで防げず、別の「はんげき」をはたらかせない（p.138・p.245・p.321）。最終ダメージが 0 なら「ダメージを受けなかった」（p.319）。かがくへんかガスで消える
+- きぜつするときに使える特殊能力（v0.11。こんじょう）: 使用を宣言する特殊能力で、宣言するかはプレイヤーが決める（p.311）。決められたとき（相手のワザによるダメージで「きぜつ」するとき）にしか使えない（p.311・p.193）。ワザを使っている最中は宣言できない（p.309）ので、ワザの要素をすべて処理したあとのきぜつの判定で使う。コインを投げて「おもて」なら「きぜつ」せず、残り HP が 10（ダメージは受けたまま。p.193・p.285）。きぜつしなければサイドは取られない（p.323）。どくのダメージなど、ワザのダメージ以外のきぜつには使えない（p.193・p.321）。ダメージを受けるとき、すでにねむり・マヒ・こんらんなら使えない。かがくへんかガスで消える
+- きぜつしたときに使える特殊能力（v0.12。ふしちょう）: 使用を宣言する特殊能力で、宣言するかはプレイヤーが決める（p.311）。このカードが「きぜつ」したとき（原因を問わない）、トラッシュからとり出し、相手に見せてから手札に加える。ねむり・マヒ・こんらんのまま「きぜつ」するときは使えない（どくは関係しない。p.82）。手札にもどしても、きぜつしたことに変わりはなく、相手はサイドを取る（p.82）。エンジンは、サイド → 勝ち負けの判定 →（対戦が続くなら）使うかの決定 → バトル場に出す、の順に正規化している（原典で順番は決まらないが、結果が変わらない）。かがくへんかガスで使えない
+- 相手の番ではたらくワザの効果（v0.12。ほのおのかべ）: ワザを使ったポケモン自身に与える持続する効果で、次の相手の番にはたらき、その番の終わりに消える（p.89 の「こうらがえし」の解説）。相手のワザによるダメージを受けたとき（それによってきぜつしても）、ダメージを与えた相手の対戦ポケモンに 10。この 10 はワザによるダメージで、弱点・抵抗力の影響を受ける（p.82・p.89）。与えるのは相手のワザのダメージの処理のあと・ダメージ以外の効果の前（p.89）。ベンチにもどる・きぜつで消える（p.322）
+- 受けたダメージを返すワザの効果（v0.13。こうらがえし）: 「ほのおのかべ」と同じ持続する効果の仕組みで、返す量だけが違う。相手のワザによってダメージを受けたとき（それによってきぜつしても）、そのポケモン（ワザを使ったポケモン）に、受けたダメージ（最終ダメージ。弱点・抵抗力・プラスパワー・ディフェンダーのあと。HP で上限をつけない）と同じダメージを与える（p.89）。返すダメージは「こうらがえし」のワザによるダメージで、受けたダメージを基本となるダメージにして、弱点・抵抗力などを計算する（p.321「8」・p.89）。ダメージ以外の効果は与えない。ワザを使ったポケモンが返すダメージできぜつしたら、そのポケモン自身への効果は処理しない（p.89 の「スターブーメラン」の例）
 - ワザによる持続する効果（v0.4b）: ワザが与え、番をまたいで残る（p.322）。「かたまる」の効果（次の相手の番、ダメージを受けない）は、そのポケモンへのダメージの要素を無効にし（p.321）、次の相手の番の終わりに消える。ベンチに戻る・場をはなれる・進化で消え、復活しない（p.311・p.322・p.323）。ポケモンチェックははたらかない（p.323）
 
 ## 現在の対応カード
 
-第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）、1 進化ポケモンのパラセクト・ジュゴン（v0.4a）・トランセル・コクーン（v0.4b）、2 進化ポケモンのスピアー（v0.4c）・バタフリー（v0.4d）、ポケモンパワーを持つ 2 進化ポケモンのフシギバナとその進化元のフシギダネ・フシギソウ（v0.5）、ポケモンパワーを持つ 2 進化ポケモンのカメックスとその進化元のゼニガメ・カメール（v0.6）、ポケモンパワーを持つ 2 進化ポケモンのフーディンとその進化元のケーシィ・ユンゲラー（v0.7）、常にはたらくポケモンパワーを持つ 1 進化ポケモンのベトベトンとその進化元のロケット団のベトベター（v0.8）、ワザを受けるときに自動的にはたらくポケモンパワーを持つ 1 進化ポケモンの化石の秘密のゴーストとその進化元の化石の秘密のゴース（v0.9）、ダメージを受けたときに自動的にはたらくポケモンパワーを持つ 2 進化ポケモンのカイリキーとその進化元のゴーリキー（v0.10。ワンリキーは v0.1 から）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータ・フシギソウのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方、ケーシィのワザの説明の読点に食い違い。[docs/data-provenance.md](docs/data-provenance.md)）。
+第1弾の、効果のないワザだけを持つたねポケモン 10 種と、基本エネルギー 6 種、トレーナー 5 種（v0.2b・v0.2c・v0.2e）（kyuura docs/engine-readiness.md 5章の段階 1 とディフェンダー）、コインを投げるワザを持つドードー（v0.2d）、自分へのダメージのワザを持つピカチュウ（v0.2f）、相手をどく状態にするワザを持つビードル（v0.3a）、相手をマヒ・ねむり状態にするワザを持つキャタピー・パラス（v0.3b）、相手をこんらん状態にするワザを持つロコン（v0.3c）、1 進化ポケモンのパラセクト・ジュゴン（v0.4a）・トランセル・コクーン（v0.4b）、2 進化ポケモンのスピアー（v0.4c）・バタフリー（v0.4d）、ポケモンパワーを持つ 2 進化ポケモンのフシギバナとその進化元のフシギダネ・フシギソウ（v0.5）、ポケモンパワーを持つ 2 進化ポケモンのカメックスとその進化元のゼニガメ・カメール（v0.6）、ポケモンパワーを持つ 2 進化ポケモンのフーディンとその進化元のケーシィ・ユンゲラー（v0.7）、常にはたらくポケモンパワーを持つ 1 進化ポケモンのベトベトンとその進化元のロケット団のベトベター（v0.8）、ワザを受けるときに自動的にはたらくポケモンパワーを持つ 1 進化ポケモンの化石の秘密のゴーストとその進化元の化石の秘密のゴース（v0.9）、ダメージを受けたときに自動的にはたらくポケモンパワーを持つ 2 進化ポケモンのカイリキーとその進化元のゴーリキー（v0.10。ワンリキーは v0.1 から）、きぜつするときに使えるポケモンパワーを持つ 2 進化ポケモンのサカキのカイリキーとその進化元のサカキのワンリキー・サカキのゴーリキー（v0.11）、きぜつしたときに使えるポケモンパワーと次の相手の番にはたらくワザを持つたねポケモンの R団のファイヤー（v0.12）、受けたダメージを次の相手の番に返すワザを持つ 1 進化ポケモンのわるいカメールとその進化元の第4弾のゼニガメ（v0.13）、既存のワザの要素だけで加えたたねポケモンのモンジャラ・サカキのニャース（v0.17a）、ねむり状態でダメージを受けたときに自動的にはたらくポケモンパワーを持つたねポケモンの R団のカビゴン（v0.17b）、R団のカビゴンのたおれこむと同じ実装の型で加えたたねポケモンのナツメのヤドン（v0.18c）です。『オフィシャルブック2000』のカードのページと照合済みです（ポニータ・フシギソウのワザ名、きずぐすり・ポケモンいれかえ・ディフェンダーの文面、ドードーのワザの説明の書き方、ケーシィのワザの説明の読点に食い違い。R団のファイヤー・わるいカメール・R団のカビゴンは kyuura の文面が印刷の文面で、最新の説明と違う。[docs/data-provenance.md](docs/data-provenance.md)）。
 
 | id | カード | id | カード |
 |---|---|---|---|
@@ -1194,7 +1533,13 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 | PMCG1-046 | ユンゲラー（v0.7。ケーシィから進化。じこさいせい（ついている「超」エネルギーカードを選んで 1 枚トラッシュし、自分のダメージカウンターをすべてとりのぞく）、ちょうねんりき 50。p.151） | PMCG1-049 | フーディン（v0.7。ユンゲラーから進化する 2 進化。ポケモンパワー「ダメージスワップ」: 自分の番の中で何度でも、きぜつさせないかぎり、自分の場のポケモンのダメージカウンターを自分の場の別のポケモンにのせかえる（1 回 1 個）、あやしいひかり 30・コインが「おもて」なら相手をこんらん状態に。p.153） |
 | PMCG4-004 | ベトベター（v0.8。ポケモンカード第4弾ロケット団。どくガス・ダメージなし・コインなしで相手をどく状態に、ねばりつく 10+・コインが「おもて」なら 20 を追加して相手をマヒ状態に。p.45） | PMCG3-007 | ベトベトン（v0.8。ベトベターから進化。ポケモンパワー「かがくへんかガス」: 常にはたらき、場にいるかぎり「かがくへんかガス」以外のすべての特殊能力を使えなくする（ねむり・マヒ・こんらんのときは消える）、ヘドロこうげき 30・コインが「おもて」なら相手をどく状態に。p.48） |
 | PMCG3-029 | ゴース（v0.9。ポケモンカード第3弾化石の秘密。したでなめる 10・コインが「おもて」なら相手をマヒ状態に、エナジーへんかん・自分のトラッシュの「エネルギーカード」を最大 2 枚手札に加え、その後、自分に 10。にげる 0。p.158） | PMCG3-030 | ゴースト（v0.9。化石の秘密。ゴースから進化。ポケモンパワー「とうめい」: ワザによってダメージや効果を受けるときに自動的にはたらき、コインが「おもて」ならそのダメージと効果を受けない（ねむり・マヒ・こんらんのときは消える）、あくむ 10・コインなしで相手をねむり状態に。にげる 0。p.160。第1弾のゴースト PMCG1-047 は別のカードで未対応） |
-| PMCG1-055 | ゴーリキー（v0.10。ワンリキーから進化。からてチョップ 50−・自分にのっているダメージカウンターの数 × 10 だけ小さくなる、じごくぐるま 60・自分にも 20。p.190） | PMCG1-057 | カイリキー（v0.10。ゴーリキーから進化する 2 進化。ポケモンパワー「はんげき」: 相手のワザによってダメージを受けたとき（きぜつしても）、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10（ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）、ちきゅうなげ 60。p.192。サカキのカイリキー PMCG6-061 は別のカードで未対応） |
+| PMCG1-055 | ゴーリキー（v0.10。ワンリキーから進化。からてチョップ 50−・自分にのっているダメージカウンターの数 × 10 だけ小さくなる、じごくぐるま 60・自分にも 20。p.190） | PMCG1-057 | カイリキー（v0.10。ゴーリキーから進化する 2 進化。ポケモンパワー「はんげき」: 相手のワザによってダメージを受けたとき（きぜつしても）、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10（ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）、ちきゅうなげ 60。p.192。サカキのカイリキー PMCG6-061 は別のカード） |
+| PMCG6-057 | サカキのワンリキー（v0.11。ジム拡張第2弾闇からの挑戦。チョップ 10、いかりのスーパーパンチ 20×・コインが「おもて」なら自分にのっているダメージカウンターの数 × 20。p.189） | PMCG6-059 | サカキのゴーリキー（v0.11。サカキのワンリキーから進化。いちかばちか 60・コインが「うら」なら相手にはダメージを与えず自分に 100、じごくがため 20+・コインが「おもて」なら 20 を追加して相手をマヒ状態に。p.191） |
+| PMCG6-061 | サカキのカイリキー（v0.11。サカキのゴーリキーから進化する 2 進化。ポケモンパワー「こんじょう」: 相手のワザによるダメージで「きぜつ」するとき、使える。コインが「おもて」なら「きぜつ」せず残り HP 10（ダメージを受けるとき、すでにねむり・マヒ・こんらんなら使えない）、ハリケーンパンチ 30×・コイン 4 枚の「おもて」の数 × 30。p.193。第1弾のカイリキー PMCG1-057 は別のカード） | PMCG5-020 | R団のファイヤー（v0.12。ジム拡張第1弾リーダーズスタジアム。たねポケモン。ポケモンパワー「ふしちょう」: このカードが「きぜつ」したとき、使える。トラッシュからとり出し、相手に見せてから手札に加える（ねむり・マヒ・こんらんのまま「きぜつ」するときは使えない）、ほのおのかべ 40・次の相手の番、相手のワザによるダメージを受けたとき（きぜつしても）相手に 10（弱点・抵抗力を計算する）。p.82。R団のファイヤーと、ワザを使ったポケモンが「ほのおのかべ」で、そろってきぜつしうるワザは止める（W24）。化石の秘密のファイヤー・カツラのファイヤーは別のカード） |
+| PMCG4-018 | ゼニガメ（v0.13。ポケモンカード第4弾ロケット団。たね。HP 50・水・弱点 雷。こうらアタック（無無）20。p.88。第1弾のゼニガメ PMCG1-023 と同じ名前で、どちらからでもわるいカメール・第1弾のカメールに進化できる。デッキでは合わせて 4 枚まで） | PMCG4-021 | わるいカメール（v0.13。ゼニガメから進化。HP 60・水・弱点 雷。おうふくびんた（水）10×・コイン 2 枚の「おもて」の数 × 10、こうらがえし（水無）・ダメージなし・次の相手の番、相手のワザによってダメージを受けたとき（きぜつしても）そのポケモンにも同じダメージ（受けた最終ダメージ。返すダメージは弱点・抵抗力を計算する）。p.89。わるいカメールとワザを使ったポケモンがそろってきぜつしうるワザは止める（S37）） |
+| PMCG1-007 | モンジャラ（v0.17a。たね。HP 50・草・弱点 炎。しめつける（草無）20・コインが「おもて」なら相手をマヒ状態に、どくのこな（草草草）20・相手をどく状態に（コインなし）。p.55） | PMCG6-063 | サカキのニャース（v0.17a。ジム拡張第2弾闇からの挑戦。たね。HP 50・無色・弱点 闘・抵抗力 超。ねこノミ（無）・ダメージなし・コインが「おもて」なら相手をこんらん状態に、ねこキック（無無無）30。p.229） |
+| PMCG6-044 | ナツメのヤドン（v0.18c。ジム拡張第2弾闇からの挑戦。たね。HP 50・超・弱点 超。ぐうたらこうげき（超無）30・ダメージを与えた後、自分をねむり状態に（たおれこむと同じ `DamageAndSelfSleep`。ダメージを与えなかったときは止める。Z23）。p.155） | | |
+| PMCG6-073 | R団のカビゴン（v0.17b。ジム拡張第2弾闇からの挑戦。たね。HP 90・無色・弱点 闘・抵抗力 超。ポケモンパワー「わるいねぞう」: ねむり状態で相手のワザによるダメージを受けたとき（きぜつしても）、ダメージを与えたポケモンに 20（特殊能力によるダメージ。宣言しない）。たおれこむ（無無無）20・ダメージを与えた後、自分をねむり状態に（ダメージを与えなかったときは止める。Z23）。p.245） | | |
 
 | id | トレーナー（v0.2b） | 処理（『オフィシャルブック2000』p.254 の最新の説明） | 原典で決められないため止める場合 |
 |---|---|---|---|
@@ -1204,13 +1549,13 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 | PMCG1-079 | ディフェンダー（v0.2e。p.257） | 自分の場のポケモンを1匹選んでつけ、次の相手の番の終わりにトラッシュ。ついているポケモンがワザで受けるダメージを 7 段階で −20 | なし |
 | PMCG1-081 | プラスパワー（v0.2c。p.257） | 自分の対戦ポケモンにつけて使い、自分の番の終わりにトラッシュ。ついているポケモンのワザが対戦ポケモンに与えるダメージを 5 段階で +10（控えへのダメージは変えない） | なし |
 
-これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、ほかの進化カード（スピアー・バタフリー・フシギバナ・カメックス・フーディンのほかの 2 進化を含む）、エナジートランス・あまごい・ダメージスワップ・かがくへんかガス・とうめい・はんげきのほかのポケモンパワーを持つカード（サカキのカイリキーなど）、化石の秘密のベトベター・第1弾のゴーストなど効果を登録していないワザを持つカード、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）、パラセクトの「キノコのほうし」・ジュゴンの「れいとうビーム」（v0.4a）、トランセル・コクーンの「かたまる」「しびれごな」「どくのこな」（v0.4b。かたまるはカードごとに照合し、印刷の文面ではなく最新の説明にしたがう）、スピアーの「ダブルニードル」「どくばり」（v0.4c。ビードルのどくばりとは別に、スピアーのカード id で登録）、バタフリーの「ふきとばし」「メガドレイン」（v0.4d。印刷の文面ではなく最新の説明にしたがう）、フシギダネの「やどりぎのタネ」・フシギソウの「どくのこな」（v0.5。どくのこなはコクーンのものと違いコインを投げない）、ゼニガメの「あわ」「からにこもる」・カメールの「からにこもる」・カメックスの「ハイドロポンプ」（v0.6。からにこもる・ハイドロポンプは印刷の文面ではなく最新の説明にしたがう）、ケーシィの「ねんりき」・ユンゲラーの「じこさいせい」・フーディンの「あやしいひかり」（v0.7。じこさいせいは印刷の文面ではなく最新の説明にしたがう。フーディンのあやしいひかりは、ロコンと同じ名前でもフーディンのカード id で登録）、ロケット団のベトベターの「どくガス」「ねばりつく」・ベトベトンの「ヘドロこうげき」（v0.8）、化石の秘密のゴースの「したでなめる」「エナジーへんかん」・ゴーストの「あくむ」（v0.9。エナジーへんかんは印刷の文面ではなく最新の説明にしたがう）、ゴーリキーの「からてチョップ」「じごくぐるま」（v0.10。からてチョップは印刷の文面ではなく最新の説明にしたがう）だけを、照合した説明文とともに登録しています。ポケモンパワーは、フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）・ベトベトンの「かがくへんかガス」（v0.8。常にはたらく）・ゴーストの「とうめい」（v0.9。自動的にはたらく）・カイリキーの「はんげき」（v0.10。ダメージを受けたときに自動的にはたらく）だけを、照合した文面とともに登録しています（パラセクトのキノコのほうしは、パラスと同じ名前なので同じとは決めず、p.39 で照合した）。
+これ以外のカード（ドードーのほかの効果のあるワザを持つポケモン、ほかの進化カード（スピアー・バタフリー・フシギバナ・カメックス・フーディンのほかの 2 進化を含む）、エナジートランス・あまごい・ダメージスワップ・かがくへんかガス・とうめい・はんげき・こんじょう・ふしちょうのほかのポケモンパワーを持つカード（リザードンなど）、化石の秘密のベトベター・第1弾のゴーストなど効果を登録していないワザを持つカード、［だつりょくえき］を持つキョウのベトベトン（v0.17c で設計だけを検証。未対応）、ほかのトレーナー、特殊エネルギーなど）はデッキに入れられません。効果のあるワザを「ダメージだけのワザ」として扱うことはしません。対戦用のたねポケモンのワザは、効果の登録表に「効果のないワザ」として 1 つずつ登録してあります（v0.2a）。v0.2a で対応したカード・ルールは v0.1 と同じです。トレーナーは、カード id で効果の実装を登録した 5 枚だけが使えます（v0.2b・v0.2c・v0.2e）。説明文のあるワザは、ドードーの「みだれづき」（v0.2d）、ピカチュウの「でんげき」（v0.2f）、ビードルの「どくばり」（v0.3a）、キャタピーの「いとをはく」・パラスの「キノコのほうし」（v0.3b）、ロコンの「あやしいひかり」（v0.3c）、パラセクトの「キノコのほうし」・ジュゴンの「れいとうビーム」（v0.4a）、トランセル・コクーンの「かたまる」「しびれごな」「どくのこな」（v0.4b。かたまるはカードごとに照合し、印刷の文面ではなく最新の説明にしたがう）、スピアーの「ダブルニードル」「どくばり」（v0.4c。ビードルのどくばりとは別に、スピアーのカード id で登録）、バタフリーの「ふきとばし」「メガドレイン」（v0.4d。印刷の文面ではなく最新の説明にしたがう）、フシギダネの「やどりぎのタネ」・フシギソウの「どくのこな」（v0.5。どくのこなはコクーンのものと違いコインを投げない）、ゼニガメの「あわ」「からにこもる」・カメールの「からにこもる」・カメックスの「ハイドロポンプ」（v0.6。からにこもる・ハイドロポンプは印刷の文面ではなく最新の説明にしたがう）、ケーシィの「ねんりき」・ユンゲラーの「じこさいせい」・フーディンの「あやしいひかり」（v0.7。じこさいせいは印刷の文面ではなく最新の説明にしたがう。フーディンのあやしいひかりは、ロコンと同じ名前でもフーディンのカード id で登録）、ロケット団のベトベターの「どくガス」「ねばりつく」・ベトベトンの「ヘドロこうげき」（v0.8）、化石の秘密のゴースの「したでなめる」「エナジーへんかん」・ゴーストの「あくむ」（v0.9。エナジーへんかんは印刷の文面ではなく最新の説明にしたがう）、ゴーリキーの「からてチョップ」「じごくぐるま」（v0.10。からてチョップは印刷の文面ではなく最新の説明にしたがう）、サカキのワンリキーの「いかりのスーパーパンチ」・サカキのゴーリキーの「いちかばちか」「じごくがため」・サカキのカイリキーの「ハリケーンパンチ」（v0.11）、R団のファイヤーの「ほのおのかべ」（v0.12。印刷の文面ではなく最新の説明にしたがう）、わるいカメールの「おうふくびんた」「こうらがえし」（v0.13。印刷の文面ではなく最新の説明にしたがう）、モンジャラの「しめつける」「どくのこな」・サカキのニャースの「ねこノミ」（v0.17a）、R団のカビゴンの「たおれこむ」（v0.17b。印刷の文面ではなく最新の説明にしたがう）、ナツメのヤドンの「ぐうたらこうげき」（v0.18c。最新の説明は kyuura の写しと同じ文面）だけを、照合した説明文とともに登録しています。ポケモンパワーは、フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）・ベトベトンの「かがくへんかガス」（v0.8。常にはたらく）・ゴーストの「とうめい」（v0.9。自動的にはたらく）・カイリキーの「はんげき」（v0.10。ダメージを受けたときに自動的にはたらく）・サカキのカイリキーの「こんじょう」（v0.11。きぜつするときに使える）・R団のファイヤーの「ふしちょう」（v0.12。きぜつしたときに使える。印刷の文面ではなく最新の説明にしたがう）・R団のカビゴンの「わるいねぞう」（v0.17b。ねむり状態でダメージを受けたときに自動的にはたらく。印刷の文面ではなく最新の説明にしたがう）だけを、照合した文面とともに登録しています（パラセクトのキノコのほうしは、パラスと同じ名前なので同じとは決めず、p.39 で照合した）。
 
 ## 未実装の機能
 
-退化・パラセクト・ジュゴン・トランセル・コクーン・スピアー・バタフリー・フシギソウ・フシギバナ・ゼニガメの系統・ケーシィの系統のほかの進化カード、ほかの相手の強制交代・与えたダメージによる回復のワザ、「かたまる」のほかのワザによる持続する効果（すなかけ・からまるいと・マーカーをのせる効果など）、ポケモンチェックの 1（指示されたこと）、特殊などく、エナジートランス・あまごい・ダメージスワップ・かがくへんかガス・とうめい・はんげきのほかのポケモンパワー（とうめい・はんげきのほかの自動的にはたらく（きぜつを取り消す［こんじょう］など）・かがくへんかガスのほかの常にはたらく・回数の制限のある・期限のある特殊能力を止める効果・決定を出す特殊能力。[docs/architecture-v0.5.md](docs/architecture-v0.5.md) 9 章・[docs/architecture-v0.6.md](docs/architecture-v0.6.md) 12 章・[docs/architecture-v0.7.md](docs/architecture-v0.7.md) 13 章・[docs/architecture-v0.8.md](docs/architecture-v0.8.md) 14 章・[docs/architecture-v0.9.md](docs/architecture-v0.9.md) 14 章・[docs/architecture-v0.10.md](docs/architecture-v0.10.md) 17 章）、ベンチ・複数のポケモンにダメージを与えるワザ、退化・手札に戻す効果、進化前のワザを使うカード（思い出させる）、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
+退化・パラセクト・ジュゴン・トランセル・コクーン・スピアー・バタフリー・フシギソウ・フシギバナ・ゼニガメの系統・ケーシィの系統のほかの進化カード、ほかの相手の強制交代・与えたダメージによる回復のワザ、「かたまる」のほかのワザによる持続する効果（すなかけ・からまるいと・マーカーをのせる効果など）、ポケモンチェックの 1（指示されたこと）、特殊などく、エナジートランス・あまごい・ダメージスワップ・かがくへんかガス・とうめい・はんげき・こんじょう・ふしちょうのほかのポケモンパワー（とうめい・はんげきのほかの自動的にはたらく・かがくへんかガスのほかの常にはたらく・こんじょうのほかのきぜつするとき・ふしちょうのほかのきぜつしたときに使える・回数の制限のある・期限のある特殊能力を止める効果・自分の番に決定を出す特殊能力。[docs/architecture-v0.5.md](docs/architecture-v0.5.md) 9 章・[docs/architecture-v0.6.md](docs/architecture-v0.6.md) 12 章・[docs/architecture-v0.7.md](docs/architecture-v0.7.md) 13 章・[docs/architecture-v0.8.md](docs/architecture-v0.8.md) 14 章・[docs/architecture-v0.9.md](docs/architecture-v0.9.md) 14 章・[docs/architecture-v0.10.md](docs/architecture-v0.10.md) 17 章・[docs/architecture-v0.11.md](docs/architecture-v0.11.md) 16 章・[docs/architecture-v0.12.md](docs/architecture-v0.12.md) 16 章・[docs/architecture-v0.13.md](docs/architecture-v0.13.md) 16 章）、「ほのおのかべ」「こうらがえし」のほかの相手の番ではたらくワザの効果（クロスカウンターなど）・カスミのヒトデマン（スターブーメラン）・わるいカメックス、きあいのハチマキなどのきぜつを防ぐトレーナー、ベンチ・複数のポケモンにダメージを与えるワザ、退化・手札に戻す効果、進化前のワザを使うカード（思い出させる）、ほかのトレーナーカード、スタジアム、ポケモンのどうぐ、ベイビィポケモン、特殊エネルギー、効果のあるワザ（みだれづき・でんげきのほか。特殊状態・控えへのダメージ・でんげき以外の自分へのダメージ・「うら」で失敗などのコインのワザを含む）、コインを使うトレーナー、ワザの失敗、サドン・デスの延長戦、旧裏の複数の時期のルールの切り替え、大会のレギュレーション、隠れた情報の管理（見る人ごとの状態）、合法な操作の一覧、状態を辞書からもどす処理、AI、GUI、Web アプリ、ネットワーク対戦。一覧は [docs/implementation-status.md](docs/implementation-status.md#未実装)。
 
-原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。対応カードでは起こらない）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)。v0.4a〜v0.4c でも変えていない）。進化したあとの HP が、のっているダメージ以下になる場合（v0.4a。`UnsupportedError`、`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)）。「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決めるワザ（みだれづき、v0.4c からスピアーのダブルニードルも）を使う場合（v0.4b。`UnsupportedError`、`UNRESOLVED_PREVENTED_COIN_DAMAGE`。コインの前。[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md) 5 章）。2 進化で新しく止める場合はありません（v0.4c）。相手の強制交代・与えたダメージによる回復（v0.4d）でも、新しく止める場合はありません（ふきとばしの致死ダメージ・「ダメージを受けない」相手へのメガドレインは原典から導けた。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md) 4 章・[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md) 4 章）。ポケモンパワー・エナジートランス・やどりぎのタネ・どくのこな（v0.5）でも、新しく止める場合はありません（[docs/pokemon-powers-v0.5.md](docs/pokemon-powers-v0.5.md) 3 章）。あまごいでつけたあと、その番にまだ通常の操作をしていないときの通常の操作（v0.6。`UnsupportedError`、`UNRESOLVED_ATTACH_AFTER_POWER_ATTACH`。カードを動かす前。[docs/rain-dance-v0.6.md](docs/rain-dance-v0.6.md) の R13）。ダメージスワップ・ケーシィ・ユンゲラー・フーディンのワザ（v0.7）でも、新しく止める場合はありません（[docs/damage-swap-v0.7.md](docs/damage-swap-v0.7.md) 5 章）。かがくへんかガス・ベトベター・ベトベトンのワザ（v0.8）でも、新しく止める場合はありません（[docs/chemical-gas-v0.8.md](docs/chemical-gas-v0.8.md) 5 章）。はたらいている「とうめい」のゴーストに、「ダメージ → ワザのコイン → 特殊状態」のワザを使い、最終ダメージが 0 より大きい場合（v0.9。`UnsupportedError`、`UNRESOLVED_EVADED_EFFECT_COIN`。ワザの宣言の前。[docs/transparency-v0.9.md](docs/transparency-v0.9.md) の T19b）。エナジーへんかんで、トラッシュにエネルギーカードがあるのに 0 枚を選ぶ場合（v0.9。`UnsupportedError`、`UNRESOLVED_RECOVER_ZERO_ENERGY`。決定は待ったまま。[docs/haunter-line-v0.9.md](docs/haunter-line-v0.9.md) の H4）。カイリキーがワザのダメージできぜつし、ワザを使ったポケモンが「はんげき」のダメージできぜつする（「はんげき」がなければきぜつしない）場合（v0.10。`UnsupportedError`、`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`。ワザの宣言の前。[docs/counterattack-v0.10.md](docs/counterattack-v0.10.md) の C18）。
+原文から決められないため止める処理: 両方が同時に切り直したあと、片方だけがさらに切り直した場合の補償（`Phase.HALTED`）。トレーナーの上の表の場合（`UnsupportedError`。対戦は続けられる）。ポケモンチェックのどくで両方のプレイヤーのポケモンがきぜつする場合（v0.3a。`Phase.HALTED`）。ポケモンチェックで両方の対戦ポケモンがねむりの場合（v0.3b。`Phase.HALTED`。v0.17b から、自分をねむりにするワザで起こる）。マヒの再付与で回復する番が変わる場合（v0.3b。`UnsupportedError`。対応カードでは起こらない）。ダメージを変えるカードがついたこんらん状態のポケモンのワザ、「にげる」に失敗したあとこんらんが消えて同じ番にバトル場に戻ったポケモンの「にげる」（v0.3c。`UnsupportedError`。コインの前）。v0.3d で調べ直し、どれも原典で決められないので止めたままです（[docs/unresolved-rulings-v0.3d.md](docs/unresolved-rulings-v0.3d.md)。v0.4a〜v0.4c でも変えていない）。進化したあとの HP が、のっているダメージ以下になる場合（v0.4a。`UnsupportedError`、`UNRESOLVED_EVOLUTION_HP`。対応カードでは起こらない。[docs/evolution-rules-v0.4a.md](docs/evolution-rules-v0.4a.md)）。「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決めるワザ（みだれづき、v0.4c からスピアーのダブルニードルも）を使う場合（v0.4b。`UnsupportedError`、`UNRESOLVED_PREVENTED_COIN_DAMAGE`。コインの前。[docs/persistent-damage-v0.4b.md](docs/persistent-damage-v0.4b.md) 5 章）。2 進化で新しく止める場合はありません（v0.4c）。相手の強制交代・与えたダメージによる回復（v0.4d）でも、新しく止める場合はありません（ふきとばしの致死ダメージ・「ダメージを受けない」相手へのメガドレインは原典から導けた。[docs/forced-switch-v0.4d.md](docs/forced-switch-v0.4d.md) 4 章・[docs/damage-drain-v0.4d.md](docs/damage-drain-v0.4d.md) 4 章）。ポケモンパワー・エナジートランス・やどりぎのタネ・どくのこな（v0.5）でも、新しく止める場合はありません（[docs/pokemon-powers-v0.5.md](docs/pokemon-powers-v0.5.md) 3 章）。あまごいでつけたあと、その番にまだ通常の操作をしていないときの通常の操作（v0.6。`UnsupportedError`、`UNRESOLVED_ATTACH_AFTER_POWER_ATTACH`。カードを動かす前。[docs/rain-dance-v0.6.md](docs/rain-dance-v0.6.md) の R13）。ダメージスワップ・ケーシィ・ユンゲラー・フーディンのワザ（v0.7）でも、新しく止める場合はありません（[docs/damage-swap-v0.7.md](docs/damage-swap-v0.7.md) 5 章）。かがくへんかガス・ベトベター・ベトベトンのワザ（v0.8）でも、新しく止める場合はありません（[docs/chemical-gas-v0.8.md](docs/chemical-gas-v0.8.md) 5 章）。はたらいている「とうめい」のゴーストに、「ダメージ → ワザのコイン → 特殊状態」のワザを使い、最終ダメージが 0 より大きい場合（v0.9。`UnsupportedError`、`UNRESOLVED_EVADED_EFFECT_COIN`。ワザの宣言の前。[docs/transparency-v0.9.md](docs/transparency-v0.9.md) の T19b）。エナジーへんかんで、トラッシュにエネルギーカードがあるのに 0 枚を選ぶ場合（v0.9。`UnsupportedError`、`UNRESOLVED_RECOVER_ZERO_ENERGY`。決定は待ったまま。[docs/haunter-line-v0.9.md](docs/haunter-line-v0.9.md) の H4）。カイリキーがワザのダメージできぜつし、ワザを使ったポケモンが「はんげき」のダメージできぜつする（「はんげき」がなければきぜつしない）場合（v0.10。`UnsupportedError`、`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`。ワザの宣言の前。[docs/counterattack-v0.10.md](docs/counterattack-v0.10.md) の C18）。「こんじょう」を使えるサカキのカイリキーにワザのダメージで HP 以上のダメージを与えうるうえ、同じワザで相手に効果を与える場合（v0.11。`UnsupportedError`、`UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`。ワザの宣言の前。[docs/guts-v0.11.md](docs/guts-v0.11.md) の G37）。R団のファイヤーがワザのダメージで、ワザを使ったポケモンが「ほのおのかべ」のダメージで、そろってきぜつしうる場合（v0.12。`UnsupportedError`、`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`。ワザの宣言の前。[docs/rocket-moltres-v0.12.md](docs/rocket-moltres-v0.12.md) の W24）。わるいカメールがワザのダメージで、ワザを使ったポケモンが「こうらがえし」で返すダメージで、そろってきぜつしうる場合も同じ問いなので、同じコードで止めます（v0.13。新しいコードではない。返す量が受けたダメージなので止まる場面が多い。[docs/shell-attack-v0.13.md](docs/shell-attack-v0.13.md) の S37）。「ふしちょう」とサイド・バトル場に出す・勝ち負けの順番は原典で決まらないが、結果が変わらないので止めずに正規化しています（[docs/post-knockout-powers-v0.12.md](docs/post-knockout-powers-v0.12.md) 3 章）。説明が「ダメージを与えた後、…」の効果（R団のカビゴンのたおれこむ・v0.18c のナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかった場合（ディフェンダー・抵抗力で 0・「ダメージを受けない」状態・「とうめい」で受けない。場合ごとの記録は [docs/unresolved-research-v0.18b.md](docs/unresolved-research-v0.18b.md) 3 章）（v0.17b。`UnsupportedError`、`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。ワザの宣言の前。[docs/rocket-snorlax-v0.17b.md](docs/rocket-snorlax-v0.17b.md) の Z23）。R団のカビゴンがワザのダメージで、ワザを使ったポケモンが「わるいねぞう」の 20 で、そろってきぜつしうる場合は v0.10 の C18 と同じ問いなので、同じコードで止めます（Z13）。キョウのベトベトンの「だつりょくえき」は、宣言する特殊能力か・処理する時点が原典で決まらないので、実装を延期しました（v0.17c。カードは未対応。[docs/kogas-muk-event-design-v0.17c.md](docs/kogas-muk-event-design-v0.17c.md)）。
 
 ## ディレクトリ
 
@@ -1218,29 +1563,33 @@ print(state.cards[state.players[0].active.card].card_id, state.current_player, s
 kyuura_engine/
   rules.py       ルールの組（2000.02.14版の数値）と根拠の一覧
   conditions.py  特殊状態（どく・ねむり・マヒ・こんらん）を付ける・置きかえる・回復する・ベンチに戻ったら・進化したら消す。v0.3a〜v0.4a
-  persistent.py  ワザによる持続する効果（「かたまる」の「ダメージを受けない」）を付ける・期限・ベンチ・進化・きぜつで消す・はたらいているか。v0.4b
-  continuous.py  常にはたらく特殊能力（かがくへんかガス）がはたらいているか・消している特殊能力を、今の状態から求める。v0.8（v0.9 の「とうめい」・v0.10 の「はんげき」の評価も使う）
+  persistent.py  ワザによる持続する効果（「かたまる」の「ダメージを受けない」、v0.12 の「ほのおのかべ」、v0.13 の「こうらがえし」）を付ける・期限・ベンチ・進化・きぜつで消す・はたらいているか。v0.4b・v0.12・v0.13
+  continuous.py  常にはたらく特殊能力（かがくへんかガス）がはたらいているか・消している特殊能力を、今の状態から求める。v0.8（v0.9 の「とうめい」・v0.10 の「はんげき」・v0.11 の「こんじょう」の評価も使う）
   cards.py       カードの定義、kyuura のデータの読み込み、対応・未対応の分類
-  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。決定を出すトレーナーの決定の形の宣言（`decision_problems`。v0.4e）。ポケモンパワーの登録（カード id・パワーの位置 → 実装）とエナジートランス、やどりぎのタネ・どくのこな（コインなし）の実装（v0.5）。あまごい（手札から「水」エネルギーをつける）・ハイドロポンプ（多い「水」エネルギーでダメージを追加）の実装（v0.6）。ダメージスワップ・じこさいせい（v0.7）、かがくへんかガス・どくガス・ねばりつく（v0.8）、とうめい（ワザを受けるときに自動的にはたらく。ワザの要素の処理の境界の評価 `attack_reaches`）・あくむ・エナジーへんかん（v0.9）、はんげき（ダメージを受けたときに自動的にはたらく。判定は `deal_attack_damage`、与えるのは `finish_damage_elements`）・からてチョップ・じごくぐるま（v0.10）。v0.2a〜v0.10
+  effects.py     効果の登録表（ワザ: カード id・ワザの位置 → 実装、トレーナー: カード id → 実装）と、トレーナー 5 枚・みだれづき・でんげき・どくばり・いとをはく・キノコのほうし・あやしいひかり・れいとうビーム・かたまるの実装（v0.4c のスピアーのワザは既存の実装の登録）、ふきとばし（ワザの途中の相手の決定）・メガドレイン（v0.4d）の実装、ワザのダメージを与える処理（相手・自分。v0.2f。「ダメージを受けない」状態なら無効。v0.4b。結果 `DamageResult` を返す。v0.4d）。決定を出すトレーナーの決定の形の宣言（`decision_problems`。v0.4e）。ポケモンパワーの登録（カード id・パワーの位置 → 実装）とエナジートランス、やどりぎのタネ・どくのこな（コインなし）の実装（v0.5）。あまごい（手札から「水」エネルギーをつける）・ハイドロポンプ（多い「水」エネルギーでダメージを追加）の実装（v0.6）。ダメージスワップ・じこさいせい（v0.7）、かがくへんかガス・どくガス・ねばりつく（v0.8）、とうめい（ワザを受けるときに自動的にはたらく。ワザの要素の処理の境界の評価 `attack_reaches`）・あくむ・エナジーへんかん（v0.9）、はんげき（ダメージを受けたときに自動的にはたらく。判定は `deal_attack_damage`、与えるのは `finish_damage_elements`）・からてチョップ・じごくぐるま（v0.10）、ハリケーンパンチほか（v0.11）、ほのおのかべ（次の相手の番にはたらく持続する効果。与えるのは `finish_damage_elements`。v0.12）・ふしちょう（きぜつしたときに使う。v0.12）、こうらがえし（返す量は受けたダメージ。v0.13）。v0.2a〜v0.13
   coins.py       コイントス（対戦の乱数で決め、1 枚ごとにログに残す）。v0.2d
   deck.py        デッキの検査
-  state.py       ゲームの状態（ゾーン、場のポケモン、進化の重なり（v0.4a。v0.4c から 2 進化の 3 枚まで）・場に出た番・進化した番（v0.4a）、ワザによる持続する効果（v0.4b）、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、ポケモンパワーで手札からつけた枚数（v0.6）、結果）
+  state.py       ゲームの状態（ゾーン、場のポケモン、進化の重なり（v0.4a。v0.4c から 2 進化の 3 枚まで）・場に出た番・進化した番（v0.4a）、ワザによる持続する効果（v0.4b。v0.12 で「ほのおのかべ」の `Retaliation`。v0.13 で与えるダメージの決め方 `basis`）、特殊状態（v0.3a〜v0.3c）、にげるの失敗の記録（v0.3c）、番、ポケモンパワーで手札からつけた枚数（v0.6）、結果）
   commands.py    プレイヤーの操作
   decisions.py   保留中の決定（出す・確かめる）。v0.2a
-  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）、進化（v0.4a。2 進化は v0.4c）、不変条件（v0.4e でトレーナーの決定・サイドと交代の決定・番の番号を強めた。v0.6 でパワーでつけた枚数とログの対応）、あまごいのあとの通常の操作の停止（v0.6）
+  engine.py      対戦の進行（new_game・apply_command）、きぜつ・サイド・勝ち負け・交代（同時のきぜつは v0.2f）、ポケモンチェック（v0.3a・v0.3b）、こんらんのワザ・にげるのコイン（v0.3c）、進化（v0.4a。2 進化は v0.4c）、不変条件（v0.4e でトレーナーの決定・サイドと交代の決定・番の番号を強めた。v0.6 でパワーでつけた枚数とログの対応）、あまごいのあとの通常の操作の停止（v0.6）、こんじょうの決定（v0.11）、きぜつしたあとの「ふしちょう」の決定（サイド・勝ち負けの判定のあと、バトル場に出す前。v0.12）
   damage.py      ワザのダメージ計算（p.321 の 8 段階。2・5〜8 段階の変更効果は v0.2c）、こんらんの 20 の計算（v0.3c）
   judge.py       勝ち負けの判定（p.311 の表）
   serialize.py   状態を辞書にする（形式 1〜9。9 は v0.6）
-  zones.py       山札から引く・トレーナーをポケモンにつける・手札のエネルギーカードを場のポケモンにつける処理（エンジン・トレーナー・ポケモンパワーで共通）。v0.2b・v0.2c・v0.6
+  zones.py       山札から引く・トレーナーをポケモンにつける・手札のエネルギーカードを場のポケモンにつける・トラッシュのカードを手札に加える処理（エンジン・トレーナー・ポケモンパワー・ワザで共通）。v0.2b・v0.2c・v0.6・v0.12
   rng.py         乱数の状態の指紋・保存・復元。v0.2a（コインも同じ乱数）
   data/kyuura_cards.json       kyuura のカードデータの写し（生成物）
   data/card_verification.json  『オフィシャルブック2000』との照合の記録
+  data/research_links.json     研究（kyuura）の id との対応表（研究の基準のコミット・停止コードと論点・最新の説明・照合の記録。v0.18）
 scripts/extract_kyuura_cards.py  kyuura から写しを作る
+scripts/check_research_links.py  研究の対応表を kyuura の研究の基準のコミットの記録と照らす（v0.18e）
 scripts/make_compat_fixture.py   v0.1 の対戦結果の参照データを作った道具（作り直さない）
+tools/mutants.py                 変異試験の定義（v0.18e から版管理。証人のテストつき）
+tools/run_mutants.py             変異試験の実行（check・witness・full。写しの木で走らせ、作業ツリーは変えない。v0.18e）
 tools/compat_driver.py           版の比較の駆動（公開の API だけで 1 つの版を動かし、1 手ごとの記録を作る）。v0.4e
 tools/compare_engine_versions.py 2 つの版の比較（git archive で取り出し、版ごとに別のプロセス。最初の食い違いを診断）。v0.4e
-tools/stress_engine.py           大規模なストレス実行（ふだんのテストでは走らせない）。v0.4e。v0.5 でフシギバナの組（エナジートランスの使用を混ぜる）、v0.6 でカメックスの組（あまごいの使用を混ぜる）、v0.7 でフーディンの組、v0.8 でベトベトンの組、v0.9 でゴーストの組、v0.10 でカイリキーの組
-tests/                           自動テスト（unittest）。tests/log_audit.py はログと書き出しの監査の道具（v0.4e。v0.6 で手札・あまごいの組み立て直しと形式 9。v0.8 でかがくへんかガス、v0.9 で「とうめい」の判定とエナジーへんかん、v0.10 で「はんげき」。テストではない）
+tools/stress_engine.py           大規模なストレス実行（ふだんのテストでは走らせない）。v0.4e。v0.5 でフシギバナの組（エナジートランスの使用を混ぜる）、v0.6 でカメックスの組（あまごいの使用を混ぜる）、v0.7 でフーディンの組、v0.8 でベトベトンの組、v0.9 でゴーストの組、v0.10 でカイリキーの組、v0.11 でサカキのカイリキーの組、v0.12 で R団のファイヤーの組、v0.13 でわるいカメールの組、v0.17 で R団のカビゴンの組、v0.18 でナツメのヤドンの組
+tests/                           自動テスト（unittest）。tests/log_audit.py はログと書き出しの監査の道具（v0.4e。v0.6 で手札・あまごいの組み立て直しと形式 9。v0.8 でかがくへんかガス、v0.9 で「とうめい」の判定とエナジーへんかん、v0.10 で「はんげき」、v0.11 で「こんじょう」の決定・コイン・残り HP、v0.12 で「ふしちょう」の答え・トラッシュから手札・「ほのおのかべ」の効果と返すダメージ、v0.13 で「こうらがえし」の受けたダメージ・効果の種類。テストではない）
 tests/fixtures/                  v0.1 の対戦結果の参照データ、v0.4d（4bd97bf）の記録の指紋（v0.4e。互換性のテスト用）
-docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.6 のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）、総合監査・組み合わせの表・互換性・未解決の範囲・v0.5 の準備（v0.4e）、ポケモンパワーの規定・フシギバナ・フシギダネとフシギソウ・エナジートランスの処理・確かめた結果（v0.5）、あまごいの原典の照合と裁定・確かめた結果（v0.6）、ダメージスワップ・ケーシィの系統（v0.7）、かがくへんかガス・ベトベターの系統・常にはたらく効果の求め方（v0.8）、とうめいの原典の照合と裁定・ゴースの系統・自動的にはたらく特殊能力の仕組み・設計・確かめた結果（v0.9）、はんげきの原典の照合と裁定・ワンリキーの系統・ダメージを受けたあとに自動的にはたらく特殊能力の仕組み・設計・確かめた結果（v0.10）
+docs/                            ルールの仕様、実装状況、データの由来、v0.1 のレビュー、API のレビュー、v0.2a〜v0.6 のアーキテクチャ、トレーナー・コイントス・みだれづき・ディフェンダー・自分へのダメージ・同時のきぜつ・ピカチュウ・特殊状態・ポケモンチェック・ビードル・ねむり・マヒ・キャタピー・パラス・こんらん・ロコンの原典照合、特殊状態の総合検証・未解決の裁定・コインの前の検証（v0.3d）、進化の準備（v0.4）、進化のルール・カード・状態の持ち方（v0.4a）、持続する効果・かたまる・持続する効果とダメージ計算（v0.4b）、2 進化のルール・スピアー・3 枚の重なりの状態（v0.4c）、相手の強制交代・与えたダメージと回復・バタフリー（v0.4d）、総合監査・組み合わせの表・互換性・未解決の範囲・v0.5 の準備（v0.4e）、ポケモンパワーの規定・フシギバナ・フシギダネとフシギソウ・エナジートランスの処理・確かめた結果（v0.5）、あまごいの原典の照合と裁定・確かめた結果（v0.6）、ダメージスワップ・ケーシィの系統（v0.7）、かがくへんかガス・ベトベターの系統・常にはたらく効果の求め方（v0.8）、とうめいの原典の照合と裁定・ゴースの系統・自動的にはたらく特殊能力の仕組み・設計・確かめた結果（v0.9）、はんげきの原典の照合と裁定・ワンリキーの系統・ダメージを受けたあとに自動的にはたらく特殊能力の仕組み・設計・確かめた結果（v0.10）、こんじょうの原典の照合と裁定・サカキのワンリキーの系統・きぜつの判定ときぜつの処理のあいだの仕組み・設計・確かめた結果（v0.11）、ふしちょうの原典の照合と裁定・R団のファイヤーとほのおのかべ・きぜつしたあとに使う特殊能力の仕組み・番をまたいではたらくワザの効果・設計・確かめた結果（v0.12）、こうらがえしの原典の照合と裁定・わるいカメールと第4弾のゼニガメ・量が受けたダメージで決まる効果の仕組み・設計・確かめた結果（v0.13）、カードの選定・既存の要素だけのカード・R団のカビゴン・キョウのベトベトンの設計の検証・拡張性の検証（v0.17）、研究との照合・未解決の裁定の再調査・ナツメのヤドン・窓の途中の決定の設計・検証の再現性・最終の検証（v0.18）
 ```

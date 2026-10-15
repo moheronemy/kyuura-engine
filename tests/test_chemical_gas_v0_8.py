@@ -224,12 +224,13 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         self.assertEqual(entry.effect, SuppressOtherPowers(exempt_name="かがくへんかガス"))
         self.assertFalse(entry.effect.declared)
         # 宣言しない特殊能力は、かがくへんかガスと、v0.9 のゴーストの「とうめい」（自動的にはたらく。docs/automatic-powers-v0.9.md）と、
-        # v0.10 のカイリキーの「はんげき」（ダメージを受けたときに自動的にはたらく。docs/post-damage-powers-v0.10.md）だけ
+        # v0.10 のカイリキーの「はんげき」（ダメージを受けたときに自動的にはたらく。docs/post-damage-powers-v0.10.md）と、v0.17b の R団のカビゴンの
+        # 「わるいねぞう」（ねむり状態でダメージを受けたときに自動的にはたらく。docs/rocket-snorlax-v0.17b.md）だけ
         undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared}
-        self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0)})
+        self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0)})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
-        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.10")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキーの登録を加えた（かがくへんかガスの登録は同じ）
+        self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG3-007@power0"],
                          {"implementation": "suppress_other_powers", "name_ja": "かがくへんかガス", "source": "P43 p.48"})
         record = read_verification()["cards"][MUK]

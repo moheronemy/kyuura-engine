@@ -1,4 +1,4 @@
-"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.9）。
+"""kyuura-engine: 旧裏ポケモンカードゲームの対戦エンジン（v0.26）。
 
 ルールは「ポケットモンスターカードゲーム公式ルール 2000.02.14版」（『ポケモンカードオフィシャルブック2000』
 pp.306〜326）。カードデータの正本は kyuura（https://github.com/moheronemy/kyuura）。
@@ -26,6 +26,7 @@ from .commands import (
 )
 from .continuous import power_suppressors, working_power_suppressors
 from .deck import deck_problems, expand_decklist, validate_deck
+from .decks import PRESET_DECKS, PresetDeck, preset_deck, preset_deck_ids
 from .effects import (
     DEFAULT_EFFECTS,
     AttackKey,
@@ -33,6 +34,7 @@ from .effects import (
     PowerEntry,
     PowerKey,
     TrainerEntry,
+    available_ko_prevention_power,
     working_counterattack_power,
     working_evasion_power,
 )
@@ -52,11 +54,12 @@ from .state import (
     Phase,
     Poison,
     PreventDamage,
+    Retaliation,
     SpecialConditions,
     TrainerInUse,
 )
 
-__version__ = "0.10.0"
+__version__ = "0.26.0"
 
 __all__ = [
     "Asleep",
@@ -85,6 +88,7 @@ __all__ = [
     "Phase",
     "Poison",
     "PreventDamage",
+    "Retaliation",
     "PlaceStartingPokemon",
     "PlayBasicToBench",
     "PlayTrainer",
@@ -105,12 +109,17 @@ __all__ = [
     "UseAttack",
     "UsePokemonPower",
     "apply_command",
+    "available_ko_prevention_power",
     "can_pay_cost",
     "check_invariants",
     "command_from_dict",
     "command_to_dict",
     "deck_problems",
     "expand_decklist",
+    "PRESET_DECKS",
+    "PresetDeck",
+    "preset_deck",
+    "preset_deck_ids",
     "load_card_pool",
     "new_game",
     "power_suppressors",

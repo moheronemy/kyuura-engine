@@ -22,17 +22,11 @@ from __future__ import annotations
 import random
 from typing import Callable, Sequence
 
-from . import judge
-from .cards import EVOLUTION_STAGES, CardPool, can_pay_cost, load_card_pool
-from .coins import CoinSide, flip_coins
+from .cards import EVOLUTION_STAGES, CardPool, load_card_pool
 from .conditions import (
-    CONFUSION_DAMAGE,
-    EVOLVE,
     RETREAT,
     clear_special_conditions,
     paralysis_recovery_turn,
-    recover_from_paralysis,
-    recover_from_sleep,
 )
 from .commands import (
     UNSUPPORTED_COMMANDS,
@@ -52,31 +46,38 @@ from .commands import (
     UseAttack,
     UsePokemonPower,
 )
-from .decisions import DECISION_PHASES, PROMOTE_ACTIVE, TAKE_PRIZE, check_choices, phase_for, push_decision
-from .damage import calculate_confusion_damage
+from .decisions import (
+    DECISION_PHASES,
+    KO_PREVENTION,
+    POST_KNOCKOUT_POWER,
+    PROMOTE_ACTIVE,
+    TAKE_PRIZE,
+    phase_for,
+)
 from .effects import (
     AttackKey,
     AttackUse,
     PowerKey,
     PowerUse,
+    ReturnToHandOnKnockOut,
     TrainerUse,
-    attack_damage_modifiers,
-    counterattack_double_knockout_problem,
-    finish_damage_elements,
+    ko_prevention_power,
+    ko_prevention_suppressors,
 )
 from .continuous import suppressors_of
 from .deck import deck_problems
+from .evolution import place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
+from .persistent import KNOCK_OUT, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    Retaliation,
     TERMINAL_PHASES,
     Asleep,
     CardInstance,
     Confused,
     DataSource,
-    GameResult,
     GameState,
     Halt,
     Paralyzed,
@@ -89,13 +90,23 @@ from .state import (
     freeze_mapping,
     turn_owner,
 )
-from .zones import attach_energy_from_hand, draw_cards
+from .zones import attach_energy_from_hand, draw_cards, shuffle_deck
 
-PLAYERS = (0, 1)
-# きぜつのあとの決定の続き（context の "then"）: ポケモンチェックの中（2 の「どく」）のきぜつのあとの決定（v0.3a）。
-# 交代が終わったら、ポケモンチェックの残り（3 の「ねむり」・4 の「マヒ」。v0.3b）をしてから次の番を始める。
-# 値は v0.3a と同じ（ポケモンチェックの中で、次の番はまだ始まっていないことを表す。書き出しの形を変えないため）
-NEXT_TURN = "next_turn"
+# v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
+# 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
+from .checks import PLAYERS, decision_choices
+from .checks import require_not_asleep_or_paralyzed as _require_not_asleep_or_paralyzed
+from .checks import require_phase as _require_phase
+from .checks import require_player as _require_player
+from .checks import require_turn as _require_turn
+from .procedures import NEXT_TURN
+from .procedures import begin_turn as _begin_turn
+from .procedures import confusion_check as _confusion_check
+from . import resolution  # v0.15b: 効果の解決の基盤（engine.py を読み込まない）
+
+# PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
+# 決定の再開先（v0.16b: 解決の基盤が続ける 5 つと、engine.py が続けるトレーナーの決定）
+DECISION_RESUMES = resolution.RESUMES | {"trainer"}
 # 対戦準備の段階（番はまだ始まっていない）
 SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
 
@@ -161,8 +172,7 @@ def new_game(
 
 
 def _shuffle_deck(state: GameState, player: int) -> None:
-    state.rng.shuffle(state.players[player].deck)
-    state.add_event("shuffle", player=player)
+    shuffle_deck(state, player)  # v0.22 から zones（カードの効果で切る処理と共通。動き・乱数・ログは同じ）
 
 
 def _draw(state: GameState, player: int, count: int) -> None:
@@ -233,7 +243,37 @@ def apply_command(state: GameState, command) -> GameState:
     - 未対応の操作・原典で決められない場合・終わった（止めた）対戦への操作: ``UnsupportedError`` /
       ``IllegalActionError``（GAME_OVER）
     - 処理の結果が不変条件を満たさない（エンジンの不具合か、渡した状態が壊れている）: ``StateIntegrityError``
+
+    v0.16b: ワザ・番の終わり・きぜつのあとの決定は、効果の解決の基盤（``kyuura_engine/resolution``）だけが処理する（v0.13 の経路と、
+    経路を選ぶ ``Route``・``apply_command_via`` は外した。docs/kernel-consolidation-v0.16b.md）。呼び方・戻り値・例外は変えていない。
     """
+    return _apply(state, command, None)
+
+
+def apply_command_with(state: GameState, command, *, preflight: str = "derived",
+                       catalog: resolution.Catalog | None = None) -> GameState:
+    """内部の入口（v0.16b。v0.15b の ``apply_command_via`` の、経路の引数のない形）: 解決の設定（宣言の前の先読みの方法 ``preflight``・
+    効果の定義の対応表 ``catalog``）を指定してコマンドを処理する。比較・試験用。公開の ``apply_command`` と同じ約束（渡した状態を変えない・
+    不変条件で確かめる）。"""
+    return _apply(state, command, _context(state, preflight, catalog))
+
+
+def apply_command_traced(state: GameState, command, *, preflight: str = "derived",
+                         catalog: resolution.Catalog | None = None) -> tuple[GameState, resolution.Trace]:
+    """内部の入口（v0.15b）: (新しい状態, 解決の記録) を返す。解決の記録（内部のトレース）は状態に保存しない（公開のログとは別のもの）。
+    解決の基盤を通らないコマンド（範囲外のコマンド・トレーナーの決定への答え）なら、解決の記録は空。"""
+    context = _context(state, preflight, catalog)
+    return _apply(state, command, context), context.trace
+
+
+def _context(state: GameState, preflight: str, catalog: resolution.Catalog | None) -> resolution.Context:
+    """解決の設定（コマンドごとに作る。解決の記録はこの中に入る。``state`` はコマンドの入口に渡された状態で、変えない）。"""
+    return resolution.Context(original=state, preflight=preflight, catalog=resolution.DEFAULT_CATALOG if catalog is None else catalog)
+
+
+def _apply(state: GameState, command, context: resolution.Context | None) -> GameState:
+    """コマンドの入口（確認・複製・不変条件）。ワザ・番の終わりは解決の基盤（``resolution.handle``）、決定への答えは ``_answer_decision``、
+    範囲外のコマンドは ``engine.py`` の処理（``_HANDLERS``）。"""
     if isinstance(command, UNSUPPORTED_COMMANDS):
         raise UnsupportedError("UNSUPPORTED_ACTION", f"{type(command).__name__} は未対応")
     handler = _HANDLERS.get(type(command))
@@ -247,7 +287,7 @@ def apply_command(state: GameState, command) -> GameState:
     if state.phase is Phase.HALTED:
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
-    handler(new, command)
+    handler(new, command, context if context is not None else _context(state, "derived", None))
     _require_integrity(new)
     return new
 
@@ -257,26 +297,6 @@ def _require_integrity(state: GameState) -> None:
     problems = check_invariants(state)
     if problems:
         raise StateIntegrityError(problems)
-
-
-def _require_phase(state: GameState, *phases: Phase) -> None:
-    if state.phase not in phases:
-        names = ", ".join(p.value for p in phases)
-        raise IllegalActionError("WRONG_PHASE", f"今は {state.phase.value}。この操作は {names} のときだけ")
-
-
-def _require_player(player) -> int:
-    if player not in PLAYERS:
-        raise IllegalActionError("INVALID_PLAYER", f"プレイヤーは 0 か 1（{player!r}）")
-    return player
-
-
-def _require_turn(state: GameState, player) -> PlayerState:
-    _require_phase(state, Phase.MAIN)
-    _require_player(player)
-    if player != state.current_player:
-        raise IllegalActionError("NOT_YOUR_TURN", f"今はプレイヤー {state.current_player} の番")
-    return state.players[player]
 
 
 def _require_in_hand(state: GameState, player: int, uid) -> None:
@@ -368,220 +388,6 @@ def _report_janken_result(state: GameState, cmd: ReportJankenResult) -> None:
 
 
 # ---------------------------------------------------------------- 番の進行
-
-
-def _begin_turn(state: GameState, player: int) -> None:
-    """番の最初に山札から必ず 1 枚引く。引けなければその時点で負け（p.309）。"""
-    state.turn_number += 1
-    state.current_player = player
-    state.energy_attachments_this_turn = 0
-    state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
-    state.phase = Phase.MAIN
-    state.add_event("turn_start", player=player)
-    if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
-        return
-    if not state.players[player].deck:
-        state.add_event("deck_out", player=player)
-        _finish(state, judge.deck_out(player))
-        return
-    _draw(state, player, 1)
-
-
-def _end_turn(state: GameState) -> None:
-    """番を終え、ポケモンチェックをして、相手の番にする（p.309「先攻プレイヤーの番が終わったら、ポケモンチェックを
-    おこない、後攻プレイヤーの番になります」）。
-
-    番の終わりに、この番の終わりにトラッシュすると決めたついているトレーナー（プラスパワーなど）を
-    トラッシュする（v0.2c）。ポケモンチェックはどちらの番でもない（p.323）ので、その前に行う。
-    勝敗が決まって対戦が終わったとき（``_finish``）は番の終わりが来ないので、ここは通らない。
-    次の番を始めるのはポケモンチェック（``_pokemon_check``）の最後。ポケモンチェックの中できぜつがあれば、
-    サイド・判定・交代のあとで始める（v0.3a）。
-
-    こんらん状態で「にげる」に失敗した記録（``PokemonInPlay.retreat_failed_turn``）は、番の終わりに消す。「今の自分の番では、
-    もう「にげる」を宣言することができません」「次の自分の番になれば、再び「にげる」を宣言することができます」（p.311。v0.3c）。
-
-    ワザによる持続する効果（v0.4b）のうち、はたらく番（``active_turn``。「次の相手の番」）が今の番のものも、番の終わりに消す
-    （p.236・p.18 のワザ解説「効果の持続：次の相手の番の最後」。``persistent.remove_expired_persistent_effects``）。ついている
-    トレーナーのトラッシュとは別の処理（持続する効果はカードではない）。ポケモンチェックの前なので、ポケモンチェックの
-    どくのダメージは防がない（ポケモンチェックはどちらの番でもない。p.323）。
-    """
-    _discard_expired_attachments(state)
-    remove_expired_persistent_effects(state)
-    for p in state.players:
-        for pokemon in p.in_play():
-            pokemon.retreat_failed_turn = None
-    state.add_event("turn_end", player=state.current_player)
-    _pokemon_check(state)
-
-
-def _discard_expired_attachments(state: GameState) -> None:
-    """有効期限（``AttachedTrainer.discard_at_end_of_turn``）が今の番のついているトレーナーをトラッシュする。
-
-    番のプレイヤーの場（バトル場 → ベンチ）、相手の場の順。トラッシュにあるカードには順番がない（p.312）。
-    """
-    for owner in (state.current_player, 1 - state.current_player):
-        for pokemon in state.players[owner].in_play():
-            expired = [t for t in pokemon.trainers if t.discard_at_end_of_turn == state.turn_number]
-            for attached in expired:
-                pokemon.trainers.remove(attached)
-                state.players[attached.player].discard.append(attached.card)
-                state.add_event(
-                    "discard_attached_trainer",
-                    player=attached.player,
-                    card=attached.card,
-                    pokemon=pokemon.card,
-                    pokemon_id=pokemon.pokemon_id,
-                    reason="end_of_turn",
-                )
-
-
-def _pokemon_check(state: GameState) -> None:
-    """ポケモンチェック（p.309・p.323「15 ポケモンチェック」）。番と番のあいだに 1 回ずつ行い、終わったら次の番を始める。
-
-    ポケモンチェックはどちらのプレイヤーの番でもなく、おたがいのプレイヤーのすべてのポケモンが対象（p.323）。
-    おこなうことの順番（p.323）:
-
-    1. 「ポケモンチェックで○○する」と指示されたこと: 対応カードにない
-    2. 「どく」のダメージ: どく状態のポケモンに、それぞれ ``Poison.damage``（通常は 10）ダメージ。ワザによる
-       ダメージではない（p.321「8」）ので、弱点・抵抗力・プラスパワー・ディフェンダーは関係しない（p.322）
-    3. 「ねむり」からさめるかどうか・4. 「マヒ」がなおるかどうか: ``_pokemon_check_sleep_and_paralysis``（v0.3b）
-
-    きぜつ: HP 以上のダメージを受けたポケモンはきぜつしてトラッシュに置かれ（p.323「16」）、対戦ポケモンが
-    いなくなったら、ベンチから代わりの対戦ポケモンを「すぐに」出す（p.311・p.313）。ポケモンチェックの手順に
-    きぜつの段階はない（p.323。kyuura knockout_timing）。2 のダメージをすべて与えてから、きぜつ・サイド・判定・交代を
-    行い（ワザのあとと同じ処理。``_after_knockouts``）、そのあとで 3・4 に進む（決定の ``context`` の ``"then"`` が
-    ``NEXT_TURN``）。きぜつしたポケモンは場にいないので、3・4 の対象にならない（ねむりのコインも投げない）。
-    代わりに出たポケモンはベンチにいたので特殊状態がない（p.322）。勝敗が決まったら対戦は終わり、3・4 はしない。
-
-    両方のプレイヤーのポケモンが「どく」できぜつする場合は、原典で決められない（「同時」かどうか（p.324）、
-    同時ならバトル場に出す順番（pp.323〜324 は「今が自分の番でないプレイヤー」が先とするが、ポケモンチェックは
-    どちらの番でもない）、サイドの順番を決めるプレイヤー（p.325「そのとき番をおこなっているプレイヤー」））ので、
-    ダメージを与える前に対戦を止める（``Phase.HALTED``、``UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT``）。
-    """
-    state.add_event("pokemon_check")
-    order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
-
-    # 2. 「どく」のダメージ（特殊状態になるのはバトル場のポケモンだけ。p.322）
-    poisoned = [
-        (owner, pokemon)
-        for owner in order
-        for pokemon in state.players[owner].in_play()
-        if pokemon.conditions.poison is not None
-    ]
-    knocked_owners = {
-        owner for owner, pokemon in poisoned
-        if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
-    }
-    if len(knocked_owners) > 1:
-        _halt(
-            state,
-            Halt(
-                code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
-                message=(
-                    "ポケモンチェックの「どく」のダメージで、両方のプレイヤーのポケモンがきぜつする。"
-                    "同時のきぜつか（p.324）、バトル場に出す順番（pp.323〜324。ポケモンチェックはどちらの番でもない。p.323）、"
-                    "サイドを取る順番を決めるプレイヤー（p.325）が公式ルール 2000.02.14版から決められないので、対戦を止める。"
-                ),
-                references=("P43 p.322", "P43 p.323", "P43 p.324", "P43 p.325", "NEO-2000-OFFICIAL-RULES", "knockout_timing"),
-            ),
-        )
-        return
-    for owner, pokemon in poisoned:
-        amount = pokemon.conditions.poison.damage
-        pokemon.damage += amount
-        state.add_event(
-            "poison_damage",
-            player=owner,
-            pokemon=pokemon.card,
-            pokemon_id=pokemon.pokemon_id,
-            amount=amount,
-            total_damage=pokemon.damage,
-        )
-
-    knocked = [
-        (owner, pokemon)
-        for owner in order
-        for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp
-    ]
-    if not knocked:
-        _pokemon_check_sleep_and_paralysis(state)
-        return
-    prize_takers = []
-    for owner, pokemon in knocked:
-        _knock_out(state, owner, pokemon, timing="pokemon_check")
-        prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤー（p.323）。番のプレイヤーではない
-    _after_knockouts(state, prize_takers, then=NEXT_TURN)
-
-
-def _pokemon_check_sleep_and_paralysis(state: GameState) -> None:
-    """ポケモンチェックの 3（ねむり）・4（マヒ）をして、次の番を始める（v0.3b。p.322・p.323）。
-
-    2 の「どく」のあと（きぜつがあれば、サイド・判定・交代のあと）に 1 回だけ呼ぶ。3・4 ではダメージを与えないので、
-    きぜつは起こらず、プレイヤーの決定も出ない。
-
-    3. ねむり状態のポケモンの側のプレイヤーが、コインを 1 枚投げる（``flip_coins``。``source`` は ``"pokemon_check"``、
-       ``effect`` は ``"sleep"``）。「おもて」ならねむり状態から回復し、「うら」ならねむり状態は続く（p.322・p.323）。
-       どちらのプレイヤーの番のあとのポケモンチェックでも投げる（p.322「ポケモンチェックのたびに」）。
-       ログ ``sleep_check``（``player``・``pokemon``・``pokemon_id``・``result``・``recovered``）。
-       両方のプレイヤーの対戦ポケモンがねむり状態なら、どちらが先にコインを投げるか（順番を決める人がいるか）が
-       原典で決まらず、順番で乱数の割り当て（どちらのコインがどの結果になるか）が変わるので、コインを投げる前に
-       対戦を止める（``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER``）。v0.3b の対応カードでは起こらない
-       （docs/pokemon-check-v0.3b.md）。
-    4. マヒ状態のポケモンは、マヒ状態になった番の「次の自分（そのポケモンの持ち主）の番」の終わりのポケモンチェックで
-       自動的に回復する（p.322・p.323）。コインは投げない。回復する番は ``conditions.paralysis_recovery_turn``。
-    """
-    order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
-    # 3. 「ねむり」からさめるかどうか（特殊状態になるのはバトル場のポケモンだけ。p.322）
-    asleep = [
-        (owner, state.players[owner].active)
-        for owner in order
-        if state.players[owner].active is not None and state.players[owner].active.conditions.asleep
-    ]
-    if len(asleep) > 1:
-        _halt(
-            state,
-            Halt(
-                code="UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER",
-                message=(
-                    "ポケモンチェックで、両方のプレイヤーの対戦ポケモンがねむり状態。p.323 の 3 は「ねむり状態になっている"
-                    "ポケモンの側のプレイヤーは、コインを投げます」とだけ書き、どちらが先に投げるか（順番を決めるプレイヤー）を"
-                    "公式ルール 2000.02.14版から決められない（ポケモンチェックはどちらの番でもない。p.323・p.325）。投げる順番で"
-                    "乱数の割り当てが変わるので、コインを投げる前に対戦を止める。"
-                ),
-                references=("P43 p.322", "P43 p.323", "P43 p.325", "NEO-2000-OFFICIAL-RULES"),
-            ),
-        )
-        return
-    for owner, pokemon in asleep:
-        flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
-        recovered = flips.results[0] is CoinSide.HEADS
-        state.add_event(
-            "sleep_check",
-            player=owner,
-            pokemon=pokemon.card,
-            pokemon_id=pokemon.pokemon_id,
-            result=flips.results[0].value,
-            recovered=recovered,
-        )
-        if recovered:
-            recover_from_sleep(state, owner, pokemon)
-    # 4. 「マヒ」がなおるかどうか
-    for owner in order:
-        pokemon = state.players[owner].active
-        if pokemon is None or not pokemon.conditions.paralyzed:
-            continue
-        if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
-            recover_from_paralysis(state, owner, pokemon)
-    _begin_turn(state, 1 - state.current_player)
-
-
-def _halt(state: GameState, halt: Halt) -> None:
-    """原典で決められない処理に当たったので、対戦を止める（``Phase.HALTED``。終端）。"""
-    state.phase = Phase.HALTED
-    state.halt = halt
-    state.decision = None
-    state.add_event("halted", code=halt.code)
 
 
 def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
@@ -687,31 +493,9 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
             "（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から決められないので扱わない",
         )
 
-    # 1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない）
-    p.hand.remove(cmd.card)
-    previous = target.card
-    target.evolution_stack = (*target.evolution_stack, previous)
-    target.card = cmd.card
-    target.evolved_turn = state.turn_number
-    state.add_event(
-        "evolve",
-        player=cmd.player,
-        pokemon_id=target.pokemon_id,
-        from_card=previous,
-        from_card_id=state.cards[previous].card_id,
-        to_card=cmd.card,
-        to_card_id=definition.id,
-    )
-    # 3. 特殊状態から回復させる
-    clear_special_conditions(state, cmd.player, target, EVOLVE)
-    # 3. その他の「持続する効果」から回復させる（p.310・p.323。v0.4b）。特殊状態とは別の処理。ついているトレーナーは
-    # 受け継ぐ（p.310。持続する効果ではない。v0.4a の E8'）
-    remove_persistent_effects(state, cmd.player, target, EVOLVE)
-    # 進化したポケモンは別のポケモンなので、にげるの失敗の記録を消す（特殊状態の解除とは別）
-    if target.retreat_failed_turn is not None:
-        target.retreat_failed_turn = None
-        state.add_event("retreat_failure_cleared", player=cmd.player, pokemon=target.card, pokemon_id=target.pokemon_id, reason=EVOLVE)
-    # 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること: 対応カードにない
+    # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
+    # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
+    place_evolution_card(state, cmd.player, target, cmd.card)
 
 
 def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
@@ -812,327 +596,6 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     remove_persistent_effects(state, cmd.player, active, RETREAT)
 
 
-def _use_attack(state: GameState, cmd: UseAttack) -> None:
-    """ワザを使う（p.309「バトル場にいるポケモンのワザを使う」、p.320、p.321）。
-
-    ワザの処理は、効果の登録表（``state.effects``）に登録された実装が行う。登録がないワザは使えない。
-    処理が終わったら（決定待ちがなければ）、きぜつ・サイド・交代のあと、自分の番は自動的に終わる。
-
-    ワザを使えるかの確認（番・ワザの位置・特殊状態・登録・必要なエネルギー）は、ワザの処理の前にすべて済ませる。
-    ワザの説明にあるコイン（v0.2d）は、処理（p.309 の手順 6）の中で投げるので、拒否した操作では乱数を
-    使わない（そもそも ``apply_command`` は複製した状態で処理する）。
-
-    p.309 の手順: 1. ワザを使うことができなくなる効果を受けているかをチェック（ねむり・マヒ状態のポケモンは
-    「ワザの使用を宣言できません」（手順 3）。p.322 も「ワザを使うことができません」。v0.3b） → 2. 必要なエネルギー
-    → 3. 宣言 → 4.（ワザを失敗させたり内容を変える効果。対応カードにない）→ 5. こんらん状態なら、持ち主がコインを 1 枚
-    投げ、「うら」ならワザがこんらんする（v0.3c）→ 6. ワザの説明にしたがって処理。
-
-    こんらん（v0.3c）: こんらん状態のポケモンもワザの使用を宣言できる（手順 1・3 にこんらんはない）。宣言（ログ ``attack``）の
-    あとでコインを投げ（``confusion_check``）、「おもて」ならワザにこんらんの影響はなく、手順 6 へ進む。「うら」ならワザが
-    こんらんし、もとのワザの内容に関わらず（ダメージ・効果・ワザ自身のコインはない）、ワザを使ったポケモン自身に 20
-    ダメージ（``_confusion_damage``。「弱点・抵抗力」の影響を受ける。p.322）。どちらの場合もワザは使ったことになり、
-    きぜつ・サイド・交代のあと番は終わる（p.309・p.322「ワザを使ったポケモン自身」・p.323「12」）。ワザの宣言が正しく
-    成り立ったあとのことなので、こんらんしたワザは不正なコマンド（``IllegalActionError``）ではない。
-
-    原典で決められない場合は、コインを投げる前に止める: ワザの説明の処理が決められない（``AttackEffect.problem``）、
-    こんらんのダメージにプラスパワー・ディフェンダーを計算するか（``_confusion_damage_problem``）、相手の「はんげき」（v0.10）で
-    ワザによるきぜつと特殊能力によるきぜつが重なりうるか（``effects.counterattack_double_knockout_problem``。
-    ``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT``。docs/counterattack-v0.10.md の C18）。
-
-    v0.10: 相手のワザのダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」）のダメージは、ワザのダメージの処理が
-    すべて終わったところで与える（``effects.finish_damage_elements``。p.89）。ダメージ以外の効果のあるワザの実装は、効果の前に自分で
-    呼ぶ。ダメージの要素だけのワザのため、``resolve`` のあとにもここで呼ぶ（与えるものがなければ何もしない）。きぜつ・サイド・交代は、
-    そのあとの ``_finish_attack``。
-    """
-    p = _require_turn(state, cmd.player)
-    attacker = p.active
-    attacker_def = state.card_def(attacker.card)
-    if not 0 <= cmd.attack_index < len(attacker_def.attacks):
-        raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
-    _require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
-    attack = attacker_def.attacks[cmd.attack_index]
-    effect = state.effects.attack_effect(attacker_def.id, attack)
-    if effect is None:
-        problem = state.effects.attack_problem(attacker_def.id, attack)
-        raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
-    if not can_pay_cost(attack.cost, state.energy_types(attacker)):
-        raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
-    use = AttackUse(cmd.player, attacker.pokemon_id, AttackKey(attacker_def.id, cmd.attack_index))
-    problem = effect.problem(state, use)
-    if problem is None and attacker.conditions.confused:
-        problem = _confusion_damage_problem(state, attacker)
-    if problem is None:
-        problem = counterattack_double_knockout_problem(state, use, effect)  # v0.10
-    if problem is not None:
-        raise problem
-
-    state.add_event("attack", player=cmd.player, pokemon=attacker.card, attack=attack.name_ja, attack_index=cmd.attack_index)
-    if attacker.conditions.confused and not _confusion_check(state, cmd.player, attacker, action="attack", effect=str(use.key)):
-        # ワザがこんらんした（p.309 の手順 5）。もとのワザの内容は処理しない
-        _confusion_damage(state, cmd.player, attacker, effect=str(use.key))
-        _finish_attack(state)
-        return
-    # ワザの説明にしたがって処理する（p.309 の手順 6）。実装は効果の登録表の AttackEffect。
-    # 実装が途中で決定を出したら、ここで止まり、決定が選ばれたあと _resume_attack から続ける（v0.4d の「ふきとばし」は
-    # 相手が決定する。番のプレイヤーは変えない。決定を待つ間は Phase.DECISION なので、ほかのコマンドは _require_turn で拒否する。
-    # p.309「ワザを使っている最中に、他のことをしてはいけません」）
-    effect.resolve(state, use)
-    finish_damage_elements(state, use)  # v0.10: ダメージの要素だけのワザの「はんげき」（決定を出したワザは、出す前に与えている）
-    if state.decision is None:
-        _finish_attack(state)
-
-
-def _confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
-    """こんらん状態のポケモンがワザを使う・にげるときのコイン（v0.3c。p.309 の手順 5・p.311 の手順 3・p.322）。
-
-    持ち主（ワザを使う・「にげる」を宣言したポケモン側のプレイヤー）がコインを 1 枚投げ、「おもて」なら成功（True）。
-    ログ ``coin_flip``（``source: "confusion"``、``effect`` はワザなら ``AttackKey`` の文字列、にげるなら ``"retreat"``）と
-    ``confusion_check``（``player``・``pokemon``・``pokemon_id``・``action``（``attack``／``retreat``）・``result``・
-    ``succeeded``）。ワザの説明のコイン（``source: "attack"``）・ねむりのコイン（``"pokemon_check"``）と区別できる。
-    """
-    flips = flip_coins(state, player, 1, source="confusion", effect=effect, card=pokemon.card, pokemon_id=pokemon.pokemon_id)
-    succeeded = flips.results[0] is CoinSide.HEADS
-    state.add_event(
-        "confusion_check",
-        player=player,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        action=action,
-        result=flips.results[0].value,
-        succeeded=succeeded,
-    )
-    return succeeded
-
-
-def _confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
-    """こんらんしたワザの 20 ダメージを、原典で決められる形で計算できないなら、その理由（v0.3c）。
-
-    p.322 は「このダメージは「弱点・抵抗力」の影響を受けます」とだけ書く。こんらんのダメージが「ワザによるダメージ」
-    （p.321「8」）かは書かれていないので、ワザを使うポケモンについているプラスパワー（「このカードをつけているポケモンの
-    ワザが…ダメージを与えるとき」）・ディフェンダー（「ワザによるダメージを受けるとき」。p.257）の効果を計算するかを決め
-    られない。それらのカードがついていなければ問題はない。ついていれば、コインを投げる前に止める（コインが「おもて」なら
-    問題はないが、投げる前には分からない）。
-    """
-    modifiers = attack_damage_modifiers(state, pokemon, pokemon)
-    if not modifiers:
-        return None
-    return UnsupportedError(
-        "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
-        f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
-        "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
-        "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
-    )
-
-
-def _confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> None:
-    """ワザがこんらんしたとき、ワザを使ったポケモン自身に 20 ダメージ（v0.3c。p.309 の手順 5・p.322）。
-
-    弱点・抵抗力の影響を受ける（``damage.calculate_confusion_damage``）。ワザの説明による自分へのダメージ
-    （``effects.deal_attack_damage`` の ``SELF``。v0.2f）とは別の規定なので、そちらを通さない。ログは ``confusion_damage``
-    （``player``・``pokemon``・``pokemon_id``・``effect``（こんらんしたワザの ``AttackKey``）・``amount``・``steps``・
-    ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
-    きぜつはワザのあとと同じ ``_finish_attack`` で判定する（サイドは相手が取る。p.323）。
-    """
-    calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
-    pokemon.damage += calc.final
-    state.add_event(
-        "confusion_damage",
-        player=player,
-        pokemon=pokemon.card,
-        pokemon_id=pokemon.pokemon_id,
-        effect=effect,
-        amount=calc.final,
-        steps=calc.steps,
-        weakness=calc.weakness_applied,
-        resistance=calc.resistance_applied,
-        total_damage=pokemon.damage,
-    )
-
-
-def _require_not_asleep_or_paralyzed(pokemon: PokemonInPlay, what: str) -> None:
-    """ねむり状態・マヒ状態のバトル場のポケモンは、ワザを使えず、「にげる」を宣言できない（p.309・p.311・p.322。v0.3b）。"""
-    if pokemon.conditions.asleep:
-        raise IllegalActionError("POKEMON_ASLEEP", f"バトル場のポケモン {pokemon.pokemon_id} はねむり状態なので、{what}")
-    if pokemon.conditions.paralyzed:
-        raise IllegalActionError("POKEMON_PARALYZED", f"バトル場のポケモン {pokemon.pokemon_id} はマヒ状態なので、{what}")
-
-
-def _finish_attack(state: GameState) -> None:
-    """ワザの処理のあと: HP 以上のダメージを受けたポケモンはきぜつ（p.315, p.319, p.323）→ サイド → 交代 → 番の終わり。
-
-    ワザの要素（相手へのダメージ・コイン・自分へのダメージなど）をすべて処理してから、場のすべてのポケモンを
-    確かめる。相手のポケモンがワザの途中で HP 以上のダメージを受けても、残りの要素は処理する（p.309「それ以降の
-    内容を無視してはいけません」）。1 つのワザで複数のポケモンがきぜつしたら「同時に『きぜつ』した」（p.324）
-    ので、ログの ``knock_out`` に ``simultaneous`` を加える（1 匹だけなら v0.1 と同じ形）。
-    トラッシュには順番がない（p.312）ので、相手のポケモン（バトル場 → ベンチ）、自分のポケモンの順に処理する。
-    自分のワザで自分のポケモンがきぜつするのは v0.2f から（ピカチュウの「でんげき」）。
-    """
-    attacker_side = state.current_player
-    knocked = [
-        (owner, pokemon)
-        for owner in (1 - attacker_side, attacker_side)
-        for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp
-    ]
-    prize_takers = []
-    for owner, pokemon in knocked:
-        _knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
-        prize_takers.append(1 - owner)  # きぜつしたポケモンの相手側のプレイヤーがサイドを取る（p.323）
-    _after_knockouts(state, prize_takers)
-
-
-def _knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None) -> None:
-    """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
-
-    場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
-    進化ポケモン（v0.4a）は、重なっているカード（たねポケモンと進化カード。2 進化（v0.4c）なら 3 枚）をすべてトラッシュ
-    する。きぜつしたのは 1 匹なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` は
-    いちばん上のカード、``evolution_stack`` は下のカード（進化していれば。下から順）。
-    ``timing``: ポケモンチェックの中のきぜつなら ``"pokemon_check"``（ログに書く。v0.3a）。ワザのあとは None。
-    """
-    p = state.players[owner]
-    if p.active is pokemon:
-        p.active = None
-    else:
-        p.bench.remove(pokemon)
-    # 進化していれば、重なっているポケモンのカードもすべてトラッシュする（p.313・p.319・p.323。v0.4a）。サイドは 1 匹ぶん
-    p.discard.extend(pokemon.cards())
-    p.discard.extend(pokemon.energy)
-    # ついていたトレーナーカードもいっしょにトラッシュする（「それについていたすべてのカード」p.323。v0.2c）
-    extra = {}
-    if pokemon.evolution_stack:
-        extra["evolution_stack"] = pokemon.evolution_stack  # v0.4a: いちばん上のカード（pokemon）の下にあったカード
-    if pokemon.trainers:
-        for attached in pokemon.trainers:
-            state.players[attached.player].discard.append(attached.card)
-        extra["discarded_trainers"] = tuple(t.card for t in pokemon.trainers)
-    if simultaneous:
-        extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
-    if timing is not None:
-        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした
-    state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
-    # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
-    remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
-
-
-def _after_knockouts(state: GameState, prize_takers=(), then: str | None = None) -> None:
-    """きぜつの後: サイドを取る → 勝ち負けの判定 → バトル場にポケモンを出す → 続き（p.323 の記述の順）。
-
-    ワザの処理の後（続きは番の終わり）と、ポケモンチェックの中のきぜつの後（v0.3a。続きは次の番の始まり）で使う。
-
-    ``prize_takers`` はサイドを 1 枚取るプレイヤーの並び（きぜつ 1 匹につき 1 つ。きぜつしたポケモンの相手側の
-    プレイヤー。p.323）。残りのサイドより多くは取らない。勝ち負けは、すべてのサイドを取ってから p.311 の表で
-    判定する（両方が同時にサイドを取り終えたらサドン・デス。p.311・p.323）。
-
-    サイドを取る順番: 同時にきぜつしたとき（p.324）、両方のプレイヤーがサイドを取る。その順番は、同じタイミングの
-    ことがらとして番のプレイヤーが決める（p.325）。ただし、サイドは表を見ないで選び（p.312）、取ったカードは
-    取ったプレイヤーの手札に入る（相手に見えない）ので、どちらが先に取っても、選べるもの・見える情報・結果
-    （勝ち負けはすべて取ってから判定する）は変わらない。そのため、順番を選ぶ決定は出さず、番のプレイヤーから
-    取る並びに正規化している（相手のポケモンのきぜつのぶんが先。docs/simultaneous-ko-v0.2f.md）。
-
-    ``then``: 交代のあとの続き。None ならワザのあと（番を終える ``_end_turn``）、``NEXT_TURN`` ならポケモンチェックの
-    2 のあと（3・4 をして次の番を始める ``_pokemon_check_sleep_and_paralysis``。v0.3a は次の番を始めるだけだった）。
-    決定の ``context`` の ``"then"`` に書いて、再開したときに使う（ポケモンチェックを二度しない・番の終わりを二度しない
-    ため）。ワザのあとの決定には書かない（v0.2f と同じ形）。
-    """
-    budget = {player: len(state.players[player].prizes) for player in PLAYERS}
-    queue = []
-    for player in prize_takers:
-        if budget[player] > 0:
-            queue.append(player)
-            budget[player] -= 1
-    _next_prize_or_judge(state, tuple(queue), then)
-
-
-def _then_context(then: str | None) -> tuple[tuple[str, str], ...]:
-    return () if then is None else (("then", then),)
-
-
-def _next_prize_or_judge(state: GameState, queue: tuple[int, ...], then: str | None = None) -> None:
-    if queue:
-        player = queue[0]
-        push_decision(
-            state,
-            kind=TAKE_PRIZE,
-            player=player,
-            options=range(len(state.players[player].prizes)),  # サイドの位置（表は見ない）
-            resume="take_prize",
-            context=(("remaining", queue[1:]), *_then_context(then)),
-        )
-        return
-
-    result = judge.decide(
-        all_prizes_taken=[not state.players[p].prizes for p in PLAYERS],
-        cannot_field_active=[state.players[p].active is None and not state.players[p].bench for p in PLAYERS],
-    )
-    if result is not None:
-        _finish(state, result)
-        return
-
-    # 両方同時なら、番でないプレイヤーが先に出し、番のプレイヤーはそれを見てから出す（pp.323-324。決定の順番）
-    order = (1 - state.current_player, state.current_player)
-    queue = tuple(p for p in order if state.players[p].active is None)
-    if then == NEXT_TURN and len(queue) > 1:
-        # ポケモンチェックの中では、出す順番が決まらない（どちらの番でもない）。その場合は _pokemon_check が止める
-        raise RuntimeError("ポケモンチェックのあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
-    _next_promotion_or_end(state, queue, then)
-
-
-def _next_promotion_or_end(state: GameState, queue: tuple[int, ...], then: str | None = None) -> None:
-    if queue:
-        player = queue[0]
-        push_decision(
-            state,
-            kind=PROMOTE_ACTIVE,
-            player=player,
-            options=[pokemon.pokemon_id for pokemon in state.players[player].bench],
-            resume="promote_active",
-            context=(("remaining", queue[1:]), *_then_context(then)),
-        )
-        return
-    if then == NEXT_TURN:
-        # ポケモンチェックの 2 のきぜつ・交代が終わった。3・4 をして次の番を始める（番の終わり・2 はもうした。v0.3b）
-        _pokemon_check_sleep_and_paralysis(state)
-    else:
-        _end_turn(state)
-
-
-def _resume_take_prize(state: GameState, decision, choices: tuple[int, ...]) -> None:
-    """サイドカードから表を見ないで 1 枚を選び、手札に加える（p.312, p.323）。"""
-    player = decision.player
-    prizes = state.players[player].prizes
-    uid = prizes.pop(choices[0])
-    state.players[player].hand.append(uid)
-    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
-    _next_prize_or_judge(state, decision.context_value("remaining", ()), decision.context_value("then"))
-
-
-def _resume_promote_active(state: GameState, decision, choices: tuple[int, ...]) -> None:
-    """ベンチから新しいバトル場のポケモンを出す（p.313, p.323）。"""
-    p = state.players[decision.player]
-    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-    p.active = p.bench.pop(index)
-    state.add_event("promote_active", player=decision.player, pokemon=p.active.card)
-    _next_promotion_or_end(state, decision.context_value("remaining", ()), decision.context_value("then"))
-
-
-def _resume_attack(state: GameState, decision, choices: tuple[int, ...]) -> None:
-    """ワザの効果の途中で出した決定の続き。決定がなくなったら、ワザの後の処理に進む。
-
-    ワザの宣言・エネルギーの確認・こんらんのコイン・それまでの要素（ダメージなど）は、決定を出す前に済んでいるので、ここでは
-    繰り返さない（実装の ``resume`` が決定のあとの要素だけを処理する）。決定は ``_resolve`` が閉じてから呼ぶので、同じ決定で
-    二度は来ない。決定をしたのが相手（v0.4d の ``FORCED_SWITCH``）でも、ワザのあとの処理（きぜつ・サイド・交代・番の終わり）は
-    番のプレイヤーのワザのあととして ``_finish_attack`` が 1 回だけ行う。
-    """
-    player, pokemon_id, card_id, attack_index = decision.context_value("use")
-    use = AttackUse(player, pokemon_id, AttackKey(card_id, attack_index))
-    entry = state.effects.attack_entry(card_id, attack_index)
-    entry.effect.resume(state, use, decision, choices)
-    finish_damage_elements(state, use)  # v0.10: 決定のあとのダメージの要素の「はんげき」（今の対応カードでは起こらない）
-    if state.decision is None:
-        _finish_attack(state)
-
-
 # ---------------------------------------------------------------- トレーナー（v0.2b）
 
 
@@ -1216,7 +679,7 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
     - 手順（p.311）: 1. 使うポケモンを示し、名前を伝えて宣言する（ログ ``pokemon_power``）→ 2. 使うための条件にしたがう（実装の
       ``check_usable``。したがえなければ使えない）→ 3. 説明にしたがって処理する（実装の ``resolve``）。確かめることはどれも宣言の
       前に済ませるので、拒否したら状態・乱数・ログは変わらない。
-    - 使っても番は終わらない（``Phase.MAIN`` のまま。``_finish_attack`` を呼ばない）。「特に指示されていないかぎり、特殊能力は
+    - 使っても番は終わらない（``Phase.MAIN`` のまま。ワザのあとの処理（解決の基盤の ``flow._finish_attack``）を通らない）。「特に指示されていないかぎり、特殊能力は
       いつでも、何度でも使用を宣言することができます」（p.323）ので、回数を数えない（回数の制限のある特殊能力は未対応）。
     - v0.8: 常にはたらいている特殊能力（``effects.SuppressOtherPowers``。ベトベトンの「かがくへんかガス」）は宣言しないので、使おうと
       したら ``POWER_NOT_DECLARABLE``（v0.9 の自動的にはたらく特殊能力 ``effects.AttackImmunityOnHeads``（ゴーストの「とうめい」）も
@@ -1271,101 +734,45 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower) -> None:
         raise RuntimeError(f"特殊能力 {use.key} の処理のあとで、番が続いていない（v0.5〜v0.7 の特殊能力は決定を出さない。エンジンの不具合）")
 
 
-# ---------------------------------------------------------------- 保留中の決定に答える
+# ---------------------------------------------------------------- 保留中の決定に答える・コマンドの振り分け
 
 
-_RESUMERS = {
-    "take_prize": _resume_take_prize,
-    "promote_active": _resume_promote_active,
-    "attack": _resume_attack,
-    "trainer": _resume_trainer,
-}
-
-
-def _current_decision(state: GameState):
-    """決定を待つ段階の、保留中の決定。段階と決定が合わない状態（呼び出し側が書き換えた）は受け付けない。"""
-    if state.decision is None:
-        raise StateIntegrityError([f"{state.phase.value} なのに決定がない"])
-    return state.decision
-
-
-def _resolve(state: GameState, choices: tuple[int, ...]) -> None:
-    """確かめ終わった選択で、保留中の決定を閉じ、再開先から処理を続ける。"""
+def _answer_decision(state: GameState, cmd, context: resolution.Context) -> None:
+    """保留中の決定に答える（``ResolveDecision``・v0.1 からある形の ``TakePrize``・``PromoteActive``）。確認（決定を待つ段階・決定する
+    プレイヤー・決定の番号・選択）は ``checks.decision_choices``（v0.15 と同じ確認・同じ順番・同じコード）。確かめ終わった選択で、再開先が
+    解決の基盤の再開先（``resolution.RESUMES``: ワザの途中・きぜつの判定・サイド・きぜつしたあとの特殊能力・バトル場に出す）なら解決の基盤、
+    トレーナーの決定（``trainer``）なら ``_resume_trainer`` で続ける（決定そのものはログに残さない。選んだ結果を再開した処理がログに残す）。"""
+    choices = decision_choices(state, cmd)
     decision = state.decision
+    if decision.resume in resolution.RESUMES:
+        resolution.resume_decision(state, choices, context)
+        return
+    if decision.resume != "trainer":
+        raise RuntimeError(f"決定の再開先 {decision.resume!r} を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）")
     state.decision = None
-    # 決定そのものはログに残さない（v0.1 のログの形を保つ。選んだ結果は再開した処理がログに残す）
-    _RESUMERS[decision.resume](state, decision, choices)
+    _resume_trainer(state, decision, choices)
 
 
-def _resolve_decision(state: GameState, cmd: ResolveDecision) -> None:
-    """保留中の決定に答える（どの種類の決定にも使える）。"""
-    _require_phase(state, *DECISION_PHASES)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"この決定をするのはプレイヤー {decision.player}")
-    if cmd.decision != decision.id:
-        raise IllegalActionError("WRONG_DECISION", f"今の決定の番号は {decision.id}（{cmd.decision} を指している）")
-    check_choices(decision, cmd.choices)
-    _resolve(state, cmd.choices)
+def _engine(handler: Callable[[GameState, object], None]) -> Callable[[GameState, object, resolution.Context], None]:
+    """範囲外のコマンドの処理（解決の設定を使わない）。"""
+    return lambda state, command, context: handler(state, command)
 
 
-def _take_prize(state: GameState, cmd: TakePrize) -> None:
-    """サイドを取る決定に、サイドの位置で答える（v0.1 からある形。``ResolveDecision`` と同じ処理）。"""
-    _require_phase(state, Phase.TAKE_PRIZE)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"プレイヤー {player} が取るサイドはない")
-    if cmd.index not in decision.options:
-        raise IllegalActionError("INVALID_PRIZE_INDEX", f"サイドの位置は 0〜{len(decision.options) - 1}")
-    _resolve(state, (cmd.index,))
-
-
-def _promote_active(state: GameState, cmd: PromoteActive) -> None:
-    """バトル場に出す決定に、ベンチのポケモンのカードの uid で答える（v0.1 からある形。
-    ``ResolveDecision`` では場のポケモンの番号で答える）。"""
-    _require_phase(state, Phase.PROMOTE_ACTIVE)
-    player = _require_player(cmd.player)
-    decision = _current_decision(state)
-    if decision.player != player:
-        raise IllegalActionError("NOT_YOUR_DECISION", f"今バトル場にポケモンを出すのはプレイヤー {decision.player}")
-    p = state.players[player]
-    index = p.bench_index(cmd.pokemon)
-    if index is None:
-        raise IllegalActionError("NOT_ON_BENCH", f"{cmd.pokemon!r} は自分のベンチにいない")
-    _resolve(state, (p.bench[index].pokemon_id,))
-
-
-def _end_turn_command(state: GameState, cmd: EndTurn) -> None:
-    """ワザを使わないで自分の番を終える（p.309）。"""
-    _require_turn(state, cmd.player)
-    state.add_event("end_turn_without_attack", player=cmd.player)
-    _end_turn(state)
-
-
-def _finish(state: GameState, result: GameResult) -> None:
-    state.result = result
-    state.phase = Phase.SUDDEN_DEATH if result.outcome == "sudden_death" else Phase.GAME_OVER
-    state.decision = None
-    state.add_event("game_end", outcome=result.outcome, winner=result.winner, conditions=result.conditions)
-
-
-_HANDLERS: dict[type, Callable[[GameState, object], None]] = {
-    PlaceStartingPokemon: _place_starting_pokemon,
-    DrawMulliganCards: _draw_mulligan_cards,
-    ReportJankenResult: _report_janken_result,
-    PlayBasicToBench: _play_basic_to_bench,
-    AttachEnergy: _attach_energy,
-    Retreat: _retreat,
-    UseAttack: _use_attack,
-    EndTurn: _end_turn_command,
-    TakePrize: _take_prize,
-    PromoteActive: _promote_active,
-    ResolveDecision: _resolve_decision,
-    PlayTrainer: _play_trainer,
-    EvolvePokemon: _evolve_pokemon,
-    UsePokemonPower: _use_pokemon_power,
+_HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] = {
+    PlaceStartingPokemon: _engine(_place_starting_pokemon),
+    DrawMulliganCards: _engine(_draw_mulligan_cards),
+    ReportJankenResult: _engine(_report_janken_result),
+    PlayBasicToBench: _engine(_play_basic_to_bench),
+    AttachEnergy: _engine(_attach_energy),
+    Retreat: _engine(_retreat),
+    UseAttack: resolution.handle,  # ワザ（解決の基盤。v0.16b）
+    EndTurn: resolution.handle,  # 番の終わり（解決の基盤。v0.16b）
+    TakePrize: _answer_decision,
+    PromoteActive: _answer_decision,
+    ResolveDecision: _answer_decision,
+    PlayTrainer: _engine(_play_trainer),
+    EvolvePokemon: _engine(_evolve_pokemon),
+    UsePokemonPower: _engine(_use_pokemon_power),
 }
 
 
@@ -1380,8 +787,14 @@ def check_invariants(state: GameState) -> list[str]:
     - カードの保存則: 対戦のすべてのカード（``state.cards``）が、持ち主のゾーンのどこか 1 か所にだけある。
       未知の番号のカードはない。``new_game`` で作った対戦では、カードの組がデッキリストと同じ。
     - 場の形: 場のポケモンはポケモンのカード、ついているのは基本エネルギー、ダメージは 10 の倍数で HP 未満（v0.10: ワザの途中の
-      決定を待つ間の、相手の「はんげき」で HP 以上になったワザを使ったポケモンだけを除く。``_counter_knocked_out_attacker_awaiting``）、
+      決定を待つ間の、相手の「はんげき」で HP 以上になったワザを使ったポケモンだけを除く。``_counter_knocked_out_attacker_awaiting``。
+      v0.11: 「こんじょう」を使うかの決定を待つ間の、その対象のポケモンと、同じワザで HP 以上になったワザを使ったポケモンを除く。
+      ``_ko_prevention_awaiting``。v0.12: ワザの途中の決定を待つ間の、相手の「ほのおのかべ」で HP 以上になったワザを使ったポケモンも
+      ``_counter_knocked_out_attacker_awaiting`` で除く）、
       ベンチは 5 匹まで、サイドはルールの枚数まで。
+    - 「ふしちょう」を使うかの決定（v0.12。再開先 ``"post_knockout"``）を待つ間は、バトル場が空のプレイヤーがいてよい（きぜつの処理のあと、
+      バトル場に出す前）。決定と、その前のサイドを取る決定の候補（``context`` の ``"post_knockout"``）は
+      ``_post_knockout_decision_problems``・``_post_knockout_candidate_problems`` が確かめる。
     - 段階との対応: 番の途中は両方のバトル場にポケモンがいる。サイドを取る・バトル場に出す段階には、
       それを待っているプレイヤーがいる。終わった段階には結果か止めた理由がある。
     - 特殊状態（v0.3a）: 特殊状態があるのはバトル場のポケモンだけ。どくのダメージは 10 の倍数の正の数。
@@ -1436,7 +849,9 @@ def check_invariants(state: GameState) -> list[str]:
                 continue
             if pokemon.damage < 0 or pokemon.damage % 10:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
-            if pokemon.damage >= definition.hp and not _counter_knocked_out_attacker_awaiting(state, player, pokemon):
+            if pokemon.damage >= definition.hp and not (
+                _counter_knocked_out_attacker_awaiting(state, player, pokemon) or _ko_prevention_awaiting(state, player, pokemon)
+            ):
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
             if pokemon.evolution_stack and evolve_events is None:
                 evolve_events = _evolve_events_by_pokemon(state)  # 進化しているポケモンがいるときだけ、ログを 1 回読む（v0.4c）
@@ -1498,8 +913,10 @@ def check_invariants(state: GameState) -> list[str]:
     if not 1 <= state.next_decision_id:
         problems.append(f"次の決定の番号 {state.next_decision_id!r} が正しくない")
 
+    # v0.12: 「ふしちょう」を使うかの決定（きぜつの処理のあと、バトル場に出す前。再開先 "post_knockout"）を待つ間も、バトル場が空のことがある
+    after_knockout = phase is Phase.DECISION and state.decision is not None and state.decision.resume == "post_knockout"
     for player, p in enumerate(state.players):
-        if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE):
+        if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE) and not after_knockout:
             problems.append(f"プレイヤー {player} のバトル場にポケモンがいないまま {phase.value} になっている")
     if phase is Phase.MAIN:
         if state.current_player not in PLAYERS:
@@ -1562,24 +979,48 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
     if len(stack) > len(EVOLUTION_STAGES) - 1:
         problems.append(f"{where} に {len(stack) + 1} 枚のカードが重なっている（2 進化までの 3 枚まで。p.319）")
     chain = (*stack, pokemon.card)
+    events = () if evolve_events is None else evolve_events.get(pokemon.pokemon_id, ())
     for position, uid in enumerate(chain):
         definition = state.card_def(uid)
-        expected = EVOLUTION_STAGES[min(position, len(EVOLUTION_STAGES) - 1)]
-        if definition.category != "pokemon" or definition.stage != expected:
-            if position == 0:
+        if definition.category != "pokemon" or definition.stage not in EVOLUTION_STAGES:
+            problems.append(
+                f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
+                f" 進化の段階のポケモンのカードではない）"
+            )
+            continue
+        if position == 0:
+            if not definition.is_basic_pokemon:
                 problems.append(f"{where} のいちばん下のカード {uid} がたねポケモンではない")
-            else:
-                problems.append(
-                    f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
-                    f" {definition.stage!r} で、{expected} ではない）"
-                )
-        if position:
-            below = state.card_def(chain[position - 1])
+            continue
+        below = state.card_def(chain[position - 1])
+        if below.category != "pokemon" or below.stage not in EVOLUTION_STAGES:
+            continue
+        step = EVOLUTION_STAGES.index(definition.stage) - EVOLUTION_STAGES.index(below.stage)
+        if step == 1:
             if definition.evolves_from != below.name_ja:
                 problems.append(
                     f"{where} のカードの重なりが正しくない（{below.name_ja} の上に {definition.name_ja}。{definition.name_ja} は"
                     f" {definition.evolves_from!r} から進化）"
                 )
+        elif step == 2 and below.is_basic_pokemon:
+            # v0.25: 1 進化を飛ばした重なり（たねポケモン + 2 進化。トレーナーの効果。docs/pokemon-breeder-v0.25.md）。系統は、2 進化カードの進化元の
+            # 1 進化カード（写しのカードのデータ）の進化元の名前で確かめ、その移り変わりの進化のログ（evolve の trainer_card）を要る
+            # （通常の操作ではできない重ね方なので、ログのない重なりは認めない。テストの盤面（build_test_state）でも同じ）
+            if skipped_stage1_basic(definition) != below.name_ja:
+                problems.append(
+                    f"{where} の重なりが正しくない（たねポケモン {below.name_ja} の上に 2 進化の {definition.name_ja}。"
+                    f"{definition.name_ja} の進化元の 1 進化（{definition.evolves_from!r}）の進化元は {list(definition.stage1_evolves_from)}）"
+                )
+            elif not any((e.get("from_card"), e.get("to_card")) == (chain[position - 1], uid) and "trainer_card" in e for e in events):
+                problems.append(
+                    f"{where} の重なりが正しくない（たねポケモン {below.name_ja} の上に 2 進化の {definition.name_ja}。1 進化を飛ばして"
+                    "重ねるトレーナーの進化のログ（evolve の trainer_card）がない）"
+                )
+        else:
+            problems.append(
+                f"{where} の重なりが正しくない（{len(chain)} 枚のカードの下から {position + 1} 枚目 {uid}（{definition.name_ja}）が"
+                f" {definition.stage!r} で、すぐ下の {below.name_ja}（{below.stage}）の次の段階ではない）"
+            )
     if evolved is None:
         problems.append(f"{where} は進化しているのに、進化した番がない")
         return problems
@@ -1640,6 +1081,7 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
                 f"{where} の進化のログ（{event.get('from_card')!r} → {event.get('to_card')!r}、プレイヤー {event.get('player')!r}）が、"
                 f"重なり（{expected[0]} → {expected[1]}、プレイヤー {player}）と対応しない"
             )
+        problems.extend(_skip_evolution_log_problems(state, player, where, event, expected))
         if event["turn"] <= previous_turn:
             problems.append(
                 f"{where} が {event['turn']} 番に進化しているが、場に出た番・前の進化の番（{previous_turn} 番）より後ではない"
@@ -1649,6 +1091,25 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
     if events and events[-1]["turn"] != pokemon.evolved_turn:
         problems.append(f"{where} の最後の進化のログは {events[-1]['turn']} 番なのに、進化した番が {pokemon.evolved_turn}")
     return problems
+
+
+def _skip_evolution_log_problems(state: GameState, player: int, where: str, event, transition: tuple[int, int]) -> list[str]:
+    """進化のログ ``evolve`` の ``trainer_card``（v0.25）: たねポケモンの上に 2 進化カードを重ねた（1 進化を飛ばした）移り変わりだけに
+    あり、そのときの番に持ち主が使った、1 進化を飛ばして進化させるトレーナー（``TrainerEffect.skips_stage1_evolution``。
+    docs/pokemon-breeder-v0.25.md）のカードの uid。通常の操作（``EvolvePokemon``）の移り変わりにはない。"""
+    lower, upper = (state.card_def(uid) if uid in state.cards else None for uid in transition)
+    skip = lower is not None and upper is not None and lower.is_basic_pokemon and upper.is_stage2_pokemon
+    trainer = event.get("trainer_card")
+    if not skip:
+        if "trainer_card" in event:
+            return [f"{where} の進化のログ（{transition[0]} → {transition[1]}）に trainer_card {trainer!r} があるが、1 進化を飛ばした進化ではない"]
+        return []
+    if type(trainer) is not int or trainer not in state.cards or state.cards[trainer].owner != player:
+        return [f"{where} の 1 進化を飛ばした進化のログの trainer_card {trainer!r} が、持ち主 {player} のカードではない"]
+    entry = state.effects.trainer_entry(state.cards[trainer].card_id)
+    if entry is None or not entry.effect.skips_stage1_evolution:
+        return [f"{where} の 1 進化を飛ばした進化のログの trainer_card {trainer}（{state.cards[trainer].card_id}）が、1 進化を飛ばして進化させるトレーナーではない"]
+    return []
 
 
 def _condition_problems(state: GameState, player: int, p: PlayerState, pokemon: PokemonInPlay) -> list[str]:
@@ -1702,6 +1163,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     - 重複: 同じ種類の効果は 1 つまで（v0.4b の対応カードでは、前の効果が消えるまで次の「かたまる」を使えない）
     - ログとの対応: 同じポケモン・種類・番の ``persistent_effect_added`` があり、そのあとに、この効果を消したはずの
       イベント（``persistent_effect_removed``・``evolve``・``retreat``・``switch``・``forced_switch``（v0.4d））がない
+    - v0.12 の ``Retaliation``（「ほのおのかべ」）: ``PreventDamage`` と同じ確認（自分自身・持ち主の番・次の相手の番・期限・バトル場だけ）に
+      加えて、``attack_index`` がこのカードのワザの位置で、そのワザに ``DamageAndRetaliation`` が登録され、``amount`` がその実装の値
+      （v0.13: 「こうらがえし」（``ReturnReceivedDamage``）も同じ確認で、決め方 ``basis`` と量（None）を登録された実装と照らす）
     """
     effects = pokemon.persistent_effects
     where = f"ポケモン {pokemon.pokemon_id} の持続する効果"
@@ -1736,8 +1200,26 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} を、持ち主の番でない {effect.created_turn} 番に与えている")
         if state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
             problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
+        if isinstance(effect, Retaliation):
+            problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
+
+
+def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Retaliation, where: str) -> list[str]:
+    """「ほのおのかべ」（v0.12）・「こうらがえし」（v0.13）の持続する効果の、ワザの位置と与えるダメージの決め方・量が、このポケモンの
+    カードの登録されたワザと合うか（登録された実装の ``retaliation_terms``。「ほのおのかべ」は (``fixed``, 10)、「こうらがえし」は
+    (``received_damage``, None)）。"""
+    if type(effect.attack_index) is not int or (effect.amount is not None and type(effect.amount) is not int):
+        return [f"{where} {effect!r} のワザの位置・与えるダメージが整数ではない"]
+    definition = state.card_def(pokemon.card)
+    if not 0 <= effect.attack_index < len(definition.attacks):
+        return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
+    entry = state.effects.attack_entry(definition.id, effect.attack_index)
+    terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
+    if terms is None or terms() != (effect.basis, effect.amount):
+        return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
 
 
 def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
@@ -1800,7 +1282,10 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
     の C16・C30）。ほかのポケモン・ほかの段階・決定のないときは、これまでどおり HP 以上のダメージで場に残ることを許さない。
 
     決定の続きの情報（``context`` の ``"use"``）がこのポケモンを指し、今の番のログで、最後のワザの宣言（``attack``）のあとに、このポケモンを
-    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。"""
+    HP 以上にした「はんげき」（``counterattack`` の ``knocked_out``）があることを確かめる（印や一覧を状態に加えない）。
+
+    v0.12: 相手の R団のファイヤーの「ほのおのかべ」のダメージ（ログ ``damage`` の ``retaliation``。このポケモンの番号で、今のダメージ）で
+    HP 以上になった場合も同じ（「ほのおのかべ」のダメージもダメージの処理のあと、効果の前。p.89 の「ふきとばし」の例。W23）。"""
     d = state.decision
     if state.phase is not Phase.DECISION or d is None or d.resume != "attack":
         return False
@@ -1812,7 +1297,190 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
             return False
         if event["kind"] == "counterattack" and event["attacker_pokemon_id"] == pokemon.pokemon_id and event["knocked_out"]:
             return True
+        if (event["kind"] == "damage" and event.get("retaliation") and event.get("pokemon_id") == pokemon.pokemon_id
+                and event.get("total_damage") == pokemon.damage):
+            return True
     return False
+
+
+def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPlay) -> bool:
+    """v0.11: 「こんじょう」を使うかの決定（``KO_PREVENTION``。再開先 ``"knock_out"``）を待つ間だけ、HP 以上のダメージのポケモンが場に
+    残る（きぜつの判定から、実際のきぜつの処理までのあいだ。docs/ko-prevention-v0.11.md）。許すのは、
+
+    - 決定の対象のポケモン（決定するプレイヤーの、選べるもののポケモン。形・ログは ``_ko_prevention_decision_problems`` が確かめる）と、
+    - 同じワザで HP 以上になったワザを使ったポケモン（決定の ``"attack"`` が指すポケモンで、今の番の最後のワザの宣言のあとの、自分への
+      ダメージ（``damage`` の ``target`` が ``self``）か「はんげき」（``counterattack``）で、今のダメージになっている）。
+
+    ほかのポケモン・ほかの段階・決定のないときは、これまでどおり許さない。"""
+    d = state.decision
+    if state.phase is not Phase.DECISION or d is None or d.resume != "knock_out":
+        return False
+    if player == d.player and pokemon.pokemon_id in d.options:
+        return True
+    attack = d.context_value("attack")
+    if not isinstance(attack, tuple) or len(attack) != 4 or (attack[0], attack[1]) != (player, pokemon.pokemon_id):
+        return False
+    for event in _events_since_turn_start(state):  # 新しい順
+        if event["kind"] == "attack":
+            return False
+        if (event["kind"] == "damage" and event.get("target") == "self" and event.get("pokemon_id") == pokemon.pokemon_id) or (
+            event["kind"] == "counterattack" and event.get("attacker_pokemon_id") == pokemon.pokemon_id
+        ):
+            return event.get("total_damage") == pokemon.damage
+    return False
+
+
+def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
+    """「こんじょう」を使うかの決定（v0.11。``KO_PREVENTION``・再開先 ``"knock_out"``）の整合性。
+
+    - 種類と再開先の組、選ぶ数（0〜1）、選べるもの（ポケモン 1 匹）、決定するのはワザを使われた側（番でないプレイヤー）。v0.12 から、
+      番のプレイヤーのワザを使ったポケモンが、相手の「ほのおのかべ」のダメージ（ログ ``damage`` の ``retaliation``）で HP 以上になった
+      場合は、番のプレイヤーが決定する（対象はワザを使ったポケモン）。
+    - ``"attack"``（ワザ）: 番のプレイヤーのバトル場のポケモンで、いちばん上のカードがそのカード。今の番にそのワザのログ ``attack`` が
+      ちょうど 1 回。
+    - 対象のポケモン: 決定するプレイヤーの場にいて、いちばん上のカードの ``"power"`` の位置に「こんじょう」（``PreventKnockOutOnHeads``）が
+      登録され、HP 以上のダメージ、今ねむり・マヒ・こんらんでない（ダメージを受けたあとにワザの効果で特殊状態を変えるワザは、G37 で
+      止めているので、今の特殊状態はダメージを受けたときと同じ）、かがくへんかガスに消されていない（G31）。
+    - ログ: 今の番の最後のワザの宣言のあとに、対象のポケモンがワザのダメージを受けて今のダメージになった ``damage`` があり、そのあとに
+      きぜつ・「こんじょう」の宣言や結果がない（同じきぜつの判定で 2 度決めさせない。G14）。
+    """
+    problems = []
+    if d.kind != KO_PREVENTION or d.resume != "knock_out":
+        return [f"決定 {d.kind} の再開先 {d.resume!r} が合わない（「こんじょう」の決定は ko_prevention・knock_out の組）"]
+    if (d.min_choices, d.max_choices) != (0, 1) or len(d.options) != 1:
+        problems.append(f"「こんじょう」の決定の選ぶ数 {d.min_choices}〜{d.max_choices}・選べるもの {d.options} が正しくない（0〜1 個・1 匹）")
+    attack = d.context_value("attack")
+    by_attacker = d.player == state.current_player  # v0.12: 「ほのおのかべ」のダメージで HP 以上になったワザを使ったポケモン
+    if d.player not in PLAYERS or (by_attacker and not (isinstance(attack, tuple) and len(attack) == 4 and d.options == (attack[1],))):
+        problems.append(
+            f"「こんじょう」の決定をするのがプレイヤー {d.player}（ワザを使われた側 {1 - state.current_player!r}、または「ほのおのかべ」を"
+            "受けたワザを使ったポケモンの持ち主のはず）"
+        )
+    power = d.context_value("power")
+    if not (isinstance(attack, tuple) and len(attack) == 4 and isinstance(power, tuple) and len(power) == 2):
+        return problems + [f"「こんじょう」の決定の続きの情報 {attack!r}・{power!r} が正しくない"]
+    player, pokemon_id, card_id, attack_index = attack
+    found = state.find_pokemon(pokemon_id)
+    if player != state.current_player or found is None or found[0] != player or state.players[player].active is not found[1]:
+        return problems + [f"「こんじょう」の決定のワザ {attack!r} が、番のプレイヤーのバトル場のポケモンのワザではない"]
+    attacker = found[1]
+    if state.cards[attacker.card].card_id != card_id:
+        problems.append(f"「こんじょう」の決定のワザのカード id {card_id} が、ワザを使ったポケモン {pokemon_id} のカードと違う")
+    events = _events_since_turn_start(state)  # 新しい順
+    attacks = [event for event in events if event["kind"] == "attack" and event.get("player") == player]
+    if len(attacks) != 1 or attacks[0].get("pokemon") != attacker.card or attacks[0].get("attack_index") != attack_index:
+        problems.append(f"「こんじょう」の決定のワザ {attack!r} に対応する、今の番のワザのログ attack がない（{len(attacks)} 回）")
+    target = state.find_pokemon(d.options[0]) if len(d.options) == 1 else None
+    if target is None or target[0] != d.player:
+        return problems + [f"「こんじょう」の決定の対象 {d.options} が、決定するプレイヤー {d.player} の場のポケモンではない"]
+    pokemon = target[1]
+    found_power = ko_prevention_power(state, pokemon)
+    if found_power is None or found_power[0] != PowerKey(*power):
+        return problems + [f"「こんじょう」の決定の特殊能力 {power!r} が、ポケモン {pokemon.pokemon_id} のいちばん上のカードの「こんじょう」ではない"]
+    key, effect = found_power
+    if pokemon.damage < state.card_def(pokemon.card).hp:
+        problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
+    if not effect.is_able(pokemon):
+        problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない。G25〜G27）")
+    if ko_prevention_suppressors(state, pokemon, key):
+        problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} の特殊能力が、かがくへんかガスに消されている（G31）")
+    received = None
+    for event in events:
+        if event["kind"] == "attack":
+            break
+        if event["kind"] in ("knock_out", "ko_prevention_declined", "ko_prevention_declared", "ko_prevented", "ko_prevention_failed"):
+            problems.append(f"「こんじょう」の決定の前に、同じワザのあとの {event['kind']} がある（同じきぜつの判定で 2 度決めさせない）")
+        if (received is None and event["kind"] == "damage" and event.get("player") == d.player and event.get("pokemon") == pokemon.card
+                and event.get("target", "opponent_active") == "opponent_active" and bool(event.get("retaliation")) == by_attacker):
+            received = event
+    if received is None or received.get("total_damage") != pokemon.damage:
+        problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} が、今の番のワザのダメージで今のダメージになったログがない")
+    return problems
+
+
+def _post_knockout_candidate_problems(state: GameState, candidates) -> list[str]:
+    """サイドを取る決定の ``context`` の ``"post_knockout"``（「ふしちょう」の候補。v0.12）の整合性。
+
+    形（(持ち主, カードの uid, カード id, パワーの位置) が 1 つ）と、そのカードが持ち主のトラッシュにあり、そのパワーの位置に「ふしちょう」
+    （``ReturnToHandOnKnockOut``）が登録され、直前のきぜつ（ログ ``knock_out``。サイドを取る決定の前の、きぜつ・取ったサイドの並び）の
+    ポケモンのカードであること。特殊状態・かがくへんかガスはきぜつしたあとの状態からは確かめられない（ログの監査が組み立て直して確かめる）。
+    """
+    if not (isinstance(candidates, tuple) and len(candidates) == 1 and isinstance(candidates[0], tuple) and len(candidates[0]) == 4):
+        return [f"「ふしちょう」の候補 {candidates!r} の形が正しくない（(持ち主, カード, カード id, パワーの位置) が 1 つ）"]
+    owner, card, card_id, power_index = candidates[0]
+    problems = _post_knockout_card_problems(state, owner, card, card_id, power_index)
+    knocked = []
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "take_prize" and not knocked:
+            continue
+        if kind == "knock_out":
+            knocked.append(event.get("pokemon"))
+        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+            continue
+        else:
+            break
+    if card not in knocked:
+        problems.append(f"「ふしちょう」の候補のカード {card} が、直前にきぜつしたポケモン {tuple(knocked)} のカードではない")
+    return problems
+
+
+def _post_knockout_card_problems(state: GameState, owner, card, card_id, power_index) -> list[str]:
+    """「ふしちょう」の候補・決定のカードが、持ち主のトラッシュにあり、そのパワーの位置に「ふしちょう」が登録されたカードか（v0.12）。"""
+    if owner not in PLAYERS or card not in state.cards or state.cards[card].owner != owner:
+        return [f"「ふしちょう」のカード {card!r} の持ち主 {owner!r} が正しくない"]
+    problems = []
+    if card not in state.players[owner].discard:
+        problems.append(f"「ふしちょう」のカード {card} が、持ち主 {owner} のトラッシュにない")
+    definition = state.card_def(card)
+    if definition.id != card_id or not isinstance(power_index, int) or not 0 <= power_index < len(definition.powers):
+        return problems + [f"「ふしちょう」のパワー {card_id}@power{power_index!r} が、カード {card}（{definition.id}）のパワーではない"]
+    effect = state.effects.power_effect(definition.id, definition.powers[power_index])
+    if not isinstance(effect, ReturnToHandOnKnockOut):
+        problems.append(f"「ふしちょう」のパワー {card_id}@power{power_index} に、きぜつしたときに使える特殊能力の実装が登録されていない")
+    return problems
+
+
+def _post_knockout_decision_problems(state: GameState, d) -> list[str]:
+    """「ふしちょう」を使うかの決定（v0.12。``POST_KNOCKOUT_POWER``・再開先 ``"post_knockout"``）の整合性。
+
+    - 種類と再開先の組、選ぶ数（0〜1）、選べるもの（カード 1 枚）。決定するのはそのカードの持ち主（番のプレイヤーでもよい。きぜつの
+      原因を問わない）。
+    - ``"power"``: そのカードの、そのパワーの位置に「ふしちょう」が登録されている。カードは持ち主のトラッシュにある。
+    - 対戦は続いている（勝ち負けが決まる場合は決めさせない。解決の基盤の ``flow._next_prize_or_judge``）。かがくへんかガスに消されていない（P18）。
+    - ログ: 最後のきぜつ（``knock_out``）のどれかがこのカードで、そのあとは取ったサイド（``take_prize``）だけ（同じきぜつで 2 度決めさせない。
+      バトル場に出すのはこの決定のあと）。
+    """
+    if d.kind != POST_KNOCKOUT_POWER or d.resume != "post_knockout":
+        return [f"決定 {d.kind} の再開先 {d.resume!r} が合わない（「ふしちょう」の決定は post_knockout_power・post_knockout の組）"]
+    problems = []
+    if (d.min_choices, d.max_choices) != (0, 1) or len(d.options) != 1:
+        return [f"「ふしちょう」の決定の選ぶ数 {d.min_choices}〜{d.max_choices}・選べるもの {d.options} が正しくない（0〜1 個・カード 1 枚）"]
+    power = d.context_value("power")
+    if not (isinstance(power, tuple) and len(power) == 2):
+        return [f"「ふしちょう」の決定の続きの情報 {power!r} が正しくない"]
+    card = d.options[0]
+    card_id, power_index = power
+    problems.extend(_post_knockout_card_problems(state, d.player, card, card_id, power_index))
+    if problems:
+        return problems
+    definition = state.card_def(card)
+    if suppressors_of(state, definition.powers[power_index]):
+        problems.append(f"「ふしちょう」の決定のカード {card} の特殊能力が、かがくへんかガスに消されている（P18）")
+    knocked = []
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "take_prize" and not knocked:
+            continue
+        if kind == "knock_out":
+            knocked.append(event.get("pokemon"))
+        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+            continue
+        else:
+            break
+    if card not in knocked:
+        problems.append(f"「ふしちょう」の決定のカード {card} が、直前にきぜつしたポケモン {tuple(knocked)} のカードではない（ログ）")
+    return problems
 
 
 def _events_since_turn_start(state: GameState) -> list:
@@ -1920,7 +1588,7 @@ def _decision_problems(state: GameState) -> list[str]:
     # 選ぶ数の上限は選べるものの数を超えてよい（「2 匹まで選ぶ」で 1 匹しかいない場合）。下限は選べる数まで
     if len(set(d.options)) != len(d.options) or not 0 <= d.min_choices <= d.max_choices or d.min_choices > len(d.options):
         problems.append(f"決定の選べるもの {d.options} と選ぶ数 {d.min_choices}〜{d.max_choices} が合わない")
-    if d.resume not in _RESUMERS:
+    if d.resume not in DECISION_RESUMES:
         problems.append(f"決定の再開先 {d.resume!r} がない")
     remaining = d.context_value("remaining", ())
     then = d.context_value("then")
@@ -1930,9 +1598,10 @@ def _decision_problems(state: GameState) -> list[str]:
     if d.kind in (TAKE_PRIZE, PROMOTE_ACTIVE) and (d.min_choices, d.max_choices) != (1, 1):
         problems.append(f"決定 {d.kind} で選ぶ数が {d.min_choices}〜{d.max_choices}（サイド 1 枚・ポケモン 1 匹のはず。p.312・p.313）")
     if then is not None:
-        # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代だけで、交代は 1 人だけ
+        # ポケモンチェックの中のきぜつのあとの決定（v0.3a）。サイド・交代（v0.12 から「ふしちょう」も）だけで、交代は 1 人だけ
         # （両方のバトル場が空になる場合は、出す順番が決まらないので止めている）
-        if then != NEXT_TURN or d.kind not in (TAKE_PRIZE, PROMOTE_ACTIVE) or d.resume != d.kind:
+        kinds = {TAKE_PRIZE: TAKE_PRIZE, PROMOTE_ACTIVE: PROMOTE_ACTIVE, POST_KNOCKOUT_POWER: "post_knockout"}
+        if then != NEXT_TURN or kinds.get(d.kind) != d.resume:
             problems.append(f"決定 {d.kind} の続き {then!r} が正しくない")
         if d.kind == PROMOTE_ACTIVE and remaining:
             problems.append(f"ポケモンチェックのあとにバトル場に出すプレイヤーが複数いる {(d.player, *remaining)}")
@@ -1948,13 +1617,18 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"サイドを取るプレイヤーの並び {queue} が正しくない")
         else:
             problems.extend(_prize_queue_problems(state, queue))
+        candidates = d.context_value("post_knockout")
+        if candidates is not None:
+            problems.extend(_post_knockout_candidate_problems(state, candidates))  # v0.12
+    elif d.context_value("post_knockout") is not None:
+        problems.append(f"サイドを取る決定でない {d.kind} に、「ふしちょう」の候補が書かれている")
     if d.kind == PROMOTE_ACTIVE:
         queue = (d.player, *remaining)
         for player in queue:
             if player not in PLAYERS or state.players[player].active is not None or not state.players[player].bench:
                 problems.append(f"バトル場に出すプレイヤー {player} の場の形が正しくない")
         if len(queue) > 1 and queue != (1 - state.current_player, state.current_player):
-            # 両方が出すときは、今が番でないプレイヤーが先（pp.323〜324。_next_prize_or_judge。v0.4e）
+            # 両方が出すときは、今が番でないプレイヤーが先（pp.323〜324。解決の基盤の flow._promotions_after_judge。v0.4e）
             problems.append(f"バトル場に出す順番 {queue} が、番でないプレイヤー {1 - state.current_player!r} からではない（pp.323〜324）")
         for player in PLAYERS:
             if player not in queue and state.players[player].active is None:
@@ -1963,6 +1637,10 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"バトル場に出す決定の選べるもの {d.options} が、ベンチのポケモンと合わない")
     if d.resume == "attack":
         problems.extend(_attack_decision_problems(state, d))
+    if d.kind == KO_PREVENTION or d.resume == "knock_out":
+        problems.extend(_ko_prevention_decision_problems(state, d))  # v0.11
+    if d.kind == POST_KNOCKOUT_POWER or d.resume == "post_knockout":
+        problems.extend(_post_knockout_decision_problems(state, d))  # v0.12
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
     if unresolved:
@@ -1976,7 +1654,7 @@ def _decision_problems(state: GameState) -> list[str]:
 def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]:
     """サイドを取るプレイヤーの並び（決定するプレイヤーと残り。v0.4e）が、直前のきぜつから決まるか。
 
-    ``_after_knockouts``: きぜつ 1 匹につき、きぜつしたポケモンの相手側のプレイヤーが 1 枚（p.323）。残りのサイドより多くは
+    解決の基盤の ``flow._after_knockouts``: きぜつ 1 匹につき、きぜつしたポケモンの相手側のプレイヤーが 1 枚（p.323）。残りのサイドより多くは
     取らない。ログの終わりから、取ったサイド（``take_prize``）・きぜつ（``knock_out``。あいだの ``persistent_effect_removed`` は
     きぜつで消えた持続する効果）の順に読み、取ったサイドと今の並びをあわせたものが、きぜつから決まる「だれが何枚取るか」と
     同じかを確かめる。同時のきぜつ（p.324）で両方が取る順番は番のプレイヤーが選べる（p.325。エンジンは番のプレイヤーからに

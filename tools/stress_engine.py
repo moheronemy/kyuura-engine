@@ -11,6 +11,9 @@
     python3 tools/stress_engine.py --scenario muk --scenario muk_mixed              # v0.8（かがくへんかガス）
     python3 tools/stress_engine.py --scenario haunter --scenario haunter_muk        # v0.9（とうめい）
     python3 tools/stress_engine.py --scenario machamp --scenario machamp_mixed      # v0.10（はんげき）
+    python3 tools/stress_engine.py --scenario giovanni --scenario giovanni_mixed    # v0.11（こんじょう）
+    python3 tools/stress_engine.py --scenario moltres --scenario moltres_mixed      # v0.12（ふしちょう・ほのおのかべ）
+    python3 tools/stress_engine.py --scenario wartortle --scenario wartortle_mixed  # v0.13（こうらがえし）
 
 - 今の作業ツリーのエンジンを、tools/compat_driver.py の組（デッキ）と駆動（ルール上できそうな操作と、わざと不正な操作を混ぜる。
   ``--illegal-rate`` で割合を変える）で動かす。
@@ -54,6 +57,38 @@
   ``counterattack_skipped``）があり、与える相手がワザを使ったポケモン・量が 10 であることを確かめ、回数・きぜつ・きぜつしたカイリキーの
   反撃・ベンチ・ガスや特殊状態で消えていたカイリキーへのワザを数える。``UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`` で止めたら、相手の
   対戦ポケモンの「はんげき」がはたらいていることを確かめる。``POWER_USERS`` の最後に加えたので、カイリキーのいない組の操作は v0.9 と同じ。
+- v0.11: サカキのカイリキーの組（``giovanni``・``giovanni_mixed``。``giovanni`` はサカキのカイリキーの系統とエビワラーのデッキと、サカキの
+  カイリキーに使うワザの種類を多くしたデッキ（ユンゲラー・カイリキー・ピカチュウ・ロコン・キャタピー・ベトベトン）、``giovanni_mixed`` は
+  両方のデッキにサカキのカイリキー、一方にベトベトン・ゴースト、もう一方にカイリキー・ロコン）を加えた。自分の場にサカキのカイリキーがいる番は、
+  ときどき UsePokemonPower で「こんじょう」を試す（決められたときにしか使えないので ``POWER_NOT_USABLE_NOW``、かがくへんかガスがはたらいて
+  いれば ``POWER_SUPPRESSED`` になるはず）。「こんじょう」を使うかの決定（``KO_PREVENTION``。選ぶ数 0〜1）には、駆動がほかの決定と同じに
+  答える（使う・使わない）。ワザ・決定の答え・番の終わりを受け付けるたびに、操作の前の場の ``available_ko_prevention_power``（エンジンの
+  公開の問い合わせ）と比べて、決定が出るのは使える「こんじょう」のポケモンが相手のワザで HP 以上になったときだけ・「おもて」なら残り HP 10・
+  使えるのに決定がないままきぜつしていないことを確かめ、決定・使う・使わない・「おもて」「うら」・ガスや特殊状態で使えずにきぜつ・どく
+  できぜつを数える。``UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`` で止めたら、相手の対戦ポケモンの「こんじょう」を使えることを確かめる。
+  ``POWER_USERS`` の最後に加えたので、サカキのカイリキーのいない組の操作は v0.10 と同じ。
+- v0.12: R団のファイヤーの組（``moltres``・``moltres_mixed``。``moltres`` は R団のファイヤーと炎のたねポケモンのデッキと、R団のファイヤーに
+  使うワザ・特殊能力の種類を多くしたデッキ（カイリキー・ゴースト・ベトベトン・バタフリー・ビードル・ユンゲラー・ピカチュウ・サカキのカイリキー）、
+  ``moltres_mixed`` は両方のデッキに R団のファイヤー、一方にベトベトン・ゴースト・ロコン、もう一方にカイリキー・バタフリー）を加えた。自分の場に
+  R団のファイヤーがいる番は、ときどき UsePokemonPower で「ふしちょう」を試す（場にいるときは使えないので ``POWER_NOT_USABLE_NOW``、
+  かがくへんかガスがはたらいていれば ``POWER_SUPPRESSED`` になるはず）。「ふしちょう」を使うかの決定（``POST_KNOCKOUT_POWER``。選ぶ数 0〜1）
+  には、駆動がほかの決定と同じに答える（使う・使わない）。操作を受け付けるたびに、操作の前の場（特殊状態・かがくへんかガス）とログから、
+  R団のファイヤーがきぜつしたら（対戦が終わらなければ）決定が出ること・使えないのに決定が出ないこと・回収したのはそのカードだけで手札に
+  あること、今の番にはたらく「ほのおのかべ」を持つポケモンが相手のワザのダメージを受けたら「ほのおのかべ」があること・ワザを使ったポケモン
+  へのダメージの基本となるダメージが 10 であることを確かめ、決定・使う・使わない・回収・特殊状態やガスで使えない・効果・はたらいた・
+  ダメージ・期限で消えたを数える。``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` で止めたら、相手の対戦ポケモンに今の番にはたらく
+  「ほのおのかべ」があることを確かめる。``POWER_USERS`` の最後に加えたので、R団のファイヤーのいない組の操作は v0.11 と同じ。
+- v0.13: わるいカメールの組（``wartortle``・``wartortle_mixed``。``wartortle`` はわるいカメールのデッキと、わるいカメールに使うワザ・特殊能力の
+  種類を多くしたデッキ（ピカチュウ（わるいカメールの弱点 雷）・ポニータ・ガーディ（弱点 水）・カイリキー・ゴースト・バタフリー・ビードル・
+  ベトベトン・サカキのカイリキー）、``wartortle_mixed`` は両方のデッキにわるいカメール、一方に R団のファイヤー・ポニータ・ロコン、もう一方に
+  ピカチュウ・ドードー・バタフリー）を加えた。わるいカメールはポケモンパワーを持たないので ``POWER_USERS`` は変えていない（ほかの組の操作は
+  v0.12 と同じ。組ごとの乱数は組の名前から作る）。操作を受け付けるたびに、操作の前の場とログから、今の番にはたらく「こうらがえし」を持つ
+  ポケモンが相手のワザのダメージを受けたら「こうらがえし」があること・受けたダメージ（received_damage）と基本となるダメージがそのダメージの
+  最終ダメージと同じこと・返すダメージの基本となる計算がその値で、受けたのがワザを使ったポケモンであることを確かめ（``_observe_shell``）、
+  効果・はたらいた・受けたダメージの合計・返したダメージ（合計・弱点・抵抗力・ディフェンダー・きぜつ）・「とうめい」・期限で消えた・S37 を
+  数える。``UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`` で止めたら、相手の対戦ポケモンに今の番にはたらく「ほのおのかべ」か「こうらがえし」が
+  あることを確かめる。``_observe_moltres`` は「ほのおのかべ」（効果を与えたワザが R団のファイヤーの位置 0）のログだけを数える（R団のファイヤーの
+  組の数は v0.12 と同じ）。
 """
 
 from __future__ import annotations
@@ -167,11 +202,102 @@ POWER_SCENARIOS += (
                      driver.DEFENDER: 2, driver.BILL: 2, driver.FIGHTING: 20, PSYCHIC: 10, driver.GRASS: 6},
                     tuple(range(6)), tags=("カイリキー", "はんげき", "ベトベトン", "かがくへんかガス", "ゴースト", "とうめい", "特殊状態")),
 )
+GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP = "PMCG6-057", "PMCG6-059", "PMCG6-061"
+POWER_SCENARIOS += (
+    # サカキのカイリキー（v0.11。こんじょう）: 相手はダメージだけ（ユンゲラーのちょうねんりき 50 × 弱点 2・カイリキーのちきゅうなげ）・でんげき
+    # （ピカチュウ）・いとをはく（キャタピー。G37 で止まる）・あやしいひかり（ロコン）・ベトベトン（かがくへんかガス）・プラスパワー
+    driver.Scenario("giovanni", {GIOVANNIS_MACHOP: 4, GIOVANNIS_MACHOKE: 4, GIOVANNIS_MACHAMP: 4, driver.HITMONCHAN: 2, driver.SWITCH: 2,
+                                 driver.POTION: 2, driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.FIGHTING: 34},
+                    {ABRA: 3, KADABRA: 3, driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, driver.PIKACHU: 2, driver.CATERPIE: 2, driver.VULPIX: 2,
+                     GRIMER: 2, MUK: 1, driver.PLUSPOWER: 2, driver.BILL: 4, PSYCHIC: 10, driver.FIGHTING: 12, driver.LIGHTNING: 3,
+                     driver.GRASS: 4, driver.FIRE: 3},
+                    tuple(range(6)), tags=("サカキのカイリキー", "こんじょう", "ハリケーンパンチ", "はんげき", "かがくへんかガス", "特殊状態")),
+    # 両方のデッキにサカキのカイリキー（ミラー。いちかばちか・じごくがため・いかりのスーパーパンチ）、一方にベトベトン・ゴースト（とうめい）、
+    # もう一方にカイリキー（はんげき）・ロコン（こんらん）
+    driver.Scenario("giovanni_mixed", {GIOVANNIS_MACHOP: 4, GIOVANNIS_MACHOKE: 3, GIOVANNIS_MACHAMP: 3, GRIMER: 3, MUK: 2, GASTLY: 2,
+                                       HAUNTER: 2, driver.SWITCH: 2, driver.POTION: 2, driver.FIGHTING: 22, PSYCHIC: 8, driver.GRASS: 7},
+                    {GIOVANNIS_MACHOP: 4, GIOVANNIS_MACHOKE: 3, GIOVANNIS_MACHAMP: 3, driver.MACHOP: 2, MACHOKE: 2, MACHAMP: 2,
+                     driver.VULPIX: 2, driver.DEFENDER: 2, driver.BILL: 2, driver.FIGHTING: 34, driver.FIRE: 4},
+                    tuple(range(6)), tags=("サカキのカイリキー", "こんじょう", "はんげき", "ベトベトン", "かがくへんかガス", "ゴースト", "特殊状態")),
+)
+ROCKETS_MOLTRES = "PMCG5-020"
+POWER_SCENARIOS += (
+    # R団のファイヤー（v0.12。ふしちょう・ほのおのかべ）: 相手はカイリキー（はんげき）・ゴースト（とうめい・あくむ）・ベトベター・ベトベトン
+    # （どくガス・かがくへんかガス）・キャタピー・トランセル・バタフリー（ふきとばし・メガドレイン。弱点 炎）・ビードル（どくばり）・ユンゲラー
+    # （ちょうねんりき）・ピカチュウ（でんげき）・サカキのカイリキー（こんじょう）・ディフェンダー
+    driver.Scenario("moltres", {ROCKETS_MOLTRES: 4, driver.PONYTA: 3, driver.GROWLITHE: 3, driver.VULPIX: 2, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.FIRE: 36},
+                    {driver.MACHOP: 2, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2, GRIMER: 2, MUK: 1, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.WEEDLE: 2, ABRA: 2, KADABRA: 2, driver.PIKACHU: 2, GIOVANNIS_MACHOP: 1, GIOVANNIS_MACHOKE: 1,
+                     GIOVANNIS_MACHAMP: 1, ROCKETS_MOLTRES: 2, driver.PLUSPOWER: 2, driver.BILL: 4, driver.DEFENDER: 2, driver.FIGHTING: 6,
+                     PSYCHIC: 8, driver.GRASS: 6, driver.LIGHTNING: 2},
+                    tuple(range(6)), tags=("R団のファイヤー", "ふしちょう", "ほのおのかべ", "はんげき", "とうめい", "かがくへんかガス", "特殊状態")),
+    # 両方のデッキに R団のファイヤー（ミラー）、一方にベトベトン・ゴースト・ロコン（こんらん）、もう一方にカイリキー・バタフリー
+    driver.Scenario("moltres_mixed", {ROCKETS_MOLTRES: 4, GRIMER: 3, MUK: 2, GASTLY: 2, HAUNTER: 2, driver.VULPIX: 2, driver.SWITCH: 2,
+                                      driver.POTION: 2, driver.FIRE: 22, PSYCHIC: 8, driver.GRASS: 9, driver.BILL: 2},
+                    {ROCKETS_MOLTRES: 4, driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, driver.CATERPIE: 3, driver.METAPOD: 2, driver.BUTTERFREE: 2,
+                     driver.DEFENDER: 2, driver.BILL: 2, driver.FIRE: 18, driver.FIGHTING: 12, driver.GRASS: 8},
+                    tuple(range(6)), tags=("R団のファイヤー", "ふしちょう", "ほのおのかべ", "はんげき", "ふきとばし", "とうめい", "かがくへんかガス")),
+)
+ROCKET_SQUIRTLE, DARK_WARTORTLE = "PMCG4-018", "PMCG4-021"
+POWER_SCENARIOS += (
+    # わるいカメール（v0.13。こうらがえし・おうふくびんた。ポケモンパワーを持たないので POWER_USERS には加えない）: 相手はピカチュウ（わるいカメールの
+    # 弱点 雷）・ポニータ・ガーディ（弱点 水）・カイリキー（はんげき）・ゴースト（とうめい・あくむ）・バタフリー（ふきとばし・メガドレイン）・
+    # ビードル（どくばり）・ベトベトン（かがくへんかガス）・サカキのカイリキー（こんじょう・ハリケーンパンチ）・ディフェンダー・プラスパワー
+    driver.Scenario("wartortle", {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, driver.STARYU: 3, driver.SEEL: 2, driver.SWITCH: 2,
+                                  driver.POTION: 2, driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.WATER: 35},
+                    {driver.PIKACHU: 3, driver.PONYTA: 2, driver.GROWLITHE: 2, driver.MACHOP: 2, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2,
+                     driver.CATERPIE: 2, driver.METAPOD: 1, driver.BUTTERFREE: 1, driver.WEEDLE: 2, GRIMER: 1, MUK: 1, GIOVANNIS_MACHOP: 1,
+                     GIOVANNIS_MACHOKE: 1, GIOVANNIS_MACHAMP: 1, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, driver.LIGHTNING: 6,
+                     driver.FIRE: 5, driver.FIGHTING: 7, PSYCHIC: 4, driver.GRASS: 4},
+                    tuple(range(6)), tags=("わるいカメール", "こうらがえし", "おうふくびんた", "はんげき", "とうめい", "こんじょう", "ディフェンダー")),
+    # 両方のデッキにわるいカメール（ミラー）、一方に R団のファイヤー（ほのおのかべ・ふしちょう）・ポニータ・ロコン、もう一方にピカチュウ・ドードー・バタフリー
+    driver.Scenario("wartortle_mixed", {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, ROCKETS_MOLTRES: 2, driver.PONYTA: 2, driver.VULPIX: 2,
+                                        driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2, driver.WATER: 24, driver.FIRE: 16},
+                    {ROCKET_SQUIRTLE: 3, SQUIRTLE: 1, DARK_WARTORTLE: 4, driver.PIKACHU: 3, driver.DODUO: 2, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.PLUSPOWER: 2, driver.BILL: 2, driver.WATER: 22, driver.LIGHTNING: 10, driver.GRASS: 7},
+                    tuple(range(6)), tags=("わるいカメール", "こうらがえし", "ほのおのかべ", "ふしちょう", "ふきとばし", "ミラー")),
+)
+ROCKETS_SNORLAX, TANGELA, GIOVANNIS_MEOWTH = "PMCG6-073", "PMCG1-007", "PMCG6-063"
+POWER_SCENARIOS += (
+    # R団のカビゴン（v0.17b。わるいねぞう・たおれこむ）: 相手はカイリキー（はんげき）・ゴースト（とうめい）・ベトベトン（かがくへんかガス）・
+    # バタフリー（ふきとばし・メガドレイン）・ピカチュウ（でんげき）・ワンリキー（R団のカビゴンの弱点 闘）・ディフェンダー・プラスパワー
+    driver.Scenario("snorlax", {ROCKETS_SNORLAX: 4, GIOVANNIS_MEOWTH: 3, driver.RATTATA: 3, driver.DODUO: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.FIRE: 35},
+                    {driver.MACHOP: 3, MACHOKE: 2, MACHAMP: 2, GASTLY: 2, HAUNTER: 2, GRIMER: 1, MUK: 1, driver.CATERPIE: 2, driver.METAPOD: 1,
+                     driver.BUTTERFREE: 1, driver.PIKACHU: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, driver.FIGHTING: 15,
+                     PSYCHIC: 8, driver.GRASS: 7, driver.LIGHTNING: 5},
+                    tuple(range(6)), tags=("R団のカビゴン", "わるいねぞう", "たおれこむ", "はんげき", "とうめい", "かがくへんかガス", "ディフェンダー")),
+    # R団のカビゴン・モンジャラ・サカキのニャース（v0.17a・v0.17b）と、わるいカメール（こうらがえし）・R団のファイヤー（ほのおのかべ）
+    driver.Scenario("snorlax_mixed", {ROCKETS_SNORLAX: 3, TANGELA: 3, GIOVANNIS_MEOWTH: 3, driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2,
+                                      driver.PLUSPOWER: 2, driver.GRASS: 43},
+                    {ROCKET_SQUIRTLE: 3, DARK_WARTORTLE: 3, ROCKETS_MOLTRES: 3, driver.PONYTA: 2, driver.PLUSPOWER: 2, driver.BILL: 2,
+                     driver.WATER: 22, driver.FIRE: 23},
+                    tuple(range(6)), tags=("R団のカビゴン", "モンジャラ", "サカキのニャース", "こうらがえし", "ほのおのかべ")),
+)
+SABRINAS_SLOWPOKE = "PMCG6-044"
+POWER_SCENARIOS += (
+    # ナツメのヤドン（v0.18c。ぐうたらこうげき。たおれこむと同じ DamageAndSelfSleep）: 相手は抵抗力 超 の R団のカビゴン・サカキのニャース・コラッタ
+    # （Z23-b）・ゴースト（とうめい。Z23-c）・トランセル（かたまる。Z23-a）・ワンリキー（超の弱点）・ディフェンダー・プラスパワー
+    driver.Scenario("slowpoke", {SABRINAS_SLOWPOKE: 4, GIOVANNIS_MEOWTH: 3, driver.RATTATA: 3, driver.DODUO: 3, driver.SWITCH: 2, driver.POTION: 2,
+                                 driver.BILL: 4, driver.DEFENDER: 2, driver.PLUSPOWER: 2, PSYCHIC: 35},
+                    {ROCKETS_SNORLAX: 3, GIOVANNIS_MEOWTH: 2, driver.RATTATA: 2, GASTLY: 2, HAUNTER: 2, driver.CATERPIE: 2, driver.METAPOD: 2,
+                     driver.MACHOP: 2, driver.DEFENDER: 2, driver.PLUSPOWER: 2, driver.BILL: 2, PSYCHIC: 12, driver.GRASS: 12, driver.FIGHTING: 13},
+                    tuple(range(6)), tags=("ナツメのヤドン", "ぐうたらこうげき", "抵抗力", "とうめい", "かたまる", "わるいねぞう", "ディフェンダー")),
+    # ナツメのヤドン・R団のカビゴン・モンジャラと、わるいカメール（こうらがえし）・R団のファイヤー（ほのおのかべ）
+    driver.Scenario("slowpoke_mixed", {SABRINAS_SLOWPOKE: 4, ROCKETS_SNORLAX: 2, TANGELA: 2, driver.SWITCH: 2, driver.DEFENDER: 2, driver.BILL: 2,
+                                       driver.PLUSPOWER: 2, PSYCHIC: 24, driver.GRASS: 20},
+                    {ROCKET_SQUIRTLE: 3, DARK_WARTORTLE: 3, ROCKETS_MOLTRES: 3, driver.PONYTA: 2, driver.PLUSPOWER: 2, driver.BILL: 2,
+                     driver.WATER: 22, driver.FIRE: 23},
+                    tuple(range(6)), tags=("ナツメのヤドン", "R団のカビゴン", "モンジャラ", "こうらがえし", "ほのおのかべ")),
+)
 ALL_SCENARIOS = (*driver.SCENARIOS, *POWER_SCENARIOS)
-POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキーがいる番で、ポケモンパワーを試す割合
-# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）を加えた。ベトベトンのいない組の選び方（乱数の使い方）は v0.7 と同じ、
-# ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ
-POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP)
+POWER_RATE = 0.35  # 自分の場にフシギバナ・カメックス・フーディン・ベトベトン・ゴースト・カイリキー・サカキのカイリキー・R団のファイヤーがいる番で、ポケモンパワーを試す割合
+# 並びの最後にベトベトン（v0.8）・ゴースト（v0.9）・カイリキー（v0.10）・サカキのカイリキー（v0.11）・R団のファイヤー（v0.12）を加えた。ベトベトンの
+# いない組の選び方（乱数の使い方）は v0.7 と同じ、ゴーストのいない組は v0.8 と同じ、カイリキーのいない組は v0.9 と同じ、サカキのカイリキーのいない組は
+# v0.10 と同じ、R団のファイヤーのいない組は v0.11 と同じ
+# v0.17b: 並びの最後に R団のカビゴン（わるいねぞう。宣言しない）を加えた。R団のカビゴンのいない組の選び方は v0.16 と同じ
+POWER_USERS = (VENUSAUR, BLASTOISE, ALAKAZAM, MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX)
 HAUNTER_DECLARE_SKIP = 0.75  # ゴースト・カイリキーを選んだときに、宣言を試さずに駆動の操作にする割合（いない組の乱数の使い方は変えない）
 
 
@@ -187,11 +313,13 @@ def choose_command(state, rng: random.Random, illegal_rate: float):
     if not kinds or rng.random() >= POWER_RATE:
         return driver.choose_command(engine, state, rng, illegal_rate)
     kind = kinds[0] if len(kinds) == 1 else rng.choice(kinds)
-    if kind in (HAUNTER, MACHAMP) and rng.random() < HAUNTER_DECLARE_SKIP:
-        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9・v0.10）
-    if kind in (MUK, HAUNTER, MACHAMP):
+    if kind in (HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX) and rng.random() < HAUNTER_DECLARE_SKIP:
+        return driver.choose_command(engine, state, rng, illegal_rate)  # 宣言の試しを減らして、ワザの手を増やす（v0.9〜v0.12）
+    if kind in (MUK, HAUNTER, MACHAMP, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES, ROCKETS_SNORLAX):
         # かがくへんかガスは常にはたらいていて（v0.8）、「とうめい」（v0.9）・「はんげき」（v0.10）は自動的にはたらいて宣言しない
-        # （POWER_NOT_DECLARABLE になるはず）
+        # （POWER_NOT_DECLARABLE になるはず）。「こんじょう」（v0.11）は決められたとき（相手のワザのダメージできぜつするとき。決定で答える）
+        # にしか使えない（POWER_NOT_USABLE_NOW になるはず）。「ふしちょう」（v0.12）は、このカードが「きぜつ」したとき（決定で答える）にしか
+        # 使えない（POWER_NOT_USABLE_NOW になるはず）
         user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == kind])
         return engine.UsePokemonPower(player, user.pokemon_id, 0)
     if kind == ALAKAZAM:
@@ -415,8 +543,13 @@ def _observe_counterattack(state, new, before, counted, problems, index, command
                 problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の相手がワザを使ったポケモンではない {e}")
             if e["kind"] == "counterattack":
                 counted["observed:counter_damage_total"] += e["amount"]
-                if e["amount"] != 10:
-                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」の量が 10 ではない {e}")
+                # v0.17b: 量は登録の値（はんげき 10・わるいねぞう 20）。どの特殊能力かはログの power
+                card_id, _, power_index = e["power"].partition("@power")
+                registered = state.effects.power_entry(card_id, int(power_index)).effect.amount
+                if e["amount"] != registered:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」「わるいねぞう」の量が登録の {registered} ではない {e}")
+                if card_id == ROCKETS_SNORLAX:
+                    counted["observed:restless_sleep"] += 1
                 if e["knocked_out"]:
                     counted["observed:counter_knock_out"] += 1
         elif e["kind"] == "knock_out" and e.get("simultaneous"):
@@ -433,6 +566,210 @@ def _observe_counterattack(state, new, before, counted, problems, index, command
                 counted["observed:machamp_attacked_under_gas"] += 1
             else:
                 counted["observed:machamp_attacked_working"] += 1
+
+
+def _guts_before(state) -> dict[int, object]:
+    """場のポケモンの番号 → 今の状態で相手のワザのダメージできぜつするなら使える「こんじょう」（v0.11。エンジンの公開の問い合わせ
+    ``available_ko_prevention_power``）。"""
+    return {pk.pokemon_id: engine.available_ko_prevention_power(state, pk.pokemon_id) for p in state.players for pk in p.in_play()}
+
+
+def _observe_guts(state, new, before, counted, problems, index, command) -> None:
+    """受け付けたワザ・決定の答え・番の終わりのログと決定を、操作の前の場の「こんじょう」と比べる（v0.11）。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    where = f"{index} 手目 {engine.command_to_dict(command)}"
+    owners = {pk.pokemon_id: player for player, p in enumerate(state.players) for pk in p.in_play()}
+    by_card = {pk.card: pk for p in state.players for pk in p.in_play()}
+    d = new.decision
+    if d is not None and d.kind == "ko_prevention":
+        pid = d.options[0]
+        pokemon = new.find_pokemon(pid)
+        counted["observed:guts_offered"] += 1
+        # v0.12: 番のプレイヤーのポケモンは、相手の「ほのおのかべ」のダメージ（相手のワザによるダメージ）を受けたときだけ
+        by_retaliation = any(e["kind"] == "damage" and e.get("retaliation") and e.get("pokemon_id") == pid for e in events)
+        if (before.get(pid) is None or (owners.get(pid) == state.current_player and not by_retaliation) or pokemon is None
+                or pokemon[1].damage < new.card_def(pokemon[1].card).hp):
+            problems.append(f"{where}: 使えないはずの「こんじょう」の決定 {d}")
+        elif state.players[owners[pid]].active is None or state.players[owners[pid]].active.pokemon_id != pid:
+            counted["observed:guts_offered_on_bench"] += 1
+    answered = {e["pokemon_id"] for e in events if e["kind"] in ("ko_prevention_declined", "ko_prevention_failed")}
+    for e in events:
+        kind = e["kind"]
+        if kind in ("ko_prevention_declined", "ko_prevention_declared", "ko_prevented", "ko_prevention_failed"):
+            counted[f"observed:{kind}"] += 1
+        if kind == "ko_prevented":
+            pokemon = new.find_pokemon(e["pokemon_id"])
+            if pokemon is None or pokemon[1].damage != new.card_def(pokemon[1].card).hp - 10:
+                problems.append(f"{where}: 「おもて」のあとに残り HP 10 で場にいない {e}")
+        if kind == "knock_out":
+            pokemon = by_card.get(e["pokemon"])
+            if pokemon is None or state.cards[pokemon.card].card_id != GIOVANNIS_MACHAMP:
+                continue
+            counted["observed:giovannis_machamp_knocked_out"] += 1
+            if pokemon.pokemon_id in answered:
+                continue
+            c = pokemon.conditions
+            if e.get("timing") == "pokemon_check":
+                counted["observed:guts_not_applicable_poison"] += 1
+            elif owners[pokemon.pokemon_id] == state.current_player and not any(
+                g["kind"] == "damage" and g.get("retaliation") and g.get("pokemon_id") == pokemon.pokemon_id for g in events
+            ):
+                counted["observed:guts_not_applicable_own_turn"] += 1  # 自分のワザ・こんらん・「はんげき」
+            elif c.asleep or c.paralyzed or c.confused:
+                counted["observed:guts_blocked_by_condition"] += 1
+            elif before.get(pokemon.pokemon_id) is None:
+                counted["observed:guts_suppressed_by_gas"] += 1
+            else:
+                problems.append(f"{where}: 「こんじょう」を使えるのに決定がないまま、きぜつした {e}")
+
+
+def _rebirth_field(state) -> dict[int, tuple[str, str | None]]:
+    """場のポケモンの番号 → (カード id, ねむり・マヒ・こんらん)（v0.12。「ふしちょう」を使えるかを、エンジンの関数を使わずに求めるため）。"""
+    return {pk.pokemon_id: (state.cards[pk.card].card_id, None if pk.conditions.exclusive is None else pk.conditions.exclusive.name)
+            for p in state.players for pk in p.in_play()}
+
+
+FIRE_WALL = f"{ROCKETS_MOLTRES}#0"
+SHELL = f"{DARK_WARTORTLE}#1"
+SHELL_KIND = "retaliation_received_damage"
+
+
+def _observe_shell(state, new, counted, problems, index, command) -> None:
+    """受け付けた操作のログを、操作の前の場から求めた「こうらがえし」と比べる（v0.13）: 今の番にはたらく「こうらがえし」を持つポケモンが相手の
+    ワザのダメージ（0 より大きい）を受けたら、その直後の処理に「こうらがえし」（retaliation か retaliation_skipped）があり、受けたダメージ
+    （received_damage）と基本となるダメージ（amount）がそのダメージの最終ダメージと同じで、返すダメージの基本となる計算がその値で、受けたのは
+    ワザを使ったポケモン（番のプレイヤーのバトル場）であること。効果・はたらいた・返したダメージ・弱点・ディフェンダー・きぜつ・期限で消えたを数える。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    where = f"{index} 手目 {engine.command_to_dict(command)}"
+    by_card = {pk.card: pk for p in state.players for pk in p.in_play()}
+    pending = []  # (場のポケモンの番号, 受けたダメージ)
+    expected_base = None
+    for e in events:
+        kind = e["kind"]
+        if kind == "persistent_effect_added" and e["persistent_effect"] == SHELL_KIND:
+            counted["observed:shell_effect_added"] += 1
+        if kind == "persistent_effect_removed" and e["persistent_effect"] == SHELL_KIND:
+            counted[f"observed:shell_effect_removed_{e['reason']}"] += 1
+        if kind == "damage" and e["amount"] > 0 and not e.get("retaliation"):
+            pid = e.get("pokemon_id", by_card[e["pokemon"]].pokemon_id if e["pokemon"] in by_card else None)
+            holder = state.find_pokemon(pid) if pid is not None else None
+            if holder is not None and holder[0] != state.current_player and any(
+                x.kind == SHELL_KIND and x.active_turn == state.turn_number for x in holder[1].persistent_effects
+            ):
+                pending.append((pid, e["amount"]))
+        if kind in ("retaliation", "retaliation_skipped") and e["effect"] == SHELL:
+            counted[f"observed:shell_{kind}"] += 1
+            if not pending or pending[0][0] != e["pokemon_id"]:
+                problems.append(f"{where}: はたらくはずのない「こうらがえし」 {e}")
+                continue
+            _, received = pending.pop(0)
+            if kind == "retaliation":
+                if (e.get("basis"), e.get("received_damage"), e["amount"]) != ("received_damage", received, received):
+                    problems.append(f"{where}: 「こうらがえし」の受けたダメージ・基本となるダメージが {received} ではない {e}")
+                counted["observed:shell_received_total"] += received
+                expected_base = received
+        if kind == "damage" and e.get("retaliation") and e["effect"] == SHELL:
+            counted["observed:shell_damage"] += 1
+            counted["observed:shell_damage_total"] += e["amount"]
+            counted["observed:shell_weakness"] += bool(e["weakness"])
+            counted["observed:shell_resistance"] += bool(e["resistance"])
+            counted["observed:shell_modifiers"] += bool(e.get("modifiers"))
+            if e["steps"][0][1] != expected_base or e["pokemon_id"] != state.players[state.current_player].active.pokemon_id:
+                problems.append(f"{where}: 「こうらがえし」の返すダメージの基本となるダメージ・相手が違う {e}")
+            if e["total_damage"] >= new.card_def(e["pokemon"]).hp:
+                counted["observed:shell_knock_out"] += 1
+        if kind == "attack_evaded" and e.get("effect") == SHELL:
+            counted["observed:shell_evaded"] += 1
+    if pending:
+        problems.append(f"{where}: はたらいた「こうらがえし」（ポケモン {[p for p, _ in pending]}）のログがない")
+
+
+def _observe_moltres(state, new, counted, problems, index, command) -> None:
+    """受け付けた操作のログと決定を、操作の前の場から求めた「ふしちょう」「ほのおのかべ」と比べる（v0.12）。きぜつするときの特殊状態・
+    かがくへんかガスは、操作の前の場をこの操作のログ（special_condition・special_conditions_removed・knock_out）で進めて求める。"""
+    events = [dict(e) for e in new.log[len(state.log):]]
+    where = f"{index} 手目 {engine.command_to_dict(command)}"
+    by_card = {pk.card: pk for p in state.players for pk in p.in_play()}
+    field = _rebirth_field(state)
+    d = new.decision
+    if d is not None and d.kind == "post_knockout_power":
+        counted["observed:rebirth_offered"] += 1
+    if state.decision is not None and state.decision.kind == "take_prize" and state.decision.context_value("post_knockout") is not None \
+            and new.phase in engine.TERMINAL_PHASES:
+        counted["observed:rebirth_not_offered_game_over"] += 1
+    batches, batch = [], set()
+    for e in events:
+        if e["kind"] == "knock_out" and e["pokemon"] in by_card:
+            batch.add(by_card[e["pokemon"]].pokemon_id)
+        elif e["kind"] != "persistent_effect_removed" and batch:
+            batches.append(batch)
+            batch = set()
+    if batch:
+        batches.append(batch)
+    pending_retaliation = []
+    for position, e in enumerate(events):
+        kind = e["kind"]
+        if kind in ("retaliation", "retaliation_skipped") and e["effect"] != FIRE_WALL:
+            continue  # v0.13: 「こうらがえし」は _observe_shell で確かめる
+        if kind in ("post_knockout_power_declined", "post_knockout_power_declared", "return_to_hand", "retaliation", "retaliation_skipped",
+                    "persistent_effect_skipped"):
+            counted[f"observed:{kind}"] += 1
+        if kind == "return_to_hand":
+            card = e["card"]
+            if state.cards[card].card_id != ROCKETS_MOLTRES or (new.phase not in engine.TERMINAL_PHASES and card not in new.players[e["player"]].hand):
+                problems.append(f"{where}: 回収したカードが R団のファイヤーでない・手札にない {e}")
+        if kind == "special_condition" and e["condition"] in ("sleep", "paralysis", "confusion") and e["pokemon_id"] in field:
+            field[e["pokemon_id"]] = (field[e["pokemon_id"]][0], e["condition"])
+        if kind == "special_conditions_removed" and e["pokemon_id"] in field and field[e["pokemon_id"]][1] in e["conditions"]:
+            field[e["pokemon_id"]] = (field[e["pokemon_id"]][0], None)
+        if kind == "persistent_effect_added" and e["persistent_effect"] == "retaliation":
+            counted["observed:retaliation_effect_added"] += 1
+        if kind == "persistent_effect_removed" and e["persistent_effect"] == "retaliation":
+            counted[f"observed:retaliation_effect_removed_{e['reason']}"] += 1
+        if kind == "damage" and e["amount"] > 0 and not e.get("retaliation"):
+            pid = e.get("pokemon_id", by_card[e["pokemon"]].pokemon_id if e["pokemon"] in by_card else None)
+            holder = state.find_pokemon(pid) if pid is not None else None
+            if holder is not None and holder[0] != state.current_player and any(
+                x.kind == "retaliation" and x.active_turn == state.turn_number for x in holder[1].persistent_effects
+            ):
+                pending_retaliation.append(pid)
+        if kind in ("retaliation", "retaliation_skipped"):
+            if not pending_retaliation or pending_retaliation[0] != e["pokemon_id"]:
+                problems.append(f"{where}: はたらくはずのない「ほのおのかべ」 {e}")
+            else:
+                pending_retaliation.pop(0)
+        if kind == "damage" and e.get("retaliation") and e["effect"] == FIRE_WALL:
+            counted["observed:retaliation_damage"] += 1
+            counted["observed:retaliation_damage_total"] += e["amount"]
+            if e["steps"][0][1] != 10 or e["pokemon_id"] != state.players[state.current_player].active.pokemon_id:
+                problems.append(f"{where}: 「ほのおのかべ」のダメージ・相手が違う {e}")
+            if e["total_damage"] >= new.card_def(e["pokemon"]).hp:
+                counted["observed:retaliation_knock_out"] += 1
+        if kind == "knock_out" and e["pokemon"] in by_card:
+            pokemon = by_card[e["pokemon"]]
+            knocked = next(b for b in batches if pokemon.pokemon_id in b)
+            card_id, condition = field.pop(pokemon.pokemon_id)
+            if card_id != ROCKETS_MOLTRES:
+                continue
+            counted["observed:rockets_moltres_knocked_out"] += 1
+            snapshot = {**_rebirth_field(state), **field}
+            gases = [pid for pid, (kind_id, exclusive) in snapshot.items() if kind_id == MUK and exclusive is None]
+            answered = any(r["kind"] in ("post_knockout_power_declined", "post_knockout_power_declared") and r["card"] == e["pokemon"]
+                           for r in events)
+            waiting = d is not None and (d.options == (e["pokemon"],) and d.kind == "post_knockout_power" or any(
+                c[1] == e["pokemon"] for c in d.context_value("post_knockout", ())))
+            if condition is not None:
+                counted["observed:rebirth_blocked_condition"] += 1
+                if answered or waiting:
+                    problems.append(f"{where}: ねむり・マヒ・こんらんのまま「きぜつ」したのに「ふしちょう」の決定 {e}")
+            elif gases and any(pid not in knocked for pid in gases):
+                counted["observed:rebirth_blocked_gas"] += 1
+                if answered or waiting:
+                    problems.append(f"{where}: かがくへんかガスがはたらいているのに「ふしちょう」の決定 {e}")
+            elif not (answered or waiting) and new.phase not in engine.TERMINAL_PHASES:
+                problems.append(f"{where}: 「ふしちょう」を使えるのに決定がないまま {e}")
+    if pending_retaliation:
+        problems.append(f"{where}: はたらいた「ほのおのかべ」（ポケモン {pending_retaliation}）のログがない")
 
 
 def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_every: int) -> tuple[Counter, list[str]]:
@@ -458,6 +795,7 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
         suppression = _suppression_of(state, command) if isinstance(command, engine.UsePokemonPower) else None
         evasion = _evasion_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision)) else None
         counter = _counter_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision)) else None
+        guts = _guts_before(state) if isinstance(command, (engine.UseAttack, engine.ResolveDecision, engine.EndTurn)) else None
         before = engine.state_to_dict(state, format_version=9)
         fingerprint, log = rng_fingerprint(state.rng), state.log
         try:
@@ -477,6 +815,41 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_counterattack_power(state, target.pokemon_id) is None:
                     problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「はんげき」がはたらいていないのに UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT")
+            if error.code == "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT":
+                target = state.players[1 - state.current_player].active
+                if target is None or engine.available_ko_prevention_power(state, target.pokemon_id) is None:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「こんじょう」を使えないのに UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT")
+            if error.code == "POWER_NOT_USABLE_NOW":
+                found = state.find_pokemon(command.pokemon) if isinstance(command, engine.UsePokemonPower) else None
+                if found is None or state.cards[found[1].card].card_id not in (GIOVANNIS_MACHAMP, ROCKETS_MOLTRES):
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: サカキのカイリキー・R団のファイヤーでないのに POWER_NOT_USABLE_NOW")
+            if error.code == "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT":
+                target = state.players[1 - state.current_player].active
+                active = [x for x in (target.persistent_effects if target is not None else ())
+                          if x.kind in ("retaliation", SHELL_KIND) and x.active_turn == state.turn_number]
+                if not active:
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: 「ほのおのかべ」「こうらがえし」がはたらいていないのに UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT")
+                elif active[0].kind == SHELL_KIND:
+                    counted["observed:shell_stopped_w24"] += 1  # v0.13: S37（W24 と同じ問い）
+            if error.code == "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE":
+                # v0.17b（Z23）: たおれこむ・v0.18c のぐうたらこうげきで、p.321 の計算（弱点・抵抗力・プラスパワー・ディフェンダー）の最終ダメージが 0・
+                # 今の番にはたらく「ダメージを受けない」状態・はたらいている「とうめい」のどれかがある（エンジンの止める関数とは別に、場から確かめる）
+                me, target = state.players[state.current_player].active, state.players[1 - state.current_player].active
+                attacker_def, target_def = state.card_def(me.card), state.card_def(target.card)
+                amount = attacker_def.attacks[0].damage or 0
+                if target_def.weakness is attacker_def.pokemon_type:
+                    amount *= 2
+                resisted = target_def.resistance is attacker_def.pokemon_type
+                if resisted:
+                    amount -= target_def.resistance_value
+                amount += 10 * sum(state.cards[t.card].card_id == driver.PLUSPOWER for t in me.trainers)
+                amount -= 20 * sum(state.cards[t.card].card_id == driver.DEFENDER for t in target.trainers)
+                prevented = any(x.kind == "prevent_damage" and x.active_turn == state.turn_number for x in target.persistent_effects)
+                evades = engine.working_evasion_power(state, target.pokemon_id) is not None
+                if state.cards[me.card].card_id not in (ROCKETS_SNORLAX, SABRINAS_SLOWPOKE) or not (amount <= 0 or prevented or evades):
+                    problems.append(f"{index} 手目 {engine.command_to_dict(command)}: ダメージを与えないことがないのに UNRESOLVED_EFFECT_AFTER_NO_DAMAGE")
+                elif amount <= 0 and resisted and not prevented:
+                    counted["observed:z23_resistance"] += 1  # v0.18c: 抵抗力で 0（Z23-b。ぐうたらこうげきで起こる）
             if error.code == "UNRESOLVED_EVADED_EFFECT_COIN":
                 target = state.players[1 - state.current_player].active
                 if target is None or engine.working_evasion_power(state, target.pokemon_id) is None:
@@ -503,6 +876,12 @@ def run_game(scenario, seed: int, *, steps: int, illegal_rate: float, serialize_
             _observe_attack(state, new, evasion, counted, problems, index, command)
         if counter is not None:
             _observe_counterattack(state, new, counter, counted, problems, index, command)
+        if guts is not None:
+            _observe_guts(state, new, guts, counted, problems, index, command)
+        if any(state.cards[uid].card_id == ROCKETS_MOLTRES for uid in state.cards):
+            _observe_moltres(state, new, counted, problems, index, command)  # v0.12
+        if any(state.cards[uid].card_id == DARK_WARTORTLE for uid in state.cards):
+            _observe_shell(state, new, counted, problems, index, command)  # v0.13
         if new.phase is engine.Phase.HALTED and state.phase is not engine.Phase.HALTED:
             counted[f"halted:{new.halt.code}"] += 1
         if serialize_every and index % serialize_every == 0:
@@ -559,7 +938,25 @@ def main(argv=None) -> int:
           f"とうめいの判定 {counts.get('observed:evade_check', 0)}（おもて {counts.get('observed:evade_heads', 0)}・"
           f"うら {counts.get('observed:evade_tails', 0)}）・"
           f"はんげき {counts.get('observed:counterattack', 0)}（与えなかった {counts.get('observed:counterattack_skipped', 0)}・"
-          f"きぜつさせた {counts.get('observed:counter_knock_out', 0)}・きぜつしたカイリキーの {counts.get('observed:counter_trigger_knocked_out_machamp', 0)}）"
+          f"きぜつさせた {counts.get('observed:counter_knock_out', 0)}・きぜつしたカイリキーの {counts.get('observed:counter_trigger_knocked_out_machamp', 0)}）・"
+          f"こんじょうの決定 {counts.get('observed:guts_offered', 0)}（使う {counts.get('observed:ko_prevention_declared', 0)}・"
+          f"使わない {counts.get('observed:ko_prevention_declined', 0)}・おもて {counts.get('observed:ko_prevented', 0)}・"
+          f"うら {counts.get('observed:ko_prevention_failed', 0)}・ベンチ {counts.get('observed:guts_offered_on_bench', 0)}・"
+          f"ガスで使えずきぜつ {counts.get('observed:guts_suppressed_by_gas', 0)}・特殊状態で使えずきぜつ {counts.get('observed:guts_blocked_by_condition', 0)}・"
+          f"G37 {counts.get('code:UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT', 0)}）・"
+          f"R団のファイヤーのきぜつ {counts.get('observed:rockets_moltres_knocked_out', 0)}（ふしちょうの決定 {counts.get('observed:rebirth_offered', 0)}・"
+          f"使う {counts.get('observed:post_knockout_power_declared', 0)}・使わない {counts.get('observed:post_knockout_power_declined', 0)}・"
+          f"特殊状態 {counts.get('observed:rebirth_blocked_condition', 0)}・ガス {counts.get('observed:rebirth_blocked_gas', 0)}・"
+          f"対戦の終わり {counts.get('observed:rebirth_not_offered_game_over', 0)}）・"
+          f"ほのおのかべ {counts.get('observed:retaliation_effect_added', 0)}（はたらいた {counts.get('observed:retaliation', 0)}・"
+          f"ダメージ {counts.get('observed:retaliation_damage', 0)}・期限 {counts.get('observed:retaliation_effect_removed_expired', 0)}・"
+          f"W24 {counts.get('code:UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT', 0)}）・"
+          f"こうらがえし {counts.get('observed:shell_effect_added', 0)}（はたらいた {counts.get('observed:shell_retaliation', 0)}・"
+          f"受けたダメージの合計 {counts.get('observed:shell_received_total', 0)}・返したダメージ {counts.get('observed:shell_damage', 0)}"
+          f"（合計 {counts.get('observed:shell_damage_total', 0)}・弱点 {counts.get('observed:shell_weakness', 0)}・"
+          f"抵抗力 {counts.get('observed:shell_resistance', 0)}・ディフェンダー {counts.get('observed:shell_modifiers', 0)}・"
+          f"きぜつ {counts.get('observed:shell_knock_out', 0)}）・とうめい {counts.get('observed:shell_evaded', 0)}・"
+          f"期限 {counts.get('observed:shell_effect_removed_expired', 0)}・S37 {counts.get('observed:shell_stopped_w24', 0)}）"
           f"（{result['seconds']} 秒）")
     for failure in result["failures"]:
         print(f"- {failure['scenario']} seed {failure['seed']}: {failure['problems'][0]}")
