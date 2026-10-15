@@ -1,0 +1,11 @@
+{
+  "format": "kyuura-engine card sources 1",
+  "description": "2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録。kyuura の data/cards.json を基本データとして採用したカード（basis: kyuura_data。採用したデータのコミット・処理に使う文面の根拠・確かめた kyuura の記録の id）と、pcg-search.com との外部照合（external_checks。URL・確認日・対象の版・結果・照合した欄・違い）を持つ。『オフィシャルブック2000』との過去の照合は kyuura_engine/data/card_verification.json（履歴。書き換えない）にあり、この記録には書かない。2026-10-14 までに登録したカードはすべて過去の照合の記録で登録したので、採用の記録はまだない。検査は scripts/check_card_sources.py。",
+  "policy": {
+    "since": "2026-10-15",
+    "document": "docs/card-data-policy.md",
+    "card_data": "kyuura data/cards.json",
+    "external_site": "pcg-search.com"
+  },
+  "cards": {}
+}

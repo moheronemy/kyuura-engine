@@ -776,7 +776,20 @@
       "PMCG6-073/power/0": "LD-PMCG6-073-PWR0"
     },
     "registered_without_kyuura_record": [
-      "PMCG2-017/attack/0"
+      "PMCG2-017/attack/0",
+      "PMCG1-026/attack/0",
+      "PMCG1-026/attack/1",
+      "PMCG1-045/attack/1",
+      "PMCG1-068/attack/0",
+      "PMCG1-068/attack/1",
+      "PMCG2-006/attack/0",
+      "PMCG2-006/attack/1",
+      "PMCG2-018/attack/0",
+      "PMCG2-035/attack/0",
+      "PMCG3-012/attack/0",
+      "PMCG3-012/attack/1",
+      "PMCG3-022/attack/0",
+      "PMCG3-022/attack/1"
     ],
     "kyuura_records_not_registered": [
       "LD-PMCG1-047-ATK1",
@@ -785,7 +798,7 @@
       "LD-PMCG5-054-ATK0",
       "LD-PMCG6-023-PWR0"
     ],
-    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる",
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。まだない",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
       "PMCG1-003/attack/1": "CC-PMCG1-003-P18",
@@ -818,7 +831,8 @@
     },
     "card_checks_without_text": {
       "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
-    }
+    },
+    "adopted_printed_text": []
   },
   "card_checks": {
     "engine_verified": {
@@ -1024,9 +1038,19 @@
       "PMCG1-076",
       "PMCG1-093",
       "PMCG1-094",
-      "PMCG2-017"
+      "PMCG2-017",
+      "PMCG3-022",
+      "PMCG1-026",
+      "PMCG2-021",
+      "PMCG2-022",
+      "PMCG2-018",
+      "PMCG2-006",
+      "PMCG2-035",
+      "PMCG1-068",
+      "PMCG1-045",
+      "PMCG3-012"
     ],
-    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（kyuura への報告事項。2026-10-15 に kyuura がエンジンの照合の記録を取り込んで空になった。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない。v0.19 のオーキドはかせ（PMCG1-077。p.255。2026-10-15 にエンジンが照合）・v0.21 の突風（PMCG1-072。p.255。2026-10-15 にエンジンが照合）・v0.22 のパソコン通信（PMCG1-090。p.260。2026-10-15 にエンジンが照合）・v0.23 のエネルギー回収（PMCG1-076。p.257。2026-10-15 にエンジンが照合。kyuura の rule_history.json の ERR-ENERGY-RETRIEVAL に同じ最新の説明の記録はあるが、照合の記録（CC-）はない）・v0.24 のポケモン交換おじさん（PMCG1-093。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・再録の書き方の違い（docs/cards/reprints.md）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.25 のポケモン育て屋さん（PMCG1-094。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）・p.88 の第4弾のゼニガメの解説の例（CC-PMCG4-018-P43。エンジンの記録の取り込み）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.27 のストライク（PMCG2-017。p.56・p.57・p.321。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）があるが、最新の説明（LD-）・照合の記録（CC-）はない）は kyuura に記録がないので挙げる）"
+    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（kyuura への報告事項。2026-10-15 に kyuura がエンジンの照合の記録を取り込んで空になった。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない。v0.19 のオーキドはかせ（PMCG1-077。p.255。2026-10-15 にエンジンが照合）・v0.21 の突風（PMCG1-072。p.255。2026-10-15 にエンジンが照合）・v0.22 のパソコン通信（PMCG1-090。p.260。2026-10-15 にエンジンが照合）・v0.23 のエネルギー回収（PMCG1-076。p.257。2026-10-15 にエンジンが照合。kyuura の rule_history.json の ERR-ENERGY-RETRIEVAL に同じ最新の説明の記録はあるが、照合の記録（CC-）はない）・v0.24 のポケモン交換おじさん（PMCG1-093。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・再録の書き方の違い（docs/cards/reprints.md）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.25 のポケモン育て屋さん（PMCG1-094。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）・p.88 の第4弾のゼニガメの解説の例（CC-PMCG4-018-P43。エンジンの記録の取り込み）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.27 のストライク（PMCG2-017。p.56・p.57・p.321。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.28 の既存の効果の型の登録だけで加えた 10 枚（ラプラス PMCG3-022・スターミー PMCG1-026・トサキント PMCG2-021・アズマオウ PMCG2-022・カイロス PMCG2-018・タマタマ PMCG2-006・プリン PMCG2-035・ラッキー PMCG1-068・スリープ PMCG1-045・シェルダー PMCG3-012。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）だけがある）は kyuura に記録がないので挙げる）"
   },
   "card_data_differences": [
     {

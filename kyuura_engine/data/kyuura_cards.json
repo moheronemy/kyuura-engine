@@ -172,6 +172,18 @@
   "pool_v0_27": [
     "PMCG2-017"
   ],
+  "pool_v0_28": [
+    "PMCG3-022",
+    "PMCG1-026",
+    "PMCG2-021",
+    "PMCG2-022",
+    "PMCG2-018",
+    "PMCG2-006",
+    "PMCG2-035",
+    "PMCG1-068",
+    "PMCG1-045",
+    "PMCG3-012"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -5001,6 +5013,907 @@
         "series": "ポケモンジャングル",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg02-017-strike/"
+      }
+    },
+    {
+      "id": "PMCG3-022",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラプラス",
+        "en": "Lapras"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          131
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": "Water Gun"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "ワザに必要なぶんよりも多く「水」エネルギーがついている時、多いエネルギー1つにつき10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": "Does 10 damage plus 10 more damage for each Water Energy attached to Lapras but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            }
+          },
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-022",
+        "pokemontcg": [
+          "base3-10",
+          "base3-25"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-020-laplace/",
+      "jp_print": {
+        "level": 31,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-020-laplace/"
+      }
+    },
+    {
+      "id": "PMCG1-026",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "スターミー",
+        "en": "Starmie"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          121
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒトデマン",
+          "en": "Staryu"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じこさいせい",
+              "en": "Recover"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の「水」エネルギーカードを1枚はがしてすてることによってダメージカウンターを全てとりのぞく。",
+              "en": "Discard 1 Water Energy card attached to Starmie in order to use this attack. Remove all damage counters from Starmie."
+            }
+          },
+          {
+            "name": {
+              "ja": "スターフリーズ",
+              "en": "Star Freeze"
+            },
+            "cost": [
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-026",
+        "pokemontcg": [
+          "base1-64"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-032-starmie/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-032-starmie/"
+      }
+    },
+    {
+      "id": "PMCG2-021",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "トサキント",
+        "en": "Goldeen"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          118
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つのでつく",
+              "en": "Horn Attack"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-021",
+        "pokemontcg": [
+          "base2-53"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-021-tosakinto/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-021-tosakinto/"
+      }
+    },
+    {
+      "id": "PMCG2-022",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "アズマオウ",
+        "en": "Seaking"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          119
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "トサキント",
+          "en": "Goldeen"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つのでつく",
+              "en": "Horn Attack"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "たきのぼり",
+              "en": "Waterfall"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-022",
+        "pokemontcg": [
+          "base2-46"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-022-azumao/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-022-azumao/"
+      }
+    },
+    {
+      "id": "PMCG2-018",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カイロス",
+        "en": "Pinsir"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          127
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まんりきばさみ",
+              "en": "Irongrip"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "ハサミギロチン",
+              "en": "Guillotine"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-018",
+        "pokemontcg": [
+          "base2-9",
+          "base2-25"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-018-kailios/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-018-kailios/"
+      }
+    },
+    {
+      "id": "PMCG2-006",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "タマタマ",
+        "en": "Exeggcute"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          102
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "さいみんじゅつ",
+              "en": "Hypnosis"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "やどりぎのタネ",
+              "en": "Leech Seed"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、自分のダメージカウンターを1つとりのぞく。",
+              "en": "Unless all damage from this attack is prevented, you may remove 1 damage counter from Exeggcute."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-006",
+        "pokemontcg": [
+          "base2-52"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-015-tamatama/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-015-tamatama/"
+      }
+    },
+    {
+      "id": "PMCG2-035",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "プリン",
+        "en": "Jigglypuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          39
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こもりうた",
+              "en": "Lullaby"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "はたく",
+              "en": "Pound"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "なぞのばしょは 2 つめのワザ名を「こもりうた」と誤記している。イントロパック（ゼニガメデッキ）に再録された同じカード（pcg-search）と、Bulbapedia「Jigglypuff (Jungle 54)」の日本語のワザ名（こもりうた・はたく）による"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG2-035",
+        "pokemontcg": [
+          "base2-54"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2014.php",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-038-purin/"
+      }
+    },
+    {
+      "id": "PMCG1-068",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラッキー",
+        "en": "Chansey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          113
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 120,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まるまる",
+              "en": "Scrunch"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番にうけるダメージが0になる。",
+              "en": "Flip a coin. If heads, prevent all damage done to Chansey during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "すてみタックル",
+              "en": "Double-edge"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分にも80ダメージ。",
+              "en": "Chansey does 80 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-068",
+        "pokemontcg": [
+          "base1-3"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-066-lucky/",
+      "jp_print": {
+        "level": 55,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-066-lucky/"
+      }
+    },
+    {
+      "id": "PMCG1-045",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "スリープ",
+        "en": "Drowzee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          96
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はたく",
+              "en": "Pound"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-045",
+        "pokemontcg": [
+          "base1-49"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-048-sleepe/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-048-sleepe/"
+      }
+    },
+    {
+      "id": "PMCG3-012",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "シェルダー",
+        "en": "Shellder"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          90
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "からをとじる",
+              "en": "Hide in Shell"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番にこのカードが受けるダメージは0になる。(ダメージ以外の効果はそのまま)",
+              "en": "Flip a coin. If heads, prevent all damage done to Shellder during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-012",
+        "pokemontcg": [
+          "base3-54"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-014-shellder/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-014-shellder/"
       }
     },
     {
