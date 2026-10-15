@@ -1761,7 +1761,7 @@ v0.28 は、既存の効果の型の登録だけで対応できるポケモン 1
 
 - 1 回目（Python 3.13.16）: 2,162 件のうち 2 件が失敗、1 件スキップ。失敗は、登録を数え上げる 2 つのテスト（tests/test_transparency_v0_9.py の T19b のワザの名前の一覧、
   tests/test_unresolved_rulings_v0_3d.py のこんらんの 20 が 40 になるポケモンの一覧）の期待値が古かったため。期待値を直した（[existing-effect-pokemon-v0.28.md](existing-effect-pokemon-v0.28.md) 4 章）。
-- 2 回目（最終のコード）: 実行中（結果は次のコミットで記入する）
+- 2 回目（最終のコード。コミット `c76581a` と同じコード）: Python 3.13.16 で 2,162 件、成功、スキップ 1 件（tests.test_cross_version_compatibility の `FullComparisonTest.test_no_differences`。C 段階の大きな比較で、`KYUURA_COMPAT_BASE` を設定したときだけ走る）。6 分 54 秒。
 
 ### 見つけた事項
 

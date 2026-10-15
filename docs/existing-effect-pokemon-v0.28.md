@@ -222,7 +222,7 @@ v0.28 は、既存の効果の型の登録だけで対応できるポケモン 1
   v0.28）: 274 件、成功。
 - `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check`: 一致。`python3 scripts/check_research_links.py --kyuura ../kyuura`: 一致。`ruff check --select F,E9 .`: 問題なし。
 - 全体テスト（`python3 -m unittest`）: 1 回目（Python 3.13.16）は 2,162 件のうち 2 件が失敗、1 件スキップ（上の 4 章の、登録を数え上げる 2 つのテストの期待値が古かった）。
-  期待値を直したあと、最終のコードでもう一度走らせた。結果は docs/implementation-status.md の v0.28 の節に書いた。
+  期待値を直したあと、最終のコード（`c76581a`）でもう一度走らせ、2,162 件が成功、スキップ 1 件（C 段階の大きな比較 `FullComparisonTest.test_no_differences`）だった。
 - 共通の処理（`engine.py`・`resolution/`・型の実装）を変えていないので、固定した前の版との大きな比較・全変異試験・性能の測定・複数の Python での反復はしていません。
 
 ## 6. 共通の処理・公開 API・ログ・保存の形式への影響
