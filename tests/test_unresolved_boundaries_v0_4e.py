@@ -47,6 +47,10 @@ ALL_CODES = (
     "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT",  # v0.11
     "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",  # v0.12
     "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",  # v0.17b
+    "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",  # v0.21（止まる場合と隣の止まらない場合は tests/test_gust_v0_21.py）
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",  # v0.22（止まる場合と隣の止まらない場合は tests/test_computer_search_v0_22.py）
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",  # v0.23（ER10。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",  # v0.23（ER9。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
 )
 TURN = 7
 

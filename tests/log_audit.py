@@ -25,7 +25,12 @@
   判定はワザ 1 回につき 1 匹 1 回（T4）・直前にゴースト側のプレイヤーの ``source: "power"`` のコインがあり結果が同じ（T33）・
   判定したポケモンがはたらいている「とうめい」を持つ（T9〜T14）・ワザの中だけ・「おもて」なら、そのワザのダメージ・効果を受けず
   （``attack_evaded`` が続く。T5）、「うら」なら、その要素をすぐに処理する・``attack_evaded`` のダメージは 0 より大きい（T21）。
-  ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める。
+  ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める（v0.23 からトレーナー
+  （エネルギー回収）の ``retrieve_energy`` も。基本エネルギーカード・1〜2 枚・そのトレーナーを使うためにトラッシュしたカードでないこと）。
+  v0.25 から、進化（``evolve``）の名前（通常の進化）と、``trainer_card`` のある進化（ポケモン育て屋さん。使っている最中のトレーナーの効果で、
+  たねポケモンに系統の合う 2 進化カードを重ねた）を確かめる。
+  v0.24 から、トレーナー（ポケモン交換おじさん）の ``return_to_deck``（手札 → 山札）・``reveal_from_deck``（山札 → 手札）も手札の組み立て直しに
+  含める（どちらもたねポケモン・進化カード。山札は組み立て直さないので、山札にあったかは持ち主・手札とトラッシュにないことで確かめる）。
   v0.10 から、ダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」。``CounterattackDamage``）のログ
   （``counterattack``・``counterattack_skipped``）を、その時点の場と比べる: 相手のワザのダメージ（0 より大きい）を、そのときに
   はたらいている「はんげき」を持つポケモン（いちばん上のカード・ねむり・マヒ・こんらんでない・かがくへんかガスに消されていない）が
@@ -63,6 +68,7 @@ from kyuura_engine.effects import (
     ReturnToHandOnKnockOut,
     SuppressOtherPowers,
 )
+from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, Phase
 
@@ -262,6 +268,9 @@ def log_problems(state) -> list[str]:
     top: dict[int, int] = {}  # 場のポケモンの番号 → いちばん上のカードの uid（v0.6。つける先のタイプを見る）
     turn_player: int | None = None  # 今の番のプレイヤー（最後の turn_start）
     hand: dict[int, list[int]] = {0: [], 1: []}  # 手札（v0.6。引いた・取ったサイド → 場に出した・つけた・使った）
+    # v0.23: 使っている最中のトレーナーの使うための条件でトラッシュした手札（discard_from_hand から discard_trainer まで）
+    trainer_discarded: dict[int, tuple[int, ...]] = {0: (), 1: ()}
+    using_trainer: dict[int, int | None] = {0: None, 1: None}  # v0.25: 使っている最中のトレーナー（play_trainer から discard_trainer まで）
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
     exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
@@ -629,6 +638,7 @@ def log_problems(state) -> list[str]:
             hand[e["player"]] = []
         elif kind == "play_trainer":
             from_hand(e, e["player"], e["card"])
+            using_trainer[e["player"]] = e["card"]
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
                 from_hand(e, e["player"], uid)
@@ -637,6 +647,20 @@ def log_problems(state) -> list[str]:
             from_hand(e, e["player"], e["card"])
             enter(e["card"])
         elif kind == "evolve":
+            # v0.25: 通常の進化は「○○○○から進化」の名前が進化前のカードの名前（p.309・p.324）。trainer_card のある進化（ポケモン育て屋さん）は、
+            # 使っている最中の 1 進化を飛ばして進化させるトレーナーの効果で、たねポケモンに系統の合う 2 進化カードを重ねた（p.259）
+            below, upper, via = state.card_def(e["from_card"]), state.card_def(e["to_card"]), e.get("trainer_card")
+            if via is None:
+                if upper.evolves_from != below.name_ja:
+                    problems.append(f"{e['turn']} 番の進化（{e['from_card']} → {e['to_card']}）で、{upper.name_ja} の進化元 {upper.evolves_from!r} が {below.name_ja} ではない")
+            else:
+                entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
+                if (entry is None or not entry.effect.skips_stage1_evolution or using_trainer.get(e["player"]) != via
+                        or not below.is_basic_pokemon or skipped_stage1_basic(upper) != below.name_ja):
+                    problems.append(
+                        f"{e['turn']} 番の 1 進化を飛ばした進化（{e['from_card']} → {e['to_card']}、trainer_card {via!r}）が、使っている最中の"
+                        "トレーナーの効果で、たねポケモンに系統の合う 2 進化カードを重ねたものではない"
+                    )
             from_hand(e, e["player"], e["to_card"])
             ids[e["to_card"]] = e["pokemon_id"]
             top[e["pokemon_id"]] = e["to_card"]
@@ -928,8 +952,52 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番にトラッシュした手札 {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札と違う")
             discard[e["player"]].extend(e["cards"])
             hand[e["player"]] = []
+        elif kind == "discard_from_hand":
+            # v0.22: トレーナー（パソコン通信）の使うための条件で、手札から選んだカードをトラッシュする（手札の並びの順。使っているカードは
+            # 手札から出ている。p.310）
+            if len(set(e["cards"])) != len(e["cards"]):
+                problems.append(f"{e['turn']} 番にトラッシュした手札 {e['cards']} に同じカードが 2 回ある")
+            for uid in e["cards"]:
+                from_hand(e, e["player"], uid)
+                discard[e["player"]].append(uid)
+            trainer_discarded[e["player"]] = tuple(e["cards"])
+        elif kind == "retrieve_energy":
+            # v0.23: トレーナー（エネルギー回収）の効果で、自分のトラッシュの基本エネルギーカード（最大 2 枚）を手札に加える。このカードを使う
+            # ためにトラッシュしたカードは選べない（p.257）
+            if not 1 <= len(e["cards"]) <= 2 or len(set(e["cards"])) != len(e["cards"]):
+                problems.append(f"{e['turn']} 番にトラッシュから手札に加えた基本エネルギーカード {e['cards']} の枚数・重複が合わない")
+            for uid in e["cards"]:
+                if uid not in discard[e["player"]] or owner.get(uid) != e["player"] or not state.card_def(uid).is_basic_energy:
+                    problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
+                    continue
+                if uid in trainer_discarded[e["player"]]:
+                    problems.append(f"{e['turn']} 番に、このカードを使うためにトラッシュしたカード {uid} を手札に加えた（p.257）")
+                discard[e["player"]].remove(uid)
+                hand[e["player"]].append(uid)
+        elif kind == "return_to_deck":
+            # v0.24: トレーナー（ポケモン交換おじさん）の使うための条件で、手札のたねポケモン・進化カードを相手に見せてから山札にもどす（p.259）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or not (state.card_def(uid).is_basic_pokemon or state.card_def(uid).is_evolution_pokemon):
+                problems.append(f"{e['turn']} 番に山札にもどしたカード {uid} が、プレイヤー {e['player']} のたねポケモン・進化カードではない")
+            from_hand(e, e["player"], uid)
+        elif kind == "reveal_from_deck":
+            # v0.24: トレーナー（ポケモン交換おじさん）の効果で、山札のたねポケモン・進化カードを相手に見せてから手札に加える（p.259。山札に
+            # もどしたカードを選んでもよい）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not (
+                    state.card_def(uid).is_basic_pokemon or state.card_def(uid).is_evolution_pokemon):
+                problems.append(f"{e['turn']} 番に山札から見せて手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のたねポケモン・進化カードではない")
+            hand[e["player"]].append(uid)
+        elif kind == "search_deck":
+            # v0.22: トレーナー（パソコン通信）の効果で、自分の山札から選び出したカードを手札に加える（「カードを引く」ではない。p.260・p.312）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]]:
+                problems.append(f"{e['turn']} 番に山札から手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のカードではない（持ち主・手札・トラッシュ）")
+            hand[e["player"]].append(uid)
         elif kind == "discard_trainer":
             discard[e["player"]].append(e["card"])
+            trainer_discarded[e["player"]] = ()
+            using_trainer[e["player"]] = None
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
         elif kind == "knock_out":

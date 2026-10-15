@@ -63,12 +63,21 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（18 件）。論点のないものは kyuura の処理が out_of_scope。"""
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（22 件）。論点のないものは kyuura の処理が out_of_scope。
+        kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 のパソコン通信の
+        UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件。kyuura への報告事項）。"""
         self.assertEqual(set(LINKS["stop_codes"]), engine_stop_codes())
         self.assertEqual(len(LINKS["stop_codes"]), LINKS["counts"]["engine_stop_codes"])
+        not_in_kyuura = set()
         for code, entry in LINKS["stop_codes"].items():
             with self.subTest(code=code):
-                self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
+                if entry["kyuura_disposition"] == "not_in_kyuura":
+                    self.assertIsNone(entry["kyuura_issue"])
+                    not_in_kyuura.add(code)
+                else:
+                    self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
+        self.assertEqual(not_in_kyuura, {"UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",
+                                         "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"})
 
     def test_codeless_questions_exist(self):
         """コードのない問い（Z9・Z22）は、問いの表（questions.QUESTIONS）にコードなしである。"""
@@ -94,7 +103,8 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertTrue(any(set(question.rulings) <= row for row in codeless_rows), question.rulings)
 
     def test_counts(self):
-        """未解決の裁定 24 件 = 停止コード 18 + コードのない未解決（起こらない 5・Z9）。kyuura の論点は 19 件で、別の数え方。"""
+        """未解決の裁定 28 件 = 停止コード 22 + コードのない未解決（起こらない 5・Z9）。kyuura の論点は 19 件で、別の数え方（v0.21 の
+        GW5・v0.22 の CS6・v0.23 の ER9・ER10 は kyuura に論点がない）。"""
         counted = len(LINKS["stop_codes"]) + len(LINKS["unresolved_without_code"]) + sum(
             v["counted_as_engine_unresolved"] for v in LINKS["codeless_questions"].values())
         self.assertEqual(counted, LINKS["counts"]["engine_unresolved_rulings"])

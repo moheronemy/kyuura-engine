@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 24,
-    "engine_stop_codes": 18,
+    "engine_unresolved_rulings": 28,
+    "engine_stop_codes": 22,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -245,6 +245,50 @@
       "kyuura_issue": "UQ-EFFECT-AFTER-NO-DAMAGE",
       "kyuura_disposition": "issue",
       "note": "場合（Z23-a 要素が無効・Z23-b 計算の結果が 0・Z23-c「とうめい」・Z23-d 対象がいない（起こらない））を分けて記録する。docs/unresolved-research-v0.18b.md 3 章"
+    },
+    "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH": {
+      "engine_rulings": [
+        {
+          "version": "v0.21",
+          "document": "docs/gust-v0.21.md",
+          "ruling_id": "GW5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK": {
+      "engine_rulings": [
+        {
+          "version": "v0.22",
+          "document": "docs/computer-search-v0.22.md",
+          "ruling_id": "CS6"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.23",
+          "document": "docs/energy-retrieval-v0.23.md",
+          "ruling_id": "ER10"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": {
+      "engine_rulings": [
+        {
+          "version": "v0.23",
+          "document": "docs/energy-retrieval-v0.23.md",
+          "ruling_id": "ER9"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -972,9 +1016,14 @@
       ]
     },
     "engine_verified_without_kyuura_record": [
-      "PMCG1-077"
+      "PMCG1-077",
+      "PMCG1-072",
+      "PMCG1-090",
+      "PMCG1-076",
+      "PMCG1-093",
+      "PMCG1-094"
     ],
-    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（kyuura への報告事項。2026-10-15 に kyuura がエンジンの照合の記録を取り込んで空になった。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない。v0.19 のオーキドはかせ（PMCG1-077。p.255。2026-10-15 にエンジンが照合）は kyuura に記録がないので挙げる）"
+    "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（kyuura への報告事項。2026-10-15 に kyuura がエンジンの照合の記録を取り込んで空になった。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない。v0.19 のオーキドはかせ（PMCG1-077。p.255。2026-10-15 にエンジンが照合）・v0.21 の突風（PMCG1-072。p.255。2026-10-15 にエンジンが照合）・v0.22 のパソコン通信（PMCG1-090。p.260。2026-10-15 にエンジンが照合）・v0.23 のエネルギー回収（PMCG1-076。p.257。2026-10-15 にエンジンが照合。kyuura の rule_history.json の ERR-ENERGY-RETRIEVAL に同じ最新の説明の記録はあるが、照合の記録（CC-）はない）・v0.24 のポケモン交換おじさん（PMCG1-093。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・再録の書き方の違い（docs/cards/reprints.md）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.25 のポケモン育て屋さん（PMCG1-094。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）・p.88 の第4弾のゼニガメの解説の例（CC-PMCG4-018-P43。エンジンの記録の取り込み）があるが、最新の説明（LD-）・照合の記録（CC-）はない）は kyuura に記録がないので挙げる）"
   },
   "card_data_differences": [
     {

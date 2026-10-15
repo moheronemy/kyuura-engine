@@ -52,6 +52,16 @@
   「最新の説明」にしたがう（``TrainerEntry.play_text_ja``。docs/trainers-v0.2b.md）
 - トレーナー（v0.19）: オーキドはかせ ``DiscardHandAndDraw``（p.255 の最新の説明。手札をすべてトラッシュし、その後 7 枚引く。
   docs/professor-oak-v0.19.md）
+- トレーナー（v0.21）: 突風 ``SwitchOpponentWithBench``（p.255 の最新の説明。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の
+  対戦ポケモンと入れ替える。入れ替えはポケモンいれかえと共通の ``_switch_active_with_bench``。docs/gust-v0.21.md）
+- トレーナー（v0.22）: パソコン通信 ``DiscardFromHandThenSearchDeck``（p.260 の最新の説明。使うための条件として手札から 2 枚選んでトラッシュ
+  し、山札から 1 枚選び出して手札に加え、山札を切る。2 段階のトレーナーの決定。docs/computer-search-v0.22.md）
+- トレーナー（v0.23）: エネルギー回収 ``DiscardFromHandThenRetrieveEnergy``（p.257 の最新の説明。使うための条件として手札から 1 枚選んで
+  トラッシュし、トラッシュの基本エネルギーカード（そのトラッシュしたカードを除く）を最大 2 枚選び出して手札に加える。2 段階のトレーナーの
+  決定。docs/energy-retrieval-v0.23.md）
+- トレーナー（v0.24）: ポケモン交換おじさん ``TradePokemonWithDeck``（p.259 の最新の説明。手札のたねポケモン・進化カードを 1 枚、相手に
+  見せて山札にもどし、山札のたねポケモン・進化カードを 1 枚、相手に見せて手札に加え、山札を切る。2 段階のトレーナーの決定。
+  docs/pokemon-trader-v0.24.md）
 - つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
@@ -86,11 +96,18 @@ from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
 from .damage import DamageModifier, calculate_attack_damage
-from .decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, SELECT_POKEMON, push_trainer_decision
+from .decisions import (
+    DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, RECOVER_ENERGY, RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_EVOLUTION_CARD,
+    SELECT_POKEMON, push_trainer_decision,
+)
 from .errors import IllegalActionError, UnsupportedError
+from .evolution import place_evolution_card, skipped_stage1_basic
 from .persistent import damage_prevention, remove_persistent_effects, retaliation
 from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
-from .zones import attach_energy_from_hand, attach_trainer, discard_hand, draw_cards, return_discard_to_hand
+from .zones import (
+    attach_energy_from_hand, attach_trainer, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand, return_hand_to_deck,
+    reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
+)
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition, Power
@@ -1849,6 +1866,9 @@ class TrainerEffect:
 
     implementation_id = "abstract"
     stays_in_play = False  # True: 使い終わったら場に残る（つけて使うトレーナー）。False: 使いすて（p.310）
+    # True: 効果で、たねポケモンの上に 2 進化カードを直接重ねる（1 進化を飛ばす。v0.25 のポケモン育て屋さん）。進化の重なりの不変条件が、
+    # たねポケモン + 2 進化の重なりの進化のログ（evolve の trainer_card）のカードを、この印で確かめる（カード id では分けない）
+    skips_stage1_evolution = False
     discard_turn_offset = 0  # つけて使うトレーナーをトラッシュする番: 使った番から数えていくつ後の番の終わりか
 
     def check(self, definition: CardDefinition) -> list[str]:
@@ -1921,13 +1941,442 @@ class DiscardHandAndDraw(TrainerEffect):
         draw_cards(state, use.player, min(self.count, len(deck)))
 
 
+@dataclass(frozen=True)
+class DiscardFromHandThenSearchDeck(TrainerEffect):
+    """使うための条件として手札から ``discard`` 枚を選んでトラッシュし、その後、自分の山札からカードを ``search`` 枚選び出して手札に加え、
+    その山札を切る（パソコン通信。p.260 の最新の説明「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札から
+    カードを1枚選び出し、手札に加える。その後、その山札をよく切る。」。p.310 の「使うための条件」の例。v0.22。docs/computer-search-v0.22.md）。
+
+    - 使うための条件（CS2〜CS5）: 使っているこのカードは p.310 の手順 1 で手札から出している（``state.trainer_in_use``）ので、トラッシュ
+      する手札に含まれない。``check_playable`` は手札から出す前に呼ばれるので、このカードを除く手札が ``discard`` 枚未満なら
+      ``IllegalActionError("INSUFFICIENT_CARDS_IN_HAND")``（p.310「2枚トラッシュできないときには、「パソコン通信」を使うことは
+      できません。」）。拒否したらカードは手札に残る。
+    - 山札が 0 枚のとき（CS6）は原典で決められない（使うための条件は手札のトラッシュだけで、山札から選び出せないときの扱いは書かれて
+      いない。p.312 の「引けるだけ引く」は「カードを引く」ときの規定）ので、条件の確認のあと ``UnsupportedError`` で止める。
+    - 段階 1（CS7〜CS10）: 使ったプレイヤーが手札（このカードを除く）からちょうど ``discard`` 枚を選ぶ（決定 ``DISCARD_FROM_HAND``）。
+      選んだカードを手札の並びの順にトラッシュする（``zones.discard_from_hand``。ログ ``discard_from_hand``。公開）。
+    - 段階 2（CS11〜CS15）: 使ったプレイヤーが自分の山札からちょうど ``search`` 枚を選ぶ（決定 ``SEARCH_DECK``。どの種類のカードでも
+      よく、省略できない。山札が 1 枚でも決定を出す）。選んだカードを手札に加え（``zones.search_deck_to_hand``。ログ ``search_deck`` の
+      ``card`` は選んだプレイヤーだけが見る情報）、その山札を切る（``zones.shuffle_deck``。乱数 ``state.rng``。ログ ``shuffle``）。
+      「カードを引く」ではないので、山札が 0 枚になっても負けではない（負けは番の最初に引けないときだけ。p.309・p.312）。
+    - 不正な答え（枚数・重複・選べないもの）は決定の確認（``decisions.check_choices``）が拒否し、決定は待ったまま、状態・乱数は変わら
+      ない。段階 2 で拒否しても、段階 1 のトラッシュは取り消さない（すでにすんだ処理）。
+    """
+
+    discard: int
+    search: int
+    implementation_id = "discard_from_hand_then_search_deck"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        p = state.players[use.player]
+        others = [uid for uid in p.hand if uid != use.card]
+        if len(others) < self.discard:
+            raise IllegalActionError(
+                "INSUFFICIENT_CARDS_IN_HAND",
+                f"このカードを除く手札が {len(others)} 枚で、使うための条件（手札からカードを{self.discard}枚選んでトラッシュする）を"
+                "満たせない（p.260・p.310）",
+            )
+        if not p.deck:
+            raise UnsupportedError(
+                "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",
+                "山札が 0 枚。このときに「パソコン通信」を使えるか（手札をトラッシュするだけで使えるか）は、『オフィシャルブック2000』（p.260・"
+                "p.310・p.312）から決められないので扱わない（p.312 の「引けるだけ引く」は「カードを引く」ときの規定）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(
+            state, use, kind=DISCARD_FROM_HAND, player=use.player, options=state.players[use.player].hand,
+            min_choices=self.discard, max_choices=self.discard,
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == DISCARD_FROM_HAND:
+            discard_from_hand(state, use.player, choices)
+            push_trainer_decision(
+                state, use, kind=SEARCH_DECK, player=use.player, options=sorted(state.players[use.player].deck),
+                min_choices=self.search, max_choices=self.search,
+            )
+            return
+        for card in choices:
+            search_deck_to_hand(state, use.player, card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は手札（このカードを除く）から ``discard`` 枚、段階 2 は山札（uid の小さい順）から
+        ``search`` 枚。段階 2 を待つのは段階 1 のトラッシュのあと（今の番のログの最後の ``play_trainer`` のあとに ``discard_from_hand``）。"""
+        p = state.players[use.player]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"「パソコン通信」の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        if decision.kind == DISCARD_FROM_HAND:
+            expected, count = tuple(p.hand), self.discard
+        elif decision.kind == SEARCH_DECK:
+            expected, count = tuple(sorted(p.deck)), self.search
+            since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e["card"] == use.card), default=None)
+            if since is None or not any(e["kind"] == "discard_from_hand" for e in state.log[since:]):
+                problems.append("「パソコン通信」の山札を選ぶ決定が、手札のトラッシュ（ログ discard_from_hand）のあとではない")
+        else:
+            return problems + [f"「パソコン通信」の決定の種類が {decision.kind!r}（{DISCARD_FROM_HAND}・{SEARCH_DECK} のはず）"]
+        if (decision.min_choices, decision.max_choices) != (count, count):
+            problems.append(f"「パソコン通信」の決定 {decision.kind} で選ぶ数が {decision.min_choices}〜{decision.max_choices}（{count} 枚のはず）")
+        if decision.options != expected:
+            problems.append(f"「パソコン通信」の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
+        if use.card in decision.options:
+            problems.append("「パソコン通信」の決定で、使っているこのカードを選べる")
+        return problems
+
+
+def _retrievable_energy(state: GameState, player: int, excluded: tuple[int, ...]) -> tuple[int, ...]:
+    """v0.23: エネルギー回収で選べるもの。自分のトラッシュの基本エネルギーカード（トラッシュの並び）から、このカードを使うためにトラッシュした
+    カード ``excluded`` を除いたもの（p.257「ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。」）。"""
+    return tuple(uid for uid in state.players[player].discard if state.card_def(uid).is_basic_energy and uid not in excluded)
+
+
+@dataclass(frozen=True)
+class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
+    """使うための条件として手札から ``discard`` 枚を選んでトラッシュし、その後、自分のトラッシュの基本エネルギーカードを最大 ``retrieve`` 枚選び
+    出して手札に加える（エネルギー回収。p.257 の最新の説明「手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたの
+    トラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことは
+    できない。」。v0.23。docs/energy-retrieval-v0.23.md の ER1〜ER17）。
+
+    - 使うための条件（ER2・ER3）: 使っているこのカードは p.310 の手順 1 で手札から出している（``state.trainer_in_use``）ので、トラッシュ
+      する手札に含まれない。``check_playable`` は手札から出す前に呼ばれるので、このカードを除く手札が ``discard`` 枚未満なら
+      ``IllegalActionError("INSUFFICIENT_CARDS_IN_HAND")``（拒否したらカードは手札に残る）。トラッシュするカードの種類に制限はない。
+    - 使う前のトラッシュに基本エネルギーカードがないとき（ER10）は、使えるかを原典で決められないので、条件の確認のあと ``UnsupportedError``
+      で止める。トラッシュするカードは選べない（ER7）ので、トラッシュによって選べるものは増えない（選べるものは、使う前のトラッシュの基本
+      エネルギーカードと同じ。ER11）。
+    - 段階 1（ER4・ER5）: 使ったプレイヤーが手札（このカードを除く）からちょうど ``discard`` 枚を選び、トラッシュする（``zones.discard_from_hand``。
+      ログ ``discard_from_hand``。公開。パソコン通信と同じ処理）。
+    - 段階 2（ER6〜ER9・ER12）: 使ったプレイヤーが、トラッシュの基本エネルギーカード（段階 1 でトラッシュしたカードを除く。トラッシュの
+      並び）から 1〜min(``retrieve``, 選べるものの数) 枚を選ぶ（決定 ``RETRIEVE_ENERGY``。``context`` の ``"discarded"`` に段階 1 で
+      トラッシュしたカード）。選べるものがあるのに 0 枚を選ぶと、原典で決められない（ER9）ので ``UnsupportedError`` で止める（決定は待った
+      まま。``min_choices`` は 0 にして、0 枚の答えを枚数の誤りにしない）。選んだカードはトラッシュの並びの順に手札に加える
+      （``zones.return_discard_to_hand``。ログ ``retrieve_energy`` の ``cards`` は公開。トラッシュは公開の情報。ER13）。
+    - 不正な答え（枚数・重複・選べないもの）は決定の確認が拒否し、決定は待ったまま。段階 2 で拒否しても、段階 1 のトラッシュは取り消さない。
+    """
+
+    discard: int
+    retrieve: int
+    implementation_id = "discard_from_hand_then_retrieve_energy"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        p = state.players[use.player]
+        others = [uid for uid in p.hand if uid != use.card]
+        if len(others) < self.discard:
+            raise IllegalActionError(
+                "INSUFFICIENT_CARDS_IN_HAND",
+                f"このカードを除く手札が {len(others)} 枚で、使うための条件（手札からカードを{self.discard}枚選んでトラッシュする）を"
+                "満たせない（p.257・p.310）",
+            )
+        if not _retrievable_energy(state, use.player, ()):
+            raise UnsupportedError(
+                "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+                "トラッシュに基本エネルギーカードがない（このカードを使うためにトラッシュするカードは選べない）。このときに「エネルギー回収」を"
+                "使えるか（手札をトラッシュするだけで使えるか）は、『オフィシャルブック2000』（p.257・p.310）から決められないので扱わない",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(
+            state, use, kind=DISCARD_FROM_HAND, player=use.player, options=state.players[use.player].hand,
+            min_choices=self.discard, max_choices=self.discard,
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == DISCARD_FROM_HAND:
+            discarded = discard_from_hand(state, use.player, choices)
+            options = _retrievable_energy(state, use.player, discarded)
+            if not options:  # check_playable で確かめた（トラッシュしたカードは選べないので、使う前と同じ）
+                raise RuntimeError("「エネルギー回収」で選べる基本エネルギーカードがない（確認の漏れ。エンジンの不具合）")
+            push_trainer_decision(
+                state, use, kind=RETRIEVE_ENERGY, player=use.player, options=options, context=(("discarded", discarded),),
+                min_choices=0, max_choices=min(self.retrieve, len(options)),
+            )
+            return
+        if not choices:
+            raise UnsupportedError(
+                "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+                "トラッシュに選べる基本エネルギーカードがあるのに 0 枚を選んだ。「最大2枚」が 0 枚を含むか（手札に加えずに終われるか）は、"
+                "『オフィシャルブック2000』（p.257）から決められないので扱わない（1 枚以上を選び直せる）",
+            )
+        cards = tuple(uid for uid in state.players[use.player].discard if uid in choices)
+        return_discard_to_hand(state, use.player, cards)
+        state.add_event("retrieve_energy", player=use.player, cards=cards)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は手札（このカードを除く）から ``discard`` 枚、段階 2 はトラッシュの基本エネルギーカード
+        から段階 1 でトラッシュしたカードを除いたもの（0〜min(``retrieve``, 数) 枚。0 枚は答えのときに止める）。段階 2 の ``"discarded"`` は、
+        今の番のログの最後のこのカードの ``play_trainer`` のあとの ``discard_from_hand`` と同じ。"""
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"「エネルギー回収」の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        if decision.kind == DISCARD_FROM_HAND:
+            expected, bounds = tuple(state.players[use.player].hand), (self.discard, self.discard)
+        elif decision.kind == RETRIEVE_ENERGY:
+            discarded = tuple(decision.context_value("discarded", ()))
+            since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e["card"] == use.card), default=None)
+            logged = None if since is None else next((tuple(e["cards"]) for e in state.log[since:] if e["kind"] == "discard_from_hand"), None)
+            if logged is None or logged != discarded:
+                problems.append(f"「エネルギー回収」の回収の決定の discarded {discarded} が、ログの手札のトラッシュ {logged} と合わない")
+            expected = _retrievable_energy(state, use.player, discarded)
+            bounds = (0, min(self.retrieve, len(expected)))
+            if not expected:
+                problems.append("「エネルギー回収」の回収の決定に、選べる基本エネルギーカードがない")
+        else:
+            return problems + [f"「エネルギー回収」の決定の種類が {decision.kind!r}（{DISCARD_FROM_HAND}・{RETRIEVE_ENERGY} のはず）"]
+        if (decision.min_choices, decision.max_choices) != bounds:
+            problems.append(f"「エネルギー回収」の決定 {decision.kind} で選ぶ数が {decision.min_choices}〜{decision.max_choices}（{bounds} のはず）")
+        if decision.options != expected:
+            problems.append(f"「エネルギー回収」の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
+        if use.card in decision.options:
+            problems.append("「エネルギー回収」の決定で、使っているこのカードを選べる")
+        return problems
+
+
+def _is_pokemon_card(state: GameState, uid: int) -> bool:
+    """v0.24: 「たねポケモン」または「進化カード」（1 進化・2 進化）か。既存のカードの定義（``is_basic_pokemon``・``is_evolution_pokemon``）で決める。"""
+    definition = state.card_def(uid)
+    return definition.is_basic_pokemon or definition.is_evolution_pokemon
+
+
+@dataclass(frozen=True)
+class TradePokemonWithDeck(TrainerEffect):
+    """使うための条件として手札の「たねポケモン」または「進化カード」を 1 枚選び、相手に見せてから山札にもどし、その後、山札の「たねポケモン」
+    または「進化カード」を 1 枚選び出し、相手に見せてから手札に加え、その山札を切る（ポケモン交換おじさん。p.259 の最新の説明「手札から
+    「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができないとき、このカードは使えない。
+    あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく
+    切る。」。v0.24。docs/pokemon-trader-v0.24.md の PT1〜PT19）。
+
+    - 使うための条件（PT2・PT3）: 使っているこのカードは p.310 の手順 1 で手札から出している。``check_playable`` は手札から出す前に呼ばれる
+      ので、このカードを除く手札にたねポケモン・進化カードがなければ ``IllegalActionError("NO_POKEMON_CARD_IN_HAND")``（拒否したら
+      カードは手札に残る）。山札の中身（見えない情報）は条件にしない。もどしたカードは山札に入るので、山札にたねポケモン・進化カードが
+      なくても・山札が 0 枚でも、選び出すものはある（p.259 の解説「山札の中にポケモンのカードがなかったら、交換のために入れたポケモン
+      カードを持ってくることになります」。PT10・PT11）。
+    - 段階 1（PT4〜PT8）: 使ったプレイヤーが手札のたねポケモン・進化カードから 1 枚を選び（決定 ``RETURN_TO_DECK``）、相手に見せてから
+      山札の一番下にもどす（``zones.return_hand_to_deck``。ログ ``return_to_deck`` は公開）。手札をトラッシュする効果ではない。
+    - 段階 2（PT9〜PT13）: 使ったプレイヤーが山札のたねポケモン・進化カード（段階 1 でもどしたカードを含む。uid の小さい順。``context`` の
+      ``"returned"``）から 1 枚を選び出し（決定 ``SEARCH_DECK``。省略できない）、相手に見せてから手札に加え（``zones.reveal_deck_to_hand``。
+      ログ ``reveal_from_deck`` は公開。選べたほかの山札のカードはログに書かない）、その山札を切る（``zones.shuffle_deck``）。
+    - 不正な答えは決定の確認が拒否し、決定は待ったまま。段階 2 で拒否しても、段階 1（山札にもどしたこと）は取り消さない。
+    """
+
+    implementation_id = "trade_pokemon_with_deck"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not any(uid != use.card and _is_pokemon_card(state, uid) for uid in state.players[use.player].hand):
+            raise IllegalActionError(
+                "NO_POKEMON_CARD_IN_HAND",
+                "このカードを除く手札に「たねポケモン」・「進化カード」がなく、使うための条件（1 枚選び、相手プレイヤーに見せてから、山札に"
+                "もどす）を満たせない（p.259・p.310）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        options = [uid for uid in state.players[use.player].hand if _is_pokemon_card(state, uid)]
+        push_trainer_decision(state, use, kind=RETURN_TO_DECK, player=use.player, options=options, min_choices=1, max_choices=1)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == RETURN_TO_DECK:
+            (returned,) = choices
+            return_hand_to_deck(state, use.player, returned)
+            options = sorted(uid for uid in state.players[use.player].deck if _is_pokemon_card(state, uid))
+            push_trainer_decision(
+                state, use, kind=SEARCH_DECK, player=use.player, options=options, context=(("returned", returned),),
+                min_choices=1, max_choices=1,
+            )
+            return
+        (card,) = choices
+        reveal_deck_to_hand(state, use.player, card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は手札のたねポケモン・進化カード（手札の並び）から 1 枚、段階 2 は山札のたねポケモン・
+        進化カード（uid の小さい順。もどしたカードを含む）から 1 枚。段階 2 の ``"returned"`` は、今のログの最後のこのカードの
+        ``play_trainer`` のあとの ``return_to_deck`` のカードと同じで、山札にあり、選べるものに入る。"""
+        p = state.players[use.player]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"「ポケモン交換おじさん」の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        if decision.kind == RETURN_TO_DECK:
+            expected = tuple(uid for uid in p.hand if _is_pokemon_card(state, uid))
+        elif decision.kind == SEARCH_DECK:
+            expected = tuple(sorted(uid for uid in p.deck if _is_pokemon_card(state, uid)))
+            returned = decision.context_value("returned", None)
+            since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e["card"] == use.card), default=None)
+            logged = None if since is None else next((e["card"] for e in state.log[since:] if e["kind"] == "return_to_deck"), None)
+            if returned is None or logged != returned:
+                problems.append(f"「ポケモン交換おじさん」の山札を選ぶ決定の returned {returned} が、ログの山札にもどしたカード {logged} と合わない")
+            elif returned not in expected:
+                problems.append(f"「ポケモン交換おじさん」で山札にもどしたカード {returned} が、山札の選べるものにない")
+        else:
+            return problems + [f"「ポケモン交換おじさん」の決定の種類が {decision.kind!r}（{RETURN_TO_DECK}・{SEARCH_DECK} のはず）"]
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"「ポケモン交換おじさん」の決定 {decision.kind} で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 枚のはず）")
+        if decision.options != expected:
+            problems.append(f"「ポケモン交換おじさん」の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
+        if use.card in decision.options:
+            problems.append("「ポケモン交換おじさん」の決定で、使っているこのカードを選べる")
+        return problems
+
+
+# 1 進化を飛ばして 2 進化させる組（自分の場のたねポケモンと手札の 2 進化カード）の扱い（v0.25。ポケモン育て屋さん）
+SKIP_EVOLUTION_OK = "ok"  # 進化させられる
+SKIP_EVOLUTION_HP = "hp"  # 進化したあとの HP がのっているダメージ以下（UNRESOLVED_EVOLUTION_HP。v0.4a の H1）
+SKIP_EVOLUTION_UNSUPPORTED_CARD = "unsupported_card"  # 2 進化カードが未対応（UNSUPPORTED_EVOLUTION）
+SKIP_EVOLUTION_UNKNOWN_LINEAGE = "unknown_lineage"  # 写しのカードのデータで系統を確かめられない（UNSUPPORTED_EVOLUTION_LINEAGE）
+_EVOLUTION_HP_REASON = (
+    "進化すると HP がのっているダメージ以下になる。そのときにきぜつするか（いつきぜつの判定をするか）は『オフィシャルブック2000』"
+    "（p.310・p.323）から決められないので扱わない"
+)
+
+
+def skip_evolution_pairs(state: GameState, player: int) -> dict[int, list[tuple[int, str]]]:
+    """1 進化を飛ばして 2 進化させられる組（v0.25。p.259 のポケモン育て屋さん。docs/pokemon-breeder-v0.25.md の BR3〜BR10）。
+
+    自分の場（バトル場・ベンチ）のたねポケモン（重なりのないたねポケモンのカード）で、その番の最初から場に出ていたもの（p.310。今の番に
+    場に出したポケモンは進化させられない）ごとに、手札の 2 進化カードのうち系統の合うもの（2 進化カードの「○○○○から進化」の 1 進化カード
+    （写しのカードのデータ）の進化元の名前が、そのたねポケモンの名前と同じ。``evolution.skipped_stage1_basic``）と、その組の扱い
+    （``SKIP_EVOLUTION_…``）。系統を写しで確かめられない 2 進化カードは、どのたねポケモンとも「確かめられない」組にする（推測で合う・
+    合わないを決めない）。場のポケモンの番号は場の並び（バトル場 → ベンチ）、カードは手札の並び。おたがいの最初の番は呼ぶ側が確かめる。
+    """
+    p = state.players[player]
+    cards = [uid for uid in p.hand if state.card_def(uid).is_stage2_pokemon]
+    pairs: dict[int, list[tuple[int, str]]] = {}
+    for pokemon in p.in_play():
+        current = state.card_def(pokemon.card)
+        if pokemon.evolution_stack or not current.is_basic_pokemon or pokemon.current_form_turn >= state.turn_number:
+            continue
+        for uid in cards:
+            definition = state.card_def(uid)
+            basic = skipped_stage1_basic(definition)
+            if basic is None:
+                status = SKIP_EVOLUTION_UNKNOWN_LINEAGE
+            elif basic != current.name_ja:
+                continue
+            elif not definition.supported:
+                status = SKIP_EVOLUTION_UNSUPPORTED_CARD
+            elif pokemon.damage >= definition.hp:
+                status = SKIP_EVOLUTION_HP
+            else:
+                status = SKIP_EVOLUTION_OK
+            pairs.setdefault(pokemon.pokemon_id, []).append((uid, status))
+    return pairs
+
+
+def _selectable_skip_evolutions(state: GameState, player: int) -> dict[int, list[tuple[int, str]]]:
+    """決定で選べる組（進化させられる組と、原典で決められない HP の組）。エンジンが確かめられない組（未対応のカード・系統を確かめられない
+    カード）は選べるものに入れない。"""
+    selectable = {}
+    for pokemon_id, entries in skip_evolution_pairs(state, player).items():
+        kept = [(uid, status) for uid, status in entries if status in (SKIP_EVOLUTION_OK, SKIP_EVOLUTION_HP)]
+        if kept:
+            selectable[pokemon_id] = kept
+    return selectable
+
+
+@dataclass(frozen=True)
+class EvolveBasicToStage2(TrainerEffect):
+    """自分の場のたねポケモンの上に、手札の 2 進化カードを直接重ね、1 進化を飛ばして 2 進化ポケモンに進化させる（ポケモン育て屋さん。
+    p.259 の最新の説明「このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を
+    直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」。v0.25。docs/pokemon-breeder-v0.25.md の BR1〜BR22）。
+
+    - 使うための条件（BR2）: 進化させるときにだけ使える。おたがいの最初の番は ``FIRST_TURN_EVOLUTION``（p.310。BR9）。進化させられる組
+      （``skip_evolution_pairs``）がなければ使えない: 原典で決められない組（HP）だけなら ``UNRESOLVED_EVOLUTION_HP``、エンジンが
+      確かめられない組（未対応のカード・写しで系統を確かめられないカード）だけなら ``UNSUPPORTED_EVOLUTION``・
+      ``UNSUPPORTED_EVOLUTION_LINEAGE``（``UnsupportedError``）、ほかは ``IllegalActionError("NO_EVOLUTION_TARGET")``。どれも手札から
+      出す前（拒否したらカードは手札に残る）。
+    - 段階 1（BR16）: 使ったプレイヤーが、進化させる自分の場のたねポケモンを選ぶ（決定 ``SELECT_POKEMON``。p.310 の進化の手順 1 の順で、
+      ポケモンを先に示す）。段階 2: そのポケモンの上に重ねる手札の 2 進化カードを選ぶ（決定 ``SELECT_EVOLUTION_CARD``。``context`` の
+      ``"target"``）。HP の組は選べるが、選ぶと ``UNRESOLVED_EVOLUTION_HP``（``unresolved_choices``）。
+    - 進化（BR11〜BR15）: 通常の進化と同じ手順（``evolution.place_evolution_card``。特殊状態・持続する効果・にげるの失敗の記録を消し、
+      ダメージ・エネルギー・ついているトレーナー・場のポケモンの番号・場に出た番は受け継ぐ）。重なりはたねポケモン + 2 進化の 2 枚で、1 進化の
+      カードは使わない（作らない・動かさない）。ログ ``evolve`` に ``trainer_card``（このカードの uid）を書く。
+    - 通常の操作（``EvolvePokemon``）の確認（名前・段階）は変えていない。たねポケモンに 2 進化カードを直接重ねられるのは、このカードの効果だけ。
+    """
+
+    implementation_id = "evolve_basic_to_stage2"
+    skips_stage1_evolution = True
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if state.turn_number <= 2:
+            raise IllegalActionError("FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310・p.259）")
+        statuses = {status for entries in skip_evolution_pairs(state, use.player).values() for _, status in entries}
+        if SKIP_EVOLUTION_OK in statuses:
+            return
+        if SKIP_EVOLUTION_HP in statuses:
+            raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", _EVOLUTION_HP_REASON)
+        if SKIP_EVOLUTION_UNSUPPORTED_CARD in statuses:
+            raise UnsupportedError("UNSUPPORTED_EVOLUTION", "1 進化を飛ばして重ねられる手札の 2 進化カードが未対応")
+        if SKIP_EVOLUTION_UNKNOWN_LINEAGE in statuses:
+            raise UnsupportedError(
+                "UNSUPPORTED_EVOLUTION_LINEAGE",
+                "手札の 2 進化カードの進化元の 1 進化カードが写しにない（または進化元が食い違う）ので、どのたねポケモンに重ねられるかを確かめられない",
+            )
+        raise IllegalActionError(
+            "NO_EVOLUTION_TARGET",
+            "自分の場に、その番の最初から場に出ていたたねポケモンと、手札にその系統の 2 進化カードの組がなく、進化させられない"
+            "（このカードは進化させるときにだけ使える。p.259）",
+        )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        selectable = _selectable_skip_evolutions(state, use.player)
+        options = list(selectable)
+        unresolved = [pid for pid in options if all(status == SKIP_EVOLUTION_HP for _, status in selectable[pid])]
+        push_trainer_decision(
+            state, use, kind=SELECT_POKEMON, player=use.player, options=options, min_choices=1, max_choices=1,
+            unresolved_choices=unresolved, unresolved_code="UNRESOLVED_EVOLUTION_HP", unresolved_reason=_EVOLUTION_HP_REASON,
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == SELECT_POKEMON:
+            (target,) = choices
+            entries = _selectable_skip_evolutions(state, use.player)[target]
+            push_trainer_decision(
+                state, use, kind=SELECT_EVOLUTION_CARD, player=use.player, options=[uid for uid, _ in entries],
+                context=(("target", target),), min_choices=1, max_choices=1,
+                unresolved_choices=[uid for uid, status in entries if status == SKIP_EVOLUTION_HP],
+                unresolved_code="UNRESOLVED_EVOLUTION_HP", unresolved_reason=_EVOLUTION_HP_REASON,
+            )
+            return
+        (card,) = choices
+        target = decision.context_value("target")
+        if (card, SKIP_EVOLUTION_OK) not in _selectable_skip_evolutions(state, use.player).get(target, []):
+            raise RuntimeError(f"場のポケモン {target} にカード {card} を 1 進化を飛ばして重ねられない（決定の確認の漏れ。エンジンの不具合）")
+        place_evolution_card(state, use.player, state.find_pokemon(target)[1], card, trainer=use.card)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は進化させられる自分の場のたねポケモン（場の並び）から 1 匹、段階 2 はそのポケモンに
+        1 進化を飛ばして重ねられる手札の 2 進化カード（手札の並び）から 1 枚。原典で決められない組（HP）は ``unresolved_choices``。"""
+        selectable = _selectable_skip_evolutions(state, use.player)
+        what = "「ポケモン育て屋さん」"
+        if decision.kind == SELECT_POKEMON:
+            unresolved = [pid for pid in selectable if all(status == SKIP_EVOLUTION_HP for _, status in selectable[pid])]
+            return _select_own_pokemon_problems(decision, use, selectable, what, unresolved)
+        if decision.kind != SELECT_EVOLUTION_CARD:
+            return [f"{what}の決定の種類が {decision.kind!r}（{SELECT_POKEMON}・{SELECT_EVOLUTION_CARD} のはず）"]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        target = decision.context_value("target", None)
+        if target not in selectable:
+            return problems + [f"{what}の 2 進化カードを選ぶ決定の target {target!r} が、進化させられる自分の場のたねポケモンではない"]
+        entries = selectable[target]
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}の決定で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 枚のはず）")
+        if decision.options != tuple(uid for uid, _ in entries):
+            problems.append(f"{what}の決定の選べるもの {decision.options} が、重ねられる手札の 2 進化カード {[uid for uid, _ in entries]} と合わない")
+        unresolved = tuple(uid for uid, status in entries if status == SKIP_EVOLUTION_HP)
+        if tuple(decision.context_value("unresolved_choices", ())) != unresolved:
+            problems.append(f"{what}の決定の扱いを決められない選択 {decision.context_value('unresolved_choices', ())} が、{unresolved} と合わない")
+        return problems
+
+
 def _select_own_pokemon_problems(
-    decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = ()
+    decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = (), whose: str = "自分"
 ) -> list[str]:
-    """トレーナーを使ったプレイヤーが自分の場のポケモンを 1 匹選ぶ決定（``SELECT_POKEMON``）の形の問題（v0.4e）。
+    """トレーナーを使ったプレイヤーが場のポケモンを 1 匹選ぶ決定（``SELECT_POKEMON``）の形の問題（v0.4e）。
 
     ``expected`` は選べるもの（場のポケモンの番号。決定を出したときと同じ並び）、``unresolved`` は、そのうち原典で扱いを
-    決められない選択（``context`` の ``"unresolved_choices"``）。"""
+    決められない選択（``context`` の ``"unresolved_choices"``）。選ぶのはいつもトレーナーを使ったプレイヤーで、v0.21 の突風は
+    相手の場のポケモンを選ぶ（``whose`` は理由の文に書く、選べるポケモンの持ち主。既定は自分）。"""
     problems = []
     if decision.player != use.player:
         problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
@@ -1937,7 +2386,7 @@ def _select_own_pokemon_problems(
         problems.append(f"{what}の決定で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 匹のはず）")
     expected = tuple(expected)
     if decision.options != expected:
-        problems.append(f"{what}の決定の選べるもの {decision.options} が、選べる自分の場のポケモン {expected} と合わない")
+        problems.append(f"{what}の決定の選べるもの {decision.options} が、選べる{whose}の場のポケモン {expected} と合わない")
     unresolved = tuple(unresolved)
     if tuple(decision.context_value("unresolved_choices", ())) != unresolved:
         problems.append(
@@ -2048,27 +2497,88 @@ class SwitchWithBench(TrainerEffect):
         )
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
-        p = state.players[use.player]
-        index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-        old = p.active
-        p.active, p.bench[index] = p.bench[index], old
-        state.add_event(
-            "switch",
-            player=use.player,
-            old_active=old.card,
-            new_active=p.active.card,
-            old_active_pokemon_id=old.pokemon_id,
-            new_active_pokemon_id=p.active.pokemon_id,
-        )
-        # ベンチに戻ったポケモンの特殊状態はすべて消える（p.322。「にげる」と同じ処理。v0.3a）
-        clear_special_conditions(state, use.player, old, SWITCH)
-        # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
-        remove_persistent_effects(state, use.player, old, SWITCH)
+        _switch_active_with_bench(state, use.player, choices[0])
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         """選べるのは自分のベンチのポケモン（控えポケモン）。"""
         bench = state.players[use.player].bench
         return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in bench), "「ポケモンいれかえ」")
+
+
+def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int) -> None:
+    """トレーナーの効果で、プレイヤー ``owner`` の対戦ポケモンと、``owner`` のベンチの ``pokemon_id`` のポケモンを入れ替える。
+    ポケモンいれかえ（v0.2b。``owner`` は使ったプレイヤー）と突風（v0.21。``owner`` は相手）で共通の処理で、v0.20 までの
+    ``SwitchWithBench.resume`` の本体をそのまま関数にした（動作・ログ・順番は同じ）。選ぶ・確かめるのは呼ぶ側。
+
+    - 「にげる」ではない（p.325）。にげるエネルギーは払わず、「にげる」の失敗の記録（v0.3c）にも関わらない。
+    - 場のポケモン（``PokemonInPlay``）ごと入れ替えるので、ついているカード（エネルギー・トレーナー）・ダメージカウンター・重なり・
+      場のポケモンの番号はいっしょに移る（p.311）。もとの対戦ポケモンは、選んだポケモンがいたベンチの位置に入る。
+    - ベンチに戻ったもとの対戦ポケモンの特殊状態・ワザによる持続する効果は消える（p.322。理由は ``SWITCH``）。ねむり・マヒでも
+      入れ替える（p.325）。
+    - ログ ``switch`` の ``player`` は入れ替わる場の持ち主（ポケモンいれかえでは使ったプレイヤーと同じ。突風では相手。使った
+      プレイヤーは、その前の ``play_trainer`` の ``player``）。
+    """
+    p = state.players[owner]
+    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == pokemon_id)
+    old = p.active
+    p.active, p.bench[index] = p.bench[index], old
+    state.add_event(
+        "switch",
+        player=owner,
+        old_active=old.card,
+        new_active=p.active.card,
+        old_active_pokemon_id=old.pokemon_id,
+        new_active_pokemon_id=p.active.pokemon_id,
+    )
+    # ベンチに戻ったポケモンの特殊状態はすべて消える（p.322。「にげる」と同じ処理。v0.3a）
+    clear_special_conditions(state, owner, old, SWITCH)
+    # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
+    remove_persistent_effects(state, owner, old, SWITCH)
+
+
+@dataclass(frozen=True)
+class SwitchOpponentWithBench(TrainerEffect):
+    """相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える（突風。p.255 の最新の説明「相手の控えポケモンを1匹選び、相手の
+    対戦ポケモンと入れ替える。」。v0.21。docs/gust-v0.21.md）。
+
+    - 選ぶのは突風を使ったプレイヤー（GW2。最新の説明に「相手は」がない。p.255 の解説「相手のベンチからポケモンを選んでバトル場に
+      呼んできます」）。決定（``SELECT_POKEMON``）の ``player`` は使ったプレイヤーで、相手ではない。バタフリーの「ふきとばし」（相手が
+      選ぶ。p.19。v0.4d の F3）とは選ぶプレイヤーが違うので、その処理（``FORCED_SWITCH``・ログ ``forced_switch``）は使わない。
+    - 選べるのは相手のベンチのポケモン（場のポケモンの番号）だけ。自分の場のポケモン・相手の対戦ポケモンは選べない（GW3）。1 匹でも
+      決定を出す（ポケモンいれかえと同じ）。自分の場（ベンチの有無）は関係しない（GW6）。
+    - 入れ替えは、ポケモンいれかえと同じ ``_switch_active_with_bench`` を相手の場で行う（GW7〜GW12: にげるエネルギーを払わない・
+      ついているカードとダメージカウンターはいっしょに移る・特殊状態と持続する効果は消える・ねむり・マヒでも入れ替える）。
+    - トレーナーの効果なので「とうめい」ははたらかない（p.159。v0.9 の T29。``attack_reaches`` を呼ばない）。
+    - 乱数は使わない。使っても番は終わらない（p.310）。
+
+    原典で決められないので扱わない（``UnsupportedError``）: 相手に控えポケモンがいないときに使えるか（GW5）。
+    """
+
+    implementation_id = "switch_opponent_with_bench"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not state.players[1 - use.player].bench:
+            raise UnsupportedError(
+                "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
+                "相手に控えポケモンがいない。このときに「突風」を使えるかは、『オフィシャルブック2000』（p.255・p.310）から決められない"
+                "ので扱わない（第1弾の印刷の文面の「相手に控えがいない場合は使えない」は、p.255 の最新の説明にない）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        bench = state.players[1 - use.player].bench
+        push_trainer_decision(
+            state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in bench]
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        _switch_active_with_bench(state, 1 - use.player, choices[0])
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤーで、選べるのは相手のベンチのポケモン（控えポケモン）。"""
+        bench = state.players[1 - use.player].bench
+        return _select_own_pokemon_problems(
+            decision, use, (pokemon.pokemon_id for pokemon in bench), "「突風」", whose="相手"
+        )
 
 
 @dataclass(frozen=True)
@@ -3415,6 +3925,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             "あなたの場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。",
             "P43 p.254",
         ),
+        # 突風（v0.21）p.255。図版の文面は最新の説明と同じ（第1弾の版ではない可能性が高い）。kyuura の写し（第1弾の印刷の転記）にある
+        # 「相手に控えがいない場合は使えない」は最新の説明にないので、控えがいないときは UNRESOLVED（docs/gust-v0.21.md の GW5）
+        "PMCG1-072": TrainerEntry(
+            SwitchOpponentWithBench(),
+            "突風",
+            "相手の場の対戦ポケモンと控えポケモンを入れ替える。どの控えポケモンを出させるかは、自分が自由に選ぶことができる。相手に控えがいない場合は使えない。",
+            "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",
+            "P43 p.255",
+        ),
         "PMCG1-073": TrainerEntry(
             SwitchWithBench(),
             "ポケモンいれかえ",
@@ -3431,6 +3950,15 @@ DEFAULT_EFFECTS = EffectRegistry(
         ),
         # オーキドはかせ（v0.19）p.255。図版の文面は kyuura の写しと同じ。最新の説明は「すべてトラッシュする。その後、…7枚引いて、手札に
         # する。」（docs/professor-oak-v0.19.md）
+        # エネルギー回収（v0.23）p.257。図版の文面は第1弾の印刷（kyuura の写し）と違う版。処理は最新の説明（手札から 1 枚選んでトラッシュ →
+        # トラッシュの基本エネルギーカード（トラッシュしたカードを除く）を最大 2 枚選び出し、手札に加える。docs/energy-retrieval-v0.23.md）
+        "PMCG1-076": TrainerEntry(
+            DiscardFromHandThenRetrieveEnergy(discard=1, retrieve=2),
+            "エネルギー回収",
+            "手札から1枚のカードをすてることによって、トラッシュから2枚の好きなエネルギーカードをひろって、手札に加えることができる。",
+            "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。",
+            "P43 p.257",
+        ),
         "PMCG1-077": TrainerEntry(
             DiscardHandAndDraw(count=7),
             "オーキドはかせ",
@@ -3451,6 +3979,31 @@ DEFAULT_EFFECTS = EffectRegistry(
             "自分の対戦ポケモンの「ワザ」によって与えるダメージを「+10」できる。自分の対戦ポケモンにつけて使い、自分の番の終わりに、はがしてすてる。",
             "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
             "P43 p.257",
+        ),
+        # パソコン通信（v0.22）p.260（p.310 の「使うための条件」の例にも同じ最新の説明）。図版の文面は kyuura の写しと同じ（印刷の文面）。
+        # 処理は最新の説明（手札から 2 枚選んでトラッシュ → 山札から 1 枚選び出し、手札に加える → その山札をよく切る。docs/computer-search-v0.22.md）
+        "PMCG1-090": TrainerEntry(
+            DiscardFromHandThenSearchDeck(discard=2, search=1),
+            "パソコン通信",
+            "手札から2枚カードをすてることによって、山札から好きなカードを1枚選んで手札にすることができる。そのあとで山札をよくきってもとに戻す。",
+            "手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。",
+            "P43 p.260",
+        ),
+        # ポケモン交換おじさん（v0.24）p.259。図版の文面は kyuura の写しと同じ（第1弾の印刷）。処理は最新の説明（手札のたねポケモン・進化カードを
+        # 見せて山札にもどす → 山札のたねポケモン・進化カードを見せて手札に加える → その山札をよく切る。docs/pokemon-trader-v0.24.md）
+        "PMCG1-093": TrainerEntry(
+            TradePokemonWithDeck(),
+            "ポケモン交換おじさん",
+            "自分の山札から好きなポケモンカードか進化カードを1枚選んで、手札のポケモンカードか進化カードと交換することができる。そのあとで、自分の山札をよくきる。交換するカードは相手に見せなければならない。",
+            "手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができないとき、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+            "P43 p.259",
+        ),
+        "PMCG1-094": TrainerEntry(
+            EvolveBasicToStage2(),
+            "ポケモン育て屋さん",
+            "ポケモンを進化させるときに使う。2進化カードをいきなりつけることができる。",
+            "このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。",
+            "P43 p.259",
         ),
     },
     {
