@@ -157,6 +157,9 @@
   "pool_v0_21": [
     "PMCG1-072"
   ],
+  "pool_v0_22": [
+    "PMCG1-090"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4713,6 +4716,43 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-080-toppu/"
+      }
+    },
+    {
+      "id": "PMCG1-090",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "パソコン通信",
+        "en": "Computer Search"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札から2枚カードをすてることによって、山札から好きなカードを1枚選んで手札にすることができる。そのあとで山札をよくきってもとに戻す。",
+          "en": "Discard 2 of the other cards from your hand in order to search your deck for any card and put it into your hand. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-090",
+        "pokemontcg": [
+          "base1-71"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-083-pasokontsuushin/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-083-pasokontsuushin/"
       }
     },
     {

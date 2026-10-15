@@ -90,7 +90,7 @@ from .state import (
     freeze_mapping,
     turn_owner,
 )
-from .zones import attach_energy_from_hand, draw_cards
+from .zones import attach_energy_from_hand, draw_cards, shuffle_deck
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
 # 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
@@ -172,8 +172,7 @@ def new_game(
 
 
 def _shuffle_deck(state: GameState, player: int) -> None:
-    state.rng.shuffle(state.players[player].deck)
-    state.add_event("shuffle", player=player)
+    shuffle_deck(state, player)  # v0.22 から zones（カードの効果で切る処理と共通。動き・乱数・ログは同じ）
 
 
 def _draw(state: GameState, player: int, count: int) -> None:

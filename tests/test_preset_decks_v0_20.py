@@ -144,10 +144,10 @@ class StartGameTest(unittest.TestCase):
         self.assertIn("venusaur-parasect", result.stdout)
 
     def test_version(self):
-        """版は pyproject.toml と同じ。v0.20 で 0.20.0、v0.21（突風）で 0.21.0 にした。"""
+        """版は pyproject.toml と同じ。v0.20 で 0.20.0、v0.21（突風）で 0.21.0、v0.22（パソコン通信）で 0.22.0 にした。"""
         text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         self.assertEqual(re.search(r'^version = "([^"]+)"', text, re.M).group(1), kyuura_engine.__version__)
-        self.assertEqual(kyuura_engine.__version__, "0.21.0")
+        self.assertEqual(kyuura_engine.__version__, "0.22.0")
 
 
 class PresetDeckGamesTest(unittest.TestCase):

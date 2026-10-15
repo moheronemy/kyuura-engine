@@ -928,6 +928,20 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番にトラッシュした手札 {e['cards']} が、ログから組み立てたプレイヤー {e['player']} の手札と違う")
             discard[e["player"]].extend(e["cards"])
             hand[e["player"]] = []
+        elif kind == "discard_from_hand":
+            # v0.22: トレーナー（パソコン通信）の使うための条件で、手札から選んだカードをトラッシュする（手札の並びの順。使っているカードは
+            # 手札から出ている。p.310）
+            if len(set(e["cards"])) != len(e["cards"]):
+                problems.append(f"{e['turn']} 番にトラッシュした手札 {e['cards']} に同じカードが 2 回ある")
+            for uid in e["cards"]:
+                from_hand(e, e["player"], uid)
+                discard[e["player"]].append(uid)
+        elif kind == "search_deck":
+            # v0.22: トレーナー（パソコン通信）の効果で、自分の山札から選び出したカードを手札に加える（「カードを引く」ではない。p.260・p.312）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]]:
+                problems.append(f"{e['turn']} 番に山札から手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のカードではない（持ち主・手札・トラッシュ）")
+            hand[e["player"]].append(uid)
         elif kind == "discard_trainer":
             discard[e["player"]].append(e["card"])
         elif kind == "discard_attached_trainer":

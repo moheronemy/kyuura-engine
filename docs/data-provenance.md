@@ -493,6 +493,16 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 
 - kyuura の記録（研究の基準 `3f34908`）に、このカードの照合の記録（CC-）・最新の説明・p.255 のページの記録・相手に控えがいないときの論点はありません（報告事項。`research_links.json` の `card_checks.engine_verified_without_kyuura_record`・`stop_codes` の `not_in_kyuura`）。kyuura の docs/cards/reprints.md は文面の変更を「書き方だけ」と分類していますが、なくなった一文の扱いの根拠は書かれていません（[gust-v0.21.md](gust-v0.21.md) 7 章）。
 
+## v0.22 で加えたパソコン通信（トレーナー）
+
+写しを作り直しました（`pool_v0_22`。参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていない。生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura`、`--check` で「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」）。写しのカードは 66 枚から 67 枚になり、ほかのカードの記録は変わっていません。照合の記録は kyuura_engine/data/card_verification.json の PMCG1-090（`status` は「不一致あり」）。照合の前に既存の記録を探し、トレーナーの使いかた・効果で引くとき・トラッシュの規定は既存の記録を再利用して、原典はカードのページ p.260 のパソコン通信（ページは本の索引 p.354 で探した）と、p.310 の例・p.312 の山札の項だけを読みました（2026-10-15。400dpi。[computer-search-v0.22.md](computer-search-v0.22.md) 1・2 章）。
+
+| id | カード | kyuura の文面（写し） | 最新の説明（p.260） | 照合 |
+|---|---|---|---|---|
+| PMCG1-090 | パソコン通信（トレーナー。収録「ポケモンカード第1弾」） | 「手札から2枚カードをすてることによって、山札から好きなカードを1枚選んで手札にすることができる。そのあとで山札をよくきってもとに戻す。」（図版の文面と同じ） | 「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。」（p.310 の例にも同じ文） | 不一致あり（印刷の文面と最新の説明の違い。誤りではない。処理は最新の説明にしたがう） |
+
+- kyuura の記録（研究の基準 `3f34908`）に、このカードの照合の記録（CC-）・最新の説明・p.260 のページの記録・山札が 0 枚のときの論点はありません（報告事項。`research_links.json` の `card_checks.engine_verified_without_kyuura_record`・`stop_codes` の `not_in_kyuura`）。kyuura の rule_history.json・rule_differences.json のこのカードの記録は大会の使用制限だけで、対戦のルールには使いません。
+
 ## 分類のテストに使う参照カード（対戦には使わない）
 
 | id | カード | 未対応の理由 |

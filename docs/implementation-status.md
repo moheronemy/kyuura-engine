@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.21）
+# 実装状況（v0.1〜v0.22）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -107,6 +107,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | きずぐすり: 自分の場にダメージカウンターののったポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_POTION_WITHOUT_DAMAGE`）で拒否。カードは手札に残る。test_trainers.py `test_no_damaged_pokemon_is_unresolved` |
 | きずぐすり: ダメージカウンターののっていないポケモンを選べるか（v0.2b） | 選ぶと `UnsupportedError`（`UNRESOLVED_POTION_UNDAMAGED_TARGET`）。決定は残る。test_trainers.py `test_undamaged_target_is_unresolved` |
 | ポケモンいれかえ: 控えポケモンがいないときに使えるか（v0.2b） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_SWITCH_WITHOUT_BENCH`）で拒否。test_trainers.py `test_no_bench_is_unresolved` |
+| パソコン通信: 山札が 0 枚のときに使えるか（v0.22。CS6） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）で拒否（使うための条件の確認のあと。カードは手札に残る）。使うための条件は手札のトラッシュだけで、山札から選び出せないときの扱いは p.260・p.310・p.312 に書かれていない。test_computer_search_v0_22.py `test_empty_deck_is_unresolved_and_checked_after_the_condition` |
 | 突風: 相手に控えポケモンがいないときに使えるか（v0.21。GW5） | `PlayTrainer` を `UnsupportedError`（`UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`）で拒否。カードは手札に残る。第1弾の印刷の文面の「相手に控えがいない場合は使えない」は最新の説明（p.255）にないので使わない。test_gust_v0_21.py `test_opponent_without_bench_is_unresolved` |
 | ポケモンチェックの「どく」で、両方のプレイヤーのポケモンがきぜつする（v0.3a） | ダメージを与える前に対戦を止める（`Phase.HALTED`、`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）。以後のコマンドは `UnsupportedError`。test_pokemon_check.py `DoubleKnockOutTest` |
 | 特殊などく状態の重ね方（通常のどくのポケモンが特殊などくを受ける、特殊などく同士。v0.3a） | 特殊などくの効果は未実装（起こらない） |
@@ -1428,7 +1429,7 @@ v0.21 は、トレーナーの突風（PMCG1-072）を、照合済みの記録�
 ### 未実装
 
 - 「バトル場をはなれられない」状態（p.325。その状態を持つカードがない。加えるときに突風の扱いを確かめる。GW16）。
-- パソコン通信・エネルギー回収・ポケモン育て屋さん。
+- パソコン通信・エネルギー回収・ポケモン育て屋さん（パソコン通信は v0.22 で対応）。
 
 ### 原典未確認・未解決
 
@@ -1438,3 +1439,43 @@ v0.21 は、トレーナーの突風（PMCG1-072）を、照合済みの記録�
 ### 見つけた事項（kyuura への報告事項）
 
 - kyuura に、突風の照合の記録（CC-）・最新の説明・p.255 のページの記録・GW5 の論点がない。kyuura の docs/cards/reprints.md が文面の変更を「書き方だけ」と分類しているが、なくなった一文（相手に控えがいない場合は使えない）の扱いの根拠が書かれていない（[gust-v0.21.md](gust-v0.21.md) 7 章）。
+
+## v0.22 で加えたもの（パソコン通信）
+
+v0.22 は、トレーナーのパソコン通信（PMCG1-090）を、照合済みの記録の再利用の手順で加えた版です（版 0.22.0）。使うための条件として手札から 2 枚を選んでトラッシュし、山札から 1 枚を選び出して手札に加え、その山札を切ります。
+
+- [パソコン通信（規定と根拠・再利用した記録・kyuura への報告事項）](computer-search-v0.22.md)
+- [v0.22 の検証](v0.22-verification.md)
+
+### 実装済み・テスト済み
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 使うための条件: このカードを除く手札が 2 枚以上（合計 1・2 枚なら `INSUFFICIENT_CARDS_IN_HAND`。手札から出す前に拒否し、カードは手札に残る）。ほかの条件はない | p.260 の最新の説明・p.310 の例・p.310 の手順（CS2〜CS5） | test_computer_search_v0_22.py `UsableTest` |
+| 段階 1: 使ったプレイヤーが手札からちょうど 2 枚を選び（同じ名前の別のカード可・同じカード 2 回・使用中のこのカード・ほかの領域・相手のカードは不可）、手札の並びの順にトラッシュする（`zones.discard_from_hand`。ログ `discard_from_hand`。公開） | p.260・p.312（CS7〜CS10） | `DiscardStageTest` |
+| 段階 2: 使ったプレイヤーが山札からどの種類のカードでも 1 枚を選び（一番上以外も・省略不可・山札 1 枚でも決定を出す）、手札に加え（`zones.search_deck_to_hand`。ログ `search_deck` の `card` は非公開）、その山札を切る（`zones.shuffle_deck`。乱数 `state.rng`） | p.260・p.312（CS11〜CS17） | `SearchStageTest` |
+| 不正な答えは拒否し、決定を待ったまま（段階 2 で拒否しても段階 1 のトラッシュは取り消さない）。拒否で状態・乱数が変わらない。カードの保存則（使用中のカードを含む）・渡した状態を変えない・同じ seed と操作で同じ結果・複製と pickle のあとも同じ | p.310（CS21） | `DiscardStageTest`・`SearchStageTest` |
+| 解決後: このカードをトラッシュし、番は続く（選んだ進化カードでその番に進化できる）。同じ番に 2 枚目を使える。「カードを引く」ではないので山札 0 枚になっても負けではなく、負けは次の番の最初に引けないとき | p.310・p.312・p.309（CS18〜CS20） | `AfterResolutionTest` |
+| 正式な対戦開始から（v0.20 の固定のデッキのディフェンダー 3 枚をパソコン通信 3 枚に置き換えた一時的なデッキ。席を入れかえて 6 局ずつ）: 引いて使い、2 枚トラッシュし、山札から選んだカードをその番の進化・ベンチ・エネルギーに使った。不変条件・ログの監査・書き出しの監査 | — | `NaturalGamesTest` |
+| 照合の記録（p.260）・写しの組 `pool_v0_22`・研究の対応表（kyuura に記録がない照合の記録・停止コードとして挙げる） | p.260 | `RegistrationTest`・test_trainers.py・test_cards.py・test_research_links_v0_18e.py |
+
+### 実装済み・テスト限定
+
+| 項目 | 状況 |
+|---|---|
+| 組み合わせの対戦（tools/preset_deck_games.py の `--variant computer`） | 一時的なデッキで 40 局・200 局（[v0.22-verification.md](v0.22-verification.md) 5 章）。手順に加えたのはパソコン通信の使い方だけ。既定の `--variant preset`・v0.21 の `--variant gust` の結果は v0.21 と 1 局ごとに同じ |
+| 共通の部品（`zones.shuffle_deck` に `engine._shuffle_deck` の本体を移した・`zones.discard_hand` と `discard_from_hand` のカードを動かす部分を共通にした） | 固定した v0.21（`36e3630`）と別の木・別のプロセスで比べ、290 対戦・48,092 歩で食い違い 0 |
+
+### 未実装
+
+- 見る人ごとに伏せたログ・表示の API（`search_deck` の `card` などの非公開の項目を伏せる変換。architecture-v0.2b.md 9 章から未実装）。
+- 山札から種類を指定して選び出すカード、選んだカードを相手に見せるカード（ダウジングマシーンなど）。エネルギー回収・ポケモン交換おじさん・ポケモン育て屋さん。
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定: 山札が 0 枚のときのパソコン通信（CS6。`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）。未解決の裁定は 26 件・停止コードは 20 件（v0.21 までの 25 件・19 件は変えていない）。
+- 選んだカードを相手に見せる必要はない（CS14）は SUPPORTED（最新の説明に見せる指示がない・p.312 の「引いた」カードの規定・同じページのダウジングマシーンとの比較）。処理には影響しない（ログの項目の公開・非公開だけ）。
+
+### 見つけた事項（kyuura への報告事項）
+
+- kyuura に、パソコン通信の照合の記録（CC-）・最新の説明・p.260 のページの記録・CS6 の論点、p.310 の「使うための条件」の例と p.312 の山札の規定（中を見る・切る）の記録がない（[computer-search-v0.22.md](computer-search-v0.22.md) 7 章）。

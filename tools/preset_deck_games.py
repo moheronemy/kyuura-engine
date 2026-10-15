@@ -22,6 +22,12 @@
   いちばん少ないもの（同じならにげるエネルギーが多く、ついているエネルギーが少ないもの、さらに同じなら並びの先）の残りの HP が、相手の
   対戦ポケモンより少なければ使い、決定ではそのポケモンを選ぶ。相手に控えがいなければ使わない（原典で決められない場合。GW5）。
   既定の ``--variant preset`` は v0.20 と同じ（突風のカードがないので、この手順は何もしない）。
+- v0.22: ``--variant computer`` は、固定のデッキのディフェンダー 3 枚をパソコン通信 3 枚に置き換えた一時的な 60 枚どうし（``deck_cards``。
+  docs/computer-search-v0.22.md 6 章）。加える手順はパソコン通信だけ: その番のほかの操作が終わったとき、1 番に 1 回だけ考え、このカードを
+  除く手札が 2 枚以上・山札が 1 枚以上で、山札に「今の番に使えるカード」（場のポケモンから進化できる進化カード → ベンチが 2 匹未満なら
+  たねポケモン → まだエネルギーをつけていない番に、バトル場のポケモンのワザに足りないタイプの基本エネルギー）があれば使う。トラッシュする
+  2 枚は、手札のうち決まった順（ディフェンダー・プラスパワー → 3 枚目からのエネルギー → 場に進化元のいない進化カード → ほかのトレーナー →
+  エネルギー → たねポケモン → 場に進化元のいる進化カード。同じなら手札の並び）で選ぶ。山札が 0 枚なら使わない（原典で決められない場合。CS6）。
 
 終わり方の分類: 通常の勝敗（``game_over``）・サドンデス（``sudden_death``。エンジンは次の対戦を始めない）・既知の未解決の裁定による停止
 （``halted``。コード付き）・手数の上限・想定外の拒否（手順が想定していない ``IllegalActionError``・``UnsupportedError``。駆動の誤りか、規定の
@@ -53,8 +59,11 @@ from tests.v017_games import play_game  # noqa: E402
 DECK_A, DECK_B = "hitmonchan-dewgong", "venusaur-parasect"
 PROFESSOR_OAK = "PMCG1-077"
 GUST = "PMCG1-072"  # v0.21
+COMPUTER_SEARCH = "PMCG1-090"  # v0.22
+PLUSPOWER = "PMCG1-081"
 DEFENDER = "PMCG1-079"
-VARIANTS = ("preset", "gust")
+VARIANTS = ("preset", "gust", "computer")
+REPLACEMENT = {"gust": GUST, "computer": COMPUTER_SEARCH}
 OAK_MIN_DECK = 7
 OAK_MAX_REST = 2
 # そのデッキで育てる系統（エネルギーをベンチにつけるときに優先する。デッキの考え方。docs/preset-decks-v0.20.md）
@@ -83,14 +92,15 @@ def _has_pending_evolution(state, player, rest):
 
 
 def deck_cards(deck_id, variant="preset"):
-    """対戦に使う 60 枚。``gust`` は固定のデッキのディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキ（v0.21。並びの位置はそのまま）。"""
+    """対戦に使う 60 枚。``gust`` は固定のデッキのディフェンダー 3 枚を突風 3 枚に（v0.21）、``computer`` はパソコン通信 3 枚に（v0.22）置き換えた
+    一時的なデッキ（並びの位置はそのまま。公開の固定のデッキは変えない）。"""
     cards = preset_deck(deck_id).cards()
     if variant == "preset":
         return cards
-    if variant != "gust":
+    if variant not in REPLACEMENT:
         raise ValueError(f"知らない変種 {variant!r}（{VARIANTS}）")
     for _ in range(3):
-        cards[cards.index(DEFENDER)] = GUST
+        cards[cards.index(DEFENDER)] = REPLACEMENT[variant]
     return cards
 
 
@@ -126,6 +136,77 @@ def _gust_command(state, player, tried, counts):
     return PlayTrainer(player, gust)
 
 
+def _can_evolve_now(state, pokemon):
+    """場のポケモンが今の番に進化できそうか（その番の最初から場にいる・最初の番でない。p.310。手順の目安で、エンジンの確認ではない）。"""
+    return state.turn_number > 2 and pokemon.current_form_turn < state.turn_number
+
+
+def _search_target(state, player):
+    """v0.22: パソコン通信で山札から選ぶカードと理由（決まった手順）。なければ None。"""
+    p = state.players[player]
+    in_play = p.in_play()
+    deck = sorted(p.deck)
+    names = {state.card_def(pk.card).name_ja for pk in in_play if _can_evolve_now(state, pk)}
+    evolvers = [u for u in deck if state.card_def(u).is_evolution_pokemon and state.card_def(u).evolves_from in names]
+    if evolvers:
+        return evolvers[0], "evolution"
+    if len(p.bench) < 2:
+        basics = [u for u in deck if state.card_def(u).is_basic_pokemon]
+        if basics:
+            return basics[0], "basic"
+    if state.energy_attachments_this_turn == 0:
+        for t in sorted(_missing_types(state, p.active), key=lambda t: t.value):
+            energies = [u for u in deck if state.card_def(u).is_basic_energy and state.card_def(u).provides == t]
+            if energies:
+                return energies[0], "energy"
+    return None
+
+
+def _discard_choice(state, player, options, count):
+    """v0.22: パソコン通信でトラッシュする手札（決まった順。低い値から）。"""
+    p = state.players[player]
+    names = {state.card_def(pk.card).name_ja for pk in p.in_play()}
+    energy_in_hand = sum(state.card_def(u).is_basic_energy for u in options)
+
+    def rank(uid):
+        d = state.card_def(uid)
+        if d.id in (DEFENDER, PLUSPOWER):
+            return 0
+        if d.is_basic_energy:
+            return 1 if energy_in_hand >= 3 else 4
+        if d.is_evolution_pokemon:
+            return 6 if d.evolves_from in names else 2
+        if d.category == "trainer":
+            return 3
+        if d.is_basic_pokemon:
+            return 1 if len(p.bench) >= 5 else 5
+        return 7
+
+    return tuple(sorted(options, key=lambda u: (rank(u), options.index(u)))[:count])
+
+
+def _computer_command(state, player, tried, counts):
+    """v0.22: パソコン通信を使うなら、そのコマンド。1 番に 1 回だけ考える。"""
+    p = state.players[player]
+    card = next((u for u in p.hand if _card(state, u) == COMPUTER_SEARCH), None)
+    marker = ("computer", state.turn_number)
+    if card is None or marker in tried:
+        return None
+    tried.add(marker)
+    if len(p.hand) - 1 < 2:
+        counts["computer_kept_small_hand"] += 1  # 使うための条件（このカードを除く手札 2 枚）を満たせない（p.310）
+        return None
+    if not p.deck:
+        counts["computer_kept_empty_deck"] += 1  # 原典で決められない（CS6）ので使わない
+        return None
+    target = _search_target(state, player)
+    if target is None:
+        counts["computer_kept_no_target"] += 1
+        return None
+    counts["computer_played"] += 1
+    return PlayTrainer(player, card)
+
+
 def make_policy(seen: dict, counts: Counter):
     """元の手順に、エネルギーのつけ方とオーキドはかせの使い方（v0.21 から突風の使い方も）を重ねる。``seen`` に最後に見た状態を残す
     （止まったときの報告のため）。"""
@@ -142,6 +223,16 @@ def make_policy(seen: dict, counts: Counter):
                 if chosen != d.options[0]:
                     counts["gust_chose_not_first"] += 1
             return ResolveDecision(d.player, d.id, (chosen,))
+        if state.phase is Phase.DECISION and d.context_value("use", (None, None, None))[2] == COMPUTER_SEARCH:
+            # v0.22: パソコン通信の決定（どちらも使ったプレイヤー）。段階 1 は手札から 2 枚、段階 2 は山札から 1 枚
+            if d.kind == "discard_from_hand":
+                chosen = _discard_choice(state, d.player, list(d.options), d.max_choices)
+                for uid in chosen:
+                    counts[f"computer_discarded_{state.card_def(uid).category}"] += 1
+                return ResolveDecision(d.player, d.id, chosen)
+            target, reason = _search_target(state, d.player) or (d.options[0], "fallback")
+            counts[f"computer_search_{reason}"] += 1
+            return ResolveDecision(d.player, d.id, (target,))
         command = base_policy(state, janken_winner=janken_winner, cure=cure, tried=tried)
         if state.phase is not Phase.MAIN:
             return command
@@ -153,6 +244,9 @@ def make_policy(seen: dict, counts: Counter):
             gust = _gust_command(state, player, tried, counts)
             if gust is not None:
                 return gust
+            computer = _computer_command(state, player, tried, counts)
+            if computer is not None:
+                return computer
             oak = next((u for u in p.hand if _card(state, u) == PROFESSOR_OAK), None)
             if oak is not None:
                 rest = [u for u in p.hand if u != oak]
@@ -256,6 +350,37 @@ def gust_uses(state):
     return uses
 
 
+def computer_uses(state):
+    """v0.22: パソコン通信を使うたびの、ログから分かる結果（使った番・プレイヤー・トラッシュした 2 枚・選んだカード・切ったか・選んだカードを
+    その番・あとの番に使ったか（進化・ベンチ・エネルギー・トレーナー））。"""
+    uses, log = [], state.log
+    spent = {}
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        for key in ("to_card", "energy", "card"):
+            if kind in ("evolve", "attach_energy", "play_to_bench", "play_trainer") and key in e and e[key] not in spent:
+                spent[e[key]] = (e["turn"], kind)
+    for i, e in enumerate(log):
+        if e["kind"] != "play_trainer" or _card(state, e["card"]) != COMPUTER_SEARCH:
+            continue
+        rest = log[i + 1:i + 6]
+        use = {"turn": e["turn"], "user": e["player"]}
+        discard = next((x for x in rest if x["kind"] == "discard_from_hand"), None)
+        search = next((x for x in rest if x["kind"] == "search_deck"), None)
+        if discard is not None:
+            use["discarded"] = [_card(state, u) for u in discard["cards"]]
+        if search is not None:
+            card = search["card"]
+            use.update(searched=_card(state, card), searched_category=state.card_def(card).category,
+                       shuffled=any(x["kind"] == "shuffle" and x["player"] == e["player"] for x in rest))
+            later = spent.get(card)
+            if later is not None and later[0] >= e["turn"]:
+                use["used_as"] = later[1]
+                use["used_same_turn"] = later[0] == e["turn"]
+        uses.append(use)
+    return uses
+
+
 def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
     """1 局を進め、終わり方と動きを返す。``keep_state`` なら最後の状態を ``"state"`` に入れる（テストの監査のため。JSON にはしない）。"""
     seen, counts = {}, Counter()
@@ -295,6 +420,8 @@ def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
         result["per_deck"] = {deck_ids[p]: dict(deck_stats(state, p, commands)) for p in (0, 1)}
         if variant == "gust":
             result["gust_uses"] = gust_uses(state)
+        if variant == "computer":
+            result["computer_uses"] = computer_uses(state)
     if keep_state:
         result["state"] = state
         result["commands"] = commands
@@ -337,6 +464,21 @@ def summarize(results):
                                      "knocked_out_new_active": use.get("knocked_out_new_active", False)})
                 if use.get("hit_new_active") and len(gust["examples_attack_after"]) < 5:
                     gust["examples_attack_after"].append({"seed": r["seed"], "decks": r["decks"], **use})
+        if "computer_uses" in r:
+            comp = s.setdefault("computer", {"uses": Counter(), "games_with_use": 0, "searched": Counter(), "searched_category": Counter(),
+                                             "used_as": Counter(), "examples": []})
+            comp["games_with_use"] += bool(r["computer_uses"])
+            for use in r["computer_uses"]:
+                comp["uses"].update({"played": 1, "discarded_two": len(use.get("discarded", ())) == 2, "searched": "searched" in use,
+                                     "shuffled": use.get("shuffled", False), "used_later": "used_as" in use,
+                                     "used_same_turn": use.get("used_same_turn", False)})
+                if "searched" in use:
+                    comp["searched"][use["searched"]] += 1
+                    comp["searched_category"][use["searched_category"]] += 1
+                if "used_as" in use:
+                    comp["used_as"][use["used_as"]] += 1
+                if use.get("used_same_turn") and len(comp["examples"]) < 5:
+                    comp["examples"].append({"seed": r["seed"], "decks": r["decks"], **use})
     return json.loads(json.dumps(s))
 
 
@@ -346,7 +488,8 @@ def main(argv=None):
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)
     parser.add_argument("--out", type=Path, help="1 局ごとの結果と集計を書き出す JSON")
-    parser.add_argument("--variant", choices=VARIANTS, default="preset", help="gust: ディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキ（v0.21）")
+    parser.add_argument("--variant", choices=VARIANTS, default="preset",
+                        help="gust: ディフェンダー 3 枚を突風 3 枚に（v0.21）、computer: パソコン通信 3 枚に（v0.22）置き換えた一時的なデッキ")
     args = parser.parse_args(argv)
     began = time.time()
     results = run(args.games, start=args.start, max_steps=args.max_steps, variant=args.variant)
@@ -354,7 +497,8 @@ def main(argv=None):
     summary["elapsed"] = round(time.time() - began, 1)
     if args.out:
         args.out.write_text(json.dumps({"summary": summary, "games": results}, ensure_ascii=False, indent=1), encoding="utf-8")
-    keys = ("games", "outcomes", "halt_codes", "unresolved_rejections", "wins", "end_conditions", "elapsed") + (("gust",) if "gust" in summary else ())
+    keys = ("games", "outcomes", "halt_codes", "unresolved_rejections", "wins", "end_conditions", "elapsed") + tuple(
+        k for k in ("gust", "computer") if k in summary)
     print(json.dumps({k: summary[k] for k in keys}, ensure_ascii=False))
     return 0 if summary["outcomes"].get("internal_error", 0) == 0 else 1
 

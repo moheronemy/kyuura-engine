@@ -54,6 +54,8 @@
   docs/professor-oak-v0.19.md）
 - トレーナー（v0.21）: 突風 ``SwitchOpponentWithBench``（p.255 の最新の説明。使ったプレイヤーが相手の控えポケモンを 1 匹選び、相手の
   対戦ポケモンと入れ替える。入れ替えはポケモンいれかえと共通の ``_switch_active_with_bench``。docs/gust-v0.21.md）
+- トレーナー（v0.22）: パソコン通信 ``DiscardFromHandThenSearchDeck``（p.260 の最新の説明。使うための条件として手札から 2 枚選んでトラッシュ
+  し、山札から 1 枚選び出して手札に加え、山札を切る。2 段階のトレーナーの決定。docs/computer-search-v0.22.md）
 - つけて使うトレーナー（v0.2c）: プラスパワー ``AttachedAttackBonus``（p.257 の最新の説明。
   docs/pluspower-v0.2c.md）。カードはポケモンについて場に残り（``PokemonInPlay.trainers``）、
   ダメージ計算の 5 段階で効果を出し、番の終わりにエンジンがトラッシュする
@@ -88,11 +90,16 @@ from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
 from .damage import DamageModifier, calculate_attack_damage
-from .decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, SELECT_POKEMON, push_trainer_decision
+from .decisions import (
+    DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, RECOVER_ENERGY, SEARCH_DECK, SELECT_POKEMON, push_trainer_decision,
+)
 from .errors import IllegalActionError, UnsupportedError
 from .persistent import damage_prevention, remove_persistent_effects, retaliation
 from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
-from .zones import attach_energy_from_hand, attach_trainer, discard_hand, draw_cards, return_discard_to_hand
+from .zones import (
+    attach_energy_from_hand, attach_trainer, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand, search_deck_to_hand,
+    shuffle_deck,
+)
 
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition, Power
@@ -1923,6 +1930,91 @@ class DiscardHandAndDraw(TrainerEffect):
         draw_cards(state, use.player, min(self.count, len(deck)))
 
 
+@dataclass(frozen=True)
+class DiscardFromHandThenSearchDeck(TrainerEffect):
+    """使うための条件として手札から ``discard`` 枚を選んでトラッシュし、その後、自分の山札からカードを ``search`` 枚選び出して手札に加え、
+    その山札を切る（パソコン通信。p.260 の最新の説明「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札から
+    カードを1枚選び出し、手札に加える。その後、その山札をよく切る。」。p.310 の「使うための条件」の例。v0.22。docs/computer-search-v0.22.md）。
+
+    - 使うための条件（CS2〜CS5）: 使っているこのカードは p.310 の手順 1 で手札から出している（``state.trainer_in_use``）ので、トラッシュ
+      する手札に含まれない。``check_playable`` は手札から出す前に呼ばれるので、このカードを除く手札が ``discard`` 枚未満なら
+      ``IllegalActionError("INSUFFICIENT_CARDS_IN_HAND")``（p.310「2枚トラッシュできないときには、「パソコン通信」を使うことは
+      できません。」）。拒否したらカードは手札に残る。
+    - 山札が 0 枚のとき（CS6）は原典で決められない（使うための条件は手札のトラッシュだけで、山札から選び出せないときの扱いは書かれて
+      いない。p.312 の「引けるだけ引く」は「カードを引く」ときの規定）ので、条件の確認のあと ``UnsupportedError`` で止める。
+    - 段階 1（CS7〜CS10）: 使ったプレイヤーが手札（このカードを除く）からちょうど ``discard`` 枚を選ぶ（決定 ``DISCARD_FROM_HAND``）。
+      選んだカードを手札の並びの順にトラッシュする（``zones.discard_from_hand``。ログ ``discard_from_hand``。公開）。
+    - 段階 2（CS11〜CS15）: 使ったプレイヤーが自分の山札からちょうど ``search`` 枚を選ぶ（決定 ``SEARCH_DECK``。どの種類のカードでも
+      よく、省略できない。山札が 1 枚でも決定を出す）。選んだカードを手札に加え（``zones.search_deck_to_hand``。ログ ``search_deck`` の
+      ``card`` は選んだプレイヤーだけが見る情報）、その山札を切る（``zones.shuffle_deck``。乱数 ``state.rng``。ログ ``shuffle``）。
+      「カードを引く」ではないので、山札が 0 枚になっても負けではない（負けは番の最初に引けないときだけ。p.309・p.312）。
+    - 不正な答え（枚数・重複・選べないもの）は決定の確認（``decisions.check_choices``）が拒否し、決定は待ったまま、状態・乱数は変わら
+      ない。段階 2 で拒否しても、段階 1 のトラッシュは取り消さない（すでにすんだ処理）。
+    """
+
+    discard: int
+    search: int
+    implementation_id = "discard_from_hand_then_search_deck"
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        p = state.players[use.player]
+        others = [uid for uid in p.hand if uid != use.card]
+        if len(others) < self.discard:
+            raise IllegalActionError(
+                "INSUFFICIENT_CARDS_IN_HAND",
+                f"このカードを除く手札が {len(others)} 枚で、使うための条件（手札からカードを{self.discard}枚選んでトラッシュする）を"
+                "満たせない（p.260・p.310）",
+            )
+        if not p.deck:
+            raise UnsupportedError(
+                "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",
+                "山札が 0 枚。このときに「パソコン通信」を使えるか（手札をトラッシュするだけで使えるか）は、『オフィシャルブック2000』（p.260・"
+                "p.310・p.312）から決められないので扱わない（p.312 の「引けるだけ引く」は「カードを引く」ときの規定）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(
+            state, use, kind=DISCARD_FROM_HAND, player=use.player, options=state.players[use.player].hand,
+            min_choices=self.discard, max_choices=self.discard,
+        )
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == DISCARD_FROM_HAND:
+            discard_from_hand(state, use.player, choices)
+            push_trainer_decision(
+                state, use, kind=SEARCH_DECK, player=use.player, options=sorted(state.players[use.player].deck),
+                min_choices=self.search, max_choices=self.search,
+            )
+            return
+        for card in choices:
+            search_deck_to_hand(state, use.player, card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        """決定するのは使ったプレイヤー。段階 1 は手札（このカードを除く）から ``discard`` 枚、段階 2 は山札（uid の小さい順）から
+        ``search`` 枚。段階 2 を待つのは段階 1 のトラッシュのあと（今の番のログの最後の ``play_trainer`` のあとに ``discard_from_hand``）。"""
+        p = state.players[use.player]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"「パソコン通信」の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        if decision.kind == DISCARD_FROM_HAND:
+            expected, count = tuple(p.hand), self.discard
+        elif decision.kind == SEARCH_DECK:
+            expected, count = tuple(sorted(p.deck)), self.search
+            since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e["card"] == use.card), default=None)
+            if since is None or not any(e["kind"] == "discard_from_hand" for e in state.log[since:]):
+                problems.append("「パソコン通信」の山札を選ぶ決定が、手札のトラッシュ（ログ discard_from_hand）のあとではない")
+        else:
+            return problems + [f"「パソコン通信」の決定の種類が {decision.kind!r}（{DISCARD_FROM_HAND}・{SEARCH_DECK} のはず）"]
+        if (decision.min_choices, decision.max_choices) != (count, count):
+            problems.append(f"「パソコン通信」の決定 {decision.kind} で選ぶ数が {decision.min_choices}〜{decision.max_choices}（{count} 枚のはず）")
+        if decision.options != expected:
+            problems.append(f"「パソコン通信」の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
+        if use.card in decision.options:
+            problems.append("「パソコン通信」の決定で、使っているこのカードを選べる")
+        return problems
+
+
 def _select_own_pokemon_problems(
     decision: PendingDecision, use: TrainerUse, expected: Iterable[int], what: str, unresolved: Iterable[int] = (), whose: str = "自分"
 ) -> list[str]:
@@ -3524,6 +3616,15 @@ DEFAULT_EFFECTS = EffectRegistry(
             "自分の対戦ポケモンの「ワザ」によって与えるダメージを「+10」できる。自分の対戦ポケモンにつけて使い、自分の番の終わりに、はがしてすてる。",
             "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
             "P43 p.257",
+        ),
+        # パソコン通信（v0.22）p.260（p.310 の「使うための条件」の例にも同じ最新の説明）。図版の文面は kyuura の写しと同じ（印刷の文面）。
+        # 処理は最新の説明（手札から 2 枚選んでトラッシュ → 山札から 1 枚選び出し、手札に加える → その山札をよく切る。docs/computer-search-v0.22.md）
+        "PMCG1-090": TrainerEntry(
+            DiscardFromHandThenSearchDeck(discard=2, search=1),
+            "パソコン通信",
+            "手札から2枚カードをすてることによって、山札から好きなカードを1枚選んで手札にすることができる。そのあとで山札をよくきってもとに戻す。",
+            "手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。",
+            "P43 p.260",
         ),
     },
     {

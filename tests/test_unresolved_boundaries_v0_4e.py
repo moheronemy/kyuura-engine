@@ -48,6 +48,7 @@ ALL_CODES = (
     "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT",  # v0.12
     "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",  # v0.17b
     "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",  # v0.21（止まる場合と隣の止まらない場合は tests/test_gust_v0_21.py）
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",  # v0.22（止まる場合と隣の止まらない場合は tests/test_computer_search_v0_22.py）
 )
 TURN = 7
 

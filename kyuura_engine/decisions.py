@@ -74,6 +74,14 @@ KO_PREVENTION = "ko_prevention"
 # サイド・勝ち負けの判定）のあと、対戦が続くときだけ、バトル場にポケモンを出す前に出す（docs/post-knockout-powers-v0.12.md）。再開先は
 # "post_knockout"。段階は Phase.DECISION
 POST_KNOCKOUT_POWER = "post_knockout_power"
+# トレーナーの「使うための条件」で、使用中のカードを除く手札からトラッシュするカードを、トレーナーを使ったプレイヤーが選ぶ（v0.22。パソコン通信の
+# 「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。」。p.260・p.310）。選べるものは手札のカードの uid（手札の並び）。
+# 段階は Phase.DECISION。再開先は "trainer"
+DISCARD_FROM_HAND = "discard_from_hand"
+# トレーナーの効果で、自分の山札からカードを選び出して手札に加えるとき、どのカードかを、トレーナーを使ったプレイヤーが選ぶ（v0.22。パソコン通信の
+# 「あなたの山札からカードを1枚選び出し、手札に加える。」。p.260）。選べるものは山札のカードの uid（山札の並びを決定に写さないよう、uid の
+# 小さい順）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない。段階は Phase.DECISION。再開先は "trainer"
+SEARCH_DECK = "search_deck"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
