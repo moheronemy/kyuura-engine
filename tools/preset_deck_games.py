@@ -266,7 +266,7 @@ def _check_trainer_state(state, counts):
 
 
 def trainer_sequence_problems(state):
-    """v0.23: 突風・パソコン通信を使ってから（``play_trainer``）トラッシュするまで（``discard_trainer``）のログに、ほかのトレーナーの使用・
+    """v0.23: 突風・パソコン通信・エネルギー回収を使ってから（``play_trainer``）トラッシュするまで（``discard_trainer``）のログに、ほかのトレーナーの使用・
     その実装が出さないイベント・持ち主の違うイベントがないか。終わっていない使用（決定を待つ間）は、最後の状態の使用中のカードと同じか。"""
     problems, open_use = [], None
     for i, e in enumerate(state.log):
