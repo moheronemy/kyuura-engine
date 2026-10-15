@@ -1668,26 +1668,90 @@ class DiscardEnergyAndRemoveAllCounters(AttackEffect):
             problems.append(f"必要なエネルギーに「{self.energy_type.ja}」がないワザを登録している（トラッシュできない場合が起こりうる）")
         return problems
 
-    def _candidates(self, state: GameState, attacker: PokemonInPlay) -> list[int]:
-        return [
-            uid for uid in attacker.energy if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is self.energy_type
-        ]
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        """「じこさいせい」の決定を待っている状態の確認（``discard_attached_energy_decision_problems``）。"""
+        return discard_attached_energy_decision_problems(state, use, decision, self.energy_type, "じこさいせい")
+
+
+def attached_basic_energy(state: GameState, attacker: PokemonInPlay, energy_type: EnergyType) -> list[int]:
+    """ワザを使うポケモンについている ``energy_type`` の基本エネルギーカード（ついている順。カードの uid）。ワザの効果でトラッシュする
+    カードの選べるもの（v0.7 の「じこさいせい」・v0.30 の ``DiscardEnergyThenDamage``。解決の基盤の ``programs.DiscardOwnEnergy`` も
+    この関数で求める）。"""
+    return [uid for uid in attacker.energy if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is energy_type]
+
+
+def discard_attached_energy_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, energy_type: EnergyType,
+                                              label: str) -> list[str]:
+    """ワザの効果で、ワザを使うポケモンについているエネルギーカードを 1 枚選んでトラッシュする決定を待っている状態の確認（v0.7 の
+    「じこさいせい」から共通にした。v0.30）: 種類は ``DISCARD_ENERGY``、決定するのはワザを使ったプレイヤー、1 枚だけ選ぶ、選べるものが、
+    ワザを使ったポケモンについている ``energy_type`` の基本エネルギーカード（ついている順）と同じ。``label`` は理由の文に書くワザの名前。"""
+    _, attacker = state.find_pokemon(use.pokemon_id)
+    problems = []
+    if decision.kind != DISCARD_ENERGY:
+        problems.append(f"「{label}」の決定の種類が {decision.kind!r}（{DISCARD_ENERGY} のはず）")
+    if decision.player != use.player:
+        problems.append(f"「{label}」でトラッシュするカードを選ぶのが、ワザを使ったプレイヤー {use.player} ではなくプレイヤー {decision.player}")
+    if (decision.min_choices, decision.max_choices) != (1, 1):
+        problems.append(f"「{label}」で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 枚のはず）")
+    candidates = tuple(attached_basic_energy(state, attacker, energy_type))
+    if not candidates or decision.options != candidates:
+        problems.append(f"「{label}」の決定の選べるもの {decision.options} が、ついている「{energy_type.ja}」エネルギーカード {candidates} と合わない")
+    return problems
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenDamage(AttackEffect):
+    """ワザを使うポケモン自身についている ``energy_type`` のエネルギーカードを 1 枚トラッシュし、そのあと相手の対戦ポケモンにダメージの
+    目安の数字ぶんのダメージ（v0.30。docs/discard-energy-attacks-v0.30.md）。第1弾のヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの
+    「かえんほうしゃ」（印刷の文面「自分の「炎」エネルギーカードを1枚はがしてすてる。」）と、第4弾のポニータの「ひのこ」（印刷の文面
+    「このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)」）。
+
+    - 処理は kyuura の RUL-ENERGY-DISCARD-ATTACKS（確実）にしたがう: 炎エネルギーカードをトラッシュするワザは、ネオからの説明で、
+      トラッシュがワザを使うための条件ではなく「ワザの効果」になった（kyuura の記録が引く『オフィシャルブック2000』のワザ解説と『トレーナーズ』の
+      誌面。エンジンはこれらを読んでいない）。
+      最新の説明は「自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。」。
+      流れはワザの宣言 → 持続する効果の確認 → こんらんの確認 → ワザの内容の処理（ここでトラッシュ）。こんらんのコインが「うら」なら
+      ワザの内容を処理しないので、トラッシュもしない（p.309 の手順 5。エンジンがこのワザの処理を呼ばない）。
+    - ワザを宣言できる条件は、ほかのワザと同じ（必要なエネルギー。p.309）。トラッシュは宣言の条件ではないので、宣言のときにトラッシュしない。
+    - 当てはめるのは「炎」エネルギーカードをトラッシュするワザだけ（``check`` が拒否する）。炎以外のエネルギーをトラッシュするワザに同じ説明が
+      当てはまるかは、kyuura の記録の未解決の問い（open_questions）。似た文面の別のタイプのワザ（ミュウツーの「バリアー」など）に流用しない。
+    - 要素の順番: トラッシュ（ワザを使うポケモンへの効果。p.320 の効果の (3)）→ 相手へのダメージ（(1)）。「トラッシュできないとき、この
+      ワザのダメージはなくなる」がダメージを決めるので、トラッシュが先。
+    - トラッシュするのは 1 枚だけ（「特に指示されていないかぎり、…エネルギーをトラッシュしてはいけません」。p.309。kyuura の
+      GR-2000-P309-ATTACK-PROCEDURE）。ついている ``energy_type`` の基本エネルギーカードから、ワザを使うプレイヤーが選ぶ（決定
+      ``DISCARD_ENERGY``。v0.7 の「じこさいせい」と同じ決定・同じ選べるもの（ついている順）。1 枚しかなくても決定を出す。実装上の仮定。K2）。
+    - 「トラッシュできないとき」: ワザに必要なエネルギー（``check`` で ``energy_type`` を 1 個以上含むことを確かめる）が、ついている
+      ``energy_type`` の基本エネルギーカードでしか払えないあいだは起こらない（特殊エネルギー・ほかのワザを使うワザは未実装）。起こったら
+      エンジンの不具合として ``RuntimeError``（「じこさいせい」の K3 と同じ扱い。第4弾のポニータの印刷の文面の「ダメージは0になる」と
+      最新の説明の「ダメージはなくなる」の違いはこの場合だけにかかわる。特殊エネルギーを加えるときに、この場合の処理とテストを加える）。
+    - ダメージは p.321 の順番で計算する（弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」は今までどおり）。
+      トラッシュはダメージより先なので、相手がダメージを受けなくても（ダメージの要素が無効・「とうめい」で受けない・最終ダメージが 0）、
+      トラッシュはすんでいる（ダメージを与えた後の効果ではない。Z23 にはかかわらない）。
+    """
+
+    energy_type: EnergyType
+    implementation_id = "discard_energy_then_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage_modifier is not None:
+            problems.append(f"ダメージの目安に「{attack.damage_modifier}」があるワザを、目安の数字ぶんのダメージのワザとして登録している")
+        if type(attack.damage) is not int or attack.damage <= 0 or attack.damage % 10:
+            problems.append("ダメージが 10 の倍数の正の数ではない（エネルギーをトラッシュしてダメージを与えるワザではない）")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、エネルギーをトラッシュしてダメージを与えるワザとして登録している")
+        if self.energy_type is not EnergyType.FIRE:
+            # kyuura の RUL-ENERGY-DISCARD-ATTACKS の未解決の問い「炎エネルギー以外のエネルギーをトラッシュするワザにも同じ説明が当てはまるか」
+            problems.append(f"「{self.energy_type.ja}」エネルギーをトラッシュするワザに、炎エネルギーのワザの説明（RUL-ENERGY-DISCARD-ATTACKS）を当てはめている")
+        if self.energy_type not in attack.cost:
+            problems.append(f"必要なエネルギーに「{self.energy_type.ja}」がないワザを登録している（トラッシュできない場合が起こりうる）")
+        return problems
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
-        """「じこさいせい」の決定を待っている状態の確認: 種類は ``DISCARD_ENERGY``、決定するのはワザを使ったプレイヤー、1 枚だけ選ぶ、
-        選べるものが、ワザを使ったポケモンについている ``energy_type`` の基本エネルギーカード（ついている順）と同じ。"""
+        """トラッシュするカードの決定を待っている状態の確認（「じこさいせい」と同じ形。``discard_attached_energy_decision_problems``）。"""
         _, attacker = state.find_pokemon(use.pokemon_id)
-        problems = []
-        if decision.kind != DISCARD_ENERGY:
-            problems.append(f"「じこさいせい」の決定の種類が {decision.kind!r}（{DISCARD_ENERGY} のはず）")
-        if decision.player != use.player:
-            problems.append(f"「じこさいせい」でトラッシュするカードを選ぶのが、ワザを使ったプレイヤー {use.player} ではなくプレイヤー {decision.player}")
-        if (decision.min_choices, decision.max_choices) != (1, 1):
-            problems.append(f"「じこさいせい」で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 枚のはず）")
-        candidates = tuple(self._candidates(state, attacker))
-        if not candidates or decision.options != candidates:
-            problems.append(f"「じこさいせい」の決定の選べるもの {decision.options} が、ついている「{self.energy_type.ja}」エネルギーカード {candidates} と合わない")
-        return problems
+        label = state.card_def(attacker.card).attacks[use.key.attack_index].name_ja
+        return discard_attached_energy_decision_problems(state, use, decision, self.energy_type, label)
 
 
 @dataclass(frozen=True)
@@ -3561,6 +3625,12 @@ class EffectRegistry:
 # 2026-10-15 からのカードデータの方針（docs/card-data-policy.md）で、kyuura の印刷の文面を処理に使う文面にした登録の出典（v0.29 から。
 # scripts/check_card_sources.py の PRINTED_TEXT_SOURCE と同じ）
 _KYUURA_PRINTED_TEXT = "kyuura data/cards.json"
+# v0.30: kyuura のエラッタの記録 RUL-ENERGY-DISCARD-ATTACKS（炎エネルギーカードをトラッシュするワザの、ネオからの説明。kyuura が『オフィシャルブック2000』
+# のワザ解説と『トレーナーズ』Vol.5・Vol.9 の誌面で確かめた記録。確実。エンジンは誌面を読んでいない）。「炎エネルギーカードをトラッシュするタイプのワザ（「かえんほうしゃ」など）は、
+# すべて同じ処理」で、最新の説明は次の文面（kyuura の記録の引用）。処理に使う文面の出典はこの id（研究の対応表の errata_text・errata_scope）
+_RUL_ENERGY_DISCARD = "RUL-ENERGY-DISCARD-ATTACKS"
+_FIRE_DISCARD_LATEST = "自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。"
+_FIRE_DISCARD_PRINTED = "自分の「炎」エネルギーカードを1枚はがしてすてる。"
 
 
 def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, AttackEntry]:
@@ -3594,8 +3664,8 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG1-058", 1, "スペシャルパンチ"),
         ("PMCG1-060", 0, "かみつく"),  # コラッタ p.217
         ("PMCG1-065", 0, "はたく"),  # ミニリュウ p.246
-        # ヒトカゲ（参照カード。デッキには入らない）の「ひっかく」。p.63 で説明文がないことを確かめた。
-        # もう 1 つのワザ「ひのこ」は効果があり、登録していない（カードは未対応のまま）
+        # ヒトカゲの「ひっかく」。v0.2a に p.63 で説明文がないことを確かめた（v0.29 までは参照カード）。
+        # もう 1 つのワザ「ひのこ」は v0.30 で DiscardEnergyThenDamage として登録した（下。カードは対戦用になった）
         ("PMCG1-014", 0, "ひっかく"),
         ("PMCG1-035", 0, "かじる"),  # ピカチュウ（v0.2f）p.125。「ワザ」欄は「●かじる」で説明文なし
         ("PMCG2-003", 0, "ひっかく"),  # パラス（v0.3b）p.38。「ワザ」欄は「●ひっかく」で説明文なし
@@ -3633,6 +3703,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG5-001", 0, "つばさでうつ"),  # タケシのズバット
         ("PMCG5-037", 1, "たいあたり"),  # マチスのコイル
         ("PMCG5-061", 0, "ベロではたく"),  # タケシのベロリンガ
+        # v0.30: エネルギーをトラッシュしてダメージを与えるワザの共通の型で加えたポケモンの、説明文のないワザ（kyuura データの採用。
+        # docs/discard-energy-attacks-v0.30.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG1-017", 0, "きりさく"),  # リザード（第1弾）。ストライク・パラセクトの「きりさく」とは別のカードのワザ
+        ("PMCG1-020", 0, "ほのおパンチ"),  # ブーバー（第1弾）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -4261,6 +4335,59 @@ DEFAULT_EFFECTS = EffectRegistry(
             "たたきつける",
             text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
             play_text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.30: 自分の「炎」エネルギーカードを 1 枚トラッシュしてから相手にダメージ（DiscardEnergyThenDamage。docs/discard-energy-attacks-v0.30.md）。
+        # 印刷の文面「自分の「炎」エネルギーカードを1枚はがしてすてる。」のワザは、kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明にしたがう
+        # （トラッシュはワザを使うための条件ではなく、ワザの効果。印刷の文面は照合にだけ使う）。ヒトカゲは v0.2a の過去の原典照合の記録があるカード
+        # （card_verification.json。「ひっかく」を照合した。ひのこの最新の説明の欄はない）で、ひのこの文面の根拠は card_sources.json に置いた
+        AttackKey("PMCG1-014", 1): AttackEntry(
+            DiscardEnergyThenDamage(energy_type=EnergyType.FIRE),
+            "ひのこ",
+            text_ja=_FIRE_DISCARD_PRINTED,
+            play_text_ja=_FIRE_DISCARD_LATEST,
+            source=_RUL_ENERGY_DISCARD,
+        ),
+        # リザード（第1弾。ヒトカゲから進化）。かえんほうしゃ（炎炎無）50
+        AttackKey("PMCG1-017", 1): AttackEntry(
+            DiscardEnergyThenDamage(energy_type=EnergyType.FIRE),
+            "かえんほうしゃ",
+            text_ja=_FIRE_DISCARD_PRINTED,
+            play_text_ja=_FIRE_DISCARD_LATEST,
+            source=_RUL_ENERGY_DISCARD,
+        ),
+        # ウインディ（第1弾。ガーディから進化）。かえんほうしゃ（炎炎無）50。RUL-ENERGY-DISCARD-ATTACKS が挙げるカード（『トレーナーズ』Vol.9 の Q&A）
+        AttackKey("PMCG1-019", 0): AttackEntry(
+            DiscardEnergyThenDamage(energy_type=EnergyType.FIRE),
+            "かえんほうしゃ",
+            text_ja=_FIRE_DISCARD_PRINTED,
+            play_text_ja=_FIRE_DISCARD_LATEST,
+            source=_RUL_ENERGY_DISCARD,
+        ),
+        # ウインディ。とっしん（炎炎無無）80・自分にも 30（既存の DamageAndSelfDamage。ゴーリキーの「じごくぐるま」と同じ形。kyuura の印刷の文面）
+        AttackKey("PMCG1-019", 1): AttackEntry(
+            DamageAndSelfDamage(30),
+            "とっしん",
+            text_ja="自分にも30ダメージ。",
+            play_text_ja="自分にも30ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ブーバー（第1弾）。かえんほうしゃ（炎炎無）50
+        AttackKey("PMCG1-020", 1): AttackEntry(
+            DiscardEnergyThenDamage(energy_type=EnergyType.FIRE),
+            "かえんほうしゃ",
+            text_ja=_FIRE_DISCARD_PRINTED,
+            play_text_ja=_FIRE_DISCARD_LATEST,
+            source=_RUL_ENERGY_DISCARD,
+        ),
+        # 第4弾のポニータ。ひのこ（炎無）30。印刷の文面がすでに「ワザの効果としてトラッシュする」書き方で、RUL-ENERGY-DISCARD-ATTACKS が挙げる文面
+        # （第1弾）と違うので、処理に使う文面は kyuura の印刷の文面（「トラッシュできない時、…0になる」と最新の説明の「…なくなる」の違いは、今の
+        # 対応カードでは起こらない場合だけにかかわる。DiscardEnergyThenDamage の説明）
+        AttackKey("PMCG4-013", 0): AttackEntry(
+            DiscardEnergyThenDamage(energy_type=EnergyType.FIRE),
+            "ひのこ",
+            text_ja="このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+            play_text_ja="このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

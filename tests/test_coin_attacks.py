@@ -27,7 +27,7 @@ from kyuura_engine.state import GameResult, Halt
 
 from tests.helpers import (
     CHARMANDER, DIGLETT, DODUO, FIGHTING, FIRE, GROWLITHE, H, HITMONCHAN, LIGHTNING, POTION, RATTATA, STARYU, T,
-    VOLTORB, WATER, build_test_state, with_coin_results,
+    NO_EMBER_EFFECTS, VOLTORB, WATER, build_test_state, with_coin_results,
 )
 
 DODUO_KEY = AttackKey(DODUO, 0)
@@ -326,8 +326,8 @@ class InvalidCommandsUseNoRandomnessTest(unittest.TestCase):
         effects = DEFAULT_EFFECTS.without_attacks("test-no-doduo", [DODUO_KEY])
         state = build_test_state([{"active": {"card": DODUO, "energy": [FIRE]}}, {"active": STARYU}], effects=effects)
         self.assert_rejected(state, UseAttack(0, 0), "UNSUPPORTED_ATTACK", UnsupportedError)
-        state = build_test_state([{"active": {"card": CHARMANDER, "energy": [FIRE, FIRE]}}, {"active": STARYU}])
-        self.assert_rejected(state, UseAttack(0, 1), "UNSUPPORTED_ATTACK", UnsupportedError)  # ひのこ（未登録）
+        state = build_test_state([{"active": {"card": CHARMANDER, "energy": [FIRE, FIRE]}}, {"active": STARYU}], effects=NO_EMBER_EFFECTS)
+        self.assert_rejected(state, UseAttack(0, 1), "UNSUPPORTED_ATTACK", UnsupportedError)  # ひのこ（登録を除いた登録表。v0.30 で製品に登録）
 
     def test_pending_decision_rejects_attacks(self):
         state = doduo_vs(STARYU, H, H, hand=[POTION])

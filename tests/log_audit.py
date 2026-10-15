@@ -48,6 +48,11 @@
   あとにコインがない（G11）・「おもて」なら残り HP 10（G18・G20）で、そのワザのあときぜつしない（サイドもない。G33）・「うら」・
   使わないならきぜつする（G19・G34）・ダメージの組み立て直しに ``ko_prevented`` を含める。決定の中身はログにない（v0.2a）ので、
   答えと決定の対応はエンジンの不変条件で確かめる。
+  v0.30 から、ワザのエネルギーのトラッシュ（``discard_energy``）の数を、そのワザの登録した実装で確かめる: じこさいせい
+  （``DiscardEnergyAndRemoveAllCounters``）はダメージカウンターをすべてとりのぞく処理と同じ数、エネルギーをトラッシュしてダメージを与える
+  ワザ（``DiscardEnergyThenDamage``。ひのこ・かえんほうしゃ）は、こんらんで「うら」でなければ 1 回で、そのワザのダメージの要素
+  （``damage``・``damage_prevented``・「とうめい」の判定）より前・トラッシュしたのはワザを使ったポケモンについていた登録のタイプの基本
+  エネルギーカード（ワザの途中の決定を待っている最後のワザだけは 0 回）。ほかのワザにはエネルギーのトラッシュがない。
   ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
@@ -58,12 +63,15 @@ from __future__ import annotations
 from collections import Counter
 
 from kyuura_engine import state_to_dict
+from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import (
     ATTACK_ELEMENTS,
     DAMAGE_ELEMENT,
     FORCED_SWITCH_ELEMENT,
     AttackImmunityOnHeads,
     CounterattackDamage,
+    DiscardEnergyAndRemoveAllCounters,
+    DiscardEnergyThenDamage,
     PreventKnockOutOnHeads,
     ReturnToHandOnKnockOut,
     SuppressOtherPowers,
@@ -167,6 +175,37 @@ def _attack_key(text: str) -> tuple[str, int]:
     return card_id, int(index) if index.isdigit() else -1
 
 
+def _attack_effect_of(state, attack_event: dict | None):
+    """ログのワザ（``attack``）の、その対戦の登録表の実装（v0.30）。"""
+    if attack_event is None:
+        return None
+    entry = state.effects.attack_entry(state.card_def(attack_event["pokemon"]).id, attack_event["attack_index"])
+    return None if entry is None else entry.effect
+
+
+def _discard_energy_window_problems(state, attack_event: dict | None, window: Counter, *, log_ended: bool) -> list[str]:
+    """ワザ 1 回のエネルギーのトラッシュ（``discard_energy``）の数が、登録した実装と合うか（v0.30）。"""
+    effect = _attack_effect_of(state, attack_event)
+    discarded = window["discard_energy"]
+    if isinstance(effect, DiscardEnergyAndRemoveAllCounters):
+        if discarded != window["remove_all_damage_counters"]:
+            return ["1 回のワザで、エネルギーのトラッシュとダメージカウンターをすべてとりのぞく処理の数が違う（じこさいせい）"]
+        return []
+    if isinstance(effect, DiscardEnergyThenDamage):
+        if window["confusion_damage"]:
+            expected = {0}  # こんらんで「うら」なら、もとのワザの要素はない（p.309 の手順 5）
+        elif log_ended and state.decision is not None and state.decision.kind == DISCARD_ENERGY:
+            expected = {0}  # トラッシュするカードを選ぶ決定を待っている（最後のワザ）
+        else:
+            expected = {1}
+        if discarded not in expected:
+            return [f"1 回のワザ（{effect.implementation_id}）で、エネルギーのトラッシュが {discarded} 回（{sorted(expected)} のはず）"]
+        return []
+    if discarded:
+        return [f"エネルギーをトラッシュしないワザ（{type(effect).__name__}）で、エネルギーのトラッシュが {discarded} 回"]
+    return []
+
+
 def log_problems(state) -> list[str]:
     """``new_game`` から進めた対戦のログと状態の整合の問題（なければ空）。"""
     log = [dict(e) for e in state.log]
@@ -202,14 +241,17 @@ def log_problems(state) -> list[str]:
 
     # 3. ワザ 1 回の要素: 同じポケモンへのダメージの要素は 1 回（相手の対戦ポケモン・自分）。こんらんしたらワザの要素はない
     window = None
+    attack_event: dict | None = None
     for e in log + [{"kind": "turn_end", "turn": None}]:
         kind = e["kind"]
         if kind == "attack":
             window = Counter()
+            attack_event = e
             continue
         if window is None:
             continue
         if kind in ("turn_end", "game_end", "halted"):
+            problems.extend(_discard_energy_window_problems(state, attack_event, window, log_ended=e["turn"] is None))
             if window["damage:opponent"] + window["prevented:opponent_active"] > 1 or window["damage:self"] + window["prevented:self"] > 1:
                 problems.append(f"1 回のワザで同じポケモンへのダメージの要素が 2 回以上 {dict(window)}")
             if window["confusion_damage"] and (window["damage:opponent"] or window["damage:self"] or window["prevented:opponent_active"]):
@@ -220,8 +262,6 @@ def log_problems(state) -> list[str]:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
-            if window["discard_energy"] != window["remove_all_damage_counters"]:
-                problems.append("1 回のワザで、エネルギーのトラッシュとダメージカウンターをすべてとりのぞく処理の数が違う（じこさいせい）")
             if window["counterattack"] + window["counterattack_skipped"] > 1:
                 problems.append(f"1 回のワザで「はんげき」が {window['counterattack'] + window['counterattack_skipped']} 回（今の対応カードでは 1 回まで）")
             if window["drain_heal"] + window["drain_heal_skipped"] > 1:
@@ -243,6 +283,19 @@ def log_problems(state) -> list[str]:
             # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない（v0.6 のあまごい・
             # v0.7 のダメージスワップも）
             problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
+        if kind == "discard_energy":
+            # v0.30: エネルギーをトラッシュしてダメージを与えるワザは、トラッシュしてからダメージの要素を処理する（RUL-ENERGY-DISCARD-ATTACKS の
+            # 最新の説明の順番）。トラッシュしたのは、ワザを使ったポケモンについていた、登録のタイプの基本エネルギーカード
+            effect = _attack_effect_of(state, attack_event)
+            if window["damage:opponent"] + window["damage:self"] + window["prevented:opponent_active"] + window["prevented:self"] \
+                    + window["evade_check"]:
+                problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザのダメージの要素のあと")
+            if (e["player"], e["pokemon"]) != (attack_event["player"], attack_event["pokemon"]):
+                problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、ワザを使ったポケモンのものでない")
+            energy_type = getattr(effect, "energy_type", None)
+            definition = state.card_def(e["energy"])
+            if not definition.is_basic_energy or definition.provides is not energy_type:
+                problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、登録のタイプ {energy_type} の基本エネルギーカードでない")
         if kind == "damage":
             window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":

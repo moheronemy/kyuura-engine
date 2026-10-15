@@ -16,7 +16,7 @@ from kyuura_engine.damage import calculate_attack_damage
 from kyuura_engine.rules import RULES_2000_02_14
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, GROWLITHE, HITMONCHAN, LIGHTNING, MACHOP, PONYTA, RATTATA, SEEL,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, GROWLITHE, HITMONCHAN, LIGHTNING, MACHOP, NO_EMBER_EFFECTS, PONYTA, RATTATA, SEEL,
     STARYU, VOLTORB, WATER, active, build_test_state,
 )
 
@@ -240,11 +240,11 @@ class UnsupportedAttackTest(unittest.TestCase):
     """効果のあるワザを、ダメージだけのワザとして処理しない。"""
 
     def test_attack_with_effect_is_refused_and_state_unchanged(self):
-        # ヒトカゲはデッキに入れられない。ここではワザ単位の検査を確かめるために盤面を直接作る
+        # v0.30 で「ひのこ」を登録したので、その登録だけを除いた登録表で、ワザ単位の検査を確かめる（盤面を直接作る）
         state = build_test_state([
             {"active": {"card": CHARMANDER, "energy": [FIRE, FIRE]}},
             {"active": GROWLITHE},
-        ])
+        ], effects=NO_EMBER_EFFECTS)
         before = state_to_dict(state)
         with self.assertRaises(UnsupportedError) as ctx:
             apply_command(state, UseAttack(0, 1))  # ひのこ（炎エネルギーをトラッシュする効果）

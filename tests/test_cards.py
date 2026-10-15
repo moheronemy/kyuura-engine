@@ -18,6 +18,7 @@ from tests.helpers import (
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
+    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -130,10 +131,18 @@ class CardPoolTest(unittest.TestCase):
         # v0.29（既存の効果の型の登録だけで加えたポケモン 14 枚。kyuura データの採用。docs/existing-effect-pokemon-v0.29.md）。どれもたねポケモン
         self.assertEqual(read_extract()["pool_v0_29"], list(V0_29_POKEMON))
         self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in V0_29_POKEMON))
+        # v0.30（エネルギーをトラッシュしてダメージを与えるワザの共通の型。docs/discard-energy-attacks-v0.30.md）。ヒトカゲは v0.29 まで参照カード。
+        # 1 進化はリザード（ヒトカゲから）・ウインディ（ガーディから）
+        self.assertEqual(read_extract()["pool_v0_30"], list(V0_30_POKEMON))
+        self.assertNotIn(CHARMANDER, read_extract()["reference_only"])
+        for card_id in V0_30_POKEMON:
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            self.assertEqual(pool.get(card_id).is_basic_pokemon, card_id not in (CHARMELEON, ARCANINE), card_id)
+        self.assertEqual((pool.get(CHARMELEON).evolves_from, pool.get(ARCANINE).evolves_from), (pool.get(CHARMANDER).name_ja, pool.get(GROWLITHE).name_ja))
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -168,13 +177,19 @@ class ClassificationTest(unittest.TestCase):
     """未対応のカード・ワザを「効果がないもの」として扱わない。"""
 
     def test_mixed_attacks_are_classified_one_by_one(self):
-        charmander = load_card_pool().get(CHARMANDER)
+        """v0.30 からヒトカゲの「ひのこ」は登録したので、その登録を除いた登録表で確かめる（v0.29 までは既定の登録表で未対応だった）。"""
+        from kyuura_engine.cards import pool_from_extract
+        from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
+
+        pool = pool_from_extract(read_extract(), DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(CHARMANDER, 1)]))
+        charmander = pool.get(CHARMANDER)
         scratch, ember = charmander.attacks
         self.assertTrue(scratch.supported)  # ひっかく: 説明文なし
         self.assertFalse(ember.supported)  # ひのこ: 炎エネルギーをトラッシュする効果
         self.assertIn("効果", ember.unsupported_reason)
         self.assertFalse(charmander.supported)
-        self.assertFalse(load_card_pool().is_playable(CHARMANDER))
+        self.assertFalse(pool.is_playable(CHARMANDER))
+        self.assertTrue(load_card_pool().is_playable(CHARMANDER))  # 既定の登録表（v0.30 から）では使える
 
     def test_damage_modifier_is_unsupported(self):
         """「×」のダメージのワザも、実装が登録されていなければ未対応。

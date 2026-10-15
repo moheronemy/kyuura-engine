@@ -551,16 +551,21 @@ class SelfNextTurnAttackDamage(Element):
 
 
 @dataclass(frozen=True)
-class DiscardEnergyHealAll(Element):
-    """自分の ``energy_type`` のエネルギーカードを選んで 1 枚トラッシュし、ダメージカウンターをすべてとりのぞく（じこさいせい）。"""
+class DiscardOwnEnergy(Element):
+    """ワザを使ったポケモン自身についている ``energy_type`` のエネルギーカードを、ワザを使ったプレイヤーが選んで 1 枚トラッシュする
+    （じこさいせい（v0.7）と、v0.30 のエネルギーをトラッシュしてダメージを与えるワザ（ひのこ・かえんほうしゃ）で共通。v0.29 までの
+    ``DiscardEnergyHealAll`` のトラッシュの部分。決定・選べるもの・ログ ``discard_energy`` は同じ）。
+
+    選べるものは ``effects.attached_basic_energy``（ついている順）。トラッシュできない（選べるものがない）場合は、ワザに必要なエネルギーに
+    ``energy_type`` があるあいだは起こらない（特殊エネルギーは未実装）ので、エンジンの不具合として止める（K3。v0.30 のワザも同じ）。
+    """
 
     energy_type: EnergyType
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = DISCARD_ENERGY
 
     def _candidates(self, run: AttackRun) -> list[int]:
-        return [uid for uid in run.attacker().energy
-                if run.state.card_def(uid).is_basic_energy and run.state.card_def(uid).provides is self.energy_type]
+        return E.attached_basic_energy(run.state, run.attacker(), self.energy_type)
 
     def run(self, run: AttackRun) -> bool:
         candidates = self._candidates(run)
@@ -578,11 +583,23 @@ class DiscardEnergyHealAll(Element):
         attacker.energy.remove(energy)
         state.players[owner].discard.append(energy)
         state.add_event("discard_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), energy=energy)
+
+
+@dataclass(frozen=True)
+class HealAllCounters(Element):
+    """ワザを使ったポケモン自身にのっているダメージカウンターをすべてとりのぞく（じこさいせい。0 個なら 0 個。ダメージの計算はしない）。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        attacker = run.attacker()
         per = state.rules.damage_per_counter
         before = attacker.damage
         attacker.damage = 0
         state.add_event("remove_all_damage_counters", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
                         effect=str(run.key), counters=before // per, amount=before, damage_before=before, total_damage=attacker.damage)
+        return False
 
 
 @dataclass(frozen=True)
@@ -654,7 +671,7 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndDrain: lambda e: (Damage(OPP, Printed()), Drain("damage")),
     E.DamageAndRemoveCounters: lambda e: (Damage(OPP, Printed()), Drain("damage", e.counters)),
     E.ExtraEnergyDamage: lambda e: (Damage(OPP, ExtraEnergy(e.energy_type, e.per_energy, e.max_extra)),),
-    E.DiscardEnergyAndRemoveAllCounters: lambda e: (DiscardEnergyHealAll(e.energy_type),),
+    E.DiscardEnergyAndRemoveAllCounters: lambda e: (DiscardOwnEnergy(e.energy_type), HealAllCounters()),
     E.RecoverEnergyAndSelfDamage: lambda e: (RecoverEnergy(e.max_cards), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
     E.DamageReducedByOwnCounters: lambda e: (Damage(OPP, PrintedMinusOwnCounters(e.reduction_per_counter)),),
     E.DamageAndSelfDamage: lambda e: (Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
@@ -664,6 +681,9 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndSelfSleep: lambda e: (Damage(OPP, Printed()), Status(SLEEP, target=SELF, after_damage="damage")),
     # v0.27: 次の自分の番にワザのダメージを変える持続する効果（ストライクの「つるぎのまい」。docs/scyther-v0.27.md）
     E.SetNextTurnAttackDamage: lambda e: (SelfNextTurnAttackDamage(e.target_attack_index, e.damage),),
+    # v0.30: 自分のエネルギーカードを選んで 1 枚トラッシュしてから、相手にダメージ（ひのこ・かえんほうしゃ。RUL-ENERGY-DISCARD-ATTACKS。
+    # docs/discard-energy-attacks-v0.30.md）。トラッシュの要素はじこさいせいと共通
+    E.DiscardEnergyThenDamage: lambda e: (DiscardOwnEnergy(e.energy_type), Damage(OPP, Printed())),
 }
 
 

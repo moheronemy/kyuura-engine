@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine card sources 1",
-  "description": "2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録。kyuura の data/cards.json を基本データとして採用したカード（basis: kyuura_data。採用したデータのコミット・処理に使う文面の根拠・確かめた kyuura の記録の id）と、pcg-search.com との外部照合（external_checks。URL・確認日・対象の版・結果・照合した欄・違い）を持つ。『オフィシャルブック2000』との過去の照合は kyuura_engine/data/card_verification.json（履歴。書き換えない）にあり、この記録には書かない。2026-10-14 までに登録したカードはすべて過去の照合の記録で登録した。v0.29 で、既存の効果の型で加えたポケモン 14 枚を採用の記録で登録した（docs/existing-effect-pokemon-v0.29.md）。検査は scripts/check_card_sources.py。",
+  "description": "2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録。kyuura の data/cards.json を基本データとして採用したカード（basis: kyuura_data。採用したデータのコミット・処理に使う文面の根拠・確かめた kyuura の記録の id）と、pcg-search.com との外部照合（external_checks。URL・確認日・対象の版・結果・照合した欄・違い）を持つ。『オフィシャルブック2000』との過去の照合は kyuura_engine/data/card_verification.json（履歴。書き換えない）にあり、この記録には書かない。2026-10-14 までに登録したカードはすべて過去の照合の記録で登録した。v0.29 で、既存の効果の型で加えたポケモン 14 枚を採用の記録で登録した（docs/existing-effect-pokemon-v0.29.md）。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザの共通の型で加えたポケモン 4 枚を採用の記録で登録し、過去の照合の記録のあるヒトカゲに、照合の記録に文面のない「ひのこ」の根拠（basis: guidebook_record の play_text）を置いた（docs/discard-energy-attacks-v0.30.md）。検査は scripts/check_card_sources.py。",
   "policy": {
     "since": "2026-10-15",
     "document": "docs/card-data-policy.md",
@@ -607,6 +607,250 @@
         }
       ],
       "issues": []
+    },
+    "PMCG1-014": {
+      "basis": "guidebook_record",
+      "name_ja": "ヒトカゲ",
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1014.php",
+          "checked_on": "2026-10-15",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "014/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。ひのこの印刷の文面も kyuura と同じ（処理に使う文面は最新の説明。印刷の文面とは書き方が違う）"
+        }
+      ],
+      "play_text": {
+        "attack/1": "RUL-ENERGY-DISCARD-ATTACKS"
+      },
+      "kyuura_records": [
+        "CC-PMCG1-014-P63",
+        "RUL-ENERGY-DISCARD-ATTACKS"
+      ],
+      "notes": "v0.2a の過去の原典照合の記録（card_verification.json。p.63。「ひっかく」を効果のないワザとして登録するために照合した）があるカード。その記録に「ひのこ」の最新の説明の欄はない（notes に文面がある）ので、v0.30 で登録した「ひのこ」の文面の根拠をここに書いた（照合の記録は書き換えない）。処理に使う文面は kyuura の RUL-ENERGY-DISCARD-ATTACKS（確実）の最新の説明「自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。」。記録の cards はウインディ（PMCG1-019）だけだが、記録は「炎エネルギーカードをトラッシュするタイプのワザ（「かえんほうしゃ」など）は、すべて同じ処理になります。」と書き、このカードの印刷の文面はウインディの「かえんほうしゃ」と同じなので、記録の範囲として適用した（研究の対応表の latest_descriptions.errata_scope。scripts/check_research_links.py が記録の文面と印刷の文面を照らす。記録の cards にこのカードがないことは kyuura への報告事項）。kyuura の CC-PMCG1-014-P63 は、ひのこの最新の説明の記録（LD-）を作っていないと書く"
+    },
+    "PMCG1-017": {
+      "basis": "kyuura_data",
+      "name_ja": "リザード",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-15",
+      "kyuura_records": [
+        "RUL-ENERGY-DISCARD-ATTACKS"
+      ],
+      "play_text": {
+        "attack/1": "RUL-ENERGY-DISCARD-ATTACKS"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1015.php",
+          "checked_on": "2026-10-15",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "015/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの「進化ライン検索」の欄（ヒトカゲ → リザード）はサイトのポケモンの系統の表示で、カードの「ヒトカゲから進化」の欄としては数えていない（pokemon.evolves_from.ja は照合していない）"
+        }
+      ],
+      "issues": [],
+      "notes": "処理に使う文面は kyuura の RUL-ENERGY-DISCARD-ATTACKS（確実）の最新の説明「自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。」。記録の cards はウインディ（PMCG1-019）だけだが、記録は「炎エネルギーカードをトラッシュするタイプのワザ（「かえんほうしゃ」など）は、すべて同じ処理になります。」と書き、このカードの印刷の文面はウインディの「かえんほうしゃ」と同じなので、記録の範囲として適用した（研究の対応表の latest_descriptions.errata_scope。scripts/check_research_links.py が記録の文面と印刷の文面を照らす。記録の cards にこのカードがないことは kyuura への報告事項）。きりさく（無無無）30 は説明文なし（DamageOnly。ストライク・パラセクトの「きりさく」とは別のカードのワザ）"
+    },
+    "PMCG1-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ウインディ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-15",
+      "kyuura_records": [
+        "RUL-ENERGY-DISCARD-ATTACKS"
+      ],
+      "play_text": {
+        "attack/0": "RUL-ENERGY-DISCARD-ATTACKS",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1020.php",
+          "checked_on": "2026-10-15",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "020/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "name.ja",
+              "kyuura": "ウインディ",
+              "pcg_search": "ウィンディ",
+              "affects_behavior": false,
+              "note": "カードページの見出しは小さい「ィ」。同じページの進化ラインの欄は「ウインディ」。写しのカードにウインディから進化するカードはなく、名前は進化の条件に使わない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの「進化ライン検索」の欄はガーディ → ウインディと書く（カードの「ガーディから進化」の欄としては数えていない）"
+        }
+      ],
+      "issues": [
+        {
+          "question": "pcg-search.com のカードページの見出しの名前は「ウィンディ」（小さい「ィ」）で、kyuura は「ウインディ」。どちらが印刷の表記か",
+          "fields": [
+            "name.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に影響しない（写しにウインディから進化するカードはない）。kyuura のデータは直さず、kyuura への報告事項にする"
+        }
+      ],
+      "notes": "かえんほうしゃは RUL-ENERGY-DISCARD-ATTACKS の記録が挙げるカード（cards。『トレーナーズ』Vol.9 の Q&A は第1弾のウインディの「かえんほうしゃ」の最新の記述を引く）。処理に使う文面は記録の最新の説明（ひのこと同じ文面）。とっしん（炎炎無無）80・「自分にも30ダメージ。」は既存の DamageAndSelfDamage(30)（kyuura の印刷の文面。LD-・エラッタはない）"
+    },
+    "PMCG1-020": {
+      "basis": "kyuura_data",
+      "name_ja": "ブーバー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-15",
+      "kyuura_records": [
+        "RUL-ENERGY-DISCARD-ATTACKS"
+      ],
+      "play_text": {
+        "attack/1": "RUL-ENERGY-DISCARD-ATTACKS"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1022.php",
+          "checked_on": "2026-10-15",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "022/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "処理に使う文面は kyuura の RUL-ENERGY-DISCARD-ATTACKS（確実）の最新の説明「自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。」。記録の cards はウインディ（PMCG1-019）だけだが、記録は「炎エネルギーカードをトラッシュするタイプのワザ（「かえんほうしゃ」など）は、すべて同じ処理になります。」と書き、このカードの印刷の文面はウインディの「かえんほうしゃ」と同じなので、記録の範囲として適用した（研究の対応表の latest_descriptions.errata_scope。scripts/check_research_links.py が記録の文面と印刷の文面を照らす。記録の cards にこのカードがないことは kyuura への報告事項）。ほのおパンチ（炎炎）30 は説明文なし（DamageOnly）"
+    },
+    "PMCG4-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ポニータ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-15",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4015.php",
+          "checked_on": "2026-10-15",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "015/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "第4弾ロケット団のポニータ。第1弾のポニータ（PMCG1-016）と同じ名前の別のカード。ひのこの印刷の文面「このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)」は、すでにトラッシュをワザの効果として書いている（ネオからの書き方）。RUL-ENERGY-DISCARD-ATTACKS の「すべて同じ処理」の範囲に入るが、記録が引く文面（第1弾の「…はがしてすてる。」と最新の説明）とこの印刷の文面は違うので、処理に使う文面は kyuura の印刷の文面にした（研究の基準のコミットに、このカードを指す kyuura の記録はない）。「トラッシュできない時」の「0になる」と最新の説明の「なくなる」の違いは、ワザに必要なエネルギーに「炎」があり基本エネルギーしかない今の対応カードでは起こらない場合だけにかかわる（DiscardEnergyThenDamage は、その場合をエンジンの不具合として止める）"
     }
   }
 }

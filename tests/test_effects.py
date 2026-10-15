@@ -16,8 +16,8 @@ from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey, PowerKey
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, VENUSAUR, WATER_FIGHTING_DECK, active,
-    build_test_state,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, NO_EMBER_EFFECTS, PONYTA, VENUSAUR, WATER_FIGHTING_DECK,
+    active, build_test_state,
 )
 
 
@@ -104,9 +104,15 @@ class DefaultRegistryTest(unittest.TestCase):
                 self.assertIn(f"attack/{key.attack_index}", sources[key.card_id]["play_text"], key)
                 continue
             record = records[key.card_id]
-            latest = record["latest_description_ja"]
+            latest = record.get("latest_description_ja")
             if isinstance(latest, dict):  # 説明文のあるワザが 2 つあるカード（v0.4b）は、ワザの位置ごと
-                latest = latest[str(key.attack_index)]
+                latest = latest.get(str(key.attack_index))
+            if latest is None:
+                # v0.30: 過去の原典照合の記録はあるが、その記録に処理に使う文面のないワザ（照合したあとで登録したヒトカゲの「ひのこ」）は、
+                # card_sources.json の basis: guidebook_record の play_text に根拠を書く（照合の記録は書き換えない）
+                self.assertEqual(sources[key.card_id]["basis"], "guidebook_record", key)
+                self.assertIn(f"attack/{key.attack_index}", sources[key.card_id]["play_text"], key)
+                continue
             self.assertEqual(entry.play_text_ja, latest, key)
             self.assertEqual(entry.source, f"P43 p.{record['page']}", key)
             self.assertEqual(record["pdf_page"], record["page"] + 2)
@@ -134,10 +140,13 @@ class DefaultRegistryTest(unittest.TestCase):
         # アーボの「どくばり」・ナゾノクサの「ねむりごな」「どくのこな」・ドガースの「どくガス」・ミニリュウの「まきつく」・タケシのズバットの
         # 「どくのきば」・カスミのトサキントの「みだれづき」「ちょうおんぱ」・マチスのコイルの「でんきショック」・マチスのビリリダマの「スピンボール」
         # 「ダブルスピン」・タケシのイシツブテの「いしなげ」・タケシのベロリンガの「たたきつける」（ガイドブックの照合の記録はなく、採用の記録の
-        # play_text と合う。scripts/check_card_sources.py）
+        # play_text と合う。scripts/check_card_sources.py）、v0.30 のエネルギーをトラッシュしてダメージを与えるワザ（ヒトカゲの「ひのこ」・リザード／
+        # ウインディ／ブーバーの「かえんほうしゃ」は kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明、第4弾のポニータの「ひのこ」は印刷の文面）と
+        # ウインディの「とっしん」（印刷の文面）
         self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
-                                     AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
+                                     AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-014", 1), AttackKey("PMCG1-015", 0),
+                                     AttackKey("PMCG1-017", 1), AttackKey("PMCG1-019", 0), AttackKey("PMCG1-019", 1), AttackKey("PMCG1-020", 1),
                                      AttackKey("PMCG1-023", 0), AttackKey("PMCG1-023", 1), AttackKey("PMCG1-024", 0), AttackKey("PMCG1-026", 0), AttackKey("PMCG1-026", 1), AttackKey("PMCG1-027", 0),
                                      AttackKey("PMCG1-030", 1), AttackKey("PMCG1-032", 0), AttackKey("PMCG1-035", 1),
                                      AttackKey("PMCG1-043", 0), AttackKey("PMCG1-045", 1), AttackKey("PMCG1-046", 0), AttackKey("PMCG1-049", 0),
@@ -148,7 +157,8 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG3-029", 0),
                                      AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-001", 1), AttackKey("PMCG4-003", 0),
                                      AttackKey("PMCG4-003", 1), AttackKey("PMCG4-004", 0),
-                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG4-005", 1), AttackKey("PMCG4-021", 0), AttackKey("PMCG4-021", 1),
+                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG4-005", 1), AttackKey("PMCG4-013", 0), AttackKey("PMCG4-021", 0),
+                                     AttackKey("PMCG4-021", 1),
                                      AttackKey("PMCG4-051", 0), AttackKey("PMCG5-001", 1),
                                      AttackKey("PMCG5-020", 0), AttackKey("PMCG5-026", 0), AttackKey("PMCG5-026", 1), AttackKey("PMCG5-037", 0),
                                      AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
@@ -164,12 +174,19 @@ class DefaultRegistryTest(unittest.TestCase):
             self.assertEqual(copied.effects.attack_keys(), DEFAULT_EFFECTS.attack_keys())
 
 
+# v0.30 からヒトカゲの「ひのこ」は登録した（DiscardEnergyThenDamage）。登録のないワザのテストは、その登録を除いた登録表
+# （tests/helpers.py の NO_EMBER_EFFECTS）で、効果のないワザ（ひっかく）と登録のない効果のあるワザ（ひのこ）を持つカードを作って確かめる
+# （v0.29 までは既定の登録表でそうなっていた）
+NO_EMBER = NO_EMBER_EFFECTS
+
+
 class UnregisteredTest(unittest.TestCase):
     def test_attack_with_text_is_not_registered(self):
-        charmander = load_card_pool().get(CHARMANDER)
+        charmander = pool_from_extract(read_extract(), NO_EMBER).get(CHARMANDER)
         ember = charmander.attacks[1]
-        self.assertIn("登録されていない", DEFAULT_EFFECTS.attack_problem(CHARMANDER, ember))
+        self.assertIn("登録されていない", NO_EMBER.attack_problem(CHARMANDER, ember))
         self.assertFalse(charmander.supported)
+        self.assertTrue(charmander.attacks[0].supported)  # ひっかくは登録してある（ワザ単位で分類する）
 
     def test_attack_without_text_is_refused_if_not_registered(self):
         """説明文がなくても、登録がなければ使えない（説明文が空なことは実装がある証拠にならない）。"""
@@ -193,7 +210,8 @@ class UnregisteredTest(unittest.TestCase):
 
     def test_unsupported_card_in_deck_is_rejected(self):
         deck = expand_decklist({CHARMANDER: 1, PONYTA: 4, FIRE: 55})
-        self.assertTrue(any("ひのこ" in p and "登録されていない" in p for p in deck_problems(deck)))
+        self.assertTrue(any("ひのこ" in p and "登録されていない" in p for p in deck_problems(deck, pool_from_extract(read_extract(), NO_EMBER))))
+        self.assertEqual(deck_problems(deck), [])  # 既定の登録表（v0.30 から）では使える
 
 
 class RegisteredWithTextTest(unittest.TestCase):
@@ -252,7 +270,7 @@ class SameNameDifferentCardTest(unittest.TestCase):
 class RegistryImmutabilityTest(unittest.TestCase):
     def test_with_and_without_do_not_change_the_original(self):
         keys = DEFAULT_EFFECTS.attack_keys()
-        DEFAULT_EFFECTS.with_attacks("x", {AttackKey(CHARMANDER, 1): AttackEntry(RECORDING, "ひのこ")})
+        DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-021", 0): AttackEntry(RECORDING, "ほのおのうず")})
         DEFAULT_EFFECTS.without_attacks("y", keys)
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), keys)
         # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）+ ピカチュウの 2 つ（v0.2f）
@@ -268,7 +286,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + ラプラス・スターミー・アズマオウ・カイロス・タマタマ・プリン・ラッキー・スリープ・シェルダーの 2 つずつ・トサキントの 1 つ（v0.28）
         # + アーボ・ズバット・ナゾノクサ・ドガース・ワンリキー・タケシのズバット・カスミのトサキント・マチスのコイル・マチスのビリリダマ・
         #   タケシのベロリンガの 2 つずつ・ニョロモ・ビリリダマ・ミニリュウ・タケシのイシツブテの 1 つずつ（v0.29。kyuura データの採用）
-        self.assertEqual(len(keys), 116)
+        # + ヒトカゲの「ひのこ」・リザード・ウインディ・ブーバーの 2 つずつ・第4弾のポニータの 1 つ（v0.30。エネルギーをトラッシュしてダメージを
+        #   与えるワザの共通の型）
+        self.assertEqual(len(keys), 124)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

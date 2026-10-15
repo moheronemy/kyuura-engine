@@ -124,14 +124,15 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertRegex(text, rf"(?<![A-Za-z0-9]){re.escape(ruling['ruling_id'])}(?![0-9])")
 
     def test_latest_descriptions_cover_every_registration(self):
-        """最新の説明を登録したワザ・特殊能力は、どれも 5 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
+        """最新の説明を登録したワザ・特殊能力は、どれも 6 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
         ワザの文面を照合していないもの、kyuura に記録なし、kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（2026-10-15
-        からの方針。docs/card-data-policy.md。採用の記録 card_sources.json との対応は scripts/check_card_sources.py が確かめる））のちょうど
-        1 つに挙げる（登録を加えたら対応表も直す）。文面の一致は scripts/check_research_links.py が kyuura で確かめる。"""
+        からの方針。docs/card-data-policy.md。採用の記録 card_sources.json との対応は scripts/check_card_sources.py が確かめる）、処理に使う
+        文面を kyuura のエラッタ（RUL- など）にしたもの（v0.30 の errata_text））のちょうど 1 つに挙げる（登録を加えたら対応表も直す）。
+        文面の一致は scripts/check_research_links.py が kyuura で確かめる。"""
         section = LINKS["latest_descriptions"]
         groups = {name: set(section[name]) for name in
                   ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record",
-                   "adopted_printed_text")}
+                   "adopted_printed_text", "errata_text")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -149,6 +150,13 @@ class ResearchLinksTest(unittest.TestCase):
             card = target.split("/")[0]
             self.assertTrue(cc_id.startswith(f"CC-{card}-P"), cc_id)
             self.assertIn(cc_id, LINKS["card_checks"]["engine_verified"][card])
+        # v0.30: 炎エネルギーをトラッシュするワザは kyuura の RUL-ENERGY-DISCARD-ATTACKS の文面にしたがう。記録の cards はウインディだけなので、
+        # ほかのワザは適用の範囲（errata_scope。記録の notes の引用・同じ印刷の文面）で結ぶ。照らすのは scripts/check_research_links.py
+        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS"})
+        scoped = {target for scope in section["errata_scope"] for target in scope["targets"]}
+        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0"})
+        for scope in section["errata_scope"]:
+            self.assertEqual(section["errata_text"][scope["targets"][0]], scope["record"])
 
     def test_card_checks_cover_every_verified_card(self):
         """エンジンの照合の記録のあるカードは、kyuura の CC- の id か「kyuura に記録なし」のどちらかに挙げる。"""

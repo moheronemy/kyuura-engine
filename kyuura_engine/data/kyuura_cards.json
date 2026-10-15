@@ -200,9 +200,15 @@
     "PMCG5-046",
     "PMCG5-061"
   ],
+  "pool_v0_30": [
+    "PMCG1-014",
+    "PMCG1-017",
+    "PMCG1-019",
+    "PMCG1-020",
+    "PMCG4-013"
+  ],
   "reference_only": [
     "PMCG1-021",
-    "PMCG1-014",
     "PMCG1-075",
     "PMCG3-003",
     "PMCG1-047",
@@ -7138,6 +7144,466 @@
       }
     },
     {
+      "id": "PMCG1-014",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒトカゲ",
+        "en": "Charmander"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          4
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": "Scratch"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ひのこ",
+              "en": "Ember"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Charmander in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-014",
+        "pokemontcg": [
+          "base1-46"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-014-hitokage/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-014-hitokage/"
+      }
+    },
+    {
+      "id": "PMCG1-017",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "リザード",
+        "en": "Charmeleon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          5
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒトカゲ",
+          "en": "Charmander"
+        },
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きりさく",
+              "en": "Slash"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かえんほうしゃ",
+              "en": "Flamethrower"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Charmeleon in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-017",
+        "pokemontcg": [
+          "base1-24"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-015-lizardo/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-015-lizardo/"
+      }
+    },
+    {
+      "id": "PMCG1-019",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウインディ",
+        "en": "Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": "Growlithe"
+        },
+        "hp": 100,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かえんほうしゃ",
+              "en": "Flamethrower"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Arcanine in order to use this attack."
+            }
+          },
+          {
+            "name": {
+              "ja": "とっしん",
+              "en": "Take Down"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分にも30ダメージ。",
+              "en": "Arcanine does 30 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-019",
+        "pokemontcg": [
+          "base1-23"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-020-windie/",
+      "jp_print": {
+        "level": 45,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "ウインディの小文字の最初の「ィ」は誤表記"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-020-windie/"
+      }
+    },
+    {
+      "id": "PMCG1-020",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ブーバー",
+        "en": "Magmar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          126
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおパンチ",
+              "en": "Fire Punch"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かえんほうしゃ",
+              "en": "Flamethrower"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Magmar in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-020",
+        "pokemontcg": [
+          "base1-36"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-022-boober/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-022-boober/"
+      }
+    },
+    {
+      "id": "PMCG4-013",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポニータ",
+        "en": "Ponyta"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          77
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひのこ",
+              "en": "Ember"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": "Discard 1 Fire Energy card attached to Ponyta in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-013",
+        "pokemontcg": [
+          "base5-64"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-015-ponyta/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-015-ponyta/"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -7247,99 +7713,6 @@
           "初版は「ポケモンの分類」「身長」「体重」に誤表記（「かいりきポケモン、身長1.5m、体重70.5kg」はゴーリキーのもの）"
         ],
         "source": "https://nazonobasho.com/pmcg01-016-lizardon/"
-      }
-    },
-    {
-      "id": "PMCG1-014",
-      "jp_set": "PMCG1",
-      "category": "pokemon",
-      "name": {
-        "ja": "ヒトカゲ",
-        "en": "Charmander"
-      },
-      "name_ja_confidence": "有力",
-      "pokemon": {
-        "dex": [
-          4
-        ],
-        "stage": "basic",
-        "evolves_from": null,
-        "hp": 50,
-        "types": [
-          "fire"
-        ],
-        "weaknesses": [
-          {
-            "type": "water",
-            "operator": "×",
-            "value": 2
-          }
-        ],
-        "resistances": [],
-        "retreat_cost": 1,
-        "rules_text": null,
-        "powers": [],
-        "attacks": [
-          {
-            "name": {
-              "ja": "ひっかく",
-              "en": "Scratch"
-            },
-            "cost": [
-              "colorless"
-            ],
-            "cost_total": 1,
-            "damage": {
-              "base": 10,
-              "modifier": null,
-              "display": "10"
-            },
-            "text": {
-              "ja": null,
-              "en": null
-            }
-          },
-          {
-            "name": {
-              "ja": "ひのこ",
-              "en": "Ember"
-            },
-            "cost": [
-              "fire",
-              "colorless"
-            ],
-            "cost_total": 2,
-            "damage": {
-              "base": 30,
-              "modifier": null,
-              "display": "30"
-            },
-            "text": {
-              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
-              "en": "Discard 1 Fire Energy card attached to Charmander in order to use this attack."
-            }
-          }
-        ]
-      },
-      "trainer": null,
-      "energy": null,
-      "jp_en_differences": [],
-      "notes": [],
-      "source_ids": {
-        "tcgdex": "PMCG1-014",
-        "pokemontcg": [
-          "base1-46"
-        ]
-      },
-      "ja_text_source": "https://nazonobasho.com/pmcg01-014-hitokage/",
-      "jp_print": {
-        "level": 10,
-        "rarity": "●(C)",
-        "series": "第1弾拡張パック、スターターパック",
-        "remarks": [
-          "初版はレアリティマークなし"
-        ],
-        "source": "https://nazonobasho.com/pmcg01-014-hitokage/"
       }
     },
     {

@@ -68,7 +68,7 @@ WATER = "PMCG1-099"
 LIGHTNING = "PMCG1-100"
 PSYCHIC = "PMCG1-101"
 FIGHTING = "PMCG1-102"
-CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
+CHARMANDER = "PMCG1-014"  # ヒトカゲ（v0.29 までは「ひのこ」が未対応の参照カード。v0.30 で対戦用。ひっかく（無）10・ひのこ（炎無）30）
 DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
 PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、でんげき 30・「うら」なら自分にも 10）
 WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「おもて」なら相手をどく状態に）
@@ -106,6 +106,13 @@ BROCKS_GEODUDE = "PMCG5-046"  # タケシのイシツブテ（HP 50・闘・弱�
 BROCKS_LICKITUNG = "PMCG5-061"  # タケシのベロリンガ（HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 3。ベロではたく（無無）20・たたきつける（無無無）30×）
 V0_29_POKEMON = (POLIWAG, ROCKET_EKANS, ROCKET_ZUBAT, ROCKET_ODDISH, ROCKET_KOFFING, ROCKET_VOLTORB, ROCKET_MACHOP, ROCKET_DRATINI,
                  BROCKS_ZUBAT, MISTYS_GOLDEEN, LT_SURGES_MAGNEMITE, LT_SURGES_VOLTORB, BROCKS_GEODUDE, BROCKS_LICKITUNG)
+# v0.30: 自分の「炎」エネルギーカードを 1 枚トラッシュしてダメージを与えるワザの共通の型（DiscardEnergyThenDamage）で加えたポケモン
+# （docs/discard-energy-attacks-v0.30.md）。ヒトカゲ（CHARMANDER）も v0.30 から対戦用。第4弾のポニータは第1弾のポニータ（PONYTA）と同じ名前の別のカード
+CHARMELEON = "PMCG1-017"  # リザード（第1弾。ヒトカゲから進化。HP 80・炎・弱点 水・にげる 1。きりさく（無無無）30・かえんほうしゃ（炎炎無）50）
+ARCANINE = "PMCG1-019"  # ウインディ（第1弾。ガーディから進化。HP 100・炎・弱点 水・にげる 3。かえんほうしゃ（炎炎無）50・とっしん（炎炎無無）80）
+MAGMAR = "PMCG1-020"  # ブーバー（第1弾。たね。HP 50・炎・弱点 水・にげる 2。ほのおパンチ（炎炎）30・かえんほうしゃ（炎炎無）50）
+ROCKET_PONYTA = "PMCG4-013"  # ポニータ（第4弾ロケット団。たね。HP 50・炎・弱点 水・にげる 1。ひのこ（炎無）30）
+V0_30_POKEMON = ("PMCG1-014", CHARMELEON, ARCANINE, MAGMAR, ROCKET_PONYTA)
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -492,7 +499,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ConfuseOnHeadsWithoutDamage,  # v0.17a: サカキのニャースの「ねこノミ」（既存の要素 Status の新しい並び）
     _effects.DamageAndSelfSleep,  # v0.17b: R団のカビゴンの「たおれこむ」（Damage と、対象を自分にした Status）
     _effects.SetNextTurnAttackDamage,  # v0.27: ストライクの「つるぎのまい」（次の自分の番のワザのダメージを変える持続する効果。新しい要素）
+    _effects.DiscardEnergyThenDamage,  # v0.30: ヒトカゲの「ひのこ」など（エネルギーをトラッシュする要素 DiscardOwnEnergy と Damage）
 )
+
+# v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
+# テストは、この登録だけを除いた登録表を使う（製品の登録表は変えない）
+NO_EMBER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(CHARMANDER, 1)])
 
 
 class TwoStepTestEffect(AttackEffect):
