@@ -163,6 +163,9 @@
   "pool_v0_23": [
     "PMCG1-076"
   ],
+  "pool_v0_24": [
+    "PMCG1-093"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4809,6 +4812,43 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-071-energykaishu/"
+      }
+    },
+    {
+      "id": "PMCG1-093",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン交換おじさん",
+        "en": "Pokémon Trader"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の山札から好きなポケモンカードか進化カードを1枚選んで、手札のポケモンカードか進化カードと交換することができる。そのあとで、自分の山札をよくきる。交換するカードは相手に見せなければならない。",
+          "en": "Trade 1 of the Basic Pokémon or Evolution cards in your hand for 1 of the Basic Pokémon or Evolution cards from your deck. Show both cards to your opponent. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-093",
+        "pokemontcg": [
+          "base1-77"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-088-pokemonkoukanojisan/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-088-pokemonkoukanojisan/"
       }
     },
     {

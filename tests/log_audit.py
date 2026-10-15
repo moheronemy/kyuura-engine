@@ -27,6 +27,8 @@
   （``attack_evaded`` が続く。T5）、「うら」なら、その要素をすぐに処理する・``attack_evaded`` のダメージは 0 より大きい（T21）。
   ワザ（エナジーへんかん）でトラッシュから手札に加えたエネルギーカード（``recover_energy``）も組み立て直しに含める（v0.23 からトレーナー
   （エネルギー回収）の ``retrieve_energy`` も。基本エネルギーカード・1〜2 枚・そのトレーナーを使うためにトラッシュしたカードでないこと）。
+  v0.24 から、トレーナー（ポケモン交換おじさん）の ``return_to_deck``（手札 → 山札）・``reveal_from_deck``（山札 → 手札）も手札の組み立て直しに
+  含める（どちらもたねポケモン・進化カード。山札は組み立て直さないので、山札にあったかは持ち主・手札とトラッシュにないことで確かめる）。
   v0.10 から、ダメージを受けたときに自動的にはたらく特殊能力（カイリキーの「はんげき」。``CounterattackDamage``）のログ
   （``counterattack``・``counterattack_skipped``）を、その時点の場と比べる: 相手のワザのダメージ（0 より大きい）を、そのときに
   はたらいている「はんげき」を持つポケモン（いちばん上のカード・ねむり・マヒ・こんらんでない・かがくへんかガスに消されていない）が
@@ -953,6 +955,20 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番に、このカードを使うためにトラッシュしたカード {uid} を手札に加えた（p.257）")
                 discard[e["player"]].remove(uid)
                 hand[e["player"]].append(uid)
+        elif kind == "return_to_deck":
+            # v0.24: トレーナー（ポケモン交換おじさん）の使うための条件で、手札のたねポケモン・進化カードを相手に見せてから山札にもどす（p.259）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or not (state.card_def(uid).is_basic_pokemon or state.card_def(uid).is_evolution_pokemon):
+                problems.append(f"{e['turn']} 番に山札にもどしたカード {uid} が、プレイヤー {e['player']} のたねポケモン・進化カードではない")
+            from_hand(e, e["player"], uid)
+        elif kind == "reveal_from_deck":
+            # v0.24: トレーナー（ポケモン交換おじさん）の効果で、山札のたねポケモン・進化カードを相手に見せてから手札に加える（p.259。山札に
+            # もどしたカードを選んでもよい）
+            uid = e["card"]
+            if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not (
+                    state.card_def(uid).is_basic_pokemon or state.card_def(uid).is_evolution_pokemon):
+                problems.append(f"{e['turn']} 番に山札から見せて手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のたねポケモン・進化カードではない")
+            hand[e["player"]].append(uid)
         elif kind == "search_deck":
             # v0.22: トレーナー（パソコン通信）の効果で、自分の山札から選び出したカードを手札に加える（「カードを引く」ではない。p.260・p.312）
             uid = e["card"]

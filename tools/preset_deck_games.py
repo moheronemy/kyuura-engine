@@ -35,6 +35,13 @@
   ないときに使い、足りないタイプを先に選べるだけ選ぶ（0 枚は選ばない。ER9。トラッシュに基本エネルギーカードがなければ使わない。ER10）。
   この 2 つの変種では、決定ごとの持ち主・使用中のカード（``check_…``）と、トレーナーを使ってからトラッシュするまでのログ
   （``trainer_sequence_problems``）も確かめる。
+- v0.24: ``--variant trader`` は、``retrieval`` の残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的な 60 枚どうし
+  （docs/pokemon-trader-v0.24.md 7 章）。加える手順はポケモン交換おじさんだけ: その番のほかの操作が終わったとき、1 番に 1 回だけ考え、
+  手札に余ったポケモンのカード（場に進化元のいない進化カード、またはベンチが 4 匹以上のときのたねポケモン）があり、今の番に欲しいもの
+  （今の番に進化できる場のポケモンの進化カードで手札にないもの、またはベンチが 2 匹未満で手札にたねポケモンがないこと）があれば使う
+  （山札の中身は見ない）。もどすのは余ったカード、選ぶのは欲しい進化カード → たねポケモン → なければもどしたカード（選び直し。PT10）。
+  ``mixed``・``retrieval`` と同じく ``check_…``・``trainer_sequence_problems`` も確かめ、もどした・手に入れたカードの段階と、手に入れた
+  カードのその後（進化・ベンチ）を数える（``trader_uses``）。
 
 終わり方の分類: 通常の勝敗（``game_over``）・サドンデス（``sudden_death``。エンジンは次の対戦を始めない）・既知の未解決の裁定による停止
 （``halted``。コード付き）・手数の上限・想定外の拒否（手順が想定していない ``IllegalActionError``・``UnsupportedError``。駆動の誤りか、規定の
@@ -68,10 +75,11 @@ PROFESSOR_OAK = "PMCG1-077"
 GUST = "PMCG1-072"  # v0.21
 COMPUTER_SEARCH = "PMCG1-090"  # v0.22
 ENERGY_RETRIEVAL = "PMCG1-076"  # v0.23
+POKEMON_TRADER = "PMCG1-093"  # v0.24
 PLUSPOWER = "PMCG1-081"
 DEFENDER = "PMCG1-079"
 POTION = "PMCG1-071"
-VARIANTS = ("preset", "gust", "computer", "mixed", "retrieval")
+VARIANTS = ("preset", "gust", "computer", "mixed", "retrieval", "trader")
 # 一時的なデッキの置き換え（固定のデッキの（取り除くカード, 加えるカード, 枚数）を順に。並びの位置はそのまま。公開の固定のデッキは変えない）
 SUBSTITUTIONS = {
     "gust": ((DEFENDER, GUST, 3),),  # v0.21
@@ -79,6 +87,8 @@ SUBSTITUTIONS = {
     "mixed": ((DEFENDER, GUST, 2), (DEFENDER, COMPUTER_SEARCH, 2)),  # v0.23: ディフェンダー 4 枚 → 突風 2 枚・パソコン通信 2 枚
     # v0.23: mixed からさらに、きずぐすり 2 枚 → エネルギー回収 2 枚
     "retrieval": ((DEFENDER, GUST, 2), (DEFENDER, COMPUTER_SEARCH, 2), (POTION, ENERGY_RETRIEVAL, 2)),
+    # v0.24: retrieval からさらに、残りのきずぐすり 2 枚 → ポケモン交換おじさん 2 枚
+    "trader": ((DEFENDER, GUST, 2), (DEFENDER, COMPUTER_SEARCH, 2), (POTION, ENERGY_RETRIEVAL, 2), (POTION, POKEMON_TRADER, 2)),
 }
 OAK_MIN_DECK = 7
 OAK_MAX_REST = 2
@@ -110,7 +120,8 @@ def _has_pending_evolution(state, player, rest):
 def deck_cards(deck_id, variant="preset"):
     """対戦に使う 60 枚。``gust`` は固定のデッキのディフェンダー 3 枚を突風 3 枚に（v0.21）、``computer`` はパソコン通信 3 枚に（v0.22）、
     ``mixed`` はディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に（v0.23）、``retrieval`` はさらにきずぐすり 2 枚をエネルギー回収 2 枚に
-    （v0.23）置き換えた一時的なデッキ（``SUBSTITUTIONS``。並びの位置はそのまま。公開の固定のデッキは変えない）。"""
+    （v0.23）、``trader`` はさらに残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に（v0.24）置き換えた一時的なデッキ（``SUBSTITUTIONS``。
+    並びの位置はそのまま。公開の固定のデッキは変えない）。"""
     cards = preset_deck(deck_id).cards()
     if variant == "preset":
         return cards
@@ -236,12 +247,13 @@ def _computer_command(state, player, tried, counts):
     return PlayTrainer(player, card)
 
 
-MIXED_VARIANTS = ("mixed", "retrieval")
+MIXED_VARIANTS = ("mixed", "retrieval", "trader")
 TRAINER_EVENTS = {
     # v0.23: 使ってからトラッシュするまでのあいだに出てよいログ（その実装が出すものだけ）と、そのイベントの player が使ったプレイヤーか相手か
     GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent"},
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
+    POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24
 }
 
 
@@ -332,6 +344,72 @@ def _retrieval_choice(state, player, options, count):
     return tuple(sorted(options, key=rank)[:count])
 
 
+def _is_pokemon_card(state, uid):
+    d = state.card_def(uid)
+    return d.is_basic_pokemon or d.is_evolution_pokemon
+
+
+def _trade_wants(state, player):
+    """v0.24: 今の番に欲しいもの（決まった手順）: 今の番に進化できる場のポケモンの名前のうち、手札にその進化カードがないもの、と、ベンチが
+    2 匹未満で手札にたねポケモンがないか。"""
+    p = state.players[player]
+    hand = [state.card_def(u) for u in p.hand]
+    names = {state.card_def(pk.card).name_ja for pk in p.in_play() if _can_evolve_now(state, pk)}
+    want_evolution = names - {d.evolves_from for d in hand if d.is_evolution_pokemon}
+    want_basic = len(p.bench) < 2 and not any(d.is_basic_pokemon for d in hand)
+    return want_evolution, want_basic
+
+
+def _trade_rank(state, player, uid):
+    """v0.24: 山札にもどす手札の順（低い値から）: 場に進化元のいない進化カード（余った進化カード）0 → ベンチが 4 匹以上のときのたね 1 →
+    たね 2 → 場に進化元のいる進化カード 3。"""
+    p = state.players[player]
+    names = {state.card_def(pk.card).name_ja for pk in p.in_play()}
+    d = state.card_def(uid)
+    if d.is_evolution_pokemon:
+        return 0 if d.evolves_from not in names else 3
+    return 1 if len(p.bench) >= 4 else 2
+
+
+def _trader_command(state, player, tried, counts):
+    """v0.24: ポケモン交換おじさんを使うなら、そのコマンド。1 番に 1 回だけ考え、手札に余ったポケモンのカード（``_trade_rank`` が 0・1）があり、
+    今の番に欲しいもの（``_trade_wants``）があるときに使う（山札の中身は見ない。手に入らなければ、もどしたカードを選び直す）。"""
+    p = state.players[player]
+    card = next((u for u in p.hand if _card(state, u) == POKEMON_TRADER), None)
+    marker = ("trader", state.turn_number)
+    if card is None or marker in tried:
+        return None
+    tried.add(marker)
+    surplus = [u for u in p.hand if u != card and _is_pokemon_card(state, u) and _trade_rank(state, player, u) <= 1]
+    if not any(u != card and _is_pokemon_card(state, u) for u in p.hand):
+        counts["trader_kept_no_pokemon_in_hand"] += 1  # 使うための条件を満たせない（p.259）
+        return None
+    if not surplus:
+        counts["trader_kept_no_surplus"] += 1
+        return None
+    want_evolution, want_basic = _trade_wants(state, player)
+    if not (want_evolution or want_basic):
+        counts["trader_kept_no_want"] += 1
+        return None
+    counts["trader_played"] += 1
+    return PlayTrainer(player, card)
+
+
+def _trader_search_choice(state, player, options, returned):
+    """v0.24: 山札から選ぶカードと理由（決まった手順）: 今の番に進化できる場のポケモンの進化カード → ベンチが 2 匹未満ならたね → なければ
+    もどしたカード（選び直し）。"""
+    want_evolution, want_basic = _trade_wants(state, player)
+    for uid in options:
+        d = state.card_def(uid)
+        if d.is_evolution_pokemon and d.evolves_from in want_evolution:
+            return uid, "evolution"
+    if want_basic:
+        for uid in options:
+            if state.card_def(uid).is_basic_pokemon and uid != returned:
+                return uid, "basic"
+    return returned, "returned"
+
+
 def make_policy(seen: dict, counts: Counter, *, checks: bool = False):
     """元の手順に、エネルギーのつけ方とオーキドはかせの使い方（v0.21 から突風の使い方も）を重ねる。``seen`` に最後に見た状態を残す
     （止まったときの報告のため）。``checks`` なら決定ごとの持ち主・使用中のカードを数える（v0.23 の混ぜた変種だけ。ほかの変種の数えは変えない）。"""
@@ -360,6 +438,15 @@ def make_policy(seen: dict, counts: Counter, *, checks: bool = False):
             target, reason = _search_target(state, d.player) or (d.options[0], "fallback")
             counts[f"computer_search_{reason}"] += 1
             return ResolveDecision(d.player, d.id, (target,))
+        if state.phase is Phase.DECISION and d.context_value("use", (None, None, None))[2] == POKEMON_TRADER:
+            # v0.24: ポケモン交換おじさんの決定（どちらも使ったプレイヤー）。段階 1 は手札のたねポケモン・進化カードから 1 枚、段階 2 は山札から 1 枚
+            if d.kind == "return_to_deck":
+                chosen = min(d.options, key=lambda u: (_trade_rank(state, d.player, u), d.options.index(u)))
+                counts[f"trader_returned_{state.card_def(chosen).stage}"] += 1
+                return ResolveDecision(d.player, d.id, (chosen,))
+            target, reason = _trader_search_choice(state, d.player, list(d.options), d.context_value("returned"))
+            counts[f"trader_search_{reason}"] += 1
+            return ResolveDecision(d.player, d.id, (target,))
         if state.phase is Phase.DECISION and d.context_value("use", (None, None, None))[2] == ENERGY_RETRIEVAL:
             # v0.23: エネルギー回収の決定（どちらも使ったプレイヤー）。段階 1 は手札から 1 枚、段階 2 はトラッシュの基本エネルギーカードから最大 2 枚
             if d.kind == "discard_from_hand":
@@ -384,6 +471,9 @@ def make_policy(seen: dict, counts: Counter, *, checks: bool = False):
             retrieval = _retrieval_command(state, player, tried, counts)
             if retrieval is not None:
                 return retrieval
+            trader = _trader_command(state, player, tried, counts)
+            if trader is not None:
+                return trader
             computer = _computer_command(state, player, tried, counts)
             if computer is not None:
                 return computer
@@ -552,6 +642,31 @@ def retrieval_uses(state):
     return uses
 
 
+def trader_uses(state):
+    """v0.24: ポケモン交換おじさんを使うたびの、ログから分かる結果（使った番・プレイヤー・山札にもどしたカードと段階・山札から見せて手札に
+    加えたカードと段階・もどしたカードと同じか・切ったか・手に入れたカードのあとの使い道（進化・ベンチ。その番か））。"""
+    uses, log = [], state.log
+    for i, e in enumerate(log):
+        if e["kind"] != "play_trainer" or _card(state, e["card"]) != POKEMON_TRADER:
+            continue
+        rest = log[i + 1:i + 6]
+        use = {"turn": e["turn"], "user": e["player"]}
+        returned = next((x["card"] for x in rest if x["kind"] == "return_to_deck"), None)
+        taken = next((x["card"] for x in rest if x["kind"] == "reveal_from_deck"), None)
+        if returned is not None:
+            use.update(returned=_card(state, returned), returned_stage=state.card_def(returned).stage)
+        if taken is not None:
+            use.update(taken=_card(state, taken), taken_stage=state.card_def(taken).stage, took_back=taken == returned,
+                       shuffled=any(x["kind"] == "shuffle" and x["player"] == e["player"] for x in rest))
+            later = next((x for x in log[i + 1:] if (x["kind"] == "evolve" and x["to_card"] == taken)
+                          or (x["kind"] == "play_to_bench" and x["card"] == taken)), None)
+            if later is not None:
+                use["used_as"] = later["kind"]
+                use["used_same_turn"] = later["turn"] == e["turn"]
+        uses.append(use)
+    return uses
+
+
 def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
     """1 局を進め、終わり方と動きを返す。``keep_state`` なら最後の状態を ``"state"`` に入れる（テストの監査のため。JSON にはしない）。"""
     seen, counts = {}, Counter()
@@ -594,8 +709,10 @@ def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
             result["gust_uses"] = gust_uses(state)
         if variant in ("computer",) + MIXED_VARIANTS:
             result["computer_uses"] = computer_uses(state)
-        if variant == "retrieval":
+        if variant in ("retrieval", "trader"):
             result["retrieval_uses"] = retrieval_uses(state)
+        if variant == "trader":
+            result["trader_uses"] = trader_uses(state)
         if mixed:
             result["trainer_sequence_problems"] = trainer_sequence_problems(state)
     if keep_state:
@@ -668,6 +785,18 @@ def summarize(results):
                 ret["discarded"].update(use.get("discarded", ()))
                 if "attached_same_turn" in use.get("fates", ()) and len(ret["examples"]) < 5:
                     ret["examples"].append({"seed": r["seed"], "decks": r["decks"], **use})
+        if "trader_uses" in r:
+            tr = s.setdefault("trader", {"uses": Counter(), "games_with_use": 0, "returned_stage": Counter(), "taken_stage": Counter(),
+                                         "used_as": Counter(), "examples": []})
+            tr["games_with_use"] += bool(r["trader_uses"])
+            for use in r["trader_uses"]:
+                tr["uses"].update({"played": 1, "returned": "returned" in use, "taken": "taken" in use, "took_back": use.get("took_back", False),
+                                   "shuffled": use.get("shuffled", False), "used_same_turn": use.get("used_same_turn", False)})
+                tr["returned_stage"][use.get("returned_stage")] += 1
+                tr["taken_stage"][use.get("taken_stage")] += 1
+                tr["used_as"][use.get("used_as", "not_used")] += 1
+                if use.get("used_same_turn") and len(tr["examples"]) < 5:
+                    tr["examples"].append({"seed": r["seed"], "decks": r["decks"], **use})
         if "trainer_sequence_problems" in r:
             mixed = s.setdefault("mixed", {"games_with_both": 0, "games_with_sequence_problems": 0, "searched_gust": 0,
                                            "searched_gust_played_same_turn": 0, "examples_searched_gust": [], "checks": Counter()})
@@ -693,7 +822,8 @@ def main(argv=None):
     parser.add_argument("--variant", choices=VARIANTS, default="preset",
                         help="gust: ディフェンダー 3 枚を突風 3 枚に（v0.21）、computer: パソコン通信 3 枚に（v0.22）置き換えた一時的なデッキ。"
                              "mixed: ディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に置き換えた一時的なデッキ（v0.23）。"
-                             "retrieval: mixed からさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキ（v0.23）")
+                             "retrieval: mixed からさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキ（v0.23）。"
+                             "trader: retrieval からさらに残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキ（v0.24）")
     args = parser.parse_args(argv)
     began = time.time()
     results = run(args.games, start=args.start, max_steps=args.max_steps, variant=args.variant)
@@ -702,7 +832,7 @@ def main(argv=None):
     if args.out:
         args.out.write_text(json.dumps({"summary": summary, "games": results}, ensure_ascii=False, indent=1), encoding="utf-8")
     keys = ("games", "outcomes", "halt_codes", "unresolved_rejections", "wins", "end_conditions", "elapsed") + tuple(
-        k for k in ("gust", "computer", "mixed", "retrieval") if k in summary)
+        k for k in ("gust", "computer", "mixed", "retrieval", "trader") if k in summary)
     print(json.dumps({k: summary[k] for k in keys}, ensure_ascii=False))
     return 0 if summary["outcomes"].get("internal_error", 0) == 0 else 1
 

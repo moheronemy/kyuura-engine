@@ -79,14 +79,50 @@ def search_deck_to_hand(state: GameState, player: int, card: int) -> None:
     「カードを引く」（山札の一番上。p.312。``draw_cards``）ではない。選んでよいかの確認は呼ぶ側が済ませる。カードがそのプレイヤーの山札に
     ない・持ち主が違うなら、確認の漏れなので ``RuntimeError``（状態を変える前）。ログの ``"search_deck"`` の ``card`` は、選んだ
     プレイヤーにだけ見える情報（最新の説明に相手に見せる指示がない。p.312「特に指示されないかぎり、引いたカードを相手プレイヤーに見せる
-    必要はありません」と同じ扱い。docs/computer-search-v0.22.md）。``player`` は全員に見える。
+    必要はありません」と同じ扱い。docs/computer-search-v0.22.md）。``player`` は全員に見える。v0.24 から、カードを動かすのは見せて
+    手札に加える ``reveal_deck_to_hand`` と共通の ``_deck_to_hand``（動き・ログは v0.22 と同じ）。
     """
+    _deck_to_hand(state, player, card)
+    state.add_event("search_deck", player=player, card=card)
+
+
+def reveal_deck_to_hand(state: GameState, player: int, card: int) -> None:
+    """自分の山札のカード ``card`` を、相手に見せてから、同じ uid のまま手札の最後に加える（v0.24。ポケモン交換おじさんの「あなたの山札から
+    「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。」。p.259）。山札の残りの並びは変えない
+    （切るのは呼ぶ側）。
+
+    ``search_deck_to_hand``（パソコン通信。選んだカードは選んだプレイヤーだけが見る）とは、見せることだけが違う。ログの
+    ``"reveal_from_deck"`` の ``card`` は全員に見える情報（見せる指示がある）。選べたほかの山札のカードはログに書かない。選んでよいかの確認は
+    呼ぶ側が済ませる。
+    """
+    _deck_to_hand(state, player, card)
+    state.add_event("reveal_from_deck", player=player, card=card)
+
+
+def _deck_to_hand(state: GameState, player: int, card: int) -> None:
+    """自分の山札の ``card`` を、同じ uid のまま手札の最後に加える（ログは呼ぶ側）。山札にない・持ち主が違うなら、確認の漏れなので
+    ``RuntimeError``（状態を変える前）。"""
     p = state.players[player]
     if card not in p.deck or state.cards[card].owner != player:
         raise RuntimeError(f"プレイヤー {player} の山札のカード {card} を手札に加えられない（確認の漏れ。エンジンの不具合）")
     p.deck.remove(card)
     p.hand.append(card)
-    state.add_event("search_deck", player=player, card=card)
+
+
+def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
+    """自分の手札のカード ``card`` を、相手に見せてから、同じ uid のまま自分の山札の一番下にもどす（v0.24。ポケモン交換おじさんの「手札から
+    「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。」。p.259）。
+
+    山札のどこにもどすかは書かれていない。このカードのあとで山札を選び出し、よく切る（どこにもどしても選べるものは同じ）ので、一番下
+    （``deck`` の最後）にもどす（実装上の仮定。docs/pokemon-trader-v0.24.md の PT7）。ログの ``"return_to_deck"`` の ``card`` は全員に
+    見える情報（見せる指示がある）。選んでよいかの確認は呼ぶ側が済ませる。手札にない・持ち主が違うなら ``RuntimeError``（状態を変える前）。
+    """
+    p = state.players[player]
+    if card not in p.hand or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {card} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(card)
+    p.deck.append(card)
+    state.add_event("return_to_deck", player=player, card=card)
 
 
 def shuffle_deck(state: GameState, player: int) -> None:
