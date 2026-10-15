@@ -110,9 +110,9 @@ kyuura の取り込んだ記録は `import_provenance`（`kind` `engine_record`�
 | kyuura: `python3 -m unittest`（137 件） | OK |
 | エンジン: `python3 scripts/check_research_links.py --kyuura ../kyuura` | 「研究の対応表は kyuura 3f349085645f47d0649a6cacece3680caeae50bf の記録と一致しています」 |
 | エンジン: 対応表を壊した 5 通り（2 つの区分に同じ登録・文面の違う CC- への対応・照合した欄に文面がある登録を `card_checks_without_text` に移す・kyuura にない取り込みの id・研究の基準を `adf9710` に戻す）で検査が失敗すること | 5 通りとも失敗（終了コード 1。`adf9710` に戻すと 55 件の違い）。元に戻した対応表で成功 |
-| エンジン: 関連するテスト（tests/test_research_links_v0_18e.py・tests/test_mutation_definitions_v0_18e.py）と `tools/run_mutants.py check` | 下の「実行の記録」 |
-| エンジン: `python3 -m unittest`（すべて） | 下の「実行の記録」 |
+| エンジン: 関連するテスト（tests/test_research_links_v0_18e.py・tests/test_mutation_definitions_v0_18e.py・tests/test_effects.py・tests/test_trainers.py） | 73 件 OK |
+| エンジン: `python3 tools/run_mutants.py check`（変異の定義が今のコードにちょうど 1 か所で入り、構文として正しいか） | 50 件すべて ok（研究の対応表の停止コードを 1 つ落とす変異 V03 も、対応表を変えたあとも入る） |
+| エンジン: `python3 -m unittest`（すべて。Python 3.13） | 1,926 件 OK（skipped 1）。5 分 49 秒 |
+| エンジン: `ruff check --select F,E9 .` | 問題なし |
 
-### 実行の記録
-
-（このあとに書く）
+変異試験の `witness`・`full`（C 段階）、長い対戦の比較（`tools/engine_lockstep.py`）・性能の測定は走らせていません（実装を変えていない）。
