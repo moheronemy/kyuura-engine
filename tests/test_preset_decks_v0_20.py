@@ -1,0 +1,206 @@
+"""v0.20: 固定のデッキ（kyuura_engine.decks）の構築の合法性・読み出しの独立性・正式な対戦開始・対戦の中の動き。
+
+- 構築の規定は p.308「対戦の前に」（60 枚・同じ名前は 4 枚まで（基本エネルギーカードは制限なし）・たねポケモンを入れる）と、進化の規定
+  p.309・p.310（進化カードは「○○から進化」の名前のポケモンに重ねる）。どれも既存の記録（docs/rules-2000-02-14.md）を再利用している。
+- デッキのカードは、どれもエンジンの照合の記録（kyuura_engine/data/card_verification.json）があるカード（v0.1〜v0.19 で照合済み）。
+- 正式な対戦開始（``new_game``）から、決まった手順（tools/preset_deck_games.py。既存の統合テストの手順を再利用）で対戦させ、終わり方を
+  分類し、各デッキの狙った動き（ベンチ・エネルギー・進化・トレーナー・ワザ・エナジートランス）が起こったことを数える。勝率は確かめない。
+"""
+
+from __future__ import annotations
+
+import copy
+import pathlib
+import re
+import subprocess
+import sys
+import unittest
+from collections import Counter
+
+import kyuura_engine
+from kyuura_engine import (
+    DEFAULT_EFFECTS, PRESET_DECKS, Phase, PresetDeck, check_invariants, deck_problems, load_card_pool, new_game, preset_deck, preset_deck_ids,
+)
+from kyuura_engine.cards import read_verification
+from tests.log_audit import log_problems, serialization_problems
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+from tools import preset_deck_games as driver  # noqa: E402
+
+STAGES = {"stage1": "basic", "stage2": "stage1"}
+POOL = load_card_pool()
+
+
+class DeckConstructionTest(unittest.TestCase):
+    """壊れると対戦に使えなくなる条件（構築の規定・対応済み・進化の関係）。"""
+
+    def test_every_preset_is_legal(self):
+        """60 枚・同じ名前は 4 枚まで（基本エネルギーは制限なし）・たねポケモンを含む（p.308）。エンジンの検査（deck_problems）でも問題がない。"""
+        for deck in PRESET_DECKS.values():
+            with self.subTest(deck=deck.deck_id):
+                cards = deck.cards()
+                self.assertEqual(len(cards), 60)
+                names = Counter(POOL.get(c).name_ja for c in cards if not POOL.get(c).is_basic_energy)
+                self.assertLessEqual(max(names.values()), 4, names)
+                self.assertTrue(any(POOL.get(c).is_basic_pokemon for c in cards))
+                self.assertEqual(deck_problems(cards), [])
+                self.assertEqual(len({c for c, _ in deck.entries}), len(deck.entries))  # 同じカード id を 2 行に分けない
+                self.assertTrue(all(n > 0 for _, n in deck.entries))
+
+    def test_every_card_attack_and_power_is_supported(self):
+        """どのカードも対戦に使え、どのポケモンのどのワザ・特殊能力にも実装が登録されている（効果のないワザとして扱っていない）。"""
+        for deck in PRESET_DECKS.values():
+            for card_id, _ in deck.entries:
+                definition = POOL.get(card_id)
+                with self.subTest(deck=deck.deck_id, card=card_id):
+                    self.assertTrue(POOL.is_playable(card_id), definition.unsupported_reasons)
+                    if definition.category == "pokemon":
+                        for index, _ in enumerate(definition.attacks):
+                            self.assertIsNotNone(DEFAULT_EFFECTS.attack_entry(card_id, index))
+                        for index, _ in enumerate(definition.powers):
+                            self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(card_id, index))
+                    elif definition.category == "trainer":
+                        self.assertIsNotNone(DEFAULT_EFFECTS.trainer_entry(card_id))
+
+    def test_evolution_lines_are_complete(self):
+        """進化カードは、デッキの中に「○○から進化」の名前の、1 つ前の段階のポケモンがいる（p.309・p.310）。"""
+        for deck in PRESET_DECKS.values():
+            pokemon = [POOL.get(c) for c, _ in deck.entries if POOL.get(c).category == "pokemon"]
+            for d in pokemon:
+                if d.stage in STAGES:
+                    with self.subTest(deck=deck.deck_id, card=d.id):
+                        sources = [s for s in pokemon if s.name_ja == d.evolves_from]
+                        self.assertTrue(sources, d.evolves_from)
+                        self.assertTrue(all(s.stage == STAGES[d.stage] for s in sources))
+
+    def test_every_card_has_a_verification_record(self):
+        """照合済みの記録の再利用の前提: どのカードにもエンジンの照合の記録がある（原典を読み直さずに使う）。"""
+        records = read_verification()["cards"]
+        for deck in PRESET_DECKS.values():
+            for card_id, _ in deck.entries:
+                with self.subTest(deck=deck.deck_id, card=card_id):
+                    self.assertIn(card_id, records)
+
+
+class ReadIndependenceTest(unittest.TestCase):
+    def test_reading_returns_fresh_values(self):
+        """読み出した側がリスト・辞書を変えても、次の読み出しは変わらない。"""
+        for deck_id in preset_deck_ids():
+            with self.subTest(deck=deck_id):
+                deck = preset_deck(deck_id)
+                first = deck.cards()
+                expected = list(first)
+                first.clear()
+                counts = deck.counts()
+                counts.clear()
+                self.assertEqual(deck.cards(), expected)
+                self.assertEqual(sum(deck.counts().values()), 60)
+
+    def test_registry_and_decks_cannot_be_changed(self):
+        with self.assertRaises(TypeError):
+            PRESET_DECKS["x"] = PRESET_DECKS["hitmonchan-dewgong"]
+        with self.assertRaises(AttributeError):
+            preset_deck("hitmonchan-dewgong").entries = ()
+        self.assertIsInstance(preset_deck("venusaur-parasect"), PresetDeck)
+
+    def test_unknown_id_names_the_choices(self):
+        with self.assertRaises(KeyError) as ctx:
+            preset_deck("no-such-deck")
+        self.assertIn("hitmonchan-dewgong", str(ctx.exception))
+
+    def test_user_decks_are_separate_from_test_decks(self):
+        """利用者向けのデッキはパッケージにあり、tests/ を読み込まない（テスト用のデッキと混ぜない）。"""
+        source = (ROOT / "kyuura_engine" / "decks.py").read_text(encoding="utf-8")
+        self.assertIsNone(re.search(r"^\s*(from|import)\s+tests", source, re.M))
+        self.assertEqual(set(preset_deck_ids()), {"hitmonchan-dewgong", "venusaur-parasect"})
+
+
+class StartGameTest(unittest.TestCase):
+    def test_new_game_accepts_every_pairing(self):
+        """正式な開始（new_game）にそのまま渡せる。デッキの記録（decklists）は渡したカードと同じ。渡したリストは変わらない。"""
+        for a in preset_deck_ids():
+            for b in preset_deck_ids():
+                with self.subTest(a=a, b=b):
+                    decks = (preset_deck(a).cards(), preset_deck(b).cards())
+                    before = copy.deepcopy(decks)
+                    state = new_game(*decks, seed=3)
+                    self.assertIn(state.phase, (Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW))
+                    self.assertEqual([sorted(d) for d in state.decklists], [sorted(d) for d in decks])
+                    self.assertEqual(decks, before)
+                    self.assertEqual(check_invariants(state), [])
+
+    def test_example_script_reaches_the_first_turn(self):
+        """examples/start_preset_game.py は、先攻の最初の番（MAIN）まで進める（対戦の開始だけの例）。"""
+        sys.path.insert(0, str(ROOT / "examples"))
+        import start_preset_game as example
+        for first in (0, 1):
+            for a, b in (("hitmonchan-dewgong", "venusaur-parasect"), ("venusaur-parasect", "hitmonchan-dewgong")):
+                with self.subTest(first=first, a=a):
+                    state = example.start(a, b, seed=first + 4, first=first)
+                    self.assertEqual((state.phase, state.turn_number, state.current_player), (Phase.MAIN, 1, first))
+        result = subprocess.run([sys.executable, str(ROOT / "examples" / "start_preset_game.py"), "--list"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("venusaur-parasect", result.stdout)
+
+    def test_version(self):
+        """版は 0.20.0（pyproject.toml と同じ）。"""
+        text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertEqual(re.search(r'^version = "([^"]+)"', text, re.M).group(1), kyuura_engine.__version__)
+        self.assertEqual(kyuura_engine.__version__, "0.20.0")
+
+
+class PresetDeckGamesTest(unittest.TestCase):
+    """正式な対戦開始から、席を入れかえて 10 局ずつ（合計 20 局）。tools/preset_deck_games.py の手順。"""
+
+    GAMES = 10
+    KNOWN = {"game_over", "sudden_death", "halted", "step_limit", "unexpected_rejection", "internal_error"}
+
+    @classmethod
+    def setUpClass(cls):
+        cls.results = driver.run(cls.GAMES, keep_state=True)
+        cls.summary = driver.summarize([{k: v for k, v in r.items() if k not in ("state", "commands")} for r in cls.results])
+
+    def test_every_game_is_classified_and_none_failed_internally(self):
+        """どの局も分類のどれかに入り（落とさない）、内部エラー・想定外の拒否はない。"""
+        outcomes = Counter(r["outcome"] for r in self.results)
+        self.assertEqual(sum(outcomes.values()), 2 * self.GAMES)
+        self.assertLessEqual(set(outcomes), self.KNOWN)
+        self.assertEqual(outcomes["internal_error"], 0, [r.get("error") for r in self.results])
+        self.assertEqual(outcomes["unexpected_rejection"], 0, [r.get("error") for r in self.results])
+
+    def test_intended_moves_happen(self):
+        """各デッキの狙った動きが起こる（1 回も起こらない試験を成功と数えない）。"""
+        games_with = self.summary["games_with"]
+        expected = {
+            driver.DECK_A: ["bench_played", "attach_FIGHTING", "attach_WATER", "evolve_PMCG1-030", "attack_PMCG1-058#0", "attack_PMCG1-058#1",
+                            "attack_PMCG1-030#0", "attack_PMCG1-030#1"],
+            driver.DECK_B: ["bench_played", "attach_GRASS", "evolve_PMCG1-008", "evolve_PMCG1-011", "evolve_PMCG2-010", "energy_trans",
+                            "attack_PMCG2-010#0", "attack_PMCG1-011#0"],
+        }
+        trainers = ["PMCG1-077", "PMCG1-074", "PMCG1-071", "PMCG1-073", "PMCG1-081", "PMCG1-079"]
+        for deck, keys in expected.items():
+            for key in keys + [f"trainer_{t}" for t in trainers]:
+                with self.subTest(deck=deck, key=key):
+                    self.assertGreater(games_with[deck].get(key, 0), 0)
+        self.assertGreater(self.summary["policy"].get("attach_bench_growing", 0), 0)
+
+    def test_final_states_pass_the_audits(self):
+        for r in self.results:
+            state = r["state"]
+            with self.subTest(seed=r["seed"], decks=r["decks"]):
+                self.assertEqual(check_invariants(state), [])
+                self.assertEqual(log_problems(state), [])
+                self.assertEqual(serialization_problems(state), [])
+
+    def test_games_are_reproducible(self):
+        """同じ席・同じ seed なら同じ結果（終わり方・手数・各デッキの動き）。"""
+        for r in self.results[:: self.GAMES // 2]:
+            again = driver.play(tuple(r["decks"]), r["seed"])
+            with self.subTest(seed=r["seed"], decks=r["decks"]):
+                for key in ("outcome", "steps", "turns", "per_deck", "conditions"):
+                    self.assertEqual(again.get(key), r.get(key))
+
+
+if __name__ == "__main__":
+    unittest.main()

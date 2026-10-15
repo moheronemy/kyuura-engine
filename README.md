@@ -32,7 +32,8 @@
 - v0.16（`kyuura_engine` の版は 0.16.0）: v0.13 のワザの解決の経路と経路の切り替え（`Route`・`apply_command_via`）を外し、ワザ・番の終わり・きぜつのあとの決定（サイド・交代・こんじょう・ふしちょう）を解決の基盤（`kyuura_engine/resolution`）だけで処理するようにした。公開の API・対応するカード・ルール・裁定・原典で決められない場合に止める条件・書き出しの形式 9・ログ・乱数の使い方は v0.13・v0.15 と同じ（決定への答えを拒否する `WRONG_PHASE` の理由の文の段階の並びだけを決まった順番にした）。v0.13 の約束（`AttackEffect.resolve`・`resume`）で書いたワザの実装は、解決の基盤の枠の中のアダプタで処理する。v0.13 の止める関数は、限定的な互換の部品（`resolution/v013_checks.py`）の 3 つの使い道だけに残した。撤去の前の監査と比較の環境（v0.16a）、旧経路の撤去（v0.16b）、先読みの整理と上限の境界（v0.16c）、重複処理の調査・テストの移行・互換の層の撤去（v0.16d）、固定した v0.13・v0.15 との 1 歩ごとの比較・変異試験・性能の最終監査（v0.16e）。[docs/legacy-removal-audit-v0.16a.md](docs/legacy-removal-audit-v0.16a.md)（監査）、[docs/kernel-consolidation-v0.16b.md](docs/kernel-consolidation-v0.16b.md)（撤去）、[docs/preflight-consolidation-v0.16c.md](docs/preflight-consolidation-v0.16c.md)（先読み）、[docs/legacy-test-migration-v0.16d.md](docs/legacy-test-migration-v0.16d.md)（テストの移行）、[docs/kernel-consolidation-verification-v0.16e.md](docs/kernel-consolidation-verification-v0.16e.md)（最終監査）
 - v0.17（`kyuura_engine` の版は 0.17.0）: 実際のカードで、解決の基盤（KERNEL）の拡張性を確かめた。既存のワザの要素だけで、モンジャラ（PMCG1-007。しめつける・どくのこな）とサカキのニャース（PMCG6-063。ねこノミ・ねこキック）を加えた（v0.17a。`engine.py`・`resolution/kernel.py`・`resolution/catalog.py` を変えていない）。既存の窓に加える新しい自動的な効果として、R団のカビゴン（PMCG6-073）の特殊能力［わるいねぞう］（ねむり状態で相手のワザによるダメージを受けたとき、それによってきぜつしても、ダメージを与えたポケモンに 20。特殊能力によるダメージ）とワザ「たおれこむ」（ダメージを与えた後、自分をねむり状態にする）を加えた（v0.17b。効果の定義の特殊状態の条件 `requires` と、自分を対象にする特殊状態の要素を一般化した）。「ダメージを与えた後」の効果を、ダメージを与えなかったときに与えるかは原典で決まらないので、宣言の前に `UNRESOLVED_EFFECT_AFTER_NO_DAMAGE` で止める（Z23）。キョウのベトベトン（PMCG6-023）の特殊能力［だつりょくえき］は、宣言する特殊能力か・処理する時点が原典で決まらず、今の KERNEL はダメージの要素のあとの窓の中で決定を出して続けられないので、設計を検証して本番の実装を延期した（v0.17c。DEFER。カードは未対応のまま）。固定した v0.16 との 1 歩ごとの比較（既存のカードの対戦）・変異試験・性能・拡張性の測定（v0.17d）。[docs/card-selection-v0.17a.md](docs/card-selection-v0.17a.md)（候補の比較と選定）、[docs/card-implementation-v0.17a.md](docs/card-implementation-v0.17a.md)（既存の要素だけのカード）、[docs/rocket-snorlax-v0.17b.md](docs/rocket-snorlax-v0.17b.md)（R団のカビゴン）、[docs/kogas-muk-event-design-v0.17c.md](docs/kogas-muk-event-design-v0.17c.md)（キョウのベトベトンの設計の検証）、[docs/card-extensibility-verification-v0.17d.md](docs/card-extensibility-verification-v0.17d.md)（拡張性の検証）
 - v0.18（`kyuura_engine` の版は 0.18.0）: 研究データ（kyuura）とエンジンが同じ出典・裁定を追跡できるようにした。研究の基準を kyuura `adf9710`（エンジン v0.17 までの研究成果の取り込み）に固定し、エンジンの未解決の裁定 24 件・停止コード 18 件と kyuura の論点 19 件・分類の違い 17 件（処理は同じ）・最新の説明 20 件（文字列まで一致）を対応づけた（v0.18a。カードの写しのコミットは変えていない）。Z9・Z23・DR1・DR6 を誌面で調べ直し、どれも UNRESOLVED のまま（Z23 はダメージを与えなかった場合を 4 つに分けた。v0.18b）。既存の実装の型（たおれこむと同じ `DamageAndSelfSleep`）だけでナツメのヤドン（PMCG6-044。ぐうたらこうげき）を加えた（v0.18c。`engine.py`・`resolution/` は変えていない。超のワザなので抵抗力で 0 になる場合（Z23-b）が起こり、宣言の前に止める）。窓の途中の決定の設計を見直し、キョウのベトベトンは延期のまま（v0.18d。DEFER）。変異試験の定義と実行の道具をリポジトリに入れ（`tools/mutants.py`・`tools/run_mutants.py`）、研究の対応表の検査（`scripts/check_research_links.py`）を加えた（v0.18e）。[docs/research-alignment-v0.18a.md](docs/research-alignment-v0.18a.md)（研究との照合）、[docs/unresolved-research-v0.18b.md](docs/unresolved-research-v0.18b.md)（未解決の裁定の再調査）、[docs/kernel-reuse-v0.18c.md](docs/kernel-reuse-v0.18c.md)（ナツメのヤドン）、[docs/mid-window-decisions-v0.18d.md](docs/mid-window-decisions-v0.18d.md)（窓の途中の決定の設計）、[docs/verification-reproducibility-v0.18e.md](docs/verification-reproducibility-v0.18e.md)（検証の再現性）、[docs/v0.18-verification.md](docs/v0.18-verification.md)（最終の検証）
-- v0.19（今のエンジンの版。`kyuura_engine` の版は 0.19.0）: トレーナーのオーキドはかせ（PMCG1-077。手札をすべてトラッシュし、その後、山札から 7 枚引く。p.255 の最新の説明）を、既存のトレーナーの登録・使用中のカード・ドローの処理で加えた（`engine.py`・`resolution/`・公開の API・書き出しの形式は変えていない）。照合済みの記録の再利用の手順にしたがい、トレーナーの使いかた（p.310）・効果で引くとき（p.312）・山札切れの規定は v0.2b の記録を再利用し、原典はカードのページ p.255 だけを読んだ。[docs/professor-oak-v0.19.md](docs/professor-oak-v0.19.md)（規定と根拠）、[docs/v0.19-verification.md](docs/v0.19-verification.md)（検証）
+- v0.19（`kyuura_engine` の版は 0.19.0）: トレーナーのオーキドはかせ（PMCG1-077。手札をすべてトラッシュし、その後、山札から 7 枚引く。p.255 の最新の説明）を、既存のトレーナーの登録・使用中のカード・ドローの処理で加えた（`engine.py`・`resolution/`・公開の API・書き出しの形式は変えていない）。照合済みの記録の再利用の手順にしたがい、トレーナーの使いかた（p.310）・効果で引くとき（p.312）・山札切れの規定は v0.2b の記録を再利用し、原典はカードのページ p.255 だけを読んだ。[docs/professor-oak-v0.19.md](docs/professor-oak-v0.19.md)（規定と根拠）、[docs/v0.19-verification.md](docs/v0.19-verification.md)（検証）
+- v0.20（今のエンジンの版。`kyuura_engine` の版は 0.20.0）: 対応済みのカードだけで組んだ固定のデッキを 2 つ加え、識別子で選んで正式な対戦開始に渡せるようにした（`kyuura_engine.decks`。エビワラー・ジュゴン `hitmonchan-dewgong`、フシギバナ・パラセクト `venusaur-parasect`。最初の試作の構成で、大会のデッキや釣り合いを確かめた構成ではない）。開始だけの例（examples/start_preset_game.py）と、決まった手順で対戦させて終わり方と動きを数える道具（tools/preset_deck_games.py）を加えた。新しいカードの効果・`engine.py`・`resolution/`・書き出しの形式は変えていない。[docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)（デッキと使い方）、[docs/v0.20-verification.md](docs/v0.20-verification.md)（検証）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -161,6 +162,24 @@ print(state_to_dict(state)["phase"], state.turn_number)
 - ジャンケンの結果は外から渡します（エンジンは決めません）。
 - `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が、`format_version=5` で特殊状態（v0.3a〜v0.3c）が、`format_version=6` でこんらんで「にげる」に失敗した記録（v0.3c）が、`format_version=7` で進化の重なり・場に出た番・進化した番（v0.4a）が、`format_version=8` でワザによる持続する効果（v0.4b）が加わります（いまの対戦は形式 8 を使う。古い形式は、表せないもの（カード・特殊状態・失敗の記録・進化・持続する効果）がある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
 - 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。ゲーム状態全体を JSON から読み込む処理はまだありません。
+
+### 固定のデッキで対戦を始める（v0.20）
+
+```python
+from kyuura_engine import new_game, preset_deck, preset_deck_ids
+
+print(preset_deck_ids())                       # ('hitmonchan-dewgong', 'venusaur-parasect')
+state = new_game(preset_deck("hitmonchan-dewgong").cards(), preset_deck("venusaur-parasect").cards(), seed=1)
+```
+
+```bash
+python3 examples/start_preset_game.py --list
+python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong --deck1 venusaur-parasect --seed 1 --first 0
+```
+
+- `preset_deck(識別子).cards()` は `new_game` に渡せる 60 枚のカード id のリストを返します（呼ぶたびに新しいリスト）。2 つのデッキの中身・考え方・既知の制限は [docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)。最初の試作の構成で、勝率の釣り合いは確かめていません。
+- examples/start_preset_game.py は、対戦準備を決まったやり方で済ませて先攻の最初の番の場を表示する、**対戦の開始だけの例**です。人間が最後まで遊べる操作画面（GUI・Web・通信対戦・対戦相手の AI）はありません。最初の番から先は `apply_command` にコマンドを渡して進めます。
+- 決まった手順どうしで対戦させ、終わり方（通常の勝敗・未解決の裁定による停止・手数の上限・想定外の拒否・内部エラー）と各デッキの動きを数える: `python3 tools/preset_deck_games.py --games 20 --out <結果の JSON>`。
 
 ### トレーナーカードを使う（v0.2b）
 
