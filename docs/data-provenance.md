@@ -534,6 +534,10 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 - kyuura の記録（研究の基準 `3f34908`）に、このカードの照合の記録（CC-）・最新の説明（LD-）・p.259 のページの記録はありません（報告事項。`research_links.json` の `card_checks.engine_verified_without_kyuura_record`）。kyuura にあるのは、印刷の文面（cards.json）・2002 年の「サポーター適用カード」（rule_history.json の MIX-SUPPORTER-ERRATA。2000.02.14 版のあとの規定なので使わない）・p.88 の第4弾のゼニガメの解説の例（CC-PMCG4-018-P43。エンジンの記録の取り込み）です。
 - 系統の確かめに、写しの 1 進化カードのデータ（名前・「○○○○から進化」）を使います（`CardDefinition.stage1_evolves_from`。写しから求める。カードデータの値は変えていない）。対戦に使える 2 進化カード 7 種類は、どれも「○○○○から進化」の 1 進化カードが写しにあります。リザードン（参照カード）のリザードは写しにありません。
 
+## v0.26 で加えた固定のデッキの第2版
+
+カードデータの写し・照合の記録・研究の対応表は変えていません（写しは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`、研究の基準は `3f349085645f47d0649a6cacece3680caeae50bf` のまま。`python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check`・`python3 scripts/check_research_links.py --kyuura ../kyuura` が一致）。第2版のデッキ（`hitmonchan-dewgong-v2`・`venusaur-parasect-v2`）のカードは、どれも v0.1〜v0.25 で照合して `card_verification.json` に記録したカードで、原典の画像は読み直していません。kyuura に v0.25 までの記録を還元したコミット（ブランチ `codex/engine-findings-through-v0.25` の `0a82aed`）には切りかえていません（研究の対応表と検査を更新する別の作業）。デッキの構成は kyuura の記録の対象ではないので、新しい報告事項はありません。
+
 ## 分類のテストに使う参照カード（対戦には使わない）
 
 | id | カード | 未対応の理由 |

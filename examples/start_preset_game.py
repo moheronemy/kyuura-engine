@@ -7,6 +7,9 @@
 
     python3 examples/start_preset_game.py --list
     python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong --deck1 venusaur-parasect --seed 1 --first 0
+    python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --seed 1 --first 0   # 第2版（v0.26）
+
+既定のデッキは第1版（``hitmonchan-dewgong``・``venusaur-parasect``）のままです。知らない識別子は引数の誤りとして拒否します（v0.26）。
 
 ``--first`` はジャンケンの勝者（先攻）。エンジンはジャンケンを決めないので、外から渡します。対戦準備で場に出すポケモンは、この例では
 「手札のたねポケモンの最初の 1 匹をバトル場、残りを 5 匹までベンチ」に決めています（ルールの決まりではなく、この例の決め方）。切り直しの
@@ -63,8 +66,8 @@ def describe(state, deck_ids) -> str:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="固定のデッキを選んで対戦を始める（開始だけの例）")
     parser.add_argument("--list", action="store_true", help="選べるデッキを表示する")
-    parser.add_argument("--deck0", default="hitmonchan-dewgong")
-    parser.add_argument("--deck1", default="venusaur-parasect")
+    parser.add_argument("--deck0", choices=preset_deck_ids(), default="hitmonchan-dewgong", help="プレイヤー 0 のデッキ（--list の識別子）")
+    parser.add_argument("--deck1", choices=preset_deck_ids(), default="venusaur-parasect", help="プレイヤー 1 のデッキ（--list の識別子）")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--first", type=int, choices=(0, 1), default=0, help="ジャンケンの勝者（先攻）")
     args = parser.parse_args(argv)

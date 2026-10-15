@@ -113,7 +113,8 @@ class ReadIndependenceTest(unittest.TestCase):
         """利用者向けのデッキはパッケージにあり、tests/ を読み込まない（テスト用のデッキと混ぜない）。"""
         source = (ROOT / "kyuura_engine" / "decks.py").read_text(encoding="utf-8")
         self.assertIsNone(re.search(r"^\s*(from|import)\s+tests", source, re.M))
-        self.assertEqual(set(preset_deck_ids()), {"hitmonchan-dewgong", "venusaur-parasect"})
+        # v0.26 で第2版（-v2）を加えた。第1版の 2 つは残す（tests/test_preset_decks_v0_26.py が中身も確かめる）
+        self.assertEqual(set(preset_deck_ids()), {"hitmonchan-dewgong", "venusaur-parasect", "hitmonchan-dewgong-v2", "venusaur-parasect-v2"})
 
 
 class StartGameTest(unittest.TestCase):
@@ -144,10 +145,10 @@ class StartGameTest(unittest.TestCase):
         self.assertIn("venusaur-parasect", result.stdout)
 
     def test_version(self):
-        """版は pyproject.toml と同じ。v0.20 で 0.20.0、v0.21（突風）で 0.21.0、v0.22（パソコン通信）で 0.22.0、v0.23（エネルギー回収）で 0.23.0、v0.24（ポケモン交換おじさん）で 0.24.0、v0.25（ポケモン育て屋さん）で 0.25.0 にした。"""
+        """版は pyproject.toml と同じ。v0.20 で 0.20.0、v0.21（突風）で 0.21.0、v0.22（パソコン通信）で 0.22.0、v0.23（エネルギー回収）で 0.23.0、v0.24（ポケモン交換おじさん）で 0.24.0、v0.25（ポケモン育て屋さん）で 0.25.0、v0.26（固定のデッキの第2版）で 0.26.0 にした。"""
         text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         self.assertEqual(re.search(r'^version = "([^"]+)"', text, re.M).group(1), kyuura_engine.__version__)
-        self.assertEqual(kyuura_engine.__version__, "0.25.0")
+        self.assertEqual(kyuura_engine.__version__, "0.26.0")
 
 
 class PresetDeckGamesTest(unittest.TestCase):

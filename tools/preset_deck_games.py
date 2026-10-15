@@ -50,6 +50,14 @@
   エネルギーが多いもの、重ねるのは選べるもののうち手札の並びの先。``mixed`` などと同じく ``check_…``・``trainer_sequence_problems`` も
   確かめ、使った回数・進化させたポケモン・進化したあとの特殊能力（エナジートランス）・ワザを数える（``breeder_uses``）。
 
+- v0.26: ``--deck-a``・``--deck-b`` で、固定のデッキの第1版（``hitmonchan-dewgong``・``venusaur-parasect``。既定）と第2版
+  （``hitmonchan-dewgong-v2``・``venusaur-parasect-v2``。docs/preset-decks-v0.26.md）の組み合わせを選べる（知らない識別子は引数の誤り）。
+  第2版は既定の ``--variant preset``（デッキをそのまま使う）だけで使える（ほかの変種は第1版のディフェンダー・きずぐすり・マサキを置き換える
+  一時的なデッキなので、第2版には使わない）。手順は変えていない: 上の突風・パソコン通信・エネルギー回収・ポケモン交換おじさん・ポケモン
+  育て屋さんの手順は、どの変種でもいつも同じ（そのカードが手札になければ何もしない）ので、第1版と第2版は同じ手順で対戦する。
+  ``play(..., observe=True)`` は、変種によらず ``check_…``・``trainer_sequence_problems`` と使ったトレーナーごとの結果（``…_uses``）を
+  記録する（数えるだけで、選ぶ操作は変えない。tools/preset_deck_comparison.py が使う）。
+
 終わり方の分類: 通常の勝敗（``game_over``）・サドンデス（``sudden_death``。エンジンは次の対戦を始めない）・既知の未解決の裁定による停止
 （``halted``。コード付き）・手数の上限・想定外の拒否（手順が想定していない ``IllegalActionError``・``UnsupportedError``。駆動の誤りか、規定の
 確認が要る）・内部エラー（不変条件の違反・そのほかの例外）。原典で決められないとして拒否された操作（``UNRESOLVED_…``）のあと別の操作で
@@ -71,7 +79,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, preset_deck,
+    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, preset_deck, preset_deck_ids,
 )
 from kyuura_engine.cards import EnergyType  # noqa: E402
 from kyuura_engine.effects import SKIP_EVOLUTION_OK, skip_evolution_pairs  # noqa: E402
@@ -142,6 +150,9 @@ def deck_cards(deck_id, variant="preset"):
         return cards
     if variant not in SUBSTITUTIONS:
         raise ValueError(f"知らない変種 {variant!r}（{VARIANTS}）")
+    if deck_id not in (DECK_A, DECK_B):
+        # v0.26: 変種は第1版のカードを置き換える一時的なデッキ。第2版（-v2）はそのまま（--variant preset）で使う
+        raise ValueError(f"変種 {variant!r} は第1版のデッキ（{DECK_A}・{DECK_B}）だけに使える（{deck_id!r} は preset で使う）")
     for removed, added, count in SUBSTITUTIONS[variant] + DECK_SUBSTITUTIONS.get(variant, {}).get(deck_id, ()):
         for _ in range(count):
             cards[cards.index(removed)] = added
@@ -754,11 +765,12 @@ def breeder_uses(state):
     return uses
 
 
-def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
-    """1 局を進め、終わり方と動きを返す。``keep_state`` なら最後の状態を ``"state"`` に入れる（テストの監査のため。JSON にはしない）。"""
+def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset", observe=False):
+    """1 局を進め、終わり方と動きを返す。``keep_state`` なら最後の状態を ``"state"`` に入れる（テストの監査のため。JSON にはしない）。
+    ``observe``（v0.26）なら、変種によらず決定ごとの確かめ（``check_…``）・トレーナーのログの並び・トレーナーごとの結果を記録する（数えるだけ）。"""
     seen, counts = {}, Counter()
     decks = tuple(deck_cards(d, variant) for d in deck_ids)
-    mixed = variant in MIXED_VARIANTS
+    mixed = variant in MIXED_VARIANTS or observe
     result = {"seed": seed, "decks": list(deck_ids), "first": seed % 2}
     if variant != "preset":
         result["variant"] = variant
@@ -792,15 +804,15 @@ def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
             result["winner_deck"] = deck_ids[state.result.winner] if state.result.winner is not None else None
             result["conditions"] = [c[1] for c in state.result.conditions]
         result["per_deck"] = {deck_ids[p]: dict(deck_stats(state, p, commands)) for p in (0, 1)}
-        if variant in ("gust",) + MIXED_VARIANTS:
+        if variant in ("gust",) + MIXED_VARIANTS or observe:
             result["gust_uses"] = gust_uses(state)
-        if variant in ("computer",) + MIXED_VARIANTS:
+        if variant in ("computer",) + MIXED_VARIANTS or observe:
             result["computer_uses"] = computer_uses(state)
-        if variant in ("retrieval", "trader", "breeder"):
+        if variant in ("retrieval", "trader", "breeder") or observe:
             result["retrieval_uses"] = retrieval_uses(state)
-        if variant in ("trader", "breeder"):
+        if variant in ("trader", "breeder") or observe:
             result["trader_uses"] = trader_uses(state)
-        if variant == "breeder":
+        if variant == "breeder" or observe:
             result["breeder_uses"] = breeder_uses(state)
         if mixed:
             result["trainer_sequence_problems"] = trainer_sequence_problems(state)
@@ -810,19 +822,24 @@ def play(deck_ids, seed, *, max_steps=8000, keep_state=False, variant="preset"):
     return result
 
 
-def run(games, *, start=0, max_steps=8000, keep_state=False, variant="preset"):
-    """席を入れかえて ``games`` 局ずつ（seed は start から）。"""
+def run(games, *, start=0, max_steps=8000, keep_state=False, variant="preset", decks=(DECK_A, DECK_B)):
+    """席を入れかえて ``games`` 局ずつ（seed は start から）。``decks``（v0.26）はデッキ A・B の識別子（既定は第1版どうし）。"""
+    a, b = decks
+    for deck_id in decks:
+        deck_cards(deck_id, variant)  # 知らない識別子・第2版に使えない変種は、1 局も始める前に拒否する（0 局の成功として扱わない）
     results = []
-    for seat in ((DECK_A, DECK_B), (DECK_B, DECK_A)):
+    for seat in ((a, b), (b, a)):
         for seed in range(start, start + games):
             results.append(play(seat, seed, max_steps=max_steps, keep_state=keep_state, variant=variant))
     return results
 
 
 def summarize(results):
+    # v0.26: デッキの識別子は結果から（最初の局の席の順。既定は第1版の DECK_A・DECK_B で、v0.25 までと同じ並び）
+    decks = list(dict.fromkeys(d for r in results for d in r["decks"])) or [DECK_A, DECK_B]
     s = {"games": len(results), "outcomes": Counter(), "halt_codes": Counter(), "unresolved_rejections": Counter(),
-         "wins": Counter(), "end_conditions": Counter(), "per_deck": {DECK_A: Counter(), DECK_B: Counter()},
-         "policy": Counter(), "games_with": {DECK_A: Counter(), DECK_B: Counter()}}
+         "wins": Counter(), "end_conditions": Counter(), "per_deck": {d: Counter() for d in decks},
+         "policy": Counter(), "games_with": {d: Counter() for d in decks}}
     for r in results:
         s["outcomes"][r["outcome"]] += 1
         if r.get("halt_code"):
@@ -915,7 +932,7 @@ def summarize(results):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--games", type=int, default=20, help="席ごとの局数（合計はこの 2 倍）")
+    parser.add_argument("--games", type=int, default=20, help="席ごとの局数（合計はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)
     parser.add_argument("--out", type=Path, help="1 局ごとの結果と集計を書き出す JSON")
@@ -925,9 +942,22 @@ def main(argv=None):
                              "retrieval: mixed からさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキ（v0.23）。"
                              "trader: retrieval からさらに残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキ（v0.24）。"
                              "breeder: trader のデッキ B（フシギバナ・パラセクト）だけ、さらにマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキ（v0.25）")
+    parser.add_argument("--deck-a", choices=preset_deck_ids(), default=DECK_A,
+                        help="デッキ A の識別子（v0.26。既定は第1版。第2版は hitmonchan-dewgong-v2）")
+    parser.add_argument("--deck-b", choices=preset_deck_ids(), default=DECK_B,
+                        help="デッキ B の識別子（v0.26。既定は第1版。第2版は venusaur-parasect-v2）")
     args = parser.parse_args(argv)
+    if args.games < 1:
+        parser.error("--games は 1 以上")
+    if args.deck_a == args.deck_b:
+        parser.error("--deck-a と --deck-b は別のデッキにする")
+    try:
+        for deck_id in (args.deck_a, args.deck_b):
+            deck_cards(deck_id, args.variant)
+    except ValueError as error:
+        parser.error(str(error))
     began = time.time()
-    results = run(args.games, start=args.start, max_steps=args.max_steps, variant=args.variant)
+    results = run(args.games, start=args.start, max_steps=args.max_steps, variant=args.variant, decks=(args.deck_a, args.deck_b))
     summary = summarize(results)
     summary["elapsed"] = round(time.time() - began, 1)
     if args.out:

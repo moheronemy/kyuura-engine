@@ -38,7 +38,8 @@
 - v0.22（`kyuura_engine` の版は 0.22.0）: トレーナーのパソコン通信（PMCG1-090。p.260 の最新の説明「手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、ゾーンの共通の関数（`zones.discard_from_hand`・`search_deck_to_hand`・`shuffle_deck`）で加えた（`engine.py` は山札を切る処理を `zones.shuffle_deck` に移しただけ。`resolution/`・公開の API・書き出しの形式は変えていない。ログのイベント `discard_from_hand`・`search_deck` を加えた）。山札が 0 枚のときに使えるかは原典で決められないので止める（`UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`）。固定のデッキは変えず、ディフェンダー 3 枚をパソコン通信 3 枚に置き換えた一時的なデッキで対戦させた（tools/preset_deck_games.py の `--variant computer`）。[docs/computer-search-v0.22.md](docs/computer-search-v0.22.md)（規定と根拠）、[docs/v0.22-verification.md](docs/v0.22-verification.md)（検証）
 - v0.23（`kyuura_engine` の版は 0.23.0）: 突風とパソコン通信を同じデッキに入れた対戦を確かめた（固定のデッキのディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に置き換えた一時的なデッキ。tools/preset_deck_games.py の `--variant mixed`。パソコン通信で山札から突風を選び、その番に使う場面を含む）。トレーナーのエネルギー回収（PMCG1-076。p.257 の最新の説明「手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「基本エネルギーカード」を最大2枚選び出し、手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、既存のゾーンの関数（`zones.discard_from_hand`・`return_discard_to_hand`）で加えた（`engine.py`・`resolution/`・`zones.py`・公開の API・書き出しの形式は変えていない。ログのイベント `retrieve_energy` と決定の種類 `retrieve_energy` を加えた）。選べるものがあるのに 0 枚を選べるか・トラッシュに基本エネルギーカードがないときに使えるかは原典で決められないので止める（`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・`UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`）。さらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキで対戦させた（`--variant retrieval`）。[docs/energy-retrieval-v0.23.md](docs/energy-retrieval-v0.23.md)（規定と根拠）、[docs/v0.23-verification.md](docs/v0.23-verification.md)（検証）
 - v0.24（`kyuura_engine` の版は 0.24.0）: トレーナーのポケモン交換おじさん（PMCG1-093。p.259 の最新の説明「手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができないとき、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、山札を切る既存の関数で加えた（`engine.py`・`resolution/`・公開の API・書き出しの形式は変えていない。手札から山札にもどす・山札から選び出して見せる `zones` の関数、ログのイベント `return_to_deck`・`reveal_from_deck`（どちらも公開）、決定の種類 `return_to_deck`、拒否のコード `NO_POKEMON_CARD_IN_HAND` を加えた）。山札の中身は使うための条件にせず、もどしたカードも選び出せる（p.259 の解説）。新しい未解決はない。`--variant retrieval` の残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキで対戦させた（`--variant trader`）。[docs/pokemon-trader-v0.24.md](docs/pokemon-trader-v0.24.md)（規定と根拠）、[docs/v0.24-verification.md](docs/v0.24-verification.md)（検証）
-- v0.25（今のエンジンの版。`kyuura_engine` の版は 0.25.0）: トレーナーのポケモン育て屋さん（PMCG1-094。p.259 の最新の説明「このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、通常の進化と共通にした進化の手順（`kyuura_engine/evolution.py` の `place_evolution_card`）で加えた。系統は、2 進化カードの「○○○○から進化」の 1 進化カード（同じ写しのカードのデータ）の進化元の名前と、たねポケモンの名前（完全一致）で確かめる（写しで確かめられなければ進化させない）。通常の進化の制限（おたがいの最初の番・その番に場に出したたねポケモン）は免除しない。進化の重なりの不変条件を、たねポケモン + 2 進化の 2 枚（進化のログ `evolve` に `trainer_card` があるときだけ）も扱えるようにした（通常の `EvolvePokemon` で 1 進化を飛ばせないのは変えていない）。`engine.py` は進化の手順を共通の関数に委ねただけで、カード id での分岐はない。公開の API・書き出しの形式は変えていない（決定の種類 `select_evolution_card`、ログ `evolve` の項目 `trainer_card`、拒否のコード `NO_EVOLUTION_TARGET`・`UNSUPPORTED_EVOLUTION_LINEAGE` を加えた）。新しい未解決はない。v0.24 の `trader` のデッキ B だけマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキで対戦させた（`--variant breeder`）。[docs/pokemon-breeder-v0.25.md](docs/pokemon-breeder-v0.25.md)（規定と根拠）、[docs/v0.25-verification.md](docs/v0.25-verification.md)（検証）
+- v0.25（`kyuura_engine` の版は 0.25.0）: トレーナーのポケモン育て屋さん（PMCG1-094。p.259 の最新の説明「このカードは、あなたが自分の場にいるポケモンを進化させるときにだけ、使える。そのポケモンの上に「2進化カード」を直接のせ、1進化をとばして「2進化ポケモン」に進化させる。」）を、既存のトレーナーの登録・使用中のカード・トレーナーの決定（2 段階）と、通常の進化と共通にした進化の手順（`kyuura_engine/evolution.py` の `place_evolution_card`）で加えた。系統は、2 進化カードの「○○○○から進化」の 1 進化カード（同じ写しのカードのデータ）の進化元の名前と、たねポケモンの名前（完全一致）で確かめる（写しで確かめられなければ進化させない）。通常の進化の制限（おたがいの最初の番・その番に場に出したたねポケモン）は免除しない。進化の重なりの不変条件を、たねポケモン + 2 進化の 2 枚（進化のログ `evolve` に `trainer_card` があるときだけ）も扱えるようにした（通常の `EvolvePokemon` で 1 進化を飛ばせないのは変えていない）。`engine.py` は進化の手順を共通の関数に委ねただけで、カード id での分岐はない。公開の API・書き出しの形式は変えていない（決定の種類 `select_evolution_card`、ログ `evolve` の項目 `trainer_card`、拒否のコード `NO_EVOLUTION_TARGET`・`UNSUPPORTED_EVOLUTION_LINEAGE` を加えた）。新しい未解決はない。v0.24 の `trader` のデッキ B だけマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキで対戦させた（`--variant breeder`）。[docs/pokemon-breeder-v0.25.md](docs/pokemon-breeder-v0.25.md)（規定と根拠）、[docs/v0.25-verification.md](docs/v0.25-verification.md)（検証）
+- v0.26（今のエンジンの版。`kyuura_engine` の版は 0.26.0）: 固定のデッキの第2版を、第1版と別の識別子で加えた（エビワラー・ジュゴン `hitmonchan-dewgong-v2`、フシギバナ・パラセクト `venusaur-parasect-v2`。第1版 `hitmonchan-dewgong`・`venusaur-parasect` の識別子と中身は変えていない）。v0.21〜v0.25 で対応にした探す・回収するトレーナー（パソコン通信・エネルギー回収・突風、デッキ B2 はポケモン交換おじさん・ポケモン育て屋さんも）を入れ、デッキ B2 はたねポケモンを 8 枚から 10 枚（モンジャラ 2）にした。開始の例と対戦の道具（`--deck-a`・`--deck-b`）で選べ、既定は第1版のまま。同じ手順・同じ seed で 4 組（A1 対 B1・A2 対 B1・A1 対 B2・A2 対 B2）を比べる道具（tools/preset_deck_comparison.py）を加えた。初期案からデッキ A2 だけ 1 回調整した（ポケモン交換おじさん 2 → 闘・水エネルギー 1 枚ずつ）。試作の構成で、大会のデッキ・最適化したデッキ・人間どうしで釣り合いを確かめたデッキではない。新しいカードの効果・裁定・`engine.py`・`resolution/`・公開のログ・状態・書き出しの形式は変えていない。[docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md)（デッキ・比較の結果・自動操作の限界）、[docs/v0.26-verification.md](docs/v0.26-verification.md)（検証）
 
 最重要の目標は、全カード対応ではなく、史料に基づいて正しく動くことです。原典で確かめられない処理は、現代のルールや推測で補わずに「未対応」「未解決」として扱います。
 
@@ -168,23 +169,37 @@ print(state_to_dict(state)["phase"], state.turn_number)
 - `state_to_dict` は状態を JSON にできる辞書にし、`command_to_dict` / `command_from_dict` はコマンドを辞書と相互に変換します（ほかの言語や画面から使うための境界）。`state_to_dict` の既定の形式は v0.1 と同じで、`format_version=2` で場のポケモンの番号・保留中の決定などが、`format_version=3` で使用中のトレーナーカードが、`format_version=4` でポケモンについているトレーナーカード（プラスパワーなど）が、`format_version=5` で特殊状態（v0.3a〜v0.3c）が、`format_version=6` でこんらんで「にげる」に失敗した記録（v0.3c）が、`format_version=7` で進化の重なり・場に出た番・進化した番（v0.4a）が、`format_version=8` でワザによる持続する効果（v0.4b）が加わります（いまの対戦は形式 8 を使う。古い形式は、表せないもの（カード・特殊状態・失敗の記録・進化・持続する効果）がある状態を書き出さずに `ValueError` にする）。どれも隠れた情報（山札の順番・相手の手札・サイドの中身）を含む内部の状態で、プレイヤーに見せる形ではありません。ログ（`state.log`）も内部の完全な記録で、引いたカードなどを含みます。見る人ごとに伏せたログはまだありません。
 - 乱数の状態の保存・復元は `kyuura_engine.rng`（`rng_state_to_json`・`rng_from_json`）にあります。ゲーム状態全体を JSON から読み込む処理はまだありません。
 
-### 固定のデッキで対戦を始める（v0.20）
+### 固定のデッキで対戦を始める（v0.20・v0.26）
 
 ```python
 from kyuura_engine import new_game, preset_deck, preset_deck_ids
 
-print(preset_deck_ids())                       # ('hitmonchan-dewgong', 'venusaur-parasect')
-state = new_game(preset_deck("hitmonchan-dewgong").cards(), preset_deck("venusaur-parasect").cards(), seed=1)
+print(preset_deck_ids())   # ('hitmonchan-dewgong', 'venusaur-parasect', 'hitmonchan-dewgong-v2', 'venusaur-parasect-v2')
+state = new_game(preset_deck("hitmonchan-dewgong").cards(), preset_deck("venusaur-parasect").cards(), seed=1)        # 第1版
+state = new_game(preset_deck("hitmonchan-dewgong-v2").cards(), preset_deck("venusaur-parasect-v2").cards(), seed=1)  # 第2版
 ```
 
 ```bash
 python3 examples/start_preset_game.py --list
 python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong --deck1 venusaur-parasect --seed 1 --first 0
+python3 examples/start_preset_game.py --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --seed 1 --first 0
 ```
 
-- `preset_deck(識別子).cards()` は `new_game` に渡せる 60 枚のカード id のリストを返します（呼ぶたびに新しいリスト）。2 つのデッキの中身・考え方・既知の制限は [docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)。最初の試作の構成で、勝率の釣り合いは確かめていません。
+- `preset_deck(識別子).cards()` は `new_game` に渡せる 60 枚のカード id のリストを返します（呼ぶたびに新しいリスト）。知らない識別子は `KeyError`（例・道具では引数の誤り）です。
+- 第1版（v0.20）の中身・考え方・既知の制限は [docs/preset-decks-v0.20.md](docs/preset-decks-v0.20.md)、第2版（v0.26）の中身・変更の理由・進め方・比較の結果・自動操作の限界は [docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md)。どれも試作の構成で、大会のデッキ・最適化したデッキではなく、人間どうしで勝率の釣り合いを確かめていません。
+
+| 識別子 | ポケモン | トレーナー | エネルギー |
+|---|---|---|---|
+| `hitmonchan-dewgong`（第1版） | エビワラー 4・パウワウ 4・ジュゴン 3・コラッタ 3 | オーキドはかせ 4・マサキ 4・きずぐすり 4・ポケモンいれかえ 4・プラスパワー 4・ディフェンダー 4 | 闘 12・水 10 |
+| `venusaur-parasect`（第1版） | フシギダネ 4・フシギソウ 4・フシギバナ 3・パラス 4・パラセクト 3 | オーキドはかせ 3・マサキ 4・きずぐすり 4・ポケモンいれかえ 4・プラスパワー 3・ディフェンダー 4 | 草 20 |
+| `hitmonchan-dewgong-v2`（第2版） | エビワラー 4・パウワウ 4・ジュゴン 3・コラッタ 3 | オーキドはかせ 3・マサキ 4・ポケモンいれかえ 3・きずぐすり 2・プラスパワー 4・突風 3・パソコン通信 3・エネルギー回収 2 | 闘 12・水 10 |
+| `venusaur-parasect-v2`（第2版） | フシギダネ 4・フシギソウ 2・フシギバナ 3・パラス 4・パラセクト 2・モンジャラ 2 | オーキドはかせ 3・マサキ 3・ポケモンいれかえ 3・きずぐすり 2・プラスパワー 2・突風 2・パソコン通信 3・エネルギー回収 2・ポケモン交換おじさん 2・ポケモン育て屋さん 2 | 草 19 |
+
+- 第2版の変更の理由: 必要なたね・進化先・エネルギーを探す（パソコン通信・ポケモン交換おじさん）、デッキ B のたね不足と進化カードの余りを減らす（たね 8 → 10・フシギソウ 4 → 2・パラセクト 3 → 2）、オーキドはかせなどでトラッシュしたエネルギーを戻す（エネルギー回収）、フシギバナに通常の進化（フシギソウ経由）とポケモン育て屋さんの両方で進化できるようにする。デッキ A2 は初期案（ポケモン交換おじさん 2・闘 11・水 9）から、比べた対戦でエネルギーが足りずにワザを使えない番が第1版より増えたので、1 回だけ調整した。
+- 進め方・検索先の候補・育て屋さんと通常の進化の使い分けは [docs/preset-decks-v0.26.md](docs/preset-decks-v0.26.md) 2・3 章。比較（同じ手順・同じ seed・席の入れかえ、80 局と補足の 320 局）では、デッキ B2 の引き直し・ベンチが空のまま負けた局・使わずに終わった進化カードが第1版より少なく、デッキ B2 のエネルギー不足で攻撃できなかった番は少し多かった。勝率はデッキの強さを示さない（決まった手順どうし。コラッタを交代役に使えていない・突風の選び方の偏りなど。同じ文書 9 章）。
 - examples/start_preset_game.py は、対戦準備を決まったやり方で済ませて先攻の最初の番の場を表示する、**対戦の開始だけの例**です。人間が最後まで遊べる操作画面（GUI・Web・通信対戦・対戦相手の AI）はありません。最初の番から先は `apply_command` にコマンドを渡して進めます。
-- 決まった手順どうしで対戦させ、終わり方（通常の勝敗・未解決の裁定による停止・手数の上限・想定外の拒否・内部エラー）と各デッキの動きを数える: `python3 tools/preset_deck_games.py --games 20 --out <結果の JSON>`。
+- 決まった手順どうしで対戦させ、終わり方（通常の勝敗・未解決の裁定による停止・手数の上限・想定外の拒否・内部エラー）と各デッキの動きを数える: `python3 tools/preset_deck_games.py --games 20 --out <結果の JSON>`。v0.26 から `--deck-a`・`--deck-b` でデッキ A・B を選べます（既定は第1版。第2版は変種なし（`--variant preset`）で使う）。
+- v0.26: 第1版と第2版の 4 組を同じ seed・席の入れかえ・同じ手順で比べ、終わり方・監査・各デッキの指標（攻撃できなかった番の理由はエンジンにワザを渡して確かめる）を数える: `python3 tools/preset_deck_comparison.py --seeds 10 --out <結果の JSON>`（80 局。約 7 秒）。
 - v0.21: `--variant gust` を付けると、固定のデッキのディフェンダー 3 枚を突風 3 枚に置き換えた一時的なデッキどうしで対戦させ、突風を使った回数・選んだ相手・その番のワザを数えます（固定のデッキは変わりません）。v0.22: `--variant computer` はパソコン通信 3 枚に置き換え、使った回数・トラッシュした 2 枚・山札から選んだカードとその使い道を数えます。
 - v0.23: `--variant mixed` はディフェンダー 4 枚を除いて突風 2 枚・パソコン通信 2 枚を加えた一時的なデッキ、`--variant retrieval` はさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキです（`python3 tools/preset_deck_games.py --games 20 --variant mixed`）。パソコン通信で山札から突風を選んでその番に使った回数、エネルギー回収で手に入れたエネルギーの使い道、決定ごとの持ち主・使用中のカードの確かめ（`check_…`）、トレーナーを使ってからトラッシュするまでのログの確かめ（`trainer_sequence_problems`）を数えます。
 - v0.24: `--variant trader` は `retrieval` の残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキです（`python3 tools/preset_deck_games.py --games 20 --variant trader`）。ポケモン交換おじさんでもどした・手に入れたカードの段階、手に入れたカードのその後（進化・ベンチ）を数え、`retrieval` と同じ確かめ（`check_…`・`trainer_sequence_problems`）をします。
