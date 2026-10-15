@@ -278,7 +278,8 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
             reasons.append("抵抗力が「-」ではない")
         resistance = EnergyType(r["type"])
         resistance_value = r["value"]
-    attacks = tuple(_annotate_attack(record["id"], _parse_attack(i, a), effects) for i, a in enumerate(pokemon["attacks"]))
+    parsed = tuple(_parse_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
+    attacks = tuple(_annotate_attack(record["id"], attack, effects, parsed) for attack in parsed)
     if not attacks:
         reasons.append("ワザがない")
     for attack in attacks:
@@ -301,8 +302,9 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
     )
 
 
-def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry) -> Attack:
-    problem = effects.attack_problem(card_id, attack)
+def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry, attacks: tuple[Attack, ...]) -> Attack:
+    # attacks（v0.27）: そのカードのワザのすべて。ほかのワザを指す登録（「つるぎのまい」が変える「きりさく」）が合うかも確かめる
+    problem = effects.attack_problem(card_id, attack, attacks)
     return replace(attack, supported=problem is None, unsupported_reason=problem)
 
 
@@ -367,6 +369,7 @@ POOL_KEYS = (
     "pool_v0_23",  # v0.23（エネルギー回収。トレーナー。2 段階のトレーナーの決定・手札のトラッシュとトラッシュから手札に加える共通の関数）
     "pool_v0_24",  # v0.24（ポケモン交換おじさん。トレーナー。2 段階のトレーナーの決定・手札から山札にもどす・山札から選び出して見せる共通の関数）
     "pool_v0_25",  # v0.25（ポケモン育て屋さん。トレーナー。2 段階のトレーナーの決定・進化の手順の共通の関数・たね + 2 進化の重なり）
+    "pool_v0_27",  # v0.27（ストライク。次の自分の番のワザのダメージを p.321 の 2 段階で変える持続する効果「つるぎのまい」・きりさく）
 )
 
 

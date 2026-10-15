@@ -28,6 +28,10 @@
   （与えるダメージ）を加える（項目の意味を変えていないので形式 9 のまま。docs/architecture-v0.12.md 5 章）。v0.13 で種類
   ``"retaliation_received_damage"``（わるいカメールの「こうらがえし」の「…そのポケモンにも同じダメージを与える」。与えるダメージは
   受けたダメージで決まる）を加え、その種類は ``"attack_index"`` だけを加える（形式 9 のまま。docs/architecture-v0.13.md 5 章）。
+  v0.27 で種類 ``"next_turn_attack_damage"``（ストライクの「つるぎのまい」の「次の自分の番、このカードが使う「きりさく」のダメージは「60」に
+  なる」。はたらく番は次の自分の番（``created_turn`` + 2）で、その番の終わりに消える）を加え、その種類だけ ``"attack_index"``（効果を与えた
+  ワザの位置）・``"target_attack_index"``（ダメージが変わるワザの位置）・``"amount"``（変えたあとのダメージ）を加える（項目の意味を変えて
+  いないので形式 9 のまま。docs/scyther-v0.27.md）。
 - 9: 8 に、``energy_attached_by_powers_this_turn``（この番に、ポケモンパワーの効果で手札から場のポケモンにつけたエネルギー
   カードの枚数。v0.6 のカメックスの「あまごい」。手札からつける通常の操作の回数 ``energy_attachments_this_turn`` とは別。
   番の最初に 0）を加えたもの（v0.6。docs/architecture-v0.6.md 5 章）。この数が 1 以上の番には、通常の操作が原典で決められない
@@ -82,7 +86,18 @@ from __future__ import annotations
 from typing import Any
 
 from .rng import rng_fingerprint
-from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Asleep, Confused, GameState, Paralyzed, PokemonInPlay, PreventDamage, Retaliation
+from .state import (
+    RETALIATION_FIXED,
+    RETALIATION_RECEIVED,
+    Asleep,
+    Confused,
+    GameState,
+    NextTurnAttackDamage,
+    Paralyzed,
+    PokemonInPlay,
+    PreventDamage,
+    Retaliation,
+)
 
 FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -104,11 +119,12 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
     return data
 
 
-def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation) -> dict[str, Any]:
+def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation | NextTurnAttackDamage) -> dict[str, Any]:
     """形式 8 の ``persistent_effects`` の 1 つ。v0.12 の ``"retaliation"``（「ほのおのかべ」）には、``attack_index``（効果を与えた
     ワザの位置）と ``amount``（与えるダメージの基本となるダメージ）を加える（ほかの種類の形は v0.4b と同じ。v0.3b の特殊状態の項目と同じく、
     種類の値を加えただけなので形式は変えない。知らない種類のある辞書は、読む側が拒否すること）。v0.13 の
-    ``"retaliation_received_damage"``（「こうらがえし」。与えるダメージは受けたダメージと同じ）は ``attack_index`` だけを加える。"""
+    ``"retaliation_received_damage"``（「こうらがえし」。与えるダメージは受けたダメージと同じ）は ``attack_index`` だけを加える。v0.27 の
+    ``"next_turn_attack_damage"``（「つるぎのまい」）は ``attack_index``・``target_attack_index``・``amount`` を加える。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -125,6 +141,10 @@ def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation) ->
             raise ValueError(f"書き出せない持続する効果 {effect!r}")
         # v0.13: 受けたダメージで決まる種類（"retaliation_received_damage"。「こうらがえし」）は、量が効果を与えたときに決まって
         # いないので amount を書かない（受けたダメージはワザ 1 回の中の値で、状態に持たない）
+    elif isinstance(effect, NextTurnAttackDamage):
+        data["attack_index"] = effect.attack_index
+        data["target_attack_index"] = effect.target_attack_index
+        data["amount"] = effect.amount
     elif not isinstance(effect, PreventDamage):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data

@@ -90,9 +90,9 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
     require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
     attack = attacker_def.attacks[cmd.attack_index]
-    effect = state.effects.attack_effect(attacker_def.id, attack)
+    effect = state.effects.attack_effect(attacker_def.id, attack, attacker_def.attacks)
     if effect is None:
-        problem = state.effects.attack_problem(attacker_def.id, attack)
+        problem = state.effects.attack_problem(attacker_def.id, attack, attacker_def.attacks)
         raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
     if not can_pay_cost(attack.cost, state.energy_types(attacker)):
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")

@@ -33,7 +33,7 @@ from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from ..decisions import DISCARD_ENERGY, FORCED_SWITCH, RECOVER_ENERGY
 from ..errors import UnsupportedError
 from ..persistent import add_persistent_effect, remove_persistent_effects
-from ..state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, PreventDamage, Retaliation
+from ..state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, NextTurnAttackDamage, PreventDamage, Retaliation
 from ..zones import return_discard_to_hand
 
 from . import catalog as C
@@ -528,6 +528,29 @@ class SelfPreventDamage(Element):
 
 
 @dataclass(frozen=True)
+class SelfNextTurnAttackDamage(Element):
+    """次の自分の番、自分の ``target_attack_index`` 番目のワザのダメージを、p.321 の 2 段階で ``amount`` にする持続する効果（v0.27。
+    ストライクの「つるぎのまい」。効果を与えるだけで、ダメージは ``effects.attack_damage_modifiers`` が計算するときに変わる）。
+
+    ダメージの要素のないワザなので、この要素の前にワザを使ったポケモンがダメージを受けることはない（相手の「はんげき」・返す効果は
+    はたらかない）。コインも決定もない。
+    """
+
+    target_attack_index: int
+    amount: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = NextTurnAttackDamage(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                      active_turn=turn + NextTurnAttackDamage.turns_until_active, attack_index=run.key.attack_index,
+                                      target_attack_index=self.target_attack_index, amount=self.amount)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
 class DiscardEnergyHealAll(Element):
     """自分の ``energy_type`` のエネルギーカードを選んで 1 枚トラッシュし、ダメージカウンターをすべてとりのぞく（じこさいせい）。"""
 
@@ -639,6 +662,8 @@ BUILDERS: dict[type, Any] = {
     E.ConfuseOnHeadsWithoutDamage: lambda e: (Status(CONFUSION, local_coin=HEADS),),
     # v0.17b: 自分への特殊状態（R団のカビゴンの「たおれこむ」。docs/rocket-snorlax-v0.17b.md）
     E.DamageAndSelfSleep: lambda e: (Damage(OPP, Printed()), Status(SLEEP, target=SELF, after_damage="damage")),
+    # v0.27: 次の自分の番にワザのダメージを変える持続する効果（ストライクの「つるぎのまい」。docs/scyther-v0.27.md）
+    E.SetNextTurnAttackDamage: lambda e: (SelfNextTurnAttackDamage(e.target_attack_index, e.damage),),
 }
 
 

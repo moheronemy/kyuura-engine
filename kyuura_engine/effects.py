@@ -95,14 +95,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
-from .damage import DamageModifier, calculate_attack_damage
+from .damage import SET, DamageModifier, calculate_attack_damage
 from .decisions import (
     DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, RECOVER_ENERGY, RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_EVOLUTION_CARD,
     SELECT_POKEMON, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import place_evolution_card, skipped_stage1_basic
-from .persistent import damage_prevention, remove_persistent_effects, retaliation
+from .persistent import damage_prevention, next_turn_attack_damage, remove_persistent_effects, retaliation
 from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
 from .zones import (
     attach_energy_from_hand, attach_trainer, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand, return_hand_to_deck,
@@ -201,6 +201,8 @@ class AttackEffect:
       ダメージなし。ダメージの目安に「×」「+」「−」があるワザは上書きする（上書きしないと ``NotImplementedError``。確かめないまま
       通さない）。自分にダメージを与えるワザも上書きする（既定は自分へのダメージなしなので、上書きしないと C18 を見落とす）。
 
+    - ``card_problems``（v0.27）: このワザの登録が、同じカードのほかのワザ（位置・名前・ダメージ）と合うか。ほかのワザを指す実装だけが上書きする。
+
     - ``opponent_effect_elements``（v0.11）: このワザが相手の対戦ポケモンに与える、ダメージ以外の効果の要素の種類（``ATTACK_ELEMENTS``
       のうち ``DAMAGE_ELEMENT`` 以外。特殊状態・入れ替え）。既定は空。相手に効果を与えるワザの実装は宣言する（tests/test_guts_v0_11.py が、
       実装の中で相手に効果を与える ``attack_reaches`` の要素と同じかを確かめる）。エンジンがワザの宣言の前に、相手のワザによるダメージで
@@ -214,6 +216,12 @@ class AttackEffect:
     opponent_effect_elements: ClassVar[tuple[str, ...]] = ()
 
     def check(self, attack: Attack) -> list[str]:
+        return []
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        """このワザの登録が、同じカードのほかのワザと合うか（v0.27）。``attacks`` はそのカードのワザのすべて（データの順）。既定は問題なし。
+        ほかのワザを指す実装（「つるぎのまい」が変える「きりさく」の位置）は上書きする。分類（``cards.py``）と使うときの確認
+        （``checks.py``）が ``EffectRegistry.attack_problem`` を通して呼ぶ。"""
         return []
 
     def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
@@ -530,12 +538,14 @@ def damage_opponent_active(state: GameState, use: AttackUse, base: int) -> Damag
 
 def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: int) -> int | None:
     """``deal_attack_damage`` が計算する最終ダメージ（状態を変えない。ログも乱数もない）。受けるポケモンが「ダメージを受けない」
-    状態なら None（要素が無効で計算しない）。ワザを使う前に、原典で決められない場合を確かめるため（v0.9。``AttackEffect.problem``）。"""
+    状態なら None（要素が無効で計算しない）。ワザを使う前に、原典で決められない場合を確かめるため（v0.9。``AttackEffect.problem``）。
+    変更効果は解決の基盤の ``kernel.deal_damage`` と同じ ``attack_damage_modifiers``（ワザ ``use.key`` を渡す。v0.27 の「つるぎのまい」の
+    2 段階もここで数える）で集める。"""
     _, attacker = state.find_pokemon(use.pokemon_id)
     receiver = damage_receiver(state, use, target)
     if damage_prevention(state, receiver) is not None:
         return None
-    modifiers = attack_damage_modifiers(state, attacker, receiver)
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
     return calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, modifiers).final
 
 
@@ -1357,6 +1367,64 @@ class ReturnReceivedDamage(AttackEffect):
         return RETALIATION_RECEIVED, None
 
 
+@dataclass(frozen=True)
+class SetNextTurnAttackDamage(AttackEffect):
+    """ダメージの要素のないワザ。ワザを使ったポケモン自身に、「次の自分の番、このカードが使う ``target_attack_name`` のダメージは
+    ``damage`` になる」持続する効果（``state.NextTurnAttackDamage``）を与える（v0.27。ストライクの「つるぎのまい」。p.56・p.321 の最新の説明
+    「次の自分の番、このカードが使う「きりさく」のダメージは「60」になる。」。p.57 のワザ解説。docs/scyther-v0.27.md）。
+
+    - ダメージの目安の数字がないワザ（データの ``damage`` が None）だけを登録できる。コインもない。p.320 の効果の分類の (3)「このワザを
+      使うポケモンへの効果」だけ（p.57「効果の対象：ワザを使ったポケモン自身」）。
+    - 変わるワザは、同じカードの ``target_attack_index`` 番目のワザ（登録のデータ。名前 ``target_attack_name`` は登録の照合だけに使い、
+      ワザを名前で探さない）。そのワザは説明のない、ダメージの目安の数字だけのワザでなければならない（``card_problems``）。
+    - 効果がはたらくのは次の自分の番（今の番 + 2。番は交互に進む。不変条件で確かめている）で、その番の終わりに消える
+      （``persistent.remove_expired_persistent_effects``。p.57「効果の持続：次の自分の番の最後」）。あいだの相手の番には何もしない。
+      ベンチにもどる（にげる・ポケモンいれかえ・突風・ふきとばし）・進化・きぜつで消える（p.57・p.322・p.323）。
+    - ダメージは p.321 の 2 段階で ``damage`` にする（「「60」になる」。p.321 の 2 段階の例「「ストライク」のワザ「つるぎのまい」などの
+      効果」、図の「ストライクのワザ「つるぎのまい」のように、ワザを使うポケモンの持続する状態の効果を計算します」）。弱点・抵抗力・
+      プラスパワー・ディフェンダーなどはそのあとの段階で計算する（``attack_damage_modifiers``・``damage.calculate_attack_damage``）。
+      印刷の文面（kyuura の写し）の「2倍」・英語版の文面では処理を決めない。
+    - 乱数は使わない。こんらん状態でワザがこんらんしたら、エンジンがこのワザの処理を呼ばない（効果もない。p.309 の手順 5）。ねむり・マヒ・
+      エネルギーが足りないときは宣言できない（効果もない）。
+    """
+
+    target_attack_index: int
+    target_attack_name: str
+    damage: int
+    implementation_id = "set_next_turn_attack_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.target_attack_index) is not int or self.target_attack_index < 0:
+            raise ValueError(f"ダメージが変わるワザの位置は 0 以上の整数（{self.target_attack_index!r}）")
+        if type(self.damage) is not int or self.damage <= 0 or self.damage % 10:
+            raise ValueError(f"変えたあとのダメージは 10 の倍数の正の数（{self.damage!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = []
+        if attack.damage is not None or attack.damage_display is not None or attack.damage_modifier is not None:
+            problems.append("ダメージの目安のあるワザを、次の自分の番のワザのダメージを変える効果のワザとして登録している")
+        if attack.text_ja is None:
+            problems.append("説明文のないワザを、次の自分の番のワザのダメージを変える効果のワザとして登録している")
+        return problems
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        index = self.target_attack_index
+        if index == attack.index or not 0 <= index < len(attacks):
+            return [f"ダメージが変わるワザの位置 {index} が、このカードのほかのワザではない"]
+        target = attacks[index]
+        problems = []
+        if target.name_ja != self.target_attack_name:
+            problems.append(f"ダメージが変わるワザの名前「{self.target_attack_name}」が、{index} 番目のワザ「{target.name_ja}」と違う")
+        if target.text_ja is not None or target.text_en is not None or target.damage_modifier is not None or type(target.damage) is not int:
+            problems.append(f"ダメージが変わるワザ「{target.name_ja}」が、説明のない、ダメージの目安の数字だけのワザではない")
+        return problems
+
+    def next_turn_terms(self) -> tuple[int, int]:
+        """このワザが与える ``NextTurnAttackDamage`` のダメージが変わるワザの位置と、変えたあとのダメージ（不変条件・ログの監査が、状態の
+        効果と登録表を照らす。v0.13 の ``retaliation_terms`` と同じ形）。"""
+        return self.target_attack_index, self.damage
+
+
 # 「ふきとばし」で入れ替えなかった理由（ログ forced_switch_skipped の reason。v0.4d）
 TARGET_KNOCKED_OUT = "knocked_out"  # 相手の対戦ポケモンがこのワザのダメージできぜつする（効果の対象がいない。p.309・p.213）
 NO_BENCH = "no_bench"  # 相手に控えポケモンがいない（最新の説明「相手に控えがいないとき、入れ替えはおこらない」）
@@ -1785,16 +1853,30 @@ class DamageAndSelfDamage(AttackEffect):
         return DamageProfile(opponent=super().damage_profile(state, use).opponent, self_damage=(self.self_damage,))
 
 
-def attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
-    """ワザでダメージを与えるときの、ついているカードによる変更効果（v0.2c）。
+def attack_damage_modifiers(
+    state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None
+) -> tuple[DamageModifier, ...]:
+    """ワザでダメージを与えるときの変更効果（v0.2c）。
 
     ワザを使うポケモン（``attacker``）についているカードは ``role="attacker"``（プラスパワーの 5 段階）、ダメージを
     受けるポケモン（``defender``）についているカードは ``role="defender"``（ディフェンダーの 7 段階）で聞く（p.321）。
     自分へのダメージ（v0.2f）では、``attacker`` と ``defender`` が同じポケモンになる。それぞれのカードは自分の
     立場でだけ効果を返すので、同じカードの効果を二重に数えない。
     効果の内容は、ついているカードのカード id で効果の登録表から引く（エンジンはカードの種類を知らない）。
+
+    v0.27: ``attack``（ダメージを計算しているワザ）を渡すと、ワザを使うポケモンの持っている持続する効果のうち、そのワザのダメージを変える
+    もの（``NextTurnAttackDamage``。ストライクの「つるぎのまい」。今の番にはたらき、効果を与えたカードの ``target_attack_index`` のワザ）を、
+    p.321 の 2 段階の「その数にする」効果（``SET``）として加える。ワザの名前では探さない（``persistent.next_turn_attack_damage``）。解決の
+    基盤の ``kernel.deal_damage`` と宣言の前の ``preview_attack_damage`` が同じこの関数を使う。``attack`` を渡さない呼び出し（こんらんの
+    20 ダメージの確認。``procedures.confusion_damage_problem``）は v0.26 と同じ（こんらんの 20 は「きりさく」のダメージではない。p.309 の
+    手順 5「もとのワザの内容に関わらず」）。
     """
     modifiers: list[DamageModifier] = []
+    if attack is not None and state.cards[attacker.card].card_id == attack.card_id:
+        boost = next_turn_attack_damage(state, attacker, attack.attack_index)
+        if boost is not None:
+            name = state.card_def(boost.source_card).attacks[boost.attack_index].name_ja
+            modifiers.append(DamageModifier(step=2, amount=boost.amount, label=name, source=boost.source_card, operation=SET))
     for holder, role in ((attacker, "attacker"), (defender, "defender")):
         for attached in holder.trainers:
             entry = state.effects.trainer_entry(state.cards[attached.card].card_id)
@@ -3345,8 +3427,9 @@ class EffectRegistry:
     def attack_entry(self, card_id: str, attack_index: int) -> AttackEntry | None:
         return self._attacks.get(AttackKey(card_id, attack_index))
 
-    def attack_problem(self, card_id: str, attack: Attack) -> str | None:
-        """このワザを使えない理由。使えるなら None。"""
+    def attack_problem(self, card_id: str, attack: Attack, attacks: tuple[Attack, ...] | None = None) -> str | None:
+        """このワザを使えない理由。使えるなら None。``attacks``（v0.27）はそのカードのワザのすべて（渡したら、実装の ``card_problems`` で、
+        ほかのワザを指す登録が合うかも確かめる）。"""
         entry = self.attack_entry(card_id, attack.index)
         if entry is None:
             features = []
@@ -3361,11 +3444,13 @@ class EffectRegistry:
         if entry.text_ja != attack.text_ja:
             return "登録したときに照合した説明文と、データの説明文が違う（データが変わった。照合し直す必要がある）"
         problems = entry.effect.check(attack)
+        if attacks is not None:
+            problems = [*problems, *entry.effect.card_problems(attack, attacks)]
         return "; ".join(problems) or None
 
-    def attack_effect(self, card_id: str, attack: Attack) -> AttackEffect | None:
-        """使えるワザなら実装を返す。登録がない・データと合わないなら None。"""
-        if self.attack_problem(card_id, attack) is not None:
+    def attack_effect(self, card_id: str, attack: Attack, attacks: tuple[Attack, ...] | None = None) -> AttackEffect | None:
+        """使えるワザなら実装を返す。登録がない・データと合わないなら None。``attacks``（v0.27）は ``attack_problem`` と同じ。"""
+        if self.attack_problem(card_id, attack, attacks) is not None:
             return None
         return self.attack_entry(card_id, attack.index).effect
 
@@ -3517,6 +3602,9 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG6-057", 0, "チョップ"),  # サカキのワンリキー（v0.11）p.189。「ワザ」欄は「●チョップ」で説明文なし
         ("PMCG4-018", 0, "こうらアタック"),  # 第4弾のゼニガメ（v0.13）p.88。「ワザ」欄は「●こうらアタック」で説明文なし
         ("PMCG6-063", 1, "ねこキック"),  # サカキのニャース（v0.17a）p.229。「ワザ」欄は「●ねこキック」で説明文なし
+        # ストライク（v0.27）p.56。「ワザ」欄は「●きりさく」で説明文なし。「つるぎのまい」の効果がはたらく番は、p.321 の 2 段階で 60 になる
+        # （ダメージを変えるのは「つるぎのまい」の持続する効果。この登録は変えない）
+        ("PMCG2-017", 1, "きりさく"),
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -3907,6 +3995,16 @@ DEFAULT_EFFECTS = EffectRegistry(
             text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
             play_text_ja="ダメージを与えた後、自分を「ねむり」状態にする。",
             source="P43 p.155",
+        ),
+        # ストライク（v0.27）p.56。つるぎのまい（草。ダメージの目安なし）: 自分に「次の自分の番、このカードが使う「きりさく」（1 番目のワザ）の
+        # ダメージは「60」になる」持続する効果（SetNextTurnAttackDamage。p.321 の 2 段階）。印刷の文面（kyuura の写し）は「次の自分の番だけ、…
+        # ダメージは2倍になる。」で、最新の説明と書き方・内容の表し方が違う（「2倍」で処理しない。docs/scyther-v0.27.md）
+        AttackKey("PMCG2-017", 0): AttackEntry(
+            SetNextTurnAttackDamage(target_attack_index=1, target_attack_name="きりさく", damage=60),
+            "つるぎのまい",
+            text_ja="次の自分の番だけ、このカードが使う「きりさく」のダメージは2倍になる。",
+            play_text_ja="次の自分の番、このカードが使う「きりさく」のダメージは「60」になる。",
+            source="P43 p.56",
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
         AttackKey("PMCG1-035", 1): AttackEntry(

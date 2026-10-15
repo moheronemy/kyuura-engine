@@ -10,10 +10,13 @@ v0.4b で扱う効果は ``PreventDamage``（「次の相手の番、このカ�
 よるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）相手に10ダメージを与える。」。R団のファイヤーの「ほのおのかべ」。
 p.82 の最新の説明。p.89 のワザ解説の「相手の番ではたらく効果」）を加えた。どちらも自分自身に与え、次の相手の番の終わりに消える。消える
 契機・ログ・置き場所は同じで、はたらき方（ダメージを受けない・ダメージを受けたら与える）だけが違う（docs/temporary-attack-effects-v0.12.md）。
+v0.27 で ``NextTurnAttackDamage``（「次の自分の番、このカードが使う「きりさく」のダメージは「60」になる。」。ストライクの「つるぎのまい」。
+p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分自身に与え、はたらく番は次の自分の番（与えた番 + 2）で、その番の終わりに消える。
+消える契機・ログ・置き場所はほかの効果と同じで、はたらき方（p.321 の 2 段階でワザのダメージを変える）だけが違う（docs/scyther-v0.27.md）。
 
 消える契機（どれもログ ``persistent_effect_removed`` の ``reason``）:
 
-- ``EXPIRED``: 効果がはたらく番（``active_turn``。「次の相手の番」）の終わり（p.236・p.18 のワザ解説「効果の持続：次の
+- ``EXPIRED``: 効果がはたらく番（``active_turn``。「次の相手の番」。v0.27 の ``NextTurnAttackDamage`` は「次の自分の番」）の終わり（p.236・p.18 のワザ解説「効果の持続：次の
   相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``procedures.expire_at_turn_end``）でポケモンチェックの前に消す
 - ``RETREAT``・``SWITCH``: バトル場からベンチに戻った（p.311「ベンチに戻ったら、そのポケモンの…「持続する効果」は、
   すべて消えてなくなります」・p.322）。「にげる」に失敗した（こんらん）ポケモンはベンチに戻っていないので消えない
@@ -31,7 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
-from .state import PreventDamage, Retaliation
+from .state import NextTurnAttackDamage, PreventDamage, Retaliation
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -41,7 +44,9 @@ KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
 
 
-def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage | Retaliation, *, attack: str) -> None:
+def add_persistent_effect(
+    state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage | Retaliation | NextTurnAttackDamage, *, attack: str
+) -> None:
     """``pokemon``（``owner`` の場のポケモン）に、ワザ ``attack``（``AttackKey`` の文字列）による持続する効果を与える。
 
     ログ ``persistent_effect_added``（``player``・``pokemon``・``pokemon_id``・``persistent_effect``（種類）・``source_card``・
@@ -62,7 +67,11 @@ def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, 
 
 
 def remove_persistent_effects(
-    state: GameState, owner: int, pokemon: PokemonInPlay, reason: str, effects: tuple[PreventDamage | Retaliation, ...] | None = None
+    state: GameState,
+    owner: int,
+    pokemon: PokemonInPlay,
+    reason: str,
+    effects: tuple[PreventDamage | Retaliation | NextTurnAttackDamage, ...] | None = None,
 ) -> None:
     """``pokemon`` の持続する効果（``effects`` を省略したらすべて）を消す。1 つにつきログ ``persistent_effect_removed``
     （``player``・``pokemon``・``pokemon_id``・``persistent_effect``・``source_card``・``created_turn``・``active_turn``・``reason``）。
@@ -124,5 +133,25 @@ def retaliation(state: GameState, pokemon: PokemonInPlay) -> Retaliation | None:
     """
     for effect in pokemon.persistent_effects:
         if isinstance(effect, Retaliation) and effect.active_turn == state.turn_number:
+            return effect
+    return None
+
+
+def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> NextTurnAttackDamage | None:
+    """今の番に、``pokemon`` が使う ``attack_index`` 番目のワザ（いちばん上のカードの）のダメージを変える効果（``NextTurnAttackDamage``。
+    v0.27 のストライクの「つるぎのまい」）がはたらいているなら、その効果。そうでなければ None。
+
+    はたらくのは ``active_turn``（次の自分の番）の間だけ。効果を与えた番の残り（「つるぎのまい」はワザなので、その番はすぐに終わる）と、
+    あいだの相手の番でははたらかない。変わるのは、効果を与えたカード（``source_card``。自分自身）の ``target_attack_index`` のワザだけ
+    （ワザの名前では探さない。ほかのポケモンの同じ名前のワザ・このカードのほかのワザは変えない）。同じ番にはたらく効果は 1 つまで（効果を
+    与えた番の 2 番あとにはたらき、その番の終わりに消える。ワザは 1 番に 1 回なので、同じ番にはたらく 2 つ目はない。不変条件で確かめている）。
+    """
+    for effect in pokemon.persistent_effects:
+        if (
+            isinstance(effect, NextTurnAttackDamage)
+            and effect.active_turn == state.turn_number
+            and effect.source_card == pokemon.card
+            and effect.target_attack_index == attack_index
+        ):
             return effect
     return None

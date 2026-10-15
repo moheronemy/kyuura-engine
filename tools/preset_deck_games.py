@@ -97,7 +97,18 @@ BILL = "PMCG1-074"
 PLUSPOWER = "PMCG1-081"
 DEFENDER = "PMCG1-079"
 POTION = "PMCG1-071"
-VARIANTS = ("preset", "gust", "computer", "mixed", "retrieval", "trader", "breeder")
+DECK_A2, DECK_B2 = "hitmonchan-dewgong-v2", "venusaur-parasect-v2"  # v0.26 の第2版
+SCYTHER = "PMCG2-017"  # v0.27
+RATTATA = "PMCG1-060"
+TANGELA = "PMCG1-007"
+VARIANTS = ("preset", "gust", "computer", "mixed", "retrieval", "trader", "breeder", "scyther", "scyther_grass")
+# v0.27: 第2版だけに使う一時的なデッキ（デッキの識別子 → （取り除くカード, 加えるカード, 枚数）。並びの位置はそのまま。ほかのデッキはそのまま。
+# 公開の固定のデッキは変えない）。scyther はデッキ A2 のコラッタ 2 枚をストライク 2 枚に（構成 A。闘・水のエネルギーなので「つるぎのまい」は
+# 使えない）、scyther_grass はデッキ B2 のモンジャラ 2 枚をストライク 2 枚に（構成 B。草エネルギーで「つるぎのまい」「きりさく」を使える検証用）
+V2_SUBSTITUTIONS = {
+    "scyther": {DECK_A2: ((RATTATA, SCYTHER, 2),)},
+    "scyther_grass": {DECK_B2: ((TANGELA, SCYTHER, 2),)},
+}
 # 一時的なデッキの置き換え（固定のデッキの（取り除くカード, 加えるカード, 枚数）を順に。並びの位置はそのまま。公開の固定のデッキは変えない）
 SUBSTITUTIONS = {
     "gust": ((DEFENDER, GUST, 3),),  # v0.21
@@ -144,9 +155,17 @@ def deck_cards(deck_id, variant="preset"):
     ``mixed`` はディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に（v0.23）、``retrieval`` はさらにきずぐすり 2 枚をエネルギー回収 2 枚に
     （v0.23）、``trader`` はさらに残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に（v0.24）、``breeder`` は ``trader`` のデッキ B
     （フシギバナ・パラセクト）だけさらにマサキ 2 枚をポケモン育て屋さん 2 枚に（v0.25。``DECK_SUBSTITUTIONS``）置き換えた一時的なデッキ（``SUBSTITUTIONS``。
-    並びの位置はそのまま。公開の固定のデッキは変えない）。"""
+    並びの位置はそのまま。公開の固定のデッキは変えない）。v0.27 の ``scyther``・``scyther_grass`` は第2版だけに使う（``V2_SUBSTITUTIONS``）。"""
     cards = preset_deck(deck_id).cards()
     if variant == "preset":
+        return cards
+    if variant in V2_SUBSTITUTIONS:
+        # v0.27: 第2版のカードを置き換える一時的なデッキ（変種ごとに 1 つのデッキだけを置き換え、もう一方の第2版はそのまま）
+        if deck_id not in (DECK_A2, DECK_B2):
+            raise ValueError(f"変種 {variant!r} は第2版のデッキ（{DECK_A2}・{DECK_B2}）だけに使える（{deck_id!r}）")
+        for removed, added, count in V2_SUBSTITUTIONS[variant].get(deck_id, ()):
+            for _ in range(count):
+                cards[cards.index(removed)] = added
         return cards
     if variant not in SUBSTITUTIONS:
         raise ValueError(f"知らない変種 {variant!r}（{VARIANTS}）")
@@ -941,7 +960,9 @@ def main(argv=None):
                              "mixed: ディフェンダー 4 枚を突風 2 枚・パソコン通信 2 枚に置き換えた一時的なデッキ（v0.23）。"
                              "retrieval: mixed からさらにきずぐすり 2 枚をエネルギー回収 2 枚に置き換えた一時的なデッキ（v0.23）。"
                              "trader: retrieval からさらに残りのきずぐすり 2 枚をポケモン交換おじさん 2 枚に置き換えた一時的なデッキ（v0.24）。"
-                             "breeder: trader のデッキ B（フシギバナ・パラセクト）だけ、さらにマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキ（v0.25）")
+                             "breeder: trader のデッキ B（フシギバナ・パラセクト）だけ、さらにマサキ 2 枚をポケモン育て屋さん 2 枚に置き換えた一時的なデッキ（v0.25）。"
+                             "scyther: 第2版のデッキ A2 のコラッタ 2 枚をストライク 2 枚に、scyther_grass: 第2版のデッキ B2 のモンジャラ 2 枚を"
+                             "ストライク 2 枚に置き換えた一時的なデッキ（v0.27。第2版だけに使う）")
     parser.add_argument("--deck-a", choices=preset_deck_ids(), default=DECK_A,
                         help="デッキ A の識別子（v0.26。既定は第1版。第2版は hitmonchan-dewgong-v2）")
     parser.add_argument("--deck-b", choices=preset_deck_ids(), default=DECK_B,

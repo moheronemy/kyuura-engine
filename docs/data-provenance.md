@@ -538,6 +538,28 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 
 カードデータの写し・照合の記録・研究の対応表は変えていません（写しは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`、研究の基準は `3f349085645f47d0649a6cacece3680caeae50bf` のまま。`python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura --check`・`python3 scripts/check_research_links.py --kyuura ../kyuura` が一致）。第2版のデッキ（`hitmonchan-dewgong-v2`・`venusaur-parasect-v2`）のカードは、どれも v0.1〜v0.25 で照合して `card_verification.json` に記録したカードで、原典の画像は読み直していません。kyuura に v0.25 までの記録を還元したコミット（ブランチ `codex/engine-findings-through-v0.25` の `0a82aed`）には切りかえていません（研究の対応表と検査を更新する別の作業）。デッキの構成は kyuura の記録の対象ではないので、新しい報告事項はありません。
 
+## v0.27 で加えたストライク
+
+写しを作り直しました（`pool_v0_27`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 70 枚から 71 枚になり、ほかのカードの記録は変わっていません。
+- 照合の記録は kyuura_engine/data/card_verification.json の PMCG2-017（`status` は「不一致あり」）です。規定と根拠は [scyther-v0.27.md](scyther-v0.27.md) です。
+
+| id | カード | kyuura の文面（写し） | 最新の説明（p.56・p.321） | 照合 |
+|---|---|---|---|---|
+| PMCG2-017 | ストライク（たね。LV.25・HP 70・草・弱点 炎・抵抗力 闘 -30・にげる 0。収録「ポケモンカード第2弾ポケモンジャングル」） | つるぎのまい（草）「次の自分の番だけ、このカードが使う「きりさく」のダメージは2倍になる。」。<br>きりさく（無無無）30（説明なし） | つるぎのまい「次の自分の番、このカードが使う「きりさく」のダメージは「60」になる。」。<br>きりさく（説明なし） | 段階・HP・タイプ・弱点・抵抗力・にげる・ワザの名前・エネルギー・ダメージ・LV は図版と同じ。<br>「つるぎのまい」の文面は、図版では「だけ」のあとが空白で読点は読めない。<br>処理は最新の説明（ダメージを「60」にする。p.321 の 2 段階）にしたがい、写しの文面（「2倍」）は登録の照合だけに使う |
+
+- kyuura の記録（研究の基準 `3f34908`）に、次のものはありません（報告事項）。
+  - このカードの照合の記録（CC-）・最新の説明（LD-）
+  - p.56・p.57（ワザ解説「つるぎのまい」）・p.321 の 2 段階の例の記録
+  - `research_links.json` では `card_checks.engine_verified_without_kyuura_record`・`latest_descriptions.registered_without_kyuura_record` に挙げています。
+- kyuura の記録の「つるぎのまい」の文面は印刷の文面で、最新の説明と区別した記録がありません。
+  - 「2倍」と「「60」になる」は表し方が違います。「きりさく」の 1 段階はいつも 30 なので、今の対応カードでは同じ数になります。
+  - 区別して記録する必要がありますが、誤りとは決めていません。
+- 写しのデッキの検証用に、第2版のデッキ A2・B2 のカードの一部をストライクに置き換えた一時的なデッキを使います（tools/preset_deck_games.py の変種 `scyther`・`scyther_grass`）。公開の固定のデッキは変えていません。
+
 ## 分類のテストに使う参照カード（対戦には使わない）
 
 | id | カード | 未対応の理由 |

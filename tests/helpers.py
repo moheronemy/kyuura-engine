@@ -37,6 +37,7 @@ from kyuura_engine.state import (
     ASLEEP,
     AttachedTrainer,
     CONFUSED,
+    NextTurnAttackDamage,
     PreventDamage,
     Retaliation,
     RETALIATION_RECEIVED,
@@ -74,6 +75,7 @@ WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「�
 CATERPIE = "PMCG1-002"  # キャタピー（v0.3b で対応。いとをはく 10・「おもて」なら相手をマヒ状態に）
 PARAS = "PMCG2-003"  # パラス（v0.3b で対応。ひっかく 20、キノコのほうし（ダメージなし）で相手をねむり状態に）
 VULPIX = "PMCG1-015"  # ロコン（v0.3c で対応。あやしいひかり 10・「おもて」なら相手をこんらん状態に。炎・弱点 水・にげる 1）
+SCYTHER = "PMCG2-017"  # ストライク（v0.27。たね・HP 70・草・弱点 炎・抵抗力 闘 -30・にげる 0。つるぎのまい（草）・きりさく（無無無）30。p.56）
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -229,6 +231,9 @@ def build_test_state(
               カードは R団のファイヤー。ログも "prevent_damage" と同じく置く）。
               "retaliation_received" は、その番に「こうらがえし」で受けた持続する効果 ``Retaliation``（v0.13。ワザの位置 1・決め方
               ``RETALIATION_RECEIVED``（受けたダメージと同じダメージを返す）・量 None。カードはわるいカメール。ログも同じく置く）。
+              "next_turn_attack_damage" は、(効果を与えた番, 効果を与えたワザの位置, ダメージが変わるワザの位置, 変えたあとのダメージ)
+              の持続する効果 ``NextTurnAttackDamage``（v0.27。「つるぎのまい」。はたらく番は与えた番 + 2。カードはストライク。ログも同じく
+              置き、ログの ``effect`` は効果を与えたワザ）。
               "trainers" は、ついているトレーナー（v0.4e）の [(カード id, トラッシュする番), ...]。使ったプレイヤーは持ち主。
               トラッシュする番は、プラスパワーなら使った番、ディフェンダーなら使った番 + 1（不変条件: 使った番は持ち主の番））
       bench:  active と同じ形のリスト
@@ -295,6 +300,13 @@ def build_test_state(
             result.persistent_effects = (
                 *result.persistent_effects, Retaliation(result.card, owner, created, created + 1, 1, None, RETALIATION_RECEIVED)
             )
+        if "next_turn_attack_damage" in spec:
+            # v0.27: (効果を与えた番, 効果を与えたワザの位置, ダメージが変わるワザの位置, 変えたあとのダメージ)。はたらく番は与えた番 + 2
+            created, attack_index, target_index, amount = spec["next_turn_attack_damage"]
+            result.persistent_effects = (
+                *result.persistent_effects,
+                NextTurnAttackDamage(result.card, owner, created, created + 2, attack_index, target_index, amount),
+            )
         poison = Poison(spec["poison"]) if "poison" in spec else None
         if poison is not None or exclusive is not None:
             result.conditions = SpecialConditions(poison=poison, exclusive=exclusive)
@@ -345,10 +357,12 @@ def build_test_state(
             for effect in pokemon.persistent_effects:
                 current = state.turn_number
                 state.turn_number = effect.created_turn  # ログの turn は効果を与えた番
+                # v0.27: 「つるぎのまい」の効果は、ログの監査が効果を与えたワザ（AttackKey の文字列）から登録を引くので、ワザを書く
+                attack = f"{state.cards[effect.source_card].card_id}#{effect.attack_index}" if isinstance(effect, NextTurnAttackDamage) else "test"
                 state.add_event(
                     "persistent_effect_added", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id,
                     persistent_effect=effect.kind, source_card=effect.source_card, source_player=effect.source_player,
-                    active_turn=effect.active_turn, effect="test",
+                    active_turn=effect.active_turn, effect=attack,
                 )
                 state.turn_number = current
     return state
@@ -447,6 +461,7 @@ from kyuura_engine import effects as _effects  # noqa: E402
 ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ConfuseOnHeadsWithoutDamage,  # v0.17a: サカキのニャースの「ねこノミ」（既存の要素 Status の新しい並び）
     _effects.DamageAndSelfSleep,  # v0.17b: R団のカビゴンの「たおれこむ」（Damage と、対象を自分にした Status）
+    _effects.SetNextTurnAttackDamage,  # v0.27: ストライクの「つるぎのまい」（次の自分の番のワザのダメージを変える持続する効果。新しい要素）
 )
 
 

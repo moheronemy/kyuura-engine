@@ -169,6 +169,9 @@
   "pool_v0_25": [
     "PMCG1-094"
   ],
+  "pool_v0_27": [
+    "PMCG2-017"
+  ],
   "reference_only": [
     "PMCG1-021",
     "PMCG1-014",
@@ -4903,6 +4906,101 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-091-pokemonsodateyasan/"
+      }
+    },
+    {
+      "id": "PMCG2-017",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ストライク",
+        "en": "Scyther"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          123
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つるぎのまい",
+              "en": "Swords Dance"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の自分の番だけ、このカードが使う「きりさく」のダメージは2倍になる。",
+              "en": "During your next turn, Scyther's Slash attack's base damage is 60 instead of 30."
+            }
+          },
+          {
+            "name": {
+              "ja": "きりさく",
+              "en": "Slash"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-017",
+        "pokemontcg": [
+          "base2-10",
+          "base2-26"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-017-strike/",
+      "jp_print": {
+        "level": 25,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-017-strike/"
       }
     },
     {
