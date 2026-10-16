@@ -98,8 +98,9 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
 from .damage import MULTIPLY, SET, DamageModifier, calculate_attack_damage
 from .decisions import (
-    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
-    RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, push_trainer_decision,
+    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
+    RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
+    push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import place_evolution_card, skipped_stage1_basic
@@ -588,8 +589,13 @@ REDUCED_DAMAGE_ELEMENT = "reduced_damage"  # v0.34: 相手に与える「なき�
 ATTACK_CHECK_ELEMENT = "attack_check"
 RETREAT_LOCK_ELEMENT = "retreat_lock"
 RETURN_IN_PLAY_TO_DECK_ELEMENT = "return_in_play_to_deck"
+# v0.41: ワザでダメージカウンターをとりのぞく効果（自分・自分の控え・相手のポケモン。GR-2000-P320-RECOVERY）と、ワザで相手の対戦ポケモンにダメージカウンターを
+# のせる・取り替える効果（ダメージではない。GR-2000-P320-COUNTER-MOVE）
+HEAL_ELEMENT = "heal"
+COUNTERS_ELEMENT = "damage_counters"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
-                   ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT)
+                   ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
+                   HEAL_ELEMENT, COUNTERS_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -2031,7 +2037,10 @@ class SwitchOpponentActive(AttackEffect):
     opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "相手の控えポケモンと入れ替えるワザ", damage="none")
+        # v0.41: 説明の文面も確かめる（v0.40 までは形だけ）。キュウコンの「かどわかす」（v0.31）と、ウツボットの「さそうかおり」（v0.41。「選んで」を「選び」と
+        # 書くだけの違い）の書き方だけを受け付ける（``SWITCH_OPPONENT_ACTIVE_TEXTS``）
+        return _check_form(attack, "相手の控えポケモンと入れ替えるワザ", damage="none") + _check_exact_text(
+            attack, "相手の控えポケモンを選んで相手の対戦ポケモンと入れ替えるワザ", SWITCH_OPPONENT_ACTIVE_TEXTS)
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         p = state.players[1 - use.player]
@@ -2040,6 +2049,13 @@ class SwitchOpponentActive(AttackEffect):
         if p.active is None or p.active.pokemon_id != decision.context_value("target"):
             problems.append(f"入れ替えの対象 {decision.context_value('target')!r} が相手のバトル場のポケモンではない")
         return problems
+
+
+# v0.41: ``SwitchOpponentActive`` が受け付ける説明（kyuura の印刷の文面）。キュウコン（v0.31）とウツボット（v0.41）。docs/heal-counter-status-v0.41.md 2 章
+SWITCH_OPPONENT_ACTIVE_TEXTS = (
+    "相手の控えポケモンを選んで、相手の対戦ポケモンと入れ替える。",
+    "相手の控えポケモンを選び、相手の対戦ポケモンと入れ替える。",
+)
 
 
 @dataclass(frozen=True)
@@ -2607,7 +2623,10 @@ def extra_energy_damage_texts(energy_type: EnergyType, per_energy: int, max_extr
     t, n, m = energy_type.ja, per_energy, max_extra
     return (f"ワザに必要なエネルギーよりも多く「{t}」エネルギーがついている時、多い「{t}」エネルギー1つにつき、{n}ダメージを追加する。(ダメージ追加は{m}つぶんまで)",  # 第4弾のコダック
             f"このワザに必要な分よりも多く「{t}」エネルギーがついている時、多いエネルギー1つにつき{n}ダメージを追加する。(ダメージ追加は{m}つぶんまで)",  # 第2弾のシャワーズ
-            f"「{t}」エネルギーを1つ追加すると、{n}ダメージ追加できる。(追加は{m}つまで)")  # 第1弾のニョロボン（カメックス・ニョロモと同じ印刷の文面）
+            f"「{t}」エネルギーを1つ追加すると、{n}ダメージ追加できる。(追加は{m}つまで)",  # 第1弾のニョロボン（カメックス・ニョロモと同じ印刷の文面）
+            # v0.41: 第3弾のシードラ（第2弾のシャワーズと同じ書き方で、「このワザに必要な分」を「ワザに必要なぶん」、「エネルギー」を「エネルギーカード」、括弧を
+            # 全角で書く。今の写しに特殊エネルギーはなく、基本エネルギーカード 1 枚がエネルギー 1 つなので、数え方は同じ）
+            f"ワザに必要なぶんよりも多く「{t}」エネルギーカードがついている時、多いエネルギー1つにつき{n}ダメージを追加する。（ダメージ追加は{m}つぶんまで）")
 
 
 @dataclass(frozen=True)
@@ -2975,6 +2994,9 @@ class DamageThenSelfBarrierOnHeads(AttackEffect):
 SELF_BARRIER_ON_HEADS_TEXTS = (
     "コインを投げて「おもて」なら、このカードは次の相手の番にワザをうけない。",
     "コインを投げて「おもて」なら、次の相手の番の「ワザ」をうけない。",
+    # v0.41: 第3弾のシードラの「こうそくいどう」。「ワザによるダメージや効果を受けない」は、v0.37 のカスミのコイキングの「しんだふり」（``SelfBarrierOnHeads``）・
+    # v0.38 のキョウのピジョンの「こうそくひこう」で ``AttackBarrier`` として登録した書き方と同じ（docs/heal-counter-status-v0.41.md 2 章）
+    "コインを投げて「おもて」なら、このカードは次の相手の番に、ワザによるダメージや効果を受けない。",
 )
 
 
@@ -4619,6 +4641,455 @@ class DamageThenSelfConfuseOnTails(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         expected = "コインを投げて「うら」なら、自分は「こんらん」状態になる。"
         return _check_form(attack, "コインで自分がこんらんになるワザ", damage="fixed") + _check_exact_text(attack, "コインで自分がこんらんになるワザ", (expected,))
+
+
+# ---------------------------------------------------------------- v0.41（docs/heal-counter-status-v0.41.md）
+# 回復（ダメージカウンターをとりのぞく）・ダメージカウンターを相手にのせる／取り替える・特殊状態の分岐と選択・山札からエネルギーをつける効果。要素は
+# ``resolution.programs`` の ``HealCounters``・``ShiftCountersToOpponent``・``SwapCounters``・``ChosenStatus``・``AttachFromDeck`` と既存の要素。説明の文面は、
+# 登録したワザの印刷の文面（kyuura の写し）と完全に同じものだけを受け付ける（v0.37 の約束）
+
+# 回復の対象（``programs.HealCounters`` の ``scope``）
+HEAL_SELF = "self"  # ワザを使ったポケモン（「自分」）
+HEAL_OWN_ALL = "own_all"  # ワザを使ったポケモンと自分の控えポケモン全員（「自分と自分の控えポケモン全員」）
+HEAL_BOTH_ALL = "both_all"  # お互いの場のポケモン全員（「お互いの場にいるポケモン全員」）
+# エリカのクサイハナの「ミラクルかふん」の選べる特殊状態（説明の「ねむり・マヒ・こんらん・どく」の並び。決定 ``select_special_condition`` の番号）
+CHOSEN_CONDITIONS = (SLEEP, PARALYSIS, CONFUSION, POISON)
+_CONDITION_JA = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}
+
+
+def _positive_count(value: int, what: str) -> None:
+    if type(value) is not int or value <= 0:
+        raise ValueError(f"{what}は正の整数（{value!r}）")
+
+
+@dataclass(frozen=True)
+class DamageThenHealSelf(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。その後、自分にのっているダメージカウンターを ``counters`` 個とりのぞく（``on_heads`` なら
+    コインを投げて「おもて」のとき）（v0.41。エリカのナゾノクサ（PMCG5-002）の「ちょっとすいとる」・「たまにすいとる」）。要素は ``Damage(OPP)`` →
+    ``HealCounters(counters, scope=HEAL_SELF)``（``on_heads`` なら要素のコイン）。
+
+    - 説明は「ダメージを与えたら」と書かない（やどりぎのタネ（v0.5。``DamageAndRemoveCounters``）の「…ダメージを与えたら」とは別の書き方）。相手がダメージを
+      受けなかった（防いだ・「とうめい」・最終ダメージ 0）ときもとりのぞく。条件を足さない
+    - とりのぞくのはのっている数まで（GR-2000-P320-RECOVERY「すべてのダメージカウンターをとりのぞいたら、それ以上の回復はできない」）
+    - コインは自分への効果だけを決めるので、相手の状態によらず投げる。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら、処理の対象がいないので
+      投げない・とりのぞかない（p.309。v0.31 の ``HealSelfOnHeads`` と同じ）
+    """
+
+    counters: int
+    on_heads: bool = False
+    implementation_id = "damage_then_heal_self"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "とりのぞくダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        prefix = "コインを投げて「おもて」なら、" if self.on_heads else ""
+        expected = f"{prefix}自分にのっているダメージカウンターを、{self.counters}つとりのぞく。"
+        return _check_form(attack, "ダメージのあと自分のダメージカウンターをとりのぞくワザ", damage="fixed") + _check_exact_text(
+            attack, "ダメージのあと自分のダメージカウンターをとりのぞくワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class CoinHealSelf(AttackEffect):
+    """ダメージの目安の数字はない。コインを投げて「おもて」なら、自分にのっているダメージカウンターを ``counters`` 個とりのぞく。``then_sleep`` なら、同じ「おもて」で
+    自分を「ねむり」状態にもする（v0.41。エリカのクサイハナの「ヒーリングかふん」・ナツメのヤドランの「いねむり」）。要素は ``Coin`` → ``HealCounters(gate=おもて)``
+    （→ ``Status(SLEEP, target=SELF, gate=おもて)``）。
+
+    - 1 枚のコイン（ワザ全体のコイン）で、とりのぞく効果と自分のねむりの両方が決まる（投げ直さない）
+    - とりのぞく数がのっている数より多くても、0 個でも、ねむりにする（GR-2000-P309-ATTACK-PROCEDURE「途中で処理の対象がいなくなっていたら、その内容は
+      無視して次の内容を処理する」。「とりのぞき、」の続きの効果は、とりのぞけたかを条件にしない）
+    - 使うための条件はない（化石の秘密のヤドンの「ぼーっとする」の「…のってない時には、このワザは使えない」は書かれていない）。カウンターが 0 個でもワザは使え、
+      コインを投げる（自分への効果なので、相手の状態によらない）
+    """
+
+    counters: int
+    then_sleep: bool = False
+    implementation_id = "coin_heal_self"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "とりのぞくダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        if self.then_sleep:
+            expected = f"コインを投げて「おもて」なら、自分にのっているダメージカウンターを{self.counters}つとりのぞき、自分を「ねむり」状態にする。"
+        else:
+            expected = f"コインを投げて「おもて」なら、自分にのっているダメージカウンターを、{self.counters}つとりのぞく。"
+        return _check_form(attack, "コインで自分のダメージカウンターをとりのぞくワザ", damage="none") + _check_exact_text(
+            attack, "コインで自分のダメージカウンターをとりのぞくワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class CoinsHealOwnPokemon(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数ぶんのダメージカウンターを、自分と自分の控えポケモン全員から、それぞれ、とりのぞく（v0.41。ナツメのモルフォンの
+    「かいふくりんぷん」。ダメージの目安の数字はない）。要素は ``Coin(coins)`` → ``HealCounters(heads_of, scope=HEAL_OWN_ALL)``。
+
+    - 同じコインの「おもて」の数を、どのポケモンにも使う（ポケモンごとに投げ直さない）。とりのぞくのはそれぞれのっている数まで
+    - 控えポケモンの「とうめい」（化石の秘密のゴースト）は、とりのぞく効果を受けるときに評価する（自分のワザでもはたらく。v0.9 の T8）。とりのぞくカウンターがない
+      ポケモンは効果を受けない（とりのぞく処理ができない。p.309）ので評価しない。2 匹以上なら T27（``UNRESOLVED_TRANSPARENCY_COIN_ORDER``）
+    """
+
+    coins: int
+    implementation_id = "coins_heal_own_pokemon"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.coins, "コインの枚数")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを{self.coins}枚投げ、「おもて」の数ぶんのダメージカウンターを、自分と自分の控えポケモン全員から、それぞれ、とりのぞく。"
+        return _check_form(attack, "コインの数で自分の場のダメージカウンターをとりのぞくワザ", damage="none") + _check_exact_text(
+            attack, "コインの数で自分の場のダメージカウンターをとりのぞくワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class HealAllPokemonBothSides(AttackEffect):
+    """お互いの場にいるポケモン全員から、それぞれダメージカウンターを ``counters`` 個ずつ、とりのぞく（v0.41。エリカのプリンの「みんなでかいふく」。ダメージの
+    目安の数字はない）。要素は ``HealCounters(counters, scope=HEAL_BOTH_ALL)``。
+
+    - 相手のポケモンからもとりのぞく（相手のポケモンへの効果）。相手の対戦ポケモンが「ワザをうけない」状態（バリアー）なら、そのポケモンへの効果は無効
+      （ほかのポケモンへの効果は有効）。「ダメージを受けない」状態（かたまる）は、ダメージ以外の効果を受けるので、とりのぞく（GR-2000-P321-PREVENTED-ELEMENTS）
+    - 「とうめい」はとりのぞくカウンターのあるポケモンだけで評価する（``CoinsHealOwnPokemon`` と同じ）
+    """
+
+    counters: int
+    implementation_id = "heal_all_pokemon_both_sides"
+    opponent_effect_elements = (HEAL_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "とりのぞくダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"お互いの場にいるポケモン全員から、それぞれダメージカウンターを{self.counters}つずつ、とりのぞく。"
+        return _check_form(attack, "お互いの場のダメージカウンターをとりのぞくワザ", damage="none") + _check_exact_text(
+            attack, "お互いの場のダメージカウンターをとりのぞくワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class MoveOwnCountersToOpponent(AttackEffect):
+    """自分と自分の控えポケモン全員から、ダメージカウンターを 1 つずつとりのぞき、とりのぞいたダメージカウンターをすべて、相手にのせる（v0.41。ナツメのゴルダックの
+    「ダメージシフト」。ダメージの目安の数字はない）。要素 ``ShiftCountersToOpponent``。
+
+    - ダメージカウンターの移動で、相手は「ダメージを受けた」ことにならない（GR-2000-P320-COUNTER-MOVE。v0.7 の S19）。ワザのダメージの計算（p.321。弱点・抵抗力・
+      プラスパワー・ディフェンダー）をせず、「ダメージを受けない」状態（かたまる）でものせる。「ダメージを受けたとき」の効果（はんげき・ほのおのかべ・こうらがえし・
+      わるいねぞう）ははたらかず、のせたカウンターで HP 以上になっても「こんじょう」は使えない（相手のワザのダメージではない。v0.11 の G3〜G7）
+    - とりのぞけるのは、カウンターが 1 つ以上のっているポケモンからだけ（0 個のポケモンからはとりのぞかない）。のせる数はとりのぞいた数（0 個ならのせない）
+    - 相手がのせる効果を受けない（「ワザをうけない」状態・「とうめい」）とき、自分の側をとりのぞくかは決められない（CX1。``UNRESOLVED_COUNTER_TRANSFER_PROTECTED``）
+    - のせたカウンターで HP 以上になった相手は、ワザのあとにきぜつする（p.323。サイドを取る）
+    """
+
+    implementation_id = "move_own_counters_to_opponent"
+    opponent_effect_elements = (COUNTERS_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "自分と自分の控えポケモン全員から、ダメージカウンターを1つずつとりのぞき、とりのぞいたダメージカウンターをすべて、相手にのせる。"
+        return _check_form(attack, "ダメージカウンターを相手にのせかえるワザ", damage="none") + _check_exact_text(
+            attack, "ダメージカウンターを相手にのせかえるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class SwapCountersOnHeads(AttackEffect):
+    """コインを投げて「おもて」なら、自分にのっているダメージカウンターすべてと、相手にのっているダメージカウンターすべてを、取り替える（v0.41。R団のミュウツーの
+    「チェンジダメージ」。ダメージの目安の数字はない）。要素は ``Coin`` → ``SwapCounters(gate=おもて)``。
+
+    - 取り替える前の双方の数で処理する（自分は相手の前の数に、相手は自分の前の数になる。片方を変えてから、変えたあとの数をもう片方に渡さない）
+    - ダメージカウンターの移動で、どちらも「ダメージを受けた」ことにならない（GR-2000-P320-COUNTER-MOVE）。弱点・抵抗力・プラスパワー・ディフェンダーを計算せず、
+      「ダメージを受けない」状態でも取り替える。「ダメージを受けたとき」の効果ははたらかず、「こんじょう」も使えない
+    - 取り替えたあと、片方・両方が HP 以上なら、ワザのあとにきぜつする（両方なら同時のきぜつ。p.324）
+    - 相手が取り替える効果を受けない（「ワザをうけない」状態・「とうめい」）とき、自分の側を変えるかは決められない（CX1。カウンターの数が同じなら場は変わらないので
+      止めない）
+    """
+
+    implementation_id = "swap_counters_on_heads"
+    opponent_effect_elements = (COUNTERS_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、自分にのっているダメージカウンターすべてと、相手にのっているダメージカウンターすべてを、取り替える。"
+        return _check_form(attack, "ダメージカウンターを取り替えるワザ", damage="none") + _check_exact_text(attack, "ダメージカウンターを取り替えるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenConfuseBoth(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手を「こんらん」状態にする。その後、自分も「こんらん」状態になる（v0.41。クサイハナの「くさいにおい」）。
+    要素は ``Damage(OPP)`` → ``Status(CONFUSION)`` → ``Status(CONFUSION, target=SELF)``。
+
+    - 相手へのこんらんと自分へのこんらんは別の要素。相手がこんらんを受けない（「ワザをうけない」状態・「とうめい」・このワザのダメージで HP 以上）ときも、自分は
+      こんらんになる（GR-2000-P321-PREVENTED-ELEMENTS「ほかの要素は有効」・GR-2000-P309-ATTACK-PROCEDURE）。「その後」は順番で、相手がこんらんになったかを
+      条件にしない（「ダメージを与えた後」（Z23）とも別の書き方）
+    - ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら、自分へのこんらんは処理しない（p.309）
+    """
+
+    implementation_id = "damage_then_confuse_both"
+    opponent_effect_elements = (CONFUSION,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "相手を「こんらん」状態にする。その後、自分も「こんらん」状態になる。"
+        return _check_form(attack, "相手と自分をこんらんにするワザ", damage="fixed") + _check_exact_text(attack, "相手と自分をこんらんにするワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenStatusByCoin(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら相手を ``heads`` に、「うら」なら ``tails`` にする（v0.41。エリカの
+    ナゾノクサ（PMCG5-003）の「へんなこな」の「こんらん」・「ねむり」）。v0.34 のくさいガス（``DamageThenPoisonOrConfuse``）と同じ要素
+    ``Status(heads, local_coin=おもて, otherwise=tails)``（1 枚のコインで、どちらの状態にするかが決まる。投げ直さない）。"""
+
+    heads: str
+    tails: str
+    implementation_id = "damage_then_status_by_coin"
+
+    def __post_init__(self) -> None:
+        if self.heads not in _CONDITION_JA or self.tails not in _CONDITION_JA or self.heads == self.tails:
+            raise ValueError(f"特殊状態の組 ({self.heads!r}, {self.tails!r}) が正しくない")
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return (self.heads, self.tails)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、相手を「{_CONDITION_JA[self.heads]}」状態に、「うら」なら「{_CONDITION_JA[self.tails]}」状態にする。"
+        return _check_form(attack, "コインで相手の特殊状態が決まるワザ", damage="fixed") + _check_exact_text(attack, "コインで相手の特殊状態が決まるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenChosenStatusOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、「ねむり・マヒ・こんらん・どく」の中から 1 つを選び、相手をその状態に
+    する（v0.41。エリカのクサイハナの「ミラクルかふん」）。要素は ``Damage(OPP)`` → ``ChosenStatus(local_coin=おもて)``。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``select_special_condition``。選べるものは説明の並びの番号 0〜3。``CHOSEN_CONDITIONS``）。「おもて」のときだけ選ぶ
+    - 選んだ状態は、ほかの特殊状態の効果と同じ規定（p.322。ねむり・マヒ・こんらんは置きかわり、どくは重なる。同じ状態は二重にならない）。マヒの再付与で回復する番が
+      変わる場合（v0.3b の ``UNRESOLVED_REPARALYSIS_RECOVERY_TURN``）は、マヒを選べるが選ぶと止める（``unresolved_choices``）
+    - コインの前の確かめは、ほかの「おもて」で相手を特殊状態にする効果と同じ（このワザのダメージで HP 以上なら投げない。「とうめい」で受けないと決まっていれば T19b、
+      「ワザをうけない」状態なら HC3）
+    """
+
+    implementation_id = "damage_then_chosen_status_on_heads"
+    opponent_effect_elements = CHOSEN_CONDITIONS
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、「ねむり・マヒ・こんらん・どく」の中から1つを選び、相手をその状態にする。"
+        return _check_form(attack, "コインで相手を選んだ特殊状態にするワザ", damage="fixed") + _check_exact_text(
+            attack, "コインで相手を選んだ特殊状態にするワザ", (expected,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        problems = _decision_form(decision, _label(state, use), kind=SELECT_SPECIAL_CONDITION, player=use.player, choices=(1, 1),
+                                  options=range(len(CHOSEN_CONDITIONS)))
+        target = state.players[1 - use.player].active
+        if target is None or decision.context_value("target") != target.pokemon_id:
+            problems.append(f"特殊状態を選ぶ決定の対象 {decision.context_value('target')!r} が相手の対戦ポケモンではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinDamageAndConfuseElseSelfConfuse(AttackEffect):
+    """コインを投げて「おもて」なら、相手の対戦ポケモンにダメージの目安の数字ぶんのダメージを与え、相手を「こんらん」状態にする。「うら」なら、相手にはダメージを
+    与えず、自分を「こんらん」状態にする（v0.41。ナツメのコダックの「こまったねんりき」）。要素は ``Coin`` → ``Damage(OPP, gate=おもて)`` →
+    ``Status(CONFUSION, gate=おもて)`` → ``Status(CONFUSION, target=SELF, gate=うら)``。
+
+    - コインが先（「うら」なら相手へのダメージの要素がない。v0.11 の「いちかばちか」と同じ形）。1 枚のコインで、相手へのダメージ・相手のこんらん・自分のこんらんが
+      決まる（投げ直さない）
+    - 「うら」は「失敗」ではない（説明に「失敗」と書かれていない。ログ ``attack_failed`` はない）
+    - コインが決める要素に自分への効果（「うら」の自分のこんらん）があるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる（v0.34 の
+      ``void_coin_question``）
+    """
+
+    implementation_id = "coin_damage_and_confuse_else_self_confuse"
+    opponent_effect_elements = (CONFUSION,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら、相手にはダメージを与えず、自分を「こんらん」状態にする。"
+        return _check_form(attack, "コインでダメージと相手か自分のこんらんが決まるワザ", damage="fixed") + _check_exact_text(
+            attack, "コインでダメージと相手か自分のこんらんが決まるワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        return DamageProfile(opponent=(attack.damage,), outcomes=((attack.damage, 0), (None, 0)))
+
+
+@dataclass(frozen=True)
+class DamageThenConfuseOnAnyHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを ``coins`` 枚投げ、1 枚でも「おもて」なら、相手を「こんらん」状態にする（v0.41。ナツメの
+    モルフォンの「げんかくおんぱ」）。要素は ``Damage(OPP)`` → ``Coin(coins)`` → ``Status(CONFUSION, gate=(おもての数が 1 以上))``。
+
+    - コインはダメージのあと（説明の順）。ダメージの要素で「ダメージを受けたとき」の効果（はんげきなど）がはたらいていれば、そのあと・このコインの前に処理する
+      （CR-COUNTERATTACK-TIMING「ダメージ以外の効果（効果を決めるコインを含む）の前」）
+    - このワザのダメージで HP 以上になった相手には、処理の対象がいないので投げない（p.309）。「とうめい」で受けないと決まった相手は T19b、「ワザをうけない」相手は HC3
+    """
+
+    coins: int
+    implementation_id = "damage_then_confuse_on_any_heads"
+    opponent_effect_elements = (CONFUSION,)
+
+    def __post_init__(self) -> None:
+        if type(self.coins) is not int or self.coins < 2:
+            raise ValueError(f"コインの枚数は 2 以上の整数（{self.coins!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを{self.coins}枚投げ、1枚でも「おもて」なら、相手を「こんらん」状態にする。"
+        return _check_form(attack, "コインで相手をこんらんにするワザ", damage="fixed") + _check_exact_text(attack, "コインで相手をこんらんにするワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenSleepOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手を「ねむり」状態にする（v0.41。R団のミュウツーの「さいみんはどう」）。
+    ``PoisonOnHeads``（v0.3a）・``ConfuseOnHeads``（v0.3c）と同じ形で、特殊状態だけが違う（要素 ``Status(SLEEP, local_coin=おもて)``）。ダメージのない
+    ``SleepOnHeadsWithoutDamage``・コインのない ``SleepOpponent`` とは別の型。"""
+
+    implementation_id = "damage_then_sleep_on_heads"
+    opponent_effect_elements = (SLEEP,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、相手を「ねむり」状態にする。"
+        return _check_form(attack, "コインで相手をねむりにするワザ", damage="fixed") + _check_exact_text(attack, "コインで相手をねむりにするワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenRetreatLockOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、このワザを受けた相手の対戦ポケモンは、次の相手の番に「にげる」ことが
+    できない（v0.41。ウツボットの「ようかいえき」）。v0.36 の ``DamageThenRetreatLock``（アイスバーン。コインなし）と同じ持続する効果 ``CannotRetreat``・要素
+    ``OpponentRetreatLock`` に、要素のコイン（``local_coin``）を加えたもの。
+
+    - コインはダメージのあと。このワザのダメージで HP 以上になった相手には投げない（p.309）。「とうめい」で受けないと決まった相手は T19b、「ワザをうけない」相手は HC3
+      （コインはこの効果だけを決める）
+    - 「にげる」でない入れ替え（ポケモンいれかえ・突風・ふきとばし）は制限しない（p.325。v0.36 と同じ）
+    """
+
+    implementation_id = "damage_then_retreat_lock_on_heads"
+    opponent_effect_elements = (RETREAT_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、「{attack.name_ja}」を受けた相手の対戦ポケモンは、次の相手の番に「にげる」ことができない。"
+        return _check_form(attack, "コインで次の相手の番に「にげる」ことができなくするワザ", damage="fixed") + _check_exact_text(
+            attack, "コインで次の相手の番に「にげる」ことができなくするワザ", (expected,))
+
+    def retreat_lock_terms(self) -> type:
+        from .state import CannotRetreat
+
+        return CannotRetreat
+
+
+@dataclass(frozen=True)
+class SwitchOpponentActiveOnHeads(AttackEffect):
+    """コインを投げて「おもて」なら、相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える。相手に控えがいない時、このワザは使えない（v0.41。わるいペルシアンの
+    「ゆうわく」。ダメージの目安の数字はない）。要素 ``ForceSwitch(chooser="attacker", local_coin=おもて, required=True)``。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``FORCED_SWITCH``。v0.31 のかどわかすと同じ）。相手に控えがいないことは、ワザを使うための条件（``usage_problem``。
+      ``NO_OPPONENT_BENCH``。こんらんのコインの前）
+    - コインは入れ替えだけを決める。「ワザをうけない」相手には投げるかが決められない（HC3）。「とうめい」はコインの「おもて」のあと、入れ替えの効果を受けるときに評価する
+    """
+
+    implementation_id = "switch_opponent_active_on_heads"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このワザは使えない)。"
+        return _check_form(attack, "コインで相手の控えと入れ替えるワザ", damage="none") + _check_exact_text(attack, "コインで相手の控えと入れ替えるワザ", (expected,))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if not state.players[1 - owner].bench:
+            return IllegalActionError("NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、このワザは使えない（ワザの説明）")
+        return None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        p = state.players[1 - use.player]
+        problems = _decision_form(decision, _label(state, use), kind=FORCED_SWITCH, player=use.player, choices=(1, 1),
+                                  options=(pokemon.pokemon_id for pokemon in p.bench))
+        if p.active is None or p.active.pokemon_id != decision.context_value("target"):
+            problems.append(f"入れ替えの対象 {decision.context_value('target')!r} が相手のバトル場のポケモンではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class DamageThenReturnSelfToDeckOnTails(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「うら」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。
+    その後、その山札をよく切る（v0.41。カツラのファイヤーの「ひのとり」）。v0.36 のくもがくれガス（``DamageThenReturnSelfToDeckOnHeads``。「おもて」でもどす）と同じ
+    要素 ``ReturnSelfToDeck`` で、もどすコインの面だけが違う（``local_coin=うら``）。
+
+    - 「ダメージを与えた後」: ダメージを与えなかったときは Z23、同じワザで HP 以上になったポケモンがいれば RD9（どちらもコインの結果によらず宣言の前に止まる）
+    - もどすのはきぜつではない（サイドは取られない）。空いたバトル場は、ワザのあとのバトル場に出す決定でうめる（控えがいなければ負け）
+    """
+
+    implementation_id = "damage_then_return_self_to_deck_on_tails"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「うら」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。"
+        return _check_form(attack, "コインの「うら」で自分を山札にもどすワザ", damage="fixed") + _check_exact_text(
+            attack, "コインの「うら」で自分を山札にもどすワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class AttachEnergyFromDeckToSelf(AttackEffect):
+    """自分の山札から ``energy_type`` エネルギーカードを 1 枚選び出し、このカードにつけてよい。その後、その山札をよく切る（v0.41。ロケット団のヤドンの「ひなたぼっこ」。
+    ダメージの目安の数字はない）。要素 ``AttachFromDeck``。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``attach_from_deck``。選べるものは山札の ``energy_type`` の基本エネルギーカード。uid の小さい順。0〜1 枚。「つけてよい」
+      なので選ばなくてよい）。選べるものがなければ決定を出さない
+    - 山札から直接つける（``zones.attach_from_deck``。手札を通さない）。手札からつける通常の操作（p.310。1 番に 1 枚。``energy_attachments_this_turn``）・特殊能力で
+      つけた枚数（v0.6 の R13。``energy_attached_by_powers_this_turn``）には数えない。つけたあとは「エネルギーカードをつけたとき」の特殊能力
+      （``after_energy_attached``）を聞く
+    - 山札を切るのは、つけた・つけなかった・選べるものがなかった、のどれでも（説明の「その後、その山札をよく切る。」に条件がない。v0.32 の ``BenchFromDeck`` と同じ）。
+      先読みでは切らない
+    """
+
+    energy_type: EnergyType
+    implementation_id = "attach_energy_from_deck_to_self"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"自分の山札から「{self.energy_type.ja}」エネルギーカードを1枚選び出し、このカードにつけてよい。その後、その山札をよく切る。"
+        return _check_form(attack, "山札のエネルギーを自分につけるワザ", damage="none") + _check_exact_text(attack, "山札のエネルギーを自分につけるワザ", (expected,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        candidates = deck_energy_candidates(state, use.player, self.energy_type)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(0, 1), options=candidates)
+
+
+def deck_energy_candidates(state: GameState, player: int, energy_type: EnergyType) -> list[int]:
+    """プレイヤーの山札の ``energy_type`` の基本エネルギーカード（uid の小さい順。山札の並びを決定に写さない）（v0.41）。"""
+    return sorted(uid for uid in state.players[player].deck
+                  if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is energy_type)
+
+
+@dataclass(frozen=True)
+class DamageThenLockSelf(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の自分の番、このカードはこのワザを使えない（v0.41。ナツメのヤドランの「きあいずつき」）。v0.35 の
+    あわあわ（``DamageThenLockSelfOnTails``。コインの「うら」のとき）と同じ持続する効果 ``CannotUseOwnAttack``・要素 ``SelfAttackLock`` で、コインがない
+    （``local_coin=None``。いつも与える）。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら与えない（p.309）。"""
+
+    implementation_id = "damage_then_lock_self"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"次の自分の番、このカードは「{attack.name_ja}」を使えない。"
+        return _check_form(attack, "次の自分の番にそのワザを使えなくなるワザ", damage="fixed") + _check_exact_text(
+            attack, "次の自分の番にそのワザを使えなくなるワザ", (expected,))
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        from .state import CannotUseOwnAttack
+
+        return CannotUseOwnAttack, None
+
+
+@dataclass(frozen=True)
+class DamageMinusIfDefenderDamaged(AttackEffect):
+    """相手（相手の対戦ポケモン）にダメージカウンターがのっている時、このワザのダメージは「-``reduction``」される（v0.41。エリカのプリンの「やさしいパンチ」）。
+    値 ``PrintedMinusIfDefenderDamaged``（p.321 の 1 段階。ダメージの目安の「−」の説明。GR-2000-P320-DAMAGE-FIGURE）。のっているかだけを見る（数に比例しない。
+    v0.40 の「つのでえぐる」の追加と同じ見方）。"""
+
+    reduction: int
+    implementation_id = "damage_minus_if_defender_damaged"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.reduction, "へらすダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"相手にダメージカウンターがのっている時、このワザのダメージは「-{self.reduction}」される。"
+        problems = _check_form(attack, "相手のダメージカウンターでダメージがへるワザ", damage="modified", modifier="-") + _check_exact_text(
+            attack, "相手のダメージカウンターでダメージがへるワザ", (expected,))
+        if type(attack.damage) is int and attack.damage < self.reduction:
+            problems.append(f"ダメージの目安 {attack.damage} がへらすダメージ {self.reduction} より小さい")
+        return problems
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        damaged = state.players[1 - use.player].active.damage > 0
+        return DamageProfile(opponent=(attack.damage - (self.reduction if damaged else 0),))
 
 
 def attack_damage_modifiers(
@@ -6695,6 +7166,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG4-044", 0, "メガトンパンチ"),  # わるいカイリキー（ロケット団）
         ("PMCG5-011", 0, "よだれ"),  # エリカのウツドン（リーダーズスタジアム）
         ("PMCG5-034", 0, "しっぽのムチ"),  # カスミのシードラ（リーダーズスタジアム）
+        # v0.41: 説明文のないワザ（kyuura データの採用。docs/heal-counter-status-v0.41.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG4-032", 1, "ずつき"),  # ヤドン（ロケット団。化石の秘密のヤドン PMCG3-028・ナツメのヤドン PMCG6-044 とは別のカード）
+        ("PMCG6-036", 0, "ひっかく"),  # ナツメのコダック（闇からの挑戦）
+        ("PMCG6-055", 2, "サイコバーン"),  # R団のミュウツー（闇からの挑戦。第1弾のミュウツー PMCG1-050 とは別の名前のカード）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -9198,6 +9673,215 @@ DEFAULT_EFFECTS = EffectRegistry(
             "あばれまわる",
             text_ja="コインを投げて「うら」なら、自分は「こんらん」状態になる。",
             play_text_ja="コインを投げて「うら」なら、自分は「こんらん」状態になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.41（docs/heal-counter-status-v0.41.md）。kyuura データの採用（処理に使う文面は kyuura の印刷の文面）。
+        # クサイハナ（第2弾。ナゾノクサから進化）。どくのこな（草）: ダメージなしでどく（v0.8 の PoisonWithoutDamage。ロケット団のベトベターの「どくガス」と同じ文面）
+        AttackKey("PMCG2-009", 0): AttackEntry(
+            PoisonWithoutDamage(),
+            "どくのこな",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # クサイハナ。くさいにおい（草草）20: ダメージ → 相手をこんらん → 自分もこんらん（相手の効果が無効でも自分の効果は残る）
+        AttackKey("PMCG2-009", 1): AttackEntry(
+            DamageThenConfuseBoth(),
+            "くさいにおい",
+            text_ja="相手を「こんらん」状態にする。その後、自分も「こんらん」状態になる。",
+            play_text_ja="相手を「こんらん」状態にする。その後、自分も「こんらん」状態になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ウツボット（第2弾。ウツドンから進化）。さそうかおり（草）: ワザを使ったプレイヤーが相手の控えを選んで入れ替える（v0.31 のかどわかすと同じ型。書き方の違いは SWITCH_OPPONENT_ACTIVE_TEXTS）
+        AttackKey("PMCG2-016", 0): AttackEntry(
+            SwitchOpponentActive(),
+            "さそうかおり",
+            text_ja="相手の控えポケモンを選び、相手の対戦ポケモンと入れ替える。",
+            play_text_ja="相手の控えポケモンを選び、相手の対戦ポケモンと入れ替える。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ウツボット。ようかいえき（草草）20: ダメージ → コインの「おもて」で次の相手の番に「にげる」ことができない（v0.36 の CannotRetreat に要素のコイン）
+        AttackKey("PMCG2-016", 1): AttackEntry(
+            DamageThenRetreatLockOnHeads(),
+            "ようかいえき",
+            text_ja="コインを投げて「おもて」なら、「ようかいえき」を受けた相手の対戦ポケモンは、次の相手の番に「にげる」ことができない。",
+            play_text_ja="コインを投げて「おもて」なら、「ようかいえき」を受けた相手の対戦ポケモンは、次の相手の番に「にげる」ことができない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # シードラ（第3弾。タッツーから進化）。みずでっぽう（水無）20+: 必要なエネルギーに無色がまざる多いエネルギーの追加（v0.31 の型。決められない数は HC4。書き方の違いは extra_energy_damage_texts）
+        AttackKey("PMCG3-020", 0): AttackEntry(
+            ExtraEnergyDamageMixed(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="ワザに必要なぶんよりも多く「水」エネルギーカードがついている時、多いエネルギー1つにつき10ダメージを追加する。（ダメージ追加は2つぶんまで）",
+            play_text_ja="ワザに必要なぶんよりも多く「水」エネルギーカードがついている時、多いエネルギー1つにつき10ダメージを追加する。（ダメージ追加は2つぶんまで）",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # シードラ。こうそくいどう（水無無）20: コインの「おもて」で次の相手の番にワザをうけない（v0.34 のギャロップと同じ AttackBarrier。書き方の違いは SELF_BARRIER_ON_HEADS_TEXTS）
+        AttackKey("PMCG3-020", 1): AttackEntry(
+            DamageThenSelfBarrierOnHeads(),
+            "こうそくいどう",
+            text_ja="コインを投げて「おもて」なら、このカードは次の相手の番に、ワザによるダメージや効果を受けない。",
+            play_text_ja="コインを投げて「おもて」なら、このカードは次の相手の番に、ワザによるダメージや効果を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいペルシアン（ロケット団。ニャースから進化）。ゆうわく（無）: 相手に控えがいなければ使えない。コインの「おもて」でワザを使ったプレイヤーが選んで入れ替える
+        AttackKey("PMCG4-048", 0): AttackEntry(
+            SwitchOpponentActiveOnHeads(),
+            "ゆうわく",
+            text_ja="コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このワザは使えない)。",
+            play_text_ja="コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このワザは使えない)。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいペルシアン。どくのつめ（無無）10: コインの「おもて」でどく（v0.3a の PoisonOnHeads）
+        AttackKey("PMCG4-048", 1): AttackEntry(
+            PoisonOnHeads(),
+            "どくのつめ",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カツラのファイヤー（闇からの挑戦）。ひのとり（炎炎炎炎炎）90: ダメージ → コインの「うら」で自分とついているカードを山札にもどして切る（くもがくれガスと逆の面。Z23・RD9）
+        AttackKey("PMCG6-035", 0): AttackEntry(
+            DamageThenReturnSelfToDeckOnTails(),
+            "ひのとり",
+            text_ja="コインを投げて「うら」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。",
+            play_text_ja="コインを投げて「うら」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ヤドン（ロケット団）。ひなたぼっこ（無）: 山札の「超」エネルギーカードを 1 枚まで選んで自分につけ、山札を切る（手札からつける通常の操作ではない）
+        AttackKey("PMCG4-032", 0): AttackEntry(
+            AttachEnergyFromDeckToSelf(energy_type=EnergyType.PSYCHIC),
+            "ひなたぼっこ",
+            text_ja="自分の山札から「超」エネルギーカードを1枚選び出し、このカードにつけてよい。その後、その山札をよく切る。",
+            play_text_ja="自分の山札から「超」エネルギーカードを1枚選び出し、このカードにつけてよい。その後、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのナゾノクサ（リーダーズスタジアム。HP 50）。ちょっとすいとる（草）10: ダメージ → 自分のカウンターを 1 つとりのぞく（「ダメージを与えたら」の条件はない）
+        AttackKey("PMCG5-002", 0): AttackEntry(
+            DamageThenHealSelf(counters=1),
+            "ちょっとすいとる",
+            text_ja="自分にのっているダメージカウンターを、1つとりのぞく。",
+            play_text_ja="自分にのっているダメージカウンターを、1つとりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのナゾノクサ（HP 50）。たまにすいとる（草無）20: ダメージ → コインの「おもて」で自分のカウンターを 1 つとりのぞく
+        AttackKey("PMCG5-002", 1): AttackEntry(
+            DamageThenHealSelf(counters=1, on_heads=True),
+            "たまにすいとる",
+            text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを、1つとりのぞく。",
+            play_text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを、1つとりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのナゾノクサ（リーダーズスタジアム。HP 40。PMCG5-002 とは同じ名前の別のカード）。へんなこな（草）10: 1 枚のコインで「おもて」ならこんらん、「うら」ならねむり
+        AttackKey("PMCG5-003", 0): AttackEntry(
+            DamageThenStatusByCoin(heads=CONFUSION, tails=SLEEP),
+            "へんなこな",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのクサイハナ（リーダーズスタジアム。エリカのナゾノクサから進化）。ヒーリングかふん（草）: コインの「おもて」で自分のカウンターを 4 つまでとりのぞく
+        AttackKey("PMCG5-009", 0): AttackEntry(
+            CoinHealSelf(counters=4),
+            "ヒーリングかふん",
+            text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを、4つとりのぞく。",
+            play_text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを、4つとりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのクサイハナ。ミラクルかふん（草草草）30: ダメージ → コインの「おもて」でワザを使ったプレイヤーが 4 つの特殊状態から 1 つ選ぶ
+        AttackKey("PMCG5-009", 1): AttackEntry(
+            DamageThenChosenStatusOnHeads(),
+            "ミラクルかふん",
+            text_ja="コインを投げて「おもて」なら、「ねむり・マヒ・こんらん・どく」の中から1つを選び、相手をその状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、「ねむり・マヒ・こんらん・どく」の中から1つを選び、相手をその状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのコダック（闇からの挑戦）。こまったねんりき（超）20: コインが先。「おもて」ならダメージと相手のこんらん、「うら」なら相手にダメージなしで自分がこんらん
+        AttackKey("PMCG6-036", 1): AttackEntry(
+            CoinDamageAndConfuseElseSelfConfuse(),
+            "こまったねんりき",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら、相手にはダメージを与えず、自分を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら、相手にはダメージを与えず、自分を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのゴルダック（闇からの挑戦。ナツメのコダックから進化）。ダメージシフト（超超）: 自分の場のポケモンから 1 つずつとりのぞいて相手にのせる（ダメージではない。CX1）
+        AttackKey("PMCG6-038", 0): AttackEntry(
+            MoveOwnCountersToOpponent(),
+            "ダメージシフト",
+            text_ja="自分と自分の控えポケモン全員から、ダメージカウンターを1つずつとりのぞき、とりのぞいたダメージカウンターをすべて、相手にのせる。",
+            play_text_ja="自分と自分の控えポケモン全員から、ダメージカウンターを1つずつとりのぞき、とりのぞいたダメージカウンターをすべて、相手にのせる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのゴルダック。ウォーターシュート（水無無）20+: コインの「おもて」で 20 追加（v0.31 の CoinBonusDamage）
+        AttackKey("PMCG6-038", 1): AttackEntry(
+            CoinBonusDamage(bonus=20),
+            "ウォーターシュート",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのモルフォン（闇からの挑戦。ナツメのコンパンから進化）。かいふくりんぷん（草）: コイン 3 枚の「おもて」の数ぶんを、自分の場のポケモンそれぞれからとりのぞく
+        AttackKey("PMCG6-022", 0): AttackEntry(
+            CoinsHealOwnPokemon(coins=3),
+            "かいふくりんぷん",
+            text_ja="コインを3枚投げ、「おもて」の数ぶんのダメージカウンターを、自分と自分の控えポケモン全員から、それぞれ、とりのぞく。",
+            play_text_ja="コインを3枚投げ、「おもて」の数ぶんのダメージカウンターを、自分と自分の控えポケモン全員から、それぞれ、とりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのモルフォン。げんかくおんぱ（超）10: ダメージ → コイン 2 枚の 1 枚でも「おもて」ならこんらん
+        AttackKey("PMCG6-022", 1): AttackEntry(
+            DamageThenConfuseOnAnyHeads(coins=2),
+            "げんかくおんぱ",
+            text_ja="コインを2枚投げ、1枚でも「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを2枚投げ、1枚でも「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのヤドラン（闇からの挑戦。ナツメのヤドンから進化）。いねむり（超）: 1 枚のコインの「おもて」で自分のカウンターを 3 つまでとりのぞき、自分をねむりにする
+        AttackKey("PMCG6-048", 0): AttackEntry(
+            CoinHealSelf(counters=3, then_sleep=True),
+            "いねむり",
+            text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを3つとりのぞき、自分を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターを3つとりのぞき、自分を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのヤドラン。きあいずつき（超無無）40: ダメージ → 次の自分の番にこのワザを使えない（v0.35 の CannotUseOwnAttack。コインなし）
+        AttackKey("PMCG6-048", 1): AttackEntry(
+            DamageThenLockSelf(),
+            "きあいずつき",
+            text_ja="次の自分の番、このカードは「きあいずつき」を使えない。",
+            play_text_ja="次の自分の番、このカードは「きあいずつき」を使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのプリン（リーダーズスタジアム）。みんなでかいふく（無）: お互いの場のポケモン全員から 1 つずつとりのぞく
+        AttackKey("PMCG5-058", 0): AttackEntry(
+            HealAllPokemonBothSides(counters=1),
+            "みんなでかいふく",
+            text_ja="お互いの場にいるポケモン全員から、それぞれダメージカウンターを1つずつ、とりのぞく。",
+            play_text_ja="お互いの場にいるポケモン全員から、それぞれダメージカウンターを1つずつ、とりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのプリン。やさしいパンチ（無無）40-: 相手にカウンターがのっていれば p.321 の 1 段階で 30 へらす（数に比例しない）
+        AttackKey("PMCG5-058", 1): AttackEntry(
+            DamageMinusIfDefenderDamaged(reduction=30),
+            "やさしいパンチ",
+            text_ja="相手にダメージカウンターがのっている時、このワザのダメージは「-30」される。",
+            play_text_ja="相手にダメージカウンターがのっている時、このワザのダメージは「-30」される。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # R団のミュウツー（闇からの挑戦）。チェンジダメージ（超）: コインの「おもて」で自分と相手のダメージカウンターを取り替える（取り替える前の双方の数で。ダメージではない。CX1）
+        AttackKey("PMCG6-055", 0): AttackEntry(
+            SwapCountersOnHeads(),
+            "チェンジダメージ",
+            text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターすべてと、相手にのっているダメージカウンターすべてを、取り替える。",
+            play_text_ja="コインを投げて「おもて」なら、自分にのっているダメージカウンターすべてと、相手にのっているダメージカウンターすべてを、取り替える。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # R団のミュウツー。さいみんはどう（超超）20: ダメージ → コインの「おもて」でねむり
+        AttackKey("PMCG6-055", 1): AttackEntry(
+            DamageThenSleepOnHeads(),
+            "さいみんはどう",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

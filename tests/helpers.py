@@ -320,6 +320,24 @@ MANKEY = "PMCG4-039"  # マンキー（ロケット団。HP 40・闘・弱点 �
 PRIMEAPE = "PMCG2-031"  # オコリザル（第2弾。マンキーから進化。HP 70・闘・弱点 超・にげる 1。みだれひっかき（闘闘）20×・あばれまわる（闘闘無）50）
 V0_40_POKEMON = (KOGAS_ZUBAT, KOGAS_GOLBAT, DARK_WEEZING, DARK_HYPNO, GIOVANNIS_NIDORAN_M, GIOVANNIS_NIDORINO, GIOVANNIS_NIDOKING, GIOVANNIS_NIDOQUEEN,
                  DARK_MACHOKE, DARK_MACHAMP, ERIKAS_WEEPINBELL, MISTYS_SEADRA, BROCKS_MANKEY, MANKEY, PRIMEAPE)  # 写しの組 pool_v0_40 の並び
+# v0.41（docs/heal-counter-status-v0.41.md）。回復・カウンターの移動・特殊状態の変化を中心とする 15 枚
+GLOOM = "PMCG2-009"  # クサイハナ（第2弾。ナゾノクサから進化。HP 60・草・弱点 炎・にげる 1。どくのこな（草）・くさいにおい（草草）20）
+VICTREEBEL = "PMCG2-016"  # ウツボット（第2弾。ウツドンから進化する 2 進化。HP 80・草・弱点 炎・にげる 2。さそうかおり（草）・ようかいえき（草草）20）
+SEADRA = "PMCG3-020"  # シードラ（第3弾。タッツーから進化。HP 60・水・弱点 雷・にげる 1。みずでっぽう（水無）20+・こうそくいどう（水無無）20）。MISTYS_SEADRA とは別の名前
+DARK_PERSIAN = "PMCG4-048"  # わるいペルシアン（ロケット団。ニャースから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 0。ゆうわく（無）・どくのつめ（無無）10）
+BLAINES_MOLTRES = "PMCG6-035"  # カツラのファイヤー（闇からの挑戦。HP 90・炎・弱点なし・抵抗力 闘 -30・にげる 3。ひのとり（炎炎炎炎炎）90）。MOLTRES・ROCKETS_MOLTRES とは別の名前
+ROCKET_SLOWPOKE = "PMCG4-032"  # ヤドン（ロケット団。HP 50・超・弱点 超・にげる 1。ひなたぼっこ（無）・ずつき（超）10）。SLOWPOKE（化石の秘密）とは同じ名前の別のカード
+ERIKAS_ODDISH = "PMCG5-002"  # エリカのナゾノクサ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。ちょっとすいとる（草）10・たまにすいとる（草無）20）
+ERIKAS_ODDISH_40 = "PMCG5-003"  # エリカのナゾノクサ（リーダーズスタジアム。HP 40・草・弱点 炎・にげる 1。へんなこな（草）10）。ERIKAS_ODDISH とは同じ名前の別のカード
+ERIKAS_GLOOM = "PMCG5-009"  # エリカのクサイハナ（エリカのナゾノクサから進化。HP 60・草・弱点 炎・にげる 1。ヒーリングかふん（草）・ミラクルかふん（草草草）30）
+SABRINAS_PSYDUCK = "PMCG6-036"  # ナツメのコダック（闇からの挑戦。HP 50・水・弱点 雷・にげる 1。ひっかく（無）10・こまったねんりき（超）20）。PSYDUCK・MISTYS_PSYDUCK とは別の名前
+SABRINAS_GOLDUCK = "PMCG6-038"  # ナツメのゴルダック（ナツメのコダックから進化。HP 70・水・弱点 雷・にげる 2。ダメージシフト（超超）・ウォーターシュート（水無無）20+）
+SABRINAS_VENOMOTH = "PMCG6-022"  # ナツメのモルフォン（ナツメのコンパンから進化。HP 60・草・弱点 炎・抵抗力 闘 -30・にげる 0。かいふくりんぷん（草）・げんかくおんぱ（超）10）
+SABRINAS_SLOWBRO = "PMCG6-048"  # ナツメのヤドラン（ナツメのヤドンから進化。HP 70・超・弱点 超・にげる 2。いねむり（超）・きあいずつき（超無無）40）
+ERIKAS_JIGGLYPUFF = "PMCG5-058"  # エリカのプリン（リーダーズスタジアム。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。みんなでかいふく（無）・やさしいパンチ（無無）40-）
+ROCKETS_MEWTWO = "PMCG6-055"  # R団のミュウツー（闇からの挑戦。HP 70・超・弱点 超・にげる 2。チェンジダメージ（超）・さいみんはどう（超超）20・サイコバーン（超超超無）60）
+V0_41_POKEMON = (GLOOM, VICTREEBEL, SEADRA, DARK_PERSIAN, BLAINES_MOLTRES, ROCKET_SLOWPOKE, ERIKAS_ODDISH, ERIKAS_ODDISH_40, ERIKAS_GLOOM, SABRINAS_PSYDUCK,
+                 SABRINAS_GOLDUCK, SABRINAS_VENOMOTH, SABRINAS_SLOWBRO, ERIKAS_JIGGLYPUFF, ROCKETS_MEWTWO)  # 写しの組 pool_v0_41 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -807,6 +825,26 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinsAllHeadsBonusDamage,  # カスミのシードラの「きぜつばり」
     _effects.ShuffleDeckAttack,  # タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」
     _effects.DamageThenSelfConfuseOnTails,  # オコリザルの「あばれまわる」
+) + (
+    # v0.41（docs/heal-counter-status-v0.41.md 3 章）
+    _effects.DamageThenHealSelf,  # エリカのナゾノクサの「ちょっとすいとる」・「たまにすいとる」
+    _effects.CoinHealSelf,  # エリカのクサイハナの「ヒーリングかふん」・ナツメのヤドランの「いねむり」
+    _effects.CoinsHealOwnPokemon,  # ナツメのモルフォンの「かいふくりんぷん」
+    _effects.HealAllPokemonBothSides,  # エリカのプリンの「みんなでかいふく」
+    _effects.MoveOwnCountersToOpponent,  # ナツメのゴルダックの「ダメージシフト」
+    _effects.SwapCountersOnHeads,  # R団のミュウツーの「チェンジダメージ」
+    _effects.DamageThenConfuseBoth,  # クサイハナの「くさいにおい」
+    _effects.DamageThenStatusByCoin,  # エリカのナゾノクサ（HP 40）の「へんなこな」
+    _effects.DamageThenChosenStatusOnHeads,  # エリカのクサイハナの「ミラクルかふん」
+    _effects.CoinDamageAndConfuseElseSelfConfuse,  # ナツメのコダックの「こまったねんりき」
+    _effects.DamageThenConfuseOnAnyHeads,  # ナツメのモルフォンの「げんかくおんぱ」
+    _effects.DamageThenSleepOnHeads,  # R団のミュウツーの「さいみんはどう」
+    _effects.DamageThenRetreatLockOnHeads,  # ウツボットの「ようかいえき」
+    _effects.SwitchOpponentActiveOnHeads,  # わるいペルシアンの「ゆうわく」
+    _effects.DamageThenReturnSelfToDeckOnTails,  # カツラのファイヤーの「ひのとり」
+    _effects.AttachEnergyFromDeckToSelf,  # ヤドン（ロケット団）の「ひなたぼっこ」
+    _effects.DamageThenLockSelf,  # ナツメのヤドランの「きあいずつき」
+    _effects.DamageMinusIfDefenderDamaged,  # エリカのプリンの「やさしいパンチ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

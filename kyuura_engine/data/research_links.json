@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 47,
-    "engine_stop_codes": 46,
+    "engine_unresolved_rulings": 48,
+    "engine_stop_codes": 47,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -584,6 +584,17 @@
           "version": "v0.40",
           "document": "docs/count-condition-switch-return-v0.40.md",
           "ruling_id": "SG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": {
+      "engine_rulings": [
+        {
+          "version": "v0.41",
+          "document": "docs/heal-counter-status-v0.41.md",
+          "ruling_id": "CX1"
         }
       ],
       "kyuura_issue": null,
@@ -1308,7 +1319,33 @@
       "PMCG4-039/attack/0",
       "PMCG4-039/attack/1",
       "PMCG2-031/attack/0",
-      "PMCG2-031/attack/1"
+      "PMCG2-031/attack/1",
+      "PMCG2-009/attack/0",
+      "PMCG2-009/attack/1",
+      "PMCG2-016/attack/0",
+      "PMCG2-016/attack/1",
+      "PMCG3-020/attack/0",
+      "PMCG3-020/attack/1",
+      "PMCG4-048/attack/0",
+      "PMCG4-048/attack/1",
+      "PMCG6-035/attack/0",
+      "PMCG4-032/attack/0",
+      "PMCG5-002/attack/0",
+      "PMCG5-002/attack/1",
+      "PMCG5-003/attack/0",
+      "PMCG5-009/attack/0",
+      "PMCG5-009/attack/1",
+      "PMCG6-036/attack/1",
+      "PMCG6-038/attack/0",
+      "PMCG6-038/attack/1",
+      "PMCG6-022/attack/0",
+      "PMCG6-022/attack/1",
+      "PMCG6-048/attack/0",
+      "PMCG6-048/attack/1",
+      "PMCG5-058/attack/0",
+      "PMCG5-058/attack/1",
+      "PMCG6-055/attack/0",
+      "PMCG6-055/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -611,7 +611,8 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",),  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
               "PMCG3-016": ("PMCG4-019",),  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
               "PMCG1-039": ("PMCG1-036",), "PMCG3-006": ("PMCG1-006",),  # v0.39: 第1弾のレアコイル（コイルから）・化石の秘密のマタドガス（ドガースから）
-              "PMCG6-014": ("PMCG6-005",)}  # v0.40: キョウのゴルバット（キョウのズバットから）
+              "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
+              "PMCG4-048": ("PMCG2-036",)}  # v0.41: わるいペルシアン（ニャースから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -660,7 +661,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "でんじは", "でんじは", "スモッグ",
                                         # v0.40: キョウのゴルバットの「ひどいおんぱ」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/count-condition-switch-return-v0.40.md）
-                                        "ひどいおんぱ"]))
+                                        "ひどいおんぱ",
+                                        # v0.41: わるいペルシアンの「どくのつめ」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/heal-counter-status-v0.41.md）
+                                        "どくのつめ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -130,6 +130,14 @@ DAMAGE_STEP_ORDER = "damage_step_order"
 # v0.35: カスミのニョロモの「ドわすれ」の「相手のワザを1つ選ぶ。」。決めるのはワザを使ったプレイヤーで、選べるものは相手の対戦ポケモン（``context`` の
 # ``"target"``）のいちばん上のカードのワザの位置
 SELECT_OPPONENT_ATTACK = "select_opponent_attack"
+# v0.41（docs/heal-counter-status-v0.41.md）。エリカのクサイハナの「ミラクルかふん」の「「ねむり・マヒ・こんらん・どく」の中から1つを選び、相手をその状態に
+# する。」。決めるのはワザを使ったプレイヤーで、選べるものは説明の並びの番号（0 ねむり・1 マヒ・2 こんらん・3 どく。``effects.CHOSEN_CONDITIONS``）。
+# ``context`` の ``"target"`` が相手の対戦ポケモン。選ぶと原典で決められない状態（マヒの再付与で回復する番が変わる）は ``"unresolved_choices"``
+SELECT_SPECIAL_CONDITION = "select_special_condition"
+# v0.41: ロケット団のヤドンの「ひなたぼっこ」の「自分の山札から「超」エネルギーカードを1枚選び出し、このカードにつけてよい。」。決めるのはワザを使った
+# プレイヤーで、選べるものは山札の「超」の基本エネルギーカードの uid（山札の並びを決定に写さないよう uid の小さい順）。0〜1 枚（「つけてよい」なので
+# 選ばなくてよい）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない（つけたカードは場に出るので公開）。再開先は "attack"
+ATTACH_FROM_DECK = "attach_from_deck"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

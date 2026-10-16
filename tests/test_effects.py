@@ -79,6 +79,10 @@ V0_40_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG4-011", "PMCG6-004",
                    for index in (0, 1)] + [
     AttackKey("PMCG6-005", 0), AttackKey("PMCG6-014", 1), AttackKey("PMCG4-037", 1), AttackKey("PMCG6-013", 0), AttackKey("PMCG6-020", 1),
     AttackKey("PMCG4-044", 1), AttackKey("PMCG5-011", 1), AttackKey("PMCG5-034", 1)]
+# v0.41: 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚（docs/heal-counter-status-v0.41.md）の説明文のあるワザ 26
+V0_41_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-009", "PMCG2-016", "PMCG3-020", "PMCG4-048", "PMCG5-002", "PMCG5-009", "PMCG6-038",
+                                                       "PMCG6-022", "PMCG6-048", "PMCG5-058", "PMCG6-055") for index in (0, 1)] + [
+    AttackKey("PMCG6-035", 0), AttackKey("PMCG4-032", 0), AttackKey("PMCG5-003", 0), AttackKey("PMCG6-036", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -228,7 +232,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
-                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT))
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -363,7 +367,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚のワザ 29（v0.38。docs/bench-switch-combined-v0.38.md）
         # + じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚のワザ 25（v0.39。docs/selfdestruct-spread-count-v0.39.md）
         # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
-        self.assertEqual(len(keys), 396)
+        # + 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚のワザ 29（v0.41。docs/heal-counter-status-v0.41.md）
+        self.assertEqual(len(keys), 425)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

@@ -324,3 +324,17 @@ def attach_from_discard(state: GameState, player: int, cards: tuple[int, ...], p
     for uid in cards:
         p.discard.remove(uid)
         pokemon.energy.append(uid)
+
+
+def attach_from_deck(state: GameState, player: int, card: int, pokemon: PokemonInPlay) -> None:
+    """自分の山札のエネルギーカード ``card`` を、同じ uid のまま、場のポケモン ``pokemon`` の ``energy`` の最後につける（v0.41。ロケット団のヤドンの
+    「ひなたぼっこ」の「自分の山札から「超」エネルギーカードを1枚選び出し、このカードにつけてよい。」）。手札を通さない（手札からつける通常の操作
+    ``attach_energy_from_hand`` ではない）。山札の残りの並びは変えない（切るのは呼ぶ側）。つけてよいかの確認とログは呼ぶ側が行う。山札にない・持ち主が
+    違う・つける先がそのプレイヤーの場にいないなら ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if card not in p.deck or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をつけられない（確認の漏れ。エンジンの不具合）")
+    if pokemon not in p.in_play():
+        raise RuntimeError(f"つける先のポケモン {pokemon.pokemon_id} がプレイヤー {player} の場にいない（エンジンの不具合）")
+    p.deck.remove(card)
+    pokemon.energy.append(card)

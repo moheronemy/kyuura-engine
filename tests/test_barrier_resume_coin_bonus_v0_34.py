@@ -413,8 +413,10 @@ class BarrierCoinTest(unittest.TestCase):
                 roles = [e.coin_receiver() for e in decided]
                 (stopping if roles and None not in roles else flipping).add(type(effect).__name__)
         # v0.40: サカキのニドクインの「ラブラリアット」（FailOnTailsAmountIfBenchNamed。失敗のコインのあとはダメージだけ。
-        # docs/count-condition-switch-return-v0.40.md の LR2）
-        self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed"})
+        # docs/count-condition-switch-return-v0.40.md の LR2）。v0.41: ナツメのモルフォンの「げんかくおんぱ」（DamageThenConfuseOnAnyHeads。ダメージのあとの
+        # コイン 2 枚は相手のこんらんだけを決める。docs/heal-counter-status-v0.41.md）
+        self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed",
+                                    "DamageThenConfuseOnAnyHeads"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

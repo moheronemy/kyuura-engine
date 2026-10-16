@@ -572,8 +572,16 @@ class G37Test(unittest.TestCase):
         ので、効果を与えるかは、登録されたワザの実装の要素の並び（``programs.opponent_effect_elements``）から求める（v0.15 までは実装の
         ``resolve`` の中の ``attack_reaches`` の呼び出しを読んでいた）。"""
         declared, found = {}, {}
+        registered = [DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect for k in DEFAULT_EFFECTS.attack_keys()]
         for name, cls in inspect.getmembers(effects_module, inspect.isclass):
-            if issubclass(cls, AttackEffect) and cls is not AttackEffect and cls.opponent_effect_elements:
+            if not issubclass(cls, AttackEffect) or cls is AttackEffect:
+                continue
+            if isinstance(cls.opponent_effect_elements, property):
+                # v0.41: 要素が登録の値で決まる型（エリカのナゾノクサの「へんなこな」の ``DamageThenStatusByCoin``）は、登録した実装の宣言で数える
+                values = [set(effect.opponent_effect_elements) for effect in registered if type(effect) is cls]
+                if values:
+                    declared[name] = set().union(*values)
+            elif cls.opponent_effect_elements:
                 declared[name] = set(cls.opponent_effect_elements)
         for key in DEFAULT_EFFECTS.attack_keys():
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
@@ -607,7 +615,12 @@ class G37Test(unittest.TestCase):
             "DamageThenSpecialPoisonOnHeads", "CoinPoisonAndBenchDamage",
             # v0.40（条件つきでワザを使えなくする持続する効果・入れ替えてからダメージ・相手の対戦ポケモンを山札にもどす。
             # docs/count-condition-switch-return-v0.40.md）
-            "AttackLockWhileSourceActive", "SwitchOpponentThenDamage", "ReturnOpponentActiveToDeck"]))
+            "AttackLockWhileSourceActive", "SwitchOpponentThenDamage", "ReturnOpponentActiveToDeck",
+            # v0.41（相手の特殊状態・「にげる」ことができない持続する効果・入れ替え・回復・ダメージカウンターをのせる／取り替える効果。
+            # docs/heal-counter-status-v0.41.md）
+            "DamageThenConfuseBoth", "DamageThenStatusByCoin", "DamageThenChosenStatusOnHeads", "CoinDamageAndConfuseElseSelfConfuse",
+            "DamageThenConfuseOnAnyHeads", "DamageThenSleepOnHeads", "DamageThenRetreatLockOnHeads", "SwitchOpponentActiveOnHeads",
+            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

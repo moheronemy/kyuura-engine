@@ -82,6 +82,10 @@ ALL_CODES = (
     # v0.40: SG1（docs/count-condition-switch-return-v0.40.md）。止まる場合（すごむの効果を与えたポケモンを突風でもどす答え・それしか選べない
     # 突風）と隣の止まらない場合（ほかの控えを選ぶ答え）は tests/test_count_condition_switch_return_v0_40.py の IntimidateTest
     "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
+    # v0.41: CX1（docs/heal-counter-status-v0.41.md）。止まる場合（相手が「ワザをうけない」状態・「とうめい」でダメージカウンターをのせる・取り替える
+    # 効果を受けない）と隣の止まらない場合（移す・取り替えるカウンターがない・数が同じ）は tests/test_heal_counter_status_v0_41.py の
+    # CounterShiftTest・SwapTest
+    "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
 )
 TURN = 7
 

@@ -383,6 +383,7 @@ POOL_KEYS = (
     "pool_v0_38",  # v0.38（控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚。docs/bench-switch-combined-v0.38.md）
     "pool_v0_39",  # v0.39（じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚。docs/selfdestruct-spread-count-v0.39.md）
     "pool_v0_40",  # v0.40（場の数・条件付きの効果・入れ替え・カードの移動の 15 枚。docs/count-condition-switch-return-v0.40.md）
+    "pool_v0_41",  # v0.41（回復・カウンターの移動・特殊状態の変化を中心とする 15 枚。docs/heal-counter-status-v0.41.md）
 )
 
 
