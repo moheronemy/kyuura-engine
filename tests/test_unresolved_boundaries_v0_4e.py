@@ -90,6 +90,12 @@ ALL_CODES = (
     # 場合（控えが 1 匹・手札が 1 枚）は tests/test_power_decisions_v0_42.py の SweetTrapTest・MatterExchangeTest
     "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH",
     "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
+    # v0.43: PW3・PW4（docs/declared-entry-powers-v0.43.md）。止まる場合（ようぶんきゅうしゅうの 0 枚・つけかえるカードがない・てしたをよぶのベンチに空きがない・
+    # 山札にたねポケモンがない・0 枚、しんかのひかりの山札に進化カードがない、つきのちからでわるいカイリューを重ねる）と隣の止まらない場合（1 枚・空きが 1 つ・
+    # 進化カードが 1 枚・ほかの進化カード）は tests/test_declared_entry_powers_v0_43.py の SoakUpTest・SummonMinionsTest・EvolutionaryLightTest・
+    # MoonPowerRouteTest
+    "UNRESOLVED_POWER_ZERO_CARDS",
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
 )
 TURN = 7
 

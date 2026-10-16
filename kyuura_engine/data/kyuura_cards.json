@@ -409,6 +409,17 @@
     "PMCG5-060",
     "PMCG5-065"
   ],
+  "pool_v0_43": [
+    "PMCG4-006",
+    "PMCG4-033",
+    "PMCG4-012",
+    "PMCG5-010",
+    "PMCG5-040",
+    "PMCG4-052",
+    "PMCG4-009",
+    "PMCG4-036",
+    "PMCG4-053"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG1-047",
@@ -24098,6 +24109,784 @@
         "series": "リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%94%E3%82%AF%E3%82%B7%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-006",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいクサイハナ",
+        "en": "Dark Gloom"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          44
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナゾノクサ",
+          "en": "Oddish"
+        },
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "くさいかふん",
+              "en": "Pollen Stench"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, the Defending Pokémon is now Confused; if tails, your Active Pokémon is now Confused. This power can't be used if Dark Gloom is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": "The Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-006",
+        "pokemontcg": [
+          "base5-36"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-006-warui-kusaihana/",
+      "jp_print": {
+        "level": 21,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-006-warui-kusaihana/"
+      }
+    },
+    {
+      "id": "PMCG4-033",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "スリープ",
+        "en": "Drowzee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          96
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "えんかくさいみん",
+              "en": "Long-Distance Hypnosis"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「ねむり」状態にする。「うら」なら、自分の対戦ポケモンを「ねむり」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, the Defending Pokémon is now Asleep; if tails, your Active Pokémon is now Asleep. This power can't be used if Drowzee is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あくむ",
+              "en": "Nightmare"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-033",
+        "pokemontcg": [
+          "base5-54"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-036-sleepe/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-036-sleepe/"
+      }
+    },
+    {
+      "id": "PMCG4-012",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヒトカゲ",
+        "en": "Charmander"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          4
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ほのおをもらう",
+              "en": "Gather Fire"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを1枚はがし、このカードにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may take 1 Fire Energy card attached to 1 of your other Pokémon and attach it to Charmander. This power can't be used if Charmander is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのしっぽ",
+              "en": "Fire Tail"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-012",
+        "pokemontcg": [
+          "base5-50"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-012-hitokage/",
+      "jp_print": {
+        "level": 9,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-012-hitokage/"
+      }
+    },
+    {
+      "id": "PMCG5-010",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのマダツボミ",
+        "en": "Erika's Bellsprout"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          69
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ようぶんきゅうしゅう",
+              "en": "Soak Up"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。自分の場のポケモンについている「草」エネルギーカードを最大2枚選び、はがしてこのカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may take up to 2 Grass Energy cards attached to your other Pokémon and attach them to Erika's Bellsprout. This power can't be used if Erika's Bellsprout is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "のびるつる",
+              "en": "Stretch Vine"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の控えポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": "Choose 1 of your opponent's Benched Pokémon, and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-010",
+        "pokemontcg": [
+          "gym2-38"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9E%E3%83%80%E3%83%84%E3%83%9C%E3%83%9FLV.13_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 13,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9E%E3%83%80%E3%83%84%E3%83%9C%E3%83%9FLV.13_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-040",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのレアコイル",
+        "en": "Lt. Surge's Magneton"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          82
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのコイル",
+          "en": "Lt. Surge's Magnemite"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーチャージ",
+              "en": "Energy Charge"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいる時だけ、使える。自分の控えポケモンについている「雷」エネルギーカードを好きなだけはがし、このカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "As often as you like during your turn (before your attack), if Lt. Surge's Magneton is your Active Pokémon, you may take 1 Lightning Energy card attached to 1 of your Pokémon and attach it to Lt. Surge's Magneton. This power can't be used if Lt. Surge's Magneton is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガショック",
+              "en": "Mega Shock"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分にも20ダメージ。",
+              "en": "Flip a coin. If tails, Lt. Surge's Magneton does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-040",
+        "pokemontcg": [
+          "gym1-8"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%AC%E3%82%A2%E3%82%B3%E3%82%A4%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 30,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%AC%E3%82%A2%E3%82%B3%E3%82%A4%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-052",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいハクリュー",
+        "en": "Dark Dragonair"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          148
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ミニリュウ",
+          "en": "Dratini"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "しんかのひかり",
+              "en": "Evolutionary Light"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回使える。自分の山札から進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may search your deck for an Evolution card. Show it to your opponent and put it into your hand. Shuffle your deck afterward. This power can't be used if Dark Dragonair is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽでつく",
+              "en": "Tail Strike"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 20 more damage; if tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-052",
+        "pokemontcg": [
+          "base5-33"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-052-warui-hakuryu/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-052-warui-hakuryu/"
+      }
+    },
+    {
+      "id": "PMCG4-009",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいゴルバット",
+        "en": "Dark Golbat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          42
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ズバット",
+          "en": "Zubat"
+        },
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "こっそりかみつく",
+              "en": "Sneak Attack"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": "When you play Dark Golbat from your hand, you may choose 1 of your opponent's Pokémon. If you do, Dark Golbat does 10 damage to that Pokémon. Apply Weakness and Resistance."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふらふらとぶ",
+              "en": "Flitter"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)20ダメージ。",
+              "en": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-009",
+        "pokemontcg": [
+          "base5-7",
+          "base5-24"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-004-warui-golbat/",
+      "jp_print": {
+        "level": 25,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-004-warui-golbat/"
+      }
+    },
+    {
+      "id": "PMCG4-036",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいヤドラン",
+        "en": "Dark Slowbro"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          80
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": "Slowpoke"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "つりあげる",
+              "en": "Reel In"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出した時、1度だけ使える。自分のトラッシュにあるポケモン(または進化)カードを最大3枚選び、相手プレイヤーに見せてから、手札に加える。",
+              "en": "When you play Dark Slowbro from your hand, choose up to 3 Basic Pokémon and/or Evolution cards from your discard pile and put them into your hand."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きまぐれこうげき",
+              "en": "Fickle Attack"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-036",
+        "pokemontcg": [
+          "base5-12",
+          "base5-29"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-035-warui-yadoran/",
+      "jp_print": {
+        "level": 27,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-035-warui-yadoran/"
+      }
+    },
+    {
+      "id": "PMCG4-053",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいカイリュー",
+        "en": "Dark Dragonite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          149
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいハクリュー",
+          "en": "Dark Dragonair"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "てしたをよぶ",
+              "en": "Summon Minions"
+            },
+            "text": {
+              "ja": "この力は、このカードが場に出た時に1度だけ使える。自分の山札からポケモンカード(進化カード以外)を最大2枚選び出し、自分のベンチに出す。その後、その山札をよく切る。",
+              "en": "When you play Dark Dragonite from your hand, search your deck for up to 2 Basic Pokémon and put them onto your Bench. Shuffle your deck afterward."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きょだいなしっぽ",
+              "en": "Giant Tail"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 70,
+              "modifier": null,
+              "display": "70"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-053",
+        "pokemontcg": [
+          "base5-5",
+          "base5-22"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-053-warui-kairyu/",
+      "jp_print": {
+        "level": 33,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-053-warui-kairyu/"
       }
     },
     {

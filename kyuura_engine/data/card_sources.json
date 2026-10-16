@@ -9181,6 +9181,418 @@
       ],
       "issues": [],
       "notes": "v0.42 で加えた。進化元のエリカのピッピ（PMCG5-060。名前で照らす）。ピクシー（PMCG2-044）とは別の名前のカード。ようせいのきせきは ReturnOwnPokemonToHandOnHeads（コインの「おもて」で自分の場のポケモンを好きなだけ選び、重なったカード・ついているカードとともに手札にもどす。きぜつではない。0 匹は HC5 と同じ問い）。ムーンインパクトは DamageOnly"
+    },
+    "PMCG4-006": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいクサイハナ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4006.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "006/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。進化元のナゾノクサ（PMCG2-002・PMCG4-003。名前で照らす）。クサイハナ（PMCG2-009）・エリカのクサイハナ（PMCG5-009）とは別の名前のカード。くさいかふん（特殊能力）は CoinConditionOnEitherActive（自分の番ごとに 1 回。コインの「おもて」で相手の、「うら」で自分の対戦ポケモンをこんらん。「うら」でも使ったことになる）。どくのこなは既存の PoisonOpponent"
+    },
+    "PMCG4-033": {
+      "basis": "kyuura_data",
+      "name_ja": "スリープ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4036.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "036/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。第1弾のスリープ（PMCG1-045）・ナツメのスリープ（PMCG6-045）とは別のカード（同じ名前の PMCG1-045 と取りちがえない）。サイトの一覧の番号は 036/065（kyuura の写しの id は PMCG4-033。HP 50・えんかくさいみん・あくむの版と照合した）。えんかくさいみん（特殊能力）は CoinConditionOnEitherActive（ねむり。くさいかふんと同じ処理）。あくむは既存の SleepOpponent"
+    },
+    "PMCG4-012": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒトカゲ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4012.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "012/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。第1弾のヒトカゲ（PMCG1-014）・カツラのヒトカゲ（PMCG6-031）とは別のカード（同じ名前の PMCG1-014 と取りちがえない）。ほのおをもらう（特殊能力）は TakeEnergyToSelf（自分の番ごとに 1 回。自分の場のほかのポケモンの基本「炎」エネルギーカードを 1 枚このカードにつけかえる。日本語の文面にない「ほかの」は加えず、このカードについているカードはつけかえにならないので選べないとした。エナジーバーンで「炎」になったほかのタイプのカードは HC10）。ほのおのしっぽは説明文なし"
+    },
+    "PMCG5-010": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのマダツボミ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1010.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "010/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。同じ収録の同じ名前の別のカード（PMCG5-005。サイトの一覧の 011/096。HP 50・へなへなタックル）と取りちがえない。HP 40・ようぶんきゅうしゅう・のびるつるの版（010/096）と照合した。ようぶんきゅうしゅう（特殊能力）は TakeEnergiesToSelf（自分の番ごとに 1 回。1 回の使用で最大 2 枚。0 枚・選べるカードがないときは PW3）。のびるつるは既存の ChooseOpponentBenchDamage（「相手の控えポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。」の書き方を受け付ける。エリカのモンジャラの「のびるつる」と同じ意味）"
+    },
+    "PMCG5-040": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのレアコイル",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1039.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "039/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。進化元のマチスのコイル（PMCG5-037・PMCG5-039。名前で照らす）。サイトの一覧の番号は 039/096（kyuura の写しの id は PMCG5-040。HP 70・エナジーチャージ・メガショックの版と照合した）。レアコイル（PMCG1-039・PMCG3-025）とは別の名前のカード。エナジーチャージ（特殊能力）は ChargeBenchEnergyToSelf（バトル場にいるときだけ。回数の制限は日本語の文面にないので加えない。控えの基本「雷」エネルギーカードを好きなだけ（1 枚以上）このカードにつけかえる）。メガショックは既存の SelfDamageOnTails(20)"
+    },
+    "PMCG4-052": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいハクリュー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4052.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "052/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。進化元のミニリュウ（PMCG1-065・PMCG4-051。名前で照らす）。ハクリュー（PMCG1-069）とは別の名前のカード。わるいカイリュー（PMCG4-053）の進化元。しんかのひかり（特殊能力）は SearchEvolutionCardToHand（自分の番ごとに 1 回。山札の進化カードを 1 枚見せて手札に加え、山札を切る。進化させるのではないので今進化できるカードにしぼらない。山札に進化カードがないときは PW3）。しっぽでつくは既存の CoinBonusDamage(20)"
+    },
+    "PMCG4-009": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいゴルバット",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4004.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "004/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.powers[0].text.ja",
+              "kyuura": "この力は、このカードを手札から出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "pcg_search": "この力は、このカードを手札から場に出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "affects_behavior": false,
+              "note": "サイトの説明は「手札から場に出した時」、kyuura は「手札から出した時」。わるいゴルバットは 1 進化ポケモンで、手札から出す経路はどちらも手札からの進化（ポケモン育て屋さんは 2 進化カードだけを重ねる）なので、使う機会は同じ（処理に影響しない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [
+        {
+          "question": "わるいゴルバットの［こっそりかみつく］の説明は「手札から出した時」（kyuura）か「手札から場に出した時」（pcg-search.com）か",
+          "fields": [
+            "pokemon.powers[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "処理に影響しない（どちらも手札から進化させたときだけ使う機会がある）。処理に使う文面は kyuura の印刷の文面。kyuura のデータは直さず、kyuura への報告事項にする"
+        }
+      ],
+      "notes": "v0.43 で加えた。進化元のズバット（PMCG3-002・PMCG4-002。名前で照らす）。ゴルバット（PMCG3-005）・タケシのゴルバット（PMCG5-008）・キョウのゴルバット（PMCG6-014）とは別の名前のカード。サイトの一覧の番号は 004/065（kyuura の写しの id は PMCG4-009）。こっそりかみつく（場に出たときの特殊能力）は DamageOpponentPokemonOnEntry（手札から出したときに 1 度だけ使える機会。相手の場のポケモン 1 匹に特殊能力によるダメージ 10。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けない」状態は計算しない。きぜつさせうる）。処理に使う文面は kyuura の印刷の文面（「手札から出した時」）。ふらふらとぶは新しい型 ChooseOpponentPokemonDamage（相手の場のポケモンを 1 匹選び、弱点・抵抗力に関係なく 20）"
+    },
+    "PMCG4-036": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいヤドラン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4035.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "035/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。進化元のヤドン（PMCG3-027・PMCG4-032。名前で照らす。ナツメのヤドン PMCG6-044 からは進化できない）。ヤドラン（PMCG3-028）・ナツメのヤドラン（PMCG6-048）とは別の名前のカード。サイトの一覧の番号は 035/065（kyuura の写しの id は PMCG4-036）。つりあげる（場に出たときの特殊能力）は RecoverPokemonFromDiscardOnEntry（手札から場に出したときに 1 度だけ使える機会。トラッシュのポケモンのカードを最大 3 枚見せて手札に加える。同じ名前の別のカードも選べる）。きまぐれこうげきは既存の FailOnTailsDamage"
+    },
+    "PMCG4-053": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいカイリュー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4053.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "053/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.43 で加えた。進化元のわるいハクリュー（PMCG4-052。名前で照らす）。カイリュー（PMCG3-043）とは別の名前のカード。てしたをよぶ（場に出たときの特殊能力）は BenchBasicsFromDeckOnEntry（場に出たとき（手札から進化・ポケモン育て屋さん）に 1 度だけ使える機会。山札のたねポケモンを最大 2 枚、手札を通さずにベンチに出して山札を切る。0 枚になるときは PW3。つきのちからで山札から重ねたときはワザの最中なので PW4）。きょだいなしっぽは既存の FailOnTailsDamage"
     }
   }
 }

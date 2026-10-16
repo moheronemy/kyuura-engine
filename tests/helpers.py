@@ -356,6 +356,18 @@ ERIKAS_CLEFAIRY = "PMCG5-060"  # エリカのピッピ（リーダーズスタ�
 ERIKAS_CLEFABLE = "PMCG5-065"  # エリカのピクシー（エリカのピッピから進化。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 2。ようせいのきせき（無）・ムーンインパクト（無無無）30）
 V0_42_POKEMON = (SABRINAS_JYNX, VILEPLUME, SLOWBRO, GENGAR, ERIKAS_VILEPLUME, SABRINAS_ABRA, SABRINAS_KADABRA, DRAGONITE, ERIKAS_VICTREEBEL, DARK_KADABRA,
                  DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE)  # 写しの組 pool_v0_42 の並び
+# v0.43（docs/declared-entry-powers-v0.43.md）: 宣言して使う特殊能力（6 枚）と、場に出たときに使う特殊能力（3 枚）を持つ 9 枚（kyuura データの採用）
+DARK_GLOOM = "PMCG4-006"  # わるいクサイハナ（ロケット団。ナゾノクサから進化。HP 50・草・弱点 炎・にげる 2。［くさいかふん］・どくのこな（草草）10）。GLOOM・ERIKAS_GLOOM とは別の名前
+ROCKET_DROWZEE = "PMCG4-033"  # スリープ（ロケット団。HP 50・超・弱点 超・にげる 1。［えんかくさいみん］・あくむ（超無）10）。DROWZEE（第1弾）と同じ名前の別のカード
+ROCKET_CHARMANDER = "PMCG4-012"  # ヒトカゲ（ロケット団。HP 40・炎・弱点 水・にげる 1。［ほのおをもらう］・ほのおのしっぽ（炎）20）。CHARMANDER（第1弾）と同じ名前の別のカード
+ERIKAS_BELLSPROUT_40 = "PMCG5-010"  # エリカのマダツボミ（リーダーズスタジアム。HP 40・草・弱点 炎・にげる 1。［ようぶんきゅうしゅう］・のびるつる（草））。ERIKAS_BELLSPROUT と同じ名前の別のカード
+LT_SURGES_MAGNETON = "PMCG5-040"  # マチスのレアコイル（マチスのコイルから進化。HP 70・雷・弱点 闘・にげる 2。［エナジーチャージ］・メガショック（雷雷雷無）50）
+DARK_DRAGONAIR = "PMCG4-052"  # わるいハクリュー（ロケット団。ミニリュウから進化。HP 60・無色・抵抗力 超 -30・にげる 2。［しんかのひかり］・しっぽでつく（無無無）20+）
+DARK_GOLBAT = "PMCG4-009"  # わるいゴルバット（ロケット団。ズバットから進化。HP 50・草・弱点 超・抵抗力 闘 -30・にげる 0。［こっそりかみつく］・ふらふらとぶ（草草））
+DARK_SLOWBRO = "PMCG4-036"  # わるいヤドラン（ロケット団。ヤドンから進化。HP 60・超・弱点 超・にげる 2。［つりあげる］・きまぐれこうげき（超超）40）
+DARK_DRAGONITE = "PMCG4-053"  # わるいカイリュー（ロケット団。わるいハクリューから進化。HP 70・無色・抵抗力 闘 -30・にげる 2。［てしたをよぶ］・きょだいなしっぽ（無無無無）70）
+V0_43_POKEMON = (DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON, DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO,
+                 DARK_DRAGONITE)  # 写しの組 pool_v0_43 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -872,6 +884,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenOptionalSelfSwitch,  # わるいフーディンの「テレポートブラスト」
     _effects.EvolveFromDeckOnHeads,  # エリカのピッピの「つきのちから」
     _effects.ReturnOwnPokemonToHandOnHeads,  # エリカのピクシーの「ようせいのきせき」
+) + (
+    # v0.43（docs/declared-entry-powers-v0.43.md）
+    _effects.ChooseOpponentPokemonDamage,  # わるいゴルバットの「ふらふらとぶ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

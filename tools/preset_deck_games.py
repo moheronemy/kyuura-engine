@@ -299,9 +299,11 @@ TRAINER_EVENTS = {
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
     POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24
-    # v0.25: 進化（と、進化で消える特殊状態・持続する効果・にげるの失敗の記録）だけ
+    # v0.25: 進化（と、進化で消える特殊状態・持続する効果・にげるの失敗の記録）だけ。v0.43: 進化させた 2 進化ポケモンの場に出たときの特殊能力（わるいカイリューの
+    # ［てしたをよぶ］）の使う機会の答え（使わない・宣言）と、その処理（山札からベンチに出す・山札を切る）
     POKEMON_BREEDER: {"evolve": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
-                      "retreat_failure_cleared": "user"},
+                      "retreat_failure_cleared": "user", "entry_power_declined": "user", "pokemon_power": "user", "bench_from_deck": "user",
+                      "shuffle": "user"},
 }
 
 

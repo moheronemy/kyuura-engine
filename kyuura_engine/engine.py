@@ -49,6 +49,7 @@ from .commands import (
 from .decisions import (
     DAMAGE_STEP_ORDER,
     DECISION_PHASES,
+    ENTRY_POWER,
     KO_PREVENTION,
     POST_KNOCKOUT_POWER,
     PROMOTE_ACTIVE,
@@ -58,11 +59,14 @@ from .decisions import (
 from .effects import (
     AttackKey,
     AttackUse,
+    EntryPower,
     PowerKey,
     PowerUse,
     ReturnToHandOnKnockOut,
     TrainerUse,
     after_energy_attached,
+    applicable_entry_power,
+    offer_entry_power,
     ko_prevention_power,
     ko_prevention_suppressors,
 )
@@ -486,6 +490,9 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
     # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
     place_evolution_card(state, cmd.player, target, cmd.card)
+    # v0.43: 手札から出した（場に出た）ときに 1 度だけ使える特殊能力（``effects.EntryPower``）があれば、使うかを持ち主に聞く
+    # （決定 ENTRY_POWER。再開先 "power"。docs/declared-entry-powers-v0.43.md 3 章）
+    offer_entry_power(state, cmd.player, target, from_hand=True)
 
 
 def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
@@ -743,13 +750,24 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
 
 def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context) -> None:
     """特殊能力の処理（宣言・決定への答え）のあと（v0.42）: 決定を出していれば待つ（再開先 ``"power"`` だけ）。出していなければ、処理のあとの場を整える
-    （``resolution.after_power``。きぜつ・空いたバトル場。なければ番のプレイヤーの ``Phase.MAIN``）。"""
+    （``resolution.after_power``。きぜつ・空いたバトル場。なければ番のプレイヤーの ``Phase.MAIN``）。
+
+    v0.43: トレーナーの効果の途中で場に出たポケモンの、場に出たときの特殊能力（``use.return_to``。1 進化を飛ばして進化させるトレーナーで場に出た 2 進化ポケモン）
+    なら、そのあとトレーナーの処理（使い終えたカードをトラッシュ）にもどる。特殊能力の処理のあとにきぜつ・バトル場に出す決定が来る組み合わせは今の対応カードでは
+    起こらない（そのトレーナーで場に出る、場に出たときの特殊能力を持つカードは、きぜつさせない特殊能力だけ）ので、来たらエンジンの不具合として止める。"""
     if state.decision is not None:
         if state.decision.resume != "power":
             raise RuntimeError(f"特殊能力 {use.key} の処理の途中で、再開先 {state.decision.resume!r} の決定を出した（エンジンの不具合）")
         return
     effect = state.effects.power_entry(use.key.card_id, use.key.power_index).effect
     resolution.after_power(state, context, knock_outs=effect.may_knock_out)
+    if use.return_to is not None:
+        if state.decision is not None:
+            raise RuntimeError(f"トレーナーの効果の途中で使った特殊能力 {use.key} のあとに、決定（{state.decision.kind}）が来た（今の対応カードでは起こらない。エンジンの不具合）")
+        kind, player, card, card_id = use.return_to
+        if kind != "trainer" or state.trainer_in_use != TrainerInUse(player, card):
+            raise RuntimeError(f"特殊能力 {use.key} のもどる先 {use.return_to!r} が、使用中のトレーナー {state.trainer_in_use} ではない（エンジンの不具合）")
+        _finish_trainer(state, state.effects.trainer_entry(card_id).effect)
 
 
 def _resume_power(state: GameState, decision, choices: tuple[int, ...], context: resolution.Context) -> None:
@@ -759,8 +777,21 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
     effect = state.effects.power_effect(definition.id, definition.powers[power_index])
     if effect is None:
         raise RuntimeError(f"特殊能力の決定の続きの特殊能力 {card_id}@power{power_index} が登録されていない（不変条件で拒否するはず。エンジンの不具合）")
-    use = PowerUse(player, pokemon_id, PowerKey(card_id, power_index))
+    use = PowerUse(player, pokemon_id, PowerKey(card_id, power_index), return_to=decision.context_value("return_to"))
     state.phase = Phase.MAIN
+    if decision.kind == ENTRY_POWER:
+        # v0.43: 場に出たときに使える特殊能力の使う機会。選ばなければ使わない（ログ entry_power_declined。もう使えない）。選んだら宣言して（ログ pokemon_power の
+        # entry）、説明にしたがって処理する（そのあとの決定・使用後の処理は宣言する特殊能力と同じ）
+        _, pokemon = state.find_pokemon(pokemon_id)
+        name = definition.powers[power_index].name_ja
+        if not choices:
+            state.add_event("entry_power_declined", player=player, pokemon=pokemon.card, pokemon_id=pokemon_id, power=name, power_index=power_index)
+        else:
+            state.add_event("pokemon_power", player=player, pokemon=pokemon.card, pokemon_id=pokemon_id, power=name, power_index=power_index,
+                            entry=decision.context_value("entry"))
+            effect.resolve(state, use)
+        _after_power_step(state, use, context)
+        return
     effect.resume(state, use, decision, choices)
     _after_power_step(state, use, context)
 
@@ -1676,6 +1707,9 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
     if not (isinstance(use, tuple) and len(use) == 4):
         return [f"特殊能力の決定の続きの情報 {use!r} が正しくない"]
     player, pokemon_id, card_id, power_index = use
+    return_to = d.context_value("return_to")
+    if return_to is not None and not (isinstance(return_to, tuple) and len(return_to) == 4 and return_to[0] == "trainer"):
+        return [f"特殊能力の決定のもどる先 {return_to!r} が正しくない"]
     problems = []
     if player != state.current_player:
         problems.append(f"特殊能力の決定の続きのプレイヤー {player!r} が、番のプレイヤー {state.current_player} ではない")
@@ -1691,13 +1725,53 @@ def _power_decision_problems(state: GameState, d) -> list[str]:
     effect = state.effects.power_effect(definition.id, definition.powers[power_index])
     if effect is None or not effect.declared:
         return problems + [f"特殊能力の決定の続きの特殊能力 {card_id}@power{power_index} が、宣言して使う特殊能力として登録されていない"]
+    if d.kind == ENTRY_POWER:
+        return problems + _entry_power_decision_problems(state, d, pokemon, effect, PowerUse(player, pokemon_id, PowerKey(card_id, power_index),
+                                                                                              return_to=return_to))
+    if return_to is not None and not isinstance(effect, EntryPower):
+        problems.append(f"特殊能力 {card_id}@power{power_index} は場に出たときに使う特殊能力ではないのに、もどる先 {return_to!r} がある")
     last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack")), None)
     if last is None or last["kind"] != "pokemon_power" or (last.get("pokemon_id"), last.get("power_index")) != (pokemon_id, power_index):
         problems.append(f"特殊能力の決定（ポケモン {pokemon_id}）の前の、今の番の最後の宣言が、この特殊能力の宣言ではない")
     if effect.once_per_turn and (pokemon_id, power_index) not in state.power_uses_this_turn:
         problems.append(f"「自分の番ごとに1回」の特殊能力の決定（ポケモン {pokemon_id}）なのに、使った記録がない")
+    if isinstance(effect, EntryPower) and last is not None and last["kind"] == "pokemon_power" and "entry" not in last:
+        problems.append(f"場に出たときに使う特殊能力の決定（ポケモン {pokemon_id}）の前の宣言が、使う機会の答えの宣言（entry）ではない")
     if not problems:
-        problems.extend(effect.decision_problems(state, PowerUse(player, pokemon_id, PowerKey(card_id, power_index)), d))
+        problems.extend(effect.decision_problems(state, PowerUse(player, pokemon_id, PowerKey(card_id, power_index), return_to=return_to), d))
+    return problems
+
+
+def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: PowerUse) -> list[str]:
+    """場に出たときに使える特殊能力の使う機会の決定（v0.43。``ENTRY_POWER``）の整合性。
+
+    - 実装が ``EntryPower`` で、今の番のログの最後の宣言・進化（``pokemon_power``・``attack``・``evolve``）が、このポケモンに今のいちばん上のカードを重ねた進化
+      （機会は場に出したすぐあと。答える前にほかのことをしない。ワザのあとではない）
+    - 経路（``context`` の ``"entry"``）が進化のログと合う（手札から: ログに ``source_zone`` がない）。経路で機会があり、かがくへんかガスに消されていない
+      （``effects.applicable_entry_power``）
+    - 決定するのは持ち主、選べるものはそのポケモンの番号 1 つ、0〜1 個。使うことを選ぶと止める場合（``accept_problem``）と ``unresolved_choices`` が合う
+    - もどる先（``"return_to"``）があるのは、トレーナーの効果で進化したとき（進化のログの ``trainer_card``）だけ
+    """
+    problems = []
+    if not isinstance(effect, EntryPower):
+        return [f"使う機会の決定（ポケモン {use.pokemon_id}）の特殊能力 {use.key} が、場に出たときに使う特殊能力ではない"]
+    last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "evolve")), None)
+    if last is None or last["kind"] != "evolve" or last.get("pokemon_id") != use.pokemon_id or last.get("to_card") != pokemon.card:
+        return problems + [f"使う機会の決定（ポケモン {use.pokemon_id}）の前の、今の番の最後の宣言・進化が、このポケモンの進化ではない"]
+    route = d.context_value("entry")
+    from_hand = "source_zone" not in last
+    if route != ("hand" if from_hand else "play"):
+        problems.append(f"使う機会の決定の経路 {route!r} が、進化のログ（{'手札から' if from_hand else last.get('source_zone')}）と合わない")
+    if applicable_entry_power(state, pokemon.card, from_hand=from_hand) is None:
+        problems.append(f"使う機会の決定（ポケモン {use.pokemon_id}）の特殊能力 {use.key} に、この経路で使う機会がない（経路・かがくへんかガス）")
+    if (d.player, d.options, d.min_choices, d.max_choices) != (use.player, (use.pokemon_id,), 0, 1):
+        problems.append(f"使う機会の決定の形（{d.player}・{d.options}・{d.min_choices}〜{d.max_choices}）が、持ち主 {use.player}・({use.pokemon_id},)・0〜1 ではない")
+    problem = effect.accept_problem(state, use)
+    expected = (use.pokemon_id,) if problem is not None else ()
+    if tuple(d.context_value("unresolved_choices", ())) != expected or (problem is not None and d.context_value("unresolved_code") != problem.code):
+        problems.append(f"使う機会の決定の、選ぶと止める選択 {d.context_value('unresolved_choices', ())} が {expected} ではない")
+    if (use.return_to is not None) != ("trainer_card" in last):
+        problems.append(f"使う機会の決定のもどる先 {use.return_to!r} が、進化のログ（トレーナー {last.get('trainer_card')!r}）と合わない")
     return problems
 
 
@@ -1915,7 +1989,9 @@ def _decision_problems(state: GameState) -> list[str]:
     if unresolved:
         if not set(unresolved) <= set(d.options):
             problems.append(f"扱いを決められない選択 {unresolved} が、選べるもの {d.options} にない")
-        if len(set(d.options) - set(unresolved)) < max(d.min_choices, 1):
+        # v0.43: 場に出たときの特殊能力の使う機会（ENTRY_POWER）は、使わない（0 個）がいつも答えになる（使うことを選ぶと止める場合も。_resume_power）
+        needed = 0 if d.kind == ENTRY_POWER else max(d.min_choices, 1)
+        if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
     return problems
 
@@ -2178,9 +2254,18 @@ def _trainer_problems(state: GameState) -> list[str]:
     used = state.trainer_in_use
     d = state.decision
     waiting = d is not None and d.resume == "trainer"
+    # v0.43: トレーナーの効果の途中で場に出たポケモンの特殊能力の決定（再開先 "power"。もどる先 "return_to" がこのトレーナー）を待つ間も、使用中のまま
+    returning = d is not None and d.resume == "power" and d.context_value("return_to") is not None
     if used is None:
         if waiting:
             problems.append("トレーナーの決定を待っているのに、使用中のトレーナーがない")
+        if returning:
+            problems.append(f"特殊能力の決定のもどる先 {d.context_value('return_to')!r} があるのに、使用中のトレーナーがない")
+        return problems
+    if returning:
+        expected = ("trainer", used.player, used.card, state.card_def(used.card).id)
+        if tuple(d.context_value("return_to")) != expected:
+            problems.append(f"特殊能力の決定のもどる先 {d.context_value('return_to')!r} が、使用中のトレーナー {expected} と違う")
         return problems
     if not waiting:
         problems.append(f"使用中のトレーナー {used.card} があるのに、その効果の決定を待っていない")

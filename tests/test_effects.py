@@ -87,6 +87,10 @@ V0_41_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-009", "PMCG2-016",
 V0_42_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG6-052", "PMCG4-035", "PMCG3-017") for index in (0, 1)] + [
     AttackKey(card, 0) for card in ("PMCG2-014", "PMCG3-028", "PMCG3-031", "PMCG5-014", "PMCG6-043", "PMCG6-047", "PMCG3-043", "PMCG4-034",
                                     "PMCG5-060", "PMCG5-065")]
+# v0.43: 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚（docs/declared-entry-powers-v0.43.md）の説明文のあるワザ 8（ロケット団のヒトカゲの
+# 「ほのおのしっぽ」は説明文なし）
+V0_43_WITH_TEXT = [AttackKey(card, 0) for card in ("PMCG4-006", "PMCG4-033", "PMCG5-010", "PMCG5-040", "PMCG4-052", "PMCG4-009", "PMCG4-036",
+                                                   "PMCG4-053")]
 
 
 class RecordingEffect(AttackEffect):
@@ -236,7 +240,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
-                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT))
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -373,7 +377,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
         # + 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚のワザ 29（v0.41。docs/heal-counter-status-v0.41.md）
         # + 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚のワザ 21（v0.42。docs/power-decisions-v0.42.md）
-        self.assertEqual(len(keys), 446)
+        # + 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚のワザ 9（v0.43。docs/declared-entry-powers-v0.43.md）
+        self.assertEqual(len(keys), 455)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -385,12 +390,16 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた。v0.31 でリザードンの「エナジーバーン」（PMCG1-021）・カツラのロコンの
         # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）。v0.42 で
         # ラフレシア・メノクラゲ・ヤドラン・ゲンガー・カイリュー・わるいユンゲラー・エリカのラフレシア・エリカのウツボットの 8 つを加えた
-        # （docs/power-decisions-v0.42.md）
+        # （docs/power-decisions-v0.42.md）。v0.43 でわるいクサイハナ・わるいゴルバット・ロケット団のヒトカゲ・ロケット団のスリープ・わるいヤドラン・
+        # わるいハクリュー・わるいカイリュー・エリカのマダツボミ（PMCG5-010）・マチスのレアコイルの 9 つを加えた（docs/declared-entry-powers-v0.43.md）
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
                                   PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
                                   PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0), PowerKey("PMCG3-043", 0),
-                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-020", 0),
-                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0), PowerKey("PMCG6-073", 0)))
+                                  PowerKey("PMCG4-006", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
+                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-052", 0), PowerKey("PMCG4-053", 0),
+                                  PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG5-040", 0), PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0),
+                                  PowerKey("PMCG6-073", 0)))
 
 
 if __name__ == "__main__":

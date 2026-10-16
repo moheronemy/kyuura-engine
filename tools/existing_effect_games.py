@@ -101,6 +101,16 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   Z23・HC3・HC4）・使うための条件（ゆうわくの ``NO_OPPONENT_BENCH``）・きあいずつきの ``ATTACK_LOCKED`` で拒否されたワザは、場から確かめてから別の操作を続ける
   （``V031_STOPS``）。v0.41 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに v0.41 のカードは入っていない
   ので、その組の結果は変わらない（``P31`` の組の決定・停止の確かめは v0.31 と同じ）。
+- v0.43（``--batch v0.43``。``PAIRINGS_V0_43``。docs/declared-entry-powers-v0.43.md）: ``G43``（草）: ナゾノクサ（第2弾・ロケット団）2 枚ずつ・わるいクサイハナ 3・
+  ズバット（化石の秘密・ロケット団）2 枚ずつ・わるいゴルバット 3・エリカのマダツボミ（PMCG5-010）4・エリカのウツドン 2、トレーナー 12、草エネルギー 28。``R43``（炎・超）:
+  ロケット団のヒトカゲ 4・リザード 2・ロケット団のスリープ 4・わるいスリーパー 2・ロケット団のヤドン 4・わるいヤドラン 3、トレーナー 12、炎エネルギー 15・超エネルギー 14。
+  ``L43``（雷・無色）: マチスのコイル（PMCG5-037・PMCG5-039）2 枚ずつ・マチスのレアコイル 3・ロケット団のミニリュウ 4・わるいハクリュー 3・わるいカイリュー 2・
+  ポケモン育て屋さん 2、トレーナー 12、雷エネルギー 30。組は ``G43`` 対 ``R43``・``R43`` 対 ``L43``・``L43`` 対 ``G43``・``G43`` 対 ``P31``（ピッピ・ピクシー・
+  カスミのコダックが v0.43 のワザを自分のワザとして使う）。v0.43 の宣言する特殊能力は ``_v043_power`` で使い（くさいかふんは相手の対戦ポケモンがこんらんでないとき、
+  えんかくさいみんはどちらの対戦ポケモンもねむりでないとき（両方のねむりはポケモンチェックの既知の停止 ``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`` になる）、
+  エナジーチャージは番ごとに 1 度だけ試す）、決定は ``_v043_decision`` で答える（場に出たときの特殊能力の使う機会は 4 回に 1 回、使うことを選ぶと止める（PW3）ときは
+  いつも使わない。v0.43 の決定は元の手順より先に答える）。v0.43 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに
+  v0.43 のカードは入っていないので、その組の結果は変わらない（``P31`` の組の決定・停止の確かめは v0.31 と同じ）。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -134,8 +144,8 @@ from kyuura_engine import (  # noqa: E402
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.decisions import (  # noqa: E402
-    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, FORCED_SWITCH, REMOVE_COUNTERS, RETURN_ENERGY,
-    SEARCH_DECK, SELECT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
+    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, ENTRY_POWER, FORCED_SWITCH, MOVE_ENERGY, RECOVER_POKEMON,
+    REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
 )
 from kyuura_engine.effects import (  # noqa: E402
     AttackKey as E_AttackKey, AttackUse, preview_attack_damage, working_counterattack_power, working_evasion_power,
@@ -248,7 +258,12 @@ DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE = "PMCG4-
 V0_42 = (SABRINAS_JYNX, VILEPLUME, SLOWBRO, GENGAR, ERIKAS_VILEPLUME, SABRINAS_ABRA, SABRINAS_KADABRA, DRAGONITE, ERIKAS_VICTREEBEL, DARK_KADABRA,
          DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE)
 ABRA, GASTLY, HAUNTER = "PMCG1-043", "PMCG3-029", "PMCG3-030"
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42  # ワザの選び方を重ね、動きを数えるカード
+# v0.43（宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚。docs/declared-entry-powers-v0.43.md）。進化元はナゾノクサ（第2弾・ロケット団）・ズバット（化石の秘密・
+# ロケット団）・ヤドン（ロケット団）・ミニリュウ（ロケット団）・マチスのコイル（v0.29・v0.33）
+DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON = "PMCG4-006", "PMCG4-033", "PMCG4-012", "PMCG5-010", "PMCG5-040"
+DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO, DARK_DRAGONITE = "PMCG4-052", "PMCG4-009", "PMCG4-036", "PMCG4-053"
+V0_43 = (DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON, DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO, DARK_DRAGONITE)
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -361,6 +376,18 @@ DECKS = {
     # v0.42: 水・無色（化石の秘密・第1弾・リーダーズスタジアム）。おくびょう（メノクラゲ）・かけつける（カイリュー）
     "W42": ((TENTACOOL, 4), (TENTACRUEL, 3), (DRATINI, 4), (DRAGONAIR, 3), (DRAGONITE, 2), (ERIKAS_CLEFAIRY, 4), (ERIKAS_CLEFABLE, 3), *TRAINERS,
             (WATER, 25)),
+    # v0.43: 草（第2弾・ロケット団・化石の秘密・リーダーズスタジアム）。くさいかふん（わるいクサイハナ）・こっそりかみつく（わるいゴルバット）・ようぶんきゅうしゅう
+    # （エリカのマダツボミ（PMCG5-010））。ナゾノクサ・ズバットは同じ名前の 2 つの版を 2 枚ずつ
+    "G43": ((ODDISH, 2), (ROCKET_ODDISH, 2), (DARK_GLOOM, 3), (FOSSIL_ZUBAT, 2), (ROCKET_ZUBAT, 2), (DARK_GOLBAT, 3), (ERIKAS_BELLSPROUT_40, 4),
+            (ERIKAS_WEEPINBELL, 2), *TRAINERS, (GRASS, 28)),
+    # v0.43: 炎・超（ロケット団・第1弾）。ほのおをもらう（ロケット団のヒトカゲ）・えんかくさいみん（ロケット団のスリープ）・つりあげる（わるいヤドラン）。リザード・わるい
+    # スリーパーはヒトカゲ・スリープ（名前）から進化する
+    "R43": ((ROCKET_CHARMANDER, 4), (CHARMELEON, 2), (ROCKET_DROWZEE, 4), (DARK_HYPNO, 2), (ROCKET_SLOWPOKE, 4), (DARK_SLOWBRO, 3), *TRAINERS,
+            (FIRE, 15), (PSYCHIC, 14)),
+    # v0.43: 雷・無色（リーダーズスタジアム・ロケット団）。エナジーチャージ（マチスのレアコイル）・しんかのひかり（わるいハクリュー）・てしたをよぶ（わるいカイリュー。
+    # 手札からの進化とポケモン育て屋さん）。マチスのコイルは同じ名前の 2 つの版を 2 枚ずつ
+    "L43": ((LT_SURGES_MAGNEMITE, 2), (LT_SURGES_MAGNEMITE_30, 2), (LT_SURGES_MAGNETON, 3), (ROCKET_DRATINI, 4), (DARK_DRAGONAIR, 3), (DARK_DRAGONITE, 2),
+            (driver.POKEMON_BREEDER, 2), *TRAINERS, (LIGHTNING, 30)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -381,9 +408,12 @@ PAIRINGS_V0_40 = (("G40", "N40"), ("N40", "F40"), ("F40", "P40"), ("P40", "G40")
 PAIRINGS_V0_41 = (("G41", "P41"), ("P41", "C41"), ("C41", "R41"), ("R41", "G41"), ("G41", "P31"), ("R41", "F37"))
 # v0.42: D42 対 P31（ピッピ・ピクシー・カスミのコダックが、エネループ・ライフダウン・テレポートブラスト・マインドショックなどを自分のワザとして使う）
 PAIRINGS_V0_42 = (("G42", "P42"), ("P42", "D42"), ("D42", "W42"), ("W42", "G42"), ("D42", "P31"))
+# v0.43: G43 対 P31（ピッピ・ピクシー・カスミのコダックが、ふらふらとぶ・のびるつる・どくのこななどを自分のワザとして使う）
+PAIRINGS_V0_43 = (("G43", "R43"), ("R43", "L43"), ("L43", "G43"), ("G43", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
-           "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42}
+           "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
+           "v0.43": PAIRINGS_V0_43}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -412,6 +442,9 @@ V042_RESULT_EVENTS = ("return_energy_to_hand", "place_damage_counters", "evolve"
 # v0.42: v0.42 のカードの特殊能力のログ（使ったカード・自動的にはたらいたカードで数える。宣言 pokemon_power も）
 V042_POWER_EVENTS = ("pokemon_power", "power_heal", "move_damage_counter", "switch", "discard_from_hand", "return_in_play_to_hand", "power_confusion",
                      "power_confusion_skipped")
+# v0.43: v0.43 のカードの特殊能力のログ（使ったカードで数える。``power`` か ``effect`` に特殊能力の識別子があるもの）
+V043_POWER_EVENTS = ("special_condition", "move_energy", "reveal_from_deck", "shuffle", "bench_from_deck", "recover_pokemon", "recover_pokemon_none",
+                     "power_damage")
 
 
 def _attacker(state, command):
@@ -882,6 +915,125 @@ def _v042_power(state, tried, counts):
     return None
 
 
+def _v043_decision(state, counts):
+    """v0.43 のカードのワザ・特殊能力の決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - 場に出たときの特殊能力の使う機会（``ENTRY_POWER``）: 使う（4 回に 1 回は使わない）。使うことを選ぶと止める場合（PW3）は使わない
+    - こっそりかみつく: 残り HP のいちばん少ない相手のポケモン。つりあげる: 選べるだけ（最大 3 枚）。てしたをよぶ: 選べるだけ・1 枚 を順に
+    - ようぶんきゅうしゅう: 1 枚・2 枚（選べるだけ）を順に。エナジーチャージ: 選べるものすべて。しんかのひかり: 1 つ目
+    - ふらふらとぶ: 相手の対戦ポケモン・残り HP のいちばん少ない控え を順に（控えがいなければ対戦ポケモン）。のびるつる: 残り HP のいちばん少ない控え"""
+    d = state.decision
+    if d is None or d.resume not in ("attack", "power"):
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_43:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    card_id = use[2]
+
+    def answer(choices, label):
+        counts[f"v043_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    def remaining(pid):
+        pokemon = state.find_pokemon(pid)[1]
+        return state.card_def(pokemon.card).hp - pokemon.damage
+
+    if d.kind == ENTRY_POWER:
+        if not options:
+            return answer((), f"entry_declined_unresolved_{d.context_value('unresolved_code')}")
+        decline = counts["v043_entry_seen"] % 4 == 3
+        counts["v043_entry_seen"] += 1
+        return answer(() if decline else tuple(options), f"entry_{'declined' if decline else 'used'}_{card_id}")
+    if d.resume == "power":
+        if card_id == DARK_GOLBAT and d.kind == SELECT_POKEMON:
+            choice = min(options, key=lambda o: (remaining(o), options.index(o)))
+            return answer((choice,), f"sneak_attack_{'ko' if remaining(choice) <= 10 else 'damage'}")
+        if card_id == DARK_SLOWBRO and d.kind == RECOVER_POKEMON:
+            return answer(tuple(options[:d.max_choices]), f"reel_in_{min(len(options), d.max_choices)}")
+        if card_id == DARK_DRAGONITE and d.kind == BENCH_FROM_DECK:
+            count = d.max_choices if counts["v043_summon"] % 2 == 0 else 1
+            counts["v043_summon"] += 1
+            return answer(tuple(options[:count]), f"summon_{count}")
+        if card_id == ERIKAS_BELLSPROUT_40 and d.kind == MOVE_ENERGY:
+            count = min(d.max_choices, 1 + counts["v043_soak"] % 2)
+            counts["v043_soak"] += 1
+            return answer(tuple(options[:count]), f"soak_up_{count}")
+        if card_id == LT_SURGES_MAGNETON and d.kind == MOVE_ENERGY:
+            return answer(tuple(options), f"energy_charge_{len(options)}")
+        if card_id == DARK_DRAGONAIR and d.kind == SEARCH_DECK:
+            return answer(tuple(options[:1]), "evolutionary_light")
+        return None
+    if card_id == DARK_GOLBAT and d.kind == SELECT_POKEMON:
+        active = state.players[1 - d.player].active.pokemon_id
+        bench = [o for o in options if o != active]
+        active_turn = counts["v043_flitter"] % 2 == 0 or not bench
+        counts["v043_flitter"] += 1
+        choice = active if active_turn and active in options else min(bench, key=lambda o: (remaining(o), bench.index(o)))
+        return answer((choice,), f"flitter_{'active' if choice == active else 'bench'}")
+    if card_id == ERIKAS_BELLSPROUT_40 and d.kind == SELECT_POKEMON:
+        return answer((min(options, key=lambda o: (remaining(o), options.index(o))),), "stretch_vine")
+    return None
+
+
+def _v043_power(state, tried, counts):
+    """v0.43 の宣言する特殊能力を使う手順（使えない特殊状態・この番に使ったもの・原典で決められない場合（PW3・HC10）は使わない。拒否を起こさない）:
+
+    - くさいかふん（わるいクサイハナ）: この番にまだ使っておらず、相手の対戦ポケモンがこんらんでなければ。えんかくさいみん（ロケット団のスリープ）: この番にまだ使って
+      おらず、どちらの対戦ポケモンもねむりでなければ（コインの「うら」なら自分の対戦ポケモンがその状態になる）
+    - ほのおをもらう（ロケット団のヒトカゲ）: ほかの自分のポケモンに基本「炎」エネルギーカード（エナジーバーンで「炎」になったものでない）があれば、その 1 枚目
+    - ようぶんきゅうしゅう（エリカのマダツボミ）: ほかの自分のポケモンに基本「草」エネルギーカードがあれば
+    - エナジーチャージ（バトル場のマチスのレアコイル）: 控えに基本「雷」エネルギーカードがあれば（回数の制限はないが、この手順は 1 番に 1 回）
+    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば"""
+    player = state.current_player
+    p = state.players[player]
+
+    def free(pokemon):
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def used(pokemon):
+        return (pokemon.pokemon_id, 0) in state.power_uses_this_turn
+
+    def energy_on(holders, energy_type):
+        return [(holder, uid) for holder in holders for uid in holder.energy
+                if state.card_def(uid).provides is energy_type and (holder.pokemon_id, uid) not in state.energy_burn]
+
+    for pokemon in p.in_play():
+        card_id = state.card_def(pokemon.card).id
+        if card_id not in V0_43 or not free(pokemon):
+            continue
+        pid = pokemon.pokemon_id
+        others = [q for q in p.in_play() if q is not pokemon]
+        actives = (p.active, state.players[1 - player].active)
+        if card_id == DARK_GLOOM and not used(pokemon) and not actives[1].conditions.confused:
+            counts[f"v043_power_coin_condition_{card_id}"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == ROCKET_DROWZEE and not used(pokemon) and not any(a.conditions.asleep for a in actives):
+            # 両方の対戦ポケモンがねむりになるとポケモンチェックで止まる（UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER）ので、どちらかがねむりなら使わない
+            counts[f"v043_power_coin_condition_{card_id}"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == ROCKET_CHARMANDER and not used(pokemon):
+            found = energy_on(others, EnergyType.FIRE)
+            if found:
+                holder, uid = found[0]
+                counts["v043_power_gather_fire"] += 1
+                return UsePokemonPower(player, pid, 0, energy=uid, source=holder.pokemon_id)
+        if card_id == ERIKAS_BELLSPROUT_40 and not used(pokemon) and energy_on(others, EnergyType.GRASS):
+            counts["v043_power_soak_up"] += 1
+            return UsePokemonPower(player, pid, 0)
+        marker = ("v043_energy_charge", pid)
+        if card_id == LT_SURGES_MAGNETON and pokemon is p.active and marker not in tried and energy_on(p.bench, EnergyType.LIGHTNING):
+            tried.add(marker)
+            counts["v043_power_energy_charge"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == DARK_DRAGONAIR and not used(pokemon) and any(state.card_def(u).is_evolution_pokemon for u in p.deck):
+            counts["v043_power_evolutionary_light"] += 1
+            return UsePokemonPower(player, pid, 0)
+    return None
+
+
 def _v031_power(state, tried, counts):
     """v0.31 の宣言する特殊能力を使う手順: カツラのロコンの「しぜんになおる」（ダメージがあり、この番にまだ使っていない）・リザードンの「エナジーバーン」
     （炎でないエネルギーがついていて、その番にまだ使っていない）。使えない特殊状態のときは使わない（拒否を起こさない）。"""
@@ -910,12 +1062,18 @@ def make_policy(seen: dict, counts: Counter):
     base = driver.make_policy(seen, counts, checks=True)
 
     def policy(state, *, janken_winner, cure, tried):
+        if state.phase is Phase.DECISION:
+            # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
+            # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
+            early = _v043_decision(state, counts)
+            if early is not None:
+                return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
         if state.phase is Phase.DECISION:
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
-            power = _v031_power(state, tried, counts) or _v042_power(state, tried, counts)
+            power = _v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
             if power is not None:
                 return power
             probe = _v036_retreat_probe(state, tried, counts)  # v0.36
@@ -939,7 +1097,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -1038,6 +1196,7 @@ def card_uses(state):
     current = None  # (カード id, ワザの位置)
     attacker = None  # ワザを使ったプレイヤー
     discarded = False
+    power_user = None
     for e in state.log:
         kind = e["kind"]
         if kind == "place_starting_pokemon":
@@ -1068,8 +1227,20 @@ def card_uses(state):
                 if card.get(source) in V0_37 + V0_38:
                     uses[card[source]][f"reduced_step{step}"] += 1
         power_key = next((str(e[f]) for f in ("power", "effect") if "@power" in str(e.get(f, ""))), None)
-        if kind == "pokemon_power" and card[e["pokemon"]] in V0_42:
+        if kind == "pokemon_power":
+            power_user = e["player"]  # v0.43: 特殊能力を使ったプレイヤー（くさいかふん・えんかくさいみんの特殊状態がどちらの側か）
+        if kind == "pokemon_power" and card[e["pokemon"]] in V0_42 + V0_43:
             uses[card[e["pokemon"]]]["power_declared"] += 1  # v0.42: 宣言する特殊能力の宣言
+            if "entry" in e:
+                uses[card[e["pokemon"]]]["power_entry_used"] += 1  # v0.43: 場に出たときの特殊能力を使う機会に使った
+        elif kind == "entry_power_declined" and card[e["pokemon"]] in V0_43:
+            uses[card[e["pokemon"]]]["power_entry_declined"] += 1  # v0.43: 場に出たときの特殊能力を使う機会に使わなかった
+        elif kind == "coin_flip" and power_key is not None and power_key.split("@")[0] in V0_43:
+            uses[power_key.split("@")[0]][f"power_coin_{e['result']}"] += 1  # v0.43: くさいかふん・えんかくさいみんのコイン
+        elif kind in V043_POWER_EVENTS and power_key is not None and power_key.split("@")[0] in V0_43:
+            # v0.43: 特殊能力の処理のログ（特殊状態は相手・自分のどちらにしたか）
+            side = ("_own" if e["player"] == power_user else "_opponent") if kind == "special_condition" else ""
+            uses[power_key.split("@")[0]][f"power_{kind}{side}"] += 1
         elif kind == "coin_flip" and power_key is not None and power_key.split("@")[0] in V0_42:
             uses[power_key.split("@")[0]][f"power_coin_{e['result']}"] += 1  # v0.42: 特殊能力のコイン（ヒーリング・かおりのわな・ぼうぎょかふん）
         elif kind in V042_POWER_EVENTS and power_key is not None and power_key.split("@")[0] in V0_42:
@@ -1094,7 +1265,7 @@ def card_uses(state):
                 uses[cid][f"self_damage#{index}"] += 1
                 if e.get("damage_multiplied"):
                     uses[cid][f"self_damage_multiplied#{index}"] += 1  # v0.35: マチスのラッタのきあいだめ（自分へのダメージも 2 倍）
-            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38 + V0_39 + V0_40:
+            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38 + V0_39 + V0_40 + V0_43:
                 uses[cid][f"{e['target']}_damage#{index}"] += 1  # v0.33: 控えポケモンへのダメージ（かけぬける・ミニじしん）
             elif kind == "damage" and not e.get("retaliation") and "target" not in e:
                 uses[cid][f"damage#{index}"] += 1

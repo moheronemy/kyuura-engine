@@ -227,7 +227,7 @@ def search_deck_to_hand(state: GameState, player: int, card: int) -> None:
     state.add_event("search_deck", player=player, card=card)
 
 
-def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None) -> None:
+def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None, power: str | None = None) -> None:
     """自分の山札のカード ``card`` を、相手に見せてから、同じ uid のまま手札の最後に加える（v0.24。ポケモン交換おじさんの「あなたの山札から
     「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。」。p.259）。山札の残りの並びは変えない
     （切るのは呼ぶ側）。
@@ -235,10 +235,12 @@ def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str
     ``search_deck_to_hand``（パソコン通信。選んだカードは選んだプレイヤーだけが見る）とは、見せることだけが違う。ログの
     ``"reveal_from_deck"`` の ``card`` は全員に見える情報（見せる指示がある）。選べたほかの山札のカードはログに書かない。選んでよいかの確認は
     呼ぶ側が済ませる。v0.38: ワザの効果（キョウのポッポの「でんれい」）で見せるときは、ログに ``effect``（ワザ）を加える（トレーナーのログの形は
-    v0.24 と同じ）。
+    v0.24 と同じ）。v0.43: 特殊能力（わるいハクリューの［しんかのひかり］）で見せるときは ``power``（``PowerKey`` の文字列）を加える。
     """
     _deck_to_hand(state, player, card)
     extra = {} if effect is None else {"effect": effect}
+    if power is not None:
+        extra["power"] = power
     state.add_event("reveal_from_deck", player=player, card=card, **extra)
 
 
@@ -268,16 +270,19 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
     state.add_event("return_to_deck", player=player, card=card)
 
 
-def shuffle_deck(state: GameState, player: int, *, effect: str | None = None) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
     v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
 
     ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
     わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
-    同じ）。"""
+    同じ）。v0.43: 特殊能力の効果で山札を切るとき（わるいハクリューの［しんかのひかり］・わるいカイリューの［てしたをよぶ］）は ``power``（``PowerKey`` の
+    文字列）を書く。"""
     state.rng.shuffle(state.players[player].deck)
     extra = {} if effect is None else {"effect": effect}
+    if power is not None:
+        extra["power"] = power
     state.add_event("shuffle", player=player, **extra)
 
 

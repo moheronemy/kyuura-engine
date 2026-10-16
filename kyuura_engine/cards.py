@@ -385,6 +385,7 @@ POOL_KEYS = (
     "pool_v0_40",  # v0.40（場の数・条件付きの効果・入れ替え・カードの移動の 15 枚。docs/count-condition-switch-return-v0.40.md）
     "pool_v0_41",  # v0.41（回復・カウンターの移動・特殊状態の変化を中心とする 15 枚。docs/heal-counter-status-v0.41.md）
     "pool_v0_42",  # v0.42（回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚。docs/power-decisions-v0.42.md）
+    "pool_v0_43",  # v0.43（宣言して使う特殊能力と、場に出たときに使う特殊能力を持つ 9 枚。docs/declared-entry-powers-v0.43.md）
 )
 
 

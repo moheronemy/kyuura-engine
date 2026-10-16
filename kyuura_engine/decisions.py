@@ -27,7 +27,9 @@
   ポケモンが、相手の「ほのおのかべ」（相手のワザによるダメージ）で「きぜつ」するときにも出す（決定するのは番のプレイヤー）
 - ``"power"``: 宣言して使う特殊能力の処理の続き（v0.42。docs/power-decisions-v0.42.md）。``context`` の ``"use"``（(プレイヤー, 場のポケモンの番号,
   カード id, 特殊能力の位置)）から実装を引き、``effects.PowerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンが特殊能力の処理のあとの場を整え
-  （きぜつ・空いたバトル場。``resolution.after_power``）、番のプレイヤーの番にもどる（番は終わらない）。決定するのは特殊能力を使ったプレイヤー
+  （きぜつ・空いたバトル場。``resolution.after_power``）、番のプレイヤーの番にもどる（番は終わらない）。決定するのは特殊能力を使ったプレイヤー。
+  v0.43: 場に出たときに使う特殊能力の使う機会（``ENTRY_POWER``）も再開先 ``"power"``。トレーナーの効果の途中で場に出たら、``context`` の ``"return_to"``
+  で、特殊能力の処理のあとにそのトレーナーの処理（トラッシュ）にもどる
 - ``"post_knockout"``: きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあとの続き（v0.12）。ポケモンが「きぜつ」したときに使える
   特殊能力（R団のファイヤーの「ふしちょう」）を使うかを、そのカードの持ち主が決める（``POST_KNOCKOUT_POWER``）。選んだら宣言して、
   そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
@@ -149,6 +151,18 @@ REMOVE_COUNTERS = "remove_counters"
 # 選べるものはワザを使ったポケモンについている「超」の基本エネルギーカードの uid（ついている順。1 枚でも決定を出す。DISCARD_ENERGY と同じ形）。トラッシュの
 # DISCARD_ENERGY とは行き先が違うので別の種類。再開先は "attack"
 RETURN_ENERGY = "return_energy"
+# v0.43（docs/declared-entry-powers-v0.43.md）。場に出たときに 1 度だけ使える特殊能力（わるいゴルバットの［こっそりかみつく］・わるいヤドランの［つりあげる］・
+# わるいカイリューの［てしたをよぶ］）を使うかを、そのポケモンの持ち主が決める（使う機会）。選べるものはそのポケモンの番号 1 つで、0〜1 個（選ばない = 使わない）。
+# 再開先は "power"（使ったら宣言のログ ``pokemon_power`` のあと、特殊能力の処理。使わなければログ ``entry_power_declined``）。``context`` の ``"entry"`` は場に出た
+# 経路（今は手札から（``"hand"``）だけ）、``"return_to"`` は場に出した元の処理（トレーナーの効果の途中なら ("trainer", プレイヤー, カード, カード id)）
+ENTRY_POWER = "entry_power"
+# v0.43: 自分の場のポケモンについているエネルギーカードを選んで、特殊能力を使ったポケモン（このカード）につけかえるとき、どのカードか（エリカのマダツボミの
+# ［ようぶんきゅうしゅう］（最大 2 枚）・マチスのレアコイルの［エナジーチャージ］（好きなだけ））。選べるものはエネルギーカードの uid（場の並び（バトル場 →
+# ベンチ）・ついている順）。再開先は "power"
+MOVE_ENERGY = "move_energy"
+# v0.43: 自分のトラッシュのポケモンのカードを選んで、見せてから手札に加えるとき、どのカードか（わるいヤドランの［つりあげる］。最大 3 枚）。選べるものは
+# トラッシュのポケモンのカード（たねポケモン・進化カード）の uid（トラッシュの並び）。同じカードを 2 回選べない（``check_choices``）。再開先は "power"
+RECOVER_POKEMON = "recover_pokemon"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -275,6 +289,9 @@ def push_power_decision(
     実装が ``PowerEffect.decision_problems`` で宣言する。
     """
     entries = [("use", (use.player, use.pokemon_id, use.key.card_id, use.key.power_index))]
+    if getattr(use, "return_to", None) is not None:
+        # v0.43: 場に出したトレーナーの効果の途中で使う特殊能力（ポケモン育て屋さんで場に出たわるいカイリューの［てしたをよぶ］）。終わったらその処理にもどる
+        entries.append(("return_to", use.return_to))
     unresolved = tuple(unresolved_choices)
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]

@@ -139,12 +139,13 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         # データの採用）・v0.38 のロケット団のケーシィ（PMCG4-031。超・弱点 超。kyuura データの採用）・v0.40 のわるいスリーパー（PMCG4-037。超・弱点 超。
         # kyuura データの採用）・v0.41 のロケット団のヤドン（PMCG4-032）・ナツメのヤドラン（PMCG6-048）・R団のミュウツー（PMCG6-055）（どれも超・弱点 超。
         # kyuura データの採用））・v0.42 のナツメのルージュラ（PMCG6-052）・ヤドラン（PMCG3-028）・ナツメのケーシィ（PMCG6-043）・ナツメのユンゲラー
-        # （PMCG6-047）・わるいユンゲラー（PMCG4-034）・わるいフーディン（PMCG4-035）（どれも超・弱点 超。kyuura データの採用）は 40、それ以外は 20
+        # （PMCG6-047）・わるいユンゲラー（PMCG4-034）・わるいフーディン（PMCG4-035）（どれも超・弱点 超。kyuura データの採用）・v0.43 のロケット団のスリープ
+        # （PMCG4-033）・わるいヤドラン（PMCG4-036）（どちらも超・弱点 超。kyuura データの採用）は 40、それ以外は 20
         # （対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはない。v0.42 のエリカのピッピ・ピクシーは無色で抵抗力 超）
         doubled = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 40}
         self.assertEqual(doubled, {"PMCG1-043", "PMCG1-045", "PMCG1-046", "PMCG1-049", "PMCG6-044", "PMCG1-050", "PMCG3-027", "PMCG1-048",
                                    "PMCG6-045", "PMCG4-031", "PMCG4-037", "PMCG4-032", "PMCG6-048", "PMCG6-055",
-                                   "PMCG6-052", "PMCG3-028", "PMCG6-043", "PMCG6-047", "PMCG4-034", "PMCG4-035"})
+                                   "PMCG6-052", "PMCG3-028", "PMCG6-043", "PMCG6-047", "PMCG4-034", "PMCG4-035", "PMCG4-033", "PMCG4-036"})
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled))
 
 

@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 50,
-    "engine_stop_codes": 49,
+    "engine_unresolved_rulings": 52,
+    "engine_stop_codes": 51,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -617,6 +617,28 @@
           "version": "v0.42",
           "document": "docs/power-decisions-v0.42.md",
           "ruling_id": "PW2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_ZERO_CARDS": {
+      "engine_rulings": [
+        {
+          "version": "v0.43",
+          "document": "docs/declared-entry-powers-v0.43.md",
+          "ruling_id": "PW3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.43",
+          "document": "docs/declared-entry-powers-v0.43.md",
+          "ruling_id": "PW4"
         }
       ],
       "kyuura_issue": null,
@@ -1390,7 +1412,24 @@
       "PMCG3-017/attack/0",
       "PMCG3-017/attack/1",
       "PMCG5-060/attack/0",
-      "PMCG5-065/attack/0"
+      "PMCG5-065/attack/0",
+      "PMCG4-006/attack/0",
+      "PMCG4-006/power/0",
+      "PMCG4-033/attack/0",
+      "PMCG4-033/power/0",
+      "PMCG4-012/power/0",
+      "PMCG5-010/attack/0",
+      "PMCG5-010/power/0",
+      "PMCG5-040/attack/0",
+      "PMCG5-040/power/0",
+      "PMCG4-052/attack/0",
+      "PMCG4-052/power/0",
+      "PMCG4-009/attack/0",
+      "PMCG4-009/power/0",
+      "PMCG4-036/attack/0",
+      "PMCG4-036/power/0",
+      "PMCG4-053/attack/0",
+      "PMCG4-053/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

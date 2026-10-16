@@ -1520,6 +1520,37 @@ class ChosenBenchDamage(Element):
 
 
 @dataclass(frozen=True)
+class ChosenOpponentPokemonDamage(ChosenBenchDamage):
+    """相手の場のポケモン（対戦ポケモン・控えポケモン）を 1 匹選び、そのポケモンにダメージ（v0.43。わるいゴルバットの「ふらふらとぶ」）。v0.33 の
+    ``ChosenBenchDamage`` の選べるものに相手の対戦ポケモンを含めた形（コインはない。相手の場には対戦ポケモンが必ずいるので、選べるものは必ずある）。
+
+    対戦ポケモンを選んだら p.320 のダメージの (1)（``OPPONENT_ACTIVE``。プラスパワー・ディフェンダーを計算する）、控えポケモンを選んだら (2)
+    （``OPPONENT_BENCH``。プラスパワーは変えない）。決定の答えのあとの計算なので、同じ段階の変更効果の順番を選ぶ決定は出せない（順番で結果が変われば問い
+    ``damage_step_order``。v0.35 の控えへのダメージと同じ）。"""
+
+    local_coin: CoinSide | None = None
+
+    def run(self, run: AttackRun) -> bool:
+        if local_coins(self.base, run):
+            raise RuntimeError("相手の場のポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
+        if self.local_coin is not None or self.own or self.required or self.weakness_resistance is not False:
+            raise RuntimeError("相手の場のポケモンを選ぶダメージは、コイン・自分の場・使うための条件・弱点・抵抗力の問いのない形だけ（エンジンの不具合）")
+        options = [p.pokemon_id for p in run.state.players[1 - run.player].in_play()]
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        side = run.state.players[1 - run.player]
+        if side.active is not None and choices[0] == side.active.pokemon_id:
+            run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_ACTIVE, self.base.value(run, None), weakness_resistance=False)
+            return
+        if choices[0] not in [p.pokemon_id for p in side.bench]:
+            raise RuntimeError(f"選んだポケモン {choices} が、相手の場にいない（エンジンの不具合）")
+        run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=choices[0],
+                                                weakness_resistance=False)
+
+
+@dataclass(frozen=True)
 class SelfPersistent(Element):
     """ワザを使ったポケモン自身に、次の相手の番にはたらく持続する効果を与える（v0.31。みちづれ ``DestinyBond``・バリアー ``AttackBarrier``・
     ちいさくなる ``DamageReduction``）。``requires`` のトラッシュの要素がトラッシュできなかったら与えない。"""
@@ -3417,9 +3448,19 @@ class EvolveFromDeck(Element):
             return False
         blocked = tuple(card for card, targets in candidates.items()
                         if len(E.evolution_hp_problem_targets(run.state, card, targets)) == len(targets))
+        # v0.43: 場に出たときに使える特殊能力を持つ進化カード（わるいカイリューの［てしたをよぶ］）を重ねると、ワザの最中に特殊能力を使う機会が来る（PW4）。
+        # 選べるが選ぶと止める（``entry_power_choices``。答えのときに止める）
+        entry = tuple(card for card in candidates if card not in blocked and E.applicable_entry_power(run.state, card, from_hand=False) is not None)
+        if len(blocked) + len(entry) == len(candidates):
+            # どの進化カードも選ぶと止める（v0.42 では、先読みが選べる答えのない決定で内部エラーになっていた。docs/declared-entry-powers-v0.43.md 4.3）
+            if entry:
+                raise run.res.question("entry_power_during_attack", f"山札の進化カード {list(entry)}")
+            raise run.res.question("evolution_hp_every_card", f"山札の進化カード {list(blocked)}")
         extra: tuple = ()
         if blocked:
             extra = (("unresolved_choices", blocked), ("unresolved_code", "UNRESOLVED_EVOLUTION_HP"), ("unresolved_reason", E.EVOLUTION_HP_REASON))
+        if entry:
+            extra += (("entry_power_choices", entry),)
         run.suspend(kind=SEARCH_DECK, player=run.player, options=tuple(candidates), extra=extra)
         return True
 
@@ -3429,6 +3470,9 @@ class EvolveFromDeck(Element):
             card = choices[0]
             if card not in candidates:
                 raise RuntimeError(f"つきのちからで選んだカード {choices} が、山札の重ねられる進化カードではない（エンジンの不具合）")
+            if card in decision.context_value("entry_power_choices", ()):
+                question = QUESTIONS["entry_power_during_attack"]
+                raise UnsupportedError(question.code, f"{question.message}（PW4。山札の進化カード {card}）")
             targets = candidates[card]
             if len(targets) == 1:
                 self._evolve(run, card, targets[0])
@@ -3454,7 +3498,7 @@ class EvolveFromDeck(Element):
         shuffle_in_attack(run, self, run.player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
-        blocked = set(decision.context_value("unresolved_choices", ()))
+        blocked = set(decision.context_value("unresolved_choices", ())) | set(decision.context_value("entry_power_choices", ()))
         return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
 
@@ -3661,6 +3705,7 @@ BUILDERS: dict[type, Any] = {
     E.DamageThenReduceDamageToSelf: lambda e: (Damage(OPP, Printed()), OpponentReducedDamage(e.amount)),
     # v0.38（docs/bench-switch-combined-v0.38.md）。控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果
     E.ChooseOpponentBenchDamage: lambda e: (ChosenBenchDamage(Fixed(e.damage), local_coin=None, required=e.requires_bench),),
+    E.ChooseOpponentPokemonDamage: lambda e: (ChosenOpponentPokemonDamage(Fixed(e.damage)),),
     E.DamageThenChosenBenchDamage: lambda e: (
         Damage(OPP, Printed()),
         ChosenBenchDamage(Fixed(e.bench_damage), local_coin=None, weakness_resistance=False if e.weakness_resistance_stated else None),

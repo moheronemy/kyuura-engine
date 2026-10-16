@@ -95,12 +95,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 
 from .cards import EnergyType
 from .coins import CoinSide, flip_coins
-from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
+from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
 from .damage import MULTIPLY, SET, DamageModifier, calculate_attack_damage
 from .decisions import (
-    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
-    REMOVE_COUNTERS, RETRIEVE_ENERGY, RETURN_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON,
-    SELECT_SPECIAL_CONDITION, push_power_decision,
+    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
+    MOVE_ENERGY, RECOVER_ENERGY, RECOVER_POKEMON, RECOVER_TRAINER, REMOVE_COUNTERS, RETRIEVE_ENERGY, RETURN_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
+    SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
@@ -117,7 +117,7 @@ from .persistent import (
 )
 from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
 from .zones import (
-    attach_energy_from_hand, attach_trainer, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
+    attach_energy_from_hand, attach_trainer, bench_from_deck, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
     return_hand_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
 )
 
@@ -3654,8 +3654,11 @@ def _positive_tens(value: int, what: str) -> None:
 CHOOSE_OPPONENT_BENCH_DAMAGE_TEXTS = {
     # サワムラー（PMCG3-039）の「のびるキック」。控えがいなければ使えない（ワザを使うための条件）
     True: lambda n: (f"相手の控えポケモンを1匹選び、そのポケモンに「弱点・抵抗力」に関係なく{n}ダメージ。相手に控えポケモンがいないとき、このワザは使えない。",),
-    # エリカのモンジャラ（PMCG5-006）の「のびるつる」。使えない、の記述がない
-    False: lambda n: (f"相手の控えポケモンから1匹を選び、(「弱点・抵抗力」に関係なく){n}ダメージ。",),
+    # エリカのモンジャラ（PMCG5-006）の「のびるつる」。使えない、の記述がない。v0.43: エリカのマダツボミ（PMCG5-010）の「のびるつる」の書き方（「相手の控え
+    # ポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。」。選ぶのはワザを使ったプレイヤー・相手の控えポケモン 1 匹・弱点・抵抗力に
+    # 関係なく・控えがいないときに使えないとは書かない、で同じ意味）も受け付ける
+    False: lambda n: (f"相手の控えポケモンから1匹を選び、(「弱点・抵抗力」に関係なく){n}ダメージ。",
+                      f"相手の控えポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、{n}ダメージ。"),
 }
 
 
@@ -3691,6 +3694,38 @@ class ChooseOpponentBenchDamage(AttackEffect):
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         bench = state.players[1 - use.player].bench
         return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=(p.pokemon_id for p in bench))
+
+
+def choose_opponent_pokemon_damage_texts(damage: int) -> tuple[str, ...]:
+    """v0.43: 相手の場のポケモンを選んでダメージを与えるワザの説明（わるいゴルバット（PMCG4-009）の「ふらふらとぶ」）。"""
+    return (f"相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。",)
+
+
+@dataclass(frozen=True)
+class ChooseOpponentPokemonDamage(AttackEffect):
+    """相手の場のポケモン（バトル場・ベンチのどれでも）を 1 匹選び、(「弱点・抵抗力」に関係なく) ``damage`` ダメージ（v0.43。わるいゴルバットの「ふらふらとぶ」。
+    kyuura の印刷の文面）。ダメージの目安の数字はない。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_POKEMON``。選べるものは相手の場のポケモン（バトル場 → ベンチ）。1 匹でも出す）。v0.38 の
+      ``ChooseOpponentBenchDamage`` と同じ要素の、選べるものに相手の対戦ポケモンを含めた形（``programs.ChosenOpponentPokemonDamage``）
+    - 相手の対戦ポケモンを選んだら p.320 のダメージの (1)（プラスパワー・ディフェンダーを計算する）、控えポケモンを選んだら (2)（プラスパワーは変えない。p.257）。
+      どちらも弱点・抵抗力は説明のとおり計算しない
+    - 相手に控えポケモンがいなくても対戦ポケモンを選べる（使えない、の記述はない）
+    """
+
+    damage: int
+    implementation_id = "choose_opponent_pokemon_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "相手の場のポケモンを選んでダメージを与えるワザ", damage="none") + _check_exact_text(
+            attack, "相手の場のポケモンを選んでダメージを与えるワザ", choose_opponent_pokemon_damage_texts(self.damage))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        options = (p.pokemon_id for p in state.players[1 - use.player].in_play())
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=options)
 
 
 @dataclass(frozen=True)
@@ -5734,7 +5769,11 @@ class EvolveBasicToStage2(TrainerEffect):
         target = decision.context_value("target")
         if (card, SKIP_EVOLUTION_OK) not in _selectable_skip_evolutions(state, use.player).get(target, []):
             raise RuntimeError(f"場のポケモン {target} にカード {card} を 1 進化を飛ばして重ねられない（決定の確認の漏れ。エンジンの不具合）")
-        place_evolution_card(state, use.player, state.find_pokemon(target)[1], card, trainer=use.card)
+        pokemon = state.find_pokemon(target)[1]
+        place_evolution_card(state, use.player, pokemon, card, trainer=use.card)
+        # v0.43: 場に出たときに使える特殊能力（わるいカイリューの［てしたをよぶ］）があれば、使うかを聞き、そのあとこのトレーナーの処理（トラッシュ）にもどる
+        # （手札から出したカード。docs/declared-entry-powers-v0.43.md 3 章）
+        offer_entry_power(state, use.player, pokemon, from_hand=True, return_to=("trainer", use.player, use.card, use.card_id))
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         """決定するのは使ったプレイヤー。段階 1 は進化させられる自分の場のたねポケモン（場の並び）から 1 匹、段階 2 はそのポケモンに
@@ -6241,7 +6280,14 @@ class EvolveFromDeckOnHeads(AttackEffect):
         label = _label(state, use)
         candidates = deck_evolution_candidates(state, use.player)
         if decision.kind == SEARCH_DECK:
-            return _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=tuple(candidates))
+            problems = _decision_form(decision, label, kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=tuple(candidates))
+            # v0.43: 場に出たときに使える特殊能力を持つ進化カードは、選べるが選ぶと止める（PW4。HP で止めるカードを除く）
+            blocked = set(decision.context_value("unresolved_choices", ()))
+            entry = tuple(card for card in candidates if card not in blocked and applicable_entry_power(state, card, from_hand=False) is not None)
+            if tuple(decision.context_value("entry_power_choices", ())) != entry:
+                problems.append(f"「{label}」の進化カードの決定の、選ぶと止めるカード（場に出たときの特殊能力）{decision.context_value('entry_power_choices', ())} が "
+                                f"{entry} ではない")
+            return problems
         card = decision.context_value("card")
         if card not in candidates or len(candidates[card]) < 2:
             return [f"「{label}」の重ねるポケモンの決定のカード {card!r} が、2 匹以上に重ねられる山札の進化カードではない"]
@@ -6291,6 +6337,9 @@ class PowerUse:
     energy: int | None = None
     source: int | None = None
     target: int | None = None
+    # v0.43: 場に出したトレーナーの効果の途中で使う、場に出たときの特殊能力（ポケモン育て屋さんで場に出たわるいカイリューの［てしたをよぶ］）の、もどる先
+    # （("trainer", プレイヤー, カード, カード id)。特殊能力の処理が終わったら、そのトレーナーの処理（トラッシュ）にもどる）。ほかは None
+    return_to: tuple | None = None
 
 
 class PowerEffect:
@@ -7495,6 +7544,582 @@ class ReturnSelfToHand(PowerEffect):
         remove_persistent_effects(state, use.player, user, RETURN_IN_PLAY_TO_HAND)
 
 
+# ---------------------------------------------------------------- v0.43 の特殊能力（docs/declared-entry-powers-v0.43.md）
+
+
+POWER_ZERO_CARDS_CODE = "UNRESOLVED_POWER_ZERO_CARDS"
+POWER_ZERO_CARDS_REASON = (
+    "特殊能力の説明の「最大N枚」「1枚選び出し」で、選ぶカードが 0 枚になる（0 枚を選ぶ・選べるカードがない・ベンチに空きがない）とき、その特殊能力を使えるか"
+    "（使ったことになるか・そのあと山札を切るか）は、kyuura の記録・印刷の文面から決められないので扱わない（PW3）"
+)
+ENERGY_BURN_MOVE_REASON = (
+    "この番は「エナジーバーン」で「炎」エネルギーになっているエネルギーカード。説明の「「{type}」エネルギーカード」に当たるか（カードの種類か、今のエネルギーの"
+    "タイプか）は決められないので扱わない（エナジートランスの HC10 と同じ問い）"
+)
+
+
+def _power_zero_cards(detail: str) -> UnsupportedError:
+    return UnsupportedError(POWER_ZERO_CARDS_CODE, f"{detail}。{POWER_ZERO_CARDS_REASON}")
+
+
+COIN_CONDITION_TEXTS = {
+    # わるいクサイハナ（PMCG4-006）の［くさいかふん］
+    CONFUSION: ("自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」"
+                "状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",),
+    # スリープ（PMCG4-033）の［えんかくさいみん］
+    SLEEP: ("自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「ねむり」状態にする。「うら」なら、自分の対戦ポケモンを「ねむり」状態にする。"
+            "このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",),
+}
+
+
+@dataclass(frozen=True)
+class CoinConditionOnEitherActive(PowerEffect):
+    """自分の番ごとに 1 回使える。コインを投げて「おもて」なら相手の対戦ポケモンを、「うら」なら自分の対戦ポケモンを ``condition`` の特殊状態にする（v0.43。
+    わるいクサイハナの［くさいかふん］（こんらん）・スリープの［えんかくさいみん］（ねむり）。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。宣言のときに記録するので、コインの「うら」でも使ったことになる）。ねむり・マヒ・こんらんのこの
+      カードは使えない（どくは使える）。選ぶものはない
+    - コインは使ったプレイヤーが 1 枚（``_power_coin``）。特殊状態にするのは、その時点のバトル場のポケモン（どちらのプレイヤーにも必ずいる）。このカードが
+      バトル場にいて「うら」なら、このカード自身がその状態になる
+    - 特殊状態にする処理は、ワザと同じ ``conditions.confuse``・``put_to_sleep``（重複の規定。p.322。ログ ``special_condition`` の ``effect`` は特殊能力）。
+      ワザではないので、ワザを使うときのこんらんのコイン（p.309）はなく、ワザを防ぐ効果（「ワザをうけない」状態・「とうめい」。どれもワザについての効果）は
+      関係しない
+    """
+
+    condition: str
+    implementation_id = "coin_condition_on_either_active"
+    once_per_turn: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if self.condition not in COIN_CONDITION_TEXTS:
+            raise ValueError(f"コインでどちらかの対戦ポケモンを特殊状態にする特殊能力の状態 {self.condition!r} は {sorted(COIN_CONDITION_TEXTS)} のどれか")
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "コインでどちらかの対戦ポケモンを特殊状態にする特殊能力", COIN_CONDITION_TEXTS[self.condition])
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        heads = _power_coin(state, use) is CoinSide.HEADS
+        owner = 1 - use.player if heads else use.player
+        target = state.players[owner].active
+        if self.condition == CONFUSION:
+            confuse(state, owner, target, effect=str(use.key))
+        else:
+            put_to_sleep(state, owner, target, effect=str(use.key))
+
+
+def _energy_card_of_type(state: GameState, holder: PokemonInPlay, uid: int, energy_type: EnergyType) -> bool | None:
+    """場のポケモン ``holder`` についているエネルギーカード ``uid`` が、説明の「「``energy_type``」エネルギーカード」か（v0.43）。この番に「エナジーバーン」で
+    「炎」エネルギーになっていて（``GameState.energy_burn``）、カードの種類（基本エネルギーカードのタイプ）と今のエネルギーのタイプで答えが違うなら None
+    （決められない。HC10）。"""
+    definition = state.card_def(uid)
+    printed = definition.is_basic_energy and definition.provides is energy_type
+    if (holder.pokemon_id, uid) not in state.energy_burn:
+        return printed
+    current = state.energy_type_of(holder, uid) is energy_type
+    return printed if printed == current else None
+
+
+def _movable_energy(state: GameState, holders: Iterable[PokemonInPlay], energy_type: EnergyType) -> tuple[list[int], list[int]]:
+    """``holders``（場の並び）についている「``energy_type``」エネルギーカード（ついている順）と、そのうち当たるかが決められないカード（HC10）。"""
+    options: list[int] = []
+    ambiguous: list[int] = []
+    for holder in holders:
+        for uid in holder.energy:
+            matched = _energy_card_of_type(state, holder, uid, energy_type)
+            if matched is None:
+                options.append(uid)
+                ambiguous.append(uid)
+            elif matched:
+                options.append(uid)
+    return options, ambiguous
+
+
+def _energy_burn_error(energy_type: EnergyType, detail: str) -> UnsupportedError:
+    return UnsupportedError("UNRESOLVED_ENERGY_BURN_TRANSFER", f"{detail}: " + ENERGY_BURN_MOVE_REASON.format(type=energy_type.ja))
+
+
+def _move_energy_to_user(state: GameState, use: PowerUse, cards: Iterable[int]) -> None:
+    """自分の場のポケモンについているエネルギーカード ``cards`` を、同じ uid のまま、特殊能力を使ったポケモン（このカード）の ``energy`` の最後に、``cards`` の順に
+    つけかえる（v0.43。複製・トラッシュ・持ち主の変更をしない。手札からつける通常の操作の回数 ``energy_attachments_this_turn`` は変えない。ログは 1 枚ずつ v0.5 の
+    ``move_energy``）。"""
+    _, user = state.find_pokemon(use.pokemon_id)
+    for uid in cards:
+        holder = next((p for p in state.players[use.player].in_play() if uid in p.energy), None)
+        if holder is None or holder is user:
+            raise RuntimeError(f"エネルギーカード {uid} が、このカード以外の自分の場のポケモンについていない（確認の漏れ。エンジンの不具合）")
+        holder.energy.remove(uid)
+        user.energy.append(uid)
+        state.add_event("move_energy", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), energy=uid,
+                        from_pokemon_id=holder.pokemon_id, to_pokemon_id=user.pokemon_id)
+
+
+GATHER_FIRE_TEXTS = (
+    "自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを1枚はがし、このカードにつけてよい。"
+    "このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+)
+
+
+@dataclass(frozen=True)
+class TakeEnergyToSelf(PowerEffect):
+    """自分の番ごとに 1 回使える。自分の場のポケモンについている「``energy_type``」エネルギーカードを 1 枚はがし、このカードにつけてよい（v0.43。ロケット団の
+    ヒトカゲの［ほのおをもらう］。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。ねむり・マヒ・こんらんのこのカードは使えない（どくは使える）
+    - 選ぶもの（コマンドで指定する。v0.5 のエナジートランスと同じ形）: ``energy``（つけかえるエネルギーカード）と ``source``（そのカードがついている自分の場の
+      ポケモン）。つける先はいつもこのカードなので ``target`` は指定しない（``POWER_CHOICE_NOT_USED``）
+    - このカードについているカードを「はがし、このカードにつける」ことは、つけかえにならないので選べない（``SAME_POKEMON``。実装上の判断。英語版の文面は使わない）
+    - 「「炎」エネルギーカード」は基本「炎」エネルギーカード（``WRONG_ENERGY_TYPE``）。「エナジーバーン」で「炎」になっているほかのタイプのカードは決められない（HC10）
+    - つけかえは手札からつけること（p.310）ではないので、その回数は変えない。ログ ``move_energy``
+    """
+
+    energy_type: EnergyType
+    implementation_id = "take_energy_to_self"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "自分の場のエネルギーカードを 1 枚このカードにつけかえる特殊能力", GATHER_FIRE_TEXTS)
+        if self.energy_type is not EnergyType.FIRE:
+            problems.append(f"説明は「炎」エネルギーカードをつけかえる（登録は {self.energy_type.ja}）")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        if use.energy is None or use.source is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "つけかえるエネルギーカード（energy）と、そのカードがついているポケモン（source）を指定する（つける先はこのカード）")
+        if use.target is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "このポケモンパワーのつける先はこのカードなので、移動先（target）は指定しない")
+        require_power_not_used(state, use)
+        source = _own_pokemon(state, use, use.source, "SOURCE")
+        if use.source == use.pokemon_id:
+            raise IllegalActionError("SAME_POKEMON", "このカードについているエネルギーカードは、このカードにつけかえられない（つけかえにならない）")
+        if use.energy not in source.energy:
+            raise IllegalActionError("ENERGY_NOT_ATTACHED", f"エネルギー {use.energy!r} はポケモン {use.source} についていない")
+        matched = _energy_card_of_type(state, source, use.energy, self.energy_type)
+        if matched is None:
+            raise _energy_burn_error(self.energy_type, f"エネルギー {use.energy}")
+        if not matched:
+            raise IllegalActionError("WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーカードではない")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _move_energy_to_user(state, use, (use.energy,))
+
+
+SOAK_UP_TEXTS = (
+    "この力は、自分の番ごとに1回使える。自分の場のポケモンについている「草」エネルギーカードを最大2枚選び、はがしてこのカードにつける。"
+    "このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+)
+
+
+@dataclass(frozen=True)
+class TakeEnergiesToSelf(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。自分の場のポケモンについている「``energy_type``」エネルギーカードを最大 ``max_cards`` 枚選び、はがしてこのカードに
+    つける（v0.43。エリカのマダツボミの［ようぶんきゅうしゅう］。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。ねむり・マヒ・こんらんのこのカードは使えない。1 回の使用で最大 2 枚（1 枚ずつ何度も使う形にしない）
+    - 宣言のあと決定で選ぶ（``MOVE_ENERGY``。選ぶのは使ったプレイヤー。選べるものは、このカード以外の自分の場のポケモンについている基本「草」エネルギーカード
+      （場の並び・ついている順）。同じカードは 2 回選べない）。選んだカードを場の並びの順につけかえる（ログ ``move_energy`` を 1 枚ずつ）
+    - 0 枚にする（選べるカードがない・0 枚を選ぶ）ときは決められない（PW3。選べるカードがなければ宣言の前に、0 枚の答えは決定を待ったまま止める）
+    - 「エナジーバーン」で「炎」になっている草エネルギーカードは決められない（HC10。選べるが選ぶと止める。選べるカードがどれもそうなら宣言の前に止める）
+    """
+
+    energy_type: EnergyType
+    max_cards: int
+    implementation_id = "take_energies_to_self"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "自分の場のエネルギーカードを最大N枚このカードにつけかえる特殊能力", SOAK_UP_TEXTS)
+        if (self.energy_type, self.max_cards) != (EnergyType.GRASS, 2):
+            problems.append(f"説明は「草」エネルギーカードを最大2枚（登録は {self.energy_type.ja}・{self.max_cards} 枚）")
+        return problems
+
+    def _options(self, state: GameState, use: PowerUse) -> tuple[list[int], list[int]]:
+        holders = [p for p in state.players[use.player].in_play() if p.pokemon_id != use.pokemon_id]
+        return _movable_energy(state, holders, self.energy_type)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        options, ambiguous = self._options(state, use)
+        if not options:
+            raise _power_zero_cards(f"このカード以外の自分の場のポケモンに「{self.energy_type.ja}」エネルギーカードがついていない")
+        if len(ambiguous) == len(options):
+            raise _energy_burn_error(self.energy_type, f"選べるエネルギーカード {tuple(options)} がどれも")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        options, ambiguous = self._options(state, use)
+        push_power_decision(state, use, kind=MOVE_ENERGY, player=use.player, options=options, min_choices=0, max_choices=min(self.max_cards, len(options)),
+                            unresolved_choices=ambiguous, unresolved_code="UNRESOLVED_ENERGY_BURN_TRANSFER",
+                            unresolved_reason=ENERGY_BURN_MOVE_REASON.format(type=self.energy_type.ja))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise _power_zero_cards("つけかえるエネルギーカードを 0 枚選んだ")
+        _move_energy_to_user(state, use, tuple(uid for uid in decision.options if uid in choices))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options, ambiguous = self._options(state, use)
+        return _power_decision_form(decision, use, kind=MOVE_ENERGY, choices=(0, min(self.max_cards, len(options))), options=options, unresolved=ambiguous)
+
+
+ENERGY_CHARGE_TEXTS = (
+    "この力は、このカードがバトル場にいる時だけ、使える。自分の控えポケモンについている「雷」エネルギーカードを好きなだけはがし、このカードにつける。"
+    "このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+)
+
+
+@dataclass(frozen=True)
+class ChargeBenchEnergyToSelf(PowerEffect):
+    """この力は、このカードがバトル場にいるときだけ使える。自分の控えポケモンについている「``energy_type``」エネルギーカードを好きなだけはがし、このカードに
+    つける（v0.43。マチスのレアコイルの［エナジーチャージ］。kyuura の印刷の文面）。
+
+    - 宣言して使う。回数の制限は書かれていないので数えない（日本語の文面にない「自分の番ごとに1回」を加えない）。このカードがバトル場にいるときだけ
+      （``POKEMON_NOT_ACTIVE``）。ねむり・マヒ・こんらんのこのカードは使えない
+    - 宣言のあと決定で選ぶ（``MOVE_ENERGY``。選べるものは自分の控えポケモンについている基本「雷」エネルギーカード（ベンチの並び・ついている順）。1 枚以上、
+      何枚でも。同じカードは 2 回選べない）。0 枚・選べるカードがないときは、使っても何も変わらず回数もないので、使えない（``NO_ENERGY_TO_MOVE``。0 枚は選べない。
+      実装上の判断）
+    - 「エナジーバーン」で「炎」になっている雷エネルギーカードは決められない（HC10）
+    """
+
+    energy_type: EnergyType
+    implementation_id = "charge_bench_energy_to_self"
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "控えのエネルギーカードを好きなだけこのカードにつけかえる特殊能力", ENERGY_CHARGE_TEXTS)
+        if self.energy_type is not EnergyType.LIGHTNING:
+            problems.append(f"説明は「雷」エネルギーカード（登録は {self.energy_type.ja}）")
+        return problems
+
+    def _options(self, state: GameState, use: PowerUse) -> tuple[list[int], list[int]]:
+        return _movable_energy(state, state.players[use.player].bench, self.energy_type)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        active = state.players[use.player].active
+        if active is None or active.pokemon_id != use.pokemon_id:
+            raise IllegalActionError("POKEMON_NOT_ACTIVE", f"ポケモン {use.pokemon_id} はバトル場にいない（この力は、このカードがバトル場にいるときだけ使える）")
+        options, ambiguous = self._options(state, use)
+        if not options:
+            raise IllegalActionError("NO_ENERGY_TO_MOVE", f"自分の控えポケモンに「{self.energy_type.ja}」エネルギーカードがついていない")
+        if len(ambiguous) == len(options):
+            raise _energy_burn_error(self.energy_type, f"選べるエネルギーカード {tuple(options)} がどれも")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        options, ambiguous = self._options(state, use)
+        push_power_decision(state, use, kind=MOVE_ENERGY, player=use.player, options=options, min_choices=1, max_choices=len(options),
+                            unresolved_choices=ambiguous, unresolved_code="UNRESOLVED_ENERGY_BURN_TRANSFER",
+                            unresolved_reason=ENERGY_BURN_MOVE_REASON.format(type=self.energy_type.ja))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        _move_energy_to_user(state, use, tuple(uid for uid in decision.options if uid in choices))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options, ambiguous = self._options(state, use)
+        return _power_decision_form(decision, use, kind=MOVE_ENERGY, choices=(1, len(options)), options=options, unresolved=ambiguous)
+
+
+EVOLUTIONARY_LIGHT_TEXTS = (
+    "自分の番ごとに1回使える。自分の山札から進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。"
+    "「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+)
+
+
+def deck_evolution_cards(state: GameState, player: int) -> list[int]:
+    """プレイヤーの山札の進化カード（1 進化・2 進化のカード。uid の小さい順。山札の並びを決定に写さない）（v0.43）。今重ねられるか（進化の制限）では
+    しぼらない（手札に加えるだけで、進化させるのではない）。"""
+    return sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_evolution_pokemon)
+
+
+@dataclass(frozen=True)
+class SearchEvolutionCardToHand(PowerEffect):
+    """自分の番ごとに 1 回使える。自分の山札から進化カードを 1 枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る（v0.43。
+    わるいハクリューの［しんかのひかり］。kyuura の印刷の文面）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``）。ねむり・マヒ・こんらんのこのカードは使えない
+    - 宣言のあと決定で選ぶ（v0.22 の ``SEARCH_DECK``。選べるものは山札の進化カード（``deck_evolution_cards``）。1 枚）。進化させるのではないので、今進化できる
+      カードにしぼらない。見せてから手札に加える（v0.24 の ``zones.reveal_deck_to_hand``。ログ ``reveal_from_deck`` の ``card`` は公開。選べたほかのカードは
+      ログに書かない）→ 山札を切る（``zones.shuffle_deck``。ログ ``shuffle``。どちらも ``power``）
+    - 山札に進化カードがない（山札が 0 枚を含む）ときは決められない（PW3。宣言の前に止める）
+    """
+
+    implementation_id = "search_evolution_card_to_hand"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "山札から進化カードを手札に加える特殊能力", EVOLUTIONARY_LIGHT_TEXTS)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        if not deck_evolution_cards(state, use.player):
+            raise _power_zero_cards("山札に進化カードがない（山札が 0 枚を含む）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        push_power_decision(state, use, kind=SEARCH_DECK, player=use.player, options=deck_evolution_cards(state, use.player))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if choices[0] not in deck_evolution_cards(state, use.player):
+            raise RuntimeError(f"しんかのひかりで選んだカード {choices} が、山札の進化カードではない（エンジンの不具合）")
+        reveal_deck_to_hand(state, use.player, choices[0], power=str(use.key))
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=SEARCH_DECK, choices=(1, 1), options=deck_evolution_cards(state, use.player))
+
+
+# ---- 場に出たときに 1 度だけ使える特殊能力（v0.43）
+
+
+class EntryPower(PowerEffect):
+    """場に出たときに 1 度だけ使える特殊能力の基底（v0.43。docs/declared-entry-powers-v0.43.md 3 章）。
+
+    「この力は、このカードを手札から出した時、1度だけ使える」（わるいゴルバットの［こっそりかみつく］）・「この力は、このカードを手札から場に出した時、1度だけ
+    使える」（わるいヤドランの［つりあげる］）・「この力は、このカードが場に出た時に1度だけ使える」（わるいカイリューの［てしたをよぶ］）。
+
+    - 「使える」ので、使うかは持ち主が決める（宣言する特殊能力。``declared`` は真）。使う機会は場に出たときの 1 度だけで、エンジンが場に出す処理のあとに決定
+      ``ENTRY_POWER`` で聞く（``offer_entry_power``）。``UsePokemonPower`` では使えない（``check_usable`` が ``POWER_NOT_USABLE_NOW``。機会が過ぎたあとに
+      ``MAIN`` から使えない）。自分の番ごとの回数（``once_per_turn``）は使わない
+    - ``from_hand_only``: 説明が「手札から出した時」「手札から場に出した時」なら真（手札から出す経路だけ。山札から重ねる進化では機会がない）。「場に出た時」なら偽
+    - ``accept_problem``: 使うことを選ぶと止める場合（原典で決められない）。機会の決定の ``unresolved_choices`` にする
+    - 使うことを選んだら、エンジンが宣言のログ ``pokemon_power``（``entry``）を残してから ``resolve`` を呼ぶ。そのあとの決定・再開・使用後の処理（きぜつ・
+      バトル場に出す）は v0.42 の宣言する特殊能力と同じ（再開先 ``"power"``・``resolution.after_power``）
+    """
+
+    from_hand_only: ClassVar[bool] = True
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError("POWER_NOT_USABLE_NOW", "この特殊能力は、このカードが場に出たときに 1 度だけ使える（そのときにエンジンが使うかを聞く）")
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        return None
+
+
+def entry_power(state: GameState, card: int) -> tuple[int, EntryPower] | None:
+    """カード ``card``（場のポケモンならいちばん上のカード）の、場に出たときに使える特殊能力（位置と実装。登録された ``EntryPower`` だけ）（v0.43）。"""
+    definition = state.card_def(card)
+    for index, power in enumerate(definition.powers):
+        effect = state.effects.power_effect(definition.id, power)
+        if isinstance(effect, EntryPower):
+            return index, effect
+    return None
+
+
+def applicable_entry_power(state: GameState, card: int, *, from_hand: bool) -> tuple[int, EntryPower] | None:
+    """カード ``card`` が場に出たときに、その経路（``from_hand``: 手札から出した）で使う機会がある特殊能力（v0.43）。経路が合わない（「手札から」の特殊能力を
+    山札から重ねた）・今はたらいている「かがくへんかガス」に消されているなら None（``continuous.suppressors_of``。消された特殊能力には機会がない。p.323）。"""
+    from .continuous import suppressors_of  # continuous.py は effects.py を読み込むので、使うときに読み込む
+
+    found = entry_power(state, card)
+    if found is None:
+        return None
+    index, effect = found
+    if effect.from_hand_only and not from_hand:
+        return None
+    if suppressors_of(state, state.card_def(card).powers[index]):
+        return None
+    return found
+
+
+def offer_entry_power(state: GameState, owner: int, pokemon: PokemonInPlay, *, from_hand: bool, return_to: tuple | None = None) -> bool:
+    """場に出たポケモン ``pokemon``（持ち主 ``owner``）の、場に出たときに使える特殊能力を使うかを聞く決定を出す（v0.43）。出したら真。
+
+    - いちばん上のカードに登録された ``EntryPower`` があり、経路が合い（``from_hand_only`` の特殊能力は手札から出したときだけ）、今はたらいている
+      「かがくへんかガス」に消されていない（``continuous.suppressors_of``。消されていれば機会はない）ときだけ出す
+    - 決定 ``ENTRY_POWER``: 決定するのは持ち主、選べるものはそのポケモンの番号 1 つ、0〜1 個（選ばない = 使わない）、再開先 ``"power"``。``context`` の
+      ``"entry"`` は経路（``"hand"``）、``"return_to"`` は場に出した元の処理（トレーナーの効果の途中なら、終わったらそのトレーナーの処理にもどる）
+    - 使うことを選ぶと止める場合（``accept_problem``）は、そのポケモンを ``unresolved_choices`` にする（使わないことは選べる）
+    """
+    found = applicable_entry_power(state, pokemon.card, from_hand=from_hand)
+    if found is None:
+        return False
+    index, effect = found
+    definition = state.card_def(pokemon.card)
+    use = PowerUse(owner, pokemon.pokemon_id, PowerKey(definition.id, index), return_to=return_to)
+    problem = effect.accept_problem(state, use)
+    unresolved = {} if problem is None else {"unresolved_choices": (pokemon.pokemon_id,), "unresolved_code": problem.code,
+                                              "unresolved_reason": problem.message}
+    push_power_decision(state, use, kind=ENTRY_POWER, player=owner, options=(pokemon.pokemon_id,), context=(("entry", "hand" if from_hand else "play"),),
+                        min_choices=0, max_choices=1, **unresolved)
+    return True
+
+
+SNEAK_ATTACK_TEXTS = (
+    "この力は、このカードを手札から出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+)
+
+
+@dataclass(frozen=True)
+class DamageOpponentPokemonOnEntry(EntryPower):
+    """この力は、このカードを手札から出したとき、1 度だけ使える。相手の場のポケモン 1 匹を選び、(「弱点・抵抗力」に関係なく) ``amount`` ダメージ（v0.43。
+    わるいゴルバットの［こっそりかみつく］。kyuura の印刷の文面。pcg-search.com の転記は「手札から場に出した時」）。
+
+    - 使う機会は手札から出したとき（手札から進化させたとき）だけ（``from_hand_only``）
+    - 選ぶのは使ったプレイヤー（決定 ``SELECT_POKEMON``。選べるものは相手の場のポケモン（バトル場 → ベンチ）。1 匹）
+    - 特殊能力によるダメージ（CR-COUNTERATTACK-IS-POWER-DAMAGE・CR-RESTLESS-SLEEP-NOT-ATTACK-CALCULATION と同じ読み方）: ワザによるダメージの計算（p.321。
+      プラスパワー・ディフェンダー・「ダメージを受けない」状態）をせず、弱点・抵抗力は説明のとおり計算しない。「ワザをうけない」状態・「とうめい」（ワザについての
+      効果）は関係しない。「相手のワザによって」ダメージを受けたときの効果（はんげき・ほのおのかべ・こうらがえし・わるいねぞう・ぼうぎょかふん）ははたらかず、
+      こんじょう（相手のワザによるダメージ）は使えない。ダメージカウンターの移動（のろい）ではない（「ダメージを受けた」ことになる）
+    - HP 以上になったポケモンは、特殊能力の処理のあとに「きぜつ」する（``may_knock_out``。``resolution.after_power`` のきぜつ・サイド・勝ち負け・ふしちょう・
+      バトル場に出す。番は続く）。ログ ``power_damage``
+    """
+
+    amount: int
+    implementation_id = "damage_opponent_pokemon_on_entry"
+    may_knock_out: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札から出したときに相手の場のポケモンにダメージを与える特殊能力", SNEAK_ATTACK_TEXTS)
+        if self.amount != 10:
+            problems.append(f"説明のダメージは 10（登録は {self.amount}）")
+        return problems
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=[p.pokemon_id for p in state.players[1 - use.player].in_play()])
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        found = state.find_pokemon(choices[0])
+        if found is None or found[0] != 1 - use.player:
+            raise RuntimeError(f"こっそりかみつくで選んだポケモン {choices} が、相手の場にいない（エンジンの不具合）")
+        _, target = found
+        _, user = state.find_pokemon(use.pokemon_id)
+        target.damage += self.amount
+        state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
+                        target_player=1 - use.player, target=target.card, target_pokemon_id=target.pokemon_id, amount=self.amount,
+                        total_damage=target.damage, knocked_out=target.damage >= state.card_def(target.card).hp)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=[p.pokemon_id for p in state.players[1 - use.player].in_play()])
+
+
+REEL_IN_TEXTS = (
+    "この力は、このカードを手札から場に出した時、1度だけ使える。自分のトラッシュにあるポケモン(または進化)カードを最大3枚選び、相手プレイヤーに見せてから、"
+    "手札に加える。",
+)
+
+
+def discard_pokemon_cards(state: GameState, player: int) -> list[int]:
+    """プレイヤーのトラッシュのポケモンのカード（たねポケモン・進化カード。トラッシュの並び）（v0.43）。同じ名前の別のカードも別々に選べる。"""
+    return [uid for uid in state.players[player].discard if state.card_def(uid).category == "pokemon"]
+
+
+@dataclass(frozen=True)
+class RecoverPokemonFromDiscardOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 度だけ使える。自分のトラッシュにあるポケモン（または進化）カードを最大 ``max_cards`` 枚選び、相手プレイヤーに
+    見せてから、手札に加える（v0.43。わるいヤドランの［つりあげる］。kyuura の印刷の文面）。
+
+    - 使う機会は手札から場に出したとき（手札から進化させたとき）だけ（``from_hand_only``）
+    - 選ぶのは使ったプレイヤー（決定 ``RECOVER_POKEMON``。選べるものはトラッシュのポケモンのカード。1〜最大 3 枚。同じカードは 2 回選べない）。0 枚にすることは
+      使わないことと結果が同じなので、機会の決定で使わないことを選ぶ（実装上の判断）。トラッシュにポケモンのカードがなければ、使っても何もしない（ログ
+      ``recover_pokemon_none``。使わないときと状態は同じ）
+    - 手札に加えるのは v0.12 の ``zones.return_discard_to_hand``（トラッシュの並びの順）。ログ ``recover_pokemon``（``cards`` は見せたので公開）
+    """
+
+    max_cards: int
+    implementation_id = "recover_pokemon_from_discard_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札から場に出したときにトラッシュのポケモンのカードを手札に加える特殊能力", REEL_IN_TEXTS)
+        if self.max_cards != 3:
+            problems.append(f"説明は最大3枚（登録は {self.max_cards}）")
+        return problems
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        cards = discard_pokemon_cards(state, use.player)
+        if not cards:
+            _, user = state.find_pokemon(use.pokemon_id)
+            state.add_event("recover_pokemon_none", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key))
+            return
+        push_power_decision(state, use, kind=RECOVER_POKEMON, player=use.player, options=cards, min_choices=1, max_choices=min(self.max_cards, len(cards)))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        cards = tuple(uid for uid in discard_pokemon_cards(state, use.player) if uid in choices)
+        if len(cards) != len(choices):
+            raise RuntimeError(f"つりあげるで選んだカード {choices} が、トラッシュのポケモンのカードではない（エンジンの不具合）")
+        return_discard_to_hand(state, use.player, cards)
+        _, user = state.find_pokemon(use.pokemon_id)
+        state.add_event("recover_pokemon", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), cards=cards)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        cards = discard_pokemon_cards(state, use.player)
+        return _power_decision_form(decision, use, kind=RECOVER_POKEMON, choices=(1, min(self.max_cards, len(cards))), options=cards)
+
+
+SUMMON_MINIONS_TEXTS = (
+    "この力は、このカードが場に出た時に1度だけ使える。自分の山札からポケモンカード(進化カード以外)を最大2枚選び出し、自分のベンチに出す。その後、その山札をよく切る。",
+)
+
+
+def deck_basic_pokemon(state: GameState, player: int) -> list[int]:
+    """プレイヤーの山札のたねポケモンのカード（uid の小さい順。山札の並びを決定に写さない）（v0.43）。"""
+    return sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_basic_pokemon)
+
+
+@dataclass(frozen=True)
+class BenchBasicsFromDeckOnEntry(EntryPower):
+    """この力は、このカードが場に出たときに 1 度だけ使える。自分の山札からポケモンカード（進化カード以外）を最大 ``max_cards`` 枚選び出し、自分のベンチに出す。
+    その後、その山札をよく切る（v0.43。わるいカイリューの［てしたをよぶ］。kyuura の印刷の文面）。
+
+    - 使う機会は場に出たとき（手札から進化させた・ポケモン育て屋さんで進化させた）。「手札から」の条件はない（``from_hand_only`` は偽）。山札から重ねる進化
+      （エリカのピッピの「つきのちから」）はワザの最中なので PW4（``programs.EvolveFromDeck``）
+    - 選ぶのは使ったプレイヤー（決定 ``BENCH_FROM_DECK``。v0.32 と同じ種類。選べるものは山札のたねポケモンのカード。0〜min(2, ベンチの空き, 枚数)）。手札を通さずに
+      ベンチに出す（v0.32 の ``zones.bench_from_deck``。場に出た番は今の番。ログ ``bench_from_deck`` に ``power``）→ 山札を切る（ログ ``shuffle`` に ``power``）
+    - ベンチに出すカードが 0 枚になる（ベンチに空きがない・山札にたねポケモンがない・0 枚を選ぶ）ときは決められない（PW3。使うことを選ぶと止める・0 枚の答えは
+      決定を待ったまま止める）
+    """
+
+    max_cards: int
+    implementation_id = "bench_basics_from_deck_on_entry"
+    from_hand_only: ClassVar[bool] = False
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "場に出たときに山札のたねポケモンをベンチに出す特殊能力", SUMMON_MINIONS_TEXTS)
+        if self.max_cards != 2:
+            problems.append(f"説明は最大2枚（登録は {self.max_cards}）")
+        return problems
+
+    def _limit(self, state: GameState, use: PowerUse) -> int:
+        space = state.rules.max_bench - len(state.players[use.player].bench)
+        return min(self.max_cards, space, len(deck_basic_pokemon(state, use.player)))
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        if len(state.players[use.player].bench) >= state.rules.max_bench:
+            return _power_zero_cards("ベンチに空きがない")
+        if not deck_basic_pokemon(state, use.player):
+            return _power_zero_cards("山札にたねポケモンがない（山札が 0 枚を含む）")
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        problem = self.accept_problem(state, use)
+        if problem is not None:
+            raise RuntimeError(f"てしたをよぶを、止めるはずの場合に使った（{problem.code}。機会の決定の確認の漏れ。エンジンの不具合）")
+        push_power_decision(state, use, kind=BENCH_FROM_DECK, player=use.player, options=deck_basic_pokemon(state, use.player), min_choices=0,
+                            max_choices=self._limit(state, use))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise _power_zero_cards("ベンチに出すカードを 0 枚選んだ")
+        cards = tuple(uid for uid in deck_basic_pokemon(state, use.player) if uid in choices)
+        if len(cards) != len(choices) or len(cards) > self._limit(state, use):
+            raise RuntimeError(f"てしたをよぶで選んだカード {choices} が、山札の選べるたねポケモンではない・多すぎる（エンジンの不具合）")
+        _, user = state.find_pokemon(use.pokemon_id)
+        for card in cards:
+            pokemon = bench_from_deck(state, use.player, card)
+            state.add_event("bench_from_deck", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), card=card,
+                            to_pokemon_id=pokemon.pokemon_id)
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=BENCH_FROM_DECK, choices=(0, self._limit(state, use)), options=deck_basic_pokemon(state, use.player))
+
+
 @dataclass(frozen=True)
 class PowerEntry:
     """ポケモンパワーの登録の 1 件（v0.5）。
@@ -7832,6 +8457,8 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG3-011", 0, "ようかいえき"),  # メノクラゲ（化石の秘密。ウツボットの「ようかいえき」とは別のワザ（説明文なし））
         ("PMCG5-060", 1, "ムーンキック"),  # エリカのピッピ（リーダーズスタジアム）
         ("PMCG5-065", 1, "ムーンインパクト"),  # エリカのピクシー（リーダーズスタジアム）
+        # v0.43: 説明文のないワザ（kyuura データの採用。docs/declared-entry-powers-v0.43.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG4-012", 0, "ほのおのしっぽ"),  # ヒトカゲ（ロケット団。第1弾のヒトカゲ PMCG1-014 とは同じ名前の別のカード）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -10683,6 +11310,71 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
             source="P43 p.125",
         ),
+        # ---- v0.43（docs/declared-entry-powers-v0.43.md）: 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚のワザ（kyuura データの採用。処理に使う文面は kyuura の印刷の文面）
+        # わるいクサイハナ（ロケット団。ナゾノクサから進化）。どくのこな（草草）10: ダメージ → どく
+        AttackKey("PMCG4-006", 0): AttackEntry(
+            PoisonOpponent(),
+            "どくのこな",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # スリープ（ロケット団。第1弾のスリープ PMCG1-045 とは同じ名前の別のカード）。あくむ（超無）10: ダメージ → ねむり（コインなし）
+        AttackKey("PMCG4-033", 0): AttackEntry(
+            SleepOpponent(),
+            "あくむ",
+            text_ja="相手を「ねむり」状態にする。",
+            play_text_ja="相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのマダツボミ（リーダーズスタジアム。HP 40。エリカのマダツボミ PMCG5-005 とは同じ名前の別のカード）。のびるつる（草）: 相手の控えを 1 匹選び、弱点・抵抗力に関係なく 10（v0.38 の型。書き方の違いを受け付ける）
+        AttackKey("PMCG5-010", 0): AttackEntry(
+            ChooseOpponentBenchDamage(10, requires_bench=False),
+            "のびるつる",
+            text_ja="相手の控えポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+            play_text_ja="相手の控えポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのレアコイル（リーダーズスタジアム。マチスのコイルから進化）。メガショック（雷雷雷無）50: コインの「うら」で自分にも 20
+        AttackKey("PMCG5-040", 0): AttackEntry(
+            SelfDamageOnTails(20),
+            "メガショック",
+            text_ja="コインを投げて「うら」なら、自分にも20ダメージ。",
+            play_text_ja="コインを投げて「うら」なら、自分にも20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいハクリュー（ロケット団。ミニリュウから進化）。しっぽでつく（無無無）20+: コインの「おもて」で 20 追加
+        AttackKey("PMCG4-052", 0): AttackEntry(
+            CoinBonusDamage(20),
+            "しっぽでつく",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいゴルバット（ロケット団。ズバットから進化）。ふらふらとぶ（草草）: 相手の場のポケモン（バトル場・ベンチ）を 1 匹選び、弱点・抵抗力に関係なく 20（v0.43 の型）
+        AttackKey("PMCG4-009", 0): AttackEntry(
+            ChooseOpponentPokemonDamage(20),
+            "ふらふらとぶ",
+            text_ja="相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)20ダメージ。",
+            play_text_ja="相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいヤドラン（ロケット団。ヤドンから進化）。きまぐれこうげき（超超）40: コインの「うら」で失敗
+        AttackKey("PMCG4-036", 0): AttackEntry(
+            FailOnTailsDamage(),
+            "きまぐれこうげき",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいカイリュー（ロケット団。わるいハクリューから進化）。きょだいなしっぽ（無無無無）70: コインの「うら」で失敗
+        AttackKey("PMCG4-053", 0): AttackEntry(
+            FailOnTailsDamage(),
+            "きょだいなしっぽ",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -10911,6 +11603,79 @@ DEFAULT_EFFECTS = EffectRegistry(
             "のろい",
             "自分の番ごとに1回だけ使える。相手の場のポケモンにのっているダメージカウンターを1つ選び、相手の場の別のポケモンの上にのせてよい。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
             "自分の番ごとに1回だけ使える。相手の場のポケモンにのっているダメージカウンターを1つ選び、相手の場の別のポケモンの上にのせてよい。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # v0.43 の特殊能力（宣言して使う 6 つ・場に出たときに 1 度だけ使える 3 つ。kyuura の印刷の文面）
+        # わるいクサイハナの［くさいかふん］（自分の番ごとに 1 回。コインの「おもて」で相手の、「うら」で自分の対戦ポケモンをこんらん）
+        PowerKey("PMCG4-006", 0): PowerEntry(
+            CoinConditionOnEitherActive(CONFUSION),
+            "くさいかふん",
+            "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「こんらん」状態にする。「うら」なら、自分の対戦ポケモンを「こんらん」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # スリープの［えんかくさいみん］（自分の番ごとに 1 回。コインの「おもて」で相手の、「うら」で自分の対戦ポケモンをねむり）
+        PowerKey("PMCG4-033", 0): PowerEntry(
+            CoinConditionOnEitherActive(SLEEP),
+            "えんかくさいみん",
+            "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「ねむり」状態にする。「うら」なら、自分の対戦ポケモンを「ねむり」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の対戦ポケモンを「ねむり」状態にする。「うら」なら、自分の対戦ポケモンを「ねむり」状態にする。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # ヒトカゲの［ほのおをもらう］（自分の番ごとに 1 回。自分の場のほかのポケモンの「炎」エネルギーカードを 1 枚このカードにつけかえる）
+        PowerKey("PMCG4-012", 0): PowerEntry(
+            TakeEnergyToSelf(EnergyType.FIRE),
+            "ほのおをもらう",
+            "自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを1枚はがし、このカードにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを1枚はがし、このカードにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのマダツボミの［ようぶんきゅうしゅう］（自分の番ごとに 1 回。自分の場のほかのポケモンの「草」エネルギーカードを最大 2 枚このカードにつけかえる。0 枚は PW3）
+        PowerKey("PMCG5-010", 0): PowerEntry(
+            TakeEnergiesToSelf(EnergyType.GRASS, 2),
+            "ようぶんきゅうしゅう",
+            "この力は、自分の番ごとに1回使える。自分の場のポケモンについている「草」エネルギーカードを最大2枚選び、はがしてこのカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "この力は、自分の番ごとに1回使える。自分の場のポケモンについている「草」エネルギーカードを最大2枚選び、はがしてこのカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのレアコイルの［エナジーチャージ］（バトル場にいるときだけ。回数の制限はない。控えの「雷」エネルギーカードを好きなだけこのカードにつけかえる）
+        PowerKey("PMCG5-040", 0): PowerEntry(
+            ChargeBenchEnergyToSelf(EnergyType.LIGHTNING),
+            "エナジーチャージ",
+            "この力は、このカードがバトル場にいる時だけ、使える。自分の控えポケモンについている「雷」エネルギーカードを好きなだけはがし、このカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "この力は、このカードがバトル場にいる時だけ、使える。自分の控えポケモンについている「雷」エネルギーカードを好きなだけはがし、このカードにつける。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいハクリューの［しんかのひかり］（自分の番ごとに 1 回。山札の進化カードを 1 枚見せて手札に加え、山札を切る。山札に進化カードがなければ PW3）
+        PowerKey("PMCG4-052", 0): PowerEntry(
+            SearchEvolutionCardToHand(),
+            "しんかのひかり",
+            "自分の番ごとに1回使える。自分の山札から進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "自分の番ごとに1回使える。自分の山札から進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいゴルバットの［こっそりかみつく］（手札から出したときに 1 度だけ。相手の場のポケモン 1 匹に、特殊能力によるダメージ 10。きぜつさせうる）
+        PowerKey("PMCG4-009", 0): PowerEntry(
+            DamageOpponentPokemonOnEntry(10),
+            "こっそりかみつく",
+            "この力は、このカードを手札から出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+            "この力は、このカードを手札から出した時、1度だけ使える。相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいヤドランの［つりあげる］（手札から場に出したときに 1 度だけ。トラッシュのポケモンのカードを最大 3 枚見せて手札に加える）
+        PowerKey("PMCG4-036", 0): PowerEntry(
+            RecoverPokemonFromDiscardOnEntry(3),
+            "つりあげる",
+            "この力は、このカードを手札から場に出した時、1度だけ使える。自分のトラッシュにあるポケモン(または進化)カードを最大3枚選び、相手プレイヤーに見せてから、手札に加える。",
+            "この力は、このカードを手札から場に出した時、1度だけ使える。自分のトラッシュにあるポケモン(または進化)カードを最大3枚選び、相手プレイヤーに見せてから、手札に加える。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいカイリューの［てしたをよぶ］（場に出たときに 1 度だけ。山札のたねポケモンを最大 2 枚ベンチに出し、山札を切る。0 枚になるときは PW3）
+        PowerKey("PMCG4-053", 0): PowerEntry(
+            BenchBasicsFromDeckOnEntry(2),
+            "てしたをよぶ",
+            "この力は、このカードが場に出た時に1度だけ使える。自分の山札からポケモンカード(進化カード以外)を最大2枚選び出し、自分のベンチに出す。その後、その山札をよく切る。",
+            "この力は、このカードが場に出た時に1度だけ使える。自分の山札からポケモンカード(進化カード以外)を最大2枚選び出し、自分のベンチに出す。その後、その山札をよく切る。",
             _KYUURA_PRINTED_TEXT,
         ),
         # エリカのラフレシアの［ぼうぎょかふん］（バトル場でワザのダメージを受けたときに自動的にはたらく。特殊状態でもはたらく。kyuura の印刷の文面）
