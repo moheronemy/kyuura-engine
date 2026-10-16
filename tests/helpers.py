@@ -147,6 +147,21 @@ V0_31_TARGETS = (NINETALES, "PMCG1-021", ZAPDOS, BASE_GASTLY, MEWTWO, CLEFABLE, 
                  BLAINES_CHARMELEON, BLAINES_MAGMAR, BLAINES_NINETALES, BLAINES_ARCANINE, LT_SURGES_RAICHU)
 V0_31_DEPENDENCIES = (CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU)
 V0_31_POKEMON = V0_31_TARGETS + V0_31_DEPENDENCIES
+# v0.32（山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザのポケモンと進化先。docs/bench-search-counter-drain-v0.32.md）
+NIDORAN_F = "PMCG2-001"  # ニドラン♀（第2弾。HP 60・草・弱点 超・にげる 1。みだれひっかき（草）10×・なかまをよぶ（草草））
+JUNGLE_ODDISH = "PMCG2-002"  # ナゾノクサ（第2弾。HP 50・草・弱点 炎・にげる 1。しびれごな（草）10・ふえる（草草））。ROCKET_ODDISH と同じ名前の別のカード
+BELLSPROUT = "PMCG2-005"  # マダツボミ（第2弾。HP 40・草・弱点 炎・にげる 1。つるのムチ（草）10・なかまをよぶ（草））
+KRABBY = "PMCG3-013"  # クラブ（化石の秘密。HP 50・水・弱点 雷・にげる 2。なかまをよぶ（水）・はさむ（水無）20）
+NIDORINA = "PMCG2-008"  # ニドリーナ（第2弾。ニドラン♀から進化。HP 70。ちょうおんぱ（草）・にどげり（草無無）30×）
+WEEPINBELL = "PMCG2-011"  # ウツドン（第2弾。マダツボミから進化。HP 70。どくのこな（草）10・はっぱカッター（草草）30）
+MAGIKARP = "PMCG1-031"  # コイキング（第1弾。HP 30・水・弱点 雷・にげる 1。たいあたり（無）10・じたばた（水）10×）
+GYARADOS = "PMCG1-034"  # ギャラドス（第1弾。コイキングから進化。HP 100・水・弱点 草・抵抗力 闘 -30。りゅうのいかり（水水水）50・バブルこうせん（水水水水）40）
+KINGLER = "PMCG3-019"  # キングラー（化石の秘密。クラブから進化。HP 60・水・弱点 雷。じたばた（水）10×・クラブハンマー（水水無）40）
+JYNX = "PMCG1-048"  # ルージュラ（第1弾。HP 70・超・弱点 超・にげる 2。おうふくびんた（超）10×・ヨガのポーズ（超超無）20+）
+VENONAT = "PMCG2-004"  # コンパン（第2弾。HP 40・草・弱点 炎・にげる 1。しびれごな（草）10・きゅうけつ（草無）10）
+FOSSIL_ZUBAT = "PMCG3-002"  # ズバット（化石の秘密。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。ちょうおんぱ（無無）・きゅうけつ（草無）10）
+GOLBAT = "PMCG3-005"  # ゴルバット（化石の秘密。ズバットから進化。HP 60・草・弱点 超・抵抗力 闘 -30・にげる 0。つばさでうつ（無無無）30・きゅうけつ（草草無）20）
+V0_32_POKEMON = (NIDORAN_F, JUNGLE_ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL, MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT)
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -569,6 +584,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.SleepOnHeadsWithoutDamage,  # ゴースの「さいみんガス」・ピッピの「うたう」
     _effects.SwitchOpponentActive,  # キュウコンの「かどわかす」
     _effects.ThreeCoinPsychicPower,  # カスミのコダックの「ちょうのうりょく」
+) + (
+    # v0.32（docs/bench-search-counter-drain-v0.32.md 3 章）
+    _effects.PutBasicFromDeckOntoBench,  # ニドラン♀・マダツボミ・クラブの「なかまをよぶ」・ナゾノクサの「ふえる」
+    _effects.DamageTimesOwnCounters,  # コイキング・キングラーの「じたばた」
+    _effects.DamagePlusDefenderCounters,  # ルージュラの「ヨガのポーズ」
+    _effects.DamageAndFullDrain,  # コンパン・ズバット（化石の秘密）・ゴルバットの「きゅうけつ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

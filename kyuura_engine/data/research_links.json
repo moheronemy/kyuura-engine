@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 38,
-    "engine_stop_codes": 37,
+    "engine_unresolved_rulings": 39,
+    "engine_stop_codes": 38,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -480,6 +480,17 @@
           "version": "v0.31",
           "document": "docs/held-cards-v0.31.md",
           "ruling_id": "HC10"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": {
+      "engine_rulings": [
+        {
+          "version": "v0.32",
+          "document": "docs/bench-search-counter-drain-v0.32.md",
+          "ruling_id": "CD4"
         }
       ],
       "kyuura_issue": null,
@@ -1024,7 +1035,26 @@
       "PMCG6-034/attack/0",
       "PMCG6-034/attack/1",
       "PMCG6-041/attack/0",
-      "PMCG6-041/attack/1"
+      "PMCG6-041/attack/1",
+      "PMCG2-001/attack/0",
+      "PMCG2-001/attack/1",
+      "PMCG2-002/attack/0",
+      "PMCG2-002/attack/1",
+      "PMCG2-005/attack/1",
+      "PMCG3-013/attack/0",
+      "PMCG2-008/attack/0",
+      "PMCG2-008/attack/1",
+      "PMCG2-011/attack/0",
+      "PMCG1-031/attack/1",
+      "PMCG1-034/attack/1",
+      "PMCG3-019/attack/0",
+      "PMCG1-048/attack/0",
+      "PMCG1-048/attack/1",
+      "PMCG2-004/attack/0",
+      "PMCG2-004/attack/1",
+      "PMCG3-002/attack/0",
+      "PMCG3-002/attack/1",
+      "PMCG3-005/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

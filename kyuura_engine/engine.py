@@ -93,7 +93,7 @@ from .state import (
     freeze_mapping,
     turn_owner,
 )
-from .zones import attach_energy_from_hand, draw_cards, shuffle_deck
+from .zones import attach_energy_from_hand, draw_cards, enter_play, shuffle_deck
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
 # 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
@@ -348,10 +348,9 @@ def _enter_play(state: GameState, uid: int) -> PokemonInPlay:
 
     場に出た番（``played_turn``。対戦準備なら 0）を記録する。今の番に場に出したポケモンは、その番には進化できない
     （「その番の最初」には場にいなかった。p.310。v0.4a）。
+    v0.32 から本体は ``zones.enter_play``（ワザの効果で山札からベンチに出す処理と共通）。
     """
-    pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
-    state.next_pokemon_id += 1
-    return pokemon
+    return enter_play(state, uid)
 
 
 def _after_prizes(state: GameState) -> None:

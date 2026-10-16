@@ -27,6 +27,11 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
 - v0.30（``--batch v0.30``。``PAIRINGS_V0_30``）: ``F30``（炎）: ヒトカゲ 4・リザード 3・ガーディ（第1弾。v0.2a から）4・ウインディ 3・ブーバー 3・
   第4弾ロケット団のポニータ 4、トレーナーは ``W28`` と同じ 12、炎エネルギー 27。組は ``F30`` 対 ``B2``（第2版のフシギバナ・パラセクト）・``F30`` 対
   ``A2``（第2版のエビワラー・ジュゴン）・``F30`` 対 ``G28``。v0.28・v0.29 のデッキに v0.30 のカードは入っていないので、その組の結果は変わらない。
+- v0.32（``--batch v0.32``。``PAIRINGS_V0_32``。docs/bench-search-counter-drain-v0.32.md）: ``G32``（草）: ニドラン♀ 4・ニドリーナ 3・ナゾノクサ（第2弾）3・
+  第4弾のナゾノクサ 1・マダツボミ 4・ウツドン 3・コンパン 3・ズバット（化石の秘密）3・ゴルバット 2、トレーナー 12、草エネルギー 22。``W32``（水・超）:
+  コイキング 4・ギャラドス 3・クラブ 4・キングラー 3・ルージュラ 4、トレーナー 12、水エネルギー 20・超エネルギー 10。組は ``G32`` 対 ``W32``・``G32`` 対
+  ``A2``・``W32`` 対 ``B2``。山札からベンチに出すワザの決定は元の手順のまま（1 つ目の選べるもの）。ベンチに空きがなくて使えないワザ（``BENCH_FULL``）と
+  CD4 で止まったワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.32 のカードは入っていないので、その組の結果は変わらない。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -92,7 +97,11 @@ CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_
 V0_31_DEPENDENCIES = (CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU)
 V0_31 = V0_31_TARGETS + V0_31_DEPENDENCIES
 VULPIX = "PMCG1-015"
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31  # ワザの選び方を重ね、動きを数えるカード
+# v0.32（山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザのポケモンと進化先。docs/bench-search-counter-drain-v0.32.md）
+NIDORAN_F, ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL = "PMCG2-001", "PMCG2-002", "PMCG2-005", "PMCG3-013", "PMCG2-008", "PMCG2-011"
+MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT = "PMCG1-031", "PMCG1-034", "PMCG3-019", "PMCG1-048", "PMCG2-004", "PMCG3-002", "PMCG3-005"
+V0_32 = (NIDORAN_F, ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL, MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT)
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -118,13 +127,19 @@ DECKS = {
     # v0.31: 超・水・無色（化石の秘密・ジャングル・ロケット団・リーダーズスタジアム）
     "P31": ((SLOWPOKE, 3), (CLEFAIRY, 3), (CLEFABLE, 2), (PSYDUCK, 3), (DARK_GOLDUCK, 2), (MISTYS_PSYDUCK, 3), (MISTYS_GOLDUCK, 2),
             *TRAINERS, (PSYCHIC, 15), (WATER, 15)),
+    # v0.32: 草（ジャングル・化石の秘密）。ふえるで同じ名前の別のカードを選べることを見るため、第4弾のナゾノクサを 1 枚入れる
+    "G32": ((NIDORAN_F, 4), (NIDORINA, 3), (ODDISH, 3), (ROCKET_ODDISH, 1), (BELLSPROUT, 4), (WEEPINBELL, 3), (VENONAT, 3), (FOSSIL_ZUBAT, 3),
+            (GOLBAT, 2), *TRAINERS, (GRASS, 22)),
+    # v0.32: 水・超（第1弾・化石の秘密）
+    "W32": ((MAGIKARP, 4), (GYARADOS, 3), (KRABBY, 4), (KINGLER, 3), (JYNX, 4), *TRAINERS, (WATER, 20), (PSYCHIC, 10)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
 PAIRINGS_V0_29 = (("GW29", "LF29"), ("GW29", "B2"), ("LF29", "A2"))
 PAIRINGS_V0_30 = (("F30", "B2"), ("F30", "A2"), ("F30", "G28"))
 PAIRINGS_V0_31 = (("R31", "K31"), ("E31", "P31"), ("R31", "P31"), ("K31", "E31"))
-BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31}
+PAIRINGS_V0_32 = (("G32", "W32"), ("G32", "A2"), ("W32", "B2"))
+BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -132,7 +147,9 @@ RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy
                  # v0.31
                  "discard_energy_failed", "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard",
                  "attack_attach_energy", "discard_from_deck", "copy_attack", "attack_failed", "effect_prevented", "effect_skipped", "draw",
-                 "forced_switch", "destiny_bond")
+                 "forced_switch", "destiny_bond",
+                 # v0.32
+                 "bench_from_deck", "bench_from_deck_none")
 
 
 def _attacker(state, command):
@@ -150,6 +167,11 @@ def _defender(state, command):
     return state.players[1 - command.player].active
 
 
+def _attack_effect(state, command):
+    definition = state.card_def(_attacker(state, command).card)
+    return state.effects.attack_effect(definition.id, definition.attacks[command.attack_index], definition.attacks)
+
+
 # v0.31: 原典で決められない場合・エンジンの未対応で止まったワザを、場から確かめる関数（tests/v017_games.py の ``extra_stop``。止まるのが正しいなら True）
 V031_STOPS = {
     "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
@@ -165,6 +187,12 @@ V031_STOPS = {
     "UNSUPPORTED_COPIED_ATTACK": lambda st, c: _copier(st, c),
     # 試す結果の数が上限（4,096）を超える（れんぞくファイヤーボール・エナジーボム・ほうでん・やまやきで、ついているエネルギーが多いとき）
     "UNSUPPORTED_PREFLIGHT_LIMIT": lambda st, c: len(_attacker(st, c).energy) >= 6,
+    # v0.32: なかまをよぶ・ふえる（ベンチに空きがなければ使えない。ワザを使うための条件）
+    "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ == "PutBasicFromDeckOntoBench"
+                                 and len(st.players[c.player].bench) >= st.rules.max_bench),
+    # v0.32: ヨガのポーズ（相手の控えポケモンにダメージカウンターがのっている。CD4）
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamagePlusDefenderCounters"
+                                                           and any(p.damage for p in st.players[1 - c.player].bench)),
 }
 
 
@@ -349,6 +377,7 @@ def card_uses(state):
       ``effect_removed_<理由>``: そのカードの持続する効果が消えた回数（``expired``・``retreat``・``switch``・``knock_out`` など）
     - ``knocked_out``: きぜつした回数
     - v0.31: ``energy_burn``（エナジーバーン）・``power_heal``（しぜんになおる）・``power_heal_on_attach``（ほのおでかいふく）: 特殊能力のログの数
+    - v0.32: ``benched_from_deck``: ワザの効果（なかまをよぶ・ふえる）で山札からベンチに出された回数（``in_play`` にも数える）
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
     uses = {cid: Counter() for cid in TARGETS}
@@ -362,6 +391,9 @@ def card_uses(state):
                     uses[card[uid]]["in_play"] += 1
         elif kind == "play_to_bench" and card[e["card"]] in uses:
             uses[card[e["card"]]]["in_play"] += 1
+        elif kind == "bench_from_deck" and card[e["card"]] in uses:
+            uses[card[e["card"]]]["in_play"] += 1  # v0.32: ワザの効果で山札からベンチに出した
+            uses[card[e["card"]]]["benched_from_deck"] += 1
         elif kind == "evolve" and card[e["to_card"]] in uses:
             uses[card[e["to_card"]]]["evolved_to"] += 1
         elif kind == "knock_out" and card.get(e.get("pokemon")) in uses:
@@ -430,7 +462,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30 のどれかの 3 組、v0.31 の 4 組）")
+    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32 のどれかの 3 組、v0.31 の 4 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

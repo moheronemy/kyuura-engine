@@ -32,7 +32,7 @@ from ..coins import CoinFlips, CoinSide, flip_coins
 from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from ..decisions import (
-    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER, SELECT_ATTACK,
+    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER, SELECT_ATTACK,
     SELECT_POKEMON,
 )
 from ..errors import UnsupportedError
@@ -41,7 +41,7 @@ from ..state import (
     RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, CannotAttack, DamageReduction, DestinyBond, NextTurnAttackDamage,
     PreventDamage, Retaliation,
 )
-from ..zones import attach_from_discard, discard_from_deck, draw_cards, return_discard_to_hand
+from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, draw_cards, return_discard_to_hand, shuffle_deck
 
 from . import catalog as C
 from . import codec
@@ -640,10 +640,11 @@ class ForceSwitch(Element):
 @dataclass(frozen=True)
 class Drain(Element):
     """相手にダメージを与えたら、自分のダメージカウンターをとりのぞく（メガドレイン・やどりぎのタネ）。``counters`` が None なら与えた
-    ダメージの半分（カウンターの単位で切り上げ）。"""
+    ダメージの半分（カウンターの単位で切り上げ）。v0.32: ``full`` なら与えたぶん（与えたダメージ ÷ 10 個。きゅうけつ）。どれも、のっている数まで。"""
 
     source: str
     counters: int | None = None
+    full: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
@@ -660,7 +661,7 @@ class Drain(Element):
         if self.counters is None:
             if result.dealt % per:
                 raise RuntimeError(f"与えたダメージ {result.dealt} がダメージカウンターの単位の倍数ではない（エンジンの不具合）")
-            counters = (result.dealt // per + 1) // 2
+            counters = result.dealt // per if self.full else (result.dealt // per + 1) // 2
         else:
             counters = self.counters
         before = attacker.damage
@@ -1606,6 +1607,98 @@ class CopyOpponentAttack(Element):
         return [(index,) for index in decision.options if index not in blocked]
 
 
+# ---------------------------------------------------------------- v0.32: 山札からベンチに出す・ダメージカウンターでダメージが決まる
+# （docs/bench-search-counter-drain-v0.32.md）
+
+
+@dataclass(frozen=True)
+class OwnCountersTimes:
+    """自分（ワザを使ったポケモン）にのっているダメージカウンターの数 × ``per``（じたばた。コインはない。0 個なら 0）。``HeadsOwnCounters``（いかりの
+    スーパーパンチ。コインの「おもて」なら）と同じ数え方。数えるのはダメージの要素を処理する時点。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attacker().damage // run.state.rules.damage_per_counter * self.per
+
+
+@dataclass(frozen=True)
+class PlusDefenderCounters:
+    """ダメージの目安の数字 + 相手の対戦ポケモンにのっているダメージカウンターの数 × ``per``（ヨガのポーズ）。説明の「相手のポケモン」が相手の場の
+    ポケモンすべてを指すかは決められない（CD4）ので、相手の控えポケモンにダメージカウンターがのっていて、読み方で基本となるダメージが変わるときは
+    問い ``opponent_pokemon_counters``（宣言の前に止まる。先読みがこの要素を処理するので、コインの結果によらない）。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        per_counter = run.state.rules.damage_per_counter
+        opponent = run.state.players[1 - run.player]
+        bench = sum(pokemon.damage for pokemon in opponent.bench) // per_counter
+        if bench:
+            raise run.res.question(
+                "opponent_pokemon_counters",
+                f"相手の対戦ポケモン {run.opponent_active().damage // per_counter} 個・相手の控えポケモン {bench} 個",
+            )
+        return run.attack.damage + run.opponent_active().damage // per_counter * self.per
+
+
+@dataclass(frozen=True)
+class BenchFromDeck(Element):
+    """自分の山札から、名前が ``names`` のどれかのたねポケモンを 1 匹さがして、自分のベンチに出す。その後、その山札をよく切る（なかまをよぶ・ふえる）。
+
+    - ベンチに空きがないときは使えない（ワザを使うための条件。``effects.PutBasicFromDeckOntoBench.usage_problem`` が宣言の前に拒否する。相手のワザとして
+      使うときは ``copy_problem``）。ここに来たらエンジンの不具合
+    - 選ぶのはワザを使ったプレイヤー（決定 ``BENCH_FROM_DECK``。1 匹。省略できない）。選べるものは山札の、名前の合うたねポケモン（uid の小さい順）
+    - 選べるものがない（山札が 0 枚を含む）: 処理の対象がないので出さない（p.309。ログ ``bench_from_deck_none``）。どちらの場合も、そのあと山札を切る
+    - 出したカードは手札を通らない（``zones.bench_from_deck``。ログ ``bench_from_deck``。出したカードは公開。山札の中身はログに書かない）
+    - 先読み（``res.dry_run``）では山札を切らない（乱数はコインだけ。切った並びを使う処理が先読みの範囲にないことを、この要素がワザの最後の要素である
+      ことで確かめる）
+    """
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = BENCH_FROM_DECK
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        if len(run.state.players[run.player].bench) >= run.state.rules.max_bench:
+            return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), "自分のベンチに空きがない（ワザを使うための条件）"
+        return None
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        if len(state.players[run.player].bench) >= state.rules.max_bench:
+            raise RuntimeError(f"ベンチに空きがないのに、ワザ {run.key} の山札からベンチに出す処理に来た（使うための条件の確認の漏れ。エンジンの不具合）")
+        candidates = E.bench_from_deck_candidates(state, run.player, self.names)
+        if not candidates:
+            attacker = run.attacker()
+            state.add_event("bench_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            names=self.names)
+            self._shuffle(run)
+            return False
+        run.suspend(kind=BENCH_FROM_DECK, player=run.player, options=candidates)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        card = choices[0]
+        if card not in E.bench_from_deck_candidates(state, run.player, self.names):
+            raise RuntimeError(f"ベンチに出すカード {choices} が、山札の「{'」「'.join(self.names)}」のたねポケモンではない（エンジンの不具合）")
+        pokemon = bench_from_deck(state, run.player, card)
+        attacker = run.attacker()
+        state.add_event("bench_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                        card=card, to_pokemon_id=pokemon.pokemon_id)
+        self._shuffle(run)
+
+    def _shuffle(self, run: AttackRun) -> None:
+        if run.res.dry_run:
+            if run.program[-1] is not self:
+                raise RuntimeError("山札を切る要素のあとに要素がある（先読みで切った並びを使えない。エンジンの不具合）")
+            return
+        shuffle_deck(run.state, run.player)
+
+
 # ---------------------------------------------------------------- 登録表の実装 → 要素の並び（v0.13 の 24 種類と、v0.17 から加えた型）
 
 BUILDERS: dict[type, Any] = {
@@ -1713,6 +1806,11 @@ BUILDERS: dict[type, Any] = {
     ),
     E.CannotAttackOnHeads: lambda e: (OpponentCannotAttack(HEADS),),
     E.DamageAndBenchTypeDamage: lambda e: (Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), pokemon_type=e.pokemon_type)),
+    # v0.32（docs/bench-search-counter-drain-v0.32.md）
+    E.PutBasicFromDeckOntoBench: lambda e: (BenchFromDeck(e.names),),
+    E.DamageTimesOwnCounters: lambda e: (Damage(OPP, OwnCountersTimes(e.per)),),
+    E.DamagePlusDefenderCounters: lambda e: (Damage(OPP, PlusDefenderCounters(e.per)),),
+    E.DamageAndFullDrain: lambda e: (Damage(OPP, Printed()), Drain("damage", full=True)),
 }
 
 

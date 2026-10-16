@@ -33,6 +33,13 @@ V0_31_WITH_TEXT = [
     AttackKey("PMCG6-026", 0), AttackKey("PMCG6-027", 0), AttackKey("PMCG6-029", 1), AttackKey("PMCG6-031", 0), AttackKey("PMCG6-031", 1),
     AttackKey("PMCG6-033", 0), AttackKey("PMCG6-034", 0), AttackKey("PMCG6-034", 1), AttackKey("PMCG6-041", 0), AttackKey("PMCG6-041", 1),
 ]
+# v0.32 で加えた説明文のあるワザ（19）。docs/bench-search-counter-drain-v0.32.md
+V0_32_WITH_TEXT = [
+    AttackKey("PMCG1-031", 1), AttackKey("PMCG1-034", 1), AttackKey("PMCG1-048", 0), AttackKey("PMCG1-048", 1), AttackKey("PMCG2-001", 0),
+    AttackKey("PMCG2-001", 1), AttackKey("PMCG2-002", 0), AttackKey("PMCG2-002", 1), AttackKey("PMCG2-004", 0), AttackKey("PMCG2-004", 1),
+    AttackKey("PMCG2-005", 1), AttackKey("PMCG2-008", 0), AttackKey("PMCG2-008", 1), AttackKey("PMCG2-011", 0), AttackKey("PMCG3-002", 0),
+    AttackKey("PMCG3-002", 1), AttackKey("PMCG3-005", 1), AttackKey("PMCG3-013", 0), AttackKey("PMCG3-019", 0),
+]
 
 
 class RecordingEffect(AttackEffect):
@@ -180,7 +187,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
                                      AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
-                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT))
+                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -305,7 +312,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + ヒトカゲの「ひのこ」・リザード・ウインディ・ブーバーの 2 つずつ・第4弾のポニータの 1 つ（v0.30。エネルギーをトラッシュしてダメージを
         #   与えるワザの共通の型）
         # + v0.30 の保留の 22 枚と進化元・依存のカード 7 枚、合わせて 29 枚のワザ 52（v0.31。docs/held-cards-v0.31.md）
-        self.assertEqual(len(keys), 176)
+        # + 山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザの 13 枚のワザ 26（v0.32。docs/bench-search-counter-drain-v0.32.md）
+        self.assertEqual(len(keys), 202)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

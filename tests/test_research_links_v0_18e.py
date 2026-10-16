@@ -63,9 +63,9 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 = 37 件）。論点のないものは kyuura の
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 = 38 件）。論点のないものは kyuura の
         処理が out_of_scope。kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 の
-        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件。kyuura への報告事項）。
+        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4。kyuura への報告事項）。
         v0.31 で、v0.30 まで起こらなかった（コードのない）5 件（T27・C34/C35・G40・P19・P32）が複数のポケモンにダメージを与えるワザで起こるように
         なったので停止コードにした。kyuura の論点（UQ-）はそのまま（kyuura の未解決の一覧ではコードのない行なので、``kyuura_index_engine_key`` で
         行を指す。scripts/check_research_links.py）。"""
@@ -85,7 +85,9 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_DISCARD_ENERGY_TIMING", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", "UNRESOLVED_PREVENTED_EFFECT_COIN",
                                          "UNRESOLVED_EXTRA_ENERGY_COLORLESS", "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO", "UNRESOLVED_DISCARD_DECK_SHORT",
                                          "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO", "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE", "UNRESOLVED_COPIED_ATTACK",
-                                         "UNRESOLVED_ENERGY_BURN_TRANSFER"})
+                                         "UNRESOLVED_ENERGY_BURN_TRANSFER",
+                                         # v0.32（docs/bench-search-counter-drain-v0.32.md の CD4）
+                                         "UNRESOLVED_OPPONENT_POKEMON_COUNTERS"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
@@ -121,9 +123,9 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertTrue(any(set(question.rulings) <= row for row in codeless_rows), question.rulings)
 
     def test_counts(self):
-        """未解決の裁定 38 件 = 停止コード 37 + コードのない未解決（Z9）。v0.30 までは 28 件 = 停止コード 22 + コードのない未解決（起こらない 5・Z9）
+        """未解決の裁定 39 件 = 停止コード 38 + コードのない未解決（Z9）。v0.32 で CD4 の 1 件を加えた。v0.30 までは 28 件 = 停止コード 22 + コードのない未解決（起こらない 5・Z9）
         で、v0.31 で起こらない 5 件を停止コードにし（数は同じ）、HC1〜HC10 の 10 件を加えた。kyuura の論点は 19 件で、別の数え方（v0.21 の
-        GW5・v0.22 の CS6・v0.23 の ER9・ER10・v0.31 の HC1〜HC10 は kyuura に論点がない）。"""
+        GW5・v0.22 の CS6・v0.23 の ER9・ER10・v0.31 の HC1〜HC10・v0.32 の CD4 は kyuura に論点がない）。"""
         counted = len(LINKS["stop_codes"]) + len(LINKS["unresolved_without_code"]) + sum(
             v["counted_as_engine_unresolved"] for v in LINKS["codeless_questions"].values())
         self.assertEqual(counted, LINKS["counts"]["engine_unresolved_rulings"])

@@ -59,6 +59,9 @@ ALL_CODES = (
     "UNRESOLVED_EXTRA_ENERGY_COLORLESS", "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO", "UNRESOLVED_DISCARD_DECK_SHORT",
     "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO", "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE", "UNRESOLVED_COPIED_ATTACK",
     "UNRESOLVED_ENERGY_BURN_TRANSFER",
+    # v0.32: CD4（docs/bench-search-counter-drain-v0.32.md）。止まる場合と隣の止まらない場合は tests/test_bench_search_counter_drain_v0_32.py の
+    # CounterDamageTest（test_meditate_stops_when_the_reading_matters・test_meditate_counts_the_defending_pokemon）
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS",
 )
 TURN = 7
 

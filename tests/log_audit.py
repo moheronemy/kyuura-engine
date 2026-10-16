@@ -63,6 +63,10 @@
   ``attach_energy_from_discard``・``attack_attach_energy``・``discard_from_deck``・``energy_burn``・``destiny_bond``）を組み立て直しに含め、
   宣言する特殊能力のすぐあとの処理に ``energy_burn``・``power_heal`` を加え、「みちづれ」できぜつしたポケモン（``destiny_bond`` の相手）は HP 未満で
   きぜつしてよい。「とうめい」の判定のあとに続く処理に、相手のエネルギーのトラッシュ・ワザを使えなくする効果・控えへのエネルギーをつける処理を加える。
+  v0.32 から、山札からベンチに出したカード（``bench_from_deck``。ワザを使ったプレイヤーの山札（手札・トラッシュにない）の、登録の名前のたねポケモン。
+  場のポケモンの番号は次の番号）を場の組み立て直しに含め、``bench_from_deck``・``bench_from_deck_none`` のすぐあとに同じプレイヤーの ``shuffle``
+  があること、ワザ 1 回に 1 回までであることを確かめる。``drain_heal`` のとりのぞく数（``drain_counters``）を登録の実装（半分の切り上げ・決まった数・
+  与えたぶん）と照らし、実際にとりのぞいた数がのっている数までであることを確かめる。
   ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
 - ``serialization_problems(state)``: 形式 1〜10 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
   形式 10 の書き出しから後の形式の項目を除いたものと同じになることを確かめる（v0.31 で形式 10 を加えた）。形式 11 はない。
@@ -86,6 +90,9 @@ from kyuura_engine.effects import (
     HealOnEnergyAttach,
     RemoveOwnCounterOncePerTurn,
     CounterattackDamage,
+    DamageAndDrain,
+    DamageAndFullDrain,
+    DamageAndRemoveCounters,
     DiscardEnergyAndRemoveAllCounters,
     DiscardEnergyThenDamage,
     PreventKnockOutOnHeads,
@@ -106,6 +113,8 @@ COUNTER_BARRIERS = (
     # v0.31: ダメージ以外の効果（エネルギーのトラッシュ・つける・回復・トレーナーの回収・山札・引く）と、ワザの失敗・効果を受けない状態
     "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard", "attack_attach_energy", "discard_from_deck",
     "draw", "effect_prevented", "effect_skipped", "destiny_bond",
+    # v0.32: 山札からベンチに出す（なかまをよぶ・ふえる）
+    "bench_from_deck", "bench_from_deck_none",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -321,6 +330,8 @@ def log_problems(state) -> list[str]:
                          "copy_attack", "attack_failed", "recover_trainer", "attach_energy_from_discard", "attack_heal", "destiny_bond"):
                 if window[once] > 1:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
+            if window["bench_from_deck"] + window["bench_from_deck_none"] > 1:
+                problems.append("1 回のワザで山札からベンチに出す処理（bench_from_deck・bench_from_deck_none）が 2 回以上")  # v0.32
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
             if window["counterattack"] + window["counterattack_skipped"] > 1:
@@ -418,6 +429,7 @@ def log_problems(state) -> list[str]:
     rebirth_answered: dict | None = None  # 直前の答え（宣言なら、すぐあとに return_to_hand が続くはず）
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
+    shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
 
     def working_gases() -> list[tuple[int, SuppressOtherPowers]]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
@@ -585,6 +597,10 @@ def log_problems(state) -> list[str]:
     for e in log:
         kind = e["kind"]
         prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
+        if shuffle_due is not None:
+            due_event, shuffle_due = shuffle_due, None
+            if kind != "shuffle" or e["player"] != due_event["player"]:
+                problems.append(f"{due_event['turn']} 番の {due_event['kind']} のすぐあとに、プレイヤー {due_event['player']} の山札を切る処理（shuffle）がない")
         if kind not in ("move_energy", "power_attach_energy", "move_damage_counter", "energy_burn", "power_heal"):
             if declared is not None:
                 problems.append(
@@ -989,6 +1005,18 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の ko_prevention_failed のダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う（「うら」はダメージを変えない。G19）")
         elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters", "remove_all_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
+            if kind == "drain_heal":
+                # v0.32: とりのぞく数は登録の実装で決まる（メガドレインは与えたダメージの半分の切り上げ、やどりぎのタネは決まった数、きゅうけつは与えたぶん）。
+                # 実際にとりのぞくのは、のっている数まで
+                per = state.rules.damage_per_counter
+                entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+                effect = entry.effect if entry is not None else None
+                expected = (e["dealt"] // per if isinstance(effect, DamageAndFullDrain) else (e["dealt"] // per + 1) // 2 if isinstance(effect, DamageAndDrain)
+                            else effect.counters if isinstance(effect, DamageAndRemoveCounters) else None)
+                if expected is None or e["drain_counters"] != expected or e["dealt"] <= 0 \
+                        or e["counters"] != min(e["drain_counters"], damage[pid] // per) or e["amount"] != e["counters"] * per:
+                    problems.append(f"{e['turn']} 番の drain_heal（ワザ {e['effect']}・与えたダメージ {e['dealt']}）のとりのぞく数 {e['drain_counters']}・{e['counters']} が"
+                                    f"登録の実装 {type(effect).__name__} と合わない（ログのダメージ {damage[pid]}）")
             if kind in ("drain_heal", "remove_all_damage_counters"):
                 damage[pid] -= e["amount"]
             elif kind == "remove_damage_counters":
@@ -1209,6 +1237,23 @@ def log_problems(state) -> list[str]:
             damage[pid] -= e["amount"]
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の power_heal のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind in ("bench_from_deck", "bench_from_deck_none"):
+            # v0.32: ワザ（なかまをよぶ・ふえる）で、ワザを使ったプレイヤーの山札の、説明の名前のたねポケモンを、手札を通さずにベンチに出す（山札は組み立て
+            # 直さないので、持ち主・手札・トラッシュ・場にないことで確かめる）。どちらのあとにも同じプレイヤーの山札を切る（shuffle）
+            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+            names = getattr(entry.effect, "names", None) if entry is not None else None
+            if attack_window is None or e["player"] != attack_window["player"] or e["pokemon_id"] != attack_window["pokemon_id"] or names is None:
+                problems.append(f"{e['turn']} 番の {kind} が、山札からベンチに出すワザ（登録の名前）の処理の中にない")
+            if kind == "bench_from_deck":
+                uid = e["card"]
+                definition = state.card_def(uid)
+                if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids \
+                        or not definition.is_basic_pokemon or (names is not None and definition.name_ja not in names):
+                    problems.append(f"{e['turn']} 番にベンチに出したカード {uid} が、プレイヤー {e['player']} の山札の、名前 {names} のたねポケモンではない")
+                enter(uid)
+                if ids[uid] != e["to_pokemon_id"]:
+                    problems.append(f"{e['turn']} 番にベンチに出したポケモンの番号 {e['to_pokemon_id']} が、ログから組み立てた {ids[uid]} と違う")
+            shuffle_due = e
         elif kind == "attack_heal":
             # v0.31: ワザ（ぼーっとする）で、ワザを使ったポケモンのダメージカウンターをとりのぞく
             pid = e["pokemon_id"]

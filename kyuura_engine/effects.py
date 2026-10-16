@@ -89,6 +89,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 
@@ -97,7 +98,7 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
 from .damage import SET, DamageModifier, calculate_attack_damage
 from .decisions import (
-    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
+    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
     RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_POKEMON, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
@@ -2575,6 +2576,101 @@ class DamageAndBenchTypeDamage(AttackEffect):
         return _check_form(attack, "控えのポケモンにもダメージを与えるワザ", damage="fixed")
 
 
+# ---------------------------------------------------------------- v0.32: 山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復する
+# （docs/bench-search-counter-drain-v0.32.md）。処理は解決の基盤の要素の並び（resolution/programs.py の BUILDERS）。処理に使う文面は kyuura の印刷の文面。
+
+
+def bench_from_deck_candidates(state: GameState, player: int, names: tuple[str, ...]) -> list[int]:
+    """``player`` の山札のカードのうち、名前（``name_ja``）が ``names`` のどれかと同じたねポケモン（v0.32。uid の小さい順。山札の並びを写さない）。
+    同じ名前の別のカード（第2弾のナゾノクサと第4弾のナゾノクサなど）は、どれも選べる（説明は名前で指す）。"""
+    return sorted(uid for uid in state.players[player].deck
+                  if state.card_def(uid).is_basic_pokemon and state.card_def(uid).name_ja in names)
+
+
+@dataclass(frozen=True)
+class PutBasicFromDeckOntoBench(AttackEffect):
+    """自分の山札から、名前が ``names`` のどれかのたねポケモンを 1 匹さがしてベンチに出す。その後、その山札をよく切る。自分のベンチに空きがなければ、
+    このワザは使えない（v0.32。ニドラン♀・マダツボミ・クラブの「なかまをよぶ」、ナゾノクサの「ふえる」）。
+
+    - ベンチに空きがないことは、ワザを使うための条件（``usage_problem``。必要なエネルギーの確認のあと・こんらんのコインの前。``BENCH_FULL``）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``BENCH_FROM_DECK``。1 匹。省略できない）。選べるものは ``bench_from_deck_candidates``
+    - 山札に選べるものがない（山札が 0 枚を含む）: 処理の対象がないので出さない（p.309。H5・ゴミあさりと同じ読み方）。そのあと山札を切る
+    - 出したカードは手札を通らない（``zones.bench_from_deck``）。場に出た番は今の番（p.310 の進化の制限は手札から出したときと同じ）
+    """
+
+    names: tuple[str, ...]
+    implementation_id = "put_basic_from_deck_onto_bench"
+
+    def __post_init__(self) -> None:
+        if type(self.names) is not tuple or not self.names or not all(type(name) is str and name for name in self.names):
+            raise ValueError(f"さがすポケモンの名前は 1 つ以上の文字列のタプル（{self.names!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "山札からベンチに出すワザ", damage="none")
+        text = attack.text_ja or ""
+        first = text.split("。")[0]
+        quoted = tuple(re.findall(r"「([^」]+)」", first))
+        if quoted != self.names or "を1匹さがしてベンチに" not in first or not first.startswith("自分の山札から"):
+            problems.append(f"説明の「自分の山札から「…」を1匹さがしてベンチに出す」の名前 {quoted} が、登録の名前 {self.names} と合わない")
+        if "その山札をよくきる" not in text:
+            problems.append("説明に「その山札をよくきる」がない")
+        if "自分のベンチに空きがなければ" not in text or "使えない" not in text:
+            problems.append("説明に「自分のベンチに空きがなければ…使えない」がない")
+        return problems
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if len(state.players[owner].bench) >= state.rules.max_bench:
+            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{state.rules.max_bench} 匹）ので、このワザは使えない（ワザの説明）")
+        return None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(1, 1),
+                              options=bench_from_deck_candidates(state, use.player, self.names))
+
+
+@dataclass(frozen=True)
+class DamageTimesOwnCounters(AttackEffect):
+    """自分にのっているダメージカウンターの数 × ``per`` のダメージ（v0.32。コイキング・キングラーの「じたばた」。ダメージの目安「10×」）。これが
+    p.321 の 1 段階（基本となるダメージ）。0 個なら 0 で、2 段階までで 0 以下なのでダメージを与えない（p.321。サカキのワンリキーの「いかりのスーパー
+    パンチ」の「おもて」と同じ数え方で、コインがない）。数えるのはダメージの要素を処理する時点のカウンター（進化前からのっているものを含む）。"""
+
+    per: int
+    implementation_id = "damage_times_own_counters"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "自分のダメージカウンターの数でダメージが決まるワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録のカウンター 1 個あたりのダメージ {self.per} と違う")
+        return problems
+
+
+@dataclass(frozen=True)
+class DamagePlusDefenderCounters(AttackEffect):
+    """ダメージの目安の数字 +「相手のポケモンにのっているダメージカウンター」× ``per`` の追加ダメージ（v0.32。ルージュラの「ヨガのポーズ」。ダメージの
+    目安「20+」）。数えるのはダメージを受ける相手の対戦ポケモンのカウンター。「相手のポケモン」が相手の場のポケモンすべてを指すかは決められないので、
+    相手の控えポケモンにダメージカウンターがのっていて読み方で答えが変わるときだけ止める（CD4。``UNRESOLVED_OPPONENT_POKEMON_COUNTERS``）。"""
+
+    per: int
+    implementation_id = "damage_plus_defender_counters"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "相手のダメージカウンターで追加ダメージのワザ", damage="modified", modifier="+")
+
+
+@dataclass(frozen=True)
+class DamageAndFullDrain(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく（v0.32。
+    コンパン・ズバット（化石の秘密）・ゴルバットの「きゅうけつ」）。メガドレイン（``DamageAndDrain``。半分の切り上げ）と同じ要素 ``programs.Drain`` で、
+    とりのぞく数だけが違う（与えたダメージ ÷ 10 個。のっている数まで）。「与えたダメージ」は最終ダメージ（p.319・p.321。v0.4d）。ダメージを与えなかったら
+    とりのぞかない（「ダメージを与えたら」。Z23 の「ダメージを与えた後、…」とは別）。ログはメガドレインと同じ ``drain_heal``。"""
+
+    implementation_id = "damage_and_full_drain"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "与えたぶんのダメージカウンターをとりのぞく")
+
+
 def attack_damage_modifiers(
     state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False
 ) -> tuple[DamageModifier, ...]:
@@ -4555,6 +4651,15 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG4-028", 0, "ころがりタックル"),  # わるいマルマイン
         ("PMCG6-025", 1, "きりさく"),  # カツラのヒトカゲ
         ("PMCG6-029", 0, "ほのおのつめ"),  # カツラのリザード
+        # v0.32: 山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザのポケモンと進化先のうち、説明文のないワザ（kyuura
+        # データの採用。docs/bench-search-counter-drain-v0.32.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG2-005", 0, "つるのムチ"),  # マダツボミ（第2弾）
+        ("PMCG3-013", 1, "はさむ"),  # クラブ（化石の秘密）
+        ("PMCG2-011", 1, "はっぱカッター"),  # ウツドン（第2弾）
+        ("PMCG1-031", 0, "たいあたり"),  # コイキング（第1弾）
+        ("PMCG1-034", 0, "りゅうのいかり"),  # ギャラドス（第1弾）
+        ("PMCG3-019", 1, "クラブハンマー"),  # キングラー（化石の秘密）
+        ("PMCG3-005", 0, "つばさでうつ"),  # ゴルバット（化石の秘密）。タケシのズバットの「つばさでうつ」とは別のカードのワザ
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -5599,6 +5704,159 @@ DEFAULT_EFFECTS = EffectRegistry(
             "でんこうせっか",
             text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
             play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.32（docs/bench-search-counter-drain-v0.32.md）。kyuura データの採用（card_sources.json）。処理に使う文面は kyuura の印刷の文面
+        # ニドラン♀（第2弾）。みだれひっかき（草）10×
+        AttackKey("PMCG2-001", 0): AttackEntry(
+            CoinFlipDamage(coins=3, damage_per_heads=10),
+            "みだれひっかき",
+            text_ja="コインを3枚投げて「おもて」の数×10のダメージ。",
+            play_text_ja="コインを3枚投げて「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ニドラン♀。なかまをよぶ（草草）。ニドラン♂（PMCG1-005）は写していないので、今の対戦では選べるのはニドラン♀だけ
+        AttackKey("PMCG2-001", 1): AttackEntry(
+            PutBasicFromDeckOntoBench(("ニドラン♂", "ニドラン♀")),
+            "なかまをよぶ",
+            text_ja="自分の山札から「ニドラン♂」または「ニドラン♀」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            play_text_ja="自分の山札から「ニドラン♂」または「ニドラン♀」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナゾノクサ（第2弾。第4弾のナゾノクサ PMCG4-003 とは別のカード）。しびれごな（草）10
+        AttackKey("PMCG2-002", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "しびれごな",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナゾノクサ（第2弾）。ふえる（草草）。名前で指すので、第4弾のナゾノクサも選べる
+        AttackKey("PMCG2-002", 1): AttackEntry(
+            PutBasicFromDeckOntoBench(("ナゾノクサ",)),
+            "ふえる",
+            text_ja="自分の山札から「ナゾノクサ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            play_text_ja="自分の山札から「ナゾノクサ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マダツボミ（第2弾）。なかまをよぶ（草）
+        AttackKey("PMCG2-005", 1): AttackEntry(
+            PutBasicFromDeckOntoBench(("マダツボミ",)),
+            "なかまをよぶ",
+            text_ja="自分の山札から「マダツボミ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            play_text_ja="自分の山札から「マダツボミ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # クラブ（化石の秘密）。なかまをよぶ（水）
+        AttackKey("PMCG3-013", 0): AttackEntry(
+            PutBasicFromDeckOntoBench(("クラブ",)),
+            "なかまをよぶ",
+            text_ja="自分の山札から「クラブ」を1匹さがしてベンチに出す。その後、その山札をよくきる。自分のベンチに空きがなければ、このワザは使えない。",
+            play_text_ja="自分の山札から「クラブ」を1匹さがしてベンチに出す。その後、その山札をよくきる。自分のベンチに空きがなければ、このワザは使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ニドリーナ（第2弾。ニドラン♀から進化）。ちょうおんぱ（草）
+        AttackKey("PMCG2-008", 0): AttackEntry(
+            ConfuseOnHeadsWithoutDamage(),
+            "ちょうおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ニドリーナ。にどげり（草無無）30×
+        AttackKey("PMCG2-008", 1): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=30),
+            "にどげり",
+            text_ja="コインを2枚投げて「おもて」の数×30のダメージ。",
+            play_text_ja="コインを2枚投げて「おもて」の数×30のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ウツドン（第2弾。マダツボミから進化）。どくのこな（草）10
+        AttackKey("PMCG2-011", 0): AttackEntry(
+            PoisonOnHeads(),
+            "どくのこな",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # コイキング（第1弾）。じたばた（水）10×
+        AttackKey("PMCG1-031", 1): AttackEntry(
+            DamageTimesOwnCounters(10),
+            "じたばた",
+            text_ja="自分のダメージカウンターの数×10のダメージをあたえる。",
+            play_text_ja="自分のダメージカウンターの数×10のダメージをあたえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ギャラドス（第1弾。コイキングから進化）。バブルこうせん（水水水水）40
+        AttackKey("PMCG1-034", 1): AttackEntry(
+            ParalyzeOnHeads(),
+            "バブルこうせん",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キングラー（化石の秘密。クラブから進化）。じたばた（水）10×
+        AttackKey("PMCG3-019", 0): AttackEntry(
+            DamageTimesOwnCounters(10),
+            "じたばた",
+            text_ja="自分にのっているダメージカウンターの数×10のダメージ。",
+            play_text_ja="自分にのっているダメージカウンターの数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ルージュラ（第1弾）。おうふくびんた（超）10×
+        AttackKey("PMCG1-048", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "おうふくびんた",
+            text_ja="コインを2枚投げて「おもて」の出た数×10のダメージをあたえる。",
+            play_text_ja="コインを2枚投げて「おもて」の出た数×10のダメージをあたえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ルージュラ。ヨガのポーズ（超超無）20+（「相手のポケモン」の範囲は CD4）
+        AttackKey("PMCG1-048", 1): AttackEntry(
+            DamagePlusDefenderCounters(10),
+            "ヨガのポーズ",
+            text_ja="相手のポケモンにのっているダメージカウンター×10のダメージを追加する。",
+            play_text_ja="相手のポケモンにのっているダメージカウンター×10のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # コンパン（第2弾）。しびれごな（草）10
+        AttackKey("PMCG2-004", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "しびれごな",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # コンパン。きゅうけつ（草無）10
+        AttackKey("PMCG2-004", 1): AttackEntry(
+            DamageAndFullDrain(),
+            "きゅうけつ",
+            text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+            play_text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ズバット（化石の秘密。第4弾のズバット PMCG4-002・タケシのズバットとは別のカード）。ちょうおんぱ（無無）
+        AttackKey("PMCG3-002", 0): AttackEntry(
+            ConfuseOnHeadsWithoutDamage(),
+            "ちょうおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ズバット（化石の秘密）。きゅうけつ（草無）10
+        AttackKey("PMCG3-002", 1): AttackEntry(
+            DamageAndFullDrain(),
+            "きゅうけつ",
+            text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+            play_text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ゴルバット（化石の秘密。ズバットから進化）。きゅうけつ（草草無）20
+        AttackKey("PMCG3-005", 1): AttackEntry(
+            DamageAndFullDrain(),
+            "きゅうけつ",
+            text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+            play_text_ja="相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

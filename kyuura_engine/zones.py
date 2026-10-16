@@ -4,10 +4,39 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .state import AttachedTrainer, TrainerInUse
+from .state import AttachedTrainer, PokemonInPlay, TrainerInUse
 
 if TYPE_CHECKING:
-    from .state import GameState, PokemonInPlay
+    from .state import GameState
+
+
+def enter_play(state: GameState, uid: int) -> PokemonInPlay:
+    """カードを場のポケモンにする。場のポケモンの番号を新しく付ける（前に使った番号は使わない）。
+
+    場に出た番（``played_turn``。対戦準備なら 0）を記録する。今の番に場に出したポケモンは、その番には進化できない
+    （「その番の最初」には場にいなかった。p.310。v0.4a）。v0.32 から、手札から出す（``engine._enter_play``。対戦準備・ベンチに出す）と、
+    ワザの効果で山札から出す（``bench_from_deck``）で共通（v0.31 までの ``engine._enter_play`` の本体をそのまま関数にした）。
+    """
+    pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
+    state.next_pokemon_id += 1
+    return pokemon
+
+
+def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
+    """自分の山札のたねポケモンのカード ``card`` を、同じ uid のまま、手札を通さずに自分のベンチの最後に出す（v0.32。ワザの「自分の山札から「○○」を
+    1匹さがしてベンチに出す」。docs/bench-search-counter-drain-v0.32.md）。場のポケモンの番号・場に出た番は手札から出すときと同じ ``enter_play``。
+    山札の残りの並びは変えない（切るのは呼ぶ側。``shuffle_deck``）。
+
+    出してよいか（名前・決定）の確認とログは呼ぶ側が行う。カードがそのプレイヤーの山札にない・持ち主が違う・たねポケモンでない・ベンチに空きが
+    ないなら、確認の漏れなので ``RuntimeError``（状態を変える前）。出した場のポケモンを返す。
+    """
+    p = state.players[player]
+    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench:
+        raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をベンチに出せない（確認の漏れ。エンジンの不具合）")
+    p.deck.remove(card)
+    pokemon = enter_play(state, card)
+    p.bench.append(pokemon)
+    return pokemon
 
 
 def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:

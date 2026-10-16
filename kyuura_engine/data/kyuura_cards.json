@@ -238,6 +238,21 @@
     "PMCG6-027",
     "PMCG5-036"
   ],
+  "pool_v0_32": [
+    "PMCG2-001",
+    "PMCG2-002",
+    "PMCG2-005",
+    "PMCG3-013",
+    "PMCG2-008",
+    "PMCG2-011",
+    "PMCG1-031",
+    "PMCG1-034",
+    "PMCG3-019",
+    "PMCG1-048",
+    "PMCG2-004",
+    "PMCG3-002",
+    "PMCG3-005"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG3-003",
@@ -10275,6 +10290,1213 @@
         "series": "クチバシティジム マチス・リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%94%E3%82%AB%E3%83%81%E3%83%A5%E3%82%A6LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG2-001",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドラン♀",
+        "en": "Nidoran ♀"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          29
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれひっかき",
+              "en": "Fury Swipes"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "なかまをよぶ",
+              "en": "Call for Family"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「ニドラン♂」または「ニドラン♀」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+              "en": "Search your deck for a Basic Pokémon named Nidoran ♂ or Nidoran ♀ and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-001",
+        "pokemontcg": [
+          "base2-57"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-002-nidoran_mesu/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-002-nidoran_mesu/"
+      }
+    },
+    {
+      "id": "PMCG2-002",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナゾノクサ",
+        "en": "Oddish"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          43
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しびれごな",
+              "en": "Stun Spore"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "ふえる",
+              "en": "Sprout"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「ナゾノクサ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+              "en": "Search your deck for a Basic Pokémon named Oddish and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-002",
+        "pokemontcg": [
+          "base2-58"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-005-nazonokusa/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-005-nazonokusa/"
+      }
+    },
+    {
+      "id": "PMCG2-005",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "マダツボミ",
+        "en": "Bellsprout"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          69
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つるのムチ",
+              "en": "Vine Whip"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "なかまをよぶ",
+              "en": "Call for Family"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「マダツボミ」を1匹さがしてベンチにだす。その後、その山札をよくきる。自分のベンチに空きがなければ使えない。",
+              "en": "Search your deck for a Basic Pokémon named Bellsprout and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-005",
+        "pokemontcg": [
+          "base2-49"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-012-madatsubomi/",
+      "jp_print": {
+        "level": 11,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-012-madatsubomi/"
+      }
+    },
+    {
+      "id": "PMCG3-013",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "クラブ",
+        "en": "Krabby"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          98
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "なかまをよぶ",
+              "en": "Call for Family"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「クラブ」を1匹さがしてベンチに出す。その後、その山札をよくきる。自分のベンチに空きがなければ、このワザは使えない。",
+              "en": "Search your deck for a Basic Pokémon named Krabby and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench if full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "はさむ",
+              "en": "Irongrip"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-013",
+        "pokemontcg": [
+          "base3-51"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-016-crab/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-016-crab/"
+      }
+    },
+    {
+      "id": "PMCG2-008",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドリーナ",
+        "en": "Nidorina"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          30
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ニドラン♀",
+          "en": "Nidoran ♀"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "にどげり",
+              "en": "Double Kick"
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×30のダメージ。",
+              "en": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-008",
+        "pokemontcg": [
+          "base2-40"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-003-nidorina/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-003-nidorina/"
+      }
+    },
+    {
+      "id": "PMCG2-011",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ウツドン",
+        "en": "Weepinbell"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          70
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マダツボミ",
+          "en": "Bellsprout"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "はっぱカッター",
+              "en": "Razor Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-011",
+        "pokemontcg": [
+          "base2-48"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-013-utsudon/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-013-utsudon/"
+      }
+    },
+    {
+      "id": "PMCG1-031",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイキング",
+        "en": "Magikarp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          129
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "じたばた",
+              "en": "Flail"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "自分のダメージカウンターの数×10のダメージをあたえる。",
+              "en": "Does 10 damage times the number of damage counters on Magikarp."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-031",
+        "pokemontcg": [
+          "base1-35"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-033-koiking/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-033-koiking/"
+      }
+    },
+    {
+      "id": "PMCG1-034",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ギャラドス",
+        "en": "Gyarados"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          130
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイキング",
+          "en": "Magikarp"
+        },
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "りゅうのいかり",
+              "en": "Dragon Rage"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "バブルこうせん",
+              "en": "Bubblebeam"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-034",
+        "pokemontcg": [
+          "base1-6"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-034-gyarados/",
+      "jp_print": {
+        "level": 41,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-034-gyarados/"
+      }
+    },
+    {
+      "id": "PMCG3-019",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "キングラー",
+        "en": "Kingler"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          99
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "クラブ",
+          "en": "Krabby"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じたばた",
+              "en": "Flail"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンターの数×10のダメージ。",
+              "en": "Does 10 damage times the number of damage counters on Kingler."
+            }
+          },
+          {
+            "name": {
+              "ja": "クラブハンマー",
+              "en": "Crabhammer"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-019",
+        "pokemontcg": [
+          "base3-38"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-017-kingler/",
+      "jp_print": {
+        "level": 27,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-017-kingler/"
+      }
+    },
+    {
+      "id": "PMCG1-048",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ルージュラ",
+        "en": "Jynx"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          124
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おうふくびんた",
+              "en": "Doubleslap"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の出た数×10のダメージをあたえる。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "ヨガのポーズ",
+              "en": "Meditate"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "相手のポケモンにのっているダメージカウンター×10のダメージを追加する。",
+              "en": "Does 20 damage plus 10 more damage for each damage counter on the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-048",
+        "pokemontcg": [
+          "base1-31"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-049-rougela/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-049-rougela/"
+      }
+    },
+    {
+      "id": "PMCG2-004",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "コンパン",
+        "en": "Venonat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          48
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しびれごな",
+              "en": "Stun Spore"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "きゅうけつ",
+              "en": "Leech Life"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Venonat equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-004",
+        "pokemontcg": [
+          "base2-63"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-010-kongpang/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-010-kongpang/"
+      }
+    },
+    {
+      "id": "PMCG3-002",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ズバット",
+        "en": "Zubat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          41
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "きゅうけつ",
+              "en": "Leech Life"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Zubat equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance). If Zubat has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-002",
+        "pokemontcg": [
+          "base3-57"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-003-zubat/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-003-zubat/"
+      }
+    },
+    {
+      "id": "PMCG3-005",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴルバット",
+        "en": "Golbat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          42
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ズバット",
+          "en": "Zubat"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つばさでうつ",
+              "en": "Wing Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きゅうけつ",
+              "en": "Leech Life"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたぶんのダメージカウンターを自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Golbat equal to the damage done to the Defending Pokémon (after applying Weakness and Resistance). If Golbat has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-005",
+        "pokemontcg": [
+          "base3-34"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-004-golbat/",
+      "jp_print": {
+        "level": 29,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-004-golbat/"
       }
     },
     {

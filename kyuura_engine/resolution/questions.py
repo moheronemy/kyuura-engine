@@ -97,6 +97,10 @@ QUESTIONS: dict[str, Question] = {
                  "山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合の処理は、原典から決められない"),
         Question("copied_attack", "UNRESOLVED_COPIED_ATTACK", ("HC9",), 10,
                  "相手のワザを自分のワザとして使う効果で、選べるワザがすべて、使えないか処理が決められない"),
+        # v0.32（docs/bench-search-counter-drain-v0.32.md）
+        Question("opponent_pokemon_counters", "UNRESOLVED_OPPONENT_POKEMON_COUNTERS", ("CD4",), 10,
+                 "ルージュラの「ヨガのポーズ」の「相手のポケモンにのっているダメージカウンター」が、相手の対戦ポケモンのものか、相手の場のポケモン"
+                 "すべてのものかは決められず、相手の控えポケモンにダメージカウンターがのっていると、読み方で基本となるダメージが変わる"),
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("copied_attack_unsupported", "UNSUPPORTED_COPIED_ATTACK", ("v0.31",), 10,
                  "相手のワザを自分のワザとして使う効果で、処理できるワザがなく、エンジンが対応していないワザがある"),

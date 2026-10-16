@@ -115,6 +115,11 @@ ATTACH_TO_BENCH = "attach_to_bench"
 RECOVER_TRAINER = "recover_trainer"
 # 自分のトラッシュのエネルギーカードを自分につけるとき、どのカードを何枚か（マチスのエレブーの「たいでん」。最大 2 枚。0 枚は決められない。HC7）
 ATTACH_FROM_DISCARD = "attach_from_discard"
+# v0.32（docs/bench-search-counter-drain-v0.32.md）。ワザの効果で、自分の山札から説明の名前のたねポケモンを 1 匹さがしてベンチに出すとき、どのカードか
+# （ニドラン♀・マダツボミ・クラブの「なかまをよぶ」、ナゾノクサの「ふえる」）。決めるのはワザを使ったプレイヤーで、選べるものは山札の、説明の名前の
+# たねポケモンのカードの uid（山札の並びを決定に写さないよう uid の小さい順）。1 匹（省略できない）。山札の中身は選ぶプレイヤーだけが見る情報で、
+# ログには書かない（出したカードは場に出るので公開）。トレーナーの ``SEARCH_DECK``（手札に加える）とは別の決定。再開先は "attack"
+BENCH_FROM_DECK = "bench_from_deck"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

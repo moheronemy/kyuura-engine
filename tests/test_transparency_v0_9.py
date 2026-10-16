@@ -607,7 +607,8 @@ class ChemicalGasTest(unittest.TestCase):
 
 # 「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザ（T19b。UNRESOLVED_EVADED_EFFECT_COIN）
 EFFECT_COIN_TYPES = (PoisonOnHeads, ParalyzeOnHeads, ConfuseOnHeads)
-EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM}  # v0.28: スターミー
+EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM,  # v0.28: スターミー
+              "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",)}  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -631,7 +632,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         # 「まきつく」・マチスのコイルの「でんきショック」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
                                         "どくばり", "どくガス", "どくのきば", "まきつく", "でんきショック",
                                         # v0.31: カツラのロコンの「しっぽでまどわす」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる）
-                                        "しっぽでまどわす"]))
+                                        "しっぽでまどわす",
+                                        # v0.32: 第2弾のナゾノクサ・コンパンの「しびれごな」・ギャラドスの「バブルこうせん」（ParalyzeOnHeads）、ウツドンの「どくのこな」
+                                        # （PoisonOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                        "しびれごな", "しびれごな", "バブルこうせん", "どくのこな"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
