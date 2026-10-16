@@ -572,8 +572,16 @@ class G37Test(unittest.TestCase):
         ので、効果を与えるかは、登録されたワザの実装の要素の並び（``programs.opponent_effect_elements``）から求める（v0.15 までは実装の
         ``resolve`` の中の ``attack_reaches`` の呼び出しを読んでいた）。"""
         declared, found = {}, {}
+        registered = [DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect for k in DEFAULT_EFFECTS.attack_keys()]
         for name, cls in inspect.getmembers(effects_module, inspect.isclass):
-            if issubclass(cls, AttackEffect) and cls is not AttackEffect and cls.opponent_effect_elements:
+            if not issubclass(cls, AttackEffect) or cls is AttackEffect:
+                continue
+            if isinstance(cls.opponent_effect_elements, property):
+                # v0.41: 要素が登録の値で決まる型（エリカのナゾノクサの「へんなこな」の ``DamageThenStatusByCoin``）は、登録した実装の宣言で数える
+                values = [set(effect.opponent_effect_elements) for effect in registered if type(effect) is cls]
+                if values:
+                    declared[name] = set().union(*values)
+            elif cls.opponent_effect_elements:
                 declared[name] = set(cls.opponent_effect_elements)
         for key in DEFAULT_EFFECTS.attack_keys():
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
@@ -582,7 +590,37 @@ class G37Test(unittest.TestCase):
                 found[type(effect).__name__] = elements
         self.assertEqual(declared, found)
         self.assertTrue(all(elements <= set(ATTACK_ELEMENTS) - {DAMAGE_ELEMENT} for elements in declared.values()))
-        self.assertEqual(len(declared), 10)  # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた
+        # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた。v0.31 で、相手の対戦ポケモンに効果を与える 6 つの型を加えた
+        # （相手のエネルギーのトラッシュ・「ワザを使えない」持続する効果・入れ替え・ねむり・マヒ。docs/held-cards-v0.31.md）。v0.33 で 2 つ
+        self.assertEqual(sorted(declared), sorted([
+            "CoinBonusDamageAndParalyze", "ConfuseOnHeads", "ConfuseOnHeadsWithoutDamage", "DamageAndForceSwitch", "ParalyzeOnHeads",
+            "PoisonOnHeads", "PoisonOpponent", "PoisonWithoutDamage", "PutToSleep", "SleepOpponent",
+            # v0.31
+            "CannotAttackOnHeads", "CoinDiscardOpponentEnergyEach", "DamageThenDiscardEachEnergy", "DamageThenParalyzeOrSelfDamage",
+            "SleepOnHeadsWithoutDamage", "SwitchOpponentActive",
+            # v0.33（相手のエネルギーのトラッシュ・マヒ。docs/cd4-opponent-energy-coins-v0.33.md）
+            "DamageThenDiscardOpponentEnergy", "DamageAndParalyzeOnHeadsElseFail",
+            # v0.34（1 枚のコインでどくかこんらん・特殊などく・与えるダメージがへる持続する効果。docs/barrier-resume-coin-bonus-v0.34.md）
+            "DamageThenPoisonOrConfuse", "DamageAndSpecialPoison", "ReduceDamageToSelf",
+            # v0.35（相手の選んだワザを使えなくする持続する効果「ドわすれ」。docs/coin-groups-damage-order-v0.35.md）
+            "LockOpponentAttack",
+            # v0.36（手順 4 のコインの持続する効果・「にげる」ことができない持続する効果。docs/sand-attack-retreat-lock-v0.36.md）
+            "DamageThenAttackCoinCheck", "DamageThenRetreatLock",
+            # v0.37（ダメージのないコインのどく・マヒと、なきつくと同じ与えるダメージがへる持続する効果。docs/fifteen-reused-effects-v0.37.md）
+            "PoisonOnHeadsWithoutDamage", "ParalyzeOnHeadsWithoutDamage", "DamageThenReduceDamageToSelf",
+            # v0.38（コインで相手が選ぶ入れ替え・入れ替えのあと自分にもダメージ・1 枚のコインでどくかマヒ・自分にもダメージのあとコインでどく。
+            # docs/bench-switch-combined-v0.38.md）
+            "DamageThenForceSwitchOnHeads", "DamageThenForceSwitchThenSelfDamage", "DamageThenPoisonOrParalyze", "DamageAndSelfDamageThenPoisonOnHeads",
+            # v0.39（コインで特殊などく・同じコインでどくと控えへのダメージ。docs/selfdestruct-spread-count-v0.39.md）
+            "DamageThenSpecialPoisonOnHeads", "CoinPoisonAndBenchDamage",
+            # v0.40（条件つきでワザを使えなくする持続する効果・入れ替えてからダメージ・相手の対戦ポケモンを山札にもどす。
+            # docs/count-condition-switch-return-v0.40.md）
+            "AttackLockWhileSourceActive", "SwitchOpponentThenDamage", "ReturnOpponentActiveToDeck",
+            # v0.41（相手の特殊状態・「にげる」ことができない持続する効果・入れ替え・回復・ダメージカウンターをのせる／取り替える効果。
+            # docs/heal-counter-status-v0.41.md）
+            "DamageThenConfuseBoth", "DamageThenStatusByCoin", "DamageThenChosenStatusOnHeads", "CoinDamageAndConfuseElseSelfConfuse",
+            "DamageThenConfuseOnAnyHeads", "DamageThenSleepOnHeads", "DamageThenRetreatLockOnHeads", "SwitchOpponentActiveOnHeads",
+            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

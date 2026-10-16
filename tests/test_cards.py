@@ -17,7 +17,9 @@ from tests.helpers import (
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
-    COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
+    COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
+    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
+    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -127,10 +129,92 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             self.assertEqual(definition.is_basic_pokemon, card_id not in (STARMIE, SEAKING), card_id)
         self.assertEqual((pool.get(STARMIE).evolves_from, pool.get(SEAKING).evolves_from), (pool.get(STARYU).name_ja, pool.get(GOLDEEN).name_ja))
+        # v0.29（既存の効果の型の登録だけで加えたポケモン 14 枚。kyuura データの採用。docs/existing-effect-pokemon-v0.29.md）。どれもたねポケモン
+        self.assertEqual(read_extract()["pool_v0_29"], list(V0_29_POKEMON))
+        self.assertTrue(all(pool.is_playable(c) and pool.get(c).is_basic_pokemon for c in V0_29_POKEMON))
+        # v0.30（エネルギーをトラッシュしてダメージを与えるワザの共通の型。docs/discard-energy-attacks-v0.30.md）。ヒトカゲは v0.29 まで参照カード。
+        # 1 進化はリザード（ヒトカゲから）・ウインディ（ガーディから）
+        self.assertEqual(read_extract()["pool_v0_30"], list(V0_30_POKEMON))
+        self.assertNotIn(CHARMANDER, read_extract()["reference_only"])
+        for card_id in V0_30_POKEMON:
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            self.assertEqual(pool.get(card_id).is_basic_pokemon, card_id not in (CHARMELEON, ARCANINE), card_id)
+        self.assertEqual((pool.get(CHARMELEON).evolves_from, pool.get(ARCANINE).evolves_from), (pool.get(CHARMANDER).name_ja, pool.get(GROWLITHE).name_ja))
+        # v0.31（v0.30 で保留した 22 枚と、その進化元として加えた 7 枚。docs/held-cards-v0.31.md）。リザードンは v0.30 まで参照カード。
+        # どのカードも、進化元が写しにあり対戦で使える（2 進化は 1 進化を、1 進化はたねポケモンを持つ）
+        self.assertEqual(read_extract()["pool_v0_31"], list(V0_31_TARGETS + V0_31_DEPENDENCIES))
+        self.assertEqual(len(V0_31_TARGETS), 22)
+        self.assertNotIn(CHARIZARD, read_extract()["reference_only"])
+        names = {pool.get(c).name_ja: c for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_31_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)
+        # v0.32（山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザの 13 枚。docs/bench-search-counter-drain-v0.32.md）。
+        # 進化先 5 枚は、進化元が同じ組にある
+        self.assertEqual(read_extract()["pool_v0_32"], list(V0_32_POKEMON))
+        for card_id in V0_32_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, {pool.get(c).name_ja for c in V0_32_POKEMON}, card_id)
+        # v0.33（相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚。
+        # docs/cd4-opponent-energy-coins-v0.33.md）。進化先 6 枚は、進化元（名前が完全に一致するたねポケモン）が写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_33"], list(V0_33_POKEMON))
+        basics = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).is_basic_pokemon}
+        for card_id in V0_33_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, basics, card_id)
+        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは登録しないので対戦に使えない。
+        # 進化先 7 枚は、進化元（名前が完全に一致するポケモン。ニドキングは 1 進化のニドリーノ）が写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_34"], list(V0_34_POOL))
+        self.assertFalse(pool.is_playable(KANGASKHAN))
+        names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_34_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)  # ニドキングの進化元のニドリーノは 1 進化
+        # v0.35（docs/coin-groups-damage-order-v0.35.md）。進化先 2 枚（マチスのラッタ・カスミのニョロゾ）は、進化元が同じ組にある
+        self.assertEqual(read_extract()["pool_v0_35"], list(V0_35_POKEMON))
+        for card_id in V0_35_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, {pool.get(c).name_ja for c in V0_35_POKEMON}, card_id)
+        # v0.36（docs/sand-attack-retreat-lock-v0.36.md）。進化先 3 枚（サンドパン・わるいサンダース・マチスのオニドリル）は、進化元（名前が完全に
+        # 一致するたねポケモン。サンド・イーブイ（v0.31）・マチスのオニスズメ（v0.33））が写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_36"], list(V0_36_POKEMON))
+        for card_id in V0_36_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)
+        # v0.37（docs/fifteen-reused-effects-v0.37.md）。写しの組は 15 枚で、化石の秘密のベトベターは v0.36 まで参照カード（reference_only）だった。
+        # 進化先 5 枚（1 進化のライチュウ・ダグトリオ・ニョロゾ・ペルシアンと 2 進化のニョロボン）は、進化元（名前が完全に一致するポケモン）が
+        # 写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_37"], list(V0_37_POKEMON))
+        self.assertEqual(read_extract()["pool_v0_38"], list(V0_38_POKEMON))  # v0.38（docs/bench-switch-combined-v0.38.md）
+        self.assertEqual(read_extract()["pool_v0_39"], list(V0_39_POKEMON))  # v0.39（docs/selfdestruct-spread-count-v0.39.md）
+        self.assertEqual(read_extract()["pool_v0_40"], list(V0_40_POKEMON))  # v0.40（docs/count-condition-switch-return-v0.40.md）
+        self.assertEqual(read_extract()["pool_v0_41"], list(V0_41_POKEMON))  # v0.41（docs/heal-counter-status-v0.41.md）
+        self.assertEqual(len(V0_37_ADOPTED), 14)
+        self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
+        names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_37_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
+                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
+                 *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -165,13 +249,19 @@ class ClassificationTest(unittest.TestCase):
     """未対応のカード・ワザを「効果がないもの」として扱わない。"""
 
     def test_mixed_attacks_are_classified_one_by_one(self):
-        charmander = load_card_pool().get(CHARMANDER)
+        """v0.30 からヒトカゲの「ひのこ」は登録したので、その登録を除いた登録表で確かめる（v0.29 までは既定の登録表で未対応だった）。"""
+        from kyuura_engine.cards import pool_from_extract
+        from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
+
+        pool = pool_from_extract(read_extract(), DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(CHARMANDER, 1)]))
+        charmander = pool.get(CHARMANDER)
         scratch, ember = charmander.attacks
         self.assertTrue(scratch.supported)  # ひっかく: 説明文なし
         self.assertFalse(ember.supported)  # ひのこ: 炎エネルギーをトラッシュする効果
         self.assertIn("効果", ember.unsupported_reason)
         self.assertFalse(charmander.supported)
-        self.assertFalse(load_card_pool().is_playable(CHARMANDER))
+        self.assertFalse(pool.is_playable(CHARMANDER))
+        self.assertTrue(load_card_pool().is_playable(CHARMANDER))  # 既定の登録表（v0.30 から）では使える
 
     def test_damage_modifier_is_unsupported(self):
         """「×」のダメージのワザも、実装が登録されていなければ未対応。
@@ -197,8 +287,10 @@ class ClassificationTest(unittest.TestCase):
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
         # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。
         # v0.6 ではフーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」）で確かめていた。v0.7 で
-        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる
-        reasons = " ".join(pool.get(CHARIZARD).unsupported_reasons)
+        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる。v0.31 でリザードンを
+        # 対応にしたので、その 2 つの登録だけを除いた登録表で分類したカードの組で確かめる（tests/helpers.py の no_charizard_pool）
+        self.assertTrue(pool.get(CHARIZARD).supported)
+        reasons = " ".join(no_charizard_pool().get(CHARIZARD).unsupported_reasons)
         self.assertTrue(pool.get(CHARIZARD).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
         self.assertIn("ポケモンパワー「エナジーバーン」", reasons)

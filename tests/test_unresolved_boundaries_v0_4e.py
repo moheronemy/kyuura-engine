@@ -51,6 +51,41 @@ ALL_CODES = (
     "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",  # v0.22（止まる場合と隣の止まらない場合は tests/test_computer_search_v0_22.py）
     "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",  # v0.23（ER10。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
     "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",  # v0.23（ER9。止まる場合と隣は tests/test_energy_retrieval_v0_23.py）
+    # v0.31: v0.30 まで起こらなかった（コードのない）5 件を停止コードにした。止まる場合と隣の止まらない場合は tests/test_held_cards_v0_31_stops.py
+    "UNRESOLVED_TRANSPARENCY_COIN_ORDER", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS", "UNRESOLVED_KO_PREVENTION_ORDER",
+    "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT", "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER",
+    # v0.31: HC1〜HC10（docs/held-cards-v0.31.md）。止まる場合と隣の止まらない場合は tests/test_held_cards_v0_31_stops.py
+    "UNRESOLVED_DISCARD_ENERGY_TIMING", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", "UNRESOLVED_PREVENTED_EFFECT_COIN",
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS", "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO", "UNRESOLVED_DISCARD_DECK_SHORT",
+    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO", "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE", "UNRESOLVED_COPIED_ATTACK",
+    "UNRESOLVED_ENERGY_BURN_TRANSFER",
+    # v0.32: CD4（docs/bench-search-counter-drain-v0.32.md）。止まる場合と隣の止まらない場合は tests/test_bench_search_counter_drain_v0_32.py の
+    # CounterDamageTest（test_meditate_stops_when_the_reading_matters・test_meditate_counts_the_defending_pokemon）
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS",
+    # v0.34: TP3・NK5（docs/barrier-resume-coin-bonus-v0.34.md）。止まる場合と隣の止まらない場合は tests/test_barrier_resume_coin_bonus_v0_34.py の
+    # SpecialPoisonTest（test_normal_poison_to_special_is_unresolved・test_same_special_poison_is_not_stacked）・GrowlTest（test_bench_target_is_unresolved・
+    # test_only_this_card_and_expires_at_the_start_of_the_next_turn）
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE", "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",
+    # v0.36: AC6・RD9（docs/sand-attack-retreat-lock-v0.36.md）。止まる場合と隣の止まらない場合は tests/test_sand_attack_retreat_lock_v0_36.py の
+    # AttackCheckTest（test_confused_pokemon_stops_before_the_coin・test_heads_continues_and_tails_fails_the_attack）・DeckReturnTest
+    # （test_knockout_in_the_same_attack_stops_before_the_declaration・test_heads_returns_the_pokemon_and_attached_cards_after_damage）
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION", "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT",
+    # v0.37: JS1（docs/fifteen-reused-effects-v0.37.md）。止まる場合と隣の止まらない場合は tests/test_fifteen_reused_effects_v0_37.py の
+    # EarthquakeTest（test_stops_when_weakness_or_resistance_would_change_the_damage・test_proceeds_when_both_readings_give_the_same_damage）
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE",
+    # v0.38: GK1（docs/bench-switch-combined-v0.38.md）。止まる場合と隣の止まらない場合は tests/test_bench_switch_combined_v0_38.py の
+    # RamTest（test_damage_trigger_stops_before_the_declaration・test_proceeds_without_a_damage_trigger）
+    "UNRESOLVED_DAMAGE_TRIGGER_TIMING",
+    # v0.39: GS1（docs/selfdestruct-spread-count-v0.39.md）。止まる場合（0 匹の答え）と隣の止まらない場合（1 匹以上）は
+    # tests/test_selfdestruct_spread_count_v0_39.py の GigaSparkTest
+    "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
+    # v0.40: SG1（docs/count-condition-switch-return-v0.40.md）。止まる場合（すごむの効果を与えたポケモンを突風でもどす答え・それしか選べない
+    # 突風）と隣の止まらない場合（ほかの控えを選ぶ答え）は tests/test_count_condition_switch_return_v0_40.py の IntimidateTest
+    "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
+    # v0.41: CX1（docs/heal-counter-status-v0.41.md）。止まる場合（相手が「ワザをうけない」状態・「とうめい」でダメージカウンターをのせる・取り替える
+    # 効果を受けない）と隣の止まらない場合（移す・取り替えるカウンターがない・数が同じ）は tests/test_heal_counter_status_v0_41.py の
+    # CounterShiftTest・SwapTest
+    "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
 )
 TURN = 7
 

@@ -8,7 +8,8 @@ from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, SUPER_POTION, WATER_FIGHTING_DECK,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, NO_EMBER_EFFECTS, PONYTA, SUPER_POTION,
+    WATER_FIGHTING_DECK,
 )
 
 
@@ -75,11 +76,13 @@ class SupportedCardsTest(unittest.TestCase):
     """未対応のカードはデッキに入れられない（効果がないものとして扱わない）。"""
 
     def test_unsupported_cards_are_rejected(self):
-        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる
+        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる。
+        # v0.30 でヒトカゲの「ひのこ」を登録したので、その登録だけを除いた登録表で確かめる（製品の登録表では対応）
         deck = expand_decklist({CHARMANDER: 1, SUPER_POTION: 1, PONYTA: 4, FIRE: 54})
-        problems = deck_problems(deck)
+        problems = deck_problems(deck, pool_from_extract(read_extract(), NO_EMBER_EFFECTS))
         self.assertEqual(codes(problems), ["UNSUPPORTED_CARD", "UNSUPPORTED_CARD"])
         self.assertIn("ひのこ", problems[0])
+        self.assertEqual(codes(deck_problems(deck)), ["UNSUPPORTED_CARD"])  # いいきずぐすりだけ
 
     def test_unknown_card_is_rejected(self):
         deck = expand_decklist({"PMCG1-999": 1, PONYTA: 4, FIRE: 55})

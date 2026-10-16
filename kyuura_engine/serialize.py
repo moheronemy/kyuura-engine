@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 9 つあります（``format_version``）。
+形式は 10 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -37,6 +37,13 @@
   番の最初に 0）を加えたもの（v0.6。docs/architecture-v0.6.md 5 章）。この数が 1 以上の番には、通常の操作が原典で決められない
   （``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``）ので、状態に持ち、書き出しで表す。形式 1〜8 は、この数が 0 でなければ
   ``ValueError``（0 なら形式 1〜8 の書き出しは v0.5 と同じ）。
+- 10: 9 に、``power_uses_this_turn``（この番に使った「自分の番ごとに1回使える」特殊能力。[場のポケモンの番号, 特殊能力の位置] の並び。
+  v0.31 のカツラのロコンの「しぜんになおる」。番の最初に空）と ``energy_burn``（この番に「炎」エネルギーになったエネルギーカード。
+  [場のポケモンの番号, エネルギーカードの uid] の並び。v0.31 のリザードンの「エナジーバーン」。番の終わりに空）を加えたもの（v0.31。
+  docs/held-cards-v0.31.md）。形式 1〜9 は、どちらかが空でなければ ``ValueError``（空なら形式 1〜9 の書き出しは v0.30 と同じ）。
+  v0.31 の持続する効果の種類 ``"destiny_bond"``（みちづれ）・``"attack_barrier"``（バリアー）・``"damage_reduction"``（ちいさくなる。
+  ``"amount"`` を加える）・``"cannot_attack"``（しっぽをふる。相手に与える効果で、``source_card``・``source_player`` は効果を与えたワザを
+  使ったポケモンのカードとプレイヤー）は、v0.27 と同じく形式 8 の ``persistent_effects`` の種類の値を加えただけ（形式は変えない）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -49,7 +56,7 @@
 （形式 7 を使う）。形式 1〜7 はワザによる持続する効果（v0.4b）を表せないので、持続する効果を受けているポケモンがいると
 ``ValueError`` にする（形式 8 を使う。効果は次の相手の番の終わりに消えるので、その間だけ）。持続する効果のない状態の
 形式 1〜7 の書き出しは v0.4a と同じ。進化していないポケモンの場に出た番（``played_turn``）は、どの形式にも入るログ（対戦準備の
-``place_starting_pokemon``・``play_to_bench`` の番）から分かるので、形式 1〜6 の書き出しは v0.3d と同じ。
+``place_starting_pokemon``・``play_to_bench``、v0.32 からワザの効果で山札から出した ``bench_from_deck`` の番）から分かるので、形式 1〜6 の書き出しは v0.3d と同じ。
 形式 1 は保留中の決定の中身を持たないので、ポケモンチェックの中のきぜつのあとの決定（続きが「ポケモンチェックの
 残りをして次の番を始める」。決定の ``context`` の ``then``）を表せない。その状態を形式 1 で書き出そうとすると
 ``ValueError`` にする。同じように、ワザの途中の決定（``resume`` が ``"attack"``。v0.4d の「ふきとばし」で相手が選ぶ控え）も
@@ -89,17 +96,28 @@ from .rng import rng_fingerprint
 from .state import (
     RETALIATION_FIXED,
     RETALIATION_RECEIVED,
+    AttackBarrier,
+    AttackCoinCheck,
     Asleep,
+    CannotAttack,
+    CannotAttackWhileSourceActive,
+    CannotRetreat,
     Confused,
+    DamageReduction,
+    DestinyBond,
     GameState,
+    NEXT_TURN_MULTIPLY,
+    CannotUseAttack,
+    CannotUseOwnAttack,
     NextTurnAttackDamage,
     Paralyzed,
     PokemonInPlay,
     PreventDamage,
+    ReducedDamageToSource,
     Retaliation,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -119,12 +137,21 @@ def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
     return data
 
 
-def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation | NextTurnAttackDamage) -> dict[str, Any]:
+def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     """形式 8 の ``persistent_effects`` の 1 つ。v0.12 の ``"retaliation"``（「ほのおのかべ」）には、``attack_index``（効果を与えた
     ワザの位置）と ``amount``（与えるダメージの基本となるダメージ）を加える（ほかの種類の形は v0.4b と同じ。v0.3b の特殊状態の項目と同じく、
     種類の値を加えただけなので形式は変えない。知らない種類のある辞書は、読む側が拒否すること）。v0.13 の
     ``"retaliation_received_damage"``（「こうらがえし」。与えるダメージは受けたダメージと同じ）は ``attack_index`` だけを加える。v0.27 の
-    ``"next_turn_attack_damage"``（「つるぎのまい」）は ``attack_index``・``target_attack_index``・``amount`` を加える。"""
+    ``"next_turn_attack_damage"``（「つるぎのまい」）は ``attack_index``・``target_attack_index``・``amount`` を加える。v0.31 の
+    ``"damage_reduction"``（「ちいさくなる」）は ``amount`` を加え、``"destiny_bond"``・``"attack_barrier"``・``"cannot_attack"`` は共通の項目だけ。
+    v0.34 の ``"reduced_damage_to_source"``（「なきつく」）は ``amount`` を加える。v0.35 の ``"next_turn_attack_damage_multiplier"``（「きあいだめ」。
+    ``NextTurnAttackDamage`` の「数をかける」決め方）は ``attack_index``・``target_attack_index``・``amount``（かける数）・``includes_self_damage`` を、
+    ``"cannot_use_own_attack"``（「あわあわ」）・``"cannot_use_attack"``（「ドわすれ」）は ``attack_index``・``target_attack_index`` を加える（どれも種類の
+    値を加えただけで形式は変えない。v0.34 までの書き出しを読む側は、知らない種類として拒否すること）。v0.36 の ``"attack_coin_check"``（「すなかけ」・
+    「えんまく」など。p.309 の手順 4 のコイン）は ``single_use``（「効果は1回できえる」）を加え、``"cannot_retreat"``（「アイスバーン」・「わしづかみ」）は共通の
+    項目だけ（どちらも相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン。形式は変えない。v0.35 までの書き出しを読む側は、知らない種類として
+    拒否すること）。v0.40 の ``"cannot_attack_while_source_active"``（「すごむ」。相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン
+    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -145,7 +172,18 @@ def _persistent_effect(state: GameState, effect: PreventDamage | Retaliation | N
         data["attack_index"] = effect.attack_index
         data["target_attack_index"] = effect.target_attack_index
         data["amount"] = effect.amount
-    elif not isinstance(effect, PreventDamage):
+        if effect.operation == NEXT_TURN_MULTIPLY:
+            data["includes_self_damage"] = effect.includes_self_damage  # v0.35: 「きあいだめ」（種類 "next_turn_attack_damage_multiplier"）だけ
+        elif effect.includes_self_damage:
+            raise ValueError(f"書き出せない持続する効果 {effect!r}（「その数にする」効果の自分へのダメージ）")
+    elif isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
+        data["attack_index"] = effect.attack_index  # v0.35: 「あわあわ」・「ドわすれ」
+        data["target_attack_index"] = effect.target_attack_index
+    elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
+        data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
+    elif isinstance(effect, AttackCoinCheck):
+        data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
 
@@ -213,6 +251,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 9 and state.energy_attached_by_powers_this_turn != 0:
         raise ValueError(
             f"形式 {format_version} は、この番にポケモンパワーで手札からつけたエネルギーの枚数を表せない（format_version=9 を使う）"
+        )
+    if format_version < 10 and (state.power_uses_this_turn or state.energy_burn):
+        raise ValueError(
+            f"形式 {format_version} は、この番に使った回数の制限のある特殊能力・「炎」エネルギーになったエネルギーを表せない（format_version=10 を使う）"
         )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
@@ -300,4 +342,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     }
     if format_version >= 9:
         data["energy_attached_by_powers_this_turn"] = state.energy_attached_by_powers_this_turn
+    if format_version >= 10:
+        data["power_uses_this_turn"] = [list(use) for use in state.power_uses_this_turn]
+        data["energy_burn"] = [list(pair) for pair in state.energy_burn]
     return data

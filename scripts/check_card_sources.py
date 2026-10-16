@@ -9,7 +9,8 @@
 - pcg-search.com との照合（``external_checks``）: URL・確認日・対象の版（収録と、サイトの一覧の番号 ``list_number``）・結果・照合した欄・
   違い。対象の版がない・アクセスできなかったことも結果として残す（照合した欄は空）。
 - 過去の原典照合（『オフィシャルブック2000』）: ``card_verification.json``（履歴。ここでは書き換えない）。そのカードに外部照合を加える
-  ときだけ、``basis: guidebook_record`` の記録を置く。
+  とき、または照合の記録に処理に使う文面（最新の説明）のない登録（v0.30 のヒトカゲの「ひのこ」のように、照合したあとで登録したワザ）の
+  文面の根拠（``play_text``・``kyuura_records``）を書くときだけ、``basis: guidebook_record`` の記録を置く。
 
 確かめること（読んでいない原典を確かめたことにする記録・形の崩れた記録を拒否する）:
 
@@ -18,7 +19,10 @@
 3. 登録したカードは、過去の原典照合の記録か採用の記録（``adopted``）のちょうど一方を持つ。保留（``on_hold``）のカードは登録しない。
 4. 採用したカードの ``play_text`` は、登録の文面（ワザ・特殊能力・トレーナー）とちょうど対応し、根拠が kyuura の印刷の文面
    （``kyuura_printed_text``。登録の ``play_text_ja`` が写しの文面と同じで、出典が ``kyuura data/cards.json``）か、kyuura の記録の id
-   （最新の説明 ``LD-``・エラッタ ``ERR-``/``TXT-``/``RUL-``。登録の出典がその id、LD- は研究の対応表の ``registered`` と同じ）。
+   （最新の説明 ``LD-``・エラッタ ``ERR-``/``TXT-``/``RUL-``。登録の出典がその id、LD- は研究の対応表の ``registered`` と、エラッタは
+   ``errata_text`` と同じ）か、kyuura の日英の違いの記録が引く最新の説明（``kyuura data/curation/card_differences.json#<カード id>``。v0.31。
+   登録の出典が同じ文字列で、研究の対応表の ``difference_text`` と同じ。文面は印刷の文面と違う）。過去の原典照合の記録のあるカード（``guidebook_record``）は、照合の記録に処理に使う文面のない登録だけを、
+   同じ形の ``play_text`` に書く（v0.30。照合の記録に文面のある登録は、今までどおり照合の記録の文面にしたがう）。
 5. 外部照合: サイトは pcg-search.com、URL は https で pcg-search.com、版の収録（と一覧の番号）がある。結果ごとに、照合した欄と違いの
    有無が合う（対象の版なし・アクセスできなかった照合に、照合した欄・違いを書けない）。欄は写しのカードにある欄だけ。違いの kyuura の
    値は写しの値と同じ。同じ版を同じデータで調べ直した照合は拒否する（既存の照合結果を再利用する）。kyuura の日本語の文面が
@@ -60,6 +64,9 @@ ADOPTED = "adopted"
 ON_HOLD = "on_hold"
 PRINTED_TEXT = "kyuura_printed_text"
 PRINTED_TEXT_SOURCE = "kyuura data/cards.json"
+# v0.31: kyuura の日英の違いの記録（data/curation/card_differences.json）が引く最新の説明を処理に使う文面にした登録の根拠・出典（``#`` のあとが
+# カード id。研究の対応表の difference_text。文面が記録の引用と同じことは scripts/check_research_links.py が kyuura で確かめる）
+DIFFERENCE_TEXT_SOURCE = "kyuura data/curation/card_differences.json"
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -68,7 +75,8 @@ GUIDEBOOK_KEYS = {"page", "pdf_page", "scan", "rules_page", "commentary_page", "
                   "power_card_image_text_ja", "power_latest_description_ja", "image_check", "mismatches"}
 KYUURA_DATA_KEYS = {"basis", "name_ja", "status", "kyuura_commit", "recorded_on", "kyuura_records", "play_text", "external_checks", "issues"}
 GUIDEBOOK_RECORD_KEYS = {"basis", "name_ja", "external_checks"}
-OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes"}, GUIDEBOOK_RECORD: {"issues", "notes"}}
+# v0.30: 過去の原典照合の記録のあるカードに、照合の記録に処理に使う文面のない登録の根拠（play_text・kyuura_records）を書ける
+OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
 CHECK_KEYS = {"site", "url", "checked_on", "kyuura_commit", "edition", "result", "checked_fields", "differences"}
 DIFFERENCE_KEYS = {"field", "kyuura", "pcg_search", "affects_behavior"}
 ISSUE_KEYS = {"question", "fields", "affects_behavior"}
@@ -116,6 +124,29 @@ def play_text_targets(registry, card_id: str) -> dict[str, object]:
     if card_id in registry.trainer_ids():
         found["trainer"] = registry.trainer_entry(card_id)
     return found
+
+
+def verified_play_text_targets(record: dict, targets) -> set[str]:
+    """過去の原典照合の記録（``card_verification.json`` のカードの記録）が処理に使う文面（最新の説明）を持つ対象（v0.30）。ワザ・トレーナーは
+    ``latest_description_ja``（説明文のあるワザが 2 つのカードはワザの位置ごとの辞書）、特殊能力は ``power_latest_description_ja``（位置ごと）。
+    ここにない対象（照合したあとで登録したワザ）の文面の根拠は、card_sources.json の ``play_text`` に書く。"""
+    covered = set()
+    for target in targets:
+        if target == "trainer":
+            if record.get("latest_description_ja") is not None:
+                covered.add(target)
+            continue
+        kind, index = target.split("/")
+        value = record.get("latest_description_ja" if kind == "attack" else "power_latest_description_ja")
+        if (isinstance(value, dict) and value.get(index) is not None) or isinstance(value, str):
+            covered.add(target)
+    return covered
+
+
+def uncovered_play_text_targets(card_id: str, verification: dict, registry) -> set[str]:
+    """過去の原典照合の記録のあるカードで、処理に使う文面のある登録のうち、照合の記録に文面がないもの（v0.30）。"""
+    targets = play_text_targets(registry, card_id)
+    return set(targets) - verified_play_text_targets(verification["cards"].get(card_id, {}), targets)
 
 
 def registered_cards(registry) -> set[str]:
@@ -312,7 +343,9 @@ def behaviour_affecting(record: dict) -> list[str]:
     return found
 
 
-def play_text_problems(where: str, record: dict, card: dict, registry, links: dict) -> list[str]:
+def play_text_problems(where: str, record: dict, card: dict, registry, links: dict, expected: set[str] | None = None) -> list[str]:
+    """``play_text`` の対象と根拠。``expected`` は書くべき対象（既定は、処理に使う文面のある登録すべて。過去の原典照合の記録のあるカードは、
+    照合の記録に文面のない登録だけ。v0.30）。"""
     found = []
     play_text = record["play_text"]
     if not isinstance(play_text, dict):
@@ -321,13 +354,15 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
         if not TARGET.match(target):
             found.append(f"{where}: play_text の対象 {target!r} は attack/<位置>・power/<位置>・trainer のどれでもない")
     targets = play_text_targets(registry, card["id"])
-    if record["status"] == ON_HOLD:
+    if record.get("status") == ON_HOLD:
         if play_text:
             found.append(f"{where}: 保留のカードに play_text を書けない（登録しない）")
         return found
-    if set(play_text) != set(targets):
-        found.append(f"{where}: play_text の対象 {sorted(play_text)} が、登録の文面 {sorted(targets)} と違う")
+    expected = set(targets) if expected is None else expected
+    if set(play_text) != expected:
+        found.append(f"{where}: play_text の対象 {sorted(play_text)} が、根拠を書くべき登録の文面 {sorted(expected)} と違う")
     registered_ld = links["latest_descriptions"]["registered"]
+    registered_errata = links["latest_descriptions"].get("errata_text", {})
     adopted_printed = set(links["latest_descriptions"].get("adopted_printed_text", []))
     kyuura_records = record["kyuura_records"] if isinstance(record["kyuura_records"], list) else []
     for target, basis in play_text.items():
@@ -344,6 +379,15 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が kyuura の印刷の文面なのに、出典が {entry.source!r}（{PRINTED_TEXT_SOURCE!r} にする）")
             if target != "trainer" and key not in adopted_printed:
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にない")
+        elif isinstance(basis, str) and basis == f"{DIFFERENCE_TEXT_SOURCE}#{card['id']}":
+            if entry.source != basis:
+                found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
+            if links["latest_descriptions"].get("difference_text", {}).get(key) != basis:
+                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の difference_text にない")
+            if entry.play_text_ja == entry.text_ja:
+                found.append(f"{where} {target}: 根拠が kyuura の日英の違いの記録の最新の説明なのに、処理に使う文面が印刷の文面と同じ")
+            if key in adopted_printed:
+                found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         elif isinstance(basis, str) and PLAY_TEXT_ID.match(basis):
             if entry.source != basis:
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
@@ -351,11 +395,23 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠 {basis} が kyuura_records にない")
             if basis.startswith("LD-") and registered_ld.get(key) != basis:
                 found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の registered にない")
+            if basis.split("-")[0] in ("ERR", "TXT", "RUL") and registered_errata.get(key) != basis:
+                found.append(f"{where} {target}: 根拠のエラッタ {basis} が研究の対応表の errata_text にない")
             if key in adopted_printed:
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         else:
-            found.append(f"{where} {target}: 根拠 {basis!r} は {PRINTED_TEXT} か kyuura の記録の id（LD-・ERR-・TXT-・RUL-）ではない")
+            found.append(f"{where} {target}: 根拠 {basis!r} は {PRINTED_TEXT}・kyuura の記録の id（LD-・ERR-・TXT-・RUL-）・"
+                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id> のどれでもない")
     return found
+
+
+def kyuura_records_problems(where: str, record: dict) -> list[str]:
+    ids = record.get("kyuura_records")
+    if not isinstance(ids, list) or any(not isinstance(x, str) or not RECORD_ID.match(x) for x in ids):
+        return [f"{where}: kyuura_records は kyuura の記録の id（LD-・CC-・CR-・UQ-・ERR-・TXT-・RUL-）のリスト"]
+    if len(set(ids)) != len(ids):
+        return [f"{where}: kyuura_records に同じ id が重なっている"]
+    return []
 
 
 def card_problems(card_id: str, record, *, cards: dict, commit: str, verification: dict, registry, links: dict,
@@ -393,8 +449,15 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
     if basis == GUIDEBOOK_RECORD:
         if card_id not in verification["cards"]:
             found.append(f"{where}: basis {GUIDEBOOK_RECORD} なのに、card_verification.json に記録がない")
-        if not checks:
-            found.append(f"{where}: basis {GUIDEBOOK_RECORD} の記録は外部照合を加えるときだけ置く（外部照合がない）")
+        if not checks and not record.get("play_text"):
+            found.append(f"{where}: basis {GUIDEBOOK_RECORD} の記録は、外部照合か、照合の記録に文面のない登録の根拠（play_text）を加えるときだけ置く")
+        if "play_text" in record or "kyuura_records" in record:
+            found.extend(kyuura_records_problems(where, record))
+            if "play_text" not in record:
+                found.append(f"{where}: kyuura_records は play_text といっしょに書く")
+            else:
+                found.extend(play_text_problems(where, record, card, registry, links,
+                                                expected=uncovered_play_text_targets(card_id, verification, registry)))
         affected = {str(d.get("field")) for c in checks if isinstance(c, dict) for d in c.get("differences") or []
                     if isinstance(d, dict) and d.get("affects_behavior") is True}
         noted = {f for issue in record.get("issues", []) if isinstance(issue, dict) for f in issue.get("fields") or []}
@@ -410,11 +473,7 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
     problem = date_problem(record["recorded_on"], "記録した日", today)
     if problem:
         found.append(f"{where}: {problem}")
-    ids = record["kyuura_records"]
-    if not isinstance(ids, list) or any(not isinstance(x, str) or not RECORD_ID.match(x) for x in ids):
-        found.append(f"{where}: kyuura_records は kyuura の記録の id（LD-・CC-・CR-・UQ-・ERR-・TXT-・RUL-）のリスト")
-    elif len(set(ids)) != len(ids):
-        found.append(f"{where}: kyuura_records に同じ id が重なっている")
+    found.extend(kyuura_records_problems(where, record))
     if card_id in verification["cards"]:
         found.append(f"{where}: card_verification.json（過去の原典照合）にも記録がある（登録の根拠を 1 つにする）")
     registered = card_id in registered_cards(registry)
@@ -460,8 +519,14 @@ def problems(sources: dict | None = None, *, extract: dict | None = None, verifi
         found.extend(card_problems(card_id, record, cards=cards, commit=commit, verification=verification, registry=registry,
                                    links=links, today=today))
     for card_id in sorted(registered_cards(registry)):
-        if registration_basis(card_id, verification, sources) is None:
+        basis = registration_basis(card_id, verification, sources)
+        if basis is None:
             found.append(f"{card_id}: 登録したカードに、過去の原典照合の記録か採用の記録（adopted）のちょうど一方がない")
+        elif basis == GUIDEBOOK_RECORD:
+            uncovered = uncovered_play_text_targets(card_id, verification, registry)
+            record = sources["cards"].get(card_id)
+            if uncovered and not (isinstance(record, dict) and isinstance(record.get("play_text"), dict)):
+                found.append(f"{card_id}: 照合の記録に処理に使う文面のない登録 {sorted(uncovered)} の根拠（card_sources.json の play_text）がない")
     adopted_printed = set(links["latest_descriptions"].get("adopted_printed_text", []))
     expected = {f"{card_id}/{target}" for card_id, record in sources["cards"].items()
                 if isinstance(record, dict) and record.get("basis") == KYUURA_DATA and record.get("status") == ADOPTED

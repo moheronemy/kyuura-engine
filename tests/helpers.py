@@ -68,7 +68,7 @@ WATER = "PMCG1-099"
 LIGHTNING = "PMCG1-100"
 PSYCHIC = "PMCG1-101"
 FIGHTING = "PMCG1-102"
-CHARMANDER = "PMCG1-014"  # 対戦には使えない参照カード（「ひのこ」は未対応）
+CHARMANDER = "PMCG1-014"  # ヒトカゲ（v0.29 までは「ひのこ」が未対応の参照カード。v0.30 で対戦用。ひっかく（無）10・ひのこ（炎無）30）
 DODUO = "PMCG1-061"  # ドードー（v0.2d で対応。みだれづき: コイン 2 枚の「おもて」の数×10）
 PIKACHU = "PMCG1-035"  # ピカチュウ（v0.2f で対応。かじる 10、でんげき 30・「うら」なら自分にも 10）
 WEEDLE = "PMCG1-004"  # ビードル（v0.3a で対応。どくばり 10・「おもて」なら相手をどく状態に）
@@ -88,6 +88,157 @@ CHANSEY = "PMCG1-068"  # ラッキー（たね・HP 120・無色・弱点 闘・
 DROWZEE = "PMCG1-045"  # スリープ（たね・HP 50・超・弱点 超・にげる 1。はたく（無）10・あやしいひかり（超超）10。p.164）
 SHELLDER = "PMCG3-012"  # シェルダー（化石の秘密。たね・HP 30・水・弱点 雷・にげる 1。ちょうおんぱ（水）・からをとじる（水）。p.103）
 V0_28_POKEMON = (LAPRAS, STARMIE, GOLDEEN, SEAKING, PINSIR, EXEGGCUTE, JIGGLYPUFF, CHANSEY, DROWZEE, SHELLDER)
+# v0.29: 既存の効果の型の登録だけで加えたポケモン（kyuura データの採用。docs/existing-effect-pokemon-v0.29.md）。どれもたねポケモン。同じ名前の
+# 第1弾のカード（VOLTORB・MACHOP・DRATINI など）とは別の id
+POLIWAG = "PMCG1-024"  # ニョロモ（第1弾。HP 40・水・弱点 草・にげる 1。みずでっぽう（水）10+）
+ROCKET_EKANS = "PMCG4-001"  # アーボ（ロケット団。HP 50・草・弱点 超・にげる 1。かみつく（無）10・どくばり（草草）20）
+ROCKET_ZUBAT = "PMCG4-002"  # ズバット（ロケット団。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。ぶつかる（無）10・かみつく（草無）20）
+ROCKET_ODDISH = "PMCG4-003"  # ナゾノクサ（ロケット団。HP 50・草・弱点 炎・にげる 1。ねむりごな（草）・どくのこな（草）。ダメージの目安なし）
+ROCKET_KOFFING = "PMCG4-005"  # ドガース（ロケット団。HP 40・草・弱点 超・にげる 1。たいあたり（無）10・どくガス（草無）20）
+ROCKET_VOLTORB = "PMCG4-027"  # ビリリダマ（ロケット団。HP 40・雷・弱点 闘・にげる 1。スピードボール（雷）20）
+ROCKET_MACHOP = "PMCG4-040"  # ワンリキー（ロケット団。HP 50・闘・弱点 超・にげる 1。パンチ（無無）20・キック（闘無無）30）
+ROCKET_DRATINI = "PMCG4-051"  # ミニリュウ（ロケット団。HP 40・無色・弱点なし・抵抗力 超 -30・にげる 1。まきつく（無無）10）
+BROCKS_ZUBAT = "PMCG5-001"  # タケシのズバット（HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。つばさでうつ（無）10・どくのきば（草無）20）
+MISTYS_GOLDEEN = "PMCG5-026"  # カスミのトサキント（HP 40・水・弱点 雷・にげる 1。みだれづき（無）10×・ちょうおんぱ（水）。ダメージの目安なし）
+LT_SURGES_MAGNEMITE = "PMCG5-037"  # マチスのコイル（HP 40・雷・弱点 闘・にげる 1。でんきショック（雷）10・たいあたり（無無）20）
+LT_SURGES_VOLTORB = "PMCG5-038"  # マチスのビリリダマ（HP 40・雷・弱点 闘・にげる 1。スピンボール（雷）20×・ダブルスピン（雷無）20×）
+BROCKS_GEODUDE = "PMCG5-046"  # タケシのイシツブテ（HP 50・闘・弱点 草・にげる 1。いしなげ（闘）10×）
+BROCKS_LICKITUNG = "PMCG5-061"  # タケシのベロリンガ（HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 3。ベロではたく（無無）20・たたきつける（無無無）30×）
+V0_29_POKEMON = (POLIWAG, ROCKET_EKANS, ROCKET_ZUBAT, ROCKET_ODDISH, ROCKET_KOFFING, ROCKET_VOLTORB, ROCKET_MACHOP, ROCKET_DRATINI,
+                 BROCKS_ZUBAT, MISTYS_GOLDEEN, LT_SURGES_MAGNEMITE, LT_SURGES_VOLTORB, BROCKS_GEODUDE, BROCKS_LICKITUNG)
+# v0.30: 自分の「炎」エネルギーカードを 1 枚トラッシュしてダメージを与えるワザの共通の型（DiscardEnergyThenDamage）で加えたポケモン
+# （docs/discard-energy-attacks-v0.30.md）。ヒトカゲ（CHARMANDER）も v0.30 から対戦用。第4弾のポニータは第1弾のポニータ（PONYTA）と同じ名前の別のカード
+CHARMELEON = "PMCG1-017"  # リザード（第1弾。ヒトカゲから進化。HP 80・炎・弱点 水・にげる 1。きりさく（無無無）30・かえんほうしゃ（炎炎無）50）
+ARCANINE = "PMCG1-019"  # ウインディ（第1弾。ガーディから進化。HP 100・炎・弱点 水・にげる 3。かえんほうしゃ（炎炎無）50・とっしん（炎炎無無）80）
+MAGMAR = "PMCG1-020"  # ブーバー（第1弾。たね。HP 50・炎・弱点 水・にげる 2。ほのおパンチ（炎炎）30・かえんほうしゃ（炎炎無）50）
+ROCKET_PONYTA = "PMCG4-013"  # ポニータ（第4弾ロケット団。たね。HP 50・炎・弱点 水・にげる 1。ひのこ（炎無）30）
+V0_30_POKEMON = ("PMCG1-014", CHARMELEON, ARCANINE, MAGMAR, ROCKET_PONYTA)
+# v0.31: v0.30 で保留した 22 枚（docs/held-cards-v0.31.md）と、その進化元として加えた 7 枚。写しの組 pool_v0_31 の並び（対象 22 枚 → 進化元 7 枚）
+NINETALES = "PMCG1-022"  # キュウコン（第1弾。ロコンから進化。かどわかす・だいもんじ）
+ZAPDOS = "PMCG1-042"  # サンダー（第1弾。かみなり・10まんボルト）
+BASE_GASTLY = "PMCG1-044"  # ゴース（第1弾。さいみんガス・みちづれ。化石の秘密のゴース GASTLY とは別のカード）
+MEWTWO = "PMCG1-050"  # ミュウツー（第1弾。サイコキネシス・バリアー）
+CLEFABLE = "PMCG2-044"  # ピクシー（ジャングル。ピッピから進化。ゆびをふる・ちいさくなる）
+MOLTRES = "PMCG3-009"  # ファイヤー（化石の秘密。やまやき・ゴッドバード）
+SLOWPOKE = "PMCG3-027"  # ヤドン（化石の秘密。ぼーっとする・ゴミあさり）
+DARK_RAPIDASH = "PMCG4-014"  # わるいギャロップ（ロケット団。ポニータ（第4弾）から進化。うしろげり・ひばしら）
+DARK_CHARMELEON = "PMCG4-015"  # わるいリザード（ロケット団。ヒトカゲから進化。しっぽでたたく・ファイヤーボール）
+DARK_FLAREON = "PMCG4-016"  # わるいブースター（ロケット団。イーブイから進化。いかり・ひあそび）
+DARK_CHARIZARD = "PMCG4-017"  # わるいリザードン（ロケット団。わるいリザードから進化。つめではじく・れんぞくファイヤーボール）
+DARK_GOLDUCK = "PMCG4-022"  # わるいゴルダック（ロケット団。コダックから進化。だい3のめ・ちょうねんりき）
+DARK_ELECTRODE = "PMCG4-028"  # わるいマルマイン（ロケット団。ビリリダマ（第4弾）から進化。ころがりタックル・エナジーボム）
+MISTYS_GOLDUCK = "PMCG5-032"  # カスミのゴルダック（カスミのコダックから進化。エクストラビーム・スーパーデストロイ）
+LT_SURGES_ELECTABUZZ = "PMCG5-041"  # マチスのエレブー（たいでん・ほうでん）
+BLAINES_CHARMANDER = "PMCG6-025"  # カツラのヒトカゲ（メラメラ・きりさく）
+BLAINES_CHARMELEON = "PMCG6-029"  # カツラのリザード（カツラのヒトカゲから進化。ほのおのつめ・やきはらう）
+BLAINES_MAGMAR = "PMCG6-031"  # カツラのブーバー（ひをふく・マグマふんしゅつ）
+BLAINES_NINETALES = "PMCG6-033"  # カツラのキュウコン（カツラのロコンから進化。ほのおでかいふく・しゃくねつ）
+BLAINES_ARCANINE = "PMCG6-034"  # カツラのウインディ（カツラのガーディから進化。ヒートタックル・ほのおのあらし）
+LT_SURGES_RAICHU = "PMCG6-041"  # マチスのライチュウ（マチスのピカチュウから進化。バリバリ・でんきタックル）
+CLEFAIRY = "PMCG1-067"  # ピッピ（第1弾。進化元。うたう・ゆびをふる）
+EEVEE = "PMCG2-037"  # イーブイ（ジャングル。進化元。しっぽをふる・でんこうせっか）
+PSYDUCK = "PMCG4-019"  # コダック（ロケット団。進化元。めまい・みずでっぽう）
+MISTYS_PSYDUCK = "PMCG5-021"  # カスミのコダック（進化元。ちょうのうりょく）
+BLAINES_VULPIX = "PMCG6-026"  # カツラのロコン（進化元。しぜんになおる・しっぽでまどわす）
+BLAINES_GROWLITHE = "PMCG6-027"  # カツラのガーディ（進化元。もえひろがる）
+LT_SURGES_PIKACHU = "PMCG5-036"  # マチスのピカチュウ（進化元。でんこうせっか）
+V0_31_TARGETS = (NINETALES, "PMCG1-021", ZAPDOS, BASE_GASTLY, MEWTWO, CLEFABLE, MOLTRES, SLOWPOKE, DARK_RAPIDASH, DARK_CHARMELEON,
+                 DARK_FLAREON, DARK_CHARIZARD, DARK_GOLDUCK, DARK_ELECTRODE, MISTYS_GOLDUCK, LT_SURGES_ELECTABUZZ, BLAINES_CHARMANDER,
+                 BLAINES_CHARMELEON, BLAINES_MAGMAR, BLAINES_NINETALES, BLAINES_ARCANINE, LT_SURGES_RAICHU)
+V0_31_DEPENDENCIES = (CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU)
+V0_31_POKEMON = V0_31_TARGETS + V0_31_DEPENDENCIES
+# v0.32（山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザのポケモンと進化先。docs/bench-search-counter-drain-v0.32.md）
+NIDORAN_F = "PMCG2-001"  # ニドラン♀（第2弾。HP 60・草・弱点 超・にげる 1。みだれひっかき（草）10×・なかまをよぶ（草草））
+JUNGLE_ODDISH = "PMCG2-002"  # ナゾノクサ（第2弾。HP 50・草・弱点 炎・にげる 1。しびれごな（草）10・ふえる（草草））。ROCKET_ODDISH と同じ名前の別のカード
+BELLSPROUT = "PMCG2-005"  # マダツボミ（第2弾。HP 40・草・弱点 炎・にげる 1。つるのムチ（草）10・なかまをよぶ（草））
+KRABBY = "PMCG3-013"  # クラブ（化石の秘密。HP 50・水・弱点 雷・にげる 2。なかまをよぶ（水）・はさむ（水無）20）
+NIDORINA = "PMCG2-008"  # ニドリーナ（第2弾。ニドラン♀から進化。HP 70。ちょうおんぱ（草）・にどげり（草無無）30×）
+WEEPINBELL = "PMCG2-011"  # ウツドン（第2弾。マダツボミから進化。HP 70。どくのこな（草）10・はっぱカッター（草草）30）
+MAGIKARP = "PMCG1-031"  # コイキング（第1弾。HP 30・水・弱点 雷・にげる 1。たいあたり（無）10・じたばた（水）10×）
+GYARADOS = "PMCG1-034"  # ギャラドス（第1弾。コイキングから進化。HP 100・水・弱点 草・抵抗力 闘 -30。りゅうのいかり（水水水）50・バブルこうせん（水水水水）40）
+KINGLER = "PMCG3-019"  # キングラー（化石の秘密。クラブから進化。HP 60・水・弱点 雷。じたばた（水）10×・クラブハンマー（水水無）40）
+JYNX = "PMCG1-048"  # ルージュラ（第1弾。HP 70・超・弱点 超・にげる 2。おうふくびんた（超）10×・ヨガのポーズ（超超無）20+）
+VENONAT = "PMCG2-004"  # コンパン（第2弾。HP 40・草・弱点 炎・にげる 1。しびれごな（草）10・きゅうけつ（草無）10）
+FOSSIL_ZUBAT = "PMCG3-002"  # ズバット（化石の秘密。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。ちょうおんぱ（無無）・きゅうけつ（草無）10）
+GOLBAT = "PMCG3-005"  # ゴルバット（化石の秘密。ズバットから進化。HP 60・草・弱点 超・抵抗力 闘 -30・にげる 0。つばさでうつ（無無無）30・きゅうけつ（草草無）20）
+V0_32_POKEMON = (NIDORAN_F, JUNGLE_ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL, MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT)
+# v0.33（相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザのポケモンと進化先。
+# docs/cd4-opponent-energy-coins-v0.33.md）
+DRAGONAIR = "PMCG1-069"  # ハクリュー（第1弾。ミニリュウから進化。HP 80・無色・抵抗力 超 -30・にげる 2。たたきつける（無無無）30×・はかいこうせん（無無無無）20）
+FOSSIL_GOLDUCK = "PMCG3-016"  # ゴルダック（化石の秘密。コダックから進化。HP 70・水・弱点 雷・にげる 1。ねんりき（超）10・はかいこうせん（水水無）20）
+DARK_VAPOREON = "PMCG4-023"  # わるいシャワーズ（ロケット団。イーブイから進化。HP 60・水・弱点 雷・にげる 1。かみつく（無無無）30・うずしお（水水無）20）
+LT_SURGES_MAGNEMITE_30 = "PMCG5-039"  # マチスのコイル（HP 30・雷・弱点 闘・にげる 0。はかいでんぱ（雷）10・こんらんでんぱ（雷雷）20）。LT_SURGES_MAGNEMITE と同じ名前の別のカード
+SABRINAS_VENONAT = "PMCG6-006"  # ナツメのコンパン（HP 40・草・弱点 炎・にげる 1。どくのしょっかく（草）・はかいビーム（超無）20）
+NIDORAN_M = "PMCG1-005"  # ニドラン♂（第1弾。HP 40・草・弱点 超・にげる 1。つのでつつく（草）30）
+NIDORINO = "PMCG1-010"  # ニドリーノ（第1弾。ニドラン♂から進化。HP 60・草・弱点 超・にげる 1。にどげり（草無無）30×・つのドリル（草草無無）50）
+CLOYSTER = "PMCG3-018"  # パルシェン（化石の秘密。シェルダーから進化。HP 50・水・弱点 雷・にげる 2。からではさむ（水水）30・とげキャノン（水水）30×）
+DARK_RATICATE = "PMCG4-046"  # わるいラッタ（ロケット団。コラッタから進化。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。かじる（無無）20・ひっさつまえば（無無無）50）
+BROCKS_DIGLETT = "PMCG5-044"  # タケシのディグダ（HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。ふいをつく（闘）20・ミニじしん（闘無）40）
+BROCKS_RHYHORN = "PMCG5-049"  # タケシのサイホーン（HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 3。ドリルタックル（闘無）70）
+LT_SURGES_SPEAROW = "PMCG5-057"  # マチスのオニスズメ（HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 0。ふきとばし（無）10・かまいたち（無無）40）
+GIOVANNIS_NIDORAN_F = "PMCG6-003"  # サカキのニドラン♀（HP 50・草・弱点 超・にげる 1。つき（草）20・すてみタックル（無無）30）
+BLAINES_RHYHORN = "PMCG6-058"  # カツラのサイホーン（HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 2。ホーンアタック（闘）30・かけぬける（無無無）20）
+BLAINES_DODUO = "PMCG6-064"  # カツラのドードー（HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 0。けりつける（無）20・しかえし（無無）10×）
+V0_33_POKEMON = (DRAGONAIR, FOSSIL_GOLDUCK, DARK_VAPOREON, LT_SURGES_MAGNEMITE_30, SABRINAS_VENONAT, NIDORAN_M, NIDORINO, CLOYSTER, DARK_RATICATE,
+                 BROCKS_DIGLETT, BROCKS_RHYHORN, LT_SURGES_SPEAROW, GIOVANNIS_NIDORAN_F, BLAINES_RHYHORN, BLAINES_DODUO)
+# v0.34（バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせて加えた 14 枚と保留の 1 枚。docs/barrier-resume-coin-bonus-v0.34.md）
+RAPIDASH = "PMCG2-019"  # ギャロップ（第2弾。ポニータから進化。HP 70・炎・弱点 水・にげる 0。ふみつけ（無無）20+・こうそくいどう（炎炎無）30）
+FLAREON = "PMCG2-020"  # ブースター（第2弾。イーブイから進化。HP 70・炎・弱点 水・にげる 1。でんこうせっか（無無）10+・かえんほうしゃ（炎炎無無）60）
+VAPOREON = "PMCG2-023"  # シャワーズ（第2弾。イーブイから進化。HP 80・水・弱点 雷・にげる 1。でんこうせっか（無無）10+・みずでっぽう（水水無）30+）
+JOLTEON = "PMCG2-026"  # サンダース（第2弾。イーブイから進化。HP 70・雷・弱点 闘・にげる 1。でんこうせっか（無無）10+・ミサイルばり（雷雷無）20×）
+ELECTABUZZ = "PMCG1-041"  # エレブー（第1弾。HP 70・雷・弱点 闘・にげる 2。でんきショック（雷）10・かみなりパンチ（雷無）30+）
+TAUROS = "PMCG2-042"  # ケンタロス（第2弾。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 2。ふみつけ（無無）20+・いかりくるう（無無無）20+）
+BROCKS_VULPIX = "PMCG5-018"  # タケシのロコン（HP 40・炎・弱点 水・にげる 1。ほのお（炎）20・でんこうせっか（無無）10+）。VULPIX・BLAINES_VULPIX とは別の名前
+GIOVANNIS_PINSIR = "PMCG6-024"  # サカキのカイロス（HP 70・草・弱点 炎・にげる 2。きあいばさみ（草無）10+・うしろなげ（草無無）40）。PINSIR とは別のカード
+BLAINES_KANGASKHAN = "PMCG6-069"  # カツラのガルーラ（HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 3。こどもパンチ（無）10・おやこパンチ（無無無）30+）
+KOFFING = "PMCG1-006"  # ドガース（第1弾。HP 50・草・弱点 超・にげる 1。くさいガス（草草）10）。ROCKET_KOFFING とは別のカード
+NIDOKING = "PMCG1-013"  # ニドキング（第1弾。ニドリーノから進化。HP 90・草・弱点 超・にげる 3。あばれる（草無無）30+・どくどく（草草草）20）
+EXEGGUTOR = "PMCG2-012"  # ナッシー（第2弾。タマタマから進化。HP 80・草・弱点 炎・にげる 3。テレポート（超）・たまなげMAX（無）20×）
+KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。保留。登録しない。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
+CUBONE = "PMCG2-029"  # カラカラ（第2弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。なきつく（無）・いかり（闘闘）10+）
+MAROWAK = "PMCG2-032"  # ガラガラ（第2弾。カラカラから進化。HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 1。ほねブーメラン（闘闘）30×・たすけをよぶ（闘闘無））
+V0_34_POKEMON = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
+                 EXEGGUTOR, CUBONE, MAROWAK)  # 対応にした 14 枚（ガルーラは保留）
+V0_34_POOL = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
+              EXEGGUTOR, KANGASKHAN, CUBONE, MAROWAK)  # 写しの組 pool_v0_34（保留のガルーラを含む 15 枚）
+# v0.35（docs/coin-groups-damage-order-v0.35.md）: kyuura データの採用で加えた 5 枚
+LT_SURGES_RATTATA = "PMCG5-056"  # マチスのコラッタ（リーダーズスタジアム。HP 30・無色・弱点 闘・抵抗力 超 -30・にげる 0。きあいだめ（無）・でんこうせっか（無無）10+）
+LT_SURGES_RATICATE = "PMCG5-059"  # マチスのラッタ（マチスのコラッタから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 1。きあいだめ（無）・すてみタックル（無無）40）
+MISTYS_POLIWAG = "PMCG5-022"  # カスミのニョロモ（リーダーズスタジアム。HP 50・水・弱点 草・にげる 1。あわあわ（水）20・ドわすれ（水水））
+MISTYS_POLIWHIRL = "PMCG5-029"  # カスミのニョロゾ（カスミのニョロモから進化。HP 70・水・弱点 草・にげる 2。はかいのうず（水無）20・ウォーターパンチ（無無無）30+）
+BLAINES_TAUROS = "PMCG6-065"  # カツラのケンタロス（闇からの挑戦。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 2。3ぼんのしっぽ（無）10×・ぜんりょくとっしん（無無無）20×）
+V0_35_POKEMON = (LT_SURGES_RATTATA, LT_SURGES_RATICATE, MISTYS_POLIWAG, MISTYS_POLIWHIRL, BLAINES_TAUROS)  # 対応にした 5 枚（写しの組 pool_v0_35 と同じ）
+# v0.36（docs/sand-attack-retreat-lock-v0.36.md）: kyuura データの採用で加えた 11 枚
+SANDSHREW = "PMCG1-051"  # サンド（第1弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。すなかけ（闘）10。効果は1回できえる）
+SANDSLASH = "PMCG3-036"  # サンドパン（化石の秘密。サンドから進化。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 1。きりさく（無無）20・みだれひっかき（闘闘）20×）
+FOSSIL_MAGMAR = "PMCG3-008"  # ブーバー（化石の秘密。HP 70・炎・弱点 水・にげる 1。えんまく（炎）10・スモッグ（炎炎）20）。MAGMAR（第1弾）とは別のカード
+HORSEA = "PMCG3-014"  # タッツー（化石の秘密。HP 40・水・弱点 雷・にげる 0。えんまく（水）10）
+MISTYS_HORSEA = "PMCG5-025"  # カスミのタッツー（リーダーズスタジアム。HP 40・水・弱点 雷・にげる 0。たいあたり（水）10・えんまく（水水）20）
+KOGAS_PIDGEY = "PMCG6-062"  # キョウのポッポ（闇からの挑戦。HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 1。つつく（無）10・すなかけ（無無無）20）
+DARK_JOLTEON = "PMCG4-029"  # わるいサンダース（ロケット団。イーブイから進化。HP 50・雷・弱点 闘・にげる 1。サンダーフラッシュ（雷）20・サンダーアタック（雷雷無）30）
+MISTYS_SEEL = "PMCG5-023"  # カスミのパウワウ（リーダーズスタジアム。HP 50・水・弱点 雷・にげる 1。アイスバーン（水）10・しんきろう（水無）10）
+LT_SURGES_FEAROW = "PMCG5-064"  # マチスのオニドリル（マチスのオニスズメから進化。HP 70・無色・弱点 雷・抵抗力 闘 -30・にげる 0。マシンガンドリル（無無）10×・わしづかみ（無無無）30）
+KOGAS_KOFFING = "PMCG6-015"  # キョウのドガース（闇からの挑戦。HP 50・草・弱点 超・にげる 1。えんまく（草）10・くもがくれガス（草無）30）。KOFFING とは別のカード
+ERIKAS_BELLSPROUT = "PMCG5-005"  # エリカのマダツボミ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。へなへなタックル（無）20）。BELLSPROUT とは別のカード
+V0_36_POKEMON = (SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA, KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING,
+                 ERIKAS_BELLSPROUT)  # 対応にした 11 枚（写しの組 pool_v0_36 と同じ）
+# v0.37（docs/fifteen-reused-effects-v0.37.md）: 15 枚（化石の秘密のベトベターは v0.8 の過去の原典照合の記録で、ほかの 14 枚は kyuura データの採用）
+RHYHORN = "PMCG2-030"  # サイホーン（第2弾。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 3。にらみつける（無）・つのでつく（闘無無）30）。BROCKS_RHYHORN などとは別のカード
+ROCKET_EEVEE = "PMCG4-049"  # イーブイ（ロケット団。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。たいあたり（無）10・すなかけ（無無）10）。EEVEE（第2弾）とは別のカード
+BROCKS_SANDSHREW = "PMCG5-043"  # タケシのサンド（リーダーズスタジアム。HP 50・闘・弱点 草・抵抗力 雷 -30・にげる 1。すなじごく（闘闘）20）。SANDSHREW とは別のカード
+SABRINAS_DROWZEE = "PMCG6-045"  # ナツメのスリープ（闇からの挑戦。HP 50・超・弱点 超・にげる 1。あんじをかける（超）・ずつき（無無）20）。DROWZEE とは別のカード
+RAICHU = "PMCG1-038"  # ライチュウ（第1弾。ピカチュウから進化。HP 80・雷・弱点 闘・にげる 1。こうそくいどう（雷無無）20・かみなり（雷雷雷無）60）
+DUGTRIO = "PMCG1-056"  # ダグトリオ（第1弾。ディグダから進化。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 2。きりさく（闘闘無）40・じしん（闘闘闘闘）70）
+POLIWHIRL = "PMCG1-028"  # ニョロゾ（第1弾。ニョロモから進化。HP 60・水・弱点 草・にげる 1。ドわすれ（水水）・おうふくびんた（水水無）30×）
+POLIWRATH = "PMCG1-033"  # ニョロボン（第1弾。ニョロゾから進化する 2 進化。HP 90・水・弱点 草・にげる 3。みずでっぽう（水水無）30+・うずしお（水水無無）40）
+FOSSIL_EKANS = "PMCG3-001"  # アーボ（化石の秘密。HP 40・草・弱点 超・にげる 1。どくえき（草）・まきつく（草無）20）。ROCKET_EKANS とは別のカード
+BROCKS_ONIX = "PMCG5-048"  # タケシのイワーク（リーダーズスタジアム。HP 100・闘・弱点 草・にげる 3。うなりごえ（無）・いわおとし（闘闘無）30）
+MEOWTH = "PMCG2-036"  # ニャース（第2弾。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。ねこにこばん（無無）10）。GIOVANNIS_MEOWTH とは別のカード
+KOGAS_TANGELA = "PMCG6-009"  # キョウのモンジャラ（闇からの挑戦。HP 50・草・弱点 炎・にげる 2。ねむりごな（草）10・つるでさがす（草無））。TANGELA とは別のカード
+MISTYS_MAGIKARP = "PMCG5-028"  # カスミのコイキング（リーダーズスタジアム。HP 30・水・弱点 雷・にげる 1。しんだふり（無）・はねる（無）10）。MAGIKARP とは別のカード
+PERSIAN = "PMCG2-039"  # ペルシアン（第2弾。ニャースから進化。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 0。ひっかく（無無）20・かみつく（無無無）30）
+V0_37_ADOPTED = (RHYHORN, ROCKET_EEVEE, BROCKS_SANDSHREW, SABRINAS_DROWZEE, RAICHU, DUGTRIO, POLIWHIRL, POLIWRATH, FOSSIL_EKANS, BROCKS_ONIX, MEOWTH,
+                 KOGAS_TANGELA, MISTYS_MAGIKARP, PERSIAN)  # kyuura データの採用の記録で加えた 14 枚
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -109,7 +260,84 @@ KADABRA = "PMCG1-046"  # ユンゲラー（v0.7。ケーシィから進化する
 ABRA = "PMCG1-043"  # ケーシィ（v0.7。HP 30・超・弱点 超・にげる 0。ねんりき 10）
 GRIMER = "PMCG4-004"  # ロケット団のベトベター（v0.8。HP 40・草・弱点 超・にげる 1。どくガス・ねばりつく 10+）
 MUK = "PMCG3-007"  # ベトベトン（v0.8。ベトベターから進化する 1 進化。HP 70・草・弱点 超・にげる 2。かがくへんかガス・ヘドロこうげき 30）
-FOSSIL_GRIMER = "PMCG3-003"  # 化石の秘密のベトベター（v0.8。参照カード。「ちいさくなる」が未実装でデッキに入らない）
+# 化石の秘密のベトベター（v0.8〜v0.36 は参照カード（「ちいさくなる」が未実装でデッキに入らない）。v0.37 で対応にした。HP 50・草・弱点 超・にげる 1。
+# ベトベト（無）10・ちいさくなる（草））
+FOSSIL_GRIMER = "PMCG3-003"
+V0_37_POKEMON = V0_37_ADOPTED[:1] + (FOSSIL_GRIMER,) + V0_37_ADOPTED[1:]  # 対応にした 15 枚（写しの組 pool_v0_37 の 14 枚と化石の秘密のベトベター）
+# v0.38（docs/bench-switch-combined-v0.38.md）。控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚（kyuura データの採用）。
+# 同じ名前の別のカード（タケシのロコン PMCG5-018・キョウのポッポ PMCG6-062・第1弾のケーシィ PMCG1-043）と取りちがえない
+ARTICUNO = "PMCG3-023"  # フリーザー（化石の秘密。HP 70・水・弱点なし・抵抗力 闘 -30・にげる 2。フリーズドライ（水水水）30・ふぶき（水水水水）50）
+HITMONLEE = "PMCG3-039"  # サワムラー（化石の秘密。HP 60・闘・弱点 超・にげる 1。のびるキック（闘闘）・とびひざげり（闘闘闘）50）
+ERIKAS_TANGELA = "PMCG5-006"  # エリカのモンジャラ（リーダーズスタジアム。HP 60・草・弱点 炎・にげる 2。つるでうつ（草）10・のびるつる（草草無））。TANGELA・KOGAS_TANGELA とは別の名前
+BROCKS_VULPIX_50 = "PMCG5-017"  # タケシのロコン（リーダーズスタジアム。HP 50・炎・弱点 水・にげる 1。みつめる（無）・ほのおのわ（炎炎）20）。BROCKS_VULPIX（PMCG5-018）とは別のカード
+BROCKS_GOLBAT = "PMCG5-008"  # タケシのゴルバット（タケシのズバットから進化。HP 70・草・弱点 超・抵抗力 闘 -30・にげる 1。スピードひこう（無）20・かいてんひこう（無無無））
+ARBOK = "PMCG3-004"  # アーボック（化石の秘密。アーボから進化。HP 60・草・弱点 超・にげる 2。いかくこうげき（草）10・どくのきば（草草無）20）
+RHYDON = "PMCG2-033"  # サイドン（第2弾。サイホーンから進化。HP 100・闘・弱点 草・抵抗力 雷 -30・にげる 3。つのでつく（闘無無）30・げきとつ（闘闘闘闘）50）
+BLAINES_PONYTA = "PMCG6-028"  # カツラのポニータ（闇からの挑戦。HP 50・炎・弱点 水・にげる 1。けりにげ（無無）20）。PONYTA とは別の名前
+BLAINES_RAPIDASH = "PMCG6-030"  # カツラのギャロップ（カツラのポニータから進化。HP 70・炎・弱点 水・にげる 0。ほのおのたてがみ（炎）20・ふみあらす（炎無無）30+）
+KOGAS_PIDGEOTTO = "PMCG6-070"  # キョウのピジョン（キョウのポッポから進化。HP 60・無色・弱点 雷・抵抗力 闘 -30・にげる 0。クイックターン（無無無）30×・こうそくひこう（無無無無）10+）
+KOGAS_WEEDLE = "PMCG6-001"  # キョウのビードル（闇からの挑戦。HP 40・草・弱点 炎・にげる 1。チクチクさす（無）10・きけんなはり（草無）10）。WEEDLE とは別の名前
+GIOVANNIS_NIDORINA = "PMCG6-012"  # サカキのニドリーナ（サカキのニドラン♀から進化。HP 80・草・弱点 超・にげる 2。どくばりタックル（草無）30・のしかかり（草無無）20）
+SABRINAS_PORYGON = "PMCG6-066"  # ナツメのポリゴン（闇からの挑戦。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。とがる（無）10・バリアアタック（無無）20）
+ROCKET_ABRA = "PMCG4-031"  # ケーシィ（ロケット団。HP 40・超・弱点 超・にげる 1。いなくなる（超）・ねんりき（超）10）。ABRA（PMCG1-043）とは別のカード
+KOGAS_PIDGEY_40 = "PMCG6-067"  # キョウのポッポ（闇からの挑戦。HP 40・無色・弱点 雷・抵抗力 闘 -30・にげる 1。でんれい（無）・つばさでうつ（無無）20）。KOGAS_PIDGEY（PMCG6-062）とは別のカード
+V0_38_POKEMON = (ARTICUNO, HITMONLEE, ERIKAS_TANGELA, BROCKS_VULPIX_50, BROCKS_GOLBAT, ARBOK, RHYDON, BLAINES_PONYTA, BLAINES_RAPIDASH, KOGAS_PIDGEOTTO,
+                 KOGAS_WEEDLE, GIOVANNIS_NIDORINA, SABRINAS_PORYGON, ROCKET_ABRA, KOGAS_PIDGEY_40)  # 写しの組 pool_v0_38 の並び
+# v0.39（docs/selfdestruct-spread-count-v0.39.md）。同じ名前の別のカード（MAGNEMITE と ROCKET_MAGNEMITE、MAGNETON と FOSSIL_MAGNETON、JUNGLE_PIKACHU と
+# PIKACHU、FOSSIL_RAICHU と RAICHU、KOGAS_KOFFING_40 と KOGAS_KOFFING）と取りちがえない
+MAGNEMITE = "PMCG1-036"  # コイル（第1弾。HP 40・雷・弱点 闘・にげる 1。でんじは（雷）10・じばく（雷無）40）
+MAGNETON = "PMCG1-039"  # レアコイル（第1弾。コイルから進化。HP 60・雷・弱点 闘・にげる 1。でんじは（雷雷無）30・じばく（雷雷無無）80）
+FOSSIL_WEEZING = "PMCG3-006"  # マタドガス（化石の秘密。ドガースから進化。HP 60・草・弱点 超・にげる 1。スモッグ（草草）20・じばく（草草無）60）
+FOSSIL_MAGNETON = "PMCG3-025"  # レアコイル（化石の秘密。コイルから進化。HP 80・雷・弱点 闘・にげる 2。ソニックブーム（雷無）20・じばく（雷雷雷雷）100）
+JUNGLE_PIKACHU = "PMCG2-024"  # ピカチュウ（第2弾。HP 50・雷・弱点 闘・にげる 1。スパーク（雷雷）20）。PIKACHU（PMCG1-035）とは別のカード
+FOSSIL_RAICHU = "PMCG3-024"  # ライチュウ（化石の秘密。ピカチュウから進化。HP 90・雷・弱点 闘・にげる 1。ギガスパーク（雷雷雷雷）30）。RAICHU（PMCG1-038）とは別のカード
+ELECTRODE = "PMCG2-025"  # マルマイン（第2弾。ビリリダマから進化。HP 90・雷・弱点 闘・にげる 1。たいあたり（無無）20・ビリビリ（雷雷雷）20）
+KOGAS_KOFFING_40 = "PMCG6-008"  # キョウのドガース（闇からの挑戦。HP 40・草・弱点 超・にげる 1。おならガス（草）10）。KOGAS_KOFFING（PMCG6-015）とは別のカード
+MISTYS_POLIWRATH = "PMCG6-039"  # カスミのニョロボン（闇からの挑戦。カスミのニョロゾから進化する 2 進化。HP 90・水・弱点 草・にげる 3。ウォーターリング（水水無無）30）
+ROCKET_MAGNEMITE = "PMCG4-026"  # コイル（ロケット団。HP 40・雷・弱点 闘・にげる 1。たいあたり（無無）20・ちょくれつじりょく（雷無）10+）。MAGNEMITE とは同じ名前の別のカード
+WIGGLYTUFF = "PMCG2-045"  # プクリン（第2弾。プリンから進化。HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 2。こもりうた（無）・ともだちのわ（無無無）10+）
+NIDOQUEEN = "PMCG2-013"  # ニドクイン（第2弾。ニドリーナから進化する 2 進化。HP 90・草・弱点 超・にげる 3。ラブラブアタック（草無）20+・メガトンパンチ（草草無無）50）
+KOGAS_WEEZING = "PMCG6-016"  # キョウのマタドガス（闇からの挑戦。キョウのドガースから進化。HP 70・草・弱点 超・にげる 2。とつぜんばくはつ（草草）10+・どくどくガス（草草無）20）
+PIDGEY = "PMCG1-059"  # ポッポ（第1弾。HP 40・無色・弱点 雷・抵抗力 闘 -30・にげる 1。かぜおこし（無無）10）
+ERIKAS_PARAS = "PMCG5-004"  # エリカのパラス（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。はさむ（無）10・きけんなほうし（草草））。PARAS とは別の名前のカード
+V0_39_POKEMON = (MAGNEMITE, MAGNETON, FOSSIL_WEEZING, FOSSIL_MAGNETON, JUNGLE_PIKACHU, FOSSIL_RAICHU, ELECTRODE, KOGAS_KOFFING_40, MISTYS_POLIWRATH,
+                 ROCKET_MAGNEMITE, WIGGLYTUFF, NIDOQUEEN, KOGAS_WEEZING, PIDGEY, ERIKAS_PARAS)  # 写しの組 pool_v0_39 の並び
+# v0.40（docs/count-condition-switch-return-v0.40.md）。場の数・条件付きの効果・入れ替え・カードの移動の 15 枚
+KOGAS_ZUBAT = "PMCG6-005"  # キョウのズバット（闇からの挑戦。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。むれでおそう（草無）10×）。ZUBAT・BROCKS_ZUBAT とは別の名前
+KOGAS_GOLBAT = "PMCG6-014"  # キョウのゴルバット（キョウのズバットから進化。HP 60・草・弱点 超・抵抗力 闘 -30・にげる 0。かみつく（無無）20・ひどいおんぱ（草草草）30）
+DARK_WEEZING = "PMCG4-011"  # わるいマタドガス（ロケット団。ドガースから進化。HP 60・草・弱点 超・にげる 1。みんなでばくはつ（草無）20×・しびれガス（草草草）20）
+DARK_HYPNO = "PMCG4-037"  # わるいスリーパー（ロケット団。スリープから進化。HP 60・超・弱点 超・にげる 2。サイコパンチ（超）20・ベンチをあやつる（超超無）20×）
+GIOVANNIS_NIDORAN_M = "PMCG6-004"  # サカキのニドラン♂（闇からの挑戦。HP 40・草・弱点 超・にげる 1。にどげり（無）10×・いかりのいちげき（草）30）。NIDORAN_M とは別の名前
+GIOVANNIS_NIDORINO = "PMCG6-013"  # サカキのニドリーノ（サカキのニドラン♂から進化。HP 70・草・弱点 超・にげる 2。つのでえぐる（草無無）20+）
+GIOVANNIS_NIDOKING = "PMCG6-021"  # サカキのニドキング（サカキのニドリーノから進化する 2 進化。HP 120・草・弱点 超・にげる 3。すごむ（草）・ローリングアタック（草草草無）40+）
+GIOVANNIS_NIDOQUEEN = "PMCG6-020"  # サカキのニドクイン（サカキのニドリーナから進化する 2 進化。HP 100・草・弱点 超・にげる 3。メガトンキック（草草無）40・ラブラリアット（草草無無）50+）
+DARK_MACHOKE = "PMCG4-042"  # わるいゴーリキー（ロケット団。ワンリキーから進化。HP 60・闘・弱点 超・にげる 2。ひきずりだす（闘闘無）20・なぐりとばす（闘闘無）30）
+DARK_MACHAMP = "PMCG4-044"  # わるいカイリキー（わるいゴーリキーから進化する 2 進化。HP 70・闘・弱点 超・にげる 3。メガトンパンチ（闘闘）30・つまみだす（闘闘闘無））
+ERIKAS_WEEPINBELL = "PMCG5-011"  # エリカのウツドン（エリカのマダツボミから進化。HP 60・草・弱点 炎・にげる 1。よだれ（草）10・さそってとかす（草草）20）。WEEPINBELL とは別の名前
+MISTYS_SEADRA = "PMCG5-034"  # カスミのシードラ（カスミのタッツーから進化。HP 70・水・弱点 雷・にげる 1。しっぽのムチ（水）20・きぜつばり（水水水）30+）
+BROCKS_MANKEY = "PMCG5-045"  # タケシのマンキー（リーダーズスタジアム。HP 40・闘・弱点 超・にげる 0。ひまつぶし（無）・からてチョップ（闘無）40-）。MANKEY とは別の名前
+MANKEY = "PMCG4-039"  # マンキー（ロケット団。HP 40・闘・弱点 超・にげる 0。いたずら（無）・おこる（闘無）20+）
+PRIMEAPE = "PMCG2-031"  # オコリザル（第2弾。マンキーから進化。HP 70・闘・弱点 超・にげる 1。みだれひっかき（闘闘）20×・あばれまわる（闘闘無）50）
+V0_40_POKEMON = (KOGAS_ZUBAT, KOGAS_GOLBAT, DARK_WEEZING, DARK_HYPNO, GIOVANNIS_NIDORAN_M, GIOVANNIS_NIDORINO, GIOVANNIS_NIDOKING, GIOVANNIS_NIDOQUEEN,
+                 DARK_MACHOKE, DARK_MACHAMP, ERIKAS_WEEPINBELL, MISTYS_SEADRA, BROCKS_MANKEY, MANKEY, PRIMEAPE)  # 写しの組 pool_v0_40 の並び
+# v0.41（docs/heal-counter-status-v0.41.md）。回復・カウンターの移動・特殊状態の変化を中心とする 15 枚
+GLOOM = "PMCG2-009"  # クサイハナ（第2弾。ナゾノクサから進化。HP 60・草・弱点 炎・にげる 1。どくのこな（草）・くさいにおい（草草）20）
+VICTREEBEL = "PMCG2-016"  # ウツボット（第2弾。ウツドンから進化する 2 進化。HP 80・草・弱点 炎・にげる 2。さそうかおり（草）・ようかいえき（草草）20）
+SEADRA = "PMCG3-020"  # シードラ（第3弾。タッツーから進化。HP 60・水・弱点 雷・にげる 1。みずでっぽう（水無）20+・こうそくいどう（水無無）20）。MISTYS_SEADRA とは別の名前
+DARK_PERSIAN = "PMCG4-048"  # わるいペルシアン（ロケット団。ニャースから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 0。ゆうわく（無）・どくのつめ（無無）10）
+BLAINES_MOLTRES = "PMCG6-035"  # カツラのファイヤー（闇からの挑戦。HP 90・炎・弱点なし・抵抗力 闘 -30・にげる 3。ひのとり（炎炎炎炎炎）90）。MOLTRES・ROCKETS_MOLTRES とは別の名前
+ROCKET_SLOWPOKE = "PMCG4-032"  # ヤドン（ロケット団。HP 50・超・弱点 超・にげる 1。ひなたぼっこ（無）・ずつき（超）10）。SLOWPOKE（化石の秘密）とは同じ名前の別のカード
+ERIKAS_ODDISH = "PMCG5-002"  # エリカのナゾノクサ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。ちょっとすいとる（草）10・たまにすいとる（草無）20）
+ERIKAS_ODDISH_40 = "PMCG5-003"  # エリカのナゾノクサ（リーダーズスタジアム。HP 40・草・弱点 炎・にげる 1。へんなこな（草）10）。ERIKAS_ODDISH とは同じ名前の別のカード
+ERIKAS_GLOOM = "PMCG5-009"  # エリカのクサイハナ（エリカのナゾノクサから進化。HP 60・草・弱点 炎・にげる 1。ヒーリングかふん（草）・ミラクルかふん（草草草）30）
+SABRINAS_PSYDUCK = "PMCG6-036"  # ナツメのコダック（闇からの挑戦。HP 50・水・弱点 雷・にげる 1。ひっかく（無）10・こまったねんりき（超）20）。PSYDUCK・MISTYS_PSYDUCK とは別の名前
+SABRINAS_GOLDUCK = "PMCG6-038"  # ナツメのゴルダック（ナツメのコダックから進化。HP 70・水・弱点 雷・にげる 2。ダメージシフト（超超）・ウォーターシュート（水無無）20+）
+SABRINAS_VENOMOTH = "PMCG6-022"  # ナツメのモルフォン（ナツメのコンパンから進化。HP 60・草・弱点 炎・抵抗力 闘 -30・にげる 0。かいふくりんぷん（草）・げんかくおんぱ（超）10）
+SABRINAS_SLOWBRO = "PMCG6-048"  # ナツメのヤドラン（ナツメのヤドンから進化。HP 70・超・弱点 超・にげる 2。いねむり（超）・きあいずつき（超無無）40）
+ERIKAS_JIGGLYPUFF = "PMCG5-058"  # エリカのプリン（リーダーズスタジアム。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。みんなでかいふく（無）・やさしいパンチ（無無）40-）
+ROCKETS_MEWTWO = "PMCG6-055"  # R団のミュウツー（闇からの挑戦。HP 70・超・弱点 超・にげる 2。チェンジダメージ（超）・さいみんはどう（超超）20・サイコバーン（超超超無）60）
+V0_41_POKEMON = (GLOOM, VICTREEBEL, SEADRA, DARK_PERSIAN, BLAINES_MOLTRES, ROCKET_SLOWPOKE, ERIKAS_ODDISH, ERIKAS_ODDISH_40, ERIKAS_GLOOM, SABRINAS_PSYDUCK,
+                 SABRINAS_GOLDUCK, SABRINAS_VENOMOTH, SABRINAS_SLOWBRO, ERIKAS_JIGGLYPUFF, ROCKETS_MEWTWO)  # 写しの組 pool_v0_41 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -474,7 +702,177 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ConfuseOnHeadsWithoutDamage,  # v0.17a: サカキのニャースの「ねこノミ」（既存の要素 Status の新しい並び）
     _effects.DamageAndSelfSleep,  # v0.17b: R団のカビゴンの「たおれこむ」（Damage と、対象を自分にした Status）
     _effects.SetNextTurnAttackDamage,  # v0.27: ストライクの「つるぎのまい」（次の自分の番のワザのダメージを変える持続する効果。新しい要素）
+    _effects.DiscardEnergyThenDamage,  # v0.30: ヒトカゲの「ひのこ」など（エネルギーをトラッシュする要素 DiscardOwnEnergy と Damage）
+) + (
+    # v0.31: v0.30 の保留の 22 枚と進化元・依存のカード（docs/held-cards-v0.31.md 3 章の仕組みの表）
+    _effects.AttachDiscardEnergyToSelf,  # マチスのエレブーの「たいでん」
+    _effects.CannotAttackOnHeads,  # イーブイの「しっぽをふる」
+    _effects.CoinBonusDamage,  # イーブイの「でんこうせっか」・マチスのピカチュウの「でんこうせっか」・カツラのブーバーの「ひをふく」
+    _effects.CoinBonusDamageThenDiscardAll,  # マチスのライチュウの「バリバリ」
+    _effects.CoinBonusDiscardThenDamage,  # わるいブースターの「ひあそび」
+    _effects.CoinDiscardOpponentEnergyEach,  # カスミのゴルダックの「スーパーデストロイ」
+    _effects.CoinsDiscardThenSpreadDamage,  # カツラのリザードの「やきはらう」
+    _effects.CoinsPerEnergyDamageThenDiscard,  # わるいリザードンの「れんぞくファイヤーボール」
+    _effects.CopyOpponentAttackEffect,  # ピッピの「ゆびをふる」・ピクシーの「ゆびをふる」
+    _effects.DamageAndBenchTypeDamage,  # カツラのガーディの「もえひろがる」
+    _effects.DamagePlusDefenderEnergy,  # ミュウツーの「サイコキネシス」
+    _effects.DamagePlusOwnCounters,  # わるいブースターの「いかり」
+    _effects.DamageThenDiscardAllOnTails,  # カスミのゴルダックの「エクストラビーム」・カツラのキュウコンの「しゃくねつ」
+    _effects.DamageThenDiscardEachEnergy,  # カツラのヒトカゲの「メラメラ」
+    _effects.DamageThenMoveEnergyToBench,  # わるいマルマインの「エナジーボム」
+    _effects.DamageThenOptionalBenchDamage,  # わるいギャロップの「ひばしら」
+    _effects.DamageThenParalyzeOrSelfDamage,  # マチスのライチュウの「でんきタックル」
+    _effects.DiscardAllThenCoinDamage,  # マチスのエレブーの「ほうでん」
+    _effects.DiscardEnergyBeforeDamage,  # リザードンの「ほのおのうず」・サンダーの「10まんボルト」・カツラのウインディの「ほのおのあらし」
+    _effects.DiscardEnergyThenDraw,  # わるいゴルダックの「だい3のめ」
+    _effects.DiscardEnergyThenRecoverTrainer,  # ヤドンの「ゴミあさり」
+    _effects.DiscardEnergyThenSelfEffect,  # ゴースの「みちづれ」・ミュウツーの「バリアー」
+    _effects.DiscardFireThenMillOpponent,  # ファイヤーの「やまやき」
+    _effects.DrawCardsAttack,  # コダックの「めまい」
+    _effects.ExtraEnergyDamageMixed,  # コダックの「みずでっぽう」
+    _effects.FailOnTailsDamage,  # ファイヤーの「ゴッドバード」
+    _effects.FailOnTailsDiscardThenDamage,  # わるいリザードの「ファイヤーボール」
+    _effects.HealSelfOnHeadsIfDamaged,  # ヤドンの「ぼーっとする」
+    _effects.MillSelfThenDamage,  # カツラのブーバーの「マグマふんしゅつ」
+    _effects.ReduceDamageNextTurn,  # ピクシーの「ちいさくなる」
+    _effects.SleepOnHeadsWithoutDamage,  # ゴースの「さいみんガス」・ピッピの「うたう」
+    _effects.SwitchOpponentActive,  # キュウコンの「かどわかす」
+    _effects.ThreeCoinPsychicPower,  # カスミのコダックの「ちょうのうりょく」
+) + (
+    # v0.32（docs/bench-search-counter-drain-v0.32.md 3 章）
+    _effects.PutBasicFromDeckOntoBench,  # ニドラン♀・マダツボミ・クラブの「なかまをよぶ」・ナゾノクサの「ふえる」
+    _effects.DamageTimesOwnCounters,  # コイキング・キングラーの「じたばた」
+    _effects.DamagePlusDefenderCounters,  # ルージュラの「ヨガのポーズ」
+    _effects.DamageAndFullDrain,  # コンパン・ズバット（化石の秘密）・ゴルバットの「きゅうけつ」
+) + (
+    # v0.33（docs/cd4-opponent-energy-coins-v0.33.md 3 章）
+    _effects.DamageThenDiscardOpponentEnergy,  # ハクリュー・ゴルダックの「はかいこうせん」・わるいシャワーズの「うずしお」・マチスのコイルの「はかいでんぱ」・ナツメのコンパンの「はかいビーム」
+    _effects.NoDamageOnTails,  # ニドラン♂の「つのでつつく」
+    _effects.DamageAndParalyzeOnHeadsElseFail,  # パルシェンの「からではさむ」
+    _effects.DamageAndOwnBenchDamage,  # タケシのディグダの「ミニじしん」
+    _effects.DamageThenCoinBenchDamage,  # カツラのサイホーンの「かけぬける」
+) + (
+    # v0.34（docs/barrier-resume-coin-bonus-v0.34.md 4 章）
+    _effects.CoinBonusOrSelfDamage,  # エレブーの「かみなりパンチ」・ニドキングの「あばれる」
+    _effects.DamageThenSelfBarrierOnHeads,  # ギャロップの「こうそくいどう」
+    _effects.DamagePlusOwnCountersThenSelfConfuseOnTails,  # ケンタロスの「いかりくるう」
+    _effects.DamageThenCoinOwnBenchDamage,  # サカキのカイロスの「うしろなげ」
+    _effects.DamageThenPoisonOrConfuse,  # ドガースの「くさいガス」
+    _effects.DamageAndSpecialPoison,  # ニドキングの「どくどく」
+    _effects.SwitchSelfWithBench,  # ナッシーの「テレポート」
+    _effects.CoinsPerAttachedEnergyDamage,  # ナッシーの「たまなげMAX」
+    _effects.ReduceDamageToSelf,  # カラカラの「なきつく」
+    _effects.PutTypeBasicFromDeckOntoBench,  # ガラガラの「たすけをよぶ」
+) + (
+    # v0.35（docs/coin-groups-damage-order-v0.35.md 4 章）
+    _effects.MultiplyNextTurnAttackDamage,  # マチスのコラッタ・ラッタの「きあいだめ」
+    _effects.DamageThenLockSelfOnTails,  # カスミのニョロモの「あわあわ」
+    _effects.LockOpponentAttack,  # カスミのニョロモの「ドわすれ」
+    _effects.CoinsPerAttachedTypeBonusDamage,  # カスミのニョロゾの「ウォーターパンチ」
+    _effects.CoinsHeadsDamageTailsSelfDamage,  # カツラのケンタロスの「ぜんりょくとっしん」
+) + (
+    # v0.36（docs/sand-attack-retreat-lock-v0.36.md 5 章）
+    _effects.DamageThenAttackCoinCheck,  # すなかけ・えんまく・サンダーフラッシュ・しんきろう
+    _effects.DamageThenRetreatLock,  # アイスバーン・わしづかみ
+    _effects.DamageThenReturnSelfToDeckOnHeads,  # キョウのドガースの「くもがくれガス」
+) + (
+    # v0.37（docs/fifteen-reused-effects-v0.37.md 3 章）
+    _effects.PoisonOnHeadsWithoutDamage,  # アーボの「どくえき」
+    _effects.ParalyzeOnHeadsWithoutDamage,  # タケシのイワークの「うなりごえ」
+    _effects.DamageThenDrawOnHeads,  # ニャースの「ねこにこばん」
+    _effects.DrawOnHeads,  # キョウのモンジャラの「つるでさがす」
+    _effects.SelfBarrierOnHeads,  # カスミのコイキングの「しんだふり」
+    _effects.DamageThenReduceDamageToSelf,  # ペルシアンの「かみつく」
+) + (
+    # v0.38（docs/bench-switch-combined-v0.38.md 3 章）
+    _effects.ChooseOpponentBenchDamage,  # サワムラーの「のびるキック」・エリカのモンジャラの「のびるつる」
+    _effects.DamageThenChosenBenchDamage,  # タケシのロコンの「ほのおのわ」
+    _effects.SpreadDamage,  # タケシのゴルバットの「かいてんひこう」
+    _effects.DamageThenCoinBenchDamageEitherSide,  # フリーザーの「ふぶき」
+    _effects.CoinBonusDamageAndBenchDamage,  # カツラのギャロップの「ふみあらす」
+    _effects.DamageThenForceSwitchOnHeads,  # アーボックの「いかくこうげき」
+    _effects.DamageThenForceSwitchThenSelfDamage,  # サイドンの「げきとつ」
+    _effects.DamageThenSelfSwitchOnHeads,  # カツラのポニータの「けりにげ」
+    _effects.CoinBonusDamageAndSelfBarrier,  # キョウのピジョンの「こうそくひこう」
+    _effects.DamageThenPoisonOrParalyze,  # キョウのビードルの「きけんなはり」
+    _effects.DamageAndSelfDamageThenPoisonOnHeads,  # サカキのニドリーナの「どくばりタックル」
+    _effects.DamageThenReduceDamageNextTurn,  # ナツメのポリゴンの「バリアアタック」
+    _effects.DiscardAttachedAndReturnSelfToDeck,  # ケーシィの「いなくなる」
+    _effects.ReturnSelfToDeckThenSearchPokemon,  # キョウのポッポの「でんれい」
+) + (
+    # v0.39（docs/selfdestruct-spread-count-v0.39.md 3 章）
+    _effects.SelfDestruct,  # コイル・レアコイル（第1弾）・マタドガス・レアコイル（化石の秘密）の「じばく」
+    _effects.DamageIgnoringWeaknessResistance,  # レアコイル（化石の秘密）の「ソニックブーム」
+    _effects.DamageThenChosenBenchTargets,  # ライチュウ（化石の秘密）の「ギガスパーク」
+    _effects.DamageThenSameTypeBenchDamage,  # マルマインの「ビリビリ」
+    _effects.DamageThenCoinBenchDamageBothSides,  # キョウのドガース（PMCG6-008）の「おならガス」
+    _effects.DamageThenOtherTypeBenchDamageBothSides,  # カスミのニョロボンの「ウォーターリング」
+    _effects.DamagePlusPokemonCount,  # コイル（ロケット団）の「ちょくれつじりょく」・プクリンの「ともだちのわ」・ニドクインの「ラブラブアタック」
+    _effects.CoinBonusDamageAndSelfDamage,  # キョウのマタドガスの「とつぜんばくはつ」
+    _effects.DamageThenSpecialPoisonOnHeads,  # キョウのマタドガスの「どくどくガス」
+    _effects.CoinPoisonAndBenchDamage,  # エリカのパラスの「きけんなほうし」
+) + (
+    # v0.40（docs/count-condition-switch-return-v0.40.md 3 章）
+    _effects.GroupAttackFromDeck,  # キョウのズバットの「むれでおそう」
+    _effects.NamedPokemonExplosion,  # わるいマタドガスの「みんなでばくはつ」
+    _effects.OpponentFlipsTailsDamage,  # わるいスリーパーの「ベンチをあやつる」
+    _effects.DamageRequiringOwnCounters,  # サカキのニドラン♂の「いかりのいちげき」
+    _effects.DamagePlusIfDefenderDamaged,  # サカキのニドリーノの「つのでえぐる」
+    _effects.AttackLockWhileSourceActive,  # サカキのニドキングの「すごむ」
+    _effects.FailOnTailsAmountIfBenchNamed,  # サカキのニドクインの「ラブラリアット」
+    _effects.SwitchOpponentThenDamage,  # わるいゴーリキーの「ひきずりだす」・エリカのウツドンの「さそってとかす」
+    _effects.ReturnOpponentActiveToDeck,  # わるいカイリキーの「つまみだす」
+    _effects.CoinsAllHeadsBonusDamage,  # カスミのシードラの「きぜつばり」
+    _effects.ShuffleDeckAttack,  # タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」
+    _effects.DamageThenSelfConfuseOnTails,  # オコリザルの「あばれまわる」
+) + (
+    # v0.41（docs/heal-counter-status-v0.41.md 3 章）
+    _effects.DamageThenHealSelf,  # エリカのナゾノクサの「ちょっとすいとる」・「たまにすいとる」
+    _effects.CoinHealSelf,  # エリカのクサイハナの「ヒーリングかふん」・ナツメのヤドランの「いねむり」
+    _effects.CoinsHealOwnPokemon,  # ナツメのモルフォンの「かいふくりんぷん」
+    _effects.HealAllPokemonBothSides,  # エリカのプリンの「みんなでかいふく」
+    _effects.MoveOwnCountersToOpponent,  # ナツメのゴルダックの「ダメージシフト」
+    _effects.SwapCountersOnHeads,  # R団のミュウツーの「チェンジダメージ」
+    _effects.DamageThenConfuseBoth,  # クサイハナの「くさいにおい」
+    _effects.DamageThenStatusByCoin,  # エリカのナゾノクサ（HP 40）の「へんなこな」
+    _effects.DamageThenChosenStatusOnHeads,  # エリカのクサイハナの「ミラクルかふん」
+    _effects.CoinDamageAndConfuseElseSelfConfuse,  # ナツメのコダックの「こまったねんりき」
+    _effects.DamageThenConfuseOnAnyHeads,  # ナツメのモルフォンの「げんかくおんぱ」
+    _effects.DamageThenSleepOnHeads,  # R団のミュウツーの「さいみんはどう」
+    _effects.DamageThenRetreatLockOnHeads,  # ウツボットの「ようかいえき」
+    _effects.SwitchOpponentActiveOnHeads,  # わるいペルシアンの「ゆうわく」
+    _effects.DamageThenReturnSelfToDeckOnTails,  # カツラのファイヤーの「ひのとり」
+    _effects.AttachEnergyFromDeckToSelf,  # ヤドン（ロケット団）の「ひなたぼっこ」
+    _effects.DamageThenLockSelf,  # ナツメのヤドランの「きあいずつき」
+    _effects.DamageMinusIfDefenderDamaged,  # エリカのプリンの「やさしいパンチ」
 )
+
+# v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
+# テストは、この登録だけを除いた登録表を使う（製品の登録表は変えない）
+NO_EMBER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(CHARMANDER, 1)])
+
+# v0.30 まで、リザードン（PMCG1-021）は「実装を登録していないポケモンパワー（エナジーバーン）とワザ（ほのおのうず）を持つ 2 進化」の参照カードで、
+# 未対応のカードの例に使っていた（v0.7 でフーディンから引き継いだ）。v0.31 で対応にしたので、その性質を確かめるテストは、この 2 つの登録だけを除いた
+# 登録表と、その登録表で分類した写しのカードの組（``no_charizard_pool``）を使う（製品の登録表は変えない）
+NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0)]).without_attacks(
+    "test-no-charizard", [AttackKey(CHARIZARD, 0)])
+
+
+def no_charizard_pool():
+    """リザードンの登録を除いた登録表（``NO_CHARIZARD_EFFECTS``）で分類した、同梱の写しのカードの組（v0.31）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_CHARIZARD_EFFECTS)
+
+
+# v0.36 まで、化石の秘密のベトベター（PMCG3-003）は「ちいさくなる」が未実装の参照カードだった（v0.8）。v0.37 で対応にしたので、その性質を
+# 確かめるテストは、この 2 つのワザの登録だけを除いた登録表と、その登録表で分類した写しのカードの組（``no_fossil_grimer_pool``）を使う
+NO_FOSSIL_GRIMER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-fossil-grimer", [AttackKey(FOSSIL_GRIMER, 0), AttackKey(FOSSIL_GRIMER, 1)])
+
+
+def no_fossil_grimer_pool():
+    """化石の秘密のベトベターの登録を除いた登録表（``NO_FOSSIL_GRIMER_EFFECTS``）で分類した、同梱の写しのカードの組（v0.37）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_FOSSIL_GRIMER_EFFECTS)
 
 
 class TwoStepTestEffect(AttackEffect):

@@ -201,7 +201,8 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
     def test_card_values(self):
         """p.48 で照合した値（300dpi・図版は 600dpi）: 「ベトベターから進化」の 1 進化、HP 70、草、弱点 超（×2）、抵抗力なし、にげる 2、
         ポケモンパワー 1 つ（かがくへんかガス）、ワザ 1 つ（ヘドロこうげき 草草草 30）。対戦用の進化元はロケット団のベトベター（p.45）。
-        化石の秘密のベトベター（p.47）は「ちいさくなる」が未実装なので参照カード（デッキに入らない）。"""
+        化石の秘密のベトベター（p.47）は v0.8〜v0.36 は「ちいさくなる」が未実装なので参照カード（デッキに入らない）だった。v0.37 で対戦用の
+        組（pool_v0_37）に移した（docs/fifteen-reused-effects-v0.37.md）。"""
         pool = load_card_pool()
         d = pool.get(MUK)
         self.assertTrue(d.supported and pool.is_playable(MUK) and d.is_stage1_pokemon)
@@ -213,8 +214,9 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                          [("ヘドロこうげき", ["grass"] * 3, 30, None)])
         extract = read_extract()
         self.assertEqual(extract["pool_v0_8"], [GRIMER, MUK])
-        self.assertIn(FOSSIL_GRIMER, extract["reference_only"])
-        self.assertFalse(pool.is_playable(FOSSIL_GRIMER))
+        self.assertIn(FOSSIL_GRIMER, extract["pool_v0_37"])
+        self.assertNotIn(FOSSIL_GRIMER, extract["reference_only"])
+        self.assertTrue(pool.is_playable(FOSSIL_GRIMER))
         self.assertEqual(pool.get(FOSSIL_GRIMER).name_ja, pool.get(GRIMER).name_ja)  # 同じ名前（どちらからでも進化できる。p.310）
 
     def test_registered_entry_matches_the_verification(self):
@@ -225,9 +227,11 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         self.assertFalse(entry.effect.declared)
         # 宣言しない特殊能力は、かがくへんかガスと、v0.9 のゴーストの「とうめい」（自動的にはたらく。docs/automatic-powers-v0.9.md）と、
         # v0.10 のカイリキーの「はんげき」（ダメージを受けたときに自動的にはたらく。docs/post-damage-powers-v0.10.md）と、v0.17b の R団のカビゴンの
-        # 「わるいねぞう」（ねむり状態でダメージを受けたときに自動的にはたらく。docs/rocket-snorlax-v0.17b.md）だけ
+        # 「わるいねぞう」（ねむり状態でダメージを受けたときに自動的にはたらく。docs/rocket-snorlax-v0.17b.md）と、v0.31 のカツラのキュウコンの
+        # 「ほのおでかいふく」（炎エネルギーカードをつけたときに自動的にはたらく。docs/held-cards-v0.31.md）だけ
         undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared}
-        self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0)})
+        self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0),
+                                      PowerKey("PMCG6-033", 0)})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）
@@ -646,7 +650,7 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 9)
+                self.assertEqual(LATEST_FORMAT, 10)  # v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn。ガスの項目ではない）
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):

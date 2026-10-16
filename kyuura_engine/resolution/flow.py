@@ -27,6 +27,7 @@ from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..effects import AttackKey, AttackUse, PowerKey
 from ..errors import UnsupportedError
 from ..state import GameState
+from ..zones import promote_from_bench
 
 from . import catalog as C
 from . import codec
@@ -34,8 +35,9 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked_out, ko_prevention_offers, track_ko
-from .programs import AttackRun, decision_index, run_elements
+from ..persistent import attack_coin_checks, destiny_bond
+from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked, ko_prevention_offers, track_ko
+from .programs import AttackRun, decision_index, declare, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
@@ -144,6 +146,10 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     state = res.state
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
+    declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
+        _finish_attack(res, use)
+        return
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
         problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
@@ -160,12 +166,45 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     _finish_attack(res, use)
 
 
+def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey) -> bool:
+    """p.309 のワザを使う手順 4（v0.36。docs/sand-attack-retreat-lock-v0.36.md 2 章）: ワザを使うポケモンが、ワザを失敗させる効果（``AttackCoinCheck``）を
+    受けていれば、手順 3（宣言）のあと・手順 5（こんらん）の前に、持ち主がコインを投げる（``PR.attack_coin_check``）。「うら」ならワザは失敗（ログ
+    ``attack_failed``。ワザの要素を処理しない。ワザは使ったことになり、番は終わる。p.323「12 ワザの失敗」）で True。
+
+    - 宣言できないワザ（ねむり・マヒ・しっぽをふる・使えないワザ・エネルギー不足・未対応）は、この前に拒否している（コインを投げない）
+    - こんらん状態のポケモン: 手順 4 でワザが失敗したとき、手順 5 のこんらんのコイン（「うら」なら自分に 20）をするかは原典から決められない（AC6）ので、
+      コインの前に問い ``attack_check_confusion`` で止める（コインの結果によらず止まる。「おもて」なら手順 5 に進むことは決まっているが、宣言の前に
+      分からない）
+    - 2 つ以上の効果（順番が決まらない）は、今の対応カードでは起こらない（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で
+      同じ種類は 1 つまで）ので、エンジンの不具合
+    """
+    state = res.state
+    checks = attack_coin_checks(state, attacker)
+    if not checks:
+        return False
+    if len(checks) > 1:
+        raise RuntimeError(f"ワザを使うポケモン {attacker.pokemon_id} に手順 4 のコインの効果が 2 つ以上ある（エンジンの不具合）")
+    if attacker.conditions.confused:
+        raise res.question("attack_check_confusion", f"ポケモン {attacker.pokemon_id}")
+    if PR.attack_coin_check(state, player, attacker, checks[0], effect=str(key)):
+        return False
+    state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key),
+                    reason=PR.ATTACK_CHECK_FAILED)
+    return True
+
+
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     """ワザの要素のあと: きぜつの判定の窓（同時のきぜつの原因・任意の効果の候補）→ 決定か、きぜつの処理。"""
     state = res.state
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
     check_simultaneous(res)
+    bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
+    if bonded and offers:
+        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
+    # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
+    # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
+    capture_post_knockout(res, knocked(res), record=False)
     if res.dry_run:
         raise DryRunComplete()
     res.horizon()
@@ -178,13 +217,42 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     _knock_out_after_attack(res)
 
 
+def _destiny_bond(res: Resolution) -> bool:
+    """v0.31: きぜつの判定の窓で、「みちづれ」（``DestinyBond``）の効果がはたらいているポケモン（番でないプレイヤーの。はたらく番は次の相手の番）が
+    HP 以上なら、相手の対戦ポケモン（番のプレイヤーのバトル場のポケモン）も「きぜつ」する（``res.forced``。ログ ``destiny_bond``）。
+
+    同時のきぜつか（p.324）は決められない（C18 と同じ形）。どちらの読み方でも、サイドを取る順番（番のプレイヤーから）・バトル場に出す順番（番でない
+    プレイヤーから）は同じで、結果が変わるのは勝ち負けが決まる場合（サイドを取り終える・場にポケモンがいなくなる）だけなので、そのときだけ止める（HC2）。
+    相手の対戦ポケモンがすでに HP 以上なら、何もしない。"""
+    state = res.state
+    current = state.current_player
+    target = state.players[current].active
+    triggered = [(owner, pokemon) for owner, pokemon in knocked(res) if owner != current and destiny_bond(state, pokemon) is not None]
+    if not triggered or target is None or any(pokemon is target for _, pokemon in knocked(res)):
+        return False
+    res.forced.add(target.pokemon_id)
+    gone = knocked(res)
+    taken = {player: sum(1 for owner, _ in gone if owner != player) for player in PLAYERS}
+    ends = [
+        (taken[player] and taken[player] >= len(state.players[player].prizes))
+        or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)]
+        for player in PLAYERS
+    ]
+    if any(ends):
+        raise res.question("destiny_bond_knockout", f"ポケモン {[p.pokemon_id for _, p in triggered]} → {target.pokemon_id}")
+    for owner, pokemon in triggered:
+        state.add_event("destiny_bond", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, target_player=current,
+                        target_pokemon=target.card, target_pokemon_id=target.pokemon_id)
+    return True
+
+
 def _knock_out_after_attack(res: Resolution) -> None:
     state = res.state
-    knocked = knocked_out(state)
-    candidates = capture_post_knockout(res, knocked)
+    gone = knocked(res)
+    candidates = capture_post_knockout(res, gone)
     prize_takers = []
-    for owner, pokemon in knocked:
-        PR.knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
+    for owner, pokemon in gone:
+        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)
         prize_takers.append(1 - owner)
     _after_knockouts(res, prize_takers, None, candidates)
 
@@ -313,15 +381,22 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     """ワザの途中の決定のあと: 決定を出した要素の続きから（宣言・コイン・それまでの要素は繰り返さない）。"""
     state = res.state
     player, pokemon_id, card_id, attack_index = cont.use
-    key = AttackKey(card_id, attack_index)
-    entry = state.effects.attack_entry(card_id, attack_index)
-    _, attacker = state.find_pokemon(pokemon_id)
-    attack = state.card_def(attacker.card).attacks[attack_index]
+    declared = AttackKey(card_id, attack_index)
+    carried = dict(cont.extra)  # 要素の値は続きの情報から読む（決定の context を直接読まない）
+    copied = carried.get("copied")  # v0.31: 相手のワザを自分のワザとして使っている途中の決定（選んだワザ）
+    key = declared if copied is None else AttackKey(*copied)
+    entry = state.effects.attack_entry(key.card_id, key.attack_index)
+    attack = state.definitions[key.card_id].attacks[key.attack_index]
     program = program_for(entry.effect, attack.name_ja)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=pokemon_id, attack_key=key)
-    run = AttackRun(res, fs, program, attack)
-    run.carried = dict(cont.extra)  # 要素の値は続きの情報から読む（決定の context を直接読まない）
-    index = decision_index(program, decision.kind)
+    run = AttackRun(res, fs, program, attack, declared=declared)
+    run.carried = carried
+    run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
+    index = carried.get("element")  # v0.35: 決定を出した要素の位置（ダメージの要素の順番の決定。並びにダメージの要素が 2 つ以上あることがある）
+    if index is None:
+        index = decision_index(program, decision.kind)
+    elif not (0 <= index < len(program) and program[index].decides(decision.kind)):
+        raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
     program[index].resume(run, decision, choices)
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
         return
@@ -386,11 +461,7 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
 
 
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
-    state = res.state
-    p = state.players[decision.player]
-    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-    p.active = p.bench.pop(index)
-    state.add_event("promote_active", player=decision.player, pokemon=p.active.card)
+    promote_from_bench(res.state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
     _next_promotion_or_end(res, cont.remaining, cont.then)
 
 

@@ -36,7 +36,7 @@ from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt, Poison, SpecialCond
 
 from tests.helpers import (
     DEFENDER, DEWGONG, DIGLETT, FIRE, GRASS, GROWLITHE, H, PARAS, PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL,
-    SWITCH, T, CHARIZARD, WATER, build_test_state, expand_decklist, with_coin_results,
+    SWITCH, T, CHARIZARD, WATER, build_test_state, expand_decklist, with_coin_results, NO_CHARIZARD_EFFECTS, no_charizard_pool,
 )
 
 SPORE = "相手を「ねむり」状態にする。"
@@ -138,9 +138,11 @@ class EvolutionCardsTest(unittest.TestCase):
         # ポケモンパワー（と登録のないワザ）だった。v0.5 でフシギバナ（エナジートランス・ソーラービーム）を対応にしたので、実装を
         # 登録していないポケモンパワー「あまごい」を持つ 2 進化のカメックスで確かめていた（tests/test_venusaur_v0_5.py）。v0.6 で
         # カメックスを対応にしたので、登録していないポケモンパワー「ダメージスワップ」を持つ 2 進化のフーディンで確かめていた。v0.7 で
-        # フーディンを対応にしたので、登録していないポケモンパワー「エナジーバーン」を持つ 2 進化のリザードンで確かめる
-        self.assertFalse(pool.get(CHARIZARD).supported)
-        self.assertIn("ポケモンパワー", pool.get(CHARIZARD).unsupported_reasons[0])
+        # フーディンを対応にしたので、登録していないポケモンパワー「エナジーバーン」を持つ 2 進化のリザードンで確かめる。v0.31 でリザードンを対応に
+        # したので、その登録を除いた登録表で分類したカードの組（tests/helpers.py の no_charizard_pool）で確かめる
+        self.assertTrue(pool.get(CHARIZARD).supported)
+        self.assertFalse(no_charizard_pool().get(CHARIZARD).supported)
+        self.assertIn("ポケモンパワー", no_charizard_pool().get(CHARIZARD).unsupported_reasons[0])
         effects = DEFAULT_EFFECTS.without_attacks("test-no-dewgong", [AttackKey(DEWGONG, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(DEWGONG))
@@ -241,7 +243,8 @@ class EvolveTest(unittest.TestCase):
 
     def test_rejected_commands(self):
         """不正な進化は、状態も乱数も変えない（カードは手札に、進化元は場に残る）。"""
-        state = board(hand=[PARASECT, PARAS, GRASS, SWITCH, CHARIZARD], opponent=PARAS)
+        # v0.31: リザードンを対応にしたので、その登録を除いた登録表とカードの組の盤面で確かめる（tests/helpers.py の NO_CHARIZARD_EFFECTS）
+        state = board(hand=[PARASECT, PARAS, GRASS, SWITCH, CHARIZARD], opponent=PARAS, effects=NO_CHARIZARD_EFFECTS, pool=no_charizard_pool())
         target = state.players[0].active.pokemon_id
         parasect = uid_of(state, 0, PARASECT)
         opponent = state.players[1].active
@@ -250,7 +253,7 @@ class EvolveTest(unittest.TestCase):
             (EvolvePokemon(0, uid_of(state, 0, GRASS), target), "NOT_EVOLUTION_CARD", IllegalActionError),
             (EvolvePokemon(0, uid_of(state, 0, SWITCH), target), "NOT_EVOLUTION_CARD", IllegalActionError),
             # 未対応の 2 進化（v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 ではフーディン。v0.7 でフーディンを対応にしたので、
-            # 未対応のポケモンパワーを持つリザードン）
+            # 未対応のポケモンパワーを持つリザードン。v0.31 から、その登録を除いた登録表のリザードン）
             (EvolvePokemon(0, uid_of(state, 0, CHARIZARD), target), "UNSUPPORTED_EVOLUTION", UnsupportedError),
             (EvolvePokemon(0, state.players[0].deck[0], target), "CARD_NOT_IN_HAND", IllegalActionError),
             (EvolvePokemon(0, parasect, opponent.pokemon_id), "TARGET_NOT_YOURS", IllegalActionError),  # 相手のパラス

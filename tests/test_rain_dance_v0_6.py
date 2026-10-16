@@ -136,9 +136,11 @@ class RainDanceRegistrationTest(unittest.TestCase):
         extract = read_extract()
         self.assertEqual(extract["pool_v0_6"], [SQUIRTLE, WARTORTLE, BLASTOISE])
         self.assertNotIn(BLASTOISE, extract["reference_only"])  # v0.5 までは参照カード
-        # 参照カードの役は v0.6 でフーディンへ移り、v0.7 でフーディンを対応にしたのでリザードンへ移った
+        # 参照カードの役は v0.6 でフーディンへ移り、v0.7 でフーディンを対応にしたのでリザードンへ移った。v0.31 でリザードンも対応にしたので、
+        # 写しの参照カードではない（登録のないポケモンパワーの例は、登録を除いた登録表で作る。tests/helpers.py の NO_CHARIZARD_EFFECTS）
         self.assertNotIn(ALAKAZAM, extract["reference_only"])
-        self.assertIn(CHARIZARD, extract["reference_only"])
+        self.assertNotIn(CHARIZARD, extract["reference_only"])
+        self.assertIn(CHARIZARD, extract["pool_v0_31"])
 
     def test_registered_entry_matches_the_verification(self):
         """登録（PowerKey("PMCG1-032", 0)）は、照合した印刷の文面・最新の説明（p.90）と同じ。実装は手札から「水」エネルギーを「水」

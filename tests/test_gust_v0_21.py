@@ -101,12 +101,19 @@ class RegistrationTest(unittest.TestCase):
 
     def test_no_card_specific_branch_and_no_forced_switch(self):
         """engine.py・resolution/ にこのカードの id・実装での分岐を加えていない。実装は「ふきとばし」の処理（FORCED_SWITCH・ログ forced_switch・
-        ``attack_reaches``）を使わず、ポケモンいれかえと同じ入れ替えの関数を呼ぶ。"""
+        ``attack_reaches``）を使わず、ポケモンいれかえと同じ入れ替えの関数を呼ぶ。
+
+        v0.34: ナッシーの「テレポート」（ワザ。要素 ``programs.SelfSwitch``）が、ポケモンいれかえと同じ入れ替えの関数（``_switch_active_with_bench``）で
+        ワザを使ったプレイヤー自身の場を入れ替える（docs/barrier-resume-coin-bonus-v0.34.md 6.4）。resolution/ でその関数を呼ぶのは、この 1 か所
+        （``run.player`` の場）だけで、突風の実装・相手の場の入れ替えはない。"""
+        expected_calls = {"programs.py": ["E._switch_active_with_bench(run.state, run.player, choices[0], effect=str(run.key))"]}
         for path in [ROOT / "kyuura_engine" / "engine.py", *(ROOT / "kyuura_engine" / "resolution").glob("*.py")]:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")
                 self.assertNotIn(GUST, text)
-                self.assertIsNone(re.search(r"SwitchOpponentWithBench|switch_opponent_with_bench|_switch_active_with_bench", text))
+                self.assertIsNone(re.search(r"SwitchOpponentWithBench|switch_opponent_with_bench", text))
+                calls = [line.strip() for line in text.splitlines() if "_switch_active_with_bench(" in line]
+                self.assertEqual(calls, expected_calls.get(path.name, []))
         import inspect
 
         from kyuura_engine.effects import SwitchWithBench

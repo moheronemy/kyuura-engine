@@ -299,21 +299,27 @@ class KadabraRecoverTest(unittest.TestCase):
             self.assertEqual(full(copied), full(pending))
             self.assertEqual(full(apply_command(copied, ResolveDecision(0, copied.decision.id, choice))), expected)
 
-    def test_unreachable_case_stops_loudly(self):
-        """「トラッシュできないとき」は、必要なエネルギー（超超）を基本エネルギーでしか払えない今の対応カードでは起こらない（K3）。実装を
-        直接呼んで起こしたら、黙って処理せずに ``RuntimeError``（状態を変える前）。
+    def test_lacking_energy_follows_k3(self):
+        """「トラッシュできないとき、このワザの効果はなくなる」（K3）は、必要なエネルギー（超超）を基本エネルギーでしか払えないので、自分の
+        ワザとして使うときは起こらない。v0.30 までは起こらないのでエンジンの不具合（``RuntimeError``）にしていた。v0.31 の相手のワザを自分の
+        ワザとして使う効果（ゆびをふる・ちょうのうりょく。必要なエネルギーはいらない）で起こるようになったので、最新の説明のとおり、トラッシュも
+        ダメージカウンターをとりのぞく処理もしない（ログ ``discard_energy_failed`` に扱い ``none``）。
 
-        v0.16d: v0.16b から、じこさいせいの処理は解決の基盤の要素（``programs.DiscardEnergyHealAll``）で、実装の ``resolve`` は解決の基盤の
+        v0.16d: v0.16b から、じこさいせいの処理は解決の基盤の要素（v0.29 までは ``programs.DiscardEnergyHealAll``、v0.30 から ``programs.DiscardOwnEnergy``・``HealAllCounters``）で、実装の ``resolve`` は解決の基盤の
         ワザの枠の中でだけ使える。枠の外で呼ぶと「枠の外」の ``RuntimeError`` になり、K3 の確かめにならない（v0.16b〜v0.16c のこのテストは
-        その理由で通っていた）ので、``resolution.open_attack`` で枠を開いて呼び、K3 の理由の文を確かめる。"""
+        その理由で通っていた）ので、``resolution.open_attack`` で枠を開いて呼ぶ。"""
         state = board(kadabra(energy=(WATER, WATER), damage=20))
         effect = DEFAULT_EFFECTS.attack_entry(KADABRA, 0).effect
-        before = full(state)
         use = open_attack(state, 0)
         self.assertEqual(use.key, AttackKey(KADABRA, 0))
-        with self.assertRaisesRegex(RuntimeError, "「超」エネルギーカードがない"):
-            effect.resolve(state, use)
-        self.assertEqual(full(state), before)
+        since = len(state.log)
+        effect.resolve(state, use)
+        kinds = [e["kind"] for e in state.log[since:]]
+        (failed,) = [dict(e) for e in state.log[since:] if e["kind"] == "discard_energy_failed"]
+        self.assertEqual((failed["outcome"], failed["needed"], failed["attached"]), ("none", 1, 0))
+        self.assertNotIn("discard_energy", kinds)
+        self.assertNotIn("remove_all_damage_counters", kinds)
+        self.assertEqual((state.players[0].active.damage, len(state.players[0].active.energy)), (20, 2))
         self.assertIsNone(state.decision)
 
     def test_super_psy(self):

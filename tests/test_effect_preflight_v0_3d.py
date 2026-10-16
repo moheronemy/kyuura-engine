@@ -29,6 +29,7 @@ from tests.helpers import (
     PSYCHIC, RATTATA, T, VULPIX, WATER, WEEDLE, build_test_state, with_coin_results,
     BLASTOISE, SQUIRTLE, WARTORTLE, ABRA, ALAKAZAM, KADABRA, GRIMER, MUK, GASTLY, HAUNTER, MACHOP, MACHOKE, MACHAMP,
     GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKET_SQUIRTLE, DARK_WARTORTLE, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX,
+    CHARMANDER,
 )
 
 ENERGY = {"grass": GRASS, "fire": FIRE, "water": WATER, "lightning": LIGHTNING, "psychic": PSYCHIC, "fighting": FIGHTING}
@@ -85,6 +86,7 @@ ATTACKS = [
     (DARK_WARTORTLE, 1),  # ReturnReceivedDamage（v0.13。「こうらがえし」。ダメージなし・コインなし。自分に次の相手の番の効果）
     (GIOVANNIS_MEOWTH, 0),  # ConfuseOnHeadsWithoutDamage（v0.17a。サカキのニャースの「ねこノミ」。ダメージなし・コインでこんらん）
     (ROCKETS_SNORLAX, 0),  # DamageAndSelfSleep（v0.17b。R団のカビゴンの「たおれこむ」。ダメージを与えなかった場合は宣言の前に止める）
+    (CHARMANDER, 1),  # DiscardEnergyThenDamage（v0.30。ヒトカゲの「ひのこ」。炎エネルギー 2 枚の中から 1 枚をトラッシュする決定を出す）
 ]
 # 進化したポケモン（v0.4b の 1 進化・v0.4c の 2 進化）は進化したものとして置く。進化した番は持ち主の 3 番以降の番（2 進化は
 # その前に 1 進化した持ち主の番がある）なので、盤面を進化の回数 × 2 番あとにずらす

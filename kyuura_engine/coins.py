@@ -18,6 +18,11 @@
 - 1 枚ごとに ``coin_flip`` のイベントをログに残す（誰の・どの効果の・何枚目の・結果）。コインの結果は
   両方のプレイヤーが見るので、隠す情報はない。
 
+v0.35: 結果の使い道が「おもて」の数だけのコイン（``by_heads``。「おもて」の数 × のダメージ・ついているエネルギーの数だけ投げるコインなど）は、
+宣言の前の先読み（``resolution.preflight``）が、コインの並びではなく「おもて」の数でまとめて試せる（docs/coin-groups-damage-order-v0.35.md）。
+実際の対戦では今までどおり 1 枚ずつ投げる（乱数の使い方・ログ・確からしさは変わらない）。まとめるのは、状態の乱数が ``coin_group`` を持つとき
+（先読みの乱数と、先読みの範囲を記録する乱数）だけで、ふつうの ``random.Random`` は持たない。
+
 コインを投げる効果は、投げる前に、使えるかどうか・原典で決められない場合を確かめ終えておくこと
 （不正な操作で乱数を進めないため）。``apply_command`` は複製した状態で処理するので、途中で例外に
 なっても、渡した状態の乱数は進まない。
@@ -64,6 +69,7 @@ def flip_coins(
     effect: str,
     card: int,
     pokemon_id: int | None = None,
+    by_heads: bool = False,
 ) -> CoinFlips:
     """コインを ``count`` 枚、1 枚ずつ投げて、結果を返す。1 枚ごとに ``coin_flip`` をログに残す。
 
@@ -73,6 +79,12 @@ def flip_coins(
     - ``card``: 効果を持つカードの uid（ワザならワザを使うポケモンのカード）
     - ``pokemon_id``: 効果を持つ場のポケモンの番号（場のポケモンでなければ None）
 
+    - ``by_heads``（v0.35）: 結果を「おもて」の数だけで使うコイン（投げた順番を使わない）。2 枚以上のとき、状態の乱数が ``coin_group`` を
+      持てば（先読みの乱数・先読みの範囲を記録する乱数）、それに ``count`` 枚の結果を求める。先読みの乱数は「おもて」の数を 1 つの値で選び、
+      決まった並び（「うら」→「おもて」の順）で返す。記録する乱数は、元の乱数で 1 枚ずつ投げた結果をそのまま返し、「おもて」の数を 1 つの
+      値として記録する。どちらでも、ここで残すログ・返す結果の形は同じ。ふつうの乱数（``random.Random``）は ``coin_group`` を持たないので、
+      実際の対戦では今までどおり 1 枚ずつ ``getrandbits(1)``
+
     枚数・プレイヤーが正しくなければ、乱数を使う前に ``ValueError``（効果の実装の誤り。プレイヤーの
     操作の誤りではない）。
     """
@@ -80,9 +92,14 @@ def flip_coins(
         raise ValueError(f"投げるコインの枚数は 1 以上の整数（{count!r}）")
     if player not in (0, 1):
         raise ValueError(f"コインを投げるプレイヤーは 0 か 1（{player!r}）")
+    group = getattr(type(state.rng), "coin_group", None) if by_heads and count > 1 else None
+    bits = tuple(state.rng.coin_group(count)) if group is not None else None
+    if bits is not None and (len(bits) != count or any(bit not in (0, 1) for bit in bits)):
+        raise RuntimeError(f"まとめて投げたコインの結果 {bits!r} が {count} 枚の 0・1 ではない（エンジンの不具合）")
     results = []
     for number in range(1, count + 1):
-        side = CoinSide.HEADS if state.rng.getrandbits(1) else CoinSide.TAILS
+        bit = bits[number - 1] if bits is not None else state.rng.getrandbits(1)
+        side = CoinSide.HEADS if bit else CoinSide.TAILS
         results.append(side)
         state.add_event(
             "coin_flip",

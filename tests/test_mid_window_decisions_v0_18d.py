@@ -22,14 +22,19 @@ from kyuura_engine.resolution.events import FrameKind, FrameState
 from tests.helpers import KOGAS_MUK, MACHOP, PONYTA, RATTATA, build_test_state
 
 # 3 章の表: 決定をまたぐと失われ、続きの情報（案 B）に写す必要がある枠ごとの値
-FRAME_STATE_FIELDS = ("frame", "pending", "reception", "results", "coins", "origin", "applied", "evaded")
+# v0.31 で ``fired``（この枠ですでに処理した送る効果の数。2 つ目は C34・C35 の問い）を加えた。ワザの途中の決定（窓のあとの決定。窓の途中ではない）を
+# またいで使う値（「とうめい」の結果・``fired``・こんじょうの写し）は、``AttackRun.suspend(carry=True)`` が決定の ``context`` の ``"frame"`` に明示的な
+# データで運ぶ（4 章の案 B と同じ持ち方。``PendingDecision`` に項目を加えない）。窓の途中の決定は v0.31 でも加えていない（下の 2 つのテスト。
+# docs/held-cards-v0.31.md）
+FRAME_STATE_FIELDS = ("frame", "pending", "reception", "results", "coins", "origin", "applied", "evaded", "fired")
 # 1 つのコマンドの解決の値のうち、きぜつの判定が使う記録（決定をまたぐと失われる）
 RESOLUTION_RECORDS = ("ko_prevention_able", "knocked_by")
 
 
 class DesignAssumptionTest(unittest.TestCase):
     def test_frame_state_fields_are_the_ones_the_design_covers(self):
-        """続きの情報の設計（4 章の表）は、FrameState のこの 8 つの項目を写すかどうかを決めている。項目が増えたら設計を見直す。"""
+        """続きの情報の設計（4 章の表）は、FrameState のこの 8 つの項目を写すかどうかを決めている。項目が増えたら設計を見直す（v0.31 の ``fired`` は
+        見直して、決定の ``context`` で運ぶ値にした。上の ``FRAME_STATE_FIELDS`` の注）。"""
         self.assertEqual(tuple(f.name for f in dataclasses.fields(FrameState)), FRAME_STATE_FIELDS)
 
     def test_resolution_records_that_a_decision_would_lose(self):
@@ -41,7 +46,11 @@ class DesignAssumptionTest(unittest.TestCase):
         self.assertFalse(any(hasattr(state, name) for name in RESOLUTION_RECORDS))
 
     def test_suspend_refuses_pending_effects(self):
-        """ワザの途中の決定は、送る効果が残っていると出せない（窓の途中では止まれない。Q3）。黙って送る効果を捨てない。"""
+        """ワザの途中の決定は、送る効果が残っていると出せない（窓の途中では止まれない。Q3）。黙って送る効果を捨てない。
+
+        v0.34: 枠の値を運ぶ決定（``carry=True``。ダメージの要素のあとに決定を出すダメージの要素 ``ChosenBenchDamage``）だけは、まだ処理していない送る
+        効果を続きの情報（``frame`` の ``pending``）に運んで出せる（窓の途中の決定ではない: 送る効果はまだ処理を始めていない。決定のあとの最後の
+        ダメージの要素のあとに処理する。tests/test_barrier_resume_coin_bonus_v0_34.py）。``carry`` のない決定は今までどおり出せない。"""
         state = build_test_state([{"active": MACHOP, "bench": [RATTATA]}, {"active": PONYTA, "bench": [RATTATA]}], turn_number=7)
         attacker = state.players[0].active
         res = kernel.Resolution(state)

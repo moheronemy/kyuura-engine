@@ -95,6 +95,7 @@ class FrameState:
     origin: Any = None  # 枠を起こした効果（``catalog.EffectInstance``。ワザの枠は None）
     applied: dict[int, int] = field(default_factory=dict)  # この枠でのせたダメージ（受けたポケモンの番号 → 最終ダメージ）
     evaded: dict[int, int] = field(default_factory=dict)  # 「とうめい」で受けなかったダメージの要素（ポケモンの番号 → 最終ダメージ）
+    fired: int = 0  # v0.31: この枠（決定をまたいだ前の枠を含む）ですでに処理した送る効果の数（2 つ目は C34・C35 の問い）
 
 
 # ---------------------------------------------------------------- 内部のイベント（記録用）

@@ -81,6 +81,11 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 不変条件（`engine._power_attachment_problems`。`check_invariants`）: 0 以上の整数で、今の番（最後の `turn_start` のあと）のログの `power_attach_energy` の数と同じ。ログから状態を決めるのではなく、状態とログが食い違っていないかを確かめるだけ。
 - 互換性: 比較の駆動（tools/compat_driver.py）は形式 8 で比べ、`UsePokemonPower` を送らないので、変えていない（参照データ tests/fixtures/compat_base_4bd97bf.json も作り直していない）。ストレス実行（tools/stress_engine.py）は拒否の前後の比較と書き出しの監査を形式 9 にした（あまごいを使う組で形式 8 は書き出せないため）。
 
+### 4.3 書き出しの形式 10（v0.31）
+
+- 形式 10 = 形式 9 に `power_uses_this_turn`（この番に使った「自分の番ごとに1回使える」特殊能力。[場のポケモンの番号, 特殊能力の位置] の並び）と `energy_burn`（この番に「エナジーバーン」で「炎」エネルギーになったエネルギーカード。[場のポケモンの番号, エネルギーカードの uid] の並び）を加えたもの。どちらも番の最初・番の終わりに空。
+- 形式 1〜9 は、どちらも空なら今までどおり書き出せる。空でなければ `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 10。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.31 のカードを使わない対戦では 2 つの項目は空）。[held-cards-v0.31.md](held-cards-v0.31.md) 6 章。
+
 ## 5. ログ
 
 ```text

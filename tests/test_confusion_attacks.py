@@ -36,7 +36,7 @@ from kyuura_engine.state import ASLEEP, CONFUSED, NO_SPECIAL_CONDITIONS, Paralyz
 
 from tests.helpers import (
     CATERPIE, CHARMANDER, DEFENDER, DIGLETT, DODUO, FIGHTING, FIRE, GRASS, GROWLITHE, H, LIGHTNING, PARAS, PIKACHU,
-    PLUSPOWER, PONYTA, RATTATA, STARYU, T, VULPIX, WEEDLE, build_test_state, with_coin_results,
+    NO_EMBER_EFFECTS, PLUSPOWER, PONYTA, RATTATA, STARYU, T, VULPIX, WEEDLE, build_test_state, with_coin_results,
 )
 
 CONFUSE_RAY = 0
@@ -305,8 +305,10 @@ class ConfusedAttackOrderTest(unittest.TestCase):
         assert_unchanged_rejection(self, confused(VULPIX, T, energy=(FIRE,)), UseAttack(0, CONFUSE_RAY), "INSUFFICIENT_ENERGY")
         assert_unchanged_rejection(self, confused(VULPIX, T), UseAttack(0, 1), "INVALID_ATTACK")
         assert_unchanged_rejection(self, confused(VULPIX, T), UseAttack(1, 0), "NOT_YOUR_TURN")
-        # 未対応のワザ（ヒトカゲの「ひのこ」）も、こんらんのコインで「うら」なら 20 ダメージになるが、宣言の前に拒否する
-        assert_unchanged_rejection(self, confused(CHARMANDER, T, energy=(FIRE, FIRE)), UseAttack(0, 1), "UNSUPPORTED_ATTACK", UnsupportedError)
+        # 未対応のワザ（登録を除いたヒトカゲの「ひのこ」。v0.30 で製品の登録表に加えた）も、こんらんのコインで「うら」なら 20 ダメージになるが、
+        # 宣言の前に拒否する
+        assert_unchanged_rejection(self, confused(CHARMANDER, T, energy=(FIRE, FIRE), effects=NO_EMBER_EFFECTS), UseAttack(0, 1),
+                                   "UNSUPPORTED_ATTACK", UnsupportedError)
         state = apply_command(confused(VULPIX, T), UseAttack(0, CONFUSE_RAY))
         assert_unchanged_rejection(self, state, UseAttack(0, CONFUSE_RAY), "NOT_YOUR_TURN")  # 番は終わっている
 

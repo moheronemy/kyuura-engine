@@ -4,10 +4,112 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .state import AttachedTrainer, TrainerInUse
+from .state import AttachedTrainer, PokemonInPlay, TrainerInUse
 
 if TYPE_CHECKING:
-    from .state import GameState, PokemonInPlay
+    from .state import GameState
+
+
+def enter_play(state: GameState, uid: int) -> PokemonInPlay:
+    """カードを場のポケモンにする。場のポケモンの番号を新しく付ける（前に使った番号は使わない）。
+
+    場に出た番（``played_turn``。対戦準備なら 0）を記録する。今の番に場に出したポケモンは、その番には進化できない
+    （「その番の最初」には場にいなかった。p.310。v0.4a）。v0.32 から、手札から出す（``engine._enter_play``。対戦準備・ベンチに出す）と、
+    ワザの効果で山札から出す（``bench_from_deck``）で共通（v0.31 までの ``engine._enter_play`` の本体をそのまま関数にした）。
+    """
+    pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
+    state.next_pokemon_id += 1
+    return pokemon
+
+
+def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
+    """自分の山札のたねポケモンのカード ``card`` を、同じ uid のまま、手札を通さずに自分のベンチの最後に出す（v0.32。ワザの「自分の山札から「○○」を
+    1匹さがしてベンチに出す」。docs/bench-search-counter-drain-v0.32.md）。場のポケモンの番号・場に出た番は手札から出すときと同じ ``enter_play``。
+    山札の残りの並びは変えない（切るのは呼ぶ側。``shuffle_deck``）。
+
+    出してよいか（名前・決定）の確認とログは呼ぶ側が行う。カードがそのプレイヤーの山札にない・持ち主が違う・たねポケモンでない・ベンチに空きが
+    ないなら、確認の漏れなので ``RuntimeError``（状態を変える前）。出した場のポケモンを返す。
+    """
+    p = state.players[player]
+    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench:
+        raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をベンチに出せない（確認の漏れ。エンジンの不具合）")
+    p.deck.remove(card)
+    pokemon = enter_play(state, card)
+    p.bench.append(pokemon)
+    return pokemon
+
+
+def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> tuple[int, ...]:
+    """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
+    ガス」の「自分と、自分についているすべてのカードを山札にもどす」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
+
+    - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``）・エネルギーカード（ついている順）・トレーナーカード（ついている順）。
+      山札のどこにもどすかは書かれていない。そのあと必ず山札を切る（``shuffle_deck``。呼ぶ側）ので一番下（実装上の仮定。v0.24 の PT7 と同じ）
+    - 場をはなれたので、場のポケモンの番号は無効になり、ダメージカウンター・特殊状態はなくなる（p.322。カードではないので、どこにも置かない）。持続する
+      効果を消すのは呼ぶ側（``persistent.remove_persistent_effects``。理由 ``return_in_play_to_deck``）。きぜつではない（サイドは取られない）
+    - ログ ``return_in_play_to_deck``（``player``・``pokemon``（いちばん上のカード）・``pokemon_id``・``effect``（ワザ）・``cards``（もどしたカードすべて。場の
+      カードなので公開）・``evolution_stack``・``energy``・``trainers``・``damage``（なくなったダメージ））
+
+    もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を変える前）。
+    もどしたカードを返す。
+    """
+    p = state.players[player]
+    trainers = tuple(t.card for t in pokemon.trainers)
+    cards = (*pokemon.cards(), *pokemon.energy, *trainers)
+    on_bench = any(b is pokemon for b in p.bench)
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    p.deck.extend(cards)
+    state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, cards=cards,
+                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage)
+    return cards
+
+
+def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """自分の場のポケモン ``pokemon`` についているすべてのカード（エネルギーカード・トレーナーカード）を、同じ uid のまま持ち主のトラッシュに置く
+    （v0.38。ケーシィ（PMCG4-031）の「いなくなる」の「ついているカードをすべてトラッシュする」。docs/bench-switch-combined-v0.38.md 5 章）。
+
+    - 「ついているカード」はエネルギーカードとトレーナーカード（p.310 の「つける」カード）。進化して重なったカードは、ポケモン自身（「このカード」）の
+      カードで、ここでは動かさない（v0.36 の RD2 と同じ読み方。重なったカード全体が 1 匹）
+    - トラッシュする順番はエネルギー（ついている順）→ トレーナー（ついている順）。トラッシュには順番がない（p.312）
+    - ログ ``discard_attached_cards``（``player``・``pokemon``・``pokemon_id``・``effect``・``energy``・``trainers``。トラッシュは公開の情報）。ついている
+      カードがなくてもログを残す（説明の処理をしたことを残す）
+
+    トラッシュしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を
+    変える前）。トラッシュした（エネルギー, トレーナー）を返す。
+    """
+    p = state.players[player]
+    energy = tuple(pokemon.energy)
+    trainers = tuple(t.card for t in pokemon.trainers)
+    if (p.active is not pokemon and not any(b is pokemon for b in p.bench)) or any(state.cards[uid].owner != player for uid in (*energy, *trainers)):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} についているカードをトラッシュできない（確認の漏れ。エンジンの不具合）")
+    pokemon.energy.clear()
+    pokemon.trainers.clear()
+    p.discard.extend((*energy, *trainers))
+    state.add_event("discard_attached_cards", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, energy=energy,
+                    trainers=trainers)
+    return energy, trainers
+
+
+def promote_from_bench(state: GameState, player: int, pokemon_id: int, *, effect: str | None = None) -> PokemonInPlay:
+    """自分のベンチのポケモン ``pokemon_id`` を、空いたバトル場に出す（ログ ``promote_active``）。きぜつのあとのバトル場に出す決定
+    （``resolution.flow._resume_promote``。p.313）と、ワザの効果で場をはなれたあとの「ベンチから、かわりの対戦ポケモンを出す」（v0.38。キョウのポッポの
+    「でんれい」。ログに ``effect``（ワザ）を加える）で共通。v0.37 までの ``_resume_promote`` の本体をそのまま関数にした（動き・ログは同じ）。
+
+    バトル場が空いていない・ベンチにいない（確認の漏れ）なら ``RuntimeError``（状態を変える前）。出した場のポケモンを返す。
+    """
+    p = state.players[player]
+    index = next((i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == pokemon_id), None)
+    if p.active is not None or index is None:
+        raise RuntimeError(f"プレイヤー {player} のベンチのポケモン {pokemon_id} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
+    p.active = p.bench.pop(index)
+    extra = {} if effect is None else {"effect": effect}
+    state.add_event("promote_active", player=player, pokemon=p.active.card, **extra)
+    return p.active
 
 
 def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:
@@ -86,17 +188,19 @@ def search_deck_to_hand(state: GameState, player: int, card: int) -> None:
     state.add_event("search_deck", player=player, card=card)
 
 
-def reveal_deck_to_hand(state: GameState, player: int, card: int) -> None:
+def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None) -> None:
     """自分の山札のカード ``card`` を、相手に見せてから、同じ uid のまま手札の最後に加える（v0.24。ポケモン交換おじさんの「あなたの山札から
     「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。」。p.259）。山札の残りの並びは変えない
     （切るのは呼ぶ側）。
 
     ``search_deck_to_hand``（パソコン通信。選んだカードは選んだプレイヤーだけが見る）とは、見せることだけが違う。ログの
     ``"reveal_from_deck"`` の ``card`` は全員に見える情報（見せる指示がある）。選べたほかの山札のカードはログに書かない。選んでよいかの確認は
-    呼ぶ側が済ませる。
+    呼ぶ側が済ませる。v0.38: ワザの効果（キョウのポッポの「でんれい」）で見せるときは、ログに ``effect``（ワザ）を加える（トレーナーのログの形は
+    v0.24 と同じ）。
     """
     _deck_to_hand(state, player, card)
-    state.add_event("reveal_from_deck", player=player, card=card)
+    extra = {} if effect is None else {"effect": effect}
+    state.add_event("reveal_from_deck", player=player, card=card, **extra)
 
 
 def _deck_to_hand(state: GameState, player: int, card: int) -> None:
@@ -125,12 +229,17 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
     state.add_event("return_to_deck", player=player, card=card)
 
 
-def shuffle_deck(state: GameState, player: int) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
-    v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。"""
+    v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
+
+    ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
+    わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
+    同じ）。"""
     state.rng.shuffle(state.players[player].deck)
-    state.add_event("shuffle", player=player)
+    extra = {} if effect is None else {"effect": effect}
+    state.add_event("shuffle", player=player, **extra)
 
 
 def attach_energy_from_hand(state: GameState, player: int, energy: int, pokemon: PokemonInPlay) -> None:
@@ -185,3 +294,47 @@ def return_discard_to_hand(state: GameState, player: int, cards: tuple[int, ...]
     for uid in cards:
         p.discard.remove(uid)
         p.hand.append(uid)
+
+
+def discard_from_deck(state: GameState, player: int, count: int) -> tuple[int, ...]:
+    """自分の山札の上から ``count`` 枚を、同じ uid のまま、上から順に自分のトラッシュに置く（v0.31。カツラのブーバーの「マグマふんしゅつ」・
+    ファイヤーの「やまやき」（相手の山札））。トラッシュしたカードを返す。
+
+    「カードを引く」（``draw_cards``）ではない。枚数が足りるかの確認とログは呼ぶ側が行う（足りない場合の処理は決められない。HC6。呼ぶ前に止める）。
+    足りなければ確認の漏れなので ``RuntimeError``（状態を変える前）。トラッシュにはカードの順番がない（p.312）。
+    """
+    p = state.players[player]
+    if not 0 <= count <= len(p.deck):
+        raise RuntimeError(f"山札 {len(p.deck)} 枚から {count} 枚はトラッシュできない（確認の漏れ。エンジンの不具合）")
+    cards = tuple(p.deck[:count])
+    del p.deck[:count]
+    p.discard.extend(cards)
+    return cards
+
+
+def attach_from_discard(state: GameState, player: int, cards: tuple[int, ...], pokemon: PokemonInPlay) -> None:
+    """自分のトラッシュのエネルギーカード ``cards`` を、同じ uid のまま、場のポケモン ``pokemon`` の ``energy`` の最後に（この順に）つける（v0.31。
+    マチスのエレブーの「たいでん」）。つけてよいかの確認とログは呼ぶ側が行う。トラッシュにない・持ち主が違う・同じカードを 2 回渡したなら
+    ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if len(set(cards)) != len(cards) or any(uid not in p.discard or state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} のトラッシュのカード {cards} をつけられない（確認の漏れ。エンジンの不具合）")
+    if pokemon not in p.in_play():
+        raise RuntimeError(f"つける先のポケモン {pokemon.pokemon_id} がプレイヤー {player} の場にいない（エンジンの不具合）")
+    for uid in cards:
+        p.discard.remove(uid)
+        pokemon.energy.append(uid)
+
+
+def attach_from_deck(state: GameState, player: int, card: int, pokemon: PokemonInPlay) -> None:
+    """自分の山札のエネルギーカード ``card`` を、同じ uid のまま、場のポケモン ``pokemon`` の ``energy`` の最後につける（v0.41。ロケット団のヤドンの
+    「ひなたぼっこ」の「自分の山札から「超」エネルギーカードを1枚選び出し、このカードにつけてよい。」）。手札を通さない（手札からつける通常の操作
+    ``attach_energy_from_hand`` ではない）。山札の残りの並びは変えない（切るのは呼ぶ側）。つけてよいかの確認とログは呼ぶ側が行う。山札にない・持ち主が
+    違う・つける先がそのプレイヤーの場にいないなら ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if card not in p.deck or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をつけられない（確認の漏れ。エンジンの不具合）")
+    if pokemon not in p.in_play():
+        raise RuntimeError(f"つける先のポケモン {pokemon.pokemon_id} がプレイヤー {player} の場にいない（エンジンの不具合）")
+    p.deck.remove(card)
+    pokemon.energy.append(card)

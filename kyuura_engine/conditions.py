@@ -52,7 +52,7 @@ NORMAL_POISON = Poison(damage=10)
 
 # 特殊状態が消えた理由（ログの ``reason``）
 RETREAT = "retreat"  # にげる（p.311）
-SWITCH = "switch"  # トレーナーの効果によるポケモンの入れ替え（ポケモンいれかえ。p.322・p.325）
+SWITCH = "switch"  # トレーナーの効果によるポケモンの入れ替え（ポケモンいれかえ。p.322・p.325）。v0.34 から、自分のワザの効果で自分のポケモンを入れ替えたとき（テレポート）も
 SLEEP_COIN = "sleep_coin"  # ポケモンチェックの 3 のコインが「おもて」でねむりから回復した（p.322・p.323。v0.3b）
 PARALYSIS_END = "paralysis_end"  # ポケモンチェックの 4 でマヒから自動的に回復した（p.322・p.323。v0.3b）
 REPLACED = "replaced"  # ほかの「ねむり」「マヒ」「こんらん」になったので消えた（p.322「特殊状態の重複」。v0.3b）
@@ -68,20 +68,29 @@ def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condit
         raise RuntimeError(f"バトル場にいないポケモン {pokemon.pokemon_id} を {condition} 状態にしようとした（エンジンの不具合。p.322）")
 
 
-def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
-    """``owner`` の対戦ポケモン ``pokemon`` を、通常のどく状態にする（p.322）。
+def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str, damage: int = NORMAL_POISON.damage) -> None:
+    """``owner`` の対戦ポケモン ``pokemon`` を、どく状態にする（p.322）。``damage`` はポケモンチェックで受けるダメージ（通常のどくは 10）。
 
     - もうどく状態なら、二重のどく状態にはならない（p.322「どく状態が積み重なることはありません」）。
     - p.322 は、特殊などく状態（ダメージが 20 など）のポケモンが通常のどく状態にする効果を受けたら、通常の
-      どく状態になると書く。どちらの場合も結果は「通常のどく状態」なので、どく状態を ``NORMAL_POISON`` にする。
-      特殊などく状態にする効果は未実装（受ける側の扱いが決まらない場合があるので、加えるときに照合する）。
+      どく状態になると書く（v0.3a の #14）。通常のどく状態にする効果（``damage`` 10）は、どちらの場合も結果が「通常のどく状態」
+      なので、どく状態を ``NORMAL_POISON`` にする。
+    - 特殊などく状態にする効果（v0.34。ニドキングの「どくどく」は 20）も「どく状態にかかる」（v0.3a の #13）ので、この関数でどく状態に
+      する。もうどく状態のポケモンが、受けるダメージの違う特殊などく状態にする効果を受けたときの扱い（v0.3a の #15）は決まらないので、
+      呼ぶ側（解決の基盤の ``Status``）がこの関数を呼ぶ前に止める。ここでは、受けるダメージが同じなら状態は変わらない（``already``）。
     - どくはほかの特殊状態と重複する（p.322）ので、ねむり・マヒはそのまま（v0.3b）。
     - ``effect``: どく状態にした効果の識別子（ワザなら ``AttackKey`` の文字列）。ログにだけ残す。
     """
     _require_active(state, owner, pokemon, POISON)
-    already = pokemon.conditions.poison is not None
-    pokemon.conditions = replace(pokemon.conditions, poison=NORMAL_POISON)
-    _log_applied(state, owner, pokemon, POISON, effect, already, damage=NORMAL_POISON.damage)
+    if damage <= 0 or damage % 10:
+        raise ValueError(f"どくで受けるダメージ {damage} は 10 の正の倍数")
+    current = pokemon.conditions.poison
+    if damage != NORMAL_POISON.damage and current is not None and current.damage != damage:
+        raise RuntimeError("受けるダメージの違うどく状態から特殊などく状態にする扱いは決まらない（v0.3a の #15。呼ぶ側が先に止める）")
+    already = current is not None
+    poisoned = NORMAL_POISON if damage == NORMAL_POISON.damage else Poison(damage=damage)
+    pokemon.conditions = replace(pokemon.conditions, poison=poisoned)
+    _log_applied(state, owner, pokemon, POISON, effect, already, damage=poisoned.damage)
 
 
 def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:

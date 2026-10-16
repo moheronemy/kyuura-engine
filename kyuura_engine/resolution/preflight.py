@@ -16,6 +16,13 @@
 確かめたワザの実装（``v013_checks.VERIFIED``）なら v0.13 の止める関数で確かめ、ほかは拒否します（``UNSUPPORTED_PREFLIGHT_LIMIT``。
 ``flow._use_attack`` の ``on_limit``）。v0.13 の止める関数（``v013_checks``）は、この先読みとは別の、限定的な互換の判定です（v0.16c。
 docs/preflight-consolidation-v0.16c.md）。この部品は v0.13 の止める関数を使いません。
+
+v0.35: 結果を「おもて」の数だけで使うコイン（``coins.flip_coins`` の ``by_heads``。たまなげMAX・ウォーターパンチ・ぜんりょくとっしんなど）は、
+台本の 1 つの値で「おもて」の数（0〜枚数）を選ぶ（``Oracle.coin_group``）。コインの並び（2 の枚数乗）ではなく、枚数 + 1 通りを試す。同じ
+「おもて」の数の並びは、そのあとの処理（ダメージ・自分へのダメージ・トラッシュの枚数・問い）が同じになる（まとめてよいのは、結果の使い道が
+「おもて」の数だけのコインだけ。どのコインかは要素が決める。docs/coin-groups-damage-order-v0.35.md 2 章）。コインのあとの決定（トラッシュする
+カードなど）は今までどおりすべての答えを試す（まとめない）。``derived`` の実際の処理は 1 枚ずつ投げ、記録する乱数（``RecordingRandom``）が
+「おもて」の数を 1 つの値として記録する（試していない結果の台本は、値ごとに選べる数（``arity``）を持つ）。
 """
 
 from __future__ import annotations
@@ -47,11 +54,15 @@ class BranchLimit(Exception):
 
 
 class Oracle:
-    """先読みの乱数（コイン 1 枚 = 1 つの値）と選択。台本の値を順に使い、足りなければ ``NeedToken`` で分かれる。"""
+    """先読みの乱数（コイン 1 枚 = 1 つの値）と選択。台本の値を順に使い、足りなければ ``NeedToken`` で分かれる。
 
-    def __init__(self, script: tuple[int, ...]):
+    v0.35: 結果を「おもて」の数だけで使う 2 枚以上のコイン（``coin_group``）は、1 つの値で「おもて」の数を選ぶ（``group`` が False なら、
+    今までどおり 1 枚ずつ。まとめた先読みと、まとめない先読みを比べるテストのため）。"""
+
+    def __init__(self, script: tuple[int, ...], group: bool = True):
         self.script = script
         self.used = 0
+        self.group = group
 
     def _next(self, n: int) -> int:
         if self.used < len(self.script):
@@ -65,6 +76,15 @@ class Oracle:
             raise RuntimeError(f"先読みの中でコイン以外の乱数（getrandbits({k})）を使った（エンジンの不具合）")
         return self._next(2)
 
+    def coin_group(self, count: int) -> tuple[int, ...]:
+        """結果を「おもて」の数だけで使う ``count`` 枚のコイン（v0.35。``coins.flip_coins`` の ``by_heads``）。台本の 1 つの値（0〜``count``）を
+        「おもて」の数とし、決まった並び（「うら」の数だけ 0、そのあと「おもて」の数だけ 1）を返す。この並びは、同じ「おもて」の数の並びのうち、
+        1 枚ずつ試す先読みで最初に試すもの（だから、当たる問いと理由の文が 1 枚ずつ試すときと同じになる）。"""
+        if not self.group:
+            return tuple(self._next(2) for _ in range(count))
+        heads = self._next(count + 1)
+        return (0,) * (count - heads) + (1,) * heads
+
     def choose(self, alternatives: list):
         if not alternatives:
             raise RuntimeError("先読みで選べるものがない決定（エンジンの不具合）")
@@ -75,16 +95,17 @@ class Oracle:
 
 
 def explore(state: GameState, body: Callable[[Resolution], None], catalog: Catalog, *, roots: tuple[tuple[int, ...], ...] = ((),),
-            limit: int = MAX_BRANCHES) -> tuple[dict[str, OpenQuestion], int]:
+            limit: int = MAX_BRANCHES, group: bool = True) -> tuple[dict[str, OpenQuestion], int]:
     """``body``（宣言からきぜつの判定まで）を、``roots`` の台本から始まるコインと選択のすべての結果で試す（深さ優先。値の小さい台本から）。
-    当たった問い（問いごとに最初に当たった結果のもの）と、試した結果の数を返す。結果の数が ``limit`` を超えたら ``BranchLimit``。"""
+    当たった問い（問いごとに最初に当たった結果のもの）と、試した結果の数を返す。結果の数が ``limit`` を超えたら ``BranchLimit``。
+    ``group``（v0.35）: 結果を「おもて」の数だけで使うコインを「おもて」の数でまとめる（既定）。False は比べるテストだけが使う。"""
     found: dict[str, OpenQuestion] = {}
     branches = 0
     stack: list[tuple[int, ...]] = list(reversed(roots))
     while stack:
         script = stack.pop()
         sim = state.clone()
-        oracle = Oracle(script)
+        oracle = Oracle(script, group)
         sim.rng = oracle
         res = Resolution(sim, catalog=catalog, trace=Trace(), dry_run=True, oracle=oracle)
         try:
@@ -120,22 +141,31 @@ def derived(state: GameState, body: Callable[[Resolution], None], catalog: Catal
 class RecordingRandom:
     """実際の処理の乱数の前に置き、先読みの範囲（宣言からきぜつの判定まで）に使ったコインを記録する。値・使う順番は元の乱数のまま
     （乱数の使い方を変えない）。範囲の中でコイン（``getrandbits(1)``）以外に乱数を使ったら ``opaque``。範囲の終わり（``stop``）で、状態の
-    乱数を元の乱数にもどす（このあとの処理・書き出しは元の乱数だけを見る）。"""
+    乱数を元の乱数にもどす（このあとの処理・書き出しは元の乱数だけを見る）。
+
+    記録は台本の値（``tokens``。(値, 選べる数)）: コイン 1 枚は (0 か 1, 2)。v0.35 から、結果を「おもて」の数だけで使う 2 枚以上のコイン
+    （``coin_group``）は、元の乱数で 1 枚ずつ投げて（乱数の使い方は変わらない）、(「おもて」の数, 枚数 + 1) を 1 つ記録する（``Oracle.coin_group``
+    と同じ値の意味）。"""
 
     def __init__(self, state: GameState):
         self._state = state
         self._rng = state.rng
-        self.bits: list[int] = []
+        self.tokens: list[tuple[int, int]] = []
         self.opaque = False
         self.stopped = False
 
     def getrandbits(self, k: int) -> int:
         value = self._rng.getrandbits(k)
         if k == 1:
-            self.bits.append(value)
+            self.tokens.append((value, 2))
         else:
             self.opaque = True
         return value
+
+    def coin_group(self, count: int) -> tuple[int, ...]:
+        bits = tuple(self._rng.getrandbits(1) for _ in range(count))
+        self.tokens.append((sum(bits), count + 1))
+        return bits
 
     def __getattr__(self, name):
         self.opaque = True
@@ -149,9 +179,11 @@ class RecordingRandom:
         self._state.rng = self._rng
 
 
-def sibling_roots(bits: tuple[int, ...]) -> tuple[tuple[int, ...], ...]:
-    """実際の処理が通ったコインの並び ``bits`` 以外のすべての結果を覆う台本（i 枚目だけを逆にした並びの、それぞれの続きのすべて）。"""
-    return tuple(bits[:i] + (1 - bits[i],) for i in range(len(bits)))
+def sibling_roots(tokens: tuple[tuple[int, int], ...]) -> tuple[tuple[int, ...], ...]:
+    """実際の処理が通った台本の値 ``tokens``（(値, 選べる数)）以外のすべての結果を覆う台本（i 番目の値だけをほかの値にした台本の、それぞれの
+    続きのすべて）。コイン 1 枚（選べる数 2）だけなら v0.34 までと同じ（i 枚目だけを逆にした並び）。"""
+    values = tuple(value for value, _ in tokens)
+    return tuple(values[:i] + (other,) for i, (value, arity) in enumerate(tokens) for other in range(arity) if other != value)
 
 
 def after_real_run(state: GameState, original: GameState, body: Callable[[Resolution], None], catalog: Catalog, trace: Trace,
@@ -179,8 +211,8 @@ def after_real_run(state: GameState, original: GameState, body: Callable[[Resolu
     before_horizon = not recorder.stopped
     if recorder.opaque or before_horizon:
         strategy, roots = "full", ((),)
-    elif recorder.bits:
-        strategy, roots = "siblings", sibling_roots(tuple(recorder.bits))
+    elif recorder.tokens:
+        strategy, roots = "siblings", sibling_roots(tuple(recorder.tokens))
     else:
         strategy, roots = "single", ()
     found: dict[str, OpenQuestion] = {}

@@ -113,7 +113,9 @@ class LineageTest(unittest.TestCase):
             GIOVANNIS_MACHAMP: ("サカキのゴーリキー", ("サカキのワンリキー",)),
             BEEDRILL: ("コクーン", ("ビードル",)),
             BLASTOISE: ("カメール", ("ゼニガメ",)),
-            CHARIZARD: ("リザード", ()),  # リザードは写しにない（参照カード。確かめられない）
+            # v0.29 まではリザードが写しになく、確かめられなかった（()）。v0.30 でリザード（ヒトカゲから進化）を写したので系統はヒトカゲ
+            # （リザードンは特殊能力が未対応の参照カードのまま）。1 進化カードが写しにない場合は、下の 2 つのテストがフシギソウを除いて確かめる
+            CHARIZARD: ("リザード", ("ヒトカゲ",)),
         }
         for card_id, (stage1, basics) in expected.items():
             with self.subTest(card=card_id):

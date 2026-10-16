@@ -16,9 +16,73 @@ from kyuura_engine.cards import pool_from_extract, read_extract
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey, PowerKey
 
 from tests.helpers import (
-    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, PONYTA, VENUSAUR, WATER_FIGHTING_DECK, active,
-    build_test_state,
+    CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, NO_EMBER_EFFECTS, PONYTA, VENUSAUR, WATER_FIGHTING_DECK,
+    active, build_test_state,
 )
+
+
+# v0.31 で加えた説明文のあるワザ（45）。docs/held-cards-v0.31.md
+V0_31_WITH_TEXT = [
+    AttackKey("PMCG1-021", 0), AttackKey("PMCG1-022", 0), AttackKey("PMCG1-022", 1), AttackKey("PMCG1-042", 0), AttackKey("PMCG1-042", 1),
+    AttackKey("PMCG1-044", 0), AttackKey("PMCG1-044", 1), AttackKey("PMCG1-050", 0), AttackKey("PMCG1-050", 1), AttackKey("PMCG1-067", 0),
+    AttackKey("PMCG1-067", 1), AttackKey("PMCG2-037", 0), AttackKey("PMCG2-037", 1), AttackKey("PMCG2-044", 0), AttackKey("PMCG2-044", 1),
+    AttackKey("PMCG3-009", 0), AttackKey("PMCG3-009", 1), AttackKey("PMCG3-027", 0), AttackKey("PMCG3-027", 1), AttackKey("PMCG4-014", 1),
+    AttackKey("PMCG4-015", 1), AttackKey("PMCG4-016", 0), AttackKey("PMCG4-016", 1), AttackKey("PMCG4-017", 1), AttackKey("PMCG4-019", 0),
+    AttackKey("PMCG4-019", 1), AttackKey("PMCG4-022", 0), AttackKey("PMCG4-028", 1), AttackKey("PMCG5-021", 0), AttackKey("PMCG5-032", 0),
+    AttackKey("PMCG5-032", 1), AttackKey("PMCG5-036", 0), AttackKey("PMCG5-041", 0), AttackKey("PMCG5-041", 1), AttackKey("PMCG6-025", 0),
+    AttackKey("PMCG6-026", 0), AttackKey("PMCG6-027", 0), AttackKey("PMCG6-029", 1), AttackKey("PMCG6-031", 0), AttackKey("PMCG6-031", 1),
+    AttackKey("PMCG6-033", 0), AttackKey("PMCG6-034", 0), AttackKey("PMCG6-034", 1), AttackKey("PMCG6-041", 0), AttackKey("PMCG6-041", 1),
+]
+# v0.32 で加えた説明文のあるワザ（19）。docs/bench-search-counter-drain-v0.32.md
+V0_32_WITH_TEXT = [
+    AttackKey("PMCG1-031", 1), AttackKey("PMCG1-034", 1), AttackKey("PMCG1-048", 0), AttackKey("PMCG1-048", 1), AttackKey("PMCG2-001", 0),
+    AttackKey("PMCG2-001", 1), AttackKey("PMCG2-002", 0), AttackKey("PMCG2-002", 1), AttackKey("PMCG2-004", 0), AttackKey("PMCG2-004", 1),
+    AttackKey("PMCG2-005", 1), AttackKey("PMCG2-008", 0), AttackKey("PMCG2-008", 1), AttackKey("PMCG2-011", 0), AttackKey("PMCG3-002", 0),
+    AttackKey("PMCG3-002", 1), AttackKey("PMCG3-005", 1), AttackKey("PMCG3-013", 0), AttackKey("PMCG3-019", 0),
+]
+# v0.33 で加えた説明文のあるワザ（25）。docs/cd4-opponent-energy-coins-v0.33.md
+V0_33_WITH_TEXT = [
+    AttackKey("PMCG1-005", 0), AttackKey("PMCG1-010", 0), AttackKey("PMCG1-069", 0), AttackKey("PMCG1-069", 1), AttackKey("PMCG3-016", 0),
+    AttackKey("PMCG3-016", 1), AttackKey("PMCG3-018", 0), AttackKey("PMCG3-018", 1), AttackKey("PMCG4-023", 1), AttackKey("PMCG4-046", 1),
+    AttackKey("PMCG5-039", 0), AttackKey("PMCG5-039", 1), AttackKey("PMCG5-044", 0), AttackKey("PMCG5-044", 1), AttackKey("PMCG5-049", 0),
+    AttackKey("PMCG5-057", 0), AttackKey("PMCG5-057", 1), AttackKey("PMCG6-003", 0), AttackKey("PMCG6-003", 1), AttackKey("PMCG6-006", 0),
+    AttackKey("PMCG6-006", 1), AttackKey("PMCG6-058", 0), AttackKey("PMCG6-058", 1), AttackKey("PMCG6-064", 0), AttackKey("PMCG6-064", 1),
+]
+# v0.34 で加えた説明文のあるワザ（26。タケシのロコンの「ほのお」は説明文なし）。docs/barrier-resume-coin-bonus-v0.34.md
+V0_34_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-019", "PMCG2-020", "PMCG2-023", "PMCG2-026", "PMCG1-041", "PMCG2-042", "PMCG6-024",
+                                                       "PMCG6-069", "PMCG1-013", "PMCG2-012", "PMCG2-029", "PMCG2-032") for index in (0, 1)] + [
+    AttackKey("PMCG5-018", 1), AttackKey("PMCG1-006", 0)]
+# v0.35 で加えた説明文のあるワザ（10。5 枚の 2 つずつ。どれも説明文あり）。docs/coin-groups-damage-order-v0.35.md
+V0_35_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG5-056", "PMCG5-059", "PMCG5-022", "PMCG5-029", "PMCG6-065") for index in (0, 1)]
+# v0.36 で加えた説明文のあるワザ（16。サンドパンの「きりさく」・カスミのタッツーの「たいあたり」・キョウのポッポの「つつく」は説明文なし）。
+# docs/sand-attack-retreat-lock-v0.36.md
+V0_36_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG3-008", "PMCG4-029", "PMCG5-023", "PMCG5-064", "PMCG6-015") for index in (0, 1)] + [
+    AttackKey("PMCG1-051", 0), AttackKey("PMCG3-036", 1), AttackKey("PMCG3-014", 0), AttackKey("PMCG5-025", 1), AttackKey("PMCG6-062", 1),
+    AttackKey("PMCG5-005", 0)]
+# v0.37 で加えた説明文のあるワザ（21。つのでつく・たいあたり・ずつき・きりさく・いわおとし・はねる・ひっかくは説明文なし）。
+# docs/fifteen-reused-effects-v0.37.md
+V0_37_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG3-003", "PMCG1-038", "PMCG1-028", "PMCG1-033", "PMCG3-001", "PMCG6-009")
+                   for index in (0, 1)] + [
+    AttackKey("PMCG2-030", 0), AttackKey("PMCG4-049", 1), AttackKey("PMCG5-043", 0), AttackKey("PMCG6-045", 0), AttackKey("PMCG1-056", 1),
+    AttackKey("PMCG5-048", 0), AttackKey("PMCG2-036", 0), AttackKey("PMCG5-028", 0), AttackKey("PMCG2-039", 1)]
+# v0.38: 控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚（docs/bench-switch-combined-v0.38.md）の説明文のあるワザ 21
+V0_38_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG3-023", "PMCG5-017", "PMCG3-004", "PMCG6-070", "PMCG6-012", "PMCG4-031") for index in (0, 1)] + [
+    AttackKey("PMCG3-039", 0), AttackKey("PMCG5-006", 1), AttackKey("PMCG5-008", 1), AttackKey("PMCG2-033", 1), AttackKey("PMCG6-028", 0),
+    AttackKey("PMCG6-030", 1), AttackKey("PMCG6-001", 1), AttackKey("PMCG6-066", 1), AttackKey("PMCG6-067", 0)]
+# v0.39: じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚（docs/selfdestruct-spread-count-v0.39.md）の説明文のあるワザ 21
+V0_39_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG1-036", "PMCG1-039", "PMCG3-006", "PMCG3-025", "PMCG6-016") for index in (0, 1)] + [
+    AttackKey("PMCG2-024", 0), AttackKey("PMCG3-024", 0), AttackKey("PMCG2-025", 1), AttackKey("PMCG6-008", 0), AttackKey("PMCG6-039", 0),
+    AttackKey("PMCG4-026", 1), AttackKey("PMCG2-045", 0), AttackKey("PMCG2-045", 1), AttackKey("PMCG2-013", 0), AttackKey("PMCG1-059", 0),
+    AttackKey("PMCG5-004", 1)]
+# v0.40: 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚（docs/count-condition-switch-return-v0.40.md）の説明文のあるワザ 22
+V0_40_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG4-011", "PMCG6-004", "PMCG6-021", "PMCG4-042", "PMCG5-045", "PMCG4-039", "PMCG2-031")
+                   for index in (0, 1)] + [
+    AttackKey("PMCG6-005", 0), AttackKey("PMCG6-014", 1), AttackKey("PMCG4-037", 1), AttackKey("PMCG6-013", 0), AttackKey("PMCG6-020", 1),
+    AttackKey("PMCG4-044", 1), AttackKey("PMCG5-011", 1), AttackKey("PMCG5-034", 1)]
+# v0.41: 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚（docs/heal-counter-status-v0.41.md）の説明文のあるワザ 26
+V0_41_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-009", "PMCG2-016", "PMCG3-020", "PMCG4-048", "PMCG5-002", "PMCG5-009", "PMCG6-038",
+                                                       "PMCG6-022", "PMCG6-048", "PMCG5-058", "PMCG6-055") for index in (0, 1)] + [
+    AttackKey("PMCG6-035", 0), AttackKey("PMCG4-032", 0), AttackKey("PMCG5-003", 0), AttackKey("PMCG6-036", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -104,9 +168,15 @@ class DefaultRegistryTest(unittest.TestCase):
                 self.assertIn(f"attack/{key.attack_index}", sources[key.card_id]["play_text"], key)
                 continue
             record = records[key.card_id]
-            latest = record["latest_description_ja"]
+            latest = record.get("latest_description_ja")
             if isinstance(latest, dict):  # 説明文のあるワザが 2 つあるカード（v0.4b）は、ワザの位置ごと
-                latest = latest[str(key.attack_index)]
+                latest = latest.get(str(key.attack_index))
+            if latest is None:
+                # v0.30: 過去の原典照合の記録はあるが、その記録に処理に使う文面のないワザ（照合したあとで登録したヒトカゲの「ひのこ」）は、
+                # card_sources.json の basis: guidebook_record の play_text に根拠を書く（照合の記録は書き換えない）
+                self.assertEqual(sources[key.card_id]["basis"], "guidebook_record", key)
+                self.assertIn(f"attack/{key.attack_index}", sources[key.card_id]["play_text"], key)
+                continue
             self.assertEqual(entry.play_text_ja, latest, key)
             self.assertEqual(entry.source, f"P43 p.{record['page']}", key)
             self.assertEqual(record["pdf_page"], record["page"] + 2)
@@ -130,11 +200,20 @@ class DefaultRegistryTest(unittest.TestCase):
         # スターミーの「じこさいせい」「スターフリーズ」（p.112）・スリープの「あやしいひかり」（p.164）・ラッキーの「まるまる」「すてみタックル」
         # （p.235）・タマタマの「さいみんじゅつ」「やどりぎのタネ」（p.49）・カイロスの「まんりきばさみ」（p.58）・プリンの「こもりうた」（p.225）・
         # シェルダーの「ちょうおんぱ」「からをとじる」（p.103）・ラプラスの「みずでっぽう」「あやしいひかり」（p.116）（トサキント・アズマオウの
-        # ワザ・スリープとプリンの「はたく」・カイロスの「ハサミギロチン」は説明文なし）
-        self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+        # ワザ・スリープとプリンの「はたく」・カイロスの「ハサミギロチン」は説明文なし）、v0.29 の kyuura データの採用で加えたニョロモの「みずでっぽう」・
+        # アーボの「どくばり」・ナゾノクサの「ねむりごな」「どくのこな」・ドガースの「どくガス」・ミニリュウの「まきつく」・タケシのズバットの
+        # 「どくのきば」・カスミのトサキントの「みだれづき」「ちょうおんぱ」・マチスのコイルの「でんきショック」・マチスのビリリダマの「スピンボール」
+        # 「ダブルスピン」・タケシのイシツブテの「いしなげ」・タケシのベロリンガの「たたきつける」（ガイドブックの照合の記録はなく、採用の記録の
+        # play_text と合う。scripts/check_card_sources.py）、v0.30 のエネルギーをトラッシュしてダメージを与えるワザ（ヒトカゲの「ひのこ」・リザード／
+        # ウインディ／ブーバーの「かえんほうしゃ」は kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明、第4弾のポニータの「ひのこ」は印刷の文面）と
+        # ウインディの「とっしん」（印刷の文面）。v0.31 で v0.30 の保留の 22 枚と進化元・依存のカードを加えた（V0_31_WITH_TEXT。
+        # どれも採用の記録の play_text（kyuura の印刷の文面・エラッタ・card_differences の最新の説明）と合う。
+        # scripts/check_card_sources.py。docs/held-cards-v0.31.md）
+        self.assertEqual(with_text, sorted([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
-                                     AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-015", 0),
-                                     AttackKey("PMCG1-023", 0), AttackKey("PMCG1-023", 1), AttackKey("PMCG1-026", 0), AttackKey("PMCG1-026", 1), AttackKey("PMCG1-027", 0),
+                                     AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-014", 1), AttackKey("PMCG1-015", 0),
+                                     AttackKey("PMCG1-017", 1), AttackKey("PMCG1-019", 0), AttackKey("PMCG1-019", 1), AttackKey("PMCG1-020", 1),
+                                     AttackKey("PMCG1-023", 0), AttackKey("PMCG1-023", 1), AttackKey("PMCG1-024", 0), AttackKey("PMCG1-026", 0), AttackKey("PMCG1-026", 1), AttackKey("PMCG1-027", 0),
                                      AttackKey("PMCG1-030", 1), AttackKey("PMCG1-032", 0), AttackKey("PMCG1-035", 1),
                                      AttackKey("PMCG1-043", 0), AttackKey("PMCG1-045", 1), AttackKey("PMCG1-046", 0), AttackKey("PMCG1-049", 0),
                                      AttackKey("PMCG1-055", 0), AttackKey("PMCG1-055", 1), AttackKey("PMCG1-061", 0), AttackKey("PMCG1-068", 0), AttackKey("PMCG1-068", 1),
@@ -142,11 +221,18 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG2-010", 0), AttackKey("PMCG2-017", 0), AttackKey("PMCG2-018", 0), AttackKey("PMCG2-035", 0),
                                      AttackKey("PMCG3-007", 0), AttackKey("PMCG3-012", 0), AttackKey("PMCG3-012", 1), AttackKey("PMCG3-022", 0), AttackKey("PMCG3-022", 1),
                                      AttackKey("PMCG3-029", 0),
-                                     AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-004", 0),
-                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG4-021", 0), AttackKey("PMCG4-021", 1),
-                                     AttackKey("PMCG5-020", 0), AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
+                                     AttackKey("PMCG3-029", 1), AttackKey("PMCG3-030", 0), AttackKey("PMCG4-001", 1), AttackKey("PMCG4-003", 0),
+                                     AttackKey("PMCG4-003", 1), AttackKey("PMCG4-004", 0),
+                                     AttackKey("PMCG4-004", 1), AttackKey("PMCG4-005", 1), AttackKey("PMCG4-013", 0), AttackKey("PMCG4-021", 0),
+                                     AttackKey("PMCG4-021", 1),
+                                     AttackKey("PMCG4-051", 0), AttackKey("PMCG5-001", 1),
+                                     AttackKey("PMCG5-020", 0), AttackKey("PMCG5-026", 0), AttackKey("PMCG5-026", 1), AttackKey("PMCG5-037", 0),
+                                     AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
+                                     AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
-                                     AttackKey("PMCG6-073", 0)])
+                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
+                                    + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -156,12 +242,19 @@ class DefaultRegistryTest(unittest.TestCase):
             self.assertEqual(copied.effects.attack_keys(), DEFAULT_EFFECTS.attack_keys())
 
 
+# v0.30 からヒトカゲの「ひのこ」は登録した（DiscardEnergyThenDamage）。登録のないワザのテストは、その登録を除いた登録表
+# （tests/helpers.py の NO_EMBER_EFFECTS）で、効果のないワザ（ひっかく）と登録のない効果のあるワザ（ひのこ）を持つカードを作って確かめる
+# （v0.29 までは既定の登録表でそうなっていた）
+NO_EMBER = NO_EMBER_EFFECTS
+
+
 class UnregisteredTest(unittest.TestCase):
     def test_attack_with_text_is_not_registered(self):
-        charmander = load_card_pool().get(CHARMANDER)
+        charmander = pool_from_extract(read_extract(), NO_EMBER).get(CHARMANDER)
         ember = charmander.attacks[1]
-        self.assertIn("登録されていない", DEFAULT_EFFECTS.attack_problem(CHARMANDER, ember))
+        self.assertIn("登録されていない", NO_EMBER.attack_problem(CHARMANDER, ember))
         self.assertFalse(charmander.supported)
+        self.assertTrue(charmander.attacks[0].supported)  # ひっかくは登録してある（ワザ単位で分類する）
 
     def test_attack_without_text_is_refused_if_not_registered(self):
         """説明文がなくても、登録がなければ使えない（説明文が空なことは実装がある証拠にならない）。"""
@@ -185,7 +278,8 @@ class UnregisteredTest(unittest.TestCase):
 
     def test_unsupported_card_in_deck_is_rejected(self):
         deck = expand_decklist({CHARMANDER: 1, PONYTA: 4, FIRE: 55})
-        self.assertTrue(any("ひのこ" in p and "登録されていない" in p for p in deck_problems(deck)))
+        self.assertTrue(any("ひのこ" in p and "登録されていない" in p for p in deck_problems(deck, pool_from_extract(read_extract(), NO_EMBER))))
+        self.assertEqual(deck_problems(deck), [])  # 既定の登録表（v0.30 から）では使える
 
 
 class RegisteredWithTextTest(unittest.TestCase):
@@ -244,7 +338,7 @@ class SameNameDifferentCardTest(unittest.TestCase):
 class RegistryImmutabilityTest(unittest.TestCase):
     def test_with_and_without_do_not_change_the_original(self):
         keys = DEFAULT_EFFECTS.attack_keys()
-        DEFAULT_EFFECTS.with_attacks("x", {AttackKey(CHARMANDER, 1): AttackEntry(RECORDING, "ひのこ")})
+        DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-021", 0): AttackEntry(RECORDING, "ほのおのうず")})
         DEFAULT_EFFECTS.without_attacks("y", keys)
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), keys)
         # v0.1 の 13 + ヒトカゲの「ひっかく」（v0.2a）+ ドードーの「みだれづき」（v0.2d）+ ピカチュウの 2 つ（v0.2f）
@@ -258,7 +352,23 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + モンジャラの 2 つ・サカキのニャースの 2 つ（v0.17a）+ R団のカビゴンの 1 つ（v0.17b）+ ナツメのヤドンの 1 つ（v0.18c）
         # + ストライクの 2 つ（v0.27）
         # + ラプラス・スターミー・アズマオウ・カイロス・タマタマ・プリン・ラッキー・スリープ・シェルダーの 2 つずつ・トサキントの 1 つ（v0.28）
-        self.assertEqual(len(keys), 92)
+        # + アーボ・ズバット・ナゾノクサ・ドガース・ワンリキー・タケシのズバット・カスミのトサキント・マチスのコイル・マチスのビリリダマ・
+        #   タケシのベロリンガの 2 つずつ・ニョロモ・ビリリダマ・ミニリュウ・タケシのイシツブテの 1 つずつ（v0.29。kyuura データの採用）
+        # + ヒトカゲの「ひのこ」・リザード・ウインディ・ブーバーの 2 つずつ・第4弾のポニータの 1 つ（v0.30。エネルギーをトラッシュしてダメージを
+        #   与えるワザの共通の型）
+        # + v0.30 の保留の 22 枚と進化元・依存のカード 7 枚、合わせて 29 枚のワザ 52（v0.31。docs/held-cards-v0.31.md）
+        # + 山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザの 13 枚のワザ 26（v0.32。docs/bench-search-counter-drain-v0.32.md）
+        # + 相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚のワザ 28
+        #   （v0.33。docs/cd4-opponent-energy-coins-v0.33.md）
+        # + バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせた 14 枚のワザ 27（v0.34。docs/barrier-resume-coin-bonus-v0.34.md）
+        # + 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせた 5 枚のワザ 10（v0.35。docs/coin-groups-damage-order-v0.35.md）
+        # + 手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と合わせた 11 枚のワザ 19（v0.36。docs/sand-attack-retreat-lock-v0.36.md）
+        # + 既存の効果の再利用・文面の違いの受け付け・新しい要素の組み合わせの 15 枚のワザ 28（v0.37。docs/fifteen-reused-effects-v0.37.md）
+        # + 控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚のワザ 29（v0.38。docs/bench-switch-combined-v0.38.md）
+        # + じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚のワザ 25（v0.39。docs/selfdestruct-spread-count-v0.39.md）
+        # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
+        # + 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚のワザ 29（v0.41。docs/heal-counter-status-v0.41.md）
+        self.assertEqual(len(keys), 425)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -267,10 +377,11 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）
         # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
         # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）、v0.17b で
-        # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた
-        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0), PowerKey("PMCG1-057", 0),
-                                  PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0), PowerKey("PMCG6-061", 0),
-                                  PowerKey("PMCG6-073", 0)))
+        # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた。v0.31 でリザードンの「エナジーバーン」（PMCG1-021）・カツラのロコンの
+        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）
+        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
+                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0), PowerKey("PMCG6-073", 0)))
 
 
 if __name__ == "__main__":

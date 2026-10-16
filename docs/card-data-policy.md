@@ -38,7 +38,7 @@
 |---|---|---|
 | kyuura データの採用 | `card_sources.json` の `basis: kyuura_data` | 採用したデータのコミット・カード id・記録した日・処理に使う文面の根拠・確かめた kyuura の記録の id・論点・状態（採用・保留） |
 | pcg-search.com との照合 | `card_sources.json` の `external_checks` | URL・確認日・対象の版（収録・カード番号）・照らした kyuura のコミット・結果・照合した欄・違い |
-| 過去の原典照合 | `card_verification.json`（履歴） | 2026-10-14 までに『オフィシャルブック2000』と照合した記録。書き換えない。そのカードに外部照合を加えるときだけ、`card_sources.json` に `basis: guidebook_record` の記録を置く |
+| 過去の原典照合 | `card_verification.json`（履歴） | 2026-10-14 までに『オフィシャルブック2000』と照合した記録。書き換えない。そのカードに外部照合を加えるとき、または照合の記録に処理に使う文面のない登録を加えるとき（v0.30）だけ、`card_sources.json` に `basis: guidebook_record` の記録を置く |
 
 ```json
 {
@@ -74,7 +74,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| `basis` | `kyuura_data`（採用）か `guidebook_record`（過去の原典照合で登録したカードに外部照合を加えるだけ。`name_ja`・`external_checks` と、任意の `issues`・`notes` だけを持つ） |
+| `basis` | `kyuura_data`（採用）か `guidebook_record`（過去の原典照合で登録したカードの記録。`name_ja`・`external_checks` と、任意の `issues`・`notes`・`play_text`・`kyuura_records` だけを持つ。`play_text` は v0.30 から、照合の記録（`card_verification.json`）に処理に使う文面のない登録（v0.30 のヒトカゲの「ひのこ」のように、照合したあとで登録したワザ）にだけ書ける。照合の記録に文面のある登録は書けない。外部照合か `play_text` のどちらかがあるときだけ置く） |
 | `status` | `adopted`（登録する）・`on_hold`（挙動に影響する論点があるので登録しない） |
 | `kyuura_commit` | 採用したデータのコミット。写しのコミット（`KYUURA_COMMIT`）と同じ。写しの元を上げたら、採用の記録も見直す |
 | `recorded_on`・`checked_on` | 方針の開始日（2026-10-15）から今日までの日付 |
@@ -88,9 +88,9 @@
 
 記録には、ガイドブックの照合の項目（`page`・`pdf_page`・`scan`・`card_image_text_ja`・`latest_description_ja`・`power_card_image_text_ja`・`power_latest_description_ja`・`image_check`・`rules_page`・`commentary_page`・`mismatches`）を書けません。読んでいない原典を確かめたことにしないためです。
 
-研究の対応表（`research_links.json`）の `latest_descriptions` に、区分 `adopted_printed_text`（採用で処理に使う文面を kyuura の印刷の文面にしたワザ・特殊能力）を加えました。今は空です。最新の説明のある登録は、5 つの区分（`registered`・`recorded_in_card_checks`・`card_checks_without_text`・`registered_without_kyuura_record`・`adopted_printed_text`）のちょうど 1 つに挙げます。
+研究の対応表（`research_links.json`）の `latest_descriptions` に、区分 `adopted_printed_text`（採用で処理に使う文面を kyuura の印刷の文面にしたワザ・特殊能力）を加えました。方針を整えたときは空でした（v0.29 で、採用したポケモン 14 枚の説明文のあるワザ 14 を挙げた）。最新の説明のある登録は、5 つの区分（`registered`・`recorded_in_card_checks`・`card_checks_without_text`・`registered_without_kyuura_record`・`adopted_printed_text`）のちょうど 1 つに挙げます。v0.30 で、処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にした登録の区分 `errata_text`（6 つめ）と、エラッタの記録の `cards` にないカードに記録の範囲（「…はすべて同じ処理」など）として当てはめる対応 `errata_scope`（記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象）を加えました（[discard-energy-attacks-v0.30.md](discard-energy-attacks-v0.30.md) 3.2）。v0.31 で、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録の区分 `difference_text`（7 つめ。ピッピの「ゆびをふる」。kyuura に LD- がない）を加えました。採用の記録の `play_text` の根拠は `kyuura data/curation/card_differences.json#<カード id>` で、`scripts/check_card_sources.py` が登録の出典・研究の対応表と照らし、`scripts/check_research_links.py` が研究の基準のコミットの記録の確度と引用の文面を照らします（[held-cards-v0.31.md](held-cards-v0.31.md) 4 章）。
 
-2026-10-14 までに登録したカード（70 枚。ワザ 92・トレーナー 11・特殊能力 9）は、どれも過去の原典照合の記録で登録したので、採用の記録はまだありません（`cards` は空）。過去の照合の記録を新しい形式に移したり、採用の記録に置きかえたりはしていません。
+2026-10-14 までに登録したカード（70 枚。ワザ 92・トレーナー 11・特殊能力 9）は、どれも過去の原典照合の記録で登録したので、方針を整えたときは採用の記録はありませんでした（`cards` は空）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の採用の記録を加えました（[existing-effect-pokemon-v0.29.md](existing-effect-pokemon-v0.29.md)）。v0.30 で、ポケモン 4 枚の採用の記録と、ヒトカゲの `guidebook_record` の記録（「ひのこ」の文面の根拠）を加えました（記録 19 件。[discard-energy-attacks-v0.30.md](discard-energy-attacks-v0.30.md)）。過去の照合の記録を新しい形式に移したり、採用の記録に置きかえたりはしていません。
 
 ## 4. 検査
 
@@ -99,8 +99,8 @@
 | `scripts/check_card_sources.py`（新規） | 形式と方針の値。決まった項目だけ（ガイドブックの項目を拒否）。カードが写しにあり名前が同じ。採用のコミットが写しのコミット。日付が方針の開始日から今日まで。登録したカードは過去の原典照合の記録か採用の記録のちょうど一方を持つ。保留のカードは登録しない・挙動に影響する論点がある。採用したカードに挙動に影響する違い・論点がない。`play_text` が登録の文面とちょうど対応し、根拠ごとに登録の文面と出典が合う（印刷の文面は写しと同じ・出典 `kyuura data/cards.json`・対応表の `adopted_printed_text` にある。LD- は出典が id・`kyuura_records` にある・対応表の `registered` と同じ）。外部照合はサイトが pcg-search.com・URL が https の pcg-search.com・版の収録と一覧の番号・結果と照合した欄・違いの組み合わせ・欄が写しのカードにある・違いの kyuura の値が写しの値・同じ版を同じデータで調べ直していない・kyuura の文面が pcg-search.com の転記のカードで日本語の欄を照合したことにしていない |
 | `scripts/check_research_links.py`（4c・7 を追加） | `adopted_printed_text` の文面が研究の基準のコミットの印刷の文面と同じで、その対象の LD- と、文面のデータの誤りの記録（CC- の `data_error`）がない。採用の記録の `kyuura_records` が研究の基準のコミットの kyuura の記録と同じ。根拠にしたエラッタがそのカードを指す。CC- のデータの誤りの欄が論点にある。LD- を根拠にした採用の登録の出典（LD- の id）を受け付ける |
 | tests/test_effects.py・tests/test_trainers.py・tests/test_pokemon_powers_v0_5.py（変更） | 登録したカードは、過去の原典照合の記録（ページ・最新の説明の確かめは今までどおり）か採用の記録のちょうど一方を持つ。採用の記録で登録したカードには、ガイドブックのページを求めない |
-| tests/test_research_links_v0_18e.py（変更） | 最新の説明のある登録が 5 つの区分のちょうど 1 つにある |
-| tests/test_card_sources.py（新規） | 同梱の記録が方針と合う（採用の記録はまだない）。方針どおりの記録（印刷の文面・LD- を根拠にした採用、保留、対象の版がない・アクセスできなかった照合、過去の原典照合のカードへの外部照合）を受け付ける。読んでいない原典を確かめたことにする記録・形の崩れた記録を拒否する（63 通り）。../kyuura があれば、研究の基準のコミットと照らす検査が、採用を受け付け、記録の見落とし・LD- を無視した印刷の文面・違う文面・データの誤り・エラッタの見落としを拒否する |
+| tests/test_research_links_v0_18e.py（変更） | 最新の説明のある登録が 5 つの区分（v0.30 から `errata_text`、v0.31 から `difference_text` を加えて 7 つ）のちょうど 1 つにある |
+| tests/test_card_sources.py（新規） | 同梱の記録が方針と合う（方針を整えたときは採用の記録はなかった。v0.29 から、同梱の 14 件を確かめる）。方針どおりの記録（印刷の文面・LD- を根拠にした採用、保留、対象の版がない・アクセスできなかった照合、過去の原典照合のカードへの外部照合）を受け付ける。読んでいない原典を確かめたことにする記録・形の崩れた記録を拒否する（63 通り）。../kyuura があれば、研究の基準のコミットと照らす検査が、採用を受け付け、記録の見落とし・LD- を無視した印刷の文面・違う文面・データの誤り・エラッタの見落としを拒否する |
 
 実装の整合性を確かめる検査は残しています: 登録したワザ名・説明文が写しと同じでなければ使えないこと（`attack_problem`）、説明文のあるワザの一覧、効果の型の `check`、トレーナー・特殊能力の名前と文面の照合、過去の原典照合の記録のページ・最新の説明と登録の一致、研究の対応表の照合。
 
@@ -115,7 +115,7 @@
 
 - 旧裏（PMCG）・neo・VS・web・e・ADV・PCG などのカードの一覧と、カードごとのページ（種類・HP・弱点・抵抗力・にげる・ワザ・説明文・収録・レアリティ・カードの画像）がある、ファンのサイトです。kyuura は出典 N3 として使っています（拡張パック以外の商品 681 枚の転記 `data/ja_text_pcgsearch.json`、拡張パックの 1 枚（プリン PMCG2-035）の日本語の文面、転記の食い違いのカードの画像での確認。kyuura docs/sources.md・docs/research-status.md）。サイトの説明に「データの誤りや誤字脱字等が含まれる場合がございます」とあるので、外部照合で違いを見つけても、写し・kyuura のデータを直さず、違いとして記録します。
 - 版の識別: 一覧（`https://pcg-search.com/card/card_list.php`）は、収録ごと（例: 「第1弾 拡張パック」「第2弾 拡張パック「ポケモンジャングル」」）に「No」（例: `001/096`。サイトの並び順で、カードに印刷された番号ではない）を付けています。カードのページは `https://pcg-search.com/card/1st/1st1032.php` の形です。サイトの番号は kyuura のカード id と別の番号です（例: 第1弾 拡張パックの一覧の `032/096` はスターミーで、kyuura の id は `PMCG1-026`）。kyuura の `jp_print.series` に複数の収録（「第1弾拡張パック、スターターパック」など）があるカードもあるので、照合した収録を書きます。
-- 2026-10-15 に、記録の形式を決めるためにトップページ・一覧・カードのページ 1 つを開きました（アクセスできた）。カードの照合はしていないので、照合の記録はありません。
+- 2026-10-15 に、記録の形式を決めるためにトップページ・一覧・カードのページ 1 つを開きました（アクセスできた）。カードの照合はしていないので、そのときの照合の記録はありません。v0.29 で、加えたポケモン 14 枚を同じ版のページと照合しました（14 件とも `match`。[existing-effect-pokemon-v0.29.md](existing-effect-pokemon-v0.29.md) 3 章）。
 
 ## 7. 確かめたこと
 
