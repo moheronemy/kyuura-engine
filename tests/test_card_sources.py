@@ -26,7 +26,7 @@ from unittest import mock
 from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
-from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON
+from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -152,13 +152,13 @@ class ShippedRecordTest(unittest.TestCase):
     def test_shipped_records_follow_the_policy(self):
         """同梱の記録は方針と合う。2026-10-14 までに登録したカードは、どれも過去の原典照合の記録で登録した。採用の記録は v0.29 の 14 枚
         （docs/existing-effect-pokemon-v0.29.md）と v0.30 の 4 枚（docs/discard-energy-attacks-v0.30.md）と v0.31 の 29 枚（対象 22 枚・進化元 7 枚。
-        docs/held-cards-v0.31.md）と v0.32 の 13 枚（docs/bench-search-counter-drain-v0.32.md）で、どれも pcg-search.com の同じ版のページと照合した（違いは書き方・表記だけで、処理に影響しない）。v0.30 の
+        docs/held-cards-v0.31.md）と v0.32 の 13 枚（docs/bench-search-counter-drain-v0.32.md）と v0.33 の 15 枚（docs/cd4-opponent-energy-coins-v0.33.md）で、どれも pcg-search.com の同じ版のページと照合した（違いは書き方・表記だけで、処理に影響しない）。v0.30 の
         ヒトカゲは過去の原典照合の記録のあるカードで、照合の記録に文面のない「ひのこ」の根拠を guidebook_record の play_text に書いた。"""
         self.assertEqual(cs.problems(), [])
         sources = cs.load_sources()
         self.assertEqual(sources["format"], cs.FORMAT)
         self.assertEqual(sources["policy"]["since"], "2026-10-15")
-        self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON))  # v0.32: 13 枚
+        self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON))  # v0.33: 15 枚
         for card_id in V0_29_POKEMON:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -188,7 +188,7 @@ class ShippedRecordTest(unittest.TestCase):
                 self.assertEqual((check["checked_on"], check["result"] in ("match", "differences")), ("2026-10-15", True))
                 self.assertFalse(any(d["affects_behavior"] for d in check["differences"]))
                 self.assertFalse(any(issue["affects_behavior"] for issue in record["issues"]))
-        for card_id in V0_32_POKEMON:  # v0.32（docs/bench-search-counter-drain-v0.32.md）。2026-10-16 に照合
+        for card_id in V0_32_POKEMON + V0_33_POKEMON:  # v0.32（docs/bench-search-counter-drain-v0.32.md）・v0.33（docs/cd4-opponent-energy-coins-v0.33.md）。2026-10-16 に照合
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, COMMIT))
@@ -202,8 +202,8 @@ class ShippedRecordTest(unittest.TestCase):
         self.assertEqual(sources["cards"]["PMCG1-021"]["play_text"]["power/0"], "TXT-CHARIZARD")
         self.assertEqual(sources["cards"]["PMCG1-067"]["play_text"]["attack/1"], f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067")
         section = cs.load_links()["latest_descriptions"]
-        # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ（16）と、v0.31 の 45（特殊能力 2 を含む）と、v0.32 の 19
-        self.assertEqual(len(section["adopted_printed_text"]), 80)
+        # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ（16）と、v0.31 の 45（特殊能力 2 を含む）と、v0.32 の 19 と、v0.33 の 25
+        self.assertEqual(len(section["adopted_printed_text"]), 105)
         self.assertEqual(sorted(section["errata_text"]), ["PMCG1-014/attack/1", "PMCG1-017/attack/1", "PMCG1-019/attack/0", "PMCG1-020/attack/1",
                                                           "PMCG1-021/power/0", "PMCG1-022/attack/1"])
         self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067"})
@@ -221,11 +221,11 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29〜v0.31 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
+        v0.29〜v0.33 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
         registered = cs.registered_cards(DEFAULT_EFFECTS)
-        adopted = set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON)
+        adopted = set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON)
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))
         self.assertIn(CHARMANDER, verification["cards"])

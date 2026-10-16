@@ -608,7 +608,8 @@ class ChemicalGasTest(unittest.TestCase):
 # 「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザ（T19b。UNRESOLVED_EVADED_EFFECT_COIN）
 EFFECT_COIN_TYPES = (PoisonOnHeads, ParalyzeOnHeads, ConfuseOnHeads)
 EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM,  # v0.28: スターミー
-              "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",)}  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
+              "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",),  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
+              "PMCG3-016": ("PMCG4-019",)}  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -635,7 +636,11 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "しっぽでまどわす",
                                         # v0.32: 第2弾のナゾノクサ・コンパンの「しびれごな」・ギャラドスの「バブルこうせん」（ParalyzeOnHeads）、ウツドンの「どくのこな」
                                         # （PoisonOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
-                                        "しびれごな", "しびれごな", "バブルこうせん", "どくのこな"]))
+                                        "しびれごな", "しびれごな", "バブルこうせん", "どくのこな",
+                                        # v0.33: 化石の秘密のゴルダックの「ねんりき」（ParalyzeOnHeads）・マチスのコイル（PMCG5-039）の「こんらんでんぱ」
+                                        # （ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（はかいでんぱ・はかいビームの T19b は
+                                        # tests/test_cd4_opponent_energy_coins_v0_33.py）
+                                        "ねんりき", "こんらんでんぱ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

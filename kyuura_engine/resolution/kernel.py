@@ -23,12 +23,14 @@ from ..coins import CoinSide, flip_coins
 from ..damage import ADD, calculate_attack_damage
 from ..effects import (
     ATTACK_ELEMENTS,
+    BENCH_TARGETS,
     COUNTERATTACK_TARGET_KNOCKED_OUT,
     DAMAGE_ELEMENT,
     OPPONENT_ACTIVE,
     OPPONENT_BENCH,
     RETALIATION_TARGET_KNOCKED_OUT,
     SELF,
+    SELF_BENCH,
     AttackKey,
     DamageResult,
     attack_damage_modifiers,
@@ -169,13 +171,13 @@ def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | 
         return 1 - fs.frame.player, state.players[1 - fs.frame.player].active
     if target == SELF:
         return fs.frame.player, state.find_pokemon(fs.frame.source_pid)[1]
-    if target == OPPONENT_BENCH:
-        # v0.31: 相手の控えポケモン（ワザの説明が選ばせる・決める場のポケモンの番号）
-        opponent = 1 - fs.frame.player
-        found = next((p for p in state.players[opponent].bench if p.pokemon_id == pokemon_id), None)
+    if target in (OPPONENT_BENCH, SELF_BENCH):
+        # v0.31: 相手の控えポケモン（ワザの説明が選ばせる・決める場のポケモンの番号）。v0.33: 自分の控えポケモン（タケシのディグダの「ミニじしん」）
+        side = 1 - fs.frame.player if target == OPPONENT_BENCH else fs.frame.player
+        found = next((p for p in state.players[side].bench if p.pokemon_id == pokemon_id), None)
         if found is None:
-            raise RuntimeError(f"ダメージを受ける相手の控えポケモン {pokemon_id!r} がいない（エンジンの不具合）")
-        return opponent, found
+            raise RuntimeError(f"ダメージを受ける{'相手' if target == OPPONENT_BENCH else '自分'}の控えポケモン {pokemon_id!r} がいない（エンジンの不具合）")
+        return side, found
     raise ValueError(f"ダメージを受けるポケモンの種類 {target!r} は未対応")
 
 
@@ -184,7 +186,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
-    ``bench``）。``weakness_resistance`` が False なら弱点・抵抗力を計算しない（「「弱点・抵抗力」に関係なく」。ログに ``ignore_weakness_resistance``）。"""
+    ``bench``）。v0.33: ``SELF_BENCH`` なら自分の控えポケモン（計算は相手の控えと同じ）。``weakness_resistance`` が False なら弱点・抵抗力を計算しない（「「弱点・抵抗力」に関係なく」。ログに ``ignore_weakness_resistance``）。"""
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
@@ -210,7 +212,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     receiver_def = state.card_def(receiver.card)
     calc = calculate_attack_damage(
         base, attacker_def, receiver_def, state.rules,
-        attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target == OPPONENT_BENCH),
+        attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS),
         weakness_resistance=weakness_resistance,
     )
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):

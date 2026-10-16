@@ -162,6 +162,25 @@ VENONAT = "PMCG2-004"  # コンパン（第2弾。HP 40・草・弱点 炎・に
 FOSSIL_ZUBAT = "PMCG3-002"  # ズバット（化石の秘密。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。ちょうおんぱ（無無）・きゅうけつ（草無）10）
 GOLBAT = "PMCG3-005"  # ゴルバット（化石の秘密。ズバットから進化。HP 60・草・弱点 超・抵抗力 闘 -30・にげる 0。つばさでうつ（無無無）30・きゅうけつ（草草無）20）
 V0_32_POKEMON = (NIDORAN_F, JUNGLE_ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL, MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT)
+# v0.33（相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザのポケモンと進化先。
+# docs/cd4-opponent-energy-coins-v0.33.md）
+DRAGONAIR = "PMCG1-069"  # ハクリュー（第1弾。ミニリュウから進化。HP 80・無色・抵抗力 超 -30・にげる 2。たたきつける（無無無）30×・はかいこうせん（無無無無）20）
+FOSSIL_GOLDUCK = "PMCG3-016"  # ゴルダック（化石の秘密。コダックから進化。HP 70・水・弱点 雷・にげる 1。ねんりき（超）10・はかいこうせん（水水無）20）
+DARK_VAPOREON = "PMCG4-023"  # わるいシャワーズ（ロケット団。イーブイから進化。HP 60・水・弱点 雷・にげる 1。かみつく（無無無）30・うずしお（水水無）20）
+LT_SURGES_MAGNEMITE_30 = "PMCG5-039"  # マチスのコイル（HP 30・雷・弱点 闘・にげる 0。はかいでんぱ（雷）10・こんらんでんぱ（雷雷）20）。LT_SURGES_MAGNEMITE と同じ名前の別のカード
+SABRINAS_VENONAT = "PMCG6-006"  # ナツメのコンパン（HP 40・草・弱点 炎・にげる 1。どくのしょっかく（草）・はかいビーム（超無）20）
+NIDORAN_M = "PMCG1-005"  # ニドラン♂（第1弾。HP 40・草・弱点 超・にげる 1。つのでつつく（草）30）
+NIDORINO = "PMCG1-010"  # ニドリーノ（第1弾。ニドラン♂から進化。HP 60・草・弱点 超・にげる 1。にどげり（草無無）30×・つのドリル（草草無無）50）
+CLOYSTER = "PMCG3-018"  # パルシェン（化石の秘密。シェルダーから進化。HP 50・水・弱点 雷・にげる 2。からではさむ（水水）30・とげキャノン（水水）30×）
+DARK_RATICATE = "PMCG4-046"  # わるいラッタ（ロケット団。コラッタから進化。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。かじる（無無）20・ひっさつまえば（無無無）50）
+BROCKS_DIGLETT = "PMCG5-044"  # タケシのディグダ（HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。ふいをつく（闘）20・ミニじしん（闘無）40）
+BROCKS_RHYHORN = "PMCG5-049"  # タケシのサイホーン（HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 3。ドリルタックル（闘無）70）
+LT_SURGES_SPEAROW = "PMCG5-057"  # マチスのオニスズメ（HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 0。ふきとばし（無）10・かまいたち（無無）40）
+GIOVANNIS_NIDORAN_F = "PMCG6-003"  # サカキのニドラン♀（HP 50・草・弱点 超・にげる 1。つき（草）20・すてみタックル（無無）30）
+BLAINES_RHYHORN = "PMCG6-058"  # カツラのサイホーン（HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 2。ホーンアタック（闘）30・かけぬける（無無無）20）
+BLAINES_DODUO = "PMCG6-064"  # カツラのドードー（HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 0。けりつける（無）20・しかえし（無無）10×）
+V0_33_POKEMON = (DRAGONAIR, FOSSIL_GOLDUCK, DARK_VAPOREON, LT_SURGES_MAGNEMITE_30, SABRINAS_VENONAT, NIDORAN_M, NIDORINO, CLOYSTER, DARK_RATICATE,
+                 BROCKS_DIGLETT, BROCKS_RHYHORN, LT_SURGES_SPEAROW, GIOVANNIS_NIDORAN_F, BLAINES_RHYHORN, BLAINES_DODUO)
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -590,6 +609,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageTimesOwnCounters,  # コイキング・キングラーの「じたばた」
     _effects.DamagePlusDefenderCounters,  # ルージュラの「ヨガのポーズ」
     _effects.DamageAndFullDrain,  # コンパン・ズバット（化石の秘密）・ゴルバットの「きゅうけつ」
+) + (
+    # v0.33（docs/cd4-opponent-energy-coins-v0.33.md 3 章）
+    _effects.DamageThenDiscardOpponentEnergy,  # ハクリュー・ゴルダックの「はかいこうせん」・わるいシャワーズの「うずしお」・マチスのコイルの「はかいでんぱ」・ナツメのコンパンの「はかいビーム」
+    _effects.NoDamageOnTails,  # ニドラン♂の「つのでつつく」
+    _effects.DamageAndParalyzeOnHeadsElseFail,  # パルシェンの「からではさむ」
+    _effects.DamageAndOwnBenchDamage,  # タケシのディグダの「ミニじしん」
+    _effects.DamageThenCoinBenchDamage,  # カツラのサイホーンの「かけぬける」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

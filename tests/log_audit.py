@@ -382,12 +382,12 @@ def log_problems(state) -> list[str]:
             elif not definition.is_basic_energy or definition.provides not in types:
                 problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、登録のタイプ {types} の基本エネルギーカードでない")
         if kind == "damage":
-            if e.get("target") == "opponent_bench":
-                window[f"damage:bench:{e['pokemon_id']}"] += 1  # v0.31: 控えポケモンへのダメージ
+            if e.get("target") in ("opponent_bench", "self_bench"):
+                window[f"damage:bench:{e['pokemon_id']}"] += 1  # v0.31: 控えポケモンへのダメージ（v0.33 から自分の控えも）
             else:
                 window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":
-            if e["target"] == "opponent_bench":
+            if e["target"] in ("opponent_bench", "self_bench"):
                 window[f"prevented:bench:{e['pokemon_id']}"] += 1
             else:
                 window[f"prevented:{e['target']}"] += 1

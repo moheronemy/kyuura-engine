@@ -104,6 +104,12 @@ QUESTIONS: dict[str, Question] = {
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("copied_attack_unsupported", "UNSUPPORTED_COPIED_ATTACK", ("v0.31",), 10,
                  "相手のワザを自分のワザとして使う効果で、処理できるワザがなく、エンジンが対応していないワザがある"),
+        # v0.33: ダメージの要素のあとに決定を出す要素（カツラのサイホーンの「かけぬける」の控えポケモンの選択）の前に、前のダメージの要素ではたらいた
+        # 「ダメージを受けたとき」の効果（はんげき・返す効果・わるいねぞう）が残っている。その効果はダメージの処理がすべて終わったあと（p.89）なので、決定を
+        # またいで運ぶ必要があるが、その仕組みがない（v0.18d の窓の途中の決定。docs/cd4-opponent-energy-coins-v0.33.md）
+        Question("decision_after_damage_trigger", "UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER", ("v0.33",), 10,
+                 "ダメージの要素のあとの決定（控えポケモンを選ぶ）の前に、「ダメージを受けたとき」の効果が残っていて、決定をまたいで運べない"
+                 "（エンジンの未対応）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

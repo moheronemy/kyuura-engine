@@ -419,24 +419,38 @@ class FailOnTails(Element):
     失敗」: 失敗してもワザを使ったことになる）。結果はワザ全体のコイン ``name`` として、あとの要素も使う。
 
     ``only_damage``: 残りの要素が相手の対戦ポケモンへのダメージだけ（ゴッドバード）。そのポケモンがダメージの要素を無効にする状態（かたまる・
-    バリアー）なら、このコインはそのダメージの量だけを決めるので、投げるかが決められない（v0.4b の ``prevented_coin_damage`` と同じ問い）。"""
+    バリアー）なら、このコインはそのダメージの量だけを決めるので、投げるかが決められない（v0.4b の ``prevented_coin_damage`` と同じ問い）。
+
+    v0.33:
+
+    - ``count``: 投げる枚数。1 つでも「うら」なら失敗する（タケシのサイホーンの「ドリルタックル」は 2 枚。すべて「おもて」のときだけ残りの要素を処理する）
+    - ``with_effect``: 残りの要素が相手の対戦ポケモンへのダメージと効果（パルシェンの「からではさむ」のマヒ）。効果の要素も無効にする状態（「ワザを
+      うけない」状態。バリアー）なら、コインが決める要素がどれも無効なので、投げるかが決められない（HC3 ``prevented_effect_coin``）。「ダメージを
+      受けない」状態だけなら、効果は有効なので投げる"""
 
     name: str = "coin"
     only_damage: bool = False
+    count: int = 1
+    with_effect: bool = False
     phase: ClassVar[Phase] = Phase.NEUTRAL
 
     def run(self, run: AttackRun) -> bool:
-        if self.only_damage:
+        if self.only_damage or self.with_effect:
             from .kernel import first_void
 
             target = run.opponent_active()
-            void = first_void(run.res, 1 - run.player, target)
-            if void is not None:
-                raise run.res.question("prevented_coin_damage", f"ポケモン {target.pokemon_id}",
-                                       E.prevented_coin_damage_error(target.pokemon_id, void.implementation.kind))
-        flips = run.flip(1)
+            if self.with_effect:
+                void = first_void(run.res, 1 - run.player, target, Window.BEFORE_EFFECT)
+                if void is not None:
+                    raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{void.implementation.kind}。ダメージと効果を決めるコイン）")
+            else:
+                void = first_void(run.res, 1 - run.player, target)
+                if void is not None:
+                    raise run.res.question("prevented_coin_damage", f"ポケモン {target.pokemon_id}",
+                                           E.prevented_coin_damage_error(target.pokemon_id, void.implementation.kind))
+        flips = run.flip(self.count)
         run.fs.coins[self.name] = flips
-        if flips.results[0] is TAILS:
+        if any(side is TAILS for side in flips.results):
             run.fail("coin")
         return False
 
@@ -479,7 +493,10 @@ class Damage(Element):
                 return False  # 「トラッシュできないとき、このワザのダメージはなくなる」（RUL-ENERGY-DISCARD-ATTACKS）
             zero = discarded is not None and discarded.outcome == LACKING_ZERO  # 「（トラッシュできない時、このワザのダメージは0になる）」
         coins = local_coins(self.base, run)
-        if coins:
+        # v0.33: 相手へのダメージの要素だけを決めるこの要素のコイン（ニドラン♂の「つのでつつく」。``coin_name`` のない ``local_gate``）も、受けるポケモンが
+        # ダメージの要素を無効にする状態なら投げるかが決められない（v0.4b と同じ問い）。でんげき（自分へのダメージ）・コインが効果も決めるもの（``coin_name``）は変えない
+        gate_only_damage = self.local_gate is not None and self.coin_name is None and self.target == OPP
+        if coins or gate_only_damage:
             owner = 1 - run.player if self.target == OPP else run.player
             receiver = run.opponent_active() if self.target == OPP else run.attacker()
             from .kernel import first_void
@@ -1081,13 +1098,14 @@ class ExtraEnergyMixed:
 class BenchDamage(Element):
     """相手の控えポケモン（``pokemon_type`` なら、そのタイプのポケモンだけ）の全員に、それぞれダメージ（v0.31。カツラのガーディの「もえひろがる」・
     カツラのリザードの「やきはらう」）。受けるのは控えの並びの順。プラスパワーは変えない（p.257）。``weakness_resistance`` が False なら「弱点・抵抗力」に
-    関係なく。"""
+    関係なく。v0.33: ``own`` なら自分の控えポケモンの全員（p.320 のダメージの (4)。タケシのディグダの「ミニじしん」。``E.SELF_BENCH``）。"""
 
     base: Any
     pokemon_type: EnergyType | None = None
     weakness_resistance: bool = False
     gate: tuple | None = None
     name: str = "bench_damage"
+    own: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def run(self, run: AttackRun) -> bool:
@@ -1095,13 +1113,53 @@ class BenchDamage(Element):
             return False
         if local_coins(self.base, run):
             raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
-        opponent = 1 - run.player
-        targets = [p for p in run.state.players[opponent].bench
+        side = run.player if self.own else 1 - run.player
+        targets = [p for p in run.state.players[side].bench
                    if self.pokemon_type is None or run.state.card_def(p.card).pokemon_type is self.pokemon_type]
         for target in targets:
-            deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=target.pokemon_id,
+            deal_damage(run.res, run.fs, E.SELF_BENCH if self.own else E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=target.pokemon_id,
                         weakness_resistance=self.weakness_resistance)
         return False
+
+
+@dataclass(frozen=True)
+class ChosenBenchDamage(Element):
+    """コインを投げて「おもて」なら（``local_coin``）、相手の控えポケモンを 1 匹選び、そのポケモンにダメージ（v0.33。カツラのサイホーンの「かけぬける」。
+    選ぶのはワザを使ったプレイヤー。決定 ``SELECT_POKEMON``。控えが 1 匹でも出す）。相手に控えがいなければ、処理の対象がないのでコインを投げない（p.309）。
+
+    ダメージの要素（``Phase.DAMAGE``）なので、前のダメージの要素で「ダメージを受けたとき」の効果（はんげき・返す効果）がはたらいていると、その効果は
+    この要素のあと（ダメージの処理がすべて終わったあと。p.89）に処理する。その送る効果を決定をまたいで運ぶ仕組みはない（v0.18d の窓の途中の決定）ので、
+    そのときは決定を出す前に、エンジンの未対応として止める（問い ``decision_after_damage_trigger``。先読みが宣言の前に止める）。"""
+
+    base: Any
+    local_coin: CoinSide | None = HEADS
+    weakness_resistance: bool = False
+    name: str = "bench_damage"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+
+    def run(self, run: AttackRun) -> bool:
+        if local_coins(self.base, run):
+            raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
+        bench = run.state.players[1 - run.player].bench
+        if not bench:
+            return False
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        if run.fs.pending:
+            raise run.res.question("decision_after_damage_trigger",
+                                   f"送る効果 {[d.instance.definition.name for d in run.fs.pending]}・控えポケモン {[p.pokemon_id for p in bench]}")
+        # 枠の値（「とうめい」の結果（T4・T27）・処理した送る効果の数（C34・C35）・こんじょうの写し）を運ぶ。相手の対戦ポケモンへのダメージの結果を、
+        # 決定のあとのきぜつの判定・控えのポケモンの「とうめい」の判定で使う
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        bench = run.state.players[1 - run.player].bench
+        if choices[0] not in [p.pokemon_id for p in bench]:
+            raise RuntimeError(f"選んだポケモン {choices} が、相手の控えにいない（エンジンの不具合）")
+        run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=choices[0],
+                                                weakness_resistance=self.weakness_resistance)
 
 
 @dataclass(frozen=True)
@@ -1203,6 +1261,12 @@ class DiscardOpponentEnergy(Element):
                 return False
             from .kernel import first_void
 
+            if all(run.fs.reception.get(pokemon.pokemon_id) is False for pokemon in targets):
+                # v0.33: 前のダメージの要素で「とうめい」の「おもて」になり、このワザで受けないと決まったポケモンだけへの効果のコイン（はかいでんぱ・
+                # はかいビーム。T19b と同じ問い。v0.31 のスーパーデストロイは前にダメージの要素がないので起こらない）
+                finals = [run.fs.evaded.get(pokemon.pokemon_id) for pokemon in targets]
+                raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}",
+                                       E.evaded_effect_coin_error(targets[0].pokemon_id, finals[0]) if len(targets) == 1 and finals[0] is not None else None)
             if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in targets):
                 raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
             if run.flip(1).results[0] is not self.local_coin:
@@ -1762,7 +1826,7 @@ BUILDERS: dict[type, Any] = {
         DiscardOwnEnergy(EnergyType.FIRE, any_number=True, deck_limit=True, when_lacking=LACKING_CONDITION, timing=TIMING_UNRESOLVED),
         MillOpponentDeck(),
     ),
-    E.FailOnTailsDamage: lambda e: (FailOnTails(only_damage=True), Damage(OPP, Printed())),
+    E.FailOnTailsDamage: lambda e: (FailOnTails(only_damage=True, count=e.coins), Damage(OPP, Printed())),
     E.HealSelfOnHeadsIfDamaged: lambda e: (HealSelfOnHeads(e.counters),),
     E.DiscardEnergyThenRecoverTrainer: lambda e: (
         DiscardOwnEnergy(e.energy_type, when_lacking=LACKING_CANNOT_USE, timing=TIMING_UNRESOLVED), RecoverTrainer(requires="discard"),
@@ -1811,6 +1875,14 @@ BUILDERS: dict[type, Any] = {
     E.DamageTimesOwnCounters: lambda e: (Damage(OPP, OwnCountersTimes(e.per)),),
     E.DamagePlusDefenderCounters: lambda e: (Damage(OPP, PlusDefenderCounters(e.per)),),
     E.DamageAndFullDrain: lambda e: (Damage(OPP, Printed()), Drain("damage", full=True)),
+    # v0.33（docs/cd4-opponent-energy-coins-v0.33.md）
+    E.DamageThenDiscardOpponentEnergy: lambda e: (Damage(OPP, Printed()), DiscardOpponentEnergy(local_coin=HEADS if e.on_heads else None)),
+    E.NoDamageOnTails: lambda e: (Damage(OPP, Printed(), local_gate=HEADS),),
+    E.DamageAndParalyzeOnHeadsElseFail: lambda e: (
+        ReparalysisGuard(), FailOnTails(with_effect=True), Damage(OPP, Printed()), Status(PARALYSIS),
+    ),
+    E.DamageAndOwnBenchDamage: lambda e: (Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), own=True)),
+    E.DamageThenCoinBenchDamage: lambda e: (Damage(OPP, Printed()), ChosenBenchDamage(Fixed(e.bench_damage))),
 }
 
 

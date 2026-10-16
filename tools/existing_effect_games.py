@@ -32,6 +32,13 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   コイキング 4・ギャラドス 3・クラブ 4・キングラー 3・ルージュラ 4、トレーナー 12、水エネルギー 20・超エネルギー 10。組は ``G32`` 対 ``W32``・``G32`` 対
   ``A2``・``W32`` 対 ``B2``。山札からベンチに出すワザの決定は元の手順のまま（1 つ目の選べるもの）。ベンチに空きがなくて使えないワザ（``BENCH_FULL``）と
   CD4 で止まったワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.32 のカードは入っていないので、その組の結果は変わらない。
+- v0.33（``--batch v0.33``。``PAIRINGS_V0_33``。docs/cd4-opponent-energy-coins-v0.33.md）: ``N33``（草・闘）: ニドラン♂ 4・ニドリーノ 3・サカキのニドラン♀ 3・
+  ナツメのコンパン 3・タケシのディグダ 3・タケシのサイホーン 3・カツラのサイホーン 3、トレーナー 12、草エネルギー 12・闘エネルギー 12・超エネルギー 2。
+  ``W33``（水）: コダック（ロケット団）4・ゴルダック（化石の秘密）3・イーブイ 4・わるいシャワーズ 3・シェルダー 4・パルシェン 3、トレーナー 12、水エネルギー 22・
+  超エネルギー 5。``C33``（無色・雷）: ミニリュウ（第1弾・ロケット団）2 枚ずつ・ハクリュー 3・コラッタ 4・わるいラッタ 3・マチスのコイル（PMCG5-039）4・
+  マチスのオニスズメ 3・カツラのドードー 3、トレーナー 12、雷エネルギー 24。組は ``N33`` 対 ``W33``・``C33`` 対 ``N33``・``W33`` 対 ``C33``。v0.33 のワザの
+  決定（相手のエネルギーカード・相手の控え）は元の手順のまま（1 つ目の選べるもの）。かけぬけるの控えを選ぶ前に「ダメージを受けたとき」の効果が残る場面
+  （エンジンの未対応）は、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.33 のカードは入っていないので、その組の結果は変わらない。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -65,7 +72,7 @@ from kyuura_engine import (  # noqa: E402
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.decisions import ATTACH_FROM_DISCARD, DISCARD_ENERGY, SELECT_ATTACK  # noqa: E402
-from kyuura_engine.persistent import attack_barrier, cannot_attack, destiny_bond  # noqa: E402
+from kyuura_engine.persistent import attack_barrier, cannot_attack, destiny_bond, retaliation  # noqa: E402
 from tests.log_audit import log_problems, serialization_problems  # noqa: E402
 from tests.v017_games import play_game  # noqa: E402
 from tools import preset_deck_games as driver  # noqa: E402
@@ -101,7 +108,15 @@ VULPIX = "PMCG1-015"
 NIDORAN_F, ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL = "PMCG2-001", "PMCG2-002", "PMCG2-005", "PMCG3-013", "PMCG2-008", "PMCG2-011"
 MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT = "PMCG1-031", "PMCG1-034", "PMCG3-019", "PMCG1-048", "PMCG2-004", "PMCG3-002", "PMCG3-005"
 V0_32 = (NIDORAN_F, ODDISH, BELLSPROUT, KRABBY, NIDORINA, WEEPINBELL, MAGIKARP, GYARADOS, KINGLER, JYNX, VENONAT, FOSSIL_ZUBAT, GOLBAT)
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32  # ワザの選び方を重ね、動きを数えるカード
+# v0.33（相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザのポケモンと進化先。
+# docs/cd4-opponent-energy-coins-v0.33.md）
+DRAGONAIR, FOSSIL_GOLDUCK, DARK_VAPOREON, LT_SURGES_MAGNEMITE_30, SABRINAS_VENONAT = "PMCG1-069", "PMCG3-016", "PMCG4-023", "PMCG5-039", "PMCG6-006"
+NIDORAN_M, NIDORINO, CLOYSTER, DARK_RATICATE, BROCKS_DIGLETT = "PMCG1-005", "PMCG1-010", "PMCG3-018", "PMCG4-046", "PMCG5-044"
+BROCKS_RHYHORN, LT_SURGES_SPEAROW, GIOVANNIS_NIDORAN_F, BLAINES_RHYHORN, BLAINES_DODUO = "PMCG5-049", "PMCG5-057", "PMCG6-003", "PMCG6-058", "PMCG6-064"
+V0_33 = (DRAGONAIR, FOSSIL_GOLDUCK, DARK_VAPOREON, LT_SURGES_MAGNEMITE_30, SABRINAS_VENONAT, NIDORAN_M, NIDORINO, CLOYSTER, DARK_RATICATE,
+         BROCKS_DIGLETT, BROCKS_RHYHORN, LT_SURGES_SPEAROW, GIOVANNIS_NIDORAN_F, BLAINES_RHYHORN, BLAINES_DODUO)
+DRATINI, RATTATA, MACHAMP, ROCKETS_SNORLAX = "PMCG1-065", "PMCG1-060", "PMCG1-057", "PMCG6-073"
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -132,6 +147,14 @@ DECKS = {
             (GOLBAT, 2), *TRAINERS, (GRASS, 22)),
     # v0.32: 水・超（第1弾・化石の秘密）
     "W32": ((MAGIKARP, 4), (GYARADOS, 3), (KRABBY, 4), (KINGLER, 3), (JYNX, 4), *TRAINERS, (WATER, 20), (PSYCHIC, 10)),
+    # v0.33: 草・闘（第1弾・リーダーズスタジアム・闇からの挑戦）。ナツメのコンパンのはかいビーム（超無）のために超を少し入れる
+    "N33": ((NIDORAN_M, 4), (NIDORINO, 3), (GIOVANNIS_NIDORAN_F, 3), (SABRINAS_VENONAT, 3), (BROCKS_DIGLETT, 3), (BROCKS_RHYHORN, 3),
+            (BLAINES_RHYHORN, 3), *TRAINERS, (GRASS, 12), (FIGHTING, 12), (PSYCHIC, 2)),
+    # v0.33: 水（化石の秘密・ジャングル・ロケット団）。ゴルダックのねんりき（超）のために超を入れる
+    "W33": ((PSYDUCK, 4), (FOSSIL_GOLDUCK, 3), (EEVEE, 4), (DARK_VAPOREON, 3), (SHELLDER, 4), (CLOYSTER, 3), *TRAINERS, (WATER, 22), (PSYCHIC, 5)),
+    # v0.33: 無色・雷（第1弾・ロケット団・リーダーズスタジアム・闇からの挑戦）。ハクリューの進化元は第1弾とロケット団のミニリュウ（名前で進化）
+    "C33": ((DRATINI, 2), (ROCKET_DRATINI, 2), (DRAGONAIR, 3), (RATTATA, 4), (DARK_RATICATE, 3), (LT_SURGES_MAGNEMITE_30, 4), (LT_SURGES_SPEAROW, 3),
+            (BLAINES_DODUO, 3), *TRAINERS, (LIGHTNING, 24)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -139,7 +162,9 @@ PAIRINGS_V0_29 = (("GW29", "LF29"), ("GW29", "B2"), ("LF29", "A2"))
 PAIRINGS_V0_30 = (("F30", "B2"), ("F30", "A2"), ("F30", "G28"))
 PAIRINGS_V0_31 = (("R31", "K31"), ("E31", "P31"), ("R31", "P31"), ("K31", "E31"))
 PAIRINGS_V0_32 = (("G32", "W32"), ("G32", "A2"), ("W32", "B2"))
-BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32}
+PAIRINGS_V0_33 = (("N33", "W33"), ("C33", "N33"), ("W33", "C33"))
+BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
+           "v0.33": PAIRINGS_V0_33}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -149,7 +174,9 @@ RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy
                  "attack_attach_energy", "discard_from_deck", "copy_attack", "attack_failed", "effect_prevented", "effect_skipped", "draw",
                  "forced_switch", "destiny_bond",
                  # v0.32
-                 "bench_from_deck", "bench_from_deck_none")
+                 "bench_from_deck", "bench_from_deck_none",
+                 # v0.33
+                 "forced_switch_skipped")
 
 
 def _attacker(state, command):
@@ -193,6 +220,10 @@ V031_STOPS = {
     # v0.32: ヨガのポーズ（相手の控えポケモンにダメージカウンターがのっている。CD4）
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamagePlusDefenderCounters"
                                                            and any(p.damage for p in st.players[1 - c.player].bench)),
+    # v0.33: かけぬける（相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果がはたらいたあとに、相手の控えを選ぶ。エンジンの未対応）
+    "UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER": lambda st, c: (
+        type(_attack_effect(st, c)).__name__ == "DamageThenCoinBenchDamage" and bool(st.players[1 - c.player].bench)
+        and (retaliation(st, _defender(st, c)) is not None or st.card_def(_defender(st, c).card).id in (MACHAMP, ROCKETS_SNORLAX))),
 }
 
 
@@ -378,6 +409,7 @@ def card_uses(state):
     - ``knocked_out``: きぜつした回数
     - v0.31: ``energy_burn``（エナジーバーン）・``power_heal``（しぜんになおる）・``power_heal_on_attach``（ほのおでかいふく）: 特殊能力のログの数
     - v0.32: ``benched_from_deck``: ワザの効果（なかまをよぶ・ふえる）で山札からベンチに出された回数（``in_play`` にも数える）
+    - v0.33: ``opponent_bench_damage#i``・``self_bench_damage#i``: v0.33 のカードのワザが控えポケモンに与えたダメージのログ
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
     uses = {cid: Counter() for cid in TARGETS}
@@ -418,6 +450,8 @@ def card_uses(state):
                 uses[cid][f"confused_failed#{index}"] += 1
             elif kind == "damage" and not e.get("retaliation") and e.get("target") == "self":
                 uses[cid][f"self_damage#{index}"] += 1
+            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33:
+                uses[cid][f"{e['target']}_damage#{index}"] += 1  # v0.33: 控えポケモンへのダメージ（かけぬける・ミニじしん）
             elif kind == "damage" and not e.get("retaliation") and "target" not in e:
                 uses[cid][f"damage#{index}"] += 1
                 uses[cid][f"base#{index}={e['steps'][0][1]}"] += 1
@@ -462,7 +496,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32 のどれかの 3 組、v0.31 の 4 組）")
+    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32・v0.33 のどれかの 3 組、v0.31 の 4 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

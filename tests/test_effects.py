@@ -40,6 +40,14 @@ V0_32_WITH_TEXT = [
     AttackKey("PMCG2-005", 1), AttackKey("PMCG2-008", 0), AttackKey("PMCG2-008", 1), AttackKey("PMCG2-011", 0), AttackKey("PMCG3-002", 0),
     AttackKey("PMCG3-002", 1), AttackKey("PMCG3-005", 1), AttackKey("PMCG3-013", 0), AttackKey("PMCG3-019", 0),
 ]
+# v0.33 で加えた説明文のあるワザ（25）。docs/cd4-opponent-energy-coins-v0.33.md
+V0_33_WITH_TEXT = [
+    AttackKey("PMCG1-005", 0), AttackKey("PMCG1-010", 0), AttackKey("PMCG1-069", 0), AttackKey("PMCG1-069", 1), AttackKey("PMCG3-016", 0),
+    AttackKey("PMCG3-016", 1), AttackKey("PMCG3-018", 0), AttackKey("PMCG3-018", 1), AttackKey("PMCG4-023", 1), AttackKey("PMCG4-046", 1),
+    AttackKey("PMCG5-039", 0), AttackKey("PMCG5-039", 1), AttackKey("PMCG5-044", 0), AttackKey("PMCG5-044", 1), AttackKey("PMCG5-049", 0),
+    AttackKey("PMCG5-057", 0), AttackKey("PMCG5-057", 1), AttackKey("PMCG6-003", 0), AttackKey("PMCG6-003", 1), AttackKey("PMCG6-006", 0),
+    AttackKey("PMCG6-006", 1), AttackKey("PMCG6-058", 0), AttackKey("PMCG6-058", 1), AttackKey("PMCG6-064", 0), AttackKey("PMCG6-064", 1),
+]
 
 
 class RecordingEffect(AttackEffect):
@@ -187,7 +195,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
                                      AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
-                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT))
+                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -313,7 +321,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   与えるワザの共通の型）
         # + v0.30 の保留の 22 枚と進化元・依存のカード 7 枚、合わせて 29 枚のワザ 52（v0.31。docs/held-cards-v0.31.md）
         # + 山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザの 13 枚のワザ 26（v0.32。docs/bench-search-counter-drain-v0.32.md）
-        self.assertEqual(len(keys), 202)
+        # + 相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚のワザ 28
+        #   （v0.33。docs/cd4-opponent-energy-coins-v0.33.md）
+        self.assertEqual(len(keys), 230)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
