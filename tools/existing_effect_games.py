@@ -55,9 +55,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    EndTurn, IllegalActionError, Phase, UnsupportedError, UseAttack, apply_command, check_invariants, new_game, preset_deck,
+    EndTurn, IllegalActionError, Phase, ResolveDecision, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
+    preset_deck,
 )
-from kyuura_engine.cards import can_pay_cost  # noqa: E402
+from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
+from kyuura_engine.decisions import ATTACH_FROM_DISCARD, DISCARD_ENERGY, SELECT_ATTACK  # noqa: E402
+from kyuura_engine.persistent import attack_barrier, cannot_attack, destiny_bond  # noqa: E402
 from tests.log_audit import log_problems, serialization_problems  # noqa: E402
 from tests.v017_games import play_game  # noqa: E402
 from tools import preset_deck_games as driver  # noqa: E402
@@ -75,7 +78,21 @@ V0_29 = (POLIWAG, ROCKET_EKANS, ROCKET_ZUBAT, ROCKET_ODDISH, ROCKET_KOFFING, ROC
 CHARMANDER, CHARMELEON, ARCANINE, MAGMAR, ROCKET_PONYTA = "PMCG1-014", "PMCG1-017", "PMCG1-019", "PMCG1-020", "PMCG4-013"
 V0_30 = (CHARMANDER, CHARMELEON, ARCANINE, MAGMAR, ROCKET_PONYTA)
 GROWLITHE = "PMCG1-018"
-TARGETS = V0_28 + V0_29 + V0_30  # ワザの選び方を重ね、動きを数えるカード
+# v0.31（v0.30 で保留した 22 枚と、進化元として加えた 7 枚。docs/held-cards-v0.31.md）
+NINETALES, CHARIZARD, ZAPDOS, GASTLY1, MEWTWO, CLEFABLE = "PMCG1-022", "PMCG1-021", "PMCG1-042", "PMCG1-044", "PMCG1-050", "PMCG2-044"
+MOLTRES, SLOWPOKE, DARK_RAPIDASH, DARK_CHARMELEON, DARK_FLAREON, DARK_CHARIZARD = "PMCG3-009", "PMCG3-027", "PMCG4-014", "PMCG4-015", "PMCG4-016", "PMCG4-017"
+DARK_GOLDUCK, DARK_ELECTRODE, MISTYS_GOLDUCK, LT_SURGES_ELECTABUZZ = "PMCG4-022", "PMCG4-028", "PMCG5-032", "PMCG5-041"
+BLAINES_CHARMANDER, BLAINES_CHARMELEON, BLAINES_MAGMAR, BLAINES_NINETALES, BLAINES_ARCANINE = "PMCG6-025", "PMCG6-029", "PMCG6-031", "PMCG6-033", "PMCG6-034"
+LT_SURGES_RAICHU = "PMCG6-041"
+V0_31_TARGETS = (NINETALES, CHARIZARD, ZAPDOS, GASTLY1, MEWTWO, CLEFABLE, MOLTRES, SLOWPOKE, DARK_RAPIDASH, DARK_CHARMELEON, DARK_FLAREON,
+                 DARK_CHARIZARD, DARK_GOLDUCK, DARK_ELECTRODE, MISTYS_GOLDUCK, LT_SURGES_ELECTABUZZ, BLAINES_CHARMANDER, BLAINES_CHARMELEON,
+                 BLAINES_MAGMAR, BLAINES_NINETALES, BLAINES_ARCANINE, LT_SURGES_RAICHU)
+CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU = (
+    "PMCG1-067", "PMCG2-037", "PMCG4-019", "PMCG5-021", "PMCG6-026", "PMCG6-027", "PMCG5-036")
+V0_31_DEPENDENCIES = (CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU)
+V0_31 = V0_31_TARGETS + V0_31_DEPENDENCIES
+VULPIX = "PMCG1-015"
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -89,16 +106,66 @@ DECKS = {
     "LF29": ((ROCKET_VOLTORB, 3), (LT_SURGES_MAGNEMITE, 3), (LT_SURGES_VOLTORB, 3), (ROCKET_MACHOP, 3), (BROCKS_GEODUDE, 3), (ROCKET_DRATINI, 3),
              (BROCKS_LICKITUNG, 3), *TRAINERS, (LIGHTNING, 14), (FIGHTING, 13)),
     "F30": ((CHARMANDER, 4), (CHARMELEON, 3), (GROWLITHE, 4), (ARCANINE, 3), (MAGMAR, 3), (ROCKET_PONYTA, 4), *TRAINERS, (FIRE, 27)),
+    # v0.31: 炎（第1弾・ロケット団・化石の秘密）。リザードンのエナジーバーンのために水・超を少し入れる
+    "R31": ((CHARMANDER, 4), (CHARMELEON, 2), (CHARIZARD, 2), (DARK_CHARMELEON, 2), (DARK_CHARIZARD, 2), (VULPIX, 3), (NINETALES, 2),
+            (ROCKET_PONYTA, 3), (DARK_RAPIDASH, 2), (EEVEE, 3), (DARK_FLAREON, 2), (MOLTRES, 2), *TRAINERS, (FIRE, 17), (WATER, 2)),
+    # v0.31: カツラのポケモン（闇からの挑戦）
+    "K31": ((BLAINES_CHARMANDER, 4), (BLAINES_CHARMELEON, 3), (BLAINES_VULPIX, 4), (BLAINES_NINETALES, 3), (BLAINES_GROWLITHE, 4),
+            (BLAINES_ARCANINE, 3), (BLAINES_MAGMAR, 3), *TRAINERS, (FIRE, 24)),
+    # v0.31: 雷・超（第1弾・ロケット団・リーダーズスタジアム・闇からの挑戦）
+    "E31": ((ZAPDOS, 2), (LT_SURGES_ELECTABUZZ, 3), (LT_SURGES_PIKACHU, 3), (LT_SURGES_RAICHU, 2), (ROCKET_VOLTORB, 3), (DARK_ELECTRODE, 2),
+            (GASTLY1, 3), (MEWTWO, 2), *TRAINERS, (LIGHTNING, 16), (PSYCHIC, 12)),
+    # v0.31: 超・水・無色（化石の秘密・ジャングル・ロケット団・リーダーズスタジアム）
+    "P31": ((SLOWPOKE, 3), (CLEFAIRY, 3), (CLEFABLE, 2), (PSYDUCK, 3), (DARK_GOLDUCK, 2), (MISTYS_PSYDUCK, 3), (MISTYS_GOLDUCK, 2),
+            *TRAINERS, (PSYCHIC, 15), (WATER, 15)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
 PAIRINGS_V0_29 = (("GW29", "LF29"), ("GW29", "B2"), ("LF29", "A2"))
 PAIRINGS_V0_30 = (("F30", "B2"), ("F30", "A2"), ("F30", "G28"))
-BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30}
+PAIRINGS_V0_31 = (("R31", "K31"), ("E31", "P31"), ("R31", "P31"), ("K31", "E31"))
+BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
-                 "damage_prevented", "confusion_damage", "attack_evaded")
+                 "damage_prevented", "confusion_damage", "attack_evaded",
+                 # v0.31
+                 "discard_energy_failed", "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard",
+                 "attack_attach_energy", "discard_from_deck", "copy_attack", "attack_failed", "effect_prevented", "effect_skipped", "draw",
+                 "forced_switch", "destiny_bond")
+
+
+def _attacker(state, command):
+    return state.players[command.player].active
+
+
+def _copier(state, command):
+    effect = state.effects.attack_effect(state.card_def(_attacker(state, command).card).id,
+                                         state.card_def(_attacker(state, command).card).attacks[command.attack_index],
+                                         state.card_def(_attacker(state, command).card).attacks)
+    return type(effect).__name__ in ("CopyOpponentAttackEffect", "ThreeCoinPsychicPower")
+
+
+def _defender(state, command):
+    return state.players[1 - command.player].active
+
+
+# v0.31: 原典で決められない場合・エンジンの未対応で止まったワザを、場から確かめる関数（tests/v017_games.py の ``extra_stop``。止まるのが正しいなら True）
+V031_STOPS = {
+    "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: st.card_def(_attacker(st, c).card).id == PSYDUCK and c.attack_index == 1,  # HC4
+    "UNRESOLVED_PREVENTED_EFFECT_COIN": lambda st, c: attack_barrier(st, _defender(st, c)) is not None,  # HC3
+    "UNRESOLVED_DESTINY_BOND_KNOCKOUT": lambda st, c: destiny_bond(st, _defender(st, c)) is not None,  # HC2
+    "ATTACK_PREVENTED": lambda st, c: cannot_attack(st, _attacker(st, c)) is not None,  # しっぽをふる
+    "UNRESOLVED_DISCARD_DECK_SHORT": lambda st, c: (  # HC6: マグマふんしゅつ（自分の山札 5 枚未満）・やまやき（相手の山札 0 枚）
+        (st.card_def(_attacker(st, c).card).id, c.attack_index) == (BLAINES_MAGMAR, 1) and len(st.players[c.player].deck) < 5
+        or (st.card_def(_attacker(st, c).card).id, c.attack_index) == (MOLTRES, 0) and not st.players[1 - c.player].deck),
+    "NO_DAMAGE_COUNTERS": lambda st, c: st.card_def(_attacker(st, c).card).id == SLOWPOKE and _attacker(st, c).damage == 0,  # ぼーっとする
+    "UNRESOLVED_COPIED_ATTACK": lambda st, c: _copier(st, c),  # HC9
+    "UNSUPPORTED_COPIED_ATTACK": lambda st, c: _copier(st, c),
+    # 試す結果の数が上限（4,096）を超える（れんぞくファイヤーボール・エナジーボム・ほうでん・やまやきで、ついているエネルギーが多いとき）
+    "UNSUPPORTED_PREFLIGHT_LIMIT": lambda st, c: len(_attacker(st, c).energy) >= 6,
+}
 
 
 def deck_cards(label):
@@ -122,12 +189,65 @@ def _uses_so_far(state, player, card_id):
     return used
 
 
+def _v031_decision(state, counts):
+    """v0.31 のカードのワザの決定への答え（元の手順は 1 つ目の選べるもの 1 つを選ぶので、2 枚以上を選ぶ決定・選ばなくてもよい決定に答えられない）。
+    原典で決められない選択・エンジンの未対応の選択（``context`` の ``unresolved_choices``・``unsupported_choices``）は選ばない。"""
+    d = state.decision
+    if d is None or d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_31:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ())) | set(d.context_value("unsupported_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if d.kind == SELECT_ATTACK:
+        counts["v031_select_attack"] += 1
+        return ResolveDecision(d.player, d.id, (options[counts["v031_select_attack"] % len(options)],))
+    if d.kind == ATTACH_FROM_DISCARD:
+        count = d.max_choices  # たいでん: つけられるだけつける（0 枚は HC7）
+    elif d.kind == DISCARD_ENERGY and d.min_choices == 0:
+        count = 1  # やまやき（好きなだけ。0 枚は HC5）・ひばしら（のぞむなら）: 1 枚
+    else:
+        count = max(d.min_choices, min(1, d.max_choices))
+    counts[f"v031_decision_{d.kind}_{count}"] += 1
+    return ResolveDecision(d.player, d.id, tuple(options[:count]))
+
+
+def _v031_power(state, tried, counts):
+    """v0.31 の宣言する特殊能力を使う手順: カツラのロコンの「しぜんになおる」（ダメージがあり、この番にまだ使っていない）・リザードンの「エナジーバーン」
+    （炎でないエネルギーがついていて、その番にまだ使っていない）。使えない特殊状態のときは使わない（拒否を起こさない）。"""
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        card_id = state.card_def(pokemon.card).id
+        blocked = pokemon is p.active and (pokemon.conditions.asleep or pokemon.conditions.paralyzed or pokemon.conditions.confused)
+        if blocked:
+            continue
+        if card_id == BLAINES_VULPIX and pokemon.damage > 0 and (pokemon.pokemon_id, 0) not in state.power_uses_this_turn:
+            counts["v031_power_natural_cure"] += 1
+            return UsePokemonPower(player, pokemon.pokemon_id, 0)
+        marker = ("energy_burn", pokemon.pokemon_id)
+        if card_id == CHARIZARD and marker not in tried and any(state.energy_type_of(pokemon, u) is not EnergyType.FIRE for u in pokemon.energy):
+            tried.add(marker)
+            counts["v031_power_energy_burn"] += 1
+            return UsePokemonPower(player, pokemon.pokemon_id, 0)
+    return None
+
+
 def make_policy(seen: dict, counts: Counter):
-    """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28・v0.29 のカードのワザの選び方を重ねる（モジュールの説明）。"""
+    """tools/preset_deck_games.py の手順（``checks=True``）に、v0.28〜v0.31 のカードのワザの選び方を重ねる（モジュールの説明）。v0.31 からは、
+    v0.31 のカードのワザの決定への答え（``_v031_decision``）と、宣言する特殊能力の使用（``_v031_power``）も重ねる。v0.31 のカードのない局では
+    何もしないので、v0.28〜v0.30 の組の結果は変わらない。"""
     base = driver.make_policy(seen, counts, checks=True)
 
     def policy(state, *, janken_winner, cure, tried):
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
+        if state.phase is Phase.DECISION:
+            return _v031_decision(state, counts) or command
+        if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
+            power = _v031_power(state, tried, counts)
+            if power is not None:
+                return power
         if state.phase is not Phase.MAIN or not isinstance(command, (UseAttack, EndTurn)) or "attack" in tried:
             return command
         player = state.current_player
@@ -141,6 +261,11 @@ def make_policy(seen: dict, counts: Counter):
         if not usable:
             return command
         used = _uses_so_far(state, player, card_id)
+        if card_id in V0_31 and all(used[i] >= 2 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+            # v0.31: エネルギーをトラッシュするワザ（やまやき・メラメラなど）を使い続けると、エネルギーがたまらず、もう一つのワザが使えるようにならない。
+            # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
+            counts[f"v031_wait_{card_id}"] += 1
+            return EndTurn(player)
         choice = min(usable, key=lambda i: (used[i], -(attacks[i].damage or 0), i))
         chosen = UseAttack(player, choice)
         if chosen != command:
@@ -157,7 +282,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
     result = {"seed": seed, "decks": list(labels), "first": seed % 2}
     commands = []
     try:
-        state, commands, observed = play_game(decks, seed, policy=make_policy(seen, counts), max_steps=max_steps)
+        state, commands, observed = play_game(decks, seed, policy=make_policy(seen, counts), max_steps=max_steps, extra_stop=V031_STOPS)
         outcome = state.phase.value
         if state.phase is Phase.HALTED:
             outcome = "halted"
@@ -223,6 +348,7 @@ def card_uses(state):
     - ``protected_by_own_effect``: 自分のワザ（まるまる・からをとじる）の効果で、相手のワザのダメージを受けなかった回数（``damage_prevented``）。
       ``effect_removed_<理由>``: そのカードの持続する効果が消えた回数（``expired``・``retreat``・``switch``・``knock_out`` など）
     - ``knocked_out``: きぜつした回数
+    - v0.31: ``energy_burn``（エナジーバーン）・``power_heal``（しぜんになおる）・``power_heal_on_attach``（ほのおでかいふく）: 特殊能力のログの数
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
     uses = {cid: Counter() for cid in TARGETS}
@@ -244,6 +370,9 @@ def card_uses(state):
             uses[card[e["pokemon"]]]["protected_by_own_effect"] += 1  # 「まるまる」「からをとじる」の効果で、相手のワザのダメージを受けなかった
         elif kind == "persistent_effect_removed" and card[e["pokemon"]] in uses:
             uses[card[e["pokemon"]]][f"effect_removed_{e['reason']}"] += 1
+        elif kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses:
+            # v0.31: 特殊能力（エナジーバーン・しぜんになおる・ほのおでかいふく（つけたカード ``trigger`` があるもの））
+            uses[card[e["pokemon"]]]["power_heal_on_attach" if "trigger" in e else kind] += 1
         if kind == "attack":
             discarded = False
             current = (card[e["pokemon"]], e["attack_index"]) if card[e["pokemon"]] in uses else None
@@ -301,7 +430,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30 のどれかの 3 組）")
+    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30 のどれかの 3 組、v0.31 の 4 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

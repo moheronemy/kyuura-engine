@@ -207,8 +207,38 @@
     "PMCG1-020",
     "PMCG4-013"
   ],
-  "reference_only": [
+  "pool_v0_31": [
+    "PMCG1-022",
     "PMCG1-021",
+    "PMCG1-042",
+    "PMCG1-044",
+    "PMCG1-050",
+    "PMCG2-044",
+    "PMCG3-009",
+    "PMCG3-027",
+    "PMCG4-014",
+    "PMCG4-015",
+    "PMCG4-016",
+    "PMCG4-017",
+    "PMCG4-022",
+    "PMCG4-028",
+    "PMCG5-032",
+    "PMCG5-041",
+    "PMCG6-025",
+    "PMCG6-029",
+    "PMCG6-031",
+    "PMCG6-033",
+    "PMCG6-034",
+    "PMCG6-041",
+    "PMCG1-067",
+    "PMCG2-037",
+    "PMCG4-019",
+    "PMCG5-021",
+    "PMCG6-026",
+    "PMCG6-027",
+    "PMCG5-036"
+  ],
+  "reference_only": [
     "PMCG1-075",
     "PMCG3-003",
     "PMCG1-047",
@@ -7604,6 +7634,101 @@
       }
     },
     {
+      "id": "PMCG1-022",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "キュウコン",
+        "en": "Ninetales"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          38
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ロコン",
+          "en": "Vulpix"
+        },
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かどわかす",
+              "en": "Lure"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の控えポケモンを選んで、相手の対戦ポケモンと入れ替える。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "だいもんじ",
+              "en": "Fire Blast"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを1枚はがしてすてる。",
+              "en": "Discard 1 Fire Energy card attached to Ninetales in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-022",
+        "pokemontcg": [
+          "base1-12"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-018-kyukon/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-018-kyukon/"
+      }
+    },
+    {
       "id": "PMCG1-021",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -7713,6 +7838,2443 @@
           "初版は「ポケモンの分類」「身長」「体重」に誤表記（「かいりきポケモン、身長1.5m、体重70.5kg」はゴーリキーのもの）"
         ],
         "source": "https://nazonobasho.com/pmcg01-016-lizardon/"
+      }
+    },
+    {
+      "id": "PMCG1-042",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンダー",
+        "en": "Zapdos"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          145
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみなり",
+              "en": "Thunder"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分にも30ダメージ。",
+              "en": "Flip a coin. If tails, Zapdos does 30 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "10まんボルト",
+              "en": "Thunderbolt"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分のエネルギーカードを全てはがしてすてる。",
+              "en": "Discard all Energy cards attached to Zapdos in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-042",
+        "pokemontcg": [
+          "base1-16"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-042-thunder/",
+      "jp_print": {
+        "level": 64,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-042-thunder/"
+      }
+    },
+    {
+      "id": "PMCG1-044",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴース",
+        "en": "Gastly"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          92
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "さいみんガス",
+              "en": "Sleeping Gas"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "みちづれ",
+              "en": "Destiny Bond"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "「超」エネルギーカードを1枚はがしてすてる。次の相手の番で自分が「きぜつ」したときには、相手の対戦ポケモンも「きぜつ」する。",
+              "en": "Discard 1 Psychic Energy card attached to Gastly in order to use this attack. If a Pokémon Knocks Out Gastly during your opponent's next turn, Knock Out that Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-044",
+        "pokemontcg": [
+          "base1-50"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-046-ghos/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-046-ghos/"
+      }
+    },
+    {
+      "id": "PMCG1-050",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウツー",
+        "en": "Mewtwo"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          150
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": "Psychic"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についているエネルギーカード×10の追加ダメージをあたえる。",
+              "en": "Does 10 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "バリアー",
+              "en": "Barrier"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「超」エネルギーカードを1枚はがしてすてることによって、次の相手の番の「ワザ」をうけない。",
+              "en": "Discard 1 Psychic Energy card attached to Mewtwo in order to prevent all effects of attacks, including damage, done to Mewtwo during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-050",
+        "pokemontcg": [
+          "base1-10"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-050-mewtwo/",
+      "jp_print": {
+        "level": 53,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-050-mewtwo/"
+      }
+    },
+    {
+      "id": "PMCG2-044",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピクシー",
+        "en": "Clefable"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          36
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ピッピ",
+          "en": "Clefairy"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ゆびをふる",
+              "en": "Metronome"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手のワザの中から1つを選び、それを【自分】のワザとして使う。そのワザを使うのに必要なエネルギーがついていなくてもかまわないが、ほかに必要な条件(エネルギーカードをはがしてすてるなど)がたりないときには使えない。",
+              "en": "Choose 1 of the Defending Pokémon's attacks. Metronome copies that attack except for its Energy costs and anything else required in order to use that attack, such as discarding Energy cards. (No matter what type the Defending Pokémon is, Clefable's type is still Colorless.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ちいさくなる",
+              "en": "Minimize"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番でこのカードが受けるダメージが20へる。",
+              "en": "All damage done by attacks to Clefable during your opponent's next turn is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ ゆびをふる（Metronome）でコピーしたワザの条件",
+          "ja": "「そのワザを使うのに必要なエネルギーがついていなくてもかまわないが、ほかに必要な条件(エネルギーカードをはがしてすてるなど)がたりないときには使えない」",
+          "en": "エネルギーコストに加えて「エネルギーのトラッシュなど、そのワザを使うために必要なこと」も不要と書かれている（日本版と逆の意味）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "X3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-044",
+        "pokemontcg": [
+          "base2-1",
+          "base2-17"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-037-pixy/",
+      "jp_print": {
+        "level": 34,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-037-pixy/"
+      }
+    },
+    {
+      "id": "PMCG3-009",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ファイヤー",
+        "en": "Moltres"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          146
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やまやき",
+              "en": "Wildfire"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の「炎」エネルギーカードを好きなだけはがしてすてる。その後、はがしたのと同じ枚数のカードを相手の山札の上から取り、相手のトラッシュにすてる。",
+              "en": "You may discard any number of Fire Energy cards attached to Moltres when you use this attack. If you do, discard that many cards from the top of your opponent's deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "ゴッドバード",
+              "en": "Dive Bomb"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-009",
+        "pokemontcg": [
+          "base3-12",
+          "base3-27"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-009-fire/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-009-fire/"
+      }
+    },
+    {
+      "id": "PMCG3-027",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドン",
+        "en": "Slowpoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          79
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぼーっとする",
+              "en": "Spacing Out"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードからダメージカウンターを1つとりのぞく。このカードにダメージカウンターがのってない時には、このワザは使えない。",
+              "en": "Flip a coin. If heads, remove a damage counter from Slowpoke. This attack can't be used if Slowpoke has no damage counters on it."
+            }
+          },
+          {
+            "name": {
+              "ja": "ゴミあさり",
+              "en": "Scavenge"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "このカードについている「超」エネルギーカードを1枚はがしてすてなければ、このワザは使えない。自分のトラッシュの中からトレーナーカードを1枚選び、手札に加える。",
+              "en": "Discard 1 Psychic Energy card attached to Slowpoke in order to use this attack. Put a Trainer card from your discard pile into your hand."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-027",
+        "pokemontcg": [
+          "base3-55"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-027-yadon/",
+      "jp_print": {
+        "level": 18,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-027-yadon/"
+      }
+    },
+    {
+      "id": "PMCG4-014",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいギャロップ",
+        "en": "Dark Rapidash"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          78
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ポニータ",
+          "en": "Ponyta"
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "うしろげり",
+              "en": "Rear Kick"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ひばしら",
+              "en": "Flame Pillar"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "のぞむなら、このカードについている「炎」エネルギーカードを1枚トラッシュし、その後、相手の控えポケモンを1匹選んで(「弱点・抵抗力」に関係なく)10ダメージを与えてもよい。",
+              "en": "You may discard 1 Fire Energy card attached to Dark Rapidash when you use this attack. If you do and if your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-014",
+        "pokemontcg": [
+          "base5-44"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-016-warui-gallop/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-016-warui-gallop/"
+      }
+    },
+    {
+      "id": "PMCG4-015",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいリザード",
+        "en": "Dark Charmeleon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          5
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒトカゲ",
+          "en": "Charmander"
+        },
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽでたたく",
+              "en": "Tail Slap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ファイヤーボール",
+              "en": "Fireball"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 70,
+              "modifier": null,
+              "display": "70"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。「おもて」の時は、このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": "Use this attack only if there are any Fire Energy cards attached to Dark Charmeleon. Flip a coin. If heads, discard 1 of those Energy cards. If tails, this attack does nothing (not even damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-015",
+        "pokemontcg": [
+          "base5-32"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-013-warui-lizardo/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-013-warui-lizardo/"
+      }
+    },
+    {
+      "id": "PMCG4-016",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいブースター",
+        "en": "Dark Flareon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          136
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いかり",
+              "en": "Rage"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンターの数×10のダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each damage counter on Dark Flareon."
+            }
+          },
+          {
+            "name": {
+              "ja": "ひあそび",
+              "en": "Playing with Fire"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加して、このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": "Use this attack only if there are any Fire Energy cards attached to Dark Flareon. Flip a coin. If heads, discard 1 of those Energy cards and this attack does 30 damage plus 20 more damage; if tails, this attack does 30 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-016",
+        "pokemontcg": [
+          "base5-35"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-017-warui-booster/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-017-warui-booster/"
+      }
+    },
+    {
+      "id": "PMCG4-017",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいリザードン",
+        "en": "Dark Charizard"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          6
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいリザード",
+          "en": "Dark Charmeleon"
+        },
+        "hp": 80,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つめではじく",
+              "en": "Nail Flick"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "れんぞくファイヤーボール",
+              "en": "Continuous Fireball"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": "×",
+              "display": "50×"
+            },
+            "text": {
+              "ja": "このカードについている「炎」エネルギーカードの数だけコインを投げ、「おもて」の数×50のダメージ。その後、「おもて」の数ぶんの「炎」エネルギーカードを、このカードからはがしてトラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": "Flip a number of coins equal to the number of Fire Energy cards attached to Dark Charizard. This attack does 50 damage times the number of heads. Discard a number of Fire Energy cards attached to Dark Charizard equal to the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-017",
+        "pokemontcg": [
+          "base5-4",
+          "base5-21"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-014-warui-lizardon/",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-014-warui-lizardon/"
+      }
+    },
+    {
+      "id": "PMCG4-022",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいゴルダック",
+        "en": "Dark Golduck"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          55
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コダック",
+          "en": "Psyduck"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "だい3のめ",
+              "en": "Third Eye"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このカードについているエネルギーカードを1枚選び、トラッシュする。その後、山札からカードを3枚引く。",
+              "en": "Discard 1 Energy card attached to Dark Golduck in order to draw up to 3 cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "ちょうねんりき",
+              "en": "Super Psy"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-022",
+        "pokemontcg": [
+          "base5-37"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-022-warui-golduck/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-022-warui-golduck/"
+      }
+    },
+    {
+      "id": "PMCG4-028",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいマルマイン",
+        "en": "Dark Electrode"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          101
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビリリダマ",
+          "en": "Voltorb"
+        },
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ころがりタックル",
+              "en": "Rolling Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "エナジーボム",
+              "en": "Energy Bomb"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このカードについているエネルギーカードをすべてはがし、自分の控えポケモンに好きなようにつける。(自分に控えがいない時、エネルギーカードはトラッシュする)",
+              "en": "Take all Energy cards attached to Dark Electrode and attach them to your Benched Pokémon (in any way you choose). If you have no Benched Pokémon, discard all Energy cards attached to Dark Electrode."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-028",
+        "pokemontcg": [
+          "base5-34"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-029-warui-marumine/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-029-warui-marumine/"
+      }
+    },
+    {
+      "id": "PMCG5-032",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのゴルダック",
+        "en": "Misty's Golduck"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          55
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのコダック",
+          "en": "Misty's Psyduck"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "エクストラビーム",
+              "en": "Electro Beam"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分についているエネルギーカードを、すべてトラッシュする。",
+              "en": "Flip a coin. If tails, discard all Energy cards attached to Misty's Golduck."
+            }
+          },
+          {
+            "name": {
+              "ja": "スーパーデストロイ",
+              "en": "Super Removal"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手と相手の控えポケモン全員から、それぞれエネルギーカードを1枚ずつ選び、トラッシュする。",
+              "en": "Flip a coin. If heads, choose 1 Energy card attached to each of your opponent's Pokémon that has any Energy cards and discard those Energy cards."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-032",
+        "pokemontcg": [
+          "gym2-12"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B4%E3%83%AB%E3%83%80%E3%83%83%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B4%E3%83%AB%E3%83%80%E3%83%83%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-041",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのエレブー",
+        "en": "Lt. Surge's Electabuzz"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          125
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいでん",
+              "en": "Charge"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分のトラッシュに「雷」エネルギーカードがあれば、最大2枚を取り出して、自分につける。",
+              "en": "Take up to 2 Lightning Energy cards from your discard pile and attach them to Lt. Surge's Electabuzz."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほうでん",
+              "en": "Discharge"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "自分についている「雷」エネルギーカードを、すべてトラッシュする。その後、トラッシュした「雷」エネルギーカードの数だけコインを投げ、「おもて」の数×30のダメージ。",
+              "en": "Discard all Lightning Energy cards attached to Lt. Surge's Electabuzz in order to use this attack. Flip a number of coins equal to the number of Lightning Energy cards you discarded. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-041",
+        "pokemontcg": [
+          "gym1-6"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%A8%E3%83%AC%E3%83%96%E3%83%BCLV.28_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%A8%E3%83%AC%E3%83%96%E3%83%BCLV.28_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-025",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのヒトカゲ",
+        "en": "Blaine's Charmander"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          4
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メラメラ",
+              "en": "Kindle"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "自分と相手についているエネルギーカードを1枚ずつ選び、それぞれトラッシュする。",
+              "en": "Discard 1 Energy card attached to Blaine's Charmander in order to use this attack. If the Defending Pokémon has any Energy cards attached to it, choose 1 of them and discard it."
+            }
+          },
+          {
+            "name": {
+              "ja": "きりさく",
+              "en": "Slash"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-025",
+        "pokemontcg": [
+          "gym1-61"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%92%E3%83%88%E3%82%AB%E3%82%B2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%92%E3%83%88%E3%82%AB%E3%82%B2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-029",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのリザード",
+        "en": "Blaine's Charmeleon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          5
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カツラのヒトカゲ",
+          "en": "Blaine's Charmander"
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのつめ",
+              "en": "Fire Claws"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "やきはらう",
+              "en": "Bonfire"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数ぶんの「炎」エネルギーカードを、自分からトラッシュする。トラッシュできない時、このワザは失敗する。相手と相手の控えポケモン全員に、「おもて」の数×10のダメージを、「弱点・抵抗力」に関係なく、それぞれ与える。",
+              "en": "Flip 3 coins. For each heads, discard 1 Fire Energy card attached to Blaine's Charmeleon. If you can't discard Energy cards, this attack does nothing. This attack does 10 damage times the number of heads to each of your opponent's Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-029",
+        "pokemontcg": [
+          "gym2-31"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AA%E3%82%B6%E3%83%BC%E3%83%89_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 29,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AA%E3%82%B6%E3%83%BC%E3%83%89_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-031",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのブーバー",
+        "en": "Blaine's Magmar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          126
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひをふく",
+              "en": "Firebreathing"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "マグマふんしゅつ",
+              "en": "Lava Burst"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "自分の山札の上から、カード5枚トラッシュする。トラッシュした5枚の中にあった「炎」エネルギーカードの数×20のダメージ。",
+              "en": "Discard the top 5 cards of your deck. (If there are fewer than 5 cards in your deck, discard all of them.) This attack does 20 damage for each Fire Energy card you discarded in this way."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-031",
+        "pokemontcg": [
+          "gym1-37"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%96%E3%83%BC%E3%83%90%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 29,
+        "rarity": "◆(U)",
+        "series": "グレンタウンジム カツラ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%96%E3%83%BC%E3%83%90%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-033",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのキュウコン",
+        "en": "Blaine's Ninetales"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          38
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カツラのロコン",
+          "en": "Blaine's Vulpix"
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ほのおでかいふく",
+              "en": "Healing Fire"
+            },
+            "text": {
+              "ja": "このカードに「炎」エネルギーカードを1枚つけるたびに、このカードにのっているダメージカウンターを、1つとりのぞく。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Whenever you attach a Fire Energy card from your hand to Blaine's Ninetales, remove 1 damage counter from it, if it has any. This power stops working when Blaine's Ninetales is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しゃくねつ",
+              "en": "Burn Up"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分についている「炎」エネルギーカードを、すべてトラッシュする。",
+              "en": "Flip a coin. If tails, discard all Fire Energy cards attached to Blaine's Ninetales."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-033",
+        "pokemontcg": [
+          "gym2-21"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 27,
+        "rarity": "★(R)",
+        "series": "グレンタウンジム カツラ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-034",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのウインディ",
+        "en": "Blaine's Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カツラのガーディ",
+          "en": "Blaine's Growlithe"
+        },
+        "hp": 90,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヒートタックル",
+              "en": "Heat Tackle"
+            },
+            "cost": [
+              "fire",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Blaine's Arcanine does 10 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおのあらし",
+              "en": "Firestorm"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 120,
+              "modifier": null,
+              "display": "120"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを3枚トラッシュしなければ、このワザは使えない。",
+              "en": "Discard 3 Fire Energy cards attached to Blaine's Arcanine in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-034",
+        "pokemontcg": [
+          "gym2-1"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%A6%E3%82%A3%E3%83%B3%E3%83%87%E3%82%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 42,
+        "rarity": "★(R)",
+        "series": "グレンタウンジム カツラ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%A6%E3%82%A3%E3%83%B3%E3%83%87%E3%82%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-041",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのライチュウ",
+        "en": "Lt. Surge's Raichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          26
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのピカチュウ",
+          "en": "Lt. Surge's Pikachu"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "バリバリ",
+              "en": "Kerzap"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、30ダメージを追加して、自分についている「雷」エネルギーカードを、すべてトラッシュする。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 30 more damage to the Defending Pokémon and discard all Lightning Energy cards attached to Lt. Surge's Raichu. If tails, this attack does 20 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "でんきタックル",
+              "en": "Thundertackle"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら自分にも20ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, Lt. Surge's Raichu does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-041",
+        "pokemontcg": [
+          "gym2-11"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%A9%E3%82%A4%E3%83%81%E3%83%A5%E3%82%A6LV.38_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%A9%E3%82%A4%E3%83%81%E3%83%A5%E3%82%A6LV.38_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-067",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピッピ",
+        "en": "Clefairy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          35
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "うたう",
+              "en": "Sing"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "ゆびをふる",
+              "en": "Metronome"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "相手の対戦ポケモンの「ワザ」の中から1つを選び、それを自分の「ワザ」としてつかう。",
+              "en": "Choose 1 of the Defending Pokémon's attacks. Metronome copies that attack except for its Energy costs and anything else required in order to use that attack, such as discarding Energy cards. (No matter what type the Defending Pokémon is, Clefairy's type is still Colorless.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ ゆびをふる（Metronome）でコピーしたワザのコストと条件",
+          "ja": "文面は「相手の対戦ポケモンの『ワザ』の中から1つを選び、それを自分の『ワザ』としてつかう。」だけで、コストや条件の扱いは書かれていない [N1]。二次資料は、日本版はエネルギーコストだけを無視すると説明 [X3]。『ポケモンカードオフィシャルブック2000』（2000年2月）p.223 の最新の説明は「相手のワザを1つ選び、それを、自分が持っているワザとして使う。（そのワザに必要なエネルギーがついていなくても、かまわない）」で、解説は「基本的にワザに必要なエネルギー以外はワザの説明にしたがいます」とし、キュウコン（第1弾）の「だいもんじ」を選んだときは炎エネルギーカードを 1 枚トラッシュできなければ失敗する、とする [P43]",
+          "en": "エネルギーコストに加えて「エネルギーのトラッシュなど、そのワザを使うために必要なこと」も不要と明記",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "X3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-067",
+        "pokemontcg": [
+          "base1-5"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-063-pippi/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-063-pippi/"
+      }
+    },
+    {
+      "id": "PMCG2-037",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "イーブイ",
+        "en": "Eevee"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          133
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽをふる",
+              "en": "Tail Wag"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら「しっぽをふる」を受けた相手の対戦ポケモンは、次の相手の番にワザをつかえない。",
+              "en": "Flip a coin. If heads, the Defending Pokémon can't attack Eevee during your opponent's next turn. (Benching either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージ追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-037",
+        "pokemontcg": [
+          "base2-51"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-046-eievui/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-046-eievui/"
+      }
+    },
+    {
+      "id": "PMCG4-019",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "コダック",
+        "en": "Psyduck"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          54
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めまい",
+              "en": "Dizziness"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "山札からカードを1枚引く。",
+              "en": "Draw a card."
+            }
+          },
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": "Water Gun"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": "Does 20 damage plus 10 more damage for each Water Energy attached to Psyduck but not used to pay for this attack. You can't add more than 20 damage in this way."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-019",
+        "pokemontcg": [
+          "base5-65"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-021-koduck/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-021-koduck/"
+      }
+    },
+    {
+      "id": "PMCG5-021",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのコダック",
+        "en": "Misty's Psyduck"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          54
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうのうりょく",
+              "en": "ESP"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを3枚投げる。「おもて」が1枚なら、山札の上からカードを1枚引いて、手札に加える。「おもて」が2枚なら、相手に20ダメージ。「おもて」が3枚なら相手のワザを1つ選び、それを、自分が持っているワザとして使う。(そのワザに必要なエネルギーがついていなくても、かまわない)",
+              "en": "Flip 3 coins. If exactly 1 is heads, draw a card. If exactly 2 are heads, this attack does 20 damage. If all 3 are heads, choose 1 of the Defending Pokémon's attacks. Misty's Psyduck copies that attack except for its Energy costs. (No matter what type the Defending Pokémon is, Misty's Psyduck's type is still Water.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-021",
+        "pokemontcg": [
+          "gym2-90"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B3%E3%83%80%E3%83%83%E3%82%AFLV.18_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 18,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B3%E3%83%80%E3%83%83%E3%82%AFLV.18_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-026",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのロコン",
+        "en": "Blaine's Vulpix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          37
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "しぜんになおる",
+              "en": "Natural Healing"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。このカードにのっているダメージカウンターを、1つとりのぞく。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may remove 1 damage counter from Blaine's Vulpix. This power can't be used if Blaine's Vulpix is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽでまどわす",
+              "en": "Tail Fan"
+            },
+            "cost": [
+              "fire",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-026",
+        "pokemontcg": [
+          "gym1-65"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AD%E3%82%B3%E3%83%B3LV.9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 9,
+        "rarity": "●(C)",
+        "series": "グレンタウンジム カツラ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AD%E3%82%B3%E3%83%B3LV.9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-027",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのガーディ",
+        "en": "Blaine's Growlithe"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          58
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "もえひろがる",
+              "en": "Blaze"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手のベンチにいる「草」ポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Does 10 damage to each Grass Pokémon on your opponent's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-027",
+        "pokemontcg": [
+          "gym1-62"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AC%E3%83%BC%E3%83%87%E3%82%A3LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AC%E3%83%BC%E3%83%87%E3%82%A3LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-036",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのピカチュウ",
+        "en": "Lt. Surge's Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-036",
+        "pokemontcg": [
+          "gym2-84"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%94%E3%82%AB%E3%83%81%E3%83%A5%E3%82%A6LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "クチバシティジム マチス・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%94%E3%82%AB%E3%83%81%E3%83%A5%E3%82%A6LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

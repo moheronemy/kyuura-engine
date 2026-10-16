@@ -54,6 +54,8 @@ def expire_at_turn_end(state: GameState) -> None:
     for p in state.players:
         for pokemon in p.in_play():
             pokemon.retreat_failed_turn = None
+    # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
+    state.energy_burn = ()
     state.add_event("turn_end", player=state.current_player)
 
 
@@ -119,6 +121,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.current_player = player
     state.energy_attachments_this_turn = 0
     state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
+    state.power_uses_this_turn = ()  # v0.31（「自分の番ごとに1回使える」特殊能力を使ったポケモン）
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:

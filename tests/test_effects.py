@@ -21,6 +21,20 @@ from tests.helpers import (
 )
 
 
+# v0.31 で加えた説明文のあるワザ（45）。docs/held-cards-v0.31.md
+V0_31_WITH_TEXT = [
+    AttackKey("PMCG1-021", 0), AttackKey("PMCG1-022", 0), AttackKey("PMCG1-022", 1), AttackKey("PMCG1-042", 0), AttackKey("PMCG1-042", 1),
+    AttackKey("PMCG1-044", 0), AttackKey("PMCG1-044", 1), AttackKey("PMCG1-050", 0), AttackKey("PMCG1-050", 1), AttackKey("PMCG1-067", 0),
+    AttackKey("PMCG1-067", 1), AttackKey("PMCG2-037", 0), AttackKey("PMCG2-037", 1), AttackKey("PMCG2-044", 0), AttackKey("PMCG2-044", 1),
+    AttackKey("PMCG3-009", 0), AttackKey("PMCG3-009", 1), AttackKey("PMCG3-027", 0), AttackKey("PMCG3-027", 1), AttackKey("PMCG4-014", 1),
+    AttackKey("PMCG4-015", 1), AttackKey("PMCG4-016", 0), AttackKey("PMCG4-016", 1), AttackKey("PMCG4-017", 1), AttackKey("PMCG4-019", 0),
+    AttackKey("PMCG4-019", 1), AttackKey("PMCG4-022", 0), AttackKey("PMCG4-028", 1), AttackKey("PMCG5-021", 0), AttackKey("PMCG5-032", 0),
+    AttackKey("PMCG5-032", 1), AttackKey("PMCG5-036", 0), AttackKey("PMCG5-041", 0), AttackKey("PMCG5-041", 1), AttackKey("PMCG6-025", 0),
+    AttackKey("PMCG6-026", 0), AttackKey("PMCG6-027", 0), AttackKey("PMCG6-029", 1), AttackKey("PMCG6-031", 0), AttackKey("PMCG6-031", 1),
+    AttackKey("PMCG6-033", 0), AttackKey("PMCG6-034", 0), AttackKey("PMCG6-034", 1), AttackKey("PMCG6-041", 0), AttackKey("PMCG6-041", 1),
+]
+
+
 class RecordingEffect(AttackEffect):
     """テスト専用の実装: ダメージを与えず、呼ばれたことをログに残すだけ（製品のコードには登録しない）。"""
 
@@ -142,8 +156,10 @@ class DefaultRegistryTest(unittest.TestCase):
         # 「ダブルスピン」・タケシのイシツブテの「いしなげ」・タケシのベロリンガの「たたきつける」（ガイドブックの照合の記録はなく、採用の記録の
         # play_text と合う。scripts/check_card_sources.py）、v0.30 のエネルギーをトラッシュしてダメージを与えるワザ（ヒトカゲの「ひのこ」・リザード／
         # ウインディ／ブーバーの「かえんほうしゃ」は kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明、第4弾のポニータの「ひのこ」は印刷の文面）と
-        # ウインディの「とっしん」（印刷の文面）
-        self.assertEqual(with_text, [AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+        # ウインディの「とっしん」（印刷の文面）。v0.31 で v0.30 の保留の 22 枚と進化元・依存のカードを加えた（V0_31_WITH_TEXT。
+        # どれも採用の記録の play_text（kyuura の印刷の文面・エラッタ・card_differences の最新の説明）と合う。
+        # scripts/check_card_sources.py。docs/held-cards-v0.31.md）
+        self.assertEqual(with_text, sorted([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-014", 1), AttackKey("PMCG1-015", 0),
                                      AttackKey("PMCG1-017", 1), AttackKey("PMCG1-019", 0), AttackKey("PMCG1-019", 1), AttackKey("PMCG1-020", 1),
@@ -164,7 +180,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
                                      AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
-                                     AttackKey("PMCG6-073", 0)])
+                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -288,7 +304,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   タケシのベロリンガの 2 つずつ・ニョロモ・ビリリダマ・ミニリュウ・タケシのイシツブテの 1 つずつ（v0.29。kyuura データの採用）
         # + ヒトカゲの「ひのこ」・リザード・ウインディ・ブーバーの 2 つずつ・第4弾のポニータの 1 つ（v0.30。エネルギーをトラッシュしてダメージを
         #   与えるワザの共通の型）
-        self.assertEqual(len(keys), 124)
+        # + v0.30 の保留の 22 枚と進化元・依存のカード 7 枚、合わせて 29 枚のワザ 52（v0.31。docs/held-cards-v0.31.md）
+        self.assertEqual(len(keys), 176)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -297,10 +314,11 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # フシギバナの「エナジートランス」（v0.5）・カメックスの「あまごい」（v0.6）・フーディンの「ダメージスワップ」（v0.7）
         # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
         # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）、v0.17b で
-        # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた
-        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0), PowerKey("PMCG1-057", 0),
-                                  PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0), PowerKey("PMCG6-061", 0),
-                                  PowerKey("PMCG6-073", 0)))
+        # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた。v0.31 でリザードンの「エナジーバーン」（PMCG1-021）・カツラのロコンの
+        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）
+        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
+                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0), PowerKey("PMCG6-073", 0)))
 
 
 if __name__ == "__main__":

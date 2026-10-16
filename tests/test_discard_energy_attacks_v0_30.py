@@ -89,6 +89,8 @@ FIRE_PRINTED = "自分の「炎」エネルギーカードを1枚はがしてす
 FIRE_LATEST = "自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。"
 PONYTA_PRINTED = "このカードについている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)"
 DISCARD_FIRE = E.DiscardEnergyThenDamage(EnergyType.FIRE)
+# v0.31: 第4弾のポニータのひのこは、トラッシュできないとき印刷の文面のとおりダメージを 0 にする（相手のワザとして使われると起こる）
+DISCARD_FIRE_ZERO = E.DiscardEnergyThenDamage(EnergyType.FIRE, when_lacking="zero")
 # (カード id, ワザの位置) → (名前, 実装, 処理に使う文面, 出典)。出典が None のワザは説明文がない（DamageOnly）
 EXPECTED = {
     (CHARMANDER, 0): ("ひっかく", E.DAMAGE_ONLY, None, None),
@@ -99,7 +101,7 @@ EXPECTED = {
     (ARCANINE, 1): ("とっしん", E.DamageAndSelfDamage(30), "自分にも30ダメージ。", PRINTED),
     (MAGMAR, 0): ("ほのおパンチ", E.DAMAGE_ONLY, None, None),
     (MAGMAR, 1): ("かえんほうしゃ", DISCARD_FIRE, FIRE_LATEST, RUL),
-    (ROCKET_PONYTA, 0): ("ひのこ", DISCARD_FIRE, PONYTA_PRINTED, PRINTED),
+    (ROCKET_PONYTA, 0): ("ひのこ", DISCARD_FIRE_ZERO, PONYTA_PRINTED, PRINTED),
 }
 # エネルギーをトラッシュしてダメージを与えるワザ: (カード id, ワザの位置, 進化元, ダメージの目安)
 DISCARD_ATTACKS = [
@@ -182,8 +184,9 @@ class RegistrationTest(unittest.TestCase):
                 self.assertTrue(pool.is_playable(card_id))
                 self.assertEqual(len(pool.get(card_id).attacks), len([k for k in EXPECTED if k[0] == card_id]))
                 self.assertEqual(pool.get(card_id).powers, ())
+        # v0.31 でキュウコン（第1弾）のだいもんじ（同じ印刷の文面。RUL-ENERGY-DISCARD-ATTACKS の範囲）を加えた
         self.assertEqual(sum(isinstance(e.effect, E.DiscardEnergyThenDamage) for e in
-                             (E.DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index) for k in E.DEFAULT_EFFECTS.attack_keys())), 5)
+                             (E.DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index) for k in E.DEFAULT_EFFECTS.attack_keys())), 6)
 
     def test_printed_texts_are_kept_for_matching(self):
         """印刷の文面（写し）は照合にだけ使い、処理は最新の説明（RUL-）にしたがう。第1弾の 4 つは同じ印刷の文面。"""
@@ -194,12 +197,17 @@ class RegistrationTest(unittest.TestCase):
 
     def test_program(self):
         """要素の並びは、トラッシュ（v0.7 のじこさいせいと共通の要素）→ 相手の対戦ポケモンへの印刷のダメージ。じこさいせいの並びは
-        トラッシュ → すべてとりのぞく（v0.29 までの 1 つの要素を 2 つに分けた。処理・ログは同じ）。"""
+        トラッシュ → すべてとりのぞく（v0.29 までの 1 つの要素を 2 つに分けた。処理・ログは同じ）。v0.31 から、トラッシュできないときの扱い
+        （``when_lacking``。最新の説明の「なくなる」・ポニータの「0になる」・じこさいせいの K3「効果はなくなる」）と、それを見る後の要素の
+        ``requires`` を要素に書く（相手のワザを自分のワザとして使う効果で、トラッシュできない場合が起こるようになった）。"""
         self.assertEqual(programs.BUILDERS[E.DiscardEnergyThenDamage](DISCARD_FIRE),
-                         (programs.DiscardOwnEnergy(EnergyType.FIRE), programs.Damage(programs.OPP, programs.Printed())))
+                         (programs.DiscardOwnEnergy(EnergyType.FIRE, when_lacking=programs.LACKING_NONE),
+                          programs.Damage(programs.OPP, programs.Printed(), requires="discard")))
+        self.assertEqual(programs.BUILDERS[E.DiscardEnergyThenDamage](DISCARD_FIRE_ZERO)[0].when_lacking, programs.LACKING_ZERO)
         recover = E.DiscardEnergyAndRemoveAllCounters(EnergyType.PSYCHIC)
         self.assertEqual(programs.BUILDERS[E.DiscardEnergyAndRemoveAllCounters](recover),
-                         (programs.DiscardOwnEnergy(EnergyType.PSYCHIC), programs.HealAllCounters()))
+                         (programs.DiscardOwnEnergy(EnergyType.PSYCHIC, when_lacking=programs.LACKING_NONE),
+                          programs.HealAllCounters(requires="discard")))
         # v0.17 から加えた型は v0.13 の約束（resolve・resume）を上書きせず、v0.13 の止める関数で確かめる型にも入れない
         self.assertNotIn(E.DiscardEnergyThenDamage, v013_checks.VERIFIED)
         self.assertNotIn("resolve", vars(E.DiscardEnergyThenDamage))
@@ -237,7 +245,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(pool.get(PONYTA).name_ja, pool.get(ROCKET_PONYTA).name_ja)
         self.assertEqual([a.name_ja for a in pool.get(PONYTA).attacks], ["けりとばす", "ほのおのしっぽ"])
         self.assertEqual(E.DEFAULT_EFFECTS.attack_entry(PONYTA, 1).effect, E.DAMAGE_ONLY)
-        self.assertEqual(E.DEFAULT_EFFECTS.attack_entry(ROCKET_PONYTA, 0).effect, DISCARD_FIRE)
+        self.assertEqual(E.DEFAULT_EFFECTS.attack_entry(ROCKET_PONYTA, 0).effect, DISCARD_FIRE_ZERO)
         self.assertEqual(pool.get(ROCKET_PONYTA).hp, 50)
         self.assertEqual(pool.get(PONYTA).hp, 40)
 
@@ -527,20 +535,27 @@ class PreflightTest(unittest.TestCase):
 
 
 class UnreachableTest(unittest.TestCase):
-    def test_no_fire_to_discard_stops_loudly(self):
-        """「トラッシュできないとき」は、必要なエネルギーに「炎」があり基本エネルギーしかない今の対応カードでは起こらない（K3 と同じ扱い。
-        第4弾のポニータの「0になる」と最新の説明の「なくなる」の違いもこの場合だけ）。枠を直接開いて起こしたら、黙って処理せずに
-        ``RuntimeError``（状態を変える前）。"""
+    def test_no_fire_to_discard_follows_the_play_text(self):
+        """「トラッシュできないとき」は、自分のワザとして使うときは必要なエネルギーから起こらない。v0.30 では起こらないのでエンジンの不具合
+        （``RuntimeError``）にしていた。v0.31 の相手のワザを自分のワザとして使う効果（必要なエネルギーはいらない）で起こるようになったので、
+        処理に使う文面のとおりに扱う: 最新の説明（RUL-ENERGY-DISCARD-ATTACKS）の「ダメージはなくなる」はダメージの要素を処理しない、第4弾のポニータ
+        の印刷の文面の「ダメージは0になる」は基本となるダメージを 0 にして計算する（p.321 の 2 段階で計算を終える）。どちらもトラッシュはなく、
+        ログ ``discard_energy_failed`` に扱いを残す。枠を直接開いて起こす（ゆびをふるの経路は tests/test_held_cards_v0_31.py）。"""
         for card_id, index, _, _ in DISCARD_ATTACKS:
             with self.subTest(card=card_id):
                 state = board(attacker(card_id, (WATER, WATER, WATER)))
                 effect = E.DEFAULT_EFFECTS.attack_entry(card_id, index).effect
-                before = full(state)
                 use = open_attack(state, 0, attack_index=index)
                 self.assertEqual(use.key, E.AttackKey(card_id, index))
-                with self.assertRaisesRegex(RuntimeError, "「炎」エネルギーカードがない"):
-                    effect.resolve(state, use)
-                self.assertEqual(full(state), before)
+                since = len(state.log)
+                effect.resolve(state, use)
+                (failed,) = [e for e in events(state, since) if e["kind"] == "discard_energy_failed"]
+                zero = card_id == ROCKET_PONYTA
+                self.assertEqual((failed["outcome"], failed["needed"], failed["attached"]), ("zero" if zero else "none", 1, 0))
+                self.assertNotIn("discard_energy", kinds(state, since))
+                damages = [e for e in events(state, since) if e["kind"] == "damage"]
+                self.assertEqual([(e["amount"], e.get("stopped_after_step_2")) for e in damages], [(0, True)] if zero else [])
+                self.assertEqual(state.players[1].active.damage, 0)
                 self.assertIsNone(state.decision)
 
 

@@ -629,7 +629,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "あやしいひかり", "あやしいひかり", "スターフリーズ", "まんりきばさみ",
                                         # v0.29: アーボの「どくばり」・ドガースの「どくガス」・タケシのズバットの「どくのきば」（PoisonOnHeads）、ミニリュウの
                                         # 「まきつく」・マチスのコイルの「でんきショック」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
-                                        "どくばり", "どくガス", "どくのきば", "まきつく", "でんきショック"]))
+                                        "どくばり", "どくガス", "どくのきば", "まきつく", "でんきショック",
+                                        # v0.31: カツラのロコンの「しっぽでまどわす」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる）
+                                        "しっぽでまどわす"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -34,8 +34,9 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked_out, ko_prevention_offers, track_ko
-from .programs import AttackRun, decision_index, run_elements
+from ..persistent import destiny_bond
+from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked, ko_prevention_offers, track_ko
+from .programs import AttackRun, decision_index, declare, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
@@ -144,6 +145,7 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     state = res.state
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
+    declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
         problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
@@ -165,7 +167,13 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     state = res.state
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
     check_simultaneous(res)
+    bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
+    if bonded and offers:
+        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
+    # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
+    # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
+    capture_post_knockout(res, knocked(res), record=False)
     if res.dry_run:
         raise DryRunComplete()
     res.horizon()
@@ -178,13 +186,42 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     _knock_out_after_attack(res)
 
 
+def _destiny_bond(res: Resolution) -> bool:
+    """v0.31: きぜつの判定の窓で、「みちづれ」（``DestinyBond``）の効果がはたらいているポケモン（番でないプレイヤーの。はたらく番は次の相手の番）が
+    HP 以上なら、相手の対戦ポケモン（番のプレイヤーのバトル場のポケモン）も「きぜつ」する（``res.forced``。ログ ``destiny_bond``）。
+
+    同時のきぜつか（p.324）は決められない（C18 と同じ形）。どちらの読み方でも、サイドを取る順番（番のプレイヤーから）・バトル場に出す順番（番でない
+    プレイヤーから）は同じで、結果が変わるのは勝ち負けが決まる場合（サイドを取り終える・場にポケモンがいなくなる）だけなので、そのときだけ止める（HC2）。
+    相手の対戦ポケモンがすでに HP 以上なら、何もしない。"""
+    state = res.state
+    current = state.current_player
+    target = state.players[current].active
+    triggered = [(owner, pokemon) for owner, pokemon in knocked(res) if owner != current and destiny_bond(state, pokemon) is not None]
+    if not triggered or target is None or any(pokemon is target for _, pokemon in knocked(res)):
+        return False
+    res.forced.add(target.pokemon_id)
+    gone = knocked(res)
+    taken = {player: sum(1 for owner, _ in gone if owner != player) for player in PLAYERS}
+    ends = [
+        (taken[player] and taken[player] >= len(state.players[player].prizes))
+        or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)]
+        for player in PLAYERS
+    ]
+    if any(ends):
+        raise res.question("destiny_bond_knockout", f"ポケモン {[p.pokemon_id for _, p in triggered]} → {target.pokemon_id}")
+    for owner, pokemon in triggered:
+        state.add_event("destiny_bond", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, target_player=current,
+                        target_pokemon=target.card, target_pokemon_id=target.pokemon_id)
+    return True
+
+
 def _knock_out_after_attack(res: Resolution) -> None:
     state = res.state
-    knocked = knocked_out(state)
-    candidates = capture_post_knockout(res, knocked)
+    gone = knocked(res)
+    candidates = capture_post_knockout(res, gone)
     prize_takers = []
-    for owner, pokemon in knocked:
-        PR.knock_out(state, owner, pokemon, simultaneous=len(knocked) > 1)
+    for owner, pokemon in gone:
+        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)
         prize_takers.append(1 - owner)
     _after_knockouts(res, prize_takers, None, candidates)
 
@@ -313,14 +350,17 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     """ワザの途中の決定のあと: 決定を出した要素の続きから（宣言・コイン・それまでの要素は繰り返さない）。"""
     state = res.state
     player, pokemon_id, card_id, attack_index = cont.use
-    key = AttackKey(card_id, attack_index)
-    entry = state.effects.attack_entry(card_id, attack_index)
-    _, attacker = state.find_pokemon(pokemon_id)
-    attack = state.card_def(attacker.card).attacks[attack_index]
+    declared = AttackKey(card_id, attack_index)
+    carried = dict(cont.extra)  # 要素の値は続きの情報から読む（決定の context を直接読まない）
+    copied = carried.get("copied")  # v0.31: 相手のワザを自分のワザとして使っている途中の決定（選んだワザ）
+    key = declared if copied is None else AttackKey(*copied)
+    entry = state.effects.attack_entry(key.card_id, key.attack_index)
+    attack = state.definitions[key.card_id].attacks[key.attack_index]
     program = program_for(entry.effect, attack.name_ja)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=pokemon_id, attack_key=key)
-    run = AttackRun(res, fs, program, attack)
-    run.carried = dict(cont.extra)  # 要素の値は続きの情報から読む（決定の context を直接読まない）
+    run = AttackRun(res, fs, program, attack, declared=declared)
+    run.carried = carried
+    run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
     index = decision_index(program, decision.kind)
     program[index].resume(run, decision, choices)
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）

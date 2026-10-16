@@ -578,13 +578,21 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(kinds - set(BUILDERS), set())
 
     def test_automatic_optional_and_continuous_powers_are_in_the_catalog(self):
-        """宣言しない・決められたときに使う特殊能力は、対応表の 1 か所にある。宣言して使う特殊能力（v0.13 のエンジンが扱う）はない。"""
+        """宣言しない・決められたときに使う特殊能力は、対応表の 1 か所にある。宣言して使う特殊能力（v0.13 のエンジンが扱う）はない。
+
+        v0.31 のカツラのキュウコンの「ほのおでかいふく」（``HealOnEnergyAttach``）は宣言しないが、はたらくのはエネルギーカードをつけたとき
+        （``effects.after_energy_attached``）で、解決の基盤の窓（ワザ・きぜつ・番の終わり）の中ではないので、対応表に入れていない
+        （docs/held-cards-v0.31.md）。ほかの宣言しない特殊能力は今までどおり対応表にあることを確かめる。"""
+        outside_windows = ("heal_on_energy_attach",)
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
             with self.subTest(power=str(key)):
-                expected = not effect.declared or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out")
+                expected = ((not effect.declared and effect.implementation_id not in outside_windows)
+                            or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out"))
                 self.assertEqual(definition is not None, expected)
+        self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
+                          if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows], ["PMCG6-033@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

@@ -53,9 +53,19 @@
   ワザ（``DiscardEnergyThenDamage``。ひのこ・かえんほうしゃ）は、こんらんで「うら」でなければ 1 回で、そのワザのダメージの要素
   （``damage``・``damage_prevented``・「とうめい」の判定）より前・トラッシュしたのはワザを使ったポケモンについていた登録のタイプの基本
   エネルギーカード（ワザの途中の決定を待っている最後のワザだけは 0 回）。ほかのワザにはエネルギーのトラッシュがない。
+  v0.31 から、v0.31 のワザ（docs/held-cards-v0.31.md）のトラッシュは、登録した実装の要素の並び（``resolution.programs.BUILDERS``）で確かめる:
+  トラッシュの要素（``DiscardOwnEnergy``・自分に控えがいない／受けなかったときにトラッシュする ``MoveOwnEnergyToBench``）がなければ 0 回、
+  決まった枚数の要素だけなら（こんらんの「うら」・ワザの失敗・トラッシュできなかった・効果の対象がいない・決定を待つ最後のワザでなければ）その数、
+  トラッシュの要素がダメージの要素より前ならダメージの要素より前・あとならダメージの要素（``damage``・``damage_prevented``・``attack_evaded``）の
+  あと、トラッシュしたのはワザを使ったポケモンについていた、要素のタイプ（None ならどのエネルギーカードでも）のエネルギーカード。相手のワザを
+  自分のワザとして使ったワザ（``copy_attack``）は、そのあとを使ったワザの登録で確かめる。控えポケモンへのダメージ（``target`` が
+  ``opponent_bench``）はポケモンごとに 1 回。新しいイベント（``discard_attached_energy``・``attack_heal``・``power_heal``・``recover_trainer``・
+  ``attach_energy_from_discard``・``attack_attach_energy``・``discard_from_deck``・``energy_burn``・``destiny_bond``）を組み立て直しに含め、
+  宣言する特殊能力のすぐあとの処理に ``energy_burn``・``power_heal`` を加え、「みちづれ」できぜつしたポケモン（``destiny_bond`` の相手）は HP 未満で
+  きぜつしてよい。「とうめい」の判定のあとに続く処理に、相手のエネルギーのトラッシュ・ワザを使えなくする効果・控えへのエネルギーをつける処理を加える。
   ログは記録で、状態の正本ではない（状態とログが食い違えば、どちらかの不具合として報告する）。
-- ``serialization_problems(state)``: 形式 1〜9 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
-  形式 9 の書き出しから後の形式の項目を除いたものと同じになることを確かめる。形式 10 はない。
+- ``serialization_problems(state)``: 形式 1〜10 の書き出しが、表せない状態では ``ValueError``（黙って落とさない）、表せる状態では
+  形式 10 の書き出しから後の形式の項目を除いたものと同じになることを確かめる（v0.31 で形式 10 を加えた）。形式 11 はない。
 """
 
 from __future__ import annotations
@@ -66,9 +76,15 @@ from kyuura_engine import state_to_dict
 from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import (
     ATTACK_ELEMENTS,
+    ATTACK_LOCK_ELEMENT,
     DAMAGE_ELEMENT,
+    ENERGY_ATTACH_ELEMENT,
+    ENERGY_DISCARD_ELEMENT,
     FORCED_SWITCH_ELEMENT,
     AttackImmunityOnHeads,
+    ConvertAttachedEnergy,
+    HealOnEnergyAttach,
+    RemoveOwnCounterOncePerTurn,
     CounterattackDamage,
     DiscardEnergyAndRemoveAllCounters,
     DiscardEnergyThenDamage,
@@ -77,8 +93,9 @@ from kyuura_engine.effects import (
     SuppressOtherPowers,
 )
 from kyuura_engine.evolution import skipped_stage1_basic
+from kyuura_engine.resolution.programs import BUILDERS, Damage, DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage
 from kyuura_engine.serialize import FORMAT_VERSIONS
-from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, NextTurnAttackDamage, Phase
+from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, CannotAttack, NextTurnAttackDamage, Phase
 
 TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 
@@ -86,6 +103,9 @@ TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 COUNTER_BARRIERS = (
     "special_condition", "forced_switch", "forced_switch_skipped", "drain_heal", "drain_heal_skipped", "knock_out", "turn_end", "game_end",
     "halted", "recover_energy", "discard_energy", "remove_all_damage_counters", "persistent_effect_added", "persistent_effect_skipped",
+    # v0.31: ダメージ以外の効果（エネルギーのトラッシュ・つける・回復・トレーナーの回収・山札・引く）と、ワザの失敗・効果を受けない状態
+    "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard", "attack_attach_energy", "discard_from_deck",
+    "draw", "effect_prevented", "effect_skipped", "destiny_bond",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -98,9 +118,9 @@ POKEMON_FIELDS_SINCE = {
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
-    "energy_attached_by_powers_this_turn": 9,
+    "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10,
 }
-LATEST_FORMAT = 9
+LATEST_FORMAT = 10
 
 
 def _project(data_latest: dict, version: int) -> dict:
@@ -136,6 +156,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 8)
     if state.energy_attached_by_powers_this_turn:
         needed = max(needed, 9)
+    if state.power_uses_this_turn or state.energy_burn:
+        needed = max(needed, 10)  # v0.31
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout") or d.context_value("post_knockout") is not None
@@ -163,7 +185,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.6 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.31 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -183,9 +205,33 @@ def _attack_effect_of(state, attack_event: dict | None):
     return None if entry is None else entry.effect
 
 
-def _discard_energy_window_problems(state, attack_event: dict | None, window: Counter, *, log_ended: bool) -> list[str]:
-    """ワザ 1 回のエネルギーのトラッシュ（``discard_energy``）の数が、登録した実装と合うか（v0.30）。"""
-    effect = _attack_effect_of(state, attack_event)
+# v0.31: ワザを使ったポケモンのエネルギーカードをトラッシュしうる要素（トラッシュの要素・自分に控えがいない／受けなかったときにトラッシュする
+# エナジーボム・のぞむならトラッシュするひばしら）
+DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage)
+
+
+def _program_of(effect) -> tuple:
+    """登録した実装の、解決の基盤の要素の並び（v0.31。対応表にない実装は空）。"""
+    builder = None if effect is None else BUILDERS.get(type(effect))
+    return () if builder is None else tuple(builder(effect))
+
+
+def _discard_elements(program) -> list:
+    """要素の並びのうち、ワザを使ったポケモンのエネルギーカードをトラッシュしうる要素（v0.31）。"""
+    return [element for element in program if isinstance(element, DISCARDING_ELEMENTS)]
+
+
+def _discard_position(program) -> str | None:
+    """トラッシュの要素が、相手へのダメージの要素より前（``"before"``）か、あと（``"after"``）か（v0.31。どちらもなければ None）。"""
+    discards = [i for i, element in enumerate(program) if isinstance(element, DISCARDING_ELEMENTS)]
+    damages = [i for i, element in enumerate(program) if isinstance(element, Damage) and element.target != "self"]
+    if not discards or not damages:
+        return None
+    return "before" if discards[0] < damages[0] else "after"
+
+
+def _discard_energy_window_problems(state, effect, window: Counter, *, log_ended: bool) -> list[str]:
+    """ワザ 1 回のエネルギーのトラッシュ（``discard_energy``）の数が、登録した実装と合うか（v0.30。v0.31 から要素の並びで確かめる）。"""
     discarded = window["discard_energy"]
     if isinstance(effect, DiscardEnergyAndRemoveAllCounters):
         if discarded != window["remove_all_damage_counters"]:
@@ -201,8 +247,17 @@ def _discard_energy_window_problems(state, attack_event: dict | None, window: Co
         if discarded not in expected:
             return [f"1 回のワザ（{effect.implementation_id}）で、エネルギーのトラッシュが {discarded} 回（{sorted(expected)} のはず）"]
         return []
-    if discarded:
-        return [f"エネルギーをトラッシュしないワザ（{type(effect).__name__}）で、エネルギーのトラッシュが {discarded} 回"]
+    elements = _discard_elements(_program_of(effect))
+    if not elements:
+        if discarded:
+            return [f"エネルギーをトラッシュしないワザ（{type(effect).__name__}）で、エネルギーのトラッシュが {discarded} 回"]
+        return []
+    exact = [element for element in elements if isinstance(element, DiscardOwnEnergy) and isinstance(element.count, int) and element.gate is None
+             and element.local_coin is None and element.heads_of is None and not element.any_number]
+    interrupted = (window["confusion_damage"] or window["attack_failed"] or window["discard_energy_failed"] or window["effect_skipped"]
+                   or (log_ended and state.decision is not None and state.decision.resume == "attack"))
+    if len(exact) == len(elements) and not interrupted and discarded != sum(element.count for element in exact):
+        return [f"1 回のワザ（{type(effect).__name__}）で、エネルギーのトラッシュが {discarded} 回（{sum(e.count for e in exact)} のはず）"]
     return []
 
 
@@ -242,22 +297,28 @@ def log_problems(state) -> list[str]:
     # 3. ワザ 1 回の要素: 同じポケモンへのダメージの要素は 1 回（相手の対戦ポケモン・自分）。こんらんしたらワザの要素はない
     window = None
     attack_event: dict | None = None
+    window_effect = None  # v0.31: 今のワザの登録の実装（相手のワザを自分のワザとして使ったら、そのワザの実装）
     for e in log + [{"kind": "turn_end", "turn": None}]:
         kind = e["kind"]
         if kind == "attack":
             window = Counter()
             attack_event = e
+            window_effect = _attack_effect_of(state, e)
             continue
         if window is None:
             continue
         if kind in ("turn_end", "game_end", "halted"):
-            problems.extend(_discard_energy_window_problems(state, attack_event, window, log_ended=e["turn"] is None))
+            problems.extend(_discard_energy_window_problems(state, window_effect, window, log_ended=e["turn"] is None))
             if window["damage:opponent"] + window["prevented:opponent_active"] > 1 or window["damage:self"] + window["prevented:self"] > 1:
                 problems.append(f"1 回のワザで同じポケモンへのダメージの要素が 2 回以上 {dict(window)}")
+            if any(count > 1 for key, count in window.items() if key.startswith("damage:bench:") or key.startswith("prevented:bench:")):
+                problems.append(f"1 回のワザで同じ控えポケモンへのダメージの要素が 2 回以上 {dict(window)}")
             if window["confusion_damage"] and (window["damage:opponent"] or window["damage:self"] or window["prevented:opponent_active"]):
                 problems.append("こんらんしたワザに、もとのワザのダメージの要素がある")
-            for once in ("forced_switch", "drain_heal", "confusion_check", "confusion_damage", "persistent_effect_added", "discard_energy",
-                         "remove_all_damage_counters", "recover_energy", "drain_heal_skipped"):
+            for once in ("forced_switch", "drain_heal", "confusion_check", "confusion_damage", "persistent_effect_added",
+                         "remove_all_damage_counters", "recover_energy", "drain_heal_skipped",
+                         # v0.31
+                         "copy_attack", "attack_failed", "recover_trainer", "attach_energy_from_discard", "attack_heal", "destiny_bond"):
                 if window[once] > 1:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
@@ -283,23 +344,42 @@ def log_problems(state) -> list[str]:
             # v0.5: ワザを使ったら番は終わる（p.309）ので、ワザのあと（番の終わりまで）に特殊能力の使用はない（v0.6 のあまごい・
             # v0.7 のダメージスワップも）
             problems.append(f"{e['turn']} 番のワザのあとに特殊能力の使用（{kind}）がある")
+        if kind == "copy_attack":
+            # v0.31: 相手のワザを自分のワザとして使った。このあとの要素は、そのワザの登録の実装で確かめる
+            window_effect = state.effects.attack_entry(*_attack_key(e["copied"])).effect if state.effects.attack_entry(*_attack_key(e["copied"])) else None
         if kind == "discard_energy":
             # v0.30: エネルギーをトラッシュしてダメージを与えるワザは、トラッシュしてからダメージの要素を処理する（RUL-ENERGY-DISCARD-ATTACKS の
-            # 最新の説明の順番）。トラッシュしたのは、ワザを使ったポケモンについていた、登録のタイプの基本エネルギーカード
-            effect = _attack_effect_of(state, attack_event)
-            if window["damage:opponent"] + window["damage:self"] + window["prevented:opponent_active"] + window["prevented:self"] \
-                    + window["evade_check"]:
+            # 最新の説明の順番）。トラッシュしたのは、ワザを使ったポケモンについていた、登録のタイプの基本エネルギーカード。v0.31 から、トラッシュの
+            # 要素とダメージの要素の順番・トラッシュするタイプを、登録の要素の並びで確かめる
+            effect = window_effect
+            program = _program_of(effect)
+            damaged = (window["damage:opponent"] + window["damage:self"] + window["prevented:opponent_active"] + window["prevented:self"]
+                       + window["evade_check"])
+            position = "before" if isinstance(effect, DiscardEnergyThenDamage) else _discard_position(program)
+            if position == "before" and damaged:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザのダメージの要素のあと")
+            if position == "after" and not (window["damage:opponent"] + window["prevented:opponent_active"] + window["attack_evaded"]):
+                problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザの相手へのダメージの要素より前")
             if (e["player"], e["pokemon"]) != (attack_event["player"], attack_event["pokemon"]):
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、ワザを使ったポケモンのものでない")
-            energy_type = getattr(effect, "energy_type", None)
+            elements = _discard_elements(program)
+            types = {getattr(element, "energy_type", None) for element in elements} if elements else {getattr(effect, "energy_type", None)}
             definition = state.card_def(e["energy"])
-            if not definition.is_basic_energy or definition.provides is not energy_type:
-                problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、登録のタイプ {energy_type} の基本エネルギーカードでない")
+            if None in types:
+                if definition.category != "energy":
+                    problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、エネルギーカードでない")
+            elif not definition.is_basic_energy or definition.provides not in types:
+                problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、登録のタイプ {types} の基本エネルギーカードでない")
         if kind == "damage":
-            window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
+            if e.get("target") == "opponent_bench":
+                window[f"damage:bench:{e['pokemon_id']}"] += 1  # v0.31: 控えポケモンへのダメージ
+            else:
+                window["damage:retaliation" if e.get("retaliation") else "damage:self" if e.get("target") == "self" else "damage:opponent"] += 1
         elif kind == "damage_prevented":
-            window[f"prevented:{e['target']}"] += 1
+            if e["target"] == "opponent_bench":
+                window[f"prevented:bench:{e['pokemon_id']}"] += 1
+            else:
+                window[f"prevented:{e['target']}"] += 1
         else:
             window[kind] += 1
 
@@ -337,6 +417,7 @@ def log_problems(state) -> list[str]:
     rebirth_pending: list[dict] = []
     rebirth_answered: dict | None = None  # 直前の答え（宣言なら、すぐあとに return_to_hand が続くはず）
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
+    destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
 
     def working_gases() -> list[tuple[int, SuppressOtherPowers]]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
@@ -504,7 +585,7 @@ def log_problems(state) -> list[str]:
     for e in log:
         kind = e["kind"]
         prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
-        if kind not in ("move_energy", "power_attach_energy", "move_damage_counter"):
+        if kind not in ("move_energy", "power_attach_energy", "move_damage_counter", "energy_burn", "power_heal"):
             if declared is not None:
                 problems.append(
                     f"{declared[0]} 番の特殊能力の宣言（ポケモン {declared[2]}）のすぐあとに、その処理（move_energy・power_attach_energy・"
@@ -569,6 +650,12 @@ def log_problems(state) -> list[str]:
                 follows = kind == "damage" and e.get("pokemon_id", ids.get(e["pokemon"])) == pid and e["amount"] > 0
             elif element == FORCED_SWITCH_ELEMENT:
                 follows = kind == "forced_switch" and e["old_active_pokemon_id"] == pid
+            elif element == ENERGY_DISCARD_ELEMENT:  # v0.31: 相手のエネルギーカードのトラッシュ（スーパーデストロイ・メラメラ）
+                follows = kind == "discard_attached_energy" and e["pokemon_id"] == pid
+            elif element == ATTACK_LOCK_ELEMENT:  # v0.31: 次の相手の番にワザを使えなくする効果（しっぽをふる）
+                follows = kind == "persistent_effect_added" and e["pokemon_id"] == pid
+            elif element == ENERGY_ATTACH_ELEMENT:  # v0.31: 控えポケモンにエネルギーをつける（エナジーボム）
+                follows = kind == "attack_attach_energy" and e["to_pokemon_id"] == pid
             elif kind == "special_conditions_removed" and e["pokemon_id"] == pid and e["reason"] == "replaced":
                 follows, expect = True, (pid, element, reaches)  # 置きかえてから、その特殊状態になる
             else:
@@ -700,6 +787,12 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], e["condition"], blocked=replaced.get(e["pokemon_id"]))
         elif kind == "forced_switch":
             received(e, e["old_active_pokemon_id"], FORCED_SWITCH_ELEMENT)
+        elif kind == "discard_attached_energy":  # v0.31
+            received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)
+        elif kind == "attack_attach_energy":
+            received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
+        elif kind == "persistent_effect_added" and e["persistent_effect"] == CannotAttack.kind:
+            received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)
         if kind == "damage" and attack_window is not None and not e.get("retaliation"):
             problems.extend(attack_damage_set_problems(e))  # v0.27
         if kind == "special_conditions_removed" and e["reason"] == "replaced":
@@ -1081,6 +1174,98 @@ def log_problems(state) -> list[str]:
             using_trainer[e["player"]] = None
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
+        elif kind == "energy_burn":
+            # v0.31: 特殊能力（エナジーバーン）。ついているエネルギーのタイプだけが変わる（カードは動かない）。直前に同じポケモンの宣言
+            if declared != (e["turn"], e["player"], e["pokemon_id"]):
+                problems.append(f"{e['turn']} 番の energy_burn の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
+            declared = None
+            card_id, _, index = e["power"].partition("@power")
+            entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
+            if entry is None or not isinstance(entry.effect, ConvertAttachedEnergy) or e["pokemon_id"] not in top \
+                    or state.cards[top[e["pokemon_id"]]].card_id != card_id:
+                problems.append(f"{e['turn']} 番の energy_burn の特殊能力 {e['power']} が、使ったポケモンのエネルギーのタイプを変える特殊能力ではない")
+            if sorted(e["energies"]) != sorted(energy.get(e["pokemon_id"], [])):
+                problems.append(f"{e['turn']} 番の energy_burn のエネルギー {e['energies']} が、ログから組み立てた {energy.get(e['pokemon_id'])} と違う")
+        elif kind == "power_heal":
+            # v0.31: 特殊能力のダメージカウンターをとりのぞく処理。宣言する（しぜんになおる。直前に同じポケモンの宣言）か、炎エネルギーカードを
+            # つけたとき（ほのおでかいふく。trigger はつけたカードで、このポケモンについている炎の基本エネルギーカード）
+            pid = e["pokemon_id"]
+            card_id, _, index = e["power"].partition("@power")
+            entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
+            if "trigger" in e:
+                if entry is None or not isinstance(entry.effect, HealOnEnergyAttach) or e["trigger"] not in energy.get(pid, []) \
+                        or state.card_def(e["trigger"]).provides is not entry.effect.energy_type:
+                    problems.append(f"{e['turn']} 番の power_heal（ポケモン {pid}）が、ついた {e['trigger']} でとりのぞく特殊能力の処理ではない")
+                if pid in exclusive:
+                    problems.append(f"{e['turn']} 番に、{exclusive[pid]} のポケモン {pid} の「ほのおでかいふく」がはたらいた")
+            else:
+                if declared != (e["turn"], e["player"], pid):
+                    problems.append(f"{e['turn']} 番の power_heal の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
+                declared = None
+                if entry is None or not isinstance(entry.effect, RemoveOwnCounterOncePerTurn):
+                    problems.append(f"{e['turn']} 番の power_heal の特殊能力 {e['power']} が、宣言してとりのぞく特殊能力ではない")
+            if e["amount"] <= 0 or e["amount"] != e["counters"] * state.rules.damage_per_counter or e["damage_before"] != damage[pid]:
+                problems.append(f"{e['turn']} 番の power_heal の量 {e['amount']}・前のダメージ {e['damage_before']} が合わない（ログ {damage[pid]}）")
+            damage[pid] -= e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の power_heal のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind == "attack_heal":
+            # v0.31: ワザ（ぼーっとする）で、ワザを使ったポケモンのダメージカウンターをとりのぞく
+            pid = e["pokemon_id"]
+            if attack_window is None or pid != attack_window["pokemon_id"] or e["damage_before"] != damage[pid]:
+                problems.append(f"{e['turn']} 番の attack_heal（ポケモン {pid}）が、そのポケモンのワザの処理の中にない・前のダメージが合わない")
+            damage[pid] -= e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の attack_heal のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind == "discard_attached_energy":
+            # v0.31: ワザ（スーパーデストロイ・メラメラ）で、相手のポケモンについているエネルギーカードを持ち主のトラッシュへ
+            pid = e["pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or e["energy"] not in energy.get(pid, []) \
+                    or attack_window is None or e["attacker"] != attack_window["player"] or e["player"] == attack_window["player"]:
+                problems.append(f"{e['turn']} 番の相手のエネルギーのトラッシュ {e['energy']} が、ログから組み立てた相手のポケモン {pid} のエネルギーにない")
+            else:
+                energy[pid].remove(e["energy"])
+                discard[e["player"]].append(e["energy"])
+        elif kind == "recover_trainer":
+            # v0.31: ワザ（ゴミあさり）で、ワザを使ったプレイヤーのトラッシュのトレーナーカード 1 枚を手札に加える
+            uid = e["card"]
+            if uid not in discard[e["player"]] or state.card_def(uid).category != "trainer":
+                problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのトレーナーカードにない")
+            else:
+                discard[e["player"]].remove(uid)
+                hand[e["player"]].append(uid)
+        elif kind == "attach_energy_from_discard":
+            # v0.31: ワザ（たいでん）で、ワザを使ったプレイヤーのトラッシュの基本エネルギーカードを、ワザを使ったポケモンにつける
+            pid = e["pokemon_id"]
+            if not 1 <= len(e["cards"]) <= 2 or attack_window is None or pid != attack_window["pokemon_id"]:
+                problems.append(f"{e['turn']} 番のトラッシュからつけたエネルギー {e['cards']} の枚数・ポケモンが合わない")
+            for uid in e["cards"]:
+                if uid not in discard[e["player"]] or not state.card_def(uid).is_basic_energy:
+                    problems.append(f"{e['turn']} 番につけたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
+                    continue
+                discard[e["player"]].remove(uid)
+                energy.setdefault(pid, []).append(uid)
+        elif kind == "attack_attach_energy":
+            # v0.31: ワザ（エナジーボム）で、ワザを使ったポケモンのエネルギーカードを、自分の控えポケモンにつける（同じカード）
+            source, target = e["pokemon_id"], e["to_pokemon_id"]
+            if source == target or target not in in_play or pokemon_owner.get(target) != e["player"] or e["energy"] not in energy.get(source, []):
+                problems.append(f"{e['turn']} 番の控えにつけたエネルギー {e['energy']}（{source} → {target}）が、ログから組み立てた場と合わない")
+            else:
+                energy[source].remove(e["energy"])
+                energy[target].append(e["energy"])
+        elif kind == "discard_from_deck":
+            # v0.31: ワザ（やまやき・マグマふんしゅつ）で、山札の上からカードをトラッシュする（山札は組み立て直さないので、持ち主・手札とトラッシュに
+            # ないことで確かめる）
+            for uid in e["cards"]:
+                if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]]:
+                    problems.append(f"{e['turn']} 番に山札からトラッシュしたカード {uid} が、プレイヤー {e['player']} の山札のカードではない")
+                    continue
+                discard[e["player"]].append(uid)
+        elif kind == "destiny_bond":
+            # v0.31: 「みちづれ」の効果のポケモンがきぜつしたので、相手の対戦ポケモンもきぜつする（ダメージではない）
+            if e["pokemon_id"] in in_play and damage[e["pokemon_id"]] < state.card_def(top[e["pokemon_id"]]).hp:
+                problems.append(f"{e['turn']} 番の「みちづれ」（ポケモン {e['pokemon_id']}）が、きぜつしていないポケモンの効果ではたらいた")
+            destiny_knocked.add(e["target_pokemon_id"])
         elif kind == "knock_out":
             pid = ids[e["pokemon"]]
             if pid not in in_play:
@@ -1097,8 +1282,9 @@ def log_problems(state) -> list[str]:
                             f"{e['turn']} 番に「こんじょう」を使えるポケモン {pid} が、使うかの決定（ko_prevention_declined・ko_prevention_declared）"
                             "がないまま、きぜつした（G10・A4）"
                         )
-            if damage[pid] < state.card_def(e["pokemon"]).hp:
+            if damage[pid] < state.card_def(e["pokemon"]).hp and pid not in destiny_knocked:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
+            destiny_knocked.discard(pid)
             rkey, rpower = rebirth_power(e["pokemon"])
             if rkey is not None and pid in in_play:
                 # v0.12: 「ふしちょう」を使えるか（きぜつするときのねむり・マヒ・こんらん（P13〜P17）・はたらいているかがくへんかガス（P18））

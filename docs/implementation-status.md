@@ -91,7 +91,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 照合はスキャンによる | 公式ルールとカードのページは Internet Archive のスキャン [J38] を画像で読んだ。印刷物の実物は確かめていない |
 | 先攻の最初の番にワザを使えること | 本文（pp.306〜325）を画像で通読した範囲では制限の規定がない（最初の番の規定は進化だけ、p.310）。規定がないことの確認なので、読み落としの可能性は残る。kyuura は当時の資料から「制限しない」と判断している（first_turn_actions） |
 | ポニータ（PMCG1-016）のワザ名 | kyuura は「けりとばす」、『オフィシャルブック2000』p.75 は「けとばす」。どちらが第1弾の印刷どおりかは未確認（[カードデータの由来](data-provenance.md)） |
-| 参照カード（PMCG1-021・075・PMCG3-003・PMCG1-047。v0.4e までは PMCG1-011 フシギバナ、v0.5 では PMCG1-032 カメックス、v0.6 では PMCG1-049 フーディン、v0.10 では PMCG6-061 サカキのカイリキー。どれも照合して対応にした） | 対戦には使わないので、『オフィシャルブック2000』と照合していない（リザードン（PMCG1-021。登録のないパワー「エナジーバーン」とワザ「ほのおのうず」）は v0.7 で照合していない。化石の秘密のベトベター（PMCG3-003）は v0.8 で p.47 と照合したが、「ちいさくなる」が未実装なので参照カードのまま。第1弾のゴースト（PMCG1-047）は v0.9 で p.160 の見出しと「ワザ」欄を照合したが、「ゆめくい」（ワザの失敗）が未実装なので参照カードのまま。PMCG1-014 ヒトカゲは、v0.2a で「ひっかく」を登録するために p.63 と照合した（v0.30 で「ひのこ」を kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明で登録し、対戦用にした。参照カードではなくなった）。きずぐすりは v0.2b、ドードー（PMCG1-061）は v0.2d で対戦用に移し、p.254・p.231 と照合した） |
+| 参照カード（PMCG1-075・PMCG3-003・PMCG1-047。v0.30 までは PMCG1-021 リザードンも（v0.31 で対応にした）。v0.4e までは PMCG1-011 フシギバナ、v0.5 では PMCG1-032 カメックス、v0.6 では PMCG1-049 フーディン、v0.10 では PMCG6-061 サカキのカイリキー。どれも照合して対応にした） | 対戦には使わないので、『オフィシャルブック2000』と照合していない（リザードン（PMCG1-021）は v0.7 で照合していない（v0.31 で kyuura データの採用で対応にした。ガイドブックとは照合していない）。化石の秘密のベトベター（PMCG3-003）は v0.8 で p.47 と照合したが、「ちいさくなる」が未実装なので参照カードのまま。第1弾のゴースト（PMCG1-047）は v0.9 で p.160 の見出しと「ワザ」欄を照合したが、「ゆめくい」（ワザの失敗）が未実装なので参照カードのまま。PMCG1-014 ヒトカゲは、v0.2a で「ひっかく」を登録するために p.63 と照合した（v0.30 で「ひのこ」を kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明で登録し、対戦用にした。参照カードではなくなった）。きずぐすりは v0.2b、ドードー（PMCG1-061）は v0.2d で対戦用に移し、p.254・p.231 と照合した） |
 | トレーナー 3 枚の図版の版 | p.254 のきずぐすり・ポケモンいれかえの図版には番号（⑦・⑲）があり、第1弾の版ではない可能性が高い。どの版の文面かは確かめていない。処理は最新の説明にしたがうので影響しない |
 | 先攻の最初の番にトレーナーを使えること | ワザと同じく、本文に制限の規定がないことの確認（読み落としの可能性は残る）。kyuura first_turn_actions |
 | 基本エネルギーの名前 | p.318 は基本エネルギーカードに名前が書かれていないとする。名前（「炎エネルギー」など）は kyuura の値をそのまま使っている（同じ名前の枚数制限の対象外なので処理には影響しない） |
@@ -119,23 +119,32 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | マヒ状態のポケモンが再びマヒの効果を受けたときに、回復する番が最初の番とあとの番で違う場合（v0.3b） | `UnsupportedError`（`UNRESOLVED_REPARALYSIS_RECOVERY_TURN`。コインの前）。回復する番が同じなら処理する。対応カード（キャタピー）では起こらない。test_sleep_paralysis.py `test_reparalysis_with_a_different_recovery_turn_is_unresolved` |
 | こんらんしたワザの 20 ダメージに、ワザを使うポケモンについているプラスパワー・ディフェンダーを計算するか（v0.3c） | ついていれば、こんらんのコインを投げる前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`）で拒否。自然な対戦 36 局で 2 回起こった。test_confusion_attacks.py `UnresolvedModifierTest` |
 | 「にげる」に失敗したあとベンチに戻り（こんらんが消え）、同じ番にバトル場に戻ったポケモンが「にげる」を宣言できるか（v0.3c） | `Retreat` を `UnsupportedError`（`UNRESOLVED_RETREAT_AFTER_CONFUSION_CLEARED`。エネルギー・コインの前）で拒否。次の番には宣言できる。test_confusion_retreat.py `test_failed_pokemon_back_in_the_battle_field_is_unresolved` |
-| ワザの説明にコスト（エネルギーのトラッシュなど）があるワザで、こんらんの「うら」のときにコストを払うか（v0.3c） | 対応カードにない（決めていない。そのワザを加えるときに照合する） |
+| ワザの説明にコスト（エネルギーのトラッシュなど）があるワザで、こんらんの「うら」のときにコストを払うか（v0.3c） | 対応カードにない（決めていない。そのワザを加えるときに照合する）。v0.31: 炎エネルギーカードをトラッシュして大きなダメージを与えるワザは RUL-ENERGY-DISCARD-ATTACKS（ワザの効果。「うら」ならトラッシュしない）。「はがしてすてる」のほかのワザ（ほのおのうず・10まんボルト・みちづれ・バリアー・やまやき・ゴミあさり）は決められないので、こんらん状態で使うときだけ宣言のあとに `UNRESOLVED_DISCARD_ENERGY_TIMING` で止める（HC1） |
 | 進化したあとの HP が、のっているダメージ以下になる場合（きぜつするか・いつ判定するか）（v0.4a） | `EvolvePokemon` を `UnsupportedError`（`UNRESOLVED_EVOLUTION_HP`）で拒否（状態を変える前）。対応カード（パラセクト・ジュゴン）は HP が増えるので起こらない。v0.4c のコクーン（HP 80）→ スピアー（HP 80）は HP が同じで、きぜつしていないコクーンでは起こらない（2 進化でも同じ止め方。HP 70 にしたテスト専用のスピアーで確かめた）。test_evolution_v0_4a.py `test_damage_at_or_above_the_new_hp_is_unresolved`・test_stage2_v0_4c.py `test_same_hp_evolution_and_the_unresolved_hp_case` |
 | あまごいでつけたあと、その番にまだ手札からつける通常の操作をしていないときの、通常の操作（v0.6。p.310「1回の自分の番ごとに1枚だけ」にあまごいでつけたカードを数えるか） | カードを動かす前に `AttachEnergy` を `UnsupportedError`（`UNRESOLVED_ATTACH_AFTER_POWER_ATTACH`）で拒否（ほかの確認がすべて通ったあと）。状態・乱数・ログは変わらない。次の自分の番には通常の操作ができる。通常の操作でつけたあとのあまごいは使える（どちらの読み方でも同じ。R12）。自然な対戦 80 局で 17 回止めた。test_rain_dance_v0_6.py `test_attaching_from_hand_after_rain_dance_is_not_decided`・test_unresolved_boundaries_v0_4e.py `AttachAfterPowerAttachBoundaryTest`（[rain-dance-v0.6.md](rain-dance-v0.6.md) の R13） |
 | 「とうめい」がはたらいているゴーストに「ダメージ → ワザを使う側のコイン → 相手を特殊状態にする」ワザを使い、ダメージの要素の「とうめい」が「おもて」になったあと、そのワザのコイン（受けないポケモンへの効果だけを決める）を投げるか（v0.9） | ダメージの要素の最終ダメージが 0 より大きい（「とうめい」のコインを投げうる）とき、ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EVADED_EFFECT_COIN`）で拒否。状態も乱数も変わらない。最終ダメージが 0 なら止めない。自然な対戦 80 局で 43 回止めた。test_transparency_v0_9.py `EvadedEffectCoinTest`・`CoinIndependenceTest`・test_unresolved_boundaries_v0_4e.py `EvadedEffectCoinBoundaryTest`（[transparency-v0.9.md](transparency-v0.9.md) の T19b） |
 | ゴースの「エナジーへんかん」で、トラッシュにエネルギーカードがあるのに 0 枚を選べるか（v0.9。「最大2枚」が 0 枚を含むか） | 決定で 0 枚を選ぶと `ResolveDecision` を `UnsupportedError`（`UNRESOLVED_RECOVER_ZERO_ENERGY`）で拒否。決定は待ったまま（1 枚以上を選び直せる）。test_haunter_line_v0_9.py `test_zero_cards_is_unresolved`・test_unresolved_boundaries_v0_4e.py `RecoverZeroEnergyBoundaryTest`（[haunter-line-v0.9.md](haunter-line-v0.9.md) の H4） |
-| 1 つのワザで、複数の「とうめい」のポケモンがダメージや効果を受けるときのコインの順番（v0.9） | 対応カードにベンチ・複数のポケモンにダメージや効果を与えるワザがないので起こらない（決めていない。そのワザを加えるときに、コインの前に止める処理を加える。[transparency-v0.9.md](transparency-v0.9.md) の T27） |
+| 1 つのワザで、複数の「とうめい」のポケモンがダメージや効果を受けるときのコインの順番（v0.9） | 対応カードにベンチ・複数のポケモンにダメージや効果を与えるワザがないので起こらない（決めていない。そのワザを加えるときに、コインの前に止める処理を加える。[transparency-v0.9.md](transparency-v0.9.md) の T27）。v0.31: カツラのリザードの「やきはらう」などで起こるので、ワザの宣言の前に `UnsupportedError`（`UNRESOLVED_TRANSPARENCY_COIN_ORDER`）で止める（[held-cards-v0.31.md](held-cards-v0.31.md) 5 章） |
 | カイリキーがワザのダメージできぜつし、ワザを使ったポケモンが「はんげき」のダメージできぜつする（「はんげき」がなければきぜつしない）とき、2 匹が「同時に「きぜつ」した」ことになるか（v0.10。p.324 の「1つのワザや特殊能力などによって引き起こされることがら」に、ワザがはたらかせた特殊能力のダメージが含まれるか） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT`）で拒否（コインのどの結果でもその場合になりうるとき）。状態・乱数・ログは変わらない。勝者を推測で決めない。自然な対戦 80 局で 1 回、ストレス実行 400 局で 21 回起こった。test_counterattack_v0_10.py `test_both_knocked_out_by_counter_is_unresolved`・`CoinIndependenceTest`・test_unresolved_boundaries_v0_4e.py `CounterattackDoubleKnockoutBoundaryTest`（[counterattack-v0.10.md](counterattack-v0.10.md) の C18） |
-| 1 つのワザで、2 つ以上の「はんげき」がはたらくときに与える順番（v0.10） | 対応カードに、相手の複数のポケモンにダメージを与えるワザがないので起こらない（決めていない。起こったらエンジンの不具合として `RuntimeError`。そのワザを加えるときに、宣言の前に止める処理を加える。[counterattack-v0.10.md](counterattack-v0.10.md) の C34・C35） |
+| 1 つのワザで、2 つ以上の「はんげき」がはたらくときに与える順番（v0.10） | 対応カードに、相手の複数のポケモンにダメージを与えるワザがないので起こらない（決めていない。起こったらエンジンの不具合として `RuntimeError`。そのワザを加えるときに、宣言の前に止める処理を加える。[counterattack-v0.10.md](counterattack-v0.10.md) の C34・C35）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS` で止める |
 | サカキのカイリキーの「こんじょう」を使えるポケモンが、ワザのダメージで HP 以上になり、同じワザでそのポケモンに効果（特殊状態・入れ替え）を与えるとき、「おもて」で「きぜつ」しなかったポケモンがその効果を受けるか（v0.11。こんじょうはワザのあとのきぜつの判定で使う（p.309）が、HP 以上になったポケモンにはあとの効果を与えない（v0.4d。p.89）） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT`）で拒否（ダメージの候補のどれかで HP 以上になりうるとき。状態・乱数・ログは変わらない）。使えない（ねむり・マヒ・こんらん・かがくへんかガス）・HP 以上にならないなら止めない。test_guts_v0_11.py `G37Test`・test_unresolved_boundaries_v0_4e.py `KoPreventionAttackEffectTest`（[guts-v0.11.md](guts-v0.11.md) の G37・G30） |
-| 同じきぜつの判定で、こんじょう（などきぜつするときに使える特殊能力）を使えるポケモンが 2 匹以上いるときの宣言の順番（v0.11） | 対応カードに、相手の複数のポケモンにダメージを与えるワザがないので起こらない（決めていない。起こったらエンジンの不具合として `RuntimeError`。そのワザ・効果（きあいのハチマキなど）を加えるときに、宣言の前に止める処理を加える。[guts-v0.11.md](guts-v0.11.md) の G40・G16） |
+| 同じきぜつの判定で、こんじょう（などきぜつするときに使える特殊能力）を使えるポケモンが 2 匹以上いるときの宣言の順番（v0.11） | 対応カードに、相手の複数のポケモンにダメージを与えるワザがないので起こらない（決めていない。起こったらエンジンの不具合として `RuntimeError`。そのワザ・効果（きあいのハチマキなど）を加えるときに、宣言の前に止める処理を加える。[guts-v0.11.md](guts-v0.11.md) の G40・G16）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_KO_PREVENTION_ORDER` で止める |
 | R団のファイヤーがワザのダメージで、ワザを使ったポケモンが「ほのおのかべ」のダメージで、そろってきぜつする（「ほのおのかべ」がなければきぜつしない）とき、2 匹が「同時に「きぜつ」した」ことになるか（v0.12。p.324 の「1つのワザや特殊能力などによって引き起こされることがら」に、前の番のワザが与えた効果のダメージが含まれるか。v0.10 の C18 と同じ問い） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT`）で拒否（同じコインの結果でいっしょに起こるダメージの組のどれかでその場合になりうるとき。「ほのおのかべ」のダメージで、ワザを使ったポケモンの「はんげき」が与える 10 も数える）。状態・乱数・ログは変わらない。勝者を推測で決めない。「こんじょう」で解決したことにしない。自然な対戦 100 局で 1 回、ストレス実行 400 局で 10 回起こった。test_rocket_moltres_v0_12.py `test_hurricane_punch_is_stopped`・`CoinIndependenceTest`・test_unresolved_boundaries_v0_4e.py `RetaliationDoubleKnockoutBoundaryTest`（[rocket-moltres-v0.12.md](rocket-moltres-v0.12.md) の W24） v0.13 で、わるいカメールがワザのダメージで、ワザを使ったポケモンが「こうらがえし」で返すダメージで、そろってきぜつしうる場合（S37）も同じ問いなので、同じコードで止める（新しいコードではない。返す量は組ごとに受けたダメージで計算する。[shell-attack-v0.13.md](shell-attack-v0.13.md)） |
-| かがくへんかガスを持つポケモンと R団のファイヤーが同じきぜつの判定できぜつするとき、「ふしちょう」を使えるか（v0.12。ガスがきぜつの時点ではたらいているか、手札に加える時点で消えているか） | 対応カードでは起こらない（W24・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` が先に止める。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P19） |
-| 同じきぜつで、きぜつしたときに使える特殊能力（「ふしちょう」）の候補が 2 つ以上あるときの順番（v0.12） | 対応カードでは起こらない（R団のファイヤーが 2 匹同時にきぜつする場合は先に止めている。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P32） |
+| かがくへんかガスを持つポケモンと R団のファイヤーが同じきぜつの判定できぜつするとき、「ふしちょう」を使えるか（v0.12。ガスがきぜつの時点ではたらいているか、手札に加える時点で消えているか） | 対応カードでは起こらない（W24・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` が先に止める。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P19）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT` で止める |
+| 同じきぜつで、きぜつしたときに使える特殊能力（「ふしちょう」）の候補が 2 つ以上あるときの順番（v0.12） | 対応カードでは起こらない（R団のファイヤーが 2 匹同時にきぜつする場合は先に止めている。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P32）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER` で止める |
 | 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
 | 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（コードのない問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard` |
 | 「ダメージを与えた後、…」の効果（たおれこむ・v0.18c からナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23。v0.18b で場合を Z23-a 要素が無効・Z23-b 計算の結果が 0（ディフェンダー・抵抗力）・Z23-c「とうめい」・Z23-d 対象がいない（起こらない）に分けた） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。理由の文が場合を書く）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest`、test_unresolved_research_v0_18b.py `EffectAfterNoDamageSubcaseTest`・`TargetGoneIsUnreachableTest`、test_sabrinas_slowpoke_v0_18c.py `NoDamageStopTest` |
 | キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
+| 「みちづれ」で相手の対戦ポケモンも「きぜつ」するとき、同時のきぜつか（v0.31。HC2） | 勝ち負けが決まる場合（サイドを取りきる・場にポケモンがいなくなる）だけ、相手のワザの宣言の前に `UNRESOLVED_DESTINY_BOND_KNOCKOUT` で止める。決まらなければ両方がサイドを取る |
+| 「ワザをうけない」状態（バリアー）のポケモンへの効果だけを決めるコインを投げるか（v0.31。HC3） | 宣言の前に `UNRESOLVED_PREVENTED_EFFECT_COIN` で止める |
+| 無色をふくむワザで、多い水エネルギーの数（v0.31。HC4。第4弾のコダックの「みずでっぽう」） | 読み方で数が変わるときだけ、宣言の前に `UNRESOLVED_EXTRA_ENERGY_COLORLESS` で止める |
+| 「好きなだけはがしてすてる」で 0 枚を選べるか（v0.31。HC5。やまやき） | 0 枚の答えを `UNRESOLVED_DISCARD_ANY_NUMBER_ZERO` で拒否（決定は待ったまま） |
+| 山札の上から決まった枚数をトラッシュする効果で山札が足りない場合（v0.31。HC6。マグマふんしゅつ・やまやき） | `UNRESOLVED_DISCARD_DECK_SHORT`（宣言の前、またはやまやきの答えのとき） |
+| 「最大2枚を取り出して」で 0 枚を選べるか（v0.31。HC7。たいでん） | 0 枚の答えを `UNRESOLVED_ATTACH_FROM_DISCARD_ZERO` で拒否 |
+| ダメージカウンターがのっていないときに「しぜんになおる」を使えるか（v0.31。HC8） | `UsePokemonPower` を `UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE` で拒否 |
+| 相手のワザを自分のワザとして使うとき、使うワザの条件の扱いが決められない（v0.31。HC9） | そのワザを選ぶと `UNRESOLVED_COPIED_ATTACK`。選べるワザがすべてそうなら宣言の前 |
+| エナジーバーンで「炎」になった草エネルギーカードをエナジートランスでつけかえられるか（v0.31。HC10） | `UsePokemonPower` を `UNRESOLVED_ENERGY_BURN_TRANSFER` で拒否 |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -1886,3 +1895,46 @@ v0.30 は、「自分の炎エネルギーカードを 1 枚トラッシュし�
 - kyuura の `RUL-ENERGY-DISCARD-ATTACKS` の `cards` はウインディだけ（ヒトカゲ・リザード・ブーバー・キュウコンの同じ文面のワザがない）。ヒトカゲの「ひのこ」の LD- はない。pcg-search.com のウインディの見出しは「ウィンディ」。
   どれも kyuura への報告事項です（[data-provenance.md](data-provenance.md) の v0.30 の章）。
 
+
+## v0.31 で加えたもの（v0.30 で保留した 22 枚の一括実装）
+
+v0.30 で保留した 22 枚と、その進化元 7 枚を、共通の仕組みをまとめて加えて対応にしました（対応ポケモン 77 → 106）。カードごとの整理・仕組み・資料・
+原典（記録）で決められない場面・互換性・検証は [held-cards-v0.31.md](held-cards-v0.31.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_held_cards_v0_31.py（以下「カード」）・tests/test_held_cards_v0_31_mechanisms.py（以下「仕組み」）・
+tests/test_held_cards_v0_31_stops.py（以下「止める」）・tests/test_held_cards_v0_31_games.py（以下「対戦」）です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 22 枚が v0.30 の文書 4 章の一覧と同じ。29 枚のすべてのワザ（52）・特殊能力（3）の登録・写しとの一致・処理に使う文面と出典・採用の記録・外部照合・進化の系統 | kyuura データの採用（card_sources.json）・RUL-ENERGY-DISCARD-ATTACKS・TXT-CHARIZARD・card_differences の PMCG1-067 | カード `CardDataTest` |
+| すべてのワザを 1 回以上使い、印刷の文面（または記録の文面）のとおり。先読みの 3 つの方法で結果・乱数が同じ | 同上・p.309・p.321（既存の記録の再利用） | カード `AttackTest` |
+| 新しい決定の持ち主・選べるもの・数・不正な答えの拒否と原子性、トラッシュの順番、コインとトラッシュ・ダメージの順番、カードの総数 | p.309（ワザの手順）・v0.2a の約束 | 仕組み `DecisionTest`・`ConservationTest` |
+| 持続する効果（みちづれ・バリアー・ちいさくなる・しっぽをふる）のはたらく番・期限・ベンチにもどったとき | p.311・p.321・p.322・p.323（既存の記録の再利用） | 仕組み `PersistentEffectTest` |
+| プラスパワー（控えへのダメージは変えない）・ディフェンダー・「弱点・抵抗力に関係なく」・こんらんとトラッシュの時点 | p.257・p.321・RUL-ENERGY-DISCARD-ATTACKS | 仕組み `DamageModifierTest`・`ConfusionTest` |
+| エナジーバーン・しぜんになおる・ほのおでかいふく（使えない特殊状態・かがくへんかガス・回数・番の終わり） | TXT-CHARIZARD・kyuura の印刷の文面 | 仕組み `PowerTest` |
+| 相手のワザを自分のワザとして使う（選べるワザ・条件の扱い・弱点・決定） | 印刷の文面・card_differences の PMCG1-067 | 仕組み `CopyAttackTest` |
+| 書き出しの形式 10 | — | 仕組み `FormatTest` |
+| 52 のワザ × 相手 4 × こんらん 2 × コイン 3 の 1,248 盤面で、先読みの 3 つの方法の結果が同じ | v0.15c・v0.16c の約束 | 仕組み `PreflightParityTest` |
+| 停止コード 15 と `UNSUPPORTED_COPIED_ATTACK` の止まる場合と隣の止まらない場合 | 5 章 | 止める |
+| 正式な開始から 48 局で、29 枚・52 のワザ・3 つの特殊能力をどれも使い、監査がすべて通る | — | 対戦 |
+| 共通の処理の変更で、v0.30 までのカードの動きが変わらない | 固定した v0.30（`43fed61`）との 1 歩ごとの比較 | tools/engine_lockstep.py（[held-cards-v0.31.md](held-cards-v0.31.md) 9.4） |
+
+### 部分対応・制限
+
+| 項目 | 状況 |
+|---|---|
+| 先読みの上限（4,096 通り） | れんぞくファイヤーボール（炎 8 枚以上）・エナジーボム・ほうでん・やまやき（エネルギーが多いとき）は `UNSUPPORTED_PREFLIGHT_LIMIT` で拒否（[held-cards-v0.31.md](held-cards-v0.31.md) 8 章） |
+| 相手のワザとして使えないワザ | ほのおのかべ・こうらがえし・つるぎのまいは `UNSUPPORTED_COPIED_ATTACK`（エンジンの未対応。裁定の問いではない） |
+| 窓の途中の決定 | 加えていない（v0.18d の DEFER のまま） |
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定は HC1〜HC10 の 10 件（上の「裁定が未解決」の表と [held-cards-v0.31.md](held-cards-v0.31.md) 5 章）。v0.30 まで起こらなかった 5 件
+  （T27・C34/C35・G40・P19・P32）は、起こるようになったので停止コードを付けた（分類は変えていない）。停止コード 22 → 37 件、未解決の裁定 28 → 38 件。
+- カードデータは kyuura の採用で、ガイドブックとは照合していません（pcg-search.com の照合は 29 件。match 21・differences 8。どれも処理に影響しない）。
+
+### 見つけた事項
+
+- kyuura への報告事項は [data-provenance.md](data-provenance.md) の v0.31 の章と [held-cards-v0.31.md](held-cards-v0.31.md) 4.1。

@@ -43,7 +43,8 @@ from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt
 
 from tests.helpers import (
     BEEDRILL, CATERPIE, DEFENDER, DEWGONG, DIGLETT, FIGHTING, FIRE, GRASS, GROWLITHE, H, HITMONCHAN, KAKUNA, MACHOP, METAPOD, PARAS,
-    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, CHARIZARD, WATER, WEEDLE, build_test_state, coin_events,
+    PARASECT, PLUSPOWER, PONYTA, RATTATA, SEEL, SWITCH, T, CHARIZARD, WATER, WEEDLE, build_test_state, coin_events, NO_CHARIZARD_EFFECTS,
+    no_charizard_pool,
     expand_decklist, with_coin_results,
 )
 
@@ -200,11 +201,15 @@ class BeedrillCardTest(unittest.TestCase):
         ないワザ）で確かめていた。v0.5 でフシギバナのパワーとワザを登録して対応にしたので、カメックス（登録のないポケモン
         パワー「あまごい」）で確かめていた（2 進化だから一括で対応にしたのではない。tests/test_venusaur_v0_5.py）。v0.6 でカメックスの
         パワーとワザを登録して対応にしたので、フーディン（登録のないポケモンパワー「ダメージスワップ」）で確かめていた。v0.7 で
-        フーディンのパワーとワザを登録して対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」）で確かめる。"""
+        フーディンのパワーとワザを登録して対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」）で確かめる。v0.31 で
+        リザードンのパワーとワザを登録して対応にしたので、その 2 つの登録を除いた登録表で分類したカードの組で確かめる（2 進化だから一括で
+        対応にしたのではなく、登録で決まる）。"""
         pool = load_card_pool()
         self.assertTrue(pool.get(CHARIZARD).is_stage2_pokemon)
-        self.assertFalse(pool.is_playable(CHARIZARD))
-        self.assertIn("ポケモンパワー", " ".join(pool.get(CHARIZARD).unsupported_reasons))
+        self.assertTrue(pool.is_playable(CHARIZARD))
+        without = no_charizard_pool()
+        self.assertFalse(without.is_playable(CHARIZARD))
+        self.assertIn("ポケモンパワー", " ".join(without.get(CHARIZARD).unsupported_reasons))
         effects = DEFAULT_EFFECTS.without_attacks("test-no-sting", [AttackKey(BEEDRILL, 1)])
         unregistered = pool_from_extract(read_extract(), effects)
         self.assertFalse(unregistered.is_playable(BEEDRILL))
@@ -333,8 +338,9 @@ class Stage2EvolveTest(unittest.TestCase):
 
     def test_unsupported_stage2_cards(self):
         """対応していない 2 進化カード（未対応のポケモンパワーを持つリザードン（v0.4e まではフシギバナ、v0.5 ではカメックス、v0.6 では
-        フーディン。どれも対応にした）・ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は ``UNSUPPORTED_EVOLUTION``。"""
-        state = board(hand=(CHARIZARD,))
+        フーディン。どれも対応にした）・ワザの登録がないスピアー。デッキには入らないので、テストの盤面だけ）は ``UNSUPPORTED_EVOLUTION``。
+        v0.31 でリザードンも対応にしたので、その登録を除いた登録表とカードの組の盤面で確かめる。"""
+        state = board(hand=(CHARIZARD,), effects=NO_CHARIZARD_EFFECTS, pool=no_charizard_pool())
         assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, CHARIZARD), state.players[0].active.pokemon_id),
                         "UNSUPPORTED_EVOLUTION", UnsupportedError)
         effects = DEFAULT_EFFECTS.without_attacks("test-no-twineedle", [AttackKey(BEEDRILL, 0)])
@@ -512,7 +518,7 @@ class ThreeCardStructureTest(unittest.TestCase):
             with self.subTest(version=version):
                 with self.assertRaises(ValueError):
                     state_to_dict(state, format_version=version)
-        self.assertEqual(max(FORMAT_VERSIONS), 9)  # v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）
+        self.assertEqual(max(FORMAT_VERSIONS), 10)  # v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）、10 は v0.31
 
     def test_attach_energy_to_a_card_below_is_rejected(self):
         """場のポケモンはいちばん上のカードの uid で指す（v0.1 からのコマンド）。下の 2 枚は場のポケモンではない。"""
@@ -1096,7 +1102,9 @@ class AtomicityTest(unittest.TestCase):
     def test_rejected_stage2_evolutions_change_nothing(self):
         """不正な 2 進化は、手札・カード・重なり・進化した番・特殊状態・持続する効果・乱数・ログを変えない（どく・こんらん・
         「かたまる」の効果を受けたコクーンは、盤面を直接作った）。"""
-        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, CHARIZARD))
+        # v0.31: リザードンを対応にしたので、その登録を除いた登録表とカードの組の盤面（tests/helpers.py の NO_CHARIZARD_EFFECTS）
+        state = board(kakuna(poison=10, confusion=True, prevent_damage=5), hand=(BEEDRILL, KAKUNA, CHARIZARD), effects=NO_CHARIZARD_EFFECTS,
+                      pool=no_charizard_pool())
         target = state.players[0].active.pokemon_id
         for command, code, error in (
             (EvolvePokemon(0, uid_of(state, 0, KAKUNA), target), "EVOLUTION_NAME_MISMATCH", IllegalActionError),

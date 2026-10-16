@@ -101,6 +101,20 @@ SELECT_EVOLUTION_CARD = "select_evolution_card"
 # 公開の情報）から、このカードを使うためにトラッシュしたカード（``context`` の ``"discarded"``）を除いたもの。段階は Phase.DECISION。
 # 再開先は "trainer"。ワザ（ゴースのエナジーへんかん）の ``RECOVER_ENERGY`` とは別の決定（選べるカードの種類・除くカードが違う）
 RETRIEVE_ENERGY = "retrieve_energy"
+# v0.31（docs/held-cards-v0.31.md）。どれもワザの途中の決定（再開先は "attack"、段階は Phase.DECISION）で、決めるのはワザを使ったプレイヤー
+# 相手のワザを自分のワザとして使うとき、相手の対戦ポケモンのワザのどれを使うか（ピクシー・ピッピの「ゆびをふる」、カスミのコダックの「ちょうのうりょく」の
+# 「おもて」が 3 枚）。選べるものはワザの位置（相手の対戦ポケモンのいちばん上のカードの。``context`` の ``"copy_from"`` がそのカード id）
+SELECT_ATTACK = "select_attack"
+# 相手のポケモンについているエネルギーカードをトラッシュするとき、どのカードか（カツラのヒトカゲの「メラメラ」、カスミのゴルダックの「スーパー
+# デストロイ」）。選べるものはそのポケモン（``context`` の ``"target"``）についているエネルギーカードの uid（ついている順）
+DISCARD_OPPONENT_ENERGY = "discard_opponent_energy"
+# ワザを使ったポケモンについているエネルギーカードを自分の控えポケモンにつけるとき、どの控えポケモンにつけるか（わるいマルマインの「エナジーボム」）。
+# エネルギーカード 1 枚ごと（``context`` の ``"energy"``）に、選べるものは自分のベンチのポケモンの番号
+ATTACH_TO_BENCH = "attach_to_bench"
+# 自分のトラッシュのトレーナーカードを手札に加えるとき、どのカードか（化石の秘密のヤドンの「ゴミあさり」）。選べるものはトラッシュのトレーナーカードの uid
+RECOVER_TRAINER = "recover_trainer"
+# 自分のトラッシュのエネルギーカードを自分につけるとき、どのカードを何枚か（マチスのエレブーの「たいでん」。最大 2 枚。0 枚は決められない。HC7）
+ATTACH_FROM_DISCARD = "attach_from_discard"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

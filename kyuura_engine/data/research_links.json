@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 28,
-    "engine_stop_codes": 22,
+    "engine_unresolved_rulings": 38,
+    "engine_stop_codes": 37,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -289,36 +289,8 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
-    }
-  },
-  "codeless_questions": {
-    "power_damage_weakness_resistance": {
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/rocket-snorlax-v0.17b.md",
-          "ruling_id": "Z9"
-        }
-      ],
-      "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": true
     },
-    "ko_prevention_self_effect": {
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/rocket-snorlax-v0.17b.md",
-          "ruling_id": "Z22"
-        }
-      ],
-      "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": false
-    }
-  },
-  "unresolved_without_code": [
-    {
+    "UNRESOLVED_TRANSPARENCY_COIN_ORDER": {
       "engine_rulings": [
         {
           "version": "v0.9",
@@ -326,9 +298,11 @@
           "ruling_id": "T27"
         }
       ],
-      "kyuura_issue": "UQ-TRANSPARENCY-COIN-ORDER"
+      "kyuura_issue": "UQ-TRANSPARENCY-COIN-ORDER",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "T27"
     },
-    {
+    "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": {
       "engine_rulings": [
         {
           "version": "v0.10",
@@ -356,9 +330,11 @@
           "ruling_id": "DR18"
         }
       ],
-      "kyuura_issue": "UQ-MULTIPLE-DAMAGE-TRIGGERS-ONE-ATTACK"
+      "kyuura_issue": "UQ-MULTIPLE-DAMAGE-TRIGGERS-ONE-ATTACK",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "C34/C35"
     },
-    {
+    "UNRESOLVED_KO_PREVENTION_ORDER": {
       "engine_rulings": [
         {
           "version": "v0.11",
@@ -371,9 +347,11 @@
           "ruling_id": "G16"
         }
       ],
-      "kyuura_issue": "UQ-KO-PREVENTION-ORDER"
+      "kyuura_issue": "UQ-KO-PREVENTION-ORDER",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "G40"
     },
-    {
+    "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": {
       "engine_rulings": [
         {
           "version": "v0.12",
@@ -381,9 +359,11 @@
           "ruling_id": "P19"
         }
       ],
-      "kyuura_issue": "UQ-PHOENIX-GAS-SOURCE-KO"
+      "kyuura_issue": "UQ-PHOENIX-GAS-SOURCE-KO",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "P19"
     },
-    {
+    "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": {
       "engine_rulings": [
         {
           "version": "v0.12",
@@ -391,9 +371,160 @@
           "ruling_id": "P32"
         }
       ],
-      "kyuura_issue": "UQ-POST-KO-POWERS-ORDER"
+      "kyuura_issue": "UQ-POST-KO-POWERS-ORDER",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "P32"
+    },
+    "UNRESOLVED_DISCARD_ENERGY_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DESTINY_BOND_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PREVENTED_EFFECT_COIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DISCARD_DECK_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC6"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC7"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC8"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COPIED_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC9"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_BURN_TRANSFER": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC10"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
-  ],
+  },
+  "codeless_questions": {
+    "power_damage_weakness_resistance": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z9"
+        }
+      ],
+      "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": true
+    },
+    "ko_prevention_self_effect": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/rocket-snorlax-v0.17b.md",
+          "ruling_id": "Z22"
+        }
+      ],
+      "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
+    },
+    "destiny_bond_with_ko_prevention": {
+      "engine_rulings": [
+        {
+          "version": "v0.31",
+          "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
+    }
+  },
+  "unresolved_without_code": [],
   "deferred_card_questions": [
     {
       "card_id": "PMCG6-023",
@@ -848,13 +979,60 @@
       "PMCG5-046/attack/0",
       "PMCG5-061/attack/1",
       "PMCG1-019/attack/1",
-      "PMCG4-013/attack/0"
+      "PMCG4-013/attack/0",
+      "PMCG1-021/attack/0",
+      "PMCG1-022/attack/0",
+      "PMCG1-042/attack/0",
+      "PMCG1-042/attack/1",
+      "PMCG1-044/attack/0",
+      "PMCG1-044/attack/1",
+      "PMCG1-050/attack/0",
+      "PMCG1-050/attack/1",
+      "PMCG1-067/attack/0",
+      "PMCG2-037/attack/0",
+      "PMCG2-037/attack/1",
+      "PMCG2-044/attack/0",
+      "PMCG2-044/attack/1",
+      "PMCG3-009/attack/0",
+      "PMCG3-009/attack/1",
+      "PMCG3-027/attack/0",
+      "PMCG3-027/attack/1",
+      "PMCG4-014/attack/1",
+      "PMCG4-015/attack/1",
+      "PMCG4-016/attack/0",
+      "PMCG4-016/attack/1",
+      "PMCG4-017/attack/1",
+      "PMCG4-019/attack/0",
+      "PMCG4-019/attack/1",
+      "PMCG4-022/attack/0",
+      "PMCG4-028/attack/1",
+      "PMCG5-021/attack/0",
+      "PMCG5-032/attack/0",
+      "PMCG5-032/attack/1",
+      "PMCG5-036/attack/0",
+      "PMCG5-041/attack/0",
+      "PMCG5-041/attack/1",
+      "PMCG6-025/attack/0",
+      "PMCG6-026/attack/0",
+      "PMCG6-026/power/0",
+      "PMCG6-027/attack/0",
+      "PMCG6-029/attack/1",
+      "PMCG6-031/attack/0",
+      "PMCG6-031/attack/1",
+      "PMCG6-033/attack/0",
+      "PMCG6-033/power/0",
+      "PMCG6-034/attack/0",
+      "PMCG6-034/attack/1",
+      "PMCG6-041/attack/0",
+      "PMCG6-041/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
       "PMCG1-017/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
       "PMCG1-019/attack/0": "RUL-ENERGY-DISCARD-ATTACKS",
-      "PMCG1-020/attack/1": "RUL-ENERGY-DISCARD-ATTACKS"
+      "PMCG1-020/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
+      "PMCG1-022/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
+      "PMCG1-021/power/0": "TXT-CHARIZARD"
     },
     "errata_scope": [
       {
@@ -865,11 +1043,15 @@
         "targets": [
           "PMCG1-014/attack/1",
           "PMCG1-017/attack/1",
-          "PMCG1-020/attack/1"
+          "PMCG1-020/attack/1",
+          "PMCG1-022/attack/1"
         ],
-        "note": "v0.30。記録の cards はウインディ（PMCG1-019）だけだが、記録の notes は炎エネルギーカードをトラッシュするタイプのワザがすべて同じ処理だと書き、第1弾のヒトカゲの「ひのこ」の最新の説明を引く。ここに挙げたワザの印刷の文面は、記録が挙げるカード（ウインディ）の「かえんほうしゃ」と同じ。記録の cards にこれらのカードがないことは kyuura への報告事項（docs/data-provenance.md の v0.30 の章）"
+        "note": "v0.30。記録の cards はウインディ（PMCG1-019）だけだが、記録の notes は炎エネルギーカードをトラッシュするタイプのワザがすべて同じ処理だと書き、第1弾のヒトカゲの「ひのこ」の最新の説明を引く。ここに挙げたワザの印刷の文面は、記録が挙げるカード（ウインディ）の「かえんほうしゃ」と同じ。記録の cards にこれらのカードがないことは kyuura への報告事項（docs/data-provenance.md の v0.30 の章）。v0.31: キュウコン（PMCG1-022）の「だいもんじ」も印刷の文面が同じなので加えた（docs/held-cards-v0.31.md）"
       }
-    ]
+    ],
+    "difference_text": {
+      "PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067"
+    }
   },
   "card_checks": {
     "engine_verified": {

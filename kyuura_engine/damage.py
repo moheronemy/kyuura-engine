@@ -87,10 +87,14 @@ def calculate_attack_damage(
     defender: CardDefinition,
     rules: RuleSet,
     modifiers: Sequence[DamageModifier] = (),
+    *,
+    weakness_resistance: bool = True,
 ) -> DamageCalculation:
     """バトル場のポケモンがワザで相手のバトル場のポケモンに与えるダメージ。
 
     ``modifiers`` は 2・5〜8 段階の変更効果（v0.2c）。渡さなければ v0.1 と同じ計算・同じ記録になる。
+    ``weakness_resistance``（v0.31）: False なら 3・4 段階（弱点・抵抗力）を計算しない（説明に「「弱点・抵抗力」に関係なく」とあるダメージ。
+    カツラのリザードの「やきはらう」など）。ほかの段階は同じ。
     """
     steps: list[tuple[str, int]] = []
     used = tuple(modifiers)
@@ -126,14 +130,14 @@ def calculate_attack_damage(
         return DamageCalculation(base, False, False, True, 0, tuple(steps), applied)
 
     # 3. ワザを使うポケモンのタイプが、ワザを受けるポケモンの「弱点」のタイプなら 2 倍（p.315, p.321）
-    weakness_applied = defender.weakness is not None and attacker.pokemon_type == defender.weakness
+    weakness_applied = weakness_resistance and defender.weakness is not None and attacker.pokemon_type == defender.weakness
     if weakness_applied:
         amount *= rules.weakness_multiplier
         steps.append(("3 弱点", amount))
 
     # 4. ワザを使うポケモンのタイプが「抵抗力」のタイプなら、抵抗力の数字をマイナス（p.315, p.321）
     # 計算の途中で 0 やマイナスになってもよい（p.319, p.321）
-    resistance_applied = defender.resistance is not None and attacker.pokemon_type == defender.resistance
+    resistance_applied = weakness_resistance and defender.resistance is not None and attacker.pokemon_type == defender.resistance
     if resistance_applied:
         amount -= defender.resistance_value
         steps.append(("4 抵抗力", amount))

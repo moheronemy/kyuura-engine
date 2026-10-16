@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from .. import effects as E
 from ..continuous import suppressors_of
 from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
-from ..state import PreventDamage, Retaliation
+from ..state import AttackBarrier, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
 
@@ -116,6 +116,12 @@ RESTLESS_SLEEP = EffectDefinition(
     frozenset(), "on_damage", True, "damage_source", "power_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
     requires=frozenset({"sleep"}),
 )
+# v0.31: ミュウツーの「バリアー」（「次の相手の番の「ワザ」をうけない」）。「かたまる」と同じく要素を無効にする効果で、ダメージの要素だけでなく
+# 効果の要素の前の窓（BEFORE_EFFECT）でも無効にする（ワザのダメージも効果も受けない）
+BARRIER = EffectDefinition(
+    "barrier", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
+    False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}),
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -133,6 +139,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
     (Retaliation, RETALIATION),
+    (AttackBarrier, BARRIER),  # v0.31
 )
 
 

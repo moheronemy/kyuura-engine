@@ -28,6 +28,7 @@ from kyuura_engine import (
     UsePokemonPower, apply_command, check_invariants, state_to_dict,
 )
 from kyuura_engine.cards import load_card_pool, pool_from_extract, read_extract, read_verification
+from kyuura_engine.errors import UnsupportedError
 from kyuura_engine.decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
 from kyuura_engine.effects import (
     DAMAGE_ONLY, AttackEffect, AttackEntry, CoinFlipDamage, DamageProfile, OPPONENT_ACTIVE, ReturnReceivedDamage, deal_attack_damage,
@@ -651,8 +652,9 @@ class AtomicityTest(unittest.TestCase):
                 self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, rng))
 
     def test_two_damage_elements_are_refused_without_a_partial_state(self):
-        """1 つのワザで、効果がはたらいているポケモンが 2 回ダメージを受ける場合（S7）は、今の対応カードでは起こらず、エンジンは推測で返さずに
-        RuntimeError で止める（v0.12 から。C34・C35 と同じ扱い）。渡した状態は変わらない。"""
+        """1 つのワザで、効果がはたらいているポケモンが 2 回ダメージを受ける場合（S7）は、エンジンは推測で返さずに止める（v0.12 から。C34・C35 と
+        同じ問い）。v0.30 までは対応カードで起こらないので RuntimeError にしていた。v0.31 で複数のポケモンにダメージを与えるワザを加えたので、
+        同じ問いにコード ``UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS`` を付けた（分類は変えていない）。渡した状態は変わらない。"""
         attack = load_card_pool().get(PONYTA).attacks[1]
 
         class TwoHits(AttackEffect):
@@ -668,8 +670,9 @@ class AtomicityTest(unittest.TestCase):
         effects = DEFAULT_EFFECTS.with_attacks("test", {AttackKey(PONYTA, 1): AttackEntry(TwoHits(), attack.name_ja, attack.text_ja)})
         state = board(PONYTA_ATTACKER, effects=effects)
         before, rng = full(state), rng_fingerprint(state.rng)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(UnsupportedError) as caught:
             apply_command(state, UseAttack(0, 1))
+        self.assertEqual(caught.exception.code, "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS")
         self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, rng))
 
 

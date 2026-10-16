@@ -582,7 +582,14 @@ class G37Test(unittest.TestCase):
                 found[type(effect).__name__] = elements
         self.assertEqual(declared, found)
         self.assertTrue(all(elements <= set(ATTACK_ELEMENTS) - {DAMAGE_ELEMENT} for elements in declared.values()))
-        self.assertEqual(len(declared), 10)  # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた
+        # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた。v0.31 で、相手の対戦ポケモンに効果を与える 6 つの型を加えた
+        # （相手のエネルギーのトラッシュ・「ワザを使えない」持続する効果・入れ替え・ねむり・マヒ。docs/held-cards-v0.31.md）
+        self.assertEqual(sorted(declared), sorted([
+            "CoinBonusDamageAndParalyze", "ConfuseOnHeads", "ConfuseOnHeadsWithoutDamage", "DamageAndForceSwitch", "ParalyzeOnHeads",
+            "PoisonOnHeads", "PoisonOpponent", "PoisonWithoutDamage", "PutToSleep", "SleepOpponent",
+            # v0.31
+            "CannotAttackOnHeads", "CoinDiscardOpponentEnergyEach", "DamageThenDiscardEachEnergy", "DamageThenParalyzeOrSelfDamage",
+            "SleepOnHeadsWithoutDamage", "SwitchOpponentActive"]))
 
 
 class DecisionTest(unittest.TestCase):

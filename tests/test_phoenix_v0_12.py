@@ -30,12 +30,13 @@ from kyuura_engine.resolution.questions import OpenQuestion, to_error
 
 def _post_knockout_candidates(state, knocked):
     """きぜつしたときに使える特殊能力の候補（v0.16b: 解決の基盤のきぜつの処理の窓 ``kernel.capture_post_knockout``。v0.15 までは v0.13 の
-    経路の ``engine._post_knockout_candidates``）。原典で決められない場合（P19・P32。コードのない問い）は、コマンドの入口と同じく
-    ``RuntimeError``（``questions.to_error``）にする。"""
+    経路の ``engine._post_knockout_candidates``）。原典で決められない場合（P19・P32。v0.30 まではコードのない問いで ``RuntimeError``。v0.31 から
+    コードのある問い）は、コマンドの入口と同じく ``questions.to_error`` の例外にする。"""
     try:
         return capture_post_knockout(Resolution(state), knocked)
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
+from kyuura_engine.errors import UnsupportedError
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     ALAKAZAM, ABRA, DEFENDER, FIRE, GRASS, GRIMER, H, HAUNTER, GASTLY, KADABRA, MACHAMP, MACHOKE, MACHOP, MUK, PONYTA, PSYCHIC,
@@ -308,21 +309,26 @@ class GasTest(unittest.TestCase):
         self.assertEqual(state.decision.kind, POST_KNOCKOUT_POWER)
 
     def test_gas_source_knocked_out_at_the_same_time_is_unresolved(self):
-        """P19（かがくへんかガスの発生源もいっしょにきぜつ）は原典で決められない。対応カードでは先に止めている（W24・ポケモンチェックの両方の
-        きぜつ）ので起こらない。候補の関数を直接呼ぶと、エンジンの不具合として止まる。"""
+        """P19（かがくへんかガスの発生源もいっしょにきぜつ）は原典で決められない。v0.30 までの対応カードでは先に止めていた（W24・ポケモンチェックの
+        両方のきぜつ）ので起こらず、エンジンの不具合として止めていた。v0.31 で相手の控えポケモンにもダメージを与えるワザ（やきはらう）を加えたので、
+        同じ番に相手のファイヤーと控えのベトベトンがきぜつしうる。同じ問いにコード ``UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT`` を付けた（分類は
+        変えていない）。候補の関数を直接呼ぶと、そのコードで止まる。"""
         state = build_test_state([
             {"active": {"card": ROCKETS_MOLTRES, "damage": 60}},
             {"active": {"card": MUK, "evolved_from": GRIMER, "damage": 70}},
         ], turn_number=5)
         knocked = [(0, state.players[0].active), (1, state.players[1].active)]
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(UnsupportedError) as caught:
             _post_knockout_candidates(state, knocked)
+        self.assertEqual(caught.exception.code, "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT")
 
     def test_two_candidates_are_an_engine_error(self):
-        """2 匹以上が同時にきぜつして使える場合の順番（p.325）は、対応カードでは起こらない。関数を直接呼ぶと、エンジンの不具合として止まる。"""
+        """2 匹以上が同時にきぜつして使える場合の順番（p.325。P32）は、v0.30 までの対応カードでは起こらず、エンジンの不具合として止めていた。
+        v0.31 で複数のポケモンにダメージを与えるワザを加えたので、同じ問いにコード ``UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER`` を付けた。"""
         state = build_test_state([{"active": {"card": ROCKETS_MOLTRES, "damage": 60}}, {"active": {"card": ROCKETS_MOLTRES, "damage": 60}}])
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(UnsupportedError) as caught:
             _post_knockout_candidates(state, [(0, state.players[0].active), (1, state.players[1].active)])
+        self.assertEqual(caught.exception.code, "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER")
 
 
 class GameEndTest(unittest.TestCase):

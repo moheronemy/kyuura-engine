@@ -26,13 +26,13 @@ from unittest import mock
 from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
-from tests.helpers import V0_29_POKEMON, V0_30_POKEMON
+from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
 TANGELA = "PMCG1-007"      # モンジャラ: 説明文のあるワザ 2 つ。処理に使う文面は印刷の文面と同じ（kyuura の印刷の文面を根拠にする場面）
 BUTTERFREE = "PMCG2-007"   # バタフリー: ワザ 2 つとも kyuura の最新の説明（LD-）がある（LD- を根拠にする場面）
-CHARIZARD = "PMCG1-021"    # リザードン: 登録していない参照カード（保留の場面）
+CHARIZARD = "PMCG1-021"    # リザードン: 保留の場面（v0.31 で採用・登録したので、テストの記録の組では登録と研究の対応表の区分から外す）
 CHARMANDER = "PMCG1-014"   # ヒトカゲ: 過去の原典照合の記録のあるカード。v0.30 の「ひのこ」の文面の根拠を guidebook_record の play_text に書いた
 CHARMELEON = "PMCG1-017"   # リザード: v0.30 の採用の記録。処理に使う文面は kyuura のエラッタ（RUL-ENERGY-DISCARD-ATTACKS。記録の範囲の当てはめ）
 RUL = "RUL-ENERGY-DISCARD-ATTACKS"
@@ -60,8 +60,12 @@ def valid_case():
     """方針どおりの記録の組: (sources, registry, verification, links)。"""
     verification = copy.deepcopy(read_verification())
     links = copy.deepcopy(cs.load_links())
-    registry = DEFAULT_EFFECTS
+    # v0.31 でリザードンを採用・登録した。このテストの記録の組では保留の場面に使うので、その登録（エナジーバーン・ほのおのうず）を除いた
+    # 登録表（tests/helpers.py の NO_CHARIZARD_EFFECTS）にし、研究の対応表の区分からも外す
+    registry = NO_CHARIZARD_EFFECTS
     section = links["latest_descriptions"]
+    section["adopted_printed_text"].remove(f"{CHARIZARD}/attack/0")
+    del section["errata_text"][f"{CHARIZARD}/power/0"]
     # モンジャラ: 過去の原典照合の記録を外し、出典を kyuura の印刷の文面にした登録にする
     del verification["cards"][TANGELA]
     changed = {}
@@ -147,14 +151,14 @@ def run(case) -> list[str]:
 class ShippedRecordTest(unittest.TestCase):
     def test_shipped_records_follow_the_policy(self):
         """同梱の記録は方針と合う。2026-10-14 までに登録したカードは、どれも過去の原典照合の記録で登録した。採用の記録は v0.29 の 14 枚
-        （docs/existing-effect-pokemon-v0.29.md）と v0.30 の 4 枚（docs/discard-energy-attacks-v0.30.md）で、どれも pcg-search.com の
-        同じ版のページと照合した（v0.30 のウインディの名前の表記だけが違い、処理に影響しない）。v0.30 のヒトカゲは過去の原典照合の記録の
-        あるカードで、照合の記録に文面のない「ひのこ」の根拠を guidebook_record の play_text に書いた。"""
+        （docs/existing-effect-pokemon-v0.29.md）と v0.30 の 4 枚（docs/discard-energy-attacks-v0.30.md）と v0.31 の 29 枚（対象 22 枚・進化元 7 枚。
+        docs/held-cards-v0.31.md）で、どれも pcg-search.com の同じ版のページと照合した（違いは書き方・表記だけで、処理に影響しない）。v0.30 の
+        ヒトカゲは過去の原典照合の記録のあるカードで、照合の記録に文面のない「ひのこ」の根拠を guidebook_record の play_text に書いた。"""
         self.assertEqual(cs.problems(), [])
         sources = cs.load_sources()
         self.assertEqual(sources["format"], cs.FORMAT)
         self.assertEqual(sources["policy"]["since"], "2026-10-15")
-        self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON))
+        self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON))
         for card_id in V0_29_POKEMON:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -176,9 +180,25 @@ class ShippedRecordTest(unittest.TestCase):
         record = sources["cards"][CHARMANDER]
         self.assertEqual((record["basis"], record["play_text"], record["kyuura_records"]),
                          (cs.GUIDEBOOK_RECORD, {"attack/1": RUL}, ["CC-PMCG1-014-P63", RUL]))
+        for card_id in V0_31_POKEMON:
+            record = sources["cards"][card_id]
+            with self.subTest(card=card_id):
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, COMMIT))
+                [check] = record["external_checks"]
+                self.assertEqual((check["checked_on"], check["result"] in ("match", "differences")), ("2026-10-15", True))
+                self.assertFalse(any(d["affects_behavior"] for d in check["differences"]))
+                self.assertFalse(any(issue["affects_behavior"] for issue in record["issues"]))
+        # v0.31: 処理に使う文面が kyuura の記録のもの（キュウコンのだいもんじは RUL- の範囲、リザードンのエナジーバーンは TXT-CHARIZARD、ピッピの
+        # ゆびをふるは日英の違いの記録が引く最新の説明）。ほかは印刷の文面
+        self.assertEqual(sources["cards"]["PMCG1-022"]["play_text"]["attack/1"], RUL)
+        self.assertEqual(sources["cards"]["PMCG1-021"]["play_text"]["power/0"], "TXT-CHARIZARD")
+        self.assertEqual(sources["cards"]["PMCG1-067"]["play_text"]["attack/1"], f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067")
         section = cs.load_links()["latest_descriptions"]
-        self.assertEqual(len(section["adopted_printed_text"]), 16)  # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ
-        self.assertEqual(sorted(section["errata_text"]), ["PMCG1-014/attack/1", "PMCG1-017/attack/1", "PMCG1-019/attack/0", "PMCG1-020/attack/1"])
+        # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ（16）と、v0.31 の 45（特殊能力 2 を含む）
+        self.assertEqual(len(section["adopted_printed_text"]), 61)
+        self.assertEqual(sorted(section["errata_text"]), ["PMCG1-014/attack/1", "PMCG1-017/attack/1", "PMCG1-019/attack/0", "PMCG1-020/attack/1",
+                                                          "PMCG1-021/power/0", "PMCG1-022/attack/1"])
+        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067"})
 
     def test_guidebook_record_covers_only_targets_without_verified_text(self):
         """過去の原典照合の記録のあるカードの play_text は、照合の記録に処理に使う文面のない登録だけに書く（v0.30）。ヒトカゲの照合の記録
@@ -193,11 +213,11 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29・v0.30 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
+        v0.29〜v0.31 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
         registered = cs.registered_cards(DEFAULT_EFFECTS)
-        adopted = set(V0_29_POKEMON) | set(V0_30_ADOPTED)
+        adopted = set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON)
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))
         self.assertIn(CHARMANDER, verification["cards"])
@@ -543,7 +563,9 @@ class ResearchCommitTest(unittest.TestCase):
         当てはめた対応表（errata_scope）を、研究の基準のコミットの記録と照らして受け付ける。"""
         links, section = self.scope_case()
         self.assertEqual(self.check({"cards": cs.load_sources()["cards"]}, DEFAULT_EFFECTS, links), [])
-        self.assertEqual(section["errata_scope"][0]["targets"], [f"{CHARMANDER}/attack/1", f"{CHARMELEON}/attack/1", "PMCG1-020/attack/1"])
+        # v0.31 でキュウコン（第1弾）のだいもんじ（同じ印刷の文面）を加えた
+        self.assertEqual(section["errata_scope"][0]["targets"], [f"{CHARMANDER}/attack/1", f"{CHARMELEON}/attack/1", "PMCG1-020/attack/1",
+                                                                 "PMCG1-022/attack/1"])
 
     def test_errata_scope_problems(self):
         """記録の範囲の当てはめ（errata_scope）は、記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象の印刷の文面で確かめる。

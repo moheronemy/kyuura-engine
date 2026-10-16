@@ -61,6 +61,7 @@ from .effects import (
     PowerUse,
     ReturnToHandOnKnockOut,
     TrainerUse,
+    after_energy_attached,
     ko_prevention_power,
     ko_prevention_suppressors,
 )
@@ -72,6 +73,7 @@ from .persistent import KNOCK_OUT, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    DamageReduction,
     NextTurnAttackDamage,
     Retaliation,
     TERMINAL_PHASES,
@@ -529,6 +531,7 @@ def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
     attach_energy_from_hand(state, cmd.player, cmd.energy, target)
     state.energy_attachments_this_turn += 1
     state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target)
+    after_energy_attached(state, cmd.player, target, cmd.energy)  # v0.31: つけたときにはたらく特殊能力（ほのおでかいふく）
 
 
 def _retreat(state: GameState, cmd: Retreat) -> None:
@@ -852,6 +855,7 @@ def check_invariants(state: GameState) -> list[str]:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
             if pokemon.damage >= definition.hp and not (
                 _counter_knocked_out_attacker_awaiting(state, player, pokemon) or _ko_prevention_awaiting(state, player, pokemon)
+                or _attack_damage_awaiting(state, player, pokemon)
             ):
                 problems.append(f"ポケモン {pokemon.card} が HP 以上のダメージで場に残っている")
             if pokemon.evolution_stack and evolve_events is None:
@@ -899,6 +903,7 @@ def check_invariants(state: GameState) -> list[str]:
         return problems
     problems.extend(_progress_problems(state))
     problems.extend(_power_attachment_problems(state))
+    problems.extend(_turn_power_problems(state))  # v0.31
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
@@ -1194,8 +1199,14 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
         if any(type(value) is not int for value in fields):
             problems.append(f"{where} {effect!r} の項目が整数ではない")
             continue
-        if effect.source_player != player or effect.source_card != pokemon.card:
+        giver = 1 - player if effect.on_opponent else player  # v0.31: 相手に与える効果（しっぽをふる）は、効果を与えたのは相手
+        if effect.on_opponent:
+            if effect.source_player != giver or effect.source_card not in state.cards or state.cards[effect.source_card].owner != giver:
+                problems.append(f"{where} {effect!r} の発生源が、相手（プレイヤー {giver}）のカードではない")
+        elif effect.source_player != player or effect.source_card != pokemon.card:
             problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
+        if isinstance(effect, DamageReduction) and (type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10):
+            problems.append(f"{where} {effect!r} の減らす量が 10 の倍数の正の数ではない")
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
             problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
@@ -1203,8 +1214,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(
                 f"{where} {effect!r} を与えた番が、いまの姿になった番 {pokemon.current_form_turn}〜今の番 {state.turn_number} ではない"
             )
-        elif state.first_player in PLAYERS and turn_owner(state, effect.created_turn) != player:
-            problems.append(f"{where} {effect!r} を、持ち主の番でない {effect.created_turn} 番に与えている")
+        elif state.first_player in PLAYERS and turn_owner(state, effect.created_turn) != giver:
+            whose = "持ち主" if giver == player else f"効果を与えたプレイヤー {giver}"  # v0.31: 相手に与える効果（しっぽをふる）は与えたプレイヤー
+            problems.append(f"{where} {effect!r} を、{whose}の番でない {effect.created_turn} 番に与えている")
         if state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
             problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
         if isinstance(effect, Retaliation):
@@ -1331,6 +1343,26 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
         if event["kind"] == "counterattack" and event["attacker_pokemon_id"] == pokemon.pokemon_id and event["knocked_out"]:
             return True
         if (event["kind"] == "damage" and event.get("retaliation") and event.get("pokemon_id") == pokemon.pokemon_id
+                and event.get("total_damage") == pokemon.damage):
+            return True
+    return False
+
+
+def _attack_damage_awaiting(state: GameState, player: int, pokemon: PokemonInPlay) -> bool:
+    """v0.31: ワザの途中の決定（再開先 ``"attack"``）を待つ間だけ、同じワザのダメージの要素で HP 以上になったポケモンは場に残る（きぜつの処理は
+    ワザの要素をすべて処理したあと。p.309）。v0.30 までの対応カードでは、ダメージのあとに決定を出すワザ（ふきとばし）は、相手がきぜつすれば
+    決定を出さなかったので起こらなかった。v0.31 のワザ（れんぞくファイヤーボール・ひばしら・エナジーボムなど）は、相手がきぜつしても自分の
+    エネルギーをトラッシュする・つけかえるので、その決定を待つ間に起こる。
+
+    今の番のログで、最後のワザの宣言（``attack``）のあとに、このポケモン（持ち主・いちばん上のカード）が受けたワザのダメージ（``damage``）が
+    あり、その ``total_damage`` が今のダメージと同じことを確かめる（印や一覧を状態に加えない）。ほかの段階・決定のないときは許さない。"""
+    d = state.decision
+    if state.phase is not Phase.DECISION or d is None or d.resume != "attack":
+        return False
+    for event in _events_since_turn_start(state):  # 新しい順
+        if event["kind"] == "attack":
+            return False
+        if (event["kind"] == "damage" and event.get("player") == player and event.get("pokemon") == pokemon.card
                 and event.get("total_damage") == pokemon.damage):
             return True
     return False
@@ -1545,6 +1577,44 @@ def _power_attachment_problems(state: GameState) -> list[str]:
     if count != logged:
         return [f"この番にポケモンパワーでつけたエネルギーの数 {count} が、今の番のログの power_attach_energy の数 {logged} と違う"]
     return []
+
+
+def _turn_power_problems(state: GameState) -> list[str]:
+    """v0.31（形式 10）: この番に使った「自分の番ごとに1回使える」特殊能力（``power_uses_this_turn``）と、「エナジーバーン」で「炎」エネルギーに
+    なったエネルギーカード（``energy_burn``）の整合。
+
+    - ``power_uses_this_turn``: (場のポケモンの番号, 特殊能力の位置) の重ならない並びで、今の番のログに、その番号・位置の ``pokemon_power`` があり、
+      その特殊能力の実装が回数の制限のあるもの（``once_per_turn``）。今の番のそのような宣言のログの数と同じ。
+    - ``energy_burn``: (場のポケモンの番号, エネルギーカードの uid) の重ならない並びで、今の番のログに、その番号の ``energy_burn``（uid を含む）がある。
+      番の終わり（ログ ``turn_end``）のあとには残らない。
+    """
+    problems: list[str] = []
+    uses = state.power_uses_this_turn
+    burn = state.energy_burn
+    if not isinstance(uses, tuple) or not isinstance(burn, tuple):
+        return [f"この番の特殊能力の記録 {uses!r}・{burn!r} がタプルではない"]
+    recent = _events_since_turn_start(state)
+    limited = []
+    for event in recent:
+        if event["kind"] != "pokemon_power" or event.get("pokemon") not in state.cards:
+            continue
+        definition = state.card_def(event["pokemon"])  # 使ったときのいちばん上のカード（そのあと進化しても、使った記録は残る）
+        index = event.get("power_index")
+        if isinstance(index, int) and 0 <= index < len(definition.powers):
+            effect = state.effects.power_effect(definition.id, definition.powers[index])
+            if getattr(effect, "once_per_turn", False):
+                limited.append((event.get("pokemon_id"), index))
+    if len(set(uses)) != len(uses) or sorted(limited) != sorted(uses):
+        problems.append(f"この番に使った回数の制限のある特殊能力 {uses} が、今の番のそのような宣言のログ {limited} と合わない")
+    burned = {(e.get("pokemon_id"), uid) for e in recent if e["kind"] == "energy_burn" for uid in e.get("energies", ())}
+    if len(set(burn)) != len(burn) or not set(burn) <= burned:
+        problems.append(f"「炎」エネルギーになったエネルギー {burn} が、今の番のログの energy_burn {sorted(burned)} と合わない")
+    if burn and any(e["kind"] == "turn_end" for e in recent):
+        problems.append(f"「炎」エネルギーになったエネルギー {burn} が、番の終わりのあとに残っている（自分の番の終わりにもとにもどる）")
+    for pid, uid in burn:
+        if uid not in state.cards or not state.card_def(uid).is_basic_energy:
+            problems.append(f"「炎」エネルギーになったカード {uid!r} が基本エネルギーカードではない")
+    return problems
 
 
 def _progress_problems(state: GameState) -> list[str]:

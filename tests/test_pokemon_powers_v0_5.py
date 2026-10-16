@@ -34,6 +34,7 @@ from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
     ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, FIRE, GRASS, GROWLITHE, HITMONCHAN, IVYSAUR, POTION, RATTATA, VENUSAUR, build_test_state,
+    NO_CHARIZARD_EFFECTS, no_charizard_pool,
     expand_decklist,
 )
 from tests.log_audit import serialization_problems
@@ -51,6 +52,13 @@ STRIKES_BACK = PowerKey("PMCG1-057", 0)  # v0.10 で登録（カイリキーの�
 GUTS = PowerKey("PMCG6-061", 0)
 REBIRTH = PowerKey("PMCG5-020", 0)  # v0.12: R団のファイヤーの「ふしちょう」
 RESTLESS_SLEEP = PowerKey("PMCG6-073", 0)  # v0.17b: R団のカビゴンの「わるいねぞう」（tests/test_rocket_snorlax_v0_17b.py）
+# v0.31（docs/held-cards-v0.31.md）: リザードンの「エナジーバーン」・カツラのロコンの「しぜんになおる」・カツラのキュウコンの「ほのおでかいふく」
+ENERGY_BURN = PowerKey("PMCG1-021", 0)
+NATURAL_CURE = PowerKey("PMCG6-026", 0)
+FIRE_RECOVERY = PowerKey("PMCG6-033", 0)
+# 登録表の特殊能力（カード id の順）
+ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, NATURAL_CURE, FIRE_RECOVERY,
+              GUTS, RESTLESS_SLEEP)
 
 
 def full(state):
@@ -140,7 +148,7 @@ class PowerRegistryTest(unittest.TestCase):
         使うかは持ち主が決める）を、カードのページ（p.193）と照合して加えた（7 つ。tests/test_guts_v0_11.py）。v0.12 で R団のファイヤーの
         「ふしちょう」（このカードが「きぜつ」したとき、使える。使うかは持ち主が決める）を、カードのページ（p.82）と照合して加えた（8 つ。
         tests/test_phoenix_v0_12.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, GUTS, RESTLESS_SLEEP))
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふくを加えた
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -149,9 +157,12 @@ class PowerRegistryTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.describe()["powers"]["PMCG1-011@power0"],
                          {"implementation": "energy_transfer", "name_ja": "エナジートランス", "source": "P43 p.16・p.323"})
         self.assertIsNone(DEFAULT_EFFECTS.power_entry(VENUSAUR, 1))
-        # 登録のないパワーの例: v0.5 ではカメックス（v0.6 で登録した）、v0.6 ではフーディン（v0.7 で登録した）
-        self.assertIsNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
-        self.assertIn("9 powers", repr(DEFAULT_EFFECTS))  # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9
+        # 登録のないパワーの例: v0.5 ではカメックス（v0.6 で登録した）、v0.6 ではフーディン（v0.7 で登録した）、v0.7〜v0.30 ではリザードン
+        # （v0.31 で登録した。登録を除いた登録表 NO_CHARIZARD_EFFECTS で確かめる）
+        self.assertIsNone(NO_CHARIZARD_EFFECTS.power_entry(CHARIZARD, 0))
+        self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
+        # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12
+        self.assertIn("12 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -186,8 +197,10 @@ class PowerRegistryTest(unittest.TestCase):
     def test_unregistered_power_of_another_card_stays_unsupported(self):
         """登録のないポケモンパワーを持つカードは使えない。名前や説明文の有無では決めない。v0.5 ではカメックスの「あまごい」で
         確かめていた。v0.6 であまごいを登録したので、フーディン（PMCG1-049）の「ダメージスワップ」で確かめていた。v0.7 でダメージ
-        スワップを登録したので、リザードン（PMCG1-021。参照カード）の「エナジーバーン」で確かめる。"""
-        pool = load_card_pool()
+        スワップを登録したので、リザードン（PMCG1-021。参照カード）の「エナジーバーン」で確かめていた。v0.31 でエナジーバーンを登録したので、
+        その登録を除いた登録表（tests/helpers.py の NO_CHARIZARD_EFFECTS）で確かめる。"""
+        pool = no_charizard_pool()
+        self.assertTrue(load_card_pool().is_playable(CHARIZARD))
         d = pool.get(CHARIZARD)
         self.assertFalse(pool.is_playable(CHARIZARD))
         self.assertEqual([(w.name_ja, w.supported, w.unsupported_reason) for w in d.powers],
@@ -195,7 +208,7 @@ class PowerRegistryTest(unittest.TestCase):
         # エナジートランス・あまごい・ダメージスワップの登録をリザードンの位置に写しても、名前が違うので使えない（データとの照合）
         for source in (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP):
             entry = DEFAULT_EFFECTS.power_entry(source.card_id, source.power_index)
-            effects = DEFAULT_EFFECTS.with_powers("test-copied", {PowerKey(CHARIZARD, 0): entry})
+            effects = NO_CHARIZARD_EFFECTS.with_powers("test-copied", {PowerKey(CHARIZARD, 0): entry})
             copied = pool_from_extract(read_extract(), effects)
             self.assertFalse(copied.get(CHARIZARD).powers[0].supported)
             self.assertIn("名前", copied.get(CHARIZARD).powers[0].unsupported_reason)
@@ -259,16 +272,15 @@ class PowerRegistryTest(unittest.TestCase):
             DEFAULT_EFFECTS.with_attacks("a", {}), DEFAULT_EFFECTS.without_attacks("b", []), DEFAULT_EFFECTS.with_trainers("c", {}),
             DEFAULT_EFFECTS.without_trainers("d", []),
         ):
-            # v0.5 は (ENERGY_TRANS,)、v0.6 は 2 つ、v0.7 は 3 つ、v0.8 は 4 つ、v0.9 は 5 つ、v0.10 は 6 つ、v0.11 は 7 つ、v0.12 は 8 つ、v0.17b は 9 つ
-            self.assertEqual(registry.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, GUTS, RESTLESS_SLEEP))
-        removed = DEFAULT_EFFECTS.without_powers("e", [ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, GUTS,
-                                                       RESTLESS_SLEEP])
+            # v0.5 は (ENERGY_TRANS,)、v0.6 は 2 つ、v0.7 は 3 つ、v0.8 は 4 つ、v0.9 は 5 つ、v0.10 は 6 つ、v0.11 は 7 つ、v0.12 は 8 つ、v0.17b は 9 つ、
+            # v0.31 は 12
+            self.assertEqual(registry.power_keys(), ALL_POWERS)
+        removed = DEFAULT_EFFECTS.without_powers("e", ALL_POWERS)
         self.assertEqual((removed.power_keys(), removed.attack_keys(), removed.trainer_ids()),
                          ((), DEFAULT_EFFECTS.attack_keys(), DEFAULT_EFFECTS.trainer_ids()))
-        self.assertEqual(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS]).power_keys(),
-                         (RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, GUTS, RESTLESS_SLEEP))
+        self.assertEqual(DEFAULT_EFFECTS.without_powers("f", [ENERGY_TRANS]).power_keys(), ALL_POWERS[1:])
         # 元の登録表は変わらない
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), (ENERGY_TRANS, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, GUTS, RESTLESS_SLEEP))
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)
 
 
 # ---------------------------------------------------------------- コマンドの形
@@ -449,7 +461,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=10)
+            state_to_dict(new, format_version=11)  # v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

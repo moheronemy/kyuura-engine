@@ -113,6 +113,40 @@ ARCANINE = "PMCG1-019"  # ウインディ（第1弾。ガーディから進化�
 MAGMAR = "PMCG1-020"  # ブーバー（第1弾。たね。HP 50・炎・弱点 水・にげる 2。ほのおパンチ（炎炎）30・かえんほうしゃ（炎炎無）50）
 ROCKET_PONYTA = "PMCG4-013"  # ポニータ（第4弾ロケット団。たね。HP 50・炎・弱点 水・にげる 1。ひのこ（炎無）30）
 V0_30_POKEMON = ("PMCG1-014", CHARMELEON, ARCANINE, MAGMAR, ROCKET_PONYTA)
+# v0.31: v0.30 で保留した 22 枚（docs/held-cards-v0.31.md）と、その進化元として加えた 7 枚。写しの組 pool_v0_31 の並び（対象 22 枚 → 進化元 7 枚）
+NINETALES = "PMCG1-022"  # キュウコン（第1弾。ロコンから進化。かどわかす・だいもんじ）
+ZAPDOS = "PMCG1-042"  # サンダー（第1弾。かみなり・10まんボルト）
+BASE_GASTLY = "PMCG1-044"  # ゴース（第1弾。さいみんガス・みちづれ。化石の秘密のゴース GASTLY とは別のカード）
+MEWTWO = "PMCG1-050"  # ミュウツー（第1弾。サイコキネシス・バリアー）
+CLEFABLE = "PMCG2-044"  # ピクシー（ジャングル。ピッピから進化。ゆびをふる・ちいさくなる）
+MOLTRES = "PMCG3-009"  # ファイヤー（化石の秘密。やまやき・ゴッドバード）
+SLOWPOKE = "PMCG3-027"  # ヤドン（化石の秘密。ぼーっとする・ゴミあさり）
+DARK_RAPIDASH = "PMCG4-014"  # わるいギャロップ（ロケット団。ポニータ（第4弾）から進化。うしろげり・ひばしら）
+DARK_CHARMELEON = "PMCG4-015"  # わるいリザード（ロケット団。ヒトカゲから進化。しっぽでたたく・ファイヤーボール）
+DARK_FLAREON = "PMCG4-016"  # わるいブースター（ロケット団。イーブイから進化。いかり・ひあそび）
+DARK_CHARIZARD = "PMCG4-017"  # わるいリザードン（ロケット団。わるいリザードから進化。つめではじく・れんぞくファイヤーボール）
+DARK_GOLDUCK = "PMCG4-022"  # わるいゴルダック（ロケット団。コダックから進化。だい3のめ・ちょうねんりき）
+DARK_ELECTRODE = "PMCG4-028"  # わるいマルマイン（ロケット団。ビリリダマ（第4弾）から進化。ころがりタックル・エナジーボム）
+MISTYS_GOLDUCK = "PMCG5-032"  # カスミのゴルダック（カスミのコダックから進化。エクストラビーム・スーパーデストロイ）
+LT_SURGES_ELECTABUZZ = "PMCG5-041"  # マチスのエレブー（たいでん・ほうでん）
+BLAINES_CHARMANDER = "PMCG6-025"  # カツラのヒトカゲ（メラメラ・きりさく）
+BLAINES_CHARMELEON = "PMCG6-029"  # カツラのリザード（カツラのヒトカゲから進化。ほのおのつめ・やきはらう）
+BLAINES_MAGMAR = "PMCG6-031"  # カツラのブーバー（ひをふく・マグマふんしゅつ）
+BLAINES_NINETALES = "PMCG6-033"  # カツラのキュウコン（カツラのロコンから進化。ほのおでかいふく・しゃくねつ）
+BLAINES_ARCANINE = "PMCG6-034"  # カツラのウインディ（カツラのガーディから進化。ヒートタックル・ほのおのあらし）
+LT_SURGES_RAICHU = "PMCG6-041"  # マチスのライチュウ（マチスのピカチュウから進化。バリバリ・でんきタックル）
+CLEFAIRY = "PMCG1-067"  # ピッピ（第1弾。進化元。うたう・ゆびをふる）
+EEVEE = "PMCG2-037"  # イーブイ（ジャングル。進化元。しっぽをふる・でんこうせっか）
+PSYDUCK = "PMCG4-019"  # コダック（ロケット団。進化元。めまい・みずでっぽう）
+MISTYS_PSYDUCK = "PMCG5-021"  # カスミのコダック（進化元。ちょうのうりょく）
+BLAINES_VULPIX = "PMCG6-026"  # カツラのロコン（進化元。しぜんになおる・しっぽでまどわす）
+BLAINES_GROWLITHE = "PMCG6-027"  # カツラのガーディ（進化元。もえひろがる）
+LT_SURGES_PIKACHU = "PMCG5-036"  # マチスのピカチュウ（進化元。でんこうせっか）
+V0_31_TARGETS = (NINETALES, "PMCG1-021", ZAPDOS, BASE_GASTLY, MEWTWO, CLEFABLE, MOLTRES, SLOWPOKE, DARK_RAPIDASH, DARK_CHARMELEON,
+                 DARK_FLAREON, DARK_CHARIZARD, DARK_GOLDUCK, DARK_ELECTRODE, MISTYS_GOLDUCK, LT_SURGES_ELECTABUZZ, BLAINES_CHARMANDER,
+                 BLAINES_CHARMELEON, BLAINES_MAGMAR, BLAINES_NINETALES, BLAINES_ARCANINE, LT_SURGES_RAICHU)
+V0_31_DEPENDENCIES = (CLEFAIRY, EEVEE, PSYDUCK, MISTYS_PSYDUCK, BLAINES_VULPIX, BLAINES_GROWLITHE, LT_SURGES_PIKACHU)
+V0_31_POKEMON = V0_31_TARGETS + V0_31_DEPENDENCIES
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -500,11 +534,58 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageAndSelfSleep,  # v0.17b: R団のカビゴンの「たおれこむ」（Damage と、対象を自分にした Status）
     _effects.SetNextTurnAttackDamage,  # v0.27: ストライクの「つるぎのまい」（次の自分の番のワザのダメージを変える持続する効果。新しい要素）
     _effects.DiscardEnergyThenDamage,  # v0.30: ヒトカゲの「ひのこ」など（エネルギーをトラッシュする要素 DiscardOwnEnergy と Damage）
+) + (
+    # v0.31: v0.30 の保留の 22 枚と進化元・依存のカード（docs/held-cards-v0.31.md 3 章の仕組みの表）
+    _effects.AttachDiscardEnergyToSelf,  # マチスのエレブーの「たいでん」
+    _effects.CannotAttackOnHeads,  # イーブイの「しっぽをふる」
+    _effects.CoinBonusDamage,  # イーブイの「でんこうせっか」・マチスのピカチュウの「でんこうせっか」・カツラのブーバーの「ひをふく」
+    _effects.CoinBonusDamageThenDiscardAll,  # マチスのライチュウの「バリバリ」
+    _effects.CoinBonusDiscardThenDamage,  # わるいブースターの「ひあそび」
+    _effects.CoinDiscardOpponentEnergyEach,  # カスミのゴルダックの「スーパーデストロイ」
+    _effects.CoinsDiscardThenSpreadDamage,  # カツラのリザードの「やきはらう」
+    _effects.CoinsPerEnergyDamageThenDiscard,  # わるいリザードンの「れんぞくファイヤーボール」
+    _effects.CopyOpponentAttackEffect,  # ピッピの「ゆびをふる」・ピクシーの「ゆびをふる」
+    _effects.DamageAndBenchTypeDamage,  # カツラのガーディの「もえひろがる」
+    _effects.DamagePlusDefenderEnergy,  # ミュウツーの「サイコキネシス」
+    _effects.DamagePlusOwnCounters,  # わるいブースターの「いかり」
+    _effects.DamageThenDiscardAllOnTails,  # カスミのゴルダックの「エクストラビーム」・カツラのキュウコンの「しゃくねつ」
+    _effects.DamageThenDiscardEachEnergy,  # カツラのヒトカゲの「メラメラ」
+    _effects.DamageThenMoveEnergyToBench,  # わるいマルマインの「エナジーボム」
+    _effects.DamageThenOptionalBenchDamage,  # わるいギャロップの「ひばしら」
+    _effects.DamageThenParalyzeOrSelfDamage,  # マチスのライチュウの「でんきタックル」
+    _effects.DiscardAllThenCoinDamage,  # マチスのエレブーの「ほうでん」
+    _effects.DiscardEnergyBeforeDamage,  # リザードンの「ほのおのうず」・サンダーの「10まんボルト」・カツラのウインディの「ほのおのあらし」
+    _effects.DiscardEnergyThenDraw,  # わるいゴルダックの「だい3のめ」
+    _effects.DiscardEnergyThenRecoverTrainer,  # ヤドンの「ゴミあさり」
+    _effects.DiscardEnergyThenSelfEffect,  # ゴースの「みちづれ」・ミュウツーの「バリアー」
+    _effects.DiscardFireThenMillOpponent,  # ファイヤーの「やまやき」
+    _effects.DrawCardsAttack,  # コダックの「めまい」
+    _effects.ExtraEnergyDamageMixed,  # コダックの「みずでっぽう」
+    _effects.FailOnTailsDamage,  # ファイヤーの「ゴッドバード」
+    _effects.FailOnTailsDiscardThenDamage,  # わるいリザードの「ファイヤーボール」
+    _effects.HealSelfOnHeadsIfDamaged,  # ヤドンの「ぼーっとする」
+    _effects.MillSelfThenDamage,  # カツラのブーバーの「マグマふんしゅつ」
+    _effects.ReduceDamageNextTurn,  # ピクシーの「ちいさくなる」
+    _effects.SleepOnHeadsWithoutDamage,  # ゴースの「さいみんガス」・ピッピの「うたう」
+    _effects.SwitchOpponentActive,  # キュウコンの「かどわかす」
+    _effects.ThreeCoinPsychicPower,  # カスミのコダックの「ちょうのうりょく」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
 # テストは、この登録だけを除いた登録表を使う（製品の登録表は変えない）
 NO_EMBER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(CHARMANDER, 1)])
+
+# v0.30 まで、リザードン（PMCG1-021）は「実装を登録していないポケモンパワー（エナジーバーン）とワザ（ほのおのうず）を持つ 2 進化」の参照カードで、
+# 未対応のカードの例に使っていた（v0.7 でフーディンから引き継いだ）。v0.31 で対応にしたので、その性質を確かめるテストは、この 2 つの登録だけを除いた
+# 登録表と、その登録表で分類した写しのカードの組（``no_charizard_pool``）を使う（製品の登録表は変えない）
+NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0)]).without_attacks(
+    "test-no-charizard", [AttackKey(CHARIZARD, 0)])
+
+
+def no_charizard_pool():
+    """リザードンの登録を除いた登録表（``NO_CHARIZARD_EFFECTS``）で分類した、同梱の写しのカードの組（v0.31）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_CHARIZARD_EFFECTS)
 
 
 class TwoStepTestEffect(AttackEffect):

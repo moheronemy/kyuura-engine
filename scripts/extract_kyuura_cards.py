@@ -319,11 +319,46 @@ POOL_V0_30 = [
     "PMCG4-013",  # ポニータ（第4弾ロケット団。ひのこ）
 ]
 
+# v0.31: v0.30 で保留した 22 枚（docs/discard-energy-attacks-v0.30.md 4 章）と、その進化元として加えた 7 枚。共通の仕組み（控えポケモンへの
+# ダメージ・ワザの失敗・トラッシュの数と時点・相手のワザを自分のワザとして使う・次の相手の番の持続する効果・回数の制限のある特殊能力など）を
+# まとめて加えた。2026-10-15 からのカードデータの方針で、kyuura の data/cards.json を基本データとし、pcg-search.com と照合した（ガイドブックは
+# 読んでいない。記録は kyuura_engine/data/card_sources.json。docs/held-cards-v0.31.md）。リザードンは v0.30 まで参照カードだった
+POOL_V0_31 = [
+    "PMCG1-022",  # キュウコン（第1弾。ロコンから進化。かどわかす・だいもんじ）
+    "PMCG1-021",  # リザードン（第1弾。リザードから進化。エナジーバーン・ほのおのうず）
+    "PMCG1-042",  # サンダー（第1弾。かみなり・10まんボルト）
+    "PMCG1-044",  # ゴース（第1弾。さいみんガス・みちづれ）
+    "PMCG1-050",  # ミュウツー（第1弾。サイコキネシス・バリアー）
+    "PMCG2-044",  # ピクシー（第2弾。ピッピから進化。ゆびをふる・ちいさくなる）
+    "PMCG3-009",  # ファイヤー（化石の秘密。やまやき・ゴッドバード）
+    "PMCG3-027",  # ヤドン（化石の秘密。ぼーっとする・ゴミあさり）
+    "PMCG4-014",  # わるいギャロップ（ロケット団。ポニータから進化。うしろげり・ひばしら）
+    "PMCG4-015",  # わるいリザード（ロケット団。ヒトカゲから進化。しっぽでたたく・ファイヤーボール）
+    "PMCG4-016",  # わるいブースター（ロケット団。イーブイから進化。いかり・ひあそび）
+    "PMCG4-017",  # わるいリザードン（ロケット団。わるいリザードから進化。つめではじく・れんぞくファイヤーボール）
+    "PMCG4-022",  # わるいゴルダック（ロケット団。コダックから進化。だい3のめ・ちょうねんりき）
+    "PMCG4-028",  # わるいマルマイン（ロケット団。ビリリダマから進化。ころがりタックル・エナジーボム）
+    "PMCG5-032",  # カスミのゴルダック（リーダーズスタジアム。カスミのコダックから進化。エクストラビーム・スーパーデストロイ）
+    "PMCG5-041",  # マチスのエレブー（リーダーズスタジアム。たいでん・ほうでん）
+    "PMCG6-025",  # カツラのヒトカゲ（闇からの挑戦。メラメラ・きりさく）
+    "PMCG6-029",  # カツラのリザード（闇からの挑戦。カツラのヒトカゲから進化。ほのおのつめ・やきはらう）
+    "PMCG6-031",  # カツラのブーバー（闇からの挑戦。ひをふく・マグマふんしゅつ）
+    "PMCG6-033",  # カツラのキュウコン（闇からの挑戦。カツラのロコンから進化。ほのおでかいふく・しゃくねつ）
+    "PMCG6-034",  # カツラのウインディ（闇からの挑戦。カツラのガーディから進化。ヒートタックル・ほのおのあらし）
+    "PMCG6-041",  # マチスのライチュウ（闇からの挑戦。マチスのピカチュウから進化。バリバリ・でんきタックル）
+    # 進化元（依存のために加えたカード）
+    "PMCG1-067",  # ピッピ（第1弾。うたう・ゆびをふる）
+    "PMCG2-037",  # イーブイ（第2弾。しっぽをふる・でんこうせっか）
+    "PMCG4-019",  # コダック（ロケット団。めまい・みずでっぽう）
+    "PMCG5-021",  # カスミのコダック（リーダーズスタジアム。ちょうのうりょく）
+    "PMCG6-026",  # カツラのロコン（闇からの挑戦。しぜんになおる・しっぽでまどわす）
+    "PMCG6-027",  # カツラのガーディ（闇からの挑戦。もえひろがる）
+    "PMCG5-036",  # マチスのピカチュウ（リーダーズスタジアム。でんこうせっか）
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
-    # リザードン（2進化・実装を登録していないポケモンパワー「エナジーバーン」と、登録していないワザ「ほのおのうず」。v0.7 でフーディンの
-    # 代わりに加えた。v0.6 ではフーディンがカメックスの、v0.5 ではカメックスがフシギバナの代わりだった）
-    "PMCG1-021",
+    # リザードン（PMCG1-021）は v0.30 まで参照カードだった（エナジーバーン・ほのおのうずが未対応）。v0.31 で対戦用（POOL_V0_31）にした
     # ヒトカゲ（PMCG1-014）は v0.29 まで参照カードだった（「ひのこ」が未対応）。v0.30 で対戦用（POOL_V0_30）にした
     "PMCG1-075",  # いいきずぐすり（実装を登録していないトレーナー）
     # 化石の秘密のベトベター（v0.8。「ベトベト」は対応できるが、「ちいさくなる」（次の相手の番、ワザによって受けるダメージを「-20」する持続する
@@ -394,10 +429,10 @@ def read_kyuura_cards(kyuura: Path) -> dict:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + REFERENCE_ONLY]
+    cards = [{field: by_id[card_id][field] for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + REFERENCE_ONLY]
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -448,6 +483,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_28": POOL_V0_28,
         "pool_v0_29": POOL_V0_29,
         "pool_v0_30": POOL_V0_30,
+        "pool_v0_31": POOL_V0_31,
         "reference_only": REFERENCE_ONLY,
         "cards": cards,
     }
@@ -473,7 +509,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

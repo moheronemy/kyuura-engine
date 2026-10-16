@@ -18,7 +18,7 @@ from tests.helpers import (
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
-    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE,
+    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -139,10 +139,22 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             self.assertEqual(pool.get(card_id).is_basic_pokemon, card_id not in (CHARMELEON, ARCANINE), card_id)
         self.assertEqual((pool.get(CHARMELEON).evolves_from, pool.get(ARCANINE).evolves_from), (pool.get(CHARMANDER).name_ja, pool.get(GROWLITHE).name_ja))
+        # v0.31（v0.30 で保留した 22 枚と、その進化元として加えた 7 枚。docs/held-cards-v0.31.md）。リザードンは v0.30 まで参照カード。
+        # どのカードも、進化元が写しにあり対戦で使える（2 進化は 1 進化を、1 進化はたねポケモンを持つ）
+        self.assertEqual(read_extract()["pool_v0_31"], list(V0_31_TARGETS + V0_31_DEPENDENCIES))
+        self.assertEqual(len(V0_31_TARGETS), 22)
+        self.assertNotIn(CHARIZARD, read_extract()["reference_only"])
+        names = {pool.get(c).name_ja: c for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_31_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
-                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON)
+                 ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
+                 *V0_31_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -215,8 +227,10 @@ class ClassificationTest(unittest.TestCase):
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
         # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。
         # v0.6 ではフーディン（登録のないポケモンパワー「ダメージスワップ」・ワザ「あやしいひかり」）で確かめていた。v0.7 で
-        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる
-        reasons = " ".join(pool.get(CHARIZARD).unsupported_reasons)
+        # フーディンを対応にしたので、リザードン（登録のないポケモンパワー「エナジーバーン」・ワザ「ほのおのうず」）で確かめる。v0.31 でリザードンを
+        # 対応にしたので、その 2 つの登録だけを除いた登録表で分類したカードの組で確かめる（tests/helpers.py の no_charizard_pool）
+        self.assertTrue(pool.get(CHARIZARD).supported)
+        reasons = " ".join(no_charizard_pool().get(CHARIZARD).unsupported_reasons)
         self.assertTrue(pool.get(CHARIZARD).is_stage2_pokemon)
         self.assertNotIn("進化", reasons)
         self.assertIn("ポケモンパワー「エナジーバーン」", reasons)

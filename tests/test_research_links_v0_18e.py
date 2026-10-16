@@ -63,9 +63,12 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（22 件）。論点のないものは kyuura の処理が out_of_scope。
-        kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 のパソコン通信の
-        UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件。kyuura への報告事項）。"""
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 = 37 件）。論点のないものは kyuura の
+        処理が out_of_scope。kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 の
+        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件。kyuura への報告事項）。
+        v0.31 で、v0.30 まで起こらなかった（コードのない）5 件（T27・C34/C35・G40・P19・P32）が複数のポケモンにダメージを与えるワザで起こるように
+        なったので停止コードにした。kyuura の論点（UQ-）はそのまま（kyuura の未解決の一覧ではコードのない行なので、``kyuura_index_engine_key`` で
+        行を指す。scripts/check_research_links.py）。"""
         self.assertEqual(set(LINKS["stop_codes"]), engine_stop_codes())
         self.assertEqual(len(LINKS["stop_codes"]), LINKS["counts"]["engine_stop_codes"])
         not_in_kyuura = set()
@@ -77,7 +80,17 @@ class ResearchLinksTest(unittest.TestCase):
                 else:
                     self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
         self.assertEqual(not_in_kyuura, {"UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",
-                                         "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"})
+                                         "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+                                         # v0.31（docs/held-cards-v0.31.md の HC1〜HC10）
+                                         "UNRESOLVED_DISCARD_ENERGY_TIMING", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", "UNRESOLVED_PREVENTED_EFFECT_COIN",
+                                         "UNRESOLVED_EXTRA_ENERGY_COLORLESS", "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO", "UNRESOLVED_DISCARD_DECK_SHORT",
+                                         "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO", "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE", "UNRESOLVED_COPIED_ATTACK",
+                                         "UNRESOLVED_ENERGY_BURN_TRANSFER"})
+        moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
+        self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
+                                 "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
+                                 "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": "P32"})
+        self.assertEqual(LINKS["unresolved_without_code"], [])
 
     def test_codeless_questions_exist(self):
         """コードのない問い（Z9・Z22）は、問いの表（questions.QUESTIONS）にコードなしである。"""
@@ -88,14 +101,19 @@ class ResearchLinksTest(unittest.TestCase):
 
     def test_every_question_is_linked_to_its_rulings(self):
         """問いの表のどの問いも、対応表に裁定 id（か版）ごと載っている。コードのある問いは停止コードの行、コードのない問いはコードのない問いか
-        起こらない未解決の行。問いを加えたら対応表も直す。"""
+        起こらない未解決の行。問いを加えたら対応表も直す。
+
+        v0.31 の ``UNSUPPORTED_…`` のコードの問い（``copied_attack_unsupported``。エンジンが表せないワザをまねるとき）は裁定の未解決ではなく
+        エンジンの対応の範囲なので、停止コードの行には載せない（docs/held-cards-v0.31.md）。"""
         def ids(rulings):
             return {r["ruling_id"] or r["version"] for r in rulings} | {r["version"] for r in rulings}
 
         codeless_rows = [ids(e["engine_rulings"]) for e in LINKS["unresolved_without_code"]]
         for key, question in questions.QUESTIONS.items():
             with self.subTest(question=key):
-                if question.code is not None:
+                if question.code is not None and question.code.startswith("UNSUPPORTED_"):
+                    self.assertNotIn(question.code, LINKS["stop_codes"])
+                elif question.code is not None:
                     self.assertTrue(set(question.rulings) <= ids(LINKS["stop_codes"][question.code]["engine_rulings"]))
                 elif key in LINKS["codeless_questions"]:
                     self.assertTrue(set(question.rulings) <= ids(LINKS["codeless_questions"][key]["engine_rulings"]))
@@ -103,13 +121,14 @@ class ResearchLinksTest(unittest.TestCase):
                     self.assertTrue(any(set(question.rulings) <= row for row in codeless_rows), question.rulings)
 
     def test_counts(self):
-        """未解決の裁定 28 件 = 停止コード 22 + コードのない未解決（起こらない 5・Z9）。kyuura の論点は 19 件で、別の数え方（v0.21 の
-        GW5・v0.22 の CS6・v0.23 の ER9・ER10 は kyuura に論点がない）。"""
+        """未解決の裁定 38 件 = 停止コード 37 + コードのない未解決（Z9）。v0.30 までは 28 件 = 停止コード 22 + コードのない未解決（起こらない 5・Z9）
+        で、v0.31 で起こらない 5 件を停止コードにし（数は同じ）、HC1〜HC10 の 10 件を加えた。kyuura の論点は 19 件で、別の数え方（v0.21 の
+        GW5・v0.22 の CS6・v0.23 の ER9・ER10・v0.31 の HC1〜HC10 は kyuura に論点がない）。"""
         counted = len(LINKS["stop_codes"]) + len(LINKS["unresolved_without_code"]) + sum(
             v["counted_as_engine_unresolved"] for v in LINKS["codeless_questions"].values())
         self.assertEqual(counted, LINKS["counts"]["engine_unresolved_rulings"])
         issues = {v["kyuura_issue"] for v in LINKS["stop_codes"].values() if v["kyuura_issue"]}
-        issues |= {v["kyuura_issue"] for v in LINKS["codeless_questions"].values()}
+        issues |= {v["kyuura_issue"] for v in LINKS["codeless_questions"].values() if v["kyuura_issue"]}
         for section in ("unresolved_without_code", "deferred_card_questions", "implementation_assumptions_with_issue"):
             issues |= {v["kyuura_issue"] for v in LINKS[section]}
         self.assertEqual(len(issues), LINKS["counts"]["kyuura_issues"])
@@ -127,12 +146,13 @@ class ResearchLinksTest(unittest.TestCase):
         """最新の説明を登録したワザ・特殊能力は、どれも 6 つの区分（kyuura の LD-、文面が印刷と同じで kyuura の CC- に書かれたもの、CC- はあるが
         ワザの文面を照合していないもの、kyuura に記録なし、kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（2026-10-15
         からの方針。docs/card-data-policy.md。採用の記録 card_sources.json との対応は scripts/check_card_sources.py が確かめる）、処理に使う
-        文面を kyuura のエラッタ（RUL- など）にしたもの（v0.30 の errata_text））のちょうど 1 つに挙げる（登録を加えたら対応表も直す）。
+        文面を kyuura のエラッタ（RUL- など）にしたもの（v0.30 の errata_text）、処理に使う文面を kyuura の card_differences の最新の説明に
+        したもの（v0.31 の difference_text。ピッピの「ゆびをふる」））のちょうど 1 つに挙げる（登録を加えたら対応表も直す）。
         文面の一致は scripts/check_research_links.py が kyuura で確かめる。"""
         section = LINKS["latest_descriptions"]
         groups = {name: set(section[name]) for name in
                   ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record",
-                   "adopted_printed_text", "errata_text")}
+                   "adopted_printed_text", "errata_text", "difference_text")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -152,9 +172,13 @@ class ResearchLinksTest(unittest.TestCase):
             self.assertIn(cc_id, LINKS["card_checks"]["engine_verified"][card])
         # v0.30: 炎エネルギーをトラッシュするワザは kyuura の RUL-ENERGY-DISCARD-ATTACKS の文面にしたがう。記録の cards はウインディだけなので、
         # ほかのワザは適用の範囲（errata_scope。記録の notes の引用・同じ印刷の文面）で結ぶ。照らすのは scripts/check_research_links.py
-        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS"})
+        # v0.31: リザードンの「エナジーバーン」は TXT-CHARIZARD（記録の cards にリザードンがある。適用の範囲ではない）
+        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS", "TXT-CHARIZARD"})
+        self.assertEqual(section["errata_text"]["PMCG1-021/power/0"], "TXT-CHARIZARD")
         scoped = {target for scope in section["errata_scope"] for target in scope["targets"]}
-        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0"})
+        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0"})
+        # v0.31: ピッピの「ゆびをふる」は kyuura の card_differences の最新の説明（p.223 の解説の記録。LD- はない。kyuura への報告事項）
+        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067"})
         for scope in section["errata_scope"]:
             self.assertEqual(section["errata_text"][scope["targets"][0]], scope["record"])
 

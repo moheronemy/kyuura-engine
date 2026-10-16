@@ -66,18 +66,50 @@ QUESTIONS: dict[str, Question] = {
             "reparalysis_recovery_turn", "UNRESOLVED_REPARALYSIS_RECOVERY_TURN", ("v0.3b",), 60,
             "マヒの再付与で回復する番が変わる場合の扱いは、原典から決められない",
         ),
+        # v0.31: 控えポケモン・複数のポケモンにダメージ・効果を与えるワザ（docs/held-cards-v0.31.md）で起こるようになったので、コードを付けた
+        # （v0.30 まではコードのない問い。裁定の分類は変えていない）
+        Question("multiple_deferred_effects", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS", ("C34", "C35"), 70,
+                 "1 つのワザで 2 つ以上の「ダメージを受けたとき」の効果がはたらく場合の順番は、原典（p.192・p.325）から決められない"),
+        Question("multiple_ko_prevention", "UNRESOLVED_KO_PREVENTION_ORDER", ("G40", "G16"), 70,
+                 "きぜつするときに使える特殊能力の候補が 2 つ以上ある場合の順番は、原典（p.311・p.325）から決められない"),
+        Question("multiple_post_knockout", "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER", ("P32",), 70,
+                 "きぜつしたときに使える特殊能力の候補が 2 つ以上ある場合の順番は、原典（p.82・p.325）から決められない"),
+        Question("post_knockout_gas_source_knocked", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT", ("P19",), 70,
+                 "かがくへんかガスの発生源が、消している特殊能力（ふしちょう）のポケモンといっしょにきぜつする場合に、その特殊能力を使えるかは、"
+                 "原典（p.48・p.82・p.323・p.324）から決められない"),
+        Question("multiple_evasion", "UNRESOLVED_TRANSPARENCY_COIN_ORDER", ("T27",), 70,
+                 "1 つのワザで 2 匹以上の「とうめい」を持つポケモンがダメージ・効果を受ける場合の、コインの順番は、原典（p.159・p.325）から"
+                 "決められない（順番で乱数の割り当てが変わる）"),
+        # v0.31（docs/held-cards-v0.31.md）
+        Question("discard_energy_timing", "UNRESOLVED_DISCARD_ENERGY_TIMING", ("HC1",), 5,
+                 "こんらん状態のポケモンが、自分のエネルギーカードを「はがしてすてる」と書かれた（炎エネルギーカードをトラッシュして大きなダメージを"
+                 "与えるタイプ以外の）ワザを使うとき、トラッシュがワザを使うための条件（宣言のとき）かワザの効果（こんらんのコインのあと）かは、"
+                 "kyuura の RUL-ENERGY-DISCARD-ATTACKS の未解決の問い（炎以外のワザ）のとおり決められない（「うら」でトラッシュするかが変わる）"),
+        Question("destiny_bond_knockout", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", ("HC2",), 55,
+                 "「みちづれ」で相手の対戦ポケモンも「きぜつ」するとき、それが同時のきぜつ（p.324）かは決められず、勝ち負けが決まる場合は"
+                 "どちらの読み方かで結果が変わる"),
+        Question("prevented_effect_coin", "UNRESOLVED_PREVENTED_EFFECT_COIN", ("HC3",), 10,
+                 "「ワザをうけない」状態のポケモンへの効果だけを決めるコインを投げるかは、原典から決められない（投げるかどうかで乱数の続きが変わる）"),
+        Question("extra_energy_colorless", "UNRESOLVED_EXTRA_ENERGY_COLORLESS", ("HC4",), 10,
+                 "無色エネルギーをふくむワザで「ワザに必要なエネルギーよりも多く「水」エネルギーがついている時」の多いエネルギーの数は、無色の"
+                 "ぶんを「水」エネルギーで払うかで変わり、決められない"),
+        Question("deck_short", "UNRESOLVED_DISCARD_DECK_SHORT", ("HC6",), 10,
+                 "山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合の処理は、原典から決められない"),
+        Question("copied_attack", "UNRESOLVED_COPIED_ATTACK", ("HC9",), 10,
+                 "相手のワザを自分のワザとして使う効果で、選べるワザがすべて、使えないか処理が決められない"),
+        # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("copied_attack_unsupported", "UNSUPPORTED_COPIED_ATTACK", ("v0.31",), 10,
+                 "相手のワザを自分のワザとして使う効果で、処理できるワザがなく、エンジンが対応していないワザがある"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
-        Question("multiple_deferred_effects", None, ("C34", "C35"), 90, "1 つのワザで 2 つ以上の「ダメージを受けたとき」の効果がはたらいた"),
-        Question("multiple_ko_prevention", None, ("G40", "G16"), 90, "きぜつするときに使える特殊能力の候補が 2 つ以上"),
-        Question("multiple_post_knockout", None, ("P32",), 90, "きぜつしたときに使える特殊能力の候補が 2 つ以上"),
-        Question("post_knockout_gas_source_knocked", None, ("P19",), 90, "かがくへんかガスの発生源が、消している特殊能力のポケモンといっしょにきぜつする"),
-        Question("multiple_evasion", None, ("T27",), 90, "1 つのワザで 2 匹以上の「とうめい」を評価した"),
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,
                  "説明に「弱点・抵抗力」に関係なく、と書かれていない特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ"
                  "（弱点・抵抗力を計算するかで結果が変わる）"),
         Question("ko_prevention_self_effect", None, ("Z22",), 90,
                  "ワザを使ったポケモン自身への効果の前に、そのポケモンが HP 以上になり、きぜつの判定で任意の効果（こんじょう）を使える"),
+        # v0.31: 「みちづれ」がはたらくワザのきぜつの判定で、任意の効果（こんじょう）の候補もある（今の対応カードでは起こらない）
+        Question("destiny_bond_with_ko_prevention", None, ("HC2",), 90,
+                 "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
     )
 }
 

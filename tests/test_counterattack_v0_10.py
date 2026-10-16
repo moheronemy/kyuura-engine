@@ -708,9 +708,10 @@ class DirectTest(unittest.TestCase):
         self.assertEqual(state.players[0].active.damage, 10)
 
     def test_two_pending_counters_are_not_ordered(self):
-        """1 つのワザで 2 つ以上の「はんげき」（複数のポケモンが受けるワザ）は、順番が決められない（C34・C35）。今の対応カードでは
-        起こらないので、エンジンの不具合として止める（解決の基盤はコードのない問い ``multiple_deferred_effects`` として見つけ、コマンドの
-        入口で ``RuntimeError`` にする。``questions.to_error``）。"""
+        """1 つのワザで 2 つ以上の「はんげき」（複数のポケモンが受けるワザ）は、順番が決められない（C34・C35）。v0.30 までの対応カードでは
+        起こらなかったので、エンジンの不具合として止めていた（コードのない問い）。v0.31 で控えポケモン・複数のポケモンにダメージを与えるワザ
+        （やきはらう・もえひろがる・ひばしら）を加えたので、同じ問い ``multiple_deferred_effects`` にコード ``UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS``
+        を付けた（裁定の分類は変えていない。コマンドの入口で ``UnsupportedError`` にする。``questions.to_error``）。"""
         state = board(HITMONCHAN_JAB, bench1=[machamp()])
         use = self.use(state)
         fs = use.runtime.run.fs
@@ -722,8 +723,9 @@ class DirectTest(unittest.TestCase):
             finish_damage_elements(state, use)
         self.assertEqual(caught.exception.key, "multiple_deferred_effects")
         from kyuura_engine.resolution.questions import to_error
-        with self.assertRaisesRegex(RuntimeError, "C34・C35"):
-            to_error(caught.exception.key)
+        error = to_error(caught.exception.key)
+        self.assertEqual(error.code, "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS")
+        self.assertIn("C34・C35", error.message)
 
     def test_effects_and_decisions_need_the_counter_first(self):
         """まだ与えていない「はんげき」があるまま、効果の要素（``attack_reaches``）・決定（``push_attack_decision``）に進むとエンジンの不具合
@@ -831,11 +833,15 @@ class SaveRestoreTest(unittest.TestCase):
     def test_format_is_still_9(self):
         from kyuura_engine.serialize import FORMAT_VERSIONS
 
-        self.assertEqual(max(FORMAT_VERSIONS), 9)
+        # v0.10 は形式 9 のまま（「はんげき」の状態の項目を加えていない）。v0.31 で形式 10（power_uses_this_turn・energy_burn）を加えたが、
+        # 「はんげき」の項目ではない（形式 9 の書き出しは変わらない）
+        self.assertEqual(max(FORMAT_VERSIONS), 10)
         new = apply_command(board(HITMONCHAN_JAB), UseAttack(0, 0))
         self.assertEqual(written(new)["format_version"], 9)
+        self.assertEqual(state_to_dict(new, format_version=10), {**written(new), "format_version": 10, "power_uses_this_turn": [],
+                                                                  "energy_burn": []})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=10)
+            state_to_dict(new, format_version=11)
 
 
 if __name__ == "__main__":

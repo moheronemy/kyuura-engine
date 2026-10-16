@@ -648,3 +648,27 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 2. ヒトカゲの照合の記録（CC-PMCG1-014-P63）は「ひのこ」の最新の説明の記録（LD-）を作っていません。RUL- の notes に文面があります。
 3. pcg-search.com のカードページの見出しはウインディを「ウィンディ」（小さい「ィ」）と書き、kyuura は「ウインディ」です（同じページの進化ラインの欄は「ウインディ」）。処理に影響しないので写しは直していません。
 
+
+## v0.31 で加えたポケモン 29 枚（v0.30 で保留した 22 枚と進化元 7 枚）
+
+写しを作り直しました（`pool_v0_31`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 99 枚から 127 枚になりました（29 枚のうちリザードン PMCG1-021 は v0.30 までも参照カードとして写しにあった）。
+- 根拠は `kyuura_engine/data/card_sources.json` の採用の記録（29 件。`basis: kyuura_data`・`adopted`）と、pcg-search.com の同じ版のページとの照合（29 件。
+  `match` 21・`differences` 8。違いはどれも処理に影響しない）。『オフィシャルブック2000』は読んでいないので、`card_verification.json` には加えていません。
+- 処理に使う文面は kyuura の印刷の文面です。ただし、キュウコンの「だいもんじ」は `RUL-ENERGY-DISCARD-ATTACKS` の最新の説明（記録の範囲として当てはめた
+  `errata_scope`）、リザードンの「エナジーバーン」は `TXT-CHARIZARD` の最新の説明、ピッピの「ゆびをふる」は kyuura の data/curation/card_differences.json の
+  PMCG1-067 の記録の最新の説明（研究の対応表の新しい区分 `difference_text`）です。わるいマルマインの「エナジーボム」は kyuura の裁定
+  `CR-TRANSPARENCY-ENERGY-BOMB` にしたがいます。
+- 検証用デッキ `R31`・`K31`・`E31`・`P31`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. `RUL-ENERGY-DISCARD-ATTACKS` の `cards` にキュウコン（PMCG1-022）の「だいもんじ」がありません（同じ印刷の文面。範囲として当てはめた）。
+2. ピッピ（PMCG1-067）の「ゆびをふる」の最新の説明は card_differences の記録にだけあり、LD- の記録がありません。
+3. pcg-search.com との表記の違い: ファイヤー（化石の秘密 PMCG3-009）のワザ名（サイトは「ゴットバード」、kyuura は「ゴッドバード」）、カツラのウインディ
+   （PMCG6-034。サイトの見出しは「カツラのウィンディ」）。ほかの違い（サイトの誤記と見られるもの）は採用の記録の `external_checks` にあります。
+4. エンジンの新しい未解決 HC1〜HC10 は kyuura に論点がありません（研究の対応表の `not_in_kyuura`）。T27・C34/C35・G40・P19・P32 は、kyuura の未解決の一覧で
+   コードのない行です（エンジンが停止コードを付けた）。

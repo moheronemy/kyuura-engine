@@ -185,3 +185,33 @@ def return_discard_to_hand(state: GameState, player: int, cards: tuple[int, ...]
     for uid in cards:
         p.discard.remove(uid)
         p.hand.append(uid)
+
+
+def discard_from_deck(state: GameState, player: int, count: int) -> tuple[int, ...]:
+    """自分の山札の上から ``count`` 枚を、同じ uid のまま、上から順に自分のトラッシュに置く（v0.31。カツラのブーバーの「マグマふんしゅつ」・
+    ファイヤーの「やまやき」（相手の山札））。トラッシュしたカードを返す。
+
+    「カードを引く」（``draw_cards``）ではない。枚数が足りるかの確認とログは呼ぶ側が行う（足りない場合の処理は決められない。HC6。呼ぶ前に止める）。
+    足りなければ確認の漏れなので ``RuntimeError``（状態を変える前）。トラッシュにはカードの順番がない（p.312）。
+    """
+    p = state.players[player]
+    if not 0 <= count <= len(p.deck):
+        raise RuntimeError(f"山札 {len(p.deck)} 枚から {count} 枚はトラッシュできない（確認の漏れ。エンジンの不具合）")
+    cards = tuple(p.deck[:count])
+    del p.deck[:count]
+    p.discard.extend(cards)
+    return cards
+
+
+def attach_from_discard(state: GameState, player: int, cards: tuple[int, ...], pokemon: PokemonInPlay) -> None:
+    """自分のトラッシュのエネルギーカード ``cards`` を、同じ uid のまま、場のポケモン ``pokemon`` の ``energy`` の最後に（この順に）つける（v0.31。
+    マチスのエレブーの「たいでん」）。つけてよいかの確認とログは呼ぶ側が行う。トラッシュにない・持ち主が違う・同じカードを 2 回渡したなら
+    ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if len(set(cards)) != len(cards) or any(uid not in p.discard or state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} のトラッシュのカード {cards} をつけられない（確認の漏れ。エンジンの不具合）")
+    if pokemon not in p.in_play():
+        raise RuntimeError(f"つける先のポケモン {pokemon.pokemon_id} がプレイヤー {player} の場にいない（エンジンの不具合）")
+    for uid in cards:
+        p.discard.remove(uid)
+        pokemon.energy.append(uid)

@@ -124,7 +124,7 @@
 
 - テストの段階: A（速い単体テスト）と B（決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行）は `python3 -m unittest` に入っています。C（前の版との大きな比較・大規模なストレス実行）は、ふだんのテストで走らせないでください（`python3 tools/compare_engine_versions.py --base <コミット>`・`python3 tools/stress_engine.py`）。
 - ログの監査（tests/log_audit.py の `log_problems`）は、ログだけから場のポケモンのダメージ・エネルギー・トラッシュ・サイドを組み立て直して状態と比べます。ダメージ・エネルギー・トラッシュを変えるログのイベントを加えたら、組み立て直しにも加えてください。ログは記録で、状態の正本ではありません（エンジンはログから状態を決めない）。
-- 書き出しの監査（`serialization_problems`）は、形式 1〜9（v0.6 から）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 9）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 10 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
+- 書き出しの監査（`serialization_problems`）は、形式 1〜10（v0.6 から 9、v0.31 から 10）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 10）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 11 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
 - 前の版との比較の駆動（tools/compat_driver.py）は、エンジンの公開の API だけを使い、版ごとに別のプロセス（`python3 -I`）で、指定した木の `kyuura_engine` だけを読み込みます。比べないのは効果の登録表の id（`effects`）だけです。ルールの動きに関わる状態・ログを比較から除かないでください。
 - tests/fixtures/compat_base_4bd97bf.json は、基準の版（v0.4d の `4bd97bf`）で駆動が作った記録の指紋です。今の版から作り直さないでください（作り直すと前の版との比較ではなくなる）。駆動を変えたら、ファイルの `how` の引数で基準の版から作り直します。
 - テストの盤面にポケモンについているトレーナーを置くときは、`build_test_state` の `"trainers"`（[(カード id, トラッシュする番), ...]）を使います。
@@ -148,7 +148,7 @@
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
-- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式（形式 9 は v0.6 で使った。次は 10）と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形）。v0.5 のパワーは決定を出しません。決定を出すパワーを加えるときは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先を加えます。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」）。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。次の新しい形式は 11）。v0.5 のパワーは決定を出しません。決定を出すパワーを加えるときは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先を加えます。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」）。
 - エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
 - ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
 - やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
@@ -331,7 +331,7 @@
 ## 研究データとの同期と検証の再現性（v0.18）
 
 - 研究の基準は kyuura `3f349085645f47d0649a6cacece3680caeae50bf`（v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`。2026-10-15 に上げた。上の「研究資料の参照コミットを固定する」）。エンジンの停止コード・問い・未解決の裁定・登録した最新の説明・照合の記録と、kyuura の id（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応は `kyuura_engine/data/research_links.json` に持ちます。kyuura の記録（文面・分類・根拠）を写さないでください（id の対応だけ。正本は kyuura）。docs/research-alignment-v0.18a.md。
-- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`。kyuura に記録ができたら検査が知らせる）。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
+- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）・処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にしたもの（`difference_text`。v0.31。ピッピの「ゆびをふる」。LD- がない）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・v0.31 の HC1〜HC10 の 10 件。kyuura に記録ができたら検査が知らせる）。kyuura の未解決の一覧でコードのない行に、エンジンが停止コードを付けたもの（v0.31 の T27・C34/C35・G40・P19・P32）は、`kyuura_index_engine_key` でその行を指します。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
 - カードの写しの元（`KYUURA_COMMIT` = `ecb2d69`）と研究の基準（`3f34908`。v0.18 は `adf9710`）は別に持ちます。状態はカードデータの元のコミット（`state.card_data.commit`・ログ `game_created`）を持ち、写しのコミットを上げると固定した参照データがすべて変わるからです。エンジンが使う項目が 2 つのコミットで同じことは、上のスクリプトが確かめます（違いは対応表の `card_data_differences` だけ）。
 - 分類（CONFIRMED・SUPPORTED）は kyuura の記録を正本にします。エンジンの過去の版の裁定の表は当時の記録として書き換えません（v0.18a の分類の違い 17 件。どれも処理は同じ）。コインの有無・順番だけが変わる論点（kyuura の rng_only）を、実装の約束として決めることは v0.18 では採っていません（docs/research-alignment-v0.18a.md 7 章）。
 - Z23 は、ダメージを与えなかった場合を Z23-a（要素が無効）・Z23-b（計算の結果が 0。ディフェンダー・抵抗力）・Z23-c（「とうめい」）・Z23-d（対象がいない。今のワザでは起こらない）に分けて記録しています（docs/unresolved-research-v0.18b.md 3 章）。どれか 1 つの答えが見つかっても、ほかの場合を同じに扱わないでください（理由の文が場合を書く。tests/test_unresolved_research_v0_18b.py）。「ダメージを与えた後」の効果のダメージの要素は、並びの最初でコインで飛ばされない形にしています（Z23-d が起こらない。崩すワザを加えるときは Z23-d を原典で確かめる）。
@@ -490,3 +490,47 @@
 - 検証用デッキ `F30` と組（`PAIRINGS_V0_30`）は tools/existing_effect_games.py の `--batch v0.30` です（v0.28・v0.29 の組の結果は変わらない）。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
 - 写しの組は `pool_v0_30`（写しは 99 枚）、効果の登録表の id は `kyuura-engine-0.13` のまま（ワザの登録 124）。書き出しは形式 9 のまま、ログのイベント・決定の種類は増やしていません。新しい未解決はありません
   （停止コード 22 件・未解決の裁定 28 件）。テストの定数は tests/helpers.py の `CHARMELEON` など・`V0_30_POKEMON`。
+
+## v0.30 で保留した 22 枚の一括実装（v0.31）
+
+- v0.30 の docs/discard-energy-attacks-v0.30.md 4 章の 22 枚と、進化元 7 枚（ピッピ PMCG1-067・イーブイ PMCG2-037・第4弾のコダック PMCG4-019・カスミのコダック PMCG5-021・
+  カツラのロコン PMCG6-026・カツラのガーディ PMCG6-027・マチスのピカチュウ PMCG5-036）を、kyuura データの採用で加えました（対応ポケモン 77 → 106。写しの組 `pool_v0_31`。
+  ワザの登録 176・特殊能力 12）。カードごとの整理・仕組み・資料・止める場面・互換性・検証は docs/held-cards-v0.31.md。ガイドブックは読んでいません。テストの定数は
+  tests/helpers.py の `V0_31_TARGETS`・`V0_31_DEPENDENCIES`・`V0_31_POKEMON`。
+- 新しいワザは、解決の基盤の要素の並び（`programs.BUILDERS`）で加えました（v0.13 の約束で書かない）。v0.31 の効果の型は tests/helpers.py の `ATTACK_TYPES_SINCE_V0_17` に
+  加えています。`engine.py`・`resolution/` にカード id の分岐はありません。
+- エネルギーカードのトラッシュは `programs.DiscardOwnEnergy` 1 つで表します（数 `count`（None ならすべて。決定なし）・コインの「おもて」の数 `heads_of`・好きなだけ
+  `any_number`・ワザ全体のコイン `gate`・要素のコイン `local_coin`・トラッシュできないとき `when_lacking`（`LACKING_*`）・時点 `timing`（`TIMING_EFFECT`・
+  `TIMING_UNRESOLVED`））。v0.30 の `DiscardEnergyThenDamage`（炎 1 枚 → ダメージ）の意味を、すべて・複数枚・コインのトラッシュ・炎以外に広げないでください（別の型）。
+  時点が決められない「はがしてすてる」のワザは、こんらん状態で使うときだけ HC1（`UNRESOLVED_DISCARD_ENERGY_TIMING`）で止めます。炎エネルギーカードをトラッシュして
+  大きなダメージを与えるワザ（ほのおのあらし）は RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果です。範囲を推測で広げないでください。
+- 持続する効果に `DestinyBond`（みちづれ）・`AttackBarrier`（バリアー。ダメージと効果の要素を無効）・`DamageReduction`（ちいさくなる。p.321 の 8 段階）・`CannotAttack`
+  （しっぽをふる。相手に与える効果。`on_opponent = True`。`source_card` は効果を与えたワザを使ったポケモンのカード）を加えました（はたらく番は次の相手の番。消える契機は
+  v0.4b と同じ）。相手に与える効果を加えるときは、不変条件（`engine._persistent_effect_problems` の発生源と番）を見直してください。
+- 相手のワザを自分のワザとして使う効果（`programs.CopyOpponentAttack`）は、選んだワザの要素の並びを同じ枠でワザを使ったポケモンのワザとして処理します（必要な
+  エネルギーはいらない。弱点・抵抗力はワザを使ったポケモンのタイプ）。使うワザの条件がたりないときに選べるかは、要素の `copy_problem` と説明の条件 `clause`
+  （`CANNOT_USE`（ピクシー）・`FOLLOW_TEXT`（ピッピ。kyuura の card_differences の記録の解説）・None（カスミのコダック））で決めます。決められなければ選べるが選ぶと
+  止める（HC9）。番をまたぐ効果をワザを使ったポケモンに与える要素（`SelfRetaliation`・`SelfNextTurnAttackDamage`）は `UNSUPPORTED_COPIED_ATTACK`（エンジンの未対応。
+  研究の対応表の停止コードに入れない）。要素を加えたら `copy_problem` を確かめてください（既定は None = 使える）。
+- 特殊能力: エナジーバーン（`ConvertAttachedEnergy`。TXT-CHARIZARD。使った時点でついているカードを、この番「炎」として数える。`GameState.energy_burn`。ワザに
+  必要なエネルギーの確認は `state.energy_types`）・しぜんになおる（`RemoveOwnCounterOncePerTurn`。自分の番ごとに 1 回。回数は `GameState.power_uses_this_turn`。
+  ログから数えない）・ほのおでかいふく（`HealOnEnergyAttach`。エネルギーカードをつける処理のあとに `effects.after_energy_attached`。解決の基盤の窓の外なので効果の
+  定義の対応表に入れていない）。手札・トラッシュ・ワザからエネルギーカードをつける処理を加えるときは、`after_energy_attached` を呼んでください。
+- 書き出しの形式 10 = 形式 9 + `power_uses_this_turn`・`energy_burn`（形式 1〜9 は空なら今までどおり、空でなければ `ValueError`）。不変条件
+  `engine._turn_power_problems` が今の番のログと照らします。
+- ワザの途中の決定の種類 `select_attack`・`discard_opponent_energy`・`attach_to_bench`・`recover_trainer`・`attach_from_discard` を加えました（段階・再開先・コマンドは同じ）。
+  2 つ以上の決定を出すワザが決定をまたいで使う値（ワザ全体のコイン・使っているワザ・「とうめい」の結果・処理した送る効果の数 `FrameState.fired`・こんじょうの写し）は、
+  `AttackRun.suspend(carry=True)` が決定の `context` に明示的なデータで運びます（v0.18d の案 B の持ち方。`PendingDecision` に項目を加えない）。窓の途中の決定は加えていません。
+- ワザの途中の決定を待つ間だけ、同じワザのダメージの要素で HP 以上になったポケモンが場に残ることを不変条件が許します（`engine._attack_damage_awaiting`。今の番の
+  ログの最後のワザの宣言のあとのダメージで確かめる狭い例外。広げないでください）。
+- 控えポケモン・複数のポケモンにダメージ・効果を与えるワザで、v0.30 まで起こらなかった問い（T27・C34/C35・G40・P19・P32）が起こるようになったので、停止コード
+  （`UNRESOLVED_TRANSPARENCY_COIN_ORDER`・`UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS`・`UNRESOLVED_KO_PREVENTION_ORDER`・`UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT`・
+  `UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER`）を付けて宣言の前に止めます（分類は変えていない）。新しい未解決は HC1〜HC10（docs/held-cards-v0.31.md 5 章）。エンジンが止める
+  `UNRESOLVED_…` は 37 件、未解決の裁定は 38 件です。
+- 先読みの上限（4,096 通り）: v0.31 の型は `v013_checks.VERIFIED` に入れていないので、上限を超えたら `UNSUPPORTED_PREFLIGHT_LIMIT` です（れんぞくファイヤーボールは炎 8 枚
+  以上など。docs 8 章）。上限を超える場面を避けるために `VERIFIED` に加えないでください。
+- リザードン（PMCG1-021）は対応にしたので、未対応の参照カードの例は、化石の秘密のベトベター（PMCG3-003）・第1弾のゴースト（PMCG1-047）か、登録を除いた登録表
+  （tests/helpers.py の `NO_CHARIZARD_EFFECTS`・`no_charizard_pool`）を使います。
+- 検証用デッキ `R31`・`K31`・`E31`・`P31` と組（`PAIRINGS_V0_31`）は tools/existing_effect_games.py の `--batch v0.31` です。v0.31 のカードのワザの決定への答え・特殊能力の
+  使用・エネルギーをためるために番を終える手順を重ねています（v0.31 のカードのいない組の結果は変わらない）。原典で決められない場面で止まったワザは `V031_STOPS` で
+  場から確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

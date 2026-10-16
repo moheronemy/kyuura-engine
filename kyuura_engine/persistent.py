@@ -34,7 +34,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
-from .state import NextTurnAttackDamage, PreventDamage, Retaliation
+from .state import AttackBarrier, CannotAttack, DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, Retaliation
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -44,9 +44,7 @@ KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
 
 
-def add_persistent_effect(
-    state: GameState, owner: int, pokemon: PokemonInPlay, effect: PreventDamage | Retaliation | NextTurnAttackDamage, *, attack: str
-) -> None:
+def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str) -> None:
     """``pokemon``（``owner`` の場のポケモン）に、ワザ ``attack``（``AttackKey`` の文字列）による持続する効果を与える。
 
     ログ ``persistent_effect_added``（``player``・``pokemon``・``pokemon_id``・``persistent_effect``（種類）・``source_card``・
@@ -71,7 +69,7 @@ def remove_persistent_effects(
     owner: int,
     pokemon: PokemonInPlay,
     reason: str,
-    effects: tuple[PreventDamage | Retaliation | NextTurnAttackDamage, ...] | None = None,
+    effects: tuple | None = None,
 ) -> None:
     """``pokemon`` の持続する効果（``effects`` を省略したらすべて）を消す。1 つにつきログ ``persistent_effect_removed``
     （``player``・``pokemon``・``pokemon_id``・``persistent_effect``・``source_card``・``created_turn``・``active_turn``・``reason``）。
@@ -155,3 +153,31 @@ def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_ind
         ):
             return effect
     return None
+
+
+def _active(state: GameState, pokemon: PokemonInPlay, kind: type):
+    """今の番にはたらいている ``kind`` の持続する効果（v0.31。はたらく番が今の番のもの）。なければ None。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, kind) and effect.active_turn == state.turn_number:
+            return effect
+    return None
+
+
+def attack_barrier(state: GameState, pokemon: PokemonInPlay) -> AttackBarrier | None:
+    """今の番に ``pokemon`` が「ワザをうけない」状態（v0.31。ミュウツーの「バリアー」）なら、その効果。はたらくのは次の相手の番だけ。"""
+    return _active(state, pokemon, AttackBarrier)
+
+
+def damage_reduction(state: GameState, pokemon: PokemonInPlay) -> DamageReduction | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを減らす効果（v0.31。ピクシーの「ちいさくなる」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, DamageReduction)
+
+
+def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None:
+    """今の番に ``pokemon`` の「みちづれ」（v0.31。第1弾のゴース）の効果がはたらいているなら、その効果。"""
+    return _active(state, pokemon, DestinyBond)
+
+
+def cannot_attack(state: GameState, pokemon: PokemonInPlay) -> CannotAttack | None:
+    """今の番に ``pokemon`` がワザを使えない効果（v0.31。イーブイの「しっぽをふる」を受けた）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, CannotAttack)

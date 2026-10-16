@@ -185,6 +185,7 @@ class PreventDamage:
     active_turn: int
     kind: ClassVar[str] = "prevent_damage"
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
+    on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
 
 # Retaliation の与えるダメージの決め方（v0.13）。名前は書き出し・ログに出る種類（kind）と対応する
@@ -230,6 +231,7 @@ class Retaliation:
     amount: int | None
     basis: str = RETALIATION_FIXED
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
+    on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
     def __post_init__(self) -> None:
         if self.basis == RETALIATION_FIXED:
@@ -290,11 +292,87 @@ class NextTurnAttackDamage:
     amount: int
     kind: ClassVar[str] = "next_turn_attack_damage"
     turns_until_active: ClassVar[int] = 2  # 次の自分の番
+    on_opponent: ClassVar[bool] = False
 
 
-# ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage を加えた）。加えるときは、消える契機（ベンチ・進化・
-# きぜつ・期限）と不変条件を見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage)
+@dataclass(frozen=True)
+class DestinyBond:
+    """ワザによる「持続する効果」（v0.31）のうち、第1弾のゴース（PMCG1-044）の「みちづれ」の「次の相手の番で自分が「きぜつ」したときには、
+    相手の対戦ポケモンも「きぜつ」する。」（kyuura の印刷の文面。docs/held-cards-v0.31.md）。
+
+    ``PreventDamage`` と同じく自分自身に与え（``source_card`` は効果を受けているポケモンのカード）、はたらく番は次の相手の番（``created_turn + 1``）。
+    その番の終わりに消える（ポケモンチェックはどちらの番でもない。p.323）。ベンチにもどる・進化する・きぜつで消える（p.311・p.322・p.323）。
+    はたらく番に、このポケモンがワザのあとのきぜつの判定で HP 以上なら、相手の対戦ポケモンも「きぜつ」する（解決の基盤の ``flow._finish_attack``）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "destiny_bond"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class AttackBarrier:
+    """ワザによる「持続する効果」（v0.31）のうち、ミュウツー（PMCG1-050）の「バリアー」の「次の相手の番の「ワザ」をうけない。」（kyuura の印刷の文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンへのワザのダメージの要素と効果の要素は無効（「ワザをうけない」。ダメージだけ
+    でなく効果も受けない。「かたまる」（``PreventDamage``）はダメージ以外の効果は受ける）。消える契機は ``PreventDamage`` と同じ。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "attack_barrier"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class DamageReduction:
+    """ワザによる「持続する効果」（v0.31）のうち、ピクシー（PMCG2-044）の「ちいさくなる」の「次の相手の番でこのカードが受けるダメージが20へる。」
+    （kyuura の印刷の文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンがワザのダメージを受けるとき、p.321 の 8 段階（「ワザを受けるポケモンの
+    持っている「ダメージを変更する効果」」）で ``amount`` を減らす（``effects.attack_damage_modifiers``）。消える契機は ``PreventDamage`` と同じ。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    amount: int
+    kind: ClassVar[str] = "damage_reduction"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class CannotAttack:
+    """ワザによる「持続する効果」（v0.31）のうち、イーブイ（PMCG2-037）の「しっぽをふる」の「「しっぽをふる」を受けた相手の対戦ポケモンは、
+    次の相手の番にワザをつかえない。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。v0.30 までの持続する効果はどれも自分自身に与えた）。効果を受けるのは相手の対戦ポケモンで、``source_card``・
+    ``source_player`` は効果を与えたワザを使ったポケモンのカードとそのプレイヤー（受けているポケモンとは別）。はたらく番は次の相手の番（受けている
+    ポケモンの持ち主の番。``created_turn + 1``）で、その番の間、受けているポケモンはワザを使えない（``checks.attack_request``）。消える契機は
+    ほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ。p.311・p.322・p.323）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "cannot_attack"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
+# ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
+# CannotAttack を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）
@@ -357,7 +435,7 @@ class PokemonInPlay:
     evolution_stack: tuple[int, ...] = ()  # v0.4a
     played_turn: int = 0  # v0.4a
     evolved_turn: int | None = None  # v0.4a
-    persistent_effects: tuple[PreventDamage | Retaliation | NextTurnAttackDamage, ...] = ()  # v0.4b（Retaliation は v0.12、NextTurnAttackDamage は v0.27）
+    persistent_effects: tuple[Any, ...] = ()  # v0.4b（型は PERSISTENT_EFFECT_TYPES。Retaliation は v0.12、NextTurnAttackDamage は v0.27、ほかは v0.31）
 
     @property
     def current_form_turn(self) -> int:
@@ -532,6 +610,13 @@ class GameState:
     # 通常の操作でまだつけていない番に、この数が 1 以上なら、通常の操作は原典で決められない（``UNRESOLVED_ATTACH_AFTER_POWER_ATTACH``。
     # docs/rain-dance-v0.6.md の R13）。書き出しは形式 9 だけが表せる（0 でなければ形式 1〜8 は ``ValueError``）
     energy_attached_by_powers_this_turn: int = 0
+    # v0.31: この番に使った「自分の番ごとに1回使える」特殊能力（(場のポケモンの番号, 特殊能力の位置) の並び。カツラのロコンの「しぜんになおる」）。
+    # 番の最初に空にする。回数の制限のある特殊能力の回数を状態に持つ（ログから数えない）。書き出しは形式 10 だけが表せる
+    power_uses_this_turn: tuple[tuple[int, int], ...] = ()
+    # v0.31: この番に「炎」エネルギーになったエネルギーカード（(場のポケモンの番号, エネルギーカードの uid) の並び。リザードンの「エナジーバーン」の
+    # 「このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりにもとにもどる」）。そのポケモンについている間だけ「炎」
+    # エネルギーとして扱う（``energy_types``）。番の終わりに空にする。書き出しは形式 10 だけが表せる
+    energy_burn: tuple[tuple[int, int], ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
@@ -591,7 +676,15 @@ class GameState:
         return None
 
     def energy_types(self, pokemon: PokemonInPlay) -> list[EnergyType]:
-        return [self.card_def(e).provides for e in pokemon.energy]
+        """``pokemon`` についているエネルギーが出すエネルギーのタイプ（ついている順）。v0.31: この番に「エナジーバーン」で「炎」エネルギーに
+        なったカード（``energy_burn``。そのポケモンについている間）は「炎」。"""
+        return [self.energy_type_of(pokemon, uid) for uid in pokemon.energy]
+
+    def energy_type_of(self, pokemon: PokemonInPlay, uid: int) -> EnergyType:
+        """``pokemon`` についているエネルギーカード ``uid`` が出すエネルギーのタイプ（v0.31。``energy_types`` の 1 枚ぶん）。"""
+        if (pokemon.pokemon_id, uid) in self.energy_burn:
+            return EnergyType.FIRE
+        return self.card_def(uid).provides
 
     def add_event(self, kind: str, **data: Any) -> None:
         if "turn" in data:
