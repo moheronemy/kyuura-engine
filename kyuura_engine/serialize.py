@@ -262,6 +262,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         # v0.4d: v0.1 の形には、ワザの途中の決定（「ふきとばし」で相手が選ぶ控えなど）の項目がない（段階 "decision" だけが残り、
         # 決定するプレイヤー・選べるもの・続きの情報が落ちる）。黙って落とさない
         raise ValueError("形式 1 は、ワザの途中の決定を表せない（format_version=2 以上を使う）")
+    if format_version == 1 and state.decision is not None and state.decision.resume == "power":
+        # v0.42: v0.1 の形には、特殊能力の途中の決定（決定するプレイヤー・選べるもの・続きの情報）の項目がない。黙って落とさない
+        raise ValueError("形式 1 は、特殊能力の途中の決定を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "knock_out":
         # v0.11: v0.1 の形には、ワザのあとのきぜつの判定で「こんじょう」を使うかの決定（決定するプレイヤー・選べるもの・選ぶ数 0〜1・
         # 続きの情報）の項目がない。黙って落とさない

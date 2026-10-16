@@ -63,12 +63,14 @@ class DesignAssumptionTest(unittest.TestCase):
         self.assertIsNone(state.decision)
 
     def test_after_damage_window_has_no_decision(self):
-        """ダメージの要素のあとの窓で処理する効果（DEFER）は、どれも決定を出さない（decision_kind が None）。処理（ACTIONS）は 2 つだけで、
-        どちらも決定を出さない（関数の中で決定の口を使わない）。"""
+        """ダメージの要素のあとの窓で処理する効果（DEFER）は、どれも決定を出さない（decision_kind が None）。処理（ACTIONS）は 3 つだけで、
+        どれも決定を出さない（関数の中で決定の口を使わない）。v0.42 でエリカのラフレシアの「ぼうぎょかふん」（同じ窓。持ち主のコインで、ダメージを
+        与えたポケモンをこんらんにする。``power_confusion_to_damage_source``）を加えた。決定を出さないので、この文書の前提（窓の途中の決定はない）は
+        変わらない（docs/power-decisions-v0.42.md）。"""
         definitions = [d for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS if d.timing is C.Timing.DEFER]
-        self.assertEqual(sorted(d.name for d in definitions), ["restless_sleep", "retaliation", "strikes_back"])
+        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "restless_sleep", "retaliation", "strikes_back"])
         self.assertTrue(all(d.decision_kind is None for d in definitions))
-        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "power_damage_to_damage_source"])
+        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "power_confusion_to_damage_source", "power_damage_to_damage_source"])
         for action in kernel.ACTIONS.values():
             source = inspect.getsource(action)
             self.assertNotIn("push_decision", source)

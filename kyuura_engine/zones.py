@@ -69,7 +69,40 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     return cards
 
 
-def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> tuple[tuple[int, ...], tuple[int, ...]]:
+def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None) -> tuple[int, ...]:
+    """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の手札にもどす（v0.42。docs/power-decisions-v0.42.md 4 章）。
+
+    - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``。重なったカード全体が 1 匹。v0.36 の RD2 と同じ読み方）・
+      エネルギーカード（ついている順）・トレーナーカード（ついている順）。エリカのピクシーの「ようせいのきせき」（「そのポケモンと、それらについているすべての
+      カードを手札にもどす」）。メノクラゲの「おくびょう」は、ついているカードを先にトラッシュする（``discard_attached_cards``。呼ぶ側）ので、もどるのは
+      ポケモンのカードだけ。山札にもどす ``return_in_play_to_deck`` とは行き先が違う（切らない）
+    - 場をはなれたので、場のポケモンの番号は無効になり、ダメージカウンター・特殊状態はなくなる（p.322。カードではないので、どこにも置かない）。持続する
+      効果を消すのは呼ぶ側（``persistent.remove_persistent_effects``。理由 ``return_in_play_to_hand``）。きぜつではない（サイドは取られない）
+    - ログ ``return_in_play_to_hand``（``player``・``pokemon``（いちばん上のカード）・``pokemon_id``・``effect``（ワザ）か ``power``（特殊能力）・``cards``
+      （もどしたカードすべて。場のカードなので公開）・``evolution_stack``・``energy``・``trainers``・``damage``（なくなったダメージ））
+
+    もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を変える前）。
+    もどしたカードを返す。
+    """
+    p = state.players[player]
+    trainers = tuple(t.card for t in pokemon.trainers)
+    cards = (*pokemon.cards(), *pokemon.energy, *trainers)
+    on_bench = any(b is pokemon for b in p.bench)
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or (effect is None) == (power is None):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    p.hand.extend(cards)
+    source = {"effect": effect} if effect is not None else {"power": power}
+    state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
+                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage)
+    return cards
+
+
+def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None,
+                           power: str | None = None) -> tuple[tuple[int, ...], tuple[int, ...]]:
     """自分の場のポケモン ``pokemon`` についているすべてのカード（エネルギーカード・トレーナーカード）を、同じ uid のまま持ち主のトラッシュに置く
     （v0.38。ケーシィ（PMCG4-031）の「いなくなる」の「ついているカードをすべてトラッシュする」。docs/bench-switch-combined-v0.38.md 5 章）。
 
@@ -77,7 +110,8 @@ def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay
       カードで、ここでは動かさない（v0.36 の RD2 と同じ読み方。重なったカード全体が 1 匹）
     - トラッシュする順番はエネルギー（ついている順）→ トレーナー（ついている順）。トラッシュには順番がない（p.312）
     - ログ ``discard_attached_cards``（``player``・``pokemon``・``pokemon_id``・``effect``・``energy``・``trainers``。トラッシュは公開の情報）。ついている
-      カードがなくてもログを残す（説明の処理をしたことを残す）
+      カードがなくてもログを残す（説明の処理をしたことを残す）。v0.42: 特殊能力（メノクラゲの「おくびょう」の「ついていたカードも全てはがしてすてる」）は
+      ``effect`` の代わりに ``power``（特殊能力の識別子）
 
     トラッシュしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を
     変える前）。トラッシュした（エネルギー, トレーナー）を返す。
@@ -85,12 +119,14 @@ def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay
     p = state.players[player]
     energy = tuple(pokemon.energy)
     trainers = tuple(t.card for t in pokemon.trainers)
-    if (p.active is not pokemon and not any(b is pokemon for b in p.bench)) or any(state.cards[uid].owner != player for uid in (*energy, *trainers)):
+    if (p.active is not pokemon and not any(b is pokemon for b in p.bench)) or any(state.cards[uid].owner != player for uid in (*energy, *trainers)) \
+            or (effect is None) == (power is None):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} についているカードをトラッシュできない（確認の漏れ。エンジンの不具合）")
     pokemon.energy.clear()
     pokemon.trainers.clear()
     p.discard.extend((*energy, *trainers))
-    state.add_event("discard_attached_cards", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, energy=energy,
+    source = {"effect": effect} if effect is not None else {"power": power}
+    state.add_event("discard_attached_cards", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, energy=energy,
                     trainers=trainers)
     return energy, trainers
 
@@ -146,7 +182,7 @@ def discard_hand(state: GameState, player: int) -> tuple[int, ...]:
     return discarded
 
 
-def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...]) -> tuple[int, ...]:
+def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...], *, power: str | None = None) -> tuple[int, ...]:
     """自分の手札のうち ``cards`` を、同じ uid のまま、手札の並びの順に自分のトラッシュに置く（v0.22。パソコン通信の「手札からカードを2枚
     選んでトラッシュしなければ、このカードは使えない」。p.260・p.310）。トラッシュしたカード（手札の並びの順）を返す。
 
@@ -154,12 +190,15 @@ def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...]) -> 
     よらず手札の並びの順に置く（トラッシュにはカードの順番がない。p.312。同じ選択なら同じ状態になる）。使っている最中のトレーナーカード
     は手札にないので選べない。ログの ``"discard_from_hand"`` の ``cards`` は全員に見える（トラッシュは表を上にして置く公開の情報。
     p.312）。オーキドはかせの ``discard_hand``（手札をすべて。ログの監査は手札の組み立て直しと同じことを確かめる）とは別のイベント。
+    v0.42: 特殊能力（わるいユンゲラーの［ぶっしつこうかん］）でトラッシュしたときは、ログに ``power``（``PowerKey`` の文字列）を書く（トレーナーの
+    使うための条件でトラッシュしたログは v0.41 と同じ形）。
     """
     p = state.players[player]
     if len(set(cards)) != len(cards) or any(uid not in p.hand for uid in cards):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {cards} をトラッシュできない（確認の漏れ。エンジンの不具合）")
     discarded = _hand_to_discard(state, player, tuple(uid for uid in p.hand if uid in cards))
-    state.add_event("discard_from_hand", player=player, cards=discarded)
+    extra = {} if power is None else {"power": power}
+    state.add_event("discard_from_hand", player=player, cards=discarded, **extra)
     return discarded
 
 

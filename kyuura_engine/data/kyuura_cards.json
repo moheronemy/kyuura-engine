@@ -392,6 +392,23 @@
     "PMCG5-058",
     "PMCG6-055"
   ],
+  "pool_v0_42": [
+    "PMCG6-052",
+    "PMCG2-014",
+    "PMCG3-028",
+    "PMCG3-031",
+    "PMCG5-014",
+    "PMCG6-043",
+    "PMCG6-047",
+    "PMCG3-043",
+    "PMCG5-015",
+    "PMCG4-034",
+    "PMCG4-035",
+    "PMCG3-011",
+    "PMCG3-017",
+    "PMCG5-060",
+    "PMCG5-065"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG1-047",
@@ -22727,6 +22744,1360 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%83%9F%E3%83%A5%E3%82%A6%E3%83%84%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-052",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのルージュラ",
+        "en": "Sabrina's Jynx"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          124
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "よいおこない",
+              "en": "Helping Hand"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、好きなだけとりのぞく。とりのぞいた数ぶんのカードを自分の山札から引いて、手札に加える。",
+              "en": "Choose 1 of your opponent's Pokémon. Remove any number of damage counters from that Pokémon, then draw that many cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "だきつく",
+              "en": "Hug"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+              "en": "Flip a coin. If heads, the Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-052",
+        "pokemontcg": [
+          "gym2-57"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%AB%E3%83%BC%E3%82%B8%E3%83%A5%E3%83%A9LV.21_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 21,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%AB%E3%83%BC%E3%82%B8%E3%83%A5%E3%83%A9LV.21_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG2-014",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラフレシア",
+        "en": "Vileplume"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          45
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "クサイハナ",
+          "en": "Gloom"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ヒーリング",
+              "en": "Heal"
+            },
+            "text": {
+              "ja": "このカードの持ち主は、自分の番に1回だけコインを投げて「おもて」なら、自分の場のポケモン1匹からダメージカウンターを1つとりのぞくことができる。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, remove 1 damage counter from 1 of your Pokémon. This power can't be used if Vileplume is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はなびらのまい",
+              "en": "Petal Dance"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "×",
+              "display": "40×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×40のダメージ。その後、自分は「こんらん」状態になる。",
+              "en": "Flip 3 coins. This attack does 40 damage times the number of heads. Vileplume is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-014",
+        "pokemontcg": [
+          "base2-15",
+          "base2-31"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-007-ruffresia/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-007-ruffresia/"
+      }
+    },
+    {
+      "id": "PMCG3-028",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドラン",
+        "en": "Slowbro"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          80
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": "Slowpoke"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "へんなこうどう",
+              "en": "Strange Behavior"
+            },
+            "text": {
+              "ja": "このカードが「きぜつ」しない範囲なら、自分の場のポケモンにのっているダメージカウンターを好きなだけ取り、このカードの上にのせてよい。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "As often as you like during your turn (before your attack), you may move 1 damage counter from 1 of your Pokémon to Slowbro as long as you don't Knock Out Slowbro. This power can't be used if Slowbro is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねんりき",
+              "en": "Psyshock"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-028",
+        "pokemontcg": [
+          "base3-43"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-028-yadoran/",
+      "jp_print": {
+        "level": 26,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-028-yadoran/"
+      }
+    },
+    {
+      "id": "PMCG3-031",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゲンガー",
+        "en": "Gengar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          94
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ゴースト",
+          "en": "Haunter"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "のろい",
+              "en": "Curse"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回だけ使える。相手の場のポケモンにのっているダメージカウンターを1つ選び、相手の場の別のポケモンの上にのせてよい。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may move 1 damage counter from 1 of your opponent's Pokémon to another (even if it would Knock Out the other Pokémon). This power can't be used if Gengar is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ナイトヘッド",
+              "en": "Dark Mind"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから1匹選び、「弱点・抵抗力」に関係なく10ダメージ。相手に控えポケモンがいない時には、この効果はない。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-031",
+        "pokemontcg": [
+          "base3-5",
+          "base3-20"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-031-gangar/",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-031-gangar/"
+      }
+    },
+    {
+      "id": "PMCG5-014",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのラフレシア",
+        "en": "Erika's Vileplume"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          45
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "エリカのクサイハナ",
+          "en": "Erika's Gloom"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ぼうぎょかふん",
+              "en": "Pollen Defense"
+            },
+            "text": {
+              "ja": "このカードがバトル場でワザによるダメージを受けた時、（このカードが「きぜつ」するかしないかにかかわらず）コインを投げ、「おもて」なら、ダメージを与えたポケモンを「こんらん」状態にする。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。",
+              "en": "If an attack does damage to Erika's Vileplume while it's your Active Pokémon (even if it's Knocked Out), flip a coin. If heads, your opponent's Active Pokémon is now Confused. This power works even while Erika's Vileplume is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガドレイン",
+              "en": "Mega Drain"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたダメージの半分（切り上げ）のダメージカウンターを、自分からとりのぞく。",
+              "en": "If Erika's Vileplume does damage to the Defending Pokémon (after applying Weakness and Resistance), remove a number of damage counters from Erika's Vileplume equal to half the damage done to the Defending Pokémon (rounded up to the nearest 10). If Erika's Vileplume has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-014",
+        "pokemontcg": [
+          "gym1-5"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%A9%E3%83%95%E3%83%AC%E3%82%B7%E3%82%A2_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 34,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%A9%E3%83%95%E3%83%AC%E3%82%B7%E3%82%A2_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-043",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのケーシィ",
+        "en": "Sabrina's Abra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          63
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "エネループ",
+              "en": "Energy Loop"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分についている「超」エネルギーカードを1枚選び、はがして手札にもどす。",
+              "en": "Return a Psychic Energy card attached to Sabrina's Abra to your hand in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-043",
+        "pokemontcg": [
+          "gym1-91"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B1%E3%83%BC%E3%82%B7%E3%82%A3LV.11_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 11,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B1%E3%83%BC%E3%82%B7%E3%82%A3LV.11_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-047",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのユンゲラー",
+        "en": "Sabrina's Kadabra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          64
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナツメのケーシィ",
+          "en": "Sabrina's Abra"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ライフダウン",
+              "en": "Life Drain"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、残りHPが「10」になるように、相手にダメージカウンターをのせる。",
+              "en": "Flip a coin. If heads, put a number of damage counters on the Defending Pokémon so that its remaining HP are 10."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコショット",
+              "en": "Psyshot"
+            },
+            "cost": [
+              "psychic",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-047",
+        "pokemontcg": [
+          "gym2-58"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%A6%E3%83%B3%E3%82%B2%E3%83%A9%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 41,
+        "rarity": "◆(U)",
+        "series": "ヤマブキシティジム ナツメ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%A6%E3%83%B3%E3%82%B2%E3%83%A9%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG3-043",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "カイリュー",
+        "en": "Dragonite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          149
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ハクリュー",
+          "en": "Dragonair"
+        },
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かけつける",
+              "en": "Step In"
+            },
+            "text": {
+              "ja": "この能力はベンチにいる時に使う。自分の番ごとに1回だけ使える。バトル場にいる自分の対戦ポケモンとこのカードとを交換することができる。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), if Dragonite is on your Bench, you may switch it with your Active Pokémon."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たたきつける",
+              "en": "Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": "×",
+              "display": "40×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて、「おもて」のでた数×40のダメージ。",
+              "en": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー かけつける（Step In）の使用条件",
+          "ja": "「『ねむり・マヒ・こんらん』状態の時、この力は使えない」と書かれている（カードの画像で確認）。『ポケモンカードオフィシャルブック2000』（2000年2月）p.249 の最新の説明は「この力は、自分の番ごとに1回、このカードがベンチにいるときに使える。バトル場にいる自分の対戦ポケモンと、このカードを入れ替える。」で、特殊状態の条件はなく、英語版と同じ [P43]",
+          "en": "特殊状態についての記述がない（ベンチのポケモンは特殊状態にならないので、実際の違いはない）",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "N3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-043",
+        "pokemontcg": [
+          "base3-4",
+          "base3-19"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-043-kairyu/",
+      "jp_print": {
+        "level": 45,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-043-kairyu/"
+      }
+    },
+    {
+      "id": "PMCG5-015",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのウツボット",
+        "en": "Erika's Victreebel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          71
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "エリカのウツドン",
+          "en": "Erika's Weepinbell"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "かおりのわな",
+              "en": "Fragrance Trap"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、相手の控えポケモンから1匹を選び、相手の対戦ポケモンと入れ替える。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, and if your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon. This power can't be used if Erika's Victreebel is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はっぱカッター",
+              "en": "Razor Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-015",
+        "pokemontcg": [
+          "gym1-26"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%A6%E3%83%84%E3%83%9C%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "★(R)",
+        "series": "タマムシシティジム エリカ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%A6%E3%83%84%E3%83%9C%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-034",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいユンゲラー",
+        "en": "Dark Kadabra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          64
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ケーシィ",
+          "en": "Abra"
+        },
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ぶっしつこうかん",
+              "en": "Matter Exchange"
+            },
+            "text": {
+              "ja": "自分の番ごとに1回使える。手札からカードを1枚選んでトラッシュする。その後、山札からカードを1枚引く。「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may discard a card from your hand in order to draw a card. This power can't be used if Dark Kadabra is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マインドショック",
+              "en": "Mind Shock"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+              "en": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-034",
+        "pokemontcg": [
+          "base5-39"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-032-warui-yungerer/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-032-warui-yungerer/"
+      }
+    },
+    {
+      "id": "PMCG4-035",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいフーディン",
+        "en": "Dark Alakazam"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          65
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいユンゲラー",
+          "en": "Dark Kadabra"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "テレポートブラスト",
+              "en": "Teleport Blast"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "のぞむなら、ダメージを与えた後、自分の控えポケモンを1匹選び、このカードと入れ替えてもよい。",
+              "en": "You may switch Dark Alakazam with 1 of your Benched Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "マインドショック",
+              "en": "Mind Shock"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+              "en": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-035",
+        "pokemontcg": [
+          "base5-1",
+          "base5-18"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-033-warui-foodin/",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-033-warui-foodin/"
+      }
+    },
+    {
+      "id": "PMCG3-011",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "メノクラゲ",
+        "en": "Tentacool"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          72
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おくびょう",
+              "en": "Cowardice"
+            },
+            "text": {
+              "ja": "自分の番であれば、いつでもこのカードを手札にもどしてよい。その時、このカードにのっていたダメージカウンターなどを全てとりのぞき、ついていたカードも全てはがしてすてる。このカードを場に出した番には、この力は使えない。また、「ねむり・マヒ・こんらん」状態の時にも、この力は使えない。",
+              "en": "At any time during your turn (before your attack), you may return Tentacool to your hand. (Discard all cards attached to Tentacool.) This power can't be used the turn you put Tentacool into play or if Tentacool is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ようかいえき",
+              "en": "Acid"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-011",
+        "pokemontcg": [
+          "base3-56"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-012-menokurage/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-012-menokurage/"
+      }
+    },
+    {
+      "id": "PMCG3-017",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドククラゲ",
+        "en": "Tentacruel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          73
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "メノクラゲ",
+          "en": "Tentacool"
+        },
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "クラゲばり",
+              "en": "Jellyfish Sting"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": "The Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-017",
+        "pokemontcg": [
+          "base3-44"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-013-dokukurage/",
+      "jp_print": {
+        "level": 21,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-013-dokukurage/"
+      }
+    },
+    {
+      "id": "PMCG5-060",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのピッピ",
+        "en": "Erika's Clefairy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          35
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つきのちから",
+              "en": "Lunar Power"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の山札から、自分または自分の控えポケモンを進化させる「進化カード」を1枚選び出し、そのポケモンの上にのせる。その後、その山札をよく切る。",
+              "en": "Flip a coin. If heads, search your deck for a card that evolves from 1 of your Benched Pokémon and put that card on that Pokémon. (This counts as evolving that Pokémon.) Shuffle your deck afterward."
+            }
+          },
+          {
+            "name": {
+              "ja": "ムーンキック",
+              "en": "Moon Kick"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ つきのちから（Lunar Power）で進化させられるポケモン",
+          "ja": "「自分または自分の控えポケモンを進化させる『進化カード』」と、ワザを使ったピッピ自身も進化させられる（カードの画像で確認）。『ポケモンカードオフィシャルブック2000』（2000年2月）p.223 の解説も「このワザを使った「エリカのピッピ」自身も進化できます」とする [P43]",
+          "en": "「a card that evolves from 1 of your Benched Pokémon」と、ベンチのポケモンだけ",
+          "confidence": "確実",
+          "sources": [
+            "N2",
+            "N3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-060",
+        "pokemontcg": [
+          "gym2-40"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%94%E3%83%83%E3%83%94LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%94%E3%83%83%E3%83%94LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-065",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのピクシー",
+        "en": "Erika's Clefable"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          36
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのピッピ",
+          "en": "Erika's Clefairy"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ようせいのきせき",
+              "en": "Fairy Power"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の場にいるポケモンを好きなだけ選び、そのポケモンと、それらについているすべてのカードを手札にもどす。",
+              "en": "Flip a coin. If heads, you may return any number of your Pokémon in play and all cards attached to them to your hand."
+            }
+          },
+          {
+            "name": {
+              "ja": "ムーンインパクト",
+              "en": "Moon Impact"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-065",
+        "pokemontcg": [
+          "gym1-3"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%94%E3%82%AF%E3%82%B7%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%94%E3%82%AF%E3%82%B7%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

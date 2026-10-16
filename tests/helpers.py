@@ -338,6 +338,24 @@ ERIKAS_JIGGLYPUFF = "PMCG5-058"  # エリカのプリン（リーダーズスタ
 ROCKETS_MEWTWO = "PMCG6-055"  # R団のミュウツー（闇からの挑戦。HP 70・超・弱点 超・にげる 2。チェンジダメージ（超）・さいみんはどう（超超）20・サイコバーン（超超超無）60）
 V0_41_POKEMON = (GLOOM, VICTREEBEL, SEADRA, DARK_PERSIAN, BLAINES_MOLTRES, ROCKET_SLOWPOKE, ERIKAS_ODDISH, ERIKAS_ODDISH_40, ERIKAS_GLOOM, SABRINAS_PSYDUCK,
                  SABRINAS_GOLDUCK, SABRINAS_VENOMOTH, SABRINAS_SLOWBRO, ERIKAS_JIGGLYPUFF, ROCKETS_MEWTWO)  # 写しの組 pool_v0_41 の並び
+# v0.42（docs/power-decisions-v0.42.md）: 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚（kyuura データの採用）
+SABRINAS_JYNX = "PMCG6-052"  # ナツメのルージュラ（闇からの挑戦。HP 60・超・弱点 超・にげる 1。よいおこない（超）・だきつく（超無）20）。JYNX（第1弾）とは別の名前
+VILEPLUME = "PMCG2-014"  # ラフレシア（第2弾。クサイハナから進化。HP 80・草・弱点 炎・にげる 2。［ヒーリング］・はなびらのまい（草草草）40×）
+SLOWBRO = "PMCG3-028"  # ヤドラン（化石の秘密。ヤドンから進化。HP 60・超・弱点 超・にげる 1。［へんなこうどう］・ねんりき（超超）20）。SABRINAS_SLOWBRO とは別の名前
+GENGAR = "PMCG3-031"  # ゲンガー（化石の秘密。ゴーストから進化。HP 80・超・抵抗力 闘 -30・にげる 1。［のろい］・ナイトヘッド（超超超）30）
+ERIKAS_VILEPLUME = "PMCG5-014"  # エリカのラフレシア（リーダーズスタジアム。エリカのクサイハナから進化。HP 80・草・弱点 炎・にげる 2。［ぼうぎょかふん］・メガドレイン（草草草）30）
+SABRINAS_ABRA = "PMCG6-043"  # ナツメのケーシィ（闇からの挑戦。HP 40・超・弱点 超・にげる 0。エネループ（超）20）。ABRA・ROCKET_ABRA とは別の名前
+SABRINAS_KADABRA = "PMCG6-047"  # ナツメのユンゲラー（ナツメのケーシィから進化。HP 70・超・弱点 超・にげる 1。ライフダウン（超）・サイコショット（超無無）30）
+DRAGONITE = "PMCG3-043"  # カイリュー（化石の秘密。ハクリューから進化。HP 100・無色・抵抗力 闘 -30・にげる 1。［かけつける］・たたきつける（無無無無）40×）
+ERIKAS_VICTREEBEL = "PMCG5-015"  # エリカのウツボット（エリカのウツドンから進化。HP 80・草・弱点 炎・にげる 2。［かおりのわな］・はっぱカッター（草草草）50）。VICTREEBEL とは別の名前
+DARK_KADABRA = "PMCG4-034"  # わるいユンゲラー（ロケット団。ケーシィから進化。HP 50・超・弱点 超・にげる 2。［ぶっしつこうかん］・マインドショック（超超）30）
+DARK_ALAKAZAM = "PMCG4-035"  # わるいフーディン（わるいユンゲラーから進化。HP 60・超・弱点 超・にげる 3。テレポートブラスト（超超無）30・マインドショック（超超超）40）
+TENTACOOL = "PMCG3-011"  # メノクラゲ（化石の秘密。HP 30・水・弱点 雷・にげる 0。［おくびょう］・ようかいえき（水）10）
+TENTACRUEL = "PMCG3-017"  # ドククラゲ（メノクラゲから進化。HP 60・水・弱点 雷・にげる 0。ちょうおんぱ（水）・クラゲばり（水水）10）
+ERIKAS_CLEFAIRY = "PMCG5-060"  # エリカのピッピ（リーダーズスタジアム。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。つきのちから（無）・ムーンキック（無無）20）。CLEFAIRY とは別の名前
+ERIKAS_CLEFABLE = "PMCG5-065"  # エリカのピクシー（エリカのピッピから進化。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 2。ようせいのきせき（無）・ムーンインパクト（無無無）30）
+V0_42_POKEMON = (SABRINAS_JYNX, VILEPLUME, SLOWBRO, GENGAR, ERIKAS_VILEPLUME, SABRINAS_ABRA, SABRINAS_KADABRA, DRAGONITE, ERIKAS_VICTREEBEL, DARK_KADABRA,
+                 DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE)  # 写しの組 pool_v0_42 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -845,6 +863,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.AttachEnergyFromDeckToSelf,  # ヤドン（ロケット団）の「ひなたぼっこ」
     _effects.DamageThenLockSelf,  # ナツメのヤドランの「きあいずつき」
     _effects.DamageMinusIfDefenderDamaged,  # エリカのプリンの「やさしいパンチ」
+) + (
+    # v0.42（docs/power-decisions-v0.42.md）
+    _effects.HealChosenOpponentThenDraw,  # ナツメのルージュラの「よいおこない」
+    _effects.CoinFlipDamageThenSelfConfuse,  # ラフレシアの「はなびらのまい」
+    _effects.ReturnEnergyThenDamage,  # ナツメのケーシィの「エネループ」
+    _effects.PlaceCountersToRemainingHpOnHeads,  # ナツメのユンゲラーの「ライフダウン」
+    _effects.DamageThenOptionalSelfSwitch,  # わるいフーディンの「テレポートブラスト」
+    _effects.EvolveFromDeckOnHeads,  # エリカのピッピの「つきのちから」
+    _effects.ReturnOwnPokemonToHandOnHeads,  # エリカのピクシーの「ようせいのきせき」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

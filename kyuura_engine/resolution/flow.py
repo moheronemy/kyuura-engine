@@ -26,7 +26,7 @@ from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAt
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..effects import AttackKey, AttackUse, PowerKey
 from ..errors import UnsupportedError
-from ..state import GameState
+from ..state import GameState, Phase
 from ..zones import promote_from_bench
 
 from . import catalog as C
@@ -42,6 +42,7 @@ from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
 NEXT_TURN = PR.NEXT_TURN
+CONTINUE_TURN = PR.CONTINUE_TURN  # v0.42: 特殊能力の処理のあとの決定の続き（終わったら番のプレイヤーの番にもどる）
 RESUMES = codec.RESUMES  # この基盤が続ける決定の再開先（ほかは engine.py。トレーナーの ``trainer``）
 
 
@@ -307,8 +308,9 @@ def _promotions_after_judge(res: Resolution, then) -> None:
     state = res.state
     order = (1 - state.current_player, state.current_player)
     queue = tuple(p for p in order if state.players[p].active is None)
-    if then == NEXT_TURN and len(queue) > 1:
-        raise RuntimeError("ポケモンチェックのあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
+    if then in (NEXT_TURN, CONTINUE_TURN) and len(queue) > 1:
+        # v0.42: 特殊能力の処理のあと（1 回の使用できぜつする・場をはなれるのは 1 匹）も、両方のバトル場が空くことはない
+        raise RuntimeError(f"{'ポケモンチェック' if then == NEXT_TURN else '特殊能力の処理'}のあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
     _next_promotion_or_end(res, queue, then)
 
 
@@ -320,8 +322,51 @@ def _next_promotion_or_end(res: Resolution, queue: tuple, then) -> None:
         return
     if then == NEXT_TURN:
         PR.pokemon_check_sleep_and_paralysis(state)  # ポケモンチェックの 3・4 と次の番（v0.13 の部品）
+    elif then == CONTINUE_TURN:
+        state.phase = Phase.MAIN  # v0.42: 特殊能力の処理のあと。番は終わらない（p.311・p.323）
     else:
         _end_turn(res)
+
+
+# ---------------------------------------------------------------- 特殊能力の処理のあと（v0.42。docs/power-decisions-v0.42.md 3 章）
+
+
+def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
+    """宣言して使う特殊能力の処理（決定への答えを含む）が終わったあと、場を整える（v0.42）。
+
+    - HP 以上のダメージのポケモンがいれば（ゲンガーの「のろい」でダメージカウンターをのせた。カウンターの移動はワザのダメージではない。
+      GR-2000-P320-COUNTER-MOVE）、ワザのあとと同じきぜつの処理（``PR.knock_out``。ログ ``knock_out`` の ``timing`` は ``"power"``）→ サイド → 勝ち負け →
+      ふしちょう → バトル場に出す（``_after_knockouts``）。続きは ``CONTINUE_TURN``（終わったら番のプレイヤーの番にもどる）。こんじょう（相手のワザの
+      ダメージで「きぜつ」するとき。G3〜G7）・みちづれ（ワザのあと）は候補にしない。きぜつするのは 1 匹（1 回の使用でのせるのは 1 個）
+    - きぜつがなく、バトル場が空いたプレイヤーがいれば（メノクラゲの「おくびょう」で自分を手札にもどした。きぜつではないのでサイドはない）、勝ち負けの
+      判定（場にポケモンがいない。p.311）→ バトル場に出す（ワザの効果で場をはなれたあとと同じ。v0.36 の RD）
+    - どちらもなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
+
+    ``knock_outs`` は、その特殊能力の説明が「きぜつ」させうるか（``PowerEffect.may_knock_out``。今はのろいだけ）。偽なら HP 以上のポケモンがいても
+    きぜつの処理をしない（説明が「きぜつ」させないもの（ダメージスワップ・へんなこうどうの「きぜつ」しない範囲）の確認の漏れを、不変条件で見つける。
+    v0.7 の二重の確かめ）。
+
+    渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    gone = knocked(res)
+    if gone and not knock_outs:
+        return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
+    if gone:
+        if len(gone) > 1:
+            raise RuntimeError(f"特殊能力の処理のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。今の対応カードでは起こらない。エンジンの不具合）")
+        try:
+            candidates = capture_post_knockout(res, gone)
+        except OpenQuestion as question:
+            raise to_error(question.key, question.detail, question.error) from None
+        prize_takers = []
+        for owner, pokemon in gone:
+            PR.knock_out(state, owner, pokemon, timing="power")
+            prize_takers.append(1 - owner)
+        _after_knockouts(res, prize_takers, CONTINUE_TURN, candidates)
+        return
+    if any(state.players[p].active is None for p in PLAYERS):
+        _next_prize_or_judge(res, (), CONTINUE_TURN, ())
 
 
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック

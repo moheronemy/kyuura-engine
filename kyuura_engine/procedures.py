@@ -34,6 +34,9 @@ if TYPE_CHECKING:
 # 交代が終わったら、ポケモンチェックの残り（3 の「ねむり」・4 の「マヒ」。v0.3b）をしてから次の番を始める。
 # 値は v0.3a と同じ（ポケモンチェックの中で、次の番はまだ始まっていないことを表す。書き出しの形を変えないため）
 NEXT_TURN = "next_turn"
+# v0.42: 特殊能力の処理のあと（きぜつ・場をはなれて空いたバトル場）の決定の続き。サイド・勝ち負け・ふしちょう・交代が終わったら、番のプレイヤーの番に
+# もどる（``Phase.MAIN``。特殊能力を使っても番は終わらない。p.311・p.323）。ワザのあと（続きなし = 番の終わり）・ポケモンチェックの中（NEXT_TURN）と区別する
+CONTINUE_TURN = "continue_turn"
 
 POKEMON_CHECK_DOUBLE_KNOCKOUT = Halt(
     code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
@@ -344,7 +347,7 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     if simultaneous:
         extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
     if timing is not None:
-        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした
+        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした。v0.42: 特殊能力の処理のあと（ゲンガーの「のろい」）は "power"
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)

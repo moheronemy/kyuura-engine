@@ -84,6 +84,9 @@ class EffectDefinition:
     by_opponent: bool = False
     decision_kind: str | None = None
     requires: frozenset[str] = frozenset()
+    # v0.42: 受けるポケモンがバトル場にいるときだけ候補になる（エリカのラフレシアの［ぼうぎょかふん］「このカードがバトル場でワザによるダメージを受けた時」）。
+    # 既定（はんげき・わるいねぞう・返す効果）は場所を見ない（p.311・p.323）
+    active_only: bool = False
 
 
 TRANSPARENCY = EffectDefinition(
@@ -122,6 +125,15 @@ BARRIER = EffectDefinition(
     "barrier", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE, Window.BEFORE_EFFECT}), frozenset(), "now",
     False, "receiving_element", "void_attack", frozenset({DamageClass.ATTACK}),
 )
+# v0.42: エリカのラフレシアの［ぼうぎょかふん］。はんげきと同じ窓（受けたときに候補になり、ダメージの要素のあとの窓で処理する。CR-COUNTERATTACK-TIMING と同じ
+# 時点）で、処理は「コインを投げ、「おもて」ならダメージを与えたポケモンをこんらん状態にする」（``kernel.power_confusion_to_damage_source``）。特殊状態の条件は
+# ない（「ねむり・マヒ・こんらん」状態でも、必ずはたらく）。受けるときにバトル場にいること（``active_only``）。説明は「ワザによるダメージ」で「相手の」と書かない
+# （``by_opponent`` は偽。今の対応カードでは、エリカのラフレシアが自分のワザのダメージを受けることはない）
+DEFENSIVE_POLLEN = EffectDefinition(
+    "defensive_pollen", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", True, "damage_source", "power_confusion_to_damage_source", frozenset({DamageClass.ATTACK}), False,
+    active_only=True,
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -135,6 +147,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.PreventKnockOutOnHeads, GUTS),
     (E.ReturnToHandOnKnockOut, REBIRTH),
     (E.SuppressOtherPowers, CHEMICAL_GAS),
+    (E.ConfuseDamageSourceOnHeads, DEFENSIVE_POLLEN),  # v0.42
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),

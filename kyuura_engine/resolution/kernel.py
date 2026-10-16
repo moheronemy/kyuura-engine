@@ -38,6 +38,7 @@ from ..effects import (
     power_name_and_page,
     retaliation_double_knockout_error,
 )
+from ..conditions import confuse
 from ..persistent import reduced_damage_to_source
 from ..state import RETALIATION_FIXED
 
@@ -323,6 +324,8 @@ def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPla
             continue
         if definition.by_opponent and owner == frame.player:
             continue
+        if definition.active_only and state.players[owner].active is not pokemon:
+            continue  # v0.42: バトル場で受けたときだけ（ぼうぎょかふん）
         if definition.timing is C.Timing.OFFER:
             # v0.13 と同じく、受けるたびに写しを書きかえる（同じポケモンが 1 つのコマンドで 2 回受けることは今の対応カードでは起こらない）
             res.ko_prevention_able[pokemon.pokemon_id] = not C.blocked_by_status(instance, pokemon)
@@ -517,9 +520,42 @@ def attack_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: De
     fire_pending(res, child)
 
 
+def power_confusion_to_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """コインを投げ、「おもて」なら、ダメージを与えたポケモンをこんらん状態にする（v0.42。エリカのラフレシアの［ぼうぎょかふん］）。
+
+    コインを投げるのは効果を持つポケモンの持ち主（``source="power"``、``effect`` は ``PowerKey``。とうめい（T33）・こんじょうと同じ）。特殊能力の効果なので、
+    受けるポケモンの「ワザをうけない」状態・「とうめい」は評価しない。ダメージを与えたポケモンがすでに HP 以上なら、処理の対象がないので投げない（ログ
+    ``power_confusion_skipped``。はんげきの C15・v0.38 の ``has_target`` と同じ読み方）。ログ ``power_confusion``（``result``・``confused``）。こんらんにするのは
+    ``conditions.confuse``（ログ ``special_condition`` の ``effect`` は特殊能力の識別子）。"""
+    state = res.state
+    instance = deferred.instance
+    source = _damage_source(res, fs, "こんらん")
+    base = {
+        "player": instance.owner,
+        "pokemon": instance.card,
+        "pokemon_id": instance.pokemon_id,
+        "power": str(instance.power_key),
+        "attacker": fs.frame.player,
+        "attacker_pokemon": source.card,
+        "attacker_pokemon_id": source.pokemon_id,
+        "effect": str(fs.frame.attack_key),
+    }
+    if source.damage >= hp_of(state, source):
+        state.add_event("power_confusion_skipped", **base, reason=COUNTERATTACK_TARGET_KNOCKED_OUT)
+        return
+    if state.players[fs.frame.player].active is not source:
+        raise RuntimeError(f"ダメージを与えたポケモン {source.pokemon_id} がバトル場にいない（こんらん状態にできない。エンジンの不具合）")
+    flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
+    confused = flips.results[0] is CoinSide.HEADS
+    state.add_event("power_confusion", **base, result=flips.results[0].value, confused=confused)
+    if confused:
+        confuse(state, fs.frame.player, source, effect=str(instance.power_key))
+
+
 ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "power_damage_to_damage_source": power_damage_to_damage_source,
     "attack_damage_to_damage_source": attack_damage_to_damage_source,
+    "power_confusion_to_damage_source": power_confusion_to_damage_source,  # v0.42
 }
 
 

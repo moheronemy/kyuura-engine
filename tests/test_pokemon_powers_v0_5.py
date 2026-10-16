@@ -57,8 +57,17 @@ ENERGY_BURN = PowerKey("PMCG1-021", 0)
 NATURAL_CURE = PowerKey("PMCG6-026", 0)
 FIRE_RECOVERY = PowerKey("PMCG6-033", 0)
 # 登録表の特殊能力（カード id の順）
-ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, CHEMICAL_GAS, TRANSPARENCY, REBIRTH, NATURAL_CURE, FIRE_RECOVERY,
-              GUTS, RESTLESS_SLEEP)
+# v0.42: ヒーリングかふん・おくびょう・へんなこうどう・のろい・かけつける・ぶっしつこうかん・ぼうぎょかふん・かおりのわな（docs/power-decisions-v0.42.md）
+HEALING_POLLEN = PowerKey("PMCG2-014", 0)
+COWARDICE = PowerKey("PMCG3-011", 0)
+STRANGE_BEHAVIOR = PowerKey("PMCG3-028", 0)
+CURSE = PowerKey("PMCG3-031", 0)
+STEP_IN = PowerKey("PMCG3-043", 0)
+MATTER_EXCHANGE = PowerKey("PMCG4-034", 0)
+DEFENSIVE_POLLEN = PowerKey("PMCG5-014", 0)
+SWEET_TRAP = PowerKey("PMCG5-015", 0)
+ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, CHEMICAL_GAS, COWARDICE, STRANGE_BEHAVIOR,
+              TRANSPARENCY, CURSE, STEP_IN, MATTER_EXCHANGE, DEFENSIVE_POLLEN, SWEET_TRAP, REBIRTH, NATURAL_CURE, FIRE_RECOVERY, GUTS, RESTLESS_SLEEP)
 
 
 def full(state):
@@ -148,7 +157,7 @@ class PowerRegistryTest(unittest.TestCase):
         使うかは持ち主が決める）を、カードのページ（p.193）と照合して加えた（7 つ。tests/test_guts_v0_11.py）。v0.12 で R団のファイヤーの
         「ふしちょう」（このカードが「きぜつ」したとき、使える。使うかは持ち主が決める）を、カードのページ（p.82）と照合して加えた（8 つ。
         tests/test_phoenix_v0_12.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふくを加えた
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つを加えた
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -161,8 +170,8 @@ class PowerRegistryTest(unittest.TestCase):
         # （v0.31 で登録した。登録を除いた登録表 NO_CHARIZARD_EFFECTS で確かめる）
         self.assertIsNone(NO_CHARIZARD_EFFECTS.power_entry(CHARIZARD, 0))
         self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
-        # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12
-        self.assertIn("12 powers", repr(DEFAULT_EFFECTS))
+        # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20
+        self.assertIn("20 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

@@ -612,7 +612,8 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG3-016": ("PMCG4-019",),  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
               "PMCG1-039": ("PMCG1-036",), "PMCG3-006": ("PMCG1-006",),  # v0.39: 第1弾のレアコイル（コイルから）・化石の秘密のマタドガス（ドガースから）
               "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
-              "PMCG4-048": ("PMCG2-036",)}  # v0.41: わるいペルシアン（ニャースから）
+              "PMCG4-048": ("PMCG2-036",),  # v0.41: わるいペルシアン（ニャースから）
+              "PMCG3-028": ("PMCG3-027",)}  # v0.42: ヤドラン（化石の秘密のヤドンから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -664,7 +665,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "ひどいおんぱ",
                                         # v0.41: わるいペルシアンの「どくのつめ」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/heal-counter-status-v0.41.md）
-                                        "どくのつめ"]))
+                                        "どくのつめ",
+                                        # v0.42: ヤドランの「ねんりき」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/power-decisions-v0.42.md）
+                                        "ねんりき"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

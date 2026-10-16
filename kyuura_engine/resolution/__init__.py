@@ -14,13 +14,14 @@ docs/kernel-integration-v0.15b.md・docs/kernel-consolidation-v0.16b.md・docs/e
 from .catalog import DEFAULT_CATALOG, Catalog, EffectDefinition, EffectInstance, Mode, Origin, Timing
 from .events import DamageClass, FrameKind, Trace, Window
 from .contract import Contract, ContractRuntime, open_attack, program_for
-from .flow import COMMANDS, PREFLIGHT_MODES, RESUMES, Context, handle, processes, resume_decision
+from .flow import COMMANDS, CONTINUE_TURN, PREFLIGHT_MODES, RESUMES, Context, after_power, handle, processes, resume_decision
 from .programs import BUILDERS, UnsupportedByKernel, compile_attack
 from .questions import QUESTIONS
 
 __all__ = [
     "BUILDERS",
     "COMMANDS",
+    "CONTINUE_TURN",
     "Catalog",
     "Context",
     "Contract",
@@ -39,6 +40,7 @@ __all__ = [
     "Trace",
     "UnsupportedByKernel",
     "Window",
+    "after_power",
     "compile_attack",
     "handle",
     "open_attack",

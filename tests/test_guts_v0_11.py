@@ -620,7 +620,9 @@ class G37Test(unittest.TestCase):
             # docs/heal-counter-status-v0.41.md）
             "DamageThenConfuseBoth", "DamageThenStatusByCoin", "DamageThenChosenStatusOnHeads", "CoinDamageAndConfuseElseSelfConfuse",
             "DamageThenConfuseOnAnyHeads", "DamageThenSleepOnHeads", "DamageThenRetreatLockOnHeads", "SwitchOpponentActiveOnHeads",
-            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads"]))
+            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads",
+            # v0.42（相手のポケモンのカウンターをとりのぞく・残り HP が決まった数になるようにカウンターをのせる。docs/power-decisions-v0.42.md）
+            "HealChosenOpponentThenDraw", "PlaceCountersToRemainingHpOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

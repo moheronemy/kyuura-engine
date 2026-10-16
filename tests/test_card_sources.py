@@ -27,7 +27,7 @@ from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
 from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_35_POKEMON, V0_36_POKEMON, KANGASKHAN
-from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, FOSSIL_GRIMER, BROCKS_ONIX, PERSIAN
+from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, FOSSIL_GRIMER, BROCKS_ONIX, PERSIAN
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -163,10 +163,10 @@ class ShippedRecordTest(unittest.TestCase):
         # v0.36: 採用 11 枚（docs/sand-attack-retreat-lock-v0.36.md）。v0.37: 採用 14 枚と、過去の原典照合の記録のある化石の秘密のベトベター
         # （pcg-search.com の照合だけを書く guidebook_record。docs/fifteen-reused-effects-v0.37.md）。v0.38: 採用 15 枚（docs/bench-switch-combined-v0.38.md）。
         # v0.39: 採用 15 枚（docs/selfdestruct-spread-count-v0.39.md）。v0.40: 採用 15 枚（docs/count-condition-switch-return-v0.40.md）。
-        # v0.41: 採用 15 枚（docs/heal-counter-status-v0.41.md）
+        # v0.41: 採用 15 枚（docs/heal-counter-status-v0.41.md）。v0.42: 採用 15 枚（docs/power-decisions-v0.42.md）
         self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON
                                                           + (KANGASKHAN,) + V0_35_POKEMON + V0_36_POKEMON + V0_37_POKEMON + V0_38_POKEMON
-                                                          + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON))
+                                                          + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON))
         for card_id in V0_29_POKEMON:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -221,8 +221,9 @@ class ShippedRecordTest(unittest.TestCase):
         # （採用の 14 枚の説明文のあるワザ。化石の秘密のベトベターの 2 つは照合の記録の文面で、LD-・CC- の区分）と、v0.38 の 21（15 枚の説明文の
         # あるワザ。kyuura に LD-・エラッタ・裁定の記録がない）と、v0.39 の 21（15 枚の説明文のあるワザ。kyuura に LD-・エラッタの記録がない。
         # 第1弾のレアコイルを指す kyuura の記録は「とうめい」の裁定（CR-）だけ）と、v0.40 の 22（15 枚の説明文のあるワザ。kyuura に LD-・エラッタ・
-        # 裁定の記録がない）と、v0.41 の 26（15 枚の説明文のあるワザ。kyuura に LD-・エラッタ・裁定の記録がない）
-        self.assertEqual(len(section["adopted_printed_text"]), 266)
+        # 裁定の記録がない）と、v0.41 の 26（15 枚の説明文のあるワザ。kyuura に LD-・エラッタ・裁定の記録がない）と、v0.42 の 23（15 枚の説明文の
+        # あるワザ 16 と特殊能力 7。カイリューの［かけつける］は card_differences の最新の説明なので difference_text）
+        self.assertEqual(len(section["adopted_printed_text"]), 289)
         # v0.37: 化石の秘密のベトベター（過去の原典照合の記録のあるカード）は pcg-search.com の照合だけを書く。タケシのイワークは kyuura が読んだ
         # 照合の記録（CC-）がある。ペルシアンは kyuura の文面の【】だけがサイトと違う（処理に影響しない）
         grimer = sources["cards"][FOSSIL_GRIMER]
@@ -235,7 +236,11 @@ class ShippedRecordTest(unittest.TestCase):
         self.assertEqual(section["recorded_in_card_checks"]["PMCG3-003/attack/0"], "CC-PMCG3-003-P47")
         self.assertEqual(sorted(section["errata_text"]), ["PMCG1-014/attack/1", "PMCG1-017/attack/1", "PMCG1-019/attack/0", "PMCG1-020/attack/1",
                                                           "PMCG1-021/power/0", "PMCG1-022/attack/1"])
-        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067"})
+        # v0.42: カイリュー（PMCG3-043）の［かけつける］も、kyuura の data/curation/card_differences.json の PMCG3-043（確度: 確実）の最新の説明
+        # （LD- はない。v0.31 のピッピのゆびをふると同じ区分）
+        self.assertEqual(sources["cards"]["PMCG3-043"]["play_text"]["power/0"], f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG3-043")
+        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067",
+                                                      "PMCG3-043/power/0": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG3-043"})
 
     def test_guidebook_record_covers_only_targets_without_verified_text(self):
         """過去の原典照合の記録のあるカードの play_text は、照合の記録に処理に使う文面のない登録だけに書く（v0.30）。ヒトカゲの照合の記録
@@ -257,7 +262,7 @@ class ShippedRecordTest(unittest.TestCase):
         registered = cs.registered_cards(DEFAULT_EFFECTS)
         adopted = (set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON) | set(V0_34_POKEMON)
                    | set(V0_35_POKEMON) | set(V0_36_POKEMON) | set(V0_37_ADOPTED) | set(V0_38_POKEMON) | set(V0_39_POKEMON)
-                   | set(V0_40_POKEMON) | set(V0_41_POKEMON))  # v0.35〜v0.41
+                   | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON))  # v0.35〜v0.42
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))

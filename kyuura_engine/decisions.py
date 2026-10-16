@@ -25,6 +25,9 @@
   残り HP、選ばなければ何もせず、そのあと、まだ HP 以上のポケモンをきぜつさせる（``engine._resume_knock_out``）。番のプレイヤーは
   ワザを使ったプレイヤーのまま。``context`` は ``"attack"``（ワザ）と ``"power"``（特殊能力）。v0.12 から、番のプレイヤーのワザを使った
   ポケモンが、相手の「ほのおのかべ」（相手のワザによるダメージ）で「きぜつ」するときにも出す（決定するのは番のプレイヤー）
+- ``"power"``: 宣言して使う特殊能力の処理の続き（v0.42。docs/power-decisions-v0.42.md）。``context`` の ``"use"``（(プレイヤー, 場のポケモンの番号,
+  カード id, 特殊能力の位置)）から実装を引き、``effects.PowerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンが特殊能力の処理のあとの場を整え
+  （きぜつ・空いたバトル場。``resolution.after_power``）、番のプレイヤーの番にもどる（番は終わらない）。決定するのは特殊能力を使ったプレイヤー
 - ``"post_knockout"``: きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあとの続き（v0.12）。ポケモンが「きぜつ」したときに使える
   特殊能力（R団のファイヤーの「ふしちょう」）を使うかを、そのカードの持ち主が決める（``POST_KNOCKOUT_POWER``）。選んだら宣言して、
   そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
@@ -138,6 +141,14 @@ SELECT_SPECIAL_CONDITION = "select_special_condition"
 # プレイヤーで、選べるものは山札の「超」の基本エネルギーカードの uid（山札の並びを決定に写さないよう uid の小さい順）。0〜1 枚（「つけてよい」なので
 # 選ばなくてよい）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない（つけたカードは場に出るので公開）。再開先は "attack"
 ATTACH_FROM_DECK = "attach_from_deck"
+# v0.42（docs/power-decisions-v0.42.md）。ナツメのルージュラの「よいおこない」の「そのポケモンにのっているダメージカウンターを、好きなだけとりのぞく」。決めるのは
+# ワザを使ったプレイヤーで、選べるものはとりのぞく数（0〜のっている数。``context`` の ``"target"`` がそのポケモン）。0 は「好きなだけ」で 0 を選べるかが
+# 決められない（HC5 と同じ問い）ので ``"unresolved_choices"``。再開先は "attack"
+REMOVE_COUNTERS = "remove_counters"
+# v0.42: ナツメのケーシィの「エネループ」の「自分についている「超」エネルギーカードを1枚選び、はがして手札にもどす」。決めるのはワザを使ったプレイヤーで、
+# 選べるものはワザを使ったポケモンについている「超」の基本エネルギーカードの uid（ついている順。1 枚でも決定を出す。DISCARD_ENERGY と同じ形）。トラッシュの
+# DISCARD_ENERGY とは行き先が違うので別の種類。再開先は "attack"
+RETURN_ENERGY = "return_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -237,6 +248,42 @@ def push_trainer_decision(
         player=player,
         options=options,
         resume="trainer",
+        context=(*entries, *tuple(context)),
+        min_choices=min_choices,
+        max_choices=max_choices,
+    )
+
+
+def push_power_decision(
+    state: GameState,
+    use,
+    *,
+    kind: str,
+    player: int,
+    options: Iterable[int],
+    context: Iterable[tuple[str, Any]] = (),
+    min_choices: int = 1,
+    max_choices: int = 1,
+    unresolved_choices: Iterable[int] = (),
+    unresolved_code: str = "UNRESOLVED_RULING",
+    unresolved_reason: str = "",
+) -> PendingDecision:
+    """宣言して使う特殊能力の処理の途中で決定を出す（v0.42）。選ばれたら、その特殊能力の実装の ``resume`` が呼ばれる（再開先 ``"power"``）。
+
+    ``context`` は ``("use", (プレイヤー, 場のポケモンの番号, カード id, 特殊能力の位置))`` と、``unresolved_choices``（トレーナーの決定と同じ。選ぶと
+    ``UnsupportedError(unresolved_code, unresolved_reason)``）と、実装が決定をまたいで使う値（``context``）。決定の形はトレーナーの決定（v0.2b）と同じ考え方で、
+    実装が ``PowerEffect.decision_problems`` で宣言する。
+    """
+    entries = [("use", (use.player, use.pokemon_id, use.key.card_id, use.key.power_index))]
+    unresolved = tuple(unresolved_choices)
+    if unresolved:
+        entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    return push_decision(
+        state,
+        kind=kind,
+        player=player,
+        options=options,
+        resume="power",
         context=(*entries, *tuple(context)),
         min_choices=min_choices,
         max_choices=max_choices,

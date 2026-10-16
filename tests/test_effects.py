@@ -83,6 +83,10 @@ V0_40_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG4-011", "PMCG6-004",
 V0_41_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-009", "PMCG2-016", "PMCG3-020", "PMCG4-048", "PMCG5-002", "PMCG5-009", "PMCG6-038",
                                                        "PMCG6-022", "PMCG6-048", "PMCG5-058", "PMCG6-055") for index in (0, 1)] + [
     AttackKey("PMCG6-035", 0), AttackKey("PMCG4-032", 0), AttackKey("PMCG5-003", 0), AttackKey("PMCG6-036", 1)]
+# v0.42: 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚（docs/power-decisions-v0.42.md）の説明文のあるワザ 16
+V0_42_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG6-052", "PMCG4-035", "PMCG3-017") for index in (0, 1)] + [
+    AttackKey(card, 0) for card in ("PMCG2-014", "PMCG3-028", "PMCG3-031", "PMCG5-014", "PMCG6-043", "PMCG6-047", "PMCG3-043", "PMCG4-034",
+                                    "PMCG5-060", "PMCG5-065")]
 
 
 class RecordingEffect(AttackEffect):
@@ -232,7 +236,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
-                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT))
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -368,7 +372,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚のワザ 25（v0.39。docs/selfdestruct-spread-count-v0.39.md）
         # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
         # + 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚のワザ 29（v0.41。docs/heal-counter-status-v0.41.md）
-        self.assertEqual(len(keys), 425)
+        # + 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚のワザ 21（v0.42。docs/power-decisions-v0.42.md）
+        self.assertEqual(len(keys), 446)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -378,9 +383,13 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
         # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）、v0.17b で
         # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた。v0.31 でリザードンの「エナジーバーン」（PMCG1-021）・カツラのロコンの
-        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）
+        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）。v0.42 で
+        # ラフレシア・メノクラゲ・ヤドラン・ゲンガー・カイリュー・わるいユンゲラー・エリカのラフレシア・エリカのウツボットの 8 つを加えた
+        # （docs/power-decisions-v0.42.md）
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
-                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
+                                  PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0), PowerKey("PMCG3-043", 0),
+                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-020", 0),
                                   PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0), PowerKey("PMCG6-073", 0)))
 
 

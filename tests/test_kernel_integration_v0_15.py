@@ -163,14 +163,26 @@ class DependencyTest(unittest.TestCase):
 
     def test_out_of_scope_handlers_do_not_use_the_kernel(self):
         """範囲外のコマンドの処理（engine.py のトレーナー・特殊能力・進化・にげる・エネルギー・対戦準備）は解決の基盤を使わない。
-        ``resolution`` を使うのは、入口と振り分け（型の注釈を含む）だけ（v0.15b の「v0.13 の経路の処理は解決の基盤を使わない」の引き継ぎ）。"""
+        ``resolution`` を使うのは、入口と振り分け（型の注釈を含む）だけ（v0.15b の「v0.13 の経路の処理は解決の基盤を使わない」の引き継ぎ）。
+        v0.42: 特殊能力の処理のあとのきぜつ・サイド・勝ち負け・バトル場に出す（p.323 の手順）は、ワザのあとと同じ解決の基盤の処理を使う
+        （``resolution.after_power``。docs/power-decisions-v0.42.md）。特殊能力の処理が使う解決の基盤の名前は、その入口と型の注釈
+        （``resolution.Context``）だけで、特殊能力そのものの処理（宣言・確認・``resolve``・``resume``）は engine.py と effects.py のまま。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
+        functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
             function.name
-            for function in tree.body if isinstance(function, ast.FunctionDef)
+            for function in functions
             for node in ast.walk(function) if isinstance(node, ast.Name) and node.id == "resolution"
         }
-        self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine"})
+        self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine",
+                                 "_use_pokemon_power", "_after_power_step", "_resume_power"})
+        power_names = {
+            node.attr
+            for function in functions if function.name in ("_use_pokemon_power", "_after_power_step", "_resume_power")
+            for node in ast.walk(function)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
+        }
+        self.assertEqual(power_names, {"Context", "after_power"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層
@@ -223,10 +235,11 @@ class DispatchTest(unittest.TestCase):
 
     def test_target_commands(self):
         """解決の基盤が処理するのは、ワザ・番の終わり（``resolution.COMMANDS``）と、再開先が ``resolution.RESUMES``（attack・knock_out・
-        post_knockout・take_prize・promote_active）の決定への答え。トレーナーの決定（trainer）への答えと、範囲外のコマンドは engine.py。"""
+        post_knockout・take_prize・promote_active）の決定への答え。トレーナーの決定（trainer）・特殊能力の途中の決定（power。v0.42）への答えと、
+        範囲外のコマンドは engine.py。"""
         self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
         self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "promote_active"})
-        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer"})
+        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power"})
         for command in (UseAttack, EndTurn):
             self.assertIs(engine._HANDLERS[command], resolution.handle)
         waiting = kyuura_engine.apply_command(board(PONYTA_, {**GIOVANNI_, "damage": 80}), UseAttack(0, 1))  # こんじょうの決定（knock_out）

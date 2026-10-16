@@ -23,7 +23,37 @@ if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
 
 
-def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, card: int, *, trainer: int | None = None) -> None:
+def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDefinition) -> tuple[str, str] | None:
+    """進化カード ``definition`` を、自分の場のポケモン ``target`` に今重ねられない理由（コード, 理由の文）。重ねられるなら None（v0.42。v0.41 までの
+    ``engine._evolve_pokemon`` の確認（番・名前・その番の最初から場にいたか・段階）を、同じ順番・同じコード・同じ文のまま関数にした。通常の操作
+    （手札から）とワザの効果（エリカのピッピの「つきのちから」。山札から）で共通。ワザによる進化でも、p.310 の進化の制限を免除しない）。
+
+    確かめないもの: 進化したあとの HP がダメージ以下になるか（呼ぶ側。``UNRESOLVED_EVOLUTION_HP``）・カードが対応しているか（呼ぶ側）。状態は変えない。"""
+    if state.turn_number <= 2:
+        # 番は先攻から交互に進むので、1 番は先攻の、2 番は後攻の最初の番（p.309・p.310）
+        return "FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310）"
+    current = state.card_def(target.card)
+    if current.name_ja != definition.evolves_from:
+        return (
+            "EVOLUTION_NAME_MISMATCH",
+            f"「{definition.name_ja}」は「{definition.evolves_from}」から進化する。場のポケモン {target.pokemon_id} は「{current.name_ja}」",
+        )
+    if target.current_form_turn >= state.turn_number:
+        if target.evolved_turn is not None:
+            return "EVOLVED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に進化したので、もう一度は進化させられない（p.310）"
+        return "PLAYED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に場に出したので、進化させられない（p.310）"
+    below_stage = "basic" if definition.is_stage1_pokemon else "stage1"
+    if current.stage != below_stage:
+        return (
+            "EVOLUTION_STAGE_MISMATCH",
+            f"「{definition.name_ja}」（{definition.stage}）は {below_stage} のポケモンに重ねる。場のポケモン {target.pokemon_id} の"
+            f"「{current.name_ja}」は {current.stage}（p.316・p.319）",
+        )
+    return None
+
+
+def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, card: int, *, trainer: int | None = None,
+                         effect: str | None = None) -> None:
     """手札の進化カード ``card`` を、自分の場のポケモン ``target`` の上に置いて進化させる（p.310 の手順 1〜5）。
 
     1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。いちばん上のカードの内容がそのポケモンを
@@ -34,14 +64,23 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     ログ ``evolve``（``player``・``pokemon_id``・進化前と進化後のカードの uid とカード id）。``trainer`` 引数は、トレーナーの効果で 1 進化を
     飛ばして重ねたとき（v0.25。ポケモン育て屋さん）の、使っているトレーナーのカードの uid で、そのときだけログの ``trainer_card`` に書く
     （通常の操作のログは v0.24 と同じ形）。乱数は使わない。
+
+    v0.42: ``effect`` は、ワザの効果で山札の進化カードを重ねたとき（エリカのピッピの「つきのちから」）のワザ（``AttackKey`` の文字列）。そのときは
+    カードを手札ではなく山札から出し、ログに ``effect`` と ``source_zone``（``"deck"``）を書く（どこに重ねてよいかの確認は、通常の操作と同じ
+    ``evolution_block``。呼ぶ側）。
     """
     p = state.players[player]
-    p.hand.remove(card)
+    if effect is None:
+        p.hand.remove(card)
+    else:
+        p.deck.remove(card)
     previous = target.card
     target.evolution_stack = (*target.evolution_stack, previous)
     target.card = card
     target.evolved_turn = state.turn_number
     extra = {} if trainer is None else {"trainer_card": trainer}
+    if effect is not None:
+        extra.update(effect=effect, source_zone="deck")
     state.add_event(
         "evolve",
         player=player,

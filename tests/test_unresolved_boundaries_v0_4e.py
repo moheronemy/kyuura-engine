@@ -86,6 +86,10 @@ ALL_CODES = (
     # 効果を受けない）と隣の止まらない場合（移す・取り替えるカウンターがない・数が同じ）は tests/test_heal_counter_status_v0_41.py の
     # CounterShiftTest・SwapTest
     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
+    # v0.42: PW1・PW2（docs/power-decisions-v0.42.md）。止まる場合（相手に控えがいないときのかおりのわな・手札がないときのぶっしつこうかん）と隣の止まらない
+    # 場合（控えが 1 匹・手札が 1 枚）は tests/test_power_decisions_v0_42.py の SweetTrapTest・MatterExchangeTest
+    "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH",
+    "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
 )
 TURN = 7
 
