@@ -609,7 +609,8 @@ class ChemicalGasTest(unittest.TestCase):
 EFFECT_COIN_TYPES = (PoisonOnHeads, ParalyzeOnHeads, ConfuseOnHeads)
 EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE: (STARYU,), **EVOLVED_FROM,  # v0.28: スターミー
               "PMCG1-034": ("PMCG1-031",), "PMCG2-011": ("PMCG2-005",),  # v0.32: ギャラドス（コイキングから）・ウツドン（マダツボミから）
-              "PMCG3-016": ("PMCG4-019",)}  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
+              "PMCG3-016": ("PMCG4-019",),  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
+              "PMCG1-039": ("PMCG1-036",), "PMCG3-006": ("PMCG1-006",)}  # v0.39: 第1弾のレアコイル（コイルから）・化石の秘密のマタドガス（ドガースから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -652,7 +653,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "ベトベト", "まきつく",
                                         # v0.38: フリーザーの「フリーズドライ」・サカキのニドリーナの「のしかかり」・ケーシィ（ロケット団）の「ねんりき」
                                         # （ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/bench-switch-combined-v0.38.md）
-                                        "フリーズドライ", "のしかかり", "ねんりき"]))
+                                        "フリーズドライ", "のしかかり", "ねんりき",
+                                        # v0.39: 第1弾のコイル・レアコイルの「でんじは」（ParalyzeOnHeads）・化石の秘密のマタドガスの「スモッグ」（PoisonOnHeads）。
+                                        # 既存の型の登録だけなので、同じ T19b で止まる（docs/selfdestruct-spread-count-v0.39.md）
+                                        "でんじは", "でんじは", "スモッグ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

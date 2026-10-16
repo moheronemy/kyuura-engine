@@ -71,6 +71,15 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   確かめてから別の操作を続ける（``V031_STOPS``）。v0.38 のカードは、使えるワザをどれも 1 回以上使い、まだ使っていないワザがエネルギーの不足で使えないとき、
   その番はワザを使わずに番を終える（でんれいは自分を山札にもどすので、つばさでうつを使うための手順）。前の版のデッキに v0.38 のカードは入っていないので、
   その組の結果は変わらない。
+- v0.39（``--batch v0.39``。``PAIRINGS_V0_39``。docs/selfdestruct-spread-count-v0.39.md）: ``L39``（雷）: コイル（第1弾・ロケット団）2 枚ずつ・レアコイル（第1弾・
+  化石の秘密）2 枚ずつ・ピカチュウ（ジャングル）4・ライチュウ（化石の秘密）3・ビリリダマ（第1弾）4・マルマイン 3、トレーナー 12、雷エネルギー 26。``G39``（草）:
+  キョウのドガース（PMCG6-008）4・キョウのマタドガス 3・ドガース（第1弾）4・マタドガス（化石の秘密）3・エリカのパラス 4、トレーナー 12、草エネルギー 30。
+  ``C39``（無色・水）: ポッポ 4・プリン 4・プクリン 3・カスミのニョロモ 4・カスミのニョロゾ 3・カスミのニョロボン 2、トレーナー 12、水エネルギー 28。``N39``（草）:
+  ニドラン♀ 4・ニドリーナ 3・ニドクイン 3・ニドラン♂ 4・ニドリーノ 3・ニドキング 2、トレーナー 12、草エネルギー 29。組は ``L39`` 対 ``C39``・``C39`` 対 ``G39``・
+  ``G39`` 対 ``N39``・``N39`` 対 ``L39``（どのデッキも 2 組に入る）。v0.39 のワザの決定（スパーク・ギガスパークの控えの選択）は、原典で決められない選択
+  （``unresolved_choices``。JS1）を選ばず、ギガスパークは 1〜3 匹を順に選ぶ（0 匹は GS1 なので選ばない）。かぜおこしの入れ替えは元の手順のまま（1 つ目の
+  選べるもの）。JS1・TP3 で止まったワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。v0.39 のカードも、使っていないワザのためにエネルギーを
+  ためる手順（v0.38 と同じ）を使う。前の版のデッキに v0.39 のカードは入っていないので、その組の結果は変わらない。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -103,7 +112,7 @@ from kyuura_engine import (  # noqa: E402
     new_game, preset_deck,
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
-from kyuura_engine.decisions import ATTACH_FROM_DISCARD, DISCARD_ENERGY, SELECT_ATTACK  # noqa: E402
+from kyuura_engine.decisions import ATTACH_FROM_DISCARD, DISCARD_ENERGY, SELECT_ATTACK, SELECT_POKEMON  # noqa: E402
 from kyuura_engine.effects import AttackKey as E_AttackKey, AttackUse, preview_attack_damage, working_counterattack_power  # noqa: E402
 from kyuura_engine.persistent import (  # noqa: E402
     attack_barrier, attack_coin_checks, attack_locked, cannot_attack, cannot_retreat, destiny_bond, reduced_damage_to_source, retaliation,
@@ -180,7 +189,15 @@ KOGAS_WEEDLE, GIOVANNIS_NIDORINA, SABRINAS_PORYGON, ROCKET_ABRA, KOGAS_PIDGEY_40
 V0_38 = (ARTICUNO, HITMONLEE, ERIKAS_TANGELA, BROCKS_VULPIX_50, BROCKS_GOLBAT, ARBOK, RHYDON, BLAINES_PONYTA, BLAINES_RAPIDASH, KOGAS_PIDGEOTTO,
          KOGAS_WEEDLE, GIOVANNIS_NIDORINA, SABRINAS_PORYGON, ROCKET_ABRA, KOGAS_PIDGEY_40)
 PIKACHU = "PMCG1-035"
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38  # ワザの選び方を重ね、動きを数えるカード
+# v0.39（じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚。docs/selfdestruct-spread-count-v0.39.md）。進化元はコイル・ドガース・ピカチュウ・
+# ビリリダマ（第1弾）・カスミのニョロゾ（v0.35）・プリン（v0.28）・ニドリーナ（v0.32）・キョウのドガース
+MAGNEMITE, MAGNETON, FOSSIL_WEEZING, FOSSIL_MAGNETON, JUNGLE_PIKACHU = "PMCG1-036", "PMCG1-039", "PMCG3-006", "PMCG3-025", "PMCG2-024"
+FOSSIL_RAICHU, ELECTRODE, KOGAS_KOFFING_40, MISTYS_POLIWRATH, ROCKET_MAGNEMITE = "PMCG3-024", "PMCG2-025", "PMCG6-008", "PMCG6-039", "PMCG4-026"
+WIGGLYTUFF, NIDOQUEEN, KOGAS_WEEZING, PIDGEY, ERIKAS_PARAS = "PMCG2-045", "PMCG2-013", "PMCG6-016", "PMCG1-059", "PMCG5-004"
+V0_39 = (MAGNEMITE, MAGNETON, FOSSIL_WEEZING, FOSSIL_MAGNETON, JUNGLE_PIKACHU, FOSSIL_RAICHU, ELECTRODE, KOGAS_KOFFING_40, MISTYS_POLIWRATH,
+         ROCKET_MAGNEMITE, WIGGLYTUFF, NIDOQUEEN, KOGAS_WEEZING, PIDGEY, ERIKAS_PARAS)
+VOLTORB = "PMCG1-037"
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -253,6 +270,16 @@ DECKS = {
             (GIOVANNIS_NIDORINA, 4), *TRAINERS, (GRASS, 22)),
     # v0.38: 無色・水・超（化石の秘密・ロケット団・闇からの挑戦）
     "C38": ((ARTICUNO, 4), (SABRINAS_PORYGON, 4), (ROCKET_ABRA, 4), (KOGAS_PIDGEY, 4), (KOGAS_PIDGEOTTO, 3), *TRAINERS, (WATER, 16), (PSYCHIC, 13)),
+    # v0.39: 雷（第1弾・ジャングル・化石の秘密・ロケット団）。同じ名前の「コイル」「レアコイル」は 2 枚ずつ（合わせて 4 枚）。ちょくれつじりょくは、ベンチの
+    # 2 種類のコイルとレアコイルを数える
+    "L39": ((MAGNEMITE, 2), (ROCKET_MAGNEMITE, 2), (MAGNETON, 2), (FOSSIL_MAGNETON, 2), (JUNGLE_PIKACHU, 4), (FOSSIL_RAICHU, 3), (VOLTORB, 4),
+            (ELECTRODE, 3), *TRAINERS, (LIGHTNING, 26)),
+    # v0.39: 草（第1弾・化石の秘密・リーダーズスタジアム・闇からの挑戦）。キョウのマタドガスの進化元は PMCG6-008 のキョウのドガース
+    "G39": ((KOGAS_KOFFING_40, 4), (KOGAS_WEEZING, 3), (KOFFING, 4), (FOSSIL_WEEZING, 3), (ERIKAS_PARAS, 4), *TRAINERS, (GRASS, 30)),
+    # v0.39: 無色・水（第1弾・ジャングル・リーダーズスタジアム・闇からの挑戦）
+    "C39": ((PIDGEY, 4), (JIGGLYPUFF, 4), (WIGGLYTUFF, 3), (MISTYS_POLIWAG, 4), (MISTYS_POLIWHIRL, 3), (MISTYS_POLIWRATH, 2), *TRAINERS, (WATER, 28)),
+    # v0.39: 草（第1弾・ジャングル）。ラブラブアタックで数えるニドキングを入れる
+    "N39": ((NIDORAN_F, 4), (NIDORINA, 3), (NIDOQUEEN, 3), (NIDORAN_M, 4), (NIDORINO, 3), (NIDOKING, 2), *TRAINERS, (GRASS, 29)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -268,9 +295,10 @@ PAIRINGS_V0_36 = (("W36", "K36"), ("K36", "P31"), ("W36", "A2"))
 PAIRINGS_V0_37 = (("F37", "L37"), ("W37", "G37"), ("L37", "W37"), ("G37", "F37"))
 # v0.38: C38 対 P31（ピッピ・ピクシー・カスミのコダックが、でんれい・いなくなる・ふぶきなどを自分のワザとして使う）
 PAIRINGS_V0_38 = (("F38", "G38"), ("G38", "C38"), ("C38", "F38"), ("C38", "P31"))
+PAIRINGS_V0_39 = (("L39", "C39"), ("C39", "G39"), ("G39", "N39"), ("N39", "L39"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
-           "v0.38": PAIRINGS_V0_38}
+           "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -334,7 +362,8 @@ V031_STOPS = {
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamagePlusDefenderCounters"
                                                            and any(p.damage for p in st.players[1 - c.player].bench)),
     # v0.34: どくどく（相手が受けるダメージの違うどく状態。TP3（v0.3a の 15））
-    "UNRESOLVED_SPECIAL_POISON_OVERWRITE": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamageAndSpecialPoison"
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("DamageAndSpecialPoison",
+                                                                                              "DamageThenSpecialPoisonOnHeads")  # v0.39 のどくどくガス
                                                           and _defender(st, c).conditions.poison is not None
                                                           and _defender(st, c).conditions.poison.damage != _attack_effect(st, c).poison_damage),
     # v0.35: あわあわ（自分）・ドわすれ（相手が選んだワザ）で、この番は使えないワザ（ワザを使うための条件と同じく宣言の前に拒否する）
@@ -377,12 +406,30 @@ def _damage_trigger_before_later_damage(state, command):
 
 def _bench_reading_matters(state, command):
     """JS1（v0.37）: ワザが説明に「弱点・抵抗力」に関係なくのない自分の控えへのダメージ（``DamageAndOwnBenchDamage`` の ``weakness_resistance_stated`` が
-    偽）で、自分の控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいる（まねるワザは対戦に入れていないので見ない）。"""
+    偽）で、自分の控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいる（まねるワザは対戦に入れていないので見ない）。
+
+    v0.39: 第1弾のじばく（``SelfDestruct`` の ``weakness_resistance_stated`` が偽。お互いの控えの全員）・ビリビリ（``DamageThenSameTypeBenchDamage``。お互いの
+    控えの、相手の対戦ポケモンと同じタイプのポケモン）は、受ける控えのどれかが、スパーク（``DamageThenChosenBenchDamage`` の ``weakness_resistance_stated`` が
+    偽）は、選べる相手の控えのすべてが、ワザを使うポケモンのタイプに弱点・抵抗力を持つ（1 匹でも持たなければ、宣言は受け付けて、選ぶときに避ける）。"""
     effect = _attack_effect(state, command)
-    if type(effect).__name__ != "DamageAndOwnBenchDamage" or effect.weakness_resistance_stated:
-        return False
     kind = state.card_def(_attacker(state, command).card).pokemon_type
-    return any(kind in (state.card_def(p.card).weakness, state.card_def(p.card).resistance) for p in state.players[command.player].bench)
+
+    def related(pokemon):
+        return kind in (state.card_def(pokemon.card).weakness, state.card_def(pokemon.card).resistance)
+
+    name = type(effect).__name__
+    both = state.players[command.player].bench + state.players[1 - command.player].bench
+    if name == "SelfDestruct" and not effect.weakness_resistance_stated:
+        return any(related(p) for p in both)
+    if name == "DamageThenSameTypeBenchDamage":
+        wanted = state.card_def(_defender(state, command).card).pokemon_type
+        return any(related(p) for p in both if state.card_def(p.card).pokemon_type is wanted)
+    if name == "DamageThenChosenBenchDamage" and not effect.weakness_resistance_stated:
+        bench = state.players[1 - command.player].bench
+        return bool(bench) and all(related(p) for p in bench)
+    if name != "DamageAndOwnBenchDamage" or effect.weakness_resistance_stated:
+        return False
+    return any(related(p) for p in state.players[command.player].bench)
 
 
 def _deck_return_attacks(state, command):
@@ -482,6 +529,26 @@ def _v031_decision(state, counts):
     return ResolveDecision(d.player, d.id, tuple(options[:count]))
 
 
+def _v039_decision(state, counts):
+    """v0.39 のカードのワザの控えを選ぶ決定への答え（スパーク・ギガスパーク）。原典で決められない選択（``unresolved_choices``。スパークの JS1）は選ばない。
+    ギガスパーク（``min_choices`` 0）は、決定のたびに 1・2・3 匹（控えの数まで）を順に選ぶ（0 匹は GS1 で止まるので選ばない）。"""
+    d = state.decision
+    if d is None or d.resume != "attack" or d.kind != SELECT_POKEMON:
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_39:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if d.min_choices == 0:
+        count = 1 + counts["v039_targets"] % d.max_choices
+        counts["v039_targets"] += 1
+    else:
+        count = d.min_choices
+    counts[f"v039_decision_{count}"] += 1
+    return ResolveDecision(d.player, d.id, tuple(options[:count]))
+
+
 def _v031_power(state, tried, counts):
     """v0.31 の宣言する特殊能力を使う手順: カツラのロコンの「しぜんになおる」（ダメージがあり、この番にまだ使っていない）・リザードンの「エナジーバーン」
     （炎でないエネルギーがついていて、その番にまだ使っていない）。使えない特殊状態のときは使わない（拒否を起こさない）。"""
@@ -512,7 +579,7 @@ def make_policy(seen: dict, counts: Counter):
     def policy(state, *, janken_winner, cure, tried):
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
         if state.phase is Phase.DECISION:
-            return _v031_decision(state, counts) or command
+            return _v031_decision(state, counts) or _v039_decision(state, counts) or command
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
             power = _v031_power(state, tried, counts)
             if power is not None:
@@ -538,10 +605,10 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
-            counts[f"v038_wait_{card_id}"] += 1
+            counts[f"v038_wait_{card_id}"] += 1  # v0.39 のカードも同じ手順（じばく・メガトンパンチ・ギガスパークなど）
             return EndTurn(player)
         choice = min(usable, key=lambda i: (used[i], -(attacks[i].damage or 0), i))
         chosen = UseAttack(player, choice)
@@ -680,7 +747,7 @@ def card_uses(state):
                 uses[cid][f"self_damage#{index}"] += 1
                 if e.get("damage_multiplied"):
                     uses[cid][f"self_damage_multiplied#{index}"] += 1  # v0.35: マチスのラッタのきあいだめ（自分へのダメージも 2 倍）
-            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38:
+            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38 + V0_39:
                 uses[cid][f"{e['target']}_damage#{index}"] += 1  # v0.33: 控えポケモンへのダメージ（かけぬける・ミニじしん）
             elif kind == "damage" and not e.get("retaliation") and "target" not in e:
                 uses[cid][f"damage#{index}"] += 1
@@ -732,7 +799,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37・v0.38 の 4 組）")
+    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37・v0.38・v0.39 の 4 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

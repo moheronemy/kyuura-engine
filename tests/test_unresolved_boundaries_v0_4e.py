@@ -76,6 +76,9 @@ ALL_CODES = (
     # v0.38: GK1（docs/bench-switch-combined-v0.38.md）。止まる場合と隣の止まらない場合は tests/test_bench_switch_combined_v0_38.py の
     # RamTest（test_damage_trigger_stops_before_the_declaration・test_proceeds_without_a_damage_trigger）
     "UNRESOLVED_DAMAGE_TRIGGER_TIMING",
+    # v0.39: GS1（docs/selfdestruct-spread-count-v0.39.md）。止まる場合（0 匹の答え）と隣の止まらない場合（1 匹以上）は
+    # tests/test_selfdestruct_spread_count_v0_39.py の GigaSparkTest
+    "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
 )
 TURN = 7
 

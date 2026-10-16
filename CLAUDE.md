@@ -331,7 +331,7 @@
 ## 研究データとの同期と検証の再現性（v0.18）
 
 - 研究の基準は kyuura `3f349085645f47d0649a6cacece3680caeae50bf`（v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`。2026-10-15 に上げた。上の「研究資料の参照コミットを固定する」）。エンジンの停止コード・問い・未解決の裁定・登録した最新の説明・照合の記録と、kyuura の id（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応は `kyuura_engine/data/research_links.json` に持ちます。kyuura の記録（文面・分類・根拠）を写さないでください（id の対応だけ。正本は kyuura）。docs/research-alignment-v0.18a.md。
-- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）・処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にしたもの（`difference_text`。v0.31。ピッピの「ゆびをふる」。LD- がない）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16。v0.31〜v0.38 の採用で加えたワザ・特殊能力も同じ区分）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4（`UNRESOLVED_OPPONENT_POKEMON_COUNTERS`）・v0.34 の TP3（`UNRESOLVED_SPECIAL_POISON_OVERWRITE`）・NK5（`UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET`）・v0.36 の AC6（`UNRESOLVED_ATTACK_CHECK_CONFUSION`）・RD9（`UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT`）・v0.37 の JS1（`UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE`）・v0.38 の GK1（`UNRESOLVED_DAMAGE_TRIGGER_TIMING`）。kyuura に記録ができたら検査が知らせる）。kyuura の未解決の一覧でコードのない行に、エンジンが停止コードを付けたもの（v0.31 の T27・C34/C35・G40・P19・P32）は、`kyuura_index_engine_key` でその行を指します。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
+- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）・処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にしたもの（`difference_text`。v0.31。ピッピの「ゆびをふる」。LD- がない）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16。v0.31〜v0.39 の採用で加えたワザ・特殊能力も同じ区分）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4（`UNRESOLVED_OPPONENT_POKEMON_COUNTERS`）・v0.34 の TP3（`UNRESOLVED_SPECIAL_POISON_OVERWRITE`）・NK5（`UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET`）・v0.36 の AC6（`UNRESOLVED_ATTACK_CHECK_CONFUSION`）・RD9（`UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT`）・v0.37 の JS1（`UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE`）・v0.38 の GK1（`UNRESOLVED_DAMAGE_TRIGGER_TIMING`）・v0.39 の GS1（`UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`）。kyuura に記録ができたら検査が知らせる）。kyuura の未解決の一覧でコードのない行に、エンジンが停止コードを付けたもの（v0.31 の T27・C34/C35・G40・P19・P32）は、`kyuura_index_engine_key` でその行を指します。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
 - カードの写しの元（`KYUURA_COMMIT` = `ecb2d69`）と研究の基準（`3f34908`。v0.18 は `adf9710`）は別に持ちます。状態はカードデータの元のコミット（`state.card_data.commit`・ログ `game_created`）を持ち、写しのコミットを上げると固定した参照データがすべて変わるからです。エンジンが使う項目が 2 つのコミットで同じことは、上のスクリプトが確かめます（違いは対応表の `card_data_differences` だけ）。
 - 分類（CONFIRMED・SUPPORTED）は kyuura の記録を正本にします。エンジンの過去の版の裁定の表は当時の記録として書き換えません（v0.18a の分類の違い 17 件。どれも処理は同じ）。コインの有無・順番だけが変わる論点（kyuura の rng_only）を、実装の約束として決めることは v0.18 では採っていません（docs/research-alignment-v0.18a.md 7 章）。
 - Z23 は、ダメージを与えなかった場合を Z23-a（要素が無効）・Z23-b（計算の結果が 0。ディフェンダー・抵抗力）・Z23-c（「とうめい」）・Z23-d（対象がいない。今のワザでは起こらない）に分けて記録しています（docs/unresolved-research-v0.18b.md 3 章）。どれか 1 つの答えが見つかっても、ほかの場合を同じに扱わないでください（理由の文が場合を書く。tests/test_unresolved_research_v0_18b.py）。「ダメージを与えた後」の効果のダメージの要素は、並びの最初でコインで飛ばされない形にしています（Z23-d が起こらない。崩すワザを加えるときは Z23-d を原典で確かめる）。
@@ -805,3 +805,44 @@
   変わらない）。v0.38 のカードの使えるワザをすべて 1 度は使い、使っていないワザのエネルギーが足りないときは番を終える手順（`v038_wait_…`）を重ねています。
   のびるキックの `NO_OPPONENT_BENCH` と GK1 で止まったワザは `V031_STOPS` で場から確かめます。公開の固定のデッキ・既存の変種には入れていません。
   勝敗で採用を判断しないでください。
+
+## じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚（v0.39）
+
+- 依頼の 15 枚（コイル PMCG1-036・レアコイル PMCG1-039・マタドガス PMCG3-006・レアコイル PMCG3-025・ピカチュウ PMCG2-024・ライチュウ PMCG3-024・マルマイン PMCG2-025・
+  キョウのドガース PMCG6-008・カスミのニョロボン PMCG6-039・コイル PMCG4-026・プクリン PMCG2-045・ニドクイン PMCG2-013・キョウのマタドガス PMCG6-016・ポッポ PMCG1-059・
+  エリカのパラス PMCG5-004）を、kyuura データの採用で加えました（対応ポケモン 194 → 209。写しの組 `pool_v0_39`。ワザの登録 368）。カードごとの結果・共通の処理・
+  規定と根拠（SD1〜SD7・SB1・SP1〜SP2・GS1〜GS2・TB1〜TB3・WR1・FG1・CT1〜CT3・EX1・TG1・DS1〜DS2・WG1）・互換性・検証は docs/selfdestruct-spread-count-v0.39.md。
+  ガイドブックは読んでいません。テストの定数は tests/helpers.py の `V0_39_POKEMON`。同じ名前の別のカード（`MAGNEMITE`（PMCG1-036）と `ROCKET_MAGNEMITE`
+  （PMCG4-026）、`MAGNETON`（PMCG1-039）と `FOSSIL_MAGNETON`（PMCG3-025）、`JUNGLE_PIKACHU`（PMCG2-024）と `PIKACHU`（PMCG1-035）、`FOSSIL_RAICHU`（PMCG3-024）と
+  `RAICHU`（PMCG1-038）、`KOGAS_KOFFING_40`（PMCG6-008）と `KOGAS_KOFFING`（PMCG6-015））と取りちがえないでください。v0.39 の効果の型は `ATTACK_TYPES_SINCE_V0_17` に
+  加え、`v013_checks.VERIFIED` には入れていません。
+- じばくは `effects.SelfDestruct`（相手 → 自分 → 相手の控え → 自分の控え。きぜつの処理・番の終わりはワザのあと）です。自分へのダメージは、ワザによる自分への
+  ダメージ（v0.2f・v0.3d。プラスパワー・ディフェンダー・弱点・抵抗力を計算する）で、残りの HP に関係なく自分をきぜつさせる処理にしないでください（ディフェンダーで
+  残ることがある）。第1弾の文面（控えへのダメージに「弱点・抵抗力」の記述がない。`weakness_resistance_stated=False`）と第3弾の文面（「弱点・抵抗力」に関係なく）を
+  区別してください（型の `check` が文面で照らす）。
+- 説明に「弱点・抵抗力」に関係なくのない控えへのダメージ（第1弾のじばく・スパーク・ビリビリ）は、v0.37 の JS1 と同じ問い（`bench_damage_weakness_resistance`）・
+  同じコードです。新しい問いを加えないでください。`BenchDamage` は受ける控えのどれかで読み方の結果が変われば宣言の前に、相手の控えを 1 匹選ぶ
+  `ChosenBenchDamage(weakness_resistance=None)`（スパーク）は選ぶ控えごとに（選べるが選ぶと止める `unresolved_choices`。どの控えでも変われば宣言の前）止めます。
+- ソニックブーム（`DamageIgnoringWeaknessResistance`）が計算しないのは、相手の弱点・抵抗力（p.321 の 3・4 段階）だけです。プラスパワー・ディフェンダー・
+  「ダメージを受けない」状態・「とうめい」などはそのまま処理します。ワザ全体を特殊能力・防御効果を無視するワザにしないでください。
+- 相手の控えから最大 N 匹を選ぶ要素 `programs.ChosenBenchDamages`（ギガスパーク）は、決定 `SELECT_POKEMON`（ワザを使ったプレイヤー。`min_choices` 0・
+  `max_choices` は min(N, 控えの数)。重複は `DUPLICATE_CHOICE`）です。0 匹の答えは GS1（`UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`。決定は待ったまま）で止めます。
+  H4・ER9 の答えで決めないでください。先読みは 1 匹以上のすべての答え（選ぶポケモン・数・順番）を試します（`all_answers(decision, minimum=1)`。選ぶ控えで結果が
+  違えば同じものとみなさない）。相手に控えがいなければ決定を出しません。
+- 受ける控えをタイプでしぼるのは `BenchDamage.same_type_as_opponent_active`（ビリビリ。「同じ色」はタイプ。p.311 の「色（タイプ）」の記録）・`exclude_type`
+  （ウォーターリング）です。タイプは、その要素を処理する時点の場のポケモンのいちばん上のカードのタイプです。
+- 場のポケモンの数でダメージが決まるワザは、値 `programs.PrintedPlusPokemonCount`（p.321 の 1 段階の基本となるダメージ = 目安 + 数 × `per`）と
+  `programs.counted_pokemon` で数えます（進化して重なったカードは 1 匹。名前はいちばん上のカードの名前の完全一致。名前の一部・収録の弾で判定しない）。数える
+  範囲（`own_bench`・`own_in_play`）と名前の組は `effects.POKEMON_COUNT_TEXTS` にあるものだけです（文面の書き方と照らす）。実際の処理と先読み（`damage_profile`）は
+  同じ関数で数えます。最終ダメージに直接足さないでください。
+- とつぜんばくはつ（`CoinBonusDamageAndSelfDamage`）・きけんなほうし（`CoinPoisonAndBenchDamage`）は、1 枚のコイン（`Coin`）で複数の要素を決めます（要素ごとに
+  投げ直さない。片方の要素だけが無効・対象なしでも、残る要素があれば投げる。v0.34 の `void_coin_question`・v0.38 の `has_target`）。どくどくガス
+  （`DamageThenSpecialPoisonOnHeads`）は v0.34 のどくどくと同じ特殊などく（`Poison(20)`。通常のどくを 2 回にしない）で、TP3・HC3 はそのまま当てはまります。
+- ログの監査（tests/log_audit.py）の特殊などくの量の確かめは、`DamageAndSpecialPoison`・`DamageThenSpecialPoisonOnHeads` の登録の量で照らします。特殊などくを
+  与える型を加えたら、監査にも加えてください。
+- 書き出しの形式は 10 のまま、公開の API・ログのイベントの種類・決定の種類・持続する効果の型は変えていません。エンジンが止める `UNRESOLVED_…` は 45 件、
+  未解決の裁定は 46 件です（GS1 を加えた。kyuura の未解決の一覧にない `not_in_kyuura`）。
+- 検証用デッキ `L39`・`G39`・`C39`・`N39` と組（`PAIRINGS_V0_39`）は tools/existing_effect_games.py の `--batch v0.39` です（前の版の組の結果は変わらない）。
+  スパーク・ギガスパークの控えの選択は `_v039_decision`（JS1 の選択を避け、ギガスパークは 1・2・3 匹を順に選ぶ。0 匹は選ばない）、v0.39 のカードも v0.38 の
+  エネルギーをためる手順を使います。JS1・TP3 で止まったワザは `V031_STOPS` で場から確かめます（JS1 の確かめ `_bench_reading_matters` は第1弾のじばく・ビリビリ・
+  スパークも見る）。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

@@ -858,3 +858,34 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 2. 研究の基準のコミットに、15 枚のどれかを指す kyuura の最新の説明・エラッタ・裁定・論点・照合の記録はない。
 3. kyuura の data/curation/nazonobasho_review.json にある、フリーザーの「ふぶき」のダメージの欄の記録は日本語の文面の出典（nazonobasho.com）についてのもので、
    kyuura のデータ・pcg-search.com の同じ版のページはどちらも 50（違いはない。参考）。
+
+## v0.39 で加えたポケモン 15 枚（じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザ）
+
+写しを作り直しました（`pool_v0_39`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 215 枚から 230 枚になりました（コイル PMCG1-036・レアコイル PMCG1-039・マタドガス PMCG3-006・レアコイル PMCG3-025・ピカチュウ PMCG2-024・
+  ライチュウ PMCG3-024・マルマイン PMCG2-025・キョウのドガース PMCG6-008・カスミのニョロボン PMCG6-039・コイル PMCG4-026・プクリン PMCG2-045・ニドクイン PMCG2-013・
+  キョウのマタドガス PMCG6-016・ポッポ PMCG1-059・エリカのパラス PMCG5-004 の 15 枚を加えた）。ほかのカードの記録は変わっていません。
+- 根拠は `kyuura_engine/data/card_sources.json` の採用の記録（15 件 `adopted`。`basis: kyuura_data`）と、pcg-search.com の同じ版のページとの照合（2026-10-16。
+  12 件 `match`、3 件 `differences`（どれも `affects_behavior: false`））です。`kyuura_records` は、研究の基準のコミットでレアコイル（PMCG1-039）を `related_cards` に
+  挙げる CR-TRANSPARENCY-BENCH・CR-TRANSPARENCY-MULTIPLE-TARGETS の 2 件（kyuura が p.159 のレアコイルの「じばく」の例を読んだ記録。エンジンは誌面を読んでいない）で、
+  ほかの 14 件は空です。版は名前だけでなく収録・一覧の番号・HP・ワザで決めました（第1弾のコイル 037/096 とロケット団のコイル 026/065、第1弾のレアコイル 038/096 と
+  化石の秘密のレアコイル 025/048、キョウのドガースの 014/098（HP40）と 015/098（PMCG6-015）は、同じ名前の別のカード）。15 枚とも kyuura の日本語の文面の出典
+  （`ja_text_source`）は pcg-search.com ではありません（nazonobasho.com・ポケモン wiki）。『オフィシャルブック2000』は読んでいないので、`card_verification.json` に
+  加えていません。
+- 処理に使う文面は kyuura の印刷の文面です（研究の対応表の `adopted_printed_text` に説明文のある 21 のワザを加えた）。
+- 検証用デッキ `L39`・`G39`・`C39`・`N39`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+- 保留中のガルーラ（PMCG2-046）・ベロリンガ、今回関係しない未解決は再調査していません（記録は変えていない）。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 新しい未解決の GS1 が kyuura の未解決の一覧にない（研究の対応表の `stop_codes` で `kyuura_disposition: not_in_kyuura`）: 相手の控えポケモンがいるとき、ライチュウ
+   （化石の秘密。PMCG3-024）の「ギガスパーク」の「相手の控えポケモンから最大3匹を選び」で 0 匹を選べるか（`UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`。
+   [selfdestruct-spread-count-v0.39.md](selfdestruct-spread-count-v0.39.md) 5 章。エナジーへんかんの H4・エネルギー回収の ER9 と同じ言い回しの別のワザの問い）。
+2. ポッポ（PMCG1-059）のワザの名前: kyuura のデータは「かぜおこし」、pcg-search.com の同じ版（第1弾 059/096）のページは「ふきとばし」（説明文・エネルギー・ダメージは
+   同じ）。kyuura の CR-TRANSPARENCY-WHIRLWIND の注（p.159 の例がポッポのワザを「ふきとばし」とする。kyuura は「データの誤りとは決めていない」）と同じ違い。
+3. pcg-search.com のレアコイル（化石の秘密 025/048）の「ソニックブーム」・カスミのニョロボン（036/098）の「ウォーターリング」の文面は「弱点・抵抗カ」（「力」がカタカナの
+   「カ」）。サイトの文字の違いで、kyuura のデータの誤りではない（参考）。
+4. 研究の基準のコミットに、15 枚のどれかを指す kyuura の最新の説明・エラッタ・論点・照合の記録はない（裁定は上の 2 件だけ）。

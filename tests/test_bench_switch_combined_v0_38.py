@@ -296,7 +296,8 @@ class CardDataTest(unittest.TestCase):
         self.assertEqual([q.key for q in QUESTIONS.values() if q.code == question.code], ["damage_trigger_timing"])
         links = cs.load_links()
         self.assertEqual(links["stop_codes"]["UNRESOLVED_DAMAGE_TRIGGER_TIMING"]["kyuura_disposition"], "not_in_kyuura")
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (44, 45))
+        # 停止コード・未解決の裁定の全体の数（v0.38 で 44・45）は tests/test_cd4_opponent_energy_coins_v0_33.py と tests/test_research_links_v0_18e.py が
+        # 確かめる（後の版で増えるので、ここでは確かめない。v0.39）
         self.assertIn("GK1", DOC.read_text(encoding="utf-8"))
 
 

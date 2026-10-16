@@ -602,7 +602,9 @@ class G37Test(unittest.TestCase):
             "PoisonOnHeadsWithoutDamage", "ParalyzeOnHeadsWithoutDamage", "DamageThenReduceDamageToSelf",
             # v0.38（コインで相手が選ぶ入れ替え・入れ替えのあと自分にもダメージ・1 枚のコインでどくかマヒ・自分にもダメージのあとコインでどく。
             # docs/bench-switch-combined-v0.38.md）
-            "DamageThenForceSwitchOnHeads", "DamageThenForceSwitchThenSelfDamage", "DamageThenPoisonOrParalyze", "DamageAndSelfDamageThenPoisonOnHeads"]))
+            "DamageThenForceSwitchOnHeads", "DamageThenForceSwitchThenSelfDamage", "DamageThenPoisonOrParalyze", "DamageAndSelfDamageThenPoisonOnHeads",
+            # v0.39（コインで特殊などく・同じコインでどくと控えへのダメージ。docs/selfdestruct-spread-count-v0.39.md）
+            "DamageThenSpecialPoisonOnHeads", "CoinPoisonAndBenchDamage"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -341,6 +341,23 @@
     "PMCG4-031",
     "PMCG6-067"
   ],
+  "pool_v0_39": [
+    "PMCG1-036",
+    "PMCG1-039",
+    "PMCG3-006",
+    "PMCG3-025",
+    "PMCG2-024",
+    "PMCG3-024",
+    "PMCG2-025",
+    "PMCG6-008",
+    "PMCG6-039",
+    "PMCG4-026",
+    "PMCG2-045",
+    "PMCG2-013",
+    "PMCG6-016",
+    "PMCG1-059",
+    "PMCG5-004"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG1-047",
@@ -18607,6 +18624,1339 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%9D%E3%83%83%E3%83%9DLV.9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-036",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイル",
+        "en": "Magnemite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          81
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんじは",
+              "en": "Thunder Wave"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」がでたら「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "じばく",
+              "en": "Selfdestruct"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分と相手に40ダメージをあたえ、お互いの控えポケモン全員にも10ダメージ。",
+              "en": "Does 10 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magnemite does 40 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-036",
+        "pokemontcg": [
+          "base1-53"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-037-coil/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-037-coil/"
+      }
+    },
+    {
+      "id": "PMCG1-039",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "レアコイル",
+        "en": "Magneton"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          82
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイル",
+          "en": "Magnemite"
+        },
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんじは",
+              "en": "Thunder Wave"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "じばく",
+              "en": "Selfdestruct"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分と相手に80ダメージをあたえ、お互いの控えポケモン全員にも20ダメージ。",
+              "en": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magneton does 80 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-039",
+        "pokemontcg": [
+          "base1-9"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-038-rarecoil/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-038-rarecoil/"
+      }
+    },
+    {
+      "id": "PMCG3-006",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マタドガス",
+        "en": "Weezing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          110
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ドガース",
+          "en": "Koffing"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スモッグ",
+              "en": "Smog"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "じばく",
+              "en": "Selfdestruct"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "自分にも60ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Does 10 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Weezing does 60 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-006",
+        "pokemontcg": [
+          "base3-45"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-007-matadogas/",
+      "jp_print": {
+        "level": 27,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-007-matadogas/"
+      }
+    },
+    {
+      "id": "PMCG3-025",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "レアコイル",
+        "en": "Magneton"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          82
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイル",
+          "en": "Magnemite"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ソニックブーム",
+              "en": "Sonicboom"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "この「ソニックブーム」のダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+              "en": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "じばく",
+              "en": "Selfdestruct"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Magneton does 100 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-025",
+        "pokemontcg": [
+          "base3-11",
+          "base3-26"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-025-rarecoil/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-025-rarecoil/"
+      }
+    },
+    {
+      "id": "PMCG2-024",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スパーク",
+              "en": "Spark"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから1匹選び、そのポケモンにも10ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-024",
+        "pokemontcg": [
+          "base2-60"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-024-pikachu/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-024-pikachu/"
+      }
+    },
+    {
+      "id": "PMCG3-024",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ライチュウ",
+        "en": "Raichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          26
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ピカチュウ",
+          "en": "Pikachu"
+        },
+        "hp": 90,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ギガスパーク",
+              "en": "Gigashock"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから最大3匹を選び、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Choose 3 of your opponent's Benched Pokémon and this attack does 10 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.) If your opponent has fewer than 3 Benched Pokémon, do the damage to each of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-024",
+        "pokemontcg": [
+          "base3-14",
+          "base3-29"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-024-raichu/",
+      "jp_print": {
+        "level": 45,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-024-raichu/"
+      }
+    },
+    {
+      "id": "PMCG2-025",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "マルマイン",
+        "en": "Electrode"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          101
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビリリダマ",
+          "en": "Voltorb"
+        },
+        "hp": 90,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ビリビリ",
+              "en": "Chain Lightning"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の対戦ポケモンと同じ色の控えポケモン全員にそれぞれ10ダメージ。(自分の控えポケモンも含まれる)",
+              "en": "If the Defending Pokémon isn't Colorless, this attack does 10 damage to each Benched Pokémon of the same type as the Defending Pokémon (including your own)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-025",
+        "pokemontcg": [
+          "base2-2",
+          "base2-18"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-025-marumine/",
+      "jp_print": {
+        "level": 42,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-025-marumine/"
+      }
+    },
+    {
+      "id": "PMCG6-008",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのドガース",
+        "en": "Koga's Koffing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          109
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おならガス",
+              "en": "Smelly Gas"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each Benched Pokémon (including your own). (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-008",
+        "pokemontcg": [
+          "gym2-79"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%89%E3%82%AC%E3%83%BC%E3%82%B9LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%89%E3%82%AC%E3%83%BC%E3%82%B9LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-039",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのニョロボン",
+        "en": "Misty's Poliwrath"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          62
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "カスミのニョロゾ",
+          "en": "Misty's Poliwhirl"
+        },
+        "hp": 90,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ウォーターリング",
+              "en": "Water Ring"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "お互いのベンチにいる、「水」ポケモン以外のポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Does 10 damage to each Pokémon that isn't Water on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-039",
+        "pokemontcg": [
+          "gym1-31"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%83%9C%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 43,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%83%9C%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-026",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイル",
+        "en": "Magnemite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          81
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ちょくれつじりょく",
+              "en": "Magnetism"
+            },
+            "cost": [
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1匹につき、10ダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each Magnemite, Magneton, and Dark Magneton on your Bench."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-026",
+        "pokemontcg": [
+          "base5-60"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-026-coil/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-026-coil/"
+      }
+    },
+    {
+      "id": "PMCG2-045",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "プクリン",
+        "en": "Wigglytuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          40
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "プリン",
+          "en": "Jigglypuff"
+        },
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こもりうた",
+              "en": "Lullaby"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "ともだちのわ",
+              "en": "Do the Wave"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分の控えポケモンの数×10ダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each of your Benched Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-045",
+        "pokemontcg": [
+          "base2-16",
+          "base2-32"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-039-pukurin/",
+      "jp_print": {
+        "level": 34,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-039-pukurin/"
+      }
+    },
+    {
+      "id": "PMCG2-013",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドクイン",
+        "en": "Nidoqueen"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          31
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ニドリーナ",
+          "en": "Nidorina"
+        },
+        "hp": 90,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ラブラブアタック",
+              "en": "Boyfriends"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "自分の場に出ている「ニドキング」の数×20のダメージを追加する。",
+              "en": "Does 20 damage plus 20 more damage for each Nidoking you have in play."
+            }
+          },
+          {
+            "name": {
+              "ja": "メガトンパンチ",
+              "en": "Mega Punch"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-013",
+        "pokemontcg": [
+          "base2-7",
+          "base2-23"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-004-nidoqueen/",
+      "jp_print": {
+        "level": 43,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-004-nidoqueen/"
+      }
+    },
+    {
+      "id": "PMCG6-016",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのマタドガス",
+        "en": "Koga's Weezing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          110
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キョウのドガース",
+          "en": "Koga's Koffing"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "とつぜんばくはつ",
+              "en": "Spontaneous Explosion"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、30ダメージを追加して、自分にも30ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 30 more damage and Koga's Weezing does 30 damage to itself; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "どくどくガス",
+              "en": "Toxic Cloud"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、20ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned. It now takes 20 Poison damage instead of 10 after each player's turn (even if it was already Poisoned)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-016",
+        "pokemontcg": [
+          "gym2-50"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%9E%E3%82%BF%E3%83%89%E3%82%AC%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%9E%E3%82%BF%E3%83%89%E3%82%AC%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-059",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポッポ",
+        "en": "Pidgey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          16
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かぜおこし",
+              "en": "Whirlwind"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えは相手が行う。相手の控えポケモンがいないときには、ダメージだけをあたえる。",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-059",
+        "pokemontcg": [
+          "base1-57"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-059-poppo/",
+      "jp_print": {
+        "level": 8,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-059-poppo/"
+      }
+    },
+    {
+      "id": "PMCG5-004",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのパラス",
+        "en": "Erika's Paras"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          46
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はさむ",
+              "en": "Irongrip"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きけんなほうし",
+              "en": "Poison Spore"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned and this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-004",
+        "pokemontcg": [
+          "gym2-71"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%91%E3%83%A9%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 17,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%91%E3%83%A9%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

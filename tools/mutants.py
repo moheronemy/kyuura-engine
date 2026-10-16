@@ -90,9 +90,10 @@ MUTANTS: tuple[Mutant, ...] = (
            '    return tuple(values[:i] + (other,) for i, (value, arity) in enumerate(tokens) for other in range(arity) if other != value)',
            '    return tuple(values[:i] + (other,) for i, (value, arity) in enumerate(tokens[:-1]) for other in range(arity) if other != value)',
            origin='v0.15d'),
+    # v0.39: ギガスパークの ``ChosenBenchDamages.dry_choices`` にも同じ行があるので、エナジーへんかんの行の直前の注を含めて 1 か所にする（同じ誤り）
     Mutant('M10', 'エナジーへんかんの答えを代表だけにもどす', R + 'programs.py',
-           '        return all_answers(decision, minimum=1)',
-           '        return [tuple(decision.options[:n]) for n in range(1, decision.max_choices + 1)]',
+           '宣言そのものを H4 で拒否してしまう\n        return all_answers(decision, minimum=1)',
+           '宣言そのものを H4 で拒否してしまう\n        return [tuple(decision.options[:n]) for n in range(1, decision.max_choices + 1)]',
            origin='v0.15d'),
     Mutant('M11', '答えの順番を試さない', R + 'programs.py',
            'itertools.permutations(decision.options, count)',

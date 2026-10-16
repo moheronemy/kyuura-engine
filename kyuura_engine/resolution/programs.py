@@ -51,6 +51,7 @@ from . import catalog as C
 from . import codec
 from .events import ElementStarted, Suspended, Window
 from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, weakness_resistance_matters
+from .questions import QUESTIONS
 
 if TYPE_CHECKING:
     from ..cards import Attack
@@ -1329,7 +1330,11 @@ class BenchDamage(Element):
     関係なく。v0.33: ``own`` なら自分の控えポケモンの全員（p.320 のダメージの (4)。タケシのディグダの「ミニじしん」。``E.SELF_BENCH``）。
     v0.37: ``weakness_resistance`` が None なら、説明が弱点・抵抗力について書いていない（第1弾のダグトリオの「じしん」）。ダメージを与える前に、どれかの
     控えのポケモンで計算するかどうかで最終ダメージが変わるなら、問い ``bench_damage_weakness_resistance``（JS1）で止める。変わらなければ「弱点・抵抗力に
-    関係なく」と同じ計算（結果は同じ）。"""
+    関係なく」と同じ計算（結果は同じ）。
+
+    v0.39: 受ける控えのポケモンをタイプでしぼる項目を加えた。``same_type_as_opponent_active`` なら、相手の対戦ポケモンと同じタイプのポケモンだけ（マルマインの
+    「ビリビリ」の「相手の対戦ポケモンと同じ色の控えポケモン全員」）、``exclude_type`` なら、そのタイプ以外のポケモンだけ（カスミのニョロボンの「ウォーター
+    リング」の「「水」ポケモン以外のポケモン全員」）。タイプはどれも、この要素を処理する時点の場のポケモンのいちばん上のカードのタイプ（p.310）。"""
 
     base: Any
     pokemon_type: EnergyType | None = None
@@ -1337,12 +1342,18 @@ class BenchDamage(Element):
     gate: tuple | None = None
     name: str = "bench_damage"
     own: bool = False
+    same_type_as_opponent_active: bool = False
+    exclude_type: EnergyType | None = None
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def targets(self, run: AttackRun) -> list[PokemonInPlay]:
         side = run.player if self.own else 1 - run.player
+        wanted = self.pokemon_type
+        if self.same_type_as_opponent_active:
+            wanted = run.state.card_def(run.opponent_active().card).pokemon_type
         return [p for p in run.state.players[side].bench
-                if self.pokemon_type is None or run.state.card_def(p.card).pokemon_type is self.pokemon_type]
+                if (wanted is None or run.state.card_def(p.card).pokemon_type is wanted)
+                and (self.exclude_type is None or run.state.card_def(p.card).pokemon_type is not self.exclude_type)]
 
     def has_target(self, run: AttackRun) -> bool:
         return bool(self.targets(run))  # v0.38: 控えポケモンがいなければ、処理の対象がない
@@ -1378,7 +1389,10 @@ class ChosenBenchDamage(Element):
 
     base: Any
     local_coin: CoinSide | None = HEADS
-    weakness_resistance: bool = False
+    # v0.39: None なら、説明が弱点・抵抗力について書いていない（第2弾のピカチュウの「スパーク」）。選べる控えのうち、計算するかどうかで最終ダメージが
+    # 変わるポケモンは、選べるが選ぶと止める（JS1。``unresolved_choices``。選んだポケモンだけが受けるので、ほかの控えを選ぶ処理は止めない）。選べるどの
+    # ポケモンでも変わるなら、宣言の前に止める（先読みが見つける）
+    weakness_resistance: bool | None = False
     name: str = "bench_damage"
     own: bool = False
     # v0.38: 説明に「控えポケモンがいないとき、このワザは使えない」がある（サワムラーの「のびるキック」。ワザを使うための条件は実装の ``usage_problem``。
@@ -1406,17 +1420,33 @@ class ChosenBenchDamage(Element):
             return False
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
+        extra: tuple = ()
+        if self.weakness_resistance is None:
+            kind = E.SELF_BENCH if self.own else E.OPPONENT_BENCH
+            base = self.base.value(run, None)
+            differs = tuple(p.pokemon_id for p in bench if weakness_resistance_matters(run.res, run.fs, kind, base, p.pokemon_id))
+            if len(differs) == len(bench):
+                raise run.res.question("bench_damage_weakness_resistance", f"控えのポケモン {list(differs)}（選べるどのポケモンも）")
+            if differs:
+                question = QUESTIONS["bench_damage_weakness_resistance"]
+                extra = (("unresolved_choices", differs), ("unresolved_code", question.code),
+                         ("unresolved_reason", f"{question.message}（JS1。選んだ控えのポケモンで、計算するかどうかで受けるダメージが変わる）"))
         # 枠の値（「とうめい」の結果（T4・T27）・処理した送る効果の数（C34・C35）・こんじょうの写し・v0.34 からまだ処理していない送る効果）を運ぶ。
         # 相手の対戦ポケモンへのダメージの結果を、決定のあとのきぜつの判定・控えのポケモンの「とうめい」の判定・送る効果の処理で使う
-        run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], carry=True)
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], carry=True, extra=extra)
         return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        # v0.39: 選ぶと止める控え（JS1）は試さない（選んだときに決定の確認が止める。ほかの控えを選ぶ処理は止めない）
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         bench = run.state.players[self.side(run)].bench
         if choices[0] not in [p.pokemon_id for p in bench]:
             raise RuntimeError(f"選んだポケモン {choices} が、{'自分' if self.own else '相手'}の控えにいない（エンジンの不具合）")
         run.fs.results[self.name] = deal_damage(run.res, run.fs, E.SELF_BENCH if self.own else E.OPPONENT_BENCH, self.base.value(run, None),
-                                                pokemon_id=choices[0], weakness_resistance=self.weakness_resistance)
+                                                pokemon_id=choices[0], weakness_resistance=bool(self.weakness_resistance))
 
 
 @dataclass(frozen=True)
@@ -2416,6 +2446,95 @@ class RevealPokemonFromDeck(Element):
         shuffle_deck(run.state, run.player)
 
 
+# ---------------------------------------------------------------- v0.39（docs/selfdestruct-spread-count-v0.39.md）
+
+
+@dataclass(frozen=True)
+class ChosenBenchDamages(Element):
+    """相手の控えポケモンから最大 ``max_targets`` 匹を選び、それぞれにダメージ（v0.39。化石の秘密のライチュウの「ギガスパーク」の「相手の控えポケモンから最大3匹を
+    選び、「弱点・抵抗力」に関係なく、それぞれ10ダメージ」）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_POKEMON``。``min_choices`` 0・``max_choices`` は min(``max_targets``, 控えの数)。同じポケモンを 2 回選べない
+      （``decisions.check_choices``））。控えがいなければ、処理の対象がないので決定を出さない（p.309。v0.31 のかどわかす・v0.33 のかけぬけると同じ読み方）
+    - 1 匹以上なら、選んだ数より少なくてもよい（説明の「最大」）。0 匹を選べるかは決められない（GS1。v0.9 の H4・v0.23 の ER9 と同じ言い回しの別のワザの問いで、
+      それらの答えで決めない）。0 匹の答えは ``UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE`` で止め、決定は待ったまま（1 匹以上を選び直せる）。先読みは 0 匹を試さない
+    - 受けるのは答えの並びの順。どの順でも結果は同じ（ダメージののる控えのポケモンはどれも別。「とうめい」が 2 匹以上なら T27、「ダメージを受けたとき」の効果が
+      2 つ以上なら C34・C35 で、順番に頼る前に止まる）
+    - ダメージの要素（``Phase.DAMAGE``）なので、前のダメージの要素の送る効果は決定をまたいで運び（v0.34 の ``carry``）、この要素のあとに処理する（p.89）
+    """
+
+    base: Any
+    max_targets: int
+    weakness_resistance: bool = False
+    name: str = "bench_damage"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+
+    def run(self, run: AttackRun) -> bool:
+        if local_coins(self.base, run):
+            raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
+        bench = run.state.players[1 - run.player].bench
+        if not bench:
+            return False
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], min_choices=0,
+                    max_choices=min(self.max_targets, len(bench)), carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise UnsupportedError(
+                "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
+                f"相手の控えポケモンがいるときに 0 匹を選べるか（「最大{self.max_targets}匹を選び」が 0 匹を含むか）は、記録から決められないので扱わない"
+                "（GS1）。1 匹以上を選ぶ",
+            )
+        bench = [p.pokemon_id for p in run.state.players[1 - run.player].bench]
+        if len(choices) > self.max_targets or any(choice not in bench for choice in choices):
+            raise RuntimeError(f"選んだポケモン {choices} が、相手の控えにいない・多すぎる（エンジンの不具合）")
+        for choice in choices:
+            run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=choice,
+                                                    weakness_resistance=self.weakness_resistance)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        # 0 匹は試さない: 0 匹の答えは決定の答えのときに止める（GS1）もので、ワザの宣言を止める理由ではない（1 匹以上を選べば処理できる）。選ぶポケモン・数・
+        # 順番の違う答えは、どれも試す（同じものとみなさない）
+        return all_answers(decision, minimum=1)
+
+
+SCOPE_OWN_BENCH = "own_bench"
+SCOPE_OWN_IN_PLAY = "own_in_play"
+
+
+def counted_pokemon(state: GameState, player: int, scope: str, names: tuple[str, ...] | None) -> list[PokemonInPlay]:
+    """``player`` の場のポケモンのうち、``scope``（``SCOPE_OWN_BENCH``: ベンチ・``SCOPE_OWN_IN_PLAY``: バトル場とベンチ）にいて、名前（いちばん上のカードの
+    ``name_ja``）が ``names`` のどれかと同じもの（None ならすべて）（v0.39）。数えるのは場のポケモン（進化して重なったカードは 1 匹。p.310）。名前は完全一致で、
+    名前の一部・収録の弾では見ない。"""
+    if scope not in (SCOPE_OWN_BENCH, SCOPE_OWN_IN_PLAY):
+        raise ValueError(f"数える範囲 {scope!r}")
+    p = state.players[player]
+    pokemon = list(p.bench) if scope == SCOPE_OWN_BENCH else list(p.in_play())
+    return [x for x in pokemon if names is None or state.card_def(x.card).name_ja in names]
+
+
+@dataclass(frozen=True)
+class PrintedPlusPokemonCount:
+    """ダメージの目安の数字 + 数えた場のポケモンの数 × ``per``（v0.39。p.321 の 1 段階の基本となるダメージ）。数えるのはダメージの要素を処理する時点で、実際の処理と
+    先読みは同じ値を使う（この値を通る）。弱点・抵抗力・プラスパワーなどは、そのあとの段階で計算する（``deal_damage``）。
+
+    - プクリンの「ともだちのわ」: 自分の控えポケモンの数 × 10（``SCOPE_OWN_BENCH``・名前なし）
+    - ニドクインの「ラブラブアタック」: 自分の場に出ている「ニドキング」の数 × 20（``SCOPE_OWN_IN_PLAY``）
+    - ロケット団のコイルの「ちょくれつじりょく」: 自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1 匹につき 10（``SCOPE_OWN_BENCH``。対応して
+      いないカードの名前も、説明の名前のまま数える）
+    """
+
+    per: int
+    scope: str
+    names: tuple[str, ...] | None = None
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + len(counted_pokemon(run.state, run.player, self.scope, self.names)) * self.per
+
+
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
@@ -2574,7 +2693,10 @@ BUILDERS: dict[type, Any] = {
     E.DamageThenReduceDamageToSelf: lambda e: (Damage(OPP, Printed()), OpponentReducedDamage(e.amount)),
     # v0.38（docs/bench-switch-combined-v0.38.md）。控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果
     E.ChooseOpponentBenchDamage: lambda e: (ChosenBenchDamage(Fixed(e.damage), local_coin=None, required=e.requires_bench),),
-    E.DamageThenChosenBenchDamage: lambda e: (Damage(OPP, Printed()), ChosenBenchDamage(Fixed(e.bench_damage), local_coin=None)),
+    E.DamageThenChosenBenchDamage: lambda e: (
+        Damage(OPP, Printed()),
+        ChosenBenchDamage(Fixed(e.bench_damage), local_coin=None, weakness_resistance=False if e.weakness_resistance_stated else None),
+    ),
     E.SpreadDamage: lambda e: (Damage(OPP, Fixed(e.damage), weakness_resistance=False), BenchDamage(Fixed(e.damage))),
     E.DamageThenCoinBenchDamageEitherSide: lambda e: (
         Coin("coin"), Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)),
@@ -2599,6 +2721,35 @@ BUILDERS: dict[type, Any] = {
     E.DiscardAttachedAndReturnSelfToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, discard_attached=True),),
     E.ReturnSelfToDeckThenSearchPokemon: lambda e: (
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
+    ),
+    # v0.39（docs/selfdestruct-spread-count-v0.39.md）。じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザ
+    E.SelfDestruct: lambda e: (
+        Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=False if e.weakness_resistance_stated else None),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=False if e.weakness_resistance_stated else None, own=True),
+    ),
+    E.DamageIgnoringWeaknessResistance: lambda e: (Damage(OPP, Printed(), weakness_resistance=False),),
+    E.DamageThenChosenBenchTargets: lambda e: (Damage(OPP, Printed()), ChosenBenchDamages(Fixed(e.bench_damage), e.max_targets)),
+    E.DamageThenSameTypeBenchDamage: lambda e: (
+        Damage(OPP, Printed()),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=None, same_type_as_opponent_active=True),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=None, same_type_as_opponent_active=True, own=True),
+    ),
+    E.DamageThenCoinBenchDamageBothSides: lambda e: (
+        Coin("coin"), Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)),
+        BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS), own=True),
+    ),
+    E.DamageThenOtherTypeBenchDamageBothSides: lambda e: (
+        Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), exclude_type=e.excluded_type),
+        BenchDamage(Fixed(e.bench_damage), exclude_type=e.excluded_type, own=True),
+    ),
+    E.DamagePlusPokemonCount: lambda e: (Damage(OPP, PrintedPlusPokemonCount(e.per, e.scope, e.names)),),
+    E.CoinBonusDamageAndSelfDamage: lambda e: (
+        Coin("coin"), Damage(OPP, PrintedPlusBonus("coin", e.bonus)), Damage(SELF, Fixed(e.self_damage), gate=("coin", HEADS), name="self_damage"),
+    ),
+    E.DamageThenSpecialPoisonOnHeads: lambda e: (Damage(OPP, Printed()), Status(POISON, local_coin=HEADS, poison_damage=e.poison_damage)),
+    E.CoinPoisonAndBenchDamage: lambda e: (
+        Coin("coin"), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)), Status(POISON, gate=("coin", HEADS)),
     ),
 }
 

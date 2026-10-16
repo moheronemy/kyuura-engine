@@ -90,6 +90,7 @@ from kyuura_engine.effects import (
     RETREAT_LOCK_ELEMENT,
     RETURN_IN_PLAY_TO_DECK_ELEMENT,
     DamageAndSpecialPoison,
+    DamageThenSpecialPoisonOnHeads,
     AttackImmunityOnHeads,
     ConvertAttachedEnergy,
     HealOnEnergyAttach,
@@ -235,13 +236,13 @@ def _attack_effect_of(state, attack_event: dict | None):
 
 
 def _poison_problems(state, e: dict, current: int | None) -> list[str]:
-    """ログ ``special_condition``（どく）の量（v0.34）。どく状態にしたワザの登録が特殊などく（``DamageAndSpecialPoison``）ならその量、ほかは
-    通常のどくの 10（p.322）。すでにどく状態なら ``already``。受けるダメージの違うどく状態から特殊などくにすることはない（v0.3a の #15。
+    """ログ ``special_condition``（どく）の量（v0.34）。どく状態にしたワザの登録が特殊などく（``DamageAndSpecialPoison``。v0.39 からキョウのマタドガスの
+    ``DamageThenSpecialPoisonOnHeads`` も）ならその量、ほかは通常のどくの 10（p.322）。すでにどく状態なら ``already``。受けるダメージの違うどく状態から特殊などくにすることはない（v0.3a の #15。
     止めるはず）。特殊などく → 通常のどくは通常のどくになる（v0.3a の #14）。"""
     found = []
     entry = state.effects.attack_entry(*_attack_key(e["effect"]))
     effect = entry.effect if entry is not None else None
-    expected = effect.poison_damage if isinstance(effect, DamageAndSpecialPoison) else 10
+    expected = effect.poison_damage if isinstance(effect, (DamageAndSpecialPoison, DamageThenSpecialPoisonOnHeads)) else 10
     if e.get("damage") != expected:
         found.append(f"{e['turn']} 番のどく（ワザ {e['effect']}）の量 {e.get('damage')} が、登録の実装の量 {expected} と違う")
     if current is not None and not e.get("already"):

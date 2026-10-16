@@ -381,6 +381,7 @@ POOL_KEYS = (
     "pool_v0_36",  # v0.36（すなかけ・えんまくなどの手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と合わせた 11 枚。docs/sand-attack-retreat-lock-v0.36.md）
     "pool_v0_37",  # v0.37（既存の効果の再利用を中心に加えた 15 枚。docs/fifteen-reused-effects-v0.37.md）
     "pool_v0_38",  # v0.38（控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚。docs/bench-switch-combined-v0.38.md）
+    "pool_v0_39",  # v0.39（じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚。docs/selfdestruct-spread-count-v0.39.md）
 )
 
 

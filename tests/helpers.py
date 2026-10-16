@@ -283,6 +283,25 @@ ROCKET_ABRA = "PMCG4-031"  # ケーシィ（ロケット団。HP 40・超・弱�
 KOGAS_PIDGEY_40 = "PMCG6-067"  # キョウのポッポ（闇からの挑戦。HP 40・無色・弱点 雷・抵抗力 闘 -30・にげる 1。でんれい（無）・つばさでうつ（無無）20）。KOGAS_PIDGEY（PMCG6-062）とは別のカード
 V0_38_POKEMON = (ARTICUNO, HITMONLEE, ERIKAS_TANGELA, BROCKS_VULPIX_50, BROCKS_GOLBAT, ARBOK, RHYDON, BLAINES_PONYTA, BLAINES_RAPIDASH, KOGAS_PIDGEOTTO,
                  KOGAS_WEEDLE, GIOVANNIS_NIDORINA, SABRINAS_PORYGON, ROCKET_ABRA, KOGAS_PIDGEY_40)  # 写しの組 pool_v0_38 の並び
+# v0.39（docs/selfdestruct-spread-count-v0.39.md）。同じ名前の別のカード（MAGNEMITE と ROCKET_MAGNEMITE、MAGNETON と FOSSIL_MAGNETON、JUNGLE_PIKACHU と
+# PIKACHU、FOSSIL_RAICHU と RAICHU、KOGAS_KOFFING_40 と KOGAS_KOFFING）と取りちがえない
+MAGNEMITE = "PMCG1-036"  # コイル（第1弾。HP 40・雷・弱点 闘・にげる 1。でんじは（雷）10・じばく（雷無）40）
+MAGNETON = "PMCG1-039"  # レアコイル（第1弾。コイルから進化。HP 60・雷・弱点 闘・にげる 1。でんじは（雷雷無）30・じばく（雷雷無無）80）
+FOSSIL_WEEZING = "PMCG3-006"  # マタドガス（化石の秘密。ドガースから進化。HP 60・草・弱点 超・にげる 1。スモッグ（草草）20・じばく（草草無）60）
+FOSSIL_MAGNETON = "PMCG3-025"  # レアコイル（化石の秘密。コイルから進化。HP 80・雷・弱点 闘・にげる 2。ソニックブーム（雷無）20・じばく（雷雷雷雷）100）
+JUNGLE_PIKACHU = "PMCG2-024"  # ピカチュウ（第2弾。HP 50・雷・弱点 闘・にげる 1。スパーク（雷雷）20）。PIKACHU（PMCG1-035）とは別のカード
+FOSSIL_RAICHU = "PMCG3-024"  # ライチュウ（化石の秘密。ピカチュウから進化。HP 90・雷・弱点 闘・にげる 1。ギガスパーク（雷雷雷雷）30）。RAICHU（PMCG1-038）とは別のカード
+ELECTRODE = "PMCG2-025"  # マルマイン（第2弾。ビリリダマから進化。HP 90・雷・弱点 闘・にげる 1。たいあたり（無無）20・ビリビリ（雷雷雷）20）
+KOGAS_KOFFING_40 = "PMCG6-008"  # キョウのドガース（闇からの挑戦。HP 40・草・弱点 超・にげる 1。おならガス（草）10）。KOGAS_KOFFING（PMCG6-015）とは別のカード
+MISTYS_POLIWRATH = "PMCG6-039"  # カスミのニョロボン（闇からの挑戦。カスミのニョロゾから進化する 2 進化。HP 90・水・弱点 草・にげる 3。ウォーターリング（水水無無）30）
+ROCKET_MAGNEMITE = "PMCG4-026"  # コイル（ロケット団。HP 40・雷・弱点 闘・にげる 1。たいあたり（無無）20・ちょくれつじりょく（雷無）10+）。MAGNEMITE とは同じ名前の別のカード
+WIGGLYTUFF = "PMCG2-045"  # プクリン（第2弾。プリンから進化。HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 2。こもりうた（無）・ともだちのわ（無無無）10+）
+NIDOQUEEN = "PMCG2-013"  # ニドクイン（第2弾。ニドリーナから進化する 2 進化。HP 90・草・弱点 超・にげる 3。ラブラブアタック（草無）20+・メガトンパンチ（草草無無）50）
+KOGAS_WEEZING = "PMCG6-016"  # キョウのマタドガス（闇からの挑戦。キョウのドガースから進化。HP 70・草・弱点 超・にげる 2。とつぜんばくはつ（草草）10+・どくどくガス（草草無）20）
+PIDGEY = "PMCG1-059"  # ポッポ（第1弾。HP 40・無色・弱点 雷・抵抗力 闘 -30・にげる 1。かぜおこし（無無）10）
+ERIKAS_PARAS = "PMCG5-004"  # エリカのパラス（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。はさむ（無）10・きけんなほうし（草草））。PARAS とは別の名前のカード
+V0_39_POKEMON = (MAGNEMITE, MAGNETON, FOSSIL_WEEZING, FOSSIL_MAGNETON, JUNGLE_PIKACHU, FOSSIL_RAICHU, ELECTRODE, KOGAS_KOFFING_40, MISTYS_POLIWRATH,
+                 ROCKET_MAGNEMITE, WIGGLYTUFF, NIDOQUEEN, KOGAS_WEEZING, PIDGEY, ERIKAS_PARAS)  # 写しの組 pool_v0_39 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -744,6 +763,18 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenReduceDamageNextTurn,  # ナツメのポリゴンの「バリアアタック」
     _effects.DiscardAttachedAndReturnSelfToDeck,  # ケーシィの「いなくなる」
     _effects.ReturnSelfToDeckThenSearchPokemon,  # キョウのポッポの「でんれい」
+) + (
+    # v0.39（docs/selfdestruct-spread-count-v0.39.md 3 章）
+    _effects.SelfDestruct,  # コイル・レアコイル（第1弾）・マタドガス・レアコイル（化石の秘密）の「じばく」
+    _effects.DamageIgnoringWeaknessResistance,  # レアコイル（化石の秘密）の「ソニックブーム」
+    _effects.DamageThenChosenBenchTargets,  # ライチュウ（化石の秘密）の「ギガスパーク」
+    _effects.DamageThenSameTypeBenchDamage,  # マルマインの「ビリビリ」
+    _effects.DamageThenCoinBenchDamageBothSides,  # キョウのドガース（PMCG6-008）の「おならガス」
+    _effects.DamageThenOtherTypeBenchDamageBothSides,  # カスミのニョロボンの「ウォーターリング」
+    _effects.DamagePlusPokemonCount,  # コイル（ロケット団）の「ちょくれつじりょく」・プクリンの「ともだちのわ」・ニドクインの「ラブラブアタック」
+    _effects.CoinBonusDamageAndSelfDamage,  # キョウのマタドガスの「とつぜんばくはつ」
+    _effects.DamageThenSpecialPoisonOnHeads,  # キョウのマタドガスの「どくどくガス」
+    _effects.CoinPoisonAndBenchDamage,  # エリカのパラスの「きけんなほうし」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

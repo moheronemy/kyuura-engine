@@ -3670,16 +3670,24 @@ class DamageThenChosenBenchDamage(AttackEffect):
     """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手に控えポケモンがいれば、1 匹を選び、「弱点・抵抗力」に関係なく ``bench_damage`` ダメージ
     （v0.38。タケシのロコンの「ほのおのわ」）。v0.33 のかけぬける（``DamageThenCoinBenchDamage``）からコインを除いた形（要素 ``ChosenBenchDamage`` の
     ``local_coin`` が None）。相手の対戦ポケモンがきぜつしても控えへのダメージは処理する（対象が違う。p.309）。控えがいなければ何もしない（説明の
-    「いれば」）。相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果がはたらいたら、決定をまたいで運び、控えへのダメージのあとに処理する（v0.34）。"""
+    「いれば」）。相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果がはたらいたら、決定をまたいで運び、控えへのダメージのあとに処理する（v0.34）。
+
+    v0.39: ``weakness_resistance_stated`` が False なら、説明が控えへのダメージの弱点・抵抗力について書いていない書き方（ピカチュウ（PMCG2-024）の「スパーク」
+    「相手の控えポケモンから1匹選び、そのポケモンにも10ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。」）。v0.37 の JS1 と同じ問いで、選ぶと
+    受けるダメージが読み方で変わる控えは選べるが選ぶと止める（``ChosenBenchDamage`` の ``weakness_resistance`` が None）。書き方と値の組だけを受け付ける。"""
 
     bench_damage: int
+    weakness_resistance_stated: bool = True
     implementation_id = "damage_then_chosen_bench_damage"
 
     def __post_init__(self) -> None:
         _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
 
     def check(self, attack: Attack) -> list[str]:
-        expected = f"相手に控えポケモンがいれば、1匹を選び、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。"
+        if self.weakness_resistance_stated:
+            expected = f"相手に控えポケモンがいれば、1匹を選び、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。"
+        else:
+            expected = f"相手の控えポケモンから1匹選び、そのポケモンにも{self.bench_damage}ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。"
         return _check_form(attack, "相手の控えにもダメージを与えるワザ", damage="fixed") + _check_exact_text(attack, "相手の控えにもダメージを与えるワザ",
                                                                                                       (expected,))
 
@@ -4003,6 +4011,276 @@ class ReturnSelfToDeckThenSearchPokemon(AttackEffect):
             return problems
         return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
                               options=deck_pokemon_candidates(state, use.player, self.excluded))
+
+
+# ---------------------------------------------------------------- v0.39（docs/selfdestruct-spread-count-v0.39.md）
+# じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザ。どれも既存の要素（``resolution.programs``）の組み合わせで、要素の項目（``BenchDamage`` の
+# ``same_type_as_opponent_active``・``exclude_type``・``ChosenBenchDamage`` の ``weakness_resistance`` の None）と、要素 ``ChosenBenchDamages``・値
+# ``PrintedPlusPokemonCount`` を加えた。説明の文面は、登録したワザの印刷の文面と完全に同じものだけを受け付ける
+
+
+SELF_DESTRUCT_TEXTS = {
+    # 第1弾のコイル・レアコイル。自分と相手に同じダメージ。控えへのダメージに弱点・抵抗力を書かない（JS1）
+    False: lambda damage, self_damage, bench: (f"自分と相手に{damage}ダメージをあたえ、お互いの控えポケモン全員にも{bench}ダメージ。",)
+    if self_damage == damage else (),
+    # 化石の秘密のマタドガス・レアコイル。控えへのダメージは「弱点・抵抗力」に関係なく
+    True: lambda damage, self_damage, bench: (f"自分にも{self_damage}ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。",),
+}
+
+
+@dataclass(frozen=True)
+class SelfDestruct(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ、自分（ワザを使ったポケモン）に ``self_damage``、お互いの控えポケモン全員にそれぞれ ``bench_damage``
+    （v0.39。「じばく」。第1弾のコイル・レアコイルと化石の秘密のマタドガス・レアコイル）。
+
+    - 要素の並び: 相手へのダメージ → 自分へのダメージ → 相手の控え全員 → 自分の控え全員。どれもダメージの要素で、その間に効果の要素はない（GK1 の並びではない）。
+      「ダメージを受けたとき」の効果は、すべてのダメージをのせたあとに処理する（CR-COUNTERATTACK-TIMING）。並びの順で結果は変わらない（きぜつはワザのあとに
+      まとめて判定し、受けるポケモンはどれも別。「とうめい」が 2 匹以上なら T27、送る効果が 2 つ以上なら C34・C35 で止まる）
+    - 自分へのダメージはワザによるダメージで、弱点・抵抗力はワザを使うポケモンのタイプと自分の弱点・抵抗力（v0.3d）。残りの HP に関係なく自分をきぜつさせる
+      処理ではない（HP 未満なら残る）
+    - ``weakness_resistance_stated``: 化石の秘密の 2 枚は、控えへのダメージに「弱点・抵抗力」に関係なくと書く（計算しない）。第1弾の 2 枚は書かないので、
+      v0.37 の JS1 と同じ問い（``BenchDamage`` の ``weakness_resistance`` が None。お互いの控えのどれかで読み方によって受けるダメージが変わるときだけ、宣言の前に
+      止める）。控えへのダメージはプラスパワーを変えず、ディフェンダーは変える（p.257・v0.33）
+    - きぜつ・サイド・勝ち負け・バトル場に出すのは、ワザのあとに今までどおり（同時のきぜつ。p.324。番でないプレイヤーが先に出す）
+    """
+
+    self_damage: int
+    bench_damage: int
+    weakness_resistance_stated: bool
+    implementation_id = "self_destruct"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.self_damage, "自分へのダメージ")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "じばく", damage="fixed")
+        if problems:
+            return problems
+        accepted = SELF_DESTRUCT_TEXTS[self.weakness_resistance_stated](attack.damage, self.self_damage, self.bench_damage)
+        if not accepted:
+            return [f"自分と相手に同じダメージを与える書き方なのに、自分へのダメージ {self.self_damage} が目安の数字 {attack.damage} と違う"]
+        return _check_exact_text(attack, "じばく", accepted)
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        return DamageProfile(opponent=(attack.damage,), self_damage=(self.self_damage,))
+
+
+@dataclass(frozen=True)
+class DamageIgnoringWeaknessResistance(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのダメージは相手の弱点・抵抗力の影響を受けない（v0.39。化石の秘密のレアコイルの「ソニックブーム」
+    「この「ソニックブーム」のダメージは、相手の「弱点・抵抗力」の影響を受けない。」）。
+
+    - 要素は ``Damage(OPP, weakness_resistance=False)``（v0.31 のやきはらう・v0.38 のかいてんひこうの相手の対戦ポケモンへのダメージと同じ）。計算しないのは p.321 の
+      3・4 段階（弱点・抵抗力）だけで、ワザを使うポケモンへの効果（2 段階）・プラスパワー（5 段階）・ディフェンダー（7 段階）・受けるポケモンへの効果（8 段階）・
+      「ダメージを受けない」「ワザをうけない」状態・「とうめい」・「ダメージを受けたとき」の効果は今までどおり
+    - 説明の「」の中はワザ自身の名前（登録のワザの名前と照らす）
+    """
+
+    implementation_id = "damage_ignoring_weakness_resistance"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"この「{attack.name_ja}」のダメージは、相手の「弱点・抵抗力」の影響を受けない。"
+        return _check_form(attack, "弱点・抵抗力の影響を受けないワザ", damage="fixed") + _check_exact_text(attack, "弱点・抵抗力の影響を受けないワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenChosenBenchTargets(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手の控えポケモンから最大 ``max_targets`` 匹を選び、「弱点・抵抗力」に関係なく、それぞれ
+    ``bench_damage`` ダメージ（v0.39。ライチュウ（PMCG3-024）の「ギガスパーク」）。選ぶのはワザを使ったプレイヤー。1 匹以上なら最大より少なくてもよい。
+    0 匹は GS1（``UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE``。答えのときに止め、決定は待ったまま）。控えがいなければ何もしない（p.309）。要素 ``ChosenBenchDamages``。"""
+
+    max_targets: int
+    bench_damage: int
+    implementation_id = "damage_then_chosen_bench_targets"
+
+    def __post_init__(self) -> None:
+        if type(self.max_targets) is not int or self.max_targets < 2:
+            raise ValueError(f"選ぶ数の最大は 2 以上（{self.max_targets!r}）")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"相手の控えポケモンから最大{self.max_targets}匹を選び、「弱点・抵抗力」に関係なく、それぞれ{self.bench_damage}ダメージ。"
+        return _check_form(attack, "相手の控えを何匹か選んでダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "相手の控えを何匹か選んでダメージを与えるワザ", (expected,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        bench = state.players[1 - use.player].bench
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(0, min(self.max_targets, len(bench))),
+                              options=(p.pokemon_id for p in bench))
+
+
+@dataclass(frozen=True)
+class DamageThenSameTypeBenchDamage(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手の対戦ポケモンと同じタイプの、お互いの控えポケモン全員にそれぞれ ``bench_damage``（v0.39。
+    マルマインの「ビリビリ」「相手の対戦ポケモンと同じ色の控えポケモン全員にそれぞれ10ダメージ。(自分の控えポケモンも含まれる)」）。
+
+    - タイプは控えへのダメージを処理する時点の、相手の対戦ポケモンのいちばん上のカードのタイプ（「色」= タイプ）。受ける控えのタイプも、いちばん上のカード
+    - 説明が控えへのダメージの弱点・抵抗力について書いていないので、v0.37 の JS1 と同じ問い（お互いの控えのどれかで読み方によって受けるダメージが変わるとき
+      だけ、宣言の前に止める）
+    """
+
+    bench_damage: int
+    implementation_id = "damage_then_same_type_bench_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"相手の対戦ポケモンと同じ色の控えポケモン全員にそれぞれ{self.bench_damage}ダメージ。(自分の控えポケモンも含まれる)"
+        return _check_form(attack, "相手の対戦ポケモンと同じタイプの控えにダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "相手の対戦ポケモンと同じタイプの控えにダメージを与えるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenCoinBenchDamageBothSides(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ
+    ``bench_damage``（v0.39。キョウのドガース（PMCG6-008）の「おならガス」）。v0.38 のふぶき（「おもて」なら相手、「うら」なら自分の控え）と同じワザ全体のコイン
+    （1 枚。要素ごとに投げ直さない）。お互いに控えがいなければ、このコインが決める要素に対象がないので投げない（v0.38 の ``has_target``）。相手の対戦ポケモンが
+    「ワザをうけない」状態でも、控えへのダメージは無効にならないので投げる（v0.34 の ``void_coin_question``）。"""
+
+    bench_damage: int
+    implementation_id = "damage_then_coin_bench_damage_both_sides"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{self.bench_damage}ダメージ。"
+        return _check_form(attack, "コインでお互いの控え全員にダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "コインでお互いの控え全員にダメージを与えるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class DamageThenOtherTypeBenchDamageBothSides(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。お互いのベンチにいる、``excluded_type`` のポケモン以外のポケモン全員にも、「弱点・抵抗力」に関係なく、
+    それぞれ ``bench_damage``（v0.39。カスミのニョロボンの「ウォーターリング」）。受ける控えのタイプは、いちばん上のカードのタイプ。"""
+
+    excluded_type: EnergyType
+    bench_damage: int
+    implementation_id = "damage_then_other_type_bench_damage_both_sides"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"お互いのベンチにいる、「{self.excluded_type.ja}」ポケモン以外のポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{self.bench_damage}ダメージ。"
+        return _check_form(attack, "お互いの控えのあるタイプ以外にダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "お互いの控えのあるタイプ以外にダメージを与えるワザ", (expected,))
+
+
+POKEMON_COUNT_TEXTS = {
+    # (数える範囲, 名前) → 説明の書き方（per はダメージ）
+    ("own_bench", None): lambda per: (f"自分の控えポケモンの数×{per}ダメージを追加する。",),
+    ("own_in_play", ("ニドキング",)): lambda per: (f"自分の場に出ている「ニドキング」の数×{per}のダメージを追加する。",),
+    ("own_bench", ("コイル", "レアコイル", "わるいレアコイル")): lambda per: (
+        f"自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1匹につき、{per}ダメージを追加する。",),
+}
+
+
+@dataclass(frozen=True)
+class DamagePlusPokemonCount(AttackEffect):
+    """ダメージの目安の数字 + 自分の場のポケモンの数 × ``per`` の基本となるダメージ（p.321 の 1 段階。v0.39。プクリンの「ともだちのわ」・ニドクインの「ラブラブ
+    アタック」・コイル（PMCG4-026）の「ちょくれつじりょく」）。値 ``programs.PrintedPlusPokemonCount``。
+
+    - ``scope``: ``"own_bench"``（自分のベンチ）・``"own_in_play"``（自分の場（バトル場とベンチ））。``names``: 数えるポケモンの名前（いちばん上のカードの名前の完全
+      一致。None ならすべて）。進化して重なったカードは 1 匹と数える。名前の一部・収録の弾では見ない（「マチスのコイル」は「コイル」ではない）
+    - 弱点・抵抗力・プラスパワー・ディフェンダーなどは、そのあとの段階で計算する。実際の処理と先読み（どの方法も）は同じ値を使う
+    - 説明の名前の一覧に対応していないカードの名前（「わるいレアコイル」）があっても、名前のまま数える（そのカードは場に出ないので、今は数に入らない）
+    """
+
+    per: int
+    scope: str
+    names: tuple[str, ...] | None = None
+    implementation_id = "damage_plus_pokemon_count"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "1 匹あたりのダメージ")
+        if (self.scope, self.names) not in POKEMON_COUNT_TEXTS:
+            raise ValueError(f"数える範囲と名前の組 {(self.scope, self.names)!r} の書き方がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "場のポケモンの数でダメージを追加するワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "場のポケモンの数でダメージを追加するワザ", POKEMON_COUNT_TEXTS[(self.scope, self.names)](self.per))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import counted_pokemon
+
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        return DamageProfile(opponent=(attack.damage + len(counted_pokemon(state, use.player, self.scope, self.names)) * self.per,))
+
+
+@dataclass(frozen=True)
+class CoinBonusDamageAndSelfDamage(AttackEffect):
+    """コインを投げて「おもて」なら、``bonus`` ダメージを追加して、自分にも ``self_damage``（v0.39。キョウのマタドガスの「とつぜんばくはつ」）。同じ 1 枚のコイン
+    （``Coin``）が追加のダメージ（p.321 の 1 段階）と自分へのダメージを決める（投げ直さない）。「うら」なら目安の数字ぶんだけで、自分へのダメージはない。
+    相手が「ダメージを受けない」「ワザをうけない」状態で追加のダメージが無効でも、自分へのダメージが残るので投げる（v0.34 の ``void_coin_question``）。"""
+
+    bonus: int
+    self_damage: int
+    implementation_id = "coin_bonus_damage_and_self_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "追加のダメージ")
+        _positive_tens(self.self_damage, "自分へのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加して、自分にも{self.self_damage}ダメージ。"
+        return _check_form(attack, "コインで追加のダメージと自分へのダメージのワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "コインで追加のダメージと自分へのダメージのワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        return DamageProfile(opponent=(attack.damage, attack.damage + self.bonus), self_damage=(0, self.self_damage),
+                             outcomes=((attack.damage, 0), (attack.damage + self.bonus, self.self_damage)))
+
+
+@dataclass(frozen=True)
+class DamageThenSpecialPoisonOnHeads(AttackEffect):
+    """相手にダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手を、ポケモンチェックで ``poison_damage`` の「どく」ダメージを受けるどく状態に
+    する（v0.39。キョウのマタドガスの「どくどくガス」）。v0.34 のニドキングの「どくどく」と同じ特殊などく（``Status`` の ``poison_damage``。通常のどくを 2 回
+    付けない）に、この要素のコインを加えた形。受けるダメージの違うどく状態のポケモンへの特殊などくは TP3（``UNRESOLVED_SPECIAL_POISON_OVERWRITE``。コインの前に聞く
+    ので、どちらの結果でも宣言の前に止まる）。コインはどくだけを決めるので、「ワザをうけない」相手には HC3、「とうめい」で受けないと決まった相手には T19b。ダメージで
+    HP 以上なら投げない（p.309）。"""
+
+    poison_damage: int
+    implementation_id = "damage_then_special_poison_on_heads"
+    opponent_effect_elements = (POISON,)
+
+    def __post_init__(self) -> None:
+        if type(self.poison_damage) is not int or self.poison_damage <= 10 or self.poison_damage % 10:
+            raise ValueError(f"特殊などくのダメージは 10 の倍数で 10 より大きい（{self.poison_damage!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = (f"コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」の"
+                    f"ダメージは、{self.poison_damage}ダメージ。")
+        return _check_form(attack, "コインで特殊などくにするワザ", damage="fixed") + _check_exact_text(attack, "コインで特殊などくにするワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class CoinPoisonAndBenchDamage(AttackEffect):
+    """コインを投げて「おもて」なら、相手をどく状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ ``bench_damage``（v0.39。エリカのパラスの
+    「きけんなほうし」。ダメージの目安の数字はない）。
+
+    - 同じ 1 枚のコイン（``Coin``）がどくと控えへのダメージの両方を決める（投げ直さない）
+    - 処理の順番は、ダメージの処理（控えへのダメージ）→ それ以外の効果（どく）（p.309 の手順 6「まず、ダメージの処理をおこない、次に「それ以外の効果」を処理して
+      ください」。v0.4d の記録）。受けるポケモンはどれも別で、順番で結果は変わらない
+    - 一方だけが無効・対象なし: 相手に控えがいなければ控えへのダメージは対象がない（コインはどくのために投げる）。相手の対戦ポケモンが「ワザをうけない」状態なら
+      どくは無効だが、控えへのダメージがあれば投げる。どちらも残らない（控えがなく、相手が「ワザをうけない」状態）なら、投げるかが決められない（HC3）
+    """
+
+    bench_damage: int
+    implementation_id = "coin_poison_and_bench_damage"
+    opponent_effect_elements = (POISON,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{self.bench_damage}ダメージ。"
+        return _check_form(attack, "コインでどくと控えへのダメージのワザ", damage="none") + _check_exact_text(attack, "コインでどくと控えへのダメージのワザ",
+                                                                                                    (expected,))
 
 
 def attack_damage_modifiers(
@@ -6037,6 +6315,11 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG6-001", 0, "チクチクさす"),  # キョウのビードル（闇からの挑戦。第1弾のビードルとは別の名前のカード）
         ("PMCG6-066", 0, "とがる"),  # ナツメのポリゴン（闇からの挑戦）
         ("PMCG6-067", 1, "つばさでうつ"),  # キョウのポッポ（闇からの挑戦。キョウのポッポ PMCG6-062 とは同じ名前の別のカード）
+        # v0.39: 説明文のないワザ（kyuura データの採用。docs/selfdestruct-spread-count-v0.39.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG2-025", 0, "たいあたり"),  # マルマイン（第2弾）
+        ("PMCG4-026", 0, "たいあたり"),  # コイル（ロケット団。第1弾のコイル PMCG1-036 とは同じ名前の別のカード）
+        ("PMCG2-013", 1, "メガトンパンチ"),  # ニドクイン（第2弾）
+        ("PMCG5-004", 0, "はさむ"),  # エリカのパラス（リーダーズスタジアム。第2弾のパラス PMCG2-003 とは別の名前のカード）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -8194,6 +8477,175 @@ DEFAULT_EFFECTS = EffectRegistry(
             "でんれい",
             text_ja="自分と、自分についているすべてのカードを山札にもどす。(ベンチから、かわりの対戦ポケモンを出す)。その後、自分の山札から「キョウのポッポ」以外の「ポケモン」を1枚選び出し、相手に見せてから手札に加え、その山札をよく切る。",
             play_text_ja="自分と、自分についているすべてのカードを山札にもどす。(ベンチから、かわりの対戦ポケモンを出す)。その後、自分の山札から「キョウのポッポ」以外の「ポケモン」を1枚選び出し、相手に見せてから手札に加え、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.39（docs/selfdestruct-spread-count-v0.39.md）。kyuura データの採用（処理に使う文面は kyuura の印刷の文面）
+        # コイル（第1弾）。でんじは（雷）10: コインの「おもて」でマヒ（第4弾のコイル PMCG4-026 とは同じ名前の別のカード）
+        AttackKey("PMCG1-036", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "でんじは",
+            text_ja="コインを投げて「おもて」がでたら「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」がでたら「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # コイル（第1弾）。じばく（雷無）40: 自分にも 40、お互いの控え全員に 10（弱点・抵抗力を書かない。JS1）
+        AttackKey("PMCG1-036", 1): AttackEntry(
+            SelfDestruct(self_damage=40, bench_damage=10, weakness_resistance_stated=False),
+            "じばく",
+            text_ja="自分と相手に40ダメージをあたえ、お互いの控えポケモン全員にも10ダメージ。",
+            play_text_ja="自分と相手に40ダメージをあたえ、お互いの控えポケモン全員にも10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # レアコイル（第1弾。コイルから進化）。でんじは（雷雷無）30
+        AttackKey("PMCG1-039", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "でんじは",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # レアコイル（第1弾）。じばく（雷雷無無）80: 自分にも 80、お互いの控え全員に 20（JS1）
+        AttackKey("PMCG1-039", 1): AttackEntry(
+            SelfDestruct(self_damage=80, bench_damage=20, weakness_resistance_stated=False),
+            "じばく",
+            text_ja="自分と相手に80ダメージをあたえ、お互いの控えポケモン全員にも20ダメージ。",
+            play_text_ja="自分と相手に80ダメージをあたえ、お互いの控えポケモン全員にも20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マタドガス（化石の秘密。ドガースから進化）。スモッグ（草草）20
+        AttackKey("PMCG3-006", 0): AttackEntry(
+            PoisonOnHeads(),
+            "スモッグ",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マタドガス（化石の秘密）。じばく（草草無）60: 自分にも 60、お互いの控え全員に 10（弱点・抵抗力に関係なく）
+        AttackKey("PMCG3-006", 1): AttackEntry(
+            SelfDestruct(self_damage=60, bench_damage=10, weakness_resistance_stated=True),
+            "じばく",
+            text_ja="自分にも60ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="自分にも60ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # レアコイル（化石の秘密。コイルから進化）。ソニックブーム（雷無）20: 相手の弱点・抵抗力の影響を受けない
+        AttackKey("PMCG3-025", 0): AttackEntry(
+            DamageIgnoringWeaknessResistance(),
+            "ソニックブーム",
+            text_ja="この「ソニックブーム」のダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+            play_text_ja="この「ソニックブーム」のダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # レアコイル（化石の秘密）。じばく（雷雷雷雷）100: 自分にも 100、お互いの控え全員に 20（弱点・抵抗力に関係なく）
+        AttackKey("PMCG3-025", 1): AttackEntry(
+            SelfDestruct(self_damage=100, bench_damage=20, weakness_resistance_stated=True),
+            "じばく",
+            text_ja="自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+            play_text_ja="自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ピカチュウ（第2弾。第1弾のピカチュウ PMCG1-035 とは別のカード）。スパーク（雷雷）20: 相手の控えから 1 匹を選んで 10（JS1 は選んだ控えだけ）
+        AttackKey("PMCG2-024", 0): AttackEntry(
+            DamageThenChosenBenchDamage(bench_damage=10, weakness_resistance_stated=False),
+            "スパーク",
+            text_ja="相手の控えポケモンから1匹選び、そのポケモンにも10ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。",
+            play_text_ja="相手の控えポケモンから1匹選び、そのポケモンにも10ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ライチュウ（化石の秘密。ピカチュウから進化。第1弾のライチュウ PMCG1-038 とは別のカード）。ギガスパーク（雷雷雷雷）30: 相手の控えから最大 3 匹（0 匹は GS1）
+        AttackKey("PMCG3-024", 0): AttackEntry(
+            DamageThenChosenBenchTargets(max_targets=3, bench_damage=10),
+            "ギガスパーク",
+            text_ja="相手の控えポケモンから最大3匹を選び、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="相手の控えポケモンから最大3匹を選び、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マルマイン（第2弾。ビリリダマから進化）。ビリビリ（雷雷雷）20: 相手の対戦ポケモンと同じタイプのお互いの控え全員に 10（JS1）
+        AttackKey("PMCG2-025", 1): AttackEntry(
+            DamageThenSameTypeBenchDamage(bench_damage=10),
+            "ビリビリ",
+            text_ja="相手の対戦ポケモンと同じ色の控えポケモン全員にそれぞれ10ダメージ。(自分の控えポケモンも含まれる)",
+            play_text_ja="相手の対戦ポケモンと同じ色の控えポケモン全員にそれぞれ10ダメージ。(自分の控えポケモンも含まれる)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのドガース（闇からの挑戦。キョウのドガース PMCG6-015 とは同じ名前の別のカード）。おならガス（草）10
+        AttackKey("PMCG6-008", 0): AttackEntry(
+            DamageThenCoinBenchDamageBothSides(bench_damage=10),
+            "おならガス",
+            text_ja="コインを投げて「おもて」なら、お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="コインを投げて「おもて」なら、お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのニョロボン（闇からの挑戦。カスミのニョロゾから進化する 2 進化）。ウォーターリング（水水無無）30
+        AttackKey("PMCG6-039", 0): AttackEntry(
+            DamageThenOtherTypeBenchDamageBothSides(excluded_type=EnergyType.WATER, bench_damage=10),
+            "ウォーターリング",
+            text_ja="お互いのベンチにいる、「水」ポケモン以外のポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="お互いのベンチにいる、「水」ポケモン以外のポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # コイル（ロケット団）。ちょくれつじりょく（雷無）10+: 自分のベンチの「コイル」「レアコイル」「わるいレアコイル」1 匹につき + 10
+        AttackKey("PMCG4-026", 1): AttackEntry(
+            DamagePlusPokemonCount(per=10, scope="own_bench", names=("コイル", "レアコイル", "わるいレアコイル")),
+            "ちょくれつじりょく",
+            text_ja="自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1匹につき、10ダメージを追加する。",
+            play_text_ja="自分のベンチにいる「コイル」「レアコイル」「わるいレアコイル」1匹につき、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # プクリン（第2弾。プリンから進化）。こもりうた（無）: ダメージなしでねむり
+        AttackKey("PMCG2-045", 0): AttackEntry(
+            PutToSleep(),
+            "こもりうた",
+            text_ja="相手を「ねむり」状態にする。",
+            play_text_ja="相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # プクリン（第2弾）。ともだちのわ（無無無）10+: 自分の控えポケモンの数 × 10 を追加
+        AttackKey("PMCG2-045", 1): AttackEntry(
+            DamagePlusPokemonCount(per=10, scope="own_bench"),
+            "ともだちのわ",
+            text_ja="自分の控えポケモンの数×10ダメージを追加する。",
+            play_text_ja="自分の控えポケモンの数×10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ニドクイン（第2弾。ニドリーナから進化する 2 進化）。ラブラブアタック（草無）20+: 自分の場の「ニドキング」の数 × 20 を追加
+        AttackKey("PMCG2-013", 0): AttackEntry(
+            DamagePlusPokemonCount(per=20, scope="own_in_play", names=("ニドキング",)),
+            "ラブラブアタック",
+            text_ja="自分の場に出ている「ニドキング」の数×20のダメージを追加する。",
+            play_text_ja="自分の場に出ている「ニドキング」の数×20のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのマタドガス（闇からの挑戦。キョウのドガースから進化）。とつぜんばくはつ（草草）10+: 同じコインの「おもて」で + 30 と自分にも 30
+        AttackKey("PMCG6-016", 0): AttackEntry(
+            CoinBonusDamageAndSelfDamage(bonus=30, self_damage=30),
+            "とつぜんばくはつ",
+            text_ja="コインを投げて「おもて」なら、30ダメージを追加して、自分にも30ダメージ。",
+            play_text_ja="コインを投げて「おもて」なら、30ダメージを追加して、自分にも30ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのマタドガス。どくどくガス（草草無）20: コインの「おもて」で 20 の特殊などく（TP3 は既存のまま）
+        AttackKey("PMCG6-016", 1): AttackEntry(
+            DamageThenSpecialPoisonOnHeads(poison_damage=20),
+            "どくどくガス",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、20ダメージ。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ポッポ（第1弾）。かぜおこし（無無）10: 相手が選ぶ控えと入れ替える（v0.4d のふきとばしと同じ処理。pcg-search.com・p.159 のワザの名前は「ふきとばし」で、kyuura の名前と違う。kyuura への報告事項）
+        AttackKey("PMCG1-059", 0): AttackEntry(
+            DamageAndForceSwitch(),
+            "かぜおこし",
+            text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えは相手が行う。相手の控えポケモンがいないときには、ダメージだけをあたえる。",
+            play_text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えは相手が行う。相手の控えポケモンがいないときには、ダメージだけをあたえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのパラス（リーダーズスタジアム）。きけんなほうし（草草）: 同じコインの「おもて」でどくと相手の控え全員に 10
+        AttackKey("PMCG5-004", 1): AttackEntry(
+            CoinPoisonAndBenchDamage(bench_damage=10),
+            "きけんなほうし",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10
