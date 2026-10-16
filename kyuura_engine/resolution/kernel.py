@@ -38,6 +38,7 @@ from ..effects import (
     power_name_and_page,
     retaliation_double_knockout_error,
 )
+from ..persistent import reduced_damage_to_source
 from ..state import RETALIATION_FIXED
 
 from . import catalog as C
@@ -210,11 +211,19 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     receiver_def = state.card_def(receiver.card)
-    calc = calculate_attack_damage(
-        base, attacker_def, receiver_def, state.rules,
-        attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS),
-        weakness_resistance=weakness_resistance,
-    )
+    if target in BENCH_TARGETS:
+        cry = reduced_damage_to_source(state, attacker)
+        if cry is not None and cry.source_card == receiver.card:
+            # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
+            # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
+            raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS)
+    step2 = [m for m in modifiers if m.step == 2]
+    if len(step2) > 1 and any(m.operation != ADD for m in step2):
+        # v0.34: p.321 の同じ段階（2 段階）に「その数にする」効果（「つるぎのまい」）とほかの効果（「なきつく」）がある。計算の順番はワザを使う
+        # プレイヤーが決める（p.321）が、その決定はエンジンの未対応（``damage.calculate_attack_damage`` の RuntimeError の前に止める）
+        raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・2 段階の効果 {[m.label for m in step2]}")
+    calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance)
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -345,6 +354,24 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
 
 
 # ---------------------------------------------------------------- ダメージの要素のあとの窓（送る効果）
+
+
+def restore_deferred(res: Resolution, fs: FrameState, entries) -> list[Deferred]:
+    """決定をまたいで運んだ送る効果（v0.34。``AttackRun.suspend`` の ``carry``）を、今の場の効果から作り直す。決定を待つ間は場が変わらないので、
+    受けたときに候補になった効果（持ち主・持つポケモン・定義の名前）は今も同じポケモンにある。見つからない・2 つ以上なら、続きの情報の誤り。
+
+    受けたときの「はたらいているか」（特殊状態の「すでに」・ガス・はたらく番）は受けたときに確かめたので、ここで確かめ直さない（``receiving``）。"""
+    restored = []
+    for owner, pokemon_id, name, received in entries:
+        located = res.state.find_pokemon(pokemon_id)
+        if located is None or located[0] != owner:
+            raise RuntimeError(f"運んだ送る効果 {name} の持ち主 {owner} のポケモン {pokemon_id} が場にいない（続きの情報の誤り）")
+        matches = [instance for instance in C.in_window(res.state, Window.DAMAGE_RECEIVING, owner, located[1], res.catalog)
+                   if instance.definition.name == name and instance.definition.timing is C.Timing.DEFER]
+        if len(matches) != 1:
+            raise RuntimeError(f"運んだ送る効果 {name} が、ポケモン {pokemon_id} に {len(matches)} つある（続きの情報の誤り）")
+        restored.append(Deferred(matches[0], fs.frame.id, received))
+    return restored
 
 
 def fire_pending(res: Resolution, fs: FrameState) -> None:

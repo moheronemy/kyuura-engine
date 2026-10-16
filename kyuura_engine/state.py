@@ -370,9 +370,36 @@ class CannotAttack:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class ReducedDamageToSource:
+    """ワザによる「持続する効果」（v0.34）のうち、カラカラ（PMCG2-029）の「なきつく」の「「なきつく」を受けた相手は、このカードにワザを使う時、与える
+    ダメージが20へる。この状態は次の自分の番の始めに消える。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``CannotAttack`` と同じ）。効果を受けるのは相手の対戦ポケモンで、``source_card``・``source_player`` は効果を
+    与えたワザを使ったポケモン（「このカード」）のカードとそのプレイヤー。はたらく番は次の相手の番（``created_turn + 1``）で、その番に、受けている
+    ポケモンが ``source_card`` のポケモンにワザでダメージを与えるとき、p.321 の 2 段階（「ワザを使うポケモンの持っている「ダメージを変更する効果」」）で
+    ``amount`` を減らす（``effects.attack_damage_modifiers``）。
+
+    消える契機: 期限は「次の自分の番の始め」（効果を与えたプレイヤーの次の番の最初。``expires_at_turn_start``。はたらく番の終わりではなく、そのあとの
+    ポケモンチェックのあと。``persistent.remove_turn_start_expired_persistent_effects``）。ほかの契機（受けているポケモンがベンチにもどる・進化・きぜつ）は
+    ほかの持続する効果と同じ（p.311・p.322・p.323）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    amount: int
+    kind: ClassVar[str] = "reduced_damage_to_source"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+    expires_at_turn_start: ClassVar[bool] = True
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
-# CannotAttack を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack)
+# CannotAttack、v0.34 で ReducedDamageToSource を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
+                           ReducedDamageToSource)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）

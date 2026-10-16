@@ -18,7 +18,7 @@ from tests.helpers import (
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
-    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON,
+    V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -167,11 +167,21 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             if not definition.is_basic_pokemon:
                 self.assertIn(definition.evolves_from, basics, card_id)
+        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは登録しないので対戦に使えない。
+        # 進化先 7 枚は、進化元（名前が完全に一致するポケモン。ニドキングは 1 進化のニドリーノ）が写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_34"], list(V0_34_POOL))
+        self.assertFalse(pool.is_playable(KANGASKHAN))
+        names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_34_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)  # ニドキングの進化元のニドリーノは 1 進化
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
-                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON)
+                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

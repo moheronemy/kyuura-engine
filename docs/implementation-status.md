@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.33）
+# 実装状況（v0.1〜v0.34）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -137,7 +137,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 「ダメージを与えた後、…」の効果（たおれこむ・v0.18c からナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23。v0.18b で場合を Z23-a 要素が無効・Z23-b 計算の結果が 0（ディフェンダー・抵抗力）・Z23-c「とうめい」・Z23-d 対象がいない（起こらない）に分けた） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。理由の文が場合を書く）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest`、test_unresolved_research_v0_18b.py `EffectAfterNoDamageSubcaseTest`・`TargetGoneIsUnreachableTest`、test_sabrinas_slowpoke_v0_18c.py `NoDamageStopTest` |
 | キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
 | 「みちづれ」で相手の対戦ポケモンも「きぜつ」するとき、同時のきぜつか（v0.31。HC2） | 勝ち負けが決まる場合（サイドを取りきる・場にポケモンがいなくなる）だけ、相手のワザの宣言の前に `UNRESOLVED_DESTINY_BOND_KNOCKOUT` で止める。決まらなければ両方がサイドを取る |
-| 「ワザをうけない」状態（バリアー）のポケモンへの効果だけを決めるコインを投げるか（v0.31。HC3） | 宣言の前に `UNRESOLVED_PREVENTED_EFFECT_COIN` で止める |
+| 「ワザをうけない」状態（バリアー）のポケモンへの効果だけを決めるコインを投げるか（v0.31。HC3） | 宣言の前に `UNRESOLVED_PREVENTED_EFFECT_COIN` で止める。v0.34 から、要素の並びのコインが決める要素がどれも相手の対戦ポケモンへの要素で、効果を含み、どれも無効なとき（ねばりつく・じごくがため・からではさむ・くさいガス）も同じ（[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md) 2 章） |
 | 無色をふくむワザで、多い水エネルギーの数（v0.31。HC4。第4弾のコダックの「みずでっぽう」） | 読み方で数が変わるときだけ、宣言の前に `UNRESOLVED_EXTRA_ENERGY_COLORLESS` で止める |
 | 「好きなだけはがしてすてる」で 0 枚を選べるか（v0.31。HC5。やまやき） | 0 枚の答えを `UNRESOLVED_DISCARD_ANY_NUMBER_ZERO` で拒否（決定は待ったまま） |
 | 山札の上から決まった枚数をトラッシュする効果で山札が足りない場合（v0.31。HC6。マグマふんしゅつ・やまやき） | `UNRESOLVED_DISCARD_DECK_SHORT`（宣言の前、またはやまやきの答えのとき） |
@@ -146,6 +146,8 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 相手のワザを自分のワザとして使うとき、使うワザの条件の扱いが決められない（v0.31。HC9） | そのワザを選ぶと `UNRESOLVED_COPIED_ATTACK`。選べるワザがすべてそうなら宣言の前 |
 | エナジーバーンで「炎」になった草エネルギーカードをエナジートランスでつけかえられるか（v0.31。HC10） | `UsePokemonPower` を `UNRESOLVED_ENERGY_BURN_TRANSFER` で拒否 |
 | ルージュラの「ヨガのポーズ」の「相手のポケモンにのっているダメージカウンター」が、相手の対戦ポケモンか場のポケモンすべてか（v0.32。CD4。v0.33 で既存の記録を再検討したが決まらない。[cd4-opponent-energy-coins-v0.33.md](cd4-opponent-energy-coins-v0.33.md) 2 章） | 相手の控えポケモンにダメージカウンターがのっていて読み方で答えが変わるときだけ、宣言の前に `UNRESOLVED_OPPONENT_POKEMON_COUNTERS` で止める |
+| どく状態（通常のどく、または受けるダメージの違う特殊などく）のポケモンを、特殊などく状態にする効果を受けたとき（v0.34。TP3。p.322 は特殊などく → 通常のどくの向きだけを書く。docs/special-conditions-v0.3a.md の 15 が、ニドキングの「どくどく」で起こるようになった） | 宣言の前に `UNRESOLVED_SPECIAL_POISON_OVERWRITE` で止める（[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md) 5 章） |
+| カラカラの「なきつく」の「このカードにワザを使う時」に、カラカラが控えにいるときの控えポケモンへのダメージを含むか（v0.34。NK5） | なきつくを受けたポケモンのワザが、控えにいるカラカラにダメージを与えうるとき、宣言の前に `UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET` で止める（[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md) 6.2） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -2004,3 +2006,39 @@ v0.32 の CD4 を既存の記録で再検討し（決まらないので未解決
 - ねばりつく・じごくがため（`CoinBonusDamageAndParalyze`）はバリアーの相手にもコインを投げ、同じ形のからではさむは HC3 で止める（扱いがそろっていない。既存の
   カードの挙動を変えないため直していない。7 章）。
 - kyuura への報告事項は [data-provenance.md](data-provenance.md) の v0.33 の章。
+
+## v0.34 で加えたもの（バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と、14 枚）
+
+「ワザをうけない」状態（バリアー）の相手へのコインを、コインが決めるものの意味からそろえ（ねばりつく・じごくがためも HC3 で止める）、ダメージのあとに決定を出すワザで
+「ダメージを受けたとき」の効果を決定をまたいで運ぶようにし（v0.33 の `UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER` を解消）、依頼の 15 枚のうち 14 枚を、必要な共通の
+処理だけを加えて対応にしました（対応ポケモン 134 → 148。ワザの登録 230 → 257）。ガルーラ（PMCG2-046）は保留。整理・規定（TP1〜TP4・NK1〜NK5）・互換性・検証は
+[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_barrier_resume_coin_bonus_v0_34.py（以下「単体」）・tests/test_barrier_resume_coin_bonus_v0_34_games.py（以下「対戦」）です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 14 枚の 27 のワザの登録（型と値）・写しとの一致・処理に使う文面（kyuura の印刷の文面）・採用の記録・外部照合・進化の名前の完全一致・同じ名前の別のカード・保留のガルーラ | kyuura データの採用（card_sources.json） | 単体 `CardDataTest` |
+| バリアーのコイン: ねばりつく・じごくがため・くさいガスは HC3、「ダメージを受けない」相手には投げる、自分へのダメージ・効果を決めるコインは投げる、ダメージだけのコインは v0.4b のコード、止まる型が要素の並びから決まる | CR-STICKY-VS-PREVENTED・UQ-COIN-IN-NULLIFIED-ELEMENT・v0.4b・v0.31・v0.33 の記録（2 章） | 単体 `BarrierCoinTest` |
+| 決定をまたぐ送る効果: 順番（控えへのダメージのあと）・不正な答え・複製と pickle の再開・重複しない・運ぶ値の不変条件・C18・先読みの方法の一致 | p.89・v0.10・v0.18d の案 B（3 章） | 単体 `CarryAcrossDecisionTest`、tests/test_cd4_opponent_energy_coins_v0_33.py `test_decision_after_damage_trigger_is_carried` |
+| 特殊などく: 新しく・同じ量・通常のどくから（止める）・特殊などくから通常のどく・ほかの特殊状態と重複・ポケモンチェックの 20 ときぜつ・両方のきぜつ・進化で消える・書き出し | p.322（v0.3a の 13〜15。5 章） | 単体 `SpecialPoisonTest` |
+| なきつく: 2 段階・0 以下・このカードだけ・次の自分の番の始めに消える・控え（止める）・つるぎのまいと重なる（未対応で止める）・バリアー・進化で消える | 印刷の文面・p.321・v0.4b の消える契機（6.2） | 単体 `GrowlTest` |
+| こうそくいどう・かえんほうしゃ・みずでっぽう・いかりくるう・くさいガス・かみなりパンチ・あばれる・テレポート・たまなげMAX・たすけをよぶの境界 | 印刷の文面・既存の記録（6 章） | 単体 `RapidashTest` ほか |
+| 27 のワザ × コイン 2 で、先読みの 3 つの方法の結果が同じ | v0.15c・v0.16c の約束 | 単体 `PreflightParityTest` |
+| 正式な開始から 36 局で、14 枚・27 のワザをどれも使い、監査がすべて通る。拒否のあとに続けた回数を停止と分けて数える | — | 対戦 |
+| 共通の処理の変更で、v0.33 までのカードの動きが、意図して変えた 2 つの場面のほかは変わらない | 固定した v0.33（`382fed4`）との比較と、変えた場面の個別の確かめ | tools/engine_lockstep.py と作業用の道具（[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md) 8 章） |
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定は TP3・NK5 の 2 件（上の「裁定が未解決」の表）。停止コード 38 → 40 件、未解決の裁定 39 → 41 件。
+- エンジンの未対応: 同じ 2 段階に「その数にする」効果とほかの効果が重なったときの順番の決定（`UNSUPPORTED_DAMAGE_STEP_ORDER`）。たまなげMAX のエネルギー 13 枚から
+  （`UNSUPPORTED_PREFLIGHT_LIMIT`。既存の上限）。v0.33 の `UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER` は外した。
+- カードデータは kyuura の採用で、ガイドブックとは照合していません（pcg-search.com の照合は 15 件。採用の 14 件は match 12・differences 2（処理に影響しない）、
+  保留のガルーラは挙動に影響する違い）。
+
+### 見つけた事項
+
+- ガルーラ（PMCG2-046）の「こどものおつかい」のコインの有無が kyuura と pcg-search.com で違う（保留。kyuura への報告事項）。
+- kyuura への報告事項は [data-provenance.md](data-provenance.md) の v0.34 の章。

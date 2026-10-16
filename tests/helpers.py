@@ -181,6 +181,26 @@ BLAINES_RHYHORN = "PMCG6-058"  # カツラのサイホーン（HP 60・闘・弱
 BLAINES_DODUO = "PMCG6-064"  # カツラのドードー（HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 0。けりつける（無）20・しかえし（無無）10×）
 V0_33_POKEMON = (DRAGONAIR, FOSSIL_GOLDUCK, DARK_VAPOREON, LT_SURGES_MAGNEMITE_30, SABRINAS_VENONAT, NIDORAN_M, NIDORINO, CLOYSTER, DARK_RATICATE,
                  BROCKS_DIGLETT, BROCKS_RHYHORN, LT_SURGES_SPEAROW, GIOVANNIS_NIDORAN_F, BLAINES_RHYHORN, BLAINES_DODUO)
+# v0.34（バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせて加えた 14 枚と保留の 1 枚。docs/barrier-resume-coin-bonus-v0.34.md）
+RAPIDASH = "PMCG2-019"  # ギャロップ（第2弾。ポニータから進化。HP 70・炎・弱点 水・にげる 0。ふみつけ（無無）20+・こうそくいどう（炎炎無）30）
+FLAREON = "PMCG2-020"  # ブースター（第2弾。イーブイから進化。HP 70・炎・弱点 水・にげる 1。でんこうせっか（無無）10+・かえんほうしゃ（炎炎無無）60）
+VAPOREON = "PMCG2-023"  # シャワーズ（第2弾。イーブイから進化。HP 80・水・弱点 雷・にげる 1。でんこうせっか（無無）10+・みずでっぽう（水水無）30+）
+JOLTEON = "PMCG2-026"  # サンダース（第2弾。イーブイから進化。HP 70・雷・弱点 闘・にげる 1。でんこうせっか（無無）10+・ミサイルばり（雷雷無）20×）
+ELECTABUZZ = "PMCG1-041"  # エレブー（第1弾。HP 70・雷・弱点 闘・にげる 2。でんきショック（雷）10・かみなりパンチ（雷無）30+）
+TAUROS = "PMCG2-042"  # ケンタロス（第2弾。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 2。ふみつけ（無無）20+・いかりくるう（無無無）20+）
+BROCKS_VULPIX = "PMCG5-018"  # タケシのロコン（HP 40・炎・弱点 水・にげる 1。ほのお（炎）20・でんこうせっか（無無）10+）。VULPIX・BLAINES_VULPIX とは別の名前
+GIOVANNIS_PINSIR = "PMCG6-024"  # サカキのカイロス（HP 70・草・弱点 炎・にげる 2。きあいばさみ（草無）10+・うしろなげ（草無無）40）。PINSIR とは別のカード
+BLAINES_KANGASKHAN = "PMCG6-069"  # カツラのガルーラ（HP 80・無色・弱点 闘・抵抗力 超 -30・にげる 3。こどもパンチ（無）10・おやこパンチ（無無無）30+）
+KOFFING = "PMCG1-006"  # ドガース（第1弾。HP 50・草・弱点 超・にげる 1。くさいガス（草草）10）。ROCKET_KOFFING とは別のカード
+NIDOKING = "PMCG1-013"  # ニドキング（第1弾。ニドリーノから進化。HP 90・草・弱点 超・にげる 3。あばれる（草無無）30+・どくどく（草草草）20）
+EXEGGUTOR = "PMCG2-012"  # ナッシー（第2弾。タマタマから進化。HP 80・草・弱点 炎・にげる 3。テレポート（超）・たまなげMAX（無）20×）
+KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。保留。登録しない。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
+CUBONE = "PMCG2-029"  # カラカラ（第2弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。なきつく（無）・いかり（闘闘）10+）
+MAROWAK = "PMCG2-032"  # ガラガラ（第2弾。カラカラから進化。HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 1。ほねブーメラン（闘闘）30×・たすけをよぶ（闘闘無））
+V0_34_POKEMON = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
+                 EXEGGUTOR, CUBONE, MAROWAK)  # 対応にした 14 枚（ガルーラは保留）
+V0_34_POOL = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
+              EXEGGUTOR, KANGASKHAN, CUBONE, MAROWAK)  # 写しの組 pool_v0_34（保留のガルーラを含む 15 枚）
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -616,6 +636,18 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageAndParalyzeOnHeadsElseFail,  # パルシェンの「からではさむ」
     _effects.DamageAndOwnBenchDamage,  # タケシのディグダの「ミニじしん」
     _effects.DamageThenCoinBenchDamage,  # カツラのサイホーンの「かけぬける」
+) + (
+    # v0.34（docs/barrier-resume-coin-bonus-v0.34.md 4 章）
+    _effects.CoinBonusOrSelfDamage,  # エレブーの「かみなりパンチ」・ニドキングの「あばれる」
+    _effects.DamageThenSelfBarrierOnHeads,  # ギャロップの「こうそくいどう」
+    _effects.DamagePlusOwnCountersThenSelfConfuseOnTails,  # ケンタロスの「いかりくるう」
+    _effects.DamageThenCoinOwnBenchDamage,  # サカキのカイロスの「うしろなげ」
+    _effects.DamageThenPoisonOrConfuse,  # ドガースの「くさいガス」
+    _effects.DamageAndSpecialPoison,  # ニドキングの「どくどく」
+    _effects.SwitchSelfWithBench,  # ナッシーの「テレポート」
+    _effects.CoinsPerAttachedEnergyDamage,  # ナッシーの「たまなげMAX」
+    _effects.ReduceDamageToSelf,  # カラカラの「なきつく」
+    _effects.PutTypeBasicFromDeckOntoBench,  # ガラガラの「たすけをよぶ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

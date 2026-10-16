@@ -352,17 +352,19 @@ class CardDataTest(unittest.TestCase):
         """解決の基盤の要素の並び。「失敗」（ワザ全体のコイン ``FailOnTails``）と「ダメージを与えられない」（ダメージの要素のコイン ``local_gate``）を
         別の要素で表す。パルシェンはマヒの再付与の確かめ → 1 枚のコイン → ダメージ → マヒ（マヒのコインはない）。"""
         self.assertEqual(BUILDERS[E.NoDamageOnTails](E.NoDamageOnTails()), (Damage(E.OPPONENT_ACTIVE, Printed(), local_gate=H),))
-        self.assertEqual(BUILDERS[E.FailOnTailsDamage](E.FailOnTailsDamage(coins=2))[0], FailOnTails(only_damage=True, count=2))
+        self.assertEqual(BUILDERS[E.FailOnTailsDamage](E.FailOnTailsDamage(coins=2))[0], FailOnTails(count=2))
         cloyster = BUILDERS[E.DamageAndParalyzeOnHeadsElseFail](E.DamageAndParalyzeOnHeadsElseFail())
         self.assertEqual([type(e) for e in cloyster], [ReparalysisGuard, FailOnTails, Damage, Status])
-        self.assertEqual((cloyster[1].count, cloyster[1].with_effect, cloyster[3].local_coin, cloyster[3].gate), (1, True, None, None))
+        # v0.34: バリアーの相手で止めるか（HC3）は、印（v0.33 の with_effect）でなく、コインが決める残りの要素（ダメージとマヒ）から求める
+        self.assertEqual((cloyster[1].count, cloyster[3].local_coin, cloyster[3].gate), (1, None, None))
+        self.assertEqual([e.coin_receiver() for e in cloyster[2:]], ["damage", "effect"])
         self.assertEqual(BUILDERS[E.DamageThenDiscardOpponentEnergy](E.DamageThenDiscardOpponentEnergy(on_heads=True))[1],
                          DiscardOpponentEnergy(local_coin=H))
         own_bench = BUILDERS[E.DamageAndOwnBenchDamage](E.DamageAndOwnBenchDamage(10))[1]
         self.assertIsInstance(own_bench, BenchDamage)
         self.assertEqual(own_bench.own, True)
         self.assertIsInstance(BUILDERS[E.DamageThenCoinBenchDamage](E.DamageThenCoinBenchDamage(20))[1], ChosenBenchDamage)
-        self.assertEqual(BUILDERS[E.FailOnTailsDamage](E.FailOnTailsDamage())[0], FailOnTails(only_damage=True))  # v0.31 のゴッドバードと同じ
+        self.assertEqual(BUILDERS[E.FailOnTailsDamage](E.FailOnTailsDamage())[0], FailOnTails())  # v0.31 のゴッドバードと同じ
 
     def test_document_lists_the_cards(self):
         text = DOC.read_text(encoding="utf-8")
@@ -379,7 +381,8 @@ class Cd4Test(unittest.TestCase):
         self.assertEqual((question.code, question.rulings), ("UNRESOLVED_OPPONENT_POKEMON_COUNTERS", ("CD4",)))
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         self.assertIn("UNRESOLVED_OPPONENT_POKEMON_COUNTERS", links["stop_codes"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (38, 39))
+        # v0.34 で 2 件（TP3・NK5）を加えた（CD4 はそのまま。docs/barrier-resume-coin-bonus-v0.34.md）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (40, 41))
 
     def test_boundary(self):
         """相手の控えのカウンターが 0 なら（控えがいない・控えにカウンターがない）、相手の対戦ポケモンのカウンターだけで処理する。控えに 1 個でも
@@ -747,16 +750,18 @@ class CoinBenchDamageTest(unittest.TestCase):
         amounts = [(e.get("target"), e["amount"]) for e in events(new, len(state.log), "damage")]
         self.assertEqual(amounts, [(None, 30), ("opponent_bench", 0)])
 
-    def test_decision_after_damage_trigger_is_unsupported(self):
-        """相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果（カイリキーの「はんげき」・R団のファイヤーの「ほのおのかべ」）がはたらいたあとに
-        控えを選ぶ場面は、その効果を決定をまたいで運べないので、エンジンの未対応として宣言の前に止める（``UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER``）。
-        控えがいなければ決定がないので止めない。"""
-        for defender in (mon(MACHAMP, (FIGHTING,)), mon(DARK_WARTORTLE, (WATER,), retaliation_received=TURN - 1)):
-            state = board(self.rhyhorn(), defender, opponent_bench=(RATTATA,))
+    def test_decision_after_damage_trigger_is_carried(self):
+        """相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果（カイリキーの「はんげき」・わるいカメールの「こうらがえし」）がはたらいたあとに
+        控えを選ぶ場面。v0.33 はエンジンの未対応として宣言の前に止めていた（``UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER``）。v0.34 から、その効果を決定を
+        またいで運び、控えへのダメージのあと（ダメージの要素がすべて終わったあと。p.89）に処理する（境界は tests/test_barrier_resume_coin_bonus_v0_34.py）。"""
+        for defender, kind in ((mon(MACHAMP, (FIGHTING,)), "counterattack"), (mon(DARK_WARTORTLE, (WATER,), retaliation_received=TURN - 1), "retaliation")):
+            state = with_coin_results(board(self.rhyhorn(), defender, opponent_bench=(RATTATA,)), H)
             with self.subTest(defender=defender["card"]):
-                assert_stops(self, state, UseAttack(0, 1), "UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER")
-            alone = board(self.rhyhorn(), defender, opponent_bench=())
-            self.assertIsNotNone(play(alone, UseAttack(0, 1)))
+                waiting = play(state, UseAttack(0, 1))
+                self.assertEqual(waiting.decision.kind, SELECT_POKEMON)
+                new = apply_kernel(waiting, ResolveDecision(0, waiting.decision.id, first(waiting.decision)))
+                after = [e["kind"] for e in events(new, len(waiting.log)) if e["kind"] in ("damage", kind)]
+                self.assertEqual(after[:2], ["damage", kind])
 
     def test_guts_survives_the_bench_choice(self):
         """相手の対戦ポケモン（サカキのカイリキー）がワザのダメージで HP 以上になったあとに控えを選ぶ決定をはさんでも、きぜつの判定で「こんじょう」を

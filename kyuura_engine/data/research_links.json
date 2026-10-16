@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 39,
-    "engine_stop_codes": 38,
+    "engine_unresolved_rulings": 41,
+    "engine_stop_codes": 40,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -491,6 +491,33 @@
           "version": "v0.32",
           "document": "docs/bench-search-counter-drain-v0.32.md",
           "ruling_id": "CD4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE": {
+      "engine_rulings": [
+        {
+          "version": "v0.3a",
+          "document": "docs/special-conditions-v0.3a.md",
+          "ruling_id": "15"
+        },
+        {
+          "version": "v0.34",
+          "document": "docs/barrier-resume-coin-bonus-v0.34.md",
+          "ruling_id": "TP3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.34",
+          "document": "docs/barrier-resume-coin-bonus-v0.34.md",
+          "ruling_id": "NK5"
         }
       ],
       "kyuura_issue": null,
@@ -1079,7 +1106,33 @@
       "PMCG6-058/attack/0",
       "PMCG6-058/attack/1",
       "PMCG6-064/attack/0",
-      "PMCG6-064/attack/1"
+      "PMCG6-064/attack/1",
+      "PMCG2-019/attack/0",
+      "PMCG2-019/attack/1",
+      "PMCG2-020/attack/0",
+      "PMCG2-020/attack/1",
+      "PMCG2-023/attack/0",
+      "PMCG2-023/attack/1",
+      "PMCG2-026/attack/0",
+      "PMCG2-026/attack/1",
+      "PMCG1-041/attack/0",
+      "PMCG1-041/attack/1",
+      "PMCG2-042/attack/0",
+      "PMCG2-042/attack/1",
+      "PMCG5-018/attack/1",
+      "PMCG6-024/attack/0",
+      "PMCG6-024/attack/1",
+      "PMCG6-069/attack/0",
+      "PMCG6-069/attack/1",
+      "PMCG1-006/attack/0",
+      "PMCG1-013/attack/0",
+      "PMCG1-013/attack/1",
+      "PMCG2-012/attack/0",
+      "PMCG2-012/attack/1",
+      "PMCG2-029/attack/0",
+      "PMCG2-029/attack/1",
+      "PMCG2-032/attack/0",
+      "PMCG2-032/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -46,7 +46,11 @@ class DesignAssumptionTest(unittest.TestCase):
         self.assertFalse(any(hasattr(state, name) for name in RESOLUTION_RECORDS))
 
     def test_suspend_refuses_pending_effects(self):
-        """ワザの途中の決定は、送る効果が残っていると出せない（窓の途中では止まれない。Q3）。黙って送る効果を捨てない。"""
+        """ワザの途中の決定は、送る効果が残っていると出せない（窓の途中では止まれない。Q3）。黙って送る効果を捨てない。
+
+        v0.34: 枠の値を運ぶ決定（``carry=True``。ダメージの要素のあとに決定を出すダメージの要素 ``ChosenBenchDamage``）だけは、まだ処理していない送る
+        効果を続きの情報（``frame`` の ``pending``）に運んで出せる（窓の途中の決定ではない: 送る効果はまだ処理を始めていない。決定のあとの最後の
+        ダメージの要素のあとに処理する。tests/test_barrier_resume_coin_bonus_v0_34.py）。``carry`` のない決定は今までどおり出せない。"""
         state = build_test_state([{"active": MACHOP, "bench": [RATTATA]}, {"active": PONYTA, "bench": [RATTATA]}], turn_number=7)
         attacker = state.players[0].active
         res = kernel.Resolution(state)

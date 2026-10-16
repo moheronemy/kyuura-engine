@@ -62,6 +62,10 @@ ALL_CODES = (
     # v0.32: CD4（docs/bench-search-counter-drain-v0.32.md）。止まる場合と隣の止まらない場合は tests/test_bench_search_counter_drain_v0_32.py の
     # CounterDamageTest（test_meditate_stops_when_the_reading_matters・test_meditate_counts_the_defending_pokemon）
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS",
+    # v0.34: TP3・NK5（docs/barrier-resume-coin-bonus-v0.34.md）。止まる場合と隣の止まらない場合は tests/test_barrier_resume_coin_bonus_v0_34.py の
+    # SpecialPoisonTest（test_normal_poison_to_special_is_unresolved・test_same_special_poison_is_not_stacked）・GrowlTest（test_bench_target_is_unresolved・
+    # test_only_this_card_and_expires_at_the_start_of_the_next_turn）
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE", "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",
 )
 TURN = 7
 

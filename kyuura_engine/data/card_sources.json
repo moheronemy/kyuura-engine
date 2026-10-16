@@ -3499,7 +3499,7 @@
         }
       ],
       "issues": [],
-      "notes": "v0.33 で加えた。ホーンアタックは FailOnTailsDamage。かけぬけるは DamageThenCoinBenchDamage(20)（相手の対戦ポケモンに 20 のあと、コインが「おもて」なら相手の控えポケモンを 1 匹、ワザを使ったプレイヤーが選んで 20。弱点・抵抗力は計算しない。相手に控えがいなければコインを投げない）。相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果がはたらいたあとに控えを選ぶ場面は、エンジンの未対応で止める（UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER）"
+      "notes": "v0.33 で加えた。ホーンアタックは FailOnTailsDamage。かけぬけるは DamageThenCoinBenchDamage(20)（相手の対戦ポケモンに 20 のあと、コインが「おもて」なら相手の控えポケモンを 1 匹、ワザを使ったプレイヤーが選んで 20。弱点・抵抗力は計算しない。相手に控えがいなければコインを投げない）。相手の対戦ポケモンへのダメージで「ダメージを受けたとき」の効果がはたらいたあとに控えを選ぶ場面は、v0.33 ではエンジンの未対応で止めていた（UNSUPPORTED_DECISION_AFTER_DAMAGE_TRIGGER）。v0.34 から、その効果を決定をまたいで運び、控えへのダメージのあとに処理する"
     },
     "PMCG6-064": {
       "basis": "kyuura_data",
@@ -3546,6 +3546,727 @@
       ],
       "issues": [],
       "notes": "v0.33 で加えた。けりつけるは FailOnTailsDamage。しかえしは DamageTimesOwnCounters(10)（v0.32 のじたばたと同じ型。自分のダメージカウンターの数 × 10 が基本となるダメージ）。第1弾のドードー（PMCG1-061）とは別の名前のカード"
+    },
+    "PMCG2-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ギャロップ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2019.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "019/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。ふみつけは CoinBonusDamage(10)。こうそくいどうは DamageThenSelfBarrierOnHeads（ダメージのあと、コインが「おもて」ならワザを使ったポケモンに v0.31 のバリアーと同じ持続する効果 AttackBarrier（次の相手の番、ワザのダメージと効果を受けない）。印刷の文面の「ワザをうけない」はミュウツーの「バリアー」と同じ言い方で、同じ型にした。コインはダメージのあと、こうそくいどうのダメージの要素の結果にかかわらず投げる）。進化元のポニータ（第1弾 PMCG1-016・ロケット団 PMCG4-013）と名前で照らす"
+    },
+    "PMCG2-020": {
+      "basis": "kyuura_data",
+      "name_ja": "ブースター",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2020.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "020/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。でんこうせっかは CoinBonusDamage(20)。かえんほうしゃは DiscardEnergyBeforeDamage（炎 1 枚・時点はワザの効果・トラッシュできなければ失敗）。炎エネルギーカードをトラッシュして大きなダメージを与えるワザで、名前も記録が挙げる「かえんほうしゃ」なので、時点は kyuura の RUL-ENERGY-DISCARD-ATTACKS（確実）の範囲としてワザの効果にした（v0.31 のカツラのウインディの「ほのおのあらし」と同じ扱い）。印刷の文面は第1弾のウインディ（記録の元のカード）と違い「はがしてすてなければ、このワザは失敗する」なので、処理に使う文面は印刷の文面（記録の最新の説明「…トラッシュできないとき、このワザのダメージはなくなる。」にしない）。記録の cards にこのカードがないことは kyuura への報告事項"
+    },
+    "PMCG2-023": {
+      "basis": "kyuura_data",
+      "name_ja": "シャワーズ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2023.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "023/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。でんこうせっかは CoinBonusDamage(20)。みずでっぽうは v0.31 の第4弾のコダックと同じ ExtraEnergyDamageMixed（水・10・2。必要なエネルギーに無色がまざる。多いエネルギーの数が払い方で変わる場合は HC4 で止める）"
+    },
+    "PMCG2-026": {
+      "basis": "kyuura_data",
+      "name_ja": "サンダース",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2026.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "026/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "コインを4枚投げて「おもて」の数×20のダメージ。",
+              "pcg_search": "コインを4枚投げて「おもて」の×20のダメージ。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「「おもて」の×20」で「数」がない（サイトの転記の脱字と読める）。どちらの読み方でもコイン 4 枚の「おもて」の数 × 20 のダメージで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。でんこうせっかは CoinBonusDamage(20)。ミサイルばりは既存の CoinFlipDamage(coins=4, damage_per_heads=20)。サイトのミサイルばりの文面の脱字は処理に影響しない"
+    },
+    "PMCG1-041": {
+      "basis": "kyuura_data",
+      "name_ja": "エレブー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1041.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "041/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。でんきショックは既存の ParalyzeOnHeads。かみなりパンチは CoinBonusOrSelfDamage(bonus=10, self_damage=10)（1 枚のコインで「おもて」なら追加 10、「うら」なら自分に 10。投げ直さない。v0.11 の「いちかばちか」と同じく、同じコインの結果でいっしょに起こるダメージの組を宣言の前の確かめ（C18・W24）に渡す）"
+    },
+    "PMCG2-042": {
+      "basis": "kyuura_data",
+      "name_ja": "ケンタロス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2045.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "045/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "自分にのっているダメージカウンター×10のダメージを追加する。その後、コインを投げて「うら」なら、【自分】は「こんらん」状態になる。",
+              "pcg_search": "自分にのっているダメージカウンター×10のダメージを追加する。その後、コインを投げて「うら」なら、自分は「こんらん」状態になる。",
+              "affects_behavior": false,
+              "note": "kyuura の文面は「【自分】」、サイトは「自分」。括弧の有無だけで、こんらん状態になるのはワザを使ったポケモン自身（処理は変わらない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。ふみつけは CoinBonusDamage(10)。いかりくるうは DamagePlusOwnCountersThenSelfConfuseOnTails(10)（目安 + 自分のダメージカウンター × 10 → その後コインが「うら」ならワザを使ったポケモンがこんらん。「その後」は順番で、ダメージを与えたかを条件にしない（「ダメージを与えた後」の Z23 とは別の言い方）。サイトの「自分」と kyuura の「【自分】」の違いは処理に影響しない）"
+    },
+    "PMCG5-018": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのロコン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1018.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "018/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。ほのおは説明文なし（DamageOnly）。でんこうせっかは CoinBonusDamage(20)。第1弾のロコン（PMCG1-015）・カツラのロコン（PMCG6-026）とは別の名前のカード"
+    },
+    "PMCG6-024": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキのカイロス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2024.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "024/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。きあいばさみは CoinBonusDamage(20)。うしろなげは DamageThenCoinOwnBenchDamage(20)（相手に 40 → コインが「うら」なら自分の控えを 1 匹選んで 20。弱点・抵抗力なし。v0.33 のかけぬけると同じ要素 ChosenBenchDamage の自分の控えの形。控えがいなければコインを投げない）。第2弾のカイロス（PMCG2-018）とは別のカード"
+    },
+    "PMCG6-069": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのガルーラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2069.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "069/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。こどもパンチは FailOnTailsDamage。おやこパンチは CoinBonusDamage(10)。第2弾のガルーラ（PMCG2-046。保留）とは別のカード"
+    },
+    "PMCG1-006": {
+      "basis": "kyuura_data",
+      "name_ja": "ドガース",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1012.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "012/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。くさいガスは DamageThenPoisonOrConfuse（相手に 10 → 1 枚のコインで「おもて」ならどく、「うら」ならこんらん。投げ直さない）。ロケット団のドガース（PMCG4-005）とは別のカード"
+    },
+    "PMCG1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ニドキング",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1011.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "011/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。あばれるは CoinBonusOrSelfDamage(bonus=10, self_damage=10)（エレブーのかみなりパンチと同じ形）。どくどくは DamageAndSpecialPoison(poison_damage=20)（ポケモンチェックごとに 20 のどくダメージを受ける特殊などく。p.322 の「どく状態にかかる」もの（v0.3a の #13）で、通常のどくの 2 倍の処理ではない。すでに受けるダメージの違うどく状態のポケモンにするときは決められない（v0.3a の #15）ので UNRESOLVED_SPECIAL_POISON_OVERWRITE で止める）。進化元のニドリーノ（PMCG1-010）と名前で照らす。サカキのニドキングは写しにない"
+    },
+    "PMCG2-012": {
+      "basis": "kyuura_data",
+      "name_ja": "ナッシー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2016.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "016/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。テレポートは SwitchSelfWithBench（ワザを使ったプレイヤーが自分の控えを 1 匹選び、ワザを使ったポケモンと入れ替える。ポケモンいれかえと同じ入れ替えの処理。控えがいなければ何もしない）。たまなげMAX は CoinsPerAttachedEnergyDamage(20)（ついているエネルギーの数だけコインを投げ、「おもて」の数 × 20。エネルギーの数は、ついているエネルギーカードが与えるエネルギーの数。今の写しでは基本エネルギーカードの枚数）。進化元のタマタマ（PMCG2-006）と名前で照らす"
+    },
+    "PMCG2-029": {
+      "basis": "kyuura_data",
+      "name_ja": "カラカラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2030.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "030/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。なきつくは ReduceDamageToSelf(20)（相手の対戦ポケモンに持続する効果 ReducedDamageToSource。受けたポケモンがこのカードにワザでダメージを与えるとき p.321 の 2 段階で 20 へらす。期限は説明のとおり次の自分の番の始め。このカードが控えにいるときに受けたポケモンが控えへのダメージを与える場合は決められないので止める（NK5））。いかりは既存の DamagePlusOwnCounters(10)"
+    },
+    "PMCG2-032": {
+      "basis": "kyuura_data",
+      "name_ja": "ガラガラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2031.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "031/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.34 で加えた。ほねブーメランは既存の CoinFlipDamage(coins=2, damage_per_heads=30)。たすけをよぶは PutTypeBasicFromDeckOntoBench（闘。v0.32 のなかまをよぶ（名前で選ぶ）と同じ要素 BenchFromDeck の、タイプで選ぶ形。進化カードは選べない。ベンチに空きがなければ使えない（ワザを使うための条件）。山札に選べるものがなければ出さずに切る）。進化元のカラカラ（PMCG2-029）と名前で照らす"
+    },
+    "PMCG2-046": {
+      "basis": "kyuura_data",
+      "name_ja": "ガルーラ",
+      "status": "on_hold",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2044.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "044/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
+              "pcg_search": "自分の山札の上からカードを1枚ひいて、手札に加える。",
+              "affects_behavior": true,
+              "note": "kyuura の文面は「コインを投げて「おもて」なら、…」、サイトはコインの記載がない。コインを投げるかどうか（引くかどうか・乱数の使い方）が変わる"
+            },
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "コインを4枚投げて「おもて」の数×20のダメージ。",
+              "pcg_search": "コインを4枚投げて「おもて」の×20のダメージ。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「「おもて」の×20」で「数」がない（サイトの転記の脱字と読める。サンダースの「ミサイルばり」と同じ）。処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [
+        {
+          "question": "こどものおつかいは、コインを投げて「おもて」のときだけ山札の上から 1 枚引くのか（kyuura の写しの文面）、コインを投げずに 1 枚引くのか（pcg-search.com の文面）。コインの有無で、引くかどうかと乱数の使い方が変わる",
+          "fields": [
+            "pokemon.attacks[0].text.ja"
+          ],
+          "affects_behavior": true,
+          "note": "kyuura の日本語の文面の元（ja_text_source）は nazonobasho.com で、pcg-search.com と食い違う。記録（LD-・CR-・UQ-・エラッタ・card_differences）にこのカードはない。ガイドブックは読んでいない（方針）。kyuura への報告事項"
+        }
+      ],
+      "notes": "v0.34 の依頼の 15 枚のうち、pcg-search.com との照合でこどものおつかいの文面に挙動に影響する違い（コインの有無）が見つかったので保留にした（登録しない。写しには保留の記録のために入れた）。れんぞくパンチの違い（サイトの脱字）は処理に影響しない。kyuura のデータ・写しは直さない（kyuura への報告事項）"
     }
   }
 }

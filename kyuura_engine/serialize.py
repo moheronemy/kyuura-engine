@@ -107,6 +107,7 @@ from .state import (
     Paralyzed,
     PokemonInPlay,
     PreventDamage,
+    ReducedDamageToSource,
     Retaliation,
 )
 
@@ -136,7 +137,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     種類の値を加えただけなので形式は変えない。知らない種類のある辞書は、読む側が拒否すること）。v0.13 の
     ``"retaliation_received_damage"``（「こうらがえし」。与えるダメージは受けたダメージと同じ）は ``attack_index`` だけを加える。v0.27 の
     ``"next_turn_attack_damage"``（「つるぎのまい」）は ``attack_index``・``target_attack_index``・``amount`` を加える。v0.31 の
-    ``"damage_reduction"``（「ちいさくなる」）は ``amount`` を加え、``"destiny_bond"``・``"attack_barrier"``・``"cannot_attack"`` は共通の項目だけ。"""
+    ``"damage_reduction"``（「ちいさくなる」）は ``amount`` を加え、``"destiny_bond"``・``"attack_barrier"``・``"cannot_attack"`` は共通の項目だけ。
+    v0.34 の ``"reduced_damage_to_source"``（「なきつく」）は ``amount`` を加える。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -157,8 +159,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["attack_index"] = effect.attack_index
         data["target_attack_index"] = effect.target_attack_index
         data["amount"] = effect.amount
-    elif isinstance(effect, DamageReduction):
-        data["amount"] = effect.amount
+    elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
+        data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data

@@ -69,12 +69,13 @@ from .continuous import suppressors_of
 from .deck import deck_problems
 from .evolution import place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, remove_persistent_effects
+from .persistent import KNOCK_OUT, expires_at_turn_start, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
     DamageReduction,
     NextTurnAttackDamage,
+    ReducedDamageToSource,
     Retaliation,
     TERMINAL_PHASES,
     Asleep,
@@ -1204,7 +1205,7 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
                 problems.append(f"{where} {effect!r} の発生源が、相手（プレイヤー {giver}）のカードではない")
         elif effect.source_player != player or effect.source_card != pokemon.card:
             problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
-        if isinstance(effect, DamageReduction) and (type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10):
+        if isinstance(effect, (DamageReduction, ReducedDamageToSource)) and (type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10):
             problems.append(f"{where} {effect!r} の減らす量が 10 の倍数の正の数ではない")
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
@@ -1216,7 +1217,11 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
         elif state.first_player in PLAYERS and turn_owner(state, effect.created_turn) != giver:
             whose = "持ち主" if giver == player else f"効果を与えたプレイヤー {giver}"  # v0.31: 相手に与える効果（しっぽをふる）は与えたプレイヤー
             problems.append(f"{where} {effect!r} を、{whose}の番でない {effect.created_turn} 番に与えている")
-        if state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
+        if expires_at_turn_start(effect):
+            # v0.34: 期限が「次の自分の番の始め」（「なきつく」）。はたらく番の終わり（turn_end）のあとのポケモンチェックの間は残り、次の番の最初に消える
+            if state.turn_number > effect.active_turn:
+                problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の次の番の始めを過ぎて残っている")
+        elif state.turn_number > effect.active_turn or (state.turn_number == effect.active_turn and turn_ended):
             problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の終わりを過ぎて残っている")
         if isinstance(effect, Retaliation):
             problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
@@ -1823,7 +1828,54 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     ]
     if len(attacks) != 1 or attacks[0].get("pokemon") != attacker.card or attacks[0].get("attack_index") != attack_index:
         return [f"ワザの決定の続き {use!r} に対応する、今の番のワザのログ attack がない（{len(attacks)} 回）"]
-    return entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+    problems = _carried_deferred_problems(state, d, player)
+    return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+
+
+def _carried_deferred_problems(state: GameState, d, player: int) -> list[str]:
+    """v0.34: ワザの途中の決定が運ぶ、まだ処理していない送る効果（続きの情報の ``frame`` の ``pending``。「ダメージを受けたとき」の効果）。
+
+    1 つずつ (持ち主, 持つポケモンの番号, 効果の定義の名前, 受けたダメージ) で、持ち主の場のそのポケモンに、その名前の送る効果がちょうど 1 つあり
+    （``resolution.catalog``）、相手のワザで受ける効果なら持ち主はワザを使ったプレイヤーでなく、今の番のワザの宣言のあとに、そのポケモンが受けた
+    同じ量のダメージのログ ``damage`` がある（印や一覧を状態に加えず、ログで確かめる）。"""
+    frame = d.context_value("frame")
+    if frame is None:
+        return []
+    pending = dict(frame).get("pending", ())
+    if not pending:
+        return []
+    from .resolution import catalog as C
+    from .resolution.events import Window
+
+    problems: list[str] = []
+    recent = _events_since_turn_start(state)  # 新しい順
+    since_attack = recent[:next((i for i, e in enumerate(recent) if e["kind"] == "attack"), len(recent))]
+    seen = set()
+    for entry in pending:
+        if not (isinstance(entry, tuple) and len(entry) == 4):
+            problems.append(f"運んだ送る効果 {entry!r} の形が正しくない")
+            continue
+        owner, pokemon_id, name, received = entry
+        if (pokemon_id, name) in seen:
+            problems.append(f"運んだ送る効果 {name}（ポケモン {pokemon_id}）が 2 つ")
+        seen.add((pokemon_id, name))
+        located = state.find_pokemon(pokemon_id)
+        if located is None or located[0] != owner:
+            problems.append(f"運んだ送る効果 {name} の持ち主 {owner} のポケモン {pokemon_id} が場にいない")
+            continue
+        pokemon = located[1]
+        matches = [i for i in C.in_window(state, Window.DAMAGE_RECEIVING, owner, pokemon)
+                   if i.definition.name == name and i.definition.timing is C.Timing.DEFER]
+        if len(matches) != 1:
+            problems.append(f"運んだ送る効果 {name} が、ポケモン {pokemon_id} に {len(matches)} つある")
+            continue
+        if matches[0].definition.by_opponent and owner == player:
+            problems.append(f"相手のワザで受ける送る効果 {name} の持ち主が、ワザを使ったプレイヤー {player}")
+        if not (type(received) is int and received > 0) or not any(
+                e["kind"] == "damage" and e.get("player") == owner and e.get("pokemon") == pokemon.card and e.get("amount") == received
+                for e in since_attack):
+            problems.append(f"運んだ送る効果 {name} の受けたダメージ {received!r} に対応する、今の番のワザの宣言のあとのログ damage がない")
+    return problems
 
 
 def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonInPlay, place) -> list[str]:

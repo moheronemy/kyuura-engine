@@ -376,6 +376,7 @@ POOL_KEYS = (
     "pool_v0_31",  # v0.31（v0.30 で保留した 22 枚と、進化元の 7 枚。docs/held-cards-v0.31.md）
     "pool_v0_32",  # v0.32（山札からベンチに出す・ダメージカウンターでダメージが決まる・与えたぶん回復するワザの 13 枚。docs/bench-search-counter-drain-v0.32.md）
     "pool_v0_33",  # v0.33（相手のエネルギーをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚。docs/cd4-opponent-energy-coins-v0.33.md）
+    "pool_v0_34",  # v0.34（バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせた 15 枚。ガルーラは保留。docs/barrier-resume-coin-bonus-v0.34.md）
 )
 
 

@@ -85,6 +85,8 @@ from kyuura_engine.effects import (
     ENERGY_ATTACH_ELEMENT,
     ENERGY_DISCARD_ELEMENT,
     FORCED_SWITCH_ELEMENT,
+    REDUCED_DAMAGE_ELEMENT,
+    DamageAndSpecialPoison,
     AttackImmunityOnHeads,
     ConvertAttachedEnergy,
     HealOnEnergyAttach,
@@ -102,7 +104,15 @@ from kyuura_engine.effects import (
 from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.resolution.programs import BUILDERS, Damage, DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage
 from kyuura_engine.serialize import FORMAT_VERSIONS
-from kyuura_engine.state import RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, CannotAttack, NextTurnAttackDamage, Phase
+from kyuura_engine.state import (
+    RETALIATION_FIXED,
+    RETALIATION_KINDS,
+    RETALIATION_RECEIVED,
+    CannotAttack,
+    NextTurnAttackDamage,
+    Phase,
+    ReducedDamageToSource,
+)
 
 TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 
@@ -115,6 +125,8 @@ COUNTER_BARRIERS = (
     "draw", "effect_prevented", "effect_skipped", "destiny_bond",
     # v0.32: 山札からベンチに出す（なかまをよぶ・ふえる）
     "bench_from_deck", "bench_from_deck_none",
+    # v0.34: ワザの効果で自分のポケモンを入れ替える（テレポート）
+    "switch",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -212,6 +224,23 @@ def _attack_effect_of(state, attack_event: dict | None):
         return None
     entry = state.effects.attack_entry(state.card_def(attack_event["pokemon"]).id, attack_event["attack_index"])
     return None if entry is None else entry.effect
+
+
+def _poison_problems(state, e: dict, current: int | None) -> list[str]:
+    """ログ ``special_condition``（どく）の量（v0.34）。どく状態にしたワザの登録が特殊などく（``DamageAndSpecialPoison``）ならその量、ほかは
+    通常のどくの 10（p.322）。すでにどく状態なら ``already``。受けるダメージの違うどく状態から特殊などくにすることはない（v0.3a の #15。
+    止めるはず）。特殊などく → 通常のどくは通常のどくになる（v0.3a の #14）。"""
+    found = []
+    entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+    effect = entry.effect if entry is not None else None
+    expected = effect.poison_damage if isinstance(effect, DamageAndSpecialPoison) else 10
+    if e.get("damage") != expected:
+        found.append(f"{e['turn']} 番のどく（ワザ {e['effect']}）の量 {e.get('damage')} が、登録の実装の量 {expected} と違う")
+    if current is not None and not e.get("already"):
+        found.append(f"{e['turn']} 番のどく（ポケモン {e['pokemon_id']}）の already {e.get('already')} が、ログから組み立てたどく状態 {current} と合わない")
+    if current is not None and current != expected and expected != 10:
+        found.append(f"{e['turn']} 番に、どくの量 {current} のポケモン {e['pokemon_id']} を、量の違う特殊などく {expected} にした（v0.3a の #15。止めるはず）")
+    return found
 
 
 # v0.31: ワザを使ったポケモンのエネルギーカードをトラッシュしうる要素（トラッシュの要素・自分に控えがいない／受けなかったときにトラッシュする
@@ -418,6 +447,7 @@ def log_problems(state) -> list[str]:
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
     exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
+    poisoned: dict[int, int] = {}  # 場のポケモンの番号 → どくで受けるダメージ（v0.34。特殊などく（どくどく）は 20）
     replaced: dict[int, str] = {}  # 特殊状態が置きかわる直前の、ねむり・マヒ・こんらん（v0.9。置きかえたワザの効果を受けた時点の状態）
     attack_window: dict | None = None  # 今の番のワザ（attack から番の終わりまで。v0.9）: 使ったプレイヤー・ポケモン・ワザ・受けるかの判定
     expect: tuple | None = None  # 直前の evade_check のすぐあとに続くはずの処理（場のポケモンの番号, 要素, 受けるか。v0.9）
@@ -536,6 +566,22 @@ def log_problems(state) -> list[str]:
         steps = [tuple(step) for step in (e.get("steps") or ())]
         step2 = [step for step in steps if str(step[0]).startswith("2 ")]
         damage_set = tuple(tuple(m) for m in e.get("damage_set", ()))
+        # v0.34: 「なきつく」を受けたポケモン（ワザを使ったポケモン）が、なきつくを使ったポケモン（効果の発生源のカード）の対戦ポケモンにワザの
+        # ダメージを与えるときは、p.321 の 2 段階で効果の量をへらす（「つるぎのまい」と同じポケモンに重なることはない。重なれば止める）
+        reduced = None
+        for (effect_pid, _), info in alive.items():
+            if (effect_pid == attack_window["pokemon_id"] and info["kind"] == ReducedDamageToSource.kind and info["active_turn"] == e["turn"]
+                    and e.get("target") is None and e["pokemon"] == info["source_card"]):
+                card_id, index = info["effect"].split("#")
+                amount = state.effects.attack_entry(card_id, int(index)).effect.amount
+                label = f"2 {state.card_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）"
+                reduced = (label, steps[0][1] - amount, info["source_card"], -amount)
+        if reduced is not None:
+            label, value, source, amount = reduced
+            if expected is not None or step2 != [(label, value)] or steps[1:2] != [(label, value)] or damage_set \
+                    or (2, source, amount) not in [tuple(m) for m in e.get("modifiers", ())]:
+                return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージの 2 段階 {step2}・{damage_set} が、「なきつく」の効果（{amount}）と合わない"]
+            return []
         if expected is None:
             if step2 or damage_set:
                 return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージに、はたらいている効果のない 2 段階の記録 {step2}・{damage_set} がある"]
@@ -672,6 +718,8 @@ def log_problems(state) -> list[str]:
                 follows = kind == "persistent_effect_added" and e["pokemon_id"] == pid
             elif element == ENERGY_ATTACH_ELEMENT:  # v0.31: 控えポケモンにエネルギーをつける（エナジーボム）
                 follows = kind == "attack_attach_energy" and e["to_pokemon_id"] == pid
+            elif element == REDUCED_DAMAGE_ELEMENT:  # v0.34: 与えるダメージがへる状態にする効果（なきつく）
+                follows = kind == "persistent_effect_added" and e["pokemon_id"] == pid
             elif kind == "special_conditions_removed" and e["pokemon_id"] == pid and e["reason"] == "replaced":
                 follows, expect = True, (pid, element, reaches)  # 置きかえてから、その特殊状態になる
             else:
@@ -809,6 +857,8 @@ def log_problems(state) -> list[str]:
             received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
         elif kind == "persistent_effect_added" and e["persistent_effect"] == CannotAttack.kind:
             received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)
+        elif kind == "persistent_effect_added" and e["persistent_effect"] == ReducedDamageToSource.kind:
+            received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34
         if kind == "damage" and attack_window is not None and not e.get("retaliation"):
             problems.extend(attack_damage_set_problems(e))  # v0.27
         if kind == "special_conditions_removed" and e["reason"] == "replaced":
@@ -1058,9 +1108,19 @@ def log_problems(state) -> list[str]:
                 if e["pokemon_id"] in exclusive:
                     problems.append(f"{e['turn']} 番に、{exclusive[e['pokemon_id']]} のポケモン {e['pokemon_id']} が、それを消さずに {e['condition']} になった")
                 exclusive[e["pokemon_id"]] = e["condition"]
+            if e["condition"] == "poison":
+                problems.extend(_poison_problems(state, e, poisoned.get(e["pokemon_id"])))
+                poisoned[e["pokemon_id"]] = e.get("damage")
         elif kind == "special_conditions_removed":
             if exclusive.get(e["pokemon_id"]) in e["conditions"]:
                 del exclusive[e["pokemon_id"]]
+            if "poison" in e["conditions"]:
+                poisoned.pop(e["pokemon_id"], None)
+        elif kind == "poison_damage":
+            # v0.34: ポケモンチェックのどくのダメージは、そのポケモンのどくの量（通常 10・特殊などくはその量。p.322・p.323）
+            # 盤面を直接作ったテスト（build_test_state）は、どく状態にしたログがないので、ログで組み立てたどくだけを確かめる
+            if e["pokemon_id"] in poisoned and poisoned[e["pokemon_id"]] != e["amount"]:
+                problems.append(f"{e['turn']} 番のポケモン {e['pokemon_id']} のどくのダメージ {e['amount']} が、ログから組み立てたどくの量 {poisoned.get(e['pokemon_id'])} と違う")
         elif kind == "move_energy":
             # v0.5: 特殊能力（エナジートランス）で、同じ uid のエネルギーを移動元から移動先へ（トラッシュには置かない）
             if declared != (e["turn"], e["player"], e["pokemon_id"]):
@@ -1240,16 +1300,21 @@ def log_problems(state) -> list[str]:
         elif kind in ("bench_from_deck", "bench_from_deck_none"):
             # v0.32: ワザ（なかまをよぶ・ふえる）で、ワザを使ったプレイヤーの山札の、説明の名前のたねポケモンを、手札を通さずにベンチに出す（山札は組み立て
             # 直さないので、持ち主・手札・トラッシュ・場にないことで確かめる）。どちらのあとにも同じプレイヤーの山札を切る（shuffle）
+            # v0.34: たすけをよぶは名前でなくタイプで選ぶ（登録の ``pokemon_type``）
             entry = state.effects.attack_entry(*_attack_key(e["effect"]))
             names = getattr(entry.effect, "names", None) if entry is not None else None
-            if attack_window is None or e["player"] != attack_window["player"] or e["pokemon_id"] != attack_window["pokemon_id"] or names is None:
-                problems.append(f"{e['turn']} 番の {kind} が、山札からベンチに出すワザ（登録の名前）の処理の中にない")
+            pokemon_type = getattr(entry.effect, "pokemon_type", None) if entry is not None else None
+            if attack_window is None or e["player"] != attack_window["player"] or e["pokemon_id"] != attack_window["pokemon_id"] \
+                    or (names is None) == (pokemon_type is None):
+                problems.append(f"{e['turn']} 番の {kind} が、山札からベンチに出すワザ（登録の名前・タイプ）の処理の中にない")
             if kind == "bench_from_deck":
                 uid = e["card"]
                 definition = state.card_def(uid)
                 if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids \
-                        or not definition.is_basic_pokemon or (names is not None and definition.name_ja not in names):
-                    problems.append(f"{e['turn']} 番にベンチに出したカード {uid} が、プレイヤー {e['player']} の山札の、名前 {names} のたねポケモンではない")
+                        or not definition.is_basic_pokemon or (names is not None and definition.name_ja not in names) \
+                        or (pokemon_type is not None and definition.pokemon_type is not pokemon_type):
+                    problems.append(f"{e['turn']} 番にベンチに出したカード {uid} が、プレイヤー {e['player']} の山札の、名前 {names}・タイプ {pokemon_type} の"
+                                    "たねポケモンではない")
                 enter(uid)
                 if ids[uid] != e["to_pokemon_id"]:
                     problems.append(f"{e['turn']} 番にベンチに出したポケモンの番号 {e['to_pokemon_id']} が、ログから組み立てた {ids[uid]} と違う")
@@ -1354,6 +1419,8 @@ def log_problems(state) -> list[str]:
             # 次の自分の番（与えた番 + 2）
             alive[(e["pokemon_id"], e["turn"])] = {
                 "kind": e["persistent_effect"], "active_turn": e["active_turn"], "effect": e["effect"], "source_card": e["source_card"],
+                # v0.34: 「次の自分の番の始めに消える」効果（なきつく）は、はたらく番の次の番の始めに消える（はたらく番の終わりではない）
+                "until": e["active_turn"] + 1 if e["persistent_effect"] == ReducedDamageToSource.kind else e["active_turn"],
             }
             offset = NextTurnAttackDamage.turns_until_active if e["persistent_effect"] == NextTurnAttackDamage.kind else 1
             if e["active_turn"] != e["turn"] + offset:
@@ -1364,11 +1431,14 @@ def log_problems(state) -> list[str]:
         elif kind == "persistent_effect_removed":
             removed[(e["pokemon_id"], e["created_turn"])] += 1
             info = alive.pop((e["pokemon_id"], e["created_turn"]), None)
-            if info is not None and e["reason"] == "expired" and e["turn"] != info["active_turn"]:
+            if info is not None and e["reason"] == "expired" and e["turn"] != info["until"]:
                 problems.append(f"{e['turn']} 番に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {e['pokemon_id']}）が期限で消えた（早すぎる・遅すぎる）")
+            if info is not None and e["reason"] == "expired" and info["until"] != info["active_turn"] \
+                    and (prior is None or prior["kind"] not in ("turn_start", "persistent_effect_removed")):
+                problems.append(f"{e['turn']} 番に、番の始めに消える持続する効果（ポケモン {e['pokemon_id']}）が、番の始め（turn_start のすぐあと）以外で消えた")
         if kind == "turn_end":
             for (pid, created), info in alive.items():
-                if info["active_turn"] <= e["turn"]:
+                if info["until"] <= e["turn"]:
                     problems.append(f"{e['turn']} 番の終わり（turn_end）に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {pid}・{created} 番）が残っている")
 
     if declared is not None:

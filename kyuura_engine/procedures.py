@@ -23,7 +23,7 @@ from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_
 from .damage import calculate_confusion_damage
 from .effects import attack_damage_modifiers
 from .errors import UnsupportedError
-from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects
+from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
 from .zones import draw_cards
 
@@ -124,6 +124,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.power_uses_this_turn = ()  # v0.31（「自分の番ごとに1回使える」特殊能力を使ったポケモン）
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
+    remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
         return
     if not state.players[player].deck:

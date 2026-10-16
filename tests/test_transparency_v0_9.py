@@ -640,7 +640,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         # v0.33: 化石の秘密のゴルダックの「ねんりき」（ParalyzeOnHeads）・マチスのコイル（PMCG5-039）の「こんらんでんぱ」
                                         # （ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（はかいでんぱ・はかいビームの T19b は
                                         # tests/test_cd4_opponent_energy_coins_v0_33.py）
-                                        "ねんりき", "こんらんでんぱ"]))
+                                        "ねんりき", "こんらんでんぱ",
+                                        # v0.34: エレブー（PMCG1-041）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/barrier-resume-coin-bonus-v0.34.md）
+                                        "でんきショック"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

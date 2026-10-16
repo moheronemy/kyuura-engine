@@ -245,7 +245,7 @@ MUTANTS: tuple[Mutant, ...] = (
            '    why = "最終ダメージが 0" if result.prevented else "「とうめい」で受けなかった" if result.evaded else "「ダメージを受けない」状態で無効"',
            origin='v0.18e'),
     Mutant('V02', '送る効果が残っていてもワザの途中の決定を出す（窓の途中で黙って止まる）', R + 'programs.py',
-           '        if self.fs.pending:\n            raise RuntimeError("決定の前に送る効果が残っている',
+           '        if self.fs.pending and not carry:\n            raise RuntimeError("決定の前に送る効果が残っている',
            '        if False:\n            raise RuntimeError("決定の前に送る効果が残っている',
            origin='v0.18e'),
     Mutant('V03', '研究の対応表から停止コードを 1 つ落とす（Z23 の停止コードの名前を誤る）', 'kyuura_engine/data/research_links.json',

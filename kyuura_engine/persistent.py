@@ -17,7 +17,9 @@ p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分�
 消える契機（どれもログ ``persistent_effect_removed`` の ``reason``）:
 
 - ``EXPIRED``: 効果がはたらく番（``active_turn``。「次の相手の番」。v0.27 の ``NextTurnAttackDamage`` は「次の自分の番」）の終わり（p.236・p.18 のワザ解説「効果の持続：次の
-  相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``procedures.expire_at_turn_end``）でポケモンチェックの前に消す
+  相手の番の最後」「この相手の番の最後に…効果は消える」）。番の終わり（``procedures.expire_at_turn_end``）でポケモンチェックの前に消す。v0.34 の
+  ``ReducedDamageToSource``（「なきつく」。説明が「この状態は次の自分の番の始めに消える」）は型の ``expires_at_turn_start`` で、はたらく番の次の番の
+  最初（``procedures.begin_turn`` のログ ``turn_start`` のすぐあと）に消す（``remove_turn_start_expired_persistent_effects``）
 - ``RETREAT``・``SWITCH``: バトル場からベンチに戻った（p.311「ベンチに戻ったら、そのポケモンの…「持続する効果」は、
   すべて消えてなくなります」・p.322）。「にげる」に失敗した（こんらん）ポケモンはベンチに戻っていないので消えない
 - ``FORCED_SWITCH``（v0.4d）: 相手のワザの効果（バタフリーの「ふきとばし」）でベンチにもどされた（p.311・p.322。p.89 の
@@ -34,7 +36,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
-from .state import AttackBarrier, CannotAttack, DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, Retaliation
+from .state import (
+    AttackBarrier,
+    CannotAttack,
+    DamageReduction,
+    DestinyBond,
+    NextTurnAttackDamage,
+    PreventDamage,
+    ReducedDamageToSource,
+    Retaliation,
+)
 
 if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
@@ -102,8 +113,30 @@ def remove_expired_persistent_effects(state: GameState) -> None:
     """
     for owner in (state.current_player, 1 - state.current_player):
         for pokemon in state.players[owner].in_play():
-            expired = tuple(e for e in pokemon.persistent_effects if e.active_turn == state.turn_number)
+            expired = tuple(e for e in pokemon.persistent_effects if e.active_turn == state.turn_number and not expires_at_turn_start(e))
             remove_persistent_effects(state, owner, pokemon, EXPIRED, expired)
+
+
+def expires_at_turn_start(effect) -> bool:
+    """期限が「はたらく番の次の番の始め」の型か（v0.34。``ReducedDamageToSource``）。ほかの型は、はたらく番の終わり。"""
+    return getattr(type(effect), "expires_at_turn_start", False)
+
+
+def remove_turn_start_expired_persistent_effects(state: GameState) -> None:
+    """番の最初（ログ ``turn_start`` のすぐあと）に、期限が「次の自分の番の始め」の持続する効果のうち、はたらく番が前の番のものを消す（``EXPIRED``。
+    v0.34。「なきつく」の「この状態は次の自分の番の始めに消える」）。番のプレイヤーの場（バトル場 → ベンチ）、相手の場の順。"""
+    for owner in (state.current_player, 1 - state.current_player):
+        for pokemon in state.players[owner].in_play():
+            expired = tuple(e for e in pokemon.persistent_effects if expires_at_turn_start(e) and e.active_turn < state.turn_number)
+            remove_persistent_effects(state, owner, pokemon, EXPIRED, expired)
+
+
+def reduced_damage_to_source(state: GameState, pokemon: PokemonInPlay) -> ReducedDamageToSource | None:
+    """今の番に ``pokemon`` が「なきつく」を受けていて（v0.34。``ReducedDamageToSource``）、その効果がはたらいているなら、その効果。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, ReducedDamageToSource) and effect.active_turn == state.turn_number:
+            return effect
+    return None
 
 
 def damage_prevention(state: GameState, pokemon: PokemonInPlay) -> PreventDamage | None:

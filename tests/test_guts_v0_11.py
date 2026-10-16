@@ -591,7 +591,9 @@ class G37Test(unittest.TestCase):
             "CannotAttackOnHeads", "CoinDiscardOpponentEnergyEach", "DamageThenDiscardEachEnergy", "DamageThenParalyzeOrSelfDamage",
             "SleepOnHeadsWithoutDamage", "SwitchOpponentActive",
             # v0.33（相手のエネルギーのトラッシュ・マヒ。docs/cd4-opponent-energy-coins-v0.33.md）
-            "DamageThenDiscardOpponentEnergy", "DamageAndParalyzeOnHeadsElseFail"]))
+            "DamageThenDiscardOpponentEnergy", "DamageAndParalyzeOnHeadsElseFail",
+            # v0.34（1 枚のコインでどくかこんらん・特殊などく・与えるダメージがへる持続する効果。docs/barrier-resume-coin-bonus-v0.34.md）
+            "DamageThenPoisonOrConfuse", "DamageAndSpecialPoison", "ReduceDamageToSelf"]))
 
 
 class DecisionTest(unittest.TestCase):
