@@ -19,6 +19,7 @@ from tests.helpers import (
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
     V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
+    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -192,11 +193,23 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             if not definition.is_basic_pokemon:
                 self.assertIn(definition.evolves_from, names, card_id)
+        # v0.37（docs/fifteen-reused-effects-v0.37.md）。写しの組は 15 枚で、化石の秘密のベトベターは v0.36 まで参照カード（reference_only）だった。
+        # 進化先 5 枚（1 進化のライチュウ・ダグトリオ・ニョロゾ・ペルシアンと 2 進化のニョロボン）は、進化元（名前が完全に一致するポケモン）が
+        # 写しのどこかの組にある
+        self.assertEqual(read_extract()["pool_v0_37"], list(V0_37_POKEMON))
+        self.assertEqual(len(V0_37_ADOPTED), 14)
+        self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
+        names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
+        for card_id in V0_37_POKEMON:
+            definition = pool.get(card_id)
+            self.assertTrue(pool.is_playable(card_id), card_id)
+            if not definition.is_basic_pokemon:
+                self.assertIn(definition.evolves_from, names, card_id)
         later = (DODUO, PIKACHU, WEEDLE, CATERPIE, PARAS, VULPIX, PARASECT, DEWGONG, METAPOD, KAKUNA, BEEDRILL, BUTTERFREE,
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
-                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON)
+                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

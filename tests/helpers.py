@@ -222,6 +222,23 @@ KOGAS_KOFFING = "PMCG6-015"  # キョウのドガース（闇からの挑戦。H
 ERIKAS_BELLSPROUT = "PMCG5-005"  # エリカのマダツボミ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。へなへなタックル（無）20）。BELLSPROUT とは別のカード
 V0_36_POKEMON = (SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA, KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING,
                  ERIKAS_BELLSPROUT)  # 対応にした 11 枚（写しの組 pool_v0_36 と同じ）
+# v0.37（docs/fifteen-reused-effects-v0.37.md）: 15 枚（化石の秘密のベトベターは v0.8 の過去の原典照合の記録で、ほかの 14 枚は kyuura データの採用）
+RHYHORN = "PMCG2-030"  # サイホーン（第2弾。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 3。にらみつける（無）・つのでつく（闘無無）30）。BROCKS_RHYHORN などとは別のカード
+ROCKET_EEVEE = "PMCG4-049"  # イーブイ（ロケット団。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。たいあたり（無）10・すなかけ（無無）10）。EEVEE（第2弾）とは別のカード
+BROCKS_SANDSHREW = "PMCG5-043"  # タケシのサンド（リーダーズスタジアム。HP 50・闘・弱点 草・抵抗力 雷 -30・にげる 1。すなじごく（闘闘）20）。SANDSHREW とは別のカード
+SABRINAS_DROWZEE = "PMCG6-045"  # ナツメのスリープ（闇からの挑戦。HP 50・超・弱点 超・にげる 1。あんじをかける（超）・ずつき（無無）20）。DROWZEE とは別のカード
+RAICHU = "PMCG1-038"  # ライチュウ（第1弾。ピカチュウから進化。HP 80・雷・弱点 闘・にげる 1。こうそくいどう（雷無無）20・かみなり（雷雷雷無）60）
+DUGTRIO = "PMCG1-056"  # ダグトリオ（第1弾。ディグダから進化。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 2。きりさく（闘闘無）40・じしん（闘闘闘闘）70）
+POLIWHIRL = "PMCG1-028"  # ニョロゾ（第1弾。ニョロモから進化。HP 60・水・弱点 草・にげる 1。ドわすれ（水水）・おうふくびんた（水水無）30×）
+POLIWRATH = "PMCG1-033"  # ニョロボン（第1弾。ニョロゾから進化する 2 進化。HP 90・水・弱点 草・にげる 3。みずでっぽう（水水無）30+・うずしお（水水無無）40）
+FOSSIL_EKANS = "PMCG3-001"  # アーボ（化石の秘密。HP 40・草・弱点 超・にげる 1。どくえき（草）・まきつく（草無）20）。ROCKET_EKANS とは別のカード
+BROCKS_ONIX = "PMCG5-048"  # タケシのイワーク（リーダーズスタジアム。HP 100・闘・弱点 草・にげる 3。うなりごえ（無）・いわおとし（闘闘無）30）
+MEOWTH = "PMCG2-036"  # ニャース（第2弾。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。ねこにこばん（無無）10）。GIOVANNIS_MEOWTH とは別のカード
+KOGAS_TANGELA = "PMCG6-009"  # キョウのモンジャラ（闇からの挑戦。HP 50・草・弱点 炎・にげる 2。ねむりごな（草）10・つるでさがす（草無））。TANGELA とは別のカード
+MISTYS_MAGIKARP = "PMCG5-028"  # カスミのコイキング（リーダーズスタジアム。HP 30・水・弱点 雷・にげる 1。しんだふり（無）・はねる（無）10）。MAGIKARP とは別のカード
+PERSIAN = "PMCG2-039"  # ペルシアン（第2弾。ニャースから進化。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 0。ひっかく（無無）20・かみつく（無無無）30）
+V0_37_ADOPTED = (RHYHORN, ROCKET_EEVEE, BROCKS_SANDSHREW, SABRINAS_DROWZEE, RAICHU, DUGTRIO, POLIWHIRL, POLIWRATH, FOSSIL_EKANS, BROCKS_ONIX, MEOWTH,
+                 KOGAS_TANGELA, MISTYS_MAGIKARP, PERSIAN)  # kyuura データの採用の記録で加えた 14 枚
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -243,7 +260,10 @@ KADABRA = "PMCG1-046"  # ユンゲラー（v0.7。ケーシィから進化する
 ABRA = "PMCG1-043"  # ケーシィ（v0.7。HP 30・超・弱点 超・にげる 0。ねんりき 10）
 GRIMER = "PMCG4-004"  # ロケット団のベトベター（v0.8。HP 40・草・弱点 超・にげる 1。どくガス・ねばりつく 10+）
 MUK = "PMCG3-007"  # ベトベトン（v0.8。ベトベターから進化する 1 進化。HP 70・草・弱点 超・にげる 2。かがくへんかガス・ヘドロこうげき 30）
-FOSSIL_GRIMER = "PMCG3-003"  # 化石の秘密のベトベター（v0.8。参照カード。「ちいさくなる」が未実装でデッキに入らない）
+# 化石の秘密のベトベター（v0.8〜v0.36 は参照カード（「ちいさくなる」が未実装でデッキに入らない）。v0.37 で対応にした。HP 50・草・弱点 超・にげる 1。
+# ベトベト（無）10・ちいさくなる（草））
+FOSSIL_GRIMER = "PMCG3-003"
+V0_37_POKEMON = V0_37_ADOPTED[:1] + (FOSSIL_GRIMER,) + V0_37_ADOPTED[1:]  # 対応にした 15 枚（写しの組 pool_v0_37 の 14 枚と化石の秘密のベトベター）
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -681,6 +701,14 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenAttackCoinCheck,  # すなかけ・えんまく・サンダーフラッシュ・しんきろう
     _effects.DamageThenRetreatLock,  # アイスバーン・わしづかみ
     _effects.DamageThenReturnSelfToDeckOnHeads,  # キョウのドガースの「くもがくれガス」
+) + (
+    # v0.37（docs/fifteen-reused-effects-v0.37.md 3 章）
+    _effects.PoisonOnHeadsWithoutDamage,  # アーボの「どくえき」
+    _effects.ParalyzeOnHeadsWithoutDamage,  # タケシのイワークの「うなりごえ」
+    _effects.DamageThenDrawOnHeads,  # ニャースの「ねこにこばん」
+    _effects.DrawOnHeads,  # キョウのモンジャラの「つるでさがす」
+    _effects.SelfBarrierOnHeads,  # カスミのコイキングの「しんだふり」
+    _effects.DamageThenReduceDamageToSelf,  # ペルシアンの「かみつく」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -698,6 +726,17 @@ def no_charizard_pool():
     """リザードンの登録を除いた登録表（``NO_CHARIZARD_EFFECTS``）で分類した、同梱の写しのカードの組（v0.31）。"""
     from kyuura_engine.cards import pool_from_extract, read_extract
     return pool_from_extract(read_extract(), NO_CHARIZARD_EFFECTS)
+
+
+# v0.36 まで、化石の秘密のベトベター（PMCG3-003）は「ちいさくなる」が未実装の参照カードだった（v0.8）。v0.37 で対応にしたので、その性質を
+# 確かめるテストは、この 2 つのワザの登録だけを除いた登録表と、その登録表で分類した写しのカードの組（``no_fossil_grimer_pool``）を使う
+NO_FOSSIL_GRIMER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-fossil-grimer", [AttackKey(FOSSIL_GRIMER, 0), AttackKey(FOSSIL_GRIMER, 1)])
+
+
+def no_fossil_grimer_pool():
+    """化石の秘密のベトベターの登録を除いた登録表（``NO_FOSSIL_GRIMER_EFFECTS``）で分類した、同梱の写しのカードの組（v0.37）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_FOSSIL_GRIMER_EFFECTS)
 
 
 class TwoStepTestEffect(AttackEffect):

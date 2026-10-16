@@ -646,7 +646,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "でんきショック",
                                         # v0.36: ブーバー（化石の秘密。PMCG3-008）の「スモッグ」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/sand-attack-retreat-lock-v0.36.md）
-                                        "スモッグ"]))
+                                        "スモッグ",
+                                        # v0.37: 化石の秘密のベトベターの「ベトベト」・化石の秘密のアーボの「まきつく」（ParalyzeOnHeads。既存の型の登録だけなので、
+                                        # 同じ T19b で止まる。docs/fifteen-reused-effects-v0.37.md）
+                                        "ベトベト", "まきつく"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

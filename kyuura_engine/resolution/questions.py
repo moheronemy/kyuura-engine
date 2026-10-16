@@ -125,6 +125,10 @@ QUESTIONS: dict[str, Question] = {
                  "ワザを使ったポケモンが、ワザの効果で自分と自分についているカードを山札にもどし（バトル場が空く）、同じワザで HP 以上になった"
                  "ポケモンがいるとき、バトル場に出す時点と、きぜつの処理（サイド・勝ち負け・相手がバトル場に出す）との順番は、原典（p.311・p.313・"
                  "p.323・p.324）から決められない（出す順番・勝ち負けが変わりうる）"),
+        # v0.37（docs/fifteen-reused-effects-v0.37.md 4 章）
+        Question("bench_damage_weakness_resistance", "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE", ("JS1",), 10,
+                 "説明に「「弱点・抵抗力」に関係なく」のない控えポケモンへのダメージ（第1弾のダグトリオの「じしん」）に、弱点・抵抗力を計算するかは、"
+                 "2000.02.14 版の記録から決められず、控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいると、読み方で受けるダメージが変わる"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

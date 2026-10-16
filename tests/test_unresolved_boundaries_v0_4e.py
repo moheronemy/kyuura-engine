@@ -70,6 +70,9 @@ ALL_CODES = (
     # AttackCheckTest（test_confused_pokemon_stops_before_the_coin・test_heads_continues_and_tails_fails_the_attack）・DeckReturnTest
     # （test_knockout_in_the_same_attack_stops_before_the_declaration・test_heads_returns_the_pokemon_and_attached_cards_after_damage）
     "UNRESOLVED_ATTACK_CHECK_CONFUSION", "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT",
+    # v0.37: JS1（docs/fifteen-reused-effects-v0.37.md）。止まる場合と隣の止まらない場合は tests/test_fifteen_reused_effects_v0_37.py の
+    # EarthquakeTest（test_stops_when_weakness_or_resistance_would_change_the_damage・test_proceeds_when_both_readings_give_the_same_damage）
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE",
 )
 TURN = 7
 

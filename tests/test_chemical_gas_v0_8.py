@@ -201,7 +201,8 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
     def test_card_values(self):
         """p.48 で照合した値（300dpi・図版は 600dpi）: 「ベトベターから進化」の 1 進化、HP 70、草、弱点 超（×2）、抵抗力なし、にげる 2、
         ポケモンパワー 1 つ（かがくへんかガス）、ワザ 1 つ（ヘドロこうげき 草草草 30）。対戦用の進化元はロケット団のベトベター（p.45）。
-        化石の秘密のベトベター（p.47）は「ちいさくなる」が未実装なので参照カード（デッキに入らない）。"""
+        化石の秘密のベトベター（p.47）は v0.8〜v0.36 は「ちいさくなる」が未実装なので参照カード（デッキに入らない）だった。v0.37 で対戦用の
+        組（pool_v0_37）に移した（docs/fifteen-reused-effects-v0.37.md）。"""
         pool = load_card_pool()
         d = pool.get(MUK)
         self.assertTrue(d.supported and pool.is_playable(MUK) and d.is_stage1_pokemon)
@@ -213,8 +214,9 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                          [("ヘドロこうげき", ["grass"] * 3, 30, None)])
         extract = read_extract()
         self.assertEqual(extract["pool_v0_8"], [GRIMER, MUK])
-        self.assertIn(FOSSIL_GRIMER, extract["reference_only"])
-        self.assertFalse(pool.is_playable(FOSSIL_GRIMER))
+        self.assertIn(FOSSIL_GRIMER, extract["pool_v0_37"])
+        self.assertNotIn(FOSSIL_GRIMER, extract["reference_only"])
+        self.assertTrue(pool.is_playable(FOSSIL_GRIMER))
         self.assertEqual(pool.get(FOSSIL_GRIMER).name_ja, pool.get(GRIMER).name_ja)  # 同じ名前（どちらからでも進化できる。p.310）
 
     def test_registered_entry_matches_the_verification(self):

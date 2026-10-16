@@ -47,7 +47,7 @@ from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, dra
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, Suspended, Window
-from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches
+from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, weakness_resistance_matters
 
 if TYPE_CHECKING:
     from ..cards import Attack
@@ -1292,11 +1292,14 @@ class ExtraEnergyMixed:
 class BenchDamage(Element):
     """相手の控えポケモン（``pokemon_type`` なら、そのタイプのポケモンだけ）の全員に、それぞれダメージ（v0.31。カツラのガーディの「もえひろがる」・
     カツラのリザードの「やきはらう」）。受けるのは控えの並びの順。プラスパワーは変えない（p.257）。``weakness_resistance`` が False なら「弱点・抵抗力」に
-    関係なく。v0.33: ``own`` なら自分の控えポケモンの全員（p.320 のダメージの (4)。タケシのディグダの「ミニじしん」。``E.SELF_BENCH``）。"""
+    関係なく。v0.33: ``own`` なら自分の控えポケモンの全員（p.320 のダメージの (4)。タケシのディグダの「ミニじしん」。``E.SELF_BENCH``）。
+    v0.37: ``weakness_resistance`` が None なら、説明が弱点・抵抗力について書いていない（第1弾のダグトリオの「じしん」）。ダメージを与える前に、どれかの
+    控えのポケモンで計算するかどうかで最終ダメージが変わるなら、問い ``bench_damage_weakness_resistance``（JS1）で止める。変わらなければ「弱点・抵抗力に
+    関係なく」と同じ計算（結果は同じ）。"""
 
     base: Any
     pokemon_type: EnergyType | None = None
-    weakness_resistance: bool = False
+    weakness_resistance: bool | None = False
     gate: tuple | None = None
     name: str = "bench_damage"
     own: bool = False
@@ -1310,9 +1313,15 @@ class BenchDamage(Element):
         side = run.player if self.own else 1 - run.player
         targets = [p for p in run.state.players[side].bench
                    if self.pokemon_type is None or run.state.card_def(p.card).pokemon_type is self.pokemon_type]
+        kind = E.SELF_BENCH if self.own else E.OPPONENT_BENCH
+        if self.weakness_resistance is None:
+            differs = [p.pokemon_id for p in targets
+                       if weakness_resistance_matters(run.res, run.fs, kind, self.base.value(run, None), p.pokemon_id)]
+            if differs:
+                raise run.res.question("bench_damage_weakness_resistance", f"控えのポケモン {differs}")
         for target in targets:
-            deal_damage(run.res, run.fs, E.SELF_BENCH if self.own else E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=target.pokemon_id,
-                        weakness_resistance=self.weakness_resistance)
+            deal_damage(run.res, run.fs, kind, self.base.value(run, None), pokemon_id=target.pokemon_id,
+                        weakness_resistance=bool(self.weakness_resistance))
         return False
 
 
@@ -2365,7 +2374,9 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndParalyzeOnHeadsElseFail: lambda e: (
         ReparalysisGuard(), FailOnTails(), Damage(OPP, Printed()), Status(PARALYSIS),
     ),
-    E.DamageAndOwnBenchDamage: lambda e: (Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), own=True)),
+    E.DamageAndOwnBenchDamage: lambda e: (
+        Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), own=True, weakness_resistance=False if e.weakness_resistance_stated else None),
+    ),
     E.DamageThenCoinBenchDamage: lambda e: (Damage(OPP, Printed()), ChosenBenchDamage(Fixed(e.bench_damage))),
     # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）
     E.CoinBonusOrSelfDamage: lambda e: (
@@ -2396,6 +2407,13 @@ BUILDERS: dict[type, Any] = {
     E.DamageThenAttackCoinCheck: lambda e: (Damage(OPP, Printed()), OpponentAttackCheck(e.single_use)),
     E.DamageThenRetreatLock: lambda e: (Damage(OPP, Printed()), OpponentRetreatLock()),
     E.DamageThenReturnSelfToDeckOnHeads: lambda e: (Damage(OPP, Printed()), ReturnSelfToDeck(HEADS, after_damage="damage")),
+    # v0.37（docs/fifteen-reused-effects-v0.37.md）。どれも既存の要素の組み合わせ
+    E.PoisonOnHeadsWithoutDamage: lambda e: (Status(POISON, local_coin=HEADS),),
+    E.ParalyzeOnHeadsWithoutDamage: lambda e: (Status(PARALYSIS, local_coin=HEADS, reparalysis_check=True),),
+    E.DamageThenDrawOnHeads: lambda e: (Damage(OPP, Printed()), Coin("coin"), Draw(e.count, gate=("coin", HEADS))),
+    E.DrawOnHeads: lambda e: (Coin("coin"), Draw(e.count, gate=("coin", HEADS))),
+    E.SelfBarrierOnHeads: lambda e: (SelfPersistent(AttackBarrier.kind, local_coin=HEADS),),
+    E.DamageThenReduceDamageToSelf: lambda e: (Damage(OPP, Printed()), OpponentReducedDamage(e.amount)),
 }
 
 

@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 43,
-    "engine_stop_codes": 42,
+    "engine_unresolved_rulings": 44,
+    "engine_stop_codes": 43,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -544,6 +544,17 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.37",
+          "document": "docs/fifteen-reused-effects-v0.37.md",
+          "ruling_id": "JS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -964,7 +975,8 @@
       "PMCG5-020/power/0": "LD-PMCG5-020-PWR0",
       "PMCG6-061/power/0": "LD-PMCG6-061-PWR0",
       "PMCG6-073/attack/0": "LD-PMCG6-073-ATK0",
-      "PMCG6-073/power/0": "LD-PMCG6-073-PWR0"
+      "PMCG6-073/power/0": "LD-PMCG6-073-PWR0",
+      "PMCG3-003/attack/1": "LD-PMCG3-003-ATK1"
     },
     "registered_without_kyuura_record": [
       "PMCG2-017/attack/0",
@@ -984,7 +996,6 @@
     ],
     "kyuura_records_not_registered": [
       "LD-PMCG1-047-ATK1",
-      "LD-PMCG3-003-ATK1",
       "LD-PMCG5-027-ATK0",
       "LD-PMCG5-054-ATK0",
       "LD-PMCG6-023-PWR0"
@@ -1018,7 +1029,8 @@
       "PMCG6-059/attack/0": "CC-PMCG6-059-P191",
       "PMCG6-059/attack/1": "CC-PMCG6-059-P191",
       "PMCG6-061/attack/0": "CC-PMCG6-061-P193",
-      "PMCG6-063/attack/0": "CC-PMCG6-063-P229"
+      "PMCG6-063/attack/0": "CC-PMCG6-063-P229",
+      "PMCG3-003/attack/0": "CC-PMCG3-003-P47"
     },
     "card_checks_without_text": {
       "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
@@ -1180,7 +1192,26 @@
       "PMCG5-064/attack/1",
       "PMCG6-015/attack/0",
       "PMCG6-015/attack/1",
-      "PMCG5-005/attack/0"
+      "PMCG5-005/attack/0",
+      "PMCG2-030/attack/0",
+      "PMCG4-049/attack/1",
+      "PMCG5-043/attack/0",
+      "PMCG6-045/attack/0",
+      "PMCG1-038/attack/0",
+      "PMCG1-038/attack/1",
+      "PMCG1-056/attack/1",
+      "PMCG1-028/attack/0",
+      "PMCG1-028/attack/1",
+      "PMCG1-033/attack/0",
+      "PMCG1-033/attack/1",
+      "PMCG3-001/attack/0",
+      "PMCG3-001/attack/1",
+      "PMCG5-048/attack/0",
+      "PMCG2-036/attack/0",
+      "PMCG6-009/attack/0",
+      "PMCG6-009/attack/1",
+      "PMCG5-028/attack/0",
+      "PMCG2-039/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

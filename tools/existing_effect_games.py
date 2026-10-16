@@ -52,6 +52,14 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   （ナッシーのたまなげMAX）対 ``S35``・``S35`` 対 ``A2``。v0.35 のワザの決定（ドわすれのワザ・ダメージの計算の順番・はかいのうずのエネルギー）は元の手順の
   まま（1 つ目の選べるもの）。あわあわ・ドわすれで使えないワザを選んだときは、場から確かめてから別の操作を続ける（``V031_STOPS`` の ``ATTACK_LOCKED``）。
   前の版のデッキに v0.35 のカードは入っていないので、その組の結果は変わらない。
+- v0.37（``--batch v0.37``。``PAIRINGS_V0_37``。docs/fifteen-reused-effects-v0.37.md）: ``F37``（闘）: サイホーン 4・タケシのサンド 4・タケシのイワーク 4・
+  ディグダ（第1弾）4・ダグトリオ 3、トレーナー 12、闘エネルギー 29（どのポケモンも闘に弱点・抵抗力を持たないので、じしんは JS1 で止まらない）。``W37``（水）:
+  ニョロモ（第1弾）4・ニョロゾ 3・ニョロボン 3・カスミのコイキング 4、トレーナー 12、水エネルギー 24・闘エネルギー 10（みずでっぽうは「水」が 3 つ以上なら HC4）。
+  ``L37``（雷・無色）: ピカチュウ（第1弾）4・ライチュウ 3・ニャース 4・ペルシアン 3・ロケット団のイーブイ 4、トレーナー 12、雷エネルギー 30。``G37``（草・超）:
+  化石の秘密のベトベター 4・化石の秘密のアーボ 4・キョウのモンジャラ 4・ナツメのスリープ 4、トレーナー 12、草エネルギー 20・超エネルギー 12。組は ``F37`` 対
+  ``L37``・``W37`` 対 ``G37``・``L37`` 対 ``W37``・``G37`` 対 ``F37``。v0.37 のワザの決定（ドわすれのワザ・うずしおのエネルギー）は元の手順のまま（1 つ目の
+  選べるもの）。JS1・HC4 で止まったワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.37 のカードは入っていないので、その組の
+  結果は変わらない。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -147,7 +155,14 @@ KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING, ERIKAS
     "PMCG6-062", "PMCG4-029", "PMCG5-023", "PMCG5-064", "PMCG6-015", "PMCG5-005")
 V0_36 = (SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA, KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING,
          ERIKAS_BELLSPROUT)
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36  # ワザの選び方を重ね、動きを数えるカード
+# v0.37（既存の効果の再利用を中心にした 15 枚。docs/fifteen-reused-effects-v0.37.md）。進化元はピカチュウ・ディグダ・ニョロモ（第1弾）・ニャース（v0.37）
+RHYHORN, FOSSIL_GRIMER, ROCKET_EEVEE, BROCKS_SANDSHREW, SABRINAS_DROWZEE = "PMCG2-030", "PMCG3-003", "PMCG4-049", "PMCG5-043", "PMCG6-045"
+RAICHU, DUGTRIO, POLIWHIRL, POLIWRATH, FOSSIL_EKANS = "PMCG1-038", "PMCG1-056", "PMCG1-028", "PMCG1-033", "PMCG3-001"
+BROCKS_ONIX, MEOWTH, KOGAS_TANGELA, MISTYS_MAGIKARP, PERSIAN = "PMCG5-048", "PMCG2-036", "PMCG6-009", "PMCG5-028", "PMCG2-039"
+V0_37 = (RHYHORN, FOSSIL_GRIMER, ROCKET_EEVEE, BROCKS_SANDSHREW, SABRINAS_DROWZEE, RAICHU, DUGTRIO, POLIWHIRL, POLIWRATH, FOSSIL_EKANS, BROCKS_ONIX,
+         MEOWTH, KOGAS_TANGELA, MISTYS_MAGIKARP, PERSIAN)
+PIKACHU = "PMCG1-035"
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -203,6 +218,14 @@ DECKS = {
     # v0.36: 草・炎・雷（化石の秘密・ロケット団・リーダーズスタジアム・闇からの挑戦）。わるいサンダースの進化元はイーブイ（v0.31）
     "K36": ((KOGAS_KOFFING, 4), (ERIKAS_BELLSPROUT, 4), (FOSSIL_MAGMAR, 4), (EEVEE, 4), (DARK_JOLTEON, 3), *TRAINERS, (GRASS, 10), (FIRE, 10),
             (LIGHTNING, 9)),
+    # v0.37: 闘（第1弾・ジャングル・リーダーズスタジアム）。どのポケモンも闘に弱点・抵抗力を持たない（ダグトリオのじしんは JS1 で止まらない）
+    "F37": ((RHYHORN, 4), (BROCKS_SANDSHREW, 4), (BROCKS_ONIX, 4), (DIGLETT, 4), (DUGTRIO, 3), *TRAINERS, (FIGHTING, 29)),
+    # v0.37: 水（第1弾・リーダーズスタジアム）。ニョロボンのみずでっぽう（水水無）のために闘を入れる（「水」が 3 つ以上なら HC4 で止まる）
+    "W37": ((POLIWAG, 4), (POLIWHIRL, 3), (POLIWRATH, 3), (MISTYS_MAGIKARP, 4), *TRAINERS, (WATER, 24), (FIGHTING, 10)),
+    # v0.37: 雷・無色（第1弾・ジャングル・ロケット団）
+    "L37": ((PIKACHU, 4), (RAICHU, 3), (MEOWTH, 4), (PERSIAN, 3), (ROCKET_EEVEE, 4), *TRAINERS, (LIGHTNING, 30)),
+    # v0.37: 草・超（化石の秘密・闇からの挑戦）
+    "G37": ((FOSSIL_GRIMER, 4), (FOSSIL_EKANS, 4), (KOGAS_TANGELA, 4), (SABRINAS_DROWZEE, 4), *TRAINERS, (GRASS, 20), (PSYCHIC, 12)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -215,8 +238,9 @@ PAIRINGS_V0_34 = (("F34", "G34"), ("C34", "F34"), ("G34", "C34"))
 PAIRINGS_V0_35 = (("S35", "C34"), ("G34", "S35"), ("S35", "A2"))
 # v0.36: K36 対 P31（ピッピ・ピクシー・カスミのコダックが、えんまく・くもがくれガスなどを自分のワザとして使う）
 PAIRINGS_V0_36 = (("W36", "K36"), ("K36", "P31"), ("W36", "A2"))
+PAIRINGS_V0_37 = (("F37", "L37"), ("W37", "G37"), ("L37", "W37"), ("G37", "F37"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
-           "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36}
+           "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -289,11 +313,24 @@ V031_STOPS = {
     "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": lambda st, c: _deck_return_with_knockout(st, c),
     # v0.36: くもがくれガスの「ダメージを与えた後」で、ダメージを与えない（Z23。最終ダメージが 0・受けない）
     "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE": lambda st, c: _deck_return_without_damage(st, c),
+    # v0.37: 説明に「弱点・抵抗力」に関係なくのない自分の控えへのダメージ（ダグトリオのじしん）で、控えにワザを使うポケモンのタイプに弱点・抵抗力を
+    # 持つポケモンがいる（JS1）
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE": lambda st, c: _bench_reading_matters(st, c),
     # v0.34: なきつくを受けたポケモンが、なきつくを使ったポケモンが控えにいるときに控えにダメージを与える（NK5）
     "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": lambda st, c: (reduced_damage_to_source(st, _attacker(st, c)) is not None
                                                              and any(p.card == reduced_damage_to_source(st, _attacker(st, c)).source_card
                                                                      for p in st.players[1 - c.player].bench)),
 }
+
+
+def _bench_reading_matters(state, command):
+    """JS1（v0.37）: ワザが説明に「弱点・抵抗力」に関係なくのない自分の控えへのダメージ（``DamageAndOwnBenchDamage`` の ``weakness_resistance_stated`` が
+    偽）で、自分の控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいる（まねるワザは対戦に入れていないので見ない）。"""
+    effect = _attack_effect(state, command)
+    if type(effect).__name__ != "DamageAndOwnBenchDamage" or effect.weakness_resistance_stated:
+        return False
+    kind = state.card_def(_attacker(state, command).card).pokemon_type
+    return any(kind in (state.card_def(p.card).weakness, state.card_def(p.card).resistance) for p in state.players[command.player].bench)
 
 
 def _deck_return_attacks(state, command):
@@ -564,7 +601,11 @@ def card_uses(state):
         elif kind == "persistent_effect_added" and card[e["source_card"]] in uses and e["persistent_effect"] in ("attack_coin_check", "cannot_retreat") \
                 and e["source_card"] != e["pokemon"]:
             uses[card[e["source_card"]]][f"gave_{e['persistent_effect']}"] += 1  # v0.36: 相手に与えた効果（まねたワザで与えたものも）
-        elif kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses:
+        elif kind == "damage" and any(card.get(m[1]) in V0_37 for m in e.get("modifiers", ())):
+            for step, source, _ in e["modifiers"]:  # v0.37: ちいさくなる（8 段階）・かみつく（2 段階）でへったダメージ（効果を持つカードに数える）
+                if card.get(source) in V0_37:
+                    uses[card[source]][f"reduced_step{step}"] += 1
+        if kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses:
             # v0.31: 特殊能力（エナジーバーン・しぜんになおる・ほのおでかいふく（つけたカード ``trigger`` があるもの））
             uses[card[e["pokemon"]]]["power_heal_on_attach" if "trigger" in e else kind] += 1
         if kind == "attack":
@@ -582,7 +623,7 @@ def card_uses(state):
                 uses[cid][f"self_damage#{index}"] += 1
                 if e.get("damage_multiplied"):
                     uses[cid][f"self_damage_multiplied#{index}"] += 1  # v0.35: マチスのラッタのきあいだめ（自分へのダメージも 2 倍）
-            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34:
+            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37:
                 uses[cid][f"{e['target']}_damage#{index}"] += 1  # v0.33: 控えポケモンへのダメージ（かけぬける・ミニじしん）
             elif kind == "damage" and not e.get("retaliation") and "target" not in e:
                 uses[cid][f"damage#{index}"] += 1
@@ -632,7 +673,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32・v0.33・v0.34・v0.35 のどれかの 3 組、v0.31 の 4 組）")
+    parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28", help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37 の 4 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

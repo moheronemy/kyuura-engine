@@ -182,6 +182,26 @@ def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | 
     raise ValueError(f"ダメージを受けるポケモンの種類 {target!r} は未対応")
 
 
+def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, base: int, pokemon_id: int) -> bool:
+    """控えポケモン（``target`` は ``OPPONENT_BENCH``・``SELF_BENCH``）へのダメージで、弱点・抵抗力を計算するかどうかで最終ダメージが変わるか（v0.37。
+    説明に「「弱点・抵抗力」に関係なく」のない控えへのダメージ。JS1）。状態を変えず、``deal_damage`` と同じ変更効果（``attack_damage_modifiers``）と
+    計算（``calculate_attack_damage``）で 2 とおりを比べる。ダメージの要素が無効になる（「ワザをうけない」・「ダメージを受けない」）ポケモンは、どちらの
+    読み方でも計算しないので変わらない。同じ段階の順番が要る計算は、``deal_damage`` が今までどおり止める（ここでは比べない）。"""
+    state = res.state
+    _, attacker = state.find_pokemon(fs.frame.source_pid)
+    receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
+    if first_void(res, receiver_player, receiver) is not None:
+        return False
+    attacker_def, receiver_def = state.card_def(attacker.card), state.card_def(receiver.card)
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True)
+    try:
+        finals = {calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=flag).final
+                  for flag in (True, False)}
+    except DamageOrderRequired:
+        return False
+    return len(finals) > 1
+
+
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False) -> DamageResult:

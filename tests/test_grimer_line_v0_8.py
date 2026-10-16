@@ -22,6 +22,7 @@ from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     DIGLETT,
     FOSSIL_GRIMER,
+    no_fossil_grimer_pool,
     GRASS,
     GRIMER,
     HITMONCHAN,
@@ -101,12 +102,16 @@ class CardValuesTest(unittest.TestCase):
             CoinBonusDamageAndParalyze(bonus=15)
 
     def test_fossil_grimer_is_a_reference_card(self):
-        """化石の秘密のベトベター（p.47）はデッキに入らない（「ちいさくなる」の実装を登録していない。「ベトベト」も登録していない）。"""
-        pool = load_card_pool()
+        """化石の秘密のベトベター（p.47）は、ワザの登録がなければデッキに入らない（v0.8〜v0.36 は「ちいさくなる」の実装を登録していない
+        参照カードだった。v0.37 で登録したので、その 2 つの登録を除いた登録表 ``NO_FOSSIL_GRIMER_EFFECTS`` で確かめる。製品の登録表では対戦に
+        使える。docs/fifteen-reused-effects-v0.37.md）。"""
+        pool = no_fossil_grimer_pool()
         self.assertFalse(pool.is_playable(FOSSIL_GRIMER))
         self.assertTrue(any("ちいさくなる" in r for r in pool.get(FOSSIL_GRIMER).unsupported_reasons))
         with self.assertRaises(DeckValidationError):
             validate_deck(expand_decklist({FOSSIL_GRIMER: 4, GRASS: 56}), pool)
+        self.assertTrue(load_card_pool().is_playable(FOSSIL_GRIMER))  # v0.37
+        validate_deck(expand_decklist({FOSSIL_GRIMER: 4, GRASS: 56}), load_card_pool())
 
 
 class PoisonGasTest(unittest.TestCase):
