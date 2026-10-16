@@ -73,6 +73,9 @@ ALL_CODES = (
     # v0.37: JS1（docs/fifteen-reused-effects-v0.37.md）。止まる場合と隣の止まらない場合は tests/test_fifteen_reused_effects_v0_37.py の
     # EarthquakeTest（test_stops_when_weakness_or_resistance_would_change_the_damage・test_proceeds_when_both_readings_give_the_same_damage）
     "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE",
+    # v0.38: GK1（docs/bench-switch-combined-v0.38.md）。止まる場合と隣の止まらない場合は tests/test_bench_switch_combined_v0_38.py の
+    # RamTest（test_damage_trigger_stops_before_the_declaration・test_proceeds_without_a_damage_trigger）
+    "UNRESOLVED_DAMAGE_TRIGGER_TIMING",
 )
 TURN = 7
 

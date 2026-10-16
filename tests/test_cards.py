@@ -19,7 +19,7 @@ from tests.helpers import (
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
     V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
-    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER,
+    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -197,6 +197,7 @@ class CardPoolTest(unittest.TestCase):
         # 進化先 5 枚（1 進化のライチュウ・ダグトリオ・ニョロゾ・ペルシアンと 2 進化のニョロボン）は、進化元（名前が完全に一致するポケモン）が
         # 写しのどこかの組にある
         self.assertEqual(read_extract()["pool_v0_37"], list(V0_37_POKEMON))
+        self.assertEqual(read_extract()["pool_v0_38"], list(V0_38_POKEMON))  # v0.38（docs/bench-switch-combined-v0.38.md）
         self.assertEqual(len(V0_37_ADOPTED), 14)
         self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
@@ -209,7 +210,7 @@ class CardPoolTest(unittest.TestCase):
                  BULBASAUR, IVYSAUR, VENUSAUR, SQUIRTLE, WARTORTLE, BLASTOISE, ABRA, KADABRA, ALAKAZAM, GRIMER, MUK, GASTLY, HAUNTER,
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
-                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON)
+                 *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

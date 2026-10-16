@@ -274,7 +274,7 @@ class CardDataTest(unittest.TestCase):
         for cls in (E.PoisonOnHeadsWithoutDamage, E.ParalyzeOnHeadsWithoutDamage, E.DamageThenDrawOnHeads, E.DrawOnHeads, E.SelfBarrierOnHeads,
                     E.DamageThenReduceDamageToSelf):
             self.assertNotIn(cls, v013_checks.VERIFIED)
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 314)
+        # 登録表の全体の数（v0.37 で 314）は tests/test_effects.py が確かめる（v0.38 で 343。後の版で増えるので、ここでは確かめない）
 
 
 class TextVariantTest(unittest.TestCase):

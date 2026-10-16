@@ -27,6 +27,7 @@ from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..effects import AttackKey, AttackUse, PowerKey
 from ..errors import UnsupportedError
 from ..state import GameState
+from ..zones import promote_from_bench
 
 from . import catalog as C
 from . import codec
@@ -460,11 +461,7 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
 
 
 def _resume_promote(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:
-    state = res.state
-    p = state.players[decision.player]
-    index = next(i for i, pokemon in enumerate(p.bench) if pokemon.pokemon_id == choices[0])
-    p.active = p.bench.pop(index)
-    state.add_event("promote_active", player=decision.player, pokemon=p.active.card)
+    promote_from_bench(res.state, decision.player, choices[0])  # v0.38: ワザの効果で場をはなれたあとの交代と共通（動き・ログは v0.37 と同じ）
     _next_promotion_or_end(res, cont.remaining, cont.then)
 
 

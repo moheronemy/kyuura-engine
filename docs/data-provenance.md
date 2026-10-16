@@ -829,3 +829,32 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
    にらみつける・ナツメのスリープのあんじをかける）は、同じ意味の既存の書き方と照らして登録した（[fifteen-reused-effects-v0.37.md](fifteen-reused-effects-v0.37.md) 2 章）。
 3. pcg-search.com との書き方の違い（処理に影響しない）: ペルシアン（PMCG2-039）の「かみつく」は、kyuura の文面（`ja_text_source` は nazonobasho.com）が
    「受けた【相手】は」（【】で囲む）、サイトは「受けた相手は」。
+
+## v0.38 で加えたポケモン 15 枚（控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果）
+
+写しを作り直しました（`pool_v0_38`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 200 枚から 215 枚になりました（フリーザー PMCG3-023・サワムラー PMCG3-039・エリカのモンジャラ PMCG5-006・タケシのロコン PMCG5-017・
+  タケシのゴルバット PMCG5-008・アーボック PMCG3-004・サイドン PMCG2-033・カツラのポニータ PMCG6-028・カツラのギャロップ PMCG6-030・キョウのピジョン PMCG6-070・
+  キョウのビードル PMCG6-001・サカキのニドリーナ PMCG6-012・ナツメのポリゴン PMCG6-066・ケーシィ PMCG4-031・キョウのポッポ PMCG6-067 の 15 枚を加えた）。
+  ほかのカードの記録は変わっていません。
+- 根拠は `kyuura_engine/data/card_sources.json` の採用の記録（15 件 `adopted`。`basis: kyuura_data`。`kyuura_records` はどれも空）と、pcg-search.com の同じ版の
+  ページとの照合（2026-10-16。15 件とも `match`）です。版は名前だけでなく収録・一覧の番号・HP・ワザで決めました（タケシのロコンはリーダーズスタジアムの 019/096
+  （HP50）で、018/096 は PMCG5-018。キョウのポッポは闇からの挑戦の 064/098 で、PMCG6-062 は別のカード。ケーシィは第4弾の 031/065 で、第1弾の 043/096 は別のカード。
+  サワムラー・アーボックはサイトの一覧の番号が kyuura の id の番号と違う）。15 枚とも kyuura の日本語の文面の出典（`ja_text_source`）は pcg-search.com ではありません。
+  『オフィシャルブック2000』は読んでいないので、`card_verification.json` に加えていません。
+- 処理に使う文面は kyuura の印刷の文面です（研究の対応表の `adopted_printed_text` に説明文のある 21 のワザを加えた）。
+- 検証用デッキ `F38`・`G38`・`C38`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+- 保留中のガルーラ（PMCG2-046）・ベロリンガ、今回関係しない未解決は再調査していません（記録は変えていない）。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 新しい未解決の GK1 が kyuura の未解決の一覧にない（研究の対応表の `stop_codes` で `kyuura_disposition: not_in_kyuura`）: 「ダメージを受けたとき」の効果
+   （はんげき・わるいねぞう・ほのおのかべ・こうらがえし）がはたらき、ワザの要素がダメージ以外の効果をはさんでもう一度ダメージの要素を持つ（サイドンの「げきとつ」）
+   とき、その効果を処理する時点（`UNRESOLVED_DAMAGE_TRIGGER_TIMING`）。kyuura の CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING の時点
+   （ダメージの処理をすべてのせたあと、かつダメージ以外の効果の前）が、この並びにない（[bench-switch-combined-v0.38.md](bench-switch-combined-v0.38.md) 5 章）。
+2. 研究の基準のコミットに、15 枚のどれかを指す kyuura の最新の説明・エラッタ・裁定・論点・照合の記録はない。
+3. kyuura の data/curation/nazonobasho_review.json にある、フリーザーの「ふぶき」のダメージの欄の記録は日本語の文面の出典（nazonobasho.com）についてのもので、
+   kyuura のデータ・pcg-search.com の同じ版のページはどちらも 50（違いはない。参考）。

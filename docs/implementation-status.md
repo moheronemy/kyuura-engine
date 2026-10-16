@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.37）
+# 実装状況（v0.1〜v0.38）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -151,6 +151,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | こんらん状態のポケモンが p.309 の手順 4 の効果（すなかけ・えんまくなど）を受けてワザを使うとき、手順 4 のコインで失敗したあとに手順 5 のこんらんのコインをするか（v0.36。AC6。p.309 は手順 4 で失敗したときの手順 5 を書かない） | 手順 4 のコインの前に `UNRESOLVED_ATTACK_CHECK_CONFUSION` で止める（[sand-attack-retreat-lock-v0.36.md](sand-attack-retreat-lock-v0.36.md) 2.2） |
 | キョウのドガースの「くもがくれガス」で自分を山札にもどし（バトル場が空く）、同じワザで相手の対戦ポケモンが HP 以上になるとき、バトル場に出す時点ときぜつの処理の順番（v0.36。RD9） | 宣言の前に `UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT` で止める（[sand-attack-retreat-lock-v0.36.md](sand-attack-retreat-lock-v0.36.md) 4 章） |
 | 説明に「弱点・抵抗力」に関係なくのない控えポケモンへのダメージ（第1弾のダグトリオの「じしん」）に、弱点・抵抗力を計算するか（v0.37。JS1。kyuura の `bench_weakness` は第2版の時期の会報・第4版の冊子の記録だけ） | 控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいて、読み方で受けるダメージが変わるときだけ、宣言の前に `UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE` で止める（[fifteen-reused-effects-v0.37.md](fifteen-reused-effects-v0.37.md) 4 章） |
+| 「ダメージを受けたとき」の効果（はんげき・わるいねぞう・ほのおのかべ・こうらがえし）がはたらき、ワザの要素がダメージ以外の効果をはさんでもう一度ダメージの要素を持つ（サイドンの「げきとつ」の入れ替え → 自分にも 20）とき、その効果を処理する時点（v0.38。GK1。記録の時点「ダメージの処理をすべてのせたあと、かつダメージ以外の効果の前」がこの並びにない） | 効果がはたらくときだけ、宣言の前に `UNRESOLVED_DAMAGE_TRIGGER_TIMING` で止める（[bench-switch-combined-v0.38.md](bench-switch-combined-v0.38.md) 5 章） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -2170,3 +2171,48 @@ p.309 のワザを使う手順 4「ワザを失敗させたりワザの内容を
 - v0.36 まで形だけを確かめていた 3 つの型（`CannotAttackOnHeads`・`ReduceDamageNextTurn`・`ExtraEnergyDamageMixed`）は、意味の違う書き方のワザも登録できた。
   v0.37 で、受け付ける書き方を一覧にした（登録済みのカードの分類は変わらない）。
 - kyuura への報告事項は [data-provenance.md](data-provenance.md) の v0.37 の章（JS1 が kyuura の未解決の一覧にない。ペルシアンの【】）。
+
+## v0.38 で加えたもの（控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚）
+
+依頼の 15 枚（フリーザー PMCG3-023・サワムラー PMCG3-039・エリカのモンジャラ PMCG5-006・タケシのロコン PMCG5-017・タケシのゴルバット PMCG5-008・アーボック PMCG3-004・
+サイドン PMCG2-033・カツラのポニータ PMCG6-028・カツラのギャロップ PMCG6-030・キョウのピジョン PMCG6-070・キョウのビードル PMCG6-001・サカキのニドリーナ PMCG6-012・
+ナツメのポリゴン PMCG6-066・ケーシィ PMCG4-031・キョウのポッポ PMCG6-067）を対応にしました（対応ポケモン 179 → 194。ワザの登録 314 → 343）。既存の要素の組み合わせと、
+要素の小さな項目（`Element.has_target`・`ForceSwitch.local_coin`・`SelfSwitch.local_coin`・`SelfPersistent.gate`・`ChosenBenchDamage.required`・`ReturnSelfToDeck` の
+`discard_attached`・`shuffle`）と、場をはなれたあとの 2 つの要素（`PromoteFromBench`・`RevealPokemonFromDeck`）で 14 の型を加えました。カードごとの結果・共通の処理・
+規定と根拠・互換性・検証は [bench-switch-combined-v0.38.md](bench-switch-combined-v0.38.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_bench_switch_combined_v0_38.py（以下「単体」）・tests/test_bench_switch_combined_v0_38_games.py（以下「対戦」）です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 15 枚の 29 のワザの登録（型と値）・写しとの一致・採用の記録と外部照合・engine.py と resolution/ にカード id の分岐がない・GK1 は 1 つの問いと 1 つのコード | kyuura データの採用（card_sources.json）・pcg-search.com | 単体 `CardDataTest` |
+| 説明の文面は登録したワザの印刷の文面と完全に同じものだけを受け付ける（のびるキックとのびるつるの条件の文の違いを含む） | 印刷の文面 | 単体 `TextTest` |
+| 進化元は名前の完全一致（6 系統。名前の似た別のカードからは進化できない） | p.310 | 単体 `EvolutionTest` |
+| のびるキック（使うための条件 `NO_OPPONENT_BENCH`）・のびるつる（控えがいなくても使え、何もしない）・ほのおのわ・控えへのダメージの計算（プラスパワーは変えずディフェンダーは変える）・はんげきの時点 | 印刷の文面・p.309・p.257・v0.33・CR-COUNTERATTACK-TIMING | 単体 `ChosenBenchTest` |
+| かいてんひこう・ふぶき（面ごとの控え・控えがいなければ投げない・自分の控えのきぜつはワザのあと）・ふみあらす（同じコイン）・「ワザをうけない」「ダメージを受けない」相手へのコイン | 印刷の文面・p.309・v0.34 の `void_coin_question`・v0.4b | 単体 `SpreadTest` |
+| いかくこうげき（相手が選ぶ・特殊状態が消える・対象がなければ投げない・HC3・T19b） | 印刷の文面・v0.4d・p.311・p.322 | 単体 `ForceSwitchTest` |
+| げきとつ（順番・控えがいなくても自分に 20・同時のきぜつ・GK1 で止める場合と止めない場合） | 印刷の文面・CR-ENERGY-CONVERSION-ORDER・p.324・GK1 | 単体 `RamTest` |
+| けりにげ（自分が選ぶ・対象がなければ投げない） | 印刷の文面・v0.34・CR-COUNTERATTACK-KO-ATTACKER | 単体 `SelfSwitchTest` |
+| こうそくひこう・きけんなはり・どくばりタックル（同じコイン・順番・はんげき・HC3） | 印刷の文面・v0.31・v0.34・CR-COUNTERATTACK-TIMING | 単体 `SameCoinTest` |
+| バリアアタック（8 段階で 10 へる・期限・はんげきで HP 以上なら与えない） | 印刷の文面・v0.31 の `DamageReduction`・p.321 | 単体 `BarrierAttackTest` |
+| いなくなる（順番・ついているカードはトラッシュ・1 回だけ切る・きぜつではない・交代・控えがいなければ負け・くもがくれガスとの行き先の違い） | 印刷の文面・v0.36 の RD1〜RD12 | 単体 `VanishTest` |
+| でんれい（順番・途中の交代・山札をさがす決定の持ち主と選べるもの・不正な答え・控えがいないとき・選べるものがないとき・保存と再開） | 印刷の文面・v0.36・v0.32・v0.24 | 単体 `MessengerTest` |
+| まねるワザ（のびるキックの条件・でんれい／いなくなるは重なったカード全体・げきとつ・ふぶき） | v0.31・v0.32・v0.36 の RD2 | 単体 `CopyTest` |
+| 途中の決定ごとの不変条件・書き出し・pickle・渡した状態を変えない・拒否の原子性 | — | 単体 `IntegrityTest` |
+| 先読みの 3 つの方法の結果が同じ・コインは 1 枚 | v0.15c・v0.16c・v0.35 の約束 | 単体 `PreflightParityTest` |
+| 正式な開始から 48 局で、15 枚・29 のワザをどれも使い、それぞれの効果が起こり、監査がすべて通る | — | 対戦 |
+| 共通の処理の変更で、v0.37 までのカードの動きが変わらない | 固定した v0.37（`beb7b0d`）との比較 | tools/engine_lockstep.py と作業用の道具（[bench-switch-combined-v0.38.md](bench-switch-combined-v0.38.md) 9.2） |
+
+### 原典未確認・未解決
+
+- 新しい未解決の裁定は GK1 の 1 件（上の「裁定が未解決」の表）。停止コード 43 → 44 件、未解決の裁定 44 → 45 件。
+- エンジンの未対応として残ったものはありません（v0.38 のワザは、まねるワザとしても処理する。ドわすれのまねは v0.36 からの `UNSUPPORTED_COPIED_ATTACK` のまま）。
+- カードデータは kyuura の採用で、ガイドブックとは照合していません（pcg-search.com の照合は 15 件。すべて match）。
+
+### 見つけた事項
+
+- 仕上げの検証の途中で、ふみあらすを控えのいない「ダメージを受けない」「ワザをうけない」相手に使う場面でコインを投げていたことに気づき、対象のない要素を
+  `void_coin_question` に渡さないように直した（v0.4b の問いで止める。v0.38 のワザだけに関わる）。
+- kyuura への報告事項は [data-provenance.md](data-provenance.md) の v0.38 の章（GK1 が kyuura の未解決の一覧にない）。

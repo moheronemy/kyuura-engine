@@ -649,7 +649,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "スモッグ",
                                         # v0.37: 化石の秘密のベトベターの「ベトベト」・化石の秘密のアーボの「まきつく」（ParalyzeOnHeads。既存の型の登録だけなので、
                                         # 同じ T19b で止まる。docs/fifteen-reused-effects-v0.37.md）
-                                        "ベトベト", "まきつく"]))
+                                        "ベトベト", "まきつく",
+                                        # v0.38: フリーザーの「フリーズドライ」・サカキのニドリーナの「のしかかり」・ケーシィ（ロケット団）の「ねんりき」
+                                        # （ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。docs/bench-switch-combined-v0.38.md）
+                                        "フリーズドライ", "のしかかり", "ねんりき"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

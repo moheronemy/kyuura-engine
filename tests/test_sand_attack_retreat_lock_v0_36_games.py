@@ -131,6 +131,13 @@ class SandAttackRetreatLockGamesTest(unittest.TestCase):
                 self.assertNotEqual(log_problems(broken), [])
 
 
+def earlier_batch_decks(version: str) -> set[str]:
+    """``version`` より前の版の組（``games.BATCHES``）で使う検証用デッキ（v0.38: 後の版の検証用デッキは、前の版のカードを進化元などに使ってよい）。"""
+    def key(batch: str) -> tuple[int, ...]:
+        return tuple(int(part) for part in batch[1:].split("."))
+    return {label for batch, pairings in games.BATCHES.items() if key(batch) < key(version) for pair in pairings for label in pair}
+
+
 class ToolTest(unittest.TestCase):
     def test_verification_decks(self):
         """検証用デッキは 60 枚で、どのカードも対戦に使える。11 枚はどれも入る。公開の固定のデッキ・前の版の検証用デッキには入れていない。"""
@@ -142,9 +149,8 @@ class ToolTest(unittest.TestCase):
                 self.assertTrue(all(pool.is_playable(c) for c in deck))
         self.assertTrue(set(V0_36_POKEMON) <= set(decks["W36"]) | set(decks["K36"]))
         self.assertFalse(any(set(V0_36_POKEMON) & set(d.cards()) for d in PRESET_DECKS.values()))
-        for label in games.DECKS:
-            if label not in ("W36", "K36"):
-                self.assertFalse(set(V0_36_POKEMON) & set(games.deck_cards(label)), label)
+        for label in sorted(earlier_batch_decks("v0.36")):  # 前の版の検証用デッキ（後の版のデッキは進化元などに使ってよい。v0.38）
+            self.assertFalse(set(V0_36_POKEMON) & set(games.deck_cards(label)), label)
 
 
 if __name__ == "__main__":

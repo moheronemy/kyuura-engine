@@ -129,6 +129,11 @@ QUESTIONS: dict[str, Question] = {
         Question("bench_damage_weakness_resistance", "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE", ("JS1",), 10,
                  "説明に「「弱点・抵抗力」に関係なく」のない控えポケモンへのダメージ（第1弾のダグトリオの「じしん」）に、弱点・抵抗力を計算するかは、"
                  "2000.02.14 版の記録から決められず、控えに、ワザを使うポケモンのタイプに弱点・抵抗力を持つポケモンがいると、読み方で受けるダメージが変わる"),
+        # v0.38（docs/bench-switch-combined-v0.38.md 4 章）
+        Question("damage_trigger_timing", "UNRESOLVED_DAMAGE_TRIGGER_TIMING", ("GK1",), 10,
+                 "「ダメージを受けたとき」の効果（はんげき・わるいねぞう・ほのおのかべ・こうらがえし）がはたらき、ワザの要素がダメージ以外の効果をはさんで"
+                 "もう一度ダメージの要素を持つ（サイドンの「げきとつ」の入れ替え → 自分にも 20）とき、その効果を処理する時点は、記録（ダメージの処理を"
+                 "すべてのせたあと、かつダメージ以外の効果の前。p.89・p.309）から決められない（自分へのダメージとの順番で、同時のきぜつ・効果を与えるかが変わりうる）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

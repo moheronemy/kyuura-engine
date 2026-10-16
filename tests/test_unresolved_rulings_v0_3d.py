@@ -136,10 +136,11 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155）・v0.28 のスリープ（超・弱点 超。
         # p.164）・v0.31 のミュウツー（PMCG1-050）・化石の秘密のヤドン（PMCG3-027）（どちらも超・弱点 超。kyuura データの採用。採用の記録の
         # カードデータ）・v0.32 のルージュラ（PMCG1-048。超・弱点 超。kyuura データの採用）・v0.37 のナツメのスリープ（PMCG6-045。超・弱点 超。kyuura
-        # データの採用））は 40、それ以外は 20（対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはない）
+        # データの採用）・v0.38 のロケット団のケーシィ（PMCG4-031。超・弱点 超。kyuura データの採用））は 40、それ以外は 20（対戦に使えるポケモンに
+        # 抵抗力で自分のタイプを減らすものはない）
         doubled = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 40}
         self.assertEqual(doubled, {"PMCG1-043", "PMCG1-045", "PMCG1-046", "PMCG1-049", "PMCG6-044", "PMCG1-050", "PMCG3-027", "PMCG1-048",
-                                   "PMCG6-045"})
+                                   "PMCG6-045", "PMCG4-031"})
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled))
 
 

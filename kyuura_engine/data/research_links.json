@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 44,
-    "engine_stop_codes": 43,
+    "engine_unresolved_rulings": 45,
+    "engine_stop_codes": 44,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -551,6 +551,17 @@
           "version": "v0.37",
           "document": "docs/fifteen-reused-effects-v0.37.md",
           "ruling_id": "JS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DAMAGE_TRIGGER_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.38",
+          "document": "docs/bench-switch-combined-v0.38.md",
+          "ruling_id": "GK1"
         }
       ],
       "kyuura_issue": null,
@@ -1211,7 +1222,28 @@
       "PMCG6-009/attack/0",
       "PMCG6-009/attack/1",
       "PMCG5-028/attack/0",
-      "PMCG2-039/attack/1"
+      "PMCG2-039/attack/1",
+      "PMCG3-023/attack/0",
+      "PMCG3-023/attack/1",
+      "PMCG3-039/attack/0",
+      "PMCG5-006/attack/1",
+      "PMCG5-017/attack/0",
+      "PMCG5-017/attack/1",
+      "PMCG5-008/attack/1",
+      "PMCG3-004/attack/0",
+      "PMCG3-004/attack/1",
+      "PMCG2-033/attack/1",
+      "PMCG6-028/attack/0",
+      "PMCG6-030/attack/1",
+      "PMCG6-070/attack/0",
+      "PMCG6-070/attack/1",
+      "PMCG6-001/attack/1",
+      "PMCG6-012/attack/0",
+      "PMCG6-012/attack/1",
+      "PMCG6-066/attack/1",
+      "PMCG4-031/attack/0",
+      "PMCG4-031/attack/1",
+      "PMCG6-067/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

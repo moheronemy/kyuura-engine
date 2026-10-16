@@ -932,7 +932,12 @@ def check_invariants(state: GameState) -> list[str]:
 
     # v0.12: 「ふしちょう」を使うかの決定（きぜつの処理のあと、バトル場に出す前。再開先 "post_knockout"）を待つ間も、バトル場が空のことがある
     after_knockout = phase is Phase.DECISION and state.decision is not None and state.decision.resume == "post_knockout"
+    # v0.38: ワザを使ったポケモンがワザの効果で場をはなれたあとのワザの途中の決定（キョウのポッポの「でんれい」）を待つ間も、そのプレイヤーのバトル場が
+    # 空のことがある（かわりの対戦ポケモンを出す決定・控えがいないときの山札をさがす決定。``_returned_attacker``）
+    left_play = phase is Phase.DECISION and state.decision is not None and _returned_attacker(state, state.decision) is not None
     for player, p in enumerate(state.players):
+        if left_play and player == state.current_player:
+            continue
         if p.placed_starting_pokemon and p.active is None and phase not in (Phase.TAKE_PRIZE, Phase.PROMOTE_ACTIVE) and not after_knockout:
             problems.append(f"プレイヤー {player} のバトル場にポケモンがいないまま {phase.value} になっている")
     if phase is Phase.MAIN:
@@ -1889,6 +1894,15 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     そのあとで、効果ごとの形（決定するプレイヤー・種類・選べるもの）を、ワザの実装の ``decision_problems`` で確かめる。
     """
     use = d.context_value("use")
+    if _returned_attacker(state, d) is not None:
+        # v0.38: ワザを使ったポケモンが、そのワザの効果で場をはなれたあとの決定（キョウのポッポの「でんれい」のかわりの対戦ポケモン・山札をさがす）。
+        # 場にいないので、場の確かめのかわりに今の番のログ（ワザの宣言 → そのポケモンを山札にもどしたログ）で確かめた（``_returned_attacker``）
+        player, pokemon_id, card_id, attack_index = use
+        if player != state.current_player:
+            return [f"場をはなれたポケモンのワザの決定の続き {use!r} が、番のプレイヤー {state.current_player!r} のワザではない"]
+        entry = state.effects.attack_entry(card_id, attack_index)
+        return _carried_deferred_problems(state, d, player) + entry.effect.decision_problems(
+            state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
     if not (isinstance(use, tuple) and len(use) == 4 and state.find_pokemon(use[1]) is not None):
         return [f"ワザの決定の続きの情報 {use!r} が正しくない"]
     player, pokemon_id, card_id, attack_index = use
@@ -1911,6 +1925,33 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
         # v0.35: ダメージの計算の順番の決定は、どのワザのダメージの要素も出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
         return problems + _damage_order_decision_problems(state, d, player, attacker)
     return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+
+
+def _returned_attacker(state: GameState, d) -> dict | None:
+    """v0.38: ワザの途中の決定（``resume`` が ``"attack"``）で、ワザを使ったポケモンがそのワザの効果で場をはなれているなら、そのポケモンを山札にもどした
+    ログ（``return_in_play_to_deck``）。そうでなければ None。
+
+    許すのは、続きのワザ（相手のワザを自分のワザとして使っていれば、そのワザ）の実装が ``leaves_play_before_decisions``（場をはなれたあとに決定を出す。
+    キョウのポッポの「でんれい」）で、続きのポケモンが場になく、今の番にそのプレイヤーのワザの宣言がちょうど 1 回あり、そのあとに、そのポケモン
+    （同じ番号・宣言と同じいちばん上のカード）を同じワザの効果で山札にもどしたログがちょうど 1 回あるときだけ（広げない）。"""
+    use = d.context_value("use")
+    if d.resume != "attack" or not (isinstance(use, tuple) and len(use) == 4) or state.find_pokemon(use[1]) is not None:
+        return None
+    player, pokemon_id, card_id, attack_index = use
+    copied = d.context_value("copied")
+    key = AttackKey(*copied) if isinstance(copied, tuple) and len(copied) == 2 else AttackKey(card_id, attack_index)
+    entry, declared = state.effects.attack_entry(key.card_id, key.attack_index), state.effects.attack_entry(card_id, attack_index)
+    if entry is None or declared is None or not entry.effect.leaves_play_before_decisions:
+        return None
+    events = list(reversed(_events_since_turn_start(state)))  # 古い順
+    attacks = [i for i, event in enumerate(events) if event["kind"] == "attack" and event.get("player") == player]
+    if len(attacks) != 1 or events[attacks[0]].get("attack_index") != attack_index:
+        return None
+    returned = [event for event in events[attacks[0] + 1:] if event["kind"] == "return_in_play_to_deck" and event.get("pokemon_id") == pokemon_id]
+    if len(returned) != 1 or returned[0].get("player") != player or returned[0].get("effect") != str(key) \
+            or returned[0].get("pokemon") != events[attacks[0]].get("pokemon") or state.cards[returned[0]["pokemon"]].card_id != card_id:
+        return None
+    return returned[0]
 
 
 def _damage_order_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:

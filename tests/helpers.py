@@ -264,6 +264,25 @@ MUK = "PMCG3-007"  # ベトベトン（v0.8。ベトベターから進化する 
 # ベトベト（無）10・ちいさくなる（草））
 FOSSIL_GRIMER = "PMCG3-003"
 V0_37_POKEMON = V0_37_ADOPTED[:1] + (FOSSIL_GRIMER,) + V0_37_ADOPTED[1:]  # 対応にした 15 枚（写しの組 pool_v0_37 の 14 枚と化石の秘密のベトベター）
+# v0.38（docs/bench-switch-combined-v0.38.md）。控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚（kyuura データの採用）。
+# 同じ名前の別のカード（タケシのロコン PMCG5-018・キョウのポッポ PMCG6-062・第1弾のケーシィ PMCG1-043）と取りちがえない
+ARTICUNO = "PMCG3-023"  # フリーザー（化石の秘密。HP 70・水・弱点なし・抵抗力 闘 -30・にげる 2。フリーズドライ（水水水）30・ふぶき（水水水水）50）
+HITMONLEE = "PMCG3-039"  # サワムラー（化石の秘密。HP 60・闘・弱点 超・にげる 1。のびるキック（闘闘）・とびひざげり（闘闘闘）50）
+ERIKAS_TANGELA = "PMCG5-006"  # エリカのモンジャラ（リーダーズスタジアム。HP 60・草・弱点 炎・にげる 2。つるでうつ（草）10・のびるつる（草草無））。TANGELA・KOGAS_TANGELA とは別の名前
+BROCKS_VULPIX_50 = "PMCG5-017"  # タケシのロコン（リーダーズスタジアム。HP 50・炎・弱点 水・にげる 1。みつめる（無）・ほのおのわ（炎炎）20）。BROCKS_VULPIX（PMCG5-018）とは別のカード
+BROCKS_GOLBAT = "PMCG5-008"  # タケシのゴルバット（タケシのズバットから進化。HP 70・草・弱点 超・抵抗力 闘 -30・にげる 1。スピードひこう（無）20・かいてんひこう（無無無））
+ARBOK = "PMCG3-004"  # アーボック（化石の秘密。アーボから進化。HP 60・草・弱点 超・にげる 2。いかくこうげき（草）10・どくのきば（草草無）20）
+RHYDON = "PMCG2-033"  # サイドン（第2弾。サイホーンから進化。HP 100・闘・弱点 草・抵抗力 雷 -30・にげる 3。つのでつく（闘無無）30・げきとつ（闘闘闘闘）50）
+BLAINES_PONYTA = "PMCG6-028"  # カツラのポニータ（闇からの挑戦。HP 50・炎・弱点 水・にげる 1。けりにげ（無無）20）。PONYTA とは別の名前
+BLAINES_RAPIDASH = "PMCG6-030"  # カツラのギャロップ（カツラのポニータから進化。HP 70・炎・弱点 水・にげる 0。ほのおのたてがみ（炎）20・ふみあらす（炎無無）30+）
+KOGAS_PIDGEOTTO = "PMCG6-070"  # キョウのピジョン（キョウのポッポから進化。HP 60・無色・弱点 雷・抵抗力 闘 -30・にげる 0。クイックターン（無無無）30×・こうそくひこう（無無無無）10+）
+KOGAS_WEEDLE = "PMCG6-001"  # キョウのビードル（闇からの挑戦。HP 40・草・弱点 炎・にげる 1。チクチクさす（無）10・きけんなはり（草無）10）。WEEDLE とは別の名前
+GIOVANNIS_NIDORINA = "PMCG6-012"  # サカキのニドリーナ（サカキのニドラン♀から進化。HP 80・草・弱点 超・にげる 2。どくばりタックル（草無）30・のしかかり（草無無）20）
+SABRINAS_PORYGON = "PMCG6-066"  # ナツメのポリゴン（闇からの挑戦。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。とがる（無）10・バリアアタック（無無）20）
+ROCKET_ABRA = "PMCG4-031"  # ケーシィ（ロケット団。HP 40・超・弱点 超・にげる 1。いなくなる（超）・ねんりき（超）10）。ABRA（PMCG1-043）とは別のカード
+KOGAS_PIDGEY_40 = "PMCG6-067"  # キョウのポッポ（闇からの挑戦。HP 40・無色・弱点 雷・抵抗力 闘 -30・にげる 1。でんれい（無）・つばさでうつ（無無）20）。KOGAS_PIDGEY（PMCG6-062）とは別のカード
+V0_38_POKEMON = (ARTICUNO, HITMONLEE, ERIKAS_TANGELA, BROCKS_VULPIX_50, BROCKS_GOLBAT, ARBOK, RHYDON, BLAINES_PONYTA, BLAINES_RAPIDASH, KOGAS_PIDGEOTTO,
+                 KOGAS_WEEDLE, GIOVANNIS_NIDORINA, SABRINAS_PORYGON, ROCKET_ABRA, KOGAS_PIDGEY_40)  # 写しの組 pool_v0_38 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -709,6 +728,22 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DrawOnHeads,  # キョウのモンジャラの「つるでさがす」
     _effects.SelfBarrierOnHeads,  # カスミのコイキングの「しんだふり」
     _effects.DamageThenReduceDamageToSelf,  # ペルシアンの「かみつく」
+) + (
+    # v0.38（docs/bench-switch-combined-v0.38.md 3 章）
+    _effects.ChooseOpponentBenchDamage,  # サワムラーの「のびるキック」・エリカのモンジャラの「のびるつる」
+    _effects.DamageThenChosenBenchDamage,  # タケシのロコンの「ほのおのわ」
+    _effects.SpreadDamage,  # タケシのゴルバットの「かいてんひこう」
+    _effects.DamageThenCoinBenchDamageEitherSide,  # フリーザーの「ふぶき」
+    _effects.CoinBonusDamageAndBenchDamage,  # カツラのギャロップの「ふみあらす」
+    _effects.DamageThenForceSwitchOnHeads,  # アーボックの「いかくこうげき」
+    _effects.DamageThenForceSwitchThenSelfDamage,  # サイドンの「げきとつ」
+    _effects.DamageThenSelfSwitchOnHeads,  # カツラのポニータの「けりにげ」
+    _effects.CoinBonusDamageAndSelfBarrier,  # キョウのピジョンの「こうそくひこう」
+    _effects.DamageThenPoisonOrParalyze,  # キョウのビードルの「きけんなはり」
+    _effects.DamageAndSelfDamageThenPoisonOnHeads,  # サカキのニドリーナの「どくばりタックル」
+    _effects.DamageThenReduceDamageNextTurn,  # ナツメのポリゴンの「バリアアタック」
+    _effects.DiscardAttachedAndReturnSelfToDeck,  # ケーシィの「いなくなる」
+    _effects.ReturnSelfToDeckThenSearchPokemon,  # キョウのポッポの「でんれい」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

@@ -34,7 +34,7 @@ from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
 from ..decisions import (
     ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DAMAGE_STEP_ORDER, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY,
-    RECOVER_TRAINER, SELECT_ATTACK, SELECT_OPPONENT_ATTACK, SELECT_POKEMON,
+    RECOVER_TRAINER, SEARCH_DECK, SELECT_ATTACK, SELECT_OPPONENT_ATTACK, SELECT_POKEMON,
 )
 from ..errors import UnsupportedError
 from ..persistent import RETURN_IN_PLAY_TO_DECK, add_persistent_effect, remove_persistent_effects
@@ -42,7 +42,10 @@ from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotRetreat,
     CannotUseAttack, CannotUseOwnAttack, DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, ReducedDamageToSource, Retaliation,
 )
-from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, draw_cards, return_discard_to_hand, return_in_play_to_deck, shuffle_deck
+from ..zones import (
+    attach_from_discard, bench_from_deck, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, return_discard_to_hand,
+    return_in_play_to_deck, reveal_deck_to_hand, shuffle_deck,
+)
 
 from . import catalog as C
 from . import codec
@@ -125,7 +128,9 @@ class AttackRun:
         """ワザ全体のコインの面（(名前, CoinSide)）か、v0.31 の「おもて」の数（(名前, 数)）が合うか。"""
         name, side = gate
         if isinstance(side, CoinSide):
-            return self.fs.coins[name].results[0] is side
+            results = self.fs.coins[name].results
+            # v0.38: 投げなかったコイン（決める要素のどれにも処理の対象がない。``Coin``）の面は、どちらでもない（何も処理しない）
+            return bool(results) and results[0] is side
         return self.fs.coins[name].heads == side
 
     def heads(self, name: str) -> int:
@@ -199,7 +204,6 @@ class AttackRun:
         if self.fs.pending and not carry:
             raise RuntimeError("決定の前に送る効果が残っている（窓の位置の誤り。エンジンの不具合）")
         check_simultaneous(self.res)  # 決定をまたぐと、きぜつの原因の記録はなくなるので、ここで確かめる
-        attacker = self.attacker()
         extra = tuple(extra)
         if self.key != self.declared:
             extra += (("copied", (self.key.card_id, self.key.attack_index)),)
@@ -218,7 +222,9 @@ class AttackRun:
                 frame += (("pending", tuple((d.instance.owner, d.instance.pokemon_id, d.instance.definition.name, d.received)
                                             for d in self.fs.pending)),)
             extra += (("frame", frame),)
-        cont = codec.AttackContinuation((self.player, attacker.pokemon_id, self.declared.card_id, self.declared.attack_index), kind, extra)
+        # v0.38: ワザを使ったポケモンは枠の番号で指す（ワザの効果で場をはなれたあとの決定でも同じ。キョウのポッポの「でんれい」。場にいれば
+        # v0.37 までの ``attacker.pokemon_id`` と同じ値）
+        cont = codec.AttackContinuation((self.player, self.fs.frame.source_pid, self.declared.card_id, self.declared.attack_index), kind, extra)
         self.carried = dict(cont.extra)
         self.suspended = codec.attack_decision(self.state, cont, player=player, options=options, min_choices=min_choices,
                                                max_choices=max_choices, push=not self.res.dry_run)
@@ -240,6 +246,11 @@ def run_elements(run: AttackRun, start: int) -> bool:
             break
         element = run.program[index]
         if element.phase is Phase.EFFECT:
+            if run.fs.pending and any(later.phase is Phase.DAMAGE for later in run.program[index + 1:]):
+                # v0.38: 「ダメージを受けたとき」の効果がはたらいていて、このあとにダメージ以外の効果をはさんでダメージの要素がある（サイドンの「げきとつ」の
+                # 入れ替え → 自分にも 20）。その効果を、ダメージの処理（自分へのダメージを含む）をすべてのせたあと・ダメージ以外の効果の前に処理する
+                # （CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING）時点がなく、決められない（GK1）
+                raise res.question("damage_trigger_timing", f"{[d.instance.name for d in run.fs.pending]}・{type(element).__name__} のあとのダメージの要素")
             fire_pending(res, run.fs)
         elif element.phase is Phase.NEUTRAL and run.fs.pending:
             raise RuntimeError("ワザ全体のコイン・確認は、ダメージの要素より前に置く（エンジンの不具合）")
@@ -399,6 +410,11 @@ class Element:
         """ワザの宣言のあと・こんらんのコインの前の確認（v0.31）。既定は何もしない。"""
         return None
 
+    def has_target(self, run: AttackRun) -> bool:
+        """処理の対象があるか（v0.38。``Coin`` が、このコインが決める要素のどれにも対象がなければ投げない（p.309。v0.31 のスーパーデストロイ・v0.33 の
+        かけぬけると同じ読み方））。既定はある。対象がなくなりうる要素（控えポケモン全員へのダメージ）だけが上書きする。"""
+        return True
+
     def coin_dependent(self, name: str) -> bool:
         """ワザ全体のコイン ``name`` の結果で、処理する・量が変わる要素か（v0.34。``gate`` の面・基本となるダメージの ``coin``・トラッシュの枚数の
         ``heads_of``）。"""
@@ -457,9 +473,16 @@ class Coin(Element):
         count = self.count
         if self.per_attached is not None:
             count = len(E.attached_basic_energy(run.state, run.attacker(), self.per_attached))
+        decided = [element for element in run.program if element.coin_dependent(self.name)]
+        if count and decided and not any(element.has_target(run) for element in decided):
+            # v0.38: このコインが決める要素のどれにも処理の対象がない（フリーザーの「ふぶき」で、自分にも相手にも控えポケモンがいない）。投げない（p.309。
+            # v0.31 のスーパーデストロイ・v0.33 のかけぬけると同じ読み方）。結果のないコインの面は、どの要素も満たさない（``coin_is``）
+            count = 0
         if count:
-            # v0.34: このコインが決める要素（``coin_dependent``）がどれも、受ける相手の対戦ポケモンにとって無効なら、投げるかが決められない
-            void_coin_question(run, [element for element in run.program if element.coin_dependent(self.name)])
+            # v0.34: このコインが決める要素（``coin_dependent``）がどれも、受ける相手の対戦ポケモンにとって無効なら、投げるかが決められない。
+            # v0.38: 処理の対象がない要素（控えのいない側の控えへのダメージ）は、コインの結果で場を変えないので数えない（カツラのギャロップの「ふみあらす」を、
+            # 控えのいない「ワザをうけない」相手に使うと、追加のダメージだけが残り、それも無効。v0.37 までの型では has_target を上書きする要素がなく、同じ）
+            void_coin_question(run, [element for element in decided if element.has_target(run)])
         by_heads = self.count > 1 or self.per_attached is not None
         if by_heads and any(isinstance(getattr(element, "gate", None), tuple) and element.gate[0] == self.name and isinstance(element.gate[1], CoinSide)
                             for element in run.program):
@@ -783,6 +806,9 @@ class ForceSwitch(Element):
     """相手の対戦ポケモンをベンチにもどし、相手が選んだ控えと入れ替える（ふきとばし。v0.13 の ``DamageAndForceSwitch`` と同じ結果・ログ）。"""
 
     chooser: str = "opponent"  # v0.31: 選ぶのは相手（ふきとばし）か、ワザを使ったプレイヤー（"attacker"。キュウコンの「かどわかす」）
+    # v0.38: この要素のコイン（アーボックの「いかくこうげき」は「おもて」で入れ替える）。入れ替えの対象がいない（HP 以上・控えがいない）なら投げない
+    # （p.309）。「とうめい」で受けないと決まった相手・「ワザをうけない」相手には、効果だけを決めるコインなので投げるかが決められない（T19b・HC3）
+    local_coin: CoinSide | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = FORCED_SWITCH
     opponent_element: ClassVar[str] = E.FORCED_SWITCH_ELEMENT
@@ -798,6 +824,14 @@ class ForceSwitch(Element):
         if not p.bench:
             self._skip(run, target, E.NO_BENCH)
             return False
+        if self.local_coin is not None:
+            if run.fs.reception.get(target.pokemon_id) is False:
+                final = run.fs.evaded.get(target.pokemon_id)
+                raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                                       None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+            prevented_effect_coin(run, opponent, target)
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
         if not reaches(run.res, run.fs, opponent, target, E.FORCED_SWITCH_ELEMENT):
             return False
         chooser = run.player if self.chooser == "attacker" else opponent
@@ -1305,14 +1339,20 @@ class BenchDamage(Element):
     own: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
 
+    def targets(self, run: AttackRun) -> list[PokemonInPlay]:
+        side = run.player if self.own else 1 - run.player
+        return [p for p in run.state.players[side].bench
+                if self.pokemon_type is None or run.state.card_def(p.card).pokemon_type is self.pokemon_type]
+
+    def has_target(self, run: AttackRun) -> bool:
+        return bool(self.targets(run))  # v0.38: 控えポケモンがいなければ、処理の対象がない
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
         if local_coins(self.base, run):
             raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
-        side = run.player if self.own else 1 - run.player
-        targets = [p for p in run.state.players[side].bench
-                   if self.pokemon_type is None or run.state.card_def(p.card).pokemon_type is self.pokemon_type]
+        targets = self.targets(run)
         kind = E.SELF_BENCH if self.own else E.OPPONENT_BENCH
         if self.weakness_resistance is None:
             differs = [p.pokemon_id for p in targets
@@ -1341,17 +1381,28 @@ class ChosenBenchDamage(Element):
     weakness_resistance: bool = False
     name: str = "bench_damage"
     own: bool = False
+    # v0.38: 説明に「控えポケモンがいないとき、このワザは使えない」がある（サワムラーの「のびるキック」。ワザを使うための条件は実装の ``usage_problem``。
+    # 相手のワザとして使うときは ``copy_problem``）。ない（エリカのモンジャラの「のびるつる」・タケシのロコンの「ほのおのわ」）なら、控えがいなければ処理の
+    # 対象がないので何もしない（p.309。v0.31 のかどわかす・v0.33 のかけぬけると同じ読み方）
+    required: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
     decision_kind: ClassVar[str] = SELECT_POKEMON
 
     def side(self, run: AttackRun) -> int:
         return run.player if self.own else 1 - run.player
 
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        if self.required and not run.state.players[self.side(run)].bench:
+            return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), "相手に控えポケモンがいない（ワザを使うための条件）"
+        return None
+
     def run(self, run: AttackRun) -> bool:
         if local_coins(self.base, run):
             raise RuntimeError("控えポケモンへのダメージの量を、要素の中のコインで決めるワザはない（エンジンの不具合）")
         bench = run.state.players[self.side(run)].bench
         if not bench:
+            if self.required:
+                raise RuntimeError(f"控えポケモンがいないのに、ワザ {run.key} の控えポケモンへのダメージに来た（使うための条件の確認の漏れ。エンジンの不具合）")
             return False
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
@@ -1377,9 +1428,12 @@ class SelfPersistent(Element):
     amount: int | None = None
     requires: str | None = None
     local_coin: CoinSide | None = None  # v0.34: この要素のコイン（ギャロップの「こうそくいどう」は「おもて」でバリアー）。ワザを使ったポケモンがいなければ投げない
+    gate: tuple | None = None  # v0.38: ワザ全体のコインの面（キョウのピジョンの「こうそくひこう」は、追加のダメージと同じコインの「おもて」でバリアー）
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         if self.requires is not None:
             discarded = run.fs.results.get(self.requires)
             if discarded is not None and discarded.outcome != "done":
@@ -1986,14 +2040,23 @@ class SelfSwitch(Element):
     入れ替えはポケモンいれかえと同じ処理（``effects._switch_active_with_bench``。ログ ``switch`` に、入れ替えたワザ ``effect`` を加える）。控えがいなければ、
     処理の対象がないので何もしない（p.309）。"""
 
+    # v0.38: この要素のコイン（カツラのポニータの「けりにげ」は「おもて」で入れ替える）。ワザを使ったポケモンが HP 以上（相手の「はんげき」など。
+    # CR-COUNTERATTACK-KO-ATTACKER）・控えがいないなら、処理の対象がないので投げない（p.309）。自分への効果なので、相手が「ワザをうけない」状態でも投げる
+    local_coin: CoinSide | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_POKEMON
 
     def run(self, run: AttackRun) -> bool:
         bench = run.state.players[run.player].bench
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.ko_prevention_conflict(attacker, run.player)
+            return False
         if not bench:
             return False
-        if run.state.players[run.player].active is not run.attacker():
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        if run.state.players[run.player].active is not attacker:
             raise RuntimeError(f"入れ替えるワザ {run.key} を使ったポケモンがバトル場にいない（エンジンの不具合）")
         run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], carry=True)
         return True
@@ -2226,6 +2289,13 @@ class ReturnSelfToDeck(Element):
 
     local_coin: CoinSide | None = HEADS
     after_damage: str | None = "damage"
+    # v0.38: ケーシィの「いなくなる」（「このカードにのっているダメージカウンターをすべてとりのぞき、ついているカードをすべてトラッシュする。その後、
+    # このカードを山札にもどし」）。もどす前にダメージカウンターをとりのぞき（ログ ``remove_all_damage_counters``）、ついているカード（エネルギー・
+    # トレーナー）をトラッシュする（``zones.discard_attached_cards``）。山札にもどすのはポケモンのカード（進化していれば重なったカードも。v0.36 の RD2）
+    discard_attached: bool = False
+    # v0.38: もどしたあと、この要素で山札を切るか。キョウのポッポの「でんれい」は、もどしたあとに交代・山札をさがしてから切る（説明にない途中の
+    # シャッフルをしない）ので False（切るのはあとの ``RevealPokemonFromDeck``）
+    shuffle: bool = True
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def run(self, run: AttackRun) -> bool:
@@ -2249,14 +2319,102 @@ class ReturnSelfToDeck(Element):
         gone = knocked(run.res)
         if gone:
             raise run.res.question("return_in_play_to_deck_with_knockout", f"ポケモン {[p.pokemon_id for _, p in gone]}")
+        if self.discard_attached:
+            per = state.rules.damage_per_counter
+            before = attacker.damage
+            attacker.damage = 0
+            state.add_event("remove_all_damage_counters", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                            effect=str(run.key), counters=before // per, amount=before, damage_before=before, total_damage=attacker.damage)
+            discard_attached_cards(state, run.player, attacker, effect=str(run.key))
         return_in_play_to_deck(state, run.player, attacker, effect=str(run.key))
         remove_persistent_effects(state, run.player, attacker, RETURN_IN_PLAY_TO_DECK)
+        if not self.shuffle:
+            return False
         if run.res.dry_run:
             if run.program[-1] is not self:
                 raise RuntimeError("山札を切る要素のあとに要素がある（先読みで切った並びを使えない。エンジンの不具合）")
             return False
         shuffle_deck(state, run.player)
         return False
+
+
+# ---------------------------------------------------------------- v0.38（docs/bench-switch-combined-v0.38.md）
+
+
+@dataclass(frozen=True)
+class PromoteFromBench(Element):
+    """ワザを使ったポケモンがワザの効果で場をはなれて空いたバトル場に、ワザを使ったプレイヤーが自分の控えポケモンを 1 匹選んで出す（v0.38。キョウのポッポの
+    「でんれい」の「(ベンチから、かわりの対戦ポケモンを出す)」。決定 ``SELECT_POKEMON``。控えが 1 匹でも出す（きぜつのあとのバトル場に出す決定と同じ））。
+
+    - 説明の順（山札にもどす → 出す → 山札をさがす）に、ワザの途中で出す（p.320 の要素の順番。CR-ENERGY-CONVERSION-ORDER と同じく書かれた順）。出したポケモンは
+      そのあとのワザの要素を受けない（今の対応カードでは、出したあとの要素は山札をさがすことだけ）
+    - バトル場が空いていない（もどさなかった）なら出さない。控えがいなければ出せないので何もしない（ワザのあとの勝ち負けの判定で、場にポケモンがいない
+      プレイヤーは負ける。p.311。v0.36 のくもがくれガスと同じ）
+    - 出すのは ``zones.promote_from_bench``（きぜつのあとのバトル場に出す決定と共通。ログ ``promote_active`` にワザの ``effect`` を加える）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+
+    def run(self, run: AttackRun) -> bool:
+        p = run.state.players[run.player]
+        if p.active is not None or not p.bench:
+            return False
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=[pokemon.pokemon_id for pokemon in p.bench])
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        p = run.state.players[run.player]
+        if p.active is not None or choices[0] not in [pokemon.pokemon_id for pokemon in p.bench]:
+            raise RuntimeError(f"バトル場に出すポケモン {choices} が、空いたバトル場のプレイヤー {run.player} の控えにいない（エンジンの不具合）")
+        promote_from_bench(run.state, run.player, choices[0], effect=str(run.key))
+
+
+@dataclass(frozen=True)
+class RevealPokemonFromDeck(Element):
+    """自分の山札から、名前が ``excluded`` のどれでもない「ポケモン」のカードを 1 枚選び出し、相手に見せてから手札に加え、その山札をよく切る（v0.38。キョウの
+    ポッポの「でんれい」の「自分の山札から「キョウのポッポ」以外の「ポケモン」を1枚選び出し、相手に見せてから手札に加え、その山札をよく切る」）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SEARCH_DECK``。v0.22 のパソコン通信・v0.24 のポケモン交換おじさんと同じ決定の種類。1 枚。省略できない）。選べるものは
+      山札のポケモンのカード（たねポケモン・進化カード）で名前が ``excluded`` にないもの（uid の小さい順。``effects.deck_pokemon_candidates``）。山札の中身は
+      ログに書かない
+    - 見せて手札に加えるのは ``zones.reveal_deck_to_hand``（v0.24 と共通。ログ ``reveal_from_deck`` は公開。ワザの ``effect`` を加える）
+    - 選べるものがない（山札が 0 枚を含む）: 処理の対象がないので加えない（p.309。v0.32 のなかまをよぶと同じ読み方。ログ ``reveal_from_deck_none``）。どちらの
+      場合も、そのあと山札を切る（1 回。説明の「その山札をよく切る」）
+    - 先読み（``res.dry_run``）では山札を切らない（この要素がワザの最後の要素であることで確かめる。v0.32 の ``BenchFromDeck`` と同じ）
+    """
+
+    excluded: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SEARCH_DECK
+
+    def candidates(self, run: AttackRun) -> list[int]:
+        return E.deck_pokemon_candidates(run.state, run.player, self.excluded)
+
+    def run(self, run: AttackRun) -> bool:
+        candidates = self.candidates(run)
+        if not candidates:
+            run.state.add_event("reveal_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key),
+                                excluded=self.excluded)
+            self._shuffle(run)
+            return False
+        run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        card = choices[0]
+        if card not in self.candidates(run):
+            raise RuntimeError(f"山札から選び出したカード {choices} が、選べるポケモンのカードではない（エンジンの不具合）")
+        reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+        self._shuffle(run)
+
+    def _shuffle(self, run: AttackRun) -> None:
+        if run.res.dry_run:
+            if run.program[-1] is not self:
+                raise RuntimeError("山札を切る要素のあとに要素がある（先読みで切った並びを使えない。エンジンの不具合）")
+            return
+        shuffle_deck(run.state, run.player)
+
 
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
@@ -2414,6 +2572,34 @@ BUILDERS: dict[type, Any] = {
     E.DrawOnHeads: lambda e: (Coin("coin"), Draw(e.count, gate=("coin", HEADS))),
     E.SelfBarrierOnHeads: lambda e: (SelfPersistent(AttackBarrier.kind, local_coin=HEADS),),
     E.DamageThenReduceDamageToSelf: lambda e: (Damage(OPP, Printed()), OpponentReducedDamage(e.amount)),
+    # v0.38（docs/bench-switch-combined-v0.38.md）。控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果
+    E.ChooseOpponentBenchDamage: lambda e: (ChosenBenchDamage(Fixed(e.damage), local_coin=None, required=e.requires_bench),),
+    E.DamageThenChosenBenchDamage: lambda e: (Damage(OPP, Printed()), ChosenBenchDamage(Fixed(e.bench_damage), local_coin=None)),
+    E.SpreadDamage: lambda e: (Damage(OPP, Fixed(e.damage), weakness_resistance=False), BenchDamage(Fixed(e.damage))),
+    E.DamageThenCoinBenchDamageEitherSide: lambda e: (
+        Coin("coin"), Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)),
+        BenchDamage(Fixed(e.bench_damage), gate=("coin", TAILS), own=True),
+    ),
+    E.CoinBonusDamageAndBenchDamage: lambda e: (
+        Coin("coin"), Damage(OPP, PrintedPlusBonus("coin", e.bonus)), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)),
+    ),
+    E.DamageThenForceSwitchOnHeads: lambda e: (Damage(OPP, Printed()), ForceSwitch(local_coin=HEADS)),
+    E.DamageThenForceSwitchThenSelfDamage: lambda e: (Damage(OPP, Printed()), ForceSwitch(), Damage(SELF, Fixed(e.self_damage), name="self_damage")),
+    E.DamageThenSelfSwitchOnHeads: lambda e: (Damage(OPP, Printed()), SelfSwitch(local_coin=HEADS)),
+    E.CoinBonusDamageAndSelfBarrier: lambda e: (
+        Coin("coin"), Damage(OPP, PrintedPlusBonus("coin", e.bonus)), SelfPersistent(AttackBarrier.kind, gate=("coin", HEADS)),
+    ),
+    E.DamageThenPoisonOrParalyze: lambda e: (
+        Damage(OPP, Printed()), Status(POISON, local_coin=HEADS, otherwise=PARALYSIS, reparalysis_check=True),
+    ),
+    E.DamageAndSelfDamageThenPoisonOnHeads: lambda e: (
+        Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), Status(POISON, local_coin=HEADS),
+    ),
+    E.DamageThenReduceDamageNextTurn: lambda e: (Damage(OPP, Printed()), SelfPersistent(DamageReduction.kind, amount=e.amount)),
+    E.DiscardAttachedAndReturnSelfToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, discard_attached=True),),
+    E.ReturnSelfToDeckThenSearchPokemon: lambda e: (
+        ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
+    ),
 }
 
 

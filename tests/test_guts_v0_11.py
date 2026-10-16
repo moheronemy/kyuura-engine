@@ -599,7 +599,10 @@ class G37Test(unittest.TestCase):
             # v0.36（手順 4 のコインの持続する効果・「にげる」ことができない持続する効果。docs/sand-attack-retreat-lock-v0.36.md）
             "DamageThenAttackCoinCheck", "DamageThenRetreatLock",
             # v0.37（ダメージのないコインのどく・マヒと、なきつくと同じ与えるダメージがへる持続する効果。docs/fifteen-reused-effects-v0.37.md）
-            "PoisonOnHeadsWithoutDamage", "ParalyzeOnHeadsWithoutDamage", "DamageThenReduceDamageToSelf"]))
+            "PoisonOnHeadsWithoutDamage", "ParalyzeOnHeadsWithoutDamage", "DamageThenReduceDamageToSelf",
+            # v0.38（コインで相手が選ぶ入れ替え・入れ替えのあと自分にもダメージ・1 枚のコインでどくかマヒ・自分にもダメージのあとコインでどく。
+            # docs/bench-switch-combined-v0.38.md）
+            "DamageThenForceSwitchOnHeads", "DamageThenForceSwitchThenSelfDamage", "DamageThenPoisonOrParalyze", "DamageAndSelfDamageThenPoisonOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

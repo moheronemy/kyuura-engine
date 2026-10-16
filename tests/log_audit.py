@@ -256,6 +256,14 @@ def _poison_problems(state, e: dict, current: int | None) -> list[str]:
 DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage)
 
 
+def _returns_without_shuffle(state, effect: str) -> bool:
+    """v0.38: ワザ ``effect``（ログの ``AttackKey`` の文字列）の要素の並びの、自分を山札にもどす要素が、もどしたあとに山札を切らない（あとの要素が
+    山札をさがしてから切る。キョウのポッポの「でんれい」）か。"""
+    card_id, _, index = effect.partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    return any(type(element).__name__ == "ReturnSelfToDeck" and not element.shuffle for element in _program_of(None if entry is None else entry.effect))
+
+
 def _program_of(effect) -> tuple:
     """登録した実装の、解決の基盤の要素の並び（v0.31。対応表にない実装は空）。"""
     builder = None if effect is None else BUILDERS.get(type(effect))
@@ -370,9 +378,13 @@ def log_problems(state) -> list[str]:
                          # v0.31
                          "copy_attack", "attack_failed", "recover_trainer", "attach_energy_from_discard", "attack_heal", "destiny_bond",
                          # v0.36
-                         "attack_check", "return_in_play_to_deck"):
+                         "attack_check", "return_in_play_to_deck",
+                         # v0.38
+                         "discard_attached_cards"):
                 if window[once] > 1:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
+            if window["reveal_from_deck"] + window["reveal_from_deck_none"] > 1:
+                problems.append("1 回のワザで山札から見せて手札に加える処理（reveal_from_deck・reveal_from_deck_none）が 2 回以上")  # v0.38
             if window["bench_from_deck"] + window["bench_from_deck_none"] > 1:
                 problems.append("1 回のワザで山札からベンチに出す処理（bench_from_deck・bench_from_deck_none）が 2 回以上")  # v0.32
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
@@ -476,6 +488,9 @@ def log_problems(state) -> list[str]:
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
+    # v0.38: 直前の、山札を切らずにもどした return_in_play_to_deck（キョウのポッポの「でんれい」。かわりの対戦ポケモンを出してから山札をさがし、その
+    # すぐあとに切る。もどしたあとに切らない）
+    search_due: dict | None = None
     # v0.36: p.309 の手順 4 のコイン（すなかけ・えんまくなど）。ワザの宣言（attack）のときにはたらいている効果（場のポケモンの番号, 与えた番, 1回で消えるか）が
     # あれば、宣言のすぐあとに coin_flip（source attack_check）→ attack_check が続くはず。「うら」なら、そのあと（1回で消える効果は消したログのあと）に
     # attack_failed（reason attack_check）が続き、ワザの要素はない
@@ -686,11 +701,24 @@ def log_problems(state) -> list[str]:
     for e in log:
         kind = e["kind"]
         prior = previous  # 1 つ前のイベント（v0.11。「こんじょう」の宣言・コイン・結果の順番）
-        if shuffle_due is not None and not (
+        if search_due is not None:
+            # v0.38: でんれい。もどしたあと、持続する効果を消したログ・同じワザのかわりの対戦ポケモンを出すログ（promote_active）のあと、同じワザの
+            # 山札をさがすログ（reveal_from_deck・reveal_from_deck_none）が続き、そのすぐあとに山札を切る（途中で切らない）
+            same = e.get("effect") == search_due["effect"] and e.get("player") == search_due["player"]
+            if kind == "persistent_effect_removed" and e["reason"] == "return_in_play_to_deck" and e["pokemon_id"] == search_due["pokemon_id"]:
+                pass
+            elif kind == "promote_active" and same:
+                pass
+            elif kind in ("reveal_from_deck", "reveal_from_deck_none") and same:
+                search_due, shuffle_due = None, e
+            else:
+                problems.append(f"{search_due['turn']} 番の {search_due['kind']} のあとに、同じワザの山札をさがす処理がないまま {kind} になった")
+                search_due = None
+        elif shuffle_due is not None and not (
             # v0.36: 山札にもどしたポケモン（return_in_play_to_deck）の持続する効果を消したログは、もどしたあと・山札を切る前
             shuffle_due["kind"] == "return_in_play_to_deck" and kind == "persistent_effect_removed" and e["reason"] == "return_in_play_to_deck"
             and e["pokemon_id"] == shuffle_due["pokemon_id"]
-        ):
+        ) and shuffle_due is not e:
             due_event, shuffle_due = shuffle_due, None
             if kind != "shuffle" or e["player"] != due_event["player"]:
                 problems.append(f"{due_event['turn']} 番の {due_event['kind']} のすぐあとに、プレイヤー {due_event['player']} の山札を切る処理（shuffle）がない")
@@ -1489,7 +1517,21 @@ def log_problems(state) -> list[str]:
             poisoned.pop(pid, None)
             energy[pid] = []
             damage[pid] = 0
-            shuffle_due = e
+            if _returns_without_shuffle(state, e["effect"]):
+                search_due = e  # v0.38: でんれい（山札をさがしたあとに切る）
+            else:
+                shuffle_due = e
+        elif kind == "discard_attached_cards":
+            # v0.38: ワザ（ケーシィの「いなくなる」）で、ワザを使ったポケモンについているエネルギー・トレーナーを持ち主のトラッシュへ（ダメージカウンターを
+            # とりのぞいたあと・山札にもどす前）
+            pid = e["pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or attack_window is None or pid != attack_window["pokemon_id"] \
+                    or sorted(e["energy"]) != sorted(energy.get(pid, [])) or damage[pid] != 0 \
+                    or any(owner.get(uid) != e["player"] for uid in (*e["energy"], *e["trainers"])):
+                problems.append(f"{e['turn']} 番のついているカードのトラッシュ（ポケモン {pid}）が、ログから組み立てたワザを使ったポケモンのカードと合わない")
+            else:
+                energy[pid] = []
+                discard[e["player"]].extend((*e["energy"], *e["trainers"]))
         elif kind == "knock_out":
             pid = ids[e["pokemon"]]
             if pid not in in_play:
