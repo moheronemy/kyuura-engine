@@ -107,8 +107,10 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     pid = attacker.pokemon_id
     use = AttackUse(cmd.player, pid, key)
 
+    once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
+
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once)
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -143,9 +145,15 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
-def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program) -> None:
+def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False) -> None:
     state = res.state
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    if once:
+        # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」。使った記録は宣言（p.309 の手順 3）のとき、手順 4（すなかけ）・手順 5（こんらん）・ワザの
+        # 要素の前に置く（手順 4 の失敗・こんらんの「うら」・コインの「うら」でも使ったことになる。p.323「12」・v0.3d の A12）。宣言の前に拒否したら（確認・先読み）、
+        # 状態ごと捨てるので記録は残らない。記録は場のポケモン（ワザを持つカードの uid とワザの位置）。ログ ``once_attack_recorded``
+        attacker.attacks_used_once = attacker.attacks_used_once + ((attacker.card, key.attack_index),)
+        state.add_event("once_attack_recorded", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）

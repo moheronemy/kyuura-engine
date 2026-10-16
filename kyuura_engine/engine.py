@@ -925,6 +925,8 @@ def check_invariants(state: GameState) -> list[str]:
             problems.extend(_evolution_problems(state, player, pokemon, evolve_events))
             problems.extend(_condition_problems(state, player, p, pokemon))
             problems.extend(_persistent_effect_problems(state, player, p, pokemon))
+            problems.extend(_once_attack_problems(state, player, pokemon))  # v0.44
+            problems.extend(_evolution_permission_problems(state, player, pokemon))  # v0.44
         if len(p.bench) > rules.max_bench:
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
         if len(p.prizes) > rules.prize_count:
@@ -1097,7 +1099,9 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
     if evolved is None:
         problems.append(f"{where} は進化しているのに、進化した番がない")
         return problems
-    if not played < evolved <= state.turn_number:
+    # v0.44: トレーナー「サカキ」の許可（その番のログ ``evolution_permission``）のあるポケモンは、場に出た番・進化した番にも進化できる
+    permitted = played == evolved and _evolution_permitted(state, pokemon.pokemon_id, evolved)
+    if not (played < evolved or permitted) or evolved > state.turn_number:
         problems.append(f"{where} の進化した番 {evolved} が、場に出た番 {played} より後・今の番 {state.turn_number} までではない")
     elif evolved <= 2:
         problems.append(f"{where} がおたがいの最初の番（{evolved} 番）に進化している（p.310）")
@@ -1105,7 +1109,8 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
         problems.append(f"{where} が持ち主の番でない {evolved} 番に進化している")
     elif len(stack) >= 2 and state.first_player in PLAYERS:
         # 2 進化（v0.4c）: 1 進化した番は、場に出た番・2 番より後で、2 進化した番より前の持ち主の番（同じ番には進化できない）
-        if not any(turn_owner(state, turn) == player for turn in range(max(played, 2) + 1, evolved)):
+        if not any(turn_owner(state, turn) == player for turn in range(max(played, 2) + 1, evolved)) and not _evolution_permitted(
+                state, pokemon.pokemon_id, evolved):
             problems.append(
                 f"{where} は {evolved} 番に 2 進化しているが、場に出た番 {played} のあと {evolved} 番より前に、1 進化できる持ち主の番がない"
                 "（同じ番に二度は進化できない。p.310）"
@@ -1124,6 +1129,18 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
         if not applied_after:
             problems.append(f"{where} は今の番に進化したのに、進化の前の特殊状態 {pokemon.conditions.names()} が残っている（p.310・p.322）")
     return problems
+
+
+def _evolution_permitted(state: GameState, pokemon_id: int, turn: int, before=None) -> bool:
+    """v0.44: 場のポケモン ``pokemon_id`` が、``turn`` 番にトレーナー「サカキ」の許可（ログ ``evolution_permission``）を受けていたか。``before`` が進化のログの
+    イベントなら、そのイベントより前の許可だけを数える（許可のあとの進化だけが、場に出た番・進化した番の制限を外れる）。番の終わりに消える許可を、終わった番の
+    進化について確かめるためにログを読む（エンジンは許可を状態の ``evolution_permission_turn`` で決め、ログから決めない）。"""
+    for event in state.log:
+        if before is not None and event is before:
+            return False
+        if event["kind"] == "evolution_permission" and event.get("pokemon_id") == pokemon_id and event.get("turn") == turn:
+            return True
+    return False
 
 
 def _evolve_events_by_pokemon(state: GameState) -> dict[int, list]:
@@ -1155,7 +1172,7 @@ def _evolution_log_problems(state: GameState, player: int, pokemon: PokemonInPla
                 f"重なり（{expected[0]} → {expected[1]}、プレイヤー {player}）と対応しない"
             )
         problems.extend(_skip_evolution_log_problems(state, player, where, event, expected))
-        if event["turn"] <= previous_turn:
+        if event["turn"] < previous_turn or (event["turn"] == previous_turn and not _evolution_permitted(state, pokemon.pokemon_id, event["turn"], event)):
             problems.append(
                 f"{where} が {event['turn']} 番に進化しているが、場に出た番・前の進化の番（{previous_turn} 番）より後ではない"
                 "（同じ番に二度は進化できない。p.310）"
@@ -1435,6 +1452,73 @@ def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, ef
         ):
             return [f"{where} {effect!r} が、ベンチに戻った（ログ {kind}）あとにも残っている（p.311・p.322）"]
     return [f"{where} {effect!r} に対応するログ persistent_effect_added がない"]
+
+
+def _once_attack_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
+    """v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」ワザを使った記録（``PokemonInPlay.attacks_used_once``）の整合。
+
+    - (カードの uid, ワザの位置) の重ならない並びのタプル。カードはこのポケモンを作るカード（重なったカードを含む。進化したあとも、進化前のカードの記録は残る
+      が、そのワザはもう使えない）で、その位置のワザの登録が ``once_after_entering_play``
+    - 対戦準備の段階にはない（ワザは使えない）。記録のもとは状態で、ログの ``once_attack_recorded`` は記録（ここでは、そのポケモンの番号・カードのワザの位置の
+      ログがあることだけを確かめる）
+    """
+    used = pokemon.attacks_used_once
+    if not isinstance(used, tuple):
+        return [f"ポケモン {pokemon.pokemon_id} の 1 回だけのワザの記録 {used!r} がタプルではない"]
+    if not used:
+        return []
+    where = f"ポケモン {pokemon.pokemon_id} の 1 回だけのワザの記録 {used!r}"
+    if state.phase in SETUP_PHASES:
+        return [f"{where} が対戦準備の段階にある"]
+    if len(set(used)) != len(used):
+        return [f"{where} が重なっている"]
+    problems = []
+    cards = pokemon.cards()
+    for entry in used:
+        if not (isinstance(entry, tuple) and len(entry) == 2 and entry[0] in cards and type(entry[1]) is int):
+            problems.append(f"{where} の {entry!r} が、このポケモンのカードのワザではない")
+            continue
+        definition = state.card_def(entry[0])
+        if not 0 <= entry[1] < len(definition.attacks):
+            problems.append(f"{where} の {entry!r} のワザの位置が正しくない")
+            continue
+        effect = state.effects.attack_effect(definition.id, definition.attacks[entry[1]], definition.attacks)
+        if effect is None or not effect.once_after_entering_play:
+            problems.append(f"{where} の {entry!r} が、場に出てから1回しか使えないワザではない")
+        elif not any(e["kind"] == "once_attack_recorded" and e.get("pokemon_id") == pokemon.pokemon_id and e.get("pokemon") == entry[0]
+                     and e.get("attack_index") == entry[1] for e in state.log):
+            problems.append(f"{where} の {entry!r} に対応するログ once_attack_recorded がない")
+    return problems
+
+
+def _evolution_permission_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
+    """v0.44: トレーナー「サカキ」の進化の許可（``PokemonInPlay.evolution_permission_turn``）の整合。
+
+    - なければ None。あれば今の番の番号で、持ち主が番のプレイヤー（「今の番」。自分の場のポケモンを選ぶ）。番の終わりに消すので、対戦準備の段階・番の終わりの
+      あと（ログ ``turn_end``）には残らない
+    - 今の番のログに、このポケモンの番号の ``evolution_permission`` がある（選んだあとに場をはなれて、もう一度場に出たポケモンには、新しい番号なので残らない）
+    - いちばん上のカードが、許可を与えたトレーナー（ログの ``trainer``）の登録の実装の「(``owner``)のポケモン」（進化しても、進化先は「サカキの…から進化」の
+      カード）。カードの名前・id を engine.py に書かない
+    """
+    turn = pokemon.evolution_permission_turn
+    if turn is None:
+        return []
+    where = f"ポケモン {pokemon.pokemon_id} の「サカキ」の進化の許可 {turn!r}"
+    if state.phase in SETUP_PHASES or type(turn) is not int:
+        return [f"{where} が正しくない（{state.phase.value}）"]
+    if turn != state.turn_number or player != state.current_player:
+        return [f"{where} が今の番（{state.turn_number} 番、プレイヤー {state.current_player!r}）の持ち主の許可ではない（番の終わりに消す）"]
+    recent = _events_since_turn_start(state)
+    if any(event["kind"] == "turn_end" for event in recent):
+        return [f"{where} が番の終わりのあとに残っている"]
+    granted = next((event for event in recent if event["kind"] == "evolution_permission" and event.get("pokemon_id") == pokemon.pokemon_id), None)
+    if granted is None or granted.get("trainer") not in state.cards:
+        return [f"{where} に対応する、今の番のログ evolution_permission がない"]
+    entry = state.effects.trainer_entry(state.card_def(granted["trainer"]).id)
+    owner = None if entry is None else getattr(entry.effect, "owner", None)
+    if owner is None or not state.card_def(pokemon.card).name_ja.startswith(f"{owner}の"):
+        return [f"{where} のポケモンが、許可を与えたトレーナー {granted['trainer']} の選ぶ「{owner}のポケモン」ではない"]
+    return []
 
 
 def _retreat_failure_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:

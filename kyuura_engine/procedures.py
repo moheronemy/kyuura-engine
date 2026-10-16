@@ -57,6 +57,8 @@ def expire_at_turn_end(state: GameState) -> None:
     for p in state.players:
         for pokemon in p.in_play():
             pokemon.retreat_failed_turn = None
+            # v0.44: トレーナー「サカキ」の、今の番だけの進化の許可（説明の「今の番」「同じ番で」）
+            pokemon.evolution_permission_turn = None
     # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
     state.energy_burn = ()
     state.add_event("turn_end", player=state.current_player)

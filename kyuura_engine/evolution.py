@@ -23,10 +23,46 @@ if TYPE_CHECKING:
     from .state import GameState, PokemonInPlay
 
 
-def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDefinition) -> tuple[str, str] | None:
+# v0.44: トレーナー「サカキ」の許可のあるポケモン（今の番に場に出した・進化した）を、山札から重ねる効果（ワザ・特殊能力）で進化させられるか（GV1）。
+# 説明の「(ポケモンを進化させる時には、あなたの手札から「進化カード」を出して、そのポケモンの上にのせる)」が、許可を手札から重ねる進化に限るのか、進化の
+# 手順の説明なのかが決められない（docs/search-evolution-once-attacks-v0.44.md 4 章）。山札から重ねる効果（つきのちから・たきのぼりしんか・［うか］）はどれも自分自身を
+# 進化させ、どれも「サカキの」ポケモンではないので、今の対応カードでは起こらない（コードのない問い。呼ぶ側はエンジンの不具合として止める）。この値は
+# ``evolution_block`` が返す「重ねられない理由」の印で、停止コードではない
+PERMISSION_FROM_DECK_CODE = "PERMISSION_ONLY_FROM_DECK"
+PERMISSION_FROM_DECK_REASON = (
+    "トレーナー「サカキ」で今の番に進化させてよいポケモン（今の番に場に出した・進化した）を、山札から重ねる効果で進化させられるかは、説明の「(ポケモンを進化させる"
+    "時には、あなたの手札から「進化カード」を出して、そのポケモンの上にのせる)」が許可を手札から重ねる進化に限るのかが決められないので扱わない（GV1）"
+)
+
+
+def has_evolution_permission(state: GameState, target: PokemonInPlay) -> bool:
+    """v0.44: 場のポケモン ``target`` が、トレーナー「サカキ」で選ばれ、今の番は場に出た番・進化した番でも進化させてよい（``evolution_permission_turn``）か。"""
+    return target.evolution_permission_turn is not None and target.evolution_permission_turn == state.turn_number
+
+
+def turn_restriction(state: GameState, target: PokemonInPlay) -> tuple[str, str] | None:
+    """p.310 の「その番の最初から場に出ていた」ポケモンでないなら、その理由（``EVOLVED_THIS_TURN``・``PLAYED_THIS_TURN``）。手札から重ねる進化（通常の操作・
+    ポケモン育て屋さん）で共通（v0.44 で関数にした。v0.43 までと同じコード・同じ文）。
+
+    v0.44: トレーナー「サカキ」の許可のあるポケモン（``has_evolution_permission``）は、今の番に場に出した・進化したポケモンでも進化させてよい（「そのポケモンが場に
+    出たのが今の番でも、そのポケモンを進化させてよい。また、進化したそのポケモンを、同じ番で、さらに進化させてもよい。」。kyuura の印刷の文面。カードの文面が
+    ルールに優先する。GR-2000-P307-CARD-OVER-RULE）。変えるのはこの 2 つの制限だけで、おたがいの最初の番（``FIRST_TURN_EVOLUTION``）・名前・段階は変えない
+    （日本語の文面に最初の番の記述はない。英語版の「or if this is your first turn」を持ち込まない）。"""
+    if target.current_form_turn < state.turn_number or has_evolution_permission(state, target):
+        return None
+    if target.evolved_turn is not None:
+        return "EVOLVED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に進化したので、もう一度は進化させられない（p.310）"
+    return "PLAYED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に場に出したので、進化させられない（p.310）"
+
+
+def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDefinition, *, from_deck: bool = False) -> tuple[str, str] | None:
     """進化カード ``definition`` を、自分の場のポケモン ``target`` に今重ねられない理由（コード, 理由の文）。重ねられるなら None（v0.42。v0.41 までの
     ``engine._evolve_pokemon`` の確認（番・名前・その番の最初から場にいたか・段階）を、同じ順番・同じコード・同じ文のまま関数にした。通常の操作
     （手札から）とワザの効果（エリカのピッピの「つきのちから」。山札から）で共通。ワザによる進化でも、p.310 の進化の制限を免除しない）。
+
+    v0.44: ``from_deck`` は、山札から重ねる効果（ワザ・特殊能力。つきのちから・コイキングの「たきのぼりしんか」・キョウのコクーンの［うか］）。トレーナー「サカキ」の
+    許可だけで制限が外れる組は、手札から重ねる進化なら重ねられ（``turn_restriction``）、山札から重ねる効果なら決められない（GV1。``PERMISSION_FROM_DECK_CODE``。
+    呼ぶ側が止める。今の対応カードでは起こらない）。
 
     確かめないもの: 進化したあとの HP がダメージ以下になるか（呼ぶ側。``UNRESOLVED_EVOLUTION_HP``）・カードが対応しているか（呼ぶ側）。状態は変えない。"""
     if state.turn_number <= 2:
@@ -38,10 +74,11 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
             "EVOLUTION_NAME_MISMATCH",
             f"「{definition.name_ja}」は「{definition.evolves_from}」から進化する。場のポケモン {target.pokemon_id} は「{current.name_ja}」",
         )
-    if target.current_form_turn >= state.turn_number:
-        if target.evolved_turn is not None:
-            return "EVOLVED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に進化したので、もう一度は進化させられない（p.310）"
-        return "PLAYED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に場に出したので、進化させられない（p.310）"
+    restriction = turn_restriction(state, target)
+    if restriction is not None:
+        return restriction
+    if from_deck and target.current_form_turn >= state.turn_number:
+        return PERMISSION_FROM_DECK_CODE, PERMISSION_FROM_DECK_REASON  # 許可だけで制限が外れる組（GV1）
     below_stage = "basic" if definition.is_stage1_pokemon else "stage1"
     if current.stage != below_stage:
         return (
@@ -53,7 +90,7 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
 
 
 def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, card: int, *, trainer: int | None = None,
-                         effect: str | None = None) -> None:
+                         effect: str | None = None, power: str | None = None) -> None:
     """手札の進化カード ``card`` を、自分の場のポケモン ``target`` の上に置いて進化させる（p.310 の手順 1〜5）。
 
     1・2. 手札から出して見せ、進化するポケモンの上に置く（下のカードはトラッシュしない。いちばん上のカードの内容がそのポケモンを
@@ -67,10 +104,13 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
 
     v0.42: ``effect`` は、ワザの効果で山札の進化カードを重ねたとき（エリカのピッピの「つきのちから」）のワザ（``AttackKey`` の文字列）。そのときは
     カードを手札ではなく山札から出し、ログに ``effect`` と ``source_zone``（``"deck"``）を書く（どこに重ねてよいかの確認は、通常の操作と同じ
-    ``evolution_block``。呼ぶ側）。
+    ``evolution_block``。呼ぶ側）。v0.44: ``power`` は、特殊能力の効果で山札の進化カードを重ねたとき（キョウのコクーンの［うか］）の特殊能力（``PowerKey`` の
+    文字列）。山札から出し、ログに ``power`` と ``source_zone``（``"deck"``）を書く。
     """
     p = state.players[player]
-    if effect is None:
+    if effect is not None and power is not None:
+        raise RuntimeError("ワザと特殊能力の両方の効果で進化させることはない（エンジンの不具合）")
+    if effect is None and power is None:
         p.hand.remove(card)
     else:
         p.deck.remove(card)
@@ -81,6 +121,8 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     extra = {} if trainer is None else {"trainer_card": trainer}
     if effect is not None:
         extra.update(effect=effect, source_zone="deck")
+    if power is not None:
+        extra.update(power=power, source_zone="deck")
     state.add_event(
         "evolve",
         player=player,

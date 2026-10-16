@@ -368,6 +368,26 @@ DARK_SLOWBRO = "PMCG4-036"  # わるいヤドラン（ロケット団。ヤド�
 DARK_DRAGONITE = "PMCG4-053"  # わるいカイリュー（ロケット団。わるいハクリューから進化。HP 70・無色・抵抗力 闘 -30・にげる 2。［てしたをよぶ］・きょだいなしっぽ（無無無無）70）
 V0_43_POKEMON = (DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON, DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO,
                  DARK_DRAGONITE)  # 写しの組 pool_v0_43 の並び
+# v0.44（docs/search-evolution-once-attacks-v0.44.md）: 場のポケモンを選ぶ・山札をさがす・山札から進化する・場に出てから 1 回だけ使えるワザ・カードの移動のポケモン
+# 14 枚とトレーナー 1 枚（kyuura データの採用）
+ROCKET_DIGLETT = "PMCG4-038"  # ディグダ（ロケット団。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 0。じめんにもぐる（闘）・ひっかく（闘無）20）。DIGLETT（第1弾）と同じ名前の別のカード
+ROCKET_MEOWTH = "PMCG4-047"  # ニャース（ロケット団。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。こばんなげ（無無））。MEOWTH（第2弾）・GIOVANNIS_MEOWTH と別のカード
+ERIKAS_BULBASAUR = "PMCG5-007"  # エリカのフシギダネ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。ねむりのたね（草）10・おつかい（草草））
+MISTYS_STARYU = "PMCG5-027"  # カスミのヒトデマン（リーダーズスタジアム。HP 40・水・弱点 雷・にげる 1。スターブーメラン（水）20）。STARYU（第1弾）とは別の名前
+ROCKET_MAGIKARP = "PMCG4-020"  # コイキング（ロケット団。HP 30・水・弱点 雷・にげる 1。はねまわる（無）10・たきのぼりしんか（水水水））。MAGIKARP（第1弾）と同じ名前の別のカード
+KOGAS_KAKUNA = "PMCG6-011"  # キョウのコクーン（闇からの挑戦。キョウのビードルから進化。HP 60・草・弱点 炎・にげる 2。［うか］・どくどくえき（草））
+KOGAS_BEEDRILL = "PMCG6-018"  # キョウのスピアー（闇からの挑戦。キョウのコクーンから進化。HP 80・草・弱点 炎・抵抗力 闘 -30・にげる 0。しんけいどく（草草）20・ひっさつばり（無無無）70）
+FARFETCHD = "PMCG1-063"  # カモネギ（第1弾。HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 1。ネギでたたく（無）30・ナベでたたく（無無無）30）
+GIOVANNIS_MAGIKARP = "PMCG6-037"  # サカキのコイキング（闇からの挑戦。HP 30・水・弱点 雷・にげる 1。りゅうのきおく（水）40・はねまくる（水無）10×）
+GIOVANNIS_GYARADOS = "PMCG6-040"  # サカキのギャラドス（闇からの挑戦。サカキのコイキングから進化。HP 90・水・弱点 草・抵抗力 闘 -30・にげる 3。あらしをよぶ（水）・りゅうのたつまき（水水無無）40）
+SABRINAS_MR_MIME = "PMCG6-046"  # ナツメのバリヤード（闇からの挑戦。HP 50・超・弱点 超・にげる 1。てじな（無）・ビンタ（超無）20）
+BLAINES_MANKEY = "PMCG6-056"  # カツラのマンキー（闇からの挑戦。HP 40・闘・弱点 超・にげる 0。わるいいたずら（無）・みだれひっかき（闘）10×）。MANKEY・BROCKS_MANKEY とは別の名前
+BLANK_CHANSEY = "PMCG6-075"  # _____のラッキー（闇からの挑戦。HP 90・無色・弱点 闘・抵抗力 超 -30・にげる 1。ラッキーたまご（無）・ラッキーパンチ（無無無）10+）。名前は kyuura の名前のまま
+GIOVANNIS_PERSIAN = "PMCG6-071"  # サカキのペルシアン（闇からの挑戦。サカキのニャースから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 0。［ボスをよぶ］・おそいかかる（無無無）20+）
+GIOVANNI = "PMCG6-095"  # サカキ（闇からの挑戦。トレーナー。選んだ「サカキのポケモン」は、今の番、場に出た番・進化した番でも進化させてよい）
+V0_44_POKEMON = (ROCKET_DIGLETT, ROCKET_MEOWTH, ERIKAS_BULBASAUR, MISTYS_STARYU, ROCKET_MAGIKARP, KOGAS_KAKUNA, KOGAS_BEEDRILL, FARFETCHD, GIOVANNIS_MAGIKARP,
+                 GIOVANNIS_GYARADOS, SABRINAS_MR_MIME, BLAINES_MANKEY, BLANK_CHANSEY, GIOVANNIS_PERSIAN)  # 写しの組 pool_v0_44 のポケモン（並び）
+V0_44_CARDS = V0_44_POKEMON + (GIOVANNI,)  # 写しの組 pool_v0_44 の並び（トレーナーは最後）
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -887,6 +907,20 @@ ATTACK_TYPES_SINCE_V0_17 = (
 ) + (
     # v0.43（docs/declared-entry-powers-v0.43.md）
     _effects.ChooseOpponentPokemonDamage,  # わるいゴルバットの「ふらふらとぶ」
+) + (
+    # v0.44（docs/search-evolution-once-attacks-v0.44.md）
+    _effects.CoinChooseOpponentPokemonDamage,  # ロケット団のニャースの「こばんなげ」
+    _effects.SearchTrainerOnHeads,  # エリカのフシギダネの「おつかい」
+    _effects.DamageThenReturnSelfToHandOnHeads,  # カスミのヒトデマンの「スターブーメラン」
+    _effects.EvolveSelfFromDeck,  # ロケット団のコイキングの「たきのぼりしんか」
+    _effects.OnceAfterEntryNoDamageOnTails,  # ひっさつばり・ネギでたたく・りゅうのきおく
+    _effects.CoinsAllHeadsSpreadDamageExceptSelf,  # サカキのギャラドスの「あらしをよぶ」
+    _effects.DamageThenSwitchOpponentIfNotKnockedOut,  # サカキのギャラドスの「りゅうのたつまき」
+    _effects.DamageThenPoisonAndParalyzeOnHeads,  # キョウのスピアーの「しんけいどく」
+    _effects.SpecialPoisonOnHeadsWithoutDamage,  # キョウのコクーンの「どくどくえき」
+    _effects.ReturnHandThenRevealBasicEnergy,  # ナツメのバリヤードの「てじな」
+    _effects.CoinPutOpponentDiscardOnDeckTop,  # カツラのマンキーの「わるいいたずら」
+    _effects.CoinDrawOrReturnHandToDeck,  # _____のラッキーの「ラッキーたまご」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

@@ -107,6 +107,11 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
     if effect is None:
         problem = state.effects.attack_problem(attacker_def.id, attack, attacker_def.attacks)
         raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
+    if effect.once_after_entering_play and (attacker.card, cmd.attack_index) in attacker.attacks_used_once:
+        # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」ワザを、この場のポケモンがもう使った（記録は場のポケモンの ``attacks_used_once``。
+        # 宣言のときに記録する。ログから数えない）。エネルギーの確認の前（説明が使えないとするワザなので、必要なエネルギーがあっても使えない）
+        raise IllegalActionError("ATTACK_ALREADY_USED", f"バトル場のポケモン {attacker.pokemon_id} は、ワザ「{attack.name_ja}」を場に出てからもう使った"
+                                 "（場に出てから1回しか使えない）")
     if not can_pay_cost(attack.cost, state.energy_types(attacker)):
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
     problem = effect.usage_problem(state, attacker)  # v0.31: 説明が書くワザを使うための条件（「ぼーっとする」）

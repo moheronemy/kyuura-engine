@@ -13,13 +13,13 @@ from kyuura_engine.cards import pool_from_extract, read_extract, read_verificati
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
-    BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
+    GIOVANNI, BEEDRILL, BILL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
     POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
     V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
-    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON,
+    V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, V0_44_POKEMON, V0_44_CARDS,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -43,9 +43,10 @@ class CardPoolTest(unittest.TestCase):
         # カメール・カメックス（pool_v0_6）、v0.7 でケーシィ・ユンゲラー・フーディン（pool_v0_7）を加えた。v0.1 の組
         # （トレーナーと v0.2d 以降のポケモン以外）は変わらない
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
-        # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）
+        # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）、
+        # サカキは v0.44（pool_v0_44）
         self.assertEqual(trainers, [POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH,
-                                    POKEMON_TRADER, POKEMON_BREEDER])
+                                    POKEMON_TRADER, POKEMON_BREEDER, GIOVANNI])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -203,6 +204,7 @@ class CardPoolTest(unittest.TestCase):
         self.assertEqual(read_extract()["pool_v0_41"], list(V0_41_POKEMON))  # v0.41（docs/heal-counter-status-v0.41.md）
         self.assertEqual(read_extract()["pool_v0_42"], list(V0_42_POKEMON))  # v0.42（docs/power-decisions-v0.42.md）
         self.assertEqual(read_extract()["pool_v0_43"], list(V0_43_POKEMON))  # v0.43（docs/declared-entry-powers-v0.43.md）
+        self.assertEqual(read_extract()["pool_v0_44"], list(V0_44_CARDS))  # v0.44（ポケモン 14 枚とサカキ。docs/search-evolution-once-attacks-v0.44.md）
         self.assertEqual(len(V0_37_ADOPTED), 14)
         self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
@@ -216,7 +218,7 @@ class CardPoolTest(unittest.TestCase):
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
-                 *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON)
+                 *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 10 あります（``format_version``）。
+形式は 11 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -44,6 +44,11 @@
   v0.31 の持続する効果の種類 ``"destiny_bond"``（みちづれ）・``"attack_barrier"``（バリアー）・``"damage_reduction"``（ちいさくなる。
   ``"amount"`` を加える）・``"cannot_attack"``（しっぽをふる。相手に与える効果で、``source_card``・``source_player`` は効果を与えたワザを
   使ったポケモンのカードとプレイヤー）は、v0.27 と同じく形式 8 の ``persistent_effects`` の種類の値を加えただけ（形式は変えない）。
+- 11: 10 に、場のポケモンごとの ``attacks_used_once``（「このワザは、このカードが場に出てから、1回しか使えない」ワザを、この場のポケモンが使った記録。
+  [ワザを持つカードの uid, ワザの位置] の並び。なければ ``[]``）と ``evolution_permission_turn``（トレーナー「サカキ」で、場に出た番・進化した番でも
+  進化させてよい番。なければ ``None``。番の終わりに消える）を加えたもの（v0.44。docs/search-evolution-once-attacks-v0.44.md 3 章）。形式 1〜10 は、どちらかが
+  空でない・None でないポケモンがいると ``ValueError``（なければ形式 1〜10 の書き出しは v0.43 と同じ）。使った記録はログから数えず状態に持つので、書き出しにも
+  加えた（場をはなれるまで残る）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -117,7 +122,7 @@ from .state import (
     Retaliation,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -222,6 +227,9 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["evolved_turn"] = pokemon.evolved_turn
     if format_version >= 8:
         data["persistent_effects"] = [_persistent_effect(state, e) for e in pokemon.persistent_effects]
+    if format_version >= 11:
+        data["attacks_used_once"] = [list(entry) for entry in pokemon.attacks_used_once]
+        data["evolution_permission_turn"] = pokemon.evolution_permission_turn
     return data
 
 
@@ -255,6 +263,11 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version < 10 and (state.power_uses_this_turn or state.energy_burn):
         raise ValueError(
             f"形式 {format_version} は、この番に使った回数の制限のある特殊能力・「炎」エネルギーになったエネルギーを表せない（format_version=10 を使う）"
+        )
+    if format_version < 11 and any(pokemon.attacks_used_once or pokemon.evolution_permission_turn is not None
+                                   for p in state.players for pokemon in p.in_play()):
+        raise ValueError(
+            f"形式 {format_version} は、場に出てから1回しか使えないワザの使った記録・「サカキ」の進化の許可を表せない（format_version=11 を使う）"
         )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")

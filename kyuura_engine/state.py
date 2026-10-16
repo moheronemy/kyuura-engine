@@ -611,6 +611,15 @@ class PokemonInPlay:
     played_turn: int = 0  # v0.4a
     evolved_turn: int | None = None  # v0.4a
     persistent_effects: tuple[Any, ...] = ()  # v0.4b（型は PERSISTENT_EFFECT_TYPES。Retaliation は v0.12、NextTurnAttackDamage は v0.27、ほかは v0.31）
+    # v0.44（docs/search-evolution-once-attacks-v0.44.md 3 章）: 「このワザは、このカードが場に出てから、1回しか使えない」ワザ（キョウのスピアーの「ひっさつばり」・
+    # カモネギの「ネギでたたく」・サカキのコイキングの「りゅうのきおく」）を、この場のポケモンが使った記録。(ワザを持つカードの uid, ワザの位置) の重ならない並び。
+    # ワザの宣言（p.309 の手順 3）のときに加える（こんらんの「うら」・手順 4 の失敗・コインの「うら」でも使ったことになる。p.323「12」・v0.3d の A12）。場のポケモンに
+    # 持つので、にげる・入れ替え・番の終わりでは消えず、場をはなれたら（きぜつ・手札や山札にもどる）なくなる（もう一度場に出たら新しい場のポケモン）。ログから数えない
+    attacks_used_once: tuple[tuple[int, int], ...] = ()
+    # v0.44: トレーナー「サカキ」で選ばれ、今の番、場に出た番・進化した番でも進化させてよい（p.310 の制限のうち「その番に場に出した」「その番に進化した」だけを
+    # 変える）番。なければ None。番の終わりに消す（``procedures.expire_at_turn_end``）。進化しても場のポケモンは同じなので受け継ぐ（「進化したそのポケモンを、同じ番で、
+    # さらに進化させてもよい」）。場をはなれたらなくなる
+    evolution_permission_turn: int | None = None
 
     @property
     def current_form_turn(self) -> int:
@@ -634,6 +643,8 @@ class PokemonInPlay:
             self.played_turn,
             self.evolved_turn,
             self.persistent_effects,
+            self.attacks_used_once,
+            self.evolution_permission_turn,
         )
 
 

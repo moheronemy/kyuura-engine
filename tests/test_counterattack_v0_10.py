@@ -835,13 +835,20 @@ class SaveRestoreTest(unittest.TestCase):
 
         # v0.10 は形式 9 のまま（「はんげき」の状態の項目を加えていない）。v0.31 で形式 10（power_uses_this_turn・energy_burn）を加えたが、
         # 「はんげき」の項目ではない（形式 9 の書き出しは変わらない）
-        self.assertEqual(max(FORMAT_VERSIONS), 10)
+        # v0.44 で形式 11（attacks_used_once・evolution_permission_turn）を加えた。これも「はんげき」の項目ではない
+        self.assertEqual(max(FORMAT_VERSIONS), 11)
         new = apply_command(board(HITMONCHAN_JAB), UseAttack(0, 0))
         self.assertEqual(written(new)["format_version"], 9)
         self.assertEqual(state_to_dict(new, format_version=10), {**written(new), "format_version": 10, "power_uses_this_turn": [],
                                                                   "energy_burn": []})
+        # 形式 11 は形式 10 の場のポケモンに 2 つの項目（空）を加えただけ
+        eleven = state_to_dict(new, format_version=11)
+        for player in eleven["players"]:
+            for pokemon in [player["active"], *player["bench"]]:
+                self.assertEqual((pokemon.pop("attacks_used_once"), pokemon.pop("evolution_permission_turn")), ([], None))
+        self.assertEqual(eleven, {**state_to_dict(new, format_version=10), "format_version": 11})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=11)
+            state_to_dict(new, format_version=12)
 
 
 if __name__ == "__main__":

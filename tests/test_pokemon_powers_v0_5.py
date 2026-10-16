@@ -77,10 +77,13 @@ EVOLUTIONARY_LIGHT = PowerKey("PMCG4-052", 0)
 SUMMON_MINIONS = PowerKey("PMCG4-053", 0)
 SOAK_UP = PowerKey("PMCG5-010", 0)
 ENERGY_CHARGE = PowerKey("PMCG5-040", 0)
+# v0.44: キョウのコクーンの［うか］・サカキのペルシアンの［ボスをよぶ］（docs/search-evolution-once-attacks-v0.44.md）
+METAMORPHOSIS = PowerKey("PMCG6-011", 0)
+BOSS_CALL = PowerKey("PMCG6-071", 0)
 ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, CHEMICAL_GAS, COWARDICE, STRANGE_BEHAVIOR,
               TRANSPARENCY, CURSE, STEP_IN, POLLEN_STENCH, SNEAK_ATTACK, GATHER_FIRE, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN,
-              EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, REBIRTH, ENERGY_CHARGE, NATURAL_CURE, FIRE_RECOVERY, GUTS,
-              RESTLESS_SLEEP)
+              EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, REBIRTH, ENERGY_CHARGE, METAMORPHOSIS, NATURAL_CURE,
+              FIRE_RECOVERY, GUTS, BOSS_CALL, RESTLESS_SLEEP)
 
 
 def full(state):
@@ -170,7 +173,7 @@ class PowerRegistryTest(unittest.TestCase):
         使うかは持ち主が決める）を、カードのページ（p.193）と照合して加えた（7 つ。tests/test_guts_v0_11.py）。v0.12 で R団のファイヤーの
         「ふしちょう」（このカードが「きぜつ」したとき、使える。使うかは持ち主が決める）を、カードのページ（p.82）と照合して加えた（8 つ。
         tests/test_phoenix_v0_12.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つを加えた
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つ、v0.44 で 2 つを加えた
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -183,8 +186,8 @@ class PowerRegistryTest(unittest.TestCase):
         # （v0.31 で登録した。登録を除いた登録表 NO_CHARIZARD_EFFECTS で確かめる）
         self.assertIsNone(NO_CHARIZARD_EFFECTS.power_entry(CHARIZARD, 0))
         self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
-        # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20、v0.43 は 29
-        self.assertIn("29 powers", repr(DEFAULT_EFFECTS))
+        # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20、v0.43 は 29、v0.44 は 31
+        self.assertIn("31 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -483,7 +486,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=11)  # v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）
+            state_to_dict(new, format_version=12)  # v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

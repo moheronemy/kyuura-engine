@@ -63,9 +63,9 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 = 51 件）。論点のないものは kyuura の
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 + v0.44 の 2 件 = 53 件）。論点のないものは kyuura の
         処理が out_of_scope。kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 の
-        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4・v0.34 の TP3・NK5・v0.36 の AC6・RD9・v0.37 の JS1・v0.38 の GK1・v0.39 の GS1・v0.40 の SG1・v0.41 の CX1・v0.42 の PW1・PW2・v0.43 の PW3・PW4。kyuura への報告事項）。
+        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4・v0.34 の TP3・NK5・v0.36 の AC6・RD9・v0.37 の JS1・v0.38 の GK1・v0.39 の GS1・v0.40 の SG1・v0.41 の CX1・v0.42 の PW1・PW2・v0.43 の PW3・PW4・v0.44 の FC1・TR1。kyuura への報告事項）。
         v0.31 で、v0.30 まで起こらなかった（コードのない）5 件（T27・C34/C35・G40・P19・P32）が複数のポケモンにダメージを与えるワザで起こるように
         なったので停止コードにした。kyuura の論点（UQ-）はそのまま（kyuura の未解決の一覧ではコードのない行なので、``kyuura_index_engine_key`` で
         行を指す。scripts/check_research_links.py）。"""
@@ -105,7 +105,9 @@ class ResearchLinksTest(unittest.TestCase):
                                          # v0.42（docs/power-decisions-v0.42.md の PW1・PW2）
                                          "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
                                          # v0.43（docs/declared-entry-powers-v0.43.md の PW3・PW4）
-                                         "UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_ENTRY_POWER_DURING_ATTACK"})
+                                         "UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
+                                         # v0.44（docs/search-evolution-once-attacks-v0.44.md の FC1・TR1。GV1 はコードのない問い）
+                                         "UNRESOLVED_STATED_CARDS_SHORT", "UNRESOLVED_TRAINER_WITHOUT_TARGET"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

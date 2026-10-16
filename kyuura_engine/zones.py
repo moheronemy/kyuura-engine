@@ -213,7 +213,7 @@ def _hand_to_discard(state: GameState, player: int, cards: tuple[int, ...]) -> t
     return cards
 
 
-def search_deck_to_hand(state: GameState, player: int, card: int) -> None:
+def search_deck_to_hand(state: GameState, player: int, card: int, *, power: str | None = None) -> None:
     """自分の山札のカード ``card`` を、同じ uid のまま手札の最後に加える（v0.22。パソコン通信の「あなたの山札からカードを1枚選び出し、
     手札に加える。」。p.260）。山札の残りの並びは変えない（切るのは呼ぶ側。``shuffle_deck``）。
 
@@ -224,7 +224,8 @@ def search_deck_to_hand(state: GameState, player: int, card: int) -> None:
     手札に加える ``reveal_deck_to_hand`` と共通の ``_deck_to_hand``（動き・ログは v0.22 と同じ）。
     """
     _deck_to_hand(state, player, card)
-    state.add_event("search_deck", player=player, card=card)
+    extra = {} if power is None else {"power": power}  # v0.44: 特殊能力（サカキのペルシアンの［ボスをよぶ］）で選び出したとき
+    state.add_event("search_deck", player=player, card=card, **extra)
 
 
 def reveal_deck_to_hand(state: GameState, player: int, card: int, *, effect: str | None = None, power: str | None = None) -> None:
@@ -268,6 +269,40 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
     p.hand.remove(card)
     p.deck.append(card)
     state.add_event("return_to_deck", player=player, card=card)
+
+
+def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, effect: str) -> tuple[int, ...]:
+    """自分の手札のカード ``cards`` を、相手に見せずに、同じ uid のまま手札の並びの順に自分の山札の一番下にもどす（v0.44。ナツメのバリヤードの「てじな」の
+    「自分の手札から最大3枚のカードを選び、山札にもどす」・_____のラッキーの「ラッキーたまご」の「自分の手札からカードを2枚選び、山札にもどして、よく切る」）。
+
+    どちらのワザも、このあと同じワザの中で山札を切る（呼ぶ側。``shuffle_in_attack``）ので、もどす位置（一番下）は実装上の仮定（v0.24 の PT7 と同じ。結果は
+    変わらない）。見せる指示がないので、ログ ``hand_to_deck`` の ``cards`` は、もどしたプレイヤーにだけ見える情報（``draw`` の ``cards`` と同じ扱い。枚数は
+    ``cards`` の長さで表し、別の項目に書かない。docs/architecture-v0.2b.md 9 章）。v0.24 のポケモン交換おじさんの ``return_to_deck``（見せる。1 枚）とは別の
+    イベント。選んでよいかの確認は呼ぶ側が済ませる。手札にない・持ち主の違う・重なったカードなら ``RuntimeError``（状態を変える前）。もどしたカードを返す。"""
+    p = state.players[player]
+    if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {cards} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    returned = tuple(uid for uid in p.hand if uid in cards)
+    for uid in returned:
+        p.hand.remove(uid)
+    p.deck.extend(returned)
+    state.add_event("hand_to_deck", player=player, cards=returned, effect=effect)
+    return returned
+
+
+def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: str, chooser: int) -> None:
+    """プレイヤー ``owner`` のトラッシュのカード ``card`` を、同じ uid のまま ``owner`` の山札の一番上にのせる（v0.44。カツラのマンキーの「わるいいたずら」の
+    「相手のトラッシュからカードを1枚選び出し、相手の山札の上にのせる」。選ぶのはワザを使ったプレイヤー ``chooser``）。山札は切らない（説明にない）。
+
+    トラッシュは公開の情報で、山札の一番上にのせたカードはどちらのプレイヤーも知っているので、ログ ``put_discard_on_deck_top`` の ``card`` は公開
+    （``player`` はカードの持ち主、``chooser`` は選んだプレイヤー）。選んでよいかの確認は呼ぶ側が済ませる。トラッシュにない・持ち主が違うなら
+    ``RuntimeError``（状態を変える前）。"""
+    p = state.players[owner]
+    if card not in p.discard or state.cards[card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} のトラッシュのカード {card} を山札の上にのせられない（確認の漏れ。エンジンの不具合）")
+    p.discard.remove(card)
+    p.deck.insert(0, card)
+    state.add_event("put_discard_on_deck_top", player=owner, card=card, effect=effect, chooser=chooser)
 
 
 def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None) -> None:

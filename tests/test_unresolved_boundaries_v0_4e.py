@@ -96,6 +96,11 @@ ALL_CODES = (
     # MoonPowerRouteTest
     "UNRESOLVED_POWER_ZERO_CARDS",
     "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
+    # v0.44: FC1・TR1（docs/search-evolution-once-attacks-v0.44.md。GV1 は今の対応カードでは起こらないコードのない問い）。止まる場合（てじなで山札の
+    # 基本エネルギーカードがもどす枚数より少ない（1 枚以上）・ラッキーたまごの手札が 0・1 枚、場にサカキのポケモンがいないときのサカキ）と隣の止まらない場合
+    # （足りる・0 枚・手札が 2 枚・サカキのポケモンが 1 匹）は tests/test_search_evolution_once_attacks_v0_44.py
+    "UNRESOLVED_STATED_CARDS_SHORT",
+    "UNRESOLVED_TRAINER_WITHOUT_TARGET",
 )
 TURN = 7
 

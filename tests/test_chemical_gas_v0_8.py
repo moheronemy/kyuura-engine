@@ -651,7 +651,7 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 10)  # v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn。ガスの項目ではない）
+                self.assertEqual(LATEST_FORMAT, 11)  # v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）。どれもガスの項目ではない
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):

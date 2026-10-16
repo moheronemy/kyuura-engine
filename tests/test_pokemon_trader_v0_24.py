@@ -91,7 +91,8 @@ class RegistrationTest(unittest.TestCase):
     def test_no_card_specific_branch_in_the_engine(self):
         """engine.py・resolution/ にこのカードの id・実装での分岐を加えていない（既存のトレーナーの登録・決定・ゾーンの関数で扱う）。v0.38 から、見せて
         手札に加えるゾーンの関数 ``reveal_deck_to_hand`` は、ワザの要素（キョウのポッポの「でんれい」。``programs.RevealPokemonFromDeck``）も使う（共通の
-        関数。このカードの処理ではない）ので、programs.py のその要素の中だけを許す。"""
+        関数。このカードの処理ではない）ので、programs.py のその要素の中だけを許す。v0.44 から、ワザの要素 ``RevealTrainerFromDeck``（ニャースの「ねこのて」）・
+        ``ReturnHandThenRevealEnergy``（_____のラッキーの「ラッキーたまご」）も同じ共通の関数を使うので、その 3 つの要素の中だけを許す（どれも 1 か所）。"""
         for path in [ROOT / "kyuura_engine" / "engine.py", *(ROOT / "kyuura_engine" / "resolution").glob("*.py")]:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")
@@ -99,10 +100,15 @@ class RegistrationTest(unittest.TestCase):
                 self.assertIsNone(re.search(r"TradePokemonWithDeck|RETURN_TO_DECK|return_hand_to_deck", text))
                 uses = [m.start() for m in re.finditer(r"reveal_deck_to_hand\(", text)]
                 if path.name == "programs.py":
-                    start = text.index("class RevealPokemonFromDeck(")
-                    end = text.index("BUILDERS: dict", start)
-                    self.assertEqual(len(uses), 1)
-                    self.assertTrue(all(start < use < end for use in uses))
+                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy")
+                    spans = []
+                    for name in elements:
+                        start = text.index(f"class {name}(")
+                        end = min(i for i in (text.find("\nclass ", start + 1), text.find("BUILDERS: dict", start)) if i > 0)
+                        spans.append((start, end))
+                        self.assertEqual(sum(start < use < end for use in uses), 1, name)
+                    self.assertEqual(len(uses), len(elements))
+                    self.assertTrue(all(any(start < use < end for start, end in spans) for use in uses))
                 else:
                     self.assertEqual(uses, [])
 

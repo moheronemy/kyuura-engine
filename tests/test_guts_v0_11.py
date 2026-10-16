@@ -622,7 +622,9 @@ class G37Test(unittest.TestCase):
             "DamageThenConfuseOnAnyHeads", "DamageThenSleepOnHeads", "DamageThenRetreatLockOnHeads", "SwitchOpponentActiveOnHeads",
             "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads",
             # v0.42（相手のポケモンのカウンターをとりのぞく・残り HP が決まった数になるようにカウンターをのせる。docs/power-decisions-v0.42.md）
-            "HealChosenOpponentThenDraw", "PlaceCountersToRemainingHpOnHeads"]))
+            "HealChosenOpponentThenDraw", "PlaceCountersToRemainingHpOnHeads",
+            # v0.44（きぜつしていなければ入れ替え・1 枚のコインでどくとマヒ・コインで特殊などく。docs/search-evolution-once-attacks-v0.44.md）
+            "DamageThenSwitchOpponentIfNotKnockedOut", "DamageThenPoisonAndParalyzeOnHeads", "SpecialPoisonOnHeadsWithoutDamage"]))
 
 
 class DecisionTest(unittest.TestCase):

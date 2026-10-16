@@ -86,6 +86,11 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 10 = 形式 9 に `power_uses_this_turn`（この番に使った「自分の番ごとに1回使える」特殊能力。[場のポケモンの番号, 特殊能力の位置] の並び）と `energy_burn`（この番に「エナジーバーン」で「炎」エネルギーになったエネルギーカード。[場のポケモンの番号, エネルギーカードの uid] の並び）を加えたもの。どちらも番の最初・番の終わりに空。
 - 形式 1〜9 は、どちらも空なら今までどおり書き出せる。空でなければ `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 10。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.31 のカードを使わない対戦では 2 つの項目は空）。[held-cards-v0.31.md](held-cards-v0.31.md) 6 章。
 
+### 4.4 書き出しの形式 11（v0.44）
+
+- 形式 11 = 形式 10 の場のポケモンごとに `attacks_used_once`（場に出てから 1 度だけ使えるワザで、このポケモンが使ったもの。[カードの uid, ワザの位置] の並び）と `evolution_permission_turn`（トレーナー「サカキ」の許可を受けた番。なければ null）を加えたもの。`attacks_used_once` はポケモンが場にいるあいだ残り（場をはなれたらポケモンごとなくなる）、`evolution_permission_turn` は番の終わりに消える。
+- 形式 1〜10 は、どちらもない（空・null）なら今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 11（`POKEMON_FIELDS_SINCE` に 2 つの項目）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.44 のカードを使わない対戦では 2 つの項目はない）。[search-evolution-once-attacks-v0.44.md](search-evolution-once-attacks-v0.44.md) 10 章。
+
 ## 5. ログ
 
 ```text

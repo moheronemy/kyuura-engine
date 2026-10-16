@@ -148,6 +148,11 @@ QUESTIONS: dict[str, Question] = {
         Question("evolution_hp_every_card", "UNRESOLVED_EVOLUTION_HP", ("v0.4a",), 10,
                  "進化すると HP がのっているダメージ以下になる。そのときにきぜつするか（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から"
                  "決められない（v0.4a の H1）"),
+        # v0.44（docs/search-evolution-once-attacks-v0.44.md 5 章）
+        Question("stated_cards_short", "UNRESOLVED_STATED_CARDS_SHORT", ("FC1",), 10,
+                 "説明が決まった枚数（「カードを2枚選び」「もどしたのと同じ枚数」）のカードを選ばせるとき、選べるカードがその枚数より少ない場合に、選べるだけ選ぶのか、"
+                 "その内容を処理しないのか（山札を切るか）は、kyuura の記録・印刷の文面から決められない（p.309 の「処理の対象がなくなってしまっている場合」は対象がない"
+                 "ときの規定で、足りないときを書かない）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,
@@ -158,6 +163,11 @@ QUESTIONS: dict[str, Question] = {
         # v0.31: 「みちづれ」がはたらくワザのきぜつの判定で、任意の効果（こんじょう）の候補もある（今の対応カードでは起こらない）
         Question("destiny_bond_with_ko_prevention", None, ("HC2",), 90,
                  "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
+        # v0.44: トレーナー「サカキ」の許可のあるポケモンを山札から重ねる効果で進化させる（山札から重ねる効果はどれも「サカキの」ポケモンではない自分自身を進化させる
+        # ので、今の対応カードでは起こらない。docs/search-evolution-once-attacks-v0.44.md）
+        Question("evolution_permission_from_deck", None, ("GV1",), 90,
+                 "トレーナー「サカキ」で今の番に進化させてよいポケモン（今の番に場に出した・進化した）を、山札から重ねる効果で進化させられるかは、説明の「(ポケモンを"
+                 "進化させる時には、あなたの手札から「進化カード」を出して、そのポケモンの上にのせる)」が許可を手札から重ねる進化に限るのかが決められない"),
     )
 }
 
