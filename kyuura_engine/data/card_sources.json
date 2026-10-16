@@ -7055,6 +7055,747 @@
       ],
       "issues": [],
       "notes": "v0.39 で加えた。第2弾のパラス（PMCG2-003）とは別の名前のカード。はさむは DamageOnly。きけんなほうしは CoinPoisonAndBenchDamage(10)（1 枚のコインの「おもて」で、相手の控え全員に弱点・抵抗力に関係なく 10 → 相手をどく（p.309 の手順 6 のダメージ → それ以外の効果の順））"
+    },
+    "PMCG6-005": {
+      "basis": "kyuura_data",
+      "name_ja": "キョウのズバット",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2010.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "010/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "自分の場にいる「キョウのズバット」の数×10ダメージ。のぞむなら、ダメージを与える前に、自分の山札から「キョウのズバット」を好きなだけ選び出し、ベンチに出してよい。その場合は、その山札をよく切る。",
+              "pcg_search": "自分の場にいる「キョウのズバット」の数×10のダメージ。のぞむなら、ダメージを与える前に、自分の山札から「キョウのズバット」を好きなだけ選び出し、ベンチに出してよい。その場合は、その山札をよく切る。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「×10のダメージ」、kyuura は「×10ダメージ」（「の」の有無）。ほかは同じで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。キョウのズバット。ズバット（PMCG3-002・PMCG4-002）・タケシのズバット（PMCG5-001）とは別の名前のカード。むれでおそうは GroupAttackFromDeck((キョウのズバット,), 10)（のぞむなら山札から「キョウのズバット」を好きなだけベンチに出し、出したら 1 回切る → 自分の場の「キョウのズバット」の数 × 10）"
+    },
+    "PMCG6-014": {
+      "basis": "kyuura_data",
+      "name_ja": "キョウのゴルバット",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2011.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "011/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のキョウのズバット（PMCG6-005）。かみつくは DamageOnly。ひどいおんぱは既存の ConfuseOnHeads（v0.3c）"
+    },
+    "PMCG4-011": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいマタドガス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4011.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "011/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」の数×20のダメージ。その後、お互いの場にいる全ての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ。",
+              "pcg_search": "お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」の数×20のダメージ。その後、お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ。",
+              "affects_behavior": false,
+              "note": "サイトの文面は 2 つめの「すべての」、kyuura は「全ての」（表記の違い）。ほかは同じで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のドガース（PMCG1-006・PMCG4-005。名前で照らす）。マタドガス（PMCG3-006）・キョウのマタドガス（PMCG6-016）とは別の名前のカード。みんなでばくはつは NamedPokemonExplosion((ドガース, マタドガス, わるいマタドガス), 20, 20)（お互いの場の名前の合うポケモンの数 × 20 → 名前の合う相手の対戦ポケモン・自分・お互いの控えにそれぞれ 20。控えへのダメージは JS1）。しびれガスは既存の DamageThenPoisonOrParalyze（v0.38 のきけんなはりと同じ型）"
+    },
+    "PMCG4-037": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいスリーパー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4037.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "037/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×20のダメージ(このワザのダメージは相手の「弱点・抵抗力」の影響を受けない)",
+              "pcg_search": "相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×20のダメージ。(このワザのダメージは相手の「弱点・抵抗力」の影響を受けない)",
+              "affects_behavior": false,
+              "note": "サイトの文面は「…×20のダメージ。(このワザの…)」と句点がある。kyuura は句点がない。処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のスリープ（PMCG1-045。名前で照らす。ナツメのスリープ PMCG6-045 は別の名前）。サイコパンチは DamageOnly。ベンチをあやつるは OpponentFlipsTailsDamage(20)（相手が相手の控えの数だけコインを投げ、「うら」の数 × 20。相手の弱点・抵抗力を計算しない）"
+    },
+    "PMCG6-004": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキのニドラン♂",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2021.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "021/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "コインを2枚投げて「おもて」の数×10のダメージ。",
+              "pcg_search": "コインを2枚投げ、「おもて」の数×10のダメージ。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「コインを2枚投げ、」、kyuura は「コインを2枚投げて」（書き方の違い）。処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。ニドラン♂（PMCG1-005）とは別の名前のカード。にどげりは CoinFlipDamage(2, 10)。いかりのいちげきは DamageRequiringOwnCounters(2)（自分にダメージカウンターが 2 つ以上のっているときだけ使える。ワザを使うための条件）"
+    },
+    "PMCG6-013": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキのニドリーノ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2022.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "022/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "このワザを使う時、すでに相手にダメージカウンターがのっているなら、20ダメージを追加する。",
+              "pcg_search": "このワザを使う時、すでに相手にダメージカウンターがのっていたなら、20ダメージを追加する。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「のっていたなら」、kyuura は「のっているなら」。どちらも「このワザを使う時、すでに」相手にカウンターがのっているかで決める同じ条件で、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のサカキのニドラン♂（PMCG6-004）。つのでえぐるは DamagePlusIfDefenderDamaged(20)（相手の対戦ポケモンにカウンターがのっていれば + 20）"
+    },
+    "PMCG6-021": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキのニドキング",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2023.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "023/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のサカキのニドリーノ（PMCG6-013）と名前で照らす 2 進化。ニドキング（PMCG1-013）とは別の名前のカード。すごむは AttackLockWhileSourceActive(50)（最大 HP 50 以下の相手は、次の相手の番、このカードがバトル場にいる限りワザを使えない。持続する効果 CannotAttackWhileSourceActive。はなれたあと同じ番にもどる場合は SG1）。ローリングアタックは既存の CoinBonusDamage(30)"
+    },
+    "PMCG6-020": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキのニドクイン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2020.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "020/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].damage",
+              "kyuura": {
+                "base": 50,
+                "modifier": "+",
+                "display": "50+"
+              },
+              "pcg_search": "50",
+              "affects_behavior": false,
+              "note": "サイトのダメージの表示は「50」、kyuura は「50+」（「+」の有無）。処理は説明の「このワザのダメージは「100」になる」と目安の数字 50 で決まり、記号では変わらない（登録は写しの「50+」で照らす）。kyuura への報告事項"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のサカキのニドリーナ（PMCG6-012）と名前で照らす 2 進化。ニドクイン（PMCG2-013）とは別の名前のカード。メガトンキックは DamageOnly。ラブラリアットは FailOnTailsAmountIfBenchNamed((サカキのニドキング,), 100)（「うら」なら失敗。自分のベンチに「サカキのニドキング」がいればダメージは 100。p.321 の 1 段階）。サイトのダメージの表示は「50」（kyuura は「50+」。処理に影響しない。kyuura への報告事項）"
+    },
+    "PMCG4-042": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいゴーリキー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4043.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "043/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。（ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない）",
+              "pcg_search": "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない)",
+              "affects_behavior": false,
+              "note": "サイトの文面はかっこが半角、kyuura は全角（記号の違い）。処理は変わらない"
+            },
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えるポケモンは相手が選ぶ。（相手に控えがいない時、入れ替えは起こらない）",
+              "pcg_search": "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)",
+              "affects_behavior": false,
+              "note": "サイトの文面は「入れ替わるポケモンは相手が選ぶ。(…入れ替えはおこらない)」、kyuura は「入れ替えるポケモンは相手が選ぶ。（…入れ替えは起こらない）」（表記・かっこの違い）。選ぶのは相手で、控えがいなければ入れ替えない処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のワンリキー（PMCG1-053・PMCG4-040。名前で照らす）。ゴーリキー（PMCG1-055）・サカキのゴーリキー（PMCG6-059）とは別の名前のカード。ひきずりだすは SwitchOpponentThenDamage（相手の控えを選んで入れ替えてから、新しい対戦ポケモンに 20。相手に控えがいなければ使えない）。なぐりとばすは既存の DamageAndForceSwitch（v0.4d のふきとばしと同じ型）"
+    },
+    "PMCG4-044": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいカイリキー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4044.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "044/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のわるいゴーリキー（PMCG4-042）と名前で照らす 2 進化。カイリキー（PMCG1-057）・サカキのカイリキー（PMCG6-061）とは別の名前のカード（kyuura の CC-PMCG1-057-P43 の not_confused_with が挙げるだけで、このカードの記録ではない）。メガトンパンチは DamageOnly。つまみだすは ReturnOpponentActiveToDeck（相手の対戦ポケモンとついているすべてのカードを持ち主の山札にもどし、切る。きぜつではない。相手に控えがいなければ使えない）"
+    },
+    "PMCG5-011": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのウツドン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1012.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "012/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のエリカのマダツボミ（PMCG5-005・PMCG5-010。名前で照らす）。ウツドン（PMCG2-011）とは別の名前のカード。よだれは DamageOnly。さそってとかすは SwitchOpponentThenDamage（わるいゴーリキーの「ひきずりだす」と同じ型。かっこは半角）"
+    },
+    "PMCG5-034": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのシードラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1031.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "031/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のカスミのタッツー（PMCG5-024・PMCG5-025。名前で照らす）。しっぽのムチは DamageOnly。きぜつばりは CoinsAllHeadsBonusDamage(2, 60)（コイン 2 枚がすべて「おもて」なら + 60）"
+    },
+    "PMCG5-045": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのマンキー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1047.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "047/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。マンキー（PMCG4-039）とは別の名前のカード。ひまつぶしは ShuffleDeckAttack(own=True)（自分の山札を切る）。からてチョップは既存の DamageReducedByOwnCounters(10)（v0.10 のゴーリキーと同じ型。kyuura の印刷の文面は、v0.10 で登録したゴーリキーの処理に使う文面と同じ文）"
+    },
+    "PMCG4-039": {
+      "basis": "kyuura_data",
+      "name_ja": "マンキー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4040.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "040/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。タケシのマンキー（PMCG5-045）とは別の名前のカード。いたずらは ShuffleDeckAttack(own=False)（相手の山札を切る）。おこるは既存の CoinBonusDamage(20)"
+    },
+    "PMCG2-031": {
+      "basis": "kyuura_data",
+      "name_ja": "オコリザル",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2029.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "029/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.40 で加えた。進化元のマンキー（PMCG2-028（写しにない）・PMCG4-039。名前で照らす。収録の弾の違いは進化の条件にしない）。みだれひっかきは CoinFlipDamage(3, 20)。あばれまわるは DamageThenSelfConfuseOnTails（ダメージ → コインの「うら」で自分がこんらん）"
     }
   }
 }

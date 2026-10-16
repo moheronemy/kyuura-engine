@@ -100,6 +100,7 @@ from .state import (
     AttackCoinCheck,
     Asleep,
     CannotAttack,
+    CannotAttackWhileSourceActive,
     CannotRetreat,
     Confused,
     DamageReduction,
@@ -149,7 +150,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     値を加えただけで形式は変えない。v0.34 までの書き出しを読む側は、知らない種類として拒否すること）。v0.36 の ``"attack_coin_check"``（「すなかけ」・
     「えんまく」など。p.309 の手順 4 のコイン）は ``single_use``（「効果は1回できえる」）を加え、``"cannot_retreat"``（「アイスバーン」・「わしづかみ」）は共通の
     項目だけ（どちらも相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン。形式は変えない。v0.35 までの書き出しを読む側は、知らない種類として
-    拒否すること）。"""
+    拒否すること）。v0.40 の ``"cannot_attack_while_source_active"``（「すごむ」。相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン
+    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -181,7 +183,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
     elif isinstance(effect, AttackCoinCheck):
         data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
-    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat)):
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
 

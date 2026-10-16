@@ -74,6 +74,11 @@ V0_39_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG1-036", "PMCG1-039",
     AttackKey("PMCG2-024", 0), AttackKey("PMCG3-024", 0), AttackKey("PMCG2-025", 1), AttackKey("PMCG6-008", 0), AttackKey("PMCG6-039", 0),
     AttackKey("PMCG4-026", 1), AttackKey("PMCG2-045", 0), AttackKey("PMCG2-045", 1), AttackKey("PMCG2-013", 0), AttackKey("PMCG1-059", 0),
     AttackKey("PMCG5-004", 1)]
+# v0.40: 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚（docs/count-condition-switch-return-v0.40.md）の説明文のあるワザ 22
+V0_40_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG4-011", "PMCG6-004", "PMCG6-021", "PMCG4-042", "PMCG5-045", "PMCG4-039", "PMCG2-031")
+                   for index in (0, 1)] + [
+    AttackKey("PMCG6-005", 0), AttackKey("PMCG6-014", 1), AttackKey("PMCG4-037", 1), AttackKey("PMCG6-013", 0), AttackKey("PMCG6-020", 1),
+    AttackKey("PMCG4-044", 1), AttackKey("PMCG5-011", 1), AttackKey("PMCG5-034", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -223,7 +228,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
-                                    + V0_39_WITH_TEXT))
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -357,7 +362,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 既存の効果の再利用・文面の違いの受け付け・新しい要素の組み合わせの 15 枚のワザ 28（v0.37。docs/fifteen-reused-effects-v0.37.md）
         # + 控えへのダメージ・入れ替え・同じコインの複数の効果・軽減・山札にもどる効果の 15 枚のワザ 29（v0.38。docs/bench-switch-combined-v0.38.md）
         # + じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚のワザ 25（v0.39。docs/selfdestruct-spread-count-v0.39.md）
-        self.assertEqual(len(keys), 368)
+        # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
+        self.assertEqual(len(keys), 396)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

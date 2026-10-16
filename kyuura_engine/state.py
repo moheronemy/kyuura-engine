@@ -521,11 +521,33 @@ class CannotRetreat:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class CannotAttackWhileSourceActive:
+    """ワザによる「持続する効果」（v0.40）のうち、サカキのニドキング（PMCG6-021）の「すごむ」の「このワザを受けた相手が「最大HPが50以下」のポケモンなら、
+    そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。」（kyuura の印刷の文面。docs/count-condition-switch-return-v0.40.md 4 章）。
+
+    相手に与える効果（``on_opponent``。``CannotAttack`` と同じ）。``source_card``・``source_player`` は効果を与えたワザを使ったポケモン（「このカード」）の
+    いちばん上のカードとそのプレイヤー。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンは、効果を与えたポケモン（``source_card``
+    のカードがいちばん上のポケモン）が持ち主のバトル場にいるときだけ、ワザを使えない（``persistent.cannot_attack_while_source_active``。確かめるのはワザの宣言の
+    とき。``checks.attack_request``）。「最大HPが50以下」は効果を与えるときに確かめ、状態には持たない（受けているポケモンが進化すると、ほかの持続する効果と同じく
+    消える。p.310）。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ）。効果を与えたポケモンがバトル場をはなれても、この効果は消さない
+    （はなれている間はワザを使える。同じ番にバトル場にもどる場合は決められない（SG1）ので、突風がもどす選択を止める。``effects.SwitchOpponentWithBench``）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "cannot_attack_while_source_active"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
-# CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat を加えた）。
-# 加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+# CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
+# CannotAttackWhileSourceActive を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
-                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat)
+                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）

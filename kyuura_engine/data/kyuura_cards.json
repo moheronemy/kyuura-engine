@@ -358,6 +358,23 @@
     "PMCG1-059",
     "PMCG5-004"
   ],
+  "pool_v0_40": [
+    "PMCG6-005",
+    "PMCG6-014",
+    "PMCG4-011",
+    "PMCG4-037",
+    "PMCG6-004",
+    "PMCG6-013",
+    "PMCG6-021",
+    "PMCG6-020",
+    "PMCG4-042",
+    "PMCG4-044",
+    "PMCG5-011",
+    "PMCG5-034",
+    "PMCG5-045",
+    "PMCG4-039",
+    "PMCG2-031"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG1-047",
@@ -19957,6 +19974,1385 @@
         "series": "リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%91%E3%83%A9%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-005",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのズバット",
+        "en": "Koga's Zubat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          41
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "むれでおそう",
+              "en": "Group Attack"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "自分の場にいる「キョウのズバット」の数×10ダメージ。のぞむなら、ダメージを与える前に、自分の山札から「キョウのズバット」を好きなだけ選び出し、ベンチに出してよい。その場合は、その山札をよく切る。",
+              "en": "Does 10 damage times the number of Koga's Zubats you have in play. Before doing damage, you may search your deck for any number of Basic Pokémon named Koga's Zubat and put them onto your Bench. (You can't get more cards with this attack than you have room on your Bench.) If you do, shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-005",
+        "pokemontcg": [
+          "gym2-83"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%BA%E3%83%90%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%BA%E3%83%90%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-014",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのゴルバット",
+        "en": "Koga's Golbat"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          42
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キョウのズバット",
+          "en": "Koga's Zubat"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ひどいおんぱ",
+              "en": "Sonic Scream"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-014",
+        "pokemontcg": [
+          "gym2-46"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%B4%E3%83%AB%E3%83%90%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 27,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%B4%E3%83%AB%E3%83%90%E3%83%83%E3%83%88_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-011",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいマタドガス",
+        "en": "Dark Weezing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          110
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ドガース",
+          "en": "Koffing"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みんなでばくはつ",
+              "en": "Mass Explosion"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」の数×20のダメージ。その後、お互いの場にいる全ての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ。",
+              "en": "Does 20 damage times the total number of Koffings, Weezings, and Dark Weezings in play (Apply Weakness and Resistance.). Then, this attack does 20 damage to each Koffing, Weezing, and Dark Weezing (even your own). Don't apply Weakness and Resistance."
+            }
+          },
+          {
+            "name": {
+              "ja": "しびれガス",
+              "en": "Stun Gas"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned; if tails, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-011",
+        "pokemontcg": [
+          "base5-14",
+          "base5-31"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-011-warui-matadogas/",
+      "jp_print": {
+        "level": 24,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-011-warui-matadogas/"
+      }
+    },
+    {
+      "id": "PMCG4-037",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいスリーパー",
+        "en": "Dark Hypno"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          97
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "スリープ",
+          "en": "Drowzee"
+        },
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコパンチ",
+              "en": "Psypunch"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ベンチをあやつる",
+              "en": "Bench Manipulation"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×20のダメージ(このワザのダメージは相手の「弱点・抵抗力」の影響を受けない)",
+              "en": "Your opponent flips a number of coins equal to the number of Pokémon on his or her Bench. This attack does 20 damage times the number of tails. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-037",
+        "pokemontcg": [
+          "base5-9",
+          "base5-26"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-037-warui-sleeper/",
+      "jp_print": {
+        "level": 26,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-037-warui-sleeper/"
+      }
+    },
+    {
+      "id": "PMCG6-004",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニドラン♂",
+        "en": "Giovanni's Nidoran ♂"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          32
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "にどげり",
+              "en": "Double Kick"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×10のダメージ。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのいちげき",
+              "en": "Retaliation"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザは、自分にダメージカウンターが2つ以上のっているときだけ、使える。",
+              "en": "You can't use this attack unless Giovanni's Nidoran ♂ has 2 or more damage counters on it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-004",
+        "pokemontcg": [
+          "gym2-76"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%83%A9%E3%83%B3%E2%99%82_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%83%A9%E3%83%B3%E2%99%82_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-013",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニドリーノ",
+        "en": "Giovanni's Nidorino"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          33
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "サカキのニドラン♂",
+          "en": "Giovanni's Nidoran ♂"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つのでえぐる",
+              "en": "Rend"
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "このワザを使う時、すでに相手にダメージカウンターがのっているなら、20ダメージを追加する。",
+              "en": "If the Defending Pokémon already has any damage counters on it, this attack does 20 damage plus 20 more damage. If not, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-013",
+        "pokemontcg": [
+          "gym2-45"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%83%AA%E3%83%BC%E3%83%8E_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%83%AA%E3%83%BC%E3%83%8E_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-021",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニドキング",
+        "en": "Giovanni's Nidoking"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          34
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サカキのニドリーノ",
+          "en": "Giovanni's Nidorino"
+        },
+        "hp": 120,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "すごむ",
+              "en": "Intimidate"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "このワザを受けた相手が「最大HPが50以下」のポケモンなら、そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。",
+              "en": "If the Defending Pokémon's maximum HP is 50 or less, it can't attack Giovanni's Nidoking during your opponent's next turn. (Benching or evolving either Pokémon ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ローリングアタック",
+              "en": "Tumbling Attack"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、30ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 40 damage plus 30 more damage; if tails, this attack does 40 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-021",
+        "pokemontcg": [
+          "gym2-7"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%82%AD%E3%83%B3%E3%82%B0_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 58,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%82%AD%E3%83%B3%E3%82%B0_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-020",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニドクイン",
+        "en": "Giovanni's Nidoqueen"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          31
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "サカキのニドリーナ",
+          "en": "Giovanni's Nidorina"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガトンキック",
+              "en": "Mega Kick"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ラブラリアット",
+              "en": "Love Lariat"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": "+",
+              "display": "50+"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。自分のベンチに「サカキのニドキング」がいるなら、このワザのダメージは「100」になる。",
+              "en": "Flip a coin. If heads, this attack does 50 damage plus 50 more damage if you have at least 1 Giovanni's Nidoking on your Bench. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-020",
+        "pokemontcg": [
+          "gym2-23"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%82%AF%E3%82%A4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 51,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%89%E3%82%AF%E3%82%A4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-042",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいゴーリキー",
+        "en": "Dark Machoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          67
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ワンリキー",
+          "en": "Machop"
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひきずりだす",
+              "en": "Drag Off"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。（ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない）",
+              "en": "Before doing damage, choose 1 of your opponent's Benched Pokémon and switch it with the Defending Pokémon. Do the damage to the new Defending Pokémon. This attack can't be used if your opponent has no Benched Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "なぐりとばす",
+              "en": "Knock Back"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えるポケモンは相手が選ぶ。（相手に控えがいない時、入れ替えは起こらない）",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-042",
+        "pokemontcg": [
+          "base5-40"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-043-warui-goriky/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-043-warui-goriky/"
+      }
+    },
+    {
+      "id": "PMCG4-044",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいカイリキー",
+        "en": "Dark Machamp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          68
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいゴーリキー",
+          "en": "Dark Machoke"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガトンパンチ",
+              "en": "Mega Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "つまみだす",
+              "en": "Fling"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": null,
+            "text": {
+              "ja": "相手の対戦ポケモンとそれについているすべてのカードを山札にもどさせ、その山札をよく切る。(相手に控えがいない時、このワザは使えない)",
+              "en": "Your opponent shuffles his or her Active Pokémon and all cards attached to it into his or her deck. This attack can't be used if your opponent has no Benched Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-044",
+        "pokemontcg": [
+          "base5-10",
+          "base5-27"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-044-warui-kairiky/",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-044-warui-kairiky/"
+      }
+    },
+    {
+      "id": "PMCG5-011",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのウツドン",
+        "en": "Erika's Weepinbell"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          70
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのマダツボミ",
+          "en": "Erika's Bellsprout"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "よだれ",
+              "en": "Drool"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "さそってとかす",
+              "en": "Flytrap"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない)",
+              "en": "Before doing damage, choose 1 of your opponent's Benched Pokémon and switch it with his or her Active Pokémon. This attack can't be used if your opponent has no Benched Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-011",
+        "pokemontcg": [
+          "gym1-48"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%A6%E3%83%84%E3%83%89%E3%83%B3LV.26_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 26,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%A6%E3%83%84%E3%83%89%E3%83%B3LV.26_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-034",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのシードラ",
+        "en": "Misty's Seadra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          117
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのタッツー",
+          "en": "Misty's Horsea"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽのムチ",
+              "en": "Tail Snap"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きぜつばり",
+              "en": "Knockout Needle"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、すべて「おもて」なら、60ダメージを追加する。",
+              "en": "Flip 2 coins. If both of them are heads, this attack does 30 damage plus 60 more damage. If 1 or both of them are tails, this attack does 30 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-034",
+        "pokemontcg": [
+          "gym1-9"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B7%E3%83%BC%E3%83%89%E3%83%A9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B7%E3%83%BC%E3%83%89%E3%83%A9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-045",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのマンキー",
+        "en": "Brock's Mankey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          56
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひまつぶし",
+              "en": "Fidget"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札をよく切る。",
+              "en": "Shuffle your deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "からてチョップ",
+              "en": "Karate Chop"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": "-",
+              "display": "40-"
+            },
+            "text": {
+              "ja": "このワザのダメージは、自分にのっているダメージカウンターの数×10だけ、小さくなる。",
+              "en": "Does 40 damage minus 10 damage for each damage counter on Brock's Mankey."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-045",
+        "pokemontcg": [
+          "gym1-68"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%83%9E%E3%83%B3%E3%82%AD%E3%83%BCLV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 12,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%83%9E%E3%83%B3%E3%82%AD%E3%83%BCLV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-039",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "マンキー",
+        "en": "Mankey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          56
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いたずら",
+              "en": "Mischief"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の山札をよく切る。",
+              "en": "Shuffle your opponent's deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "おこる",
+              "en": "Anger"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 20 more damage; if tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-039",
+        "pokemontcg": [
+          "base5-61"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-040-mankey/",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-040-mankey/"
+      }
+    },
+    {
+      "id": "PMCG2-031",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "オコリザル",
+        "en": "Primeape"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          57
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マンキー",
+          "en": "Mankey"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれひっかき",
+              "en": "Fury Swipes"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×20のダメージ。",
+              "en": "Flip 3 coins. This attack does 20 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "あばれまわる",
+              "en": "Tantrum"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分は「こんらん」状態になる。",
+              "en": "Flip a coin. If tails, Primeape is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-031",
+        "pokemontcg": [
+          "base2-43"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-029-okorizaru/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-029-okorizaru/"
       }
     },
     {

@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 46,
-    "engine_stop_codes": 45,
+    "engine_unresolved_rulings": 47,
+    "engine_stop_codes": 46,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -573,6 +573,17 @@
           "version": "v0.39",
           "document": "docs/selfdestruct-spread-count-v0.39.md",
           "ruling_id": "GS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED": {
+      "engine_rulings": [
+        {
+          "version": "v0.40",
+          "document": "docs/count-condition-switch-return-v0.40.md",
+          "ruling_id": "SG1"
         }
       ],
       "kyuura_issue": null,
@@ -1275,7 +1286,29 @@
       "PMCG6-016/attack/0",
       "PMCG6-016/attack/1",
       "PMCG1-059/attack/0",
-      "PMCG5-004/attack/1"
+      "PMCG5-004/attack/1",
+      "PMCG6-005/attack/0",
+      "PMCG6-014/attack/1",
+      "PMCG4-011/attack/0",
+      "PMCG4-011/attack/1",
+      "PMCG4-037/attack/1",
+      "PMCG6-004/attack/0",
+      "PMCG6-004/attack/1",
+      "PMCG6-013/attack/0",
+      "PMCG6-021/attack/0",
+      "PMCG6-021/attack/1",
+      "PMCG6-020/attack/1",
+      "PMCG4-042/attack/0",
+      "PMCG4-042/attack/1",
+      "PMCG4-044/attack/1",
+      "PMCG5-011/attack/1",
+      "PMCG5-034/attack/1",
+      "PMCG5-045/attack/0",
+      "PMCG5-045/attack/1",
+      "PMCG4-039/attack/0",
+      "PMCG4-039/attack/1",
+      "PMCG2-031/attack/0",
+      "PMCG2-031/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

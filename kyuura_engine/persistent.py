@@ -43,6 +43,7 @@ from .state import (
     AttackBarrier,
     AttackCoinCheck,
     CannotAttack,
+    CannotAttackWhileSourceActive,
     CannotRetreat,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -226,6 +227,17 @@ def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None
 def cannot_attack(state: GameState, pokemon: PokemonInPlay) -> CannotAttack | None:
     """今の番に ``pokemon`` がワザを使えない効果（v0.31。イーブイの「しっぽをふる」を受けた）がはたらいているなら、その効果。"""
     return _active(state, pokemon, CannotAttack)
+
+
+def cannot_attack_while_source_active(state: GameState, pokemon: PokemonInPlay) -> CannotAttackWhileSourceActive | None:
+    """今の番に ``pokemon`` がワザを使えない効果（v0.40。サカキのニドキングの「すごむ」の「次の相手の番、このカードがバトル場にいる限り、ワザを使えない」）が
+    はたらいているなら、その効果。はたらく番が今の番で、効果を与えたポケモン（``source_card`` のカードがいちばん上のポケモン）が持ち主（``source_player``）の
+    バトル場にいるときだけ（いないなら None。ワザを使える）。確かめるのは問い合わせのとき（ワザの宣言のとき）。"""
+    effect = _active(state, pokemon, CannotAttackWhileSourceActive)
+    if effect is None:
+        return None
+    active = state.players[effect.source_player].active
+    return effect if active is not None and active.card == effect.source_card else None
 
 
 def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> CannotUseOwnAttack | CannotUseAttack | None:

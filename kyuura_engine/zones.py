@@ -229,12 +229,17 @@ def return_hand_to_deck(state: GameState, player: int, card: int) -> None:
     state.add_event("return_to_deck", player=player, card=card)
 
 
-def shuffle_deck(state: GameState, player: int) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
-    v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。"""
+    v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
+
+    ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
+    わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
+    同じ）。"""
     state.rng.shuffle(state.players[player].deck)
-    state.add_event("shuffle", player=player)
+    extra = {} if effect is None else {"effect": effect}
+    state.add_event("shuffle", player=player, **extra)
 
 
 def attach_energy_from_hand(state: GameState, player: int, energy: int, pokemon: PokemonInPlay) -> None:

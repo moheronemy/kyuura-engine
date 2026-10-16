@@ -398,7 +398,7 @@ class BarrierCoinTest(unittest.TestCase):
 
     def test_stopping_types_follow_from_the_programs(self):
         """製品のどの登録でも、バリアーで止まるコインは、コインが決める要素がどれも相手の対戦ポケモンへのダメージ・効果のもの（要素の並びから求める。
-        カード id の表ではない）。止まる型は 3 つ（ねばりつく・じごくがための型・からではさむの型・失敗するワザの型）で、ほかのコインは投げる。"""
+        カード id の表ではない）。止まる型は 4 つ（ねばりつく・じごくがための型・からではさむの型・失敗するワザの型・v0.40 のラブラリアットの型）で、ほかのコインは投げる。"""
         stopping, flipping = set(), set()
         for key in E.DEFAULT_EFFECTS.attack_keys():
             effect = E.DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
@@ -412,7 +412,9 @@ class BarrierCoinTest(unittest.TestCase):
                     continue
                 roles = [e.coin_receiver() for e in decided]
                 (stopping if roles and None not in roles else flipping).add(type(effect).__name__)
-        self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage"})
+        # v0.40: サカキのニドクインの「ラブラリアット」（FailOnTailsAmountIfBenchNamed。失敗のコインのあとはダメージだけ。
+        # docs/count-condition-switch-return-v0.40.md の LR2）
+        self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

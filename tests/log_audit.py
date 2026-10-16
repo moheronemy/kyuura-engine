@@ -114,6 +114,7 @@ from kyuura_engine.state import (
     RETALIATION_RECEIVED,
     NEXT_TURN_DAMAGE_KINDS,
     CannotAttack,
+    CannotAttackWhileSourceActive,
     AttackCoinCheck,
     CannotRetreat,
     CannotUseAttack,
@@ -265,6 +266,23 @@ def _returns_without_shuffle(state, effect: str) -> bool:
     return any(type(element).__name__ == "ReturnSelfToDeck" and not element.shuffle for element in _program_of(None if entry is None else entry.effect))
 
 
+def _benches_any_from_deck(state, effect: str) -> bool:
+    """v0.40: ワザ ``effect`` の要素の並びに、山札から好きなだけベンチに出す要素（キョウのズバットの「むれでおそう」。``BenchFromDeckAny``）があるか。そのワザの
+    ``bench_from_deck`` は 1 回のワザに何回もあり、出したあと 1 回だけ山札を切る。"""
+    card_id, _, index = str(effect).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    return any(type(element).__name__ == "BenchFromDeckAny" for element in _program_of(None if entry is None else entry.effect))
+
+
+def _damage_element_limits(effect) -> tuple[int, int]:
+    """v0.40: 登録した実装の要素の並びの、相手の対戦ポケモン・自分へのダメージの要素の数（1 回のワザで同じポケモンが受けるダメージの要素の上限。わるいマタドガスの
+    「みんなでばくはつ」は相手の対戦ポケモンに 2 つ）。並びのない実装は 1 つずつ。"""
+    program = _program_of(effect)
+    opponent = sum(1 for element in program if isinstance(element, Damage) and element.target == "opponent_active")
+    own = sum(1 for element in program if isinstance(element, Damage) and element.target == "self")
+    return max(opponent, 1), max(own, 1)
+
+
 def _program_of(effect) -> tuple:
     """登録した実装の、解決の基盤の要素の並び（v0.31。対応表にない実装は空）。"""
     builder = None if effect is None else BUILDERS.get(type(effect))
@@ -364,8 +382,9 @@ def log_problems(state) -> list[str]:
             continue
         if kind in ("turn_end", "game_end", "halted"):
             problems.extend(_discard_energy_window_problems(state, window_effect, window, log_ended=e["turn"] is None))
-            if window["damage:opponent"] + window["prevented:opponent_active"] > 1 or window["damage:self"] + window["prevented:self"] > 1:
-                problems.append(f"1 回のワザで同じポケモンへのダメージの要素が 2 回以上 {dict(window)}")
+            opponent_limit, own_limit = _damage_element_limits(window_effect)  # v0.40: みんなでばくはつは相手の対戦ポケモンに 2 つ
+            if window["damage:opponent"] + window["prevented:opponent_active"] > opponent_limit or window["damage:self"] + window["prevented:self"] > own_limit:
+                problems.append(f"1 回のワザで同じポケモンへのダメージの要素が、登録の要素の数より多い {dict(window)}")
             if any(count > 1 for key, count in window.items() if key.startswith("damage:bench:") or key.startswith("prevented:bench:")):
                 problems.append(f"1 回のワザで同じ控えポケモンへのダメージの要素が 2 回以上 {dict(window)}")
             if window["confusion_damage"] and (window["damage:opponent"] or window["damage:self"] or window["prevented:opponent_active"]):
@@ -386,7 +405,10 @@ def log_problems(state) -> list[str]:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
             if window["reveal_from_deck"] + window["reveal_from_deck_none"] > 1:
                 problems.append("1 回のワザで山札から見せて手札に加える処理（reveal_from_deck・reveal_from_deck_none）が 2 回以上")  # v0.38
-            if window["bench_from_deck"] + window["bench_from_deck_none"] > 1:
+            if window["bench_from_deck"] + window["bench_from_deck_none"] > 1 and not (
+                    attack_event is not None and _benches_any_from_deck(state, f"{state.cards[attack_event['pokemon']].card_id}#{attack_event['attack_index']}")
+                    and not window["bench_from_deck_none"]):
+                # v0.40: むれでおそうは好きなだけ出す（bench_from_deck が何回もあり、bench_from_deck_none はない）
                 problems.append("1 回のワザで山札からベンチに出す処理（bench_from_deck・bench_from_deck_none）が 2 回以上")  # v0.32
             if window["forced_switch"] + window["forced_switch_skipped"] > 1:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
@@ -719,6 +741,10 @@ def log_problems(state) -> list[str]:
             # v0.36: 山札にもどしたポケモン（return_in_play_to_deck）の持続する効果を消したログは、もどしたあと・山札を切る前
             shuffle_due["kind"] == "return_in_play_to_deck" and kind == "persistent_effect_removed" and e["reason"] == "return_in_play_to_deck"
             and e["pokemon_id"] == shuffle_due["pokemon_id"]
+        ) and not (
+            # v0.40: むれでおそうは、好きなだけ出したあと（同じワザの bench_from_deck が続いたあと）に 1 回だけ切る
+            shuffle_due["kind"] == "bench_from_deck" and kind == "bench_from_deck" and e.get("effect") == shuffle_due.get("effect")
+            and e["player"] == shuffle_due["player"] and _benches_any_from_deck(state, e["effect"])
         ) and shuffle_due is not e:
             due_event, shuffle_due = shuffle_due, None
             if kind != "shuffle" or e["player"] != due_event["player"]:
@@ -970,8 +996,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)
         elif kind == "attack_attach_energy":
             received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
-        elif kind == "persistent_effect_added" and e["persistent_effect"] in (CannotAttack.kind, CannotUseAttack.kind):
-            received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)  # v0.35: 「ドわすれ」も相手の対戦ポケモンが受ける効果
+        elif kind == "persistent_effect_added" and e["persistent_effect"] in (CannotAttack.kind, CannotUseAttack.kind, CannotAttackWhileSourceActive.kind):
+            received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)  # v0.35: 「ドわすれ」も相手の対戦ポケモンが受ける効果。v0.40: 「すごむ」も
         elif kind == "persistent_effect_added" and e["persistent_effect"] == ReducedDamageToSource.kind:
             received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34
         elif kind == "persistent_effect_added" and e["persistent_effect"] == AttackCoinCheck.kind:
@@ -1505,9 +1531,13 @@ def log_problems(state) -> list[str]:
             # v0.36: ワザ（くもがくれガス）で、ワザを使ったポケモンと、ついているすべてのカードを持ち主の山札にもどす（きぜつではない。山札は組み立て
             # 直さないので、持ち主・場にあったことで確かめる）。すぐあとに（持続する効果を消したログのあと）同じプレイヤーの山札を切る
             pid = e["pokemon_id"]
+            # v0.40: わるいカイリキーの「つまみだす」は、相手の対戦ポケモンを持ち主（相手）の山札にもどす（登録の実装 ReturnOpponentActiveToDeck）
+            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+            opponent_return = entry is not None and type(entry.effect).__name__ == "ReturnOpponentActiveToDeck"
             if pid not in in_play or pokemon_owner.get(pid) != e["player"] or ids.get(e["pokemon"]) != pid or attack_window is None \
-                    or pid != attack_window["pokemon_id"] or e["player"] != attack_window["player"]:
-                problems.append(f"{e['turn']} 番に山札にもどしたポケモン {pid} が、そのワザを使ったポケモンではない")
+                    or (not opponent_return and (pid != attack_window["pokemon_id"] or e["player"] != attack_window["player"])) \
+                    or (opponent_return and e["player"] == attack_window["player"]):
+                problems.append(f"{e['turn']} 番に山札にもどしたポケモン {pid} が、そのワザを使ったポケモン（つまみだすなら相手のポケモン）ではない")
             if sorted(e["energy"]) != sorted(energy.get(pid, [])) or e["damage"] != damage[pid]:
                 problems.append(f"{e['turn']} 番に山札にもどしたポケモン {pid} のエネルギー {e['energy']}・ダメージ {e['damage']} がログの組み立てと違う")
             if sorted(e["cards"]) != sorted([*e["evolution_stack"], e["pokemon"], *e["energy"], *e["trainers"]]) \

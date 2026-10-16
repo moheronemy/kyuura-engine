@@ -79,6 +79,9 @@ ALL_CODES = (
     # v0.39: GS1（docs/selfdestruct-spread-count-v0.39.md）。止まる場合（0 匹の答え）と隣の止まらない場合（1 匹以上）は
     # tests/test_selfdestruct_spread_count_v0_39.py の GigaSparkTest
     "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
+    # v0.40: SG1（docs/count-condition-switch-return-v0.40.md）。止まる場合（すごむの効果を与えたポケモンを突風でもどす答え・それしか選べない
+    # 突風）と隣の止まらない場合（ほかの控えを選ぶ答え）は tests/test_count_condition_switch_return_v0_40.py の IntimidateTest
+    "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
 )
 TURN = 7
 

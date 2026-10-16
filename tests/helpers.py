@@ -302,6 +302,24 @@ PIDGEY = "PMCG1-059"  # ポッポ（第1弾。HP 40・無色・弱点 雷・抵�
 ERIKAS_PARAS = "PMCG5-004"  # エリカのパラス（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。はさむ（無）10・きけんなほうし（草草））。PARAS とは別の名前のカード
 V0_39_POKEMON = (MAGNEMITE, MAGNETON, FOSSIL_WEEZING, FOSSIL_MAGNETON, JUNGLE_PIKACHU, FOSSIL_RAICHU, ELECTRODE, KOGAS_KOFFING_40, MISTYS_POLIWRATH,
                  ROCKET_MAGNEMITE, WIGGLYTUFF, NIDOQUEEN, KOGAS_WEEZING, PIDGEY, ERIKAS_PARAS)  # 写しの組 pool_v0_39 の並び
+# v0.40（docs/count-condition-switch-return-v0.40.md）。場の数・条件付きの効果・入れ替え・カードの移動の 15 枚
+KOGAS_ZUBAT = "PMCG6-005"  # キョウのズバット（闇からの挑戦。HP 40・草・弱点 超・抵抗力 闘 -30・にげる 0。むれでおそう（草無）10×）。ZUBAT・BROCKS_ZUBAT とは別の名前
+KOGAS_GOLBAT = "PMCG6-014"  # キョウのゴルバット（キョウのズバットから進化。HP 60・草・弱点 超・抵抗力 闘 -30・にげる 0。かみつく（無無）20・ひどいおんぱ（草草草）30）
+DARK_WEEZING = "PMCG4-011"  # わるいマタドガス（ロケット団。ドガースから進化。HP 60・草・弱点 超・にげる 1。みんなでばくはつ（草無）20×・しびれガス（草草草）20）
+DARK_HYPNO = "PMCG4-037"  # わるいスリーパー（ロケット団。スリープから進化。HP 60・超・弱点 超・にげる 2。サイコパンチ（超）20・ベンチをあやつる（超超無）20×）
+GIOVANNIS_NIDORAN_M = "PMCG6-004"  # サカキのニドラン♂（闇からの挑戦。HP 40・草・弱点 超・にげる 1。にどげり（無）10×・いかりのいちげき（草）30）。NIDORAN_M とは別の名前
+GIOVANNIS_NIDORINO = "PMCG6-013"  # サカキのニドリーノ（サカキのニドラン♂から進化。HP 70・草・弱点 超・にげる 2。つのでえぐる（草無無）20+）
+GIOVANNIS_NIDOKING = "PMCG6-021"  # サカキのニドキング（サカキのニドリーノから進化する 2 進化。HP 120・草・弱点 超・にげる 3。すごむ（草）・ローリングアタック（草草草無）40+）
+GIOVANNIS_NIDOQUEEN = "PMCG6-020"  # サカキのニドクイン（サカキのニドリーナから進化する 2 進化。HP 100・草・弱点 超・にげる 3。メガトンキック（草草無）40・ラブラリアット（草草無無）50+）
+DARK_MACHOKE = "PMCG4-042"  # わるいゴーリキー（ロケット団。ワンリキーから進化。HP 60・闘・弱点 超・にげる 2。ひきずりだす（闘闘無）20・なぐりとばす（闘闘無）30）
+DARK_MACHAMP = "PMCG4-044"  # わるいカイリキー（わるいゴーリキーから進化する 2 進化。HP 70・闘・弱点 超・にげる 3。メガトンパンチ（闘闘）30・つまみだす（闘闘闘無））
+ERIKAS_WEEPINBELL = "PMCG5-011"  # エリカのウツドン（エリカのマダツボミから進化。HP 60・草・弱点 炎・にげる 1。よだれ（草）10・さそってとかす（草草）20）。WEEPINBELL とは別の名前
+MISTYS_SEADRA = "PMCG5-034"  # カスミのシードラ（カスミのタッツーから進化。HP 70・水・弱点 雷・にげる 1。しっぽのムチ（水）20・きぜつばり（水水水）30+）
+BROCKS_MANKEY = "PMCG5-045"  # タケシのマンキー（リーダーズスタジアム。HP 40・闘・弱点 超・にげる 0。ひまつぶし（無）・からてチョップ（闘無）40-）。MANKEY とは別の名前
+MANKEY = "PMCG4-039"  # マンキー（ロケット団。HP 40・闘・弱点 超・にげる 0。いたずら（無）・おこる（闘無）20+）
+PRIMEAPE = "PMCG2-031"  # オコリザル（第2弾。マンキーから進化。HP 70・闘・弱点 超・にげる 1。みだれひっかき（闘闘）20×・あばれまわる（闘闘無）50）
+V0_40_POKEMON = (KOGAS_ZUBAT, KOGAS_GOLBAT, DARK_WEEZING, DARK_HYPNO, GIOVANNIS_NIDORAN_M, GIOVANNIS_NIDORINO, GIOVANNIS_NIDOKING, GIOVANNIS_NIDOQUEEN,
+                 DARK_MACHOKE, DARK_MACHAMP, ERIKAS_WEEPINBELL, MISTYS_SEADRA, BROCKS_MANKEY, MANKEY, PRIMEAPE)  # 写しの組 pool_v0_40 の並び
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
 BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
@@ -775,6 +793,20 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinBonusDamageAndSelfDamage,  # キョウのマタドガスの「とつぜんばくはつ」
     _effects.DamageThenSpecialPoisonOnHeads,  # キョウのマタドガスの「どくどくガス」
     _effects.CoinPoisonAndBenchDamage,  # エリカのパラスの「きけんなほうし」
+) + (
+    # v0.40（docs/count-condition-switch-return-v0.40.md 3 章）
+    _effects.GroupAttackFromDeck,  # キョウのズバットの「むれでおそう」
+    _effects.NamedPokemonExplosion,  # わるいマタドガスの「みんなでばくはつ」
+    _effects.OpponentFlipsTailsDamage,  # わるいスリーパーの「ベンチをあやつる」
+    _effects.DamageRequiringOwnCounters,  # サカキのニドラン♂の「いかりのいちげき」
+    _effects.DamagePlusIfDefenderDamaged,  # サカキのニドリーノの「つのでえぐる」
+    _effects.AttackLockWhileSourceActive,  # サカキのニドキングの「すごむ」
+    _effects.FailOnTailsAmountIfBenchNamed,  # サカキのニドクインの「ラブラリアット」
+    _effects.SwitchOpponentThenDamage,  # わるいゴーリキーの「ひきずりだす」・エリカのウツドンの「さそってとかす」
+    _effects.ReturnOpponentActiveToDeck,  # わるいカイリキーの「つまみだす」
+    _effects.CoinsAllHeadsBonusDamage,  # カスミのシードラの「きぜつばり」
+    _effects.ShuffleDeckAttack,  # タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」
+    _effects.DamageThenSelfConfuseOnTails,  # オコリザルの「あばれまわる」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

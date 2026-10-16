@@ -75,6 +75,7 @@ from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
     AttackCoinCheck,
+    CannotAttackWhileSourceActive,
     CannotRetreat,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -1245,8 +1246,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
-        if isinstance(effect, (AttackCoinCheck, CannotRetreat)):
-            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36
+        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive)):
+            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ）
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -1323,6 +1324,13 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     if isinstance(effect, AttackCoinCheck):
         terms = getattr(entry.effect, "attack_check_terms", None) if entry is not None else None
         expected = (AttackCoinCheck, effect.single_use)
+    elif isinstance(effect, CannotAttackWhileSourceActive):
+        # v0.40: 「すごむ」。登録された実装の ``conditional_lock_terms`` は (型, 最大 HP の上限)。受けているポケモン（いちばん上のカード。進化すると効果は消える）の
+        # 最大 HP が上限以下（効果を与えたときに確かめた条件）
+        terms = getattr(entry.effect, "conditional_lock_terms", None) if entry is not None else None
+        if terms is not None and state.card_def(pokemon.card).hp > terms()[1]:
+            return [f"{where} {effect!r} を受けているポケモンの最大 HP {state.card_def(pokemon.card).hp} が、効果の条件 {terms()[1]} 以下ではない"]
+        expected = (CannotAttackWhileSourceActive, terms()[1]) if terms is not None else None
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat

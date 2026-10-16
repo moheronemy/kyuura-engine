@@ -4283,6 +4283,344 @@ class CoinPoisonAndBenchDamage(AttackEffect):
                                                                                                     (expected,))
 
 
+
+# ---------------------------------------------------------------- v0.40（docs/count-condition-switch-return-v0.40.md）
+# 場の数・条件付きの効果・入れ替え・カードの移動。要素（``resolution.programs``）の組み合わせと、v0.40 の要素（``BenchFromDeckAny``・``PokemonCountTimes``・
+# ``TailsOfOpponentBenchCoins``・``OwnCountersAtLeast``・``PrintedPlusBonusIfDefenderDamaged``・``OpponentAttackLockWhileSourceActive``・``AmountIfOwnBenchNamed``・
+# ``ReturnOpponentToDeck``・``PrintedPlusBonusOnAllHeads``・``ShuffleDeck``）。説明の文面は、登録したワザの印刷の文面（kyuura の写し）と完全に同じものだけを受け付ける
+
+
+def _counts_and_space(state: GameState, player: int, names: tuple[str, ...]) -> tuple[list[int], int]:
+    candidates = bench_from_deck_candidates(state, player, names)
+    return candidates, state.rules.max_bench - len(state.players[player].bench)
+
+
+@dataclass(frozen=True)
+class GroupAttackFromDeck(AttackEffect):
+    """自分の場にいる「``names``」の数 × ``per`` のダメージ。のぞむなら、ダメージを与える前に、自分の山札から「``names``」を好きなだけ選び出し、ベンチに出してよい。
+    その場合は、その山札をよく切る（v0.40。キョウのズバットの「むれでおそう」）。
+
+    要素は ``BenchFromDeckAny``（決定 ``BENCH_FROM_DECK``。0〜min(ベンチの空き, 山札の選べるたねポケモンの数) 枚。出したら 1 回だけ切る）→ ``Damage``（``PokemonCountTimes``。
+    出したあとの自分の場の数）。ダメージの目安「10×」の数字が 1 匹あたりのダメージ。"""
+
+    names: tuple[str, ...]
+    per: int
+    implementation_id = "group_attack_from_deck"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "1 匹あたりのダメージ")
+        if len(self.names) != 1:
+            raise ValueError(f"数えて山札から出すポケモンの名前は 1 つ（{self.names!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        name = self.names[0]
+        expected = (f"自分の場にいる「{name}」の数×{self.per}ダメージ。のぞむなら、ダメージを与える前に、自分の山札から「{name}」を好きなだけ選び出し、ベンチに"
+                    f"出してよい。その場合は、その山札をよく切る。")
+        problems = _check_form(attack, "山札から出して場の数でダメージのワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、1 匹あたりのダメージ {self.per} が違う")
+        return problems + _check_exact_text(attack, "山札から出して場の数でダメージのワザ", (expected,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        candidates, space = _counts_and_space(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DECK, player=use.player, choices=(0, min(space, len(candidates))),
+                              options=candidates)
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_IN_PLAY, counted_pokemon
+
+        candidates, space = _counts_and_space(state, use.player, self.names)
+        now = len(counted_pokemon(state, use.player, SCOPE_OWN_IN_PLAY, self.names))
+        return DamageProfile(opponent=tuple((now + added) * self.per for added in range(min(max(space, 0), len(candidates)) + 1)))
+
+
+EXPLOSION_TEXT = ("お互いの場にいるすべての{names}の数×{per}のダメージ。その後、お互いの場にいる全ての{names}に、それぞれ{each}ダメージ。")
+
+
+@dataclass(frozen=True)
+class NamedPokemonExplosion(AttackEffect):
+    """お互いの場にいるすべての「``names``」の数 × ``per`` のダメージ。その後、お互いの場にいる全ての「``names``」に、それぞれ ``each`` ダメージ（v0.40。わるいマタドガスの
+    「みんなでばくはつ」）。v0.39 のじばく（``SelfDestruct``）とは別の型（受けるのは名前の合うポケモンだけで、ワザを使ったポケモンも名前が合えば受ける）。
+
+    - 相手の対戦ポケモンへの数 × ``per``（p.320 のダメージの (1)。弱点・抵抗力を計算する。数はダメージの要素を処理する時点のお互いの場。``PokemonCountTimes``）
+    - その後の ``each``: 名前の合う相手の対戦ポケモン（(1)。もう一度ダメージの要素を受ける）→ 名前の合う自分（(3)。自分へのダメージの計算。v0.2f・v0.3d）→ 名前の合う
+      相手の控え（(2)）→ 名前の合う自分の控え（(4)）。控えへのダメージは説明が弱点・抵抗力について書いていないので、計算するかで最終ダメージが変わる控えが
+      あれば v0.37 の JS1（``bench_damage_weakness_resistance``）で宣言の前に止める（英語版の「Don't apply Weakness and Resistance」では決めない）
+    - きぜつの処理はワザのあと（すべてのダメージをのせてから。p.309）。同時にきぜつしたポケモンのサイド・バトル場に出す順番は今までどおり
+    """
+
+    names: tuple[str, ...]
+    per: int
+    each: int
+    implementation_id = "named_pokemon_explosion"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "1 匹あたりのダメージ")
+        _positive_tens(self.each, "それぞれへのダメージ")
+        if not self.names:
+            raise ValueError("数えるポケモンの名前がない")
+
+    def check(self, attack: Attack) -> list[str]:
+        names = "".join(f"「{name}」" for name in self.names)
+        expected = EXPLOSION_TEXT.format(names=names, per=self.per, each=self.each)
+        problems = _check_form(attack, "お互いの場の数でダメージと、それぞれへのダメージのワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、1 匹あたりのダメージ {self.per} が違う")
+        return problems + _check_exact_text(attack, "お互いの場の数でダメージと、それぞれへのダメージのワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_BOTH_IN_PLAY, counted_pokemon
+
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        own = self.each if state.card_def(attacker.card).name_ja in self.names else 0
+        return DamageProfile(opponent=(len(counted_pokemon(state, use.player, SCOPE_BOTH_IN_PLAY, self.names)) * self.per,), self_damage=(own,))
+
+
+@dataclass(frozen=True)
+class OpponentFlipsTailsDamage(AttackEffect):
+    """相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数 × ``per`` のダメージ。このワザのダメージは相手の「弱点・抵抗力」の影響を受けない
+    （v0.40。わるいスリーパーの「ベンチをあやつる」）。要素は ``Damage``（``TailsOfOpponentBenchCoins``。投げるのは相手、使うのは「うら」の数、``weakness_resistance``
+    は False（p.321 の 3・4 段階だけを計算しない。v0.39 のソニックブームと同じ。プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」はそのまま））。"""
+
+    per: int
+    implementation_id = "opponent_flips_tails_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「うら」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = (f"相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×{self.per}のダメージ(このワザのダメージは相手の「弱点・抵抗力」の"
+                    "影響を受けない)")
+        problems = _check_form(attack, "相手が投げるコインの「うら」の数でダメージのワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、「うら」1 枚あたりのダメージ {self.per} が違う")
+        return problems + _check_exact_text(attack, "相手が投げるコインの「うら」の数でダメージのワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        bench = len(state.players[1 - use.player].bench)
+        return DamageProfile(opponent=tuple(tails * self.per for tails in range(bench + 1)))
+
+
+@dataclass(frozen=True)
+class DamageRequiringOwnCounters(AttackEffect):
+    """「このワザは、自分にダメージカウンターが ``minimum`` つ以上のっているときだけ、使える。」（v0.40。サカキのニドラン♂の「いかりのいちげき」）。ダメージの目安の
+    数字ぶんのダメージ。条件はワザを使うための条件（``usage_problem``。必要なエネルギーの確認のあと・こんらんのコインの前。``NOT_ENOUGH_DAMAGE_COUNTERS``。
+    拒否では状態・乱数・ログを変えない）。数えるのはワザを使うポケモン自身のダメージカウンター（ダメージ ÷ 10）。"""
+
+    minimum: int
+    implementation_id = "damage_requiring_own_counters"
+
+    def __post_init__(self) -> None:
+        if type(self.minimum) is not int or self.minimum < 1:
+            raise ValueError(f"必要なダメージカウンターの数は 1 以上の整数（{self.minimum!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"このワザは、自分にダメージカウンターが{self.minimum}つ以上のっているときだけ、使える。"
+        return _check_form(attack, "ダメージカウンターが条件のワザ", damage="fixed") + _check_exact_text(attack, "ダメージカウンターが条件のワザ", (expected,))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        counters = attacker.damage // state.rules.damage_per_counter
+        if counters < self.minimum:
+            return IllegalActionError("NOT_ENOUGH_DAMAGE_COUNTERS",
+                                      f"自分にダメージカウンターが {self.minimum} つ以上のっていない（{counters} 個）ので、このワザは使えない（ワザの説明）")
+        return None
+
+
+@dataclass(frozen=True)
+class DamagePlusIfDefenderDamaged(AttackEffect):
+    """このワザを使う時、すでに相手（相手の対戦ポケモン）にダメージカウンターがのっているなら、``bonus`` ダメージを追加する（v0.40。サカキのニドリーノの「つのでえぐる」。
+    値 ``PrintedPlusBonusIfDefenderDamaged``。のっているかだけを見る（数に比例しない））。"""
+
+    bonus: int
+    implementation_id = "damage_plus_if_defender_damaged"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "追加のダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"このワザを使う時、すでに相手にダメージカウンターがのっているなら、{self.bonus}ダメージを追加する。"
+        return _check_form(attack, "相手のダメージカウンターで追加ダメージのワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "相手のダメージカウンターで追加ダメージのワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        damaged = state.players[1 - use.player].active.damage > 0
+        return DamageProfile(opponent=(attack.damage + (self.bonus if damaged else 0),))
+
+
+@dataclass(frozen=True)
+class AttackLockWhileSourceActive(AttackEffect):
+    """このワザを受けた相手が「最大HPが ``max_hp`` 以下」のポケモンなら、そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない（v0.40。サカキの
+    ニドキングの「すごむ」。ダメージの目安の数字はない）。要素 ``OpponentAttackLockWhileSourceActive``（持続する効果 ``state.CannotAttackWhileSourceActive``）。
+
+    - 「最大HP」は受けるポケモンのいちばん上のカードの HP。確かめるのは効果を与えるとき。英語版の文面（「can't attack Giovanni's Nidoking」「Benching or evolving
+      either Pokémon ends this effect」）は日本語版と意味が違い、使わない
+    - 効果を与えたポケモンがバトル場にいないとき（ベンチにもどった・きぜつした）は、ワザを使える。同じ番にバトル場にもどるときの扱いは決められない（SG1。突風が
+      もどす選択を止める。``SwitchOpponentWithBench``）
+    """
+
+    max_hp: int
+    implementation_id = "attack_lock_while_source_active"
+    opponent_effect_elements = (ATTACK_LOCK_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.max_hp, "最大HP")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"このワザを受けた相手が「最大HPが{self.max_hp}以下」のポケモンなら、そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。"
+        return _check_form(attack, "条件つきでワザを使えなくするワザ", damage="none") + _check_exact_text(attack, "条件つきでワザを使えなくするワザ", (expected,))
+
+    def conditional_lock_terms(self) -> tuple[type, int]:
+        """不変条件（``engine._given_by_attack_problems``）が照らす、与える持続する効果の型と最大 HP の上限。"""
+        from .state import CannotAttackWhileSourceActive
+
+        return CannotAttackWhileSourceActive, self.max_hp
+
+
+@dataclass(frozen=True)
+class FailOnTailsAmountIfBenchNamed(AttackEffect):
+    """コインを投げて「うら」なら、このワザは失敗する。自分のベンチに「``names``」がいるなら、このワザのダメージは「``amount``」になる（v0.40。サカキのニドクインの
+    「ラブラリアット」）。要素は ``FailOnTails``（1 枚。p.323 の失敗）→ ``Damage``（``AmountIfOwnBenchNamed``。p.321 の 1 段階。匹数で足さない）。"""
+
+    names: tuple[str, ...]
+    amount: int
+    implementation_id = "fail_on_tails_amount_if_bench_named"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+        if len(self.names) != 1:
+            raise ValueError(f"ベンチにいるかを見るポケモンの名前は 1 つ（{self.names!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「うら」なら、このワザは失敗する。自分のベンチに「{self.names[0]}」がいるなら、このワザのダメージは「{self.amount}」になる。"
+        return _check_form(attack, "コインで失敗しベンチでダメージが変わるワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "コインで失敗しベンチでダメージが変わるワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        from .resolution.programs import SCOPE_OWN_BENCH, counted_pokemon
+
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        named = counted_pokemon(state, use.player, SCOPE_OWN_BENCH, self.names)
+        return DamageProfile(opponent=(self.amount if named else attack.damage,))
+
+
+SWITCH_OPPONENT_THEN_DAMAGE_TEXTS = (
+    # わるいゴーリキー（PMCG4-042）の「ひきずりだす」（全角のかっこ）
+    "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。（ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない）",
+    # エリカのウツドン（PMCG5-011）の「さそってとかす」（半角のかっこ。意味は同じ）
+    "ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない)",
+)
+
+
+@dataclass(frozen=True)
+class SwitchOpponentThenDamage(AttackEffect):
+    """ダメージを与える前に、相手の控えポケモンを 1 匹選び、相手の対戦ポケモンと入れ替える。ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは
+    使えない（v0.40。わるいゴーリキーの「ひきずりだす」・エリカのウツドンの「さそってとかす」）。ダメージを与えてから入れ替える型（``DamageAndForceSwitch``・
+    ``SwitchOpponentActive``）とは別の型。
+
+    - 相手に控えがいないことは、ワザを使うための条件（``usage_problem``。``NO_OPPONENT_BENCH``）
+    - 選ぶのはワザを使ったプレイヤー（決定 ``FORCED_SWITCH``。v0.31 のかどわかすと同じ要素 ``ForceSwitch(chooser="attacker")``）。入れ替えは相手の対戦ポケモンへの
+      効果（v0.31 のかどわかすと同じ読み方）なので、入れ替える前のポケモンの「ワザをうけない」状態・「とうめい」を評価する（受けなければ入れ替えず、ダメージはその
+      ままのバトル場のポケモンに）。ベンチにもどったポケモンの特殊状態・持続する効果は消える（理由 ``forced_switch``）。ダメージ・エネルギー・ついているカードは
+      いっしょに移る
+    - ダメージは入れ替えたあとの相手の対戦ポケモンに、そのポケモンの弱点・抵抗力・防ぐ効果・「とうめい」・「ダメージを受けたとき」の効果で計算する（``Damage(OPP)``。
+      決定をまたいで枠の値を運ぶ（``carry``）ので、入れ替える前のポケモンと新しいポケモンの両方の「とうめい」は T27 で止まる）
+    """
+
+    implementation_id = "switch_opponent_then_damage"
+    opponent_effect_elements = (FORCED_SWITCH_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "入れ替えてからダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "入れ替えてからダメージを与えるワザ", SWITCH_OPPONENT_THEN_DAMAGE_TEXTS)
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if not state.players[1 - owner].bench:
+            return IllegalActionError("NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、このワザは使えない（ワザの説明）")
+        return None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        p = state.players[1 - use.player]
+        problems = _decision_form(decision, _label(state, use), kind=FORCED_SWITCH, player=use.player, choices=(1, 1),
+                                  options=(pokemon.pokemon_id for pokemon in p.bench))
+        if p.active is None or p.active.pokemon_id != decision.context_value("target"):
+            problems.append(f"入れ替えの対象 {decision.context_value('target')!r} が相手のバトル場のポケモンではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class ReturnOpponentActiveToDeck(AttackEffect):
+    """相手の対戦ポケモンとそれについているすべてのカードを山札にもどさせ、その山札をよく切る。(相手に控えがいない時、このワザは使えない)（v0.40。わるいカイリキーの
+    「つまみだす」。ダメージの目安の数字はない）。要素 ``ReturnOpponentToDeck``。相手に控えがいないことはワザを使うための条件（``usage_problem``。``NO_OPPONENT_BENCH``）。
+    きぜつではない（サイドは取らない）。空いた相手のバトル場には、ワザのあとに相手が控えから出す。"""
+
+    implementation_id = "return_opponent_active_to_deck"
+    opponent_effect_elements = (RETURN_IN_PLAY_TO_DECK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "相手の対戦ポケモンとそれについているすべてのカードを山札にもどさせ、その山札をよく切る。(相手に控えがいない時、このワザは使えない)"
+        return _check_form(attack, "相手を山札にもどすワザ", damage="none") + _check_exact_text(attack, "相手を山札にもどすワザ", (expected,))
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        owner, _ = state.find_pokemon(attacker.pokemon_id)
+        if not state.players[1 - owner].bench:
+            return IllegalActionError("NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、このワザは使えない（ワザの説明）")
+        return None
+
+
+@dataclass(frozen=True)
+class CoinsAllHeadsBonusDamage(AttackEffect):
+    """コインを ``coins`` 枚投げ、すべて「おもて」なら、``bonus`` ダメージを追加する（v0.40。カスミのシードラの「きぜつばり」。値 ``PrintedPlusBonusOnAllHeads``。
+    「おもて」の数に比例しない）。コインはダメージの量だけを決めるので、「ダメージを受けない」相手には v0.4b の問い（``Damage.run``）。"""
+
+    coins: int
+    bonus: int
+    implementation_id = "coins_all_heads_bonus_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.coins) is not int or self.coins < 2:
+            raise ValueError(f"コインの枚数は 2 以上の整数（{self.coins!r}）")
+        _positive_tens(self.bonus, "追加のダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを{self.coins}枚投げ、すべて「おもて」なら、{self.bonus}ダメージを追加する。"
+        return _check_form(attack, "コインがすべて「おもて」で追加ダメージのワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "コインがすべて「おもて」で追加ダメージのワザ", (expected,))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = state.definitions[use.key.card_id].attacks[use.key.attack_index]
+        return DamageProfile(opponent=(attack.damage, attack.damage + self.bonus))
+
+
+SHUFFLE_DECK_TEXTS = {True: "自分の山札をよく切る。", False: "相手の山札をよく切る。"}
+
+
+@dataclass(frozen=True)
+class ShuffleDeckAttack(AttackEffect):
+    """自分の（``own``）・相手の山札をよく切る（v0.40。タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」。ダメージの目安の数字はない）。要素 ``ShuffleDeck``
+    （``zones.shuffle_deck``。ログ ``shuffle`` の ``player`` は切る山札の持ち主）。"""
+
+    own: bool
+    implementation_id = "shuffle_deck_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "山札を切るワザ", damage="none") + _check_exact_text(attack, "山札を切るワザ", (SHUFFLE_DECK_TEXTS[self.own],))
+
+
+@dataclass(frozen=True)
+class DamageThenSelfConfuseOnTails(AttackEffect):
+    """相手にダメージの目安の数字ぶんのダメージ。コインを投げて「うら」なら、自分はこんらん状態になる（v0.40。オコリザルの「あばれまわる」）。v0.34 の
+    ``DamagePlusOwnCountersThenSelfConfuseOnTails``（ケンタロスの「いかりくるう」）と同じ要素 ``Status(CONFUSION, local_coin=TAILS, target=SELF)``（相手に与えるこんらんではない）。コインは自分への
+    効果だけを決めるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら投げない（p.309）。"""
+
+    implementation_id = "damage_then_self_confuse_on_tails"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「うら」なら、自分は「こんらん」状態になる。"
+        return _check_form(attack, "コインで自分がこんらんになるワザ", damage="fixed") + _check_exact_text(attack, "コインで自分がこんらんになるワザ", (expected,))
+
+
 def attack_damage_modifiers(
     state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False
 ) -> tuple[DamageModifier, ...]:
@@ -5099,6 +5437,11 @@ class SwitchOpponentWithBench(TrainerEffect):
     - 乱数は使わない。使っても番は終わらない（p.310）。
 
     原典で決められないので扱わない（``UnsupportedError``）: 相手に控えポケモンがいないときに使えるか（GW5）。
+
+    v0.40: 使ったプレイヤーの対戦ポケモンが、この番、相手のポケモンの「すごむ」（``state.CannotAttackWhileSourceActive``。「このカードがバトル場にいる限り、
+    ワザを使えない」）を受けていて、その効果を与えたポケモン（「このカード」）が相手のベンチにいる（この番にバトル場をはなれた）とき、そのポケモンを選んで
+    バトル場にもどしたあとの扱い（「いる限り」が、はなれた時点で終わるのか、もどればまたはたらくのか）は、kyuura の記録・印刷の文面から決められない（SG1）。
+    そのポケモンは選べるが、選ぶと ``UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED`` で止める（``unresolved_choices``）。選べる控えがそのポケモンだけなら、使う前に止める。
     """
 
     implementation_id = "switch_opponent_with_bench"
@@ -5110,22 +5453,47 @@ class SwitchOpponentWithBench(TrainerEffect):
                 "相手に控えポケモンがいない。このときに「突風」を使えるかは、『オフィシャルブック2000』（p.255・p.310）から決められない"
                 "ので扱わない（第1弾の印刷の文面の「相手に控えがいない場合は使えない」は、p.255 の最新の説明にない）",
             )
+        returning = _returning_lock_sources(state, use.player)
+        if returning and len(returning) == len(state.players[1 - use.player].bench):
+            raise UnsupportedError("UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED", _ATTACK_LOCK_SOURCE_RETURNED_REASON)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         bench = state.players[1 - use.player].bench
         push_trainer_decision(
-            state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in bench]
+            state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in bench],
+            unresolved_choices=_returning_lock_sources(state, use.player), unresolved_code="UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
+            unresolved_reason=_ATTACK_LOCK_SOURCE_RETURNED_REASON,
         )
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         _switch_active_with_bench(state, 1 - use.player, choices[0])
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
-        """決定するのは使ったプレイヤーで、選べるのは相手のベンチのポケモン（控えポケモン）。"""
+        """決定するのは使ったプレイヤーで、選べるのは相手のベンチのポケモン（控えポケモン）。v0.40: 選ぶと止める選択は SG1 のポケモン。"""
         bench = state.players[1 - use.player].bench
         return _select_own_pokemon_problems(
-            decision, use, (pokemon.pokemon_id for pokemon in bench), "「突風」", whose="相手"
+            decision, use, (pokemon.pokemon_id for pokemon in bench), "「突風」", unresolved=_returning_lock_sources(state, use.player), whose="相手"
         )
+
+
+_ATTACK_LOCK_SOURCE_RETURNED_REASON = (
+    "このポケモンは、使ったプレイヤーの対戦ポケモンに「すごむ」（「次の相手の番、このカードがバトル場にいる限り、ワザを使えない」）の効果を与えたポケモンで、"
+    "この番にバトル場をはなれている。バトル場にもどしたあと、その効果がまたはたらくか（「いる限り」が、はなれた時点で終わるか）は、kyuura の記録・印刷の文面から"
+    "決められないので扱わない（SG1）"
+)
+
+
+def _returning_lock_sources(state: GameState, user: int) -> tuple[int, ...]:
+    """v0.40（SG1）: プレイヤー ``user`` の対戦ポケモンが今の番に受けている「すごむ」（``CannotAttackWhileSourceActive``）の、効果を与えたポケモンのうち、相手の
+    ベンチにいるもの（場のポケモンの番号。ベンチの並び）。効果を与えたのは前の番の相手のワザで、そのときバトル場にいたので、ベンチにいればこの番にはなれた。"""
+    from .state import CannotAttackWhileSourceActive
+
+    active = state.players[user].active
+    if active is None:
+        return ()
+    sources = {effect.source_card for effect in active.persistent_effects
+               if isinstance(effect, CannotAttackWhileSourceActive) and effect.active_turn == state.turn_number and effect.source_player == 1 - user}
+    return tuple(pokemon.pokemon_id for pokemon in state.players[1 - user].bench if pokemon.card in sources)
 
 
 @dataclass(frozen=True)
@@ -6320,6 +6688,13 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG4-026", 0, "たいあたり"),  # コイル（ロケット団。第1弾のコイル PMCG1-036 とは同じ名前の別のカード）
         ("PMCG2-013", 1, "メガトンパンチ"),  # ニドクイン（第2弾）
         ("PMCG5-004", 0, "はさむ"),  # エリカのパラス（リーダーズスタジアム。第2弾のパラス PMCG2-003 とは別の名前のカード）
+        # v0.40: 説明文のないワザ（kyuura データの採用。docs/count-condition-switch-return-v0.40.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG6-014", 0, "かみつく"),  # キョウのゴルバット（闇からの挑戦。キョウのズバットから進化）
+        ("PMCG4-037", 0, "サイコパンチ"),  # わるいスリーパー（ロケット団）
+        ("PMCG6-020", 0, "メガトンキック"),  # サカキのニドクイン（闇からの挑戦）
+        ("PMCG4-044", 0, "メガトンパンチ"),  # わるいカイリキー（ロケット団）
+        ("PMCG5-011", 0, "よだれ"),  # エリカのウツドン（リーダーズスタジアム）
+        ("PMCG5-034", 0, "しっぽのムチ"),  # カスミのシードラ（リーダーズスタジアム）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -8646,6 +9021,183 @@ DEFAULT_EFFECTS = EffectRegistry(
             "きけんなほうし",
             text_ja="コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
             play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にして、相手の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.40（docs/count-condition-switch-return-v0.40.md）。kyuura データの採用（処理に使う文面は kyuura の印刷の文面）。
+        # キョウのズバット（闇からの挑戦）。むれでおそう（草無）10×: のぞむなら山札から「キョウのズバット」を好きなだけベンチに出し（出したら 1 回切る）、自分の場の数 × 10
+        AttackKey("PMCG6-005", 0): AttackEntry(
+            GroupAttackFromDeck(names=("キョウのズバット",), per=10),
+            "むれでおそう",
+            text_ja="自分の場にいる「キョウのズバット」の数×10ダメージ。のぞむなら、ダメージを与える前に、自分の山札から「キョウのズバット」を好きなだけ選び出し、ベンチに出してよい。その場合は、その山札をよく切る。",
+            play_text_ja="自分の場にいる「キョウのズバット」の数×10ダメージ。のぞむなら、ダメージを与える前に、自分の山札から「キョウのズバット」を好きなだけ選び出し、ベンチに出してよい。その場合は、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのゴルバット（闇からの挑戦）。ひどいおんぱ（草草草）30: コインの「おもて」でこんらん（v0.3c の ConfuseOnHeads）
+        AttackKey("PMCG6-014", 1): AttackEntry(
+            ConfuseOnHeads(),
+            "ひどいおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいマタドガス（ロケット団。ドガースから進化）。みんなでばくはつ（草無）20×: お互いの場の名前の合うポケモンの数 × 20 → 名前の合うポケモンそれぞれに 20
+        AttackKey("PMCG4-011", 0): AttackEntry(
+            NamedPokemonExplosion(names=("ドガース", "マタドガス", "わるいマタドガス"), per=20, each=20),
+            "みんなでばくはつ",
+            text_ja="お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」の数×20のダメージ。その後、お互いの場にいる全ての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ。",
+            play_text_ja="お互いの場にいるすべての「ドガース」「マタドガス」「わるいマタドガス」の数×20のダメージ。その後、お互いの場にいる全ての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいマタドガス。しびれガス（草草草）20: 1 枚のコインで「おもて」ならどく、「うら」ならマヒ（v0.38 のきけんなはりと同じ型）
+        AttackKey("PMCG4-011", 1): AttackEntry(
+            DamageThenPoisonOrParalyze(),
+            "しびれガス",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいスリーパー（ロケット団。スリープから進化）。ベンチをあやつる（超超無）20×: 相手が相手の控えの数だけコインを投げ、「うら」の数 × 20（弱点・抵抗力なし）
+        AttackKey("PMCG4-037", 1): AttackEntry(
+            OpponentFlipsTailsDamage(per=20),
+            "ベンチをあやつる",
+            text_ja="相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×20のダメージ(このワザのダメージは相手の「弱点・抵抗力」の影響を受けない)",
+            play_text_ja="相手プレイヤーに、相手の控えポケモンの数だけコインを投げさせ、「うら」が出た数×20のダメージ(このワザのダメージは相手の「弱点・抵抗力」の影響を受けない)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドラン♂（闇からの挑戦）。にどげり（無）10×: コイン 2 枚の「おもて」の数 × 10
+        AttackKey("PMCG6-004", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "にどげり",
+            text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            play_text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドラン♂。いかりのいちげき（草）30: 自分にダメージカウンターが 2 つ以上のっているときだけ使える（ワザを使うための条件）
+        AttackKey("PMCG6-004", 1): AttackEntry(
+            DamageRequiringOwnCounters(minimum=2),
+            "いかりのいちげき",
+            text_ja="このワザは、自分にダメージカウンターが2つ以上のっているときだけ、使える。",
+            play_text_ja="このワザは、自分にダメージカウンターが2つ以上のっているときだけ、使える。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドリーノ（闇からの挑戦。サカキのニドラン♂から進化）。つのでえぐる（草無無）20+: 相手にカウンターがのっていれば + 20
+        AttackKey("PMCG6-013", 0): AttackEntry(
+            DamagePlusIfDefenderDamaged(bonus=20),
+            "つのでえぐる",
+            text_ja="このワザを使う時、すでに相手にダメージカウンターがのっているなら、20ダメージを追加する。",
+            play_text_ja="このワザを使う時、すでに相手にダメージカウンターがのっているなら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドキング（闇からの挑戦。サカキのニドリーノから進化）。すごむ（草）: 最大 HP 50 以下の相手は、次の相手の番、このカードがバトル場にいる限りワザを使えない
+        AttackKey("PMCG6-021", 0): AttackEntry(
+            AttackLockWhileSourceActive(max_hp=50),
+            "すごむ",
+            text_ja="このワザを受けた相手が「最大HPが50以下」のポケモンなら、そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。",
+            play_text_ja="このワザを受けた相手が「最大HPが50以下」のポケモンなら、そのポケモンは、次の相手の番、このカードがバトル場にいる限り、ワザを使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドキング。ローリングアタック（草草草無）40+: コインの「おもて」で + 30（v0.31 の CoinBonusDamage）
+        AttackKey("PMCG6-021", 1): AttackEntry(
+            CoinBonusDamage(bonus=30),
+            "ローリングアタック",
+            text_ja="コインを投げて「おもて」なら、30ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、30ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サカキのニドクイン（闇からの挑戦。サカキのニドリーナから進化）。ラブラリアット（草草無無）50+: 「うら」なら失敗。ベンチに「サカキのニドキング」がいればダメージは 100
+        AttackKey("PMCG6-020", 1): AttackEntry(
+            FailOnTailsAmountIfBenchNamed(names=("サカキのニドキング",), amount=100),
+            "ラブラリアット",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。自分のベンチに「サカキのニドキング」がいるなら、このワザのダメージは「100」になる。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。自分のベンチに「サカキのニドキング」がいるなら、このワザのダメージは「100」になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいゴーリキー（ロケット団。ワンリキーから進化）。ひきずりだす（闘闘無）20: 相手の控えを選んで入れ替えてから、新しい対戦ポケモンに 20
+        AttackKey("PMCG4-042", 0): AttackEntry(
+            SwitchOpponentThenDamage(),
+            "ひきずりだす",
+            text_ja="ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。（ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない）",
+            play_text_ja="ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。（ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない）",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいゴーリキー。なぐりとばす（闘闘無）30: ダメージのあと、相手が選ぶ控えと入れ替える（v0.4d のふきとばしと同じ型）
+        AttackKey("PMCG4-042", 1): AttackEntry(
+            DamageAndForceSwitch(),
+            "なぐりとばす",
+            text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えるポケモンは相手が選ぶ。（相手に控えがいない時、入れ替えは起こらない）",
+            play_text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。入れ替えるポケモンは相手が選ぶ。（相手に控えがいない時、入れ替えは起こらない）",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいカイリキー（ロケット団。わるいゴーリキーから進化）。つまみだす（闘闘闘無）: 相手の対戦ポケモンとついているカードを持ち主の山札にもどし、切る
+        AttackKey("PMCG4-044", 1): AttackEntry(
+            ReturnOpponentActiveToDeck(),
+            "つまみだす",
+            text_ja="相手の対戦ポケモンとそれについているすべてのカードを山札にもどさせ、その山札をよく切る。(相手に控えがいない時、このワザは使えない)",
+            play_text_ja="相手の対戦ポケモンとそれについているすべてのカードを山札にもどさせ、その山札をよく切る。(相手に控えがいない時、このワザは使えない)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのウツドン（リーダーズスタジアム。エリカのマダツボミから進化）。さそってとかす（草草）20: ひきずりだすと同じ型
+        AttackKey("PMCG5-011", 1): AttackEntry(
+            SwitchOpponentThenDamage(),
+            "さそってとかす",
+            text_ja="ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない)",
+            play_text_ja="ダメージを与える前に、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(ダメージは新しい対戦ポケモンに与える。相手に控えがいない時、このワザは使えない)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのシードラ（リーダーズスタジアム。カスミのタッツーから進化）。きぜつばり（水水水）30+: コイン 2 枚がすべて「おもて」なら + 60
+        AttackKey("PMCG5-034", 1): AttackEntry(
+            CoinsAllHeadsBonusDamage(coins=2, bonus=60),
+            "きぜつばり",
+            text_ja="コインを2枚投げ、すべて「おもて」なら、60ダメージを追加する。",
+            play_text_ja="コインを2枚投げ、すべて「おもて」なら、60ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのマンキー（リーダーズスタジアム）。ひまつぶし（無）: 自分の山札を切る
+        AttackKey("PMCG5-045", 0): AttackEntry(
+            ShuffleDeckAttack(own=True),
+            "ひまつぶし",
+            text_ja="自分の山札をよく切る。",
+            play_text_ja="自分の山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのマンキー。からてチョップ（闘無）40-: 自分のカウンターの数 × 10 だけ小さくなる（v0.10 の DamageReducedByOwnCounters。kyuura の印刷の文面が、v0.10 のゴーリキーの最新の説明と同じ文面）
+        AttackKey("PMCG5-045", 1): AttackEntry(
+            DamageReducedByOwnCounters(reduction_per_counter=10),
+            "からてチョップ",
+            text_ja="このワザのダメージは、自分にのっているダメージカウンターの数×10だけ、小さくなる。",
+            play_text_ja="このワザのダメージは、自分にのっているダメージカウンターの数×10だけ、小さくなる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マンキー（ロケット団）。いたずら（無）: 相手の山札を切る
+        AttackKey("PMCG4-039", 0): AttackEntry(
+            ShuffleDeckAttack(own=False),
+            "いたずら",
+            text_ja="相手の山札をよく切る。",
+            play_text_ja="相手の山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マンキー。おこる（闘無）20+: コインの「おもて」で + 20
+        AttackKey("PMCG4-039", 1): AttackEntry(
+            CoinBonusDamage(bonus=20),
+            "おこる",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # オコリザル（第2弾。マンキーから進化）。みだれひっかき（闘闘）20×: コイン 3 枚の「おもて」の数 × 20
+        AttackKey("PMCG2-031", 0): AttackEntry(
+            CoinFlipDamage(coins=3, damage_per_heads=20),
+            "みだれひっかき",
+            text_ja="コインを3枚投げて「おもて」の数×20のダメージ。",
+            play_text_ja="コインを3枚投げて「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # オコリザル。あばれまわる（闘闘無）50: ダメージ → コインの「うら」で自分がこんらん
+        AttackKey("PMCG2-031", 1): AttackEntry(
+            DamageThenSelfConfuseOnTails(),
+            "あばれまわる",
+            text_ja="コインを投げて「うら」なら、自分は「こんらん」状態になる。",
+            play_text_ja="コインを投げて「うら」なら、自分は「こんらん」状態になる。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

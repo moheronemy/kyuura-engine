@@ -604,7 +604,10 @@ class G37Test(unittest.TestCase):
             # docs/bench-switch-combined-v0.38.md）
             "DamageThenForceSwitchOnHeads", "DamageThenForceSwitchThenSelfDamage", "DamageThenPoisonOrParalyze", "DamageAndSelfDamageThenPoisonOnHeads",
             # v0.39（コインで特殊などく・同じコインでどくと控えへのダメージ。docs/selfdestruct-spread-count-v0.39.md）
-            "DamageThenSpecialPoisonOnHeads", "CoinPoisonAndBenchDamage"]))
+            "DamageThenSpecialPoisonOnHeads", "CoinPoisonAndBenchDamage",
+            # v0.40（条件つきでワザを使えなくする持続する効果・入れ替えてからダメージ・相手の対戦ポケモンを山札にもどす。
+            # docs/count-condition-switch-return-v0.40.md）
+            "AttackLockWhileSourceActive", "SwitchOpponentThenDamage", "ReturnOpponentActiveToDeck"]))
 
 
 class DecisionTest(unittest.TestCase):
