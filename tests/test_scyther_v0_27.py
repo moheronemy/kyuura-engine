@@ -443,9 +443,12 @@ class DamageOrderTest(unittest.TestCase):
                 self.assertEqual((calc.final, calc.steps[1]), (60, ("2 つるぎのまい", 60)))
         self.assertEqual(calculate_attack_damage(30, definition, target, rules, (adds, adds)).final, 50)
         with self.assertRaisesRegex(RuntimeError, "順番"):
+            # v0.35: 順番の決定に対応し、この場合は ``DamageOrderRequired``（RuntimeError の部分型）で呼ぶ側に順番を求める（解決の基盤のダメージの
+            # 要素が決定を出す。tests/test_coin_groups_damage_order_v0_35.py）。順番を渡さない計算は、今までどおり順番を決めずに止める
             calculate_attack_damage(30, definition, target, rules, (sets, adds))
         with self.assertRaises(ValueError):
-            DamageModifier(2, 60, "x", operation="multiply")
+            # v0.35 で「数をかける」効果（``MULTIPLY``。「きあいだめ」）を加えたので、知らない計算の例を "multiply" から "divide" にした（確かめる性質は同じ）
+            DamageModifier(2, 60, "x", operation="divide")
         self.assertEqual(ADD, DamageModifier(5, 10, "x").operation)
 
 

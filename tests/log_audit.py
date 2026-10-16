@@ -108,7 +108,10 @@ from kyuura_engine.state import (
     RETALIATION_FIXED,
     RETALIATION_KINDS,
     RETALIATION_RECEIVED,
+    NEXT_TURN_DAMAGE_KINDS,
     CannotAttack,
+    CannotUseAttack,
+    CannotUseOwnAttack,
     NextTurnAttackDamage,
     Phase,
     ReducedDamageToSource,
@@ -550,45 +553,66 @@ def log_problems(state) -> list[str]:
         return found
 
     def attack_damage_set_problems(e: dict) -> list[str]:
-        """ワザのダメージのログ（v0.27）: ワザを使ったポケモンに、今の番にはたらく「つるぎのまい」の効果（ログから組み立てた）があり、そのワザが
-        効果の登録のダメージが変わるワザ（``next_turn_terms`` の位置。名前では探さない）なら、p.321 の 2 段階の記録が 1 つ（steps の 2 番目が
-        「2 <ワザ名>」でその数、``damage_set`` が (2, 発生源のカード, その数)）。そうでなければ 2 段階の記録がない（今の対応カードで 2 段階の
-        変更効果は「つるぎのまい」だけ）。"""
-        expected = None
+        """ワザのダメージのログ（v0.27）の p.321 の 2 段階の記録。ワザを使ったポケモンが持つ効果（ログから組み立てた）から、そのダメージにはたらく
+        2 段階の変更効果を求めて、記録と照らす:
+
+        - 「つるぎのまい」（v0.27。「その数にする」）・「きあいだめ」（v0.35。「数をかける」）: 効果の登録の ``next_turn_terms`` の位置のワザ（名前では
+          探さない）のダメージで、はたらく番が今の番。自分へのダメージ（``target`` が ``self``）は、登録が自分へのダメージにも当てはめるときだけ
+        - 「なきつく」（v0.34）: 受けたポケモン（ワザを使ったポケモン）が、効果の発生源のカードの対戦ポケモンに与えるダメージ
+        はたらく効果がなければ 2 段階の記録はない。あれば、1 段階のすぐあとに効果の数だけ 2 段階の記録が並び、計算した順番に当てはめた数が記録の数と同じ。
+        「その数にする」は ``damage_set``、「数をかける」は ``damage_multiplied``、加える数は ``modifiers`` に入る。2 つ以上なら、順番の決定で選んだ順番
+        （``step_orders``。v0.35）が記録の並びと同じで、決定がなければ集めた順番（効果の登録 → なきつく）。"""
+        target = e.get("target")
+        expected: list[tuple[str, str, int, int]] = []  # (名前, 計算, 数, 発生源のカード)。集めた順番
         for (effect_pid, _), info in alive.items():
-            if effect_pid != attack_window["pokemon_id"] or info["kind"] != NextTurnAttackDamage.kind or info["active_turn"] != e["turn"]:
+            if effect_pid != attack_window["pokemon_id"] or info["kind"] not in NEXT_TURN_DAMAGE_KINDS.values() or info["active_turn"] != e["turn"]:
                 continue
             card_id, index = info["effect"].split("#")
             entry = state.effects.attack_entry(card_id, int(index))
-            target_index, amount = entry.effect.next_turn_terms()
-            if attack_window["effect"] == f"{card_id}#{target_index}":
-                expected = (entry.name_ja, amount, info["source_card"])
+            terms = entry.effect.next_turn_terms()
+            operation, includes_self = (terms[2], terms[3]) if len(terms) == 4 else ("set", False)
+            if attack_window["effect"] == f"{card_id}#{terms[0]}" and (target != "self" or includes_self):
+                expected.append((entry.name_ja, operation, terms[1], info["source_card"]))
+        for (effect_pid, _), info in alive.items():
+            # v0.34: 「なきつく」を受けたポケモン（ワザを使ったポケモン）が、なきつくを使ったポケモン（効果の発生源のカード）の対戦ポケモンにワザの
+            # ダメージを与えるときは、p.321 の 2 段階で効果の量をへらす
+            if (effect_pid == attack_window["pokemon_id"] and info["kind"] == ReducedDamageToSource.kind and info["active_turn"] == e["turn"]
+                    and target is None and e["pokemon"] == info["source_card"]):
+                card_id, index = info["effect"].split("#")
+                amount = state.effects.attack_entry(card_id, int(index)).effect.amount
+                expected.append((f"{state.card_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）", "add", -amount, info["source_card"]))
         steps = [tuple(step) for step in (e.get("steps") or ())]
         step2 = [step for step in steps if str(step[0]).startswith("2 ")]
         damage_set = tuple(tuple(m) for m in e.get("damage_set", ()))
-        # v0.34: 「なきつく」を受けたポケモン（ワザを使ったポケモン）が、なきつくを使ったポケモン（効果の発生源のカード）の対戦ポケモンにワザの
-        # ダメージを与えるときは、p.321 の 2 段階で効果の量をへらす（「つるぎのまい」と同じポケモンに重なることはない。重なれば止める）
-        reduced = None
-        for (effect_pid, _), info in alive.items():
-            if (effect_pid == attack_window["pokemon_id"] and info["kind"] == ReducedDamageToSource.kind and info["active_turn"] == e["turn"]
-                    and e.get("target") is None and e["pokemon"] == info["source_card"]):
-                card_id, index = info["effect"].split("#")
-                amount = state.effects.attack_entry(card_id, int(index)).effect.amount
-                label = f"2 {state.card_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）"
-                reduced = (label, steps[0][1] - amount, info["source_card"], -amount)
-        if reduced is not None:
-            label, value, source, amount = reduced
-            if expected is not None or step2 != [(label, value)] or steps[1:2] != [(label, value)] or damage_set \
-                    or (2, source, amount) not in [tuple(m) for m in e.get("modifiers", ())]:
-                return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージの 2 段階 {step2}・{damage_set} が、「なきつく」の効果（{amount}）と合わない"]
+        multiplied = tuple(tuple(m) for m in e.get("damage_multiplied", ()))
+        orders = {step: tuple(labels) for step, labels in e.get("step_orders", ())}
+        where = f"{e['turn']} 番のワザ {attack_window['effect']} のダメージの 2 段階 {step2}"
+        if not expected:
+            if step2 or damage_set or multiplied or orders:
+                return [f"{where}: はたらいている効果のない 2 段階の記録・{damage_set}・{multiplied}・{orders} がある"]
             return []
-        if expected is None:
-            if step2 or damage_set:
-                return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージに、はたらいている効果のない 2 段階の記録 {step2}・{damage_set} がある"]
-            return []
-        name, amount, source = expected
-        if steps[1:2] != [(f"2 {name}", amount)] or step2 != [(f"2 {name}", amount)] or damage_set != ((2, source, amount),):
-            return [f"{e['turn']} 番のワザ {attack_window['effect']} のダメージの 2 段階 {step2}・{damage_set} が、「{name}」の効果（{amount}）と合わない"]
+        by_label = {label: (operation, amount, source) for label, operation, amount, source in expected}
+        applied = [str(step[0])[2:] for step in step2]
+        if len(by_label) != len(expected) or sorted(applied) != sorted(by_label) or steps[1:1 + len(step2)] != step2:
+            return [f"{where} が、はたらく効果 {[x[0] for x in expected]} と合わない"]
+        value = steps[0][1]
+        for label, (_, recorded) in zip(applied, step2):
+            operation, amount, _ = by_label[label]
+            value = amount if operation == "set" else value * amount if operation == "multiply" else value + amount
+            if recorded != value:
+                return [f"{where} の「{label}」のあとの数 {recorded} が、計算した {value} と違う"]
+        if damage_set != tuple((2, by_label[label][2], by_label[label][1]) for label in applied if by_label[label][0] == "set") \
+                or multiplied != tuple((2, by_label[label][2], by_label[label][1]) for label in applied if by_label[label][0] == "multiply") \
+                or any((2, by_label[label][2], by_label[label][1]) not in [tuple(m) for m in e.get("modifiers", ())]
+                       for label in applied if by_label[label][0] == "add"):
+            return [f"{where} の damage_set {damage_set}・damage_multiplied {multiplied}・modifiers が、計算した順番の効果と合わない"]
+        if len(expected) > 1:
+            if 2 in orders and list(orders[2]) != applied:
+                return [f"{where} の並びが、順番の決定で選んだ順番 {orders[2]} と違う"]
+            if 2 not in orders and applied != [x[0] for x in expected]:
+                return [f"{where} が、順番の決定がないのに集めた順番 {[x[0] for x in expected]} でない"]
+        elif orders:
+            return [f"{where}: 効果が 1 つなのに順番の決定の記録 {orders} がある"]
         return []
 
     def source_of(e: dict) -> dict | None:
@@ -784,6 +808,11 @@ def log_problems(state) -> list[str]:
             if kind == "drain_heal_skipped" and (e["pokemon_id"] not in in_play or damage[e["pokemon_id"]] < state.card_def(top[e["pokemon_id"]]).hp):
                 problems.append(f"{e['turn']} 番に、きぜつしていないポケモン {e['pokemon_id']} のとりのぞく効果を処理しなかった")
         if kind == "attack":
+            for (effect_pid, _), info in alive.items():
+                # v0.35: 「あわあわ」（自分）・「ドわすれ」（相手が選んだワザ）で、はたらく番に使えないワザを使っていない
+                if (effect_pid == ids.get(e["pokemon"]) and info["kind"] in (CannotUseOwnAttack.kind, CannotUseAttack.kind)
+                        and info["active_turn"] == e["turn"] and info["target_attack_index"] == e["attack_index"]):
+                    problems.append(f"{e['turn']} 番に、ポケモン {effect_pid} が使えないワザ（{e['attack_index']} 番目。{info['kind']}）を使った")
             attack_window = {
                 "player": e["player"], "pokemon_id": ids.get(e["pokemon"]), "reception": {},
                 "effect": f"{state.cards[e['pokemon']].card_id}#{e['attack_index']}",
@@ -855,8 +884,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)
         elif kind == "attack_attach_energy":
             received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
-        elif kind == "persistent_effect_added" and e["persistent_effect"] == CannotAttack.kind:
-            received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)
+        elif kind == "persistent_effect_added" and e["persistent_effect"] in (CannotAttack.kind, CannotUseAttack.kind):
+            received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)  # v0.35: 「ドわすれ」も相手の対戦ポケモンが受ける効果
         elif kind == "persistent_effect_added" and e["persistent_effect"] == ReducedDamageToSource.kind:
             received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34
         if kind == "damage" and attack_window is not None and not e.get("retaliation"):
@@ -1419,10 +1448,13 @@ def log_problems(state) -> list[str]:
             # 次の自分の番（与えた番 + 2）
             alive[(e["pokemon_id"], e["turn"])] = {
                 "kind": e["persistent_effect"], "active_turn": e["active_turn"], "effect": e["effect"], "source_card": e["source_card"],
+                "target_attack_index": e.get("target_attack_index"),  # v0.35: 「あわあわ」・「ドわすれ」の使えなくなるワザの位置
                 # v0.34: 「次の自分の番の始めに消える」効果（なきつく）は、はたらく番の次の番の始めに消える（はたらく番の終わりではない）
                 "until": e["active_turn"] + 1 if e["persistent_effect"] == ReducedDamageToSource.kind else e["active_turn"],
             }
-            offset = NextTurnAttackDamage.turns_until_active if e["persistent_effect"] == NextTurnAttackDamage.kind else 1
+            # v0.35: 「きあいだめ」（next_turn_attack_damage_multiplier）・「あわあわ」（cannot_use_own_attack）も次の自分の番
+            offset = (NextTurnAttackDamage.turns_until_active if e["persistent_effect"] in (*NEXT_TURN_DAMAGE_KINDS.values(), CannotUseOwnAttack.kind)
+                      else 1)
             if e["active_turn"] != e["turn"] + offset:
                 problems.append(
                     f"{e['turn']} 番の持続する効果（ポケモン {e['pokemon_id']}）のはたらく番 {e['active_turn']} が、"

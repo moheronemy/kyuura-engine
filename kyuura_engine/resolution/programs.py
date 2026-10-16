@@ -31,15 +31,16 @@ from ..cards import EnergyType
 from ..coins import CoinFlips, CoinSide, flip_coins
 from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
+from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
 from ..decisions import (
-    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER, SELECT_ATTACK,
-    SELECT_POKEMON,
+    ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DAMAGE_STEP_ORDER, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY,
+    RECOVER_TRAINER, SELECT_ATTACK, SELECT_OPPONENT_ATTACK, SELECT_POKEMON,
 )
 from ..errors import UnsupportedError
 from ..persistent import add_persistent_effect, remove_persistent_effects
 from ..state import (
-    RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, CannotAttack, DamageReduction, DestinyBond, NextTurnAttackDamage,
-    PreventDamage, ReducedDamageToSource, Retaliation,
+    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, CannotAttack, CannotUseAttack, CannotUseOwnAttack,
+    DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, ReducedDamageToSource, Retaliation,
 )
 from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, draw_cards, return_discard_to_hand, shuffle_deck
 
@@ -113,9 +114,12 @@ class AttackRun:
     def opponent_active(self) -> PokemonInPlay:
         return self.state.players[1 - self.player].active
 
-    def flip(self, count: int) -> CoinFlips:
+    def flip(self, count: int, *, by_heads: bool = False) -> CoinFlips:
+        """コインを ``count`` 枚投げる。``by_heads``（v0.35）: 結果を「おもて」の数だけで使うコイン（先読みが「おもて」の数でまとめて試せる。
+        ``coins.flip_coins``。実際の対戦の投げ方・乱数・ログは同じ）。並びの順番（1 枚目の面など）を使う要素は渡さない。"""
         attacker = self.attacker()
-        return flip_coins(self.state, self.player, count, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id)
+        return flip_coins(self.state, self.player, count, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id,
+                          by_heads=by_heads)
 
     def coin_is(self, gate: tuple) -> bool:
         """ワザ全体のコインの面（(名前, CoinSide)）か、v0.31 の「おもて」の数（(名前, 数)）が合うか。"""
@@ -308,8 +312,15 @@ class PrintedPlusBonus:
 
 @dataclass(frozen=True)
 class HeadsTimes:
+    """コインを ``coins`` 枚投げ、「おもて」の数 × ``per``（v0.13 の ``CoinFlipDamage``。みだれづき・ハリケーンパンチ・3ぼんのしっぽなど）。
+
+    v0.35: 結果の使い道は「おもて」の数だけなので、先読みで「おもて」の数にまとめても答えは変わらない（安全に当てはめられる）が、まとめない
+    （``by_heads`` は False）。枚数は登録で決まった 2〜4 枚（多くても 16 通り）で上限に届かず、v0.15c・v0.16c の上限のテスト（``ManyCoins``）が
+    この値の 1 枚ずつの木を基準にしている（docs/coin-groups-damage-order-v0.35.md 2 章）。"""
+
     coins: int
     per: int
+    by_heads: ClassVar[bool] = False
 
     @property
     def local_coins(self) -> int:
@@ -449,7 +460,13 @@ class Coin(Element):
         if count:
             # v0.34: このコインが決める要素（``coin_dependent``）がどれも、受ける相手の対戦ポケモンにとって無効なら、投げるかが決められない
             void_coin_question(run, [element for element in run.program if element.coin_dependent(self.name)])
-        run.fs.coins[self.name] = run.flip(count) if count else CoinFlips(())
+        by_heads = self.count > 1 or self.per_attached is not None
+        if by_heads and any(isinstance(getattr(element, "gate", None), tuple) and element.gate[0] == self.name and isinstance(element.gate[1], CoinSide)
+                            for element in run.program):
+            # v0.35: 2 枚以上のワザ全体のコインは、あとの要素が「おもて」の数（``coin_is`` の数・``heads``・``heads_of``）だけを使う。1 枚目の面を
+            # 使う要素があると、先読みで「おもて」の数にまとめられない（並びで処理が変わる）
+            raise RuntimeError(f"2 枚以上のワザ全体のコイン {self.name} の 1 枚目の面を使う要素がある（エンジンの不具合）")
+        run.fs.coins[self.name] = run.flip(count, by_heads=by_heads) if count else CoinFlips(())
         return False
 
 
@@ -504,7 +521,7 @@ class FailOnTails(Element):
         if index is None:
             raise RuntimeError("ワザの失敗のコインの要素が、処理している要素の並びにない（エンジンの不具合）")
         void_coin_question(run, list(run.program[index + 1:]))
-        flips = run.flip(self.count)
+        flips = run.flip(self.count, by_heads=True)  # v0.35: すべて「おもて」か（「おもて」の数が枚数か）だけを使う
         run.fs.coins[self.name] = flips
         if any(side is TAILS for side in flips.results):
             run.fail("coin")
@@ -542,6 +559,11 @@ class Damage(Element):
     def coin_receiver(self) -> str | None:
         return "damage" if self.target == OPP else None
 
+    def decides(self, kind: str) -> bool:
+        # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
+        # ``element``（要素の位置）で区別する（``flow._resume_attack``）
+        return kind == DAMAGE_STEP_ORDER
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -570,10 +592,93 @@ class Damage(Element):
                 run.fs.coins[self.coin_name] = gate_flips
             if gate_flips.results[0] is not self.local_gate:
                 return False
-        flips = run.flip(coins) if coins else None
+        flips = run.flip(coins, by_heads=getattr(self.base, "by_heads", False)) if coins else None
         base = 0 if zero else self.base.value(run, flips)
-        run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance)
+        return self._deal(run, base, {})
+
+    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]]) -> bool:
+        """基本となるダメージ ``base`` を与える。同じ段階の変更効果の計算の順番によって結果が変わるなら、順番の決定を出して止まる（v0.35）。"""
+        try:
+            run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
+                                                    orders=orders or None, order_decision=True)
+        except DamageOrderRequired as need:
+            suspend_step_order(run, self, need, base, orders)
+            return True
         return False
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        base, orders = resume_step_order(run, self, decision, choices)
+        self._deal(run, base, orders)
+
+
+def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequired, base: int, orders: dict[int, tuple[int, ...]]) -> None:
+    """同じ段階の変更効果の計算の順番によって結果が変わる（v0.35。``damage.DamageOrderRequired``）。``DAMAGE_STEP_CHOOSER`` のプレイヤー（2・5・6 段階は
+    ワザを使うプレイヤー、7・8 段階はダメージを受けるポケモンの持ち主。p.321）に、順番の決定（``DAMAGE_STEP_ORDER``）を出して止まる。
+
+    続きの情報に、決定を出した要素の位置（``element``）・基本となるダメージ（``base``。要素のコインを投げ直さない）・前に選んだ段階の順番（``orders``）・
+    段階（``step``）・受けるポケモン（``target``・``receiver``）・その段階の変更効果（``modifiers``: (名前, 発生源, 計算, 数)。集めた順番）・選べる
+    順番（``permutations``。``damage.step_orders``。決定の選べるもの i が permutations[i]）を書く。ダメージはまだ与えていない（受けるときの効果・
+    「とうめい」は、順番を決めたあとの計算で評価する）。
+
+    決定をまたいで運べるのは、ワザ全体のコインと枠の値（``AttackRun.suspend`` の ``carry``）だけなので、この要素より前の要素がダメージを与えて
+    いる（``applied``・``evaded``）か、前の要素の結果をこの要素より後の要素が使う並びでは、決定を出せない（エンジンの未対応として v0.34 と同じ
+    問い ``damage_step_order`` で止める。今の対応カードでは起こらない）。"""
+    index = next((i for i, candidate in enumerate(run.program) if candidate is element), None)
+    if index is None:
+        raise RuntimeError("順番の決定を出すダメージの要素が、処理している要素の並びにない（エンジンの不具合）")
+    used_later = {value for later in run.program[index + 1:] for value in _result_names(later)}
+    if run.fs.applied or run.fs.evaded or any(name in used_later for name in run.fs.results if name != getattr(element, "name", None)):
+        raise run.res.question("damage_step_order", f"ポケモン {run.fs.frame.source_pid}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}"
+                                                     "（前の要素の結果を決定のあとに運べない）")
+    target = element.target
+    owner, receiver = receiver_of_target(run, target)
+    chooser = run.player if DAMAGE_STEP_CHOOSER[need.step] == "attacker" else owner
+    permutations = step_orders(len(need.modifiers))
+    described = tuple((m.label, m.source, m.operation, m.amount) for m in need.modifiers)
+    run.suspend(kind=DAMAGE_STEP_ORDER, player=chooser, options=tuple(range(len(permutations))),
+                extra=(("element", index), ("base", base), ("orders", tuple(sorted(orders.items()))), ("step", need.step), ("target", target),
+                       ("receiver", receiver.pokemon_id), ("weakness_resistance", getattr(element, "weakness_resistance", True)),
+                       ("modifiers", described), ("permutations", permutations)),
+                carry=True)
+
+
+def resume_step_order(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> tuple[int, dict[int, tuple[int, ...]]]:
+    """順番の決定の答えのあと（v0.35）: 続きの情報の基本となるダメージと、選んだ順番を加えた段階の順番を返す（コインを投げ直さない。ダメージは
+    呼ぶ側がもう一度計算して与える）。決定を待つ間に場は変わらないので、受けるポケモン・その段階の変更効果が続きの情報と違えばエンジンの不具合。"""
+    carried = run.carried
+    step = carried["step"]
+    permutations = tuple(tuple(order) for order in carried["permutations"])
+    if decision.kind != DAMAGE_STEP_ORDER or len(choices) != 1 or not 0 <= choices[0] < len(permutations):
+        raise RuntimeError(f"順番の決定の答え {choices!r} が、選べる順番の番号ではない（エンジンの不具合）")
+    owner, receiver = receiver_of_target(run, element.target)
+    if receiver.pokemon_id != carried["receiver"]:
+        raise RuntimeError("順番の決定を待つ間に、ダメージを受けるポケモンが変わった（エンジンの不具合）")
+    orders = {int(k): tuple(v) for k, v in carried.get("orders", ())}
+    orders[step] = permutations[choices[0]]
+    return carried["base"], orders
+
+
+def receiver_of_target(run: AttackRun, target: str) -> tuple[int, PokemonInPlay]:
+    """ダメージの要素の ``target``（相手の対戦ポケモン・自分）の、受けるポケモンとその持ち主（v0.35。順番の決定の選ぶプレイヤー・続きの情報）。"""
+    if target == OPP:
+        return 1 - run.player, run.opponent_active()
+    if target == SELF:
+        return run.player, run.attacker()
+    raise RuntimeError(f"順番の決定を出すダメージの要素の受けるポケモンの種類 {target!r} は未対応（エンジンの不具合）")
+
+
+def _result_names(element: Element) -> set[str]:
+    """要素（とその基本となるダメージの値）が、前の要素の結果として名前で読むもの（v0.35。``requires``・``after_damage``・``discard``・``mill``・
+    ``source`` など、文字列の項目すべて。読まない文字列も含めて広めに数える）。"""
+    found: set[str] = set()
+    for holder in (element, getattr(element, "base", None)):
+        if holder is None or not dataclasses.is_dataclass(holder):
+            continue
+        for field in dataclasses.fields(holder):
+            value = getattr(holder, field.name)
+            if isinstance(value, str):
+                found.add(value)
+    return found
 
 
 def local_coins(base: Any, run: AttackRun) -> int:
@@ -826,6 +931,8 @@ class SelfNextTurnAttackDamage(Element):
 
     target_attack_index: int
     amount: int
+    operation: str = NEXT_TURN_SET  # v0.35: ``NEXT_TURN_MULTIPLY`` なら「数をかける」（「きあいだめ」の 2 倍。``amount`` はかける数）
+    includes_self_damage: bool = False  # v0.35: そのワザの自分へのダメージにも（マチスのラッタの「(自分へのダメージも2倍)」）
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
@@ -838,7 +945,8 @@ class SelfNextTurnAttackDamage(Element):
         turn = run.state.turn_number
         effect = NextTurnAttackDamage(source_card=attacker.card, source_player=run.player, created_turn=turn,
                                       active_turn=turn + NextTurnAttackDamage.turns_until_active, attack_index=run.key.attack_index,
-                                      target_attack_index=self.target_attack_index, amount=self.amount)
+                                      target_attack_index=self.target_attack_index, amount=self.amount, operation=self.operation,
+                                      includes_self_damage=self.includes_self_damage)
         add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
         return False
 
@@ -1129,6 +1237,7 @@ class HeadsOfDiscarded:
 
     discard: str
     per: int
+    by_heads: ClassVar[bool] = True  # v0.35: 「おもて」の数だけを使う（先読みは「おもて」の数でまとめる。トラッシュした枚数だけ投げる）
 
     def coin_count(self, run: AttackRun) -> int:
         return len(run.fs.results[self.discard].cards)
@@ -1893,12 +2002,116 @@ class HeadsTimesAttachedEnergy:
     中（ダメージの量だけを決める）。エネルギーの数は ``state.energy_types`` の数（今の写しでは、ついている基本エネルギーカードの枚数と同じ）。"""
 
     per: int
+    by_heads: ClassVar[bool] = True  # v0.35: 「おもて」の数だけを使う（先読みは「おもて」の数でまとめる。v0.34 の 13 枚からの上限の拒否を解消した）
 
     def coin_count(self, run: AttackRun) -> int:
         return len(run.state.energy_types(run.attacker()))
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class PlusHeadsPerAttachedType:
+    """ダメージの目安の数字 + ワザを使うポケモンについている ``energy_type`` のエネルギーの数だけコインを投げた「おもて」の数 × ``per``（v0.35。カスミの
+    ニョロゾの「ウォーターパンチ」）。エネルギーの数は ``state.energy_types`` の ``energy_type`` の数（カードが出すエネルギーの数。今の写しでは基本
+    エネルギーカードの枚数と同じ）。コインはダメージの要素の中（ダメージの量だけを決める）。"""
+
+    energy_type: EnergyType
+    per: int
+    by_heads: ClassVar[bool] = True  # 「おもて」の数だけを使う（先読みは「おもて」の数でまとめる）
+
+    def coin_count(self, run: AttackRun) -> int:
+        attacker = run.attacker()
+        for uid in attacker.energy:
+            if not run.state.card_def(uid).is_basic_energy:
+                # 2 つ以上のエネルギーを出す特殊エネルギーを加えるときは、数え方（カードの枚数ではなくエネルギーの数）を確かめる
+                raise RuntimeError(f"ウォーターパンチのエネルギーの数え方を確かめていないエネルギーカード {uid}（エンジンの不具合）")
+        return sum(1 for kind in run.state.energy_types(attacker) if kind is self.energy_type)
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class TailsOfCoin:
+    """ワザ全体のコイン ``coin`` の「うら」の数 × ``per``（v0.35。カツラのケンタロスの「ぜんりょくとっしん」の自分へのダメージ。相手へのダメージは同じコインの
+    ``HeadsOfCoin``）。"""
+
+    coin: str
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.fs.coins[self.coin].tails * self.per
+
+
+@dataclass(frozen=True)
+class SelfAttackLock(Element):
+    """コインが ``local_coin`` なら、次の自分の番、ワザを使ったポケモンはこのワザを使えない（v0.35。カスミのニョロモの「あわあわ」。持続する効果
+    ``CannotUseOwnAttack``）。ワザを使ったポケモンへの効果（v0.31 の ``SelfPersistent`` と同じく「とうめい」を評価しない）。ワザを使ったポケモンが
+    このワザの中で HP 以上になっていれば、効果を与えず、コインも投げない（v0.34 の「こうそくいどう」と同じ）。"""
+
+    local_coin: CoinSide = TAILS
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        # 番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録する（v0.31 の SelfNextTurnAttackDamage と同じ）。相手のワザとして使ったときの
+        # 「このカードは「あわあわ」を使えない」は、使ったポケモンのワザの位置で表せないので、エンジンの未対応
+        return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない"
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=CannotUseOwnAttack.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if run.flip(1).results[0] is not self.local_coin:
+            return False
+        turn = run.state.turn_number
+        index = run.key.attack_index
+        effect = CannotUseOwnAttack(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                    active_turn=turn + CannotUseOwnAttack.turns_until_active, attack_index=index, target_attack_index=index)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), target_attack_index=index)
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentAttackLock(Element):
+    """相手の対戦ポケモンのワザを 1 つ、ワザを使ったプレイヤーが選び（決定 ``SELECT_OPPONENT_ATTACK``）、次の相手の番、そのポケモンはそのワザを使えない
+    （v0.35。カスミのニョロモの「ドわすれ」。持続する効果 ``CannotUseAttack``）。相手に与える効果なので、選ぶ前に「ワザをうけない」状態・「とうめい」を
+    評価する（受けないなら選ばない。v0.31 の ``DiscardOpponentEnergy`` と同じ順番）。選べるものは、そのポケモンのいちばん上のカードのワザの位置。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_OPPONENT_ATTACK
+    opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.ATTACK_LOCK_ELEMENT):
+            return False
+        attacks = run.state.card_def(target.card).attacks
+        if not attacks:
+            raise RuntimeError(f"ワザのない相手の対戦ポケモン {target.pokemon_id}（今の写しにはない。エンジンの不具合）")
+        run.suspend(kind=SELECT_OPPONENT_ATTACK, player=run.player, options=tuple(range(len(attacks))), extra=(("target", target.pokemon_id),),
+                    carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if target.pokemon_id != run.carried["target"] or choices[0] not in decision.options:
+            raise RuntimeError(f"ドわすれの決定の答え {choices!r} が、相手の対戦ポケモンのワザではない（エンジンの不具合）")
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = CannotUseAttack(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                 active_turn=turn + CannotUseAttack.turns_until_active, attack_index=run.key.attack_index,
+                                 target_attack_index=choices[0])
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), target_attack_index=choices[0])
 
 
 @dataclass(frozen=True)
@@ -2061,6 +2274,16 @@ BUILDERS: dict[type, Any] = {
     E.CoinsPerAttachedEnergyDamage: lambda e: (Damage(OPP, HeadsTimesAttachedEnergy(e.per)),),
     E.ReduceDamageToSelf: lambda e: (OpponentReducedDamage(e.amount),),
     E.PutTypeBasicFromDeckOntoBench: lambda e: (BenchFromDeck((), pokemon_type=e.pokemon_type),),
+    # v0.35（docs/coin-groups-damage-order-v0.35.md）
+    E.MultiplyNextTurnAttackDamage: lambda e: (
+        SelfNextTurnAttackDamage(e.target_attack_index, e.factor, operation=NEXT_TURN_MULTIPLY, includes_self_damage=e.includes_self_damage),
+    ),
+    E.DamageThenLockSelfOnTails: lambda e: (Damage(OPP, Printed()), SelfAttackLock(TAILS)),
+    E.LockOpponentAttack: lambda e: (OpponentAttackLock(),),
+    E.CoinsPerAttachedTypeBonusDamage: lambda e: (Damage(OPP, PlusHeadsPerAttachedType(e.energy_type, e.per)),),
+    E.CoinsHeadsDamageTailsSelfDamage: lambda e: (
+        Coin("coin", count=e.coins), Damage(OPP, HeadsOfCoin("coin", e.per)), Damage(SELF, TailsOfCoin("coin", e.self_per), name="self_damage"),
+    ),
 }
 
 

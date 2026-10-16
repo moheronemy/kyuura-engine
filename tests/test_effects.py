@@ -52,6 +52,8 @@ V0_33_WITH_TEXT = [
 V0_34_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-019", "PMCG2-020", "PMCG2-023", "PMCG2-026", "PMCG1-041", "PMCG2-042", "PMCG6-024",
                                                        "PMCG6-069", "PMCG1-013", "PMCG2-012", "PMCG2-029", "PMCG2-032") for index in (0, 1)] + [
     AttackKey("PMCG5-018", 1), AttackKey("PMCG1-006", 0)]
+# v0.35 で加えた説明文のあるワザ（10。5 枚の 2 つずつ。どれも説明文あり）。docs/coin-groups-damage-order-v0.35.md
+V0_35_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG5-056", "PMCG5-059", "PMCG5-022", "PMCG5-029", "PMCG6-065") for index in (0, 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -199,7 +201,8 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG5-038", 0), AttackKey("PMCG5-038", 1), AttackKey("PMCG5-046", 0), AttackKey("PMCG5-061", 1),
                                      AttackKey("PMCG6-044", 0), AttackKey("PMCG6-057", 1),
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
-                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT))
+                                     AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
+                                    + V0_35_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -328,7 +331,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 相手のエネルギーカードをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚のワザ 28
         #   （v0.33。docs/cd4-opponent-energy-coins-v0.33.md）
         # + バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせた 14 枚のワザ 27（v0.34。docs/barrier-resume-coin-bonus-v0.34.md）
-        self.assertEqual(len(keys), 257)
+        # + 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせた 5 枚のワザ 10（v0.35。docs/coin-groups-damage-order-v0.35.md）
+        self.assertEqual(len(keys), 267)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

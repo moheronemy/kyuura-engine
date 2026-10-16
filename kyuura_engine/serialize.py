@@ -103,6 +103,9 @@ from .state import (
     DamageReduction,
     DestinyBond,
     GameState,
+    NEXT_TURN_MULTIPLY,
+    CannotUseAttack,
+    CannotUseOwnAttack,
     NextTurnAttackDamage,
     Paralyzed,
     PokemonInPlay,
@@ -138,7 +141,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     ``"retaliation_received_damage"``（「こうらがえし」。与えるダメージは受けたダメージと同じ）は ``attack_index`` だけを加える。v0.27 の
     ``"next_turn_attack_damage"``（「つるぎのまい」）は ``attack_index``・``target_attack_index``・``amount`` を加える。v0.31 の
     ``"damage_reduction"``（「ちいさくなる」）は ``amount`` を加え、``"destiny_bond"``・``"attack_barrier"``・``"cannot_attack"`` は共通の項目だけ。
-    v0.34 の ``"reduced_damage_to_source"``（「なきつく」）は ``amount`` を加える。"""
+    v0.34 の ``"reduced_damage_to_source"``（「なきつく」）は ``amount`` を加える。v0.35 の ``"next_turn_attack_damage_multiplier"``（「きあいだめ」。
+    ``NextTurnAttackDamage`` の「数をかける」決め方）は ``attack_index``・``target_attack_index``・``amount``（かける数）・``includes_self_damage`` を、
+    ``"cannot_use_own_attack"``（「あわあわ」）・``"cannot_use_attack"``（「ドわすれ」）は ``attack_index``・``target_attack_index`` を加える（どれも種類の
+    値を加えただけで形式は変えない。v0.34 までの書き出しを読む側は、知らない種類として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -159,6 +165,13 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["attack_index"] = effect.attack_index
         data["target_attack_index"] = effect.target_attack_index
         data["amount"] = effect.amount
+        if effect.operation == NEXT_TURN_MULTIPLY:
+            data["includes_self_damage"] = effect.includes_self_damage  # v0.35: 「きあいだめ」（種類 "next_turn_attack_damage_multiplier"）だけ
+        elif effect.includes_self_damage:
+            raise ValueError(f"書き出せない持続する効果 {effect!r}（「その数にする」効果の自分へのダメージ）")
+    elif isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
+        data["attack_index"] = effect.attack_index  # v0.35: 「あわあわ」・「ドわすれ」
+        data["target_attack_index"] = effect.target_attack_index
     elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack)):

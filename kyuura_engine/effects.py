@@ -96,10 +96,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions
-from .damage import SET, DamageModifier, calculate_attack_damage
+from .damage import MULTIPLY, SET, DamageModifier, calculate_attack_damage
 from .decisions import (
     ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, FORCED_SWITCH, RECOVER_ENERGY, RECOVER_TRAINER,
-    RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_POKEMON, push_trainer_decision,
+    RETRIEVE_ENERGY, RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK, SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import place_evolution_card, skipped_stage1_basic
@@ -112,7 +112,7 @@ from .persistent import (
     remove_persistent_effects,
     retaliation,
 )
-from .state import RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
+from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
 from .zones import (
     attach_energy_from_hand, attach_trainer, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand, return_hand_to_deck,
     reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
@@ -3114,6 +3114,184 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
                               options=bench_from_deck_candidates(state, use.player, (), self.pokemon_type))
 
 
+# ---------------------------------------------------------------- v0.35: 可変枚数のコインの先読み・ダメージの計算の順番の決定と合わせて加えた 5 枚
+# （docs/coin-groups-damage-order-v0.35.md）。処理は解決の基盤の要素の並び（resolution/programs.py の BUILDERS）。処理に使う文面は kyuura の印刷の文面。
+
+
+@dataclass(frozen=True)
+class MultiplyNextTurnAttackDamage(AttackEffect):
+    """ダメージの要素のないワザ。ワザを使ったポケモン自身に、「次の自分の番、このカードが使う ``target_attack_name`` のダメージは ``factor`` 倍になる」
+    持続する効果を与える（v0.35。マチスのコラッタ・ラッタの「きあいだめ」）。
+
+    - 持続する効果は v0.27 の ``state.NextTurnAttackDamage`` の「数をかける」決め方（``operation`` が ``NEXT_TURN_MULTIPLY``。種類
+      ``next_turn_attack_damage_multiplier``）。「つるぎのまい」の「その数にする」（``SetNextTurnAttackDamage``）とは計算が違う（流用しない）
+    - かけるのは p.321 の 2 段階（「ワザを使うポケモンの持っている「ダメージを変更する効果」」。p.321 の例「つるぎのまい」と同じく、ワザを使うポケモンの
+      持続する状態の効果。``damage.MULTIPLY``）。1 段階（基本となるダメージ。でんこうせっかはコインの結果の 10 か 30）に ``factor`` をかけ、弱点・抵抗力・
+      プラスパワーなどはそのあとの段階
+    - ``includes_self_damage``: 説明の「(自分へのダメージも2倍)」（マチスのラッタ）。そのワザの自分へのダメージの 2 段階にも同じ数をかける。ない説明
+      （マチスのコラッタ。でんこうせっかに自分へのダメージはない）は相手へのダメージだけ
+    - はたらくのは次の自分の番（今の番 + 2）で、その番の終わりに消える。ベンチにもどる・進化・きぜつで消える（p.322・p.323。v0.27 と同じ消える契機）。
+      はたらく番にもう一度使うと、その番の終わりまで、はたらく番の違う 2 つがある（v0.27 の SC7 と同じ。かけるのははたらく番の 1 つだけ）
+    - 同じ 2 段階にほかの効果（「なきつく」）が重なり、計算の順番で結果が変わるときは、ワザを使うプレイヤーが順番を選ぶ（p.321。``damage.DamageOrderRequired``・
+      決定 ``damage_step_order``）
+    """
+
+    target_attack_index: int
+    target_attack_name: str
+    factor: int = 2
+    includes_self_damage: bool = False
+    implementation_id = "multiply_next_turn_attack_damage"
+
+    def __post_init__(self) -> None:
+        if type(self.target_attack_index) is not int or self.target_attack_index < 0:
+            raise ValueError(f"ダメージが変わるワザの位置は 0 以上の整数（{self.target_attack_index!r}）")
+        if type(self.factor) is not int or self.factor < 2:
+            raise ValueError(f"ダメージにかける数は 2 以上の整数（{self.factor!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "次の自分の番のワザのダメージをかける効果のワザ", damage="none")
+        clause = f"(自分へのダメージも{self.factor}倍)" if self.includes_self_damage else ""
+        pattern = f"次の自分の番、この「[^」]+」が使う「{re.escape(self.target_attack_name)}」のダメージは{self.factor}倍になる。{re.escape(clause)}"
+        if re.fullmatch(pattern, attack.text_ja or "") is None:
+            problems.append(f"説明 {attack.text_ja!r} が、「{self.target_attack_name}」のダメージを {self.factor} 倍にする効果"
+                            f"（自分へのダメージ {'も' if self.includes_self_damage else 'なし'}）の説明ではない")
+        return problems
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        index = self.target_attack_index
+        if index == attack.index or not 0 <= index < len(attacks):
+            return [f"ダメージが変わるワザの位置 {index} が、このカードのほかのワザではない"]
+        target = attacks[index]
+        problems = []
+        if target.name_ja != self.target_attack_name:
+            problems.append(f"ダメージが変わるワザの名前「{self.target_attack_name}」が、{index} 番目のワザ「{target.name_ja}」と違う")
+        if type(target.damage) is not int:
+            problems.append(f"ダメージが変わるワザ「{target.name_ja}」にダメージの目安がない")
+        if ("自分にも" in (target.text_ja or "")) != self.includes_self_damage:
+            problems.append(f"ダメージが変わるワザ「{target.name_ja}」の自分へのダメージの有無と、登録の includes_self_damage が合わない")
+        return problems
+
+    def next_turn_terms(self) -> tuple[int, int, str, bool]:
+        """このワザが与える ``NextTurnAttackDamage`` の (変わるワザの位置, かける数, 変え方, 自分へのダメージにも)（不変条件・ログの監査が照らす）。"""
+        return self.target_attack_index, self.factor, NEXT_TURN_MULTIPLY, self.includes_self_damage
+
+
+@dataclass(frozen=True)
+class DamageThenLockSelfOnTails(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。そのあとコインを投げて「うら」なら、次の自分の番、このカードはこのワザを使えない（v0.35。
+    カスミのニョロモの「あわあわ」）。
+
+    - 持続する効果 ``state.CannotUseOwnAttack``（自分自身。はたらく番は次の自分の番）。その番の間、このワザ（位置）だけを使えない（``checks.attack_request``
+      の ``ATTACK_LOCKED``。ほかのワザ・にげるは使える）。その番の終わりに消える。ベンチにもどる・進化・きぜつで消える（p.322・p.323）
+    - コインはワザを使ったポケモン自身への効果だけを決めるので、相手が「ダメージを受けない」「ワザをうけない」状態でも投げる（v0.34 の
+      ``void_coin_question`` の読み方）。ワザを使ったポケモンが同じワザの中で HP 以上になっていれば（相手の「はんげき」など）、効果を与えず、コインも投げない
+      （v0.34 の「こうそくいどう」と同じ）
+    """
+
+    implementation_id = "damage_then_lock_self_on_tails"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_damage_then_effect(attack, "コインで自分がそのワザを使えなくなる")
+        expected = f"コインを投げて「うら」なら、次の自分の番、このカードは「{attack.name_ja}」を使えない。"
+        if attack.text_ja != expected:
+            problems.append(f"説明 {attack.text_ja!r} が {expected!r} ではない")
+        return problems
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        """このワザが与える持続する効果の型と、使えなくなるワザの位置（自分のこのワザなので None = 効果を与えたワザと同じ。不変条件が照らす）。"""
+        from .state import CannotUseOwnAttack
+
+        return CannotUseOwnAttack, None
+
+
+@dataclass(frozen=True)
+class LockOpponentAttack(AttackEffect):
+    """ダメージの要素のないワザ。相手の対戦ポケモンのワザを 1 つ選び、次の相手の番、そのポケモンはそのワザを使えない（v0.35。カスミのニョロモの
+    「ドわすれ」）。
+
+    - 選ぶのはワザを使ったプレイヤー（説明の「相手のワザを1つ選ぶ」）。決定 ``select_opponent_attack``（選べるものは、相手の対戦ポケモンのいちばん上の
+      カードのワザの位置。1 つしかなくても決定を出す。v0.7 の K2 と同じ実装上の仮定）
+    - 持続する効果 ``state.CannotUseAttack``（相手に与える。はたらく番は次の相手の番）。その番の間、受けたポケモンはそのワザ（位置）だけを使えない。
+      ほかのワザ・にげる・特殊能力は制限しない。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる（にげる・ポケモンいれかえ・突風）・進化・きぜつ）
+    - 相手に与える効果なので、選ぶ前に「ワザをうけない」状態・「とうめい」を評価する（v0.31 の「しっぽをふる」・相手のエネルギーをトラッシュする効果と
+      同じ順番。受けないなら選ばない）
+    """
+
+    implementation_id = "lock_opponent_attack"
+    opponent_effect_elements = (ATTACK_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "相手のワザを使えなくするワザ", damage="none")
+        if attack.text_ja != "相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。":
+            problems.append(f"説明 {attack.text_ja!r} が、相手のワザを 1 つ選んで次の相手の番に使えなくする説明ではない")
+        return problems
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        from .state import CannotUseAttack
+
+        return CannotUseAttack, None
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        problems = super().decision_problems(state, use, decision)
+        if decision.kind != SELECT_OPPONENT_ATTACK:
+            return problems + [f"ドわすれの決定の種類 {decision.kind!r} が {SELECT_OPPONENT_ATTACK} ではない"]
+        target = state.players[1 - use.player].active
+        if target is None or decision.context_value("target") != target.pokemon_id:
+            return problems + ["ドわすれの決定の対象が、相手の対戦ポケモンではない"]
+        if decision.options != tuple(range(len(state.card_def(target.card).attacks))) or (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"ドわすれの決定の選べるもの {decision.options!r} が、相手の対戦ポケモンのワザの位置ではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinsPerAttachedTypeBonusDamage(AttackEffect):
+    """ダメージの目安の数字 +「このカードについている ``energy_type`` エネルギーの数ぶんコインを投げ、「おもて」の数 × ``per`` のダメージを追加する」（v0.35。
+    カスミのニョロゾの「ウォーターパンチ」）。
+
+    - 数えるのは、ワザを使うポケモンについている ``energy_type`` のエネルギーの数（``state.energy_types`` のうち ``energy_type`` のもの。エネルギーカードの
+      枚数ではなく、カードが出すエネルギー。今の写しのエネルギーカードはどれも 1 つのエネルギーを出す基本エネルギーで、同じ数になる。2 つ以上のエネルギーを
+      出すカードを加えるときは数え方を確かめる）。0 ならコインを投げず、ダメージの目安の数字だけ
+    - コインはダメージの要素の中（ダメージの量だけを決める）。受けるポケモンがダメージを受けない状態なら、投げるかが決まらない（v0.4b の問い）
+    - 先読みは「おもて」の数でまとめる（エネルギーの数 + 1 通り。docs 2 章）
+    """
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "coins_per_attached_type_bonus_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "ついているエネルギーの数のコインで追加ダメージのワザ", damage="modified", modifier="+")
+        expected = f"このカードについている「{self.energy_type.ja}」エネルギーの数ぶんコインを投げ、「おもて」の数×{self.per}のダメージを追加する。"
+        if attack.text_ja != expected:
+            problems.append(f"説明 {attack.text_ja!r} が {expected!r} ではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinsHeadsDamageTailsSelfDamage(AttackEffect):
+    """コインを ``coins`` 枚投げ、「おもて」の数 × ``per`` のダメージ。その後、「うら」の数 × ``self_per`` のダメージを自分に与える（v0.35。カツラの
+    ケンタロスの「ぜんりょくとっしん」）。
+
+    - 1 回投げた ``coins`` 枚のコイン（ワザ全体のコイン）の「おもて」の数で相手へのダメージ、同じコインの「うら」の数で自分へのダメージが決まる（別々に
+      投げない。相手へのダメージと自分へのダメージは同じ結果の組）。先読みも「おもて」の数でまとめ、組を ``coins`` + 1 通り試す
+    - 相手へのダメージ → 自分へのダメージ（説明の「その後」）。どちらもワザによるダメージ（p.321。自分へのダメージは自分のタイプと自分の弱点・抵抗力。
+      v0.3d）。「おもて」が 0 枚なら相手へのダメージは 0（与えなかった）、「うら」が 0 枚なら自分へのダメージは 0
+    - コインは相手へのダメージと自分へのダメージの両方を決めるので、相手が「ダメージを受けない」状態でも投げる（v0.34 の ``void_coin_question``）
+    """
+
+    coins: int
+    per: int
+    self_per: int
+    implementation_id = "coins_heads_damage_tails_self_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "コインのおもてで相手に・うらで自分にダメージのワザ", damage="modified", modifier="×")
+        expected = f"コインを{self.coins}枚投げ、「おもて」の数×{self.per}のダメージ。その後、「うら」の数×{self.self_per}のダメージを自分に与える。"
+        if attack.text_ja != expected or attack.damage != self.per:
+            problems.append(f"説明 {attack.text_ja!r}・ダメージ {attack.damage} が {expected!r}・{self.per} ではない")
+        return problems
+
+
 def attack_damage_modifiers(
     state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False
 ) -> tuple[DamageModifier, ...]:
@@ -3135,9 +3313,12 @@ def attack_damage_modifiers(
     modifiers: list[DamageModifier] = []
     if attack is not None and state.cards[attacker.card].card_id == attack.card_id:
         boost = next_turn_attack_damage(state, attacker, attack.attack_index)
-        if boost is not None:
+        if boost is not None and (defender is not attacker or boost.includes_self_damage):
+            # v0.35: 「数をかける」効果（「きあいだめ」の「2倍」。``MULTIPLY``）も同じ 2 段階。自分へのダメージに当てはめるのは、説明がそう書くとき
+            # だけ（マチスのラッタの「(自分へのダメージも2倍)」。``includes_self_damage``）
             name = state.card_def(boost.source_card).attacks[boost.attack_index].name_ja
-            modifiers.append(DamageModifier(step=2, amount=boost.amount, label=name, source=boost.source_card, operation=SET))
+            operation = MULTIPLY if boost.operation == NEXT_TURN_MULTIPLY else SET
+            modifiers.append(DamageModifier(step=2, amount=boost.amount, label=name, source=boost.source_card, operation=operation))
     for holder, role in ((attacker, "attacker"), (defender, "defender")):
         for attached in holder.trainers:
             entry = state.effects.trainer_entry(state.cards[attached.card].card_id)
@@ -6729,6 +6910,87 @@ DEFAULT_EFFECTS = EffectRegistry(
             "たすけをよぶ",
             text_ja="自分の山札から「闘」ポケモンを1匹選んでベンチにだす。その後、その山札をよくきる。進化カードは選べない。自分のベンチに空きがなければ使えない。",
             play_text_ja="自分の山札から「闘」ポケモンを1匹選んでベンチにだす。その後、その山札をよくきる。進化カードは選べない。自分のベンチに空きがなければ使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ---- v0.35（docs/coin-groups-damage-order-v0.35.md）。kyuura データの採用（card_sources.json）。処理に使う文面は kyuura の印刷の文面
+        # マチスのコラッタ（リーダーズスタジアム）。きあいだめ（無）: 次の自分の番、でんこうせっかのダメージは 2 倍（p.321 の 2 段階）
+        AttackKey("PMCG5-056", 0): AttackEntry(
+            MultiplyNextTurnAttackDamage(target_attack_index=1, target_attack_name="でんこうせっか"),
+            "きあいだめ",
+            text_ja="次の自分の番、この「マチスのコラッタ」が使う「でんこうせっか」のダメージは2倍になる。",
+            play_text_ja="次の自分の番、この「マチスのコラッタ」が使う「でんこうせっか」のダメージは2倍になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのコラッタ。でんこうせっか（無無）10+
+        AttackKey("PMCG5-056", 1): AttackEntry(
+            CoinBonusDamage(20),
+            "でんこうせっか",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのラッタ（マチスのコラッタから進化）。きあいだめ（無）: 次の自分の番、すてみタックルのダメージは 2 倍（自分へのダメージも）
+        AttackKey("PMCG5-059", 0): AttackEntry(
+            MultiplyNextTurnAttackDamage(target_attack_index=1, target_attack_name="すてみタックル", includes_self_damage=True),
+            "きあいだめ",
+            text_ja="次の自分の番、この「マチスのラッタ」が使う「すてみタックル」のダメージは2倍になる。(自分へのダメージも2倍)",
+            play_text_ja="次の自分の番、この「マチスのラッタ」が使う「すてみタックル」のダメージは2倍になる。(自分へのダメージも2倍)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのラッタ。すてみタックル（無無）40: 自分にも 20
+        AttackKey("PMCG5-059", 1): AttackEntry(
+            DamageAndSelfDamage(20),
+            "すてみタックル",
+            text_ja="自分にも20ダメージ。",
+            play_text_ja="自分にも20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのニョロモ（リーダーズスタジアム）。あわあわ（水）20: コインが「うら」なら、次の自分の番このワザを使えない
+        AttackKey("PMCG5-022", 0): AttackEntry(
+            DamageThenLockSelfOnTails(),
+            "あわあわ",
+            text_ja="コインを投げて「うら」なら、次の自分の番、このカードは「あわあわ」を使えない。",
+            play_text_ja="コインを投げて「うら」なら、次の自分の番、このカードは「あわあわ」を使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのニョロモ。ドわすれ（水水）: 相手のワザを 1 つ選び、次の相手の番に使えなくする
+        AttackKey("PMCG5-022", 1): AttackEntry(
+            LockOpponentAttack(),
+            "ドわすれ",
+            text_ja="相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。",
+            play_text_ja="相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのニョロゾ（カスミのニョロモから進化）。はかいのうず（水無）20: コインが「おもて」なら相手のエネルギーカードを 1 枚トラッシュ
+        AttackKey("PMCG5-029", 0): AttackEntry(
+            DamageThenDiscardOpponentEnergy(on_heads=True),
+            "はかいのうず",
+            text_ja="コインを投げて「おもて」なら、相手についているエネルギーカードを1枚選び、トラッシュする。",
+            play_text_ja="コインを投げて「おもて」なら、相手についているエネルギーカードを1枚選び、トラッシュする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのニョロゾ。ウォーターパンチ（無無無）30+: ついている「水」エネルギーの数のコインの「おもて」の数 × 10 を追加
+        AttackKey("PMCG5-029", 1): AttackEntry(
+            CoinsPerAttachedTypeBonusDamage(EnergyType.WATER, 10),
+            "ウォーターパンチ",
+            text_ja="このカードについている「水」エネルギーの数ぶんコインを投げ、「おもて」の数×10のダメージを追加する。",
+            play_text_ja="このカードについている「水」エネルギーの数ぶんコインを投げ、「おもて」の数×10のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カツラのケンタロス（闇からの挑戦）。3ぼんのしっぽ（無）10×
+        AttackKey("PMCG6-065", 0): AttackEntry(
+            CoinFlipDamage(coins=3, damage_per_heads=10),
+            "3ぼんのしっぽ",
+            text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            play_text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カツラのケンタロス。ぜんりょくとっしん（無無無）20×: 同じ 4 枚のコインの「おもて」の数 × 20 を相手に、「うら」の数 × 20 を自分に
+        AttackKey("PMCG6-065", 1): AttackEntry(
+            CoinsHeadsDamageTailsSelfDamage(coins=4, per=20, self_per=20),
+            "ぜんりょくとっしん",
+            text_ja="コインを4枚投げ、「おもて」の数×20のダメージ。その後、「うら」の数×20のダメージを自分に与える。",
+            play_text_ja="コインを4枚投げ、「おもて」の数×20のダメージ。その後、「うら」の数×20のダメージを自分に与える。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

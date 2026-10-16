@@ -111,8 +111,11 @@ QUESTIONS: dict[str, Question] = {
         Question("reduced_damage_bench_target", "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET", ("NK5",), 10,
                  "「なきつく」の「このカードにワザを使う時、与えるダメージが20へる」が、そのポケモンが控えにいるときの控えポケモンへのダメージにも"
                  "当てはまるかは、原典から決められない"),
-        Question("damage_step_order", "UNSUPPORTED_DAMAGE_STEP_ORDER", ("v0.34",), 10,
-                 "p.321 の同じ段階に「その数にする」効果とほかの効果があるとき、計算の順番はワザを使うプレイヤーが決めるが、その決定はエンジンの未対応"),
+        # v0.35 から、ダメージの要素（``programs.Damage``）は順番の決定を出す。この問いに当たるのは、決定を出せない呼ぶ側（控えへのダメージ・返す
+        # 効果のダメージ・v0.13 の約束で書いたワザ・前の要素の結果を決定のあとに運べない並び。今の対応カードでは起こらない）だけ
+        Question("damage_step_order", "UNSUPPORTED_DAMAGE_STEP_ORDER", ("v0.34", "v0.35"), 10,
+                 "p.321 の同じ段階に加算でない効果を含む 2 つ以上の効果があり、計算の順番で結果が変わるが、このダメージの処理は順番を選ぶ決定を"
+                 "出せない（エンジンの未対応）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

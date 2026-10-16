@@ -1132,7 +1132,17 @@
       "PMCG2-029/attack/0",
       "PMCG2-029/attack/1",
       "PMCG2-032/attack/0",
-      "PMCG2-032/attack/1"
+      "PMCG2-032/attack/1",
+      "PMCG5-056/attack/0",
+      "PMCG5-056/attack/1",
+      "PMCG5-059/attack/0",
+      "PMCG5-059/attack/1",
+      "PMCG5-022/attack/0",
+      "PMCG5-022/attack/1",
+      "PMCG5-029/attack/0",
+      "PMCG5-029/attack/1",
+      "PMCG6-065/attack/0",
+      "PMCG6-065/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

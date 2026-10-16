@@ -754,10 +754,12 @@ class ExeggutorTest(unittest.TestCase):
         self.assertEqual([e["amount"] for e in events(new, len(state.log), "damage")], [40])
 
     def test_branch_limit(self):
-        """先読みは 2 のエネルギーの数乗の結果を試す。12 枚（4,096 通り）までは受け付け、13 枚で ``UNSUPPORTED_PREFLIGHT_LIMIT``（v0.34 の型は
-        ``VERIFIED`` に入れていない）。"""
+        """v0.34: 先読みは 2 のエネルギーの数乗の結果を試し、12 枚（4,096 通り）までは受け付け、13 枚で ``UNSUPPORTED_PREFLIGHT_LIMIT`` だった。
+        v0.35 で、結果を「おもて」の数だけで使うコインを先読みが「おもて」の数でまとめるようにした（エネルギーの数 + 1 通り）ので、13 枚以上も
+        受け付ける（従来拒否していた場面を受け付ける変更。境界・試した結果の数・実際の処理のコインの数は
+        tests/test_coin_groups_damage_order_v0_35.py で確かめる。docs/coin-groups-damage-order-v0.35.md 2 章）。"""
         play(board(mon(EXEGGUTOR, (GRASS,) * 12)), UseAttack(0, 1))
-        assert_stops(self, board(mon(EXEGGUTOR, (GRASS,) * 13)), UseAttack(0, 1), "UNSUPPORTED_PREFLIGHT_LIMIT")
+        play(board(mon(EXEGGUTOR, (GRASS,) * 13)), UseAttack(0, 1))
 
 
 class GrowlTest(unittest.TestCase):
@@ -806,10 +808,15 @@ class GrowlTest(unittest.TestCase):
         assert_stops(self, gusted, UseAttack(1, 1), "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET")
 
     def test_with_swords_dance_is_unsupported(self):
-        """同じ 2 段階に「その数にする」効果（つるぎのまい）と、へらす効果が重なると、計算の順番を選ぶ決定（p.321）がエンジンの未対応なので止める。"""
+        """v0.34: 同じ 2 段階に「その数にする」効果（つるぎのまい）と、へらす効果が重なると、計算の順番を選ぶ決定（p.321）がエンジンの未対応なので
+        ``UNSUPPORTED_DAMAGE_STEP_ORDER`` で止めていた。v0.35 で順番の決定に対応したので、ワザを使うプレイヤー（2 段階。p.321・SC15）が順番を選ぶ
+        決定を出す（従来拒否していた場面を受け付ける変更。順番ごとの最終ダメージ・保存と復元・不正な答えは tests/test_coin_groups_damage_order_v0_35.py）。"""
         state = board(mon(CUBONE, (FIGHTING,)), mon(SCYTHER, (GRASS, GRASS, GRASS), next_turn_attack_damage=(TURN - 1, 0, 1, 60)))
         growled = play(state, UseAttack(0, 0))
-        assert_stops(self, growled, UseAttack(1, 1), "UNSUPPORTED_DAMAGE_STEP_ORDER")
+        for mode in PREFLIGHT_MODES:
+            with self.subTest(mode=mode):
+                waiting = play(growled, UseAttack(1, 1), mode=mode)
+                self.assertEqual((waiting.decision.kind, waiting.decision.player, waiting.decision.options), ("damage_step_order", 1, (0, 1)))
 
     def test_barrier_voids_growl(self):
         """「ワザをうけない」状態の相手には、なきつくの効果は無効（相手に与える効果）。"""

@@ -26,7 +26,7 @@ from unittest import mock
 from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
-from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, KANGASKHAN
+from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_35_POKEMON, KANGASKHAN
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -158,9 +158,9 @@ class ShippedRecordTest(unittest.TestCase):
         sources = cs.load_sources()
         self.assertEqual(sources["format"], cs.FORMAT)
         self.assertEqual(sources["policy"]["since"], "2026-10-15")
-        # v0.34: 採用 14 枚と保留のガルーラ（docs/barrier-resume-coin-bonus-v0.34.md）
+        # v0.34: 採用 14 枚と保留のガルーラ（docs/barrier-resume-coin-bonus-v0.34.md）。v0.35: 採用 5 枚（docs/coin-groups-damage-order-v0.35.md）
         self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON
-                                                          + (KANGASKHAN,)))
+                                                          + (KANGASKHAN,) + V0_35_POKEMON))
         for card_id in V0_29_POKEMON:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -190,7 +190,7 @@ class ShippedRecordTest(unittest.TestCase):
                 self.assertEqual((check["checked_on"], check["result"] in ("match", "differences")), ("2026-10-15", True))
                 self.assertFalse(any(d["affects_behavior"] for d in check["differences"]))
                 self.assertFalse(any(issue["affects_behavior"] for issue in record["issues"]))
-        for card_id in V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON:  # v0.32・v0.33・v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。2026-10-16 に照合
+        for card_id in V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON + V0_35_POKEMON:  # v0.32〜v0.35（docs/coin-groups-damage-order-v0.35.md）。2026-10-16 に照合
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, COMMIT))
@@ -210,8 +210,8 @@ class ShippedRecordTest(unittest.TestCase):
         self.assertNotIn(KANGASKHAN, cs.registered_cards(DEFAULT_EFFECTS))
         section = cs.load_links()["latest_descriptions"]
         # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ（16）と、v0.31 の 45（特殊能力 2 を含む）と、v0.32 の 19 と、v0.33 の 25 と、
-        # v0.34 の 26（ブースターのかえんほうしゃも印刷の文面。トラッシュの時点だけを RUL-ENERGY-DISCARD-ATTACKS の範囲とした）
-        self.assertEqual(len(section["adopted_printed_text"]), 131)
+        # v0.34 の 26（ブースターのかえんほうしゃも印刷の文面。トラッシュの時点だけを RUL-ENERGY-DISCARD-ATTACKS の範囲とした）と、v0.35 の 10
+        self.assertEqual(len(section["adopted_printed_text"]), 141)
         self.assertEqual(sorted(section["errata_text"]), ["PMCG1-014/attack/1", "PMCG1-017/attack/1", "PMCG1-019/attack/0", "PMCG1-020/attack/1",
                                                           "PMCG1-021/power/0", "PMCG1-022/attack/1"])
         self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067"})
@@ -229,11 +229,12 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29〜v0.34 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
+        v0.29〜v0.35 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
         registered = cs.registered_cards(DEFAULT_EFFECTS)
-        adopted = set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON) | set(V0_34_POKEMON)
+        adopted = (set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON) | set(V0_34_POKEMON)
+                   | set(V0_35_POKEMON))  # v0.35
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))
         self.assertIn(CHARMANDER, verification["cards"])

@@ -120,6 +120,14 @@ ATTACH_FROM_DISCARD = "attach_from_discard"
 # たねポケモンのカードの uid（山札の並びを決定に写さないよう uid の小さい順）。1 匹（省略できない）。山札の中身は選ぶプレイヤーだけが見る情報で、
 # ログには書かない（出したカードは場に出るので公開）。トレーナーの ``SEARCH_DECK``（手札に加える）とは別の決定。再開先は "attack"
 BENCH_FROM_DECK = "bench_from_deck"
+# v0.35（docs/coin-groups-damage-order-v0.35.md 3 章）。ワザのダメージの計算（p.321）の同じ段階に、加算でない変更効果を含む 2 つ以上の効果があり、
+# 計算の順番によって結果が変わるとき、その順番（p.321。2・5・6 段階はワザを使うプレイヤー、7・8 段階はワザを受けるプレイヤー。``damage.DAMAGE_STEP_CHOOSER``）。
+# 選べるものは、その段階の変更効果の集めた順番の番号の並べかえ（``damage.step_orders``。辞書順）の位置。``context`` に段階・変更効果・並べかえ・
+# 基本となるダメージ（コインを投げ直さない）・前に選んだ段階の順番を持つ
+DAMAGE_STEP_ORDER = "damage_step_order"
+# v0.35: カスミのニョロモの「ドわすれ」の「相手のワザを1つ選ぶ。」。決めるのはワザを使ったプレイヤーで、選べるものは相手の対戦ポケモン（``context`` の
+# ``"target"``）のいちばん上のカードのワザの位置
+SELECT_OPPONENT_ATTACK = "select_opponent_attack"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

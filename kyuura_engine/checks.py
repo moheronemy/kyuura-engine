@@ -16,7 +16,7 @@ from .commands import PromoteActive, ResolveDecision, TakePrize
 from .decisions import DECISION_PHASE_ORDER, check_choices
 from .effects import AttackKey
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import cannot_attack
+from .persistent import attack_locked, cannot_attack
 from .state import Phase
 
 if TYPE_CHECKING:
@@ -93,6 +93,10 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
     if cannot_attack(state, attacker) is not None:
         # v0.31: イーブイの「しっぽをふる」を受けた（次の相手の番にワザをつかえない）。ねむり・マヒと同じ場所（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、この番はワザを使えない（相手のワザの効果）")
+    if attack_locked(state, attacker, cmd.attack_index) is not None:
+        # v0.35: カスミのニョロモの「あわあわ」（自分）・「ドわすれ」（相手が選んだワザ）で、この番はこのワザを使えない。ほかのワザは使える。
+        # 「しっぽをふる」と同じ場所（宣言の前・エネルギーの確認より前）
+        raise IllegalActionError("ATTACK_LOCKED", f"バトル場のポケモン {attacker.pokemon_id} は、この番は {cmd.attack_index} 番目のワザを使えない（ワザの効果）")
     attack = attacker_def.attacks[cmd.attack_index]
     effect = state.effects.attack_effect(attacker_def.id, attack, attacker_def.attacks)
     if effect is None:

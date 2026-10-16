@@ -39,6 +39,8 @@ from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     CannotAttack,
+    CannotUseAttack,
+    CannotUseOwnAttack,
     DamageReduction,
     DestinyBond,
     NextTurnAttackDamage,
@@ -55,11 +57,12 @@ KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
 
 
-def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str) -> None:
+def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
     """``pokemon``（``owner`` の場のポケモン）に、ワザ ``attack``（``AttackKey`` の文字列）による持続する効果を与える。
 
     ログ ``persistent_effect_added``（``player``・``pokemon``・``pokemon_id``・``persistent_effect``（種類）・``source_card``・
-    ``source_player``・``active_turn``・``effect``（ワザ））。ログの ``turn`` が効果を与えた番（``created_turn``）。
+    ``source_player``・``active_turn``・``effect``（ワザ））。ログの ``turn`` が効果を与えた番（``created_turn``）。v0.35: ``extra`` はその効果の
+    種類だけの項目（「あわあわ」・「ドわすれ」の使えなくなるワザの位置 ``target_attack_index``。v0.34 までの種類のログの形は変えない）。
     """
     pokemon.persistent_effects = (*pokemon.persistent_effects, effect)
     state.add_event(
@@ -72,6 +75,7 @@ def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, 
         source_player=effect.source_player,
         active_turn=effect.active_turn,
         effect=attack,
+        **extra,
     )
 
 
@@ -214,3 +218,21 @@ def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None
 def cannot_attack(state: GameState, pokemon: PokemonInPlay) -> CannotAttack | None:
     """今の番に ``pokemon`` がワザを使えない効果（v0.31。イーブイの「しっぽをふる」を受けた）がはたらいているなら、その効果。"""
     return _active(state, pokemon, CannotAttack)
+
+
+def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> CannotUseOwnAttack | CannotUseAttack | None:
+    """今の番に、``pokemon`` が ``attack_index`` 番目のワザ（いちばん上のカードの）を使えない効果がはたらいているなら、その効果（v0.35）。
+
+    - ``CannotUseOwnAttack``（カスミのニョロモの「あわあわ」の「次の自分の番、このカードは「あわあわ」を使えない」）: 自分自身の効果。効果を与えた
+      カード（``source_card``）がいちばん上のカードのときだけ（進化すると効果は消える。p.310・p.323）
+    - ``CannotUseAttack``（「ドわすれ」の「次の相手の番、そのポケモンは、そのワザを使えない」）: 相手に与えられた効果
+    どちらも、ワザの位置で探す（ワザの名前では探さない。ほかのワザは使える）。"""
+    for effect in pokemon.persistent_effects:
+        if not isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)) or effect.active_turn != state.turn_number:
+            continue
+        if effect.target_attack_index != attack_index:
+            continue
+        if isinstance(effect, CannotUseOwnAttack) and effect.source_card != pokemon.card:
+            continue
+        return effect
+    return None

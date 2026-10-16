@@ -361,7 +361,11 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried
     run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
-    index = decision_index(program, decision.kind)
+    index = carried.get("element")  # v0.35: 決定を出した要素の位置（ダメージの要素の順番の決定。並びにダメージの要素が 2 つ以上あることがある）
+    if index is None:
+        index = decision_index(program, decision.kind)
+    elif not (0 <= index < len(program) and program[index].decides(decision.kind)):
+        raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
     program[index].resume(run, decision, choices)
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
         return

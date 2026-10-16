@@ -287,6 +287,13 @@
     "PMCG2-029",
     "PMCG2-032"
   ],
+  "pool_v0_35": [
+    "PMCG5-056",
+    "PMCG5-059",
+    "PMCG5-022",
+    "PMCG5-029",
+    "PMCG6-065"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG3-003",
@@ -14341,6 +14348,476 @@
         "series": "ポケモンジャングル",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg02-031-garagara/"
+      }
+    },
+    {
+      "id": "PMCG5-056",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのコラッタ",
+        "en": "Lt. Surge's Rattata"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          19
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きあいだめ",
+              "en": "Focus Energy"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の自分の番、この「マチスのコラッタ」が使う「でんこうせっか」のダメージは2倍になる。",
+              "en": "During your next turn, Lt. Surge's Rattata's Quick Attack's base damage is doubled."
+            }
+          },
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-056",
+        "pokemontcg": [
+          "gym2-85"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%B3%E3%83%A9%E3%83%83%E3%82%BFLV.7_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 7,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%B3%E3%83%A9%E3%83%83%E3%82%BFLV.7_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-059",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのラッタ",
+        "en": "Lt. Surge's Raticate"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          20
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのコラッタ",
+          "en": "Lt. Surge's Rattata"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きあいだめ",
+              "en": "Focus Energy"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の自分の番、この「マチスのラッタ」が使う「すてみタックル」のダメージは2倍になる。(自分へのダメージも2倍)",
+              "en": "During your next turn, Lt. Surge's Raticate's Double-edge attack's damage (base damage and damage to itself) is doubled."
+            }
+          },
+          {
+            "name": {
+              "ja": "すてみタックル",
+              "en": "Double-edge"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": "Lt. Surge's Raticate does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-059",
+        "pokemontcg": [
+          "gym2-53"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%A9%E3%83%83%E3%82%BFLV.33_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%83%A9%E3%83%83%E3%82%BFLV.33_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-022",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのニョロモ",
+        "en": "Misty's Poliwag"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          60
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あわあわ",
+              "en": "Bubbles"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、次の自分の番、このカードは「あわあわ」を使えない。",
+              "en": "Flip a coin. If tails, you can't use this attack during your next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "ドわすれ",
+              "en": "Amnesia"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。",
+              "en": "Choose 1 of the Defending Pokémon's attacks. That Pokémon can't use that attack during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-022",
+        "pokemontcg": [
+          "gym2-89"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%83%A2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%83%A2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-029",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのニョロゾ",
+        "en": "Misty's Poliwhirl"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          61
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのニョロモ",
+          "en": "Misty's Poliwag"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はかいのうず",
+              "en": "Rapids"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手についているエネルギーカードを1枚選び、トラッシュする。",
+              "en": "If the Defending Pokémon has any Energy cards attached to it, flip a coin. If heads, choose 1 of those Energy cards and discard it."
+            }
+          },
+          {
+            "name": {
+              "ja": "ウォーターパンチ",
+              "en": "Water Punch"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "このカードについている「水」エネルギーの数ぶんコインを投げ、「おもて」の数×10のダメージを追加する。",
+              "en": "Flip a number of coins equal to the number of Water Energy attached to Misty's Poliwhirl. This attack does 30 damage plus 10 damage for each heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-029",
+        "pokemontcg": [
+          "gym1-53"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%82%BE_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%8B%E3%83%A7%E3%83%AD%E3%82%BE_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-065",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのケンタロス",
+        "en": "Blaine's Tauros"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          128
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "3ぼんのしっぽ",
+              "en": "3-Pronged Tail"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "ぜんりょくとっしん",
+              "en": "Full Speed Charge"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×20のダメージ。その後、「うら」の数×20のダメージを自分に与える。",
+              "en": "Flip 4 coins. This attack does 20 damage times the number of heads to the Defending Pokémon and 20 damage times the number of tails to Blaine's Tauros."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-065",
+        "pokemontcg": [
+          "gym1-64"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%B1%E3%83%B3%E3%82%BF%E3%83%AD%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 34,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%B1%E3%83%B3%E3%82%BF%E3%83%AD%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

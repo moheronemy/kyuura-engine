@@ -419,7 +419,7 @@
 - ストライク（PMCG2-017）の「つるぎのまい」は `effects.SetNextTurnAttackDamage(target_attack_index=1, target_attack_name="きりさく", damage=60)`（`AttackKey("PMCG2-017", 0)`。要素 `programs.SelfNextTurnAttackDamage`）、「きりさく」は `DamageOnly` です。p.56・p.321 の最新の説明「次の自分の番、このカードが使う「きりさく」のダメージは「60」になる。」と p.57 のワザ解説にしたがいます。印刷の文面（kyuura の写し。「2倍」）・英語版の文面で処理を決めないでください。規定と根拠（SC1〜SC22。再利用した記録と p.56・p.57・p.321 で読んだことの区別）は docs/scyther-v0.27.md、検証は docs/v0.27-verification.md。
 - 効果は持続する効果 `state.NextTurnAttackDamage`（`PokemonInPlay.persistent_effects`。v0.4b と同じ置き場所・消える契機・ログ）で、はたらく番は与えた番 + 2（型の `turns_until_active`。`PreventDamage`・`Retaliation` は 1）です。はたらく番の終わりに消えます（p.57「効果の持続：次の自分の番の最後」）。ワザ 1 回の中の値・ログから求め直す形・プレイヤー単位の印にしないでください。効果がはたらくかは `persistent.next_turn_attack_damage(state, pokemon, attack_index)` で、効果を与えたカード（いちばん上）とワザの位置で探します（ワザの名前で探さない。ほかのストライク・パラセクトの同じ名前の「きりさく」を変えない）。
 - 対象のワザは登録のデータ（位置と名前）で表し、`AttackEffect.card_problems`（v0.27）が同じカードのほかのワザと照合します（位置・名前・説明のないダメージの目安だけのワザ）。合わなければカードは未対応です。`EffectRegistry.attack_problem`・`attack_effect` の `attacks`（そのカードのワザの一覧）は、分類（cards.py）と使うときの確認（checks.py）が渡します。ほかのワザを指す実装を加えたら `card_problems` を書いてください。
-- 「「60」になる」は p.321 の 2 段階で、ダメージをその数にする効果（`damage.DamageModifier` の `operation=SET`。既定は `ADD`）です。最終ダメージに直接足したり、最終ダメージを 2 倍にしたり、8 段階で置きかえたりしないでください。弱点・抵抗力・プラスパワー・ディフェンダーはそのあとの段階で計算します。同じ段階に加算でない効果とほかの効果が重なったら、計算の順番を選ぶ決定（p.321。2 段階はワザを使うプレイヤー）がないので `calculate_attack_damage` が `RuntimeError` で止めます（今の対応カードでは起こらない）。2 段階のほかの効果を加えるときは、先に順番を選ぶ決定を加えてください。
+- 「「60」になる」は p.321 の 2 段階で、ダメージをその数にする効果（`damage.DamageModifier` の `operation=SET`。既定は `ADD`）です。最終ダメージに直接足したり、最終ダメージを 2 倍にしたり、8 段階で置きかえたりしないでください。弱点・抵抗力・プラスパワー・ディフェンダーはそのあとの段階で計算します。同じ段階に加算でない効果とほかの効果が重なったら、計算の順番を選ぶ決定（p.321。2 段階はワザを使うプレイヤー）がないので `calculate_attack_damage` が `RuntimeError` で止めます（今の対応カードでは起こらない）。2 段階のほかの効果を加えるときは、先に順番を選ぶ決定を加えてください（v0.35 で加えた。下の「可変枚数のコインの先読みとダメージの計算の順番の決定（v0.35）」）。
 - 変更効果を集めるのは `effects.attack_damage_modifiers(state, attacker, defender, attack=…)` だけです。解決の基盤の `kernel.deal_damage`（`frame.attack_key`）と宣言の前の `preview_attack_damage`（`use.key`。C18・W24 などの確かめ）が同じ関数を使います。片方だけに効果を足さないでください。ダメージの候補（`damage_profile`）は印刷の 30（1 段階）のままです（候補に効果を重ねて数えない）。`attack` を渡さない呼び出し（こんらんの 20 の確かめ `procedures.confusion_damage_problem`）は v0.26 と同じで、こんらんの 20 に「つるぎのまい」は関係しません（p.309 の手順 5。SC17）。
 - ワザのダメージのログ `damage` は、効果がはたらいたときだけ `steps` に `("2 つるぎのまい", 60)`、項目 `damage_set`（`((2, 効果を与えたカード, 60),)`）が入ります。加える数の `modifiers` に混ぜないでください（効果のないダメージのログは v0.26 と同じ）。ログの監査（tests/log_audit.py）は、持続する効果のはたらく番を種類ごとに確かめ（「つるぎのまい」は + 2）、ワザのダメージごとに 2 段階の記録の有無と値を、ログから組み立てた効果と登録の位置で確かめます。
 - 不変条件（`engine._persistent_effect_problems`）は、はたらく番を `created_turn + turns_until_active` で確かめます。同じ種類の効果は、`turns_until_active` が 1 の型は 1 つまで、どの型も同じはたらく番は 1 つまでです（「つるぎのまい」ははたらく番にもう一度使うと、その番の終わりまで、はたらく番の違う 2 つがある。SC7）。効果を消したログとの対応は、同じ効果（与えた番・はたらく番）のログだけを数えます。登録の値は `_next_turn_attack_damage_problems`（実装の `next_turn_terms()`）で照らします。テストで効果を置くときは `build_test_state` の `"next_turn_attack_damage"`（(与えた番, 効果を与えたワザの位置, 変わるワザの位置, ダメージ)）を使ってください（ログの `effect` は効果を与えたワザ）。
@@ -628,10 +628,10 @@
   ワザでダメージを与えるとき p.321 の 2 段階で量をへらします（`effects.attack_damage_modifiers`）。期限は説明のとおり次の自分の番の始め（`procedures.begin_turn` の
   `remove_turn_start_expired_persistent_effects`）。番の始めに消える効果を加えるときは `expires_at_turn_start` を使ってください。カラカラが控えにいるときの控えへの
   ダメージは NK5（`UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET`）で止めます。同じ 2 段階に「その数にする」効果（つるぎのまい）とほかの効果が重なったら、順番の決定が
-  未対応なので `UNSUPPORTED_DAMAGE_STEP_ORDER`（研究の対応表の停止コードに入れない）で止めます。
+  未対応なので `UNSUPPORTED_DAMAGE_STEP_ORDER`（研究の対応表の停止コードに入れない）で止めます（v0.35 で、ダメージの要素では順番の決定を出すようにした）。
 - ギャロップの「こうそくいどう」はバリアーと同じ `AttackBarrier`（`SelfPersistent` の `local_coin`）、ナッシーの「テレポート」は要素 `SelfSwitch`（入れ替えは
   `effects._switch_active_with_bench(..., effect=)`。ログ `switch` に `effect`）、「たまなげMAX」は値 `HeadsTimesAttachedEnergy`（コインの数 = `state.energy_types` の数。
-  先読みは 2 のエネルギーの数乗。13 枚から `UNSUPPORTED_PREFLIGHT_LIMIT`）、ガラガラの「たすけをよぶ」は `BenchFromDeck` の `pokemon_type`（闘のたねポケモン）、
+  先読みは 2 のエネルギーの数乗。13 枚から `UNSUPPORTED_PREFLIGHT_LIMIT`。v0.35 で「おもて」の数でまとめ、エネルギーの数 + 1 通り）、ガラガラの「たすけをよぶ」は `BenchFromDeck` の `pokemon_type`（闘のたねポケモン）、
   ドガースの「くさいガス」は `Status` の `otherwise`（同じコインの「うら」）、かみなりパンチ・あばれるは `CoinBonusOrSelfDamage`（1 枚のコイン）、ブースターの
   「かえんほうしゃ」は `DiscardEnergyBeforeDamage(炎, 1, "effect", "fail")`（トラッシュの時点は RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果。処理に使う文面は
   印刷の文面）。v0.34 の型は tests/helpers.py の `ATTACK_TYPES_SINCE_V0_17` にあり、`v013_checks.VERIFIED` に入れていません。
@@ -640,3 +640,43 @@
   ポケモンチェックのどくの量・なきつくの 2 段階と期限・たすけをよぶのタイプを確かめます。
 - 検証用デッキ `F34`・`G34`・`C34` と組（`PAIRINGS_V0_34`）は tools/existing_effect_games.py の `--batch v0.34` です（前の版の組の結果は変わらない）。TP3・NK5・HC4
   （シャワーズのみずでっぽう）で止まったワザは `V031_STOPS` で場から確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 可変枚数のコインの先読みとダメージの計算の順番の決定と 5 枚（v0.35）
+
+- 依頼の 5 枚（マチスのコラッタ PMCG5-056・マチスのラッタ PMCG5-059・カスミのニョロモ PMCG5-022・カスミのニョロゾ PMCG5-029・カツラのケンタロス PMCG6-065）を、
+  kyuura データの採用で加えました（対応ポケモン 148 → 153。写しの組 `pool_v0_35`。ワザの登録 267）。まとめる条件・順番の決定の仕様・カードごとの結果・互換性・
+  検証は docs/coin-groups-damage-order-v0.35.md。ガイドブックは読んでいません。テストの定数は tests/helpers.py の `V0_35_POKEMON`（`LT_SURGES_RATTATA` など）。
+  v0.35 の効果の型は `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。
+- 先読み（`resolution/preflight.py`）は、結果を「おもて」の数だけで使うコインを「おもて」の数でまとめて試します（`Oracle.coin_group`。n 枚を n + 1 通り）。
+  まとめてよいかは、コインを投げる要素・値が宣言します（`coins.flip_coins`・`AttackRun.flip` の `by_heads`、基本となるダメージの値の ClassVar `by_heads`、
+  2 枚以上か枚数が状態で決まる `Coin`、`FailOnTails`）。カード id で決めないでください。投げた順番・何枚目の面を使う要素（`CoinSide` の `gate`）がある
+  コインはまとめられないので、`Coin` が `RuntimeError` で止めます。コインのあとの決定（カードの選び方）は、まとめずにすべての答えを試します（選び方の違いを
+  同じものとみなさない）。相手と自分へのダメージを同じコインで決めるワザは、組のまま試します（別々に数えた結果を組み合わせない）。
+- まとめた先読みの決まった並び（「うら」→「おもて」）は、1 枚ずつ試す先読みで最初に試す並びなので、当たる問いと理由の文は 1 枚ずつ試すときと同じです。
+  実際の対戦の乱数（`random.Random`）は `coin_group` を持たないので、今までどおり 1 枚ずつ投げます（乱数・ログ・確率を変えない）。`derived` の記録
+  （`RecordingRandom`）は元の乱数で 1 枚ずつ投げ、(「おもて」の数, 枚数 + 1) を 1 つの値として記録します（`tokens`）。上限の数 `MAX_BRANCHES`（4,096）と、
+  上限を超えたときの扱いは変えていません。上限を回避するために上限の数を上げないでください。
+- `CoinFlipDamage`（`HeadsTimes`）はまとめません（`by_heads` は False。登録で決まった 4 枚以下で、v0.15c・v0.16c の上限の境界のテストがこの値の 1 枚ずつの
+  木を基準にしている）。れんぞくファイヤーボールは、コインはまとめるが、トラッシュするカードの選び方が 2 の n 乗通りのままで、炎 13 枚から
+  `UNSUPPORTED_PREFLIGHT_LIMIT` が残ります。
+- p.321 の 2・5〜8 段階の変更効果は `damage.DamageModifier` の `operation`（`ADD`・`SET`・`MULTIPLY`）で区別します。同じ段階に加算でない効果を含む 2 つ以上の
+  効果があり、順番によって結果（最終ダメージと 2 段階で終えるか）が変わるときだけ、`calculate_attack_damage` が `DamageOrderRequired` を投げ、ダメージの要素
+  （`programs.Damage`）が `DAMAGE_STEP_CHOOSER` のプレイヤーに決定 `damage_step_order` を出します（選べるものは `damage.step_orders` の位置。`context` に
+  決定を出した要素の位置・基本となるダメージ・段階・受けるポケモン・変更効果・選べる順番。`carry=True`）。再開は、選んだ順番を `orders` に渡して計算し直す
+  だけで、コインを投げ直しません。順番で結果が変わらなければ決定を出さないでください。コードで順番を決めて計算しないでください。決定を出せない呼ぶ側
+  （控えへのダメージ・返す効果のダメージ・v0.13 の約束のワザ・前の要素がダメージを与えた並び）は、問い `damage_step_order`（`UNSUPPORTED_DAMAGE_STEP_ORDER`）
+  で止めます。不変条件は `engine._damage_order_decision_problems`。ログ `damage` の `modifiers` は v0.34 と同じ集めた順番で、順番を選んだ段階のものだけを
+  その位置の中で並べかえます（`step_orders`・`damage_multiplied` は該当するときだけ）。
+- 「きあいだめ」は v0.27 の `NextTurnAttackDamage` に `operation`（`NEXT_TURN_MULTIPLY`）と `includes_self_damage` を明示した値です（種類
+  `next_turn_attack_damage_multiplier`）。「つるぎのまい」の「その数にする」の値を 2 倍の意味に流用しないでください。自分へのダメージに当てはめるのは、説明に
+  「(自分へのダメージも2倍)」があるときだけ（`card_problems` が変わるワザの「自分にも」と照らす）。
+- 「あわあわ」は自分自身の `CannotUseOwnAttack`（はたらく番は与えた番 + 2）、「ドわすれ」は相手に与える `CannotUseAttack`（与えた番 + 1。選ぶのはワザを使った
+  プレイヤー、決定 `select_opponent_attack`、選べるものは相手の対戦ポケモンのいちばん上のカードのワザの位置）です。使えないワザは `checks.attack_request` が
+  `ATTACK_LOCKED` で拒否します（「しっぽをふる」と同じ場所）。ワザは位置で表し、名前では探さないでください。消える契機は v0.4b と同じです（進化で消える）。
+- ウォーターパンチは、ついている「水」エネルギーの数（`state.energy_types`。カードの枚数ではない）だけコインを投げます。基本エネルギーでないカードが
+  ついていれば `RuntimeError`（特殊エネルギーを加えるときに数え方を確かめる）。ぜんりょくとっしんは、同じ 4 枚のコイン（`Coin`）の「おもて」の数で相手へ、
+  「うら」の数（`TailsOfCoin`）で自分へのダメージです（別々に投げない）。
+- 書き出しは形式 10 のまま（持続する効果の種類 `next_turn_attack_damage_multiplier`・`cannot_use_own_attack`・`cannot_use_attack`、決定の種類
+  `damage_step_order`・`select_opponent_attack` の値を加えた）。新しい未解決はありません（停止コード 40 件・未解決の裁定 41 件）。
+- 検証用デッキ `S35` と組（`PAIRINGS_V0_35`）は tools/existing_effect_games.py の `--batch v0.35` です。公開の固定のデッキ・既存の変種には入れていません。
+  勝敗で採用を判断しないでください。

@@ -201,6 +201,13 @@ V0_34_POKEMON = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCK
                  EXEGGUTOR, CUBONE, MAROWAK)  # 対応にした 14 枚（ガルーラは保留）
 V0_34_POOL = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
               EXEGGUTOR, KANGASKHAN, CUBONE, MAROWAK)  # 写しの組 pool_v0_34（保留のガルーラを含む 15 枚）
+# v0.35（docs/coin-groups-damage-order-v0.35.md）: kyuura データの採用で加えた 5 枚
+LT_SURGES_RATTATA = "PMCG5-056"  # マチスのコラッタ（リーダーズスタジアム。HP 30・無色・弱点 闘・抵抗力 超 -30・にげる 0。きあいだめ（無）・でんこうせっか（無無）10+）
+LT_SURGES_RATICATE = "PMCG5-059"  # マチスのラッタ（マチスのコラッタから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 1。きあいだめ（無）・すてみタックル（無無）40）
+MISTYS_POLIWAG = "PMCG5-022"  # カスミのニョロモ（リーダーズスタジアム。HP 50・水・弱点 草・にげる 1。あわあわ（水）20・ドわすれ（水水））
+MISTYS_POLIWHIRL = "PMCG5-029"  # カスミのニョロゾ（カスミのニョロモから進化。HP 70・水・弱点 草・にげる 2。はかいのうず（水無）20・ウォーターパンチ（無無無）30+）
+BLAINES_TAUROS = "PMCG6-065"  # カツラのケンタロス（闇からの挑戦。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 2。3ぼんのしっぽ（無）10×・ぜんりょくとっしん（無無無）20×）
+V0_35_POKEMON = (LT_SURGES_RATTATA, LT_SURGES_RATICATE, MISTYS_POLIWAG, MISTYS_POLIWHIRL, BLAINES_TAUROS)  # 対応にした 5 枚（写しの組 pool_v0_35 と同じ）
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -648,6 +655,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinsPerAttachedEnergyDamage,  # ナッシーの「たまなげMAX」
     _effects.ReduceDamageToSelf,  # カラカラの「なきつく」
     _effects.PutTypeBasicFromDeckOntoBench,  # ガラガラの「たすけをよぶ」
+) + (
+    # v0.35（docs/coin-groups-damage-order-v0.35.md 4 章）
+    _effects.MultiplyNextTurnAttackDamage,  # マチスのコラッタ・ラッタの「きあいだめ」
+    _effects.DamageThenLockSelfOnTails,  # カスミのニョロモの「あわあわ」
+    _effects.LockOpponentAttack,  # カスミのニョロモの「ドわすれ」
+    _effects.CoinsPerAttachedTypeBonusDamage,  # カスミのニョロゾの「ウォーターパンチ」
+    _effects.CoinsHeadsDamageTailsSelfDamage,  # カツラのケンタロスの「ぜんりょくとっしん」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

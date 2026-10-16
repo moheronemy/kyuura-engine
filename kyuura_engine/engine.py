@@ -47,6 +47,7 @@ from .commands import (
     UsePokemonPower,
 )
 from .decisions import (
+    DAMAGE_STEP_ORDER,
     DECISION_PHASES,
     KO_PREVENTION,
     POST_KNOCKOUT_POWER,
@@ -73,6 +74,8 @@ from .persistent import KNOCK_OUT, expires_at_turn_start, remove_persistent_effe
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    CannotUseAttack,
+    CannotUseOwnAttack,
     DamageReduction,
     NextTurnAttackDamage,
     ReducedDamageToSource,
@@ -1227,6 +1230,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_retaliation_problems(state, pokemon, effect, where))  # v0.12
         if isinstance(effect, NextTurnAttackDamage):
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
+        if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
+            problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -1258,8 +1263,33 @@ def _next_turn_attack_damage_problems(state: GameState, pokemon: PokemonInPlay, 
         return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
     entry = state.effects.attack_entry(definition.id, effect.attack_index)
     terms = getattr(entry.effect, "next_turn_terms", None) if entry is not None else None
-    if terms is None or terms() != (effect.target_attack_index, effect.amount):
+    expected = terms() if terms is not None else None
+    # v0.35: 「数をかける」効果（「きあいだめ」）の実装は (変わるワザの位置, かける数, 変え方, 自分へのダメージにも) を返す。v0.27 の「つるぎのまい」は
+    # (変わるワザの位置, その数) で、変え方は「その数にする」・自分へのダメージには当てはめない
+    if expected is not None and len(expected) == 2:
+        expected = (*expected, "set", False)
+    if expected is None or expected != (effect.target_attack_index, effect.amount, effect.operation, effect.includes_self_damage):
         return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
+
+
+def _attack_lock_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.35: 「あわあわ」（``CannotUseOwnAttack``）・「ドわすれ」（``CannotUseAttack``）の持続する効果の、効果を与えたワザ（``source_card`` のカードの
+    ``attack_index``。登録された実装の ``attack_lock_terms`` がこの効果の型と、自分のワザを使えなくするなら使えなくなるワザの位置を返す）と、使えなくなる
+    ワザ（受けているポケモンのいちばん上のカードの ``target_attack_index``）が合うか。"""
+    if type(effect.attack_index) is not int or type(effect.target_attack_index) is not int:
+        return [f"{where} {effect!r} のワザの位置が整数ではない"]
+    source = state.card_def(effect.source_card)
+    if not 0 <= effect.attack_index < len(source.attacks):
+        return [f"{where} {effect!r} の効果を与えたワザの位置が、カード {source.id} のワザではない"]
+    entry = state.effects.attack_entry(source.id, effect.attack_index)
+    terms = getattr(entry.effect, "attack_lock_terms", None) if entry is not None else None
+    if terms is None or terms()[0] is not type(effect) or (terms()[1] is not None and terms()[1] != effect.target_attack_index):
+        return [f"{where} {effect!r} が、カード {source.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    if isinstance(effect, CannotUseOwnAttack) and effect.target_attack_index != effect.attack_index:
+        return [f"{where} {effect!r} の使えなくなるワザが、効果を与えたワザ（このカードの同じワザ）ではない"]
+    if not 0 <= effect.target_attack_index < len(state.card_def(pokemon.card).attacks):
+        return [f"{where} {effect!r} の使えなくなるワザの位置が、このポケモンのワザではない"]
     return []
 
 
@@ -1829,7 +1859,56 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     if len(attacks) != 1 or attacks[0].get("pokemon") != attacker.card or attacks[0].get("attack_index") != attack_index:
         return [f"ワザの決定の続き {use!r} に対応する、今の番のワザのログ attack がない（{len(attacks)} 回）"]
     problems = _carried_deferred_problems(state, d, player)
+    if d.kind == DAMAGE_STEP_ORDER:
+        # v0.35: ダメージの計算の順番の決定は、どのワザのダメージの要素も出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
+        return problems + _damage_order_decision_problems(state, d, player, attacker)
     return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+
+
+def _damage_order_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
+    """v0.35: ワザのダメージの計算（p.321）の同じ段階の順番の決定（``DAMAGE_STEP_ORDER``。``resolution.programs.suspend_step_order``）。
+
+    続きの情報の段階・受けるポケモン・基本となるダメージ・前に選んだ段階の順番から、今の場で変更効果を集め直し（``effects.attack_damage_modifiers``）、
+    その段階の変更効果が続きの情報と同じで、その順番がまだ選ばれておらず、順番によって計算の結果が変わる（``damage.DamageOrderRequired``）ことと、
+    決めるプレイヤー（2・5・6 段階はワザを使うプレイヤー、7・8 段階は受けるポケモンの持ち主。p.321）・選べるもの（並べかえの位置）・選ぶ数を確かめる。"""
+    from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, calculate_attack_damage, step_orders
+    from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers
+
+    context = dict(d.context)
+    step, target, base = context.get("step"), context.get("target"), context.get("base")
+    modifiers, permutations = context.get("modifiers"), context.get("permutations")
+    orders = {k: tuple(v) for k, v in context.get("orders", ())}
+    if step not in DAMAGE_STEP_CHOOSER or target not in (OPPONENT_ACTIVE, SELF) or type(base) is not int or not isinstance(modifiers, tuple):
+        return [f"順番の決定の続きの情報（段階 {step!r}・受けるポケモン {target!r}・基本となるダメージ {base!r}）が正しくない"]
+    if step in orders:
+        return [f"順番の決定の段階 {step} の順番が、すでに選ばれている"]
+    if tuple(tuple(order) for order in permutations or ()) != step_orders(len(modifiers)) or d.options != tuple(range(len(step_orders(len(modifiers))))):
+        return [f"順番の決定の選べるもの {d.options!r} が、{len(modifiers)} つの変更効果の並べかえの位置ではない"]
+    if (d.min_choices, d.max_choices) != (1, 1):
+        return [f"順番の決定の選ぶ数 {(d.min_choices, d.max_choices)!r} が 1 つではない"]
+    owner, receiver = (1 - player, state.players[1 - player].active) if target == OPPONENT_ACTIVE else (player, attacker)
+    if receiver is None or receiver.pokemon_id != context.get("receiver"):
+        return [f"順番の決定の受けるポケモン {context.get('receiver')!r} が、場の {target} ではない"]
+    chooser = player if DAMAGE_STEP_CHOOSER[step] == "attacker" else owner
+    if d.player != chooser:
+        return [f"{step} 段階の順番を選ぶのがプレイヤー {d.player} で、{DAMAGE_STEP_CHOOSER[step]} のプレイヤー {chooser} ではない（p.321）"]
+    copied = context.get("copied")
+    use = d.context_value("use")
+    key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
+    collected = attack_damage_modifiers(state, attacker, receiver, attack=key)
+    at_step = tuple(m for m in collected if m.step == step)
+    if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
+        return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
+    try:
+        calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, collected,
+                                weakness_resistance=context.get("weakness_resistance", True), orders=orders)
+    except DamageOrderRequired as need:
+        if need.step == step:
+            return []
+        return [f"順番の決定の段階 {step} が、計算で順番の要る段階 {need.step} と違う"]
+    except ValueError as error:
+        return [f"順番の決定の前に選んだ順番 {orders!r} が正しくない（{error}）"]
+    return [f"{step} 段階の順番は、どの順番でも計算の結果が同じ（決定は要らない）"]
 
 
 def _carried_deferred_problems(state: GameState, d, player: int) -> list[str]:

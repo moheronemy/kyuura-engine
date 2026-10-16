@@ -4267,6 +4267,236 @@
         }
       ],
       "notes": "v0.34 の依頼の 15 枚のうち、pcg-search.com との照合でこどものおつかいの文面に挙動に影響する違い（コインの有無）が見つかったので保留にした（登録しない。写しには保留の記録のために入れた）。れんぞくパンチの違い（サイトの脱字）は処理に影響しない。kyuura のデータ・写しは直さない（kyuura への報告事項）"
+    },
+    "PMCG5-056": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのコラッタ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1057.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "057/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.35 で加えた。きあいだめは MultiplyNextTurnAttackDamage（次の自分の番、でんこうせっかのダメージを p.321 の 2 段階で 2 倍。持続する効果は v0.27 の NextTurnAttackDamage の「数をかける」決め方（種類 next_turn_attack_damage_multiplier）。「つるぎのまい」の「その数にする」とは計算が違う。同じ 2 段階に「なきつく」が重なって順番で結果が変わるときは、ワザを使うプレイヤーが順番を選ぶ）。でんこうせっかは既存の CoinBonusDamage(20)。第1弾・第4弾のコラッタとは別のカード。サイトの一覧には同じ名前の構築済みデッキのカード（1stgymd3011）もあるが、写しの収録（リーダーズスタジアム）の 057/096 と照合した"
+    },
+    "PMCG5-059": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのラッタ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1058.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "058/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.35 で加えた。きあいだめは MultiplyNextTurnAttackDamage（すてみタックル。説明の「(自分へのダメージも2倍)」で自分へのダメージにも 2 倍。includes_self_damage）。すてみタックルは既存の DamageAndSelfDamage(20)。進化元のマチスのコラッタ（PMCG5-056）と名前で照らす。サイトの一覧の構築済みデッキのカード（1stgymd3012）ではなく、リーダーズスタジアムの 058/096 と照合した"
+    },
+    "PMCG5-022": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのニョロモ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1023.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "023/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.35 で加えた。あわあわは DamageThenLockSelfOnTails（ダメージのあとコインが「うら」なら、次の自分の番このワザを使えない持続する効果 CannotUseOwnAttack）。ドわすれは LockOpponentAttack（ワザを使ったプレイヤーが相手の対戦ポケモンのワザを 1 つ選び、次の相手の番そのワザを使えない持続する効果 CannotUseAttack。選ぶ前に「ワザをうけない」状態・「とうめい」を評価する）。第1弾のニョロモ（PMCG1-024）とは別のカード。サイトの一覧の構築済みデッキのカード（1stgymd2002）ではなく、リーダーズスタジアムの 023/096 と照合した"
+    },
+    "PMCG5-029": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのニョロゾ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1024.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "024/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.35 で加えた。はかいのうずは既存の DamageThenDiscardOpponentEnergy(on_heads=True)（v0.33 のはかいでんぱ・はかいビームと同じ。相手にエネルギーカードがなければコインを投げない）。ウォーターパンチは CoinsPerAttachedTypeBonusDamage（水・10。ついている「水」エネルギーの数（カードが出すエネルギーの数。今の写しでは基本エネルギーカードの枚数）だけコインを投げ、「おもて」の数 × 10 を追加。先読みは「おもて」の数でまとめる）。進化元のカスミのニョロモ（PMCG5-022）と名前で照らす"
+    },
+    "PMCG6-065": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのケンタロス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-16",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2070.php",
+          "checked_on": "2026-10-16",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "070/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.35 で加えた。3ぼんのしっぽは既存の CoinFlipDamage(coins=3, damage_per_heads=10)。ぜんりょくとっしんは CoinsHeadsDamageTailsSelfDamage（同じ 4 枚のコインの「おもて」の数 × 20 を相手に、その後「うら」の数 × 20 を自分に。別々に投げない。先読みは「おもて」の数でまとめ、相手へのダメージと自分へのダメージを同じ結果の組として試す）。第2弾のケンタロス（PMCG2-042）とは別のカード"
     }
   }
 }

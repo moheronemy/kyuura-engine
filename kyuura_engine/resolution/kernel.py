@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, calculate_attack_damage
+from ..damage import ADD, MULTIPLY, SET, DamageOrderRequired, calculate_attack_damage
 from ..effects import (
     ATTACK_ELEMENTS,
     BENCH_TARGETS,
@@ -183,11 +183,18 @@ def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | 
 
 
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
-                weakness_resistance: bool = True) -> DamageResult:
+                weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
+                order_decision: bool = False) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
-    ``bench``）。v0.33: ``SELF_BENCH`` なら自分の控えポケモン（計算は相手の控えと同じ）。``weakness_resistance`` が False なら弱点・抵抗力を計算しない（「「弱点・抵抗力」に関係なく」。ログに ``ignore_weakness_resistance``）。"""
+    ``bench``）。v0.33: ``SELF_BENCH`` なら自分の控えポケモン（計算は相手の控えと同じ）。``weakness_resistance`` が False なら弱点・抵抗力を計算しない（「「弱点・抵抗力」に関係なく」。ログに ``ignore_weakness_resistance``）。
+
+    v0.35: 同じ段階の変更効果の計算の順番によって結果が変わるとき（``damage.DamageOrderRequired``）、``order_decision`` なら、状態を変える前に
+    その例外をそのまま投げる（呼ぶ側のダメージの要素が、順番を選ぶ決定を出し、選んだ順番を ``orders`` に渡してもう一度呼ぶ。``programs.Damage``）。
+    ``order_decision`` でない呼ぶ側（控えへのダメージ・返す効果のダメージなど。今の対応カードでは起こらない）は、エンジンの未対応として止める
+    （問い ``damage_step_order``・``UNSUPPORTED_DAMAGE_STEP_ORDER``）。順番を決定で選んだときは、ログ ``damage`` に ``step_orders``（(段階, その段階の
+    変更効果の名前を計算した順に)）を残す。"""
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
@@ -218,12 +225,15 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS)
-    step2 = [m for m in modifiers if m.step == 2]
-    if len(step2) > 1 and any(m.operation != ADD for m in step2):
-        # v0.34: p.321 の同じ段階（2 段階）に「その数にする」効果（「つるぎのまい」）とほかの効果（「なきつく」）がある。計算の順番はワザを使う
-        # プレイヤーが決める（p.321）が、その決定はエンジンの未対応（``damage.calculate_attack_damage`` の RuntimeError の前に止める）
-        raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・2 段階の効果 {[m.label for m in step2]}")
-    calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance)
+    try:
+        calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
+                                       orders=orders)
+    except DamageOrderRequired as need:
+        # v0.35: p.321 の同じ段階に、順番によって結果が変わる効果が重なった（「つるぎのまい」・「きあいだめ」と「なきつく」など）。計算の順番は
+        # DAMAGE_STEP_CHOOSER のプレイヤーが決める（p.321。SC15）。決定を出せる呼ぶ側（ダメージの要素）に返す。出せない呼ぶ側では v0.34 と同じ問いで止める
+        if order_decision:
+            raise
+        raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -240,10 +250,17 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     added = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == ADD)
     if added:
         extra["modifiers"] = added
-    replaced = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation != ADD)
+    replaced = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == SET)
     if replaced:
         # v0.27: 「その数にする」効果（「つるぎのまい」の 2 段階）。加える数の modifiers と混ぜない（(段階, 発生源のカード, その数)）
         extra["damage_set"] = replaced
+    multiplied = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == MULTIPLY)
+    if multiplied:
+        # v0.35: 「数をかける」効果（「きあいだめ」の 2 段階）。(段階, 発生源のカード, かける数)
+        extra["damage_multiplied"] = multiplied
+    if orders:
+        # v0.35: 順番の決定で選んだ計算の順番（(段階, その段階の変更効果の名前を計算した順に)）
+        extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
     if calc.stopped_after_step_2:
         extra["stopped_after_step_2"] = True
     if target != OPPONENT_ACTIVE:
