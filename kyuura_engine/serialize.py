@@ -97,8 +97,10 @@ from .state import (
     RETALIATION_FIXED,
     RETALIATION_RECEIVED,
     AttackBarrier,
+    AttackCoinCheck,
     Asleep,
     CannotAttack,
+    CannotRetreat,
     Confused,
     DamageReduction,
     DestinyBond,
@@ -144,7 +146,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     v0.34 の ``"reduced_damage_to_source"``（「なきつく」）は ``amount`` を加える。v0.35 の ``"next_turn_attack_damage_multiplier"``（「きあいだめ」。
     ``NextTurnAttackDamage`` の「数をかける」決め方）は ``attack_index``・``target_attack_index``・``amount``（かける数）・``includes_self_damage`` を、
     ``"cannot_use_own_attack"``（「あわあわ」）・``"cannot_use_attack"``（「ドわすれ」）は ``attack_index``・``target_attack_index`` を加える（どれも種類の
-    値を加えただけで形式は変えない。v0.34 までの書き出しを読む側は、知らない種類として拒否すること）。"""
+    値を加えただけで形式は変えない。v0.34 までの書き出しを読む側は、知らない種類として拒否すること）。v0.36 の ``"attack_coin_check"``（「すなかけ」・
+    「えんまく」など。p.309 の手順 4 のコイン）は ``single_use``（「効果は1回できえる」）を加え、``"cannot_retreat"``（「アイスバーン」・「わしづかみ」）は共通の
+    項目だけ（どちらも相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン。形式は変えない。v0.35 までの書き出しを読む側は、知らない種類として
+    拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -174,7 +179,9 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["target_attack_index"] = effect.target_attack_index
     elif isinstance(effect, (DamageReduction, ReducedDamageToSource)):
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
-    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack)):
+    elif isinstance(effect, AttackCoinCheck):
+        data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
 

@@ -643,7 +643,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "ねんりき", "こんらんでんぱ",
                                         # v0.34: エレブー（PMCG1-041）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/barrier-resume-coin-bonus-v0.34.md）
-                                        "でんきショック"]))
+                                        "でんきショック",
+                                        # v0.36: ブーバー（化石の秘密。PMCG3-008）の「スモッグ」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/sand-attack-retreat-lock-v0.36.md）
+                                        "スモッグ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

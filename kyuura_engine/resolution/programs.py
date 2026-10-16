@@ -37,12 +37,12 @@ from ..decisions import (
     RECOVER_TRAINER, SELECT_ATTACK, SELECT_OPPONENT_ATTACK, SELECT_POKEMON,
 )
 from ..errors import UnsupportedError
-from ..persistent import add_persistent_effect, remove_persistent_effects
+from ..persistent import RETURN_IN_PLAY_TO_DECK, add_persistent_effect, remove_persistent_effects
 from ..state import (
-    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, CannotAttack, CannotUseAttack, CannotUseOwnAttack,
-    DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, ReducedDamageToSource, Retaliation,
+    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_KINDS, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotRetreat,
+    CannotUseAttack, CannotUseOwnAttack, DamageReduction, DestinyBond, NextTurnAttackDamage, PreventDamage, ReducedDamageToSource, Retaliation,
 )
-from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, draw_cards, return_discard_to_hand, shuffle_deck
+from ..zones import attach_from_discard, bench_from_deck, discard_from_deck, draw_cards, return_discard_to_hand, return_in_play_to_deck, shuffle_deck
 
 from . import catalog as C
 from . import codec
@@ -2086,6 +2086,12 @@ class OpponentAttackLock(Element):
     decision_kind: ClassVar[str] = SELECT_OPPONENT_ATTACK
     opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
 
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        # v0.36: 効果（``CannotUseAttack``）は、効果を与えたワザを効果を与えたポケモンのカードのワザの位置（``attack_index``）で記録するので、相手のワザ
+        # として使った「ドわすれ」の効果を表せない（v0.35 は選べて、効果を与えたところで不変条件の違反（内部エラー）になっていた。あわあわ・きあいだめと
+        # 同じ扱いにした。docs/sand-attack-retreat-lock-v0.36.md 5 章）
+        return UNSUPPORTED, "番をまたぐ効果を、効果を与えたポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない"
+
     def run(self, run: AttackRun) -> bool:
         opponent = 1 - run.player
         target = run.opponent_active()
@@ -2140,6 +2146,108 @@ class OpponentReducedDamage(Element):
 
 
 # ---------------------------------------------------------------- 登録表の実装 → 要素の並び（v0.13 の 24 種類と、v0.17 から加えた型）
+
+
+# ---------------------------------------------------------------- v0.36（docs/sand-attack-retreat-lock-v0.36.md）
+
+
+@dataclass(frozen=True)
+class OpponentAttackCheck(Element):
+    """相手の対戦ポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する（v0.36。「すなかけ」・「えんまく」など。持続する効果
+    ``AttackCoinCheck``。コインは、効果を受けたポケモンがワザを使うときに ``flow._attack_check_failed`` が投げる。このワザの中では投げない）。相手に与える
+    効果なので「ワザをうけない」状態・「とうめい」を評価する（v0.31 の ``OpponentCannotAttack`` と同じ順番）。``single_use``: 「効果は1回できえる」。"""
+
+    single_use: bool = False
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.ATTACK_CHECK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.ATTACK_CHECK_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = AttackCoinCheck(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                 active_turn=turn + AttackCoinCheck.turns_until_active, single_use=self.single_use)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), single_use=self.single_use)
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentRetreatLock(Element):
+    """相手の対戦ポケモンは、次の相手の番に「にげる」ことができない（v0.36。「アイスバーン」・「わしづかみ」。持続する効果 ``CannotRetreat``）。相手に
+    与える効果なので「ワザをうけない」状態・「とうめい」を評価する。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.RETREAT_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.RETREAT_LOCK_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = CannotRetreat(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                               active_turn=turn + CannotRetreat.turns_until_active)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class ReturnSelfToDeck(Element):
+    """コインが ``local_coin`` なら、``after_damage`` のダメージの要素のあと、ワザを使ったポケモンと、ついているすべてのカードを山札にもどし、その山札を
+    よく切る（v0.36。キョウのドガースの「くもがくれガス」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
+
+    - 「ダメージを与えた後」（``after_damage``）: そのダメージの要素がダメージを与えなかったら Z23（v0.17b の ``Status.after_damage`` と同じ問い。コインの前）
+    - ワザを使ったポケモンがこのワザの中で HP 以上なら、もどさない（自分への効果。コインも投げない。p.309「処理の対象がなくなってしまっている場合」）
+    - 自分への効果も「とうめい」を評価する（v0.17b の ``Status`` の ``SELF`` と同じ）
+    - 同じワザで HP 以上になったポケモンがいれば RD9（``return_in_play_to_deck_with_knockout``。バトル場に出す時点ときぜつの処理の順番が決まらない）。もどす前
+    - もどす（``zones.return_in_play_to_deck``）→ 持続する効果を消す（理由 ``return_in_play_to_deck``）→ 山札を切る。先読み（``res.dry_run``）では切らない（v0.32 の
+      ``BenchFromDeck`` と同じ。この要素がワザの最後の要素であることで確かめる）。空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定で
+      うめる（``flow._next_prize_or_judge``・``_promotions_after_judge``。きぜつのあとと同じ処理）
+    """
+
+    local_coin: CoinSide | None = HEADS
+    after_damage: str | None = "damage"
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        if self.after_damage is not None:
+            result = run.fs.results[self.after_damage]
+            if result.dealt <= 0:
+                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",
+                                       E.effect_after_no_damage_error(str(run.key), result, None,
+                                                                      what="自分と、自分についているすべてのカードを山札にもどす"))
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.ko_prevention_conflict(attacker, run.player)
+            return False
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        if not reaches(run.res, run.fs, run.player, attacker, E.RETURN_IN_PLAY_TO_DECK_ELEMENT):
+            return False
+        from .kernel import knocked
+
+        gone = knocked(run.res)
+        if gone:
+            raise run.res.question("return_in_play_to_deck_with_knockout", f"ポケモン {[p.pokemon_id for _, p in gone]}")
+        return_in_play_to_deck(state, run.player, attacker, effect=str(run.key))
+        remove_persistent_effects(state, run.player, attacker, RETURN_IN_PLAY_TO_DECK)
+        if run.res.dry_run:
+            if run.program[-1] is not self:
+                raise RuntimeError("山札を切る要素のあとに要素がある（先読みで切った並びを使えない。エンジンの不具合）")
+            return False
+        shuffle_deck(state, run.player)
+        return False
 
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
@@ -2284,6 +2392,10 @@ BUILDERS: dict[type, Any] = {
     E.CoinsHeadsDamageTailsSelfDamage: lambda e: (
         Coin("coin", count=e.coins), Damage(OPP, HeadsOfCoin("coin", e.per)), Damage(SELF, TailsOfCoin("coin", e.self_per), name="self_damage"),
     ),
+    # v0.36（docs/sand-attack-retreat-lock-v0.36.md）
+    E.DamageThenAttackCoinCheck: lambda e: (Damage(OPP, Printed()), OpponentAttackCheck(e.single_use)),
+    E.DamageThenRetreatLock: lambda e: (Damage(OPP, Printed()), OpponentRetreatLock()),
+    E.DamageThenReturnSelfToDeckOnHeads: lambda e: (Damage(OPP, Printed()), ReturnSelfToDeck(HEADS, after_damage="damage")),
 }
 
 

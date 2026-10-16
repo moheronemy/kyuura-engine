@@ -474,11 +474,58 @@ class CannotUseAttack:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class AttackCoinCheck:
+    """ワザによる「持続する効果」（v0.36）のうち、p.309 のワザを使う手順 4 の「ワザを失敗させたりワザの内容を変えてしまう効果」: 効果を受けたポケモンが、
+    はたらく番にワザを使うとき、持ち主（効果を受けたポケモン側のプレイヤー）がコインを 1 枚投げ、「うら」ならワザは失敗する（サンドの「すなかけ」・
+    ブーバー・タッツーの「えんまく」・わるいサンダースの「サンダーフラッシュ」・カスミのパウワウの「しんきろう」など。docs/sand-attack-retreat-lock-v0.36.md）。
+
+    相手に与える効果（``on_opponent``。v0.31 の ``CannotAttack`` と同じ）。効果を受けるのは相手の対戦ポケモンで、``source_card``・``source_player`` は効果を
+    与えたワザを使ったポケモンのカードとそのプレイヤー（相手のワザとして使ったときは、使ったポケモン。どのワザで与えたかはログ ``persistent_effect_added``
+    の ``effect``）。はたらく番は次の相手の番（``created_turn + 1``。受けているポケモンの持ち主の番）。ワザの宣言を拒否しない（宣言できる。手順 3 のあと、
+    こんらんの手順 5 の前にコインを投げる。``resolution.flow._attack_body``）。
+
+    - ``single_use``: サンド（PMCG1-051）の「すなかけ」の「「すなかけ」の効果は1回できえる」。手順 4 のコインを投げたら（「おもて」でも「うら」でも）消える
+      （ログ ``persistent_effect_removed`` の理由 ``used``）。ほかの文面（「次の相手の番に…」）の効果は、はたらく番の終わりに消える。どちらも、はたらく番は
+      次の番だけ（PMCG1-051 の「次の番に」も次の相手の番）で、ワザは 1 番に 1 回なので、どちらの消え方でも同じ番に 2 回目のコインはない
+    消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ。p.311・p.322・p.323）。効果を与えたポケモンが場をはなれても消えない（p.322）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    single_use: bool = False
+    kind: ClassVar[str] = "attack_coin_check"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
+class CannotRetreat:
+    """ワザによる「持続する効果」（v0.36）のうち、カスミのパウワウ（PMCG5-023）の「アイスバーン」・マチスのオニドリル（PMCG5-064）の「わしづかみ」の
+    「このワザを受けた相手は、次の相手の番に「にげる」ことができない。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``CannotAttack`` と同じ）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンは
+    「にげる」を宣言できない（``engine._retreat`` がエネルギーのトラッシュ・こんらんのコインの前に ``RETREAT_PREVENTED`` で拒否する）。「にげる」ではない
+    入れ替え（ポケモンいれかえ・突風・ふきとばし・テレポート）は制限しない（p.325「「にげる」がおこなえない状態のポケモンでも、「そのポケモンを入れ替える」
+    と指示されたときは、入れ替えをおこないます」）。ワザ・特殊能力も制限しない。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "cannot_retreat"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
-# CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack を加えた）。加えるときは、消える契機（ベンチ・進化・
-# きぜつ・期限）と不変条件を見直す
+# CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat を加えた）。
+# 加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
-                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack)
+                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）

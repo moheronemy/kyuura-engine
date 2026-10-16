@@ -39,6 +39,36 @@ def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
     return pokemon
 
 
+def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> tuple[int, ...]:
+    """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
+    ガス」の「自分と、自分についているすべてのカードを山札にもどす」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
+
+    - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``）・エネルギーカード（ついている順）・トレーナーカード（ついている順）。
+      山札のどこにもどすかは書かれていない。そのあと必ず山札を切る（``shuffle_deck``。呼ぶ側）ので一番下（実装上の仮定。v0.24 の PT7 と同じ）
+    - 場をはなれたので、場のポケモンの番号は無効になり、ダメージカウンター・特殊状態はなくなる（p.322。カードではないので、どこにも置かない）。持続する
+      効果を消すのは呼ぶ側（``persistent.remove_persistent_effects``。理由 ``return_in_play_to_deck``）。きぜつではない（サイドは取られない）
+    - ログ ``return_in_play_to_deck``（``player``・``pokemon``（いちばん上のカード）・``pokemon_id``・``effect``（ワザ）・``cards``（もどしたカードすべて。場の
+      カードなので公開）・``evolution_stack``・``energy``・``trainers``・``damage``（なくなったダメージ））
+
+    もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を変える前）。
+    もどしたカードを返す。
+    """
+    p = state.players[player]
+    trainers = tuple(t.card for t in pokemon.trainers)
+    cards = (*pokemon.cards(), *pokemon.energy, *trainers)
+    on_bench = any(b is pokemon for b in p.bench)
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    p.deck.extend(cards)
+    state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, cards=cards,
+                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage)
+    return cards
+
+
 def draw_cards(state: GameState, player: int, count: int) -> tuple[int, ...]:
     """自分の山札の一番上から ``count`` 枚を、1 枚ずつ手札に加える（p.312「カードを引く」）。
 

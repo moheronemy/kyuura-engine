@@ -23,7 +23,7 @@ from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_
 from .damage import calculate_confusion_damage
 from .effects import attack_damage_modifiers
 from .errors import UnsupportedError
-from .persistent import KNOCK_OUT, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
+from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
 from .zones import draw_cards
 
@@ -236,6 +236,38 @@ def confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, ac
         result=flips.results[0].value,
         succeeded=succeeded,
     )
+    return succeeded
+
+
+ATTACK_CHECK_FAILED = "attack_check"  # v0.36: p.309 の手順 4 のコインで失敗したワザ（ログ attack_failed の reason）
+
+
+def attack_coin_check(state: GameState, player: int, pokemon: PokemonInPlay, check, *, effect: str) -> bool:
+    """p.309 のワザを使う手順 4（v0.36）: ワザを使うポケモンが、ワザを失敗させる効果（``state.AttackCoinCheck``。「すなかけ」・「えんまく」など）を
+    受けているときのコイン。
+
+    手順 3（宣言）のあと、手順 5（こんらん）の前。効果を受けているポケモン側のプレイヤー（ワザを使うプレイヤー。説明の「…を受けた相手は、…ワザを
+    使うときにコインを投げ」）が 1 枚投げ、「おもて」なら成功（True）。ログ ``coin_flip``（``source: "attack_check"``、``effect`` は宣言したワザの
+    ``AttackKey`` の文字列）と ``attack_check``（``player``・``pokemon``・``pokemon_id``・``effect``・``persistent_effect``・``source_card``・``created_turn``・
+    ``result``・``succeeded``）。ワザの説明のコイン（``"attack"``）・こんらんのコイン（``"confusion"``）と区別できる。説明が「効果は1回できえる」と書く
+    効果（``check.single_use``。サンドの「すなかけ」）は、コインを投げたら消す（理由 ``used``。「おもて」でも「うら」でも）。
+    """
+    flips = flip_coins(state, player, 1, source="attack_check", effect=effect, card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    succeeded = flips.results[0] is CoinSide.HEADS
+    state.add_event(
+        "attack_check",
+        player=player,
+        pokemon=pokemon.card,
+        pokemon_id=pokemon.pokemon_id,
+        effect=effect,
+        persistent_effect=check.kind,
+        source_card=check.source_card,
+        created_turn=check.created_turn,
+        result=flips.results[0].value,
+        succeeded=succeeded,
+    )
+    if check.single_use:
+        remove_persistent_effects(state, player, pokemon, USED, (check,))
     return succeeded
 
 

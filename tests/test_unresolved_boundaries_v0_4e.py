@@ -66,6 +66,10 @@ ALL_CODES = (
     # SpecialPoisonTest（test_normal_poison_to_special_is_unresolved・test_same_special_poison_is_not_stacked）・GrowlTest（test_bench_target_is_unresolved・
     # test_only_this_card_and_expires_at_the_start_of_the_next_turn）
     "UNRESOLVED_SPECIAL_POISON_OVERWRITE", "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",
+    # v0.36: AC6・RD9（docs/sand-attack-retreat-lock-v0.36.md）。止まる場合と隣の止まらない場合は tests/test_sand_attack_retreat_lock_v0_36.py の
+    # AttackCheckTest（test_confused_pokemon_stops_before_the_coin・test_heads_continues_and_tails_fails_the_attack）・DeckReturnTest
+    # （test_knockout_in_the_same_attack_stops_before_the_declaration・test_heads_returns_the_pokemon_and_attached_cards_after_damage）
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION", "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT",
 )
 TURN = 7
 

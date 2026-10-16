@@ -80,12 +80,15 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    EndTurn, IllegalActionError, Phase, ResolveDecision, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
-    preset_deck,
+    EndTurn, IllegalActionError, Phase, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
+    new_game, preset_deck,
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.decisions import ATTACH_FROM_DISCARD, DISCARD_ENERGY, SELECT_ATTACK  # noqa: E402
-from kyuura_engine.persistent import attack_barrier, attack_locked, cannot_attack, destiny_bond, reduced_damage_to_source  # noqa: E402
+from kyuura_engine.effects import AttackKey as E_AttackKey, AttackUse, preview_attack_damage  # noqa: E402
+from kyuura_engine.persistent import (  # noqa: E402
+    attack_barrier, attack_coin_checks, attack_locked, cannot_attack, cannot_retreat, destiny_bond, reduced_damage_to_source,
+)
 from tests.log_audit import log_problems, serialization_problems  # noqa: E402
 from tests.v017_games import play_game  # noqa: E402
 from tools import preset_deck_games as driver  # noqa: E402
@@ -138,7 +141,13 @@ V0_34 = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX
 LT_SURGES_RATTATA, LT_SURGES_RATICATE, MISTYS_POLIWAG, MISTYS_POLIWHIRL, BLAINES_TAUROS = "PMCG5-056", "PMCG5-059", "PMCG5-022", "PMCG5-029", "PMCG6-065"
 V0_35 = (LT_SURGES_RATTATA, LT_SURGES_RATICATE, MISTYS_POLIWAG, MISTYS_POLIWHIRL, BLAINES_TAUROS)
 DRATINI, RATTATA, MACHAMP, ROCKETS_SNORLAX = "PMCG1-065", "PMCG1-060", "PMCG1-057", "PMCG6-073"
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35  # ワザの選び方を重ね、動きを数えるカード
+# v0.36（p.309 の手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と合わせて加えた 11 枚。docs/sand-attack-retreat-lock-v0.36.md）
+SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA = "PMCG1-051", "PMCG3-036", "PMCG3-008", "PMCG3-014", "PMCG5-025"
+KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING, ERIKAS_BELLSPROUT = (
+    "PMCG6-062", "PMCG4-029", "PMCG5-023", "PMCG5-064", "PMCG6-015", "PMCG5-005")
+V0_36 = (SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA, KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING,
+         ERIKAS_BELLSPROUT)
+TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -188,6 +197,12 @@ DECKS = {
             (FIGHTING, 15), (WATER, 12)),
     # v0.35: 無色・水（リーダーズスタジアム・闇からの挑戦）。どのワザも水と無色で払える
     "S35": ((LT_SURGES_RATTATA, 4), (LT_SURGES_RATICATE, 3), (MISTYS_POLIWAG, 4), (MISTYS_POLIWHIRL, 3), (BLAINES_TAUROS, 3), *TRAINERS, (WATER, 31)),
+    # v0.36: 水・闘・無色（第1弾・化石の秘密・リーダーズスタジアム・闇からの挑戦）。マチスのオニドリルの進化元はマチスのオニスズメ（v0.33）
+    "W36": ((SANDSHREW, 4), (SANDSLASH, 3), (HORSEA, 3), (MISTYS_HORSEA, 3), (MISTYS_SEEL, 4), (KOGAS_PIDGEY, 3), (LT_SURGES_SPEAROW, 3),
+            (LT_SURGES_FEAROW, 2), *TRAINERS, (FIGHTING, 11), (WATER, 12)),
+    # v0.36: 草・炎・雷（化石の秘密・ロケット団・リーダーズスタジアム・闇からの挑戦）。わるいサンダースの進化元はイーブイ（v0.31）
+    "K36": ((KOGAS_KOFFING, 4), (ERIKAS_BELLSPROUT, 4), (FOSSIL_MAGMAR, 4), (EEVEE, 4), (DARK_JOLTEON, 3), *TRAINERS, (GRASS, 10), (FIRE, 10),
+            (LIGHTNING, 9)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -198,8 +213,10 @@ PAIRINGS_V0_32 = (("G32", "W32"), ("G32", "A2"), ("W32", "B2"))
 PAIRINGS_V0_33 = (("N33", "W33"), ("C33", "N33"), ("W33", "C33"))
 PAIRINGS_V0_34 = (("F34", "G34"), ("C34", "F34"), ("G34", "C34"))
 PAIRINGS_V0_35 = (("S35", "C34"), ("G34", "S35"), ("S35", "A2"))
+# v0.36: K36 対 P31（ピッピ・ピクシー・カスミのコダックが、えんまく・くもがくれガスなどを自分のワザとして使う）
+PAIRINGS_V0_36 = (("W36", "K36"), ("K36", "P31"), ("W36", "A2"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
-           "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35}
+           "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -213,7 +230,9 @@ RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy
                  # v0.33
                  "forced_switch_skipped",
                  # v0.34（テレポート）
-                 "switch")
+                 "switch",
+                 # v0.36（くもがくれガス）
+                 "return_in_play_to_deck")
 
 
 def _attacker(state, command):
@@ -264,11 +283,69 @@ V031_STOPS = {
                                                           and _defender(st, c).conditions.poison.damage != _attack_effect(st, c).poison_damage),
     # v0.35: あわあわ（自分）・ドわすれ（相手が選んだワザ）で、この番は使えないワザ（ワザを使うための条件と同じく宣言の前に拒否する）
     "ATTACK_LOCKED": lambda st, c: attack_locked(st, _attacker(st, c), c.attack_index) is not None,
+    # v0.36: こんらん状態のポケモンが、手順 4 のコインの効果（すなかけ・えんまくなど）を受けてワザを使う（AC6）
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION": lambda st, c: _attacker(st, c).conditions.confused and bool(attack_coin_checks(st, _attacker(st, c))),
+    # v0.36: くもがくれガス（自分のワザ・相手のワザとして使うワザ）で、同じワザで相手の対戦ポケモンが HP 以上になりうる（RD9）
+    "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": lambda st, c: _deck_return_with_knockout(st, c),
+    # v0.36: くもがくれガスの「ダメージを与えた後」で、ダメージを与えない（Z23。最終ダメージが 0・受けない）
+    "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE": lambda st, c: _deck_return_without_damage(st, c),
     # v0.34: なきつくを受けたポケモンが、なきつくを使ったポケモンが控えにいるときに控えにダメージを与える（NK5）
     "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": lambda st, c: (reduced_damage_to_source(st, _attacker(st, c)) is not None
                                                              and any(p.card == reduced_damage_to_source(st, _attacker(st, c)).source_card
                                                                      for p in st.players[1 - c.player].bench)),
 }
+
+
+def _deck_return_attacks(state, command):
+    """ワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザ）のうち、くもがくれガス（``DamageThenReturnSelfToDeckOnHeads``）の (カード id, ワザ)（v0.36）。"""
+    candidates = [(_attacker(state, command), command.attack_index)]
+    if _copier(state, command):
+        defender = _defender(state, command)
+        candidates = [(defender, a.index) for a in state.card_def(defender.card).attacks]
+    found = []
+    for pokemon, index in candidates:
+        definition = state.card_def(pokemon.card)
+        effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
+        if type(effect).__name__ == "DamageThenReturnSelfToDeckOnHeads":
+            found.append((definition.id, definition.attacks[index]))
+    return found
+
+
+def _deck_return_preview(state, command):
+    """くもがくれガスの相手へのダメージの最終ダメージ（状態を変えない計算。``effects.preview_attack_damage``。受けないなら None）の一覧。"""
+    attacker = _attacker(state, command)
+    return [preview_attack_damage(state, AttackUse(command.player, attacker.pokemon_id, E_AttackKey(card_id, attack.index)), "opponent_active",
+                                  attack.damage)
+            for card_id, attack in _deck_return_attacks(state, command)]
+
+
+def _deck_return_with_knockout(state, command):
+    defender = _defender(state, command)
+    left = state.card_def(defender.card).hp - defender.damage
+    return any(amount is not None and amount >= left for amount in _deck_return_preview(state, command))
+
+
+def _deck_return_without_damage(state, command):
+    return any(amount is None or amount <= 0 for amount in _deck_return_preview(state, command))
+
+
+def _v036_retreat_probe(state, tried, counts):
+    """v0.36: バトル場のポケモンが「にげる」ことができない効果（アイスバーン・わしづかみ）を受けているはたらく番に、1 度だけ「にげる」を宣言する
+    （エネルギー・コインの前の拒否 ``RETREAT_PREVENTED`` を起こし、状態が変わらないことを確かめる。効果がなければ何もしないので、前の版の組の結果は
+    変わらない）。ねむり・マヒ（先に別のコードで拒否する）とにげるエネルギーが足りないときはしない。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if "retreat_lock_probe" in tried or not p.bench or cannot_retreat(state, active) is None:
+        return None
+    if active.conditions.asleep or active.conditions.paralyzed:
+        return None
+    cost = state.card_def(active.card).retreat_cost
+    if len(active.energy) < cost:
+        return None
+    tried.add("retreat_lock_probe")
+    counts["v036_retreat_probe"] += 1
+    return Retreat(player, tuple(active.energy[:cost]), p.bench[0].card)
 
 
 def deck_cards(label):
@@ -351,6 +428,9 @@ def make_policy(seen: dict, counts: Counter):
             power = _v031_power(state, tried, counts)
             if power is not None:
                 return power
+            probe = _v036_retreat_probe(state, tried, counts)  # v0.36
+            if probe is not None:
+                return probe
         if state.phase is not Phase.MAIN or not isinstance(command, (UseAttack, EndTurn)) or "attack" in tried:
             return command
         player = state.current_player
@@ -478,6 +558,12 @@ def card_uses(state):
             uses[card[e["pokemon"]]]["protected_by_own_effect"] += 1  # 「まるまる」「からをとじる」の効果で、相手のワザのダメージを受けなかった
         elif kind == "persistent_effect_removed" and card[e["pokemon"]] in uses:
             uses[card[e["pokemon"]]][f"effect_removed_{e['reason']}"] += 1
+        elif kind == "attack_check" and card[e["source_card"]] in uses:
+            # v0.36: 相手が、このカードのワザ（すなかけ・えんまくなど）の効果を受けてワザを使ったときの手順 4 のコイン（結果ごと）
+            uses[card[e["source_card"]]][f"attack_check_{e['result']}"] += 1
+        elif kind == "persistent_effect_added" and card[e["source_card"]] in uses and e["persistent_effect"] in ("attack_coin_check", "cannot_retreat") \
+                and e["source_card"] != e["pokemon"]:
+            uses[card[e["source_card"]]][f"gave_{e['persistent_effect']}"] += 1  # v0.36: 相手に与えた効果（まねたワザで与えたものも）
         elif kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses:
             # v0.31: 特殊能力（エナジーバーン・しぜんになおる・ほのおでかいふく（つけたカード ``trigger`` があるもの））
             uses[card[e["pokemon"]]]["power_heal_on_attach" if "trigger" in e else kind] += 1

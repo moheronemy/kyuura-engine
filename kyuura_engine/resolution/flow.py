@@ -34,7 +34,7 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from ..persistent import destiny_bond
+from ..persistent import attack_coin_checks, destiny_bond
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked, ko_prevention_offers, track_ko
 from .programs import AttackRun, decision_index, declare, run_elements
 from .questions import OpenQuestion, to_error
@@ -146,6 +146,9 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
+        _finish_attack(res, use)
+        return
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
         problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
@@ -160,6 +163,33 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     if run_elements(AttackRun(res, fs, program, attack), 0):
         return
     _finish_attack(res, use)
+
+
+def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey) -> bool:
+    """p.309 のワザを使う手順 4（v0.36。docs/sand-attack-retreat-lock-v0.36.md 2 章）: ワザを使うポケモンが、ワザを失敗させる効果（``AttackCoinCheck``）を
+    受けていれば、手順 3（宣言）のあと・手順 5（こんらん）の前に、持ち主がコインを投げる（``PR.attack_coin_check``）。「うら」ならワザは失敗（ログ
+    ``attack_failed``。ワザの要素を処理しない。ワザは使ったことになり、番は終わる。p.323「12 ワザの失敗」）で True。
+
+    - 宣言できないワザ（ねむり・マヒ・しっぽをふる・使えないワザ・エネルギー不足・未対応）は、この前に拒否している（コインを投げない）
+    - こんらん状態のポケモン: 手順 4 でワザが失敗したとき、手順 5 のこんらんのコイン（「うら」なら自分に 20）をするかは原典から決められない（AC6）ので、
+      コインの前に問い ``attack_check_confusion`` で止める（コインの結果によらず止まる。「おもて」なら手順 5 に進むことは決まっているが、宣言の前に
+      分からない）
+    - 2 つ以上の効果（順番が決まらない）は、今の対応カードでは起こらない（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で
+      同じ種類は 1 つまで）ので、エンジンの不具合
+    """
+    state = res.state
+    checks = attack_coin_checks(state, attacker)
+    if not checks:
+        return False
+    if len(checks) > 1:
+        raise RuntimeError(f"ワザを使うポケモン {attacker.pokemon_id} に手順 4 のコインの効果が 2 つ以上ある（エンジンの不具合）")
+    if attacker.conditions.confused:
+        raise res.question("attack_check_confusion", f"ポケモン {attacker.pokemon_id}")
+    if PR.attack_coin_check(state, player, attacker, checks[0], effect=str(key)):
+        return False
+    state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key),
+                    reason=PR.ATTACK_CHECK_FAILED)
+    return True
 
 
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:

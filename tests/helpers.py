@@ -208,6 +208,20 @@ MISTYS_POLIWAG = "PMCG5-022"  # カスミのニョロモ（リーダーズスタ
 MISTYS_POLIWHIRL = "PMCG5-029"  # カスミのニョロゾ（カスミのニョロモから進化。HP 70・水・弱点 草・にげる 2。はかいのうず（水無）20・ウォーターパンチ（無無無）30+）
 BLAINES_TAUROS = "PMCG6-065"  # カツラのケンタロス（闇からの挑戦。HP 70・無色・弱点 闘・抵抗力 超 -30・にげる 2。3ぼんのしっぽ（無）10×・ぜんりょくとっしん（無無無）20×）
 V0_35_POKEMON = (LT_SURGES_RATTATA, LT_SURGES_RATICATE, MISTYS_POLIWAG, MISTYS_POLIWHIRL, BLAINES_TAUROS)  # 対応にした 5 枚（写しの組 pool_v0_35 と同じ）
+# v0.36（docs/sand-attack-retreat-lock-v0.36.md）: kyuura データの採用で加えた 11 枚
+SANDSHREW = "PMCG1-051"  # サンド（第1弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。すなかけ（闘）10。効果は1回できえる）
+SANDSLASH = "PMCG3-036"  # サンドパン（化石の秘密。サンドから進化。HP 70・闘・弱点 草・抵抗力 雷 -30・にげる 1。きりさく（無無）20・みだれひっかき（闘闘）20×）
+FOSSIL_MAGMAR = "PMCG3-008"  # ブーバー（化石の秘密。HP 70・炎・弱点 水・にげる 1。えんまく（炎）10・スモッグ（炎炎）20）。MAGMAR（第1弾）とは別のカード
+HORSEA = "PMCG3-014"  # タッツー（化石の秘密。HP 40・水・弱点 雷・にげる 0。えんまく（水）10）
+MISTYS_HORSEA = "PMCG5-025"  # カスミのタッツー（リーダーズスタジアム。HP 40・水・弱点 雷・にげる 0。たいあたり（水）10・えんまく（水水）20）
+KOGAS_PIDGEY = "PMCG6-062"  # キョウのポッポ（闇からの挑戦。HP 50・無色・弱点 雷・抵抗力 闘 -30・にげる 1。つつく（無）10・すなかけ（無無無）20）
+DARK_JOLTEON = "PMCG4-029"  # わるいサンダース（ロケット団。イーブイから進化。HP 50・雷・弱点 闘・にげる 1。サンダーフラッシュ（雷）20・サンダーアタック（雷雷無）30）
+MISTYS_SEEL = "PMCG5-023"  # カスミのパウワウ（リーダーズスタジアム。HP 50・水・弱点 雷・にげる 1。アイスバーン（水）10・しんきろう（水無）10）
+LT_SURGES_FEAROW = "PMCG5-064"  # マチスのオニドリル（マチスのオニスズメから進化。HP 70・無色・弱点 雷・抵抗力 闘 -30・にげる 0。マシンガンドリル（無無）10×・わしづかみ（無無無）30）
+KOGAS_KOFFING = "PMCG6-015"  # キョウのドガース（闇からの挑戦。HP 50・草・弱点 超・にげる 1。えんまく（草）10・くもがくれガス（草無）30）。KOFFING とは別のカード
+ERIKAS_BELLSPROUT = "PMCG5-005"  # エリカのマダツボミ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。へなへなタックル（無）20）。BELLSPROUT とは別のカード
+V0_36_POKEMON = (SANDSHREW, SANDSLASH, FOSSIL_MAGMAR, HORSEA, MISTYS_HORSEA, KOGAS_PIDGEY, DARK_JOLTEON, MISTYS_SEEL, LT_SURGES_FEAROW, KOGAS_KOFFING,
+                 ERIKAS_BELLSPROUT)  # 対応にした 11 枚（写しの組 pool_v0_36 と同じ）
 PARASECT = "PMCG2-010"  # パラセクト（v0.4a で対応。パラスから進化する 1 進化。HP 60・草・弱点 炎・にげる 1。キノコのほうし・きりさく 30）
 DEWGONG = "PMCG1-030"  # ジュゴン（v0.4a で対応。パウワウから進化する 1 進化。HP 80・水・弱点 雷・にげる 3。オーロラビーム 50・れいとうビーム 30）
 METAPOD = "PMCG1-003"  # トランセル（v0.4b。キャタピーから進化。かたまる・しびれごな）
@@ -662,6 +676,11 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.LockOpponentAttack,  # カスミのニョロモの「ドわすれ」
     _effects.CoinsPerAttachedTypeBonusDamage,  # カスミのニョロゾの「ウォーターパンチ」
     _effects.CoinsHeadsDamageTailsSelfDamage,  # カツラのケンタロスの「ぜんりょくとっしん」
+) + (
+    # v0.36（docs/sand-attack-retreat-lock-v0.36.md 5 章）
+    _effects.DamageThenAttackCoinCheck,  # すなかけ・えんまく・サンダーフラッシュ・しんきろう
+    _effects.DamageThenRetreatLock,  # アイスバーン・わしづかみ
+    _effects.DamageThenReturnSelfToDeckOnHeads,  # キョウのドガースの「くもがくれガス」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

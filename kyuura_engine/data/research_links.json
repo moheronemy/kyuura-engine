@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 41,
-    "engine_stop_codes": 40,
+    "engine_unresolved_rulings": 43,
+    "engine_stop_codes": 42,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -518,6 +518,28 @@
           "version": "v0.34",
           "document": "docs/barrier-resume-coin-bonus-v0.34.md",
           "ruling_id": "NK5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION": {
+      "engine_rulings": [
+        {
+          "version": "v0.36",
+          "document": "docs/sand-attack-retreat-lock-v0.36.md",
+          "ruling_id": "AC6"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.36",
+          "document": "docs/sand-attack-retreat-lock-v0.36.md",
+          "ruling_id": "RD9"
         }
       ],
       "kyuura_issue": null,
@@ -1142,7 +1164,23 @@
       "PMCG5-029/attack/0",
       "PMCG5-029/attack/1",
       "PMCG6-065/attack/0",
-      "PMCG6-065/attack/1"
+      "PMCG6-065/attack/1",
+      "PMCG1-051/attack/0",
+      "PMCG3-036/attack/1",
+      "PMCG3-008/attack/0",
+      "PMCG3-008/attack/1",
+      "PMCG3-014/attack/0",
+      "PMCG5-025/attack/1",
+      "PMCG6-062/attack/1",
+      "PMCG4-029/attack/0",
+      "PMCG4-029/attack/1",
+      "PMCG5-023/attack/0",
+      "PMCG5-023/attack/1",
+      "PMCG5-064/attack/0",
+      "PMCG5-064/attack/1",
+      "PMCG6-015/attack/0",
+      "PMCG6-015/attack/1",
+      "PMCG5-005/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

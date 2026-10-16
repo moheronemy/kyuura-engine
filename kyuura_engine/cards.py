@@ -378,6 +378,7 @@ POOL_KEYS = (
     "pool_v0_33",  # v0.33（相手のエネルギーをトラッシュする・コインで失敗する／ダメージを与えられない・控えにもダメージを与えるワザの 15 枚。docs/cd4-opponent-energy-coins-v0.33.md）
     "pool_v0_34",  # v0.34（バリアーに対するコインの見直し・ダメージのあとの決定をまたぐ処理と合わせた 15 枚。ガルーラは保留。docs/barrier-resume-coin-bonus-v0.34.md）
     "pool_v0_35",  # v0.35（可変枚数のコインの先読み・同じダメージ計算の段階の順番の決定と合わせた 5 枚。docs/coin-groups-damage-order-v0.35.md）
+    "pool_v0_36",  # v0.36（すなかけ・えんまくなどの手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と合わせた 11 枚。docs/sand-attack-retreat-lock-v0.36.md）
 )
 
 

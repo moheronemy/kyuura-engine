@@ -17,9 +17,10 @@ from collections import Counter
 from typing import Callable
 
 from kyuura_engine import (
-    AttachEnergy, EvolvePokemon, IllegalActionError, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
+    AttachEnergy, EvolvePokemon, IllegalActionError, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
     state_to_dict,
 )
+from kyuura_engine.persistent import cannot_retreat
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
 from tests.test_blastoise_games_v0_6 import R13
@@ -112,6 +113,13 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise AssertionError(f"「とうめい」がはたらいていないのに {EVADED_COIN}: {command}")
                     observed[f"stopped_attack_{EVADED_COIN}"] += 1
                     turn_tried.update({"evaded_coin", ("attack_index", command.attack_index)})
+                    continue
+                if isinstance(command, Retreat) and error.code == "RETREAT_PREVENTED":
+                    # v0.36: 「にげる」ことができない効果（アイスバーン・わしづかみ）を受けたポケモン。場から確かめる（エネルギー・コインの前に拒否）
+                    if cannot_retreat(state, state.players[command.player].active) is None:
+                        raise AssertionError(f"「にげる」ことができない効果がないのに RETREAT_PREVENTED: {command}")
+                    observed["stopped_retreat_RETREAT_PREVENTED"] += 1
+                    turn_tried.add("retreat")
                     continue
                 if isinstance(command, AttachEnergy):
                     if error.code != R13:

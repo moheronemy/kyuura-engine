@@ -580,8 +580,13 @@ ENERGY_DISCARD_ELEMENT = "energy_discard"
 ATTACK_LOCK_ELEMENT = "attack_lock"
 ENERGY_ATTACH_ELEMENT = "energy_attach"
 REDUCED_DAMAGE_ELEMENT = "reduced_damage"  # v0.34: 相手に与える「なきつく」（``ReducedDamageToSource``）
+# v0.36: 相手に与える「すなかけ」・「えんまく」など（``AttackCoinCheck``）・「アイスバーン」・「わしづかみ」（``CannotRetreat``）と、ワザを使ったポケモン
+# 自身を山札にもどす「くもがくれガス」（自分への効果）
+ATTACK_CHECK_ELEMENT = "attack_check"
+RETREAT_LOCK_ELEMENT = "retreat_lock"
+RETURN_IN_PLAY_TO_DECK_ELEMENT = "return_in_play_to_deck"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
-                   ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT)
+                   ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -649,15 +654,16 @@ def evaded_effect_coin_problem(state: GameState, use: AttackUse) -> UnsupportedE
     return evaded_effect_coin_error(target.pokemon_id, final)
 
 
-def effect_after_no_damage_error(attack: str, result: DamageResult, condition: str) -> UnsupportedError:
+def effect_after_no_damage_error(attack: str, result: DamageResult, condition: str | None, *, what: str | None = None) -> UnsupportedError:
     """``UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`` の理由（v0.17b。docs/rocket-snorlax-v0.17b.md の Z23）。説明が「ダメージを与えた後、…」の効果で、
-    そのダメージの要素がダメージを与えなかった（``result``: 防いだ・「とうめい」で受けなかった・最終ダメージが 0）。"""
+    そのダメージの要素がダメージを与えなかった（``result``: 防いだ・「とうめい」で受けなかった・最終ダメージが 0）。v0.36: 特殊状態でない効果は
+    ``what``（説明のその部分。キョウのドガースの「くもがくれガス」の「自分と、自分についているすべてのカードを山札にもどす」）で書く（同じ問い）。"""
     why = "「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded else "最終ダメージが 0"
-    name = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}[condition]
+    effect_text = what if what is not None else f"「{ {POISON: 'どく', SLEEP: 'ねむり', PARALYSIS: 'マヒ', CONFUSION: 'こんらん'}[condition]}」状態にする"
     return UnsupportedError(
         "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
         f"ワザ {attack} のダメージの要素が、ポケモン {result.pokemon_id} にダメージを与えなかった（{why}）。説明の「ダメージを与えた後、"
-        f"…「{name}」状態にする」が要素の順番か、ダメージを与えたことの条件かは『オフィシャルブック2000』（p.245・p.155・p.309・p.319〜p.321）"
+        f"…{effect_text}」が要素の順番か、ダメージを与えたことの条件かは『オフィシャルブック2000』（p.245・p.155・p.309・p.319〜p.321）"
         "から決められないので扱わない（p.321 はダメージ以外の効果の要素を有効とするが、p.155 の同じ文面の解説は「相手にダメージを与えたら」と書く）",
     )
 
@@ -3292,6 +3298,101 @@ class CoinsHeadsDamageTailsSelfDamage(AttackEffect):
         return problems
 
 
+# v0.36: 「次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する」効果の説明（kyuura の印刷の文面。文面ごとに、効果が「1回できえる」か）。
+# 似た名前のワザを同じ設定にしないよう、説明の文面で登録を確かめる（docs/sand-attack-retreat-lock-v0.36.md 2 章の表）
+ATTACK_COIN_CHECK_TEXTS: dict[str, bool] = {
+    # サンド（PMCG1-051）の「すなかけ」: 「次の番に」・「効果は1回できえる」
+    "「すなかけ」を受けた相手は、次の番に「ワザ」を使うときに、コインをなげ、「おもて」なら成功、「うら」なら「ワザ」は失敗する。"
+    "「すなかけ」の効果は1回できえる。": True,
+    # 化石の秘密のブーバー（PMCG3-008）・タッツー（PMCG3-014）の「えんまく」
+    "「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。": False,
+    # カスミのタッツー（PMCG5-025）の「えんまく」
+    "このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。": False,
+    # わるいサンダース（PMCG4-029）の「サンダーフラッシュ」
+    "このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。": False,
+    # キョウのポッポ（PMCG6-062）の「すなかけ」・カスミのパウワウ（PMCG5-023）の「しんきろう」・キョウのドガース（PMCG6-015）の「えんまく」
+    "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。": False,
+}
+RETREAT_LOCK_TEXT = "このワザを受けた相手は、次の相手の番に「にげる」ことができない。"
+RETURN_SELF_TO_DECK_TEXT = "コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class DamageThenAttackCoinCheck(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは
+    失敗する（v0.36。サンド・キョウのポッポの「すなかけ」、ブーバー・タッツー・カスミのタッツー・キョウのドガースの「えんまく」、わるいサンダースの
+    「サンダーフラッシュ」、カスミのパウワウの「しんきろう」。docs/sand-attack-retreat-lock-v0.36.md 2 章）。
+
+    - 相手に与える持続する効果 ``state.AttackCoinCheck``（はたらく番は次の相手の番）。コインを投げるのは、効果を受けたポケモンがワザを使うとき（p.309 の
+      ワザを使う手順 4。宣言のあと・こんらんのコインの前。``resolution.flow._attack_check_failed``）で、このワザの中ではコインを投げない
+    - ``single_use``: 説明が「効果は1回できえる」（サンドの「すなかけ」）。説明の文面（``ATTACK_COIN_CHECK_TEXTS``）と合わない登録は拒否する
+    - 相手に与える効果なので「ワザをうけない」状態・「とうめい」を評価する。相手がこのワザで HP 以上になったら効果を与えない（p.309）
+    """
+
+    single_use: bool = False
+    implementation_id = "damage_then_attack_coin_check"
+    opponent_effect_elements = (ATTACK_CHECK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "次の相手の番にワザを使うときにコインを投げさせるワザ", damage="fixed")
+        if ATTACK_COIN_CHECK_TEXTS.get(attack.text_ja) is not self.single_use:
+            problems.append(f"説明 {attack.text_ja!r} が、効果が1回{'で消える' if self.single_use else 'で消えない'}「うら」ならワザが失敗する効果の説明ではない")
+        return problems
+
+    def attack_check_terms(self) -> tuple[type, bool]:
+        from .state import AttackCoinCheck
+
+        return AttackCoinCheck, self.single_use
+
+
+@dataclass(frozen=True)
+class DamageThenRetreatLock(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。このワザを受けた相手は、次の相手の番に「にげる」ことができない（v0.36。カスミのパウワウの
+    「アイスバーン」・マチスのオニドリルの「わしづかみ」）。
+
+    - 相手に与える持続する効果 ``state.CannotRetreat``（はたらく番は次の相手の番）。その番の間、「にげる」の宣言を拒否する（``engine._retreat``。
+      エネルギーのトラッシュ・こんらんのコインの前）。「にげる」でない入れ替え（ポケモンいれかえ・突風・ふきとばし・テレポート）は制限しない（p.325）
+    - 相手に与える効果なので「ワザをうけない」状態・「とうめい」を評価する。相手がこのワザで HP 以上になったら効果を与えない（p.309）
+    """
+
+    implementation_id = "damage_then_retreat_lock"
+    opponent_effect_elements = (RETREAT_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "次の相手の番に「にげる」ことができなくするワザ", damage="fixed")
+        if attack.text_ja != RETREAT_LOCK_TEXT:
+            problems.append(f"説明 {attack.text_ja!r} が {RETREAT_LOCK_TEXT!r} ではない")
+        return problems
+
+    def retreat_lock_terms(self) -> type:
+        from .state import CannotRetreat
+
+        return CannotRetreat
+
+
+@dataclass(frozen=True)
+class DamageThenReturnSelfToDeckOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを
+    山札にもどす。その後、その山札をよく切る（v0.36。キョウのドガースの「くもがくれガス」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
+
+    - ダメージ → コイン → 山札にもどす → 山札を切る。もどすのはワザを使ったポケモンのカード（進化していれば重なったカードもすべて）・ついているエネルギー
+      カード・トレーナーカード（``zones.return_in_play_to_deck``）。きぜつではない（サイドは取られない。ログ ``knock_out`` ではない）
+    - 場をはなれたので、ダメージカウンター・特殊状態・持続する効果はなくなる（p.322。持続する効果は理由 ``return_in_play_to_deck``）。バトル場が空くので、ワザの
+      あとの勝ち負けの判定（p.311。控えがいなければ負け）とバトル場に出す決定（p.313）は、きぜつのあとと同じ処理
+    - 「ダメージを与えた後」: ダメージを与えなかったときは Z23（``UNRESOLVED_EFFECT_AFTER_NO_DAMAGE``）。同じワザで HP 以上になったポケモンがいれば RD9
+      （``UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT``）。どちらもコインの結果によらず宣言の前に止まる
+    - ワザを使ったポケモンが相手の「はんげき」などですでに HP 以上なら、もどさない（自分への効果。CR-SHELL-ATTACK-KO-ATTACKER-OWN-EFFECTS）
+    """
+
+    implementation_id = "damage_then_return_self_to_deck_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "自分を山札にもどすワザ", damage="fixed")
+        if attack.text_ja != RETURN_SELF_TO_DECK_TEXT:
+            problems.append(f"説明 {attack.text_ja!r} が {RETURN_SELF_TO_DECK_TEXT!r} ではない")
+        return problems
+
+
 def attack_damage_modifiers(
     state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False
 ) -> tuple[DamageModifier, ...]:
@@ -5303,6 +5404,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG4-046", 0, "かじる"),  # わるいラッタ（ロケット団）
         # v0.34: 説明文のないワザ（kyuura データの採用。docs/barrier-resume-coin-bonus-v0.34.md。pcg-search.com の同じ版のページでも説明文がない）
         ("PMCG5-018", 0, "ほのお"),  # タケシのロコン（リーダーズスタジアム。第1弾のロコン・カツラのロコンとは別の名前のカード）
+        # v0.36: 説明文のないワザ（kyuura データの採用。docs/sand-attack-retreat-lock-v0.36.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG3-036", 0, "きりさく"),  # サンドパン（化石の秘密）
+        ("PMCG5-025", 0, "たいあたり"),  # カスミのタッツー（リーダーズスタジアム）
+        ("PMCG6-062", 0, "つつく"),  # キョウのポッポ（闇からの挑戦）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -6991,6 +7096,136 @@ DEFAULT_EFFECTS = EffectRegistry(
             "ぜんりょくとっしん",
             text_ja="コインを4枚投げ、「おもて」の数×20のダメージ。その後、「うら」の数×20のダメージを自分に与える。",
             play_text_ja="コインを4枚投げ、「おもて」の数×20のダメージ。その後、「うら」の数×20のダメージを自分に与える。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.36（docs/sand-attack-retreat-lock-v0.36.md）。kyuura データの採用。処理に使う文面は kyuura の印刷の文面
+        # サンド（第1弾）。すなかけ（闘）10: 次の番にワザを使うときコイン。「効果は1回できえる」（AttackCoinCheck の single_use）
+        AttackKey("PMCG1-051", 0): AttackEntry(
+            DamageThenAttackCoinCheck(single_use=True),
+            "すなかけ",
+            text_ja="「すなかけ」を受けた相手は、次の番に「ワザ」を使うときに、コインをなげ、「おもて」なら成功、「うら」なら「ワザ」は失敗する。「すなかけ」の効果は1回できえる。",
+            play_text_ja="「すなかけ」を受けた相手は、次の番に「ワザ」を使うときに、コインをなげ、「おもて」なら成功、「うら」なら「ワザ」は失敗する。「すなかけ」の効果は1回できえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サンドパン（化石の秘密。サンドから進化）。みだれひっかき（闘闘）20×: コイン 3 枚の「おもて」の数 × 20（kyuura の文面は最後の「。」がない）
+        AttackKey("PMCG3-036", 1): AttackEntry(
+            CoinFlipDamage(coins=3, damage_per_heads=20),
+            "みだれひっかき",
+            text_ja="コインを3枚投げて「おもて」の数×20のダメージ",
+            play_text_ja="コインを3枚投げて「おもて」の数×20のダメージ",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ブーバー（化石の秘密。第1弾のブーバー PMCG1-020 とは別のカード）。えんまく（炎）10
+        AttackKey("PMCG3-008", 0): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "えんまく",
+            text_ja="「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            play_text_ja="「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ブーバー（化石の秘密）。スモッグ（炎炎）20: コインが「おもて」ならどく
+        AttackKey("PMCG3-008", 1): AttackEntry(
+            PoisonOnHeads(),
+            "スモッグ",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タッツー（化石の秘密）。えんまく（水）10
+        AttackKey("PMCG3-014", 0): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "えんまく",
+            text_ja="「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            play_text_ja="「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのタッツー（リーダーズスタジアム）。えんまく（水水）20
+        AttackKey("PMCG5-025", 1): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "えんまく",
+            text_ja="このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。",
+            play_text_ja="このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのポッポ（闇からの挑戦）。すなかけ（無無無）20（サンドの「すなかけ」とは別の文面。1回では消えない）
+        AttackKey("PMCG6-062", 1): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "すなかけ",
+            text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            play_text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいサンダース（ロケット団。イーブイから進化）。サンダーフラッシュ（雷）20
+        AttackKey("PMCG4-029", 0): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "サンダーフラッシュ",
+            text_ja="このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            play_text_ja="このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいサンダース。サンダーアタック（雷雷無）30: 1 枚のコインで「おもて」ならマヒ、「うら」なら自分に 10（投げ直さない。マチスのライチュウの
+        # 「でんきタックル」と同じ型。説明は「自分に」と「自分にも」の違いだけ）
+        AttackKey("PMCG4-029", 1): AttackEntry(
+            DamageThenParalyzeOrSelfDamage(10),
+            "サンダーアタック",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら自分に10ダメージ。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら自分に10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのパウワウ（リーダーズスタジアム）。アイスバーン（水）10: 次の相手の番に「にげる」ことができない
+        AttackKey("PMCG5-023", 0): AttackEntry(
+            DamageThenRetreatLock(),
+            "アイスバーン",
+            text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            play_text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カスミのパウワウ。しんきろう（水無）10
+        AttackKey("PMCG5-023", 1): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "しんきろう",
+            text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            play_text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのオニドリル（リーダーズスタジアム。マチスのオニスズメから進化）。マシンガンドリル（無無）10×: コイン 5 枚の「おもて」の数 × 10
+        AttackKey("PMCG5-064", 0): AttackEntry(
+            CoinFlipDamage(coins=5, damage_per_heads=10),
+            "マシンガンドリル",
+            text_ja="コインを5枚投げ、「おもて」の数×10のダメージ。",
+            play_text_ja="コインを5枚投げ、「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # マチスのオニドリル。わしづかみ（無無無）30: 次の相手の番に「にげる」ことができない
+        AttackKey("PMCG5-064", 1): AttackEntry(
+            DamageThenRetreatLock(),
+            "わしづかみ",
+            text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            play_text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのドガース（闇からの挑戦。第1弾・第4弾のドガースとは別のカード）。えんまく（草）10
+        AttackKey("PMCG6-015", 0): AttackEntry(
+            DamageThenAttackCoinCheck(),
+            "えんまく",
+            text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            play_text_ja="このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのドガース。くもがくれガス（草無）30: コインが「おもて」なら、ダメージを与えた後、自分とついているカードを山札にもどして切る
+        AttackKey("PMCG6-015", 1): AttackEntry(
+            DamageThenReturnSelfToDeckOnHeads(),
+            "くもがくれガス",
+            text_ja="コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。",
+            play_text_ja="コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのマダツボミ（リーダーズスタジアム。第2弾のマダツボミ PMCG2-005 とは別のカード）。へなへなタックル（無）20: 自分にも 10
+        AttackKey("PMCG5-005", 0): AttackEntry(
+            DamageAndSelfDamage(10),
+            "へなへなタックル",
+            text_ja="自分にも10ダメージ。",
+            play_text_ja="自分にも10ダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
         # ピカチュウ（v0.2f）p.125。相手に 30（目安の数字）、コインが「うら」なら自分にも 10

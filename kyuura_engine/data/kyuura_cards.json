@@ -294,6 +294,19 @@
     "PMCG5-029",
     "PMCG6-065"
   ],
+  "pool_v0_36": [
+    "PMCG1-051",
+    "PMCG3-036",
+    "PMCG3-008",
+    "PMCG3-014",
+    "PMCG5-025",
+    "PMCG6-062",
+    "PMCG4-029",
+    "PMCG5-023",
+    "PMCG5-064",
+    "PMCG6-015",
+    "PMCG5-005"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG3-003",
@@ -14818,6 +14831,987 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%B1%E3%83%B3%E3%82%BF%E3%83%AD%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-051",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンド",
+        "en": "Sandshrew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          27
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "すなかけ",
+              "en": "Sand-attack"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "「すなかけ」を受けた相手は、次の番に「ワザ」を使うときに、コインをなげ、「おもて」なら成功、「うら」なら「ワザ」は失敗する。「すなかけ」の効果は1回できえる。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-051",
+        "pokemontcg": [
+          "base1-62"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-051-sand/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-051-sand/"
+      }
+    },
+    {
+      "id": "PMCG3-036",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンドパン",
+        "en": "Sandslash"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          28
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "サンド",
+          "en": "Sandshrew"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きりさく",
+              "en": "Slash"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "みだれひっかき",
+              "en": "Fury Swipes"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×20のダメージ",
+              "en": "Flip 3 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-036",
+        "pokemontcg": [
+          "base3-41"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-034-sandpan/",
+      "jp_print": {
+        "level": 33,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-034-sandpan/"
+      }
+    },
+    {
+      "id": "PMCG3-008",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ブーバー",
+        "en": "Magmar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          126
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "スモッグ",
+              "en": "Smog"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-008",
+        "pokemontcg": [
+          "base3-39"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-008-boober/",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-008-boober/"
+      }
+    },
+    {
+      "id": "PMCG3-014",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "タッツー",
+        "en": "Horsea"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          116
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "「えんまく」を受けた相手は、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-014",
+        "pokemontcg": [
+          "base3-49"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-018-tattu/",
+      "jp_print": {
+        "level": 19,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-018-tattu/"
+      }
+    },
+    {
+      "id": "PMCG5-025",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのタッツー",
+        "en": "Misty's Horsea"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          116
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-025",
+        "pokemontcg": [
+          "gym1-86"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%BF%E3%83%83%E3%83%84%E3%83%BCLV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "ハナダシティジム カスミ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%BF%E3%83%83%E3%83%84%E3%83%BCLV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-062",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのポッポ",
+        "en": "Koga's Pidgey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          16
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つつく",
+              "en": "Peck"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "すなかけ",
+              "en": "Sand-attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-062",
+        "pokemontcg": [
+          "gym2-80"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%9D%E3%83%83%E3%83%9DLV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%9D%E3%83%83%E3%83%9DLV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-029",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいサンダース",
+        "en": "Dark Jolteon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          135
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 50,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サンダーフラッシュ",
+              "en": "Lightning Flash"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザを受けたポケモンは、次の相手の番にワザを使うときにコインを投げ、「うら」ならワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "サンダーアタック",
+              "en": "Thunder Attack"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら自分に10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, Dark Jolteon does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-029",
+        "pokemontcg": [
+          "base5-38"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-030-warui-thunders/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-030-warui-thunders/"
+      }
+    },
+    {
+      "id": "PMCG5-023",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのパウワウ",
+        "en": "Misty's Seel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          86
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "アイスバーン",
+              "en": "Frostbite"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+              "en": "The Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "しんきろう",
+              "en": "Mirage"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-023",
+        "pokemontcg": [
+          "gym2-91"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%91%E3%82%A6%E3%83%AF%E3%82%A6LV.14_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%91%E3%82%A6%E3%83%AF%E3%82%A6LV.14_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-064",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのオニドリル",
+        "en": "Lt. Surge's Fearow"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          22
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのオニスズメ",
+          "en": "Lt. Surge's Spearow"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マシンガンドリル",
+              "en": "Repeating Drill"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを5枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 5 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "わしづかみ",
+              "en": "Clutch"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+              "en": "The Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-064",
+        "pokemontcg": [
+          "gym1-7"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%AA%E3%83%8B%E3%83%89%E3%83%AA%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E3%82%AA%E3%83%8B%E3%83%89%E3%83%AA%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-015",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのドガース",
+        "en": "Koga's Koffing"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          109
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "えんまく",
+              "en": "Smokescreen"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。",
+              "en": "If the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "くもがくれガス",
+              "en": "Obscuring Gas"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。",
+              "en": "Flip a coin. If heads, shuffle Koga's Koffing and all cards attached to it into your deck (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-015",
+        "pokemontcg": [
+          "gym2-48"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%89%E3%82%AC%E3%83%BC%E3%82%B9LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%89%E3%82%AC%E3%83%BC%E3%82%B9LV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-005",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのマダツボミ",
+        "en": "Erika's Bellsprout"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          69
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "へなへなタックル",
+              "en": "Careless Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Erika's Bellsprout does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-005",
+        "pokemontcg": [
+          "gym1-76"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9E%E3%83%80%E3%83%84%E3%83%9C%E3%83%9FLV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "タマムシシティジム エリカ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9E%E3%83%80%E3%83%84%E3%83%9C%E3%83%9FLV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

@@ -331,7 +331,7 @@
 ## 研究データとの同期と検証の再現性（v0.18）
 
 - 研究の基準は kyuura `3f349085645f47d0649a6cacece3680caeae50bf`（v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`。2026-10-15 に上げた。上の「研究資料の参照コミットを固定する」）。エンジンの停止コード・問い・未解決の裁定・登録した最新の説明・照合の記録と、kyuura の id（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応は `kyuura_engine/data/research_links.json` に持ちます。kyuura の記録（文面・分類・根拠）を写さないでください（id の対応だけ。正本は kyuura）。docs/research-alignment-v0.18a.md。
-- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）・処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にしたもの（`difference_text`。v0.31。ピッピの「ゆびをふる」。LD- がない）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16。v0.31〜v0.34 の採用で加えたワザ・特殊能力も同じ区分）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4（`UNRESOLVED_OPPONENT_POKEMON_COUNTERS`）・v0.34 の TP3（`UNRESOLVED_SPECIAL_POISON_OVERWRITE`）・NK5（`UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET`）。kyuura に記録ができたら検査が知らせる）。kyuura の未解決の一覧でコードのない行に、エンジンが停止コードを付けたもの（v0.31 の T27・C34/C35・G40・P19・P32）は、`kyuura_index_engine_key` でその行を指します。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
+- 停止コード・問い（`questions.QUESTIONS`）・最新の説明のある登録（`play_text_ja`）・照合の記録を加えたら、対応表も直します（tests/test_research_links_v0_18e.py が、エンジンの側の集合と対応表を照らす）。最新の説明のある登録は、kyuura の LD-（`registered`）・印刷の文面と同じで kyuura の CC- に書かれたもの（`recorded_in_card_checks`）・CC- はあるがワザの文面を照合していないもの（`card_checks_without_text`）・kyuura に記録なし（`registered_without_kyuura_record`）・kyuura データの採用で処理に使う文面を kyuura の印刷の文面にしたもの（`adopted_printed_text`。2026-10-15 からの方針。エンジンが原典と照合した記録ではない）・処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にしたもの（`errata_text`。v0.30）・処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にしたもの（`difference_text`。v0.31。ピッピの「ゆびをふる」。LD- がない）のちょうど 1 つに挙げます（2026-10-15 から）。エラッタの記録の `cards` にないカードに、記録の範囲（「…はすべて同じ処理」など）として当てはめるときは、`errata_scope` に記録の文の引用・記録が挙げるカードの同じ印刷の文面・対象を書きます（v0.30。検査が研究の基準のコミットの記録と照らす。印刷の文面が違うカードに当てはめない）。kyuura に記録がなければ `registered_without_kyuura_record`・`engine_verified_without_kyuura_record` に挙げ、kyuura への報告事項にします（2026-10-15 の取り込みで空になり、v0.19 で `engine_verified_without_kyuura_record` にオーキドはかせ（PMCG1-077）、v0.21 で突風（PMCG1-072）、v0.22 でパソコン通信（PMCG1-090）、v0.23 でエネルギー回収（PMCG1-076）、v0.24 でポケモン交換おじさん（PMCG1-093）、v0.25 でポケモン育て屋さん（PMCG1-094）、v0.27 でストライク（PMCG2-017。`registered_without_kyuura_record` にも「つるぎのまい」の PMCG2-017/attack/0）、v0.28 で既存の効果の型で加えたポケモン 10 枚（`registered_without_kyuura_record` に説明文のあるワザ 13）を加えた。kyuura に記録ができたら、検査が一覧を直すよう知らせる）。v0.29 の採用の記録で加えたポケモン 14 枚の説明文のあるワザ 14 は `adopted_printed_text` に挙げています（kyuura への報告事項ではない。v0.30 でとっしん・第4弾のポニータのひのこを加えて 16。v0.31〜v0.36 の採用で加えたワザ・特殊能力も同じ区分）。kyuura の未解決の一覧（`engine_unresolved_index`）にまだない停止コードは、`stop_codes` の `kyuura_disposition` を `not_in_kyuura` にします（v0.21 の `UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH`・v0.22 の `UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK`・v0.23 の `UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET`・`UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4（`UNRESOLVED_OPPONENT_POKEMON_COUNTERS`）・v0.34 の TP3（`UNRESOLVED_SPECIAL_POISON_OVERWRITE`）・NK5（`UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET`）・v0.36 の AC6（`UNRESOLVED_ATTACK_CHECK_CONFUSION`）・RD9（`UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT`）。kyuura に記録ができたら検査が知らせる）。kyuura の未解決の一覧でコードのない行に、エンジンが停止コードを付けたもの（v0.31 の T27・C34/C35・G40・P19・P32）は、`kyuura_index_engine_key` でその行を指します。`../kyuura` があれば `python3 scripts/check_research_links.py --kyuura ../kyuura` が、論点の分類（UNRESOLVED のままか）・エンジンの未解決の一覧・分類の違い・最新の説明の文面・照合の記録・カードデータの違いを、研究の基準のコミットの記録と照らします。kyuura で論点が UNRESOLVED でなくなったら、このスクリプトが失敗します。そのときは、根拠を docs に書いてから止める処理を見直します（エンジンの判断で先に決めない）。
 - カードの写しの元（`KYUURA_COMMIT` = `ecb2d69`）と研究の基準（`3f34908`。v0.18 は `adf9710`）は別に持ちます。状態はカードデータの元のコミット（`state.card_data.commit`・ログ `game_created`）を持ち、写しのコミットを上げると固定した参照データがすべて変わるからです。エンジンが使う項目が 2 つのコミットで同じことは、上のスクリプトが確かめます（違いは対応表の `card_data_differences` だけ）。
 - 分類（CONFIRMED・SUPPORTED）は kyuura の記録を正本にします。エンジンの過去の版の裁定の表は当時の記録として書き換えません（v0.18a の分類の違い 17 件。どれも処理は同じ）。コインの有無・順番だけが変わる論点（kyuura の rng_only）を、実装の約束として決めることは v0.18 では採っていません（docs/research-alignment-v0.18a.md 7 章）。
 - Z23 は、ダメージを与えなかった場合を Z23-a（要素が無効）・Z23-b（計算の結果が 0。ディフェンダー・抵抗力）・Z23-c（「とうめい」）・Z23-d（対象がいない。今のワザでは起こらない）に分けて記録しています（docs/unresolved-research-v0.18b.md 3 章）。どれか 1 つの答えが見つかっても、ほかの場合を同じに扱わないでください（理由の文が場合を書く。tests/test_unresolved_research_v0_18b.py）。「ダメージを与えた後」の効果のダメージの要素は、並びの最初でコインで飛ばされない形にしています（Z23-d が起こらない。崩すワザを加えるときは Z23-d を原典で確かめる）。
@@ -679,4 +679,49 @@
 - 書き出しは形式 10 のまま（持続する効果の種類 `next_turn_attack_damage_multiplier`・`cannot_use_own_attack`・`cannot_use_attack`、決定の種類
   `damage_step_order`・`select_opponent_attack` の値を加えた）。新しい未解決はありません（停止コード 40 件・未解決の裁定 41 件）。
 - 検証用デッキ `S35` と組（`PAIRINGS_V0_35`）は tools/existing_effect_games.py の `--batch v0.35` です。公開の固定のデッキ・既存の変種には入れていません。
+  勝敗で採用を判断しないでください。
+
+## p.309 の手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と 11 枚（v0.36）
+
+- 依頼の 11 枚（サンド PMCG1-051・サンドパン PMCG3-036・ブーバー（化石の秘密）PMCG3-008・タッツー PMCG3-014・カスミのタッツー PMCG5-025・キョウのポッポ PMCG6-062・
+  わるいサンダース PMCG4-029・カスミのパウワウ PMCG5-023・マチスのオニドリル PMCG5-064・キョウのドガース PMCG6-015・エリカのマダツボミ PMCG5-005）を、kyuura データの
+  採用で加えました（対応ポケモン 153 → 164。写しの組 `pool_v0_36`。ワザの登録 286）。規定と根拠（AC1〜AC14・RL1〜RL5・RD1〜RD12）・カードごとの結果・互換性・検証は
+  docs/sand-attack-retreat-lock-v0.36.md。ガイドブックは読んでいません。テストの定数は tests/helpers.py の `V0_36_POKEMON`（`FOSSIL_MAGMAR`・`KOGAS_KOFFING` など。
+  第1弾のブーバー PMCG1-020・第1弾／第4弾のドガース・第2弾のマダツボミ、同じ名前の別の版と取りちがえない）。v0.36 の効果の型は `ATTACK_TYPES_SINCE_V0_17` に加え、
+  `v013_checks.VERIFIED` には入れていません。
+- p.309 のワザを使う手順 4「ワザを失敗させたりワザの内容を変えてしまう効果」（すなかけ・えんまく・サンダーフラッシュ・しんきろう）は、相手に与える持続する効果
+  `state.AttackCoinCheck`（`on_opponent`。はたらく番は与えた番 + 1。`single_use` はサンドの「すなかけ」の「効果は1回できえる」だけ）です。効果を受けたポケモンが
+  ワザを使うとき、`resolution.flow._attack_check_failed` が宣言（手順 3）のあと・こんらんのコイン（手順 5）とワザの要素の前に、`procedures.attack_coin_check`
+  （持ち主が `flip_coins` の `source="attack_check"`、ログ `attack_check`、「1回できえる」なら理由 `used` で消す）でコインを投げます。「うら」ならログ
+  `attack_failed`（`reason` `attack_check`）→ ワザの要素を処理せずに `_finish_attack`（ワザは使ったことになり、番は終わる。p.323 の 12）。ワザの要素のコイン
+  （`Coin`・`FailOnTails`）や「とうめい」のコインと混ぜないでください。宣言できないワザ（ねむり・マヒ・しっぽをふる・使えないワザ・エネルギー不足・未対応）は
+  この前に拒否するので、コインを投げません。決定のあとの再開（`resume`）で投げ直さないでください。
+- 手順 4 の効果の文面は 5 通りあり、`effects.ATTACK_COIN_CHECK_TEXTS`（文面 → `single_use`）で照らします。型 `DamageThenAttackCoinCheck(single_use)` の `check` が
+  登録の文面と値の組を確かめます。ワザの名前が同じ（すなかけ・えんまく）ことで同じ設定にしないでください（キョウのポッポの「すなかけ」は 1 回では消えない）。
+- こんらん状態のポケモンが手順 4 の効果を受けてワザを使う場合（AC6。手順 4 で失敗したあとに手順 5 をするかを p.309 が書かない）は、コインの前に問い
+  `attack_check_confusion`（`UNRESOLVED_ATTACK_CHECK_CONFUSION`）で止めます。「おもて」の先のワザの内容で止める問いに当たるなら、先読みが宣言の前に止めます
+  （受け付けるかが手順 4 のコインで変わらない）。2 つ以上の手順 4 の効果は今の対応カードでは起こらず `RuntimeError` です。手順 4 の効果を加えるとき（ベイビィ
+  ポケモンのルールなど）は、この順番と問いを見直してください。
+- 「にげる」ことができない効果（アイスバーン・わしづかみ）は相手に与える持続する効果 `state.CannotRetreat` で、`engine._retreat` が、ねむり・マヒの確認のあと・
+  エネルギーのトラッシュとこんらんのコインの前に `IllegalActionError("RETREAT_PREVENTED")` で拒否します（`persistent.cannot_retreat`）。ポケモンいれかえ・
+  テレポート（入れ替え）は制限しません（p.325）。ワザも制限しません。
+- 自分を山札にもどす効果（キョウのドガースの「くもがくれガス」）は要素 `programs.ReturnSelfToDeck`（「ダメージを与えた後」の効果。`after_damage`）と
+  `zones.return_in_play_to_deck`（重なったカード・エネルギー・ついているトレーナーを持ち主の山札の下に。ログ `return_in_play_to_deck`）→ 持続する効果を理由
+  `return_in_play_to_deck` で消す → 山札を切る（先読みでは切らない）です。きぜつとして扱わないでください（サイド・ログ `knock_out`・きぜつしたときの特殊能力は
+  ない）。バトル場が空くので、ワザのあとの既存の勝ち負けの判定とバトル場に出す決定（`promote_active`）に進みます（控えがいなければ負け）。同じワザでポケモンが
+  HP 以上になる場合（RD9）は問い `return_in_play_to_deck_with_knockout`（`UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT`）で宣言の前に止め、ダメージを与えなかった
+  場合（RD8）は既存の Z23 です。v0.24 のポケモン交換おじさんの決定の種類・ログ `return_to_deck`（手札 → 山札。`zones.return_hand_to_deck`）とは別の処理・名前です。
+  名前・値を混ぜないでください（tests/test_pokemon_trader_v0_24.py が engine.py・resolution/ に `RETURN_TO_DECK` がないことを確かめる）。
+- 不変条件（`engine._given_by_attack_problems`）は、効果を与えたワザ（ログ `persistent_effect_added` の `effect`）の登録の `attack_check_terms()`・`retreat_lock_terms()`
+  と効果を照らします。手順 4・「にげる」の効果を与えるワザを加えたら、これらを書いてください。テストで効果を置くときは、実際にワザを使って作ってください。
+- まねるワザで「ドわすれ」をまねると、効果 `CannotUseAttack` が効果を与えたポケモンのカードのワザの位置で記録されるため表せないので、エンジンの未対応
+  （`OpponentAttackLock.copy_problem`。`UNSUPPORTED_COPIED_ATTACK`）にしました（v0.35 は不変条件の違反になっていた）。まねた手順 4・「にげる」・くもがくれガスの
+  効果は対応で、発生源はまねたポケモンです。
+- 書き出しは形式 10 のまま（持続する効果の種類 `attack_coin_check`（`single_use`）・`cannot_retreat`。形式 8 から書ける）。公開の API は変えていません。ログの監査
+  （tests/log_audit.py）は、手順 4 のコインの並び（`attack` → `coin_flip` → `attack_check` →「1回できえる」の消去 →「うら」の `attack_failed`）・「にげる」ことが
+  できないポケモンの「にげる」・山札にもどしたカードの組み立て直しとそのあとの `shuffle` を確かめます。
+- エンジンが止める `UNRESOLVED_…` は 42 件、未解決の裁定は 43 件です（AC6・RD9 を加えた。どちらも kyuura の未解決の一覧にない `not_in_kyuura`）。
+- 検証用デッキ `W36`・`K36` と組（`PAIRINGS_V0_36`）は tools/existing_effect_games.py の `--batch v0.36` です（前の版の組の結果は変わらない）。「にげる」ことが
+  できない効果を受けたはたらく番に 1 度だけ「にげる」を宣言する手順（`_v036_retreat_probe`）を重ね、拒否 `RETREAT_PREVENTED` は場から確かめます
+  （tests/v017_games.py の `play_game` も同じ）。RD9 で止まったワザは `V031_STOPS` で場から確かめます。公開の固定のデッキ・既存の変種には入れていません。
   勝敗で採用を判断しないでください。

@@ -26,6 +26,9 @@ p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分�
   わるいカメールの「こうらがえし」の解説は、「ふきとばし」でベンチにもどったポケモンの持続する効果が消える例）
 - ``EVOLVE``: 進化した（p.310 の進化の手順 3・p.323「「持続する効果」を受けているポケモンが進化したら…消えてなくなります」）
 - ``KNOCK_OUT``: きぜつして場をはなれた（p.322「「持続する効果」を受けているポケモンが場をはなれたら…消えてなくなります」）
+- ``RETURN_IN_PLAY_TO_DECK``（v0.36）: ワザの効果で、そのポケモンが山札にもどって場をはなれた（キョウのドガースの「くもがくれガス」。p.322 の「場をはなれたら」。
+  きぜつではない）
+- ``USED``（v0.36）: 説明が「効果は1回できえる」と書く効果を使った（サンドの「すなかけ」の手順 4 のコインを投げた。``AttackCoinCheck.single_use``）
 
 持続する効果は物理的なカードではないので、消えてもトラッシュには何も置かない。乱数も使わない。一度消えた効果は、
 ベンチから再びバトル場に出ても復活しない（p.322）。
@@ -38,7 +41,9 @@ from typing import TYPE_CHECKING
 from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
+    AttackCoinCheck,
     CannotAttack,
+    CannotRetreat,
     CannotUseAttack,
     CannotUseOwnAttack,
     DamageReduction,
@@ -54,7 +59,10 @@ if TYPE_CHECKING:
 
 EXPIRED = "expired"  # 効果がはたらく番の終わり（p.236・p.18 のワザ解説）
 KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
-REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH)  # FORCED_SWITCH は v0.4d
+RETURN_IN_PLAY_TO_DECK = "return_in_play_to_deck"  # v0.36: ワザの効果で山札にもどって場をはなれた（p.322。くもがくれガス）
+USED = "used"  # v0.36: 「効果は1回できえる」効果を使った（サンドの「すなかけ」）
+# FORCED_SWITCH は v0.4d、RETURN_IN_PLAY_TO_DECK・USED は v0.36
+REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -236,3 +244,16 @@ def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -
             continue
         return effect
     return None
+
+
+def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackCoinCheck, ...]:
+    """今の番に ``pokemon`` がワザを使うときに、p.309 の手順 4 のコインを投げる効果（v0.36。``AttackCoinCheck``。「すなかけ」・「えんまく」など）のうち、
+    はたらいているもの（はたらく番が今の番）。ふつうは 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で同じ種類は
+    1 つまで）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_turn == state.turn_number)
+
+
+def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | None:
+    """今の番に ``pokemon`` が「にげる」ことができない効果（v0.36。``CannotRetreat``。「アイスバーン」・「わしづかみ」を受けた）がはたらいているなら、
+    その効果。"""
+    return _active(state, pokemon, CannotRetreat)

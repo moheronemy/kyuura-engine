@@ -116,6 +116,15 @@ QUESTIONS: dict[str, Question] = {
         Question("damage_step_order", "UNSUPPORTED_DAMAGE_STEP_ORDER", ("v0.34", "v0.35"), 10,
                  "p.321 の同じ段階に加算でない効果を含む 2 つ以上の効果があり、計算の順番で結果が変わるが、このダメージの処理は順番を選ぶ決定を"
                  "出せない（エンジンの未対応）"),
+        # v0.36（docs/sand-attack-retreat-lock-v0.36.md）
+        Question("attack_check_confusion", "UNRESOLVED_ATTACK_CHECK_CONFUSION", ("AC6",), 6,
+                 "こんらん状態のポケモンが、ワザを失敗させる効果（「すなかけ」・「えんまく」など。p.309 の手順 4）を受けてワザを使うとき、手順 4 の"
+                 "コインでワザが失敗したら、手順 5 のこんらんのコイン（「うら」なら自分に 20 ダメージ）をおこなうかは、原典（p.309・p.322・p.323）"
+                 "から決められない（コインの数・ダメージが変わる）"),
+        Question("return_in_play_to_deck_with_knockout", "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT", ("RD9",), 50,
+                 "ワザを使ったポケモンが、ワザの効果で自分と自分についているカードを山札にもどし（バトル場が空く）、同じワザで HP 以上になった"
+                 "ポケモンがいるとき、バトル場に出す時点と、きぜつの処理（サイド・勝ち負け・相手がバトル場に出す）との順番は、原典（p.311・p.313・"
+                 "p.323・p.324）から決められない（出す順番・勝ち負けが変わりうる）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

@@ -70,10 +70,12 @@ from .continuous import suppressors_of
 from .deck import deck_problems
 from .evolution import place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, expires_at_turn_start, remove_persistent_effects
+from .persistent import KNOCK_OUT, cannot_retreat, expires_at_turn_start, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    AttackCoinCheck,
+    CannotRetreat,
     CannotUseAttack,
     CannotUseOwnAttack,
     DamageReduction,
@@ -558,6 +560,12 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     if not p.bench:
         raise IllegalActionError("NO_BENCH", "控えポケモンがいないので、にげるを宣言できない")
     _require_not_asleep_or_paralyzed(active, "「にげる」を宣言できない（p.311・p.322）")
+    if cannot_retreat(state, active) is not None:
+        # v0.36: 「アイスバーン」・「わしづかみ」を受けた（次の相手の番に「にげる」ことができない）。ねむり・マヒと同じく宣言できないので、エネルギーの
+        # トラッシュ・こんらんのコインの前に拒否する（状態・乱数・ログは変わらない）。「ポケモンいれかえ」などの入れ替えは制限しない（p.325）
+        raise IllegalActionError(
+            "RETREAT_PREVENTED", f"バトル場のポケモン {active.pokemon_id} は、この番は「にげる」ことができない（相手のワザの効果）"
+        )
     if active.retreat_failed_turn == state.turn_number:
         if active.conditions.confused:
             raise IllegalActionError(
@@ -1232,6 +1240,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
+        if isinstance(effect, (AttackCoinCheck, CannotRetreat)):
+            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -1291,6 +1301,44 @@ def _attack_lock_problems(state: GameState, pokemon: PokemonInPlay, effect, wher
     if not 0 <= effect.target_attack_index < len(state.card_def(pokemon.card).attacks):
         return [f"{where} {effect!r} の使えなくなるワザの位置が、このポケモンのワザではない"]
     return []
+
+
+def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.36: 「すなかけ」・「えんまく」など（``AttackCoinCheck``）・「アイスバーン」・「わしづかみ」（``CannotRetreat``）の持続する効果が、それを与えたワザ
+    （ログ ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは、使ったワザ。効果の ``source_card`` は使ったポケモン）の登録された実装の
+    効果と合うか（``attack_check_terms``: (型, 「1回できえる」か)・``retreat_lock_terms``: 型）。対応するログがなければ ``_persistent_effect_log_problems``
+    が見つける。"""
+    if isinstance(effect, AttackCoinCheck) and type(effect.single_use) is not bool:
+        return [f"{where} {effect!r} の「1回できえる」が真偽値ではない"]
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    if isinstance(effect, AttackCoinCheck):
+        terms = getattr(entry.effect, "attack_check_terms", None) if entry is not None else None
+        expected = (AttackCoinCheck, effect.single_use)
+    else:
+        terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
+        expected = CannotRetreat
+    if terms is None or terms() != expected or added.get("single_use", False) != getattr(effect, "single_use", False):
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
+    return []
+
+
+def _persistent_effect_added_event(state: GameState, pokemon: PokemonInPlay, effect):
+    """持続する効果を与えたログ（``persistent_effect_added``。同じポケモン・種類・番・発生源）。なければ None（v0.36）。"""
+    for event in reversed(state.log):
+        if (
+            event["kind"] == "persistent_effect_added"
+            and event.get("pokemon_id") == pokemon.pokemon_id
+            and event.get("persistent_effect") == effect.kind
+            and event["turn"] == effect.created_turn
+            and event.get("active_turn") == effect.active_turn
+            and event.get("source_card") == effect.source_card
+        ):
+            return event
+    return None
 
 
 def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:

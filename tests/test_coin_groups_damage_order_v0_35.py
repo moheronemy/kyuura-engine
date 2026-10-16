@@ -807,10 +807,11 @@ class BubblesTest(unittest.TestCase):
         self.assertEqual([e["reason"] for e in events(evolved, len(mine.log), "persistent_effect_removed")], ["evolve"])
 
     def test_copying_bubbles_is_unsupported(self):
-        """「あわあわ」をまねるのも未対応（自分への番をまたぐ効果）。「ドわすれ」はまねられる（ピッピの相手、つまりニョロモのワザを選ぶ決定が続く）。"""
-        waiting = assert_copy_choice_unsupported(self, mon(MISTYS_POLIWAG, (WATER, WATER)))
-        copied = play(waiting, ResolveDecision(0, waiting.decision.id, (1,)))
-        self.assertEqual((copied.decision.kind, copied.decision.player, copied.decision.options), (SELECT_OPPONENT_ATTACK, 0, (0, 1)))
+        """「あわあわ」をまねるのも未対応（自分への番をまたぐ効果）。v0.36 から「ドわすれ」も未対応（効果 ``CannotUseAttack`` は、効果を与えたワザを効果を
+        与えたポケモンのカードのワザの位置で記録するので、まねた効果を表せない。v0.35 は選べて、効果を与えたところで不変条件の違反（内部エラー）になって
+        いた。docs/sand-attack-retreat-lock-v0.36.md 5 章）。ニョロモのワザはどちらも処理できないので、ゆびをふるの宣言の前に止まる（状態は変わらない）。"""
+        state = board(mon(CLEFAIRY, (WATER, WATER, WATER)), mon(MISTYS_POLIWAG, (WATER, WATER)))
+        assert_stops(self, state, UseAttack(0, 1), "UNSUPPORTED_COPIED_ATTACK")
 
 
 class AmnesiaTest(unittest.TestCase):
