@@ -438,3 +438,82 @@ def attach_from_deck(state: GameState, player: int, card: int, pokemon: PokemonI
         raise RuntimeError(f"つける先のポケモン {pokemon.pokemon_id} がプレイヤー {player} の場にいない（エンジンの不具合）")
     p.deck.remove(card)
     pokemon.energy.append(card)
+
+
+# ---------------------------------------------------------------- v0.47（docs/fossil-hidden-info-v0.47.md）
+
+
+def put_trainer_into_play(state: GameState, player: int, card: int) -> PokemonInPlay:
+    """使っている最中のトレーナーカード ``card``（なにかの化石・ピッピ人形。「ポケモンとして場に出すことができる」）を、同じ uid のまま自分のベンチの最後に
+    ポケモンとして出す（v0.47）。カードは ``state.trainer_in_use`` から場に移る（同じカードが 2 か所にある瞬間を作らない。v0.2c の ``attach_trainer`` と同じ形）。
+    場のポケモンの番号・場に出た番は手札から出すたねポケモンと同じ ``enter_play``（その番には進化できない。p.310）。
+
+    出してよいか（ベンチの空き・番）の確認は呼ぶ側が済ませる。使っている最中のカードでない・ベンチに空きがないなら ``RuntimeError``（状態を変える前）。
+    ログ ``play_trainer_as_pokemon``（``player``・``card``・``pokemon_id``。場のカードなので公開）。出した場のポケモンを返す。"""
+    p = state.players[player]
+    if state.trainer_in_use != TrainerInUse(player, card) or len(p.bench) >= state.rules.max_bench:
+        raise RuntimeError(f"プレイヤー {player} の使用中のカード {card} をポケモンとして場に出せない（確認の漏れ。エンジンの不具合）")
+    state.trainer_in_use = None
+    pokemon = enter_play(state, card)
+    p.bench.append(pokemon)
+    state.add_event("play_trainer_as_pokemon", player=player, card=card, pokemon_id=pokemon.pokemon_id)
+    return pokemon
+
+
+def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> tuple[int, ...]:
+    """自分の場のポケモン ``pokemon``（なにかの化石・ピッピ人形。「自分の番の好きなときに（自分のトラッシュに）すてることができる」）を、ついているすべてのカードと
+    いっしょに、同じ uid のまま持ち主のトラッシュに置く（v0.47）。きぜつではない（サイドは取られない。ログ ``knock_out`` ではない）。
+
+    - トラッシュするカード: ポケモンのカード（重なりのないカード 1 枚。重なりがあれば呼ばない）・エネルギーカード（ついている順）・トレーナーカード（ついている順。
+      トレーナーはつけたプレイヤーのトラッシュ。きぜつの ``knock_out`` と同じ）。ダメージカウンター・特殊状態はなくなる（p.322。カードではない）。持続する効果を
+      消すのは呼ぶ側（``persistent.remove_persistent_effects``。理由 ``discard_from_play``）
+    - 空いたバトル場の勝ち負けの判定・バトル場に出す決定は呼ぶ側（``resolution.after_power`` と同じ使用後の処理）
+    - ログ ``discard_from_play``（``player``・``pokemon``・``pokemon_id``・``cards``（トラッシュしたカードすべて。公開）・``energy``・``trainers``・``damage``）
+
+    トラッシュしてよいかの確認は呼ぶ側が済ませる。場にいない・重なりがある・持ち主の違うカードがあるなら ``RuntimeError``（状態を変える前）。トラッシュしたカードを返す。"""
+    p = state.players[player]
+    on_bench = any(b is pokemon for b in p.bench)
+    if (p.active is not pokemon and not on_bench) or pokemon.evolution_stack or any(state.cards[uid].owner != player for uid in (pokemon.card, *pokemon.energy)):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} をトラッシュできない（確認の漏れ。エンジンの不具合）")
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    trainers = tuple(t.card for t in pokemon.trainers)
+    p.discard.append(pokemon.card)
+    p.discard.extend(pokemon.energy)
+    for attached in pokemon.trainers:
+        state.players[attached.player].discard.append(attached.card)
+    cards = (pokemon.card, *pokemon.energy, *trainers)
+    state.add_event("discard_from_play", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=cards, energy=tuple(pokemon.energy),
+                    trainers=trainers, damage=pokemon.damage)
+    return cards
+
+
+def swap_prize_with_deck_top(state: GameState, player: int, position: int, *, power: str) -> None:
+    """自分のサイドの位置 ``position`` のカードと、自分の山札の一番上のカードを、どちらも裏のまま入れかえる（v0.47。コラッタ（ロケット団）の［わるふざけ］の「自分の
+    サイドカードから1枚を選び、自分の山札の一番上のカードと入れ替える」）。サイドの枚数・位置と、山札の枚数・ほかのカードの並びは変えない。見る・見せる指示がない
+    ので、どちらのカードも誰にも見せない（ログ ``swap_prize_with_deck_top`` は位置だけで、カードを書かない）。山札は切らない（説明にない）。
+
+    入れかえてよいかの確認は呼ぶ側が済ませる。位置がサイドにない・山札が 0 枚なら ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if not 0 <= position < len(p.prizes) or not p.deck:
+        raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} と山札の一番上を入れかえられない（確認の漏れ。エンジンの不具合）")
+    p.prizes[position], p.deck[0] = p.deck[0], p.prizes[position]
+    state.add_event("swap_prize_with_deck_top", player=player, prize_position=position, power=power)
+
+
+def look_at_card(state: GameState, viewer: int, owner: int, zone: str, position: int, *, effect: str | None = None, power: str | None = None) -> int:
+    """プレイヤー ``viewer`` が、プレイヤー ``owner`` の ``zone``（``"deck"``: 山札の上から ``position`` 枚目（0 から）・``"prize"``: サイドの位置・``"hand"``: 手札の
+    位置）のカードを見る（v0.47。マンキーの［スパイ］・マチスのイーブイの「おどろかす」）。カードは動かさない（「見たカードは元の場所に戻す」）。
+
+    ログ ``look_at_card``（``player``（見たプレイヤー）・``owner``・``zone``・``position``・``card``）。``card`` は見たプレイヤーにだけ見える情報（手札のカードなら
+    持ち主も知っている。``observation.visible_log``）。相手にも見せる（公開する）処理ではない。見たカードの uid を返す。"""
+    p = state.players[owner]
+    cards = {"deck": p.deck, "prize": p.prizes, "hand": p.hand}[zone]
+    if not 0 <= position < len(cards) or (effect is None) == (power is None):
+        raise RuntimeError(f"プレイヤー {owner} の {zone} の位置 {position} のカードを見られない（確認の漏れ。エンジンの不具合）")
+    card = cards[position]
+    source = {"effect": effect} if effect is not None else {"power": power}
+    state.add_event("look_at_card", player=viewer, owner=owner, zone=zone, position=position, card=card, **source)
+    return card

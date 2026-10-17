@@ -114,6 +114,13 @@ ALL_CODES = (
     # どちらの読み方でも足りる数）は tests/test_continuous_powers_v0_46.py の CalmingAromaTest・RetreatCostTest
     "UNRESOLVED_CALMING_AROMA_RETALIATION",
     "UNRESOLVED_RETREAT_COST_FLOOR",
+    # v0.47: PF1・PF2・PF3・KA1（docs/fossil-hidden-info-v0.47.md）。止まる場合（手札にたねポケモンがなく、なにかの化石がある対戦準備・なにかの化石を最初のポケモンと
+    # して出す・バトル場のなにかの化石の「にげる」・ポケモン育て屋さんで場のなにかの化石に 2 進化カード・どく状態のカブトのポケモンチェック）と隣の止まらない場合
+    # （ポケモンいれかえ・ほかの組を選ぶ育て屋さん・［なぞのかべ］とどく）は tests/test_fossil_hidden_info_v0_47.py の PlayAsPokemonTest・KabutoArmorTest
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP",
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT",
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON",
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
 )
 TURN = 7
 

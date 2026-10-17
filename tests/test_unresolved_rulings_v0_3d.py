@@ -121,18 +121,25 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         v0.6 までは、ついていないときの値を 20 と固定していた（対戦に使えるポケモンに、自分のタイプを弱点に持つものがなかった）。
         v0.7 で対応にしたケーシィ・ユンゲラー・フーディン（超・弱点 超）は、こんらんの 20 が自分の弱点で 40 になる（v0.3c の
         ``calculate_confusion_damage``。p.149・p.151・p.153 の図版の弱点）ので、期待値を 1 通りの読み方の値にした（読み方が 1 通りで
-        あることは変えていない）。"""
+        あることは変えていない）。
+
+        v0.47 のプテラ（PMCG3-041。闘・抵抗力 闘 -30。kyuura データの採用）は、自分のタイプを抵抗力に持つ最初の対戦に使えるポケモンで、こんらんの 20 が
+        自分の抵抗力で 0 になる。プラスパワーが 1 枚以下なら、どの読み方でも 0 で結果が同じになる（2 枚なら 40 − 30 = 10 で変わる）。エンジンは読み方ごとの
+        結果を比べず、ダメージを変えるカードがついていれば止める（v0.3c のまま。止める範囲はこの組だけ必要より広い。docs/fossil-hidden-info-v0.47.md 10 章）。
+        その組を ``coinciding`` に挙げ、ほかのポケモン・組では今までどおり結果が変わることを確かめる。"""
         pool = load_card_pool()
         pokemon = [pool.get(c) for c in sorted(pool.playable_ids) if pool.get(c).category == "pokemon"]
         self.assertGreater(len(pokemon), 10)
+        coinciding = set()
         for definition in pokemon:
             for pluspowers, defenders in itertools.product(range(3), repeat=2):
                 with self.subTest(pokemon=definition.id, pluspowers=pluspowers, defenders=defenders):
                     results = confusion_interpretations(definition, pluspowers, defenders)
                     if pluspowers == defenders == 0:
                         self.assertEqual(set(results.values()), {calculate_confusion_damage(definition, RULES_2000_02_14, 20).final})
-                    else:
-                        self.assertGreater(len(set(results.values())), 1, results)
+                    elif len(set(results.values())) == 1:
+                        coinciding.add((definition.id, pluspowers, defenders))
+        self.assertEqual(coinciding, {("PMCG3-041", p, d) for p in range(2) for d in range(3)} - {("PMCG3-041", 0, 0)})
         # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155）・v0.28 のスリープ（超・弱点 超。
         # p.164）・v0.31 のミュウツー（PMCG1-050）・化石の秘密のヤドン（PMCG3-027）（どちらも超・弱点 超。kyuura データの採用。採用の記録の
         # カードデータ）・v0.32 のルージュラ（PMCG1-048。超・弱点 超。kyuura データの採用）・v0.37 のナツメのスリープ（PMCG6-045。超・弱点 超。kyuura
@@ -142,13 +149,16 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         # （PMCG6-047）・わるいユンゲラー（PMCG4-034）・わるいフーディン（PMCG4-035）（どれも超・弱点 超。kyuura データの採用）・v0.43 のロケット団のスリープ
         # （PMCG4-033）・わるいヤドラン（PMCG4-036）（どちらも超・弱点 超。kyuura データの採用）・v0.44 のナツメのバリヤード（PMCG6-046。超・弱点 超。kyuura
         # データの採用）・v0.46 のバリヤード（PMCG2-027。超・弱点 超。kyuura データの採用）は 40、それ以外は 20
-        # （対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはない。v0.42 のエリカのピッピ・ピクシーは無色で抵抗力 超）
+        # （v0.46 までは、対戦に使えるポケモンに抵抗力で自分のタイプを減らすものはなかった。v0.42 のエリカのピッピ・ピクシーは無色で抵抗力 超）
         doubled = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 40}
         self.assertEqual(doubled, {"PMCG1-043", "PMCG1-045", "PMCG1-046", "PMCG1-049", "PMCG6-044", "PMCG1-050", "PMCG3-027", "PMCG1-048",
                                    "PMCG6-045", "PMCG4-031", "PMCG4-037", "PMCG4-032", "PMCG6-048", "PMCG6-055",
                                    "PMCG6-052", "PMCG3-028", "PMCG6-043", "PMCG6-047", "PMCG4-034", "PMCG4-035", "PMCG4-033", "PMCG4-036",
-                                   "PMCG6-046", "PMCG2-027"})
-        self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled))
+                                   "PMCG6-046", "PMCG2-027", "PMCG3-032"})
+        # v0.47: スリーパー（PMCG3-032。超・弱点 超。kyuura データの採用）は 40、プテラ（PMCG3-041。闘・抵抗力 闘）は 0
+        zeroed = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 0}
+        self.assertEqual(zeroed, {"PMCG3-041"})
+        self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled | zeroed))
 
 
 

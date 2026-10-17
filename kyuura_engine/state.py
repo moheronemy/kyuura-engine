@@ -634,6 +634,27 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, Des
                            ZeroDamageBelow, HalvedDamage)
 
 
+@dataclass(frozen=True)
+class TrainerUseLock:
+    """プレイヤーに与える、期限のあるトレーナーカードの使用の禁止（v0.47。docs/fossil-hidden-info-v0.47.md 5 章。コダック（化石の秘密）の「ずつう」・マチスの
+    サンダースの「こうしゅうは」の「次の相手の番の終わりまで、相手プレイヤーはトレーナーカードを使うことができない」）。
+
+    - 場のポケモンではなくプレイヤーに与える効果（``GameState.trainer_locks``）。ワザによる持続する効果（``PokemonInPlay.persistent_effects``。場のポケモンが受け、
+      ベンチにもどる・進化・きぜつで消える）とは別に持つ。対戦ポケモンの入れ替え・効果を与えたポケモンが場をはなれることでは消えない
+    - ``player``: 使えなくなるプレイヤー。``source_player``: 効果を与えたワザを使ったプレイヤー（``player`` の相手）。``source_card``: そのワザを使ったポケモンの
+      いちばん上のカード。``effect``: そのワザ（``AttackKey`` の文字列）。``created_turn``: 与えた番。``expires_turn``: 消える番（その番の終わりに消す。「次の相手の
+      番」は与えた番 + 1。番は交互に進む。v0.2e と同じ前提）
+    - 常にはたらく特殊能力による禁止（v0.46 の［アレルギーかふん］。場から問い合わせる）とは別の記録で、両方が重なっても、それぞれの期間で判定する
+    """
+
+    player: int
+    source_player: int
+    source_card: int
+    effect: str
+    created_turn: int
+    expires_turn: int
+
+
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
@@ -887,6 +908,9 @@ class GameState:
     # 「このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりにもとにもどる」）。そのポケモンについている間だけ「炎」
     # エネルギーとして扱う（``energy_types``）。番の終わりに空にする。書き出しは形式 10 だけが表せる
     energy_burn: tuple[tuple[int, int], ...] = ()
+    # v0.47（docs/fossil-hidden-info-v0.47.md 5 章）: プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止（``TrainerUseLock`` の並び。与えた順）。消える番の
+    # 終わりに消す（``procedures.expire_at_turn_end``。ログ ``trainer_lock_removed``）。書き出しは形式 12 だけが表せる（空でなければ形式 1〜11 は ``ValueError``）
+    trainer_locks: tuple[TrainerUseLock, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
@@ -935,7 +959,40 @@ class GameState:
     # --- 読み取り用 ---
 
     def card_def(self, uid: int) -> CardDefinition:
+        """カード ``uid`` の、今の場所での定義。
+
+        v0.47（docs/fossil-hidden-info-v0.47.md 2 章）: ポケモンとして場に出せるトレーナーカード（なにかの化石・ピッピ人形。効果の登録表の
+        ``play_profile``）は、場のポケモンのカード（いちばん上のカードか、進化して下に重なったカード）であるあいだだけ、場での役割の定義（``category`` は
+        "pokemon"・``play_role`` あり）を返す。手札・山札・サイド・トラッシュ・使用中のトレーナーでは、印刷の定義（トレーナーカード）のまま（「場に出ている
+        とき以外は、トレーナーカードとしてあつかう」）。ほかのカードは、どこにあっても印刷の定義（v0.46 までと同じ）。印刷の定義・写しは変えない。"""
+        definition = self.definitions[self.cards[uid].card_id]
+        if definition.category == "trainer":
+            profile = self.effects.play_profile(definition)
+            if profile is not None and self._as_pokemon_in_play(uid):
+                return profile
+        return definition
+
+    def printed_def(self, uid: int) -> CardDefinition:
+        """カード ``uid`` の印刷の定義（写しから読んだ定義。場所によらない。v0.47）。"""
         return self.definitions[self.cards[uid].card_id]
+
+    def in_play_def(self, uid: int) -> CardDefinition:
+        """カード ``uid`` が場のポケモンのカードとしてあつかわれるときの定義（v0.47。場所によらない）。ポケモンとして場に出せるトレーナーカードなら場での役割の
+        定義、ほかは印刷の定義。ログから場を組み立て直す確かめ（監査・不変条件）が、そのカードが今は場にいないときにも、場にいたときの定義を引くために使う。"""
+        definition = self.definitions[self.cards[uid].card_id]
+        if definition.category == "trainer":
+            profile = self.effects.play_profile(definition)
+            if profile is not None:
+                return profile
+        return definition
+
+    def _as_pokemon_in_play(self, uid: int) -> bool:
+        """カード ``uid`` が、場のポケモンを作っているカード（いちばん上か、下に重なったカード）か（v0.47）。ついているカードは含まない。"""
+        for player in self.players:
+            for pokemon in player.in_play():
+                if pokemon.card == uid or uid in pokemon.evolution_stack:
+                    return True
+        return False
 
     def find_pokemon(self, pokemon_id: int) -> tuple[int, PokemonInPlay] | None:
         """場のポケモンの番号から、(持ち主, ポケモン) を返す。場にいなければ None。"""

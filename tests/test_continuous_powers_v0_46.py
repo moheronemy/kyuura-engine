@@ -320,7 +320,8 @@ class CardDataTest(unittest.TestCase):
 
     def test_new_types_are_kernel_programs_outside_the_v013_contract(self):
         """v0.46 の型は解決の基盤の要素の並びで処理し（v0.13 の約束のアダプタでない）、v0.13 の止める関数で確かめる型（VERIFIED）に入れない。"""
-        self.assertEqual(ATTACK_TYPES_SINCE_V0_17[-len(NEW_TYPES):], NEW_TYPES)
+        start = ATTACK_TYPES_SINCE_V0_17.index(NEW_TYPES[0])  # v0.47 からは、このあとに v0.47 の型が続く
+        self.assertEqual(ATTACK_TYPES_SINCE_V0_17[start:start + len(NEW_TYPES)], NEW_TYPES)
         for kind in NEW_TYPES:
             with self.subTest(kind=kind.__name__):
                 self.assertNotIn(kind, v013_checks.VERIFIED)

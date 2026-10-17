@@ -654,7 +654,7 @@ class LogSerializationInvariantTest(unittest.TestCase):
 
     def test_no_new_format(self):
         """v0.7 は書き出しの形式を加えない（形式 9 のまま。移したカウンターは場のポケモンの ``damage``）。進化したフーディンがいるので形式 1〜6
-        は ``ValueError``、7〜9 は書き出せる。形式 10 はない。"""
+        は ``ValueError``、7〜9 は書き出せる。形式 13 はない（10〜12 はその後の版で加えた）。"""
         state = board()
         new = apply_command(state, swap(state, state.players[0].active, state.players[0].bench[1]))
         data = full(new)
@@ -665,7 +665,7 @@ class LogSerializationInvariantTest(unittest.TestCase):
         for version in (7, 8):
             self.assertEqual(state_to_dict(new, format_version=version)["players"][0]["active"]["damage"], 20)
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=12)  # v0.7 では 10 がなかった。10 は v0.31、11 は v0.44（ダメージスワップの項目ではない）
+            state_to_dict(new, format_version=13)  # v0.7 では 10 がなかった。10 は v0.31、11 は v0.44、12 は v0.47（ダメージスワップの項目ではない）
         self.assertEqual(serialization_problems(new), [])
 
     def test_copies(self):

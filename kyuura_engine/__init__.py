@@ -8,6 +8,7 @@ from .cards import CardDefinition, CardPool, EnergyType, can_pay_cost, load_card
 from .coins import CoinSide
 from .commands import (
     AttachEnergy,
+    DiscardFromPlay,
     DrawMulliganCards,
     EndTurn,
     EvolvePokemon,
@@ -39,6 +40,7 @@ from .effects import (
     working_evasion_power,
 )
 from .engine import apply_command, check_invariants, new_game
+from .observation import observe, visible_log
 from .errors import DeckValidationError, EngineError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
@@ -60,7 +62,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.46.0"
+__version__ = "0.47.0"
 
 __all__ = [
     "Asleep",
@@ -73,6 +75,7 @@ __all__ = [
     "Confused",
     "DEFAULT_EFFECTS",
     "DeckValidationError",
+    "DiscardFromPlay",
     "DrawMulliganCards",
     "EffectRegistry",
     "EndTurn",
@@ -124,9 +127,11 @@ __all__ = [
     "preset_deck_ids",
     "load_card_pool",
     "new_game",
+    "observe",
     "power_suppressors",
     "state_to_dict",
     "validate_deck",
+    "visible_log",
     "working_power_suppressors",
     "working_counterattack_power",
     "working_evasion_power",

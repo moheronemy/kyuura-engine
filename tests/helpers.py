@@ -424,6 +424,24 @@ ERIKAS_EXEGGCUTE = "PMCG5-012"  # エリカのタマタマ（リーダーズス�
 ERIKAS_EXEGGUTOR = "PMCG5-013"  # エリカのナッシー（リーダーズスタジアム。エリカのタマタマから進化。HP 70・草・弱点 炎・にげる 2。サイコエクスチェンジ（超）・ふみつけ（草無無）30+）
 V0_46_POWER_POKEMON = (MR_MIME, ERIKAS_DRATINI, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DODRIO, DARK_MUK, DARK_VILEPLUME, SNORLAX)  # 常にはたらく特殊能力を持つ 8 枚
 V0_46_POKEMON = V0_46_POWER_POKEMON + (ERIKAS_VENUSAUR, ERIKAS_EXEGGCUTE, ERIKAS_EXEGGUTOR)  # 写しの組 pool_v0_46 の並び
+# v0.47（docs/fossil-hidden-info-v0.47.md）。ポケモンとして場に出せるトレーナーカード 2 枚・化石のポケモン 5 枚・見えない情報の 4 枚・トレーナーの使用を禁止する 2 枚
+# （どれも kyuura データの採用。場での HP は pcg-search.com の同じ版のページ）
+MYSTERIOUS_FOSSIL = "PMCG3-046"  # なにかの化石（化石の秘密。トレーナーカード。場ではポケモン: HP 10・タイプなし・弱点なし・抵抗力なし・ワザなし）
+CLEFAIRY_DOLL = "PMCG1-091"  # ピッピ人形（第1弾。トレーナーカード。場ではポケモン: HP 10・タイプなし・弱点なし・抵抗力なし・ワザなし）
+OMANYTE = "PMCG3-015"  # オムナイト（化石の秘密。なにかの化石から進化。HP 40・水・弱点 草・にげる 1。［おみとおし］・みずでっぽう（水）10+）
+OMASTAR = "PMCG3-021"  # オムスター（化石の秘密。オムナイトから進化する 2 進化。HP 70・水・弱点 草・にげる 1。みずでっぽう（水無）20+・とげキャノン（水水）30×）
+KABUTO = "PMCG3-035"  # カブト（化石の秘密。なにかの化石から進化。HP 30・闘・弱点 草・にげる 1。［カブトアーマー］・ひっかく（無）10）
+KABUTOPS = "PMCG3-040"  # カブトプス（化石の秘密。カブトから進化する 2 進化。HP 60・闘・弱点 草・にげる 1。するどいかま（闘闘）30・すいとる（闘闘闘闘）40）
+AERODACTYL = "PMCG3-041"  # プテラ（化石の秘密。なにかの化石から進化。HP 60・闘・弱点 草・抵抗力 闘 -30・にげる 2。［げんしのちから］・つばさでうつ（無無無）30）
+JUNGLE_MANKEY = "PMCG2-028"  # マンキー（ポケモンジャングル。HP 30・闘・弱点 超・にげる 0。［スパイ］・ひっかく（無）10）。MANKEY（PMCG4-039。ロケット団）と別のカード
+ROCKET_RATTATA = "PMCG4-045"  # コラッタ（ロケット団。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 0。［わるふざけ］・でんこうせっか（無）10+）。RATTATA（PMCG1-060）と別のカード
+HYPNO = "PMCG3-032"  # スリーパー（化石の秘密。スリープから進化。HP 90・超・弱点 超・にげる 2。みらいよち（超）・ナイトヘッド（超超超）30）
+LT_SURGES_EEVEE = "PMCG5-062"  # マチスのイーブイ（リーダーズスタジアム。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。おどろかす（無）・ひっかく（無無）20）
+LT_SURGES_JOLTEON = "PMCG5-042"  # マチスのサンダース（リーダーズスタジアム。マチスのイーブイから進化。HP 70・雷・弱点 闘・にげる 1。こうしゅうは（雷無）20・いかりのサンダー（雷雷雷）30+）
+FOSSIL_PSYDUCK = "PMCG3-010"  # コダック（化石の秘密。HP 50・水・弱点 雷・にげる 1。ずつう（超）・みだれひっかき（水）10×）。PSYDUCK（PMCG4-019）と別のカード
+V0_47_TRAINERS = (MYSTERIOUS_FOSSIL, CLEFAIRY_DOLL)
+V0_47_POKEMON = (OMANYTE, OMASTAR, KABUTO, KABUTOPS, AERODACTYL, JUNGLE_MANKEY, ROCKET_RATTATA, HYPNO, LT_SURGES_EEVEE, LT_SURGES_JOLTEON, FOSSIL_PSYDUCK)
+V0_47_CARDS = V0_47_TRAINERS + V0_47_POKEMON  # 写しの組 pool_v0_47 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -981,6 +999,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenExactBenchTargets,  # エリカのフシギバナの「かくさんソーラービーム」
     _effects.HalveDamageNextTurn,  # エリカのタマタマの「リフレクター」
     _effects.ShuffleHandIntoDeckThenDraw,  # エリカのナッシーの「サイコエクスチェンジ」
+    # v0.47（docs/fossil-hidden-info-v0.47.md）
+    _effects.ArrangeDeckTopEffect,  # スリーパーの「みらいよち」
+    _effects.LookOpponentHandCardToDeck,  # マチスのイーブイの「おどろかす」
+    _effects.LockOpponentTrainersNextTurn,  # コダック（化石の秘密）の「ずつう」
+    _effects.DamageThenLockOpponentTrainersOnHeads,  # マチスのサンダースの「こうしゅうは」
+    _effects.DamagePlusOwnCountersThenSelfDamageOnTails,  # マチスのサンダースの「ぶちかます」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1189,3 +1213,11 @@ DODUO_DECK = expand_decklist({DODUO: 4, GROWLITHE: 4, PONYTA: 4, RATTATA: 4, VOL
 DODUO_TRAINER_DECK = expand_decklist({
     DODUO: 4, GROWLITHE: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, BILL: 4, POTION: 2, SWITCH: 2, PLUSPOWER: 4, FIRE: 28,
 })
+
+
+def driver_retreat_cost(state, pokemon) -> int:
+    """対戦の手順（テストの駆動）が「にげる」に使う、場のポケモン ``pokemon`` の印刷のにげるエネルギーの数。v0.47: なにかの化石・ピッピ人形（場での役割のある
+    カード）の「にげる」は決まらない（PF2。印刷の数がない）ので、手順が「にげる」を選ばない数（ついているエネルギーより 1 多い）にする。ほかのポケモンは v0.46 までと
+    同じ印刷の数（手順の結果は変わらない）。"""
+    cost = state.card_def(pokemon.card).retreat_cost
+    return len(pokemon.energy) + 1 if cost is None else cost

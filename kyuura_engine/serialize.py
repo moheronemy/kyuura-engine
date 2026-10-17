@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 11 あります（``format_version``）。
+形式は 12 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -49,6 +49,11 @@
   進化させてよい番。なければ ``None``。番の終わりに消える）を加えたもの（v0.44。docs/search-evolution-once-attacks-v0.44.md 3 章）。形式 1〜10 は、どちらかが
   空でない・None でないポケモンがいると ``ValueError``（なければ形式 1〜10 の書き出しは v0.43 と同じ）。使った記録はログから数えず状態に持つので、書き出しにも
   加えた（場をはなれるまで残る）。
+- 12: 11 に、``trainer_locks``（プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止。コダックの「ずつう」・マチスのサンダースの「こうしゅうは」。
+  ``{"player", "source_player", "source_card", "source_card_id", "effect", "created_turn", "expires_turn"}`` の並び（与えた順）。なければ ``[]``）を加えたもの
+  （v0.47。docs/fossil-hidden-info-v0.47.md 5 章）。形式 1〜11 は、禁止があると ``ValueError``（なければ形式 1〜11 の書き出しは v0.46 と同じ）。禁止は場のポケモンの
+  持続する効果ではなくプレイヤーの記録なので、ポケモンの項目ではなく最上位の項目にした（消える番の終わりに消える）。v0.47 のなにかの化石・ピッピ人形は、場に
+  いるあいだも書き出しの形を変えない（場のポケモンの ``card``・``card_id`` はそのカード。ポケモンとしてあつかうことは、状態の定義（``GameState.card_def``）が決める）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -124,7 +129,7 @@ from .state import (
     Retaliation,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -282,6 +287,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、場に出てから1回しか使えないワザの使った記録・「サカキ」の進化の許可を表せない（format_version=11 を使う）"
         )
+    if format_version < 12 and state.trainer_locks:
+        raise ValueError(f"形式 {format_version} は、プレイヤーに与えた期限のあるトレーナーカードの使用の禁止を表せない（format_version=12 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -374,4 +381,11 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 10:
         data["power_uses_this_turn"] = [list(use) for use in state.power_uses_this_turn]
         data["energy_burn"] = [list(pair) for pair in state.energy_burn]
+    if format_version >= 12:
+        data["trainer_locks"] = [
+            {"player": lock.player, "source_player": lock.source_player, "source_card": lock.source_card,
+             "source_card_id": state.cards[lock.source_card].card_id, "effect": lock.effect, "created_turn": lock.created_turn,
+             "expires_turn": lock.expires_turn}
+            for lock in state.trainer_locks
+        ]
     return data

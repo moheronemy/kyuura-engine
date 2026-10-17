@@ -20,7 +20,7 @@ from kyuura_engine import (
     AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
     new_game, state_to_dict,
 )
-from kyuura_engine.effects import retreat_cost, trainer_lock_sources
+from kyuura_engine.effects import PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, retreat_cost, trainer_use_blockers
 from kyuura_engine.persistent import cannot_retreat
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -138,9 +138,17 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     observed[f"stopped_retreat_{error.code}"] += 1
                     turn_tried.add("retreat_floor")
                     continue
+                if isinstance(command, Retreat) and error.code == PLAY_AS_POKEMON_RETREAT_CODE:
+                    # v0.47: バトル場のなにかの化石・ピッピ人形の「にげる」は決まらない（PF2）。場から確かめる（エネルギー・コインの前に拒否）
+                    if state.card_def(state.players[command.player].active.card).play_role is None:
+                        raise AssertionError(f"バトル場がなにかの化石・ピッピ人形でないのに {error.code}: {command}")
+                    observed[f"stopped_retreat_{error.code}"] += 1
+                    turn_tried.add("retreat")
+                    continue
                 if isinstance(command, PlayTrainer) and error.code == "TRAINER_PREVENTED":
-                    # v0.46: はたらいている［アレルギーかふん］（わるいラフレシア）。場から確かめる（手札から出す前に拒否）
-                    if not trainer_lock_sources(state):
+                    # v0.46: はたらいている［アレルギーかふん］（わるいラフレシア）。v0.47 から、期限のあるトレーナーの使用の禁止（ずつう・こうしゅうは）も。
+                    # 場と状態から確かめる（手札から出す前に拒否）
+                    if not trainer_use_blockers(state, command.player):
                         raise AssertionError(f"トレーナーカードを使えなくする特殊能力がはたらいていないのに TRAINER_PREVENTED: {command}")
                     observed["stopped_trainer_TRAINER_PREVENTED"] += 1
                     turn_tried.add("trainer_locked")
@@ -150,6 +158,13 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise
                     observed[f"stopped_attach_{error.code}"] += 1
                     turn_tried.add("attach_blocked")
+                    continue
+                if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED":
+                    # v0.47: はたらいている［げんしのちから］（プテラ）。場から確かめる（重ねる前に拒否）
+                    if not evolution_preventers(state):
+                        raise AssertionError(f"進化できなくする特殊能力がはたらいていないのに EVOLUTION_PREVENTED: {command}")
+                    observed["stopped_evolve_EVOLUTION_PREVENTED"] += 1
+                    turn_tried.update({"evolution_prevented", "evolve", "evolve2"})
                     continue
                 if isinstance(command, EvolvePokemon):
                     stage2 = state.card_def(command.card).is_stage2_pokemon

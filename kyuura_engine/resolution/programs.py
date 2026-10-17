@@ -37,18 +37,20 @@ from ..decisions import (
     DISCARD_TO_DECK_TOP, FORCED_SWITCH, HAND_TO_DECK, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_TRAINER, REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK,
     SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
 )
+from ..decisions import ARRANGE_DECK_TOP, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT
 from ..errors import UnsupportedError
 from ..evolution import place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, remove_persistent_effects
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
     CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUseOwnAttack, DamageReduction, DestinyBond, HalvedDamage, NextTurnAttackDamage, PreventDamage,
-    ReducedDamageToSource, Retaliation, ZeroDamageBelow,
+    ReducedDamageToSource, Retaliation, TrainerUseLock, ZeroDamageBelow,
 )
 from ..zones import (
     attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
     return_discard_to_hand, return_hand_cards_to_deck, return_in_play_to_deck, return_in_play_to_hand, reveal_deck_to_hand, shuffle_deck, take_deck_top,
 )
+from ..zones import look_at_card
 
 from . import catalog as C
 from . import codec
@@ -1460,6 +1462,10 @@ class BenchDamage(Element):
         wanted = self.pokemon_type
         if self.same_type_as_opponent_active:
             wanted = run.state.card_def(run.opponent_active().card).pokemon_type
+            if wanted is None:
+                # v0.47: タイプ（色）のない相手の対戦ポケモン（場のなにかの化石・ピッピ人形）と「同じ色」の控えポケモンはいない（実装上の判断。
+                # docs/fossil-hidden-info-v0.47.md 3 章。None を「タイプでしぼらない」と読まない）
+                return []
         return [p for p in run.state.players[side].bench
                 if (wanted is None or run.state.card_def(p.card).pokemon_type is wanted)
                 and (self.exclude_type is None or run.state.card_def(p.card).pokemon_type is not self.exclude_type)
@@ -4270,6 +4276,133 @@ class ShuffleHandThenDraw(Element):
         return False
 
 
+# ---------------------------------------------------------------- v0.47（docs/fossil-hidden-info-v0.47.md）。山札の上を見て並べかえる・相手の手札を見て山札にもどさせる・
+# 相手プレイヤーのトレーナーの使用を禁止する
+
+
+@dataclass(frozen=True)
+class ArrangeDeckTop(Element):
+    """自分または相手の山札の上から ``max_cards`` 枚まで見て、好きな順番に入れ替えて、もとの山札の上にもどす（v0.47。スリーパーの「みらいよち」）。
+
+    - 選ぶのはワザを使ったプレイヤー: 見る山札の持ち主（決定 ``SELECT_DECK_OWNER``。選べるものは自分・相手のプレイヤーの番号）→ 見る枚数（決定 ``SELECT_LOOK_COUNT``。
+      0〜min(``max_cards``, その山札の枚数)。``context`` の ``"owner"``）→ 見る（ログ ``look_at_deck_top`` の ``cards`` は見たプレイヤーにだけ見える）→ 2 枚以上なら
+      新しい並び（決定 ``ARRANGE_DECK_TOP``。選べるものは見たカード（上から順）。ちょうどその枚数。答えの並びが新しい上からの順）→ もどす（ログ ``arrange_deck_top``）
+    - 1 枚なら並べかえる決定はない（並びは変わらない。ログ ``arrange_deck_top`` は同じ）。見た部分より下の並びは変えない。山札は切らない（説明にない）
+    - 選んだ山札が 0 枚なら見るカードがない（p.309。ログ ``look_at_deck_top_none``）。山札があるとき 0 枚を選べるかは GS1（答えのときに止める。決定は待ったまま。
+      先読みは 0 枚を試さない）
+    - 山札は裏向きなので、見る前（持ち主と枚数を選ぶ決定）には内容を見せない。相手には見せない（「見て」で「見せる」ではない）
+    """
+
+    max_cards: int
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def decides(self, kind: str) -> bool:
+        return kind in (SELECT_DECK_OWNER, SELECT_LOOK_COUNT, ARRANGE_DECK_TOP)
+
+    def run(self, run: AttackRun) -> bool:
+        run.suspend(kind=SELECT_DECK_OWNER, player=run.player, options=(run.player, 1 - run.player))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        if decision.kind == SELECT_DECK_OWNER:
+            owner = choices[0]
+            deck = state.players[owner].deck
+            if not deck:
+                state.add_event("look_at_deck_top_none", player=run.player, owner=owner, effect=str(run.key))
+                return
+            run.suspend(kind=SELECT_LOOK_COUNT, player=run.player, options=tuple(range(min(self.max_cards, len(deck)) + 1)), extra=(("owner", owner),))
+            return
+        owner = decision.context_value("owner")
+        deck = state.players[owner].deck
+        if decision.kind == SELECT_LOOK_COUNT:
+            count = choices[0]
+            if count == 0:
+                raise UnsupportedError(
+                    "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
+                    f"山札があるときに 0 枚を見るのを選べるか（「上から{self.max_cards}枚まで見て」が 0 枚を含むか）は、記録から決められないので扱わない"
+                    "（v0.39 の GS1 と同じ問い。ワザの説明の「最大N」が 0 を含むか）。1 枚以上を選ぶ",
+                )
+            cards = tuple(deck[:count])
+            state.add_event("look_at_deck_top", player=run.player, owner=owner, count=count, cards=cards, effect=str(run.key))
+            if count == 1:
+                state.add_event("arrange_deck_top", player=run.player, owner=owner, count=1, cards=cards, effect=str(run.key))
+                return
+            run.suspend(kind=ARRANGE_DECK_TOP, player=run.player, options=cards, min_choices=count, max_choices=count, extra=(("owner", owner),))
+            return
+        count = len(decision.options)
+        if tuple(deck[:count]) != tuple(decision.options) or sorted(choices) != sorted(decision.options):
+            raise RuntimeError(f"みらいよちの並べかえ {choices} が、見たカード {decision.options} の並べかえではない（エンジンの不具合）")
+        deck[:count] = list(choices)
+        state.add_event("arrange_deck_top", player=run.player, owner=owner, count=count, cards=tuple(choices), effect=str(run.key))
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if decision.kind == SELECT_LOOK_COUNT:
+            return [(count,) for count in decision.options if count]  # 0 枚は答えのときに止める（GS1）
+        return all_answers(decision)
+
+
+@dataclass(frozen=True)
+class LookHandCardToDeck(Element):
+    """相手の手札から、おもてを見ないで 1 枚選び、そのカードを見る。その後、そのカードを相手の山札にもどさせ、その山札をよく切る（v0.47。マチスのイーブイの「おどろかす」）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_HAND_CARD``。選べるものは相手の手札の位置（0 から）。カードの uid・内容を選べるものに書かない。``context`` の
+      ``"owner"``）→ 見る（``zones.look_at_card``。ログ ``look_at_card``）→ 相手がそのカードを山札にもどす（``zones.return_hand_cards_to_deck``。ログ ``hand_to_deck``）→
+      相手の山札を切る（1 回。``shuffle_in_attack``）。この順番を変えない
+    - 相手の手札・山札への効果なので、相手の対戦ポケモンの「ワザをうけない」状態・「とうめい」は評価しない
+    - 相手の手札が 0 枚なら決められない（FC1 ``stated_cards_short``。決定の前に止める。先読みが見つける）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_HAND_CARD
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        hand = run.state.players[opponent].hand
+        if not hand:
+            raise run.res.question("stated_cards_short", "相手の手札 0 枚（説明は 1 枚）")
+        run.suspend(kind=SELECT_HAND_CARD, player=run.player, options=tuple(range(len(hand))), extra=(("owner", opponent),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        opponent = decision.context_value("owner")
+        if opponent != 1 - run.player or len(choices) != 1:
+            raise RuntimeError(f"おどろかすの決定 {decision.kind}・答え {choices} が正しくない（エンジンの不具合）")
+        card = look_at_card(run.state, run.player, opponent, "hand", choices[0], effect=str(run.key))
+        return_hand_cards_to_deck(run.state, opponent, (card,), effect=str(run.key))
+        shuffle_in_attack(run, self, opponent)
+
+
+@dataclass(frozen=True)
+class LockOpponentTrainers(Element):
+    """コインを投げて ``local_coin`` なら（None ならコインなしで）、次の相手の番の終わりまで、相手プレイヤーはトレーナーカードを使うことができない（v0.47。コダックの
+    「ずつう」・マチスのサンダースの「こうしゅうは」）。
+
+    - 相手プレイヤーに与える期限のある禁止（``state.TrainerUseLock``。``GameState.trainer_locks``。消える番は与えた番 + 1。番の終わりに消す）。場のポケモンに与える
+      効果ではないので、「ワザをうけない」状態・「とうめい」は評価せず、相手の対戦ポケモンがこのワザのダメージで HP 以上でも与える。対戦ポケモンの入れ替え・ワザを
+      使ったポケモンが場をはなれることでは消えない。ログ ``trainer_lock_added``
+    - 同じプレイヤー・同じ消える番の禁止が 2 つになることはない（1 番に使えるワザは 1 つ。起これば RuntimeError）
+    """
+
+    local_coin: CoinSide | None = None
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False
+        state = run.state
+        opponent = 1 - run.player
+        expires = state.turn_number + 1
+        if any(lock.player == opponent and lock.expires_turn == expires for lock in state.trainer_locks):
+            raise RuntimeError(f"プレイヤー {opponent} に、消える番 {expires} のトレーナーの使用の禁止がすでにある（エンジンの不具合）")
+        lock = TrainerUseLock(player=opponent, source_player=run.player, source_card=run.attacker().card, effect=str(run.key),
+                              created_turn=state.turn_number, expires_turn=expires)
+        state.trainer_locks = state.trainer_locks + (lock,)
+        state.add_event("trainer_lock_added", player=opponent, source_player=run.player, source_card=lock.source_card, effect=lock.effect,
+                        expires_turn=expires)
+        return False
+
+
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
@@ -4594,6 +4727,13 @@ BUILDERS: dict[type, Any] = {
         Damage(OPP, Printed()), ChosenBenchDamages(Fixed(e.bench_damage), e.targets, weakness_resistance=False, exact=True)),
     E.HalveDamageNextTurn: lambda e: (SelfPersistent(HalvedDamage.kind),),
     E.ShuffleHandIntoDeckThenDraw: lambda e: (ShuffleHandThenDraw(e.count),),
+    # v0.47（docs/fossil-hidden-info-v0.47.md）
+    E.ArrangeDeckTopEffect: lambda e: (ArrangeDeckTop(e.max_cards),),
+    E.LookOpponentHandCardToDeck: lambda e: (LookHandCardToDeck(),),
+    E.LockOpponentTrainersNextTurn: lambda e: (LockOpponentTrainers(),),
+    E.DamageThenLockOpponentTrainersOnHeads: lambda e: (Damage(OPP, Printed()), LockOpponentTrainers(local_coin=HEADS)),
+    E.DamagePlusOwnCountersThenSelfDamageOnTails: lambda e: (
+        Damage(OPP, PlusOwnCounters(e.per)), Damage(SELF, Fixed(e.self_damage), name="self_damage", local_gate=TAILS)),
 }
 
 

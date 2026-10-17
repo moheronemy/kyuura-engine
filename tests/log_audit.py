@@ -101,6 +101,17 @@ from kyuura_engine.effects import (
     EntryPower,
     RecoverPokemonFromDiscardOnEntry,
     SearchEvolutionCardToHand,
+    # v0.47（docs/fossil-hidden-info-v0.47.md）
+    ArrangeDeckTopEffect,
+    DamageThenLockOpponentTrainersOnHeads,
+    HalveDamageReceived,
+    LockOpponentTrainersNextTurn,
+    LookOpponentHandCardToDeck,
+    PeekCard,
+    PlayAsPokemon,
+    PreventEvolution,
+    RevealOpponentHand,
+    SwapPrizeWithDeckTop,
     # v0.45（docs/conditional-damage-energy-v0.45.md）
     CoinOpponentDeckTopDiscardTrainerElseHand,
     DamageThenMoveOpponentEnergyToBench,
@@ -224,9 +235,9 @@ POKEMON_FIELDS_SINCE = {
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
-    "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10,
+    "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12,
 }
-LATEST_FORMAT = 11
+LATEST_FORMAT = 12
 
 
 def _project(data_latest: dict, version: int) -> dict:
@@ -266,6 +277,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 10)  # v0.31
     if any(pokemon.attacks_used_once or pokemon.evolution_permission_turn is not None for pokemon in in_play):
         needed = max(needed, 11)  # v0.44
+    if state.trainer_locks:
+        needed = max(needed, 12)  # v0.47
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -294,7 +307,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.44 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.47 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -321,7 +334,7 @@ def _attack_effect_of(state, attack_event: dict | None):
     """ログのワザ（``attack``）の、その対戦の登録表の実装（v0.30）。"""
     if attack_event is None:
         return None
-    entry = state.effects.attack_entry(state.card_def(attack_event["pokemon"]).id, attack_event["attack_index"])
+    entry = state.effects.attack_entry(state.in_play_def(attack_event["pokemon"]).id, attack_event["attack_index"])
     return None if entry is None else entry.effect
 
 
@@ -402,6 +415,11 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
     if isinstance(effect, SearchNamedTrainerOnEntry):
         return kind == "search_deck" and e.get("power") == key and e["player"] == player
+    # v0.47: ［スパイ］は見る処理（look_at_card の power）、［わるふざけ］はサイドと山札の一番上の入れかえ（そのあいだに決定がある）
+    if isinstance(effect, PeekCard):
+        return kind == "look_at_card" and e.get("power") == key and e["player"] == player
+    if isinstance(effect, SwapPrizeWithDeckTop):
+        return kind == "swap_prize_with_deck_top" and e.get("power") == key and e["player"] == player
     return False
 
 
@@ -653,7 +671,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、ワザを使ったポケモンのものでない")
             elements = _discard_elements(program)
             types = {getattr(element, "energy_type", None) for element in elements} if elements else {getattr(effect, "energy_type", None)}
-            definition = state.card_def(e["energy"])
+            definition = state.printed_def(e["energy"])
             if None in types:
                 if definition.category != "energy":
                     problems.append(f"{e['turn']} 番のワザでトラッシュしたカード {e['energy']} が、エネルギーカードでない")
@@ -745,11 +763,15 @@ def log_problems(state) -> list[str]:
     # サイコエクスチェンジ（手札を山札にもどしたあと、切ってから引く）の引く処理（プレイヤー, 枚数の上限, 番）
     active_of: dict[int, int | None] = {0: None, 1: None}
     exchange_due: tuple | None = None
+    # v0.47: ログから組み立てた、期限のあるトレーナーの使用の禁止（(禁止されたプレイヤー, 消える番) → 与えたログ）。みらいよちの見たカード（すぐあとに、その並べかえ
+    # arrange_deck_top が続くはず）
+    trainer_locks_log: dict[tuple[int, int], dict] = {}
+    arrange_due: dict | None = None
 
     def entry_opportunity(uid: int, *, from_hand: bool) -> str | None:
         """v0.43: カード ``uid`` を重ねた進化（手札から ``from_hand``）で、場に出たときの特殊能力を使う機会があるか（その特殊能力の PowerKey の文字列。経路が
         合わない（「手札から」の特殊能力を山札から重ねた）・ログから組み立てた今の場ではたらいている「かがくへんかガス」に消されているなら None）。"""
-        definition = state.card_def(uid)
+        definition = state.in_play_def(uid)
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
             if isinstance(effect, EntryPower):
@@ -762,7 +784,7 @@ def log_problems(state) -> list[str]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
         found = []
         for pid in sorted(in_play):
-            definition = state.card_def(top[pid])
+            definition = state.in_play_def(top[pid])
             for power in definition.powers:
                 effect = state.effects.power_effect(definition.id, power)
                 if isinstance(effect, SuppressOtherPowers) and pid not in exclusive:
@@ -772,7 +794,7 @@ def log_problems(state) -> list[str]:
     def evasion(pid: int, *, blocked: str | None = None) -> tuple[str | None, str | None]:
         """ログから組み立てた今の場の、ポケモン ``pid`` の「とうめい」（v0.9）: (持っている特殊能力の PowerKey の文字列, はたらいて
         いない理由)。持っていなければ (None, None)。``blocked`` はその時点のねむり・マヒ・こんらん（置きかわる直前の値を渡すため）。"""
-        definition = state.card_def(top[pid])
+        definition = state.in_play_def(top[pid])
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
             if isinstance(effect, AttackImmunityOnHeads):
@@ -790,7 +812,7 @@ def log_problems(state) -> list[str]:
         """ログから組み立てた今の場の、ポケモン ``pid`` の「はんげき」（v0.10）・「わるいねぞう」（v0.17b）: (持っている特殊能力の PowerKey の
         文字列, 与える量, はたらいていない理由)。持っていなければ (None, None, None)。ねむり・マヒ・こんらんは、その時点（ダメージを受けるとき）
         の値で、はたらくかは実装の ``works_with`` で決める（はんげきはどれでもないとき、わるいねぞうはねむりのときだけ）。"""
-        definition = state.card_def(top[pid])
+        definition = state.in_play_def(top[pid])
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
             if isinstance(effect, CounterattackDamage):
@@ -806,7 +828,7 @@ def log_problems(state) -> list[str]:
     def guts_power(pid: int) -> tuple[str | None, PreventKnockOutOnHeads | None, object | None]:
         """ログから組み立てた今の場の、ポケモン ``pid`` の「こんじょう」（v0.11）: (持っている特殊能力の PowerKey の文字列, 実装,
         特殊能力の定義)。持っていなければ (None, None, None)。"""
-        definition = state.card_def(top[pid])
+        definition = state.in_play_def(top[pid])
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
             if isinstance(effect, PreventKnockOutOnHeads):
@@ -815,7 +837,7 @@ def log_problems(state) -> list[str]:
 
     def rebirth_power(uid: int) -> tuple[str | None, object | None]:
         """カード ``uid`` の「ふしちょう」（v0.12。``ReturnToHandOnKnockOut``）: (PowerKey の文字列, 特殊能力の定義)。なければ (None, None)。"""
-        definition = state.card_def(uid)
+        definition = state.in_play_def(uid)
         for index, power in enumerate(definition.powers):
             if isinstance(state.effects.power_effect(definition.id, power), ReturnToHandOnKnockOut):
                 return f"{definition.id}@power{index}", power
@@ -838,8 +860,8 @@ def log_problems(state) -> list[str]:
         if not steps or tuple(steps[0]) != ("1 基本となる計算", ret["amount"]):
             found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの基本となるダメージ {steps[:1]} が {ret['amount']} ではない（W14）")
         if pid in top and ret["pokemon_id"] in top:
-            attacker_type = state.card_def(top[ret["pokemon_id"]]).pokemon_type
-            receiver = state.card_def(top[pid])
+            attacker_type = state.in_play_def(top[ret["pokemon_id"]]).pokemon_type
+            receiver = state.in_play_def(top[pid])
             if e["weakness"] != (receiver.weakness is not None and receiver.weakness is attacker_type):
                 found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの弱点 {e['weakness']} が、タイプと弱点に合わない（W15）")
             if e["resistance"] != (receiver.resistance is not None and receiver.resistance is attacker_type):
@@ -894,7 +916,7 @@ def log_problems(state) -> list[str]:
                     and target is None and e["pokemon"] == info["source_card"]):
                 card_id, index = info["effect"].split("#")
                 amount = state.effects.attack_entry(card_id, int(index)).effect.amount
-                expected.append((f"{state.card_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）", "add", -amount, info["source_card"]))
+                expected.append((f"{state.printed_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）", "add", -amount, info["source_card"]))
         steps = [tuple(step) for step in (e.get("steps") or ())]
         # v0.46: 常にはたらく特殊能力の 2 段階の記録（くつろぐかおり・きょうぼう）は continuous_damage_problems が確かめる（ここでは並びの位置だけに数える）
         step2_all = [step for step in steps if str(step[0]).startswith("2 ")]
@@ -946,7 +968,7 @@ def log_problems(state) -> list[str]:
         はたらいているかがくへんかガスで決める（エンジンの ``effects.continuous_powers`` と別に、ログから求める）。"""
         if pid is None or pid not in in_play:
             return []
-        definition = state.card_def(top[pid])
+        definition = state.in_play_def(top[pid])
         found = []
         for index, power in enumerate(definition.powers):
             effect = state.effects.power_effect(definition.id, power)
@@ -975,19 +997,21 @@ def log_problems(state) -> list[str]:
             return expected
         for (effect_pid, _), info in alive.items():
             if effect_pid == receiver_pid and info["kind"] == HalvedDamage.kind and info["active_turn"] == turn_now:
-                expected.append((8, f"{state.card_def(info['source_card']).name_ja}（{HalvedDamage.kind}）", HALVE_DOWN, None, 2, info["source_card"]))
+                expected.append((8, f"{state.printed_def(info['source_card']).name_ja}（{HalvedDamage.kind}）", HALVE_DOWN, None, 2, info["source_card"]))
         attacker_active = is_active(attacker_pid)
         for pid in sorted(in_play, key=lambda q: (pokemon_owner.get(q), not is_active(q), q)):
             for _, effect, power in working_continuous(pid, ContinuousPower, attack_status=attack_status):
-                label, source = f"{state.card_def(top[pid]).name_ja}［{power.name_ja}］", top[pid]
+                label, source = f"{state.in_play_def(top[pid]).name_ja}［{power.name_ja}］", top[pid]
                 if isinstance(effect, ZeroLargeDamageReceived) and pid == receiver_pid:
                     expected.append((8, label, ZERO_IF_AT_LEAST, None, effect.threshold, source))
-                elif isinstance(effect, CapDamageFromBasic) and pid == receiver_pid and state.card_def(top[attacker_pid]).is_basic_pokemon:
+                elif isinstance(effect, CapDamageFromBasic) and pid == receiver_pid and state.in_play_def(top[attacker_pid]).is_basic_pokemon:
                     expected.append((8, label, SET_IF_AT_LEAST, effect.threshold, effect.amount, source))
                 elif isinstance(effect, HalveActiveAttackDamage) and attacker_active:
                     expected.append((2 if pid == attacker_pid else 8 if pid == receiver_pid else 6, label, HALVE_UP, None, 2, source))
                 elif isinstance(effect, BonusDamageWhileConfused) and pid == attacker_pid:
                     expected.append((2, label, ADD, None, effect.amount, source))
+                elif isinstance(effect, HalveDamageReceived) and pid == receiver_pid:
+                    expected.append((8, label, HALVE_DOWN, None, 2, source))  # v0.47: ［カブトアーマー］
         return expected
 
     def continuous_damage_problems(e: dict) -> list[str]:
@@ -1045,11 +1069,15 @@ def log_problems(state) -> list[str]:
         """特殊能力のダメージ（はんげき・わるいねぞう・こっそりかみつく。v0.46）を ``receiver_pid`` が ``source_pid`` から受けるときの、受けるダメージ全体を書く
         常にはたらく特殊能力（なぞのかべ・ふしぎなバリアー）を当てはめた数と記録（(発生源のカード, 計算, しきい値, 数)）。ログから組み立てた場で求める。"""
         applied = []
-        for _, effect, _ in working_continuous(receiver_pid, (ZeroLargeDamageReceived, CapDamageFromBasic)):
-            if isinstance(effect, ZeroLargeDamageReceived):
+        for _, effect, _ in working_continuous(receiver_pid, (ZeroLargeDamageReceived, CapDamageFromBasic, HalveDamageReceived)):
+            if isinstance(effect, HalveDamageReceived):
+                # v0.47: ［カブトアーマー］（半分。切りすて）
+                applied.append((top[receiver_pid], HALVE_DOWN, None, 2))
+                amount = amount if amount <= 0 else amount // state.rules.damage_per_counter // 2 * state.rules.damage_per_counter
+            elif isinstance(effect, ZeroLargeDamageReceived):
                 applied.append((top[receiver_pid], ZERO_IF_AT_LEAST, None, effect.threshold))
                 amount = 0 if amount >= effect.threshold else amount
-            elif source_pid in in_play and state.card_def(top[source_pid]).is_basic_pokemon:
+            elif source_pid in in_play and state.in_play_def(top[source_pid]).is_basic_pokemon:
                 applied.append((top[receiver_pid], SET_IF_AT_LEAST, effect.threshold, effect.amount))
                 amount = effect.amount if amount >= effect.threshold else amount
         return amount, tuple(applied)
@@ -1378,7 +1406,7 @@ def log_problems(state) -> list[str]:
                 )
             if kind == "drain_heal" and attack_window["counter_ko"] == e["pokemon_id"]:
                 problems.append(f"{e['turn']} 番に、「はんげき」できぜつしたポケモン {e['pokemon_id']} のダメージカウンターをとりのぞいた（C16）")
-            if kind == "drain_heal_skipped" and (e["pokemon_id"] not in in_play or damage[e["pokemon_id"]] < state.card_def(top[e["pokemon_id"]]).hp):
+            if kind == "drain_heal_skipped" and (e["pokemon_id"] not in in_play or damage[e["pokemon_id"]] < state.in_play_def(top[e["pokemon_id"]]).hp):
                 problems.append(f"{e['turn']} 番に、きぜつしていないポケモン {e['pokemon_id']} のとりのぞく効果を処理しなかった")
         if kind == "attack":
             for (effect_pid, _), info in alive.items():
@@ -1528,6 +1556,10 @@ def log_problems(state) -> list[str]:
             locked = [pid for pid in sorted(in_play) if working_continuous(pid, PreventTrainerUse)]
             if locked:
                 problems.append(f"{e['turn']} 番に、はたらいているトレーナーカードを使えなくする特殊能力（ポケモン {locked}）があるのに、トレーナー {e['card']} を使った")
+            # v0.47: 期限のあるトレーナーの使用の禁止（ずつう・こうしゅうは。与えた番の次の番から、消える番まで）を受けているプレイヤーは使えない
+            banned = [key for key, info in trainer_locks_log.items() if key[0] == e["player"] and info["turn"] < e["turn"] <= key[1]]
+            if banned:
+                problems.append(f"{e['turn']} 番に、トレーナーの使用を禁止されている（{banned}）プレイヤー {e['player']} が、トレーナー {e['card']} を使った")
             from_hand(e, e["player"], e["card"])
             using_trainer[e["player"]] = e["card"]
         if kind == "place_starting_pokemon":
@@ -1539,9 +1571,13 @@ def log_problems(state) -> list[str]:
             from_hand(e, e["player"], e["card"])
             enter(e["card"])
         elif kind == "evolve":
+            # v0.47: はたらいている［げんしのちから］（場のどこでも。ねむり・マヒ・こんらん・かがくへんかガスで消える）があれば、どの方法でも進化できない。重ねる前の場で求める
+            preventing = [pid for pid in sorted(in_play) if working_continuous(pid, PreventEvolution)]
+            if preventing:
+                problems.append(f"{e['turn']} 番に、はたらいている進化できなくする特殊能力（ポケモン {preventing}）があるのに、ポケモン {e['pokemon_id']} が進化した")
             # v0.25: 通常の進化は「○○○○から進化」の名前が進化前のカードの名前（p.309・p.324）。trainer_card のある進化（ポケモン育て屋さん）は、
             # 使っている最中の 1 進化を飛ばして進化させるトレーナーの効果で、たねポケモンに系統の合う 2 進化カードを重ねた（p.259）
-            below, upper, via = state.card_def(e["from_card"]), state.card_def(e["to_card"]), e.get("trainer_card")
+            below, upper, via = state.in_play_def(e["from_card"]), state.in_play_def(e["to_card"]), e.get("trainer_card")
             if via is None:
                 if upper.evolves_from != below.name_ja:
                     problems.append(f"{e['turn']} 番の進化（{e['from_card']} → {e['to_card']}）で、{upper.name_ja} の進化元 {upper.evolves_from!r} が {below.name_ja} ではない")
@@ -1560,7 +1596,7 @@ def log_problems(state) -> list[str]:
                 if "power" in e:
                     # v0.44: ［うか］（特殊能力）。直前に持ち主の「おもて」のコイン（そのあいだに決定がある）。重ねるのは説明の名前のカード
                     effect = _power_effect(state, e["power"])
-                    valid = isinstance(effect, CoinEvolveSelfFromDeck) and state.card_def(uid).name_ja == effect.name \
+                    valid = isinstance(effect, CoinEvolveSelfFromDeck) and state.printed_def(uid).name_ja == effect.name \
                         and e["power"].partition("@power")[0] == state.cards[e["from_card"]].card_id
                 else:
                     # v0.44: たきのぼりしんか（EvolveSelfFromDeck。ワザを使ったポケモン自身を、説明の名前から進化するカードで進化させる）
@@ -1600,7 +1636,7 @@ def log_problems(state) -> list[str]:
             if target not in in_play:
                 problems.append(f"{e['turn']} 番の「はんげき」を与える相手 {target} が場にいない")
                 continue
-            hp = state.card_def(top[target]).hp
+            hp = state.in_play_def(top[target]).hp
             if kind == "counterattack_skipped":
                 if e["reason"] != "knocked_out" or damage[target] < hp:
                     problems.append(f"{e['turn']} 番に、きぜつしていない相手 {target}（ダメージ {damage[target]}）に「はんげき」を与えなかった（{e['reason']}）")
@@ -1637,7 +1673,7 @@ def log_problems(state) -> list[str]:
             if target not in in_play:
                 problems.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」を与える相手 {target} が場にいない")
                 continue
-            hp = state.card_def(top[target]).hp
+            hp = state.in_play_def(top[target]).hp
             entry = state.effects.attack_entry(*_attack_key(e["effect"]))
             terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
             # v0.45: 倍数とはたらくときのコインのある効果（クロスカウンター）は 4 つの値（v0.44 までの効果は 2 つ）
@@ -1690,11 +1726,11 @@ def log_problems(state) -> list[str]:
         elif kind == "persistent_effect_skipped":
             # v0.12: ワザを使ったポケモンが相手の「はんげき」で HP 以上になったので、自分に与える持続する効果を与えなかった
             pid = e["pokemon_id"]
-            if attack_window is None or pid != attack_window["pokemon_id"] or pid not in in_play or damage[pid] < state.card_def(top[pid]).hp:
+            if attack_window is None or pid != attack_window["pokemon_id"] or pid not in in_play or damage[pid] < state.in_play_def(top[pid]).hp:
                 problems.append(f"{e['turn']} 番に、きぜつしていないポケモン {pid} の持続する効果（{e['persistent_effect']}）を与えなかった")
         elif kind == "return_to_hand":
             # v0.12: 「ふしちょう」でトラッシュから手札に加えたカード（きぜつしたポケモンのカード 1 枚だけ。P22〜P24）
-            if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or state.card_def(e["card"]).category != "pokemon":
+            if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or state.printed_def(e["card"]).category != "pokemon":
                 problems.append(f"{e['turn']} 番に手札に加えたカード {e['card']} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのポケモンのカードにない")
             else:
                 discard[e["player"]].remove(e["card"])
@@ -1712,7 +1748,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の「こんじょう」の {kind}（ポケモン {pid}）が、相手のワザ（「ほのおのかべ」・「こうらがえし」を含む）のダメージを受けた場のポケモンではない（G4・G15）")
                 continue
             gkey, geffect, gpower = guts_power(pid)
-            hp = state.card_def(top[pid]).hp
+            hp = state.in_play_def(top[pid]).hp
             if gkey is None or gkey != e["power"]:
                 problems.append(f"{e['turn']} 番の「こんじょう」の {kind} の特殊能力 {e['power']} が、ポケモン {pid} のいちばん上のカードの「こんじょう」ではない")
                 continue
@@ -1791,7 +1827,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の特殊能力の宣言（ポケモン {e['pokemon_id']}）が、番のプレイヤーの場のポケモンではない")
                 continue
             # v0.8: 宣言した時点の場で、宣言しない特殊能力でないこと・はたらいているかがくへんかガスに消されていないこと
-            definition = state.card_def(top[e["pokemon_id"]])
+            definition = state.in_play_def(top[e["pokemon_id"]])
             power = definition.powers[e["power_index"]] if 0 <= e["power_index"] < len(definition.powers) else None
             if power is None or power.name_ja != e["power"]:
                 problems.append(f"{e['turn']} 番の特殊能力の宣言 {e['power']!r} が、ポケモン {e['pokemon_id']} のいちばん上のカードの特殊能力ではない")
@@ -1808,7 +1844,7 @@ def log_problems(state) -> list[str]:
             continue
         elif kind == "entry_power_declined":
             # v0.43: 場に出たときの特殊能力を使わなかった（使う機会の答え。番のプレイヤーの場のポケモン）
-            definition = state.card_def(top[e["pokemon_id"]]) if e["pokemon_id"] in top else None
+            definition = state.in_play_def(top[e["pokemon_id"]]) if e["pokemon_id"] in top else None
             power = definition.powers[e["power_index"]] if definition is not None and 0 <= e["power_index"] < len(definition.powers) else None
             if power is None or power.name_ja != e["power"] or not isinstance(state.effects.power_effect(definition.id, power), EntryPower) \
                     or e["player"] != turn_player or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
@@ -1824,9 +1860,9 @@ def log_problems(state) -> list[str]:
             else:
                 problems.extend(received_power_problems(e, target, e["pokemon_id"], effect.amount))  # v0.46
                 damage[target] += e["amount"]
-                if damage[target] != e["total_damage"] or (damage[target] >= state.card_def(top[target]).hp) != e["knocked_out"]:
+                if damage[target] != e["total_damage"] or (damage[target] >= state.in_play_def(top[target]).hp) != e["knocked_out"]:
                     problems.append(f"{e['turn']} 番の power_damage のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[target]} と違う")
-                if damage[target] >= state.card_def(top[target]).hp:
+                if damage[target] >= state.in_play_def(top[target]).hp:
                     power_ko_due = target
         elif kind in ("recover_pokemon", "recover_pokemon_none"):
             # v0.43: つりあげる。自分のトラッシュのポケモンのカード（同じカードは 1 回まで・最大 3 枚）を見せて手札に加える。加えるものがないのは、トラッシュに
@@ -1837,10 +1873,10 @@ def log_problems(state) -> list[str]:
             if not isinstance(effect, RecoverPokemonFromDiscardOnEntry) or pokemon_owner.get(e["pokemon_id"]) != player:
                 problems.append(f"{e['turn']} 番の {kind} の特殊能力 {e['power']} が、トラッシュのポケモンのカードを手札に加える特殊能力ではない")
             elif kind == "recover_pokemon_none":
-                if any(state.card_def(uid).category == "pokemon" for uid in discard[player]):
+                if any(state.printed_def(uid).category == "pokemon" for uid in discard[player]):
                     problems.append(f"{e['turn']} 番の recover_pokemon_none のとき、ログから組み立てたトラッシュにポケモンのカードがある")
             elif not 1 <= len(cards) <= effect.max_cards or len(set(cards)) != len(cards) or any(
-                    uid not in discard[player] or owner.get(uid) != player or state.card_def(uid).category != "pokemon" for uid in cards):
+                    uid not in discard[player] or owner.get(uid) != player or state.printed_def(uid).category != "pokemon" for uid in cards):
                 problems.append(f"{e['turn']} 番に手札に加えたカード {cards} が、ログから組み立てたトラッシュのポケモンのカード（最大 {effect.max_cards} 枚）ではない")
             else:
                 for uid in cards:
@@ -1860,7 +1896,7 @@ def log_problems(state) -> list[str]:
             heads = prior is not None and prior["kind"] == "coin_flip" and prior["source"] == "attack" and prior["result"] == "heads"
             if not isinstance(effect, AttachEnergyFromHandOnHeads) or e["pokemon_id"] != attack_window["pokemon_id"] or e["player"] != attack_window["player"] \
                     or not heads or not 1 <= len(cards) <= effect.max_cards or len(set(cards)) != len(cards) \
-                    or any(not state.card_def(uid).is_basic_energy or state.card_def(uid).provides is not effect.energy_type for uid in cards):
+                    or any(not state.printed_def(uid).is_basic_energy or state.printed_def(uid).provides is not effect.energy_type for uid in cards):
                 problems.append(f"{e['turn']} 番の attach_energy_from_hand（{cards}）が、コインの「おもて」のあとに手札の基本エネルギーカードをつけるワザの処理と合わない")
             for uid in cards:
                 from_hand(e, e["player"], uid)
@@ -1898,7 +1934,7 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番のようぶんきゅうしゅう（ポケモン {e['pokemon_id']}）で、1 回に {moving[4]} 枚つけかえた")
             source, target = e["from_pokemon_id"], e["to_pokemon_id"]
             if isinstance(effect, (TakeEnergyToSelf, TakeEnergiesToSelf, ChargeBenchEnergyToSelf)) and (
-                    target != e["pokemon_id"] or not state.card_def(e["energy"]).is_basic_energy or state.card_def(e["energy"]).provides is not effect.energy_type):
+                    target != e["pokemon_id"] or not state.printed_def(e["energy"]).is_basic_energy or state.printed_def(e["energy"]).provides is not effect.energy_type):
                 # v0.43: つける先は特殊能力を使ったポケモン（このカード）。つけかえるのは登録のタイプの基本エネルギーカード
                 problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']}（{source} → {target}）が、特殊能力 {e.get('power')} のつけかえ（このカードに・"
                                 "登録のタイプの基本エネルギーカード）ではない")
@@ -1927,9 +1963,9 @@ def log_problems(state) -> list[str]:
             if effect is None or not hasattr(effect, "energy_type"):
                 problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} の特殊能力 {e['power']} が、手札からつける特殊能力として登録されていない")
             else:
-                if state.card_def(e["energy"]).provides is not effect.energy_type:
+                if state.printed_def(e["energy"]).provides is not effect.energy_type:
                     problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} が「{effect.energy_type.ja}」エネルギーではない")
-                if state.card_def(top[target]).pokemon_type is not effect.pokemon_type:
+                if state.in_play_def(top[target]).pokemon_type is not effect.pokemon_type:
                     problems.append(f"{e['turn']} 番の手札からのエネルギー {e['energy']} のつける先 {target} が「{effect.pokemon_type.ja}」ポケモンではない")
         elif kind == "move_damage_counter":
             # v0.7: 特殊能力（ダメージスワップ）で、自分の場のポケモンのダメージカウンターを、自分の場の別のポケモンへ（1 回に 1 個）
@@ -1966,7 +2002,7 @@ def log_problems(state) -> list[str]:
                     f"{e['turn']} 番のダメージカウンターの移動のあとのダメージ {(e['from_total_damage'], e['to_total_damage'])} が、ログから"
                     f"組み立てた {(damage[source], damage[target])} と違う"
                 )
-            if damage[target] >= state.card_def(top[target]).hp:
+            if damage[target] >= state.in_play_def(top[target]).hp:
                 if isinstance(effect, MoveOpponentDamageCounter):
                     power_ko_due = target  # v0.42: のろいのあとの「きぜつ」（すぐあとに timing power のきぜつ）
                 else:
@@ -1984,7 +2020,7 @@ def log_problems(state) -> list[str]:
             if attack_window is None or e["pokemon_id"] != attack_window["pokemon_id"] or e["player"] != attack_window["player"]:
                 problems.append(f"{e['turn']} 番のトラッシュから手札に加えたエネルギー {e['cards']} が、そのポケモンのワザの処理の中にない")
             for uid in e["cards"]:
-                if uid not in discard[e["player"]] or state.card_def(uid).category != "energy":
+                if uid not in discard[e["player"]] or state.printed_def(uid).category != "energy":
                     problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのエネルギーカードにない")
                     continue
                 discard[e["player"]].remove(uid)
@@ -1993,7 +2029,7 @@ def log_problems(state) -> list[str]:
             pid = e["pokemon_id"] if kind == "retreat_failed" else ids[e["old_active"]]
             # v0.46: トラッシュしたエネルギーの数は、印刷の数に、ログから組み立てた場ではたらく［ねんちゃくえき］（相手のバトル場。決まって増やす）・［にげるサポート］
             # （自分のベンチ。少なくできる）を当てはめた範囲（最後に 0 で下限）。少なくしてから 0 で止める読み方と答えが変わる数は CP2 で止まる
-            printed = state.card_def(top[pid]).retreat_cost
+            printed = state.in_play_def(top[pid]).retreat_cost
             increases = sorted((hpid, key, eff.amount) for hpid in in_play if pokemon_owner.get(hpid) != e["player"]
                                for key, eff, _ in working_continuous(hpid, IncreaseOpponentActiveRetreatCost))
             reductions = sorted((hpid, key, eff.amount) for hpid in in_play if pokemon_owner.get(hpid) == e["player"]
@@ -2047,7 +2083,7 @@ def log_problems(state) -> list[str]:
             if not 1 <= len(e["cards"]) <= 2 or len(set(e["cards"])) != len(e["cards"]):
                 problems.append(f"{e['turn']} 番にトラッシュから手札に加えた基本エネルギーカード {e['cards']} の枚数・重複が合わない")
             for uid in e["cards"]:
-                if uid not in discard[e["player"]] or owner.get(uid) != e["player"] or not state.card_def(uid).is_basic_energy:
+                if uid not in discard[e["player"]] or owner.get(uid) != e["player"] or not state.printed_def(uid).is_basic_energy:
                     problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
                     continue
                 if uid in trainer_discarded[e["player"]]:
@@ -2057,14 +2093,14 @@ def log_problems(state) -> list[str]:
         elif kind == "return_to_deck":
             # v0.24: トレーナー（ポケモン交換おじさん）の使うための条件で、手札のたねポケモン・進化カードを相手に見せてから山札にもどす（p.259）
             uid = e["card"]
-            if owner.get(uid) != e["player"] or not (state.card_def(uid).is_basic_pokemon or state.card_def(uid).is_evolution_pokemon):
+            if owner.get(uid) != e["player"] or not (state.printed_def(uid).is_basic_pokemon or state.printed_def(uid).is_evolution_pokemon):
                 problems.append(f"{e['turn']} 番に山札にもどしたカード {uid} が、プレイヤー {e['player']} のたねポケモン・進化カードではない")
             from_hand(e, e["player"], uid)
         elif kind == "reveal_from_deck":
             # v0.24: トレーナー（ポケモン交換おじさん）の効果で、山札のたねポケモン・進化カードを相手に見せてから手札に加える（p.259。山札に
             # もどしたカードを選んでもよい）
             uid = e["card"]
-            definition = state.card_def(uid)
+            definition = state.printed_def(uid)
             # v0.44: おつかい（SearchTrainerOnHeads）はトレーナーカード、てじな（ReturnHandThenRevealBasicEnergy）は基本エネルギーカードを見せて手札に加える
             revealer = _effect_of_event(state, e) if "effect" in e else None
             if isinstance(revealer, SearchTrainerOnHeads):
@@ -2078,7 +2114,7 @@ def log_problems(state) -> list[str]:
                                 "（おつかいならトレーナー、てじななら基本エネルギーカード）ではない")
             if "power" in e:
                 # v0.43: しんかのひかり。山札の進化カードを見せて手札に加え、すぐあとに山札を切る
-                if not isinstance(_power_effect(state, e["power"]), SearchEvolutionCardToHand) or not state.card_def(uid).is_evolution_pokemon:
+                if not isinstance(_power_effect(state, e["power"]), SearchEvolutionCardToHand) or not state.printed_def(uid).is_evolution_pokemon:
                     problems.append(f"{e['turn']} 番に特殊能力 {e['power']} で山札から見せて手札に加えたカード {uid} が、しんかのひかりの進化カードではない")
                 shuffle_due = e
             hand[e["player"]].append(uid)
@@ -2090,7 +2126,7 @@ def log_problems(state) -> list[str]:
             if "power" in e:
                 # v0.44: ［ボスをよぶ］。山札の説明の名前のトレーナーカードを手札に加え、すぐあとに山札を切る
                 effect = _power_effect(state, e["power"])
-                if not isinstance(effect, SearchNamedTrainerOnEntry) or state.card_def(uid).name_ja != effect.name or state.card_def(uid).category != "trainer":
+                if not isinstance(effect, SearchNamedTrainerOnEntry) or state.printed_def(uid).name_ja != effect.name or state.printed_def(uid).category != "trainer":
                     problems.append(f"{e['turn']} 番に特殊能力 {e['power']} で山札から手札に加えたカード {uid} が、説明の名前のトレーナーカードではない")
                 shuffle_due = e
             hand[e["player"]].append(uid)
@@ -2101,7 +2137,7 @@ def log_problems(state) -> list[str]:
             effect = None if entry is None else entry.effect
             if not isinstance(effect, EvolutionPermissionForOwnerPokemon) or using_trainer.get(e["player"]) != e["trainer"] or e["player"] != turn_player \
                     or pid not in in_play or pokemon_owner.get(pid) != e["player"] or ids.get(e["pokemon"]) != pid \
-                    or not state.card_def(e["pokemon"]).name_ja.startswith(f"{effect.owner}の") or e["turn"] <= 2 or (pid, e["turn"]) in permitted:
+                    or not state.in_play_def(e["pokemon"]).name_ja.startswith(f"{effect.owner}の") or e["turn"] <= 2 or (pid, e["turn"]) in permitted:
                 problems.append(f"{e['turn']} 番のサカキの許可（ポケモン {pid}）が、使っている最中のサカキの効果・自分の場のサカキのポケモンのものではない")
             permitted.add((pid, e["turn"]))
         elif kind == "once_attack_recorded":
@@ -2114,6 +2150,14 @@ def log_problems(state) -> list[str]:
             if (pid, e["pokemon"], e["attack_index"]) in once_used:
                 problems.append(f"{e['turn']} 番に、場のポケモン {pid} が 1 度しか使えないワザ {e['attack_index']} をもう一度使った")
             once_used.add((pid, e["pokemon"], e["attack_index"]))
+        elif kind == "hand_to_deck" and isinstance(_effect_of_event(state, e), LookOpponentHandCardToDeck):
+            # v0.47: おどろかす。見た相手の手札の 1 枚（直前の look_at_card）を、相手が山札にもどし（見せない）、すぐあとに相手の山札を切る
+            if not _same_attack(attack_window, e) or e["player"] != 1 - attack_window["player"] or prior is None or prior["kind"] != "look_at_card" \
+                    or tuple(e["cards"]) != (prior["card"],) or prior["owner"] != e["player"]:
+                problems.append(f"{e['turn']} 番のおどろかすで山札にもどしたカード {e['cards']} が、直前に見た相手の手札のカードではない")
+            for uid in e["cards"]:
+                from_hand(e, e["player"], uid)
+            shuffle_due = e
         elif kind == "hand_to_deck":
             # v0.44: てじな・ラッキーたまご。ワザを使ったプレイヤーの手札のカードを、見せずに山札にもどす（cards は手札の並びの順。山札は組み立て直さない）
             if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] \
@@ -2139,7 +2183,7 @@ def log_problems(state) -> list[str]:
             source, target, uid = e["pokemon_id"], e["to_pokemon_id"], e["energy"]
             if not _same_attack(attack_window, e) or e["attacker"] != attack_window["player"] or e["player"] == e["attacker"] \
                     or not isinstance(_effect_of_event(state, e), DamageThenMoveOpponentEnergyToBench) or uid not in energy.get(source, ()) \
-                    or not state.card_def(uid).is_basic_energy or owner.get(uid) != e["player"] or pokemon_owner.get(target) != e["player"] \
+                    or not state.printed_def(uid).is_basic_energy or owner.get(uid) != e["player"] or pokemon_owner.get(target) != e["player"] \
                     or target == source or target not in in_play or e["result"] not in ("attached", "evaded"):
                 problems.append(f"{e['turn']} 番のじりょくせんのエネルギー {uid}（{source} → {target}）が、そのワザの処理のものではない")
             else:
@@ -2154,7 +2198,7 @@ def log_problems(state) -> list[str]:
             # v0.45: てつだうふり。相手の山札の一番上のカードを、トレーナーなら相手のトラッシュ、それ以外なら相手の手札へ（カードを引くことではない。山札は組み立て
             # 直さない）。見たのはワザを使ったプレイヤー
             uid = e["card"]
-            expected = "discard" if state.card_def(uid).category == "trainer" else "hand"
+            expected = "discard" if state.printed_def(uid).category == "trainer" else "hand"
             if not _same_attack(attack_window, e) or e["looker"] != attack_window["player"] or e["player"] == e["looker"] \
                     or not isinstance(_effect_of_event(state, e), CoinOpponentDeckTopDiscardTrainerElseHand) or owner.get(uid) != e["player"] \
                     or e["destination"] != expected:
@@ -2173,6 +2217,83 @@ def log_problems(state) -> list[str]:
             discard[e["player"]].append(e["card"])
             trainer_discarded[e["player"]] = ()
             using_trainer[e["player"]] = None
+        elif kind == "play_trainer_as_pokemon":
+            # v0.47: なにかの化石・ピッピ人形。使っている最中のこのカード（play_trainer のすぐあと）を、トラッシュせずにベンチにポケモンとして出す
+            card = e["card"]
+            entry = state.effects.trainer_entry(state.cards[card].card_id) if card in state.cards else None
+            if using_trainer.get(e["player"]) != card or entry is None or not isinstance(entry.effect, PlayAsPokemon) or prior is None \
+                    or prior["kind"] != "play_trainer" or prior["card"] != card or owner.get(card) != e["player"]:
+                problems.append(f"{e['turn']} 番にポケモンとして場に出したカード {card} が、使っている最中のポケモンとして場に出せるトレーナーカードではない")
+            using_trainer[e["player"]] = None
+            enter(card)
+            if ids[card] != e["pokemon_id"]:
+                problems.append(f"{e['turn']} 番にポケモンとして場に出したカード {card} の場のポケモンの番号 {e['pokemon_id']} が、ログの順番の番号 {ids[card]} と違う")
+        elif kind == "discard_from_play":
+            # v0.47: なにかの化石・ピッピ人形（進化カードがのっていない）を、自分の番に、ついているカードといっしょにトラッシュする（きぜつではない）
+            pid = e["pokemon_id"]
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or ids.get(e["pokemon"]) != pid or e["player"] != turn_player \
+                    or state.in_play_def(e["pokemon"]).play_role is None or evolve_turns.get(pid):
+                problems.append(f"{e['turn']} 番にトラッシュした場のポケモン {pid} が、自分の番の、すてられる場での役割のカード（進化していない）ではない")
+            if sorted(e["energy"]) != sorted(energy.get(pid, [])) or e["damage"] != damage[pid] \
+                    or tuple(e["cards"]) != (e["pokemon"], *e["energy"], *e["trainers"]):
+                problems.append(f"{e['turn']} 番にトラッシュした場のポケモン {pid} のカード {e['cards']}・ダメージ {e['damage']} が、ログの組み立てと違う")
+            in_play.discard(pid)
+            exclusive.pop(pid, None)
+            poisoned.pop(pid, None)
+            energy[pid] = []
+            damage[pid] = 0
+            discard[e["player"]].extend((e["pokemon"], *e["energy"]))
+            for uid in e["trainers"]:
+                discard[owner[uid]].append(uid)
+            if active_of.get(e["player"]) == pid:
+                active_of[e["player"]] = None
+        elif kind == "trainer_lock_added":
+            # v0.47: ずつう・こうしゅうは。ワザを使ったプレイヤーの相手に、次の相手の番の終わりまでの使用の禁止を与える（同じ番に 2 つは与えない）
+            if not _same_attack(attack_window, e) or e["source_player"] != attack_window["player"] or e["player"] != 1 - e["source_player"] \
+                    or not isinstance(_effect_of_event(state, e), (LockOpponentTrainersNextTurn, DamageThenLockOpponentTrainersOnHeads)) \
+                    or e["expires_turn"] != e["turn"] + 1 or (e["player"], e["expires_turn"]) in trainer_locks_log:
+                problems.append(f"{e['turn']} 番のトレーナーの使用の禁止（プレイヤー {e['player']}・{e['expires_turn']} 番まで）が、そのワザの処理のものではない")
+            trainer_locks_log[(e["player"], e["expires_turn"])] = e
+        elif kind == "trainer_lock_removed":
+            info = trainer_locks_log.pop((e["player"], e["expires_turn"]), None)
+            if info is None or e["reason"] != "expired" or e["turn"] != e["expires_turn"] or e["created_turn"] != info["turn"] \
+                    or e["source_player"] != info["source_player"] or e["effect"] != info["effect"]:
+                problems.append(f"{e['turn']} 番に消したトレーナーの使用の禁止（プレイヤー {e['player']}・{e['expires_turn']} 番まで）が、与えた禁止の期限と合わない")
+        elif kind == "look_at_card":
+            # v0.47: ［スパイ］（使ったプレイヤーの番。どちらかの山札の一番上・どちらかのサイド・相手の手札）・おどろかす（相手の手札）。カードは動かない
+            zone, holder, card = e["zone"], e["owner"], e["card"]
+            if "power" in e:
+                valid = isinstance(_power_effect(state, e["power"]), PeekCard) and e["player"] == turn_player and (zone != "hand" or holder != e["player"]) \
+                    and (zone != "deck" or e["position"] == 0)
+            else:
+                valid = _same_attack(attack_window, e) and e["player"] == attack_window["player"] and holder == 1 - e["player"] and zone == "hand" \
+                    and isinstance(_effect_of_event(state, e), LookOpponentHandCardToDeck)
+            where = hand[holder] if zone == "hand" else None
+            if not valid or owner.get(card) != holder or (where is not None and card not in where) \
+                    or (where is None and (card in hand[holder] or card in discard[holder])):
+                problems.append(f"{e['turn']} 番に見たカード {card}（プレイヤー {holder} の {zone}）が、その特殊能力・ワザで見られるカードではない")
+        elif kind in ("look_at_deck_top", "look_at_deck_top_none"):
+            # v0.47: みらいよち。ワザを使ったプレイヤーが、自分または相手の山札の上から見る（相手には見せない）
+            effect = _effect_of_event(state, e)
+            if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or not isinstance(effect, ArrangeDeckTopEffect) \
+                    or e["owner"] not in (0, 1):
+                problems.append(f"{e['turn']} 番の {kind} が、山札の上を見て並べかえるワザの処理ではない")
+            elif kind == "look_at_deck_top":
+                if not 1 <= e["count"] <= effect.max_cards or len(e["cards"]) != e["count"] or len(set(e["cards"])) != e["count"] \
+                        or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
+                    problems.append(f"{e['turn']} 番のみらいよちで見たカード {e['cards']}（{e['count']} 枚）が、プレイヤー {e['owner']} の山札の上の {effect.max_cards} 枚までではない")
+                arrange_due = e
+        elif kind == "arrange_deck_top":
+            if arrange_due is None or prior is not arrange_due or (e["player"], e["owner"], e["effect"], e["count"]) \
+                    != (arrange_due["player"], arrange_due["owner"], arrange_due["effect"], arrange_due["count"]) \
+                    or sorted(e["cards"]) != sorted(arrange_due["cards"]):
+                problems.append(f"{e['turn']} 番のみらいよちでもどした並び {e['cards']} が、すぐ前に見たカードの並べかえではない")
+            arrange_due = None
+        elif kind == "swap_prize_with_deck_top":
+            # v0.47: ［わるふざけ］。自分のサイドの位置と山札の一番上を入れかえる（どちらも見ない）
+            if not isinstance(_power_effect(state, e["power"]), SwapPrizeWithDeckTop) or e["player"] != turn_player \
+                    or not 0 <= e["prize_position"] < state.rules.prize_count - prizes_taken[e["player"]]:
+                problems.append(f"{e['turn']} 番のサイドと山札の一番上の入れかえ（位置 {e['prize_position']}）が、その特殊能力の処理ではない")
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
         elif kind == "energy_burn":
@@ -2195,7 +2316,7 @@ def log_problems(state) -> list[str]:
             entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
             if "trigger" in e:
                 if entry is None or not isinstance(entry.effect, HealOnEnergyAttach) or e["trigger"] not in energy.get(pid, []) \
-                        or state.card_def(e["trigger"]).provides is not entry.effect.energy_type:
+                        or state.printed_def(e["trigger"]).provides is not entry.effect.energy_type:
                     problems.append(f"{e['turn']} 番の power_heal（ポケモン {pid}）が、ついた {e['trigger']} でとりのぞく特殊能力の処理ではない")
                 if pid in exclusive:
                     problems.append(f"{e['turn']} 番に、{exclusive[pid]} のポケモン {pid} の「ほのおでかいふく」がはたらいた")
@@ -2224,7 +2345,7 @@ def log_problems(state) -> list[str]:
             # v0.43: てしたをよぶ（場に出たときの特殊能力）。自分の山札のたねポケモンを、手札を通さずにベンチに出す（最大 2 枚。続けて出し、そのあとに山札を切る）
             effect = _power_effect(state, e["power"])
             uid = e["card"]
-            definition = state.card_def(uid)
+            definition = state.printed_def(uid)
             if not isinstance(effect, BenchBasicsFromDeckOnEntry) or pokemon_owner.get(e["pokemon_id"]) != e["player"] or owner.get(uid) != e["player"] \
                     or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids or not definition.is_basic_pokemon:
                 problems.append(f"{e['turn']} 番に特殊能力 {e['power']} でベンチに出したカード {uid} が、プレイヤー {e['player']} の山札のたねポケモンではない")
@@ -2249,7 +2370,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の {kind} が、山札からベンチに出すワザ（登録の名前・タイプ）の処理の中にない")
             if kind == "bench_from_deck":
                 uid = e["card"]
-                definition = state.card_def(uid)
+                definition = state.printed_def(uid)
                 if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids \
                         or not definition.is_basic_pokemon or (names is not None and definition.name_ja not in names) \
                         or (pokemon_type is not None and definition.pokemon_type is not pokemon_type) \
@@ -2293,7 +2414,7 @@ def log_problems(state) -> list[str]:
             effect = _effect_of_event(state, e) if attack_window is not None else None
             if isinstance(effect, PlaceCountersToRemainingHpOnHeads):
                 # v0.42: ライフダウン。相手の対戦ポケモンの残り HP が登録の数になるまで（ダメージではない）
-                hp = state.card_def(top[pid]).hp if pid in top else 0
+                hp = state.in_play_def(top[pid]).hp if pid in top else 0
                 if pid not in in_play or pokemon_owner.get(pid) != e["player"] or e["player"] == attack_window["player"] or e["damage_before"] != damage[pid] \
                         or e["total_damage"] != hp - effect.remaining or e["amount"] != e["counters"] * state.rules.damage_per_counter or e["counters"] <= 0:
                     problems.append(f"{e['turn']} 番の place_damage_counters（ポケモン {pid}）が、残り HP を {effect.remaining} にするライフダウンの処理と合わない")
@@ -2324,7 +2445,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）が、山札からエネルギーをつけるワザの処理の中にない")
             elif kind == "attach_energy_from_deck":
                 uid = e["card"]
-                definition = state.card_def(uid)
+                definition = state.printed_def(uid)
                 if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not definition.is_basic_energy \
                         or definition.provides is not effect.energy_type:
                     problems.append(f"{e['turn']} 番に山札からつけたカード {uid} が、プレイヤー {e['player']} の山札の「{effect.energy_type.ja}」の基本エネルギーカードではない")
@@ -2383,13 +2504,13 @@ def log_problems(state) -> list[str]:
                     or pokemon_owner.get(holder) != e["player"] or e["player"] == e["attacker"] or not isinstance(effect, ConfuseDamageSourceOnHeads) \
                     or state.cards[top[holder]].card_id != e["power"].partition("@")[0] or holder not in attack_window.get("damaged", set()):
                 problems.append(f"{e['turn']} 番の {kind}（ポケモン {holder}）が、相手のワザのダメージを受けた「ぼうぎょかふん」のポケモンの処理ではない")
-            definition = state.card_def(top[holder]) if holder in top else None
+            definition = state.in_play_def(top[holder]) if holder in top else None
             power = next((pw for pw in definition.powers if f"{definition.id}@power{definition.powers.index(pw)}" == e["power"]), None) if definition else None
             if power is not None and [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(power)]:
                 problems.append(f"{e['turn']} 番に、かがくへんかガスに消されている「ぼうぎょかふん」（ポケモン {holder}）がはたらいた")
             target = e["attacker_pokemon_id"]
             if kind == "power_confusion_skipped":
-                if e["reason"] != "knocked_out" or target not in in_play or damage[target] < state.card_def(top[target]).hp:
+                if e["reason"] != "knocked_out" or target not in in_play or damage[target] < state.in_play_def(top[target]).hp:
                     problems.append(f"{e['turn']} 番に、きぜつしていない相手 {target} に「ぼうぎょかふん」がはたらかなかった（{e['reason']}）")
             else:
                 coin = prior or {}
@@ -2410,7 +2531,7 @@ def log_problems(state) -> list[str]:
         elif kind == "recover_trainer":
             # v0.31: ワザ（ゴミあさり）で、ワザを使ったプレイヤーのトラッシュのトレーナーカード 1 枚を手札に加える
             uid = e["card"]
-            if uid not in discard[e["player"]] or state.card_def(uid).category != "trainer":
+            if uid not in discard[e["player"]] or state.printed_def(uid).category != "trainer":
                 problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュのトレーナーカードにない")
             else:
                 discard[e["player"]].remove(uid)
@@ -2421,7 +2542,7 @@ def log_problems(state) -> list[str]:
             if not 1 <= len(e["cards"]) <= 2 or attack_window is None or pid != attack_window["pokemon_id"]:
                 problems.append(f"{e['turn']} 番のトラッシュからつけたエネルギー {e['cards']} の枚数・ポケモンが合わない")
             for uid in e["cards"]:
-                if uid not in discard[e["player"]] or not state.card_def(uid).is_basic_energy:
+                if uid not in discard[e["player"]] or not state.printed_def(uid).is_basic_energy:
                     problems.append(f"{e['turn']} 番につけたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュの基本エネルギーカードにない")
                     continue
                 discard[e["player"]].remove(uid)
@@ -2444,7 +2565,7 @@ def log_problems(state) -> list[str]:
                 discard[e["player"]].append(uid)
         elif kind == "destiny_bond":
             # v0.31: 「みちづれ」の効果のポケモンがきぜつしたので、相手の対戦ポケモンもきぜつする（ダメージではない）
-            if e["pokemon_id"] in in_play and damage[e["pokemon_id"]] < state.card_def(top[e["pokemon_id"]]).hp:
+            if e["pokemon_id"] in in_play and damage[e["pokemon_id"]] < state.in_play_def(top[e["pokemon_id"]]).hp:
                 problems.append(f"{e['turn']} 番の「みちづれ」（ポケモン {e['pokemon_id']}）が、きぜつしていないポケモンの効果ではたらいた")
             destiny_knocked.add(e["target_pokemon_id"])
         elif kind == "return_in_play_to_deck":
@@ -2504,7 +2625,7 @@ def log_problems(state) -> list[str]:
                             f"{e['turn']} 番に「こんじょう」を使えるポケモン {pid} が、使うかの決定（ko_prevention_declined・ko_prevention_declared）"
                             "がないまま、きぜつした（G10・A4）"
                         )
-            if damage[pid] < state.card_def(e["pokemon"]).hp and pid not in destiny_knocked:
+            if damage[pid] < state.in_play_def(e["pokemon"]).hp and pid not in destiny_knocked:
                 problems.append(f"場のポケモン {pid} が、ログから組み立てたダメージ {damage[pid]}（HP 未満）できぜつした")
             destiny_knocked.discard(pid)
             rkey, rpower = rebirth_power(e["pokemon"])
@@ -2515,7 +2636,13 @@ def log_problems(state) -> list[str]:
                 rebirth_pending.append({"card": e["pokemon"], "player": e["player"], "power": rkey, "turn": e["turn"], "blocked": blocked})
             in_play.discard(pid)
             exclusive.pop(pid, None)
-            knocked[e["player"]] += 1
+            # v0.47: いちばん上がなにかの化石・ピッピ人形（場での役割のあるカード。進化カードがのっていない）の「きぜつ」はカウントされない（counted False。相手は
+            # サイドを取らない）。ほかのきぜつは今までどおり（counted を書かない）
+            counted = state.in_play_def(e["pokemon"]).play_role is None
+            if e.get("counted", True) != counted or ("counted" in e and counted):
+                problems.append(f"{e['turn']} 番のきぜつ（ポケモン {pid}）の counted {e.get('counted')!r} が、いちばん上のカードの場での役割と合わない")
+            if counted:
+                knocked[e["player"]] += 1
             discard[e["player"]].extend([*e.get("evolution_stack", ()), e["pokemon"], *e["discarded_energy"]])
             if sorted(e["discarded_energy"]) != sorted(energy.get(pid, [])):
                 problems.append(f"きぜつしたポケモン {pid} のトラッシュしたエネルギー {e['discarded_energy']} がログの組み立てと違う")
@@ -2557,7 +2684,13 @@ def log_problems(state) -> list[str]:
             if info is not None and e["reason"] == "expired" and info["until"] != info["active_turn"] \
                     and (prior is None or prior["kind"] not in ("turn_start", "persistent_effect_removed")):
                 problems.append(f"{e['turn']} 番に、番の始めに消える持続する効果（ポケモン {e['pokemon_id']}）が、番の始め（turn_start のすぐあと）以外で消えた")
+        if arrange_due is not None and kind != "arrange_deck_top" and prior is arrange_due:
+            problems.append(f"{arrange_due['turn']} 番のみらいよちで見たカードのすぐあとに、その並べかえ（arrange_deck_top）がない（{kind}）")
+            arrange_due = None
         if kind == "turn_end":
+            for (locked_player, expires), info in trainer_locks_log.items():
+                if expires <= e["turn"]:
+                    problems.append(f"{e['turn']} 番の終わり（turn_end）に、{expires} 番までのトレーナーの使用の禁止（プレイヤー {locked_player}）が残っている")
             for (pid, created), info in alive.items():
                 if info["until"] <= e["turn"]:
                     problems.append(f"{e['turn']} 番の終わり（turn_end）に、はたらく番 {info['active_turn']} の持続する効果（ポケモン {pid}・{created} 番）が残っている")
@@ -2634,6 +2767,11 @@ def log_problems(state) -> list[str]:
         problems.append("ログから組み立てた場のポケモンが状態と違う")
     if len(set(taken_cards)) != len(taken_cards):
         problems.append("同じサイドのカードを 2 回取った")
+    # v0.47: 状態の期限のあるトレーナーの使用の禁止が、ログで与えてまだ消していない禁止と同じ
+    if {(lock.player, lock.expires_turn) for lock in state.trainer_locks} != set(trainer_locks_log):
+        problems.append(f"状態のトレーナーの使用の禁止 {state.trainer_locks} が、ログから組み立てた {sorted(trainer_locks_log)} と違う")
+    if arrange_due is not None and not (state.decision is not None and state.decision.kind == "arrange_deck_top"):
+        problems.append(f"{arrange_due['turn']} 番のみらいよちで見たカードの並べかえも、その決定もない（ログの最後）")
     for p in state.players:
         for pokemon in p.in_play():
             # v0.44: 状態の 1 度だけ使えるワザの記録・サカキの許可が、ログの記録と同じ
@@ -2666,4 +2804,98 @@ def log_problems(state) -> list[str]:
             problems.append(f"持続する効果 {key} が、消したログがないのに状態にない")
         if not alive and key in remaining:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
+    return problems
+
+
+def _card_values(node, found: set) -> set:
+    """観測（辞書・並び）の中の、カードの項目（``"card"``）の値（カードの uid）をすべて集める（v0.47）。"""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "card" and isinstance(value, int):
+                found.add(value)
+            else:
+                _card_values(value, found)
+    elif isinstance(node, (list, tuple)):
+        for value in node:
+            _card_values(value, found)
+    return found
+
+
+def _sees_private(event: dict, viewer) -> bool:
+    """v0.47: 見えない項目のあるログのイベントで、その項目が ``viewer`` に見えてよいか（observation.PRIVATE_FIELDS とは別に、イベントの意味から書き直した規則）。"""
+    kind = event["kind"]
+    if kind == "game_created":
+        return False  # seed から山札の並び・コインがわかる
+    if kind == "look_at_card":
+        return viewer is not None and (viewer == event["player"] or (event["zone"] == "hand" and viewer == event["owner"]))
+    if kind == "take_deck_top":
+        return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
+    return viewer is not None and viewer == event.get("player")
+
+
+def observation_problems(state) -> list[str]:
+    """v0.47: プレイヤー（と観戦者）に渡す観測（``observation.observe``・``visible_log``。docs/fossil-hidden-info-v0.47.md 5 章）が、その人が見てよい情報だけを渡すか。
+
+    - 手札: 持ち主か、相手の［おみとおし］がはたらいているとき（エンジンの ``hand_revealed_by`` とは別に、場のいちばん上のカード・ねむり・マヒ・こんらん・かがくへんかガス
+      から求める）だけカードが見え、ほかは枚数だけ。山札・サイドは枚数だけ
+    - 観測のどこにも、見えないカード（山札・サイド・見えない手札）の uid がない（uid の付け方からカードがわかる）。対戦準備のポケモンは表にするまで持ち主にだけ見える
+    - 保留中の決定の選べるものは決めるプレイヤーだけに渡し、見えないカードの uid は、決めるプレイヤーが効果で見ている山札（``DECK_REVEALING_KINDS``）のときだけ
+    - ログの写し: 見えない項目は、イベントの意味から決めた見てよい人（``_sees_private``）だけに残り、ほかには ``hidden`` に名前だけ。ほかのイベントは内部の記録と同じ
+    """
+    from kyuura_engine.continuous import suppressors_of
+    from kyuura_engine.observation import DECK_REVEALING_KINDS, OPTION_MEANINGS, PRIVATE_FIELDS, observe, visible_log
+
+    problems: list[str] = []
+    revealed = {0: False, 1: False}
+    for owner, p in enumerate(state.players):
+        for pokemon in p.in_play():
+            definition = state.card_def(pokemon.card)
+            for power in definition.powers:
+                effect = state.effects.power_effect(definition.id, power)
+                if isinstance(effect, RevealOpponentHand) and pokemon.conditions.exclusive is None and not suppressors_of(state, power):
+                    revealed[1 - owner] = True
+    used = state.trainer_in_use
+    public = {uid for p in state.players for uid in p.discard} | ({used.card} if used is not None else set()) | {
+        uid for p in state.players for pokemon in p.in_play() for uid in (*pokemon.cards(), *pokemon.energy, *(t.card for t in pokemon.trainers))}
+    for viewer in (0, 1, None):
+        view = observe(state, viewer)
+        visible = set(public)
+        for owner, (p, pv) in enumerate(zip(state.players, view["players"])):
+            shows = viewer == owner or revealed[owner]
+            cards = pv["hand"]["cards"]
+            if pv["hand"]["count"] != len(p.hand) or shows != (cards is not None):
+                problems.append(f"観測（{viewer}）のプレイヤー {owner} の手札が、見えるか（{shows}）・枚数 {len(p.hand)} と合わない")
+            if cards is not None and [c["card"] for c in cards] != list(p.hand):
+                problems.append(f"観測（{viewer}）のプレイヤー {owner} の手札のカードが、状態の手札と違う")
+            if shows:
+                visible.update(p.hand)
+            if set(pv["deck"]) != {"count"} or set(pv["prizes"]) != {"count"} or pv["deck"]["count"] != len(p.deck) or pv["prizes"]["count"] != len(p.prizes):
+                problems.append(f"観測（{viewer}）のプレイヤー {owner} の山札・サイドが、枚数だけではない")
+            if state.turn_number == 0 and viewer != owner and p.active is not None and pv["active"] != {"face_down": True}:
+                problems.append(f"観測（{viewer}）で、表にする前のプレイヤー {owner} の対戦準備のポケモンが見える")
+        board = {key: value for key, value in view.items() if key != "decision"}
+        leaked = _card_values(board, set()) - visible
+        if leaked:
+            problems.append(f"観測（{viewer}）に、見えないカードの uid {sorted(leaked)} がある")
+        d, dv = state.decision, view["decision"]
+        if d is not None:
+            if viewer != d.player and ("options" in dv or dv.get("option_count") != len(d.options)):
+                problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるものがある")
+            if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":
+                for option in dv["options"]:
+                    uid = option["value"]
+                    if uid not in visible and d.kind not in DECK_REVEALING_KINDS:
+                        problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるものに、見えないカード {uid} がある")
+                    if ("card_id" in option) != (uid in visible or d.kind in DECK_REVEALING_KINDS):
+                        problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるもの {uid} のカードの id の有無が、見えるかと合わない")
+        for event, shown in zip(state.log, visible_log(state, viewer)):
+            if event["kind"] in PRIVATE_FIELDS:
+                fields = [name for name in PRIVATE_FIELDS[event["kind"]][0] if name in event]
+                if _sees_private(event, viewer):
+                    if shown != dict(event):
+                        problems.append(f"ログの写し（{viewer}）の {event['kind']} が、見てよい内部の記録と違う")
+                elif any(name in shown for name in fields) or set(shown.get("hidden", {})) != set(fields):
+                    problems.append(f"ログの写し（{viewer}）の {event['kind']}（{event['turn']} 番）に、見えない項目 {fields} がある・hidden がない")
+            elif shown != dict(event):
+                problems.append(f"ログの写し（{viewer}）の公開のイベント {event['kind']} が、内部の記録と違う")
     return problems

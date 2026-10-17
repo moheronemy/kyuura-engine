@@ -186,7 +186,8 @@ def _gust_target(state, options):
     """突風で呼ぶ相手の控えポケモン（決まった手順。強さを目指したものではない）。"""
     def key(pid):
         pokemon = state.find_pokemon(pid)[1]
-        return (_remaining_hp(state, pokemon), -state.card_def(pokemon.card).retreat_cost, len(pokemon.energy), options.index(pid))
+        # v0.47: なにかの化石・ピッピ人形の「にげる」は決まらない（PF2。印刷の数がない）ので 0 として並べる（ほかのポケモンの並びは変わらない）
+        return (_remaining_hp(state, pokemon), -(state.card_def(pokemon.card).retreat_cost or 0), len(pokemon.energy), options.index(pid))
     return min(options, key=key)
 
 

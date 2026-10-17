@@ -181,6 +181,18 @@ MOVE_OPPONENT_ENERGY = "move_opponent_energy"
 # 含むかが決められない。v0.31 の HC7（トラッシュからつける「最大2枚」）と同じ問いで、答えのときに止める）。手札からつける通常の操作（p.310。1 番に 1 枚）とは別の処理
 # （回数に数えない）。v0.41 の ATTACH_FROM_DECK（山札）・v0.31 の ATTACH_FROM_DISCARD（トラッシュ）とは選ぶ場所が違うので別の種類。再開先は "attack"
 ATTACH_FROM_HAND = "attach_from_hand"
+# v0.47（docs/fossil-hidden-info-v0.47.md 4 章）: 裏向きのカード・見えないカードを、内容を知らずに位置で選ぶ決定と、見たカードの並べかえ。選べるものはどれも位置・プレイヤー・
+# 数で、カードの uid を選べるものに入れない（見る前に内容を漏らさない）。ARRANGE_DECK_TOP だけは、見たプレイヤーが見たカード（uid）の並びを答える
+# マンキーの［スパイ］: 見るカード（``context`` の ``"targets"`` の位置。(``"deck"``, 持ち主)・(``"prize"``, 持ち主, 位置)・(``"hand"``, 持ち主, 位置)）
+PEEK_CARD = "peek_card"
+# コラッタ（ロケット団）の［わるふざけ］: 自分のサイドの位置
+SELECT_PRIZE_CARD = "select_prize_card"
+# スリーパーの「みらいよち」: 見る山札の持ち主（プレイヤー）→ 見る枚数 → 見たカードのもどす並び（上から順。見たカードの uid）
+SELECT_DECK_OWNER = "select_deck_owner"
+SELECT_LOOK_COUNT = "select_look_count"
+ARRANGE_DECK_TOP = "arrange_deck_top"
+# マチスのイーブイの「おどろかす」: 相手の手札の位置（おもてを見ないで選ぶ）
+SELECT_HAND_CARD = "select_hand_card"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

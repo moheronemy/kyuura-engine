@@ -70,7 +70,9 @@ USED = "used"  # v0.36: 「効果は1回できえる」効果を使った（サ�
 # v0.42: 特殊能力・ワザの効果で手札にもどって場をはなれた（p.322。メノクラゲの「おくびょう」・エリカのピクシーの「ようせいのきせき」）
 RETURN_IN_PLAY_TO_HAND = "return_in_play_to_hand"
 # FORCED_SWITCH は v0.4d、RETURN_IN_PLAY_TO_DECK・USED は v0.36、RETURN_IN_PLAY_TO_HAND は v0.42
-REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND)
+# v0.47: なにかの化石・ピッピ人形を、自分の番に自分の場からトラッシュにすてた（場をはなれた。きぜつではない。p.322）
+DISCARD_FROM_PLAY = "discard_from_play"
+REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:

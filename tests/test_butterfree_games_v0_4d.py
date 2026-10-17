@@ -27,6 +27,7 @@ from kyuura_engine.decisions import FORCED_SWITCH
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    driver_retreat_cost,
     BEEDRILL, BILL, BUTTERFREE, CATERPIE, DEFENDER, FIRE, GRASS, GROWLITHE, KAKUNA, LIGHTNING, METAPOD, PARAS, PARASECT,
     PIKACHU, PLUSPOWER, POTION, SWITCH, VULPIX, WEEDLE, coin_events, expand_decklist,
 )
@@ -89,7 +90,7 @@ def retreat_to_butterfree(state, tried):
             continue
         if not can_pay_cost(state.card_def(pokemon.card).attacks[0].cost, state.energy_types(pokemon)):
             continue
-        cost = state.card_def(p.active.card).retreat_cost
+        cost = driver_retreat_cost(state, p.active)
         if len(p.active.energy) < cost:
             return None
         return Retreat(player, tuple(p.active.energy[:cost]), pokemon.card)

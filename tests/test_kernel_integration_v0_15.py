@@ -166,7 +166,9 @@ class DependencyTest(unittest.TestCase):
         ``resolution`` を使うのは、入口と振り分け（型の注釈を含む）だけ（v0.15b の「v0.13 の経路の処理は解決の基盤を使わない」の引き継ぎ）。
         v0.42: 特殊能力の処理のあとのきぜつ・サイド・勝ち負け・バトル場に出す（p.323 の手順）は、ワザのあとと同じ解決の基盤の処理を使う
         （``resolution.after_power``。docs/power-decisions-v0.42.md）。特殊能力の処理が使う解決の基盤の名前は、その入口と型の注釈
-        （``resolution.Context``）だけで、特殊能力そのものの処理（宣言・確認・``resolve``・``resume``）は engine.py と effects.py のまま。"""
+        （``resolution.Context``）だけで、特殊能力そのものの処理（宣言・確認・``resolve``・``resume``）は engine.py と effects.py のまま。
+        v0.47: なにかの化石・ピッピ人形を場からすてる操作（``_discard_from_play``）も、空いたバトル場の勝ち負け・バトル場に出す決定に同じ
+        ``resolution.after_power`` を使う（きぜつはない。docs/fossil-hidden-info-v0.47.md 2.4 節）。すてる処理そのものは engine.py と zones.py のまま。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -175,10 +177,10 @@ class DependencyTest(unittest.TestCase):
             for node in ast.walk(function) if isinstance(node, ast.Name) and node.id == "resolution"
         }
         self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine",
-                                 "_use_pokemon_power", "_after_power_step", "_resume_power"})
+                                 "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play"})
         power_names = {
             node.attr
-            for function in functions if function.name in ("_use_pokemon_power", "_after_power_step", "_resume_power")
+            for function in functions if function.name in ("_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play")
             for node in ast.walk(function)
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }

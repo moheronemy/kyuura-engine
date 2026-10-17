@@ -21,7 +21,7 @@ from . import judge
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
-from .effects import attack_damage_modifiers, confusion_power_modifiers
+from .effects import attack_damage_modifiers, confusion_power_modifiers, poison_received_power_problem
 from .errors import UnsupportedError
 from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
@@ -37,6 +37,17 @@ NEXT_TURN = "next_turn"
 # v0.42: 特殊能力の処理のあと（きぜつ・場をはなれて空いたバトル場）の決定の続き。サイド・勝ち負け・ふしちょう・交代が終わったら、番のプレイヤーの番に
 # もどる（``Phase.MAIN``。特殊能力を使っても番は終わらない。p.311・p.323）。ワザのあと（続きなし = 番の終わり）・ポケモンチェックの中（NEXT_TURN）と区別する
 CONTINUE_TURN = "continue_turn"
+
+# v0.47（KA1。docs/fossil-hidden-info-v0.47.md 4 章）: ポケモンチェックの「どく」のダメージ（ワザによるダメージではない。p.321・p.322）に、受けるダメージを変える
+# 常にはたらく特殊能力（カブトの［カブトアーマー］「このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)」）を当てはめるか
+POISON_RECEIVED_POWER = Halt(
+    code="UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
+    message=(
+        "説明の「受けるダメージ」がポケモンチェックの「どく」のダメージを含むかは、公式ルール 2000.02.14版（p.321 のダメージの計算はワザによるダメージ・p.322 の"
+        "「どく」）とカードの文面から決められないので、ダメージを与える前に対戦を止める（KA1）"
+    ),
+    references=("P43 p.321", "P43 p.322", "P43 p.323", "NEO-2000-OFFICIAL-RULES", "docs/fossil-hidden-info-v0.47.md 4 章"),
+)
 
 POKEMON_CHECK_DOUBLE_KNOCKOUT = Halt(
     code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
@@ -61,7 +72,22 @@ def expire_at_turn_end(state: GameState) -> None:
             pokemon.evolution_permission_turn = None
     # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
     state.energy_burn = ()
+    remove_expired_trainer_locks(state)  # v0.47
     state.add_event("turn_end", player=state.current_player)
+
+
+def remove_expired_trainer_locks(state: GameState) -> None:
+    """v0.47: 消える番（``expires_turn``）が今の番の、期限のあるトレーナーの使用の禁止（``GameState.trainer_locks``。ずつう・こうしゅうはの「次の相手の番の終わりまで」）
+    を消す。1 つにつきログ ``trainer_lock_removed``（``player``・``source_player``・``effect``・``created_turn``・``expires_turn``・``reason`` は ``expired``）。常にはたらく
+    特殊能力による禁止（［アレルギーかふん］）は状態に持たないので関係しない。"""
+    kept = []
+    for lock in state.trainer_locks:
+        if lock.expires_turn == state.turn_number:
+            state.add_event("trainer_lock_removed", player=lock.player, source_player=lock.source_player, effect=lock.effect,
+                            created_turn=lock.created_turn, expires_turn=lock.expires_turn, reason="expired")
+        else:
+            kept.append(lock)
+    state.trainer_locks = tuple(kept)
 
 
 def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | None:
@@ -79,6 +105,13 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         for pokemon in state.players[owner].in_play()
         if pokemon.conditions.poison is not None
     ]
+    for owner, pokemon in poisoned:
+        # v0.47（KA1）: 受けるダメージを変える常にはたらく特殊能力（カブトアーマー）を、どくのダメージに当てはめるかは決められない。当てはめると量が変わるなら、
+        # ダメージを与える前に対戦を止める
+        problem = poison_received_power_problem(state, owner, pokemon, pokemon.conditions.poison.damage)
+        if problem is not None:
+            halt(state, Halt(code=POISON_RECEIVED_POWER.code, message=f"{problem}。{POISON_RECEIVED_POWER.message}", references=POISON_RECEIVED_POWER.references))
+            return None
     knocked_owners = {
         owner for owner, pokemon in poisoned
         if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
@@ -333,7 +366,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     )
 
 
-def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None) -> None:
+def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None, counted: bool = True) -> None:
     """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
 
     場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
@@ -341,6 +374,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     する。きぜつしたのは 1 匹なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` は
     いちばん上のカード、``evolution_stack`` は下のカード（進化していれば。下から順）。
     ``timing``: ポケモンチェックの中のきぜつなら ``"pokemon_check"``（ログに書く。v0.3a）。ワザのあとは None。
+    ``counted``: きぜつしたポケモンとしてカウントされるか（v0.47。偽ならなにかの化石・ピッピ人形の「「きぜつ」しても「きぜつ」とカウントされない」。トラッシュは
+    同じで、相手はサイドを取らない。ログに ``counted`` が False と書く。真なら書かない（v0.46 までと同じ形））。サイドを取るプレイヤーを決めるのは呼ぶ側。
     """
     p = state.players[owner]
     if p.active is pokemon:
@@ -362,6 +397,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
         extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
     if timing is not None:
         extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした。v0.42: 特殊能力の処理のあと（ゲンガーの「のろい」）は "power"
+    if not counted:
+        extra["counted"] = False  # v0.47: なにかの化石・ピッピ人形（進化カードがのっていない）。相手はサイドを取らない
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)

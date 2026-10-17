@@ -29,6 +29,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    driver_retreat_cost,
     BILL, CATERPIE, DEFENDER, DIGLETT, FIGHTING, GRASS, PARAS, PLUSPOWER, POTION, RATTATA, SWITCH, WEEDLE, coin_events,
     energy_in_hand, expand_decklist, trainer_policy_command,
 )
@@ -83,7 +84,7 @@ def _rotation_command(state):
     mine = _status_attack(state, active)
     if mine is not None and mine[1] in wanted and mine[2]:
         return None
-    cost = state.card_def(active.card).retreat_cost
+    cost = driver_retreat_cost(state, active)
     if len(active.energy) < cost:
         return None
     for benched in p.bench:
@@ -101,7 +102,7 @@ def status_policy_command(state, *, janken_winner=0, cure=True, tried=()):
     p = state.players[player]
     active = p.active
     restricted = active.conditions.asleep or active.conditions.paralyzed
-    cost = state.card_def(active.card).retreat_cost
+    cost = driver_retreat_cost(state, active)
     if cure and active.conditions.names() and p.bench:
         switch = next((u for u in p.hand if state.cards[u].card_id == SWITCH), None)
         if switch is not None:

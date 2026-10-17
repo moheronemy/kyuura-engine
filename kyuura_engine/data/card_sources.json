@@ -11507,6 +11507,585 @@
       ],
       "issues": [],
       "notes": "v0.46 で加えた。進化元はエリカのタマタマ（PMCG5-012。v0.46）。サイコエクスチェンジは ShuffleHandIntoDeckThenDraw(5)（手札をすべて山札にもどし（v0.44 の return_hand_cards_to_deck）、切ってから 5 枚引く）。ふみつけは既存の CoinBonusDamage(10)"
+    },
+    "PMCG3-046": {
+      "basis": "kyuura_data",
+      "name_ja": "なにかの化石",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3046.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "046/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。トレーナー。PlayAsPokemon(hp=10, role=fossil)（ポケモンとして場に出せる。手札・山札・サイド・トラッシュではトレーナーカード、場にいるあいだだけ場での役割の定義でポケモン。「なにかの化石から進化」の 1 進化カードを重ねられる。進化カードがのっていないときは、きぜつしてもカウントされず（相手はサイドを取らない）、自分の番に場からすてられる（DiscardFromPlay））。場での HP 10・タイプなし・弱点なし・抵抗力なし・ワザなし・特殊能力なしは、pcg-search.com の同じ版のページの「トレーナー」「HP:10」「弱点 -」「抵抗力 -」の表示（kyuura の写しのトレーナーのデータに HP などの欄はない。kyuura のデータは書き換えていない）。「にげる -」は、にげるエネルギーが 0 のポケモン（マンキーなど）と同じ表示で、0 か「にげることができない」かを区別しないので、場の化石の「にげる」は決めない（PF2。UNRESOLVED_PLAY_AS_POKEMON_RETREAT）。対戦準備で最初のポケモンとして出せるか・切り直しは PF1（UNRESOLVED_PLAY_AS_POKEMON_SETUP）。ポケモン育て屋さんで 2 進化カードを重ねるのは PF3（UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON）。英語版の「can't be Asleep…」「can't retreat」は持ち込まない"
+    },
+    "PMCG1-091": {
+      "basis": "kyuura_data",
+      "name_ja": "ピッピ人形",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1084.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "084/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "ポケモンとして場に出すことができる。「きぜつ」しても「きぜつ」ポケモンとしてカウントされない。自分の番の好きなときにすてることができる。場に出ているとき以外は、トレーナーカードとしてあつかう。",
+              "pcg_search": "ポケモンとして場に出すことができる。「きぜつ」しても「きぜつ」ポケモンとしてカウントされない。自分の番で好きなときにすてることができる。場に出ているとき以外は、トレーナーカードとしてあつかう。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「自分の番で好きなときに」（kyuura は「自分の番の好きなときに」）。書き方の違いで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。トレーナー。PlayAsPokemon(hp=10, role=doll)（なにかの化石と同じ仕組み。進化カードは重ねられない（「○○から進化」がこの名前の進化カードはない）。きぜつしてもカウントされず、自分の番に場からすてられる）。場での HP 10・タイプなし・弱点なし・抵抗力なしは pcg-search.com の同じ版のページの表示（kyuura のデータにない）。「にげる」は PF2、対戦準備は PF1（なにかの化石と同じ）。サイトの一覧の版は 084/096（kyuura の id は PMCG1-091。写しの jp_print の出典も 084 番のページ）"
+    },
+    "PMCG3-015": {
+      "basis": "kyuura_data",
+      "name_ja": "オムナイト",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3021.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "021/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。なにかの化石から進化。［おみとおし］は RevealOpponentHand（常にはたらく。場にいる限り、相手の手札を全員に見えるようにする。観測（observation.observe）で見せるだけで、ゲームの処理は変えない。ねむり・マヒ・こんらんで消える）。みずでっぽうは必要なエネルギーがすべて「水」なので v0.6 の ExtraEnergyDamage（多い「水」1 つにつき 10。2 つまで）"
+    },
+    "PMCG3-021": {
+      "basis": "kyuura_data",
+      "name_ja": "オムスター",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3022.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "022/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。オムナイトから進化（2 進化）。みずでっぽう（水無）は必要なエネルギーに無色がまざるので v0.31 の ExtraEnergyDamageMixed（無色のぶんをどのエネルギーで払うかで多いエネルギーの数が変われば HC4。文面は第3弾のシードラと同じ書き方で括弧が半角。受け付ける書き方に加えた）。とげキャノンは既存の CoinFlipDamage(2, 30)"
+    },
+    "PMCG3-035": {
+      "basis": "kyuura_data",
+      "name_ja": "カブト",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3039.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "039/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。なにかの化石から進化。［カブトアーマー］は HalveDamageReceived（常にはたらく。受けるダメージは p.321 の 8 段階で半分（10 の単位で切りすて。v0.46 のリフレクターと同じ計算）。特殊能力のダメージにも当てはめる。ダメージ以外の効果は受ける。ねむり・マヒ・こんらんで使えない。こんらんの 20 は v0.46 と同じくコインの前に止める。ポケモンチェックのどくのダメージに当てはめるかはKA1（UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER。量が変わるならダメージの前に対戦を止める））。ひっかくは効果のないワザ"
+    },
+    "PMCG3-040": {
+      "basis": "kyuura_data",
+      "name_ja": "カブトプス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3040.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "040/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。カブトから進化（2 進化）。するどいかまは効果のないワザ。すいとるは v0.4d のメガドレインと同じ DamageAndDrain（与えたダメージ（最終ダメージ）の半分（切り上げ）のカウンターを自分からとりのぞく。のっている数まで。ダメージを与えなかったら回復しない）"
+    },
+    "PMCG3-041": {
+      "basis": "kyuura_data",
+      "name_ja": "プテラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3041.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "041/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。なにかの化石から進化。［げんしのちから］は PreventEvolution（常にはたらく。場にいる限り、全てのポケモンは進化できない。進化の入口の共通の確かめ evolution.evolution_block の最初に聞く（手札から重ねる通常の操作・ワザと特殊能力で山札から重ねる効果）。ポケモン育て屋さんは使う前に止める。すでに進化しているポケモンはそのまま。ねむり・マヒ・こんらんで消える）。つばさでうつは効果のないワザ"
+    },
+    "PMCG2-028": {
+      "basis": "kyuura_data",
+      "name_ja": "マンキー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2028.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "028/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。［スパイ］は PeekCard（宣言して使う。自分の番に 1 回。自分・相手の山札の一番上・自分・相手のサイド 1 枚・相手の手札 1 枚のどれかを、位置で選んで見る。カードは動かさない。見たプレイヤーにだけ見える。英語版の「random」は持ち込まない。見られるカードがなければ PW3）。ひっかくは効果のないワザ。タケシのマンキー・ロケット団のマンキーとは別のカード"
+    },
+    "PMCG4-045": {
+      "basis": "kyuura_data",
+      "name_ja": "コラッタ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4045.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "045/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。［わるふざけ］は SwapPrizeWithDeckTop（宣言して使う。自分の番ごとに 1 回。自分のサイド 1 枚を位置で選び、自分の山札の一番上と入れかえる。どちらも見ない・見せない。山札は切らない。サイドか山札が 0 枚なら PW3）。でんこうせっかは既存の CoinBonusDamage(10)。第1弾のコラッタ・マチスのコラッタとは別のカード"
+    },
+    "PMCG3-032": {
+      "basis": "kyuura_data",
+      "name_ja": "スリーパー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3032.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "032/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "相手の控えポケモンから1匹選び、「弱点・抵抗力」に関係なく10ダメージ。相手に控えポケモンがいない時には、この効果はない。",
+              "pcg_search": "相手の控えポケモンから1匹を選び、「弱点・抵抗力」に関係なく10ダメージ。相手に控えポケモンがいない時には、この効果はない。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「1匹を選び」（kyuura は「1匹選び」）。書き方の違いで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。スリープから進化（第1弾のスリープ PMCG1-045・ロケット団のスリープ PMCG4-033 のどちらからも。名前の完全一致）。みらいよちは ArrangeDeckTopEffect(3)（自分か相手の山札を選び、上から 3 枚まで見て並べかえる。見た部分より下の並びは変えない。山札は切らない。0 枚は GS1）。ナイトヘッドは v0.42 のゲンガーと同じ文面・同じ DamageThenChosenBenchDamage(10)。わるいスリーパーとは別のカード"
+    },
+    "PMCG5-062": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのイーブイ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1061.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "061/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "相手の手札から、おもてを見ないで1枚選び、そのカードを見る。その後、そのカードを相手の山札にもどさせ、その山札をよく切る。",
+              "pcg_search": "相手の手札から、おもてを見ないで1枚を選び、そのカードを見る。その後、そのカードを相手の山札にもどさせ、その山札をよく切る。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「1枚を選び」（kyuura は「1枚選び」）。書き方の違いで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。おどろかすは LookOpponentHandCardToDeck（相手の手札を位置で 1 枚選ぶ → 見る → 相手がそのカードを山札にもどす → 相手の山札を切る。手札全体は見せない。英語版の「random」は持ち込まない。相手の手札が 0 枚なら FC1）。ひっかくは効果のないワザ。イーブイ・ロケット団のイーブイとは別のカード"
+    },
+    "PMCG5-042": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのサンダース",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1042.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "042/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。マチスのイーブイから進化。こうしゅうはは DamageThenLockOpponentTrainersOnHeads（ダメージ → コインの「おもて」で、次の相手の番の終わりまで相手プレイヤーはトレーナーカードを使えない。プレイヤーに与える期限のある禁止 TrainerUseLock）。いかりのサンダーは DamagePlusOwnCountersThenSelfDamageOnTails(10, 30)（自分のカウンター × 10 を加える → コインの「うら」で自分にも 30）。サンダースとは別のカード"
+    },
+    "PMCG3-010": {
+      "basis": "kyuura_data",
+      "name_ja": "コダック",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3010.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "010/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.47 で加えた。ずつうは LockOpponentTrainersNextTurn（次の相手の番の終わりまで、相手プレイヤーはトレーナーカードを使えない。プレイヤーに与える期限のある禁止 TrainerUseLock。対戦ポケモンの入れ替えでは消えない）。みだれひっかきは既存の CoinFlipDamage(3, 10)。第4弾のコダック・カスミのコダック・ナツメのコダックとは別のカード"
     }
   }
 }

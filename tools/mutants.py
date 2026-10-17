@@ -180,8 +180,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        result = run.fs.results[self.source]\n        if False:\n            return False',
            origin='v0.16e'),
     Mutant('R12', '同時のきぜつの印をつけない', R + 'flow.py',
-           '        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)',
-           '        PR.knock_out(state, owner, pokemon, simultaneous=False)',
+           # v0.47: きぜつの処理をまとめた _knock_out_all に、同時のきぜつの印を引数で渡すようにした（同じ誤りを今のコードに入れる）
+           '    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)',
+           '    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=False), None, candidates)',
            origin='v0.16e'),
     Mutant('R13', '補助関数が枠の外でも何もせずに進む', 'kyuura_engine/effects.py',
            '    if runtime is None:\n        raise RuntimeError(\n',

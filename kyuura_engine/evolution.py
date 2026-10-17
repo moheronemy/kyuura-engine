@@ -56,6 +56,16 @@ def turn_restriction(state: GameState, target: PokemonInPlay) -> tuple[str, str]
     return "PLAYED_THIS_TURN", f"場のポケモン {target.pokemon_id} はこの番に場に出したので、進化させられない（p.310）"
 
 
+def evolution_prevented(state: GameState) -> tuple[str, str] | None:
+    """v0.47: 今はたらいている、ポケモンを進化できなくする特殊能力（［げんしのちから］）があれば、進化できない理由（``EVOLUTION_PREVENTED``, 理由の文）。なければ None。
+    はたらいているかは問い合わせのたびに今の場から求める（効果の登録表の ``evolution_preventers``。``effects.py`` を読み込まないための入口）。状態は変えない。"""
+    preventers = state.effects.evolution_preventers(state)
+    if not preventers:
+        return None
+    holders = "・".join(f"{pid}" for _, pid, _ in preventers)
+    return "EVOLUTION_PREVENTED", f"場のポケモン {holders} の特殊能力がはたらいているので、全てのポケモンは進化することができない"
+
+
 def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDefinition, *, from_deck: bool = False) -> tuple[str, str] | None:
     """進化カード ``definition`` を、自分の場のポケモン ``target`` に今重ねられない理由（コード, 理由の文）。重ねられるなら None（v0.42。v0.41 までの
     ``engine._evolve_pokemon`` の確認（番・名前・その番の最初から場にいたか・段階）を、同じ順番・同じコード・同じ文のまま関数にした。通常の操作
@@ -65,7 +75,13 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
     許可だけで制限が外れる組は、手札から重ねる進化なら重ねられ（``turn_restriction``）、山札から重ねる効果なら決められない（GV1。``PERMISSION_FROM_DECK_CODE``。
     呼ぶ側が止める。v0.45 から停止コード ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK``。つきのちからでほかのポケモンを進化させるときに起こる）。
 
+    v0.47: 最初に、ポケモンを進化できなくする常にはたらく特殊能力（プテラの［げんしのちから］。``EffectRegistry.evolution_preventers``）がはたらいていれば
+    ``EVOLUTION_PREVENTED``（どの入口でも同じ。手札から重ねる通常の操作・山札から重ねるワザと特殊能力。ポケモン育て屋さんは使う前に同じ問い合わせで止める）。
+
     確かめないもの: 進化したあとの HP がダメージ以下になるか（呼ぶ側。``UNRESOLVED_EVOLUTION_HP``）・カードが対応しているか（呼ぶ側）。状態は変えない。"""
+    prevented = evolution_prevented(state)
+    if prevented is not None:
+        return prevented
     if state.turn_number <= 2:
         # 番は先攻から交互に進むので、1 番は先攻の、2 番は後攻の最初の番（p.309・p.310）
         return "FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310）"

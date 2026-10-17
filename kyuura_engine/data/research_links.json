@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 58,
-    "engine_stop_codes": 57,
+    "engine_unresolved_rulings": 62,
+    "engine_stop_codes": 61,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -715,6 +715,50 @@
           "version": "v0.46",
           "document": "docs/continuous-powers-v0.46.md",
           "ruling_id": "CP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "KA1"
         }
       ],
       "kyuura_issue": null,
@@ -1570,7 +1614,24 @@
       "PMCG5-012/attack/0",
       "PMCG5-012/attack/1",
       "PMCG5-013/attack/0",
-      "PMCG5-013/attack/1"
+      "PMCG5-013/attack/1",
+      "PMCG3-015/power/0",
+      "PMCG3-015/attack/0",
+      "PMCG3-021/attack/0",
+      "PMCG3-021/attack/1",
+      "PMCG3-035/power/0",
+      "PMCG3-040/attack/1",
+      "PMCG3-041/power/0",
+      "PMCG2-028/power/0",
+      "PMCG4-045/power/0",
+      "PMCG4-045/attack/0",
+      "PMCG3-032/attack/0",
+      "PMCG3-032/attack/1",
+      "PMCG5-062/attack/0",
+      "PMCG5-042/attack/0",
+      "PMCG5-042/attack/1",
+      "PMCG3-010/attack/0",
+      "PMCG3-010/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

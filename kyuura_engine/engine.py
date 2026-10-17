@@ -32,6 +32,7 @@ from .commands import (
     UNSUPPORTED_COMMANDS,
     check_command_fields,
     AttachEnergy,
+    DiscardFromPlay,
     DrawMulliganCards,
     EndTurn,
     EvolvePokemon,
@@ -69,14 +70,20 @@ from .effects import (
     offer_entry_power,
     ko_prevention_power,
     retreat_cost,
-    trainer_lock_sources,
     ko_prevention_suppressors,
+    PLAY_AS_POKEMON_RETREAT_CODE,
+    PLAY_AS_POKEMON_RETREAT_REASON,
+    PLAY_AS_POKEMON_SETUP_CODE,
+    PLAY_AS_POKEMON_SETUP_REASON,
+    play_as_pokemon_effect,
+    play_as_pokemon_in_hand,
+    trainer_use_blockers,
 )
 from .continuous import suppressors_of
 from .deck import deck_problems
 from .evolution import evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, cannot_retreat, expires_at_turn_start, lasting, remove_persistent_effects
+from .persistent import DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, expires_at_turn_start, lasting, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
@@ -104,11 +111,12 @@ from .state import (
     Poison,
     SpecialConditions,
     TrainerInUse,
+    TrainerUseLock,
     ZeroDamageBelow,
     freeze_mapping,
     turn_owner,
 )
-from .zones import attach_energy_from_hand, draw_cards, enter_play, shuffle_deck
+from .zones import attach_energy_from_hand, discard_from_play, draw_cards, enter_play, shuffle_deck
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
 # 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
@@ -221,6 +229,16 @@ def _deal_opening_hands(state: GameState) -> None:
         lacking = tuple(p for p in dealing if not _hand_has_basic(state, p))
         if not lacking:
             break
+        undecided = [p for p in lacking if play_as_pokemon_in_hand(state, p)]
+        if undecided:
+            # v0.47: たねポケモンがなく、なにかの化石・ピッピ人形がある手札で、切り直すのか、それを最初のポケモンとして出せるのかは決められない（PF1）。切り直す前に
+            # 対戦を止める（v0.1 の切り直しの補償と同じ形。推測で決めない）
+            state.phase = Phase.HALTED
+            state.halt = Halt(code=PLAY_AS_POKEMON_SETUP_CODE, message=PLAY_AS_POKEMON_SETUP_REASON,
+                              references=("P43 p.308", "NEO-2000-OFFICIAL-RULES", "mulligan", "docs/fossil-hidden-info-v0.47.md 3 章"))
+            state.mulligan_rounds = tuple(rounds)
+            state.add_event("halted", code=state.halt.code, players=tuple(undecided))
+            return
         rounds.append(lacking)
         for player in lacking:
             p = state.players[player]
@@ -339,6 +357,9 @@ def _place_starting_pokemon(state: GameState, cmd: PlaceStartingPokemon) -> None
         raise IllegalActionError("SETUP_BENCH_LIMIT", f"対戦準備でベンチに出せるのは {state.rules.max_setup_bench} 枚まで")
     for uid in chosen:
         _require_in_hand(state, player, uid)
+        if uid in play_as_pokemon_in_hand(state, player):
+            # v0.47: 手札のなにかの化石・ピッピ人形（手札ではトレーナーカード）を、対戦準備で最初のポケモンとして出せるかは決められない（PF1）
+            raise UnsupportedError(PLAY_AS_POKEMON_SETUP_CODE, f"カード {uid}（{state.card_def(uid).name_ja}）: {PLAY_AS_POKEMON_SETUP_REASON}")
         if not state.card_def(uid).is_basic_pokemon:
             raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {uid} はたねポケモンではない")
     for uid in chosen:
@@ -553,6 +574,9 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     if not p.bench:
         raise IllegalActionError("NO_BENCH", "控えポケモンがいないので、にげるを宣言できない")
     _require_not_asleep_or_paralyzed(active, "「にげる」を宣言できない（p.311・p.322）")
+    if state.card_def(active.card).play_role is not None:
+        # v0.47: バトル場のなにかの化石・ピッピ人形が「にげる」ことができるか（にげるエネルギーの数）は決められない（PF2）。エネルギーのトラッシュ・こんらんのコインの前
+        raise UnsupportedError(PLAY_AS_POKEMON_RETREAT_CODE, f"バトル場のポケモン {active.pokemon_id}: {PLAY_AS_POKEMON_RETREAT_REASON}")
     if cannot_retreat(state, active) is not None:
         # v0.36: 「アイスバーン」・「わしづかみ」を受けた（次の相手の番に「にげる」ことができない）。ねむり・マヒと同じく宣言できないので、エネルギーの
         # トラッシュ・こんらんのコインの前に拒否する（状態・乱数・ログは変わらない）。「ポケモンいれかえ」などの入れ替えは制限しない（p.325）
@@ -639,13 +663,17 @@ def _play_trainer(state: GameState, cmd: PlayTrainer) -> None:
     definition = state.card_def(cmd.card)
     if definition.category != "trainer":
         raise IllegalActionError("NOT_TRAINER", f"カード {cmd.card} はトレーナーカードではない")
-    locked = trainer_lock_sources(state)
-    if locked:
-        # v0.46: 場にはたらいている［アレルギーかふん］（わるいラフレシア）があれば、誰もトレーナーカードを使えない。手札から出す前に拒否する（状態・乱数・ログは
-        # 変わらない）。ポケモンについているトレーナーの効果・使っている最中のトレーナーは止めない
-        raise IllegalActionError(
-            "TRAINER_PREVENTED", f"場のポケモン {[pid for _, pid, _ in locked]} の特殊能力がはたらいているので、トレーナーカードを使えない"
-        )
+    blockers = trainer_use_blockers(state, cmd.player)
+    if blockers:
+        # v0.46: 場にはたらいている［アレルギーかふん］（わるいラフレシア）があれば、誰もトレーナーカードを使えない。v0.47: プレイヤーに与えた期限のある禁止（ずつう・
+        # こうしゅうは。``GameState.trainer_locks``）も同じ確かめ（2 つの記録をそれぞれの期間で判定する）。手札から出す前に拒否する（状態・乱数・ログは変わらない）。
+        # ポケモンについているトレーナーの効果・使っている最中のトレーナーは止めない。ポケモンとして場に出すトレーナー（なにかの化石・ピッピ人形）も、トレーナー
+        # カードを使うことなので止める
+        powers = [b[2] for b in blockers if b[0] == "power"]
+        locks = [(b[2], b[3]) for b in blockers if b[0] == "lock"]
+        detail = "・".join(([f"場のポケモン {powers} の特殊能力がはたらいている"] if powers else [])
+                          + ([f"相手のワザ {[e for e, _ in locks]} の効果（{[t for _, t in locks]} 番の終わりまで）"] if locks else []))
+        raise IllegalActionError("TRAINER_PREVENTED", f"{detail}ので、トレーナーカードを使えない")
     effect = state.effects.trainer_effect(definition)
     if effect is None:
         problem = state.effects.trainer_problem(definition)
@@ -673,9 +701,10 @@ def _finish_trainer(state: GameState, effect) -> None:
     今のトレーナーは、きぜつ・勝敗を起こさないので、使い終わったら自分の番（MAIN）にもどる。
     """
     used = state.trainer_in_use
-    if effect.stays_in_play:
+    if effect.stays_in_play or effect.enters_play:
+        # v0.47: ポケモンとして場に出すトレーナー（なにかの化石・ピッピ人形。``enters_play``）も、使い終わったら場にいる（トラッシュしない）
         if used is not None:
-            raise RuntimeError(f"つけて使うトレーナー {used.card} が、使い終わっても場についていない（エンジンの不具合）")
+            raise RuntimeError(f"場に残るトレーナー {used.card} が、使い終わっても場にない（エンジンの不具合）")
     else:
         state.trainer_in_use = None
         state.players[used.player].discard.append(used.card)
@@ -823,6 +852,35 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
     _after_power_step(state, use, context)
 
 
+def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
+    """自分の場のなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面「自分の番の好きなときに
+    （自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 3 章）。
+
+    - 自分の番（``Phase.MAIN``）だけ。トレーナーカードを使うことでも、特殊能力でもない（宣言しない。トレーナーの使用の禁止・かがくへんかガス・特殊状態は関係しない。
+      説明に制限がない）
+    - すてられるのは、いちばん上のカードが、ポケモンとして場に出したトレーナーカード（``PlayAsPokemon``。``discardable_from_play``）の場のポケモンだけ。進化カードが
+      のっていれば（いちばん上が進化カード）すてられない（なにかの化石の「進化カードがのっていないときに限り」。ピッピ人形は進化カードを重ねられない）
+    - ついているカードもいっしょにトラッシュする（``zones.discard_from_play``）。持続する効果は理由 ``discard_from_play`` で消す。きぜつではない（サイドはない）
+    - バトル場が空いたら、特殊能力のあとと同じ使用後の処理（``resolution.after_power``。勝ち負けの判定（場にポケモンがいない。p.311）→ バトル場に出す決定）の
+      あと、自分の番にもどる。確かめることはどれもトラッシュの前に済ませる（拒否したら状態・乱数・ログは変わらない）"""
+    p = _require_turn(state, cmd.player)
+    pokemon = p.find_by_pokemon_id(cmd.pokemon)
+    if pokemon is None:
+        if state.players[1 - cmd.player].find_by_pokemon_id(cmd.pokemon) is not None:
+            raise IllegalActionError("POKEMON_NOT_YOURS", "相手の場のポケモンはすてられない")
+        raise IllegalActionError("POKEMON_NOT_IN_PLAY", f"場のポケモンの番号 {cmd.pokemon!r} は自分の場にいない")
+    effect = play_as_pokemon_effect(state, pokemon)
+    if effect is None or not effect.discardable_from_play:
+        name = state.card_def(pokemon.card).name_ja
+        raise IllegalActionError(
+            "NOT_DISCARDABLE",
+            f"場のポケモン {pokemon.pokemon_id}（{name}）は、自分の番にすてられるカード（進化カードがのっていないなにかの化石・ピッピ人形）ではない",
+        )
+    discard_from_play(state, cmd.player, pokemon)
+    remove_persistent_effects(state, cmd.player, pokemon, DISCARD_FROM_PLAY)
+    resolution.after_power(state, context, knock_outs=False)
+
+
 # ---------------------------------------------------------------- 保留中の決定に答える・コマンドの振り分け
 
 
@@ -866,6 +924,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     PlayTrainer: _engine(_play_trainer),
     EvolvePokemon: _engine(_evolve_pokemon),
     UsePokemonPower: _use_pokemon_power,  # v0.42: 処理のあとのきぜつ・交代に解決の設定（効果の定義の対応表）を使う
+    DiscardFromPlay: _discard_from_play,  # v0.47: 空いたバトル場の勝ち負け・交代に解決の設定を使う
 }
 
 
@@ -995,6 +1054,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_progress_problems(state))
     problems.extend(_power_attachment_problems(state))
     problems.extend(_turn_power_problems(state))  # v0.31
+    problems.extend(_trainer_lock_problems(state))  # v0.47
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
@@ -1524,6 +1584,66 @@ def _persistent_effect_log_problems(state: GameState, pokemon: PokemonInPlay, ef
     return [f"{where} {effect!r} に対応するログ persistent_effect_added がない"]
 
 
+def _trainer_lock_problems(state: GameState) -> list[str]:
+    """v0.47（形式 12）: プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止（``GameState.trainer_locks``。ずつう・こうしゅうは）の整合。
+
+    - 型は ``TrainerUseLock``。使えなくなるプレイヤー ``player`` は与えたプレイヤー ``source_player`` の相手。与えた番は与えたプレイヤーの番で、消える番は与えた番 + 1
+      （「次の相手の番の終わりまで」）。今の番は与えた番〜消える番（消える番の終わりに消す）。同じプレイヤー・同じ消える番の禁止は 1 つまで
+    - 与えたワザ（``effect``。``AttackKey`` の文字列）の登録された実装が、禁止を与える実装（``lock_terms``）。``source_card`` は対戦のカード
+    - ログとの対応: 今の番と前の番（禁止が残りうる範囲）のログで、与えた（``trainer_lock_added``）がまだ消していない（``trainer_lock_removed`` がない）禁止と、状態の
+      禁止が同じ（状態だけにある・ログだけにある禁止がない）。エンジンは禁止をログから決めない（状態とログが食い違っていないかだけを確かめる）"""
+    locks = state.trainer_locks
+    if type(locks) is not tuple:
+        return [f"期限のあるトレーナーの使用の禁止 {locks!r} がタプルではない"]
+    problems: list[str] = []
+    keys = []
+    for lock in locks:
+        if not isinstance(lock, TrainerUseLock):
+            problems.append(f"期限のあるトレーナーの使用の禁止 {lock!r} の型が TrainerUseLock ではない")
+            continue
+        where = f"プレイヤー {lock.player!r} のトレーナーの使用の禁止（{lock.effect}）"
+        if lock.player not in PLAYERS or lock.source_player != 1 - lock.player:
+            problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、使えなくなるプレイヤーの相手ではない")
+            continue
+        if type(lock.created_turn) is not int or lock.expires_turn != lock.created_turn + 1:
+            problems.append(f"{where} の消える番 {lock.expires_turn!r} が、与えた番 {lock.created_turn!r} + 1 ではない（次の相手の番の終わりまで）")
+            continue
+        if not lock.created_turn <= state.turn_number <= lock.expires_turn:
+            problems.append(f"{where} が、与えた番 {lock.created_turn}〜消える番 {lock.expires_turn} の外の今の番 {state.turn_number} に残っている")
+        if state.first_player in PLAYERS and turn_owner(state, lock.created_turn) != lock.source_player:
+            problems.append(f"{where} を与えた番 {lock.created_turn} が、与えたプレイヤー {lock.source_player} の番ではない")
+        if lock.source_card not in state.cards:
+            problems.append(f"{where} のワザを使ったカード {lock.source_card!r} が対戦のカードではない")
+        card_id, _, index = str(lock.effect).partition("#")
+        entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+        if entry is None or getattr(entry.effect, "lock_terms", None) is None:
+            problems.append(f"{where} を与えたワザ {lock.effect!r} の登録された実装が、トレーナーの使用を禁止する実装ではない")
+        keys.append((lock.player, lock.expires_turn))
+    if len(set(keys)) != len(keys):
+        problems.append(f"同じプレイヤー・同じ消える番のトレーナーの使用の禁止が重なっている {keys}")
+    added: dict[tuple, dict] = {}
+    removed: set[tuple] = set()
+    starts = 0
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "turn_start":
+            starts += 1
+            if starts >= 2:
+                break
+        elif kind == "trainer_lock_added":
+            added.setdefault((event.get("player"), event.get("expires_turn")), event)
+        elif kind == "trainer_lock_removed":
+            removed.add((event.get("player"), event.get("expires_turn")))
+    live = {key for key in added if key not in removed and key[1] >= state.turn_number}
+    if live != set(keys):
+        problems.append(f"期限のあるトレーナーの使用の禁止 {sorted(keys)} が、ログで与えてまだ消していない禁止 {sorted(live)} と違う")
+    for lock in locks:
+        event = added.get((lock.player, lock.expires_turn)) if isinstance(lock, TrainerUseLock) else None
+        if event is not None and (event.get("effect"), event.get("source_player"), event.get("source_card")) != (lock.effect, lock.source_player, lock.source_card):
+            problems.append(f"プレイヤー {lock.player} のトレーナーの使用の禁止 {lock!r} が、与えたログ {event!r} と合わない")
+    return problems
+
+
 def _once_attack_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
     """v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」ワザを使った記録（``PokemonInPlay.attacks_used_once``）の整合。
 
@@ -1931,9 +2051,10 @@ def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: Po
 
 def _power_aftermath_problems(state: GameState) -> list[str]:
     """特殊能力の処理のあとの決定（v0.42。続き ``CONTINUE_TURN``。サイド・ふしちょう・交代）の前の、今の番の最後の宣言が特殊能力の宣言（ワザのあとではない）。"""
-    last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack")), None)
-    if last is None or last["kind"] != "pokemon_power":
-        return ["特殊能力の処理のあとの決定（続き continue_turn）の前の、今の番の最後の宣言が、特殊能力の宣言ではない"]
+    last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "discard_from_play")), None)
+    if last is None or last["kind"] not in ("pokemon_power", "discard_from_play"):
+        # v0.47: なにかの化石・ピッピ人形を場からすてて空いたバトル場（``discard_from_play``）も、同じ続きで出す
+        return ["特殊能力の処理のあとの決定（続き continue_turn）の前の、今の番の最後の宣言が、特殊能力の宣言・場からすてる操作ではない"]
     return []
 
 
@@ -2162,12 +2283,15 @@ def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]
     """
     taken: list[int] = []
     knocked: list[int] = []
+    seen_knock_out = False
     for event in reversed(state.log):
         kind = event["kind"]
-        if kind == "take_prize" and not knocked:
+        if kind == "take_prize" and not seen_knock_out:
             taken.append(event.get("player"))
         elif kind == "knock_out":
-            knocked.append(event.get("player"))
+            seen_knock_out = True
+            if event.get("counted", True):  # v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形）では、相手はサイドを取らない
+                knocked.append(event.get("player"))
         elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
             continue
         else:

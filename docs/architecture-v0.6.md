@@ -91,6 +91,11 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 11 = 形式 10 の場のポケモンごとに `attacks_used_once`（場に出てから 1 度だけ使えるワザで、このポケモンが使ったもの。[カードの uid, ワザの位置] の並び）と `evolution_permission_turn`（トレーナー「サカキ」の許可を受けた番。なければ null）を加えたもの。`attacks_used_once` はポケモンが場にいるあいだ残り（場をはなれたらポケモンごとなくなる）、`evolution_permission_turn` は番の終わりに消える。
 - 形式 1〜10 は、どちらもない（空・null）なら今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 11（`POKEMON_FIELDS_SINCE` に 2 つの項目）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.44 のカードを使わない対戦では 2 つの項目はない）。[search-evolution-once-attacks-v0.44.md](search-evolution-once-attacks-v0.44.md) 10 章。
 
+### 4.5 書き出しの形式 12（v0.47）
+
+- 形式 12 = 形式 11 に、最上位の `trainer_locks`（プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止。`{"player", "source_player", "source_card", "source_card_id", "effect", "created_turn", "expires_turn"}` の並び。与えた順。なければ `[]`）を加えたもの。禁止は消える番の終わりに消える。場のポケモンの項目ではなくプレイヤーの記録なので、最上位の項目にした。
+- 形式 1〜11 は、禁止がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 12（`TOP_FIELDS_SINCE` に `trainer_locks`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.47 のカードを使わない対戦では禁止はない）。次の新しい形式は 13。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.3 節。
+
 ## 5. ログ
 
 ```text

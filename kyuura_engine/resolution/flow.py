@@ -24,7 +24,7 @@ from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from ..effects import AttackKey, AttackUse, PowerKey, status_at_attack_blocked
+from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, status_at_attack_blocked
 from ..errors import UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench
@@ -246,7 +246,8 @@ def _destiny_bond(res: Resolution) -> bool:
         return False
     res.forced.add(target.pokemon_id)
     gone = knocked(res)
-    taken = {player: sum(1 for owner, _ in gone if owner != player) for player in PLAYERS}
+    # v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形）では、相手はサイドを取らない
+    taken = {player: sum(1 for owner, pokemon in gone if owner != player and counts_as_knockout(state, pokemon)) for player in PLAYERS}
     ends = [
         (taken[player] and taken[player] >= len(state.players[player].prizes))
         or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)]
@@ -264,11 +265,19 @@ def _knock_out_after_attack(res: Resolution) -> None:
     state = res.state
     gone = knocked(res)
     candidates = capture_post_knockout(res, gone)
+    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)
+
+
+def _knock_out_all(state: GameState, gone, **how) -> list[int]:
+    """きぜつした (持ち主, ポケモン) をきぜつの処理（トラッシュ）に送り、サイドを取るプレイヤーの並びを返す（きぜつ 1 匹につき相手側のプレイヤー 1 人。p.323）。
+    v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形。``effects.counts_as_knockout``。トラッシュの前に、場にいるうちに聞く）では、相手はサイドを取らない。"""
     prize_takers = []
     for owner, pokemon in gone:
-        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)
-        prize_takers.append(1 - owner)
-    _after_knockouts(res, prize_takers, None, candidates)
+        counted = counts_as_knockout(state, pokemon)
+        PR.knock_out(state, owner, pokemon, counted=counted, **how)
+        if counted:
+            prize_takers.append(1 - owner)
+    return prize_takers
 
 
 # ---------------------------------------------------------------- きぜつのあと（サイド → 勝ち負け → ふしちょう → 交代 → 続き）
@@ -372,11 +381,7 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
             candidates = capture_post_knockout(res, gone)
         except OpenQuestion as question:
             raise to_error(question.key, question.detail, question.error) from None
-        prize_takers = []
-        for owner, pokemon in gone:
-            PR.knock_out(state, owner, pokemon, timing="power")
-            prize_takers.append(1 - owner)
-        _after_knockouts(res, prize_takers, CONTINUE_TURN, candidates)
+        _after_knockouts(res, _knock_out_all(state, gone, timing="power"), CONTINUE_TURN, candidates)
         return
     if any(state.players[p].active is None for p in PLAYERS):
         _next_prize_or_judge(res, (), CONTINUE_TURN, ())
@@ -402,11 +407,7 @@ def _pokemon_check(res: Resolution) -> None:
         PR.pokemon_check_sleep_and_paralysis(state)
         return
     candidates = capture_post_knockout(res, knocked)
-    prize_takers = []
-    for owner, pokemon in knocked:
-        PR.knock_out(state, owner, pokemon, timing="pokemon_check")
-        prize_takers.append(1 - owner)
-    _after_knockouts(res, prize_takers, NEXT_TURN, candidates)
+    _after_knockouts(res, _knock_out_all(state, knocked, timing="pokemon_check"), NEXT_TURN, candidates)
 
 
 def _end_turn_command(ctx: Context, state, cmd: EndTurn) -> None:

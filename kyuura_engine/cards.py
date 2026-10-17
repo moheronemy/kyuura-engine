@@ -127,6 +127,10 @@ class CardDefinition:
     trainer_text_ja: str | None = None
     trainer_text_en: str | None = None
     trainer_kinds: tuple[str, ...] = ()
+    # v0.47（docs/fossil-hidden-info-v0.47.md 2 章）: ポケモンとして場に出せるトレーナーカード（なにかの化石・ピッピ人形）の、場にいるあいだの定義（場での役割）
+    # だけに付ける印（"fossil"・"doll"）。印刷の定義（写しから読んだ ``category`` が "trainer" の定義）はいつも None で、変えない。場での役割の定義は効果の登録表
+    # （``effects.PlayAsPokemon.in_play_definition``）が印刷の定義から別のインスタンスとして作り、``GameState.card_def`` が、そのカードが場にいるあいだだけ返す
+    play_role: str | None = None
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -389,6 +393,7 @@ POOL_KEYS = (
     "pool_v0_44",  # v0.44（場のポケモンを選ぶ・山札をさがす・山札から進化する・場に出てから 1 回だけ使えるワザ・カードの移動のポケモン 14 枚とトレーナー 1 枚。docs/search-evolution-once-attacks-v0.44.md）
     "pool_v0_45",  # v0.45（条件・コイン・特殊状態・エネルギーの処理・ダメージの計算・返す効果・山札のワザのポケモン 15 枚。docs/conditional-damage-energy-v0.45.md）
     "pool_v0_46",  # v0.46（常にはたらく特殊能力を持つ 8 枚と、関連する 3 枚。docs/continuous-powers-v0.46.md）
+    "pool_v0_47",  # v0.47（なにかの化石・ピッピ人形と化石のポケモン、見えない情報を扱う 4 枚、トレーナーの使用を禁止する 2 枚。docs/fossil-hidden-info-v0.47.md）
 )
 
 

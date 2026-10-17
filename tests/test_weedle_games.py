@@ -21,6 +21,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    driver_retreat_cost,
     BILL, DEFENDER, DIGLETT, DODUO, DRATINI, FIGHTING, GRASS, HITMONCHAN, MACHOP, PLUSPOWER, POTION, RATTATA, SWITCH, WEEDLE,
     coin_events, expand_decklist, trainer_policy_command,
 )
@@ -50,7 +51,7 @@ def poison_policy_command(state, *, janken_winner=0):
             switch = next((u for u in p.hand if state.cards[u].card_id == SWITCH), None)
             if switch is not None:
                 return PlayTrainer(player, switch)
-            cost = state.card_def(p.active.card).retreat_cost
+            cost = driver_retreat_cost(state, p.active)
             if len(p.active.energy) >= cost:
                 return Retreat(player, tuple(p.active.energy[:cost]), p.bench[0].card)
     return trainer_policy_command(state, janken_winner=janken_winner)

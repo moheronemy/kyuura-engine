@@ -173,6 +173,21 @@ class UsePokemonPower:
     target: int | None = None
 
 
+@dataclass(frozen=True)
+class DiscardFromPlay:
+    """自分の場のポケモンとして出したなにかの化石・ピッピ人形（進化カードがのっていないもの）を、自分の番の好きなときにトラッシュにすてる（v0.47。カードの文面
+    「自分の番の好きなときに（自分のトラッシュに）すてることができる」。docs/fossil-hidden-info-v0.47.md 2 章）。
+
+    - ``pokemon``: すてる自分の場のポケモンの番号（``PokemonInPlay.pokemon_id``）。バトル場でもベンチでもよい
+    - ついているカードもいっしょにトラッシュする。きぜつではない（相手はサイドを取らない）。トレーナーカードを使うことでも、特殊能力でもない（宣言しない。
+      トレーナーの使用の禁止・かがくへんかガスは関係しない）
+    - バトル場が空いたら、勝ち負けの判定（場にポケモンがいない）・バトル場に出す決定のあと、自分の番にもどる
+    """
+
+    player: int
+    pokemon: int
+
+
 COMMAND_TYPES: dict[str, type] = {
     "place_starting_pokemon": PlaceStartingPokemon,
     "draw_mulligan_cards": DrawMulliganCards,
@@ -188,6 +203,7 @@ COMMAND_TYPES: dict[str, type] = {
     "evolve_pokemon": EvolvePokemon,
     "play_trainer": PlayTrainer,
     "use_pokemon_power": UsePokemonPower,
+    "discard_from_play": DiscardFromPlay,
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -210,6 +226,7 @@ Command = (
     | EvolvePokemon
     | PlayTrainer
     | UsePokemonPower
+    | DiscardFromPlay
 )
 
 
