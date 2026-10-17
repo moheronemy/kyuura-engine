@@ -121,6 +121,13 @@ ALL_CODES = (
     "UNRESOLVED_PLAY_AS_POKEMON_RETREAT",
     "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON",
     "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
+    # v0.48: VS1・PG1・MH1（docs/effective-pokemon-properties-v0.48.md）。止まる場合（［へんしょく］で変えた色が、使った番のあとに読み方でダメージを変える・
+    # 弱点（抵抗力）のないポケモンの色を変える・「きょだいか」の効果が消えて最大HPがのっているダメージ以下になる「にげる」・ポケモンいれかえ・かがくへんかガス）と
+    # 隣の止まらない場合（使った番のうち・読み方でダメージが変わらない・弱点のあるポケモン・最大HPがダメージより大きいまま）は
+    # tests/test_effective_pokemon_properties_v0_48.py の ShiftColorTest・ConversionTest・MaxHpDropTest
+    "UNRESOLVED_SHIFT_COLOR_DURATION",
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE",
+    "UNRESOLVED_MAX_HP_DROP",
 )
 TURN = 7
 

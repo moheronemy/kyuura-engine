@@ -159,6 +159,9 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     if target.retreat_failed_turn is not None:
         target.retreat_failed_turn = None
         state.add_event("retreat_failure_cleared", player=player, pokemon=target.card, pokemon_id=target.pokemon_id, reason=EVOLVE)
+    # v0.48: 特殊能力で色を変えた記録（モルフォンの［へんしょく］。``TypeShift``）も、進化前のポケモンのものなので消す（進化したポケモンは別のポケモン。p.310。モルフォンから
+    # 進化するカードは写しにないので、今の対応カードでは起こらない。ログは残さない）
+    target.type_shift = None
     # 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること: 対応カードにない
 
 

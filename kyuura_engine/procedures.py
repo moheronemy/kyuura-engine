@@ -21,7 +21,10 @@ from . import judge
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
-from .effects import attack_damage_modifiers, confusion_power_modifiers, poison_received_power_problem
+from .effects import (
+    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, max_hp_drop_error, max_hp_drops, poison_received_power_problem,
+    same_for_type_readings, shift_duration_error,
+)
 from .errors import UnsupportedError
 from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
@@ -114,7 +117,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             return None
     knocked_owners = {
         owner for owner, pokemon in poisoned
-        if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
+        if pokemon.damage + pokemon.conditions.poison.damage >= max_hp(state, pokemon)  # v0.48: 今有効な最大HP
     }
     if len(knocked_owners) > 1:
         halt(state, POKEMON_CHECK_DOUBLE_KNOCKOUT)
@@ -134,7 +137,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         (owner, pokemon)
         for owner in order
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp
+        if pokemon.damage >= max_hp(state, pokemon)
     ]
 
 
@@ -232,6 +235,21 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
             ),
         )
         return
+    # v0.48（MH1）: ねむり・マヒから回復すると、そのポケモンの特殊能力（かがくへんかガス）がはたらきはじめ、ほかのポケモンの最大HP（［ガスのからだ］）が下がって、のっている
+    # ダメージ以下になる場合がある。ポケモンチェックの 3・4 のあとに、きぜつの判定はない（p.323）ので決められない。ねむりのコイン・マヒの回復の前に止める
+    paralyzed_now = [
+        (owner, state.players[owner].active)
+        for owner in order
+        if state.players[owner].active is not None and state.players[owner].active.conditions.paralyzed
+        and paralysis_recovery_turn(state, owner, state.players[owner].active.conditions.exclusive.turn) == state.turn_number
+    ]
+    for owner, pokemon, recover in [(o, p, recover_from_sleep) for o, p in asleep] + [(o, p, recover_from_paralysis) for o, p in paralyzed_now]:
+        drops = _recovery_max_hp_drops(state, owner, pokemon, recover)
+        if drops:
+            error = max_hp_drop_error(drops)
+            halt(state, Halt(code=error.code, message=f"ポケモンチェックで、プレイヤー {owner} のポケモン {pokemon.pokemon_id} が回復すると: {error.message}",
+                             references=("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT")))
+            return
     for owner, pokemon in asleep:
         flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
         recovered = flips.results[0] is CoinSide.HEADS
@@ -253,6 +271,13 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
         if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
             recover_from_paralysis(state, owner, pokemon)
     begin_turn(state, 1 - state.current_player)
+
+
+def _recovery_max_hp_drops(state: GameState, owner: int, pokemon: PokemonInPlay, recover) -> list:
+    """``pokemon`` がねむり・マヒから回復したとしたら、最大HPがのっているダメージ以下に下がる場のポケモン（v0.48。MH1。複製の上で回復させて比べる。状態を変えない）。"""
+    trial = state.clone()
+    recover(trial, owner, trial.players[owner].active)
+    return max_hp_drops(state, trial)
 
 
 def confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
@@ -330,6 +355,12 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
             "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
             "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
         )
+    try:
+        # v0.48: 自分のタイプ（色）と自分の弱点・抵抗力（今有効な値。``effects.definition_views``）。［へんしょく］で変えた色の読み方（VS1）で 20 ダメージの計算が
+        # 変わるなら、コインを投げる前に止める（こんらん状態のモルフォンでは［へんしょく］の力が消えているので、変えた色が続くかが決まらない）
+        same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE))
+    except TypeReadingsDiffer:
+        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージの弱点・抵抗力の計算")
     powers = confusion_power_modifiers(state, pokemon, attack_status)
     if powers:
         return UnsupportedError(
@@ -350,7 +381,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
     きぜつはワザのあとと同じきぜつの判定（解決の基盤の ``flow._finish_attack``）で判定する（サイドは相手が取る。p.323）。
     """
-    calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
+    calc = calculate_confusion_damage(definition_views(state, pokemon)[0], state.rules, CONFUSION_DAMAGE)  # v0.48: 今有効な値（読み方は宣言の前に確かめた）
     pokemon.damage += calc.final
     state.add_event(
         "confusion_damage",

@@ -96,6 +96,11 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 12 = 形式 11 に、最上位の `trainer_locks`（プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止。`{"player", "source_player", "source_card", "source_card_id", "effect", "created_turn", "expires_turn"}` の並び。与えた順。なければ `[]`）を加えたもの。禁止は消える番の終わりに消える。場のポケモンの項目ではなくプレイヤーの記録なので、最上位の項目にした。
 - 形式 1〜11 は、禁止がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 12（`TOP_FIELDS_SINCE` に `trainer_locks`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.47 のカードを使わない対戦では禁止はない）。次の新しい形式は 13。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.3 節。
 
+### 4.6 書き出しの形式 13（v0.48）
+
+- 形式 13 = 形式 12 の場のポケモンごとに `type_shift`（モルフォンの［へんしょく］で色を変えた記録。`{"color", "turn", "source_card", "source_card_id", "returned_to_bench"}`。なければ null）を加えたもの。記録は場をはなれるとポケモンごとなくなり、進化すると消える。変えた色が今有効か（VS1）は記録・番・場所・特殊状態・かがくへんかガスから求める値なので書かない。
+- 形式 1〜12 は、記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。v0.48 の持続する効果の種類（`weakness_change`・`resistance_change`・`max_hp_set`）は形式 8 の `persistent_effects` の値を加えただけ。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 13（`POKEMON_FIELDS_SINCE` に `type_shift`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.48 のカードを使わない対戦では記録はない）。次の新しい形式は 14。[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 7.4 節。
+
 ## 5. ログ
 
 ```text

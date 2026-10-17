@@ -20,7 +20,7 @@ from kyuura_engine import (
     AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
     new_game, state_to_dict,
 )
-from kyuura_engine.effects import PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, retreat_cost, trainer_use_blockers
+from kyuura_engine.effects import MAX_HP_DROP_CODE, PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, max_hp, retreat_cost, trainer_use_blockers
 from kyuura_engine.persistent import cannot_retreat
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -39,6 +39,7 @@ from tests.test_stage2_games_v0_4c import STAGE2_REJECTIONS
 
 NOT_DECLARABLE = (MUK, MACHAMP, HAUNTER)  # v0.8〜v0.10（tests/test_dark_wartortle_games_v0_13.py と同じ）
 USABLE_ONLY_WHEN = (ROCKETS_MOLTRES, GIOVANNIS_MACHAMP)  # v0.11・v0.12（決められたときにしか使えない）
+EVOLUTION_HP_CODE = "UNRESOLVED_EVOLUTION_HP"  # v0.4a の H1（v0.48 から、［ガスのからだ］で最大HPが上がったポケモンの進化で自然な対戦でも起こる）
 
 
 def full(state):
@@ -66,6 +67,27 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                 break
             except (IllegalActionError, UnsupportedError) as error:
                 observed["rejected"] += 1
+                if error.code == MAX_HP_DROP_CODE and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower)):
+                    # v0.48: 最大HPが、ダメージ以外の原因（「きょだいか」の効果が消える・かがくへんかガスで［ガスのからだ］が消える）でのっているダメージ以下に
+                    # 下がる（MH1）。場から確かめる（今有効な最大HPがカードの HP より大きく、のっているダメージがカードの HP 以上のポケモンがいる）
+                    if not any(p.damage >= state.card_def(p.card).hp and max_hp(state, p) > state.card_def(p.card).hp
+                               for player in state.players for p in player.in_play()):
+                        raise AssertionError(f"最大HPがのっているダメージより大きいポケモンがいないのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    # 同じ操作を繰り返さない（「にげる」は "retreat"、手札のカードを使う操作はそのカード、特殊能力は操作そのもの。手順が見る）
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code == EVOLUTION_HP_CODE and isinstance(command, EvolvePokemon):
+                    # v0.48: ［ガスのからだ］で最大HPが印刷の HP より大きいポケモンを、のっているダメージ以下の HP のカードに進化させる（v0.4a の H1 と同じ問い）。
+                    # 場から確かめる（進化先の HP がのっているダメージ以下）。同じカードを繰り返さない
+                    target = state.find_pokemon(command.target)
+                    if target is None or target[1].damage < state.card_def(command.card).hp:
+                        raise AssertionError(f"進化先の HP がのっているダメージより大きいのに {error.code}: {command}")
+                    observed[f"stopped_EvolvePokemon_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
                 if isinstance(command, UsePokemonPower):
                     kind = card_id(state, state.find_pokemon(command.pokemon)[1])
                     if error.code == "POWER_NOT_USABLE_NOW" and kind in USABLE_ONLY_WHEN and not gas_on(state):

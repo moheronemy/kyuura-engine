@@ -193,6 +193,9 @@ SELECT_LOOK_COUNT = "select_look_count"
 ARRANGE_DECK_TOP = "arrange_deck_top"
 # マチスのイーブイの「おどろかす」: 相手の手札の位置（おもてを見ないで選ぶ）
 SELECT_HAND_CARD = "select_hand_card"
+# v0.48（docs/effective-pokemon-properties-v0.48.md）: 色（タイプ）を選ぶ。選べるものは ``effects.COLORS`` の位置（ポリゴンの「テクスチャー1」「テクスチャー2」は無色以外の
+# 色。モルフォンの［へんしょく］は場にいるポケモンの色）。決めるのはワザ・特殊能力を使ったプレイヤー
+SELECT_COLOR = "select_color"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

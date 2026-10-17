@@ -673,7 +673,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "ねんりき",
                                         # v0.46: カビゴン（PMCG2-047）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/continuous-powers-v0.46.md）
-                                        "のしかかり"]))
+                                        "のしかかり",
+                                        # v0.48: ロケット団のポリゴンの「サイケこうせん」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/effective-pokemon-properties-v0.48.md）
+                                        "サイケこうせん"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

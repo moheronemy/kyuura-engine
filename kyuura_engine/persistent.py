@@ -53,10 +53,13 @@ from .state import (
     DamageReduction,
     DestinyBond,
     HalvedDamage,
+    MaxHpSet,
     NextTurnAttackDamage,
     PreventDamage,
     ReducedDamageToSource,
+    ResistanceChange,
     Retaliation,
+    WeaknessChange,
     ZeroDamageBelow,
 )
 
@@ -72,7 +75,11 @@ RETURN_IN_PLAY_TO_HAND = "return_in_play_to_hand"
 # FORCED_SWITCH は v0.4d、RETURN_IN_PLAY_TO_DECK・USED は v0.36、RETURN_IN_PLAY_TO_HAND は v0.42
 # v0.47: なにかの化石・ピッピ人形を、自分の番に自分の場からトラッシュにすてた（場をはなれた。きぜつではない。p.322）
 DISCARD_FROM_PLAY = "discard_from_play"
-REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY)
+# v0.48: 同じ種類の効果を新しく与えたので、前の効果を消した（「テクスチャー1」をもう一度受けて弱点の色が変わる・「きょだいか」をもう一度「おもて」で使う。
+# 期限のない効果（``lasting``）だけ。新しい効果のログ ``persistent_effect_added`` のすぐ前に残す）
+REPLACED = "replaced"
+REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
+                   REPLACED)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -141,8 +148,18 @@ def remove_expired_persistent_effects(state: GameState) -> None:
 
 
 def lasting(effect) -> bool:
-    """期限のない効果か（v0.45。``AttackCoinCheck.lasting``。「スミをかける」の「それ以後」）。期限（``EXPIRED``）では消えない。"""
+    """期限のない効果か（v0.45。``AttackCoinCheck.lasting``。「スミをかける」の「それ以後」。v0.48 の ``WeaknessChange``・``ResistanceChange``・``MaxHpSet`` は型で
+    期限がない）。期限（``EXPIRED``）では消えない。"""
     return getattr(effect, "lasting", False) is True
+
+
+def replace_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
+    """``pokemon`` に、期限のない効果（v0.48。``WeaknessChange``・``ResistanceChange``・``MaxHpSet``）を与える。同じ型の効果がすでにあれば、それを理由
+    ``REPLACED`` で消してから与える（受けているポケモンに同じ型の効果は 1 つ。新しく受けた色・最大HPが今有効な値）。"""
+    if not lasting(effect):
+        raise ValueError(f"前の効果と置きかえるのは期限のない効果だけ（{effect!r}）")
+    remove_persistent_effects(state, owner, pokemon, REPLACED, tuple(e for e in pokemon.persistent_effects if type(e) is type(effect)))
+    add_persistent_effect(state, owner, pokemon, effect, attack=attack, **extra)
 
 
 def expires_at_turn_start(effect) -> bool:
@@ -289,6 +306,22 @@ def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[Attack
     v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
     もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
+
+
+def max_hp_set(pokemon: PokemonInPlay) -> MaxHpSet | None:
+    """``pokemon`` の最大HPを決まった数にする効果（v0.48。キョウのメタモンの「きょだいか」）。与えたときからはたらき、期限はない（バトル場をはなれる・進化で消える）。
+    最大HP（``effects.max_hp``）と「はたく」のダメージ（``programs.AmountIfSelfMaxHpSet``）が、同じこの問い合わせで「きょだいか」の効果の有無を見る。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, MaxHpSet)), None)
+
+
+def weakness_change(pokemon: PokemonInPlay) -> WeaknessChange | None:
+    """``pokemon`` の弱点の色を変える効果（v0.48。「テクスチャー1」）。与えたときからはたらき、期限はない。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, WeaknessChange)), None)
+
+
+def resistance_change(pokemon: PokemonInPlay) -> ResistanceChange | None:
+    """``pokemon`` の抵抗力の色を変える効果（v0.48。「テクスチャー2」）。与えたときからはたらき、期限はない。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, ResistanceChange)), None)
 
 
 def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | None:

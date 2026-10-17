@@ -24,7 +24,7 @@ from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, status_at_attack_blocked
+from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, max_hp, status_at_attack_blocked
 from ..errors import UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench
@@ -487,7 +487,7 @@ def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation,
     if not choices:
         state.add_event("ko_prevention_declined", **base, total_damage=pokemon.damage)
     else:
-        state.add_event("ko_prevention_declared", **base, total_damage=pokemon.damage, hp=state.card_def(pokemon.card).hp)
+        state.add_event("ko_prevention_declared", **base, total_damage=pokemon.damage, hp=max_hp(state, pokemon))
         OFFER_ACTIONS[effect_definition.action](state, owner, pokemon, key, implementation)
     _knock_out_after_attack(res)
 

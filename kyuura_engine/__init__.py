@@ -36,6 +36,10 @@ from .effects import (
     PowerKey,
     TrainerEntry,
     available_ko_prevention_power,
+    max_hp,
+    resistance_of,
+    type_readings,
+    weakness_of,
     working_counterattack_power,
     working_evasion_power,
 )
@@ -62,7 +66,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.47.0"
+__version__ = "0.48.0"
 
 __all__ = [
     "Asleep",
@@ -126,12 +130,16 @@ __all__ = [
     "preset_deck",
     "preset_deck_ids",
     "load_card_pool",
+    "max_hp",
     "new_game",
     "observe",
     "power_suppressors",
+    "resistance_of",
     "state_to_dict",
+    "type_readings",
     "validate_deck",
     "visible_log",
+    "weakness_of",
     "working_power_suppressors",
     "working_counterattack_power",
     "working_evasion_power",

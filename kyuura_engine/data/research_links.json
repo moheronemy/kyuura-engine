@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 62,
-    "engine_stop_codes": 61,
+    "engine_unresolved_rulings": 65,
+    "engine_stop_codes": 64,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -759,6 +759,39 @@
           "version": "v0.47",
           "document": "docs/fossil-hidden-info-v0.47.md",
           "ruling_id": "KA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHIFT_COLOR_DURATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "VS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "PG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MAX_HP_DROP": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "MH1"
         }
       ],
       "kyuura_issue": null,
@@ -1631,7 +1664,19 @@
       "PMCG5-042/attack/0",
       "PMCG5-042/attack/1",
       "PMCG3-010/attack/0",
-      "PMCG3-010/attack/1"
+      "PMCG3-010/attack/1",
+      "PMCG1-064/attack/0",
+      "PMCG1-064/attack/1",
+      "PMCG4-050/attack/0",
+      "PMCG4-050/attack/1",
+      "PMCG2-015/power/0",
+      "PMCG2-015/attack/0",
+      "PMCG6-049/power/0",
+      "PMCG6-050/attack/0",
+      "PMCG6-054/attack/0",
+      "PMCG6-054/attack/1",
+      "PMCG6-072/attack/0",
+      "PMCG6-072/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

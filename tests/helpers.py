@@ -442,6 +442,15 @@ FOSSIL_PSYDUCK = "PMCG3-010"  # コダック（化石の秘密。HP 50・水・�
 V0_47_TRAINERS = (MYSTERIOUS_FOSSIL, CLEFAIRY_DOLL)
 V0_47_POKEMON = (OMANYTE, OMASTAR, KABUTO, KABUTOPS, AERODACTYL, JUNGLE_MANKEY, ROCKET_RATTATA, HYPNO, LT_SURGES_EEVEE, LT_SURGES_JOLTEON, FOSSIL_PSYDUCK)
 V0_47_CARDS = V0_47_TRAINERS + V0_47_POKEMON  # 写しの組 pool_v0_47 の並び
+# v0.48（docs/effective-pokemon-properties-v0.48.md）。場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力を変える 7 枚（どれも kyuura データの採用）
+PORYGON = "PMCG1-064"  # ポリゴン（第1弾。HP 30・無色・弱点 闘・抵抗力 超 -30・にげる 1。テクスチャー1（無）・テクスチャー2（無無））
+ROCKET_PORYGON = "PMCG4-050"  # ポリゴン（ロケット団。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 0。テクスチャー1（無）・サイケこうせん（無無無）20）
+VENOMOTH = "PMCG2-015"  # モルフォン（ポケモンジャングル。コンパンから進化。HP 70・草・弱点 炎・抵抗力 闘 -30・にげる 0。［へんしょく］・りんぷん（草草）10）
+SABRINAS_GASTLY = "PMCG6-049"  # ナツメのゴース（闇からの挑戦。HP 40・超・弱点なし・抵抗力 闘 -30・にげる 0。［ガスのからだ］・ガスでつつむ（超超）30）。GASTLY（PMCG3-029）と別のカード
+SABRINAS_HAUNTER = "PMCG6-050"  # ナツメのゴースト（闇からの挑戦。ナツメのゴースから進化。HP 50・超・弱点なし・抵抗力 闘 -30・にげる 0。ナイトスピリッツ（超超）30×）
+SABRINAS_GENGAR = "PMCG6-054"  # ナツメのゲンガー（闇からの挑戦。ナツメのゴーストから進化する 2 進化。HP 80・超・弱点なし・抵抗力 闘 -30・にげる 1。ダメージぞうふく（超）・やみのこえ（超超超）40）
+KOGAS_DITTO = "PMCG6-072"  # キョウのメタモン（闇からの挑戦。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。きょだいか（無）・はたく（無）10）
+V0_48_POKEMON = (PORYGON, ROCKET_PORYGON, VENOMOTH, SABRINAS_GASTLY, SABRINAS_HAUNTER, SABRINAS_GENGAR, KOGAS_DITTO)  # 写しの組 pool_v0_48 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -1005,6 +1014,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.LockOpponentTrainersNextTurn,  # コダック（化石の秘密）の「ずつう」
     _effects.DamageThenLockOpponentTrainersOnHeads,  # マチスのサンダースの「こうしゅうは」
     _effects.DamagePlusOwnCountersThenSelfDamageOnTails,  # マチスのサンダースの「ぶちかます」
+    # v0.48（docs/effective-pokemon-properties-v0.48.md）
+    _effects.ChangeOpponentWeakness,  # ポリゴン 2 枚の「テクスチャー1」
+    _effects.ChangeOwnResistance,  # 第1弾のポリゴンの「テクスチャー2」
+    _effects.DamageThenPoisonAndConfuseOnHeads,  # モルフォンの「りんぷん」
+    _effects.CoinsPerNamedPokemonDamage,  # ナツメのゴーストの「ナイトスピリッツ」
+    _effects.PlaceCountersOnDamagedOpponentPokemon,  # ナツメのゲンガーの「ダメージぞうふく」
+    _effects.DamageThenCoinsReturnOpponentToDeck,  # ナツメのゲンガーの「やみのこえ」
+    _effects.SetMaxHpOnHeads,  # キョウのメタモンの「きょだいか」
+    _effects.DamageIfSelfMaxHpSet,  # キョウのメタモンの「はたく」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

@@ -79,7 +79,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, preset_deck, preset_deck_ids,
+    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, max_hp, preset_deck, preset_deck_ids,
 )
 from kyuura_engine.cards import EnergyType  # noqa: E402
 from kyuura_engine.effects import SKIP_EVOLUTION_OK, skip_evolution_pairs  # noqa: E402
@@ -179,7 +179,7 @@ def deck_cards(deck_id, variant="preset"):
 
 
 def _remaining_hp(state, pokemon):
-    return state.card_def(pokemon.card).hp - pokemon.damage
+    return max_hp(state, pokemon) - pokemon.damage
 
 
 def _gust_target(state, options):

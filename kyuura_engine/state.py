@@ -626,12 +626,106 @@ class CannotAttackWhileSourceActive:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class WeaknessChange:
+    """ワザによる「持続する効果」（v0.48。docs/effective-pokemon-properties-v0.48.md 3 章）のうち、ポリゴン（PMCG1-064・PMCG4-050）の「テクスチャー1」の
+    「相手の対戦ポケモンの弱点を好きな「色」にかえる。ただし「無色」にはできない。相手がベンチに戻った時にその効果はきえる。」（第1弾）・「相手の対戦ポケモンの
+    「弱点」を、無色以外の好きな「色」に変える。この効果は、そのポケモンがバトル場をはなれた時に消える。」（ロケット団）（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``CannotAttack`` と同じく、``source_card``・``source_player`` は効果を与えたワザを使ったポケモンのカードとそのプレイヤー）。
+    与えたときからはたらき（``turns_until_active`` は 0）、期限では消えない（``lasting``。説明は番の期限を書かない）。消えるのは、受けたポケモンがベンチにもどる・
+    場をはなれる（説明の「ベンチに戻った時」「バトル場をはなれた時」）と進化する（p.310・p.323 の一般の規定。GR-2000-P322-PERSISTENT-EFFECTS）とき。弱点の倍数は
+    変えない（色だけ）。受けているポケモンの弱点は ``effects.weakness_of``（今有効な弱点）で求める。同じポケモンが 2 つ受けることはない（新しく与えるときに前の
+    効果を理由 ``replaced`` で消す）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    color: EnergyType
+    kind: ClassVar[str] = "weakness_change"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = True
+    lasting: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
+class ResistanceChange:
+    """ワザによる「持続する効果」（v0.48）のうち、ポリゴン（PMCG1-064）の「テクスチャー2」の「自分の抵抗力を好きな「色」にかえる。ただし「無色」にはできない。
+    自分がベンチに戻ったときにその効果はきえる。」（kyuura の印刷の文面）。
+
+    自分自身に与え、与えたときからはたらき、期限では消えない（``WeaknessChange`` と同じ消え方）。変えるのは抵抗力の色だけで、抵抗力の数（−30 など。
+    ``CardDefinition.resistance_value``）は変えない。受けているポケモンの抵抗力は ``effects.resistance_of`` で求める。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    color: EnergyType
+    kind: ClassVar[str] = "resistance_change"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
+class MaxHpSet:
+    """ワザによる「持続する効果」（v0.48）のうち、キョウのメタモン（PMCG6-072）の「きょだいか」の「コインを投げて「おもて」なら、このカードの最大HPは「80」になる。
+    (バトル場をはなれた時、この効果は消える)」（kyuura の印刷の文面）。
+
+    自分自身に与え、与えたときからはたらき、期限では消えない（``WeaknessChange`` と同じ消え方。説明の「バトル場をはなれた時」）。はたらいている間、このポケモンの
+    最大HPは ``amount``（``effects.max_hp``）。同じワザの「はたく」の「このカードに「きょだいか」の効果がはたらいているとき」も、この効果があるか（``effects.max_hp_set``）
+    で決める（最大HPと同じものを見る）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    amount: int
+    kind: ClassVar[str] = "max_hp_set"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
+class TypeShift:
+    """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
+    ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
+
+    ワザによる持続する効果（``persistent_effects``）ではない（特殊能力の効果で、P322 の持続する効果の規定はワザの効果のもの）。場のポケモンの ``type_shift`` に持つ。
+    説明は効果の期限を書かないので、変えた色が「使った番のあと」「ベンチにもどったあと」「この力が消えている（ねむり・マヒ・こんらん・かがくへんかガス）あいだ」も
+    続くかは決められない（VS1。``effects.type_readings`` が、決まらない場合に 2 つの読み方（変えた色・印刷の色）を返し、結果が変わる処理だけを止める）。
+
+    - ``color``: 変えた色
+    - ``turn``: 使った番（``GameState.turn_number``）
+    - ``source_card``: 使ったときのいちばん上のカード（進化したら消す。``evolution.place_evolution_card``）
+    - ``returned_to_bench``: 使ったあと、このポケモンがバトル場からベンチにもどった（にげる・入れ替え）か。もどったら真にする（``mark_returned_to_bench``）
+    場をはなれたら、場のポケモンといっしょになくなる。
+    """
+
+    color: EnergyType
+    turn: int
+    source_card: int
+    returned_to_bench: bool = False
+
+
+def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
+    """バトル場からベンチにもどったポケモンの、特殊能力で色を変えた記録（``TypeShift``）に、ベンチにもどったことを残す（v0.48）。記録がなければ何もしない。
+    にげる・ポケモンいれかえ／突風・ワザによる入れ替えの 3 か所で、特殊状態・持続する効果を消すのと同じところで呼ぶ（ログは残さない。記録の項目が変わるだけ）。"""
+    if pokemon.type_shift is not None and not pokemon.type_shift.returned_to_bench:
+        pokemon.type_shift = TypeShift(pokemon.type_shift.color, pokemon.type_shift.turn, pokemon.type_shift.source_card, True)
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
-# CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+# CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow, HalvedDamage)
+                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet)
 
 
 @dataclass(frozen=True)
@@ -725,6 +819,8 @@ class PokemonInPlay:
     # 変える）番。なければ None。番の終わりに消す（``procedures.expire_at_turn_end``）。進化しても場のポケモンは同じなので受け継ぐ（「進化したそのポケモンを、同じ番で、
     # さらに進化させてもよい」）。場をはなれたらなくなる
     evolution_permission_turn: int | None = None
+    # v0.48（docs/effective-pokemon-properties-v0.48.md 4 章）: 特殊能力で色（タイプ）を変えた記録（モルフォンの［へんしょく］。``TypeShift``）。なければ None
+    type_shift: TypeShift | None = None
 
     @property
     def current_form_turn(self) -> int:
@@ -750,6 +846,7 @@ class PokemonInPlay:
             self.persistent_effects,
             self.attacks_used_once,
             self.evolution_permission_turn,
+            self.type_shift,
         )
 
 

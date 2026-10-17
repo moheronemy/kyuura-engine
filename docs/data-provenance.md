@@ -1173,3 +1173,37 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
    - ピッピ人形（PMCG1-091）: kyuura「自分の番の好きなときに」、サイト「自分の番で好きなときに」。
    - スリーパー（PMCG3-032）のナイトヘッド: kyuura「1匹選び」、サイト「1匹を選び」。
    - マチスのイーブイ（PMCG5-062）のおどろかす: kyuura「1枚選び」、サイト「1枚を選び」。
+
+## v0.48 で加えたカード 7 枚（場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力を変えるカード）
+
+写しを作り直しました（`pool_v0_48`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません（今回の追加だけを理由に、写しの元・研究の基準・
+  固定した参照データを更新していない）。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 337 枚から 344 枚になりました（ポリゴン PMCG1-064・ポリゴン PMCG4-050・モルフォン PMCG2-015・ナツメのゴース PMCG6-049・ナツメのゴースト PMCG6-050・
+  ナツメのゲンガー PMCG6-054・キョウのメタモン PMCG6-072 の 7 枚を加えた。どれもポケモン）。ほかのカードの記録は変わっていません。
+- 根拠:
+  - `kyuura_engine/data/card_sources.json` の採用の記録（7 件 `adopted`。`basis: kyuura_data`。記録した日 2026-10-17。`kyuura_records` はどれも空）です。
+  - pcg-search.com の同じ版のページとの照合（2026-10-17）: 7 件のうち 6 件 `match`、1 件 `differences`（`affects_behavior: false`）。版は名前だけでなく収録・サイトの
+    一覧の番号で決めました（ポリゴン 067/096（第1弾）・ポリゴン 050/065（ロケット団）・モルフォン 011/048（ポケモンジャングル）・ナツメのゴース 049/098・
+    ナツメのゴースト 050/098・ナツメのゲンガー 051/098・キョウのメタモン 067/098（闇からの挑戦））。同じ名前・名前の似た別のカード（2 枚のポリゴン、ゴース PMCG1-044・
+    PMCG3-029、ゴースト PMCG1-047・PMCG3-030、ゲンガー PMCG3-031、メタモン）と取りちがえていません。
+  - 7 枚とも kyuura の日本語の文面の出典（`ja_text_source`）は pcg-search.com ではありません（nazonobasho.com・ポケモン wiki）。『オフィシャルブック2000』は読んで
+    いないので、`card_verification.json` に加えていません。
+- 処理に使う文面: どれも kyuura の印刷の文面です（研究の基準のコミットで、7 枚を指す最新の説明・エラッタ・裁定・論点・照合の記録・card_differences の記録はない）。
+  研究の対応表の `adopted_printed_text` に、説明文のあるワザ 10 と特殊能力 2 を加えました（387 → 399。説明文のないガスでつつむは含まない）。
+  英語版の文面は処理に持ち込んでいません。
+- 一般の規定として再利用した kyuura の記録（研究の基準のコミット）: GR-2000-P321-DAMAGE-ORDER（弱点・抵抗力の計算。rule_history.json の P43 の記録のダメージの計算の
+  順番の例に悪エネルギー・鋼エネルギーがある）・GR-2000-P322-PERSISTENT-EFFECTS・GR-2000-P323-KNOCKOUT・GR-2000-P320-COUNTER-MOVE・GR-2000-P309-ATTACK-PROCEDURE。
+- 検証用デッキ `C48`・`S48`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 新しい停止コードの VS1（`UNRESOLVED_SHIFT_COLOR_DURATION`）・PG1（`UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE`）・MH1（`UNRESOLVED_MAX_HP_DROP`）が kyuura の
+   未解決の一覧にない（研究の対応表の `stop_codes` で `kyuura_disposition: not_in_kyuura`）。
+2. この 7 枚に、最新の説明・エラッタ・裁定・照合の記録がない。
+3. モルフォン PMCG2-015 の［へんしょく］の写しの文面（data/cards.json）は「このカード持ち主は」（「の」の抜け）で、data/ja_text_nazonobasho.json の備考に「「このカード持ち主は」が
+   「このカードの持ち主は」に修正」された版があると書かれている（研究の基準のコミットと写しの元のコミットの両方で同じ）。どちらの版の文面を写しの文面にするか。処理は同じ。
+4. pcg-search.com との違い（処理に影響しないので、kyuura の文面のまま使った。写しは直さない）: ポリゴン（PMCG1-064）のテクスチャー2 は、kyuura「自分の抵抗力を」、
+   サイト「自分の抵抗力をを」（サイトの誤記とみられる）。

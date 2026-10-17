@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 12 あります（``format_version``）。
+形式は 13 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -54,6 +54,13 @@
   （v0.47。docs/fossil-hidden-info-v0.47.md 5 章）。形式 1〜11 は、禁止があると ``ValueError``（なければ形式 1〜11 の書き出しは v0.46 と同じ）。禁止は場のポケモンの
   持続する効果ではなくプレイヤーの記録なので、ポケモンの項目ではなく最上位の項目にした（消える番の終わりに消える）。v0.47 のなにかの化石・ピッピ人形は、場に
   いるあいだも書き出しの形を変えない（場のポケモンの ``card``・``card_id`` はそのカード。ポケモンとしてあつかうことは、状態の定義（``GameState.card_def``）が決める）。
+- 13: 12 に、場のポケモンごとの ``type_shift``（特殊能力で色（タイプ）を変えた記録。モルフォンの［へんしょく］。``{"color", "turn", "source_card",
+  "source_card_id", "returned_to_bench"}``、なければ ``None``）を加えたもの（v0.48。docs/effective-pokemon-properties-v0.48.md 7 章）。形式 1〜12 は、記録のある
+  ポケモンがいると ``ValueError``（なければ形式 1〜12 の書き出しは v0.47 と同じ）。変えた色が今有効かは、記録・番・場所・特殊状態・かがくへんかガスから求める（VS1。
+  状態の項目にしない）ので、記録だけを書く。v0.48 の持続する効果の種類 ``"weakness_change"``・``"resistance_change"``（ポリゴンの「テクスチャー1」「テクスチャー2」。
+  ``color`` を加える）・``"max_hp_set"``（キョウのメタモンの「きょだいか」。``amount`` を加える）は、形式 8 の ``persistent_effects`` の種類の値を加えただけ（形式は
+  変えない。v0.47 までの書き出しを読む側は、知らない種類として拒否すること）。場のポケモンの ``hp`` は、これまでどおりいちばん上のカード（場での役割を含むカードの
+  定義）の HP で、今有効な最大HP（［ガスのからだ］・「きょだいか」）ではない（今有効な値は状態から求める値で、観測 ``observation.observe`` が書く）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -118,6 +125,7 @@ from .state import (
     DestinyBond,
     GameState,
     HalvedDamage,
+    MaxHpSet,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -126,10 +134,12 @@ from .state import (
     PokemonInPlay,
     PreventDamage,
     ReducedDamageToSource,
+    ResistanceChange,
     Retaliation,
+    WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -206,6 +216,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["lasting"] = True  # v0.45: 「スミをかける」の「それ以後」（期限のない効果だけ書く）
     elif isinstance(effect, ZeroDamageBelow):
         data["threshold"] = effect.threshold  # v0.45: 「かたくなる」
+    elif isinstance(effect, (WeaknessChange, ResistanceChange)):
+        data["color"] = effect.color.value  # v0.48: 「テクスチャー1」「テクスチャー2」の変えた色
+    elif isinstance(effect, MaxHpSet):
+        data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
@@ -248,6 +262,12 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
     if format_version >= 11:
         data["attacks_used_once"] = [list(entry) for entry in pokemon.attacks_used_once]
         data["evolution_permission_turn"] = pokemon.evolution_permission_turn
+    if format_version >= 13:
+        shift = pokemon.type_shift
+        data["type_shift"] = None if shift is None else {
+            "color": shift.color.value, "turn": shift.turn, "source_card": shift.source_card,
+            "source_card_id": state.cards[shift.source_card].card_id, "returned_to_bench": shift.returned_to_bench,
+        }
     return data
 
 
@@ -289,6 +309,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         )
     if format_version < 12 and state.trainer_locks:
         raise ValueError(f"形式 {format_version} は、プレイヤーに与えた期限のあるトレーナーカードの使用の禁止を表せない（format_version=12 を使う）")
+    if format_version < 13 and any(pokemon.type_shift is not None for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、特殊能力で色を変えた記録（［へんしょく］）を表せない（format_version=13 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":

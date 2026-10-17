@@ -103,7 +103,7 @@ from .decisions import (
     RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
-    push_trainer_decision,
+    SELECT_COLOR, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import PERMISSION_FROM_DECK_CODE, evolution_block, evolution_prevented, place_evolution_card, skipped_stage1_basic, turn_restriction
@@ -112,14 +112,17 @@ from .persistent import (
     damage_prevention,
     damage_reduction,
     halved_damage,
+    max_hp_set,
     next_turn_attack_damage,
     reduced_damage_to_source,
     RETURN_IN_PLAY_TO_HAND,
     remove_persistent_effects,
+    resistance_change,
     retaliation,
+    weakness_change,
     zero_damage_below,
 )
-from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation
+from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation, mark_returned_to_bench
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
     return_hand_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
@@ -581,7 +584,12 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     if damage_prevention(state, receiver) is not None or attack_barrier(state, receiver) is not None:  # v0.31: 「バリアー」も要素を無効にする
         return None
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
-    return calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, modifiers).final
+    # v0.48: 今有効な値の定義（``definition_views``）。色の読み方（VS1）で最終ダメージが変わるなら止める（``kernel.deal_damage`` と同じ判定）
+    try:
+        return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
+            base, views[0], views[1], state.rules, modifiers).final)
+    except TypeReadingsDiffer as differ:
+        raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算") from None
 
 
 # ワザを受けるときに自動的にはたらく特殊能力（v0.9。ゴーストの「とうめい」）で、受けなかった要素の種類（ログ attack_evaded の
@@ -610,9 +618,15 @@ RETURN_IN_PLAY_TO_HAND_ELEMENT = "return_in_play_to_hand"
 # v0.45: 相手のポケモンについているエネルギーカードをはがす（ほかのポケモンにつけかえる）効果（わるいレアコイルの「じりょくせん」。トラッシュする ENERGY_DISCARD_ELEMENT
 # とは行き先が違う）
 ENERGY_MOVE_ELEMENT = "energy_move"
+# v0.48: 相手の対戦ポケモンの弱点の色を変える効果（ポリゴンの「テクスチャー1」）・自分の抵抗力の色を変える効果（「テクスチャー2」。自分への効果）・自分の最大HPを決まった数に
+# する効果（キョウのメタモンの「きょだいか」。自分への効果）
+WEAKNESS_CHANGE_ELEMENT = "weakness_change"
+RESISTANCE_CHANGE_ELEMENT = "resistance_change"
+MAX_HP_ELEMENT = "max_hp"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
-                   HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT)
+                   HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
+                   RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -787,8 +801,8 @@ def counterattack_double_knockout_problem(state: GameState, use: AttackUse, effe
     power_key, power_effect = found
     _, attacker = state.find_pokemon(use.pokemon_id)
     profile = effect.damage_profile(state, use)
-    defender_hp = state.card_def(defender.card).hp
-    attacker_hp = state.card_def(attacker.card).hp
+    defender_hp = max_hp(state, defender)  # v0.48: 今有効な最大HP
+    attacker_hp = max_hp(state, attacker)
 
     def defender_knocked_out(base: int | None) -> bool:
         final = None if base is None else preview_attack_damage(state, use, OPPONENT_ACTIVE, base)
@@ -880,8 +894,8 @@ def retaliation_double_knockout_problem(state: GameState, use: AttackUse, effect
     fire_use = retaliation_use(state, 1 - use.player, holder, found)
     counter = counterattack_power(state, attacker)  # 返すダメージで、ワザを使ったポケモンの「はんげき」がはたらく
     counter_amount = 0 if counter is None else counter[1].amount
-    holder_hp = state.card_def(holder.card).hp
-    attacker_hp = state.card_def(attacker.card).hp
+    holder_hp = max_hp(state, holder)  # v0.48: 今有効な最大HP
+    attacker_hp = max_hp(state, attacker)
     for opponent, own in effect.damage_profile(state, use).pairs():
         final = None if opponent is None else preview_attack_damage(state, use, OPPONENT_ACTIVE, opponent)
         if final is None or final <= 0:
@@ -985,7 +999,7 @@ def ko_prevention_attack_effect_problem(state: GameState, use: AttackUse, effect
     defender = state.players[1 - use.player].active
     if defender is None or available_ko_prevention_power(state, defender.pokemon_id) is None:
         return None
-    hp = state.card_def(defender.card).hp
+    hp = max_hp(state, defender)  # v0.48: 今有効な最大HP
     finals = [preview_attack_damage(state, use, OPPONENT_ACTIVE, base) for base in effect.damage_profile(state, use).opponent]
     if not any(final is not None and final > 0 and defender.damage + final >= hp for final in finals):
         return None
@@ -5161,8 +5175,8 @@ def deck_evolution_permission_pairs(state: GameState, player: int, pokemon_ids: 
 
 def evolution_hp_problem_targets(state: GameState, card: int, targets: Iterable[int]) -> tuple[int, ...]:
     """v0.42: 進化カード ``card`` を重ねると、HP がのっているダメージ以下になるポケモン（v0.4a の H1 と同じ問い。``UNRESOLVED_EVOLUTION_HP``）。"""
-    hp = state.card_def(card).hp
-    return tuple(pid for pid in targets if state.find_pokemon(pid)[1].damage >= hp)
+    # v0.48: 重ねたあとの最大HP（``evolution_hp``。重ねるカードの HP と、そのカードの常にはたらく特殊能力）
+    return tuple(pid for pid in targets if state.find_pokemon(pid)[1].damage >= evolution_hp(state, state.find_pokemon(pid)[1], card))
 
 
 EVOLUTION_HP_REASON = (
@@ -5760,7 +5774,7 @@ def skip_evolution_pairs(state: GameState, player: int) -> dict[int, list[tuple[
                 status = SKIP_EVOLUTION_PLAY_ROLE  # v0.47: 系統は合うが、印刷のたねポケモンではない（PF3）
             elif not definition.supported:
                 status = SKIP_EVOLUTION_UNSUPPORTED_CARD
-            elif pokemon.damage >= definition.hp:
+            elif pokemon.damage >= evolution_hp(state, pokemon, uid):  # v0.48: 重ねたあとの最大HP
                 status = SKIP_EVOLUTION_HP
             else:
                 status = SKIP_EVOLUTION_OK
@@ -6029,6 +6043,7 @@ class SwitchWithBench(TrainerEffect):
                 "控えポケモンがいない。このときに「ポケモンいれかえ」を使えるかは、"
                 "『オフィシャルブック2000』（p.254・p.310）から決められないので扱わない",
             )
+        switch_max_hp_drop_check(state, use.player)  # v0.48: MH1（手札から出す前。決定への答えで止めない）
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         bench = state.players[use.player].bench
@@ -6043,6 +6058,22 @@ class SwitchWithBench(TrainerEffect):
         """選べるのは自分のベンチのポケモン（控えポケモン）。"""
         bench = state.players[use.player].bench
         return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in bench), "「ポケモンいれかえ」")
+
+
+def switch_max_hp_drop_check(state: GameState, owner: int) -> None:
+    """トレーナーの効果で ``owner`` の対戦ポケモンを控えと入れ替える前の確かめ（v0.48。MH1）。複製の上で、最初の控えと入れ替えた（ベンチにもどった対戦ポケモンの特殊状態・
+    ワザによる持続する効果が消え、［へんしょく］の記録に「ベンチにもどった」をつけた）状態を作り、最大HPがのっているダメージ以下に下がるポケモンがいれば止める
+    （``max_hp_drops``・``max_hp_drop_error``）。最大HPが下がりうるのはベンチにもどる対戦ポケモン（「きょだいか」の効果が消える）と、消えた特殊状態でまたはたらく
+    かがくへんかガスの影響を受けるポケモンで、どの控えを選んでも同じなので、決定を出す前（手札から出す前）に止める（答えで止めると、ほかの答えがなく進めない）。
+    渡した状態・乱数・ログは変えない。"""
+    p = state.players[owner]
+    if p.active is None or not p.bench:
+        return
+    trial = state.clone()
+    _switch_active_with_bench(trial, owner, trial.players[owner].bench[0].pokemon_id)
+    drops = max_hp_drops(state, trial)
+    if drops:
+        raise max_hp_drop_error(drops)
 
 
 def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, effect: str | None = None) -> None:
@@ -6079,6 +6110,7 @@ def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, 
     clear_special_conditions(state, owner, old, SWITCH)
     # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
     remove_persistent_effects(state, owner, old, SWITCH)
+    mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
 
 
 @dataclass(frozen=True)
@@ -6116,6 +6148,7 @@ class SwitchOpponentWithBench(TrainerEffect):
         returning = _returning_lock_sources(state, use.player)
         if returning and len(returning) == len(state.players[1 - use.player].bench):
             raise UnsupportedError("UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED", _ATTACK_LOCK_SOURCE_RETURNED_REASON)
+        switch_max_hp_drop_check(state, 1 - use.player)  # v0.48: MH1（手札から出す前。決定への答えで止めない）
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         bench = state.players[1 - use.player].bench
@@ -6664,7 +6697,11 @@ class AttachEnergyFromHand(PowerEffect):
                 "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつける）"
             )
         target = _own_pokemon(state, use, use.target, "TARGET")
-        if state.card_def(target.card).pokemon_type is not self.pokemon_type:
+        # v0.48: 「水」ポケモンかは今有効な色（``type_readings``。モルフォンの［へんしょく］で変えた色を含む）。読み方（VS1）で答えが変わるなら、エネルギーを動かす前に止める
+        readings = {color is self.pokemon_type for color in type_readings(state, target)}
+        if len(readings) > 1:
+            raise shift_duration_error(target, f"つける先 {use.target} が「{self.pokemon_type.ja}」ポケモンか")
+        if readings == {False}:
             raise IllegalActionError(
                 "WRONG_POKEMON_TYPE", f"場のポケモン {use.target} は「{self.pokemon_type.ja}」ポケモンではない（「{self.pokemon_type.ja}」ポケモンにだけつける）"
             )
@@ -6693,7 +6730,7 @@ def would_be_knocked_out(state: GameState, pokemon: PokemonInPlay, damage: int) 
     大きくなったら、そこでそのポケモンは「きぜつ」します」・p.320「ダメージカウンターの移動によって、ダメージの数がポケモンのHPと
     同じか、それより大きくなったら、そのポケモンは「きぜつ」します」・p.323）。HP はいちばん上のカードの値（p.310）。状態は変えない。
     """
-    return damage >= state.card_def(pokemon.card).hp
+    return damage >= max_hp(state, pokemon)  # v0.48: 今有効な最大HP
 
 
 @dataclass(frozen=True)
@@ -6970,7 +7007,7 @@ class PreventKnockOutOnHeads(PowerEffect):
         """使用を宣言したあとの処理（p.311 の手順 3）: 持ち主 ``owner`` がコインを 1 枚投げ、「おもて」なら ``pokemon`` のダメージを
         HP − ``remaining_hp`` にする。ログ ``ko_prevented``（「おもて」）か ``ko_prevention_failed``（「うら」）。「きぜつ」しなかったら
         True。宣言のログ（``ko_prevention_declared``）と、そのあとのきぜつの処理はエンジン（``engine._resume_knock_out``）。"""
-        hp = state.card_def(pokemon.card).hp
+        hp = max_hp(state, pokemon)  # v0.48: 今有効な最大HP（「こんじょう」で残す HP も、その値から数える）
         if pokemon.damage < hp:
             raise RuntimeError(f"HP 以上のダメージを受けていないポケモン {pokemon.pokemon_id} に「{key}」を使おうとした（エンジンの不具合）")
         flips = flip_coins(state, owner, 1, source="power", effect=str(key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
@@ -7542,6 +7579,7 @@ class SwitchOpponentOnHeads(PowerEffect):
         returning = _returning_lock_sources(state, use.player)
         if returning and len(returning) == len(bench):
             raise UnsupportedError("UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED", _ATTACK_LOCK_SOURCE_RETURNED_REASON)
+        switch_max_hp_drop_check(state, 1 - use.player)  # v0.48: MH1（「おもて」のあとの入れ替えで下がるなら、コインの前に止める）
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         if _power_coin(state, use) is not CoinSide.HEADS:
@@ -8104,7 +8142,7 @@ class DamageOpponentPokemonOnEntry(EntryPower):
         extra = {} if not applied else {"amount_before": self.amount, "received_modifiers": received_modifiers_log(applied)}
         state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
                         target_player=1 - use.player, target=target.card, target_pokemon_id=target.pokemon_id, amount=amount,
-                        total_damage=target.damage, knocked_out=target.damage >= state.card_def(target.card).hp, **extra)
+                        total_damage=target.damage, knocked_out=target.damage >= max_hp(state, target), **extra)
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
         return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=[p.pokemon_id for p in state.players[1 - use.player].in_play()])
@@ -9209,7 +9247,7 @@ class HalfRemainingHpDamage(AttackEffect):
 def half_remaining_hp(state: GameState, pokemon: PokemonInPlay) -> int:
     """場のポケモンの残りの HP の半分（ダメージカウンターの単位で切り上げ）（v0.45。「いかりのまえば」）。"""
     per = state.rules.damage_per_counter
-    remaining = state.card_def(pokemon.card).hp - pokemon.damage
+    remaining = max_hp(state, pokemon) - pokemon.damage  # v0.48: 今有効な最大HPから残りの HP を求める
     if remaining <= 0 or remaining % per:
         raise RuntimeError(f"ポケモン {pokemon.pokemon_id} の残りの HP {remaining} が、ダメージカウンターの単位の正の倍数ではない（エンジンの不具合）")
     return (remaining // per + 1) // 2 * per
@@ -9370,7 +9408,7 @@ class CoinEvolveSelfFromDeck(PowerEffect):
 
     def _hp_blocked(self, state: GameState, use: PowerUse, candidates: list[int]) -> tuple[int, ...]:
         _, user = state.find_pokemon(use.pokemon_id)
-        return tuple(uid for uid in candidates if user.damage >= state.card_def(uid).hp)
+        return tuple(uid for uid in candidates if user.damage >= evolution_hp(state, user, uid))  # v0.48: 重ねたあとの最大HP
 
     def check_usable(self, state: GameState, use: PowerUse) -> None:
         _require_user_not_asleep_paralyzed_confused(state, use)
@@ -10679,6 +10717,565 @@ def trainer_use_blockers(state: GameState, player: int) -> tuple[tuple, ...]:
     found: list[tuple] = [("power", owner, pid, key) for owner, pid, key in trainer_lock_sources(state)]
     found.extend(("lock", lock.source_player, lock.effect, lock.expires_turn) for lock in state.trainer_locks if lock.player == player)
     return tuple(found)
+
+
+# ---------------------------------------------------------------- v0.48（docs/effective-pokemon-properties-v0.48.md）。場のポケモンの「今有効な最大HP・タイプ（色）・
+# 弱点・抵抗力」を一か所で求める処理と、それを変える 7 枚の効果（ポリゴン 2 枚・モルフォン・ナツメのゴース／ゴースト／ゲンガー・キョウのメタモン）。処理に使う文面はどれも
+# kyuura の印刷の文面（7 枚とも kyuura に最新の説明・エラッタ・裁定の記録がない）
+#
+# 印刷の定義（``GameState.printed_def``）・場での役割の定義（v0.47。``GameState.card_def`` が場にいるあいだ返す）は書きかえない。今有効な値は、そのつど、カードの定義
+# （``card_def``。場での役割を含む）に、今の効果（ワザによる持続する効果・はたらいている常にはたらく特殊能力・特殊能力で色を変えた記録）を当てはめて求める。値を
+# 状態・ログに書き写さない（進化・入れ替え・きぜつ・特殊状態・かがくへんかガス・保存と復元のあとも、その時点の場から同じ答えになる）。
+
+COLORS: tuple[EnergyType, ...] = tuple(EnergyType)  # 色を選ぶ決定（``SELECT_COLOR``）の選べるもの i は COLORS[i]
+# 「好きな「色」…ただし「無色」にはできない」「無色以外の好きな「色」」（テクスチャー1・2）。色は 2000.02.14 版の公式ルールのタイプ（p.321 が悪エネルギー・鋼エネルギーを
+# 例に挙げる。kyuura rule_history.json の NEO-2000-OFFICIAL-RULES）のうち無色以外の 8 つ（実装上の判断。docs 3 章）
+NON_COLORLESS_CHOICES: tuple[int, ...] = tuple(i for i, color in enumerate(COLORS) if color is not EnergyType.COLORLESS)
+
+# VS1（docs 4 章）: モルフォンの［へんしょく］で変えた色が、いつまで続くか
+SHIFT_DURATION_CODE = "UNRESOLVED_SHIFT_COLOR_DURATION"
+SHIFT_DURATION_REASON = (
+    "モルフォンの［へんしょく］で変えた色が、使った番のあと（次の番以後）・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん状態・"
+    "かがくへんかガス）あいだも続くかは、印刷の文面（効果の期限を書かない）・kyuura の記録（持続する効果の規定 GR-2000-P322-PERSISTENT-EFFECTS はワザの効果のもの。"
+    "v0.8 の G27 は物理的なカード・カウンターの結果だけ）から決められず、変えた色と印刷の色で結果が変わる（VS1）"
+)
+# PG1（docs 3 章）: 弱点・抵抗力のないポケモンの弱点・抵抗力を「好きな色にかえる」
+ABSENT_WEAKNESS_RESISTANCE_CODE = "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE"
+ABSENT_WEAKNESS_RESISTANCE_REASON = (
+    "弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を「好きな「色」にかえる」効果（ポリゴンの「テクスチャー1」「テクスチャー2」）で、弱点（抵抗力）を新しく持たせる"
+    "のか、何もしないのか（抵抗力なら引く数も）は、印刷の文面・kyuura の記録から決められない（PG1。英語版の「If the Defending Pokémon has a Weakness」は持ち込まない）"
+)
+# MH1（docs 5 章）: ダメージ以外の原因で最大HPが下がり、のっているダメージ以下になる
+MAX_HP_DROP_CODE = "UNRESOLVED_MAX_HP_DROP"
+MAX_HP_DROP_REASON = (
+    "場のポケモンの最大HPが、ダメージ以外の原因（ついている「超」エネルギーカードが減る・［ガスのからだ］がかがくへんかガスで消える・「きょだいか」の効果が消える）で"
+    "のっているダメージ以下に下がるとき、きぜつするか・いつきぜつの判定をするかは、ワザのあとのきぜつの判定（p.309・GR-2000-P323-KNOCKOUT）のほかに記録がなく決められない"
+    "（MH1。v0.4a の H1 は進化のときの問いで、ここには広げない）"
+)
+# ワザの途中の決定を待つあいだに、ワザの効果で最大HPが下がってのっているダメージ以下になる（ワザのあとのきぜつの判定で処理するが、待つあいだの状態をエンジンが表せない。
+# 今の対応カードでは起こらない。エンジンの未対応。研究の対応表の停止コードに入れない）
+MAX_HP_DROP_DURING_ATTACK_CODE = "UNSUPPORTED_MAX_HP_DROP_DURING_ATTACK"
+
+
+GASEOUS_FORM_TEXT = ("このカードの最大HPは、このカードについている「{type}」エネルギーカードの数×{per}ぶん、大きいものになる。このカードが「ねむり・マヒ・こんらん」状態の"
+                     "時でも、この力は必ずはたらく。")
+
+
+@dataclass(frozen=True)
+class MaxHpPerAttachedEnergyCards(ContinuousPower):
+    """このカードの最大HPは、このカードについている ``energy_type`` エネルギーカードの数 × ``per`` ぶん、大きいものになる。ねむり・マヒ・こんらん状態の時でも、この力は
+    必ずはたらく（v0.48。ナツメのゴース（PMCG6-049）の［ガスのからだ］。kyuura の印刷の文面）。
+
+    - 常にはたらく特殊能力（v0.46 の ``ContinuousPower``。宣言しない）。場（バトル場・ベンチ）のどこでもはたらく。説明のとおり特殊状態では消えない（``blocked_by_status`` が
+      偽）。かがくへんかガスでは消える（G4。抑止は ``continuous.suppressors_of`` で別に判定する）
+    - 数えるのは、ついている基本エネルギーカードのうち、カードが ``energy_type`` のもの（カードの枚数。エナジーバーンなどで供給するエネルギーのタイプが変わっても、
+      カードの種類で数える。供給するエネルギーの個数（``state.energy_types``）とは別）
+    - 最大HP（``max_hp``）はそのつど求める。エネルギーカードをつける・はがす・つけかえる・かがくへんかガスがはたらく／消える・進化する（いちばん上のカードが変わる）と
+      変わる。下がってのっているダメージ以下になる場合は MH1（ワザのあとのきぜつの判定で処理する場合を除く。``max_hp_drops``）
+    """
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "max_hp_per_attached_energy_cards"
+    blocked_by_status: ClassVar[bool] = False
+    what: ClassVar[str] = "ついているエネルギーカードの数で最大HPが大きくなる特殊能力"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "エネルギーカード 1 枚あたりの最大HP")
+
+    def texts(self) -> tuple[str, ...]:
+        return (GASEOUS_FORM_TEXT.format(type=self.energy_type.ja, per=self.per),)
+
+    def hp_bonus(self, state: GameState, pokemon: PokemonInPlay) -> int:
+        cards = [uid for uid in pokemon.energy if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is self.energy_type]
+        return len(cards) * self.per
+
+
+def _own_working_continuous(state: GameState, pokemon: PokemonInPlay, kind: type, *, card: int | None = None) -> list[tuple[PowerKey, ContinuousPower]]:
+    """``pokemon`` のいちばん上のカード（``card`` を渡したら、そのカードがいちばん上だとしたとき。進化の確かめ）の常にはたらく特殊能力（``kind`` の型）のうち、今はたらいて
+    いるもの（v0.48）。場所・特殊状態の条件（``ContinuousPower.located``・``status_allows``）とかがくへんかガス（``continuous.suppressors_of``）は ``continuous_powers`` と同じ
+    判定。``card`` を渡したとき、進化したポケモンは特殊状態が消える（p.310）ので、特殊状態の条件は見ない。"""
+    definition = state.card_def(pokemon.card if card is None else card)
+    if not definition.powers:
+        return []
+    from .continuous import suppressors_of  # continuous.py は effects.py を読み込むので、使うときに読み込む
+
+    found = []
+    for index, power in enumerate(definition.powers):
+        effect = state.effects.power_effect(definition.id, power)
+        if not isinstance(effect, kind):
+            continue
+        if effect.location != CONTINUOUS_IN_PLAY:
+            located = state.find_pokemon(pokemon.pokemon_id)
+            if located is None or not effect.located(state, located[0], located[1]):
+                continue
+        if card is None and not effect.status_allows(pokemon):
+            continue
+        if suppressors_of(state, power):
+            continue
+        found.append((PowerKey(definition.id, index), effect))
+    return found
+
+
+def max_hp(state: GameState, pokemon: PokemonInPlay, *, card: int | None = None) -> int:
+    """場のポケモン ``pokemon`` の今有効な最大HP（v0.48。公開の問い合わせ。HP を使う処理はどれもこれを使う）。
+
+    - もとの値はカードの定義の HP（``GameState.card_def``。場での役割（v0.47）を含む。いちばん上のカード）
+    - 「きょだいか」の効果（``persistent.max_hp_set``。ワザによる持続する効果）がはたらいていれば、その数（「「80」になる」）
+    - はたらいている［ガスのからだ］（``MaxHpPerAttachedEnergyCards``）の分だけ大きくなる
+    - 2 つが同時にはたらくポケモンは今の写しにない（その数にするのと足すのの順番は決まらない）ので ``RuntimeError``
+    ``card`` を渡したら、そのカードがいちばん上だとしたときの最大HP（進化の確かめ。H1・``evolution_hp``。進化すると持続する効果は消えるので、常にはたらく特殊能力だけを
+    当てはめる）。状態を変えず、乱数を使わない。"""
+    definition = state.card_def(pokemon.card if card is None else card)
+    if definition.hp is None:
+        raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} のカード {definition.id} に HP がない（エンジンの不具合）")
+    fixed = max_hp_set(pokemon) if card is None else None
+    bonus = sum(effect.hp_bonus(state, pokemon) for _, effect in _own_working_continuous(state, pokemon, MaxHpPerAttachedEnergyCards, card=card))
+    if fixed is not None and bonus:
+        raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} の最大HPを、その数にする効果と大きくする特殊能力が同時に変える（今の写しでは起こらない）")
+    return fixed.amount if fixed is not None else definition.hp + bonus
+
+
+def knocked_by_hp(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """のっているダメージが今有効な最大HP以上か（v0.48。HP 以上のダメージを受けた。``max_hp``）。"""
+    return pokemon.damage >= max_hp(state, pokemon)
+
+
+def weakness_of(state: GameState, pokemon: PokemonInPlay) -> EnergyType | None:
+    """場のポケモンの今有効な弱点の色（v0.48）。「テクスチャー1」の効果（``persistent.weakness_change``）があればその色、なければカードの定義の弱点。倍数は変えない。"""
+    change = weakness_change(pokemon)
+    return change.color if change is not None else state.card_def(pokemon.card).weakness
+
+
+def resistance_of(state: GameState, pokemon: PokemonInPlay) -> tuple[EnergyType | None, int]:
+    """場のポケモンの今有効な抵抗力（色, 数）（v0.48）。「テクスチャー2」の効果（``persistent.resistance_change``）があれば色だけ変わる（数はカードの定義の値のまま）。"""
+    definition = state.card_def(pokemon.card)
+    change = resistance_change(pokemon)
+    return (change.color if change is not None else definition.resistance), definition.resistance_value
+
+
+def type_shift_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, ShiftColor] | None:
+    """``pokemon`` のいちばん上のカードの［へんしょく］（``ShiftColor``）。なければ None。"""
+    definition = state.card_def(pokemon.card)
+    for index, power in enumerate(definition.powers):
+        effect = state.effects.power_effect(definition.id, power)
+        if isinstance(effect, ShiftColor):
+            return PowerKey(definition.id, index), effect
+    return None
+
+
+def type_shift_power_works(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """［へんしょく］が今消えていないか（v0.48）。説明の「「ねむり・マヒ・こんらん」状態の時、この力は消える」と、かがくへんかガス（G4。``continuous.suppressors_of``）。"""
+    found = type_shift_power(state, pokemon)
+    if found is None or _asleep_paralyzed_or_confused(pokemon):
+        return False
+    from .continuous import suppressors_of
+
+    return not suppressors_of(state, state.card_def(pokemon.card).powers[found[0].power_index])
+
+
+def type_shift_determined(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """特殊能力で変えた色（``PokemonInPlay.type_shift``）が今も有効と決まっているか（v0.48）。決まっているのは、使った番のうちで、使ってからベンチにもどっておらず、
+    いちばん上のカードが使ったときと同じで、［へんしょく］が今消えていない（ねむり・マヒ・こんらん・かがくへんかガスでない）ときだけ。ほかは VS1（``type_readings``）。"""
+    shift = pokemon.type_shift
+    return (shift is not None and shift.turn == state.turn_number and not shift.returned_to_bench and shift.source_card == pokemon.card
+            and type_shift_power_works(state, pokemon))
+
+
+def type_readings(state: GameState, pokemon: PokemonInPlay) -> tuple[EnergyType | None, ...]:
+    """場のポケモンの今有効な色（タイプ）の読み方（v0.48。公開の問い合わせ）。ふつうは 1 つ（カードの定義のタイプ。場での役割のポケモンは None）。
+
+    - ［へんしょく］で変えた色（``type_shift``）が決まって有効（``type_shift_determined``）なら、その色だけ
+    - 変えた記録はあるが有効か決まらない（VS1。使った番のあと・ベンチにもどったあと・この力が消えている）なら、(変えた色, カードの定義のタイプ) の 2 つ。この値を使う処理は、
+      2 つの読み方で結果が変わるときだけ止める（変わらなければ止めない）。どちらか 1 つを選んで続けない
+    """
+    printed = state.card_def(pokemon.card).pokemon_type
+    shift = pokemon.type_shift
+    if shift is None:
+        return (printed,)
+    if type_shift_determined(state, pokemon) or shift.color is printed:
+        return (shift.color,)
+    return (shift.color, printed)
+
+
+def definition_views(state: GameState, pokemon: PokemonInPlay) -> tuple[CardDefinition, ...]:
+    """ダメージの計算などに渡す、今有効な値を入れたカードの定義（v0.48）。色の読み方（``type_readings``）ごとに 1 つ。最大HP・弱点・抵抗力・色がカードの定義と同じなら、
+    カードの定義そのもの（共有する定義を書きかえず、違うときは ``dataclasses.replace`` の新しい値。状態に持たない）。"""
+    from dataclasses import replace
+
+    base = state.card_def(pokemon.card)
+    hp = max_hp(state, pokemon)
+    weakness = weakness_of(state, pokemon)
+    resistance, _ = resistance_of(state, pokemon)
+    views = []
+    for color in type_readings(state, pokemon):
+        if (hp, color, weakness, resistance) == (base.hp, base.pokemon_type, base.weakness, base.resistance):
+            views.append(base)
+        else:
+            views.append(replace(base, hp=hp, pokemon_type=color, weakness=weakness, resistance=resistance))
+    return tuple(views)
+
+
+def shift_duration_error(pokemon: PokemonInPlay, detail: str) -> UnsupportedError:
+    """VS1 の止める理由（v0.48）。解決の基盤の問い（``shift_color_duration``）と、ワザの外の確かめ（特殊能力の使用など）で同じ文。"""
+    shift = pokemon.type_shift
+    what = f"ポケモン {pokemon.pokemon_id} の［へんしょく］の色 {shift.color.ja}（{shift.turn} 番）" if shift is not None else f"ポケモン {pokemon.pokemon_id}"
+    return UnsupportedError(SHIFT_DURATION_CODE, f"{what}。{detail}: {SHIFT_DURATION_REASON}")
+
+
+def same_for_type_readings(state: GameState, pokemons: Iterable[PokemonInPlay], compute) -> Any:
+    """``pokemons`` の色の読み方（``type_readings``）のすべての組で ``compute(views)``（``views`` は ``pokemons`` の順の ``definition_views`` の 1 つずつ）を求め、どれも同じなら
+    その値を返す（v0.48）。読み方で結果が変わるなら ``TypeReadingsDiffer``（呼ぶ側が VS1 の止める処理にする）。どのポケモンも読み方が 1 つなら 1 回だけ求める（v0.47 までと
+    同じ計算）。計算の順番の決定が要る（``damage.DamageOrderRequired``）のも結果の 1 つとして比べ、どの読み方でも同じならそのまま投げる。"""
+    from itertools import product
+
+    from .damage import DamageOrderRequired
+
+    pokemons = tuple(pokemons)
+    choices = [definition_views(state, p) for p in pokemons]
+    if all(len(c) == 1 for c in choices):
+        return compute(tuple(c[0] for c in choices))
+    outcomes = []
+    for combo in product(*choices):
+        try:
+            outcomes.append(("value", compute(combo)))
+        except DamageOrderRequired as need:
+            outcomes.append(("order", need.step, tuple(m.label for m in need.modifiers)))
+    if any(outcome != outcomes[0] for outcome in outcomes[1:]):
+        raise TypeReadingsDiffer([p for p, c in zip(pokemons, choices) if len(c) > 1])
+    if outcomes[0][0] == "order":
+        return compute(tuple(c[0] for c in choices))  # どの読み方でも同じ段階の順番の決定が要る（呼ぶ側が決定を出す）
+    return outcomes[0][1]
+
+
+class TypeReadingsDiffer(Exception):
+    """色の読み方（VS1）で結果が変わった（v0.48。``same_for_type_readings``）。``pokemons`` は読み方が 2 つある場のポケモン。"""
+
+    def __init__(self, pokemons: list[PokemonInPlay]):
+        super().__init__(f"色の読み方で結果が変わる: {[p.pokemon_id for p in pokemons]}")
+        self.pokemons = pokemons
+
+
+def single_type(state: GameState, pokemon: PokemonInPlay, detail: str) -> EnergyType | None:
+    """色の読み方が 1 つならその色。2 つなら VS1 で止める（v0.48。読み方ごとに結果を比べられない処理が使う。今の対応カードでは、読み方ごとに比べる処理だけが使う）。"""
+    readings = type_readings(state, pokemon)
+    if len(readings) > 1:
+        raise shift_duration_error(pokemon, detail)
+    return readings[0]
+
+
+def evolution_hp(state: GameState, pokemon: PokemonInPlay, card: int) -> int:
+    """``pokemon`` に ``card`` を重ねて進化させたあとの最大HP（v0.48。v0.4a の H1 の確かめ。進化すると持続する効果・特殊状態は消えるので、重ねるカードの HP と、そのカードの
+    はたらく常にはたらく特殊能力だけ）。"""
+    return max_hp(state, pokemon, card=card)
+
+
+def max_hp_drops(before: GameState, after: GameState) -> list[tuple[int, PokemonInPlay, int, int]]:
+    """``before`` から ``after`` までのあいだに、今有効な最大HPが下がって、のっているダメージ以下になった場のポケモン（持ち主, ポケモン, 前の最大HP, 今の最大HP）（v0.48。MH1）。
+
+    同じ場のポケモンの番号で比べる（``before`` にいなかったポケモン・場をはなれたポケモンは数えない）。ダメージを受けて HP 以上になったポケモン（最大HPは下がっていない）は
+    数えない（ワザのあとのきぜつの判定・こんじょうなどの既存の処理）。状態を変えず、乱数を使わない。"""
+    previous = {pokemon.pokemon_id: max_hp(before, pokemon) for player in before.players for pokemon in player.in_play()}
+    found = []
+    for owner, player in enumerate(after.players):
+        for pokemon in player.in_play():
+            old = previous.get(pokemon.pokemon_id)
+            if old is None:
+                continue
+            hp = max_hp(after, pokemon)
+            if hp < old and pokemon.damage >= hp:
+                found.append((owner, pokemon, old, hp))
+    return found
+
+
+def max_hp_drop_error(drops: list[tuple[int, PokemonInPlay, int, int]], *, during_attack: bool = False) -> UnsupportedError:
+    """MH1 の止める理由（v0.48）。``during_attack`` なら、ワザの途中の決定を待つあいだの場合（エンジンの未対応のコード）。"""
+    detail = "・".join(f"プレイヤー {owner} のポケモン {pokemon.pokemon_id}（最大HP {old} → {hp}、ダメージ {pokemon.damage}）" for owner, pokemon, old, hp in drops)
+    if during_attack:
+        return UnsupportedError(MAX_HP_DROP_DURING_ATTACK_CODE,
+                                f"{detail}: ワザの途中の決定を待つあいだに、ワザの効果で最大HPがのっているダメージ以下に下がった。ワザのあとのきぜつの判定で処理するが、"
+                                "待つあいだの状態をエンジンが表せない（エンジンの未対応。今の対応カードでは起こらない）")
+    return UnsupportedError(MAX_HP_DROP_CODE, f"{detail}: {MAX_HP_DROP_REASON}")
+
+
+SHIFT_TEXT = "このカード持ち主は、自分の番に1回、このカードの色を場にいるポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。"
+
+
+def shift_color_options(state: GameState) -> tuple[frozenset[int], frozenset[int]]:
+    """［へんしょく］で選べる色（``COLORS`` の位置）: (決まって場にいる色, 読み方によって場にいる色)（v0.48）。場にいるポケモン（お互いの場のバトル場・ベンチ）の今有効な色
+    （``type_readings``）。色のないポケモン（なにかの化石・ピッピ人形の場での役割）は数えない。無色も選べる（日本語の文面は無色を除かない。英語版の「other than
+    Colorless」は持ち込まない）。読み方が 2 つあるポケモンの色は、ほかに決まってその色のポケモンがいなければ、選ぶと止める（VS1）。"""
+    sure: set[int] = set()
+    maybe: set[int] = set()
+    for player in state.players:
+        for pokemon in player.in_play():
+            readings = [color for color in type_readings(state, pokemon) if color is not None]
+            target = sure if len(type_readings(state, pokemon)) == 1 else maybe
+            target.update(COLORS.index(color) for color in readings)
+    return frozenset(sure), frozenset(maybe - sure)
+
+
+@dataclass(frozen=True)
+class ShiftColor(PowerEffect):
+    """このカードの持ち主は、自分の番に 1 回、このカードの色を場にいるポケモンのどれかの色に変えることができる。ねむり・マヒ・こんらん状態の時、この力は消える（v0.48。
+    モルフォン（PMCG2-015）の［へんしょく］。kyuura の印刷の文面。印刷の「このカード持ち主は」は誤植で、kyuura の記録は「このカードの持ち主は」に直した版があるとする。
+    意味は同じ）。
+
+    - 宣言して使う。自分の番に 1 回（``once_per_turn``。宣言のときに記録する。v0.42）。ねむり・マヒ・こんらんのこのカードは使えない。かがくへんかガスで消える（エンジンの
+      共通の確認 ``POWER_SUPPRESSED``）
+    - 宣言のあと、使ったプレイヤーが色を選ぶ（決定 ``SELECT_COLOR``。選べるものは ``shift_color_options``）。選んだ色を場のポケモンの記録（``TypeShift``）に残す（ログ
+      ``type_shift``）。前の記録は置きかえる
+    - 変えた色がいつまで続くか（使った番のあと・ベンチにもどったあと・この力が消えているあいだ）は決まらない（VS1）。決まっている間（使った番・ベンチにもどっていない・
+      力が消えていない）は変えた色、それ以外は 2 つの読み方（``type_readings``）で、結果が変わる処理だけを止める。力を使えなくすること（特殊状態・ガス）と、すでに
+      変えた色を消すことを、同じ処理にしない（消えたことにも、続くことにもしない）
+    - 場をはなれたら、記録は場のポケモンといっしょになくなる。モルフォンから進化するカードは写しにない（進化したら記録を消す。``evolution.place_evolution_card``）
+    """
+
+    implementation_id = "shift_color"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "このカードの色を場にいるポケモンの色に変える特殊能力", (SHIFT_TEXT,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        sure, _ = shift_color_options(state)
+        if not sure:
+            _, user = state.find_pokemon(use.pokemon_id)
+            raise shift_duration_error(user, "決まって場にいる色がない（どの色も、読み方によっては場にいない）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        sure, maybe = shift_color_options(state)
+        _, user = state.find_pokemon(use.pokemon_id)
+        push_power_decision(state, use, kind=SELECT_COLOR, player=use.player, options=sorted(sure | maybe), unresolved_choices=sorted(maybe),
+                            unresolved_code=SHIFT_DURATION_CODE, unresolved_reason=shift_duration_error(user, "選んだ色は、読み方によっては場にいない").message)
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        from .state import TypeShift
+
+        owner, user = state.find_pokemon(use.pokemon_id)
+        color = COLORS[choices[0]]
+        previous = user.type_shift
+        user.type_shift = TypeShift(color, state.turn_number, user.card)
+        extra = {} if previous is None else {"previous_color": previous.color.value, "previous_turn": previous.turn}
+        state.add_event("type_shift", player=owner, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), color=color.value, **extra)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        sure, maybe = shift_color_options(state)
+        return _power_decision_form(decision, use, kind=SELECT_COLOR, choices=(1, 1), options=sorted(sure | maybe), unresolved=sorted(maybe))
+
+
+CONVERSION_WEAKNESS_TEXTS = (
+    # 第1弾のポリゴン（PMCG1-064）
+    "相手の対戦ポケモンの弱点を好きな「色」にかえる。ただし「無色」にはできない。相手がベンチに戻った時にその効果はきえる。",
+    # ロケット団のポリゴン（PMCG4-050）。書き方だけが違う（「ベンチに戻った時」と「バトル場をはなれた時」はどちらも、受けたポケモンがバトル場をはなれると消える。場をはなれる・
+    # 進化するときは一般の規定（GR-2000-P322-PERSISTENT-EFFECTS）でも消える）
+    "相手の対戦ポケモンの「弱点」を、無色以外の好きな「色」に変える。この効果は、そのポケモンがバトル場をはなれた時に消える。",
+)
+CONVERSION_RESISTANCE_TEXTS = ("自分の抵抗力を好きな「色」にかえる。ただし「無色」にはできない。自分がベンチに戻ったときにその効果はきえる。",)
+
+
+@dataclass(frozen=True)
+class ChangeOpponentWeakness(AttackEffect):
+    """相手の対戦ポケモンの弱点を、無色以外の好きな色に変える。受けたポケモンがバトル場をはなれた（ベンチにもどった）時にその効果は消える（v0.48。ポリゴン（PMCG1-064・
+    PMCG4-050）の「テクスチャー1」。kyuura の印刷の文面。2 つの書き方を受け付ける）。
+
+    - 相手に与える持続する効果 ``state.WeaknessChange``（与えたときからはたらき、期限はない。ベンチにもどる・場をはなれる・進化で消える）。弱点の倍数は変えない
+    - 相手に与える効果なので「ワザをうけない」状態・「とうめい」を評価する。色を選ぶのはワザを使ったプレイヤー（決定 ``SELECT_COLOR``。無色以外の 8 色）
+    - 受けるポケモンに弱点がないときは決まらない（PG1）。同じポケモンがもう一度受けたら、前の効果を消して新しい色にする（``persistent.replace_persistent_effect``）
+    """
+
+    implementation_id = "change_opponent_weakness"
+    opponent_effect_elements = (WEAKNESS_CHANGE_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "相手の弱点の色を変えるワザ", damage="none") + _check_exact_text(attack, "相手の弱点の色を変えるワザ", CONVERSION_WEAKNESS_TEXTS)
+
+    def color_terms(self) -> tuple[type]:
+        from .state import WeaknessChange
+
+        return (WeaknessChange,)
+
+
+@dataclass(frozen=True)
+class ChangeOwnResistance(AttackEffect):
+    """自分の抵抗力を、無色以外の好きな色に変える。自分がベンチにもどった時にその効果は消える（v0.48。ポリゴン（PMCG1-064）の「テクスチャー2」。kyuura の印刷の文面）。
+
+    - 自分自身に与える持続する効果 ``state.ResistanceChange``（与えたときからはたらき、期限はない）。変えるのは色だけで、抵抗力の数（-30）は変えない
+    - 自分への効果も「とうめい」を評価する（v0.9 の T8。ポリゴンは持たない）。色を選ぶのはワザを使ったプレイヤー。自分に抵抗力がないとき（相手のワザとして使う）は PG1
+    """
+
+    implementation_id = "change_own_resistance"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "自分の抵抗力の色を変えるワザ", damage="none") + _check_exact_text(attack, "自分の抵抗力の色を変えるワザ", CONVERSION_RESISTANCE_TEXTS)
+
+    def color_terms(self) -> tuple[type]:
+        from .state import ResistanceChange
+
+        return (ResistanceChange,)
+
+
+GIANT_GROWTH_TEXT = "コインを投げて「おもて」なら、このカードの最大HPは「{amount}」になる。(バトル場をはなれた時、この効果は消える)"
+
+
+@dataclass(frozen=True)
+class SetMaxHpOnHeads(AttackEffect):
+    """コインを投げて「おもて」なら、このカードの最大HPは ``amount`` になる。バトル場をはなれた時、この効果は消える（v0.48。キョウのメタモン（PMCG6-072）の「きょだいか」。
+    kyuura の印刷の文面）。
+
+    - 自分自身に与える持続する効果 ``state.MaxHpSet``（与えたときからはたらき、期限はない。ベンチにもどる・場をはなれる・進化で消える）。「うら」なら何もしない（前に受けた
+      効果はそのまま）。もう一度「おもて」なら前の効果を消して新しい効果にする（同じ数）
+    - ダメージはない。自分への効果なので、コインは相手の状態に関係なく投げる。最大HPが下がる（効果が消える）ときにのっているダメージ以下になる場合は MH1（ワザのあとの
+      きぜつの判定で処理する場合を除く）
+    """
+
+    amount: int
+    implementation_id = "set_max_hp_on_heads"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "最大HP")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "コインで最大HPを決まった数にするワザ", damage="none") + _check_exact_text(
+            attack, "コインで最大HPを決まった数にするワザ", (GIANT_GROWTH_TEXT.format(amount=self.amount),))
+
+    def max_hp_terms(self) -> tuple[type, int]:
+        from .state import MaxHpSet
+
+        return MaxHpSet, self.amount
+
+
+POUND_TEXT = "このカードに「{name}」の効果がはたらいているとき、このワザのダメージは「{amount}」になる。"
+
+
+@dataclass(frozen=True)
+class DamageIfSelfMaxHpSet(AttackEffect):
+    """このカードに「``effect_attack_name``」の効果がはたらいているとき、このワザのダメージは ``amount`` になる（v0.48。キョウのメタモン（PMCG6-072）の「はたく」。kyuura の
+    印刷の文面。英語版は条件を「Giant Growth」の文に書くが、効果は同じ（kyuura の card_differences の PMCG6-072。確度: 確実））。
+
+    - 「「30」になる」はワザの説明の計算（p.321 の 1 段階。v0.40 の「ラブラリアット」と同じ）。条件が満たされなければダメージの目安の数字（10）。弱点・抵抗力などは
+      そのあとの段階
+    - 「きょだいか」の効果がはたらいているかは、最大HP（``max_hp``）と同じ問い合わせ ``persistent.max_hp_set`` で見る（同じ効果の有無を参照する）
+    - 同じカードの「``effect_attack_name``」のワザが最大HPを決まった数にするワザであることを ``card_problems`` で確かめる
+    """
+
+    effect_attack_name: str
+    amount: int
+    implementation_id = "damage_if_self_max_hp_set"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "ダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "最大HPの効果でダメージが変わるワザ", damage="fixed") + _check_exact_text(
+            attack, "最大HPの効果でダメージが変わるワザ", (POUND_TEXT.format(name=self.effect_attack_name, amount=self.amount),))
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        named = [a for a in attacks if a.index != attack.index and a.name_ja == self.effect_attack_name]
+        if len(named) != 1:
+            return [f"「{self.effect_attack_name}」のワザが、このカードのほかのワザに 1 つない"]
+        text = named[0].text_ja or ""
+        if not (text.startswith("コインを投げて「おもて」なら、このカードの最大HPは「") and text.endswith("(バトル場をはなれた時、この効果は消える)")):
+            return [f"「{self.effect_attack_name}」が、最大HPを決まった数にするワザではない（{text!r}）"]
+        return []
+
+
+@dataclass(frozen=True)
+class DamageThenPoisonAndConfuseOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手を「どく」と「こんらん」状態にする（v0.48。モルフォン（PMCG2-015）の
+    「りんぷん」。kyuura の印刷の文面）。
+
+    - 1 枚のワザ全体のコイン（``Coin``）で両方を決める（要素ごとに投げ直さない。v0.44 の「しんけいどく」（どくとマヒ）と同じ形。説明の書き方（「両方の」の有無）が違う
+      ので別の型）
+    - 相手がこのワザのダメージで HP 以上なら投げない（p.309）。「とうめい」で受けないと決まった・「ワザをうけない」相手には T19b・HC3（v0.34 の ``void_coin_question``）
+    """
+
+    implementation_id = "damage_then_poison_and_confuse_on_heads"
+    opponent_effect_elements = (POISON, CONFUSION)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = "コインを投げて「おもて」なら、相手を「どく」と「こんらん」状態にする。"
+        return _check_form(attack, "コインでどくとこんらんにするワザ", damage="fixed") + _check_exact_text(attack, "コインでどくとこんらんにするワザ", (expected,))
+
+
+NIGHT_SPIRITS_TEXT = "自分の場にいる{names}の数だけコインを投げ、「おもて」の数×{per}のダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinsPerNamedPokemonDamage(AttackEffect):
+    """自分の場にいる名前が ``names`` のどれかのポケモンの数だけコインを投げ、「おもて」の数 × ``per`` のダメージ（v0.48。ナツメのゴースト（PMCG6-050）の「ナイトスピリッツ」。
+    kyuura の印刷の文面）。
+
+    - 数えるのはダメージの要素を処理する時点の自分の場（バトル場・ベンチ）のポケモン（v0.39 の ``programs.counted_pokemon``。進化して重なったカードは 1 匹。名前は
+      いちばん上のカードの名前の完全一致。カード id の一覧ではなく、説明の名前で数える）。ワザを使ったポケモンも数える
+    - コインはダメージの要素の中（ダメージの量だけを決める）。結果は「おもて」の数だけを使う（先読みは「おもて」の数でまとめる。v0.35）。実際の対戦のコインは 1 枚ずつ
+    - 相手が「ダメージを受けない」状態なら、ダメージの量だけを決めるコインなので投げるかが決められない（v0.4b の問い）
+    """
+
+    names: tuple[str, ...]
+    per: int
+    implementation_id = "coins_per_named_pokemon_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "場の名前の合うポケモンの数のコインでダメージのワザ", damage="modified", modifier="×")
+        expected = NIGHT_SPIRITS_TEXT.format(names="".join(f"「{name}」" for name in self.names), per=self.per)
+        if attack.text_ja != expected or attack.damage != self.per:
+            problems.append(f"説明 {attack.text_ja!r}・ダメージ {attack.damage} が {expected!r}・{self.per} ではない")
+        return problems
+
+
+PAIN_AMPLIFIER_TEXT = "相手の場の、ダメージカウンターがのっているポケモン全員に、ダメージカウンターを{n}つずつのせる。"
+
+
+@dataclass(frozen=True)
+class PlaceCountersOnDamagedOpponentPokemon(AttackEffect):
+    """相手の場の、ダメージカウンターがのっているポケモン全員に、ダメージカウンターを ``counters`` 個ずつのせる（v0.48。ナツメのゲンガー（PMCG6-054）の「ダメージぞうふく」。
+    kyuura の印刷の文面）。
+
+    - ダメージカウンターをのせる効果で、ワザによるダメージではない（v0.41 の「ダメージシフト」と同じ。GR-2000-P320-COUNTER-MOVE）。弱点・抵抗力・プラスパワー・ディフェンダー・
+      「ダメージを受けない」状態を計算せず、「ダメージを受けたとき」の効果ははたらかない。ログは v0.41 の ``place_damage_counters``
+    - 対象は、この要素を処理する時点で相手の場（バトル場 → ベンチの順）にいて、ダメージカウンターがのっているポケモン全員。のっていないポケモン・自分の場のポケモンには
+      のせない。対象がいなければ何もしない（p.309）
+    - 相手のポケモンへの効果なので、ポケモンごとに「ワザをうけない」状態・「とうめい」を評価する（2 匹以上が「とうめい」なら T27）
+    - のせて HP 以上になったポケモンは、ワザのあとのきぜつの判定でまとめてきぜつする（同時のきぜつ。こんじょうは使えない。v0.41 の ``_counters_changed``）
+    """
+
+    counters: int
+    implementation_id = "place_counters_on_damaged_opponent_pokemon"
+    opponent_effect_elements = (COUNTERS_ELEMENT,)  # 相手の場のポケモンにダメージカウンターをのせる（ダメージではない。v0.41 のダメージシフトと同じ要素の種類）
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "ダメージカウンターがのっている相手のポケモン全員にのせるワザ", damage="none") + _check_exact_text(
+            attack, "ダメージカウンターがのっている相手のポケモン全員にのせるワザ", (PAIN_AMPLIFIER_TEXT.format(n=self.counters),))
+
+
+CALL_OF_THE_NIGHT_TEXT = ("相手が「きぜつ」しなかったなら、コインを{n}枚投げる。すべて「おもて」なら、相手と、相手についているすべてのカードを持ち主の山札にもどし、"
+                          "その山札をよく切る。")
+
+
+@dataclass(frozen=True)
+class DamageThenCoinsReturnOpponentToDeck(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手が「きぜつ」しなかったなら、コインを ``coins`` 枚投げる。すべて「おもて」なら、相手と、相手について
+    いるすべてのカードを持ち主の山札にもどし、その山札をよく切る（v0.48。ナツメのゲンガー（PMCG6-054）の「やみのこえ」。kyuura の印刷の文面）。
+
+    - 山札にもどす処理は v0.40 の「つまみだす」と同じ要素 ``programs.ReturnOpponentToDeck``（きぜつではない。サイドは取らない。空いたバトル場はワザのあとに相手が控えから
+      出す。控えがいなければ相手の負け）。「つまみだす」の「相手に控えがいない時、このワザは使えない」は、このワザの説明にないので持ち込まない（``required`` が偽）
+    - 「相手が「きぜつ」しなかったなら」: このワザのダメージで相手が HP 以上になっていればコインを投げない（処理の対象がない。``has_target``。こんじょうを使えるなら G37）。
+      「ダメージを受けない」状態でダメージを受けなかった相手はきぜつしていないので投げる（山札にもどす効果はダメージではないので受ける）。「ワザをうけない」相手・「とうめい」で
+      受けないと決まった相手には、効果だけを決めるコインなので HC3・T19b
+    - 同じワザで HP 以上になったポケモンがいて山札にもどす場合は RD9（v0.36 と同じ問い）
+    """
+
+    coins: int
+    implementation_id = "damage_then_coins_return_opponent_to_deck"
+    opponent_effect_elements = (RETURN_IN_PLAY_TO_DECK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "コインがすべて「おもて」なら相手を山札にもどすワザ", damage="fixed") + _check_exact_text(
+            attack, "コインがすべて「おもて」なら相手を山札にもどすワザ", (CALL_OF_THE_NIGHT_TEXT.format(n=self.coins),))
 
 
 def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, AttackEntry]:
@@ -14334,6 +14931,89 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを3枚投げて「おもて」の数×10のダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.48（docs/effective-pokemon-properties-v0.48.md）。処理に使う文面は kyuura の印刷の文面（7 枚とも kyuura に最新の説明・エラッタ・裁定の記録がない）
+        # ポリゴン（第1弾）。テクスチャー1（無）: 相手の対戦ポケモンの弱点を無色以外の好きな色に変える（期限なし。ベンチにもどる・場をはなれる・進化で消える）
+        AttackKey("PMCG1-064", 0): AttackEntry(
+            ChangeOpponentWeakness(),
+            "テクスチャー1",
+            text_ja="相手の対戦ポケモンの弱点を好きな「色」にかえる。ただし「無色」にはできない。相手がベンチに戻った時にその効果はきえる。",
+            play_text_ja="相手の対戦ポケモンの弱点を好きな「色」にかえる。ただし「無色」にはできない。相手がベンチに戻った時にその効果はきえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # テクスチャー2（無無）: 自分の抵抗力の色を無色以外の好きな色に変える（数は変えない）
+        AttackKey("PMCG1-064", 1): AttackEntry(
+            ChangeOwnResistance(),
+            "テクスチャー2",
+            text_ja="自分の抵抗力を好きな「色」にかえる。ただし「無色」にはできない。自分がベンチに戻ったときにその効果はきえる。",
+            play_text_ja="自分の抵抗力を好きな「色」にかえる。ただし「無色」にはできない。自分がベンチに戻ったときにその効果はきえる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ポリゴン（ロケット団）。テクスチャー1（無）: 第1弾と同じ処理（書き方だけが違う）
+        AttackKey("PMCG4-050", 0): AttackEntry(
+            ChangeOpponentWeakness(),
+            "テクスチャー1",
+            text_ja="相手の対戦ポケモンの「弱点」を、無色以外の好きな「色」に変える。この効果は、そのポケモンがバトル場をはなれた時に消える。",
+            play_text_ja="相手の対戦ポケモンの「弱点」を、無色以外の好きな「色」に変える。この効果は、そのポケモンがバトル場をはなれた時に消える。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # サイケこうせん（無無無）20: ダメージ → コインの「おもて」でこんらん（v0.3c の「あやしいひかり」と同じ型）
+        AttackKey("PMCG4-050", 1): AttackEntry(
+            ConfuseOnHeads(),
+            "サイケこうせん",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # モルフォン（ポケモンジャングル）。りんぷん（草草）10: ダメージ → 同じコインの「おもて」でどくとこんらん
+        AttackKey("PMCG2-015", 0): AttackEntry(
+            DamageThenPoisonAndConfuseOnHeads(),
+            "りんぷん",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」と「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」と「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのゴース（闇からの挑戦）。ガスでつつむ（超超）30: 説明のないワザ
+        AttackKey("PMCG6-049", 0): AttackEntry(DAMAGE_ONLY, "ガスでつつむ"),
+        # ナツメのゴースト（闇からの挑戦。ナツメのゴースから進化）。ナイトスピリッツ（超超）30×: 自分の場の名前の合うポケモンの数だけコイン
+        AttackKey("PMCG6-050", 0): AttackEntry(
+            CoinsPerNamedPokemonDamage(names=("ナツメのゴース", "ナツメのゴースト", "ナツメのゲンガー"), per=30),
+            "ナイトスピリッツ",
+            text_ja="自分の場にいる「ナツメのゴース」「ナツメのゴースト」「ナツメのゲンガー」の数だけコインを投げ、「おもて」の数×30のダメージ。",
+            play_text_ja="自分の場にいる「ナツメのゴース」「ナツメのゴースト」「ナツメのゲンガー」の数だけコインを投げ、「おもて」の数×30のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ナツメのゲンガー（闇からの挑戦。ナツメのゴーストから進化）。ダメージぞうふく（超）: ダメージカウンターがのっている相手のポケモン全員に 1 個ずつのせる（ダメージではない）
+        AttackKey("PMCG6-054", 0): AttackEntry(
+            PlaceCountersOnDamagedOpponentPokemon(1),
+            "ダメージぞうふく",
+            text_ja="相手の場の、ダメージカウンターがのっているポケモン全員に、ダメージカウンターを1つずつのせる。",
+            play_text_ja="相手の場の、ダメージカウンターがのっているポケモン全員に、ダメージカウンターを1つずつのせる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # やみのこえ（超超超）40: ダメージ → 相手がきぜつしなかったらコイン 2 枚 → すべて「おもて」なら相手を山札にもどして切る（控えがいなくても使える）
+        AttackKey("PMCG6-054", 1): AttackEntry(
+            DamageThenCoinsReturnOpponentToDeck(2),
+            "やみのこえ",
+            text_ja="相手が「きぜつ」しなかったなら、コインを2枚投げる。すべて「おもて」なら、相手と、相手についているすべてのカードを持ち主の山札にもどし、その山札をよく切る。",
+            play_text_ja="相手が「きぜつ」しなかったなら、コインを2枚投げる。すべて「おもて」なら、相手と、相手についているすべてのカードを持ち主の山札にもどし、その山札をよく切る。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのメタモン（闇からの挑戦）。きょだいか（無）: コインの「おもて」で最大HPは 80（バトル場をはなれると消える）
+        AttackKey("PMCG6-072", 0): AttackEntry(
+            SetMaxHpOnHeads(80),
+            "きょだいか",
+            text_ja="コインを投げて「おもて」なら、このカードの最大HPは「80」になる。(バトル場をはなれた時、この効果は消える)",
+            play_text_ja="コインを投げて「おもて」なら、このカードの最大HPは「80」になる。(バトル場をはなれた時、この効果は消える)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # はたく（無）10: 「きょだいか」の効果がはたらいているとき 30（p.321 の 1 段階。最大HPと同じ効果の有無を見る）
+        AttackKey("PMCG6-072", 1): AttackEntry(
+            DamageIfSelfMaxHpSet("きょだいか", 30),
+            "はたく",
+            text_ja="このカードに「きょだいか」の効果がはたらいているとき、このワザのダメージは「30」になる。",
+            play_text_ja="このカードに「きょだいか」の効果がはたらいているとき、このワザのダメージは「30」になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -14783,5 +15463,16 @@ DEFAULT_EFFECTS = EffectRegistry(
         PowerKey("PMCG2-028", 0): PowerEntry(PeekCard(), "スパイ", PEEK_TEXT, PEEK_TEXT, _KYUURA_PRINTED_TEXT),
         # コラッタ（ロケット団）の［わるふざけ］（宣言して使う。自分の番ごとに 1 回。サイド 1 枚（位置で選ぶ）と山札の一番上を、見ないで入れかえる）
         PowerKey("PMCG4-045", 0): PowerEntry(SwapPrizeWithDeckTop(), "わるふざけ", TRICKERY_TEXT, TRICKERY_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.48（docs/effective-pokemon-properties-v0.48.md）。処理に使う文面は kyuura の印刷の文面
+        # モルフォンの［へんしょく］（宣言して使う。自分の番に 1 回。このカードの色を場にいるポケモンの色に変える。ねむり・マヒ・こんらんで消える。変えた色の期限は VS1）
+        PowerKey("PMCG2-015", 0): PowerEntry(ShiftColor(), "へんしょく", SHIFT_TEXT, SHIFT_TEXT, _KYUURA_PRINTED_TEXT),
+        # ナツメのゴースの［ガスのからだ］（常にはたらく。最大HPがついている「超」エネルギーカードの数×10 大きくなる。特殊状態でもはたらく。かがくへんかガスでは消える）
+        PowerKey("PMCG6-049", 0): PowerEntry(
+            MaxHpPerAttachedEnergyCards(EnergyType.PSYCHIC, 10),
+            "ガスのからだ",
+            GASEOUS_FORM_TEXT.format(type="超", per=10),
+            GASEOUS_FORM_TEXT.format(type="超", per=10),
+            _KYUURA_PRINTED_TEXT,
+        ),
     },
 )

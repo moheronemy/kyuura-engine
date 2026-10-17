@@ -22,7 +22,7 @@ from __future__ import annotations
 import random
 from typing import Callable, Sequence
 
-from .cards import EVOLUTION_STAGES, CardPool, load_card_pool
+from .cards import EVOLUTION_STAGES, CardPool, EnergyType, load_card_pool
 from .conditions import (
     RETREAT,
     clear_special_conditions,
@@ -78,6 +78,12 @@ from .effects import (
     play_as_pokemon_effect,
     play_as_pokemon_in_hand,
     trainer_use_blockers,
+    definition_views,
+    evolution_hp,
+    max_hp,
+    max_hp_drop_error,
+    max_hp_drops,
+    type_shift_power,
 )
 from .continuous import suppressors_of
 from .deck import deck_problems
@@ -113,7 +119,12 @@ from .state import (
     TrainerInUse,
     TrainerUseLock,
     ZeroDamageBelow,
+    MaxHpSet,
+    ResistanceChange,
+    TypeShift,
+    WeaknessChange,
     freeze_mapping,
+    mark_returned_to_bench,
     turn_owner,
 )
 from .zones import attach_energy_from_hand, discard_from_play, draw_cards, enter_play, shuffle_deck
@@ -324,6 +335,12 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
     handler(new, command, context if context is not None else _context(state, "derived", None))
+    # v0.48（MH1。docs/effective-pokemon-properties-v0.48.md 5 章）: このコマンドで、ダメージ以外の原因で最大HPが下がり、のっているダメージ以下になった場のポケモンが
+    # 残っていれば、きぜつの判定の時点が決まらないので、このコマンドを受け付けない（渡した状態は変えない）。ワザの中で下がったポケモンは、ワザのあとのきぜつの判定で
+    # きぜつしている（ここに残らない）。コインの前に確かめるもの（にげる・ポケモンチェック）は、それぞれの処理が先に止める
+    drops = max_hp_drops(state, new)
+    if drops:
+        raise max_hp_drop_error(drops, during_attack=new.decision is not None and new.decision.resume == "attack")
     _require_integrity(new)
     return new
 
@@ -505,10 +522,13 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
     block = evolution_block(state, target, definition)
     if block is not None:
         raise IllegalActionError(*block)
-    if target.damage >= definition.hp:
+    # v0.48: 進化したあとの最大HP（重ねるカードの HP と、そのカードのはたらく常にはたらく特殊能力。``effects.evolution_hp``）。進化すると持続する効果（きょだいか）は
+    # 消える。ナツメのゴースの［ガスのからだ］で大きくなっていた最大HPは、ナツメのゴーストに進化するともとにもどる（v0.4a の H1 と同じ問い。進化が原因の場合だけ）
+    evolved_hp = evolution_hp(state, target, cmd.card)
+    if target.damage >= evolved_hp:
         raise UnsupportedError(
             "UNRESOLVED_EVOLUTION_HP",
-            f"進化すると HP（{definition.hp}）がのっているダメージ（{target.damage}）以下になる。そのときにきぜつするか"
+            f"進化すると HP（{evolved_hp}）がのっているダメージ（{target.damage}）以下になる。そのときにきぜつするか"
             "（いつきぜつの判定をするか）は『オフィシャルブック2000』（p.310・p.323）から決められないので扱わない",
         )
 
@@ -622,6 +642,10 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
             f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{len(discard)} 枚が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
         )
+    # v0.48（MH1）: トラッシュするエネルギーカード（［ガスのからだ］の「超」エネルギーカード）・ベンチにもどること（「きょだいか」の効果が消える・ベンチにもどった
+    # ベトベトンの特殊状態が消えてかがくへんかガスがはたらく）で、最大HPがのっているダメージ以下に下がる場のポケモンがいれば、エネルギーのトラッシュ・こんらんの
+    # コインの前に止める（コインの結果で受け付けるかが変わらないように、失敗と成功のどちらの結果も複製の上で確かめる）
+    _retreat_max_hp_drop_check(state, cmd.player, discard, index)
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
@@ -642,6 +666,26 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     clear_special_conditions(state, cmd.player, active, RETREAT)
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
     remove_persistent_effects(state, cmd.player, active, RETREAT)
+    mark_returned_to_bench(active)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+
+
+def _retreat_max_hp_drop_check(state: GameState, player: int, discard: tuple[int, ...], index: int) -> None:
+    """「にげる」で、最大HPがのっているダメージ以下に下がる場のポケモンがいれば止める（v0.48。MH1）。複製の上で、エネルギーをトラッシュした状態（こんらんで失敗した
+    ときの結果）と、ベンチにもどした状態（成功したときの結果）を作り、``effects.max_hp_drops`` で比べる。渡した状態・乱数・ログは変えない。"""
+    trial = state.clone()
+    tp = trial.players[player]
+    active = tp.active
+    for uid in discard:
+        active.energy.remove(uid)
+        tp.discard.append(uid)
+    drops = max_hp_drops(state, trial)
+    if not drops:
+        tp.active, tp.bench[index] = tp.bench[index], active
+        clear_special_conditions(trial, player, active, RETREAT)
+        remove_persistent_effects(trial, player, active, RETREAT)
+        drops = max_hp_drops(state, trial)
+    if drops:
+        raise max_hp_drop_error(drops)
 
 
 # ---------------------------------------------------------------- トレーナー（v0.2b）
@@ -1001,7 +1045,7 @@ def check_invariants(state: GameState) -> list[str]:
                 continue
             if pokemon.damage < 0 or pokemon.damage % 10:
                 problems.append(f"ポケモン {pokemon.card} のダメージ {pokemon.damage} が 10 の倍数でない")
-            if pokemon.damage >= definition.hp and not (
+            if pokemon.damage >= max_hp(state, pokemon) and not (  # v0.48: 今有効な最大HP
                 _counter_knocked_out_attacker_awaiting(state, player, pokemon) or _ko_prevention_awaiting(state, player, pokemon)
                 or _attack_damage_awaiting(state, player, pokemon)
             ):
@@ -1013,6 +1057,7 @@ def check_invariants(state: GameState) -> list[str]:
             problems.extend(_persistent_effect_problems(state, player, p, pokemon))
             problems.extend(_once_attack_problems(state, player, pokemon))  # v0.44
             problems.extend(_evolution_permission_problems(state, player, pokemon))  # v0.44
+            problems.extend(_type_shift_problems(state, player, pokemon))  # v0.48
         if len(p.bench) > rules.max_bench:
             problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
         if len(p.prizes) > rules.prize_count:
@@ -1410,6 +1455,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
         if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive)):
             problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ）
+        if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
+            problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -1523,9 +1570,9 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     elif isinstance(effect, CannotAttackWhileSourceActive):
         # v0.40: 「すごむ」。登録された実装の ``conditional_lock_terms`` は (型, 最大 HP の上限)。受けているポケモン（いちばん上のカード。進化すると効果は消える）の
         # 最大 HP が上限以下（効果を与えたときに確かめた条件）
+        # v0.48: 最大HPの条件は効果を与えたときに確かめたもので、今の最大HPでは確かめない（最大HPは［ガスのからだ］のエネルギー・「きょだいか」で、効果を与えた
+        # あとにも変わる。説明は「このワザを受けた相手が「最大HPが50以下」のポケモンなら」で、受けたときの条件）
         terms = getattr(entry.effect, "conditional_lock_terms", None) if entry is not None else None
-        if terms is not None and state.card_def(pokemon.card).hp > terms()[1]:
-            return [f"{where} {effect!r} を受けているポケモンの最大 HP {state.card_def(pokemon.card).hp} が、効果の条件 {terms()[1]} 以下ではない"]
         expected = (CannotAttackWhileSourceActive, terms()[1]) if terms is not None else None
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
@@ -1534,6 +1581,66 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
             or added.get("lasting", False) != getattr(effect, "lasting", False)):
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
+
+
+def _effective_value_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.48: 「テクスチャー1」（``WeaknessChange``）・「テクスチャー2」（``ResistanceChange``）・「きょだいか」（``MaxHpSet``）の持続する効果が、与えたワザ（ログ
+    ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは使ったワザ）の登録された実装（``color_terms``: (型,)・``max_hp_terms``: (型, 数)）と合い、
+    ログに書いた色・数と同じか。色は無色以外（「「無色」にはできない」）。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    if isinstance(effect, MaxHpSet):
+        if type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10:
+            return [f"{where} {effect!r} の最大HPが 10 の倍数の正の数ではない"]
+        attr, expected, value, logged_key = "max_hp_terms", (MaxHpSet, effect.amount), effect.amount, "amount"
+    else:
+        if not isinstance(effect.color, EnergyType) or effect.color is EnergyType.COLORLESS:
+            return [f"{where} {effect!r} の色が、無色以外の色ではない"]
+        attr, expected, value, logged_key = "color_terms", (type(effect),), effect.color.value, "color"
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, attr, None) if entry is not None else None
+    if terms is None or terms() != expected or added.get(logged_key) != value:
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装・ログの {logged_key}）と合わない"]
+    return []
+
+
+def _type_shift_problems(state: GameState, player: int, pokemon: PokemonInPlay) -> list[str]:
+    """v0.48（形式 13）: 特殊能力で色を変えた記録（``PokemonInPlay.type_shift``。モルフォンの［へんしょく］）の整合。
+
+    - 型は ``TypeShift``。色は ``EnergyType``、使った番は、いまの姿になった番〜今の番で、持ち主の番。使ったときのいちばん上のカード（``source_card``）は今のいちばん上の
+      カードで、そのカードに色を変える特殊能力（``effects.ShiftColor``）が登録されている（進化したら記録は消える）
+    - ログとの対応: そのポケモンの最後の ``type_shift`` が、この記録の番・色。そのあとに、このポケモンがバトル場からベンチにもどったログ（``retreat``・``switch``・
+      ``forced_switch``）があることと ``returned_to_bench`` が同じ（エンジンは記録をログから決めない。食い違っていないかだけを確かめる）"""
+    shift = pokemon.type_shift
+    if shift is None:
+        return []
+    where = f"ポケモン {pokemon.pokemon_id} の色を変えた記録"
+    if not isinstance(shift, TypeShift) or not isinstance(shift.color, EnergyType) or type(shift.turn) is not int or type(shift.returned_to_bench) is not bool:
+        return [f"{where} {shift!r} の形が正しくない"]
+    problems = []
+    if shift.source_card != pokemon.card:
+        problems.append(f"{where} {shift!r} の使ったカードが、いちばん上のカード {pokemon.card} ではない")
+    if type_shift_power(state, pokemon) is None:
+        problems.append(f"{where} {shift!r} のポケモンに、色を変える特殊能力がない")
+    if not pokemon.current_form_turn <= shift.turn <= state.turn_number:
+        problems.append(f"{where} {shift!r} の番が、いまの姿になった番〜今の番ではない")
+    elif state.first_player in PLAYERS and turn_owner(state, shift.turn) != player:
+        problems.append(f"{where} {shift!r} の番 {shift.turn} が、持ち主の番ではない")
+    benched = False
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "type_shift" and event.get("pokemon_id") == pokemon.pokemon_id:
+            if event["turn"] != shift.turn or event.get("color") != shift.color.value:
+                problems.append(f"{where} {shift!r} が、最後のログ type_shift（{event['turn']} 番・{event.get('color')}）と違う")
+            if benched != shift.returned_to_bench:
+                problems.append(f"{where} {shift!r} のベンチにもどったか（{shift.returned_to_bench}）が、ログ（{benched}）と違う")
+            return problems
+        if (kind == "retreat" and event.get("old_active") == pokemon.card) or (
+                kind in ("switch", "forced_switch") and event.get("old_active_pokemon_id") == pokemon.pokemon_id):
+            benched = True
+    return problems + [f"{where} {shift!r} に対応するログ type_shift がない"]
 
 
 def _persistent_effect_added_event(state: GameState, pokemon: PokemonInPlay, effect):
@@ -1862,7 +1969,7 @@ def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
     if found_power is None or found_power[0] != PowerKey(*power):
         return problems + [f"「こんじょう」の決定の特殊能力 {power!r} が、ポケモン {pokemon.pokemon_id} のいちばん上のカードの「こんじょう」ではない"]
     key, effect = found_power
-    if pokemon.damage < state.card_def(pokemon.card).hp:
+    if pokemon.damage < max_hp(state, pokemon):
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
     if not effect.is_able(pokemon):
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない。G25〜G27）")
@@ -2423,7 +2530,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
     try:
-        calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, collected,
+        calculate_attack_damage(base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], state.rules, collected,
                                 weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                 resistance=context.get("resistance", True))
     except DamageOrderRequired as need:

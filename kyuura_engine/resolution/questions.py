@@ -173,6 +173,14 @@ QUESTIONS: dict[str, Question] = {
                  "返す効果のダメージ（前の番のワザの効果。GR-2000-P321-ATTACK-DAMAGE でそのワザのダメージ）に［くつろぐかおり］の「ワザが使われた時、すでに…状態なら、"
                  "この力ははたらかない」を当てはめるとき、「ワザが使われた時」が返す効果を与えた前の番のワザか、きっかけになったこの番のワザかは、印刷の文面・kyuura の"
                  "記録から決められない（前の番のワザのときの特殊状態は記録していない）"),
+        # v0.48（docs/effective-pokemon-properties-v0.48.md 3 章・4 章）
+        Question("shift_color_duration", "UNRESOLVED_SHIFT_COLOR_DURATION", ("VS1",), 10,
+                 "モルフォンの［へんしょく］で変えた色が、使った番のあと・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん状態・"
+                 "かがくへんかガス）あいだも続くかは、印刷の文面（効果の期限を書かない）・kyuura の記録から決められず、変えた色と印刷の色で結果が変わる"),
+        Question("change_absent_weakness_resistance", "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE", ("PG1",), 10,
+                 "弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を「好きな「色」にかえる」効果（ポリゴンの「テクスチャー1」「テクスチャー2」）で、弱点（抵抗力）を新しく"
+                 "持たせるのか、何もしないのか（抵抗力なら引く数も）は、印刷の文面・kyuura の記録から決められない（英語版の「If the Defending Pokémon has a Weakness」は"
+                 "持ち込まない）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

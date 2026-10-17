@@ -482,6 +482,15 @@
     "PMCG5-042",
     "PMCG3-010"
   ],
+  "pool_v0_48": [
+    "PMCG1-064",
+    "PMCG4-050",
+    "PMCG2-015",
+    "PMCG6-049",
+    "PMCG6-050",
+    "PMCG6-054",
+    "PMCG6-072"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -29630,6 +29639,643 @@
         "series": "化石の秘密",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg03-010-koduck/"
+      }
+    },
+    {
+      "id": "PMCG1-064",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン",
+        "en": "Porygon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          137
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "テクスチャー1",
+              "en": "Conversion 1"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の対戦ポケモンの弱点を好きな「色」にかえる。ただし「無色」にはできない。相手がベンチに戻った時にその効果はきえる。",
+              "en": "If the Defending Pokémon has a Weakness, you may change it to a type of your choice other than Colorless."
+            }
+          },
+          {
+            "name": {
+              "ja": "テクスチャー2",
+              "en": "Conversion 2"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の抵抗力を好きな「色」にかえる。ただし「無色」にはできない。自分がベンチに戻ったときにその効果はきえる。",
+              "en": "Change Porygon's Resistance to a type of your choice other than Colorless."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-064",
+        "pokemontcg": [
+          "base1-39"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-067-porygon/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "「ポケットモンスター　青」よりポケモンの分類が「バーチャルポケモン」に変更"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-067-porygon/"
+      }
+    },
+    {
+      "id": "PMCG4-050",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン",
+        "en": "Porygon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          137
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "テクスチャー1",
+              "en": "Conversion 1"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の対戦ポケモンの「弱点」を、無色以外の好きな「色」に変える。この効果は、そのポケモンがバトル場をはなれた時に消える。",
+              "en": "If the Defending Pokémon has a Weakness, you may change it to a type of your choice other than Colorless."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイケこうせん",
+              "en": "Psybeam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-050",
+        "pokemontcg": [
+          "base5-48"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-050-porygon/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-050-porygon/"
+      }
+    },
+    {
+      "id": "PMCG2-015",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "モルフォン",
+        "en": "Venomoth"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          49
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コンパン",
+          "en": "Venonat"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "へんしょく",
+              "en": "Shift"
+            },
+            "text": {
+              "ja": "このカード持ち主は、自分の番に1回、このカードの色を場にいるポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "Once during your turn (before your attack), you may change the type of Venomoth to the type of any other Pokémon in play other than Colorless. This power can't be used if Venomoth is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "りんぷん",
+              "en": "Venom Powder"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」と「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused and Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-015",
+        "pokemontcg": [
+          "base2-13",
+          "base2-29"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-011-morphon/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [
+          "特殊能力の記述の修正版がある（「このカード持ち主は」が「このカードの持ち主は」に修正）"
+        ],
+        "source": "https://nazonobasho.com/pmcg02-011-morphon/"
+      }
+    },
+    {
+      "id": "PMCG6-049",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのゴース",
+        "en": "Sabrina's Gastly"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          92
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ガスのからだ",
+              "en": "Gaseous Form"
+            },
+            "text": {
+              "ja": "このカードの最大HPは、このカードについている「超」エネルギーカードの数×10ぶん、大きいものになる。このカードが「ねむり・マヒ・こんらん」状態の時でも、この力は必ずはたらく。",
+              "en": "Sabrina's Gastly gets +10 HP for each Psychic Energy card attached to it. This power works even if Sabrina's Gastly is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ガスでつつむ",
+              "en": "Suffocating Gas"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-049",
+        "pokemontcg": [
+          "gym2-97"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B4%E3%83%BC%E3%82%B9LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 10,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B4%E3%83%BC%E3%82%B9LV.10_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-050",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのゴースト",
+        "en": "Sabrina's Haunter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          93
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナツメのゴース",
+          "en": "Sabrina's Gastly"
+        },
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ナイトスピリッツ",
+              "en": "Night Spirits"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "自分の場にいる「ナツメのゴース」「ナツメのゴースト」「ナツメのゲンガー」の数だけコインを投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip a number of coins equal to the total number of Sabrina's Gastlys, Sabrina's Haunters, and Sabrina's Gengars you have in play. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-050",
+        "pokemontcg": [
+          "gym1-58"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B4%E3%83%BC%E3%82%B9%E3%83%88LV.20_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 20,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B4%E3%83%BC%E3%82%B9%E3%83%88LV.20_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-054",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのゲンガー",
+        "en": "Sabrina's Gengar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          94
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ナツメのゴースト",
+          "en": "Sabrina's Haunter"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ダメージぞうふく",
+              "en": "Pain Amplifier"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場の、ダメージカウンターがのっているポケモン全員に、ダメージカウンターを1つずつのせる。",
+              "en": "Put a damage counter on each of your opponent's Pokémon has already has any damage counters on it."
+            }
+          },
+          {
+            "name": {
+              "ja": "やみのこえ",
+              "en": "Call of the Night"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手が「きぜつ」しなかったなら、コインを2枚投げる。すべて「おもて」なら、相手と、相手についているすべてのカードを持ち主の山札にもどし、その山札をよく切る。",
+              "en": "Unless this attack Knocks Out the Defending Pokémon, flip 2 coins. If both of them are heads, your opponent shuffles his or her Active Pokémon and all cards attached to it into his or her deck."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-054",
+        "pokemontcg": [
+          "gym1-14"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B2%E3%83%B3%E3%82%AC%E3%83%BCLV.39_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 39,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B2%E3%83%B3%E3%82%AC%E3%83%BCLV.39_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-072",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのメタモン",
+        "en": "Koga's Ditto"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          132
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きょだいか",
+              "en": "Giant Growth"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードの最大HPは「80」になる。(バトル場をはなれた時、この効果は消える)",
+              "en": "Flip a coin. If heads, Koga's Ditto's maximum HP is now 80 and Koga's Ditto's Pound attack's base damage is 30 instead of 10. (Benching Koga's Ditto ends this effect.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "はたく",
+              "en": "Pound"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "このカードに「きょだいか」の効果がはたらいているとき、このワザのダメージは「30」になる。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "wording",
+          "summary": "はたく（Pound）のダメージが 30 になる条件を書いている場所",
+          "ja": "条件ははたくの効果文に「このカードに『きょだいか』の効果がはたらいているとき、このワザのダメージは『30』になる。」と書かれ、きょだいかの効果文は最大HPのことだけ（カードの画像で確認）",
+          "en": "Pound には効果文がなく、条件は Giant Growth の効果文に「Koga's Ditto's Pound attack's base damage is 30 instead of 10」とまとめて書かれている。効果は日本版と同じ",
+          "confidence": "確実",
+          "sources": [
+            "N2",
+            "N3",
+            "X38"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-072",
+        "pokemontcg": [
+          "gym2-10"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%A1%E3%82%BF%E3%83%A2%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 12,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%A1%E3%82%BF%E3%83%A2%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

@@ -54,6 +54,7 @@ from .decisions import (
     RETURN_TO_DECK,
     SEARCH_DECK,
     SELECT_ATTACK,
+    SELECT_COLOR,
     SELECT_DECK_OWNER,
     SELECT_EVOLUTION_CARD,
     SELECT_HAND_CARD,
@@ -64,7 +65,7 @@ from .decisions import (
     SELECT_SPECIAL_CONDITION,
     TAKE_PRIZE,
 )
-from .effects import hand_revealed_by
+from .effects import COLORS, hand_revealed_by, max_hp, resistance_of, type_readings, type_shift_determined, weakness_of
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -84,6 +85,7 @@ OPTION_MEANINGS: dict[str, str] = {
     ARRANGE_DECK_TOP: "card",
     DAMAGE_STEP_ORDER: "number", SELECT_ATTACK: "number", SELECT_OPPONENT_ATTACK: "number", SELECT_SPECIAL_CONDITION: "number",
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
+    SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP})
@@ -104,13 +106,27 @@ def _card(state: GameState, uid: int) -> dict[str, Any]:
 
 
 def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
+    """場のポケモン。v0.48: ``hp`` は今有効な最大HP（``effects.max_hp``。［ガスのからだ］・「きょだいか」を当てはめた値。エンジンの処理と同じ値）。``pokemon_type``・
+    ``weakness``・``resistance`` も今有効な値（テクスチャー・［へんしょく］）。［へんしょく］で変えた色が有効か決まらない（VS1）ときは ``pokemon_type`` は None で、
+    ``pokemon_type_readings`` に 2 つの読み方（変えた色・カードの定義の色）を書く（エンジンは読み方で結果が変わる処理を止める）。``type_shift`` は記録そのもの。"""
     definition = state.card_def(pokemon.card)
+    readings = type_readings(state, pokemon)
+    resistance, resistance_value = resistance_of(state, pokemon)
+    shift = pokemon.type_shift
     return {
         "pokemon_id": pokemon.pokemon_id,
         **_card(state, pokemon.card),
         "name_ja": definition.name_ja,
         "play_role": definition.play_role,
-        "hp": definition.hp,
+        "hp": max_hp(state, pokemon),
+        "printed_hp": definition.hp,
+        "pokemon_type": _color(readings[0]) if len(readings) == 1 else None,
+        "pokemon_type_readings": [_color(color) for color in readings],
+        "weakness": _color(weakness_of(state, pokemon)),
+        "resistance": _color(resistance),
+        "resistance_value": resistance_value,
+        "type_shift": None if shift is None else {"color": shift.color.value, "turn": shift.turn, "returned_to_bench": shift.returned_to_bench,
+                                                  "determined": type_shift_determined(state, pokemon)},
         "evolution_stack": [_card(state, uid) for uid in pokemon.evolution_stack],
         "damage": pokemon.damage,
         "energy": [_card(state, uid) for uid in pokemon.energy],
@@ -118,6 +134,10 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
     }
+
+
+def _color(color) -> str | None:
+    return None if color is None else color.value
 
 
 def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> bool:
@@ -154,6 +174,8 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
         option: dict[str, Any] = {"value": value}
         if meaning == "card" and _visible_to_decider(state, value, viewer, d.kind):
             option["card_id"] = state.cards[value].card_id
+        elif meaning == "color":
+            option["color"] = COLORS[value].value
         elif meaning == "peek_target":
             target = d.context_value("targets")[value]
             option["target"] = {"zone": target[0], "owner": target[1], **({} if target[0] == "deck" else {"position": target[2]})}
@@ -253,7 +275,7 @@ PUBLIC_EVENTS = frozenset({
     "return_in_play_to_hand", "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",
-    "turn_start",
+    "turn_start", "type_shift",
 })
 
 

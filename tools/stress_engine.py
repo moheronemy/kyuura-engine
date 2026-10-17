@@ -336,12 +336,12 @@ def _damage_swap_command(state, rng: random.Random):
     user = rng.choice([pk for pk in mine if state.cards[pk.card].card_id == ALAKAZAM])
     damaged = [pk for pk in mine if pk.damage]
     source = rng.choice(damaged or mine)
-    room = [pk for pk in mine if pk is not source and pk.damage + 10 < state.card_def(pk.card).hp]
+    room = [pk for pk in mine if pk is not source and pk.damage + 10 < engine.max_hp(state, pk)]
     target = rng.choice(room or [pk for pk in mine if pk is not source] or mine)
     command = engine.UsePokemonPower(player, user.pokemon_id, 0, None, source.pokemon_id, target.pokemon_id)
     if rng.random() < 0.7:
         return command
-    full = [pk for pk in mine if pk.damage + 10 >= state.card_def(pk.card).hp]
+    full = [pk for pk in mine if pk.damage + 10 >= engine.max_hp(state, pk)]
     clean = [pk for pk in mine if not pk.damage]
     odd = [
         engine.UsePokemonPower(player, user.pokemon_id),  # 選ばせるものがない
@@ -588,7 +588,7 @@ def _observe_guts(state, new, before, counted, problems, index, command) -> None
         # v0.12: 番のプレイヤーのポケモンは、相手の「ほのおのかべ」のダメージ（相手のワザによるダメージ）を受けたときだけ
         by_retaliation = any(e["kind"] == "damage" and e.get("retaliation") and e.get("pokemon_id") == pid for e in events)
         if (before.get(pid) is None or (owners.get(pid) == state.current_player and not by_retaliation) or pokemon is None
-                or pokemon[1].damage < new.card_def(pokemon[1].card).hp):
+                or pokemon[1].damage < engine.max_hp(new, pokemon[1])):  # v0.48: 今有効な最大HP
             problems.append(f"{where}: 使えないはずの「こんじょう」の決定 {d}")
         elif state.players[owners[pid]].active is None or state.players[owners[pid]].active.pokemon_id != pid:
             counted["observed:guts_offered_on_bench"] += 1
@@ -599,7 +599,7 @@ def _observe_guts(state, new, before, counted, problems, index, command) -> None
             counted[f"observed:{kind}"] += 1
         if kind == "ko_prevented":
             pokemon = new.find_pokemon(e["pokemon_id"])
-            if pokemon is None or pokemon[1].damage != new.card_def(pokemon[1].card).hp - 10:
+            if pokemon is None or pokemon[1].damage != engine.max_hp(new, pokemon[1]) - 10:
                 problems.append(f"{where}: 「おもて」のあとに残り HP 10 で場にいない {e}")
         if kind == "knock_out":
             pokemon = by_card.get(e["pokemon"])

@@ -40,6 +40,13 @@ from ..effects import (
     received_modifiers_log,
     received_power_damage,
     retaliation_double_knockout_error,
+    TypeReadingsDiffer,
+    definition_views,
+    max_hp,
+    resistance_of,
+    same_for_type_readings,
+    type_readings,
+    weakness_of,
 )
 from ..conditions import confuse
 from ..persistent import reduced_damage_to_source
@@ -151,7 +158,13 @@ class Resolution:
 
 
 def hp_of(state: GameState, pokemon: PokemonInPlay) -> int:
-    return state.card_def(pokemon.card).hp
+    """v0.48: 今有効な最大HP（``effects.max_hp``。カードの定義の HP に、きょだいか・［ガスのからだ］を当てはめた値）。"""
+    return max_hp(state, pokemon)
+
+
+def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> OpenQuestion:
+    """v0.48: 色の読み方（VS1。``effects.type_readings``）で結果が変わった。問い ``shift_color_duration`` で止める（先読みが集め、宣言の前に止まる）。"""
+    return res.question("shift_color_duration", f"{what}（ポケモン {[p.pokemon_id for p in error.pokemons]}）")
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
@@ -200,14 +213,19 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
     if first_void(res, receiver_player, receiver) is not None:
         return False
-    attacker_def, receiver_def = state.card_def(attacker.card), state.card_def(receiver.card)
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True, attack_status=res.attack_status)
+    # v0.48: 今有効な値の定義（``effects.definition_views``）で比べる。色の読み方（VS1）が 2 つあれば、どの読み方でも弱点・抵抗力の計算で変わるかを見る（読み方で
+    # 結果が変わることは、ダメージを与えるとき ``deal_damage`` が止める）
     try:
-        finals = {calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=flag).final
-                  for flag in (True, False)}
+        for attacker_def in definition_views(state, attacker):
+            for receiver_def in definition_views(state, receiver):
+                finals = {calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=flag).final
+                          for flag in (True, False)}
+                if len(finals) > 1:
+                    return True
     except DamageOrderRequired:
         return False
-    return len(finals) > 1
+    return False
 
 
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
@@ -230,7 +248,6 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
-    attacker_def = state.card_def(attacker.card)
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
     res.trace.record(DamageProposal(frame.id, receiver.pokemon_id, receiver_player, target, base))
     res.trace.record(WindowOpened(Window.BEFORE_DAMAGE, frame.id))
@@ -249,7 +266,6 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         )
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
-    receiver_def = state.card_def(receiver.card)
     if target in BENCH_TARGETS:
         cry = reduced_damage_to_source(state, attacker)
         if cry is not None and cry.source_card == receiver.card:
@@ -260,8 +276,12 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
     try:
-        calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
-                                       orders=orders, resistance=resistance)
+        # v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力（``effects.definition_views``。テクスチャー・［へんしょく］）。色の読み方
+        # （VS1）が 2 つあり、読み方で計算の結果が変わるなら止める（変わらなければ、読み方が 1 つのときと同じ計算）
+        calc = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
+            base, views[0], views[1], state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
+    except TypeReadingsDiffer as differ:
+        raise type_question(res, differ, f"ワザ {frame.attack_key} のダメージの計算（ワザを使うポケモンの色と受けるポケモンの弱点・抵抗力）") from None
     except DamageOrderRequired as need:
         # v0.35: p.321 の同じ段階に、順番によって結果が変わる効果が重なった（「つるぎのまい」・「きあいだめ」と「なきつく」など）。計算の順番は
         # DAMAGE_STEP_CHOOSER のプレイヤーが決める（p.321。SC15）。決定を出せる呼ぶ側（ダメージの要素）に返す。出せない呼ぶ側では v0.34 と同じ問いで止める
@@ -271,7 +291,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
-        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= receiver_def.hp, evaded=True)
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
     deferred: list[Deferred] = []
     by_opponent = receiver_player != frame.player
     if calc.final > 0:
@@ -334,7 +354,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
                                    before, receiver.damage, by_opponent))
     track_ko(res, fs, receiver, before)
     fs.pending.extend(deferred)
-    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)
+    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))
 
 
 def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, target: str,
@@ -350,16 +370,19 @@ def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: Poke
     if not status_at_attack_powers(state):
         return
     every = frozenset(p.pokemon_id for player in state.players for p in player.in_play())
-    outcomes = set()
+    # v0.48: 色の読み方（VS1）が 2 つあるポケモンは、読み方の組ごとに比べる（どれかの組で当てはめるかどうかで変われば止める。読み方の違いそのものは deal_damage が VS1 で見る）
+    readings = [(a, r) for a in definition_views(state, attacker) for r in definition_views(state, receiver)]
+    by_reading: list[set] = [set() for _ in readings]
     for snapshot in (frozenset(), every):  # 当てはめる読み方・当てはめない読み方
         modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
-        try:
-            calc = calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, modifiers,
-                                           weakness_resistance=weakness_resistance, resistance=resistance)
-            outcomes.add(calc.final)
-        except DamageOrderRequired:
-            outcomes.add(None)
-    if len(outcomes) > 1:
+        for outcomes, (attacker_def, receiver_def) in zip(by_reading, readings):
+            try:
+                calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
+                                               resistance=resistance)
+                outcomes.add(calc.final)
+            except DamageOrderRequired:
+                outcomes.add(None)
+    if any(len(outcomes) > 1 for outcomes in by_reading):
         raise res.question("calming_retaliation", f"返すダメージ {base}（ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}）")
 
 
@@ -518,9 +541,10 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
     if not instance.implementation.ignores_weakness_resistance:
         # v0.17b: 説明に「弱点・抵抗力」に関係なく、がない特殊能力のダメージ（わるいねぞう）に弱点・抵抗力を計算するかは原典で決まらない（Z9）。
         # 計算しない処理で結果が同じなのは、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプでないときだけ（今の対応カードでは起こらない）
-        source_type = state.card_def(instance.card).pokemon_type
-        target_def = state.card_def(attacker.card)
-        if source_type in (target_def.weakness, target_def.resistance):
+        # v0.48: 与えるポケモンの今有効な色（読み方のどれか）と、受けるポケモンの今有効な弱点・抵抗力（``effects.weakness_of``・``resistance_of``）で比べる
+        source = state.find_pokemon(instance.pokemon_id)[1]
+        against = {weakness_of(state, attacker), resistance_of(state, attacker)[0]} - {None}
+        if any(color in against for color in type_readings(state, source)):
             raise res.question("power_damage_weakness_resistance", f"{instance.power_key} → ポケモン {attacker.pokemon_id}")
     if first_void(res, fs.frame.player, attacker) is not None:
         raise RuntimeError(f"ワザを使ったポケモン {attacker.pokemon_id} が自分の番に「ダメージを受けない」状態（エンジンの不具合）")
@@ -644,7 +668,7 @@ def knocked_out(state: GameState, forced: set[int] | frozenset[int] = frozenset(
         (owner, pokemon)
         for owner in (1 - current, current)
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp or pokemon.pokemon_id in forced
+        if pokemon.damage >= hp_of(state, pokemon) or pokemon.pokemon_id in forced
     ]
 
 

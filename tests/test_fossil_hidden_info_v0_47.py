@@ -378,7 +378,9 @@ class CardDataTest(unittest.TestCase):
             E.PlayAsPokemon(hp=10, role="statue")
 
     def test_new_types_are_kernel_programs_outside_the_v013_contract(self):
-        self.assertEqual(ATTACK_TYPES_SINCE_V0_17[-len(NEW_TYPES):], NEW_TYPES)
+        # v0.48 からうしろに型が加わるので、v0.47 の型が続けて並んでいることを確かめる（v0.46 の確かめ方と同じ）
+        start = ATTACK_TYPES_SINCE_V0_17.index(NEW_TYPES[0])
+        self.assertEqual(ATTACK_TYPES_SINCE_V0_17[start:start + len(NEW_TYPES)], NEW_TYPES)
         for kind in NEW_TYPES:
             with self.subTest(kind=kind.__name__):
                 self.assertNotIn(kind, v013_checks.VERIFIED)
@@ -978,7 +980,7 @@ class TrainerLockTest(unittest.TestCase):
 
     def test_format_12_carries_trainer_locks(self):
         state = self.locked()
-        self.assertEqual(max(FORMAT_VERSIONS), 12)
+        self.assertIn(12, FORMAT_VERSIONS)  # v0.48 で形式 13（type_shift）を加えた。禁止は形式 12 から書ける
         data = state_to_dict(state, format_version=12)
         self.assertEqual(data["trainer_locks"][0]["player"], 1)
         with self.assertRaises(ValueError):
