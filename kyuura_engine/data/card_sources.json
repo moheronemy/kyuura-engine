@@ -12870,6 +12870,326 @@
       ],
       "issues": [],
       "notes": "v0.52 で加えた。ふぶきは DamageThenCoinBenchDamageEitherSide（v0.38 のフリーザーの「ふぶき」と同じ型。書き方の違い（「コインを投げ、」・かっこのない「「弱点・抵抗力」に関係なく、」）を同じ意味として受け付けた）、つれさるは ReturnBothActivesToDeck（自分と相手の対戦ポケモンを、ついているすべてのカードとともにそれぞれの山札にもどし、それぞれの山札を切る。それぞれ「ワザをうけない」状態・「とうめい」を評価する。きぜつではない）。英語版の「Then, your opponent …」の順番は持ち込まない。kyuura の日本語の文面の転記元はポケモンWiki（ja_text_source）で、pcg-search.com との照合は独立した照合"
+    },
+    "PMCG3-044": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー転送",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3044.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "044/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と同じ"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（山札の基本エネルギーカードを 1 枚選び、手札に加えて切る。見せる指示がないので search_deck（選んだプレイヤーだけが見る）。特殊なエネルギーカードは選べない（印刷の文面のただし書き）。選べるカードがないときは ST1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG2-048": {
+      "basis": "kyuura_data",
+      "name_ja": "モンスターボール",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2048.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "048/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と同じ"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（コインを 1 枚投げ、「おもて」なら山札のたねポケモンのカード・進化カードを 0〜1 枚選び、見せて手札に加えて切る。「うら」なら何もしない（山札を見ず、切らない。v0.44 のおつかいと同じ読み方）。山札のなにかの化石・ピッピ人形はトレーナーカードなので選べない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG4-060": {
+      "basis": "kyuura_data",
+      "name_ja": "ボスのやりかた",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4058.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "058/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（058）は kyuura の id の番号（060）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（山札の、名前が「わるい」で始まる進化カードを 1 枚選び、見せて手札に加えて切る。進化カード自身の名前で決め、進化前のカードの名前・カード id の一覧で決めない。選べるカードがないときは ST1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG5-077": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシの育て方",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1069.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "069/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（069）は kyuura の id の番号（077）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（山札の「タケシのポケモン」（名前が「タケシの」で始まるたねポケモンのカード・進化カード）を 1 枚選び、見せて手札に加えて切る。選べるカードがないときは ST1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pokemonwiki（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG5-069": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのなみだ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1075.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "075/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（075）は kyuura の id の番号（069）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（使うための条件として手札（このカードを除く）を 1 枚選んでトラッシュし、山札の「水」の基本エネルギーカードを 0〜2 枚選び、見せて手札に加えて切る（「加えてよい」）。ほかの色として使えるエネルギーは数えない。jp_en_differences のイラストの違いは処理に関係しない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pokemonwiki（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG5-072": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのお付き",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1085.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "085/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（085）は kyuura の id の番号（072）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。SearchDeckTrainer（使うための条件として手札（このカードを除く）を 2 枚選び、見せずに山札にもどし（hand_to_deck）、山札の「エリカのポケモン」を 0〜2 枚選び、見せて手札に加えて切る（「加えてよい」）。もどしたカードも山札にあるので選べる）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pokemonwiki（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG1-085": {
+      "basis": "kyuura_data",
+      "name_ja": "メンテナンス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1095.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "095/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（095）は kyuura の id の番号（085）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。ReturnHandToDeckThenDraw（手札（このカードを除く）を 2 枚選び、見せずに山札にもどし、切ってから 1 枚引く。手札が足りないときは FC1（v0.44 のラッキーたまごと同じ問い。印刷の文面に「使えない」がないので使うための条件にしない））。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG1-087": {
+      "basis": "kyuura_data",
+      "name_ja": "ダウジングマシーン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1077.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "077/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（077）は kyuura の id の番号（087）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。TakeFromDiscardTrainer（使うための条件として手札（このカードを除く）を 2 枚すて、自分のトラッシュのトレーナーカードを 0〜1 枚手札に加える（「ことができる」）。すてたカードも選べる（エネルギー回収のただし書きがない）。使っている最中のこのカードは選べない。相手のトラッシュ・場のトレーナーは選べない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG3-047": {
+      "basis": "kyuura_data",
+      "name_ja": "リサイクル",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3048.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "048/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（048）は kyuura の id の番号（047）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。TakeFromDiscardTrainer（コインを 1 枚投げ、「おもて」なら自分のトラッシュの好きなカードを 1 枚選び、山札の一番上に置く。切らない・手札に加えない・種類の制限はない。トラッシュにカードがないときは ST1（コインの前））。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
+    },
+    "PMCG4-057": {
+      "basis": "kyuura_data",
+      "name_ja": "夜の廃品回収",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4060.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "060/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（060）は kyuura の id の番号（057）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.53 で加えた。トレーナー。TakeFromDiscardTrainer（自分のトラッシュのたねポケモンのカード・進化カード・基本エネルギーカードを最大 3 枚選び、見せて山札にもどして切る。トレーナーカード・特殊エネルギーカードは選べない。0 枚を選ぶ・選べるカードがないときは NG1。kyuura の種類 rockets_secret_machine（ロケット団秘密メカ）は、2000.02.14 版の規定の記録にこの種類を区別する規定がないので、処理に影響しない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合。英語版の文面は持ち込まない"
     }
   }
 }

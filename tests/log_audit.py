@@ -80,6 +80,12 @@ from kyuura_engine import state_to_dict
 from kyuura_engine.cards import EnergyType
 from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import (
+    TO_DECK,
+    TO_DECK_TOP,
+    TO_HAND,
+    ReturnHandToDeckThenDraw,
+    SearchDeckTrainer,
+    TakeFromDiscardTrainer,
     BenchBasicFromEitherDiscard,
     BenchBasicFromOpponentDiscard,
     BenchBasicFromOwnDiscardWithCounters,
@@ -348,6 +354,99 @@ def serialization_problems(state) -> list[str]:
         problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.50 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
+    return problems
+
+
+def _trainer_effect_of(state, card):
+    """v0.53: 使っている最中のトレーナー（カードの uid）の実装（なければ None）。"""
+    entry = state.effects.trainer_entry(state.cards[card].card_id) if card in state.cards else None
+    return None if entry is None else entry.effect
+
+
+def search_retrieval_problems(state, events: list[dict]) -> list[str]:
+    """v0.53: 山札・トラッシュからカードを選ぶトレーナー（``SearchDeckTrainer``・``TakeFromDiscardTrainer``・``ReturnHandToDeckThenDraw``）1 回ぶんのイベント
+    （``play_trainer`` から ``discard_trainer`` まで）の並びが、登録の実装（使うための条件 → コイン → 選んだカード → 切る・引く）と合うか。カードの種類・枚数・
+    見せるか（``reveal_from_deck``・``search_deck``）・出どころ（``trainer_card``）を確かめる。ゾーンの組み立て直しは ``log_problems`` の本体が行う。"""
+    play = events[0]
+    card, player = play["card"], play["player"]
+    effect = _trainer_effect_of(state, card)
+    if not isinstance(effect, (SearchDeckTrainer, TakeFromDiscardTrainer, ReturnHandToDeckThenDraw)):
+        return []
+    body = list(events[1:-1])
+    label = f"{play['turn']} 番の {state.cards[card].card_id}（カード {card}）"
+    problems: list[str] = []
+
+    def mine(e: dict) -> bool:
+        return e.get("player") == player and e.get("trainer_card", card) == card
+
+    def take(kind: str) -> dict | None:
+        if body and body[0]["kind"] == kind and mine(body[0]):
+            return body.pop(0)
+        problems.append(f"{label} のイベントの並びに {kind} がない（{[e['kind'] for e in body[:3]]}）")
+        body.clear()
+        return None
+
+    if isinstance(effect, ReturnHandToDeckThenDraw):
+        returned = take("hand_to_deck")
+        if returned is not None and (len(returned["cards"]) != effect.count or returned.get("trainer_card") != card):
+            problems.append(f"{label} で山札にもどしたカード {returned['cards']} が {effect.count} 枚ではない")
+        take("shuffle")
+        drawn = take("draw")
+        if drawn is not None and len(drawn["cards"]) != effect.draw:
+            problems.append(f"{label} で引いたカード {drawn['cards']} が {effect.draw} 枚ではない（もどしたあとの山札は足りる）")
+    else:
+        if effect.discard_cost:
+            paid = take("discard_from_hand")
+            if paid is not None and len(paid["cards"]) != effect.discard_cost:
+                problems.append(f"{label} の使うための条件でトラッシュしたカード {paid['cards']} が {effect.discard_cost} 枚ではない")
+        if isinstance(effect, SearchDeckTrainer) and effect.return_cost:
+            paid = take("hand_to_deck")
+            if paid is not None and len(paid["cards"]) != effect.return_cost:
+                problems.append(f"{label} の使うための条件で山札にもどしたカード {paid['cards']} が {effect.return_cost} 枚ではない")
+        if effect.coin:
+            coin = take("coin_flip")
+            if coin is not None and (coin["source"] != "trainer" or coin["card"] != card or coin["count"] != 1):
+                problems.append(f"{label} のコインが、このトレーナーのコイン（source trainer）ではない")
+            if coin is not None and coin["result"] == "tails":
+                if body:
+                    problems.append(f"{label} のコインが「うら」なのに、そのあとに {[e['kind'] for e in body]} がある（何もしない）")
+                return problems
+        zone = "deck" if isinstance(effect, SearchDeckTrainer) else "discard"
+        if body and body[0]["kind"] == "trainer_take_none":
+            none = body.pop(0)
+            if none["zone"] != zone or not effect.optional:
+                problems.append(f"{label} で選ばずに終わった（{none['zone']}）が、選ばなくてよいトレーナーの{zone}ではない")
+            chosen = []
+        elif isinstance(effect, SearchDeckTrainer):
+            moved = "reveal_from_deck" if effect.reveal else "search_deck"
+            chosen = []
+            while body and body[0]["kind"] in ("reveal_from_deck", "search_deck") and body[0]["player"] == player:
+                e = body.pop(0)
+                if e["kind"] != moved:
+                    problems.append(f"{label} で山札から手札に加えたログが {e['kind']}（{moved} のはず。見せる指示{'がある' if effect.reveal else 'がない'}）")
+                chosen.append(e["card"])
+        elif effect.destination == TO_HAND:
+            chosen = []
+            while body and body[0]["kind"] == "retrieve_trainer" and mine(body[0]):
+                chosen.append(body.pop(0)["card"])
+        elif effect.destination == TO_DECK_TOP:
+            put = take("put_discard_on_deck_top")
+            chosen = [] if put is None else [put["card"]]
+            if put is not None and put["chooser"] != player:
+                problems.append(f"{label} で山札の上にのせたカードを選んだのが {put['chooser']}")
+        else:
+            back = take("discard_to_deck")
+            chosen = [] if back is None else list(back["cards"])
+        if not 0 <= len(chosen) <= effect.count or (not effect.optional and not getattr(effect, "zero_undetermined", False) and len(chosen) != effect.count) \
+                or (getattr(effect, "zero_undetermined", False) and not chosen):
+            problems.append(f"{label} で選んだカード {chosen} の枚数が、登録（最大 {effect.count} 枚・選ばなくてよい {effect.optional}）と合わない")
+        for uid in chosen:
+            if not effect.target.matches(state.printed_def(uid)) or state.cards[uid].owner != player:
+                problems.append(f"{label} で選んだカード {uid} が、プレイヤー {player} の登録の種類のカードではない")
+        if zone == "deck" or effect.destination == TO_DECK:
+            take("shuffle")
+    if body:
+        problems.append(f"{label} の最後に、処理にないイベント {[e['kind'] for e in body]} がある")
     return problems
 
 
@@ -2370,7 +2469,11 @@ def log_problems(state) -> list[str]:
             definition = state.printed_def(uid)
             # v0.44: おつかい（SearchTrainerOnHeads）はトレーナーカード、てじな（ReturnHandThenRevealBasicEnergy）は基本エネルギーカードを見せて手札に加える
             revealer = _effect_of_event(state, e) if "effect" in e else None
-            if isinstance(revealer, SearchTrainerOnHeads):
+            trainer_effect = None if revealer is not None or "power" in e or using_trainer.get(e["player"]) is None \
+                else _trainer_effect_of(state, using_trainer[e["player"]])
+            if isinstance(trainer_effect, SearchDeckTrainer):
+                kind_ok = trainer_effect.target.matches(definition)  # v0.53: 説明の種類のカード（モンスターボール・ボスのやりかた など）
+            elif isinstance(revealer, SearchTrainerOnHeads):
                 kind_ok = definition.category == "trainer"
             elif isinstance(revealer, ReturnHandThenRevealBasicEnergy):
                 kind_ok = definition.is_basic_energy
@@ -2417,6 +2520,13 @@ def log_problems(state) -> list[str]:
             if (pid, e["pokemon"], e["attack_index"]) in once_used:
                 problems.append(f"{e['turn']} 番に、場のポケモン {pid} が 1 度しか使えないワザ {e['attack_index']} をもう一度使った")
             once_used.add((pid, e["pokemon"], e["attack_index"]))
+        elif kind == "hand_to_deck" and "trainer_card" in e:
+            # v0.53: エリカのお付き（使うための条件）・メンテナンス。使っている最中のそのトレーナーで、手札のカードを見せずに山札にもどす（山札は組み立て直さない）
+            if using_trainer.get(e["player"]) != e["trainer_card"] \
+                    or not isinstance(_trainer_effect_of(state, e["trainer_card"]), (SearchDeckTrainer, ReturnHandToDeckThenDraw)):
+                problems.append(f"{e['turn']} 番に手札から山札にもどしたカード {e['cards']} が、使っている最中のトレーナーの処理のものではない")
+            for uid in e["cards"]:
+                from_hand(e, e["player"], uid)
         elif kind == "hand_to_deck" and isinstance(_effect_of_event(state, e), LookOpponentHandCardToDeck):
             # v0.47: おどろかす。見た相手の手札の 1 枚（直前の look_at_card）を、相手が山札にもどし（見せない）、すぐあとに相手の山札を切る
             if not _same_attack(attack_window, e) or e["player"] != 1 - attack_window["player"] or prior is None or prior["kind"] != "look_at_card" \
@@ -2471,6 +2581,33 @@ def log_problems(state) -> list[str]:
                     or e["destination"] != expected:
                 problems.append(f"{e['turn']} 番のてつだうふりのカード {uid}（{e['destination']}）が、そのワザの処理のものではない")
             (discard if e["destination"] == "discard" else hand)[e["player"]].append(uid)
+        elif kind == "put_discard_on_deck_top" and "trainer_card" in e:
+            # v0.53: リサイクル。使っている最中のそのトレーナーで、自分のトラッシュのカードを自分の山札の上にのせる（切らない。山札は組み立て直さない）
+            uid = e["card"]
+            if using_trainer.get(e["player"]) != e["trainer_card"] or e["chooser"] != e["player"] or owner.get(uid) != e["player"] \
+                    or uid not in discard[e["player"]] or not isinstance(_trainer_effect_of(state, e["trainer_card"]), TakeFromDiscardTrainer):
+                problems.append(f"{e['turn']} 番に山札の上にのせたカード {uid} が、リサイクルを使ったプレイヤーのトラッシュのカードではない")
+            else:
+                discard[e["player"]].remove(uid)
+        elif kind == "discard_to_deck":
+            # v0.53: 夜の廃品回収。自分のトラッシュのカードを見せて山札にもどす（このあと切る。山札は組み立て直さない）
+            for uid in e["cards"]:
+                if using_trainer.get(e["player"]) != e["trainer_card"] or owner.get(uid) != e["player"] or uid not in discard[e["player"]]:
+                    problems.append(f"{e['turn']} 番に山札にもどしたカード {uid} が、使ったプレイヤーのトラッシュのカードではない")
+                else:
+                    discard[e["player"]].remove(uid)
+        elif kind == "retrieve_trainer":
+            # v0.53: ダウジングマシーン。自分のトラッシュのトレーナーカードを手札に加える（使うための条件ですてたカードも選べる。使っている最中のこのカードは選べない）
+            uid = e["card"]
+            if using_trainer.get(e["player"]) != e["trainer_card"] or uid == e["trainer_card"] or owner.get(uid) != e["player"] \
+                    or uid not in discard[e["player"]] or state.printed_def(uid).category != "trainer":
+                problems.append(f"{e['turn']} 番に手札に加えたカード {uid} が、使ったプレイヤーのトラッシュのトレーナーカードではない")
+            else:
+                discard[e["player"]].remove(uid)
+                hand[e["player"]].append(uid)
+        elif kind == "trainer_take_none":
+            if using_trainer.get(e["player"]) != e["trainer_card"]:
+                problems.append(f"{e['turn']} 番の選ばずに終わったログ（カード {e['trainer_card']}）が、使っている最中のトレーナーのものではない")
         elif kind == "put_discard_on_deck_top":
             # v0.44: わるいいたずら。相手（カードの持ち主）のトラッシュのカードを、その山札の上にのせる（切らない）。選んだのはワザを使ったプレイヤー
             uid = e["card"]
@@ -2481,6 +2618,10 @@ def log_problems(state) -> list[str]:
             else:
                 discard[e["player"]].remove(uid)
         elif kind == "discard_trainer":
+            here = next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)
+            start = next((i for i in range(here, -1, -1) if log[i]["kind"] == "play_trainer" and log[i]["card"] == e["card"]), None)
+            if start is not None:
+                problems.extend(search_retrieval_problems(state, log[start:here + 1]))  # v0.53
             discard[e["player"]].append(e["card"])
             trainer_discarded[e["player"]] = ()
             using_trainer[e["player"]] = None

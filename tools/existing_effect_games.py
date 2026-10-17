@@ -389,6 +389,12 @@ V0_51_TRAINERS = (REVIVE, POKEMON_FLUTE)
 MR_FUJI, SCOOP_UP, ERIKAS_DRAGONAIR = "PMCG3-048", "PMCG1-092", "PMCG5-066"
 V0_52 = (ERIKAS_DRAGONAIR,)
 V0_52_TRAINERS = (MR_FUJI, SCOOP_UP)
+# v0.53（docs/search-retrieval-trainers-v0.53.md）。山札・トラッシュからカードを選ぶトレーナー 10 枚
+ENERGY_SEARCH, POKE_BALL, BOSS_WAY, BROCK_TRAINING, MISTYS_TEARS = "PMCG3-044", "PMCG2-048", "PMCG4-060", "PMCG5-077", "PMCG5-069"
+ERIKAS_MAIDS, MAINTENANCE, ITEM_FINDER, RECYCLE, NIGHTLY_GARBAGE_RUN = "PMCG5-072", "PMCG1-085", "PMCG1-087", "PMCG3-047", "PMCG4-057"
+V0_53_TRAINERS = (ENERGY_SEARCH, POKE_BALL, BOSS_WAY, BROCK_TRAINING, MISTYS_TEARS, ERIKAS_MAIDS, MAINTENANCE, ITEM_FINDER, RECYCLE,
+                  NIGHTLY_GARBAGE_RUN)
+DARK_GOLBAT_53 = "PMCG4-009"  # わるいゴルバット（ロケット団のズバットから進化。ボスのやりかたで選べる「わるい」進化カード）
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP")
@@ -591,6 +597,14 @@ DECKS = {
     # v0.52: 無色（リーダーズスタジアム・化石の秘密・第1弾）。エリカのハクリューのふぶき・つれさる、フジろうじん（控えの進化ポケモン・ダメージのあるポケモンを山札へ）・
     # ポケモン回収（ダメージのあるポケモンのたねポケモンを手札へ。バトル場なら控えから出す）。もどしたたねポケモンは手札から出し直す（元の手順）
     "R52": ((ERIKAS_DRATINI, 4), (ERIKAS_DRAGONAIR, 4), (RATTATA, 4), (RATICATE, 2), (MR_FUJI, 3), (SCOOP_UP, 3), *TRAINERS, (WATER, 28)),
+    # v0.53: 草・水（リーダーズスタジアム・ロケット団）。山札をさがすトレーナー: タケシの育て方（タケシのズバット・タケシのゴルバット）・ボスのやりかた（わるいゴルバット）・
+    # モンスターボール（コイン）・エネルギー転送（基本エネルギーカード。見せない）・カスミのなみだ（「水」エネルギーカード。手札 1 枚をトラッシュ）
+    "S53": ((BROCKS_ZUBAT, 4), (BROCKS_GOLBAT, 2), (ROCKET_ZUBAT, 3), (DARK_GOLBAT_53, 2), (ENERGY_SEARCH, 3), (POKE_BALL, 3), (BOSS_WAY, 3),
+            (BROCK_TRAINING, 3), (MISTYS_TEARS, 2), *TRAINERS, (GRASS, 15), (WATER, 8)),
+    # v0.53: 草（リーダーズスタジアム）。エリカのお付き（手札 2 枚を山札にもどして「エリカのポケモン」）・メンテナンス・ダウジングマシーン（すてたトレーナーも選べる）・
+    # リサイクル（山札の一番上に置いたカードを次に引く）・夜の廃品回収（トラッシュのポケモン・基本エネルギーを山札へ）
+    "R53": ((ERIKAS_ODDISH, 4), (ERIKAS_GLOOM, 3), (ERIKAS_BELLSPROUT, 4), (ERIKAS_WEEPINBELL, 2), (ERIKAS_MAIDS, 3), (MAINTENANCE, 3),
+            (ITEM_FINDER, 3), (RECYCLE, 3), (NIGHTLY_GARBAGE_RUN, 3), *TRAINERS, (GRASS, 20)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -636,12 +650,16 @@ PAIRINGS_V0_51 = (("H51", "E50"), ("E50", "H51"), ("H51", "P31"), ("S51", "H51")
 # フシギバナ・［うか］で重ねたキョウのスピアーを山札にもどす。退化スプレーのあとのポケモン）・R52 対 P31（ピッピ・ピクシー・カスミのコダックが、ふぶき・つれさるを自分の
 # ワザとして使う）。D49（メタモン）は、エリカのミニリュウ（［ふしぎなバリアー］）を写す対戦準備で既存の TF1 に当たるので組にしない（「ばける」・［へんしん］の場面は単体テスト）
 PAIRINGS_V0_52 = (("R52", "H51"), ("H51", "R52"), ("R52", "E50"), ("R52", "P31"))
+# v0.53: S53 対 R53・S53 対 P31（ピッピ・ピクシー・カスミのコダックのいる相手）・R53 対 H51（よみがえらせる・元気のかけら・ポケモンの笛のトラッシュの取り合い。夜の廃品回収で
+# トラッシュのたねポケモンを山札にもどす）・R53 対 K44（カツラのマンキーのわるいいたずらで、R53 のトラッシュのカードが山札の上にのる。リサイクル・夜の廃品回収と同じトラッシュ）。
+# どの組も席を入れかえて同じ seed で 2 局（``run``）
+PAIRINGS_V0_53 = (("S53", "R53"), ("S53", "P31"), ("R53", "H51"), ("R53", "K44"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
-           "v0.52": PAIRINGS_V0_52}
+           "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1973,6 +1991,56 @@ def _v052_trainer(state, tried, counts):
     return None
 
 
+def _v053_decision(state, counts):
+    """v0.53 の決定への答え（元の手順より先に答える）: 山札・トラッシュからカードを選ぶトレーナーの決定。受け付ける答え（NG1 の 0 枚などで止まらない）のうち、
+    使うための条件の手札は手札の後ろから、選ぶカードは「選べるだけ → 0 枚（選ばなくてよいとき）→ 1 枚」の順に回して選ぶ（選ばない・最大の枚数の両方を起こす）。"""
+    d = state.decision
+    if d is None or d.resume != "trainer":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_53_TRAINERS:
+        return None
+    seen = counts[f"v053_{use[2]}_{d.kind}_seen"]
+    counts[f"v053_{use[2]}_{d.kind}_seen"] += 1
+    if d.kind in ("discard_from_hand", "hand_to_deck"):
+        candidates = [tuple(d.options[-d.max_choices:])]
+    else:
+        sizes = [d.max_choices, d.min_choices, min(1, d.max_choices)]
+        size = sizes[seen % 3]
+        candidates = [tuple(d.options[:size]), tuple(d.options[-size:] if size else ()), *[(o,) for o in d.options], ()]
+    for choices in candidates:
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"v053_{use[2]}_chose_{len(choices)}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts[f"v053_{use[2]}_no_accepted_answer"] += 1
+    return None
+
+
+def _v053_trainer(state, tried, counts):
+    """v0.53: 山札・トラッシュからカードを選ぶトレーナーを、受け付けるなら使う（種類ごとに 1 番に 1 回まで）。使う前に止まる場面（ST1・NG1・FC1・手札が足りない）は
+    使わない（その場面は単体テストで確かめる。``v053_<カード>_not_playable`` に数える）。拒否を起こさない。"""
+    player = state.current_player
+    if "trainer_locked" in tried:
+        return None
+    p = state.players[player]
+    for card_id in V0_53_TRAINERS:
+        if (f"v053_{card_id}", state.turn_number) in tried:
+            continue
+        for uid in p.hand:
+            if state.cards[uid].card_id == card_id:
+                tried.add((f"v053_{card_id}", state.turn_number))
+                command = PlayTrainer(player, uid)
+                real = _V052_REAL.get("state")
+                try:
+                    apply_command(real if real is not None and real.turn_number == state.turn_number and real.decision == state.decision else state, command)
+                except (IllegalActionError, UnsupportedError) as error:
+                    counts[f"v053_{card_id}_not_playable_{error.code}"] += 1  # 使う前に止まる・拒否される場面（コードごと）
+                    break
+                counts[f"v053_play_{card_id}"] += 1
+                return command
+    return None
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -2117,7 +2185,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
                      or _v047_decision(state, counts) or _v048_decision(state, counts)  # v0.47・v0.48
                      or _v049_decision(state, counts) or _v050_decision(state, counts)  # v0.49・v0.50
-                     or _v051_decision(state, counts) or _v052_decision(state, counts))  # v0.51・v0.52
+                     or _v051_decision(state, counts) or _v052_decision(state, counts)  # v0.51・v0.52
+                     or _v053_decision(state, counts))  # v0.53
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2131,7 +2200,7 @@ def make_policy(seen: dict, counts: Counter):
                      or _v048_power(state, tried, counts)  # v0.48
                      or _v049_power(state, tried, counts) or _v049_trainer(state, tried, counts)  # v0.49
                      or _v050_trainer(state, tried, counts) or _v051_trainer(state, tried, counts)  # v0.50・v0.51
-                     or _v052_trainer(state, tried, counts))  # v0.52
+                     or _v052_trainer(state, tried, counts) or _v053_trainer(state, tried, counts))  # v0.52・v0.53
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2316,8 +2385,10 @@ def card_uses(state):
       ナツメのスリーパー）で数える
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
-    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS + V0_51_TRAINERS + V0_52_TRAINERS}
+    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS + V0_51_TRAINERS + V0_52_TRAINERS + V0_53_TRAINERS}
     returned_cards: dict[int, str] = {}  # v0.52: 場から手札・山札にもどしたカードの uid → もどした効果のカード id（そのあと場に出し直したかを数える）
+    taken: dict[int, str] = {}  # v0.53: 山札・トラッシュから手札に加えた・山札の一番上に置いたカードの uid → トレーナーのカード id（そのあとの使い道を数える）
+    using53: dict[int, str] = {}  # v0.53: 使っている最中の v0.53 のトレーナー（プレイヤー → カード id）
     revived: dict[int, str] = {}  # v0.51: トラッシュからベンチに出した場のポケモンの番号 → 出した効果のカード id（そのあとの行動を数える）
     revived_cards: dict[int, str] = {}  # v0.51: そのポケモンのいちばん上のカードの uid（出したカード・進化で重ねたカード）→ 出した効果のカード id
     current = None  # (カード id, ワザの位置)
@@ -2345,6 +2416,27 @@ def card_uses(state):
             uses[SABRINAS_HYPNO][f"via_{e['route']}#{e['attack_index']}"] += 1  # ［サイコリンク］・［へんしん］など、ほかのポケモンが使った
         elif kind == "copy_attack" and e["copied"].startswith(SABRINAS_HYPNO + "#"):
             uses[SABRINAS_HYPNO][f"copied{e['copied'][len(SABRINAS_HYPNO):]}"] += 1  # ゆびをふる・ちょうのうりょく・ぼーっとする
+        # v0.53: 山札・トラッシュからカードを選ぶトレーナー（選んだ・選ばなかった・コイン）と、選んだカードのそのあとの使い道（場に出した・つけた・進化・使った・引いた）
+        if kind == "play_trainer" and card[e["card"]] in V0_53_TRAINERS:
+            using53[e["player"]] = card[e["card"]]
+            uses[card[e["card"]]]["played"] += 1
+        elif kind == "discard_trainer":
+            using53.pop(e["player"], None)
+        elif e.get("player") in using53 and kind in ("reveal_from_deck", "search_deck", "retrieve_trainer", "put_discard_on_deck_top", "discard_to_deck",
+                                                     "trainer_take_none", "hand_to_deck", "discard_from_hand", "coin_flip", "draw"):
+            source = using53[e["player"]]
+            label = {"trainer_take_none": f"none_{e.get('reason')}", "coin_flip": f"coin_{e.get('result')}"}.get(kind, kind)
+            uses[source][label] += 1
+            for uid in ([e["card"]] if kind in ("reveal_from_deck", "search_deck", "retrieve_trainer", "put_discard_on_deck_top") else []):
+                taken[uid] = source
+        elif kind == "draw":
+            for uid in e["cards"]:
+                if uid in taken:
+                    uses[taken.pop(uid)]["taken_then_draw"] += 1  # リサイクルで山札の一番上に置いたカードを、あとで引いた
+        hit = {"play_to_bench": e.get("card"), "attach_energy": e.get("energy"), "evolve": e.get("to_card"), "play_trainer": e.get("card"),
+               "disguise": e.get("card")}.get(kind)
+        if hit in taken:
+            uses[taken.pop(hit)][f"taken_then_{kind}"] += 1
         # v0.52: 場から手札・山札にもどした（フジろうじん・ポケモン回収・つれさる）と、もどしたカードをそのあと場に出し直したか
         if kind == "return_basic_to_hand":
             uses[SCOOP_UP][f"returned_{e['zone']}"] += 1

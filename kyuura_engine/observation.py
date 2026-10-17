@@ -36,6 +36,7 @@ from .decisions import (
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
+    DISCARD_TO_DECK,
     DISCARD_TO_DECK_TOP,
     ENTRY_POWER,
     FORCED_SWITCH,
@@ -91,6 +92,7 @@ OPTION_MEANINGS: dict[str, str] = {
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
+    DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
@@ -302,6 +304,7 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "look_at_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（見る）
     "arrange_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（もどす並び）
     "take_deck_top": (("card",), _taken_deck_top),
+    "trainer_take_none": (("reason",), _only_player),  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -325,6 +328,7 @@ PUBLIC_EVENTS = frozenset({
     "retreat", "retreat_failed", "retreat_failure_cleared", "retrieve_energy", "return_energy_to_hand", "return_in_play_to_deck",
     "return_in_play_to_hand",
     "return_basic_to_hand",  # v0.52: ポケモン回収（場のカード → 手札・トラッシュ。手札にもどしたカードは場にあったので公開）
+    "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",
