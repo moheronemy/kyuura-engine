@@ -101,6 +101,12 @@ from kyuura_engine.effects import (
     EntryPower,
     RecoverPokemonFromDiscardOnEntry,
     SearchEvolutionCardToHand,
+    # v0.45（docs/conditional-damage-energy-v0.45.md）
+    CoinOpponentDeckTopDiscardTrainerElseHand,
+    DamageThenMoveOpponentEnergyToBench,
+    PutOwnerBasicFromDeckOntoBenchOnHeads,
+    ENERGY_MOVE_ELEMENT,
+    RETALIATION_COIN_TAILS,
     # v0.44（docs/search-evolution-once-attacks-v0.44.md）
     CoinDrawOrReturnHandToDeck,
     CoinEvolveSelfFromDeck,
@@ -156,6 +162,7 @@ from kyuura_engine.state import (
     RETALIATION_FIXED,
     RETALIATION_KINDS,
     RETALIATION_RECEIVED,
+    RETALIATION_RECEIVED_SCALED_KIND,
     NEXT_TURN_DAMAGE_KINDS,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -781,7 +788,7 @@ def log_problems(state) -> list[str]:
     def active_retaliation(pid: int, turn: int) -> dict | None:
         """ログから組み立てた、ポケモン ``pid`` の今の番 ``turn`` にはたらく「ほのおのかべ」（v0.12）・「こうらがえし」（v0.13）の効果。"""
         for (effect_pid, _), info in alive.items():
-            if effect_pid == pid and info["kind"] in RETALIATION_KINDS.values() and info["active_turn"] == turn:
+            if effect_pid == pid and info["kind"] in (*RETALIATION_KINDS.values(), RETALIATION_RECEIVED_SCALED_KIND) and info["active_turn"] == turn:
                 return info
         return None
 
@@ -802,6 +809,26 @@ def log_problems(state) -> list[str]:
             if e["resistance"] != (receiver.resistance is not None and receiver.resistance is attacker_type):
                 found.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」のダメージの抵抗力 {e['resistance']} が、タイプと抵抗力に合わない（W16）")
         return found
+
+    def zero_damage_below_problems(e: dict) -> list[str]:
+        """ワザのダメージのログ（v0.45）の p.321 の 8 段階の「決まった数より小さければ 0 にする」効果（イワークの「かたくなる」）の記録。ダメージを受けた
+        ポケモンが、今の番にはたらく ``zero_damage_below`` の効果（ログから組み立てた）を持つときだけ記録があり、しきい値は効果を与えたワザの登録の値、
+        受けたダメージは 0 かしきい値以上。"""
+        pid = e["pokemon_id"] if "pokemon_id" in e else ids.get(e["pokemon"])
+        expected = []
+        for (effect_pid, _), info in alive.items():
+            if effect_pid == pid and info["kind"] == "zero_damage_below" and info["active_turn"] == e["turn"]:
+                card_id, index = info["effect"].split("#")
+                expected.append((8, info["source_card"], state.effects.attack_entry(card_id, int(index)).effect.threshold_terms()[1]))
+        recorded = [tuple(m) for m in e.get("damage_zero_below", ())]
+        ended_early = e["amount"] == 0 and not any(str(step[0]).startswith("8 ") for step in (e.get("steps") or ()))
+        if expected and not recorded and ended_early:
+            return []  # p.321: 途中の段階で 0 以下になって計算を終えた（8 段階まで進まない）
+        if recorded != expected:
+            return [f"{e['turn']} 番のポケモン {pid} へのダメージの 8 段階の記録 {recorded} が、はたらいている「かたくなる」の効果 {expected} と違う"]
+        if recorded and 0 < e["amount"] < recorded[0][2]:
+            return [f"{e['turn']} 番のポケモン {pid} へのダメージ {e['amount']} が、0 でもしきい値 {recorded[0][2]} 以上でもない"]
+        return []
 
     def attack_damage_set_problems(e: dict) -> list[str]:
         """ワザのダメージのログ（v0.27）の p.321 の 2 段階の記録。ワザを使ったポケモンが持つ効果（ログから組み立てた）から、そのダメージにはたらく
@@ -1179,7 +1206,8 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番に、ポケモン {effect_pid} が使えないワザ（{e['attack_index']} 番目。{info['kind']}）を使った")
             # v0.36: はたらいている手順 4 のコインの効果（すなかけ・えんまくなど）。宣言のすぐあとにコインがあるはず
             due_checks = [(effect_pid, created, bool(info.get("single_use"))) for (effect_pid, created), info in alive.items()
-                          if effect_pid == ids.get(e["pokemon"]) and info["kind"] == AttackCoinCheck.kind and info["active_turn"] == e["turn"]]
+                          if effect_pid == ids.get(e["pokemon"]) and info["kind"] == AttackCoinCheck.kind
+                          and (info["active_turn"] <= e["turn"] if info.get("lasting") else info["active_turn"] == e["turn"])]
             if len(due_checks) > 1:
                 problems.append(f"{e['turn']} 番のワザを使うポケモン {ids.get(e['pokemon'])} に、手順 4 のコインの効果が 2 つ以上ある")
             check_due = due_checks[0] if due_checks else None
@@ -1260,6 +1288,10 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34
         elif kind == "persistent_effect_added" and e["persistent_effect"] == AttackCoinCheck.kind:
             received(e, e["pokemon_id"], ATTACK_CHECK_ELEMENT)  # v0.36
+        elif kind == "move_opponent_energy":
+            received(e, e["pokemon_id"], ENERGY_MOVE_ELEMENT)  # v0.45: はがすのは相手の対戦ポケモンへの効果、つけるのは控えへの効果
+            if e["result"] == "attached":
+                received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
         elif kind == "persistent_effect_added" and e["persistent_effect"] == CannotRetreat.kind:
             received(e, e["pokemon_id"], RETREAT_LOCK_ELEMENT)  # v0.36
         elif kind == "return_in_play_to_deck":
@@ -1278,6 +1310,8 @@ def log_problems(state) -> list[str]:
             attack_window["copied"] = e["copied"]  # v0.44: 相手のワザを自分のワザとして使った（そのワザの効果のログの effect は copied）
         if kind == "damage" and attack_window is not None and not e.get("retaliation"):
             problems.extend(attack_damage_set_problems(e))  # v0.27
+        if kind == "damage" and attack_window is not None:
+            problems.extend(zero_damage_below_problems(e))  # v0.45
         if kind == "special_conditions_removed" and e["reason"] == "replaced":
             replaced[e["pokemon_id"]] = exclusive.get(e["pokemon_id"])
         elif kind == "special_condition":
@@ -1402,23 +1436,45 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」を与える相手 {target} が場にいない")
                 continue
             hp = state.card_def(top[target]).hp
+            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+            terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
+            # v0.45: 倍数とはたらくときのコインのある効果（クロスカウンター）は 4 つの値（v0.44 までの効果は 2 つ）
+            basis, fixed, multiplier, on_heads = (tuple(terms()) + (1, False))[:4] if terms is not None else (None, None, 1, False)
+            scaled = multiplier != 1 or on_heads
+            coin = prior or {}
+            heads_coin = (coin.get("kind"), coin.get("source"), coin.get("player"), coin.get("pokemon_id"), coin.get("effect")) == (
+                "coin_flip", "attack", e["player"], holder, e["effect"])
             if kind == "retaliation_skipped":
-                if e["reason"] != "knocked_out" or damage[target] < hp:
+                if e["reason"] == RETALIATION_COIN_TAILS:
+                    # v0.45: クロスカウンターのコインが「うら」（与えない）。直前に効果を持つポケモンの持ち主の「うら」のコインがある
+                    if not on_heads or not heads_coin or coin.get("result") != "tails" or e.get("received_damage") != received_damage \
+                            or damage[target] >= hp:
+                        problems.append(f"{e['turn']} 番のクロスカウンターの「うら」（ポケモン {holder}）の直前に持ち主の「うら」のコインがない・受けたダメージが合わない")
+                elif e["reason"] != "knocked_out" or damage[target] < hp:
                     problems.append(f"{e['turn']} 番に、きぜつしていない相手 {target}（ダメージ {damage[target]}）に「ほのおのかべ」・「こうらがえし」を与えなかった（{e['reason']}）")
+                elif coin.get("kind") == "coin_flip" and coin.get("effect") == e["effect"] and coin.get("pokemon_id") == holder:
+                    problems.append(f"{e['turn']} 番に、すでに HP 以上の相手 {target} への返す効果のコインを投げた（C15）")
                 continue
             if damage[target] >= hp:
                 problems.append(f"{e['turn']} 番に、すでに HP 以上のダメージの相手 {target} に「ほのおのかべ」・「こうらがえし」を与えた（対象がいない。W23）")
-            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
-            terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
-            basis, fixed = terms() if terms is not None else (None, None)
-            if info is not None and basis is not None and info["kind"] != RETALIATION_KINDS[basis]:
+            expected_kind = RETALIATION_RECEIVED_SCALED_KIND if scaled else RETALIATION_KINDS.get(basis)
+            if info is not None and basis is not None and info["kind"] != expected_kind:
                 problems.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」の効果の種類 {info['kind']} が、ワザ {e['effect']} の登録と違う")
-            if basis == RETALIATION_FIXED:
+            if on_heads and (not heads_coin or coin.get("result") != "heads" or e.get("coin") != "heads"):
+                problems.append(f"{e['turn']} 番のクロスカウンター（ポケモン {holder}）の直前に、持ち主の「おもて」のコインがない（LD-PMCG5-054-ATK0）")
+            if scaled:
+                # v0.45: 基本となるダメージは、受けたダメージ（きっかけのダメージのログの最終ダメージ）の multiplier 倍
+                if (e.get("basis"), e.get("received_damage"), e.get("multiplier")) != (basis, received_damage, multiplier) \
+                        or received_damage is None or e["amount"] != received_damage * multiplier:
+                    problems.append(f"{e['turn']} 番のクロスカウンターの量 {e['amount']}（{e.get('received_damage')}・{e.get('multiplier')}）が、受けたダメージ"
+                                    f" {received_damage} の {multiplier} 倍と違う")
+            elif basis == RETALIATION_FIXED:
                 if e["amount"] != fixed or "basis" in e or "received_damage" in e:
                     problems.append(f"{e['turn']} 番の「ほのおのかべ」・「こうらがえし」の量 {e['amount']} が、ワザ {e['effect']} の登録と違う（W14）")
             elif basis == RETALIATION_RECEIVED:
                 # v0.13: 「こうらがえし」。基本となるダメージは、きっかけのダメージのログの最終ダメージ（受けたダメージ）と同じ（S9・S10）
-                if (e.get("basis"), e.get("received_damage")) != (basis, received_damage) or e["amount"] != received_damage:
+                if (e.get("basis"), e.get("received_damage")) != (basis, received_damage) or e["amount"] != received_damage \
+                        or "multiplier" in e or "coin" in e:
                     problems.append(
                         f"{e['turn']} 番の「こうらがえし」の量 {e['amount']}（{e.get('basis')}・{e.get('received_damage')}）が、受けたダメージ"
                         f" {received_damage} と違う（S9・S10）"
@@ -1827,6 +1883,33 @@ def log_problems(state) -> list[str]:
                 if len(e["cards"]) != effect.count:
                     problems.append(f"{e['turn']} 番のラッキーたまごで山札にもどしたカードが {len(e['cards'])} 枚（説明は {effect.count} 枚）")
                 shuffle_due = e
+        elif kind == "move_opponent_energy":
+            # v0.45: じりょくせん。相手の対戦ポケモンの基本エネルギーカード（同じ uid）を、相手の控えポケモンにつける。つける控えが「とうめい」で受けなければ
+            # 持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方）
+            source, target, uid = e["pokemon_id"], e["to_pokemon_id"], e["energy"]
+            if not _same_attack(attack_window, e) or e["attacker"] != attack_window["player"] or e["player"] == e["attacker"] \
+                    or not isinstance(_effect_of_event(state, e), DamageThenMoveOpponentEnergyToBench) or uid not in energy.get(source, ()) \
+                    or not state.card_def(uid).is_basic_energy or owner.get(uid) != e["player"] or pokemon_owner.get(target) != e["player"] \
+                    or target == source or target not in in_play or e["result"] not in ("attached", "evaded"):
+                problems.append(f"{e['turn']} 番のじりょくせんのエネルギー {uid}（{source} → {target}）が、そのワザの処理のものではない")
+            else:
+                energy[source].remove(uid)
+                if e["result"] == "attached":
+                    energy[target].append(uid)
+                else:
+                    discard[e["player"]].append(uid)
+                    if attack_window["reception"].get(target) is not False:
+                        problems.append(f"{e['turn']} 番のじりょくせんで、「とうめい」で受けないと決まっていない控え {target} のかわりにトラッシュした")
+        elif kind == "take_deck_top":
+            # v0.45: てつだうふり。相手の山札の一番上のカードを、トレーナーなら相手のトラッシュ、それ以外なら相手の手札へ（カードを引くことではない。山札は組み立て
+            # 直さない）。見たのはワザを使ったプレイヤー
+            uid = e["card"]
+            expected = "discard" if state.card_def(uid).category == "trainer" else "hand"
+            if not _same_attack(attack_window, e) or e["looker"] != attack_window["player"] or e["player"] == e["looker"] \
+                    or not isinstance(_effect_of_event(state, e), CoinOpponentDeckTopDiscardTrainerElseHand) or owner.get(uid) != e["player"] \
+                    or e["destination"] != expected:
+                problems.append(f"{e['turn']} 番のてつだうふりのカード {uid}（{e['destination']}）が、そのワザの処理のものではない")
+            (discard if e["destination"] == "discard" else hand)[e["player"]].append(uid)
         elif kind == "put_discard_on_deck_top":
             # v0.44: わるいいたずら。相手（カードの持ち主）のトラッシュのカードを、その山札の上にのせる（切らない）。選んだのはワザを使ったプレイヤー
             uid = e["card"]
@@ -1906,18 +1989,21 @@ def log_problems(state) -> list[str]:
             # v0.32: ワザ（なかまをよぶ・ふえる）で、ワザを使ったプレイヤーの山札の、説明の名前のたねポケモンを、手札を通さずにベンチに出す（山札は組み立て
             # 直さないので、持ち主・手札・トラッシュ・場にないことで確かめる）。どちらのあとにも同じプレイヤーの山札を切る（shuffle）
             # v0.34: たすけをよぶは名前でなくタイプで選ぶ（登録の ``pokemon_type``）
+            # v0.45: タケシのイシツブテのたすけをよぶは「(owner)のポケモン」（名前が「(owner)の」で始まるたねポケモン。登録の ``owner``）
             entry = state.effects.attack_entry(*_attack_key(e["effect"]))
             names = getattr(entry.effect, "names", None) if entry is not None else None
             pokemon_type = getattr(entry.effect, "pokemon_type", None) if entry is not None else None
+            owner_name = entry.effect.owner if entry is not None and isinstance(entry.effect, PutOwnerBasicFromDeckOntoBenchOnHeads) else None
             if attack_window is None or e["player"] != attack_window["player"] or e["pokemon_id"] != attack_window["pokemon_id"] \
-                    or (names is None) == (pokemon_type is None):
+                    or [names, pokemon_type, owner_name].count(None) != 2:
                 problems.append(f"{e['turn']} 番の {kind} が、山札からベンチに出すワザ（登録の名前・タイプ）の処理の中にない")
             if kind == "bench_from_deck":
                 uid = e["card"]
                 definition = state.card_def(uid)
                 if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or uid in ids \
                         or not definition.is_basic_pokemon or (names is not None and definition.name_ja not in names) \
-                        or (pokemon_type is not None and definition.pokemon_type is not pokemon_type):
+                        or (pokemon_type is not None and definition.pokemon_type is not pokemon_type) \
+                        or (owner_name is not None and not definition.name_ja.startswith(f"{owner_name}の")):
                     problems.append(f"{e['turn']} 番にベンチに出したカード {uid} が、プレイヤー {e['player']} の山札の、名前 {names}・タイプ {pokemon_type} の"
                                     "たねポケモンではない")
                 enter(uid)
@@ -2197,9 +2283,14 @@ def log_problems(state) -> list[str]:
                 "kind": e["persistent_effect"], "active_turn": e["active_turn"], "effect": e["effect"], "source_card": e["source_card"],
                 "target_attack_index": e.get("target_attack_index"),  # v0.35: 「あわあわ」・「ドわすれ」の使えなくなるワザの位置
                 "single_use": e.get("single_use"),  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
+                "lasting": e.get("lasting", False),  # v0.45: 「スミをかける」の「それ以後」（期限で消えない。場をはなれる・進化で消える）
                 # v0.34: 「次の自分の番の始めに消える」効果（なきつく）は、はたらく番の次の番の始めに消える（はたらく番の終わりではない）
-                "until": e["active_turn"] + 1 if e["persistent_effect"] == ReducedDamageToSource.kind else e["active_turn"],
+                # v0.45: 期限のない効果は期限で消えない
+                "until": (float("inf") if e.get("lasting") else
+                          e["active_turn"] + 1 if e["persistent_effect"] == ReducedDamageToSource.kind else e["active_turn"]),
             }
+            if e.get("lasting") and (e["persistent_effect"] != AttackCoinCheck.kind or e.get("single_use")):
+                problems.append(f"{e['turn']} 番の期限のない持続する効果（ポケモン {e['pokemon_id']}）が、手順 4 のコインの「1回できえる」でない効果ではない")
             # v0.35: 「きあいだめ」（next_turn_attack_damage_multiplier）・「あわあわ」（cannot_use_own_attack）も次の自分の番
             offset = (NextTurnAttackDamage.turns_until_active if e["persistent_effect"] in (*NEXT_TURN_DAMAGE_KINDS.values(), CannotUseOwnAttack.kind)
                       else 1)

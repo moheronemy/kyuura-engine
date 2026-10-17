@@ -97,6 +97,13 @@ V0_44_WITH_TEXT = [AttackKey(card, index) for card, index in (
     ("PMCG4-038", 0), ("PMCG4-047", 0), ("PMCG5-007", 0), ("PMCG5-007", 1), ("PMCG5-027", 0), ("PMCG4-020", 1), ("PMCG6-011", 0), ("PMCG6-018", 0),
     ("PMCG6-018", 1), ("PMCG1-063", 0), ("PMCG6-037", 0), ("PMCG6-037", 1), ("PMCG6-040", 0), ("PMCG6-040", 1), ("PMCG6-046", 0), ("PMCG6-056", 0),
     ("PMCG6-056", 1), ("PMCG6-075", 0), ("PMCG6-075", 1), ("PMCG6-071", 0))]
+# v0.45（docs/conditional-damage-energy-v0.45.md）: 15 枚の説明文のあるワザ 24。第1弾のゴーストの 2 つは v0.9 の過去の原典照合の記録の最新の説明（p.160）、
+# R団のエビワラーの「クロスカウンター」は kyuura の最新の説明（LD-PMCG5-054-ATK0）、ほかは採用の記録の play_text（kyuura の印刷の文面）と合う
+# （キョウのベトベターの「ヘドロなげ」・イワークの「いわおとし」・ラッタの「かみつく」・R団のエビワラーの「マグナムパンチ」は説明文なし）
+V0_45_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG1-047", 0), ("PMCG1-047", 1), ("PMCG5-024", 0), ("PMCG5-031", 0), ("PMCG5-031", 1), ("PMCG6-002", 0), ("PMCG6-019", 0), ("PMCG6-019", 1),
+    ("PMCG6-007", 0), ("PMCG4-024", 0), ("PMCG4-024", 1), ("PMCG4-030", 0), ("PMCG4-030", 1), ("PMCG6-032", 0), ("PMCG6-032", 1), ("PMCG6-042", 0),
+    ("PMCG6-042", 1), ("PMCG1-054", 1), ("PMCG1-062", 1), ("PMCG5-054", 0), ("PMCG5-047", 0), ("PMCG5-047", 1), ("PMCG6-068", 0), ("PMCG6-068", 1))]
 
 
 class RecordingEffect(AttackEffect):
@@ -247,7 +254,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
-                                + V0_44_WITH_TEXT))
+                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -386,7 +393,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚のワザ 21（v0.42。docs/power-decisions-v0.42.md）
         # + 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚のワザ 9（v0.43。docs/declared-entry-powers-v0.43.md）
         # + 検索・進化・1 度だけ使えるワザの 14 枚のワザ 24（v0.44。docs/search-evolution-once-attacks-v0.44.md）
-        self.assertEqual(len(keys), 479)
+        # + 条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などの 15 枚のワザ 28（v0.45。カスミのタッツー（HP 50）・
+        #   キョウのアーボはワザ 1 つ。docs/conditional-damage-energy-v0.45.md）
+        self.assertEqual(len(keys), 507)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

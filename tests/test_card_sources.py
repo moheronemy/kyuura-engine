@@ -29,6 +29,7 @@ from scripts import check_card_sources as cs
 from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_35_POKEMON, V0_36_POKEMON, KANGASKHAN
 from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, FOSSIL_GRIMER, BROCKS_ONIX, PERSIAN
 from tests.helpers import V0_44_CARDS, GIOVANNI, MISTYS_STARYU, BLANK_CHANSEY
+from tests.helpers import NO_BASE_HAUNTER_EFFECTS, V0_45_ADOPTED, BASE_HAUNTER, DARK_BLASTOISE, DARK_MAGNETON, RATICATE, BROCKS_GEODUDE_40, ROCKETS_HITMONCHAN
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -165,11 +166,13 @@ class ShippedRecordTest(unittest.TestCase):
         # （pcg-search.com の照合だけを書く guidebook_record。docs/fifteen-reused-effects-v0.37.md）。v0.38: 採用 15 枚（docs/bench-switch-combined-v0.38.md）。
         # v0.39: 採用 15 枚（docs/selfdestruct-spread-count-v0.39.md）。v0.40: 採用 15 枚（docs/count-condition-switch-return-v0.40.md）。
         # v0.41: 採用 15 枚（docs/heal-counter-status-v0.41.md）。v0.42: 採用 15 枚（docs/power-decisions-v0.42.md）。v0.43: 採用 9 枚
-        # （docs/declared-entry-powers-v0.43.md）。v0.44: 採用 15 枚（ポケモン 14 枚とトレーナーのサカキ。docs/search-evolution-once-attacks-v0.44.md）
+        # （docs/declared-entry-powers-v0.43.md）。v0.44: 採用 15 枚（ポケモン 14 枚とトレーナーのサカキ。docs/search-evolution-once-attacks-v0.44.md）。
+        # v0.45: 採用 14 枚と、過去の原典照合の記録のある第1弾のゴースト（pcg-search.com の照合だけを書く guidebook_record。
+        # docs/conditional-damage-energy-v0.45.md）
         self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON
                                                           + (KANGASKHAN,) + V0_35_POKEMON + V0_36_POKEMON + V0_37_POKEMON + V0_38_POKEMON
                                                           + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON + V0_43_POKEMON
-                                                          + V0_44_CARDS))
+                                                          + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED))
         for card_id in V0_44_CARDS:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -183,6 +186,28 @@ class ShippedRecordTest(unittest.TestCase):
         # トレーナーのサカキの処理に使う文面は kyuura の印刷の文面、カスミのヒトデマンの「スターブーメラン」は kyuura の最新の説明（LD-PMCG5-027-ATK0）
         self.assertEqual(sources["cards"][GIOVANNI]["play_text"], {"trainer": cs.PRINTED_TEXT})
         self.assertEqual(sources["cards"][MISTYS_STARYU]["play_text"], {"attack/0": "LD-PMCG5-027-ATK0"})
+        # v0.45: 採用の 14 枚は 2026-10-16 に記録し、pcg-search.com の同じ版のページと照合した。違いは 4 枚とも処理に影響しない（わるいカメックス・
+        # タケシのイシツブテ（HP 40）の説明文の表記、わるいレアコイルの「特殊エネルギーカード」と「特殊エネルギー」、ラッタのダメージの表示の「?」）
+        with_differences = {DARK_BLASTOISE: "pokemon.attacks[0].text.ja", DARK_MAGNETON: "pokemon.attacks[1].text.ja",
+                            RATICATE: "pokemon.attacks[1].damage", BROCKS_GEODUDE_40: "pokemon.attacks[0].text.ja"}
+        for card_id in V0_45_ADOPTED:
+            record = sources["cards"][card_id]
+            with self.subTest(card=card_id):
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"]),
+                                 (cs.KYUURA_DATA, cs.ADOPTED, COMMIT, "2026-10-16"))
+                [check] = record["external_checks"]
+                self.assertEqual(check["checked_on"], "2026-10-16")
+                self.assertEqual(check["result"], "differences" if card_id in with_differences else "match")
+                self.assertEqual([d["field"] for d in check["differences"]], [with_differences[card_id]] if card_id in with_differences else [])
+                self.assertTrue(all(not d["affects_behavior"] for d in check["differences"]))
+                self.assertEqual(record["issues"], [])
+        # R団のエビワラーの「クロスカウンター」の処理に使う文面は kyuura の最新の説明（LD-PMCG5-054-ATK0）。ほかは kyuura の印刷の文面
+        self.assertEqual(sources["cards"][ROCKETS_HITMONCHAN]["play_text"], {"attack/0": "LD-PMCG5-054-ATK0"})
+        self.assertTrue(all(set(sources["cards"][c]["play_text"].values()) == {cs.PRINTED_TEXT} for c in V0_45_ADOPTED if c != ROCKETS_HITMONCHAN))
+        # 第1弾のゴーストは v0.9 の過去の原典照合の記録で登録した（化石の秘密のベトベターと同じ。pcg-search.com の照合だけを書く）
+        haunter = sources["cards"][BASE_HAUNTER]
+        self.assertEqual((haunter["basis"], [c["result"] for c in haunter["external_checks"]]), (cs.GUIDEBOOK_RECORD, ["match"]))
+        self.assertNotIn("play_text", haunter)
         for card_id in V0_29_POKEMON:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -240,8 +265,14 @@ class ShippedRecordTest(unittest.TestCase):
         # 裁定の記録がない）と、v0.41 の 26（15 枚の説明文のあるワザ。kyuura に LD-・エラッタ・裁定の記録がない）と、v0.42 の 23（15 枚の説明文の
         # あるワザ 16 と特殊能力 7。カイリューの［かけつける］は card_differences の最新の説明なので difference_text）と、v0.43 の 17（9 枚の説明文の
         # あるワザ 8 と特殊能力 9。kyuura に LD-・エラッタ・裁定・card_differences の記録がない）と、v0.44 の 21（14 枚の説明文のあるワザ 19 と特殊能力 2。
-        # カスミのヒトデマンの「スターブーメラン」は kyuura の最新の説明（LD-PMCG5-027-ATK0）があるので registered。トレーナーのサカキは対応表の区分の外）
-        self.assertEqual(len(section["adopted_printed_text"]), 327)
+        # カスミのヒトデマンの「スターブーメラン」は kyuura の最新の説明（LD-PMCG5-027-ATK0）があるので registered。トレーナーのサカキは対応表の区分の外）と、
+        # v0.45 の 21（採用の 14 枚の説明文のあるワザ 22 から、kyuura の最新の説明（LD-PMCG5-054-ATK0）のある R団のエビワラーの「クロスカウンター」
+        # を除く（registered）。第1弾のゴーストの 2 つは照合の記録の文面で、LD-・CC- の区分）
+        self.assertEqual(len(section["adopted_printed_text"]), 348)
+        self.assertNotIn(f"{ROCKETS_HITMONCHAN}/attack/0", section["adopted_printed_text"])
+        self.assertEqual(section["registered"][f"{ROCKETS_HITMONCHAN}/attack/0"], "LD-PMCG5-054-ATK0")
+        self.assertEqual((section["registered"][f"{BASE_HAUNTER}/attack/1"], section["recorded_in_card_checks"][f"{BASE_HAUNTER}/attack/0"]),
+                         ("LD-PMCG1-047-ATK1", "CC-PMCG1-047-P160"))
         # v0.37: 化石の秘密のベトベター（過去の原典照合の記録のあるカード）は pcg-search.com の照合だけを書く。タケシのイワークは kyuura が読んだ
         # 照合の記録（CC-）がある。ペルシアンは kyuura の文面の【】だけがサイトと違う（処理に影響しない）
         grimer = sources["cards"][FOSSIL_GRIMER]
@@ -273,16 +304,17 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29〜v0.44 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
-        v0.8 の記録のあるカード）。"""
+        v0.29〜v0.45 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
+        v0.8、v0.45 の第1弾のゴーストは v0.9 の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
         registered = cs.registered_cards(DEFAULT_EFFECTS)
         adopted = (set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON) | set(V0_34_POKEMON)
                    | set(V0_35_POKEMON) | set(V0_36_POKEMON) | set(V0_37_ADOPTED) | set(V0_38_POKEMON) | set(V0_39_POKEMON)
                    | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON) | set(V0_43_POKEMON)
-                   | set(V0_44_CARDS))  # v0.35〜v0.44
+                   | set(V0_44_CARDS) | set(V0_45_ADOPTED))  # v0.35〜v0.45
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
+        self.assertIn(BASE_HAUNTER, verification["cards"])  # v0.45 で登録した第1弾のゴーストは v0.9 の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))
         self.assertIn(CHARMANDER, verification["cards"])
@@ -508,7 +540,7 @@ class RejectTest(unittest.TestCase):
 
 
 KYUURA = pathlib.Path(__file__).resolve().parent.parent.parent / "kyuura"
-HAUNTER = "PMCG1-047"   # 第1弾のゴースト（参照カード）: さいみんじゅつは kyuura の LD- なし、ゆめくいは LD-PMCG1-047-ATK1 がある
+HAUNTER = "PMCG1-047"   # 第1弾のゴースト: さいみんじゅつは kyuura の LD- なし、ゆめくいは LD-PMCG1-047-ATK1 がある（v0.44 まで参照カード。v0.45 で登録した）
 ABRA = "PMCG1-043"      # ケーシィ: kyuura の CC-PMCG1-043-P43 に、ねんりきの文面のデータの誤り（読点）の記録がある
 
 
@@ -517,7 +549,9 @@ class ResearchCommitTest(unittest.TestCase):
     """scripts/check_research_links.py の 4c・7（kyuura データの採用の記録を、研究の基準のコミットの kyuura の記録と照らす）。
 
     登録していない参照カード（第1弾のゴースト）を、テストの中だけで採用の記録で登録したことにする（効果の実装は確かめない。記録の照らし方だけ。
-    同梱の記録・登録表は変えない）。
+    同梱の記録・登録表は変えない）。v0.45 で第1弾のゴーストを v0.9 の過去の原典照合の記録で登録したので、テストの中では、その登録を除いた
+    登録表（``NO_BASE_HAUNTER_EFFECTS``）・対応表（研究の対応表の区分から外し、LD- を登録していない記録にもどす）・記録の組（同梱の
+    guidebook_record を除く）から始める。
     """
 
     @classmethod
@@ -530,12 +564,29 @@ class ResearchCommitTest(unittest.TestCase):
         cls.ld = {x["id"]: x for x in research.git_show(KYUURA, commit, "data/sidecar/latest_descriptions.json")["records"]}
         cls.cards = {c["id"]: c for c in read_extract()["cards"]}
 
-    def case(self):
+    def unregistered(self):
+        """第1弾のゴーストを登録していない対応表・記録の組（v0.44 までの同梱の状態と同じ扱い）。"""
         links = copy.deepcopy(self.links)
+        section = links["latest_descriptions"]
+        ld_id = f"LD-{HAUNTER}-ATK1"
+        self.assertEqual(section["registered"].pop(f"{HAUNTER}/attack/1"), ld_id)
+        self.assertEqual(section["recorded_in_card_checks"].pop(f"{HAUNTER}/attack/0"), f"CC-{HAUNTER}-P160")
+        section["kyuura_records_not_registered"].append(ld_id)
+        cards = copy.deepcopy(cs.load_sources()["cards"])
+        self.assertEqual(cards.pop(HAUNTER)["basis"], cs.GUIDEBOOK_RECORD)
+        return links, cards
+
+    def test_unregistered_starting_point_is_accepted(self):
+        """テストの始まりの状態（第1弾のゴーストの登録・対応表の区分・記録を除いたもの）は、研究の基準のコミットの記録と照らして受け付ける。"""
+        links, cards = self.unregistered()
+        self.assertEqual(self.check({"cards": cards}, NO_BASE_HAUNTER_EFFECTS, links), [])
+
+    def case(self):
+        links, cards = self.unregistered()
         section = links["latest_descriptions"]
         attacks = self.cards[HAUNTER]["pokemon"]["attacks"]
         ld_id = f"LD-{HAUNTER}-ATK1"
-        registry = DEFAULT_EFFECTS.with_attacks("test-research-commit", {
+        registry = NO_BASE_HAUNTER_EFFECTS.with_attacks("test-research-commit", {
             AttackKey(HAUNTER, 0): AttackEntry(DAMAGE_ONLY, attacks[0]["name"]["ja"], text_ja=attacks[0]["text"]["ja"],
                                                play_text_ja=attacks[0]["text"]["ja"], source=cs.PRINTED_TEXT_SOURCE),
             AttackKey(HAUNTER, 1): AttackEntry(DAMAGE_ONLY, attacks[1]["name"]["ja"], text_ja=attacks[1]["text"]["ja"],
@@ -545,7 +596,7 @@ class ResearchCommitTest(unittest.TestCase):
         section["registered"][f"{HAUNTER}/attack/1"] = ld_id
         section["kyuura_records_not_registered"].remove(ld_id)
         sources = {"format": cs.FORMAT, "description": "テストのための記録", "policy": dict(cs.POLICY), "cards": {
-            **copy.deepcopy(cs.load_sources()["cards"]), HAUNTER: {
+            **cards, HAUNTER: {
             "basis": "kyuura_data", "name_ja": "ゴースト", "status": "adopted", "kyuura_commit": COMMIT, "recorded_on": "2026-10-16",
             "kyuura_records": [f"CC-{HAUNTER}-P160", ld_id], "play_text": {"attack/0": cs.PRINTED_TEXT, "attack/1": ld_id},
             "external_checks": [], "issues": []}}}

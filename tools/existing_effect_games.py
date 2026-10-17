@@ -120,6 +120,15 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   ポケモンの進化は ``_v044_trainer``（今の番に場に出した・進化したサカキのポケモンと、そのポケモンから進化するカードが手札にあるときだけサカキを使う）。1 度しか使えないワザで
   使ったものは選ばない。原典で決められない場合（FC1・RD9）で拒否されたワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.44 のカードは
   入っていないので、その組の結果は変わらない。
+- v0.45（``--batch v0.45``。``PAIRINGS_V0_45``。docs/conditional-damage-energy-v0.45.md）: ``G45``（草・水）: キョウのアーボ 4・キョウのアーボック 3・キョウのベトベター 4・
+  カスミのタッツー（PMCG5-024）4・カスミのパウワウ 3・カスミのジュゴン 2、トレーナー 12、草エネルギー 15・水エネルギー 13。``R45``（炎・雷）: カツラのヒトカゲ 4・
+  カツラのリザード 3・カツラのリザードン 2・コイル（第1弾）4・わるいレアコイル 3・R団のサンダー 3、トレーナー 12、炎エネルギー 15・雷エネルギー 14。``F45``（闘・無色）:
+  イワーク 3・コラッタ 4・ラッタ 3・R団のエビワラー 3・タケシのイシツブテ（PMCG5-047）4・タケシのサイホーン 1・タケシのサンド 1・サカキのニャース（PMCG6-068）3、
+  トレーナー 12、闘エネルギー 26。``W45``（水・超）: ゼニガメ（ロケット団）4・わるいカメール 3・わるいカメックス 2・ゴース（第1弾）4・ゴースト（第1弾）3、トレーナー 12、
+  水エネルギー 18・超エネルギー 14。組は ``G45`` 対 ``R45``・``R45`` 対 ``F45``・``F45`` 対 ``W45``・``W45`` 対 ``G45``・``G45`` 対 ``P31``（ピッピ・ピクシー・
+  カスミのコダックが v0.45 のワザを自分のワザとして使う。クロスカウンターはまねられない）。決定は ``_v045_decision``（じりょくせんは はがすカードの 1 つ目・つける控えの
+  最後、たすけをよぶは 4 回に 1 回は出さない）。原典で決められない場合（AC13・AC6・W24）で拒否されたワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。
+  v0.45 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに v0.45 のカードは入っていないので、その組の結果は変わらない。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -154,7 +163,7 @@ from kyuura_engine import (  # noqa: E402
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.decisions import (  # noqa: E402
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_TO_DECK_TOP, ENTRY_POWER, FORCED_SWITCH, HAND_TO_DECK,
-    MOVE_ENERGY, RECOVER_POKEMON,
+    MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_POKEMON,
     REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
 )
 from kyuura_engine.effects import (  # noqa: E402
@@ -281,8 +290,16 @@ V0_44 = (ROCKET_DIGLETT, ROCKET_MEOWTH, ERIKAS_BULBASAUR, MISTYS_STARYU, ROCKET_
          GIOVANNIS_GYARADOS, SABRINAS_MR_MIME, BLAINES_MANKEY, BLANK_CHANSEY, GIOVANNIS_PERSIAN)
 GIOVANNI = "PMCG6-095"
 GIOVANNIS_MEOWTH, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP = "PMCG6-063", "PMCG6-057", "PMCG6-059", "PMCG6-061"
+# v0.45（条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などの 15 枚。docs/conditional-damage-energy-v0.45.md）。進化元はゴース（第1弾）・
+# カスミのパウワウ（v0.36）・キョウのアーボ・わるいカメール（v0.13）・コイル（第1弾）・カツラのリザード（v0.31）・コラッタ（第1弾）
+BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK = "PMCG1-047", "PMCG5-024", "PMCG5-031", "PMCG6-002", "PMCG6-019"
+KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD, ROCKETS_ZAPDOS = "PMCG6-007", "PMCG4-024", "PMCG4-030", "PMCG6-032", "PMCG6-042"
+ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40 = "PMCG1-054", "PMCG1-062", "PMCG5-054", "PMCG5-047", "PMCG6-068"
+V0_45 = (BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK, KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD,
+         ROCKETS_ZAPDOS, ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40)
+BASE_GASTLY, ROCKET_SQUIRTLE, DARK_WARTORTLE = "PMCG1-044", "PMCG4-018", "PMCG4-021"
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
-           + V0_44)  # ワザの選び方を重ね、動きを数えるカード
+           + V0_44 + V0_45)  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -419,6 +436,20 @@ DECKS = {
     # てじな（ナツメのバリヤード）・ラッキーたまご（_____のラッキー）・ネギでたたく（カモネギ）・こばんなげ（ニャース）
     "W44": ((MISTYS_STARYU, 4), (ROCKET_MAGIKARP, 4), (GYARADOS, 2), (SABRINAS_MR_MIME, 4), (BLANK_CHANSEY, 4), (FARFETCHD, 3), (ROCKET_MEOWTH, 4),
             *TRAINERS, (WATER, 16), (PSYCHIC, 7)),
+    # v0.45: 草・水（闇からの挑戦・リーダーズスタジアム）。とつぜんどく・どくをためる・ポイズンパワー・ベトベトハンド・スミをかける（それ以後の手順 4 のコイン）・
+    # こおりのつぶて
+    "G45": ((KOGAS_EKANS, 4), (KOGAS_ARBOK, 3), (KOGAS_GRIMER, 4), (MISTYS_HORSEA_50, 4), (MISTYS_SEEL, 3), (MISTYS_DEWGONG, 2), *TRAINERS,
+            (GRASS, 15), (WATER, 13)),
+    # v0.45: 炎・雷（闇からの挑戦・第1弾・ロケット団）。ファイヤーブレス（多いエネルギーのトラッシュ）・かえんひこう・じりょくせん（相手のエネルギーのつけかえ）・
+    # ソニックブーム・プラズマ・エレクトロバーン
+    "R45": ((BLAINES_CHARMANDER, 4), (BLAINES_CHARMELEON, 3), (BLAINES_CHARIZARD, 2), (MAGNEMITE, 4), (DARK_MAGNETON, 3), (ROCKETS_ZAPDOS, 3), *TRAINERS,
+            (FIRE, 15), (LIGHTNING, 14)),
+    # v0.45: 闘・無色（第1弾・リーダーズスタジアム・闇からの挑戦）。かたくなる・いかりのまえば・クロスカウンター・たすけをよぶ（タケシのポケモン）・スパイラルショット・
+    # てつだうふり・ダブルひっかき
+    "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
+            (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
+    # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
+    "W45": ((ROCKET_SQUIRTLE, 4), (DARK_WARTORTLE, 3), (DARK_BLASTOISE, 2), (BASE_GASTLY, 4), (BASE_HAUNTER, 3), *TRAINERS, (WATER, 18), (PSYCHIC, 14)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -443,10 +474,12 @@ PAIRINGS_V0_42 = (("G42", "P42"), ("P42", "D42"), ("D42", "W42"), ("W42", "G42")
 PAIRINGS_V0_43 = (("G43", "R43"), ("R43", "L43"), ("L43", "G43"), ("G43", "P31"))
 # v0.44: W44 対 P31（ピッピ・ピクシー・カスミのコダックが、てじな・ラッキーたまご・スターブーメランなどを自分のワザとして使う。1 度だけ使えるワザはまねられない）
 PAIRINGS_V0_44 = (("K44", "V44"), ("V44", "W44"), ("W44", "K44"), ("W44", "P31"))
+# v0.45: G45 対 P31（ピッピ・ピクシー・カスミのコダックが、スミをかける・とつぜんどく・ポイズンパワー・ベトベトハンドなどを自分のワザとして使う）
+PAIRINGS_V0_45 = (("G45", "R45"), ("R45", "F45"), ("F45", "W45"), ("W45", "G45"), ("G45", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
-           "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44}
+           "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -457,6 +490,8 @@ RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy
                  "forced_switch", "destiny_bond",
                  # v0.32
                  "bench_from_deck", "bench_from_deck_none",
+                 # v0.45
+                 "move_opponent_energy", "take_deck_top",
                  # v0.33
                  "forced_switch_skipped",
                  # v0.34（テレポート）
@@ -519,7 +554,8 @@ V031_STOPS = {
     # 試す結果の数が上限（4,096）を超える（れんぞくファイヤーボール・エナジーボム・ほうでん・やまやきで、ついているエネルギーが多いとき）
     "UNSUPPORTED_PREFLIGHT_LIMIT": lambda st, c: len(_attacker(st, c).energy) >= 6,
     # v0.32: なかまをよぶ・ふえる（ベンチに空きがなければ使えない。ワザを使うための条件）
-    "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("PutBasicFromDeckOntoBench", "PutTypeBasicFromDeckOntoBench")  # v0.34 のたすけをよぶ
+    "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("PutBasicFromDeckOntoBench", "PutTypeBasicFromDeckOntoBench",  # v0.34 のたすけをよぶ
+                                                                          "PutOwnerBasicFromDeckOntoBenchOnHeads")  # v0.45 のたすけをよぶ
                                  and len(st.players[c.player].bench) >= st.rules.max_bench),
     # v0.32: ヨガのポーズ（相手の控えポケモンにダメージカウンターがのっている。CD4）
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamagePlusDefenderCounters"
@@ -564,6 +600,10 @@ V031_STOPS = {
     "UNRESOLVED_STATED_CARDS_SHORT": lambda st, c: _hand_return_short(st, c),
     # v0.44: 場に出てから 1 度しか使えないワザ（ネギでたたく・りゅうのきおく・ひっさつばり）を、このポケモンがもう使った（場のポケモンの記録 ``attacks_used_once``）
     "ATTACK_ALREADY_USED": lambda st, c: (_attacker(st, c).card, c.attack_index) in _attacker(st, c).attacks_used_once,
+    # v0.45: ワザを使うポケモンが手順 4 の効果を 2 つ以上受けている（AC13。スミをかけるの「それ以後」の効果が重なる）
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": lambda st, c: len(attack_coin_checks(st, _attacker(st, c))) >= 2,
+    # v0.45: 相手の対戦ポケモンが返す効果（クロスカウンター。ほのおのかべ・こうらがえしも）を持ち、そろってきぜつしうる（W24・S37）
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT": lambda st, c: retaliation(st, _defender(st, c)) is not None,
 }
 
 
@@ -1111,6 +1151,50 @@ def _v044_decision(state, counts):
     return None
 
 
+def _v045_decision(state, counts):
+    """v0.45 のカードのワザの決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - じりょくせん: はがすカードは 1 つ目、つける相手の控えは 最後・最初 を順に
+    - たすけをよぶ: 選べる 1 つ目（4 回に 1 回は出さない。0 枚は「出してよい」の選ばないこと）
+    - ファイヤーブレス: 多い枚数ちょうど（ついている順の 1 つ目から）。かえんひこう: 相手の対戦ポケモン・残り HP のいちばん少ない控え を順に"""
+    d = state.decision
+    if d is None or d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_45:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    card_id = use[2]
+
+    def answer(choices, label):
+        counts[f"v045_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    if card_id == DARK_MAGNETON and d.kind == MOVE_OPPONENT_ENERGY:
+        return answer(options[:1], "magnetic_energy")
+    if card_id == DARK_MAGNETON and d.kind == SELECT_POKEMON:
+        choice = options[-1] if counts["v045_magnetic_bench_seen"] % 2 == 0 else options[0]
+        counts["v045_magnetic_bench_seen"] += 1
+        return answer((choice,), "magnetic_bench")
+    if card_id == BROCKS_GEODUDE_40 and d.kind == BENCH_FROM_DECK:
+        decline = not options or counts["v045_call_seen"] % 4 == 3
+        counts["v045_call_seen"] += 1
+        return answer(() if decline else options[:1], "call_declined" if decline else "call_benched")
+    if card_id == BLAINES_CHARIZARD and d.kind == DISCARD_ENERGY:
+        return answer(options[:d.min_choices], f"fire_breath_{d.min_choices}")
+    if card_id == BLAINES_CHARIZARD and d.kind == SELECT_POKEMON:
+        active = state.players[1 - d.player].active.pokemon_id
+        bench = [o for o in options if o != active]
+        active_turn = counts["v045_flame_flight"] % 2 == 0 or not bench
+        counts["v045_flame_flight"] += 1
+        if active_turn and active in options:
+            return answer((active,), "flame_flight_active")
+        remaining = {o: state.card_def(state.find_pokemon(o)[1].card).hp - state.find_pokemon(o)[1].damage for o in bench}
+        return answer((min(bench, key=lambda o: (remaining[o], bench.index(o))),), "flame_flight_bench")
+    return None
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -1251,7 +1335,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = _v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
+            early = (_v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
+                     or _v045_decision(state, counts))  # v0.45 の決定も
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -1290,7 +1375,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -1409,6 +1494,12 @@ def card_uses(state):
             uses[card[e["pokemon"]]]["protected_by_own_effect"] += 1  # 「まるまる」「からをとじる」の効果で、相手のワザのダメージを受けなかった
         elif kind == "persistent_effect_removed" and card[e["pokemon"]] in uses:
             uses[card[e["pokemon"]]][f"effect_removed_{e['reason']}"] += 1
+        elif kind in ("retaliation", "retaliation_skipped") and card[e["pokemon"]] in V0_45:
+            # v0.45: クロスカウンター（効果を持つポケモンのカード）。返した（「おもて」）・コインの「うら」・対象がいない
+            uses[card[e["pokemon"]]][f"{kind}_{e.get('coin') or e.get('reason')}"] += 1
+        elif kind == "damage" and e.get("damage_zero_below") and card.get(e["damage_zero_below"][0][1]) in V0_45:
+            # v0.45: かたくなる（8 段階で 0 になった相手のワザのダメージ・しきい値以上でそのまま受けたダメージ）
+            uses[card[e["damage_zero_below"][0][1]]]["zeroed_damage" if e["amount"] == 0 else "harden_exceeded"] += 1
         elif kind == "attack_check" and card[e["source_card"]] in uses:
             # v0.36: 相手が、このカードのワザ（すなかけ・えんまくなど）の効果を受けてワザを使ったときの手順 4 のコイン（結果ごと）
             uses[card[e["source_card"]]][f"attack_check_{e['result']}"] += 1
@@ -1523,7 +1614,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28",
-                        help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37〜v0.40・v0.43・v0.44 の 4 組、v0.41 の 6 組、v0.42 の 5 組）")
+                        help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37〜v0.40・v0.43・v0.44 の 4 組、v0.41 の 6 組、v0.42・v0.45 の 5 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

@@ -21,7 +21,7 @@ from kyuura_engine.rng import rng_fingerprint
 
 from tests.helpers import (
     BASE_HAUNTER, CATERPIE, FIRE, GASTLY, GROWLITHE, H, HAUNTER, METAPOD, PONYTA, POTION, PSYCHIC, RATTATA, T, WATER,
-    build_test_state, coin_events, uids, with_coin_results,
+    build_test_state, coin_events, no_base_haunter_pool, uids, with_coin_results,
 )
 
 TURN = 7
@@ -59,8 +59,12 @@ class CardDataTest(unittest.TestCase):
         self.assertEqual([(w.name_ja, w.kind, w.supported) for w in haunter.powers], [("とうめい", "pokemon_power", True)])
         extract = read_extract()
         self.assertEqual(extract["pool_v0_9"], [GASTLY, HAUNTER])
-        self.assertIn(BASE_HAUNTER, extract["reference_only"])
-        self.assertFalse(pool.is_playable(BASE_HAUNTER))
+        # 第1弾のゴースト（同じ名前の別のカード）は v0.44 まで参照カード（ゆめくいが未実装）。v0.45 で写しの組 pool_v0_45 に移して対応にした。
+        # 登録のないワザを持つカードが対応にならない性質は、その登録を除いた登録表で確かめる
+        self.assertNotIn(BASE_HAUNTER, extract["reference_only"])
+        self.assertIn(BASE_HAUNTER, extract["pool_v0_45"])
+        self.assertTrue(pool.is_playable(BASE_HAUNTER))
+        self.assertFalse(no_base_haunter_pool().is_playable(BASE_HAUNTER))
 
     def test_registration_follows_the_verified_latest_description(self):
         """登録の文面（照合用の kyuura の写し・実装がしたがう最新の説明・出典）が、照合の記録（card_verification.json）と同じ。"""

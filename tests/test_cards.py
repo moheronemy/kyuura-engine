@@ -20,6 +20,7 @@ from tests.helpers import (
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
     V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
     V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, V0_44_POKEMON, V0_44_CARDS,
+    V0_45_POKEMON, no_base_haunter_pool,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -76,7 +77,10 @@ class CardPoolTest(unittest.TestCase):
         self.assertTrue(all(pool.is_playable(c) for c in (GRIMER, MUK)))
         self.assertEqual(read_extract()["pool_v0_9"], [GASTLY, HAUNTER])  # v0.9（ワザを受けるときに自動的にはたらくポケモンパワーのとうめい）
         self.assertTrue(all(pool.is_playable(c) for c in (GASTLY, HAUNTER)))
-        self.assertFalse(pool.is_playable(BASE_HAUNTER))  # 同じ名前の第1弾のゴースト（参照カード。ゆめくいが未実装）
+        # 同じ名前の第1弾のゴースト（v0.44 まで参照カード。ゆめくいが未実装）。v0.45 で対応にしたので、登録のないワザを持つカードが対応にならない
+        # 性質は、その 2 つのワザの登録を除いた登録表で確かめる
+        self.assertFalse(no_base_haunter_pool().is_playable(BASE_HAUNTER))
+        self.assertTrue(pool.is_playable(BASE_HAUNTER))
         self.assertEqual(read_extract()["pool_v0_10"], [MACHOKE, MACHAMP])  # v0.10（ダメージを受けたときに自動的にはたらくポケモンパワーのはんげき）
         self.assertTrue(all(pool.is_playable(c) for c in (MACHOP, MACHOKE, MACHAMP)))  # ワンリキーは v0.1 から
         # v0.11（相手のワザによるダメージできぜつするときに使えるポケモンパワーのこんじょう）。サカキのカイリキーは v0.10 では参照カード
@@ -205,6 +209,7 @@ class CardPoolTest(unittest.TestCase):
         self.assertEqual(read_extract()["pool_v0_42"], list(V0_42_POKEMON))  # v0.42（docs/power-decisions-v0.42.md）
         self.assertEqual(read_extract()["pool_v0_43"], list(V0_43_POKEMON))  # v0.43（docs/declared-entry-powers-v0.43.md）
         self.assertEqual(read_extract()["pool_v0_44"], list(V0_44_CARDS))  # v0.44（ポケモン 14 枚とサカキ。docs/search-evolution-once-attacks-v0.44.md）
+        self.assertEqual(read_extract()["pool_v0_45"], list(V0_45_POKEMON))  # v0.45（docs/conditional-damage-energy-v0.45.md）
         self.assertEqual(len(V0_37_ADOPTED), 14)
         self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
@@ -218,7 +223,8 @@ class CardPoolTest(unittest.TestCase):
                  MACHOKE, MACHAMP, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP, ROCKETS_MOLTRES,
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
-                 *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON)
+                 *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
+                 *V0_45_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

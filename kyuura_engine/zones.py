@@ -305,6 +305,27 @@ def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: 
     state.add_event("put_discard_on_deck_top", player=owner, card=card, effect=effect, chooser=chooser)
 
 
+def take_deck_top(state: GameState, owner: int, *, effect: str, looker: int) -> tuple[int, str]:
+    """プレイヤー ``owner`` の山札の一番上のカードを、トレーナーカードなら ``owner`` のトラッシュに、それ以外なら ``owner`` の手札に、同じ uid のまま動かす（v0.45。
+    サカキのニャースの「てつだうふり」の「相手の山札の一番上のカードを見る。そのカードが「トレーナーカード」なら、そのカードをトラッシュする。それ以外なら、そのカードを
+    相手の手札に加えさせる。」。見るのはワザを使ったプレイヤー ``looker``）。「カードを引く」（p.312）ではない（ログ ``draw`` ではない）。山札は切らない（説明にない）。
+
+    見たカードは見たプレイヤーが知り、トラッシュ（公開）か持ち主の手札（持ち主も知る）に動くので、ログ ``take_deck_top`` の ``card`` は公開（``player`` はカードの
+    持ち主、``destination`` は ``"discard"``・``"hand"``）。山札が 0 枚なら確認の漏れなので ``RuntimeError``（状態を変える前）。動かしたカードと行き先を返す。"""
+    p = state.players[owner]
+    if not p.deck:
+        raise RuntimeError(f"プレイヤー {owner} の山札が 0 枚で、一番上のカードを動かせない（確認の漏れ。エンジンの不具合）")
+    card = p.deck.pop(0)
+    if state.card_def(card).category == "trainer":
+        p.discard.append(card)
+        destination = "discard"
+    else:
+        p.hand.append(card)
+        destination = "hand"
+    state.add_event("take_deck_top", player=owner, card=card, destination=destination, effect=effect, looker=looker)
+    return card, destination
+
+
 def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。

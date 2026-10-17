@@ -25,9 +25,10 @@ if TYPE_CHECKING:
 
 # v0.44: トレーナー「サカキ」の許可のあるポケモン（今の番に場に出した・進化した）を、山札から重ねる効果（ワザ・特殊能力）で進化させられるか（GV1）。
 # 説明の「(ポケモンを進化させる時には、あなたの手札から「進化カード」を出して、そのポケモンの上にのせる)」が、許可を手札から重ねる進化に限るのか、進化の
-# 手順の説明なのかが決められない（docs/search-evolution-once-attacks-v0.44.md 4 章）。山札から重ねる効果（つきのちから・たきのぼりしんか・［うか］）はどれも自分自身を
-# 進化させ、どれも「サカキの」ポケモンではないので、今の対応カードでは起こらない（コードのない問い。呼ぶ側はエンジンの不具合として止める）。この値は
-# ``evolution_block`` が返す「重ねられない理由」の印で、停止コードではない
+# 手順の説明なのかが決められない（docs/search-evolution-once-attacks-v0.44.md 4 章）。v0.44 では、山札から重ねる効果はどれも「サカキの」ポケモンではない自分自身を
+# 進化させるとして、コードのない問いにしたが、エリカのピッピの「つきのちから」は自分の場のほかのポケモン（サカキのコイキング）も進化させられるので起こる（v0.45 で
+# 停止コード ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK`` を付けた。裁定は未解決のまま。docs/conditional-damage-energy-v0.45.md 2 章）。呼ぶ側がその停止コードで止める。
+# この値は ``evolution_block`` が返す「重ねられない理由」の印で、停止コードではない
 PERMISSION_FROM_DECK_CODE = "PERMISSION_ONLY_FROM_DECK"
 PERMISSION_FROM_DECK_REASON = (
     "トレーナー「サカキ」で今の番に進化させてよいポケモン（今の番に場に出した・進化した）を、山札から重ねる効果で進化させられるかは、説明の「(ポケモンを進化させる"
@@ -62,7 +63,7 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
 
     v0.44: ``from_deck`` は、山札から重ねる効果（ワザ・特殊能力。つきのちから・コイキングの「たきのぼりしんか」・キョウのコクーンの［うか］）。トレーナー「サカキ」の
     許可だけで制限が外れる組は、手札から重ねる進化なら重ねられ（``turn_restriction``）、山札から重ねる効果なら決められない（GV1。``PERMISSION_FROM_DECK_CODE``。
-    呼ぶ側が止める。今の対応カードでは起こらない）。
+    呼ぶ側が止める。v0.45 から停止コード ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK``。つきのちからでほかのポケモンを進化させるときに起こる）。
 
     確かめないもの: 進化したあとの HP がダメージ以下になるか（呼ぶ側。``UNRESOLVED_EVOLUTION_HP``）・カードが対応しているか（呼ぶ側）。状態は変えない。"""
     if state.turn_number <= 2:

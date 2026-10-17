@@ -171,6 +171,11 @@ HAND_TO_DECK = "hand_to_deck"
 # v0.44: カツラのマンキーの「わるいいたずら」の「相手のトラッシュからカードを1枚選び出し、相手の山札の上にのせる」。決めるのはワザを使ったプレイヤーで、選べるものは
 # 相手のトラッシュのカードの uid（トラッシュの並び。公開の情報）。1 枚。再開先は "attack"
 DISCARD_TO_DECK_TOP = "discard_to_deck_top"
+# v0.45（docs/conditional-damage-energy-v0.45.md）。わるいレアコイルの「じりょくせん」の「相手の対戦ポケモンのエネルギーカード(特殊エネルギーカード以外)を1枚選んで
+# はがす」。決めるのはワザを使ったプレイヤーで、選べるものは相手の対戦ポケモン（``context`` の ``"target"``）についている基本エネルギーカードの uid（ついている順。
+# 1 枚でも決定を出す）。つける控えポケモンは続けて ``SELECT_POKEMON``（``context`` の ``"energy"`` がはがすカード）で選ぶ。v0.31 の DISCARD_OPPONENT_ENERGY（トラッシュ）
+# とは行き先が違うので別の種類。再開先は "attack"
+MOVE_OPPONENT_ENERGY = "move_opponent_energy"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

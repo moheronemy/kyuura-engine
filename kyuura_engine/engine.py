@@ -74,7 +74,7 @@ from .continuous import suppressors_of
 from .deck import deck_problems
 from .evolution import evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import KNOCK_OUT, cannot_retreat, expires_at_turn_start, remove_persistent_effects
+from .persistent import KNOCK_OUT, cannot_retreat, expires_at_turn_start, lasting, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
@@ -101,6 +101,7 @@ from .state import (
     Poison,
     SpecialConditions,
     TrainerInUse,
+    ZeroDamageBelow,
     freeze_mapping,
     turn_owner,
 )
@@ -1272,7 +1273,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     if pokemon is not p.active:
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} に持続する効果が残っている（p.311・p.322）")
     kinds = [e.kind for e in effects]
-    single = [e.kind for e in effects if e.turns_until_active == 1]
+    # v0.45: 期限のない効果（「スミをかける」の「それ以後」。``AttackCoinCheck.lasting``）は、効果を与えた番の違うものが同じポケモンに重なりうる（受けたポケモンが
+    # バトル場にいる間に、もう一度受ける）。重なった状態でワザを使うときは AC13 で止める（``flow._attack_check_failed``）。同じ種類・同じはたらく番は 1 つまで
+    single = [e.kind for e in effects if e.turns_until_active == 1 and not lasting(e)]
     timed = [(e.kind, e.active_turn) for e in effects]
     if len(set(single)) != len(single) or len(set(timed)) != len(timed):
         problems.append(f"{where} に同じ種類の効果が重なっている {kinds}")
@@ -1291,6 +1294,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} の発生源が、このポケモン（カード {pokemon.card}、プレイヤー {player}）ではない")
         if isinstance(effect, (DamageReduction, ReducedDamageToSource)) and (type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10):
             problems.append(f"{where} {effect!r} の減らす量が 10 の倍数の正の数ではない")
+        if isinstance(effect, ZeroDamageBelow):
+            problems.extend(_zero_damage_below_problems(state, pokemon, effect, where))  # v0.45
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
             problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
@@ -1301,7 +1306,9 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
         elif state.first_player in PLAYERS and turn_owner(state, effect.created_turn) != giver:
             whose = "持ち主" if giver == player else f"効果を与えたプレイヤー {giver}"  # v0.31: 相手に与える効果（しっぽをふる）は与えたプレイヤー
             problems.append(f"{where} {effect!r} を、{whose}の番でない {effect.created_turn} 番に与えている")
-        if expires_at_turn_start(effect):
+        if lasting(effect):
+            pass  # v0.45: 期限のない効果（「スミをかける」の「それ以後」）。期限では消えない（バトル場をはなれる・進化で消える）
+        elif expires_at_turn_start(effect):
             # v0.34: 期限が「次の自分の番の始め」（「なきつく」）。はたらく番の終わり（turn_end）のあとのポケモンチェックの間は残り、次の番の最初に消える
             if state.turn_number > effect.active_turn:
                 problems.append(f"{where} {effect!r} が、はたらく番 {effect.active_turn} の次の番の始めを過ぎて残っている")
@@ -1330,8 +1337,25 @@ def _retaliation_problems(state: GameState, pokemon: PokemonInPlay, effect: Reta
         return [f"{where} {effect!r} のワザの位置が、カード {definition.id} のワザではない"]
     entry = state.effects.attack_entry(definition.id, effect.attack_index)
     terms = getattr(entry.effect, "retaliation_terms", None) if entry is not None else None
-    if terms is None or terms() != (effect.basis, effect.amount):
+    # v0.45: 倍数・コインの条件のある効果（「クロスカウンター」）は (決め方, 量, 倍数, コインの条件)。``Retaliation.terms``
+    if terms is None or terms() != effect.terms():
         return [f"{where} {effect!r} が、カード {definition.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
+    return []
+
+
+def _zero_damage_below_problems(state: GameState, pokemon: PokemonInPlay, effect: ZeroDamageBelow, where: str) -> list[str]:
+    """「かたくなる」（v0.45）の持続する効果のしきい値が、効果を与えたワザ（ログ ``persistent_effect_added`` の ``effect``）の登録された実装の値
+    （``threshold_terms``）と合うか。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    if type(effect.threshold) is not int or effect.threshold <= 0 or effect.threshold % 10:
+        return [f"{where} {effect!r} のしきい値が 10 の倍数の正の数ではない"]
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "threshold_terms", None) if entry is not None else None
+    if terms is None or terms() != (ZeroDamageBelow, effect.threshold):
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
 
 
@@ -1381,8 +1405,10 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     （ログ ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは、使ったワザ。効果の ``source_card`` は使ったポケモン）の登録された実装の
     効果と合うか（``attack_check_terms``: (型, 「1回できえる」か)・``retreat_lock_terms``: 型）。対応するログがなければ ``_persistent_effect_log_problems``
     が見つける。"""
-    if isinstance(effect, AttackCoinCheck) and type(effect.single_use) is not bool:
-        return [f"{where} {effect!r} の「1回できえる」が真偽値ではない"]
+    if isinstance(effect, AttackCoinCheck) and (type(effect.single_use) is not bool or type(effect.lasting) is not bool):
+        return [f"{where} {effect!r} の「1回できえる」・「それ以後」が真偽値ではない"]
+    if isinstance(effect, AttackCoinCheck) and effect.single_use and effect.lasting:
+        return [f"{where} {effect!r} が「1回できえる」と「それ以後」の両方を持つ（どの文面にもない組）"]
     added = _persistent_effect_added_event(state, pokemon, effect)
     if added is None:
         return []
@@ -1390,7 +1416,8 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
     if isinstance(effect, AttackCoinCheck):
         terms = getattr(entry.effect, "attack_check_terms", None) if entry is not None else None
-        expected = (AttackCoinCheck, effect.single_use)
+        # v0.45: 期限のない効果（「スミをかける」）の実装は (型, 「1回できえる」か, 「それ以後」か) を返す。v0.36 の実装は (型, 「1回できえる」か)
+        expected = (AttackCoinCheck, effect.single_use, True) if effect.lasting else (AttackCoinCheck, effect.single_use)
     elif isinstance(effect, CannotAttackWhileSourceActive):
         # v0.40: 「すごむ」。登録された実装の ``conditional_lock_terms`` は (型, 最大 HP の上限)。受けているポケモン（いちばん上のカード。進化すると効果は消える）の
         # 最大 HP が上限以下（効果を与えたときに確かめた条件）
@@ -1401,7 +1428,8 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat
-    if terms is None or terms() != expected or added.get("single_use", False) != getattr(effect, "single_use", False):
+    if (terms is None or terms() != expected or added.get("single_use", False) != getattr(effect, "single_use", False)
+            or added.get("lasting", False) != getattr(effect, "lasting", False)):
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
 
@@ -2229,7 +2257,8 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
     try:
         calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, collected,
-                                weakness_resistance=context.get("weakness_resistance", True), orders=orders)
+                                weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                                resistance=context.get("resistance", True))
     except DamageOrderRequired as need:
         if need.step == step:
             return []

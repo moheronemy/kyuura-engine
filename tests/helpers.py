@@ -388,9 +388,28 @@ GIOVANNI = "PMCG6-095"  # サカキ（闇からの挑戦。トレーナー。選
 V0_44_POKEMON = (ROCKET_DIGLETT, ROCKET_MEOWTH, ERIKAS_BULBASAUR, MISTYS_STARYU, ROCKET_MAGIKARP, KOGAS_KAKUNA, KOGAS_BEEDRILL, FARFETCHD, GIOVANNIS_MAGIKARP,
                  GIOVANNIS_GYARADOS, SABRINAS_MR_MIME, BLAINES_MANKEY, BLANK_CHANSEY, GIOVANNIS_PERSIAN)  # 写しの組 pool_v0_44 のポケモン（並び）
 V0_44_CARDS = V0_44_POKEMON + (GIOVANNI,)  # 写しの組 pool_v0_44 の並び（トレーナーは最後）
+# v0.45（docs/conditional-damage-energy-v0.45.md）: 条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などのポケモン 15 枚
+# （第1弾のゴーストは v0.9 の過去の原典照合の記録、ほかは kyuura データの採用）
+MISTYS_HORSEA_50 = "PMCG5-024"  # カスミのタッツー（リーダーズスタジアム。HP 50・水・弱点 雷・にげる 0。スミをかける（水水）20）。MISTYS_HORSEA（PMCG5-025）と同じ名前の別のカード
+MISTYS_DEWGONG = "PMCG5-031"  # カスミのジュゴン（リーダーズスタジアム。カスミのパウワウから進化。HP 80・水・弱点 雷・にげる 2。こおりのつぶて（水水）20・とっしん（水無無無）60）
+KOGAS_EKANS = "PMCG6-002"  # キョウのアーボ（闇からの挑戦。HP 50・草・弱点 超・にげる 1。とつぜんどく（草）10）
+KOGAS_ARBOK = "PMCG6-019"  # キョウのアーボック（闇からの挑戦。キョウのアーボから進化。HP 90・草・弱点 超・にげる 2。どくをためる（草）・ポイズンパワー（草草）20）
+KOGAS_GRIMER = "PMCG6-007"  # キョウのベトベター（闇からの挑戦。HP 50・草・弱点 超・にげる 1。ベトベトハンド（草）・ヘドロなげ（草無）20）
+DARK_BLASTOISE = "PMCG4-024"  # わるいカメックス（ロケット団。わるいカメールから進化。HP 70・水・弱点 雷・にげる 2。ハイドロキャノン（水水）30+・ロケットタックル（水無無）40）
+DARK_MAGNETON = "PMCG4-030"  # わるいレアコイル（ロケット団。コイルから進化。HP 60・雷・弱点 闘・にげる 2。ソニックブーム（無無）20・じりょくせん（雷雷）30）
+BLAINES_CHARIZARD = "PMCG6-032"  # カツラのリザードン（闇からの挑戦。カツラのリザードから進化。HP 100・炎・弱点 水・抵抗力 闘 -30・にげる 3。ファイヤーブレス（炎）20+・かえんひこう（炎炎））
+ROCKETS_ZAPDOS = "PMCG6-042"  # R団のサンダー（闇からの挑戦。HP 70・雷・抵抗力 闘 -30・にげる 2。プラズマ（雷）20・エレクトロバーン（雷雷雷無）70）。ZAPDOS（第1弾）と別の名前
+ONIX = "PMCG1-054"  # イワーク（第1弾。HP 90・闘・弱点 草・にげる 3。いわおとし（闘）10・かたくなる（闘闘））
+RATICATE = "PMCG1-062"  # ラッタ（第1弾。コラッタから進化。HP 60・無色・弱点 闘・抵抗力 超 -30・にげる 1。かみつく（無）20・いかりのまえば（無無無）?）
+ROCKETS_HITMONCHAN = "PMCG5-054"  # R団のエビワラー（リーダーズスタジアム。HP 60・闘・弱点 超・にげる 1。クロスカウンター（闘）・マグナムパンチ（闘闘無）50）。HITMONCHAN と別の名前
+BROCKS_GEODUDE_40 = "PMCG5-047"  # タケシのイシツブテ（リーダーズスタジアム。HP 40・闘・弱点 草・にげる 1。たすけをよぶ（闘）・スパイラルショット（闘無）20）。BROCKS_GEODUDE（PMCG5-046）と別のカード
+GIOVANNIS_MEOWTH_40 = "PMCG6-068"  # サカキのニャース（闇からの挑戦。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。てつだうふり（無）・ダブルひっかき（無無）20×）。GIOVANNIS_MEOWTH（PMCG6-063）と別のカード
 GASTLY = "PMCG3-029"  # 化石の秘密のゴース（v0.9。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。したでなめる 10・エナジーへんかん）
 HAUNTER = "PMCG3-030"  # 化石の秘密のゴースト（v0.9。ゴースから進化する 1 進化。HP 50・超・弱点なし・抵抗力 闘 −30・にげる 0。とうめい・あくむ 10）
-BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9。参照カード。同じ名前の別のカード。とうめいを持たない。ゆめくいが未実装でデッキに入らない）
+BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9 の参照カード。同じ名前の別のカード。とうめいを持たない。HP 60・超・抵抗力 闘 -30・にげる 1。さいみんじゅつ（超）・ゆめくい（超超）50。v0.44 まで「ゆめくい」が未実装でデッキに入らず、v0.45 で対応にした）
+V0_45_POKEMON = (BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK, KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD,
+                 ROCKETS_ZAPDOS, ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40)  # 写しの組 pool_v0_45 の並び
+V0_45_ADOPTED = V0_45_POKEMON[1:]  # kyuura データの採用で加えた 14 枚（第1弾のゴーストは v0.9 の過去の原典照合の記録）
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -921,6 +940,26 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ReturnHandThenRevealBasicEnergy,  # ナツメのバリヤードの「てじな」
     _effects.CoinPutOpponentDiscardOnDeckTop,  # カツラのマンキーの「わるいいたずら」
     _effects.CoinDrawOrReturnHandToDeck,  # _____のラッキーの「ラッキーたまご」
+) + (
+    # v0.45（docs/conditional-damage-energy-v0.45.md）
+    _effects.DamageFailUnlessOpponentStatus,  # 第1弾のゴーストの「ゆめくい」
+    _effects.DamageThenLastingAttackCoinCheckOnHeads,  # カスミのタッツー（HP 50）の「スミをかける」
+    _effects.DamageMultipliedAgainstType,  # カスミのジュゴンの「こおりのつぶて」
+    _effects.DamageThenPoisonAndConfuseOnAllHeads,  # キョウのアーボの「とつぜんどく」
+    _effects.SelfStatusWithoutDamage,  # キョウのアーボックの「どくをためる」
+    _effects.DamageIfSelfStatusThenOpponentStatus,  # キョウのアーボックの「ポイズンパワー」
+    _effects.CoinSwitchOpponentThenStatus,  # キョウのベトベターの「ベトベトハンド」
+    _effects.DamageAndSelfDamageThenPreventDamageOnHeads,  # わるいカメックスの「ロケットタックル」
+    _effects.DamageThenMoveOpponentEnergyToBench,  # わるいレアコイルの「じりょくせん」
+    _effects.DiscardExcessEnergyForDamage,  # カツラのリザードンの「ファイヤーブレス」
+    _effects.DamageThenAttachEnergyFromDiscardToSelf,  # R団のサンダーの「プラズマ」
+    _effects.DamageAndSelfDamagePerAttachedEnergyCard,  # R団のサンダーの「エレクトロバーン」
+    _effects.ZeroDamageBelowNextTurn,  # イワークの「かたくなる」
+    _effects.HalfRemainingHpDamage,  # ラッタの「いかりのまえば」
+    _effects.ReturnReceivedDamageOnHeads,  # R団のエビワラーの「クロスカウンター」
+    _effects.PutOwnerBasicFromDeckOntoBenchOnHeads,  # タケシのイシツブテ（HP 40）の「たすけをよぶ」
+    _effects.DamageIgnoringResistance,  # タケシのイシツブテ（HP 40）の「スパイラルショット」
+    _effects.CoinOpponentDeckTopDiscardTrainerElseHand,  # サカキのニャース（HP 40）の「てつだうふり」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -949,6 +988,17 @@ def no_fossil_grimer_pool():
     """化石の秘密のベトベターの登録を除いた登録表（``NO_FOSSIL_GRIMER_EFFECTS``）で分類した、同梱の写しのカードの組（v0.37）。"""
     from kyuura_engine.cards import pool_from_extract, read_extract
     return pool_from_extract(read_extract(), NO_FOSSIL_GRIMER_EFFECTS)
+
+
+# v0.44 まで、第1弾のゴースト（PMCG1-047）は「ゆめくい」が未実装の参照カードだった（v0.9）。v0.45 で対応にしたので、その性質を確かめるテストは、
+# この 2 つのワザの登録だけを除いた登録表と、その登録表で分類した写しのカードの組（``no_base_haunter_pool``）を使う（製品の登録表は変えない）
+NO_BASE_HAUNTER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-base-haunter", [AttackKey(BASE_HAUNTER, 0), AttackKey(BASE_HAUNTER, 1)])
+
+
+def no_base_haunter_pool():
+    """第1弾のゴーストの登録を除いた登録表（``NO_BASE_HAUNTER_EFFECTS``）で分類した、同梱の写しのカードの組（v0.45）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_BASE_HAUNTER_EFFECTS)
 
 
 class TwoStepTestEffect(AttackEffect):

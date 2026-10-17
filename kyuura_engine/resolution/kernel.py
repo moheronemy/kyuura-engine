@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, MULTIPLY, SET, DamageOrderRequired, calculate_attack_damage
+from ..damage import ADD, MULTIPLY, SET, ZERO_IF_BELOW, DamageOrderRequired, calculate_attack_damage
 from ..effects import (
     ATTACK_ELEMENTS,
     BENCH_TARGETS,
@@ -28,6 +28,7 @@ from ..effects import (
     DAMAGE_ELEMENT,
     OPPONENT_ACTIVE,
     OPPONENT_BENCH,
+    RETALIATION_COIN_TAILS,
     RETALIATION_TARGET_KNOCKED_OUT,
     SELF,
     SELF_BENCH,
@@ -205,7 +206,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
 
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
-                order_decision: bool = False) -> DamageResult:
+                order_decision: bool = False, resistance: bool = True) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -215,7 +216,11 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     その例外をそのまま投げる（呼ぶ側のダメージの要素が、順番を選ぶ決定を出し、選んだ順番を ``orders`` に渡してもう一度呼ぶ。``programs.Damage``）。
     ``order_decision`` でない呼ぶ側（控えへのダメージ・返す効果のダメージなど。今の対応カードでは起こらない）は、エンジンの未対応として止める
     （問い ``damage_step_order``・``UNSUPPORTED_DAMAGE_STEP_ORDER``）。順番を決定で選んだときは、ログ ``damage`` に ``step_orders``（(段階, その段階の
-    変更効果の名前を計算した順に)）を残す。"""
+    変更効果の名前を計算した順に)）を残す。
+
+    v0.45: ``resistance`` が False なら抵抗力（4 段階）だけを計算しない（「「抵抗力」の影響を受けない」。ログに ``ignore_resistance``）。8 段階の
+    「決まった数より小さければ 0 にする」効果（「かたくなる」。``damage.ZERO_IF_BELOW``）を計算したら、ログに ``damage_zero_below``（(段階, 発生源のカード,
+    しきい値)）を残す。"""
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
@@ -248,7 +253,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS)
     try:
         calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
-                                       orders=orders)
+                                       orders=orders, resistance=resistance)
     except DamageOrderRequired as need:
         # v0.35: p.321 の同じ段階に、順番によって結果が変わる効果が重なった（「つるぎのまい」・「きあいだめ」と「なきつく」など）。計算の順番は
         # DAMAGE_STEP_CHOOSER のプレイヤーが決める（p.321。SC15）。決定を出せる呼ぶ側（ダメージの要素）に返す。出せない呼ぶ側では v0.34 と同じ問いで止める
@@ -279,6 +284,10 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if multiplied:
         # v0.35: 「数をかける」効果（「きあいだめ」の 2 段階）。(段階, 発生源のカード, かける数)
         extra["damage_multiplied"] = multiplied
+    zeroed = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == ZERO_IF_BELOW)
+    if zeroed:
+        # v0.45: 「決まった数より小さければ 0 にする」効果（「かたくなる」の 8 段階）。(段階, 発生源のカード, しきい値)
+        extra["damage_zero_below"] = zeroed
     if orders:
         # v0.35: 順番の決定で選んだ計算の順番（(段階, その段階の変更効果の名前を計算した順に)）
         extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
@@ -288,6 +297,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
     if not weakness_resistance:
         extra["ignore_weakness_resistance"] = True  # v0.31
+    elif not resistance:
+        extra["ignore_resistance"] = True  # v0.45
     if log_extra:
         extra.update(log_extra)
     state.add_event(
@@ -507,13 +518,27 @@ def attack_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: De
         "attacker_pokemon_id": attacker.pokemon_id,
     }
     if attacker.damage >= hp_of(state, attacker):
+        # 与える相手がいない（C15・W23）。v0.45: コインの条件のある効果（「クロスカウンター」）も、処理の対象がないのでコインを投げない（p.309。v0.38 の
+        # ``has_target``・v0.42 の［ぼうぎょかふん］と同じ読み方）
         state.add_event("retaliation_skipped", **base, reason=RETALIATION_TARGET_KNOCKED_OUT)
         return
+    scaled = {}
+    if effect.scaled:
+        # v0.45: 「クロスカウンター」（kyuura の最新の説明）: ダメージを受けたときにコインを投げ（効果を持つポケモンの持ち主。効果を与えたのはそのポケモンの
+        # ワザなので ``source="attack"``・ワザの識別子）、「おもて」なら受けたダメージの ``multiplier`` 倍を与える。「うら」なら与えない（ログ
+        # ``retaliation_skipped`` の理由 ``coin_tails``）。効果を与えたときにはコインを投げない
+        scaled = {"multiplier": effect.multiplier}
+        if effect.on_heads:
+            flips = flip_coins(state, instance.owner, 1, source="attack", effect=str(key), card=instance.card, pokemon_id=instance.pokemon_id)
+            if flips.results[0] is not CoinSide.HEADS:
+                state.add_event("retaliation_skipped", **base, reason=RETALIATION_COIN_TAILS, received_damage=deferred.received)
+                return
+            scaled["coin"] = CoinSide.HEADS.value
     amount = effect.base_damage(deferred.received)
     if effect.basis == RETALIATION_FIXED:
         state.add_event("retaliation", **base, amount=amount)
     else:
-        state.add_event("retaliation", **base, amount=amount, basis=effect.basis, received_damage=deferred.received)
+        state.add_event("retaliation", **base, amount=amount, basis=effect.basis, received_damage=deferred.received, **scaled)
     child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id, attack_key=key)
     child.origin = instance
     deal_damage(res, child, OPPONENT_ACTIVE, amount, log_extra={"retaliation": True, "effect": str(key), "pokemon_id": attacker.pokemon_id})
@@ -606,7 +631,7 @@ def _retaliation_error(res: Resolution, fs: FrameState):
     target = _damage_target(res, fs)
     if fs.origin is None or target not in fs.applied:
         return None  # 理由の文の値がない（questions の表の文を使う）
-    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target)
+    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target, res.state)
 
 
 def _counterattack_error(res: Resolution, fs: FrameState):

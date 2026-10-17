@@ -192,6 +192,9 @@ class PreventDamage:
 RETALIATION_FIXED = "fixed"  # 決まった量（v0.12 の「ほのおのかべ」の 10）
 RETALIATION_RECEIVED = "received_damage"  # 受けたダメージと同じ（v0.13 の「こうらがえし」）
 RETALIATION_KINDS = {RETALIATION_FIXED: "retaliation", RETALIATION_RECEIVED: "retaliation_received_damage"}
+# v0.45: 受けたダメージで決まり、倍数（``multiplier``）か、はたらくときのコイン（``on_heads``）のある効果の種類（R団のエビワラーの「クロスカウンター」。
+# 「こうらがえし」と同じ決め方 ``RETALIATION_RECEIVED`` に、量の倍数とコインの条件を明示した値。v0.44 までの読み手は知らない種類として拒否する）
+RETALIATION_RECEIVED_SCALED_KIND = "retaliation_received_damage_scaled"
 
 
 @dataclass(frozen=True)
@@ -217,6 +220,11 @@ class Retaliation:
       与えない）」。受けたダメージ（p.321 で計算した最終ダメージ。HP で上限をつけない）。docs/shell-attack-v0.13.md・
       docs/variable-retaliation-v0.13.md）。受けたダメージはワザ 1 回の中の値（解決の基盤の ``kernel.Deferred.received``）で、状態に
       持たない
+    - ``multiplier``・``on_heads``（v0.45）: ``RETALIATION_RECEIVED`` の効果で、与えるダメージの基本となるダメージを受けたダメージの何倍にするか（既定 1）と、
+      はたらくときにコインを投げて「おもて」のときだけ与えるか（既定 False）。R団のエビワラーの「クロスカウンター」の最新の説明（LD-PMCG5-054-ATK0）
+      「次の相手の番、このカードが相手のワザによるダメージを受けたとき、（それによってこのカードが「きぜつ」しても、）コインを投げる。「おもて」なら、
+      このカードが受けたダメージの2倍のダメージを、相手に与える。」は 2・True（docs/conditional-damage-energy-v0.45.md）。コインは効果を与えるときではなく、
+      はたらくとき（``kernel.attack_damage_to_damage_source``）に投げる。どちらも既定の値なら v0.13 の「こうらがえし」と同じ種類・書き出し
 
     はたらくのは ``active_turn`` の間に、このポケモンが相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けたとき
     （``effects.deal_attack_damage`` が記録し、``effects.finish_damage_elements`` が与える）。ベンチに戻ったら（p.311・p.322）・場を
@@ -230,13 +238,19 @@ class Retaliation:
     attack_index: int
     amount: int | None
     basis: str = RETALIATION_FIXED
+    multiplier: int = 1  # v0.45: 受けたダメージの何倍を与えるか（クロスカウンターは 2）
+    on_heads: bool = False  # v0.45: はたらくときにコインを投げ、「おもて」のときだけ与える（クロスカウンター）
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
     on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
     def __post_init__(self) -> None:
+        if type(self.multiplier) is not int or self.multiplier < 1 or type(self.on_heads) is not bool:
+            raise ValueError(f"倍数は 1 以上の整数、コインの条件は真偽値（{self.multiplier!r}・{self.on_heads!r}）")
         if self.basis == RETALIATION_FIXED:
             if type(self.amount) is not int:
                 raise ValueError(f"決まった量の効果には amount が要る（{self.amount!r}）")
+            if self.multiplier != 1 or self.on_heads:
+                raise ValueError("決まった量の効果に倍数・コインの条件は書かない（v0.45 の倍数・コインは受けたダメージで決まる効果だけ）")
         elif self.basis == RETALIATION_RECEIVED:
             if self.amount is not None:
                 raise ValueError(f"受けたダメージで決まる効果に amount は書かない（{self.amount!r}）")
@@ -244,19 +258,36 @@ class Retaliation:
             raise ValueError(f"知らない決め方 {self.basis!r}")
 
     @property
+    def scaled(self) -> bool:
+        """受けたダメージの倍数かコインの条件がある（v0.45。既定の値でない）か。"""
+        return self.multiplier != 1 or self.on_heads
+
+    @property
     def kind(self) -> str:
         """持続する効果の種類（ログ ``persistent_effect_added`` などの ``persistent_effect``・書き出しの ``effect``）。決まった量は
         v0.12 と同じ ``"retaliation"``、受けたダメージで決まるものは ``"retaliation_received_damage"``（v0.13。v0.12 の読み手は知らない
-        種類として拒否する）。"""
+        種類として拒否する）。v0.45: 倍数・コインの条件のあるもの（クロスカウンター）は ``"retaliation_received_damage_scaled"``（v0.44 の読み手は
+        知らない種類として拒否する）。"""
+        if self.scaled:
+            return RETALIATION_RECEIVED_SCALED_KIND
         return RETALIATION_KINDS[self.basis]
+
+    def terms(self) -> tuple:
+        """登録された実装の ``retaliation_terms()`` と比べる値（不変条件）。v0.44 までの効果は (決め方, 量)、倍数・コインの条件のあるもの（v0.45）は
+        (決め方, 量, 倍数, コインの条件)。"""
+        if self.scaled:
+            return self.basis, self.amount, self.multiplier, self.on_heads
+        return self.basis, self.amount
 
     def base_damage(self, received: int) -> int:
         """与えるダメージの基本となるダメージ（p.321 の 1 段階）。``received`` はこのポケモンが受けたダメージ（相手のワザによる最終ダメージ。
         0 より大きい）。決まった量なら ``amount``、受けたダメージで決まるなら ``received`` そのもの（p.89 の解説「100ダメージを受けたら
-        そのまま100ダメージが返る」「2倍のまま相手にダメージが返ります」）。"""
+        そのまま100ダメージが返る」「2倍のまま相手にダメージが返ります」）。v0.45: 倍数があれば ``received`` × ``multiplier``（クロスカウンターの
+        「受けたダメージの2倍のダメージ」。2 倍は与えるダメージの基本となるダメージで、弱点・抵抗力などはそのあとの段階で計算する）。コインの条件
+        （``on_heads``）は、はたらくときに呼ぶ側が確かめる（「おもて」のときの量を返す）。"""
         if self.basis == RETALIATION_FIXED:
             return self.amount
-        return received
+        return received * self.multiplier
 
 
 # v0.35: 次の自分の番のワザのダメージの変え方（``NextTurnAttackDamage.operation``。``damage.SET``・``damage.MULTIPLY`` と同じ値）と、それぞれの種類
@@ -379,6 +410,28 @@ class DamageReduction:
 
 
 @dataclass(frozen=True)
+class ZeroDamageBelow:
+    """ワザによる「持続する効果」（v0.45）のうち、イワーク（PMCG1-054）の「かたくなる」の「次の相手の番に受けるダメージが0になる。ただしダメージが40以上の
+    場合は、そのままダメージをうける。」（kyuura の印刷の文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンがワザのダメージを受けるとき、p.321 の 8 段階（「ワザを受けるポケモンの持っている
+    「ダメージを変更する効果」」。GR-2000-P321-DAMAGE-ORDER の 8 段階の例が「かたくなる」）で、その段階のダメージが ``threshold`` より小さければ 0 にし、
+    ``threshold`` 以上ならそのまま（``damage.ZERO_IF_BELOW``。``effects.attack_damage_modifiers``）。計算の結果が 0 なら「ダメージを受けなかった」（p.321）
+    ことになるだけで、「ダメージを受けない」状態（``PreventDamage``。ダメージの要素が計算の前に無効）ではない。ダメージ以外の効果は受ける。消える契機は
+    ``PreventDamage`` と同じ（期限・ベンチ・進化・きぜつ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    threshold: int
+    kind: ClassVar[str] = "zero_damage_below"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class CannotAttack:
     """ワザによる「持続する効果」（v0.31）のうち、イーブイ（PMCG2-037）の「しっぽをふる」の「「しっぽをふる」を受けた相手の対戦ポケモンは、
     次の相手の番にワザをつかえない。」（kyuura の印刷の文面）。
@@ -489,6 +542,11 @@ class AttackCoinCheck:
       （ログ ``persistent_effect_removed`` の理由 ``used``）。ほかの文面（「次の相手の番に…」）の効果は、はたらく番の終わりに消える。どちらも、はたらく番は
       次の番だけ（PMCG1-051 の「次の番に」も次の相手の番）で、ワザは 1 番に 1 回なので、どちらの消え方でも同じ番に 2 回目のコインはない
     消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ。p.311・p.322・p.323）。効果を与えたポケモンが場をはなれても消えない（p.322）。
+
+    - ``lasting``（v0.45）: カスミのタッツー（PMCG5-024）の「スミをかける」の「このワザを受けた相手は、それ以後ワザを使うたびにコインを投げ、「うら」なら
+      ワザは失敗する。バトル場をはなれたポケモンからは、このワザの効果は消える。」（kyuura の印刷の文面）。はたらく番（次の相手の番）から、期限で消えずに
+      はたらき続ける（``active_on``。番の終わりの期限の処理 ``persistent.remove_expired_persistent_effects`` が消さない）。消えるのはバトル場をはなれたとき
+      （ベンチにもどる・きぜつ・山札や手札にもどる）と進化したとき（p.310・p.323 の一般の規定）。「次の相手の番」の効果（えんまくなど）の期限は変えない
     """
 
     source_card: int
@@ -496,9 +554,14 @@ class AttackCoinCheck:
     created_turn: int
     active_turn: int
     single_use: bool = False
+    lasting: bool = False  # v0.45: 「それ以後」（カスミのタッツーの「スミをかける」）。はたらく番から期限なしにはたらく
     kind: ClassVar[str] = "attack_coin_check"
     turns_until_active: ClassVar[int] = 1
     on_opponent: ClassVar[bool] = True
+
+    def active_on(self, turn: int) -> bool:
+        """番 ``turn`` にはたらいているか（v0.45）。ふつうは、はたらく番だけ。``lasting`` なら、はたらく番とそれ以後のすべての番（期限で消えない）。"""
+        return self.active_turn <= turn if self.lasting else self.active_turn == turn
 
 
 @dataclass(frozen=True)
@@ -545,9 +608,10 @@ class CannotAttackWhileSourceActive:
 
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
-# CannotAttackWhileSourceActive を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+# CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
-                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive)
+                           ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
+                           ZeroDamageBelow)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）

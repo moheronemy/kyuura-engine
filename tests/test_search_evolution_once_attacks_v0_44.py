@@ -9,7 +9,8 @@
 根拠にした既存の記録: p.323 の 12（「ワザを使った」ことになる場合。v0.3d の A12）・GR-2000-P307-CARD-OVER-RULE（カードの文面がルールに優先する）・
 GR-2000-P309-ATTACK-PROCEDURE（対象のない内容は無視する）・GR-2000-P309-EVOLUTION-BY-NAME・CR-SHELL-ATTACK-STAR-BOOMERANG と、エンジンの v0.4a（進化）・v0.24（見せて
 手札に加える）・v0.25（ポケモン育て屋さん）・v0.36（RD9）・v0.39（GS1）・v0.42（つきのちから）・v0.43（場に出たときの特殊能力・PW3）の記録。新しい未解決は FC1
-（``UNRESOLVED_STATED_CARDS_SHORT``）・TR1（``UNRESOLVED_TRAINER_WITHOUT_TARGET``）と、コードのない問い GV1（今の対応カードでは起こらない）。
+（``UNRESOLVED_STATED_CARDS_SHORT``）・TR1（``UNRESOLVED_TRAINER_WITHOUT_TARGET``）と、v0.44 ではコードのない問いとした GV1（v0.45 で、つきのちからで起こることが
+分かり、停止コード ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK`` を付けた。tests/test_conditional_damage_energy_v0_45.py の ``Gv1Test``）。
 """
 
 from __future__ import annotations
@@ -591,12 +592,14 @@ class DeckEvolutionTest(unittest.TestCase):
                 with self.assertRaises(EngineError):
                     apply_kernel(asleep, UsePokemonPower(0, asleep.players[0].active.pokemon_id, 0))
 
-    def test_gv1_is_codeless_and_unreachable(self):
-        """GV1（サカキの許可のあるポケモンを山札から重ねる効果で進化させる）はコードのない問い。山札から重ねる効果はどれも「サカキの」ポケモンではない自分自身を
-        進化させるので、今の対応カードでは起こらない（evolution_block が返すのは停止コードではない印）。"""
-        self.assertIsNone(QUESTIONS["evolution_permission_from_deck"].code)
+    def test_gv1_is_a_stop_code_and_self_evolution_cannot_reach_it(self):
+        """GV1（サカキの許可のあるポケモンを山札から重ねる効果で進化させる）。v0.44 はコードのない問いとしたが、つきのちから（エリカのピッピ）は自分の場のほかの
+        ポケモン（許可のあるサカキのコイキング）を進化させうるので、v0.45 で停止コードを付けた（裁定は未解決のまま。再現と隣の場合は v0.45 のテスト）。
+        ``evolution_block`` が返す印は停止コードではない（呼ぶ側が止める）。自分自身を進化させる効果（たきのぼりしんか・［うか］）のカードは「サカキの」ポケモン
+        ではないので、自分自身からは起こらない。"""
+        self.assertEqual(QUESTIONS["evolution_permission_from_deck"].code, "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK")
         self.assertFalse(evolution.PERMISSION_FROM_DECK_CODE.startswith("UNRESOLVED_"))
-        for card in (ROCKET_MAGIKARP, KOGAS_KAKUNA, "PMCG5-060"):
+        for card in (ROCKET_MAGIKARP, KOGAS_KAKUNA):
             with self.subTest(card=card):
                 self.assertFalse(load_card_pool().get(card).name_ja.startswith("サカキの"))
 

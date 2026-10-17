@@ -387,6 +387,7 @@ POOL_KEYS = (
     "pool_v0_42",  # v0.42（回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚。docs/power-decisions-v0.42.md）
     "pool_v0_43",  # v0.43（宣言して使う特殊能力と、場に出たときに使う特殊能力を持つ 9 枚。docs/declared-entry-powers-v0.43.md）
     "pool_v0_44",  # v0.44（場のポケモンを選ぶ・山札をさがす・山札から進化する・場に出てから 1 回だけ使えるワザ・カードの移動のポケモン 14 枚とトレーナー 1 枚。docs/search-evolution-once-attacks-v0.44.md）
+    "pool_v0_45",  # v0.45（条件・コイン・特殊状態・エネルギーの処理・ダメージの計算・返す効果・山札のワザのポケモン 15 枚。docs/conditional-damage-energy-v0.45.md）
 )
 
 

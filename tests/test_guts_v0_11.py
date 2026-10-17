@@ -624,7 +624,11 @@ class G37Test(unittest.TestCase):
             # v0.42（相手のポケモンのカウンターをとりのぞく・残り HP が決まった数になるようにカウンターをのせる。docs/power-decisions-v0.42.md）
             "HealChosenOpponentThenDraw", "PlaceCountersToRemainingHpOnHeads",
             # v0.44（きぜつしていなければ入れ替え・1 枚のコインでどくとマヒ・コインで特殊などく。docs/search-evolution-once-attacks-v0.44.md）
-            "DamageThenSwitchOpponentIfNotKnockedOut", "DamageThenPoisonAndParalyzeOnHeads", "SpecialPoisonOnHeadsWithoutDamage"]))
+            "DamageThenSwitchOpponentIfNotKnockedOut", "DamageThenPoisonAndParalyzeOnHeads", "SpecialPoisonOnHeadsWithoutDamage",
+            # v0.45（次の相手の番から消えない手順 4 の効果・2 枚とも「おもて」でどくとこんらん・自分がどくなら相手もどく・コインで入れ替えて
+            # 新しい対戦ポケモンをどく・相手の対戦ポケモンのエネルギーを控えにつけかえる。docs/conditional-damage-energy-v0.45.md）
+            "DamageThenLastingAttackCoinCheckOnHeads", "DamageThenPoisonAndConfuseOnAllHeads", "DamageIfSelfStatusThenOpponentStatus",
+            "CoinSwitchOpponentThenStatus", "DamageThenMoveOpponentEnergyToBench"]))
 
 
 class DecisionTest(unittest.TestCase):

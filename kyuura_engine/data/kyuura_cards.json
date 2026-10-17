@@ -437,9 +437,25 @@
     "PMCG6-071",
     "PMCG6-095"
   ],
+  "pool_v0_45": [
+    "PMCG1-047",
+    "PMCG5-024",
+    "PMCG5-031",
+    "PMCG6-002",
+    "PMCG6-019",
+    "PMCG6-007",
+    "PMCG4-024",
+    "PMCG4-030",
+    "PMCG6-032",
+    "PMCG6-042",
+    "PMCG1-054",
+    "PMCG1-062",
+    "PMCG5-054",
+    "PMCG5-047",
+    "PMCG6-068"
+  ],
   "reference_only": [
     "PMCG1-075",
-    "PMCG1-047",
     "PMCG6-023"
   ],
   "cards": [
@@ -26190,43 +26206,6 @@
       }
     },
     {
-      "id": "PMCG1-075",
-      "jp_set": "PMCG1",
-      "category": "trainer",
-      "name": {
-        "ja": "いいきずぐすり",
-        "en": "Super Potion"
-      },
-      "name_ja_confidence": "有力",
-      "pokemon": null,
-      "trainer": {
-        "kinds": [],
-        "text": {
-          "ja": "自分のポケモン1匹のエネルギーカードを1枚はがしてすてることによって、そのポケモンのダメージカウンターを4個までとりのぞくことができる。",
-          "en": "Discard 1 Energy card attached to your own Pokémon in order to remove up to 4 damage counters from that Pokémon."
-        }
-      },
-      "energy": null,
-      "jp_en_differences": [],
-      "notes": [],
-      "source_ids": {
-        "tcgdex": "PMCG1-075",
-        "pokemontcg": [
-          "base1-90"
-        ]
-      },
-      "ja_text_source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/",
-      "jp_print": {
-        "level": null,
-        "rarity": "♦(U)",
-        "series": "第1弾拡張パック、スターターパック",
-        "remarks": [
-          "初版はレアリティマークなし"
-        ],
-        "source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/"
-      }
-    },
-    {
       "id": "PMCG1-047",
       "jp_set": "PMCG1",
       "category": "pokemon",
@@ -26316,6 +26295,1302 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-047-ghost/"
+      }
+    },
+    {
+      "id": "PMCG5-024",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのタッツー",
+        "en": "Misty's Horsea"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          116
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スミをかける",
+              "en": "Ink Spurt"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、それ以後ワザを使うたびにコインを投げ、「うら」ならワザは失敗する。バトル場をはなれたポケモンからは、このワザの効果は消える。",
+              "en": "Flip a coin. If heads, whenever the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack does nothing. (This effect lasts until the Defending Pokémon evolves or is Benched.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-024",
+        "pokemontcg": [
+          "gym2-87"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%BF%E3%83%83%E3%83%84%E3%83%BCLV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%BF%E3%83%83%E3%83%84%E3%83%BCLV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-031",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのジュゴン",
+        "en": "Misty's Dewgong"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          87
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのパウワウ",
+          "en": "Misty's Seel"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こおりのつぶて",
+              "en": "Ice Throw"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザを受ける相手が「闘」ポケモンなら、このワザのダメージは2倍になる。",
+              "en": "If the Defending Pokémon is Fighting, this attack's base damage is doubled."
+            }
+          },
+          {
+            "name": {
+              "ja": "とっしん",
+              "en": "Take Down"
+            },
+            "cost": [
+              "water",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。",
+              "en": "Misty's Dewgong does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-031",
+        "pokemontcg": [
+          "gym2-54"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B8%E3%83%A5%E3%82%B4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%B8%E3%83%A5%E3%82%B4%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-002",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのアーボ",
+        "en": "Koga's Ekans"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          23
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "とつぜんどく",
+              "en": "Fast-Acting Poison"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、すべて「おもて」なら、相手を「どく」と「こんらん」の両方の状態にする。",
+              "en": "Flip 2 coins. If both are heads, the Defending Pokémon is now Confused and Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-002",
+        "pokemontcg": [
+          "gym2-77"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%A2%E3%83%BC%E3%83%9C_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 17,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%A2%E3%83%BC%E3%83%9C_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-019",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのアーボック",
+        "en": "Koga's Arbok"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          24
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "キョウのアーボ",
+          "en": "Koga's Ekans"
+        },
+        "hp": 90,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくをためる",
+              "en": "Poison Buildup"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分を「どく」状態にする。",
+              "en": "Koga's Arbok is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "ポイズンパワー",
+              "en": "Poison Power"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分が「どく」状態なら、このワザのダメージは「40」になる。その場合、相手を「どく」状態にする。",
+              "en": "If Koga's Arbok is Poisoned, this attack's base damage is 40 instead of 20 and the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-019",
+        "pokemontcg": [
+          "gym2-25"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%A2%E3%83%BC%E3%83%9C%E3%83%83%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 44,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%82%A2%E3%83%BC%E3%83%9C%E3%83%83%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-007",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "キョウのベトベター",
+        "en": "Koga's Grimer"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          88
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ベトベトハンド",
+              "en": "Sludge Grip"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、相手と入れ替える。その後、新しい相手の対戦ポケモンを「どく」状態にする。",
+              "en": "If your opponent has any Benched Pokémon, flip a coin. If heads, choose 1 of your opponent's Benched Pokémon and switch it with the Defending Pokémon. The new Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "ヘドロなげ",
+              "en": "Sludge Toss"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-007",
+        "pokemontcg": [
+          "gym2-78"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%99%E3%83%88%E3%83%99%E3%82%BF%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 19,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%99%E3%83%88%E3%83%99%E3%82%BF%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-024",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいカメックス",
+        "en": "Dark Blastoise"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          9
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいカメール",
+          "en": "Dark Wartortle"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハイドロキャノン",
+              "en": "Hydrocannon"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがいている時、多い「水」エネルギー1つにつき、20ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": "Does 30 damage plus 20 more damage for each Water Energy attached to Dark Blastoise but not used to pay for this attack. You can't add more than 40 damage in this way."
+            }
+          },
+          {
+            "name": {
+              "ja": "ロケットタックル",
+              "en": "Rocket Tackle"
+            },
+            "cost": [
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "このカードにも10ダメージ。コインを投げて「おもて」なら、このカードは次の相手の番にダメージを受けない。(ダメージ以外の効果は受ける)",
+              "en": "Dark Blastoise does 10 damage to itself. Flip a coin. If heads, prevent all damage done to Dark Blastoise during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-024",
+        "pokemontcg": [
+          "base5-3",
+          "base5-20"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-020-warui-kamex/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-020-warui-kamex/"
+      }
+    },
+    {
+      "id": "PMCG4-030",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいレアコイル",
+        "en": "Dark Magneton"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          82
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイル",
+          "en": "Magnemite"
+        },
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ソニックブーム",
+              "en": "Sonicboom"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の「弱点・抵抗力」の影響を受けない。",
+              "en": "Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "じりょくせん",
+              "en": "Magnetic Lines"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の対戦ポケモンのエネルギーカード(特殊エネルギーカード以外)を1枚選んではがす。その後、相手の控えポケモンを1匹選び、はがしたエネルギーをそのポケモンにつける。(相手に控えがいない時、この効果はない)",
+              "en": "If the Defending Pokémon has any basic Energy cards attached to it, choose 1 of them. If your opponent has any Benched Pokémon, choose 1 of them and attach that Energy card to it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-030",
+        "pokemontcg": [
+          "base5-11",
+          "base5-28"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-027-warui-rarecoil/",
+      "jp_print": {
+        "level": 26,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-027-warui-rarecoil/"
+      }
+    },
+    {
+      "id": "PMCG6-032",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのリザードン",
+        "en": "Blaine's Charizard"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          6
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "カツラのリザード",
+          "en": "Blaine's Charmeleon"
+        },
+        "hp": 100,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ファイヤーブレス",
+              "en": "Roaring Flames"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "このワザに必要なエネルギーよりも多く「炎」エネルギーがついている時、多い「炎」エネルギーをすべてトラッシュして、トラッシュしたエネルギーの数×20のダメージを追加する。",
+              "en": "Discard all Fire Energy cards attached to Blaine's Charizard. If all Energy cards attached to Blaine's Charizard provide 2 Fire Energy, discard all of them. This attack does 20 damage plus 20 more damage for each Fire Energy discarded in this way."
+            }
+          },
+          {
+            "name": {
+              "ja": "かえんひこう",
+              "en": "Flame Jet"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、40ダメージ。",
+              "en": "Flip a coin. If heads, choose 1 of your opponent's Pokémon. This attack does 40 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-032",
+        "pokemontcg": [
+          "gym2-2"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AA%E3%82%B6%E3%83%BC%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 50,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%83%AA%E3%82%B6%E3%83%BC%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-042",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "R団のサンダー",
+        "en": "Rocket's Zapdos"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          145
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "プラズマ",
+              "en": "Plasma"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分のトラッシュに「雷」エネルギーカードがあれば、1枚取り出して、自分につける。",
+              "en": "If there are any Lightning Energy cards in your discard pile, attach 1 of them to Rocket's Zapdos."
+            }
+          },
+          {
+            "name": {
+              "ja": "エレクトロバーン",
+              "en": "Electroburn"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 70,
+              "modifier": null,
+              "display": "70"
+            },
+            "text": {
+              "ja": "自分にも、自分についている「雷」エネルギーカードの数×10のダメージ。",
+              "en": "Rocket's Zapdos does damage to itself equal to 10 times the number of Lightning Energy cards attached to it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-042",
+        "pokemontcg": [
+          "gym2-15"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%80%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 34,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%80%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-054",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "イワーク",
+        "en": "Onix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          95
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いわおとし",
+              "en": "Rock Throw"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かたくなる",
+              "en": "Harden"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番に受けるダメージが0になる。ただしダメージが40以上の場合は、そのままダメージをうける。",
+              "en": "During your opponent's next turn, whenever 30 or less damage is done to Onix (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-054",
+        "pokemontcg": [
+          "base1-56"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-057-iwark/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-057-iwark/"
+      }
+    },
+    {
+      "id": "PMCG1-062",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラッタ",
+        "en": "Raticate"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          20
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コラッタ",
+          "en": "Rattata"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのまえば",
+              "en": "Super Fang"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": null,
+              "modifier": "?",
+              "display": "?"
+            },
+            "text": {
+              "ja": "相手の残りのHPの半分(切り上げ)のダメージをあたえる。",
+              "en": "Does damage to the Defending Pokémon equal to half the Defending Pokémon's remaining HP (rounded up to the nearest 10)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-062",
+        "pokemontcg": [
+          "base1-40"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-062-ratta/",
+      "jp_print": {
+        "level": 41,
+        "rarity": "◆(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-062-ratta/"
+      }
+    },
+    {
+      "id": "PMCG5-054",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "R団のエビワラー",
+        "en": "Rocket's Hitmonchan"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          107
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "クロスカウンター",
+              "en": "Crosscounter"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)コインを投げる。「おもて」なら、相手に、このカードが受けた2倍のダメージを与える。",
+              "en": "If an attack does damage to Rocket's Hitmonchan during your opponent's next turn (even if Rocket's Hitmonchan is Knocked Out), flip a coin. If heads, Rocket's Hitmonchan attacks your opponent's Active Pokémon for double that amount of damage. (If Rocket's Hitmonchan takes 20 damage, it does 40 damage to that Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "マグナムパンチ",
+              "en": "Magnum Punch"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-054",
+        "pokemontcg": [
+          "gym1-11"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%A8%E3%83%93%E3%83%AF%E3%83%A9%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 29,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%A8%E3%83%93%E3%83%AF%E3%83%A9%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-047",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのイシツブテ",
+        "en": "Brock's Geodude"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          74
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たすけをよぶ",
+              "en": "Call for Friend"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、「タケシのポケモン」(進化カード以外)を自分の山札から1枚選び出し、自分のベンチに出してよい。その後、その山札をよく切る。(自分のベンチに空きが無い時、このワザは使えない)",
+              "en": "Flip a coin. If heads, you may search your deck for a Basic Pokémon card with Brock in its name and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "スパイラルショット",
+              "en": "Hook Shot"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、「抵抗力」の影響を受けない。",
+              "en": "Don't apply Resistance for this attack. (Any other effects that would happen after applying Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-047",
+        "pokemontcg": [
+          "gym1-66"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%A4%E3%82%B7%E3%83%84%E3%83%96%E3%83%86LV.13_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "ニビシティジム タケシ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%A4%E3%82%B7%E3%83%84%E3%83%96%E3%83%86LV.13_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-068",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "サカキのニャース",
+        "en": "Giovanni's Meowth"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          52
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "てつだうふり",
+              "en": "False Charity"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の山札の一番上のカードを見る。そのカードが「トレーナーカード」なら、そのカードをトラッシュする。それ以外なら、そのカードを相手の手札に加えさせる。",
+              "en": "Flip a coin. If heads, look at the top card of your opponent's deck. If it's a Trainer card, put it in your opponent's discard pile; otherwise, put it into his or her hand."
+            }
+          },
+          {
+            "name": {
+              "ja": "ダブルひっかき",
+              "en": "Double Scratch"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip 2 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-068",
+        "pokemontcg": [
+          "gym2-43"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%A3%E3%83%BC%E3%82%B9LV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 12,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%A3%E3%83%BC%E3%82%B9LV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-075",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "いいきずぐすり",
+        "en": "Super Potion"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分のポケモン1匹のエネルギーカードを1枚はがしてすてることによって、そのポケモンのダメージカウンターを4個までとりのぞくことができる。",
+          "en": "Discard 1 Energy card attached to your own Pokémon in order to remove up to 4 damage counters from that Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-075",
+        "pokemontcg": [
+          "base1-90"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/"
       }
     },
     {

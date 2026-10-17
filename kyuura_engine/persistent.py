@@ -30,6 +30,9 @@ p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分�
   きぜつではない）
 - ``USED``（v0.36）: 説明が「効果は1回できえる」と書く効果を使った（サンドの「すなかけ」の手順 4 のコインを投げた。``AttackCoinCheck.single_use``）
 
+v0.45: 期限のない効果（``AttackCoinCheck.lasting``。カスミのタッツーの「スミをかける」の「それ以後」）は ``EXPIRED`` で消えない（``lasting``）。ほかの契機
+（ベンチ・進化・きぜつ・山札や手札にもどる）では、ほかの効果と同じに消える。
+
 持続する効果は物理的なカードではないので、消えてもトラッシュには何も置かない。乱数も使わない。一度消えた効果は、
 ベンチから再びバトル場に出ても復活しない（p.322）。
 """
@@ -53,6 +56,7 @@ from .state import (
     PreventDamage,
     ReducedDamageToSource,
     Retaliation,
+    ZeroDamageBelow,
 )
 
 if TYPE_CHECKING:
@@ -128,8 +132,14 @@ def remove_expired_persistent_effects(state: GameState) -> None:
     """
     for owner in (state.current_player, 1 - state.current_player):
         for pokemon in state.players[owner].in_play():
-            expired = tuple(e for e in pokemon.persistent_effects if e.active_turn == state.turn_number and not expires_at_turn_start(e))
+            expired = tuple(e for e in pokemon.persistent_effects
+                            if e.active_turn == state.turn_number and not expires_at_turn_start(e) and not lasting(e))
             remove_persistent_effects(state, owner, pokemon, EXPIRED, expired)
+
+
+def lasting(effect) -> bool:
+    """期限のない効果か（v0.45。``AttackCoinCheck.lasting``。「スミをかける」の「それ以後」）。期限（``EXPIRED``）では消えない。"""
+    return getattr(effect, "lasting", False) is True
 
 
 def expires_at_turn_start(effect) -> bool:
@@ -221,6 +231,11 @@ def damage_reduction(state: GameState, pokemon: PokemonInPlay) -> DamageReductio
     return _active(state, pokemon, DamageReduction)
 
 
+def zero_damage_below(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageBelow | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを、決まった数より小さければ 0 にする効果（v0.45。イワークの「かたくなる」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, ZeroDamageBelow)
+
+
 def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None:
     """今の番に ``pokemon`` の「みちづれ」（v0.31。第1弾のゴース）の効果がはたらいているなら、その効果。"""
     return _active(state, pokemon, DestinyBond)
@@ -262,9 +277,10 @@ def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -
 
 def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackCoinCheck, ...]:
     """今の番に ``pokemon`` がワザを使うときに、p.309 の手順 4 のコインを投げる効果（v0.36。``AttackCoinCheck``。「すなかけ」・「えんまく」など）のうち、
-    はたらいているもの（はたらく番が今の番）。ふつうは 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で同じ種類は
-    1 つまで）。"""
-    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_turn == state.turn_number)
+    はたらいているもの（はたらく番が今の番。v0.45 の期限のない効果（「スミをかける」の「それ以後」）は、はたらく番とそれ以後の番。``AttackCoinCheck.active_on``）。
+    v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
+    もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
 
 
 def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | None:

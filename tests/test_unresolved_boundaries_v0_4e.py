@@ -96,11 +96,19 @@ ALL_CODES = (
     # MoonPowerRouteTest
     "UNRESOLVED_POWER_ZERO_CARDS",
     "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
-    # v0.44: FC1・TR1（docs/search-evolution-once-attacks-v0.44.md。GV1 は今の対応カードでは起こらないコードのない問い）。止まる場合（てじなで山札の
+    # v0.44: FC1・TR1（docs/search-evolution-once-attacks-v0.44.md。GV1 は v0.44 ではコードのない問い。v0.45 で停止コードを付けた）。止まる場合（てじなで山札の
     # 基本エネルギーカードがもどす枚数より少ない（1 枚以上）・ラッキーたまごの手札が 0・1 枚、場にサカキのポケモンがいないときのサカキ）と隣の止まらない場合
     # （足りる・0 枚・手札が 2 枚・サカキのポケモンが 1 匹）は tests/test_search_evolution_once_attacks_v0_44.py
     "UNRESOLVED_STATED_CARDS_SHORT",
     "UNRESOLVED_TRAINER_WITHOUT_TARGET",
+    # v0.45: GV1（docs/conditional-damage-energy-v0.45.md。v0.44 はコードのない問い）。止まる場合（つきのちからで、この番に場に出してサカキの許可を受けた
+    # サカキのコイキングにサカキのギャラドスを重ねる）と隣の止まらない場合（前の番から場にいるサカキのコイキング）は
+    # tests/test_conditional_damage_energy_v0_45.py の Gv1Test
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK",
+    # v0.45: AC13（v0.36 の docs/sand-attack-retreat-lock-v0.36.md。v0.36〜v0.44 は対応カードで起こらず RuntimeError。v0.45 のスミをかける（次の相手の番から
+    # 消えない手順 4 の効果）で起こる）。止まる場合（手順 4 の効果が 2 つ）と隣の止まらない場合（1 つ）は tests/test_conditional_damage_energy_v0_45.py の
+    # LastingAttackCheckTest
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
 )
 TURN = 7
 

@@ -103,6 +103,7 @@ from .state import (
     RETALIATION_RECEIVED,
     AttackBarrier,
     AttackCoinCheck,
+    ZeroDamageBelow,
     Asleep,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -156,7 +157,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     「えんまく」など。p.309 の手順 4 のコイン）は ``single_use``（「効果は1回できえる」）を加え、``"cannot_retreat"``（「アイスバーン」・「わしづかみ」）は共通の
     項目だけ（どちらも相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン。形式は変えない。v0.35 までの書き出しを読む側は、知らない種類として
     拒否すること）。v0.40 の ``"cannot_attack_while_source_active"``（「すごむ」。相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン
-    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。"""
+    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。v0.45 の
+    ``"retaliation_received_damage_scaled"``（「クロスカウンター」。受けたダメージの倍数とコインの条件のある返す効果）は ``attack_index``・``multiplier``・
+    ``on_heads`` を、``"zero_damage_below"``（「かたくなる」）は ``threshold`` を加え、``"attack_coin_check"`` の期限のない効果（「スミをかける」の「それ以後」）
+    だけ ``lasting``（True）を加える（v0.44 までの形は変えない。形式は変えない。v0.44 までの書き出しを読む側は、知らない種類・項目として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -171,6 +175,9 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["amount"] = effect.amount
         elif effect.basis != RETALIATION_RECEIVED:
             raise ValueError(f"書き出せない持続する効果 {effect!r}")
+        if effect.scaled:
+            data["multiplier"] = effect.multiplier  # v0.45: 「クロスカウンター」（種類 "retaliation_received_damage_scaled"）だけ
+            data["on_heads"] = effect.on_heads
         # v0.13: 受けたダメージで決まる種類（"retaliation_received_damage"。「こうらがえし」）は、量が効果を与えたときに決まって
         # いないので amount を書かない（受けたダメージはワザ 1 回の中の値で、状態に持たない）
     elif isinstance(effect, NextTurnAttackDamage):
@@ -188,6 +195,10 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
     elif isinstance(effect, AttackCoinCheck):
         data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
+        if effect.lasting:
+            data["lasting"] = True  # v0.45: 「スミをかける」の「それ以後」（期限のない効果だけ書く）
+    elif isinstance(effect, ZeroDamageBelow):
+        data["threshold"] = effect.threshold  # v0.45: 「かたくなる」
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data

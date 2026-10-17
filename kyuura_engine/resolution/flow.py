@@ -184,15 +184,17 @@ def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey)
     - こんらん状態のポケモン: 手順 4 でワザが失敗したとき、手順 5 のこんらんのコイン（「うら」なら自分に 20）をするかは原典から決められない（AC6）ので、
       コインの前に問い ``attack_check_confusion`` で止める（コインの結果によらず止まる。「おもて」なら手順 5 に進むことは決まっているが、宣言の前に
       分からない）
-    - 2 つ以上の効果（順番が決まらない）は、今の対応カードでは起こらない（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で
-      同じ種類は 1 つまで）ので、エンジンの不具合
+    - 2 つ以上の効果（AC13）: v0.36 では起こらなかった（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 の期限のない効果
+      （カスミのタッツーの「スミをかける」の「それ以後」）を受けたポケモンが、もう 1 つの効果（もう一度の「スミをかける」・「えんまく」など）を受けると起こる。
+      効果ごとにコインを投げるのか、その順番、1 枚で両方を決めるのかが原典（p.309 の手順 4）から決められないので、コインの前に問い
+      ``multiple_attack_checks`` で止める（こんらんの AC6 より先に聞く）
     """
     state = res.state
     checks = attack_coin_checks(state, attacker)
     if not checks:
         return False
     if len(checks) > 1:
-        raise RuntimeError(f"ワザを使うポケモン {attacker.pokemon_id} に手順 4 のコインの効果が 2 つ以上ある（エンジンの不具合）")
+        raise res.question("multiple_attack_checks", f"ポケモン {attacker.pokemon_id}（{len(checks)} つの効果）")
     if attacker.conditions.confused:
         raise res.question("attack_check_confusion", f"ポケモン {attacker.pokemon_id}")
     if PR.attack_coin_check(state, player, attacker, checks[0], effect=str(key)):
