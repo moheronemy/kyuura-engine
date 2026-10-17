@@ -491,6 +491,12 @@
     "PMCG6-054",
     "PMCG6-072"
   ],
+  "pool_v0_49": [
+    "PMCG6-053",
+    "PMCG3-042",
+    "PMCG5-019",
+    "PMCG5-071"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -30276,6 +30282,301 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%A1%E3%82%BF%E3%83%A2%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-053",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのフーディン",
+        "en": "Sabrina's Alakazam"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          65
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ナツメのユンゲラー",
+          "en": "Sabrina's Kadabra"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "サイコリンク",
+              "en": "Psylink"
+            },
+            "text": {
+              "ja": "自分の場の「超」ポケモンが持っているすべてのワザを、このカードも持っているものとする。(それらのワザを、このカードのワザとして使うことができる)。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "Sabrina's Alakazam always has a copy of every attack your Psychic Pokémon in play have (including their Energy costs and anything else required in order to use those attacks, such as discarding Energy cards). This power can't be used if Sabrina's Alakazam is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガバーン",
+              "en": "Mega Burn"
+            },
+            "cost": [
+              "psychic",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードは「メガバーン」を使えない。",
+              "en": "You can't use this attack during your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-053",
+        "pokemontcg": [
+          "gym2-16"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%95%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 44,
+        "rarity": "★(R)(闇からの挑戦)",
+        "series": "ヤマブキシティジム ナツメ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%83%95%E3%83%BC%E3%83%87%E3%82%A3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG3-042",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "メタモン",
+        "en": "Ditto"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          132
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "へんしん",
+              "en": "Transform"
+            },
+            "text": {
+              "ja": "バトル場にいる限り、このカードは相手の対戦ポケモンと同じカードとしてあつかう。エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使うことができる。「ねむり・マヒ・こんらん」状態の時やベンチにいる時には、この「へんしん」の力は消える。このカードに進化カードをつけることはできない。",
+              "en": "If Ditto is your Active Pokémon, treat it as if it were the same card as the Defending Pokémon, including type, Hit Points, Weakness, and so on, except Ditto can't evolve, always has this Pokémon Power, and you may treat any Energy attached to Ditto as Energy of any type. Ditto isn't a copy of any other Pokémon while Ditto is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": []
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-042",
+        "pokemontcg": [
+          "base3-3",
+          "base3-18"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-042-metamon/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-042-metamon/"
+      }
+    },
+    {
+      "id": "PMCG5-019",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのキュウコン",
+        "en": "Brock's Ninetales"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          38
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのロコン",
+          "en": "Brock's Vulpix"
+        },
+        "hp": 70,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ばける",
+              "en": "Shapeshift"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回だけ使える。手札から「進化カード」を1枚選び、このカードの上にのせる。それ以後、このカードを、のせた「進化カード」のポケモンとしてあつかう。(ただし「進化・退化」はできない)。自分の番に、このカードの上にのっている「進化カード」をトラッシュして、このカードを「タケシのキュウコン」にもどしてもよい。このカードが「ねむり・マヒ・こんらん」状態の時、この「ばける」の力は使えず、このカードは「タケシのキュウコン」にもどる。(のせてあった「進化カード」はトラッシュされる)",
+              "en": "Once during your turn (before your attack), you may attach an Evolution card from your hand to Brock's Ninetales. (This doesn't count as evolving Brock's Ninetales.) Treat Brock's Ninetales as if it were that Pokémon instead. It can't evolve, devolve, or use the Pokémon Power of that Pokémon. During your turn, you may discard the Evolution card attached to Brock's Ninetales. This power can't be used if Brock's Ninetales is Asleep, Confused, or Paralyzed. If Brock's Ninetales becomes Asleep, Confused, or Paralyzed, discard all Evolution cards attached to it."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おにび",
+              "en": "Will-o'-the-wisp"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワー ばける（Shapeshift）で、のせた進化カードのポケモンパワーを使えるか",
+          "ja": "「(ただし「進化・退化」はできない)」とだけ書かれ、のせた進化カードのポケモンパワーを使えないとは書かれていない。日本では当初、のせたカードのポケモンパワーを使えたため、わるいラフレシアと組み合わせて大会で広く使われ、のちにエラッタされた。『トレーナーズ』Vol.6（2000年5月1日発行）pp.58〜59 の「ルール変更のお知らせ」が、のせた進化カードの特殊能力は「はたらかず、使うこともできない」と変えた（大会に限るとは書かれていない。data/rule_history.json の ERR-BROCK-NINETALES）[P3]",
+          "en": "「It can't evolve, devolve, or use the Pokémon Power of that Pokémon.」と、ポケモンパワーも使えないと明記（日本のエラッタ後の内容）",
+          "confidence": "確実",
+          "sources": [
+            "N2",
+            "P3",
+            "X37",
+            "X52"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-019",
+        "pokemontcg": [
+          "gym2-3"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-071",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "思い出させる",
+        "en": "Recall"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンが進化カードなら、この番だけ、進化前に持っていたワザを自分のワザとして使ってよい。",
+          "en": "For your attack this turn, your Active Pokémon can use any attack from its Basic Pokémon card or any Evolution card attached to it. (You still have to pay for that attack's Energy cost.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-071",
+        "pokemontcg": [
+          "gym1-116"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E6%80%9D%E3%81%84%E5%87%BA%E3%81%95%E3%81%9B%E3%82%8B",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E6%80%9D%E3%81%84%E5%87%BA%E3%81%95%E3%81%9B%E3%82%8B"
       }
     },
     {

@@ -213,7 +213,20 @@ def retaliation(state: GameState, pokemon: PokemonInPlay) -> Retaliation | None:
     return None
 
 
-def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> NextTurnAttackDamage | None:
+def effect_attack_card(state: GameState, effect) -> str:
+    """持続する効果を与えたワザ（と ``target_attack_index`` のワザ）を印刷したカードの id（v0.49）。効果の ``attack_card`` があればそれ、なければ ``source_card`` の
+    カードの id（v0.48 までと同じ。ワザの出どころがいちばん上のカードのとき）。"""
+    return effect.attack_card if effect.attack_card is not None else state.cards[effect.source_card].card_id
+
+
+def _attack_pair(state: GameState, pokemon: PokemonInPlay, key) -> tuple[str, int]:
+    """ワザの (印刷したカードの id, 位置)（v0.49）。``key`` は ``AttackKey``。整数（v0.48 までの呼び方）なら、いちばん上のカードのワザの位置。"""
+    if isinstance(key, int):
+        return state.cards[pokemon.card].card_id, key
+    return key.card_id, key.attack_index
+
+
+def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, key) -> NextTurnAttackDamage | None:
     """今の番に、``pokemon`` が使う ``attack_index`` 番目のワザ（いちばん上のカードの）のダメージを変える効果（``NextTurnAttackDamage``。
     v0.27 のストライクの「つるぎのまい」）がはたらいているなら、その効果。そうでなければ None。
 
@@ -227,8 +240,9 @@ def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_ind
             isinstance(effect, NextTurnAttackDamage)
             and effect.active_turn == state.turn_number
             and effect.source_card == pokemon.card
-            and effect.target_attack_index == attack_index
+            and (effect_attack_card(state, effect), effect.target_attack_index) == _attack_pair(state, pokemon, key)
         ):
+            # v0.49: 変わるワザは ``AttackKey``（印刷したカードの id と位置）で探す。v0.48 までの効果（``attack_card`` が None）は、いちばん上のカードのワザ
             return effect
     return None
 
@@ -282,19 +296,28 @@ def cannot_attack_while_source_active(state: GameState, pokemon: PokemonInPlay) 
     return effect if active is not None and active.card == effect.source_card else None
 
 
-def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> CannotUseOwnAttack | CannotUseAttack | None:
+def attack_locked(state: GameState, pokemon: PokemonInPlay, key) -> CannotUseOwnAttack | CannotUseAttack | None:
     """今の番に、``pokemon`` が ``attack_index`` 番目のワザ（いちばん上のカードの）を使えない効果がはたらいているなら、その効果（v0.35）。
 
     - ``CannotUseOwnAttack``（カスミのニョロモの「あわあわ」の「次の自分の番、このカードは「あわあわ」を使えない」）: 自分自身の効果。効果を与えた
       カード（``source_card``）がいちばん上のカードのときだけ（進化すると効果は消える。p.310・p.323）
     - ``CannotUseAttack``（「ドわすれ」の「次の相手の番、そのポケモンは、そのワザを使えない」）: 相手に与えられた効果
-    どちらも、ワザの位置で探す（ワザの名前では探さない。ほかのワザは使える）。"""
+    どちらも、ワザの位置で探す（ワザの名前では探さない。ほかのワザは使える）。
+
+    v0.49: ``key`` は使おうとするワザの ``AttackKey``（印刷したカードの id と位置）。使えなくなるワザも (カードの id, 位置) で持つ（``attack_card``・
+    ``target_attack_card``。None ならいちばん上のカード。v0.48 までと同じ）。ワザの一覧（［サイコリンク］・［へんしん］・「ばける」・「思い出させる」）が変わっても、
+    同じワザ（同じカードの同じ位置）に当てはまる。出どころ（どのポケモンが供給したか）は問わない。"""
     for effect in pokemon.persistent_effects:
         if not isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)) or effect.active_turn != state.turn_number:
             continue
-        if effect.target_attack_index != attack_index:
-            continue
-        if isinstance(effect, CannotUseOwnAttack) and effect.source_card != pokemon.card:
+        if isinstance(effect, CannotUseOwnAttack):
+            if effect.source_card != pokemon.card:
+                continue
+            target = (effect_attack_card(state, effect), effect.target_attack_index)
+        else:
+            target_card = effect.target_attack_card if effect.target_attack_card is not None else state.cards[pokemon.card].card_id
+            target = (target_card, effect.target_attack_index)
+        if target != _attack_pair(state, pokemon, key):
             continue
         return effect
     return None

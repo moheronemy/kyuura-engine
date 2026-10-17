@@ -99,11 +99,16 @@ TRICKERY = PowerKey("PMCG4-045", 0)
 # v0.48（docs/effective-pokemon-properties-v0.48.md）: モルフォンの［へんしょく］（宣言して使う。自分の番に 1 回）・ナツメのゴースの［ガスのからだ］（常にはたらく）
 SHIFT = PowerKey("PMCG2-015", 0)
 GASEOUS_FORM = PowerKey("PMCG6-049", 0)
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）: メタモンの［へんしん］・ナツメのフーディンの［サイコリンク］（どちらも常にはたらく）・タケシのキュウコンの「ばける」
+# （宣言して使う。自分の番に 1 回）
+TRANSFORM = PowerKey("PMCG3-042", 0)
+SHAPESHIFT = PowerKey("PMCG5-019", 0)
+PSYLINK = PowerKey("PMCG6-053", 0)
 ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, DAMAGE_SWAP, STRIKES_BACK, HEALING_POLLEN, SHIFT, MYSTERIOUS_WALL, PEEK, RETREAT_AID, IMMUNITY,
-              CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, STEP_IN, POLLEN_STENCH,
+              CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, TRANSFORM, STEP_IN, POLLEN_STENCH,
               STICKY_GOO, SNEAK_ATTACK, ALLERGIC_POLLEN, GATHER_FIRE, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN, FRENZY, TRICKERY,
-              EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, REBIRTH, ENERGY_CHARGE, STRANGE_BARRIER, CALMING_AROMA,
-              METAMORPHOSIS, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, GUTS, BOSS_CALL, RESTLESS_SLEEP)
+              EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, SHAPESHIFT, REBIRTH, ENERGY_CHARGE, STRANGE_BARRIER,
+              CALMING_AROMA, METAMORPHOSIS, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP)
 
 
 def full(state):
@@ -193,7 +198,7 @@ class PowerRegistryTest(unittest.TestCase):
         使うかは持ち主が決める）を、カードのページ（p.193）と照合して加えた（7 つ。tests/test_guts_v0_11.py）。v0.12 で R団のファイヤーの
         「ふしちょう」（このカードが「きぜつ」したとき、使える。使うかは持ち主が決める）を、カードのページ（p.82）と照合して加えた（8 つ。
         tests/test_phoenix_v0_12.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つ、v0.44 で 2 つ、v0.46 で 8 つ、v0.47 で 5 つ、v0.48 で 2 つを加えた
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つ、v0.44 で 2 つ、v0.46 で 8 つ、v0.47 で 5 つ、v0.48 で 2 つ、v0.49 で 3 つを加えた
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -207,8 +212,8 @@ class PowerRegistryTest(unittest.TestCase):
         self.assertIsNone(NO_CHARIZARD_EFFECTS.power_entry(CHARIZARD, 0))
         self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
         # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20、v0.43 は 29、v0.44 は 31、
-        # v0.46 は 39、v0.47 は 44、v0.48 は 46
-        self.assertIn("46 powers", repr(DEFAULT_EFFECTS))
+        # v0.46 は 39、v0.47 は 44、v0.48 は 46、v0.49 は 49
+        self.assertIn("49 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -507,7 +512,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=14)  # v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48
+            state_to_dict(new, format_version=15)  # v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

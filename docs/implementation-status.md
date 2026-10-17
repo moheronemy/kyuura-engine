@@ -172,6 +172,17 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | モルフォンの［へんしょく］で変えた色が、使った番のあと・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん・かがくへんかガス）あいだも続くか（v0.48。VS1。印刷の文面は期限を書かない。持続する効果の規定はワザの効果のもの。kyuura の記録にない） | 決まらないあいだは 2 つの読み方（変えた色・印刷の色）を持ち、読み方で結果が変わる処理だけを `UNRESOLVED_SHIFT_COLOR_DURATION` で止める（ワザは宣言の前、特殊能力はカードを動かす前。[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 4 章） |
 | 弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を、ポリゴンの「テクスチャー1」「テクスチャー2」で「好きな色にかえる」とき、新しく持たせるのか（v0.48。PG1。英語版の「If … has a Weakness」は持ち込まない。kyuura の記録にない） | ワザの宣言の前に `UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE`（弱点・抵抗力のあるポケモンには止めない。[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 3.3 節） |
 | ダメージ以外の原因（超のエネルギーカードが減る・［ガスのからだ］がかがくへんかガスで消える・「きょだいか」の効果が消える）で最大HPがのっているダメージ以下に下がるとき、きぜつするか・いつ判定するか（v0.48。MH1。ワザのあとのきぜつの判定のほかに記録がない。進化の H1 は広げない。kyuura の記録にない） | その操作を受け付けない（`UNRESOLVED_MAX_HP_DROP`。にげる・ポケモンいれかえ・突風・かおりのわなはコインの前・手札から出す前、ポケモンチェックの回復はコインの前に `Phase.HALTED`）。ワザの中で下がったポケモンはワザのあとのきぜつの判定できぜつ（[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 5 章） |
+| ［へんしん］のメタモンのワザの説明がタイプのエネルギーの数を数える・タイプのエネルギーカードを選ぶとき、どの色としても使えるエネルギーカードをそのタイプとして数えるか（v0.49。TE1。kyuura の記録にない） | 2 つの読み方（今のタイプ・すべてそのタイプ）で数・選べるカードが変わるときだけ、ワザの宣言の前に `UNRESOLVED_TRANSFORM_ENERGY_COUNT`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 5 章） |
+| ［へんしん］で相手と同じカードになったメタモンが、そのカードの特殊能力を持つか（使える・はたらくか）（v0.49。TF1。英語版の「always has this Pokémon Power」は持ち込まない。kyuura の記録にない） | 常にはたらく・自動的にはたらく・きぜつするとき・きぜつしたときの特殊能力を持つ相手と同じカードになる状態を作るコマンドを受け付けない（決定の答えでどの答えでもそうなるなら `Phase.HALTED`）。宣言する特殊能力なら、写した特殊能力の使用を `UNRESOLVED_TRANSFORM_COPIED_POWER`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 5 章・7.1 節） |
+| 相手の対戦ポケモンが「ばける」でほかのポケモンとしてあつかわれている・ポケモンとして出したなにかの化石・ピッピ人形のとき、［へんしん］のメタモンがどのカードと同じになるか（v0.49。TF2。kyuura の記録にない） | その状態を作るコマンドを `UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER` で受け付けない（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 5 章） |
+| 「ばける」でのせたカードのあるポケモンの「ばける」がかがくへんかガスで消えたとき、のせたカードのポケモンのままか（v0.49。DG1。kyuura の記録にない） | その状態を作るコマンドを `UNRESOLVED_SHAPESHIFT_SUPPRESSED` で受け付けない（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 4 章） |
+| 「場に出た時」の特殊能力を持つカードを「ばける」でのせたとき、その特殊能力を使えるか（v0.49。DG2。p.69 の解説の記録は「手札から場に出したとき」の能力だけ。kyuura の記録にない） | 選べるが選ぶと `UNRESOLVED_SHAPESHIFT_ENTRY_POWER`（どれもそうなら宣言の前。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 4 章） |
+| のせたカードのあるポケモンがもう一度「ばける」を使えるか（のせたカードはどうなるか）（v0.49。DG3。kyuura の記録にない） | 宣言の前に `UNRESOLVED_SHAPESHIFT_AGAIN`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 4 章） |
+| 場に出てから 1 度だけ使えるワザを、ほかのカードのワザとして（［サイコリンク］・［へんしん］・思い出させるで）使うとき、使ったことの記録をどのカードに付けるか（v0.49。VA1。kyuura の記録にない） | ワザの宣言の前に `UNRESOLVED_VIRTUAL_ONCE_ATTACK`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 7.5 節） |
+| 対戦ポケモンが進化していない（進化前のカードにワザがない）ときに思い出させるを使えるか（効果のないトレーナーを使えるか）（v0.49。RC1。kyuura の記録にない） | 使う前に `UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK`（カードは手札のまま。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 6 章） |
+| 思い出させるの「進化前に持っていたワザ」に、2 進化ポケモンのいちばん下のたねポケモンのワザが入るか（v0.49。RC2。英語版の「its Basic Pokémon card or any Evolution card」は持ち込まない。kyuura の記録にない） | そのワザを選ぶと `UNRESOLVED_RECALL_EARLIER_STAGE`（すぐ下のカードのワザは使える。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 6 章） |
+| 思い出させるを使ったあと対戦ポケモンが入れかわった・進化したとき、「この番だけ」の効果が使ったときの対戦ポケモンにだけ当てはまるか（v0.49。RC3。kyuura の記録にない） | 進化前のワザを選ぶと `UNRESOLVED_RECALL_TARGET_CHANGED`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 6 章） |
+| 「ばける」でほかのポケモンとしてあつかわれている対戦ポケモンの「進化前」がどのカードか（v0.49。RC4。kyuura の記録にない） | 使う前、使ったあとにばけたなら進化前のワザを選ぶと `UNRESOLVED_RECALL_FORM`（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 6 章） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -2668,3 +2679,44 @@ MH1・互換性・検証は [effective-pokemon-properties-v0.48.md](effective-po
 - 実装上の判断（原典で確かめた規定ではない）: テクスチャーで選べる色を無色以外の 8 つ（悪・鋼を含む）にしたこと、［へんしょく］の色に無色を含めたこと、もう一度受けた
   テクスチャーを置きかえること、［ガスのからだ］をエネルギーカードの枚数で数えること。
 - カードデータは kyuura の採用で、ガイドブックとは照合していません（pcg-search.com の照合は 7 件。違い 1 件はサイトの誤記で処理に影響しない）。
+
+## v0.49 で加えたもの（ワザの出どころ・今の姿を区別する共通の処理と、ナツメのフーディン・メタモン・タケシのキュウコン・思い出させる）
+
+依頼の 4 枚（ナツメのフーディン PMCG6-053・メタモン PMCG3-042・タケシのキュウコン PMCG5-019・トレーナーの思い出させる PMCG5-071）を、kyuura データの採用で、どのワザも、
+どの特殊能力も、トレーナーも登録して対応にしました（対応ポケモン 321 → 324。ワザの登録 549 → 551・特殊能力の登録 46 → 49・トレーナーの登録 14 → 15）。場のポケモンの
+「実際のカード」「今の姿」（`effects.current_form`。印刷・［へんしん］・「ばける」）・「今使えるワザとその出どころ」（`available_attacks`。今の姿・思い出させる・［サイコリンク］）・
+「今持つ特殊能力とその出どころ」（`powers_of`）を区別する問い合わせ、ワザ・特殊能力を印刷したカードの uid で指すコマンドの項目（`UseAttack`・`UsePokemonPower` の `card`）、
+のせたカードをもどすコマンド `RemoveDisguise`、思い出させるの記録（`GameState.recalls`）、書き出しの形式 14 を加えました。カードごとの結果・共通の処理・2000年2月の基準と
+2000年5月のエラッタの区別・未解決・技術的な制限・実装上の仮定・互換性・検証は [virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_virtual_attacks_transformation_v0_49.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 4 枚の 2 つのワザ・3 つの特殊能力・トレーナーの登録（型と値）・文面の確かめ・採用の記録と外部照合 | kyuura の印刷の文面・pcg-search.com | `CardDataTest`・test_card_sources.py |
+| ［サイコリンク］（供給するポケモンの範囲（今有効なタイプ「超」）・処理するポケモン・必要なエネルギー・特殊状態とガス・2 匹の［サイコリンク］・同じワザの 2 つの出どころ・供給するポケモンの進化・VS1） | 印刷の文面・v0.46・v0.48 | `PsylinkTest` |
+| メガバーン（使用禁止の効果はワザ（`AttackKey`）で探す。［サイコリンク］で使ったワザの効果の `attack_card`） | 印刷の文面・v0.35・v0.41 | `MegaBurnTest` |
+| ［へんしん］（今の姿・エネルギーの支払い・TE1・場所と特殊状態とガス・相手の入れ替えと進化ときぜつ・進化カード・TF1・TF2・メタモンどうし・保存則） | 印刷の文面 | `TransformTest` |
+| 「ばける」（のせる・回数・DG3・もどす・特殊状態でもどる・MH1・のせたカードの特殊能力・DG2・DG1・進化の禁止・きぜつ）とおにび | 印刷の文面・kyuura の ERR-BROCK-NINETALES・card_differences の PMCG5-019（2000年2月の基準） | `ShapeshiftTest` |
+| 思い出させる（RC1〜RC4・2 進化・ポケモン育て屋さんの重なり・記録と書き出し） | 印刷の文面・GR-2000-P310-EVOLUTION | `RecallTest` |
+| まねるワザ・VA1・VS1 | v0.31・v0.35・v0.44・v0.48 | `CopiedAndVirtualAttackTest` |
+| 観測・形式 14・コマンドの辞書・先読みの方法の一致 | — | `ObservationAndSerializationTest` |
+| 新しく到達する組み合わせ（答えのない決定を残さない・ポケモンいれかえと TF1・「きょだいか」と［ガスのからだ］・突風の答えごとの MH1・こんじょうの写し・でんれい） | — | `ReachableCombinationTest` |
+| 正式な開始からの対戦で、4 枚のワザ・特殊能力・トレーナーが使われ、監査（不変条件・ログ・書き出し・観測）がすべて通る | — | `GameTest`・`tools/existing_effect_games.py --batch v0.49` |
+| v0.48 までのカードの動きが変わらない | 固定した v0.48（`7d7f4c5`）との比較 | tools/engine_lockstep.py と作業用の道具（[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 13.2 節） |
+
+### 原典未確認・未解決
+
+- 新しい停止コードは TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4 の 11 件（上の「裁定が未解決」の表）。停止コード 64 → 75 件、未解決の裁定 65 → 76 件。
+- 技術的な制限: 番をまたぐ効果を与えるワザをまねる（`UNSUPPORTED_COPIED_ATTACK`）は v0.35 からのまま。答えのない決定を探す試しは答えの数 256 まで。「最大HPを決まった数にする
+  効果と大きくする特殊能力」の組は到達しないので RuntimeError のまま。
+- 既存の問いの再利用: MH1（もどす操作・入れ替え）・H1・VS1・PW3（手札に進化カードがない「ばける」）・HC9。
+- 実装上の判断（原典で確かめた規定ではない）: 同じワザを 2 匹が供給するときは出どころごとに選べること、のせたあともタケシのキュウコンの「ばける」を持つこと、のせたカードは
+  ベンチにもどってものせたままであること、思い出させるで選べるのは記録のポケモン（番号といちばん上のカード）がバトル場にいるときだけであること。
+- 「ばける」は 2000.02.14 版の基準（2000年2月）で、のせたカードの特殊能力ははたらき、使えます。kyuura の ERR-BROCK-NINETALES（『トレーナーズ』Vol.6・2000年5月）の
+  変更は、この基準のあとの変更なので持ち込んでいません。
+- v0.49 で直した既存の不具合: わるいリザードンの「れんぞくファイヤーボール」で HP 以上になったサカキのカイリキーのこんじょうの写しが、エネルギーのトラッシュの決定をまたぐと
+  なくなる内部エラー（v0.48 の木でも起こる）。
+- カードデータは kyuura の採用で、ガイドブックとは照合していません（pcg-search.com の照合は 4 件とも `match`）。

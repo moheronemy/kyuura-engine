@@ -16,6 +16,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Callable
 
+from kyuura_engine.commands import RemoveDisguise  # v0.49
 from kyuura_engine import (
     AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
     new_game, state_to_dict,
@@ -46,6 +47,16 @@ def full(state):
     return state_to_dict(state, format_version=9)
 
 
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）: 姿が変わりうるカードがあるときに、操作を受け付けない理由のコード
+V049_FORM_CODES = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
+                   "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE)
+FORM_CARDS = ("PMCG3-042", "PMCG5-019")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）
+
+
+def form_cards_in_play(state) -> bool:
+    return any(state.cards[pokemon.card].card_id in FORM_CARDS for player in state.players for pokemon in player.in_play())
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -67,6 +78,22 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                 break
             except (IllegalActionError, UnsupportedError) as error:
                 observed["rejected"] += 1
+                if error.code in V049_FORM_CODES and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower, RemoveDisguise)) \
+                        and form_cards_in_play(state):
+                    # v0.49: 決められない姿（TF1・TF2・DG1）・「ばける」（DG2・DG3）・思い出させる（RC1・RC4）・［へんしん］・「ばける」で最大HPが下がる（MH1）。
+                    # 場から確かめる（メタモン・タケシのキュウコンが場にいる。思い出させるは対戦ポケモンが進化していない・ばけている）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code in ("UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK", "UNRESOLVED_RECALL_FORM") and isinstance(command, PlayTrainer):
+                    active = state.players[command.player].active
+                    if active.evolution_stack and active.disguise is None:
+                        raise AssertionError(f"対戦ポケモンが進化していて「ばける」でもないのに {error.code}: {command}")
+                    observed[f"stopped_PlayTrainer_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
                 if error.code == MAX_HP_DROP_CODE and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower)):
                     # v0.48: 最大HPが、ダメージ以外の原因（「きょだいか」の効果が消える・かがくへんかガスで［ガスのからだ］が消える）でのっているダメージ以下に
                     # 下がる（MH1）。場から確かめる（今有効な最大HPがカードの HP より大きく、のっているダメージがカードの HP 以上のポケモンがいる）

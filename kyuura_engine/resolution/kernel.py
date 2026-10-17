@@ -49,7 +49,7 @@ from ..effects import (
     weakness_of,
 )
 from ..conditions import confuse
-from ..persistent import reduced_damage_to_source
+from ..persistent import effect_attack_card, reduced_damage_to_source
 from ..state import RETALIATION_FIXED
 
 from . import catalog as C
@@ -575,7 +575,7 @@ def attack_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: De
     holder_found = state.find_pokemon(instance.pokemon_id)
     if holder_found is None or holder_found[0] != instance.owner:
         raise RuntimeError(f"返す効果を持つポケモン {instance.pokemon_id} が場にいない（エンジンの不具合）")
-    key = AttackKey(state.cards[effect.source_card].card_id, effect.attack_index)
+    key = AttackKey(effect_attack_card(state, effect), effect.attack_index)  # v0.49: 効果を与えたワザを印刷したカード（``attack_card``）
     if state.players[1 - instance.owner].active is not attacker:
         raise RuntimeError(f"返すダメージの相手が、ワザを使ったポケモン {attacker.pokemon_id} ではない（エンジンの不具合）")
     base = {

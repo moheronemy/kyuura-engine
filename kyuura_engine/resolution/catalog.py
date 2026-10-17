@@ -182,18 +182,18 @@ def definition_for(implementation: Any, table: tuple[tuple[type, EffectDefinitio
 
 
 def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) -> tuple[EffectInstance, ...]:
-    """場のポケモン ``pokemon`` の効果（いちばん上のカードの特殊能力。p.310。と、受けている持続する効果）。"""
+    """場のポケモン ``pokemon`` の効果（今持つ特殊能力（いちばん上のカードの。p.310。v0.49 から ``effects.powers_of``。「ばける」でのせたカードの特殊能力を含む）と、
+    受けている持続する効果）。"""
     powers = POWER_DEFINITIONS if table is None else table.powers
     persistent = PERSISTENT_DEFINITIONS if table is None else table.persistent
-    definition = state.card_def(pokemon.card)
     found = []
-    for index, power in enumerate(definition.powers):
-        implementation = state.effects.power_effect(definition.id, power)
+    for slot in E.powers_of(state, pokemon):
+        implementation = slot.effect
         if implementation is None:
             continue
         effect_definition = definition_for(implementation, powers)
         if effect_definition is not None:
-            found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, E.PowerKey(definition.id, index), power, implementation))
+            found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, slot.key, slot.power, implementation))
     for effect in pokemon.persistent_effects:
         effect_definition = definition_for(effect, persistent)
         if effect_definition is not None:

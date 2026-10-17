@@ -16,6 +16,7 @@ from .commands import (
     PlayBasicToBench,
     PlayTrainer,
     PromoteActive,
+    RemoveDisguise,
     ReportJankenResult,
     ResolveDecision,
     Retreat,
@@ -35,8 +36,11 @@ from .effects import (
     PowerEntry,
     PowerKey,
     TrainerEntry,
+    available_attacks,
     available_ko_prevention_power,
+    current_form,
     max_hp,
+    powers_of,
     resistance_of,
     type_readings,
     weakness_of,
@@ -66,7 +70,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.48.0"
+__version__ = "0.49.0"
 
 __all__ = [
     "Asleep",
@@ -102,6 +106,7 @@ __all__ = [
     "PlayBasicToBench",
     "PlayTrainer",
     "PromoteActive",
+    "RemoveDisguise",
     "RULE_REFERENCES",
     "RULES_2000_02_14",
     "ReportJankenResult",
@@ -118,11 +123,13 @@ __all__ = [
     "UseAttack",
     "UsePokemonPower",
     "apply_command",
+    "available_attacks",
     "available_ko_prevention_power",
     "can_pay_cost",
     "check_invariants",
     "command_from_dict",
     "command_to_dict",
+    "current_form",
     "deck_problems",
     "expand_decklist",
     "PRESET_DECKS",
@@ -134,6 +141,7 @@ __all__ = [
     "new_game",
     "observe",
     "power_suppressors",
+    "powers_of",
     "resistance_of",
     "state_to_dict",
     "type_readings",

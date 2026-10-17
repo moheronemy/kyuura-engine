@@ -65,7 +65,9 @@ from .decisions import (
     SELECT_SPECIAL_CONDITION,
     TAKE_PRIZE,
 )
-from .effects import COLORS, hand_revealed_by, max_hp, resistance_of, type_readings, type_shift_determined, weakness_of
+from .effects import (
+    COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
+)
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -133,7 +135,24 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "trainers": [_card(state, t.card) for t in pokemon.trainers],
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
+        # v0.49（docs/virtual-attacks-transformation-v0.49.md 9 章）: 実際のカード（``card``・``card_id``・``name_ja``。いちばん上のポケモンのカード）と、今の姿
+        # （``form``。［へんしん］で同じカードとしてあつかう相手のカード・「ばける」でのせたカード）・のせたカード（``disguise``）・今持つワザ（``attacks``。印刷した
+        # カード・位置・持ち方・供給するポケモン・選ぶと止める理由のコード）・今持つ特殊能力（``powers``。印刷したカード・位置）を分けて書く。どれも表のカード
+        "form": _form(state, pokemon),
+        "disguise": None if pokemon.disguise is None else _card(state, pokemon.disguise),
+        "attacks": [
+            {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
+             "provider": option.provider, "problem": None if option.problem is None else option.problem[0]}
+            for option in available_attacks(state, pokemon)
+        ],
+        "powers": [{**_card(state, slot.card), "power_index": slot.key.power_index, "name_ja": slot.power.name_ja} for slot in powers_of(state, pokemon)],
     }
+
+
+def _form(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
+    """場のポケモンの今の姿（v0.49。``effects.current_form``）。``kind`` は ``printed``・``transform``・``disguise``。"""
+    form = current_form(state, pokemon)
+    return {**_card(state, form.card), "name_ja": state.card_def(form.card).name_ja, "kind": form.kind, "defender": form.defender}
 
 
 def _color(color) -> str | None:
@@ -152,7 +171,8 @@ def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> b
         if uid in p.deck or uid in p.prizes:
             return False
         for pokemon in p.in_play():
-            if uid == pokemon.card or uid in pokemon.evolution_stack or uid in pokemon.energy or any(t.card == uid for t in pokemon.trainers):
+            if (uid == pokemon.card or uid == pokemon.disguise or uid in pokemon.evolution_stack or uid in pokemon.energy
+                    or any(t.card == uid for t in pokemon.trainers)):
                 return True
     used = state.trainer_in_use
     return used is not None and used.card == uid
@@ -179,10 +199,31 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
         elif meaning == "peek_target":
             target = d.context_value("targets")[value]
             option["target"] = {"zone": target[0], "owner": target[1], **({} if target[0] == "deck" else {"position": target[2]})}
+        if d.kind in (SELECT_ATTACK, SELECT_OPPONENT_ATTACK):
+            # v0.49: 相手のワザを選ぶ決定の選べるものが指すワザ（印刷したカードの id・位置・名前。表のカード）
+            key = _chosen_attack(state, d, value)
+            if key is not None:
+                option["attack"] = {"card_id": key[0], "attack_index": key[1], "name_ja": state.definitions[key[0]].attacks[key[1]].name_ja}
         options.append(option)
     view["options"] = options
     view["meaning"] = meaning
     return view
+
+
+def _chosen_attack(state: GameState, d, value: int) -> tuple[str, int] | None:
+    """相手のワザを選ぶ決定（ゆびをふる・ドわすれ）の選べるもの ``value`` が指すワザの (カードの id, 位置)（v0.49）。決定の続きの情報の並び（``copy_attacks``・
+    ``lock_attacks``）があればその位置、なければ v0.48 までの形（``copy_from`` のカード・ドわすれの相手のいちばん上のカードのワザの位置）。"""
+    keys = d.context_value("copy_attacks") or d.context_value("lock_attacks")
+    if keys is not None:
+        return tuple(keys[value])
+    copy_from = d.context_value("copy_from")
+    if copy_from is not None:
+        return copy_from, value
+    target = d.context_value("target")
+    found = state.find_pokemon(target) if target is not None else None
+    if found is None:
+        return None
+    return state.cards[found[1].card].card_id, value
 
 
 def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
@@ -262,7 +303,7 @@ PUBLIC_EVENTS = frozenset({
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none", "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
-    "discard_from_play", "discard_hand", "discard_trainer", "drain_heal", "drain_heal_skipped", "effect_prevented", "effect_skipped",
+    "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "effect_prevented", "effect_skipped",
     "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
     "evolve_from_deck_none", "forced_switch", "forced_switch_skipped", "game_end", "halted", "janken", "knock_out", "ko_prevented",
     "ko_prevention_declared", "ko_prevention_declined", "ko_prevention_failed", "look_at_deck_top_none", "move_damage_counter", "move_energy",
@@ -270,7 +311,7 @@ PUBLIC_EVENTS = frozenset({
     "persistent_effect_skipped", "place_damage_counters", "play_to_bench", "play_trainer", "play_trainer_as_pokemon", "poison_damage",
     "pokemon_check", "pokemon_power", "post_knockout_power_declared", "post_knockout_power_declined", "power_attach_energy", "power_confusion",
     "power_confusion_skipped", "power_damage", "power_heal", "promote_active", "put_discard_on_deck_top", "recover_energy", "recover_pokemon",
-    "recover_pokemon_none", "recover_trainer", "remove_all_damage_counters", "remove_damage_counters", "retaliation", "retaliation_skipped",
+    "recall", "recover_pokemon_none", "recover_trainer", "remove_all_damage_counters", "remove_damage_counters", "retaliation", "retaliation_skipped",
     "retreat", "retreat_failed", "retreat_failure_cleared", "retrieve_energy", "return_energy_to_hand", "return_in_play_to_deck",
     "return_in_play_to_hand", "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",

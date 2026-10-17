@@ -181,6 +181,11 @@ QUESTIONS: dict[str, Question] = {
                  "弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を「好きな「色」にかえる」効果（ポリゴンの「テクスチャー1」「テクスチャー2」）で、弱点（抵抗力）を新しく"
                  "持たせるのか、何もしないのか（抵抗力なら引く数も）は、印刷の文面・kyuura の記録から決められない（英語版の「If the Defending Pokémon has a Weakness」は"
                  "持ち込まない）"),
+        # v0.49（docs/virtual-attacks-transformation-v0.49.md 5 章）
+        Question("transform_energy_count", "UNRESOLVED_TRANSFORM_ENERGY_COUNT", ("TE1",), 10,
+                 "メタモンの［へんしん］の「エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使うことができる」が、ワザに必要なエネルギーの"
+                 "支払いのほか、ワザの説明がついている「○」エネルギー（カード）を数える・トラッシュするときにも当てはまる（どの色としても数える・選べる）かは、"
+                 "印刷の文面・kyuura の記録から決められず、2 つの読み方で数える・選べるカードが変わる"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

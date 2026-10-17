@@ -12406,6 +12406,166 @@
       ],
       "issues": [],
       "notes": "v0.48 で加えた。きょだいかは SetMaxHpOnHeads（「おもて」なら自分の持続する効果 MaxHpSet。最大HP 80。バトル場をはなれる・進化で消える）。はたくは DamageIfSelfMaxHpSet（同じ効果がはたらいているときだけ基本となるダメージ 30）。メタモン（へんしん）とは別のカード"
+    },
+    "PMCG6-053": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのフーディン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2046.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "046/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.49 で加えた。［サイコリンク］は AttacksOfOwnTypePokemon（常にはたらく。自分の場のほかの「超」ポケモン（今有効なタイプ）の今の姿のカードのワザを、このカードのワザとして持つ。必要なエネルギー・説明の条件はそのまま。ねむり・マヒ・こんらん・かがくへんかガスで消える。VS1 で供給するかが変わるワザは選ぶと止める）。メガバーンは v0.41 の DamageThenLockSelf（使えないワザは AttackKey で探す）。フーディン（PMCG1-049）・わるいフーディン（PMCG4-035）とは別のカード"
+    },
+    "PMCG3-042": {
+      "basis": "kyuura_data",
+      "name_ja": "メタモン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3042.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "042/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.49 で加えた。ワザのないポケモン（写しでワザのないポケモンはこのカードだけ。［へんしん］が今の姿のカードのワザを持たせるので対応にした）。［へんしん］は TransformIntoDefender（常にはたらく。バトル場にいて、ねむり・マヒ・こんらん・かがくへんかガスでないとき、相手の対戦ポケモンのいちばん上のカードを今の姿にする。エネルギーカードはワザに必要なエネルギーの支払いでどの色としても使える（1 枚 1 つ）。説明が「○」エネルギーを数える・トラッシュするときの読み方は TE1、写した特殊能力は TF1、写す相手が「ばける」・ポケモンとして出したトレーナーカードのときは TF2。進化カードはつけられない）。英語版の「always has this Pokémon Power」などは持ち込まない。キョウのメタモン（PMCG6-072）とは別のカード"
+    },
+    "PMCG5-019": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのキュウコン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [
+        "ERR-BROCK-NINETALES"
+      ],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1020.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "020/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.49 で加えた。「ばける」は Shapeshift（宣言して使う。自分の番ごとに 1 回。手札の進化カードを PokemonInPlay.disguise にのせ、そのポケモンとしてあつかう（進化ではない）。RemoveDisguise でトラッシュしてもどす。ねむり・マヒ・こんらんでトラッシュしてもどる）。処理に使う文面は kyuura の印刷の文面（2000.02.14 版の基準）。kyuura の ERR-BROCK-NINETALES（『トレーナーズ』Vol.6・2000年5月の「のせた「進化カード」の特殊能力は、はたらかず、使うこともできない」）はこの基準のあとの変更なので持ち込まない（のせたカードの特殊能力ははたらき、使える。p.69 の解説の「手札から場に出したときに使える能力は、[ばける]で場に出したときには使えません」は同じ記録の notes の引用にしたがう）。おにびは説明文のない固定のダメージ"
+    },
+    "PMCG5-071": {
+      "basis": "kyuura_data",
+      "name_ja": "思い出させる",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1068.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "068/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.49 で加えた。トレーナー。RecallPreEvolutionAttacks（この番だけ、使ったときの対戦ポケモンに重なっている進化前のカードのワザを、このポケモンのワザとして使える。必要なエネルギー・説明の条件はそのまま。すぐ下のカードのワザは使え、2 進化のいちばん下のたねポケモンのワザは RC2、進化していない・進化前のカードにワザがないときは RC1、使ったあと対戦ポケモンが入れかわった・進化したら RC3、「ばける」の姿なら RC4）。英語版の「any attack from its Basic Pokémon card or any Evolution card attached to it」は持ち込まない"
     }
   }
 }

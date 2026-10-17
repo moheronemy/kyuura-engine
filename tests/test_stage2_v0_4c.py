@@ -518,7 +518,7 @@ class ThreeCardStructureTest(unittest.TestCase):
             with self.subTest(version=version):
                 with self.assertRaises(ValueError):
                     state_to_dict(state, format_version=version)
-        self.assertEqual(max(FORMAT_VERSIONS), 13)  # v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48
+        self.assertEqual(max(FORMAT_VERSIONS), 14)  # v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49
 
     def test_attach_energy_to_a_card_below_is_rejected(self):
         """場のポケモンはいちばん上のカードの uid で指す（v0.1 からのコマンド）。下の 2 枚は場のポケモンではない。"""

@@ -117,6 +117,9 @@ V0_47_WITH_TEXT = [AttackKey(card, index) for card, index in (
 V0_48_WITH_TEXT = [AttackKey(card, index) for card, index in (
     ("PMCG1-064", 0), ("PMCG1-064", 1), ("PMCG4-050", 0), ("PMCG4-050", 1), ("PMCG2-015", 0), ("PMCG6-050", 0), ("PMCG6-054", 0), ("PMCG6-054", 1),
     ("PMCG6-072", 0), ("PMCG6-072", 1))]
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）。説明文のあるワザはナツメのフーディンの「メガバーン」1 つ（タケシのキュウコンの「おにび」は説明文なし。
+# メタモンはワザなし）。処理に使う文面は kyuura の印刷の文面
+V0_49_WITH_TEXT = [AttackKey("PMCG6-053", 0)]
 
 
 class RecordingEffect(AttackEffect):
@@ -267,7 +270,8 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
-                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT))
+                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
+                                + V0_49_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -413,7 +417,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   オムナイト・カブト・プテラ・マンキー・コラッタはワザ 1 つ。docs/fossil-hidden-info-v0.47.md）
         # + 場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力を変える 7 枚のワザ 11（v0.48。モルフォン・ナツメのゴース・ナツメのゴーストはワザ 1 つ。
         #   docs/effective-pokemon-properties-v0.48.md）
-        self.assertEqual(len(keys), 549)
+        # + ナツメのフーディンの「メガバーン」・タケシのキュウコンの「おにび」（v0.49。メタモンはワザなし。docs/virtual-attacks-transformation-v0.49.md）
+        self.assertEqual(len(keys), 551)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -431,20 +436,22 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.46 で常にはたらく特殊能力 8 つ（PMCG2-027・PMCG2-040・PMCG2-047・PMCG4-007・PMCG4-010・PMCG4-041・PMCG5-063・PMCG6-010）を加えた
         # （docs/continuous-powers-v0.46.md）。v0.47 でマンキーの［スパイ］（PMCG2-028）・オムナイトの［おみとおし］（PMCG3-015）・カブトの［カブトアーマー］
         # （PMCG3-035）・プテラの［げんしのちから］（PMCG3-041）・ロケット団のコラッタの［わるふざけ］（PMCG4-045）を加えた（docs/fossil-hidden-info-v0.47.md）。
-        # v0.48 でモルフォンの［へんしょく］（PMCG2-015）・ナツメのゴースの［ガスのからだ］（PMCG6-049）を加えた（docs/effective-pokemon-properties-v0.48.md）
+        # v0.48 でモルフォンの［へんしょく］（PMCG2-015）・ナツメのゴースの［ガスのからだ］（PMCG6-049）を加えた（docs/effective-pokemon-properties-v0.48.md）。
+        # v0.49 でメタモンの［へんしん］（PMCG3-042）・タケシのキュウコンの「ばける」（PMCG5-019）・ナツメのフーディンの［サイコリンク］（PMCG6-053）を加えた
+        # （docs/virtual-attacks-transformation-v0.49.md）
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
                                   PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG2-015", 0), PowerKey("PMCG2-027", 0), PowerKey("PMCG2-028", 0),
                                   PowerKey("PMCG2-040", 0), PowerKey("PMCG2-047", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
                                   PowerKey("PMCG3-015", 0), PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0),
-                                  PowerKey("PMCG3-035", 0), PowerKey("PMCG3-041", 0), PowerKey("PMCG3-043", 0),
+                                  PowerKey("PMCG3-035", 0), PowerKey("PMCG3-041", 0), PowerKey("PMCG3-042", 0), PowerKey("PMCG3-043", 0),
                                   PowerKey("PMCG4-006", 0), PowerKey("PMCG4-007", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-010", 0),
                                   PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
                                   PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-041", 0), PowerKey("PMCG4-045", 0),
                                   PowerKey("PMCG4-052", 0),
                                   PowerKey("PMCG4-053", 0),
-                                  PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-019", 0), PowerKey("PMCG5-020", 0),
                                   PowerKey("PMCG5-040", 0), PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
-                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0),
+                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
                                   PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
 
 

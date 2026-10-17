@@ -101,6 +101,11 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 13 = 形式 12 の場のポケモンごとに `type_shift`（モルフォンの［へんしょく］で色を変えた記録。`{"color", "turn", "source_card", "source_card_id", "returned_to_bench"}`。なければ null）を加えたもの。記録は場をはなれるとポケモンごとなくなり、進化すると消える。変えた色が今有効か（VS1）は記録・番・場所・特殊状態・かがくへんかガスから求める値なので書かない。
 - 形式 1〜12 は、記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。v0.48 の持続する効果の種類（`weakness_change`・`resistance_change`・`max_hp_set`）は形式 8 の `persistent_effects` の値を加えただけ。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 13（`POKEMON_FIELDS_SINCE` に `type_shift`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.48 のカードを使わない対戦では記録はない）。次の新しい形式は 14。[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 7.4 節。
 
+### 4.7 書き出しの形式 14（v0.49）
+
+- 形式 14 = 形式 13 の場のポケモンごとに `disguise`（タケシのキュウコンの「ばける」でのせた進化カード。`{"card", "card_id"}`。なければ null）と、最上位の `recalls`（思い出させるの記録。`{"player", "turn", "pokemon_id", "card", "card_id", "trainer", "trainer_card_id"}` の並び。`card` は使ったときの対戦ポケモンのいちばん上のカード、`trainer` は思い出させるのカード。なければ `[]`）を加えたもの。持続する効果は、効果を与えたワザ・対象のワザがいちばん上のカードのものでないとき（［サイコリンク］・［へんしん］・「ばける」・思い出させるで使ったワザ、「ドわすれ」で選んだワザ）だけ `attack_card`・`target_attack_card`（ワザを印刷したカードの id）を書く。`power_uses_this_turn` には、のせたカードの特殊能力を使った記録（[場のポケモンの番号, 特殊能力の位置, そのカードの uid]）が入る。今の姿（［へんしん］・「ばける」）・今使えるワザは状態から求める値なので書かない（観測が書く）。
+- 形式 1〜13 は、のせたカード・記録・その項目のある効果・のせたカードの特殊能力の使用の記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 14（`POKEMON_FIELDS_SINCE` に `disguise`、`TOP_FIELDS_SINCE` に `recalls`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.49 のカードを使わない対戦ではのせたカード・記録はない）。次の新しい形式は 15。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 8 章。
+
 ## 5. ログ
 
 ```text

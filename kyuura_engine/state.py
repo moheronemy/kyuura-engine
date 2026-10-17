@@ -158,6 +158,12 @@ class SpecialConditions:
         return isinstance(self.exclusive, Confused)
 
 
+def _check_attack_card(card_id: Any) -> None:
+    """v0.49: 持続する効果の「ワザを印刷したカードの id」（``attack_card``・``target_attack_card``）は空でない文字列か None。"""
+    if card_id is not None and (type(card_id) is not str or not card_id):
+        raise ValueError(f"ワザを印刷したカードの id は空でない文字列か None（{card_id!r}）")
+
+
 @dataclass(frozen=True)
 class PreventDamage:
     """ワザによる「持続する効果」（v0.4b。p.322「11 特殊状態以外の「持続する効果」」）のうち、「次の相手の番、このカードは
@@ -240,10 +246,14 @@ class Retaliation:
     basis: str = RETALIATION_FIXED
     multiplier: int = 1  # v0.45: 受けたダメージの何倍を与えるか（クロスカウンターは 2）
     on_heads: bool = False  # v0.45: はたらくときにコインを投げ、「おもて」のときだけ与える（クロスカウンター）
+    # v0.49（docs/virtual-attacks-transformation-v0.49.md 3 章）: 効果を与えたワザを印刷したカードの id（``attack_index`` はこのカードのワザの位置）。None なら
+    # ``source_card`` のカード（v0.48 までと同じ）。ワザの出どころがいちばん上のカードでないとき（へんしん・ばける・サイコリンク・思い出させる）だけ書く
+    attack_card: str | None = None
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
     on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
     def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
         if type(self.multiplier) is not int or self.multiplier < 1 or type(self.on_heads) is not bool:
             raise ValueError(f"倍数は 1 以上の整数、コインの条件は真偽値（{self.multiplier!r}・{self.on_heads!r}）")
         if self.basis == RETALIATION_FIXED:
@@ -337,10 +347,13 @@ class NextTurnAttackDamage:
     amount: int
     operation: str = "set"
     includes_self_damage: bool = False
+    # v0.49: 効果を与えたワザ・ダメージが変わるワザを印刷したカードの id（どちらも同じカードのワザ）。None なら ``source_card`` のカード（v0.48 までと同じ）
+    attack_card: str | None = None
     turns_until_active: ClassVar[int] = 2  # 次の自分の番
     on_opponent: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
         if self.operation not in NEXT_TURN_DAMAGE_KINDS:
             raise ValueError(f"次の自分の番のワザのダメージの変え方は {tuple(NEXT_TURN_DAMAGE_KINDS)} のどれか（{self.operation!r}）")
         if self.operation == NEXT_TURN_MULTIPLY and (type(self.amount) is not int or self.amount < 2):
@@ -516,9 +529,15 @@ class CannotUseOwnAttack:
     active_turn: int
     attack_index: int
     target_attack_index: int
+    # v0.49: 効果を与えたワザ・使えなくなるワザを印刷したカードの id（同じカードのワザ）。None なら ``source_card`` のカード（v0.48 までと同じ）。使えなくなるワザは
+    # (このカード id, ``target_attack_index``) の ``AttackKey`` で探す（ワザの一覧の位置・名前では探さない。``persistent.attack_locked``）
+    attack_card: str | None = None
     kind: ClassVar[str] = "cannot_use_own_attack"
     turns_until_active: ClassVar[int] = 2  # 次の自分の番
     on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
 
 
 @dataclass(frozen=True)
@@ -542,9 +561,17 @@ class CannotUseAttack:
     active_turn: int
     attack_index: int
     target_attack_index: int
+    # v0.49: 効果を与えたワザ（「ドわすれ」）を印刷したカードの id（None なら ``source_card`` のカード）と、使えなくなるワザを印刷したカードの id（None なら受けている
+    # ポケモンのいちばん上のカード。v0.48 までと同じ）。受けているポケモンのワザの一覧（サイコリンクなど）から選んだワザを (カード id, 位置) で持つ
+    attack_card: str | None = None
+    target_attack_card: str | None = None
     kind: ClassVar[str] = "cannot_use_attack"
     turns_until_active: ClassVar[int] = 1
     on_opponent: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        _check_attack_card(self.target_attack_card)
 
 
 @dataclass(frozen=True)
@@ -749,6 +776,25 @@ class TrainerUseLock:
     expires_turn: int
 
 
+@dataclass(frozen=True)
+class RecallEffect:
+    """トレーナー「思い出させる」（PMCG5-071）の「あなたの対戦ポケモンが進化カードなら、この番だけ、進化前に持っていたワザを自分のワザとして使ってよい。」の、
+    今の番の記録（v0.49。docs/virtual-attacks-transformation-v0.49.md 6 章）。
+
+    - ``player``: 使ったプレイヤー（番のプレイヤー）。``turn``: 使った番（その番の終わりに消す）
+    - ``pokemon_id``・``card``: 使ったときの対戦ポケモンの番号といちばん上のカード（進化前のワザを決める重なりは、このときのもの）
+    - ``trainer``: 使った「思い出させる」のカードの uid（ログ ``recall`` との対応）
+    使ったあとに対戦ポケモンが入れかわった・進化した・姿が変わったときに、進化前のワザを使えるかは決まらない（RC3。``effects.available_attacks`` が選べるワザに
+    止める理由を付ける）。場のポケモンではなくプレイヤーの番の記録なので、最上位の ``GameState.recalls`` に持つ。
+    """
+
+    player: int
+    turn: int
+    pokemon_id: int
+    card: int
+    trainer: int
+
+
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
@@ -821,6 +867,11 @@ class PokemonInPlay:
     evolution_permission_turn: int | None = None
     # v0.48（docs/effective-pokemon-properties-v0.48.md 4 章）: 特殊能力で色（タイプ）を変えた記録（モルフォンの［へんしょく］。``TypeShift``）。なければ None
     type_shift: TypeShift | None = None
+    # v0.49（docs/virtual-attacks-transformation-v0.49.md 4 章）: タケシのキュウコンの「ばける」で、このカードの上にのせた手札の進化カードの uid。なければ None。
+    # 進化の重なり（``evolution_stack``）とは別の重なりで、``card``（いちばん上のポケモンのカード。このポケモンそのもの）は変えない。のせたカードのポケモンとして
+    # あつかう（今の姿。``effects.current_form``）が、進化・退化ではない（場のポケモンの番号・場に出た番・進化した番・持続する効果・特殊状態は変えない）。
+    # トラッシュしてもどす（``RemoveDisguise``）・ねむり・マヒ・こんらんになる（のせたカードはトラッシュされる）と None にもどす
+    disguise: int | None = None
 
     @property
     def current_form_turn(self) -> int:
@@ -828,8 +879,11 @@ class PokemonInPlay:
         return self.played_turn if self.evolved_turn is None else self.evolved_turn
 
     def cards(self) -> tuple[int, ...]:
-        """このポケモンを作っているポケモンのカード（下から順。いちばん上が ``card``）。ついているカードは含まない。"""
-        return (*self.evolution_stack, self.card)
+        """このポケモンを作っているポケモンのカード（下から順。``card`` の上に、v0.49 の「ばける」でのせた進化カード（``disguise``）があれば最後）。ついている
+        カード（エネルギー・トレーナー）は含まない。きぜつ・山札や手札にもどすときは、これをいっしょに動かす。"""
+        if self.disguise is None:
+            return (*self.evolution_stack, self.card)
+        return (*self.evolution_stack, self.card, self.disguise)
 
     def clone(self) -> PokemonInPlay:
         return PokemonInPlay(
@@ -847,6 +901,7 @@ class PokemonInPlay:
             self.attacks_used_once,
             self.evolution_permission_turn,
             self.type_shift,
+            self.disguise,
         )
 
 
@@ -1008,6 +1063,9 @@ class GameState:
     # v0.47（docs/fossil-hidden-info-v0.47.md 5 章）: プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止（``TrainerUseLock`` の並び。与えた順）。消える番の
     # 終わりに消す（``procedures.expire_at_turn_end``。ログ ``trainer_lock_removed``）。書き出しは形式 12 だけが表せる（空でなければ形式 1〜11 は ``ValueError``）
     trainer_locks: tuple[TrainerUseLock, ...] = ()
+    # v0.49（docs/virtual-attacks-transformation-v0.49.md 6 章）: この番に使った「思い出させる」の記録（``RecallEffect`` の並び。使った順）。番の終わりに消す
+    # （``procedures.expire_at_turn_end``）。書き出しは形式 14 だけが表せる（空でなければ形式 1〜13 は ``ValueError``）
+    recalls: tuple[RecallEffect, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

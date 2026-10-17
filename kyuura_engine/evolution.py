@@ -82,6 +82,11 @@ def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDef
     prevented = evolution_prevented(state)
     if prevented is not None:
         return prevented
+    # v0.49: カードの説明が進化を禁じている（メタモンの［へんしん］の「このカードに進化カードをつけることはできない」・タケシのキュウコンの「ばける」の「(ただし
+    # 「進化・退化」はできない)」）。どの入口（手札・山札から重ねるワザと特殊能力）でも同じ。``EffectRegistry.evolution_forbidden``
+    forbidden = state.effects.evolution_forbidden(state, target)
+    if forbidden is not None:
+        return forbidden
     if state.turn_number <= 2:
         # 番は先攻から交互に進むので、1 番は先攻の、2 番は後攻の最初の番（p.309・p.310）
         return "FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310）"

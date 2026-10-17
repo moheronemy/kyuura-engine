@@ -836,7 +836,7 @@ class SaveRestoreTest(unittest.TestCase):
         # v0.10 は形式 9 のまま（「はんげき」の状態の項目を加えていない）。v0.31 で形式 10（power_uses_this_turn・energy_burn）を加えたが、
         # 「はんげき」の項目ではない（形式 9 の書き出しは変わらない）
         # v0.44 で形式 11（attacks_used_once・evolution_permission_turn）を加えた。これも「はんげき」の項目ではない
-        self.assertEqual(max(FORMAT_VERSIONS), 13)  # 12 は v0.47（trainer_locks）、13 は v0.48（type_shift。どちらもはんげきの項目ではない）
+        self.assertEqual(max(FORMAT_VERSIONS), 14)  # 12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls。どれもはんげきの項目ではない）
         new = apply_command(board(HITMONCHAN_JAB), UseAttack(0, 0))
         self.assertEqual(written(new)["format_version"], 9)
         self.assertEqual(state_to_dict(new, format_version=10), {**written(new), "format_version": 10, "power_uses_this_turn": [],
@@ -855,8 +855,15 @@ class SaveRestoreTest(unittest.TestCase):
             for pokemon in [player["active"], *player["bench"]]:
                 self.assertIsNone(pokemon.pop("type_shift"))
         self.assertEqual(thirteen, {**state_to_dict(new, format_version=12), "format_version": 13})
+        # 形式 14（v0.49）は場のポケモンごとに disguise（のせたカードなし = None）と、最上位の recalls（記録なし = []）を加えただけ
+        fourteen = state_to_dict(new, format_version=14)
+        self.assertEqual(fourteen.pop("recalls"), [])
+        for player in fourteen["players"]:
+            for pokemon in [player["active"], *player["bench"]]:
+                self.assertIsNone(pokemon.pop("disguise"))
+        self.assertEqual(fourteen, {**state_to_dict(new, format_version=13), "format_version": 14})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=14)
+            state_to_dict(new, format_version=15)
 
 
 if __name__ == "__main__":

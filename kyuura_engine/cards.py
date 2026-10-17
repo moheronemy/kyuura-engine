@@ -284,7 +284,9 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         resistance_value = r["value"]
     parsed = tuple(_parse_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
     attacks = tuple(_annotate_attack(record["id"], attack, effects, parsed) for attack in parsed)
-    if not attacks:
+    if not attacks and not any(power.supported and getattr(effects.power_effect(record["id"], power), "supplies_attacks", False) for power in powers):
+        # v0.49: ワザのないポケモンは、今の姿のワザを持たせる特殊能力（メタモンの［へんしん］。``PowerEffect.supplies_attacks``）が登録されているときだけ対応にする
+        # （写しでワザのないポケモンはメタモンだけ）
         reasons.append("ワザがない")
     for attack in attacks:
         if not attack.supported:
@@ -395,6 +397,7 @@ POOL_KEYS = (
     "pool_v0_46",  # v0.46（常にはたらく特殊能力を持つ 8 枚と、関連する 3 枚。docs/continuous-powers-v0.46.md）
     "pool_v0_47",  # v0.47（なにかの化石・ピッピ人形と化石のポケモン、見えない情報を扱う 4 枚、トレーナーの使用を禁止する 2 枚。docs/fossil-hidden-info-v0.47.md）
     "pool_v0_48",  # v0.48（ポリゴン 2 枚・モルフォン・ナツメのゴース／ゴースト／ゲンガー・キョウのメタモン。場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力）
+    "pool_v0_49",  # v0.49（ナツメのフーディン・メタモン・タケシのキュウコン・思い出させる。ワザの出どころと今の姿）
 )
 
 

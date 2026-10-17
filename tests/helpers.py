@@ -451,6 +451,13 @@ SABRINAS_HAUNTER = "PMCG6-050"  # ナツメのゴースト（闇からの挑戦�
 SABRINAS_GENGAR = "PMCG6-054"  # ナツメのゲンガー（闇からの挑戦。ナツメのゴーストから進化する 2 進化。HP 80・超・弱点なし・抵抗力 闘 -30・にげる 1。ダメージぞうふく（超）・やみのこえ（超超超）40）
 KOGAS_DITTO = "PMCG6-072"  # キョウのメタモン（闇からの挑戦。HP 40・無色・弱点 闘・抵抗力 超 -30・にげる 1。きょだいか（無）・はたく（無）10）
 V0_48_POKEMON = (PORYGON, ROCKET_PORYGON, VENOMOTH, SABRINAS_GASTLY, SABRINAS_HAUNTER, SABRINAS_GENGAR, KOGAS_DITTO)  # 写しの組 pool_v0_48 の並び
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）。ワザの出どころ・今の姿の共通の処理で加えた 4 枚（どれも kyuura データの採用）
+SABRINAS_ALAKAZAM = "PMCG6-053"  # ナツメのフーディン（闇からの挑戦。ナツメのユンゲラーから進化する 2 進化。HP 80・超・弱点 超・にげる 3。［サイコリンク］・メガバーン（超無無無）60）
+DITTO = "PMCG3-042"  # メタモン（化石の秘密。HP 50・無色・弱点 闘・抵抗力 超 -30・にげる 1。［へんしん］。ワザなし）。KOGAS_DITTO（PMCG6-072）と別のカード
+BROCKS_NINETALES = "PMCG5-019"  # タケシのキュウコン（リーダーズスタジアム。タケシのロコン（PMCG5-018）から進化。HP 70・炎・弱点 水・にげる 1。「ばける」・おにび（炎炎）30）
+RECALL = "PMCG5-071"  # 思い出させる（リーダーズスタジアム。トレーナー）
+V0_49_POKEMON = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES)
+V0_49_CARDS = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES, RECALL)  # 写しの組 pool_v0_49 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー

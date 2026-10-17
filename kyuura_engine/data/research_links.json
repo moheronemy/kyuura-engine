@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 65,
-    "engine_stop_codes": 64,
+    "engine_unresolved_rulings": 76,
+    "engine_stop_codes": 75,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -792,6 +792,127 @@
           "version": "v0.48",
           "document": "docs/effective-pokemon-properties-v0.48.md",
           "ruling_id": "MH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_COPIED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TF2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_SUPPRESSED": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_AGAIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VIRTUAL_ONCE_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "VA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_EARLIER_STAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_TARGET_CHANGED": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_FORM": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC4"
         }
       ],
       "kyuura_issue": null,
@@ -1676,7 +1797,11 @@
       "PMCG6-054/attack/0",
       "PMCG6-054/attack/1",
       "PMCG6-072/attack/0",
-      "PMCG6-072/attack/1"
+      "PMCG6-072/attack/1",
+      "PMCG6-053/attack/0",
+      "PMCG6-053/power/0",
+      "PMCG3-042/power/0",
+      "PMCG5-019/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

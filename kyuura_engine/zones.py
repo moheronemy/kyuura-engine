@@ -64,8 +64,9 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.deck.extend(cards)
+    disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, cards=cards,
-                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage)
+                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
     return cards
 
 
@@ -96,8 +97,9 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.hand.extend(cards)
     source = {"effect": effect} if effect is not None else {"power": power}
+    disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
-                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage)
+                    evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
     return cards
 
 
@@ -516,4 +518,43 @@ def look_at_card(state: GameState, viewer: int, owner: int, zone: str, position:
     card = cards[position]
     source = {"effect": effect} if effect is not None else {"power": power}
     state.add_event("look_at_card", player=viewer, owner=owner, zone=zone, position=position, card=card, **source)
+    return card
+
+
+def place_disguise(state: GameState, player: int, pokemon: PokemonInPlay, card: int, *, power: str) -> None:
+    """自分の手札の進化カード ``card`` を、同じ uid のまま、自分の場のポケモン ``pokemon`` の上にのせる（v0.49。タケシのキュウコンの「ばける」の「手札から「進化カード」を
+    1枚選び、このカードの上にのせる」。docs/virtual-attacks-transformation-v0.49.md 4 章）。進化の重なり（``evolution_stack``）ではなく ``PokemonInPlay.disguise`` に置き、
+    いちばん上のポケモンのカード（``card``）・場のポケモンの番号・場に出た番・進化した番は変えない（進化・退化ではない）。ログ ``disguise``（``player``・``pokemon``・
+    ``pokemon_id``・``card``（のせたカード。手札から出したカードで公開）・``power``）。
+
+    のせてよいかの確認は呼ぶ側が済ませる。手札にない・持ち主が違う・進化カードでない・もうのせている・場にいない（確認の漏れ）なら ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    on_field = p.active is pokemon or any(b is pokemon for b in p.bench)
+    if (card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_evolution_pokemon or pokemon.disguise is not None
+            or not on_field):
+        raise RuntimeError(f"プレイヤー {player} のカード {card} を場のポケモン {pokemon.pokemon_id} にのせられない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(card)
+    pokemon.disguise = card
+    state.add_event("disguise", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, power=power)
+
+
+DISGUISE_REVERT = "revert"  # 自分の番にトラッシュしてもどした（``RemoveDisguise``）
+DISGUISE_SPECIAL_CONDITION = "special_condition"  # ねむり・マヒ・こんらんになった（「「タケシのキュウコン」にもどる。(のせてあった「進化カード」はトラッシュされる)」）
+
+
+def remove_disguise(state: GameState, player: int, pokemon: PokemonInPlay, *, reason: str, effect: str | None = None) -> int:
+    """自分の場のポケモン ``pokemon`` の上に「ばける」でのせた進化カードを、持ち主のトラッシュに置き、のせる前の姿にもどす（v0.49）。``reason`` は
+    ``DISGUISE_REVERT``・``DISGUISE_SPECIAL_CONDITION``。ログ ``disguise_removed``（``player``・``pokemon``・``pokemon_id``・``card``・``reason``、特殊状態にした効果が
+    あれば ``effect``）。場のポケモンの番号・ダメージ・エネルギー・ついているトレーナー・持続する効果・特殊状態は変えない（進化・退化・ベンチにもどることではない）。
+
+    のせたカードがない・場にいない（確認の漏れ）なら ``RuntimeError``（状態を変える前）。トラッシュしたカードを返す。"""
+    p = state.players[player]
+    card = pokemon.disguise
+    on_field = p.active is pokemon or any(b is pokemon for b in p.bench)
+    if card is None or not on_field or state.cards[card].owner != player or reason not in (DISGUISE_REVERT, DISGUISE_SPECIAL_CONDITION):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} の「ばける」でのせたカードをトラッシュできない（確認の漏れ。エンジンの不具合）")
+    pokemon.disguise = None
+    p.discard.append(card)
+    extra = {} if effect is None else {"effect": effect}
+    state.add_event("disguise_removed", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, reason=reason, **extra)
     return card

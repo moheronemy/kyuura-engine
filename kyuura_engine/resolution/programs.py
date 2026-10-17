@@ -207,6 +207,10 @@ class AttackRun:
                                         E.ko_prevention_attack_effect_error(target.pokemon_id, opponent_effect_elements(self.program)))
             break
 
+    def _knocked_pid(self, pid: int) -> bool:
+        located = self.state.find_pokemon(pid)
+        return located is not None and located[1].damage >= E.max_hp(self.state, located[1])
+
     def suspend(self, *, kind: str, player: int, options, extra: tuple = (), min_choices: int = 1, max_choices: int = 1,
                 carry: bool = False) -> None:
         """決定を出して止まる。v0.31: 決定をまたいで要素が使う値を続きの情報に運ぶ: ワザ全体のコインの結果（``coins``。あるときだけ）・相手の
@@ -241,6 +245,14 @@ class AttackRun:
                 frame += (("pending", tuple((d.instance.owner, d.instance.pokemon_id, d.instance.definition.name, d.received)
                                             for d in self.fs.pending)),)
             extra += (("frame", frame),)
+        else:
+            # v0.49: ``carry`` でない決定でも、こんじょうの写しのうち、もう HP 以上になったポケモンのもの（きぜつの判定で使う）は運ぶ（``frame`` の ``guts``
+            # だけ）。v0.48 までは運ばず、ダメージのあとにエネルギーをトラッシュする決定を出すワザ（わるいリザードンの「れんぞくファイヤーボール」。v0.49 で
+            # 「ばける」・［へんしん］からも使える）で、HP 以上になったサカキのカイリキーのきぜつの判定が内部エラーになっていた。HP 以上のポケモンの写しが
+            # ないときは v0.48 までと同じ形
+            knocked = tuple(sorted((pid, int(value)) for pid, value in self.res.ko_prevention_able.items() if self._knocked_pid(pid)))
+            if knocked:
+                extra += (("frame", (("guts", knocked),)),)
         # v0.38: ワザを使ったポケモンは枠の番号で指す（ワザの効果で場をはなれたあとの決定でも同じ。キョウのポッポの「でんれい」。場にいれば
         # v0.37 までの ``attacker.pokemon_id`` と同じ値）
         cont = codec.AttackContinuation((self.player, self.fs.frame.source_pid, self.declared.card_id, self.declared.attack_index), kind, extra)
@@ -384,6 +396,14 @@ class HeadsOwnCounters:
         return counters * self.per if flips.results[0] is HEADS else 0
 
 
+def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType) -> None:
+    """v0.49（TE1）: ワザの説明が ``pokemon`` についている ``energy_type`` のエネルギー（カード）を数える・トラッシュするとき、［へんしん］の「どの色のエネルギー
+    としても使うことができる」が当てはまるかで、数える・選べるカードが変わるなら止める（``E.energy_type_readings`` が 2 つの読み方を返すとき）。［へんしん］が
+    はたらいていない・ついているエネルギーがどれも ``energy_type`` なら何もしない。必要なエネルギーの支払い（``E.attack_cost_payable``）とは別の問い。"""
+    if len(E.energy_type_readings(run.state, pokemon, energy_type)) > 1:
+        raise run.res.question("transform_energy_count", f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー")
+
+
 @dataclass(frozen=True)
 class ExtraEnergy:
     energy_type: EnergyType
@@ -393,6 +413,7 @@ class ExtraEnergy:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         attacker = run.attacker()
+        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
         attached = sum(1 for uid in attacker.energy if run.state.card_def(uid).provides is self.energy_type)
         return run.attack.damage + min(max(0, attached - len(run.attack.cost)), self.max_extra) * self.per
 
@@ -508,6 +529,7 @@ class Coin(Element):
     def run(self, run: AttackRun) -> bool:
         count = self.count
         if self.per_attached is not None:
+            transform_energy_question(run, run.attacker(), self.per_attached)  # v0.49: TE1
             count = len(E.attached_basic_energy(run.state, run.attacker(), self.per_attached))
         decided = [element for element in run.program if element.coin_dependent(self.name)]
         if count and decided and not any(element.has_target(run) for element in decided):
@@ -629,7 +651,7 @@ class Damage(Element):
         if self.names is None:
             return True
         _, receiver = receiver_of_target(run, self.target)
-        return run.state.card_def(receiver.card).name_ja in self.names
+        return E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
@@ -1014,6 +1036,12 @@ class Drain(Element):
         return False
 
 
+def effect_attack_card_of(run: AttackRun, attacker: PokemonInPlay) -> str | None:
+    """持続する効果を与えるワザを印刷したカードの id（v0.49。効果の ``attack_card``）。ワザの出どころがワザを使ったポケモンのいちばん上のカードと同じカードの id なら
+    None（v0.48 までの効果と同じ形）。違う（［へんしん］・「ばける」・［サイコリンク］・「思い出させる」）ときだけ、そのカードの id。"""
+    return None if run.key.card_id == run.state.cards[attacker.card].card_id else run.key.card_id
+
+
 @dataclass(frozen=True)
 class SelfRetaliation(Element):
     """自分に「次の相手の番、相手のワザのダメージを受けたら返す」持続する効果（ほのおのかべ: ``amount``、こうらがえし: None = 受けたダメージ）。"""
@@ -1033,7 +1061,7 @@ class SelfRetaliation(Element):
         basis = RETALIATION_FIXED if self.amount is not None else RETALIATION_RECEIVED
         effect = Retaliation(source_card=attacker.card, source_player=run.player, created_turn=run.state.turn_number,
                              active_turn=run.state.turn_number + 1, attack_index=run.key.attack_index, amount=self.amount, basis=basis,
-                             multiplier=self.multiplier, on_heads=self.on_heads)
+                             multiplier=self.multiplier, on_heads=self.on_heads, attack_card=effect_attack_card_of(run, attacker))
         if run.knocked_out(attacker):
             run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
                                 persistent_effect=effect.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
@@ -1083,7 +1111,7 @@ class SelfNextTurnAttackDamage(Element):
         effect = NextTurnAttackDamage(source_card=attacker.card, source_player=run.player, created_turn=turn,
                                       active_turn=turn + NextTurnAttackDamage.turns_until_active, attack_index=run.key.attack_index,
                                       target_attack_index=self.target_attack_index, amount=self.amount, operation=self.operation,
-                                      includes_self_damage=self.includes_self_damage)
+                                      includes_self_damage=self.includes_self_damage, attack_card=effect_attack_card_of(run, attacker))
         add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
         return False
 
@@ -1147,6 +1175,7 @@ class DiscardOwnEnergy(Element):
         pokemon = run.attacker() if pokemon is None else pokemon
         if self.energy_type is None:
             return [uid for uid in pokemon.energy if run.state.card_def(uid).category == "energy"]
+        transform_energy_question(run, pokemon, self.energy_type)  # v0.49: TE1（トラッシュするカードの選べるもの）
         return E.attached_basic_energy(run.state, pokemon, self.energy_type)
 
     def _needed(self, run: AttackRun) -> int | None:
@@ -1419,6 +1448,7 @@ class ExtraEnergyMixed:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1
         types = run.state.energy_types(run.attacker())
         have = types.count(self.energy_type)
         others = len(types) - have
@@ -1461,7 +1491,7 @@ class BenchDamage(Element):
     def targets(self, run: AttackRun) -> list[PokemonInPlay]:
         side = run.player if self.own else 1 - run.player
         bench = run.state.players[side].bench
-        named = [p for p in bench if self.names is None or run.state.card_def(p.card).name_ja in self.names]
+        named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
         if self.pokemon_type is None and not self.same_type_as_opponent_active and self.exclude_type is None:
             return named
         # v0.48: タイプ（色）は今有効な色（``effects.type_readings``。［へんしょく］）。読み方（VS1）が 2 つあり、選ばれる控えが変わるなら止める
@@ -2043,6 +2073,7 @@ class OptionalDiscardBenchDamage(Element):
             run.state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 element="discard_energy", reason=E.EFFECT_TARGET_KNOCKED_OUT)
             return False
+        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
         candidates = E.attached_basic_energy(run.state, attacker, self.energy_type)
         if not candidates:
             return False
@@ -2114,24 +2145,35 @@ class CopyOpponentAttack(Element):
         if self.gate is not None and not run.coin_is(self.gate):
             return False
         source = run.opponent_active()
-        definition = run.state.card_def(source.card)
-        if not definition.attacks:
+        # v0.49: 相手の対戦ポケモンが今持つワザ（``E.held_attack_keys``。今の姿のカード（［へんしん］・「ばける」）・［サイコリンク］で持つワザを含む。ワザごとに 1 つ）。
+        # 並びがいちばん上のカードのワザと同じなら、決定の形は v0.48 と同じ（選べるものはワザの位置・``copy_from``）。違えば、選べるものは並びの位置で、
+        # ``copy_attacks`` に (カードの id, ワザの位置) の並びを書く
+        entries, legacy = E.held_attack_keys(run.state, source)
+        if not entries:
             return False
-        statuses = {attack.index: self._status(run, definition, attack) for attack in definition.attacks}
-        options = [index for index, status in statuses.items() if status is None or status[0] != ILLEGAL]
+        attacks = [E.attack_of(run.state, key) for key, _ in entries]
+        statuses = {i: self._status(run, run.state.definitions[key.card_id], attacks[i]) for i, (key, _) in enumerate(entries)}
+        held = {i: problem for i, (_, problem) in enumerate(entries) if problem is not None and statuses[i] is None}  # VS1（持つかが読み方で変わる）
+        label = run.state.card_def(source.card).id if legacy else E.form_def(run.state, source).id
+        options = [i for i, status in statuses.items() if status is None or status[0] != ILLEGAL]
         if not any(status is None for status in statuses.values()):
-            detail = "・".join(f"{definition.attacks[i].name_ja}: {status[1]}" for i, status in statuses.items())
+            detail = "・".join(f"{attacks[i].name_ja}: {status[1]}" for i, status in statuses.items())
             if any(status[0] == UNSUPPORTED for status in statuses.values()):
                 # 処理できるワザがなく、そのうちエンジンが対応していないワザがある（ルールの問いではない）
-                raise run.res.question("copied_attack_unsupported", f"{definition.id}（{detail}）")
-            raise run.res.question("copied_attack", f"{definition.id}（{detail}）")
+                raise run.res.question("copied_attack_unsupported", f"{label}（{detail}）")
+            raise run.res.question("copied_attack", f"{label}（{detail}）")
         unresolved = tuple(i for i in options if statuses[i] is not None and statuses[i][0] == UNRESOLVED)
         unsupported = tuple(i for i in options if statuses[i] is not None and statuses[i][0] == UNSUPPORTED)
-        extra: tuple = (("copy_from", definition.id),)
-        if unresolved:
-            reason = "・".join(f"{definition.attacks[i].name_ja}: {statuses[i][1]}" for i in unresolved)
-            extra += (("unresolved_choices", unresolved), ("unresolved_code", "UNRESOLVED_COPIED_ATTACK"),
+        if legacy:
+            extra: tuple = (("copy_from", label),)
+        else:
+            extra = (("copy_attacks", tuple((key.card_id, key.attack_index) for key, _ in entries)),)
+        if unresolved or held:
+            reason = "・".join(f"{attacks[i].name_ja}: {statuses[i][1]}" for i in unresolved)
+            extra += (("unresolved_choices", tuple(sorted(unresolved + tuple(held)))), ("unresolved_code", "UNRESOLVED_COPIED_ATTACK"),
                       ("unresolved_reason", f"相手のワザを自分のワザとして使うとき、処理が決められない（HC9。{reason}）"))
+        if held:
+            extra += (("unresolved_detail", tuple((i, problem[0], f"相手のワザ「{attacks[i].name_ja}」: {problem[1]}") for i, problem in sorted(held.items()))),)
         if unsupported:
             extra += (("unsupported_choices", unsupported),)
         run.suspend(kind=SELECT_ATTACK, player=run.player, options=options, extra=extra)
@@ -2139,7 +2181,10 @@ class CopyOpponentAttack(Element):
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         index = choices[0]
-        card_id = run.carried["copy_from"]
+        if "copy_attacks" in run.carried:
+            card_id, index = run.carried["copy_attacks"][index]  # v0.49: 選べるものは並びの位置
+        else:
+            card_id = run.carried["copy_from"]
         definition = run.state.definitions[card_id]
         attack = definition.attacks[index]
         status = self._status(run, definition, attack)
@@ -2363,6 +2408,7 @@ class PlusHeadsPerAttachedType:
             if not run.state.card_def(uid).is_basic_energy:
                 # 2 つ以上のエネルギーを出す特殊エネルギーを加えるときは、数え方（カードの枚数ではなくエネルギーの数）を確かめる
                 raise RuntimeError(f"ウォーターパンチのエネルギーの数え方を確かめていないエネルギーカード {uid}（エンジンの不具合）")
+        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
         return sum(1 for kind in run.state.energy_types(attacker) if kind is self.energy_type)
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
@@ -2408,7 +2454,8 @@ class SelfAttackLock(Element):
         turn = run.state.turn_number
         index = run.key.attack_index
         effect = CannotUseOwnAttack(source_card=attacker.card, source_player=run.player, created_turn=turn,
-                                    active_turn=turn + CannotUseOwnAttack.turns_until_active, attack_index=index, target_attack_index=index)
+                                    active_turn=turn + CannotUseOwnAttack.turns_until_active, attack_index=index, target_attack_index=index,
+                                    attack_card=effect_attack_card_of(run, attacker))
         add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), target_attack_index=index)
         return False
 
@@ -2437,11 +2484,22 @@ class OpponentAttackLock(Element):
             return False
         if not reaches(run.res, run.fs, opponent, target, E.ATTACK_LOCK_ELEMENT):
             return False
-        attacks = run.state.card_def(target.card).attacks
-        if not attacks:
-            raise RuntimeError(f"ワザのない相手の対戦ポケモン {target.pokemon_id}（今の写しにはない。エンジンの不具合）")
-        run.suspend(kind=SELECT_OPPONENT_ATTACK, player=run.player, options=tuple(range(len(attacks))), extra=(("target", target.pokemon_id),),
-                    carry=True)
+        # v0.49: 選べるものは相手の対戦ポケモンが今持つワザ（``E.held_attack_keys``。今の姿のカード・［サイコリンク］で持つワザを含む。ワザごとに 1 つ）。並びが
+        # いちばん上のカードのワザと同じなら v0.48 と同じ形（選べるものはワザの位置）。違えば選べるものは並びの位置で、``lock_attacks`` に (カードの id, 位置) を
+        # 書く。持つかが読み方で変わるワザ（VS1）は、選ぶと止める。ワザを持たない相手の対戦ポケモン（v0.47 のポケモンとして出したトレーナーカード）には、
+        # 選ぶワザがないので何もしない（p.309。v0.31 の「ゆびをふる」と同じ読み方。v0.48 までは内部エラーだった）
+        entries, legacy = E.held_attack_keys(run.state, target)
+        if not entries:
+            return False
+        extra: tuple = (("target", target.pokemon_id),)
+        if not legacy:
+            extra += (("lock_attacks", tuple((key.card_id, key.attack_index) for key, _ in entries)),)
+        held = [(i, problem) for i, (key, problem) in enumerate(entries) if problem is not None]
+        if held:
+            extra += (("unresolved_choices", tuple(i for i, _ in held)), ("unresolved_code", held[0][1][0]), ("unresolved_reason", held[0][1][1]),
+                      ("unresolved_detail", tuple((i, problem[0], f"相手のワザ「{E.attack_of(run.state, entries[i][0]).name_ja}」: {problem[1]}")
+                                                  for i, problem in held)))
+        run.suspend(kind=SELECT_OPPONENT_ATTACK, player=run.player, options=tuple(range(len(entries))), extra=extra, carry=True)
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
@@ -2449,12 +2507,24 @@ class OpponentAttackLock(Element):
         target = run.opponent_active()
         if target.pokemon_id != run.carried["target"] or choices[0] not in decision.options:
             raise RuntimeError(f"ドわすれの決定の答え {choices!r} が、相手の対戦ポケモンのワザではない（エンジンの不具合）")
+        if "lock_attacks" in run.carried:
+            card_id, index = run.carried["lock_attacks"][choices[0]]
+        else:
+            card_id, index = run.state.cards[target.card].card_id, choices[0]
         attacker = run.attacker()
         turn = run.state.turn_number
+        # v0.49: 使えなくなるワザを印刷したカードの id（``target_attack_card``）は、受けるポケモンのいちばん上のカードと違うときだけ書く（v0.48 までの効果と同じ形）。
+        # 効果を与えたワザ（「ドわすれ」）の出どころがワザを使ったポケモンのいちばん上のカードと違うとき（［サイコリンク］など）は ``attack_card``
+        target_card = card_id if card_id != run.state.cards[target.card].card_id else None
         effect = CannotUseAttack(source_card=attacker.card, source_player=run.player, created_turn=turn,
                                  active_turn=turn + CannotUseAttack.turns_until_active, attack_index=run.key.attack_index,
-                                 target_attack_index=choices[0])
-        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), target_attack_index=choices[0])
+                                 target_attack_index=index, attack_card=effect_attack_card_of(run, attacker), target_attack_card=target_card)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key), target_attack_index=index,
+                              **({"target_attack_card": target_card} if target_card is not None else {}))
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))  # v0.49: 持つかが読み方で変わるワザ（VS1）は答えのときに止める
+        return [(index,) for index in decision.options if index not in blocked]
 
 
 @dataclass(frozen=True)
@@ -2777,7 +2847,9 @@ SCOPE_BOTH_IN_PLAY = "both_in_play"  # v0.40: お互いの場（わるいマタ�
 def counted_pokemon(state: GameState, player: int, scope: str, names: tuple[str, ...] | None) -> list[PokemonInPlay]:
     """``player`` の場のポケモンのうち、``scope``（``SCOPE_OWN_BENCH``: ベンチ・``SCOPE_OWN_IN_PLAY``: バトル場とベンチ）にいて、名前（いちばん上のカードの
     ``name_ja``）が ``names`` のどれかと同じもの（None ならすべて）（v0.39）。数えるのは場のポケモン（進化して重なったカードは 1 匹。p.310）。名前は完全一致で、
-    名前の一部・収録の弾では見ない。v0.40: ``SCOPE_BOTH_IN_PLAY`` なら、お互いの場（``player`` の場 → 相手の場の順。数だけを使う）。"""
+    名前の一部・収録の弾では見ない。v0.40: ``SCOPE_BOTH_IN_PLAY`` なら、お互いの場（``player`` の場 → 相手の場の順。数だけを使う）。
+    v0.49: 名前は今の姿の名前（``effects.form_def``。［へんしん］で相手の対戦ポケモンと同じカード・「ばける」でのせたカードのポケモンとしてあつかうなら、そのカードの
+    名前。それ以外はいちばん上のカードの名前で v0.48 と同じ）。"""
     if scope not in (SCOPE_OWN_BENCH, SCOPE_OWN_IN_PLAY, SCOPE_BOTH_IN_PLAY):
         raise ValueError(f"数える範囲 {scope!r}")
     p = state.players[player]
@@ -2785,7 +2857,7 @@ def counted_pokemon(state: GameState, player: int, scope: str, names: tuple[str,
         pokemon = [*p.in_play(), *state.players[1 - player].in_play()]
     else:
         pokemon = list(p.bench) if scope == SCOPE_OWN_BENCH else list(p.in_play())
-    return [x for x in pokemon if names is None or state.card_def(x.card).name_ja in names]
+    return [x for x in pokemon if names is None or E.form_def(state, x).name_ja in names]
 
 
 @dataclass(frozen=True)
@@ -4122,6 +4194,7 @@ class PerAttachedEnergyCards:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1
         return len(E.attached_basic_energy(run.state, run.attacker(), self.energy_type)) * self.per
 
 

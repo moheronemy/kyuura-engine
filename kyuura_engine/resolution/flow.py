@@ -109,8 +109,10 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
 
     once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
 
+    option = request.option
+
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option)
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -145,9 +147,16 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
-def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False) -> None:
+def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None) -> None:
     state = res.state
-    state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    if option is None or option.card == attacker.card:
+        state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    else:
+        # v0.49: ワザの出どころがワザを使うポケモンのいちばん上のカードでない（［へんしん］・「ばける」・［サイコリンク］・「思い出させる」）。ワザを印刷したカード
+        # （``card``・``card_id``）・持ち方（``route``）・［サイコリンク］で供給したポケモン（``provider``）を書く。どれも表のカード（公開の情報）。ふつうのワザは v0.48 と同じ形
+        extra = {"provider": option.provider} if option.provider is not None else {}
+        state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index, card=option.card,
+                        card_id=key.card_id, route=option.route, **extra)
     # v0.46: 「ワザが使われた時、すでに…」の特殊状態（エリカのフシギソウの［くつろぐかおり］）を宣言（p.309 の手順 3）の時点で写す。手順 4・5・ワザの要素で特殊状態が
     # 変わっても、このワザでは変えない（``effects.status_at_attack_blocked``。決定をまたぐときは続きの情報で運ぶ）
     res.attack_status = status_at_attack_blocked(state)

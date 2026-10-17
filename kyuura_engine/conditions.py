@@ -79,6 +79,16 @@ def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: 
     return True
 
 
+def _end_disguise(state: GameState, owner: int, pokemon: PokemonInPlay, effect: str) -> None:
+    """v0.49: タケシのキュウコンの「ばける」の「このカードが「ねむり・マヒ・こんらん」状態の時、この「ばける」の力は使えず、このカードは「タケシのキュウコン」に
+    もどる。(のせてあった「進化カード」はトラッシュされる)」。ねむり・マヒ・こんらんにする 3 つの関数が、特殊状態を付けたあとに呼ぶ（［めんえき］で防いだら呼ばない）。
+    のせたカードがなければ何もしない（どくでは呼ばない。説明に「どく」はない）。"""
+    if pokemon.disguise is not None:
+        from .zones import DISGUISE_SPECIAL_CONDITION, remove_disguise  # zones.py は state.py だけを読み込む。conditions.py の読み込みの順番に合わせて使うときに読む
+
+        remove_disguise(state, owner, pokemon, reason=DISGUISE_SPECIAL_CONDITION, effect=effect)
+
+
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:
     # ベンチのポケモンは特殊状態にならない（p.322）ので、バトル場のポケモンでなければエンジンの不具合として止める
     if state.players[owner].active is not pokemon:
@@ -126,6 +136,7 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
         return  # v0.46: ［めんえき］
     already = _set_exclusive(state, owner, pokemon, ASLEEP)
     _log_applied(state, owner, pokemon, SLEEP, effect, already)
+    _end_disguise(state, owner, pokemon, effect)
 
 
 def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -143,6 +154,7 @@ def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str
         return  # v0.46: ［めんえき］
     already = _set_exclusive(state, owner, pokemon, CONFUSED)
     _log_applied(state, owner, pokemon, CONFUSION, effect, already)
+    _end_disguise(state, owner, pokemon, effect)
 
 
 def paralysis_recovery_turn(state: GameState, owner: int, turn: int) -> int:
@@ -208,6 +220,7 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
         state, owner, pokemon, PARALYSIS, effect, already,
         paralyzed_turn=paralyzed.turn, recovery_turn=paralysis_recovery_turn(state, owner, paralyzed.turn),
     )
+    _end_disguise(state, owner, pokemon, effect)
 
 
 def recover_from_sleep(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:

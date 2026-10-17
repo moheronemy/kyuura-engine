@@ -71,10 +71,18 @@ class Retreat:
 
 @dataclass(frozen=True)
 class UseAttack:
-    """バトル場のポケモンのワザを使う（p.309）。``attack_index`` はカードのワザの順番（0 から）。"""
+    """バトル場のポケモンのワザを使う（p.309）。``attack_index`` はカードのワザの順番（0 から）。
+
+    v0.49（docs/virtual-attacks-transformation-v0.49.md 2 章）: ``card`` は、そのワザを印刷したカードの uid（ワザの出どころ）。None（既定。v0.48 までの形）なら、
+    バトル場のポケモンの今の姿のカード（ふつうはいちばん上のカード。メタモンの［へんしん］なら相手の対戦ポケモンのカード、タケシのキュウコンの「ばける」なら
+    のせた進化カード）。ナツメのフーディンの［サイコリンク］で持つワザは、そのワザを持つ自分の場の「超」ポケモンの今の姿のカード、「思い出させる」で使う進化前の
+    ワザは、重なっている進化前のカードを指す（``effects.available_attacks`` の ``card``）。ワザの名前・一覧の位置では指さない（同じ名前のワザ・一覧の変化で
+    取りちがえないため）。
+    """
 
     player: int
     attack_index: int
+    card: int | None = None
 
 
 @dataclass(frozen=True)
@@ -171,6 +179,23 @@ class UsePokemonPower:
     energy: int | None = None
     source: int | None = None
     target: int | None = None
+    # v0.49: その特殊能力を印刷したカードの uid。None（既定。v0.48 までの形）なら今の姿のカード（ふつうはいちばん上のカード。「ばける」ならのせた進化カード、
+    # メタモンの［へんしん］なら相手の対戦ポケモンのカード（写した特殊能力を使えるかは決まらない。TF1））。「ばける」でのせたカードの下のタケシのキュウコンの
+    # 「ばける」は、そのカードの uid で指す
+    card: int | None = None
+
+
+@dataclass(frozen=True)
+class RemoveDisguise:
+    """タケシのキュウコンの「ばける」の「自分の番に、このカードの上にのっている「進化カード」をトラッシュして、このカードを「タケシのキュウコン」にもどしてもよい。」
+    （v0.49。docs/virtual-attacks-transformation-v0.49.md 4 章）。
+
+    - ``pokemon``: のせた進化カードをトラッシュする自分の場のポケモンの番号。バトル場でもベンチでもよい
+    - 自分の番（``Phase.MAIN``）だけ。説明が許す操作で、特殊能力の使用の宣言（回数の制限のある「ばける」の使用）ではない。トレーナーカードを使うことでもない
+    """
+
+    player: int
+    pokemon: int
 
 
 @dataclass(frozen=True)
@@ -204,6 +229,7 @@ COMMAND_TYPES: dict[str, type] = {
     "play_trainer": PlayTrainer,
     "use_pokemon_power": UsePokemonPower,
     "discard_from_play": DiscardFromPlay,
+    "remove_disguise": RemoveDisguise,  # v0.49
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -227,6 +253,7 @@ Command = (
     | PlayTrainer
     | UsePokemonPower
     | DiscardFromPlay
+    | RemoveDisguise
 )
 
 
@@ -247,8 +274,15 @@ def check_command_fields(command) -> None:
             raise IllegalActionError("BAD_COMMAND", f"{type(command).__name__}.{f.name} の値 {value!r} が {f.type} ではない")
 
 
+# v0.49: v0.48 までの形を変えないため、既定の値（None）のときは辞書に書かない項目（``UseAttack.card``・``UsePokemonPower.card``）
+_OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",)}
+
+
 def command_to_dict(command) -> dict:
     data = asdict(command)
+    for name in _OMITTED_WHEN_NONE.get(type(command), ()):
+        if data[name] is None:
+            del data[name]
     for key, value in data.items():
         if isinstance(value, tuple):
             data[key] = list(value)

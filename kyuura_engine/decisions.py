@@ -279,6 +279,7 @@ def push_trainer_decision(
     unresolved_choices: Iterable[int] = (),
     unresolved_code: str = "UNRESOLVED_RULING",
     unresolved_reason: str = "",
+    unresolved_detail: Iterable[tuple[int, str, str]] = (),
 ) -> PendingDecision:
     """トレーナーの効果の途中で決定を出す（v0.2b）。選ばれたら、そのトレーナーの実装の ``resume`` が呼ばれる。
 
@@ -289,6 +290,12 @@ def push_trainer_decision(
     unresolved = tuple(unresolved_choices)
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    if detail:
+        # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
+        if not {item[0] for item in detail} <= set(unresolved):
+            raise RuntimeError(f"選択ごとの止める理由 {detail} の選択が、選ぶと止める選択 {unresolved} にない（エンジンの不具合）")
+        entries.append(("unresolved_detail", detail))
     return push_decision(
         state,
         kind=kind,
@@ -314,6 +321,7 @@ def push_power_decision(
     unresolved_choices: Iterable[int] = (),
     unresolved_code: str = "UNRESOLVED_RULING",
     unresolved_reason: str = "",
+    unresolved_detail: Iterable[tuple[int, str, str]] = (),
 ) -> PendingDecision:
     """宣言して使う特殊能力の処理の途中で決定を出す（v0.42）。選ばれたら、その特殊能力の実装の ``resume`` が呼ばれる（再開先 ``"power"``）。
 
@@ -322,12 +330,23 @@ def push_power_decision(
     実装が ``PowerEffect.decision_problems`` で宣言する。
     """
     entries = [("use", (use.player, use.pokemon_id, use.key.card_id, use.key.power_index))]
+    card = getattr(use, "card", None)
+    found = state.find_pokemon(use.pokemon_id)
+    if card is not None and found is not None and card != found[1].card:
+        # v0.49: 特殊能力を印刷したカードが、ポケモンのいちばん上のカードでない（「ばける」でのせたカード）。そのカードの uid（ふつうは書かない。v0.48 と同じ形）
+        entries.append(("power_card", card))
     if getattr(use, "return_to", None) is not None:
         # v0.43: 場に出したトレーナーの効果の途中で使う特殊能力（ポケモン育て屋さんで場に出たわるいカイリューの［てしたをよぶ］）。終わったらその処理にもどる
         entries.append(("return_to", use.return_to))
     unresolved = tuple(unresolved_choices)
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    if detail:
+        # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
+        if not {item[0] for item in detail} <= set(unresolved):
+            raise RuntimeError(f"選択ごとの止める理由 {detail} の選択が、選ぶと止める選択 {unresolved} にない（エンジンの不具合）")
+        entries.append(("unresolved_detail", detail))
     return push_decision(
         state,
         kind=kind,
@@ -356,7 +375,10 @@ def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choice not in decision.options:
             raise IllegalActionError("INVALID_CHOICE", f"{choice!r} はこの決定で選べるものではない（{decision.options}）")
     unresolved = decision.context_value("unresolved_choices", ())
+    detail = {item[0]: item for item in decision.context_value("unresolved_detail", ())}  # v0.49: 選択ごとの止める理由
     for choice in choices:
+        if choice in detail:
+            raise UnsupportedError(detail[choice][1], detail[choice][2])
         if choice in unresolved:
             raise UnsupportedError(
                 decision.context_value("unresolved_code", "UNRESOLVED_RULING"),

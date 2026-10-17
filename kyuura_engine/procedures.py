@@ -22,8 +22,8 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
 from .effects import (
-    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, max_hp_drop_error, max_hp_drops, poison_received_power_problem,
-    same_for_type_readings, shift_duration_error,
+    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
+    same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
 )
 from .errors import UnsupportedError
 from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
@@ -75,6 +75,8 @@ def expire_at_turn_end(state: GameState) -> None:
             pokemon.evolution_permission_turn = None
     # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
     state.energy_burn = ()
+    # v0.49: 「思い出させる」の「この番だけ」（docs/virtual-attacks-transformation-v0.49.md 6 章）。ログ ``recall`` の番で分かるので、消すログは出さない
+    state.recalls = ()
     remove_expired_trainer_locks(state)  # v0.47
     state.add_event("turn_end", player=state.current_player)
 
@@ -243,12 +245,16 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
         if state.players[owner].active is not None and state.players[owner].active.conditions.paralyzed
         and paralysis_recovery_turn(state, owner, state.players[owner].active.conditions.exclusive.turn) == state.turn_number
     ]
+    # v0.49: 回復すると、決められない姿（［へんしん］がはたらきはじめて写す特殊能力（TF1）・写すカード（TF2）、かがくへんかガスがはたらきはじめて「ばける」が消える
+    # （DG1））になる場合も、同じくコインの前に止める（``effects.state_stop_after``。MH1 と合わせて確かめる）
     for owner, pokemon, recover in [(o, p, recover_from_sleep) for o, p in asleep] + [(o, p, recover_from_paralysis) for o, p in paralyzed_now]:
-        drops = _recovery_max_hp_drops(state, owner, pokemon, recover)
-        if drops:
-            error = max_hp_drop_error(drops)
-            halt(state, Halt(code=error.code, message=f"ポケモンチェックで、プレイヤー {owner} のポケモン {pokemon.pokemon_id} が回復すると: {error.message}",
-                             references=("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT")))
+        stop = _recovery_stop(state, owner, pokemon, recover)
+        if stop is not None:
+            code, message = stop
+            references = (("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT") if code == MAX_HP_DROP_CODE
+                          else ("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "docs/virtual-attacks-transformation-v0.49.md"))
+            halt(state, Halt(code=code, message=f"ポケモンチェックで、プレイヤー {owner} のポケモン {pokemon.pokemon_id} が回復すると: {message}",
+                             references=references))
             return
     for owner, pokemon in asleep:
         flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
@@ -273,11 +279,12 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
     begin_turn(state, 1 - state.current_player)
 
 
-def _recovery_max_hp_drops(state: GameState, owner: int, pokemon: PokemonInPlay, recover) -> list:
-    """``pokemon`` がねむり・マヒから回復したとしたら、最大HPがのっているダメージ以下に下がる場のポケモン（v0.48。MH1。複製の上で回復させて比べる。状態を変えない）。"""
+def _recovery_stop(state: GameState, owner: int, pokemon: PokemonInPlay, recover) -> tuple[str, str] | None:
+    """``pokemon`` がねむり・マヒから回復したとしたら受け付けられない状態になるなら、その (コード, 理由の文)（v0.48 の MH1（最大HPがのっているダメージ以下に下がる）、
+    v0.49 の決められない姿（TF1・TF2・DG1）。``effects.state_stop_after``。複製の上で回復させて比べる。状態を変えない）。"""
     trial = state.clone()
     recover(trial, owner, trial.players[owner].active)
-    return max_hp_drops(state, trial)
+    return state_stop_after(state, trial)
 
 
 def confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
@@ -420,6 +427,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     extra = {}
     if pokemon.evolution_stack:
         extra["evolution_stack"] = pokemon.evolution_stack  # v0.4a: いちばん上のカード（pokemon）の下にあったカード
+    if pokemon.disguise is not None:
+        extra["disguise"] = pokemon.disguise  # v0.49: 「ばける」でのせていた進化カード（いっしょにトラッシュする）
     if pokemon.trainers:
         for attached in pokemon.trainers:
             state.players[attached.player].discard.append(attached.card)
