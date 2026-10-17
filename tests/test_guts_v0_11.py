@@ -633,7 +633,9 @@ class G37Test(unittest.TestCase):
             # 2 枚とも「おもて」で相手の対戦ポケモンを山札にもどす。docs/effective-pokemon-properties-v0.48.md）
             "ChangeOpponentWeakness", "DamageThenPoisonAndConfuseOnHeads", "PlaceCountersOnDamagedOpponentPokemon", "DamageThenCoinsReturnOpponentToDeck",
             # v0.50（自分・相手のポケモンの進化カードをはがして手札にもどす「たいかビーム」。docs/mew-devolution-spray-v0.50.md）
-            "DevolveChosenPokemon"]))
+            "DevolveChosenPokemon",
+            # v0.51（自分・相手のトラッシュのたねポケモンを持ち主のベンチに出し、ダメージカウンターをのせる「よみがえらせる」。docs/discard-to-bench-v0.51.md）
+            "BenchBasicFromEitherDiscard"]))
 
 
 class DecisionTest(unittest.TestCase):

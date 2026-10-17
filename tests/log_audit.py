@@ -80,6 +80,9 @@ from kyuura_engine import state_to_dict
 from kyuura_engine.cards import EnergyType
 from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import (
+    BenchBasicFromEitherDiscard,
+    BenchBasicFromOpponentDiscard,
+    BenchBasicFromOwnDiscardWithCounters,
     DevolveChosenPokemon,
     DevolveOwnPokemon,
     Shapeshift,
@@ -234,6 +237,8 @@ COUNTER_BARRIERS = (
     "place_damage_counters", "swap_damage_counters", "attach_energy_from_deck", "attach_energy_from_deck_none",
     # v0.46: 特殊状態にならない（めんえき）・手札からエネルギーをつける（せいちょう）
     "special_condition_prevented", "attach_energy_from_hand",
+    # v0.51: トラッシュからベンチに出す（よみがえらせる）
+    "bench_from_discard", "bench_from_discard_none",
 )
 # v0.10: ダメージの要素のあとのワザのコインが、ダメージ以外の効果（特殊状態）を決めるワザ（「はんげき」はそのコインより先）。でんげきの
 # コインは自分へのダメージ（ダメージの要素）を決めるので含めない
@@ -648,7 +653,9 @@ def log_problems(state) -> list[str]:
                          "return_energy_to_hand", "evolve", "evolve_from_deck_none", "switch_declined", "power_confusion",
                          "power_confusion_skipped",
                          # v0.46
-                         "attach_energy_from_hand"):
+                         "attach_energy_from_hand",
+                         # v0.51
+                         "bench_from_discard", "bench_from_discard_none"):
                 if window[once] > 1:
                     problems.append(f"1 回のワザで {once} が {window[once]} 回")
             if any(count > 1 for key, count in window.items() if key.startswith("place_damage_counters:")):
@@ -785,6 +792,7 @@ def log_problems(state) -> list[str]:
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
+    discard_entered: dict[int, int] = {}  # v0.51: トラッシュからベンチに出したポケモンの番号 → 出した番（状態の場に出た番と同じはず）
     # v0.38: 直前の、山札を切らずにもどした return_in_play_to_deck（キョウのポッポの「でんれい」。かわりの対戦ポケモンを出してから山札をさがし、その
     # すぐあとに切る。もどしたあとに切らない）
     search_due: dict | None = None
@@ -1796,6 +1804,58 @@ def log_problems(state) -> list[str]:
             # v0.50: 退化スプレーで 0 枚を選んだ（はがさない）。使っている最中のそのトレーナー
             if using_trainer.get(e["player"]) != e.get("trainer_card") or e["pokemon_id"] not in in_play or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
                 problems.append(f"{e['turn']} 番の退化スプレーの 0 枚（ポケモン {e['pokemon_id']}）が、使っている最中のトレーナー・自分の場のポケモンと合わない")
+        elif kind == "bench_from_discard":
+            # v0.51: トラッシュのたねポケモンのカードを、同じ uid のまま持ち主のベンチに出した（よみがえらせる・元気のかけら・ポケモンの笛。
+            # docs/discard-to-bench-v0.51.md）。カードは持ち主（player）のトラッシュ（ログから組み立てた）にあり、トラッシュにある間のカードの定義がたねポケモン、
+            # 持ち主のベンチに空きがあった。出どころは、今のワザ（よみがえらせる。選んだのはワザを使ったプレイヤー）か、使っている最中のトレーナー（元気のかけらは使った
+            # プレイヤー自身の、ポケモンの笛は相手のトラッシュ）。場のポケモンの番号は次の番号（新しい番号。前に場にいたときのものは引き継がない）
+            uid = e["card"]
+            via = e.get("trainer_card")
+            effect = None
+            if via is None:
+                effect = _effect_of_event(state, e) if attack_window is not None and _same_attack(attack_window, e) else None
+                source_ok = isinstance(effect, BenchBasicFromEitherDiscard) and e["by_player"] == attack_window["player"] and "counters" not in e
+            else:
+                trainer_entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
+                effect = None if trainer_entry is None else trainer_entry.effect
+                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == turn_player and (
+                    (isinstance(effect, BenchBasicFromOwnDiscardWithCounters) and e["player"] == e["by_player"] and "counters" in e)
+                    or (isinstance(effect, BenchBasicFromOpponentDiscard) and e["player"] == 1 - e["by_player"] and "counters" not in e))
+            bench_count = sum(1 for pid in in_play if pokemon_owner.get(pid) == e["player"]) - (1 if active_of.get(e["player"]) in in_play else 0)
+            if not source_ok or owner.get(uid) != e["player"] or uid not in discard[e["player"]] or not state.printed_def(uid).is_basic_pokemon \
+                    or bench_count >= state.rules.max_bench or (e["from_zone"], e["to_zone"]) != ("discard", "bench"):
+                problems.append(f"{e['turn']} 番にトラッシュからベンチに出したカード {uid}（持ち主 {e['player']}）が、持ち主のトラッシュのたねポケモン・その効果の処理と合わない")
+            if uid in discard[e["player"]]:
+                discard[e["player"]].remove(uid)
+            enter(uid)
+            pid = ids[uid]
+            if pid != e["to_pokemon_id"]:
+                problems.append(f"{e['turn']} 番にトラッシュからベンチに出したポケモンの番号 {e['to_pokemon_id']} が、ログから組み立てた {pid} と違う")
+            discard_entered[pid] = e["turn"]
+            if "counters" in e:
+                # 元気のかけら: カードの HP（トラッシュにある間の定義）の半分（切り捨て。ダメージカウンターの単位）をのせた状態で出す
+                per = state.rules.damage_per_counter
+                hp = state.printed_def(uid).hp
+                if e["counters"] != hp // per // 2 or e["damage"] != e["counters"] * per:
+                    problems.append(f"{e['turn']} 番に元気のかけらで出したポケモン {pid} のダメージカウンター {e['counters']} が、HP {hp} の半分（切り捨て）ではない")
+                damage[pid] = e["damage"]
+            if via is None:
+                attack_window["discard_entered"] = pid
+        elif kind in ("bench_from_discard_none", "bench_from_discard_declined"):
+            # v0.51: よみがえらせるで出せるカードがなかった（ワザの処理の中）・元気のかけら・ポケモンの笛で 0 枚を選んだ（使っている最中のトレーナー）
+            if kind == "bench_from_discard_none":
+                source_ok = attack_window is not None and _same_attack(attack_window, e) and isinstance(_effect_of_event(state, e), BenchBasicFromEitherDiscard) \
+                    and e["player"] == attack_window["player"] and not any(
+                        uid for p_index in (0, 1) for uid in discard[p_index]
+                        if state.printed_def(uid).is_basic_pokemon
+                        and sum(1 for pid in in_play if pokemon_owner.get(pid) == p_index) - (1 if active_of.get(p_index) in in_play else 0) < state.rules.max_bench)
+            else:
+                via = e.get("trainer_card")
+                trainer_entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
+                source_ok = trainer_entry is not None and isinstance(trainer_entry.effect, (BenchBasicFromOwnDiscardWithCounters, BenchBasicFromOpponentDiscard)) \
+                    and using_trainer.get(e["by_player"]) == via and e["by_player"] == turn_player
+            if not source_ok:
+                problems.append(f"{e['turn']} 番の {kind} が、出せるカードのない「よみがえらせる」・使っている最中の元気のかけら・ポケモンの笛の処理と合わない")
         elif kind in ("counterattack", "counterattack_skipped"):
             # v0.10: 「はんげき」のダメージ（ワザを使ったポケモンへ。ワザによるダメージではない）
             target = e["attacker_pokemon_id"]
@@ -2641,6 +2701,16 @@ def log_problems(state) -> list[str]:
                 if damage[pid] != e["total_damage"]:
                     problems.append(f"{e['turn']} 番の place_damage_counters のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
                 continue
+            if isinstance(effect, BenchBasicFromEitherDiscard):
+                # v0.51: よみがえらせる。同じワザでトラッシュからベンチに出したポケモンに、出したあとの今有効な最大HPの半分（切り捨て）（ダメージではない）
+                per = state.rules.damage_per_counter
+                if pid != attack_window.get("discard_entered") or e["damage_before"] != damage[pid] or e["counters"] != max_hp_now(pid) // per // 2 \
+                        or e["counters"] <= 0 or e["amount"] != e["counters"] * per or pokemon_owner.get(pid) != e["player"]:
+                    problems.append(f"{e['turn']} 番の place_damage_counters（ポケモン {pid}）が、よみがえらせるで出したポケモンに HP の半分（切り捨て）をのせる処理と合わない")
+                damage[pid] += e["amount"]
+                if damage[pid] != e["total_damage"]:
+                    problems.append(f"{e['turn']} 番の place_damage_counters のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+                continue
             if isinstance(effect, PlaceCountersToRemainingHpOnHeads):
                 # v0.42: ライフダウン。相手の対戦ポケモンの残り HP が登録の数になるまで（ダメージではない）
                 hp = hp_of(pid)
@@ -3013,6 +3083,8 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場のポケモン {pid} のエネルギー {pokemon.energy} が、ログから組み立てた {energy[pid]} と違う")
             if ids.get(pokemon.card) != pid:
                 problems.append(f"場のポケモン {pid} のいちばん上のカード {pokemon.card} が、ログの進化と対応しない")
+            if pid in discard_entered and pokemon.played_turn != discard_entered[pid]:
+                problems.append(f"トラッシュから出した場のポケモン {pid} の場に出た番 {pokemon.played_turn} が、ログの {discard_entered[pid]} 番と違う")  # v0.51
             state_exclusive = pokemon.conditions.exclusive
             if (None if state_exclusive is None else state_exclusive.name) != exclusive.get(pid):
                 problems.append(f"場のポケモン {pid} のねむり・マヒ・こんらん {state_exclusive!r} が、ログから組み立てた {exclusive.get(pid)!r} と違う")

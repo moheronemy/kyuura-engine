@@ -501,6 +501,11 @@
     "PMCG3-033",
     "PMCG1-086"
   ],
+  "pool_v0_51": [
+    "PMCG6-051",
+    "PMCG1-078",
+    "PMCG1-084"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -30717,6 +30722,172 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-076-taikaspray/"
+      }
+    },
+    {
+      "id": "PMCG6-051",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのスリーパー",
+        "en": "Sabrina's Hypno"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          97
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナツメのスリープ",
+          "en": "Sabrina's Drowzee"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "よみがえらせる",
+              "en": "Invigorate"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切り捨て)のダメージカウンターをのせる。",
+              "en": "Choose 1 Basic Pokémon in any player's discard pile. Put it onto that player's Bench. Put a number of damage counters on that Pokémon equal to half its HP (rounded down to the nearest 10). (You can't put a Pokémon on a Bench that's full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ふりこののろい",
+              "en": "Pendulum Curse"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "相手にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip a number of coins equal to the number of damage counters on the Defending Pokémon. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-051",
+        "pokemontcg": [
+          "gym2-56"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B9%E3%83%AA%E3%83%BC%E3%83%91%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "ヤマブキシティジム ナツメ・闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B9%E3%83%AA%E3%83%BC%E3%83%91%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG1-078",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "元気のかけら",
+        "en": "Revive"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "トラッシュからポケモンカードを1枚選んで、HPの半分(きりすて)のダメージカウンターをのせた状態でベンチに出すことができる。進化カードを選ぶことはできない。",
+          "en": "Put 1 Basic Pokémon card from your discard pile onto your Bench. Put damage counters on that Pokémon equal to half its HP (rounded down to the nearest 10). (You can't play Revive if your Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "なぞのばしょの表記による。TCGdex の表記は「げんきのかけら」"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-078",
+        "pokemontcg": [
+          "base1-89"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-075-genkinokakera/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-075-genkinokakera/"
+      }
+    },
+    {
+      "id": "PMCG1-084",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンの笛",
+        "en": "Pokémon Flute"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手のトラッシュからポケモンカードを1枚選び、相手のベンチに出させることができる。ただし進化カードを選ぶことはできない。",
+          "en": "Choose 1 Basic Pokémon card from your opponent's discard pile and put it onto his or her Bench. (You can't play Pokémon Flute if your opponent's Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-084",
+        "pokemontcg": [
+          "base1-86"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-092-pokemonnofue/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-092-pokemonnofue/"
       }
     },
     {

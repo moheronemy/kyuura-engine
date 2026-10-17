@@ -103,7 +103,7 @@ from .decisions import (
     RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
-    SELECT_COLOR, SELECT_DEVOLVE_COUNT, push_trainer_decision,
+    SELECT_COLOR, SELECT_DEVOLVE_COUNT, BENCH_FROM_DISCARD, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -137,7 +137,7 @@ from .persistent import (
 )
 from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation, mark_returned_to_bench
 from .zones import (
-    attach_energy_from_hand, attach_trainer, bench_from_deck, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
+    attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
     return_hand_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
     look_at_card, put_trainer_into_play, swap_prize_with_deck_top,
 )
@@ -12169,6 +12169,243 @@ class DevolveOwnPokemon(TrainerEffect):
         return problems
 
 
+# ---------------------------------------------------------------- トラッシュのたねポケモンを持ち主のベンチに出す効果（v0.51。docs/discard-to-bench-v0.51.md）
+
+INVIGORATE_TEXT = "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切り捨て)のダメージカウンターをのせる。"
+PENDULUM_CURSE_TEXT = "相手にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×{per}のダメージ。"
+REVIVE_TEXT = "トラッシュからポケモンカードを1枚選んで、HPの半分(きりすて)のダメージカウンターをのせた状態でベンチに出すことができる。進化カードを選ぶことはできない。"
+POKEMON_FLUTE_TEXT = "相手のトラッシュからポケモンカードを1枚選び、相手のベンチに出させることができる。ただし進化カードを選ぶことはできない。"
+
+# RV1: 自分のトラッシュにたねポケモンのカードがない・自分のベンチに空きがないときに元気のかけらを使えるか。印刷の文面は「…ベンチに出すことができる。」で、出せないときの
+# 記述がない。kyuura の再録の文面の書き換えの記録（ポケモンジム第1弾の版は「…このカードは使えない」を加えた。区分「書き方だけ」）は、v0.21 の突風（GW5）と同じく、処理に
+# 使う文面を補う根拠にしない（記録の文面ではなく、処理の文面の区分の判断）
+REVIVE_WITHOUT_TARGET_CODE = "UNRESOLVED_REVIVE_WITHOUT_TARGET"
+REVIVE_WITHOUT_TARGET_REASON = (
+    "自分のトラッシュにたねポケモンのカードがない・自分のベンチに空きがないときに元気のかけらを使えるかは、印刷の文面（「…ベンチに出すことができる。」）に出せないときの"
+    "記述がなく、記録で決まらないので扱わない（RV1。kyuura の再録の文面の書き換えの記録の「書き方だけ」で、のちの版の「…このカードは使えない」を補わない）"
+)
+# FT1: 相手のトラッシュにたねポケモンのカードがない・相手のベンチに空きがないときにポケモンの笛を使えるか（RV1 と同じ形の問いだが、別のカードの問いなので答えを流用しない。
+# ポケモンの笛には文面の書き換えの記録もない）
+POKEMON_FLUTE_WITHOUT_TARGET_CODE = "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET"
+POKEMON_FLUTE_WITHOUT_TARGET_REASON = (
+    "相手のトラッシュにたねポケモンのカードがない・相手のベンチに空きがないときにポケモンの笛を使えるかは、印刷の文面（「…相手のベンチに出させることができる。」）に出せない"
+    "ときの記述がなく、記録で決まらないので扱わない（FT1）"
+)
+
+
+def discard_basic_pokemon(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.51: プレイヤー ``player`` のトラッシュの、たねポケモンのカード（トラッシュの並び）。トラッシュにある間のカードの定義（印刷の定義。``state.card_def``）で決めるので、
+    進化カード・エネルギーカード・トレーナーカード（なにかの化石・ピッピ人形も、トラッシュではトレーナーカード。v0.47）は入らない。「ポケモンカード」で「進化カードを
+    選ぶことはできない」（元気のかけら・ポケモンの笛）と「たねポケモン」（よみがえらせる）は、どちらもこの集まり（ベイビィポケモンは写しにない。cards.py が拒否する）。"""
+    return tuple(uid for uid in state.players[player].discard if state.card_def(uid).is_basic_pokemon)
+
+
+def bench_has_space(state: GameState, player: int) -> bool:
+    """v0.51: プレイヤー ``player`` のベンチに空きがあるか（共通のルールの値 ``rules.max_bench``。p.312）。"""
+    return len(state.players[player].bench) < state.rules.max_bench
+
+
+def bench_from_discard_candidates(state: GameState, players: Iterable[int]) -> tuple[int, ...]:
+    """v0.51: プレイヤー ``players`` の順に、それぞれのトラッシュのたねポケモンのカードのうち、持ち主のベンチに空きがあるもの（持ち主のベンチに出せるもの）。ベンチの空きは
+    カードの持ち主の側で確かめる（よみがえらせるで、自分のベンチがいっぱいでも、相手のベンチに空きがあれば相手のトラッシュのカードは選べる）。"""
+    return tuple(uid for player in players if bench_has_space(state, player) for uid in discard_basic_pokemon(state, player))
+
+
+def half_hp_counters(state: GameState, hp: int | None) -> int:
+    """v0.51: 「HPの半分(切り捨て)のダメージカウンター」の数。ダメージカウンター 1 個は 10 ダメージ（p.319。GR-2000-P319-HP-AND-DAMAGE）なので、HP をダメージカウンターの
+    数で表して半分にし、切りすてる（HP 70 なら 3 個、50 なら 2 個）。半分の丸めをダメージカウンターの単位でするのは、v0.46 のリフレクター（「半分(切りすて)」）・v0.45 の
+    「いかりのまえば」（「半分（切り上げ）」）と同じ。HP がダメージカウンターの単位の正の倍数でなければエンジンの不具合。"""
+    per = state.rules.damage_per_counter
+    if not isinstance(hp, int) or hp <= 0 or hp % per:
+        raise RuntimeError(f"HP {hp!r} が、ダメージカウンターの単位の正の倍数ではない（エンジンの不具合）")
+    return hp // per // 2
+
+
+def discard_entry_power_guard(state: GameState, card: int) -> None:
+    """v0.51: トラッシュから場に出すカード ``card`` に、場に出たときに使える特殊能力（``EntryPower``）があるかを、出す前に確かめる。「手札から出した時」「手札から場に出した時」
+    の特殊能力（``from_hand_only``）は、トラッシュから出すと経路が合わないので使う機会はない（手札から出したことにしない）。「場に出た時」の特殊能力（わるいカイリューの
+    ［てしたをよぶ］）は、トラッシュから出すときに機会を出すかを決めていない（ワザの最中なら v0.43 の PW4 の場面）。今の対応カードでは、場に出たときの特殊能力を持つカードは
+    どれも進化カード（トラッシュから出せるたねポケモンにはない。tests/test_discard_to_bench_v0_51.py が登録を確かめる）なので起こらない。来たら ``RuntimeError``（状態を
+    変える前）。"""
+    found = entry_power(state, card)
+    if found is not None and not found[1].from_hand_only:
+        raise RuntimeError(f"トラッシュから場に出すカード {card} に、場に出たときに使える特殊能力がある（トラッシュからの経路の使う機会は未対応。エンジンの不具合）")
+
+
+def log_bench_from_discard(state: GameState, pokemon: PokemonInPlay, *, by_player: int, source: dict[str, Any], counters: int | None = None) -> None:
+    """v0.51: トラッシュから持ち主のベンチに出したログ ``bench_from_discard``（公開。トラッシュと場は公開の情報）。
+
+    ``player`` はカードの持ち主（カードを置いていたトラッシュと、出したベンチの持ち主）、``by_player`` は効果を使って選んだプレイヤー、``card``・``to_pokemon_id``（新しい
+    場のポケモンの番号）。場に出た番はこのログの番（``played_turn`` と同じ）。``source`` は効果の出どころ（ワザなら ``pokemon``・``pokemon_id``・``effect``、トレーナーなら
+    ``trainer_card``・``trainer``）。``counters`` は、ベンチに出す前にのせた（「のせた状態でベンチに出す」）ダメージカウンターの数で、そのときだけ ``counters``・``damage`` を
+    書く（よみがえらせるは、出したあとの ``place_damage_counters``）。"""
+    owner = state.cards[pokemon.card].owner
+    extra = {} if counters is None else {"counters": counters, "damage": pokemon.damage}
+    state.add_event("bench_from_discard", player=owner, by_player=by_player, card=pokemon.card, from_zone="discard", to_zone="bench",
+                    to_pokemon_id=pokemon.pokemon_id, **source, **extra)
+
+
+@dataclass(frozen=True)
+class BenchBasicFromEitherDiscard(AttackEffect):
+    """自分または相手のトラッシュから「たねポケモン」を 1 枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HP の半分（切り捨て）のダメージカウンターをのせる
+    （v0.51。ナツメのスリーパーの「よみがえらせる」。ダメージの目安の数字はない。kyuura の印刷の文面）。要素 ``programs.BenchFromEitherDiscard``（決定 ``bench_from_discard``）。
+
+    - 選ぶのはワザを使ったプレイヤー。選べるものは自分のトラッシュ → 相手のトラッシュの、たねポケモンのカードのうち、持ち主のベンチに空きがあるもの
+      （``bench_from_discard_candidates``）。1 枚（「選び出し、…出す」。省略できない）。1 枚もなければ何もしない（p.309。GR-2000-P309-ATTACK-PROCEDURE。ログ
+      ``bench_from_discard_none``）。相手のカードは相手のベンチに出す（自分のベンチに出さない）
+    - 出す処理は ``zones.bench_from_discard``（同じ uid。新しい場のポケモンの番号。場に出た番は今の番。前に場にいたときのものは引き継がない）。トラッシュのカードを出すことは
+      場のポケモンへの効果ではない（「ワザをうけない」状態・「とうめい」はトラッシュのカードには関係しない）
+    - そのあと、出したポケモンの今有効な最大HP（``max_hp``）の半分（ダメージカウンターの単位で切り捨て。``half_hp_counters``）のダメージカウンターをのせる。ワザによる
+      ダメージではない（GR-2000-P320-COUNTER-MOVE と同じ読み方。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けたとき」の効果は関係しない）。場のポケモンへの
+      ワザの効果なので、のせる前に「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の ``damage_counters``。自分のポケモンも「とうめい」を評価する）。ログ
+      ``place_damage_counters``（v0.41 と同じ形）。半分なので HP 以上にはならない（きぜつしない）
+    """
+
+    implementation_id = "bench_basic_from_either_discard"
+    opponent_effect_elements = (COUNTERS_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "トラッシュのたねポケモンを持ち主のベンチに出すワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (INVIGORATE_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        options = bench_from_discard_candidates(state, (use.player, 1 - use.player))
+        return _decision_form(decision, _label(state, use), kind=BENCH_FROM_DISCARD, player=use.player, choices=(1, 1), options=options)
+
+
+@dataclass(frozen=True)
+class CoinsPerDefenderCountersDamage(AttackEffect):
+    """相手（相手の対戦ポケモン）にのっているダメージカウンターの数だけコインを投げ、「おもて」の数 × ``per`` のダメージ（v0.51。ナツメのスリーパーの「ふりこののろい」。
+    ダメージの目安「20×」。kyuura の印刷の文面）。要素 ``Damage(OPP, programs.HeadsPerDefenderCounters(per))``。
+
+    - 「相手」は相手の対戦ポケモン（p.320。v0.46 のバリヤードの「ヨガのポーズ」の「相手にのっている」と同じ。CD4 の「相手のポケモン」には当たらない）
+    - コインの枚数は、ダメージの要素を処理する時点の相手の対戦ポケモンのダメージカウンターの数（ダメージ ÷ 10）。0 個ならコインを投げず、基本となるダメージは 0（ダメージを
+      与えない。p.321。v0.32 の「じたばた」と同じ）。「おもて」の数 × ``per`` が p.321 の 1 段階（基本となるダメージ）で、弱点・抵抗力・プラスパワー・ディフェンダーなどは
+      そのあとの段階（最終ダメージに直接足さない）
+    - コイン 1 枚で「おもて」ならカウンターの数 × 20 の「いかりのスーパーパンチ」（``CoinHeadsDamagePerOwnCounter``）・自分のカウンターの「じたばた」とは別の型
+    - コインはこのダメージの量だけを決めるので、ダメージを受けない状態の相手には投げるかが決められない（v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``。投げる枚数が 1 枚以上の
+      ときだけ）。先読みは「おもて」の数でまとめる（``by_heads``。v0.35）。実際の対戦では 1 枚ずつ投げる（乱数・ログは v0.35 の ``CoinFlipDamage`` と同じ）
+    """
+
+    per: int
+    implementation_id = "coins_per_defender_counters_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のダメージカウンターの数だけコインを投げるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録の「おもて」1 回あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (PENDULUM_CURSE_TEXT.format(per=self.per),))
+
+
+class _BenchBasicFromDiscardTrainer(TrainerEffect):
+    """v0.51: トラッシュのたねポケモンのカードを、使ったプレイヤーが選んで、持ち主のベンチに出す（「ことができる」）トレーナーの共通の部分（元気のかけら・ポケモンの笛）。
+
+    - 選ぶのは使ったプレイヤー（決定 ``bench_from_discard``。0〜1 枚。0 枚は「ことができる」の、出さないこと（ログ ``bench_from_discard_declined``。v0.50 の退化スプレーの
+      0 枚と同じ読み方））。選べるものは ``from_player`` のトラッシュのたねポケモンのカード（トラッシュの並び）
+    - 使う前に、選べるカードがない・その持ち主のベンチに空きがない（出せない）なら、使えるかが決まらないので止める（``without_target``。手札から出す前。状態・乱数・ログを
+      変えない）。決定を待つ間は場が変わらないので、答えのときにも同じ選べるもの
+    - 出したポケモンは、きぜつしない（元気のかけらのカウンターは HP の半分）ので、使い終えたあとのきぜつの処理（``may_knock_out``）はしない
+    """
+
+    text: ClassVar[str]
+    without_target: ClassVar[tuple[str, str]]
+
+    def from_player(self, use: TrainerUse) -> int:
+        raise NotImplementedError
+
+    def counters(self, state: GameState, card: int) -> int | None:
+        return None
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、{self.implementation_id} の文面ではない")
+        return problems
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return bench_from_discard_candidates(state, (self.from_player(use),))
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        owner = self.from_player(use)
+        if not self.candidates(state, use):
+            code, reason = self.without_target
+            scene = "ベンチに空きがない" if discard_basic_pokemon(state, owner) else "トラッシュにたねポケモンのカードがない"
+            raise UnsupportedError(code, f"{reason}。プレイヤー {owner} の{scene}")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=BENCH_FROM_DISCARD, player=use.player, options=self.candidates(state, use), min_choices=0, max_choices=1)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        source = {"trainer_card": use.card, "trainer": use.card_id}
+        if not choices:
+            state.add_event("bench_from_discard_declined", player=self.from_player(use), by_player=use.player, **source)
+            return
+        (card,) = choices
+        if card not in self.candidates(state, use):
+            raise RuntimeError(f"{self.implementation_id} で選んだカード {card} が、選べるトラッシュのたねポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
+        discard_entry_power_guard(state, card)
+        counters = self.counters(state, card)
+        pokemon = bench_from_discard(state, card, counters=counters or 0)
+        log_bench_from_discard(state, pokemon, by_player=use.player, source=source, counters=counters)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = []
+        if decision.kind != BENCH_FROM_DISCARD:
+            problems.append(f"{what}の決定の種類が {decision.kind!r}（{BENCH_FROM_DISCARD} のはず）")
+        if decision.player != use.player:
+            problems.append(f"{what}の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）")
+        if (decision.min_choices, decision.max_choices) != (0, 1):
+            problems.append(f"{what}で選ぶ数が {decision.min_choices}〜{decision.max_choices}（0〜1 のはず）")
+        expected = self.candidates(state, use)
+        if decision.options != expected:
+            problems.append(f"{what}の決定の選べるもの {decision.options} が、トラッシュの出せるたねポケモンのカード {expected} と合わない")
+        return problems
+
+
+@dataclass(frozen=True)
+class BenchBasicFromOwnDiscardWithCounters(_BenchBasicFromDiscardTrainer):
+    """トラッシュからポケモンカードを 1 枚選んで、HP の半分（きりすて）のダメージカウンターをのせた状態でベンチに出すことができる。進化カードを選ぶことはできない（v0.51。
+    元気のかけら（PMCG1-078）。kyuura の印刷の文面）。
+
+    - 「トラッシュ」「ベンチ」は使ったプレイヤーのもの（相手のトラッシュを指すポケモンの笛の「相手の」がない。実装上の読み方。docs/discard-to-bench-v0.51.md 4 章）。選べる
+      ものは自分のトラッシュのたねポケモンのカード（「ポケモンカード」で進化カードは選べない）
+    - のせるダメージカウンターの数は、そのカードの HP（トラッシュにある間のカードの定義の値）の半分（ダメージカウンターの単位で切り捨て。``half_hp_counters``）。カウンターを
+      のせた状態で場に出す（``zones.bench_from_discard`` の ``counters``。よみがえらせるの「ベンチに出す。そして、…のせる」とは順番が違う。今の対応カードのたねポケモンでは、
+      ベンチに出した直後の今有効な最大HPは印刷の HP と同じで、のせる数は変わらない。tests が登録のすべてのたねポケモンで確かめる）
+    - 使えるか決まらない場面は RV1（自分のトラッシュにたねポケモンのカードがない・自分のベンチに空きがない）
+    """
+
+    implementation_id = "bench_basic_from_own_discard_with_counters"
+    text: ClassVar[str] = REVIVE_TEXT
+    without_target: ClassVar[tuple[str, str]] = (REVIVE_WITHOUT_TARGET_CODE, REVIVE_WITHOUT_TARGET_REASON)
+
+    def from_player(self, use: TrainerUse) -> int:
+        return use.player
+
+    def counters(self, state: GameState, card: int) -> int | None:
+        return half_hp_counters(state, state.card_def(card).hp)
+
+
+@dataclass(frozen=True)
+class BenchBasicFromOpponentDiscard(_BenchBasicFromDiscardTrainer):
+    """相手のトラッシュからポケモンカードを 1 枚選び、相手のベンチに出させることができる。ただし進化カードを選ぶことはできない（v0.51。ポケモンの笛（PMCG1-084）。kyuura の
+    印刷の文面）。
+
+    - 選ぶのは使ったプレイヤー（「選び」の主語。出される側の相手に選ばせない）。選べるものは相手のトラッシュのたねポケモンのカード。出すのは相手のベンチ（カードの持ち主）
+    - ダメージカウンターはのせない（ほかの 2 枚の処理を当てはめない）
+    - 使えるか決まらない場面は FT1（相手のトラッシュにたねポケモンのカードがない・相手のベンチに空きがない）
+    """
+
+    implementation_id = "bench_basic_from_opponent_discard"
+    text: ClassVar[str] = POKEMON_FLUTE_TEXT
+    without_target: ClassVar[tuple[str, str]] = (POKEMON_FLUTE_WITHOUT_TARGET_CODE, POKEMON_FLUTE_WITHOUT_TARGET_REASON)
+
+    def from_player(self, use: TrainerUse) -> int:
+        return 1 - use.player
+
+
 # ---------------------------------------------------------------- 決められない姿の状態（TF1・TF2・DG1）
 
 TRANSFORM_POWER_CODE = "UNRESOLVED_TRANSFORM_COPIED_POWER"
@@ -16003,6 +16240,23 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja=DEVOLUTION_BEAM_TEXT,
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.51（docs/discard-to-bench-v0.51.md）。ナツメのスリーパー（闇からの挑戦）。処理に使う文面は kyuura の印刷の文面
+        # よみがえらせる（超）: 自分または相手のトラッシュのたねポケモンを 1 枚選び、持ち主のベンチに出す → 出したポケモンに HP の半分（切り捨て）のダメージカウンターをのせる
+        AttackKey("PMCG6-051", 0): AttackEntry(
+            BenchBasicFromEitherDiscard(),
+            "よみがえらせる",
+            text_ja=INVIGORATE_TEXT,
+            play_text_ja=INVIGORATE_TEXT,
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ふりこののろい（超超）20×: 相手の対戦ポケモンのダメージカウンターの数だけコインを投げ、「おもて」の数 × 20 が基本となるダメージ
+        AttackKey("PMCG6-051", 1): AttackEntry(
+            CoinsPerDefenderCountersDamage(20),
+            "ふりこののろい",
+            text_ja=PENDULUM_CURSE_TEXT.format(per=20),
+            play_text_ja=PENDULUM_CURSE_TEXT.format(per=20),
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -16111,6 +16365,12 @@ DEFAULT_EFFECTS = EffectRegistry(
         # v0.50（docs/mew-devolution-spray-v0.50.md 4 章）。退化スプレー: 自分の進化ポケモンを 1 匹選び、進化カードを好きな枚数（0 枚を含む）はがしてトラッシュする。処理に
         # 使う文面は kyuura の印刷の文面（英語版の「a Stage of Evolution」・退化スプレーHYPER の文面は持ち込まない）
         "PMCG1-086": TrainerEntry(DevolveOwnPokemon(), "退化スプレー", DEVOLUTION_SPRAY_TEXT, DEVOLUTION_SPRAY_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.51（docs/discard-to-bench-v0.51.md 4 章）。処理に使う文面は kyuura の印刷の文面（英語版の「Basic Pokémon card」・「You can't play … if … Bench is full」、のちの版
+        # （ポケモンジム第1弾）の「…このカードは使えない」は持ち込まない）
+        # 元気のかけら: 自分のトラッシュのたねポケモンのカードを、HP の半分（きりすて）のダメージカウンターをのせた状態で自分のベンチに出してよい
+        "PMCG1-078": TrainerEntry(BenchBasicFromOwnDiscardWithCounters(), "元気のかけら", REVIVE_TEXT, REVIVE_TEXT, _KYUURA_PRINTED_TEXT),
+        # ポケモンの笛: 相手のトラッシュのたねポケモンのカードを、使ったプレイヤーが選び、相手のベンチに出させてよい
+        "PMCG1-084": TrainerEntry(BenchBasicFromOpponentDiscard(), "ポケモンの笛", POKEMON_FLUTE_TEXT, POKEMON_FLUTE_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

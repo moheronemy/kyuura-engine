@@ -332,8 +332,11 @@ class CardDataTest(unittest.TestCase):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.50", "docs/mew-devolution-spray-v0.50.md")])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (80, 81))
-        applied = [record["kyuura_record"] for record in links["applied_rule_records"]]
+        # v0.50 で 80・81。v0.51 で RV1・FT1 の 2 件を加えた（docs/discard-to-bench-v0.51.md）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (82, 83))
+        # v0.50 の版で結んだ記録（v0.51 からほかの版の記録も同じ一覧にある）
+        applied = [record["kyuura_record"] for record in links["applied_rule_records"]
+                   if any(engine["version"] == "v0.50" for engine in record["engine"])]
         self.assertEqual(sorted(applied), sorted(["GR-2000-P324-DEVOLUTION", "CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION", "CR-CHEMICAL-GAS-LEAVES",
                                                   "GR-2000-P323-KNOCKOUT"]))
         adopted = links["latest_descriptions"]["adopted_printed_text"]

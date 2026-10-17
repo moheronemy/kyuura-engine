@@ -199,6 +199,11 @@ SELECT_COLOR = "select_color"
 # v0.50（docs/mew-devolution-spray-v0.50.md）: 退化スプレーで、選んだポケモンからはがす進化カードの枚数（0〜重なっている進化カードの数）。決めるのは使ったプレイヤー。
 # 0 枚は「ことができる」の、はがさないこと（はがさなければ退化しない）
 SELECT_DEVOLVE_COUNT = "select_devolve_count"
+# v0.51（docs/discard-to-bench-v0.51.md）: トラッシュのたねポケモンのカードを選んで、持ち主のベンチに出すとき、どのカードか（ナツメのスリーパーの「よみがえらせる」は
+# 自分または相手のトラッシュ（再開先 "attack"）、元気のかけらは自分のトラッシュ、ポケモンの笛は相手のトラッシュ（どちらも再開先 "trainer"））。決めるのはワザ・トレーナーを
+# 使ったプレイヤー（ポケモンの笛でも、出される側の相手ではない）。選べるものはトラッシュのカードの uid（使ったプレイヤーのトラッシュ → 相手のトラッシュ、それぞれトラッシュの並び。
+# トラッシュは公開の情報）。山札の ``BENCH_FROM_DECK`` とは選ぶ場所が違うので別の種類
+BENCH_FROM_DISCARD = "bench_from_discard"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

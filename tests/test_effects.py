@@ -122,6 +122,8 @@ V0_48_WITH_TEXT = [AttackKey(card, index) for card, index in (
 V0_49_WITH_TEXT = [AttackKey("PMCG6-053", 0)]
 # v0.50（docs/mew-devolution-spray-v0.50.md）。ミュウの「サイコウェーブ」・「たいかビーム」。処理に使う文面は kyuura の印刷の文面
 V0_50_WITH_TEXT = [AttackKey("PMCG3-033", 0), AttackKey("PMCG3-033", 1)]
+# v0.51（docs/discard-to-bench-v0.51.md）。ナツメのスリーパーの「よみがえらせる」・「ふりこののろい」。処理に使う文面は kyuura の印刷の文面
+V0_51_WITH_TEXT = [AttackKey("PMCG6-051", 0), AttackKey("PMCG6-051", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -273,7 +275,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -421,7 +423,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   docs/effective-pokemon-properties-v0.48.md）
         # + ナツメのフーディンの「メガバーン」・タケシのキュウコンの「おにび」（v0.49。メタモンはワザなし。docs/virtual-attacks-transformation-v0.49.md）
         # + ミュウの「サイコウェーブ」・「たいかビーム」（v0.50。docs/mew-devolution-spray-v0.50.md）
-        self.assertEqual(len(keys), 553)
+        # + ナツメのスリーパーの「よみがえらせる」・「ふりこののろい」（v0.51。docs/discard-to-bench-v0.51.md）
+        self.assertEqual(len(keys), 555)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

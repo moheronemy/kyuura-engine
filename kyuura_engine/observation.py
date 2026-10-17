@@ -31,6 +31,7 @@ from .decisions import (
     ATTACH_FROM_HAND,
     ATTACH_TO_BENCH,
     BENCH_FROM_DECK,
+    BENCH_FROM_DISCARD,
     DAMAGE_STEP_ORDER,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
@@ -89,6 +90,7 @@ OPTION_MEANINGS: dict[str, str] = {
     DAMAGE_STEP_ORDER: "number", SELECT_ATTACK: "number", SELECT_OPPONENT_ATTACK: "number", SELECT_SPECIAL_CONDITION: "number",
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
+    BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
@@ -305,7 +307,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 PUBLIC_EVENTS = frozenset({
     "attach_energy", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
-    "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none", "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
+    "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",
+    "bench_from_discard", "bench_from_discard_declined", "bench_from_discard_none",  # v0.51: トラッシュと場は公開の情報
+    "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
     "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",

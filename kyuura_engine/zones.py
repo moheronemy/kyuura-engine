@@ -15,7 +15,8 @@ def enter_play(state: GameState, uid: int) -> PokemonInPlay:
 
     場に出た番（``played_turn``。対戦準備なら 0）を記録する。今の番に場に出したポケモンは、その番には進化できない
     （「その番の最初」には場にいなかった。p.310。v0.4a）。v0.32 から、手札から出す（``engine._enter_play``。対戦準備・ベンチに出す）と、
-    ワザの効果で山札から出す（``bench_from_deck``）で共通（v0.31 までの ``engine._enter_play`` の本体をそのまま関数にした）。
+    ワザの効果で山札から出す（``bench_from_deck``）で共通（v0.31 までの ``engine._enter_play`` の本体をそのまま関数にした）。v0.51 から、トラッシュから持ち主の
+    ベンチに出す（``bench_from_discard``）も共通。
     """
     pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
     state.next_pokemon_id += 1
@@ -35,6 +36,33 @@ def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
         raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をベンチに出せない（確認の漏れ。エンジンの不具合）")
     p.deck.remove(card)
     pokemon = enter_play(state, card)
+    p.bench.append(pokemon)
+    return pokemon
+
+
+def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> PokemonInPlay:
+    """トラッシュのたねポケモンのカード ``card`` を、同じ uid のまま、手札・山札を通さずに持ち主のベンチの最後に出す（v0.51。ナツメのスリーパーの「よみがえらせる」・
+    元気のかけら・ポケモンの笛。docs/discard-to-bench-v0.51.md 3 章）。
+
+    - カードの持ち主・カードを置いていたトラッシュ・出すベンチは、いつも同じプレイヤー（カードの持ち主。カードは持ち主のトラッシュにしか置かれない）。効果を使った
+      プレイヤー・選んだプレイヤーとは別に決まる（ポケモンの笛は、使ったプレイヤーが相手のトラッシュから選び、相手のベンチに出る）
+    - 場のポケモンの番号・場に出た番は、手札・山札から出すときと同じ ``enter_play``（新しい番号。今の番に場に出たので、その番には進化できない。p.310）。トラッシュに
+      置かれる前に場にいたときのもの（ダメージ・特殊状態・ついていたカード・持続する効果・使用の記録・場のポケモンの番号）はどれも引き継がない（カードだけを動かす）
+    - ``counters``: ベンチに出す前に、場のポケモンにのせておくダメージカウンターの数（元気のかけらの「…のダメージカウンターをのせた状態でベンチに出す」）。0 なら
+      のせない（よみがえらせるは「ベンチに出す。そして、…のせる」なので、出したあとに呼ぶ側がのせる）
+    - 手札を通さず、山札を切らない（説明にない移動・シャッフルを加えない）
+
+    出してよいか（カードの種類・決定・ベンチの空き）の確認とログは呼ぶ側が行う。カードが持ち主のトラッシュにない・トラッシュにある間のカードの定義がたねポケモンでない
+    （なにかの化石・ピッピ人形はトラッシュではトレーナーカード）・持ち主のベンチに空きがない（``rules.max_bench``）・のせる数が負なら、確認の漏れなので ``RuntimeError``
+    （状態を変える前）。出した場のポケモンを返す。
+    """
+    owner = state.cards[card].owner if card in state.cards else None
+    p = None if owner is None else state.players[owner]
+    if p is None or card not in p.discard or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench or counters < 0:
+        raise RuntimeError(f"トラッシュのカード {card}（持ち主 {owner}）を持ち主のベンチに出せない（確認の漏れ。エンジンの不具合）")
+    p.discard.remove(card)
+    pokemon = enter_play(state, card)
+    pokemon.damage = counters * state.rules.damage_per_counter
     p.bench.append(pokemon)
     return pokemon
 

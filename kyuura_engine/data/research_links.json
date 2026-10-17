@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 81,
-    "engine_stop_codes": 80,
+    "engine_unresolved_rulings": 83,
+    "engine_stop_codes": 82,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -972,6 +972,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REVIVE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.51",
+          "document": "docs/discard-to-bench-v0.51.md",
+          "ruling_id": "RV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.51",
+          "document": "docs/discard-to-bench-v0.51.md",
+          "ruling_id": "FT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1858,7 +1880,9 @@
       "PMCG3-042/power/0",
       "PMCG5-019/power/0",
       "PMCG3-033/attack/0",
-      "PMCG3-033/attack/1"
+      "PMCG3-033/attack/1",
+      "PMCG6-051/attack/0",
+      "PMCG6-051/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -2163,6 +2187,42 @@
         }
       ],
       "use": "退化で最大HPがのっているダメージ以下になったポケモンのきぜつ: ワザ（たいかビーム）はワザのあとの判定、トレーナー（退化スプレー）は使い終えたあとの判定（resolution.after_trainer。timing trainer）。p.323「16」の HP 以上のダメージ・p.319 のダメージカウンター・p.324「19」の退化前のカードの内容の無効・p.324「16」の続きの「ワザや特殊能力などによって引き起こされることがら」からの SUPPORTED（第4版の冊子の記述は別の版の記録で根拠にしない）"
+    },
+    {
+      "kyuura_record": "GR-2000-P309-ATTACK-PROCEDURE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.51",
+          "document": "docs/discard-to-bench-v0.51.md",
+          "ruling_id": "RB6"
+        }
+      ],
+      "use": "よみがえらせる（ワザ）で、自分・相手のトラッシュに持ち主のベンチに出せるたねポケモンのカードがなければ、処理の対象がないので何もしない（ワザは使える。ログ bench_from_discard_none）。持ち主のベンチに空きのないカードは「持ち主のベンチに出す」対象にならない（実装上の判断。RB3）"
+    },
+    {
+      "kyuura_record": "GR-2000-P319-HP-AND-DAMAGE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.51",
+          "document": "docs/discard-to-bench-v0.51.md",
+          "ruling_id": "RB4"
+        }
+      ],
+      "use": "「HPの半分(切り捨て)のダメージカウンター」: ダメージカウンター 1 個は 10 ダメージなので、HP をダメージカウンターの数で表して半分にし、切りすてる（effects.half_hp_counters。HP 70 なら 3 個。v0.45 の「いかりのまえば」・v0.46 のリフレクターと同じ単位）"
+    },
+    {
+      "kyuura_record": "GR-2000-P320-COUNTER-MOVE",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.51",
+          "document": "docs/discard-to-bench-v0.51.md",
+          "ruling_id": "RB5"
+        }
+      ],
+      "use": "よみがえらせる・元気のかけらでのせるダメージカウンターは「ダメージを受けた」ことにならない（ワザ・トレーナーによるダメージではない。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けたとき」の効果は関係しない。v0.41 のダメージシフト・v0.42 のライフダウンと同じ読み方）"
     }
   ]
 }

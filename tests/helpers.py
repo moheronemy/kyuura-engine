@@ -463,6 +463,12 @@ MEW = "PMCG3-033"  # ミュウ（化石の秘密。HP 50・超・弱点 超・�
 DEVOLUTION_SPRAY = "PMCG1-086"  # 退化スプレー（第1弾。トレーナー）
 V0_50_POKEMON = (MEW,)
 V0_50_CARDS = (MEW, DEVOLUTION_SPRAY)  # 写しの組 pool_v0_50 の並び
+# v0.51（docs/discard-to-bench-v0.51.md）。トラッシュのたねポケモンを持ち主のベンチに出す共通の処理で加えた 3 枚（どれも kyuura データの採用）
+SABRINAS_HYPNO = "PMCG6-051"  # ナツメのスリーパー（闇からの挑戦。ナツメのスリープ（PMCG6-045）から進化する 1 進化。HP 70・超・弱点 超・にげる 2。よみがえらせる（超）・ふりこののろい（超超）20×）
+REVIVE = "PMCG1-078"  # 元気のかけら（第1弾。トレーナー）。元気のかたまり（写しにない）とは別のカード
+POKEMON_FLUTE = "PMCG1-084"  # ポケモンの笛（第1弾。トレーナー）
+V0_51_POKEMON = (SABRINAS_HYPNO,)
+V0_51_CARDS = (SABRINAS_HYPNO, REVIVE, POKEMON_FLUTE)  # 写しの組 pool_v0_51 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -1038,6 +1044,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.50（docs/mew-devolution-spray-v0.50.md）
     _effects.DamageTimesDefenderEnergyCards,  # ミュウの「サイコウェーブ」
     _effects.DevolveChosenPokemon,  # ミュウの「たいかビーム」
+    # v0.51（docs/discard-to-bench-v0.51.md）
+    _effects.BenchBasicFromEitherDiscard,  # ナツメのスリーパーの「よみがえらせる」
+    _effects.CoinsPerDefenderCountersDamage,  # ナツメのスリーパーの「ふりこののろい」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

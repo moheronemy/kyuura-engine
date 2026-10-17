@@ -12643,6 +12643,123 @@
       ],
       "issues": [],
       "notes": "v0.50 で加えた。トレーナー。DevolveOwnPokemon（自分の、実際に進化カードが重なっているポケモンを 1 匹選び、上から好きな枚数（0 枚を含む。「ことができる」）の進化カードをはがしてトラッシュする。退化の共通の処理 evolution.devolve。使い終えてトラッシュしてから、最大HPがのっているダメージ以下になったポケモンはきぜつする）。自分の場に進化ポケモンがいないときは DV4、「ばける」のポケモンは DV5、途中の重なりできぜつするかで結果が変わる枚数は DV1。英語版の「a Stage of Evolution」・退化スプレーHYPER の文面は持ち込まない"
+    },
+    "PMCG6-051": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのスリーパー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2053.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "053/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切り捨て)のダメージカウンターをのせる。",
+              "pcg_search": "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「切りすて」（ひらがな）、kyuura は「切り捨て」。表記の違いで、処理（HP の半分をダメージカウンターの単位で切り捨てる）は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。同じカードのポケモンジム第3弾「ヤマブキシティジム ナツメ」の版（サイトの 1stgymd6010）は、ふりこののろいのダメージの表示が「20」（「×」がない）。kyuura の docs/cards/reprints.md は、それをサイトの転記の誤りとして記録している（カードの画像で「20×」を確かめた。確実）。照合したのは闇からの挑戦の版で、「20×」と書かれている"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.51 で加えた。よみがえらせるは BenchBasicFromEitherDiscard（自分 → 相手のトラッシュの、持ち主のベンチに空きのあるたねポケモンのカードから、ワザを使ったプレイヤーが 1 枚選び、持ち主のベンチに出す（zones.bench_from_discard）→ 出したポケモンの今有効な最大HPの半分（ダメージカウンターの単位で切り捨て）のダメージカウンターをのせる（ダメージではない。のせる前に「ワザをうけない」状態・「とうめい」を評価する）。出せるカードがなければ何もしない（p.309））、ふりこののろいは CoinsPerDefenderCountersDamage（相手の対戦ポケモンのダメージカウンターの数だけコインを投げ、「おもて」の数 × 20 が基本となるダメージ。0 個なら投げない。「いかりのスーパーパンチ」の型とは別）。英語版の「(You can't put a Pokémon on a Bench that's full.)」は持ち込まない（ベンチに空きのないカードを選べないのは p.309 の処理の対象の読み方。docs/discard-to-bench-v0.51.md）。kyuura の日本語の文面の転記元はポケモンWiki（ja_text_source）で、pcg-search.com との照合は独立した照合"
+    },
+    "PMCG1-078": {
+      "basis": "kyuura_data",
+      "name_ja": "元気のかけら",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1075.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "075/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（v0.47 のピッピ人形・v0.50 の退化スプレーと同じ）。同じカードのポケモンジム第1弾「ニビシティジム タケシ」の版（サイトの 1stgymd1017）は、のちの書き方（「あなたのトラッシュから、たねポケモンカードを1枚選び、あなたのベンチに出す。その後、…(…このカードは使えない)」）で、照合の対象ではない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.51 で加えた。トレーナー。BenchBasicFromOwnDiscardWithCounters（使ったプレイヤーのトラッシュのたねポケモンのカード（「ポケモンカード」で進化カードは選べない。なにかの化石・ピッピ人形はトラッシュではトレーナーカード）を 0〜1 枚選び、そのカードの HP の半分（ダメージカウンターの単位で切り捨て）のダメージカウンターをのせた状態で、自分のベンチに出す。0 枚は「ことができる」の、出さないこと）。自分のトラッシュにたねポケモンのカードがない・自分のベンチに空きがないときは RV1（使えるか決まらない）。英語版の文面・kyuura の再録の文面の書き換えの記録（ポケモンジム第1弾の版の「…このカードは使えない」。区分「書き方だけ」）は、処理に使う文面を補う根拠にしない（v0.21 の突風の GW5 と同じ）"
+    },
+    "PMCG1-084": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンの笛",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1092.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "092/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.51 で加えた。トレーナー。BenchBasicFromOpponentDiscard（使ったプレイヤーが、相手のトラッシュのたねポケモンのカード（進化カードは選べない）を 0〜1 枚選び、相手のベンチに出させる。ダメージカウンターはのせない。0 枚は「ことができる」の、出さないこと）。相手のトラッシュにたねポケモンのカードがない・相手のベンチに空きがないときは FT1（使えるか決まらない）。英語版の「(You can't play Pokémon Flute if your opponent's Bench is full.)」は持ち込まない"
     }
   }
 }

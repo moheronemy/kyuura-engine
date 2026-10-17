@@ -343,7 +343,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(code=code):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
         # v0.49 で 75・76。v0.50 で DV1〜DV5 の 5 件を加えた（docs/mew-devolution-spray-v0.50.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (80, 81))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (82, 83))  # v0.51 で RV1・FT1 を加えた
 
 
 # ---------------------------------------------------------------- ［サイコリンク］・メガバーン
