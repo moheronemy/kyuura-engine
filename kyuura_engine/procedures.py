@@ -21,7 +21,7 @@ from . import judge
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
-from .effects import attack_damage_modifiers
+from .effects import attack_damage_modifiers, confusion_power_modifiers
 from .errors import UnsupportedError
 from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
@@ -276,7 +276,7 @@ def attack_coin_check(state: GameState, player: int, pokemon: PokemonInPlay, che
     return succeeded
 
 
-def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
+def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_status: frozenset[int] | None = None) -> UnsupportedError | None:
     """こんらんしたワザの 20 ダメージを、原典で決められる形で計算できないなら、その理由（v0.3c）。
 
     p.322 は「このダメージは「弱点・抵抗力」の影響を受けます」とだけ書く。こんらんのダメージが「ワザによるダメージ」
@@ -284,16 +284,28 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> Unsupp
     ワザが…ダメージを与えるとき」）・ディフェンダー（「ワザによるダメージを受けるとき」。p.257）の効果を計算するかを決め
     られない。それらのカードがついていなければ問題はない。ついていれば、コインを投げる前に止める（コインが「おもて」なら
     問題はないが、投げる前には分からない）。
+
+    v0.46: 同じ問いで、場の常にはたらく特殊能力が、こんらんの 20 をワザのダメージ（このポケモンが与えるダメージ）として扱うなら当てはまるとき（エリカのフシギソウの
+    ［くつろぐかおり］の「すべてのワザのダメージ」・わるいオコリザルの［きょうぼう］の「このカードがポケモンに与えるダメージ」。``effects.confusion_power_modifiers``。
+    ``attack_status`` はワザが使われた時の特殊状態）も止める（新しい問いにしない）。
     """
     modifiers = attack_damage_modifiers(state, pokemon, pokemon)
-    if not modifiers:
-        return None
-    return UnsupportedError(
-        "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
-        f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
-        "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
-        "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
-    )
+    if modifiers:
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
+            "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
+            "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
+        )
+    powers = confusion_power_modifiers(state, pokemon, attack_status)
+    if powers:
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} のワザがこんらんしたとき、ダメージを変える特殊能力（{'・'.join(powers)}）がはたらいている。こんらんしたワザで"
+            "自分が受ける 20 ダメージが、その特殊能力の書く「ワザのダメージ」「このカードがポケモンに与えるダメージ」か（こんらんのダメージが「ワザによるダメージ」か）は"
+            "『オフィシャルブック2000』（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない",
+        )
+    return None
 
 
 def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> None:

@@ -20,7 +20,7 @@ from tests.helpers import (
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
     V0_30_POKEMON, CHARMELEON, ARCANINE, GROWLITHE, V0_31_POKEMON, V0_31_TARGETS, V0_31_DEPENDENCIES, no_charizard_pool, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_34_POOL, KANGASKHAN, V0_35_POKEMON, V0_36_POKEMON,
     V0_37_POKEMON, V0_37_ADOPTED, FOSSIL_GRIMER, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, V0_44_POKEMON, V0_44_CARDS,
-    V0_45_POKEMON, no_base_haunter_pool,
+    V0_45_POKEMON, V0_46_POKEMON, no_base_haunter_pool,
 )
 
 KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
@@ -210,6 +210,7 @@ class CardPoolTest(unittest.TestCase):
         self.assertEqual(read_extract()["pool_v0_43"], list(V0_43_POKEMON))  # v0.43（docs/declared-entry-powers-v0.43.md）
         self.assertEqual(read_extract()["pool_v0_44"], list(V0_44_CARDS))  # v0.44（ポケモン 14 枚とサカキ。docs/search-evolution-once-attacks-v0.44.md）
         self.assertEqual(read_extract()["pool_v0_45"], list(V0_45_POKEMON))  # v0.45（docs/conditional-damage-energy-v0.45.md）
+        self.assertEqual(read_extract()["pool_v0_46"], list(V0_46_POKEMON))  # v0.46（docs/continuous-powers-v0.46.md）
         self.assertEqual(len(V0_37_ADOPTED), 14)
         self.assertNotIn(FOSSIL_GRIMER, read_extract()["reference_only"])
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
@@ -224,7 +225,7 @@ class CardPoolTest(unittest.TestCase):
                  ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SCYTHER, *V0_28_POKEMON, *V0_29_POKEMON, *V0_30_POKEMON,
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
-                 *V0_45_POKEMON)
+                 *V0_45_POKEMON, *V0_46_POKEMON)
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, MULTIPLY, SET, ZERO_IF_BELOW, DamageOrderRequired, calculate_attack_damage
+from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, calculate_attack_damage
 from ..effects import (
     ATTACK_ELEMENTS,
     BENCH_TARGETS,
@@ -37,6 +37,8 @@ from ..effects import (
     attack_damage_modifiers,
     counterattack_double_knockout_error,
     power_name_and_page,
+    received_modifiers_log,
+    received_power_damage,
     retaliation_double_knockout_error,
 )
 from ..conditions import confuse
@@ -108,6 +110,10 @@ class Resolution:
         # v0.31: ダメージによらず「きぜつ」するポケモン（「みちづれ」で、相手の対戦ポケモンも「きぜつ」する。場のポケモンの番号）。きぜつの判定・
         # 処理は、HP 以上のダメージのポケモンといっしょに扱う（``knocked``）
         self.forced: set[int] = set()
+        # v0.46: ワザが使われた時（宣言）に「ねむり・マヒ・こんらん」状態だった、その時点の特殊状態で決める常にはたらく特殊能力（エリカのフシギソウの
+        # ［くつろぐかおり］）を持つ場のポケモンの番号（``effects.status_at_attack_blocked``）。ワザの宣言で写し（``flow._attack_body``）、決定をまたぐときは
+        # 続きの情報で運ぶ（``AttackRun.suspend``）。ワザの外（None）では今の特殊状態で決める
+        self.attack_status: frozenset[int] | None = None
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -195,7 +201,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     if first_void(res, receiver_player, receiver) is not None:
         return False
     attacker_def, receiver_def = state.card_def(attacker.card), state.card_def(receiver.card)
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True)
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=True, attack_status=res.attack_status)
     try:
         finals = {calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=flag).final
                   for flag in (True, False)}
@@ -250,7 +256,9 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS)
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status)
+    if frame.kind is FrameKind.RETALIATION:
+        calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
     try:
         calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
                                        orders=orders, resistance=resistance)
@@ -288,6 +296,16 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if zeroed:
         # v0.45: 「決まった数より小さければ 0 にする」効果（「かたくなる」の 8 段階）。(段階, 発生源のカード, しきい値)
         extra["damage_zero_below"] = zeroed
+    # v0.46: 常にはたらく特殊能力・「リフレクター」の計算（docs/continuous-powers-v0.46.md 3 章）。どれも計算したときだけ書く（v0.45 までのログの形は変えない）
+    zeroed_large = tuple((m.step, m.source, m.amount) for m in calc.modifiers if m.operation == ZERO_IF_AT_LEAST)
+    if zeroed_large:
+        extra["damage_zero_at_least"] = zeroed_large  # ［なぞのかべ］。(段階, 発生源のカード, しきい値)
+    capped = tuple((m.step, m.source, m.threshold, m.amount) for m in calc.modifiers if m.operation == SET_IF_AT_LEAST)
+    if capped:
+        extra["damage_set_if_at_least"] = capped  # ［ふしぎなバリアー］。(段階, 発生源のカード, しきい値, その数)
+    halved = tuple((m.step, m.source, "up" if m.operation == HALVE_UP else "down") for m in calc.modifiers if m.operation in (HALVE_UP, HALVE_DOWN))
+    if halved:
+        extra["damage_halved"] = halved  # ［くつろぐかおり］（切り上げ）・「リフレクター」（切りすて）。(段階, 発生源のカード, 丸め)
     if orders:
         # v0.35: 順番の決定で選んだ計算の順番（(段階, その段階の変更効果の名前を計算した順に)）
         extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
@@ -317,6 +335,32 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     track_ko(res, fs, receiver, before)
     fs.pending.extend(deferred)
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)
+
+
+def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, target: str,
+                                 weakness_resistance: bool, resistance: bool) -> None:
+    """返す効果のダメージ（ほのおのかべ・こうらがえし・クロスカウンター。前の番のワザの効果）に、ワザが使われた時の特殊状態で決める常にはたらく特殊能力
+    （［くつろぐかおり］の「ワザが使われた時、すでに…」）が当てはまりうるとき（v0.46。CP1）。返すダメージは「こうらがえし」などのワザによるダメージ
+    （GR-2000-P321-ATTACK-DAMAGE）だが、「ワザが使われた時」が返す効果を与えた前の番のワザか、きっかけになったこの番のワザかは決まらず、前の番のワザのときの
+    特殊状態は記録していない。場所・かがくへんかガスの条件を満たす特殊能力があり、特殊状態によって当てはめるかどうかで最終ダメージ（または順番の決定の要否）が
+    変わるなら止める（問い ``calming_retaliation``）。変わらなければ（半分にしても同じ数・特殊能力がない）止めない。"""
+    from ..effects import status_at_attack_powers
+
+    state = res.state
+    if not status_at_attack_powers(state):
+        return
+    every = frozenset(p.pokemon_id for player in state.players for p in player.in_play())
+    outcomes = set()
+    for snapshot in (frozenset(), every):  # 当てはめる読み方・当てはめない読み方
+        modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
+        try:
+            calc = calculate_attack_damage(base, state.card_def(attacker.card), state.card_def(receiver.card), state.rules, modifiers,
+                                           weakness_resistance=weakness_resistance, resistance=resistance)
+            outcomes.add(calc.final)
+        except DamageOrderRequired:
+            outcomes.add(None)
+    if len(outcomes) > 1:
+        raise res.question("calming_retaliation", f"返すダメージ {base}（ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}）")
 
 
 def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, received: int) -> list[Deferred]:
@@ -484,10 +528,15 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
                            attack_key=fs.frame.attack_key)
     child.origin = instance
     before = attacker.damage
-    attacker.damage += instance.implementation.amount
-    child.applied[attacker.pokemon_id] = instance.implementation.amount
-    state.add_event("counterattack", **base, amount=instance.implementation.amount, total_damage=attacker.damage,
-                    knocked_out=attacker.damage >= hp)
+    # v0.46: 受けるポケモンの、受けるダメージ全体を書く常にはたらく特殊能力（エリカのミニリュウの［ふしぎなバリアー］は R団のカビゴン（たねポケモン）の
+    # ［わるいねぞう］の 20 を 10 にする）。p.321 の計算（ワザによるダメージ）ではない。当てはめたときだけログに書く
+    holder = state.find_pokemon(instance.pokemon_id)[1]
+    amount, applied = received_power_damage(state, fs.frame.player, attacker, holder, instance.implementation.amount)
+    attacker.damage += amount
+    child.applied[attacker.pokemon_id] = amount
+    extra = {} if not applied else {"amount_before": instance.implementation.amount, "received_modifiers": received_modifiers_log(applied)}
+    state.add_event("counterattack", **base, amount=amount, total_damage=attacker.damage,
+                    knocked_out=attacker.damage >= hp, **extra)
     track_ko(res, child, attacker, before)
 
 

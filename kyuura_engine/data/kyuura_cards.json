@@ -454,6 +454,19 @@
     "PMCG5-047",
     "PMCG6-068"
   ],
+  "pool_v0_46": [
+    "PMCG2-027",
+    "PMCG5-063",
+    "PMCG6-010",
+    "PMCG4-041",
+    "PMCG2-040",
+    "PMCG4-007",
+    "PMCG4-010",
+    "PMCG2-047",
+    "PMCG6-017",
+    "PMCG5-012",
+    "PMCG5-013"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -27554,6 +27567,983 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E3%83%8B%E3%83%A3%E3%83%BC%E3%82%B9LV.12_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG2-027",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "バリヤード",
+        "en": "Mr. Mime"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          122
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "なぞのかべ",
+              "en": "Invisible Wall"
+            },
+            "text": {
+              "ja": "このカードが受ける30以上のダメージは0になる。(30より小さいダメージはそのまま受ける。)「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Whenever an attack (including your own) does 30 or more damage to Mr. Mime (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.) This power can't be used if Mr. Mime is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヨガのポーズ",
+              "en": "Meditate"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手にのっているダメージカウンター×10のダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each damage counter on the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-027",
+        "pokemontcg": [
+          "base2-6",
+          "base2-22"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-027-barrierd/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-027-barrierd/"
+      }
+    },
+    {
+      "id": "PMCG5-063",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのミニリュウ",
+        "en": "Erika's Dratini"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          147
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ふしぎなバリアー",
+              "en": "Strange Barrier"
+            },
+            "text": {
+              "ja": "このカードが「たねポケモン」から受ける20以上のダメージは、「10」になる。(ダメージ以外の効果は、そのまま)。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "Whenever an attack by a Basic Pokémon (including your own) does 20 or more damage to Erika's Dratini (after applying Weakness and Resistance), reduce that damage to 10. (Any other effects of attacks still happen.) This power stops working while Erika's Dratini is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽでつく",
+              "en": "Tail Strike"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-063",
+        "pokemontcg": [
+          "gym1-42"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9F%E3%83%8B%E3%83%AA%E3%83%A5%E3%82%A6_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 14,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%9F%E3%83%8B%E3%83%AA%E3%83%A5%E3%82%A6_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-010",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのフシギソウ",
+        "en": "Erika's Ivysaur"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          2
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのフシギダネ",
+          "en": "Erika's Bulbasaur"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "くつろぐかおり",
+              "en": "Relaxing Scent"
+            },
+            "text": {
+              "ja": "このカードがバトル場にいる限り、お互いの対戦ポケモンの、すべてのワザのダメージは、半分(切り上げ)になる。(自分や、控えへのダメージも半分になる)。ワザが使われた時、すでにこのカードが「ねむり・マヒ・こんらん」状態なら、この力ははたらかない。",
+              "en": "As long as Erika's Ivysaur is your Active Pokémon, whenever an attack (even your own) does damage to any Pokémon (after applying Weakness and Resistance), that attack only does half the damage to that Pokémon (rounded up to the nearest 10). (Any other effects of attacks still happen.) This power stops working while Erika's Ivysaur is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ダブルはっぱカッター",
+              "en": "Double Razor Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "×",
+              "display": "40×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×40のダメージ。",
+              "en": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-010",
+        "pokemontcg": [
+          "gym2-41"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%95%E3%82%B7%E3%82%AE%E3%82%BD%E3%82%A6_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 22,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%95%E3%82%B7%E3%82%AE%E3%82%BD%E3%82%A6_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-041",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいオコリザル",
+        "en": "Dark Primeape"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          57
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マンキー",
+          "en": "Mankey"
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "きょうぼう",
+              "en": "Frenzy"
+            },
+            "text": {
+              "ja": "このカードが「こんらん」状態の時、このカードがポケモンに与えるダメージは「+30」される。",
+              "en": "If Dark Primeape does any damage while it's Confused (even to itself), it does 30 more damage."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あばれくるう",
+              "en": "Frenzied Attack"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分は「こんらん」状態になる。",
+              "en": "Dark Primeape is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-041",
+        "pokemontcg": [
+          "base5-43"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-041-warui-okorizaru/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-041-warui-okorizaru/"
+      }
+    },
+    {
+      "id": "PMCG2-040",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドードリオ",
+        "en": "Dodrio"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          85
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ドードー",
+          "en": "Doduo"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "にげるサポート",
+              "en": "Retreat Aid"
+            },
+            "text": {
+              "ja": "この力はベンチでしか使えない。自分の対戦ポケモンが「にげる」時、はがしてすてるエネルギーを1つ分少なくできる。",
+              "en": "As long as Dodrio is Benched, pay Colorless less to retreat your Active Pokémon."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いかり",
+              "en": "Rage"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンター×10のダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each damage counter on Dodrio."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-040",
+        "pokemontcg": [
+          "base2-34"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-042-dodorio/",
+      "jp_print": {
+        "level": 28,
+        "rarity": "◆(U)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-042-dodorio/"
+      }
+    },
+    {
+      "id": "PMCG4-007",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいベトベトン",
+        "en": "Dark Muk"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          89
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ベトベター",
+          "en": "Grimer"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ねんちゃくえき",
+              "en": "Sticky Goo"
+            },
+            "text": {
+              "ja": "このカードがバトル場にいるかぎり、相手の対戦ポケモンは、「にげる」時トラッシュするエネルギーが2ぶん多く必要になる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "As long as Dark Muk is your Active Pokémon, your opponent pays ColorlessColorless more to retreat his or her Active Pokémon. This power stops working while Dark Muk is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ヘドロパンチ",
+              "en": "Sludge Punch"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": "The Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-007",
+        "pokemontcg": [
+          "base5-41"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-009-warui-betbeton/",
+      "jp_print": {
+        "level": 25,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-009-warui-betbeton/"
+      }
+    },
+    {
+      "id": "PMCG4-010",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいラフレシア",
+        "en": "Dark Vileplume"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          45
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "わるいクサイハナ",
+          "en": "Dark Gloom"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "アレルギーかふん",
+              "en": "Hay Fever"
+            },
+            "text": {
+              "ja": "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": "No Trainer cards can be played. This power stops working while Dark Vileplume is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はなびらのうず",
+              "en": "Petal Whirlwind"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×30のダメージ。2枚以上「おもて」なら、自分は「こんらん」状態になる",
+              "en": "Flip a coins. This attack does 30 damage times the number of heads. If you get 2 or more heads, Dark Vileplume is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-010",
+        "pokemontcg": [
+          "base5-13",
+          "base5-30"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-007-warui-ruffresia/",
+      "jp_print": {
+        "level": 29,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-007-warui-ruffresia/"
+      }
+    },
+    {
+      "id": "PMCG2-047",
+      "jp_set": "PMCG2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カビゴン",
+        "en": "Snorlax"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          143
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "めんえき",
+              "en": "Thick Skinned"
+            },
+            "text": {
+              "ja": "このカードは、「どく・ねむり・マヒ・こんらん」状態にならない。(なんらかの原因で「ねむり・マヒ・こんらん」状態になっているとき、この力は使えない)",
+              "en": "Snorlax can't become Asleep, Confused, Paralyzed, or Poisoned. This power can't be used if Snorlax is already Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": "Body Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG2-047",
+        "pokemontcg": [
+          "base2-11",
+          "base2-27"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg02-047-kabigon/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "★(R)",
+        "series": "ポケモンジャングル",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg02-047-kabigon/"
+      }
+    },
+    {
+      "id": "PMCG6-017",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのフシギバナ",
+        "en": "Erika's Venusaur"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          3
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "エリカのフシギソウ",
+          "en": "Erika's Ivysaur"
+        },
+        "hp": 90,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "せいちょう",
+              "en": "Growth"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、このカードにつける。",
+              "en": "Flip a coin. If heads, you may attach up to 2 Grass Energy cards from your hand to Erika's Venusaur."
+            }
+          },
+          {
+            "name": {
+              "ja": "かくさんソーラービーム",
+              "en": "Wide Solarbeam"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の控えポケモンを2匹選び、それらのポケモンにも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, choose 2 of them (or 1 if he or she only has 1). This attack does 20 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-017",
+        "pokemontcg": [
+          "gym2-4"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%95%E3%82%B7%E3%82%AE%E3%83%90%E3%83%8A_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 45,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%95%E3%82%B7%E3%82%AE%E3%83%90%E3%83%8A_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-012",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのタマタマ",
+        "en": "Erika's Exeggcute"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          102
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "リフレクター",
+              "en": "Deflector"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+              "en": "During your opponent's next turn, whenever Erika's Exeggcute takes damage, divide that damage in half (rounded down to the nearest 10). (Any other effects still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "タマゴばくだん",
+              "en": "Egg Bomb"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、相手へのダメージはなくなり、自分に20ダメージ。",
+              "en": "Flip a coin. If tails, this attack does nothing to the Defending Pokémon and Erika's Exeggcute does 20 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-012",
+        "pokemontcg": [
+          "gym1-43"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%BF%E3%83%9E%E3%82%BF%E3%83%9ELV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%82%BF%E3%83%9E%E3%82%BF%E3%83%9ELV.15_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-013",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのナッシー",
+        "en": "Erika's Exeggutor"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          103
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのタマタマ",
+          "en": "Erika's Exeggcute"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコエクスチェンジ",
+              "en": "Psychic Exchange"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の手札をすべて山札にもどし、山札をよく切る。その後、カードを5枚引いて、手札にする。",
+              "en": "Shuffle your hand into your deck, then draw 5 cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "ふみつけ",
+              "en": "Stomp"
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 30 damage plus 10 more damage; if tails, this attack does 30 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-013",
+        "pokemontcg": [
+          "gym1-44"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%8A%E3%83%83%E3%82%B7%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "タマムシシティジム エリカ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%8A%E3%83%83%E3%82%B7%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

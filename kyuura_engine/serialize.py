@@ -112,6 +112,7 @@ from .state import (
     DamageReduction,
     DestinyBond,
     GameState,
+    HalvedDamage,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -160,7 +161,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。v0.45 の
     ``"retaliation_received_damage_scaled"``（「クロスカウンター」。受けたダメージの倍数とコインの条件のある返す効果）は ``attack_index``・``multiplier``・
     ``on_heads`` を、``"zero_damage_below"``（「かたくなる」）は ``threshold`` を加え、``"attack_coin_check"`` の期限のない効果（「スミをかける」の「それ以後」）
-    だけ ``lasting``（True）を加える（v0.44 までの形は変えない。形式は変えない。v0.44 までの書き出しを読む側は、知らない種類・項目として拒否すること）。"""
+    だけ ``lasting``（True）を加える（v0.44 までの形は変えない。形式は変えない。v0.44 までの書き出しを読む側は、知らない種類・項目として拒否すること）。v0.46 の
+    ``"halved_damage"``（「リフレクター」）は共通の項目だけ（形式は変えない。v0.45 までの書き出しを読む側は、知らない種類として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -199,7 +201,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["lasting"] = True  # v0.45: 「スミをかける」の「それ以後」（期限のない効果だけ書く）
     elif isinstance(effect, ZeroDamageBelow):
         data["threshold"] = effect.threshold  # v0.45: 「かたくなる」
-    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive)):
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     return data
 

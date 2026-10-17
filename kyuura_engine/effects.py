@@ -96,9 +96,9 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 from .cards import EnergyType
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
-from .damage import MULTIPLY, SET, ZERO_IF_BELOW, DamageModifier, calculate_attack_damage
+from .damage import HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, calculate_attack_damage
 from .decisions import (
-    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
+    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
     DISCARD_TO_DECK_TOP, HAND_TO_DECK, MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_POKEMON, RECOVER_TRAINER, REMOVE_COUNTERS, RETRIEVE_ENERGY, RETURN_ENERGY,
     RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
@@ -110,6 +110,7 @@ from .persistent import (
     attack_barrier,
     damage_prevention,
     damage_reduction,
+    halved_damage,
     next_turn_attack_damage,
     reduced_damage_to_source,
     RETURN_IN_PLAY_TO_HAND,
@@ -2780,10 +2781,15 @@ class DamagePlusDefenderCounters(AttackEffect):
     相手の控えポケモンにダメージカウンターがのっていて読み方で答えが変わるときだけ止める（CD4。``UNRESOLVED_OPPONENT_POKEMON_COUNTERS``）。"""
 
     per: int
+    # v0.46: 説明が「相手のポケモンにのっている」（ルージュラ。CD4 の読み方の問いがある）なら True、「相手にのっている」（バリヤードの「ヨガのポーズ」。「相手」は相手の
+    # 対戦ポケモン。p.320。CD4 に当たらない）なら False
+    scope_ambiguous: bool = True
     implementation_id = "damage_plus_defender_counters"
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "相手のダメージカウンターで追加ダメージのワザ", damage="modified", modifier="+")
+        whom = "相手のポケモン" if self.scope_ambiguous else "相手"
+        return _check_form(attack, "相手のダメージカウンターで追加ダメージのワザ", damage="modified", modifier="+") + _check_exact_text(
+            attack, "相手のダメージカウンターで追加ダメージのワザ", (f"{whom}にのっているダメージカウンター×{self.per}のダメージを追加する。",))
 
 
 @dataclass(frozen=True)
@@ -5213,7 +5219,8 @@ class DamageMinusIfDefenderDamaged(AttackEffect):
 
 
 def attack_damage_modifiers(
-    state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False
+    state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *, attack: AttackKey | None = None, bench: bool = False,
+    attack_status: frozenset[int] | None = None,
 ) -> tuple[DamageModifier, ...]:
     """ワザでダメージを与えるときの変更効果（v0.2c）。
 
@@ -5229,6 +5236,11 @@ def attack_damage_modifiers(
     基盤の ``kernel.deal_damage`` と宣言の前の ``preview_attack_damage`` が同じこの関数を使う。``attack`` を渡さない呼び出し（こんらんの
     20 ダメージの確認。``procedures.confusion_damage_problem``）は v0.26 と同じ（こんらんの 20 は「きりさく」のダメージではない。p.309 の
     手順 5「もとのワザの内容に関わらず」）。
+
+    v0.46: ``attack`` を渡すと、受けるポケモンの持っている「リフレクター」の効果（``HalvedDamage``。8 段階の半分（切りすて））と、場の常にはたらく特殊能力の
+    変更効果（``continuous_attack_damage_modifiers``。なぞのかべ・ふしぎなバリアー・くつろぐかおり・きょうぼう）も加える。``attack_status`` は、ワザが使われた時
+    （宣言）に「ねむり・マヒ・こんらん」状態だった場のポケモンの番号（その時点の特殊状態で決める特殊能力（くつろぐかおり）のため。解決の基盤の
+    ``Resolution.attack_status``）。None なら今の特殊状態で決める（宣言の前の計算）。
     """
     modifiers: list[DamageModifier] = []
     if attack is not None and state.cards[attacker.card].card_id == attack.card_id:
@@ -5268,6 +5280,12 @@ def attack_damage_modifiers(
         if threshold is not None:
             modifiers.append(DamageModifier(step=8, amount=threshold.threshold, label=_persistent_effect_name(state, threshold),
                                             source=threshold.source_card, operation=ZERO_IF_BELOW))
+        # v0.46: 同じ 8 段階の、受けるダメージを半分（切りすて）にする効果（エリカのタマタマの「リフレクター」。``HalvedDamage``・``damage.HALVE_DOWN``）
+        halved = halved_damage(state, defender)
+        if halved is not None:
+            modifiers.append(DamageModifier(step=8, amount=2, label=_persistent_effect_name(state, halved), source=halved.source_card, operation=HALVE_DOWN))
+        # v0.46: 常にはたらく特殊能力（2・6・8 段階）。こんらんの 20（``attack`` を渡さない呼び出し）には使わない（``confusion_power_modifiers`` で別に聞く）
+        modifiers.extend(continuous_attack_damage_modifiers(state, attacker, defender, attack_status=attack_status))
     return tuple(modifiers)
 
 
@@ -8040,10 +8058,14 @@ class DamageOpponentPokemonOnEntry(EntryPower):
             raise RuntimeError(f"こっそりかみつくで選んだポケモン {choices} が、相手の場にいない（エンジンの不具合）")
         _, target = found
         _, user = state.find_pokemon(use.pokemon_id)
-        target.damage += self.amount
+        # v0.46: 受けるポケモンの、受けるダメージ全体を書く常にはたらく特殊能力（なぞのかべ・ふしぎなバリアー）。今の対応カードでは結果が変わらない（20 は 30 より
+        # 小さく、わるいゴルバットはたねポケモンではない）が、当てはめたら記録する
+        amount, applied = received_power_damage(state, 1 - use.player, target, user, self.amount)
+        target.damage += amount
+        extra = {} if not applied else {"amount_before": self.amount, "received_modifiers": received_modifiers_log(applied)}
         state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
-                        target_player=1 - use.player, target=target.card, target_pokemon_id=target.pokemon_id, amount=self.amount,
-                        total_damage=target.damage, knocked_out=target.damage >= state.card_def(target.card).hp)
+                        target_player=1 - use.player, target=target.card, target_pokemon_id=target.pokemon_id, amount=amount,
+                        total_damage=target.damage, knocked_out=target.damage >= state.card_def(target.card).hp, **extra)
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
         return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=[p.pokemon_id for p in state.players[1 - use.player].in_play()])
@@ -9449,6 +9471,658 @@ _CARD_DIFFERENCES = "kyuura data/curation/card_differences.json"
 _RUL_ENERGY_DISCARD = "RUL-ENERGY-DISCARD-ATTACKS"
 _FIRE_DISCARD_LATEST = "自分についている「炎」エネルギーカードを1枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。"
 _FIRE_DISCARD_PRINTED = "自分の「炎」エネルギーカードを1枚はがしてすてる。"
+
+
+# ---------------------------------------------------------------- v0.46（docs/continuous-powers-v0.46.md）。常にはたらく特殊能力 8 つ（ダメージの変更・
+# 「にげる」のエネルギー・トレーナーの禁止・特殊状態の防止）と、関連する 3 枚のワザ。処理に使う文面は kyuura の印刷の文面（11 枚とも kyuura に最新の説明・エラッタ・
+# 裁定の記録がない）。はたらいているかは、場のポケモン・特殊状態・登録表・かがくへんかガスから、問い合わせのたびに求める（v0.8 の continuous.py と同じ考え方。
+# 状態に「はたらいている」の印を持たない・ログを読まない）
+
+CONTINUOUS_IN_PLAY = "in_play"  # 場（バトル場・ベンチ）にいればはたらく（なぞのかべ・ふしぎなバリアー・きょうぼう・アレルギーかふん・めんえき）
+CONTINUOUS_ACTIVE = "active"  # バトル場にいる限りはたらく（くつろぐかおり・ねんちゃくえき）
+CONTINUOUS_BENCH = "bench"  # ベンチでしか使えない（にげるサポート）
+
+
+def _asleep_paralyzed_or_confused(pokemon: PokemonInPlay) -> bool:
+    conditions = pokemon.conditions
+    return bool(conditions.asleep or conditions.paralyzed or conditions.confused)
+
+
+class ContinuousPower(PowerEffect):
+    """常にはたらいていて、使用を宣言しない特殊能力の実装の基底（v0.46。docs/continuous-powers-v0.46.md 2 章）。
+
+    - 宣言しない（``declared`` が False。p.311・p.323「常にはたらいているため、使用を宣言しない特殊能力もあります」）。``UsePokemonPower`` はエンジンが
+      ``POWER_NOT_DECLARABLE`` で拒否する（``check_usable``・``resolve`` を呼ばない）
+    - はたらいているか（``continuous_powers``）は、問い合わせのたびに、いちばん上のカード（p.310。進化前のカードの特殊能力は使えない）・場所（``location``）・
+      特殊状態（``status_allows``）・かがくへんかガス（``continuous.suppressors_of``。抑止の判定を複製しない）から求める。進化・入れ替え・きぜつ・場をはなれる・
+      特殊状態の変化・保存と復元のあとも、その時点の場から同じ答えになる
+    - 特殊状態の条件は説明ごと（一律に「ねむり・マヒ・こんらんで消える」にしない）: ``blocked_by_status``（ねむり・マヒ・こんらんで消える・使えない）・
+      ``requires_confusion``（「こんらん」状態の時だけはたらく。わるいオコリザルの［きょうぼう］）・``status_at_attack``（「ワザが使われた時、すでに…」。ワザの宣言の
+      時点の特殊状態で決める。エリカのフシギソウの［くつろぐかおり］。解決の基盤の ``Resolution.attack_status``）。どくは、どの説明にも挙げられていないので関係しない
+    - 効果ごとの問い合わせ（``attack_damage_modifiers``・``received_damage_modifier``）は、既定では何もしない。エンジン・解決の基盤は型で探し、カード id で分けない
+    """
+
+    declared: ClassVar[bool] = False
+    location: ClassVar[str] = CONTINUOUS_IN_PLAY
+    blocked_by_status: ClassVar[bool] = True
+    requires_confusion: ClassVar[bool] = False
+    status_at_attack: ClassVar[bool] = False
+    what: ClassVar[str] = "常にはたらく特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        """受け付ける説明（kyuura の写しの印刷の文面と完全に同じ）。"""
+        raise NotImplementedError
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, self.what, self.texts())
+
+    def located(self, state: GameState, owner: int, pokemon: PokemonInPlay) -> bool:
+        """場所の条件（「このカードがバトル場にいる限り」「この力はベンチでしか使えない」）。"""
+        if self.location == CONTINUOUS_IN_PLAY:
+            return True
+        active = state.players[owner].active is pokemon
+        return active if self.location == CONTINUOUS_ACTIVE else not active
+
+    def status_allows(self, pokemon: PokemonInPlay, attack_status: frozenset[int] | None = None) -> bool:
+        """特殊状態の条件。``attack_status``（ワザが使われた時にねむり・マヒ・こんらんだったポケモンの番号）は ``status_at_attack`` の特殊能力だけが使う。"""
+        if self.requires_confusion:
+            return bool(pokemon.conditions.confused)
+        if not self.blocked_by_status:
+            return True
+        if self.status_at_attack and attack_status is not None:
+            return pokemon.pokemon_id not in attack_status
+        return not _asleep_paralyzed_or_confused(pokemon)
+
+    def attack_damage_modifiers(self, state: GameState, holder: PokemonInPlay, label: str, attacker: PokemonInPlay,
+                                defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
+        """``attacker`` が ``defender`` にワザのダメージを与えるときの、この特殊能力（``holder`` が持つ）の変更効果（p.321 の段階）。"""
+        return ()
+
+    def received_damage_modifier(self, state: GameState, holder: PokemonInPlay, label: str, source: PokemonInPlay) -> DamageModifier | None:
+        """``holder`` が ``source`` から、ワザでない（特殊能力の）ダメージを受けるときの変更（受けるダメージ全体を書く説明だけ）。"""
+        return None
+
+
+def continuous_powers(state: GameState, kind: type | tuple[type, ...] = ContinuousPower, *, attack_status: frozenset[int] | None = None,
+                      ignore_status: bool = False) -> list[tuple[int, PokemonInPlay, PowerKey, ContinuousPower]]:
+    """今はたらいている常にはたらく特殊能力（``kind`` の型）の (持ち主, 持つポケモン, ``PowerKey``, 実装)（v0.46）。並びはプレイヤー 0 → 1、それぞれバトル場 →
+    ベンチ、カードの特殊能力の順。``ignore_status`` なら特殊状態の条件を見ない（くつろぐかおりの CP1 の読み方の比べ）。状態を変えず、乱数を使わない。"""
+    from .continuous import suppressors_of  # continuous.py は effects.py を読み込むので、使うときに読み込む
+
+    found = []
+    for owner, player in enumerate(state.players):
+        for pokemon in player.in_play():
+            definition = state.card_def(pokemon.card)
+            for index, power in enumerate(definition.powers):
+                effect = state.effects.power_effect(definition.id, power)
+                if not isinstance(effect, kind) or not effect.located(state, owner, pokemon):
+                    continue
+                if not ignore_status and not effect.status_allows(pokemon, attack_status):
+                    continue
+                if suppressors_of(state, power):
+                    continue
+                found.append((owner, pokemon, PowerKey(definition.id, index), effect))
+    return found
+
+
+def _power_label(state: GameState, holder: PokemonInPlay, key: PowerKey) -> str:
+    """ダメージの記録・ログに出す名前（カードの名前と特殊能力の名前）。"""
+    definition = state.card_def(holder.card)
+    return f"{definition.name_ja}［{definition.powers[key.power_index].name_ja}］"
+
+
+def continuous_attack_damage_modifiers(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay, *,
+                                       attack_status: frozenset[int] | None = None, ignore_status: bool = False) -> list[DamageModifier]:
+    """``attacker`` が ``defender`` にワザのダメージを与えるときの、場の常にはたらく特殊能力の変更効果（v0.46。``attack_damage_modifiers`` から呼ぶ）。"""
+    modifiers: list[DamageModifier] = []
+    for _, holder, key, effect in continuous_powers(state, attack_status=attack_status, ignore_status=ignore_status):
+        modifiers.extend(effect.attack_damage_modifiers(state, holder, _power_label(state, holder, key), attacker, defender))
+    return modifiers
+
+
+def status_at_attack_blocked(state: GameState) -> frozenset[int]:
+    """ワザの宣言の時点で、ワザが使われた時の特殊状態で決める常にはたらく特殊能力（``status_at_attack``。くつろぐかおり）を持ち、ねむり・マヒ・こんらん状態の
+    場のポケモンの番号（v0.46。解決の基盤が宣言のときに写す ``Resolution.attack_status``。決定をまたぐときは続きの情報で運ぶ）。かがくへんかガス・場所は、
+    ダメージを計算するときに見る（説明の「このカードがバトル場にいる限り」は今の場所）。"""
+    blocked = []
+    for player in state.players:
+        for pokemon in player.in_play():
+            definition = state.card_def(pokemon.card)
+            if not _asleep_paralyzed_or_confused(pokemon):
+                continue
+            if any(isinstance(effect, ContinuousPower) and effect.status_at_attack
+                   for effect in (state.effects.power_effect(definition.id, power) for power in definition.powers)):
+                blocked.append(pokemon.pokemon_id)
+    return frozenset(blocked)
+
+
+def status_at_attack_powers(state: GameState) -> list[tuple[int, PokemonInPlay, PowerKey, ContinuousPower]]:
+    """場所・かがくへんかガスの条件を満たす、ワザが使われた時の特殊状態で決める常にはたらく特殊能力（特殊状態は見ない。CP1 の確かめ）。"""
+    return [found for found in continuous_powers(state, ignore_status=True) if found[3].status_at_attack]
+
+
+MYSTERIOUS_WALL_TEXT = "このカードが受ける{n}以上のダメージは0になる。({n}より小さいダメージはそのまま受ける。)「ねむり・マヒ・こんらん」状態の時、この力は使えない。"
+
+
+@dataclass(frozen=True)
+class ZeroLargeDamageReceived(ContinuousPower):
+    """このカードが受ける ``threshold`` 以上のダメージは 0 になる（``threshold`` より小さいダメージはそのまま受ける）。ねむり・マヒ・こんらん状態の時、この力は使えない
+    （v0.46。バリヤード（PMCG2-027）の［なぞのかべ］。kyuura の印刷の文面）。
+
+    - p.321 の 8 段階（「ワザを受けるポケモンの持っている「ダメージを変更する効果」」。GR-2000-P321-DAMAGE-ORDER の 8 段階の例が「なぞのかべ」）で、その段階のダメージが
+      ``threshold`` 以上なら 0（``damage.ZERO_IF_AT_LEAST``。イワークの「かたくなる」の ``ZERO_IF_BELOW`` とは比べる向きが逆で、発生源も持続する効果ではなく特殊能力）。
+      計算の結果が 0 なら「ダメージを受けなかった」（p.321）だけで、ダメージ以外の効果は受ける（ワザの要素を無効にする処理にしない）
+    - 場（バトル場・ベンチ）のどこでもはたらく（控えへのダメージも 8 段階）。ねむり・マヒ・こんらん（ダメージを受ける時の状態）で使えない。どくは関係しない
+    - ワザでない特殊能力のダメージ（はんげき・わるいねぞう・こっそりかみつく）も「受けるダメージ」なので当てはめる（``received_damage_modifier``。今の対応カードの
+      特殊能力のダメージは 20 以下で、結果は変わらない）。ポケモンチェックのどくのダメージ（10・特殊などくは 20）もしきい値より小さく結果が変わらないので、どくの処理は
+      通さない（どくの量がしきい値以上のカードを加えるときは見直す）。ダメージカウンターをのせる・移す効果はダメージではない（GR-2000-P320-COUNTER-MOVE）
+    """
+
+    threshold: int
+    implementation_id = "zero_large_damage_received"
+    what = "受ける大きいダメージを 0 にする特殊能力"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.threshold, "ダメージを 0 にするしきい値")
+
+    def texts(self) -> tuple[str, ...]:
+        return (MYSTERIOUS_WALL_TEXT.format(n=self.threshold),)
+
+    def _modifier(self, holder: PokemonInPlay, label: str) -> DamageModifier:
+        return DamageModifier(step=8, amount=self.threshold, label=label, source=holder.card, operation=ZERO_IF_AT_LEAST)
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+        return (self._modifier(holder, label),) if holder is defender else ()
+
+    def received_damage_modifier(self, state, holder, label, source):
+        return self._modifier(holder, label)
+
+
+STRANGE_BARRIER_TEXT = ("このカードが「たねポケモン」から受ける{n}以上のダメージは、「{m}」になる。(ダメージ以外の効果は、そのまま)。ダメージを受ける時、すでにこのカードが"
+                        "「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。")
+
+
+@dataclass(frozen=True)
+class CapDamageFromBasic(ContinuousPower):
+    """このカードが「たねポケモン」から受ける ``threshold`` 以上のダメージは ``amount`` になる（ダメージ以外の効果はそのまま）。ダメージを受ける時、すでにねむり・マヒ・
+    こんらん状態だったなら、この力は使えない（v0.46。エリカのミニリュウ（PMCG5-063）の［ふしぎなバリアー］。kyuura の印刷の文面）。
+
+    - p.321 の 8 段階（受けるポケモンの持っている効果）で、その段階のダメージが ``threshold`` 以上なら ``amount``（``damage.SET_IF_AT_LEAST``）。ダメージ以外の効果は
+      受ける（ワザの要素を無効にしない）
+    - 「たねポケモンから」: ダメージを与えるポケモン（ワザを使ったポケモン・返す効果を持つポケモン・特殊能力でダメージを与えるポケモン）の、ダメージを受ける時の
+      いちばん上のカードが、たねポケモン（``is_basic_pokemon``）。進化した 1 進化・2 進化のポケモンは「たねポケモン」ではない。ポケモンチェックのどくは、ポケモンから
+      受けるダメージではない（GR-2000-P319-HP-AND-DAMAGE「ポケモン以外のもの（…ポケモンチェックの「どく」）から受けたダメージ」）ので当てはめない
+    - 特殊状態は「ダメージを受ける時、すでに」の時点（ダメージを計算する時の特殊状態）。場（バトル場・ベンチ）のどこでもはたらく
+    - ワザでないダメージ（R団のカビゴンの［わるいねぞう］の 20 など。説明が「受けるダメージ」をワザに限らない）にも当てはめる（``received_damage_modifier``）
+    """
+
+    threshold: int
+    amount: int
+    implementation_id = "cap_damage_from_basic"
+    what = "たねポケモンから受ける大きいダメージを決まった数にする特殊能力"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.threshold, "しきい値")
+        _positive_tens(self.amount, "決まった数")
+        if self.amount >= self.threshold:
+            raise ValueError(f"決まった数 {self.amount} はしきい値 {self.threshold} より小さい")
+
+    def texts(self) -> tuple[str, ...]:
+        return (STRANGE_BARRIER_TEXT.format(n=self.threshold, m=self.amount),)
+
+    def _modifier(self, state: GameState, holder: PokemonInPlay, label: str, source: PokemonInPlay) -> DamageModifier | None:
+        if not state.card_def(source.card).is_basic_pokemon:
+            return None
+        return DamageModifier(step=8, amount=self.amount, label=label, source=holder.card, operation=SET_IF_AT_LEAST, threshold=self.threshold)
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+        if holder is not defender:
+            return ()
+        found = self._modifier(state, holder, label, attacker)
+        return () if found is None else (found,)
+
+    def received_damage_modifier(self, state, holder, label, source):
+        return self._modifier(state, holder, label, source)
+
+
+CALMING_AROMA_TEXT = ("このカードがバトル場にいる限り、お互いの対戦ポケモンの、すべてのワザのダメージは、半分(切り上げ)になる。(自分や、控えへのダメージも半分になる)。"
+                      "ワザが使われた時、すでにこのカードが「ねむり・マヒ・こんらん」状態なら、この力ははたらかない。")
+
+
+@dataclass(frozen=True)
+class HalveActiveAttackDamage(ContinuousPower):
+    """このカードがバトル場にいる限り、お互いの対戦ポケモンの、すべてのワザのダメージは半分（切り上げ）になる（自分や、控えへのダメージも半分）。ワザが使われた時、
+    すでにねむり・マヒ・こんらん状態なら、この力ははたらかない（v0.46。エリカのフシギソウ（PMCG6-010）の［くつろぐかおり］。kyuura の印刷の文面）。
+
+    - 対象: 対戦ポケモン（バトル場のポケモン）が使ったワザのダメージ（相手・自分・控えへのダメージ）。返す効果のダメージ（ほのおのかべ・こうらがえし）もワザによる
+      ダメージ（GR-2000-P321-ATTACK-DAMAGE）だが、「ワザが使われた時」がどのワザか（返す効果を与えた前の番のワザか、きっかけのワザか）が決まらないので、結果が
+      変わるときは止める（CP1。解決の基盤の ``kernel.deal_damage``）。特殊能力のダメージ（はんげき・わるいねぞう）はワザのダメージではないので当てはめない。こんらんの
+      20 は「ワザによるダメージ」かが決まらない（v0.3c）ので、この特殊能力がはたらいていればコインの前に止める（``confusion_power_modifiers``）
+    - 段階（GR-2000-P321-DAMAGE-ORDER の持ち主の区別）: このカードがワザを使うポケモンなら 2 段階（ワザを使うポケモンの持っている効果）、ダメージを受けるポケモンなら
+      8 段階、どちらでもない（相手の控えへのダメージで、このカードがバトル場にいる側）なら 6 段階（それ以外の効果）。どの段階でも 1 つのダメージの要素に 1 回
+      （同じダメージに二重に当てはめない）。このカードが同じワザでワザを使うポケモンとダメージを受けるポケモンの両方になる（自分へのダメージ）場合の段階は決まらない
+      が、このカードのワザに自分へのダメージはなく、相手のワザを使う効果もないので起こらない（起こったらエンジンの不具合として止める）
+    - 半分の丸め: ダメージカウンターの単位（10）で切り上げ（``damage.HALVE_UP``。v0.4d のメガドレインの「半分（切り上げ）」と同じ単位）
+    - 特殊状態: 「ワザが使われた時、すでに」の時点（ワザの宣言。``status_at_attack``）。ワザの途中でこのカードの特殊状態が変わっても、そのワザでは変わらない。場所
+      （バトル場）・かがくへんかガスは、ダメージを計算する時の場で見る
+    """
+
+    implementation_id = "halve_active_attack_damage"
+    location = CONTINUOUS_ACTIVE
+    status_at_attack = True
+    what = "お互いの対戦ポケモンのワザのダメージを半分にする特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (CALMING_AROMA_TEXT,)
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+        located = state.find_pokemon(attacker.pokemon_id)
+        if located is None or state.players[located[0]].active is not attacker:
+            return ()  # 対戦ポケモンのワザのダメージではない
+        if holder is attacker and holder is defender:
+            raise RuntimeError(f"{label} を持つポケモン {holder.pokemon_id} が、自分のワザで自分にダメージを与えた（段階が決まらない。今の対応カードでは起こらない。"
+                               "エンジンの不具合）")
+        step = 2 if holder is attacker else 8 if holder is defender else 6
+        return (DamageModifier(step=step, amount=2, label=label, source=holder.card, operation=HALVE_UP),)
+
+
+FRENZY_TEXT = "このカードが「こんらん」状態の時、このカードがポケモンに与えるダメージは「+{n}」される。"
+
+
+@dataclass(frozen=True)
+class BonusDamageWhileConfused(ContinuousPower):
+    """このカードがこんらん状態の時、このカードがポケモンに与えるダメージは ``amount`` 増える（v0.46。わるいオコリザル（PMCG4-041）の［きょうぼう］。kyuura の印刷の
+    文面）。
+
+    - はたらくのは、このカードがこんらん状態の時（``requires_confusion``。こんらんで消える特殊能力ではない。ねむり・マヒとこんらんは重ならない。どくは関係しない）。
+      こんらん状態はダメージを計算する時の状態（あばれくるうの「ダメージを与えた後、自分は「こんらん」状態になる」は、そのダメージのあと）
+    - p.321 の 2 段階（ワザを使うポケモンの持っている効果）で ``amount`` を加える。相手・控え・自分へのワザのダメージに当てはめる（「ポケモンに与えるダメージ」）
+    - こんらんの 20（このカードのワザがこんらんして自分が受ける）が「このカードがポケモンに与えるダメージ」かは決まらない（v0.3c の「こんらんのダメージがワザによる
+      ダメージか」と同じ問い）ので、こんらんのコインの前に止める（``confusion_power_modifiers``・``UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS``）。この特殊能力がはたらくのは
+      こんらん状態の時だけなので、宣言の前の先読みがこんらんの「うら」で止まり、このカードのワザは受け付けない（docs 4.4）
+    """
+
+    amount: int
+    implementation_id = "bonus_damage_while_confused"
+    requires_confusion = True
+    blocked_by_status = False
+    what = "こんらん状態の時に与えるダメージを増やす特殊能力"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "増やすダメージ")
+
+    def texts(self) -> tuple[str, ...]:
+        return (FRENZY_TEXT.format(n=self.amount),)
+
+    def attack_damage_modifiers(self, state, holder, label, attacker, defender):
+        return (DamageModifier(step=2, amount=self.amount, label=label, source=holder.card),) if holder is attacker else ()
+
+
+RETREAT_AID_TEXT = "この力はベンチでしか使えない。自分の対戦ポケモンが「にげる」時、はがしてすてるエネルギーを{n}つ分少なくできる。"
+
+
+@dataclass(frozen=True)
+class ReduceOwnActiveRetreatCost(ContinuousPower):
+    """この力はベンチでしか使えない。自分の対戦ポケモンが「にげる」時、はがしてすてるエネルギーを ``amount`` 個分少なくできる（v0.46。ドードリオ（PMCG2-040）の
+    ［にげるサポート］。kyuura の印刷の文面）。
+
+    - 「にげる」の最中に特殊能力の使用を宣言してはいけない（p.311）ので、宣言しない（常にはたらく）。「少なくできる」なので、少なくするかは「にげる」のプレイヤーが
+      トラッシュするエネルギーの数で決める（``retreat_cost``。少なくしない数でもよい）
+    - ベンチにいるとき（バトル場のこのカードには当てはめない）。説明に特殊状態の条件はない（ベンチのポケモンは特殊状態にならない。p.322）。かがくへんかガスで消える
+    - 「にげる」（p.311）のエネルギーだけ。ポケモンいれかえ・突風・ワザの入れ替えはエネルギーをトラッシュしないので関係しない
+    """
+
+    amount: int
+    implementation_id = "reduce_own_active_retreat_cost"
+    location = CONTINUOUS_BENCH
+    blocked_by_status = False
+    what = "自分の対戦ポケモンの「にげる」エネルギーを少なくできる特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (RETREAT_AID_TEXT.format(n=self.amount),)
+
+
+STICKY_GOO_TEXT = ("このカードがバトル場にいるかぎり、相手の対戦ポケモンは、「にげる」時トラッシュするエネルギーが{n}ぶん多く必要になる。このカードが「ねむり・マヒ・こんらん」"
+                   "状態の時、この力は消える。")
+
+
+@dataclass(frozen=True)
+class IncreaseOpponentActiveRetreatCost(ContinuousPower):
+    """このカードがバトル場にいるかぎり、相手の対戦ポケモンは、「にげる」時トラッシュするエネルギーが ``amount`` 個分多く必要になる。ねむり・マヒ・こんらん状態の時、
+    この力は消える（v0.46。わるいベトベトン（PMCG4-007）の［ねんちゃくえき］。kyuura の印刷の文面）。
+
+    - 「にげる」のエネルギーの数（``retreat_cost``）に、決まって ``amount`` を加える（「必要になる」なので選べない）。バトル場にいるときだけ。かがくへんかガスで消える
+    - 「にげる」（p.311）のエネルギーだけ。ポケモンいれかえ・突風・ワザの入れ替えはエネルギーをトラッシュしないので関係しない
+    """
+
+    amount: int
+    implementation_id = "increase_opponent_active_retreat_cost"
+    location = CONTINUOUS_ACTIVE
+    what = "相手の対戦ポケモンの「にげる」エネルギーを多くする特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (STICKY_GOO_TEXT.format(n=self.amount),)
+
+
+@dataclass(frozen=True)
+class RetreatCost:
+    """「にげる」でトラッシュするエネルギーの数（v0.46。``retreat_cost``）。
+
+    - ``printed``: バトル場のポケモンのいちばん上のカードの「にげる」の数（p.310）
+    - ``increases``: 決まって増やす特殊能力（(持つポケモンの番号, ``PowerKey`` の文字列, 数)。ねんちゃくえき）
+    - ``reductions``: 少なくできる特殊能力（同じ形。にげるサポート。少なくするかは選べる）
+
+    増やす数と少なくする数をまとめ、最後に 0 で下限をつける（``maximum`` = 印刷の数 + 増やす数、``minimum`` = max(0, ``maximum`` − 少なくできる数)）。少なくする数が
+    印刷の数より多く、増やす数もあるときは、先に少なくして 0 で止めてから増やす読み方（``floor_first_minimum``）と最後に下限をつける読み方で、トラッシュしてよい数が
+    変わる。どちらの読み方も記録から決まらない（CP2）ので、その違う数をトラッシュする「にげる」は止める（``engine._retreat``）。"""
+
+    printed: int
+    increases: tuple[tuple[int, str, int], ...] = ()
+    reductions: tuple[tuple[int, str, int], ...] = ()
+
+    @property
+    def maximum(self) -> int:
+        return self.printed + sum(amount for _, _, amount in self.increases)
+
+    @property
+    def minimum(self) -> int:
+        return max(0, self.maximum - sum(amount for _, _, amount in self.reductions))
+
+    @property
+    def floor_first_minimum(self) -> int:
+        """少なくする数を先に当てはめて 0 で止めてから、増やす数を加える読み方の下限（CP2 の比べ）。"""
+        return max(0, self.printed - sum(amount for _, _, amount in self.reductions)) + sum(amount for _, _, amount in self.increases)
+
+    def allows(self, count: int) -> bool:
+        return self.minimum <= count <= self.maximum
+
+    def floor_ambiguous(self, count: int) -> bool:
+        """``count`` 枚が、最後に下限をつける読み方では正しく、先に 0 で止める読み方では足りない（CP2）。"""
+        return self.minimum <= count < self.floor_first_minimum
+
+    @property
+    def modified(self) -> bool:
+        return bool(self.increases or self.reductions)
+
+
+def retreat_cost(state: GameState, player: int) -> RetreatCost:
+    """プレイヤー ``player`` のバトル場のポケモンが「にげる」ときにトラッシュするエネルギーの数（v0.46。公開の問い合わせ。``RetreatCost``）。増やすのは相手の
+    はたらいている［ねんちゃくえき］、少なくできるのは自分のはたらいている［にげるサポート］。状態を変えず、乱数を使わない。バトル場にポケモンがいなければ ``ValueError``。"""
+    active = state.players[player].active
+    if active is None:
+        raise ValueError(f"プレイヤー {player} のバトル場にポケモンがいない")
+    increases, reductions = [], []
+    for owner, holder, key, effect in continuous_powers(state, (IncreaseOpponentActiveRetreatCost, ReduceOwnActiveRetreatCost)):
+        if isinstance(effect, IncreaseOpponentActiveRetreatCost) and owner != player:
+            increases.append((holder.pokemon_id, str(key), effect.amount))
+        elif isinstance(effect, ReduceOwnActiveRetreatCost) and owner == player:
+            reductions.append((holder.pokemon_id, str(key), effect.amount))
+    return RetreatCost(state.card_def(active.card).retreat_cost, tuple(increases), tuple(reductions))
+
+
+ALLERGIC_POLLEN_TEXT = "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。"
+
+
+@dataclass(frozen=True)
+class PreventTrainerUse(ContinuousPower):
+    """このカードが場にいる限り、誰もトレーナーカードを使うことができない。ねむり・マヒ・こんらん状態の時、この力は消える（v0.46。わるいラフレシア（PMCG4-010）の
+    ［アレルギーかふん］。kyuura の印刷の文面）。
+
+    - お互いのプレイヤーが、手札のトレーナーカードを使えない（``engine._play_trainer`` が、カードを手札から出す前に ``TRAINER_PREVENTED`` で拒否する。状態・乱数・
+      ログは変わらない）。場（バトル場・ベンチ）のどこでもはたらく。ねむり・マヒ・こんらんで消える。かがくへんかガスで消える
+    - すでに使ってポケモンについているトレーナー（プラスパワー・ディフェンダー）は、使い終わっているので、その効果は続く（使う操作ではない）。使っている最中のトレーナー
+      （ポケモン育て屋さんでこのカードを場に出した）も、使い終える
+    """
+
+    implementation_id = "prevent_trainer_use"
+    what = "トレーナーカードを使えなくする特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (ALLERGIC_POLLEN_TEXT,)
+
+
+def trainer_lock_sources(state: GameState) -> tuple[tuple[int, int, str], ...]:
+    """今はたらいている、トレーナーカードを使えなくする特殊能力（v0.46。［アレルギーかふん］）の (持ち主, 持つポケモンの番号, ``PowerKey`` の文字列)。空なら
+    トレーナーカードを使える（ほかの条件による）。公開の問い合わせ。状態を変えず、乱数を使わない。"""
+    return tuple((owner, holder.pokemon_id, str(key)) for owner, holder, key, _ in continuous_powers(state, PreventTrainerUse))
+
+
+IMMUNITY_TEXT = "このカードは、「どく・ねむり・マヒ・こんらん」状態にならない。(なんらかの原因で「ねむり・マヒ・こんらん」状態になっているとき、この力は使えない)"
+
+
+@dataclass(frozen=True)
+class SpecialConditionImmunity(ContinuousPower):
+    """このカードは、どく・ねむり・マヒ・こんらん状態にならない。なんらかの原因でねむり・マヒ・こんらん状態になっているとき、この力は使えない（v0.46。カビゴン
+    （PMCG2-047）の［めんえき］。kyuura の印刷の文面）。
+
+    - 特殊状態にする効果（ワザ・特殊能力のどれでも）を受けても、その特殊状態にならない（``conditions`` の付ける処理の共通の入口で防ぐ。ログ
+      ``special_condition_prevented``）。すでにある特殊状態を回復する効果ではない（どくは残る）
+    - すでにねむり・マヒ・こんらん状態（かがくへんかガスで消えていた間になった）なら使えない。どく状態だけなら使える（ねむり・マヒ・こんらんにならない・どくの
+      上書き（特殊などく）もしない）
+    - 防がれる特殊状態について、原典で決められない場合の確かめ（マヒの再付与・特殊などくの上書き・「ダメージを与えた後」の効果）は、防がれて結果が変わらないので
+      聞かない（``resolution.programs.Status``）。効果を決めるコインは、効果の要素が無効なのではなく、効果を受けて特殊状態にならないので、今までどおり投げる
+    """
+
+    implementation_id = "special_condition_immunity"
+    what = "特殊状態にならない特殊能力"
+
+    def texts(self) -> tuple[str, ...]:
+        return (IMMUNITY_TEXT,)
+
+
+def status_immunity(state: GameState, owner: int, pokemon: PokemonInPlay) -> PowerKey | None:
+    """場のポケモン ``pokemon``（持ち主 ``owner``）の、今はたらいている特殊状態にならない特殊能力（v0.46。［めんえき］）の ``PowerKey``。なければ None。"""
+    from .continuous import suppressors_of  # continuous.py は effects.py を読み込むので、使うときに読み込む
+
+    definition = state.card_def(pokemon.card)
+    for index, power in enumerate(definition.powers):
+        effect = state.effects.power_effect(definition.id, power)
+        if isinstance(effect, SpecialConditionImmunity) and effect.located(state, owner, pokemon) and effect.status_allows(pokemon) \
+                and not suppressors_of(state, power):
+            return PowerKey(definition.id, index)
+    return None
+
+
+def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay, source: PokemonInPlay, amount: int) -> tuple[int, tuple[DamageModifier, ...]]:
+    """特殊能力のダメージ（はんげき・わるいねぞう・こっそりかみつく。ワザによるダメージではない）を ``receiver`` が受けるときの、受けるダメージ全体を書く常にはたらく
+    特殊能力（なぞのかべ・ふしぎなバリアー）を当てはめた数と、当てはめた変更（v0.46）。p.321 の計算の順番（ワザによるダメージの計算）は当てはめず、受けるポケモンの
+    特殊能力だけを、持つ特殊能力の順に当てはめる（2 つ以上が当てはまる場合は今の対応カードでは起こらない。起こったらエンジンの不具合として止める）。"""
+    applied = []
+    for holder_owner, holder, key, effect in continuous_powers(state):
+        if holder is not receiver:
+            continue
+        modifier = effect.received_damage_modifier(state, holder, _power_label(state, holder, key), source)
+        if modifier is not None:
+            applied.append(modifier)
+    if len(applied) > 1:
+        raise RuntimeError(f"特殊能力のダメージを受けるポケモン {receiver.pokemon_id} に、受けるダメージを変える特殊能力が 2 つ以上ある（順番が決まらない。エンジンの不具合）")
+    for modifier in applied:
+        amount = modifier.apply(amount, state.rules.damage_per_counter)
+    return amount, tuple(applied)
+
+
+def received_modifiers_log(applied: tuple[DamageModifier, ...]) -> tuple[tuple, ...]:
+    """ワザでないダメージに当てはめた、受けるダメージを変える特殊能力の記録（ログの ``received_modifiers``。(発生源のカード, 計算, しきい値, 数)）。"""
+    return tuple((m.source, m.operation, m.threshold, m.amount) for m in applied)
+
+
+def confusion_power_modifiers(state: GameState, pokemon: PokemonInPlay, attack_status: frozenset[int] | None) -> list[str]:
+    """こんらんしたワザの 20（ワザを使ったポケモン ``pokemon`` が自分に受ける）を、ワザのダメージ（このポケモンが与えるダメージ）として扱うなら当てはまる、常に
+    はたらく特殊能力の名前（v0.46。くつろぐかおり・きょうぼう・なぞのかべ・ふしぎなバリアー）。こんらんの 20 がワザによるダメージか・このポケモンが与えるダメージかは
+    決まらない（v0.3c）ので、当てはまるものがあれば、コインの前に止める（``procedures.confusion_damage_problem``）。"""
+    return [modifier.label for modifier in continuous_attack_damage_modifiers(state, pokemon, pokemon, attack_status=attack_status, ignore_status=False)]
+
+
+# --- v0.46 のワザ（エリカのフシギソウ・わるいオコリザル・わるいラフレシア・エリカのフシギバナ・エリカのタマタマ・エリカのナッシー）
+
+
+@dataclass(frozen=True)
+class DamageThenSelfConfuse(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージを与えた後、自分（ワザを使ったポケモン）をこんらん状態にする（v0.46。わるいオコリザルの「あばれくるう」。
+    kyuura の印刷の文面「ダメージを与えた後、自分は「こんらん」状態になる。」）。
+
+    - 要素の並びは v0.17b の「たおれこむ」と同じ形（``Damage`` → ``Status(CONFUSION, target=SELF, after_damage="damage")``）。ダメージ → ダメージを受けたときの効果の窓
+      → 自分をこんらん。自分が HP 以上なら、処理の対象がないのでこんらんにしない（p.309）
+    - ダメージを与えなかったとき（ディフェンダーで 0・「ダメージを受けない」・「とうめい」・なぞのかべで 0）は「ダメージを与えた後」の効果を処理するかが決まらない
+      （Z23。既存の問いを使う）
+    - ［きょうぼう］の +30 は、このダメージを計算する時にこんらん状態のときだけ（あばれくるうで自分をこんらんにするのは、ダメージのあと）
+    """
+
+    implementation_id = "damage_then_self_confuse"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "自分をこんらん状態にする") + _check_exact_text(
+            attack, "ダメージのあと自分をこんらん状態にするワザ", ("ダメージを与えた後、自分は「こんらん」状態になる。",))
+
+
+@dataclass(frozen=True)
+class CoinsTimesDamageSelfConfuse(AttackEffect):
+    """コインを ``coins`` 枚投げて「おもて」の数 × ``per`` のダメージ。``at_least`` 枚以上「おもて」なら、自分（ワザを使ったポケモン）をこんらん状態にする（v0.46。
+    わるいラフレシアの「はなびらのうず」。kyuura の印刷の文面。文末の「。」がない書き方も、ある書き方も受け付ける）。
+
+    - 同じ ``coins`` 枚のコイン（ワザ全体のコイン ``Coin``）の「おもて」の数で、ダメージと自分のこんらんの両方を決める（要素ごとに投げ直さない）。``Damage`` は
+      「おもて」の数 × ``per``（``HeadsOfCoin``）、``Status(CONFUSION, target=SELF, gate=("coin", AtLeast(at_least)))``
+    - 自分のこんらんは自分への効果なので、相手が「ダメージを受けない」状態でもコインを投げる（v0.34 の ``void_coin_question``）。自分が HP 以上なら処理の対象がない
+    """
+
+    coins: int
+    per: int
+    at_least: int
+    implementation_id = "coins_times_damage_self_confuse"
+
+    def __post_init__(self) -> None:
+        if type(self.coins) is not int or self.coins < 2 or type(self.at_least) is not int or not 1 <= self.at_least <= self.coins:
+            raise ValueError(f"コインの枚数 {self.coins!r}・こんらんになる「おもて」の数 {self.at_least!r} が正しくない")
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        text = f"コインを{self.coins}枚投げて「おもて」の数×{self.per}のダメージ。{self.at_least}枚以上「おもて」なら、自分は「こんらん」状態になる"
+        problems = _check_form(attack, "コインの数でダメージを与えて自分をこんらんにするワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した「おもて」1 枚あたりのダメージ {self.per} が違う")
+        return problems + _check_exact_text(attack, "コインの数でダメージを与えて自分をこんらんにするワザ", (text, text + "。"))
+
+
+GROWTH_TEXT = "コインを投げて「おもて」なら、自分の手札にある「{type}」エネルギーカードを最大{n}枚、このカードにつける。"
+
+
+def hand_basic_energy(state: GameState, player: int, energy_type: EnergyType) -> list[int]:
+    """プレイヤー ``player`` の手札の ``energy_type`` の基本エネルギーカード（手札の並び。v0.46）。"""
+    return [uid for uid in state.players[player].hand if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is energy_type]
+
+
+@dataclass(frozen=True)
+class AttachEnergyFromHandOnHeads(AttackEffect):
+    """コインを投げて「おもて」なら、自分の手札にある ``energy_type`` エネルギーカードを最大 ``max_cards`` 枚、このカード（ワザを使ったポケモン）につける（v0.46。
+    エリカのフシギバナの「せいちょう」。kyuura の印刷の文面）。
+
+    - コイン（``Coin``）→「おもて」なら決定 ``ATTACH_FROM_HAND``（ワザを使ったプレイヤー。手札の ``energy_type`` の基本エネルギーカード。0〜min(``max_cards``, 枚数)）→
+      つける（``zones.attach_energy_from_hand``。手札からつける通常の操作・あまごいと同じカードの動かし方）。つけたら ``after_energy_attached``
+    - 手札からつける通常の操作（p.310。1 番に 1 枚。``energy_attachments_this_turn``）・特殊能力でつけた枚数（``energy_attached_by_powers_this_turn``）には数えない
+      （ワザの効果。別の処理）
+    - 手札にそのエネルギーカードがなければ、処理の対象がないのでコインを投げない（v0.38 の ``has_target``）。あるときに 0 枚を選べるかは決まらない（「最大2枚」が
+      0 枚を含むか。v0.31 の HC7 と同じ問い。答えのときに止める）
+    - 特殊エネルギーは選べない（説明は「「草」エネルギーカード」。今の写しに特殊エネルギーのカードはない）
+    """
+
+    energy_type: EnergyType
+    max_cards: int
+    implementation_id = "attach_energy_from_hand_on_heads"
+
+    def __post_init__(self) -> None:
+        if type(self.max_cards) is not int or self.max_cards < 1:
+            raise ValueError(f"つける枚数の最大は 1 以上（{self.max_cards!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        text = GROWTH_TEXT.format(type=self.energy_type.ja, n=self.max_cards)
+        return _check_form(attack, "手札のエネルギーカードを自分につけるワザ", damage="none") + _check_exact_text(attack, "手札のエネルギーカードを自分につけるワザ", (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        candidates = hand_basic_energy(state, use.player, self.energy_type)
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_HAND, player=use.player, choices=(0, min(self.max_cards, len(candidates))),
+                              options=candidates)
+
+
+SPREAD_SOLAR_BEAM_TEXT = "相手の控えポケモンを{n}匹選び、それらのポケモンにも、「弱点・抵抗力」に関係なく、それぞれ{d}ダメージ。"
+
+
+@dataclass(frozen=True)
+class DamageThenExactBenchTargets(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手の控えポケモンを ``targets`` 匹選び、「弱点・抵抗力」に関係なく、それぞれ ``bench_damage``
+    ダメージ（v0.46。エリカのフシギバナの「かくさんソーラービーム」。kyuura の印刷の文面）。
+
+    - 要素は v0.39 の ``ChosenBenchDamages`` の ``exact``（ちょうど ``targets`` 匹。「最大」の v0.39 の「ギガスパーク」と混ぜない。0 匹・少ない数は選べない）
+    - 相手に控えがいなければ、処理の対象がないので選ばない（p.309）。控えが 1 匹以上で ``targets`` 匹より少ないときに、いるだけ選ぶのか、その内容を処理しないのかは
+      決まらない（v0.44 の FC1 と同じ問い「説明が決まった数を選ばせるとき、選べるものが足りない」。宣言の前に止まる）
+    """
+
+    targets: int
+    bench_damage: int
+    implementation_id = "damage_then_exact_bench_targets"
+
+    def __post_init__(self) -> None:
+        if type(self.targets) is not int or self.targets < 2:
+            raise ValueError(f"選ぶ数は 2 以上（{self.targets!r}）")
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        text = SPREAD_SOLAR_BEAM_TEXT.format(n=self.targets, d=self.bench_damage)
+        return _check_form(attack, "相手の控えを決まった数選んでダメージを与えるワザ", damage="fixed") + _check_exact_text(
+            attack, "相手の控えを決まった数選んでダメージを与えるワザ", (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        bench = state.players[1 - use.player].bench
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(self.targets, self.targets),
+                              options=(p.pokemon_id for p in bench))
+
+
+@dataclass(frozen=True)
+class HalveDamageNextTurn(AttackEffect):
+    """次の相手の番、このカードが受けるダメージは半分（切りすて）になる（ダメージ以外の効果はそのまま）（v0.46。エリカのタマタマの「リフレクター」。kyuura の印刷の
+    文面）。
+
+    - 自分自身に与える持続する効果 ``state.HalvedDamage``（はたらく番は次の相手の番。消える契機は v0.4b と同じ）。はたらく番に受けるワザのダメージの p.321 の 8 段階で、
+      半分にしてダメージカウンターの単位で切りすてる（``damage.HALVE_DOWN``）。［くつろぐかおり］（常にはたらく特殊能力。切り上げ）とは、はたらく条件・期限・丸めの
+      向きが違い、半分にする計算だけを共通にする
+    - ダメージ以外の効果は受ける（「ダメージを受けない」状態・「ワザをうけない」状態とは別）
+    """
+
+    implementation_id = "halve_damage_next_turn"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "次の相手の番に受けるダメージを半分にするワザ", damage="none") + _check_exact_text(
+            attack, "次の相手の番に受けるダメージを半分にするワザ", ("次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",))
+
+    def halved_terms(self) -> tuple[type]:
+        from .state import HalvedDamage
+
+        return (HalvedDamage,)
+
+
+PSYCHIC_EXCHANGE_TEXT = "自分の手札をすべて山札にもどし、山札をよく切る。その後、カードを{n}枚引いて、手札にする。"
+
+
+@dataclass(frozen=True)
+class ShuffleHandIntoDeckThenDraw(AttackEffect):
+    """自分の手札をすべて山札にもどし、山札をよく切る。その後、カードを ``count`` 枚引いて、手札にする（v0.46。エリカのナッシーの「サイコエクスチェンジ」。kyuura の
+    印刷の文面）。
+
+    - もどす（相手に見せない。v0.44 の ``zones.return_hand_cards_to_deck``。手札の並びの順。決定はない（すべて））→ 切る（1 回。``programs.shuffle_in_attack``）→ 引く
+      （``zones.draw_cards``。山札が足りなければ引けるだけ。効果で引くときの規定。p.312）。もどす前に引かない・もどしたカードを見せない
+    - 手札がなくても、山札を切って引く（説明の文はそれぞれ別の内容。p.309）
+    - 要素の並びの最後の要素（先読みでは山札を切らない。引いたカードを使う要素があとにない）
+    """
+
+    count: int
+    implementation_id = "shuffle_hand_into_deck_then_draw"
+
+    def __post_init__(self) -> None:
+        if type(self.count) is not int or self.count < 1:
+            raise ValueError(f"引く枚数は 1 以上（{self.count!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        text = PSYCHIC_EXCHANGE_TEXT.format(n=self.count)
+        return _check_form(attack, "手札を山札にもどして引くワザ", damage="none") + _check_exact_text(attack, "手札を山札にもどして引くワザ", (text,))
 
 
 def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, AttackEntry]:
@@ -12883,6 +13557,119 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.46（docs/continuous-powers-v0.46.md）。11 枚のワザ。処理に使う文面は kyuura の印刷の文面（kyuura データの採用）
+        # バリヤード（ポケモンジャングル）。ヨガのポーズ（超無）10+: 相手（対戦ポケモン。p.320）のダメージカウンター × 10 を加える（ルージュラの「相手のポケモン」ではないので CD4 に当たらない）
+        AttackKey("PMCG2-027", 0): AttackEntry(
+            DamagePlusDefenderCounters(10, scope_ambiguous=False),
+            "ヨガのポーズ",
+            text_ja="相手にのっているダメージカウンター×10のダメージを追加する。",
+            play_text_ja="相手にのっているダメージカウンター×10のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのミニリュウ（リーダーズスタジアム）。しっぽでつく（無無）10+: コインの「おもて」で 20 を追加（v0.31 の型）
+        AttackKey("PMCG5-063", 0): AttackEntry(
+            CoinBonusDamage(20),
+            "しっぽでつく",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのフシギソウ（闇からの挑戦。エリカのフシギダネから進化）。ダブルはっぱカッター（草草草）40×: コイン 2 枚の「おもて」の数 × 40（既存のコインのダメージ）
+        AttackKey("PMCG6-010", 0): AttackEntry(
+            CoinFlipDamage(coins=2, damage_per_heads=40),
+            "ダブルはっぱカッター",
+            text_ja="コインを2枚投げ、「おもて」の数×40のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×40のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいオコリザル（ロケット団。マンキーから進化）。あばれくるう（闘闘）40: ダメージを与えた後、自分をこんらん（ダメージを与えなかったら Z23）
+        AttackKey("PMCG4-041", 0): AttackEntry(
+            DamageThenSelfConfuse(),
+            "あばれくるう",
+            text_ja="ダメージを与えた後、自分は「こんらん」状態になる。",
+            play_text_ja="ダメージを与えた後、自分は「こんらん」状態になる。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ドードリオ（ポケモンジャングル。ドードーから進化）。いかり（無無無）10+: 自分のダメージカウンター × 10 を加える（v0.34 のカラカラの「いかり」と同じ型）
+        AttackKey("PMCG2-040", 0): AttackEntry(
+            DamagePlusOwnCounters(10),
+            "いかり",
+            text_ja="自分にのっているダメージカウンター×10のダメージを追加する。",
+            play_text_ja="自分にのっているダメージカウンター×10のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいベトベトン（ロケット団。ベトベターから進化）。ヘドロパンチ（草草）20: ダメージのあと相手をどく（コインなし）
+        AttackKey("PMCG4-007", 0): AttackEntry(
+            PoisonOpponent(),
+            "ヘドロパンチ",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # わるいラフレシア（ロケット団。わるいクサイハナから進化）。はなびらのうず（草草草）30×: 同じ 3 枚のコインの「おもて」の数 × 30・2 枚以上「おもて」なら自分をこんらん
+        AttackKey("PMCG4-010", 0): AttackEntry(
+            CoinsTimesDamageSelfConfuse(coins=3, per=30, at_least=2),
+            "はなびらのうず",
+            text_ja="コインを3枚投げて「おもて」の数×30のダメージ。2枚以上「おもて」なら、自分は「こんらん」状態になる",
+            play_text_ja="コインを3枚投げて「おもて」の数×30のダメージ。2枚以上「おもて」なら、自分は「こんらん」状態になる",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # カビゴン（ポケモンジャングル）。のしかかり（無無無無）30: コインの「おもて」で相手をマヒ
+        AttackKey("PMCG2-047", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "のしかかり",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのフシギバナ（闇からの挑戦。エリカのフシギソウから進化）。せいちょう（草）: コインの「おもて」で手札の「草」エネルギーカードを最大 2 枚このカードにつける（通常の操作の回数に数えない。0 枚は HC7）
+        AttackKey("PMCG6-017", 0): AttackEntry(
+            AttachEnergyFromHandOnHeads(EnergyType.GRASS, 2),
+            "せいちょう",
+            text_ja="コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、このカードにつける。",
+            play_text_ja="コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、このカードにつける。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # かくさんソーラービーム（草草草草）20: 相手の控えポケモンをちょうど 2 匹選び、「弱点・抵抗力」に関係なくそれぞれ 20（控えが 1 匹なら FC1）
+        AttackKey("PMCG6-017", 1): AttackEntry(
+            DamageThenExactBenchTargets(targets=2, bench_damage=20),
+            "かくさんソーラービーム",
+            text_ja="相手の控えポケモンを2匹選び、それらのポケモンにも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+            play_text_ja="相手の控えポケモンを2匹選び、それらのポケモンにも、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのタマタマ（リーダーズスタジアム）。リフレクター（超）: 次の相手の番、受けるダメージは 8 段階で半分（切りすて）（持続する効果 HalvedDamage）
+        AttackKey("PMCG5-012", 0): AttackEntry(
+            HalveDamageNextTurn(),
+            "リフレクター",
+            text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            play_text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タマゴばくだん（草無）40: コインの「うら」なら相手へのダメージはなくなり、自分に 20（ワザの失敗ではない。v0.11 の型）
+        AttackKey("PMCG5-012", 1): AttackEntry(
+            SelfDamageInsteadOnTails(20),
+            "タマゴばくだん",
+            text_ja="コインを投げて「うら」なら、相手へのダメージはなくなり、自分に20ダメージ。",
+            play_text_ja="コインを投げて「うら」なら、相手へのダメージはなくなり、自分に20ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのナッシー（リーダーズスタジアム。エリカのタマタマから進化）。サイコエクスチェンジ（超）: 手札をすべて山札にもどし、切ってから 5 枚引く
+        AttackKey("PMCG5-013", 0): AttackEntry(
+            ShuffleHandIntoDeckThenDraw(5),
+            "サイコエクスチェンジ",
+            text_ja="自分の手札をすべて山札にもどし、山札をよく切る。その後、カードを5枚引いて、手札にする。",
+            play_text_ja="自分の手札をすべて山札にもどし、山札をよく切る。その後、カードを5枚引いて、手札にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ふみつけ（草無無）30+: コインの「おもて」で 10 を追加
+        AttackKey("PMCG5-013", 1): AttackEntry(
+            CoinBonusDamage(10),
+            "ふみつけ",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -13250,6 +14037,71 @@ DEFAULT_EFFECTS = EffectRegistry(
             "おくびょう",
             "自分の番であれば、いつでもこのカードを手札にもどしてよい。その時、このカードにのっていたダメージカウンターなどを全てとりのぞき、ついていたカードも全てはがしてすてる。このカードを場に出した番には、この力は使えない。また、「ねむり・マヒ・こんらん」状態の時にも、この力は使えない。",
             "自分の番であれば、いつでもこのカードを手札にもどしてよい。その時、このカードにのっていたダメージカウンターなどを全てとりのぞき、ついていたカードも全てはがしてすてる。このカードを場に出した番には、この力は使えない。また、「ねむり・マヒ・こんらん」状態の時にも、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # v0.46 の常にはたらく特殊能力（kyuura の印刷の文面。docs/continuous-powers-v0.46.md）
+        # バリヤードの［なぞのかべ］（常にはたらく。受ける 30 以上のダメージは 0。8 段階。ねむり・マヒ・こんらんで使えない）
+        PowerKey("PMCG2-027", 0): PowerEntry(
+            ZeroLargeDamageReceived(30),
+            "なぞのかべ",
+            "このカードが受ける30以上のダメージは0になる。(30より小さいダメージはそのまま受ける。)「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            "このカードが受ける30以上のダメージは0になる。(30より小さいダメージはそのまま受ける。)「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのミニリュウの［ふしぎなバリアー］（常にはたらく。たねポケモンから受ける 20 以上のダメージは 10。8 段階。受けるときのねむり・マヒ・こんらんで使えない）
+        PowerKey("PMCG5-063", 0): PowerEntry(
+            CapDamageFromBasic(threshold=20, amount=10),
+            "ふしぎなバリアー",
+            "このカードが「たねポケモン」から受ける20以上のダメージは、「10」になる。(ダメージ以外の効果は、そのまま)。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+            "このカードが「たねポケモン」から受ける20以上のダメージは、「10」になる。(ダメージ以外の効果は、そのまま)。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # エリカのフシギソウの［くつろぐかおり］（常にはたらく。バトル場にいる限り、お互いの対戦ポケモンのワザのダメージは半分（切り上げ）。ワザが使われた時の特殊状態）
+        PowerKey("PMCG6-010", 0): PowerEntry(
+            HalveActiveAttackDamage(),
+            "くつろぐかおり",
+            "このカードがバトル場にいる限り、お互いの対戦ポケモンの、すべてのワザのダメージは、半分(切り上げ)になる。(自分や、控えへのダメージも半分になる)。ワザが使われた時、すでにこのカードが「ねむり・マヒ・こんらん」状態なら、この力ははたらかない。",
+            "このカードがバトル場にいる限り、お互いの対戦ポケモンの、すべてのワザのダメージは、半分(切り上げ)になる。(自分や、控えへのダメージも半分になる)。ワザが使われた時、すでにこのカードが「ねむり・マヒ・こんらん」状態なら、この力ははたらかない。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいオコリザルの［きょうぼう］（常にはたらく。こんらん状態の時、このカードが与えるダメージ + 30。2 段階）
+        PowerKey("PMCG4-041", 0): PowerEntry(
+            BonusDamageWhileConfused(30),
+            "きょうぼう",
+            "このカードが「こんらん」状態の時、このカードがポケモンに与えるダメージは「+30」される。",
+            "このカードが「こんらん」状態の時、このカードがポケモンに与えるダメージは「+30」される。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # ドードリオの［にげるサポート］（常にはたらく。ベンチにいるとき、自分の対戦ポケモンの「にげる」エネルギーを 1 少なくできる）
+        PowerKey("PMCG2-040", 0): PowerEntry(
+            ReduceOwnActiveRetreatCost(1),
+            "にげるサポート",
+            "この力はベンチでしか使えない。自分の対戦ポケモンが「にげる」時、はがしてすてるエネルギーを1つ分少なくできる。",
+            "この力はベンチでしか使えない。自分の対戦ポケモンが「にげる」時、はがしてすてるエネルギーを1つ分少なくできる。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいベトベトンの［ねんちゃくえき］（常にはたらく。バトル場にいるかぎり、相手の対戦ポケモンの「にげる」エネルギーが 2 多く必要。ねむり・マヒ・こんらんで消える）
+        PowerKey("PMCG4-007", 0): PowerEntry(
+            IncreaseOpponentActiveRetreatCost(2),
+            "ねんちゃくえき",
+            "このカードがバトル場にいるかぎり、相手の対戦ポケモンは、「にげる」時トラッシュするエネルギーが2ぶん多く必要になる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+            "このカードがバトル場にいるかぎり、相手の対戦ポケモンは、「にげる」時トラッシュするエネルギーが2ぶん多く必要になる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # わるいラフレシアの［アレルギーかふん］（常にはたらく。場にいる限り、誰もトレーナーカードを使えない。ねむり・マヒ・こんらんで消える）
+        PowerKey("PMCG4-010", 0): PowerEntry(
+            PreventTrainerUse(),
+            "アレルギーかふん",
+            "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+            "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+            _KYUURA_PRINTED_TEXT,
+        ),
+        # カビゴンの［めんえき］（常にはたらく。どく・ねむり・マヒ・こんらん状態にならない。ねむり・マヒ・こんらん状態なら使えない）
+        PowerKey("PMCG2-047", 0): PowerEntry(
+            SpecialConditionImmunity(),
+            "めんえき",
+            "このカードは、「どく・ねむり・マヒ・こんらん」状態にならない。(なんらかの原因で「ねむり・マヒ・こんらん」状態になっているとき、この力は使えない)",
+            "このカードは、「どく・ねむり・マヒ・こんらん」状態にならない。(なんらかの原因で「ねむり・マヒ・こんらん」状態になっているとき、この力は使えない)",
             _KYUURA_PRINTED_TEXT,
         ),
     },

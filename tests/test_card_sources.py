@@ -30,6 +30,7 @@ from tests.helpers import NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0
 from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, FOSSIL_GRIMER, BROCKS_ONIX, PERSIAN
 from tests.helpers import V0_44_CARDS, GIOVANNI, MISTYS_STARYU, BLANK_CHANSEY
 from tests.helpers import NO_BASE_HAUNTER_EFFECTS, V0_45_ADOPTED, BASE_HAUNTER, DARK_BLASTOISE, DARK_MAGNETON, RATICATE, BROCKS_GEODUDE_40, ROCKETS_HITMONCHAN
+from tests.helpers import V0_46_POKEMON, MR_MIME, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DARK_MUK, SNORLAX
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -168,11 +169,28 @@ class ShippedRecordTest(unittest.TestCase):
         # v0.41: 採用 15 枚（docs/heal-counter-status-v0.41.md）。v0.42: 採用 15 枚（docs/power-decisions-v0.42.md）。v0.43: 採用 9 枚
         # （docs/declared-entry-powers-v0.43.md）。v0.44: 採用 15 枚（ポケモン 14 枚とトレーナーのサカキ。docs/search-evolution-once-attacks-v0.44.md）。
         # v0.45: 採用 14 枚と、過去の原典照合の記録のある第1弾のゴースト（pcg-search.com の照合だけを書く guidebook_record。
-        # docs/conditional-damage-energy-v0.45.md）
+        # docs/conditional-damage-energy-v0.45.md）。v0.46: 採用 11 枚（docs/continuous-powers-v0.46.md）
         self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON
                                                           + (KANGASKHAN,) + V0_35_POKEMON + V0_36_POKEMON + V0_37_POKEMON + V0_38_POKEMON
                                                           + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON + V0_43_POKEMON
-                                                          + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED))
+                                                          + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED + V0_46_POKEMON))
+        # v0.46: 採用の 11 枚は 2026-10-17 に記録し、pcg-search.com の同じ版のページと照合した。違いは 5 枚とも処理に影響しない（バリヤード・カビゴンの特殊能力の
+        # 説明文の読点、エリカのフシギソウの「いる限り」と「いるかぎり」、わるいベトベトンの「2ぶん」と「2つぶん」、わるいオコリザルのワザの名前の「あばれくるう」と
+        # 「あれくるう」（kyuura への報告事項））。処理に使う文面はどれも kyuura の印刷の文面
+        v046_differences = {MR_MIME: "pokemon.powers[0].text.ja", ERIKAS_IVYSAUR: "pokemon.powers[0].text.ja", DARK_PRIMEAPE: "pokemon.attacks[0].name.ja",
+                            DARK_MUK: "pokemon.powers[0].text.ja", SNORLAX: "pokemon.powers[0].text.ja"}
+        for card_id in V0_46_POKEMON:
+            record = sources["cards"][card_id]
+            with self.subTest(card=card_id):
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["recorded_on"], record["kyuura_records"]),
+                                 (cs.KYUURA_DATA, cs.ADOPTED, COMMIT, "2026-10-17", []))
+                self.assertEqual(set(record["play_text"].values()), {cs.PRINTED_TEXT})
+                [check] = record["external_checks"]
+                self.assertEqual(check["checked_on"], "2026-10-17")
+                self.assertEqual(check["result"], "differences" if card_id in v046_differences else "match")
+                self.assertEqual([d["field"] for d in check["differences"]], [v046_differences[card_id]] if card_id in v046_differences else [])
+                self.assertTrue(all(not d["affects_behavior"] for d in check["differences"]))
+                self.assertEqual(record["issues"], [])
         for card_id in V0_44_CARDS:
             record = sources["cards"][card_id]
             with self.subTest(card=card_id):
@@ -267,8 +285,9 @@ class ShippedRecordTest(unittest.TestCase):
         # あるワザ 8 と特殊能力 9。kyuura に LD-・エラッタ・裁定・card_differences の記録がない）と、v0.44 の 21（14 枚の説明文のあるワザ 19 と特殊能力 2。
         # カスミのヒトデマンの「スターブーメラン」は kyuura の最新の説明（LD-PMCG5-027-ATK0）があるので registered。トレーナーのサカキは対応表の区分の外）と、
         # v0.45 の 21（採用の 14 枚の説明文のあるワザ 22 から、kyuura の最新の説明（LD-PMCG5-054-ATK0）のある R団のエビワラーの「クロスカウンター」
-        # を除く（registered）。第1弾のゴーストの 2 つは照合の記録の文面で、LD-・CC- の区分）
-        self.assertEqual(len(section["adopted_printed_text"]), 348)
+        # を除く（registered）。第1弾のゴーストの 2 つは照合の記録の文面で、LD-・CC- の区分）と、v0.46 の 22（11 枚の説明文のあるワザ 14 と特殊能力 8。
+        # kyuura に LD-・エラッタ・裁定・card_differences の記録がない）
+        self.assertEqual(len(section["adopted_printed_text"]), 370)
         self.assertNotIn(f"{ROCKETS_HITMONCHAN}/attack/0", section["adopted_printed_text"])
         self.assertEqual(section["registered"][f"{ROCKETS_HITMONCHAN}/attack/0"], "LD-PMCG5-054-ATK0")
         self.assertEqual((section["registered"][f"{BASE_HAUNTER}/attack/1"], section["recorded_in_card_checks"][f"{BASE_HAUNTER}/attack/0"]),
@@ -304,7 +323,7 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29〜v0.45 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
+        v0.29〜v0.46 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
         v0.8、v0.45 の第1弾のゴーストは v0.9 の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
@@ -312,7 +331,7 @@ class ShippedRecordTest(unittest.TestCase):
         adopted = (set(V0_29_POKEMON) | set(V0_30_ADOPTED) | set(V0_31_POKEMON) | set(V0_32_POKEMON) | set(V0_33_POKEMON) | set(V0_34_POKEMON)
                    | set(V0_35_POKEMON) | set(V0_36_POKEMON) | set(V0_37_ADOPTED) | set(V0_38_POKEMON) | set(V0_39_POKEMON)
                    | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON) | set(V0_43_POKEMON)
-                   | set(V0_44_CARDS) | set(V0_45_ADOPTED))  # v0.35〜v0.45
+                   | set(V0_44_CARDS) | set(V0_45_ADOPTED) | set(V0_46_POKEMON))  # v0.35〜v0.46
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
         self.assertIn(BASE_HAUNTER, verification["cards"])  # v0.45 で登録した第1弾のゴーストは v0.9 の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))

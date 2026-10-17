@@ -410,6 +410,20 @@ BASE_HAUNTER = "PMCG1-047"  # 第1弾のゴースト（v0.9 の参照カード�
 V0_45_POKEMON = (BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK, KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD,
                  ROCKETS_ZAPDOS, ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40)  # 写しの組 pool_v0_45 の並び
 V0_45_ADOPTED = V0_45_POKEMON[1:]  # kyuura データの採用で加えた 14 枚（第1弾のゴーストは v0.9 の過去の原典照合の記録）
+# v0.46（docs/continuous-powers-v0.46.md）。常にはたらく特殊能力を持つ 8 枚と、関連する 3 枚（どれも kyuura データの採用）
+MR_MIME = "PMCG2-027"  # バリヤード（ポケモンジャングル。HP 40・超・弱点 超・にげる 1。［なぞのかべ］・ヨガのポーズ（超無）10+）
+ERIKAS_DRATINI = "PMCG5-063"  # エリカのミニリュウ（リーダーズスタジアム。HP 40・無色・抵抗力 超 -30・にげる 1。［ふしぎなバリアー］・しっぽでつく（無無）10+）。DRATINI（PMCG1-065）・ロケット団のミニリュウ（PMCG4-051）と別のカード
+ERIKAS_IVYSAUR = "PMCG6-010"  # エリカのフシギソウ（闇からの挑戦。エリカのフシギダネから進化。HP 60・草・弱点 炎・にげる 2。［くつろぐかおり］・ダブルはっぱカッター（草草草）40×）
+DARK_PRIMEAPE = "PMCG4-041"  # わるいオコリザル（ロケット団。マンキーから進化。HP 60・闘・弱点 超・にげる 1。［きょうぼう］・あばれくるう（闘闘）40）。PRIMEAPE（PMCG2-031）と別の名前
+DODRIO = "PMCG2-040"  # ドードリオ（ポケモンジャングル。ドードーから進化。HP 70・無色・弱点 雷・抵抗力 闘 -30・にげる 0。［にげるサポート］・いかり（無無無）10+）
+DARK_MUK = "PMCG4-007"  # わるいベトベトン（ロケット団。ベトベターから進化。HP 60・草・弱点 超・にげる 2。［ねんちゃくえき］・ヘドロパンチ（草草）20）。MUK・KOGAS_MUK と別の名前
+DARK_VILEPLUME = "PMCG4-010"  # わるいラフレシア（ロケット団。わるいクサイハナから進化。HP 60・草・弱点 炎・にげる 2。［アレルギーかふん］・はなびらのうず（草草草）30×）
+SNORLAX = "PMCG2-047"  # カビゴン（ポケモンジャングル。HP 90・無色・弱点 闘・抵抗力 超 -30・にげる 4。［めんえき］・のしかかり（無無無無）30）。ROCKETS_SNORLAX と別の名前
+ERIKAS_VENUSAUR = "PMCG6-017"  # エリカのフシギバナ（闇からの挑戦。エリカのフシギソウから進化。HP 90・草・弱点 炎・にげる 2。せいちょう（草）・かくさんソーラービーム（草草草草）20）
+ERIKAS_EXEGGCUTE = "PMCG5-012"  # エリカのタマタマ（リーダーズスタジアム。HP 50・草・弱点 炎・にげる 1。リフレクター（超）・タマゴばくだん（草無）40）
+ERIKAS_EXEGGUTOR = "PMCG5-013"  # エリカのナッシー（リーダーズスタジアム。エリカのタマタマから進化。HP 70・草・弱点 炎・にげる 2。サイコエクスチェンジ（超）・ふみつけ（草無無）30+）
+V0_46_POWER_POKEMON = (MR_MIME, ERIKAS_DRATINI, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DODRIO, DARK_MUK, DARK_VILEPLUME, SNORLAX)  # 常にはたらく特殊能力を持つ 8 枚
+V0_46_POKEMON = V0_46_POWER_POKEMON + (ERIKAS_VENUSAUR, ERIKAS_EXEGGCUTE, ERIKAS_EXEGGUTOR)  # 写しの組 pool_v0_46 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -960,6 +974,13 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.PutOwnerBasicFromDeckOntoBenchOnHeads,  # タケシのイシツブテ（HP 40）の「たすけをよぶ」
     _effects.DamageIgnoringResistance,  # タケシのイシツブテ（HP 40）の「スパイラルショット」
     _effects.CoinOpponentDeckTopDiscardTrainerElseHand,  # サカキのニャース（HP 40）の「てつだうふり」
+    # v0.46（docs/continuous-powers-v0.46.md）
+    _effects.DamageThenSelfConfuse,  # わるいオコリザルの「あばれくるう」
+    _effects.CoinsTimesDamageSelfConfuse,  # わるいラフレシアの「はなびらのうず」
+    _effects.AttachEnergyFromHandOnHeads,  # エリカのフシギバナの「せいちょう」
+    _effects.DamageThenExactBenchTargets,  # エリカのフシギバナの「かくさんソーラービーム」
+    _effects.HalveDamageNextTurn,  # エリカのタマタマの「リフレクター」
+    _effects.ShuffleHandIntoDeckThenDraw,  # エリカのナッシーの「サイコエクスチェンジ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

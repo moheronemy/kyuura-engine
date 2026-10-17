@@ -24,7 +24,7 @@ from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from ..effects import AttackKey, AttackUse, PowerKey
+from ..effects import AttackKey, AttackUse, PowerKey, status_at_attack_blocked
 from ..errors import UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench
@@ -148,6 +148,9 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False) -> None:
     state = res.state
     state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    # v0.46: 「ワザが使われた時、すでに…」の特殊状態（エリカのフシギソウの［くつろぐかおり］）を宣言（p.309 の手順 3）の時点で写す。手順 4・5・ワザの要素で特殊状態が
+    # 変わっても、このワザでは変えない（``effects.status_at_attack_blocked``。決定をまたぐときは続きの情報で運ぶ）
+    res.attack_status = status_at_attack_blocked(state)
     if once:
         # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」。使った記録は宣言（p.309 の手順 3）のとき、手順 4（すなかけ）・手順 5（こんらん）・ワザの
         # 要素の前に置く（手順 4 の失敗・こんらんの「うら」・コインの「うら」でも使ったことになる。p.323「12」・v0.3d の A12）。宣言の前に拒否したら（確認・先読み）、
@@ -161,7 +164,7 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         return
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
-        problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
+        problem = PR.confusion_damage_problem(state, attacker, res.attack_status)  # v0.13 の経路と同じ判定・理由の文（procedures）。v0.46: 常にはたらく特殊能力も
         if problem is not None:
             raise res.question("confusion_damage_modifiers", f"ポケモン {attacker.pokemon_id}", problem)
         before = attacker.damage

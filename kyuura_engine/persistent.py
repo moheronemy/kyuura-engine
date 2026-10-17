@@ -52,6 +52,7 @@ from .state import (
     CannotUseOwnAttack,
     DamageReduction,
     DestinyBond,
+    HalvedDamage,
     NextTurnAttackDamage,
     PreventDamage,
     ReducedDamageToSource,
@@ -234,6 +235,11 @@ def damage_reduction(state: GameState, pokemon: PokemonInPlay) -> DamageReductio
 def zero_damage_below(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageBelow | None:
     """今の番に ``pokemon`` が受けるワザのダメージを、決まった数より小さければ 0 にする効果（v0.45。イワークの「かたくなる」）がはたらいているなら、その効果。"""
     return _active(state, pokemon, ZeroDamageBelow)
+
+
+def halved_damage(state: GameState, pokemon: PokemonInPlay) -> HalvedDamage | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを半分（切りすて）にする効果（v0.46。エリカのタマタマの「リフレクター」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, HalvedDamage)
 
 
 def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None:

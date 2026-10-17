@@ -68,6 +68,8 @@ from .effects import (
     applicable_entry_power,
     offer_entry_power,
     ko_prevention_power,
+    retreat_cost,
+    trainer_lock_sources,
     ko_prevention_suppressors,
 )
 from .continuous import suppressors_of
@@ -84,6 +86,7 @@ from .state import (
     CannotUseAttack,
     CannotUseOwnAttack,
     DamageReduction,
+    HalvedDamage,
     NextTurnAttackDamage,
     ReducedDamageToSource,
     Retaliation,
@@ -573,28 +576,44 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     index = p.bench_index(cmd.new_active)
     if index is None:
         raise IllegalActionError("NOT_ON_BENCH", f"{cmd.new_active!r} は自分のベンチにいない")
-    cost = state.card_def(active.card).retreat_cost
+    # v0.46: トラッシュするエネルギーの数は、印刷の数に、はたらいている常にはたらく特殊能力（相手の［ねんちゃくえき］は決まって増やし、自分の［にげるサポート］は少なく
+    # できる）を当てはめた範囲（``effects.retreat_cost``。最後に 0 で下限をつける）。特殊能力がなければ印刷の数ちょうど（v0.45 までと同じ）
+    cost = retreat_cost(state, cmd.player)
     discard = tuple(cmd.discard)
     if len(set(discard)) != len(discard):
         raise IllegalActionError("DUPLICATE_CARD", "同じエネルギーを 2 回選んでいる")
     if any(uid not in active.energy for uid in discard):
         raise IllegalActionError("ENERGY_NOT_ATTACHED", "バトル場のポケモンについていないエネルギーを選んでいる")
-    if len(discard) != cost:
+    if not cost.allows(len(discard)):
         # 基本エネルギーは 1 枚 1 個なので、トラッシュする枚数 = にげるエネルギーの数
-        raise IllegalActionError("WRONG_RETREAT_COST", f"にげるエネルギーは {cost} 個（{len(discard)} 枚選んでいる）")
+        wanted = f"{cost.maximum} 個" if cost.minimum == cost.maximum else f"{cost.minimum}〜{cost.maximum} 個"
+        raise IllegalActionError("WRONG_RETREAT_COST", f"にげるエネルギーは {wanted}（{len(discard)} 枚選んでいる）")
+    if cost.floor_ambiguous(len(discard)):
+        # v0.46: 少なくする数が印刷の数より多く、増やす数もある（自分のにげるの数が 0 のドードリオのベンチにドードリオ、相手のバトル場にわるいベトベトン）。先に少なくして
+        # 0 で止めてから増やすのか、最後に下限をつけるのかで、トラッシュしてよい数が変わる。記録から決まらない（CP2）ので、読み方で答えが変わる数は扱わない（エネルギーを
+        # トラッシュする前・コインの前。状態・乱数・ログは変わらない）
+        raise UnsupportedError(
+            "UNRESOLVED_RETREAT_COST_FLOOR",
+            f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}）を、"
+            f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{len(discard)} 枚が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
+            "ので扱わない（CP2）",
+        )
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
+    # v0.46: 特殊能力で数が変わったときだけ、ログに数の範囲と特殊能力を書く（v0.45 までのログの形は変えない）
+    cost_log = {} if not cost.modified else {"retreat_cost": (cost.minimum, cost.maximum), "retreat_cost_printed": cost.printed,
+                                             "retreat_cost_increases": cost.increases, "retreat_cost_reductions": cost.reductions}
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
         # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
         active.retreat_failed_turn = state.turn_number
         state.add_event(
-            "retreat_failed", player=cmd.player, pokemon=active.card, pokemon_id=active.pokemon_id, discarded=discard,
+            "retreat_failed", player=cmd.player, pokemon=active.card, pokemon_id=active.pokemon_id, discarded=discard, **cost_log,
         )
         return
     # ついているカード・ダメージはいっしょに移動する（p.311）
     p.active, p.bench[index] = p.bench[index], active
-    state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active)
+    state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active, **cost_log)
     # ベンチに戻ったら、特殊状態はすべて消える（p.311・p.322。v0.3a）
     clear_special_conditions(state, cmd.player, active, RETREAT)
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
@@ -620,6 +639,13 @@ def _play_trainer(state: GameState, cmd: PlayTrainer) -> None:
     definition = state.card_def(cmd.card)
     if definition.category != "trainer":
         raise IllegalActionError("NOT_TRAINER", f"カード {cmd.card} はトレーナーカードではない")
+    locked = trainer_lock_sources(state)
+    if locked:
+        # v0.46: 場にはたらいている［アレルギーかふん］（わるいラフレシア）があれば、誰もトレーナーカードを使えない。手札から出す前に拒否する（状態・乱数・ログは
+        # 変わらない）。ポケモンについているトレーナーの効果・使っている最中のトレーナーは止めない
+        raise IllegalActionError(
+            "TRAINER_PREVENTED", f"場のポケモン {[pid for _, pid, _ in locked]} の特殊能力がはたらいているので、トレーナーカードを使えない"
+        )
     effect = state.effects.trainer_effect(definition)
     if effect is None:
         problem = state.effects.trainer_problem(definition)
@@ -1296,6 +1322,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.append(f"{where} {effect!r} の減らす量が 10 の倍数の正の数ではない")
         if isinstance(effect, ZeroDamageBelow):
             problems.extend(_zero_damage_below_problems(state, pokemon, effect, where))  # v0.45
+        if isinstance(effect, HalvedDamage):
+            problems.extend(_halved_damage_problems(state, pokemon, effect, where))  # v0.46
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
             problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
@@ -1355,6 +1383,20 @@ def _zero_damage_below_problems(state: GameState, pokemon: PokemonInPlay, effect
     entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
     terms = getattr(entry.effect, "threshold_terms", None) if entry is not None else None
     if terms is None or terms() != (ZeroDamageBelow, effect.threshold):
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
+    return []
+
+
+def _halved_damage_problems(state: GameState, pokemon: PokemonInPlay, effect: HalvedDamage, where: str) -> list[str]:
+    """「リフレクター」（v0.46）の持続する効果が、効果を与えたワザ（ログ ``persistent_effect_added`` の ``effect``）の登録された実装（``halved_terms``）の効果と合うか。
+    対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "halved_terms", None) if entry is not None else None
+    if terms is None or terms() != (HalvedDamage,):
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
 
@@ -2251,7 +2293,8 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     copied = context.get("copied")
     use = d.context_value("use")
     key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
-    collected = attack_damage_modifiers(state, attacker, receiver, attack=key)
+    # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）は、決定の続きの情報で運んだ値（書いていなければ空）
+    collected = attack_damage_modifiers(state, attacker, receiver, attack=key, attack_status=frozenset(context.get("attack_status", ())))
     at_step = tuple(m for m in collected if m.step == step)
     if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]

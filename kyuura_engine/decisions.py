@@ -176,6 +176,11 @@ DISCARD_TO_DECK_TOP = "discard_to_deck_top"
 # 1 枚でも決定を出す）。つける控えポケモンは続けて ``SELECT_POKEMON``（``context`` の ``"energy"`` がはがすカード）で選ぶ。v0.31 の DISCARD_OPPONENT_ENERGY（トラッシュ）
 # とは行き先が違うので別の種類。再開先は "attack"
 MOVE_OPPONENT_ENERGY = "move_opponent_energy"
+# v0.46（docs/continuous-powers-v0.46.md）。エリカのフシギバナの「せいちょう」の「コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、このカードに
+# つける」。決めるのはワザを使ったプレイヤーで、選べるものは手札の「草」の基本エネルギーカードの uid（手札の並び）。0〜min(2, 枚数) 枚（0 枚は「最大2枚」が 0 枚を
+# 含むかが決められない。v0.31 の HC7（トラッシュからつける「最大2枚」）と同じ問いで、答えのときに止める）。手札からつける通常の操作（p.310。1 番に 1 枚）とは別の処理
+# （回数に数えない）。v0.41 の ATTACH_FROM_DECK（山札）・v0.31 の ATTACH_FROM_DISCARD（トラッシュ）とは選ぶ場所が違うので別の種類。再開先は "attack"
+ATTACH_FROM_HAND = "attach_from_hand"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

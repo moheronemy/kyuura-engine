@@ -223,9 +223,11 @@ MUTANTS: tuple[Mutant, ...] = (
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',
            origin='v0.17d'),
-    # S09: v0.36 でくもがくれガスにも同じ確かめを置いたので、置きかえる前の文字列を Status の 1 か所に絞った（同じ誤りを入れる）
+    # S09: v0.36 でくもがくれガスにも同じ確かめを置いたので、置きかえる前の文字列を Status の 1 か所に絞った（同じ誤りを入れる）。v0.46 で、対象が［めんえき］で
+    # 特殊状態にならないときの条件を加えたので、置きかえる前の文字列をその条件に合わせた（同じ誤りを入れる）
     Mutant('S09', '未解決を勝手に解決する（Z23: ダメージを与えなくても自分をねむりにする）', R + 'programs.py',
-           '            if result.dealt <= 0:\n                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
+           '            if result.dealt <= 0 and not (immune and self.local_coin is None):\n'
+           '                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
            '                                       E.effect_after_no_damage_error(str(run.key), result, self.condition))',
            '            if False:\n                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
            '                                       E.effect_after_no_damage_error(str(run.key), result, self.condition))',

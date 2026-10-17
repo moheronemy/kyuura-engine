@@ -432,6 +432,26 @@ class ZeroDamageBelow:
 
 
 @dataclass(frozen=True)
+class HalvedDamage:
+    """ワザによる「持続する効果」（v0.46）のうち、エリカのタマタマ（PMCG5-012）の「リフレクター」の「次の相手の番、このカードが受けるダメージは半分(切りすて)
+    になる。(ダメージ以外の効果はそのまま)」（kyuura の印刷の文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンがワザのダメージを受けるとき、p.321 の 8 段階（「ワザを受けるポケモンの持っている「ダメージを
+    変更する効果」」）で、その段階のダメージを半分にし、ダメージカウンターの単位で切りすてる（``damage.HALVE_DOWN``。``effects.attack_damage_modifiers``）。
+    エリカのフシギソウの［くつろぐかおり］（常にはたらく特殊能力の「半分(切り上げ)」。``damage.HALVE_UP``）とは、はたらく条件・期限・丸めの向きが違い、半分にする
+    計算（``DamageModifier.apply``）だけを共通にする。ダメージ以外の効果は受ける。消える契機は ``PreventDamage`` と同じ（期限・ベンチ・進化・きぜつ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "halved_damage"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class CannotAttack:
     """ワザによる「持続する効果」（v0.31）のうち、イーブイ（PMCG2-037）の「しっぽをふる」の「「しっぽをふる」を受けた相手の対戦ポケモンは、
     次の相手の番にワザをつかえない。」（kyuura の印刷の文面）。
@@ -608,10 +628,10 @@ class CannotAttackWhileSourceActive:
 
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
-# CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
+# CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow)
+                           ZeroDamageBelow, HalvedDamage)
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）

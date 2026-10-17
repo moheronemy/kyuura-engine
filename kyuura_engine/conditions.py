@@ -24,6 +24,8 @@ v0.3a で「どく」、v0.3b で「ねむり」「マヒ」、v0.3c で「こ�
 - ``special_condition``: 特殊状態にする効果を受けた（``player``・``pokemon``・``pokemon_id``・``condition``・
   ``effect``、どくなら ``damage``、マヒなら ``paralyzed_turn``（マヒ状態になった番）・``recovery_turn``（回復する番）。
   もうその状態だったときだけ ``already``）
+- ``special_condition_prevented``（v0.46）: 特殊状態にする効果を受けたが、特殊状態にならない特殊能力（カビゴンの［めんえき］）で防いだ（``player``・``pokemon``・
+  ``pokemon_id``・``condition``・どくなら ``damage``・``effect``・``power``）。状態は変わらない
 - ``special_conditions_removed``: 特殊状態が消えた（``player``・``pokemon``・``pokemon_id``・``conditions``・``reason``）。
   ``reason`` は ``RETREAT``・``SWITCH``（v0.3a）、``SLEEP_COIN``・``PARALYSIS_END``・``REPLACED``（v0.3b）、``EVOLVE``（v0.4a）、
   ``FORCED_SWITCH``（v0.4d。相手のワザ「ふきとばし」でベンチにもどされた）
@@ -62,6 +64,21 @@ EVOLVE = "evolve"  # 進化した（p.310 の進化の手順 3・p.322「特殊�
 FORCED_SWITCH = "forced_switch"
 
 
+def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str, effect: str, **fields: object) -> bool:
+    """v0.46: ``pokemon`` が特殊状態にならない（カビゴンの［めんえき］。はたらいているか ``effects.status_immunity``）なら、状態を変えずにログ
+    ``special_condition_prevented``（``player``・``pokemon``・``pokemon_id``・``condition``・状態ごとの項目・``effect``・``power``）を残して True。付ける処理の共通の
+    入口（どく・ねむり・マヒ・こんらんのすべての付ける関数）がはじめに呼ぶので、ワザ・特殊能力のどれで付けようとしても同じに防ぐ。すでにある特殊状態は消さない
+    （防ぐのは新しく付けることだけ）。"""
+    from .effects import status_immunity  # effects.py は conditions.py を読み込むので、使うときに読み込む
+
+    key = status_immunity(state, owner, pokemon)
+    if key is None:
+        return False
+    state.add_event("special_condition_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, condition=condition, **fields,
+                    effect=effect, power=str(key))
+    return True
+
+
 def _require_active(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str) -> None:
     # ベンチのポケモンは特殊状態にならない（p.322）ので、バトル場のポケモンでなければエンジンの不具合として止める
     if state.players[owner].active is not pokemon:
@@ -84,6 +101,8 @@ def poison(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str,
     _require_active(state, owner, pokemon, POISON)
     if damage <= 0 or damage % 10:
         raise ValueError(f"どくで受けるダメージ {damage} は 10 の正の倍数")
+    if _prevented(state, owner, pokemon, POISON, effect, damage=damage):
+        return  # v0.46: ［めんえき］（特殊などくの上書きの確かめより先。防がれるなら状態は変わらない）
     current = pokemon.conditions.poison
     if damage != NORMAL_POISON.damage and current is not None and current.damage != damage:
         raise RuntimeError("受けるダメージの違うどく状態から特殊などく状態にする扱いは決まらない（v0.3a の #15。呼ぶ側が先に止める）")
@@ -103,6 +122,8 @@ def put_to_sleep(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect
     - どく状態はそのまま（どくはほかの特殊状態と重複する。p.322）。
     """
     _require_active(state, owner, pokemon, SLEEP)
+    if _prevented(state, owner, pokemon, SLEEP, effect):
+        return  # v0.46: ［めんえき］
     already = _set_exclusive(state, owner, pokemon, ASLEEP)
     _log_applied(state, owner, pokemon, SLEEP, effect, already)
 
@@ -118,6 +139,8 @@ def confuse(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: str
       状態になります」）。
     """
     _require_active(state, owner, pokemon, CONFUSION)
+    if _prevented(state, owner, pokemon, CONFUSION, effect):
+        return  # v0.46: ［めんえき］
     already = _set_exclusive(state, owner, pokemon, CONFUSED)
     _log_applied(state, owner, pokemon, CONFUSION, effect, already)
 
@@ -173,6 +196,8 @@ def paralyze(state: GameState, owner: int, pokemon: PokemonInPlay, *, effect: st
     - どく状態はそのまま（p.322）。
     """
     _require_active(state, owner, pokemon, PARALYSIS)
+    if _prevented(state, owner, pokemon, PARALYSIS, effect):
+        return  # v0.46: ［めんえき］（マヒの再付与の確かめより先。防がれるなら回復する番は変わらない）
     problem = paralysis_problem(state, owner, pokemon)
     if problem is not None:
         raise problem

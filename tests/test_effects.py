@@ -104,6 +104,11 @@ V0_45_WITH_TEXT = [AttackKey(card, index) for card, index in (
     ("PMCG1-047", 0), ("PMCG1-047", 1), ("PMCG5-024", 0), ("PMCG5-031", 0), ("PMCG5-031", 1), ("PMCG6-002", 0), ("PMCG6-019", 0), ("PMCG6-019", 1),
     ("PMCG6-007", 0), ("PMCG4-024", 0), ("PMCG4-024", 1), ("PMCG4-030", 0), ("PMCG4-030", 1), ("PMCG6-032", 0), ("PMCG6-032", 1), ("PMCG6-042", 0),
     ("PMCG6-042", 1), ("PMCG1-054", 1), ("PMCG1-062", 1), ("PMCG5-054", 0), ("PMCG5-047", 0), ("PMCG5-047", 1), ("PMCG6-068", 0), ("PMCG6-068", 1))]
+# v0.46: 常にはたらく特殊能力を持つ 8 枚と関連する 3 枚の説明文のあるワザ（どれも。kyuura データの採用。処理に使う文面は kyuura の印刷の文面。
+# docs/continuous-powers-v0.46.md）
+V0_46_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG2-027", 0), ("PMCG5-063", 0), ("PMCG6-010", 0), ("PMCG4-041", 0), ("PMCG2-040", 0), ("PMCG4-007", 0), ("PMCG4-010", 0), ("PMCG2-047", 0),
+    ("PMCG6-017", 0), ("PMCG6-017", 1), ("PMCG5-012", 0), ("PMCG5-012", 1), ("PMCG5-013", 0), ("PMCG5-013", 1))]
 
 
 class RecordingEffect(AttackEffect):
@@ -254,7 +259,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
-                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT))
+                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -395,7 +400,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 検索・進化・1 度だけ使えるワザの 14 枚のワザ 24（v0.44。docs/search-evolution-once-attacks-v0.44.md）
         # + 条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などの 15 枚のワザ 28（v0.45。カスミのタッツー（HP 50）・
         #   キョウのアーボはワザ 1 つ。docs/conditional-damage-energy-v0.45.md）
-        self.assertEqual(len(keys), 507)
+        # + 常にはたらく特殊能力を持つ 8 枚（ワザ 1 つずつ）と関連する 3 枚（ワザ 2 つずつ）のワザ 14（v0.46。docs/continuous-powers-v0.46.md）
+        self.assertEqual(len(keys), 521)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -409,14 +415,20 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # ラフレシア・メノクラゲ・ヤドラン・ゲンガー・カイリュー・わるいユンゲラー・エリカのラフレシア・エリカのウツボットの 8 つを加えた
         # （docs/power-decisions-v0.42.md）。v0.43 でわるいクサイハナ・わるいゴルバット・ロケット団のヒトカゲ・ロケット団のスリープ・わるいヤドラン・
         # わるいハクリュー・わるいカイリュー・エリカのマダツボミ（PMCG5-010）・マチスのレアコイルの 9 つを加えた（docs/declared-entry-powers-v0.43.md）。
-        # v0.44 でキョウのコクーンの［うか］（PMCG6-011）・サカキのペルシアンの［ボスをよぶ］（PMCG6-071）を加えた（docs/search-evolution-once-attacks-v0.44.md）
+        # v0.44 でキョウのコクーンの［うか］（PMCG6-011）・サカキのペルシアンの［ボスをよぶ］（PMCG6-071）を加えた（docs/search-evolution-once-attacks-v0.44.md）。
+        # v0.46 で常にはたらく特殊能力 8 つ（PMCG2-027・PMCG2-040・PMCG2-047・PMCG4-007・PMCG4-010・PMCG4-041・PMCG5-063・PMCG6-010）を加えた
+        # （docs/continuous-powers-v0.46.md）
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
-                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
+                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG2-027", 0), PowerKey("PMCG2-040", 0),
+                                  PowerKey("PMCG2-047", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
                                   PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0), PowerKey("PMCG3-043", 0),
-                                  PowerKey("PMCG4-006", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
-                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-052", 0), PowerKey("PMCG4-053", 0),
+                                  PowerKey("PMCG4-006", 0), PowerKey("PMCG4-007", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-010", 0),
+                                  PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
+                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-041", 0), PowerKey("PMCG4-052", 0),
+                                  PowerKey("PMCG4-053", 0),
                                   PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-020", 0),
-                                  PowerKey("PMCG5-040", 0), PowerKey("PMCG6-011", 0), PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0),
+                                  PowerKey("PMCG5-040", 0), PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
+                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0),
                                   PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
 
 

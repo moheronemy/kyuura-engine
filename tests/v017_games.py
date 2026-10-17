@@ -17,9 +17,10 @@ from collections import Counter
 from typing import Callable
 
 from kyuura_engine import (
-    AttachEnergy, EvolvePokemon, IllegalActionError, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
-    state_to_dict,
+    AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
+    new_game, state_to_dict,
 )
+from kyuura_engine.effects import retreat_cost, trainer_lock_sources
 from kyuura_engine.persistent import cannot_retreat
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -120,6 +121,29 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise AssertionError(f"「にげる」ことができない効果がないのに RETREAT_PREVENTED: {command}")
                     observed["stopped_retreat_RETREAT_PREVENTED"] += 1
                     turn_tried.add("retreat")
+                    continue
+                if isinstance(command, Retreat) and error.code == "WRONG_RETREAT_COST":
+                    # v0.46: 常にはたらく特殊能力（［ねんちゃくえき］・［にげるサポート］）で「にげる」のエネルギーの数が変わり、印刷の数で宣言した。場から確かめる
+                    # （特殊能力がなければ、今までどおり想定外の拒否）
+                    cost = retreat_cost(state, command.player)
+                    if not cost.modified or cost.allows(len(command.discard)):
+                        raise
+                    observed["stopped_retreat_WRONG_RETREAT_COST"] += 1
+                    turn_tried.add("retreat")
+                    continue
+                if isinstance(command, Retreat) and error.code == "UNRESOLVED_RETREAT_COST_FLOOR":
+                    # v0.46: 少なくする数と増やす数の当てはめ方で、トラッシュしてよい数が変わる（CP2）。場から確かめる
+                    if not retreat_cost(state, command.player).floor_ambiguous(len(command.discard)):
+                        raise AssertionError(f"にげるエネルギーの読み方で答えが変わらないのに {error.code}: {command}")
+                    observed[f"stopped_retreat_{error.code}"] += 1
+                    turn_tried.add("retreat_floor")
+                    continue
+                if isinstance(command, PlayTrainer) and error.code == "TRAINER_PREVENTED":
+                    # v0.46: はたらいている［アレルギーかふん］（わるいラフレシア）。場から確かめる（手札から出す前に拒否）
+                    if not trainer_lock_sources(state):
+                        raise AssertionError(f"トレーナーカードを使えなくする特殊能力がはたらいていないのに TRAINER_PREVENTED: {command}")
+                    observed["stopped_trainer_TRAINER_PREVENTED"] += 1
+                    turn_tried.add("trainer_locked")
                     continue
                 if isinstance(command, AttachEnergy):
                     if error.code != R13:

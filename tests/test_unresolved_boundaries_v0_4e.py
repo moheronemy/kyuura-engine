@@ -109,6 +109,11 @@ ALL_CODES = (
     # 消えない手順 4 の効果）で起こる）。止まる場合（手順 4 の効果が 2 つ）と隣の止まらない場合（1 つ）は tests/test_conditional_damage_energy_v0_45.py の
     # LastingAttackCheckTest
     "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
+    # v0.46: CP1・CP2（docs/continuous-powers-v0.46.md）。止まる場合（［くつろぐかおり］がバトル場にあり、返す効果（こうらがえし）のダメージを半分にするかで
+    # 結果が変わる・少なくする数と増やす数の当てはめ方でトラッシュしてよい数が変わる「にげる」）と隣の止まらない場合（ほのおのかべの 10 は半分にしても 10・
+    # どちらの読み方でも足りる数）は tests/test_continuous_powers_v0_46.py の CalmingAromaTest・RetreatCostTest
+    "UNRESOLVED_CALMING_AROMA_RETALIATION",
+    "UNRESOLVED_RETREAT_COST_FLOOR",
 )
 TURN = 7
 
