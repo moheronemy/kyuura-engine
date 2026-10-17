@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 83,
-    "engine_stop_codes": 82,
+    "engine_unresolved_rulings": 86,
+    "engine_stop_codes": 85,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -994,6 +994,39 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MR_FUJI_WITHOUT_BENCH": {
+      "engine_rulings": [
+        {
+          "version": "v0.52",
+          "document": "docs/field-return-v0.52.md",
+          "ruling_id": "FJ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER": {
+      "engine_rulings": [
+        {
+          "version": "v0.52",
+          "document": "docs/field-return-v0.52.md",
+          "ruling_id": "SU1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCOOP_UP_LAST_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.52",
+          "document": "docs/field-return-v0.52.md",
+          "ruling_id": "SU2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1882,7 +1915,9 @@
       "PMCG3-033/attack/0",
       "PMCG3-033/attack/1",
       "PMCG6-051/attack/0",
-      "PMCG6-051/attack/1"
+      "PMCG6-051/attack/1",
+      "PMCG5-066/attack/0",
+      "PMCG5-066/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -2223,6 +2258,30 @@
         }
       ],
       "use": "よみがえらせる・元気のかけらでのせるダメージカウンターは「ダメージを受けた」ことにならない（ワザ・トレーナーによるダメージではない。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けたとき」の効果は関係しない。v0.41 のダメージシフト・v0.42 のライフダウンと同じ読み方）"
+    },
+    {
+      "kyuura_record": "GR-2000-P322-PERSISTENT-EFFECTS",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.52",
+          "document": "docs/field-return-v0.52.md",
+          "ruling_id": "FR1"
+        }
+      ],
+      "use": "フジろうじん・ポケモン回収・つれさるで場をはなれたポケモンの持続する効果を消す（理由 return_in_play_to_deck・return_in_play_to_hand）。特殊状態・ダメージカウンターもなくなる（場のポケモンの記録がなくなる）。場にもどしたカードは新しいポケモン（新しい場のポケモンの番号）で、前の状態を引き継がない"
+    },
+    {
+      "kyuura_record": "GR-2000-P312-FIELD",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.52",
+          "document": "docs/field-return-v0.52.md",
+          "ruling_id": "FR2"
+        }
+      ],
+      "use": "手札・山札・トラッシュは場にふくまれないので、手札・山札にもどしたポケモンは場をはなれた（きぜつではないのでサイドは取らない。p.323 のきぜつの規定は当てはめない）。空いたバトル場は勝ち負けの判定・バトル場に出す決定でうめる"
     }
   ]
 }

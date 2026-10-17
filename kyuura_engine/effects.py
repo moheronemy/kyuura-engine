@@ -128,6 +128,7 @@ from .persistent import (
     max_hp_set,
     next_turn_attack_damage,
     reduced_damage_to_source,
+    RETURN_IN_PLAY_TO_DECK,
     RETURN_IN_PLAY_TO_HAND,
     remove_persistent_effects,
     resistance_change,
@@ -138,7 +139,7 @@ from .persistent import (
 from .state import NEXT_TURN_MULTIPLY, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation, mark_returned_to_bench
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
-    return_hand_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
+    return_basic_to_hand, return_hand_to_deck, return_in_play_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
     look_at_card, put_trainer_into_play, swap_prize_with_deck_top,
 )
 
@@ -3898,10 +3899,14 @@ class DamageThenCoinBenchDamageEitherSide(AttackEffect):
         _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
 
     def check(self, attack: Attack) -> list[str]:
-        expected = (f"コインを投げて「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、(「弱点・抵抗力」に関係なく)それぞれ"
-                    f"{self.bench_damage}ダメージ。")
+        # v0.52: エリカのハクリューの「ふぶき」の書き方（「コインを投げ、」・かっこのない「「弱点・抵抗力」に関係なく、」）も受け付ける。どちらも 1 枚のコインの「おもて」で
+        # 相手の控え全員・「うら」で自分の控え全員に、弱点・抵抗力を計算しないダメージを与える同じ意味（読点とかっこの違いだけ。docs/field-return-v0.52.md 5 章）
+        accepted = (
+            f"コインを投げて「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、(「弱点・抵抗力」に関係なく)それぞれ{self.bench_damage}ダメージ。",
+            f"コインを投げ、「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{self.bench_damage}ダメージ。",
+        )
         return _check_form(attack, "コインで相手か自分の控え全員にダメージを与えるワザ", damage="fixed") + _check_exact_text(
-            attack, "コインで相手か自分の控え全員にダメージを与えるワザ", (expected,))
+            attack, "コインで相手か自分の控え全員にダメージを与えるワザ", accepted)
 
 
 @dataclass(frozen=True)
@@ -4735,6 +4740,29 @@ class ReturnOpponentActiveToDeck(AttackEffect):
         return None
 
 
+TAKE_AWAY_TEXT = "自分と相手、そしてそれらについているすべてのカードをそれぞれの山札にもどし、それぞれの山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class ReturnBothActivesToDeck(AttackEffect):
+    """自分と相手、そしてそれらについているすべてのカードをそれぞれの山札にもどし、それぞれの山札をよく切る（v0.52。エリカのハクリューの「つれさる」。ダメージの目安の
+    数字はない。kyuura の印刷の文面。要素 ``programs.ReturnBothActivesToDeck``。docs/field-return-v0.52.md 4 章）。
+
+    - 「自分」はワザを使ったポケモン（バトル場）、「相手」は相手の対戦ポケモン。どちらも、重なったカード・「ばける」でのせたカード・エネルギー・トレーナーを持ち主の山札に
+      もどす（``zones.return_in_play_to_deck``）。きぜつではない（サイドは取らない）
+    - 両方に「ワザをうけない」状態・「とうめい」を評価する（自分 → 相手の順。受けない側はもどさない・その山札を切らない）。片方だけもどることがある
+    - 相手に控えがいなくても使える（説明に条件がない。わるいカイリキーの「つまみだす」の条件を持ち込まない）
+    - 空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定（番でないプレイヤーが先）でうめる。両方とも場にポケモンがいなくなれば、勝ち負けの判定（p.311）
+    """
+
+    implementation_id = "return_both_actives_to_deck"
+    opponent_effect_elements = (RETURN_IN_PLAY_TO_DECK_ELEMENT,)
+    returns_both_actives: ClassVar[bool] = True  # ログの監査が、自分と相手の両方の return_in_play_to_deck を許すのに使う
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "自分と相手を山札にもどすワザ", damage="none") + _check_exact_text(attack, "自分と相手を山札にもどすワザ", (TAKE_AWAY_TEXT,))
+
+
 @dataclass(frozen=True)
 class CoinsAllHeadsBonusDamage(AttackEffect):
     """コインを ``coins`` 枚投げ、すべて「おもて」なら、``bonus`` ダメージを追加する（v0.40。カスミのシードラの「きぜつばり」。値 ``PrintedPlusBonusOnAllHeads``。
@@ -5466,6 +5494,9 @@ class TrainerEffect:
     # v0.50: True なら、効果で自分のポケモンの最大HPを下げ（退化）、のっているダメージ以下になったポケモンが「きぜつ」しうる（退化スプレー）。エンジンが、使い終わって
     # カードをトラッシュしたあとに、きぜつの処理（``resolution.after_trainer``）をする。False のトレーナーのあとに HP 以上のポケモンが残れば、v0.48 の MH1 で受け付けない
     may_knock_out = False
+    # v0.52: True なら、効果で自分のバトル場のポケモンが場をはなれ（きぜつではない）、バトル場が空きうる（ポケモン回収）。エンジンが、使い終わってカードをトラッシュした
+    # あとに、勝ち負けの判定・バトル場に出す決定（``resolution.after_trainer``）をする。False のトレーナーのあとにバトル場が空いていれば、不変条件で止める
+    empties_active = False
 
     def check(self, definition: CardDefinition) -> list[str]:
         if definition.trainer_kinds:
@@ -12406,6 +12437,139 @@ class BenchBasicFromOpponentDiscard(_BenchBasicFromDiscardTrainer):
         return 1 - use.player
 
 
+# ---------------------------------------------------------------- 場のポケモンを場から山札・手札にもどすトレーナー（v0.52。docs/field-return-v0.52.md）
+
+MR_FUJI_TEXT = "自分の控えポケモンを1匹選び、そのカードとそれについているカード全てを自分の山札にもどす。その後、その山札をよくきる。"
+SCOOP_UP_TEXT = ("自分の場のポケモン1匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがしてすてる。バトル場のポケモンを手札に戻す"
+                 "ときは、ベンチからポケモンをバトル場にだす。")
+
+# FJ1: 自分に控えポケモンがいないときにフジろうじんを使えるか。印刷の文面は「自分の控えポケモンを1匹選び、…」で、選べないときの記述がない（「使えない」と書かれて
+# いない）。ほかのカードの問い（突風の GW5・サカキの TR1・元気のかけらの RV1）の答えを流用しない
+MR_FUJI_WITHOUT_BENCH_CODE = "UNRESOLVED_MR_FUJI_WITHOUT_BENCH"
+MR_FUJI_WITHOUT_BENCH_REASON = (
+    "自分に控えポケモンがいないときにフジろうじんを使えるかは、印刷の文面（「自分の控えポケモンを1匹選び、…」）に選べないときの記述がなく、記録で決まらないので扱わない"
+    "（FJ1。ほかのカードの「対象がない」ときの問いの答えを流用しない）"
+)
+# SU1: ポケモン回収で手札にもどすポケモンにトレーナーカード（プラスパワー・ディフェンダー）がついているときの、そのトレーナーカードの行き先。日本語の文面は
+# 「ダメージカウンター、エネルギーカード、進化カードは全てはがしてすてる」で、トレーナーカードを挙げていない。英語版の「(Discard all cards attached to that card.)」は
+# 日本語版の処理の根拠にしない。場をはなれたポケモンについていたカードの行き先の一般の規定は、kyuura の記録（GR-2000-P322-PERSISTENT-EFFECTS・P323-KNOCKOUT・P312-FIELD）
+# にない（きぜつのトラッシュは「きぜつ」の規定）
+SCOOP_UP_ATTACHED_TRAINER_CODE = "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER"
+SCOOP_UP_ATTACHED_TRAINER_REASON = (
+    "ポケモン回収で手札にもどすポケモンについているトレーナーカード（プラスパワー・ディフェンダー）の行き先（トラッシュ・手札・そのほか）は、日本語の文面（「ダメージ"
+    "カウンター、エネルギーカード、進化カードは全てはがしてすてる」）に書かれておらず、記録で決まらないので扱わない（SU1。英語版の「all cards attached」は持ち込まない）"
+)
+# SU2: 自分の場のポケモンがバトル場の 1 匹だけ（控えがいない）のときに、そのポケモンをポケモン回収で手札にもどせるか。文面の「バトル場のポケモンを手札に戻すときは、
+# ベンチからポケモンをバトル場にだす」をしたがえない。使えない・使って場にポケモンがいなくなる（p.311 で負け）のどちらも記録で決まらない
+SCOOP_UP_LAST_POKEMON_CODE = "UNRESOLVED_SCOOP_UP_LAST_POKEMON"
+SCOOP_UP_LAST_POKEMON_REASON = (
+    "控えポケモンがいないときにバトル場のポケモンをポケモン回収で手札にもどせるか（文面の「ベンチからポケモンをバトル場にだす」をしたがえない）は、記録で決まらないので"
+    "扱わない（SU2。ほかのカードの使うための条件を持ち込まない）"
+)
+
+
+@dataclass(frozen=True)
+class ReturnBenchedPokemonToDeck(TrainerEffect):
+    """自分の控えポケモンを 1 匹選び、そのカードとそれについているカード全てを自分の山札にもどす。その後、その山札をよくきる（v0.52。フジろうじん（PMCG3-048）。kyuura の
+    印刷の文面。docs/field-return-v0.52.md 3 章）。
+
+    - 選ぶのは使ったプレイヤー（決定 ``select_pokemon``。選べるものは自分のベンチのポケモン。バトル場のポケモン・相手のポケモンは選べない）
+    - もどすのは、重なったカード（進化カード・「ばける」でのせた進化カード）・エネルギーカード・トレーナーカードのすべて（``zones.return_in_play_to_deck``。v0.36 のワザと
+      同じ関数を、トレーナーの出どころ ``trainer`` で呼ぶ）→ 持続する効果を消す（理由 ``return_in_play_to_deck``）→ 自分の山札を切る（``zones.shuffle_deck``）。きぜつでは
+      ない（サイドは取られない）。ダメージカウンター・特殊状態はなくなる
+    - 自分に控えポケモンがいなければ使えるか決まらない（FJ1。使う前）
+    """
+
+    implementation_id = "return_benched_pokemon_to_deck"
+
+    def _candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        return tuple(pokemon.pokemon_id for pokemon in state.players[player].bench)
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not self._candidates(state, use.player):
+            raise UnsupportedError(MR_FUJI_WITHOUT_BENCH_CODE, MR_FUJI_WITHOUT_BENCH_REASON)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=self._candidates(state, use.player))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (target,) = choices
+        p = state.players[use.player]
+        pokemon = next((b for b in p.bench if b.pokemon_id == target), None)
+        if pokemon is None:
+            raise RuntimeError(f"フジろうじんで選んだポケモン {target} が自分の控えにいない（決定の確認の漏れ。エンジンの不具合）")
+        return_in_play_to_deck(state, use.player, pokemon, trainer=use.card)
+        remove_persistent_effects(state, use.player, pokemon, RETURN_IN_PLAY_TO_DECK)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        return _select_own_pokemon_problems(decision, use, self._candidates(state, use.player), "「フジろうじん」")
+
+
+@dataclass(frozen=True)
+class ReturnOwnPokemonBasicToHand(TrainerEffect):
+    """自分の場のポケモン 1 匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがしてすてる。バトル場のポケモンを手札に戻すときは、
+    ベンチからポケモンをバトル場にだす（v0.52。ポケモン回収（PMCG1-092）。kyuura の印刷の文面。docs/field-return-v0.52.md 3 章）。
+
+    - 選ぶのは使ったプレイヤー（決定 ``select_pokemon``。選べるものは自分の場のポケモン（バトル場 → ベンチの順））
+    - 手札にもどすのは重なりのいちばん下のカードだけ。進化カード（「ばける」でのせたカードも進化カード）・エネルギーカードはトラッシュ、ダメージカウンターはカードでは
+      ないのでなくなる（``zones.return_basic_to_hand``）→ 持続する効果を消す（理由 ``return_in_play_to_hand``）。v0.42 の ``return_in_play_to_hand``（すべて手札へ）は
+      使わない。きぜつではない（サイドは取られない）
+    - バトル場のポケモンを手札にもどしたら、使い終えて（カードをトラッシュして）から、使ったプレイヤーが控えからバトル場に出す（``empties_active``。
+      ``resolution.after_trainer`` の勝ち負けの判定 → バトル場に出す決定 → 同じ番の続き。きぜつのあとと同じ ``promote_active``）
+    - 選ぶと止める: トレーナーカードがついているポケモン（SU1）、控えがいないときのバトル場のポケモン（SU2）。どのポケモンもそうなら使う前に止める
+    """
+
+    implementation_id = "return_own_pokemon_basic_to_hand"
+    empties_active = True
+
+    def _candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        return tuple(pokemon.pokemon_id for pokemon in state.players[player].in_play())
+
+    def stops(self, state: GameState, player: int) -> tuple[tuple[int, str, str], ...]:
+        """選ぶと止める選択ごとの (場のポケモンの番号, コード, 理由)（選べるものの並び）。トレーナーカードのついたポケモンは SU1、控えのいないバトル場のポケモンは SU2
+        （両方に当たれば SU1）。"""
+        p = state.players[player]
+        found = []
+        for pokemon in p.in_play():
+            if pokemon.trainers:
+                found.append((pokemon.pokemon_id, SCOOP_UP_ATTACHED_TRAINER_CODE, SCOOP_UP_ATTACHED_TRAINER_REASON))
+            elif pokemon is p.active and not p.bench:
+                found.append((pokemon.pokemon_id, SCOOP_UP_LAST_POKEMON_CODE, SCOOP_UP_LAST_POKEMON_REASON))
+        return tuple(found)
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        candidates = self._candidates(state, use.player)
+        stops = self.stops(state, use.player)
+        if not candidates:
+            raise RuntimeError(f"プレイヤー {use.player} の場にポケモンがいない（エンジンの不具合）")
+        if len(stops) == len(candidates):
+            raise UnsupportedError(stops[0][1], stops[0][2])
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        stops = self.stops(state, use.player)
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=self._candidates(state, use.player),
+                              unresolved_choices=tuple(pid for pid, _, _ in stops),
+                              unresolved_code=stops[0][1] if stops else "UNRESOLVED_RULING", unresolved_reason=stops[0][2] if stops else "",
+                              unresolved_detail=stops)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (target,) = choices
+        p = state.players[use.player]
+        pokemon = p.find_by_pokemon_id(target)
+        if pokemon is None or pokemon.trainers or (pokemon is p.active and not p.bench):
+            raise RuntimeError(f"ポケモン回収で選んだポケモン {target} を手札にもどせない（決定の確認の漏れ。エンジンの不具合）")
+        return_basic_to_hand(state, use.player, pokemon, trainer=use.card)
+        remove_persistent_effects(state, use.player, pokemon, RETURN_IN_PLAY_TO_HAND)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        stops = self.stops(state, use.player)
+        problems = _select_own_pokemon_problems(decision, use, self._candidates(state, use.player), "「ポケモン回収」", tuple(pid for pid, _, _ in stops))
+        if tuple(decision.context_value("unresolved_detail", ())) != stops:
+            problems.append(f"「ポケモン回収」の決定の選択ごとの止める理由 {decision.context_value('unresolved_detail', ())} が {stops} ではない")
+        return problems
+
+
 # ---------------------------------------------------------------- 決められない姿の状態（TF1・TF2・DG1）
 
 TRANSFORM_POWER_CODE = "UNRESOLVED_TRANSFORM_COPIED_POWER"
@@ -16257,6 +16421,23 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja=PENDULUM_CURSE_TEXT.format(per=20),
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.52（docs/field-return-v0.52.md 4・5 章）。エリカのハクリュー（PMCG5-066。エリカのミニリュウから進化）
+        # ふぶき（無無無）30: 1 枚のコインで「おもて」なら相手の控え全員、「うら」なら自分の控え全員に 10（弱点・抵抗力なし）。フリーザーの「ふぶき」と同じ型
+        AttackKey("PMCG5-066", 0): AttackEntry(
+            DamageThenCoinBenchDamageEitherSide(10),
+            "ふぶき",
+            text_ja="コインを投げ、「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            play_text_ja="コインを投げ、「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # つれさる（無無無無）: 自分と相手の対戦ポケモンを、ついているすべてのカードとともにそれぞれの山札にもどし、それぞれの山札を切る（きぜつではない）
+        AttackKey("PMCG5-066", 1): AttackEntry(
+            ReturnBothActivesToDeck(),
+            "つれさる",
+            text_ja=TAKE_AWAY_TEXT,
+            play_text_ja=TAKE_AWAY_TEXT,
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -16371,6 +16552,12 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG1-078": TrainerEntry(BenchBasicFromOwnDiscardWithCounters(), "元気のかけら", REVIVE_TEXT, REVIVE_TEXT, _KYUURA_PRINTED_TEXT),
         # ポケモンの笛: 相手のトラッシュのたねポケモンのカードを、使ったプレイヤーが選び、相手のベンチに出させてよい
         "PMCG1-084": TrainerEntry(BenchBasicFromOpponentDiscard(), "ポケモンの笛", POKEMON_FLUTE_TEXT, POKEMON_FLUTE_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.52（docs/field-return-v0.52.md 3 章）。処理に使う文面は kyuura の印刷の文面（英語版の「Shuffle it … into your deck」「return its Basic Pokémon card to your hand.
+        # (Discard all cards attached to that card.)」は持ち込まない）
+        # フジろうじん: 自分の控えポケモンを 1 匹選び、そのカードとついているカードすべてを自分の山札にもどして切る
+        "PMCG3-048": TrainerEntry(ReturnBenchedPokemonToDeck(), "フジろうじん", MR_FUJI_TEXT, MR_FUJI_TEXT, _KYUURA_PRINTED_TEXT),
+        # ポケモン回収: 自分の場のポケモン 1 匹のいちばん下のカードを手札に、進化カード・エネルギーカードをトラッシュに。バトル場なら控えからバトル場に出す
+        "PMCG1-092": TrainerEntry(ReturnOwnPokemonBasicToHand(), "ポケモン回収", SCOOP_UP_TEXT, SCOOP_UP_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

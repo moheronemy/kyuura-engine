@@ -3160,6 +3160,54 @@ class ReturnOpponentToDeck(Element):
 
 
 @dataclass(frozen=True)
+class ReturnBothActivesToDeck(Element):
+    """ワザを使ったポケモンと相手の対戦ポケモン、それぞれについているすべてのカードを、それぞれの持ち主の山札にもどし、それぞれの山札をよく切る（v0.52。エリカの
+    ハクリューの「つれさる」。docs/field-return-v0.52.md 4 章）。
+
+    - 対象: ワザを使ったポケモン（自分）と相手の対戦ポケモン。このワザの中で HP 以上になっていれば、その側は処理の対象がない（p.309。こんじょうを使えるなら G37 と同じ問い。
+      このワザにダメージの要素はないので、今の対応カードでは起こらない）
+    - 同じワザで HP 以上になったポケモンがいれば RD9（もどす前・受けるかのコインの前。v0.36 と同じ問い）
+    - 自分 → 相手の順に、受けるか（「ワザをうけない」状態・「とうめい」。``reaches``。両方が「とうめい」なら T27）を評価し、受けるなら、もどす（``zones.return_in_play_to_deck``）
+      → 持続する効果を消す（理由 ``return_in_play_to_deck``）。受けない側はもどさない。対象は、効果を処理し始めたときの 2 匹（自分をもどしても、相手の対戦ポケモンは
+      変わらない）。そのあと、もどした側の山札を、自分 → 相手の順に切る（``shuffle_in_attack``。先読みでは切らない）。説明は「もどし、…切る」で、もどすことと切ることの順番だけを決めている。2 匹をもどす順・2 つの山札を切る順は
+      結果（どちらの山札にどのカードが入るか）を変えないので、説明の書かれた順（自分 → 相手）にした（実装上の判断。乱数の使い方だけが決まる）。英語版の「Then, your
+      opponent …」の順番は根拠にしない
+    - 片方がもどったあとも、もう片方の処理を続ける（ワザを使ったポケモンが場をはなれても、この要素の処理は終わらない）。きぜつではないので、サイド・きぜつしたときの
+      特殊能力はない。空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定（``flow._promotions_after_judge``。番でないプレイヤーが先）でうめる
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.RETURN_IN_PLAY_TO_DECK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        sides = []
+        for owner, pokemon in ((run.player, run.attacker()), (opponent, run.opponent_active())):
+            if pokemon is None:
+                continue
+            if run.knocked_out(pokemon):
+                run.ko_prevention_conflict(pokemon, owner)
+                continue
+            sides.append((owner, pokemon))
+        from .kernel import knocked
+
+        gone = knocked(run.res)
+        if gone:
+            raise run.res.question("return_in_play_to_deck_with_knockout", f"ポケモン {[pokemon.pokemon_id for _, pokemon in gone]}")
+        returned = []
+        for owner, pokemon in sides:
+            if not reaches(run.res, run.fs, owner, pokemon, E.RETURN_IN_PLAY_TO_DECK_ELEMENT):
+                continue
+            return_in_play_to_deck(state, owner, pokemon, effect=str(run.key))
+            remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+            returned.append(owner)
+        for owner in returned:
+            shuffle_in_attack(run, self, owner)
+        return False
+
+
+@dataclass(frozen=True)
 class PrintedPlusBonusOnAllHeads:
     """コインを ``coins`` 枚投げ、すべて「おもて」なら、ダメージの目安の数字 + ``bonus``（v0.40。カスミのシードラの「きぜつばり」の「コインを2枚投げ、すべて「おもて」
     なら、60ダメージを追加する。」）。「おもて」の数に比例しない（1 枚だけ「おもて」なら目安の数字だけ）。コインはダメージの要素の中（ダメージの量だけを決める）で、
@@ -5181,6 +5229,8 @@ BUILDERS: dict[type, Any] = {
     # v0.51（docs/discard-to-bench-v0.51.md）
     E.BenchBasicFromEitherDiscard: lambda e: (BenchFromEitherDiscard(),),
     E.CoinsPerDefenderCountersDamage: lambda e: (Damage(OPP, HeadsPerDefenderCounters(e.per)),),
+    # v0.52（docs/field-return-v0.52.md）
+    E.ReturnBothActivesToDeck: lambda e: (ReturnBothActivesToDeck(),),
 }
 
 

@@ -12760,6 +12760,116 @@
       ],
       "issues": [],
       "notes": "v0.51 で加えた。トレーナー。BenchBasicFromOpponentDiscard（使ったプレイヤーが、相手のトラッシュのたねポケモンのカード（進化カードは選べない）を 0〜1 枚選び、相手のベンチに出させる。ダメージカウンターはのせない。0 枚は「ことができる」の、出さないこと）。相手のトラッシュにたねポケモンのカードがない・相手のベンチに空きがないときは FT1（使えるか決まらない）。英語版の「(You can't play Pokémon Flute if your opponent's Bench is full.)」は持ち込まない"
+    },
+    "PMCG3-048": {
+      "basis": "kyuura_data",
+      "name_ja": "フジろうじん",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3047.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "047/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（047）は kyuura の id の番号（048）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.52 で加えた。トレーナー。ReturnBenchedPokemonToDeck（使ったプレイヤーが自分の控えポケモンを 1 匹選び、重なったカード・「ばける」でのせたカード・エネルギー・トレーナーのすべてを自分の山札にもどして切る。zones.return_in_play_to_deck をトレーナーの出どころで呼ぶ。きぜつではない）。自分に控えポケモンがいないときは FJ1（使えるか決まらない）。英語版の「Shuffle it and any cards attached to it into your deck」は持ち込まない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合"
+    },
+    "PMCG1-092": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン回収",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1087.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "087/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（087）は kyuura の id の番号（092）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.52 で加えた。トレーナー。ReturnOwnPokemonBasicToHand（使ったプレイヤーが自分の場のポケモンを 1 匹選び、重なりのいちばん下のカードを手札に、進化カード（「ばける」でのせたカードを含む）・エネルギーカードをトラッシュに。ダメージカウンターはなくなる。zones.return_basic_to_hand。バトル場のポケモンなら、使い終えてから控えからバトル場に出す（resolution.after_trainer）。きぜつではない）。トレーナーカードがついているポケモンは SU1（行き先が日本語の文面にない）、控えがいないときのバトル場のポケモンは SU2（使えるか決まらない）。英語版の「return its Basic Pokémon card to your hand. (Discard all cards attached to that card.)」は持ち込まない。kyuura の日本語の文面の転記元は nazonobasho（ja_text_source）で、pcg-search.com との照合は独立した照合"
+    },
+    "PMCG5-066": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのハクリュー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1066.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "066/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。エネルギーのアイコンは、タイプ 無色・抵抗力 超（-30）・ふぶき 無色 3・つれさる 無色 4・にげる 2 で、kyuura と同じ"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.52 で加えた。ふぶきは DamageThenCoinBenchDamageEitherSide（v0.38 のフリーザーの「ふぶき」と同じ型。書き方の違い（「コインを投げ、」・かっこのない「「弱点・抵抗力」に関係なく、」）を同じ意味として受け付けた）、つれさるは ReturnBothActivesToDeck（自分と相手の対戦ポケモンを、ついているすべてのカードとともにそれぞれの山札にもどし、それぞれの山札を切る。それぞれ「ワザをうけない」状態・「とうめい」を評価する。きぜつではない）。英語版の「Then, your opponent …」の順番は持ち込まない。kyuura の日本語の文面の転記元はポケモンWiki（ja_text_source）で、pcg-search.com との照合は独立した照合"
     }
   }
 }

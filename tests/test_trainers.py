@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    BILL, CLEFAIRY_DOLL, GIOVANNI, RECALL, DEVOLUTION_SPRAY, REVIVE, POKEMON_FLUTE, COMPUTER_SEARCH, MYSTERIOUS_FOSSIL, DEFENDER, ENERGY_RETRIEVAL, FIRE, POKEMON_BREEDER, POKEMON_TRADER, GROWLITHE, GUST, MACHOP, PLUSPOWER, PONYTA, POTION, PROFESSOR_OAK, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
+    BILL, CLEFAIRY_DOLL, GIOVANNI, MR_FUJI, RECALL, SCOOP_UP, DEVOLUTION_SPRAY, REVIVE, POKEMON_FLUTE, COMPUTER_SEARCH, MYSTERIOUS_FOSSIL, DEFENDER, ENERGY_RETRIEVAL, FIRE, POKEMON_BREEDER, POKEMON_TRADER, GROWLITHE, GUST, MACHOP, PLUSPOWER, PONYTA, POTION, PROFESSOR_OAK, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
     build_test_state,
 )
 
@@ -71,7 +71,7 @@ class TrainerRegistryTest(unittest.TestCase):
         # v0.17・v0.18 と同じく変えていない）
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(),
                          (POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, PLUSPOWER, POKEMON_FLUTE, DEVOLUTION_SPRAY, COMPUTER_SEARCH, CLEFAIRY_DOLL,
-                          POKEMON_TRADER, POKEMON_BREEDER, MYSTERIOUS_FOSSIL, RECALL, GIOVANNI))
+                          SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER, MYSTERIOUS_FOSSIL, MR_FUJI, RECALL, GIOVANNI))
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -89,7 +89,8 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "play_as_pokemon",  # v0.47 のなにかの化石・ピッピ人形
                                            "recall_pre_evolution_attacks",  # v0.49 の思い出させる
                                            "devolve_own_pokemon",  # v0.50 の退化スプレー
-                                           "bench_basic_from_own_discard_with_counters", "bench_basic_from_opponent_discard"})  # v0.51 の元気のかけら・ポケモンの笛
+                                           "bench_basic_from_own_discard_with_counters", "bench_basic_from_opponent_discard",  # v0.51 の元気のかけら・ポケモンの笛
+                                           "return_benched_pokemon_to_deck", "return_own_pokemon_basic_to_hand"})  # v0.52 のフジろうじん・ポケモン回収
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -167,10 +168,10 @@ class TrainerRegistryTest(unittest.TestCase):
         added = DEFAULT_EFFECTS.with_attacks("x", {AttackKey("PMCG1-014", 1): AttackEntry(DAMAGE_ONLY, "ひのこ")})
         self.assertEqual(added.trainer_ids(), trainers)  # ワザを加えてもトレーナーの登録は残る
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
-        # PLUSPOWER は v0.2c、DEFENDER は v0.2e、PROFESSOR_OAK は v0.19、GUST は v0.21、COMPUTER_SEARCH は v0.22、ENERGY_RETRIEVAL は v0.23、POKEMON_TRADER は v0.24、POKEMON_BREEDER は v0.25、GIOVANNI は v0.44、CLEFAIRY_DOLL・MYSTERIOUS_FOSSIL は v0.47、RECALL は v0.49
+        # PLUSPOWER は v0.2c、DEFENDER は v0.2e、PROFESSOR_OAK は v0.19、GUST は v0.21、COMPUTER_SEARCH は v0.22、ENERGY_RETRIEVAL は v0.23、POKEMON_TRADER は v0.24、POKEMON_BREEDER は v0.25、GIOVANNI は v0.44、CLEFAIRY_DOLL・MYSTERIOUS_FOSSIL は v0.47、RECALL は v0.49、SCOOP_UP・MR_FUJI は v0.52
         self.assertEqual(removed.trainer_ids(),
-                         (GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, PLUSPOWER, POKEMON_FLUTE, DEVOLUTION_SPRAY, COMPUTER_SEARCH, CLEFAIRY_DOLL, POKEMON_TRADER,
-                          POKEMON_BREEDER, MYSTERIOUS_FOSSIL, RECALL, GIOVANNI))
+                         (GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, PLUSPOWER, POKEMON_FLUTE, DEVOLUTION_SPRAY, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER,
+                          POKEMON_BREEDER, MYSTERIOUS_FOSSIL, MR_FUJI, RECALL, GIOVANNI))
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

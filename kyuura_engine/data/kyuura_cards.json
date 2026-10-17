@@ -506,6 +506,11 @@
     "PMCG1-078",
     "PMCG1-084"
   ],
+  "pool_v0_52": [
+    "PMCG3-048",
+    "PMCG1-092",
+    "PMCG5-066"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -30888,6 +30893,172 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-092-pokemonnofue/"
+      }
+    },
+    {
+      "id": "PMCG3-048",
+      "jp_set": "PMCG3",
+      "category": "trainer",
+      "name": {
+        "ja": "フジろうじん",
+        "en": "Mr. Fuji"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の控えポケモンを1匹選び、そのカードとそれについているカード全てを自分の山札にもどす。その後、その山札をよくきる。",
+          "en": "Choose a Pokémon on your Bench. Shuffle it and any cards attached to it into your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-048",
+        "pokemontcg": [
+          "base3-58"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-047-fujiroujin/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-047-fujiroujin/"
+      }
+    },
+    {
+      "id": "PMCG1-092",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン回収",
+        "en": "Scoop Up"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のポケモン1匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがしてすてる。バトル場のポケモンを手札に戻すときは、ベンチからポケモンをバトル場にだす。",
+          "en": "Choose 1 of your Pokémon in play and return its Basic Pokémon card to your hand. (Discard all cards attached to that card.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-092",
+        "pokemontcg": [
+          "base1-78"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-087-pokemonkaishu/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-087-pokemonkaishu/"
+      }
+    },
+    {
+      "id": "PMCG5-066",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのハクリュー",
+        "en": "Erika's Dragonair"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          148
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのミニリュウ",
+          "en": "Erika's Dratini"
+        },
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふぶき",
+              "en": "Blizzard"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げ、「おもて」なら相手の控えポケモン全員に、「うら」なら自分の控えポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Benched Pokémon. If tails, this attack does 10 damage to each of your own Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "つれさる",
+              "en": "Take Away"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": null,
+            "text": {
+              "ja": "自分と相手、そしてそれらについているすべてのカードをそれぞれの山札にもどし、それぞれの山札をよく切る。",
+              "en": "Shuffle Erika's Dragonair and all cards attached to it into your deck. Then, your opponent shuffles his or her Active Pokémon and all cards attached to it into his or her deck."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-066",
+        "pokemontcg": [
+          "gym1-4"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%8F%E3%82%AF%E3%83%AA%E3%83%A5%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E3%83%8F%E3%82%AF%E3%83%AA%E3%83%A5%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

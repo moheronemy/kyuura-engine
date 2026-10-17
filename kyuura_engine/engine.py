@@ -868,7 +868,8 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context) -> No
         state.players[used.player].discard.append(used.card)
         state.add_event("discard_trainer", player=used.player, card=used.card)
     state.phase = Phase.MAIN
-    if effect.may_knock_out:
+    if effect.may_knock_out or effect.empties_active:
+        # v0.52: 自分のバトル場のポケモンを場からはなれさせうるトレーナー（``empties_active``。ポケモン回収）も、使い終わってから勝ち負けの判定・バトル場に出す決定をする
         resolution.after_trainer(state, context)
 
 
@@ -2508,9 +2509,13 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
     if last is not None and last["kind"] == "play_trainer":
         uid = last.get("card")
         entry = state.effects.trainer_entry(state.cards[uid].card_id) if uid in state.cards else None
-        knocked = any(e["kind"] == "knock_out" and e.get("timing") == "trainer" for e in _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)])
-        if entry is None or not entry.effect.may_knock_out or not knocked:
-            return ["トレーナーの使用のあとの決定（続き continue_turn）の前に、きぜつさせうるトレーナーの使用と、そのあとのきぜつ（timing trainer）がない"]
+        since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
+        knocked = any(e["kind"] == "knock_out" and e.get("timing") == "trainer" for e in since)
+        # v0.52: 自分のバトル場のポケモンを手札にもどすトレーナー（ポケモン回収。``empties_active``）のあとの、バトル場に出す決定
+        emptied = any(e["kind"] == "return_basic_to_hand" and e.get("zone") == "active" and e.get("trainer_card") == uid for e in since)
+        if entry is None or not ((entry.effect.may_knock_out and knocked) or (entry.effect.empties_active and emptied)):
+            return [("トレーナーの使用のあとの決定（続き continue_turn）の前に、きぜつさせうるトレーナーの使用と、そのあとのきぜつ（timing trainer）・"
+                     "バトル場のポケモンを場からはなれさせたトレーナーの使用がない")]
         return []
     if last is None or last["kind"] not in ("pokemon_power", "discard_from_play"):
         # v0.47: なにかの化石・ピッピ人形を場からすてて空いたバトル場（``discard_from_play``）も、同じ続きで出す

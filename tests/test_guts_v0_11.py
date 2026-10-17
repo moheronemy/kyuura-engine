@@ -635,7 +635,9 @@ class G37Test(unittest.TestCase):
             # v0.50（自分・相手のポケモンの進化カードをはがして手札にもどす「たいかビーム」。docs/mew-devolution-spray-v0.50.md）
             "DevolveChosenPokemon",
             # v0.51（自分・相手のトラッシュのたねポケモンを持ち主のベンチに出し、ダメージカウンターをのせる「よみがえらせる」。docs/discard-to-bench-v0.51.md）
-            "BenchBasicFromEitherDiscard"]))
+            "BenchBasicFromEitherDiscard",
+            # v0.52（自分と相手の対戦ポケモンを山札にもどす「つれさる」。docs/field-return-v0.52.md）
+            "ReturnBothActivesToDeck"]))
 
 
 class DecisionTest(unittest.TestCase):

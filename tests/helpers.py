@@ -469,6 +469,12 @@ REVIVE = "PMCG1-078"  # 元気のかけら（第1弾。トレーナー）。元�
 POKEMON_FLUTE = "PMCG1-084"  # ポケモンの笛（第1弾。トレーナー）
 V0_51_POKEMON = (SABRINAS_HYPNO,)
 V0_51_CARDS = (SABRINAS_HYPNO, REVIVE, POKEMON_FLUTE)  # 写しの組 pool_v0_51 の並び
+# v0.52（docs/field-return-v0.52.md）。場のポケモンを場から手札・山札にもどす共通の処理で加えた 3 枚（どれも kyuura データの採用）
+MR_FUJI = "PMCG3-048"  # フジろうじん（化石の秘密。トレーナー。pcg-search.com の一覧の番号は 047/048）
+SCOOP_UP = "PMCG1-092"  # ポケモン回収（第1弾。トレーナー。pcg-search.com の一覧の番号は 087/096）
+ERIKAS_DRAGONAIR = "PMCG5-066"  # エリカのハクリュー（リーダーズスタジアム。エリカのミニリュウから進化する 1 進化。HP 80・無色・弱点なし・抵抗力 超 -30・にげる 2。ふぶき（無無無）30・つれさる（無無無無））。DRAGONAIR（PMCG1-069）・DARK_DRAGONAIR（PMCG4-052）と別のカード
+V0_52_POKEMON = (ERIKAS_DRAGONAIR,)
+V0_52_CARDS = (MR_FUJI, SCOOP_UP, ERIKAS_DRAGONAIR)  # 写しの組 pool_v0_52 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -1047,6 +1053,8 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.51（docs/discard-to-bench-v0.51.md）
     _effects.BenchBasicFromEitherDiscard,  # ナツメのスリーパーの「よみがえらせる」
     _effects.CoinsPerDefenderCountersDamage,  # ナツメのスリーパーの「ふりこののろい」
+    # v0.52（docs/field-return-v0.52.md）
+    _effects.ReturnBothActivesToDeck,  # エリカのハクリューの「つれさる」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

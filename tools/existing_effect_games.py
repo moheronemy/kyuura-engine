@@ -385,11 +385,15 @@ BULBASAUR, IVYSAUR, VENUSAUR = "PMCG1-001", "PMCG1-008", "PMCG1-011"
 SABRINAS_DROWZEE, SABRINAS_HYPNO, REVIVE, POKEMON_FLUTE = "PMCG6-045", "PMCG6-051", "PMCG1-078", "PMCG1-084"
 V0_51 = (SABRINAS_HYPNO,)
 V0_51_TRAINERS = (REVIVE, POKEMON_FLUTE)
+# v0.52（docs/field-return-v0.52.md）。場のポケモンを場から手札・山札にもどす（フジろうじん・ポケモン回収・つれさる）。進化元はエリカのミニリュウ（v0.46）
+MR_FUJI, SCOOP_UP, ERIKAS_DRAGONAIR = "PMCG3-048", "PMCG1-092", "PMCG5-066"
+V0_52 = (ERIKAS_DRAGONAIR,)
+V0_52_TRAINERS = (MR_FUJI, SCOOP_UP)
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP")
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
-           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51)  # ワザの選び方を重ね、動きを数えるカード
+           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52)  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -584,6 +588,9 @@ DECKS = {
     # いちばん上のカードでない）。元気のかけらでナツメのケーシィ・ナツメのスリープをもどす
     "S51": ((SABRINAS_ABRA, 4), (SABRINAS_KADABRA, 3), (SABRINAS_ALAKAZAM, 2), (SABRINAS_DROWZEE, 4), (SABRINAS_HYPNO, 3), (REVIVE, 3),
             *TRAINERS, (PSYCHIC, 29)),
+    # v0.52: 無色（リーダーズスタジアム・化石の秘密・第1弾）。エリカのハクリューのふぶき・つれさる、フジろうじん（控えの進化ポケモン・ダメージのあるポケモンを山札へ）・
+    # ポケモン回収（ダメージのあるポケモンのたねポケモンを手札へ。バトル場なら控えから出す）。もどしたたねポケモンは手札から出し直す（元の手順）
+    "R52": ((ERIKAS_DRATINI, 4), (ERIKAS_DRAGONAIR, 4), (RATTATA, 4), (RATICATE, 2), (MR_FUJI, 3), (SCOOP_UP, 3), *TRAINERS, (WATER, 28)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -625,11 +632,16 @@ PAIRINGS_V0_50 = (("M50", "E50"), ("E50", "M50"), ("M50", "P31"), ("M50", "D49")
 # v0.51: H51 対 E50（相手のトラッシュのたねポケモン（フシギダネ・キョウのビードル）をよみがえらせる・ポケモンの笛で出す）・H51 対 P31（ピッピ・ピクシー・カスミのコダックが、
 # よみがえらせる・ふりこののろいを自分のワザとして使う）・S51 対 H51（［サイコリンク］で持つよみがえらせる・ふりこののろい）
 PAIRINGS_V0_51 = (("H51", "E50"), ("E50", "H51"), ("H51", "P31"), ("S51", "H51"))
+# v0.52: R52 対 H51（よみがえらせる・元気のかけら・ポケモンの笛で、もどしたたねポケモンとトラッシュの関係）・R52 対 E50（つれさるで相手のポケモン育て屋さんで重ねた
+# フシギバナ・［うか］で重ねたキョウのスピアーを山札にもどす。退化スプレーのあとのポケモン）・R52 対 P31（ピッピ・ピクシー・カスミのコダックが、ふぶき・つれさるを自分の
+# ワザとして使う）。D49（メタモン）は、エリカのミニリュウ（［ふしぎなバリアー］）を写す対戦準備で既存の TF1 に当たるので組にしない（「ばける」・［へんしん］の場面は単体テスト）
+PAIRINGS_V0_52 = (("R52", "H51"), ("H51", "R52"), ("R52", "E50"), ("R52", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
-           "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51}
+           "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
+           "v0.52": PAIRINGS_V0_52}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1896,6 +1908,71 @@ def _v051_trainer(state, tried, counts):
     return None
 
 
+_V052_REAL: dict = {}  # v0.52: 手順に渡した本当の状態（手札を隠した写しで apply_command を呼ぶと、カードの保存則の不変条件で止まる）
+
+
+def _v052_accepted(state, command) -> bool:
+    """v0.52: 操作を受け付けるか（渡した状態は変えない。``apply_command`` は複製してから処理する）。止まる操作（SU1・SU2・FJ1・MH1 など）を手順に選ばせないため。
+    手札を隠した写し（v0.46〜v0.48 の手順）を渡されても、本当の状態で確かめる。"""
+    real = _V052_REAL.get("state")
+    if real is not None and real.turn_number == state.turn_number and real.decision == state.decision:
+        state = real
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError):
+        return False
+    return True
+
+
+def _v052_decision(state, counts):
+    """v0.52 の決定への答え（元の手順より先に答える）: フジろうじん・ポケモン回収で選ぶポケモン。受け付ける答え（SU1・SU2・MH1 で止まらない）のうち、
+    ポケモン回収は 1 局の中で、バトル場 → ベンチ → … の順に（選べるときは）、フジろうじんは控えの前から順に選ぶ。"""
+    d = state.decision
+    if d is None or d.resume != "trainer":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_52_TRAINERS:
+        return None
+    label = "scoop_up" if use[2] == SCOOP_UP else "fuji"
+    accepted = [o for o in d.options if _v052_accepted(state, ResolveDecision(d.player, d.id, (o,)))]
+    seen = counts[f"v052_{label}_seen"]
+    counts[f"v052_{label}_seen"] += 1
+    counts[f"v052_{label}_stopped_choices"] += len(d.options) - len(accepted)
+    if not accepted:
+        return None
+    active = state.players[d.player].active
+    if label == "scoop_up":
+        wanted = [o for o in accepted if (active is not None and o == active.pokemon_id) == (seen % 2 == 0)] or accepted
+        chosen = wanted[0]
+        counts["v052_scoop_up_" + ("active" if active is not None and chosen == active.pokemon_id else "bench")] += 1
+    else:
+        chosen = accepted[seen % len(accepted)]
+    return ResolveDecision(d.player, d.id, (chosen,))
+
+
+def _v052_trainer(state, tried, counts):
+    """v0.52: フジろうじん（自分の控えに、ダメージのあるポケモンか進化ポケモンがいるとき）・ポケモン回収（自分の場に、ダメージのあるポケモンがいるとき）。それぞれ 1 番に
+    1 回まで。使う前に止まる場面（FJ1・SU1・SU2・どの答えも止まる）は使わない（その場面は単体テストで確かめる）。拒否を起こさない。"""
+    player = state.current_player
+    if "trainer_locked" in tried:
+        return None
+    p = state.players[player]
+    for card_id, label, wanted in ((SCOOP_UP, "scoop_up", any(pk.damage for pk in p.in_play())),
+                                   (MR_FUJI, "fuji", any(pk.damage or pk.evolution_stack for pk in p.bench))):
+        if (f"v052_{label}", state.turn_number) in tried or not wanted:
+            continue
+        for uid in p.hand:
+            if state.cards[uid].card_id == card_id:
+                tried.add((f"v052_{label}", state.turn_number))
+                command = PlayTrainer(player, uid)
+                if not _v052_accepted(state, command):
+                    counts[f"v052_{label}_not_playable"] += 1
+                    break
+                counts[f"v052_play_{label}"] += 1
+                return command
+    return None
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -2040,7 +2117,7 @@ def make_policy(seen: dict, counts: Counter):
                      or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
                      or _v047_decision(state, counts) or _v048_decision(state, counts)  # v0.47・v0.48
                      or _v049_decision(state, counts) or _v050_decision(state, counts)  # v0.49・v0.50
-                     or _v051_decision(state, counts))  # v0.51
+                     or _v051_decision(state, counts) or _v052_decision(state, counts))  # v0.51・v0.52
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2053,7 +2130,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v047_power(state, tried, counts) or _v047_trainer(state, tried, counts)  # v0.47
                      or _v048_power(state, tried, counts)  # v0.48
                      or _v049_power(state, tried, counts) or _v049_trainer(state, tried, counts)  # v0.49
-                     or _v050_trainer(state, tried, counts) or _v051_trainer(state, tried, counts))  # v0.50・v0.51
+                     or _v050_trainer(state, tried, counts) or _v051_trainer(state, tried, counts)  # v0.50・v0.51
+                     or _v052_trainer(state, tried, counts))  # v0.52
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2098,7 +2176,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -2110,6 +2188,7 @@ def make_policy(seen: dict, counts: Counter):
         return chosen
 
     def policy(state, *, janken_winner, cure, tried):
+        _V052_REAL["state"] = state  # v0.52: 手札を隠した写し（view）ではなく、本当の状態で受け付けるかを確かめる
         _v048_observe(state, counts)
         # v0.48: この番に、最大HPがのっているダメージ以下に下がる（MH1）ので拒否された手札のカード（進化カード・トレーナー）。この番に拒否がなければ空
         blocked = {marker[1] for marker in tried if isinstance(marker, tuple) and marker[0] == "max_hp_drop_card"}
@@ -2237,7 +2316,8 @@ def card_uses(state):
       ナツメのスリーパー）で数える
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
-    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS + V0_51_TRAINERS}
+    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS + V0_51_TRAINERS + V0_52_TRAINERS}
+    returned_cards: dict[int, str] = {}  # v0.52: 場から手札・山札にもどしたカードの uid → もどした効果のカード id（そのあと場に出し直したかを数える）
     revived: dict[int, str] = {}  # v0.51: トラッシュからベンチに出した場のポケモンの番号 → 出した効果のカード id（そのあとの行動を数える）
     revived_cards: dict[int, str] = {}  # v0.51: そのポケモンのいちばん上のカードの uid（出したカード・進化で重ねたカード）→ 出した効果のカード id
     current = None  # (カード id, ワザの位置)
@@ -2265,6 +2345,21 @@ def card_uses(state):
             uses[SABRINAS_HYPNO][f"via_{e['route']}#{e['attack_index']}"] += 1  # ［サイコリンク］・［へんしん］など、ほかのポケモンが使った
         elif kind == "copy_attack" and e["copied"].startswith(SABRINAS_HYPNO + "#"):
             uses[SABRINAS_HYPNO][f"copied{e['copied'][len(SABRINAS_HYPNO):]}"] += 1  # ゆびをふる・ちょうのうりょく・ぼーっとする
+        # v0.52: 場から手札・山札にもどした（フジろうじん・ポケモン回収・つれさる）と、もどしたカードをそのあと場に出し直したか
+        if kind == "return_basic_to_hand":
+            uses[SCOOP_UP][f"returned_{e['zone']}"] += 1
+            uses[SCOOP_UP]["returned_with_evolution"] += bool(e["evolution_cards"])
+            uses[SCOOP_UP]["returned_with_disguise"] += "disguise" in e
+            returned_cards[e["card"]] = SCOOP_UP
+        elif kind == "return_in_play_to_deck" and ("trainer_card" in e or e.get("effect") == f"{ERIKAS_DRAGONAIR}#1"):
+            source = MR_FUJI if "trainer_card" in e else ERIKAS_DRAGONAIR
+            uses[source][f"returned_player{e['player']}"] += 1
+            uses[source]["returned_with_evolution"] += bool(e["evolution_stack"])
+            uses[source]["returned_with_disguise"] += "disguise" in e
+            for uid in e["cards"]:
+                returned_cards[uid] = source
+        elif kind in ("play_to_bench", "place_starting_pokemon") and e.get("card") in returned_cards:
+            uses[returned_cards.pop(e["card"])]["returned_then_replayed"] += 1
         if kind == "evolve" and e.get("pokemon_id") in revived:
             uses[revived[e["pokemon_id"]]]["revived_then_evolve"] += 1
             revived_cards[e["to_card"]] = revived[e["pokemon_id"]]

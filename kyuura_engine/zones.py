@@ -67,7 +67,7 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     return pokemon
 
 
-def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> tuple[int, ...]:
+def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, trainer: int | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
     ガス」の「自分と、自分についているすべてのカードを山札にもどす」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
 
@@ -80,22 +80,68 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
 
     もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を変える前）。
     もどしたカードを返す。
+
+    v0.52: トレーナーの効果（フジろうじんの「自分の控えポケモンを1匹選び、そのカードとそれについているカード全てを自分の山札にもどす」）でも使う。そのときは
+    ``effect`` の代わりに ``trainer``（使っているトレーナーのカードの uid。ログの ``trainer_card``）を渡す（どちらか一方。ワザのログの形は v0.51 と同じ）。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
-    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards):
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or (effect is None) == (trainer is None):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     if p.active is pokemon:
         p.active = None
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.deck.extend(cards)
+    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
-    state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=effect, cards=cards,
+    state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
     return cards
+
+
+def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, trainer: int) -> tuple[int, tuple[int, ...]]:
+    """自分の場のポケモン ``pokemon`` のいちばん下のカードを、同じ uid のまま自分の手札にもどし、のっている進化カード・エネルギーカードを自分のトラッシュに
+    置く（v0.52。ポケモン回収（PMCG1-092）の「自分の場のポケモン1匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがして
+    すてる。」。docs/field-return-v0.52.md 3 章）。
+
+    - 手札にもどすのは、重なりのいちばん下のカード（たねポケモンのカード。場のなにかの化石・ピッピ人形なら、そのトレーナーカード）だけ。進化していなければ
+      いちばん上のカード
+    - トラッシュに置くのは、重なった進化カード（いちばん下より上の ``PokemonInPlay.cards()``。v0.49 の「ばける」でのせた進化カード（``disguise``）も進化カード
+      なので含める）とエネルギーカード（ついている順）。ダメージカウンター・特殊状態はカードではないので、どこにも置かずになくなる（p.322。場をはなれた）
+    - ついているトレーナーカード（プラスパワー・ディフェンダー）は説明に書かれていないので、ここでは扱わない（呼ぶ側が SU1 で止める。ついていたら ``RuntimeError``）
+    - ``return_in_play_to_hand``（v0.42。重なったカード・ついているカードすべてを手札へ）・``discard_attached_cards``（ついているカードだけをトラッシュ。進化カードは
+      動かさない）とは動かし方が違うので、使わない
+    - 場をはなれたので、場のポケモンの番号は無効になる。持続する効果を消すのは呼ぶ側（``persistent.remove_persistent_effects``。理由 ``return_in_play_to_hand``）。
+      きぜつではない（サイドは取られない）。空いたバトル場をうめるのは呼ぶ側（トレーナーを使い終えたあとの ``resolution.after_trainer``）
+    - ログ ``return_basic_to_hand``（``player``・``pokemon``（いちばん上のカード）・``pokemon_id``・``zone``（``"active"``・``"bench"``）・``trainer_card``・
+      ``card``（手札にもどしたカード）・``discarded``（トラッシュに置いたカードすべて。進化カード → エネルギー）・``evolution_cards``・``energy``・``damage``
+      （なくなったダメージ）。``disguise`` は「ばける」でのせていたときだけ。場のカードなので公開）
+
+    もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある・トレーナーがついている（確認の漏れ）なら ``RuntimeError``（状態を変える前）。
+    (手札にもどしたカード, トラッシュに置いたカード) を返す。
+    """
+    p = state.players[player]
+    stack = pokemon.cards()
+    energy = tuple(pokemon.energy)
+    on_bench = any(b is pokemon for b in p.bench)
+    if (p.active is not pokemon and not on_bench) or pokemon.trainers or any(state.cards[uid].owner != player for uid in (*stack, *energy)):
+        raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
+    card, evolution_cards = stack[0], stack[1:]
+    discarded = (*evolution_cards, *energy)
+    zone = "active" if p.active is pokemon else "bench"
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    p.hand.append(card)
+    p.discard.extend(discarded)
+    disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}
+    state.add_event("return_basic_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, zone=zone, trainer_card=trainer, card=card,
+                    discarded=discarded, evolution_cards=evolution_cards, energy=energy, damage=pokemon.damage, **disguise)
+    return card, discarded
 
 
 def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None) -> tuple[int, ...]:
