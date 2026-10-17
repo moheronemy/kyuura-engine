@@ -86,6 +86,68 @@ ALL_CODES = (
     # 効果を受けない）と隣の止まらない場合（移す・取り替えるカウンターがない・数が同じ）は tests/test_heal_counter_status_v0_41.py の
     # CounterShiftTest・SwapTest
     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
+    # v0.42: PW1・PW2（docs/power-decisions-v0.42.md）。止まる場合（相手に控えがいないときのかおりのわな・手札がないときのぶっしつこうかん）と隣の止まらない
+    # 場合（控えが 1 匹・手札が 1 枚）は tests/test_power_decisions_v0_42.py の SweetTrapTest・MatterExchangeTest
+    "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH",
+    "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
+    # v0.43: PW3・PW4（docs/declared-entry-powers-v0.43.md）。止まる場合（ようぶんきゅうしゅうの 0 枚・つけかえるカードがない・てしたをよぶのベンチに空きがない・
+    # 山札にたねポケモンがない・0 枚、しんかのひかりの山札に進化カードがない、つきのちからでわるいカイリューを重ねる）と隣の止まらない場合（1 枚・空きが 1 つ・
+    # 進化カードが 1 枚・ほかの進化カード）は tests/test_declared_entry_powers_v0_43.py の SoakUpTest・SummonMinionsTest・EvolutionaryLightTest・
+    # MoonPowerRouteTest
+    "UNRESOLVED_POWER_ZERO_CARDS",
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
+    # v0.44: FC1・TR1（docs/search-evolution-once-attacks-v0.44.md。GV1 は v0.44 ではコードのない問い。v0.45 で停止コードを付けた）。止まる場合（てじなで山札の
+    # 基本エネルギーカードがもどす枚数より少ない（1 枚以上）・ラッキーたまごの手札が 0・1 枚、場にサカキのポケモンがいないときのサカキ）と隣の止まらない場合
+    # （足りる・0 枚・手札が 2 枚・サカキのポケモンが 1 匹）は tests/test_search_evolution_once_attacks_v0_44.py
+    "UNRESOLVED_STATED_CARDS_SHORT",
+    "UNRESOLVED_TRAINER_WITHOUT_TARGET",
+    # v0.45: GV1（docs/conditional-damage-energy-v0.45.md。v0.44 はコードのない問い）。止まる場合（つきのちからで、この番に場に出してサカキの許可を受けた
+    # サカキのコイキングにサカキのギャラドスを重ねる）と隣の止まらない場合（前の番から場にいるサカキのコイキング）は
+    # tests/test_conditional_damage_energy_v0_45.py の Gv1Test
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK",
+    # v0.45: AC13（v0.36 の docs/sand-attack-retreat-lock-v0.36.md。v0.36〜v0.44 は対応カードで起こらず RuntimeError。v0.45 のスミをかける（次の相手の番から
+    # 消えない手順 4 の効果）で起こる）。止まる場合（手順 4 の効果が 2 つ）と隣の止まらない場合（1 つ）は tests/test_conditional_damage_energy_v0_45.py の
+    # LastingAttackCheckTest
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
+    # v0.46: CP1・CP2（docs/continuous-powers-v0.46.md）。止まる場合（［くつろぐかおり］がバトル場にあり、返す効果（こうらがえし）のダメージを半分にするかで
+    # 結果が変わる・少なくする数と増やす数の当てはめ方でトラッシュしてよい数が変わる「にげる」）と隣の止まらない場合（ほのおのかべの 10 は半分にしても 10・
+    # どちらの読み方でも足りる数）は tests/test_continuous_powers_v0_46.py の CalmingAromaTest・RetreatCostTest
+    "UNRESOLVED_CALMING_AROMA_RETALIATION",
+    "UNRESOLVED_RETREAT_COST_FLOOR",
+    # v0.47: PF1・PF2・PF3・KA1（docs/fossil-hidden-info-v0.47.md）。止まる場合（手札にたねポケモンがなく、なにかの化石がある対戦準備・なにかの化石を最初のポケモンと
+    # して出す・バトル場のなにかの化石の「にげる」・ポケモン育て屋さんで場のなにかの化石に 2 進化カード・どく状態のカブトのポケモンチェック）と隣の止まらない場合
+    # （ポケモンいれかえ・ほかの組を選ぶ育て屋さん・［なぞのかべ］とどく）は tests/test_fossil_hidden_info_v0_47.py の PlayAsPokemonTest・KabutoArmorTest
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP",
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT",
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON",
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
+    # v0.48: VS1・PG1・MH1（docs/effective-pokemon-properties-v0.48.md）。止まる場合（［へんしょく］で変えた色が、使った番のあとに読み方でダメージを変える・
+    # 弱点（抵抗力）のないポケモンの色を変える・「きょだいか」の効果が消えて最大HPがのっているダメージ以下になる「にげる」・ポケモンいれかえ・かがくへんかガス）と
+    # 隣の止まらない場合（使った番のうち・読み方でダメージが変わらない・弱点のあるポケモン・最大HPがダメージより大きいまま）は
+    # tests/test_effective_pokemon_properties_v0_48.py の ShiftColorTest・ConversionTest・MaxHpDropTest
+    "UNRESOLVED_SHIFT_COLOR_DURATION",
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE",
+    "UNRESOLVED_MAX_HP_DROP",
+    # v0.49: TE1・TF1・TF2・DG1・DG2・DG3・VA1・RC1〜RC4（docs/virtual-attacks-transformation-v0.49.md）。止まる場合と隣の止まらない場合は
+    # tests/test_virtual_attacks_transformation_v0_49.py
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT",
+    "UNRESOLVED_TRANSFORM_COPIED_POWER",
+    "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER",
+    "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
+    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER",
+    "UNRESOLVED_SHAPESHIFT_AGAIN",
+    "UNRESOLVED_VIRTUAL_ONCE_ATTACK",
+    "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK",
+    "UNRESOLVED_RECALL_EARLIER_STAGE",
+    "UNRESOLVED_RECALL_TARGET_CHANGED",
+    "UNRESOLVED_RECALL_FORM",
+    # v0.50: DV1・DV2・DV3・DV4・DV5（退化の途中のきぜつ・退化した番の進化・退化でもどったカードの特殊能力・自分の進化ポケモンがいない退化スプレー・「ばける」のポケモンの退化。
+    # docs/mew-devolution-spray-v0.50.md）
+    "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT",
+    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION",
+    "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION",
+    "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET",
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED",
 )
 TURN = 7
 

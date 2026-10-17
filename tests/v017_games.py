@@ -16,10 +16,12 @@ from __future__ import annotations
 from collections import Counter
 from typing import Callable
 
+from kyuura_engine.commands import RemoveDisguise  # v0.49
 from kyuura_engine import (
-    AttachEnergy, EvolvePokemon, IllegalActionError, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants, new_game,
-    state_to_dict,
+    AttachEnergy, EvolvePokemon, IllegalActionError, PlayTrainer, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
+    new_game, state_to_dict,
 )
+from kyuura_engine.effects import MAX_HP_DROP_CODE, PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, max_hp, retreat_cost, trainer_use_blockers
 from kyuura_engine.persistent import cannot_retreat
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -38,10 +40,36 @@ from tests.test_stage2_games_v0_4c import STAGE2_REJECTIONS
 
 NOT_DECLARABLE = (MUK, MACHAMP, HAUNTER)  # v0.8〜v0.10（tests/test_dark_wartortle_games_v0_13.py と同じ）
 USABLE_ONLY_WHEN = (ROCKETS_MOLTRES, GIOVANNIS_MACHAMP)  # v0.11・v0.12（決められたときにしか使えない）
+EVOLUTION_HP_CODE = "UNRESOLVED_EVOLUTION_HP"  # v0.4a の H1（v0.48 から、［ガスのからだ］で最大HPが上がったポケモンの進化で自然な対戦でも起こる）
 
 
 def full(state):
     return state_to_dict(state, format_version=9)
+
+
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）: 姿が変わりうるカードがあるときに、操作を受け付けない理由のコード
+V049_FORM_CODES = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
+                   "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", MAX_HP_DROP_CODE)
+FORM_CARDS = ("PMCG3-042", "PMCG5-019")  # メタモン（［へんしん］）・タケシのキュウコン（「ばける」）
+
+
+def form_cards_in_play(state) -> bool:
+    return any(state.cards[pokemon.card].card_id in FORM_CARDS for player in state.players for pokemon in player.in_play())
+
+
+# v0.50（docs/mew-devolution-spray-v0.50.md）: 退化したポケモンの進化（DV2）・退化でいちばん上にもどったカードの「自分の番ごとに1回」の特殊能力（DV3）
+V050_DEVOLUTION_CODES = ("UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION")
+
+
+def devolved_this_turn_in_play(state, command) -> bool:
+    """v0.50: 操作の対象（進化させるポケモン・特殊能力を使うポケモン。ポケモン育て屋さんなら使うプレイヤーの場）に、この番に退化したポケモンがいる。"""
+    if isinstance(command, EvolvePokemon):
+        found = state.find_pokemon(command.target)
+        return found is not None and found[1].devolved_turn == state.turn_number
+    if isinstance(command, UsePokemonPower):
+        found = state.find_pokemon(command.pokemon)
+        return found is not None and found[1].devolved_turn == state.turn_number
+    return any(pokemon.devolved_turn == state.turn_number for pokemon in state.players[command.player].in_play())
 
 
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
@@ -65,6 +93,52 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                 break
             except (IllegalActionError, UnsupportedError) as error:
                 observed["rejected"] += 1
+                if error.code in V049_FORM_CODES and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower, RemoveDisguise)) \
+                        and form_cards_in_play(state):
+                    # v0.49: 決められない姿（TF1・TF2・DG1）・「ばける」（DG2・DG3）・思い出させる（RC1・RC4）・［へんしん］・「ばける」で最大HPが下がる（MH1）。
+                    # 場から確かめる（メタモン・タケシのキュウコンが場にいる。思い出させるは対戦ポケモンが進化していない・ばけている）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code in ("UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK", "UNRESOLVED_RECALL_FORM") and isinstance(command, PlayTrainer):
+                    active = state.players[command.player].active
+                    if active.evolution_stack and active.disguise is None:
+                        raise AssertionError(f"対戦ポケモンが進化していて「ばける」でもないのに {error.code}: {command}")
+                    observed[f"stopped_PlayTrainer_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
+                if error.code == MAX_HP_DROP_CODE and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower)):
+                    # v0.48: 最大HPが、ダメージ以外の原因（「きょだいか」の効果が消える・かがくへんかガスで［ガスのからだ］が消える）でのっているダメージ以下に
+                    # 下がる（MH1）。場から確かめる（今有効な最大HPがカードの HP より大きく、のっているダメージがカードの HP 以上のポケモンがいる）
+                    if not any(p.damage >= state.card_def(p.card).hp and max_hp(state, p) > state.card_def(p.card).hp
+                               for player in state.players for p in player.in_play()):
+                        raise AssertionError(f"最大HPがのっているダメージより大きいポケモンがいないのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    # 同じ操作を繰り返さない（「にげる」は "retreat"、手札のカードを使う操作はそのカード、特殊能力は操作そのもの。手順が見る）
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code in V050_DEVOLUTION_CODES and isinstance(command, (EvolvePokemon, PlayTrainer, UsePokemonPower)):
+                    # v0.50: この番に退化したポケモンを進化させる（DV2。手札からの進化・ポケモン育て屋さん・［うか］）・この番に使った「自分の番ごとに1回」の特殊能力を、
+                    # 退化でいちばん上にもどったカードでもう一度使う（DV3）。場から確かめる（この番に退化したポケモンがいる）。同じ操作を繰り返さない
+                    if not devolved_this_turn_in_play(state, command):
+                        raise AssertionError(f"この番に退化したポケモンがいないのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon") else ("max_hp_drop_command", command))
+                    continue
+                if error.code == EVOLUTION_HP_CODE and isinstance(command, EvolvePokemon):
+                    # v0.48: ［ガスのからだ］で最大HPが印刷の HP より大きいポケモンを、のっているダメージ以下の HP のカードに進化させる（v0.4a の H1 と同じ問い）。
+                    # 場から確かめる（進化先の HP がのっているダメージ以下）。同じカードを繰り返さない
+                    target = state.find_pokemon(command.target)
+                    if target is None or target[1].damage < state.card_def(command.card).hp:
+                        raise AssertionError(f"進化先の HP がのっているダメージより大きいのに {error.code}: {command}")
+                    observed[f"stopped_EvolvePokemon_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
                 if isinstance(command, UsePokemonPower):
                     kind = card_id(state, state.find_pokemon(command.pokemon)[1])
                     if error.code == "POWER_NOT_USABLE_NOW" and kind in USABLE_ONLY_WHEN and not gas_on(state):
@@ -121,11 +195,49 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     observed["stopped_retreat_RETREAT_PREVENTED"] += 1
                     turn_tried.add("retreat")
                     continue
+                if isinstance(command, Retreat) and error.code == "WRONG_RETREAT_COST":
+                    # v0.46: 常にはたらく特殊能力（［ねんちゃくえき］・［にげるサポート］）で「にげる」のエネルギーの数が変わり、印刷の数で宣言した。場から確かめる
+                    # （特殊能力がなければ、今までどおり想定外の拒否）
+                    cost = retreat_cost(state, command.player)
+                    if not cost.modified or cost.allows(len(command.discard)):
+                        raise
+                    observed["stopped_retreat_WRONG_RETREAT_COST"] += 1
+                    turn_tried.add("retreat")
+                    continue
+                if isinstance(command, Retreat) and error.code == "UNRESOLVED_RETREAT_COST_FLOOR":
+                    # v0.46: 少なくする数と増やす数の当てはめ方で、トラッシュしてよい数が変わる（CP2）。場から確かめる
+                    if not retreat_cost(state, command.player).floor_ambiguous(len(command.discard)):
+                        raise AssertionError(f"にげるエネルギーの読み方で答えが変わらないのに {error.code}: {command}")
+                    observed[f"stopped_retreat_{error.code}"] += 1
+                    turn_tried.add("retreat_floor")
+                    continue
+                if isinstance(command, Retreat) and error.code == PLAY_AS_POKEMON_RETREAT_CODE:
+                    # v0.47: バトル場のなにかの化石・ピッピ人形の「にげる」は決まらない（PF2）。場から確かめる（エネルギー・コインの前に拒否）
+                    if state.card_def(state.players[command.player].active.card).play_role is None:
+                        raise AssertionError(f"バトル場がなにかの化石・ピッピ人形でないのに {error.code}: {command}")
+                    observed[f"stopped_retreat_{error.code}"] += 1
+                    turn_tried.add("retreat")
+                    continue
+                if isinstance(command, PlayTrainer) and error.code == "TRAINER_PREVENTED":
+                    # v0.46: はたらいている［アレルギーかふん］（わるいラフレシア）。v0.47 から、期限のあるトレーナーの使用の禁止（ずつう・こうしゅうは）も。
+                    # 場と状態から確かめる（手札から出す前に拒否）
+                    if not trainer_use_blockers(state, command.player):
+                        raise AssertionError(f"トレーナーカードを使えなくする特殊能力がはたらいていないのに TRAINER_PREVENTED: {command}")
+                    observed["stopped_trainer_TRAINER_PREVENTED"] += 1
+                    turn_tried.add("trainer_locked")
+                    continue
                 if isinstance(command, AttachEnergy):
                     if error.code != R13:
                         raise
                     observed[f"stopped_attach_{error.code}"] += 1
                     turn_tried.add("attach_blocked")
+                    continue
+                if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED":
+                    # v0.47: はたらいている［げんしのちから］（プテラ）。場から確かめる（重ねる前に拒否）
+                    if not evolution_preventers(state):
+                        raise AssertionError(f"進化できなくする特殊能力がはたらいていないのに EVOLUTION_PREVENTED: {command}")
+                    observed["stopped_evolve_EVOLUTION_PREVENTED"] += 1
+                    turn_tried.update({"evolution_prevented", "evolve", "evolve2"})
                     continue
                 if isinstance(command, EvolvePokemon):
                     stage2 = state.card_def(command.card).is_stage2_pokemon

@@ -25,6 +25,11 @@
   残り HP、選ばなければ何もせず、そのあと、まだ HP 以上のポケモンをきぜつさせる（``engine._resume_knock_out``）。番のプレイヤーは
   ワザを使ったプレイヤーのまま。``context`` は ``"attack"``（ワザ）と ``"power"``（特殊能力）。v0.12 から、番のプレイヤーのワザを使った
   ポケモンが、相手の「ほのおのかべ」（相手のワザによるダメージ）で「きぜつ」するときにも出す（決定するのは番のプレイヤー）
+- ``"power"``: 宣言して使う特殊能力の処理の続き（v0.42。docs/power-decisions-v0.42.md）。``context`` の ``"use"``（(プレイヤー, 場のポケモンの番号,
+  カード id, 特殊能力の位置)）から実装を引き、``effects.PowerEffect.resume`` を呼ぶ。決定がなくなったら、エンジンが特殊能力の処理のあとの場を整え
+  （きぜつ・空いたバトル場。``resolution.after_power``）、番のプレイヤーの番にもどる（番は終わらない）。決定するのは特殊能力を使ったプレイヤー。
+  v0.43: 場に出たときに使う特殊能力の使う機会（``ENTRY_POWER``）も再開先 ``"power"``。トレーナーの効果の途中で場に出たら、``context`` の ``"return_to"``
+  で、特殊能力の処理のあとにそのトレーナーの処理（トラッシュ）にもどる
 - ``"post_knockout"``: きぜつの処理（トラッシュ・サイド・勝ち負けの判定）のあとの続き（v0.12）。ポケモンが「きぜつ」したときに使える
   特殊能力（R団のファイヤーの「ふしちょう」）を使うかを、そのカードの持ち主が決める（``POST_KNOCKOUT_POWER``）。選んだら宣言して、
   そのカードをトラッシュから手札に加え、選ばなければ何もせず、そのあとバトル場にポケモンを出す（``engine._resume_post_knockout``）。
@@ -138,6 +143,62 @@ SELECT_SPECIAL_CONDITION = "select_special_condition"
 # プレイヤーで、選べるものは山札の「超」の基本エネルギーカードの uid（山札の並びを決定に写さないよう uid の小さい順）。0〜1 枚（「つけてよい」なので
 # 選ばなくてよい）。山札の中身は選ぶプレイヤーだけが見る情報で、ログには書かない（つけたカードは場に出るので公開）。再開先は "attack"
 ATTACH_FROM_DECK = "attach_from_deck"
+# v0.42（docs/power-decisions-v0.42.md）。ナツメのルージュラの「よいおこない」の「そのポケモンにのっているダメージカウンターを、好きなだけとりのぞく」。決めるのは
+# ワザを使ったプレイヤーで、選べるものはとりのぞく数（0〜のっている数。``context`` の ``"target"`` がそのポケモン）。0 は「好きなだけ」で 0 を選べるかが
+# 決められない（HC5 と同じ問い）ので ``"unresolved_choices"``。再開先は "attack"
+REMOVE_COUNTERS = "remove_counters"
+# v0.42: ナツメのケーシィの「エネループ」の「自分についている「超」エネルギーカードを1枚選び、はがして手札にもどす」。決めるのはワザを使ったプレイヤーで、
+# 選べるものはワザを使ったポケモンについている「超」の基本エネルギーカードの uid（ついている順。1 枚でも決定を出す。DISCARD_ENERGY と同じ形）。トラッシュの
+# DISCARD_ENERGY とは行き先が違うので別の種類。再開先は "attack"
+RETURN_ENERGY = "return_energy"
+# v0.43（docs/declared-entry-powers-v0.43.md）。場に出たときに 1 度だけ使える特殊能力（わるいゴルバットの［こっそりかみつく］・わるいヤドランの［つりあげる］・
+# わるいカイリューの［てしたをよぶ］）を使うかを、そのポケモンの持ち主が決める（使う機会）。選べるものはそのポケモンの番号 1 つで、0〜1 個（選ばない = 使わない）。
+# 再開先は "power"（使ったら宣言のログ ``pokemon_power`` のあと、特殊能力の処理。使わなければログ ``entry_power_declined``）。``context`` の ``"entry"`` は場に出た
+# 経路（今は手札から（``"hand"``）だけ）、``"return_to"`` は場に出した元の処理（トレーナーの効果の途中なら ("trainer", プレイヤー, カード, カード id)）
+ENTRY_POWER = "entry_power"
+# v0.43: 自分の場のポケモンについているエネルギーカードを選んで、特殊能力を使ったポケモン（このカード）につけかえるとき、どのカードか（エリカのマダツボミの
+# ［ようぶんきゅうしゅう］（最大 2 枚）・マチスのレアコイルの［エナジーチャージ］（好きなだけ））。選べるものはエネルギーカードの uid（場の並び（バトル場 →
+# ベンチ）・ついている順）。再開先は "power"
+MOVE_ENERGY = "move_energy"
+# v0.43: 自分のトラッシュのポケモンのカードを選んで、見せてから手札に加えるとき、どのカードか（わるいヤドランの［つりあげる］。最大 3 枚）。選べるものは
+# トラッシュのポケモンのカード（たねポケモン・進化カード）の uid（トラッシュの並び）。同じカードを 2 回選べない（``check_choices``）。再開先は "power"
+RECOVER_POKEMON = "recover_pokemon"
+# v0.44（docs/search-evolution-once-attacks-v0.44.md）。ワザの効果で、自分の手札のカードを選び、相手に見せずに山札にもどすとき、どのカードか（ナツメのバリヤードの
+# 「てじな」の「自分の手札から最大3枚のカードを選び、山札にもどす」（0〜3 枚。0 枚は GS1 と同じ問い）・_____のラッキーの「ラッキーたまご」の「自分の手札から
+# カードを2枚選び、山札にもどして」（2 枚））。決めるのはワザを使ったプレイヤーで、選べるものは手札のカードの uid（手札の並び）。v0.24 のポケモン交換おじさんの
+# RETURN_TO_DECK（トレーナー。見せる。たねポケモン・進化カードだけ）とは別の決定。再開先は "attack"
+HAND_TO_DECK = "hand_to_deck"
+# v0.44: カツラのマンキーの「わるいいたずら」の「相手のトラッシュからカードを1枚選び出し、相手の山札の上にのせる」。決めるのはワザを使ったプレイヤーで、選べるものは
+# 相手のトラッシュのカードの uid（トラッシュの並び。公開の情報）。1 枚。再開先は "attack"
+DISCARD_TO_DECK_TOP = "discard_to_deck_top"
+# v0.45（docs/conditional-damage-energy-v0.45.md）。わるいレアコイルの「じりょくせん」の「相手の対戦ポケモンのエネルギーカード(特殊エネルギーカード以外)を1枚選んで
+# はがす」。決めるのはワザを使ったプレイヤーで、選べるものは相手の対戦ポケモン（``context`` の ``"target"``）についている基本エネルギーカードの uid（ついている順。
+# 1 枚でも決定を出す）。つける控えポケモンは続けて ``SELECT_POKEMON``（``context`` の ``"energy"`` がはがすカード）で選ぶ。v0.31 の DISCARD_OPPONENT_ENERGY（トラッシュ）
+# とは行き先が違うので別の種類。再開先は "attack"
+MOVE_OPPONENT_ENERGY = "move_opponent_energy"
+# v0.46（docs/continuous-powers-v0.46.md）。エリカのフシギバナの「せいちょう」の「コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、このカードに
+# つける」。決めるのはワザを使ったプレイヤーで、選べるものは手札の「草」の基本エネルギーカードの uid（手札の並び）。0〜min(2, 枚数) 枚（0 枚は「最大2枚」が 0 枚を
+# 含むかが決められない。v0.31 の HC7（トラッシュからつける「最大2枚」）と同じ問いで、答えのときに止める）。手札からつける通常の操作（p.310。1 番に 1 枚）とは別の処理
+# （回数に数えない）。v0.41 の ATTACH_FROM_DECK（山札）・v0.31 の ATTACH_FROM_DISCARD（トラッシュ）とは選ぶ場所が違うので別の種類。再開先は "attack"
+ATTACH_FROM_HAND = "attach_from_hand"
+# v0.47（docs/fossil-hidden-info-v0.47.md 4 章）: 裏向きのカード・見えないカードを、内容を知らずに位置で選ぶ決定と、見たカードの並べかえ。選べるものはどれも位置・プレイヤー・
+# 数で、カードの uid を選べるものに入れない（見る前に内容を漏らさない）。ARRANGE_DECK_TOP だけは、見たプレイヤーが見たカード（uid）の並びを答える
+# マンキーの［スパイ］: 見るカード（``context`` の ``"targets"`` の位置。(``"deck"``, 持ち主)・(``"prize"``, 持ち主, 位置)・(``"hand"``, 持ち主, 位置)）
+PEEK_CARD = "peek_card"
+# コラッタ（ロケット団）の［わるふざけ］: 自分のサイドの位置
+SELECT_PRIZE_CARD = "select_prize_card"
+# スリーパーの「みらいよち」: 見る山札の持ち主（プレイヤー）→ 見る枚数 → 見たカードのもどす並び（上から順。見たカードの uid）
+SELECT_DECK_OWNER = "select_deck_owner"
+SELECT_LOOK_COUNT = "select_look_count"
+ARRANGE_DECK_TOP = "arrange_deck_top"
+# マチスのイーブイの「おどろかす」: 相手の手札の位置（おもてを見ないで選ぶ）
+SELECT_HAND_CARD = "select_hand_card"
+# v0.48（docs/effective-pokemon-properties-v0.48.md）: 色（タイプ）を選ぶ。選べるものは ``effects.COLORS`` の位置（ポリゴンの「テクスチャー1」「テクスチャー2」は無色以外の
+# 色。モルフォンの［へんしょく］は場にいるポケモンの色）。決めるのはワザ・特殊能力を使ったプレイヤー
+SELECT_COLOR = "select_color"
+# v0.50（docs/mew-devolution-spray-v0.50.md）: 退化スプレーで、選んだポケモンからはがす進化カードの枚数（0〜重なっている進化カードの数）。決めるのは使ったプレイヤー。
+# 0 枚は「ことができる」の、はがさないこと（はがさなければ退化しない）
+SELECT_DEVOLVE_COUNT = "select_devolve_count"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -221,6 +282,7 @@ def push_trainer_decision(
     unresolved_choices: Iterable[int] = (),
     unresolved_code: str = "UNRESOLVED_RULING",
     unresolved_reason: str = "",
+    unresolved_detail: Iterable[tuple[int, str, str]] = (),
 ) -> PendingDecision:
     """トレーナーの効果の途中で決定を出す（v0.2b）。選ばれたら、そのトレーナーの実装の ``resume`` が呼ばれる。
 
@@ -231,12 +293,69 @@ def push_trainer_decision(
     unresolved = tuple(unresolved_choices)
     if unresolved:
         entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    if detail:
+        # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
+        if not {item[0] for item in detail} <= set(unresolved):
+            raise RuntimeError(f"選択ごとの止める理由 {detail} の選択が、選ぶと止める選択 {unresolved} にない（エンジンの不具合）")
+        entries.append(("unresolved_detail", detail))
     return push_decision(
         state,
         kind=kind,
         player=player,
         options=options,
         resume="trainer",
+        context=(*entries, *tuple(context)),
+        min_choices=min_choices,
+        max_choices=max_choices,
+    )
+
+
+def push_power_decision(
+    state: GameState,
+    use,
+    *,
+    kind: str,
+    player: int,
+    options: Iterable[int],
+    context: Iterable[tuple[str, Any]] = (),
+    min_choices: int = 1,
+    max_choices: int = 1,
+    unresolved_choices: Iterable[int] = (),
+    unresolved_code: str = "UNRESOLVED_RULING",
+    unresolved_reason: str = "",
+    unresolved_detail: Iterable[tuple[int, str, str]] = (),
+) -> PendingDecision:
+    """宣言して使う特殊能力の処理の途中で決定を出す（v0.42）。選ばれたら、その特殊能力の実装の ``resume`` が呼ばれる（再開先 ``"power"``）。
+
+    ``context`` は ``("use", (プレイヤー, 場のポケモンの番号, カード id, 特殊能力の位置))`` と、``unresolved_choices``（トレーナーの決定と同じ。選ぶと
+    ``UnsupportedError(unresolved_code, unresolved_reason)``）と、実装が決定をまたいで使う値（``context``）。決定の形はトレーナーの決定（v0.2b）と同じ考え方で、
+    実装が ``PowerEffect.decision_problems`` で宣言する。
+    """
+    entries = [("use", (use.player, use.pokemon_id, use.key.card_id, use.key.power_index))]
+    card = getattr(use, "card", None)
+    found = state.find_pokemon(use.pokemon_id)
+    if card is not None and found is not None and card != found[1].card:
+        # v0.49: 特殊能力を印刷したカードが、ポケモンのいちばん上のカードでない（「ばける」でのせたカード）。そのカードの uid（ふつうは書かない。v0.48 と同じ形）
+        entries.append(("power_card", card))
+    if getattr(use, "return_to", None) is not None:
+        # v0.43: 場に出したトレーナーの効果の途中で使う特殊能力（ポケモン育て屋さんで場に出たわるいカイリューの［てしたをよぶ］）。終わったらその処理にもどる
+        entries.append(("return_to", use.return_to))
+    unresolved = tuple(unresolved_choices)
+    if unresolved:
+        entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    detail = tuple(tuple(item) for item in unresolved_detail)
+    if detail:
+        # v0.49: 選ぶと止める選択ごとの (選択, コード, 理由)。選択によって止める理由が違うとき（「ばける」の候補）だけ書く。``check_choices`` が優先して使う
+        if not {item[0] for item in detail} <= set(unresolved):
+            raise RuntimeError(f"選択ごとの止める理由 {detail} の選択が、選ぶと止める選択 {unresolved} にない（エンジンの不具合）")
+        entries.append(("unresolved_detail", detail))
+    return push_decision(
+        state,
+        kind=kind,
+        player=player,
+        options=options,
+        resume="power",
         context=(*entries, *tuple(context)),
         min_choices=min_choices,
         max_choices=max_choices,
@@ -259,7 +378,10 @@ def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if choice not in decision.options:
             raise IllegalActionError("INVALID_CHOICE", f"{choice!r} はこの決定で選べるものではない（{decision.options}）")
     unresolved = decision.context_value("unresolved_choices", ())
+    detail = {item[0]: item for item in decision.context_value("unresolved_detail", ())}  # v0.49: 選択ごとの止める理由
     for choice in choices:
+        if choice in detail:
+            raise UnsupportedError(detail[choice][1], detail[choice][2])
         if choice in unresolved:
             raise UnsupportedError(
                 decision.context_value("unresolved_code", "UNRESOLVED_RULING"),

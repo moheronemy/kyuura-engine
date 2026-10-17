@@ -620,7 +620,20 @@ class G37Test(unittest.TestCase):
             # docs/heal-counter-status-v0.41.md）
             "DamageThenConfuseBoth", "DamageThenStatusByCoin", "DamageThenChosenStatusOnHeads", "CoinDamageAndConfuseElseSelfConfuse",
             "DamageThenConfuseOnAnyHeads", "DamageThenSleepOnHeads", "DamageThenRetreatLockOnHeads", "SwitchOpponentActiveOnHeads",
-            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads"]))
+            "HealAllPokemonBothSides", "MoveOwnCountersToOpponent", "SwapCountersOnHeads",
+            # v0.42（相手のポケモンのカウンターをとりのぞく・残り HP が決まった数になるようにカウンターをのせる。docs/power-decisions-v0.42.md）
+            "HealChosenOpponentThenDraw", "PlaceCountersToRemainingHpOnHeads",
+            # v0.44（きぜつしていなければ入れ替え・1 枚のコインでどくとマヒ・コインで特殊などく。docs/search-evolution-once-attacks-v0.44.md）
+            "DamageThenSwitchOpponentIfNotKnockedOut", "DamageThenPoisonAndParalyzeOnHeads", "SpecialPoisonOnHeadsWithoutDamage",
+            # v0.45（次の相手の番から消えない手順 4 の効果・2 枚とも「おもて」でどくとこんらん・自分がどくなら相手もどく・コインで入れ替えて
+            # 新しい対戦ポケモンをどく・相手の対戦ポケモンのエネルギーを控えにつけかえる。docs/conditional-damage-energy-v0.45.md）
+            "DamageThenLastingAttackCoinCheckOnHeads", "DamageThenPoisonAndConfuseOnAllHeads", "DamageIfSelfStatusThenOpponentStatus",
+            "CoinSwitchOpponentThenStatus", "DamageThenMoveOpponentEnergyToBench",
+            # v0.48（相手の対戦ポケモンの弱点の色を変える・1 枚のコインでどくとこんらん・ダメージカウンターがのっている相手のポケモンにのせる・
+            # 2 枚とも「おもて」で相手の対戦ポケモンを山札にもどす。docs/effective-pokemon-properties-v0.48.md）
+            "ChangeOpponentWeakness", "DamageThenPoisonAndConfuseOnHeads", "PlaceCountersOnDamagedOpponentPokemon", "DamageThenCoinsReturnOpponentToDeck",
+            # v0.50（自分・相手のポケモンの進化カードをはがして手札にもどす「たいかビーム」。docs/mew-devolution-spray-v0.50.md）
+            "DevolveChosenPokemon"]))
 
 
 class DecisionTest(unittest.TestCase):

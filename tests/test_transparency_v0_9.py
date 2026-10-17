@@ -35,7 +35,7 @@ from kyuura_engine.state import Asleep
 from tests.helpers import (
     ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
     KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, STARMIE, STARYU, build_test_state, coin_events, uids, with_coin_results,
+    WEEDLE, BASE_HAUNTER, LIGHTNING, STARMIE, STARYU, build_test_state, coin_events, no_base_haunter_pool, uids, with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -190,14 +190,16 @@ class BasicTest(unittest.TestCase):
         self.assertIs(state.log, log)
 
     def test_registration(self):
-        """登録は宣言しない ``AttackImmunityOnHeads``。第1弾のゴースト（PMCG1-047。同じ名前の別のカード）は特殊能力を持たず、参照カード。"""
+        """登録は宣言しない ``AttackImmunityOnHeads``。第1弾のゴースト（PMCG1-047。同じ名前の別のカード）は特殊能力を持たない（v0.44 まで参照カード。
+        v0.45 で対応にした。ワザの登録を除いた登録表では対応にならない）。"""
         entry = DEFAULT_EFFECTS.power_entry(HAUNTER, 0)
         self.assertEqual(entry.effect, AttackImmunityOnHeads())
         self.assertFalse(entry.effect.declared)
         pool = load_card_pool()
         self.assertEqual(pool.get(BASE_HAUNTER).name_ja, pool.get(HAUNTER).name_ja)
         self.assertEqual(pool.get(BASE_HAUNTER).powers, ())
-        self.assertFalse(pool.is_playable(BASE_HAUNTER))
+        self.assertTrue(pool.is_playable(BASE_HAUNTER))
+        self.assertFalse(no_base_haunter_pool().is_playable(BASE_HAUNTER))
 
     def test_public_query(self):
         """``working_evasion_power``（v0.9 の公開の問い合わせ）は状態を変えず、乱数を使わない。場にいない番号は ValueError。"""
@@ -612,7 +614,8 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG3-016": ("PMCG4-019",),  # v0.33: 化石の秘密のゴルダック（第4弾のコダックから）
               "PMCG1-039": ("PMCG1-036",), "PMCG3-006": ("PMCG1-006",),  # v0.39: 第1弾のレアコイル（コイルから）・化石の秘密のマタドガス（ドガースから）
               "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
-              "PMCG4-048": ("PMCG2-036",)}  # v0.41: わるいペルシアン（ニャースから）
+              "PMCG4-048": ("PMCG2-036",),  # v0.41: わるいペルシアン（ニャースから）
+              "PMCG3-028": ("PMCG3-027",)}  # v0.42: ヤドラン（化石の秘密のヤドンから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -664,7 +667,16 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "ひどいおんぱ",
                                         # v0.41: わるいペルシアンの「どくのつめ」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/heal-counter-status-v0.41.md）
-                                        "どくのつめ"]))
+                                        "どくのつめ",
+                                        # v0.42: ヤドランの「ねんりき」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/power-decisions-v0.42.md）
+                                        "ねんりき",
+                                        # v0.46: カビゴン（PMCG2-047）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/continuous-powers-v0.46.md）
+                                        "のしかかり",
+                                        # v0.48: ロケット団のポリゴンの「サイケこうせん」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/effective-pokemon-properties-v0.48.md）
+                                        "サイケこうせん"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

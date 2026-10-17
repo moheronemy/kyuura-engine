@@ -127,6 +127,10 @@ class CardDefinition:
     trainer_text_ja: str | None = None
     trainer_text_en: str | None = None
     trainer_kinds: tuple[str, ...] = ()
+    # v0.47（docs/fossil-hidden-info-v0.47.md 2 章）: ポケモンとして場に出せるトレーナーカード（なにかの化石・ピッピ人形）の、場にいるあいだの定義（場での役割）
+    # だけに付ける印（"fossil"・"doll"）。印刷の定義（写しから読んだ ``category`` が "trainer" の定義）はいつも None で、変えない。場での役割の定義は効果の登録表
+    # （``effects.PlayAsPokemon.in_play_definition``）が印刷の定義から別のインスタンスとして作り、``GameState.card_def`` が、そのカードが場にいるあいだだけ返す
+    play_role: str | None = None
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -280,7 +284,9 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         resistance_value = r["value"]
     parsed = tuple(_parse_attack(i, a) for i, a in enumerate(pokemon["attacks"]))
     attacks = tuple(_annotate_attack(record["id"], attack, effects, parsed) for attack in parsed)
-    if not attacks:
+    if not attacks and not any(power.supported and getattr(effects.power_effect(record["id"], power), "supplies_attacks", False) for power in powers):
+        # v0.49: ワザのないポケモンは、今の姿のワザを持たせる特殊能力（メタモンの［へんしん］。``PowerEffect.supplies_attacks``）が登録されているときだけ対応にする
+        # （写しでワザのないポケモンはメタモンだけ）
         reasons.append("ワザがない")
     for attack in attacks:
         if not attack.supported:
@@ -384,6 +390,15 @@ POOL_KEYS = (
     "pool_v0_39",  # v0.39（じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚。docs/selfdestruct-spread-count-v0.39.md）
     "pool_v0_40",  # v0.40（場の数・条件付きの効果・入れ替え・カードの移動の 15 枚。docs/count-condition-switch-return-v0.40.md）
     "pool_v0_41",  # v0.41（回復・カウンターの移動・特殊状態の変化を中心とする 15 枚。docs/heal-counter-status-v0.41.md）
+    "pool_v0_42",  # v0.42（回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚。docs/power-decisions-v0.42.md）
+    "pool_v0_43",  # v0.43（宣言して使う特殊能力と、場に出たときに使う特殊能力を持つ 9 枚。docs/declared-entry-powers-v0.43.md）
+    "pool_v0_44",  # v0.44（場のポケモンを選ぶ・山札をさがす・山札から進化する・場に出てから 1 回だけ使えるワザ・カードの移動のポケモン 14 枚とトレーナー 1 枚。docs/search-evolution-once-attacks-v0.44.md）
+    "pool_v0_45",  # v0.45（条件・コイン・特殊状態・エネルギーの処理・ダメージの計算・返す効果・山札のワザのポケモン 15 枚。docs/conditional-damage-energy-v0.45.md）
+    "pool_v0_46",  # v0.46（常にはたらく特殊能力を持つ 8 枚と、関連する 3 枚。docs/continuous-powers-v0.46.md）
+    "pool_v0_47",  # v0.47（なにかの化石・ピッピ人形と化石のポケモン、見えない情報を扱う 4 枚、トレーナーの使用を禁止する 2 枚。docs/fossil-hidden-info-v0.47.md）
+    "pool_v0_48",  # v0.48（ポリゴン 2 枚・モルフォン・ナツメのゴース／ゴースト／ゲンガー・キョウのメタモン。場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力）
+    "pool_v0_49",  # v0.49（ナツメのフーディン・メタモン・タケシのキュウコン・思い出させる。ワザの出どころと今の姿）
+    "pool_v0_50",  # v0.50（ミュウ・退化スプレー。退化の共通の処理）
 )
 
 

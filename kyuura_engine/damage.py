@@ -54,7 +54,23 @@ DAMAGE_STEP_CHOOSER = {2: "attacker", 5: "attacker", 6: "attacker", 7: "defender
 ADD = "add"  # 数を加える（プラスパワー・ディフェンダー。v0.2c）
 SET = "set"  # その数にする（v0.27。「つるぎのまい」の「「60」になる」）
 MULTIPLY = "multiply"  # その数をかける（v0.35。「きあいだめ」の「…のダメージは2倍になる」）
-DAMAGE_OPERATIONS = (ADD, SET, MULTIPLY)
+# v0.45: その段階のダメージがこの数より小さければ 0 にし、この数以上ならそのまま（イワークの「かたくなる」の「受けるダメージが0になる。ただしダメージが40以上の
+# 場合は、そのままダメージをうける。」。p.321 の 8 段階の例）
+ZERO_IF_BELOW = "zero_if_below"
+# v0.46: 常にはたらく特殊能力・ワザの持続する効果の計算（docs/continuous-powers-v0.46.md 3 章）。どれも、その段階のダメージだけを見て決まる計算で、計算の順番が
+# 結果を変えるときは、ほかの加算でない効果と同じく ``DamageOrderRequired``（順番の決定）になる
+# - ``ZERO_IF_AT_LEAST``: その段階のダメージが ``amount`` 以上なら 0 にし、``amount`` より小さければそのまま（バリヤードの［なぞのかべ］の「このカードが受ける30以上の
+#   ダメージは0になる。(30より小さいダメージはそのまま受ける。)」。p.321 の 8 段階の例。``ZERO_IF_BELOW`` と比べる向きが逆）
+# - ``SET_IF_AT_LEAST``: その段階のダメージが ``threshold`` 以上なら ``amount`` にし、小さければそのまま（エリカのミニリュウの［ふしぎなバリアー］の「20以上のダメージは、
+#   「10」になる」）
+# - ``HALVE_UP``・``HALVE_DOWN``: その段階のダメージを半分にし、ダメージカウンター 1 個（``unit``。p.319 の 10）の単位で切り上げる・切りすてる（エリカのフシギソウの
+#   ［くつろぐかおり］の「半分(切り上げ)」・エリカのタマタマの「リフレクター」の「半分(切りすて)」。単位は v0.4d のメガドレイン・v0.45 の「いかりのまえば」の
+#   「半分（切り上げ）」と同じ）。0 以下のダメージは変えない（2 段階なら計算を終え、6・8 段階のあとにダメージを増やす段階はないので、最終ダメージはどちらでも 0）
+ZERO_IF_AT_LEAST = "zero_if_at_least"
+SET_IF_AT_LEAST = "set_if_at_least"
+HALVE_UP = "halve_up"
+HALVE_DOWN = "halve_down"
+DAMAGE_OPERATIONS = (ADD, SET, MULTIPLY, ZERO_IF_BELOW, ZERO_IF_AT_LEAST, SET_IF_AT_LEAST, HALVE_UP, HALVE_DOWN)
 
 
 @dataclass(frozen=True)
@@ -66,7 +82,10 @@ class DamageModifier:
       その段階でダメージにこの数をかける（v0.35。2 以上の整数）
     - ``label``: 段階の記録に出す名前（カード名・ワザ名など）
     - ``source``: 発生源のカードの uid（なければ None）
-    - ``operation``（v0.27）: ``ADD``（既定。v0.26 までの変更効果はすべてこれ）か ``SET``（v0.27）か ``MULTIPLY``（v0.35）
+    - ``operation``（v0.27）: ``ADD``（既定。v0.26 までの変更効果はすべてこれ）か ``SET``（v0.27）か ``MULTIPLY``（v0.35）か ``ZERO_IF_BELOW``（v0.45。
+      ``amount`` はしきい値。その段階のダメージが ``amount`` より小さければ 0、``amount`` 以上ならそのまま）。v0.46: ``ZERO_IF_AT_LEAST``（``amount`` はしきい値）・
+      ``SET_IF_AT_LEAST``（``threshold`` 以上なら ``amount`` にする）・``HALVE_UP``・``HALVE_DOWN``（``amount`` は 2。割る数）
+    - ``threshold``（v0.46）: ``SET_IF_AT_LEAST`` のしきい値（ほかの計算では None）
     """
 
     step: int
@@ -74,6 +93,7 @@ class DamageModifier:
     label: str
     source: int | None = None
     operation: str = ADD
+    threshold: int | None = None
 
     def __post_init__(self) -> None:
         if self.step not in DAMAGE_STEP_CHOOSER:
@@ -82,13 +102,36 @@ class DamageModifier:
             raise ValueError(f"ダメージを変更する効果の計算は {DAMAGE_OPERATIONS} のどれか（{self.operation!r}）")
         if self.operation == MULTIPLY and (type(self.amount) is not int or self.amount < 2):
             raise ValueError(f"ダメージにかける数は 2 以上の整数（{self.amount!r}）")
+        if self.operation in (ZERO_IF_BELOW, ZERO_IF_AT_LEAST) and (type(self.amount) is not int or self.amount < 1):
+            raise ValueError(f"ダメージを 0 にするしきい値は 1 以上の整数（{self.amount!r}）")
+        if self.operation == SET_IF_AT_LEAST:
+            if type(self.threshold) is not int or self.threshold < 1 or type(self.amount) is not int or self.amount < 0:
+                raise ValueError(f"しきい値以上のダメージをその数にする効果のしきい値・数が正しくない（{self.threshold!r}・{self.amount!r}）")
+        elif self.threshold is not None:
+            raise ValueError(f"しきい値（threshold）は、しきい値以上のダメージをその数にする効果だけに書く（{self.operation!r}）")
+        if self.operation in (HALVE_UP, HALVE_DOWN) and self.amount != 2:
+            raise ValueError(f"半分にする効果の割る数は 2（{self.amount!r}）")
 
-    def apply(self, amount: int) -> int:
-        """この効果を、その段階のダメージ ``amount`` に当てはめた数（v0.35）。"""
+    def apply(self, amount: int, unit: int = 10) -> int:
+        """この効果を、その段階のダメージ ``amount`` に当てはめた数（v0.35）。v0.46: ``unit`` はダメージカウンター 1 個のダメージ（半分にするときの端数の単位。
+        p.319。``RuleSet.damage_per_counter``）。"""
         if self.operation == SET:
             return self.amount
         if self.operation == MULTIPLY:
             return amount * self.amount
+        if self.operation == ZERO_IF_BELOW:
+            return 0 if amount < self.amount else amount
+        if self.operation == ZERO_IF_AT_LEAST:
+            return 0 if amount >= self.amount else amount
+        if self.operation == SET_IF_AT_LEAST:
+            return self.amount if amount >= self.threshold else amount
+        if self.operation in (HALVE_UP, HALVE_DOWN):
+            if amount <= 0:
+                return amount
+            counters = amount // unit
+            if counters * unit != amount:
+                raise ValueError(f"ダメージ {amount} がダメージカウンターの単位 {unit} の倍数ではない（半分にできない）")
+            return ((counters + 1) // 2 if self.operation == HALVE_UP else counters // 2) * unit
         return amount + self.amount
 
 
@@ -138,6 +181,7 @@ def calculate_attack_damage(
     *,
     weakness_resistance: bool = True,
     orders: Mapping[int, tuple[int, ...]] | None = None,
+    resistance: bool = True,
 ) -> DamageCalculation:
     """バトル場のポケモンがワザで相手のバトル場のポケモンに与えるダメージ。
 
@@ -147,6 +191,8 @@ def calculate_attack_damage(
     ``orders``（v0.35）: 段階ごとの、その段階の変更効果の計算の順番（集めた順番の番号の並べかえ。順番の決定で選んだもの）。同じ段階に加算でない
     効果を含む 2 つ以上の効果があり、順番によって結果（最終ダメージと 2 段階で終えるか）が変わる段階の順番がなければ ``DamageOrderRequired``。
     結果が変わらない段階は、渡されていなければ集めた順番で計算する。
+    ``resistance``（v0.45）: False なら 4 段階（抵抗力）だけを計算しない（説明に「このワザのダメージは、「抵抗力」の影響を受けない」とあるダメージ。
+    タケシのイシツブテの「スパイラルショット」）。弱点（3 段階）とほかの段階は計算する。
     """
     used = tuple(modifiers)
     chosen = dict(orders or {})
@@ -160,11 +206,11 @@ def calculate_attack_damage(
             continue
         # 加算でない効果は、同じ段階のほかの効果との順番で結果が変わりうる。p.321 は順番を DAMAGE_STEP_CHOOSER のプレイヤーが決めるとする。
         # どの順番でも結果（最終ダメージと 2 段階で終えるか）が同じなら決めさせない（あとの段階は、渡された順番か集めた順番で比べる）
-        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}))
+        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}, resistance))
                     for order in step_orders(len(at_step))}
         if len(outcomes) > 1:
             raise DamageOrderRequired(step, at_step)
-    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen)
+    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance)
 
 
 def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
@@ -172,7 +218,7 @@ def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
 
 
 def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, rules: RuleSet, used: tuple[DamageModifier, ...],
-               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]]) -> DamageCalculation:
+               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]], resistance: bool = True) -> DamageCalculation:
     """p.321 の 8 段階の計算（順番の確かめは ``calculate_attack_damage``）。段階の中の変更効果は、``orders`` にあればその順番、なければ集めた順番。
 
     結果の ``modifiers`` は v0.34 と同じ集めた順番（2 段階で終えたら 2 段階のものだけ）で、順番を選んだ段階のものだけ、その段階の位置の中で選んだ
@@ -186,7 +232,7 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
 
     def apply(step: int, amount: int) -> int:
         for modifier in at(step):
-            amount = modifier.apply(amount)
+            amount = modifier.apply(amount, rules.damage_per_counter)
             steps.append((f"{step} {modifier.label}", amount))
         return amount
 
@@ -211,7 +257,8 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
 
     # 4. ワザを使うポケモンのタイプが「抵抗力」のタイプなら、抵抗力の数字をマイナス（p.315, p.321）
     # 計算の途中で 0 やマイナスになってもよい（p.319, p.321）
-    resistance_applied = weakness_resistance and defender.resistance is not None and attacker.pokemon_type == defender.resistance
+    # v0.45: ``resistance`` が False（「抵抗力」の影響を受けない）なら計算しない
+    resistance_applied = weakness_resistance and resistance and defender.resistance is not None and attacker.pokemon_type == defender.resistance
     if resistance_applied:
         amount -= defender.resistance_value
         steps.append(("4 抵抗力", amount))

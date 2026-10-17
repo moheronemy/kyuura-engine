@@ -31,6 +31,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    driver_retreat_cost,
     BILL, CATERPIE, DEFENDER, FIRE, GRASS, PARAS, PLUSPOWER, PONYTA, POTION, RATTATA, SWITCH, VULPIX, WEEDLE, coin_events,
     energy_in_hand, expand_decklist, trainer_policy_command,
 )
@@ -89,7 +90,7 @@ def _rotation_command(state, *, allow_retreat):
     mine = _status_attack(state, active)
     if mine is not None and mine[1] in wanted and mine[2]:
         return None
-    cost = state.card_def(active.card).retreat_cost
+    cost = driver_retreat_cost(state, active)
     if len(active.energy) < cost:
         return None
     for benched in p.bench:
@@ -107,7 +108,7 @@ def confusion_policy_command(state, *, janken_winner=0, cure=True, tried=()):
     p = state.players[player]
     active = p.active
     conditions = active.conditions
-    cost = state.card_def(active.card).retreat_cost
+    cost = driver_retreat_cost(state, active)
     retreat = Retreat(player, tuple(active.energy[:cost]), p.bench[0].card) if p.bench and len(active.energy) >= cost else None
     can_retreat = retreat is not None and "retreat" not in tried
     if can_retreat and (active.retreat_failed_turn == state.turn_number or conditions.asleep or conditions.paralyzed):

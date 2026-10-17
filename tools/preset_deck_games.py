@@ -79,7 +79,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, preset_deck, preset_deck_ids,
+    AttachEnergy, EndTurn, IllegalActionError, Phase, PlayTrainer, ResolveDecision, UnsupportedError, UseAttack, max_hp, preset_deck, preset_deck_ids,
 )
 from kyuura_engine.cards import EnergyType  # noqa: E402
 from kyuura_engine.effects import SKIP_EVOLUTION_OK, skip_evolution_pairs  # noqa: E402
@@ -93,6 +93,7 @@ COMPUTER_SEARCH = "PMCG1-090"  # v0.22
 ENERGY_RETRIEVAL = "PMCG1-076"  # v0.23
 POKEMON_TRADER = "PMCG1-093"  # v0.24
 POKEMON_BREEDER = "PMCG1-094"  # v0.25
+DEVOLUTION_SPRAY = "PMCG1-086"  # v0.50（docs/mew-devolution-spray-v0.50.md）
 BILL = "PMCG1-074"
 PLUSPOWER = "PMCG1-081"
 DEFENDER = "PMCG1-079"
@@ -179,14 +180,15 @@ def deck_cards(deck_id, variant="preset"):
 
 
 def _remaining_hp(state, pokemon):
-    return state.card_def(pokemon.card).hp - pokemon.damage
+    return max_hp(state, pokemon) - pokemon.damage
 
 
 def _gust_target(state, options):
     """突風で呼ぶ相手の控えポケモン（決まった手順。強さを目指したものではない）。"""
     def key(pid):
         pokemon = state.find_pokemon(pid)[1]
-        return (_remaining_hp(state, pokemon), -state.card_def(pokemon.card).retreat_cost, len(pokemon.energy), options.index(pid))
+        # v0.47: なにかの化石・ピッピ人形の「にげる」は決まらない（PF2。印刷の数がない）ので 0 として並べる（ほかのポケモンの並びは変わらない）
+        return (_remaining_hp(state, pokemon), -(state.card_def(pokemon.card).retreat_cost or 0), len(pokemon.energy), options.index(pid))
     return min(options, key=key)
 
 
@@ -299,9 +301,14 @@ TRAINER_EVENTS = {
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
     POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24
-    # v0.25: 進化（と、進化で消える特殊状態・持続する効果・にげるの失敗の記録）だけ
+    # v0.25: 進化（と、進化で消える特殊状態・持続する効果・にげるの失敗の記録）だけ。v0.43: 進化させた 2 進化ポケモンの場に出たときの特殊能力（わるいカイリューの
+    # ［てしたをよぶ］）の使う機会の答え（使わない・宣言）と、その処理（山札からベンチに出す・山札を切る）
     POKEMON_BREEDER: {"evolve": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
-                      "retreat_failure_cleared": "user"},
+                      "retreat_failure_cleared": "user", "entry_power_declined": "user", "pokemon_power": "user", "bench_from_deck": "user",
+                      "shuffle": "user"},
+    # v0.50: 退化スプレー。自分の進化ポケモンからはがす（退化で消える特殊状態・持続する効果・にげるの失敗の記録）か、はがさない（0 枚）。きぜつはトラッシュしたあと
+    DEVOLUTION_SPRAY: {"devolve": "user", "devolve_declined": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
+                       "retreat_failure_cleared": "user"},
 }
 
 

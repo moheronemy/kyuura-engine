@@ -30,6 +30,9 @@ p.56・p.321 の最新の説明。p.57 のワザ解説）を加えた。自分�
   きぜつではない）
 - ``USED``（v0.36）: 説明が「効果は1回できえる」と書く効果を使った（サンドの「すなかけ」の手順 4 のコインを投げた。``AttackCoinCheck.single_use``）
 
+v0.45: 期限のない効果（``AttackCoinCheck.lasting``。カスミのタッツーの「スミをかける」の「それ以後」）は ``EXPIRED`` で消えない（``lasting``）。ほかの契機
+（ベンチ・進化・きぜつ・山札や手札にもどる）では、ほかの効果と同じに消える。
+
 持続する効果は物理的なカードではないので、消えてもトラッシュには何も置かない。乱数も使わない。一度消えた効果は、
 ベンチから再びバトル場に出ても復活しない（p.322）。
 """
@@ -38,7 +41,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
+from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     AttackCoinCheck,
@@ -49,10 +52,15 @@ from .state import (
     CannotUseOwnAttack,
     DamageReduction,
     DestinyBond,
+    HalvedDamage,
+    MaxHpSet,
     NextTurnAttackDamage,
     PreventDamage,
     ReducedDamageToSource,
+    ResistanceChange,
     Retaliation,
+    WeaknessChange,
+    ZeroDamageBelow,
 )
 
 if TYPE_CHECKING:
@@ -62,8 +70,17 @@ EXPIRED = "expired"  # 効果がはたらく番の終わり（p.236・p.18 の�
 KNOCK_OUT = "knock_out"  # きぜつして場をはなれた（p.322）
 RETURN_IN_PLAY_TO_DECK = "return_in_play_to_deck"  # v0.36: ワザの効果で山札にもどって場をはなれた（p.322。くもがくれガス）
 USED = "used"  # v0.36: 「効果は1回できえる」効果を使った（サンドの「すなかけ」）
-# FORCED_SWITCH は v0.4d、RETURN_IN_PLAY_TO_DECK・USED は v0.36
-REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED)
+# v0.42: 特殊能力・ワザの効果で手札にもどって場をはなれた（p.322。メノクラゲの「おくびょう」・エリカのピクシーの「ようせいのきせき」）
+RETURN_IN_PLAY_TO_HAND = "return_in_play_to_hand"
+# FORCED_SWITCH は v0.4d、RETURN_IN_PLAY_TO_DECK・USED は v0.36、RETURN_IN_PLAY_TO_HAND は v0.42
+# v0.47: なにかの化石・ピッピ人形を、自分の番に自分の場からトラッシュにすてた（場をはなれた。きぜつではない。p.322）
+DISCARD_FROM_PLAY = "discard_from_play"
+# v0.48: 同じ種類の効果を新しく与えたので、前の効果を消した（「テクスチャー1」をもう一度受けて弱点の色が変わる・「きょだいか」をもう一度「おもて」で使う。
+# 期限のない効果（``lasting``）だけ。新しい効果のログ ``persistent_effect_added`` のすぐ前に残す）
+REPLACED = "replaced"
+# v0.50: 退化した（p.324「19」。CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION。理由の値は特殊状態の ``conditions.DEVOLVE`` と同じ）
+REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
+                   REPLACED, DEVOLVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -126,8 +143,24 @@ def remove_expired_persistent_effects(state: GameState) -> None:
     """
     for owner in (state.current_player, 1 - state.current_player):
         for pokemon in state.players[owner].in_play():
-            expired = tuple(e for e in pokemon.persistent_effects if e.active_turn == state.turn_number and not expires_at_turn_start(e))
+            expired = tuple(e for e in pokemon.persistent_effects
+                            if e.active_turn == state.turn_number and not expires_at_turn_start(e) and not lasting(e))
             remove_persistent_effects(state, owner, pokemon, EXPIRED, expired)
+
+
+def lasting(effect) -> bool:
+    """期限のない効果か（v0.45。``AttackCoinCheck.lasting``。「スミをかける」の「それ以後」。v0.48 の ``WeaknessChange``・``ResistanceChange``・``MaxHpSet`` は型で
+    期限がない）。期限（``EXPIRED``）では消えない。"""
+    return getattr(effect, "lasting", False) is True
+
+
+def replace_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
+    """``pokemon`` に、期限のない効果（v0.48。``WeaknessChange``・``ResistanceChange``・``MaxHpSet``）を与える。同じ型の効果がすでにあれば、それを理由
+    ``REPLACED`` で消してから与える（受けているポケモンに同じ型の効果は 1 つ。新しく受けた色・最大HPが今有効な値）。"""
+    if not lasting(effect):
+        raise ValueError(f"前の効果と置きかえるのは期限のない効果だけ（{effect!r}）")
+    remove_persistent_effects(state, owner, pokemon, REPLACED, tuple(e for e in pokemon.persistent_effects if type(e) is type(effect)))
+    add_persistent_effect(state, owner, pokemon, effect, attack=attack, **extra)
 
 
 def expires_at_turn_start(effect) -> bool:
@@ -181,7 +214,20 @@ def retaliation(state: GameState, pokemon: PokemonInPlay) -> Retaliation | None:
     return None
 
 
-def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> NextTurnAttackDamage | None:
+def effect_attack_card(state: GameState, effect) -> str:
+    """持続する効果を与えたワザ（と ``target_attack_index`` のワザ）を印刷したカードの id（v0.49）。効果の ``attack_card`` があればそれ、なければ ``source_card`` の
+    カードの id（v0.48 までと同じ。ワザの出どころがいちばん上のカードのとき）。"""
+    return effect.attack_card if effect.attack_card is not None else state.cards[effect.source_card].card_id
+
+
+def _attack_pair(state: GameState, pokemon: PokemonInPlay, key) -> tuple[str, int]:
+    """ワザの (印刷したカードの id, 位置)（v0.49）。``key`` は ``AttackKey``。整数（v0.48 までの呼び方）なら、いちばん上のカードのワザの位置。"""
+    if isinstance(key, int):
+        return state.cards[pokemon.card].card_id, key
+    return key.card_id, key.attack_index
+
+
+def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, key) -> NextTurnAttackDamage | None:
     """今の番に、``pokemon`` が使う ``attack_index`` 番目のワザ（いちばん上のカードの）のダメージを変える効果（``NextTurnAttackDamage``。
     v0.27 のストライクの「つるぎのまい」）がはたらいているなら、その効果。そうでなければ None。
 
@@ -195,8 +241,9 @@ def next_turn_attack_damage(state: GameState, pokemon: PokemonInPlay, attack_ind
             isinstance(effect, NextTurnAttackDamage)
             and effect.active_turn == state.turn_number
             and effect.source_card == pokemon.card
-            and effect.target_attack_index == attack_index
+            and (effect_attack_card(state, effect), effect.target_attack_index) == _attack_pair(state, pokemon, key)
         ):
+            # v0.49: 変わるワザは ``AttackKey``（印刷したカードの id と位置）で探す。v0.48 までの効果（``attack_card`` が None）は、いちばん上のカードのワザ
             return effect
     return None
 
@@ -217,6 +264,16 @@ def attack_barrier(state: GameState, pokemon: PokemonInPlay) -> AttackBarrier | 
 def damage_reduction(state: GameState, pokemon: PokemonInPlay) -> DamageReduction | None:
     """今の番に ``pokemon`` が受けるワザのダメージを減らす効果（v0.31。ピクシーの「ちいさくなる」）がはたらいているなら、その効果。"""
     return _active(state, pokemon, DamageReduction)
+
+
+def zero_damage_below(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageBelow | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを、決まった数より小さければ 0 にする効果（v0.45。イワークの「かたくなる」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, ZeroDamageBelow)
+
+
+def halved_damage(state: GameState, pokemon: PokemonInPlay) -> HalvedDamage | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを半分（切りすて）にする効果（v0.46。エリカのタマタマの「リフレクター」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, HalvedDamage)
 
 
 def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None:
@@ -240,19 +297,28 @@ def cannot_attack_while_source_active(state: GameState, pokemon: PokemonInPlay) 
     return effect if active is not None and active.card == effect.source_card else None
 
 
-def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -> CannotUseOwnAttack | CannotUseAttack | None:
+def attack_locked(state: GameState, pokemon: PokemonInPlay, key) -> CannotUseOwnAttack | CannotUseAttack | None:
     """今の番に、``pokemon`` が ``attack_index`` 番目のワザ（いちばん上のカードの）を使えない効果がはたらいているなら、その効果（v0.35）。
 
     - ``CannotUseOwnAttack``（カスミのニョロモの「あわあわ」の「次の自分の番、このカードは「あわあわ」を使えない」）: 自分自身の効果。効果を与えた
       カード（``source_card``）がいちばん上のカードのときだけ（進化すると効果は消える。p.310・p.323）
     - ``CannotUseAttack``（「ドわすれ」の「次の相手の番、そのポケモンは、そのワザを使えない」）: 相手に与えられた効果
-    どちらも、ワザの位置で探す（ワザの名前では探さない。ほかのワザは使える）。"""
+    どちらも、ワザの位置で探す（ワザの名前では探さない。ほかのワザは使える）。
+
+    v0.49: ``key`` は使おうとするワザの ``AttackKey``（印刷したカードの id と位置）。使えなくなるワザも (カードの id, 位置) で持つ（``attack_card``・
+    ``target_attack_card``。None ならいちばん上のカード。v0.48 までと同じ）。ワザの一覧（［サイコリンク］・［へんしん］・「ばける」・「思い出させる」）が変わっても、
+    同じワザ（同じカードの同じ位置）に当てはまる。出どころ（どのポケモンが供給したか）は問わない。"""
     for effect in pokemon.persistent_effects:
         if not isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)) or effect.active_turn != state.turn_number:
             continue
-        if effect.target_attack_index != attack_index:
-            continue
-        if isinstance(effect, CannotUseOwnAttack) and effect.source_card != pokemon.card:
+        if isinstance(effect, CannotUseOwnAttack):
+            if effect.source_card != pokemon.card:
+                continue
+            target = (effect_attack_card(state, effect), effect.target_attack_index)
+        else:
+            target_card = effect.target_attack_card if effect.target_attack_card is not None else state.cards[pokemon.card].card_id
+            target = (target_card, effect.target_attack_index)
+        if target != _attack_pair(state, pokemon, key):
             continue
         return effect
     return None
@@ -260,9 +326,26 @@ def attack_locked(state: GameState, pokemon: PokemonInPlay, attack_index: int) -
 
 def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[AttackCoinCheck, ...]:
     """今の番に ``pokemon`` がワザを使うときに、p.309 の手順 4 のコインを投げる効果（v0.36。``AttackCoinCheck``。「すなかけ」・「えんまく」など）のうち、
-    はたらいているもの（はたらく番が今の番）。ふつうは 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で同じ種類は
-    1 つまで）。"""
-    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_turn == state.turn_number)
+    はたらいているもの（はたらく番が今の番。v0.45 の期限のない効果（「スミをかける」の「それ以後」）は、はたらく番とそれ以後の番。``AttackCoinCheck.active_on``）。
+    v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
+    もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
+    return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
+
+
+def max_hp_set(pokemon: PokemonInPlay) -> MaxHpSet | None:
+    """``pokemon`` の最大HPを決まった数にする効果（v0.48。キョウのメタモンの「きょだいか」）。与えたときからはたらき、期限はない（バトル場をはなれる・進化で消える）。
+    最大HP（``effects.max_hp``）と「はたく」のダメージ（``programs.AmountIfSelfMaxHpSet``）が、同じこの問い合わせで「きょだいか」の効果の有無を見る。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, MaxHpSet)), None)
+
+
+def weakness_change(pokemon: PokemonInPlay) -> WeaknessChange | None:
+    """``pokemon`` の弱点の色を変える効果（v0.48。「テクスチャー1」）。与えたときからはたらき、期限はない。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, WeaknessChange)), None)
+
+
+def resistance_change(pokemon: PokemonInPlay) -> ResistanceChange | None:
+    """``pokemon`` の抵抗力の色を変える効果（v0.48。「テクスチャー2」）。与えたときからはたらき、期限はない。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, ResistanceChange)), None)
 
 
 def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | None:

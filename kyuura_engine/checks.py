@@ -11,10 +11,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from .cards import can_pay_cost
 from .commands import PromoteActive, ResolveDecision, TakePrize
 from .decisions import DECISION_PHASE_ORDER, check_choices
-from .effects import AttackKey
+from .effects import AttackKey, attack_cost_payable, find_attack_option, form_def
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import attack_locked, cannot_attack, cannot_attack_while_source_active
 from .state import Phase
@@ -22,7 +21,7 @@ from .state import Phase
 if TYPE_CHECKING:
     from .cards import Attack, CardDefinition
     from .commands import UseAttack
-    from .effects import AttackEffect
+    from .effects import AttackEffect, AttackOption
     from .state import GameState, PendingDecision, PlayerState, PokemonInPlay
 
 PLAYERS = (0, 1)
@@ -76,6 +75,7 @@ class AttackRequest:
     attack: Attack
     effect: AttackEffect
     key: AttackKey
+    option: AttackOption | None = None  # v0.49: 選んだワザの出どころ（印刷したカード・持ち方・供給するポケモン）
 
 
 def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
@@ -86,9 +86,14 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
     """
     p = require_turn(state, cmd.player)
     attacker = p.active
-    attacker_def = state.card_def(attacker.card)
-    if not 0 <= cmd.attack_index < len(attacker_def.attacks):
-        raise IllegalActionError("INVALID_ATTACK", f"{attacker_def.name_ja} に {cmd.attack_index!r} 番目のワザはない")
+    # v0.49（docs/virtual-attacks-transformation-v0.49.md 2 章）: 使うワザは、今持つワザ（``effects.available_attacks``）から、印刷したカード（``cmd.card``。None なら
+    # 今の姿のカード）と位置で探す。今の姿（［へんしん］・「ばける」）・［サイコリンク］・「思い出させる」のワザも、ここで同じに確かめる
+    option = find_attack_option(state, attacker, cmd.card, cmd.attack_index)
+    if option is None:
+        name = form_def(state, attacker).name_ja
+        where = "" if cmd.card is None else f"（カード {cmd.card!r} の）"
+        raise IllegalActionError("INVALID_ATTACK", f"{name} に{where} {cmd.attack_index!r} 番目のワザはない")
+    attacker_def = state.definitions[option.card_id]
     require_not_asleep_or_paralyzed(attacker, "ワザを使うことができない（p.309・p.322）")
     if cannot_attack(state, attacker) is not None:
         # v0.31: イーブイの「しっぽをふる」を受けた（次の相手の番にワザをつかえない）。ねむり・マヒと同じ場所（宣言の前・エネルギーの確認より前）
@@ -98,21 +103,30 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 今バトル場にいるときだけ。「しっぽをふる」と同じ場所・同じコード（宣言の前・エネルギーの確認より前）
         raise IllegalActionError("ATTACK_PREVENTED", f"バトル場のポケモン {attacker.pokemon_id} は、効果を与えたポケモンがバトル場にいる間、この番はワザを使えない"
                                  "（相手のワザの効果）")
-    if attack_locked(state, attacker, cmd.attack_index) is not None:
+    if attack_locked(state, attacker, option.key) is not None:
         # v0.35: カスミのニョロモの「あわあわ」（自分）・「ドわすれ」（相手が選んだワザ）で、この番はこのワザを使えない。ほかのワザは使える。
-        # 「しっぽをふる」と同じ場所（宣言の前・エネルギーの確認より前）
+        # 「しっぽをふる」と同じ場所（宣言の前・エネルギーの確認より前）。v0.49: ワザは ``AttackKey`` で探す（出どころによらない。「メガバーン」）
         raise IllegalActionError("ATTACK_LOCKED", f"バトル場のポケモン {attacker.pokemon_id} は、この番は {cmd.attack_index} 番目のワザを使えない（ワザの効果）")
-    attack = attacker_def.attacks[cmd.attack_index]
+    attack = attacker_def.attacks[option.attack_index]
     effect = state.effects.attack_effect(attacker_def.id, attack, attacker_def.attacks)
     if effect is None:
         problem = state.effects.attack_problem(attacker_def.id, attack, attacker_def.attacks)
         raise UnsupportedError("UNSUPPORTED_ATTACK", f"ワザ「{attack.name_ja}」は未対応（{problem}）")
-    if not can_pay_cost(attack.cost, state.energy_types(attacker)):
+    if effect.once_after_entering_play and option.problem is None and (option.card, option.attack_index) in attacker.attacks_used_once:
+        # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」ワザを、この場のポケモンがもう使った（記録は場のポケモンの ``attacks_used_once``。
+        # 宣言のときに記録する。ログから数えない）。エネルギーの確認の前（説明が使えないとするワザなので、必要なエネルギーがあっても使えない）
+        raise IllegalActionError("ATTACK_ALREADY_USED", f"バトル場のポケモン {attacker.pokemon_id} は、ワザ「{attack.name_ja}」を場に出てからもう使った"
+                                 "（場に出てから1回しか使えない）")
+    if not attack_cost_payable(state, attacker, attack):
+        # v0.49: 必要なエネルギーはどのワザの出どころでも同じに確かめる（［へんしん］のメタモンはエネルギーカードをどの色としても払える。``effects.attack_cost_payable``）
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
     problem = effect.usage_problem(state, attacker)  # v0.31: 説明が書くワザを使うための条件（「ぼーっとする」）
     if problem is not None:
         raise problem
-    return AttackRequest(cmd.player, attacker, attacker_def, attack, effect, AttackKey(attacker_def.id, cmd.attack_index))
+    if option.problem is not None:
+        # v0.49: 選ぶと止めるワザ（VS1・RC2〜RC4・VA1）。原典で決められない理由はほかの確認がすべて通ったあと（API の約束）
+        raise UnsupportedError(option.problem[0], f"ワザ「{attack.name_ja}」（カード {option.card}）: {option.problem[1]}")
+    return AttackRequest(cmd.player, attacker, attacker_def, attack, effect, option.key, option)
 
 
 # ---------------------------------------------------------------- 保留中の決定への答え

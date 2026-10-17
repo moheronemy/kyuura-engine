@@ -27,14 +27,12 @@ if TYPE_CHECKING:
 
 
 def _suppressor(state: GameState, pokemon: PokemonInPlay) -> tuple[SuppressOtherPowers, ...]:
-    """場のポケモン ``pokemon`` の（いちばん上のカードの）特殊能力のうち、ほかの特殊能力を消す実装が登録されたもの。"""
-    definition = state.card_def(pokemon.card)
-    found = []
-    for power in definition.powers:
-        effect = state.effects.power_effect(definition.id, power)
-        if isinstance(effect, SuppressOtherPowers):
-            found.append(effect)
-    return tuple(found)
+    """場のポケモン ``pokemon`` の今持つ特殊能力（v0.49 から ``effects.powers_of``。いちばん上のカードと「ばける」でのせたカード。メタモンの［へんしん］で写した
+    カードの特殊能力は入らない（TF1。写した特殊能力を持つかは決まらないので、``effects.form_problems`` がその状態にしない））のうち、ほかの特殊能力を消す実装が
+    登録されたもの。［へんしん］がはたらいているかはこの答えを聞くので、［へんしん］で決まる姿を聞かない（循環しない）。"""
+    from .effects import powers_of
+
+    return tuple(slot.effect for slot in powers_of(state, pokemon) if isinstance(slot.effect, SuppressOtherPowers))
 
 
 def working_power_suppressors(state: GameState) -> tuple[int, ...]:
@@ -71,7 +69,7 @@ def power_suppressors(state: GameState, pokemon_id: int, power_index: int = 0) -
     found = state.find_pokemon(pokemon_id)
     if found is None:
         raise ValueError(f"場のポケモンの番号 {pokemon_id!r} は場にいない")
-    definition = state.card_def(found[1].card)
+    definition = state.card_def(found[1].card)  # いちばん上のカードの特殊能力（v0.48 までと同じ呼び方。「ばける」でのせたカードの特殊能力は ``suppressors_of`` で聞く）
     if not 0 <= power_index < len(definition.powers):
         raise ValueError(f"場のポケモン {pokemon_id}（{definition.name_ja}）に {power_index!r} 番目の特殊能力はない")
     return suppressors_of(state, definition.powers[power_index])

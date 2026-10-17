@@ -86,6 +86,34 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 10 = 形式 9 に `power_uses_this_turn`（この番に使った「自分の番ごとに1回使える」特殊能力。[場のポケモンの番号, 特殊能力の位置] の並び）と `energy_burn`（この番に「エナジーバーン」で「炎」エネルギーになったエネルギーカード。[場のポケモンの番号, エネルギーカードの uid] の並び）を加えたもの。どちらも番の最初・番の終わりに空。
 - 形式 1〜9 は、どちらも空なら今までどおり書き出せる。空でなければ `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 10。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.31 のカードを使わない対戦では 2 つの項目は空）。[held-cards-v0.31.md](held-cards-v0.31.md) 6 章。
 
+### 4.4 書き出しの形式 11（v0.44）
+
+- 形式 11 = 形式 10 の場のポケモンごとに `attacks_used_once`（場に出てから 1 度だけ使えるワザで、このポケモンが使ったもの。[カードの uid, ワザの位置] の並び）と `evolution_permission_turn`（トレーナー「サカキ」の許可を受けた番。なければ null）を加えたもの。`attacks_used_once` はポケモンが場にいるあいだ残り（場をはなれたらポケモンごとなくなる）、`evolution_permission_turn` は番の終わりに消える。
+- 形式 1〜10 は、どちらもない（空・null）なら今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 11（`POKEMON_FIELDS_SINCE` に 2 つの項目）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.44 のカードを使わない対戦では 2 つの項目はない）。[search-evolution-once-attacks-v0.44.md](search-evolution-once-attacks-v0.44.md) 10 章。
+
+### 4.5 書き出しの形式 12（v0.47）
+
+- 形式 12 = 形式 11 に、最上位の `trainer_locks`（プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止。`{"player", "source_player", "source_card", "source_card_id", "effect", "created_turn", "expires_turn"}` の並び。与えた順。なければ `[]`）を加えたもの。禁止は消える番の終わりに消える。場のポケモンの項目ではなくプレイヤーの記録なので、最上位の項目にした。
+- 形式 1〜11 は、禁止がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 12（`TOP_FIELDS_SINCE` に `trainer_locks`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.47 のカードを使わない対戦では禁止はない）。次の新しい形式は 13。[fossil-hidden-info-v0.47.md](fossil-hidden-info-v0.47.md) 5.3 節。
+
+### 4.6 書き出しの形式 13（v0.48）
+
+- 形式 13 = 形式 12 の場のポケモンごとに `type_shift`（モルフォンの［へんしょく］で色を変えた記録。`{"color", "turn", "source_card", "source_card_id", "returned_to_bench"}`。なければ null）を加えたもの。記録は場をはなれるとポケモンごとなくなり、進化すると消える。変えた色が今有効か（VS1）は記録・番・場所・特殊状態・かがくへんかガスから求める値なので書かない。
+- 形式 1〜12 は、記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。v0.48 の持続する効果の種類（`weakness_change`・`resistance_change`・`max_hp_set`）は形式 8 の `persistent_effects` の値を加えただけ。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 13（`POKEMON_FIELDS_SINCE` に `type_shift`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.48 のカードを使わない対戦では記録はない）。次の新しい形式は 14。[effective-pokemon-properties-v0.48.md](effective-pokemon-properties-v0.48.md) 7.4 節。
+
+### 4.7 書き出しの形式 14（v0.49）
+
+- 形式 14 = 形式 13 の場のポケモンごとに `disguise`（タケシのキュウコンの「ばける」でのせた進化カード。`{"card", "card_id"}`。なければ null）と、最上位の `recalls`（思い出させるの記録。`{"player", "turn", "pokemon_id", "card", "card_id", "trainer", "trainer_card_id"}` の並び。`card` は使ったときの対戦ポケモンのいちばん上のカード、`trainer` は思い出させるのカード。なければ `[]`）を加えたもの。持続する効果は、効果を与えたワザ・対象のワザがいちばん上のカードのものでないとき（［サイコリンク］・［へんしん］・「ばける」・思い出させるで使ったワザ、「ドわすれ」で選んだワザ）だけ `attack_card`・`target_attack_card`（ワザを印刷したカードの id）を書く。`power_uses_this_turn` には、のせたカードの特殊能力を使った記録（[場のポケモンの番号, 特殊能力の位置, そのカードの uid]）が入る。今の姿（［へんしん］・「ばける」）・今使えるワザは状態から求める値なので書かない（観測が書く）。
+- 形式 1〜13 は、のせたカード・記録・その項目のある効果・のせたカードの特殊能力の使用の記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 14（`POKEMON_FIELDS_SINCE` に `disguise`、`TOP_FIELDS_SINCE` に `recalls`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.49 のカードを使わない対戦ではのせたカード・記録はない）。次の新しい形式は 15。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 8 章。
+
+### 4.8 書き出しの形式 15（v0.50）
+
+- 形式 15 = 形式 14 の場のポケモンごとに `devolved_turn`（最後に退化した番。退化していなければ null）を加えたもの。`power_uses_this_turn` には、進化・退化でいちばん上で
+  なくなったカードの「自分の番ごとに1回」の特殊能力の記録（[場のポケモンの番号, 特殊能力の位置, 使ったカードの uid]。`evolution.retag_power_uses`）が入る。
+- 形式 1〜14 は、退化した番のあるポケモン・置きかえた記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の
+  `LATEST_FORMAT` は 15（`POKEMON_FIELDS_SINCE` に `devolved_turn`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま
+  （v0.50 のカードを使わない対戦では退化した番はない）。次の新しい形式は 16。[mew-devolution-spray-v0.50.md](mew-devolution-spray-v0.50.md) 7 章。
+
 ## 5. ログ
 
 ```text

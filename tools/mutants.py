@@ -124,8 +124,8 @@ MUTANTS: tuple[Mutant, ...] = (
            '    recorded = {e.pid: e.frame for e in res.trace.of(KnockedOutRecorded)}\n    frames = {recorded[pokemon.pokemon_id] for _, pokemon in knocked(res) if pokemon.pokemon_id in recorded}',
            origin='v0.15d'),
     Mutant('M18', '理由の文の返す量を変える', R + 'kernel.py',
-           '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target)',
-           '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target] + 10, target)',
+           '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target, res.state)',
+           '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target] + 10, target, res.state)',
            origin='v0.15d'),
     Mutant('M19', '複製でなく渡された状態を変える', 'kyuura_engine/engine.py',
            '    new = state.clone()\n    handler(new, command,',
@@ -180,8 +180,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        result = run.fs.results[self.source]\n        if False:\n            return False',
            origin='v0.16e'),
     Mutant('R12', '同時のきぜつの印をつけない', R + 'flow.py',
-           '        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)',
-           '        PR.knock_out(state, owner, pokemon, simultaneous=False)',
+           # v0.47: きぜつの処理をまとめた _knock_out_all に、同時のきぜつの印を引数で渡すようにした（同じ誤りを今のコードに入れる）
+           '    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)',
+           '    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=False), None, candidates)',
            origin='v0.16e'),
     Mutant('R13', '補助関数が枠の外でも何もせずに進む', 'kyuura_engine/effects.py',
            '    if runtime is None:\n        raise RuntimeError(\n',
@@ -216,16 +217,18 @@ MUTANTS: tuple[Mutant, ...] = (
            '    child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
            origin='v0.17d'),
     Mutant('S07', '処理窓を誤る（受けた直後に処理する）', R + 'kernel.py',
-           '    fs.pending.extend(deferred)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)',
-           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= receiver_def.hp)',
+           '    fs.pending.extend(deferred)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))',
+           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))',
            origin='v0.17d'),
     Mutant('S08', '同じ効果を二重に発動する', R + 'kernel.py',
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',
            origin='v0.17d'),
-    # S09: v0.36 でくもがくれガスにも同じ確かめを置いたので、置きかえる前の文字列を Status の 1 か所に絞った（同じ誤りを入れる）
+    # S09: v0.36 でくもがくれガスにも同じ確かめを置いたので、置きかえる前の文字列を Status の 1 か所に絞った（同じ誤りを入れる）。v0.46 で、対象が［めんえき］で
+    # 特殊状態にならないときの条件を加えたので、置きかえる前の文字列をその条件に合わせた（同じ誤りを入れる）
     Mutant('S09', '未解決を勝手に解決する（Z23: ダメージを与えなくても自分をねむりにする）', R + 'programs.py',
-           '            if result.dealt <= 0:\n                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
+           '            if result.dealt <= 0 and not (immune and self.local_coin is None):\n'
+           '                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
            '                                       E.effect_after_no_damage_error(str(run.key), result, self.condition))',
            '            if False:\n                raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",\n'
            '                                       E.effect_after_no_damage_error(str(run.key), result, self.condition))',

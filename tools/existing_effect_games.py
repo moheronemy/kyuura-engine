@@ -101,6 +101,76 @@ tests/test_discard_energy_games_v0_30.py が数局だけ走らせる）。対戦
   Z23・HC3・HC4）・使うための条件（ゆうわくの ``NO_OPPONENT_BENCH``）・きあいずつきの ``ATTACK_LOCKED`` で拒否されたワザは、場から確かめてから別の操作を続ける
   （``V031_STOPS``）。v0.41 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに v0.41 のカードは入っていない
   ので、その組の結果は変わらない（``P31`` の組の決定・停止の確かめは v0.31 と同じ）。
+- v0.43（``--batch v0.43``。``PAIRINGS_V0_43``。docs/declared-entry-powers-v0.43.md）: ``G43``（草）: ナゾノクサ（第2弾・ロケット団）2 枚ずつ・わるいクサイハナ 3・
+  ズバット（化石の秘密・ロケット団）2 枚ずつ・わるいゴルバット 3・エリカのマダツボミ（PMCG5-010）4・エリカのウツドン 2、トレーナー 12、草エネルギー 28。``R43``（炎・超）:
+  ロケット団のヒトカゲ 4・リザード 2・ロケット団のスリープ 4・わるいスリーパー 2・ロケット団のヤドン 4・わるいヤドラン 3、トレーナー 12、炎エネルギー 15・超エネルギー 14。
+  ``L43``（雷・無色）: マチスのコイル（PMCG5-037・PMCG5-039）2 枚ずつ・マチスのレアコイル 3・ロケット団のミニリュウ 4・わるいハクリュー 3・わるいカイリュー 2・
+  ポケモン育て屋さん 2、トレーナー 12、雷エネルギー 30。組は ``G43`` 対 ``R43``・``R43`` 対 ``L43``・``L43`` 対 ``G43``・``G43`` 対 ``P31``（ピッピ・ピクシー・
+  カスミのコダックが v0.43 のワザを自分のワザとして使う）。v0.43 の宣言する特殊能力は ``_v043_power`` で使い（くさいかふんは相手の対戦ポケモンがこんらんでないとき、
+  えんかくさいみんはどちらの対戦ポケモンもねむりでないとき（両方のねむりはポケモンチェックの既知の停止 ``UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`` になる）、
+  エナジーチャージは番ごとに 1 度だけ試す）、決定は ``_v043_decision`` で答える（場に出たときの特殊能力の使う機会は 4 回に 1 回、使うことを選ぶと止める（PW3）ときは
+  いつも使わない。v0.43 の決定は元の手順より先に答える）。v0.43 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに
+  v0.43 のカードは入っていないので、その組の結果は変わらない（``P31`` の組の決定・停止の確かめは v0.31 と同じ）。
+- v0.44（``--batch v0.44``。``PAIRINGS_V0_44``。docs/search-evolution-once-attacks-v0.44.md）: ``K44``（草・闘）: キョウのビードル 4・キョウのコクーン 3・キョウのスピアー 2・
+  エリカのフシギダネ 4・ディグダ（ロケット団）4・カツラのマンキー 4、トレーナー 12、草エネルギー 15・闘エネルギー 12。``V44``（水・闘）: サカキのニャース 4・サカキのペルシアン 3・
+  サカキのコイキング 4・サカキのギャラドス 3・サカキのワンリキー 3・サカキのゴーリキー 2・サカキのカイリキー 1・サカキ 4、トレーナー 12、水エネルギー 14・闘エネルギー 10。
+  ``W44``（水・超・無色）: カスミのヒトデマン 4・コイキング（ロケット団）4・ギャラドス（第1弾）2・ナツメのバリヤード 4・_____のラッキー 4・カモネギ 3・ニャース（ロケット団）4、
+  トレーナー 12、水エネルギー 16・超エネルギー 7。組は ``K44`` 対 ``V44``・``V44`` 対 ``W44``・``W44`` 対 ``K44``・``W44`` 対 ``P31``（ピッピ・ピクシー・カスミのコダックが
+  v0.44 のワザを自分のワザとして使う。1 度だけ使えるワザはまねられない）。決定は ``_v044_decision``（元の手順より先に答える）、［うか］は ``_v044_power``、サカキと許可のある
+  ポケモンの進化は ``_v044_trainer``（今の番に場に出した・進化したサカキのポケモンと、そのポケモンから進化するカードが手札にあるときだけサカキを使う）。1 度しか使えないワザで
+  使ったものは選ばない。原典で決められない場合（FC1・RD9）で拒否されたワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。前の版のデッキに v0.44 のカードは
+  入っていないので、その組の結果は変わらない。
+- v0.45（``--batch v0.45``。``PAIRINGS_V0_45``。docs/conditional-damage-energy-v0.45.md）: ``G45``（草・水）: キョウのアーボ 4・キョウのアーボック 3・キョウのベトベター 4・
+  カスミのタッツー（PMCG5-024）4・カスミのパウワウ 3・カスミのジュゴン 2、トレーナー 12、草エネルギー 15・水エネルギー 13。``R45``（炎・雷）: カツラのヒトカゲ 4・
+  カツラのリザード 3・カツラのリザードン 2・コイル（第1弾）4・わるいレアコイル 3・R団のサンダー 3、トレーナー 12、炎エネルギー 15・雷エネルギー 14。``F45``（闘・無色）:
+  イワーク 3・コラッタ 4・ラッタ 3・R団のエビワラー 3・タケシのイシツブテ（PMCG5-047）4・タケシのサイホーン 1・タケシのサンド 1・サカキのニャース（PMCG6-068）3、
+  トレーナー 12、闘エネルギー 26。``W45``（水・超）: ゼニガメ（ロケット団）4・わるいカメール 3・わるいカメックス 2・ゴース（第1弾）4・ゴースト（第1弾）3、トレーナー 12、
+  水エネルギー 18・超エネルギー 14。組は ``G45`` 対 ``R45``・``R45`` 対 ``F45``・``F45`` 対 ``W45``・``W45`` 対 ``G45``・``G45`` 対 ``P31``（ピッピ・ピクシー・
+  カスミのコダックが v0.45 のワザを自分のワザとして使う。クロスカウンターはまねられない）。決定は ``_v045_decision``（じりょくせんは はがすカードの 1 つ目・つける控えの
+  最後、たすけをよぶは 4 回に 1 回は出さない）。原典で決められない場合（AC13・AC6・W24）で拒否されたワザは、場から確かめてから別の操作を続ける（``V031_STOPS``）。
+  v0.45 のカードも、使っていないワザのためにエネルギーをためる手順（v0.38 と同じ）を使う。前の版のデッキに v0.45 のカードは入っていないので、その組の結果は変わらない。
+- v0.46（``--batch v0.46``。``PAIRINGS_V0_46``。docs/continuous-powers-v0.46.md）: ``G46``（草・超）: エリカのフシギダネ 4・エリカのフシギソウ 3・エリカのフシギバナ 2・
+  エリカのタマタマ 4・エリカのナッシー 3・ナゾノクサ（第2弾・ロケット団）2 枚ずつ・わるいクサイハナ 3・わるいラフレシア 2、トレーナー 12、草エネルギー 17・超エネルギー 6。
+  ``P46``（超・無色）: バリヤード 4・エリカのミニリュウ 4・カビゴン 3・ドードー 4・ドードリオ 3、トレーナー 12、超エネルギー 30。``D46``（闘・草）: マンキー 4・
+  わるいオコリザル 3・ベトベター（ロケット団）4・わるいベトベトン 3・ドードー 2・ドードリオ 2、トレーナー 12、闘エネルギー 15・草エネルギー 15。組は ``G46`` 対 ``P46``・
+  ``P46`` 対 ``D46``・``D46`` 対 ``G46``・``G46`` 対 ``P31``（ピッピ・ピクシー・カスミのコダックが v0.46 のワザを自分のワザとして使う）。決定は ``_v046_decision``（せいちょうは
+  選べるだけ・1 枚 を順に、かくさんソーラービームは控えの最初の 2 匹）。「にげる」のエネルギーの数が常にはたらく特殊能力で変わるときは ``_v046_retreat`` が 1 局に 3 回まで
+  「にげる」を宣言する（少なくできるなら少ない数、増えるなら増えた数。少なくしてから 0 で止める読み方と答えが変わる数（CP2）は 1 度だけ試す）。［アレルギーかふん］で
+  トレーナーカードを使えない番は、元の手順に手札のトレーナーカードを見せずに選ばせる（``make_policy``）。元の手順が印刷の数で宣言した「にげる」（``WRONG_RETREAT_COST``）・
+  CP2・``TRAINER_PREVENTED`` は、場から確かめてから別の操作を続ける（tests/v017_games.py の ``play_game``）。v0.46 のカードも、使っていないワザのためにエネルギーをためる
+  手順（v0.38 と同じ）を使う。前の版のデッキに v0.46 のカードは入っていないので、その組の結果は変わらない。
+- v0.47（``--batch v0.47``。``PAIRINGS_V0_47``。docs/fossil-hidden-info-v0.47.md）: ``F47``（水・闘・超）: なにかの化石 4・オムナイト 3・オムスター 2・カブト 3・
+  カブトプス 2・マンキー（第2弾）4・コラッタ（ロケット団）4・コダック（化石の秘密）4・ピッピ人形 2、トレーナー 12、水エネルギー 7・闘エネルギー 11・超エネルギー 2。
+  ``H47``（超・雷）: スリープ 4・スリーパー 3・マチスのイーブイ 4・マチスのサンダース 3・コラッタ（ロケット団）4・コダック（化石の秘密）4・ピッピ人形 2、トレーナー 12、
+  超エネルギー 12・雷エネルギー 12。``A47``（闘・雷）: なにかの化石 4・プテラ 3・カブト 2・マンキー（第2弾）4・マチスのイーブイ 4・マチスのサンダース 2・
+  コラッタ（ロケット団）4・ピッピ人形 2、トレーナー 12、闘エネルギー 12・雷エネルギー 11。組は ``F47`` 対 ``H47``・``H47`` 対 ``A47``・``A47`` 対 ``F47``・``H47`` 対
+  ``P31``（ピッピ・ピクシー・カスミのコダックが、みらいよち・おどろかす・ずつう・こうしゅうはを自分のワザとして使う）。なにかの化石・ピッピ人形は、手札にありベンチに
+  空きがあれば場に出し（``_v047_trainer``。トレーナーの使用を禁止された番は 1 度拒否されてから出さない）、バトル場に出ている（ワザのない）なにかの化石・ピッピ人形は
+  控えがいればすてる（ベンチのピッピ人形も、番の番号が 7 の倍数の番にすてる）。［スパイ］・［わるふざけ］は使える番に使う（``_v047_power``）。決定は ``_v047_decision``
+  （［スパイ］の見る場所・［わるふざけ］のサイドの位置・おどろかすの手札の位置は順に、みらいよちは自分・相手の山札を順に、枚数は 3・1・2 枚を順に（0 枚は選ばない）、
+  並びは逆に）。［げんしのちから］で進化できない番（この番に ``EVOLUTION_PREVENTED`` で拒否された）は、元の手順に手札の進化カードを見せずに選ばせる（``make_policy``）。
+  バトル場のなにかの化石・ピッピ人形の「にげる」（PF2）・``EVOLUTION_PREVENTED``・``TRAINER_PREVENTED``（期限のある禁止も）は、場から確かめてから別の操作を続ける
+  （tests/v017_games.py の ``play_game``）。監査（``audit``）は、受け付けた操作ごとに、プレイヤー・観戦者に渡す観測（``observation_problems``）も確かめる。前の版の
+  デッキに v0.47 のカードは入っていないので、その組の結果は変わらない。
+- v0.48（``--batch v0.48``。``PAIRINGS_V0_48``。docs/effective-pokemon-properties-v0.48.md）: ``C48``（草・超）: ポリゴン（第1弾）2・ポリゴン（ロケット団）2・
+  キョウのメタモン 4・コンパン（第2弾）4・モルフォン 3、トレーナー 12、草エネルギー 19・超エネルギー 14。``S48``（超・草）: ナツメのゴース 4・ナツメのゴースト 3・
+  ナツメのゲンガー 3・キョウのメタモン 2・ベトベター（ロケット団）3・ベトベトン（化石の秘密。［かがくへんかガス］）2、トレーナー 12、超エネルギー 25・草エネルギー 6。組は ``C48`` 対
+  ``S48``（両方の席）・``C48`` 対 ``P31``・``S48`` 対 ``P31``（ピッピ・ピクシー・カスミのコダックが、v0.48 のワザを自分のワザとして使う）。［へんしょく］は使える番に
+  使い（``_v048_power``）、テクスチャー・［へんしょく］の色は ``_v048_decision`` が選べる色を順に選ぶ（原典で決められない色は選ばない）。ベトベトンへの進化で
+  ［ガスのからだ］が消えるなど、最大HPがのっているダメージ以下に下がる操作（MH1）と、［ガスのからだ］で最大HPが上がったポケモンの進化で HP がダメージ以下になる操作
+  （v0.4a の H1）は、場から確かめてから、その番はそのカードを手順に見せずに別の操作を続ける（tests/v017_games.py の ``play_game``・``make_policy``）。弱点・抵抗力の
+  ないポケモンへのテクスチャー（PG1）は ``V031_STOPS`` で場から確かめる。手順は、今有効な最大HP が印刷の HP と違う v0.48 のポケモンのいる盤面を数える
+  （``_v048_observe``。``v048_max_hp_<カード>_raised``・``…_over_printed``）。前の版のデッキに v0.48 のカードは入っていないので、その組の結果は変わらない。
+- v0.49（``--batch v0.49``。``PAIRINGS_V0_49``。docs/virtual-attacks-transformation-v0.49.md）: ``A49``（超）: ナツメのケーシィ 4・ナツメのユンゲラー 3・
+  ナツメのフーディン 3・ルージュラ 2・ケーシィ 3・ユンゲラー 2・思い出させる 4、トレーナー 12、超エネルギー 27。``D49``（炎・無）: タケシのロコン 4・
+  タケシのキュウコン 3・メタモン 4・ヒトカゲ 3・リザード 3・思い出させる 3、トレーナー 12、炎エネルギー 28。組は ``A49`` 対 ``D49``（両方の席）・``A49`` 対 ``P31``・
+  ``D49`` 対 ``P31``（ピッピ・ピクシー・カスミのコダックが、［サイコリンク］で持つワザ・［へんしん］の今の姿のワザを選ぶ）。手順は、今持つワザ（``available_attacks``）の
+  うち出どころが今の姿のいちばん上のカードでないもの（［サイコリンク］・［へんしん］・「ばける」・「思い出させる」）を、払えて止める理由がなければ優先して使い、
+  使った回数の少ないものから選ぶ（``_v049_attack``。``UseAttack`` の ``card``）。「ばける」は使える番に使い（のせるカードは選べるものを順に。``_v049_power``・
+  ``_v049_decision``）、のせたカードは 4 番ごとにもどす（``RemoveDisguise``。最大HPがダメージ以下に下がるときはもどさない）。「思い出させる」は対戦ポケモンが進化して
+  いて、すぐ下のカードのワザを払えるときに使う（``_v049_trainer``）。決められない姿（TF1・TF2・DG1）・MH1 で拒否される決定の答え・操作は、場から確かめてから別の答え・
+  操作を続ける（``_v049_answer``・tests/v017_games.py の ``play_game``）。どの答えでも止まる決定は対戦を止める（``halted``）。前の版のデッキに v0.49 のカードは
+  入っていないので、その組の結果は変わらない（ワザのログに ``card_id`` が書かれるのは v0.49 の出どころのワザだけ）。
 
 手順: tools/preset_deck_games.py の ``make_policy``（v0.26 から変えていない手順。決定ごとの持ち主・使用中のカードの確かめ ``check_…`` も数える）に、
 v0.28・v0.29 のカード（``TARGETS``）のワザの選び方だけを重ねる（``make_policy``）。バトル場がそのカードで、元の手順がワザか番の終わりを選んだとき、払えるワザ
@@ -129,22 +199,36 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    EndTurn, IllegalActionError, Phase, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command, check_invariants,
-    new_game, preset_deck,
+    EndTurn, EvolvePokemon, IllegalActionError, Phase, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command,
+    check_invariants, max_hp, new_game, preset_deck,
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
+from kyuura_engine.commands import DiscardFromPlay  # noqa: E402
 from kyuura_engine.decisions import (  # noqa: E402
-    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, BENCH_FROM_DECK, DISCARD_ENERGY, FORCED_SWITCH, SELECT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
+    ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
+    ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_TO_DECK_TOP, ENTRY_POWER, FORCED_SWITCH, HAND_TO_DECK,
+    MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_POKEMON,
+    REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK, SELECT_COLOR, SELECT_EVOLUTION_CARD, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
 )
 from kyuura_engine.effects import (  # noqa: E402
-    AttackKey as E_AttackKey, AttackUse, preview_attack_damage, working_counterattack_power, working_evasion_power,
+    AttackKey as E_AttackKey, AttackUse, preview_attack_damage, retreat_cost, working_counterattack_power, working_evasion_power,
 )
+from kyuura_engine.effects import COLORS, resistance_of, shift_color_options, type_readings, weakness_of  # noqa: E402  v0.48
 from kyuura_engine.resolution.programs import compile_attack  # noqa: E402
 from kyuura_engine.persistent import (  # noqa: E402
     attack_barrier, attack_coin_checks, attack_locked, cannot_attack, cannot_attack_while_source_active, cannot_retreat, destiny_bond,
     reduced_damage_to_source, retaliation,
 )
-from tests.log_audit import log_problems, serialization_problems  # noqa: E402
+from kyuura_engine.effects import trainer_use_blockers  # noqa: E402
+from kyuura_engine.commands import PromoteActive, RemoveDisguise, TakePrize  # noqa: E402  v0.49
+from kyuura_engine.effects import PowerKey as E_PowerKey  # noqa: E402  v0.49
+from kyuura_engine.effects import (  # noqa: E402  v0.49
+    any_color_energy, attack_cost_payable, available_attacks, current_form, find_attack_option, recall_records, shapeshift_choices,
+)
+from kyuura_engine.decisions import SELECT_DEVOLVE_COUNT  # noqa: E402  v0.50
+from kyuura_engine.effects import devolution_candidates, devolution_forbidden  # noqa: E402  v0.50
+from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
+from tests.log_audit import log_problems, observation_problems, serialization_problems  # noqa: E402
 from tests.v017_games import play_game  # noqa: E402
 from tools import preset_deck_games as driver  # noqa: E402
 
@@ -239,7 +323,67 @@ SABRINAS_GOLDUCK, SABRINAS_VENOMOTH, SABRINAS_SLOWBRO, ERIKAS_JIGGLYPUFF, ROCKET
 V0_41 = (GLOOM, VICTREEBEL, SEADRA, DARK_PERSIAN, BLAINES_MOLTRES, ROCKET_SLOWPOKE, ERIKAS_ODDISH, ERIKAS_ODDISH_40, ERIKAS_GLOOM, SABRINAS_PSYDUCK,
          SABRINAS_GOLDUCK, SABRINAS_VENOMOTH, SABRINAS_SLOWBRO, ERIKAS_JIGGLYPUFF, ROCKETS_MEWTWO)
 SABRINAS_SLOWPOKE = "PMCG6-044"
-TARGETS = V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41  # ワザの選び方を重ね、動きを数えるカード
+# v0.42（回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚。docs/power-decisions-v0.42.md）。進化元はクサイハナ（v0.41）・ヤドン（化石の秘密）・
+# ゴースト（化石の秘密。v0.9）・エリカのクサイハナ（v0.41）・ハクリュー（v0.33）・エリカのウツドン（v0.40）・ケーシィ（第1弾）
+SABRINAS_JYNX, VILEPLUME, SLOWBRO, GENGAR, ERIKAS_VILEPLUME = "PMCG6-052", "PMCG2-014", "PMCG3-028", "PMCG3-031", "PMCG5-014"
+SABRINAS_ABRA, SABRINAS_KADABRA, DRAGONITE, ERIKAS_VICTREEBEL, DARK_KADABRA = "PMCG6-043", "PMCG6-047", "PMCG3-043", "PMCG5-015", "PMCG4-034"
+DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE = "PMCG4-035", "PMCG3-011", "PMCG3-017", "PMCG5-060", "PMCG5-065"
+V0_42 = (SABRINAS_JYNX, VILEPLUME, SLOWBRO, GENGAR, ERIKAS_VILEPLUME, SABRINAS_ABRA, SABRINAS_KADABRA, DRAGONITE, ERIKAS_VICTREEBEL, DARK_KADABRA,
+         DARK_ALAKAZAM, TENTACOOL, TENTACRUEL, ERIKAS_CLEFAIRY, ERIKAS_CLEFABLE)
+ABRA, GASTLY, HAUNTER = "PMCG1-043", "PMCG3-029", "PMCG3-030"
+# v0.43（宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚。docs/declared-entry-powers-v0.43.md）。進化元はナゾノクサ（第2弾・ロケット団）・ズバット（化石の秘密・
+# ロケット団）・ヤドン（ロケット団）・ミニリュウ（ロケット団）・マチスのコイル（v0.29・v0.33）
+DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON = "PMCG4-006", "PMCG4-033", "PMCG4-012", "PMCG5-010", "PMCG5-040"
+DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO, DARK_DRAGONITE = "PMCG4-052", "PMCG4-009", "PMCG4-036", "PMCG4-053"
+V0_43 = (DARK_GLOOM, ROCKET_DROWZEE, ROCKET_CHARMANDER, ERIKAS_BELLSPROUT_40, LT_SURGES_MAGNETON, DARK_DRAGONAIR, DARK_GOLBAT, DARK_SLOWBRO, DARK_DRAGONITE)
+# v0.44（検索・進化・1 度だけ使えるワザの 14 枚。docs/search-evolution-once-attacks-v0.44.md）。トレーナーのサカキは TARGETS に入れない（ワザがない）
+ROCKET_DIGLETT, ROCKET_MEOWTH, ERIKAS_BULBASAUR, MISTYS_STARYU, ROCKET_MAGIKARP = "PMCG4-038", "PMCG4-047", "PMCG5-007", "PMCG5-027", "PMCG4-020"
+KOGAS_KAKUNA, KOGAS_BEEDRILL, FARFETCHD, GIOVANNIS_MAGIKARP, GIOVANNIS_GYARADOS = "PMCG6-011", "PMCG6-018", "PMCG1-063", "PMCG6-037", "PMCG6-040"
+SABRINAS_MR_MIME, BLAINES_MANKEY, BLANK_CHANSEY, GIOVANNIS_PERSIAN = "PMCG6-046", "PMCG6-056", "PMCG6-075", "PMCG6-071"
+V0_44 = (ROCKET_DIGLETT, ROCKET_MEOWTH, ERIKAS_BULBASAUR, MISTYS_STARYU, ROCKET_MAGIKARP, KOGAS_KAKUNA, KOGAS_BEEDRILL, FARFETCHD, GIOVANNIS_MAGIKARP,
+         GIOVANNIS_GYARADOS, SABRINAS_MR_MIME, BLAINES_MANKEY, BLANK_CHANSEY, GIOVANNIS_PERSIAN)
+GIOVANNI = "PMCG6-095"
+GIOVANNIS_MEOWTH, GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHAMP = "PMCG6-063", "PMCG6-057", "PMCG6-059", "PMCG6-061"
+# v0.45（条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などの 15 枚。docs/conditional-damage-energy-v0.45.md）。進化元はゴース（第1弾）・
+# カスミのパウワウ（v0.36）・キョウのアーボ・わるいカメール（v0.13）・コイル（第1弾）・カツラのリザード（v0.31）・コラッタ（第1弾）
+BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK = "PMCG1-047", "PMCG5-024", "PMCG5-031", "PMCG6-002", "PMCG6-019"
+KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD, ROCKETS_ZAPDOS = "PMCG6-007", "PMCG4-024", "PMCG4-030", "PMCG6-032", "PMCG6-042"
+ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40 = "PMCG1-054", "PMCG1-062", "PMCG5-054", "PMCG5-047", "PMCG6-068"
+V0_45 = (BASE_HAUNTER, MISTYS_HORSEA_50, MISTYS_DEWGONG, KOGAS_EKANS, KOGAS_ARBOK, KOGAS_GRIMER, DARK_BLASTOISE, DARK_MAGNETON, BLAINES_CHARIZARD,
+         ROCKETS_ZAPDOS, ONIX, RATICATE, ROCKETS_HITMONCHAN, BROCKS_GEODUDE_40, GIOVANNIS_MEOWTH_40)
+BASE_GASTLY, ROCKET_SQUIRTLE, DARK_WARTORTLE = "PMCG1-044", "PMCG4-018", "PMCG4-021"
+MR_MIME, ERIKAS_DRATINI, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DODRIO, DARK_MUK = "PMCG2-027", "PMCG5-063", "PMCG6-010", "PMCG4-041", "PMCG2-040", "PMCG4-007"
+DARK_VILEPLUME, SNORLAX, ERIKAS_VENUSAUR, ERIKAS_EXEGGCUTE, ERIKAS_EXEGGUTOR = "PMCG4-010", "PMCG2-047", "PMCG6-017", "PMCG5-012", "PMCG5-013"
+V0_46 = (MR_MIME, ERIKAS_DRATINI, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DODRIO, DARK_MUK, DARK_VILEPLUME, SNORLAX, ERIKAS_VENUSAUR, ERIKAS_EXEGGCUTE, ERIKAS_EXEGGUTOR)
+DODUO, GRIMER = "PMCG1-061", "PMCG4-004"
+# v0.47（docs/fossil-hidden-info-v0.47.md）
+MYSTERIOUS_FOSSIL, CLEFAIRY_DOLL = "PMCG3-046", "PMCG1-091"
+OMANYTE, OMASTAR, KABUTO, KABUTOPS, AERODACTYL = "PMCG3-015", "PMCG3-021", "PMCG3-035", "PMCG3-040", "PMCG3-041"
+JUNGLE_MANKEY, ROCKET_RATTATA, HYPNO, LT_SURGES_EEVEE, LT_SURGES_JOLTEON, FOSSIL_PSYDUCK = (
+    "PMCG2-028", "PMCG4-045", "PMCG3-032", "PMCG5-062", "PMCG5-042", "PMCG3-010")
+V0_47 = (OMANYTE, OMASTAR, KABUTO, KABUTOPS, AERODACTYL, JUNGLE_MANKEY, ROCKET_RATTATA, HYPNO, LT_SURGES_EEVEE, LT_SURGES_JOLTEON, FOSSIL_PSYDUCK)
+V0_47_TRAINERS = (MYSTERIOUS_FOSSIL, CLEFAIRY_DOLL)
+# v0.48（docs/effective-pokemon-properties-v0.48.md）。進化元はコンパン（第2弾。v0.32）。かがくへんかガスはベトベトン（化石の秘密。v0.8）
+PORYGON, ROCKET_PORYGON, VENOMOTH, KOGAS_DITTO = "PMCG1-064", "PMCG4-050", "PMCG2-015", "PMCG6-072"
+SABRINAS_GASTLY, SABRINAS_HAUNTER, SABRINAS_GENGAR = "PMCG6-049", "PMCG6-050", "PMCG6-054"
+V0_48 = (PORYGON, ROCKET_PORYGON, VENOMOTH, SABRINAS_GASTLY, SABRINAS_HAUNTER, SABRINAS_GENGAR, KOGAS_DITTO)
+MUK = "PMCG3-007"
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）。進化元はナツメのケーシィ・ナツメのユンゲラー（v0.42）・タケシのロコン（v0.36）
+SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES, RECALL = "PMCG6-053", "PMCG3-042", "PMCG5-019", "PMCG5-071"
+V0_49 = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES)
+V0_49_TRAINERS = (RECALL,)
+KADABRA = "PMCG1-046"  # ユンゲラー（第1弾。ケーシィから進化。「思い出させる」でケーシィの「ねんりき」を使う）
+# v0.50（docs/mew-devolution-spray-v0.50.md）。退化させる進化ポケモンは、第1弾のケーシィ・ユンゲラー・化石の秘密のゴースの系統・キョウのビードルの系統（［うか］）・
+# 第1弾のフシギダネの系統（ポケモン育て屋さんで 1 進化を飛ばした重なり）
+MEW, DEVOLUTION_SPRAY = "PMCG3-033", "PMCG1-086"
+V0_50 = (MEW,)
+V0_50_TRAINERS = (DEVOLUTION_SPRAY,)
+BULBASAUR, IVYSAUR, VENUSAUR = "PMCG1-001", "PMCG1-008", "PMCG1-011"
+# 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
+V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
+                   "UNRESOLVED_MAX_HP_DROP")
+TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
+           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50)  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -342,6 +486,91 @@ DECKS = {
     "C41": ((MEOWTH, 4), (DARK_PERSIAN, 3), (HORSEA, 4), (SEADRA, 3), (ERIKAS_JIGGLYPUFF, 4), (CHANSEY, 4), *TRAINERS, (WATER, 26)),
     # v0.41: 炎・草・超（闇からの挑戦）。ひのとりの炎 5 つ
     "R41": ((BLAINES_MOLTRES, 4), (SABRINAS_VENONAT, 4), (SABRINAS_VENOMOTH, 3), *TRAINERS, (FIRE, 25), (GRASS, 6), (PSYCHIC, 6)),
+    # v0.42: 草（第2弾・リーダーズスタジアム）。ヒーリング（ラフレシア）・ぼうぎょかふん（エリカのラフレシア）・かおりのわな（エリカのウツボット）
+    "G42": ((ODDISH, 4), (GLOOM, 3), (VILEPLUME, 2), (ERIKAS_ODDISH, 2), (ERIKAS_ODDISH_40, 2), (ERIKAS_GLOOM, 3), (ERIKAS_VILEPLUME, 2),
+            (ERIKAS_BELLSPROUT, 4), (ERIKAS_WEEPINBELL, 3), (ERIKAS_VICTREEBEL, 2), *TRAINERS, (GRASS, 21)),
+    # v0.42: 超（闇からの挑戦・化石の秘密）。へんなこうどう（ヤドラン）・のろい（ゲンガー）。ゴースト（化石の秘密）の「とうめい」もはたらく
+    "P42": ((SABRINAS_JYNX, 3), (SLOWPOKE, 4), (SLOWBRO, 3), (GASTLY, 4), (HAUNTER, 3), (GENGAR, 2), *TRAINERS, (PSYCHIC, 29)),
+    # v0.42: 超（闇からの挑戦・第1弾・ロケット団）。ぶっしつこうかん（わるいユンゲラー）
+    "D42": ((SABRINAS_ABRA, 4), (SABRINAS_KADABRA, 3), (ABRA, 4), (DARK_KADABRA, 3), (DARK_ALAKAZAM, 2), *TRAINERS, (PSYCHIC, 32)),
+    # v0.42: 水・無色（化石の秘密・第1弾・リーダーズスタジアム）。おくびょう（メノクラゲ）・かけつける（カイリュー）
+    "W42": ((TENTACOOL, 4), (TENTACRUEL, 3), (DRATINI, 4), (DRAGONAIR, 3), (DRAGONITE, 2), (ERIKAS_CLEFAIRY, 4), (ERIKAS_CLEFABLE, 3), *TRAINERS,
+            (WATER, 25)),
+    # v0.43: 草（第2弾・ロケット団・化石の秘密・リーダーズスタジアム）。くさいかふん（わるいクサイハナ）・こっそりかみつく（わるいゴルバット）・ようぶんきゅうしゅう
+    # （エリカのマダツボミ（PMCG5-010））。ナゾノクサ・ズバットは同じ名前の 2 つの版を 2 枚ずつ
+    "G43": ((ODDISH, 2), (ROCKET_ODDISH, 2), (DARK_GLOOM, 3), (FOSSIL_ZUBAT, 2), (ROCKET_ZUBAT, 2), (DARK_GOLBAT, 3), (ERIKAS_BELLSPROUT_40, 4),
+            (ERIKAS_WEEPINBELL, 2), *TRAINERS, (GRASS, 28)),
+    # v0.43: 炎・超（ロケット団・第1弾）。ほのおをもらう（ロケット団のヒトカゲ）・えんかくさいみん（ロケット団のスリープ）・つりあげる（わるいヤドラン）。リザード・わるい
+    # スリーパーはヒトカゲ・スリープ（名前）から進化する
+    "R43": ((ROCKET_CHARMANDER, 4), (CHARMELEON, 2), (ROCKET_DROWZEE, 4), (DARK_HYPNO, 2), (ROCKET_SLOWPOKE, 4), (DARK_SLOWBRO, 3), *TRAINERS,
+            (FIRE, 15), (PSYCHIC, 14)),
+    # v0.43: 雷・無色（リーダーズスタジアム・ロケット団）。エナジーチャージ（マチスのレアコイル）・しんかのひかり（わるいハクリュー）・てしたをよぶ（わるいカイリュー。
+    # 手札からの進化とポケモン育て屋さん）。マチスのコイルは同じ名前の 2 つの版を 2 枚ずつ
+    "L43": ((LT_SURGES_MAGNEMITE, 2), (LT_SURGES_MAGNEMITE_30, 2), (LT_SURGES_MAGNETON, 3), (ROCKET_DRATINI, 4), (DARK_DRAGONAIR, 3), (DARK_DRAGONITE, 2),
+            (driver.POKEMON_BREEDER, 2), *TRAINERS, (LIGHTNING, 30)),
+    # v0.44: 草・闘（闇からの挑戦・リーダーズスタジアム・ロケット団）。［うか］（キョウのコクーン）・ひっさつばり（キョウのスピアー）・おつかい（エリカのフシギダネ）・
+    # じめんにもぐる（ディグダ）・わるいいたずら（カツラのマンキー）
+    "K44": ((KOGAS_WEEDLE, 4), (KOGAS_KAKUNA, 3), (KOGAS_BEEDRILL, 2), (ERIKAS_BULBASAUR, 4), (ROCKET_DIGLETT, 4), (BLAINES_MANKEY, 4), *TRAINERS,
+            (GRASS, 15), (FIGHTING, 12)),
+    # v0.44: 水・闘・無色（闇からの挑戦）。［ボスをよぶ］（サカキのペルシアン）・サカキ（今の番に場に出した・進化したサカキのポケモンを進化させる）・りゅうのきおく・
+    # りゅうのたつまき・あらしをよぶ。サカキのワンリキー → ゴーリキー → カイリキーで、同じ番の 2 回の進化
+    "V44": ((GIOVANNIS_MEOWTH, 4), (GIOVANNIS_PERSIAN, 3), (GIOVANNIS_MAGIKARP, 4), (GIOVANNIS_GYARADOS, 3), (GIOVANNIS_MACHOP, 3), (GIOVANNIS_MACHOKE, 2),
+            (GIOVANNIS_MACHAMP, 1), (GIOVANNI, 4), *TRAINERS, (WATER, 14), (FIGHTING, 10)),
+    # v0.44: 水・超・無色（リーダーズスタジアム・ロケット団・闇からの挑戦・第1弾）。スターブーメラン・たきのぼりしんか（コイキング → ギャラドス（第1弾））・
+    # てじな（ナツメのバリヤード）・ラッキーたまご（_____のラッキー）・ネギでたたく（カモネギ）・こばんなげ（ニャース）
+    "W44": ((MISTYS_STARYU, 4), (ROCKET_MAGIKARP, 4), (GYARADOS, 2), (SABRINAS_MR_MIME, 4), (BLANK_CHANSEY, 4), (FARFETCHD, 3), (ROCKET_MEOWTH, 4),
+            *TRAINERS, (WATER, 16), (PSYCHIC, 7)),
+    # v0.45: 草・水（闇からの挑戦・リーダーズスタジアム）。とつぜんどく・どくをためる・ポイズンパワー・ベトベトハンド・スミをかける（それ以後の手順 4 のコイン）・
+    # こおりのつぶて
+    "G45": ((KOGAS_EKANS, 4), (KOGAS_ARBOK, 3), (KOGAS_GRIMER, 4), (MISTYS_HORSEA_50, 4), (MISTYS_SEEL, 3), (MISTYS_DEWGONG, 2), *TRAINERS,
+            (GRASS, 15), (WATER, 13)),
+    # v0.45: 炎・雷（闇からの挑戦・第1弾・ロケット団）。ファイヤーブレス（多いエネルギーのトラッシュ）・かえんひこう・じりょくせん（相手のエネルギーのつけかえ）・
+    # ソニックブーム・プラズマ・エレクトロバーン
+    "R45": ((BLAINES_CHARMANDER, 4), (BLAINES_CHARMELEON, 3), (BLAINES_CHARIZARD, 2), (MAGNEMITE, 4), (DARK_MAGNETON, 3), (ROCKETS_ZAPDOS, 3), *TRAINERS,
+            (FIRE, 15), (LIGHTNING, 14)),
+    # v0.45: 闘・無色（第1弾・リーダーズスタジアム・闇からの挑戦）。かたくなる・いかりのまえば・クロスカウンター・たすけをよぶ（タケシのポケモン）・スパイラルショット・
+    # てつだうふり・ダブルひっかき
+    "F45": ((ONIX, 3), (RATTATA, 4), (RATICATE, 3), (ROCKETS_HITMONCHAN, 3), (BROCKS_GEODUDE_40, 4), (BROCKS_RHYHORN, 1), (BROCKS_SANDSHREW, 1),
+            (GIOVANNIS_MEOWTH_40, 3), *TRAINERS, (FIGHTING, 26)),
+    # v0.45: 水・超（ロケット団・第1弾）。ハイドロキャノン・ロケットタックル・さいみんじゅつ・ゆめくい（相手がねむりでないと失敗）
+    "W45": ((ROCKET_SQUIRTLE, 4), (DARK_WARTORTLE, 3), (DARK_BLASTOISE, 2), (BASE_GASTLY, 4), (BASE_HAUNTER, 3), *TRAINERS, (WATER, 18), (PSYCHIC, 14)),
+    # v0.46: 草・超（闇からの挑戦・リーダーズスタジアム・第2弾・ロケット団）。［くつろぐかおり］・［アレルギーかふん］（お互いにトレーナーを使えない）・せいちょう・
+    # かくさんソーラービーム・リフレクター・タマゴばくだん・サイコエクスチェンジ・はなびらのうず
+    "G46": ((ERIKAS_BULBASAUR, 4), (ERIKAS_IVYSAUR, 3), (ERIKAS_VENUSAUR, 2), (ERIKAS_EXEGGCUTE, 4), (ERIKAS_EXEGGUTOR, 3), (ODDISH, 2), (ROCKET_ODDISH, 2),
+            (DARK_GLOOM, 3), (DARK_VILEPLUME, 2), *TRAINERS, (GRASS, 17), (PSYCHIC, 6)),
+    # v0.46: 超・無色（第2弾・リーダーズスタジアム・第1弾）。［なぞのかべ］・［ふしぎなバリアー］・［めんえき］・［にげるサポート］・ヨガのポーズ・いかり
+    "P46": ((MR_MIME, 4), (ERIKAS_DRATINI, 4), (SNORLAX, 3), (DODUO, 4), (DODRIO, 3), *TRAINERS, (PSYCHIC, 30)),
+    # v0.46: 闘・草（ロケット団・第1弾・第2弾）。［きょうぼう］・あばれくるう・［ねんちゃくえき］・［にげるサポート］
+    "D46": ((MANKEY, 4), (DARK_PRIMEAPE, 3), (GRIMER, 4), (DARK_MUK, 3), (DODUO, 2), (DODRIO, 2), *TRAINERS, (FIGHTING, 15), (GRASS, 15)),
+    # v0.47: 水・闘・超（化石の秘密・第2弾・ロケット団・第1弾）。なにかの化石から進化するオムナイト・カブトの系統（［おみとおし］・［カブトアーマー］）・ピッピ人形・
+    # ［スパイ］・［わるふざけ］・ずつう
+    "F47": ((MYSTERIOUS_FOSSIL, 4), (OMANYTE, 3), (OMASTAR, 2), (KABUTO, 3), (KABUTOPS, 2), (JUNGLE_MANKEY, 4), (ROCKET_RATTATA, 4), (FOSSIL_PSYDUCK, 4),
+            (CLEFAIRY_DOLL, 2), *TRAINERS, (WATER, 7), (FIGHTING, 11), (PSYCHIC, 2)),
+    # v0.47: 超・雷（化石の秘密・第1弾・リーダーズスタジアム・ロケット団）。みらいよち・おどろかす・こうしゅうは・いかりのサンダー・ずつう
+    "H47": ((DROWZEE, 4), (HYPNO, 3), (LT_SURGES_EEVEE, 4), (LT_SURGES_JOLTEON, 3), (ROCKET_RATTATA, 4), (FOSSIL_PSYDUCK, 4), (CLEFAIRY_DOLL, 2),
+            *TRAINERS, (PSYCHIC, 12), (LIGHTNING, 12)),
+    # v0.47: 闘・雷（化石の秘密・第2弾・リーダーズスタジアム・ロケット団）。［げんしのちから］（お互いに進化できない）
+    "A47": ((MYSTERIOUS_FOSSIL, 4), (AERODACTYL, 3), (KABUTO, 2), (JUNGLE_MANKEY, 4), (LT_SURGES_EEVEE, 4), (LT_SURGES_JOLTEON, 2), (ROCKET_RATTATA, 4),
+            (CLEFAIRY_DOLL, 2), *TRAINERS, (FIGHTING, 12), (LIGHTNING, 11)),
+    # v0.48: 無色・草（第1弾・ロケット団・ジャングル・闇からの挑戦）。テクスチャー1・2・サイケこうせん・［へんしょく］・りんぷん・きょだいか・はたく
+    # （「ポリゴン」は同じ名前なので、第1弾・ロケット団の 2 枚ずつで 4 枚）
+    "C48": ((PORYGON, 2), (ROCKET_PORYGON, 2), (KOGAS_DITTO, 4), (VENONAT, 4), (VENOMOTH, 3), *TRAINERS, (GRASS, 19), (PSYCHIC, 14)),
+    # v0.48: 超・草（闇からの挑戦・化石の秘密・ロケット団）。［ガスのからだ］・ナイトスピリッツ・ダメージぞうふく・やみのこえ・かがくへんかガス（［ガスのからだ］・
+    # ［へんしょく］を消す）・きょだいか
+    "S48": ((SABRINAS_GASTLY, 4), (SABRINAS_HAUNTER, 3), (SABRINAS_GENGAR, 3), (KOGAS_DITTO, 2), (GRIMER, 3), (MUK, 2), *TRAINERS,
+            (PSYCHIC, 25), (GRASS, 6)),
+    # v0.49: 超（闇からの挑戦・第1弾・リーダーズスタジアム）。［サイコリンク］（ルージュラ・ナツメのユンゲラー・ユンゲラーのワザ）・メガバーン・思い出させる
+    "A49": ((SABRINAS_ABRA, 4), (SABRINAS_KADABRA, 3), (SABRINAS_ALAKAZAM, 3), (JYNX, 2), (ABRA, 3), (KADABRA, 2), (RECALL, 4), *TRAINERS,
+            (PSYCHIC, 27)),
+    # v0.49: 炎・無（リーダーズスタジアム・化石の秘密・第1弾）。「ばける」（リザード・タケシのキュウコンをのせる）・おにび・［へんしん］・思い出させる
+    "D49": ((BROCKS_VULPIX, 4), (BROCKS_NINETALES, 3), (DITTO, 4), (CHARMANDER, 3), (CHARMELEON, 3), (RECALL, 3), *TRAINERS, (FIRE, 28)),
+    # v0.50: 超（化石の秘密・第1弾）。サイコウェーブ・たいかビーム（自分・相手の進化ポケモン）・退化スプレー（ケーシィ・ゴースの系統。ゴーストの［とうめい］・
+    # ゲンガーの［のろい］）。第1弾のフーディンは入れない（v0.7 の手順のダメージスワップは、きぜつさせる移動をわざと試し、その拒否は tests/test_alakazam_games_v0_7.py の
+    # 対戦の手順だけが数える。tests/v017_games.py の ``play_game`` では想定外の拒否になる）
+    "M50": ((MEW, 4), (ABRA, 4), (KADABRA, 3), (GASTLY, 4), (HAUNTER, 3), (GENGAR, 2), (DEVOLUTION_SPRAY, 4), *TRAINERS, (PSYCHIC, 24)),
+    # v0.50: 草（第1弾・闇からの挑戦）。退化スプレー（フシギバナの系統・キョウのビードルの系統。ポケモン育て屋さんで 1 進化を飛ばした重なり・［うか］で重ねた進化）
+    "E50": ((BULBASAUR, 4), (IVYSAUR, 2), (VENUSAUR, 2), (KOGAS_WEEDLE, 4), (KOGAS_KAKUNA, 3), (KOGAS_BEEDRILL, 2), (DEVOLUTION_SPRAY, 3),
+            (driver.POKEMON_BREEDER, 2), *TRAINERS, (GRASS, 26)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -360,9 +589,31 @@ PAIRINGS_V0_38 = (("F38", "G38"), ("G38", "C38"), ("C38", "F38"), ("C38", "P31")
 PAIRINGS_V0_39 = (("L39", "C39"), ("C39", "G39"), ("G39", "N39"), ("N39", "L39"))
 PAIRINGS_V0_40 = (("G40", "N40"), ("N40", "F40"), ("F40", "P40"), ("P40", "G40"))
 PAIRINGS_V0_41 = (("G41", "P41"), ("P41", "C41"), ("C41", "R41"), ("R41", "G41"), ("G41", "P31"), ("R41", "F37"))
+# v0.42: D42 対 P31（ピッピ・ピクシー・カスミのコダックが、エネループ・ライフダウン・テレポートブラスト・マインドショックなどを自分のワザとして使う）
+PAIRINGS_V0_42 = (("G42", "P42"), ("P42", "D42"), ("D42", "W42"), ("W42", "G42"), ("D42", "P31"))
+# v0.43: G43 対 P31（ピッピ・ピクシー・カスミのコダックが、ふらふらとぶ・のびるつる・どくのこななどを自分のワザとして使う）
+PAIRINGS_V0_43 = (("G43", "R43"), ("R43", "L43"), ("L43", "G43"), ("G43", "P31"))
+# v0.44: W44 対 P31（ピッピ・ピクシー・カスミのコダックが、てじな・ラッキーたまご・スターブーメランなどを自分のワザとして使う。1 度だけ使えるワザはまねられない）
+PAIRINGS_V0_44 = (("K44", "V44"), ("V44", "W44"), ("W44", "K44"), ("W44", "P31"))
+# v0.45: G45 対 P31（ピッピ・ピクシー・カスミのコダックが、スミをかける・とつぜんどく・ポイズンパワー・ベトベトハンドなどを自分のワザとして使う）
+PAIRINGS_V0_45 = (("G45", "R45"), ("R45", "F45"), ("F45", "W45"), ("W45", "G45"), ("G45", "P31"))
+# v0.46: G46 対 P31（ピッピ・ピクシー・カスミのコダックが、せいちょう・かくさんソーラービーム・リフレクター・サイコエクスチェンジなどを自分のワザとして使う）
+PAIRINGS_V0_46 = (("G46", "P46"), ("P46", "D46"), ("D46", "G46"), ("G46", "P31"))
+# v0.47: H47 対 P31（ピッピ・ピクシー・カスミのコダックが、みらいよち・おどろかす・ずつう・こうしゅうはを自分のワザとして使う）
+PAIRINGS_V0_47 = (("F47", "H47"), ("H47", "A47"), ("A47", "F47"), ("H47", "P31"))
+# v0.48: C48 対 P31・S48 対 P31（ピッピ・ピクシー・カスミのコダックが、テクスチャー1・2・きょだいか・はたく・ナイトスピリッツ・ダメージぞうふく・やみのこえを
+# 自分のワザとして使う）
+PAIRINGS_V0_48 = (("C48", "S48"), ("S48", "C48"), ("C48", "P31"), ("S48", "P31"))
+# v0.49: A49 対 P31・D49 対 P31（ピッピ・ピクシー・カスミのコダックが、［サイコリンク］で持つワザ・［へんしん］の今の姿のワザを自分のワザとして使う）
+PAIRINGS_V0_49 = (("A49", "D49"), ("D49", "A49"), ("A49", "P31"), ("D49", "P31"))
+# v0.50: M50 対 P31（ピッピ・ピクシー・カスミのコダックが、サイコウェーブ・たいかビームを自分のワザとして使う）・M50 対 D49（タケシのキュウコンの「ばける」の
+# ポケモン（退化させられない。DV5）・［へんしん］のメタモン（今の姿でなく実際の重なりで選ぶ））
+PAIRINGS_V0_50 = (("M50", "E50"), ("E50", "M50"), ("M50", "P31"), ("M50", "D49"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
-           "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41}
+           "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
+           "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
+           "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -373,6 +624,8 @@ RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy
                  "forced_switch", "destiny_bond",
                  # v0.32
                  "bench_from_deck", "bench_from_deck_none",
+                 # v0.45
+                 "move_opponent_energy", "take_deck_top",
                  # v0.33
                  "forced_switch_skipped",
                  # v0.34（テレポート）
@@ -385,17 +638,50 @@ V038_RESULT_EVENTS = ("discard_attached_cards", "reveal_from_deck", "reveal_from
 V040_RESULT_EVENTS = ("bench_from_deck_declined", "shuffle")
 # v0.41: v0.41 のカードのワザの中に出た結果のログ（v0.41 のカードだけで数える）。``shuffle`` はワザの効果で切ったもの（ログの ``effect``）だけ
 V041_RESULT_EVENTS = ("place_damage_counters", "swap_damage_counters", "attach_energy_from_deck", "attach_energy_from_deck_none", "shuffle")
+# v0.42: v0.42 のカードのワザの中に出た結果のログ（v0.42 のカードだけで数える）。``shuffle`` はワザの効果で切ったもの（ログの ``effect``）だけ
+V042_RESULT_EVENTS = ("return_energy_to_hand", "place_damage_counters", "evolve", "evolve_from_deck_none", "return_in_play_to_hand", "switch_declined",
+                      "shuffle")
+# v0.42: v0.42 のカードの特殊能力のログ（使ったカード・自動的にはたらいたカードで数える。宣言 pokemon_power も）
+V042_POWER_EVENTS = ("pokemon_power", "power_heal", "move_damage_counter", "switch", "discard_from_hand", "return_in_play_to_hand", "power_confusion",
+                     "power_confusion_skipped")
+# v0.43: v0.43 のカードの特殊能力のログ（使ったカードで数える。``power`` か ``effect`` に特殊能力の識別子があるもの）
+V043_POWER_EVENTS = ("special_condition", "move_energy", "reveal_from_deck", "shuffle", "bench_from_deck", "recover_pokemon", "recover_pokemon_none",
+                     "power_damage")
+# v0.46: v0.46 のカードのワザの中に出た結果のログ（v0.46 のカードだけで数える）。``shuffle`` はワザの効果で切ったもの（ログの ``effect``）だけ
+V046_RESULT_EVENTS = ("attach_energy_from_hand", "hand_to_deck", "shuffle")
+# v0.47: v0.47 のカードのワザの中に出た結果のログ（v0.47 のカードだけで数える）
+V047_RESULT_EVENTS = ("look_at_deck_top", "look_at_deck_top_none", "arrange_deck_top", "look_at_card", "hand_to_deck", "shuffle", "trainer_lock_added")
+# v0.48: v0.48 のカードのワザの中に出た結果のログ（v0.48 のカードだけで数える。``shuffle`` はワザの効果で切ったもの（ログの ``effect``）だけ）
+V048_RESULT_EVENTS = ("place_damage_counters", "shuffle")
 
 
 def _attacker(state, command):
     return state.players[command.player].active
 
 
+def _attack_definition(state, command):
+    """v0.49: 使おうとするワザを印刷したカードの定義（``UseAttack.card``。None なら今の姿のカード。v0.48 までは、いちばん上のカード）。"""
+    option = find_attack_option(state, _attacker(state, command), getattr(command, "card", None), command.attack_index)
+    return state.definitions[option.card_id] if option is not None else state.card_def(_attacker(state, command).card)
+
+
 def _copier(state, command):
-    effect = state.effects.attack_effect(state.card_def(_attacker(state, command).card).id,
-                                         state.card_def(_attacker(state, command).card).attacks[command.attack_index],
-                                         state.card_def(_attacker(state, command).card).attacks)
+    definition = _attack_definition(state, command)
+    effect = state.effects.attack_effect(definition.id, definition.attacks[command.attack_index], definition.attacks)
     return type(effect).__name__ in ("CopyOpponentAttackEffect", "ThreeCoinPsychicPower")
+
+
+def _attack_and_copied_types(state, command):
+    """v0.49: 使おうとするワザの実装の型の名前と、相手のワザを自分のワザとして使うワザ（ゆびをふる・ちょうのうりょく）なら、相手の対戦ポケモンが今持つワザ
+    （［サイコリンク］で持つワザ・［へんしん］の今の姿のワザも）の実装の型の名前。宣言の前の先読みは、まねるワザの選び方のすべてを試す。"""
+    names = {type(_attack_effect(state, command)).__name__}
+    defender = _defender(state, command)
+    if _copier(state, command) and defender is not None:
+        for option in available_attacks(state, defender):
+            definition = state.definitions[option.card_id]
+            effect = state.effects.attack_effect(definition.id, definition.attacks[option.attack_index], definition.attacks)
+            names.add(type(effect).__name__)
+    return names
 
 
 def _defender(state, command):
@@ -403,12 +689,14 @@ def _defender(state, command):
 
 
 def _attack_effect(state, command):
-    definition = state.card_def(_attacker(state, command).card)
+    definition = _attack_definition(state, command)
     return state.effects.attack_effect(definition.id, definition.attacks[command.attack_index], definition.attacks)
 
 
 # v0.31: 原典で決められない場合・エンジンの未対応で止まったワザを、場から確かめる関数（tests/v017_games.py の ``extra_stop``。止まるのが正しいなら True）
 V031_STOPS = {
+    # v0.49: ［へんしん］のメタモンが、タイプのエネルギーの数を数える・トラッシュするワザを使う（どの色としても数えるかが決まらない。TE1）
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT": lambda st, c: any_color_energy(st, _attacker(st, c)),
     "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
     # HC4（第4弾のコダック・v0.34 のシャワーズの「みずでっぽう」）
     "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: type(_attack_effect(st, c)).__name__ == "ExtraEnergyDamageMixed",
@@ -418,18 +706,20 @@ V031_STOPS = {
     "ATTACK_PREVENTED": lambda st, c: (cannot_attack(st, _attacker(st, c)) is not None
                                        or cannot_attack_while_source_active(st, _attacker(st, c)) is not None),
     "UNRESOLVED_DISCARD_DECK_SHORT": lambda st, c: (  # HC6: マグマふんしゅつ（自分の山札 5 枚未満）・やまやき（相手の山札 0 枚）
-        (st.card_def(_attacker(st, c).card).id, c.attack_index) == (BLAINES_MAGMAR, 1) and len(st.players[c.player].deck) < 5
-        or (st.card_def(_attacker(st, c).card).id, c.attack_index) == (MOLTRES, 0) and not st.players[1 - c.player].deck),
-    "NO_DAMAGE_COUNTERS": lambda st, c: st.card_def(_attacker(st, c).card).id == SLOWPOKE and _attacker(st, c).damage == 0,  # ぼーっとする
+        (_attack_definition(st, c).id, c.attack_index) == (BLAINES_MAGMAR, 1) and len(st.players[c.player].deck) < 5
+        or (_attack_definition(st, c).id, c.attack_index) == (MOLTRES, 0) and not st.players[1 - c.player].deck),
+    # ぼーっとする（v0.49: ワザを印刷したカードで見る。［へんしん］のメタモンがヤドンと同じカードのとき）
+    "NO_DAMAGE_COUNTERS": lambda st, c: _attack_definition(st, c).id == SLOWPOKE and _attacker(st, c).damage == 0,
     "UNRESOLVED_COPIED_ATTACK": lambda st, c: _copier(st, c),  # HC9
     "UNSUPPORTED_COPIED_ATTACK": lambda st, c: _copier(st, c),
     # 試す結果の数が上限（4,096）を超える（れんぞくファイヤーボール・エナジーボム・ほうでん・やまやきで、ついているエネルギーが多いとき）
     "UNSUPPORTED_PREFLIGHT_LIMIT": lambda st, c: len(_attacker(st, c).energy) >= 6,
     # v0.32: なかまをよぶ・ふえる（ベンチに空きがなければ使えない。ワザを使うための条件）
-    "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("PutBasicFromDeckOntoBench", "PutTypeBasicFromDeckOntoBench")  # v0.34 のたすけをよぶ
+    "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("PutBasicFromDeckOntoBench", "PutTypeBasicFromDeckOntoBench",  # v0.34 のたすけをよぶ
+                                                                          "PutOwnerBasicFromDeckOntoBenchOnHeads")  # v0.45 のたすけをよぶ
                                  and len(st.players[c.player].bench) >= st.rules.max_bench),
     # v0.32: ヨガのポーズ（相手の控えポケモンにダメージカウンターがのっている。CD4）
-    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamagePlusDefenderCounters"
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (("DamagePlusDefenderCounters" in _attack_and_copied_types(st, c))
                                                            and any(p.damage for p in st.players[1 - c.player].bench)),
     # v0.34: どくどく（相手が受けるダメージの違うどく状態。TP3（v0.3a の 15））
     "UNRESOLVED_SPECIAL_POISON_OVERWRITE": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("DamageAndSpecialPoison",
@@ -467,7 +757,97 @@ V031_STOPS = {
     # v0.41: ダメージシフト・チェンジダメージ（自分のワザ・相手のワザとして使うワザ）で、相手の対戦ポケモンが「ワザをうけない」状態・はたらいている
     # 「とうめい」（CX1）
     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": lambda st, c: _counter_transfer_protected(st, c),
+    # v0.44: ラッキーたまご（自分のワザ・相手のワザとして使うワザ）で、「うら」のとき手札が 2 枚より少ない（FC1。山札にもどすカードが足りない）
+    # v0.46: かくさんソーラービーム（相手の控えポケモン 2 匹）で、相手の控えが 1 匹（FC1）
+    "UNRESOLVED_STATED_CARDS_SHORT": lambda st, c: _hand_return_short(st, c) or _exact_bench_short(st, c) or _surprise_short(st, c),
+    # v0.44: 場に出てから 1 度しか使えないワザ（ネギでたたく・りゅうのきおく・ひっさつばり）を、このポケモンがもう使った（場のポケモンの記録 ``attacks_used_once``）
+    "ATTACK_ALREADY_USED": lambda st, c: (_attacker(st, c).card, c.attack_index) in _attacker(st, c).attacks_used_once,
+    # v0.45: ワザを使うポケモンが手順 4 の効果を 2 つ以上受けている（AC13。スミをかけるの「それ以後」の効果が重なる）
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": lambda st, c: len(attack_coin_checks(st, _attacker(st, c))) >= 2,
+    # v0.45: 相手の対戦ポケモンが返す効果（クロスカウンター。ほのおのかべ・こうらがえしも）を持ち、そろってきぜつしうる（W24・S37）
+    "UNRESOLVED_RETALIATION_DOUBLE_KNOCKOUT": lambda st, c: retaliation(st, _defender(st, c)) is not None,
+    # v0.48: ［へんしょく］で変えた色の読み方が 2 つある（使った番のあと・ベンチにもどったあと・この力が消えている）場のポケモンがいる（VS1。読み方で結果が変わるときだけ
+    # 止まる。止まらない場合は場から確かめられないので、止まったときに読み方が 2 つあるポケモンがいることだけを確かめる）
+    "UNRESOLVED_SHIFT_COLOR_DURATION": lambda st, c: any(len(type_readings(st, p)) > 1 for pl in st.players for p in pl.in_play()),
+    # v0.50: たいかビーム（自分のワザ・相手のワザとして使うワザ）で、自分・相手の場の進化ポケモンがどれも「ばける」でのせたカードのポケモン（DV5）
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": lambda st, c: _all_devolution_targets_disguised(st, c),
+    # v0.48: テクスチャー1（相手の対戦ポケモンに弱点がない）・テクスチャー2（自分に抵抗力がない）。相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか（PG1）
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": lambda st, c: _conversion_absent(st, c),
 }
+
+
+def _all_devolution_targets_disguised(state, command):
+    """DV5（v0.50）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）がたいかビームで、自分・相手の場の進化ポケモンがどれも「ばける」でのせた
+    カードのポケモン。"""
+    if "DevolveChosenPokemon" not in _attack_and_copied_types(state, command):
+        return False
+    candidates = devolution_candidates(state, (command.player, 1 - command.player))
+    return bool(candidates) and all(devolution_forbidden(state, state.find_pokemon(pid)[1]) for pid in candidates)
+
+
+def _conversion_absent(state, command):
+    """PG1（v0.48）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）が、弱点を変えるワザで相手の対戦ポケモンに弱点がない・抵抗力を変える
+    ワザで自分に抵抗力がない。"""
+    attacker, defender = _attacker(state, command), _defender(state, command)
+    candidates = [(attacker, command.attack_index)]
+    if _copier(state, command):
+        candidates = [(defender, a.index) for a in state.card_def(defender.card).attacks]
+    for pokemon, index in candidates:
+        definition = state.card_def(pokemon.card)
+        name = type(state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)).__name__
+        if (name == "ChangeOpponentWeakness" and weakness_of(state, defender) is None) or (
+                name == "ChangeOwnResistance" and resistance_of(state, attacker)[0] is None):
+            return True
+    return False
+
+
+def _hand_return_short(state, command):
+    """FC1（v0.44）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）が「うら」で手札をもどすワザ（``CoinDrawOrReturnHandToDeck``）で、
+    手札がもどす枚数より少ない。"""
+    attacker = _attacker(state, command)
+    candidates = [(attacker, command.attack_index)]
+    if _copier(state, command):
+        defender = _defender(state, command)
+        candidates = [(defender, a.index) for a in state.card_def(defender.card).attacks]
+    for pokemon, index in candidates:
+        definition = state.card_def(pokemon.card)
+        effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
+        if type(effect).__name__ == "CoinDrawOrReturnHandToDeck" and len(state.players[command.player].hand) < effect.count:
+            return True
+    return False
+
+
+def _exact_bench_short(state, command):
+    """FC1（v0.46）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）が、相手の控えポケモンを決まった数選ぶワザ
+    （``DamageThenExactBenchTargets``。かくさんソーラービーム）で、相手の控えが 1 匹以上その数より少ない。"""
+    attacker = _attacker(state, command)
+    candidates = [(attacker, command.attack_index)]
+    if _copier(state, command):
+        defender = _defender(state, command)
+        candidates = [(defender, a.index) for a in state.card_def(defender.card).attacks]
+    bench = len(state.players[1 - command.player].bench)
+    for pokemon, index in candidates:
+        definition = state.card_def(pokemon.card)
+        effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
+        if type(effect).__name__ == "DamageThenExactBenchTargets" and 0 < bench < effect.targets:
+            return True
+    return False
+
+
+def _surprise_short(state, command):
+    """FC1（v0.47）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）が、相手の手札を 1 枚見て山札にもどさせるワザ
+    （``LookOpponentHandCardToDeck``。おどろかす）で、相手の手札が 0 枚。"""
+    attacker = _attacker(state, command)
+    candidates = [(attacker, command.attack_index)]
+    if _copier(state, command):
+        defender = _defender(state, command)
+        candidates = [(defender, a.index) for a in state.card_def(defender.card).attacks]
+    for pokemon, index in candidates:
+        definition = state.card_def(pokemon.card)
+        effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
+        if type(effect).__name__ == "LookOpponentHandCardToDeck" and not state.players[1 - command.player].hand:
+            return True
+    return False
 
 
 def _counter_transfer_protected(state, command):
@@ -542,7 +922,8 @@ def _deck_return_attacks(state, command):
     for pokemon, index in candidates:
         definition = state.card_def(pokemon.card)
         effect = state.effects.attack_effect(definition.id, definition.attacks[index], definition.attacks)
-        if type(effect).__name__ in ("DamageThenReturnSelfToDeckOnHeads", "DamageThenReturnSelfToDeckOnTails"):  # v0.41: ひのとり（「うら」）
+        if type(effect).__name__ in ("DamageThenReturnSelfToDeckOnHeads", "DamageThenReturnSelfToDeckOnTails",  # v0.41: ひのとり（「うら」）
+                                     "DamageThenReturnSelfToHandOnHeads"):  # v0.44: スターブーメラン（手札にもどす。RD9 と同じ問い）
             found.append((definition.id, definition.attacks[index]))
     return found
 
@@ -581,7 +962,7 @@ def _after_damage_without_damage(state, command):
 
 def _deck_return_with_knockout(state, command):
     defender = _defender(state, command)
-    left = state.card_def(defender.card).hp - defender.damage
+    left = max_hp(state, defender) - defender.damage
     return any(amount is not None and amount >= left for amount in _deck_return_preview(state, command))
 
 
@@ -600,7 +981,7 @@ def _v036_retreat_probe(state, tried, counts):
         return None
     if active.conditions.asleep or active.conditions.paralyzed:
         return None
-    cost = state.card_def(active.card).retreat_cost
+    cost = retreat_cost(state, player).maximum  # v0.46: 常にはたらく特殊能力で変わった数（変わらなければ印刷の数）
     if len(active.energy) < cost:
         return None
     tried.add("retreat_lock_probe")
@@ -719,6 +1100,844 @@ def _v041_decision(state, counts):
     return None
 
 
+def _v042_decision(state, counts):
+    """v0.42 のカードのワザ・特殊能力の決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - 特殊能力（再開先 ``power``）: ヒーリングはダメージのいちばん多いポケモン、かおりのわなは残り HP のいちばん少ない相手の控え、ぶっしつこうかんは手札に基本
+      エネルギーカードが 2 枚以上あればその最後の 1 枚、なければ手札の最後のカード
+    - よいおこない: ダメージのいちばん多い相手のポケモン → とりのぞく数は 1・のっている数すべて・半分（切り上げ）を順に
+    - テレポートブラスト（0〜1 匹）: 入れ替える（最初の控え）・入れ替えない を順に。ナイトヘッド: 残り HP のいちばん少ない控え
+    - つきのちから: 山札の進化カードは 1 つ目、進化させるポケモンはワザを使ったポケモン・ほかのポケモン を順に
+    - ようせいのきせき（1 匹以上）: ダメージのいちばん多いポケモン 1 匹・控えのポケモンすべて を順に（控えがいなければ 1 匹）
+    - エネループ: 1 つ目のエネルギーカード"""
+    d = state.decision
+    if d is None or d.resume not in ("attack", "power"):
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_42:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    card_id = use[2]
+
+    def answer(choices, label):
+        counts[f"v042_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    def damage(pid):
+        return state.find_pokemon(pid)[1].damage
+
+    def remaining(pid):
+        pokemon = state.find_pokemon(pid)[1]
+        return max_hp(state, pokemon) - pokemon.damage
+
+    if d.resume == "power":
+        if card_id == VILEPLUME and d.kind == SELECT_POKEMON:
+            return answer((max(options, key=lambda o: (damage(o), -options.index(o))),), "healing_target")
+        if card_id == ERIKAS_VICTREEBEL and d.kind == SELECT_POKEMON:
+            return answer((min(options, key=lambda o: (remaining(o), options.index(o))),), "sweet_trap_target")
+        if card_id == DARK_KADABRA and d.kind == DISCARD_FROM_HAND:
+            energy = [u for u in options if state.card_def(u).is_basic_energy]
+            choice = energy[-1] if len(energy) >= 2 else options[-1]
+            return answer((choice,), f"matter_exchange_{'energy' if choice in energy else 'other'}")
+        return None
+    if card_id == SABRINAS_JYNX and d.kind == SELECT_POKEMON:
+        return answer((max(options, key=lambda o: (damage(o), -options.index(o))),), "good_deed_target")
+    if card_id == SABRINAS_JYNX and d.kind == REMOVE_COUNTERS:
+        top = max(options)
+        choice = (1, top, (top + 1) // 2)[counts["v042_good_deed_count"] % 3]
+        counts["v042_good_deed_count"] += 1
+        return answer((max(1, choice),), f"good_deed_remove_{'all' if choice == top else 'some'}")
+    if card_id == DARK_ALAKAZAM and d.kind == SELECT_POKEMON:
+        switch = counts["v042_teleport"] % 2 == 0
+        counts["v042_teleport"] += 1
+        return answer(tuple(options[:1]) if switch else (), f"teleport_{'switch' if switch else 'decline'}")
+    if card_id == GENGAR and d.kind == SELECT_POKEMON:
+        return answer((min(options, key=lambda o: (remaining(o), options.index(o))),), "night_head_target")
+    if card_id == ERIKAS_CLEFAIRY and d.kind == SEARCH_DECK:
+        return answer(tuple(options[:1]), "moon_power_card")
+    if card_id == ERIKAS_CLEFAIRY and d.kind == SELECT_POKEMON:
+        self_first = counts["v042_moon_target"] % 2 == 0
+        counts["v042_moon_target"] += 1
+        choice = use[1] if self_first and use[1] in options else next((o for o in options if o != use[1]), options[0])
+        return answer((choice,), f"moon_power_{'self' if choice == use[1] else 'other'}")
+    if card_id == ERIKAS_CLEFABLE and d.kind == SELECT_POKEMON:
+        bench = [p.pokemon_id for p in state.players[d.player].bench if p.pokemon_id in options]
+        single = counts["v042_fairy"] % 2 == 0 or not bench
+        counts["v042_fairy"] += 1
+        choices = (max(options, key=lambda o: (damage(o), -options.index(o))),) if single else tuple(bench)
+        return answer(choices, f"fairy_{'single' if single else 'bench'}")
+    if card_id == SABRINAS_ABRA and d.kind == RETURN_ENERGY:
+        return answer(tuple(options[:1]), "energy_loop")
+    return None
+
+
+def _v042_power(state, tried, counts):
+    """v0.42 の宣言する特殊能力を使う手順（使えない特殊状態・この番に使ったものは使わない。拒否を起こさない）:
+
+    - ヒーリング（ラフレシア）: 自分の場にダメージカウンターがのったポケモンがいれば
+    - へんなこうどう（ヤドラン）: ほかの自分のポケモン（バトル場を先に）にカウンターがあり、ヤドランに 1 つのせても残り HP が 20 以上なら（1 番に 2 回まで）
+    - のろい（ゲンガー）: 相手の場に 2 匹以上いて、カウンターがのったポケモンがいれば。のせる先は残り HP のいちばん少ない別のポケモン（きぜつさせることもある）
+    - かけつける（ベンチのカイリュー）: 自分の対戦ポケモンにダメージがあれば
+    - かおりのわな（エリカのウツボット）: 相手に控えがいれば
+    - ぶっしつこうかん（わるいユンゲラー）: 手札があれば
+    - おくびょう（メノクラゲ）: 場に出した番でなく、ダメージがあり、バトル場なら控えがいれば"""
+    player = state.current_player
+    p = state.players[player]
+    opponent = state.players[1 - player]
+    per = state.rules.damage_per_counter
+
+    def free(pokemon):
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def used(pokemon):
+        return (pokemon.pokemon_id, 0) in state.power_uses_this_turn
+
+    def remaining(pokemon):
+        return max_hp(state, pokemon) - pokemon.damage
+
+    for pokemon in p.in_play():
+        card_id = state.card_def(pokemon.card).id
+        if card_id not in V0_42 or not free(pokemon):
+            continue
+        pid = pokemon.pokemon_id
+        if card_id == VILEPLUME and not used(pokemon) and any(q.damage >= per for q in p.in_play()):
+            counts["v042_power_healing"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == SLOWBRO and sum(1 for t in tried if isinstance(t, tuple) and t[:2] == ("v042_strange", pid)) < 2 \
+                and remaining(pokemon) - per >= 20:
+            sources = [q for q in p.in_play() if q is not pokemon and q.damage >= per]
+            if sources:
+                tried.add(("v042_strange", pid, len(tried)))
+                counts["v042_power_strange_behavior"] += 1
+                return UsePokemonPower(player, pid, 0, source=sources[0].pokemon_id)
+        if card_id == GENGAR and not used(pokemon):
+            targets = opponent.in_play()
+            sources = [q for q in targets if q.damage >= per]
+            if len(targets) >= 2 and sources:
+                source = max(sources, key=lambda q: q.damage)
+                target = min((q for q in targets if q is not source), key=remaining)
+                counts["v042_power_curse"] += 1
+                counts[f"v042_power_curse_{'ko' if remaining(target) <= per else 'move'}"] += 1
+                return UsePokemonPower(player, pid, 0, source=source.pokemon_id, target=target.pokemon_id)
+        if card_id == DRAGONITE and pokemon is not p.active and not used(pokemon) and p.active is not None and p.active.damage > 0:
+            counts["v042_power_step_in"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == ERIKAS_VICTREEBEL and not used(pokemon) and opponent.bench:
+            counts["v042_power_sweet_trap"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == DARK_KADABRA and not used(pokemon) and p.hand:
+            counts["v042_power_matter_exchange"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == TENTACOOL and pokemon.played_turn < state.turn_number and pokemon.damage > 0 and (pokemon is not p.active or p.bench):
+            counts[f"v042_power_cowardice_{'active' if pokemon is p.active else 'bench'}"] += 1
+            return UsePokemonPower(player, pid, 0)
+    return None
+
+
+def _v043_decision(state, counts):
+    """v0.43 のカードのワザ・特殊能力の決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - 場に出たときの特殊能力の使う機会（``ENTRY_POWER``）: 使う（4 回に 1 回は使わない）。使うことを選ぶと止める場合（PW3）は使わない
+    - こっそりかみつく: 残り HP のいちばん少ない相手のポケモン。つりあげる: 選べるだけ（最大 3 枚）。てしたをよぶ: 選べるだけ・1 枚 を順に
+    - ようぶんきゅうしゅう: 1 枚・2 枚（選べるだけ）を順に。エナジーチャージ: 選べるものすべて。しんかのひかり: 1 つ目
+    - ふらふらとぶ: 相手の対戦ポケモン・残り HP のいちばん少ない控え を順に（控えがいなければ対戦ポケモン）。のびるつる: 残り HP のいちばん少ない控え"""
+    d = state.decision
+    if d is None or d.resume not in ("attack", "power"):
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_43:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    card_id = use[2]
+
+    def answer(choices, label):
+        counts[f"v043_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    def remaining(pid):
+        pokemon = state.find_pokemon(pid)[1]
+        return max_hp(state, pokemon) - pokemon.damage
+
+    if d.kind == ENTRY_POWER:
+        if not options:
+            return answer((), f"entry_declined_unresolved_{d.context_value('unresolved_code')}")
+        decline = counts["v043_entry_seen"] % 4 == 3
+        counts["v043_entry_seen"] += 1
+        return answer(() if decline else tuple(options), f"entry_{'declined' if decline else 'used'}_{card_id}")
+    if d.resume == "power":
+        if card_id == DARK_GOLBAT and d.kind == SELECT_POKEMON:
+            choice = min(options, key=lambda o: (remaining(o), options.index(o)))
+            return answer((choice,), f"sneak_attack_{'ko' if remaining(choice) <= 10 else 'damage'}")
+        if card_id == DARK_SLOWBRO and d.kind == RECOVER_POKEMON:
+            return answer(tuple(options[:d.max_choices]), f"reel_in_{min(len(options), d.max_choices)}")
+        if card_id == DARK_DRAGONITE and d.kind == BENCH_FROM_DECK:
+            count = d.max_choices if counts["v043_summon"] % 2 == 0 else 1
+            counts["v043_summon"] += 1
+            return answer(tuple(options[:count]), f"summon_{count}")
+        if card_id == ERIKAS_BELLSPROUT_40 and d.kind == MOVE_ENERGY:
+            count = min(d.max_choices, 1 + counts["v043_soak"] % 2)
+            counts["v043_soak"] += 1
+            return answer(tuple(options[:count]), f"soak_up_{count}")
+        if card_id == LT_SURGES_MAGNETON and d.kind == MOVE_ENERGY:
+            return answer(tuple(options), f"energy_charge_{len(options)}")
+        if card_id == DARK_DRAGONAIR and d.kind == SEARCH_DECK:
+            return answer(tuple(options[:1]), "evolutionary_light")
+        return None
+    if card_id == DARK_GOLBAT and d.kind == SELECT_POKEMON:
+        active = state.players[1 - d.player].active.pokemon_id
+        bench = [o for o in options if o != active]
+        active_turn = counts["v043_flitter"] % 2 == 0 or not bench
+        counts["v043_flitter"] += 1
+        choice = active if active_turn and active in options else min(bench, key=lambda o: (remaining(o), bench.index(o)))
+        return answer((choice,), f"flitter_{'active' if choice == active else 'bench'}")
+    if card_id == ERIKAS_BELLSPROUT_40 and d.kind == SELECT_POKEMON:
+        return answer((min(options, key=lambda o: (remaining(o), options.index(o))),), "stretch_vine")
+    return None
+
+
+def _v044_decision(state, counts):
+    """v0.44 のカードのワザ・特殊能力・トレーナーの決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない。0 枚（GS1）・足りない枚数（FC1）を選ばない）。
+
+    - サカキ: 今の番に場に出した・進化したサカキのポケモンで、手札にそのポケモンから進化するカードがあるもの（なければ 1 つ目）
+    - ［ボスをよぶ］の使う機会: 使う（その局の 2 回目ごとに使わない。山札にサカキがない（PW3）ときは使わない）。山札のサカキ: 1 つ目。［うか］: 選べる 1 つ目
+    - じめんにもぐる・こばんなげ: 相手の対戦ポケモン・残り HP のいちばん少ない控え を順に。りゅうのたつまき: 相手の控えの 最後・最初 を順に
+    - おつかい・たきのぼりしんか: 選ぶ（4 回に 1 回は選ばない）。てじな: 1・2・3 枚を順に（山札の基本エネルギーカードが足りる枚数まで）、そのあと選べるだけの基本エネルギーカード。
+      ラッキーたまご: 手札の 1 つ目から 2 枚。わるいいたずら: 相手のトラッシュの 1 つ目"""
+    d = state.decision
+    if d is None:
+        return None
+    use = d.context_value("use")
+    if use is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+
+    def answer(choices, label):
+        counts[f"v044_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    def remaining(pid):
+        pokemon = state.find_pokemon(pid)[1]
+        return max_hp(state, pokemon) - pokemon.damage
+
+    if d.resume == "trainer":
+        if use[2] != GIOVANNI or d.kind != SELECT_POKEMON:
+            return None
+        hand = state.players[d.player].hand
+        ready = [o for o in options if any(state.card_def(u).evolves_from == state.card_def(state.find_pokemon(o)[1].card).name_ja for u in hand)
+                 and state.find_pokemon(o)[1].current_form_turn >= state.turn_number]
+        return answer((ready[0] if ready else options[0],), f"giovanni_{'ready' if ready else 'other'}")
+    if d.resume not in ("attack", "power") or use[2] not in V0_44:
+        return None
+    card_id = use[2]
+    if d.kind == ENTRY_POWER:
+        if not options:
+            return answer((), f"entry_declined_unresolved_{d.context_value('unresolved_code')}")
+        decline = counts["v044_entry_seen"] % 2 == 1
+        counts["v044_entry_seen"] += 1
+        return answer(() if decline else tuple(options), f"entry_{'declined' if decline else 'used'}")
+    if d.resume == "power":
+        if d.kind == SEARCH_DECK and options:
+            return answer(options[:1], f"power_search_{card_id}")
+        return None
+    if card_id in (ROCKET_DIGLETT, ROCKET_MEOWTH) and d.kind == SELECT_POKEMON:
+        active = state.players[1 - d.player].active.pokemon_id
+        bench = [o for o in options if o != active]
+        active_turn = counts["v044_choose_target"] % 2 == 0 or not bench
+        counts["v044_choose_target"] += 1
+        choice = active if active_turn and active in options else min(bench, key=lambda o: (remaining(o), bench.index(o)))
+        return answer((choice,), f"choose_{'active' if choice == active else 'bench'}_{card_id}")
+    if card_id == GIOVANNIS_GYARADOS and d.kind in (SELECT_POKEMON, FORCED_SWITCH):
+        choice = options[-1] if counts["v044_whirlpool"] % 2 == 0 else options[0]
+        counts["v044_whirlpool"] += 1
+        return answer((choice,), "dragon_whirlwind")
+    if card_id in (ERIKAS_BULBASAUR, ROCKET_MAGIKARP) and d.kind == SEARCH_DECK and d.min_choices == 0:
+        decline = not options or counts[f"v044_optional_{card_id}"] % 4 == 3
+        counts[f"v044_optional_{card_id}"] += 1
+        return answer(() if decline else options[:1], f"{'declined' if decline else 'chosen'}_{card_id}")
+    if card_id == SABRINAS_MR_MIME and d.kind == HAND_TO_DECK:
+        energy_in_deck = sum(1 for u in state.players[d.player].deck if state.card_def(u).is_basic_energy)
+        wanted = 1 + counts["v044_sleight"] % 3
+        counts["v044_sleight"] += 1
+        hand = list(d.options)
+        for count in range(min(wanted, d.max_choices), 0, -1):
+            chosen = hand[:count]
+            available = energy_in_deck + sum(1 for u in chosen if state.card_def(u).is_basic_energy)
+            if available >= count or available == 0:
+                return answer(chosen, f"sleight_return_{count}")
+        return None
+    if card_id == SABRINAS_MR_MIME and d.kind == SEARCH_DECK:
+        return answer(options[:d.min_choices], f"sleight_reveal_{d.min_choices}")
+    if card_id == BLANK_CHANSEY and d.kind == HAND_TO_DECK:
+        return answer(options[:d.min_choices], "lucky_return")
+    if card_id == BLAINES_MANKEY and d.kind == DISCARD_TO_DECK_TOP:
+        return answer(options[:1], "mischief")
+    return None
+
+
+def _v045_decision(state, counts):
+    """v0.45 のカードのワザの決定への答え（原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - じりょくせん: はがすカードは 1 つ目、つける相手の控えは 最後・最初 を順に
+    - たすけをよぶ: 選べる 1 つ目（4 回に 1 回は出さない。0 枚は「出してよい」の選ばないこと）
+    - ファイヤーブレス: 多い枚数ちょうど（ついている順の 1 つ目から）。かえんひこう: 相手の対戦ポケモン・残り HP のいちばん少ない控え を順に"""
+    d = state.decision
+    if d is None or d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in V0_45:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    card_id = use[2]
+
+    def answer(choices, label):
+        counts[f"v045_{label}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(choices))
+
+    if card_id == DARK_MAGNETON and d.kind == MOVE_OPPONENT_ENERGY:
+        return answer(options[:1], "magnetic_energy")
+    if card_id == DARK_MAGNETON and d.kind == SELECT_POKEMON:
+        choice = options[-1] if counts["v045_magnetic_bench_seen"] % 2 == 0 else options[0]
+        counts["v045_magnetic_bench_seen"] += 1
+        return answer((choice,), "magnetic_bench")
+    if card_id == BROCKS_GEODUDE_40 and d.kind == BENCH_FROM_DECK:
+        decline = not options or counts["v045_call_seen"] % 4 == 3
+        counts["v045_call_seen"] += 1
+        return answer(() if decline else options[:1], "call_declined" if decline else "call_benched")
+    if card_id == BLAINES_CHARIZARD and d.kind == DISCARD_ENERGY:
+        return answer(options[:d.min_choices], f"fire_breath_{d.min_choices}")
+    if card_id == BLAINES_CHARIZARD and d.kind == SELECT_POKEMON:
+        active = state.players[1 - d.player].active.pokemon_id
+        bench = [o for o in options if o != active]
+        active_turn = counts["v045_flame_flight"] % 2 == 0 or not bench
+        counts["v045_flame_flight"] += 1
+        if active_turn and active in options:
+            return answer((active,), "flame_flight_active")
+        remaining = {o: max_hp(state, state.find_pokemon(o)[1]) - state.find_pokemon(o)[1].damage for o in bench}
+        return answer((min(bench, key=lambda o: (remaining[o], bench.index(o))),), "flame_flight_bench")
+    return None
+
+
+def _v046_decision(state, counts):
+    """v0.46 のカードのワザの決定への答え（相手のワザとして使ったワザ（``copied``）も。原典で決められない選択 ``unresolved_choices`` は選ばない）。
+
+    - せいちょう（``ATTACH_FROM_HAND``）: 選べるだけ・1 枚 を順に（0 枚は選ばない。HC7 で止まる）
+    - かくさんソーラービーム（``SELECT_POKEMON``。ちょうど 2 匹）: 相手の控えの最初の 2 匹"""
+    d = state.decision
+    if d is None or d.resume != "attack":
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    card_id = copied[0] if copied is not None else (use[2] if use is not None else None)
+    if card_id not in V0_46:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if card_id == ERIKAS_VENUSAUR and d.kind == ATTACH_FROM_HAND:
+        many = counts["v046_growth_seen"] % 2 == 0
+        counts["v046_growth_seen"] += 1
+        chosen = options[:d.max_choices] if many else options[:1]
+        counts[f"v046_growth_{len(chosen)}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(chosen))
+    if card_id == ERIKAS_VENUSAUR and d.kind == SELECT_POKEMON:
+        counts[f"v046_spread_{d.min_choices}"] += 1
+        return ResolveDecision(d.player, d.id, tuple(options[:d.min_choices]))
+    return None
+
+
+def _v046_retreat(state, tried, counts):
+    """v0.46: 常にはたらく特殊能力（［ねんちゃくえき］・［にげるサポート］）で「にげる」のエネルギーの数が変わるとき、「にげる」を宣言する（1 局に 3 回まで。
+    同じ番に 1 度）。少なくしてから 0 で止める読み方と答えが変わる数（CP2）は 1 局に 1 度だけ試し（拒否のあとは増えた数）、少なくできるなら少ない数、ほかは
+    増えた数。ねむり・マヒ・エネルギーが足りないときはしない。数が変わらなければ何もしないので、前の版の組の結果は変わらない。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if not p.bench or active.conditions.asleep or active.conditions.paralyzed or cannot_retreat(state, active) is not None:
+        return None
+    if state.card_def(active.card).play_role is not None:
+        return None  # v0.47: なにかの化石・ピッピ人形の「にげる」は決まらない（PF2。_v047_trainer が 1 局に 1 度だけ試す）
+    if "retreat" in tried or ("v046_retreat", state.turn_number) in tried or counts[f"v046_retreat_{player}"] >= 3:
+        return None
+    cost = retreat_cost(state, player)
+    if not cost.modified:
+        return None
+    if cost.floor_first_minimum > cost.minimum and "retreat_floor" not in tried and not counts["v046_floor_probe"]:
+        count, label = cost.minimum, "floor_probe"
+    elif cost.reductions and cost.floor_first_minimum < cost.maximum:
+        count, label = cost.floor_first_minimum, "reduced"
+    else:
+        count, label = cost.maximum, "increased" if cost.increases else "full"
+    if len(active.energy) < count:
+        return None
+    if label != "floor_probe":
+        tried.add(("v046_retreat", state.turn_number))
+        counts[f"v046_retreat_{player}"] += 1
+    counts[f"v046_{label}"] += 1
+    return Retreat(player, tuple(active.energy[:count]), p.bench[0].card)
+
+
+def _v047_decision(state, counts):
+    """v0.47 のカードの決定への答え（相手のワザとして使ったワザ（``copied``）も。原典で決められない選択は選ばない）。元の手順より先に答える。
+
+    - ［スパイ］（``PEEK_CARD``）・［わるふざけ］（``SELECT_PRIZE_CARD``）・おどろかす（``SELECT_HAND_CARD``）: 選べる位置を順に
+    - みらいよち: 見る山札（``SELECT_DECK_OWNER``）は自分・相手を順に、枚数（``SELECT_LOOK_COUNT``）は 3・1・2 枚を順に（その山札の枚数まで。0 枚は選ばない。GS1）、
+      並び（``ARRANGE_DECK_TOP``）は見たカードの逆
+    - ナイトヘッド（``SELECT_POKEMON``）: 相手の控えの最初"""
+    d = state.decision
+    if d is None or d.resume not in ("attack", "power"):
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied") if d.resume == "attack" else None
+    card_id = copied[0] if copied is not None else (use[2] if use is not None else None)
+    if card_id not in V0_47:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if d.kind in (PEEK_CARD, SELECT_PRIZE_CARD, SELECT_HAND_CARD):
+        seen = counts[f"v047_{d.kind}_seen"]
+        counts[f"v047_{d.kind}_seen"] += 1
+        chosen = options[seen % len(options)]
+        if d.kind == PEEK_CARD:
+            counts[f"v047_peek_{d.context_value('targets')[chosen][0]}"] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    if d.kind == SELECT_DECK_OWNER:
+        seen = counts["v047_prophecy_owner_seen"]
+        counts["v047_prophecy_owner_seen"] += 1
+        owner = (d.player, 1 - d.player)[seen % 2]
+        counts["v047_prophecy_" + ("own" if owner == d.player else "opponent")] += 1
+        return ResolveDecision(d.player, d.id, (owner,))
+    if d.kind == SELECT_LOOK_COUNT:
+        seen = counts["v047_prophecy_count_seen"]
+        counts["v047_prophecy_count_seen"] += 1
+        wanted = (3, 1, 2)[seen % 3]
+        chosen = min(wanted, max(o for o in options))
+        counts[f"v047_prophecy_count_{chosen}"] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    if d.kind == ARRANGE_DECK_TOP:
+        counts["v047_prophecy_arranged"] += 1
+        return ResolveDecision(d.player, d.id, tuple(reversed(d.options)))
+    if d.kind == SELECT_POKEMON and options:
+        return ResolveDecision(d.player, d.id, (options[0],))
+    return None
+
+
+def _v047_power(state, tried, counts):
+    """v0.47 の宣言する特殊能力を使う手順: マンキー（第2弾）の［スパイ］・コラッタ（ロケット団）の［わるふざけ］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、
+    見る・入れかえるカードがあるとき）。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        card_id = state.card_def(pokemon.card).id
+        if card_id not in (JUNGLE_MANKEY, ROCKET_RATTATA) or (pokemon.pokemon_id, 0) in state.power_uses_this_turn:
+            continue
+        conditions = pokemon.conditions
+        if conditions.asleep or conditions.paralyzed or conditions.confused:
+            continue
+        if card_id == ROCKET_RATTATA and not (p.prizes and p.deck):
+            continue
+        counts[f"v047_power_{card_id}"] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0)
+    return None
+
+
+def _v047_trainer(state, tried, counts):
+    """v0.47: なにかの化石・ピッピ人形を場に出す・すてる手順。手札にあり、ベンチに空きがあれば場に出す（トレーナーの使用を禁止された番は、1 度拒否されたら出さない）。
+    バトル場の（進化していない）なにかの化石・ピッピ人形は、控えがいればすてる。ベンチのピッピ人形は、番の番号が 7 の倍数の番にすてる。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if active is not None and state.card_def(active.card).play_role is not None and p.bench and not counts[f"v047_pf2_probe_{player}"] \
+            and "retreat" not in tried:
+        # バトル場のなにかの化石・ピッピ人形の「にげる」（PF2）を、1 局に 1 度だけ試す（エネルギー・コインの前に拒否される）
+        counts[f"v047_pf2_probe_{player}"] += 1
+        return Retreat(player, (), p.bench[0].card)
+    if active is not None and state.card_def(active.card).play_role is not None and p.bench and ("v047_discard", active.pokemon_id) not in tried:
+        tried.add(("v047_discard", active.pokemon_id))
+        counts[f"v047_discard_active_{state.card_def(active.card).play_role}"] += 1
+        return DiscardFromPlay(player, active.pokemon_id)
+    if state.turn_number % 7 == 0:
+        for pokemon in p.bench:
+            if state.card_def(pokemon.card).play_role == "doll" and ("v047_discard", pokemon.pokemon_id) not in tried:
+                tried.add(("v047_discard", pokemon.pokemon_id))
+                counts["v047_discard_bench_doll"] += 1
+                return DiscardFromPlay(player, pokemon.pokemon_id)
+    if "trainer_locked" in tried or len(p.bench) >= state.rules.max_bench:
+        return None
+    for uid in p.hand:
+        card_id = state.cards[uid].card_id
+        if card_id in V0_47_TRAINERS and ("v047_play", uid) not in tried:
+            tried.add(("v047_play", uid))
+            counts[f"v047_play_{card_id}" + ("_locked" if trainer_use_blockers(state, player) else "")] += 1
+            return PlayTrainer(player, uid)
+    return None
+
+
+def _v048_decision(state, counts):
+    """v0.48 のカードの決定への答え（相手のワザとして使ったワザ（``copied``）も。原典で決められない選択は選ばない）。元の手順より先に答える。
+
+    - テクスチャー1・2（ワザの ``SELECT_COLOR``）・［へんしょく］（特殊能力の ``SELECT_COLOR``）: 選べる色を順に（決定ごとに 1 つずつずらす）"""
+    d = state.decision
+    if d is None or d.resume not in ("attack", "power") or d.kind != SELECT_COLOR:
+        return None
+    use = d.context_value("use")
+    copied = d.context_value("copied") if d.resume == "attack" else None
+    card_id = copied[0] if copied is not None else (use[2] if use is not None else None)
+    if card_id not in V0_48:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if not options:
+        return None
+    seen = counts[f"v048_color_seen_{d.resume}"]
+    counts[f"v048_color_seen_{d.resume}"] += 1
+    chosen = options[seen % len(options)]
+    counts[f"v048_color_{d.resume}_{COLORS[chosen].value}"] += 1
+    return ResolveDecision(d.player, d.id, (chosen,))
+
+
+def _v048_observe(state, counts):
+    """v0.48: 手順が呼ばれた盤面で、今有効な最大HPが印刷の HP と違う v0.48 のポケモン（［ガスのからだ］・「きょだいか」）を数える（``v048_max_hp_<カード>_raised``、
+    のっているダメージが印刷の HP 以上で場にいるなら ``…_over_printed``）。盤面を数えるだけで、選ぶ操作は変えない。"""
+    for player in state.players:
+        for pokemon in player.in_play():
+            card = state.card_def(pokemon.card)
+            if card.id in V0_48 and card.hp is not None and max_hp(state, pokemon) != card.hp:
+                counts[f"v048_max_hp_{card.id}_{'over_printed' if pokemon.damage >= card.hp else 'raised'}"] += 1
+
+
+def _v048_power(state, tried, counts):
+    """v0.48 の宣言する特殊能力を使う手順: モルフォンの［へんしょく］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、決まって場にいる色があるとき。
+    バトル場・ベンチのどちらでも使う）。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        if state.card_def(pokemon.card).id != VENOMOTH or (pokemon.pokemon_id, 0) in state.power_uses_this_turn:
+            continue
+        conditions = pokemon.conditions
+        if conditions.asleep or conditions.paralyzed or conditions.confused or ("v048_shift", pokemon.pokemon_id) in tried:
+            continue
+        if not shift_color_options(state)[0]:
+            continue
+        tried.add(("v048_shift", pokemon.pokemon_id))
+        counts["v048_power_shift"] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0)
+    return None
+
+
+def _v049_relevant(state):
+    """v0.49: 姿が変わりうるカード（メタモン・タケシのキュウコン）が場にいる（決められない姿・MH1 で拒否される答えを避ける手順を使う盤面）。"""
+    return any(state.cards[pokemon.card].card_id in (DITTO, BROCKS_NINETALES) for player in state.players for pokemon in player.in_play())
+
+
+def _v049_decision(state, counts):
+    """v0.49 の決定への答え: 「ばける」でのせる手札の進化カード（選べるもののうち、選ぶと止めるものを除いて、順に）。元の手順より先に答える。"""
+    d = state.decision
+    if d is None or d.resume != "power" or d.kind != SELECT_EVOLUTION_CARD:
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] != BROCKS_NINETALES:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    options = [o for o in d.options if o not in blocked]
+    if not options:
+        return None
+    seen = counts["v049_shapeshift_seen"]
+    counts["v049_shapeshift_seen"] += 1
+    chosen = options[seen % len(options)]
+    counts[f"v049_shapeshift_{state.cards[chosen].card_id}"] += 1
+    return ResolveDecision(d.player, d.id, (chosen,))
+
+
+def _v049_answer(state, command, counts):
+    """v0.49: 決定への答え（``ResolveDecision``・``PromoteActive``・``TakePrize``）が、決められない姿（TF1・TF2・DG1）・MH1 で拒否されるなら、受け付けられる別の答えにする
+    （姿が変わりうるカードが場にいるときだけ。状態の複製の上で試す）。どの答えも拒否されるなら元の答え（エンジンが対戦を止める）。"""
+    if state.decision is None or not isinstance(command, (ResolveDecision, PromoteActive, TakePrize)) or not _v049_relevant(state):
+        return command
+    try:
+        apply_command(state, command)
+        return command
+    except UnsupportedError as error:
+        if error.code not in V049_FORM_STOPS:
+            return command
+        counts[f"v049_answer_stopped_{error.code}"] += 1
+    d = state.decision
+    for choices in all_answers(d):
+        if set(choices) & set(d.context_value("unresolved_choices", ())):
+            continue
+        alternative = ResolveDecision(d.player, d.id, tuple(choices))
+        try:
+            apply_command(state, alternative)
+        except (IllegalActionError, UnsupportedError):
+            continue
+        counts["v049_answer_alternative"] += 1
+        return alternative
+    return command
+
+
+def _v049_power(state, tried, counts):
+    """v0.49: タケシのキュウコンの「ばける」（のせていない・この番にまだ使っていない・ねむり・マヒ・こんらんでない・手札に止めずにのせられる進化カードがあるとき。
+    バトル場・ベンチのどちらでも）と、のせたカードをもどす操作（番の番号が 4 の倍数の番。最大HPがのっているダメージ以下に下がるならもどさない）。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    for pokemon in p.in_play():
+        if state.cards[pokemon.card].card_id != BROCKS_NINETALES:
+            continue
+        if pokemon.disguise is not None:
+            if state.turn_number % 4 == 0 and pokemon.damage < state.card_def(pokemon.card).hp and ("v049_revert", pokemon.pokemon_id) not in tried:
+                tried.add(("v049_revert", pokemon.pokemon_id))
+                counts["v049_revert"] += 1
+                return RemoveDisguise(player, pokemon.pokemon_id)
+            continue
+        conditions = pokemon.conditions
+        if conditions.asleep or conditions.paralyzed or conditions.confused or ("v049_shapeshift", pokemon.pokemon_id) in tried:
+            continue
+        if any(use[0] == pokemon.pokemon_id for use in state.power_uses_this_turn):
+            continue
+        options, blocked = shapeshift_choices(state, player, pokemon, E_PowerKey(BROCKS_NINETALES, 0))
+        if len(options) == len(blocked):
+            continue
+        tried.add(("v049_shapeshift", pokemon.pokemon_id))
+        counts["v049_power_shapeshift"] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0, card=pokemon.card)
+    return None
+
+
+def _v049_trainer(state, tried, counts):
+    """v0.49: 思い出させる（対戦ポケモンが進化していて、今の姿がいちばん上のカードで、すぐ下のカードのワザに払えるものがあり、この番にまだ使っていないとき）。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if active is None or "trainer_locked" in tried or recall_records(state, player) or current_form(state, active).kind != "printed":
+        return None
+    if not active.evolution_stack:
+        return None
+    below = active.evolution_stack[-1]
+    if not any(attack_cost_payable(state, active, attack) for attack in state.card_def(below).attacks):
+        return None
+    for uid in p.hand:
+        if state.cards[uid].card_id == RECALL and ("v049_recall", uid) not in tried:
+            tried.add(("v049_recall", uid))
+            counts["v049_play_recall"] += 1
+            return PlayTrainer(player, uid)
+    return None
+
+
+def _v049_attack(state, tried, counts):
+    """v0.49: 今持つワザのうち、出どころが今の姿のいちばん上のカードでないワザ（［サイコリンク］・［へんしん］・「ばける」・「思い出させる」）で、払えて止める理由がなく、
+    この番に拒否されていないものを、使った回数の少ないものから使う（``UseAttack`` の ``card``）。"""
+    player = state.current_player
+    active = state.players[player].active
+    if active is None or "attack" in tried:
+        return None
+    form = current_form(state, active)
+    used = Counter((e.get("card_id"), e["attack_index"]) for e in state.log if e["kind"] == "attack" and e.get("player") == player)
+    candidates = []
+    for option in available_attacks(state, active):
+        if option.route == "form" and form.kind == "printed":
+            continue
+        if option.problem is not None or ("v049_attack", option.card, option.attack_index) in tried:
+            continue
+        if attack_locked(state, active, option.key) is not None:
+            continue
+        if not attack_cost_payable(state, active, state.definitions[option.card_id].attacks[option.attack_index]):
+            continue
+        candidates.append(option)
+    if not candidates:
+        return None
+    option = min(candidates, key=lambda o: (used[(o.card_id, o.attack_index)], o.route, o.card_id, o.attack_index))
+    tried.add(("v049_attack", option.card, option.attack_index))
+    counts[f"v049_attack_{option.route}" + ("" if form.kind == "printed" else f"_{form.kind}")] += 1
+    return UseAttack(player, option.attack_index, card=option.card)
+
+
+def _v050_beam_decision(d):
+    """v0.50: たいかビームの決定（ワザを使ったポケモンのワザ・相手のワザとして使ったワザ・［サイコリンク］で持つワザのどれでも、ワザの続きの情報の ``use``・``copied``）。"""
+    if d.resume != "attack" or d.kind != SELECT_POKEMON:
+        return False
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    return (use is not None and tuple(use[2:4]) == (MEW, 1)) or (copied is not None and tuple(copied) == (MEW, 1))
+
+
+def _v050_decision(state, counts):
+    """v0.50 の決定への答え（元の手順より先に答える）:
+
+    - たいかビーム: 選ぶと止める（DV5）ものを除き、3 回に 2 回は相手の進化ポケモン、1 回は自分の進化ポケモン（どちらかしかなければそれ）を、順に選ぶ
+    - 退化スプレー: 退化させるポケモンは選ぶと止める（DV5）ものを除いて順に。はがす枚数は、選ぶと止める（DV1）枚数を除いて、1 枚・すべて・0 枚を順に
+    """
+    d = state.decision
+    if d is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    if _v050_beam_decision(d):
+        options = [o for o in d.options if o not in blocked]
+        if not options:
+            return None
+        mine = [o for o in options if state.find_pokemon(o)[0] == d.player]
+        theirs = [o for o in options if o not in mine]
+        seen = counts["v050_beam_seen"]
+        counts["v050_beam_seen"] += 1
+        group = mine if (seen % 3 == 2 and mine) or not theirs else theirs
+        chosen = group[seen % len(group)]
+        counts["v050_beam_" + ("own" if chosen in mine else "opponent")] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    use = d.context_value("use")
+    if d.resume != "trainer" or use is None or use[2] != DEVOLUTION_SPRAY:
+        return None
+    options = [o for o in d.options if o not in blocked]
+    if not options:
+        return None
+    if d.kind == SELECT_POKEMON:
+        seen = counts["v050_spray_target_seen"]
+        counts["v050_spray_target_seen"] += 1
+        return ResolveDecision(d.player, d.id, (options[seen % len(options)],))
+    if d.kind != SELECT_DEVOLVE_COUNT:
+        return None
+    seen = counts["v050_spray_count_seen"]
+    counts["v050_spray_count_seen"] += 1
+    if blocked:
+        counts["v050_spray_count_dv1_avoided"] += 1
+    wanted = (1, max(d.options), 0)[seen % 3]
+    chosen = wanted if wanted in options else options[-1]
+    counts[f"v050_spray_count_{chosen}"] += 1
+    return ResolveDecision(d.player, d.id, (chosen,))
+
+
+def _v050_trainer(state, tried, counts):
+    """v0.50: 退化スプレー（自分の場に、実際に進化カードが重なっていて「ばける」でないポケモンがいて、この番にまだ使っていないとき。番の番号が 3 の倍数の番は、
+    ダメージがのっている進化ポケモンがいれば使う。それ以外の番は、ダメージがのっていて退化すればきぜつしないポケモンがいれば使う）。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    if "trainer_locked" in tried or ("v050_spray", state.turn_number) in tried:
+        return None
+    candidates = [state.find_pokemon(pid)[1] for pid in devolution_candidates(state, (player,))]
+    candidates = [pokemon for pokemon in candidates if not devolution_forbidden(state, pokemon)]
+    if not candidates:
+        return None
+    damaged = [pokemon for pokemon in candidates if pokemon.damage > 0]
+    if not damaged and state.turn_number % 3 != 0:
+        return None
+    for uid in p.hand:
+        if state.cards[uid].card_id == DEVOLUTION_SPRAY:
+            tried.add(("v050_spray", state.turn_number))
+            counts["v050_play_spray"] += 1
+            return PlayTrainer(player, uid)
+    return None
+
+
+def _v044_power(state, tried, counts):
+    """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
+    でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    if state.turn_number <= 2:
+        return None
+    for pokemon in p.in_play():
+        if state.card_def(pokemon.card).id != KOGAS_KAKUNA:
+            continue
+        conditions = pokemon.conditions
+        if conditions.asleep or conditions.paralyzed or conditions.confused or (pokemon.pokemon_id, 0) in state.power_uses_this_turn:
+            continue
+        if pokemon.current_form_turn >= state.turn_number:
+            continue
+        in_deck = any(state.card_def(u).id == KOGAS_BEEDRILL for u in p.deck)
+        if not in_deck and counts["v044_power_metamorphosis_without_card"] >= 2:
+            continue
+        counts["v044_power_metamorphosis" + ("" if in_deck else "_without_card")] += 1
+        return UsePokemonPower(player, pokemon.pokemon_id, 0)
+    return None
+
+
+def _v044_trainer(state, tried, counts):
+    """v0.44 のトレーナー「サカキ」の手順: 今の番に場に出した・進化したサカキのポケモンがいて、手札にそのポケモンから進化するカードがあり、まだ許可がなければ、サカキを使う。
+    許可のあるポケモン（``evolution_permission_turn``）がいて、手札にそのポケモンから進化するカードがあれば進化させる（同じ番に 2 回目の進化も）。拒否を起こさない
+    （場にサカキのポケモンがいない（TR1）ときは使わない）。"""
+    player = state.current_player
+    p = state.players[player]
+    if state.turn_number <= 2:
+        return None
+    for pokemon in p.in_play():
+        if pokemon.evolution_permission_turn != state.turn_number:
+            continue
+        name = state.card_def(pokemon.card).name_ja
+        card = next((u for u in p.hand if state.card_def(u).evolves_from == name), None)
+        if card is not None:
+            counts["v044_permitted_evolve_" + ("again" if pokemon.evolved_turn == state.turn_number else "played")] += 1
+            return EvolvePokemon(player, card, pokemon.pokemon_id)
+    giovanni = next((u for u in p.hand if state.card_def(u).id == GIOVANNI), None)
+    if giovanni is None:
+        return None
+    for pokemon in p.in_play():
+        name = state.card_def(pokemon.card).name_ja
+        if not name.startswith("サカキの") or pokemon.current_form_turn < state.turn_number or pokemon.evolution_permission_turn == state.turn_number:
+            continue
+        if any(state.card_def(u).evolves_from == name for u in p.hand):
+            counts["v044_play_giovanni"] += 1
+            return PlayTrainer(player, giovanni)
+    return None
+
+
+def _v043_power(state, tried, counts):
+    """v0.43 の宣言する特殊能力を使う手順（使えない特殊状態・この番に使ったもの・原典で決められない場合（PW3・HC10）は使わない。拒否を起こさない）:
+
+    - くさいかふん（わるいクサイハナ）: この番にまだ使っておらず、相手の対戦ポケモンがこんらんでなければ。えんかくさいみん（ロケット団のスリープ）: この番にまだ使って
+      おらず、どちらの対戦ポケモンもねむりでなければ（コインの「うら」なら自分の対戦ポケモンがその状態になる）
+    - ほのおをもらう（ロケット団のヒトカゲ）: ほかの自分のポケモンに基本「炎」エネルギーカード（エナジーバーンで「炎」になったものでない）があれば、その 1 枚目
+    - ようぶんきゅうしゅう（エリカのマダツボミ）: ほかの自分のポケモンに基本「草」エネルギーカードがあれば
+    - エナジーチャージ（バトル場のマチスのレアコイル）: 控えに基本「雷」エネルギーカードがあれば（回数の制限はないが、この手順は 1 番に 1 回）
+    - しんかのひかり（わるいハクリュー）: 山札に進化カードがあれば"""
+    player = state.current_player
+    p = state.players[player]
+
+    def free(pokemon):
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def used(pokemon):
+        return (pokemon.pokemon_id, 0) in state.power_uses_this_turn
+
+    def energy_on(holders, energy_type):
+        return [(holder, uid) for holder in holders for uid in holder.energy
+                if state.card_def(uid).provides is energy_type and (holder.pokemon_id, uid) not in state.energy_burn]
+
+    for pokemon in p.in_play():
+        card_id = state.card_def(pokemon.card).id
+        if card_id not in V0_43 or not free(pokemon):
+            continue
+        pid = pokemon.pokemon_id
+        others = [q for q in p.in_play() if q is not pokemon]
+        actives = (p.active, state.players[1 - player].active)
+        if card_id == DARK_GLOOM and not used(pokemon) and not actives[1].conditions.confused:
+            counts[f"v043_power_coin_condition_{card_id}"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == ROCKET_DROWZEE and not used(pokemon) and not any(a.conditions.asleep for a in actives):
+            # 両方の対戦ポケモンがねむりになるとポケモンチェックで止まる（UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER）ので、どちらかがねむりなら使わない
+            counts[f"v043_power_coin_condition_{card_id}"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == ROCKET_CHARMANDER and not used(pokemon):
+            found = energy_on(others, EnergyType.FIRE)
+            if found:
+                holder, uid = found[0]
+                counts["v043_power_gather_fire"] += 1
+                return UsePokemonPower(player, pid, 0, energy=uid, source=holder.pokemon_id)
+        if card_id == ERIKAS_BELLSPROUT_40 and not used(pokemon) and energy_on(others, EnergyType.GRASS):
+            counts["v043_power_soak_up"] += 1
+            return UsePokemonPower(player, pid, 0)
+        marker = ("v043_energy_charge", pid)
+        if card_id == LT_SURGES_MAGNETON and pokemon is p.active and marker not in tried and energy_on(p.bench, EnergyType.LIGHTNING):
+            tried.add(marker)
+            counts["v043_power_energy_charge"] += 1
+            return UsePokemonPower(player, pid, 0)
+        if card_id == DARK_DRAGONAIR and not used(pokemon) and any(state.card_def(u).is_evolution_pokemon for u in p.deck):
+            counts["v043_power_evolutionary_light"] += 1
+            return UsePokemonPower(player, pid, 0)
+    return None
+
+
 def _v031_power(state, tried, counts):
     """v0.31 の宣言する特殊能力を使う手順: カツラのロコンの「しぜんになおる」（ダメージがあり、この番にまだ使っていない）・リザードンの「エナジーバーン」
     （炎でないエネルギーがついていて、その番にまだ使っていない）。使えない特殊状態のときは使わない（拒否を起こさない）。"""
@@ -746,18 +1965,38 @@ def make_policy(seen: dict, counts: Counter):
     何もしないので、v0.28〜v0.30 の組の結果は変わらない。"""
     base = driver.make_policy(seen, counts, checks=True)
 
-    def policy(state, *, janken_winner, cure, tried):
+    def choose(state, *, janken_winner, cure, tried):
+        if state.phase is Phase.DECISION:
+            # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
+            # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
+            early = (_v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
+                     or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
+                     or _v047_decision(state, counts) or _v048_decision(state, counts)  # v0.47・v0.48
+                     or _v049_decision(state, counts) or _v050_decision(state, counts))  # v0.49・v0.50
+            if early is not None:
+                return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
         if state.phase is Phase.DECISION:
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
-                    or command)
+                    or _v042_decision(state, counts) or command)
         if state.phase is Phase.MAIN and isinstance(command, (UseAttack, EndTurn)):
-            power = _v031_power(state, tried, counts)
+            power = (_v031_power(state, tried, counts) or _v042_power(state, tried, counts) or _v043_power(state, tried, counts)
+                     or _v044_power(state, tried, counts) or _v044_trainer(state, tried, counts)
+                     or _v047_power(state, tried, counts) or _v047_trainer(state, tried, counts)  # v0.47
+                     or _v048_power(state, tried, counts)  # v0.48
+                     or _v049_power(state, tried, counts) or _v049_trainer(state, tried, counts)  # v0.49
+                     or _v050_trainer(state, tried, counts))  # v0.50
             if power is not None:
                 return power
+            virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
+            if virtual is not None:
+                return virtual
             probe = _v036_retreat_probe(state, tried, counts)  # v0.36
             if probe is not None:
                 return probe
+            retreat = _v046_retreat(state, tried, counts)  # v0.46
+            if retreat is not None:
+                return retreat
         if state.phase is not Phase.MAIN or not isinstance(command, (UseAttack, EndTurn)) or "attack" in tried:
             return command
         player = state.current_player
@@ -768,6 +2007,21 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
+        if current_form(state, active).kind != "printed":
+            # v0.50: 今の姿が「ばける」・［へんしん］のカードのとき、ワザの位置は今の姿のカードのワザ（v0.49 の ``UseAttack``）。いちばん上のカードのワザで払えるかを
+            # 見ていたので、今の姿のワザを払えないときに INSUFFICIENT_ENERGY の想定外の拒否になった（v0.50 の M50 対 D49 で起こった。v0.49 の組では起こらなかった）。
+            # 今の姿のワザで払えるかを見て、払えるワザがなければ番を終える
+            attacks = state.card_def(current_form(state, active).card).attacks
+            usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
+            if not usable and isinstance(command, UseAttack):
+                counts[f"v050_form_unpayable_end_{card_id}"] += 1
+                return EndTurn(player)
+        if card_id in V0_44:
+            # v0.44: 場に出てから 1 度しか使えないワザで、このポケモンがもう使ったもの（場のポケモンの記録）は選ばない
+            usable = [i for i in usable if (active.card, i) not in active.attacks_used_once]
+            if not usable and isinstance(command, UseAttack):
+                counts[f"v044_once_used_end_{card_id}"] += 1
+                return EndTurn(player)
         if not usable:
             return command
         used = _uses_so_far(state, player, card_id)
@@ -776,7 +2030,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -786,6 +2040,36 @@ def make_policy(seen: dict, counts: Counter):
         if chosen != command:
             counts[f"coverage_choice_{card_id}#{choice}"] += 1
         return chosen
+
+    def policy(state, *, janken_winner, cure, tried):
+        _v048_observe(state, counts)
+        # v0.48: この番に、最大HPがのっているダメージ以下に下がる（MH1）ので拒否された手札のカード（進化カード・トレーナー）。この番に拒否がなければ空
+        blocked = {marker[1] for marker in tried if isinstance(marker, tuple) and marker[0] == "max_hp_drop_card"}
+        if state.phase is Phase.MAIN and (blocked or "trainer_locked" in tried or "evolution_prevented" in tried):
+            # v0.46: ［アレルギーかふん］でトレーナーカードを使えない番（この番に TRAINER_PREVENTED で拒否された）。元の手順・重ねた手順に、手札のトレーナーカードを
+            # 見せずに選ばせる（同じ拒否を繰り返さない）。この番に拒否がなければ何もしないので、前の版の組の結果は変わらない
+            # v0.47: ［げんしのちから］で進化できない番（この番に EVOLUTION_PREVENTED で拒否された）も、手札の進化カードを見せずに選ばせる
+            # v0.48: MH1 で拒否された手札のカードも見せない
+            view = state.clone()
+            hand = view.players[state.current_player].hand
+            if blocked:
+                hand[:] = [uid for uid in hand if uid not in blocked]
+                counts["v048_max_hp_drop_masked"] += 1
+            if "trainer_locked" in tried:
+                hand[:] = [uid for uid in hand if view.card_def(uid).category != "trainer"]
+                counts["v046_trainer_masked"] += 1
+            if "evolution_prevented" in tried:
+                hand[:] = [uid for uid in hand if not view.card_def(uid).is_evolution_pokemon]
+                counts["v047_evolution_masked"] += 1
+            command = choose(view, janken_winner=janken_winner, cure=cure, tried=tried)
+            seen["state"] = state
+        else:
+            command = choose(state, janken_winner=janken_winner, cure=cure, tried=tried)
+        if ("max_hp_drop_command", command) in tried:
+            # v0.48: MH1 で拒否された特殊能力の使用をくり返さない（この番を終える）
+            counts["v048_max_hp_drop_end_turn"] += 1
+            return EndTurn(state.current_player)
+        return _v049_answer(state, command, counts)  # v0.49: 決められない姿・MH1 で拒否される決定の答えを避ける
 
     return policy
 
@@ -839,8 +2123,11 @@ def audit(result, state, commands):
     if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted"):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
+    watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 for uid in state.cards)  # v0.48: 観測の今有効な値も
     for command in commands:
         current = apply_command(current, command)
+        if watch:
+            failures["observation"] += bool(observation_problems(current))  # v0.47: 受け付けた操作ごとに、プレイヤー・観戦者に渡す観測
     failures["replay_mismatch"] += [dict(e) for e in current.log] != [dict(e) for e in state.log]
     failures["invariants"] += bool(check_invariants(state))
     failures["log"] += bool(log_problems(state))
@@ -869,14 +2156,23 @@ def card_uses(state):
     - v0.40: ``bench_from_deck_declined#i``・``shuffle#i``（ワザの効果で切った山札）・``opponent_coin_<面>#i``（相手が投げたワザのコイン）
     - v0.41: ``place_damage_counters#i``・``swap_damage_counters#i``・``attach_energy_from_deck#i``・``attach_energy_from_deck_none#i``・``shuffle#i``、
       ``self_special_condition_<状態>#i``（自分を特殊状態にした）・``attack_heal_own#i``・``attack_heal_opponent#i``（回復したポケモンの持ち主）
+    - v0.46: 常にはたらく特殊能力・リフレクターがはたらいたダメージ（発生源のカードで数える）: ``wall_zeroed``・``wall_kept``（［なぞのかべ］。しきい値以上で 0・
+      しきい値より小さくそのまま）、``barrier_capped``・``barrier_kept``（［ふしぎなバリアー］）、``halved_<相手>_step<段階>``（［くつろぐかおり］。相手は ``opponent``・
+      ``opponent_bench``・``self_bench``・``self``）、``reflector_halved``、``frenzy_bonus``（［きょうぼう］）、``power_damage_modified``（特殊能力のダメージに
+      ［ふしぎなバリアー］・［なぞのかべ］を当てはめた）、``immunity_prevented_<状態>``（［めんえき］）、``retreat_increased``（［ねんちゃくえき］）・``retreat_reducible``・
+      ``retreat_reduced``（［にげるサポート］で数を変えられた「にげる」・印刷の数より少なくした「にげる」）。ワザの結果は ``attach_energy_from_hand#i``・
+      ``hand_to_deck#i``・``shuffle#i``・``self_special_condition_confusion#i``
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
-    uses = {cid: Counter() for cid in TARGETS}
+    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS}
     current = None  # (カード id, ワザの位置)
     attacker = None  # ワザを使ったプレイヤー
     discarded = False
+    power_user = None
     for e in state.log:
         kind = e["kind"]
+        if kind == "knock_out" and e.get("timing") == "trainer":
+            uses[DEVOLUTION_SPRAY]["knock_out_after_spray"] += 1  # v0.50: 退化スプレーで最大HPがダメージ以下になったポケモンのきぜつ
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
                 if card[uid] in uses:
@@ -894,6 +2190,12 @@ def card_uses(state):
             uses[card[e["pokemon"]]]["protected_by_own_effect"] += 1  # 「まるまる」「からをとじる」の効果で、相手のワザのダメージを受けなかった
         elif kind == "persistent_effect_removed" and card[e["pokemon"]] in uses:
             uses[card[e["pokemon"]]][f"effect_removed_{e['reason']}"] += 1
+        elif kind in ("retaliation", "retaliation_skipped") and card[e["pokemon"]] in V0_45:
+            # v0.45: クロスカウンター（効果を持つポケモンのカード）。返した（「おもて」）・コインの「うら」・対象がいない
+            uses[card[e["pokemon"]]][f"{kind}_{e.get('coin') or e.get('reason')}"] += 1
+        elif kind == "damage" and e.get("damage_zero_below") and card.get(e["damage_zero_below"][0][1]) in V0_45:
+            # v0.45: かたくなる（8 段階で 0 になった相手のワザのダメージ・しきい値以上でそのまま受けたダメージ）
+            uses[card[e["damage_zero_below"][0][1]]]["zeroed_damage" if e["amount"] == 0 else "harden_exceeded"] += 1
         elif kind == "attack_check" and card[e["source_card"]] in uses:
             # v0.36: 相手が、このカードのワザ（すなかけ・えんまくなど）の効果を受けてワザを使ったときの手順 4 のコイン（結果ごと）
             uses[card[e["source_card"]]][f"attack_check_{e['result']}"] += 1
@@ -904,15 +2206,107 @@ def card_uses(state):
             for step, source, _ in e["modifiers"]:  # v0.37: ちいさくなる（8 段階）・かみつく（2 段階）、v0.38: バリアアタック（8 段階）でへったダメージ
                 if card.get(source) in V0_37 + V0_38:
                     uses[card[source]][f"reduced_step{step}"] += 1
-        if kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses:
+        # v0.47: なにかの化石・ピッピ人形（場に出した・すてた・カウントされないきぜつ・重ねた進化）、トレーナーの使用の禁止、見る・入れかえる特殊能力とワザ
+        if kind == "play_trainer_as_pokemon":
+            uses[card[e["card"]]]["played_as_pokemon"] += 1
+        elif kind == "discard_from_play":
+            uses[card[e["pokemon"]]]["discarded_from_play" + ("_with_energy" if e["energy"] else "")] += 1
+        elif kind == "knock_out" and e.get("counted") is False:
+            uses[card[e["pokemon"]]]["knocked_out_uncounted"] += 1
+        elif kind == "evolve" and card[e["from_card"]] in V0_47_TRAINERS:
+            uses[card[e["from_card"]]][f"evolved_into_{card[e['to_card']]}"] += 1
+        elif kind == "trainer_lock_added" and e["effect"].split("#")[0] in uses:
+            uses[e["effect"].split("#")[0]]["trainer_lock_added" + ("" if card[e["source_card"]] == e["effect"].split("#")[0] else "_copied")] += 1
+        elif kind == "look_at_card" and "power" in e:
+            uses[e["power"].split("@")[0]][f"peek_{e['zone']}_{'own' if e['owner'] == e['player'] else 'opponent'}"] += 1
+        elif kind == "swap_prize_with_deck_top":
+            uses[e["power"].split("@")[0]]["swap_prize"] += 1
+        elif kind == "type_shift":
+            uses[e["power"].split("@")[0]][f"type_shift_{e['color']}"] += 1  # v0.48: ［へんしょく］（選んだ色ごと）
+        if kind == "damage" and e.get("damage_halved"):
+            for _, source, rounding in e["damage_halved"]:
+                if card[source] == KABUTO:
+                    uses[KABUTO]["armor_halved"] += 1  # v0.47: ［カブトアーマー］（8 段階。切りすて）
+        if kind in ("counterattack", "power_damage") and any(card[m[0]] == KABUTO for m in e.get("received_modifiers", ())):
+            uses[KABUTO]["armor_halved_power_damage"] += 1
+        if kind == "damage":
+            # v0.46: 常にはたらく特殊能力・リフレクターの記録（docs/continuous-powers-v0.46.md）。前の版のカードの数え方は変えない
+            steps = e.get("steps") or ()
+            before = {str(step[0]).partition(" ")[2]: steps[i - 1][1] for i, step in enumerate(steps) if i}
+            for _, source, threshold in e.get("damage_zero_at_least", ()):
+                value = next((v for label, v in before.items() if label.startswith(state.card_def(source).name_ja + "［")), 0)
+                uses[card[source]]["wall_zeroed" if value >= threshold else "wall_kept"] += 1
+            for _, source, threshold, _ in e.get("damage_set_if_at_least", ()):
+                value = next((v for label, v in before.items() if label.startswith(state.card_def(source).name_ja + "［")), 0)
+                uses[card[source]]["barrier_capped" if value >= threshold else "barrier_kept"] += 1
+            for step, source, rounding in e.get("damage_halved", ()):
+                if card[source] in V0_46:
+                    key = "reflector_halved" if rounding == "down" else f"halved_{e.get('target', 'opponent')}_step{step}"
+                    uses[card[source]][key] += 1
+            for _, source, _ in e.get("modifiers", ()):
+                if card.get(source) == DARK_PRIMEAPE:
+                    uses[DARK_PRIMEAPE]["frenzy_bonus"] += 1
+        elif kind in ("counterattack", "power_damage") and e.get("received_modifiers"):
+            for source, *_ in e["received_modifiers"]:
+                uses[card[source]]["power_damage_modified"] += 1
+        elif kind == "special_condition_prevented" and card[e["pokemon"]] in V0_46:
+            uses[card[e["pokemon"]]][f"immunity_prevented_{e['condition']}"] += 1
+        elif kind in ("retreat", "retreat_failed") and "retreat_cost" in e:
+            for pid, key, _ in e["retreat_cost_increases"]:
+                uses[key.split("@")[0]]["retreat_increased"] += 1
+            for pid, key, _ in e["retreat_cost_reductions"]:
+                uses[key.split("@")[0]]["retreat_reducible"] += 1
+                if len(e["discarded"]) < e["retreat_cost_printed"] + sum(x[2] for x in e["retreat_cost_increases"]):
+                    uses[key.split("@")[0]]["retreat_reduced"] += 1
+        power_key = next((str(e[f]) for f in ("power", "effect") if "@power" in str(e.get(f, ""))), None)
+        if kind == "pokemon_power":
+            power_user = e["player"]  # v0.43: 特殊能力を使ったプレイヤー（くさいかふん・えんかくさいみんの特殊状態がどちらの側か）
+        if kind == "pokemon_power" and card[e["pokemon"]] in V0_42 + V0_43:
+            uses[card[e["pokemon"]]]["power_declared"] += 1  # v0.42: 宣言する特殊能力の宣言
+            if "entry" in e:
+                uses[card[e["pokemon"]]]["power_entry_used"] += 1  # v0.43: 場に出たときの特殊能力を使う機会に使った
+        elif kind == "entry_power_declined" and card[e["pokemon"]] in V0_43:
+            uses[card[e["pokemon"]]]["power_entry_declined"] += 1  # v0.43: 場に出たときの特殊能力を使う機会に使わなかった
+        elif kind == "coin_flip" and power_key is not None and power_key.split("@")[0] in V0_43:
+            uses[power_key.split("@")[0]][f"power_coin_{e['result']}"] += 1  # v0.43: くさいかふん・えんかくさいみんのコイン
+        elif kind in V043_POWER_EVENTS and power_key is not None and power_key.split("@")[0] in V0_43:
+            # v0.43: 特殊能力の処理のログ（特殊状態は相手・自分のどちらにしたか）
+            side = ("_own" if e["player"] == power_user else "_opponent") if kind == "special_condition" else ""
+            uses[power_key.split("@")[0]][f"power_{kind}{side}"] += 1
+        elif kind == "coin_flip" and power_key is not None and power_key.split("@")[0] in V0_42:
+            uses[power_key.split("@")[0]][f"power_coin_{e['result']}"] += 1  # v0.42: 特殊能力のコイン（ヒーリング・かおりのわな・ぼうぎょかふん）
+        elif kind in V042_POWER_EVENTS and power_key is not None and power_key.split("@")[0] in V0_42:
+            # v0.42: 特殊能力の処理のログ（使ったカード・はたらいたカードで数える。こんらんにしたかも）
+            uses[power_key.split("@")[0]][f"power_{kind}" + (f"_{e['confused']}" if kind == "power_confusion" else "")] += 1
+        if kind in ("energy_burn", "power_heal") and card[e["pokemon"]] in uses and not (power_key or "").split("@")[0] in V0_42:
             # v0.31: 特殊能力（エナジーバーン・しぜんになおる・ほのおでかいふく（つけたカード ``trigger`` があるもの））
             uses[card[e["pokemon"]]]["power_heal_on_attach" if "trigger" in e else kind] += 1
         if kind == "attack":
             discarded = False
-            current = (card[e["pokemon"]], e["attack_index"]) if card[e["pokemon"]] in uses else None
+            # v0.49: ワザを印刷したカード（ログの ``card_id``。出どころがいちばん上のカードでないワザだけに書かれる）で数える。出どころはワザを使ったカードで数える
+            printing = e.get("card_id", card[e["pokemon"]])
+            current = (printing, e["attack_index"]) if printing in uses else None
             attacker = e["player"]
             if current is not None:
                 uses[current[0]][f"attack#{current[1]}"] += 1
+            if "route" in e and card[e["pokemon"]] in uses:
+                uses[card[e["pokemon"]]][f"v049_route_{e['route']}"] += 1
+                if current is not None:
+                    uses[current[0]][f"used_by_{card[e['pokemon']]}#{current[1]}"] += 1
+        elif kind in ("disguise", "disguise_removed") and card.get(e.get("pokemon")) in uses:
+            uses[card[e["pokemon"]]][kind if kind == "disguise" else f"disguise_removed_{e['reason']}"] += 1  # v0.49: 「ばける」
+        elif kind == "recall":
+            uses[RECALL]["recall"] += 1  # v0.49: 思い出させる
+        elif kind == "devolve":
+            # v0.50: たいかビーム（ワザの効果。自分・相手のポケモン）・退化スプレー（はがした枚数）
+            if "trainer_card" in e:
+                uses[DEVOLUTION_SPRAY][f"devolve_{len(e['removed'])}"] += 1
+            else:
+                uses[MEW]["beam_devolve_" + ("own" if e["player"] == e["by_player"] else "opponent")] += 1
+        elif kind == "devolve_declined":
+            uses[DEVOLUTION_SPRAY]["devolve_declined"] += 1
+        elif kind == "devolve_none":
+            uses[MEW]["beam_devolve_none"] += 1
         elif kind in ("turn_end", "turn_start"):
             current = None
         elif current is not None:
@@ -923,7 +2317,7 @@ def card_uses(state):
                 uses[cid][f"self_damage#{index}"] += 1
                 if e.get("damage_multiplied"):
                     uses[cid][f"self_damage_multiplied#{index}"] += 1  # v0.35: マチスのラッタのきあいだめ（自分へのダメージも 2 倍）
-            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38 + V0_39 + V0_40:
+            elif kind == "damage" and not e.get("retaliation") and e.get("target") in ("opponent_bench", "self_bench") and cid in V0_33 + V0_34 + V0_37 + V0_38 + V0_39 + V0_40 + V0_43 + V0_46:
                 uses[cid][f"{e['target']}_damage#{index}"] += 1  # v0.33: 控えポケモンへのダメージ（かけぬける・ミニじしん）
             elif kind == "damage" and not e.get("retaliation") and "target" not in e:
                 uses[cid][f"damage#{index}"] += 1
@@ -944,7 +2338,15 @@ def card_uses(state):
                 uses[cid][f"opponent_coin_{e['result']}#{index}"] += 1  # v0.40: ベンチをあやつる（相手が投げるコイン）
             elif kind in V041_RESULT_EVENTS and cid in V0_41 and (kind != "shuffle" or e.get("effect") == f"{cid}#{index}"):
                 uses[cid][f"{kind}#{index}"] += 1  # v0.41: ダメージシフト・チェンジダメージ・ひなたぼっこ（つけない・つけるものがないも）
-            if cid in V0_41 and kind == "special_condition" and e.get("effect") == f"{cid}#{index}" and e["player"] == attacker:
+            elif kind in V042_RESULT_EVENTS and cid in V0_42 and e.get("effect", f"{cid}#{index}") == f"{cid}#{index}":
+                uses[cid][f"{kind}#{index}"] += 1  # v0.42: エネループ・ライフダウン・つきのちから・ようせいのきせき・テレポートブラスト（入れ替えない）
+            elif kind in V046_RESULT_EVENTS and cid in V0_46 and e.get("effect") == f"{cid}#{index}":
+                uses[cid][f"{kind}#{index}"] += 1  # v0.46: せいちょう・サイコエクスチェンジ
+            elif kind in V047_RESULT_EVENTS and cid in V0_47 and e.get("effect") == f"{cid}#{index}":
+                uses[cid][f"{kind}#{index}"] += 1  # v0.47: みらいよち・おどろかす・ずつう・こうしゅうは
+            elif kind in V048_RESULT_EVENTS and cid in V0_48 and e.get("effect") == f"{cid}#{index}":
+                uses[cid][f"{kind}#{index}"] += 1  # v0.48: ダメージぞうふく・やみのこえ（山札を切った）
+            if cid in V0_41 + V0_46 and kind == "special_condition" and e.get("effect") == f"{cid}#{index}" and e["player"] == attacker:
                 uses[cid][f"self_special_condition_{e['condition']}#{index}"] += 1  # v0.41: くさいにおい・いねむり・こまったねんりきの自分の特殊状態
             if cid in V0_41 and kind == "attack_heal":
                 uses[cid][f"attack_heal_{'opponent' if 'attacker' in e else 'own'}#{index}"] += 1  # v0.41: みんなでかいふく（相手のポケモンの回復）
@@ -986,7 +2388,7 @@ def run(seeds, *, max_steps=8000, pairings=PAIRINGS):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--batch", choices=sorted(BATCHES), default="v0.28",
-                        help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37〜v0.40 の 4 組、v0.41 の 6 組）")
+                        help="組の一覧（v0.28・v0.29・v0.30・v0.32〜v0.36 のどれかの 3 組、v0.31・v0.37〜v0.40・v0.43・v0.44・v0.46 の 4 組、v0.41 の 6 組、v0.42・v0.45 の 5 組）")
     parser.add_argument("--seeds", type=int, default=10, help="組ごと・席ごとの seed の数（1 組の局数はこの 2 倍。1 以上）")
     parser.add_argument("--start", type=int, default=0, help="最初の seed")
     parser.add_argument("--max-steps", type=int, default=8000)

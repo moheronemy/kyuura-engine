@@ -21,7 +21,10 @@ from . import judge
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
-from .effects import attack_damage_modifiers
+from .effects import (
+    TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
+    same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
+)
 from .errors import UnsupportedError
 from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
 from .state import Halt, Phase
@@ -34,6 +37,20 @@ if TYPE_CHECKING:
 # 交代が終わったら、ポケモンチェックの残り（3 の「ねむり」・4 の「マヒ」。v0.3b）をしてから次の番を始める。
 # 値は v0.3a と同じ（ポケモンチェックの中で、次の番はまだ始まっていないことを表す。書き出しの形を変えないため）
 NEXT_TURN = "next_turn"
+# v0.42: 特殊能力の処理のあと（きぜつ・場をはなれて空いたバトル場）の決定の続き。サイド・勝ち負け・ふしちょう・交代が終わったら、番のプレイヤーの番に
+# もどる（``Phase.MAIN``。特殊能力を使っても番は終わらない。p.311・p.323）。ワザのあと（続きなし = 番の終わり）・ポケモンチェックの中（NEXT_TURN）と区別する
+CONTINUE_TURN = "continue_turn"
+
+# v0.47（KA1。docs/fossil-hidden-info-v0.47.md 4 章）: ポケモンチェックの「どく」のダメージ（ワザによるダメージではない。p.321・p.322）に、受けるダメージを変える
+# 常にはたらく特殊能力（カブトの［カブトアーマー］「このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)」）を当てはめるか
+POISON_RECEIVED_POWER = Halt(
+    code="UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
+    message=(
+        "説明の「受けるダメージ」がポケモンチェックの「どく」のダメージを含むかは、公式ルール 2000.02.14版（p.321 のダメージの計算はワザによるダメージ・p.322 の"
+        "「どく」）とカードの文面から決められないので、ダメージを与える前に対戦を止める（KA1）"
+    ),
+    references=("P43 p.321", "P43 p.322", "P43 p.323", "NEO-2000-OFFICIAL-RULES", "docs/fossil-hidden-info-v0.47.md 4 章"),
+)
 
 POKEMON_CHECK_DOUBLE_KNOCKOUT = Halt(
     code="UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT",
@@ -54,9 +71,28 @@ def expire_at_turn_end(state: GameState) -> None:
     for p in state.players:
         for pokemon in p.in_play():
             pokemon.retreat_failed_turn = None
+            # v0.44: トレーナー「サカキ」の、今の番だけの進化の許可（説明の「今の番」「同じ番で」）
+            pokemon.evolution_permission_turn = None
     # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
     state.energy_burn = ()
+    # v0.49: 「思い出させる」の「この番だけ」（docs/virtual-attacks-transformation-v0.49.md 6 章）。ログ ``recall`` の番で分かるので、消すログは出さない
+    state.recalls = ()
+    remove_expired_trainer_locks(state)  # v0.47
     state.add_event("turn_end", player=state.current_player)
+
+
+def remove_expired_trainer_locks(state: GameState) -> None:
+    """v0.47: 消える番（``expires_turn``）が今の番の、期限のあるトレーナーの使用の禁止（``GameState.trainer_locks``。ずつう・こうしゅうはの「次の相手の番の終わりまで」）
+    を消す。1 つにつきログ ``trainer_lock_removed``（``player``・``source_player``・``effect``・``created_turn``・``expires_turn``・``reason`` は ``expired``）。常にはたらく
+    特殊能力による禁止（［アレルギーかふん］）は状態に持たないので関係しない。"""
+    kept = []
+    for lock in state.trainer_locks:
+        if lock.expires_turn == state.turn_number:
+            state.add_event("trainer_lock_removed", player=lock.player, source_player=lock.source_player, effect=lock.effect,
+                            created_turn=lock.created_turn, expires_turn=lock.expires_turn, reason="expired")
+        else:
+            kept.append(lock)
+    state.trainer_locks = tuple(kept)
 
 
 def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | None:
@@ -74,9 +110,16 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         for pokemon in state.players[owner].in_play()
         if pokemon.conditions.poison is not None
     ]
+    for owner, pokemon in poisoned:
+        # v0.47（KA1）: 受けるダメージを変える常にはたらく特殊能力（カブトアーマー）を、どくのダメージに当てはめるかは決められない。当てはめると量が変わるなら、
+        # ダメージを与える前に対戦を止める
+        problem = poison_received_power_problem(state, owner, pokemon, pokemon.conditions.poison.damage)
+        if problem is not None:
+            halt(state, Halt(code=POISON_RECEIVED_POWER.code, message=f"{problem}。{POISON_RECEIVED_POWER.message}", references=POISON_RECEIVED_POWER.references))
+            return None
     knocked_owners = {
         owner for owner, pokemon in poisoned
-        if pokemon.damage + pokemon.conditions.poison.damage >= state.card_def(pokemon.card).hp
+        if pokemon.damage + pokemon.conditions.poison.damage >= max_hp(state, pokemon)  # v0.48: 今有効な最大HP
     }
     if len(knocked_owners) > 1:
         halt(state, POKEMON_CHECK_DOUBLE_KNOCKOUT)
@@ -96,7 +139,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         (owner, pokemon)
         for owner in order
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= state.card_def(pokemon.card).hp
+        if pokemon.damage >= max_hp(state, pokemon)
     ]
 
 
@@ -194,6 +237,25 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
             ),
         )
         return
+    # v0.48（MH1）: ねむり・マヒから回復すると、そのポケモンの特殊能力（かがくへんかガス）がはたらきはじめ、ほかのポケモンの最大HP（［ガスのからだ］）が下がって、のっている
+    # ダメージ以下になる場合がある。ポケモンチェックの 3・4 のあとに、きぜつの判定はない（p.323）ので決められない。ねむりのコイン・マヒの回復の前に止める
+    paralyzed_now = [
+        (owner, state.players[owner].active)
+        for owner in order
+        if state.players[owner].active is not None and state.players[owner].active.conditions.paralyzed
+        and paralysis_recovery_turn(state, owner, state.players[owner].active.conditions.exclusive.turn) == state.turn_number
+    ]
+    # v0.49: 回復すると、決められない姿（［へんしん］がはたらきはじめて写す特殊能力（TF1）・写すカード（TF2）、かがくへんかガスがはたらきはじめて「ばける」が消える
+    # （DG1））になる場合も、同じくコインの前に止める（``effects.state_stop_after``。MH1 と合わせて確かめる）
+    for owner, pokemon, recover in [(o, p, recover_from_sleep) for o, p in asleep] + [(o, p, recover_from_paralysis) for o, p in paralyzed_now]:
+        stop = _recovery_stop(state, owner, pokemon, recover)
+        if stop is not None:
+            code, message = stop
+            references = (("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT") if code == MAX_HP_DROP_CODE
+                          else ("P43 p.322", "P43 p.323", "GR-2000-P323-POKEMON-CHECK", "docs/virtual-attacks-transformation-v0.49.md"))
+            halt(state, Halt(code=code, message=f"ポケモンチェックで、プレイヤー {owner} のポケモン {pokemon.pokemon_id} が回復すると: {message}",
+                             references=references))
+            return
     for owner, pokemon in asleep:
         flips = flip_coins(state, owner, 1, source="pokemon_check", effect="sleep", card=pokemon.card, pokemon_id=pokemon.pokemon_id)
         recovered = flips.results[0] is CoinSide.HEADS
@@ -215,6 +277,14 @@ def pokemon_check_sleep_and_paralysis(state: GameState) -> None:
         if paralysis_recovery_turn(state, owner, pokemon.conditions.exclusive.turn) == state.turn_number:
             recover_from_paralysis(state, owner, pokemon)
     begin_turn(state, 1 - state.current_player)
+
+
+def _recovery_stop(state: GameState, owner: int, pokemon: PokemonInPlay, recover) -> tuple[str, str] | None:
+    """``pokemon`` がねむり・マヒから回復したとしたら受け付けられない状態になるなら、その (コード, 理由の文)（v0.48 の MH1（最大HPがのっているダメージ以下に下がる）、
+    v0.49 の決められない姿（TF1・TF2・DG1）。``effects.state_stop_after``。複製の上で回復させて比べる。状態を変えない）。"""
+    trial = state.clone()
+    recover(trial, owner, trial.players[owner].active)
+    return state_stop_after(state, trial)
 
 
 def confusion_check(state: GameState, player: int, pokemon: PokemonInPlay, *, action: str, effect: str) -> bool:
@@ -271,7 +341,7 @@ def attack_coin_check(state: GameState, player: int, pokemon: PokemonInPlay, che
     return succeeded
 
 
-def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> UnsupportedError | None:
+def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_status: frozenset[int] | None = None) -> UnsupportedError | None:
     """こんらんしたワザの 20 ダメージを、原典で決められる形で計算できないなら、その理由（v0.3c）。
 
     p.322 は「このダメージは「弱点・抵抗力」の影響を受けます」とだけ書く。こんらんのダメージが「ワザによるダメージ」
@@ -279,16 +349,34 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay) -> Unsupp
     ワザが…ダメージを与えるとき」）・ディフェンダー（「ワザによるダメージを受けるとき」。p.257）の効果を計算するかを決め
     られない。それらのカードがついていなければ問題はない。ついていれば、コインを投げる前に止める（コインが「おもて」なら
     問題はないが、投げる前には分からない）。
+
+    v0.46: 同じ問いで、場の常にはたらく特殊能力が、こんらんの 20 をワザのダメージ（このポケモンが与えるダメージ）として扱うなら当てはまるとき（エリカのフシギソウの
+    ［くつろぐかおり］の「すべてのワザのダメージ」・わるいオコリザルの［きょうぼう］の「このカードがポケモンに与えるダメージ」。``effects.confusion_power_modifiers``。
+    ``attack_status`` はワザが使われた時の特殊状態）も止める（新しい問いにしない）。
     """
     modifiers = attack_damage_modifiers(state, pokemon, pokemon)
-    if not modifiers:
-        return None
-    return UnsupportedError(
-        "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
-        f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
-        "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
-        "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
-    )
+    if modifiers:
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} に、ダメージを変えるカードがついている。こんらんしたワザで自分が受ける 20 "
+            "ダメージに、プラスパワー・ディフェンダーの効果を計算するか（こんらんのダメージが「ワザによるダメージ」か）は"
+            "『オフィシャルブック2000』（p.257・p.309・p.321・p.322）から決められないので扱わない",
+        )
+    try:
+        # v0.48: 自分のタイプ（色）と自分の弱点・抵抗力（今有効な値。``effects.definition_views``）。［へんしょく］で変えた色の読み方（VS1）で 20 ダメージの計算が
+        # 変わるなら、コインを投げる前に止める（こんらん状態のモルフォンでは［へんしょく］の力が消えているので、変えた色が続くかが決まらない）
+        same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE))
+    except TypeReadingsDiffer:
+        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージの弱点・抵抗力の計算")
+    powers = confusion_power_modifiers(state, pokemon, attack_status)
+    if powers:
+        return UnsupportedError(
+            "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",
+            f"こんらん状態のポケモン {pokemon.pokemon_id} のワザがこんらんしたとき、ダメージを変える特殊能力（{'・'.join(powers)}）がはたらいている。こんらんしたワザで"
+            "自分が受ける 20 ダメージが、その特殊能力の書く「ワザのダメージ」「このカードがポケモンに与えるダメージ」か（こんらんのダメージが「ワザによるダメージ」か）は"
+            "『オフィシャルブック2000』（p.309・p.321・p.322）と kyuura の記録から決められないので扱わない",
+        )
+    return None
 
 
 def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str) -> None:
@@ -300,7 +388,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     ``weakness``・``resistance``・``total_damage``）。``damage`` のログ（ワザによるダメージ）とは種類を分ける。
     きぜつはワザのあとと同じきぜつの判定（解決の基盤の ``flow._finish_attack``）で判定する（サイドは相手が取る。p.323）。
     """
-    calc = calculate_confusion_damage(state.card_def(pokemon.card), state.rules, CONFUSION_DAMAGE)
+    calc = calculate_confusion_damage(definition_views(state, pokemon)[0], state.rules, CONFUSION_DAMAGE)  # v0.48: 今有効な値（読み方は宣言の前に確かめた）
     pokemon.damage += calc.final
     state.add_event(
         "confusion_damage",
@@ -316,7 +404,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
     )
 
 
-def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None) -> None:
+def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None, counted: bool = True) -> None:
     """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
 
     場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
@@ -324,6 +412,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     する。きぜつしたのは 1 匹なので、サイドは 1 枚（重なったカードの数では増えない。p.323）。ログの ``pokemon`` は
     いちばん上のカード、``evolution_stack`` は下のカード（進化していれば。下から順）。
     ``timing``: ポケモンチェックの中のきぜつなら ``"pokemon_check"``（ログに書く。v0.3a）。ワザのあとは None。
+    ``counted``: きぜつしたポケモンとしてカウントされるか（v0.47。偽ならなにかの化石・ピッピ人形の「「きぜつ」しても「きぜつ」とカウントされない」。トラッシュは
+    同じで、相手はサイドを取らない。ログに ``counted`` が False と書く。真なら書かない（v0.46 までと同じ形））。サイドを取るプレイヤーを決めるのは呼ぶ側。
     """
     p = state.players[owner]
     if p.active is pokemon:
@@ -337,6 +427,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     extra = {}
     if pokemon.evolution_stack:
         extra["evolution_stack"] = pokemon.evolution_stack  # v0.4a: いちばん上のカード（pokemon）の下にあったカード
+    if pokemon.disguise is not None:
+        extra["disguise"] = pokemon.disguise  # v0.49: 「ばける」でのせていた進化カード（いっしょにトラッシュする）
     if pokemon.trainers:
         for attached in pokemon.trainers:
             state.players[attached.player].discard.append(attached.card)
@@ -344,7 +436,9 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     if simultaneous:
         extra["simultaneous"] = True  # v0.2f: 同じワザでほかのポケモンもきぜつした（p.324）
     if timing is not None:
-        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした
+        extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした。v0.42: 特殊能力の処理のあと（ゲンガーの「のろい」）は "power"
+    if not counted:
+        extra["counted"] = False  # v0.47: なにかの化石・ピッピ人形（進化カードがのっていない）。相手はサイドを取らない
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)

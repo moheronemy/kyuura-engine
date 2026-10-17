@@ -582,8 +582,23 @@ class CatalogTest(unittest.TestCase):
 
         v0.31 のカツラのキュウコンの「ほのおでかいふく」（``HealOnEnergyAttach``）は宣言しないが、はたらくのはエネルギーカードをつけたとき
         （``effects.after_energy_attached``）で、解決の基盤の窓（ワザ・きぜつ・番の終わり）の中ではないので、対応表に入れていない
-        （docs/held-cards-v0.31.md）。ほかの宣言しない特殊能力は今までどおり対応表にあることを確かめる。"""
-        outside_windows = ("heal_on_energy_attach",)
+        （docs/held-cards-v0.31.md）。v0.46 の常にはたらく特殊能力 8 つ（``effects.ContinuousPower``）も宣言しないが、窓の中ではたらく反応ではなく、ダメージの計算・
+        「にげる」・トレーナーを使う・特殊状態にする処理が、その時点の場から問い合わせる（``effects.continuous_powers``。docs/continuous-powers-v0.46.md 2 章）ので、
+        対応表に入れていない。v0.47 の常にはたらく特殊能力 3 つ（おみとおし・カブトアーマー・げんしのちから。観測・ダメージの計算・進化の入口が問い合わせる。
+        docs/fossil-hidden-info-v0.47.md 4 章）も同じ。v0.48 のナツメのゴースの［ガスのからだ］（最大HP。HP を使う処理が ``effects.max_hp`` で問い合わせる。
+        docs/effective-pokemon-properties-v0.48.md 2 章）も同じ。v0.49 のナツメのフーディンの［サイコリンク］（ワザの一覧。ワザを使う処理が
+        ``effects.available_attacks`` で問い合わせる）・メタモンの［へんしん］（今の姿。``effects.current_form`` で問い合わせる。docs/virtual-attacks-transformation-v0.49.md
+        2 章）も同じ。ほかの宣言しない特殊能力は今までどおり対応表にあることを確かめる。"""
+        outside_windows = ("heal_on_energy_attach",
+                           # v0.46
+                           "zero_large_damage_received", "cap_damage_from_basic", "halve_active_attack_damage", "bonus_damage_while_confused",
+                           "reduce_own_active_retreat_cost", "increase_opponent_active_retreat_cost", "prevent_trainer_use", "special_condition_immunity",
+                           # v0.47
+                           "reveal_opponent_hand", "halve_damage_received", "prevent_evolution",
+                           # v0.48
+                           "max_hp_per_attached_energy_cards",
+                           # v0.49
+                           "attacks_of_own_type_pokemon", "transform_into_defender")
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
@@ -592,7 +607,10 @@ class CatalogTest(unittest.TestCase):
                             or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out"))
                 self.assertEqual(definition is not None, expected)
         self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
-                          if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows], ["PMCG6-033@power0"])
+                          if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows],
+                         ["PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
+                          "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG5-063@power0", "PMCG6-010@power0",
+                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

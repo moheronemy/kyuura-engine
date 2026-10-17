@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 10 あります（``format_version``）。
+形式は 15 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -44,6 +44,35 @@
   v0.31 の持続する効果の種類 ``"destiny_bond"``（みちづれ）・``"attack_barrier"``（バリアー）・``"damage_reduction"``（ちいさくなる。
   ``"amount"`` を加える）・``"cannot_attack"``（しっぽをふる。相手に与える効果で、``source_card``・``source_player`` は効果を与えたワザを
   使ったポケモンのカードとプレイヤー）は、v0.27 と同じく形式 8 の ``persistent_effects`` の種類の値を加えただけ（形式は変えない）。
+- 11: 10 に、場のポケモンごとの ``attacks_used_once``（「このワザは、このカードが場に出てから、1回しか使えない」ワザを、この場のポケモンが使った記録。
+  [ワザを持つカードの uid, ワザの位置] の並び。なければ ``[]``）と ``evolution_permission_turn``（トレーナー「サカキ」で、場に出た番・進化した番でも
+  進化させてよい番。なければ ``None``。番の終わりに消える）を加えたもの（v0.44。docs/search-evolution-once-attacks-v0.44.md 3 章）。形式 1〜10 は、どちらかが
+  空でない・None でないポケモンがいると ``ValueError``（なければ形式 1〜10 の書き出しは v0.43 と同じ）。使った記録はログから数えず状態に持つので、書き出しにも
+  加えた（場をはなれるまで残る）。
+- 12: 11 に、``trainer_locks``（プレイヤーに与えた、期限のあるトレーナーカードの使用の禁止。コダックの「ずつう」・マチスのサンダースの「こうしゅうは」。
+  ``{"player", "source_player", "source_card", "source_card_id", "effect", "created_turn", "expires_turn"}`` の並び（与えた順）。なければ ``[]``）を加えたもの
+  （v0.47。docs/fossil-hidden-info-v0.47.md 5 章）。形式 1〜11 は、禁止があると ``ValueError``（なければ形式 1〜11 の書き出しは v0.46 と同じ）。禁止は場のポケモンの
+  持続する効果ではなくプレイヤーの記録なので、ポケモンの項目ではなく最上位の項目にした（消える番の終わりに消える）。v0.47 のなにかの化石・ピッピ人形は、場に
+  いるあいだも書き出しの形を変えない（場のポケモンの ``card``・``card_id`` はそのカード。ポケモンとしてあつかうことは、状態の定義（``GameState.card_def``）が決める）。
+- 13: 12 に、場のポケモンごとの ``type_shift``（特殊能力で色（タイプ）を変えた記録。モルフォンの［へんしょく］。``{"color", "turn", "source_card",
+  "source_card_id", "returned_to_bench"}``、なければ ``None``）を加えたもの（v0.48。docs/effective-pokemon-properties-v0.48.md 7 章）。形式 1〜12 は、記録のある
+  ポケモンがいると ``ValueError``（なければ形式 1〜12 の書き出しは v0.47 と同じ）。変えた色が今有効かは、記録・番・場所・特殊状態・かがくへんかガスから求める（VS1。
+  状態の項目にしない）ので、記録だけを書く。v0.48 の持続する効果の種類 ``"weakness_change"``・``"resistance_change"``（ポリゴンの「テクスチャー1」「テクスチャー2」。
+  ``color`` を加える）・``"max_hp_set"``（キョウのメタモンの「きょだいか」。``amount`` を加える）は、形式 8 の ``persistent_effects`` の種類の値を加えただけ（形式は
+  変えない。v0.47 までの書き出しを読む側は、知らない種類として拒否すること）。場のポケモンの ``hp`` は、これまでどおりいちばん上のカード（場での役割を含むカードの
+  定義）の HP で、今有効な最大HP（［ガスのからだ］・「きょだいか」）ではない（今有効な値は状態から求める値で、観測 ``observation.observe`` が書く）。
+- 14: 13 に、場のポケモンごとの ``disguise``（タケシのキュウコンの「ばける」でのせた進化カード。``{"card", "card_id"}``、なければ ``None``）と、最上位の
+  ``recalls``（この番に使った「思い出させる」の記録。``{"player", "turn", "pokemon_id", "card", "card_id", "trainer", "trainer_card_id"}`` の並び。なければ ``[]``）を
+  加えたもの（v0.49。docs/virtual-attacks-transformation-v0.49.md 8 章）。持続する効果は、ワザの出どころがワザを使ったポケモンのいちばん上のカードと違うとき
+  （［サイコリンク］・［へんしん］・「ばける」・「思い出させる」で使ったワザ）だけ ``attack_card``（効果を与えたワザを印刷したカードの id）、「ドわすれ」で
+  受けたポケモンのいちばん上のカードでないワザを選んだときだけ ``target_attack_card`` を加える。``power_uses_this_turn`` には、のせたカードの特殊能力を使った記録
+  （[場のポケモンの番号, 特殊能力の位置, そのカードの uid]）が入る。形式 1〜13 は、のせたカード・記録・その項目のある効果・3 つの値の使用の記録があると
+  ``ValueError``（なければ形式 1〜13 の書き出しは v0.48 と同じ）。今の姿（［へんしん］で同じカードとしてあつかう相手のカードなど）・今使えるワザは、状態から求める
+  値なので書かない（観測 ``observation.observe`` が書く）。
+- 15: 14 に、場のポケモンごとの ``devolved_turn``（最後に退化した番。退化していなければ ``None``）を加えたもの（v0.50。ミュウの「たいかビーム」・退化スプレー。
+  docs/mew-devolution-spray-v0.50.md 7 章）。``power_uses_this_turn`` の 3 つの値の記録に、いちばん上のカードとして使ったあとで進化・退化していちばん上でなくなった
+  カードの記録（[場のポケモンの番号, 特殊能力の位置, 使ったカードの uid]。``evolution.retag_power_uses``）が入る。形式 1〜14 は、退化した番のあるポケモン・その記録
+  （今の番の特殊能力の宣言のログが「ばける」でのせたカードの使用でない 3 つの値の記録）があると ``ValueError``（なければ形式 1〜14 の書き出しは v0.49 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -98,6 +127,7 @@ from .state import (
     RETALIATION_RECEIVED,
     AttackBarrier,
     AttackCoinCheck,
+    ZeroDamageBelow,
     Asleep,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -106,6 +136,8 @@ from .state import (
     DamageReduction,
     DestinyBond,
     GameState,
+    HalvedDamage,
+    MaxHpSet,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -114,10 +146,12 @@ from .state import (
     PokemonInPlay,
     PreventDamage,
     ReducedDamageToSource,
+    ResistanceChange,
     Retaliation,
+    WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -151,7 +185,11 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     「えんまく」など。p.309 の手順 4 のコイン）は ``single_use``（「効果は1回できえる」）を加え、``"cannot_retreat"``（「アイスバーン」・「わしづかみ」）は共通の
     項目だけ（どちらも相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン。形式は変えない。v0.35 までの書き出しを読む側は、知らない種類として
     拒否すること）。v0.40 の ``"cannot_attack_while_source_active"``（「すごむ」。相手に与える効果。``source_card`` は効果を与えたワザを使ったポケモン
-    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。"""
+    （「このカード」））は共通の項目だけ（形式は変えない。v0.39 までの書き出しを読む側は、知らない種類として拒否すること）。v0.45 の
+    ``"retaliation_received_damage_scaled"``（「クロスカウンター」。受けたダメージの倍数とコインの条件のある返す効果）は ``attack_index``・``multiplier``・
+    ``on_heads`` を、``"zero_damage_below"``（「かたくなる」）は ``threshold`` を加え、``"attack_coin_check"`` の期限のない効果（「スミをかける」の「それ以後」）
+    だけ ``lasting``（True）を加える（v0.44 までの形は変えない。形式は変えない。v0.44 までの書き出しを読む側は、知らない種類・項目として拒否すること）。v0.46 の
+    ``"halved_damage"``（「リフレクター」）は共通の項目だけ（形式は変えない。v0.45 までの書き出しを読む側は、知らない種類として拒否すること）。"""
     data: dict[str, Any] = {
         "effect": effect.kind,
         "source_card": effect.source_card,
@@ -166,6 +204,9 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
             data["amount"] = effect.amount
         elif effect.basis != RETALIATION_RECEIVED:
             raise ValueError(f"書き出せない持続する効果 {effect!r}")
+        if effect.scaled:
+            data["multiplier"] = effect.multiplier  # v0.45: 「クロスカウンター」（種類 "retaliation_received_damage_scaled"）だけ
+            data["on_heads"] = effect.on_heads
         # v0.13: 受けたダメージで決まる種類（"retaliation_received_damage"。「こうらがえし」）は、量が効果を与えたときに決まって
         # いないので amount を書かない（受けたダメージはワザ 1 回の中の値で、状態に持たない）
     elif isinstance(effect, NextTurnAttackDamage):
@@ -183,9 +224,55 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["amount"] = effect.amount  # v0.34: "reduced_damage_to_source"（「なきつく」）も減らす量を加える
     elif isinstance(effect, AttackCoinCheck):
         data["single_use"] = effect.single_use  # v0.36: 「すなかけ」（PMCG1-051）の「効果は1回できえる」
-    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive)):
+        if effect.lasting:
+            data["lasting"] = True  # v0.45: 「スミをかける」の「それ以後」（期限のない効果だけ書く）
+    elif isinstance(effect, ZeroDamageBelow):
+        data["threshold"] = effect.threshold  # v0.45: 「かたくなる」
+    elif isinstance(effect, (WeaknessChange, ResistanceChange)):
+        data["color"] = effect.color.value  # v0.48: 「テクスチャー1」「テクスチャー2」の変えた色
+    elif isinstance(effect, MaxHpSet):
+        data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
+    # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
+    for name in ("attack_card", "target_attack_card"):
+        if getattr(effect, name, None) is not None:
+            data[name] = getattr(effect, name)
     return data
+
+
+def _uses_v049_fields(state: GameState) -> bool:
+    """形式 14（v0.49）だけが表せる値があるか: 「ばける」でのせたカード・「思い出させる」の記録・ワザを印刷したカードを持つ持続する効果・のせたカードの特殊能力の
+    使用の記録。"""
+    if state.recalls or any(len(use) != 2 for use in state.power_uses_this_turn):
+        return True
+    for p in state.players:
+        for pokemon in p.in_play():
+            if pokemon.disguise is not None:
+                return True
+            if any(getattr(e, "attack_card", None) is not None or getattr(e, "target_attack_card", None) is not None for e in pokemon.persistent_effects):
+                return True
+    return False
+
+
+def _disguise_power_records(state: GameState) -> set[tuple[int, int, int]]:
+    """今の番の特殊能力の宣言のログのうち、いちばん上のカードでないカード（「ばける」でのせたカード。ログの ``card``）の特殊能力を使ったもの（v0.49 の 3 つの値の記録）。"""
+    found = set()
+    for event in reversed(state.log):
+        if event["kind"] == "turn_start":
+            break
+        if event["kind"] == "pokemon_power" and event.get("card") is not None:
+            found.add((event.get("pokemon_id"), event.get("power_index"), event.get("card")))
+    return found
+
+
+def _uses_v050_fields(state: GameState) -> bool:
+    """形式 15（v0.50）だけが表せる値があるか: 退化した番のあるポケモン・進化・退化でいちばん上でなくなったカードの「自分の番ごとに1回」の記録（形式 14 の 3 つの値の
+    記録は「ばける」でのせたカードの使用だけを表すので、それと区別する。区別はログの宣言で確かめる。状態は変えない）。"""
+    if any(pokemon.devolved_turn is not None for p in state.players for pokemon in p.in_play()):
+        return True
+    retagged = [use for use in state.power_uses_this_turn if len(use) == 3]
+    return bool(retagged) and not set(retagged) <= _disguise_power_records(state)
 
 
 def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: int) -> dict[str, Any] | None:
@@ -222,6 +309,19 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["evolved_turn"] = pokemon.evolved_turn
     if format_version >= 8:
         data["persistent_effects"] = [_persistent_effect(state, e) for e in pokemon.persistent_effects]
+    if format_version >= 11:
+        data["attacks_used_once"] = [list(entry) for entry in pokemon.attacks_used_once]
+        data["evolution_permission_turn"] = pokemon.evolution_permission_turn
+    if format_version >= 13:
+        shift = pokemon.type_shift
+        data["type_shift"] = None if shift is None else {
+            "color": shift.color.value, "turn": shift.turn, "source_card": shift.source_card,
+            "source_card_id": state.cards[shift.source_card].card_id, "returned_to_bench": shift.returned_to_bench,
+        }
+    if format_version >= 14:
+        data["disguise"] = None if pokemon.disguise is None else {"card": pokemon.disguise, "card_id": state.cards[pokemon.disguise].card_id}
+    if format_version >= 15:
+        data["devolved_turn"] = pokemon.devolved_turn  # v0.50
     return data
 
 
@@ -256,12 +356,33 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、この番に使った回数の制限のある特殊能力・「炎」エネルギーになったエネルギーを表せない（format_version=10 を使う）"
         )
+    if format_version < 11 and any(pokemon.attacks_used_once or pokemon.evolution_permission_turn is not None
+                                   for p in state.players for pokemon in p.in_play()):
+        raise ValueError(
+            f"形式 {format_version} は、場に出てから1回しか使えないワザの使った記録・「サカキ」の進化の許可を表せない（format_version=11 を使う）"
+        )
+    if format_version < 12 and state.trainer_locks:
+        raise ValueError(f"形式 {format_version} は、プレイヤーに与えた期限のあるトレーナーカードの使用の禁止を表せない（format_version=12 を使う）")
+    if format_version < 13 and any(pokemon.type_shift is not None for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、特殊能力で色を変えた記録（［へんしょく］）を表せない（format_version=13 を使う）")
+    if format_version < 14 and _uses_v049_fields(state):
+        raise ValueError(
+            f"形式 {format_version} は、「ばける」でのせたカード・「思い出させる」の記録・ワザを印刷したカードを持つ持続する効果・のせたカードの特殊能力の使用の記録を"
+            "表せない（format_version=14 を使う）"
+        )
+    if format_version < 15 and _uses_v050_fields(state):
+        raise ValueError(
+            f"形式 {format_version} は、退化した番・進化や退化でいちばん上でなくなったカードの特殊能力の使用の記録を表せない（format_version=15 を使う）"
+        )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
         # v0.4d: v0.1 の形には、ワザの途中の決定（「ふきとばし」で相手が選ぶ控えなど）の項目がない（段階 "decision" だけが残り、
         # 決定するプレイヤー・選べるもの・続きの情報が落ちる）。黙って落とさない
         raise ValueError("形式 1 は、ワザの途中の決定を表せない（format_version=2 以上を使う）")
+    if format_version == 1 and state.decision is not None and state.decision.resume == "power":
+        # v0.42: v0.1 の形には、特殊能力の途中の決定（決定するプレイヤー・選べるもの・続きの情報）の項目がない。黙って落とさない
+        raise ValueError("形式 1 は、特殊能力の途中の決定を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "knock_out":
         # v0.11: v0.1 の形には、ワザのあとのきぜつの判定で「こんじょう」を使うかの決定（決定するプレイヤー・選べるもの・選ぶ数 0〜1・
         # 続きの情報）の項目がない。黙って落とさない
@@ -345,4 +466,17 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 10:
         data["power_uses_this_turn"] = [list(use) for use in state.power_uses_this_turn]
         data["energy_burn"] = [list(pair) for pair in state.energy_burn]
+    if format_version >= 12:
+        data["trainer_locks"] = [
+            {"player": lock.player, "source_player": lock.source_player, "source_card": lock.source_card,
+             "source_card_id": state.cards[lock.source_card].card_id, "effect": lock.effect, "created_turn": lock.created_turn,
+             "expires_turn": lock.expires_turn}
+            for lock in state.trainer_locks
+        ]
+    if format_version >= 14:
+        data["recalls"] = [
+            {"player": r.player, "turn": r.turn, "pokemon_id": r.pokemon_id, "card": r.card, "card_id": state.cards[r.card].card_id,
+             "trainer": r.trainer, "trainer_card_id": state.cards[r.trainer].card_id}
+            for r in state.recalls
+        ]
     return data

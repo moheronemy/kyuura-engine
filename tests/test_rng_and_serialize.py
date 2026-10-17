@@ -109,9 +109,11 @@ class SerializeFormatTest(unittest.TestCase):
         state = build_test_state([{"active": GROWLITHE}, {"active": STARYU}])
         # 3 は v0.2b（trainer_in_use）、4 は v0.2c（ついているトレーナー）、5 は v0.3a（特殊状態）、
         # 6 は v0.3c（こんらん状態で「にげる」に失敗した記録）
-        # 7 は v0.4a、8 は v0.4b、9 は v0.6（あまごい）、10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-        for unknown in (0, 11, "5", None):
+        # 7 は v0.4a、8 は v0.4b、9 は v0.6（あまごい）、10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、
+        # 11 は v0.44（場に出てから 1 度だけ使えるワザの記録・トレーナー「サカキ」の許可）、12 は v0.47（期限のあるトレーナーの使用の禁止）、13 は v0.48（［へんしょく］の記録）、
+        # 14 は v0.49（「ばける」でのせたカード・「思い出させる」の記録）、15 は v0.50（退化した番）
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
+        for unknown in (0, 16, "5", None):
             with self.subTest(format_version=unknown), self.assertRaises(ValueError):
                 state_to_dict(state, format_version=unknown)
 

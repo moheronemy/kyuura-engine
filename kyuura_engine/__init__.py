@@ -8,6 +8,7 @@ from .cards import CardDefinition, CardPool, EnergyType, can_pay_cost, load_card
 from .coins import CoinSide
 from .commands import (
     AttachEnergy,
+    DiscardFromPlay,
     DrawMulliganCards,
     EndTurn,
     EvolvePokemon,
@@ -15,6 +16,7 @@ from .commands import (
     PlayBasicToBench,
     PlayTrainer,
     PromoteActive,
+    RemoveDisguise,
     ReportJankenResult,
     ResolveDecision,
     Retreat,
@@ -34,11 +36,19 @@ from .effects import (
     PowerEntry,
     PowerKey,
     TrainerEntry,
+    available_attacks,
     available_ko_prevention_power,
+    current_form,
+    max_hp,
+    powers_of,
+    resistance_of,
+    type_readings,
+    weakness_of,
     working_counterattack_power,
     working_evasion_power,
 )
 from .engine import apply_command, check_invariants, new_game
+from .observation import observe, visible_log
 from .errors import DeckValidationError, EngineError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .rules import RULE_REFERENCES, RULES_2000_02_14, RuleSet
 from .serialize import state_to_dict
@@ -60,7 +70,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.41.0"
+__version__ = "0.50.0"
 
 __all__ = [
     "Asleep",
@@ -73,6 +83,7 @@ __all__ = [
     "Confused",
     "DEFAULT_EFFECTS",
     "DeckValidationError",
+    "DiscardFromPlay",
     "DrawMulliganCards",
     "EffectRegistry",
     "EndTurn",
@@ -95,6 +106,7 @@ __all__ = [
     "PlayBasicToBench",
     "PlayTrainer",
     "PromoteActive",
+    "RemoveDisguise",
     "RULE_REFERENCES",
     "RULES_2000_02_14",
     "ReportJankenResult",
@@ -111,11 +123,13 @@ __all__ = [
     "UseAttack",
     "UsePokemonPower",
     "apply_command",
+    "available_attacks",
     "available_ko_prevention_power",
     "can_pay_cost",
     "check_invariants",
     "command_from_dict",
     "command_to_dict",
+    "current_form",
     "deck_problems",
     "expand_decklist",
     "PRESET_DECKS",
@@ -123,10 +137,17 @@ __all__ = [
     "preset_deck",
     "preset_deck_ids",
     "load_card_pool",
+    "max_hp",
     "new_game",
+    "observe",
     "power_suppressors",
+    "powers_of",
+    "resistance_of",
     "state_to_dict",
+    "type_readings",
     "validate_deck",
+    "visible_log",
+    "weakness_of",
     "working_power_suppressors",
     "working_counterattack_power",
     "working_evasion_power",

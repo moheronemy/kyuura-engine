@@ -83,6 +83,45 @@ V0_40_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG4-011", "PMCG6-004",
 V0_41_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG2-009", "PMCG2-016", "PMCG3-020", "PMCG4-048", "PMCG5-002", "PMCG5-009", "PMCG6-038",
                                                        "PMCG6-022", "PMCG6-048", "PMCG5-058", "PMCG6-055") for index in (0, 1)] + [
     AttackKey("PMCG6-035", 0), AttackKey("PMCG4-032", 0), AttackKey("PMCG5-003", 0), AttackKey("PMCG6-036", 1)]
+# v0.42: 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚（docs/power-decisions-v0.42.md）の説明文のあるワザ 16
+V0_42_WITH_TEXT = [AttackKey(card, index) for card in ("PMCG6-052", "PMCG4-035", "PMCG3-017") for index in (0, 1)] + [
+    AttackKey(card, 0) for card in ("PMCG2-014", "PMCG3-028", "PMCG3-031", "PMCG5-014", "PMCG6-043", "PMCG6-047", "PMCG3-043", "PMCG4-034",
+                                    "PMCG5-060", "PMCG5-065")]
+# v0.43: 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚（docs/declared-entry-powers-v0.43.md）の説明文のあるワザ 8（ロケット団のヒトカゲの
+# 「ほのおのしっぽ」は説明文なし）
+V0_43_WITH_TEXT = [AttackKey(card, 0) for card in ("PMCG4-006", "PMCG4-033", "PMCG5-010", "PMCG5-040", "PMCG4-052", "PMCG4-009", "PMCG4-036",
+                                                   "PMCG4-053")]
+# v0.44: 検索・進化・1 度だけ使えるワザの 14 枚（docs/search-evolution-once-attacks-v0.44.md）の説明文のあるワザ 20（ディグダの「ひっかく」・コイキングの
+# 「はねまわる」・カモネギの「ナベでたたく」・ナツメのバリヤードの「ビンタ」は説明文なし）
+V0_44_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG4-038", 0), ("PMCG4-047", 0), ("PMCG5-007", 0), ("PMCG5-007", 1), ("PMCG5-027", 0), ("PMCG4-020", 1), ("PMCG6-011", 0), ("PMCG6-018", 0),
+    ("PMCG6-018", 1), ("PMCG1-063", 0), ("PMCG6-037", 0), ("PMCG6-037", 1), ("PMCG6-040", 0), ("PMCG6-040", 1), ("PMCG6-046", 0), ("PMCG6-056", 0),
+    ("PMCG6-056", 1), ("PMCG6-075", 0), ("PMCG6-075", 1), ("PMCG6-071", 0))]
+# v0.45（docs/conditional-damage-energy-v0.45.md）: 15 枚の説明文のあるワザ 24。第1弾のゴーストの 2 つは v0.9 の過去の原典照合の記録の最新の説明（p.160）、
+# R団のエビワラーの「クロスカウンター」は kyuura の最新の説明（LD-PMCG5-054-ATK0）、ほかは採用の記録の play_text（kyuura の印刷の文面）と合う
+# （キョウのベトベターの「ヘドロなげ」・イワークの「いわおとし」・ラッタの「かみつく」・R団のエビワラーの「マグナムパンチ」は説明文なし）
+V0_45_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG1-047", 0), ("PMCG1-047", 1), ("PMCG5-024", 0), ("PMCG5-031", 0), ("PMCG5-031", 1), ("PMCG6-002", 0), ("PMCG6-019", 0), ("PMCG6-019", 1),
+    ("PMCG6-007", 0), ("PMCG4-024", 0), ("PMCG4-024", 1), ("PMCG4-030", 0), ("PMCG4-030", 1), ("PMCG6-032", 0), ("PMCG6-032", 1), ("PMCG6-042", 0),
+    ("PMCG6-042", 1), ("PMCG1-054", 1), ("PMCG1-062", 1), ("PMCG5-054", 0), ("PMCG5-047", 0), ("PMCG5-047", 1), ("PMCG6-068", 0), ("PMCG6-068", 1))]
+# v0.46: 常にはたらく特殊能力を持つ 8 枚と関連する 3 枚の説明文のあるワザ（どれも。kyuura データの採用。処理に使う文面は kyuura の印刷の文面。
+# docs/continuous-powers-v0.46.md）
+V0_46_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG2-027", 0), ("PMCG5-063", 0), ("PMCG6-010", 0), ("PMCG4-041", 0), ("PMCG2-040", 0), ("PMCG4-007", 0), ("PMCG4-010", 0), ("PMCG2-047", 0),
+    ("PMCG6-017", 0), ("PMCG6-017", 1), ("PMCG5-012", 0), ("PMCG5-012", 1), ("PMCG5-013", 0), ("PMCG5-013", 1))]
+# v0.47（docs/fossil-hidden-info-v0.47.md）: ポケモン 11 枚の説明文のあるワザ 12（ひっかく・するどいかま・つばさでうつは説明文なし。処理に使う文面は kyuura の印刷の文面）
+V0_47_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG3-015", 0), ("PMCG3-021", 0), ("PMCG3-021", 1), ("PMCG3-040", 1), ("PMCG4-045", 0), ("PMCG3-032", 0), ("PMCG3-032", 1),
+    ("PMCG5-062", 0), ("PMCG5-042", 0), ("PMCG5-042", 1), ("PMCG3-010", 0), ("PMCG3-010", 1))]
+# v0.48（docs/effective-pokemon-properties-v0.48.md）。説明文のあるワザ 10（ナツメのゴースの「ガスでつつむ」は説明文なし）。処理に使う文面は kyuura の印刷の文面
+V0_48_WITH_TEXT = [AttackKey(card, index) for card, index in (
+    ("PMCG1-064", 0), ("PMCG1-064", 1), ("PMCG4-050", 0), ("PMCG4-050", 1), ("PMCG2-015", 0), ("PMCG6-050", 0), ("PMCG6-054", 0), ("PMCG6-054", 1),
+    ("PMCG6-072", 0), ("PMCG6-072", 1))]
+# v0.49（docs/virtual-attacks-transformation-v0.49.md）。説明文のあるワザはナツメのフーディンの「メガバーン」1 つ（タケシのキュウコンの「おにび」は説明文なし。
+# メタモンはワザなし）。処理に使う文面は kyuura の印刷の文面
+V0_49_WITH_TEXT = [AttackKey("PMCG6-053", 0)]
+# v0.50（docs/mew-devolution-spray-v0.50.md）。ミュウの「サイコウェーブ」・「たいかビーム」。処理に使う文面は kyuura の印刷の文面
+V0_50_WITH_TEXT = [AttackKey("PMCG3-033", 0), AttackKey("PMCG3-033", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -232,7 +271,9 @@ class DefaultRegistryTest(unittest.TestCase):
                                      AttackKey("PMCG6-059", 0), AttackKey("PMCG6-059", 1), AttackKey("PMCG6-061", 0), AttackKey("PMCG6-063", 0),
                                      AttackKey("PMCG6-073", 0)] + V0_31_WITH_TEXT + V0_32_WITH_TEXT + V0_33_WITH_TEXT + V0_34_WITH_TEXT
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
-                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT))
+                                    + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
+                                + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -368,7 +409,19 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザの 15 枚のワザ 25（v0.39。docs/selfdestruct-spread-count-v0.39.md）
         # + 場の数・条件付きの効果・入れ替え・カードの移動の 15 枚のワザ 28（v0.40。docs/count-condition-switch-return-v0.40.md）
         # + 回復・カウンターの移動・特殊状態の変化を中心とする 15 枚のワザ 29（v0.41。docs/heal-counter-status-v0.41.md）
-        self.assertEqual(len(keys), 425)
+        # + 回復・カウンター操作と、特殊能力を持つ進化系統を中心とする 15 枚のワザ 21（v0.42。docs/power-decisions-v0.42.md）
+        # + 宣言して使う特殊能力・場に出たときに使う特殊能力を持つ 9 枚のワザ 9（v0.43。docs/declared-entry-powers-v0.43.md）
+        # + 検索・進化・1 度だけ使えるワザの 14 枚のワザ 24（v0.44。docs/search-evolution-once-attacks-v0.44.md）
+        # + 条件つきのダメージ・エネルギーの移動とトラッシュ・受けたダメージを返す効果などの 15 枚のワザ 28（v0.45。カスミのタッツー（HP 50）・
+        #   キョウのアーボはワザ 1 つ。docs/conditional-damage-energy-v0.45.md）
+        # + 常にはたらく特殊能力を持つ 8 枚（ワザ 1 つずつ）と関連する 3 枚（ワザ 2 つずつ）のワザ 14（v0.46。docs/continuous-powers-v0.46.md）
+        # + なにかの化石・ピッピ人形と化石のポケモン・見えない情報を扱う 4 枚・トレーナーの使用を禁止する 2 枚のうち、ポケモン 11 枚のワザ 17（v0.47。
+        #   オムナイト・カブト・プテラ・マンキー・コラッタはワザ 1 つ。docs/fossil-hidden-info-v0.47.md）
+        # + 場のポケモンの今有効な最大HP・タイプ・弱点・抵抗力を変える 7 枚のワザ 11（v0.48。モルフォン・ナツメのゴース・ナツメのゴーストはワザ 1 つ。
+        #   docs/effective-pokemon-properties-v0.48.md）
+        # + ナツメのフーディンの「メガバーン」・タケシのキュウコンの「おにび」（v0.49。メタモンはワザなし。docs/virtual-attacks-transformation-v0.49.md）
+        # + ミュウの「サイコウェーブ」・「たいかビーム」（v0.50。docs/mew-devolution-spray-v0.50.md）
+        self.assertEqual(len(keys), 553)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -378,10 +431,31 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.8 でベトベトンの「かがくへんかガス」（PMCG3-007）、v0.9 でゴーストの「とうめい」（PMCG3-030）、v0.10 でカイリキーの「はんげき」
         # （PMCG1-057）、v0.11 でサカキのカイリキーの「こんじょう」（PMCG6-061）、v0.12 で R団のファイヤーの「ふしちょう」（PMCG5-020）、v0.17b で
         # R団のカビゴンの「わるいねぞう」（PMCG6-073）を加えた。v0.31 でリザードンの「エナジーバーン」（PMCG1-021）・カツラのロコンの
-        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）
+        # 「しぜんになおる」（PMCG6-026）・カツラのキュウコンの「ほのおでかいふく」（PMCG6-033）を加えた（docs/held-cards-v0.31.md）。v0.42 で
+        # ラフレシア・メノクラゲ・ヤドラン・ゲンガー・カイリュー・わるいユンゲラー・エリカのラフレシア・エリカのウツボットの 8 つを加えた
+        # （docs/power-decisions-v0.42.md）。v0.43 でわるいクサイハナ・わるいゴルバット・ロケット団のヒトカゲ・ロケット団のスリープ・わるいヤドラン・
+        # わるいハクリュー・わるいカイリュー・エリカのマダツボミ（PMCG5-010）・マチスのレアコイルの 9 つを加えた（docs/declared-entry-powers-v0.43.md）。
+        # v0.44 でキョウのコクーンの［うか］（PMCG6-011）・サカキのペルシアンの［ボスをよぶ］（PMCG6-071）を加えた（docs/search-evolution-once-attacks-v0.44.md）。
+        # v0.46 で常にはたらく特殊能力 8 つ（PMCG2-027・PMCG2-040・PMCG2-047・PMCG4-007・PMCG4-010・PMCG4-041・PMCG5-063・PMCG6-010）を加えた
+        # （docs/continuous-powers-v0.46.md）。v0.47 でマンキーの［スパイ］（PMCG2-028）・オムナイトの［おみとおし］（PMCG3-015）・カブトの［カブトアーマー］
+        # （PMCG3-035）・プテラの［げんしのちから］（PMCG3-041）・ロケット団のコラッタの［わるふざけ］（PMCG4-045）を加えた（docs/fossil-hidden-info-v0.47.md）。
+        # v0.48 でモルフォンの［へんしょく］（PMCG2-015）・ナツメのゴースの［ガスのからだ］（PMCG6-049）を加えた（docs/effective-pokemon-properties-v0.48.md）。
+        # v0.49 でメタモンの［へんしん］（PMCG3-042）・タケシのキュウコンの「ばける」（PMCG5-019）・ナツメのフーディンの［サイコリンク］（PMCG6-053）を加えた
+        # （docs/virtual-attacks-transformation-v0.49.md）
         self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-049", 0),
-                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG5-020", 0),
-                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-061", 0), PowerKey("PMCG6-073", 0)))
+                                  PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG2-015", 0), PowerKey("PMCG2-027", 0), PowerKey("PMCG2-028", 0),
+                                  PowerKey("PMCG2-040", 0), PowerKey("PMCG2-047", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
+                                  PowerKey("PMCG3-015", 0), PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0),
+                                  PowerKey("PMCG3-035", 0), PowerKey("PMCG3-041", 0), PowerKey("PMCG3-042", 0), PowerKey("PMCG3-043", 0),
+                                  PowerKey("PMCG4-006", 0), PowerKey("PMCG4-007", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-010", 0),
+                                  PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
+                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-041", 0), PowerKey("PMCG4-045", 0),
+                                  PowerKey("PMCG4-052", 0),
+                                  PowerKey("PMCG4-053", 0),
+                                  PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-019", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG5-040", 0), PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
+                                  PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
+                                  PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
 
 
 if __name__ == "__main__":

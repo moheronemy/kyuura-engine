@@ -63,9 +63,9 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 = 47 件）。論点のないものは kyuura の
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 + v0.44 の 2 件 + v0.45 の 2 件 + v0.46 の 2 件 + v0.47 の 4 件 + v0.48 の 3 件 + v0.49 の 11 件 + v0.50 の 5 件 = 80 件）。論点のないものは kyuura の
         処理が out_of_scope。kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 の
-        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4・v0.34 の TP3・NK5・v0.36 の AC6・RD9・v0.37 の JS1・v0.38 の GK1・v0.39 の GS1・v0.40 の SG1・v0.41 の CX1。kyuura への報告事項）。
+        パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4・v0.34 の TP3・NK5・v0.36 の AC6・RD9・v0.37 の JS1・v0.38 の GK1・v0.39 の GS1・v0.40 の SG1・v0.41 の CX1・v0.42 の PW1・PW2・v0.43 の PW3・PW4・v0.44 の FC1・TR1・v0.45 の GV1・AC13・v0.46 の CP1・CP2・v0.47 の PF1・PF2・PF3・KA1・v0.48 の VS1・PG1・MH1・v0.49 の TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4・v0.50 の DV1〜DV5。kyuura への報告事項）。
         v0.31 で、v0.30 まで起こらなかった（コードのない）5 件（T27・C34/C35・G40・P19・P32）が複数のポケモンにダメージを与えるワザで起こるように
         なったので停止コードにした。kyuura の論点（UQ-）はそのまま（kyuura の未解決の一覧ではコードのない行なので、``kyuura_index_engine_key`` で
         行を指す。scripts/check_research_links.py）。"""
@@ -101,7 +101,30 @@ class ResearchLinksTest(unittest.TestCase):
                                          # v0.40（docs/count-condition-switch-return-v0.40.md の SG1）
                                          "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
                                          # v0.41（docs/heal-counter-status-v0.41.md の CX1）
-                                         "UNRESOLVED_COUNTER_TRANSFER_PROTECTED"})
+                                         "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
+                                         # v0.42（docs/power-decisions-v0.42.md の PW1・PW2）
+                                         "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
+                                         # v0.43（docs/declared-entry-powers-v0.43.md の PW3・PW4）
+                                         "UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
+                                         # v0.44（docs/search-evolution-once-attacks-v0.44.md の FC1・TR1）
+                                         "UNRESOLVED_STATED_CARDS_SHORT", "UNRESOLVED_TRAINER_WITHOUT_TARGET",
+                                         # v0.45（docs/conditional-damage-energy-v0.45.md の GV1（v0.44 はコードのない問い）・AC13（v0.36 は起こらない
+                                         # RuntimeError））
+                                         "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK", "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
+                                         # v0.46（docs/continuous-powers-v0.46.md の CP1・CP2）
+                                         "UNRESOLVED_CALMING_AROMA_RETALIATION", "UNRESOLVED_RETREAT_COST_FLOOR",
+                                         # v0.47（docs/fossil-hidden-info-v0.47.md の PF1・PF2・PF3・KA1）
+                                         "UNRESOLVED_PLAY_AS_POKEMON_SETUP", "UNRESOLVED_PLAY_AS_POKEMON_RETREAT",
+                                         "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON", "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
+                                         # v0.48: VS1・PG1・MH1（docs/effective-pokemon-properties-v0.48.md）
+                                         "UNRESOLVED_SHIFT_COLOR_DURATION", "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE", "UNRESOLVED_MAX_HP_DROP",
+                                         # v0.49: TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4（docs/virtual-attacks-transformation-v0.49.md）
+                                         "UNRESOLVED_TRANSFORM_ENERGY_COUNT", "UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER",
+                                         "UNRESOLVED_SHAPESHIFT_SUPPRESSED", "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", "UNRESOLVED_VIRTUAL_ONCE_ATTACK",
+                                         "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK", "UNRESOLVED_RECALL_EARLIER_STAGE", "UNRESOLVED_RECALL_TARGET_CHANGED", "UNRESOLVED_RECALL_FORM",
+                                         # v0.50: DV1〜DV5（docs/mew-devolution-spray-v0.50.md）
+                                         "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT", "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION",
+                                         "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET", "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
@@ -194,7 +217,9 @@ class ResearchLinksTest(unittest.TestCase):
         scoped = {target for scope in section["errata_scope"] for target in scope["targets"]}
         self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0"})
         # v0.31: ピッピの「ゆびをふる」は kyuura の card_differences の最新の説明（p.223 の解説の記録。LD- はない。kyuura への報告事項）
-        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067"})
+        # v0.42: カイリューの［かけつける］は kyuura の card_differences の最新の説明（p.249 の記録。特殊状態の記述がない。LD- はない）
+        self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067",
+                                                      "PMCG3-043/power/0": "kyuura data/curation/card_differences.json#PMCG3-043"})
         for scope in section["errata_scope"]:
             self.assertEqual(section["errata_text"][scope["targets"][0]], scope["record"])
 

@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine research links 1",
-  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。",
+  "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。",
   "repository": "https://github.com/moheronemy/kyuura",
   "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
   "research_branch": "claude/cool-ptolemy-5vtgsg",
@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 48,
-    "engine_stop_codes": 47,
+    "engine_unresolved_rulings": 81,
+    "engine_stop_codes": 80,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -599,6 +599,379 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH": {
+      "engine_rulings": [
+        {
+          "version": "v0.42",
+          "document": "docs/power-decisions-v0.42.md",
+          "ruling_id": "PW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND": {
+      "engine_rulings": [
+        {
+          "version": "v0.42",
+          "document": "docs/power-decisions-v0.42.md",
+          "ruling_id": "PW2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_ZERO_CARDS": {
+      "engine_rulings": [
+        {
+          "version": "v0.43",
+          "document": "docs/declared-entry-powers-v0.43.md",
+          "ruling_id": "PW3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.43",
+          "document": "docs/declared-entry-powers-v0.43.md",
+          "ruling_id": "PW4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STATED_CARDS_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.44",
+          "document": "docs/search-evolution-once-attacks-v0.44.md",
+          "ruling_id": "FC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRAINER_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.44",
+          "document": "docs/search-evolution-once-attacks-v0.44.md",
+          "ruling_id": "TR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": {
+      "engine_rulings": [
+        {
+          "version": "v0.44",
+          "document": "docs/search-evolution-once-attacks-v0.44.md",
+          "ruling_id": "GV1"
+        },
+        {
+          "version": "v0.45",
+          "document": "docs/conditional-damage-energy-v0.45.md",
+          "ruling_id": "GV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": {
+      "engine_rulings": [
+        {
+          "version": "v0.36",
+          "document": "docs/sand-attack-retreat-lock-v0.36.md",
+          "ruling_id": "AC13"
+        },
+        {
+          "version": "v0.45",
+          "document": "docs/conditional-damage-energy-v0.45.md",
+          "ruling_id": "AC13"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CALMING_AROMA_RETALIATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.46",
+          "document": "docs/continuous-powers-v0.46.md",
+          "ruling_id": "CP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RETREAT_COST_FLOOR": {
+      "engine_rulings": [
+        {
+          "version": "v0.46",
+          "document": "docs/continuous-powers-v0.46.md",
+          "ruling_id": "CP2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "PF3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.47",
+          "document": "docs/fossil-hidden-info-v0.47.md",
+          "ruling_id": "KA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHIFT_COLOR_DURATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "VS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "PG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MAX_HP_DROP": {
+      "engine_rulings": [
+        {
+          "version": "v0.48",
+          "document": "docs/effective-pokemon-properties-v0.48.md",
+          "ruling_id": "MH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_COPIED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "TF2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_SUPPRESSED": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SHAPESHIFT_AGAIN": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "DG3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VIRTUAL_ONCE_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "VA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_EARLIER_STAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_TARGET_CHANGED": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RECALL_FORM": {
+      "engine_rulings": [
+        {
+          "version": "v0.49",
+          "document": "docs/virtual-attacks-transformation-v0.49.md",
+          "ruling_id": "RC4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": {
+      "engine_rulings": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1010,6 +1383,7 @@
       "PMCG1-057/power/0": "LD-PMCG1-057-PWR0",
       "PMCG2-007/attack/0": "LD-PMCG2-007-ATK0",
       "PMCG2-007/attack/1": "LD-PMCG2-007-ATK1",
+      "PMCG3-003/attack/1": "LD-PMCG3-003-ATK1",
       "PMCG3-007/power/0": "LD-PMCG3-007-PWR0",
       "PMCG3-029/attack/1": "LD-PMCG3-029-ATK1",
       "PMCG3-030/power/0": "LD-PMCG3-030-PWR0",
@@ -1017,10 +1391,12 @@
       "PMCG4-021/attack/1": "LD-PMCG4-021-ATK1",
       "PMCG5-020/attack/0": "LD-PMCG5-020-ATK0",
       "PMCG5-020/power/0": "LD-PMCG5-020-PWR0",
+      "PMCG5-027/attack/0": "LD-PMCG5-027-ATK0",
       "PMCG6-061/power/0": "LD-PMCG6-061-PWR0",
       "PMCG6-073/attack/0": "LD-PMCG6-073-ATK0",
       "PMCG6-073/power/0": "LD-PMCG6-073-PWR0",
-      "PMCG3-003/attack/1": "LD-PMCG3-003-ATK1"
+      "PMCG1-047/attack/1": "LD-PMCG1-047-ATK1",
+      "PMCG5-054/attack/0": "LD-PMCG5-054-ATK0"
     },
     "registered_without_kyuura_record": [
       "PMCG2-017/attack/0",
@@ -1039,12 +1415,9 @@
       "PMCG3-022/attack/1"
     ],
     "kyuura_records_not_registered": [
-      "LD-PMCG1-047-ATK1",
-      "LD-PMCG5-027-ATK0",
-      "LD-PMCG5-054-ATK0",
       "LD-PMCG6-023-PWR0"
     ],
-    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた",
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
       "PMCG1-003/attack/1": "CC-PMCG1-003-P18",
@@ -1074,7 +1447,8 @@
       "PMCG6-059/attack/1": "CC-PMCG6-059-P191",
       "PMCG6-061/attack/0": "CC-PMCG6-061-P193",
       "PMCG6-063/attack/0": "CC-PMCG6-063-P229",
-      "PMCG3-003/attack/0": "CC-PMCG3-003-P47"
+      "PMCG3-003/attack/0": "CC-PMCG3-003-P47",
+      "PMCG1-047/attack/0": "CC-PMCG1-047-P160"
     },
     "card_checks_without_text": {
       "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
@@ -1345,7 +1719,146 @@
       "PMCG5-058/attack/0",
       "PMCG5-058/attack/1",
       "PMCG6-055/attack/0",
-      "PMCG6-055/attack/1"
+      "PMCG6-055/attack/1",
+      "PMCG6-052/attack/0",
+      "PMCG6-052/attack/1",
+      "PMCG2-014/attack/0",
+      "PMCG2-014/power/0",
+      "PMCG3-028/attack/0",
+      "PMCG3-028/power/0",
+      "PMCG3-031/attack/0",
+      "PMCG3-031/power/0",
+      "PMCG5-014/attack/0",
+      "PMCG5-014/power/0",
+      "PMCG6-043/attack/0",
+      "PMCG6-047/attack/0",
+      "PMCG3-043/attack/0",
+      "PMCG5-015/power/0",
+      "PMCG4-034/attack/0",
+      "PMCG4-034/power/0",
+      "PMCG4-035/attack/0",
+      "PMCG4-035/attack/1",
+      "PMCG3-011/power/0",
+      "PMCG3-017/attack/0",
+      "PMCG3-017/attack/1",
+      "PMCG5-060/attack/0",
+      "PMCG5-065/attack/0",
+      "PMCG4-006/attack/0",
+      "PMCG4-006/power/0",
+      "PMCG4-033/attack/0",
+      "PMCG4-033/power/0",
+      "PMCG4-012/power/0",
+      "PMCG5-010/attack/0",
+      "PMCG5-010/power/0",
+      "PMCG5-040/attack/0",
+      "PMCG5-040/power/0",
+      "PMCG4-052/attack/0",
+      "PMCG4-052/power/0",
+      "PMCG4-009/attack/0",
+      "PMCG4-009/power/0",
+      "PMCG4-036/attack/0",
+      "PMCG4-036/power/0",
+      "PMCG4-053/attack/0",
+      "PMCG4-053/power/0",
+      "PMCG1-063/attack/0",
+      "PMCG4-020/attack/1",
+      "PMCG4-038/attack/0",
+      "PMCG4-047/attack/0",
+      "PMCG5-007/attack/0",
+      "PMCG5-007/attack/1",
+      "PMCG6-011/attack/0",
+      "PMCG6-018/attack/0",
+      "PMCG6-018/attack/1",
+      "PMCG6-037/attack/0",
+      "PMCG6-037/attack/1",
+      "PMCG6-040/attack/0",
+      "PMCG6-040/attack/1",
+      "PMCG6-046/attack/0",
+      "PMCG6-056/attack/0",
+      "PMCG6-056/attack/1",
+      "PMCG6-071/attack/0",
+      "PMCG6-075/attack/0",
+      "PMCG6-075/attack/1",
+      "PMCG6-011/power/0",
+      "PMCG6-071/power/0",
+      "PMCG5-024/attack/0",
+      "PMCG5-031/attack/0",
+      "PMCG5-031/attack/1",
+      "PMCG6-002/attack/0",
+      "PMCG6-019/attack/0",
+      "PMCG6-019/attack/1",
+      "PMCG6-007/attack/0",
+      "PMCG4-024/attack/0",
+      "PMCG4-024/attack/1",
+      "PMCG4-030/attack/0",
+      "PMCG4-030/attack/1",
+      "PMCG6-032/attack/0",
+      "PMCG6-032/attack/1",
+      "PMCG6-042/attack/0",
+      "PMCG6-042/attack/1",
+      "PMCG1-054/attack/1",
+      "PMCG1-062/attack/1",
+      "PMCG5-047/attack/0",
+      "PMCG5-047/attack/1",
+      "PMCG6-068/attack/0",
+      "PMCG6-068/attack/1",
+      "PMCG2-027/power/0",
+      "PMCG2-027/attack/0",
+      "PMCG5-063/power/0",
+      "PMCG5-063/attack/0",
+      "PMCG6-010/power/0",
+      "PMCG6-010/attack/0",
+      "PMCG4-041/power/0",
+      "PMCG4-041/attack/0",
+      "PMCG2-040/power/0",
+      "PMCG2-040/attack/0",
+      "PMCG4-007/power/0",
+      "PMCG4-007/attack/0",
+      "PMCG4-010/power/0",
+      "PMCG4-010/attack/0",
+      "PMCG2-047/power/0",
+      "PMCG2-047/attack/0",
+      "PMCG6-017/attack/0",
+      "PMCG6-017/attack/1",
+      "PMCG5-012/attack/0",
+      "PMCG5-012/attack/1",
+      "PMCG5-013/attack/0",
+      "PMCG5-013/attack/1",
+      "PMCG3-015/power/0",
+      "PMCG3-015/attack/0",
+      "PMCG3-021/attack/0",
+      "PMCG3-021/attack/1",
+      "PMCG3-035/power/0",
+      "PMCG3-040/attack/1",
+      "PMCG3-041/power/0",
+      "PMCG2-028/power/0",
+      "PMCG4-045/power/0",
+      "PMCG4-045/attack/0",
+      "PMCG3-032/attack/0",
+      "PMCG3-032/attack/1",
+      "PMCG5-062/attack/0",
+      "PMCG5-042/attack/0",
+      "PMCG5-042/attack/1",
+      "PMCG3-010/attack/0",
+      "PMCG3-010/attack/1",
+      "PMCG1-064/attack/0",
+      "PMCG1-064/attack/1",
+      "PMCG4-050/attack/0",
+      "PMCG4-050/attack/1",
+      "PMCG2-015/power/0",
+      "PMCG2-015/attack/0",
+      "PMCG6-049/power/0",
+      "PMCG6-050/attack/0",
+      "PMCG6-054/attack/0",
+      "PMCG6-054/attack/1",
+      "PMCG6-072/attack/0",
+      "PMCG6-072/attack/1",
+      "PMCG6-053/attack/0",
+      "PMCG6-053/power/0",
+      "PMCG3-042/power/0",
+      "PMCG5-019/power/0",
+      "PMCG3-033/attack/0",
+      "PMCG3-033/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -1371,7 +1884,8 @@
       }
     ],
     "difference_text": {
-      "PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067"
+      "PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067",
+      "PMCG3-043/power/0": "kyuura data/curation/card_differences.json#PMCG3-043"
     }
   },
   "card_checks": {
@@ -1597,6 +2111,58 @@
       "card_id": "PMCG6-023",
       "field": "jp_en_differences",
       "note": "kyuura が adf9710 でだつりょくえきの英語版の「if it has any」を記録した（参照カード。エンジンは使わない項目）"
+    }
+  ],
+  "applied_rule_records": [
+    {
+      "kyuura_record": "GR-2000-P324-DEVOLUTION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV-R1"
+        }
+      ],
+      "use": "退化の共通の処理（evolution.devolve）: 退化したポケモンは特殊状態・持続する効果から回復し、退化前とは別のポケモンとしてあつかう。退化前の進化カードの内容は無効（いまの姿・最大HP・ワザ・特殊能力は残ったいちばん上のカードから求める）"
+    },
+    {
+      "kyuura_record": "CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV-R2"
+        }
+      ],
+      "use": "退化で持続する効果（こうらがえしの Retaliation を含む）を理由 devolve で消す。v0.13 の S29 の「到達しない」は、退化させるカードが未実装だったことの説明で、裁定が決まらなかったのではない（v0.50 で到達する）"
+    },
+    {
+      "kyuura_record": "CR-CHEMICAL-GAS-LEAVES",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV-R3"
+        }
+      ],
+      "use": "ベトベトンが退化したら、かがくへんかガスの力はなくなり、ほかの特殊能力はその時点から（同じ番でも）また使える。はたらいているかは問い合わせのたびに今の場から求める（v0.8 の continuous.suppressors_of。v0.8 の G16 の「未実装」は退化させるカードがなかったため）"
+    },
+    {
+      "kyuura_record": "GR-2000-P323-KNOCKOUT",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.50",
+          "document": "docs/mew-devolution-spray-v0.50.md",
+          "ruling_id": "DV-R4"
+        }
+      ],
+      "use": "退化で最大HPがのっているダメージ以下になったポケモンのきぜつ: ワザ（たいかビーム）はワザのあとの判定、トレーナー（退化スプレー）は使い終えたあとの判定（resolution.after_trainer。timing trainer）。p.323「16」の HP 以上のダメージ・p.319 のダメージカウンター・p.324「19」の退化前のカードの内容の無効・p.324「16」の続きの「ワザや特殊能力などによって引き起こされることがら」からの SUPPORTED（第4版の冊子の記述は別の版の記録で根拠にしない）"
     }
   ]
 }

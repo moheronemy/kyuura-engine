@@ -24,9 +24,9 @@ from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from ..effects import AttackKey, AttackUse, PowerKey
+from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, max_hp, status_at_attack_blocked
 from ..errors import UnsupportedError
-from ..state import GameState
+from ..state import GameState, Phase
 from ..zones import promote_from_bench
 
 from . import catalog as C
@@ -36,12 +36,13 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import attack_coin_checks, destiny_bond
-from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked, ko_prevention_offers, track_ko
+from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knocked, ko_prevention_offers, track_ko
 from .programs import AttackRun, decision_index, declare, run_elements
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
 NEXT_TURN = PR.NEXT_TURN
+CONTINUE_TURN = PR.CONTINUE_TURN  # v0.42: 特殊能力の処理のあとの決定の続き（終わったら番のプレイヤーの番にもどる）
 RESUMES = codec.RESUMES  # この基盤が続ける決定の再開先（ほかは engine.py。トレーナーの ``trainer``）
 
 
@@ -106,8 +107,12 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     pid = attacker.pokemon_id
     use = AttackUse(cmd.player, pid, key)
 
+    once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
+
+    option = request.option
+
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option)
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -142,9 +147,25 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
-def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program) -> None:
+def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None) -> None:
     state = res.state
-    state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    if option is None or option.card == attacker.card:
+        state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
+    else:
+        # v0.49: ワザの出どころがワザを使うポケモンのいちばん上のカードでない（［へんしん］・「ばける」・［サイコリンク］・「思い出させる」）。ワザを印刷したカード
+        # （``card``・``card_id``）・持ち方（``route``）・［サイコリンク］で供給したポケモン（``provider``）を書く。どれも表のカード（公開の情報）。ふつうのワザは v0.48 と同じ形
+        extra = {"provider": option.provider} if option.provider is not None else {}
+        state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index, card=option.card,
+                        card_id=key.card_id, route=option.route, **extra)
+    # v0.46: 「ワザが使われた時、すでに…」の特殊状態（エリカのフシギソウの［くつろぐかおり］）を宣言（p.309 の手順 3）の時点で写す。手順 4・5・ワザの要素で特殊状態が
+    # 変わっても、このワザでは変えない（``effects.status_at_attack_blocked``。決定をまたぐときは続きの情報で運ぶ）
+    res.attack_status = status_at_attack_blocked(state)
+    if once:
+        # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」。使った記録は宣言（p.309 の手順 3）のとき、手順 4（すなかけ）・手順 5（こんらん）・ワザの
+        # 要素の前に置く（手順 4 の失敗・こんらんの「うら」・コインの「うら」でも使ったことになる。p.323「12」・v0.3d の A12）。宣言の前に拒否したら（確認・先読み）、
+        # 状態ごと捨てるので記録は残らない。記録は場のポケモン（ワザを持つカードの uid とワザの位置）。ログ ``once_attack_recorded``
+        attacker.attacks_used_once = attacker.attacks_used_once + ((attacker.card, key.attack_index),)
+        state.add_event("once_attack_recorded", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, attack_index=key.attack_index)
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
@@ -152,7 +173,7 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         return
     if attacker.conditions.confused and not PR.confusion_check(state, player, attacker, action="attack", effect=str(key)):
         fs = res.open_frame(FrameKind.CONFUSION, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
-        problem = PR.confusion_damage_problem(state, attacker)  # v0.13 の経路と同じ判定・理由の文（procedures）
+        problem = PR.confusion_damage_problem(state, attacker, res.attack_status)  # v0.13 の経路と同じ判定・理由の文（procedures）。v0.46: 常にはたらく特殊能力も
         if problem is not None:
             raise res.question("confusion_damage_modifiers", f"ポケモン {attacker.pokemon_id}", problem)
         before = attacker.damage
@@ -175,15 +196,17 @@ def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey)
     - こんらん状態のポケモン: 手順 4 でワザが失敗したとき、手順 5 のこんらんのコイン（「うら」なら自分に 20）をするかは原典から決められない（AC6）ので、
       コインの前に問い ``attack_check_confusion`` で止める（コインの結果によらず止まる。「おもて」なら手順 5 に進むことは決まっているが、宣言の前に
       分からない）
-    - 2 つ以上の効果（順番が決まらない）は、今の対応カードでは起こらない（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで。不変条件で
-      同じ種類は 1 つまで）ので、エンジンの不具合
+    - 2 つ以上の効果（AC13）: v0.36 では起こらなかった（効果を与えるワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 の期限のない効果
+      （カスミのタッツーの「スミをかける」の「それ以後」）を受けたポケモンが、もう 1 つの効果（もう一度の「スミをかける」・「えんまく」など）を受けると起こる。
+      効果ごとにコインを投げるのか、その順番、1 枚で両方を決めるのかが原典（p.309 の手順 4）から決められないので、コインの前に問い
+      ``multiple_attack_checks`` で止める（こんらんの AC6 より先に聞く）
     """
     state = res.state
     checks = attack_coin_checks(state, attacker)
     if not checks:
         return False
     if len(checks) > 1:
-        raise RuntimeError(f"ワザを使うポケモン {attacker.pokemon_id} に手順 4 のコインの効果が 2 つ以上ある（エンジンの不具合）")
+        raise res.question("multiple_attack_checks", f"ポケモン {attacker.pokemon_id}（{len(checks)} つの効果）")
     if attacker.conditions.confused:
         raise res.question("attack_check_confusion", f"ポケモン {attacker.pokemon_id}")
     if PR.attack_coin_check(state, player, attacker, checks[0], effect=str(key)):
@@ -232,7 +255,8 @@ def _destiny_bond(res: Resolution) -> bool:
         return False
     res.forced.add(target.pokemon_id)
     gone = knocked(res)
-    taken = {player: sum(1 for owner, _ in gone if owner != player) for player in PLAYERS}
+    # v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形）では、相手はサイドを取らない
+    taken = {player: sum(1 for owner, pokemon in gone if owner != player and counts_as_knockout(state, pokemon)) for player in PLAYERS}
     ends = [
         (taken[player] and taken[player] >= len(state.players[player].prizes))
         or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)]
@@ -250,11 +274,19 @@ def _knock_out_after_attack(res: Resolution) -> None:
     state = res.state
     gone = knocked(res)
     candidates = capture_post_knockout(res, gone)
+    _after_knockouts(res, _knock_out_all(state, gone, simultaneous=len(gone) > 1), None, candidates)
+
+
+def _knock_out_all(state: GameState, gone, **how) -> list[int]:
+    """きぜつした (持ち主, ポケモン) をきぜつの処理（トラッシュ）に送り、サイドを取るプレイヤーの並びを返す（きぜつ 1 匹につき相手側のプレイヤー 1 人。p.323）。
+    v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形。``effects.counts_as_knockout``。トラッシュの前に、場にいるうちに聞く）では、相手はサイドを取らない。"""
     prize_takers = []
     for owner, pokemon in gone:
-        PR.knock_out(state, owner, pokemon, simultaneous=len(gone) > 1)
-        prize_takers.append(1 - owner)
-    _after_knockouts(res, prize_takers, None, candidates)
+        counted = counts_as_knockout(state, pokemon)
+        PR.knock_out(state, owner, pokemon, counted=counted, **how)
+        if counted:
+            prize_takers.append(1 - owner)
+    return prize_takers
 
 
 # ---------------------------------------------------------------- きぜつのあと（サイド → 勝ち負け → ふしちょう → 交代 → 続き）
@@ -307,8 +339,9 @@ def _promotions_after_judge(res: Resolution, then) -> None:
     state = res.state
     order = (1 - state.current_player, state.current_player)
     queue = tuple(p for p in order if state.players[p].active is None)
-    if then == NEXT_TURN and len(queue) > 1:
-        raise RuntimeError("ポケモンチェックのあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
+    if then in (NEXT_TURN, CONTINUE_TURN) and len(queue) > 1:
+        # v0.42: 特殊能力の処理のあと（1 回の使用できぜつする・場をはなれるのは 1 匹）も、両方のバトル場が空くことはない
+        raise RuntimeError(f"{'ポケモンチェック' if then == NEXT_TURN else '特殊能力の処理'}のあとで両方のプレイヤーがバトル場に出そうとした（エンジンの不具合）")
     _next_promotion_or_end(res, queue, then)
 
 
@@ -320,8 +353,78 @@ def _next_promotion_or_end(res: Resolution, queue: tuple, then) -> None:
         return
     if then == NEXT_TURN:
         PR.pokemon_check_sleep_and_paralysis(state)  # ポケモンチェックの 3・4 と次の番（v0.13 の部品）
+    elif then == CONTINUE_TURN:
+        state.phase = Phase.MAIN  # v0.42: 特殊能力の処理のあと。番は終わらない（p.311・p.323）
     else:
         _end_turn(res)
+
+
+# ---------------------------------------------------------------- 特殊能力の処理のあと（v0.42。docs/power-decisions-v0.42.md 3 章）
+
+
+def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
+    """宣言して使う特殊能力の処理（決定への答えを含む）が終わったあと、場を整える（v0.42）。
+
+    - HP 以上のダメージのポケモンがいれば（ゲンガーの「のろい」でダメージカウンターをのせた。カウンターの移動はワザのダメージではない。
+      GR-2000-P320-COUNTER-MOVE）、ワザのあとと同じきぜつの処理（``PR.knock_out``。ログ ``knock_out`` の ``timing`` は ``"power"``）→ サイド → 勝ち負け →
+      ふしちょう → バトル場に出す（``_after_knockouts``）。続きは ``CONTINUE_TURN``（終わったら番のプレイヤーの番にもどる）。こんじょう（相手のワザの
+      ダメージで「きぜつ」するとき。G3〜G7）・みちづれ（ワザのあと）は候補にしない。きぜつするのは 1 匹（1 回の使用でのせるのは 1 個）
+    - きぜつがなく、バトル場が空いたプレイヤーがいれば（メノクラゲの「おくびょう」で自分を手札にもどした。きぜつではないのでサイドはない）、勝ち負けの
+      判定（場にポケモンがいない。p.311）→ バトル場に出す（ワザの効果で場をはなれたあとと同じ。v0.36 の RD）
+    - どちらもなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
+
+    ``knock_outs`` は、その特殊能力の説明が「きぜつ」させうるか（``PowerEffect.may_knock_out``。今はのろいだけ）。偽なら HP 以上のポケモンがいても
+    きぜつの処理をしない（説明が「きぜつ」させないもの（ダメージスワップ・へんなこうどうの「きぜつ」しない範囲）の確認の漏れを、不変条件で見つける。
+    v0.7 の二重の確かめ）。
+
+    渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    gone = knocked(res)
+    if gone and not knock_outs:
+        return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
+    if gone:
+        if len(gone) > 1:
+            raise RuntimeError(f"特殊能力の処理のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。今の対応カードでは起こらない。エンジンの不具合）")
+        try:
+            candidates = capture_post_knockout(res, gone)
+        except OpenQuestion as question:
+            raise to_error(question.key, question.detail, question.error) from None
+        _after_knockouts(res, _knock_out_all(state, gone, timing="power"), CONTINUE_TURN, candidates)
+        return
+    if any(state.players[p].active is None for p in PLAYERS):
+        _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+
+
+# ---------------------------------------------------------------- トレーナーの使用のあと（v0.50。docs/mew-devolution-spray-v0.50.md 4 章）
+
+
+def after_trainer(state: GameState, ctx: Context) -> None:
+    """きぜつさせうるトレーナー（``TrainerEffect.may_knock_out``。退化スプレー）を使い終わって、カードをトラッシュしたあと、場を整える（v0.50）。
+
+    - 退化で最大HPがのっているダメージ以下になった、番のプレイヤーのポケモン（今の番に退化した ``devolved_turn``。トレーナーのあとに HP 以上のポケモンは残らないので、
+      このコマンドで退化したもの）を、ワザのあとと同じきぜつの処理（``PR.knock_out``。ログ ``knock_out`` の ``timing`` は ``"trainer"``。特殊能力の ``"power"`` と
+      分ける）→ サイド → 勝ち負け → ふしちょう → バトル場に出す（``_after_knockouts``）。続きは ``CONTINUE_TURN``（終わったら番のプレイヤーの番にもどる。トレーナーを
+      使っても番は終わらない。p.310）。こんじょう（相手のワザのダメージで「きぜつ」するとき）・みちづれ（ワザのあと）は候補にしない
+    - ほかのポケモン（［へんしん］で退化したポケモンと同じカードとしてあつかう相手のメタモンなど）の最大HPが下がってダメージ以下になっても、ここではきぜつさせない
+      （トレーナーの効果でほかのポケモンの最大HPが下がったときの判定は v0.48 の MH1。コマンドの入口が受け付けない）
+    - きぜつがなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
+
+    渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    player = state.current_player
+    gone = [(player, pokemon) for pokemon in state.players[player].in_play()
+            if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
+    if not gone:
+        return
+    if len(gone) > 1:
+        raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
+    try:
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="trainer"), CONTINUE_TURN, candidates)
 
 
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック
@@ -344,11 +447,7 @@ def _pokemon_check(res: Resolution) -> None:
         PR.pokemon_check_sleep_and_paralysis(state)
         return
     candidates = capture_post_knockout(res, knocked)
-    prize_takers = []
-    for owner, pokemon in knocked:
-        PR.knock_out(state, owner, pokemon, timing="pokemon_check")
-        prize_takers.append(1 - owner)
-    _after_knockouts(res, prize_takers, NEXT_TURN, candidates)
+    _after_knockouts(res, _knock_out_all(state, knocked, timing="pokemon_check"), NEXT_TURN, candidates)
 
 
 def _end_turn_command(ctx: Context, state, cmd: EndTurn) -> None:
@@ -428,7 +527,7 @@ def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation,
     if not choices:
         state.add_event("ko_prevention_declined", **base, total_damage=pokemon.damage)
     else:
-        state.add_event("ko_prevention_declared", **base, total_damage=pokemon.damage, hp=state.card_def(pokemon.card).hp)
+        state.add_event("ko_prevention_declared", **base, total_damage=pokemon.damage, hp=max_hp(state, pokemon))
         OFFER_ACTIONS[effect_definition.action](state, owner, pokemon, key, implementation)
     _knock_out_after_attack(res)
 

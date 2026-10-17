@@ -414,9 +414,15 @@ class BarrierCoinTest(unittest.TestCase):
                 (stopping if roles and None not in roles else flipping).add(type(effect).__name__)
         # v0.40: サカキのニドクインの「ラブラリアット」（FailOnTailsAmountIfBenchNamed。失敗のコインのあとはダメージだけ。
         # docs/count-condition-switch-return-v0.40.md の LR2）。v0.41: ナツメのモルフォンの「げんかくおんぱ」（DamageThenConfuseOnAnyHeads。ダメージのあとの
-        # コイン 2 枚は相手のこんらんだけを決める。docs/heal-counter-status-v0.41.md）
+        # コイン 2 枚は相手のこんらんだけを決める。docs/heal-counter-status-v0.41.md）。v0.44: キョウのスピアーの「どくばり」（DamageThenPoisonAndParalyzeOnHeads。
+        # ダメージのあとの 1 枚のコインは相手のどくとマヒだけを決める。docs/search-evolution-once-attacks-v0.44.md）。v0.45: キョウのアーボの「とつぜんどく」
+        # （DamageThenPoisonAndConfuseOnAllHeads。ダメージのあとの 2 枚のコインは相手のどくとこんらんだけを決める。docs/conditional-damage-energy-v0.45.md）。
+        # v0.48: モルフォンの「りんぷん」（DamageThenPoisonAndConfuseOnHeads。ダメージのあとの 1 枚のコインは相手のどくとこんらんだけを決める）・ナツメのゲンガーの
+        # 「やみのこえ」（DamageThenCoinsReturnOpponentToDeck。ダメージのあとの 2 枚のコインは相手の対戦ポケモンを山札にもどすことだけを決める。
+        # docs/effective-pokemon-properties-v0.48.md）
         self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed",
-                                    "DamageThenConfuseOnAnyHeads"})
+                                    "DamageThenConfuseOnAnyHeads", "DamageThenPoisonAndParalyzeOnHeads", "DamageThenPoisonAndConfuseOnAllHeads",
+                                    "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 
