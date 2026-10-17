@@ -62,6 +62,9 @@ EVOLVE = "evolve"  # 進化した（p.310 の進化の手順 3・p.322「特殊�
 # 相手のワザの効果でベンチにもどされた（バタフリーの「ふきとばし」。p.19・p.213「相手の対戦ポケモンをベンチにもどす」・
 # p.311・p.322。v0.4d）。トレーナーの効果による入れ替え（SWITCH）とは理由を分ける
 FORCED_SWITCH = "forced_switch"
+# v0.50: 退化した（p.324「19 ポケモンの退化」。kyuura の GR-2000-P324-DEVOLUTION「退化したポケモンを、「どく」「ねむり」「マヒ」「こんらん」状態や、その他の
+# 「持続する効果」から回復させます」。ミュウの「たいかビーム」・退化スプレー。``evolution.devolve``）。進化（EVOLVE）とは理由を分ける
+DEVOLVE = "devolve"
 
 
 def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str, effect: str, **fields: object) -> bool:

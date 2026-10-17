@@ -41,7 +41,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .conditions import EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
+from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     AttackCoinCheck,
@@ -78,8 +78,9 @@ DISCARD_FROM_PLAY = "discard_from_play"
 # v0.48: 同じ種類の効果を新しく与えたので、前の効果を消した（「テクスチャー1」をもう一度受けて弱点の色が変わる・「きょだいか」をもう一度「おもて」で使う。
 # 期限のない効果（``lasting``）だけ。新しい効果のログ ``persistent_effect_added`` のすぐ前に残す）
 REPLACED = "replaced"
+# v0.50: 退化した（p.324「19」。CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION。理由の値は特殊状態の ``conditions.DEVOLVE`` と同じ）
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED)
+                   REPLACED, DEVOLVE)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:

@@ -458,6 +458,11 @@ BROCKS_NINETALES = "PMCG5-019"  # タケシのキュウコン（リーダーズ�
 RECALL = "PMCG5-071"  # 思い出させる（リーダーズスタジアム。トレーナー）
 V0_49_POKEMON = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES)
 V0_49_CARDS = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES, RECALL)  # 写しの組 pool_v0_49 の並び
+# v0.50（docs/mew-devolution-spray-v0.50.md）。退化の共通の処理で加えた 2 枚（どれも kyuura データの採用）
+MEW = "PMCG3-033"  # ミュウ（化石の秘密。HP 50・超・弱点 超・にげる 1。サイコウェーブ（超）10×・たいかビーム（超超））
+DEVOLUTION_SPRAY = "PMCG1-086"  # 退化スプレー（第1弾。トレーナー）
+V0_50_POKEMON = (MEW,)
+V0_50_CARDS = (MEW, DEVOLUTION_SPRAY)  # 写しの組 pool_v0_50 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -1030,6 +1035,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenCoinsReturnOpponentToDeck,  # ナツメのゲンガーの「やみのこえ」
     _effects.SetMaxHpOnHeads,  # キョウのメタモンの「きょだいか」
     _effects.DamageIfSelfMaxHpSet,  # キョウのメタモンの「はたく」
+    # v0.50（docs/mew-devolution-spray-v0.50.md）
+    _effects.DamageTimesDefenderEnergyCards,  # ミュウの「サイコウェーブ」
+    _effects.DevolveChosenPokemon,  # ミュウの「たいかビーム」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

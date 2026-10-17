@@ -832,7 +832,8 @@ class PokemonInPlay:
     - ``evolved_turn``: いまの姿に進化した番。進化していなければ None。「その番の最初から場に出ていた」（p.310）かは、
       いまの姿になった番（``evolved_turn``、なければ ``played_turn``）が今の番より前かで決まる。2 進化（v0.4c）では
       2 進化した番で、1 進化した番は状態に持たない（進化の条件に要らない。不変条件はログ ``evolve`` と照らす。
-      docs/stage2-state-v0.4c.md）
+      docs/stage2-state-v0.4c.md）。v0.50: 退化して重なりが残れば、最後に進化した番のまま（重なりがなくなれば None）。
+      いまの姿になった番は ``current_form_turn``（退化した番 ``devolved_turn`` を含む）
 
     ワザによる持続する効果（v0.4b）:
 
@@ -872,11 +873,18 @@ class PokemonInPlay:
     # あつかう（今の姿。``effects.current_form``）が、進化・退化ではない（場のポケモンの番号・場に出た番・進化した番・持続する効果・特殊状態は変えない）。
     # トラッシュしてもどす（``RemoveDisguise``）・ねむり・マヒ・こんらんになる（のせたカードはトラッシュされる）と None にもどす
     disguise: int | None = None
+    # v0.50（docs/mew-devolution-spray-v0.50.md 3 章）: このポケモンが最後に退化した番（ミュウの「たいかビーム」・退化スプレー。``evolution.devolve``）。退化したことが
+    # なければ None。退化したポケモンは「退化前とは別のポケモン」（p.324「19」）で、いまの姿になった番（``current_form_turn``）はこの番になる。退化した番に、そのポケモンを
+    # 進化させられるか（p.310 の「その番の最初から場に出ていた」「その番に進化した」の当てはめ）は決まらないので、エンジンが止める（DV2。``evolution.evolution_block``）。
+    # 進化しても消さない（いまの姿になった番は、進化した番と退化した番の新しいほう）。場をはなれたらなくなる
+    devolved_turn: int | None = None
 
     @property
     def current_form_turn(self) -> int:
-        """いまの姿（いちばん上のカード）になった番（進化した番、進化していなければ場に出た番。v0.4a）。"""
-        return self.played_turn if self.evolved_turn is None else self.evolved_turn
+        """いまの姿（いちばん上のカード）になった番（場に出た番・進化した番・退化した番（v0.50）のいちばん新しい番。v0.4a）。退化していなければ v0.49 までと同じ
+        （進化した番、進化していなければ場に出た番）。"""
+        turn = self.played_turn if self.evolved_turn is None else self.evolved_turn
+        return turn if self.devolved_turn is None else max(turn, self.devolved_turn)
 
     def cards(self) -> tuple[int, ...]:
         """このポケモンを作っているポケモンのカード（下から順。``card`` の上に、v0.49 の「ばける」でのせた進化カード（``disguise``）があれば最後）。ついている
@@ -902,6 +910,7 @@ class PokemonInPlay:
             self.evolution_permission_turn,
             self.type_shift,
             self.disguise,
+            self.devolved_turn,
         )
 
 

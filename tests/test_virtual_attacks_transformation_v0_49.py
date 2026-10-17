@@ -342,7 +342,8 @@ class CardDataTest(unittest.TestCase):
         for code in NEW_CODES:
             with self.subTest(code=code):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (75, 76))
+        # v0.49 で 75・76。v0.50 で DV1〜DV5 の 5 件を加えた（docs/mew-devolution-spray-v0.50.md）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (80, 81))
 
 
 # ---------------------------------------------------------------- ［サイコリンク］・メガバーン
@@ -1032,10 +1033,10 @@ class ObservationAndSerializationTest(unittest.TestCase):
 
     def test_format_14_and_older_formats(self):
         """「ばける」でのせたカード・「思い出させる」の記録・ほかのカードのワザが与えた効果は形式 14 で書き出す。形式 1〜13 は書き出せない（``ValueError``。黙って落とさない）。
-        どれもなければ形式 13 と同じ。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 14)
+        どれもなければ形式 13 と同じ。v0.50 で形式 15（退化した番。``devolved_turn``）を加えた（退化していなければ None）。"""
+        self.assertEqual(max(FORMAT_VERSIONS), 15)
         plain = ninetales_board()
-        latest, older = full(plain), state_to_dict(plain, format_version=13)
+        latest, older = state_to_dict(plain, format_version=14), state_to_dict(plain, format_version=13)
         self.assertEqual(latest["recalls"], [])
         for player in latest["players"]:
             for pokemon in [player["active"], *player["bench"]]:

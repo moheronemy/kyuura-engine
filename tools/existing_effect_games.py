@@ -225,6 +225,8 @@ from kyuura_engine.effects import PowerKey as E_PowerKey  # noqa: E402  v0.49
 from kyuura_engine.effects import (  # noqa: E402  v0.49
     any_color_energy, attack_cost_payable, available_attacks, current_form, find_attack_option, recall_records, shapeshift_choices,
 )
+from kyuura_engine.decisions import SELECT_DEVOLVE_COUNT  # noqa: E402  v0.50
+from kyuura_engine.effects import devolution_candidates, devolution_forbidden  # noqa: E402  v0.50
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
 from tests.log_audit import log_problems, observation_problems, serialization_problems  # noqa: E402
 from tests.v017_games import play_game  # noqa: E402
@@ -371,11 +373,17 @@ SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES, RECALL = "PMCG6-053", "PMCG3-042", "
 V0_49 = (SABRINAS_ALAKAZAM, DITTO, BROCKS_NINETALES)
 V0_49_TRAINERS = (RECALL,)
 KADABRA = "PMCG1-046"  # ユンゲラー（第1弾。ケーシィから進化。「思い出させる」でケーシィの「ねんりき」を使う）
+# v0.50（docs/mew-devolution-spray-v0.50.md）。退化させる進化ポケモンは、第1弾のケーシィ・ユンゲラー・化石の秘密のゴースの系統・キョウのビードルの系統（［うか］）・
+# 第1弾のフシギダネの系統（ポケモン育て屋さんで 1 進化を飛ばした重なり）
+MEW, DEVOLUTION_SPRAY = "PMCG3-033", "PMCG1-086"
+V0_50 = (MEW,)
+V0_50_TRAINERS = (DEVOLUTION_SPRAY,)
+BULBASAUR, IVYSAUR, VENUSAUR = "PMCG1-001", "PMCG1-008", "PMCG1-011"
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP")
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
-           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49)  # ワザの選び方を重ね、動きを数えるカード
+           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50)  # ワザの選び方を重ね、動きを数えるカード
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -556,6 +564,13 @@ DECKS = {
             (PSYCHIC, 27)),
     # v0.49: 炎・無（リーダーズスタジアム・化石の秘密・第1弾）。「ばける」（リザード・タケシのキュウコンをのせる）・おにび・［へんしん］・思い出させる
     "D49": ((BROCKS_VULPIX, 4), (BROCKS_NINETALES, 3), (DITTO, 4), (CHARMANDER, 3), (CHARMELEON, 3), (RECALL, 3), *TRAINERS, (FIRE, 28)),
+    # v0.50: 超（化石の秘密・第1弾）。サイコウェーブ・たいかビーム（自分・相手の進化ポケモン）・退化スプレー（ケーシィ・ゴースの系統。ゴーストの［とうめい］・
+    # ゲンガーの［のろい］）。第1弾のフーディンは入れない（v0.7 の手順のダメージスワップは、きぜつさせる移動をわざと試し、その拒否は tests/test_alakazam_games_v0_7.py の
+    # 対戦の手順だけが数える。tests/v017_games.py の ``play_game`` では想定外の拒否になる）
+    "M50": ((MEW, 4), (ABRA, 4), (KADABRA, 3), (GASTLY, 4), (HAUNTER, 3), (GENGAR, 2), (DEVOLUTION_SPRAY, 4), *TRAINERS, (PSYCHIC, 24)),
+    # v0.50: 草（第1弾・闇からの挑戦）。退化スプレー（フシギバナの系統・キョウのビードルの系統。ポケモン育て屋さんで 1 進化を飛ばした重なり・［うか］で重ねた進化）
+    "E50": ((BULBASAUR, 4), (IVYSAUR, 2), (VENUSAUR, 2), (KOGAS_WEEDLE, 4), (KOGAS_KAKUNA, 3), (KOGAS_BEEDRILL, 2), (DEVOLUTION_SPRAY, 3),
+            (driver.POKEMON_BREEDER, 2), *TRAINERS, (GRASS, 26)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -591,11 +606,14 @@ PAIRINGS_V0_47 = (("F47", "H47"), ("H47", "A47"), ("A47", "F47"), ("H47", "P31")
 PAIRINGS_V0_48 = (("C48", "S48"), ("S48", "C48"), ("C48", "P31"), ("S48", "P31"))
 # v0.49: A49 対 P31・D49 対 P31（ピッピ・ピクシー・カスミのコダックが、［サイコリンク］で持つワザ・［へんしん］の今の姿のワザを自分のワザとして使う）
 PAIRINGS_V0_49 = (("A49", "D49"), ("D49", "A49"), ("A49", "P31"), ("D49", "P31"))
+# v0.50: M50 対 P31（ピッピ・ピクシー・カスミのコダックが、サイコウェーブ・たいかビームを自分のワザとして使う）・M50 対 D49（タケシのキュウコンの「ばける」の
+# ポケモン（退化させられない。DV5）・［へんしん］のメタモン（今の姿でなく実際の重なりで選ぶ））
+PAIRINGS_V0_50 = (("M50", "E50"), ("E50", "M50"), ("M50", "P31"), ("M50", "D49"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
-           "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49}
+           "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -751,9 +769,20 @@ V031_STOPS = {
     # v0.48: ［へんしょく］で変えた色の読み方が 2 つある（使った番のあと・ベンチにもどったあと・この力が消えている）場のポケモンがいる（VS1。読み方で結果が変わるときだけ
     # 止まる。止まらない場合は場から確かめられないので、止まったときに読み方が 2 つあるポケモンがいることだけを確かめる）
     "UNRESOLVED_SHIFT_COLOR_DURATION": lambda st, c: any(len(type_readings(st, p)) > 1 for pl in st.players for p in pl.in_play()),
+    # v0.50: たいかビーム（自分のワザ・相手のワザとして使うワザ）で、自分・相手の場の進化ポケモンがどれも「ばける」でのせたカードのポケモン（DV5）
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": lambda st, c: _all_devolution_targets_disguised(st, c),
     # v0.48: テクスチャー1（相手の対戦ポケモンに弱点がない）・テクスチャー2（自分に抵抗力がない）。相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか（PG1）
     "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": lambda st, c: _conversion_absent(st, c),
 }
+
+
+def _all_devolution_targets_disguised(state, command):
+    """DV5（v0.50）: 使うワザ（相手のワザとして使うワザなら、相手の対戦ポケモンのワザのどれか）がたいかビームで、自分・相手の場の進化ポケモンがどれも「ばける」でのせた
+    カードのポケモン。"""
+    if "DevolveChosenPokemon" not in _attack_and_copied_types(state, command):
+        return False
+    candidates = devolution_candidates(state, (command.player, 1 - command.player))
+    return bool(candidates) and all(devolution_forbidden(state, state.find_pokemon(pid)[1]) for pid in candidates)
 
 
 def _conversion_absent(state, command):
@@ -1725,6 +1754,81 @@ def _v049_attack(state, tried, counts):
     return UseAttack(player, option.attack_index, card=option.card)
 
 
+def _v050_beam_decision(d):
+    """v0.50: たいかビームの決定（ワザを使ったポケモンのワザ・相手のワザとして使ったワザ・［サイコリンク］で持つワザのどれでも、ワザの続きの情報の ``use``・``copied``）。"""
+    if d.resume != "attack" or d.kind != SELECT_POKEMON:
+        return False
+    use = d.context_value("use")
+    copied = d.context_value("copied")
+    return (use is not None and tuple(use[2:4]) == (MEW, 1)) or (copied is not None and tuple(copied) == (MEW, 1))
+
+
+def _v050_decision(state, counts):
+    """v0.50 の決定への答え（元の手順より先に答える）:
+
+    - たいかビーム: 選ぶと止める（DV5）ものを除き、3 回に 2 回は相手の進化ポケモン、1 回は自分の進化ポケモン（どちらかしかなければそれ）を、順に選ぶ
+    - 退化スプレー: 退化させるポケモンは選ぶと止める（DV5）ものを除いて順に。はがす枚数は、選ぶと止める（DV1）枚数を除いて、1 枚・すべて・0 枚を順に
+    """
+    d = state.decision
+    if d is None:
+        return None
+    blocked = set(d.context_value("unresolved_choices", ()))
+    if _v050_beam_decision(d):
+        options = [o for o in d.options if o not in blocked]
+        if not options:
+            return None
+        mine = [o for o in options if state.find_pokemon(o)[0] == d.player]
+        theirs = [o for o in options if o not in mine]
+        seen = counts["v050_beam_seen"]
+        counts["v050_beam_seen"] += 1
+        group = mine if (seen % 3 == 2 and mine) or not theirs else theirs
+        chosen = group[seen % len(group)]
+        counts["v050_beam_" + ("own" if chosen in mine else "opponent")] += 1
+        return ResolveDecision(d.player, d.id, (chosen,))
+    use = d.context_value("use")
+    if d.resume != "trainer" or use is None or use[2] != DEVOLUTION_SPRAY:
+        return None
+    options = [o for o in d.options if o not in blocked]
+    if not options:
+        return None
+    if d.kind == SELECT_POKEMON:
+        seen = counts["v050_spray_target_seen"]
+        counts["v050_spray_target_seen"] += 1
+        return ResolveDecision(d.player, d.id, (options[seen % len(options)],))
+    if d.kind != SELECT_DEVOLVE_COUNT:
+        return None
+    seen = counts["v050_spray_count_seen"]
+    counts["v050_spray_count_seen"] += 1
+    if blocked:
+        counts["v050_spray_count_dv1_avoided"] += 1
+    wanted = (1, max(d.options), 0)[seen % 3]
+    chosen = wanted if wanted in options else options[-1]
+    counts[f"v050_spray_count_{chosen}"] += 1
+    return ResolveDecision(d.player, d.id, (chosen,))
+
+
+def _v050_trainer(state, tried, counts):
+    """v0.50: 退化スプレー（自分の場に、実際に進化カードが重なっていて「ばける」でないポケモンがいて、この番にまだ使っていないとき。番の番号が 3 の倍数の番は、
+    ダメージがのっている進化ポケモンがいれば使う。それ以外の番は、ダメージがのっていて退化すればきぜつしないポケモンがいれば使う）。拒否を起こさない。"""
+    player = state.current_player
+    p = state.players[player]
+    if "trainer_locked" in tried or ("v050_spray", state.turn_number) in tried:
+        return None
+    candidates = [state.find_pokemon(pid)[1] for pid in devolution_candidates(state, (player,))]
+    candidates = [pokemon for pokemon in candidates if not devolution_forbidden(state, pokemon)]
+    if not candidates:
+        return None
+    damaged = [pokemon for pokemon in candidates if pokemon.damage > 0]
+    if not damaged and state.turn_number % 3 != 0:
+        return None
+    for uid in p.hand:
+        if state.cards[uid].card_id == DEVOLUTION_SPRAY:
+            tried.add(("v050_spray", state.turn_number))
+            counts["v050_play_spray"] += 1
+            return PlayTrainer(player, uid)
+    return None
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -1868,7 +1972,7 @@ def make_policy(seen: dict, counts: Counter):
             early = (_v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
                      or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
                      or _v047_decision(state, counts) or _v048_decision(state, counts)  # v0.47・v0.48
-                     or _v049_decision(state, counts))  # v0.49
+                     or _v049_decision(state, counts) or _v050_decision(state, counts))  # v0.49・v0.50
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -1880,7 +1984,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v044_power(state, tried, counts) or _v044_trainer(state, tried, counts)
                      or _v047_power(state, tried, counts) or _v047_trainer(state, tried, counts)  # v0.47
                      or _v048_power(state, tried, counts)  # v0.48
-                     or _v049_power(state, tried, counts) or _v049_trainer(state, tried, counts))  # v0.49
+                     or _v049_power(state, tried, counts) or _v049_trainer(state, tried, counts)  # v0.49
+                     or _v050_trainer(state, tried, counts))  # v0.50
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -1902,6 +2007,15 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
+        if current_form(state, active).kind != "printed":
+            # v0.50: 今の姿が「ばける」・［へんしん］のカードのとき、ワザの位置は今の姿のカードのワザ（v0.49 の ``UseAttack``）。いちばん上のカードのワザで払えるかを
+            # 見ていたので、今の姿のワザを払えないときに INSUFFICIENT_ENERGY の想定外の拒否になった（v0.50 の M50 対 D49 で起こった。v0.49 の組では起こらなかった）。
+            # 今の姿のワザで払えるかを見て、払えるワザがなければ番を終える
+            attacks = state.card_def(current_form(state, active).card).attacks
+            usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
+            if not usable and isinstance(command, UseAttack):
+                counts[f"v050_form_unpayable_end_{card_id}"] += 1
+                return EndTurn(player)
         if card_id in V0_44:
             # v0.44: 場に出てから 1 度しか使えないワザで、このポケモンがもう使ったもの（場のポケモンの記録）は選ばない
             usable = [i for i in usable if (active.card, i) not in active.attacks_used_once]
@@ -2050,13 +2164,15 @@ def card_uses(state):
       ``hand_to_deck#i``・``shuffle#i``・``self_special_condition_confusion#i``
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
-    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS}
+    uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS}
     current = None  # (カード id, ワザの位置)
     attacker = None  # ワザを使ったプレイヤー
     discarded = False
     power_user = None
     for e in state.log:
         kind = e["kind"]
+        if kind == "knock_out" and e.get("timing") == "trainer":
+            uses[DEVOLUTION_SPRAY]["knock_out_after_spray"] += 1  # v0.50: 退化スプレーで最大HPがダメージ以下になったポケモンのきぜつ
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
                 if card[uid] in uses:
@@ -2181,6 +2297,16 @@ def card_uses(state):
             uses[card[e["pokemon"]]][kind if kind == "disguise" else f"disguise_removed_{e['reason']}"] += 1  # v0.49: 「ばける」
         elif kind == "recall":
             uses[RECALL]["recall"] += 1  # v0.49: 思い出させる
+        elif kind == "devolve":
+            # v0.50: たいかビーム（ワザの効果。自分・相手のポケモン）・退化スプレー（はがした枚数）
+            if "trainer_card" in e:
+                uses[DEVOLUTION_SPRAY][f"devolve_{len(e['removed'])}"] += 1
+            else:
+                uses[MEW]["beam_devolve_" + ("own" if e["player"] == e["by_player"] else "opponent")] += 1
+        elif kind == "devolve_declined":
+            uses[DEVOLUTION_SPRAY]["devolve_declined"] += 1
+        elif kind == "devolve_none":
+            uses[MEW]["beam_devolve_none"] += 1
         elif kind in ("turn_end", "turn_start"):
             current = None
         elif current is not None:

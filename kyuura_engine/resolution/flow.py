@@ -36,7 +36,7 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import attack_coin_checks, destiny_bond
-from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, knocked, ko_prevention_offers, track_ko
+from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knocked, ko_prevention_offers, track_ko
 from .programs import AttackRun, decision_index, declare, run_elements
 from .questions import OpenQuestion, to_error
 
@@ -394,6 +394,37 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
         return
     if any(state.players[p].active is None for p in PLAYERS):
         _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+
+
+# ---------------------------------------------------------------- トレーナーの使用のあと（v0.50。docs/mew-devolution-spray-v0.50.md 4 章）
+
+
+def after_trainer(state: GameState, ctx: Context) -> None:
+    """きぜつさせうるトレーナー（``TrainerEffect.may_knock_out``。退化スプレー）を使い終わって、カードをトラッシュしたあと、場を整える（v0.50）。
+
+    - 退化で最大HPがのっているダメージ以下になった、番のプレイヤーのポケモン（今の番に退化した ``devolved_turn``。トレーナーのあとに HP 以上のポケモンは残らないので、
+      このコマンドで退化したもの）を、ワザのあとと同じきぜつの処理（``PR.knock_out``。ログ ``knock_out`` の ``timing`` は ``"trainer"``。特殊能力の ``"power"`` と
+      分ける）→ サイド → 勝ち負け → ふしちょう → バトル場に出す（``_after_knockouts``）。続きは ``CONTINUE_TURN``（終わったら番のプレイヤーの番にもどる。トレーナーを
+      使っても番は終わらない。p.310）。こんじょう（相手のワザのダメージで「きぜつ」するとき）・みちづれ（ワザのあと）は候補にしない
+    - ほかのポケモン（［へんしん］で退化したポケモンと同じカードとしてあつかう相手のメタモンなど）の最大HPが下がってダメージ以下になっても、ここではきぜつさせない
+      （トレーナーの効果でほかのポケモンの最大HPが下がったときの判定は v0.48 の MH1。コマンドの入口が受け付けない）
+    - きぜつがなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
+
+    渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    player = state.current_player
+    gone = [(player, pokemon) for pokemon in state.players[player].in_play()
+            if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
+    if not gone:
+        return
+    if len(gone) > 1:
+        raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
+    try:
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="trainer"), CONTINUE_TURN, candidates)
 
 
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック

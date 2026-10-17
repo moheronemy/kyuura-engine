@@ -57,6 +57,21 @@ def form_cards_in_play(state) -> bool:
     return any(state.cards[pokemon.card].card_id in FORM_CARDS for player in state.players for pokemon in player.in_play())
 
 
+# v0.50（docs/mew-devolution-spray-v0.50.md）: 退化したポケモンの進化（DV2）・退化でいちばん上にもどったカードの「自分の番ごとに1回」の特殊能力（DV3）
+V050_DEVOLUTION_CODES = ("UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION")
+
+
+def devolved_this_turn_in_play(state, command) -> bool:
+    """v0.50: 操作の対象（進化させるポケモン・特殊能力を使うポケモン。ポケモン育て屋さんなら使うプレイヤーの場）に、この番に退化したポケモンがいる。"""
+    if isinstance(command, EvolvePokemon):
+        found = state.find_pokemon(command.target)
+        return found is not None and found[1].devolved_turn == state.turn_number
+    if isinstance(command, UsePokemonPower):
+        found = state.find_pokemon(command.pokemon)
+        return found is not None and found[1].devolved_turn == state.turn_number
+    return any(pokemon.devolved_turn == state.turn_number for pokemon in state.players[command.player].in_play())
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -105,6 +120,15 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     # 同じ操作を繰り返さない（「にげる」は "retreat"、手札のカードを使う操作はそのカード、特殊能力は操作そのもの。手順が見る）
                     turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
                                    else ("max_hp_drop_command", command))
+                    continue
+                if error.code in V050_DEVOLUTION_CODES and isinstance(command, (EvolvePokemon, PlayTrainer, UsePokemonPower)):
+                    # v0.50: この番に退化したポケモンを進化させる（DV2。手札からの進化・ポケモン育て屋さん・［うか］）・この番に使った「自分の番ごとに1回」の特殊能力を、
+                    # 退化でいちばん上にもどったカードでもう一度使う（DV3）。場から確かめる（この番に退化したポケモンがいる）。同じ操作を繰り返さない
+                    if not devolved_this_turn_in_play(state, command):
+                        raise AssertionError(f"この番に退化したポケモンがいないのに {error.code}: {command}")
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon") else ("max_hp_drop_command", command))
                     continue
                 if error.code == EVOLUTION_HP_CODE and isinstance(command, EvolvePokemon):
                     # v0.48: ［ガスのからだ］で最大HPが印刷の HP より大きいポケモンを、のっているダメージ以下の HP のカードに進化させる（v0.4a の H1 と同じ問い）。

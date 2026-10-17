@@ -1246,3 +1246,35 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
    記録されていない。
 4. 思い出させるの kyuura の英語の文面（`trainer.text.en`）は、日本語の文面より範囲が広い（たねポケモンのカード・重なったすべての進化カード）。日本語版の処理の根拠に
    していない。
+
+## v0.50 で加えたカード 2 枚（ミュウ・退化スプレー）
+
+写しを作り直しました（`pool_v0_50`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません（今回の追加だけを理由に、写しの元・研究の基準・
+  固定した参照データを更新していない）。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です。`--check` は「kyuura ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 と一致しています」でした。
+- 写しのカードは 348 枚から 350 枚になりました（ミュウ PMCG3-033 と、トレーナーの退化スプレー PMCG1-086 を加えた）。ほかのカードの記録は変わっていません。
+- 根拠:
+  - `kyuura_engine/data/card_sources.json` の採用の記録（2 件 `adopted`。`basis: kyuura_data`。記録した日 2026-10-17）です。`kyuura_records` は 2 件とも空です
+    （研究の基準のコミットで、この 2 枚を指す最新の説明・エラッタ・裁定・論点・照合の記録・card_differences の記録はない）。
+  - pcg-search.com の同じ版のページとの照合（2026-10-17）: 2 件とも `match`。版は名前だけでなく収録・サイトの一覧の番号で決めました（ミュウ 033/048（第3弾 化石の秘密）・
+    退化スプレー 076/096（第1弾。サイトの一覧の番号は kyuura の id の番号と違う。v0.47 のピッピ人形と同じ））。カードの画像は読んでいません。
+  - 2 枚とも kyuura の日本語の文面の出典（`ja_text_source`）は nazonobasho.com で、pcg-search.com との照合は独立した照合です。『オフィシャルブック2000』は読んでいないので、
+    `card_verification.json` に加えていません。
+- 処理に使う文面: どれも kyuura の印刷の文面です。研究の対応表の `adopted_printed_text` に、サイコウェーブ・たいかビームを加えました（403 → 405。トレーナーの文面は
+  採用の記録の `play_text` で確かめる）。英語版の文面・「退化スプレーHYPER」の文面は処理に持ち込んでいません。
+- 一般の規定・裁定として再利用した kyuura の記録（研究の基準のコミット。研究の対応表の `applied_rule_records` に id だけで結んだ）: GR-2000-P324-DEVOLUTION（退化）・
+  CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION（退化でこうらがえしの効果が終わる）・CR-CHEMICAL-GAS-LEAVES（ベトベトンが退化したらかがくへんかガスの力がなくなる）・
+  GR-2000-P323-KNOCKOUT（きぜつ）。退化で最大HPがのっているダメージ以下になったポケモンのきぜつは、これらと p.319 の記録から導いた処理です（SUPPORTED。
+  [mew-devolution-spray-v0.50.md](mew-devolution-spray-v0.50.md) 2 章）。第4版の冊子の記録は根拠にしていません。
+- 検証用デッキ `M50`・`E50`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 新しい停止コードの DV1〜DV5（5 件）が kyuura の未解決の一覧にない（研究の対応表の `stop_codes` で `kyuura_disposition: not_in_kyuura`）。
+2. ミュウ・退化スプレーに、最新の説明・エラッタ・裁定・照合の記録がない。DV1（複数枚の退化の途中のきぜつ）・DV2（退化した番の進化）・DV3（退化でもどったカードの
+   特殊能力）・DV4（対象のない退化スプレー）・DV5（「ばける」のポケモンの退化）は kyuura の論点として記録されていない。
+3. 退化で最大HPがのっているダメージ以下になったポケモンのきぜつは、kyuura に 2000.02.14 版の直接の記録がない（第4版の冊子の記録はある）。
+4. kyuura の英語の文面（ミュウの「That Pokémon is no longer Asleep, …」・退化スプレーの「a Stage of Evolution … that Stage or higher」）は日本語の文面と範囲が違う。
+   日本語版の処理の根拠にしていない。

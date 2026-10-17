@@ -631,7 +631,9 @@ class G37Test(unittest.TestCase):
             "CoinSwitchOpponentThenStatus", "DamageThenMoveOpponentEnergyToBench",
             # v0.48（相手の対戦ポケモンの弱点の色を変える・1 枚のコインでどくとこんらん・ダメージカウンターがのっている相手のポケモンにのせる・
             # 2 枚とも「おもて」で相手の対戦ポケモンを山札にもどす。docs/effective-pokemon-properties-v0.48.md）
-            "ChangeOpponentWeakness", "DamageThenPoisonAndConfuseOnHeads", "PlaceCountersOnDamagedOpponentPokemon", "DamageThenCoinsReturnOpponentToDeck"]))
+            "ChangeOpponentWeakness", "DamageThenPoisonAndConfuseOnHeads", "PlaceCountersOnDamagedOpponentPokemon", "DamageThenCoinsReturnOpponentToDeck",
+            # v0.50（自分・相手のポケモンの進化カードをはがして手札にもどす「たいかビーム」。docs/mew-devolution-spray-v0.50.md）
+            "DevolveChosenPokemon"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -106,6 +106,14 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
 - 形式 14 = 形式 13 の場のポケモンごとに `disguise`（タケシのキュウコンの「ばける」でのせた進化カード。`{"card", "card_id"}`。なければ null）と、最上位の `recalls`（思い出させるの記録。`{"player", "turn", "pokemon_id", "card", "card_id", "trainer", "trainer_card_id"}` の並び。`card` は使ったときの対戦ポケモンのいちばん上のカード、`trainer` は思い出させるのカード。なければ `[]`）を加えたもの。持続する効果は、効果を与えたワザ・対象のワザがいちばん上のカードのものでないとき（［サイコリンク］・［へんしん］・「ばける」・思い出させるで使ったワザ、「ドわすれ」で選んだワザ）だけ `attack_card`・`target_attack_card`（ワザを印刷したカードの id）を書く。`power_uses_this_turn` には、のせたカードの特殊能力を使った記録（[場のポケモンの番号, 特殊能力の位置, そのカードの uid]）が入る。今の姿（［へんしん］・「ばける」）・今使えるワザは状態から求める値なので書かない（観測が書く）。
 - 形式 1〜13 は、のせたカード・記録・その項目のある効果・のせたカードの特殊能力の使用の記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 14（`POKEMON_FIELDS_SINCE` に `disguise`、`TOP_FIELDS_SINCE` に `recalls`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.49 のカードを使わない対戦ではのせたカード・記録はない）。次の新しい形式は 15。[virtual-attacks-transformation-v0.49.md](virtual-attacks-transformation-v0.49.md) 8 章。
 
+### 4.8 書き出しの形式 15（v0.50）
+
+- 形式 15 = 形式 14 の場のポケモンごとに `devolved_turn`（最後に退化した番。退化していなければ null）を加えたもの。`power_uses_this_turn` には、進化・退化でいちばん上で
+  なくなったカードの「自分の番ごとに1回」の特殊能力の記録（[場のポケモンの番号, 特殊能力の位置, 使ったカードの uid]。`evolution.retag_power_uses`）が入る。
+- 形式 1〜14 は、退化した番のあるポケモン・置きかえた記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の
+  `LATEST_FORMAT` は 15（`POKEMON_FIELDS_SINCE` に `devolved_turn`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま
+  （v0.50 のカードを使わない対戦では退化した番はない）。次の新しい形式は 16。[mew-devolution-spray-v0.50.md](mew-devolution-spray-v0.50.md) 7 章。
+
 ## 5. ログ
 
 ```text

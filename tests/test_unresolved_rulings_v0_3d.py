@@ -154,10 +154,11 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         self.assertEqual(doubled, {"PMCG1-043", "PMCG1-045", "PMCG1-046", "PMCG1-049", "PMCG6-044", "PMCG1-050", "PMCG3-027", "PMCG1-048",
                                    "PMCG6-045", "PMCG4-031", "PMCG4-037", "PMCG4-032", "PMCG6-048", "PMCG6-055",
                                    "PMCG6-052", "PMCG3-028", "PMCG6-043", "PMCG6-047", "PMCG4-034", "PMCG4-035", "PMCG4-033", "PMCG4-036",
-                                   "PMCG6-046", "PMCG2-027", "PMCG3-032", "PMCG6-053"})
+                                   "PMCG6-046", "PMCG2-027", "PMCG3-032", "PMCG6-053", "PMCG3-033"})
         # v0.47: スリーパー（PMCG3-032。超・弱点 超。kyuura データの採用）は 40、プテラ（PMCG3-041。闘・抵抗力 闘）は 0
         # v0.49: ナツメのフーディン（PMCG6-053。超・弱点 超。kyuura データの採用）は 40。メタモン（PMCG3-042。無色・弱点 闘）・タケシのキュウコン（PMCG5-019。炎・弱点 水）は 20
         # （印刷の定義で確かめる。［へんしん］・「ばける」の今の姿のこんらんの 20 は、今有効なタイプ・弱点・抵抗力で計算する。docs/virtual-attacks-transformation-v0.49.md）
+        # v0.50: ミュウ（PMCG3-033。超・弱点 超。kyuura データの採用）は 40
         zeroed = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 0}
         self.assertEqual(zeroed, {"PMCG3-041"})
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled | zeroed))

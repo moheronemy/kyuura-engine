@@ -665,7 +665,7 @@ class LogSerializationInvariantTest(unittest.TestCase):
         for version in (7, 8):
             self.assertEqual(state_to_dict(new, format_version=version)["players"][0]["active"]["damage"], 20)
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=15)  # v0.7 では 10 がなかった。10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49（ダメージスワップの項目ではない）
+            state_to_dict(new, format_version=16)  # v0.7 では 10 がなかった。10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50（ダメージスワップの項目ではない）
         self.assertEqual(serialization_problems(new), [])
 
     def test_copies(self):

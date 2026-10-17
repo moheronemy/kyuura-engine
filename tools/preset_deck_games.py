@@ -93,6 +93,7 @@ COMPUTER_SEARCH = "PMCG1-090"  # v0.22
 ENERGY_RETRIEVAL = "PMCG1-076"  # v0.23
 POKEMON_TRADER = "PMCG1-093"  # v0.24
 POKEMON_BREEDER = "PMCG1-094"  # v0.25
+DEVOLUTION_SPRAY = "PMCG1-086"  # v0.50（docs/mew-devolution-spray-v0.50.md）
 BILL = "PMCG1-074"
 PLUSPOWER = "PMCG1-081"
 DEFENDER = "PMCG1-079"
@@ -305,6 +306,9 @@ TRAINER_EVENTS = {
     POKEMON_BREEDER: {"evolve": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
                       "retreat_failure_cleared": "user", "entry_power_declined": "user", "pokemon_power": "user", "bench_from_deck": "user",
                       "shuffle": "user"},
+    # v0.50: 退化スプレー。自分の進化ポケモンからはがす（退化で消える特殊状態・持続する効果・にげるの失敗の記録）か、はがさない（0 枚）。きぜつはトラッシュしたあと
+    DEVOLUTION_SPRAY: {"devolve": "user", "devolve_declined": "user", "special_conditions_removed": "user", "persistent_effect_removed": "user",
+                       "retreat_failure_cleared": "user"},
 }
 
 

@@ -416,6 +416,22 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             for e in x.get("data_error") or []:
                 if e.get("field") not in noted:
                     problems.append(f"{card}: kyuura の {x['id']} のデータの誤りの欄 {e.get('field')} が、採用の記録の論点にない")
+
+    # 8. エンジンの処理に使う kyuura の規定・裁定（v0.50。applied_rule_records。退化の共通の処理）: 研究の基準のコミットにあり、裁定なら分類が対応表と同じ
+    clauses = {x["id"] for x in rulings.get("rule_clauses", [])}
+    for entry in links.get("applied_rule_records", []):
+        record_id = entry.get("kyuura_record")
+        if entry.get("kind") == "rule_clause":
+            if record_id not in clauses:
+                problems.append(f"applied_rule_records: 規定 {record_id} が kyuura {commit[:7]} にない")
+        elif entry.get("kind") == "ruling":
+            ruling = by_id.get(record_id)
+            if ruling is None:
+                problems.append(f"applied_rule_records: 裁定 {record_id} が kyuura {commit[:7]} にない")
+            elif ruling.get("status") != entry.get("kyuura_status"):
+                problems.append(f"applied_rule_records: 裁定 {record_id} の分類が {ruling.get('status')}（対応表は {entry.get('kyuura_status')}）")
+        else:
+            problems.append(f"applied_rule_records: {record_id} の種類 {entry.get('kind')!r} は rule_clause か ruling")
     return problems
 
 

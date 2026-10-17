@@ -80,6 +80,8 @@ from kyuura_engine import state_to_dict
 from kyuura_engine.cards import EnergyType
 from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import (
+    DevolveChosenPokemon,
+    DevolveOwnPokemon,
     Shapeshift,
     TransformIntoDefender,
     ATTACK_ELEMENTS,
@@ -100,6 +102,7 @@ from kyuura_engine.effects import (
     EVOLVE_ELEMENT,
     HEAL_ELEMENT,
     RETURN_IN_PLAY_TO_HAND_ELEMENT,
+    DEVOLVE_ELEMENT,
     AttachEnergyFromDeckToSelf,
     BenchBasicsFromDeckOnEntry,
     ChargeBenchEnergyToSelf,
@@ -244,12 +247,13 @@ EFFECT_COIN_AFTER_DAMAGE = ("poison_on_heads", "paralyze_on_heads", "confuse_on_
 POKEMON_FIELDS_SINCE = {
     "pokemon_id": 2, "trainers": 4, "special_conditions": 5, "retreat_failed_turn": 6, "evolution_stack": 7, "played_turn": 7,
     "evolved_turn": 7, "persistent_effects": 8, "attacks_used_once": 11, "evolution_permission_turn": 11, "type_shift": 13, "disguise": 14,
+    "devolved_turn": 15,
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
     "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12, "recalls": 14,
 }
-LATEST_FORMAT = 14
+LATEST_FORMAT = 15
 
 
 def _project(data_latest: dict, version: int) -> dict:
@@ -297,6 +301,15 @@ def required_format(state) -> tuple[int, bool]:
             or any(getattr(e, "attack_card", None) is not None or getattr(e, "target_attack_card", None) is not None
                    for pokemon in in_play for e in pokemon.persistent_effects)):
         needed = max(needed, 14)  # v0.49: 「ばける」でのせたカード・「思い出させる」の記録・ワザを印刷したカードを持つ効果・のせたカードの特殊能力の使用の記録
+    disguise_uses = set()
+    for event in reversed(state.log):
+        if event["kind"] == "turn_start":
+            break
+        if event["kind"] == "pokemon_power" and event.get("card") is not None:
+            disguise_uses.add((event.get("pokemon_id"), event.get("power_index"), event.get("card")))
+    if (any(pokemon.devolved_turn is not None for pokemon in in_play)
+            or any(len(use) == 3 and use not in disguise_uses for use in state.power_uses_this_turn)):
+        needed = max(needed, 15)  # v0.50: 退化した番・進化や退化でいちばん上でなくなったカードの特殊能力の使用の記録
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -325,7 +338,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.49 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.50 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -742,6 +755,8 @@ def log_problems(state) -> list[str]:
     taken_cards: list[int] = []
     knocked: Counter = Counter()
     evolve_turns: dict[int, list[int]] = {}
+    devolve_turns: dict[int, list[int]] = {}  # v0.50: 場のポケモンの番号 → 退化した番（ログの順）
+    trainer_devolved: set[tuple[int, int]] = set()  # v0.50: トレーナー（退化スプレー）で退化した (場のポケモンの番号, 番)（timing trainer のきぜつの確かめ）
     permitted: set[tuple[int, int]] = set()  # v0.44: トレーナー「サカキ」の許可（場のポケモンの番号, 番）
     once_used: set[tuple[int, int, int]] = set()  # v0.44: 場に出てから 1 度しか使えないワザの記録（場のポケモンの番号, カードの uid, ワザの位置）
     added: dict[tuple, int] = {}
@@ -1226,6 +1241,10 @@ def log_problems(state) -> list[str]:
         keys = (e.get("effect"), e.get("attacker"), e.get("attacker_pokemon_id"))
         if keys == (attack_window["effect"], attack_window["player"], attack_window["pokemon_id"]):
             return attack_window
+        if keys == (attack_window.get("copied"), attack_window["player"], attack_window["pokemon_id"]):
+            # v0.50: 相手のワザを自分のワザとして使ったワザ（ゆびをふる・ちょうのうりょく）の判定の effect は、使ったワザ（copied。v0.44 の約束）。v0.49 までは、
+            # まねたワザで「とうめい」のポケモンにダメージ・効果を与える対戦がなかった
+            return attack_window
         ret = attack_window["ret"]
         if ret is not None and keys == (ret["effect"], ret["player"], ret["pokemon_id"]):
             return ret
@@ -1457,6 +1476,8 @@ def log_problems(state) -> list[str]:
                 follows = kind == "evolve" and e["pokemon_id"] == pid
             elif element == RETURN_IN_PLAY_TO_HAND_ELEMENT:  # v0.42: 自分の場のポケモンを手札にもどす（ようせいのきせき）
                 follows = kind == "return_in_play_to_hand" and e["pokemon_id"] == pid
+            elif element == DEVOLVE_ELEMENT:  # v0.50: 進化カードをはがして手札にもどす（たいかビーム。自分・相手のポケモン）
+                follows = kind == "devolve" and e["pokemon_id"] == pid and "effect" in e
             elif kind == "special_conditions_removed" and e["pokemon_id"] == pid and e["reason"] == "replaced":
                 follows, expect = True, (pid, element, reaches)  # 置きかえてから、その特殊状態になる
             else:
@@ -1597,7 +1618,7 @@ def log_problems(state) -> list[str]:
             pid = e["pokemon_id"]
             ret = None if attack_window is None else attack_window["ret"]
             source = ret if ret is not None and e["effect"] == ret["effect"] and pid == attack_window["pokemon_id"] else attack_window
-            if source is None or source["reception"].get(pid) is not False or e["effect"] != source["effect"]:
+            if source is None or source["reception"].get(pid) is not False or e["effect"] not in (source["effect"], source.get("copied")):
                 problems.append(f"{e['turn']} 番のポケモン {pid} の受けなかった要素 {e['element']} の前に、そのワザの「おもて」の判定がない")
             if source is not None and source is ret:
                 ret["damage_seen"] = True  # 「ほのおのかべ」のダメージの要素を受けなかった（W19）
@@ -1639,6 +1660,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], EVOLVE_ELEMENT)  # v0.42: つきのちから（自分の場のポケモンへの効果）
         elif kind == "return_in_play_to_hand" and "effect" in e:
             received(e, e["pokemon_id"], RETURN_IN_PLAY_TO_HAND_ELEMENT)  # v0.42: ようせいのきせき
+        elif kind == "devolve" and "effect" in e:
+            received(e, e["pokemon_id"], DEVOLVE_ELEMENT)  # v0.50: たいかビーム（自分・相手の場のポケモンへの効果）
         if kind == "copy_attack" and attack_window is not None:
             attack_window["copied"] = e["copied"]  # v0.44: 相手のワザを自分のワザとして使った（そのワザの効果のログの effect は copied）
         if kind == "damage" and attack_window is not None and not e.get("retaliation"):
@@ -1732,13 +1755,47 @@ def log_problems(state) -> list[str]:
             ids[e["to_card"]] = e["pokemon_id"]
             top[e["pokemon_id"]] = e["to_card"]
             before = evolve_turns.get(e["pokemon_id"], [])
-            if before and before[-1] == e["turn"] and (e["pokemon_id"], e["turn"]) not in permitted:
+            if e["turn"] in devolve_turns.get(e["pokemon_id"], ()):
+                # v0.50: 退化した番に、そのポケモンを進化させられるかは決まらない（DV2。エンジンが止める）
+                problems.append(f"{e['turn']} 番に、その番に退化した場のポケモン {e['pokemon_id']} を進化させた（DV2）")
+            elif before and before[-1] == e["turn"] and (e["pokemon_id"], e["turn"]) not in permitted:
                 # v0.44: 同じ番の 2 回目の進化は、その前にトレーナー「サカキ」の許可（evolution_permission）があるときだけ
                 problems.append(f"{e['turn']} 番に場のポケモン {e['pokemon_id']} を同じ番に 2 回進化させた（サカキの許可がない）")
             evolve_turns.setdefault(e["pokemon_id"], []).append(e["turn"])
             key = entry_opportunity(e["to_card"], from_hand="source_zone" not in e)
             if key is not None:
                 entry_due = (e["turn"], e["pokemon_id"], key)  # v0.43: 場に出たときの特殊能力の使う機会
+        elif kind == "devolve":
+            # v0.50: 退化（ミュウの「たいかビーム」・退化スプレー。docs/mew-devolution-spray-v0.50.md）。はがしたカード（上から順）が、ログから組み立てた重なりの上から
+            # 続くカードで、持ち主の手札（たいかビーム）・トラッシュ（退化スプレー）に置く。たいかビームはワザの処理の中で 1 枚、退化スプレーは使っている最中のその
+            # トレーナーで、使ったプレイヤーの場のポケモン
+            pid = e["pokemon_id"]
+            removed_cards = list(e.get("removed") or ())
+            via = e.get("trainer_card")
+            if via is None:
+                source_ok = attack_window is not None and _same_attack(attack_window, e) and e["by_player"] == attack_window["player"] \
+                    and isinstance(_effect_of_event(state, e), DevolveChosenPokemon) and e["destination"] == "hand" and len(removed_cards) == 1
+            else:
+                trainer_entry = state.effects.trainer_entry(state.cards[via].card_id) if via in state.cards else None
+                source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == e["player"] == turn_player \
+                    and trainer_entry is not None and isinstance(trainer_entry.effect, DevolveOwnPokemon) and e["destination"] == "discard"
+            if pid not in in_play or pokemon_owner.get(pid) != e["player"] or not removed_cards or removed_cards[0] != top.get(pid) \
+                    or e["from_card"] != removed_cards[0] or any(ids.get(uid) != pid or owner.get(uid) != e["player"] for uid in removed_cards) \
+                    or ids.get(e["to_card"]) != pid or e["to_card"] in removed_cards or disguised.get(pid) is not None or not source_ok:
+                problems.append(f"{e['turn']} 番の退化（ポケモン {pid}・はがしたカード {removed_cards}）が、ログから組み立てた重なり・ワザ・トレーナーと合わない")
+            for uid in removed_cards:
+                ids.pop(uid, None)
+                (hand if e["destination"] == "hand" else discard)[e["player"]].append(uid)
+            top[pid] = e["to_card"]
+            shifts.pop(pid, None)  # 退化したら［へんしょく］の記録は消える（別のポケモン。p.324）
+            once_used.difference_update({used for used in once_used if used[0] == pid and used[1] in removed_cards})
+            devolve_turns.setdefault(pid, []).append(e["turn"])
+            if via is not None:
+                trainer_devolved.add((pid, e["turn"]))
+        elif kind == "devolve_declined":
+            # v0.50: 退化スプレーで 0 枚を選んだ（はがさない）。使っている最中のそのトレーナー
+            if using_trainer.get(e["player"]) != e.get("trainer_card") or e["pokemon_id"] not in in_play or pokemon_owner.get(e["pokemon_id"]) != e["player"]:
+                problems.append(f"{e['turn']} 番の退化スプレーの 0 枚（ポケモン {e['pokemon_id']}）が、使っている最中のトレーナー・自分の場のポケモンと合わない")
         elif kind in ("counterattack", "counterattack_skipped"):
             # v0.10: 「はんげき」のダメージ（ワザを使ったポケモンへ。ワザによるダメージではない）
             target = e["attacker_pokemon_id"]
@@ -2787,6 +2844,9 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場にいないポケモン {pid} がきぜつした")
             if (e.get("timing") == "power") != power_knock_out:
                 problems.append(f"{e['turn']} 番のきぜつ（ポケモン {pid}・timing {e.get('timing')}）が、特殊能力の処理のすぐあとのきぜつと合わない")
+            if e.get("timing") == "trainer" and ((pid, e["turn"]) not in trainer_devolved or e["player"] != turn_player or using_trainer.get(e["player"]) is not None):
+                # v0.50: トレーナー（退化スプレー）を使い終えたあと（トラッシュしたあと）の、その番に退化した自分のポケモンのきぜつ
+                problems.append(f"{e['turn']} 番のきぜつ（ポケモン {pid}・timing trainer）が、使い終えたトレーナーで退化した自分のポケモンのきぜつではない")
             if attack_window is not None and pid in in_play:
                 # v0.11: 「こんじょう」の「おもて」のポケモンはきぜつしない。使えたのに決定がないまま、きぜつしない（使うかは持ち主が決める）
                 attack_window["knocked"].add(pid)
@@ -2996,7 +3056,7 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場のポケモン {pokemon.pokemon_id} のサカキの許可（{pokemon.evolution_permission_turn} 番）が、ログにない")
     for pid, evolved in evolve_turns.items():
         # v0.44: サカキの許可のある番は、同じ番に 2 回進化できる（進化した時点で許可があったことは evolve の分岐が確かめる）
-        if len(evolved) > 2 or evolved != sorted(evolved) or any(turn <= 2 for turn in evolved) \
+        if (len(evolved) > 2 and not devolve_turns.get(pid)) or evolved != sorted(evolved) or any(turn <= 2 for turn in evolved) \
                 or any(a == b and (pid, a) not in permitted for a, b in zip(evolved, evolved[1:])):
             problems.append(f"場のポケモン {pid} の進化の番 {evolved} が正しくない")
     for key, count in removed.items():

@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 14 あります（``format_version``）。
+形式は 15 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -69,6 +69,10 @@
   （[場のポケモンの番号, 特殊能力の位置, そのカードの uid]）が入る。形式 1〜13 は、のせたカード・記録・その項目のある効果・3 つの値の使用の記録があると
   ``ValueError``（なければ形式 1〜13 の書き出しは v0.48 と同じ）。今の姿（［へんしん］で同じカードとしてあつかう相手のカードなど）・今使えるワザは、状態から求める
   値なので書かない（観測 ``observation.observe`` が書く）。
+- 15: 14 に、場のポケモンごとの ``devolved_turn``（最後に退化した番。退化していなければ ``None``）を加えたもの（v0.50。ミュウの「たいかビーム」・退化スプレー。
+  docs/mew-devolution-spray-v0.50.md 7 章）。``power_uses_this_turn`` の 3 つの値の記録に、いちばん上のカードとして使ったあとで進化・退化していちばん上でなくなった
+  カードの記録（[場のポケモンの番号, 特殊能力の位置, 使ったカードの uid]。``evolution.retag_power_uses``）が入る。形式 1〜14 は、退化した番のあるポケモン・その記録
+  （今の番の特殊能力の宣言のログが「ばける」でのせたカードの使用でない 3 つの値の記録）があると ``ValueError``（なければ形式 1〜14 の書き出しは v0.49 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -147,7 +151,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -251,6 +255,26 @@ def _uses_v049_fields(state: GameState) -> bool:
     return False
 
 
+def _disguise_power_records(state: GameState) -> set[tuple[int, int, int]]:
+    """今の番の特殊能力の宣言のログのうち、いちばん上のカードでないカード（「ばける」でのせたカード。ログの ``card``）の特殊能力を使ったもの（v0.49 の 3 つの値の記録）。"""
+    found = set()
+    for event in reversed(state.log):
+        if event["kind"] == "turn_start":
+            break
+        if event["kind"] == "pokemon_power" and event.get("card") is not None:
+            found.add((event.get("pokemon_id"), event.get("power_index"), event.get("card")))
+    return found
+
+
+def _uses_v050_fields(state: GameState) -> bool:
+    """形式 15（v0.50）だけが表せる値があるか: 退化した番のあるポケモン・進化・退化でいちばん上でなくなったカードの「自分の番ごとに1回」の記録（形式 14 の 3 つの値の
+    記録は「ばける」でのせたカードの使用だけを表すので、それと区別する。区別はログの宣言で確かめる。状態は変えない）。"""
+    if any(pokemon.devolved_turn is not None for p in state.players for pokemon in p.in_play()):
+        return True
+    retagged = [use for use in state.power_uses_this_turn if len(use) == 3]
+    return bool(retagged) and not set(retagged) <= _disguise_power_records(state)
+
+
 def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: int) -> dict[str, Any] | None:
     if pokemon is None:
         return None
@@ -296,6 +320,8 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         }
     if format_version >= 14:
         data["disguise"] = None if pokemon.disguise is None else {"card": pokemon.disguise, "card_id": state.cards[pokemon.disguise].card_id}
+    if format_version >= 15:
+        data["devolved_turn"] = pokemon.devolved_turn  # v0.50
     return data
 
 
@@ -343,6 +369,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、「ばける」でのせたカード・「思い出させる」の記録・ワザを印刷したカードを持つ持続する効果・のせたカードの特殊能力の使用の記録を"
             "表せない（format_version=14 を使う）"
+        )
+    if format_version < 15 and _uses_v050_fields(state):
+        raise ValueError(
+            f"形式 {format_version} は、退化した番・進化や退化でいちばん上でなくなったカードの特殊能力の使用の記録を表せない（format_version=15 を使う）"
         )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")

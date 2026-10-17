@@ -103,10 +103,22 @@ from .decisions import (
     RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
-    SELECT_COLOR, push_trainer_decision,
+    SELECT_COLOR, SELECT_DEVOLVE_COUNT, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
-from .evolution import PERMISSION_FROM_DECK_CODE, evolution_block, evolution_prevented, place_evolution_card, skipped_stage1_basic, turn_restriction
+from .evolution import (
+    DEVOLVE_TO_DISCARD,
+    DEVOLVED_THIS_TURN_CODE,
+    DEVOLVED_THIS_TURN_REASON,
+    PERMISSION_FROM_DECK_CODE,
+    devolve,
+    devolved_this_turn,
+    evolution_block,
+    evolution_prevented,
+    place_evolution_card,
+    skipped_stage1_basic,
+    turn_restriction,
+)
 from .persistent import (
     attack_barrier,
     damage_prevention,
@@ -624,10 +636,12 @@ ENERGY_MOVE_ELEMENT = "energy_move"
 WEAKNESS_CHANGE_ELEMENT = "weakness_change"
 RESISTANCE_CHANGE_ELEMENT = "resistance_change"
 MAX_HP_ELEMENT = "max_hp"
+# v0.50: 場のポケモンの進化カードをはがす効果（ミュウの「たいかビーム」。自分・相手のどちらのポケモンにも与える。相手のポケモンなら相手への効果）
+DEVOLVE_ELEMENT = "devolve"
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
-                   RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT)
+                   RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -2794,6 +2808,32 @@ class DamageTimesOwnCounters(AttackEffect):
         if attack.damage != self.per:
             problems.append(f"ダメージの目安の数字 {attack.damage} が、登録のカウンター 1 個あたりのダメージ {self.per} と違う")
         return problems
+
+
+def attached_energy_cards(state: GameState, pokemon: PokemonInPlay) -> int:
+    """場のポケモン ``pokemon`` についているエネルギーカードの枚数（v0.50。ミュウツーの「サイコキネシス」（v0.31）とミュウの「サイコウェーブ」で共通の数え方）。
+    数えるのはカードの枚数で、供給するエネルギーの個数・色（``state.energy_types``。エナジーバーン・［へんしん］の「どの色としても」）ではない。"""
+    return sum(1 for uid in pokemon.energy if state.card_def(uid).category == "energy")
+
+
+@dataclass(frozen=True)
+class DamageTimesDefenderEnergyCards(AttackEffect):
+    """相手の対戦ポケモンについているエネルギーカードの枚数 × ``per`` のダメージ（v0.50。ミュウの「サイコウェーブ」。ダメージの目安「10×」。kyuura の印刷の文面
+    「相手についているエネルギーカード×10のダメージ。」）。
+
+    これが p.321 の 1 段階（基本となるダメージ）。ミュウツーの「サイコキネシス」（``DamagePlusDefenderEnergy``。目安の数字に枚数 × 10 を加える。「10+」）とは違い、
+    枚数 × 10 そのものが基本となるダメージ（「×」）。数えるのはダメージの要素を処理する時点のカードの枚数（``attached_energy_cards``。供給するエネルギーの個数・色では
+    ない）。0 枚なら 0 で、2 段階までで 0 以下なのでダメージを与えない（弱点・抵抗力・プラスパワーを計算しない。v0.32 の「じたばた」と同じ。p.321）。"""
+
+    per: int
+    implementation_id = "damage_times_defender_energy_cards"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のエネルギーカードの枚数でダメージが決まるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage} が、登録のエネルギーカード 1 枚あたりのダメージ {self.per} と違う")
+        return problems + _check_exact_text(attack, what, (f"相手についているエネルギーカード×{self.per}のダメージ。",))
 
 
 @dataclass(frozen=True)
@@ -5187,6 +5227,29 @@ def deck_evolution_permission_pairs(state: GameState, player: int, pokemon_ids: 
     return tuple(pairs)
 
 
+def deck_evolution_devolved_pairs(state: GameState, player: int, pokemon_ids: Iterable[int] | None = None,
+                                  cards: Iterable[int] | None = None) -> tuple[tuple[int, int], ...]:
+    """v0.50: 山札の進化カード（``cards``。None なら山札のすべての対応している進化カード）と自分の場のポケモン（``pokemon_ids``。None なら場のすべて）の組のうち、
+    ほかの確かめがすべて通り、ポケモンが今の番に退化したことだけで重ねられるかが決まらない組（DV2。``evolution.DEVOLVED_THIS_TURN_CODE``）。山札から重ねる効果
+    （つきのちから・たきのぼりしんか・［うか］）は、GV1 と同じく、選べるものが変わるので決定を出す前に止める（呼ぶ側）。今の番に退化したポケモンがいなければ空。"""
+    p = state.players[player]
+    wanted = None if pokemon_ids is None else set(pokemon_ids)
+    targets = [pokemon for pokemon in p.in_play() if (wanted is None or pokemon.pokemon_id in wanted) and devolved_this_turn(state, pokemon)]
+    if not targets:
+        return ()
+    uids = sorted(p.deck) if cards is None else list(cards)
+    pairs = []
+    for uid in uids:
+        definition = state.card_def(uid)
+        if definition.category != "pokemon" or not definition.is_evolution_pokemon or not definition.supported:
+            continue
+        for pokemon in targets:
+            block = evolution_block(state, pokemon, definition, from_deck=True)
+            if block is not None and block[0] == DEVOLVED_THIS_TURN_CODE:
+                pairs.append((uid, pokemon.pokemon_id))
+    return tuple(pairs)
+
+
 def evolution_hp_problem_targets(state: GameState, card: int, targets: Iterable[int]) -> tuple[int, ...]:
     """v0.42: 進化カード ``card`` を重ねると、HP がのっているダメージ以下になるポケモン（v0.4a の H1 と同じ問い。``UNRESOLVED_EVOLUTION_HP``）。"""
     # v0.48: 重ねたあとの最大HP（``evolution_hp``。重ねるカードの HP と、そのカードの常にはたらく特殊能力）
@@ -5400,6 +5463,9 @@ class TrainerEffect:
     # たねポケモン + 2 進化の重なりの進化のログ（evolve の trainer_card）のカードを、この印で確かめる（カード id では分けない）
     skips_stage1_evolution = False
     discard_turn_offset = 0  # つけて使うトレーナーをトラッシュする番: 使った番から数えていくつ後の番の終わりか
+    # v0.50: True なら、効果で自分のポケモンの最大HPを下げ（退化）、のっているダメージ以下になったポケモンが「きぜつ」しうる（退化スプレー）。エンジンが、使い終わって
+    # カードをトラッシュしたあとに、きぜつの処理（``resolution.after_trainer``）をする。False のトレーナーのあとに HP 以上のポケモンが残れば、v0.48 の MH1 で受け付けない
+    may_knock_out = False
 
     def check(self, definition: CardDefinition) -> list[str]:
         if definition.trainer_kinds:
@@ -5754,6 +5820,7 @@ SKIP_EVOLUTION_HP = "hp"  # 進化したあとの HP がのっているダメー
 SKIP_EVOLUTION_UNSUPPORTED_CARD = "unsupported_card"  # 2 進化カードが未対応（UNSUPPORTED_EVOLUTION）
 SKIP_EVOLUTION_UNKNOWN_LINEAGE = "unknown_lineage"  # 写しのカードのデータで系統を確かめられない（UNSUPPORTED_EVOLUTION_LINEAGE）
 SKIP_EVOLUTION_PLAY_ROLE = "play_role"  # v0.47: 場のなにかの化石（場での役割のポケモン）に重ねる組（PF3。UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON）
+SKIP_EVOLUTION_DEVOLVED = "devolved"  # v0.50: 今の番に退化したたねポケモンに重ねる組（DV2。UNRESOLVED_EVOLVE_AFTER_DEVOLUTION）
 _EVOLUTION_HP_REASON = (
     "進化すると HP がのっているダメージ以下になる。そのときにきぜつするか（いつきぜつの判定をするか）は『オフィシャルブック2000』"
     "（p.310・p.323）から決められないので扱わない"
@@ -5776,8 +5843,9 @@ def skip_evolution_pairs(state: GameState, player: int) -> dict[int, list[tuple[
         current = state.card_def(pokemon.card)
         # v0.44: その番の最初から場に出ていたかは通常の進化と共通の ``evolution.turn_restriction``（トレーナー「サカキ」の許可のあるポケモンは、今の番に場に出した
         # ポケモンでも進化させてよい。手札から重ねる進化なので許可が当てはまる。docs/search-evolution-once-attacks-v0.44.md 4 章）
-        if pokemon.evolution_stack or not current.is_basic_pokemon or turn_restriction(state, pokemon) is not None:
-            continue
+        devolved = devolved_this_turn(state, pokemon)
+        if pokemon.evolution_stack or not current.is_basic_pokemon or (not devolved and turn_restriction(state, pokemon) is not None):
+            continue  # v0.50: 今の番に退化したたねポケモンは p.310 の制限を当てはめず、DV2 の組にする（下）
         if evolution_forbidden(state, pokemon) is not None:
             continue  # v0.49: 説明が進化を禁じるポケモン（メタモンの「このカードに進化カードをつけることはできない」）には重ねない
         for uid in cards:
@@ -5791,6 +5859,8 @@ def skip_evolution_pairs(state: GameState, player: int) -> dict[int, list[tuple[
                 status = SKIP_EVOLUTION_PLAY_ROLE  # v0.47: 系統は合うが、印刷のたねポケモンではない（PF3）
             elif not definition.supported:
                 status = SKIP_EVOLUTION_UNSUPPORTED_CARD
+            elif devolved:
+                status = SKIP_EVOLUTION_DEVOLVED  # v0.50: 今の番に退化したポケモン（DV2）
             elif pokemon.damage >= evolution_hp(state, pokemon, uid):  # v0.48: 重ねたあとの最大HP
                 status = SKIP_EVOLUTION_HP
             else:
@@ -5804,25 +5874,28 @@ def _selectable_skip_evolutions(state: GameState, player: int) -> dict[int, list
     系統を確かめられないカード）は選べるものに入れない。"""
     selectable = {}
     for pokemon_id, entries in skip_evolution_pairs(state, player).items():
-        kept = [(uid, status) for uid, status in entries if status in (SKIP_EVOLUTION_OK, SKIP_EVOLUTION_HP, SKIP_EVOLUTION_PLAY_ROLE)]
+        kept = [(uid, status) for uid, status in entries if status in (SKIP_EVOLUTION_OK, SKIP_EVOLUTION_HP, SKIP_EVOLUTION_PLAY_ROLE, SKIP_EVOLUTION_DEVOLVED)]
         if kept:
             selectable[pokemon_id] = kept
     return selectable
 
 
-def _skip_unresolved_targets(selectable: dict[int, list[tuple[int, str]]]) -> tuple[list[int], list[int]]:
-    """v0.47: 段階 1 で選ぶと止める場のポケモン: (どの組も HP の組のポケモン, 場のなにかの化石（PF3）)。"""
+def _skip_unresolved_targets(selectable: dict[int, list[tuple[int, str]]]) -> tuple[list[int], list[int], list[int]]:
+    """v0.47: 段階 1 で選ぶと止める場のポケモン: (どの組も HP の組のポケモン, 場のなにかの化石（PF3）, v0.50: 今の番に退化したポケモン（DV2）)。"""
     hp_only = [pid for pid, entries in selectable.items() if all(status == SKIP_EVOLUTION_HP for _, status in entries)]
     role = [pid for pid, entries in selectable.items() if all(status == SKIP_EVOLUTION_PLAY_ROLE for _, status in entries)]
-    return hp_only, role
+    devolved = [pid for pid, entries in selectable.items() if all(status == SKIP_EVOLUTION_DEVOLVED for _, status in entries)]
+    return hp_only, role, devolved
 
 
 def _skip_stage1_unresolved(selectable: dict[int, list[tuple[int, str]]]) -> tuple[list[int], str, str]:
-    """段階 1 の決定の選ぶと止める選択とそのコード・理由。場のなにかの化石（PF3）があればそれ、なければ HP の組（v0.25 と同じ）。両方が同じ決定にあることはない
-    （``check_playable`` が使う前に止める。1 つの決定に止めるコードは 1 つ）。"""
-    hp_only, role = _skip_unresolved_targets(selectable)
+    """段階 1 の決定の選ぶと止める選択とそのコード・理由。場のなにかの化石（PF3）があればそれ、v0.50: 次に今の番に退化したポケモン（DV2）、なければ HP の組
+    （v0.25 と同じ）。2 種類が同じ決定にあることはない（``check_playable`` が使う前に止める。1 つの決定に止めるコードは 1 つ）。"""
+    hp_only, role, devolved = _skip_unresolved_targets(selectable)
     if role:
         return role, BREEDER_PLAY_AS_POKEMON_CODE, BREEDER_PLAY_AS_POKEMON_REASON
+    if devolved:
+        return devolved, DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON
     return hp_only, "UNRESOLVED_EVOLUTION_HP", _EVOLUTION_HP_REASON
 
 
@@ -5857,14 +5930,18 @@ class EvolveBasicToStage2(TrainerEffect):
         if state.turn_number <= 2:
             raise IllegalActionError("FIRST_TURN_EVOLUTION", "おたがいのプレイヤーの最初の番には、ポケモンを進化させられない（p.310・p.259）")
         statuses = {status for entries in skip_evolution_pairs(state, use.player).values() for _, status in entries}
-        hp_only, role = _skip_unresolved_targets(_selectable_skip_evolutions(state, use.player))
-        if hp_only and role:
+        hp_only, role, devolved = _skip_unresolved_targets(_selectable_skip_evolutions(state, use.player))
+        if hp_only and role or role and devolved:
             # v0.47: 選ぶと止める選択が 2 種類（HP・場のなにかの化石）になる。1 つの決定に止めるコードは 1 つなので、使う前に PF3 で止める
             raise UnsupportedError(BREEDER_PLAY_AS_POKEMON_CODE, BREEDER_PLAY_AS_POKEMON_REASON)
+        if hp_only and devolved:
+            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)  # v0.50: 同じく 2 種類（HP・今の番に退化したポケモン）
         if SKIP_EVOLUTION_OK in statuses:
             return
         if SKIP_EVOLUTION_PLAY_ROLE in statuses:
             raise UnsupportedError(BREEDER_PLAY_AS_POKEMON_CODE, BREEDER_PLAY_AS_POKEMON_REASON)
+        if SKIP_EVOLUTION_DEVOLVED in statuses:
+            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)  # v0.50: 今の番に退化したたねポケモンの組だけ（DV2）
         if SKIP_EVOLUTION_HP in statuses:
             raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", _EVOLUTION_HP_REASON)
         if SKIP_EVOLUTION_UNSUPPORTED_CARD in statuses:
@@ -6588,12 +6665,32 @@ def power_use_record(state: GameState, use: PowerUse) -> tuple[int, ...]:
     return (use.pokemon_id, use.key.power_index, use.card)
 
 
+POWER_REUSE_AFTER_DEVOLUTION_CODE = "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"
+POWER_REUSE_AFTER_DEVOLUTION_REASON = (
+    "今の番に退化してまたいちばん上になったカードの「自分の番ごとに1回」の特殊能力を、そのカードで退化の前（進化させる前）にこの番に使っていたとき、もう一度使えるかは、"
+    "退化したポケモンが「退化前とは別のポケモン」（p.324）であることと、同じカードで使った記録の関係が記録で決まらないので扱わない（DV3）"
+)
+
+
 def require_power_not_used(state: GameState, use: PowerUse) -> None:
     """「自分の番ごとに1回」（v0.31。v0.42 で共通の関数にした）: この番に、この場のポケモンの、この特殊能力をもう使っていたら ``POWER_ALREADY_USED``。
     使った記録は ``GameState.power_uses_this_turn``（宣言のときにエンジンが記録する。ログから数えない）。同じ名前のカードが 2 匹いれば、それぞれ 1 回。
-    v0.49: 特殊能力は印刷したカードで区別する（``power_use_record``）。"""
+    v0.49: 特殊能力は印刷したカードで区別する（``power_use_record``）。
+
+    v0.50: 進化・退化でいちばん上のカードが変わると、前のいちばん上のカードで使った記録は、そのカードの記録（(番号, 位置, カード)）になる（``evolution.retag_power_uses``）。
+    退化してまたいちばん上になったカードの記録は、ここでは数えない（DV3。``power_reuse_after_devolution``。エンジンがパワーごとの確かめのあとに止める）。"""
     if power_use_record(state, use) in state.power_uses_this_turn:
         raise IllegalActionError("POWER_ALREADY_USED", f"ポケモン {use.pokemon_id} の特殊能力は、この番にもう使った（自分の番ごとに1回）")
+
+
+def power_reuse_after_devolution(state: GameState, use: PowerUse) -> bool:
+    """v0.50: いちばん上のカードの「自分の番ごとに1回」の特殊能力を使うとき、そのカードで使った記録（(番号, 位置, そのカード)。``evolution.retag_power_uses``）がこの番に
+    あるか。いちばん上のカードの記録がそのカードの記録になるのは、進化・退化でいちばん上でなくなったときだけなので、あれば、そのカードが進化させる前に使い、今の番に退化して
+    またいちばん上になった（DV3。決まらない）。"""
+    found = state.find_pokemon(use.pokemon_id)
+    if found is None or power_use_record(state, use) != (use.pokemon_id, use.key.power_index):
+        return False
+    return (use.pokemon_id, use.key.power_index, found[1].card) in state.power_uses_this_turn
 
 
 def _require_user_not_asleep_paralyzed_confused(state: GameState, use: PowerUse) -> None:
@@ -9487,6 +9584,8 @@ class CoinEvolveSelfFromDeck(PowerEffect):
             # GV1（v0.45 から停止コード。このカードは「サカキの」ポケモンではなく許可を受けないので、今の対応カードでは［うか］からは起こらないが、つきのちからと
             # 同じ問いなので同じコードで止める）
             raise UnsupportedError(PERMISSION_FROM_DECK_STOP_CODE, _PERMISSION_FROM_DECK_DETAIL)
+        if deck_evolution_devolved_pairs(state, use.player, (use.pokemon_id,), cards):
+            raise UnsupportedError(DEVOLVED_THIS_TURN_CODE, DEVOLVED_THIS_TURN_REASON)  # v0.50: 今の番に退化したこのカード（DV2。コインの前）
         candidates = self._candidates(state, use)
         if candidates and len(self._hp_blocked(state, use, candidates)) == len(candidates):
             raise UnsupportedError("UNRESOLVED_EVOLUTION_HP", EVOLUTION_HP_REASON)  # 「おもて」なら必ず止める（コインの前に止める）
@@ -11894,6 +11993,180 @@ class RecallPreEvolutionAttacks(TrainerEffect):
         active = state.players[use.player].active
         state.recalls = state.recalls + (RecallEffect(use.player, state.turn_number, active.pokemon_id, active.card, use.card),)
         state.add_event("recall", player=use.player, pokemon=active.card, pokemon_id=active.pokemon_id, card=use.card)
+
+
+# ---------------------------------------------------------------- 退化させる効果（v0.50。docs/mew-devolution-spray-v0.50.md）
+
+DEVOLUTION_BEAM_TEXT = "自分または相手の場にいるポケモンの中から「進化カード」のついているもの1匹を選び、その「進化カード」を上から1枚はがして持ち主の手札に戻す。"
+DEVOLUTION_SPRAY_TEXT = "自分の進化ポケモンを1匹選び、進化カードを何枚でもはがしてすてることができる。"
+
+# DV4: 自分の場に進化ポケモンがいないときに退化スプレーを使えるか。説明は「自分の進化ポケモンを1匹選び」で、選ぶものがないときの記述がない（トレーナー「サカキ」の TR1・
+# 突風の GW5 と同じ形の問いだが、別のカードの問いなので答えを流用しない）
+DEVOLUTION_SPRAY_WITHOUT_TARGET_CODE = "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET"
+DEVOLUTION_SPRAY_WITHOUT_TARGET_REASON = (
+    "自分の場に進化ポケモン（実際に進化カードが重なっているポケモン）がいないときに退化スプレーを使えるかは、説明の「自分の進化ポケモンを1匹選び」に選ぶものがない"
+    "ときの記述がなく、記録で決まらないので扱わない（DV4）"
+)
+# DV5: 「ばける」でのせたカードのあるタケシのキュウコン（「(ただし「進化・退化」はできない)」）を、退化させる効果で選べるか・選んだらどうなるか（のせたカードを
+# 「進化カード」としてはがすのか、退化できないので何も起こらないのか）
+DEVOLUTION_TARGET_DISGUISED_CODE = "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED"
+DEVOLUTION_TARGET_DISGUISED_REASON = (
+    "「ばける」でのせたカードのあるポケモン（説明に「(ただし「進化・退化」はできない)」）を、退化させる効果で選べるか、選んだらのせたカードをはがすのか何も起こらないのかは、"
+    "記録で決まらないので扱わない（DV5）"
+)
+# DV1: 退化スプレーで 2 枚以上はがすとき、途中の重なり（はがし終える前）で HP がのっているダメージ以下になり、最後の重なりではきぜつしない（またはカウントのされ方が
+# 違う）場合。きぜつの判定をはがすたびにするか、はがし終えてからするかが記録で決まらない
+DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE = "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT"
+DEVOLUTION_INTERMEDIATE_KNOCKOUT_REASON = (
+    "2 枚以上の進化カードをはがすとき、途中の重なりで HP がのっているダメージ以下になり、はがし終えた重なりではきぜつしない（またはカウントのされ方が違う）。きぜつの判定を"
+    "はがすたびにするか、はがし終えてからするかが記録で決まらないので扱わない（DV1）"
+)
+
+
+def devolution_forbidden(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """v0.50: 場のポケモン ``pokemon`` を、説明が退化を禁じているか（タケシのキュウコンの「ばける」でのせたカードのあるポケモン（``disguise``）。「(ただし「進化・退化」は
+    できない)」）。メタモンの［へんしん］（「このカードに進化カードをつけることはできない」）は進化カードが重ならないので、退化させる効果の対象にならない。"""
+    return pokemon.disguise is not None
+
+
+def devolution_candidates(state: GameState, players: Iterable[int]) -> tuple[int, ...]:
+    """v0.50: プレイヤー ``players`` の順に、それぞれの場（バトル場 → ベンチ）の、実際に進化カードが重なっているポケモン（``evolution_stack`` がある）の番号。今の姿
+    （［へんしん］）ではなく実際の重なりで決める（進化カードの重ならないメタモンは入らない）。説明が退化を禁じるポケモン（``devolution_forbidden``）も入れる（呼ぶ側が
+    選ぶと止める選択にする。DV5）。"""
+    return tuple(pokemon.pokemon_id for player in players for pokemon in state.players[player].in_play() if pokemon.evolution_stack)
+
+
+@dataclass(frozen=True)
+class DevolveChosenPokemon(AttackEffect):
+    """自分または相手の場にいるポケモンの中から「進化カード」のついているもの 1 匹を選び、その「進化カード」を上から 1 枚はがして持ち主の手札に戻す（v0.50。ミュウの
+    「たいかビーム」。ダメージの目安の数字はない。kyuura の印刷の文面）。要素 ``programs.DevolveChosenPokemon``（決定 ``select_pokemon``）。
+
+    - 選ぶのはワザを使ったプレイヤー。選べるものは自分の場 → 相手の場の、実際に進化カードが重なっているポケモン（``devolution_candidates``）。1 匹もいなければ何もしない
+      （p.309。ログ ``devolve_none``）。「ばける」のポケモンは選べるが選ぶと止める（DV5）。どれもそうなら宣言の前に止める
+    - はがした進化カードは持ち主の手札（相手のポケモンなら相手の手札。使ったプレイヤーの手札に入れない）。退化の処理は ``evolution.devolve``（特殊状態・持続する効果を
+      消す。p.324「19」）。ワザによるダメージではなく、ワザの効果。退化させる前に、そのポケモンの「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の
+      ``devolve``。自分のポケモンも「とうめい」を評価する。v0.42 の「ようせいのきせき」と同じ）
+    - 退化して最大HPがのっているダメージ以下になったポケモンは、ワザのあとのきぜつの判定できぜつする（GR-2000-P323-KNOCKOUT・GR-2000-P324-DEVOLUTION。v0.48 のワザの
+      効果で最大HPが下がったときと同じ）"""
+
+    implementation_id = "devolve_chosen_pokemon"
+    opponent_effect_elements = (DEVOLVE_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "進化カードを 1 枚はがして手札にもどすワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (DEVOLUTION_BEAM_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        label = _label(state, use)
+        options = devolution_candidates(state, (use.player, 1 - use.player))
+        problems = _decision_form(decision, label, kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=options)
+        forbidden = tuple(pid for pid in options if devolution_forbidden(state, state.find_pokemon(pid)[1]))
+        if tuple(decision.context_value("unresolved_choices", ())) != forbidden:
+            problems.append(f"「{label}」の決定の、選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {forbidden}（DV5）ではない")
+        return problems
+
+
+def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card: int) -> dict[int, tuple[str, str]]:
+    """v0.50: 退化スプレーで場のポケモン ``pokemon_id`` からはがす枚数ごとの、選ぶと止める理由（DV1）。状態の複製の上で 1 枚ずつはがして（``evolution.devolve``）、途中の
+    重なりで HP がのっているダメージ以下になるかを、今有効な最大HP（``max_hp``。［ガスのからだ］・かがくへんかガスを含む）で求める。最後の重なりでも同じカウントのされ方で
+    きぜつするなら、どちらで判定しても結果は同じなので止めない。状態は変えない。"""
+    trial = state.clone()
+    pokemon = trial.find_pokemon(pokemon_id)[1]
+    results = []  # はがした枚数 k（1 から）ごとの (きぜつするか, カウントされるか)
+    for _ in range(len(pokemon.evolution_stack)):
+        devolve(trial, player, pokemon, 1, destination=DEVOLVE_TO_DISCARD, by_player=player, trainer=card)
+        results.append((pokemon.damage >= max_hp(trial, pokemon), counts_as_knockout(trial, pokemon)))
+    problems = {}
+    for count in range(2, len(results) + 1):
+        first = next((k for k in range(count - 1) if results[k][0]), None)
+        if first is None:
+            continue
+        final_ko, final_counted = results[count - 1]
+        if not final_ko or final_counted != results[first][1]:
+            problems[count] = (DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE,
+                               f"場のポケモン {pokemon_id} から {count} 枚: {DEVOLUTION_INTERMEDIATE_KNOCKOUT_REASON}")
+    return problems
+
+
+@dataclass(frozen=True)
+class DevolveOwnPokemon(TrainerEffect):
+    """自分の進化ポケモンを 1 匹選び、進化カードを何枚でもはがしてすてることができる（v0.50。退化スプレー（PMCG1-086）。kyuura の印刷の文面。docs/mew-devolution-spray-v0.50.md
+    4 章）。
+
+    - 段階 1: 使ったプレイヤーが、自分の場の、実際に進化カードが重なっているポケモン（``devolution_candidates``）を 1 匹選ぶ（決定 ``select_pokemon``）。1 匹もいなければ
+      使えるかが決まらない（DV4。使う前）。「ばける」のポケモンは選べるが選ぶと止める（DV5。どれもそうなら使う前）
+    - 段階 2: はがす枚数（決定 ``select_devolve_count``。0〜重なっている進化カードの数。上から順にはがす）。0 枚は「ことができる」の、はがさないこと（何もしない。ログ
+      ``devolve_declined``。退化していないので特殊状態も消さない）。途中の重なりできぜつするかで結果が変わる枚数は選ぶと止める（DV1。``devolve_count_problems``）
+    - はがした進化カードは持ち主（使ったプレイヤー）のトラッシュ（手札にもどさない）。退化の処理は ``evolution.devolve``
+    - 使い終わって（カードをトラッシュして）から、退化で最大HPがのっているダメージ以下になったポケモンは「きぜつ」する（``may_knock_out``。``resolution.after_trainer``。
+      サイド → 勝ち負け → バトル場に出す → 同じ番の続き）。根拠: p.323「16」（HP 以上のダメージを受けると「きぜつ」）・p.319（ダメージカウンター 1 個は 10 ダメージを
+      受けていることを表す）・p.324「19」（退化前の進化カードに書かれている内容のすべては無効）・p.324「16」の続き（「ワザや特殊能力などによって引き起こされることがら」）。
+      SUPPORTED（第4版の冊子の「退化してダメージが HP 以上ならきぜつ」は別の版の記録なので根拠にしない）
+    """
+
+    implementation_id = "devolve_own_pokemon"
+    may_knock_out = True
+
+    def _candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        return devolution_candidates(state, (player,))
+
+    def _forbidden(self, state: GameState, candidates: Iterable[int]) -> tuple[int, ...]:
+        return tuple(pid for pid in candidates if devolution_forbidden(state, state.find_pokemon(pid)[1]))
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        candidates = self._candidates(state, use.player)
+        if not candidates:
+            raise UnsupportedError(DEVOLUTION_SPRAY_WITHOUT_TARGET_CODE, DEVOLUTION_SPRAY_WITHOUT_TARGET_REASON)
+        if len(self._forbidden(state, candidates)) == len(candidates):
+            raise UnsupportedError(DEVOLUTION_TARGET_DISGUISED_CODE, DEVOLUTION_TARGET_DISGUISED_REASON)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        candidates = self._candidates(state, use.player)
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=candidates, unresolved_choices=self._forbidden(state, candidates),
+                              unresolved_code=DEVOLUTION_TARGET_DISGUISED_CODE, unresolved_reason=DEVOLUTION_TARGET_DISGUISED_REASON)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == SELECT_POKEMON:
+            (target,) = choices
+            pokemon = state.players[use.player].find_by_pokemon_id(target)
+            if pokemon is None or not pokemon.evolution_stack or devolution_forbidden(state, pokemon):
+                raise RuntimeError(f"退化スプレーで選んだポケモン {target} から進化カードをはがせない（決定の確認の漏れ。エンジンの不具合）")
+            stops = devolve_count_problems(state, use.player, target, use.card)
+            push_trainer_decision(state, use, kind=SELECT_DEVOLVE_COUNT, player=use.player, options=range(len(pokemon.evolution_stack) + 1),
+                                  context=(("target", target),), unresolved_choices=tuple(stops),
+                                  unresolved_code=DEVOLUTION_INTERMEDIATE_KNOCKOUT_CODE, unresolved_reason=DEVOLUTION_INTERMEDIATE_KNOCKOUT_REASON,
+                                  unresolved_detail=tuple((count, code, reason) for count, (code, reason) in stops.items()))
+            return
+        (count,) = choices
+        target = decision.context_value("target")
+        pokemon = state.players[use.player].find_by_pokemon_id(target)
+        if pokemon is None or not 0 <= count <= len(pokemon.evolution_stack):
+            raise RuntimeError(f"退化スプレーではがす枚数 {count}・ポケモン {target} が正しくない（決定の確認の漏れ。エンジンの不具合）")
+        if count == 0:
+            state.add_event("devolve_declined", player=use.player, pokemon=pokemon.card, pokemon_id=target, trainer_card=use.card)
+            return
+        devolve(state, use.player, pokemon, count, destination=DEVOLVE_TO_DISCARD, by_player=use.player, trainer=use.card)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = "「退化スプレー」"
+        candidates = self._candidates(state, use.player)
+        if decision.kind == SELECT_POKEMON:
+            return _select_own_pokemon_problems(decision, use, candidates, what, self._forbidden(state, candidates))
+        if decision.kind != SELECT_DEVOLVE_COUNT:
+            return [f"{what}の決定の種類が {decision.kind!r}（{SELECT_POKEMON}・{SELECT_DEVOLVE_COUNT} のはず）"]
+        problems = []
+        if decision.player != use.player:
+            problems.append(f"{what}の決定を決定するのがプレイヤー {decision.player} で、使ったプレイヤー {use.player} ではない")
+        target = decision.context_value("target", None)
+        pokemon = state.players[use.player].find_by_pokemon_id(target) if isinstance(target, int) else None
+        if pokemon is None or target not in candidates or devolution_forbidden(state, pokemon):
+            return problems + [f"{what}のはがす枚数の決定の target {target!r} が、選べる自分の進化ポケモンではない"]
+        if (decision.min_choices, decision.max_choices) != (1, 1) or decision.options != tuple(range(len(pokemon.evolution_stack) + 1)):
+            problems.append(f"{what}のはがす枚数の決定の選べるもの {decision.options}・選ぶ数が、0〜{len(pokemon.evolution_stack)} から 1 つではない")
+        stops = tuple(devolve_count_problems(state, use.player, target, use.card))
+        if tuple(decision.context_value("unresolved_choices", ())) != stops:
+            problems.append(f"{what}のはがす枚数の決定の、選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {stops}（DV1）ではない")
+        return problems
 
 
 # ---------------------------------------------------------------- 決められない姿の状態（TF1・TF2・DG1）
@@ -15713,6 +15986,23 @@ DEFAULT_EFFECTS = EffectRegistry(
         ),
         # タケシのキュウコン。おにび（炎炎）30（説明文なし）
         AttackKey("PMCG5-019", 0): AttackEntry(DAMAGE_ONLY, "おにび"),
+        # v0.50（docs/mew-devolution-spray-v0.50.md）。ミュウ（化石の秘密）。処理に使う文面は kyuura の印刷の文面
+        # サイコウェーブ（超）10×: 相手の対戦ポケモンについているエネルギーカードの枚数 × 10 が基本となるダメージ（「サイコキネシス」の「10+」とは違う）
+        AttackKey("PMCG3-033", 0): AttackEntry(
+            DamageTimesDefenderEnergyCards(10),
+            "サイコウェーブ",
+            text_ja="相手についているエネルギーカード×10のダメージ。",
+            play_text_ja="相手についているエネルギーカード×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # たいかビーム（超超）: 自分・相手の場の、進化カードの重なっているポケモンを 1 匹選び、いちばん上の進化カードを持ち主の手札にもどす（退化）
+        AttackKey("PMCG3-033", 1): AttackEntry(
+            DevolveChosenPokemon(),
+            "たいかビーム",
+            text_ja=DEVOLUTION_BEAM_TEXT,
+            play_text_ja=DEVOLUTION_BEAM_TEXT,
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -15818,6 +16108,9 @@ DEFAULT_EFFECTS = EffectRegistry(
         # v0.49（docs/virtual-attacks-transformation-v0.49.md 6 章）。思い出させる: この番だけ、対戦ポケモンが重なっている進化前のカードのワザを使ってよい。処理に使う文面は
         # kyuura の印刷の文面（英語版の「any attack from its Basic Pokémon card or any Evolution card attached to it」は持ち込まない）
         "PMCG5-071": TrainerEntry(RecallPreEvolutionAttacks(), "思い出させる", RECALL_TEXT, RECALL_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.50（docs/mew-devolution-spray-v0.50.md 4 章）。退化スプレー: 自分の進化ポケモンを 1 匹選び、進化カードを好きな枚数（0 枚を含む）はがしてトラッシュする。処理に
+        # 使う文面は kyuura の印刷の文面（英語版の「a Stage of Evolution」・退化スプレーHYPER の文面は持ち込まない）
+        "PMCG1-086": TrainerEntry(DevolveOwnPokemon(), "退化スプレー", DEVOLUTION_SPRAY_TEXT, DEVOLUTION_SPRAY_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

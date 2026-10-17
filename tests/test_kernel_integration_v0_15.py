@@ -171,7 +171,11 @@ class DependencyTest(unittest.TestCase):
         ``resolution.after_power`` を使う（きぜつはない。docs/fossil-hidden-info-v0.47.md 2.4 節）。すてる処理そのものは engine.py と zones.py のまま。
         v0.49: 決定への答えを状態の複製の上で試す確かめ（``_decision_has_unstopped_answer``・``_trainer_dead_end``。答えのない決定を残さない。
         docs/virtual-attacks-transformation-v0.49.md 7.1 節）は、答えの処理を決定への答えの入口（``_HANDLERS[ResolveDecision]``）に渡し、解決の基盤の名前は
-        型の注釈（``resolution.Context``）だけを使う（答えの一覧は ``resolution.programs.all_answers`` を読み込む）。"""
+        型の注釈（``resolution.Context``）だけを使う（答えの一覧は ``resolution.programs.all_answers`` を読み込む）。
+        v0.50: トレーナーの使用（``_play_trainer``・``_resume_trainer``）のあと、退化スプレーで最大HPがのっているダメージ以下になったポケモンのきぜつ・サイド・
+        勝ち負け・バトル場に出す（p.323 の手順）は、特殊能力のあとと同じ解決の基盤の処理を使う（``_finish_trainer`` の ``resolution.after_trainer``。
+        ``TrainerEffect.may_knock_out`` の実装だけ。docs/mew-devolution-spray-v0.50.md 4 章）。トレーナーの処理そのもの（確認・``resolve``・``resume``）は
+        engine.py と effects.py のまま。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -181,7 +185,7 @@ class DependencyTest(unittest.TestCase):
         }
         self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine",
                                  "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play",
-                                 "_decision_has_unstopped_answer", "_trainer_dead_end"})
+                                 "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -196,6 +200,13 @@ class DependencyTest(unittest.TestCase):
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }
         self.assertEqual(power_names, {"Context", "after_power"})
+        trainer_names = {
+            node.attr
+            for function in functions if function.name in ("_play_trainer", "_resume_trainer", "_finish_trainer")
+            for node in ast.walk(function)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
+        }
+        self.assertEqual(trainer_names, {"Context", "after_trainer"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層

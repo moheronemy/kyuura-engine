@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    BILL, CLEFAIRY_DOLL, GIOVANNI, RECALL, COMPUTER_SEARCH, MYSTERIOUS_FOSSIL, DEFENDER, ENERGY_RETRIEVAL, FIRE, POKEMON_BREEDER, POKEMON_TRADER, GROWLITHE, GUST, MACHOP, PLUSPOWER, PONYTA, POTION, PROFESSOR_OAK, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
+    BILL, CLEFAIRY_DOLL, GIOVANNI, RECALL, DEVOLUTION_SPRAY, COMPUTER_SEARCH, MYSTERIOUS_FOSSIL, DEFENDER, ENERGY_RETRIEVAL, FIRE, POKEMON_BREEDER, POKEMON_TRADER, GROWLITHE, GUST, MACHOP, PLUSPOWER, PONYTA, POTION, PROFESSOR_OAK, RATTATA, SEEL, STARYU, SUPER_POTION, SWITCH, WATER, active,
     build_test_state,
 )
 
@@ -67,10 +67,10 @@ class TrainerRegistryTest(unittest.TestCase):
     def test_default_registry_has_exactly_the_registered_cards(self):
         # v0.2c でプラスパワーを加え、登録表の id を変えた（v0.2b の 3 枚は同じ実装のまま）。
         # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。v0.2e でディフェンダーを加えた。
-        # トレーナーの登録は v0.2e から v0.18 まで同じ。v0.19 でオーキドはかせ、v0.21 で突風、v0.22 でパソコン通信、v0.23 でエネルギー回収、v0.24 でポケモン交換おじさん、v0.25 でポケモン育て屋さん、v0.44 でサカキ、v0.47 でピッピ人形・なにかの化石、v0.49 で思い出させるを加えた（登録表の id は
+        # トレーナーの登録は v0.2e から v0.18 まで同じ。v0.19 でオーキドはかせ、v0.21 で突風、v0.22 でパソコン通信、v0.23 でエネルギー回収、v0.24 でポケモン交換おじさん、v0.25 でポケモン育て屋さん、v0.44 でサカキ、v0.47 でピッピ人形・なにかの化石、v0.49 で思い出させる、v0.50 で退化スプレーを加えた（登録表の id は
         # v0.17・v0.18 と同じく変えていない）
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(),
-                         (POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH, CLEFAIRY_DOLL,
+                         (POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, DEVOLUTION_SPRAY, COMPUTER_SEARCH, CLEFAIRY_DOLL,
                           POKEMON_TRADER, POKEMON_BREEDER, MYSTERIOUS_FOSSIL, RECALL, GIOVANNI))
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
@@ -87,7 +87,8 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "trade_pokemon_with_deck", "evolve_basic_to_stage2",
                                            "evolution_permission_for_owner_pokemon",  # v0.44 のサカキ
                                            "play_as_pokemon",  # v0.47 のなにかの化石・ピッピ人形
-                                           "recall_pre_evolution_attacks"})  # v0.49 の思い出させる
+                                           "recall_pre_evolution_attacks",  # v0.49 の思い出させる
+                                           "devolve_own_pokemon"})  # v0.50 の退化スプレー
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -167,7 +168,7 @@ class TrainerRegistryTest(unittest.TestCase):
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
         # PLUSPOWER は v0.2c、DEFENDER は v0.2e、PROFESSOR_OAK は v0.19、GUST は v0.21、COMPUTER_SEARCH は v0.22、ENERGY_RETRIEVAL は v0.23、POKEMON_TRADER は v0.24、POKEMON_BREEDER は v0.25、GIOVANNI は v0.44、CLEFAIRY_DOLL・MYSTERIOUS_FOSSIL は v0.47、RECALL は v0.49
         self.assertEqual(removed.trainer_ids(),
-                         (GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, COMPUTER_SEARCH, CLEFAIRY_DOLL, POKEMON_TRADER,
+                         (GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, DEFENDER, PLUSPOWER, DEVOLUTION_SPRAY, COMPUTER_SEARCH, CLEFAIRY_DOLL, POKEMON_TRADER,
                           POKEMON_BREEDER, MYSTERIOUS_FOSSIL, RECALL, GIOVANNI))
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない

@@ -196,6 +196,9 @@ SELECT_HAND_CARD = "select_hand_card"
 # v0.48（docs/effective-pokemon-properties-v0.48.md）: 色（タイプ）を選ぶ。選べるものは ``effects.COLORS`` の位置（ポリゴンの「テクスチャー1」「テクスチャー2」は無色以外の
 # 色。モルフォンの［へんしょく］は場にいるポケモンの色）。決めるのはワザ・特殊能力を使ったプレイヤー
 SELECT_COLOR = "select_color"
+# v0.50（docs/mew-devolution-spray-v0.50.md）: 退化スプレーで、選んだポケモンからはがす進化カードの枚数（0〜重なっている進化カードの数）。決めるのは使ったプレイヤー。
+# 0 枚は「ことができる」の、はがさないこと（はがさなければ退化しない）
+SELECT_DEVOLVE_COUNT = "select_devolve_count"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

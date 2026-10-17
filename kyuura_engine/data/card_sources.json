@@ -12566,6 +12566,83 @@
       ],
       "issues": [],
       "notes": "v0.49 で加えた。トレーナー。RecallPreEvolutionAttacks（この番だけ、使ったときの対戦ポケモンに重なっている進化前のカードのワザを、このポケモンのワザとして使える。必要なエネルギー・説明の条件はそのまま。すぐ下のカードのワザは使え、2 進化のいちばん下のたねポケモンのワザは RC2、進化していない・進化前のカードにワザがないときは RC1、使ったあと対戦ポケモンが入れかわった・進化したら RC3、「ばける」の姿なら RC4）。英語版の「any attack from its Basic Pokémon card or any Evolution card attached to it」は持ち込まない"
+    },
+    "PMCG3-033": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3033.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "033/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.50 で加えた。サイコウェーブは DamageTimesDefenderEnergyCards（相手の対戦ポケモンについているエネルギーカードの枚数 × 10 が基本となるダメージ。ミュウツーの「サイコキネシス」の「10+」とは違う）、たいかビームは DevolveChosenPokemon（自分・相手の場の、実際に進化カードが重なっているポケモンを 1 匹選び、いちばん上の進化カードを持ち主の手札にもどす。退化の共通の処理 evolution.devolve。「ばける」のポケモンは DV5）。英語版の「Return the highest Stage Evolution card」・「That Pokémon is no longer Asleep, …」は日本語版の処理の根拠にしない（特殊状態・持続する効果が消えるのは p.324「19」の一般の規定）。kyuura の日本語の文面の転記元はnazonobasho.com（ja_text_source）で、pcg-search.com との照合は独立した照合"
+    },
+    "PMCG1-086": {
+      "basis": "kyuura_data",
+      "name_ja": "退化スプレー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-17",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1076.php",
+          "checked_on": "2026-10-17",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "076/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.50 で加えた。トレーナー。DevolveOwnPokemon（自分の、実際に進化カードが重なっているポケモンを 1 匹選び、上から好きな枚数（0 枚を含む。「ことができる」）の進化カードをはがしてトラッシュする。退化の共通の処理 evolution.devolve。使い終えてトラッシュしてから、最大HPがのっているダメージ以下になったポケモンはきぜつする）。自分の場に進化ポケモンがいないときは DV4、「ばける」のポケモンは DV5、途中の重なりできぜつするかで結果が変わる枚数は DV1。英語版の「a Stage of Evolution」・退化スプレーHYPER の文面は持ち込まない"
     }
   }
 }

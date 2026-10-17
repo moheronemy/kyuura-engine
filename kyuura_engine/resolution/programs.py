@@ -39,7 +39,7 @@ from ..decisions import (
 )
 from ..decisions import ARRANGE_DECK_TOP, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT
 from ..errors import UnsupportedError
-from ..evolution import place_evolution_card
+from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
@@ -54,7 +54,7 @@ from ..zones import look_at_card
 
 from . import catalog as C
 from . import codec
-from .events import ElementStarted, Suspended, Window
+from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
 from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, track_ko, type_question, weakness_resistance_matters
 from .questions import QUESTIONS
 
@@ -1377,8 +1377,19 @@ class PlusDefenderEnergy:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        target = run.opponent_active()
-        return run.attack.damage + sum(1 for uid in target.energy if run.state.card_def(uid).category == "energy") * self.per
+        return run.attack.damage + E.attached_energy_cards(run.state, run.opponent_active()) * self.per  # v0.50: 数え方を「サイコウェーブ」と共通にした（同じ値）
+
+
+@dataclass(frozen=True)
+class DefenderEnergyCardsTimes:
+    """相手の対戦ポケモンについているエネルギーカードの枚数 × ``per``（v0.50。ミュウの「サイコウェーブ」。p.321 の 1 段階の基本となるダメージそのもの。「サイコキネシス」の
+    ``PlusDefenderEnergy`` は目安の数字に加える値で、こちらは目安の数字を使わない）。数えるのはカードの枚数（``effects.attached_energy_cards``）。0 枚なら 0。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return E.attached_energy_cards(run.state, run.opponent_active()) * self.per
 
 
 @dataclass(frozen=True)
@@ -3674,6 +3685,10 @@ class EvolveFromDeck(Element):
             # v0.44: トレーナー「サカキ」の許可だけで重ねられる組がある（GV1）。重ねられるかで選べるものが変わるので、決定を出す前に止める（v0.45 から停止コード
             # ``UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK``。v0.44 はコードのない問いで、自分の場のサカキのコイキングに許可があると内部エラーになっていた）
             raise run.res.question("evolution_permission_from_deck", f"山札の進化カードと場のポケモン {list(permitted)}")
+        devolved = E.deck_evolution_devolved_pairs(run.state, run.player)
+        if devolved:
+            # v0.50: 今の番に退化したポケモンに重ねられる組（DV2）。GV1 と同じく、選べるものが変わるので決定を出す前に止める
+            raise run.res.question("evolve_after_devolution", f"山札の進化カードと場のポケモン {list(devolved)}")
         candidates = E.deck_evolution_candidates(run.state, run.player)
         if not candidates:
             run.state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
@@ -3914,6 +3929,9 @@ class EvolveAttackerFromDeck(Element):
         permitted = E.deck_evolution_permission_pairs(state, run.player, (attacker.pokemon_id,), cards)
         if permitted:
             raise run.res.question("evolution_permission_from_deck", f"山札の進化カードと場のポケモン {list(permitted)}")
+        devolved = E.deck_evolution_devolved_pairs(state, run.player, (attacker.pokemon_id,), cards)
+        if devolved:
+            raise run.res.question("evolve_after_devolution", f"山札の進化カードと場のポケモン {list(devolved)}")  # v0.50: DV2
         candidates = self.candidates(run)
         if not candidates:
             state.add_event("evolve_from_deck_none", player=run.player, pokemon_id=attacker.pokemon_id, effect=str(run.key))
@@ -4675,6 +4693,72 @@ class PlaceCountersOnDamagedOpponents(Element):
         return False
 
 
+# ---------------------------------------------------------------- v0.50（docs/mew-devolution-spray-v0.50.md）。進化カードをはがす（退化させる）要素
+
+
+def _hp_dropped_in_attack(run: AttackRun) -> None:
+    """ワザの効果で最大HPが下がり、のっているダメージ以下になったポケモン（v0.50。退化。退化したポケモンと、［へんしん］で同じカードとしてあつかう相手のメタモンなど）の、
+    きぜつの原因の枠を記録する（同時のきぜつの判定。``kernel.check_simultaneous``）。きぜつの処理はワザのあとの判定（v0.48 のワザの効果で最大HPが下がったときと同じ）。
+    ダメージを受けたのではないので、「こんじょう」は使えない（``ko_prevention_able`` を偽。v0.41 のカウンターの移動と同じ）。"""
+    res = run.res
+    for player in (run.player, 1 - run.player):
+        for pokemon in run.state.players[player].in_play():
+            if pokemon.damage >= E.max_hp(run.state, pokemon) and pokemon.pokemon_id not in res.knocked_by:
+                res.knocked_by[pokemon.pokemon_id] = run.fs.frame.id
+                res.trace.record(KnockedOutRecorded(pokemon.pokemon_id, run.fs.frame.id))
+                res.ko_prevention_able[pokemon.pokemon_id] = False
+
+
+@dataclass(frozen=True)
+class DevolveChosenPokemon(Element):
+    """自分または相手の場にいるポケモンの中から「進化カード」のついているもの 1 匹を選び、その「進化カード」を上から 1 枚はがして持ち主の手札に戻す（v0.50。ミュウの
+    「たいかビーム」。kyuura の印刷の文面）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_POKEMON``。選べるものは自分の場 → 相手の場の、実際に進化カードが重なっているポケモン。``effects.devolution_candidates``。
+      今の姿（［へんしん］）ではなく実際の重なりで決める）。1 匹もいなければ何もしない（p.309。ログ ``devolve_none``）
+    - 「ばける」でのせたカードのあるポケモン（「進化・退化」はできない）は選べるが選ぶと止める（DV5）。どれもそうなら、決定を出す前に止める（問い
+      ``devolution_target_disguised``）
+    - はがす前に、そのポケモンの「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の ``devolve``。自分のポケモンでも「とうめい」は評価する。受けなければはがさない）
+    - はがしたカードは持ち主の手札（``evolution.devolve`` の ``hand``。相手のポケモンのカードは相手の手札）。ワザによるダメージではなく、ワザの効果。退化して最大HPが
+      のっているダメージ以下になったポケモンは、ワザのあとのきぜつの判定できぜつする（``_hp_dropped_in_attack``）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SELECT_POKEMON
+    opponent_element: ClassVar[str] = E.DEVOLVE_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        options = E.devolution_candidates(state, (run.player, 1 - run.player))
+        if not options:
+            state.add_event("devolve_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key))
+            return False
+        forbidden = tuple(pid for pid in options if E.devolution_forbidden(state, state.find_pokemon(pid)[1]))
+        if len(forbidden) == len(options):
+            raise run.res.question("devolution_target_disguised", f"ポケモン {list(forbidden)}")
+        extra: tuple = ()
+        if forbidden:
+            extra = (("unresolved_choices", forbidden), ("unresolved_code", E.DEVOLUTION_TARGET_DISGUISED_CODE),
+                     ("unresolved_reason", E.DEVOLUTION_TARGET_DISGUISED_REASON))
+        run.suspend(kind=SELECT_POKEMON, player=run.player, options=options, extra=extra)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        found = state.find_pokemon(choices[0])
+        if found is None or not found[1].evolution_stack or E.devolution_forbidden(state, found[1]):
+            raise RuntimeError(f"たいかビームで選んだポケモン {choices} から進化カードをはがせない（決定の確認の漏れ。エンジンの不具合）")
+        owner, target = found
+        if not reaches(run.res, run.fs, owner, target, E.DEVOLVE_ELEMENT):
+            return
+        devolve(state, owner, target, 1, destination=DEVOLVE_TO_HAND, by_player=run.player, effect=str(run.key))
+        _hp_dropped_in_attack(run)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
+
+
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
@@ -5017,6 +5101,9 @@ BUILDERS: dict[type, Any] = {
     E.PlaceCountersOnDamagedOpponentPokemon: lambda e: (PlaceCountersOnDamagedOpponents(e.counters),),
     E.DamageThenCoinsReturnOpponentToDeck: lambda e: (
         Damage(OPP, Printed()), Coin("coin", count=e.coins), ReturnOpponentToDeck(required=False, gate=("coin", AtLeast(e.coins)))),
+    # v0.50（docs/mew-devolution-spray-v0.50.md）
+    E.DamageTimesDefenderEnergyCards: lambda e: (Damage(OPP, DefenderEnergyCardsTimes(e.per)),),
+    E.DevolveChosenPokemon: lambda e: (DevolveChosenPokemon(),),
 }
 
 

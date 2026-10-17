@@ -497,6 +497,10 @@
     "PMCG5-019",
     "PMCG5-071"
   ],
+  "pool_v0_50": [
+    "PMCG3-033",
+    "PMCG1-086"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -30577,6 +30581,142 @@
         "series": null,
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E6%80%9D%E3%81%84%E5%87%BA%E3%81%95%E3%81%9B%E3%82%8B"
+      }
+    },
+    {
+      "id": "PMCG3-033",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウ",
+        "en": "Mew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          151
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコウェーブ",
+              "en": "Psywave"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "相手についているエネルギーカード×10のダメージ。",
+              "en": "Does 10 damage times the number of Energy cards attached to the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "たいかビーム",
+              "en": "Devolution Beam"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分または相手の場にいるポケモンの中から「進化カード」のついているもの1匹を選び、その「進化カード」を上から1枚はがして持ち主の手札に戻す。",
+              "en": "Choose an evolved Pokémon (your own or your opponent's). Return the highest Stage Evolution card on that Pokémon to its player's hand. That Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned, or anything else that might be the result of an attack (just as if you had evolved it)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "placement",
+          "summary": "収録先",
+          "ja": "拡張パック「化石の秘密」に収録",
+          "en": "英語版 Fossil には入らず、Wizards Black Star Promos（8・9）として発売",
+          "confidence": "確実",
+          "sources": []
+        }
+      ],
+      "notes": [
+        "英語版 Fossil には収録されず、WotC のプロモとして発売"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG3-033",
+        "pokemontcg": [
+          "basep-8",
+          "basep-9"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-033-mew/",
+      "jp_print": {
+        "level": 23,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-033-mew/"
+      }
+    },
+    {
+      "id": "PMCG1-086",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "退化スプレー",
+        "en": "Devolution Spray"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の進化ポケモンを1匹選び、進化カードを何枚でもはがしてすてることができる。",
+          "en": "Choose 1 of your own Pokémon in play and a Stage of Evolution. Discard all Evolution cards of that Stage or higher attached to that Pokémon. That Pokémon is no longer Asleep, Confused, Paralyzed, Poisoned, or anything else that might be the result of an attack (just as if you had evolved it)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-086",
+        "pokemontcg": [
+          "base1-72"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-076-taikaspray/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-076-taikaspray/"
       }
     },
     {

@@ -56,6 +56,7 @@ from .decisions import (
     SELECT_ATTACK,
     SELECT_COLOR,
     SELECT_DECK_OWNER,
+    SELECT_DEVOLVE_COUNT,
     SELECT_EVOLUTION_CARD,
     SELECT_HAND_CARD,
     SELECT_LOOK_COUNT,
@@ -87,6 +88,7 @@ OPTION_MEANINGS: dict[str, str] = {
     ARRANGE_DECK_TOP: "card",
     DAMAGE_STEP_ORDER: "number", SELECT_ATTACK: "number", SELECT_OPPONENT_ATTACK: "number", SELECT_SPECIAL_CONDITION: "number",
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
+    SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
@@ -140,6 +142,9 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # カード・位置・持ち方・供給するポケモン・選ぶと止める理由のコード）・今持つ特殊能力（``powers``。印刷したカード・位置）を分けて書く。どれも表のカード
         "form": _form(state, pokemon),
         "disguise": None if pokemon.disguise is None else _card(state, pokemon.disguise),
+        # v0.50（docs/mew-devolution-spray-v0.50.md 7 章）: 最後に退化した番（いまの姿になった番の決まり方の材料。退化していなければ None）。進化した番・場に出た番は
+        # これまでどおり書かない（ログからわかる）
+        "devolved_turn": pokemon.devolved_turn,
         "attacks": [
             {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0]}
@@ -301,7 +306,8 @@ PUBLIC_EVENTS = frozenset({
     "attach_energy", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none", "coin_flip", "confusion_check", "confusion_damage", "copy_attack",
-    "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "discard_attached_cards",
+    "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
+    "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
     "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "effect_prevented", "effect_skipped",
     "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
