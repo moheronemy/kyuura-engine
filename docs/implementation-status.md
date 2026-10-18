@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.60）
+# 実装状況（v0.1〜v0.61）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -133,7 +133,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | かがくへんかガスを持つポケモンと R団のファイヤーが同じきぜつの判定できぜつするとき、「ふしちょう」を使えるか（v0.12。ガスがきぜつの時点ではたらいているか、手札に加える時点で消えているか） | 対応カードでは起こらない（W24・`UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT` が先に止める。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P19）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT` で止める |
 | 同じきぜつで、きぜつしたときに使える特殊能力（「ふしちょう」）の候補が 2 つ以上あるときの順番（v0.12） | 対応カードでは起こらない（R団のファイヤーが 2 匹同時にきぜつする場合は先に止めている。決めていない。起こったらエンジンの不具合として `RuntimeError`。[phoenix-v0.12.md](phoenix-v0.12.md) の P32）。v0.31: やきはらうで起こるので、宣言の前に `UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER` で止める |
 | 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
-| 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（コードのない問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard` |
+| 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。v0.61 で［ファイナルビーム］（弱点「水」のポケモンが受ける）で起こるようになり、停止コード `UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE` を付けた（使うを選ぶと止める）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard`・test_reactive_powers_trainer_damage_v0_61.py |
 | 「ダメージを与えた後、…」の効果（たおれこむ・v0.18c からナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23。v0.18b で場合を Z23-a 要素が無効・Z23-b 計算の結果が 0（ディフェンダー・抵抗力）・Z23-c「とうめい」・Z23-d 対象がいない（起こらない）に分けた） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。理由の文が場合を書く）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest`、test_unresolved_research_v0_18b.py `EffectAfterNoDamageSubcaseTest`・`TargetGoneIsUnreachableTest`、test_sabrinas_slowpoke_v0_18c.py `NoDamageStopTest` |
 | キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
 | 「みちづれ」で相手の対戦ポケモンも「きぜつ」するとき、同時のきぜつか（v0.31。HC2） | 勝ち負けが決まる場合（サイドを取りきる・場にポケモンがいなくなる）だけ、相手のワザの宣言の前に `UNRESOLVED_DESTINY_BOND_KNOCKOUT` で止める。決まらなければ両方がサイドを取る |
@@ -234,6 +234,11 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 「ばける」でのせたマルマインのカードの［エネエネ］（v0.59。BZ4） | 宣言の前に `UNRESOLVED_BUZZAP_DISGUISED` |
 | サンダーストームの控えのコインを、すべて投げてからダメージを与えるか、1 匹ずつか（v0.60。TS1。「とうめい」のコインがあいだに入るときだけ乱数の割り当てが変わる） | はたらいている「とうめい」の控えの後ろにほかの控えがいると、宣言の前に `UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER` |
 | スピードスターの「相手の持っている」が、相手の場のほかのポケモンの特殊能力を含むか（v0.60。SS1。今の写しでは結果が変わらない） | コードのない問い `speed_star_scope`（読み方で結果が変わるときだけ止める。今は起こらない） |
+| ［おとしあな］が「にげる」の手順のどの時点ではたらくか（v0.61。SH1。にげるポケモンがこんらん・受けるダメージがバトル場とベンチで違うときだけ結果が変わる） | エネルギーのトラッシュ・コインの前に `UNRESOLVED_SINKHOLE_TIMING` |
+| ［ずらかる］がはたらく時点（v0.61。SC1。残りHPが「10」を通って変わる・ワザの途中でポケモンによる要素が残る・2 匹が同時・2 つの［おとしあな］の途中） | ワザの宣言の前・にげる・トレーナーのコインの前に `UNRESOLVED_SCRAM_TIMING` |
+| 残りHPが「10」で力が消えていた［ずらかる］の力がもどったとき、はたらくか（v0.61。SC2） | その操作を受け付けない（ポケモンチェックは `Phase.HALTED`）。`UNRESOLVED_SCRAM_POWER_RESTORED` |
+| 受けるダメージを変える効果（ちいさくなる・かたくなる・リフレクター・カブトアーマー・なぞのかべ）を、トレーナーのダメージ（バトル場は穴だらけ!）に当てはめるか（v0.61。TD1） | 量が変わるときだけ、コインの前に `UNRESOLVED_TRAINER_DAMAGE_REDUCTION` |
+| 「みちづれ」で「きぜつ」するわるいギャラドスの［ファイナルビーム］（そのきぜつが「相手のワザによって」か。v0.61。HC2 と同じみちづれの問い） | ワザの宣言の前に `UNRESOLVED_DESTINY_BOND_KNOCKOUT`（v0.31 のコードのない問い `destiny_bond_with_ko_prevention` にコードを付けた） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -3162,3 +3167,39 @@ card_differences の二次資料だけ、6 枚に最新の説明・照合の記�
 
 kyuura への報告事項（kyuura のデータ・記録は変えていない）: R団のストライクの「これ以降」と pcg-search.com の「これ以後」・カスミのギャラドスのサイトの「うち」（処理に影響しない）、
 4 枚に最新の説明・照合の記録がない、新しい問い TS1・SS1 は kyuura の未解決の一覧にない。
+
+## v0.61 で加えたもの（ワザ・にげる・残りHPではたらく特殊能力とトレーナーのダメージの 4 枚）
+
+依頼の 4 枚（わるいギャラドス PMCG4-025・わるいダグトリオ PMCG4-043・タケシのオコリザル PMCG5-051・バトル場は穴だらけ! PMCG4-055）を、kyuura データの採用で、どのワザ・特殊能力・
+トレーナーも登録して対応にしました（対応ポケモン 336 → 339・トレーナー 84 → 85・エネルギー 10。対応するカード 430 → 434。ワザの登録 571 → 574・特殊能力の登録 51 → 54。
+PMCG1〜PMCG6 の未対応は 27 → 23 枚）。共通の処理は、相手のワザで「きぜつ」する時に使うダメージを与える特殊能力（`effects.BeamOnKnockOut`・`catalog.FINAL_BEAM`・決定
+`knock_out_power`。こんじょうの続きの情報と再開を共通に使う）、「にげる」のあとにはたらく特殊能力（`effects.DamageOnOpponentRetreat`・`resolution.after_retreat`・
+`engine._sinkhole_check`）、残りHPの決まった数ではたらく特殊能力の決まった時点（`effects.ReturnToDeckAtRemainingHp`・`kernel.settle_scram`。ワザの中のまとまりのあと・きぜつの判定の
+窓・特殊能力・エネルギー・トレーナー・にげる・ポケモンチェックのあと）、トレーナーのダメージ（`effects.trainer_damage`・`AlternateCoinsUntilTailsDamage`・`resolution.trainer_damage_stop`。
+`after_trainer` で使い終えたあとにきぜつを処理する）です。書き出しの形式は 19 のまま。新しいログのイベント `knock_out_power_declined`・`knock_out_power_declared`・
+`knock_out_power_failed`・`knock_out_power_damage`・`scram`・`sinkhole_check`・`sinkhole_damage`・`digger_result`・`trainer_damage`・`trainer_damage_prevented`。カードごとの結果・
+時点の根拠・未解決・互換性・検証は [reactive-powers-trainer-damage-v0.61.md](reactive-powers-trainer-damage-v0.61.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_reactive_powers_trainer_damage_v0_61.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 4 枚の登録・数・文面と登録の値の照らし合わせ・採用の記録と外部照合・研究の対応表 | kyuura の印刷の文面・pcg-search.com | `CardDataTest`・test_card_sources.py |
+| ［ファイナルビーム］（使う機会・使わない・「水」エネルギーの数 × 20・「うら」・持ち主のコイン 1 枚・特殊状態・ガス・相手のワザ以外・Z9・RB1・C18・G40・HC2・保存と復元）・れいとうビーム | 印刷の文面・p.311・CR-POWER-OPTIONAL-DECLARATION | `FinalBeamTest` |
+| ［おとしあな］（にげたプレイヤーのコイン・ベンチにもどったポケモンへの 20・「おもて」・ベンチのわるいダグトリオ・特殊状態とガス・ポケモンいれかえ・SH1・きぜつと番の続き）・つきおとす | 印刷の文面・p.311・p.325 | `SinkholeTest` |
+| ［ずらかる］（ちょうど 10・おおあばれとスタジアム・相手のワザ・特殊状態・どく・SC1・SC2・［おとしあな］・［ファイナルビーム］・バトル場は穴だらけ!） | 印刷の文面 | `ScramTest` |
+| バトル場は穴だらけ!（交互のコイン・ダメージを受けない状態・TD1・きぜつとサイド・最後のサイド） | 印刷の文面・p.235 の解説の記録（v0.28） | `DiggerTest` |
+| 正式な開始からの対戦で監査がすべて通る | — | `tools/existing_effect_games.py --batch v0.61` |
+| v0.60 までのカードの動きが変わらない | 固定した v0.60（`f2068f6`）との比較 | tools/engine_lockstep.py と作業用の道具（[reactive-powers-trainer-damage-v0.61.md](reactive-powers-trainer-damage-v0.61.md) 8 章） |
+
+### 原典未確認・未解決
+
+- 新しい停止コードは SH1・SC1・SC2・TD1 の 4 件、停止コードを付けた既存の問いは Z9・HC2（停止コード 128 件・未解決の裁定 129 件。上の「裁定が未解決」の表）。
+- 再利用した問い: C18・G40・HC2・RB1・BZ2・v0.4b の `UNRESOLVED_PREVENTED_COIN_DAMAGE`・MH1。
+- 実装上の判断（原典で確かめた規定ではない）: ［おとしあな］の時点（SH1 に当たらない場合は入れ替えのあと）、［ずらかる］の決まった時点（結果が時点で変わる場合は SC1 で止める）、
+  バトル場は穴だらけ!のきぜつの処理を使い終えたあとにしたこと。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）: 新しい停止コード 4 件は kyuura の未解決の一覧にない、Z9 が［ファイナルビーム］で起こるようになった、pcg-search.com との
+違い 2 件（わるいギャラドスの読点・バトル場は穴だらけ!の「抵抗カ」）、4 枚に最新の説明・照合の記録がない。

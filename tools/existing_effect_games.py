@@ -233,6 +233,8 @@ from kyuura_engine.continuous import goop_gas_effects  # v0.59
 from kyuura_engine.effects import blaine_effects  # v0.59
 from kyuura_engine.effects import DamageThenCoinPerOpponentBench, attack_rebellion_powers, evasion_power  # v0.60
 from kyuura_engine.persistent import tails_damage_guard  # v0.60
+from kyuura_engine.decisions import KNOCK_OUT_POWER  # v0.61
+from kyuura_engine.effects import energy_unit_count  # v0.61
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
@@ -424,7 +426,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
            + ("PMCG1-040", "PMCG5-030", "PMCG4-008")  # v0.59: マルマイン（第1弾）・カスミのメノクラゲ・わるいアーボック
-           + ("PMCG3-026", "PMCG5-016", "PMCG5-035", "PMCG5-050"))  # v0.60: サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン
+           + ("PMCG3-026", "PMCG5-016", "PMCG5-035", "PMCG5-050")  # v0.60: サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン
+           + ("PMCG4-025", "PMCG4-043", "PMCG5-051"))  # v0.61: わるいギャラドス・わるいダグトリオ・タケシのオコリザル
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -454,6 +457,10 @@ FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH = "PMCG3-026",
 FOSSIL_GASTLY, FOSSIL_HAUNTER = "PMCG3-029", "PMCG3-030"
 BASE_MACHOP, BASE_MACHOKE, BASE_MACHAMP = "PMCG1-053", "PMCG1-055", "PMCG1-057"
 V0_60 = (FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH)
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）。わるいギャラドス（コイキング（ロケット団）から進化）・わるいダグトリオ（ディグダ（ロケット団）から進化）・
+# タケシのオコリザル（タケシのマンキーから進化）と、トレーナーのバトル場は穴だらけ!
+DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE, DIGGER = "PMCG4-025", "PMCG4-043", "PMCG5-051", "PMCG4-055"
+V0_61 = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -716,6 +723,11 @@ DECKS = {
     # ストームの控えのコインとの順番（TS1）・スピードスターで無視する効果）・ワンリキー → ゴーリキー → カイリキー（［はんげき］。控えでもはたらく）
     "M60": ((MISTYS_MAGIKARP, 4), (MISTYS_GYARADOS, 3), (FOSSIL_GASTLY, 3), (FOSSIL_HAUNTER, 2), (BASE_MACHOP, 3), (BASE_MACHOKE, 2), (BASE_MACHAMP, 1),
             *TRAINERS, (WATER, 18), (PSYCHIC, 6), (FIGHTING, 6)),
+    # v0.61: 水・闘。コイキング（ロケット団）→ わるいギャラドス（［ファイナルビーム］・れいとうビーム）・ディグダ（ロケット団）→ わるいダグトリオ（［おとしあな］・
+    # つきおとす）・バトル場は穴だらけ!
+    "G61": ((ROCKET_MAGIKARP, 4), (DARK_GYARADOS, 3), (ROCKET_DIGLETT, 4), (DARK_DUGTRIO, 3), (DIGGER, 4), *TRAINERS, (WATER, 18), (FIGHTING, 12)),
+    # v0.61: 闘。タケシのマンキー → タケシのオコリザル（［ずらかる］・おおあばれ）・ニビシティジム（おおあばれでトラッシュするスタジアム）・バトル場は穴だらけ!
+    "P61": ((BROCKS_MANKEY, 4), (BROCKS_PRIMEAPE, 4), (BROCKS_GEODUDE, 4), (DIGGER, 3), (PEWTER_CITY_GYM, 3), *TRAINERS, (FIGHTING, 30)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -792,13 +804,18 @@ PAIRINGS_V0_59 = (("Z59", "B59"), ("Z59", "R58"), ("B59", "U55"), ("Z59", "D46")
 # ショックアイでは止めない）・Z60 対 D46（わるいベトベトン・わるいオコリザルの常にはたらく特殊能力をスピードスターで無視する）・Z60 対 P31（ゆびをふるでサンダーストーム・
 # かげぶんしんを相手のワザとして使う）
 PAIRINGS_V0_60 = (("Z60", "M60"), ("M60", "Z59"), ("Z60", "D46"), ("Z60", "P31"))
+# v0.61: G61 対 P61（［おとしあな］で「10」になったタケシのオコリザルの［ずらかる］・［ファイナルビーム］の相手・バトル場は穴だらけ!どうし）・P61 対 M60（カイリキーの
+# ［はんげき］・カスミのギャラドスの［はんこう］と［ずらかる］）・G61 対 Z60（R団のストライクのかげぶんしん・スピードスターの相手の［ファイナルビーム］）・G61 対 P31
+# （ピッピ・ピクシー・カスミのコダックが、つきおとす・れいとうビームを自分のワザとして使う）。``run`` が席を入れかえる
+PAIRINGS_V0_61 = (("G61", "P61"), ("P61", "M60"), ("G61", "Z60"), ("G61", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
-           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60}
+           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
+           "v0.61": PAIRINGS_V0_61}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2724,6 +2741,132 @@ def _v059_energy(state, command, tried, counts):
     return attach
 
 
+def _v061_decision(state, counts):
+    """v0.61 の決定への答え（元の手順より先に答える）: ［ファイナルビーム］を使うか。使うと止める（Z9・C18・RB1・BZ2）なら使わない。ほかは 1 局の中で
+    4 回に 3 回使う（使わない場面も起こす）。"""
+    d = state.decision
+    if d is None or d.kind != KNOCK_OUT_POWER:
+        return None
+    unresolved = d.context_value("unresolved_choices", ())
+    if unresolved:
+        counts[f"v061_beam_stopped_{d.context_value('unresolved_code')}"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    counts["v061_beam_offers"] += 1
+    if counts["v061_beam_offers"] % 4 == 0:
+        counts["v061_beam_declined_by_policy"] += 1
+        return ResolveDecision(d.player, d.id, ())
+    return ResolveDecision(d.player, d.id, (d.options[0],))
+
+
+def _v061_trainer(state, tried, counts):
+    """v0.61: バトル場は穴だらけ!を、受け付けるなら番の番号が 2 の倍数の番に使う（1 番に 1 回）。止まる場面（TD1 など）は ``v061_digger_rejected_<コード>``。"""
+    player = state.current_player
+    p = state.players[player]
+    if "trainer_locked" in tried or ("v061_digger", state.turn_number) in tried or state.turn_number % 2:
+        return None
+    uid = next((u for u in p.hand if state.cards[u].card_id == DIGGER), None)
+    if uid is None:
+        return None
+    tried.add(("v061_digger", state.turn_number))
+    command = PlayTrainer(player, uid)
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v061_digger_rejected_{error.code}"] += 1
+        return None
+    counts["v061_digger_played"] += 1
+    return command
+
+
+def _v061_retreat(state, tried, counts):
+    """v0.61: 相手の場にわるいダグトリオがいて、控えがいれば、3 番に 1 回「にげる」を試す（［おとしあな］の場面を起こす。にげるエネルギーはついている前から）。
+    拒否は ``v061_retreat_rejected_<コード>`` に数え、別の操作を続ける。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if active is None or not p.bench or state.turn_number % 3 or ("v061_retreat", state.turn_number) in tried or "retreat" in tried:
+        return None
+    if not any(state.cards[pk.card].card_id == DARK_DUGTRIO for pk in state.players[1 - player].in_play()):
+        return None
+    tried.add(("v061_retreat", state.turn_number))
+    try:
+        cost = retreat_cost(state, player)
+    except UnsupportedError as error:
+        counts[f"v061_retreat_rejected_{error.code}"] += 1
+        return None
+    paid = []
+    for uid in active.energy:
+        if energy_unit_count(state, paid, active) >= cost.minimum:
+            break
+        paid.append(uid)
+    command = Retreat(player, tuple(paid), p.bench[-1].card)
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v061_retreat_rejected_{error.code}"] += 1
+        return None
+    counts["v061_retreat"] += 1
+    return command
+
+
+def v061_uses(state):
+    """v0.61: ログから数えた v0.61 の 4 枚の動き（どれもない局では空）。
+
+    - ``beam_declined``・``beam_declared``・``beam_heads``・``beam_tails``: ［ファイナルビーム］。``beam_ko``: そのダメージで HP 以上。``beam_energy_<数>``: 数えた「水」エネルギー
+    - ``ice_beam_paralysis``: れいとうビームでマヒ
+    - ``sinkhole_checks``・``sinkhole_damage``・``sinkhole_ko``: ［おとしあな］のコイン・20 ダメージ・きぜつ
+    - ``knock_down``・``knock_down_tails``: つきおとすのコイン（相手が投げる）・「うら」
+    - ``scram_after_<きっかけ>``: ［ずらかる］で山札にもどった（直前のイベントの種類）
+    - ``mega_thrash``・``mega_thrash_stadium``・``mega_thrash_no_stadium``: おおあばれ・スタジアムのトラッシュ
+    - ``digger``・``digger_coins_<枚数>``・``digger_loser_user``・``digger_loser_opponent``・``digger_ko``: バトル場は穴だらけ!
+    """
+    counts = Counter()
+    log = state.log
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "knock_out_power_declined":
+            counts["beam_declined"] += 1
+        elif kind == "knock_out_power_declared":
+            counts["beam_declared"] += 1
+        elif kind == "knock_out_power_failed":
+            counts["beam_tails"] += 1
+        elif kind == "knock_out_power_damage":
+            counts["beam_heads"] += 1
+            counts[f"beam_energy_{e['energy']}"] += 1
+            if e["knocked_out"]:
+                counts["beam_ko"] += 1
+        elif kind == "special_condition" and e.get("condition") == "paralysis" and str(e.get("effect", "")).startswith(DARK_GYARADOS):
+            counts["ice_beam_paralysis"] += 1
+        elif kind == "sinkhole_check":
+            counts["sinkhole_checks"] += 1
+        elif kind == "sinkhole_damage":
+            counts["sinkhole_damage"] += 1
+            if e["knocked_out"]:
+                counts["sinkhole_ko"] += 1
+        elif kind == "attack" and e.get("attack") == "つきおとす":
+            counts["knock_down"] += 1
+            coin = next((x for x in log[i + 1:i + 6] if x["kind"] == "coin_flip"), None)
+            if coin is not None and coin["result"] == "tails":
+                counts["knock_down_tails"] += 1
+        elif kind == "scram":
+            before = log[i - 1]["kind"] if i else "none"
+            counts[f"scram_after_{before}"] += 1
+        elif kind == "attack" and e.get("attack") == "おおあばれ":
+            counts["mega_thrash"] += 1
+        elif kind == "stadium_discarded" and e.get("reason") == "attack" and str(e.get("effect", "")).startswith(BROCKS_PRIMEAPE):
+            counts["mega_thrash_stadium"] += 1
+        elif kind == "stadium_discard_none" and str(e.get("effect", "")).startswith(BROCKS_PRIMEAPE):
+            counts["mega_thrash_no_stadium"] += 1
+        elif kind == "digger_result":
+            counts["digger"] += 1
+            counts[f"digger_coins_{e['coins']}"] += 1
+            counts["digger_loser_user" if e["loser"] == e["player"] else "digger_loser_opponent"] += 1
+        elif kind == "knock_out" and e.get("timing") == "trainer" and any(
+                x["kind"] == "trainer_damage" and x["pokemon"] == e["pokemon"] for x in log[max(0, i - 8):i]):
+            counts["digger_ko"] += 1
+    return {k: v for k, v in counts.items() if v}
+
+
 def v060_uses(state):
     """v0.60: ログから数えた v0.60 の 4 枚の動き（どれもない局では空）。
 
@@ -2955,7 +3098,7 @@ def make_policy(seen: dict, counts: Counter):
                      or _v053_decision(state, counts) or _v054_decision(state, counts)  # v0.53・v0.54
                      or _v055_decision(state, counts) or _v056_decision(state, counts)  # v0.55・v0.56
                      or _v057_decision(state, counts) or _v058_decision(state, counts)  # v0.57・v0.58
-                     or _v059_decision(state, counts))  # v0.59
+                     or _v059_decision(state, counts) or _v061_decision(state, counts))  # v0.59・v0.61
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2983,7 +3126,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v056_trainer(state, tried, counts)  # v0.56
                      or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts)  # v0.57
                      or _v058_trainer(state, tried, counts)  # v0.58
-                     or _v059_trainer(state, tried, counts) or _v059_power(state, tried, counts))  # v0.59
+                     or _v059_trainer(state, tried, counts) or _v059_power(state, tried, counts)  # v0.59
+                     or _v061_trainer(state, tried, counts))  # v0.61
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2992,7 +3136,8 @@ def make_policy(seen: dict, counts: Counter):
             probe = _v036_retreat_probe(state, tried, counts)  # v0.36
             if probe is not None:
                 return probe
-            retreat = _v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts)  # v0.46・v0.58
+            retreat = (_v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts)  # v0.46・v0.58
+                       or _v061_retreat(state, tried, counts))  # v0.61
             if retreat is not None:
                 return retreat
         if state.phase is not Phase.MAIN or not isinstance(command, (UseAttack, EndTurn)) or "attack" in tried:
@@ -3114,6 +3259,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v058"] = v058_uses(state)
         result["v059"] = v059_uses(state)
         result["v060"] = v060_uses(state)
+        result["v061"] = v061_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -3544,7 +3690,8 @@ def summarize(games):
                                                                                                      if r.get("halt_code")),
          "unresolved_rejections": Counter(), "audit_failures": Counter(), "end_conditions": Counter(), "wins": Counter(),
          "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter(), "v059": Counter(), "v059_policy": Counter(),
-         "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter()}
+         "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter(), "v061": Counter(), "v061_games_with": Counter(),
+         "v061_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -3553,6 +3700,9 @@ def summarize(games):
         s["v059_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v059_")})
         s["v060"].update(r.get("v060", {}))  # v0.60
         s["v060_games_with"].update({k: 1 for k, v in r.get("v060", {}).items() if v})
+        s["v061"].update(r.get("v061", {}))  # v0.61
+        s["v061_games_with"].update({k: 1 for k, v in r.get("v061", {}).items() if v})
+        s["v061_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v061_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

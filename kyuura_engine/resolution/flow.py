@@ -23,10 +23,10 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
+from ..decisions import KNOCK_OUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
-from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, max_hp, stadium_attack_coin_available,
-                       status_at_attack_blocked)
+from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
+                       received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench, return_in_play_to_deck, shuffle_deck
@@ -37,8 +37,9 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_persistent_effects
-from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knocked, ko_prevention_offers, track_ko
+from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
+from .kernel import (DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
+                     ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
 from .programs import AttackRun, decision_index, declare, program_may_fail, run_elements, with_stadium_self_damage
 from .questions import OpenQuestion, to_error
 
@@ -286,12 +287,18 @@ def _rebellion_failed(res: Resolution, player: int, attacker, key: AttackKey, sl
 def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     """ワザの要素のあと: きぜつの判定の窓（同時のきぜつの原因・任意の効果の候補）→ 決定か、きぜつの処理。"""
     state = res.state
+    settle_scram(res)  # v0.61: ［ずらかる］（ワザの要素のあとに残りHPが「10」になったポケモン。ワザの要素を処理しない経路（こんらん・手順 4 の失敗）も通る）
     res.trace.record(WindowOpened(Window.KO_CHECK, None))
     check_simultaneous(res)
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
-    if bonded and offers:
-        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
+    beams = knock_out_power_offers(res)  # v0.61: ［ファイナルビーム］
+    if bonded and (offers or beams):
+        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
+    if len(offers) + len(beams) > 1:
+        # v0.61: こんじょうと［ファイナルビーム］・2 匹の［ファイナルビーム］など、きぜつするときに使える特殊能力の候補が 2 つ以上（G40 と同じ問い）
+        raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
+    scram_restored_question(res, knocked(res))  # v0.61: きぜつの処理でかがくへんかガスの発生源が場をはなれ、［ずらかる］の力がもどる（SC2）
     # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
     # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
     capture_post_knockout(res, knocked(res), record=False)
@@ -302,6 +309,18 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         owner, pokemon, instance = offers[0]
         cont = codec.KoCheckContinuation(use, (instance.power_key.card_id, instance.power_key.power_index))
         codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id)
+        res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
+        return
+    if beams:
+        # v0.61: ［ファイナルビーム］を使うかを持ち主に聞く（こんじょうと同じ続きの情報。context の "source" は「きぜつ」させたポケモン。使うを選ぶと止める場合は
+        # ``unresolved_choices``。コインは答えのあと）
+        owner, pokemon, instance, source = beams[0]
+        cont = codec.KoCheckContinuation(use, (instance.power_key.card_id, instance.power_key.power_index))
+        extra: tuple = (("source", source),)
+        problem = knock_out_beam_problem(res, owner, pokemon, instance, source)
+        if problem is not None:
+            extra += (("unresolved_choices", (pokemon.pokemon_id,)), ("unresolved_code", problem[0]), ("unresolved_reason", problem[1]))
+        codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id, kind=KNOCK_OUT_POWER, extra=extra)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
     _knock_out_after_attack(res)
@@ -445,11 +464,12 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool, converted=N
     v0.7 の二重の確かめ）。
 
     渡された状態（コマンドの入口が作った複製）を変える。"""
-    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
     state.phase = Phase.MAIN
     if converted is not None:
         _knock_out_to_energy(res, converted)
         return
+    _settle_outside_attack(res)  # v0.61: ［ずらかる］（ダメージスワップ・のろい・こっそりかみつく・「ばける」で残りHPが「10」になった）
     gone = knocked(res)
     if gone and not knock_outs:
         return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
@@ -500,10 +520,13 @@ def after_energy(state: GameState, ctx: Context) -> None:
       こんじょう（相手のワザのダメージで「きぜつ」するとき）・みちづれ（ワザのあと）は候補にしない。v0.42 の ``after_power`` と同じ形
     - いなければ何もしない
     渡された状態（コマンドの入口が作った複製）を変える。"""
-    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
     state.phase = Phase.MAIN
+    _settle_outside_attack(res)  # v0.61: ［ずらかる］（レインボーエネルギーの 10 ダメージで残りHPが「10」になった）
     gone = knocked(res)
     if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())  # v0.61: ［ずらかる］でバトル場が空いた
         return
     if len(gone) > 1:
         raise RuntimeError(f"エネルギーをつけたあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回でダメージを与えるのは 1 匹。エンジンの不具合）")
@@ -532,12 +555,15 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     - どちらもなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
 
     渡された状態（コマンドの入口が作った複製）を変える。"""
-    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
     state.phase = Phase.MAIN
+    _settle_outside_attack(res)  # v0.61: ［ずらかる］（バトル場は穴だらけ!の 10 ダメージで残りHPが「10」になった）
     # v0.57: 錯乱ジムで相手プレイヤーがかわりに使った退化スプレーは、使ったプレイヤー（番でないプレイヤー）のポケモンを退化させるので、両方のプレイヤーを見る（今の番に
     # 退化したほかのポケモンは、ワザのあとのきぜつの処理で残らない）
+    # v0.61: トレーナーのダメージ（バトル場は穴だらけ!。このコマンドのログ ``trainer_damage``）で HP 以上になったポケモンも
+    damaged = _trainer_damaged(state)
     gone = [(player, pokemon) for player in PLAYERS for pokemon in state.players[player].in_play()
-            if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
+            if (pokemon.devolved_turn == state.turn_number or pokemon.pokemon_id in damaged) and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
         # v0.56: 効果でサイドを取ったトレーナー（マチスの交渉）のあと、サイドが 0 枚のプレイヤーがいれば、勝ち負けの判定（p.311 の表。両方が 0 枚でも同じ表）
         if any(state.players[p].active is None or not state.players[p].prizes for p in PLAYERS):
@@ -546,10 +572,96 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     if len(gone) > 1:
         raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
     try:
+        scram_restored_question(res, gone)  # v0.61
         candidates = capture_post_knockout(res, gone)
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
     _after_knockouts(res, _knock_out_all(state, gone, timing="trainer"), CONTINUE_TURN, candidates)
+
+
+def _trainer_damaged(state: GameState) -> set[int]:
+    """v0.61: 今のトレーナーの使用（最後のログ ``play_trainer`` のあと）で、トレーナーのダメージ（ログ ``trainer_damage``）を受けた場のポケモンの番号。"""
+    found: set[int] = set()
+    for event in reversed(state.log):
+        if event["kind"] == "play_trainer":
+            break
+        if event["kind"] == "trainer_damage":
+            found.add(event["pokemon_id"])
+    return found
+
+
+def _settle_outside_attack(res: Resolution) -> None:
+    """v0.61: ワザの外（特殊能力・エネルギー・トレーナー・にげるのあと）の［ずらかる］の決まった時点。止めるなら ``UnsupportedError``（コマンドを受け付けない）。"""
+    try:
+        settle_scram(res)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+
+
+def trainer_damage_stop(before: GameState, after: GameState) -> tuple[str, str] | None:
+    """v0.61: トレーナーのダメージ（バトル場は穴だらけ!）を与えた結果の状態 ``after``（複製）で、使い終えたあとの処理（［ずらかる］・きぜつの写し・SC2・受け付けられない状態）が
+    止まるなら (コード, 理由の文)。コインの前に、どちらの対戦ポケモンが受ける結果も確かめるのに使う（コインの結果で受け付けるかが変わらない）。状態 ``before`` は変えない。"""
+    from ..effects import state_stop_after
+
+    trial = after.clone()
+    res = Resolution(trial, dormant=dormant_scram(before))
+    try:
+        settle_scram(res)
+        damaged = _trainer_damaged(trial)
+        gone = [(player, pokemon) for player in PLAYERS for pokemon in trial.players[player].in_play()
+                if pokemon.pokemon_id in damaged and pokemon.damage >= hp_of(trial, pokemon)]
+        scram_restored_question(res, gone)
+        capture_post_knockout(res, gone, record=False)
+    except OpenQuestion as question:
+        error = to_error(question.key, question.detail, question.error)
+        return error.code, error.message
+    except UnsupportedError as error:
+        return error.code, error.message
+    return state_stop_after(before, trial)
+
+
+def after_retreat(state: GameState, ctx: Context, player: int, retreated) -> None:
+    """v0.61（docs/reactive-powers-trainer-damage-v0.61.md 3 章）: 「にげる」が成り立ったあと（入れ替えのあと）の、相手の［おとしあな］。
+
+    はたらいている［おとしあな］（``effects.retreat_trap_powers``。相手の場の並びの順）ごとに、にげたプレイヤーがコインを 1 枚投げ（``source="power"``・ログ ``sinkhole_check``）、
+    「うら」ならにげたポケモン（ベンチにもどった）に特殊能力のダメージ（弱点・抵抗力・ワザのダメージを変える効果・「とうめい」を当てはめない。受けるポケモンの受けるダメージを変える
+    常にはたらく特殊能力は当てはめる。ログ ``sinkhole_damage``）。すべて処理してから［ずらかる］を確かめ（SC1: 2 つの［おとしあな］の途中で「10」を通る）、HP 以上になった
+    ポケモンをきぜつの処理（ログ ``knock_out`` の ``timing`` は ``"retreat"``）→ サイド → 勝ち負け → ふしちょう → バトル場に出す → 同じ番（``CONTINUE_TURN``）。
+
+    コインの前に止める場合（SH1・SC1）は ``engine._retreat`` が確かめ終えている。渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace, dormant=dormant_scram(ctx.original))
+    traps = retreat_trap_powers(state, player)
+    if not traps:
+        return
+    frame = res.open_frame(FrameKind.POWER_DAMAGE, parent=None, player=1 - player, source_pid=traps[0][1].pokemon_id, attack_key=None)
+    for owner, holder, slot in traps:
+        key = str(slot.key)
+        flips = flip_coins(state, player, 1, source="power", effect=key, card=holder.card, pokemon_id=holder.pokemon_id)
+        tails = flips.results[0] is CoinSide.TAILS
+        state.add_event("sinkhole_check", player=owner, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=key, flipper=player,
+                        target_pokemon_id=retreated.pokemon_id, result=flips.results[0].value)
+        if not tails or retreated.damage >= hp_of(state, retreated):
+            continue  # 「うら」でない・もう HP 以上（処理の対象がない。p.309）
+        amount, applied = received_power_damage(state, player, retreated, holder, slot.effect.amount)
+        before = retreated.damage
+        retreated.damage += amount
+        extra = {} if not applied else {"amount_before": slot.effect.amount, "received_modifiers": received_modifiers_log(applied)}
+        state.add_event("sinkhole_damage", player=owner, pokemon=holder.card, pokemon_id=holder.pokemon_id, power=key, target_player=player,
+                        target_pokemon=retreated.card, target_pokemon_id=retreated.pokemon_id, amount=amount, total_damage=retreated.damage,
+                        knocked_out=retreated.damage >= hp_of(state, retreated), **extra)
+        remove_on_damage(state, player, retreated, amount)
+        track_ko(res, frame, retreated, before)
+    state.phase = Phase.MAIN
+    _settle_outside_attack(res)
+    gone = knocked(res)
+    if not gone:
+        return
+    try:
+        scram_restored_question(res, gone)
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="retreat"), CONTINUE_TURN, candidates)
 
 
 def after_stadium(state: GameState, ctx: Context) -> None:
@@ -591,7 +703,20 @@ def _pokemon_check(res: Resolution) -> None:
     knocked = PR.pokemon_check_poison(state)  # 始まり・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
     if knocked is None:
         return
+    try:
+        # v0.61: ［ずらかる］（どくのダメージで残りHPが「10」になった）・きぜつでかがくへんかガスの発生源が場をはなれて［ずらかる］の力がもどる（SC2）。ポケモンチェックは
+        # どちらの番の操作でもなく、どの操作でも番は終わるので、決められないなら対戦を止める（v0.48 の MH1 と同じ形）
+        settle_scram(res)
+        scram_restored_question(res, knocked)
+    except OpenQuestion as question:
+        error = to_error(question.key, question.detail, question.error)
+        PR.halt(state, PR.Halt(code=error.code, message=f"ポケモンチェックで: {error.message}",
+                               references=("GR-2000-P323-POKEMON-CHECK", "docs/reactive-powers-trainer-damage-v0.61.md")))
+        return
     if not knocked:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), NEXT_TURN, ())  # v0.61: ［ずらかる］でバトル場が空いた（交代のあと、ポケモンチェックの 3・4 → 次の番）
+            return
         PR.pokemon_check_sleep_and_paralysis(state)
         return
     candidates = capture_post_knockout(res, knocked)
@@ -674,6 +799,10 @@ def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation,
     _, pokemon = state.find_pokemon(pokemon_id)
     card_id, power_index = cont.power
     key = PowerKey(card_id, power_index)
+    if decision.kind == KNOCK_OUT_POWER:
+        _resume_knock_out_power(res, decision, pokemon, key, choices)  # v0.61: ［ファイナルビーム］
+        _knock_out_after_attack(res)
+        return
     implementation, effect_definition = _offer_effect(res, state.cards[pokemon.card].card_id, power_index)
     base = {"player": owner, "pokemon": pokemon.card, "pokemon_id": pokemon_id, "power": str(key)}
     if not choices:
@@ -682,6 +811,41 @@ def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation,
         state.add_event("ko_prevention_declared", **base, total_damage=pokemon.damage, hp=max_hp(state, pokemon))
         OFFER_ACTIONS[effect_definition.action](state, owner, pokemon, key, implementation)
     _knock_out_after_attack(res)
+
+
+def _resume_knock_out_power(res: Resolution, decision, pokemon, key: PowerKey, choices) -> None:
+    """v0.61（docs/reactive-powers-trainer-damage-v0.61.md 2 章）: ［ファイナルビーム］の答えのあと。使わないならログ ``knock_out_power_declined``。使うならログ
+    ``knock_out_power_declared`` → 持ち主がコインを 1 枚投げる（``source="power"``）→「おもて」なら、「きぜつ」させたポケモン（決定の ``source``）に、このポケモンについている
+    「水」エネルギーの数 × 20 の特殊能力のダメージ（受けるポケモンの受けるダメージを変える常にはたらく特殊能力は当てはめる。ログ ``knock_out_power_damage``）、「うら」なら
+    ログ ``knock_out_power_failed``。そのあと［ずらかる］を確かめる（呼ぶ側がきぜつの処理に進む）。数えるのはきぜつの処理の前（このポケモンはまだ場にいる）。"""
+    state = res.state
+    owner = decision.player
+    effect = state.effects.power_effect(key.card_id, state.definitions[key.card_id].powers[key.power_index])
+    source_id = decision.context_value("source")
+    base = {"player": owner, "pokemon": pokemon.card, "pokemon_id": pokemon.pokemon_id, "power": str(key)}
+    if not choices:
+        state.add_event("knock_out_power_declined", **base, total_damage=pokemon.damage)
+        return
+    state.add_event("knock_out_power_declared", **base, total_damage=pokemon.damage, source_pokemon_id=source_id)
+    located = state.find_pokemon(source_id)
+    if located is None:
+        raise RuntimeError(f"［ファイナルビーム］の相手のポケモン {source_id} が場にいない（決定を待つ間に場は変わらない。エンジンの不具合）")
+    source_owner, source = located
+    flips = flip_coins(state, owner, 1, source="power", effect=str(key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    result = flips.results[0]
+    if result is not CoinSide.HEADS:
+        state.add_event("knock_out_power_failed", **base, result=result.value)
+        return
+    count = effect.energy_count(state, pokemon)
+    printed = count * effect.per
+    amount, applied = received_power_damage(state, source_owner, source, pokemon, printed)
+    source.damage += amount
+    extra = {} if not applied else {"amount_before": printed, "received_modifiers": received_modifiers_log(applied)}
+    state.add_event("knock_out_power_damage", **base, result=result.value, energy=count, amount=amount, target_player=source_owner,
+                    target_pokemon=source.card, target_pokemon_id=source.pokemon_id, total_damage=source.damage,
+                    knocked_out=source.damage >= hp_of(state, source), **extra)
+    remove_on_damage(state, source_owner, source, amount)  # 「かげぶんしん」はダメージを受けたら消える
+    settle_scram(res)
 
 
 def _resume_post_knockout(res: Resolution, decision, cont: codec.AftermathContinuation, choices) -> None:

@@ -24,6 +24,7 @@ from kyuura_engine import (
 from kyuura_engine.effects import MAX_HP_DROP_CODE, PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, max_hp, retreat_cost, trainer_use_blockers
 from kyuura_engine.continuous import goop_gas_effects  # v0.59
 from kyuura_engine.effects import GOOP_GAS_SCOPE_CODE, blaine_effects, energy_attach_block, energy_unit_count  # v0.59
+from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -89,6 +90,21 @@ def special_energy_in_game(state) -> bool:
 V059_ATTACH_CODES = ("ENERGY_ATTACH_PREVENTED", "UNRESOLVED_BLAINE_SECOND_ATTACH")
 
 
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・［ずらかる］の力がもどる時（SC2）・
+# バトル場は穴だらけ!のダメージの変更（TD1）
+V061_CODES = ("UNRESOLVED_SINKHOLE_TIMING", "UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED", "UNRESOLVED_TRAINER_DAMAGE_REDUCTION")
+
+
+def v061_stop_expected(state, command, code) -> bool:
+    """v0.61: 場から確かめる。SH1 は「にげる」で、相手の場にはたらく［おとしあな］がある。SC1・SC2 は場に［ずらかる］を持つポケモンがいる。TD1 はバトル場は
+    穴だらけ!を使う。"""
+    if code == "UNRESOLVED_SINKHOLE_TIMING":
+        return isinstance(command, Retreat) and bool(retreat_trap_powers(state, command.player))
+    if code in ("UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED"):
+        return bool(scram_slots(state))
+    return isinstance(command, PlayTrainer) and state.cards[command.card].card_id == "PMCG4-055"
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -141,6 +157,16 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     card = getattr(command, "card", None)
                     turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
                                    else ("max_hp_drop_command", command))
+                    continue
+                if error.code in V061_CODES and v061_stop_expected(state, command, error.code):
+                    # v0.61: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・力がもどる時（SC2）・バトル場は穴だらけ!のダメージの変更（TD1）。場から確かめる
+                    # （［おとしあな］・［ずらかる］を持つポケモンが場にいる、バトル場は穴だらけ!を使う）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("attack_index", command.attack_index) if kind == "UseAttack" else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
                     continue
                 if error.code == MAX_HP_DROP_CODE and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower)):
                     # v0.48: 最大HPが、ダメージ以外の原因（「きょだいか」の効果が消える・かがくへんかガスで［ガスのからだ］が消える）でのっているダメージ以下に

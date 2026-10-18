@@ -60,6 +60,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     DECISION_PHASES,
     ENTRY_POWER,
+    KNOCK_OUT_POWER,
     KO_PREVENTION,
     POST_KNOCKOUT_POWER,
     PROMOTE_ACTIVE,
@@ -128,6 +129,18 @@ from .effects import (
     max_hp_drop_error,
     max_hp_drops,
     type_shift_power,
+    SCRAM_TIMING_CODE,
+    SCRAM_TIMING_REASON,
+    SINKHOLE_TIMING_CODE,
+    SINKHOLE_TIMING_REASON,
+    BeamOnKnockOut,
+    received_power_damage,
+    retreat_trap_powers,
+    scram_restored,
+    scram_restored_error,
+    scram_slots,
+    scram_unsettled,
+    scram_working,
 )
 from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
@@ -413,6 +426,15 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
     drops = max_hp_drops(state, new)
     if drops:
         raise max_hp_drop_error(drops, during_attack=new.decision is not None and new.decision.resume == "attack")
+    if new.phase not in (Phase.HALTED, Phase.GAME_OVER):
+        # v0.61（SC2。docs/reactive-powers-trainer-damage-v0.61.md 4 章）: このコマンドで、残りHPが「10」のまま消えていた［ずらかる］の力がもどった（なんでもなおし・ポケモン
+        # いれかえ・かがくへんかガスのポケモンが場をはなれたなど）なら、このコマンドを受け付けない。コインの結果で変わるもの（にげる・ポケモンチェック・ワザ）は、それぞれの処理が先に止める
+        restored = scram_restored(state, new)
+        if restored:
+            raise scram_restored_error(restored)
+        # 残りHPが「10」で力がはたらく［ずらかる］が残っていれば、決まった時点で確かめていない経路（エンジンの不具合）。ワザの途中の決定を待つ間は、決定のあとの時点で確かめる
+        if not (new.decision is not None and new.decision.resume == "attack") and scram_unsettled(new):
+            raise RuntimeError(f"残りHPが「10」で［ずらかる］の力がはたらくポケモン {scram_unsettled(new)} が残っている（確かめる時点がない経路。エンジンの不具合）")
     if new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision)):
         # v0.49（docs 7 章）: トレーナーの効果の途中の決定（入れ替える・進化させるトレーナーなど）で、どの答えの続きも受け付けられない状態（決められない姿・MH1）
         # になるなら、このコマンド（使う・前の段階の答え）を受け付けない。答えのない決定を、使用中のトレーナーを残したまま止めない
@@ -453,7 +475,7 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
                                                                                               context.catalog if context else None))
         except (IllegalActionError, UnsupportedError):
             continue
-        if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial):
+        if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial):
             return True
     return False
 
@@ -487,6 +509,9 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
             stop = _fresh_form_problem(before, trial)
             if stop is None and max_hp_drops(before, trial):
                 error = max_hp_drop_error(max_hp_drops(before, trial))
+                stop = (error.code, error.message)
+            if stop is None and scram_restored(before, trial):
+                error = scram_restored_error(scram_restored(before, trial))  # v0.61（SC2）
                 stop = (error.code, error.message)
             if stop is not None:
                 found.append(stop)
@@ -776,7 +801,7 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
         resolution.after_energy(state, context)  # v0.58: レインボーエネルギーの 10 ダメージで HP 以上になったら、きぜつの処理
 
 
-def _retreat(state: GameState, cmd: Retreat) -> None:
+def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> None:
     """にげる（pp.310-311）。1 番に何度でも。控えがいなければ宣言できない。
 
     にげるエネルギーの数ぶん、そのポケモンについているエネルギーを選んでトラッシュし、控えと入れ替える。
@@ -866,6 +891,9 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     # ベトベトンの特殊状態が消えてかがくへんかガスがはたらく）で、最大HPがのっているダメージ以下に下がる場のポケモンがいれば、エネルギーのトラッシュ・こんらんの
     # コインの前に止める（コインの結果で受け付けるかが変わらないように、失敗と成功のどちらの結果も複製の上で確かめる）
     _retreat_max_hp_drop_check(state, cmd.player, discard, index)
+    # v0.61（docs/reactive-powers-trainer-damage-v0.61.md 3 章）: 相手の［おとしあな］。こんらん状態の「にげる」と、入れ替えの前か後かで受けるダメージが変わる場合は SH1、
+    # 2 つ以上の［おとしあな］の途中で［ずらかる］の残りHPが「10」を通る場合は SC1。どれもエネルギーのトラッシュ・コインの前に止める
+    _sinkhole_check(state, cmd.player, active, index)
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
@@ -891,6 +919,40 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
     remove_persistent_effects(state, cmd.player, active, RETREAT)
     mark_returned_to_bench(active)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+    resolution.after_retreat(state, context, cmd.player, active)  # v0.61: 相手の［おとしあな］（入れ替えのあと。きぜつ・交代・同じ番）
+
+
+def _sinkhole_check(state: GameState, player: int, active: PokemonInPlay, index: int) -> None:
+    """v0.61: 「にげる」の前に、相手の［おとしあな］で決められない場合を確かめる（状態・乱数・ログを変えない）。
+
+    - SH1: はたらく［おとしあな］があり、にげるポケモンがこんらん状態（「にげる」に失敗したときにはたらくか決まらない）、または受けるダメージ（受けるダメージを変える常にはたらく
+      特殊能力を当てはめた量）が、入れ替えの前（バトル場）と後（ベンチ）で違う
+    - SC1: 2 つ以上の［おとしあな］で、入れ替えのあとに力がはたらく［ずらかる］を持つにげるポケモンの残りHPが、途中で「10」を通る（すべて投げてからか、1 つずつかで結果が変わる）"""
+    traps = retreat_trap_powers(state, player)
+    if not traps:
+        return
+    if active.conditions.confused:
+        raise UnsupportedError(SINKHOLE_TIMING_CODE, f"こんらん状態のポケモン {active.pokemon_id} の「にげる」: {SINKHOLE_TIMING_REASON}")
+    trial = state.clone()
+    tp = trial.players[player]
+    moved = tp.active
+    tp.active, tp.bench[index] = tp.bench[index], moved
+    clear_special_conditions(trial, player, moved, RETREAT)
+    remove_persistent_effects(trial, player, moved, RETREAT)
+    for owner, holder, slot in traps:
+        before, _ = received_power_damage(state, player, active, holder, slot.effect.amount)
+        trial_holder = trial.find_pokemon(holder.pokemon_id)[1]
+        after, _ = received_power_damage(trial, player, moved, trial_holder, slot.effect.amount)
+        if before != after:
+            raise UnsupportedError(SINKHOLE_TIMING_CODE, f"ポケモン {active.pokemon_id} の受けるダメージ（バトル場 {before}・ベンチ {after}）: {SINKHOLE_TIMING_REASON}")
+    if len(traps) > 1:
+        amount = traps[0][2].effect.amount
+        for _, pokemon, slot in scram_slots(trial):
+            if pokemon is not moved or not scram_working(trial, pokemon, slot):
+                continue
+            remaining = max_hp(trial, pokemon) - pokemon.damage
+            if any(remaining - amount * k == slot.effect.remaining_hp for k in range(1, len(traps))):
+                raise UnsupportedError(SCRAM_TIMING_CODE, f"ポケモン {active.pokemon_id}・［おとしあな］{len(traps)} つ: {SCRAM_TIMING_REASON}")
 
 
 def _retreat_max_hp_drop_check(state: GameState, player: int, discard: tuple[int, ...], index: int) -> None:
@@ -908,6 +970,10 @@ def _retreat_max_hp_drop_check(state: GameState, player: int, discard: tuple[int
         clear_special_conditions(trial, player, active, RETREAT)
         remove_persistent_effects(trial, player, active, RETREAT)
         drops = max_hp_drops(state, trial)
+        # v0.61（SC2）: ベンチにもどって特殊状態が消え、残りHPが「10」で消えていた［ずらかる］の力がもどる（こんらんのコインの前に止める）
+        restored = scram_restored(state, trial)
+        if restored and not drops:
+            raise scram_restored_error(restored)
     if drops:
         raise max_hp_drop_error(drops)
 
@@ -1471,7 +1537,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     ReportJankenResult: _engine(_report_janken_result),
     PlayBasicToBench: _engine(_play_basic_to_bench),
     AttachEnergy: _attach_energy,  # v0.58: レインボーエネルギーの 10 ダメージのあとのきぜつに解決の設定を使う
-    Retreat: _engine(_retreat),
+    Retreat: _retreat,  # v0.61: 相手の［おとしあな］のあとのきぜつ・交代に解決の設定を使う
     UseAttack: resolution.handle,  # ワザ（解決の基盤。v0.16b）
     EndTurn: resolution.handle,  # 番の終わり（解決の基盤。v0.16b）
     TakePrize: _answer_decision,
@@ -2752,6 +2818,8 @@ def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPla
         return False
     if player == d.player and pokemon.pokemon_id in d.options:
         return True
+    if d.kind == KNOCK_OUT_POWER:
+        return True  # v0.61: ［ファイナルビーム］の決定を待つ間は、同じワザで HP 以上になったほかのポケモンも残る（答えのあとのきぜつの処理でまとめて処理する）
     attack = d.context_value("attack")
     if not isinstance(attack, tuple) or len(attack) != 4 or (attack[0], attack[1]) != (player, pokemon.pokemon_id):
         return False
@@ -2763,6 +2831,38 @@ def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPla
         ):
             return event.get("total_damage") == pokemon.damage
     return False
+
+
+def _knock_out_power_decision_problems(state: GameState, d) -> list[str]:
+    """［ファイナルビーム］を使うかの決定（v0.61。``KNOCK_OUT_POWER``・再開先 ``"knock_out"``）の整合性: 選ぶ数（0〜1）・選べるもの（ポケモン 1 匹）、対象が決定するプレイヤーの
+    HP 以上の場のポケモンで、今持つ特殊能力の ``"power"`` が［ファイナルビーム］（``BeamOnKnockOut``）、ねむり・マヒ・こんらんでなく、力が消えていない・使うことができない状態で
+    ない。``"source"``（「きぜつ」させたポケモン）が相手の場にいる。今の番にワザの宣言がある。"""
+    problems = []
+    if d.resume != "knock_out":
+        return [f"決定 {d.kind} の再開先 {d.resume!r} が合わない（knock_out_power・knock_out の組）"]
+    if (d.min_choices, d.max_choices) != (0, 1) or len(d.options) != 1:
+        return [f"［ファイナルビーム］の決定の選ぶ数 {d.min_choices}〜{d.max_choices}・選べるもの {d.options} が正しくない（0〜1 個・1 匹）"]
+    power = d.context_value("power")
+    source = d.context_value("source")
+    found = state.find_pokemon(d.options[0])
+    if found is None or found[0] != d.player:
+        return [f"［ファイナルビーム］の決定の対象 {d.options} が、決定するプレイヤー {d.player} の場のポケモンではない"]
+    pokemon = found[1]
+    slot = next((slot for slot in powers_of(state, pokemon) if isinstance(power, tuple) and slot.key == PowerKey(*power)), None)
+    if slot is None or not isinstance(slot.effect, BeamOnKnockOut):
+        return [f"［ファイナルビーム］の決定の特殊能力 {power!r} が、ポケモン {pokemon.pokemon_id} の今持つ［ファイナルビーム］ではない"]
+    if pokemon.damage < max_hp(state, pokemon):
+        problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
+    if not slot.effect.is_able(pokemon):
+        problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない）")
+    if power_suppressed(state, slot.power) or powers_use_prevented(state, pokemon) is not None:
+        problems.append(f"［ファイナルビーム］の決定の対象のポケモン {pokemon.pokemon_id} の特殊能力が消えている・使うことができない")
+    located = state.find_pokemon(source) if isinstance(source, int) else None
+    if located is None or located[0] == d.player:
+        problems.append(f"［ファイナルビーム］の決定の「きぜつ」させたポケモン {source!r} が、相手の場にいない")
+    if not any(event["kind"] == "attack" for event in _events_since_turn_start(state)):
+        problems.append("［ファイナルビーム］の決定の前に、今の番のワザの宣言がない")
+    return problems
 
 
 def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
@@ -3014,7 +3114,16 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
     v0.50: きぜつさせうるトレーナー（``TrainerEffect.may_knock_out``。退化スプレー）を使ったあとの決定も同じ続き。今の番の最後の宣言がそのトレーナーの使用
     （``play_trainer``）で、そのあとに ``timing`` が ``"trainer"`` のきぜつがある。"""
     last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "discard_from_play", "play_trainer", "stadium_used",
-                                                                              "attach_energy")), None)
+                                                                              "attach_energy", "retreat")), None)
+    if last is not None and last["kind"] != "attack":
+        since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
+        if any(e["kind"] == "scram" for e in since):
+            return []  # v0.61: その操作のあとに［ずらかる］でバトル場のポケモンが山札にもどった（きぜつではない）あとの、バトル場に出す決定
+        if last["kind"] == "retreat":
+            # v0.61: 相手の［おとしあな］のダメージで、にげたポケモンがきぜつした（timing retreat）あとの、サイド・交代の決定
+            if not any(e["kind"] == "knock_out" and e.get("timing") == "retreat" for e in since):
+                return ["「にげる」のあとの決定（続き continue_turn）の前に、［おとしあな］のダメージによるきぜつ（timing retreat）・［ずらかる］がない"]
+            return []
     if last is not None and last["kind"] == "attach_energy":
         # v0.58: 手札からつけたレインボーエネルギーの 10 ダメージできぜつした（timing energy）あとの、サイド・交代の決定
         since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
@@ -3407,7 +3516,9 @@ def _decision_problems(state: GameState) -> list[str]:
             problems.append(f"バトル場に出す決定の選べるもの {d.options} が、ベンチのポケモンと合わない")
     if d.resume == "attack":
         problems.extend(_attack_decision_problems(state, d))
-    if d.kind == KO_PREVENTION or d.resume == "knock_out":
+    if d.kind == KNOCK_OUT_POWER:
+        problems.extend(_knock_out_power_decision_problems(state, d))  # v0.61
+    elif d.kind == KO_PREVENTION or d.resume == "knock_out":
         problems.extend(_ko_prevention_decision_problems(state, d))  # v0.11
     if d.kind == POST_KNOCKOUT_POWER or d.resume == "post_knockout":
         problems.extend(_post_knockout_decision_problems(state, d))  # v0.12
@@ -3424,7 +3535,8 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.57: トキワシティジムのとりのぞく機会（EVOLUTION_HEAL。VG1）・錯乱ジムで借りるかの問い（ACCEPT_REQUEST の続きの情報 chaos。CH1 など）も、選ばない（0 個）が
         # いつも答えになる（借りない・とりのぞかない）
         # v0.58: ナツメのサイキックコントロールで使うカード（USE_DISCARD_TRAINER）も、使わない（0 個。「使ってよい」）がいつも答えになる（CH1 など選ぶと止めるカード）
-        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+        # v0.61: ［ファイナルビーム］の使う機会（KNOCK_OUT_POWER。Z9・C18・RB1・BZ2 など使うと止める場合）も、使わない（0 個）がいつも答えになる
+        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")

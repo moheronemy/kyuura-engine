@@ -130,6 +130,8 @@ V0_58_WITH_TEXT = [AttackKey("PMCG5-052", 1), AttackKey("PMCG5-053", 0)]  # v0.5
 V0_59_WITH_TEXT = [AttackKey("PMCG1-040", 0), AttackKey("PMCG5-030", 0), AttackKey("PMCG4-008", 0), AttackKey("PMCG4-008", 1)]
 # v0.60: サンダー（化石の秘密）のサンダーストーム・R団のストライクのかげぶんしん・タケシのサンドパンのスピードスター・とげボール（kyuura の印刷の文面）
 V0_60_WITH_TEXT = [AttackKey("PMCG3-026", 0), AttackKey("PMCG5-016", 0), AttackKey("PMCG5-050", 0), AttackKey("PMCG5-050", 1)]
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）: わるいギャラドスの「れいとうビーム」・わるいダグトリオの「つきおとす」・タケシのオコリザルの「おおあばれ」
+V0_61_WITH_TEXT = [AttackKey("PMCG4-025", 0), AttackKey("PMCG4-043", 0), AttackKey("PMCG5-051", 0)]
 
 
 class RecordingEffect(AttackEffect):
@@ -281,7 +283,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -436,7 +438,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   docs/energy-control-power-suppression-v0.59.md）
         # + サンダー（化石の秘密）の「サンダーストーム」・R団のストライクの「かげぶんしん」「こうそくカマ」・カスミのギャラドスの「ハイドロクラッシュ」・タケシのサンドパンの
         #   「スピードスター」「とげボール」（v0.60。docs/coins-defense-rebellion-v0.60.md）
-        self.assertEqual(len(keys), 571)
+        # + わるいギャラドスの「れいとうビーム」・わるいダグトリオの「つきおとす」・タケシのオコリザルの「おおあばれ」（v0.61。docs/reactive-powers-trainer-damage-v0.61.md）
+        self.assertEqual(len(keys), 574)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -464,13 +467,17 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                   PowerKey("PMCG3-015", 0), PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0),
                                   PowerKey("PMCG3-035", 0), PowerKey("PMCG3-041", 0), PowerKey("PMCG3-042", 0), PowerKey("PMCG3-043", 0),
                                   PowerKey("PMCG4-006", 0), PowerKey("PMCG4-007", 0), PowerKey("PMCG4-009", 0), PowerKey("PMCG4-010", 0),
-                                  PowerKey("PMCG4-012", 0), PowerKey("PMCG4-033", 0),
-                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-041", 0), PowerKey("PMCG4-045", 0),
+                                  PowerKey("PMCG4-012", 0), PowerKey("PMCG4-025", 0), PowerKey("PMCG4-033", 0),  # v0.61: わるいギャラドスの［ファイナルビーム］
+                                  PowerKey("PMCG4-034", 0), PowerKey("PMCG4-036", 0), PowerKey("PMCG4-041", 0),
+                                  PowerKey("PMCG4-043", 0),  # v0.61: わるいダグトリオの［おとしあな］
+                                  PowerKey("PMCG4-045", 0),
                                   PowerKey("PMCG4-052", 0),
                                   PowerKey("PMCG4-053", 0),
                                   PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-019", 0), PowerKey("PMCG5-020", 0),
                                   PowerKey("PMCG5-035", 0),  # v0.60: カスミのギャラドスの［はんこう］
-                                  PowerKey("PMCG5-040", 0), PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
+                                  PowerKey("PMCG5-040", 0),
+                                  PowerKey("PMCG5-051", 0),  # v0.61: タケシのオコリザルの［ずらかる］
+                                  PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
                                   PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
                                   PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
 

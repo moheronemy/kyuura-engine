@@ -234,13 +234,14 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         # v0.47 の常にはたらく特殊能力 3 つ（おみとおし・カブトアーマー・げんしのちから。docs/fossil-hidden-info-v0.47.md）と、v0.48 のナツメのゴースの
         # 「ガスのからだ」（常にはたらく。docs/effective-pokemon-properties-v0.48.md）と、v0.49 のナツメのフーディンの［サイコリンク］・メタモンの［へんしん］
         # （どちらも常にはたらく。docs/virtual-attacks-transformation-v0.49.md）と、v0.60 のカスミのギャラドスの［はんこう］（ワザを使う時に自動的にはたらく。
-        # docs/coins-defense-rebellion-v0.60.md）だけ
+        # docs/coins-defense-rebellion-v0.60.md）と、v0.61 のわるいダグトリオの［おとしあな］（相手が「にげる」時に自動的にはたらく）・タケシのオコリザルの
+        # ［ずらかる］（残りHPが「10」になった時に自動的にはたらく。docs/reactive-powers-trainer-damage-v0.61.md）だけ
         undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared}
         self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0),
                                       PowerKey("PMCG6-033", 0), PowerKey("PMCG5-014", 0),
                                       *(PowerKey(card, 0) for card in ("PMCG2-027", "PMCG5-063", "PMCG6-010", "PMCG4-041", "PMCG2-040", "PMCG4-007",
                                                                        "PMCG4-010", "PMCG2-047", "PMCG3-015", "PMCG3-035", "PMCG3-041", "PMCG6-049",
-                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035"))})
+                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035", "PMCG4-043", "PMCG5-051"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

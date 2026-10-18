@@ -261,7 +261,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_55"], list(V0_55_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 84)  # 40（v0.54）+ 16。v0.56 で 10 枚、v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 85)  # 40（v0.54）+ 16。v0.56 で 10 枚、v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
 
     def test_registration_parameters(self):
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_55_CARDS}
@@ -337,7 +337,7 @@ class RegistrationTest(unittest.TestCase):
                 entry = links["stop_codes"][code]
                 self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
                 self.assertIn({"version": "v0.55", "document": "docs/instant-trainers-v0.55.md", "ruling_id": ruling}, entry["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (123, 125))  # v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (128, 129))  # v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた
 
     def test_observation_tables(self):
         self.assertEqual((OPTION_MEANINGS[TAKE_LOOKED_CARDS], OPTION_MEANINGS[OPPONENT_HAND_TO_DECK], OPTION_MEANINGS[SELECT_COUNTER_COUNT]),

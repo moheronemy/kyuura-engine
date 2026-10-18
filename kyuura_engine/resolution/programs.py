@@ -56,7 +56,8 @@ from ..zones import discard_stadium, look_at_card
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
-from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, track_ko, type_question, weakness_resistance_matters
+from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from ..decisions import KO_PREVENTION
 from .questions import QUESTIONS
 
 if TYPE_CHECKING:
@@ -187,6 +188,8 @@ class AttackRun:
             self.fs.pending.extend(restore_deferred(self.res, self.fs, pending))
         for pid, value in frame.get("guts", ()):
             self.res.ko_prevention_able.setdefault(pid, bool(value))
+        for pid, player, source, attack in frame.get("ko_by", ()):
+            self.res.ko_carried.setdefault(pid, (player, source, bool(attack)))  # v0.61
         # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）。決定の前の宣言で写した値（書いていなければ空。決定をまたいでも今の特殊状態で決め直さない）
         self.res.attack_status = frozenset(carried.get("attack_status", ()))
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
@@ -205,14 +208,25 @@ class AttackRun:
         今の対応カードでは起こらない（自分に効果を与えるワザを持つポケモンに、こんじょうはない。コードのない問い）。"""
         owner = 1 - self.player if owner is None else owner
         for instance in C.in_window(self.state, Window.KO_CHECK, owner, target, self.res.catalog):
-            if instance.definition.timing is not C.Timing.OFFER:
-                continue
+            if instance.definition.timing is not C.Timing.OFFER or instance.definition.decision_kind != KO_PREVENTION:
+                continue  # v0.61: ［ファイナルビーム］は「きぜつ」をまぬがれないので、効果を飛ばしてよい
             if self.res.ko_prevention_able.get(target.pokemon_id) and not C.offer_stopped(self.state, instance, target):
                 if owner == self.player:
                     raise self.res.question("ko_prevention_self_effect", f"ポケモン {target.pokemon_id}")
                 raise self.res.question("ko_prevention_attack_effect", f"ポケモン {target.pokemon_id}",
                                         E.ko_prevention_attack_effect_error(target.pokemon_id, opponent_effect_elements(self.program)))
             break
+
+    def _ko_by(self) -> tuple:
+        """v0.61: HP 以上になった場のポケモンのきぜつの原因 ((番号, 原因の枠のプレイヤー, ダメージを与えたポケモン, ワザの分類か), ...)。"""
+        from .kernel import ko_cause
+
+        found = []
+        for pid in sorted(set(self.res.knocked_by) | set(self.res.ko_carried)):
+            cause = ko_cause(self.res, pid)
+            if cause is not None and self._knocked_pid(pid):
+                found.append((pid, cause[0], cause[1], int(cause[2])))
+        return tuple(found)
 
     def _knocked_pid(self, pid: int) -> bool:
         located = self.state.find_pokemon(pid)
@@ -242,12 +256,16 @@ class AttackRun:
         if self.res.stadium_coin is not None:
             # v0.57: クチバシティジムのコインの結果（(スタジアムカード, 「おもて」なら 1)）。投げていなければ書かない（v0.56 までの決定の形は変えない）
             extra += (("stadium_coin", (self.res.stadium_coin[0], int(self.res.stadium_coin[1]))),)
+        # v0.61: HP 以上になったポケモンのきぜつの原因（［ファイナルビーム］の候補。``kernel.ko_cause``）。HP 以上のポケモンがなければ書かない
+        ko_by = self._ko_by()
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
                 ("fired", self.fs.fired),
                 ("guts", tuple(sorted((pid, int(value)) for pid, value in self.res.ko_prevention_able.items()))),
             )
+            if ko_by:
+                frame += (("ko_by", ko_by),)
             if self.fs.pending:
                 # v0.34: まだ処理していない送る効果（「ダメージを受けたとき」の効果。ダメージの要素がすべて終わったあとに処理する。p.89）。持ち主・
                 # 持つポケモン・効果の定義の名前・受けたダメージだけを運び、再開のときに場の効果から作り直す（``kernel.restore_deferred``）。
@@ -261,8 +279,9 @@ class AttackRun:
             # 「ばける」・［へんしん］からも使える）で、HP 以上になったサカキのカイリキーのきぜつの判定が内部エラーになっていた。HP 以上のポケモンの写しが
             # ないときは v0.48 までと同じ形
             knocked = tuple(sorted((pid, int(value)) for pid, value in self.res.ko_prevention_able.items() if self._knocked_pid(pid)))
-            if knocked:
-                extra += (("frame", (("guts", knocked),)),)
+            frame = ((("guts", knocked),) if knocked else ()) + ((("ko_by", ko_by),) if ko_by else ())
+            if frame:
+                extra += (("frame", frame),)
         # v0.38: ワザを使ったポケモンは枠の番号で指す（ワザの効果で場をはなれたあとの決定でも同じ。キョウのポッポの「でんれい」。場にいれば
         # v0.37 までの ``attacker.pokemon_id`` と同じ値）
         cont = codec.AttackContinuation((self.player, self.fs.frame.source_pid, self.declared.card_id, self.declared.attack_index), kind, extra)
@@ -286,6 +305,8 @@ def run_elements(run: AttackRun, start: int) -> bool:
         if run.failed or index >= len(run.program):
             break
         element = run.program[index]
+        # v0.61: ［ずらかる］を確かめる決まった時点（ダメージの要素のまとまりのあと・ダメージ以外の要素の前とあと。送る効果を処理したあと）
+        boundary = element.phase is not Phase.DAMAGE or (index > 0 and run.program[index - 1].phase is not Phase.DAMAGE)
         if element.phase is Phase.EFFECT:
             if run.fs.pending and any(later.phase is Phase.DAMAGE for later in run.program[index + 1:]):
                 # v0.38: 「ダメージを受けたとき」の効果がはたらいていて、このあとにダメージ以外の効果をはさんでダメージの要素がある（サイドンの「げきとつ」の
@@ -301,6 +322,8 @@ def run_elements(run: AttackRun, start: int) -> bool:
             # 処理する（CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING）ので、コインの前に処理する。v0.40 までは、ここで
             # RuntimeError（内部エラー）になっていた（ねこにこばんをカイリキーの「はんげき」などに使うと止まった。docs/heal-counter-status-v0.41.md 3.5）
             fire_pending(res, run.fs)
+        if boundary and not run.fs.pending:
+            settle_scram(res, rest=run.program[index:])
         res.trace.record(ElementStarted(run.fs.frame.id, index, type(element).__name__, element.phase.value))
         if element.run(run):
             if not res.dry_run:
@@ -310,6 +333,7 @@ def run_elements(run: AttackRun, start: int) -> bool:
                 element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
         index += 1
     fire_pending(res, run.fs)
+    settle_scram(res, rest=())
     return False
 
 
@@ -1446,6 +1470,20 @@ class HeadsBonus:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return run.attack.damage + (self.bonus if flips.results[0] is HEADS else 0)
+
+
+@dataclass(frozen=True)
+class OpponentTailsBonus:
+    """v0.61: 「相手プレイヤーにコインを投げさせ、「うら」なら ``bonus`` ダメージを追加する」（わるいダグトリオの「つきおとす」）。コインはダメージの要素の中で、相手プレイヤーが
+    1 枚投げる（``flipped_by_opponent``。v0.40 の ``TailsOfOpponentBenchCoins`` と同じ投げる人）。基本となるダメージは目安 +（「うら」なら ``bonus``）。受けるポケモンがダメージを
+    受けない状態なら投げるかが決まらない（v0.4b と同じ問い。``Damage.run``）。"""
+
+    bonus: int
+    local_coins: ClassVar[int] = 1
+    flipped_by_opponent: ClassVar[bool] = True
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return run.attack.damage + (self.bonus if flips.results[0] is TAILS else 0)
 
 
 @dataclass(frozen=True)
@@ -3495,14 +3533,27 @@ class DiscardStadium(Element):
     """
 
     phase: ClassVar[Phase] = Phase.EFFECT
+    # v0.61: 場のポケモンによらない要素（ワザを使ったポケモンが［ずらかる］で場をはなれたあとも、時点で結果が変わらない。``kernel.settle_scram``）
+    independent_of_pokemon: ClassVar[bool] = True
 
     def run(self, run: AttackRun) -> bool:
         stadium = run.state.stadium
         if stadium is None:
             run.state.add_event("stadium_discard_none", player=run.player, effect=str(run.key))
             return False
-        discard_stadium(run.state, stadium, reason="attack", by_card=run.attacker().card, effect=str(run.key))
+        # v0.61: ワザを使ったポケモンが［ずらかる］で山札にもどっていても、ワザを使ったカード（ログ ``attack`` の ``pokemon``）を書く
+        located = run.state.find_pokemon(run.fs.frame.source_pid)
+        by_card = located[1].card if located is not None else _declared_attacker_card(run)
+        discard_stadium(run.state, stadium, reason="attack", by_card=by_card, effect=str(run.key))
         return False
+
+
+def _declared_attacker_card(run: AttackRun) -> int:
+    """v0.61: 今のワザを宣言したポケモンのカード（今の番の最後のログ ``attack`` の ``pokemon``）。ワザを使ったポケモンが場をはなれたあとに使う。"""
+    for event in reversed(run.state.log):
+        if event["kind"] == "attack" and event.get("player") == run.player:
+            return event["pokemon"]
+    raise RuntimeError("ワザの宣言のログがない（エンジンの不具合）")
 
 
 # ---------------------------------------------------------------- v0.41（docs/heal-counter-status-v0.41.md）
@@ -5405,6 +5456,9 @@ BUILDERS: dict[type, Any] = {
         BenchDamage(Fixed(e.bench_damage), weakness_resistance=False if e.weakness_resistance_stated else None),
         BenchDamage(Fixed(e.bench_damage), weakness_resistance=False if e.weakness_resistance_stated else None, own=True),
     ),
+    # v0.61（docs/reactive-powers-trainer-damage-v0.61.md）
+    E.OpponentCoinTailsBonusDamage: lambda e: (Damage(OPP, OpponentTailsBonus(e.bonus)),),
+    E.DamageSelfDamageThenDiscardStadium: lambda e: (Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), DiscardStadium()),
     E.DamageIgnoringWeaknessResistance: lambda e: (Damage(OPP, Printed(), weakness_resistance=False),),
     E.DamageThenChosenBenchTargets: lambda e: (Damage(OPP, Printed()), ChosenBenchDamages(Fixed(e.bench_damage), e.max_targets)),
     E.DamageThenSameTypeBenchDamage: lambda e: (

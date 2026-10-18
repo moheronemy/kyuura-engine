@@ -605,6 +605,12 @@
     "PMCG5-035",
     "PMCG5-050"
   ],
+  "pool_v0_61": [
+    "PMCG4-025",
+    "PMCG4-043",
+    "PMCG5-051",
+    "PMCG4-055"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -34495,6 +34501,320 @@
         "series": "リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%89%E3%83%91%E3%83%B3LV.34_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-025",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいギャラドス",
+        "en": "Dark Gyarados"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          130
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイキング",
+          "en": "Magikarp"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ファイナルビーム",
+              "en": "Final Beam"
+            },
+            "text": {
+              "ja": "この力は、このカードが相手のワザによって「きぜつ」する時、1度だけ使える。コインを投げて「おもて」なら、このカードを「きぜつ」させたポケモンに、このカードについている「水」エネルギーの数×20のダメージ。このカードが、「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
+              "en": "When Dark Gyarados is Knocked Out by an attack, flip a coin. If heads, this power does 20 damage for each Water Energy attached to Dark Gyarados to the Pokémon that Knocked Out Dark Gyarados. Apply Weakness and Resistance. This power doesn't work if Dark Gyarados is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れいとうビーム",
+              "en": "Ice Beam"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-025",
+        "pokemontcg": [
+          "base5-8",
+          "base5-25"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-024-warui-gyarados/",
+      "jp_print": {
+        "level": 31,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-024-warui-gyarados/"
+      }
+    },
+    {
+      "id": "PMCG4-043",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいダグトリオ",
+        "en": "Dark Dugtrio"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          51
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ディグダ",
+          "en": "Diglett"
+        },
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おとしあな",
+              "en": "Sinkhole"
+            },
+            "text": {
+              "ja": "相手がにげる時、相手プレイヤーにコインを投げさせ、「うら」ならそのポケモンに(「弱点・抵抗力」に関係なく)20ダメージ。(にげられなくする効果はない)。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": "Whenever your opponent's Active Pokémon retreats, your opponent flips a coin. If tails, this power does 20 damage to that Pokémon. (Don't apply Weakness and Resistance.) This power stops working while Dark Dugtrio is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つきおとす",
+              "en": "Knock Down"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "相手プレイヤーにコインを投げさせ、「うら」なら20ダメージを追加する。",
+              "en": "Your opponent flips a coin. If tails, this attack does 20 damage plus 20 more damage; if heads, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-043",
+        "pokemontcg": [
+          "base5-6",
+          "base5-23"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-039-warui-dugtrio/",
+      "jp_print": {
+        "level": 18,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-039-warui-dugtrio/"
+      }
+    },
+    {
+      "id": "PMCG5-051",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのオコリザル",
+        "en": "Brock's Primeape"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          57
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのマンキー",
+          "en": "Brock's Mankey"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ずらかる",
+              "en": "Scram"
+            },
+            "text": {
+              "ja": "この力は、このカードの残りHPが「10」になった時、必ずはたらく。このカードと、これについているすべてのカードを山札にもどし、その山札をよく切る。ただし、このカードが「ねむり・マヒ・こんらん」状態の時には、この力ははたらかない。",
+              "en": "If Brock's Primeape ever has exactly 10 HP left, shuffle it and all cards attached to it into your deck. This power stops working while Brock's Primeape is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おおあばれ",
+              "en": "Mega Thrash"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "自分にも20ダメージ。場に「スタジアムカード」があれば、それをトラッシュする。",
+              "en": "Brock's Primeape does 20 damage to itself. If there is a Stadium card in play, discard it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-051",
+        "pokemontcg": [
+          "gym2-35"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%AA%E3%82%B3%E3%83%AA%E3%82%B6%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%AA%E3%82%B3%E3%83%AA%E3%82%B6%E3%83%AB_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-055",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "バトル場は穴だらけ!",
+        "en": "Digger"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "rockets_secret_machine"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは交互にコインを投げ、先に「うら」を出したプレイヤーの対戦ポケモンに(「弱点・抵抗力」に関係なく)10ダメージ。(最初にコインを投げるのは、このカードを使ったプレイヤー)",
+          "en": "Flip a coin. If tails, do 10 damage to your Active Pokémon. If heads, your opponent flips a coin. If tails, your opponent does 10 damage to his or her Active Pokémon. If heads, you flip a coin. Keep doing this until a player gets tails."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-055",
+        "pokemontcg": [
+          "base5-75"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-057-battlejyohaanadarake/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-057-battlejyohaanadarake/"
       }
     },
     {

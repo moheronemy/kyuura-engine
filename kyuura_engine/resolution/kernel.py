@@ -53,11 +53,15 @@ from ..effects import (
     weakness_of,
 )
 from ..conditions import confuse
-from ..persistent import effect_attack_card, reduced_damage_to_source, remove_on_damage, tails_damage_guard
+from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION
+from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..zones import return_in_play_to_deck, shuffle_deck
+from .. import effects as E
 from ..state import RETALIATION_FIXED
 
 from . import catalog as C
 from .events import (
+    DamageClass,
     SPAWN_REFUSALS,
     SPAWNS,
     Activated,
@@ -107,7 +111,8 @@ class Resolution:
     """
 
     def __init__(self, state: GameState, *, catalog: C.Catalog = C.DEFAULT_CATALOG, trace: Trace | None = None,
-                 dry_run: bool = False, oracle: Any = None, on_horizon: Callable[[], None] | None = None):
+                 dry_run: bool = False, oracle: Any = None, on_horizon: Callable[[], None] | None = None,
+                 dormant: frozenset[int] | None = None):
         self.state = state
         self.on_horizon = on_horizon
         self.catalog = catalog
@@ -130,6 +135,14 @@ class Resolution:
         # v0.57: このワザでクチバシティジムのコインを投げた結果（(スタジアムカード, 「おもて」か)。投げていなければ None）。ワザの宣言のあとに投げ（``flow._attack_body``）、
         # 決定をまたぐときは続きの情報の ``stadium_coin`` で運ぶ（投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージの要素に 6 段階の +10（``deal_damage``）
         self.stadium_coin: tuple[int, bool] | None = None
+        # v0.61: ［ずらかる］（``effects.ReturnToDeckAtRemainingHp``）。``dormant`` はコマンドの始めに、残りHPが「10」で力が消えていた場のポケモンの番号（SC2 の比べのもと。
+        # 渡さなければ、この解決を作った時点の状態から求める。コマンドの途中で作る解決（特殊能力・トレーナー・にげるのあと）は、コマンドの入口の状態から求めて渡す）。
+        # ``scram_touched`` は、この解決のダメージで、力がはたらいたまま残りHPが「10」になった場のポケモンの番号（ダメージの処理のまとまりの途中で「10」を通ったか。SC1）
+        self.dormant: frozenset[int] = E.dormant_scram(state) if dormant is None else dormant
+        self.scram_touched: set[int] = set()
+        # v0.61: 決定をまたいで運んだ、HP 以上になった場のポケモンのきぜつの原因（番号 → (原因の枠のプレイヤー, ダメージを与えたポケモン, ワザの分類か)）。決定の前の
+        # ``knocked_by`` の枠は残らないので、［ファイナルビーム］の候補はこれで求める（``AttackRun.suspend``・``restore``）
+        self.ko_carried: dict[int, tuple[int, int, bool]] = {}
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -177,11 +190,91 @@ def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> Open
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
-    """ダメージで HP 以上になったら、その枠を記録する（きぜつの原因。4 章）。"""
+    """ダメージで HP 以上になったら、その枠を記録する（きぜつの原因。4 章）。v0.61: 力がはたらいている［ずらかる］のポケモンの残りHPが「10」になったら、それも記録する
+    （``note_scram``。ダメージの処理のまとまりの途中で「10」を通ったかを ``settle_scram`` が見る）。"""
     hp = hp_of(res.state, pokemon)
     if before < hp <= pokemon.damage:
         res.knocked_by[pokemon.pokemon_id] = fs.frame.id
         res.trace.record(KnockedOutRecorded(pokemon.pokemon_id, fs.frame.id))
+    note_scram(res, pokemon)
+
+
+# ---------------------------------------------------------------- ［ずらかる］（v0.61。docs/reactive-powers-trainer-damage-v0.61.md 4 章）
+
+
+def note_scram(res: Resolution, pokemon: PokemonInPlay) -> None:
+    """ダメージ・ダメージカウンターでのっている数が変わった ``pokemon`` が、力がはたらいている［ずらかる］を持ち、残りHPがちょうど「10」なら記録する（v0.61）。"""
+    state = res.state
+    for slot in E.powers_of(state, pokemon):
+        if isinstance(slot.effect, E.ReturnToDeckAtRemainingHp) and E.scram_due(state, pokemon, slot) and E.scram_working(state, pokemon, slot):
+            res.scram_touched.add(pokemon.pokemon_id)
+
+
+def settle_scram(res: Resolution, *, rest: tuple | None = None) -> list[int]:
+    """［ずらかる］を確かめる決まった時点（v0.61）: 残りHPがちょうど「10」で力がはたらいている場のポケモンを、山札にもどす（``fire_scram``）。もどした番号を返す。
+
+    呼ぶ時点: ワザの処理のダメージの要素のまとまりのあと・ダメージ以外の要素のあと（``programs.run_elements``）・きぜつの判定の窓の始め（``flow._finish_attack``）・
+    ［ファイナルビーム］のダメージのあと・特殊能力・エネルギー・トレーナー・にげる・ポケモンチェックのどくのあと。
+
+    - 決まった時点のあいだに残りHPが「10」を通って変わった（「10」になったあと、同じまとまりでさらにダメージを受けた）なら、はたらく時点で結果が変わるので SC1
+    - コマンドの始めに残りHPが「10」で力が消えていて、今もどった（``res.dormant``）なら SC2
+    - ワザの途中（``rest`` がワザの残りの要素）なら、残りの要素がどれもポケモンによらないもの（``independent_of_pokemon``。スタジアムのトラッシュ）でなければ SC1。2 匹以上が
+      同時にもどるなら、山札を切る順番が決まらないので SC1
+    """
+    state = res.state
+    touched, res.scram_touched = res.scram_touched, set()
+    due = []
+    for owner, pokemon, slot in E.scram_slots(state):
+        if not E.scram_due(state, pokemon, slot):
+            if pokemon.pokemon_id in touched:
+                raise res.question("scram_timing", f"ポケモン {pokemon.pokemon_id} の残りHPが「10」を通って変わった")
+            continue
+        if not E.scram_working(state, pokemon, slot):
+            continue
+        if pokemon.pokemon_id in res.dormant:
+            raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}")
+        due.append((owner, pokemon, slot))
+    if not due:
+        return []
+    if len(due) > 1:
+        raise res.question("scram_timing", f"ポケモン {[p.pokemon_id for _, p, _ in due]} が同時にもどる")
+    if rest and not all(getattr(element, "independent_of_pokemon", False) for element in rest):
+        raise res.question("scram_timing", f"ポケモン {due[0][1].pokemon_id}・ワザの残りの要素 {[type(e).__name__ for e in rest]}")
+    for owner, pokemon, slot in due:
+        fire_scram(res, owner, pokemon, slot)
+    return [pokemon.pokemon_id for _, pokemon, _ in due]
+
+
+def fire_scram(res: Resolution, owner: int, pokemon: PokemonInPlay, slot) -> None:
+    """［ずらかる］がはたらく（v0.61）: ログ ``scram`` → 場のポケモンを山札にもどす（``zones.return_in_play_to_deck``。出どころ ``power``）→ 持続する効果を消す → 山札を切る
+    （先読みでは切らない）。きぜつではない。"""
+    state = res.state
+    key = str(slot.key)
+    res.trace.record(Activated(Window.KO_CHECK, "scram", pokemon.pokemon_id, None))
+    state.add_event("scram", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=key, remaining_hp=slot.effect.remaining_hp)
+    return_in_play_to_deck(state, owner, pokemon, power=key)
+    remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+    if not res.dry_run:
+        shuffle_deck(state, owner, power=key)
+
+
+def scram_restored_question(res: Resolution, gone) -> None:
+    """きぜつの処理でかがくへんかガスの発生源が場をはなれると、残りHPが「10」で力が消えていた［ずらかる］の力がもどるなら SC2（v0.61。きぜつの判定の窓で、きぜつの処理の
+    前に確かめる。先読みの範囲の中）。"""
+    state = res.state
+    gone_ids = {pokemon.pokemon_id for _, pokemon in gone}
+    from ..continuous import goop_gas_effects, suppressors_of
+
+    if goop_gas_effects(state):
+        return  # まきちらせ!ベトベトガスはきぜつで消えない
+    for _, pokemon, slot in E.scram_slots(state):
+        if pokemon.pokemon_id in gone_ids or not E.scram_due(state, pokemon, slot) or E.scram_working(state, pokemon, slot):
+            continue
+        if not slot.effect.is_able(pokemon):
+            continue
+        sources = suppressors_of(state, slot.power)
+        if sources and all(pid in gone_ids for pid in sources):
+            raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}（かがくへんかガスのポケモン {list(sources)} がきぜつする）")
 
 
 # ---------------------------------------------------------------- ダメージの要素（窓: 適用の前 → 受けるとき → 適用 → 受けたとき）
@@ -873,8 +966,8 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
     offers = []
     for owner, pokemon in knocked(res):
         for instance in C.in_window(state, Window.KO_CHECK, owner, pokemon, res.catalog):
-            if instance.definition.timing is not C.Timing.OFFER:
-                continue
+            if instance.definition.timing is not C.Timing.OFFER or instance.definition.decision_kind != KO_PREVENTION:
+                continue  # v0.61: ［ファイナルビーム］（KNOCK_OUT_POWER）は knock_out_power_offers
             able = res.ko_prevention_able.get(pokemon.pokemon_id)
             if able is None:
                 if owner == state.current_player:
@@ -887,6 +980,70 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
     if len(offers) > 1:
         raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
     return offers
+
+
+def ko_cause(res: Resolution, pokemon_id: int) -> tuple[int, int, bool] | None:
+    """HP 以上になった場のポケモンのきぜつの原因（v0.61）: (原因の枠のプレイヤー, ダメージを与えたポケモンの番号, ワザの分類の枠か)。この解決の枠（``knocked_by``）か、決定を
+    またいで運んだ値（``ko_carried``）。どちらもなければ None。"""
+    if pokemon_id in res.knocked_by:
+        frame = res.frames[res.knocked_by[pokemon_id]].frame
+        return frame.player, frame.source_pid, frame.damage_class is DamageClass.ATTACK
+    return res.ko_carried.get(pokemon_id)
+
+
+def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance, int | None]]:
+    """きぜつの判定の窓: 相手のワザによって「きぜつ」する時に使えるダメージを与える特殊能力（［ファイナルビーム］。``KNOCK_OUT_POWER``）の候補 (持ち主, ポケモン, 効果,
+    「きぜつ」させたポケモンの番号)（v0.61）。
+
+    - 原因の枠がワザの分類（ワザ・返す効果のダメージ・ワザでのせたダメージカウンター）で、そのプレイヤーが持ち主の相手。特殊能力のダメージ・こんらん・自分のワザでは使えない
+    - きぜつの判定の時点でねむり・マヒ・こんらんでない（「状態のまま「きぜつ」する時」）、かがくへんかガス・まきちらせ!ベトベトガス・ショックアイでない（``offer_stopped``）
+    - 「きぜつ」させたポケモンが場にいる（いなければダメージを与える相手がいない）
+    - 「みちづれ」で「きぜつ」するポケモンは原因の枠がない（「きぜつ」させたポケモンは None。呼ぶ側が HC2 と同じ問いで止める）"""
+    state = res.state
+    offers = []
+    for owner, pokemon in knocked(res):
+        for instance in C.in_window(state, Window.KO_CHECK, owner, pokemon, res.catalog):
+            if instance.definition.decision_kind != KNOCK_OUT_POWER:
+                continue
+            if C.blocked_by_status(instance, pokemon) or C.offer_stopped(state, instance, pokemon):
+                break
+            if pokemon.pokemon_id in res.forced and pokemon.pokemon_id not in res.knocked_by:
+                offers.append((owner, pokemon, instance, None))
+                break
+            cause = ko_cause(res, pokemon.pokemon_id)
+            if cause is None or not cause[2] or cause[0] == owner:
+                break
+            located = state.find_pokemon(cause[1])
+            if located is None:
+                break
+            offers.append((owner, pokemon, instance, cause[1]))
+            res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
+            break
+    return offers
+
+
+def knock_out_beam_problem(res: Resolution, owner: int, pokemon: PokemonInPlay, instance: C.EffectInstance, source_id: int) -> tuple[str, str] | None:
+    """［ファイナルビーム］を使うを選んだときに止める理由（v0.61）: 数え方・弱点・抵抗力（RB1・BZ2・Z9。``effects.BeamOnKnockOut.use_problem``）と、ダメージで「きぜつ」させた
+    ポケモンもきぜつし、どちらのきぜつが先かで勝ち負けが変わる場合（C18 と同じ問い。同時のきぜつかが決まらない。勝ち負けが決まらなければ、どちらの読み方でもサイドを取る順番・
+    バトル場に出す順番は同じなので、同じきぜつの処理で扱う）。"""
+    state = res.state
+    source_owner, source = state.find_pokemon(source_id)
+    effect = instance.implementation
+    problem = effect.use_problem(state, pokemon, source)
+    if problem is not None:
+        return problem
+    amount, _ = received_power_damage(state, source_owner, source, pokemon, effect.energy_count(state, pokemon) * effect.per)
+    if amount <= 0 or source.damage + amount < hp_of(state, source):
+        return None
+    gone = knocked(res) + [(source_owner, source)]
+    taken = {player: sum(1 for o, p in gone if o != player and E.counts_as_knockout(state, p)) for player in (0, 1)}
+    ends = [(taken[player] and taken[player] >= len(state.players[player].prizes))
+            or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)] for player in (0, 1)]
+    if any(ends):
+        return ("UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",
+                (f"［ファイナルビーム］のダメージ {amount} でポケモン {source_id} もきぜつする: ワザによるきぜつと、それがはたらかせた特殊能力のダメージによるきぜつが"
+                 "「同時に「きぜつ」した」ことになるか（p.324）は決められず、どちらのきぜつを先に処理するかで勝ち負けが変わる（C18 と同じ問い）"))
+    return None
 
 
 def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPlay]], *, record: bool = True) -> tuple[tuple[int, int, str, int], ...]:

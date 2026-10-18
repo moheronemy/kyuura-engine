@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
 from ..persistent import powers_use_prevented
-from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
+from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER
 from ..state import AttackBarrier, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
@@ -136,6 +136,13 @@ DEFENSIVE_POLLEN = EffectDefinition(
     frozenset(), "on_damage", True, "damage_source", "power_confusion_to_damage_source", frozenset({DamageClass.ATTACK}), False,
     active_only=True,
 )
+# v0.61: わるいギャラドスの［ファイナルビーム］。こんじょうと同じ言い回し（「…「きぜつ」する時」）の任意の効果で、きぜつの判定の窓で持ち主に決定で聞く（決定の種類は
+# ``KNOCK_OUT_POWER``。こんじょうの ``KO_PREVENTION`` と分ける）。特殊状態はきぜつの判定の時点（「状態のまま「きぜつ」する時」）。候補は ``kernel.knock_out_power_offers``
+# （相手のワザ（ワザの分類の枠）で HP 以上になったポケモン。「ダメージを受けるとき」の写しはない）
+FINAL_BEAM = EffectDefinition(
+    "final_beam", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.OFFER, frozenset({Window.KO_CHECK}), BLOCKING_CONDITIONS, "on_knock_out", True,
+    "damage_source", "beam_on_knock_out", frozenset({DamageClass.ATTACK}), True, KNOCK_OUT_POWER,
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -157,6 +164,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.ReturnToHandOnKnockOut, REBIRTH),
     (E.SuppressOtherPowers, CHEMICAL_GAS),
     (E.ConfuseDamageSourceOnHeads, DEFENSIVE_POLLEN),  # v0.42
+    (E.BeamOnKnockOut, FINAL_BEAM),  # v0.61
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),

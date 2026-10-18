@@ -680,7 +680,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "サイケこうせん",
                                         # v0.60: タケシのサンドパンの「とげボール」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/coins-defense-rebellion-v0.60.md）
-                                        "とげボール"]))
+                                        "とげボール",
+                                        # v0.61: わるいギャラドスの「れいとうビーム」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/reactive-powers-trainer-damage-v0.61.md）
+                                        "れいとうビーム"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

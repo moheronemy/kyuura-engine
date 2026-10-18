@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 125,
-    "engine_stop_codes": 123,
+    "engine_unresolved_rulings": 129,
+    "engine_stop_codes": 128,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -197,6 +197,11 @@
           "version": "v0.17",
           "document": "docs/rocket-snorlax-v0.17b.md",
           "ruling_id": "Z13"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "C18"
         }
       ],
       "kyuura_issue": "UQ-COUNTERATTACK-DOUBLE-KO",
@@ -391,6 +396,11 @@
         {
           "version": "v0.31",
           "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC2"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
           "ruling_id": "HC2"
         }
       ],
@@ -1455,21 +1465,70 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
-    }
-  },
-  "codeless_questions": {
-    "power_damage_weakness_resistance": {
+    },
+    "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": {
       "engine_rulings": [
         {
           "version": "v0.17",
           "document": "docs/rocket-snorlax-v0.17b.md",
           "ruling_id": "Z9"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "Z9"
         }
       ],
       "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": true
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "Z9"
     },
+    "UNRESOLVED_SINKHOLE_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCRAM_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCRAM_POWER_RESTORED": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRAINER_DAMAGE_REDUCTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "TD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    }
+  },
+  "codeless_questions": {
     "ko_prevention_self_effect": {
       "engine_rulings": [
         {
@@ -1479,18 +1538,6 @@
         }
       ],
       "kyuura_issue": "UQ-GUTS-ATTACK-EFFECT",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": false
-    },
-    "destiny_bond_with_ko_prevention": {
-      "engine_rulings": [
-        {
-          "version": "v0.31",
-          "document": "docs/held-cards-v0.31.md",
-          "ruling_id": "HC2"
-        }
-      ],
-      "kyuura_issue": null,
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     },
@@ -2369,7 +2416,13 @@
       "PMCG5-016/attack/0",
       "PMCG5-035/power/0",
       "PMCG5-050/attack/0",
-      "PMCG5-050/attack/1"
+      "PMCG5-050/attack/1",
+      "PMCG4-025/power/0",
+      "PMCG4-025/attack/0",
+      "PMCG4-043/power/0",
+      "PMCG4-043/attack/0",
+      "PMCG5-051/power/0",
+      "PMCG5-051/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

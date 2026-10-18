@@ -44,6 +44,7 @@ from .decisions import (
     USE_DISCARD_TRAINER,
     FORCED_SWITCH,
     HAND_TO_DECK,
+    KNOCK_OUT_POWER,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -93,7 +94,7 @@ VIEWERS = (0, 1, None)
 OPTION_MEANINGS: dict[str, str] = {
     TAKE_PRIZE: "position", SELECT_PRIZE_CARD: "position", SELECT_HAND_CARD: "position",
     PEEK_CARD: "peek_target",
-    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", ATTACH_TO_BENCH: "pokemon",
+    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon",
     ENTRY_POWER: "pokemon",
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
@@ -361,6 +362,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
+    "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
+    "digger_result", "trainer_damage", "trainer_damage_prevented",
     "attach_energy", "energy_conversion", "bench_coin_results", "damage_guard_check", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",

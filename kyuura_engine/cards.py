@@ -454,6 +454,7 @@ POOL_KEYS = (
     "pool_v0_58",  # v0.58（タケシのゴローン・タケシのゴローニャ・ナツメのサイキックコントロール・特殊エネルギー 4 枚。docs/stadium-reuse-special-energy-v0.58.md）
     "pool_v0_59",  # v0.59（マルマイン（第1弾）・カツラ・タケシの保護・カスミのメノクラゲ・わるいアーボック・まきちらせ!ベトベトガス。docs/energy-control-power-suppression-v0.59.md）
     "pool_v0_60",  # v0.60（サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン。docs/coins-defense-rebellion-v0.60.md）
+    "pool_v0_61",  # v0.61（わるいギャラドス・わるいダグトリオ・タケシのオコリザル・バトル場は穴だらけ!。docs/reactive-powers-trainer-damage-v0.61.md）
 )
 
 

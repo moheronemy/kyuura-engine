@@ -182,7 +182,8 @@ class DependencyTest(unittest.TestCase):
         docs/trainer-decisions-turn-effects-v0.56.md 3 章。
         v0.58: 手札からつけたレインボーエネルギーの 10 ダメージのきぜつは、特殊能力のあとと同じ形の ``resolution.after_energy``（``_attach_energy``）。トレーナーの
         使用の始まりと続き（``_start_trainer_use``・``_after_trainer_step``・``_start_nested_trainer``。サイキックコントロールの内側の使用）は型の注釈
-        （``resolution.Context``）だけ。docs/stadium-reuse-special-energy-v0.58.md 2 章・4 章。"""
+        （``resolution.Context``）だけ。docs/stadium-reuse-special-energy-v0.58.md 2 章・4 章。
+        v0.61: 「にげる」のあとの［おとしあな］は ``resolution.after_retreat``（``_retreat``）。docs/reactive-powers-trainer-damage-v0.61.md 3 章。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -194,7 +195,7 @@ class DependencyTest(unittest.TestCase):
                                  "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play",
                                  "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer",
                                  "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium",
-                                 "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer"})
+                                 "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer", "_retreat"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -226,6 +227,15 @@ class DependencyTest(unittest.TestCase):
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }
         self.assertEqual(stadium_names, {"Context", "after_stadium"})
+        # v0.61: 「にげる」（``_retreat``）のあとの相手の［おとしあな］（コイン・20 ダメージ・きぜつ・バトル場に出す）は、特殊能力のあとと同じ形の
+        # ``resolution.after_retreat``（docs/reactive-powers-trainer-damage-v0.61.md 3 章）。「にげる」の処理そのもの（確認・トラッシュ・入れ替え）は engine.py のまま
+        retreat_names = {
+            node.attr
+            for function in functions if function.name == "_retreat"
+            for node in ast.walk(function)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
+        }
+        self.assertEqual(retreat_names, {"Context", "after_retreat"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層

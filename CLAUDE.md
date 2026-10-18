@@ -320,7 +320,7 @@
 - 新しいカードの効果は、解決の基盤の効果の定義（`resolution/catalog.py`）とワザの要素（`resolution/programs.py` の `BUILDERS`）で加えます。v0.13 の約束（`AttackEffect.resolve`・`resume`）で書かないでください（v0.17 の型はどれも上書きしていない。tests/test_existing_elements_v0_17a.py・tests/test_rocket_snorlax_v0_17b.py が確かめる）。v0.17 から加えた実装の型は `v013_checks.VERIFIED` に入れず、tests/helpers.py の `ATTACK_TYPES_SINCE_V0_17` に加えます（一覧を数えるテストはそこから数える）。
 - 既存の要素だけで加えたカード（v0.17a）: モンジャラ（PMCG1-007。しめつける `ParalyzeOnHeads`・どくのこな `PoisonOpponent`）、サカキのニャース（PMCG6-063。ねこノミ `ConfuseOnHeadsWithoutDamage` = 要素 `Status(CONFUSION, local_coin=HEADS)` だけ、ねこキック `DamageOnly`）。新しい裁定はない（docs/card-implementation-v0.17a.md）。
 - R団のカビゴン（PMCG6-073）の「わるいねぞう」は `effects.CounterattackDamageWhileAsleep(amount=20)`（`PowerKey("PMCG6-073", 0)`）で、はんげきと同じ窓・同じ処理（`kernel.power_damage_to_damage_source`）です。効果の定義 `catalog.RESTLESS_SLEEP` は `requires=frozenset({"sleep"})`（その特殊状態のときだけはたらく）で、`disabled_by` は空です。通常の特殊状態の抑止（`BLOCKING_CONDITIONS`）を当てはめないでください。特殊状態の条件は `catalog.blocked_by_status`（`disabled_by` と `requires`）だけで判定し、カードごとの分岐にしないでください。v0.13 の問い合わせ（`PowerEffect.is_working`。ログの監査が使う）は `works_with` で同じ条件を表します。裁定は docs/rocket-snorlax-v0.17b.md（Z1〜Z30）。
-- 「わるいねぞう」の 20 は特殊能力によるダメージです（p.245。CONFIRMED）。弱点・抵抗力を計算するかは原典で決まらない（Z9）ので、`ignores_weakness_resistance = False` の特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプなら、コードのない問い `power_damage_weakness_resistance` で止めます（R団のカビゴンは無色で、今のカードでは起こらない）。はんげきは `ignores_weakness_resistance = True`（「弱点・抵抗力」に関係なく）。そろってのきぜつ（Z13）は C18 と同じ問い・同じコード `UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT` で、理由の文は特殊能力の名前とページ（`effects.power_name_and_page`。はんげきは v0.16 までと同じ文）です。新しいコードにしないでください。
+- 「わるいねぞう」の 20 は特殊能力によるダメージです（p.245。CONFIRMED）。弱点・抵抗力を計算するかは原典で決まらない（Z9）ので、`ignores_weakness_resistance = False` の特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプなら、問い `power_damage_weakness_resistance` で止めます（R団のカビゴンは無色で、今のカードでは起こらない。v0.61 で［ファイナルビーム］で起こるようになり、停止コード `UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE` を付けた）。はんげきは `ignores_weakness_resistance = True`（「弱点・抵抗力」に関係なく）。そろってのきぜつ（Z13）は C18 と同じ問い・同じコード `UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT` で、理由の文は特殊能力の名前とページ（`effects.power_name_and_page`。はんげきは v0.16 までと同じ文）です。新しいコードにしないでください。
 - 「たおれこむ」は `effects.DamageAndSelfSleep`（`AttackKey("PMCG6-073", 0)`。要素の並び `Damage(OPP)` → `Status(SLEEP, target=SELF, after_damage="damage")`）です。要素 `Status` の `target`（`OPP`・`SELF`）と `after_damage`（「ダメージを与えた後」の効果の、もとのダメージの要素の名前）は汎用の項目で、カードごとの要素を加えないでください。自分への効果も `reaches` で「とうめい」を評価し、対象が HP 以上なら飛ばします（自分がこんじょうを使える場合は G37 と同じ問いでコードのない `ko_prevention_self_effect`。今のカードでは起こらない）。
 - 「ダメージを与えた後、…」の効果で、そのダメージの要素がダメージを与えなかった（`DamageResult.dealt` が 0。ディフェンダーで 0・「ダメージを受けない」状態・「とうめい」）ときに効果を与えるかは原典で決まらない（Z23）ので、宣言の前に `UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`（問い `effect_after_no_damage`。優先度 10）で止めます。「ダメージを与えた後」の効果を加えるときは `after_damage` を書いてください。成功を仮定するテストを書かないでください。
 - キョウのベトベトン（PMCG6-023）の「だつりょくえき」は実装を延期しました（v0.17c。DEFER。docs/kogas-muk-event-design-v0.17c.md）。宣言する特殊能力か（DR1）・処理する時点（DR6）が原典で決まらず、今の KERNEL はダメージの要素のあとの窓の中で決定を出して続けられません（`AttackRun.suspend` は送る効果が残っていれば RuntimeError。決定をまたいで `FrameState`・`Resolution` の値は残らない）。カードは分類で拒否したままにしてください（効果のないものとして扱わない）。実装するときは、同じ文書 6 章の手順（自動なら続きの情報を既存の `decision.context` に明示的なデータで持つ案 B、宣言するならきぜつの判定の窓の任意の効果の拡張）にしたがいます。`PendingDecision` に項目を加える形（案 A）は形式 9 を保てないので採らないでください。
@@ -1865,3 +1865,51 @@
 - 検証用デッキ `Z60`・`M60` と組（`PAIRINGS_V0_60`。`Z60` 対 `M60`・`M60` 対 `Z59`・`Z60` 対 `D46`・`Z60` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.60` です（前の版の
   組の結果は変わらない）。数えた結果は `v060_uses`。TS1・T27（控えにもダメージ・効果を与えるワザと「とうめい」2 匹以上）・Z23（かげぶんしん）・AC13（［はんこう］を含む）は `V031_STOPS`
   で場から確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## ワザ・にげる・残りHPではたらく特殊能力とトレーナーのダメージの 4 枚（v0.61）
+
+- 依頼の 4 枚（わるいギャラドス PMCG4-025 の［ファイナルビーム］・れいとうビーム、わるいダグトリオ PMCG4-043 の［おとしあな］・つきおとす、タケシのオコリザル PMCG5-051 の［ずらかる］・
+  おおあばれ、トレーナーのバトル場は穴だらけ! PMCG4-055）を、kyuura データの採用で、どのワザも、特殊能力も、トレーナーも登録しました（対応ポケモン 336 → 339・トレーナーの登録 84 → 85・
+  写しの組 `pool_v0_61`。写し 432 → 436 枚・対応するカード 430 → 434 枚。ワザの登録 571 → 574・特殊能力の登録 51 → 54。PMCG1〜PMCG6 の未対応は 27 → 23 枚）。カードごとの結果・
+  共通の処理・時点の根拠・未解決・実装上の判断・互換性・検証は docs/reactive-powers-trainer-damage-v0.61.md。ガイドブックは読んでいません。英語版の文面で日本語の不足を補わないで
+  ください。テストの定数は tests/helpers.py の `DARK_GYARADOS`・`DARK_DUGTRIO`・`BROCKS_PRIMEAPE`・`DIGGER`・`V0_61_POKEMON`・`V0_61_CARDS`（`DARK_GYARADOS` と `GYARADOS`・
+  `GIOVANNIS_GYARADOS`・`MISTYS_GYARADOS`、`DARK_DUGTRIO` と `DUGTRIO`、`BROCKS_PRIMEAPE` と `PRIMEAPE`・`DARK_PRIMEAPE` を取りちがえない）。v0.61 のワザの型は
+  `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。
+- ［ファイナルビーム］（`effects.BeamOnKnockOut`）は使用を宣言する任意の特殊能力で、時点はこんじょう（v0.11）と同じきぜつの判定の窓です（解決の基盤の効果の定義 `catalog.FINAL_BEAM`。
+  決定 `decisions.KNOCK_OUT_POWER`。続きの情報・再開先 `"knock_out"` はこんじょうと共通で、決定の種類で分ける）。自動的にはたらく形・別の段階にしないでください。使えるのは、
+  相手のワザの分類の枠（ワザのダメージ・返す効果のダメージ・ワザでのせたダメージカウンター）で HP 以上になったときだけです（`kernel.ko_cause`。特殊能力のダメージ・どく・こんらん・
+  トレーナー・自分のワザでは使えない）。きぜつの判定の時点のねむり・マヒ・こんらん・`catalog.offer_stopped`（ガス・まきちらせ!ベトベトガス・ショックアイ）で使えません。コインは
+  答えのあとに持ち主が 1 枚だけ投げ、「水」の基本エネルギーカードの数（使った時点。1 枚 1 個）× 20 の特殊能力のダメージ（ワザのダメージの計算をしない。`received_power_damage` は
+  当てはめる）。使うを選ぶと止める場合（Z9・RB1・BZ2・勝ち負けが決まる同時のきぜつの C18）は `unresolved_choices` にし、使わないはいつも答えになります（決定の不変条件の例外に
+  `knock_out_power` を加えた。広げない）。きぜつするときに使える特殊能力が 2 つ以上なら G40、みちづれできぜつする場合は HC2（v0.31 のコードのない問い `destiny_bond_with_ko_prevention` に
+  `UNRESOLVED_DESTINY_BOND_KNOCKOUT` を付けた）。
+- ［おとしあな］（`effects.DamageOnOpponentRetreat`。宣言しない）は「にげる」（`engine._retreat`）だけではたらきます（ポケモンいれかえ・突風・ワザの入れ替えは「にげる」ではない。p.325）。
+  入れ替えが成り立ったあとに `resolution.after_retreat` が、はたらく［おとしあな］ごと（`effects.retreat_trap_powers`。相手の場の並び）に、にげたプレイヤーのコイン 1 枚（ログ
+  `sinkhole_check`）→「うら」ならベンチにもどったポケモンに 20 の特殊能力のダメージ（ログ `sinkhole_damage`）→［ずらかる］→ きぜつ（ログ `knock_out` の `timing` は `"retreat"`）・
+  サイド・勝ち負け・バトル場に出す → 同じ番（`CONTINUE_TURN`）。「にげる」の時点で結果が変わる場合（こんらん・受けるダメージがバトル場とベンチで違う）は、エネルギーのトラッシュと
+  コインの前に SH1（`UNRESOLVED_SINKHOLE_TIMING`。`engine._sinkhole_check`）。にげられなくする処理にしないでください。つきおとす（`OpponentCoinTailsBonusDamage`）は相手プレイヤーの
+  コイン 1 枚で 1 段階に + 20 で、v0.40 の `OpponentFlipsTailsDamage` とは別の型です。
+- ［ずらかる］（`effects.ReturnToDeckAtRemainingHp`。宣言しない）は、残りHP（今有効な最大HP − ダメージ）がちょうど 10 で力がはたらいているとき、決まった時点（`kernel.settle_scram`。
+  ワザの要素のダメージのまとまりのあと・ダメージ以外の要素のあと・きぜつの判定の窓の始め・［ファイナルビーム］のダメージのあと・特殊能力・エネルギー・トレーナー・にげる・
+  ポケモンチェックのどくのあと）に、v0.36 の `zones.return_in_play_to_deck`（出どころ `power`）→ 持続する効果を消す → 山札を切る、です（ログ `scram`。きぜつではない）。残りHPを
+  変える処理を加えるときは、そのあとの決まった時点で `settle_scram` を呼んでください（ワザの外は `flow._settle_outside_attack`）。結果が時点で変わる場合（「10」を通る・ワザの途中で
+  ポケモンによる要素が残る・2 匹が同時）は SC1（`UNRESOLVED_SCRAM_TIMING`）、力が消えていたあいだに「10」になり力がもどる場合は SC2（`UNRESOLVED_SCRAM_POWER_RESTORED`。
+  `engine._apply` が操作の前の状態（`dormant_scram`）と比べる。`state_stop_after` にも加えた）。ポケモンによらない要素は `Element.independent_of_pokemon`（今は `DiscardStadium`）で、
+  おおあばれで自分が山札にもどっても場のスタジアムをトラッシュします。ワザの途中の決定をまたぐときは、HP 以上になったポケモンのきぜつの原因を続きの情報の `frame` の `ko_by` で運びます。
+- バトル場は穴だらけ!（`effects.AlternateCoinsUntilTailsDamage`）は、実際に使ったプレイヤー → 相手 → … の順に「うら」が出るまでコインを投げ（上限なし。50% の近道をしない。ログ
+  `digger_result`）、「うら」を出したプレイヤーの対戦ポケモンに 10 のトレーナーのダメージ（`effects.trainer_damage`。ログ `trainer_damage`。ワザ・特殊能力のダメージの計算をしない）。
+  「ダメージを受けない」状態なら受けません（v0.28 の p.235 の解説の記録の再利用。ログ `trainer_damage_prevented`）。受けるダメージを変えるほかの効果で量が変わるときは TD1
+  （`UNRESOLVED_TRAINER_DAMAGE_REDUCTION`）。結果は「うら」の側だけで決まるので、コインの前に両方の結果を状態の複製で確かめます（`resolution.trainer_damage_stop`）。きぜつの処理は
+  使い終えてトラッシュしたあと（`may_knock_out`。`resolution.after_trainer` がこのコマンドのログ `trainer_damage` のポケモンもきぜつさせる）。
+- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20）。公開の API の呼び方・コマンド・拒否のコードは変えていません。新しい決定の種類は `knock_out_power`、
+  新しいログのイベント（公開）は `knock_out_power_declined`・`knock_out_power_declared`・`knock_out_power_failed`・`knock_out_power_damage`・`scram`・`sinkhole_check`・`sinkhole_damage`・
+  `digger_result`・`trainer_damage`・`trainer_damage_prevented`。解決の基盤の入口に `after_retreat`・`trainer_damage_stop` を加えました（tests/test_kernel_integration_v0_15.py の
+  `DependencyTest`）。エンジンが止める `UNRESOLVED_…` は 128 件、未解決の裁定は 129 件です（SH1・SC1・SC2・TD1 は kyuura の未解決の一覧にない `not_in_kyuura`、Z9 は
+  `kyuura_index_engine_key`）。
+- ログの監査（tests/log_audit.py）は、［おとしあな］・［ファイナルビーム］のコインのすぐあとの結果、［おとしあな］・［ファイナルビーム］・トレーナーのダメージの組み立て直し、
+  ［ずらかる］で山札にもどしたポケモン（すぐ前のログ `scram`）、バトル場は穴だらけ!のあとの `timing: trainer` のきぜつを確かめます。
+- 検証用デッキ `G61`・`P61` と組（`PAIRINGS_V0_61`。`G61` 対 `P61`・`P61` 対 `M60`・`G61` 対 `Z60`・`G61` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.61` です（前の版の
+  組の結果は変わらない）。［ファイナルビーム］の答えは `_v061_decision`、バトル場は穴だらけ!は `_v061_trainer`、わるいダグトリオの相手の「にげる」は `_v061_retreat`、数えた結果は
+  `v061_uses`。tests/v017_games.py の `play_game` は SH1・SC1・SC2・TD1 を場から確かめてから別の操作を続けます（`v061_stop_expected`）。tests/helpers.py の `trainer_policy_command` は、
+  選べる答えがない（使うと止める）決定に、選ばない答えを返します。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+

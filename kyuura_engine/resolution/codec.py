@@ -66,10 +66,12 @@ def attack_decision(state: GameState, cont: AttackContinuation, *, player: int, 
                  min_choices=min_choices, max_choices=max_choices)
 
 
-def ko_check_decision(state: GameState, cont: KoCheckContinuation, *, player: int, pokemon_id: int) -> PendingDecision:
-    """きぜつの判定の任意の効果の決定（v0.13 の ``engine._finish_attack`` と同じ形）。"""
-    return push_decision(state, kind=KO_PREVENTION, player=player, options=(pokemon_id,), resume=KNOCK_OUT,
-                         context=(("attack", cont.attack), ("power", cont.power)), min_choices=0, max_choices=1)
+def ko_check_decision(state: GameState, cont: KoCheckContinuation, *, player: int, pokemon_id: int, kind: str = KO_PREVENTION,
+                      extra: tuple = ()) -> PendingDecision:
+    """きぜつの判定の任意の効果の決定（v0.13 の ``engine._finish_attack`` と同じ形）。v0.61: ``kind`` が ``KNOCK_OUT_POWER``（［ファイナルビーム］）なら、``extra`` に
+    「きぜつ」させたポケモン（``source``）と、使うを選ぶと止める場合（``unresolved_*``）を書く（こんじょうの決定の形は変えない）。"""
+    return push_decision(state, kind=kind, player=player, options=(pokemon_id,), resume=KNOCK_OUT,
+                         context=(("attack", cont.attack), ("power", cont.power), *extra), min_choices=0, max_choices=1)
 
 
 def prize_decision(state: GameState, player: int, cont: AftermathContinuation) -> PendingDecision:

@@ -625,6 +625,13 @@ MISTYS_GYARADOS = "PMCG5-035"  # カスミのギャラドス（リーダーズ�
 BROCKS_SANDSLASH = "PMCG5-050"  # タケシのサンドパン（リーダーズスタジアム。045/096。タケシのサンドから進化。HP 70・闘・弱点 草・抵抗力 雷・にげる 1。スピードスター（闘無）20・とげボール（闘闘）30）
 V0_60_POKEMON = (FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH)
 V0_60_CARDS = V0_60_POKEMON
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）。ワザ・にげる・残りHPではたらく特殊能力とトレーナーのダメージの 4 枚
+DARK_GYARADOS = "PMCG4-025"  # わるいギャラドス（ロケット団。024/065。コイキングから進化。HP 70・水・弱点 草・抵抗力 闘・にげる 2。［ファイナルビーム］・れいとうビーム（水水水）30）
+DARK_DUGTRIO = "PMCG4-043"  # わるいダグトリオ（ロケット団。039/065。ディグダから進化。HP 50・闘・弱点 草・抵抗力 雷・にげる 2。［おとしあな］・つきおとす（闘闘）20+）
+BROCKS_PRIMEAPE = "PMCG5-051"  # タケシのオコリザル（リーダーズスタジアム。048/096。タケシのマンキーから進化。HP 70・闘・弱点 超・にげる 1。［ずらかる］・おおあばれ（闘闘闘）60）
+DIGGER = "PMCG4-055"  # バトル場は穴だらけ!（ロケット団。057/065。トレーナー。kyuura の種類 rockets_secret_machine）
+V0_61_POKEMON = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
+V0_61_CARDS = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE, DIGGER)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1165,6 +1172,8 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenCoinPerOpponentBench,  # v0.60: サンダーの「サンダーストーム」（控えごとのコインと、同じコインの「うら」の数の自分へのダメージ。新しい要素 CoinPerOpponentBench）
     _effects.SelfTailsDamageGuard,  # v0.60: R団のストライクの「かげぶんしん」（持続する効果 TailsDamageGuard）
     _effects.DamageIgnoringDefenderEffects,  # v0.60: タケシのサンドパンの「スピードスター」（Damage の defender_effects）
+    _effects.OpponentCoinTailsBonusDamage,  # v0.61: わるいダグトリオの「つきおとす」（相手が投げるコインの「うら」で追加。値 OpponentTailsBonus）
+    _effects.DamageSelfDamageThenDiscardStadium,  # v0.61: タケシのオコリザルの「おおあばれ」（相手 → 自分 → スタジアムのトラッシュ）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1281,6 +1290,8 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
         options = [o for o in d.options if o not in unresolved]
         if d.context_value("use", (None, None, None))[2] == POTION:
             options.sort(key=lambda pid: -state.find_pokemon(pid)[1].damage)
+        if not options and d.min_choices == 0:
+            return ResolveDecision(d.player, d.id, ())  # v0.61: 使うと止める［ファイナルビーム］など、選ばない（使わない）だけが答えになる決定
         return ResolveDecision(d.player, d.id, (options[0],))
     if state.phase is Phase.MAIN:
         command = trainer_command(state)

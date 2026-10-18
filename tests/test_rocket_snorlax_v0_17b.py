@@ -280,16 +280,17 @@ class RestlessSleepTest(unittest.TestCase):
     def test_weakness_resistance_guard(self):
         """Z9: 説明に「弱点・抵抗力」に関係なく、がない特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ（無色）なら、
         計算するかで結果が変わるので止める。今の対応カード（kyuura の記録の 780 枚）に無色の弱点・抵抗力はないので、カードの定義を書きかえた
-        テスト専用のカードの組で確かめる（コードのない問い。エンジンの不具合として RuntimeError）。"""
+        テスト専用のカードの組で確かめる（v0.17〜v0.60 はコードのない問いで RuntimeError。v0.61 で［ファイナルビーム］（説明に弱点・抵抗力がなく、
+        受けるポケモンの弱点「水」で起こる）のために停止コード UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE を付けた。docs/reactive-powers-trainer-damage-v0.61.md）。"""
         pool = load_card_pool()
         definitions = dict(pool.definitions)
         definitions[MACHOP] = dataclasses.replace(definitions[MACHOP], weakness=EnergyType.COLORLESS)
         test_pool = CardPool(MappingProxyType(definitions), pool.playable_ids, pool.source, pool.effects)
         state = board(machop(), snorlax(sleep=True), pool=test_pool)
         before = snapshot(state)
-        with self.assertRaises(RuntimeError) as ctx:
+        with self.assertRaises(UnsupportedError) as ctx:
             apply_command(state, UseAttack(0, 0))
-        self.assertIn("power_damage_weakness_resistance", str(ctx.exception))
+        self.assertEqual(ctx.exception.code, "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE")
         self.assertEqual(snapshot(state), before)
         # はんげき（説明に「弱点・抵抗力」に関係なく、がある）は止めない
         state = board(machop(), machamp(), pool=test_pool)

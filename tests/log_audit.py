@@ -82,6 +82,7 @@ from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerPokemonStadium, OwnerRetreatReductionStadium  # v0.57
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
+from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
 from kyuura_engine.effects import (
     AskOpponentEachTakePrizeElseDraw,
@@ -884,6 +885,12 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
         if coin["number"] < coin["count"]:
             return kind == "coin_flip" and e["source"] == "power" and e["effect"] == coin["effect"] and e["number"] == coin["number"] + 1
         return kind == "rebellion_check" and e["power"] == coin["effect"]
+    if isinstance(effect, DamageOnOpponentRetreat):
+        # v0.61: ［おとしあな］。にげたプレイヤーのコインのすぐあとに判定（sinkhole_check）
+        return kind == "sinkhole_check" and e["power"] == coin["effect"] and e["flipper"] == coin["player"] and e["result"] == coin["result"]
+    if isinstance(effect, BeamOnKnockOut):
+        # v0.61: ［ファイナルビーム］。「おもて」ならダメージ（knock_out_power_damage）、「うら」なら knock_out_power_failed
+        return kind == ("knock_out_power_damage" if coin["result"] == "heads" else "knock_out_power_failed") and e["power"] == coin["effect"]
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -1158,6 +1165,7 @@ def log_problems(state) -> list[str]:
     knocked: Counter = Counter()
     evolve_turns: dict[int, list[int]] = {}
     devolve_turns: dict[int, list[int]] = {}  # v0.50: 場のポケモンの番号 → 退化した番（ログの順）
+    trainer_damaged: set[tuple[int, int]] = set()  # v0.61: バトル場は穴だらけ!でダメージを受けた (場のポケモンの番号, 番)（timing trainer のきぜつの確かめ）
     trainer_devolved: set[tuple[int, int]] = set()  # v0.50: トレーナー（退化スプレー）で退化した (場のポケモンの番号, 番)（timing trainer のきぜつの確かめ）
     permitted: set[tuple[int, int]] = set()  # v0.44: トレーナー「サカキ」の許可（場のポケモンの番号, 番）
     once_used: set[tuple[int, int, int]] = set()  # v0.44: 場に出てから 1 度しか使えないワザの記録（場のポケモンの番号, カードの uid, ワザの位置）
@@ -3212,6 +3220,15 @@ def log_problems(state) -> list[str]:
             damage[pid] += e["amount"]
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の stadium_damage のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind in ("sinkhole_damage", "knock_out_power_damage", "trainer_damage"):
+            # v0.61: ［おとしあな］・［ファイナルビーム］のダメージ（特殊能力のダメージ）とバトル場は穴だらけ!のダメージ（トレーナーのダメージ）。どれもワザのダメージ
+            # ではない（弱点・抵抗力を計算しない。量はログの amount）
+            pid = e["pokemon_id"] if kind == "trainer_damage" else e["target_pokemon_id"]
+            if kind == "trainer_damage":
+                trainer_damaged.add((pid, e["turn"]))
+            damage[pid] += e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "evolution_heal":
             # v0.57: トキワシティジム（進化したサカキのポケモンから、のぞむならダメージカウンターを 2 つ）
             pid = e["pokemon_id"]
@@ -3700,8 +3717,12 @@ def log_problems(state) -> list[str]:
                 card_id, _, index = e["power"].partition("@power")
                 power_entry = state.effects.power_entry(card_id, int(index)) if index.isdigit() else None
                 both = False
-                invalid = power_entry is None or not isinstance(power_entry.effect, FailAndReturnOnAttack) or attack_window is None \
-                    or pid != attack_window["pokemon_id"] or e["player"] != attack_window["player"]
+                if power_entry is not None and isinstance(power_entry.effect, ReturnToDeckAtRemainingHp):
+                    # v0.61: ［ずらかる］（すぐ前のログ scram の、残りHPがちょうど「10」のポケモン）
+                    invalid = prior is None or prior["kind"] != "scram" or prior["pokemon_id"] != pid or prior["power"] != e["power"]
+                else:
+                    invalid = power_entry is None or not isinstance(power_entry.effect, FailAndReturnOnAttack) or attack_window is None \
+                        or pid != attack_window["pokemon_id"] or e["player"] != attack_window["player"]
             else:
                 entry = state.effects.attack_entry(*_attack_key(e["effect"]))
                 opponent_return = entry is not None and RETURN_IN_PLAY_TO_DECK_ELEMENT in getattr(entry.effect, "opponent_effect_elements", ())
@@ -3776,7 +3797,9 @@ def log_problems(state) -> list[str]:
                 problems.append(f"場にいないポケモン {pid} がきぜつした")
             if (e.get("timing") == "power") != (power_knock_out or "to_energy" in e):  # v0.59: ［エネエネ］のきぜつは HP によらない
                 problems.append(f"{e['turn']} 番のきぜつ（ポケモン {pid}・timing {e.get('timing')}）が、特殊能力の処理のすぐあとのきぜつと合わない")
-            if e.get("timing") == "trainer" and ((pid, e["turn"]) not in trainer_devolved or e["player"] != turn_player or using_trainer.get(e["player"]) is not None):
+            # v0.61: バトル場は穴だらけ!（使い終えたあと）でダメージを受けたポケモン（どちらのプレイヤーのポケモンでもよい）のきぜつも
+            devolved_ko = (pid, e["turn"]) in trainer_devolved and e["player"] == turn_player
+            if e.get("timing") == "trainer" and (not (devolved_ko or (pid, e["turn"]) in trainer_damaged) or using_trainer.get(turn_player) is not None):
                 # v0.50: トレーナー（退化スプレー）を使い終えたあと（トラッシュしたあと）の、その番に退化した自分のポケモンのきぜつ
                 problems.append(f"{e['turn']} 番のきぜつ（ポケモン {pid}・timing trainer）が、使い終えたトレーナーで退化した自分のポケモンのきぜつではない")
             if attack_window is not None and pid in in_play:
