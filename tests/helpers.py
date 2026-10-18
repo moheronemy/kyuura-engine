@@ -488,6 +488,19 @@ RECYCLE = "PMCG3-047"  # リサイクル（化石の秘密。048/048）
 NIGHTLY_GARBAGE_RUN = "PMCG4-057"  # 夜の廃品回収（ロケット団。060/065）
 V0_53_CARDS = (ENERGY_SEARCH, POKE_BALL, BOSS_WAY, BROCK_TRAINING, MISTYS_TEARS, ERIKAS_MAIDS, MAINTENANCE, ITEM_FINDER, RECYCLE,
                NIGHTLY_GARBAGE_RUN)  # 写しの組 pool_v0_53 の並び
+# v0.54（docs/hand-deck-trainers-v0.54.md）: 手札の入れ替え・ドロー・情報の確認のトレーナー 10 枚（kyuura データの採用。pcg-search.com の一覧の番号）
+IMPOSTER_OAK = "PMCG1-089"  # にせオーキドはかせ（第1弾。082/096）
+IMPOSTER_OAKS_REVENGE = "PMCG4-059"  # にせオーキドの逆襲（ロケット団。055/065）
+GAMBLER = "PMCG3-045"  # ギャンブラー（化石の秘密。045/048）
+SABRINAS_GAZE = "PMCG6-078"  # ナツメの眼（闇からの挑戦。076/098）
+BLAINES_LAST_RESORT = "PMCG6-081"  # カツラの奥の手（闇からの挑戦。086/098）
+ERIKA = "PMCG5-083"  # エリカ（リーダーズスタジアム。084/096）
+SECRET_MISSION = "PMCG5-088"  # スパイ作戦（リーダーズスタジアム。080/096）
+BLAINES_GAMBLE = "PMCG6-076"  # カツラのギャンブル（闇からの挑戦。087/098）
+LASS = "PMCG1-095"  # ミニスカート（第1弾。094/096）
+POKEDEX = "PMCG1-082"  # ポケモン図鑑 HANDY505（第1弾。089/096）
+V0_54_CARDS = (IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS,
+               POKEDEX)  # 写しの組 pool_v0_54 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー

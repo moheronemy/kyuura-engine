@@ -523,6 +523,18 @@
     "PMCG3-047",
     "PMCG4-057"
   ],
+  "pool_v0_54": [
+    "PMCG1-089",
+    "PMCG4-059",
+    "PMCG3-045",
+    "PMCG6-078",
+    "PMCG6-081",
+    "PMCG5-083",
+    "PMCG5-088",
+    "PMCG6-076",
+    "PMCG1-095",
+    "PMCG1-082"
+  ],
   "reference_only": [
     "PMCG1-075",
     "PMCG6-023"
@@ -31438,6 +31450,387 @@
         "series": "ロケット団",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg04-060-yorunohaihinkaishu/"
+      }
+    },
+    {
+      "id": "PMCG1-089",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "にせオーキドはかせ",
+        "en": "Impostor Professor Oak"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の手札をすべて相手の山札にもどさせ、よくきってから、新たに7枚を引いて手札にさせる。",
+          "en": "Your opponent shuffles his or her hand into his or her deck, then draws 7 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "print",
+          "summary": "英語版のカード名の綴り",
+          "ja": "にせオーキドはかせ",
+          "en": "初期の英語版は「Impostor Professor Oak」、のちの版は「Imposter Professor Oak」",
+          "confidence": "有力",
+          "sources": [
+            "X17"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-089",
+        "pokemontcg": [
+          "base1-73"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-082-niseookidohakase/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-082-niseookidohakase/"
+      }
+    },
+    {
+      "id": "PMCG4-059",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "にせオーキドの逆襲",
+        "en": "Imposter Oak's Revenge"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。\n\n\n\n相手の手札をすべて山札にもどさせ、山札をよく切ってから、新たに4枚を引かせて手札にさせる。",
+          "en": "Discard a card from your hand in order to play this card. Your opponent shuffles his or her hand into his or her deck, then draws 4 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-059",
+        "pokemontcg": [
+          "base5-76"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-055-niseookidonogyakushu/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-055-niseookidonogyakushu/"
+      }
+    },
+    {
+      "id": "PMCG3-045",
+      "jp_set": "PMCG3",
+      "category": "trainer",
+      "name": {
+        "ja": "ギャンブラー",
+        "en": "Gambler"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の手札を自分の山札に全てもどし、その山札をよくきる。その後、コインを投げて「おもて」なら8枚、「うら」なら1枚のカードを自分の山札からひいて手札にする。",
+          "en": "Shuffle your hand into your deck. Flip a coin. If heads, draw 8 cards. If tails, draw 1 card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-045",
+        "pokemontcg": [
+          "base3-60"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-045-gambler/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-045-gambler/"
+      }
+    },
+    {
+      "id": "PMCG6-078",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ナツメの眼",
+        "en": "Sabrina's Gaze"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いのプレイヤーは、それぞれ、自分の手札の数を数え、それらすべてを自分の山札にもどす。その後、お互いに山札をよく切り、それぞれ、自分がもどした枚数のカードを引いて、手札にする。",
+          "en": "Each player shuffles his or her hand into his or her deck and draws a new hand of the same number of cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "art",
+          "summary": "イラスト",
+          "ja": "ナツメがマスターボールを持つ手の中指が立っているように見える",
+          "en": "ナツメがモンスターボールを投げるイラストに変更",
+          "confidence": "確実",
+          "sources": [
+            "X45"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-078",
+        "pokemontcg": [
+          "gym1-125"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E7%9C%BC",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E7%9C%BC"
+      }
+    },
+    {
+      "id": "PMCG6-081",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラの奥の手",
+        "en": "Blaine's Last Resort"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの手札に「カツラの奥の手」以外のカードがある時には、使えない。山札からカードを5枚引いて、手札に加える。",
+          "en": "You can't play this card if you have any cards in your hand other than Blaine's Last Resort. Show your hand to your opponent, then draw 5 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-081",
+        "pokemontcg": [
+          "gym1-105"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E5%A5%A5%E3%81%AE%E6%89%8B",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E5%A5%A5%E3%81%AE%E6%89%8B"
+      }
+    },
+    {
+      "id": "PMCG5-083",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "エリカ",
+        "en": "Erika"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたと相手プレイヤーは、それぞれ、のぞむなら最大3枚まで、山札からカードを引いてよい。(あなたがカードを引き終わってから、相手プレイヤーが引く)",
+          "en": "You may draw up to 3 cards, then your opponent may draw up to 3 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-083",
+        "pokemontcg": [
+          "gym1-16",
+          "gym1-100"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-088",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "スパイ作戦",
+        "en": "Secret Mission"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手プレイヤーの手札を見る。その後、のぞむなら、あなたの手札からカードを好きなだけトラッシュして、トラッシュしたのと同じ数のカードを、山札から引いてよい。",
+          "en": "Look at your opponent's hand. Then, you may discard as many other cards as you want from your hand and draw that many cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-088",
+        "pokemontcg": [
+          "gym1-118"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%83%91%E3%82%A4%E4%BD%9C%E6%88%A6",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%83%91%E3%82%A4%E4%BD%9C%E6%88%A6"
+      }
+    },
+    {
+      "id": "PMCG6-076",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラのギャンブル",
+        "en": "Blaine's Gamble"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札から、好きなだけカードを選んでトラッシュする。その後、コインを投げて「おもて」なら、トラッシュした数×2枚のカードを、山札から引いて手札に加える。",
+          "en": "Discard any number of other cards from your hand, then flip a coin. If heads, draw twice that many cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-076",
+        "pokemontcg": [
+          "gym1-121"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AE%E3%83%A3%E3%83%B3%E3%83%96%E3%83%AB",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AE%E3%83%A3%E3%83%B3%E3%83%96%E3%83%AB"
+      }
+    },
+    {
+      "id": "PMCG1-095",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ミニスカート",
+        "en": "Lass"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いのプレイヤーは手札を見せ合い、手札にあるトレーナーカードを全て山札に戻す。そのあとで山札をよくきって、プレイを再開する。",
+          "en": "You and your opponent show each other your hands, then shuffle all the Trainer cards from your hands into your decks."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-095",
+        "pokemontcg": [
+          "base1-75"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-094-miniskirt/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-094-miniskirt/"
+      }
+    },
+    {
+      "id": "PMCG1-082",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン図鑑 HANDY505",
+        "en": "Pokédex"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の山札を上から5枚まで見て、好きな順番に入れ替えて山札に戻すことができる。",
+          "en": "Look at up to 5 cards from the top of your deck and rearrange them as you like."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "なぞのばしょの表記による。TCGdex の表記は「ポケモン図鑑」"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-082",
+        "pokemontcg": [
+          "base1-87"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-089-pokemonzukanhandy505/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-089-pokemonzukanhandy505/"
       }
     },
     {

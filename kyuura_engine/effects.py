@@ -103,7 +103,7 @@ from .decisions import (
     RETURN_TO_DECK, SEARCH_DECK, SELECT_ATTACK,
     SELECT_EVOLUTION_CARD, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, push_power_decision,
     ARRANGE_DECK_TOP, PEEK_CARD, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT, SELECT_PRIZE_CARD,
-    SELECT_COLOR, SELECT_DEVOLVE_COUNT, BENCH_FROM_DISCARD, DISCARD_TO_DECK, push_trainer_decision,
+    SELECT_COLOR, SELECT_DEVOLVE_COUNT, BENCH_FROM_DISCARD, DISCARD_TO_DECK, SELECT_DRAW_COUNT, push_trainer_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -141,6 +141,7 @@ from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
     return_basic_to_hand, return_hand_to_deck, return_in_play_to_deck, return_in_play_to_hand, reveal_deck_to_hand, search_deck_to_hand, shuffle_deck,
     look_at_card, put_trainer_into_play, swap_prize_with_deck_top, put_discard_on_deck_top, return_discard_to_deck, return_hand_cards_to_deck,
+    look_at_hand, return_revealed_hand_cards_to_deck, reveal_hand,
 )
 
 if TYPE_CHECKING:
@@ -13023,6 +13024,415 @@ class TakeFromDiscardTrainer(TrainerEffect):
         return problems
 
 
+# ---------------------------------------------------------------- 手札の入れ替え・ドロー・情報の確認のトレーナー（v0.54）
+# どれも kyuura の印刷の文面（kyuura data/cards.json。kyuura に最新の説明・エラッタ・裁定の記録はない）。docs/hand-deck-trainers-v0.54.md
+
+IMPOSTER_OAK_TEXT = "相手の手札をすべて相手の山札にもどさせ、よくきってから、新たに7枚を引いて手札にさせる。"
+IMPOSTER_OAKS_REVENGE_TEXT = ("手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。\n\n\n\n"
+                              "相手の手札をすべて山札にもどさせ、山札をよく切ってから、新たに4枚を引かせて手札にさせる。")
+GAMBLER_TEXT = ("自分の手札を自分の山札に全てもどし、その山札をよくきる。その後、コインを投げて「おもて」なら8枚、「うら」なら1枚のカードを自分の山札からひいて"
+                "手札にする。")
+SABRINAS_GAZE_TEXT = ("お互いのプレイヤーは、それぞれ、自分の手札の数を数え、それらすべてを自分の山札にもどす。その後、お互いに山札をよく切り、それぞれ、自分がもどした"
+                      "枚数のカードを引いて、手札にする。")
+BLAINES_LAST_RESORT_TEXT = "このカードは、あなたの手札に「カツラの奥の手」以外のカードがある時には、使えない。山札からカードを5枚引いて、手札に加える。"
+ERIKA_TEXT = "あなたと相手プレイヤーは、それぞれ、のぞむなら最大3枚まで、山札からカードを引いてよい。(あなたがカードを引き終わってから、相手プレイヤーが引く)"
+SECRET_MISSION_TEXT = ("相手プレイヤーの手札を見る。その後、のぞむなら、あなたの手札からカードを好きなだけトラッシュして、トラッシュしたのと同じ数のカードを、山札から"
+                       "引いてよい。")
+BLAINES_GAMBLE_TEXT = ("あなたの手札から、好きなだけカードを選んでトラッシュする。その後、コインを投げて「おもて」なら、トラッシュした数×2枚のカードを、山札から引いて"
+                       "手札に加える。")
+LASS_TEXT = "お互いのプレイヤーは手札を見せ合い、手札にあるトレーナーカードを全て山札に戻す。そのあとで山札をよくきって、プレイを再開する。"
+POKEDEX_TEXT = "自分の山札を上から5枚まで見て、好きな順番に入れ替えて山札に戻すことができる。"
+
+# 手札を山札にもどすプレイヤー（v0.54）。両方なら、使ったプレイヤー → 相手プレイヤーの順に処理する（実装上の順番。docs 3 章）
+HANDS_OPPONENT = "opponent"
+HANDS_SELF = "self"
+HANDS_BOTH = "both"
+# HC5（v0.31）: 「好きなだけ」（「のぞむなら」のない）で 0 枚を選べるか。カツラのギャンブルの「好きなだけカードを選んでトラッシュする」は同じ言い回し
+DISCARD_ANY_NUMBER_ZERO_CODE = "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO"
+DISCARD_ANY_NUMBER_ZERO_REASON = (
+    "「好きなだけカードを選んでトラッシュする」（「のぞむなら」のない「好きなだけ」）で 0 枚を選べるかは決められないので扱わない（v0.31 の HC5 と同じ言い回しの問い。"
+    "カツラのギャンブル）。1 枚以上を選ぶ"
+)
+
+
+def _players_in_order(use: TrainerUse, who: str) -> tuple[int, ...]:
+    return {HANDS_SELF: (use.player,), HANDS_OPPONENT: (1 - use.player,), HANDS_BOTH: (use.player, 1 - use.player)}[who]
+
+
+def _draw_up_to(state: GameState, player: int, count: int) -> tuple[int, ...]:
+    """効果で ``count`` 枚引く（山札が足りなければ引けるだけ。0 枚でも負けではない。p.312。マサキ・オーキドはかせと同じ規定）。"""
+    return draw_cards(state, player, min(count, len(state.players[player].deck)))
+
+
+@dataclass(frozen=True)
+class ReturnHandsToDeckTrainer(TrainerEffect):
+    """v0.54: プレイヤーの手札（すべて・トレーナーカードだけ）を山札にもどし、山札を切り、決まった枚数を引くトレーナーの共通の処理（にせオーキドはかせ・にせオーキドの逆襲・
+    ギャンブラー・ナツメの眼・ミニスカート。docs/hand-deck-trainers-v0.54.md 3 章）。
+
+    - ``who``: もどすプレイヤー（``HANDS_OPPONENT``・``HANDS_SELF``・``HANDS_BOTH``）。相手の手札をもどさせる・相手に引かせるのは相手の手札・山札への効果で、相手の決定は
+      ない（選ぶものがない）。両方なら、見せる・もどす・切る・引くのそれぞれを、使ったプレイヤー → 相手プレイヤーの順に行う（実装上の順番。手札・山札は別々なので結果の
+      分布は変わらない）
+    - ``returns``: ``"all"``（手札をすべて）・``"trainers"``（手札のトレーナーカード。手札にある間の印刷の定義で決める ``CardFilter("trainer")``。なにかの化石・ピッピ人形・
+      ほかの種類のトレーナーも含む。ポケモン・エネルギーは動かさない）。使っているこのカードは手札にない（``trainer_in_use``）ので含まない
+    - ``reveal``: もどす前に手札を見せ合う（``zones.reveal_hand``。ログ ``reveal_hand`` は公開）。見せたカードからもどすので ``revealed_hand_to_deck``（公開）。見せない
+      ときは ``zones.return_hand_cards_to_deck``（ログ ``hand_to_deck`` の ``cards`` は持ち主だけ）。もどすカードがなければもどすログはない
+    - 切る: もどすプレイヤーの山札を必ず切る（もどすカードが 0 枚でも。説明の「よくきって」の主語はもどすプレイヤー）
+    - 引く枚数: ``draw``（決まった数）・``draw_returned``（そのプレイヤーがもどした枚数。ナツメの眼。プレイヤーごとに別に数える）・``coin_draws``（切ったあとに使った
+      プレイヤーがコインを 1 枚投げ、(「おもて」, 「うら」) の枚数。ギャンブラー）。山札が足りなければ引けるだけ（p.312）。``returns`` が ``"trainers"`` なら引かない
+    - ``discard_cost``: 使うための条件として、このカードを除く手札から決まった枚数をトラッシュする（にせオーキドの逆襲。``INSUFFICIENT_CARDS_IN_HAND``。決定
+      ``DISCARD_FROM_HAND``）。トラッシュのあとで不正な答えがあっても、すんだトラッシュは取り消さない
+    """
+
+    text: str
+    who: str
+    returns: str = "all"
+    reveal: bool = False
+    draw: int | None = None
+    draw_returned: bool = False
+    coin_draws: tuple[int, int] | None = None
+    discard_cost: int = 0
+    implementation_id = "return_hands_to_deck_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        text = definition.trainer_text_ja
+        if text != self.text:
+            problems.append(f"文面 {text!r} が、登録の文面ではない")
+            return problems
+        draws = [self.draw is not None, self.draw_returned, self.coin_draws is not None]
+        coin = self.coin_draws or (0, 0)
+        expected = {
+            "相手の手札": ("相手の手札をすべて" in text, self.who == HANDS_OPPONENT),
+            "自分の手札": ("自分の手札を自分の山札に全てもどし" in text, self.who == HANDS_SELF),
+            "お互いのプレイヤー": (text.startswith("お互いのプレイヤーは"), self.who == HANDS_BOTH),
+            "トレーナーカードだけ": ("トレーナーカードを全て山札に戻す" in text, self.returns == "trainers"),
+            "見せ合う": ("見せ合い" in text, self.reveal),
+            "決まった枚数を引く": (self.draw is not None and f"{self.draw}枚を引" in text, self.draw is not None),
+            "もどした枚数を引く": ("自分がもどした枚数のカードを引いて" in text, self.draw_returned),
+            "コイン": (f"コインを投げて「おもて」なら{coin[0]}枚、「うら」なら{coin[1]}枚" in text, self.coin_draws is not None),
+            "トラッシュの条件": ("選んでトラッシュしなければ、このカードは使えない" in text, self.discard_cost > 0),
+        }
+        problems += [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
+        if self.discard_cost and f"手札からカードを{self.discard_cost}枚選んでトラッシュしなければ" not in text:
+            problems.append(f"文面と登録の使うための条件の枚数（{self.discard_cost}）が合わない")
+        if sum(draws) != (0 if self.returns == "trainers" else 1):
+            problems.append("引く枚数の決め方（決まった数・もどした枚数・コイン）は、手札をすべてもどすときちょうど 1 つ（トレーナーカードだけもどすときは引かない）")
+        if self.returns not in ("all", "trainers") or self.who not in (HANDS_OPPONENT, HANDS_SELF, HANDS_BOTH):
+            problems.append(f"もどすカード {self.returns!r}・プレイヤー {self.who!r} が登録できる値ではない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if self.discard_cost:
+            _hand_cost_problem(state, use, self.discard_cost, "トラッシュする")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if self.discard_cost:
+            push_trainer_decision(state, use, kind=DISCARD_FROM_HAND, player=use.player, options=state.players[use.player].hand,
+                                  min_choices=self.discard_cost, max_choices=self.discard_cost)
+            return
+        self._apply(state, use)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        discard_from_hand(state, use.player, choices)
+        self._apply(state, use)
+
+    def _apply(self, state: GameState, use: TrainerUse) -> None:
+        players = _players_in_order(use, self.who)
+        if self.reveal:
+            for player in players:
+                reveal_hand(state, player, trainer=use.card)
+        returned: dict[int, int] = {}
+        for player in players:
+            hand = state.players[player].hand
+            cards = tuple(uid for uid in hand if self.returns == "all" or CardFilter("trainer").matches(state.card_def(uid)))
+            returned[player] = len(cards)
+            if not cards:
+                continue
+            if self.reveal:
+                return_revealed_hand_cards_to_deck(state, player, cards, trainer=use.card)
+            else:
+                return_hand_cards_to_deck(state, player, cards, trainer=use.card)
+        for player in players:
+            shuffle_deck(state, player)
+        if self.returns == "trainers":
+            return
+        if self.coin_draws is not None:
+            count = self.coin_draws[0] if _trainer_coin(state, use) else self.coin_draws[1]
+        for player in players:
+            if self.draw is not None:
+                count = self.draw
+            elif self.draw_returned:
+                count = returned[player]
+            _draw_up_to(state, player, count)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = [] if decision.player == use.player else [f"{what}の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）"]
+        if decision.kind != DISCARD_FROM_HAND or not self.discard_cost:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}"]
+        if (decision.min_choices, decision.max_choices) != (self.discard_cost, self.discard_cost):
+            problems.append(f"{what}で選ぶ数が {decision.min_choices}〜{decision.max_choices}（{self.discard_cost} 枚のはず）")
+        if decision.options != tuple(state.players[use.player].hand):
+            problems.append(f"{what}の決定の選べるもの {decision.options} が手札と合わない")
+        return problems
+
+
+@dataclass(frozen=True)
+class DrawIfOnlyNamedInHand(TrainerEffect):
+    """v0.54: 手札に ``name`` 以外のカードがある時には使えず、山札からカードを ``count`` 枚引いて手札に加える（カツラの奥の手）。
+
+    - 使うための条件: 使っているこのカードを除く手札に、名前（手札にある間の印刷の定義の名前の完全一致）が ``name`` でないカードがあれば、手札から出す前に
+      ``IllegalActionError("OTHER_CARDS_IN_HAND")``。同じ名前のカード（ほかの「カツラの奥の手」）はあってよく、手札がこのカードだけでも使える
+    - 手札を見せる指示は日本語版の文面にない（英語版の「Show your hand to your opponent」を持ち込まない）。条件はエンジンが確かめるだけで、ログに手札を書かない
+    - 引くのは山札から ``count`` 枚（足りなければ引けるだけ。p.312）
+    """
+
+    text: str
+    name: str
+    count: int
+    implementation_id = "draw_if_only_named_in_hand"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
+        elif f"手札に「{self.name}」以外のカードがある時には、使えない" not in self.text or f"カードを{self.count}枚引いて" not in self.text:
+            problems.append("文面と登録の名前・枚数が合わない")
+        if definition.name_ja != self.name:
+            problems.append(f"カードの名前 {definition.name_ja!r} が、条件の名前 {self.name!r} ではない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        others = [uid for uid in state.players[use.player].hand if uid != use.card and state.card_def(uid).name_ja != self.name]
+        if others:
+            raise IllegalActionError(
+                "OTHER_CARDS_IN_HAND",
+                f"手札に「{self.name}」以外のカードが {len(others)} 枚あるので、このカードは使えない（使うための条件）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        _draw_up_to(state, use.player, self.count)
+
+
+@dataclass(frozen=True)
+class EachPlayerMayDraw(TrainerEffect):
+    """v0.54: 使ったプレイヤーと相手プレイヤーが、それぞれ、のぞむなら最大 ``max_count`` 枚まで山札から引く（エリカ。使ったプレイヤーが引き終わってから相手が引く）。
+
+    - 引く枚数を決めるのは引くプレイヤー自身（決定 ``SELECT_DRAW_COUNT``。選べるものは 0〜min(``max_count``, 自分の山札の枚数)。``context`` の ``"stage"`` は 0（使った
+      プレイヤー）・1（相手プレイヤー））。相手プレイヤーの決定は、このカードの ``decision_problems`` だけが許す（ほかのトレーナーの、使ったプレイヤーが決める約束は変えない）
+    - 0 枚は「のぞむなら」の、引かないこと（ログ ``trainer_draw_declined`` の ``reason`` ``declined``）。山札が 0 枚なら決定を出さない（``reason`` ``empty_deck``）。両方が
+      引かなくてもよい
+    - 使ったプレイヤーが引いてから、相手プレイヤーの決定を出す（説明の「(あなたがカードを引き終わってから、相手プレイヤーが引く)」）。相手は使ったプレイヤーが引いた枚数を
+      知ってから決める（ログ ``draw`` の枚数は公開、カードは引いたプレイヤーだけ）
+    """
+
+    text: str
+    max_count: int
+    implementation_id = "each_player_may_draw"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
+        elif f"のぞむなら最大{self.max_count}枚まで" not in self.text or "あなたがカードを引き終わってから、相手プレイヤーが引く" not in self.text:
+            problems.append("文面と登録の枚数・順番が合わない")
+        return problems
+
+    def _drawer(self, use: TrainerUse, stage: int) -> int:
+        return use.player if stage == 0 else 1 - use.player
+
+    def _options(self, state: GameState, player: int) -> tuple[int, ...]:
+        return tuple(range(min(self.max_count, len(state.players[player].deck)) + 1))
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        self._offer(state, use, 0)
+
+    def _offer(self, state: GameState, use: TrainerUse, stage: int) -> None:
+        for current in range(stage, 2):
+            player = self._drawer(use, current)
+            if state.players[player].deck:
+                push_trainer_decision(state, use, kind=SELECT_DRAW_COUNT, player=player, options=self._options(state, player), context=(("stage", current),))
+                return
+            state.add_event("trainer_draw_declined", player=player, trainer_card=use.card, reason="empty_deck")
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        stage = decision.context_value("stage")
+        player = self._drawer(use, stage)
+        if choices[0]:
+            draw_cards(state, player, choices[0])
+        else:
+            state.add_event("trainer_draw_declined", player=player, trainer_card=use.card, reason="declined")
+        if stage == 0:
+            self._offer(state, use, 1)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        if decision.kind != SELECT_DRAW_COUNT:
+            return [f"{what}の決定の種類が {decision.kind!r}（{SELECT_DRAW_COUNT} のはず）"]
+        stage = decision.context_value("stage")
+        if stage not in (0, 1):
+            return [f"{what}の決定の段階 {stage!r} が 0・1 ではない"]
+        problems = []
+        player = self._drawer(use, stage)
+        if decision.player != player:
+            problems.append(f"{what}の段階 {stage} で引く枚数を決めるのがプレイヤー {decision.player}（{player} のはず）")
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}で選ぶ数が {decision.min_choices}〜{decision.max_choices}")
+        if not state.players[player].deck or decision.options != self._options(state, player):
+            problems.append(f"{what}の決定の選べるもの {decision.options} が、プレイヤー {player} の山札の枚数と合わない")
+        if stage == 1 and not any(e["kind"] in ("draw", "trainer_draw_declined") and e["player"] == use.player for e in _last_trainer_events(state, use)):
+            problems.append(f"{what}の相手プレイヤーの決定が、使ったプレイヤーが引き終わる前に出ている")
+        return problems
+
+
+@dataclass(frozen=True)
+class DiscardFromHandThenDrawTrainer(TrainerEffect):
+    """v0.54: 手札から好きなだけトラッシュし、トラッシュした数（× ``multiplier``）のカードを引くトレーナーの共通の処理（スパイ作戦・カツラのギャンブル）。
+
+    - ``look_opponent_hand``（スパイ作戦）: 最初に相手プレイヤーの手札を見る（``zones.look_at_hand``。ログ ``look_at_hand`` の ``cards`` は見たプレイヤーと持ち主だけ。
+      相手の手札が 0 枚でも見る処理をして、そのあとの処理を続ける（見るカードがないだけ。実装上の読み方））。見たのはこの時点の手札で、あとで観測の手札を公開しない
+    - トラッシュするのは使ったプレイヤーが選ぶ、このカードを除く手札の 0〜すべて（決定 ``DISCARD_FROM_HAND``）。``optional``（「のぞむなら」。スパイ作戦）なら 0 枚は
+      トラッシュも引くこともしない（ログ ``trainer_discard_declined``）。``optional`` でない（カツラのギャンブルの「好きなだけ」）なら 0 枚は HC5（答えのときに止める。
+      手札がこのカードだけなら、選べるのは 0 枚しかないので使う前に止める）
+    - ``coin``: トラッシュのあとに使ったプレイヤーがコインを 1 枚投げ、「おもて」ならトラッシュした数 × ``multiplier`` 枚引く。「うら」なら引かない（トラッシュしたカードは
+      もどさない）。スパイ作戦はトラッシュした数と同じ数を引く（トラッシュと引くのは 1 つの「のぞむなら」。トラッシュして引かない選択はない。実装上の読み方）
+    - 引く枚数は山札が足りなければ引けるだけ（p.312）
+    """
+
+    text: str
+    multiplier: int = 1
+    coin: bool = False
+    optional: bool = False
+    look_opponent_hand: bool = False
+    implementation_id = "discard_from_hand_then_draw_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        text = definition.trainer_text_ja
+        if text != self.text:
+            problems.append(f"文面 {text!r} が、登録の文面ではない")
+            return problems
+        expected = {
+            "相手の手札を見る": (text.startswith("相手プレイヤーの手札を見る。"), self.look_opponent_hand),
+            "のぞむなら": ("のぞむなら" in text, self.optional),
+            "コイン": ("コインを投げて「おもて」なら" in text, self.coin),
+            "引く枚数": ("トラッシュした数×2枚" in text if self.multiplier == 2 else "トラッシュしたのと同じ数のカード" in text, True),
+            "好きなだけ": ("好きなだけ" in text, True),
+        }
+        problems += [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not self.optional and not [uid for uid in state.players[use.player].hand if uid != use.card]:
+            raise UnsupportedError(DISCARD_ANY_NUMBER_ZERO_CODE, f"{DISCARD_ANY_NUMBER_ZERO_REASON}。このカードを除く手札が 0 枚で、選べるのは 0 枚だけ")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if self.look_opponent_hand:
+            look_at_hand(state, use.player, 1 - use.player, trainer=use.card)
+        hand = state.players[use.player].hand
+        if not hand:
+            state.add_event("trainer_discard_declined", player=use.player, trainer_card=use.card, reason="empty_hand")
+            return
+        push_trainer_decision(state, use, kind=DISCARD_FROM_HAND, player=use.player, options=hand, min_choices=0, max_choices=len(hand))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            if not self.optional:
+                raise UnsupportedError(DISCARD_ANY_NUMBER_ZERO_CODE, DISCARD_ANY_NUMBER_ZERO_REASON)
+            state.add_event("trainer_discard_declined", player=use.player, trainer_card=use.card, reason="declined")
+            return
+        discarded = discard_from_hand(state, use.player, choices)
+        if self.coin and not _trainer_coin(state, use):
+            return
+        _draw_up_to(state, use.player, len(discarded) * self.multiplier)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = [] if decision.player == use.player else [f"{what}の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）"]
+        if decision.kind != DISCARD_FROM_HAND:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}（{DISCARD_FROM_HAND} のはず）"]
+        hand = tuple(state.players[use.player].hand)
+        if (decision.min_choices, decision.max_choices) != (0, len(hand)) or not hand:
+            problems.append(f"{what}で選ぶ数が {decision.min_choices}〜{decision.max_choices}（0〜{len(hand)} 枚のはず）")
+        if decision.options != hand:
+            problems.append(f"{what}の決定の選べるもの {decision.options} が手札と合わない")
+        if self.look_opponent_hand and not any(e["kind"] == "look_at_hand" and e.get("trainer_card") == use.card for e in _last_trainer_events(state, use)):
+            problems.append(f"{what}の決定が、相手の手札を見るまえに出ている")
+        return problems
+
+
+@dataclass(frozen=True)
+class ArrangeOwnDeckTopTrainer(TrainerEffect):
+    """v0.54: 自分の山札を上から ``max_cards`` 枚まで見て、好きな順番に入れ替えて山札にもどすことができる（ポケモン図鑑 HANDY505）。
+
+    - 見る山札は自分の山札だけ（みらいよちの持ち主を選ぶ決定はない）。見る枚数は使ったプレイヤーが選ぶ（決定 ``SELECT_LOOK_COUNT``。0〜min(``max_cards``, 山札の枚数)）。
+      0 枚は「ことができる」の、見ないこと（ログ ``look_at_deck_top_declined``。v0.39 の GS1（「最大N」が 0 を含むか）とは別の言い回しで、GS1 を当てはめない）
+    - 見る（ログ ``look_at_deck_top`` の ``cards`` は見たプレイヤーだけ）→ 2 枚以上なら新しい並び（決定 ``ARRANGE_DECK_TOP``。選べるものは見たカード（上から順）。答えの
+      並びが新しい上からの順）→ もどす（ログ ``arrange_deck_top``）。1 枚なら並べかえる決定はない。見た部分より下の並びは変えない。手札に加えず、切らない
+    - 山札が 0 枚なら見るカードがない（ログ ``look_at_deck_top_none``。決定なし）。見る枚数を選ぶ前は山札の内容を見せない
+    - 出どころはトレーナー（ログの ``trainer_card``）。みらいよちのワザの ``effect`` とは別（ワザの要素 ``programs.ArrangeDeckTop`` は変えない）
+    """
+
+    text: str
+    max_cards: int
+    implementation_id = "arrange_own_deck_top_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
+        elif f"自分の山札を上から{self.max_cards}枚まで見て" not in self.text or "ことができる" not in self.text:
+            problems.append("文面と登録の枚数・「ことができる」が合わない")
+        return problems
+
+    def _count_options(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return tuple(range(min(self.max_cards, len(state.players[use.player].deck)) + 1))
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if not state.players[use.player].deck:
+            state.add_event("look_at_deck_top_none", player=use.player, owner=use.player, trainer_card=use.card)
+            return
+        push_trainer_decision(state, use, kind=SELECT_LOOK_COUNT, player=use.player, options=self._count_options(state, use))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        deck = state.players[use.player].deck
+        if decision.kind == SELECT_LOOK_COUNT:
+            count = choices[0]
+            if count == 0:
+                state.add_event("look_at_deck_top_declined", player=use.player, owner=use.player, trainer_card=use.card)
+                return
+            cards = tuple(deck[:count])
+            state.add_event("look_at_deck_top", player=use.player, owner=use.player, count=count, cards=cards, trainer_card=use.card)
+            if count == 1:
+                state.add_event("arrange_deck_top", player=use.player, owner=use.player, count=1, cards=cards, trainer_card=use.card)
+                return
+            push_trainer_decision(state, use, kind=ARRANGE_DECK_TOP, player=use.player, options=cards, min_choices=count, max_choices=count)
+            return
+        count = len(decision.options)
+        if tuple(deck[:count]) != tuple(decision.options) or sorted(choices) != sorted(decision.options):
+            raise RuntimeError(f"ポケモン図鑑の並べかえ {choices} が、見たカード {decision.options} の並べかえではない（エンジンの不具合）")
+        deck[:count] = list(choices)
+        state.add_event("arrange_deck_top", player=use.player, owner=use.player, count=count, cards=tuple(choices), trainer_card=use.card)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = [] if decision.player == use.player else [f"{what}の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）"]
+        deck = state.players[use.player].deck
+        if decision.kind == SELECT_LOOK_COUNT:
+            if (decision.min_choices, decision.max_choices) != (1, 1) or not deck or decision.options != self._count_options(state, use):
+                problems.append(f"{what}の見る枚数の決定 {decision.options}（{decision.min_choices}〜{decision.max_choices}）が山札と合わない")
+            return problems
+        if decision.kind != ARRANGE_DECK_TOP:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}"]
+        count = len(decision.options)
+        if not 2 <= count <= self.max_cards or (decision.min_choices, decision.max_choices) != (count, count) or tuple(deck[:count]) != decision.options:
+            problems.append(f"{what}の並べかえの決定 {decision.options} が、山札の上の {count} 枚と合わない")
+        looked = [e for e in _last_trainer_events(state, use) if e["kind"] == "look_at_deck_top" and e.get("trainer_card") == use.card]
+        if len(looked) != 1 or tuple(looked[0]["cards"]) != decision.options:
+            problems.append(f"{what}の並べかえの決定の前に、同じカードを見たログがない")
+        return problems
+
+
 # ---------------------------------------------------------------- 決められない姿の状態（TF1・TF2・DG1）
 
 TRANSFORM_POWER_CODE = "UNRESOLVED_TRANSFORM_COPIED_POWER"
@@ -17043,6 +17453,36 @@ DEFAULT_EFFECTS = EffectRegistry(
         # 夜の廃品回収: 自分のトラッシュのたねポケモン・進化カード・基本エネルギーカードを最大 3 枚、見せて山札にもどして切る（0 枚・選べるカードがないときは NG1）
         "PMCG4-057": TrainerEntry(TakeFromDiscardTrainer(NIGHTLY_GARBAGE_RUN_TEXT, CardFilter("pokemon_or_basic_energy"), 3, TO_DECK, zero_undetermined=True),
                                   "夜の廃品回収", NIGHTLY_GARBAGE_RUN_TEXT, NIGHTLY_GARBAGE_RUN_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.54（docs/hand-deck-trainers-v0.54.md。どれも kyuura の印刷の文面）
+        # にせオーキドはかせ: 相手の手札をすべて相手の山札にもどさせ、切ってから 7 枚引かせる（相手の手札 0 枚でも切って引かせる。山札が足りなければ引けるだけ）
+        "PMCG1-089": TrainerEntry(ReturnHandsToDeckTrainer(IMPOSTER_OAK_TEXT, HANDS_OPPONENT, draw=7),
+                                  "にせオーキドはかせ", IMPOSTER_OAK_TEXT, IMPOSTER_OAK_TEXT, _KYUURA_PRINTED_TEXT),
+        # にせオーキドの逆襲: 手札 1 枚のトラッシュが使うための条件。そのあと相手の手札をすべて山札にもどさせ、切ってから 4 枚引かせる
+        "PMCG4-059": TrainerEntry(ReturnHandsToDeckTrainer(IMPOSTER_OAKS_REVENGE_TEXT, HANDS_OPPONENT, draw=4, discard_cost=1),
+                                  "にせオーキドの逆襲", IMPOSTER_OAKS_REVENGE_TEXT, IMPOSTER_OAKS_REVENGE_TEXT, _KYUURA_PRINTED_TEXT),
+        # ギャンブラー: 自分の手札をすべて山札にもどして切る → コイン → 「おもて」なら 8 枚、「うら」なら 1 枚引く
+        "PMCG3-045": TrainerEntry(ReturnHandsToDeckTrainer(GAMBLER_TEXT, HANDS_SELF, coin_draws=(8, 1)),
+                                  "ギャンブラー", GAMBLER_TEXT, GAMBLER_TEXT, _KYUURA_PRINTED_TEXT),
+        # ナツメの眼: お互いに自分の手札をすべて山札にもどし、切り、それぞれ自分がもどした枚数を引く（枚数はプレイヤーごと）
+        "PMCG6-078": TrainerEntry(ReturnHandsToDeckTrainer(SABRINAS_GAZE_TEXT, HANDS_BOTH, draw_returned=True),
+                                  "ナツメの眼", SABRINAS_GAZE_TEXT, SABRINAS_GAZE_TEXT, _KYUURA_PRINTED_TEXT),
+        # カツラの奥の手: 手札に「カツラの奥の手」以外のカードがあれば使えない（使うための条件）。5 枚引く
+        "PMCG6-081": TrainerEntry(DrawIfOnlyNamedInHand(BLAINES_LAST_RESORT_TEXT, "カツラの奥の手", 5),
+                                  "カツラの奥の手", BLAINES_LAST_RESORT_TEXT, BLAINES_LAST_RESORT_TEXT, _KYUURA_PRINTED_TEXT),
+        # エリカ: 使ったプレイヤー → 相手プレイヤーの順に、それぞれ 0〜3 枚を選んで引く（決めるのは引くプレイヤー）
+        "PMCG5-083": TrainerEntry(EachPlayerMayDraw(ERIKA_TEXT, 3), "エリカ", ERIKA_TEXT, ERIKA_TEXT, _KYUURA_PRINTED_TEXT),
+        # スパイ作戦: 相手の手札を見る → のぞむなら手札を好きなだけトラッシュして、同じ数を引く
+        "PMCG5-088": TrainerEntry(DiscardFromHandThenDrawTrainer(SECRET_MISSION_TEXT, optional=True, look_opponent_hand=True),
+                                  "スパイ作戦", SECRET_MISSION_TEXT, SECRET_MISSION_TEXT, _KYUURA_PRINTED_TEXT),
+        # カツラのギャンブル: 手札を好きなだけトラッシュ（0 枚は HC5）→ コイン → 「おもて」ならトラッシュした数 × 2 枚引く
+        "PMCG6-076": TrainerEntry(DiscardFromHandThenDrawTrainer(BLAINES_GAMBLE_TEXT, multiplier=2, coin=True),
+                                  "カツラのギャンブル", BLAINES_GAMBLE_TEXT, BLAINES_GAMBLE_TEXT, _KYUURA_PRINTED_TEXT),
+        # ミニスカート: お互いに手札を見せ合い、手札のトレーナーカードをすべて山札にもどし、お互いに山札を切る
+        "PMCG1-095": TrainerEntry(ReturnHandsToDeckTrainer(LASS_TEXT, HANDS_BOTH, returns="trainers", reveal=True),
+                                  "ミニスカート", LASS_TEXT, LASS_TEXT, _KYUURA_PRINTED_TEXT),
+        # ポケモン図鑑 HANDY505: 自分の山札の上から 0〜5 枚を見て、好きな順番にもどす（手札に加えない・切らない）
+        "PMCG1-082": TrainerEntry(ArrangeOwnDeckTopTrainer(POKEDEX_TEXT, 5),
+                                  "ポケモン図鑑 HANDY505", POKEDEX_TEXT, POKEDEX_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

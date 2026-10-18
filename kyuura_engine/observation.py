@@ -59,6 +59,7 @@ from .decisions import (
     SELECT_COLOR,
     SELECT_DECK_OWNER,
     SELECT_DEVOLVE_COUNT,
+    SELECT_DRAW_COUNT,
     SELECT_EVOLUTION_CARD,
     SELECT_HAND_CARD,
     SELECT_LOOK_COUNT,
@@ -93,6 +94,7 @@ OPTION_MEANINGS: dict[str, str] = {
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
+    SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
@@ -287,6 +289,11 @@ def _looked_card(event, viewer) -> bool:
     return viewer is not None and (viewer == event.get("player") or (event.get("zone") == "hand" and viewer == event.get("owner")))
 
 
+def _hand_looker_or_owner(event, viewer) -> bool:
+    """v0.54: スパイ作戦で見た手札は、見たプレイヤーと手札の持ち主（自分の手札を知っている）に見える。"""
+    return viewer is not None and viewer in (event.get("player"), event.get("owner"))
+
+
 def _taken_deck_top(event, viewer) -> bool:
     """てつだうふり（v0.45）: トラッシュに置いたら公開。手札に加えたら、見たプレイヤーと持ち主。"""
     return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
@@ -305,6 +312,7 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "arrange_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（もどす並び）
     "take_deck_top": (("card",), _taken_deck_top),
     "trainer_take_none": (("reason",), _only_player),  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
+    "look_at_hand": (("cards",), _hand_looker_or_owner),  # v0.54: スパイ作戦（見たプレイヤーと持ち主だけ。観戦者には見せない）
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -328,6 +336,8 @@ PUBLIC_EVENTS = frozenset({
     "retreat", "retreat_failed", "retreat_failure_cleared", "retrieve_energy", "return_energy_to_hand", "return_in_play_to_deck",
     "return_in_play_to_hand",
     "return_basic_to_hand",  # v0.52: ポケモン回収（場のカード → 手札・トラッシュ。手札にもどしたカードは場にあったので公開）
+    "reveal_hand", "revealed_hand_to_deck",  # v0.54: ミニスカート（見せ合った手札・見せた手札から山札にもどしたトレーナーカード）
+    "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined",  # v0.54: 引かない・トラッシュしない・見ない（山札・手札の枚数は公開）
     "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",

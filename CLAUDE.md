@@ -1552,3 +1552,35 @@
   （前の版の組の結果は変わらない）。トレーナーは `_v053_trainer`（受け付けるときだけ使う。止まる場面はコードごとに数える）、決定は `_v053_decision`。選んだカードのそのあとの使い道は
   `card_uses` の `taken_then_…`。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
 
+## 手札の入れ替え・ドロー・情報の確認のトレーナー 10 枚（v0.54）
+
+- 依頼の 10 枚（にせオーキドはかせ PMCG1-089・にせオーキドの逆襲 PMCG4-059・ギャンブラー PMCG3-045・ナツメの眼 PMCG6-078・カツラの奥の手 PMCG6-081・エリカ PMCG5-083・
+  スパイ作戦 PMCG5-088・カツラのギャンブル PMCG6-076・ミニスカート PMCG1-095・ポケモン図鑑 HANDY505 PMCG1-082）を、kyuura データの採用で登録しました（トレーナーの登録 30 → 40。写しの組
+  `pool_v0_54`。写し 366 → 376 枚）。カードごとの結果・条件・順番・枚数・見せるか・未解決・実装上の読み方・互換性・検証は docs/hand-deck-trainers-v0.54.md。ガイドブックは読んでいません。
+  英語版の文面（カツラの奥の手の「Show your hand」など）・2002 年の「サポーター適用カード」（kyuura MIX-SUPPORTER-ERRATA）・現代のサポーターの規定で、日本語版の条件を補わないで
+  ください。テストの定数は tests/helpers.py の `IMPOSTER_OAK`〜`POKEDEX`・`V0_54_CARDS`。
+- 共通の処理は `effects.ReturnHandsToDeckTrainer`（もどすプレイヤー `HANDS_OPPONENT`・`HANDS_SELF`・`HANDS_BOTH`・もどすカード `"all"`・`"trainers"`・見せ合うか・引く枚数の決め方
+  （決まった数 `draw`・もどした枚数 `draw_returned`・コイン `coin_draws` のちょうど 1 つ）・使うための条件 `discard_cost`）・`DrawIfOnlyNamedInHand`・`EachPlayerMayDraw`・
+  `DiscardFromHandThenDrawTrainer`（相手の手札を見るか・「のぞむなら」か・コイン・倍数）・`ArrangeOwnDeckTopTrainer` です。型の `check` が登録の値と文面の言葉を照らします。似た
+  トレーナーを加えるときは、まずこれらの引数で表せるかを確かめ、カードごとの型・汎用の条件の書き方を作らないでください。
+- 両方のプレイヤーの処理（見せる・もどす・切る・引く）は、使ったプレイヤー → 相手の順（実装上の順番。HD1）。もどすカードが 0 枚でも、もどすプレイヤーの山札は切る（HD2）。
+  もどす枚数（ナツメの眼）はプレイヤーごとに数え、使っているこのカード（`trainer_in_use`）は数えない。効果で引く枚数は、山札が足りなければ引けるだけ（p.312。`_draw_up_to`）。
+- 相手の手札をもどさせる・相手に引かせる（にせオーキドはかせ・逆襲）のに相手の決定はありません。エリカの相手の枚数は相手自身が決め（決定 `select_draw_count`、`context` の
+  `"stage"` が 1）、それを許すのはエリカの `decision_problems` だけです（ほかのトレーナーの「決めるのは使ったプレイヤー」の約束を緩めない）。
+- 見る・見せるのは 1 回だけです: スパイ作戦は `zones.look_at_hand`（ログ `look_at_hand` の `cards` は見たプレイヤーと持ち主だけ）、ミニスカートは `zones.reveal_hand`・
+  `return_revealed_hand_cards_to_deck`（公開）。観測の手札の見え方（`hand_visible_to`・［おみとおし］）を変えないでください（あとで手札に加わったカードを公開しない）。ポケモン図鑑は
+  みらいよちと同じ決定 `select_look_count`・`arrange_deck_top` とログ（出どころは `trainer_card`）で、自分の山札だけ・手札に加えない・切らない。0 枚は「ことができる」の見ないこと
+  （`look_at_deck_top_declined`。GS1 を当てはめない）。
+- ミニスカートのトレーナーカードは、手札にある間の印刷の分類（`CardFilter("trainer")`。`category`）で、なにかの化石・ピッピ人形・種類（`trainer_kinds`）のあるトレーナーも含みます。
+  v0.53 の `secret_machine_ok` は夜の廃品回収自身の登録の印で、選べるカードの種類とは別です（v0.53 の節の「ほかの種類のトレーナーは今までどおり拒否します」は、ほかの種類の
+  トレーナーを登録しないという意味。選べるカード・もどすカードから種類で除く意味ではない）。
+- 使うための条件: にせオーキドの逆襲は v0.53 の `_hand_cost_problem`（`INSUFFICIENT_CARDS_IN_HAND`）、カツラの奥の手は `OTHER_CARDS_IN_HAND`（名前の完全一致。同じ名前のカードは
+  よい。手札を見せない）。カツラのギャンブルの「好きなだけ」（「のぞむなら」がない）の 0 枚は v0.31 の HC5（`UNRESOLVED_DISCARD_ANY_NUMBER_ZERO`。0 枚の答え・手札がこのカードだけの
+  とき）で、スパイ作戦（「のぞむなら」がある）の 0 枚は受け付けます。似た言い回しのカードの問いを自動で当てはめないでください。
+- 状態の項目・書き出しの形式（15）・公開の API の呼び方は変えていません。新しい決定の種類は `select_draw_count`、新しいログのイベントは `reveal_hand`・`revealed_hand_to_deck`・
+  `look_at_hand`・`trainer_draw_declined`・`trainer_discard_declined`・`look_at_deck_top_declined`、新しい拒否のコードは `OTHER_CARDS_IN_HAND`。新しい停止コード・未解決の裁定は
+  ありません（87 件・88 件のまま）。ログの監査（tests/log_audit.py の `hand_deck_problems`）は、トレーナー 1 回ぶんのイベントの並び・引いた枚数の上限・プレイヤーの順番と、
+  見せた・見た手札の組み立て直しを確かめます。手札・山札を動かす・見るトレーナーを加えたら、監査にも加えてください。
+- 検証用デッキ `H54`・`D54` と組（`PAIRINGS_V0_54`。`H54` 対 `D54`・`D54` 対 `H54`・`H54` 対 `R53`・`D54` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.54` です
+  （前の版の組の結果は変わらない）。トレーナーは `_v054_trainer`（受け付けるときだけ使う）、決定は `_v054_decision`（相手の決定にも答える）。`D54` のなにかの化石で、対戦準備が既知の
+  PF1 で止まる局があります。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

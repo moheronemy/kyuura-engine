@@ -425,6 +425,11 @@
           "version": "v0.31",
           "document": "docs/held-cards-v0.31.md",
           "ruling_id": "HC5"
+        },
+        {
+          "version": "v0.54",
+          "document": "docs/hand-deck-trainers-v0.54.md",
+          "ruling_id": "HC5"
         }
       ],
       "kyuura_issue": null,

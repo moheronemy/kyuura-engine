@@ -210,6 +210,9 @@ BENCH_FROM_DISCARD = "bench_from_discard"
 # 使ったプレイヤー。選べるものはトラッシュのカードの uid（トラッシュの並び。トラッシュは公開の情報）。山札の一番上にのせる ``DISCARD_TO_DECK_TOP``（わるいいたずら・
 # リサイクル。1 枚。切らない）とは、枚数・行き先・切るかが違うので別の種類
 DISCARD_TO_DECK = "discard_to_deck"
+# v0.54（docs/hand-deck-trainers-v0.54.md）: エリカの「のぞむなら最大3枚まで、山札からカードを引いてよい」で引く枚数（0〜min(3, 自分の山札の枚数)）。決めるのは引くプレイヤー
+# （先に使ったプレイヤー、引き終わってから相手プレイヤー。``context`` の ``"stage"``）。0 枚は「のぞむなら」の、引かないこと
+SELECT_DRAW_COUNT = "select_draw_count"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

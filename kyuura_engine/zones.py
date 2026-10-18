@@ -359,18 +359,49 @@ def return_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, .
 
     v0.53: トレーナーの効果（エリカのお付きの使うための条件・メンテナンス。どちらも見せる指示がない）でもどすときは、ワザの ``effect`` のかわりに ``trainer``（使っている
     トレーナーのカードの uid。ログの ``trainer_card``）を渡す（ちょうど一方。ワザのログの形は v0.52 と同じ）。"""
-    p = state.players[player]
     if (effect is None) == (trainer is None):
         raise RuntimeError("手札を山札にもどす効果の出どころ（ワザ effect・トレーナー trainer）はちょうど一方（エンジンの不具合）")
+    returned = _hand_to_deck_bottom(state, player, cards)
+    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
+    state.add_event("hand_to_deck", player=player, cards=returned, **source)
+    return returned
+
+
+def return_revealed_hand_cards_to_deck(state: GameState, player: int, cards: tuple[int, ...], *, trainer: int) -> tuple[int, ...]:
+    """見せた手札（``reveal_hand`` のすぐあと）のカード ``cards`` を、同じ uid のまま手札の並びの順に自分の山札の一番下にもどす（v0.54。ミニスカートの「お互いの
+    プレイヤーは手札を見せ合い、手札にあるトレーナーカードを全て山札に戻す」）。``return_hand_cards_to_deck`` と同じ動き（一番下にもどすのは、このあと必ず切るので
+    実装上の仮定）で、もどしたカードは見せたカードなのでログ ``revealed_hand_to_deck`` の ``cards`` は公開。もどしてよいかの確認は呼ぶ側が済ませる。"""
+    returned = _hand_to_deck_bottom(state, player, cards)
+    state.add_event("revealed_hand_to_deck", player=player, cards=returned, trainer_card=trainer)
+    return returned
+
+
+def _hand_to_deck_bottom(state: GameState, player: int, cards: tuple[int, ...]) -> tuple[int, ...]:
+    p = state.players[player]
     if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != player for uid in cards):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {cards} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     returned = tuple(uid for uid in p.hand if uid in cards)
     for uid in returned:
         p.hand.remove(uid)
     p.deck.extend(returned)
-    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
-    state.add_event("hand_to_deck", player=player, cards=returned, **source)
     return returned
+
+
+def reveal_hand(state: GameState, player: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``player`` が自分の手札をすべて相手に見せる（v0.54。ミニスカートの「お互いのプレイヤーは手札を見せ合い」）。カードは動かさない。ログ ``reveal_hand``
+    （``cards`` は見せた手札で公開。見せたのはこの時点の手札だけで、あとで手札に加わったカードは見せない）。見せたカードを返す。"""
+    cards = tuple(state.players[player].hand)
+    state.add_event("reveal_hand", player=player, cards=cards, trainer_card=trainer)
+    return cards
+
+
+def look_at_hand(state: GameState, viewer: int, owner: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``viewer`` が、プレイヤー ``owner`` の手札をすべて見る（v0.54。スパイ作戦の「相手プレイヤーの手札を見る」）。カードは動かさない。ログ ``look_at_hand``
+    （``player`` は見たプレイヤー、``owner`` は手札の持ち主）の ``cards`` は、見たプレイヤーと持ち主にだけ見える（観戦者・ほかの人に見せる処理ではない。
+    ``observation.visible_log``）。見たのはこの時点の手札だけ。見たカードを返す（手札が 0 枚なら空）。"""
+    cards = tuple(state.players[owner].hand)
+    state.add_event("look_at_hand", player=viewer, owner=owner, cards=cards, trainer_card=trainer)
+    return cards
 
 
 def put_discard_on_deck_top(state: GameState, owner: int, card: int, *, effect: str | None = None, trainer: int | None = None, chooser: int) -> None:
