@@ -330,11 +330,15 @@ def _check_trainer_state(state, counts):
         # v0.57: 錯乱ジムのコインの「うら」で、相手プレイヤーに借りて使うかを聞く（決めるのは相手。使っている最中のカードは持ち主のまま）
         if not (d.player == 1 - user and user == state.current_player):
             counts["check_decision_player_mismatch"] += 1
-        if used is None or (used.player, used.card, used.user) != (user, card, None) or state.cards[card].card_id != card_id:
+        # v0.58: ナツメのサイキックコントロールで相手のトラッシュのカードを使っているときは、持ち主は相手で、使うプレイヤーが user（``via`` がある）
+        if used is None or (used.using_player, used.card) != (user, card) or (used.via is None and used.player != user) or state.cards[card].card_id != card_id:
             counts["check_in_use_mismatch"] += 1
         return
-    # v0.57: 錯乱ジムで相手プレイヤーが借りて使っているときは、決めるのは借りたプレイヤー（番のプレイヤーの相手）。使っている最中のカードの持ち主は番のプレイヤー
-    turn_user = state.current_player if used is None or used.user is None else 1 - state.current_player
+    # v0.57: 錯乱ジムで相手プレイヤーが借りて使っているときは、決めるのは借りたプレイヤー（番のプレイヤーの相手）。使っている最中のカードの持ち主は番のプレイヤー。
+    # v0.58: サイキックコントロールで相手のトラッシュのカードを使う（``via`` がある）ときは、持ち主は相手で、使うのは番のプレイヤー（錯乱ジムで借りたら相手）
+    turn_user = state.current_player if used is None or used.using_player == state.current_player else 1 - state.current_player
+    if used is not None and used.via is None and used.user is None and used.player != state.current_player:
+        counts["check_decision_player_mismatch"] += 1  # 手札から使ったカード（借りていない）の持ち主は番のプレイヤー
     if not (d.player == user == turn_user):
         counts["check_decision_player_mismatch"] += 1
     if used is None or (used.using_player, used.card) != (user, card) or state.cards[card].card_id != card_id:

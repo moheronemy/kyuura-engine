@@ -597,6 +597,17 @@ NO_REMOVAL_GYM = "PMCG5-094"  # リムーブ禁止ジム（リーダーズスタ
 CHAOS_GYM = "PMCG5-087"  # 錯乱ジム（リーダーズスタジアム。092/096）
 V0_57_CARDS = (PEWTER_CITY_GYM, CERULEAN_CITY_GYM, RESISTANCE_GYM, ROCKETS_TRAINING_GYM, CINNABAR_CITY_GYM, CELADON_CITY_GYM, FUCHSIA_CITY_GYM,
                SAFFRON_CITY_GYM, NARROW_GYM, ROCKETS_MINEFIELD_GYM, VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM)
+# v0.58（docs/stadium-reuse-special-energy-v0.58.md）。スタジアムの処理を使う 3 枚と特殊エネルギー 4 枚
+BROCKS_GRAVELER = "PMCG5-052"  # タケシのゴローン（リーダーズスタジアム。051/096。タケシのイシツブテから進化）
+BROCKS_GOLEM = "PMCG5-053"  # タケシのゴローニャ（リーダーズスタジアム。052/096。タケシのゴローンから進化）
+SABRINAS_PSYCHIC_CONTROL = "PMCG6-088"  # ナツメのサイキックコントロール（闇からの挑戦。トレーナー）
+DOUBLE_COLORLESS_ENERGY = "PMCG1-096"  # 無色2個エネルギー（第1弾。096/096）
+POTION_ENERGY = "PMCG4-063"  # きずぐすり配合エネルギー（ロケット団。062/065）
+FULL_HEAL_ENERGY = "PMCG4-064"  # なんでもなおし配合エネルギー（ロケット団。063/065）
+RAINBOW_ENERGY = "PMCG4-065"  # レインボーエネルギー（ロケット団。064/065）
+V0_58_POKEMON = (BROCKS_GRAVELER, BROCKS_GOLEM)
+V0_58_ENERGIES = (DOUBLE_COLORLESS_ENERGY, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY)
+V0_58_CARDS = (BROCKS_GRAVELER, BROCKS_GOLEM, SABRINAS_PSYCHIC_CONTROL, *V0_58_ENERGIES)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1130,6 +1141,7 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinsPerDefenderCountersDamage,  # ナツメのスリーパーの「ふりこののろい」
     # v0.52（docs/field-return-v0.52.md）
     _effects.ReturnBothActivesToDeck,  # エリカのハクリューの「つれさる」
+    _effects.SelfDestructThenDiscardStadium,  # v0.58: タケシのゴローンの「ばくれつ」（v0.39 のじばく + 場のスタジアムをトラッシュする要素 DiscardStadium）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

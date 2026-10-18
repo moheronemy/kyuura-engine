@@ -389,7 +389,7 @@ class Cd4Test(unittest.TestCase):
         # docs/count-condition-switch-return-v0.40.md・docs/heal-counter-status-v0.41.md・docs/power-decisions-v0.42.md・docs/declared-entry-powers-v0.43.md・
         # docs/search-evolution-once-attacks-v0.44.md・docs/conditional-damage-energy-v0.45.md・docs/continuous-powers-v0.46.md・docs/fossil-hidden-info-v0.47.md・
         # docs/effective-pokemon-properties-v0.48.md・docs/virtual-attacks-transformation-v0.49.md・docs/mew-devolution-spray-v0.50.md・docs/discard-to-bench-v0.51.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (109, 110))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (115, 116))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた
 
     def test_boundary(self):
         """相手の控えのカウンターが 0 なら（控えがいない・控えにカウンターがない）、相手の対戦ポケモンのカウンターだけで処理する。控えに 1 個でも

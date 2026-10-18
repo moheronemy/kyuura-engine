@@ -199,7 +199,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from kyuura_engine import (  # noqa: E402
-    EndTurn, EvolvePokemon, IllegalActionError, Phase, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command,
+    AttachEnergy, EndTurn, EvolvePokemon, IllegalActionError, Phase, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command,
     UseStadium, check_invariants, max_hp, new_game, preset_deck,
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
@@ -228,6 +228,7 @@ from kyuura_engine.effects import (  # noqa: E402  v0.49
 from kyuura_engine.decisions import SELECT_DEVOLVE_COUNT  # noqa: E402  v0.50
 from kyuura_engine.effects import devolution_candidates, devolution_forbidden  # noqa: E402  v0.50
 from kyuura_engine.stadiums import bench_limit  # v0.57
+from kyuura_engine.decisions import USE_DISCARD_TRAINER  # v0.58
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
@@ -416,7 +417,8 @@ V0_56_TRAINERS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, 
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP")
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
-           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52)  # ワザの選び方を重ね、動きを数えるカード
+           + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
+           + ("PMCG5-052", "PMCG5-053"))  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -427,6 +429,13 @@ VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM = "PMCG6-097", 
 V0_57_STADIUMS = (PEWTER_CITY_GYM, CERULEAN_CITY_GYM, RESISTANCE_GYM, ROCKETS_TRAINING_GYM, CINNABAR_CITY_GYM, CELADON_CITY_GYM, FUCHSIA_CITY_GYM,
                   SAFFRON_CITY_GYM, NARROW_GYM, ROCKETS_MINEFIELD_GYM, VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM)
 TRAINERS = ((driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (driver.PLUSPOWER, 2), (driver.DEFENDER, 2), (driver.GUST, 2))
+# v0.58（docs/stadium-reuse-special-energy-v0.58.md）。タケシのゴローン・ゴローニャ（進化元はタケシのイシツブテ PMCG5-046・047）・ナツメのサイキックコントロール・
+# 特殊エネルギー 4 枚
+BROCKS_GEODUDE_40, BROCKS_GRAVELER, BROCKS_GOLEM, PSYCHIC_CONTROL = "PMCG5-047", "PMCG5-052", "PMCG5-053", "PMCG6-088"
+DOUBLE_COLORLESS, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY = "PMCG1-096", "PMCG4-063", "PMCG4-064", "PMCG4-065"
+V0_58 = (BROCKS_GRAVELER, BROCKS_GOLEM)
+V0_58_ENERGIES = (DOUBLE_COLORLESS, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY)
+SQUIRTLE, WARTORTLE, BLASTOISE = "PMCG1-023", "PMCG1-027", "PMCG1-032"
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -665,6 +674,14 @@ DECKS = {
     "D57": ((KOGAS_KOFFING, 4), (KOGAS_WEEZING, 2), (SABRINAS_ABRA, 4), (GIOVANNIS_MAGIKARP, 4), (GIOVANNIS_GYARADOS, 2), (BLAINES_PONYTA, 4),
             (FUCHSIA_CITY_GYM, 2), (SAFFRON_CITY_GYM, 2), (CINNABAR_CITY_GYM, 2), (ROCKETS_MINEFIELD_GYM, 2), (VIRIDIAN_CITY_GYM, 2), (driver.POTION, 2),
             (GRASS, 10), (PSYCHIC, 8), (WATER, 10)),
+    # v0.58: 闘・無色。タケシのイシツブテ → ゴローン → ゴローニャ（ばくれつで場のスタジアムをトラッシュ・いわなだれで相手の控えを選ぶ）・特殊エネルギー 4 種類・
+    # ナツメのサイキックコントロール（相手のトラッシュのトレーナーを使う）・ニビシティジム（ばくれつでトラッシュするスタジアム）
+    "E58": ((BROCKS_GEODUDE, 3), (BROCKS_GEODUDE_40, 1), (BROCKS_GRAVELER, 3), (BROCKS_GOLEM, 2), (RATTATA, 4), (PEWTER_CITY_GYM, 2),
+            (PSYCHIC_CONTROL, 3), (DOUBLE_COLORLESS, 4), (POTION_ENERGY, 3), (FULL_HEAL_ENERGY, 3), (RAINBOW_ENERGY, 3), (FIGHTING, 29)),
+    # v0.58: 草・水。フシギバナ（エナジートランスでレインボーエネルギーを「草」としてつけかえる）・カメックス（あまごい。レインボーエネルギーは RB2）・
+    # 特殊エネルギー 4 種類・ナツメのサイキックコントロール
+    "R58": ((BULBASAUR, 4), (IVYSAUR, 3), (VENUSAUR, 2), (SQUIRTLE, 4), (WARTORTLE, 3), (BLASTOISE, 2), (RAINBOW_ENERGY, 4), (DOUBLE_COLORLESS, 3),
+            (POTION_ENERGY, 2), (FULL_HEAL_ENERGY, 2), (PSYCHIC_CONTROL, 2), (GRASS, 15), (WATER, 14)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -729,13 +746,17 @@ PAIRINGS_V0_56 = (("M56", "K56"), ("K56", "P31"), ("M56", "G55"), ("K56", "U55")
 # 多い相手の錯乱ジム）・D57 対 M56（カスミのポケモンのいる相手のハナダシティジム・グレンタウンジム（水のワザ）。エリカの香水で出させるたねポケモンの爆発ジム）・
 # D57 対 P31（ピッピ・ピクシー・カスミのコダックがマチスのポケモンでないワザを使う相手）。``run`` が席を入れかえる
 PAIRINGS_V0_57 = (("L57", "D57"), ("L57", "U55"), ("D57", "M56"), ("D57", "P31"))
+# v0.58: E58 対 R58（特殊エネルギーとサイキックコントロールどうし）・E58 対 U55（エネルギー・リムーブなどのトラッシュのトレーナーを使う。特殊エネルギーをはがされる）・
+# R58 対 H54（にせオーキドはかせなど手札を入れかえるトレーナーをトラッシュから使う）・E58 対 L57（錯乱ジム・リムーブ禁止ジムの場でサイキックコントロールを使う。
+# ばくれつでスタジアムをトラッシュ）。``run`` が席を入れかえる
+PAIRINGS_V0_58 = (("E58", "R58"), ("E58", "U55"), ("R58", "H54"), ("E58", "L57"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
-           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57}
+           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2400,6 +2421,134 @@ def _v057_attack(state, command, tried, counts):
     return coined
 
 
+def _v058_energy(state, command, tried, counts):
+    """v0.58: この番に手札からまだエネルギーカードをつけておらず、手札に特殊エネルギーがあれば、2 番に 1 回、元の手順のかわりに特殊エネルギーをつける（元の手順は基本
+    エネルギーだけをつける）。つけ先: きずぐすり配合エネルギーはダメージのあるポケモン、なんでもなおし配合エネルギーは特殊状態のバトル場のポケモン（なければバトル場）、
+    レインボーエネルギーはそのダメージできぜつしないポケモン（3 回に 1 回は、きぜつするポケモンがいればそれにつける）、無色2個エネルギーはバトル場。受け付けない場面
+    （RB1・RB4 など）はつけず ``v058_attach_<カード>_rejected_<コード>`` に数える。"""
+    if state.phase is not Phase.MAIN or state.energy_attachments_this_turn or ("v058_energy", state.turn_number) in tried:
+        return None
+    if not isinstance(command, (AttachEnergy, UseAttack, EndTurn)):
+        return None
+    player = state.current_player
+    p = state.players[player]
+    specials = [u for u in p.hand if state.cards[u].card_id in V0_58_ENERGIES]
+    if not specials or (state.turn_number // 2) % 2:
+        return None
+    tried.add(("v058_energy", state.turn_number))
+    pokemons = list(p.in_play())
+    for uid in specials:
+        card_id = state.cards[uid].card_id
+        target = None
+        if card_id == POTION_ENERGY:
+            target = next((pk for pk in pokemons if pk.damage), p.active)
+        elif card_id == FULL_HEAL_ENERGY:
+            target = p.active
+        elif card_id == RAINBOW_ENERGY:
+            seen = counts["v058_rainbow_seen"]
+            counts["v058_rainbow_seen"] += 1
+            knocked = [pk for pk in pokemons if max_hp(state, pk) - pk.damage <= 10]
+            safe = [pk for pk in pokemons if max_hp(state, pk) - pk.damage > 10]
+            target = knocked[0] if knocked and seen % 3 == 2 and p.bench else (safe[0] if safe else None)
+        else:
+            target = p.active
+        if target is None:
+            continue
+        attach = AttachEnergy(player, uid, target.card)
+        try:
+            apply_command(_V052_REAL.get("state") if _V052_REAL.get("state") is not None and _V052_REAL["state"].turn_number == state.turn_number
+                          and _V052_REAL["state"].decision == state.decision else state, attach)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v058_attach_{card_id}_rejected_{error.code}"] += 1
+            continue
+        where = "active" if target is p.active else "bench"
+        counts[f"v058_attach_{card_id}_{where}"] += 1
+        if card_id == POTION_ENERGY and target.damage:
+            counts["v058_potion_energy_heals"] += 1
+        if card_id == FULL_HEAL_ENERGY and target.conditions.names():
+            counts["v058_full_heal_energy_cures"] += 1
+        if card_id == RAINBOW_ENERGY and max_hp(state, target) - target.damage <= 10:
+            counts["v058_rainbow_knock_out"] += 1
+        return attach
+    return None
+
+
+def _v058_trainer(state, tried, counts):
+    """v0.58: ナツメのサイキックコントロールを、相手のトラッシュにトレーナーカードがあり、受け付けるなら使う（1 番に 1 回まで）。"""
+    player = state.current_player
+    if "trainer_locked" in tried or ("v058_psychic_control", state.turn_number) in tried:
+        return None
+    p = state.players[player]
+    if not any(state.card_def(u).category == "trainer" for u in state.players[1 - player].discard):
+        return None
+    for uid in p.hand:
+        if state.cards[uid].card_id != PSYCHIC_CONTROL:
+            continue
+        tried.add(("v058_psychic_control", state.turn_number))
+        command = PlayTrainer(player, uid)
+        if not _v052_accepted(state, command):
+            counts["v058_psychic_control_not_playable"] += 1
+            return None
+        counts["v058_play_psychic_control"] += 1
+        return command
+    return None
+
+
+def _v058_decision(state, counts):
+    """v0.58 の決定への答え（元の手順より先に答える）: サイキックコントロールで使う相手のトラッシュのトレーナー（4 回に 1 回は使わない。ほかは選べるものの後ろから、
+    受け付けるもの）。いわなだれの相手の控え（最大 3 匹。3・1・2 匹を順に。0 匹は選ばない）。"""
+    d = state.decision
+    if d is None:
+        return None
+    if d.kind == USE_DISCARD_TRAINER:
+        seen = counts["v058_use_discard_trainer_seen"]
+        counts["v058_use_discard_trainer_seen"] += 1
+        candidates = ([()] if seen % 4 == 3 else []) + [(o,) for o in reversed(d.options)] + [()]
+        for choices in candidates:
+            if _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+                if choices:
+                    counts[f"v058_use_discard_{state.cards[choices[0]].card_id}"] += 1
+                else:
+                    counts["v058_use_discard_declined"] += 1
+                return ResolveDecision(d.player, d.id, choices)
+        counts["v058_use_discard_no_accepted_answer"] += 1
+        return None
+    if d.resume == "attack" and d.kind == SELECT_POKEMON and d.max_choices > 1:
+        last = next((e for e in reversed(state.log) if e["kind"] == "attack"), None)
+        if last is None or state.cards[last.get("card", last["pokemon"])].card_id != BROCKS_GOLEM:
+            return None
+        seen = counts["v058_rock_slide_seen"]
+        counts["v058_rock_slide_seen"] += 1
+        size = max(1, min(d.max_choices, len(d.options), (3, 1, 2)[seen % 3]))
+        for choices in (tuple(d.options[:size]), tuple(d.options[-size:]), tuple(d.options[:1])):
+            if _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+                counts[f"v058_rock_slide_{len(choices)}"] += 1
+                return ResolveDecision(d.player, d.id, choices)
+    return None
+
+
+def _v058_retreat(state, tried, counts):
+    """v0.58: バトル場のポケモンに無色2個エネルギーがついていて控えがいれば、4 番に 1 回、それだけをトラッシュして「にげる」を試す（にげるエネルギー 2 なら受け付け、1 なら
+    RT1。拒否は ``v058_retreat_dce_rejected_<コード>`` に数え、別の操作を続ける）。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if active is None or not p.bench or state.turn_number % 4 or ("v058_retreat", state.turn_number) in tried:
+        return None
+    dce = [u for u in active.energy if state.cards[u].card_id == DOUBLE_COLORLESS]
+    if not dce:
+        return None
+    tried.add(("v058_retreat", state.turn_number))
+    command = Retreat(player, (dce[0],), p.bench[0].card)
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v058_retreat_dce_rejected_{error.code}"] += 1
+        return None
+    counts["v058_retreat_dce"] += 1
+    return command
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -2547,7 +2696,7 @@ def make_policy(seen: dict, counts: Counter):
                      or _v051_decision(state, counts) or _v052_decision(state, counts)  # v0.51・v0.52
                      or _v053_decision(state, counts) or _v054_decision(state, counts)  # v0.53・v0.54
                      or _v055_decision(state, counts) or _v056_decision(state, counts)  # v0.55・v0.56
-                     or _v057_decision(state, counts))  # v0.57
+                     or _v057_decision(state, counts) or _v058_decision(state, counts))  # v0.57・v0.58
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2556,6 +2705,9 @@ def make_policy(seen: dict, counts: Counter):
             surge = _v056_trainer(state, tried, counts, only=(LT_SURGE_TRAINER,))
             if surge is not None:
                 return surge
+        special = _v058_energy(state, command, tried, counts)  # v0.58: 特殊エネルギー（手札にないデッキでは何もしない）
+        if special is not None:
+            return special
         if state.phase is Phase.DECISION:
             return (_v031_decision(state, counts) or _v039_decision(state, counts) or _v040_decision(state, counts) or _v041_decision(state, counts)
                     or _v042_decision(state, counts) or command)
@@ -2569,7 +2721,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v052_trainer(state, tried, counts) or _v053_trainer(state, tried, counts)  # v0.52・v0.53
                      or _v054_trainer(state, tried, counts) or _v055_trainer(state, tried, counts)  # v0.54・v0.55
                      or _v056_trainer(state, tried, counts)  # v0.56
-                     or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts))  # v0.57
+                     or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts)  # v0.57
+                     or _v058_trainer(state, tried, counts))  # v0.58
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2578,7 +2731,7 @@ def make_policy(seen: dict, counts: Counter):
             probe = _v036_retreat_probe(state, tried, counts)  # v0.36
             if probe is not None:
                 return probe
-            retreat = _v046_retreat(state, tried, counts)  # v0.46
+            retreat = _v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts)  # v0.46・v0.58
             if retreat is not None:
                 return retreat
         if state.phase is not Phase.MAIN or not isinstance(command, (UseAttack, EndTurn)) or "attack" in tried:
@@ -2614,7 +2767,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -2697,6 +2850,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
             result["winner_deck"] = labels[state.result.winner] if state.result.winner is not None else None
             result["conditions"] = [c[1] for c in state.result.conditions]
         result["card_uses"] = card_uses(state)
+        result["v058"] = v058_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -2725,6 +2879,44 @@ def audit(result, state, commands):
     for key in CHECK_FAILURES:
         failures[key] += result["policy"].get(key, 0)
     return {k: v for k, v in failures.items() if v}
+
+
+def v058_uses(state):
+    """v0.58: ログから数えた特殊エネルギー・ナツメのサイキックコントロール・ばくれつの動き（特殊エネルギーのない局では空）。
+
+    - ``attach_<カード id>``: 手札からつけた特殊エネルギー（通常の操作）。``energy_heal``・``energy_damage``・``energy_cure``（なんでもなおし配合エネルギーで回復した）・
+      ``energy_knock_out``（レインボーエネルギーの 10 できぜつ）
+    - ``moved_special_energy``: 場の特殊エネルギーのつけかえ（エナジートランス）。``retreat_special_energy``: 特殊エネルギーをトラッシュした「にげる」
+    - ``psychic_control_inner_<カード id>``: サイキックコントロールで使った相手のトラッシュのトレーナー。``psychic_control_none``・``psychic_control_declined``
+    - ``explosion_discarded_stadium``・``explosion_without_stadium``: ばくれつで場のスタジアムをトラッシュした・場にスタジアムがなかった
+    """
+    counts = Counter()
+    special = {uid for uid, c in state.cards.items() if c.card_id in V0_58_ENERGIES}
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attach_energy" and e["energy"] in special:
+            counts[f"attach_{state.cards[e['energy']].card_id}"] += 1
+        elif kind in ("energy_heal", "energy_damage"):
+            counts[kind] += 1
+        elif kind == "special_conditions_removed" and e.get("energy_card") is not None:
+            counts["energy_cure"] += 1
+        elif kind == "knock_out" and e.get("timing") == "energy":
+            counts["energy_knock_out"] += 1
+        elif kind == "move_energy" and e.get("energy") in special:
+            counts["moved_special_energy"] += 1
+        elif kind == "retreat" and any(u in special for u in e.get("discarded", e.get("energy", ())) or ()):
+            counts["retreat_special_energy"] += 1
+        elif kind == "play_trainer" and e.get("source_zone") == "discard":
+            counts[f"psychic_control_inner_{state.cards[e['card']].card_id}"] += 1
+        elif kind == "discard_trainer_use_none":
+            counts["psychic_control_none"] += 1
+        elif kind == "discard_trainer_use_declined":
+            counts["psychic_control_declined"] += 1
+        elif kind == "stadium_discarded" and e.get("reason") == "attack":
+            counts["explosion_discarded_stadium"] += 1
+        elif kind == "stadium_discard_none":
+            counts["explosion_without_stadium"] += 1
+    return dict(counts)
 
 
 def card_uses(state):
@@ -3088,8 +3280,10 @@ def summarize(games):
     s = {"games": len(games), "outcomes": Counter(r["outcome"] for r in games), "halt_codes": Counter(r["halt_code"] for r in games
                                                                                                      if r.get("halt_code")),
          "unresolved_rejections": Counter(), "audit_failures": Counter(), "end_conditions": Counter(), "wins": Counter(),
-         "cards": {}, "games_with": {}}
+         "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter()}
     for r in games:
+        s["v058"].update(r.get("v058", {}))  # v0.58
+        s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

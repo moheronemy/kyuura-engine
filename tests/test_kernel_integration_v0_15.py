@@ -179,7 +179,10 @@ class DependencyTest(unittest.TestCase):
         v0.56: ロケット団員の「うら」（使い終えてトラッシュしてから番を終える）は、ワザのあとの番の終わりと同じ解決の基盤の処理を使う（``_finish_trainer`` の
         ``resolution.end_turn_after_trainer``。ログ ``trainer_turn_end`` → 番の終わり → ポケモンチェック → 次の番。``TrainerEffect.may_end_turn`` の実装が ``resume`` で
         ``END_TURN`` を返したときだけ）。マチスの交渉のサイドを取ったあとの勝ち負けの判定は ``resolution.after_trainer``（``takes_prizes``）。
-        docs/trainer-decisions-turn-effects-v0.56.md 3 章。"""
+        docs/trainer-decisions-turn-effects-v0.56.md 3 章。
+        v0.58: 手札からつけたレインボーエネルギーの 10 ダメージのきぜつは、特殊能力のあとと同じ形の ``resolution.after_energy``（``_attach_energy``）。トレーナーの
+        使用の始まりと続き（``_start_trainer_use``・``_after_trainer_step``・``_start_nested_trainer``。サイキックコントロールの内側の使用）は型の注釈
+        （``resolution.Context``）だけ。docs/stadium-reuse-special-energy-v0.58.md 2 章・4 章。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -190,7 +193,8 @@ class DependencyTest(unittest.TestCase):
         self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine",
                                  "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play",
                                  "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer",
-                                 "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium"})
+                                 "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium",
+                                 "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")

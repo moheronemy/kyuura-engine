@@ -122,7 +122,10 @@ class CardDefinition:
     powers: tuple[Power, ...] = ()  # ポケモンパワー（v0.5）。カードに印刷された順
     # エネルギー
     energy_kind: str | None = None
-    provides: EnergyType | None = None
+    provides: EnergyType | None = None  # 基本エネルギーカードのタイプ。特殊エネルギーは None（出すエネルギーは効果の登録表の実装が決める。v0.58）
+    # v0.58（docs/stadium-reuse-special-energy-v0.58.md）: 特殊エネルギーの kyuura の energy.text（効果の処理には使わず、登録した実装との照合に使う）
+    energy_text_ja: str | None = None
+    energy_text_en: str | None = None
     # トレーナー（kyuura の trainer.text・trainer.kinds。効果の処理には使わず、登録した実装との照合に使う）
     trainer_text_ja: str | None = None
     trainer_text_en: str | None = None
@@ -154,15 +157,22 @@ class CardDefinition:
 
     @property
     def is_basic_energy(self) -> bool:
+        """基本エネルギーカード（印刷の種類）。特殊エネルギーカード（レインボーエネルギーを含む）は、手札・山札・トラッシュでは基本エネルギーカードではない
+        （v0.58。kyuura の ERR-ENERGY-RETRIEVAL）。場でどの色のエネルギーとして使えるかは ``effects.energy_units`` が決める。"""
         return self.category == "energy" and self.energy_kind == "basic"
+
+    @property
+    def is_special_energy(self) -> bool:
+        """特殊エネルギーカード（v0.58）。"""
+        return self.category == "energy" and self.energy_kind == "special"
 
 
 def can_pay_cost(cost: Iterable[EnergyType], provided: Iterable[EnergyType]) -> bool:
     """ワザに必要なエネルギーが足りているか（p.320）。
 
     色の指定がある分は同じ色で、「無色」の分はどの色でも払える。多くついていてもよい。
-    v0.1 のエネルギーは基本エネルギーだけ（1 枚がちょうど 1 個のエネルギー）なので、
-    色ごとの数と合計の数を比べれば足りる。
+    ``provided`` は 1 個ずつのエネルギーのタイプ（基本エネルギーカードは 1 枚がちょうど 1 個）。色ごとの数と合計の数を比べれば足りる。
+    特殊エネルギー（1 枚で 2 個・どの色にもなる 1 個。v0.58）を含む支払いは ``can_pay_with_units``。
     """
     need = Counter(cost)
     have = Counter(provided)
@@ -172,6 +182,31 @@ def can_pay_cost(cost: Iterable[EnergyType], provided: Iterable[EnergyType]) -> 
         if have[energy_type] < count:
             return False
     return sum(have.values()) >= sum(need.values())
+
+
+def can_pay_with_units(cost: Iterable[EnergyType], units: Iterable[frozenset[EnergyType]]) -> bool:
+    """ワザに必要なエネルギーを、ついているエネルギー（1 個ずつの、そのエネルギーとして使えるタイプの集まり）で払えるか（v0.58。p.320）。
+
+    無色 2 個エネルギーは「無色」の 1 個が 2 つ、レインボーエネルギーはどの色にもなる 1 個（合計 1 個。2 つの記号に数えない）。色の指定のある記号には、その色に
+    なれる 1 個を 1 つずつ割り当て（割り当ての探索。レインボーエネルギーの色は払い方に合わせて選べる）、「無色」の記号は残りのどの 1 個でも払う。「無色」の 1 個は
+    色の指定のある記号を払えない（「無色」エネルギーは、ほかの色のエネルギーのかわりにならない）。1 個が 1 つのタイプだけなら ``can_pay_cost`` と同じ答え。"""
+    units = [frozenset(unit) for unit in units]
+    cost = list(cost)
+    colored = [symbol for symbol in cost if symbol is not EnergyType.COLORLESS]
+    if len(units) < len(cost):
+        return False
+    owner: dict[int, int] = {}  # 1 個の位置 → 割り当てた記号の位置
+
+    def assign(symbol: int, seen: set[int]) -> bool:
+        for unit, kinds in enumerate(units):
+            if colored[symbol] in kinds and unit not in seen:
+                seen.add(unit)
+                if unit not in owner or assign(owner[unit], seen):
+                    owner[unit] = symbol
+                    return True
+        return False
+
+    return all(assign(symbol, set()) for symbol in range(len(colored)))
 
 
 def _parse_attack(index: int, raw: dict) -> Attack:
@@ -224,21 +259,31 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
 
     if category == "energy":
         # 基本エネルギーは効果を持たず、公式ルールの規定（p.310・p.318・p.320）だけで扱う（エンジンの中心部分）。
-        # 特殊エネルギーは効果の実装が要るが、登録表に特殊エネルギーの欄がまだないので未対応
+        # 特殊エネルギー（v0.58）は、効果の登録表にカード id で実装が登録され、登録したときに照合した名前・文面とデータが合うときだけ使える（トレーナーと同じ）。
+        # 出すエネルギーは登録した実装が決める（kyuura の energy.provides が空でも「エネルギーを出さない」と読まない。無色2個エネルギー）
         energy = record["energy"]
+        text = energy.get("text") or {}
         reasons = []
-        if energy["kind"] != "basic":
-            reasons.append("特殊エネルギーの効果の実装が登録されていない")
-        if len(energy["provides"]) != 1:
-            reasons.append("1 種類のエネルギーを 1 個出す基本エネルギーではない")
-        provides = EnergyType(energy["provides"][0]) if len(energy["provides"]) == 1 else None
-        return CardDefinition(
+        provides = None
+        if energy["kind"] == "basic":
+            if len(energy["provides"]) != 1:
+                reasons.append("1 種類のエネルギーを 1 個出す基本エネルギーではない")
+            else:
+                provides = EnergyType(energy["provides"][0])
+        definition = CardDefinition(
             **common,
-            supported=not reasons,
-            unsupported_reasons=tuple(reasons),
+            supported=False,
+            unsupported_reasons=(),
             energy_kind=energy["kind"],
             provides=provides,
+            energy_text_ja=text.get("ja"),
+            energy_text_en=text.get("en"),
         )
+        if energy["kind"] != "basic":
+            problem = effects.energy_problem(definition)
+            if problem is not None:
+                reasons.append(problem)
+        return replace(definition, supported=not reasons, unsupported_reasons=tuple(reasons))
 
     if category != "pokemon":
         return CardDefinition(**common, supported=False, unsupported_reasons=(f"未知のカードの種類 {category}",))
@@ -406,6 +451,7 @@ POOL_KEYS = (
     "pool_v0_55",  # v0.55（カスミのいかり・ロケット団のおねーさん・礼儀作法・トラッシュ交換・エネルギー・リムーブ・超エネルギーリムーブ・いいきずぐすり・なんでもなおし・ポケモンセンター・ねむれ!ねむれ!・エネルギーサーキュレート・エリカの親切・タケシ・サカキの切り札・ナツメ・ワープポイント）
     "pool_v0_56",  # v0.56（エリカの香水・マチス・ロケット団のワナ・ロケット団員・マチスの交渉・カスミのわがまま・カスミ・キョウ・見えない壁・ロケット団の実験）
     "pool_v0_57",  # v0.57（スタジアム 14 枚。docs/stadiums-v0.57.md）
+    "pool_v0_58",  # v0.58（タケシのゴローン・タケシのゴローニャ・ナツメのサイキックコントロール・特殊エネルギー 4 枚。docs/stadium-reuse-special-energy-v0.58.md）
 )
 
 

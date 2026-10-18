@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.57）
+# 実装状況（v0.1〜v0.58）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -219,6 +219,12 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | トキワシティジムを、ダメージカウンターが 1 つのポケモンに使ったとき（v0.57。VG1。英語版の「(or 1 if it only has 1)」を持ち込まない） | とりのぞく答えは止める（選ばないことは受け付ける）。`UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER` |
 | クチバシティジムのコインと、p.309 の手順 4・5・ワザの失敗の順番（v0.57。VM1） | コインの前に `UNRESOLVED_VERMILION_GYM_ATTACK_ORDER` |
 | 錯乱ジムで相手プレイヤーが使うトレーナーの説明が、使ったプレイヤーの番を書くとき（v0.57。CH1） | 相手が使うことを選ぶと `UNRESOLVED_CHAOS_GYM_BORROWED_TURN` |
+| 場のレインボーエネルギーを、説明の「「X」エネルギー(カード)」として数える・選ぶ・当てはめるか（v0.58。RB1。支払いとエナジートランスの「草」は決まっている） | 結果が変わるとき、宣言・使用・つける前に `UNRESOLVED_RAINBOW_ENERGY_TYPE` |
+| 手札・山札・トラッシュのレインボーエネルギーを、「「X」エネルギーカード」をつける効果で選べるか（v0.58。RB2。あまごいに CR-ENERGY-TRANS-RAINBOW を使わない） | 選べるかもしれないとき `UNRESOLVED_RAINBOW_ATTACH_AS_TYPE` |
+| 場のレインボーエネルギーを、説明の「基本エネルギーカード」として選べるか（v0.58。RB3） | 選べるものが変わるとき `UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD` |
+| レインボーエネルギーの 10 ダメージに［カブトアーマー］を当てはめるか（v0.58。RB4。v0.57 の EX1 と同じ形の別の問い） | つける前に `UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER` |
+| ［へんしん］のメタモンの「どの色としても使える」が、無色の特殊エネルギーにも当てはまるか（v0.58。TE2） | 払えるかが変わるワザは `UNRESOLVED_TRANSFORM_SPECIAL_ENERGY` |
+| 「にげる」で、分けられない無色2個エネルギーで、にげるエネルギーより多く払えるか（v0.58。RT1） | エネルギー・コインの前に `UNRESOLVED_RETREAT_OVERPAY` |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -3036,3 +3042,40 @@ PMCG1-088・いいきずぐすり PMCG1-075・なんでもなおし PMCG1-080・
 - 実装上の判断（原典で確かめた規定ではない）: せまいジムで両方が 5 匹なら番でないプレイヤーが先、ヤマブキシティジムは 1 回の使用で 1 枚、クチバシティジムの「うら」の自分への
   ダメージはダメージの要素の最後（なければ最初の効果の要素の前）、リムーブ禁止ジムの追加の 2 枚は手札から出したあと・カードの効果の前に払う。
 - 関連する「○○の」ポケモン（写しにないもの）は加えていない。v0.56 の監査の漏れ（`swap_prize_with_hand` のサイドの組み立て直し）を直した。
+
+## v0.58 で加えたもの（スタジアムの処理を再利用するカード 3 枚と特殊エネルギー 4 枚）
+
+依頼の 7 枚（タケシのゴローン PMCG5-052・タケシのゴローニャ PMCG5-053・ナツメのサイキックコントロール PMCG6-088・無色2個エネルギー PMCG1-096・きずぐすり配合エネルギー PMCG4-063・
+なんでもなおし配合エネルギー PMCG4-064・レインボーエネルギー PMCG4-065）を、kyuura データの採用で登録して対応にしました（対応ポケモン 327 → 329・トレーナーの登録 80 → 81・
+特殊エネルギーの登録 0 → 4・ワザの登録 557 → 561。特殊能力の登録 49 は変わらない）。共通の処理は、エネルギーのカードの枚数・個数・色の割り当てを分けたこと（`effects.energy_units`・
+`attached_units`・`attack_cost_payable`・`cards.can_pay_with_units`。にげるは個数で数える）、効果の登録表の特殊エネルギー（`EffectRegistry` の `energies`。`SpecialEnergyEffect`）、
+手札から出してつけたときの効果（`energy_attached_from_hand`・`resolution.after_energy`）、外側のトレーナーの効果で相手のトラッシュのトレーナーを使う処理（`GameState.trainer_stack`・
+`TrainerInUse.via`）、ワザの効果で場のスタジアムをトラッシュする要素（`programs.DiscardStadium`）です。書き出しの形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）。新しい
+決定の種類 `use_discard_trainer`、新しいログのイベント `energy_heal`・`energy_damage`・`stadium_discard_none`・`discard_trainer_use_none`・`discard_trainer_use_declined`。公開の API の
+呼び方は変えていません（`AttachEnergy` で特殊エネルギーもつけられる）。カードごとの結果・共通の処理・未解決・互換性・検証は
+[stadium-reuse-special-energy-v0.58.md](stadium-reuse-special-energy-v0.58.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_stadium_reuse_special_energy_v0_58.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 7 枚の登録・文面と登録の値の照らし合わせ・採用の記録と外部照合・研究の対応表・特殊エネルギーの 4 枚の制限 | kyuura の印刷の文面・カードの名前と同じ版の記号（無色2個エネルギー）・pcg-search.com・GR-2000-P308-SAME-NAME | `CardDataTest`・test_card_sources.py |
+| エネルギーの個数と支払い | 印刷の文面 | `EnergyUnitsTest` |
+| にげる（個数で数える・RT1） | 印刷の文面 | `RetreatTest` |
+| 手札からつけたときの効果・エナジートランスでの移動・RB2・RB4 | GR-2000-P310-ATTACH-ENERGY・CR-ENERGY-TRANS-RAINBOW・CR-ENERGY-TRANS-NOT-ATTACHMENT | `AttachEffectTest` |
+| RB1・TE2・場の外の特殊エネルギー（エネルギー回収）・エネルギー・リムーブ | ERR-ENERGY-RETRIEVAL・印刷の文面 | `RainbowQuestionTest` |
+| ばくれつ・いわなだれ | 印刷の文面 | `GravelerGolemTest` |
+| サイキックコントロール（コイン・使えるカード・使う・使わない・書き出し・使うための条件・錯乱ジム・リムーブ禁止ジム・トレーナーの使用の禁止・CH1） | 印刷の文面 | `PsychicControlTest`・`PsychicControlTurnTest` |
+| 正式な開始からの対戦で監査がすべて通る | — | `GameTest`・`tools/existing_effect_games.py --batch v0.58` |
+| v0.57 までのカードの動きが変わらない | 固定した v0.57（`5b32812`）との比較 | tools/engine_lockstep.py と作業用の道具（[stadium-reuse-special-energy-v0.58.md](stadium-reuse-special-energy-v0.58.md) 7 章） |
+
+### 原典未確認・未解決
+
+- 新しい停止コードは RB1・RB2・RB3・RB4・TE2・RT1 の 6 件（停止コード 115 件・未解決の裁定 116 件。上の「裁定が未解決」の表）。
+- 技術的な制限: 特殊エネルギーのつけたときの効果と、つけたときにはたらく特殊能力が同じタイミングに起こる組（今の写しでは起こらない。`RuntimeError`）。
+- 実装上の読み方（原典で確かめた規定ではない）: エナジーバーンで無色2個エネルギーは「炎」2 個、サイキックコントロールで使うカードは使用中の場所に移って持ち主のトラッシュにもどる、
+  外側・内側の使用で錯乱ジムのコインを別々に投げる。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）: 無色2個エネルギーの `energy.provides` が空・日本語の説明が null、配合エネルギーの説明の空行、新しい停止コード 6 件。

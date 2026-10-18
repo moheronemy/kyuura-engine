@@ -41,7 +41,8 @@
     "pokemon.attacks[].text",
     "trainer",
     "energy.kind",
-    "energy.provides"
+    "energy.provides",
+    "energy.text"
   ],
   "pool_v0_1": [
     "PMCG1-016",
@@ -580,6 +581,15 @@
     "PMCG5-076",
     "PMCG5-094",
     "PMCG5-087"
+  ],
+  "pool_v0_58": [
+    "PMCG5-052",
+    "PMCG5-053",
+    "PMCG6-088",
+    "PMCG1-096",
+    "PMCG4-063",
+    "PMCG4-064",
+    "PMCG4-065"
   ],
   "reference_only": [
     "PMCG6-023"
@@ -33351,6 +33361,384 @@
         "series": "リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E9%8C%AF%E4%B9%B1%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-052",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのゴローン",
+        "en": "Brock's Graveler"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          75
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのイシツブテ",
+          "en": "Brock's Geodude"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ばくれつ",
+              "en": "Detonate"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分にも50ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。場に「スタジアムカード」があれば、それをトラッシュする。",
+              "en": "Does 10 damage to each Pokémon on each player's bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Brock's Graveler does 50 damage to itself. If there is a Stadium card in play, discard it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-052",
+        "pokemontcg": [
+          "gym2-34"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3LV.32_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3LV.32_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-053",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのゴローニャ",
+        "en": "Brock's Golem"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          76
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "タケシのゴローン",
+          "en": "Brock's Graveler"
+        },
+        "hp": 90,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いわなだれ",
+              "en": "Rock Slide"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから最大3匹を選び、それぞれに(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, choose up to 3 of them. This attack does 10 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ランドクラッシュ",
+              "en": "Fissure"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-053",
+        "pokemontcg": [
+          "gym1-20"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%8B%E3%83%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "ニビシティジム タケシ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%8B%E3%83%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-088",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ナツメのサイキックコントロール",
+        "en": "Sabrina's Psychic Control"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、相手のトラッシュからトレーナーカードを1枚選び、そのカードがあなたの手札にあるものとみなして、使ってよい。ポケモンにつけて使うカード(「プラスパワー」など)や、場に出して使うカード(「ピッピ人形」など)は、使うことができない。また、そのカードの「使うための条件」(「手札からカードを1枚トラッシュする」など)を満たせない時も、使うことができない。",
+          "en": "Flip a coin. If heads, choose a Trainer card in your opponent's discard pile that isn't put in play (like PlusPower or Mysterious Fossil). You may use that card as if it were in your hand, if you do everything required in order to play that card (like discarding cards). The card stays in your opponent's discard pile."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-088",
+        "pokemontcg": [
+          "gym2-121"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B5%E3%82%A4%E3%82%AD%E3%83%83%E3%82%AF%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B5%E3%82%A4%E3%82%AD%E3%83%83%E3%82%AF%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB"
+      }
+    },
+    {
+      "id": "PMCG1-096",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "無色2個エネルギー",
+        "en": "Double Colorless Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": null,
+          "en": "Provides ColorlessColorless energy.\nDoesn't count as a basic Energy card."
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "なぞのばしょの表記による。TCGdex の表記は「ダブル無色エネルギー」"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-096",
+        "pokemontcg": [
+          "base1-96"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-096-mushoku2koenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-096-mushoku2koenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-063",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "きずぐすり配合エネルギー",
+        "en": "Potion Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンのダメージカウンターを1つとりのぞく。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+          "en": "If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any. Potion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-063",
+        "pokemontcg": [
+          "base5-82"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-063-kizugusurihaigoenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-063-kizugusurihaigoenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-064",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "なんでもなおし配合エネルギー",
+        "en": "Full Heal Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンの「どく・ねむり・マヒ・こんらん」状態をすべて回復させる。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+          "en": "If you play this card from your hand, the Pokémon you attach it to is no longer Asleep, Confused, Paralyzed, or Poisoned. Full Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-064",
+        "pokemontcg": [
+          "base5-81"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-064-nandemonaoshihaigoenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-064-nandemonaoshihaigoenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-065",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "レインボーエネルギー",
+        "en": "Rainbow Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "どの色の基本エネルギーカードとして使ってもよい。このカードを手札から出してポケモンにつける時、そのポケモンに(「弱点・抵抗力」に関係なく)10ダメージ。",
+          "en": "Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-065",
+        "pokemontcg": [
+          "base5-17",
+          "base5-80"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-065-rainbowenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-065-rainbowenergy/"
       }
     },
     {

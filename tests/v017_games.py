@@ -72,6 +72,17 @@ def devolved_this_turn_in_play(state, command) -> bool:
     return any(pokemon.devolved_turn == state.turn_number for pokemon in state.players[command.player].in_play())
 
 
+# v0.58: 特殊エネルギーで決まらない場面のコード（docs/stadium-reuse-special-energy-v0.58.md）
+V058_ENERGY_CODES = ("UNRESOLVED_RAINBOW_ENERGY_TYPE", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+                     "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER", "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY", "UNRESOLVED_RETREAT_OVERPAY")
+
+
+def special_energy_in_game(state) -> bool:
+    """v0.58: 特殊エネルギーカードが、どちらかのプレイヤーの場（ついている）か手札にある。"""
+    return any(state.card_def(uid).is_special_energy for player in state.players
+               for uid in [*player.hand, *(u for pokemon in player.in_play() for u in pokemon.energy)])
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -101,6 +112,13 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     observed[f"stopped_{kind}_{error.code}"] += 1
                     turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
                                    else ("max_hp_drop_command", command))
+                    continue
+                if error.code in V058_ENERGY_CODES and special_energy_in_game(state):
+                    # v0.58: 特殊エネルギーで決まらない場面（RB1〜RB4・TE2・RT1）。場から確かめる（特殊エネルギーが場か手札にある）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add(("attack_index", command.attack_index) if kind == "UseAttack" else "retreat" if kind == "Retreat"
+                                   else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon") else ("max_hp_drop_command", command))
                     continue
                 if error.code in ("UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK", "UNRESOLVED_RECALL_FORM") and isinstance(command, PlayTrainer):
                     active = state.players[command.player].active

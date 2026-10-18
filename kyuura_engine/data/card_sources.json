@@ -14950,6 +14950,284 @@
       ],
       "issues": [],
       "notes": "v0.57 で加えた。スタジアム。TrainerCoinStadium（スタジアム以外のトレーナーを使う時コインを投げ、「うら」なら相手が借りて使える（TrainerInUse.user）。ついて使う・場に出して使うカード・使うための条件を満たせないカードは持ち主のトラッシュ。借りた番を参照するトレーナーは CH1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。2003 年の「スタジアムは 1 番に 1 枚」（kyuura MIX-ADV-RULES-2003）・英語版の文面・のちの版の規定は持ち込まない（docs/stadiums-v0.57.md）"
+    },
+    "PMCG5-052": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのゴローン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1051.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "051/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。ばくれつは v0.39 のじばく（SelfDestruct）に、場のスタジアムをトラッシュする要素（DiscardStadium。v0.57 の zones.discard_stadium）を加えた型 SelfDestructThenDiscardStadium。進化元はタケシのイシツブテ（PMCG5-046・PMCG5-047。名前の完全一致）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合（docs/stadium-reuse-special-energy-v0.58.md）"
+    },
+    "PMCG5-053": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのゴローニャ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1052.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "052/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。いわなだれは v0.39 のギガスパーク（DamageThenChosenBenchTargets。最大 3 匹・0 匹は GS1・弱点・抵抗力に関係なく）の書き方の違い（「それぞれに(「弱点・抵抗力」に関係なく)」）。進化元はタケシのゴローン（名前の完全一致。ポケモン育て屋さんはタケシのイシツブテから）。kyuura の研究の基準のコミット（3f34908）に、このカードの記録はない（docs/stadium-reuse-special-energy-v0.58.md）"
+    },
+    "PMCG6-088": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのサイキックコントロール",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2077.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "077/000"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類「トレーナー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトのカードページの番号の表示は「077/000」（収録の総数の欄が 000。サイトの表示のまま書いた）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。UseOpponentDiscardTrainer（コイン → 「おもて」なら相手のトラッシュの使えるトレーナーを 0〜1 枚選んで使う。内側の使用はエンジンが外側の使用（trainer_stack）に積んで処理し、カードは使い終わったら持ち主のトラッシュにもどる）。英語版の「The card stays in your opponent's discard pile」は根拠にしない。kyuura の研究の基準のコミット（3f34908）に、このカードの記録はない（docs/stadium-reuse-special-energy-v0.58.md 4 章）"
+    },
+    "PMCG4-063": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり配合エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4062.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "062/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "energy.kind",
+            "energy.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "energy.text.ja",
+              "kyuura": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンのダメージカウンターを1つとりのぞく。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+              "pcg_search": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンのダメージカウンターを1つとりのぞく。(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+              "affects_behavior": false,
+              "note": "サイトの説明文は、kyuura の文面の「\\n\\n」（かっこの注記の前の空行）がない。文字は同じで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類「特殊エネルギー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。特殊エネルギー（「無色」エネルギー 1 個。手札から出してポケモンにつける時の効果）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（GR-2000-P325-SAME-TIMING の例として名前が出るだけ）。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合（docs/stadium-reuse-special-energy-v0.58.md 3 章）"
+    },
+    "PMCG4-064": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし配合エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4063.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "063/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "energy.kind",
+            "energy.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "energy.text.ja",
+              "kyuura": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンの「どく・ねむり・マヒ・こんらん」状態をすべて回復させる。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+              "pcg_search": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンの「どく・ねむり・マヒ・こんらん」状態をすべて回復させる。(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+              "affects_behavior": false,
+              "note": "サイトの説明文は、kyuura の文面の「\\n\\n」（かっこの注記の前の空行）がない。文字は同じで、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類「特殊エネルギー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。特殊エネルギー（「無色」エネルギー 1 個。手札から出してポケモンにつける時の効果）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（GR-2000-P325-SAME-TIMING の例として名前が出るだけ）。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合（docs/stadium-reuse-special-energy-v0.58.md 3 章）"
+    },
+    "PMCG4-065": {
+      "basis": "kyuura_data",
+      "name_ja": "レインボーエネルギー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [
+        "CR-ENERGY-TRANS-RAINBOW"
+      ],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4064.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "064/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "energy.kind",
+            "energy.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類「特殊エネルギー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.58 で加えた。特殊エネルギー（場ではどの色にもなる 1 個。手札から出してつける時、そのポケモンに（弱点・抵抗力に関係なく）10 ダメージ）。kyuura の CR-ENERGY-TRANS-RAINBOW（CONFIRMED）: エナジートランスで「草」としてつけかえられ、その移動では 10 ダメージを受けない。同じ記録の注記どおり、手札からあまごいでつけられるかは kyuura で確かめていない（RB2 で止める）。英語版の「only provides 1 Energy at a time」「Doesn't count as a basic Energy card when not in play」は根拠にしない（docs/stadium-reuse-special-energy-v0.58.md 3 章）"
+    },
+    "PMCG1-096": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "card_name_and_edition_symbols"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1096.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "096/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "energy.kind"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類「特殊エネルギー」・名前）を kyuura の写しの元（ecb2d69）と比べた。サイトのカードページに説明文はない（kyuura の日本語の説明が null なのと同じ）。出すエネルギーを決めるために、同じページのカードの画像を見て、「無色」の記号が 2 つあることを確かめた（文字の説明はない）。kyuura の energy.provides（空）はこの照合の欄に入れていない（論点に書いた）"
+        }
+      ],
+      "issues": [
+        {
+          "question": "kyuura の energy.provides が空で、日本語の説明が null（英語の説明だけがある）。空の provides を「エネルギーを出さない」と読まず、出すエネルギーを、カードの名前（「無色2個エネルギー」）と pcg-search.com の同じ版（第1弾 096/096）のカードの「無色」の記号 2 つで、「無色」エネルギー 2 個とした（英語の説明「Provides ColorlessColorless」は根拠にしない）。kyuura の provides を記録する作業は kyuura 側の報告事項",
+          "fields": [
+            "energy.provides"
+          ],
+          "affects_behavior": false,
+          "note": "採用した内容（「無色」2 個）は名前と同じ版の記号で決まり、kyuura のデータの欠けだけでは挙動が決まらないことはない"
+        }
+      ],
+      "notes": "v0.58 で加えた。特殊エネルギー（「無色」エネルギー 2 個。1 枚で 2 個を出し、にげるでは分けてトラッシュできない）。処理に使う文面はない（日本語の説明がない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（ERR-ENERGY-RETRIEVAL がエネルギー回収で拾えない特殊エネルギーの例として名前を挙げる）。同じ名前のデッキの枚数は 4 枚まで（GR-2000-P308-SAME-NAME。基本エネルギーだけが制限なし）（docs/stadium-reuse-special-energy-v0.58.md 3 章）"
     }
   }
 }

@@ -241,6 +241,9 @@ STADIUM_RETURN_BENCH = "stadium_return_bench"
 # v0.57: トキワシティジムがある時、自分の「サカキのポケモン」を進化させる時に、のっているダメージカウンターを 2 つとりのぞくか。決めるのは進化させたプレイヤー（持ち主）。
 # 選べるものはそのポケモンの番号 1 つで、0〜1 個（選ばない = とりのぞかない。「のぞむなら」）
 EVOLUTION_HEAL = "evolution_heal"
+# v0.58（docs/stadium-reuse-special-energy-v0.58.md 4 章）: ナツメのサイキックコントロールの「おもて」で、相手のトラッシュから使うトレーナーカード。決めるのは使ったプレイヤー。
+# 選べるものは相手のトラッシュのトレーナーカード（トラッシュの並び。公開の情報）のうち、使えるもの。0〜1 枚（選ばない = 使わない。「使ってよい」）
+USE_DISCARD_TRAINER = "use_discard_trainer"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

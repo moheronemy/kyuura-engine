@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 17 あります（``format_version``）。
+形式は 18 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -81,6 +81,10 @@
   （この番にスタジアムの効果を使った記録。[プレイヤー, スタジアムのカードの uid] の並び）と、``trainer_in_use`` の ``user``（錯乱ジムで相手プレイヤーが
   借りて使っているときの使っているプレイヤー。持ち主が使っていれば ``None``）を加えたもの（v0.57。docs/stadiums-v0.57.md 8 章）。形式 1〜16 は、場に
   スタジアムがある・使った記録がある・借りて使っている最中のトレーナーがあると ``ValueError``（なければ形式 1〜16 の書き出しは v0.56 と同じ）。
+- 18: 17 に、最上位の ``trainer_stack``（内側のトレーナーを使い終わるのを待っている外側のトレーナーの使用。``{"player", "card", "card_id", "user", "via"}`` の並び。
+  外側から順）と、``trainer_in_use`` の ``via``（外側のトレーナー（ナツメのサイキックコントロール）の効果で相手のトラッシュから使っているときの、外側のカードの uid。
+  手札から使っていれば ``None``）を加えたもの（v0.58。docs/stadium-reuse-special-energy-v0.58.md 7 章）。形式 1〜17 は、外側のトレーナーの使用・相手のトラッシュから
+  使っている最中のトレーナーがあると ``ValueError``（なければ形式 1〜17 の書き出しは v0.57 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -159,7 +163,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -393,6 +397,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、場のスタジアム・スタジアムの効果を使った記録・借りて使っているトレーナーを表せない（format_version=17 を使う）"
         )
+    if format_version < 18 and (state.trainer_stack or (state.trainer_in_use is not None and state.trainer_in_use.via is not None)):
+        raise ValueError(
+            f"形式 {format_version} は、外側のトレーナーの効果で相手のトラッシュから使っている最中のトレーナー（ナツメのサイキックコントロール）を表せない（format_version=18 を使う）"
+        )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -480,6 +488,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         "card": used.card,
         "card_id": state.cards[used.card].card_id,
         **({"user": used.user} if format_version >= 17 else {}),
+        **({"via": used.via} if format_version >= 18 else {}),
     }
     if format_version >= 9:
         data["energy_attached_by_powers_this_turn"] = state.energy_attached_by_powers_this_turn
@@ -511,4 +520,9 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
             "owner": stadium.owner, "card": stadium.card, "card_id": state.cards[stadium.card].card_id, "placed_turn": stadium.placed_turn,
         }
         data["stadium_uses_this_turn"] = [list(use) for use in state.stadium_uses_this_turn]
+    if format_version >= 18:
+        data["trainer_stack"] = [
+            {"player": outer.player, "card": outer.card, "card_id": state.cards[outer.card].card_id, "user": outer.user, "via": outer.via}
+            for outer in state.trainer_stack
+        ]
     return data

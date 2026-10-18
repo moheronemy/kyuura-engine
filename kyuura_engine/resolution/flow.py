@@ -430,6 +430,31 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
         _next_prize_or_judge(res, (), CONTINUE_TURN, ())
 
 
+# ---------------------------------------------------------------- 手札からつけたエネルギーの効果のあと（v0.58。docs/stadium-reuse-special-energy-v0.58.md）
+
+
+def after_energy(state: GameState, ctx: Context) -> None:
+    """手札から出してポケモンにつけた特殊エネルギーの効果（レインボーエネルギーの 10 ダメージ。``SpecialEnergyEffect.may_knock_out``）のあと、場を整える（v0.58）。
+
+    - HP 以上のダメージのポケモンがいれば（つけたポケモン 1 匹）、ワザのあとと同じきぜつの処理（ログ ``knock_out`` の ``timing`` は ``"energy"``）→ サイド →
+      勝ち負け → ふしちょう → バトル場に出す（``_after_knockouts``）。続きは ``CONTINUE_TURN``（同じ番の ``Phase.MAIN``。エネルギーをつけても番は終わらない）。
+      こんじょう（相手のワザのダメージで「きぜつ」するとき）・みちづれ（ワザのあと）は候補にしない。v0.42 の ``after_power`` と同じ形
+    - いなければ何もしない
+    渡された状態（コマンドの入口が作った複製）を変える。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    gone = knocked(res)
+    if not gone:
+        return
+    if len(gone) > 1:
+        raise RuntimeError(f"エネルギーをつけたあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回でダメージを与えるのは 1 匹。エンジンの不具合）")
+    try:
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    _after_knockouts(res, _knock_out_all(state, gone, timing="energy"), CONTINUE_TURN, candidates)
+
+
 # ---------------------------------------------------------------- トレーナーの使用のあと（v0.50。docs/mew-devolution-spray-v0.50.md 4 章）
 
 

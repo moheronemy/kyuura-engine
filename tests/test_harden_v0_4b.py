@@ -601,7 +601,7 @@ class SerializationTest(unittest.TestCase):
         }])
         self.assertEqual(full(state)["players"][0]["bench"][0]["persistent_effects"], [])
         # v0.4b では 8 が最後。v0.6 で形式 9（あまごいで手札からつけた枚数）を加えた。持続する効果の項目は形式 9 でも同じ
-        self.assertEqual(FORMAT_VERSIONS[-1], 17)  # v0.57 で形式 17（stadium）。v0.56 で形式 16（trainer_effects）。 v0.31 で形式 10（power_uses_this_turn・energy_burn）、v0.44 で形式 11（attacks_used_once・evolution_permission_turn）、v0.47 で形式 12（trainer_locks）、v0.48 で形式 13（type_shift）、v0.49 で形式 14（disguise・recalls）、v0.50 で形式 15（devolved_turn）を加えた。持続する効果の項目は同じ
+        self.assertEqual(FORMAT_VERSIONS[-1], 18)  # v0.58 で形式 18（trainer_stack）。v0.57 で形式 17（stadium）。v0.56 で形式 16（trainer_effects）。 v0.31 で形式 10（power_uses_this_turn・energy_burn）、v0.44 で形式 11（attacks_used_once・evolution_permission_turn）、v0.47 で形式 12（trainer_locks）、v0.48 で形式 13（type_shift）、v0.49 で形式 14（disguise・recalls）、v0.50 で形式 15（devolved_turn）を加えた。持続する効果の項目は同じ
         self.assertEqual(state_to_dict(state, format_version=9)["players"], full(state)["players"])
 
     def test_older_formats_refuse_effects(self):

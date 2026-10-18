@@ -124,7 +124,7 @@
 
 - テストの段階: A（速い単体テスト）と B（決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行）は `python3 -m unittest` に入っています。C（前の版との大きな比較・大規模なストレス実行）は、ふだんのテストで走らせないでください（`python3 tools/compare_engine_versions.py --base <コミット>`・`python3 tools/stress_engine.py`）。
 - ログの監査（tests/log_audit.py の `log_problems`）は、ログだけから場のポケモンのダメージ・エネルギー・トラッシュ・サイドを組み立て直して状態と比べます。ダメージ・エネルギー・トラッシュを変えるログのイベントを加えたら、組み立て直しにも加えてください。ログは記録で、状態の正本ではありません（エンジンはログから状態を決めない）。
-- 書き出しの監査（`serialization_problems`）は、形式 1〜17（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 17）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 18 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
+- 書き出しの監査（`serialization_problems`）は、形式 1〜18（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 18）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 19 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
 - 前の版との比較の駆動（tools/compat_driver.py）は、エンジンの公開の API だけを使い、版ごとに別のプロセス（`python3 -I`）で、指定した木の `kyuura_engine` だけを読み込みます。比べないのは効果の登録表の id（`effects`）だけです。ルールの動きに関わる状態・ログを比較から除かないでください。
 - tests/fixtures/compat_base_4bd97bf.json は、基準の版（v0.4d の `4bd97bf`）で駆動が作った記録の指紋です。今の版から作り直さないでください（作り直すと前の版との比較ではなくなる）。駆動を変えたら、ファイルの `how` の引数で基準の版から作り直します。
 - テストの盤面にポケモンについているトレーナーを置くときは、`build_test_state` の `"trainers"`（[(カード id, トラッシュする番), ...]）を使います。
@@ -148,7 +148,7 @@
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。v0.49 から、今の姿（［へんしん］・「ばける」）のカードの特殊能力と、それを印刷したカードの uid（`effects.powers_of` の `PowerSlot`）で決めます（「ばける」でのせたカードの下のタケシのキュウコンの「ばける」も持つ）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
-- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）を加えた。次の新しい形式は 18）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）を加えた。次の新しい形式は 19）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
 - エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
 - ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
 - やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
@@ -1725,11 +1725,61 @@
   （`UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER`）・VG1（`UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER`）・VM1（`UNRESOLVED_VERMILION_GYM_ATTACK_ORDER`）・CH1（`UNRESOLVED_CHAOS_GYM_BORROWED_TURN`）。
   再利用: CP2・H1・MH1（範囲を広げない）。ほかのカードの問いの答えを流用しないでください。到達しない場面（爆発ジムのダメージできぜつ・特殊能力で「サカキのポケモン」を山札から進化）は
   `RuntimeError`。エンジンが止める `UNRESOLVED_…` は 109 件、未解決の裁定は 110 件です。
-- 書き出しの形式 17 = 形式 16 + 最上位の `stadium`・`stadium_uses_this_turn` と `trainer_in_use.user`（形式 1〜16 は、どれかがあると `ValueError`）。監査の `LATEST_FORMAT` は 17。
-  次の新しい形式は 18。新しい決定の種類は `stadium_return_bench`・`evolution_heal`（観測の意味は `pokemon`）、新しいログのイベント（公開）は `stadium_placed`・`stadium_discarded`・
+- 書き出しの形式 17 = 形式 16 + 最上位の `stadium`・`stadium_uses_this_turn` と `trainer_in_use.user`（形式 1〜16 は、どれかがあると `ValueError`）。監査の `LATEST_FORMAT` は 17（v0.58 で 18）。
+  次の新しい形式は 18（v0.58 で加えた。その次は 19）。新しい決定の種類は `stadium_return_bench`・`evolution_heal`（観測の意味は `pokemon`）、新しいログのイベント（公開）は `stadium_placed`・`stadium_discarded`・
   `stadium_used`・`stadium_discard_energy`・`stadium_return_energy`・`stadium_damage`・`evolution_heal`・`evolution_heal_declined`・`stadium_attack_coin`・`chaos_check`・`chaos_answered`・
   `chaos_not_borrowable`。ログの監査（tests/log_audit.py）は場のスタジアム・使った記録・借りて使うプレイヤー・スタジアムの効果で動いたカードとダメージ・にげるの数の読み方・ベンチの
   上限を組み立て直します。スタジアムのイベントを加えたら、監査（トレーナー 1 回ぶんの並びの確かめから除く `_without_stadium_steps` を含む）にも加えてください。
 - 検証用デッキ `L57`・`D57` と組（`PAIRINGS_V0_57`。`L57` 対 `D57`・`L57` 対 `U55`・`D57` 対 `M56`・`D57` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.57` です（前の版の組の
   結果は変わらない）。スタジアムを出す・使う手順は `_v057_trainer`・`_v057_stadium`、クチバのコインは `_v057_attack`、決定は `_v057_decision`（受け付ける答えだけを選ぶ）。関連する
   「○○の」ポケモン（写しにないもの）は加えていません。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## スタジアムの処理を再利用するカード 3 枚と特殊エネルギー 4 枚（v0.58）
+
+- 依頼の 7 枚（タケシのゴローン PMCG5-052・タケシのゴローニャ PMCG5-053・ナツメのサイキックコントロール PMCG6-088・無色2個エネルギー PMCG1-096・きずぐすり配合エネルギー PMCG4-063・
+  なんでもなおし配合エネルギー PMCG4-064・レインボーエネルギー PMCG4-065）を、kyuura データの採用で、どのワザも、トレーナーも、特殊エネルギーも登録しました（対応ポケモン 327 → 329。
+  写しの組 `pool_v0_58`。写し 415 → 422 枚・対応するカード 413 → 420 枚。ワザの登録 557 → 561・特殊能力の登録 49・トレーナーの登録 80 → 81・特殊エネルギーの登録 0 → 4）。カードごとの結果・共通の処理・再利用した
+  記録（SE1〜SE5）・未解決・実装上の読み方・互換性・検証は docs/stadium-reuse-special-energy-v0.58.md。ガイドブックは読んでいません。英語版の文面（「Provides ColorlessColorless」
+  「only provides 1 Energy at a time」「The card stays in your opponent's discard pile」など）・現代のルールで日本語の不足を補わないでください。テストの定数は tests/helpers.py の
+  `BROCKS_GRAVELER`・`BROCKS_GOLEM`・`SABRINAS_PSYCHIC_CONTROL`・`DOUBLE_COLORLESS_ENERGY`・`POTION_ENERGY`・`FULL_HEAL_ENERGY`・`RAINBOW_ENERGY`・`V0_58_POKEMON`・`V0_58_ENERGIES`・
+  `V0_58_CARDS`（`POTION_ENERGY` はトレーナーの `POTION`、`FULL_HEAL_ENERGY` は `FULL_HEAL` と別のカード）。
+- 特殊エネルギーは、効果の登録表の `energies`（カード id → `EnergyEntry`。実装は `effects.SpecialEnergyEffect` の部分型）で登録します。登録のない特殊エネルギーは分類が未対応にします
+  （名前・説明文・kyuura の `energy.provides` で一括に対応にしない）。印刷の定義（`CardDefinition`）を基本エネルギーに書きかえないでください。同じ名前 4 枚の制限の例外は基本エネルギー
+  だけです（GR-2000-P308-SAME-NAME）。
+- 無色2個エネルギーは kyuura の日本語の説明が null・`energy.provides` が空です。空の `provides` を「エネルギーを出さない」と読まず、カードの名前と pcg-search.com の同じ版のカードの
+  「無色」の記号 2 つで「無色」2 個にしました（`ColorlessUnitsByName`。採用の記録の `play_text` は `card_name_and_edition_symbols`。`scripts/check_card_sources.py` が名前と照らす）。
+- カードの枚数・エネルギーの個数・色の割り当てを分けます。ついているカード 1 枚が出すエネルギーは `effects.energy_units`（1 個ずつ、使えるタイプの集まり。無色2個エネルギーは無色 2 個、
+  レインボーエネルギーは「6 色のどれか」1 個（合計 1 個。色ごとに数えない）、エナジーバーンのカードは 1 個ずつ「炎」）、並びは `attached_units`、個数は `energy_unit_count` だけで
+  求めます。ワザに必要なエネルギーは `effects.attack_cost_payable`（`cards.can_pay_with_units`）、にげるは個数で数えます。`state.energy_types`（カード 1 枚 1 つのタイプ）を、支払い・
+  エネルギーの数え方に新しく使わないでください（特殊エネルギーの `provides` は None）。「X」エネルギーを数える・選ぶ処理を加えるときは、レインボーエネルギーの扱い（RB1・RB2・RB3）を
+  `programs.transform_energy_question`・`rainbow_attach_question`・`effects.require_energy_type_determined` で確かめてください。
+- つけたときの効果（回復・10 ダメージ）は、手札から出してつけたときだけ（`energy_attached_from_hand`。手札からつける通常の操作・あまごい・せいちょう。GR-2000-P310-ATTACH-ENERGY）。
+  場のカードの移動・山札やトラッシュからつける効果では起こしません（CR-ENERGY-TRANS-NOT-ATTACHMENT と同じ読み方）。手札からエネルギーカードをつける処理を加えるときは、つける前に
+  `attach_from_hand_problem`、つけたあとに `energy_attached_from_hand` → `after_energy_attached` を呼び、きぜつしうるなら `resolution.after_energy`（ログ `knock_out` の `timing` は
+  `energy`）にしてください。レインボーエネルギーの 10 はワザ・特殊能力のダメージではありません（弱点・抵抗力・プラスパワー・ディフェンダー・「とうめい」・「ダメージを受けたとき」の
+  効果を当てはめない。ログ `energy_damage`）。なんでもなおし配合エネルギーの対象はつけたポケモンで、トレーナーのなんでもなおしの FH1 は当てはまりません。
+- 場の外（手札・山札・トラッシュ）の特殊エネルギーは「基本エネルギーカード」ではありません（ERR-ENERGY-RETRIEVAL の読み方）。レインボーエネルギーは、ワザ・にげるの支払いと
+  エナジートランスの「草」（CR-ENERGY-TRANS-RAINBOW。CONFIRMED。移動で 10 ダメージは受けない）だけが決まっています。あまごいに CR-ENERGY-TRANS-RAINBOW を当てはめないでください（RB2）。
+- にげる: 無色2個エネルギーは分けてトラッシュできません。余計なカードを除いても足りる選び方は `WRONG_RETREAT_COST`（基本エネルギーだけの理由の文は v0.57 と同じ）、どのカードを除いても
+  足りなくなる選び方で個数がにげるエネルギーより多いもの（無色2個エネルギーでにげる 1）は RT1。
+- ばくれつ（`SelfDestructThenDiscardStadium`）は v0.39 のじばくに、場のスタジアムをトラッシュする要素 `programs.DiscardStadium`（v0.57 の `zones.discard_stadium`。ログ
+  `stadium_discarded` の `reason` `attack`・`effect`、スタジアムがなければ `stadium_discard_none`）を加えた型です。いわなだれは v0.39 の `DamageThenChosenBenchTargets` の書き方の違い。
+- ナツメのサイキックコントロール（`UseOpponentDiscardTrainer`）: コイン → 「おもて」なら相手のトラッシュの使えるトレーナー（`discard_trainer_use_choices`。ポケモンにつけて使う・場に
+  出して使う・スタジアムを除く。使うための条件・リムーブ禁止ジムの追加の条件を使ったプレイヤーの手札・場で満たせないものを除く）から 0〜1 枚（決定 `use_discard_trainer`。0 枚は
+  使わない）。選んだら `resume` が `effects.UseDiscardTrainer` を返し、エンジンが外側の使用を `GameState.trainer_stack` に積んで、カードを相手のトラッシュから使用中の場所に移し
+  （同じ uid・持ち主のまま。`TrainerInUse.via` は外側のカード）、手札から使うときと同じ手順（錯乱ジムのコイン → リムーブ禁止ジムの追加の条件 → 効果）で内側の使用を始めます。
+  内側のカードは持ち主のトラッシュに、外側のカードはそのあと使ったプレイヤーのトラッシュにもどります（`engine._finish_outer_trainers`）。カードの物理的な置き場所（使用中・持ち主の
+  トラッシュ）と使用の記録（使うプレイヤー・外側の使用）を分けて持ってください。錯乱ジムのコインは使用ごと（外側の結果を内側に持ち越さない）、CH1 は使うプレイヤーが番のプレイヤーで
+  ないときだけ。決定の不変条件は、使わない（0 個）がいつも答えになる例外にこの決定を加えた（広げない）。
+- 新しい停止コードは RB1（`UNRESOLVED_RAINBOW_ENERGY_TYPE`）・RB2（`UNRESOLVED_RAINBOW_ATTACH_AS_TYPE`）・RB3（`UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD`）・RB4
+  （`UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER`）・TE2（`UNRESOLVED_TRANSFORM_SPECIAL_ENERGY`）・RT1（`UNRESOLVED_RETREAT_OVERPAY`）の 6 件（どれも `not_in_kyuura`）。エンジンが止める
+  `UNRESOLVED_…` は 115 件、未解決の裁定は 116 件です。特殊エネルギーのつけたときの効果と、つけたときにはたらく特殊能力が同じタイミングに起こる組（SE2。今の写しでは起こらない）は
+  `RuntimeError` です。そのようなカードを加えるときは、番のプレイヤーが順番を決める決定（GR-2000-P325-SAME-TIMING）を先に加えてください。
+- 書き出しの形式 18 = 形式 17 + 最上位の `trainer_stack` と `trainer_in_use.via`（形式 1〜17 は、どちらかがあると `ValueError`）。監査の `LATEST_FORMAT` は 18。次の新しい形式は 19。
+  新しい決定の種類は `use_discard_trainer`（観測の意味は `card`）、新しいログのイベント（公開）は `energy_heal`・`energy_damage`・`stadium_discard_none`・`discard_trainer_use_none`・
+  `discard_trainer_use_declined`。ログの監査（tests/log_audit.py）は、特殊エネルギーの効果のダメージ・内側の `play_trainer`（持ち主のトラッシュから）・外側のカードのトラッシュ・
+  ばくれつのスタジアム・にげるの個数を組み立て直します。
+- 検証用デッキ `E58`・`R58` と組（`PAIRINGS_V0_58`。`E58` 対 `R58`・`E58` 対 `U55`・`R58` 対 `H54`・`E58` 対 `L57`）は tools/existing_effect_games.py の `--batch v0.58` です（前の版の
+  組の結果は変わらない）。特殊エネルギーをつける手順は `_v058_energy`、サイキックコントロールは `_v058_trainer`・`_v058_decision`、無色2個エネルギーでの「にげる」は `_v058_retreat`、
+  数えた結果は `v058_uses`。tests/v017_games.py の `play_game` は RB1〜RB4・TE2・RT1 を場から確かめてから別の操作を続けます。公開の固定のデッキ・既存の変種には入れていません。
+  勝敗で採用を判断しないでください。

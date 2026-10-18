@@ -195,6 +195,15 @@ QUESTIONS: dict[str, Question] = {
                  "メタモンの［へんしん］の「エネルギーカードは、このカードについている限り、どの色のエネルギーとしても使うことができる」が、ワザに必要なエネルギーの"
                  "支払いのほか、ワザの説明がついている「○」エネルギー（カード）を数える・トラッシュするときにも当てはまる（どの色としても数える・選べる）かは、"
                  "印刷の文面・kyuura の記録から決められず、2 つの読み方で数える・選べるカードが変わる"),
+        # v0.58（docs/stadium-reuse-special-energy-v0.58.md）
+        Question("rainbow_energy_type", "UNRESOLVED_RAINBOW_ENERGY_TYPE", ("RB1",), 10,
+                 "場のレインボーエネルギー（「どの色の基本エネルギーカードとして使ってもよい」）を、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶかは、"
+                 "印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる（支払い・エナジートランスの「草」は決まっている）"),
+        Question("rainbow_attach_type", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE", ("RB2",), 10,
+                 "山札・トラッシュ・手札のレインボーエネルギーを、「「○」エネルギーカード」をつけるワザの効果で、その色のエネルギーカードとして選べるかは、kyuura の記録から"
+                 "決められない"),
+        Question("rainbow_basic_energy_card", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", ("RB3",), 10,
+                 "場のポケモンについているレインボーエネルギーを、説明の「基本エネルギーカード」として選べるかは、印刷の文面・kyuura の記録から決められない"),
         # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 7 章）
         Question("trainer_self_bonus", "UNRESOLVED_MISTY_SELF_DAMAGE", ("MS1",), 10,
                  "トレーナー「カスミ」の「「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、…「+20」される。(控えポケモンへのダメージは、そのまま)」を、"

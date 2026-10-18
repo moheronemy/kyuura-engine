@@ -80,6 +80,7 @@ from kyuura_engine import state_to_dict
 from kyuura_engine.cards import EnergyType
 from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerPokemonStadium, OwnerRetreatReductionStadium  # v0.57
+from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import (
     AskOpponentEachTakePrizeElseDraw,
     BenchActiveThenHandBasicToActive,
@@ -282,9 +283,9 @@ POKEMON_FIELDS_SINCE = {
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
     "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12, "recalls": 14,
-    "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17,
+    "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18,
 }
-LATEST_FORMAT = 17
+LATEST_FORMAT = 18
 
 
 def _project(data_latest: dict, version: int) -> dict:
@@ -299,6 +300,8 @@ def _project(data_latest: dict, version: int) -> dict:
     data["players"] = [
         {**player, "active": pokemon(player["active"]), "bench": [pokemon(b) for b in player["bench"]]} for player in data_latest["players"]
     ]
+    if version < 18 and isinstance(data.get("trainer_in_use"), dict):
+        data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "via"}  # v0.58: 外側のトレーナーのカードは形式 18 から
     if version < 17 and isinstance(data.get("trainer_in_use"), dict):
         data["trainer_in_use"] = {k: v for k, v in data["trainer_in_use"].items() if k != "user"}  # v0.57: 借りて使っているプレイヤーは形式 17 から
     if version < 16 and "trainer_locks" in data:
@@ -350,6 +353,8 @@ def required_format(state) -> tuple[int, bool]:
     if (state.stadium is not None or state.stadium_uses_this_turn
             or (state.trainer_in_use is not None and state.trainer_in_use.user is not None)):
         needed = max(needed, 17)  # v0.57: 場のスタジアム・スタジアムの効果を使った記録・錯乱ジムで借りて使っているトレーナー
+    if state.trainer_stack or (state.trainer_in_use is not None and state.trainer_in_use.via is not None):
+        needed = max(needed, 18)  # v0.58: 外側のトレーナーの効果で相手のトラッシュから使っているトレーナー（サイキックコントロール）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -378,7 +383,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.57 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.58 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -1151,6 +1156,7 @@ def log_problems(state) -> list[str]:
     # v0.23: 使っている最中のトレーナーの使うための条件でトラッシュした手札（discard_from_hand から discard_trainer まで）
     trainer_discarded: dict[int, tuple[int, ...]] = {0: (), 1: ()}
     using_trainer: dict[int, int | None] = {0: None, 1: None}  # v0.25: 使っている最中のトレーナー（play_trainer から discard_trainer まで）
+    outer_trainers: dict[int, list] = {}  # v0.58: 内側のカードを使っている間の外側のトレーナー（サイキックコントロール。プレイヤーごとに積む）
     attached_this_turn = 0  # この番の、手札からつける通常の操作（attach_energy）の数（v0.6）
     power_attached_this_turn = 0  # この番の、特殊能力で手札からつけた数（power_attach_energy。v0.6）
     exclusive: dict[int, str] = {}  # 場のポケモンの番号 → ねむり・マヒ・こんらんのどれか（v0.8。かがくへんかガスがはたらいているかを見る）
@@ -2117,7 +2123,18 @@ def log_problems(state) -> list[str]:
             banned = [key for key, info in trainer_locks_log.items() if key[0] == e["player"] and info["turn"] < e["turn"] <= key[1]]
             if banned:
                 problems.append(f"{e['turn']} 番に、トレーナーの使用を禁止されている（{banned}）プレイヤー {e['player']} が、トレーナー {e['card']} を使った")
-            from_hand(e, e["player"], e["card"])
+            if e.get("source_zone") == "discard":
+                # v0.58: ナツメのサイキックコントロールで、相手（持ち主）のトラッシュのトレーナーカードを使う。外側のカード（via）を使っている最中のプレイヤーが使い、
+                # カードは持ち主のトラッシュから出る（手札を通らない）
+                card_owner = e.get("owner")
+                if card_owner != owner.get(e["card"]) or card_owner == e["player"] or using_trainer.get(e["player"]) != e.get("via") \
+                        or e["card"] not in discard[card_owner]:
+                    problems.append(f"{e['turn']} 番に外側のトレーナー {e.get('via')} の効果で使ったカード {e['card']} が、使っている最中のプレイヤーの相手のトラッシュのカードではない")
+                else:
+                    discard[card_owner].remove(e["card"])
+                outer_trainers.setdefault(e["player"], []).append(e.get("via"))
+            else:
+                from_hand(e, e["player"], e["card"])
             using_trainer[e["player"]] = e["card"]
         if kind == "place_starting_pokemon":
             for uid in (e["active"], *e["bench"]):
@@ -2698,10 +2715,12 @@ def log_problems(state) -> list[str]:
             first_max = max(0, printed - forced) + plus
             first_min = max(0, printed - forced - optional) + plus
             floor_first = first_min
-            count = len(e["discarded"])
+            # v0.58: トラッシュしたエネルギーの個数（無色2個エネルギーは 1 枚で 2 個。カードの枚数ではない）。登録の特殊エネルギーの実装で数える
+            count = sum(len(state.effects.energy_effect(state.printed_def(u)).units()) if state.printed_def(u).is_special_energy else 1
+                        for u in e["discarded"])
             last_ok, first_ok = minimum <= count <= maximum, first_min <= count <= first_max
             if not is_active(pid) or not last_ok or not first_ok:
-                problems.append(f"{e['turn']} 番の{kind}（ポケモン {pid}）でトラッシュした {count} 枚が、にげるエネルギーの範囲 {minimum}〜{maximum}"
+                problems.append(f"{e['turn']} 番の{kind}（ポケモン {pid}）でトラッシュした {count} 個が、にげるエネルギーの範囲 {minimum}〜{maximum}"
                                 f"（印刷 {printed}・増やす {increases}・少なくできる {reductions}。CP2 の下限 {floor_first}）にない")
             if tuple(tuple(x) for x in e.get("retreat_cost_stadium", ())) != tuple(stadium_terms):
                 problems.append(f"{e['turn']} 番の{kind}のスタジアムのにげるエネルギーの記録 {e.get('retreat_cost_stadium')} が、ログから組み立てた {stadium_terms} と違う")
@@ -3083,6 +3102,15 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番にスタジアム {card} を出したあとに、前のスタジアム {stadium_due[0]} を持ち主のトラッシュにすてたログがない")
                 else:
                     discard[stadium_due[1]].append(stadium_due[0])
+        elif kind == "stadium_discarded" and e.get("reason") == "attack":
+            # v0.58: ワザの効果で場のスタジアムをトラッシュする（タケシのゴローンの「ばくれつ」）。そのワザ（effect）の宣言のあと、場のスタジアムを持ち主のトラッシュに
+            last_attack = next((x for x in reversed(log[:next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)]) if x["kind"] == "attack"), None)
+            if stadium_zone is None or stadium_zone != (e["card"], e["player"]) or last_attack is None or last_attack["turn"] != e["turn"] \
+                    or e.get("by_card") != last_attack.get("pokemon"):
+                problems.append(f"{e['turn']} 番にワザの効果でトラッシュしたスタジアム {e['card']} が、ログから組み立てた場のスタジアム {stadium_zone} ではない")
+            else:
+                discard[e["player"]].append(e["card"])
+                stadium_zone = None
         elif kind == "stadium_discarded":
             if prior is None or prior["kind"] != "stadium_placed" or prior.get("replaces") != e["card"] or owner.get(e["card"]) != e["player"]:
                 problems.append(f"{e['turn']} 番にトラッシュしたスタジアム {e['card']} が、新しいスタジアムに入れかわった前のスタジアムではない")
@@ -3109,6 +3137,22 @@ def log_problems(state) -> list[str]:
                 (discard if kind == "stadium_discard_energy" else hand)[e["player"]].append(e["card"])
                 if kind == "stadium_return_energy" and not state.printed_def(e["card"]).is_basic_energy:
                     problems.append(f"{e['turn']} 番にヤマブキシティジムで手札に加えたカード {e['card']} が、基本エネルギーカードではない")
+        elif kind in ("energy_heal", "energy_damage"):
+            # v0.58: 特殊エネルギーを手札から出してつけたときの効果（きずぐすり配合エネルギーの回復・レインボーエネルギーの 10）。つけたログ（attach_energy・
+            # power_attach_energy・attach_energy_from_hand）のすぐあとで、そのカードの登録の実装と量が合う
+            pid = e["pokemon_id"]
+            effect = state.effects.energy_effect(state.printed_def(e["energy"])) if e["energy"] in state.cards else None
+            attached = prior is not None and prior["kind"] in ("attach_energy", "power_attach_energy", "attach_energy_from_hand") \
+                and prior.get("energy", prior.get("card")) == e["energy"]
+            if kind == "energy_heal":
+                ok = isinstance(effect, HealOnAttachEnergy) and 0 < e["counters"] <= effect.counters and e["damage_before"] == damage[pid]
+                damage[pid] -= e["counters"] * state.rules.damage_per_counter
+            else:
+                ok = isinstance(effect, RainbowEnergy) and e["amount"] == effect.amount
+                damage[pid] += e["amount"]
+            if not ok or not attached or damage[pid] != e["total_damage"] or damage[pid] < 0:
+                problems.append(f"{e['turn']} 番の {kind}（ポケモン {pid}・カード {e['energy']}）が、手札からつけたすぐあとの登録の特殊エネルギーの効果・ログから組み立てた"
+                                f"ダメージ {damage[pid]} と合わない")
         elif kind == "stadium_damage":
             # v0.57: ロケット団の爆発ジム（手札からベンチに出したたねポケモンへの 20。持ち主のコインの「うら」のすぐあと）
             pid = e["pokemon_id"]
@@ -3147,6 +3191,12 @@ def log_problems(state) -> list[str]:
             for p_index in (0, 1):
                 if using_trainer.get(p_index) == e["card"]:
                     using_trainer[p_index] = None  # v0.57: 錯乱ジムで借りて使ったカードも、持ち主のトラッシュにすてる
+            for p_index, stack in outer_trainers.items():
+                # v0.58: 内側のカードを使い終えたら、外側のカード（サイキックコントロール）を使い終える。外側のカードのすてるログは内側のすぐあと
+                if stack and stack[-1] == e["card"]:
+                    stack.pop()
+                elif stack and using_trainer.get(p_index) is None and owner.get(e["card"]) != p_index:
+                    using_trainer[p_index] = stack[-1]
         elif kind == "play_trainer_as_pokemon":
             # v0.47: なにかの化石・ピッピ人形。使っている最中のこのカード（play_trainer のすぐあと）を、トラッシュせずにベンチにポケモンとして出す
             card = e["card"]

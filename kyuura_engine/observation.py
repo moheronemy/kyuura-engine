@@ -41,6 +41,7 @@ from .decisions import (
     ENTRY_POWER,
     EVOLUTION_HEAL,
     STADIUM_RETURN_BENCH,
+    USE_DISCARD_TRAINER,
     FORCED_SWITCH,
     HAND_TO_DECK,
     KO_PREVENTION,
@@ -113,6 +114,8 @@ OPTION_MEANINGS: dict[str, str] = {
     ACCEPT_REQUEST: "number", OPPONENT_HAND_TO_BENCH: "card", SELECT_HAND_POSITIONS: "position", HAND_TO_ACTIVE: "card", SWAP_WITH_PRIZE: "card",
     # v0.57: せまいジムでトラッシュするベンチのポケモン・トキワシティジムでカウンターをとりのぞく進化したポケモン
     STADIUM_RETURN_BENCH: "pokemon", EVOLUTION_HEAL: "pokemon",
+    # v0.58: ナツメのサイキックコントロールで使う相手のトラッシュのトレーナーカード（トラッシュは公開の情報）
+    USE_DISCARD_TRAINER: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS})
@@ -393,6 +396,9 @@ PUBLIC_EVENTS = frozenset({
     # v0.57: スタジアム（場に出す・トラッシュ・効果を使う・場のカードを動かす・ダメージ・コイン・錯乱ジムのコインと答え。場・トラッシュ・コインは公開の情報）
     "stadium_placed", "stadium_discarded", "stadium_discard_energy", "stadium_return_energy", "stadium_used", "stadium_damage", "evolution_heal",
     "evolution_heal_declined", "stadium_attack_coin", "chaos_check", "chaos_answered", "chaos_not_borrowable",
+    # v0.58: 特殊エネルギーをつけたときの効果（回復・ダメージ）・ばくれつのスタジアムがない場面・サイキックコントロールで使えるカードがない・使わなかった
+    # （場・トラッシュは公開の情報）
+    "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
 })
 
 

@@ -234,7 +234,7 @@ class RegistrationTest(unittest.TestCase):
             self.assertEqual(links["stop_codes"][code]["engine_rulings"][0]["document"], "docs/search-retrieval-trainers-v0.53.md")
         self.assertIn({"version": "v0.53", "document": "docs/search-retrieval-trainers-v0.53.md", "ruling_id": "FC1"},
                       links["stop_codes"][FC1]["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (109, 110))  # v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (115, 116))  # v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた
 
     def test_observation_tables(self):
         self.assertIn("discard_to_deck", PUBLIC_EVENTS)

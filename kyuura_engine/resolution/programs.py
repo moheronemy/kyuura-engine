@@ -51,7 +51,7 @@ from ..zones import (
     attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
     return_discard_to_hand, return_hand_cards_to_deck, return_in_play_to_deck, return_in_play_to_hand, reveal_deck_to_hand, shuffle_deck, take_deck_top,
 )
-from ..zones import look_at_card
+from ..zones import discard_stadium, look_at_card
 
 from . import catalog as C
 from . import codec
@@ -412,6 +412,17 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
     はたらいていない・ついているエネルギーがどれも ``energy_type`` なら何もしない。必要なエネルギーの支払い（``E.attack_cost_payable``）とは別の問い。"""
     if len(E.energy_type_readings(run.state, pokemon, energy_type)) > 1:
         raise run.res.question("transform_energy_count", f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー")
+    # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める
+    cards = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
+    if cards:
+        raise run.res.question("rainbow_energy_type", f"ポケモン {pokemon.pokemon_id} のレインボーエネルギー {cards}・「{energy_type.ja}」エネルギー")
+
+
+def rainbow_attach_question(run: AttackRun, uids, energy_type: EnergyType) -> None:
+    """v0.58（RB2）: 山札・トラッシュ・手札から「「○」エネルギーカード」をつけるワザで、選べるかもしれないレインボーエネルギーがあれば止める。"""
+    cards = E.rainbow_cards_in(run.state, uids)
+    if cards:
+        raise run.res.question("rainbow_attach_type", f"レインボーエネルギー {cards}・「{energy_type.ja}」エネルギーカード")
 
 
 @dataclass(frozen=True)
@@ -1519,10 +1530,10 @@ class ExtraEnergyMixed:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1
-        types = run.state.energy_types(run.attacker())
-        have = types.count(self.energy_type)
-        others = len(types) - have
+        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
+        units = E.attached_units(run.state, run.attacker())  # v0.58: 出すエネルギーの個数（無色2個エネルギーは 2 個）
+        have = sum(1 for unit in units if unit == frozenset({self.energy_type}))
+        others = len(units) - have
         symbols = sum(1 for t in run.attack.cost if t is self.energy_type)
         colorless = sum(1 for t in run.attack.cost if t is EnergyType.COLORLESS)
         by_symbols = have - symbols
@@ -1997,6 +2008,7 @@ class AttachFromDiscard(Element):
     decision_kind: ClassVar[str] = ATTACH_FROM_DISCARD
 
     def _candidates(self, run: AttackRun) -> list[int]:
+        rainbow_attach_question(run, run.state.players[run.player].discard, self.energy_type)  # v0.58: RB2
         return [uid for uid in run.state.players[run.player].discard
                 if run.state.card_def(uid).is_basic_energy and run.state.card_def(uid).provides is self.energy_type]
 
@@ -2469,13 +2481,14 @@ class SelfSwitch(Element):
 @dataclass(frozen=True)
 class HeadsTimesAttachedEnergy:
     """ワザを使うポケモンについているエネルギーの数だけコインを投げ、「おもて」の数 × ``per``（v0.34。ナッシーの「たまなげMAX」）。コインはダメージの要素の
-    中（ダメージの量だけを決める）。エネルギーの数は ``state.energy_types`` の数（今の写しでは、ついている基本エネルギーカードの枚数と同じ）。"""
+    中（ダメージの量だけを決める）。エネルギーの数は出すエネルギーの個数（v0.58。``effects.attached_units``。無色2個エネルギーは 2 個、レインボーエネルギーは 1 個。
+    カードの枚数ではない）。"""
 
     per: int
     by_heads: ClassVar[bool] = True  # v0.35: 「おもて」の数だけを使う（先読みは「おもて」の数でまとめる。v0.34 の 13 枚からの上限の拒否を解消した）
 
     def coin_count(self, run: AttackRun) -> int:
-        return len(run.state.energy_types(run.attacker()))
+        return len(E.attached_units(run.state, run.attacker()))
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return (0 if flips is None else flips.heads) * self.per
@@ -2493,12 +2506,9 @@ class PlusHeadsPerAttachedType:
 
     def coin_count(self, run: AttackRun) -> int:
         attacker = run.attacker()
-        for uid in attacker.energy:
-            if not run.state.card_def(uid).is_basic_energy:
-                # 2 つ以上のエネルギーを出す特殊エネルギーを加えるときは、数え方（カードの枚数ではなくエネルギーの数）を確かめる
-                raise RuntimeError(f"ウォーターパンチのエネルギーの数え方を確かめていないエネルギーカード {uid}（エンジンの不具合）")
-        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
-        return sum(1 for kind in run.state.energy_types(attacker) if kind is self.energy_type)
+        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
+        # v0.58: 出すエネルギーの個数で数える（無色2個エネルギーは「水」ではないので数えない。レインボーエネルギーは RB1 で止めている）
+        return sum(1 for unit in E.attached_units(run.state, attacker) if unit == frozenset({self.energy_type}))
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return run.attack.damage + (0 if flips is None else flips.heads) * self.per
@@ -3321,6 +3331,27 @@ class ShuffleDeck(Element):
         return False
 
 
+@dataclass(frozen=True)
+class DiscardStadium(Element):
+    """場に「スタジアムカード」があれば、それをトラッシュする（v0.58。タケシのゴローンの「ばくれつ」）。
+
+    - トラッシュするのは v0.57 の ``zones.discard_stadium``（同じ uid のまま持ち主のトラッシュ。ログ ``stadium_discarded`` の ``reason`` は ``attack``・``by_card`` は
+      ワザを使ったポケモンのカード・``effect`` はワザ）。スタジアムがなければ何もしない（p.309。ログ ``stadium_discard_none``）
+    - 場のポケモンへの効果ではない（「ワザをうけない」状態・「とうめい」は関係しない）。ワザを使ったポケモンがこのワザで HP 以上になっても処理する
+    - 先読み（``res.dry_run``）でも状態の複製の上で同じに処理する（乱数を使わない）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        stadium = run.state.stadium
+        if stadium is None:
+            run.state.add_event("stadium_discard_none", player=run.player, effect=str(run.key))
+            return False
+        discard_stadium(run.state, stadium, reason="attack", by_card=run.attacker().card, effect=str(run.key))
+        return False
+
+
 # ---------------------------------------------------------------- v0.41（docs/heal-counter-status-v0.41.md）
 # 回復（ダメージカウンターをとりのぞく）・ダメージカウンターを相手にのせる／取り替える・特殊状態を選ぶ・山札からエネルギーをつける
 
@@ -3594,6 +3625,7 @@ class AttachFromDeck(Element):
     decision_kind: ClassVar[str] = ATTACH_FROM_DECK
 
     def candidates(self, run: AttackRun) -> list[int]:
+        rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
         return E.deck_energy_candidates(run.state, run.player, self.energy_type)
 
     def run(self, run: AttackRun) -> bool:
@@ -4419,6 +4451,10 @@ class MoveOpponentEnergyToBench(Element):
             return False
         if not p.bench:
             return False  # 「相手に控えがいない時、この効果はない」（はがさない）
+        rainbow = E.rainbow_cards_attached(run.state, [target])
+        if rainbow:
+            # v0.58（RB3）: 相手の対戦ポケモンのレインボーエネルギーが、説明の「基本エネルギーカード」として選べるかが決まらない
+            raise run.res.question("rainbow_basic_energy_card", f"相手の対戦ポケモン {target.pokemon_id} のレインボーエネルギー {rainbow}")
         energies = E.opponent_active_basic_energy(run.state, run.player)
         if not energies:
             return False
@@ -4507,6 +4543,7 @@ class AttachFromHand(Element):
     decision_kind: ClassVar[str] = ATTACH_FROM_HAND
 
     def _candidates(self, run: AttackRun) -> list[int]:
+        rainbow_attach_question(run, run.state.players[run.player].hand, self.energy_type)  # v0.58: RB2
         return E.hand_basic_energy(run.state, run.player, self.energy_type)
 
     def has_target(self, run: AttackRun) -> bool:
@@ -5188,6 +5225,12 @@ BUILDERS: dict[type, Any] = {
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
     ),
     # v0.39（docs/selfdestruct-spread-count-v0.39.md）。じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザ
+    E.SelfDestructThenDiscardStadium: lambda e: (
+        Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=False),
+        BenchDamage(Fixed(e.bench_damage), weakness_resistance=False, own=True),
+        DiscardStadium(),
+    ),
     E.SelfDestruct: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"),
         BenchDamage(Fixed(e.bench_damage), weakness_resistance=False if e.weakness_resistance_stated else None),

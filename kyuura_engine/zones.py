@@ -934,7 +934,7 @@ def place_stadium(state: GameState, player: int, card: int) -> StadiumInPlay | N
     return old
 
 
-def discard_stadium(state: GameState, stadium: StadiumInPlay, *, reason: str, by_card: int | None = None) -> None:
+def discard_stadium(state: GameState, stadium: StadiumInPlay, *, reason: str, by_card: int | None = None, effect: str | None = None) -> None:
     """場のスタジアム ``stadium``（または、新しいスタジアムを出す途中の古いスタジアム）を、同じ uid のまま持ち主のトラッシュにすてる（v0.57。スタジアムが場を
     はなれる共通の処理）。ログ ``stadium_discarded``（``player`` は持ち主・``card``・``reason``（``replaced``: 新しいスタジアムが場に出た）・``by_card``）。
     場から除く処理と、トラッシュに置く処理をここだけで行う（入れ替え・ワザや効果による明示的なトラッシュで共通。v0.57 の対応カードでトラッシュするのは入れ替えだけ。
@@ -945,6 +945,8 @@ def discard_stadium(state: GameState, stadium: StadiumInPlay, *, reason: str, by
         raise RuntimeError(f"すてるスタジアム {stadium} が場にない（エンジンの不具合）")
     state.players[stadium.owner].discard.append(stadium.card)
     extra = {} if by_card is None else {"by_card": by_card}
+    if effect is not None:
+        extra["effect"] = effect  # v0.58: ワザの効果でトラッシュした（タケシのゴローンの「ばくれつ」。``reason`` は ``attack``、``by_card`` はワザを使ったポケモンのカード）
     state.add_event("stadium_discarded", player=stadium.owner, card=stadium.card, reason=reason, **extra)
 
 

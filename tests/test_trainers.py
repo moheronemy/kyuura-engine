@@ -30,7 +30,7 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
-    V0_57_CARDS,
+    SABRINAS_PSYCHIC_CONTROL, V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
     ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT,
@@ -82,7 +82,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
-                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER))))  # v0.57 でスタジアム 14 枚
+                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -121,7 +121,8 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "active_retreat_increase_stadium", "ignore_weakness_from_type_stadium", "cure_by_discarding_energy_stadium",
                                            "coin_return_owner_pokemon_stadium", "return_basic_energy_stadium", "bench_limit_stadium",
                                            "bench_entry_damage_stadium", "evolution_heal_stadium", "attack_coin_stadium",
-                                           "extra_trainer_cost_stadium", "trainer_coin_stadium"})
+                                           "extra_trainer_cost_stadium", "trainer_coin_stadium",
+                                       "use_opponent_discard_trainer"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -208,7 +209,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
-                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER))))  # v0.57 でスタジアム 14 枚
+                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

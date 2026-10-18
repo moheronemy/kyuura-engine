@@ -836,7 +836,7 @@ class SaveRestoreTest(unittest.TestCase):
         # v0.10 は形式 9 のまま（「はんげき」の状態の項目を加えていない）。v0.31 で形式 10（power_uses_this_turn・energy_burn）を加えたが、
         # 「はんげき」の項目ではない（形式 9 の書き出しは変わらない）
         # v0.44 で形式 11（attacks_used_once・evolution_permission_turn）を加えた。これも「はんげき」の項目ではない
-        self.assertEqual(max(FORMAT_VERSIONS), 17)  # 17 は v0.57（stadium）。16 は v0.56（trainer_effects）。 12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn。どれもはんげきの項目ではない）
+        self.assertEqual(max(FORMAT_VERSIONS), 18)  # 18 は v0.58（trainer_stack）。17 は v0.57（stadium）。16 は v0.56（trainer_effects）。 12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn。どれもはんげきの項目ではない）
         new = apply_command(board(HITMONCHAN_JAB), UseAttack(0, 0))
         self.assertEqual(written(new)["format_version"], 9)
         self.assertEqual(state_to_dict(new, format_version=10), {**written(new), "format_version": 10, "power_uses_this_turn": [],
@@ -875,8 +875,11 @@ class SaveRestoreTest(unittest.TestCase):
         self.assertIsNone(seventeen.pop("stadium"))
         self.assertEqual(seventeen.pop("stadium_uses_this_turn"), [])
         self.assertEqual(seventeen, {**state_to_dict(new, format_version=16), "format_version": 17})
+        eighteen = state_to_dict(new, format_version=18)  # v0.58: 外側のトレーナーの使用（空）を加えただけ
+        self.assertEqual(eighteen.pop("trainer_stack"), [])
+        self.assertEqual(eighteen, {**state_to_dict(new, format_version=17), "format_version": 18})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=18)
+            state_to_dict(new, format_version=19)
 
 
 if __name__ == "__main__":
