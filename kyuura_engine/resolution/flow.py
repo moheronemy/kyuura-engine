@@ -23,9 +23,9 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import KNOCK_OUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
-from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
+from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
@@ -41,7 +41,8 @@ from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
 from .kernel import (DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
                      ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
-from .programs import AttackRun, decision_index, declare, program_may_fail, run_elements, with_stadium_self_damage
+from .programs import (AttackRun, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
+                       with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
@@ -188,6 +189,10 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     res.attack_declared = key
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
+                                                   or attacker.conditions.confused or coin_stadium is not None):
+        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）
+        raise res.question("ninja_trick_attack_order", f"ポケモン {attacker.pokemon_id} のワザ・変わり身の術 {list(usable_ninja_tricks(state, 1 - player))}")
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
         _finish_attack(res, use)
         return
@@ -204,7 +209,9 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     if coin_stadium is not None:
         program = _stadium_attack_coin(res, player, attacker, key, program, coin_stadium)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
-    if run_elements(AttackRun(res, fs, program, attack), 0):
+    run = AttackRun(res, fs, program, attack)
+    # v0.65: 相手がワザを使う時（宣言が受け付けられ、ワザの要素の前）の変わり身の術。入れ替えたら、ワザのダメージや効果は入れ替えのあとでおこる（宣言・コインはやり直さない）
+    if offer_ninja_trick(run) or run_elements(run, 0):
         return
     _finish_attack(res, use)
 
@@ -774,12 +781,30 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried
     run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
+    boundary = carried.get("boundary")
+    if boundary is not None:
+        # v0.65: 要素と要素のあいだの決定（変わり身の術はワザの要素の前、［にげこむ］はダメージの要素のあと）。答えを処理して、その位置の要素から続ける（それまでの要素・コインは
+        # 繰り返さない）
+        if decision.kind == NINJA_TRICK:
+            apply_ninja_trick(run, tuple(carried["tricks"]), choices)
+        elif decision.kind == REACTION_SWITCH:
+            apply_flee(run, tuple(carried["flee"]), choices)
+        else:
+            raise RuntimeError(f"要素のあいだの決定 {decision.kind} は扱わない（エンジンの不具合）")
+        if run_elements(run, boundary):
+            return
+        _finish_attack(res, cont.use)
+        return
     index = carried.get("element")  # v0.35: 決定を出した要素の位置（ダメージの要素の順番の決定。並びにダメージの要素が 2 つ以上あることがある）
     if index is None:
         index = decision_index(program, decision.kind)
     elif not (0 <= index < len(program) and program[index].decides(decision.kind)):
         raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
-    program[index].resume(run, decision, choices)
+    run.index = index
+    if decision.kind == BENCH_GUARD:
+        resume_guarded(run, program[index], decision, choices)  # v0.65: ダメージの要素の中の［ベンチガード］の決定
+    else:
+        program[index].resume(run, decision, choices)
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
         return
     if run_elements(run, index + 1):

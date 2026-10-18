@@ -834,6 +834,13 @@ POOL_V0_64 = [
     "PMCG3-038",  # ゴローニャ（化石の秘密。ゴローンから進化。いわころがり・じばく）
 ]
 
+POOL_V0_65 = [
+    # ワザの途中の任意の決定（相手がワザを使う時・ダメージを受ける処理の中・ダメージのあと）を使う 3 枚（docs/reactive-decisions-v0.65.md）
+    "PMCG6-083",  # キョウ秘伝,変わり身の術（闇からの挑戦。相手がワザを使う時、つけたキョウのポケモンを控えと入れ替えてよい）
+    "PMCG5-033",  # カスミのドククラゲ（リーダーズスタジアム。カスミのメノクラゲから進化。［にげこむ］・クラゲどく）
+    "PMCG5-055",  # タケシのサイドン（リーダーズスタジアム。タケシのサイホーンから進化。［ベンチガード］・ラリアット）
+]
+
 # v0.62（docs/history-attacks-v0.62.md 8 章）: kyuura が確定した修正（研究の基準のコミットの照合の記録 CC- の ``corrections``）のうち、写しに当てはめるもの。
 # 写しの元のコミット（KYUURA_COMMIT）の値が ``before`` であること、修正のコミット（``commit``）の値が ``after`` であること、研究の基準のコミット（``record_commit``）の
 # 照合の記録 ``record`` に同じ修正（欄・前・後・コミット）があり、修正のコミットが写しの元のあと・研究の基準の前にあることを、書き出すたびに確かめる（違えば書き出さない）。
@@ -1017,10 +1024,10 @@ def apply_corrections(cards: list[dict]) -> list[dict]:
 
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: json.loads(json.dumps(by_id[card_id][field])) for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + REFERENCE_ONLY]
+    cards = [{field: json.loads(json.dumps(by_id[card_id][field])) for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + REFERENCE_ONLY]
     cards = apply_corrections(cards)
     return {
         "format": "kyuura-engine card extract 1",
@@ -1106,6 +1113,7 @@ def build_extract(source: dict) -> dict:
         "pool_v0_62": POOL_V0_62,
         "pool_v0_63": POOL_V0_63,
         "pool_v0_64": POOL_V0_64,
+        "pool_v0_65": POOL_V0_65,
         "reference_only": REFERENCE_ONLY,
         "corrections": [dict(correction, source_commit=KYUURA_COMMIT) for correction in CONFIRMED_CORRECTIONS],
         "cards": cards,
@@ -1137,7 +1145,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(POOL_V0_32)} + {len(POOL_V0_33)} + {len(POOL_V0_34)} + {len(POOL_V0_35)} + {len(POOL_V0_36)} + {len(POOL_V0_37)} + {len(POOL_V0_38)} + {len(POOL_V0_39)} + {len(POOL_V0_40)} + {len(POOL_V0_41)} + {len(POOL_V0_42)} + {len(POOL_V0_43)} + {len(POOL_V0_44)} + {len(POOL_V0_45)} + {len(POOL_V0_46)} + {len(POOL_V0_47)} + {len(POOL_V0_48)} + {len(POOL_V0_49)} + {len(POOL_V0_50)} + {len(POOL_V0_51)} + {len(POOL_V0_52)} + {len(POOL_V0_53)} + {len(POOL_V0_54)} + {len(POOL_V0_55)} + {len(POOL_V0_56)} + {len(POOL_V0_57)} + {len(POOL_V0_58)} + {len(POOL_V0_59)} + {len(POOL_V0_60)} + {len(POOL_V0_61)} + {len(POOL_V0_62)} + {len(POOL_V0_63)} + {len(POOL_V0_64)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(POOL_V0_32)} + {len(POOL_V0_33)} + {len(POOL_V0_34)} + {len(POOL_V0_35)} + {len(POOL_V0_36)} + {len(POOL_V0_37)} + {len(POOL_V0_38)} + {len(POOL_V0_39)} + {len(POOL_V0_40)} + {len(POOL_V0_41)} + {len(POOL_V0_42)} + {len(POOL_V0_43)} + {len(POOL_V0_44)} + {len(POOL_V0_45)} + {len(POOL_V0_46)} + {len(POOL_V0_47)} + {len(POOL_V0_48)} + {len(POOL_V0_49)} + {len(POOL_V0_50)} + {len(POOL_V0_51)} + {len(POOL_V0_52)} + {len(POOL_V0_53)} + {len(POOL_V0_54)} + {len(POOL_V0_55)} + {len(POOL_V0_56)} + {len(POOL_V0_57)} + {len(POOL_V0_58)} + {len(POOL_V0_59)} + {len(POOL_V0_60)} + {len(POOL_V0_61)} + {len(POOL_V0_62)} + {len(POOL_V0_63)} + {len(POOL_V0_64)} + {len(POOL_V0_65)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

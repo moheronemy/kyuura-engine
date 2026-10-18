@@ -297,7 +297,8 @@ def _computer_command(state, player, tried, counts):
 MIXED_VARIANTS = ("mixed", "retrieval", "trader", "breeder")
 TRAINER_EVENTS = {
     # v0.23: 使ってからトラッシュするまでのあいだに出てよいログ（その実装が出すものだけ）と、そのイベントの player が使ったプレイヤーか相手か
-    GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent"},
+    # v0.65: 入れ替えでバトル場をはなれた相手のポケモンの、変わり身の術のトラッシュ（discard_attached_trainer の reason left_active。player はそのカードの持ち主）
+    GUST: {"switch": "opponent", "special_conditions_removed": "opponent", "persistent_effect_removed": "opponent", "discard_attached_trainer": "opponent"},
     COMPUTER_SEARCH: {"discard_from_hand": "user", "search_deck": "user", "shuffle": "user"},
     ENERGY_RETRIEVAL: {"discard_from_hand": "user", "retrieve_energy": "user"},
     POKEMON_TRADER: {"return_to_deck": "user", "reveal_from_deck": "user", "shuffle": "user"},  # v0.24

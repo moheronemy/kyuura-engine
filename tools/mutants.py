@@ -205,9 +205,10 @@ MUTANTS: tuple[Mutant, ...] = (
            '    frozenset(), "on_damage", True, "damage_source", "power_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,\n    requires=frozenset({"sleep"}),',
            '    frozenset(), "on_damage", False, "damage_source", "power_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,\n    requires=frozenset({"sleep"}),',
            origin='v0.17d'),
+    # S04・S07: v0.65 で［ベンチガード］でかわりに受けた分を除いた量（final）で判定するようにしたので、置きかえる前の文字列をその変数に合わせた（同じ誤りを入れる）
     Mutant('S04', 'ダメージを受けていないのに発動する', R + 'kernel.py',
-           '    if calc.final > 0:\n        res.trace.record(WindowOpened(Window.DAMAGE_RECEIVING, frame.id))',
-           '    if calc.final >= 0:\n        res.trace.record(WindowOpened(Window.DAMAGE_RECEIVING, frame.id))',
+           '    if final > 0:\n        res.trace.record(WindowOpened(Window.DAMAGE_RECEIVING, frame.id))',
+           '    if final >= 0:\n        res.trace.record(WindowOpened(Window.DAMAGE_RECEIVING, frame.id))',
            origin='v0.17d'),
     Mutant('S05', 'きぜつした場合に効果を消してしまう', R + 'kernel.py',
            '    if attacker.damage >= hp:\n        state.add_event("counterattack_skipped"',
@@ -219,8 +220,8 @@ MUTANTS: tuple[Mutant, ...] = (
            origin='v0.17d'),
     # S07: v0.56 でダメージをのせたあとにキョウのどくの処理を加えたので、置きかえる前の文字列を送る効果を加える行の直後に絞った（同じ誤りを入れる）
     Mutant('S07', '処理窓を誤る（受けた直後に処理する）', R + 'kernel.py',
-           '    fs.pending.extend(deferred)\n    if target == OPPONENT_ACTIVE and calc.final > 0:\n',
-           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    if target == OPPONENT_ACTIVE and calc.final > 0:\n',
+           '    fs.pending.extend(deferred)\n    if target == OPPONENT_ACTIVE and final > 0:\n',
+           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    if target == OPPONENT_ACTIVE and final > 0:\n',
            origin='v0.17d'),
     Mutant('S08', '同じ効果を二重に発動する', R + 'kernel.py',
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',

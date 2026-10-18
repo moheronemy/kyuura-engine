@@ -16402,6 +16402,134 @@
       ],
       "issues": [],
       "notes": "v0.64 で加えた。タケシのゴローニャ（PMCG5-053）とは別のカード。進化元はゴローン（名前の完全一致）。いわころがりは DamageOnly。じばくは化石の秘密のレアコイル（v0.39）と同じ SelfDestruct(100, 20, True)（「関係なく」のあとの読点のない書き方を SELF_DESTRUCT_TEXTS の 2 つめとして明示的に受け付けた。読点を一律に取り除く比べ方にしていない）。kyuura の研究の基準のコミットに、このカードの記録はない（docs/geodude-line-unbounded-coins-v0.64.md）"
+    },
+    "PMCG6-083": {
+      "basis": "kyuura_data",
+      "name_ja": "キョウ秘伝,変わり身の術",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2081.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "081/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。サイトの一覧の番号（081）は kyuura の id の番号（083）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.65 で加えた。トレーナー。NinjaTrick（バトル場の今の姿の名前が「キョウの」で始まるポケモンにつけ（いなければ v0.44 の TR1）、相手のワザの宣言が受け付けられたあと・ワザの要素の前に、持ち主が控えと入れ替えるかを決める（決定 ninja_trick。入れ替えは「にげる」ではない）。バトル場をはなれた時（にげる・入れ替え・この入れ替え）にトラッシュする。新しい未解決は NT1・NT2・NT3・RX1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面（「If this Pokémon goes to your Bench」など）は持ち込まない（docs/reactive-decisions-v0.65.md）"
+    },
+    "PMCG5-033": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのドククラゲ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura-engine docs/unresolved-research-v0.18b.md#4.1"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1026.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "026/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.powers[0].text.ja",
+              "kyuura": "この力は、このカードがバトル場にいて、ワザによるダメージを受けるたびに1回、使える。自分の控えポケモンがいれば、そのうちの1匹を選び、このカードと入れ替える。ダメージを受ける時にこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "pcg_search": "この力は、このカードがバトル場でワザによるダメージを受けた時、使える。自分の控えポケモンから1匹を選び、このカードと入れ替える。この時、このカードは、そのワザによる「ダメージ以外の効果」を受けない。ダメージを受ける時、このカードがすでに「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "affects_behavior": false,
+              "note": "サイトの文面は、このリポジトリが v0.18b（2026-10-14）に『オフィシャルブック2000』p.100 で読んだ最新の説明と、書き方（「とき」「そのとき」と「時」「この時」）を除いて同じで、「そのワザによる「ダメージ以外の効果」を受けない」がある。kyuura の文面（ポケモンWiki からの転記。ハナダシティジム カスミ・リーダーズスタジアムの両方の収録）にはその文がない。どちらの収録の印刷がどちらの文面かは、この照合では決めていない（印刷の文面と最新の説明の違いで、転記の誤りとは扱わない）。エンジンは p.100 の最新の説明で処理するので、処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・進化元・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・特殊能力・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号（026）は kyuura の id の番号（033）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.65 で加えた。カスミのメノクラゲ（PMCG5-030）から進化。［にげこむ］は FleeAfterAttackDamage。処理に使う文面は、このリポジトリの v0.18b の記録（docs/unresolved-research-v0.18b.md 4.1。2026-10-14 に p.100 を 600dpi の画像で読んだ最新の説明と解説）の再利用で、v0.65 では原典を開いていない。その記録は［にげこむ］の最新の説明と解説だけを読んだもので、カードの全体を照合した記録ではない（card_verification.json に加えない）。kyuura は p.100 を読んでいない（kyuura の研究の基準のコミットに、このカードの最新の説明・照合・裁定・論点の記録はない。研究の対応表の registered_without_kyuura_record。kyuura への報告事項）。クラゲどくは DamageThenPoisonOrConfuse（書き方の違いは POISON_OR_CONFUSE_TEXTS の 2 つめ）。新しい未解決は FL1・RX1・KD1（docs/reactive-decisions-v0.65.md）"
+    },
+    "PMCG5-055": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのサイドン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1055.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "055/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・進化元・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・特殊能力・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。一覧の番号はサイトのカードの一覧のページ（kyuura の id の番号と同じ 055）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.65 で加えた。タケシのサイホーン（PMCG5-049）から進化。［ベンチガード］は TakeBenchDamageInstead（ワザのダメージの要素で、ほかの自分の控えポケモンが受けるダメージを計算したあと・のせる前に、持ち主が決定 bench_guard で使うかを決める。ワザでないダメージで聞く決定はエンジンの未対応 UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK）。ラリアットは FailOnTailsDamage。新しい未解決は BG1・BG2・KD1。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。英語版の文面（「may do 10 of that damage」など）は持ち込まない（docs/reactive-decisions-v0.65.md）"
     }
   }
 }

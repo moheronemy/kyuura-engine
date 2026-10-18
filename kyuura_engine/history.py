@@ -27,7 +27,8 @@ VOID_DAMAGE_ONLY = "damage_only"  # ダメージの要素だけを無効にす�
 VOID_EVADED = "evaded"  # 「とうめい」で受けなかった（「ダメージや効果を受けない」）
 VOID_DODGED = "dodged"  # 「かげぶんしん」で受けなかった（ダメージだけ）
 VOID_IMMUNE = "immune"  # 特殊状態にならない（［めんえき］。効果の要素は受けたが特殊状態にならなかった）
-VOID_REASONS = (VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_EVADED, VOID_DODGED, VOID_IMMUNE)
+VOID_FLED = "fled"  # v0.65: ［にげこむ］で入れ替えたので、そのワザの「ダメージ以外の効果」を受けなかった
+VOID_REASONS = (VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_EVADED, VOID_DODGED, VOID_IMMUNE, VOID_FLED)
 
 # 記録を残す番の数（今の番・前の番・2 つ前の番。「前の自分の番」は 2 つ前、「前の相手の番」は 1 つ前）
 KEPT_TURNS = 2

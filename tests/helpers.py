@@ -653,6 +653,12 @@ FOSSIL_GRAVELER = "PMCG3-037"  # ゴローン（化石の秘密。036/048。イ�
 FOSSIL_GOLEM = "PMCG3-038"  # ゴローニャ（化石の秘密。037/048。ゴローンから進化。HP 80・闘・弱点 草・にげる 4。いわころがり（闘闘闘無）60・じばく（闘闘闘闘）100）
 V0_64_POKEMON = (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM)
 V0_64_CARDS = V0_64_POKEMON
+# v0.65（docs/reactive-decisions-v0.65.md）: ワザの途中の任意の決定を使う 3 枚
+KOGAS_NINJA_TRICK = "PMCG6-083"  # キョウ秘伝,変わり身の術（闇からの挑戦。081/098。トレーナー。バトル場の「キョウのポケモン」につけ、相手がワザを使う時に控えと入れ替えてよい）
+MISTYS_TENTACRUEL = "PMCG5-033"  # カスミのドククラゲ（リーダーズスタジアム。026/096。カスミのメノクラゲから進化。HP 70・水・弱点 雷・にげる 0。［にげこむ］・クラゲどく（水水無無）30）
+BROCKS_RHYDON = "PMCG5-055"  # タケシのサイドン（リーダーズスタジアム。055/096。タケシのサイホーンから進化。HP 80・闘・弱点 草・抵抗力 雷 -30・にげる 3。［ベンチガード］・ラリアット（闘闘無無）70）
+V0_65_POKEMON = (MISTYS_TENTACRUEL, BROCKS_RHYDON)
+V0_65_CARDS = (KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})

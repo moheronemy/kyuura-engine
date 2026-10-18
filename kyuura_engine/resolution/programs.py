@@ -58,8 +58,8 @@ from ..zones import discard_stadium, look_at_card
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
-from .kernel import Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
-from ..decisions import KO_PREVENTION
+from .kernel import BenchGuardRequest, Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from ..decisions import BENCH_GUARD, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from .questions import QUESTIONS
 
 if TYPE_CHECKING:
@@ -108,6 +108,7 @@ class AttackRun:
         self.declared = fs.frame.attack_key if declared is None else declared
         self.failed = False
         self.redirect: tuple | None = None
+        self.index = 0  # v0.65: 処理している要素の位置（``run_elements``。ダメージの要素の中の決定（［ベンチガード］）の続きの情報の "element"）
 
     @property
     def state(self) -> GameState:
@@ -193,6 +194,9 @@ class AttackRun:
             self.res.ko_prevention_able.setdefault(pid, bool(value))
         for pid, player, source, attack in frame.get("ko_by", ()):
             self.res.ko_carried.setdefault(pid, (player, source, bool(attack)))  # v0.61
+        # v0.65: ［にげこむ］のまだ聞いていない候補と、入れ替えたポケモン（もと → かわり）
+        self.res.flee_offers = [tuple(entry) for entry in frame.get("flee", ())]
+        self.res.fled = {orig: new for orig, new in frame.get("fled", ())}
         # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）。決定の前の宣言で写した値（書いていなければ空。決定をまたいでも今の特殊状態で決め直さない）
         self.res.attack_status = frozenset(carried.get("attack_status", ()))
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
@@ -203,6 +207,10 @@ class AttackRun:
         """効果の対象が、このワザの処理の中で HP 以上になった（p.309「処理の対象がなくなってしまっている場合」。きぜつの処理はワザのあと）。
         v0.13 では、ワザの実装によって今のダメージで比べるものと、ダメージの要素の結果で見るものがあった（audit 4.3）。ここでは今のダメージで
         比べる（今の対応カードでは同じ答え）。"""
+        if self.res.fled and (pokemon.pokemon_id in self.res.fled or pokemon.pokemon_id in self.res.fled.values()):
+            # v0.65: ［にげこむ］で入れ替えたポケモンと、かわりに出たポケモンは、このワザの残りの「ダメージ以外の効果」の対象ではない（効果を移さない）。処理の対象がない
+            # ときと同じく、その効果を決めるコインも投げない（p.309。HP 以上になった対象と同じ扱い）
+            return True
         return pokemon.damage >= E.max_hp(self.state, pokemon)  # v0.48: 今有効な最大HP
 
     def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
@@ -261,6 +269,9 @@ class AttackRun:
             extra += (("stadium_coin", (self.res.stadium_coin[0], int(self.res.stadium_coin[1]))),)
         # v0.61: HP 以上になったポケモンのきぜつの原因（［ファイナルビーム］の候補。``kernel.ko_cause``）。HP 以上のポケモンがなければ書かない
         ko_by = self._ko_by()
+        # v0.65: ［にげこむ］のまだ聞いていない候補・入れ替えたポケモン。なければ書かない（v0.64 までの決定の形は変えない）
+        flee = ((("flee", tuple(self.res.flee_offers)),) if self.res.flee_offers else ()) + (
+            (("fled", tuple(sorted(self.res.fled.items()))),) if self.res.fled else ())
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -269,6 +280,7 @@ class AttackRun:
             )
             if ko_by:
                 frame += (("ko_by", ko_by),)
+            frame += flee
             if self.fs.pending:
                 # v0.34: まだ処理していない送る効果（「ダメージを受けたとき」の効果。ダメージの要素がすべて終わったあとに処理する。p.89）。持ち主・
                 # 持つポケモン・効果の定義の名前・受けたダメージだけを運び、再開のときに場の効果から作り直す（``kernel.restore_deferred``）。
@@ -282,7 +294,7 @@ class AttackRun:
             # 「ばける」・［へんしん］からも使える）で、HP 以上になったサカキのカイリキーのきぜつの判定が内部エラーになっていた。HP 以上のポケモンの写しが
             # ないときは v0.48 までと同じ形
             knocked = tuple(sorted((pid, int(value)) for pid, value in self.res.ko_prevention_able.items() if self._knocked_pid(pid)))
-            frame = ((("guts", knocked),) if knocked else ()) + ((("ko_by", ko_by),) if ko_by else ())
+            frame = ((("guts", knocked),) if knocked else ()) + ((("ko_by", ko_by),) if ko_by else ()) + flee
             if frame:
                 extra += (("frame", frame),)
         # v0.38: ワザを使ったポケモンは枠の番号で指す（ワザの効果で場をはなれたあとの決定でも同じ。キョウのポッポの「でんれい」。場にいれば
@@ -325,9 +337,12 @@ def run_elements(run: AttackRun, start: int) -> bool:
             # 処理する（CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING）ので、コインの前に処理する。v0.40 までは、ここで
             # RuntimeError（内部エラー）になっていた（ねこにこばんをカイリキーの「はんげき」などに使うと止まった。docs/heal-counter-status-v0.41.md 3.5）
             fire_pending(res, run.fs)
+        if element.phase is not Phase.DAMAGE and res.flee_offers and offer_flee(run, index):
+            return True  # v0.65: ［にげこむ］（ダメージの要素のあと・ダメージ以外の効果の前。送る効果のあと）
         if boundary and not run.fs.pending:
             settle_scram(res, rest=run.program[index:])
         res.trace.record(ElementStarted(run.fs.frame.id, index, type(element).__name__, element.phase.value))
+        run.index = index
         if element.run(run):
             if not res.dry_run:
                 return True
@@ -336,8 +351,155 @@ def run_elements(run: AttackRun, start: int) -> bool:
                 element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
         index += 1
     fire_pending(res, run.fs)
+    if res.flee_offers and offer_flee(run, len(run.program)):
+        return True  # v0.65: 最後のダメージの要素のあと（きぜつの判定の前）
     settle_scram(res, rest=())
     return False
+
+
+# ---------------------------------------------------------------- v0.65 ワザの途中の任意の決定（docs/reactive-decisions-v0.65.md 2 章）
+
+
+def _unresolved_extra(unresolved: tuple[int, ...], code: str | None, reason: str | None) -> tuple:
+    return () if not unresolved else (("unresolved_choices", unresolved), ("unresolved_code", code), ("unresolved_reason", reason))
+
+
+def _switch_changes_attacker(run: AttackRun, owner: int, option: int) -> bool:
+    """入れ替え（``owner`` のバトル場のポケモンと控えの ``option``）で、ワザを使っているポケモンの今の姿（［へんしん］）が変わるか（RX1。状態を変えない）。"""
+    state = run.state
+    attacker = run.attacker()
+    if owner == run.player or E.transform_defender(state, attacker) is None:
+        return False  # ［へんしん］で相手の対戦ポケモンの姿になっていなければ、相手の入れ替えで今の姿は変わらない（状態を複製しない。先読みの中でも使う）
+    incoming = state.find_pokemon(option)[1]
+    return state.cards[incoming.card].card_id != E.form_def(state, attacker).id
+
+
+def _boundary_answer(run: AttackRun, kind: str, owner: int, options: tuple[int, ...], unresolved: tuple[int, ...], code, reason, extra: tuple):
+    """入れ替えの決定（0〜1 個）を出す。先読みなら選ぶ答え（() か (番号,)。止める選択は試さない）を返し、実際の処理なら決定を出して None を返す。"""
+    if run.res.dry_run:
+        return tuple(run.res.oracle.choose([()] + [(o,) for o in options if o not in unresolved]))
+    run.suspend(kind=kind, player=owner, options=list(options), min_choices=0, max_choices=1, carry=True,
+                extra=extra + _unresolved_extra(unresolved, code, reason))
+    return None
+
+
+def offer_ninja_trick(run: AttackRun) -> bool:
+    """相手がワザを使う時（宣言が受け付けられ、ワザの要素の前）に、ワザを受ける側のバトル場のポケモンについている「キョウ秘伝,変わり身の術」で入れ替えるかを、その持ち主に
+    聞く（決定 ``NINJA_TRICK``。再開すると要素の並びの最初から処理する）。使えなければ何もしない。決定で止まったら True。"""
+    state = run.state
+    owner = 1 - run.player
+    tricks = E.usable_ninja_tricks(state, owner)
+    if not tricks:
+        return False
+    options = tuple(p.pokemon_id for p in state.players[owner].bench)
+    if E.trainer_use_blockers(state, owner):
+        unresolved, code, reason = options, E.NINJA_TRICK_BAN_CODE, E.NINJA_TRICK_BAN_REASON
+    else:
+        unresolved = tuple(o for o in options if _switch_changes_attacker(run, owner, o))
+        code, reason = (E.REACTIVE_SWITCH_TRANSFORM_CODE, E.REACTIVE_SWITCH_TRANSFORM_REASON) if unresolved else (None, None)
+    answer = _boundary_answer(run, NINJA_TRICK, owner, options, unresolved, code, reason, (("boundary", 0), ("tricks", tricks)))
+    if answer is None:
+        return True
+    apply_ninja_trick(run, tricks, answer)
+    return False
+
+
+def apply_ninja_trick(run: AttackRun, tricks: tuple[int, ...], choices: tuple[int, ...]) -> None:
+    """変わり身の術の答え。入れ替えるなら、変わり身の術のついたポケモンと選んだ控えを入れ替える（「にげる」ではない。ベンチにもどったポケモンの特殊状態・持続する効果は消え、
+    変わり身の術はバトル場をはなれたのでトラッシュする（``effects._switch_active_with_bench``）。宣言・それまでのコインはやり直さない）。"""
+    state = run.state
+    owner = 1 - run.player
+    active = state.players[owner].active
+    if not choices:
+        state.add_event("ninja_trick_declined", player=owner, cards=tuple(tricks), pokemon_id=active.pokemon_id, effect=str(run.declared))
+        return
+    state.add_event("ninja_trick", player=owner, cards=tuple(tricks), pokemon_id=active.pokemon_id, new_pokemon_id=choices[0], effect=str(run.declared))
+    E._switch_active_with_bench(state, owner, choices[0], trainer=tricks[0])
+
+
+def offer_flee(run: AttackRun, index: int) -> bool:
+    """［にげこむ］の候補を順に聞く（決定 ``REACTION_SWITCH``。0 個は使わない）。ダメージを受けたときの特殊状態は候補にしたときに確かめた（``kernel.receiving``）。聞く時点で、
+    バトル場にいない・控えがいない・力が消えている（かがくへんかガス・まきちらせ!ベトベトガス）・ショックアイで使えないなら聞かない。自分のワザの中の返す効果のダメージで
+    候補になったものは、使うを選ぶと止める（FL1）。決定で止まったら True（残りの候補は続きの情報で運ぶ）。"""
+    res = run.res
+    state = run.state
+    while res.flee_offers:
+        owner, pid, card_id, power_index, own_attack = res.flee_offers.pop(0)
+        located = state.find_pokemon(pid)
+        p = state.players[owner]
+        if located is None or p.active is not located[1] or not p.bench:
+            continue
+        pokemon = located[1]
+        instance = next((i for i in C.instances(state, owner, pokemon, res.catalog)
+                         if i.definition.decision_kind == REACTION_SWITCH and i.power_key == E.PowerKey(card_id, power_index)), None)
+        if instance is None or C.offer_stopped(state, instance, pokemon):
+            continue
+        options = tuple(b.pokemon_id for b in p.bench)
+        if pokemon.damage >= E.max_hp(state, pokemon):
+            unresolved, code, reason = options, E.KNOCKED_OUT_REACTION_CODE, E.KNOCKED_OUT_REACTION_REASON  # KD1（同じワザのダメージで HP 以上）
+        elif own_attack:
+            unresolved, code, reason = options, E.FLEE_OWN_ATTACK_CODE, E.FLEE_OWN_ATTACK_REASON
+        else:
+            unresolved = tuple(o for o in options if _switch_changes_attacker(run, owner, o))
+            code, reason = (E.REACTIVE_SWITCH_TRANSFORM_CODE, E.REACTIVE_SWITCH_TRANSFORM_REASON) if unresolved else (None, None)
+        entry = (owner, pid, card_id, power_index)
+        answer = _boundary_answer(run, REACTION_SWITCH, owner, options, unresolved, code, reason, (("boundary", index), ("flee", entry)))
+        if answer is None:
+            return True
+        apply_flee(run, entry, answer)
+    return False
+
+
+def apply_flee(run: AttackRun, entry: tuple, choices: tuple[int, ...]) -> None:
+    """［にげこむ］の答え。使うなら入れ替え（「にげる」ではない。``effects._switch_active_with_bench``）、そのワザの残りの「ダメージ以外の効果」を、このポケモンにもかわりに出た
+    ポケモンにも与えない（``res.fled``。``kernel.reaches``）。"""
+    state = run.state
+    owner, pid, card_id, power_index = entry
+    key = str(E.PowerKey(card_id, power_index))
+    pokemon = state.find_pokemon(pid)[1]
+    if not choices:
+        state.add_event("flee_declined", player=owner, pokemon=pokemon.card, pokemon_id=pid, power=key, effect=str(run.declared))
+        return
+    state.add_event("flee", player=owner, pokemon=pokemon.card, pokemon_id=pid, power=key, new_pokemon_id=choices[0], effect=str(run.declared))
+    E._switch_active_with_bench(state, owner, choices[0], power=key)
+    run.res.fled[pid] = choices[0]
+
+
+def ninja_trick_leave_question(run: AttackRun, pokemon: PokemonInPlay) -> None:
+    """v0.65（NT2）: 変わり身の術がついているポケモンを、ワザの効果で、ついているカードといっしょに山札・手札にもどすなら止める（問い。先読みが宣言の前に見つける）。"""
+    tricks = E.ninja_tricks(run.state, pokemon)
+    if tricks:
+        raise run.res.question("ninja_trick_leaves_play", f"ポケモン {pokemon.pokemon_id}（変わり身の術 {list(tricks)}）")
+
+
+def guarded_damages(run: AttackRun, element: Element, entries, after: Any = None, record: bool = False) -> bool:
+    """控えポケモンへのダメージを順に与える（``entries`` は (受けるもの, ポケモンの番号, 基本となるダメージ, 弱点・抵抗力を計算するか) の並び）。［ベンチガード］の決定が要るときは、
+    残りの並び（今のダメージを含む）・要素の続き（``after``）を続きの情報で運び、決定を出して True を返す（``resume_guarded`` で続ける）。``record`` なら、要素の結果に
+    最後のダメージの結果を置く。"""
+    entries = tuple(tuple(entry) for entry in entries)
+    for i, (kind, pid, base, wr) in enumerate(entries):
+        try:
+            result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard_suspend=True)
+        except BenchGuardRequest as request:
+            run.suspend(kind=BENCH_GUARD, player=request.owner, options=list(request.options), min_choices=0, max_choices=request.max_choices, carry=True,
+                        extra=(("element", run.index), ("bench_guard", (entries[i:], after, int(record)))) + request.extra())
+            return True
+        if record:
+            run.fs.results[element.name] = result
+    return False
+
+
+def resume_guarded(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+    """［ベンチガード］の答えのあと: 運んだ並びの最初のダメージを答えで与え（計算をやり直す。「とうめい」の結果は続きの情報。コインは投げ直さない）、残りを続け、要素の続き
+    （``Element.after_guarded``）を処理する。"""
+    entries, after, record = run.carried["bench_guard"]
+    kind, pid, base, wr = entries[0]
+    result = deal_damage(run.res, run.fs, kind, base, pokemon_id=pid, weakness_resistance=bool(wr), guard=tuple(choices), guard_suspend=True)
+    if record:
+        run.fs.results[element.name] = result
+    if guarded_damages(run, element, entries[1:], after, bool(record)):
+        return
+    element.after_guarded(run, after)
 
 
 def opponent_effect_elements(program: tuple) -> tuple[str, ...]:
@@ -536,8 +698,14 @@ class Element:
         raise NotImplementedError
 
     def decides(self, kind: str) -> bool:
-        """決定の種類 ``kind`` を出す要素か（再開する要素を決定の種類から探す。v0.16b から要素が答える）。"""
-        return self.decision_kind is not None and self.decision_kind == kind
+        """決定の種類 ``kind`` を出す要素か（再開する要素を決定の種類から探す。v0.16b から要素が答える）。v0.65: 控えポケモンへのダメージの要素は［ベンチガード］の決定も出す。"""
+        return (self.decision_kind is not None and self.decision_kind == kind) or (kind == BENCH_GUARD and self.guards_bench)
+
+    # v0.65: 控えポケモンへのダメージを ``guarded_damages`` で与える要素（［ベンチガード］の決定を出して続けられる）
+    guards_bench: ClassVar[bool] = False
+
+    def after_guarded(self, run: AttackRun, after: Any) -> None:
+        """［ベンチガード］の決定のあと、控えポケモンへのダメージをすべて与えてからの、この要素の続き（v0.65。既定はない）。"""
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         """決定の答えのあと。v0.16b から、``resume`` がもう一度決定を出してもよい（``run.suspended``。v0.13 の約束の 2 段階の決定）。"""
@@ -1138,6 +1306,7 @@ class ForceSwitch(Element):
         clear_special_conditions(run.state, opponent, old, FORCED_SWITCH_REASON)
         remove_persistent_effects(run.state, opponent, old, FORCED_SWITCH_REASON)
         mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+        E.discard_on_leaving_active(run.state, opponent, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
         run.fs.results[self.name] = p.active.pokemon_id  # v0.45: 入れ替えて出た控えポケモン
 
     @staticmethod
@@ -1666,6 +1835,7 @@ class BenchDamage(Element):
     # v0.40: 名前（いちばん上のカードの名前の完全一致）がこのどれかの控えポケモンだけ（わるいマタドガスの「みんなでばくはつ」）。None なら名前を見ない
     names: tuple[str, ...] | None = None
     phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True  # v0.65
 
     def targets(self, run: AttackRun) -> list[PokemonInPlay]:
         side = run.player if self.own else 1 - run.player
@@ -1722,10 +1892,9 @@ class BenchDamage(Element):
                        if weakness_resistance_matters(run.res, run.fs, kind, self.base.value(run, None), p.pokemon_id)]
             if differs:
                 raise run.res.question("bench_damage_weakness_resistance", f"控えのポケモン {differs}")
-        for target in targets:
-            deal_damage(run.res, run.fs, kind, self.base.value(run, None), pokemon_id=target.pokemon_id,
-                        weakness_resistance=bool(self.weakness_resistance))
-        return False
+        base = self.base.value(run, None)
+        # v0.65: ［ベンチガード］の決定が要れば止まる（``guarded_damages``）
+        return guarded_damages(run, self, [(kind, target.pokemon_id, base, bool(self.weakness_resistance)) for target in targets])
 
 
 @dataclass(frozen=True)
@@ -1752,6 +1921,7 @@ class ChosenBenchDamage(Element):
     # 対象がないので何もしない（p.309。v0.31 のかどわかす・v0.33 のかけぬけると同じ読み方）
     required: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True  # v0.65
     decision_kind: ClassVar[str] = SELECT_POKEMON
 
     def side(self, run: AttackRun) -> int:
@@ -1803,8 +1973,8 @@ class ChosenBenchDamage(Element):
         bench = run.state.players[self.side(run)].bench
         if choices[0] not in [p.pokemon_id for p in bench]:
             raise RuntimeError(f"選んだポケモン {choices} が、{'自分' if self.own else '相手'}の控えにいない（エンジンの不具合）")
-        run.fs.results[self.name] = deal_damage(run.res, run.fs, E.SELF_BENCH if self.own else E.OPPONENT_BENCH, self.base.value(run, None),
-                                                pokemon_id=choices[0], weakness_resistance=bool(self.weakness_resistance))
+        guarded_damages(run, self, [(E.SELF_BENCH if self.own else E.OPPONENT_BENCH, choices[0], self.base.value(run, None), bool(self.weakness_resistance))],
+                        record=True)  # v0.65: ［ベンチガード］
 
 
 @dataclass(frozen=True)
@@ -1843,8 +2013,7 @@ class ChosenOpponentPokemonDamage(ChosenBenchDamage):
             return
         if choices[0] not in [p.pokemon_id for p in side.bench]:
             raise RuntimeError(f"選んだポケモン {choices} が、相手の場にいない（エンジンの不具合）")
-        run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=choices[0],
-                                                weakness_resistance=False)
+        guarded_damages(run, self, [(E.OPPONENT_BENCH, choices[0], self.base.value(run, None), False)], record=True)  # v0.65: ［ベンチガード］
 
 
 @dataclass(frozen=True)
@@ -2275,9 +2444,10 @@ class OptionalDiscardBenchDamage(Element):
     energy_type: EnergyType
     damage: int
     phase: ClassVar[Phase] = Phase.EFFECT
+    guards_bench: ClassVar[bool] = True  # v0.65
 
     def decides(self, kind: str) -> bool:
-        return kind in (DISCARD_ENERGY, SELECT_POKEMON)
+        return kind in (DISCARD_ENERGY, SELECT_POKEMON, BENCH_GUARD)
 
     def run(self, run: AttackRun) -> bool:
         attacker = run.attacker()
@@ -2309,7 +2479,7 @@ class OptionalDiscardBenchDamage(Element):
                 return
             run.suspend(kind=SELECT_POKEMON, player=run.player, options=[p.pokemon_id for p in bench], carry=True)
             return
-        deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.damage, pokemon_id=choices[0], weakness_resistance=False)
+        guarded_damages(run, self, [(E.OPPONENT_BENCH, choices[0], self.damage, False)])  # v0.65: ［ベンチガード］
 
 
 @dataclass(frozen=True)
@@ -2975,6 +3145,7 @@ class ReturnSelfToDeck(Element):
             state.add_event("remove_all_damage_counters", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
                             effect=str(run.key), counters=before // per, amount=before, damage_before=before, total_damage=attacker.damage)
             discard_attached_cards(state, run.player, attacker, effect=str(run.key))
+        ninja_trick_leave_question(run, attacker)  # v0.65（NT2）
         return_in_play_to_deck(state, run.player, attacker, effect=str(run.key))
         remove_persistent_effects(state, run.player, attacker, RETURN_IN_PLAY_TO_DECK)
         if not self.shuffle:
@@ -3090,6 +3261,7 @@ class ChosenBenchDamages(Element):
     # ``max_targets`` 匹より少なければ、いるだけ選ぶのか、その内容を処理しないのかが決まらない（v0.44 の FC1 と同じ問い。決定の前に止める。先読みが見つける）
     exact: bool = False
     phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True  # v0.65
     decision_kind: ClassVar[str] = SELECT_POKEMON
 
     def run(self, run: AttackRun) -> bool:
@@ -3116,9 +3288,8 @@ class ChosenBenchDamages(Element):
         bench = [p.pokemon_id for p in run.state.players[1 - run.player].bench]
         if len(choices) > self.max_targets or any(choice not in bench for choice in choices):
             raise RuntimeError(f"選んだポケモン {choices} が、相手の控えにいない・多すぎる（エンジンの不具合）")
-        for choice in choices:
-            run.fs.results[self.name] = deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.base.value(run, None), pokemon_id=choice,
-                                                    weakness_resistance=self.weakness_resistance)
+        base = self.base.value(run, None)
+        guarded_damages(run, self, [(E.OPPONENT_BENCH, choice, base, self.weakness_resistance) for choice in choices], record=True)  # v0.65
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
         # 0 匹は試さない: 0 匹の答えは決定の答えのときに止める（GS1）もので、ワザの宣言を止める理由ではない（1 匹以上を選べば処理できる）。選ぶポケモン・数・
@@ -3295,6 +3466,7 @@ class CoinPerOpponentBench(Element):
     self_per: int
     name: str = "bench_coins"
     phase: ClassVar[Phase] = Phase.DAMAGE
+    guards_bench: ClassVar[bool] = True  # v0.65
 
     def run(self, run: AttackRun) -> bool:
         state = run.state
@@ -3308,12 +3480,16 @@ class CoinPerOpponentBench(Element):
         run.fs.coins[self.name] = flips
         state.add_event("bench_coin_results", player=run.player, pokemon=run.attacker().card, pokemon_id=run.attacker().pokemon_id, effect=str(run.key),
                         targets=tuple(p.pokemon_id for p in bench), results=tuple(side.value for side in flips.results))
-        for pokemon, side in zip(bench, flips.results):
-            if side is HEADS:
-                deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.bench_damage, pokemon_id=pokemon.pokemon_id, weakness_resistance=False)
-        if flips.tails:
-            run.fs.results["self_damage"] = deal_damage(run.res, run.fs, SELF, flips.tails * self.self_per)
+        heads = [(E.OPPONENT_BENCH, pokemon.pokemon_id, self.bench_damage, False) for pokemon, side in zip(bench, flips.results) if side is HEADS]
+        # v0.65: ［ベンチガード］の決定が要れば止まり、「うら」の数（コインは投げ直さない）を続きの情報で運んで、決定のあとで自分へのダメージを与える
+        if guarded_damages(run, self, heads, after=flips.tails):
+            return True
+        self.after_guarded(run, flips.tails)
         return False
+
+    def after_guarded(self, run: AttackRun, after: Any) -> None:
+        if after:
+            run.fs.results["self_damage"] = deal_damage(run.res, run.fs, SELF, after * self.self_per)
 
 
 @dataclass(frozen=True)
@@ -3489,6 +3665,7 @@ class ReturnOpponentToDeck(Element):
         gone = knocked(run.res)
         if gone:
             raise run.res.question("return_in_play_to_deck_with_knockout", f"ポケモン {[pokemon.pokemon_id for _, pokemon in gone]}")
+        ninja_trick_leave_question(run, target)  # v0.65（NT2）
         return_in_play_to_deck(state, opponent, target, effect=str(run.key))
         remove_persistent_effects(state, opponent, target, RETURN_IN_PLAY_TO_DECK)
         shuffle_in_attack(run, self, opponent)
@@ -3535,6 +3712,7 @@ class ReturnBothActivesToDeck(Element):
         for owner, pokemon in sides:
             if not reaches(run.res, run.fs, owner, pokemon, E.RETURN_IN_PLAY_TO_DECK_ELEMENT):
                 continue
+            ninja_trick_leave_question(run, pokemon)  # v0.65（NT2）
             return_in_play_to_deck(state, owner, pokemon, effect=str(run.key))
             remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
             returned.append(owner)
@@ -4241,6 +4419,7 @@ class ReturnOwnPokemonToHand(Element):
         for pokemon in own:
             if not reaches(run.res, run.fs, run.player, pokemon, E.RETURN_IN_PLAY_TO_HAND_ELEMENT):
                 continue
+            ninja_trick_leave_question(run, pokemon)  # v0.65（NT2）
             return_in_play_to_hand(state, run.player, pokemon, effect=str(run.key))
             remove_persistent_effects(state, run.player, pokemon, RETURN_IN_PLAY_TO_HAND)
 
@@ -4349,6 +4528,7 @@ class ReturnAttackerToHand(Element):
         gone = knocked(run.res)
         if gone:
             raise run.res.question("return_in_play_to_deck_with_knockout", f"手札にもどす。ポケモン {[p.pokemon_id for _, p in gone]}")
+        ninja_trick_leave_question(run, attacker)  # v0.65（NT2）
         return_in_play_to_hand(state, run.player, attacker, effect=str(run.key))
         remove_persistent_effects(state, run.player, attacker, RETURN_IN_PLAY_TO_HAND)
         return False
@@ -5526,6 +5706,7 @@ class ReturnOpponentToHand(Element):
         gone = knocked(run.res)
         if gone:
             raise run.res.question("return_in_play_to_deck_with_knockout", f"相手を手札にもどす。ポケモン {[p.pokemon_id for _, p in gone]}")
+        ninja_trick_leave_question(run, target)  # v0.65（NT2）
         return_in_play_to_hand(state, opponent, target, effect=str(run.key))
         remove_persistent_effects(state, opponent, target, RETURN_IN_PLAY_TO_HAND)
         return False

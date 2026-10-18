@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .errors import UnsupportedError
 from .stadiums import bench_limit
 from .state import (
     SET_ASIDE_FACE_DOWN_BENCH,
@@ -106,6 +107,7 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     ``power``）を渡す（``effect``・``trainer``・``stadium``・``power`` のちょうど一つ）。
     """
     p = state.players[player]
+    _ninja_trick_guard(state, pokemon)  # v0.65（NT2）
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
@@ -192,6 +194,7 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
+    _ninja_trick_guard(state, pokemon)  # v0.65（NT2）
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
     sources = [value for value in (effect, power, trainer, stadium) if value is not None]
@@ -1119,3 +1122,19 @@ def return_expired_set_aside(state: GameState) -> None:
     for group in state.set_aside:
         if group.kind == SET_ASIDE_HAND and group.return_turn == state.turn_number:
             return_set_aside(state, group, reason="expired")
+
+
+def _ninja_trick_guard(state: GameState, pokemon: PokemonInPlay) -> None:
+    """v0.65（NT2。docs/reactive-decisions-v0.65.md 6 章）: 「バトル場をはなれた時、このカードをトラッシュする」カード（キョウ秘伝,変わり身の術。効果の登録表の
+    ``discard_on_leaving_active``）がついているポケモンを、ついているカードといっしょに山札・手札にもどすなら、このカードをもどすかトラッシュするかが決まらないので止める
+    （状態を変える前）。ワザの要素は、ここに来る前に問い ``ninja_trick_leaves_play`` で止める（先読みが宣言の前に見つける）。ここは特殊能力・トレーナー・スタジアムの経路の
+    最後の確かめ。"""
+    tricks = [t.card for t in pokemon.trainers if (entry := state.effects.trainer_entry(state.cards[t.card].card_id)) is not None
+              and entry.effect.discard_on_leaving_active]
+    if tricks:
+        raise UnsupportedError(
+            "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON",
+            f"ポケモン {pokemon.pokemon_id}（変わり身の術 {tricks}）: キョウ秘伝,変わり身の術がついているポケモンを、ついているすべてのカードといっしょに山札・手札にもどす"
+            "効果で、このカードもいっしょにもどすか、「そのポケモンがバトル場をはなれた時、このカードをトラッシュする」にしたがってトラッシュするかは、印刷の文面・kyuura の"
+            "記録から決められないので扱わない（NT2）",
+        )

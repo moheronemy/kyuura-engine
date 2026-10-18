@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 135,
-    "engine_stop_codes": 133,
+    "engine_unresolved_rulings": 143,
+    "engine_stop_codes": 141,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1586,6 +1586,94 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "NT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "NT2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "NT3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "RX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FLEE_DURING_OWN_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "FL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BENCH_GUARD_RECOMPUTE": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "BG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "BG2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "KD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1624,6 +1712,30 @@
       "kyuura_issue": null,
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": true
+    },
+    "flee_then_damage": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "FL0"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
+    },
+    "bench_guard_element": {
+      "engine_rulings": [
+        {
+          "version": "v0.65",
+          "document": "docs/reactive-decisions-v0.65.md",
+          "ruling_id": "BG0"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
     }
   },
   "unresolved_without_code": [],
@@ -2026,7 +2138,8 @@
       "PMCG3-012/attack/0",
       "PMCG3-012/attack/1",
       "PMCG3-022/attack/0",
-      "PMCG3-022/attack/1"
+      "PMCG3-022/attack/1",
+      "PMCG5-033/power/0"
     ],
     "kyuura_records_not_registered": [
       "LD-PMCG6-023-PWR0"
@@ -2506,7 +2619,10 @@
       "PMCG2-041/attack/1",
       "PMCG3-034/attack/0",
       "PMCG3-037/attack/0",
-      "PMCG3-038/attack/1"
+      "PMCG3-038/attack/1",
+      "PMCG5-033/attack/0",
+      "PMCG5-055/attack/0",
+      "PMCG5-055/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

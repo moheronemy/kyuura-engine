@@ -630,6 +630,11 @@
     "PMCG3-037",
     "PMCG3-038"
   ],
+  "pool_v0_65": [
+    "PMCG6-083",
+    "PMCG5-033",
+    "PMCG5-055"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -35866,6 +35871,238 @@
         "series": "化石の秘密",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg03-037-golonya/"
+      }
+    },
+    {
+      "id": "PMCG6-083",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "キョウ秘伝,変わり身の術",
+        "en": "Koga's Ninja Trick"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたのバトル場にいる「キョウのポケモン」につけて使い、そのポケモンがバトル場をはなれた時、このカードをトラッシュする。あなたがのぞむなら、相手がワザを使う時、このカードをつけたポケモンをあなたが選んだ控えポケモン1匹と入れ替えてよい。(そのワザのダメージや効果は、入れ替えの後でおこる)",
+          "en": "Attach Koga's Ninja Trick to your Active Pokémon with Koga in its name. If this Pokémon goes to your Bench, discard this card. When your opponent attacks, you may switch this Pokémon with 1 of your Benched Pokémon (before damage or other effects of attacks)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "art",
+          "summary": "イラスト",
+          "ja": "表卍（まんじ）が描かれている",
+          "en": "不適切とされ、別の記号に変更",
+          "confidence": "確実",
+          "sources": [
+            "X45"
+          ]
+        }
+      ],
+      "notes": [
+        "TCGdex・Scrydex 由来のデータ・ポケモンWiki とも、読点で区切る表記（区切りの文字は資料によって「,」「, 」と違う）"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG6-083",
+        "pokemontcg": [
+          "gym2-115"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E7%A7%98%E4%BC%9D,%E5%A4%89%E3%82%8F%E3%82%8A%E8%BA%AB%E3%81%AE%E8%A1%93",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E7%A7%98%E4%BC%9D,%E5%A4%89%E3%82%8F%E3%82%8A%E8%BA%AB%E3%81%AE%E8%A1%93"
+      }
+    },
+    {
+      "id": "PMCG5-033",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのドククラゲ",
+        "en": "Misty's Tentacruel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          73
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのメノクラゲ",
+          "en": "Misty's Tentacool"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "にげこむ",
+              "en": "Flee"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいて、ワザによるダメージを受けるたびに1回、使える。自分の控えポケモンがいれば、そのうちの1匹を選び、このカードと入れ替える。ダメージを受ける時にこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。",
+              "en": "If an attack does damage to Misty's Tentacruel while it's your Active Pokémon, you may switch it with 1 of your Benched Pokémon, which prevents all other effects of that attack on Misty's Tentacruel. This power can't be used if Misty's Tentacruel is already Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "クラゲどく",
+              "en": "Jellyfish Poison"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned. If tails, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-033",
+        "pokemontcg": [
+          "gym1-10"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%89%E3%82%AF%E3%82%AF%E3%83%A9%E3%82%B2_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "ハナダシティジム カスミ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%89%E3%82%AF%E3%82%AF%E3%83%A9%E3%82%B2_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-055",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのサイドン",
+        "en": "Brock's Rhydon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          112
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのサイホーン",
+          "en": "Brock's Rhyhorn"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ベンチガード",
+              "en": "Bench Guard"
+            },
+            "text": {
+              "ja": "この力は、このカードがベンチにいて、自分の控えポケモンがダメージを受けるたびに、1回使える。そのダメージのうちの10ダメージを、このカードがかわりに受ける。(2匹以上がダメージを受けた時は、それぞれのダメージに対して1回ずつ使える)",
+              "en": "As long as Brock's Rhydon is Benched, whenever 1 of your Benched Pokémon is damaged, you may do 10 of that damage to Brock's Rhydon instead. (If more than 1 of your Benched Pokémon is damaged at the same time, you may use this power once for each of them.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ラリアット",
+              "en": "Lariat"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 70,
+              "modifier": null,
+              "display": "70"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-055",
+        "pokemontcg": [
+          "gym1-2"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%82%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 38,
+        "rarity": "★(R)",
+        "series": "ニビシティジム タケシ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%82%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

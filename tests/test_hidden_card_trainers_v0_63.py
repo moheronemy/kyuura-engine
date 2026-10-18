@@ -154,10 +154,10 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (348, 89, 10))  # v0.64 でポケモン 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 447)  # v0.64 でポケモン 3 枚を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 591)  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つを加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 54)
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 90, 10))  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた
+        self.assertEqual(sum(counts.values()), 450)  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 593)  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 56)  # v0.65 で 2 つを加えた
 
     def test_registration_rejects_text_mismatches(self):
         pool = load_card_pool()
@@ -182,7 +182,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertEqual((check["site"], check["result"]), ("pcg-search.com", result))
                 self.assertTrue(all(not d["affects_behavior"] for d in check["differences"]))
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (133, 135))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (141, 143))  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた
         self.assertEqual(links["stop_codes"][QZ1]["kyuura_disposition"], "not_in_kyuura")
         self.assertIn({"version": "v0.63", "document": "docs/hidden-card-trainers-v0.63.md", "ruling_id": "HC5"},
                       links["stop_codes"][HC5]["engine_rulings"])

@@ -2028,3 +2028,120 @@
   新しい未解決の裁定はなく、エンジンが止める `UNRESOLVED_…` は 133 件、未解決の裁定は 135 件のままです。
 - 検証用デッキ `G64` と組（`PAIRINGS_V0_64`。`G64` 対 `H62`・`D46`・`P61`・`W45`）は tools/existing_effect_games.py の `--batch v0.64` です（前の版の組の結果は変わらない）。数えた結果は
   `v064_uses`。ゆびをふる・オウムがえしでれんぞくいしなげを使う場面は単体テストで確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## ワザの最中の任意の決定と、変わり身の術・カスミのドククラゲ・タケシのサイドン（v0.65）
+
+### 対象と数
+
+- 依頼の 3 枚を、kyuura データの採用で、どのワザも、特殊能力も、トレーナーも登録しました。
+  - キョウ秘伝,変わり身の術 PMCG6-083
+  - カスミのドククラゲ PMCG5-033（［にげこむ］・クラゲどく）
+  - タケシのサイドン PMCG5-055（［ベンチガード］・ラリアット）
+- 数の変化:
+
+  | | v0.64 | v0.65 |
+  |---|---|---|
+  | 対応ポケモン | 348 | 350 |
+  | トレーナーの登録 | 89 | 90 |
+  | 写し | 449 枚 | 452 枚 |
+  | 対応するカード | 447 枚 | 450 枚 |
+  | ワザの登録 | 591 | 593 |
+  | 特殊能力の登録 | 54 | 56 |
+  | PMCG1〜PMCG6 の未対応 | 10 | 7 |
+
+- 写しの組は `pool_v0_65`。
+- カードごとの結果・3 つの時点・続きの情報・未解決・実装上の判断・互換性・検証は docs/reactive-decisions-v0.65.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。英語版の文面・現代のルールで日本語の不足を補わないでください。
+- テストの定数は tests/helpers.py の `KOGAS_NINJA_TRICK`・`MISTYS_TENTACRUEL`・`BROCKS_RHYDON`・`V0_65_POKEMON`・`V0_65_CARDS`。
+
+### ［にげこむ］の文面の出典
+
+- 処理に使う文面は、このリポジトリの v0.18b の記録の再利用です（`card_sources.json` の `play_text` は `kyuura-engine docs/unresolved-research-v0.18b.md#4.1`）。
+  - 記録は docs/unresolved-research-v0.18b.md 4.1 の p.100 の最新の説明と解説で、2026-10-14 に読みました。
+  - v0.65 では原典を開いていません。
+- その記録について、次のことを区別してください。
+  - 元の確認日（2026-10-14）は、v0.65 の採用の日（2026-10-18）と別です。
+  - 記録の範囲は［にげこむ］の最新の説明と解説だけです。カードの全体を照合した記録とせず、`card_verification.json` に加えないでください。
+  - kyuura が p.100 を確かめた記録としないでください（研究の対応表の `registered_without_kyuura_record`）。
+  - kyuura の印刷の文面（「ダメージ以外の効果」を受けない文がない）と最新の説明の違いを、転記の誤りとしないでください。
+- `scripts/check_card_sources.py` の `ENGINE_RECORDS` が、この形の根拠（出典・印刷の文面と違うこと・記録の文書にある文面・研究の対応表）を確かめます。
+
+### 3 つの決定と時点
+
+ワザを受ける側（ワザを使っていないプレイヤー）が、ワザの途中の決定で使うかを選びます。再開先は既存の `"attack"` です。
+
+| 効果 | 決定 | 時点 |
+|---|---|---|
+| 変わり身の術 | `ninja_trick` | 宣言が受け付けられたあと・ワザの要素の前 |
+| ［ベンチガード］ | `bench_guard` | 控えへのワザのダメージを計算したあと・のせる前（`kernel.bench_guard_answer`） |
+| ［にげこむ］ | `reaction_switch` | ダメージの要素のまとまりのあと・最初のダメージ以外の要素の前、またはワザの要素の最後（`programs.run_elements` の `offer_flee`） |
+
+- 自動的にはたらく形・強制にしないでください。ワザのあとに動かさないでください。
+- 新しい段階・コマンド・保留中のリストを加えないでください。
+- 決めるのが相手であることを許すのは `engine._reaction_decision_problems` だけです。広げないでください。
+
+### 続きの情報
+
+- 続きの情報は決定の `context` の明示的なデータで持ちます。オブジェクトへの参照を持たないでください。
+  - 変わり身の術・［にげこむ］は `boundary`（再開する要素の位置）。
+  - ［ベンチガード］は `element` と `bench_guard`（残りの控えのダメージの並び・要素の続き）。
+  - まだ聞いていない［にげこむ］の候補・入れ替えた記録は `frame` の `flee`・`fled`。
+- `PendingDecision` に項目を加えないでください。
+- 再開は答えを当てはめてから続けます。宣言・それまでのコイン・ダメージを繰り返さず、答えのあとでコインを投げ直さないでください。
+
+### 変わり身の術
+
+- バトル場の今の姿の名前が「キョウの」で始まるポケモンにつけます（いなければ TR1）。有効期限はありません（`discard_at_end_of_turn` None）。
+- つけたポケモンがバトル場をはなれて控えにもどったら、`effects.discard_on_leaving_active` がトラッシュします（ログ `discard_attached_trainer` の `reason` `left_active`）。
+  - 呼ぶのは、にげる・ポケモンいれかえ・突風・ワザの効果の入れ替え・マチス・変わり身の術・［にげこむ］のすべての経路です。
+  - バトル場から控えにもどす経路を加えるときは、この関数を呼んでください。
+- 入れ替えは「にげる」ではありません（`effects._switch_active_with_bench` の `trainer`）。
+
+### ［にげこむ］
+
+- ダメージを受けたとき（`kernel.receiving`）に、受けたときの特殊状態で候補にします。あとの特殊状態で決め直さないでください。
+- 使ったら、そのワザの残りの「ダメージ以外の効果」を、このポケモンにもかわりに出たポケモンにも与えません。
+  - `kernel.reaches` がログ `flee_effect_skipped` を残し、履歴に `fled` を記録します。
+  - その効果を決めるコインも投げません（`AttackRun.knocked_out`）。
+
+### ［ベンチガード］
+
+- 聞く場面: 自分のほかのタケシのサイドンがベンチにいて、自分の控えポケモンがワザのダメージの要素で 10 以上を受けるとき。自分のワザでも聞きます。
+- 選ぶ数は 0〜min(サイドンの数, ダメージ ÷ 10)。もとのダメージを 10 × 数だけ減らし、サイドンに 10 ずつのせます。
+  - ログ `damage` の `amount` は減らしたあとの量で、`bench_guard` に (サイドン, 10)。サイドンごとにログ `bench_guard`。
+- 控えへのダメージを与える要素は `programs.guarded_damages` で与えます（`Element.guards_bench`）。控えへのダメージを与える要素を加えたら、同じ形にしてください。
+- ワザでないダメージの［ベンチガード］はエンジンの未対応です。状態を変える前に `UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK` で止めます（`effects.bench_guard_outside_attack_check`）。
+  - 控えポケモンにワザでないダメージを与える処理を加えるときは、この関数を呼んでください。
+
+### 決められない場合
+
+- 新しい停止コードは 8 件で、どれも `not_in_kyuura` です。
+  - NT1 `UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER`
+  - NT2 `UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON`
+  - NT3 `UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN`
+  - RX1 `UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER`
+  - FL1 `UNRESOLVED_FLEE_DURING_OWN_ATTACK`
+  - BG1 `UNRESOLVED_BENCH_GUARD_RECOMPUTE`
+  - BG2 `UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION`
+  - KD1 `UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON`（同じワザのダメージで HP 以上になったポケモンの［にげこむ］・［ベンチガード］。こんじょう・［ファイナルビーム］には当てはめない）
+- コードのない問いは FL0 `flee_then_damage`・BG0 `bench_guard_element` です。
+- 選べるが選ぶと止める形では、「使わない」がいつも答えになります（決定の不変条件の例外にこの 3 つを加えた。広げない）。
+- 推測で決めないでください。実装の順番で決めないでください。
+- エンジンが止める `UNRESOLVED_…` は 141 件、未解決の裁定は 143 件です。
+
+### 変えていないもの
+
+- だつりょくえきの DR1・DR6 は未解決のままです。v0.65 の仕組みで決まったことにしないでください。
+- 書き出しの形式は 21 のまま（次の新しい形式は 22）です。公開の API の呼び方・コマンドも変えていません。
+- 新しいログのイベント（公開）: `ninja_trick`・`ninja_trick_declined`・`flee`・`flee_declined`・`flee_effect_skipped`・`bench_guard`。
+
+### 検証用デッキ
+
+- 検証用デッキ `K65`・`R65` と組 `PAIRINGS_V0_65` は tools/existing_effect_games.py の `--batch v0.65` です。
+  - 組は `K65` 対 `R65`・`R65` 対 `L39`・`R65` 対 `Z60`・`K65` 対 `H62`。
+  - 前の版の組の結果は変わりません。
+- 手順:
+  - 決定の答え方は `_v065_decision`（止める選択は選ばない）、変わり身の術は `_v065_trainer`。
+  - 数えた結果は `v065_uses`。
+  - NT1・NT2 で止まったワザは `V031_STOPS` で場から確かめます。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

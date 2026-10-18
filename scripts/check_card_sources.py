@@ -71,6 +71,10 @@ DIFFERENCE_TEXT_SOURCE = "kyuura data/curation/card_differences.json"
 # カードの記号で決めた（登録の出典は effects.DCE_SOURCE と同じ。同じ版の照合（結果 match。名前と種類を照らした）が要る）
 NAME_AND_SYMBOLS = "card_name_and_edition_symbols"
 NAME_AND_SYMBOLS_SOURCE = "kyuura data/cards.json name.ja + pcg-search.com 1st1096 (096/096) symbols"
+# v0.65: このリポジトリの過去の記録（版の文書の節）の最新の説明を処理に使う文面にした登録の根拠・出典（カスミのドククラゲの［にげこむ］。v0.18b に p.100 を読んで
+# docs/unresolved-research-v0.18b.md 4.1 に記録した文面の再利用）。許すのは ``ENGINE_RECORDS`` の根拠だけで、文面がその文書にそのまま書かれていること・研究の対応表の
+# registered_without_kyuura_record（kyuura に記録がない。kyuura への報告事項）にあること・印刷の文面と違うことを確かめる
+ENGINE_RECORDS = {"kyuura-engine docs/unresolved-research-v0.18b.md#4.1": ROOT / "docs" / "unresolved-research-v0.18b.md"}
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -396,6 +400,17 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が {NAME_AND_SYMBOLS} なのに、出典が {entry.source!r}（{NAME_AND_SYMBOLS_SOURCE!r} にする）")
             if not any(isinstance(c, dict) and c.get("result") == "match" and "name.ja" in (c.get("checked_fields") or []) for c in record.get("external_checks") or []):
                 found.append(f"{where} {target}: 根拠 {NAME_AND_SYMBOLS} には、名前を照らした同じ版の外部照合（match）が要る")
+        elif isinstance(basis, str) and basis in ENGINE_RECORDS:
+            if entry.source != basis:
+                found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
+            if entry.play_text_ja == entry.text_ja:
+                found.append(f"{where} {target}: 根拠がこのリポジトリの記録の最新の説明なのに、処理に使う文面が印刷の文面と同じ")
+            if f"「{entry.play_text_ja}」" not in ENGINE_RECORDS[basis].read_text(encoding="utf-8"):
+                found.append(f"{where} {target}: 処理に使う文面が、根拠の文書 {ENGINE_RECORDS[basis].name} の引用（「」）にない")
+            if key not in links["latest_descriptions"].get("registered_without_kyuura_record", []):
+                found.append(f"{where} {target}: 根拠 {basis} の登録が、研究の対応表の registered_without_kyuura_record にない")
+            if key in adopted_printed:
+                found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         elif isinstance(basis, str) and basis == f"{DIFFERENCE_TEXT_SOURCE}#{card['id']}":
             if entry.source != basis:
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
@@ -418,7 +433,7 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         else:
             found.append(f"{where} {target}: 根拠 {basis!r} は {PRINTED_TEXT}・kyuura の記録の id（LD-・ERR-・TXT-・RUL-）・"
-                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id>・{NAME_AND_SYMBOLS} のどれでもない")
+                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id>・{NAME_AND_SYMBOLS}・このリポジトリの記録（{sorted(ENGINE_RECORDS)}）のどれでもない")
     return found
 
 

@@ -272,6 +272,22 @@ QUESTIONS: dict[str, Question] = {
         # v0.64（docs/geodude-line-unbounded-coins-v0.64.md 3 章）。ルールの問いではなく、エンジンの未対応（今の写しでは起こらない場だけ）
         Question("unbounded_coin_preflight", "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT", ("v0.64",), 10,
                  "「うら」が出るまで投げるコインの、先読みの有限の組の根拠が扱っていない計算・前提の場（エンジンの未対応）"),
+        # v0.65（docs/reactive-decisions-v0.65.md 6 章）
+        Question("ninja_trick_attack_order", "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER", ("NT1",), 10,
+                 "キョウ秘伝,変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの宣言のあとにワザの要素より先に投げるコイン（p.309 の手順 4（すなかけ・［はんこう］）・手順 5"
+                 "（こんらん）・クチバシティジム）のどちらが先かは、印刷の文面・kyuura の記録から決められない（入れ替えるかを決めるときにコインの結果が分かるか・ワザが失敗したあとも"
+                 "入れ替えられるかが変わる）"),
+        Question("ninja_trick_leaves_play", "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON", ("NT2",), 10,
+                 "キョウ秘伝,変わり身の術がついているポケモンを、ついているすべてのカードといっしょに山札・手札にもどす効果で、このカードもいっしょにもどすか、「そのポケモンがバトル場を"
+                 "はなれた時、このカードをトラッシュする」にしたがってトラッシュするかは、印刷の文面・kyuura の記録から決められない"),
+        Question("bench_guard_zero_reaction", "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION", ("BG2",), 10,
+                 "［ベンチガード］で、もとのポケモンが受けるダメージがすべてサイドンに移って 0 になるとき、もとのポケモンが「ダメージを受けた」ことになるか（「ダメージを受けたとき」の"
+                 "効果・こんじょうがはたらくか）は、印刷の文面・kyuura の記録から決められない（2 匹以上のサイドンで 0 になる答えがある）"),
+        # 今の写しのワザの並びでは起こらない（コードのない問い。当たったらエンジンの不具合）
+        Question("flee_then_damage", None, ("FL0",), 10,
+                 "［にげこむ］で入れ替えたあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来る並びのワザは、今の写しにない"),
+        Question("bench_guard_element", None, ("BG0",), 10,
+                 "［ベンチガード］の決定を出せないダメージの要素で、控えポケモンが 10 以上のダメージを受ける（今の写しのワザの要素はどれも出せる）"),
     )
 }
 

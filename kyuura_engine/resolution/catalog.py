@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
 from ..persistent import powers_use_prevented
-from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER
+from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH
 from ..state import AttackBarrier, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
@@ -143,6 +143,19 @@ FINAL_BEAM = EffectDefinition(
     "final_beam", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.OFFER, frozenset({Window.KO_CHECK}), BLOCKING_CONDITIONS, "on_knock_out", True,
     "damage_source", "beam_on_knock_out", frozenset({DamageClass.ATTACK}), True, KNOCK_OUT_POWER,
 )
+# v0.65（docs/reactive-decisions-v0.65.md 4 章）: カスミのドククラゲの［にげこむ］。受けるとき（バトル場・ワザの分類のダメージ・最終ダメージが 0 より大きい）に特殊状態を写して候補にし
+# （``kernel.receiving``）、そのワザのダメージの要素のあと・ダメージ以外の効果の前に持ち主に決定（``REACTION_SWITCH``）で聞く（``programs.offer_flee``）。説明は「相手の」と
+# 書かない（``by_opponent`` は偽。自分のワザの中の返す効果のダメージは FL1）
+FLEE = EffectDefinition(
+    "flee", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.OFFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "self", "switch_with_bench", frozenset({DamageClass.ATTACK}), False, REACTION_SWITCH, active_only=True,
+)
+# v0.65（5 章）: タケシのサイドンの［ベンチガード］。ほかの自分の控えポケモンがワザのダメージを受ける処理の中（計算のあと・のせる前）に、持ち主に決定（``BENCH_GUARD``）で聞く
+# （``kernel.deal_damage``）。特殊状態の条件はない。候補は受けるポケモンではなくサイドンの効果なので、``receiving`` では集めない（``effects.bench_guard_holders``）
+BENCH_GUARD_DEFINITION = EffectDefinition(
+    "bench_guard", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.OFFER, frozenset(), frozenset(), "now", True, "receiving_element", "take_damage_instead",
+    frozenset({DamageClass.ATTACK}), False, BENCH_GUARD,
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -165,6 +178,8 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.SuppressOtherPowers, CHEMICAL_GAS),
     (E.ConfuseDamageSourceOnHeads, DEFENSIVE_POLLEN),  # v0.42
     (E.BeamOnKnockOut, FINAL_BEAM),  # v0.61
+    (E.FleeAfterAttackDamage, FLEE),  # v0.65
+    (E.TakeBenchDamageInstead, BENCH_GUARD_DEFINITION),  # v0.65
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),

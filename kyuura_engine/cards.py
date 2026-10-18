@@ -458,6 +458,7 @@ POOL_KEYS = (
     "pool_v0_62",  # v0.62（ピジョン・オニスズメ・オニドリル・ピジョット・タケシのダグトリオ・ベロリンガ（確定した修正を当てはめた写し）。docs/history-attacks-v0.62.md）
     "pool_v0_63",  # v0.63（ロケット団参上!・くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3。docs/hidden-card-trainers-v0.63.md）
     "pool_v0_64",  # v0.64（化石の秘密のイシツブテ・ゴローン・ゴローニャ。docs/geodude-line-unbounded-coins-v0.64.md）
+    "pool_v0_65",  # v0.65（キョウ秘伝,変わり身の術・カスミのドククラゲ・タケシのサイドン。docs/reactive-decisions-v0.65.md）
 )
 
 

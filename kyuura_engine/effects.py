@@ -3176,6 +3176,13 @@ class DamageThenCoinOwnBenchDamage(AttackEffect):
         return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=(p.pokemon_id for p in bench))
 
 
+# v0.65: 意味が同じと確かめた書き方（2 つめはカスミのドククラゲの「クラゲどく」。「「どく」状態に、」の「に」のある書き方。ほかの書き方は受け付けない）
+POISON_OR_CONFUSE_TEXTS = (
+    "コインを投げて「おもて」なら、相手を「どく」状態、「うら」なら「こんらん」状態にする。",
+    "コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「こんらん」状態にする。",
+)
+
+
 @dataclass(frozen=True)
 class DamageThenPoisonOrConfuse(AttackEffect):
     """相手にダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら相手をどく状態、「うら」ならこんらん状態にする（v0.34。ドガースの「くさいガス」）。
@@ -3191,7 +3198,7 @@ class DamageThenPoisonOrConfuse(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "コインでどくかこんらんになるワザ", damage="fixed")
-        if attack.text_ja != "コインを投げて「おもて」なら、相手を「どく」状態、「うら」なら「こんらん」状態にする。":
+        if attack.text_ja not in POISON_OR_CONFUSE_TEXTS:
             problems.append(f"説明 {attack.text_ja!r} が、コインでどくかこんらんにするワザの説明ではない")
         return problems
 
@@ -5765,6 +5772,10 @@ class TrainerEffect:
     # たねポケモン + 2 進化の重なりの進化のログ（evolve の trainer_card）のカードを、この印で確かめる（カード id では分けない）
     skips_stage1_evolution = False
     discard_turn_offset = 0  # つけて使うトレーナーをトラッシュする番: 使った番から数えていくつ後の番の終わりか
+    # v0.65: つけたポケモンがバトル場をはなれた時にトラッシュする（キョウ秘伝,変わり身の術。``discard_on_leaving_active``。バトル場のポケモンにだけつく）
+    discard_on_leaving_active = False
+    # v0.65: 相手がワザを使う時、持ち主が決定で使うかを決める（変わり身の術。``resolution.flow`` の決定 ``NINJA_TRICK``）
+    reacts_to_opponent_attack = False
     # v0.50: True なら、効果で自分のポケモンの最大HPを下げ（退化）、のっているダメージ以下になったポケモンが「きぜつ」しうる（退化スプレー）。エンジンが、使い終わって
     # カードをトラッシュしたあとに、きぜつの処理（``resolution.after_trainer``）をする。False のトレーナーのあとに HP 以上のポケモンが残れば、v0.48 の MH1 で受け付けない
     may_knock_out = False
@@ -6526,7 +6537,8 @@ def switch_choice_stops(state: GameState, owner: int) -> list[tuple[int, str, st
     return blocked
 
 
-def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, effect: str | None = None) -> None:
+def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, effect: str | None = None, trainer: int | None = None,
+                              power: str | None = None) -> None:
     """トレーナーの効果で、プレイヤー ``owner`` の対戦ポケモンと、``owner`` のベンチの ``pokemon_id`` のポケモンを入れ替える。
     ポケモンいれかえ（v0.2b。``owner`` は使ったプレイヤー）と突風（v0.21。``owner`` は相手）で共通の処理で、v0.20 までの
     ``SwitchWithBench.resume`` の本体をそのまま関数にした（動作・ログ・順番は同じ）。選ぶ・確かめるのは呼ぶ側。
@@ -6547,6 +6559,10 @@ def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, 
     old = p.active
     p.active, p.bench[index] = p.bench[index], old
     extra = {} if effect is None else {"effect": effect}
+    if trainer is not None:
+        extra["trainer_card"] = trainer  # v0.65: キョウ秘伝,変わり身の術（相手がワザを使う時の入れ替え）
+    if power is not None:
+        extra["power"] = power  # v0.65: カスミのドククラゲの［にげこむ］（ワザのダメージのあとの入れ替え）
     state.add_event(
         "switch",
         player=owner,
@@ -6561,6 +6577,7 @@ def _switch_active_with_bench(state: GameState, owner: int, pokemon_id: int, *, 
     # ワザによる持続する効果も消える（p.322「通常、「持続する効果」を受けたポケモンがベンチにもどったら…消えてなくなります」。v0.4b）
     remove_persistent_effects(state, owner, old, SWITCH)
     mark_returned_to_bench(old)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+    discard_on_leaving_active(state, owner, old)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
 
 
 @dataclass(frozen=True)
@@ -8666,6 +8683,7 @@ class DamageOpponentPokemonOnEntry(EntryPower):
         # v0.46: 受けるポケモンの、受けるダメージ全体を書く常にはたらく特殊能力（なぞのかべ・ふしぎなバリアー）。今の対応カードでは結果が変わらない（20 は 30 より
         # 小さく、わるいゴルバットはたねポケモンではない）が、当てはめたら記録する
         amount, applied = received_power_damage(state, 1 - use.player, target, user, self.amount)
+        bench_guard_outside_attack_check(state, 1 - use.player, target, amount)  # v0.65: 状態を変える前
         target.damage += amount
         extra = {} if not applied else {"amount_before": self.amount, "received_modifiers": received_modifiers_log(applied)}
         state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
@@ -9004,6 +9022,8 @@ class RainbowEnergy(SpecialEnergyEffect):
                 return (RAINBOW_RECEIVED_POWER_CODE,
                         (f"ポケモン {target.pokemon_id} の {modifier.label} を、レインボーエネルギーの {self.amount} ダメージ（特殊エネルギーカードによるダメージ。ワザ・特殊能力の"
                          "ダメージではない）に当てはめるかは決められないので扱わない（RB4。v0.57 の EX1 と同じ形の別の問い）"))
+        if bench_guard_holders(state, player, target):  # v0.65: 控えのポケモンにつけて 10 ダメージを与える場面（エンジンの未対応）
+            return (BENCH_GUARD_OUTSIDE_ATTACK_CODE, f"控えのポケモン {target.pokemon_id} の {self.amount} ダメージ: {BENCH_GUARD_OUTSIDE_ATTACK_REASON}")
         return None
 
     def on_attached_from_hand(self, state: GameState, player: int, card: int, target: PokemonInPlay) -> None:
@@ -15582,6 +15602,7 @@ class BenchActiveThenHandBasicToActive(TrainerEffect):
         clear_special_conditions(state, use.player, old, SWITCH)
         remove_persistent_effects(state, use.player, old, SWITCH)
         mark_returned_to_bench(old)
+        discard_on_leaving_active(state, use.player, old)  # v0.65
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         what = f"トレーナー {use.card_id}"
@@ -17067,12 +17088,22 @@ class CoinReturnOwnerPokemonStadium(StadiumEffect):
             raise UnsupportedError(FUCHSIA_GYM_AFTER_REPLACEMENT_CODE, FUCHSIA_GYM_AFTER_REPLACEMENT_REASON)
         if not self.targets(state, player):
             raise UnsupportedError(FUCHSIA_GYM_WITHOUT_TARGET_CODE, FUCHSIA_GYM_WITHOUT_TARGET_REASON)
+        tricked = self._tricked(state, player)
+        if tricked and len(tricked) == len(self.targets(state, player)):
+            # v0.65（NT2）: 選べるどのポケモンにも変わり身の術がついている（いっしょにもどすかトラッシュするかが決まらない）。コインの前に止める
+            raise ninja_trick_return_error(state.find_pokemon(tricked[0])[1], ninja_tricks(state, state.find_pokemon(tricked[0])[1]))
+
+    def _tricked(self, state: GameState, player: int) -> tuple[int, ...]:
+        """v0.65: 選べるポケモンのうち、変わり身の術がついているもの（選ぶと NT2 で止める）。"""
+        return tuple(pid for pid in self.targets(state, player) if ninja_tricks(state, state.find_pokemon(pid)[1]))
 
     def activate(self, state, player, energy, stadium):
         flips = flip_coins(state, player, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card)
         if flips.results[0] is not CoinSide.HEADS:
             return
-        push_stadium_decision(state, stadium=stadium.card, stage="fuchsia", kind=SELECT_POKEMON, player=player, options=self.targets(state, player))
+        push_stadium_decision(state, stadium=stadium.card, stage="fuchsia", kind=SELECT_POKEMON, player=player, options=self.targets(state, player),
+                              unresolved_choices=self._tricked(state, player), unresolved_code=NINJA_TRICK_LEAVES_CODE,
+                              unresolved_reason=NINJA_TRICK_LEAVES_REASON)
 
     def resume_stadium(self, state, stadium, decision, choices):
         player = decision.player
@@ -17225,6 +17256,7 @@ def bench_entry_damage(state: GameState, owner: int, pokemon: PokemonInPlay) -> 
     problem = minefield_received_power_problem(state, owner, pokemon, effect.amount)
     if problem is not None:
         raise UnsupportedError(MINEFIELD_RECEIVED_POWER_CODE, problem)
+    bench_guard_outside_attack_check(state, owner, pokemon, effect.amount)  # v0.65: コインの前
     flips = flip_coins(state, owner, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card, pokemon_id=pokemon.pokemon_id)
     if flips.results[0] is not CoinSide.TAILS:
         return
@@ -17877,6 +17909,247 @@ class BlainesQuiz(TrainerEffect):
         if hint not in {a.name_ja for a in attacks} or hints != [hint]:
             problems.append(f"{what}の伝えたワザ {hint!r} が、置いたカードのワザ・伝えたログ {hints} と合わない")
         return problems
+
+
+
+# ---------------------------------------------------------------- v0.65 ワザの途中の任意の決定（docs/reactive-decisions-v0.65.md）
+
+NINJA_TRICK_TEXT = ("このカードはあなたのバトル場にいる「キョウのポケモン」につけて使い、そのポケモンがバトル場をはなれた時、このカードをトラッシュする。あなたがのぞむなら、"
+                    "相手がワザを使う時、このカードをつけたポケモンをあなたが選んだ控えポケモン1匹と入れ替えてよい。(そのワザのダメージや効果は、入れ替えの後でおこる)")
+# カスミのドククラゲの［にげこむ］: kyuura の写しの印刷の文面（照合用）と、処理に使う文面（『オフィシャルブック2000』p.100 の最新の説明。v0.18b（2026-10-14）にこのリポジトリが
+# 画像で読んで docs/unresolved-research-v0.18b.md 4.1 に記録した文面の再利用。v0.65 で原典を開いていない。カードの全体を照合した記録ではない）
+FLEE_TEXT = ("この力は、このカードがバトル場にいて、ワザによるダメージを受けるたびに1回、使える。自分の控えポケモンがいれば、そのうちの1匹を選び、このカードと入れ替える。"
+             "ダメージを受ける時にこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。")
+FLEE_PLAY_TEXT = ("この力は、このカードがバトル場でワザによるダメージを受けたとき、使える。自分の控えポケモンから1匹を選び、このカードと入れ替える。そのとき、このカードは、"
+                  "そのワザによる「ダメージ以外の効果」を受けない。ダメージを受けるとき、このカードがすでに「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。")
+ENGINE_RECORD_FLEE_SOURCE = "kyuura-engine docs/unresolved-research-v0.18b.md#4.1"
+BENCH_GUARD_TEXT = ("この力は、このカードがベンチにいて、自分の控えポケモンがダメージを受けるたびに、1回使える。そのダメージのうちの10ダメージを、このカードがかわりに受ける。"
+                    "(2匹以上がダメージを受けた時は、それぞれのダメージに対して1回ずつ使える)")
+
+# NT1: 変わり身の術を使える状態で、相手のワザの宣言のあと・ワザの要素の前に、ほかのコイン（p.309 の手順 4（すなかけ・［はんこう］）・手順 5（こんらん）・クチバシティジム）を投げる
+NINJA_TRICK_ORDER_CODE = "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER"
+# NT2: 変わり身の術がついたポケモンが、ついているカードといっしょに山札・手札にもどる（「バトル場をはなれた時、このカードをトラッシュする」ともどす効果のどちらがこのカードを動かすか）
+NINJA_TRICK_LEAVES_CODE = "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON"
+NINJA_TRICK_LEAVES_REASON = (
+    "キョウ秘伝,変わり身の術がついているポケモンを、ついているすべてのカードといっしょに山札・手札にもどす効果で、このカードもいっしょにもどすか、「そのポケモンがバトル場を"
+    "はなれた時、このカードをトラッシュする」にしたがってトラッシュするかは、印刷の文面・kyuura の記録から決められないので扱わない（NT2。docs/reactive-decisions-v0.65.md 6 章）")
+# NT3: トレーナーカードを使えない効果（アレルギーかふん・トレーナーの使用の禁止）がはたらいているときに、ついている変わり身の術の入れ替えを使えるか
+NINJA_TRICK_BAN_CODE = "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN"
+NINJA_TRICK_BAN_REASON = (
+    "トレーナーカードを使えない効果がはたらいているときに、すでについているキョウ秘伝,変わり身の術の「入れ替えてよい」を使えるか（ついたカードの効果か、トレーナーカードを"
+    "使うことか）は、印刷の文面・kyuura の記録から決められないので扱わない（NT3。入れ替えないことはできる）")
+# RX1: ワザの途中の入れ替え（変わり身の術・［にげこむ］）で、ワザを使っているポケモンの今の姿（［へんしん］）が変わる
+REACTIVE_SWITCH_TRANSFORM_CODE = "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER"
+REACTIVE_SWITCH_TRANSFORM_REASON = (
+    "ワザの途中の入れ替えで、ワザを使っている［へんしん］のメタモンの今の姿（相手の対戦ポケモンのカード）が変わる。宣言したワザ・残りの要素をどの姿で処理するかは、"
+    "印刷の文面・kyuura の記録から決められないので扱わない（RX1。入れ替えないことはできる）")
+# FL1: ［にげこむ］を、自分のワザの処理の中で受けたダメージ（相手の「ほのおのかべ」などの返す効果のダメージ）のあとに使えるか
+FLEE_OWN_ATTACK_CODE = "UNRESOLVED_FLEE_DURING_OWN_ATTACK"
+FLEE_OWN_ATTACK_REASON = (
+    "カスミのドククラゲが自分のワザの処理の中で、相手の返す効果（ほのおのかべ・こうらがえし・クロスカウンター）のワザによるダメージを受けたとき、自分のワザの最中に"
+    "［にげこむ］を使えるか（p.309「ワザを使っている最中に…特殊能力の使用を宣言してはいけません」がこの場合を含むか）は、記録から決められないので扱わない（FL1。使わないことはできる）")
+# BG1: ［ベンチガード］でかわりに受ける 10 を、タケシのサイドンの弱点・抵抗力・受けるダメージを変える効果で計算し直すか（計算し直すかで量が変わるとき）
+BENCH_GUARD_RECOMPUTE_CODE = "UNRESOLVED_BENCH_GUARD_RECOMPUTE"
+BENCH_GUARD_RECOMPUTE_REASON = (
+    "［ベンチガード］で「そのダメージのうちの10ダメージを、このカードがかわりに受ける」とき、その 10 をタケシのサイドンが受けるダメージとして、サイドンの弱点・抵抗力・"
+    "受けるダメージを変える効果で計算し直すかは、印刷の文面・kyuura の記録から決められないので扱わない（BG1。計算し直すかで受ける量が変わるときだけ。使わないことはできる）")
+# BG2: ［ベンチガード］で、もとのポケモンが受けるダメージが 0 になり、そのポケモンの「ダメージを受けたとき」の効果・こんじょうがはたらくかが変わる
+BENCH_GUARD_ZERO_CODE = "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION"
+BENCH_GUARD_ZERO_REASON = (
+    "［ベンチガード］で、もとのポケモンが受けるダメージがすべてサイドンに移って 0 になるとき、もとのポケモンが「ダメージを受けた」ことになるか（そのポケモンの「ダメージを受けた"
+    "とき」の効果・こんじょうがはたらくか）は、印刷の文面・kyuura の記録から決められないので扱わない（BG2。使わないことはできる）")
+# KD1: 同じワザのダメージで HP 以上になった（きぜつの処理はワザのあと）ポケモンが、そのワザの最中に宣言して使う特殊能力（［にげこむ］・［ベンチガード］）を使う
+KNOCKED_OUT_REACTION_CODE = "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON"
+KNOCKED_OUT_REACTION_REASON = (
+    "同じワザのダメージで HP 以上のダメージがのっている（きぜつの処理はワザのあと。p.309）ポケモンが、そのワザの最中に、宣言して使う特殊能力（［にげこむ］・［ベンチガード］）を"
+    "使えるか（もう「きぜつ」したものとして使えないか）は、印刷の文面・kyuura の記録から決められないので扱わない（KD1。そのポケモンの特殊能力を使う答えだけを止める。"
+    "使わないことはできる。こんじょう・［ファイナルビーム］は説明が「きぜつ」するときを書くので当てはまらない）")
+# エンジンの未対応: ワザでないダメージ（特殊能力・特殊エネルギー・スタジアム・［おとしあな］）で自分の控えポケモンがダメージを受けるときの［ベンチガード］の決定
+BENCH_GUARD_OUTSIDE_ATTACK_CODE = "UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK"
+BENCH_GUARD_OUTSIDE_ATTACK_REASON = (
+    "ワザでないダメージ（特殊能力・特殊エネルギー・スタジアム・［おとしあな］のダメージ）で控えポケモンがダメージを受けるときに、［ベンチガード］を使うかを聞く決定を、エンジンは"
+    "まだ出せない（エンジンの未対応。説明は「ダメージを受けるたびに」でワザのダメージに限らないので、使えないことにはしない）")
+
+
+def ninja_tricks(state: GameState, pokemon: PokemonInPlay) -> tuple[int, ...]:
+    """v0.65: 場のポケモン ``pokemon`` についている、バトル場をはなれた時にトラッシュするトレーナー（キョウ秘伝,変わり身の術。``TrainerEffect.discard_on_leaving_active``）の
+    カードの uid（ついている順）。"""
+    found = []
+    for attached in pokemon.trainers:
+        entry = state.effects.trainer_entry(state.cards[attached.card].card_id)
+        if entry is not None and entry.effect.discard_on_leaving_active:
+            found.append(attached.card)
+    return tuple(found)
+
+
+def discard_on_leaving_active(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """v0.65: ``pokemon``（持ち主 ``owner``）がバトル場をはなれて控えにもどった（にげる・入れ替え・ワザの効果の入れ替え・変わり身の術・［にげこむ］）とき、ついている
+    「バトル場をはなれた時、このカードをトラッシュする」カードを、使ったプレイヤーのトラッシュに置く（ログ ``discard_attached_trainer`` の ``reason`` は ``left_active``）。
+    場をはなれる（きぜつ）ときは、ほかのついているカードといっしょにトラッシュする（v0.2c）。山札・手札にもどすときは NT2（``ninja_trick_return_error``）。進化・退化・
+    姿の変化はバトル場をはなれることではないので、呼ばない。"""
+    tricks = set(ninja_tricks(state, pokemon))
+    if not tricks:
+        return
+    if state.players[owner].active is pokemon:
+        raise RuntimeError(f"バトル場にいるポケモン {pokemon.pokemon_id} の、バトル場をはなれた時のトラッシュ（エンジンの不具合）")
+    for attached in [t for t in pokemon.trainers if t.card in tricks]:
+        pokemon.trainers.remove(attached)
+        state.players[attached.player].discard.append(attached.card)
+        state.add_event("discard_attached_trainer", player=attached.player, card=attached.card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id,
+                        reason="left_active")
+
+
+def ninja_trick_return_error(pokemon: PokemonInPlay, tricks: tuple[int, ...]) -> UnsupportedError:
+    return UnsupportedError(NINJA_TRICK_LEAVES_CODE, f"ポケモン {pokemon.pokemon_id}（変わり身の術 {list(tricks)}）: {NINJA_TRICK_LEAVES_REASON}")
+
+
+@dataclass(frozen=True)
+class NinjaTrick(TrainerEffect):
+    """あなたのバトル場にいる「(``owner``)のポケモン」につけて使い、そのポケモンがバトル場をはなれた時にトラッシュする。あなたがのぞむなら、相手がワザを使う時、このカードを
+    つけたポケモンを、あなたが選んだ控えポケモン 1 匹と入れ替えてよい。そのワザのダメージや効果は、入れ替えのあとでおこる（キョウ秘伝,変わり身の術 PMCG6-083。kyuura の
+    印刷の文面。docs/reactive-decisions-v0.65.md 3 章）。
+
+    - つける条件（使うための対象）は、今の姿の名前が「(``owner``)の」で始まる自分のバトル場のポケモン。いなければ v0.44 の TR1（つける対象がないときに使えるか）。つけたあとの
+      入れ替えの条件には名前を書いていない（つけたポケモンの名前があとで変わっても入れ替えられる）
+    - ついているトレーナーの共通の処理（``zones.attach_trainer``）。有効期限はない。バトル場をはなれた時（にげる・入れ替え・ワザの効果の入れ替え・この入れ替え）に
+      トラッシュする（``discard_on_leaving_active``）。きぜつではほかのカードといっしょにトラッシュ。山札・手札にもどす効果は NT2。進化・退化・姿の変化では残る
+    - 入れ替えを使うかは、相手のワザの宣言が受け付けられたあと・ワザの要素（ダメージ・効果）の前に、持ち主に決定（``decisions.NINJA_TRICK``）で聞く（``resolution.flow``）。
+      入れ替えは「にげる」ではない（にげるエネルギー・にげるの失敗の記録・［おとしあな］に関わらない）。宣言・それまでのコインはやり直さない
+    """
+
+    text: str
+    owner: str = "キョウ"
+    stays_in_play = True
+    discard_turn_offset = None
+    discard_on_leaving_active = True
+    reacts_to_opponent_attack = True
+    implementation_id = "ninja_trick"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (f"あなたのバトル場にいる「{self.owner}のポケモン」につけて使い" not in self.text
+                             or "そのポケモンがバトル場をはなれた時、このカードをトラッシュする" not in self.text
+                             or "相手がワザを使う時、このカードをつけたポケモンをあなたが選んだ控えポケモン1匹と入れ替えてよい" not in self.text
+                             or "(そのワザのダメージや効果は、入れ替えの後でおこる)" not in self.text):
+            problems.append("文面と登録の処理（つける先の名前・バトル場をはなれた時・相手がワザを使う時の入れ替え・入れ替えの後）が合わない")
+        return problems
+
+    def attachment_discard_turn(self, state: GameState) -> None:
+        return None
+
+    def _target(self, state: GameState, player: int) -> PokemonInPlay | None:
+        active = state.players[player].active
+        return active if active is not None and _owner_named(form_def(state, active).name_ja, self.owner) else None
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if self._target(state, use.player) is None:
+            raise UnsupportedError(
+                TRAINER_WITHOUT_TARGET_CODE,
+                f"自分のバトル場に「{self.owner}のポケモン」がいない。説明がつける対象（「あなたのバトル場にいる「{self.owner}のポケモン」につけて使い」）がないときにこのトレーナーを"
+                "使えるかは、kyuura の記録・印刷の文面から決められないので扱わない（TR1）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        attach_trainer(state, use.player, use.card, self._target(state, use.player), discard_at_end_of_turn=None)
+
+
+def usable_ninja_tricks(state: GameState, defender_owner: int) -> tuple[int, ...]:
+    """v0.65: 相手がワザを使う時に、プレイヤー ``defender_owner`` が入れ替えに使える変わり身の術（バトル場のポケモンについていて、控えポケモンがいる）。なければ ()。"""
+    p = state.players[defender_owner]
+    if p.active is None or not p.bench:
+        return ()
+    return ninja_tricks(state, p.active)
+
+
+@dataclass(frozen=True)
+class FleeAfterAttackDamage(PowerEffect):
+    """このカードがバトル場でワザによるダメージを受けたとき、使える。自分の控えポケモンから 1 匹を選び、このカードと入れ替える。そのとき、このカードは、そのワザによる「ダメージ
+    以外の効果」を受けない。ダメージを受けるとき、すでにねむり・マヒ・こんらん状態だったなら使えない（カスミのドククラゲ PMCG5-033 の［にげこむ］。処理に使う文面は
+    ``FLEE_PLAY_TEXT``（p.100 の最新の説明。v0.18b の記録の再利用）。docs/reactive-decisions-v0.65.md 4 章）。
+
+    - 使用を宣言する任意の特殊能力（p.100 の解説「使うかどうかを相手プレイヤーに言ってから使います」）。ダメージを受けたとき（最終ダメージが 0 より大きい。バトル場で）の
+      特殊状態を写し（``kernel.receiving``）、そのワザのダメージの要素のあと・ダメージ以外の効果の前に、持ち主に決定（``decisions.REACTION_SWITCH``）で聞く
+    - 使えないのは、ダメージを受けるときにねむり・マヒ・こんらんだったとき（あとで回復・新しく特殊状態になっても変えない）、聞く時点でかがくへんかガス・まきちらせ!ベトベト
+      ガスで力が消えている・ショックアイで使えないとき（``catalog.offer_stopped``）、控えポケモンがいないとき
+    - 入れ替えたら、そのワザの残りのダメージ以外の効果は、このカードにも、かわりに出たポケモンにも与えない（効果を移さない）。きぜつの判定はワザのあと
+    """
+
+    implementation_id = "flee_after_attack_damage"
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、ポケモンパワー（特殊能力）として登録している")
+        if power.text_ja != FLEE_TEXT:
+            problems.append("説明文が［にげこむ］の文面と違うパワーを、ワザのダメージのあとに入れ替える特殊能力として登録している")
+        return problems
+
+    def is_able(self, pokemon: PokemonInPlay) -> bool:
+        conditions = pokemon.conditions
+        return not (conditions.asleep or conditions.paralyzed or conditions.confused)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError(
+            "POWER_NOT_USABLE_NOW",
+            f"特殊能力 {use.key} は、このカードがバトル場でワザによるダメージを受けたときにだけ使える（そのときはエンジンが決定 reaction_switch を出す）",
+        )
+
+
+@dataclass(frozen=True)
+class TakeBenchDamageInstead(PowerEffect):
+    """このカードがベンチにいて、自分の控えポケモンがダメージを受けるたびに 1 回使える。そのダメージのうちの ``amount`` ダメージを、このカードがかわりに受ける（2 匹以上が
+    ダメージを受けた時は、それぞれのダメージに対して 1 回ずつ使える）（タケシのサイドン PMCG5-055 の［ベンチガード］。kyuura の印刷の文面。docs/reactive-decisions-v0.65.md 5 章）。
+
+    - 使用を宣言する任意の特殊能力（「使える」）。ワザのダメージの要素で、ほかの自分の控えポケモンが受けるダメージを計算し（無効・「とうめい」のあと）、のせる前に、持ち主に
+      決定（``decisions.BENCH_GUARD``）で聞く（``kernel.deal_damage``）。特殊状態の条件は書かれていない（控えは特殊状態にならない）。かがくへんかガス・まきちらせ!ベトベトガス・
+      ショックアイで使えない（``catalog.offer_stopped``）。このカード自身が受けるダメージには使わない（かわりに受けるのはこのカード）
+    - かわりに受けた 10 で、もう一度［ベンチガード］を使わない（どの順番でも、のるダメージの組み合わせは同じ。実装上の正規化）
+    - ワザでないダメージで聞く決定はエンジンの未対応（``BENCH_GUARD_OUTSIDE_ATTACK_CODE``）
+    """
+
+    amount: int = 10
+    implementation_id = "take_bench_damage_instead"
+
+    def check(self, power: Power) -> list[str]:
+        problems = []
+        if power.kind != "pokemon_power":
+            problems.append(f"種類 {power.kind!r} のパワーを、ポケモンパワー（特殊能力）として登録している")
+        if power.text_ja != BENCH_GUARD_TEXT or self.amount != 10:
+            problems.append("説明文が［ベンチガード］の文面（10ダメージを、このカードがかわりに受ける）と違うパワーを、控えのダメージをかわりに受ける特殊能力として登録している")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError(
+            "POWER_NOT_USABLE_NOW",
+            f"特殊能力 {use.key} は、自分の控えポケモンがダメージを受けるときにだけ使える（そのときはエンジンが決定 bench_guard を出す）",
+        )
+
+
+def bench_guard_holders(state: GameState, owner: int, receiver: PokemonInPlay) -> list[tuple[PokemonInPlay, PowerSlot]]:
+    """v0.65: ``owner`` の控えポケモン ``receiver`` がダメージを受けるときに、［ベンチガード］（``TakeBenchDamageInstead``）を使える自分の控えのポケモン（``receiver`` 以外。ベンチの
+    並び）と特殊能力。力が消えている（かがくへんかガス・まきちらせ!ベトベトガス）・ショックアイで使えないものは除く。``receiver`` がバトル場なら空。"""
+    # continuous.py は effects.py を読み込むので、使うときに読み込む
+    from .continuous import power_suppressed
+    from .persistent import powers_use_prevented
+
+    p = state.players[owner]
+    if not any(b is receiver for b in p.bench):
+        return []
+    found = []
+    for pokemon in p.bench:
+        if pokemon is receiver:
+            continue
+        for slot in powers_of(state, pokemon):
+            if isinstance(slot.effect, TakeBenchDamageInstead) and not power_suppressed(state, slot.power) and powers_use_prevented(state, pokemon) is None:
+                found.append((pokemon, slot))
+                break
+    return found
+
+
+def bench_guard_outside_attack_check(state: GameState, owner: int, receiver: PokemonInPlay, amount: int) -> None:
+    """v0.65: ワザでないダメージ ``amount`` を ``owner`` の控えポケモン ``receiver`` に与える前に、［ベンチガード］を使える場面なら止める（エンジンの未対応。状態を変える前）。"""
+    if amount >= 10 and bench_guard_holders(state, owner, receiver):
+        raise UnsupportedError(BENCH_GUARD_OUTSIDE_ATTACK_CODE, f"控えのポケモン {receiver.pokemon_id} の {amount} ダメージ: {BENCH_GUARD_OUTSIDE_ATTACK_REASON}")
 
 
 DEFAULT_EFFECTS = EffectRegistry(
@@ -21829,6 +22102,23 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なくそれぞれ20ダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.65（docs/reactive-decisions-v0.65.md）: カスミのドククラゲ（PMCG5-033。カスミのメノクラゲから進化）のクラゲどく（水水無無）30: 1 枚のコインで「おもて」ならどく、
+        # 「うら」ならこんらん（第1弾のドガースの「くさいガス」と同じ型。書き方の違い（「「どく」状態に、」）は ``POISON_OR_CONFUSE_TEXTS`` の 2 つめ）
+        AttackKey("PMCG5-033", 0): AttackEntry(
+            DamageThenPoisonOrConfuse(),
+            "クラゲどく",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態に、「うら」なら「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのサイドン（PMCG5-055。タケシのサイホーンから進化）のラリアット（闘闘無無）70: 「うら」ならワザは失敗（ゴッドバードと同じ型）
+        AttackKey("PMCG5-055", 0): AttackEntry(
+            FailOnTailsDamage(),
+            "ラリアット",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -21963,6 +22253,8 @@ DEFAULT_EFFECTS = EffectRegistry(
                                   _KYUURA_PRINTED_TEXT),
         # v0.61: バトル場は穴だらけ!（交互にコイン。先に「うら」を出したプレイヤーの対戦ポケモンに（弱点・抵抗力に関係なく）10。最初は使ったプレイヤー。ロケット団秘密メカ）
         "PMCG4-055": TrainerEntry(AlternateCoinsUntilTailsDamage(DIGGER_TEXT), "バトル場は穴だらけ!", DIGGER_TEXT, DIGGER_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.65: キョウ秘伝,変わり身の術（バトル場の「キョウのポケモン」につけ、相手がワザを使う時に控えと入れ替えてよい。バトル場をはなれた時にトラッシュ）
+        "PMCG6-083": TrainerEntry(NinjaTrick(NINJA_TRICK_TEXT), "キョウ秘伝,変わり身の術", NINJA_TRICK_TEXT, NINJA_TRICK_TEXT, _KYUURA_PRINTED_TEXT),
         # v0.53（docs/search-retrieval-trainers-v0.53.md 3 章）。山札・トラッシュからカードを選ぶトレーナー。処理に使う文面は kyuura の印刷の文面（英語版の「basic Energy」
         # 「Basic Pokémon or Evolution card」「in order to」「Shuffle … into your deck」などは持ち込まない）
         # エネルギー転送: 山札の基本エネルギーカードを 1 枚、見せずに手札に加えて切る（選べなければ ST1）
@@ -22498,6 +22790,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         PowerKey("PMCG4-043", 0): PowerEntry(DamageOnOpponentRetreat(), "おとしあな", SINKHOLE_TEXT, SINKHOLE_TEXT, _KYUURA_PRINTED_TEXT),
         # タケシのオコリザル（PMCG5-051）の［ずらかる］（残りHPが「10」になった時、必ずはたらく。ついているカードとともに山札にもどし、切る）
         PowerKey("PMCG5-051", 0): PowerEntry(ReturnToDeckAtRemainingHp(), "ずらかる", SCRAM_TEXT, SCRAM_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.65（docs/reactive-decisions-v0.65.md）: カスミのドククラゲの［にげこむ］（処理に使う文面は p.100 の最新の説明。v0.18b の記録の再利用。印刷の文面は照合だけに使う）
+        PowerKey("PMCG5-033", 0): PowerEntry(FleeAfterAttackDamage(), "にげこむ", FLEE_TEXT, FLEE_PLAY_TEXT, ENGINE_RECORD_FLEE_SOURCE),
+        # タケシのサイドンの［ベンチガード］（自分の控えポケモンが受けるダメージのうち 10 を、かわりに受ける。kyuura の印刷の文面）
+        PowerKey("PMCG5-055", 0): PowerEntry(TakeBenchDamageInstead(), "ベンチガード", BENCH_GUARD_TEXT, BENCH_GUARD_TEXT, _KYUURA_PRINTED_TEXT),
     },
     energies={
         # v0.58（docs/stadium-reuse-special-energy-v0.58.md）。特殊エネルギー 4 枚

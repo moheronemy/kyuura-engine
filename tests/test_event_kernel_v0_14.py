@@ -612,7 +612,9 @@ class CatalogTest(unittest.TestCase):
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
             with self.subTest(power=str(key)):
                 expected = ((not effect.declared and effect.implementation_id not in outside_windows)
-                            or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out", "beam_on_knock_out"))
+                            or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out", "beam_on_knock_out",
+                                                           # v0.65: ［にげこむ］・［ベンチガード］（宣言する。ワザの途中の決定を出す定義が対応表にある）
+                                                           "flee_after_attack_damage", "take_bench_damage_instead"))
                 self.assertEqual(definition is not None, expected)
         self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
                           if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows],

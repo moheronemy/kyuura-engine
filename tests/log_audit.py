@@ -1740,9 +1740,12 @@ def log_problems(state) -> list[str]:
     owner = {uid: card.owner for uid, card in state.cards.items()}
     turn_now = 0  # v0.46: 今処理しているイベントの番（continuous_expected が持続する効果のはたらく番を見る）
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
+    last_damage = None  # v0.65: 直前のログ damage（［ベンチガード］の確かめ）
     for e in log:
         kind = e["kind"]
         turn_now = e["turn"]
+        if kind == "damage":
+            last_damage = e
         if kind == "trainer_effect_added" and e["effect_kind"] == "power_suppression":
             goop_gases[e["trainer_card"]] = e["expires_turn"]
         elif kind == "trainer_effect_removed" and e.get("effect_kind") == "power_suppression":
@@ -3300,6 +3303,15 @@ def log_problems(state) -> list[str]:
             damage[pid] += e["amount"]
             if damage[pid] != e["total_damage"]:
                 problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
+        elif kind == "bench_guard":
+            # v0.65: ［ベンチガード］でタケシのサイドンがかわりに受けた 10（ワザのダメージの要素の一部。すぐ前のログ damage の bench_guard に、このサイドンと量がある）
+            pid = e["pokemon_id"]
+            source = last_damage
+            if source is None or (pid, e["amount"]) not in tuple(source.get("bench_guard", ())) or source.get("pokemon_id") != e["from_pokemon_id"]:
+                problems.append(f"{e['turn']} 番の［ベンチガード］（ポケモン {pid}）が、すぐ前の控えポケモンへのダメージのログの bench_guard と合わない")
+            damage[pid] += e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の bench_guard のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind == "evolution_heal":
             # v0.57: トキワシティジム（進化したサカキのポケモンから、のぞむならダメージカウンターを 2 つ）
             pid = e["pokemon_id"]

@@ -166,8 +166,8 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         playable = [pool.get(c) for c in pool.definitions if pool.is_playable(c)]
         by = {k: sum(1 for d in playable if d.category == k) for k in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by, {"pokemon": 348, "trainer": 89, "energy": 10})
-        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (591, 54, 89))
+        self.assertEqual(by, {"pokemon": 350, "trainer": 90, "energy": 10})  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた
+        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (593, 56, 90))  # v0.65 でワザ 2・特殊能力 2・トレーナー 1
         for card in (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM):
             self.assertTrue(pool.is_playable(card))
 

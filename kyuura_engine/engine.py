@@ -51,6 +51,9 @@ from .commands import (
 )
 from .decisions import (
     ACCEPT_REQUEST,
+    BENCH_GUARD,
+    NINJA_TRICK,
+    REACTION_SWITCH,
     DISCARD_FROM_HAND,
     EVOLUTION_HEAL,
     SELECT_POKEMON,
@@ -70,6 +73,8 @@ from .decisions import (
 from .effects import (
     AttackKey,
     AttackUse,
+    bench_guard_outside_attack_check,
+    discard_on_leaving_active,
     END_TURN,
     SELF_TRAINER_LOCK_TURNS,
     EntryPower,
@@ -938,6 +943,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
     remove_persistent_effects(state, cmd.player, active, RETREAT)
     mark_returned_to_bench(active)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
+    discard_on_leaving_active(state, cmd.player, active)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
     resolution.after_retreat(state, context, cmd.player, active)  # v0.61: 相手の［おとしあな］（入れ替えのあと。きぜつ・交代・同じ番）
 
 
@@ -964,6 +970,7 @@ def _sinkhole_check(state: GameState, player: int, active: PokemonInPlay, index:
         after, _ = received_power_damage(trial, player, moved, trial_holder, slot.effect.amount)
         if before != after:
             raise UnsupportedError(SINKHOLE_TIMING_CODE, f"ポケモン {active.pokemon_id} の受けるダメージ（バトル場 {before}・ベンチ {after}）: {SINKHOLE_TIMING_REASON}")
+        bench_guard_outside_attack_check(trial, player, moved, after)  # v0.65: ベンチにもどったポケモンの［おとしあな］のダメージ（エンジンの未対応）
     if len(traps) > 1:
         amount = traps[0][2].effect.amount
         for _, pokemon, slot in scram_slots(trial):
@@ -2831,9 +2838,9 @@ def _attack_damage_awaiting(state: GameState, player: int, pokemon: PokemonInPla
     for event in _events_since_turn_start(state):  # 新しい順
         if event["kind"] == "attack":
             return False
-        if (event["kind"] == "damage" and event.get("player") == player and event.get("pokemon") == pokemon.card
+        if (event["kind"] in ("damage", "bench_guard") and event.get("player") == player and event.get("pokemon") == pokemon.card
                 and event.get("total_damage") == pokemon.damage):
-            return True
+            return True  # v0.65: ［ベンチガード］でかわりに受けたダメージ（ログ bench_guard）も同じワザのダメージの要素
     return False
 
 
@@ -3626,7 +3633,8 @@ def _decision_problems(state: GameState) -> list[str]:
         # いつも答えになる（借りない・とりのぞかない）
         # v0.58: ナツメのサイキックコントロールで使うカード（USE_DISCARD_TRAINER）も、使わない（0 個。「使ってよい」）がいつも答えになる（CH1 など選ぶと止めるカード）
         # v0.61: ［ファイナルビーム］の使う機会（KNOCK_OUT_POWER。Z9・C18・RB1・BZ2 など使うと止める場合）も、使わない（0 個）がいつも答えになる
-        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+        # v0.65: 変わり身の術・［にげこむ］・［ベンチガード］の機会（NINJA_TRICK・REACTION_SWITCH・BENCH_GUARD。NT3・RX1・FL1・BG1・BG2・KD1 で使うと止める場合）も同じ
+        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
@@ -3810,11 +3818,79 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     expected = attacks[0].get("card_id", state.cards[attacker.card].card_id if attacker.card in state.cards else None)
     if card_id != expected:
         return [f"ワザの決定の続きのカード id {card_id} が、ワザを使ったポケモン {pokemon_id} の使ったワザのカード {expected} と違う"]
-    problems = _carried_deferred_problems(state, d, player)
+    problems = _carried_deferred_problems(state, d, player) + _carried_flee_problems(state, d)
+    if d.kind in (NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD):
+        # v0.65: ワザの途中の任意の決定（変わり身の術・［にげこむ］・［ベンチガード］）は、どのワザでも出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
+        return problems + _reaction_decision_problems(state, d, player)
     if d.kind == DAMAGE_STEP_ORDER:
         # v0.35: ダメージの計算の順番の決定は、どのワザのダメージの要素も出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
         return problems + _damage_order_decision_problems(state, d, player, attacker)
     return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+
+
+def _reaction_decision_problems(state: GameState, d, player: int) -> list[str]:
+    """v0.65（docs/reactive-decisions-v0.65.md 2 章）: ワザの途中の任意の決定の形。
+
+    - 変わり身の術（``NINJA_TRICK``）: 決めるのはワザを受ける側（番でないプレイヤー）。続きの情報の位置は 0（ワザの要素の前）・変わり身の術は、そのプレイヤーのバトル場の
+      ポケモンについている「バトル場をはなれた時にトラッシュする」カードと同じ。選べるものはそのプレイヤーの控えの番号・0〜1 個
+    - ［にげこむ］（``REACTION_SWITCH``）: 決めるのは持ち主。そのポケモンが持ち主のバトル場にいて、今その特殊能力を持つ。選べるものは持ち主の控えの番号・0〜1 個
+    - ［ベンチガード］（``BENCH_GUARD``）: 決めるのはダメージを受ける控えポケモンの持ち主。選べるものは、そのポケモン以外の、使える［ベンチガード］を持つ控えのポケモン（場の並び）・
+      0〜min(数, 運んだダメージの並びの数で決まる上限) 個
+    """
+    from .effects import bench_guard_holders, ninja_tricks, powers_of
+
+    problems: list[str] = []
+    owner = d.player
+    bench = tuple(p.pokemon_id for p in state.players[owner].bench)
+    if d.kind == NINJA_TRICK:
+        active = state.players[owner].active
+        tricks = d.context_value("tricks")
+        if owner != 1 - player or d.context_value("boundary") != 0:
+            problems.append(f"変わり身の術の決定 {d.id} の決めるプレイヤー・位置が正しくない")
+        if active is None or not tricks or tuple(tricks) != ninja_tricks(state, active):
+            problems.append(f"変わり身の術の決定 {d.id} の変わり身の術 {tricks} が、プレイヤー {owner} のバトル場のポケモンについているものと違う")
+        if d.options != bench or (d.min_choices, d.max_choices) != (0, 1):
+            problems.append(f"変わり身の術の決定 {d.id} の選べるもの {d.options}（{d.min_choices}〜{d.max_choices}）が、控え {bench} の 0〜1 個ではない")
+        return problems
+    if d.kind == REACTION_SWITCH:
+        entry = d.context_value("flee")
+        if not (isinstance(entry, tuple) and len(entry) == 4) or entry[0] != owner:
+            return [f"［にげこむ］の決定 {d.id} の続きの情報 {entry!r} が正しくない"]
+        _, pid, card_id, power_index = entry
+        active = state.players[owner].active
+        if active is None or active.pokemon_id != pid or not any(slot.key == PowerKey(card_id, power_index) for slot in powers_of(state, active)):
+            problems.append(f"［にげこむ］の決定 {d.id} のポケモン {pid} が、プレイヤー {owner} のバトル場にいない・特殊能力を持たない")
+        if not isinstance(d.context_value("boundary"), int):
+            problems.append(f"［にげこむ］の決定 {d.id} に、続ける要素の位置がない")
+        if d.options != bench or (d.min_choices, d.max_choices) != (0, 1):
+            problems.append(f"［にげこむ］の決定 {d.id} の選べるもの {d.options}（{d.min_choices}〜{d.max_choices}）が、控え {bench} の 0〜1 個ではない")
+        return problems
+    carried = d.context_value("bench_guard")
+    if not (isinstance(carried, tuple) and len(carried) == 3 and carried[0]):
+        return [f"［ベンチガード］の決定 {d.id} の続きの情報 {carried!r} が正しくない"]
+    receiver_pid = carried[0][0][1]
+    located = state.find_pokemon(receiver_pid)
+    if located is None or located[0] != owner or not any(p is located[1] for p in state.players[owner].bench):
+        return [f"［ベンチガード］の決定 {d.id} のダメージを受けるポケモン {receiver_pid} が、プレイヤー {owner} の控えにいない"]
+    holders = tuple(p.pokemon_id for p, _ in bench_guard_holders(state, owner, located[1]))
+    if d.options != holders or d.min_choices != 0 or not 1 <= d.max_choices <= len(holders) or not isinstance(d.context_value("element"), int):
+        problems.append(f"［ベンチガード］の決定 {d.id} の選べるもの {d.options}（0〜{d.max_choices}）が、使えるサイドン {holders} と合わない")
+    return problems
+
+
+def _carried_flee_problems(state: GameState, d) -> list[str]:
+    """v0.65: ワザの途中の決定が運ぶ、［にげこむ］のまだ聞いていない候補（``frame`` の ``flee``）と入れ替えたポケモン（``fled``。もと → かわり）。候補は場のポケモンの番号で、
+    入れ替えたポケモンはどちらも、持ち主の場にいる（かわりのポケモンはこのワザの効果を受けないので、決定を待つ間は動かない）。"""
+    frame = dict(d.context_value("frame") or ())
+    problems: list[str] = []
+    for entry in frame.get("flee", ()):
+        if not (isinstance(entry, tuple) and len(entry) == 5) or state.find_pokemon(entry[1]) is None:
+            problems.append(f"運んだ［にげこむ］の候補 {entry!r} が正しくない")
+    for orig, new in frame.get("fled", ()):
+        a, b = state.find_pokemon(orig), state.find_pokemon(new)
+        if a is None or b is None or a[0] != b[0]:
+            problems.append(f"運んだ［にげこむ］の入れ替え {orig} → {new} のポケモンが、同じ持ち主の場にいない")
+    return problems
 
 
 def _returned_attacker(state: GameState, d) -> dict | None:
