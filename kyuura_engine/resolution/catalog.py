@@ -19,7 +19,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from .. import effects as E
-from ..continuous import suppressors_of
+from ..continuous import goop_gas_effects, suppressors_of
+from ..persistent import powers_use_prevented
 from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
 from ..state import AttackBarrier, PreventDamage, Retaliation
 
@@ -232,6 +233,20 @@ def suppressors(state: GameState, instance: EffectInstance) -> tuple[int, ...]:
     return suppressors_of(state, instance.power)
 
 
+def stopped(state: GameState, instance: EffectInstance) -> bool:
+    """この効果（印刷された特殊能力）が今「使えず、その力も消え」ているか（v0.59）: かがくへんかガス（``suppressors``）か、まきちらせ!ベトベトガスの効果
+    （``continuous.goop_gas_effects``）。印刷された特殊能力でない効果・消えない効果は False。"""
+    if instance.definition.origin is not Origin.PRINTED_POWER or not instance.definition.suppressible:
+        return False
+    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power))
+
+
+def offer_stopped(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:
+    """宣言して使う任意の効果（こんじょう・ふしちょう。``Timing.OFFER``）を ``pokemon`` が今使えないか（v0.59）: ``stopped`` か、「ショックアイ」で特殊能力を使うことが
+    できない（``persistent.powers_use_prevented``。宣言して使う特殊能力の使用だけを止める。CR-CHEMICAL-GAS-USE-VS-POWER）。"""
+    return stopped(state, instance) or (instance.definition.origin is Origin.PRINTED_POWER and powers_use_prevented(state, pokemon) is not None)
+
+
 def active_now(state: GameState, instance: EffectInstance) -> bool:
     """持続する効果なら、はたらく番が今の番か（p.82・p.89・p.18「次の相手の番」）。印刷された特殊能力はいつも True。"""
     if instance.definition.origin is Origin.PERSISTENT_EFFECT:
@@ -241,7 +256,7 @@ def active_now(state: GameState, instance: EffectInstance) -> bool:
 
 def working(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:
     """今の時点ではたらいているか（特殊状態・ガス・はたらく番）。"""
-    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not suppressors(state, instance)
+    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not stopped(state, instance)
 
 
 @dataclass(frozen=True)

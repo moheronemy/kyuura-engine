@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.58）
+# 実装状況（v0.1〜v0.59）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -225,6 +225,13 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | レインボーエネルギーの 10 ダメージに［カブトアーマー］を当てはめるか（v0.58。RB4。v0.57 の EX1 と同じ形の別の問い） | つける前に `UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER` |
 | ［へんしん］のメタモンの「どの色としても使える」が、無色の特殊エネルギーにも当てはまるか（v0.58。TE2） | 払えるかが変わるワザは `UNRESOLVED_TRANSFORM_SPECIAL_ENERGY` |
 | 「にげる」で、分けられない無色2個エネルギーで、にげるエネルギーより多く払えるか（v0.58。RT1） | エネルギー・コインの前に `UNRESOLVED_RETREAT_OVERPAY` |
+| まきちらせ!ベトベトガスの止める範囲が、あとから場に出た・進化した・退化したポケモンも含むか（v0.59。GG1） | 効果のはたらく間に、特殊能力を持つポケモンを場に出す・進化・退化させる前に `UNRESOLVED_GOOP_GAS_NEW_POKEMON` |
+| カツラの「1枚でなく2枚にする」が、2 回目の通常の操作でつける 2 枚目を許すか（v0.59。BL1。1 回の操作で 2 枚は受け付ける） | 2 回目の通常の操作を `UNRESOLVED_BLAINE_SECOND_ATTACH` |
+| クリスタルビームの「エネルギーカードをつけることができない」が、場のエネルギーのつけかえ・［エネエネ］に当たるか（v0.59。CB1） | 受けたポケモンを移動先・つける先に選ぶと `UNRESOLVED_ATTACH_BLOCK_SCOPE` |
+| ［エネエネ］の「場のポケモン」が相手のポケモンを含むか（v0.59。BZ1） | 相手のポケモンを選ぶと（自分のほかのポケモンがいなければ宣言の前に）`UNRESOLVED_BUZZAP_OPPONENT_TARGET` |
+| ［エネエネ］でエネルギーになったカードが、説明の「「X」エネルギー(カード)」に当たるか（v0.59。BZ2。出すエネルギーの個数と色は決まっている） | 数える・選ぶ・つけたときの効果で答えが変わるとき `UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE` |
+| ［エネエネ］の「好きな色」に無色・悪・鋼が入るか（v0.59。BZ3。基本エネルギーの 6 色は止めない） | その色を選ぶと `UNRESOLVED_BUZZAP_COLOR` |
+| 「ばける」でのせたマルマインのカードの［エネエネ］（v0.59。BZ4） | 宣言の前に `UNRESOLVED_BUZZAP_DISGUISED` |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -3079,3 +3086,40 @@ PMCG1-088・いいきずぐすり PMCG1-075・なんでもなおし PMCG1-080・
   外側・内側の使用で錯乱ジムのコインを別々に投げる。
 
 kyuura への報告事項（kyuura のデータ・記録は変えていない）: 無色2個エネルギーの `energy.provides` が空・日本語の説明が null、配合エネルギーの説明の空行、新しい停止コード 6 件。
+
+## v0.59 で加えたもの（特殊能力を止める効果・エネルギーをつける操作を変える効果の 6 枚）
+
+依頼の 6 枚（マルマイン PMCG1-040・カツラ PMCG6-093・タケシの保護 PMCG5-090・カスミのメノクラゲ PMCG5-030・わるいアーボック PMCG4-008・まきちらせ!ベトベトガス PMCG4-056）を、
+kyuura データの採用で、どのワザ・特殊能力・トレーナーも登録して対応にしました（対応ポケモン 329 → 332・トレーナーの登録 81 → 84・ワザの登録 561 → 565・特殊能力の登録 49 → 50）。
+共通の処理は、特殊能力が止まっているかを一か所で聞くこと（`continuous.power_suppressed`。かがくへんかガスとまきちらせ!ベトベトガス。宣言して使う特殊能力の使用だけを止める
+ショックアイは `persistent.powers_use_prevented`）、エネルギーカードをつける経路が共通に聞く禁止（`effects.energy_attach_block`）、相手のワザ・トレーナーではがせないエネルギー
+（`effects.energy_removal_protected`）、エネルギーとしてついているポケモンのカード（`GameState.energy_roles`・`EnergyRole`）、1 回の操作で 2 枚をつける `AttachEnergy.energy2` です。
+書き出しの形式 19（最上位の `energy_roles`）。新しい拒否のコード `POWER_USE_PREVENTED`・`ENERGY_ATTACH_PREVENTED`・`DOUBLE_ATTACH_NOT_ALLOWED`・`NOT_FIRE_ENERGY`、新しいログの
+イベント `energy_conversion`。カードごとの結果・共通の処理・未解決・互換性・検証は [energy-control-power-suppression-v0.59.md](energy-control-power-suppression-v0.59.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_energy_control_power_suppression_v0_59.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 6 枚の登録・文面と登録の値の照らし合わせ・採用の記録と外部照合・研究の対応表 | kyuura の印刷の文面・pcg-search.com | `CardDataTest`・test_card_sources.py |
+| まきちらせ!ベトベトガス（宣言して使う・常にはたらく特殊能力・かがくへんかガスを止め、期限のあとにもどる・GG1） | 印刷の文面・CR-CHEMICAL-GAS-USE-VS-POWER・CR-CHEMICAL-GAS-ALL-POWERS・CR-POWER-BACK-AFTER-RECOVERY | `GoopGasTest` |
+| ショックアイ（ベンチのポケモン・宣言して使う特殊能力だけ）・どくのきり | 印刷の文面・CR-CHEMICAL-GAS-USE-VS-POWER | `ShockEyeTest` |
+| クリスタルビーム（「おもて」・「うら」） | 印刷の文面 | `CrystalBeamTest` |
+| カツラ（1 回の操作で 2 枚・不正な 2 枚・BL1・この番だけ） | 印刷の文面 | `BlaineTest` |
+| タケシの保護（ついたまま・相手のトレーナーではがされない・EM1・TR1） | 印刷の文面 | `BrocksProtectionTest` |
+| ［エネエネ］（きぜつ・つける・サイド・支払い・役割の終わり・BZ1〜BZ3・使えない場面） | 印刷の文面 | `BuzzapTest` |
+| 組み合わせ（CB1・G37・ふしちょうの機会）・不変条件 | — | `InteractionTest`・`InvariantTest` |
+| 正式な開始からの対戦で監査がすべて通る | — | `tools/existing_effect_games.py --batch v0.59` |
+| v0.58 までのカードの動きが変わらない | 固定した v0.58（`1392f8c`）との比較 | tools/engine_lockstep.py と作業用の道具（[energy-control-power-suppression-v0.59.md](energy-control-power-suppression-v0.59.md) 7 章） |
+
+### 原典未確認・未解決
+
+- 新しい停止コードは GG1・BL1・CB1・BZ1・BZ2・BZ3・BZ4 の 7 件（停止コード 122 件・未解決の裁定 123 件。上の「裁定が未解決」の表）。
+- 宣言の前の先読みは、選ぶ答えのどれかが問いに当たれば宣言の前に止めるので、相手の場にこんじょうを使えるポケモンがいてショックアイで HP 以上になりうるときは、ほかのポケモンを選ぶ
+  つもりでもワザを使えない（G37。v0.15c からの先読みの動き）。
+- 実装上の判断（原典で確かめた規定ではない）: ［エネエネ］の役割のカードがついていなくなったら印刷のポケモンのカードにもどる、2 枚目のカツラは効果を重ねない。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）: まきちらせ!ベトベトガスの pcg-search.com の説明文に「おたがいの場の」がない（処理に影響しない）、GG1 の記録が
+card_differences の二次資料だけ、6 枚に最新の説明・照合の記録がない、新しい停止コード 7 件は kyuura の未解決の一覧にない。

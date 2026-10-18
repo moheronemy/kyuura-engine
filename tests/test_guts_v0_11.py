@@ -637,7 +637,10 @@ class G37Test(unittest.TestCase):
             # v0.51（自分・相手のトラッシュのたねポケモンを持ち主のベンチに出し、ダメージカウンターをのせる「よみがえらせる」。docs/discard-to-bench-v0.51.md）
             "BenchBasicFromEitherDiscard",
             # v0.52（自分と相手の対戦ポケモンを山札にもどす「つれさる」。docs/field-return-v0.52.md）
-            "ReturnBothActivesToDeck"]))
+            "ReturnBothActivesToDeck",
+            # v0.59（選んだ相手のポケモンが特殊能力を使えなくなる「ショックアイ」・どくと控えへのダメージ「どくのきり」・エネルギーカードをつけられなくなる
+            # 「クリスタルビーム」。docs/energy-control-power-suppression-v0.59.md）
+            "ChooseOpponentPokemonDamageAndPowerLock", "DamagePoisonAndBenchDamage", "DamageThenAttachLockOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

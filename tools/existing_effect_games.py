@@ -229,6 +229,8 @@ from kyuura_engine.decisions import SELECT_DEVOLVE_COUNT  # noqa: E402  v0.50
 from kyuura_engine.effects import devolution_candidates, devolution_forbidden  # noqa: E402  v0.50
 from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.decisions import USE_DISCARD_TRAINER  # v0.58
+from kyuura_engine.continuous import goop_gas_effects  # v0.59
+from kyuura_engine.effects import blaine_effects  # v0.59
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
@@ -418,7 +420,8 @@ V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MO
                    "UNRESOLVED_MAX_HP_DROP")
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
-           + ("PMCG5-052", "PMCG5-053"))  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
+           + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
+           + ("PMCG1-040", "PMCG5-030", "PMCG4-008"))  # v0.59: マルマイン（第1弾）・カスミのメノクラゲ・わるいアーボック
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -436,6 +439,12 @@ DOUBLE_COLORLESS, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY = "PMCG1-096",
 V0_58 = (BROCKS_GRAVELER, BROCKS_GOLEM)
 V0_58_ENERGIES = (DOUBLE_COLORLESS, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY)
 SQUIRTLE, WARTORTLE, BLASTOISE = "PMCG1-023", "PMCG1-027", "PMCG1-032"
+# v0.59（docs/energy-control-power-suppression-v0.59.md）。マルマイン（第1弾。ビリリダマから進化）・カスミのメノクラゲ・わるいアーボック（アーボから進化）と、
+# トレーナーのカツラ・タケシの保護・まきちらせ!ベトベトガス
+BUZZAP_ELECTRODE, MISTYS_TENTACOOL, DARK_ARBOK = "PMCG1-040", "PMCG5-030", "PMCG4-008"
+BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK = "PMCG6-093", "PMCG5-090", "PMCG4-056"
+V0_59 = (BUZZAP_ELECTRODE, MISTYS_TENTACOOL, DARK_ARBOK)
+V0_59_TRAINERS = (BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -682,6 +691,15 @@ DECKS = {
     # 特殊エネルギー 4 種類・ナツメのサイキックコントロール
     "R58": ((BULBASAUR, 4), (IVYSAUR, 3), (VENUSAUR, 2), (SQUIRTLE, 4), (WARTORTLE, 3), (BLASTOISE, 2), (RAINBOW_ENERGY, 4), (DOUBLE_COLORLESS, 3),
             (POTION_ENERGY, 2), (FULL_HEAL_ENERGY, 2), (PSYCHIC_CONTROL, 2), (GRASS, 15), (WATER, 14)),
+    # v0.59: 雷・草・水。ビリリダマ → マルマイン（［エネエネ］で自分のポケモンにつく）・アーボ（ロケット団）→ わるいアーボック（ショックアイ・どくのきり）・
+    # カスミのメノクラゲ（クリスタルビーム）・まきちらせ!ベトベトガス
+    "Z59": ((VOLTORB, 4), (BUZZAP_ELECTRODE, 3), (ROCKET_EKANS, 4), (DARK_ARBOK, 3), (MISTYS_TENTACOOL, 4), (GOOP_GAS_ATTACK, 3), *TRAINERS,
+            (LIGHTNING, 10), (GRASS, 11), (WATER, 6)),
+    # v0.59: 炎・闘。カツラのガーディ → ウインディ・カツラのポニータ → ギャロップ（カツラで「炎」2 枚をいっしょにつける）・タケシのイシツブテ → ゴローン・
+    # タケシのロコン（タケシの保護をつける）・カツラ・タケシの保護
+    # （カツラを使う場面（手札にカツラと「炎」2 枚）を起こすため、トレーナーはマサキ・ポケモンいれかえ・きずぐすりだけにし、炎エネルギーを多くした）
+    "B59": ((BLAINES_GROWLITHE, 4), (BLAINES_ARCANINE, 2), (BLAINES_PONYTA, 4), (BLAINES_RAPIDASH, 2), (BROCKS_GEODUDE, 4),
+            (BROCKS_VULPIX, 3), (BLAINE_TRAINER, 4), (BROCKS_PROTECTION, 4), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (FIRE, 21), (FIGHTING, 6)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -750,13 +768,17 @@ PAIRINGS_V0_57 = (("L57", "D57"), ("L57", "U55"), ("D57", "M56"), ("D57", "P31")
 # R58 対 H54（にせオーキドはかせなど手札を入れかえるトレーナーをトラッシュから使う）・E58 対 L57（錯乱ジム・リムーブ禁止ジムの場でサイキックコントロールを使う。
 # ばくれつでスタジアムをトラッシュ）。``run`` が席を入れかえる
 PAIRINGS_V0_58 = (("E58", "R58"), ("E58", "U55"), ("R58", "H54"), ("E58", "L57"))
+# v0.59: Z59 対 B59（ベトベトガス・ショックアイ・クリスタルビームとカツラ・タケシの保護）・Z59 対 R58（エナジートランス・あまごいをベトベトガス・ショックアイで止め、
+# クリスタルビームを受けたポケモンにつける）・B59 対 U55（タケシの保護をつけたポケモンのエネルギーカードを、エネルギー・リムーブなどではがせない）・
+# Z59 対 D46（［きょうぼう］・［ねんちゃくえき］などの常にはたらく特殊能力を、ベトベトガスで止める）
+PAIRINGS_V0_59 = (("Z59", "B59"), ("Z59", "R58"), ("B59", "U55"), ("Z59", "D46"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
-           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58}
+           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2549,6 +2571,159 @@ def _v058_retreat(state, tried, counts):
     return command
 
 
+def _v059_power(state, tried, counts):
+    """v0.59: マルマイン（第1弾）の［エネエネ］を、自分の場にほかのポケモンがいて、受け付けるとき、番の番号が 3 の倍数か、マルマインにダメージがあれば使う（1 番に 1 回）。
+    拒否（BZ1〜BZ4・まきちらせ!ベトベトガス・ショックアイなど）は ``v059_buzzap_rejected_<コード>`` に数える。"""
+    player = state.current_player
+    p = state.players[player]
+    if ("v059_buzzap", state.turn_number) in tried or len(list(p.in_play())) < 2:
+        return None
+    for pokemon in p.in_play():
+        if state.cards[pokemon.card].card_id != BUZZAP_ELECTRODE or not (state.turn_number % 3 == 0 or pokemon.damage):
+            continue
+        tried.add(("v059_buzzap", state.turn_number))
+        command = UsePokemonPower(player, pokemon.pokemon_id, 0)
+        try:
+            apply_command(state, command)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v059_buzzap_rejected_{error.code}"] += 1
+            return None
+        counts["v059_buzzap_declared"] += 1
+        return command
+    return None
+
+
+def _v059_decision(state, counts):
+    """v0.59 の決定への答え（元の手順より先に答える）: ［エネエネ］のつける先（自分のバトル場のポケモン、なければ受け付ける最初の自分のポケモン）・色（つける先の
+    タイプ。基本エネルギーの色でなければ受け付ける最初の色）・ショックアイの相手のポケモン（特殊能力を持つポケモン、なければバトル場）・タケシの保護のつける先。"""
+    d = state.decision
+    if d is None:
+        return None
+    if d.resume == "power" and d.kind in (SELECT_POKEMON, SELECT_COLOR):
+        use = d.context_value("use")
+        if use is None or use[2] != BUZZAP_ELECTRODE:
+            return None
+        if d.kind == SELECT_POKEMON:
+            active = state.players[d.player].active
+            order = ([active.pokemon_id] if active is not None else []) + list(d.options)
+        else:
+            target = state.find_pokemon(d.context_value("target"))
+            own_type = state.card_def(target[1].card).pokemon_type if target is not None else None
+            order = ([COLORS.index(own_type)] if own_type in COLORS else []) + list(d.options)
+        for option in order:
+            if option in d.options and _v052_accepted(state, ResolveDecision(d.player, d.id, (option,))):
+                counts[f"v059_buzzap_{'target' if d.kind == SELECT_POKEMON else 'color'}"] += 1
+                return ResolveDecision(d.player, d.id, (option,))
+        counts["v059_buzzap_no_accepted_answer"] += 1
+        return None
+    if d.resume == "attack" and d.kind == SELECT_POKEMON:
+        last = next((e for e in reversed(state.log) if e["kind"] == "attack"), None)
+        if last is None or state.cards[last.get("card", last["pokemon"])].card_id != DARK_ARBOK:
+            return None
+        with_power = [o for o in d.options if state.card_def(state.find_pokemon(o)[1].card).powers]
+        for option in (*with_power, *d.options):
+            if _v052_accepted(state, ResolveDecision(d.player, d.id, (option,))):
+                counts["v059_shock_eye_power_holder" if option in with_power else "v059_shock_eye_other"] += 1
+                return ResolveDecision(d.player, d.id, (option,))
+    return None
+
+
+def _v059_trainer(state, tried, counts, only=V0_59_TRAINERS):
+    """v0.59: まきちらせ!ベトベトガス（相手の場に特殊能力を持つポケモンがいて、効果がはたらいていないとき）・タケシの保護（自分の場のタケシのポケモンにまだついていないとき）・
+    カツラ（この番に手札からまだつけておらず、手札に「炎」エネルギーカードが 2 枚以上あり、場にカツラのポケモンがいるとき）を、受け付けるなら使う。"""
+    player = state.current_player
+    p = state.players[player]
+    if "trainer_locked" in tried:
+        return None
+    opponent_powers = any(state.card_def(pk.card).powers for pk in state.players[1 - player].in_play())
+    for uid in p.hand:
+        card_id = state.cards[uid].card_id
+        key = ("v059_trainer", card_id, state.turn_number)
+        if card_id not in only or key in tried:
+            continue
+        if card_id == GOOP_GAS_ATTACK and not (opponent_powers and not goop_gas_effects(state)):
+            continue
+        if card_id == BROCKS_PROTECTION and not any(state.card_def(pk.card).name_ja.startswith("タケシの") and not pk.trainers for pk in p.in_play()):
+            continue
+        if card_id == BLAINE_TRAINER and (state.energy_attachments_this_turn or blaine_effects(state, player)
+                                          or sum(state.cards[u].card_id == FIRE for u in p.hand) < 2
+                                          or not any(state.card_def(pk.card).name_ja.startswith("カツラの") for pk in p.in_play())):
+            continue
+        tried.add(key)
+        command = PlayTrainer(player, uid)
+        if not _v052_accepted(state, command):
+            counts[f"v059_{card_id}_not_playable"] += 1
+            continue
+        counts[f"v059_play_{card_id}"] += 1
+        return command
+    return None
+
+
+def _v059_energy(state, command, tried, counts):
+    """v0.59: カツラの効果がはたらいていて、この番に手札からまだつけておらず、手札に「炎」エネルギーカードが 2 枚以上あれば、元の手順のかわりに 2 枚をいっしょに
+    カツラのポケモン（バトル場を先に）につける（``AttachEnergy.energy2``）。受け付けない場面は ``v059_blaine_attach_rejected_<コード>`` に数える。"""
+    if state.phase is not Phase.MAIN or state.energy_attachments_this_turn or ("v059_blaine_attach", state.turn_number) in tried:
+        return None
+    player = state.current_player
+    if not blaine_effects(state, player):
+        # 元の手順がつける前に、カツラを使う（使える場面なら。使ったら次の手でこの関数が 2 枚をつける）
+        return _v059_trainer(state, set(), counts, only=(BLAINE_TRAINER,)) if isinstance(command, AttachEnergy) else None
+    p = state.players[player]
+    fire = [u for u in p.hand if state.cards[u].card_id == FIRE]
+    targets = [pk for pk in p.in_play() if state.card_def(pk.card).name_ja.startswith("カツラの")]
+    if len(fire) < 2 or not targets:
+        return None
+    tried.add(("v059_blaine_attach", state.turn_number))
+    attach = AttachEnergy(player, fire[0], targets[0].card, energy2=fire[1])
+    try:
+        apply_command(state, attach)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v059_blaine_attach_rejected_{error.code}"] += 1
+        return None
+    counts["v059_blaine_double_attach"] += 1
+    return attach
+
+
+def v059_uses(state):
+    """v0.59: ログから数えた v0.59 の 6 枚の動き（どれもない局では空）。
+
+    - ``buzzap``・``buzzap_<色>``: ［エネエネ］でエネルギーとしてついた（色ごと）。``converted_energy_paid``: そのカードがついたポケモンのワザ
+    - ``shock_eye``・``shock_eye_bench``: ショックアイの効果を与えた（ベンチのポケモンに）。``crystal_beam``: クリスタルビームの効果を与えた
+    - ``poison_vapor_bench``: どくのきりの控えへのダメージ。``goop_gas``: まきちらせ!ベトベトガスを使った。``blaine_double_attach``: カツラで 2 枚をいっしょにつけた
+    - ``protection_attached``: タケシの保護をつけた。``attach_skipped``: ワザでつける効果がクリスタルビームで飛んだ
+    """
+    counts = Counter()
+    converted = {}
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "energy_conversion":
+            counts["buzzap"] += 1
+            counts[f"buzzap_{e['energy_type']}"] += 1
+            converted[e["card"]] = e["target"]
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "cannot_use_powers":
+            counts["shock_eye"] += 1
+        elif kind == "persistent_effect_added" and e.get("persistent_effect") == "cannot_attach_energy":
+            counts["crystal_beam"] += 1
+        elif kind == "damage" and e.get("target") == "opponent_bench" and str(e.get("effect", "")).startswith(DARK_ARBOK + "#1"):
+            counts["poison_vapor_bench"] += 1
+        elif kind == "play_trainer" and state.cards[e["card"]].card_id in V0_59_TRAINERS:
+            counts[f"play_{state.cards[e['card']].card_id}"] += 1
+        elif kind == "attach_energy" and "energy2" in e:
+            counts["blaine_double_attach"] += 1
+        elif kind == "attach_trainer" and state.cards[e["card"]].card_id == BROCKS_PROTECTION:
+            counts["protection_attached"] += 1
+        elif kind == "effect_skipped" and e.get("reason") == "attach_prevented":
+            counts["attach_skipped"] += 1
+        elif kind == "attack" and e["pokemon"] in converted.values():
+            counts["converted_energy_paid"] += 1  # ［エネエネ］のカードがついたあとの、つけた先（そのときのいちばん上のカード）のワザ
+    for e in state.log:
+        if e["kind"] == "persistent_effect_added" and e.get("persistent_effect") == "cannot_use_powers":
+            found = state.find_pokemon(e["pokemon_id"])
+            if found is not None and found[1] is not state.players[found[0]].active:
+                counts["shock_eye_bench"] += 1
+    return dict(counts)
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -2696,7 +2871,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v051_decision(state, counts) or _v052_decision(state, counts)  # v0.51・v0.52
                      or _v053_decision(state, counts) or _v054_decision(state, counts)  # v0.53・v0.54
                      or _v055_decision(state, counts) or _v056_decision(state, counts)  # v0.55・v0.56
-                     or _v057_decision(state, counts) or _v058_decision(state, counts))  # v0.57・v0.58
+                     or _v057_decision(state, counts) or _v058_decision(state, counts)  # v0.57・v0.58
+                     or _v059_decision(state, counts))  # v0.59
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2705,7 +2881,8 @@ def make_policy(seen: dict, counts: Counter):
             surge = _v056_trainer(state, tried, counts, only=(LT_SURGE_TRAINER,))
             if surge is not None:
                 return surge
-        special = _v058_energy(state, command, tried, counts)  # v0.58: 特殊エネルギー（手札にないデッキでは何もしない）
+        special = (_v059_energy(state, command, tried, counts)  # v0.59: カツラの 2 枚（カツラの効果がなければ何もしない）
+                   or _v058_energy(state, command, tried, counts))  # v0.58: 特殊エネルギー（手札にないデッキでは何もしない）
         if special is not None:
             return special
         if state.phase is Phase.DECISION:
@@ -2722,7 +2899,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v054_trainer(state, tried, counts) or _v055_trainer(state, tried, counts)  # v0.54・v0.55
                      or _v056_trainer(state, tried, counts)  # v0.56
                      or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts)  # v0.57
-                     or _v058_trainer(state, tried, counts))  # v0.58
+                     or _v058_trainer(state, tried, counts)  # v0.58
+                     or _v059_trainer(state, tried, counts) or _v059_power(state, tried, counts))  # v0.59
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2851,6 +3029,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
             result["conditions"] = [c[1] for c in state.result.conditions]
         result["card_uses"] = card_uses(state)
         result["v058"] = v058_uses(state)
+        result["v059"] = v059_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -3280,10 +3459,14 @@ def summarize(games):
     s = {"games": len(games), "outcomes": Counter(r["outcome"] for r in games), "halt_codes": Counter(r["halt_code"] for r in games
                                                                                                      if r.get("halt_code")),
          "unresolved_rejections": Counter(), "audit_failures": Counter(), "end_conditions": Counter(), "wins": Counter(),
-         "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter()}
+         "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter(), "v059": Counter(), "v059_policy": Counter(),
+         "v059_games_with": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
+        s["v059"].update(r.get("v059", {}))  # v0.59
+        s["v059_games_with"].update({k: 1 for k, v in r.get("v059", {}).items() if v})
+        s["v059_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v059_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

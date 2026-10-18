@@ -155,6 +155,10 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     p = state.players[player]
     if effect is not None and power is not None:
         raise RuntimeError("ワザと特殊能力の両方の効果で進化させることはない（エンジンの不具合）")
+    # effects.py は evolution.py を読み込むので、使うときに読み込む
+    from .effects import goop_gas_entry_check
+
+    goop_gas_entry_check(state, card, how="evolve")  # v0.59: GG1（状態を変える前）
     if effect is None and power is None:
         p.hand.remove(card)
     else:
@@ -257,6 +261,10 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
     p = state.players[owner]
     chain = (*target.evolution_stack, target.card)
     removed = tuple(reversed(chain[-count:]))
+    # effects.py は evolution.py を読み込むので、使うときに読み込む
+    from .effects import goop_gas_entry_check
+
+    goop_gas_entry_check(state, chain[-count - 1], how="devolve")  # v0.59: GG1（状態を変える前）
     previous = target.card
     retag_power_uses(state, target)
     target.card = chain[-count - 1]

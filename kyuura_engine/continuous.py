@@ -20,10 +20,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .effects import SuppressOtherPowers
+from .state import POWER_SUPPRESSION
 
 if TYPE_CHECKING:
     from .cards import Power
-    from .state import GameState, PokemonInPlay
+    from .state import GameState, PokemonInPlay, TrainerTurnEffect
 
 
 def _suppressor(state: GameState, pokemon: PokemonInPlay) -> tuple[SuppressOtherPowers, ...]:
@@ -58,6 +59,26 @@ def suppressors_of(state: GameState, power: Power) -> tuple[int, ...]:
             if any(effect.is_working(pokemon) and effect.suppresses(power) for effect in _suppressor(state, pokemon)):
                 found.append(pokemon.pokemon_id)
     return tuple(found)
+
+
+def goop_gas_effects(state: GameState) -> tuple[TrainerTurnEffect, ...]:
+    """今はたらいている「まきちらせ!ベトベトガス」（v0.59。``TrainerTurnEffect`` の種類 ``POWER_SUPPRESSION``。「次の相手の番が終わるまで、おたがいの場のすべての
+    ポケモンは特殊能力を使うことができず、その力も消える。」）。使った番〜消える番（消える番の終わりに ``procedures.expire_at_turn_end`` が消す）。
+
+    止める範囲は使った時点で場にいるポケモン（kyuura の card_differences の PMCG4-056 の二次資料の説明。確度は有力）とも、あとから場に出た・進化した・退化した
+    ポケモンも含むとも読めて決まらない（GG1）。特殊能力を持つポケモンが、この効果のはたらく間に場に出る・進化する・退化するコマンドは受け付けない
+    （``effects.goop_gas_entry_check``）ので、効果のはたらく間に場にいる特殊能力を持つポケモンは、どれも使った時点で場にいたポケモン（同じ姿）で、どちらの読み方でも
+    止まる。そのため、効果がはたらいている間は場のすべての特殊能力を止める（かがくへんかガスも除かない。p.265 の解説「［かがくへんかガス］の力を一時的に消す」）。"""
+    turn = state.turn_number
+    return tuple(r for r in state.trainer_effects if r.kind == POWER_SUPPRESSION and r.created_turn <= turn <= r.expires_turn)
+
+
+def power_suppressed(state: GameState, power: Power) -> bool:
+    """特殊能力 ``power``（場のポケモンの特殊能力）が今「使えず、その力も消え」ているか（v0.59）: はたらいているかがくへんかガスに消されている（``suppressors_of``）か、
+    まきちらせ!ベトベトガスの効果がはたらいている（``goop_gas_effects``）。宣言して使う特殊能力の使用・常にはたらく・自動的にはたらく特殊能力の力のどちらにも当てはまる
+    （kyuura の CR-CHEMICAL-GAS-USE-VS-POWER・CR-CHEMICAL-GAS-ALL-POWERS）。わるいアーボックの「ショックアイ」（使うことだけができない）は含まない
+    （``persistent.powers_use_prevented``）。"""
+    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, power))
 
 
 def power_suppressors(state: GameState, pokemon_id: int, power_index: int = 0) -> tuple[int, ...]:

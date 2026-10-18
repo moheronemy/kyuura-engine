@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 18 あります（``format_version``）。
+形式は 19 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -85,6 +85,10 @@
   外側から順）と、``trainer_in_use`` の ``via``（外側のトレーナー（ナツメのサイキックコントロール）の効果で相手のトラッシュから使っているときの、外側のカードの uid。
   手札から使っていれば ``None``）を加えたもの（v0.58。docs/stadium-reuse-special-energy-v0.58.md 7 章）。形式 1〜17 は、外側のトレーナーの使用・相手のトラッシュから
   使っている最中のトレーナーがあると ``ValueError``（なければ形式 1〜17 の書き出しは v0.57 と同じ）。
+- 19: 18 に、最上位の ``energy_roles``（エネルギーとしてついているカードの記録。マルマインの［エネエネ］。``{"card", "card_id", "energy_type", "units", "owner",
+  "turn"}`` の並び）を加えたもの（v0.59。docs/energy-control-power-suppression-v0.59.md 8 章）。形式 1〜18 は、記録があると ``ValueError``（なければ形式 1〜18 の
+  書き出しは v0.58 と同じ）。v0.59 の持続する効果の種類 ``"cannot_use_powers"``（「ショックアイ」）・``"cannot_attach_energy"``（「クリスタルビーム」）は共通の項目だけで、
+  形式 8 から書ける（種類の値を加えただけ）。タケシの保護（場をはなれるまでついたまま）のついているトレーナーの ``discard_at_end_of_turn`` は ``None``。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -144,6 +148,8 @@ from .state import (
     CannotAttack,
     CannotAttackWhileSourceActive,
     CannotRetreat,
+    CannotUsePowers,
+    CannotAttachEnergy,
     Confused,
     DamageReduction,
     DestinyBond,
@@ -163,7 +169,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -244,7 +250,8 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["color"] = effect.color.value  # v0.48: 「テクスチャー1」「テクスチャー2」の変えた色
     elif isinstance(effect, MaxHpSet):
         data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
-    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage)):
+    elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
+                                         CannotUsePowers, CannotAttachEnergy)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):
@@ -401,6 +408,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、外側のトレーナーの効果で相手のトラッシュから使っている最中のトレーナー（ナツメのサイキックコントロール）を表せない（format_version=18 を使う）"
         )
+    if format_version < 19 and state.energy_roles:
+        raise ValueError(f"形式 {format_version} は、エネルギーとしてついているカード（マルマインの［エネエネ］）を表せない（format_version=19 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -524,5 +533,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["trainer_stack"] = [
             {"player": outer.player, "card": outer.card, "card_id": state.cards[outer.card].card_id, "user": outer.user, "via": outer.via}
             for outer in state.trainer_stack
+        ]
+    if format_version >= 19:
+        data["energy_roles"] = [
+            {"card": r.card, "card_id": state.cards[r.card].card_id, "energy_type": r.energy_type.value, "units": r.units, "owner": r.owner, "turn": r.turn}
+            for r in state.energy_roles
         ]
     return data

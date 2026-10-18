@@ -67,7 +67,8 @@ MUTANTS: tuple[Mutant, ...] = (
            '        pass',
            origin='v0.15d'),
     Mutant('M04', 'かがくへんかガスを見ない', R + 'catalog.py',
-           '    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not suppressors(state, instance)',
+           # v0.59: かがくへんかガスとまきちらせ!ベトベトガスの確認を ``stopped`` にまとめたので、同じ誤り（はたらいているかでガスを見ない）をその呼び出しに入れる
+           '    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not stopped(state, instance)',
            '    return not blocked_by_status(instance, pokemon) and active_now(state, instance)',
            origin='v0.15d'),
     Mutant('M05', '持続する効果のはたらく番を見ない', R + 'catalog.py',

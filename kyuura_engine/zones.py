@@ -19,6 +19,10 @@ def enter_play(state: GameState, uid: int) -> PokemonInPlay:
     ワザの効果で山札から出す（``bench_from_deck``）で共通（v0.31 までの ``engine._enter_play`` の本体をそのまま関数にした）。v0.51 から、トラッシュから持ち主の
     ベンチに出す（``bench_from_discard``）も共通。
     """
+    # effects.py は zones.py を読み込むので、使うときに読み込む
+    from .effects import goop_gas_entry_check
+
+    goop_gas_entry_check(state, uid, how="enter")  # v0.59: GG1（場に出す前。番号を付ける前）
     pokemon = PokemonInPlay(uid, pokemon_id=state.next_pokemon_id, played_turn=state.turn_number)
     state.next_pokemon_id += 1
     return pokemon
@@ -517,7 +521,7 @@ def attach_energy_from_hand(state: GameState, player: int, energy: int, pokemon:
     pokemon.energy.append(energy)
 
 
-def attach_trainer(state: GameState, player: int, card: int, pokemon: PokemonInPlay, discard_at_end_of_turn: int) -> AttachedTrainer:
+def attach_trainer(state: GameState, player: int, card: int, pokemon: PokemonInPlay, discard_at_end_of_turn: int | None) -> AttachedTrainer:
     """使っている最中のトレーナーカードを、場のポケモンにつける（v0.2c。「つけて使う」トレーナー）。
 
     カードは ``state.trainer_in_use`` から、ついているポケモンの ``trainers`` に移る（同じカードが

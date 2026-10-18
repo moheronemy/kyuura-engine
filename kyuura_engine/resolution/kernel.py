@@ -418,7 +418,7 @@ def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner:
         return
     if receiver.damage >= max_hp(state, receiver):
         for instance in C.in_window(state, Window.KO_CHECK, owner, receiver, res.catalog):
-            if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.suppressors(state, instance):
+            if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.offer_stopped(state, instance, receiver):
                 raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
         return
     poison(state, owner, receiver, effect=records[0].card_id)
@@ -798,7 +798,7 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
                 if owner == state.current_player:
                     break  # 相手のワザのダメージで HP 以上になったのではない（G4・G5）
                 raise RuntimeError(f"任意の効果を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、ダメージを受けたときの写しがない（エンジンの不具合）")
-            if able and not C.suppressors(state, instance):
+            if able and not C.offer_stopped(state, instance, pokemon):
                 offers.append((owner, pokemon, instance))
                 res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
             break
@@ -827,8 +827,8 @@ def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPla
             gas = C.suppressors(state, instance)
             if gas and all(pid in knocked_ids for pid in gas):
                 raise res.question("post_knockout_gas_source_knocked", f"{pokemon.pokemon_id} と {gas}")
-            if gas:
-                break
+            if gas or C.offer_stopped(state, instance, pokemon):
+                break  # v0.59: まきちらせ!ベトベトガス・「ショックアイ」（きぜつするときの状態で決める。P13〜P18 と同じ時点）
             candidates.append((owner, pokemon.card, instance.power_key.card_id, instance.power_key.power_index))
             if record:
                 res.trace.record(CandidateFound(Window.KO_PROCESS, instance.name, pokemon.pokemon_id, None))

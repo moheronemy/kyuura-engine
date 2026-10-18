@@ -214,6 +214,10 @@ QUESTIONS: dict[str, Question] = {
         Question("trainer_poison_order", "UNRESOLVED_KOGA_POISON_ORDER", ("KG1",), 10,
                  "トレーナー「キョウ」の効果でどく状態にしたポケモンを、同じワザの効果が受けるダメージの違うどく状態（特殊などく）にするとき、キョウの効果とワザの効果の"
                  "順番（どちらのどく状態が残るか）は、印刷の文面・kyuura の記録から決められない"),
+        # v0.59（docs/energy-control-power-suppression-v0.59.md）
+        Question("buzzap_energy_type", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", ("BZ2",), 10,
+                 "マルマインの［エネエネ］で「○」エネルギー2個分になってついているマルマインのカードを、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶかは、"
+                 "印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる（出すエネルギーの個数と色は決まっている）"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,

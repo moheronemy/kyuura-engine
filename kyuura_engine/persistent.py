@@ -45,11 +45,13 @@ from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     AttackCoinCheck,
+    CannotAttachEnergy,
     CannotAttack,
     CannotAttackWhileSourceActive,
     CannotRetreat,
     CannotUseAttack,
     CannotUseOwnAttack,
+    CannotUsePowers,
     DamageReduction,
     DestinyBond,
     HalvedDamage,
@@ -352,3 +354,18 @@ def cannot_retreat(state: GameState, pokemon: PokemonInPlay) -> CannotRetreat | 
     """今の番に ``pokemon`` が「にげる」ことができない効果（v0.36。``CannotRetreat``。「アイスバーン」・「わしづかみ」を受けた）がはたらいているなら、
     その効果。"""
     return _active(state, pokemon, CannotRetreat)
+
+
+def powers_use_prevented(state: GameState, pokemon: PokemonInPlay) -> CannotUsePowers | None:
+    """今 ``pokemon`` が特殊能力を使うことができない効果（v0.59。``CannotUsePowers``。「ショックアイ」を受けた）がはたらいているなら、その効果。はたらくのは
+    与えた番から次の相手の番（``active_turn``）の終わりまで（「次の相手の番の終わりまで」）。宣言して使う特殊能力の使用だけを止める（呼ぶ側が決める）。"""
+    for effect in pokemon.persistent_effects:
+        if isinstance(effect, CannotUsePowers) and effect.created_turn <= state.turn_number <= effect.active_turn:
+            return effect
+    return None
+
+
+def energy_attach_blocked(state: GameState, pokemon: PokemonInPlay) -> CannotAttachEnergy | None:
+    """今の番に ``pokemon`` にエネルギーカードをつけることができない効果（v0.59。``CannotAttachEnergy``。「クリスタルビーム」の「おもて」）がはたらいているなら、
+    その効果。はたらくのは次の相手の番だけ。"""
+    return _active(state, pokemon, CannotAttachEnergy)

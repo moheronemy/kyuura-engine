@@ -80,6 +80,11 @@ from .effects import (
     RETREAT_OVERPAY_CODE,
     after_energy_attached,
     attach_from_hand_problem,
+    blaine_attach_applies,
+    blaine_effect_card,
+    blaine_second_attach_error,
+    double_attach_check,
+    double_attach_rainbow_check,
     energy_attached_from_hand,
     energy_unit_count,
     applicable_entry_power,
@@ -98,7 +103,7 @@ from .effects import (
     FORM_TRANSFORM,
     TRANSFORM_POWER_CODE,
     TRANSFORM_POWER_REASON,
-    ko_prevention_suppressors,
+    ko_prevention_suppressed,
     PLAY_AS_POKEMON_RETREAT_CODE,
     PLAY_AS_POKEMON_RETREAT_REASON,
     PLAY_AS_POKEMON_SETUP_CODE,
@@ -124,11 +129,12 @@ from .effects import (
     max_hp_drops,
     type_shift_power,
 )
-from .continuous import suppressors_of
+from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
-from .persistent import DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, expires_at_turn_start, lasting, remove_persistent_effects
+from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, energy_attach_blocked, expires_at_turn_start, lasting, powers_use_prevented,
+                         remove_persistent_effects)
 from .rules import RULES_2000_02_14, RuleSet
 from .stadiums import bench_limit, stadium_in_play
 from .state import (
@@ -138,6 +144,9 @@ from .state import (
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
     CannotRetreat,
+    CannotUsePowers,
+    CannotAttachEnergy,
+    EnergyRole,
     CannotUseAttack,
     CannotUseOwnAttack,
     DamageReduction,
@@ -380,6 +389,10 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
     handler(new, command, context if context is not None else _context(state, "derived", None))
+    if new.energy_roles:
+        # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: 場のポケモンについていなくなったエネルギーとしての役割の記録（マルマインの［エネエネ］）を消す
+        # （ついていないあいだは印刷のポケモンのカード。実装上の判断）
+        new.energy_roles = tuple(role for role in new.energy_roles if new.energy_role(role.card) is not None)
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 5 章・7 章）: このコマンドで、決められない姿（TF1・TF2・DG1。``effects.form_problems``）が新しくできたら、
     # このコマンドを受け付けない。決定への答え・対戦準備の最後（ポケモンを表にする）で、どの答えでもできるなら、その前の状態で対戦を止める（``Phase.HALTED``。
     # 答えのない決定を残さない）
@@ -706,13 +719,31 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
     if state.card_def(cmd.energy).category != "energy":
         # v0.58: 特殊エネルギーカード（登録されたもの。デッキの検査で確かめている）もつけられる。エネルギーカードでないカードの拒否のコードは v0.57 までと同じ
         raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {cmd.energy} は基本エネルギーカードではない")  # 理由の文も v0.57 と同じ（エネルギーカードではない）
+    cards = (cmd.energy,) if cmd.energy2 is None else (cmd.energy, cmd.energy2)
+    if cmd.energy2 is not None:
+        # v0.59: カツラの効果で 2 枚をいっしょにつける（docs/energy-control-power-suppression-v0.59.md 4 章）
+        _require_in_hand(state, cmd.player, cmd.energy2)
+        if cmd.energy2 == cmd.energy:
+            raise IllegalActionError("DUPLICATE_CHOICE", f"同じカード {cmd.energy} を 2 回つけようとした")
+    # v0.59: 通常の操作でつけた枚数（カツラの効果で 2 枚つけたら 2）。2 回目の操作は、カツラの効果がはたらいていて、「炎」エネルギーカードを「カツラのポケモン」に
+    # つける操作なら決められない（BL1。ほかの確認のあとで止める）。ほかは v0.58 までと同じ拒否
+    second_attach = False
     if state.energy_attachments_this_turn >= state.rules.energy_attachments_per_turn:
-        raise IllegalActionError("ENERGY_ALREADY_ATTACHED", "エネルギーカードはこの番にもうつけた（1 番に 1 枚）")
+        candidate = p.find_in_play(cmd.target)
+        if not (state.energy_attachments_this_turn == state.rules.energy_attachments_per_turn and candidate is not None
+                and blaine_attach_applies(state, cmd.player, candidate, cards)):
+            raise IllegalActionError("ENERGY_ALREADY_ATTACHED", "エネルギーカードはこの番にもうつけた（1 番に 1 枚）")
+        second_attach = True
     target = p.find_in_play(cmd.target)
     if target is None:
         if state.players[1 - cmd.player].find_in_play(cmd.target) is not None:
             raise IllegalActionError("TARGET_NOT_YOURS", "相手の場のポケモンにはつけられない")
         raise IllegalActionError("TARGET_NOT_IN_PLAY", f"{cmd.target!r} は自分の場のポケモンではない")
+    if cmd.energy2 is not None:
+        double_attach_check(state, cmd.player, target, cards)
+    if energy_attach_blocked(state, target) is not None:
+        # v0.59: カスミのメノクラゲの「クリスタルビーム」を受けた（次の相手の番、エネルギーカードをつけることができない）。カードを動かす前
+        raise IllegalActionError("ENERGY_ATTACH_PREVENTED", f"ポケモン {target.pokemon_id} には、この番はエネルギーカードをつけることができない（相手のワザの効果）")
     if state.energy_attached_by_powers_this_turn > 0:
         raise UnsupportedError(
             "UNRESOLVED_ATTACH_AFTER_POWER_ATTACH",
@@ -720,17 +751,26 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
             "エネルギーをつける（通常の操作）ことができるかは『オフィシャルブック2000』から決められない（p.310 の「1回の自分の番ごとに"
             "1枚だけ」にパワーでつけたカードを数えるかが書かれていない）ので扱わない",
         )
-    problem = attach_from_hand_problem(state, cmd.player, cmd.energy, target)
-    if problem is not None:
-        # v0.58: 特殊エネルギーの、手札から出してつけたときの効果が決められない（RB1・RB4）。カードを動かす前
-        raise UnsupportedError(*problem)
-    attach_energy_from_hand(state, cmd.player, cmd.energy, target)
-    state.energy_attachments_this_turn += 1
-    state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target)
-    # v0.58: 特殊エネルギーの、手札から出してつけたときの効果（きずぐすり配合・なんでもなおし配合・レインボー。GR-2000-P310-ATTACH-ENERGY）。場にあるカードの
-    # 移動（エナジートランスなど）では呼ばない
-    knocks_out = energy_attached_from_hand(state, cmd.player, cmd.energy, target)
-    after_energy_attached(state, cmd.player, target, cmd.energy)  # v0.31: つけたときにはたらく特殊能力（ほのおでかいふく）
+    if cmd.energy2 is not None:
+        double_attach_rainbow_check(state, cards)  # v0.59: レインボーエネルギーを「炎」エネルギーカードとして 2 枚の 1 枚に選べるか（RB2）
+    if second_attach:
+        raise blaine_second_attach_error(state, target)  # v0.59: BL1
+    for card in cards:
+        problem = attach_from_hand_problem(state, cmd.player, card, target)
+        if problem is not None:
+            # v0.58: 特殊エネルギーの、手札から出してつけたときの効果が決められない（RB1・RB4）。カードを動かす前
+            raise UnsupportedError(*problem)
+    knocks_out = False
+    for card in cards:
+        attach_energy_from_hand(state, cmd.player, card, target)
+    state.energy_attachments_this_turn += len(cards)
+    extra = {} if cmd.energy2 is None else {"energy2": cmd.energy2, "trainer_card": blaine_effect_card(state, cmd.player)}
+    state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target, **extra)
+    for card in cards:
+        # v0.58: 特殊エネルギーの、手札から出してつけたときの効果（きずぐすり配合・なんでもなおし配合・レインボー。GR-2000-P310-ATTACH-ENERGY）。場にあるカードの
+        # 移動（エナジートランスなど）では呼ばない
+        knocks_out = energy_attached_from_hand(state, cmd.player, card, target) or knocks_out
+        after_energy_attached(state, cmd.player, target, card)  # v0.31: つけたときにはたらく特殊能力（ほのおでかいふく）
     if knocks_out:
         resolution.after_energy(state, context)  # v0.58: レインボーエネルギーの 10 ダメージで HP 以上になったら、きぜつの処理
 
@@ -1199,6 +1239,21 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
             "POWER_SUPPRESSED",
             f"場のポケモン {names}の特殊能力がはたらいているので、特殊能力「{power.name_ja}」は使えず、その力も消えている（p.48・p.323）",
         )
+    goop = goop_gas_effects(state)
+    if goop:
+        # v0.59: まきちらせ!ベトベトガス（「おたがいの場のすべてのポケモンは特殊能力を使うことができず、その力も消える」）。かがくへんかガスと同じコード
+        raise IllegalActionError(
+            "POWER_SUPPRESSED",
+            f"トレーナー「{state.card_def(goop[0].source_card).name_ja}」（カード {goop[0].source_card}）の効果がはたらいているので、特殊能力「{power.name_ja}」は"
+            "使えず、その力も消えている",
+        )
+    if powers_use_prevented(state, user) is not None:
+        # v0.59: わるいアーボックの「ショックアイ」（「次の相手の番の終わりまで、そのポケモンは特殊能力を使うことができない」）。宣言して使う特殊能力の使用だけを止める
+        # （CR-CHEMICAL-GAS-USE-VS-POWER の読み方）。パワーごとの確認・宣言の前
+        raise IllegalActionError(
+            "POWER_USE_PREVENTED",
+            f"場のポケモン {user.pokemon_id} は、相手のワザの効果で、次の相手の番の終わりまで特殊能力を使うことができない",
+        )
     use = PowerUse(cmd.player, user.pokemon_id, slot.key, cmd.energy, cmd.source, cmd.target, card=None if slot.card == user.card else slot.card)
     effect.check_usable(state, use)
     if effect.once_per_turn and power_reuse_after_devolution(state, use):
@@ -1218,7 +1273,7 @@ def _use_pokemon_power(state: GameState, cmd: UsePokemonPower, context: resoluti
     _after_power_step(state, use, context)
 
 
-def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context) -> None:
+def _after_power_step(state: GameState, use: PowerUse, context: resolution.Context, converted=None) -> None:
     """特殊能力の処理（宣言・決定への答え）のあと（v0.42）: 決定を出していれば待つ（再開先 ``"power"`` だけ）。出していなければ、処理のあとの場を整える
     （``resolution.after_power``。きぜつ・空いたバトル場。なければ番のプレイヤーの ``Phase.MAIN``）。
 
@@ -1230,7 +1285,7 @@ def _after_power_step(state: GameState, use: PowerUse, context: resolution.Conte
             raise RuntimeError(f"特殊能力 {use.key} の処理の途中で、再開先 {state.decision.resume!r} の決定を出した（エンジンの不具合）")
         return
     effect = state.effects.power_entry(use.key.card_id, use.key.power_index).effect
-    resolution.after_power(state, context, knock_outs=effect.may_knock_out)
+    resolution.after_power(state, context, knock_outs=effect.may_knock_out, converted=converted)
     if use.return_to is not None:
         if state.decision is not None:
             raise RuntimeError(f"トレーナーの効果の途中で使った特殊能力 {use.key} のあとに、決定（{state.decision.kind}）が来た（今の対応カードでは起こらない。エンジンの不具合）")
@@ -1264,8 +1319,8 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
             effect.resolve(state, use)
         _after_power_step(state, use, context)
         return
-    effect.resume(state, use, decision, choices)
-    _after_power_step(state, use, context)
+    converted = effect.resume(state, use, decision, choices)  # v0.59: ［エネエネ］は使用後の処理への指示（``SelfKnockOutToEnergy``）を返す。ほかは None
+    _after_power_step(state, use, context, converted)
 
 
 def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context) -> None:
@@ -1497,8 +1552,9 @@ def check_invariants(state: GameState) -> list[str]:
                 place(pokemon.disguise, player, "場（「ばける」でのせたカード）")  # v0.49
             for uid in pokemon.energy:
                 place(uid, player, "場（ついているエネルギー）")
-                if uid in state.cards and not state.card_def(uid).is_basic_energy and state.effects.energy_effect(state.card_def(uid)) is None:
-                    # v0.58: 登録された特殊エネルギーカードはつけられる
+                if uid in state.cards and not state.card_def(uid).is_basic_energy and state.effects.energy_effect(state.card_def(uid)) is None \
+                        and state.energy_role(uid) is None:
+                    # v0.58: 登録された特殊エネルギーカードはつけられる。v0.59: ［エネエネ］でエネルギーとしてついているカード（``EnergyRole``）も
                     problems.append(f"エネルギーカードでない（登録のない特殊エネルギーの）カード {uid} がポケモンについている")
             problems.extend(_attached_trainer_problems(state, player, pokemon, place))
             if pokemon.card not in state.cards:
@@ -1582,6 +1638,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_turn_power_problems(state))  # v0.31
     problems.extend(_trainer_lock_problems(state))  # v0.47
     problems.extend(_trainer_effect_problems(state))  # v0.56
+    problems.extend(_energy_role_problems(state))  # v0.59
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
@@ -1612,7 +1669,7 @@ def check_invariants(state: GameState) -> list[str]:
     if phase is Phase.MAIN:
         if state.current_player not in PLAYERS:
             problems.append(f"番のプレイヤー {state.current_player!r} が正しくない")
-        if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn:
+        if not 0 <= state.energy_attachments_this_turn <= rules.energy_attachments_per_turn + _blaine_double_attached(state):
             problems.append(f"この番にエネルギーをつけた回数 {state.energy_attachments_this_turn} が正しくない")
     if state.first_player is not None and phase not in SETUP_PHASES:
         # 番は先攻から 1 番ずつ交互に進む（p.309）。有効期限（「次の相手の番の終わり」= 今の番 + 1）の前提（v0.2e）
@@ -1973,7 +2030,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
     if state.phase in SETUP_PHASES:
         return [f"{where} が対戦準備の段階（{state.phase.value}）にある"]
     problems = []
-    if pokemon is not p.active:
+    if pokemon is not p.active and not all(getattr(e, "bench_ok", False) for e in effects):
+        # v0.59: 「ショックアイ」（``CannotUsePowers.bench_ok``）は、選んだ相手のベンチのポケモンも受ける
         problems.append(f"プレイヤー {player} のベンチのポケモン {pokemon.pokemon_id} に持続する効果が残っている（p.311・p.322）")
     kinds = [e.kind for e in effects]
     # v0.45: 期限のない効果（「スミをかける」の「それ以後」。``AttackCoinCheck.lasting``）は、効果を与えた番の違うものが同じポケモンに重なりうる（受けたポケモンが
@@ -2025,8 +2083,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_next_turn_attack_damage_problems(state, pokemon, effect, where))  # v0.27
         if isinstance(effect, (CannotUseOwnAttack, CannotUseAttack)):
             problems.extend(_attack_lock_problems(state, pokemon, effect, where))  # v0.35
-        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive)):
-            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ）
+        if isinstance(effect, (AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive, CannotUsePowers, CannotAttachEnergy)):
+            problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム）
         if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
@@ -2258,6 +2316,12 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
         # あとにも変わる。説明は「このワザを受けた相手が「最大HPが50以下」のポケモンなら」で、受けたときの条件）
         terms = getattr(entry.effect, "conditional_lock_terms", None) if entry is not None else None
         expected = (CannotAttackWhileSourceActive, terms()[1]) if terms is not None else None
+    elif isinstance(effect, CannotUsePowers):
+        terms = getattr(entry.effect, "power_lock_terms", None) if entry is not None else None  # v0.59: ショックアイ
+        expected = CannotUsePowers
+    elif isinstance(effect, CannotAttachEnergy):
+        terms = getattr(entry.effect, "attach_lock_terms", None) if entry is not None else None  # v0.59: クリスタルビーム
+        expected = CannotAttachEnergy
     else:
         terms = getattr(entry.effect, "retreat_lock_terms", None) if entry is not None else None
         expected = CannotRetreat
@@ -2738,7 +2802,7 @@ def _ko_prevention_decision_problems(state: GameState, d) -> list[str]:
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} が HP 以上のダメージを受けていない")
     if not effect.is_able(pokemon):
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} がねむり・マヒ・こんらん（使えない。G25〜G27）")
-    if ko_prevention_suppressors(state, pokemon, key):
+    if ko_prevention_suppressed(state, pokemon, key):
         problems.append(f"「こんじょう」の決定の対象のポケモン {pokemon.pokemon_id} の特殊能力が、かがくへんかガスに消されている（G31）")
     received = None
     for event in events:
@@ -2821,7 +2885,7 @@ def _post_knockout_decision_problems(state: GameState, d) -> list[str]:
     if problems:
         return problems
     definition = state.card_def(card)
-    if suppressors_of(state, definition.powers[power_index]):
+    if power_suppressed(state, definition.powers[power_index]):
         problems.append(f"「ふしちょう」の決定のカード {card} の特殊能力が、かがくへんかガスに消されている（P18）")
     knocked = []
     for event in reversed(state.log):
@@ -2961,6 +3025,40 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
         # v0.47: なにかの化石・ピッピ人形を場からすてて空いたバトル場（``discard_from_play``）も、同じ続きで出す
         return ["特殊能力の処理のあとの決定（続き continue_turn）の前の、今の番の最後の宣言が、特殊能力の宣言・場からすてる操作ではない"]
     return []
+
+
+def _energy_role_problems(state: GameState) -> list[str]:
+    """v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: エネルギーとしての役割の記録（``GameState.energy_roles``。マルマインの［エネエネ］）。
+
+    - ``EnergyRole`` の値のタプルで、カードは重複しない。どのカードも、今は場のポケモンについている（ついていなくなった記録はコマンドの終わりに消している）
+    - 印刷の定義がポケモンのカードで、持ち主が ``owner``。個数は 2、色は ``EnergyType``、番は今の番まで
+    - ログ ``energy_conversion`` に、同じカード・色・個数・番の記録がある（エンジンはこの記録をログから決めない。状態とログが食い違っていないかだけを確かめる）"""
+    roles = state.energy_roles
+    if not isinstance(roles, tuple) or any(type(r) is not EnergyRole for r in roles):
+        return [f"エネルギーとしての役割の記録 {roles!r} が EnergyRole の値のタプルではない"]
+    problems = []
+    if len({r.card for r in roles}) != len(roles):
+        problems.append(f"エネルギーとしての役割の記録 {roles!r} にカードの重複がある")
+    for role in roles:
+        if role.card not in state.cards:
+            problems.append(f"エネルギーとしての役割 {role!r} のカードがこの対戦のカードではない")
+            continue
+        if state.energy_role(role.card) is None:
+            problems.append(f"エネルギーとしての役割 {role!r} のカードが場のポケモンについていない")
+        if state.printed_def(role.card).category != "pokemon" or state.cards[role.card].owner != role.owner:
+            problems.append(f"エネルギーとしての役割 {role!r} のカードが、持ち主 {role.owner} のポケモンのカードではない")
+        if role.units != 2 or not isinstance(role.energy_type, EnergyType) or not 1 <= role.turn <= state.turn_number:
+            problems.append(f"エネルギーとしての役割 {role!r} の個数・色・番が正しくない")
+        logged = any(e["kind"] == "energy_conversion" and e.get("card") == role.card and e.get("energy_type") == role.energy_type.value
+                     and e.get("units") == role.units and e["turn"] == role.turn for e in state.log)
+        if not logged:
+            problems.append(f"エネルギーとしての役割 {role!r} に対応するログ energy_conversion がない")
+    return problems
+
+
+def _blaine_double_attached(state: GameState) -> int:
+    """v0.59: この番に、カツラの効果で手札から 2 枚をいっしょにつけた通常の操作（ログ ``attach_energy`` の ``energy2``）があれば 1（つけた枚数の上限が 1 枚多い）。"""
+    return 1 if any(e["kind"] == "attach_energy" and "energy2" in e for e in _events_since_turn_start(state)) else 0
 
 
 def _events_since_turn_start(state: GameState) -> list:
@@ -3339,6 +3437,8 @@ def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]
                 knocked.append(event.get("player"))
         elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
             continue
+        elif kind == "energy_conversion" and not seen_knock_out:
+            continue  # v0.59: ［エネエネ］できぜつしたマルマインのカードを、きぜつのすぐあと（サイドの前）にエネルギーとしてつけた
         else:
             break
     if not knocked:
@@ -3555,6 +3655,13 @@ def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonIn
             problems.append(f"ついているトレーナー {attached.card}（{definition.id}）に、場に残る実装が登録されていない")
         if state.phase in TERMINAL_PHASES:
             continue
+        if attached.discard_at_end_of_turn is None:
+            # v0.59: 有効期限のないついているトレーナー（タケシの保護。場をはなれるまでついたまま）。登録の実装の ``discard_turn_offset`` も None
+            if entry is not None and entry.effect.discard_turn_offset is not None:
+                problems.append(f"ついているトレーナー {attached.card} に有効期限がないが、登録の実装 {definition.id} は有効期限のあるトレーナー")
+            continue
+        if entry is not None and entry.effect.discard_turn_offset is None:
+            problems.append(f"ついているトレーナー {attached.card} に有効期限があるが、登録の実装 {definition.id} は場をはなれるまでついたままのトレーナー")
         if attached.discard_at_end_of_turn < state.turn_number:
             problems.append(f"ついているトレーナー {attached.card} の有効期限（{attached.discard_at_end_of_turn} 番の終わり）が過ぎている")
         elif entry is not None and entry.effect.stays_in_play:

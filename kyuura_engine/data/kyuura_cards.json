@@ -591,6 +591,14 @@
     "PMCG4-064",
     "PMCG4-065"
   ],
+  "pool_v0_59": [
+    "PMCG1-040",
+    "PMCG6-093",
+    "PMCG5-090",
+    "PMCG5-030",
+    "PMCG4-008",
+    "PMCG4-056"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -33739,6 +33747,383 @@
         "series": "ロケット団",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg04-065-rainbowenergy/"
+      }
+    },
+    {
+      "id": "PMCG1-040",
+      "jp_set": "PMCG1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マルマイン",
+        "en": "Electrode"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          101
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ビリリダマ",
+          "en": "Voltorb"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エネエネ",
+              "en": "Buzzap"
+            },
+            "text": {
+              "ja": "マルマインはみずから「きぜつ」して好きな色のエネルギー2個分になり、場のポケモンにつけることができる。「ねむり・マヒ・こんらん」状態のときには使えない。",
+              "en": "At any time during your turn (before your attack), you may Knock Out Electrode and attach it to 1 of your other Pokémon. If you do, choose a type of Energy. Electrode is now an Energy card (instead of a Pokémon) that provides 2 energy of that type. You can't use this power if Electrode is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんげき",
+              "en": "Electric Shock"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分に10ダメージ。",
+              "en": "Flip a coin. If tails, Electrode does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-040",
+        "pokemontcg": [
+          "base1-21"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-040-marumine/",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし",
+          "特殊能力が「特種能力」と表記されている"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-040-marumine/"
+      }
+    },
+    {
+      "id": "PMCG6-093",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラ",
+        "en": "Blaine"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたが「炎」エネルギーカードを手札から出して「カツラのポケモン」につける時、つける「炎」エネルギーカードの枚数を、この番だけ、1枚でなく2枚にする。",
+          "en": "During this turn, instead of attaching your free Energy card, you may instead attach 2 Fire Energy cards to 1 of your Pokémon with Blaine in its name. (Playing additional copies of this card this turn has no effect.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-093",
+        "pokemontcg": [
+          "gym2-17",
+          "gym2-100"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-090",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "タケシの保護",
+        "en": "Brock's Protection"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの場の「タケシのポケモン」につけて使う。(そのポケモンが場をはなれるまで、このカードはついたまま)このカードをつけているポケモンのエネルギーカードは、相手の使うワザや、相手の使うトレーナーカードによっては、はがされない。",
+          "en": "Attach Brock's Protection to 1 of your Pokémon with Brock in its name. Energy cards attached to that Pokémon can't be removed by your opponent's attacks or Trainer cards. (This doesn't stop the rest of the attack or Trainer card from working normally.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-090",
+        "pokemontcg": [
+          "gym2-101"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E4%BF%9D%E8%AD%B7",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E4%BF%9D%E8%AD%B7"
+      }
+    },
+    {
+      "id": "PMCG5-030",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのメノクラゲ",
+        "en": "Misty's Tentacool"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          72
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "クリスタルビーム",
+              "en": "Crystal Beam"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このワザを受けた相手には、「エネルギーカード」をつけることができない。",
+              "en": "Flip a coin. If heads, your opponent can't attach Energy cards to the Defending Pokémon during his or her next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-030",
+        "pokemontcg": [
+          "gym1-57"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%A1%E3%83%8E%E3%82%AF%E3%83%A9%E3%82%B2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 16,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%83%A1%E3%83%8E%E3%82%AF%E3%83%A9%E3%82%B2LV.16_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG4-008",
+      "jp_set": "PMCG4",
+      "category": "pokemon",
+      "name": {
+        "ja": "わるいアーボック",
+        "en": "Dark Arbok"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          24
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "アーボ",
+          "en": "Ekans"
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ショックアイ",
+              "en": "Stare"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場にいるポケモンから1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。次の相手の番の終わりまで、そのポケモンは特殊能力を使うことができない。",
+              "en": "Choose 1 of your opponent's Pokémon. This attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.) If that Pokémon has a Pokémon Power, that power stops working until the end of your opponent's next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "どくのきり",
+              "en": "Poison Vapor"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。相手の控えポケモン全員に(「弱点・抵抗力」に関係なく)それぞれ10ダメージ。",
+              "en": "The Defending Pokémon is now Poisoned. This attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-008",
+        "pokemontcg": [
+          "base5-2",
+          "base5-19"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-002-warui-arbok/",
+      "jp_print": {
+        "level": 25,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-002-warui-arbok/"
+      }
+    },
+    {
+      "id": "PMCG4-056",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "まきちらせ!ベトベトガス",
+        "en": "Goop Gas Attack"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使うことができず、その力も消える。",
+          "en": "All Pokémon Powers stop working until the end of your opponent's next turn."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ポケモンパワーを止める範囲",
+          "ja": "「次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使うことができず、その力も消える。」。二次資料は、使った時点で場に出ているポケモンだけを止める意味だと説明",
+          "en": "「All Pokémon Powers stop working …」とあり、後から出たポケモンも止まるかがあいまい。WotC の裁定は一部だけ正しかった",
+          "confidence": "有力",
+          "sources": [
+            "N1",
+            "X3",
+            "X14"
+          ]
+        }
+      ],
+      "notes": [
+        "「!」の後の空白の有無はデータにより異なる"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG4-056",
+        "pokemontcg": [
+          "base5-78"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-059-makichirasebetobetogass/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-059-makichirasebetobetogass/"
       }
     },
     {

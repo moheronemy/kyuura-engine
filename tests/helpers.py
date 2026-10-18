@@ -608,6 +608,16 @@ RAINBOW_ENERGY = "PMCG4-065"  # レインボーエネルギー（ロケット団
 V0_58_POKEMON = (BROCKS_GRAVELER, BROCKS_GOLEM)
 V0_58_ENERGIES = (DOUBLE_COLORLESS_ENERGY, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY)
 V0_58_CARDS = (BROCKS_GRAVELER, BROCKS_GOLEM, SABRINAS_PSYCHIC_CONTROL, *V0_58_ENERGIES)
+# v0.59（docs/energy-control-power-suppression-v0.59.md）。特殊能力を止める効果・エネルギーの扱いを変える 6 枚
+BUZZAP_ELECTRODE = "PMCG1-040"  # マルマイン（第1弾。040/096。ビリリダマから進化。HP 80・雷・弱点 闘・にげる 1。［エネエネ］・でんげき（雷雷雷）50）。ELECTRODE（第2弾）と別のカード
+BLAINE_TRAINER = "PMCG6-093"  # カツラ（闇からの挑戦。085/000。トレーナー）。「カツラの」ポケモン・カツラの奥の手・カツラのギャンブルと別のカード
+BROCKS_PROTECTION = "PMCG5-090"  # タケシの保護（リーダーズスタジアム。070/096。トレーナー）
+MISTYS_TENTACOOL = "PMCG5-030"  # カスミのメノクラゲ（リーダーズスタジアム。025/096。HP 50・水・弱点 雷・にげる 1。クリスタルビーム（水無）20）。TENTACOOL と別の名前
+DARK_ARBOK = "PMCG4-008"  # わるいアーボック（ロケット団。002/065。アーボから進化。HP 60・草・弱点 超・にげる 2。ショックアイ（草草）・どくのきり（草草草）10）
+GOOP_GAS_ATTACK = "PMCG4-056"  # まきちらせ!ベトベトガス（ロケット団。059/065。トレーナー）
+V0_59_POKEMON = (BUZZAP_ELECTRODE, MISTYS_TENTACOOL, DARK_ARBOK)
+V0_59_TRAINERS = (BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK)
+V0_59_CARDS = (BUZZAP_ELECTRODE, BLAINE_TRAINER, BROCKS_PROTECTION, MISTYS_TENTACOOL, DARK_ARBOK, GOOP_GAS_ATTACK)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1142,6 +1152,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.52（docs/field-return-v0.52.md）
     _effects.ReturnBothActivesToDeck,  # エリカのハクリューの「つれさる」
     _effects.SelfDestructThenDiscardStadium,  # v0.58: タケシのゴローンの「ばくれつ」（v0.39 のじばく + 場のスタジアムをトラッシュする要素 DiscardStadium）
+    _effects.ChooseOpponentPokemonDamageAndPowerLock,  # v0.59: わるいアーボックの「ショックアイ」（相手の場のポケモン 1 匹に 10 + 持続する効果 CannotUsePowers）
+    _effects.DamagePoisonAndBenchDamage,  # v0.59: わるいアーボックの「どくのきり」
+    _effects.DamageThenAttachLockOnHeads,  # v0.59: カスミのメノクラゲの「クリスタルビーム」（持続する効果 CannotAttachEnergy）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

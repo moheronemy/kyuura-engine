@@ -44,7 +44,7 @@ from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
-    CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUseOwnAttack, DamageReduction, DestinyBond, HalvedDamage, NextTurnAttackDamage, PreventDamage,
+    CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, HalvedDamage, NextTurnAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..zones import (
@@ -207,7 +207,7 @@ class AttackRun:
         for instance in C.in_window(self.state, Window.KO_CHECK, owner, target, self.res.catalog):
             if instance.definition.timing is not C.Timing.OFFER:
                 continue
-            if self.res.ko_prevention_able.get(target.pokemon_id) and not C.suppressors(self.state, instance):
+            if self.res.ko_prevention_able.get(target.pokemon_id) and not C.offer_stopped(self.state, instance, target):
                 if owner == self.player:
                     raise self.res.question("ko_prevention_self_effect", f"ポケモン {target.pokemon_id}")
                 raise self.res.question("ko_prevention_attack_effect", f"ポケモン {target.pokemon_id}",
@@ -416,6 +416,10 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
     cards = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
     if cards:
         raise run.res.question("rainbow_energy_type", f"ポケモン {pokemon.pokemon_id} のレインボーエネルギー {cards}・「{energy_type.ja}」エネルギー")
+    # v0.59（BZ2）: ［エネエネ］でその色のエネルギーになったカードが、説明の「「X」エネルギー(カード)」に当たるかが決まらない
+    converted = E.converted_energy_cards(run.state, pokemon, energy_type)
+    if converted:
+        raise run.res.question("buzzap_energy_type", f"ポケモン {pokemon.pokemon_id} のカード {converted}・「{energy_type.ja}」エネルギー")
 
 
 def rainbow_attach_question(run: AttackRun, uids, energy_type: EnergyType) -> None:
@@ -1844,6 +1848,8 @@ class DiscardOpponentEnergy(Element):
 
     @staticmethod
     def _energy(run: AttackRun, pokemon: PokemonInPlay) -> list[int]:
+        if E.energy_removal_protected(run.state, 1 - run.player, pokemon, run.player) is not None:
+            return []  # v0.59: タケシの保護（相手の使うワザによってははがされない）。はがせるカードがないポケモンと同じ（処理の対象がない）
         return [uid for uid in pokemon.energy if run.state.card_def(uid).category == "energy"]
 
     def run(self, run: AttackRun) -> bool:
@@ -1995,6 +2001,16 @@ class Draw(Element):
         return False
 
 
+def attach_prevented(run: AttackRun, pokemon: PokemonInPlay, element: str) -> bool:
+    """v0.59: ワザの効果でエネルギーカードをつける先 ``pokemon`` が、クリスタルビームの効果（次の相手の番、エネルギーカードをつけることができない）を受けているなら、つけずに
+    ログ ``effect_skipped``（``reason`` は ``attach_prevented``）を残して真。手札・山札・トラッシュからつけるのは「つける」こと（場のエネルギーのつけかえとは別。CB1）。"""
+    if E.energy_attach_block(run.state, pokemon) is None:
+        return False
+    run.state.add_event("effect_skipped", player=run.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(run.key),
+                        element=element, reason="attach_prevented")
+    return True
+
+
 @dataclass(frozen=True)
 class AttachFromDiscard(Element):
     """自分のトラッシュに ``energy_type`` の基本エネルギーカードがあれば、最大 ``max_cards`` 枚を取り出して、自分（ワザを使ったポケモン）につける
@@ -2019,6 +2035,8 @@ class AttachFromDiscard(Element):
             # 「たいでん」はダメージの要素がないので起こらない
             run.state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 element="attach_from_discard", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if attach_prevented(run, attacker, "attach_from_discard"):
             return False
         candidates = self._candidates(run)
         if not candidates:
@@ -2730,6 +2748,77 @@ class OpponentRetreatLock(Element):
         turn = run.state.turn_number
         effect = CannotRetreat(source_card=attacker.card, source_player=run.player, created_turn=turn,
                                active_turn=turn + CannotRetreat.turns_until_active)
+        add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class OpponentAttachLock(OpponentRetreatLock):
+    """コインが ``local_coin`` なら、次の相手の番、相手の対戦ポケモン（このワザを受けた相手）にはエネルギーカードをつけることができない（v0.59。カスミのメノクラゲの
+    「クリスタルビーム」。持続する効果 ``CannotAttachEnergy``）。v0.41 の ``OpponentRetreatLock`` と同じ形（対象が HP 以上ならコインを投げない・「とうめい」・「ワザを
+    うけない」状態の評価・効果だけを決めるコインの問い）で、与える効果だけが違う。"""
+
+    opponent_element: ClassVar[str] = E.ATTACH_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        return _opponent_lock(self, run, CannotAttachEnergy, E.ATTACH_LOCK_ELEMENT)
+
+
+def _opponent_lock(element, run: AttackRun, kind: type, element_kind: str) -> bool:
+    opponent = 1 - run.player
+    target = run.opponent_active()
+    if run.knocked_out(target):
+        run.ko_prevention_conflict(target)
+        return False
+    if element.local_coin is not None:
+        if run.fs.reception.get(target.pokemon_id) is False:
+            final = run.fs.evaded.get(target.pokemon_id)
+            raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                                   None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+        prevented_effect_coin(run, opponent, target)
+        if run.flip(1).results[0] is not element.local_coin:
+            return False
+    if not reaches(run.res, run.fs, opponent, target, element_kind):
+        return False
+    attacker = run.attacker()
+    turn = run.state.turn_number
+    effect = kind(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + kind.turns_until_active)
+    add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key))
+    return False
+
+
+@dataclass(frozen=True)
+class LockChosenPowers(Element):
+    """``damage`` のダメージの要素（相手の場のポケモンを選んだ ``ChosenOpponentPokemonDamage``）で選んだポケモンは、次の相手の番の終わりまで特殊能力を使うことが
+    できない（v0.59。わるいアーボックの「ショックアイ」。持続する効果 ``CannotUsePowers``。バトル場・ベンチのどちらのポケモンも受ける）。
+
+    - 相手のポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する（``reaches``。選んだポケモンが控えでも同じ）
+    - 選んだポケモンがこのワザで HP 以上なら与えない（p.309。こんじょうを使えるなら G37 と同じ問い）
+    - ダメージの要素が「ダメージを受けない」状態などでダメージを与えなかったときも、効果は与える（説明は「ダメージを与えた後」の形ではない）
+    """
+
+    damage: str = "bench_damage"
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.POWER_LOCK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        result = run.fs.results.get(self.damage)
+        if result is None:
+            raise RuntimeError(f"特殊能力を使えなくするポケモンを選んだダメージの要素 {self.damage} の結果がない（エンジンの不具合）")
+        opponent = 1 - run.player
+        found = run.state.find_pokemon(result.pokemon_id)
+        if found is None or found[0] != opponent:
+            return False
+        target = found[1]
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.POWER_LOCK_ELEMENT):
+            return False
+        attacker = run.attacker()
+        turn = run.state.turn_number
+        effect = CannotUsePowers(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                 active_turn=turn + CannotUsePowers.turns_until_active)
         add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key))
         return False
 
@@ -3632,6 +3721,10 @@ class AttachFromDeck(Element):
         attacker = run.attacker()
         if run.knocked_out(attacker):
             raise RuntimeError(f"ワザ {run.key} を使ったポケモンが、山札からエネルギーをつける前に HP 以上（このワザにダメージの要素はない。エンジンの不具合）")
+        if E.energy_attach_block(run.state, attacker) is not None:
+            # v0.59: クリスタルビームを受けている（エネルギーカードをつけることができない）。つけない（「つけてよい」の、つけないこと）。山札は今までどおり切る
+            self._none(run, attacker, "attach_prevented")
+            return False
         candidates = self.candidates(run)
         if not candidates:
             self._none(run, attacker, "no_candidates")
@@ -4451,6 +4544,8 @@ class MoveOpponentEnergyToBench(Element):
             return False
         if not p.bench:
             return False  # 「相手に控えがいない時、この効果はない」（はがさない）
+        if E.energy_removal_protected(run.state, opponent, target, run.player) is not None:
+            return False  # v0.59: タケシの保護（相手の使うワザによってははがされない）。はがせるカードがない
         rainbow = E.rainbow_cards_attached(run.state, [target])
         if rainbow:
             # v0.58（RB3）: 相手の対戦ポケモンのレインボーエネルギーが、説明の「基本エネルギーカード」として選べるかが決まらない
@@ -4547,7 +4642,8 @@ class AttachFromHand(Element):
         return E.hand_basic_energy(run.state, run.player, self.energy_type)
 
     def has_target(self, run: AttackRun) -> bool:
-        return bool(self._candidates(run)) and not run.knocked_out(run.attacker())
+        attacker = run.attacker()
+        return bool(self._candidates(run)) and not run.knocked_out(attacker) and E.energy_attach_block(run.state, attacker) is None
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -4556,6 +4652,8 @@ class AttachFromHand(Element):
         if run.knocked_out(attacker):
             run.state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 element="attach_from_hand", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if attach_prevented(run, attacker, "attach_from_hand"):
             return False
         candidates = self._candidates(run)
         if not candidates:
@@ -5225,6 +5323,9 @@ BUILDERS: dict[type, Any] = {
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
     ),
     # v0.39（docs/selfdestruct-spread-count-v0.39.md）。じばく・控えへのダメージ・場のポケモンの数でダメージが決まるワザ
+    E.ChooseOpponentPokemonDamageAndPowerLock: lambda e: (ChosenOpponentPokemonDamage(Fixed(e.damage)), LockChosenPowers()),
+    E.DamagePoisonAndBenchDamage: lambda e: (Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage)), Status(POISON)),
+    E.DamageThenAttachLockOnHeads: lambda e: (Damage(OPP, Printed()), OpponentAttachLock(local_coin=HEADS)),
     E.SelfDestructThenDiscardStadium: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"),
         BenchDamage(Fixed(e.bench_damage), weakness_resistance=False),

@@ -25,7 +25,7 @@ from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
-from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, max_hp, stadium_attack_coin_available, status_at_attack_blocked
+from ..effects import AttackKey, AttackUse, PowerKey, attach_converted_energy, counts_as_knockout, max_hp, stadium_attack_coin_available, status_at_attack_blocked
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench
@@ -396,7 +396,7 @@ def _next_promotion_or_end(res: Resolution, queue: tuple, then) -> None:
 # ---------------------------------------------------------------- 特殊能力の処理のあと（v0.42。docs/power-decisions-v0.42.md 3 章）
 
 
-def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
+def after_power(state: GameState, ctx: Context, *, knock_outs: bool, converted=None) -> None:
     """宣言して使う特殊能力の処理（決定への答えを含む）が終わったあと、場を整える（v0.42）。
 
     - HP 以上のダメージのポケモンがいれば（ゲンガーの「のろい」でダメージカウンターをのせた。カウンターの移動はワザのダメージではない。
@@ -414,6 +414,9 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
     渡された状態（コマンドの入口が作った複製）を変える。"""
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
     state.phase = Phase.MAIN
+    if converted is not None:
+        _knock_out_to_energy(res, converted)
+        return
     gone = knocked(res)
     if gone and not knock_outs:
         return  # 不変条件（場のポケモンのダメージは HP 未満）が StateIntegrityError にする
@@ -428,6 +431,29 @@ def after_power(state: GameState, ctx: Context, *, knock_outs: bool) -> None:
         return
     if any(state.players[p].active is None for p in PLAYERS):
         _next_prize_or_judge(res, (), CONTINUE_TURN, ())
+
+
+def _knock_out_to_energy(res: Resolution, converted) -> None:
+    """v0.59: マルマインの［エネエネ］（``effects.SelfKnockOutToEnergy``）。マルマインをきぜつの処理に送り（いちばん上のカードはトラッシュしない。ほかのカードはトラッシュ。
+    ログ ``knock_out`` の ``timing`` は ``"power"``・``to_energy``。持続する効果は消える）→ そのカードをつける先のエネルギーとしてつける（``effects.attach_converted_energy``）→
+    相手がサイドを取る → 勝ち負け → ふしちょう（マルマインにはない。きぜつするときの状態で写す）→ バトル場に出す → 同じ番（``CONTINUE_TURN``）。
+    「きぜつ」してからエネルギーになる順番は説明の順（「みずから「きぜつ」して…エネルギー2個分になり、…つける」）。サイド・勝ち負けはそのあと（ワザのあとと同じく、
+    きぜつの処理のあとにまとめる）。どの順番でも、つける先は相手のサイド・勝ち負けにかかわらないので結果は同じ。"""
+    state = res.state
+    found = state.find_pokemon(converted.pokemon_id)
+    if found is None or found[0] != converted.owner:
+        raise RuntimeError(f"［エネエネ］のポケモン {converted.pokemon_id} が使ったプレイヤーの場にいない（エンジンの不具合）")
+    owner, pokemon = found
+    gone = [(owner, pokemon)]
+    try:
+        candidates = capture_post_knockout(res, gone)
+    except OpenQuestion as question:
+        raise to_error(question.key, question.detail, question.error) from None
+    card = pokemon.card
+    counted = counts_as_knockout(state, pokemon)
+    PR.knock_out(state, owner, pokemon, counted=counted, timing="power", to_energy=True)
+    attach_converted_energy(state, owner, card, converted.pokemon_id, converted.target, converted.energy_type)
+    _after_knockouts(res, [1 - owner] if counted else [], CONTINUE_TURN, candidates)
 
 
 # ---------------------------------------------------------------- 手札からつけたエネルギーの効果のあと（v0.58。docs/stadium-reuse-special-energy-v0.58.md）
@@ -521,7 +547,8 @@ def _end_turn(res: Resolution) -> None:
     """番の終わりの窓（期限: ついているトレーナー → 持続する効果 → にげるの失敗の記録。v0.13 と同じ順番）→ ポケモンチェック。"""
     state = res.state
     res.trace.record(WindowOpened(Window.TURN_END, None))
-    PR.expire_at_turn_end(state)  # v0.13 の経路と同じ手続き
+    if not PR.expire_at_turn_end(state):  # v0.13 の経路と同じ手続き
+        return  # v0.59: まきちらせ!ベトベトガスの効果が消えると受け付けられない状態になるので、対戦を止めた（``Phase.HALTED``）
     _pokemon_check(res)
 
 
