@@ -203,6 +203,10 @@ from kyuura_engine.effects import (
     ShuffleHandIntoDeckThenDraw,
     SpecialConditionImmunity,
     ZeroLargeDamageReceived,
+    # v0.55
+    CoinStatusOnOpponentActiveTrainer, CureSpecialConditionsTrainer, DiscardAttachedEnergyTrainer, DiscardEnergyThenHealTrainer, DiscardPileExchange,
+    HealEachDamagedPokemonTrainer, HealOwnerPokemonThenDiscardHand, LookTopTakeRestDiscardTrainer, MoveAllEnergyBetweenOwnerPokemon, OpponentHandTrainerToDeck,
+    ReturnBasicEnergyToHandTrainer, SwitchBothActivesTrainer,
 )
 from kyuura_engine.damage import ADD, HALVE_DOWN, HALVE_UP, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST
 from kyuura_engine.evolution import skipped_stage1_basic
@@ -400,6 +404,10 @@ def search_retrieval_problems(state, events: list[dict]) -> list[str]:
         if drawn is not None and len(drawn["cards"]) != effect.draw:
             problems.append(f"{label} で引いたカード {drawn['cards']} が {effect.draw} 枚ではない（もどしたあとの山札は足りる）")
     else:
+        if getattr(effect, "reveal_hand", False):
+            shown = take("reveal_hand")  # v0.55: 礼儀作法（山札をさがす前に手札を見せる。見せた手札にたねポケモンはない）
+            if shown is not None and any(state.printed_def(uid).is_basic_pokemon for uid in shown["cards"]):
+                problems.append(f"{label} で見せた手札 {shown['cards']} にたねポケモンがある（使うための条件を満たしていない）")
         if effect.discard_cost:
             paid = take("discard_from_hand")
             if paid is not None and len(paid["cards"]) != effect.discard_cost:
@@ -550,6 +558,114 @@ def hand_deck_problems(state, events: list[dict]) -> list[str]:
             if looked is not None and arranged is not None and (not 1 <= looked["count"] <= effect.max_cards or looked["owner"] != user
                                                                 or sorted(arranged["cards"]) != sorted(looked["cards"])):
                 problems.append(f"{label} で見た・もどしたカード {looked['cards']}・{arranged['cards']} が、自分の山札の上の {effect.max_cards} 枚までの並べかえではない")
+    if body:
+        problems.append(f"{label} の最後に、処理にないイベント {[e['kind'] for e in body]} がある")
+    return problems
+
+
+def instant_trainer_problems(state, events: list[dict]) -> list[str]:
+    """v0.55: すぐに使い終わるトレーナー（docs/instant-trainers-v0.55.md）1 回ぶんのイベント（``play_trainer`` から ``discard_trainer`` まで）の並びが、登録の実装
+    （見る → 手札・トラッシュ／もどす → 切る／使うための条件 → 相手の側／とりのぞく → すてる／相手 → 使ったプレイヤーの入れ替え）と合うか。動かしたカードの数・側・
+    出どころ（``trainer_card``）を確かめる。ゾーンの組み立て直しは ``log_problems`` の本体が行う（礼儀作法は ``search_retrieval_problems``）。"""
+    play = events[0]
+    card, user = play["card"], play["player"]
+    effect = _trainer_effect_of(state, card)
+    kinds = (LookTopTakeRestDiscardTrainer, OpponentHandTrainerToDeck, DiscardPileExchange, DiscardAttachedEnergyTrainer, DiscardEnergyThenHealTrainer,
+             CureSpecialConditionsTrainer, CoinStatusOnOpponentActiveTrainer, ReturnBasicEnergyToHandTrainer, HealEachDamagedPokemonTrainer,
+             HealOwnerPokemonThenDiscardHand, MoveAllEnergyBetweenOwnerPokemon, SwitchBothActivesTrainer)
+    if not isinstance(effect, kinds):
+        return []
+    body = list(events[1:-1])
+    label = f"{play['turn']} 番の {state.cards[card].card_id}（カード {card}）"
+    problems: list[str] = []
+    opponent = 1 - user
+
+    def take(kind: str, player: int | None = None) -> dict | None:
+        if body and body[0]["kind"] == kind and (player is None or body[0].get("player") == player) and body[0].get("trainer_card", card) == card:
+            return body.pop(0)
+        problems.append(f"{label} のイベントの並びに プレイヤー {player} の {kind} がない（{[e['kind'] for e in body[:3]]}）")
+        body.clear()
+        return None
+
+    def skip(*names: str) -> None:
+        while body and body[0]["kind"] in names:
+            body.pop(0)
+
+    if isinstance(effect, LookTopTakeRestDiscardTrainer):
+        looked, taken, rest = take("look_at_deck_top", user), take("looked_to_hand", user), take("looked_to_discard", user)
+        if None not in (looked, taken, rest) and (len(taken["cards"]) != effect.take or sorted(taken["cards"] + rest["cards"]) != sorted(looked["cards"])):
+            problems.append(f"{label} で手札に加えたカード {taken['cards']}・トラッシュしたカード {rest['cards']} が、見た {effect.look} 枚を {effect.take} 枚と残りに分けたものではない")
+    elif isinstance(effect, OpponentHandTrainerToDeck):
+        seen = take("look_at_hand", user)
+        trainers = [] if seen is None else [uid for uid in seen["cards"] if state.printed_def(uid).category == "trainer"]
+        if trainers:
+            moved = take("opponent_hand_to_deck", opponent)
+            if moved is not None and moved["card"] not in trainers:
+                problems.append(f"{label} で相手の山札にもどさせたカード {moved['card']} が、見た手札のトレーナーカードではない")
+            take("shuffle", opponent)
+    elif isinstance(effect, DiscardPileExchange):
+        back, _, top = take("discard_pile_to_deck", user), take("shuffle", user), take("deck_top_to_discard", user)
+        if back is not None and top is not None and len(back["cards"]) != len(top["cards"]):
+            problems.append(f"{label} で山札の上からトラッシュした枚数 {len(top['cards'])} が、数えたトラッシュの枚数 {len(back['cards'])} と違う")
+    elif isinstance(effect, DiscardAttachedEnergyTrainer):
+        if effect.own_cost:
+            paid = take("trainer_discard_energy", user)
+            if paid is not None and len(paid["cards"]) != effect.own_cost:
+                problems.append(f"{label} の使うための条件ではがしてすてたカード {paid['cards']} が {effect.own_cost} 枚ではない")
+        removed = take("trainer_discard_energy", opponent)
+        if removed is not None and (len(removed["cards"]) != effect.opponent_cards or removed["user"] != user):
+            problems.append(f"{label} で相手のポケモン {removed['pokemon_id']} からはがしてすてたカード {removed['cards']} が {effect.opponent_cards} 枚ではない（1 匹から）")
+    elif isinstance(effect, DiscardEnergyThenHealTrainer):
+        paid = take("trainer_discard_energy", user)
+        healed = take("remove_damage_counters", user)
+        if paid is not None and healed is not None and (len(paid["cards"]) != 1 or healed["pokemon_id"] != paid["pokemon_id"]
+                                                        or not 0 <= healed["counters"] <= effect.max_counters):
+            problems.append(f"{label} で、はがしたポケモン {paid['pokemon_id']} とダメージカウンターをとりのぞいたポケモン {healed['pokemon_id']}・数 {healed['counters']} が合わない")
+    elif isinstance(effect, CureSpecialConditionsTrainer):
+        cured = take("special_conditions_removed", user)
+        if cured is not None and cured["reason"] != "cured":
+            problems.append(f"{label} で特殊状態を消した理由が {cured['reason']}（cured のはず）")
+    elif isinstance(effect, CoinStatusOnOpponentActiveTrainer):
+        coin = take("coin_flip", user)
+        if coin is not None and (coin["source"] != "trainer" or coin["card"] != card or coin["count"] != 1):
+            problems.append(f"{label} のコインが、このトレーナーのコイン（source trainer）ではない")
+        if coin is not None and coin["result"] == "heads":
+            results = [e for e in body if e["kind"] in ("special_condition", "special_condition_prevented")]
+            if len(results) != 1 or results[0]["player"] != opponent or results[0]["condition"] != effect.condition or results[0].get("effect") != state.cards[card].card_id:
+                problems.append(f"{label} の「おもて」のあとに、相手の対戦ポケモンを {effect.condition} にする処理が 1 回ない")
+            skip("special_conditions_removed", "special_condition", "special_condition_prevented", "disguise_removed")
+    elif isinstance(effect, ReturnBasicEnergyToHandTrainer):
+        while body and body[0]["kind"] == "trainer_return_energy":
+            if body.pop(0)["player"] != user:
+                problems.append(f"{label} で相手のエネルギーカードを手札にもどした")
+    elif isinstance(effect, HealEachDamagedPokemonTrainer):
+        order = (user,) if effect.who == "self" else (user, opponent)
+        position = 0
+        while body and body[0]["kind"] == "remove_damage_counters":
+            e = body.pop(0)
+            while position < len(order) and order[position] != e["player"]:
+                position += 1
+            per = state.rules.damage_per_counter
+            if position == len(order) or e["counters"] <= 0 or (effect.counters is not None and e["counters"] > effect.counters) \
+                    or (effect.counters is None and e["total_damage"] != 0) or (effect.counters is not None and e["counters"] < effect.counters and e["total_damage"] != 0):
+                problems.append(f"{label} でポケモン {e['pokemon_id']} からとりのぞいた数 {e['counters']}（残り {e['total_damage'] // per} 個）が登録と合わない・プレイヤーの順ではない")
+            if effect.discard_energy and body and body[0]["kind"] == "trainer_discard_energy" and body.pop(0)["pokemon_id"] != e["pokemon_id"]:
+                problems.append(f"{label} でエネルギーカードをすてたポケモンが、とりのぞいたポケモンではない")
+    elif isinstance(effect, HealOwnerPokemonThenDiscardHand):
+        healed = take("remove_damage_counters", user)
+        take("discard_hand", user)
+        if healed is not None and (healed["total_damage"] != 0 or healed["counters"] <= 0):
+            problems.append(f"{label} で、選んだポケモンのダメージカウンターをすべてとりのぞいていない")
+    elif isinstance(effect, MoveAllEnergyBetweenOwnerPokemon):
+        take("trainer_move_energy", user)
+        skip("power_heal")
+    elif isinstance(effect, SwitchBothActivesTrainer):
+        for player in (opponent, user):
+            if body and body[0]["kind"] == "trainer_switch_skipped" and body[0]["player"] == player:
+                body.pop(0)
+            else:
+                take("switch", player)
+                skip("special_conditions_removed", "persistent_effect_removed")
     if body:
         problems.append(f"{label} の最後に、処理にないイベント {[e['kind'] for e in body]} がある")
     return problems
@@ -1037,6 +1153,7 @@ def log_problems(state) -> list[str]:
     # arrange_deck_top が続くはず）
     trainer_locks_log: dict[tuple[int, int], dict] = {}
     arrange_due: dict | None = None
+    looked_due: dict | None = None  # v0.55: カスミのいかりで見たカード（look_at_deck_top）。手札に加える・トラッシュするカードはその中から
     # v0.48: ログから組み立てた、特殊能力で色を変えた記録（場のポケモンの番号 → 色・番・使ったときのいちばん上のカード・使ってからベンチにもどったか）。
     # ログから組み立てた今の番（最後の turn_start の番）
     shifts: dict[int, dict] = {}
@@ -2643,8 +2760,10 @@ def log_problems(state) -> list[str]:
             # v0.54: 使っている最中のトレーナー（ミニスカート・スパイ作戦・エリカ・スパイ作戦／カツラのギャンブル・ポケモン図鑑）の処理
             trainer_effect = _trainer_effect_of(state, e["trainer_card"])
             user = owner.get(e["trainer_card"])
-            expected = {"reveal_hand": ReturnHandsToDeckTrainer, "revealed_hand_to_deck": ReturnHandsToDeckTrainer, "look_at_hand": DiscardFromHandThenDrawTrainer,
-                        "trainer_draw_declined": EachPlayerMayDraw, "trainer_discard_declined": DiscardFromHandThenDrawTrainer}.get(kind, ArrangeOwnDeckTopTrainer)
+            expected = {"reveal_hand": (ReturnHandsToDeckTrainer, SearchDeckTrainer), "revealed_hand_to_deck": ReturnHandsToDeckTrainer,
+                        "look_at_hand": (DiscardFromHandThenDrawTrainer, OpponentHandTrainerToDeck),  # v0.55: 礼儀作法・ロケット団のおねーさん・カスミのいかり
+                        "trainer_draw_declined": EachPlayerMayDraw, "trainer_discard_declined": DiscardFromHandThenDrawTrainer}.get(
+                kind, (ArrangeOwnDeckTopTrainer, LookTopTakeRestDiscardTrainer) if kind == "look_at_deck_top" else ArrangeOwnDeckTopTrainer)
             if using_trainer.get(user) != e["trainer_card"] or not isinstance(trainer_effect, expected):
                 problems.append(f"{e['turn']} 番の {kind} が、使っている最中のトレーナーの処理のものではない")
             elif kind == "reveal_hand" and sorted(e["cards"]) != sorted(hand[e["player"]]):
@@ -2659,6 +2778,12 @@ def log_problems(state) -> list[str]:
                     from_hand(e, e["player"], uid)
             elif kind in ("look_at_deck_top", "look_at_deck_top_none", "look_at_deck_top_declined") and (e["player"] != user or e["owner"] != user):
                 problems.append(f"{e['turn']} 番の {kind} が、使ったプレイヤーの自分の山札ではない")
+            elif kind == "look_at_deck_top" and isinstance(trainer_effect, LookTopTakeRestDiscardTrainer):
+                # v0.55: カスミのいかり。自分の山札の上のちょうど look 枚を見る（そのあと手札に加えるカード・トラッシュするカードに分ける）
+                if e["count"] != trainer_effect.look or len(e["cards"]) != e["count"] or len(set(e["cards"])) != e["count"] \
+                        or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
+                    problems.append(f"{e['turn']} 番のカスミのいかりで見たカード {e['cards']} が、自分の山札の上の {trainer_effect.look} 枚ではない")
+                looked_due = e
             elif kind == "look_at_deck_top":
                 if not 1 <= e["count"] <= trainer_effect.max_cards or len(e["cards"]) != e["count"] or len(set(e["cards"])) != e["count"] \
                         or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
@@ -2742,6 +2867,50 @@ def log_problems(state) -> list[str]:
             else:
                 discard[e["player"]].remove(uid)
                 hand[e["player"]].append(uid)
+        elif kind in ("trainer_discard_energy", "trainer_return_energy", "trainer_move_energy", "looked_to_hand", "looked_to_discard", "discard_pile_to_deck",
+                      "deck_top_to_discard", "opponent_hand_to_deck", "trainer_switch_skipped"):
+            # v0.55: すぐに使い終わるトレーナー。使っている最中のそのトレーナーの処理で、場のエネルギーカード・山札の上のカード・トラッシュ・相手の手札を動かす
+            # （山札は組み立て直さない）。並び・数・側は instant_trainer_problems が確かめる
+            user = owner.get(e["trainer_card"])
+            trainer_effect = _trainer_effect_of(state, e["trainer_card"])
+            if using_trainer.get(user) != e["trainer_card"] or trainer_effect is None:
+                problems.append(f"{e['turn']} 番の {kind} が、使っている最中のトレーナーの処理のものではない")
+            elif kind in ("trainer_discard_energy", "trainer_return_energy"):
+                pid = e["pokemon_id"]
+                if pid not in in_play or pokemon_owner.get(pid) != e["player"] or any(uid not in energy.get(pid, []) for uid in e["cards"]) or not e["cards"] \
+                        or any(owner.get(uid) != e["player"] or state.printed_def(uid).category != "energy" for uid in e["cards"]) \
+                        or (kind == "trainer_return_energy" and (e["player"] != user or any(not state.printed_def(uid).is_basic_energy for uid in e["cards"]))):
+                    problems.append(f"{e['turn']} 番に {kind} で動かしたカード {e['cards']} が、ログから組み立てたポケモン {pid} のエネルギーカードではない")
+                else:
+                    for uid in e["cards"]:
+                        energy[pid].remove(uid)
+                    (discard if kind == "trainer_discard_energy" else hand)[e["player"]].extend(e["cards"])
+            elif kind == "trainer_move_energy":
+                source, target = e["from_pokemon_id"], e["to_pokemon_id"]
+                if source == target or e["player"] != user or any(pokemon_owner.get(pid) != user or pid not in in_play for pid in (source, target)) \
+                        or tuple(energy.get(source, [])) != tuple(e["cards"]):
+                    problems.append(f"{e['turn']} 番のナツメのつけなおし {e['cards']}（{source} → {target}）が、ログから組み立てた移動元のエネルギーカードのすべてではない")
+                else:
+                    energy[source] = []
+                    energy[target].extend(e["cards"])
+            elif kind in ("looked_to_hand", "looked_to_discard"):
+                if looked_due is None or e["player"] != user or any(uid not in looked_due["cards"] for uid in e["cards"]):
+                    problems.append(f"{e['turn']} 番の {kind} のカード {e['cards']} が、すぐ前にカスミのいかりで見たカードではない")
+                (hand if kind == "looked_to_hand" else discard)[e["player"]].extend(e["cards"])
+                if kind == "looked_to_discard":
+                    looked_due = None
+            elif kind == "discard_pile_to_deck":
+                if e["player"] != user or sorted(e["cards"]) != sorted(discard[user]):
+                    problems.append(f"{e['turn']} 番のトラッシュ交換で山札にもどしたカード {e['cards']} が、ログから組み立てたトラッシュのすべてではない")
+                discard[user] = []
+            elif kind == "deck_top_to_discard":
+                if e["player"] != user or any(owner.get(uid) != user or uid in hand[user] or uid in discard[user] for uid in e["cards"]):
+                    problems.append(f"{e['turn']} 番のトラッシュ交換で山札の上からトラッシュしたカード {e['cards']} が、自分の山札のカードではない")
+                discard[user].extend(e["cards"])
+            elif kind == "opponent_hand_to_deck":
+                if e["player"] != 1 - user or e["looker"] != user or state.printed_def(e["card"]).category != "trainer":
+                    problems.append(f"{e['turn']} 番に相手の山札にもどさせたカード {e['card']} が、相手の手札のトレーナーカードではない")
+                from_hand(e, e["player"], e["card"])
         elif kind == "trainer_take_none":
             if using_trainer.get(e["player"]) != e["trainer_card"]:
                 problems.append(f"{e['turn']} 番の選ばずに終わったログ（カード {e['trainer_card']}）が、使っている最中のトレーナーのものではない")
@@ -2760,6 +2929,7 @@ def log_problems(state) -> list[str]:
             if start is not None:
                 problems.extend(search_retrieval_problems(state, log[start:here + 1]))  # v0.53
                 problems.extend(hand_deck_problems(state, log[start:here + 1]))  # v0.54
+                problems.extend(instant_trainer_problems(state, log[start:here + 1]))  # v0.55
             discard[e["player"]].append(e["card"])
             trainer_discarded[e["player"]] = ()
             using_trainer[e["player"]] = None
@@ -3521,6 +3691,8 @@ def _sees_private(event: dict, viewer) -> bool:
         return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
     if kind == "look_at_hand":
         return viewer is not None and viewer in (event["player"], event["owner"])  # v0.54: スパイ作戦（見たプレイヤーと、自分の手札を知っている持ち主）
+    if kind == "opponent_hand_to_deck":
+        return viewer is not None and viewer in (event["player"], event["looker"])  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤー）
     return viewer is not None and viewer == event.get("player")
 
 
@@ -3588,7 +3760,7 @@ def observation_problems(state) -> list[str]:
     - ログの写し: 見えない項目は、イベントの意味から決めた見てよい人（``_sees_private``）だけに残り、ほかには ``hidden`` に名前だけ。ほかのイベントは内部の記録と同じ
     """
     from kyuura_engine.continuous import suppressors_of
-    from kyuura_engine.observation import DECK_REVEALING_KINDS, OPTION_MEANINGS, PRIVATE_FIELDS, observe, visible_log
+    from kyuura_engine.observation import DECK_REVEALING_KINDS, LOOKED_HAND_KINDS, OPTION_MEANINGS, PRIVATE_FIELDS, observe, visible_log
 
     problems: list[str] = []
     revealed = {0: False, 1: False}
@@ -3638,9 +3810,11 @@ def observation_problems(state) -> list[str]:
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":
                 for option in dv["options"]:
                     uid = option["value"]
-                    if uid not in visible and d.kind not in DECK_REVEALING_KINDS:
+                    # v0.55: 決めるプレイヤーが効果で見た相手の手札（LOOKED_HAND_KINDS）も、決めるプレイヤーには見えている
+                    seen = d.kind in DECK_REVEALING_KINDS or (d.kind in LOOKED_HAND_KINDS and all(uid in state.players[1 - d.player].hand for uid in d.options))
+                    if uid not in visible and not seen:
                         problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるものに、見えないカード {uid} がある")
-                    if ("card_id" in option) != (uid in visible or d.kind in DECK_REVEALING_KINDS):
+                    if ("card_id" in option) != (uid in visible or seen):
                         problems.append(f"観測（{viewer}）の決定 {d.kind} の選べるもの {uid} のカードの id の有無が、見えるかと合わない")
         for event, shown in zip(state.log, visible_log(state, viewer)):
             if event["kind"] in PRIVATE_FIELDS:

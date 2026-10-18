@@ -213,6 +213,14 @@ DISCARD_TO_DECK = "discard_to_deck"
 # v0.54（docs/hand-deck-trainers-v0.54.md）: エリカの「のぞむなら最大3枚まで、山札からカードを引いてよい」で引く枚数（0〜min(3, 自分の山札の枚数)）。決めるのは引くプレイヤー
 # （先に使ったプレイヤー、引き終わってから相手プレイヤー。``context`` の ``"stage"``）。0 枚は「のぞむなら」の、引かないこと
 SELECT_DRAW_COUNT = "select_draw_count"
+# v0.55（docs/instant-trainers-v0.55.md）: カスミのいかりで、見た山札の上のカード（7 枚）から手札に加える 2 枚。決めるのは使ったプレイヤー。選べるものは見たカードの uid
+# （山札の上からの順。決めるプレイヤーは見ている）。残りはトラッシュする。山札をさがす ``SEARCH_DECK`` とは、選べるカード（見た上の 7 枚だけ）・残りの行き先が違うので別の種類
+TAKE_LOOKED_CARDS = "take_looked_cards"
+# v0.55: ロケット団のおねーさんで、見た相手の手札のトレーナーカードから、相手の山札にもどさせる 1 枚。決めるのは使ったプレイヤー（手札を見た）。選べるものは相手の手札の
+# トレーナーカードの uid（手札の並び）。相手のポケモン・山札を選ぶ決定とは別
+OPPONENT_HAND_TO_DECK = "opponent_hand_to_deck"
+# v0.55: いいきずぐすりで、選んだポケモンからとりのぞくダメージカウンターの数（0〜min(4, のっている数)。「4個まで…ことができる」）。決めるのは使ったプレイヤー
+SELECT_COUNTER_COUNT = "select_counter_count"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

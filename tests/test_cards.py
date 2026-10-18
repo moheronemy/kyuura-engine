@@ -14,8 +14,10 @@ from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
+    MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
+    ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT,
     MAINTENANCE, ITEM_FINDER, POKE_BALL, ENERGY_SEARCH, RECYCLE, NIGHTLY_GARBAGE_RUN, BOSS_WAY, MISTYS_TEARS, ERIKAS_MAIDS, BROCK_TRAINING, GIOVANNI, MR_FUJI, RECALL, SCOOP_UP, DEVOLUTION_SPRAY, REVIVE, POKEMON_FLUTE, BEEDRILL, BILL, CLEFAIRY_DOLL, MYSTERIOUS_FOSSIL, BUTTERFREE, CATERPIE, CHARMANDER, DEFENDER, DEWGONG, DIGLETT, DODUO, KAKUNA, METAPOD, PARAS, PARASECT, PIKACHU, PLUSPOWER, PONYTA,
-    POTION, RATTATA, SUPER_POTION, SWITCH, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
+    POTION, RATTATA, SUPER_POTION, SWITCH, no_super_potion_pool, ABRA, ALAKAZAM, BLASTOISE, BULBASAUR, CHARIZARD, IVYSAUR, KADABRA, SQUIRTLE, VENUSAUR, VULPIX,
     WARTORTLE, WEEDLE, GRIMER, MUK, GASTLY, HAUNTER, BASE_HAUNTER, MACHOP, MACHOKE, MACHAMP, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES,
     ROCKET_SQUIRTLE, DARK_WARTORTLE, TANGELA, GIOVANNIS_MEOWTH, ROCKETS_SNORLAX, KOGAS_MUK, SABRINAS_SLOWPOKE, PROFESSOR_OAK, GUST,
     COMPUTER_SEARCH, ENERGY_RETRIEVAL, POKEMON_BREEDER, POKEMON_TRADER, SCYTHER, V0_28_POKEMON, V0_29_POKEMON, STARMIE, SEAKING, STARYU, GOLDEEN,
@@ -47,11 +49,14 @@ class CardPoolTest(unittest.TestCase):
         trainers = sorted(c for c in pool.playable_ids if pool.get(c).category == "trainer")
         # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）、
         # サカキは v0.44（pool_v0_44）、ピッピ人形・なにかの化石は v0.47（pool_v0_47。ポケモンとして場に出せるが、印刷の分類はトレーナーカード）、
-        # 思い出させるは v0.49（pool_v0_49）、退化スプレーは v0.50（pool_v0_50）、元気のかけら・ポケモンの笛は v0.51（pool_v0_51）、フジろうじん・ポケモン回収は v0.52（pool_v0_52）、山札・トラッシュからカードを選ぶ 10 枚は v0.53（pool_v0_53）、手札の入れ替え・ドロー・情報の確認の 10 枚は v0.54（pool_v0_54）
-        self.assertEqual(trainers, [POTION, GUST, SWITCH, BILL, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, PLUSPOWER, POKEDEX, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER,
-                                    IMPOSTER_OAK, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER, LASS, POKE_BALL, ENERGY_SEARCH, GAMBLER, MYSTERIOUS_FOSSIL,
-                                    RECYCLE, MR_FUJI, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, BROCK_TRAINING, ERIKA, SECRET_MISSION,
-                                    BLAINES_GAMBLE, SABRINAS_GAZE, BLAINES_LAST_RESORT, GIOVANNI])
+        # 思い出させるは v0.49（pool_v0_49）、退化スプレーは v0.50（pool_v0_50）、元気のかけら・ポケモンの笛は v0.51（pool_v0_51）、フジろうじん・ポケモン回収は v0.52（pool_v0_52）、山札・トラッシュからカードを選ぶ 10 枚は v0.53（pool_v0_53）、手札の入れ替え・ドロー・情報の確認の 10 枚は v0.54（pool_v0_54）、すぐに使い終わる 16 枚（いいきずぐすりは v0.54 まで参照カード）は v0.55（pool_v0_55）
+        self.assertEqual(trainers, [ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER,
+                                    FULL_HEAL, PLUSPOWER, POKEDEX, POKEMON_CENTER, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER,
+                                    SUPER_ENERGY_REMOVAL, IMPOSTER_OAK, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER,
+                                    LASS, POKE_BALL, ENERGY_SEARCH, GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN,
+                                    IMPOSTER_OAKS_REVENGE, BOSS_WAY, ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS,
+                                    MISTYS_WRATH, BROCK_TRAINING, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, SECRET_MISSION, BROCK_TRAINER, BLAINES_GAMBLE,
+                                    TRASH_EXCHANGE, SABRINAS_GAZE, WARP_POINT, BLAINES_LAST_RESORT, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER])
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -296,8 +301,10 @@ class ClassificationTest(unittest.TestCase):
 
     def test_trainer_evolution_and_power_are_unsupported(self):
         pool = load_card_pool()
-        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる
-        self.assertIn("トレーナー", pool.get(SUPER_POTION).unsupported_reasons[0])
+        # v0.2b できずぐすりを対応にしたので、実装を登録していないトレーナー（いいきずぐすり）で確かめる。v0.55 でいいきずぐすりを対応にしたので、
+        # その登録だけを除いた登録表で分類した組で確かめる（製品の登録表では対応）
+        self.assertIn("トレーナー", no_super_potion_pool().get(SUPER_POTION).unsupported_reasons[0])
+        self.assertTrue(pool.get(SUPER_POTION).supported)
         # v0.4c で 2 進化の段階を扱えるようにしたので、2 進化のカードは段階ではなく、ポケモンパワーと登録のないワザで未対応に
         # なる（v0.4b までは理由の最初が「stage2（2 進化・ベイビィ）は未実装」だった）。v0.4e まではフシギバナ（ポケモンパワー・
         # ソーラービーム）、v0.5 ではカメックス（登録のないポケモンパワー「あまごい」・ワザ「ハイドロポンプ」）で確かめていた。

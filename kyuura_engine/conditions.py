@@ -65,6 +65,9 @@ FORCED_SWITCH = "forced_switch"
 # v0.50: 退化した（p.324「19 ポケモンの退化」。kyuura の GR-2000-P324-DEVOLUTION「退化したポケモンを、「どく」「ねむり」「マヒ」「こんらん」状態や、その他の
 # 「持続する効果」から回復させます」。ミュウの「たいかビーム」・退化スプレー。``evolution.devolve``）。進化（EVOLVE）とは理由を分ける
 DEVOLVE = "devolve"
+# v0.55: トレーナーの効果で特殊状態を回復した（なんでもなおしの「特殊状態にあるポケモンの全ての特殊状態を回復する」。docs/instant-trainers-v0.55.md）。ベンチにもどる・進化・
+# 退化とは理由を分ける。ワザによる持続する効果・ダメージ・にげるの失敗の記録は特殊状態ではないので消さない
+CURED = "cured"
 
 
 def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: str, effect: str, **fields: object) -> bool:
@@ -289,7 +292,7 @@ def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reas
     )
 
 
-def clear_special_conditions(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:
+def clear_special_conditions(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str, **fields: object) -> None:
     """バトル場からベンチに戻ったポケモン・進化したポケモン（``reason`` が ``EVOLVE``。v0.4a）の特殊状態を、すべて消す
     （p.310・p.311・p.322）。特殊状態がなければ何もしない。にげるの失敗の記録（``retreat_failed_turn``）は特殊状態では
     ないので、ここでは変えない（進化で記録を消すのは ``engine._evolve_pokemon``）。ワザによる持続する効果（v0.4b）も特殊状態
@@ -310,4 +313,5 @@ def clear_special_conditions(state: GameState, owner: int, pokemon: PokemonInPla
         pokemon_id=pokemon.pokemon_id,
         conditions=names,
         reason=reason,
+        **fields,
     )

@@ -694,3 +694,108 @@ def remove_disguise(state: GameState, player: int, pokemon: PokemonInPlay, *, re
     extra = {} if effect is None else {"effect": effect}
     state.add_event("disguise_removed", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, reason=reason, **extra)
     return card
+
+
+# ---------------------------------------------------------------- v0.55（docs/instant-trainers-v0.55.md）。トレーナーの効果で、場のポケモンについているエネルギーカード・
+# 山札の上のカード・相手の手札のカード・トラッシュのカードを動かす処理。どれも同じ uid・同じ持ち主のまま動かし（複製しない）、ログの ``trainer_card`` は使っている
+# トレーナーのカードの uid。動かしてよいかの確認は呼ぶ側が済ませ、確認の漏れは状態を変える前に ``RuntimeError``。
+
+
+def _attached_energy_cards(state: GameState, owner: int, pokemon: PokemonInPlay, cards: tuple[int, ...]) -> tuple[int, ...]:
+    """``owner`` の場のポケモン ``pokemon`` についているエネルギーカード ``cards`` を、ついている順に並べたもの（v0.55）。場にいない・ついていない・持ち主が違う・同じカードを
+    2 回渡したなら ``RuntimeError``。"""
+    p = state.players[owner]
+    if not any(x is pokemon for x in p.in_play()) or len(set(cards)) != len(cards) \
+            or any(uid not in pokemon.energy or state.cards[uid].owner != owner for uid in cards):
+        raise RuntimeError(f"プレイヤー {owner} の場のポケモン {pokemon.pokemon_id} についているエネルギーカード {cards} を動かせない（確認の漏れ。エンジンの不具合）")
+    return tuple(uid for uid in pokemon.energy if uid in cards)
+
+
+def discard_attached_energy_cards(state: GameState, owner: int, pokemon: PokemonInPlay, cards: tuple[int, ...], *, trainer: int, user: int) -> tuple[int, ...]:
+    """トレーナーの効果で、``owner`` の場のポケモン ``pokemon`` についているエネルギーカード ``cards`` を、持ち主（``owner``）のトラッシュに置く（v0.55。エネルギー・
+    リムーブ・超エネルギーリムーブ・いいきずぐすり・ポケモンセンターの「はがしてすてる」）。エネルギーの数（何個ぶんか）ではなく、カードを動かす。ログ
+    ``trainer_discard_energy``（``player`` はカードの持ち主、``user`` はトレーナーを使ったプレイヤー。場のカードとトラッシュは公開の情報なので ``cards`` は公開）。
+    ワザの効果のトラッシュ（``discard_energy``・``discard_attached_energy``）とは出どころが違うので、ログを分ける。トラッシュしたカード（ついていた順）を返す。"""
+    moved = _attached_energy_cards(state, owner, pokemon, cards)
+    for uid in moved:
+        pokemon.energy.remove(uid)
+    state.players[owner].discard.extend(moved)
+    state.add_event("trainer_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer, user=user)
+    return moved
+
+
+def return_attached_energy_to_hand(state: GameState, owner: int, pokemon: PokemonInPlay, cards: tuple[int, ...], *, trainer: int) -> tuple[int, ...]:
+    """トレーナーの効果で、自分（``owner``）の場のポケモン ``pokemon`` についているエネルギーカード ``cards`` を、自分の手札にもどす（v0.55。エネルギーサーキュレートの
+    「はがし、手札に戻してよい」）。トラッシュ・つけなおし・手札からつける通常の操作ではない。ログ ``trainer_return_energy``（場にあったカードなので ``cards`` は公開）。
+    手札にもどしたカード（ついていた順）を返す。"""
+    moved = _attached_energy_cards(state, owner, pokemon, cards)
+    for uid in moved:
+        pokemon.energy.remove(uid)
+    state.players[owner].hand.extend(moved)
+    state.add_event("trainer_return_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer)
+    return moved
+
+
+def move_attached_energy(state: GameState, owner: int, source: PokemonInPlay, target: PokemonInPlay, *, trainer: int) -> tuple[int, ...]:
+    """トレーナーの効果で、自分（``owner``）の場のポケモン ``source`` についているエネルギーカードをすべて、自分の場の別のポケモン ``target`` に、ついていた順のまま
+    つけなおす（v0.55。ナツメの「それについているエネルギーカードをすべてはがす。そして、はがしたエネルギーカードすべてを、…別の「ナツメのポケモン」1匹につけなおす」）。
+    すべてを 1 回で動かす（1 枚ずつの途中の状態を作らない）。手札からつける通常の操作の回数（``energy_attachments_this_turn``）・特殊能力でつけた枚数は変えない。
+    ログ ``trainer_move_energy``（公開）。同じポケモン・場にいないなら ``RuntimeError``。動かしたカードを返す（0 枚もある）。"""
+    if source is target:
+        raise RuntimeError(f"エネルギーカードを、同じポケモン {source.pokemon_id} につけなおそうとした（確認の漏れ。エンジンの不具合）")
+    moved = _attached_energy_cards(state, owner, source, tuple(source.energy))
+    if not any(x is target for x in state.players[owner].in_play()):
+        raise RuntimeError(f"つけなおす先のポケモン {target.pokemon_id} が、プレイヤー {owner} の場にいない（確認の漏れ。エンジンの不具合）")
+    source.energy.clear()
+    target.energy.extend(moved)
+    state.add_event("trainer_move_energy", player=owner, from_pokemon_id=source.pokemon_id, to_pokemon_id=target.pokemon_id, cards=moved, trainer_card=trainer)
+    return moved
+
+
+def opponent_hand_card_to_deck(state: GameState, owner: int, card: int, *, looker: int, trainer: int) -> None:
+    """トレーナーの効果で、プレイヤー ``owner`` の手札のカード ``card`` を、``owner`` の山札（一番下）にもどさせる（v0.55。ロケット団のおねーさんの「その中に
+    トレーナーカードがあれば、1枚を選び、それを相手の山札にもどさせる」。選んだのは手札を見たプレイヤー ``looker``）。このあと同じ効果の中で山札を切るので、もどす位置は
+    実装上の仮定（v0.24 の PT7 と同じ。結果は変わらない）。もどしたカードは、手札を見たプレイヤーと持ち主だけが知っている（ログ ``opponent_hand_to_deck`` の ``card`` は
+    その 2 人だけに見える。``observation.PRIVATE_FIELDS``。手札の枚数が 1 枚へったことは公開）。"""
+    _hand_to_deck_bottom(state, owner, (card,))
+    state.add_event("opponent_hand_to_deck", player=owner, card=card, looker=looker, trainer_card=trainer)
+
+
+def take_looked_deck_cards(state: GameState, player: int, looked: int, cards: tuple[int, ...], *, trainer: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """自分の山札の上から見たカード（``look_at_deck_top`` の ``cards``。山札の上から順）のうち、``cards`` を手札に加え、残りをトラッシュする（v0.55。カスミのいかりの
+    「その中から2枚を選んで手札に加え、残りをトラッシュする」）。見た部分より下の山札の並びは変えない（切らない）。手札に加えたカードは使ったプレイヤーだけが見る
+    （ログ ``looked_to_hand`` の ``cards``。「カードを引く」ではない）。トラッシュしたカードは公開（ログ ``looked_to_discard``）。見たカードの範囲は呼ぶ側が決め、
+    ``cards`` が見たカード（山札の上の ``looked`` 枚）にないなら ``RuntimeError``。(手札に加えたカード, トラッシュしたカード) を返す（どちらも山札の上からの順）。"""
+    p = state.players[player]
+    top = tuple(p.deck[:looked])
+    if looked > len(p.deck) or len(set(cards)) != len(cards) or any(uid not in top for uid in cards):
+        raise RuntimeError(f"山札の上の {looked} 枚 {top} から、カード {cards} を手札に加えられない（確認の漏れ。エンジンの不具合）")
+    taken = tuple(uid for uid in top if uid in cards)
+    rest = tuple(uid for uid in top if uid not in cards)
+    del p.deck[:looked]
+    p.hand.extend(taken)
+    p.discard.extend(rest)
+    state.add_event("looked_to_hand", player=player, cards=taken, trainer_card=trainer)
+    state.add_event("looked_to_discard", player=player, cards=rest, trainer_card=trainer)
+    return taken, rest
+
+
+def discard_pile_to_deck(state: GameState, player: int, *, trainer: int) -> tuple[int, ...]:
+    """自分のトラッシュのカードをすべて、トラッシュの並びの順に自分の山札の一番下にもどす（v0.55。トラッシュ交換の「それらをすべて山札にもどし」）。このあと同じ効果の中で
+    山札を切るので、もどす位置は実装上の仮定。使っている最中のトレーナーはトラッシュにない（``trainer_in_use``）ので含まない。トラッシュは公開の情報なので、ログ
+    ``discard_pile_to_deck`` の ``cards`` は公開（0 枚でも書く）。もどしたカードを返す。"""
+    p = state.players[player]
+    cards = tuple(p.discard)
+    p.discard.clear()
+    p.deck.extend(cards)
+    state.add_event("discard_pile_to_deck", player=player, cards=cards, trainer_card=trainer)
+    return cards
+
+
+def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: int) -> tuple[int, ...]:
+    """自分の山札の上から ``count`` 枚を、上から順に自分のトラッシュに置く（v0.55。トラッシュ交換の「数えた枚数のカードを山札の上から取って、トラッシュする」）。「カードを
+    引く」ではない。山札が足りなければ確認の漏れ（``RuntimeError``。トラッシュ交換では、もどしたあとの山札は数えた枚数以上ある）。ログ ``deck_top_to_discard``（公開。0 枚でも
+    書く）。トラッシュしたカードを返す。"""
+    cards = discard_from_deck(state, player, count)
+    state.add_event("deck_top_to_discard", player=player, cards=cards, trainer_card=trainer)
+    return cards

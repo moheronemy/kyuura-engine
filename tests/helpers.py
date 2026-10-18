@@ -501,6 +501,22 @@ LASS = "PMCG1-095"  # ミニスカート（第1弾。094/096）
 POKEDEX = "PMCG1-082"  # ポケモン図鑑 HANDY505（第1弾。089/096）
 V0_54_CARDS = (IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS,
                POKEDEX)  # 写しの組 pool_v0_54 の並び
+# v0.55（docs/instant-trainers-v0.55.md）: すぐに使い終わるトレーナー 16 枚（kyuura データの採用。pcg-search.com の一覧の番号）
+MISTYS_WRATH = "PMCG5-075"  # カスミのいかり（リーダーズスタジアム。073/096）
+ROCKETS_SNEAK_ATTACK = "PMCG4-061"  # ロケット団のおねーさん（ロケット団。061/065）
+GOOD_MANNERS = "PMCG5-082"  # 礼儀作法（リーダーズスタジアム。088/096）
+TRASH_EXCHANGE = "PMCG6-077"  # トラッシュ交換（闇からの挑戦。082/098）
+ENERGY_REMOVAL = "PMCG1-070"  # エネルギー・リムーブ（第1弾。072/096）
+SUPER_ENERGY_REMOVAL = "PMCG1-088"  # 超エネルギーリムーブ（第1弾。078/096）
+FULL_HEAL = "PMCG1-080"  # なんでもなおし（第1弾。081/096）
+POKEMON_CENTER = "PMCG1-083"  # ポケモンセンター（第1弾。090/096）
+SLEEP_TRAINER = "PMCG4-054"  # ねむれ!ねむれ!（ロケット団。056/065。kyuura の種類 rockets_secret_machine）
+ENERGY_FLOW = "PMCG5-067"  # エネルギーサーキュレート（リーダーズスタジアム。079/096）
+ERIKAS_KINDNESS = "PMCG5-084"  # エリカの親切（リーダーズスタジアム。089/096）
+BROCK_TRAINER = "PMCG5-089"  # タケシ（リーダーズスタジアム。067/096。トレーナー）
+GIOVANNIS_LAST_RESORT = "PMCG6-096"  # サカキの切り札（闇からの挑戦。091/098）
+SABRINA_TRAINER = "PMCG6-098"  # ナツメ（闇からの挑戦。074/098。トレーナー）
+WARP_POINT = "PMCG6-080"  # ワープポイント（闇からの挑戦。078/098）
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -547,7 +563,9 @@ ENERGY_RETRIEVAL = "PMCG1-076"  # エネルギー回収（v0.23 で対応。手�
 POKEMON_BREEDER = "PMCG1-094"  # ポケモン育て屋さん（v0.25 で対応。自分の場のたねポケモンに手札の 2 進化カードを直接重ね、1 進化を飛ばして進化させる。p.259）
 POKEMON_TRADER = "PMCG1-093"  # ポケモン交換おじさん（v0.24 で対応。手札のたねポケモン・進化カードを見せて山札にもどし、山札のたねポケモン・進化カードを見せて手札に加え、山札を切る。p.259）
 DEFENDER = "PMCG1-079"  # ディフェンダー（v0.2e で対応）
-SUPER_POTION = "PMCG1-075"  # いいきずぐすり（参照カード。実装を登録していないトレーナー）
+SUPER_POTION = "PMCG1-075"  # いいきずぐすり（v0.54 まで参照カード（実装を登録していないトレーナー）。v0.55 で対応。第1弾。070/096）
+V0_55_CARDS = (MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, SUPER_POTION, FULL_HEAL, POKEMON_CENTER,
+               SLEEP_TRAINER, ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT)  # 写しの組 pool_v0_55 の並び
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1297,3 +1315,14 @@ def driver_retreat_cost(state, pokemon) -> int:
     同じ印刷の数（手順の結果は変わらない）。"""
     cost = state.card_def(pokemon.card).retreat_cost
     return len(pokemon.energy) + 1 if cost is None else cost
+
+
+# v0.54 まで、いいきずぐすり（PMCG1-075）は「実装を登録していないトレーナー」の参照カードで、未対応のトレーナーの例に使っていた（v0.2b から）。v0.55 で対応にしたので、
+# その性質を確かめるテストは、この登録だけを除いた登録表と、その登録表で分類した写しのカードの組（``no_super_potion_pool``）を使う（製品の登録表は変えない）
+NO_SUPER_POTION_EFFECTS = DEFAULT_EFFECTS.without_trainers("test-no-super-potion", [SUPER_POTION])
+
+
+def no_super_potion_pool():
+    """いいきずぐすりの登録を除いた登録表（``NO_SUPER_POTION_EFFECTS``）で分類した、同梱の写しのカードの組（v0.55）。"""
+    from kyuura_engine.cards import pool_from_extract, read_extract
+    return pool_from_extract(read_extract(), NO_SUPER_POTION_EFFECTS)

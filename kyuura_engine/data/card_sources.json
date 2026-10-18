@@ -13526,6 +13526,550 @@
       ],
       "issues": [],
       "notes": "v0.54 で加えた。トレーナー。ArrangeOwnDeckTopTrainer（自分の山札の上から 0〜5 枚を見る枚数として選び（0 枚は「ことができる」の、見ないこと）、見て、2 枚以上なら好きな順番に並べてもどす。手札に加えず、切らない。山札が 0 枚なら見るカードがない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（kyuura の MIX-SUPPORTER-ERRATA は 2002 年のサポーター適用カードの記録で、2000.02.14 版の基準のあとなので使わない）。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・現代のサポーターの規定は持ち込まない（docs/hand-deck-trainers-v0.54.md）"
+    },
+    "PMCG5-075": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのいかり",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1073.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "073/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（073）は kyuura の id の番号（075）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。LookTopTakeRestDiscardTrainer（山札の上から 7 枚を見て（ログ look_at_deck_top は使ったプレイヤーだけ）、ちょうど 2 枚を手札に加え（looked_to_hand は使ったプレイヤーだけ）、残りをトラッシュする（公開）。見た部分より下は変えず、切らない。山札が 7 枚より少なければ MW1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG4-061": {
+      "basis": "kyuura_data",
+      "name_ja": "ロケット団のおねーさん",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4061.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "061/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。OpponentHandTrainerToDeck（相手の手札を見て（look_at_hand は見たプレイヤーと持ち主だけ）、手札にある間の印刷の分類のトレーナーカードがあれば 1 枚を選び、相手の山札にもどさせ（opponent_hand_to_deck のカードは持ち主と見たプレイヤーだけ）、相手の山札を切る。なければもどさず切らない（MB1 と同じ読み方）。kyuura の card_differences の PMCG4-061 は 2002 年の大会のサポーター適用カードの記録で、2000.02.14 版の基準のあとなので使わない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG5-082": {
+      "basis": "kyuura_data",
+      "name_ja": "礼儀作法",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1088.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "088/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（088）は kyuura の id の番号（082）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。SearchDeckTrainer（no_basic_in_hand・reveal_hand。手札にたねポケモン（手札にある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード）があれば使えない（BASIC_POKEMON_IN_HAND）。手札を見せ（reveal_hand は公開）、山札のたねポケモンを 0〜1 枚、見せて手札に加え、切る（「てよい」））。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG6-077": {
+      "basis": "kyuura_data",
+      "name_ja": "トラッシュ交換",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2082.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "082/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（082）は kyuura の id の番号（077）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。DiscardPileExchange（使う時点のトラッシュの枚数を数え（使っているこのカードは数えない）、すべて山札にもどし、切り、数えた枚数を山札の上からトラッシュする。0 枚でももどす・切る処理をする）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG1-070": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー・リムーブ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1072.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "072/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（072）は kyuura の id の番号（070）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。DiscardAttachedEnergyTrainer（相手の場のポケモンについているエネルギーカードから使ったプレイヤーが 1 枚を選び、持ち主のトラッシュに置く。ワザを防ぐ効果を当てはめない。相手の場にエネルギーカードがなければ EM1）。kyuura の MIX-ENERGY-REMOVAL（ポケモンカードe の版のコインの判定）は 2001 年 12 月からの再録・大会の記録で、2000.02.14 版の基準のあとなので持ち込まない。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG1-088": {
+      "basis": "kyuura_data",
+      "name_ja": "超エネルギーリムーブ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1078.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "078/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "自分の場のポケモンについているエネルギーカードを1枚はがしてすてることによって、相手の場のポケモン1匹から2枚のエネルギーカードをはがしてすてる。",
+              "pcg_search": "自分の場のポケモンについているエネルギーカードを1枚をはがしてすてることによって、相手の場のポケモン1匹から2枚のエネルギーカードをはがしてすてる。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「1枚をはがして」、kyuura は「1枚はがして」（書き方の違い）。処理は変わらない（写しは直さない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（078）は kyuura の id の番号（088）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。DiscardAttachedEnergyTrainer（own_cost 1・相手 2 枚。使うための条件として自分の場のポケモンのエネルギーカードを 1 枚選んでトラッシュし（なければ NO_ENERGY_TO_DISCARD）、相手の場のポケモンを 1 匹選び、そのポケモンのエネルギーカードをちょうど 2 枚選んでトラッシュする。2 枚より少ないポケモンは選ぶと FC1、どのポケモンも少なければ使う前に FC1）。kyuura の MIX-SUPER-ENERGY-REMOVAL は 2002 年の再録・大会の記録で、その before の要約「2 枚まで」は最新の説明ではないので使わない（印刷の文面の「2枚」にしたがう）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG1-075": {
+      "basis": "kyuura_data",
+      "name_ja": "いいきずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1070.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "070/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（070）は kyuura の id の番号（075）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。DiscardEnergyThenHealTrainer（エネルギーカードのついている自分のポケモンを 1 匹選び（なければ NO_ENERGY_TO_DISCARD。ダメージカウンターのないポケモンは選ぶと SP1）、そのポケモンのエネルギーカードを 1 枚トラッシュし、ダメージカウンターを 0〜min(4, のっている数) 個とりのぞく（「4個まで…ことができる」）。v0.54 まで参照カード（REFERENCE_ONLY）だった。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG1-080": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1081.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "081/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（081）は kyuura の id の番号（080）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。CureSpecialConditionsTrainer（特殊状態のポケモンが使ったプレイヤーの対戦ポケモンだけのとき、その特殊状態をすべて回復する（special_conditions_removed の reason cured）。相手の対戦ポケモンが特殊状態・特殊状態のポケモンがいないときは FH1（「特殊状態にあるポケモン」の対象が決まらない）。英語版の「Your Active Pokémon」は持ち込まない。kyuura の P2（1998 年のファンクラブ会報）の「なんでもなおしの書き直し」は 2000.02.14 版の基準の前の記録で、書き直しの文面も記録にない。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG1-083": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンセンター",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1090.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "090/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（090）は kyuura の id の番号（083）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。HealEachDamagedPokemonTrainer（自分・すべて・エネルギーカードもすてる。ダメージカウンターがのっている自分のポケモンごとに、ダメージカウンターをすべてとりのぞき、ついているエネルギーカードをすべてトラッシュする。のっていないポケモンは何もしない。進化カード・ついているトレーナーはそのまま）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG4-054": {
+      "basis": "kyuura_data",
+      "name_ja": "ねむれ!ねむれ!",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4056.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "056/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "name.ja",
+              "kyuura": "ねむれ!ねむれ!",
+              "pcg_search": "ねむれ! ねむれ!",
+              "affects_behavior": false,
+              "note": "サイトの名前は「!」のあとに空白がある。kyuura の notes も「「!」の後の空白の有無はデータにより異なる」と書く。処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（056）は kyuura の id の番号（054）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。CoinStatusOnOpponentActiveTrainer（使ったプレイヤーがコインを 1 枚投げ、「おもて」なら相手の対戦ポケモンをねむり状態にする（既存の put_to_sleep。めんえき・「ばける」・重複の規定はそのまま。ワザを防ぐ効果は当てはめない）。kyuura の種類 rockets_secret_machine だけを受け付ける（secret_machine_ok））。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG5-067": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギーサーキュレート",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1079.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "079/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（079）は kyuura の id の番号（067）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。ReturnBasicEnergyToHandTrainer（自分の場のポケモンについている基本エネルギーカード（カードの種類）を 0〜すべて選び、手札にもどす（trainer_return_energy））。kyuura の data/curation/card_differences.json の PMCG5-067（確度: 確実）は、最新の説明が印刷の文面と同じ「「基本エネルギーカード」を好きなだけはがし、手札に戻してよい」と記録している（処理に使う文面は印刷の文面のまま）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG5-084": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカの親切",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1089.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "089/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（089）は kyuura の id の番号（084）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。HealEachDamagedPokemonTrainer（お互い・2 つずつ。使ったプレイヤー → 相手の順に、ダメージカウンターがのっている場のポケモンごとに 2 個（のっている数まで）とりのぞく）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG5-089": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1067.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "067/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "自分の場のすべてのポケモンから、それぞれ1つずつダメージカウンターをとりのぞく。",
+              "pcg_search": "自分の場のすべてのポケモンから、それぞれ1つずつダメージカウンタ ーをとりのぞく。",
+              "affects_behavior": false,
+              "note": "サイトの文面は「ダメージカウンタ ー」と途中に空白がある（サイトの表記）。処理は変わらない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（067）は kyuura の id の番号（089）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。HealEachDamagedPokemonTrainer（自分・1 つずつ。ダメージカウンターがのっている自分の場のポケモンごとに 1 個とりのぞく）。トレーナー。タケシのポケモン・タケシの育て方とは別のカード。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG6-096": {
+      "basis": "kyuura_data",
+      "name_ja": "サカキの切り札",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2091.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "091/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（091）は kyuura の id の番号（096）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。HealOwnerPokemonThenDiscardHand（自分の場の「サカキのポケモン」（今の姿の名前。owner_pokemon）を 1 匹選び、ダメージカウンターをすべてとりのぞき、そのあと手札をすべてトラッシュする（使うための条件ではない）。サカキのポケモンがいなければ GL1、ダメージカウンターのないものは選ぶと GL2）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG6-098": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2074.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "074/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（074）は kyuura の id の番号（098）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。MoveAllEnergyBetweenOwnerPokemon（自分の場の「ナツメのポケモン」を 1 匹選び、ついているエネルギーカードをすべて、別の「ナツメのポケモン」1 匹に 1 回でつけなおす（trainer_move_energy。通常の操作の回数は変えない。つけたときの特殊能力を評価する）。2 匹いなければ SB1、エネルギーカードのないものは選ぶと SB2）。トレーナー。ナツメのポケモン・ナツメの眼とは別のカード。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
+    },
+    "PMCG6-080": {
+      "basis": "kyuura_data",
+      "name_ja": "ワープポイント",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2078.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "078/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "お互いの対戦ポケモンを、それぞれ、控えポケモンと入れ替える。入れ替わるポケモンは、それぞれ、持ち主が選ぶ。(入れ替えは、相手プレイヤーが先におこなう。控えがいないプレイヤーは、入れ替えをしない。",
+              "pcg_search": "お互いの対戦ポケモンを、それぞれ、控えポケモンと入れ替える。入れ替わるポケモンは、それぞれ、持ち主が選ぶ。(入れ替えは、相手プレイヤーが先におこなう。控えがいないプレイヤーは、入れ替えをしない)",
+              "affects_behavior": false,
+              "note": "kyuura の文面は最後の閉じかっこ「)」がなく、サイトの文面にはある（サイトは句点がない）。処理は変わらない（写しは直さない。kyuura への報告事項）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（078）は kyuura の id の番号（080）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.55 で加えた。トレーナー。SwitchBothActivesTrainer（相手プレイヤー → 使ったプレイヤーの順に、持ち主が自分のベンチから選んで対戦ポケモンと入れ替える（_switch_active_with_bench）。控えがいないプレイヤーは入れ替えない（trainer_switch_skipped）。どちらにも控えがいなくても使える。SG1 は使ったプレイヤーに控えがいないときだけ）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/instant-trainers-v0.55.md）"
     }
   }
 }

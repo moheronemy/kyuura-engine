@@ -1584,3 +1584,51 @@
 - 検証用デッキ `H54`・`D54` と組（`PAIRINGS_V0_54`。`H54` 対 `D54`・`D54` 対 `H54`・`H54` 対 `R53`・`D54` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.54` です
   （前の版の組の結果は変わらない）。トレーナーは `_v054_trainer`（受け付けるときだけ使う）、決定は `_v054_decision`（相手の決定にも答える）。`D54` のなにかの化石で、対戦準備が既知の
   PF1 で止まる局があります。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## すぐに使い終わるトレーナー 16 枚（v0.55）
+
+- 依頼の 16 枚（カスミのいかり PMCG5-075・ロケット団のおねーさん PMCG4-061・礼儀作法 PMCG5-082・トラッシュ交換 PMCG6-077・エネルギー・リムーブ PMCG1-070・超エネルギーリムーブ
+  PMCG1-088・いいきずぐすり PMCG1-075・なんでもなおし PMCG1-080・ポケモンセンター PMCG1-083・ねむれ!ねむれ! PMCG4-054・エネルギーサーキュレート PMCG5-067・エリカの親切 PMCG5-084・
+  タケシ PMCG5-089・サカキの切り札 PMCG6-096・ナツメ PMCG6-098・ワープポイント PMCG6-080）を、kyuura データの採用で登録しました（トレーナーの登録 40 → 56。写しの組 `pool_v0_55`。
+  写し 376 → 391 枚）。カードごとの結果・条件・対象・順番・枚数・見せるか・未解決・実装上の読み方・互換性・検証は docs/instant-trainers-v0.55.md。ガイドブックは読んでいません。
+  英語版の文面（「Your Active Pokémon」「up to 2」「in order to」など）・のちのルール・kyuura の MIX-ENERGY-REMOVAL・MIX-SUPER-ENERGY-REMOVAL（2000.02.14 版のあとの再録・大会の記録）・
+  2002 年のサポーターの規定で、日本語版の条件を補わないでください。テストの定数は tests/helpers.py の `MISTYS_WRATH`〜`WARP_POINT`・`V0_55_CARDS`（トレーナーの `BROCK_TRAINER`・
+  `SABRINA_TRAINER` を、「タケシの」「ナツメの」ポケモン・ナツメの眼と取りちがえない）。
+- いいきずぐすりは v0.54 まで「実装を登録していないトレーナー」の参照カードでした。その性質を確かめるテストは、登録だけを除いた登録表（tests/helpers.py の `NO_SUPER_POTION_EFFECTS`・
+  `no_super_potion_pool`）を使います。参照カード（`REFERENCE_ONLY`）は キョウのベトベトン PMCG6-023 だけです。
+- 意味ごとの共通の型: `effects.DiscardAttachedEnergyTrainer(text, opponent_cards, own_cost)`（エネルギー・リムーブ・超エネルギーリムーブ）・`HealEachDamagedPokemonTrainer(text, who,
+  counters, discard_energy)`（ポケモンセンター・エリカの親切・タケシ。`HEAL_SELF`・`HEAL_BOTH`）。ほかは 1 枚ずつの型（`LookTopTakeRestDiscardTrainer`・`OpponentHandTrainerToDeck`・
+  `DiscardPileExchange`・`DiscardEnergyThenHealTrainer`・`CureSpecialConditionsTrainer`・`CoinStatusOnOpponentActiveTrainer`・`ReturnBasicEnergyToHandTrainer`・
+  `HealOwnerPokemonThenDiscardHand`・`MoveAllEnergyBetweenOwnerPokemon`・`SwitchBothActivesTrainer`）。礼儀作法は v0.53 の `SearchDeckTrainer` に `no_basic_in_hand`（使うための条件
+  `BASIC_POKEMON_IN_HAND`）・`reveal_hand`（さがす前に手札を見せる）と `CardFilter("basic_pokemon")` を加えたものです。似たトレーナーを加えるときは、まずこれらの引数で表せるかを
+  確かめ、汎用の条件の書き方・カード id の分岐を作らないでください。型の `check` が文面の言葉と登録の値を照らします。
+- 場のエネルギーカードを動かすのは `zones.discard_attached_energy_cards`（持ち主のトラッシュ。ログ `trainer_discard_energy` の `player` は持ち主・`user` は使ったプレイヤー）・
+  `return_attached_energy_to_hand`（`trainer_return_energy`）・`move_attached_energy`（はがしたカードすべてを 1 回でつけなおす。`trainer_move_energy`。つけたあとカードごとに
+  `effects.after_energy_attached`）だけです。手札からつける通常の操作の回数・特殊能力でつけた枚数は変えません。ほかのゾーンの関数は `take_looked_deck_cards`（`looked_to_hand` は
+  使ったプレイヤーだけ・`looked_to_discard` は公開）・`opponent_hand_card_to_deck`（`opponent_hand_to_deck` の `card` は持ち主と見たプレイヤーだけ）・`discard_pile_to_deck`・
+  `deck_top_to_discard`（公開）。どれも同じ uid・同じ持ち主のまま動かします。
+- 選ぶのはワープポイントの段階 0 を除き使ったプレイヤーです（相手のポケモン・手札・エネルギーカードも）。ワープポイントは相手プレイヤーが先に自分の控えを選び（その決定を許すのは
+  このカードの `decision_problems` だけ）、控えがいないプレイヤーは入れ替えません（`trainer_switch_skipped`。どちらにも控えがいなくても使える）。トレーナーの効果なので「ワザを
+  うけない」状態・「とうめい」は当てはめません。エリカの親切は使ったプレイヤー → 相手の順（EK1）。
+- 使うための条件（「…ことによって」「…時だけ、使える」）は手札から出す前の `IllegalActionError`（超エネルギーリムーブ・いいきずぐすりの `NO_ENERGY_TO_DISCARD`、礼儀作法の
+  `BASIC_POKEMON_IN_HAND`）。条件のエネルギーカードのトラッシュは、そのあとの段階の不正な答え・止める答えで取り消しません。
+- 決められない場合（新しい停止コード 8 件。どれも `not_in_kyuura`）: MW1（`UNRESOLVED_MISTYS_WRATH_SHORT_DECK`。山札 7 枚未満。「引けるだけ」を見る処理に当てはめない）・EM1
+  （`UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET`）・SP1（`UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET`）・FH1（`UNRESOLVED_FULL_HEAL_SCOPE`。特殊状態のポケモンが自分の対戦ポケモン
+  だけなら回復し、ほかは使う前に止める）・GL1（`UNRESOLVED_LAST_RESORT_WITHOUT_TARGET`）・GL2（`UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET`）・SB1
+  （`UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON`）・SB2（`UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY`）。対象を選ぶ問い（SP1・GL2・SB2）は選べるが選ぶと止め、どれもそうなら使う前に
+  止めます。既存の問い: 超エネルギーリムーブの 2 枚より少ないポケモンは v0.44 の FC1（のちの版の「2 枚まで」を持ち込まない）、ワープポイントの「すごむ」は v0.40 の SG1（使った
+  プレイヤーに控えがいないときだけ。WP1）、最大HPが下がる答え（いいきずぐすり・エネルギーサーキュレート・ナツメ・ワープポイント）はエンジンの共通の MH1（カードごとの確かめ・途中の
+  状態の確かめを加えない）。ほかのカードの「対象がない」ときの問いの答えを流用しないでください。エンジンが止める `UNRESOLVED_…` は 95 件、未解決の裁定は 96 件です。
+- 「全員から」の効果（ポケモンセンター・エリカの親切・タケシ）は、ダメージカウンターのあるポケモンがいなければ何も起こらずに使い終わります（HE1。選ばせる効果の「対象がない」とは
+  別）。いいきずぐすりのとりのぞく数は 0〜min(4, のっている数)（決定 `select_counter_count`）。ねむれ!ねむれ!は「おもて」で特殊状態にしたあとの状態が受け付けられないなら、コインの
+  前に止めます（`state_stop_after`）。ロケット団のおねーさんはトレーナーカードがなければ切りません（RS1）。
+- ロケット団秘密メカの種類（`rockets_secret_machine`）だけを持つトレーナーの受け付けは、夜の廃品回収（v0.53）とねむれ!ねむれ!で共通の `effects.secret_machine_ok` です。ほかの種類の
+  トレーナーを一律に受け付けないでください（この種類を参照するカードを加えるときに見直す）。
+- 状態の項目・書き出しの形式（15）・公開の API の呼び方は変えていません（次の新しい形式は 16）。新しい決定の種類は `take_looked_cards`・`opponent_hand_to_deck`（観測の
+  `LOOKED_HAND_KINDS`。決めるプレイヤーに見た相手の手札が見える）・`select_counter_count`、新しいログのイベントは `trainer_discard_energy`・`trainer_return_energy`・
+  `trainer_move_energy`・`trainer_switch_skipped`・`discard_pile_to_deck`・`deck_top_to_discard`・`looked_to_discard`（公開）・`looked_to_hand`・`opponent_hand_to_deck`（非公開の
+  項目あり）、`special_conditions_removed` の理由 `cured`。ログの監査（tests/log_audit.py の `instant_trainer_problems`）は、トレーナー 1 回ぶんのイベントの並び・動かしたカードの
+  数・側・出どころと、新しいイベントの組み立て直しを確かめます。場・手札・山札・トラッシュのカードを動かすトレーナーを加えたら、監査にも加えてください。
+- 検証用デッキ `G55`・`U55` と組（`PAIRINGS_V0_55`。`G55` 対 `U55`・`U55` 対 `G55`・`G55` 対 `S48`・`U55` 対 `H54`）は tools/existing_effect_games.py の `--batch v0.55` です
+  （前の版の組の結果は変わらない）。トレーナーは `_v055_trainer`（受け付けるときだけ使う）、決定は `_v055_decision`（相手の決定にも答える）。なんでもなおしは対戦の場面ではいつも
+  FH1 で、回復は単体テストで確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
