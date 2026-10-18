@@ -41,7 +41,8 @@
     "pokemon.attacks[].text",
     "trainer",
     "energy.kind",
-    "energy.provides"
+    "energy.provides",
+    "energy.text"
   ],
   "pool_v0_1": [
     "PMCG1-016",
@@ -564,6 +565,31 @@
     "PMCG6-094",
     "PMCG6-079",
     "PMCG6-091"
+  ],
+  "pool_v0_57": [
+    "PMCG5-079",
+    "PMCG5-080",
+    "PMCG5-091",
+    "PMCG5-095",
+    "PMCG6-085",
+    "PMCG5-078",
+    "PMCG6-086",
+    "PMCG6-090",
+    "PMCG5-070",
+    "PMCG6-092",
+    "PMCG6-097",
+    "PMCG5-076",
+    "PMCG5-094",
+    "PMCG5-087"
+  ],
+  "pool_v0_58": [
+    "PMCG5-052",
+    "PMCG5-053",
+    "PMCG6-088",
+    "PMCG1-096",
+    "PMCG4-063",
+    "PMCG4-064",
+    "PMCG4-065"
   ],
   "reference_only": [
     "PMCG6-023"
@@ -32817,6 +32843,902 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E5%AE%9F%E9%A8%93"
+      }
+    },
+    {
+      "id": "PMCG5-079",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "ニビシティジム",
+        "en": "Pewter City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "このスタジアムカードが場にあるかぎり、「タケシのポケモン」が使うワザのダメージは「抵抗力」の影響を受けない。このスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Don't apply Resistance to any attacks made by Pokémon with Brock in their names."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-079",
+        "pokemontcg": [
+          "gym1-115"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8B%E3%83%93%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8B%E3%83%93%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-080",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "ハナダシティジム",
+        "en": "Cerulean City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "このスタジアムカードが場にあるかぎり、「カスミのポケモン」の「にげる時トラッシュするエネルギーの数」は「-1」される。(0より小さくなることはない)このスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Each player pays Colorless less to retreat his or her Pokémon if it has Misty in its name."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-080",
+        "pokemontcg": [
+          "gym1-108"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%8A%E3%83%80%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%8A%E3%83%80%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-091",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "抵抗力低下ジム",
+        "en": "Resistance Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "すべてのポケモンの「抵抗力」は、20へる。(「抵抗力」が「-30」なら、「-10」になる)(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Each Pokémon's Resistance is reduced by 20. (If a Pokémon's Resistance is -30, it becomes -10.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-091",
+        "pokemontcg": [
+          "gym2-109"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E6%8A%B5%E6%8A%97%E5%8A%9B%E4%BD%8E%E4%B8%8B%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E6%8A%B5%E6%8A%97%E5%8A%9B%E4%BD%8E%E4%B8%8B%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-095",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団の特訓ジム",
+        "en": "The Rocket's Training Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いの対戦ポケモンは、「にげる」時、トラッシュするエネルギーが1つぶん多く必要になる。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Each player pays Colorless more to retreat his or her Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-095",
+        "pokemontcg": [
+          "gym1-104"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E7%89%B9%E8%A8%93%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E7%89%B9%E8%A8%93%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG6-085",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "グレンタウンジム",
+        "en": "Cinnabar City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーの「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を受けない。(このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Ignore Weakness when a Water Pokémon does damage to a Pokémon with Blaine in its name."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-085",
+        "pokemontcg": [
+          "gym2-113"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B0%E3%83%AC%E3%83%B3%E3%82%BF%E3%82%A6%E3%83%B3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B0%E3%83%AC%E3%83%B3%E3%82%BF%E3%82%A6%E3%83%B3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-078",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "タマムシシティジム",
+        "en": "Celadon City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番の中で、自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させてもよい。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. During each player's turn, that player may choose to discard an Energy card attached to 1 of his or her Pokémon with Erika in its name. If that player does so, that Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-078",
+        "pokemontcg": [
+          "gym1-107"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%83%9E%E3%83%A0%E3%82%B7%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%83%9E%E3%83%A0%E3%82%B7%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG6-086",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "セキチクシティジム",
+        "en": "Fuchsia City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインが「おもて」なら、自分の場にいる「キョウのポケモン」を1枚選び、そのポケモンと、それについているすべてのカードを山札にもどし、その山札をよく切る。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player may shuffle 1 of his or her Pokémon in play with Koga in its name and any cards attached to it into his or her deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-086",
+        "pokemontcg": [
+          "gym2-114"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BB%E3%82%AD%E3%83%81%E3%82%AF%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BB%E3%82%AD%E3%83%81%E3%82%AF%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG6-090",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ヤマブキシティジム",
+        "en": "Saffron City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、自分の番に、自分の「ナツメのポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. As often as each player like during his or her turn (before attacking), that player may return 1 basic Energy card attached to 1 of his or her Pokémon with Sabrina in its name to his or her hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-090",
+        "pokemontcg": [
+          "gym2-122"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A4%E3%83%9E%E3%83%96%E3%82%AD%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A4%E3%83%9E%E3%83%96%E3%82%AD%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-070",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "せまいジム",
+        "en": "Narrow Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーの「ベンチに出しておける控えポケモンの数」は、「4匹まで」となる。このカードが場に出た時、ベンチにポケモンが5匹いるプレイヤーは、その中から1匹を選び、そのカードと、それについているすべてのカードを手札にもどす。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. No player may have more than 4 Pokémon on his or her Bench. When this card is played, if a player has 5 Pokémon on his or her Bench, that player chooses 1 of them and returns it and all cards attached to it to his or her hand. (If both players have to return a Pokémon, your opponent returns a Pokémon first.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-070",
+        "pokemontcg": [
+          "gym1-124"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%9B%E3%81%BE%E3%81%84%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%9B%E3%81%BE%E3%81%84%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG6-092",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団の爆発ジム",
+        "en": "Rocket's Minefield Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "手札から「たねポケモン」のカードをベンチに出す時、そのポケモンの持ち主はコインを投げる。コインが「うら」なら、そのポケモンに20ダメージ。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Whenever a player puts a Basic Pokémon onto his or her Bench from his or her hand, he or she flips a coin. If tails, put damage counters on that Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-092",
+        "pokemontcg": [
+          "gym2-119"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E7%88%86%E7%99%BA%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E7%88%86%E7%99%BA%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG6-097",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "トキワシティジム",
+        "en": "Viridian City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、自分の「サカキのポケモン」を進化させる時、のぞむなら、そのポケモンにのっているダメージカウンターを、2つとりのぞいてよい。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Whenever a Pokémon with Giovanni in its name evolves, its owner removes 2 damage counters from that Pokémon (or 1 if it only has 1)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-097",
+        "pokemontcg": [
+          "gym2-123"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%82%AD%E3%83%AF%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%82%AD%E3%83%AF%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-076",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "クチバシティジム",
+        "en": "Vermilion City Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番で「マチスのポケモン」がワザを使う時、コインを投げてもよい。コインが「おもて」なら、そのワザによって相手の対戦ポケモンに与えるダメージは「+10」される。(控えポケモンへのダメージは、そのまま)「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、10ダメージ。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Whenever a player attacks with a Pokémon with Lt. Surge in its name, he or she may flip a coin. If heads, and if that Pokémon's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), that attack does 10 more damage to the Defending Pokémon. If tails, the attacking Pokémon does 10 damage to itself in addition to whatever its attack usually does."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-076",
+        "pokemontcg": [
+          "gym1-120"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AF%E3%83%81%E3%83%90%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AF%E3%83%81%E3%83%90%E3%82%B7%E3%83%86%E3%82%A3%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-094",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "リムーブ禁止ジム",
+        "en": "No Removal Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、「エネルギーリムーブ」「超エネルギーリムーブ」を使うことができない。ただし、それらを使う時に、自分の手札からカードを2枚選んでトラッシュするなら、使うことができる。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. A player must discard 2 cards from his or her hand in order to play an Energy Removal or Super Energy Removal card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-094",
+        "pokemontcg": [
+          "gym1-103"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AA%E3%83%A0%E3%83%BC%E3%83%96%E7%A6%81%E6%AD%A2%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AA%E3%83%A0%E3%83%BC%E3%83%96%E7%A6%81%E6%AD%A2%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-087",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "錯乱ジム",
+        "en": "Chaos Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。どちらかのプレイヤーが「トレーナーカード」(スタジアムカード以外)を使う時、そのプレイヤーはコインを投げる。コインが「うら」なら、そのプレイヤーは、そのカードを使うことができず、相手プレイヤーは、のぞむなら、そのカードを使ってもよい。相手プレイヤーが使う場合、ポケモンにつけて使うカード(「プラスパワー」など)や、場に出して使うカード(「ピッピ人形」など)は、使うことができない。また、そのカードの「使うための条件」(「手札からカードを1枚トラッシュする」など)を満たせない時も、使うことができない。使ったトレーナーカードは、持ち主のトラッシュにすてる。使えなかったり、使わなかったカードも、持ち主のトラッシュにすてる。",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Whenever a player plays a Trainer card other than a Stadium card, he or she flips a coin. If heads, that player plays that card normally. If tails, the player can't play that card. If the card isn't put into play, the player's opponent may use that card instead, if he or she does everything required in order to play that card (like discarding cards). Either way, the card goes to its owner's discard pile."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-087",
+        "pokemontcg": [
+          "gym2-102"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E9%8C%AF%E4%B9%B1%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E9%8C%AF%E4%B9%B1%E3%82%B8%E3%83%A0"
+      }
+    },
+    {
+      "id": "PMCG5-052",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのゴローン",
+        "en": "Brock's Graveler"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          75
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのイシツブテ",
+          "en": "Brock's Geodude"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ばくれつ",
+              "en": "Detonate"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分にも50ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。場に「スタジアムカード」があれば、それをトラッシュする。",
+              "en": "Does 10 damage to each Pokémon on each player's bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Brock's Graveler does 50 damage to itself. If there is a Stadium card in play, discard it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-052",
+        "pokemontcg": [
+          "gym2-34"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3LV.32_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%B3LV.32_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-053",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのゴローニャ",
+        "en": "Brock's Golem"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          76
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "タケシのゴローン",
+          "en": "Brock's Graveler"
+        },
+        "hp": 90,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いわなだれ",
+              "en": "Rock Slide"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の控えポケモンから最大3匹を選び、それぞれに(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, choose up to 3 of them. This attack does 10 damage to each of them. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ランドクラッシュ",
+              "en": "Fissure"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-053",
+        "pokemontcg": [
+          "gym1-20"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%8B%E3%83%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "ニビシティジム タケシ・リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B4%E3%83%AD%E3%83%BC%E3%83%8B%E3%83%A3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-088",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ナツメのサイキックコントロール",
+        "en": "Sabrina's Psychic Control"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、相手のトラッシュからトレーナーカードを1枚選び、そのカードがあなたの手札にあるものとみなして、使ってよい。ポケモンにつけて使うカード(「プラスパワー」など)や、場に出して使うカード(「ピッピ人形」など)は、使うことができない。また、そのカードの「使うための条件」(「手札からカードを1枚トラッシュする」など)を満たせない時も、使うことができない。",
+          "en": "Flip a coin. If heads, choose a Trainer card in your opponent's discard pile that isn't put in play (like PlusPower or Mysterious Fossil). You may use that card as if it were in your hand, if you do everything required in order to play that card (like discarding cards). The card stays in your opponent's discard pile."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-088",
+        "pokemontcg": [
+          "gym2-121"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B5%E3%82%A4%E3%82%AD%E3%83%83%E3%82%AF%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AE%E3%82%B5%E3%82%A4%E3%82%AD%E3%83%83%E3%82%AF%E3%82%B3%E3%83%B3%E3%83%88%E3%83%AD%E3%83%BC%E3%83%AB"
+      }
+    },
+    {
+      "id": "PMCG1-096",
+      "jp_set": "PMCG1",
+      "category": "energy",
+      "name": {
+        "ja": "無色2個エネルギー",
+        "en": "Double Colorless Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": null,
+          "en": "Provides ColorlessColorless energy.\nDoesn't count as a basic Energy card."
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [
+        "なぞのばしょの表記による。TCGdex の表記は「ダブル無色エネルギー」"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG1-096",
+        "pokemontcg": [
+          "base1-96"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-096-mushoku2koenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-096-mushoku2koenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-063",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "きずぐすり配合エネルギー",
+        "en": "Potion Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンのダメージカウンターを1つとりのぞく。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+          "en": "If you play this card from your hand, remove 1 damage counter from the Pokémon you attach it to, if it has any. Potion Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-063",
+        "pokemontcg": [
+          "base5-82"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-063-kizugusurihaigoenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-063-kizugusurihaigoenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-064",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "なんでもなおし配合エネルギー",
+        "en": "Full Heal Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "「無色」エネルギー1個ぶんとしてあつかう。このカードを手札から出してポケモンにつける時、そのポケモンの「どく・ねむり・マヒ・こんらん」状態をすべて回復させる。\n\n(「無色」エネルギーは、ほかの色のエネルギーのかわりにはならない。ほかの色のエネルギーは「無色」エネルギーのかわりになる。)",
+          "en": "If you play this card from your hand, the Pokémon you attach it to is no longer Asleep, Confused, Paralyzed, or Poisoned. Full Heal Energy provides Colorless energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-064",
+        "pokemontcg": [
+          "base5-81"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-064-nandemonaoshihaigoenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-064-nandemonaoshihaigoenergy/"
+      }
+    },
+    {
+      "id": "PMCG4-065",
+      "jp_set": "PMCG4",
+      "category": "energy",
+      "name": {
+        "ja": "レインボーエネルギー",
+        "en": "Rainbow Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "どの色の基本エネルギーカードとして使ってもよい。このカードを手札から出してポケモンにつける時、そのポケモンに(「弱点・抵抗力」に関係なく)10ダメージ。",
+          "en": "Attach Rainbow Energy to 1 of your Pokémon. While in play, Rainbow Energy counts as every type of basic Energy but only provides 1 Energy at a time. (Doesn't count as a basic Energy card when not in play.) When you attach this card from your hand to 1 of your Pokémon, it does 10 damage to that Pokémon. (Don't apply Weakness and Resistance.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-065",
+        "pokemontcg": [
+          "base5-17",
+          "base5-80"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-065-rainbowenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-065-rainbowenergy/"
       }
     },
     {

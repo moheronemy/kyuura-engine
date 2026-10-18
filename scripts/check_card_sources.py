@@ -67,6 +67,10 @@ PRINTED_TEXT_SOURCE = "kyuura data/cards.json"
 # v0.31: kyuura の日英の違いの記録（data/curation/card_differences.json）が引く最新の説明を処理に使う文面にした登録の根拠・出典（``#`` のあとが
 # カード id。研究の対応表の difference_text。文面が記録の引用と同じことは scripts/check_research_links.py が kyuura で確かめる）
 DIFFERENCE_TEXT_SOURCE = "kyuura data/curation/card_differences.json"
+# v0.58: 日本語の説明のない特殊エネルギー（無色2個エネルギー）の根拠。処理に使う文面はなく、出すエネルギーの個数と色を、kyuura の名前と pcg-search.com の同じ版の
+# カードの記号で決めた（登録の出典は effects.DCE_SOURCE と同じ。同じ版の照合（結果 match。名前と種類を照らした）が要る）
+NAME_AND_SYMBOLS = "card_name_and_edition_symbols"
+NAME_AND_SYMBOLS_SOURCE = "kyuura data/cards.json name.ja + pcg-search.com 1st1096 (096/096) symbols"
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -85,9 +89,9 @@ DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 RECORD_ID = re.compile(r"^(LD|CC|CR|UQ|ERR|TXT|RUL)-[A-Za-z0-9-]+$")
 PLAY_TEXT_ID = re.compile(r"^(LD|ERR|TXT|RUL)-[A-Za-z0-9-]+$")
-TARGET = re.compile(r"^(attack|power)/(\d+)$|^trainer$")
+TARGET = re.compile(r"^(attack|power)/(\d+)$|^trainer$|^energy$")
 CARD_FIELD = re.compile(r"^(name\.ja|pokemon\.(stage|evolves_from\.ja|hp|types|weaknesses|resistances|retreat_cost|rules_text)"
-                        r"|trainer\.text\.ja|energy\.(kind|provides)|jp_print\.(level|rarity))$")
+                        r"|trainer\.text\.ja|energy\.(kind|provides|text\.ja)|jp_print\.(level|rarity))$")
 INDEXED_FIELD = re.compile(r"^pokemon\.(attacks|powers)\[(\d+)\]\.(name\.ja|cost|damage|text\.ja)$")
 JAPANESE_FIELD = re.compile(r"(^|\.)(name|text)\.ja$")
 
@@ -123,6 +127,8 @@ def play_text_targets(registry, card_id: str) -> dict[str, object]:
             found[f"power/{key.power_index}"] = registry.power_entry(key.card_id, key.power_index)
     if card_id in registry.trainer_ids():
         found["trainer"] = registry.trainer_entry(card_id)
+    if card_id in registry.energy_ids():
+        found["energy"] = registry.energy_entry(card_id)  # v0.58: 特殊エネルギー（日本語の説明のないものも根拠を書く）
     return found
 
 
@@ -150,12 +156,15 @@ def uncovered_play_text_targets(card_id: str, verification: dict, registry) -> s
 
 
 def registered_cards(registry) -> set[str]:
-    return ({k.card_id for k in registry.attack_keys()} | {k.card_id for k in registry.power_keys()} | set(registry.trainer_ids()))
+    return ({k.card_id for k in registry.attack_keys()} | {k.card_id for k in registry.power_keys()} | set(registry.trainer_ids())
+            | set(registry.energy_ids()))  # v0.58: 特殊エネルギー
 
 
 def printed_text(card: dict, target: str) -> str | None:
     if target == "trainer":
         return ((card.get("trainer") or {}).get("text") or {}).get("ja")
+    if target == "energy":
+        return ((card.get("energy") or {}).get("text") or {}).get("ja")
     kind, index = target.split("/")
     items = (card.get("pokemon") or {}).get("attacks" if kind == "attack" else "powers") or []
     if int(index) >= len(items):
@@ -352,7 +361,7 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
         return [f"{where}: play_text は辞書"]
     for target in play_text:
         if not TARGET.match(target):
-            found.append(f"{where}: play_text の対象 {target!r} は attack/<位置>・power/<位置>・trainer のどれでもない")
+            found.append(f"{where}: play_text の対象 {target!r} は attack/<位置>・power/<位置>・trainer・energy のどれでもない")
     targets = play_text_targets(registry, card["id"])
     if record.get("status") == ON_HOLD:
         if play_text:
@@ -377,8 +386,16 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が kyuura の印刷の文面なのに、登録の play_text_ja が写しの文面と違う")
             if entry.source != PRINTED_TEXT_SOURCE:
                 found.append(f"{where} {target}: 根拠が kyuura の印刷の文面なのに、出典が {entry.source!r}（{PRINTED_TEXT_SOURCE!r} にする）")
-            if target != "trainer" and key not in adopted_printed:
+            if target not in ("trainer", "energy") and key not in adopted_printed:
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にない")
+        elif basis == NAME_AND_SYMBOLS:
+            # v0.58: 日本語の説明のない特殊エネルギー。処理に使う文面はなく（登録の text_ja・play_text_ja は None）、出典は名前と同じ版の記号。同じ版の照合（match）が要る
+            if target != "energy" or entry.text_ja is not None or entry.play_text_ja is not None or printed_text(card, target) is not None:
+                found.append(f"{where} {target}: 根拠 {NAME_AND_SYMBOLS} は、日本語の説明のない特殊エネルギーの登録（文面なし）だけに使う")
+            if entry.source != NAME_AND_SYMBOLS_SOURCE:
+                found.append(f"{where} {target}: 根拠が {NAME_AND_SYMBOLS} なのに、出典が {entry.source!r}（{NAME_AND_SYMBOLS_SOURCE!r} にする）")
+            if not any(isinstance(c, dict) and c.get("result") == "match" and "name.ja" in (c.get("checked_fields") or []) for c in record.get("external_checks") or []):
+                found.append(f"{where} {target}: 根拠 {NAME_AND_SYMBOLS} には、名前を照らした同じ版の外部照合（match）が要る")
         elif isinstance(basis, str) and basis == f"{DIFFERENCE_TEXT_SOURCE}#{card['id']}":
             if entry.source != basis:
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
@@ -401,7 +418,7 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         else:
             found.append(f"{where} {target}: 根拠 {basis!r} は {PRINTED_TEXT}・kyuura の記録の id（LD-・ERR-・TXT-・RUL-）・"
-                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id> のどれでもない")
+                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id>・{NAME_AND_SYMBOLS} のどれでもない")
     return found
 
 
@@ -531,7 +548,7 @@ def problems(sources: dict | None = None, *, extract: dict | None = None, verifi
     expected = {f"{card_id}/{target}" for card_id, record in sources["cards"].items()
                 if isinstance(record, dict) and record.get("basis") == KYUURA_DATA and record.get("status") == ADOPTED
                 and isinstance(record.get("play_text"), dict)
-                for target, basis in record["play_text"].items() if basis == PRINTED_TEXT and target != "trainer"}
+                for target, basis in record["play_text"].items() if basis == PRINTED_TEXT and target not in ("trainer", "energy")}
     for key in sorted(adopted_printed - expected):
         found.append(f"研究の対応表の adopted_printed_text の {key} に、kyuura の印刷の文面を根拠とする採用の記録がない")
     return found

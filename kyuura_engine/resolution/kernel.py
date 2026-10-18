@@ -20,8 +20,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, calculate_attack_damage
+from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired
 from ..effects import (
+    calculate_with_stadium,
+    stadium_coin_modifier,
     ATTACK_ELEMENTS,
     BENCH_TARGETS,
     COUNTERATTACK_TARGET_KNOCKED_OUT,
@@ -123,6 +125,9 @@ class Resolution:
         self.attack_status: frozenset[int] | None = None
         # v0.56: このワザの中で、トレーナー「キョウ」の効果でどく状態にした場のポケモンの番号（KG1。``kernel.trainer_poison_after_damage``・``programs.Status``）
         self.trainer_poisoned: set[int] = set()
+        # v0.57: このワザでクチバシティジムのコインを投げた結果（(スタジアムカード, 「おもて」か)。投げていなければ None）。ワザの宣言のあとに投げ（``flow._attack_body``）、
+        # 決定をまたぐときは続きの情報の ``stadium_coin`` で運ぶ（投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージの要素に 6 段階の +10（``deal_damage``）
+        self.stadium_coin: tuple[int, bool] | None = None
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -221,7 +226,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     try:
         for attacker_def in definition_views(state, attacker):
             for receiver_def in definition_views(state, receiver):
-                finals = {calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=flag).final
+                finals = {calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=flag).final
                           for flag in (True, False)}
                 if len(finals) > 1:
                     return True
@@ -275,13 +280,17 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status)
+    if res.stadium_coin is not None and res.stadium_coin[1] and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
+        # v0.57: クチバシティジムの「おもて」（そのワザによって相手の対戦ポケモンに与えるダメージは「+10」。p.321 の 6 段階。控えへのダメージ・返す効果のダメージは
+        # そのまま）
+        modifiers = [*modifiers, stadium_coin_modifier(state, res.stadium_coin[0])]
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
     try:
         # v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力（``effects.definition_views``。テクスチャー・［へんしょく］）。色の読み方
         # （VS1）が 2 つあり、読み方で計算の結果が変わるなら止める（変わらなければ、読み方が 1 つのときと同じ計算）
-        calc = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
-            base, views[0], views[1], state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
+        calc = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
     except TypeReadingsDiffer as differ:
         raise type_question(res, differ, f"ワザ {frame.attack_key} のダメージの計算（ワザを使うポケモンの色と受けるポケモンの弱点・抵抗力）") from None
     except DamageOrderRequired as need:
@@ -378,8 +387,8 @@ def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiv
         return
     extra = tuple(DamageModifier(step=6, amount=amount, label=state.card_def(record.source_card).name_ja, source=record.source_card) for record, amount in bonuses)
     try:
-        alternative = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
-            base, views[0], views[1], state.rules, (*modifiers, *extra), weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)).final
+        alternative = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], (*modifiers, *extra), weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)).final
     except (TypeReadingsDiffer, DamageOrderRequired):
         alternative = None
     if alternative != final:
@@ -437,7 +446,7 @@ def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: Poke
         modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
         for outcomes, (attacker_def, receiver_def) in zip(by_reading, readings):
             try:
-                calc = calculate_attack_damage(base, attacker_def, receiver_def, state.rules, modifiers, weakness_resistance=weakness_resistance,
+                calc = calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=weakness_resistance,
                                                resistance=resistance)
                 outcomes.add(calc.final)
             except DamageOrderRequired:

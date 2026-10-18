@@ -124,9 +124,10 @@ class IsolationTest(unittest.TestCase):
             shutil.copytree(ROOT / "kyuura_engine", mutated / "kyuura_engine", ignore=shutil.ignore_patterns("__pycache__"))
             engine_py = mutated / "kyuura_engine" / "engine.py"
             source = engine_py.read_text(encoding="utf-8")
-            needle = "    if not cost.allows(len(discard)):"  # v0.46: にげるエネルギーの数の確かめ（v0.45 までは ``if len(discard) != cost:``）
+            # v0.46: にげるエネルギーの数の確かめ（v0.45 までは ``if len(discard) != cost:``）。v0.58 から、トラッシュするカードの出すエネルギーの個数で数える
+            needle = "    if not cost.allows(units):"
             self.assertIn(needle, source)
-            engine_py.write_text(source.replace(needle, "    if not cost.allows(len(discard)) and False:"), encoding="utf-8")
+            engine_py.write_text(source.replace(needle, "    if not cost.allows(units) and False:"), encoding="utf-8")
             args = type("Args", (), {"scenario": ["basics"], "seeds": 1, "steps": 120})()
             outputs = []
             for tree in (ROOT, mutated):

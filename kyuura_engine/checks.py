@@ -13,7 +13,13 @@ from typing import TYPE_CHECKING, Any
 
 from .commands import PromoteActive, ResolveDecision, TakePrize
 from .decisions import DECISION_PHASE_ORDER, check_choices
-from .effects import AttackKey, attack_cost_payable, find_attack_option, form_def
+from .effects import (
+    AttackKey,
+    attack_cost_payable,
+    attack_cost_problem,
+    find_attack_option,
+    form_def,
+)
 from .errors import IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import attack_locked, cannot_attack, cannot_attack_while_source_active
 from .state import Phase
@@ -117,12 +123,16 @@ def attack_request(state: GameState, cmd: UseAttack) -> AttackRequest:
         # 宣言のときに記録する。ログから数えない）。エネルギーの確認の前（説明が使えないとするワザなので、必要なエネルギーがあっても使えない）
         raise IllegalActionError("ATTACK_ALREADY_USED", f"バトル場のポケモン {attacker.pokemon_id} は、ワザ「{attack.name_ja}」を場に出てからもう使った"
                                  "（場に出てから1回しか使えない）")
-    if not attack_cost_payable(state, attacker, attack):
+    cost_problem = attack_cost_problem(state, attacker, attack)  # v0.58: TE2（［へんしん］のメタモンの無色の特殊エネルギー。ほかの確認がすべて通ったあとに止める）
+    if cost_problem is None and not attack_cost_payable(state, attacker, attack):
         # v0.49: 必要なエネルギーはどのワザの出どころでも同じに確かめる（［へんしん］のメタモンはエネルギーカードをどの色としても払える。``effects.attack_cost_payable``）
+        # v0.58: 出すエネルギーの個数と色で払う（無色2個エネルギー・レインボーエネルギー）
         raise IllegalActionError("INSUFFICIENT_ENERGY", f"ワザ「{attack.name_ja}」に必要なエネルギーが足りない")
     problem = effect.usage_problem(state, attacker)  # v0.31: 説明が書くワザを使うための条件（「ぼーっとする」）
     if problem is not None:
         raise problem
+    if cost_problem is not None:
+        raise cost_problem
     if option.problem is not None:
         # v0.49: 選ぶと止めるワザ（VS1・RC2〜RC4・VA1）。原典で決められない理由はほかの確認がすべて通ったあと（API の約束）
         raise UnsupportedError(option.problem[0], f"ワザ「{attack.name_ja}」（カード {option.card}）: {option.problem[1]}")

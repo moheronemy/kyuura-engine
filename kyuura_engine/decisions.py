@@ -235,6 +235,15 @@ HAND_TO_ACTIVE = "hand_to_active"
 # v0.56: カスミのわがままで、見たサイドのカードと交換する手札のカード。決めるのは使ったプレイヤー。選べるものは自分の手札のカードの uid（手札の並び。使っているこの
 # カードは手札にない）
 SWAP_WITH_PRIZE = "swap_with_prize"
+# v0.57（docs/stadiums-v0.57.md 5 章）: せまいジムが場に出た時、ベンチにポケモンが 5 匹いるプレイヤーが、その中から手札にもどす 1 匹。決めるのはそのプレイヤー（ベンチの
+# 持ち主）。選べるものはそのプレイヤーの控えポケモンの番号。両方のプレイヤーが 5 匹なら、番でないプレイヤーが先（実装上の順番。``context`` の ``"remaining"``）
+STADIUM_RETURN_BENCH = "stadium_return_bench"
+# v0.57: トキワシティジムがある時、自分の「サカキのポケモン」を進化させる時に、のっているダメージカウンターを 2 つとりのぞくか。決めるのは進化させたプレイヤー（持ち主）。
+# 選べるものはそのポケモンの番号 1 つで、0〜1 個（選ばない = とりのぞかない。「のぞむなら」）
+EVOLUTION_HEAL = "evolution_heal"
+# v0.58（docs/stadium-reuse-special-energy-v0.58.md 4 章）: ナツメのサイキックコントロールの「おもて」で、相手のトラッシュから使うトレーナーカード。決めるのは使ったプレイヤー。
+# 選べるものは相手のトラッシュのトレーナーカード（トラッシュの並び。公開の情報）のうち、使えるもの。0〜1 枚（選ばない = 使わない。「使ってよい」）
+USE_DISCARD_TRAINER = "use_discard_trainer"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
@@ -396,6 +405,32 @@ def push_power_decision(
         min_choices=min_choices,
         max_choices=max_choices,
     )
+
+
+def push_stadium_decision(
+    state: GameState,
+    *,
+    stadium: int,
+    stage: str,
+    kind: str,
+    player: int,
+    options: Iterable[int],
+    context: Iterable[tuple[str, Any]] = (),
+    min_choices: int = 1,
+    max_choices: int = 1,
+    unresolved_choices: Iterable[int] = (),
+    unresolved_code: str = "UNRESOLVED_RULING",
+    unresolved_reason: str = "",
+) -> PendingDecision:
+    """場のスタジアムの効果の途中で決定を出す（v0.57。再開先 ``"stadium"``。``engine._resume_stadium`` が ``stage`` で続きを選ぶ）。``context`` の ``"stadium"`` は
+    スタジアムカードの uid、``"stage"`` は段階（``narrow``: せまいジムが場に出た時の控えポケモンを手札にもどす・``fuchsia``: セキチクシティジムの「おもて」のあとの
+    ポケモンを選ぶ・``evolution_heal``: トキワシティジムの進化の時のダメージカウンター）。``unresolved_choices`` はトレーナーの決定と同じ（選ぶと止める）。"""
+    entries = [("stadium", stadium), ("stage", stage)]
+    unresolved = tuple(unresolved_choices)
+    if unresolved:
+        entries += [("unresolved_choices", unresolved), ("unresolved_code", unresolved_code), ("unresolved_reason", unresolved_reason)]
+    return push_decision(state, kind=kind, player=player, options=options, resume="stadium", context=(*entries, *tuple(context)),
+                         min_choices=min_choices, max_choices=max_choices)
 
 
 def check_choices(decision: PendingDecision, choices: tuple[int, ...]) -> None:

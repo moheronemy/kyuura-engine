@@ -182,6 +182,7 @@ def calculate_attack_damage(
     weakness_resistance: bool = True,
     orders: Mapping[int, tuple[int, ...]] | None = None,
     resistance: bool = True,
+    weakness: bool = True,
 ) -> DamageCalculation:
     """バトル場のポケモンがワザで相手のバトル場のポケモンに与えるダメージ。
 
@@ -193,6 +194,8 @@ def calculate_attack_damage(
     結果が変わらない段階は、渡されていなければ集めた順番で計算する。
     ``resistance``（v0.45）: False なら 4 段階（抵抗力）だけを計算しない（説明に「このワザのダメージは、「抵抗力」の影響を受けない」とあるダメージ。
     タケシのイシツブテの「スパイラルショット」）。弱点（3 段階）とほかの段階は計算する。
+    ``weakness``（v0.57）: False なら 3 段階（弱点）だけを計算しない（グレンタウンジムの「「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を
+    受けない」。``effects.calculate_with_stadium``）。抵抗力とほかの段階は計算する。
     """
     used = tuple(modifiers)
     chosen = dict(orders or {})
@@ -206,11 +209,11 @@ def calculate_attack_damage(
             continue
         # 加算でない効果は、同じ段階のほかの効果との順番で結果が変わりうる。p.321 は順番を DAMAGE_STEP_CHOOSER のプレイヤーが決めるとする。
         # どの順番でも結果（最終ダメージと 2 段階で終えるか）が同じなら決めさせない（あとの段階は、渡された順番か集めた順番で比べる）
-        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}, resistance))
+        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}, resistance, weakness))
                     for order in step_orders(len(at_step))}
         if len(outcomes) > 1:
             raise DamageOrderRequired(step, at_step)
-    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance)
+    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance, weakness)
 
 
 def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
@@ -218,7 +221,7 @@ def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
 
 
 def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, rules: RuleSet, used: tuple[DamageModifier, ...],
-               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]], resistance: bool = True) -> DamageCalculation:
+               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]], resistance: bool = True, weakness: bool = True) -> DamageCalculation:
     """p.321 の 8 段階の計算（順番の確かめは ``calculate_attack_damage``）。段階の中の変更効果は、``orders`` にあればその順番、なければ集めた順番。
 
     結果の ``modifiers`` は v0.34 と同じ集めた順番（2 段階で終えたら 2 段階のものだけ）で、順番を選んだ段階のものだけ、その段階の位置の中で選んだ
@@ -250,7 +253,7 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
         return DamageCalculation(base, False, False, True, 0, tuple(steps), _in_order(tuple(m for m in used if m.step == 2), orders))
 
     # 3. ワザを使うポケモンのタイプが、ワザを受けるポケモンの「弱点」のタイプなら 2 倍（p.315, p.321）
-    weakness_applied = weakness_resistance and defender.weakness is not None and attacker.pokemon_type == defender.weakness
+    weakness_applied = weakness_resistance and weakness and defender.weakness is not None and attacker.pokemon_type == defender.weakness
     if weakness_applied:
         amount *= rules.weakness_multiplier
         steps.append(("3 弱点", amount))

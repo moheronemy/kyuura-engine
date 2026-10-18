@@ -23,6 +23,7 @@ from .commands import (
     TakePrize,
     UseAttack,
     UsePokemonPower,
+    UseStadium,
     command_from_dict,
     command_to_dict,
 )
@@ -67,10 +68,11 @@ from .state import (
     PreventDamage,
     Retaliation,
     SpecialConditions,
+    StadiumInPlay,
     TrainerInUse,
 )
 
-__version__ = "0.56.0"
+__version__ = "0.58.0"
 
 __all__ = [
     "Asleep",
@@ -122,6 +124,8 @@ __all__ = [
     "UnsupportedError",
     "UseAttack",
     "UsePokemonPower",
+    "UseStadium",
+    "StadiumInPlay",
     "apply_command",
     "available_attacks",
     "available_ko_prevention_power",

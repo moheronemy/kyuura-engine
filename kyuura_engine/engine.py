@@ -46,9 +46,17 @@ from .commands import (
     TakePrize,
     UseAttack,
     UsePokemonPower,
+    UseStadium,
     RemoveDisguise,
 )
 from .decisions import (
+    ACCEPT_REQUEST,
+    DISCARD_FROM_HAND,
+    EVOLUTION_HEAL,
+    SELECT_POKEMON,
+    STADIUM_RETURN_BENCH,
+    USE_DISCARD_TRAINER,
+    push_trainer_decision,
     DAMAGE_STEP_ORDER,
     DECISION_PHASES,
     ENTRY_POWER,
@@ -68,7 +76,12 @@ from .effects import (
     PowerUse,
     ReturnToHandOnKnockOut,
     TrainerUse,
+    UseDiscardTrainer,
+    RETREAT_OVERPAY_CODE,
     after_energy_attached,
+    attach_from_hand_problem,
+    energy_attached_from_hand,
+    energy_unit_count,
     applicable_entry_power,
     offer_entry_power,
     ko_prevention_power,
@@ -93,6 +106,17 @@ from .effects import (
     play_as_pokemon_effect,
     play_as_pokemon_in_hand,
     trainer_use_blockers,
+    TrainerCoinStadium,
+    BenchLimitStadium,
+    CoinReturnOwnerPokemonStadium,
+    EvolutionHealStadium,
+    apply_evolution_heal,
+    bench_entry_damage,
+    borrow_unusable_reason,
+    offer_evolution_heal,
+    stadium_of,
+    pay_stadium_trainer_cost,
+    stadium_trainer_cost,
     definition_views,
     evolution_hp,
     max_hp,
@@ -106,6 +130,7 @@ from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution
 from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, expires_at_turn_start, lasting, remove_persistent_effects
 from .rules import RULES_2000_02_14, RuleSet
+from .stadiums import bench_limit, stadium_in_play
 from .state import (
     PERSISTENT_EFFECT_TYPES,
     TRAINER_TURN_EFFECT_KINDS,
@@ -134,6 +159,7 @@ from .state import (
     Poison,
     SpecialConditions,
     TrainerInUse,
+    StadiumInPlay,
     TrainerUseLock,
     ZeroDamageBelow,
     MaxHpSet,
@@ -144,7 +170,8 @@ from .state import (
     mark_returned_to_bench,
     turn_owner,
 )
-from .zones import DISGUISE_REVERT, attach_energy_from_hand, discard_from_play, draw_cards, enter_play, remove_disguise, shuffle_deck
+from .zones import DISGUISE_REVERT, attach_energy_from_hand, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, shuffle_deck
+from .coins import CoinSide, flip_coins
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
 # 範囲外のコマンドの処理が使う名前を、v0.13 の名前で読み込む（v0.16b でワザ・番の終わりの処理は解決の基盤だけになった）
@@ -161,7 +188,7 @@ from . import resolution  # v0.15b: 効果の解決の基盤（engine.py を読�
 
 # PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
 # 決定の再開先（v0.16b: 解決の基盤が続ける 5 つと、engine.py が続けるトレーナーの決定）
-DECISION_RESUMES = resolution.RESUMES | {"trainer", "power"}  # v0.42: 宣言して使う特殊能力の途中の決定（"power"）
+DECISION_RESUMES = resolution.RESUMES | {"trainer", "power", "stadium"}  # v0.42: 宣言して使う特殊能力の途中の決定（"power"）。v0.57: スタジアム（"stadium"）
 # 対戦準備の段階（番はまだ始まっていない）
 SETUP_PHASES = frozenset({Phase.SETUP_PLACEMENT, Phase.SETUP_MULLIGAN_DRAW, Phase.SETUP_FIRST_PLAYER})
 
@@ -565,11 +592,15 @@ def _play_basic_to_bench(state: GameState, cmd: PlayBasicToBench) -> None:
     _require_in_hand(state, cmd.player, cmd.card)
     if not state.card_def(cmd.card).is_basic_pokemon:
         raise IllegalActionError("NOT_BASIC_POKEMON", f"カード {cmd.card} はたねポケモンではない")
-    if len(p.bench) >= state.rules.max_bench:
-        raise IllegalActionError("BENCH_FULL", f"ベンチは {state.rules.max_bench} 匹まで")
+    if len(p.bench) >= bench_limit(state, cmd.player):
+        # v0.57: 場のスタジアムの「ベンチに出しておける控えポケモンの数」（せまいジム）を当てはめた数（``stadiums.bench_limit``。なければ共通のルールの 5 匹）
+        raise IllegalActionError("BENCH_FULL", f"ベンチは {bench_limit(state, cmd.player)} 匹まで")
     p.hand.remove(cmd.card)
-    p.bench.append(_enter_play(state, cmd.card))
+    pokemon = _enter_play(state, cmd.card)
+    p.bench.append(pokemon)
     state.add_event("play_to_bench", player=cmd.player, card=cmd.card)
+    # v0.57: 場のロケット団の爆発ジム（手札からたねポケモンのカードをベンチに出す時、持ち主がコインを投げ、「うら」なら 20 ダメージ。docs/stadiums-v0.57.md 5 章）
+    bench_entry_damage(state, cmd.player, pokemon)
 
 
 def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
@@ -650,13 +681,18 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
 
     # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
     # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
+    before_name = form_def(state, target).name_ja
     place_evolution_card(state, cmd.player, target, cmd.card)
+    # v0.57: 場のトキワシティジム（自分の「サカキのポケモン」を進化させる時、のぞむならダメージカウンターを 2 つとりのぞいてよい）。答えたあと、場に出たときの特殊能力の
+    # 機会にもどる（``_resume_stadium``。docs/stadiums-v0.57.md 5 章）
+    if offer_evolution_heal(state, cmd.player, target, before_name, then=("entry", 1, ())):
+        return
     # v0.43: 手札から出した（場に出た）ときに 1 度だけ使える特殊能力（``effects.EntryPower``）があれば、使うかを持ち主に聞く
     # （決定 ENTRY_POWER。再開先 "power"。docs/declared-entry-powers-v0.43.md 3 章）
     offer_entry_power(state, cmd.player, target, from_hand=True)
 
 
-def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
+def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Context) -> None:
     """エネルギーカードを 1 番に 1 枚、自分の場のポケモンにつける（p.310）。
 
     v0.6: この番に、ポケモンパワー（「あまごい」）の効果で手札からエネルギーをつけていて、通常の操作ではまだつけていなければ、
@@ -667,8 +703,9 @@ def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
     """
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.energy)
-    if not state.card_def(cmd.energy).is_basic_energy:
-        raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {cmd.energy} は基本エネルギーカードではない")
+    if state.card_def(cmd.energy).category != "energy":
+        # v0.58: 特殊エネルギーカード（登録されたもの。デッキの検査で確かめている）もつけられる。エネルギーカードでないカードの拒否のコードは v0.57 までと同じ
+        raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {cmd.energy} は基本エネルギーカードではない")  # 理由の文も v0.57 と同じ（エネルギーカードではない）
     if state.energy_attachments_this_turn >= state.rules.energy_attachments_per_turn:
         raise IllegalActionError("ENERGY_ALREADY_ATTACHED", "エネルギーカードはこの番にもうつけた（1 番に 1 枚）")
     target = p.find_in_play(cmd.target)
@@ -683,10 +720,19 @@ def _attach_energy(state: GameState, cmd: AttachEnergy) -> None:
             "エネルギーをつける（通常の操作）ことができるかは『オフィシャルブック2000』から決められない（p.310 の「1回の自分の番ごとに"
             "1枚だけ」にパワーでつけたカードを数えるかが書かれていない）ので扱わない",
         )
+    problem = attach_from_hand_problem(state, cmd.player, cmd.energy, target)
+    if problem is not None:
+        # v0.58: 特殊エネルギーの、手札から出してつけたときの効果が決められない（RB1・RB4）。カードを動かす前
+        raise UnsupportedError(*problem)
     attach_energy_from_hand(state, cmd.player, cmd.energy, target)
     state.energy_attachments_this_turn += 1
     state.add_event("attach_energy", player=cmd.player, energy=cmd.energy, target=cmd.target)
+    # v0.58: 特殊エネルギーの、手札から出してつけたときの効果（きずぐすり配合・なんでもなおし配合・レインボー。GR-2000-P310-ATTACH-ENERGY）。場にあるカードの
+    # 移動（エナジートランスなど）では呼ばない
+    knocks_out = energy_attached_from_hand(state, cmd.player, cmd.energy, target)
     after_energy_attached(state, cmd.player, target, cmd.energy)  # v0.31: つけたときにはたらく特殊能力（ほのおでかいふく）
+    if knocks_out:
+        resolution.after_energy(state, context)  # v0.58: レインボーエネルギーの 10 ダメージで HP 以上になったら、きぜつの処理
 
 
 def _retreat(state: GameState, cmd: Retreat) -> None:
@@ -744,18 +790,35 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
         raise IllegalActionError("DUPLICATE_CARD", "同じエネルギーを 2 回選んでいる")
     if any(uid not in active.energy for uid in discard):
         raise IllegalActionError("ENERGY_NOT_ATTACHED", "バトル場のポケモンについていないエネルギーを選んでいる")
-    if not cost.allows(len(discard)):
-        # 基本エネルギーは 1 枚 1 個なので、トラッシュする枚数 = にげるエネルギーの数
-        wanted = f"{cost.maximum} 個" if cost.minimum == cost.maximum else f"{cost.minimum}〜{cost.maximum} 個"
-        raise IllegalActionError("WRONG_RETREAT_COST", f"にげるエネルギーは {wanted}（{len(discard)} 枚選んでいる）")
-    if cost.floor_ambiguous(len(discard)):
+    # v0.58: トラッシュするエネルギーは、選んだカードの出すエネルギーの個数で数える（基本エネルギーカードは 1 枚 1 個。無色2個エネルギーは 1 枚で 2 個で、分けて
+    # トラッシュできない。レインボーエネルギーは 1 個）。カードの枚数では数えない
+    units = energy_unit_count(state, discard, active)
+    overpay = False
+    if not cost.allows(units):
+        # 余計なカードを除いても足りる選び方（どれか 1 枚を除いても正しい数以上になる）は誤り。どのカードを除いても足りなくなる選び方（無色2個エネルギーでにげる
+        # エネルギー 1 を払う）は、余る個数を払ってよいかが決まらない（RT1。ほかの確認がすべて通ったあとに止める）
+        overpay = units > cost.maximum and all(units - energy_unit_count(state, (uid,), active) < cost.minimum for uid in discard)
+        if not overpay:
+            wanted = f"{cost.maximum} 個" if cost.minimum == cost.maximum else f"{cost.minimum}〜{cost.maximum} 個"
+            chosen = f"{len(discard)} 枚選んでいる" if units == len(discard) else f"{len(discard)} 枚・{units} 個選んでいる"
+            raise IllegalActionError("WRONG_RETREAT_COST", f"にげるエネルギーは {wanted}（{chosen}）")
+    if overpay:
+        raise UnsupportedError(
+            RETREAT_OVERPAY_CODE,
+            f"「にげる」でトラッシュするエネルギーカード {list(discard)} の出すエネルギー {units} 個が、にげるエネルギーの数（{cost.minimum}〜{cost.maximum}）より多く、"
+            "どのカードを除いても足りない（無色2個エネルギーは分けてトラッシュできない）。余るエネルギーをトラッシュして「にげる」ことができるかは、2000.02.14 版の"
+            "公式ルール・kyuura の記録で決まらないので扱わない（RT1）",
+        )
+    if cost.floor_ambiguous(units):
         # v0.46: 少なくする数が印刷の数より多く、増やす数もある（自分のにげるの数が 0 のドードリオのベンチにドードリオ、相手のバトル場にわるいベトベトン）。先に少なくして
         # 0 で止めてから増やすのか、最後に下限をつけるのかで、トラッシュしてよい数が変わる。記録から決まらない（CP2）ので、読み方で答えが変わる数は扱わない（エネルギーを
         # トラッシュする前・コインの前。状態・乱数・ログは変わらない）
         raise UnsupportedError(
             "UNRESOLVED_RETREAT_COST_FLOOR",
-            f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}）を、"
-            f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{len(discard)} 枚が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
+            f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}"
+            + (f"、スタジアムで増やす {[a for _, a in cost.stadium_increases]}・へらす {[a for _, a in cost.stadium_reductions]}"
+               if cost.stadium_increases or cost.stadium_reductions else "") + "）を、"
+            f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{units if units != len(discard) else len(discard)} {'個' if units != len(discard) else '枚'}が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
         )
     # v0.48（MH1）: トラッシュするエネルギーカード（［ガスのからだ］の「超」エネルギーカード）・ベンチにもどること（「きょだいか」の効果が消える・ベンチにもどった
@@ -768,6 +831,10 @@ def _retreat(state: GameState, cmd: Retreat) -> None:
     # v0.46: 特殊能力で数が変わったときだけ、ログに数の範囲と特殊能力を書く（v0.45 までのログの形は変えない）
     cost_log = {} if not cost.modified else {"retreat_cost": (cost.minimum, cost.maximum), "retreat_cost_printed": cost.printed,
                                              "retreat_cost_increases": cost.increases, "retreat_cost_reductions": cost.reductions}
+    if cost.stadium_increases or cost.stadium_reductions:
+        # v0.57: 場のスタジアムで数が変わったときだけ、(スタジアムカード, 数（増やすなら正、へらすなら負）) を書く（特殊能力の記録とは分ける）
+        cost_log["retreat_cost_stadium"] = tuple((card, amount) for card, amount in cost.stadium_increases) + tuple(
+            (card, -amount) for card, amount in cost.stadium_reductions)
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
         # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
         active.retreat_failed_turn = state.turn_number
@@ -817,6 +884,14 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
       確認（``TrainerEffect.check_playable``）を通ってから、手札から出す。
     - 手札から出して相手に見せ、名前を伝え（ログの ``play_trainer``）、説明にしたがう。説明が終わったら
       トラッシュする（``_finish_trainer``）。途中で決定を待つ間、カードは ``state.trainer_in_use`` にある。
+
+    v0.57（docs/stadiums-v0.57.md）:
+
+    - スタジアムカード（``effect.is_stadium``）は、手札から出したら場に出す（``_play_stadium``。トラッシュしない。古いスタジアムは持ち主のトラッシュ）
+    - 場のリムーブ禁止ジムが当てはまるトレーナーは、このカードを除く手札が 2 枚以上なければ使えない（``INSUFFICIENT_CARDS_IN_HAND``。カード自身の使うための条件の確認の
+      あと・手札から出す前）。手札から出したあと、カードの効果の前に 2 枚をトラッシュする（決定 ``DISCARD_FROM_HAND``。続きの情報の ``stadium_cost``）
+    - 場の錯乱ジムがあれば、スタジアムカード以外のトレーナーを手札から出したあと（手順 1・2）、使うための条件を払う前に、使ったプレイヤーがコインを投げる。「うら」なら
+      使えず、相手プレイヤーがかわりに使えるか聞く（``_chaos_tails``）
     """
     p = _require_turn(state, cmd.player)
     _require_in_hand(state, cmd.player, cmd.card)
@@ -828,7 +903,7 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
         # v0.46: 場にはたらいている［アレルギーかふん］（わるいラフレシア）があれば、誰もトレーナーカードを使えない。v0.47: プレイヤーに与えた期限のある禁止（ずつう・
         # こうしゅうは。``GameState.trainer_locks``）も同じ確かめ（2 つの記録をそれぞれの期間で判定する）。手札から出す前に拒否する（状態・乱数・ログは変わらない）。
         # ポケモンについているトレーナーの効果・使っている最中のトレーナーは止めない。ポケモンとして場に出すトレーナー（なにかの化石・ピッピ人形）も、トレーナー
-        # カードを使うことなので止める
+        # カードを使うことなので止める。v0.57: スタジアムカードを手札から出すことも、トレーナーカードを使うことなので止める
         powers = [b[2] for b in blockers if b[0] == "power"]
         locks = [(b[2], b[3]) for b in blockers if b[0] == "lock"]  # v0.56: ワザ（ずつう・こうしゅうは）かトレーナー（ロケット団の実験の「うら」）
         detail = "・".join(([f"場のポケモン {powers} の特殊能力がはたらいている"] if powers else [])
@@ -840,15 +915,114 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
         raise UnsupportedError("UNSUPPORTED_TRAINER", f"「{definition.name_ja}」は未対応（{problem}）")
     use = TrainerUse(cmd.player, cmd.card, definition.id)
     effect.check_playable(state, use)
+    extra_cost = stadium_trainer_cost(state, definition)
+    if extra_cost is not None:
+        needed = extra_cost[1].discard
+        if len(p.hand) - 1 < needed:
+            raise IllegalActionError(
+                "INSUFFICIENT_CARDS_IN_HAND",
+                f"場の「{state.card_def(extra_cost[0].card).name_ja}」があるので、「{definition.name_ja}」を使うには、このカードを除く手札から {needed} 枚をトラッシュする"
+                f"（手札はこのカードを除いて {len(p.hand) - 1} 枚）")
 
     # 1・2. 手札から出して相手プレイヤーに見えるようにし、名前を伝える（p.310）
     p.hand.remove(cmd.card)
     state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
     state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
-    # 3・4. 使うための条件と、残りの説明にしたがう。決定を出したら、ここで止まり _resume_trainer から続ける
+    if effect.is_stadium:
+        _play_stadium(state, cmd.player, cmd.card, effect)
+        return
+    _start_trainer_use(state, use, effect, context)
+
+
+def _start_trainer_use(state: GameState, use: TrainerUse, effect, context: resolution.Context) -> None:
+    """手札から出した（v0.58: または外側のトレーナーの効果で相手のトラッシュから出した）トレーナーの使用を、カードの効果の前のスタジアムの段階から始める（v0.57 の
+    ``_play_trainer`` の後半を分けた。動きは同じ）。``use.player`` は使うプレイヤー（費用・選ぶものはこのプレイヤーの手札・場）。
+
+    - 場の錯乱ジムのコイン（使うための条件を払う前。1 回の使用で 1 回だけ。v0.58: 外側の使用（サイキックコントロール）のコインとは別に、内側の使用でも投げる）
+    - 場のリムーブ禁止ジムの追加の条件（使うプレイヤーの手札から 2 枚。カードの効果の前）
+    - 3・4. 使うための条件と、残りの説明にしたがう。決定を出したら、ここで止まり ``_resume_trainer`` から続ける"""
+    definition = state.card_def(use.card)
+    chaos = stadium_of(state, TrainerCoinStadium)
+    if chaos is not None:
+        stadium = chaos[0]
+        heads = flip_coins(state, use.player, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card).results[0] is CoinSide.HEADS
+        state.add_event("chaos_check", player=use.player, card=use.card, stadium_card=stadium.card, heads=heads)
+        if not heads:
+            _chaos_tails(state, use, effect, stadium, context)
+            return
+    extra_cost = stadium_trainer_cost(state, definition)
+    if extra_cost is not None:
+        push_trainer_decision(state, use, kind=DISCARD_FROM_HAND, player=use.player, options=tuple(state.players[use.player].hand),
+                              min_choices=extra_cost[1].discard, max_choices=extra_cost[1].discard, context=(("stadium_cost", extra_cost[0].card),))
+        return
+    _resolve_trainer(state, effect, use, context)
+
+
+def _resolve_trainer(state: GameState, effect, use: TrainerUse, context: resolution.Context) -> None:
+    """トレーナーの説明にしたがう（p.310 の手順 3・4）。決定を出したら止まり、出さなければ使い終える（v0.57 で ``_play_trainer`` から分けた。動きは同じ）。"""
     outcome = effect.resolve(state, use)
+    _after_trainer_step(state, effect, use, outcome, context)
+
+
+def _after_trainer_step(state: GameState, effect, use: TrainerUse, outcome, context: resolution.Context) -> None:
+    """トレーナーの ``resolve``・``resume`` のあと（v0.58 でまとめた）。外側のトレーナーの効果で別のカードを使う印（``UseDiscardTrainer``。サイキックコントロール）なら、
+    内側の使用を始める。決定を出していなければ使い終える。"""
+    if isinstance(outcome, UseDiscardTrainer):
+        if state.decision is not None:
+            raise RuntimeError("トレーナーの効果が決定を出したまま、別のトレーナーカードを使おうとした（エンジンの不具合）")
+        _start_nested_trainer(state, use, outcome.card, context)
+        return
     if state.decision is None:
         _finish_trainer(state, effect, context, end_turn=_ends_turn(effect, outcome))
+
+
+def _start_nested_trainer(state: GameState, outer_use: TrainerUse, card: int, context: resolution.Context) -> None:
+    """外側のトレーナー（ナツメのサイキックコントロール）の効果で、相手のトラッシュのトレーナーカード ``card`` を使い始める（v0.58。docs/stadium-reuse-special-energy-v0.58.md
+    4 章）。外側の使用を ``trainer_stack`` に積み、カードを持ち主のトラッシュから使用中の場所に移す（同じ uid・持ち主のまま。複製しない・使うプレイヤーの手札に移さない）。
+    ログは ``play_trainer``（``player`` は使うプレイヤー、``owner`` はカードの持ち主、``source_zone`` は ``"discard"``、``via`` は外側のカード）。そのあとは手札から使うとき
+    と同じ（錯乱ジムのコイン・リムーブ禁止ジムの追加の条件・カードの効果）。"""
+    outer = state.trainer_in_use
+    owner = state.cards[card].owner
+    if outer is None or outer.card != outer_use.card or card not in state.players[owner].discard:
+        raise RuntimeError(f"外側のトレーナー {outer} の効果で使うカード {card} が、持ち主のトラッシュにない（エンジンの不具合）")
+    definition = state.card_def(card)
+    effect = state.effects.trainer_effect(definition)
+    state.players[owner].discard.remove(card)
+    state.trainer_stack = state.trainer_stack + (outer,)
+    state.trainer_in_use = TrainerInUse(owner, card, user=None if outer_use.player == owner else outer_use.player, via=outer.card)
+    state.add_event("play_trainer", player=outer_use.player, card=card, trainer=definition.name_ja, owner=owner, source_zone="discard", via=outer.card)
+    _start_trainer_use(state, TrainerUse(outer_use.player, card, definition.id), effect, context)
+
+
+def _play_stadium(state: GameState, player: int, card: int, effect) -> None:
+    """手札から出したスタジアムカードを場に出す（v0.57。``zones.place_stadium``。古いスタジアムは持ち主のトラッシュ）。場に出た時の効果（せまいジム）があれば
+    決定を出す（再開先 ``"stadium"``）。なければ番の続き（``Phase.MAIN``）。"""
+    place_stadium(state, player, card)
+    state.phase = Phase.MAIN
+    effect.on_placed(state, state.stadium)
+
+
+def _chaos_tails(state: GameState, use: TrainerUse, effect, stadium, context: resolution.Context) -> None:
+    """錯乱ジムのコインが「うら」（v0.57。docs/stadiums-v0.57.md 7 章）: 使ったプレイヤーはそのカードを使えない（使うための条件を払わない）。相手プレイヤーがかわりに使えるか
+    （``effects.borrow_unusable_reason``）を確かめ、使えるなら相手プレイヤーに聞く（決定 ``ACCEPT_REQUEST``。続きの情報の ``chaos``）。使えないなら、カードを持ち主の
+    トラッシュにすてる（ログ ``chaos_not_borrowable``）。相手が使うことを選ぶと決められない（CH1 など）カード・決められない使うための条件は、選ぶと止める選択にする。"""
+    borrower = 1 - use.player  # v0.58: 使うプレイヤーの相手（手札から使うなら持ち主の相手。外側のトレーナーの効果で使うなら、使うプレイヤーの相手 = カードの持ち主）
+    borrowed = TrainerUse(borrower, use.card, use.card_id)
+    unresolved: dict = {}
+    try:
+        reason = borrow_unusable_reason(state, effect, borrowed)
+    except UnsupportedError as error:
+        reason = None
+        unresolved = {"unresolved_choices": (1,), "unresolved_code": error.code, "unresolved_reason": error.message}
+    if reason is not None:
+        state.add_event("chaos_not_borrowable", player=borrower, card=use.card, owner=use.player, reason=reason)
+        _finish_trainer(state, effect, context, discard_only=True)
+        return
+    problem = effect.borrow_problem(state, borrowed)
+    if problem is not None and not unresolved:
+        unresolved = {"unresolved_choices": (1,), "unresolved_code": problem[0], "unresolved_reason": problem[1]}
+    push_trainer_decision(state, use, kind=ACCEPT_REQUEST, player=borrower, options=(1,), min_choices=0, max_choices=1,
+                          context=(("chaos", stadium.card),), **unresolved)
 
 
 def _ends_turn(effect, outcome) -> bool:
@@ -860,7 +1034,7 @@ def _ends_turn(effect, outcome) -> bool:
     return True
 
 
-def _finish_trainer(state: GameState, effect, context: resolution.Context, *, end_turn: bool = False) -> None:
+def _finish_trainer(state: GameState, effect, context: resolution.Context, *, end_turn: bool = False, discard_only: bool = False) -> None:
     """トレーナーを使い終えて、番の続きにもどる。
 
     - 使いすて（特に記述がないかぎり。p.310）: 使ったカードをトラッシュする。
@@ -872,6 +1046,14 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context, *, en
     勝ち負け・バトル場に出す決定をする（``resolution.after_trainer``。続きは同じ番の ``Phase.MAIN``。docs/mew-devolution-spray-v0.50.md 4 章）。
     """
     used = state.trainer_in_use
+    if discard_only:
+        # v0.57: 錯乱ジムで使えなかった・使わなかったカード（効果を処理していない）。持ち主のトラッシュにすてて、番にもどる
+        state.trainer_in_use = None
+        state.players[used.player].discard.append(used.card)
+        state.add_event("discard_trainer", player=used.player, card=used.card)
+        _finish_outer_trainers(state)
+        state.phase = Phase.MAIN
+        return
     if effect.stays_in_play or effect.enters_play:
         # v0.47: ポケモンとして場に出すトレーナー（なにかの化石・ピッピ人形。``enters_play``）も、使い終わったら場にいる（トラッシュしない）
         if used is not None:
@@ -880,6 +1062,7 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context, *, en
         state.trainer_in_use = None
         state.players[used.player].discard.append(used.card)
         state.add_event("discard_trainer", player=used.player, card=used.card)
+    _finish_outer_trainers(state)
     state.phase = Phase.MAIN
     if end_turn:
         # v0.56: 説明の「あなたの番は終わりになる」（ロケット団員の「うら」）。カードをトラッシュしてから、番の終わりの窓（期限 → ポケモンチェック → 次の番）に進む
@@ -893,13 +1076,46 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context, *, en
         resolution.after_trainer(state, context)
 
 
+def _finish_outer_trainers(state: GameState) -> None:
+    """内側のトレーナーを使い終えたあと（v0.58）、その使用を待っていた外側のトレーナー（ナツメのサイキックコントロール。``trainer_stack``）を、内側から順に使い終える
+    （持ち主のトラッシュにすてる。ログ ``discard_trainer``）。外側のトレーナーには、内側の使用のあとの説明はない。内側の効果のあとのきぜつ・勝ち負け・番の終わりは、
+    外側のカードもトラッシュしてから（使用中のカードを残さない）。"""
+    while state.trainer_stack:
+        outer = state.trainer_stack[-1]
+        state.trainer_stack = state.trainer_stack[:-1]
+        if state.trainer_in_use is not None:
+            raise RuntimeError(f"外側のトレーナー {outer} を使い終えるとき、使用中のトレーナー {state.trainer_in_use} が残っている（エンジンの不具合）")
+        state.players[outer.player].discard.append(outer.card)
+        state.add_event("discard_trainer", player=outer.player, card=outer.card)
+
+
 def _resume_trainer(state: GameState, decision, choices: tuple[int, ...], context: resolution.Context) -> None:
-    """トレーナーの効果の途中で出した決定の続き。決定がなくなったら、カードをトラッシュして番にもどる。"""
+    """トレーナーの効果の途中で出した決定の続き。決定がなくなったら、カードをトラッシュして番にもどる。
+
+    v0.57: スタジアムがトレーナーの使用に加えた段階（錯乱ジムの相手プレイヤーへの問い ``chaos``・リムーブ禁止ジムの追加の条件 ``stadium_cost``）の答えは、カードの効果
+    （``resume``）ではなくここで処理する。"""
     player, card, card_id = decision.context_value("use")
     entry = state.effects.trainer_entry(card_id)
-    outcome = entry.effect.resume(state, TrainerUse(player, card, card_id), decision, choices)
-    if state.decision is None:
-        _finish_trainer(state, entry.effect, context, end_turn=_ends_turn(entry.effect, outcome))
+    use = TrainerUse(player, card, card_id)
+    if decision.context_value("chaos") is not None:
+        # 錯乱ジム: 相手プレイヤーがかわりに使うか（選ばない = 使わない）
+        borrower = decision.player
+        state.add_event("chaos_answered", player=borrower, card=card, owner=player, accepted=bool(choices))
+        if not choices:
+            _finish_trainer(state, entry.effect, context, discard_only=True)
+            return
+        # v0.58: 持ち主・外側の使用（``via``）は変えず、使うプレイヤーだけを変える（外側のトレーナーの効果で使っているカードでは、借りるのが持ち主自身のことがある）
+        current = state.trainer_in_use
+        state.trainer_in_use = TrainerInUse(current.player, card, user=None if borrower == current.player else borrower, via=current.via)
+        _resolve_trainer(state, entry.effect, TrainerUse(borrower, card, card_id), context)
+        return
+    if decision.context_value("stadium_cost") is not None:
+        # リムーブ禁止ジム: 手札から選んだカードをトラッシュしてから、カードの効果にしたがう（カード自身の条件は効果の中で払う）
+        pay_stadium_trainer_cost(state, player, tuple(choices), decision.context_value("stadium_cost"))
+        _resolve_trainer(state, entry.effect, use, context)
+        return
+    outcome = entry.effect.resume(state, use, decision, choices)
+    _after_trainer_step(state, entry.effect, use, outcome, context)
 
 
 # ---------------------------------------------------------------- ポケモンパワー（特殊能力。v0.5）
@@ -1019,7 +1235,8 @@ def _after_power_step(state: GameState, use: PowerUse, context: resolution.Conte
         if state.decision is not None:
             raise RuntimeError(f"トレーナーの効果の途中で使った特殊能力 {use.key} のあとに、決定（{state.decision.kind}）が来た（今の対応カードでは起こらない。エンジンの不具合）")
         kind, player, card, card_id = use.return_to
-        if kind != "trainer" or state.trainer_in_use != TrainerInUse(player, card):
+        used = state.trainer_in_use
+        if kind != "trainer" or used is None or (used.using_player, used.card) != (player, card):  # v0.58: もどる先は使うプレイヤーと使用中のカード
             raise RuntimeError(f"特殊能力 {use.key} のもどる先 {use.return_to!r} が、使用中のトレーナー {state.trainer_in_use} ではない（エンジンの不具合）")
         _finish_trainer(state, state.effects.trainer_entry(card_id).effect, context)
 
@@ -1049,6 +1266,65 @@ def _resume_power(state: GameState, decision, choices: tuple[int, ...], context:
         return
     effect.resume(state, use, decision, choices)
     _after_power_step(state, use, context)
+
+
+def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context) -> None:
+    """場のスタジアムカードの、自分の番に使ってよい効果を使う（v0.57。docs/stadiums-v0.57.md 4 章。タマムシシティジム・セキチクシティジム・ヤマブキシティジム）。
+
+    - 自分の番（``Phase.MAIN``）だけ。カードの持ち主でないプレイヤーも使える（お互いのプレイヤーの場に出ているカード）
+    - 確かめる順番: 番・段階 → 場のスタジアムがある（``NO_STADIUM``）→ 実装の ``check_activation``（使う効果がない ``STADIUM_NOT_USABLE``・選ばせるもの・回数・
+      決められない場合）。どれも状態を変える前
+    - 使う（ログ ``stadium_used``）→「自分の番ごとに1回」なら記録（``stadium_uses_this_turn``。「うら」でも使ったことになる）→ 実装の ``activate``。決定を出したら
+      再開先 ``"stadium"``（``_resume_stadium``）で続ける。終わったら空いたバトル場（セキチクシティジムでバトル場のポケモンを山札にもどした）の勝ち負け・交代
+      （``resolution.after_stadium``）。番は終わらない
+    - トレーナーカードを手札から使うこと・特殊能力の使用ではない（かがくへんかガス・特殊状態は関係しない）。トレーナーの使用の禁止の対象かは STB1
+    """
+    _require_turn(state, cmd.player)
+    found = stadium_in_play(state)
+    if found is None:
+        raise IllegalActionError("NO_STADIUM", "場にスタジアムカードがない")
+    stadium, effect = found
+    effect.check_activation(state, cmd.player, cmd.energy, stadium)
+    state.add_event("stadium_used", player=cmd.player, card=stadium.card, owner=stadium.owner)
+    if effect.once_per_turn:
+        state.stadium_uses_this_turn = state.stadium_uses_this_turn + ((cmd.player, stadium.card),)
+    effect.activate(state, cmd.player, cmd.energy, stadium)
+    if state.decision is None:
+        resolution.after_stadium(state, context)
+
+
+def _resume_stadium(state: GameState, decision, choices: tuple[int, ...], context: resolution.Context) -> None:
+    """場のスタジアムの効果の途中で出した決定の続き（v0.57。再開先 ``"stadium"``。段階 ``stage``）。
+
+    - ``narrow``（せまいジムが場に出た時）・``fuchsia``（セキチクシティジムの「おもて」）: 場のスタジアムの実装の ``resume_stadium``。決定がなくなったら、空いたバトル場の
+      勝ち負け・交代（``resolution.after_stadium``）
+    - ``evolution_heal``（トキワシティジム）: 答え（``effects.apply_evolution_heal``）のあと、続き ``after_heal``（(``"entry"``, 手札から出したか, もどる先)）にもどる: 場に出たとき
+      の特殊能力の機会（v0.43）→ もどる先がトレーナーなら、そのトレーナーを使い終える"""
+    stage = decision.context_value("stage")
+    card = decision.context_value("stadium")
+    state.phase = Phase.MAIN
+    if stage == "evolution_heal":
+        found = state.find_pokemon(decision.context_value("pokemon"))
+        if found is None:
+            raise RuntimeError(f"トキワシティジムの決定のポケモン {decision.context_value('pokemon')} が場にいない（エンジンの不具合）")
+        owner, pokemon = found
+        apply_evolution_heal(state, owner, pokemon, card, bool(choices))
+        _, from_hand, return_to = decision.context_value("after_heal")
+        return_to = tuple(return_to) or None
+        if offer_entry_power(state, owner, pokemon, from_hand=bool(from_hand), return_to=return_to):
+            return
+        if return_to is not None:
+            kind, _, trainer, card_id = return_to
+            if kind != "trainer" or state.trainer_in_use is None or state.trainer_in_use.card != trainer:
+                raise RuntimeError(f"トキワシティジムの続きのもどる先 {return_to!r} が、使用中のトレーナー {state.trainer_in_use} ではない（エンジンの不具合）")
+            _finish_trainer(state, state.effects.trainer_entry(card_id).effect, context)
+        return
+    found = stadium_in_play(state)
+    if found is None or found[0].card != card:
+        raise RuntimeError(f"スタジアムの決定（{stage}）のスタジアム {card} が場にない（エンジンの不具合）")
+    found[1].resume_stadium(state, found[0], decision, choices)
+    if state.decision is None:
+        resolution.after_stadium(state, context)
 
 
 def _discard_from_play(state: GameState, cmd: DiscardFromPlay, context: resolution.Context) -> None:
@@ -1118,6 +1394,10 @@ def _answer_decision(state: GameState, cmd, context: resolution.Context) -> None
         state.decision = None
         _resume_power(state, decision, choices, context)  # v0.42
         return
+    if decision.resume == "stadium":
+        state.decision = None
+        _resume_stadium(state, decision, choices, context)  # v0.57
+        return
     if decision.resume != "trainer":
         raise RuntimeError(f"決定の再開先 {decision.resume!r} を続ける処理がない（不変条件で拒否するはず。エンジンの不具合）")
     state.decision = None
@@ -1134,7 +1414,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     DrawMulliganCards: _engine(_draw_mulligan_cards),
     ReportJankenResult: _engine(_report_janken_result),
     PlayBasicToBench: _engine(_play_basic_to_bench),
-    AttachEnergy: _engine(_attach_energy),
+    AttachEnergy: _attach_energy,  # v0.58: レインボーエネルギーの 10 ダメージのあとのきぜつに解決の設定を使う
     Retreat: _engine(_retreat),
     UseAttack: resolution.handle,  # ワザ（解決の基盤。v0.16b）
     EndTurn: resolution.handle,  # 番の終わり（解決の基盤。v0.16b）
@@ -1146,6 +1426,7 @@ _HANDLERS: dict[type, Callable[[GameState, object, resolution.Context], None]] =
     UsePokemonPower: _use_pokemon_power,  # v0.42: 処理のあとのきぜつ・交代に解決の設定（効果の定義の対応表）を使う
     DiscardFromPlay: _discard_from_play,  # v0.47: 空いたバトル場の勝ち負け・交代に解決の設定を使う
     RemoveDisguise: _engine(_remove_disguise),  # v0.49
+    UseStadium: _use_stadium,  # v0.57: 空いたバトル場の勝ち負け・交代に解決の設定を使う
 }
 
 
@@ -1216,8 +1497,9 @@ def check_invariants(state: GameState) -> list[str]:
                 place(pokemon.disguise, player, "場（「ばける」でのせたカード）")  # v0.49
             for uid in pokemon.energy:
                 place(uid, player, "場（ついているエネルギー）")
-                if uid in state.cards and not state.card_def(uid).is_basic_energy:
-                    problems.append(f"基本エネルギーでないカード {uid} がポケモンについている")
+                if uid in state.cards and not state.card_def(uid).is_basic_energy and state.effects.energy_effect(state.card_def(uid)) is None:
+                    # v0.58: 登録された特殊エネルギーカードはつけられる
+                    problems.append(f"エネルギーカードでない（登録のない特殊エネルギーの）カード {uid} がポケモンについている")
             problems.extend(_attached_trainer_problems(state, player, pokemon, place))
             if pokemon.card not in state.cards:
                 continue
@@ -1242,12 +1524,21 @@ def check_invariants(state: GameState) -> list[str]:
             problems.extend(_evolution_permission_problems(state, player, pokemon))  # v0.44
             problems.extend(_type_shift_problems(state, player, pokemon))  # v0.48
             problems.extend(_disguise_problems(state, player, pokemon))  # v0.49
-        if len(p.bench) > rules.max_bench:
-            problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹")
+        limit = _bench_limit_or_default(state, player)
+        if len(p.bench) > limit and not _narrow_cleanup_pending(state, player):
+            # v0.57: ベンチの上限は場のスタジアム（せまいジム）を当てはめた数。場に出た時の、手札にもどすポケモンを選ぶ決定を待つ間だけ、そのプレイヤーは多くてよい
+            problems.append(f"プレイヤー {player} のベンチが {len(p.bench)} 匹（{limit} 匹まで）")
         if len(p.prizes) > rules.prize_count:
             problems.append(f"プレイヤー {player} のサイドが {len(p.prizes)} 枚（{rules.prize_count} 枚まで）")
         if p.mulligan_draws_remaining < 0:
             problems.append(f"プレイヤー {player} の切り直しの補償の残りが負")
+    # v0.57: 場のスタジアムカード（両方の場に出ているカードとして扱うが、実際のカードは 1 枚。持ち主のゾーンとして 1 回だけ数える）
+    if state.stadium is not None:
+        stadium = state.stadium
+        if getattr(stadium, "owner", None) not in PLAYERS:
+            problems.append(f"場のスタジアム {stadium!r} の持ち主が正しくない")
+        else:
+            place(stadium.card, stadium.owner, "場（スタジアム）")
     # 使っている最中のトレーナーカード（v0.2b）も、持ち主のゾーンの 1 つとして数える
     used = state.trainer_in_use
     if used is not None:
@@ -1257,6 +1548,12 @@ def check_invariants(state: GameState) -> list[str]:
             place(used.card, used.player, "使用中のトレーナー")
             if used.card in state.cards and state.card_def(used.card).category != "trainer":
                 problems.append(f"トレーナーカードでないカード {used.card} が使用中のトレーナーになっている")
+    # v0.58: 内側のトレーナーを使い終わるのを待っている外側のトレーナー（ナツメのサイキックコントロール）も、持ち主のゾーンの 1 つとして数える
+    for outer in state.trainer_stack:
+        if outer.player not in PLAYERS:
+            problems.append(f"外側のトレーナーの持ち主 {outer.player!r} が正しくない")
+        else:
+            place(outer.card, outer.player, "使用中のトレーナー（外側）")
     missing = set(state.cards) - set(seen)
     if missing:
         problems.append(f"どこにもないカード {sorted(missing)}")
@@ -1285,11 +1582,12 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_turn_power_problems(state))  # v0.31
     problems.extend(_trainer_lock_problems(state))  # v0.47
     problems.extend(_trainer_effect_problems(state))  # v0.56
+    problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
             problems.append("対戦が終わっているのに、決定が残っている")
-        if state.trainer_in_use is not None:
+        if state.trainer_in_use is not None or state.trainer_stack:
             problems.append("対戦が終わっているのに、使用中のトレーナーが残っている")
         if phase is Phase.HALTED and state.halt is None:
             problems.append("止めた理由がないまま HALTED になっている")
@@ -1895,6 +2193,37 @@ def _recall_problems(state: GameState) -> list[str]:
     return problems
 
 
+def _trainer_stack_problems(state: GameState, used) -> list[str]:
+    """v0.58（docs/stadium-reuse-special-energy-v0.58.md 4 章）: 外側のトレーナーの効果で使っている内側のトレーナーと、外側の使用の並び（``trainer_stack``）の整合。
+
+    - 外側の使用があるのは、使用中のトレーナーが外側の効果で使っているカード（``via``）のときだけで、``via`` は並びの最後（すぐ外側）のカード。並びの各段も同じ
+    - 外側のカードは、相手のトラッシュのトレーナーを使う効果（サイキックコントロール。``UseOpponentDiscardTrainer``）のカード
+    - いちばん外側の使用は手札から使ったもの（``via`` なし）で、持ち主が番のプレイヤー（錯乱ジムで借りていれば使うプレイヤーは相手）
+    - 外側の効果で使っているカードの持ち主は、外側の使うプレイヤーの相手（相手のトラッシュのカード）"""
+    from .effects import UseOpponentDiscardTrainer
+
+    problems: list[str] = []
+    chain = (*state.trainer_stack, used)
+    for i, item in enumerate(chain):
+        if item.user is not None and (item.user not in PLAYERS or item.user == item.player):
+            problems.append(f"使用中のトレーナー {item} の使うプレイヤーが正しくない（持ち主と同じ・知らないプレイヤー）")
+        if i == 0:
+            if item.via is not None:
+                problems.append(f"いちばん外側のトレーナー {item} が、外側の効果で使っているカードになっている")
+            if item.player != state.current_player:
+                problems.append(f"いちばん外側のトレーナーの持ち主 {item.player} が、番のプレイヤー {state.current_player} ではない")
+            continue
+        outer = chain[i - 1]
+        if item.via != outer.card:
+            problems.append(f"内側のトレーナー {item} の外側のカード {item.via} が、外側の使用 {outer.card} と違う")
+        entry = state.effects.trainer_entry(state.cards[outer.card].card_id) if outer.card in state.cards else None
+        if entry is None or not isinstance(entry.effect, UseOpponentDiscardTrainer):
+            problems.append(f"外側のトレーナー {outer} が、相手のトラッシュのトレーナーを使う効果のカードではない")
+        if item.player != 1 - outer.using_player:
+            problems.append(f"内側のトレーナー {item} の持ち主が、外側の使うプレイヤー {outer.using_player} の相手ではない")
+    return problems
+
+
 def _effect_attack_definition(state: GameState, effect):
     """持続する効果を与えたワザを印刷したカードの定義（v0.49。``persistent.effect_attack_card``）。``attack_card`` を書くのは、ワザの出どころが効果を与えたポケモンの
     いちばん上のカードと違うときだけ（同じなら書かない。v0.48 までの効果と同じ形）。この対戦のカードでなければ None。"""
@@ -2071,13 +2400,19 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
         if lock.player not in PLAYERS or lock.source_player != (lock.player if trainer_origin else 1 - lock.player):
             problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、{'使えなくなるプレイヤー自身' if trainer_origin else '使えなくなるプレイヤーの相手'}ではない")
             continue
-        span = SELF_TRAINER_LOCK_TURNS if trainer_origin else 1
-        if type(lock.created_turn) is not int or lock.expires_turn != lock.created_turn + span:
+        if type(lock.created_turn) is not int:
+            problems.append(f"{where} の与えた番 {lock.created_turn!r} が正しくない")
+            continue
+        # v0.57: トレーナーの禁止は、与えた番より後の使えなくなるプレイヤーの最初の番に消える（自分の番に使えば + 2。錯乱ジムで相手の番にかわりに使えば + 1。
+        # ``effects.self_lock_expiry``）。ワザの禁止は次の相手の番（+ 1）
+        borrowed = trainer_origin and state.first_player in PLAYERS and turn_owner(state, lock.created_turn) != lock.player
+        span = (1 if borrowed else SELF_TRAINER_LOCK_TURNS) if trainer_origin else 1
+        if lock.expires_turn != lock.created_turn + span:
             problems.append(f"{where} の消える番 {lock.expires_turn!r} が、与えた番 {lock.created_turn!r} + {span} ではない")
             continue
         if not lock.created_turn <= state.turn_number <= lock.expires_turn:
             problems.append(f"{where} が、与えた番 {lock.created_turn}〜消える番 {lock.expires_turn} の外の今の番 {state.turn_number} に残っている")
-        if state.first_player in PLAYERS and turn_owner(state, lock.created_turn) != lock.source_player:
+        if state.first_player in PLAYERS and turn_owner(state, lock.created_turn) != lock.source_player and not borrowed:
             problems.append(f"{where} を与えた番 {lock.created_turn} が、与えたプレイヤー {lock.source_player} の番ではない")
         if lock.source_card not in state.cards:
             problems.append(f"{where} のワザを使ったカード {lock.source_card!r} が対戦のカードではない")
@@ -2085,7 +2420,8 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             entry = state.effects.trainer_entry(lock.effect)
             if entry is None or not getattr(entry.effect, "tails_self_lock", False):
                 problems.append(f"{where} を与えたトレーナー {lock.effect!r} の登録された実装が、使ったプレイヤーにトレーナーの使用を禁止する実装ではない")
-            elif lock.source_card not in state.cards or state.cards[lock.source_card].card_id != lock.effect or state.cards[lock.source_card].owner != lock.player:
+            elif lock.source_card not in state.cards or state.cards[lock.source_card].card_id != lock.effect \
+                    or state.cards[lock.source_card].owner != (1 - lock.player if borrowed else lock.player):  # v0.57: 借りて使ったカードの持ち主は相手
                 problems.append(f"{where} の使ったトレーナーのカード {lock.source_card!r} が、使ったプレイヤーのそのカードではない")
         else:
             card_id, _, index = str(lock.effect).partition("#")
@@ -2596,7 +2932,20 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
     """特殊能力の処理のあとの決定（v0.42。続き ``CONTINUE_TURN``。サイド・ふしちょう・交代）の前の、今の番の最後の宣言が特殊能力の宣言（ワザのあとではない）。
     v0.50: きぜつさせうるトレーナー（``TrainerEffect.may_knock_out``。退化スプレー）を使ったあとの決定も同じ続き。今の番の最後の宣言がそのトレーナーの使用
     （``play_trainer``）で、そのあとに ``timing`` が ``"trainer"`` のきぜつがある。"""
-    last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "discard_from_play", "play_trainer")), None)
+    last = next((e for e in _events_since_turn_start(state) if e["kind"] in ("pokemon_power", "attack", "discard_from_play", "play_trainer", "stadium_used",
+                                                                              "attach_energy")), None)
+    if last is not None and last["kind"] == "attach_energy":
+        # v0.58: 手札からつけたレインボーエネルギーの 10 ダメージできぜつした（timing energy）あとの、サイド・交代の決定
+        since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
+        if not any(e["kind"] == "knock_out" and e.get("timing") == "energy" for e in since):
+            return ["エネルギーをつけたあとの決定（続き continue_turn）の前に、つけたときの効果によるきぜつ（timing energy）がない"]
+        return []
+    if last is not None and last["kind"] == "stadium_used":
+        # v0.57: 場のスタジアムの効果（セキチクシティジム）でバトル場のポケモンを山札にもどしたあとの、バトル場に出す決定
+        since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
+        if not any(e["kind"] == "return_in_play_to_deck" and e.get("stadium_card") == last.get("card") for e in since):
+            return ["スタジアムの効果のあとの決定（続き continue_turn）の前に、スタジアムの効果で場をはなれたポケモンがない"]
+        return []
     if last is not None and last["kind"] == "play_trainer":
         uid = last.get("card")
         entry = state.effects.trainer_entry(state.cards[uid].card_id) if uid in state.cards else None
@@ -2694,8 +3043,9 @@ def _turn_power_problems(state: GameState) -> list[str]:
     if burn and any(e["kind"] == "turn_end" for e in recent):
         problems.append(f"「炎」エネルギーになったエネルギー {burn} が、番の終わりのあとに残っている（自分の番の終わりにもとにもどる）")
     for pid, uid in burn:
-        if uid not in state.cards or not state.card_def(uid).is_basic_energy:
-            problems.append(f"「炎」エネルギーになったカード {uid!r} が基本エネルギーカードではない")
+        if uid not in state.cards or state.card_def(uid).category != "energy":
+            # v0.58: 特殊エネルギーカード（無色2個エネルギーなど）も「エナジーバーン」で「炎」になる（「すべてのエネルギー」）
+            problems.append(f"「炎」エネルギーになったカード {uid!r} がエネルギーカードではない")
     return problems
 
 
@@ -2744,6 +3094,123 @@ def _progress_problems(state: GameState) -> list[str]:
     if tail not in allowed:
         problems.append(f"{state.phase.value} なのに、今の番のあとの番の終わり・ポケモンチェックが {tail}")
     return problems
+
+
+def _bench_limit_or_default(state: GameState, player: int) -> int:
+    """ベンチの上限（v0.57。``stadiums.bench_limit``）。場のスタジアムの実装が引けない壊れた状態では、共通のルールの値（``_stadium_problems`` が見つける）。"""
+    try:
+        return bench_limit(state, player)
+    except RuntimeError:
+        return state.rules.max_bench
+
+
+def _narrow_cleanup_pending(state: GameState, player: int) -> bool:
+    """せまいジムが場に出た時の、手札にもどすポケモンを選ぶ決定（v0.57）を ``player`` が待っている・このあと待つか。"""
+    d = state.decision
+    return (d is not None and d.resume == "stadium" and d.context_value("stage") == "narrow"
+            and player in (d.player, *d.context_value("remaining", ())))
+
+
+def _stadium_problems(state: GameState) -> list[str]:
+    """場のスタジアム（v0.57。``GameState.stadium``）と、この番に使った「自分の番ごとに1回」のスタジアムの効果（``stadium_uses_this_turn``）。
+
+    - 場のスタジアム: ``StadiumInPlay``。カードは持ち主のカードで（保存則は ``check_invariants`` の本体）、トレーナーカードで、効果の登録表の実装がスタジアム。場に出した番は
+      今の番まで。ログに、そのカードを場に出した ``stadium_placed`` があり、そのあとにトラッシュした ``stadium_discarded`` がない（ログのある対戦だけ）
+    - 使った記録: (使ったプレイヤー, スタジアムカード) の重ならない並び。そのカードの実装が「自分の番ごとに1回」で、使ったのは番のプレイヤー。今の番のログの ``stadium_used``
+      （同じプレイヤー・同じカード）の数と記録の数が同じ
+    """
+    problems: list[str] = []
+    stadium = state.stadium
+    if stadium is not None:
+        where = f"場のスタジアム {stadium!r}"
+        if not isinstance(stadium, StadiumInPlay):
+            return [f"{where} の型が StadiumInPlay ではない"]
+        if stadium.card not in state.cards:
+            return [f"{where} のカードが対戦のカードではない"]
+        definition = state.printed_def(stadium.card)
+        entry = state.effects.trainer_entry(definition.id)
+        if definition.category != "trainer" or entry is None or not entry.effect.is_stadium:
+            problems.append(f"{where} のカード {definition.id} が、登録されたスタジアムカードではない")
+        if type(stadium.placed_turn) is not int or not 0 <= stadium.placed_turn <= state.turn_number:
+            problems.append(f"{where} の場に出した番 {stadium.placed_turn!r} が正しくない")
+        if any(event["kind"] == "game_created" for event in state.log):
+            placed = [i for i, e in enumerate(state.log) if e["kind"] == "stadium_placed" and e.get("card") == stadium.card]
+            if not placed or any(e["kind"] == "stadium_discarded" and e.get("card") == stadium.card for e in state.log[placed[-1]:]):
+                problems.append(f"{where} を場に出したログ stadium_placed がない（または、そのあとにトラッシュしたログがある）")
+    uses = state.stadium_uses_this_turn
+    if type(uses) is not tuple or len(set(uses)) != len(uses):
+        return problems + [f"この番に使ったスタジアムの効果の記録 {uses!r} が正しくない"]
+    recent = _events_since_turn_start(state)
+    for record in uses:
+        if not (isinstance(record, tuple) and len(record) == 2 and record[0] in PLAYERS and record[1] in state.cards):
+            problems.append(f"スタジアムの効果の記録 {record!r} が正しくない")
+            continue
+        player, card = record
+        entry = state.effects.trainer_entry(state.cards[card].card_id)
+        if entry is None or not entry.effect.is_stadium or not entry.effect.once_per_turn:
+            problems.append(f"スタジアムの効果の記録 {record} のカードが、「自分の番ごとに1回」のスタジアムではない")
+        if player != state.current_player:
+            problems.append(f"スタジアムの効果の記録 {record} のプレイヤーが、番のプレイヤーではない")
+        logged = sum(1 for e in recent if e["kind"] == "stadium_used" and e.get("player") == player and e.get("card") == card)
+        if logged != 1:
+            problems.append(f"スタジアムの効果の記録 {record} に対応する、今の番のログ stadium_used が {logged} 回")
+    once_logged = [(e.get("player"), e.get("card")) for e in recent if e["kind"] == "stadium_used" and e.get("card") in state.cards
+                   and getattr((state.effects.trainer_entry(state.cards[e["card"]].card_id) or E_NONE).effect, "once_per_turn", False)]
+    if sorted(once_logged) != sorted(uses):
+        problems.append(f"今の番のログの「自分の番ごとに1回」のスタジアムの使用 {once_logged} が、記録 {uses} と違う")
+    return problems
+
+
+class _NoEntry:
+    effect = None
+
+
+E_NONE = _NoEntry()
+
+
+def _stadium_decision_problems(state: GameState, d) -> list[str]:
+    """スタジアムの効果の途中の決定（v0.57。再開先 ``"stadium"``）の形。"""
+    stage = d.context_value("stage")
+    card = d.context_value("stadium")
+    where = f"スタジアムの決定（{stage}）"
+    if stage == "evolution_heal":
+        found = state.find_pokemon(d.context_value("pokemon"))
+        then = d.context_value("after_heal")
+        terms = None if found is None else (stadium_of(state, EvolutionHealStadium))
+        problems = []
+        if found is None or terms is None or terms[0].card != card:
+            return [f"{where} のポケモン・場のトキワシティジムが正しくない"]
+        owner, pokemon = found
+        if (d.kind, d.player, d.options, d.min_choices, d.max_choices) != (EVOLUTION_HEAL, owner, (pokemon.pokemon_id,), 0, 1):
+            problems.append(f"{where} の形 {d.kind} {d.player} {d.options} が、持ち主への 0〜1 個の問いではない")
+        if pokemon.damage <= 0:
+            problems.append(f"{where} のポケモン {pokemon.pokemon_id} にダメージカウンターがない")
+        if not (isinstance(then, tuple) and len(then) == 3 and then[0] == "entry"):
+            problems.append(f"{where} の続き {then!r} が正しくない")
+        return problems
+    found = stadium_in_play(state) if state.stadium is not None else None
+    if found is None or found[0].card != card:
+        return [f"{where} のスタジアム {card!r} が場にない"]
+    _, effect = found
+    if stage == "narrow":
+        problems = []
+        if not isinstance(effect, BenchLimitStadium) or d.kind != STADIUM_RETURN_BENCH:
+            problems.append(f"{where} の種類 {d.kind} と場のスタジアムが合わない")
+        if d.options != tuple(p.pokemon_id for p in state.players[d.player].bench) or (d.min_choices, d.max_choices) != (1, 1):
+            problems.append(f"{where} の選べるもの {d.options} が、プレイヤー {d.player} の控えポケモン 1 匹ではない")
+        if len(state.players[d.player].bench) <= effect.limit:
+            problems.append(f"{where} のプレイヤー {d.player} のベンチが上限より多くない")
+        if any(len(state.players[p].bench) > effect.limit for p in PLAYERS if p not in (d.player, *d.context_value("remaining", ()))):
+            problems.append(f"{where} の順番に入っていないプレイヤーのベンチが上限より多い")
+        return problems
+    if stage == "fuchsia":
+        problems = []
+        if not isinstance(effect, CoinReturnOwnerPokemonStadium) or d.kind != SELECT_POKEMON or d.player != state.current_player:
+            problems.append(f"{where} の種類 {d.kind}・プレイヤー {d.player} が、番のプレイヤーのポケモンを選ぶ決定ではない")
+        elif d.options != tuple(effect.targets(state, d.player)) or (d.min_choices, d.max_choices) != (1, 1):
+            problems.append(f"{where} の選べるもの {d.options} が、自分の場の「{effect.owner}のポケモン」1 匹ではない")
+        return problems
+    return [f"{where} の段階が正しくない"]
 
 
 def _decision_problems(state: GameState) -> list[str]:
@@ -2831,13 +3298,19 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.extend(_post_knockout_decision_problems(state, d))  # v0.12
     if d.resume == "power":
         problems.extend(_power_decision_problems(state, d))  # v0.42
+    if d.resume == "stadium":
+        problems.extend(_stadium_decision_problems(state, d))  # v0.57
     # 選べるもののうち原典で扱いを決められないもの（v0.2b）: 選べるものの中にあり、残りで答えられる
     unresolved = d.context_value("unresolved_choices", ())
     if unresolved:
         if not set(unresolved) <= set(d.options):
             problems.append(f"扱いを決められない選択 {unresolved} が、選べるもの {d.options} にない")
         # v0.43: 場に出たときの特殊能力の使う機会（ENTRY_POWER）は、使わない（0 個）がいつも答えになる（使うことを選ぶと止める場合も。_resume_power）
-        needed = 0 if d.kind == ENTRY_POWER else max(d.min_choices, 1)
+        # v0.57: トキワシティジムのとりのぞく機会（EVOLUTION_HEAL。VG1）・錯乱ジムで借りるかの問い（ACCEPT_REQUEST の続きの情報 chaos。CH1 など）も、選ばない（0 個）が
+        # いつも答えになる（借りない・とりのぞかない）
+        # v0.58: ナツメのサイキックコントロールで使うカード（USE_DISCARD_TRAINER）も、使わない（0 個。「使ってよい」）がいつも答えになる（CH1 など選ぶと止めるカード）
+        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+        needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
     return problems
@@ -2970,7 +3443,8 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     続きの情報の段階・受けるポケモン・基本となるダメージ・前に選んだ段階の順番から、今の場で変更効果を集め直し（``effects.attack_damage_modifiers``）、
     その段階の変更効果が続きの情報と同じで、その順番がまだ選ばれておらず、順番によって計算の結果が変わる（``damage.DamageOrderRequired``）ことと、
     決めるプレイヤー（2・5・6 段階はワザを使うプレイヤー、7・8 段階は受けるポケモンの持ち主。p.321）・選べるもの（並べかえの位置）・選ぶ数を確かめる。"""
-    from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, calculate_attack_damage, step_orders
+    from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
+    from .effects import calculate_with_stadium
     from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers
 
     context = dict(d.context)
@@ -3000,7 +3474,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]
     try:
-        calculate_attack_damage(base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], state.rules, collected,
+        calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
                                 weakness_resistance=context.get("weakness_resistance", True), orders=orders,
                                 resistance=context.get("resistance", True))
     except DamageOrderRequired as need:
@@ -3113,28 +3587,59 @@ def _trainer_problems(state: GameState) -> list[str]:
     waiting = d is not None and d.resume == "trainer"
     # v0.43: トレーナーの効果の途中で場に出たポケモンの特殊能力の決定（再開先 "power"。もどる先 "return_to" がこのトレーナー）を待つ間も、使用中のまま
     returning = d is not None and d.resume == "power" and d.context_value("return_to") is not None
+    # v0.57: トレーナーの効果の途中で進化させたポケモンのトキワシティジムの決定（再開先 "stadium"。続き then のもどる先がこのトレーナー）を待つ間も、使用中のまま
+    healing = d is not None and d.resume == "stadium" and d.context_value("stage") == "evolution_heal" and tuple((d.context_value("after_heal") or ((), (), ()))[2])
     if used is None:
+        if state.trainer_stack:
+            problems.append(f"外側のトレーナー {state.trainer_stack} があるのに、使用中の（内側の）トレーナーがない")
         if waiting:
             problems.append("トレーナーの決定を待っているのに、使用中のトレーナーがない")
         if returning:
             problems.append(f"特殊能力の決定のもどる先 {d.context_value('return_to')!r} があるのに、使用中のトレーナーがない")
+        if healing:
+            problems.append(f"トキワシティジムの決定のもどる先 {d.context_value('then')!r} があるのに、使用中のトレーナーがない")
         return problems
-    if returning:
-        expected = ("trainer", used.player, used.card, state.card_def(used.card).id)
-        if tuple(d.context_value("return_to")) != expected:
-            problems.append(f"特殊能力の決定のもどる先 {d.context_value('return_to')!r} が、使用中のトレーナー {expected} と違う")
+    problems.extend(_trainer_stack_problems(state, used))
+    if returning or healing:
+        expected = ("trainer", used.using_player, used.card, state.card_def(used.card).id)
+        back = tuple(d.context_value("return_to")) if returning else tuple(d.context_value("after_heal")[2])
+        if back != expected:
+            problems.append(f"決定のもどる先 {back!r} が、使用中のトレーナー {expected} と違う")
         return problems
     if not waiting:
         problems.append(f"使用中のトレーナー {used.card} があるのに、その効果の決定を待っていない")
         return problems
-    if used.player != state.current_player:
+    if used.via is None and used.player != state.current_player:
         problems.append(f"使用中のトレーナーの持ち主 {used.player} が、番のプレイヤー {state.current_player} ではない")
+    if used.via is None and used.user is not None and (used.user not in PLAYERS or used.user == used.player or stadium_of(state, TrainerCoinStadium) is None):
+        # v0.57: 借りて使っているのは、場の錯乱ジムで、持ち主の相手プレイヤーだけ
+        problems.append(f"使用中のトレーナー {used} を借りて使っているプレイヤーが正しくない（錯乱ジムで、持ち主の相手だけ）")
     use = d.context_value("use")
     if not (isinstance(use, tuple) and len(use) == 3):
         problems.append(f"トレーナーの決定の続きの情報 {use!r} が正しくない")
         return problems
     player, card, card_id = use
-    if (player, card) != (used.player, used.card):
+    stage = "chaos" if d.context_value("chaos") is not None else "stadium_cost" if d.context_value("stadium_cost") is not None else None
+    if stage is not None:
+        # v0.57: スタジアムがトレーナーの使用に加えた段階（錯乱ジムの問い・リムーブ禁止ジムの追加の条件）。続きの情報は持ち主の使用で、まだ借りていない
+        # v0.58: 外側のトレーナーの効果で使っているカードは、使うプレイヤー（持ち主ではない）の使用
+        starter = used.using_player if used.via is not None else used.player
+        if (player, card) != (starter, used.card) or (used.via is None and used.user is not None):
+            problems.append(f"スタジアムの段階 {stage} の続きの情報 {use!r} が、使用中のトレーナー {used} と違う")
+        if stage == "chaos":
+            if stadium_of(state, TrainerCoinStadium) is None or d.context_value("chaos") != state.stadium.card:
+                problems.append("錯乱ジムの問いを待っているのに、場に錯乱ジムがない")
+            if (d.kind, d.player, d.options, d.min_choices, d.max_choices) != (ACCEPT_REQUEST, 1 - starter, (1,), 0, 1):
+                problems.append(f"錯乱ジムの問い {d.kind} {d.player} {d.options} が、相手プレイヤーへの問い（1 = 使う。0〜1 個）ではない")
+        else:
+            found = stadium_trainer_cost(state, state.card_def(card))
+            if found is None or d.context_value("stadium_cost") != found[0].card:
+                problems.append("リムーブ禁止ジムの追加の条件を待っているのに、場にリムーブ禁止ジムがない")
+            elif (d.kind, d.player, d.options, d.min_choices, d.max_choices) != (
+                    DISCARD_FROM_HAND, starter, tuple(state.players[starter].hand), found[1].discard, found[1].discard):
+                problems.append(f"リムーブ禁止ジムの追加の条件の決定 {d.kind} {d.options} が、手札から {found[1].discard} 枚ではない")
+        return problems
+    if (player, card) != (used.using_player, used.card):
         problems.append(f"トレーナーの決定の続きの情報 {use!r} が、使用中のトレーナー {used} と違う")
     if card in state.cards and state.cards[card].card_id != card_id:
         problems.append(f"トレーナーの決定の続きのカード id {card_id} が、カード {card} と違う")

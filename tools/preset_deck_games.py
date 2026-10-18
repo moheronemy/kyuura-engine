@@ -326,9 +326,22 @@ def _check_trainer_state(state, counts):
     user, card, card_id = d.context_value("use")
     used = state.trainer_in_use
     counts[f"check_decision_{card_id}_{d.kind}"] += 1
-    if not (d.player == user == state.current_player):
+    if d.context_value("chaos") is not None:
+        # v0.57: 錯乱ジムのコインの「うら」で、相手プレイヤーに借りて使うかを聞く（決めるのは相手。使っている最中のカードは持ち主のまま）
+        if not (d.player == 1 - user and user == state.current_player):
+            counts["check_decision_player_mismatch"] += 1
+        # v0.58: ナツメのサイキックコントロールで相手のトラッシュのカードを使っているときは、持ち主は相手で、使うプレイヤーが user（``via`` がある）
+        if used is None or (used.using_player, used.card) != (user, card) or (used.via is None and used.player != user) or state.cards[card].card_id != card_id:
+            counts["check_in_use_mismatch"] += 1
+        return
+    # v0.57: 錯乱ジムで相手プレイヤーが借りて使っているときは、決めるのは借りたプレイヤー（番のプレイヤーの相手）。使っている最中のカードの持ち主は番のプレイヤー。
+    # v0.58: サイキックコントロールで相手のトラッシュのカードを使う（``via`` がある）ときは、持ち主は相手で、使うのは番のプレイヤー（錯乱ジムで借りたら相手）
+    turn_user = state.current_player if used is None or used.using_player == state.current_player else 1 - state.current_player
+    if used is not None and used.via is None and used.user is None and used.player != state.current_player:
+        counts["check_decision_player_mismatch"] += 1  # 手札から使ったカード（借りていない）の持ち主は番のプレイヤー
+    if not (d.player == user == turn_user):
         counts["check_decision_player_mismatch"] += 1
-    if used is None or (used.player, used.card) != (user, card) or state.cards[card].card_id != card_id:
+    if used is None or (used.using_player, used.card) != (user, card) or state.cards[card].card_id != card_id:
         counts["check_in_use_mismatch"] += 1
 
 
@@ -336,19 +349,30 @@ def trainer_sequence_problems(state):
     """v0.23: 突風・パソコン通信・エネルギー回収を使ってから（``play_trainer``）トラッシュするまで（``discard_trainer``）のログに、ほかのトレーナーの使用・
     その実装が出さないイベント・持ち主の違うイベントがないか。終わっていない使用（決定を待つ間）は、最後の状態の使用中のカードと同じか。"""
     problems, open_use = [], None
+    borrowed: dict[int, int] = {}  # v0.57: 錯乱ジムで相手が借りて使ったカード → 借りたプレイヤー
     for i, e in enumerate(state.log):
         kind = e["kind"]
         if open_use is not None:
             user, card, card_id = open_use
+            # v0.57: 錯乱ジム（コイン・相手への問いと答え）・リムーブ禁止ジムの追加の条件（スタジアムのトラッシュ）は、カードの効果の前のスタジアムの処理。
+            # 相手が借りて使ったら、効果のイベントのプレイヤーは借りたプレイヤー（トラッシュするのは持ち主のトラッシュ）
+            if (kind in ("chaos_check", "chaos_not_borrowable") or (kind == "coin_flip" and e.get("source") == "stadium")
+                    or (kind == "discard_from_hand" and "stadium_card" in e)):
+                continue
+            if kind == "chaos_answered":
+                if e["accepted"]:
+                    borrowed[card] = e["player"]
+                continue
             if kind == "discard_trainer":
                 if (e["player"], e["card"]) != (user, card):
                     problems.append(f"{i}: 使用中の {card_id}（{card}）でないカード {e['card']} をトラッシュ")
                 open_use = None
                 continue
             allowed = TRAINER_EVENTS[card_id]
+            acting = borrowed.get(card, user)
             if kind not in allowed:
                 problems.append(f"{i}: {card_id} の使用中に {kind}")
-            elif e.get("player") != (user if allowed[kind] == "user" else 1 - user):
+            elif e.get("player") != (acting if allowed[kind] == "user" else 1 - acting):
                 problems.append(f"{i}: {card_id} の使用中の {kind} の player が {e.get('player')}")
             continue
         if kind == "play_trainer" and _card(state, e["card"]) in TRAINER_EVENTS:

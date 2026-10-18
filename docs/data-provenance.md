@@ -1466,3 +1466,57 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 kyuura への報告事項（kyuura のデータ・記録は変えていない）:
 
 1. 10 枚に、最新の説明・エラッタ・裁定・照合の記録がない。新しい停止コード 6 件（LS1・RT1・RG1・MY1・MS1・KG1）は kyuura の未解決の一覧にない。
+
+## v0.57 で加えたカード 14 枚（スタジアム）
+
+写しを作り直しました（`pool_v0_57`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません（今回の追加だけを理由に、写しの元・研究の基準・
+  固定した参照データを更新していない）。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_57` に 14 枚を加えた）。
+- 写しのカードは 401 枚から 415 枚になりました（14 枚を加えた。ほかのカードの記録は変わっていない）。14 枚は、ニビシティジム PMCG5-079・ハナダシティジム PMCG5-080・
+  抵抗力低下ジム PMCG5-091・ロケット団の特訓ジム PMCG5-095・グレンタウンジム PMCG6-085・タマムシシティジム PMCG5-078・セキチクシティジム PMCG6-086・ヤマブキシティジム
+  PMCG6-090・せまいジム PMCG5-070・ロケット団の爆発ジム PMCG6-092・トキワシティジム PMCG6-097・クチバシティジム PMCG5-076・リムーブ禁止ジム PMCG5-094・錯乱ジム PMCG5-087 です
+  （kyuura の種類 `stadium`）。
+- 根拠:
+  - `kyuura_engine/data/card_sources.json` の採用の記録（14 件 `adopted`。`basis: kyuura_data`。記録した日 2026-10-18）です。研究の基準のコミットで、この 14 枚を指す最新の
+    説明・エラッタ・裁定・論点・照合の記録はありません。スタジアムの一般の規定は kyuura の rule_differences の「stadium」の 2000.02.14 版の行と GR-2000-P312-FIELD を再利用しました
+    （2003 年の `MIX-ADV-RULES-2003` は使わない）。
+  - pcg-search.com の同じ版のページとの照合（2026-10-18）: 14 件とも `differences`（どれも処理に影響しない。サイトの説明文にスタジアムの出し方とトラッシュの文がない、
+    セキチクシティジムの「1匹」と「1枚」、錯乱ジムの「別の」と「このカード以外の」）。版は名前だけでなく収録・サイトの一覧の番号で決めました
+    （[stadiums-v0.57.md](stadiums-v0.57.md) 9 章）。カードの画像は読んでいません。
+  - kyuura の日本語の文面の出典（`ja_text_source`）は 14 枚ともポケモンWiki で、pcg-search.com との照合は独立した照合です。『オフィシャルブック2000』は読んでいないので、
+    `card_verification.json` に加えていません。
+- 処理に使う文面: どれも kyuura の印刷の文面です（採用の記録の `play_text` は `{"trainer": "kyuura_printed_text"}`）。英語版の文面・のちの規定は処理に持ち込んでいません。
+- 検証用デッキ `L57`・`D57`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 14 枚に、最新の説明・エラッタ・裁定・照合の記録がない。新しい停止コード 8 件（STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1）は kyuura の未解決の一覧にない。
+2. pcg-search.com の文面と kyuura の文面の違い（上。どれも処理に影響しない）。
+
+## v0.58 で加えたカード 7 枚（タケシのゴローン・ゴローニャ・ナツメのサイキックコントロール・特殊エネルギー 4 枚）
+
+写しを作り直しました（`pool_v0_58`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません（今回の追加だけを理由に、写しの元・研究の基準・
+  固定した参照データを更新していない）。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_58` に 7 枚を加えた。エンジンが使う項目に、特殊エネルギーの `energy.text` を加えた）。
+- 写しのカードは 415 枚から 422 枚になりました（7 枚を加えた。ほかのカードの記録は変わっていない）。
+- 根拠:
+  - `kyuura_engine/data/card_sources.json` の採用の記録（7 件 `adopted`。`basis: kyuura_data`。記録した日 2026-10-18）です。レインボーエネルギーは kyuura の
+    CR-ENERGY-TRANS-RAINBOW（`kyuura_records`）。一般の規定（GR-2000-P310-ATTACH-ENERGY・GR-2000-P325-SAME-TIMING・GR-2000-P308-SAME-NAME・CR-ENERGY-TRANS-NOT-ATTACHMENT）は
+    研究の対応表の `applied_rule_records`（SE1〜SE5）で結んだ。
+  - 無色2個エネルギーは kyuura の日本語の説明が null、`energy.provides` が空です。出すエネルギー（「無色」2 個）は、カードの名前と pcg-search.com の同じ版（第1弾 096/096）の
+    カードの「無色」の記号 2 つで決めました（`play_text` は `card_name_and_edition_symbols`。論点に記録）。英語の説明は根拠にしていません。
+  - pcg-search.com の同じ版のページとの照合（2026-10-18）: タケシのゴローン・ゴローニャ・サイキックコントロール・無色2個エネルギー・レインボーエネルギーは `match`、配合エネルギー 2 枚は
+    `differences`（説明の空行だけ。処理に影響しない）。版は名前だけでなく収録・サイトの一覧の番号で決めました（[stadium-reuse-special-energy-v0.58.md](stadium-reuse-special-energy-v0.58.md)
+    3 章）。カードの画像は、無色2個エネルギーの記号を除いて読んでいません。『オフィシャルブック2000』は読んでいないので、`card_verification.json` に加えていません。
+- 処理に使う文面: kyuura の印刷の文面（無色2個エネルギーは文面なし）。英語版の文面・のちの規定は処理に持ち込んでいません。
+- 検証用デッキ `E58`・`R58`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 無色2個エネルギーの `energy.provides` が空で、日本語の説明が null（「無色」2 個を記録する作業）。
+2. きずぐすり配合エネルギー・なんでもなおし配合エネルギーの説明の空行（pcg-search.com の表示にはない。処理に影響しない）。
+3. 7 枚に、最新の説明・照合の記録がない（レインボーエネルギーの CR-ENERGY-TRANS-RAINBOW を除く）。新しい停止コード 6 件（RB1〜RB4・TE2・RT1）は kyuura の未解決の一覧にない。
