@@ -150,7 +150,9 @@ class ResearchLinksTest(unittest.TestCase):
                                      # v0.59（docs/energy-control-power-suppression-v0.59.md の GG1・BL1・CB1・BZ1〜BZ4）
                                      "UNRESOLVED_GOOP_GAS_NEW_POKEMON", "UNRESOLVED_BLAINE_SECOND_ATTACH", "UNRESOLVED_ATTACH_BLOCK_SCOPE",
                                      "UNRESOLVED_BUZZAP_OPPONENT_TARGET", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", "UNRESOLVED_BUZZAP_COLOR",
-                                     "UNRESOLVED_BUZZAP_DISGUISED"})
+                                     "UNRESOLVED_BUZZAP_DISGUISED",
+                                     # v0.60（docs/coins-defense-rebellion-v0.60.md の TS1）
+                                     "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

@@ -618,6 +618,13 @@ GOOP_GAS_ATTACK = "PMCG4-056"  # まきちらせ!ベトベトガス（ロケッ�
 V0_59_POKEMON = (BUZZAP_ELECTRODE, MISTYS_TENTACOOL, DARK_ARBOK)
 V0_59_TRAINERS = (BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK)
 V0_59_CARDS = (BUZZAP_ELECTRODE, BLAINE_TRAINER, BROCKS_PROTECTION, MISTYS_TENTACOOL, DARK_ARBOK, GOOP_GAS_ATTACK)
+# v0.60（docs/coins-defense-rebellion-v0.60.md）。控えへのコイン・ダメージを受けない効果・攻撃するときの特殊能力・相手の効果を受けないダメージの 4 枚
+FOSSIL_ZAPDOS = "PMCG3-026"  # サンダー（化石の秘密。026/048。HP 80・雷・抵抗力 闘・にげる 2。サンダーストーム（雷雷雷雷）40）。第1弾のサンダー ZAPDOS と別のカード
+ROCKETS_SCYTHER = "PMCG5-016"  # R団のストライク（リーダーズスタジアム。001/096。HP 60・草・弱点 炎・抵抗力 闘・にげる 1。かげぶんしん（草）・こうそくカマ（草無無）40）
+MISTYS_GYARADOS = "PMCG5-035"  # カスミのギャラドス（リーダーズスタジアム。035/096。カスミのコイキングから進化。HP 100・水・弱点 草・抵抗力 闘・にげる 3。［はんこう］・ハイドロクラッシュ（水水水水）70）
+BROCKS_SANDSLASH = "PMCG5-050"  # タケシのサンドパン（リーダーズスタジアム。045/096。タケシのサンドから進化。HP 70・闘・弱点 草・抵抗力 雷・にげる 1。スピードスター（闘無）20・とげボール（闘闘）30）
+V0_60_POKEMON = (FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH)
+V0_60_CARDS = V0_60_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1155,6 +1162,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ChooseOpponentPokemonDamageAndPowerLock,  # v0.59: わるいアーボックの「ショックアイ」（相手の場のポケモン 1 匹に 10 + 持続する効果 CannotUsePowers）
     _effects.DamagePoisonAndBenchDamage,  # v0.59: わるいアーボックの「どくのきり」
     _effects.DamageThenAttachLockOnHeads,  # v0.59: カスミのメノクラゲの「クリスタルビーム」（持続する効果 CannotAttachEnergy）
+    _effects.DamageThenCoinPerOpponentBench,  # v0.60: サンダーの「サンダーストーム」（控えごとのコインと、同じコインの「うら」の数の自分へのダメージ。新しい要素 CoinPerOpponentBench）
+    _effects.SelfTailsDamageGuard,  # v0.60: R団のストライクの「かげぶんしん」（持続する効果 TailsDamageGuard）
+    _effects.DamageIgnoringDefenderEffects,  # v0.60: タケシのサンドパンの「スピードスター」（Damage の defender_effects）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

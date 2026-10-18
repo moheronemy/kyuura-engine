@@ -218,6 +218,10 @@ QUESTIONS: dict[str, Question] = {
         Question("buzzap_energy_type", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", ("BZ2",), 10,
                  "マルマインの［エネエネ］で「○」エネルギー2個分になってついているマルマインのカードを、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶかは、"
                  "印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる（出すエネルギーの個数と色は決まっている）"),
+        # v0.60（docs/coins-defense-rebellion-v0.60.md）
+        Question("bench_coin_transparency_order", "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER", ("TS1",), 70,
+                 "サンダーの「サンダーストーム」の控えポケモンそれぞれのコインを、すべて投げてからダメージを与えるのか、1 匹ずつ投げてダメージを与えるのかは、印刷の文面・"
+                 "kyuura の記録から決められない。どちらでも結果の分布は同じだが、「とうめい」のコインがあいだに入ると乱数の割り当てが変わる"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
         Question("power_damage_weakness_resistance", None, ("Z9",), 90,
@@ -228,6 +232,11 @@ QUESTIONS: dict[str, Question] = {
         # v0.31: 「みちづれ」がはたらくワザのきぜつの判定で、任意の効果（こんじょう）の候補もある（今の対応カードでは起こらない）
         Question("destiny_bond_with_ko_prevention", None, ("HC2",), 90,
                  "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
+        # v0.60（docs/coins-defense-rebellion-v0.60.md）: 「ワザのダメージを変える常にはたらく特殊能力」で、持っているのが相手の対戦ポケモン以外の相手の場のポケモンのものは、
+        # 今の写しにない（［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身）
+        Question("speed_star_scope", None, ("SS1",), 90,
+                 "タケシのサンドパンの「スピードスター」の「相手の持っている…その他の効果」に、相手の対戦ポケモン自身が持っている効果だけでなく、相手の場のほかのポケモンが"
+                 "持っている常にはたらく特殊能力も含むかは、印刷の文面・kyuura の記録から決められず、最終ダメージが変わる"),
     )
 }
 

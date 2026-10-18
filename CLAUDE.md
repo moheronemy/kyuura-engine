@@ -1829,3 +1829,39 @@
   組の結果は変わらない）。［エネエネ］は `_v059_power`・`_v059_decision`、カツラ・タケシの保護・まきちらせ!ベトベトガスは `_v059_trainer`・`_v059_energy`（手順がつける前にカツラを使う）、
   数えた結果は `v059_uses`。tests/v017_games.py の `play_game` は GG1・`ENERGY_ATTACH_PREVENTED`・BL1・CB1・`POWER_USE_PREVENTED`・まきちらせ!ベトベトガスの `POWER_SUPPRESSED` と、
   役割のカード（1 枚 2 個）で数が変わる「にげる」を場から確かめてから別の操作を続けます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 控えへのコイン・ダメージを受けない効果・攻撃するときの特殊能力・相手の効果を受けないダメージの 4 枚（v0.60）
+
+- 依頼の 4 枚（サンダー（化石の秘密）PMCG3-026 のサンダーストーム、R団のストライク PMCG5-016 のかげぶんしん・こうそくカマ、カスミのギャラドス PMCG5-035 の［はんこう］・ハイドロクラッシュ、
+  タケシのサンドパン PMCG5-050 のスピードスター・とげボール）を、kyuura データの採用で、どのワザも、特殊能力も登録しました（対応ポケモン 332 → 336・写しの組 `pool_v0_60`。写し 428 → 432 枚・
+  対応するカード 426 → 430 枚。ワザの登録 565 → 571・特殊能力の登録 50 → 51。PMCG1〜PMCG6 の未対応は 31 → 27 枚）。カードごとの結果・共通の処理・未解決・実装上の読み方・互換性・検証は
+  docs/coins-defense-rebellion-v0.60.md。ガイドブックは読んでいません。英語版の文面（「(or is Benched or is evolved)」「that attack does nothing」など）で日本語の不足を補わないでください。
+  テストの定数は tests/helpers.py の `FOSSIL_ZAPDOS`・`ROCKETS_SCYTHER`・`MISTYS_GYARADOS`・`BROCKS_SANDSLASH`・`V0_60_POKEMON`・`V0_60_CARDS`（`FOSSIL_ZAPDOS` と第1弾の `ZAPDOS`、
+  `ROCKETS_SCYTHER` とストライク `SCYTHER`、`MISTYS_GYARADOS` と `GYARADOS`・`GIOVANNIS_GYARADOS`、`BROCKS_SANDSLASH` と `SANDSLASH` を取りちがえない）。v0.60 のワザの型は
+  `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。
+- 相手の控えそれぞれにコインを投げる効果は要素 `programs.CoinPerOpponentBench`（その時点のベンチの並びの順に 1 匹 1 枚、1 回の `flip` で投げ、ログ `bench_coin_results` に控えと面の対応。
+  すべて投げてから「おもて」の控えにダメージ、そのあと「うら」の数で自分へのダメージ）です。「おもて」の数でまとめないでください（どの控えかが要る）。はたらいている「とうめい」の控えの
+  後ろにほかの控えがいれば、コインの割り当てが投げ方で変わるので TS1（`UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER`。宣言の前）で止めます。2 匹以上の「とうめい」は T27 のままです。
+- 「相手のワザのダメージを受ける時、相手プレイヤーがコインを投げ、「うら」ならそのダメージを受けない」効果は、自分自身の持続する効果 `state.TailsDamageGuard`（与えた番からはたらき、
+  期限では消えない。種類 `tails_damage_guard`）で、`kernel.deal_damage` がダメージをのせる直前（最終ダメージが 0 より大きい相手のワザのダメージだけ）に `damage_guard_passes` で聞きます
+  （ログ `damage_guard_check`。「うら」は `DamageResult.dodged`）。ダメージを受けたら、どの経路のダメージでも `persistent.remove_on_damage`（理由 `damaged`）で消します。ダメージを
+  のせる処理を加えるときは、ダメージのログのあとに `remove_on_damage` を呼んでください（ダメージカウンターをのせる・移す効果はダメージではないので呼ばない）。ダメージ以外の効果は
+  そのまま受けます（ワザ全体を無効にしない）。受けなかったダメージのあとの「ダメージを与えた後」の効果は既存の Z23 です。
+- ［はんこう］（`effects.FailAndReturnOnAttack`。自動的にはたらく特殊能力。`declared = False`）は、p.309 の手順 4 の効果として、宣言のあと・こんらんのコインの前に
+  `flow._rebellion_failed` が持ち主のコイン 2 枚を投げます（ログ `rebellion_check`）。すべて「うら」ならワザの失敗（`attack_failed` の `reason` `power`）→ v0.36 の
+  `zones.return_in_play_to_deck`（出どころ `power`）→ 持続する効果を消す → 山札を切る。きぜつではありません。手順 4 の効果として数えるので、ほかの手順 4 の効果と重なれば AC13、
+  クチバシティジムのコインとは VM1 です。こんらんでは止めません（失敗したらポケモンは場にいないので、AC6 の読み方で結果が変わらない）。ワザを使う時にはたらく特殊能力を加えるときは、
+  `effects.attack_rebellion_powers` と同じく `continuous.power_suppressed` で聞き、手順 4 の効果の数え方（`flow._attack_check_failed`）を見直してください。
+- 相手の対戦ポケモン自身が持っている効果を計算しないダメージ（スピードスター）は、要素 `Damage` の `defender_effects=False`（`kernel.deal_damage` の `defender_effects`。相手の対戦
+  ポケモンへのダメージだけ）です。弱点・抵抗力・ついているトレーナー・受けるポケモンの持続する効果・受けるポケモン自身の特殊能力（`effects.attack_damage_modifiers` の `exclude`・
+  `kernel.first_void` の `held_by_receiver`・「とうめい」・かげぶんしん）を計算せず、ワザを使うポケモン・プレイヤー・スタジアムの効果と、ダメージを受けたあとの反応は今までどおりです。
+  効果を持っているのがだれかで分け、だれが与えたかで分けないでください。相手の場のほかのポケモンの特殊能力を含むかは SS1（コードのない問い `speed_star_scope`。今の写しでは起こらない）。
+  バトル場以外ではたらくワザのダメージを変える特殊能力を加えるときは、SS1 に当たるかを確かめてください。
+- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20）。持続する効果の種類 `tails_damage_guard` は形式 8 から書けます。新しいログのイベント（公開）は
+  `bench_coin_results`・`damage_guard_check`・`rebellion_check`。公開の API の呼び方・コマンド・決定の種類・拒否のコードは変えていません。エンジンが止める `UNRESOLVED_…` は 123 件、
+  未解決の裁定は 125 件です（TS1・SS1。kyuura の未解決の一覧にない）。
+- ログの監査（tests/log_audit.py）は、かげぶんしんの効果・コイン・ダメージのすぐあとの消去、［はんこう］のコインの並びと山札にもどしたポケモン、スピードスターのダメージに「とうめい」の
+  判定がないことを確かめます。v0.59 のまきちらせ!ベトベトガスで消えた「とうめい」・［はんげき］を監査が数えていなかったのを直しました（`goop_gases`）。
+- 検証用デッキ `Z60`・`M60` と組（`PAIRINGS_V0_60`。`Z60` 対 `M60`・`M60` 対 `Z59`・`Z60` 対 `D46`・`Z60` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.60` です（前の版の
+  組の結果は変わらない）。数えた結果は `v060_uses`。TS1・T27（控えにもダメージ・効果を与えるワザと「とうめい」2 匹以上）・Z23（かげぶんしん）・AC13（［はんこう］を含む）は `V031_STOPS`
+  で場から確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

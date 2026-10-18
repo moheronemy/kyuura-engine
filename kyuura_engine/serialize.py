@@ -89,6 +89,7 @@
   "turn"}`` の並び）を加えたもの（v0.59。docs/energy-control-power-suppression-v0.59.md 8 章）。形式 1〜18 は、記録があると ``ValueError``（なければ形式 1〜18 の
   書き出しは v0.58 と同じ）。v0.59 の持続する効果の種類 ``"cannot_use_powers"``（「ショックアイ」）・``"cannot_attach_energy"``（「クリスタルビーム」）は共通の項目だけで、
   形式 8 から書ける（種類の値を加えただけ）。タケシの保護（場をはなれるまでついたまま）のついているトレーナーの ``discard_at_end_of_turn`` は ``None``。
+  v0.60: 持続する効果の種類 ``"tails_damage_guard"``（R団のストライクの「かげぶんしん」）も共通の項目だけで、形式 8 から書ける（形式は増やしていない）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -156,6 +157,7 @@ from .state import (
     GameState,
     HalvedDamage,
     MaxHpSet,
+    TailsDamageGuard,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -251,7 +253,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, MaxHpSet):
         data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
-                                         CannotUsePowers, CannotAttachEnergy)):
+                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):

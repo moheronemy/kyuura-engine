@@ -719,6 +719,28 @@ class MaxHpSet:
 
 
 @dataclass(frozen=True)
+class TailsDamageGuard:
+    """ワザによる「持続する効果」（v0.60）のうち、R団のストライク（PMCG5-016）の「かげぶんしん」の「これ以降、このカードが相手のワザによるダメージを受ける時、相手
+    プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は、そのまま)。このカードがダメージを受けるか、バトル場をはなれた時、
+    この効果は消える。」（kyuura の印刷の文面。docs/coins-defense-rebellion-v0.60.md 3 章）。
+
+    自分自身に与え、与えたときからはたらき（「これ以降」）、期限では消えない（``lasting``）。消えるのは、このポケモンが実際にダメージを受けたとき（ワザ・特殊能力・こんらん・
+    どく・特殊エネルギー・スタジアムのどのダメージでも。``persistent.remove_on_damage``。理由 ``damaged``）と、バトル場をはなれたとき（にげる・入れ替え・きぜつ・山札や手札に
+    もどる。進化・退化でも消える（v0.4b からの持続する効果の規定。p.310・p.324））。コインは、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受ける時に、相手
+    プレイヤーが投げる（``resolution.kernel.deal_damage``）。ダメージだけを受けない（ワザの要素を無効にする「ワザをうけない」状態・「とうめい」とは別の型）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "tails_damage_guard"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -792,7 +814,7 @@ class CannotAttachEnergy:
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy)
+                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)
 
 
 @dataclass(frozen=True)

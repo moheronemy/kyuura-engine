@@ -172,6 +172,7 @@ from .state import (
     TrainerUseLock,
     ZeroDamageBelow,
     MaxHpSet,
+    TailsDamageGuard,
     ResistanceChange,
     TypeShift,
     WeaknessChange,
@@ -2087,6 +2088,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_given_by_attack_problems(state, pokemon, effect, where))  # v0.36（v0.40: すごむ。v0.59: ショックアイ・クリスタルビーム）
         if isinstance(effect, (WeaknessChange, ResistanceChange, MaxHpSet)):
             problems.extend(_effective_value_effect_problems(state, pokemon, effect, where))  # v0.48
+        if isinstance(effect, TailsDamageGuard):
+            problems.extend(_damage_guard_problems(state, pokemon, effect, where))  # v0.60
         problems.extend(_persistent_effect_log_problems(state, pokemon, effect, where))
     return problems
 
@@ -2351,6 +2354,20 @@ def _effective_value_effect_problems(state: GameState, pokemon: PokemonInPlay, e
     terms = getattr(entry.effect, attr, None) if entry is not None else None
     if terms is None or terms() != expected or added.get(logged_key) != value:
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装・ログの {logged_key}）と合わない"]
+    return []
+
+
+def _damage_guard_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
+    """v0.60: 「かげぶんしん」の持続する効果（``TailsDamageGuard``）が、与えたワザ（ログ ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは使ったワザ）の
+    登録された実装（``guard_terms``: 型）と合うか。消える契機（ダメージを受けた・バトル場をはなれた）は ``_persistent_effect_log_problems`` がログと照らす。"""
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, "guard_terms", None) if entry is not None else None
+    if terms is None or terms() is not TailsDamageGuard:
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
 
 

@@ -599,6 +599,12 @@
     "PMCG4-008",
     "PMCG4-056"
   ],
+  "pool_v0_60": [
+    "PMCG3-026",
+    "PMCG5-016",
+    "PMCG5-035",
+    "PMCG5-050"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -34124,6 +34130,371 @@
         "series": "ロケット団",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg04-059-makichirasebetobetogass/"
+      }
+    },
+    {
+      "id": "PMCG3-026",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンダー",
+        "en": "Zapdos"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          145
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サンダーストーム",
+              "en": "Thunderstorm"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手の控えポケモンそれぞれに対してコインを投げ、「おもて」ならそのポケモンに(「弱点・抵抗力」に関係なく)20ダメージ。相手の控えポケモン全員に対してコインを投げ終わったら、その間に出た「うら」の数×10ダメージをこのカードに与える。",
+              "en": "For each of your opponent's Benched Pokémon, flip a coin. If heads, this attack does 20 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Then, Zapdos does 10 damage times the number of tails to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-026",
+        "pokemontcg": [
+          "base3-15",
+          "base3-30"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-026-thunder/",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-026-thunder/"
+      }
+    },
+    {
+      "id": "PMCG5-016",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "R団のストライク",
+        "en": "Rocket's Scyther"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          123
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かげぶんしん",
+              "en": "Shadow Images"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "これ以降、このカードが相手のワザによるダメージを受ける時、相手プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は、そのまま)。このカードがダメージを受けるか、バトル場をはなれた時、この効果は消える。",
+              "en": "Whenever Rocket's Scyther is attacked, your opponent flips a coin. If tails, that attack does no damage to Rocket's Scyther. (Any other effects of the attack still happen.) This effect lasts until Rocket's Scyther takes damage (or is Benched or is evolved)."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくカマ",
+              "en": "Blinding Scythe"
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-016",
+        "pokemontcg": [
+          "gym1-13"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%B9%E3%83%88%E3%83%A9%E3%82%A4%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 23,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/R%E5%9B%A3%E3%81%AE%E3%82%B9%E3%83%88%E3%83%A9%E3%82%A4%E3%82%AF_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-035",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのギャラドス",
+        "en": "Misty's Gyarados"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          130
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "カスミのコイキング",
+          "en": "Misty's Magikarp"
+        },
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "はんこう",
+              "en": "Rebellion"
+            },
+            "text": {
+              "ja": "このカードがワザを使う時、コインを2枚投げる。コインがすべて「うら」なら、そのワザは失敗となり、このカードと、これについているすべてのカードを山札にもどし、その山札をよく切る。この力は、このカードが「こんらん」状態でも、必ずはたらく。",
+              "en": "Whenever Misty's Gyarados attacks, flip 2 coins. If both of them are tails, that attack does nothing. Instead, shuffle Misty's Gyarados and all cards attached to it into your deck. (This power works even if Misty's Gyarados is Confused.)"
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハイドロクラッシュ",
+              "en": "Tidal Wave"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 70,
+              "modifier": null,
+              "display": "70"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-035",
+        "pokemontcg": [
+          "gym2-13"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%AE%E3%83%A3%E3%83%A9%E3%83%89%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 42,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%AE%E3%83%A3%E3%83%A9%E3%83%89%E3%82%B9_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-050",
+      "jp_set": "PMCG5",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのサンドパン",
+        "en": "Brock's Sandslash"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          28
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タケシのサンド",
+          "en": "Brock's Sandshrew"
+        },
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スピードスター",
+              "en": "Swift"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。",
+              "en": "This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "とげボール",
+              "en": "Needle Ball"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-050",
+        "pokemontcg": [
+          "gym2-36"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%89%E3%83%91%E3%83%B3LV.34_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 34,
+        "rarity": "◆(U)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%83%B3%E3%83%89%E3%83%91%E3%83%B3LV.34_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     },
     {

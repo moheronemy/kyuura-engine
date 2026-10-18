@@ -45,7 +45,7 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_per
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, HalvedDamage, NextTurnAttackDamage, PreventDamage,
-    MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
+    MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..zones import (
     attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
@@ -676,6 +676,9 @@ class Damage(Element):
     # v0.40: 受けるポケモンの名前（いちばん上のカードの名前の完全一致）がこのどれかのときだけ与える（わるいマタドガスの「みんなでばくはつ」の「お互いの場にいる
     # 全ての「ドガース」「マタドガス」「わるいマタドガス」に、それぞれ20ダメージ」の、相手の対戦ポケモンと自分へのダメージ）。None なら名前を見ない
     names: tuple[str, ...] | None = None
+    # v0.60: False なら、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない（タケシのサンドパンの「スピードスター」。``kernel.deal_damage`` の
+    # ``defender_effects``。相手の対戦ポケモンへのダメージだけ）
+    defender_effects: bool = True
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def coin_receiver(self) -> str | None:
@@ -732,7 +735,8 @@ class Damage(Element):
         """基本となるダメージ ``base`` を与える。同じ段階の変更効果の計算の順番によって結果が変わるなら、順番の決定を出して止まる（v0.35）。"""
         try:
             run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
-                                                    orders=orders or None, order_decision=True, resistance=self.resistance)
+                                                    orders=orders or None, order_decision=True, resistance=self.resistance,
+                                                    defender_effects=self.defender_effects)
         except DamageOrderRequired as need:
             suspend_step_order(run, self, need, base, orders)
             return True
@@ -3178,6 +3182,66 @@ class TailsOfOpponentBenchCoins:
 
 
 @dataclass(frozen=True)
+class CoinPerOpponentBench(Element):
+    """相手の控えポケモンそれぞれに対してコインを投げ、「おもて」ならそのポケモンに（「弱点・抵抗力」に関係なく）``bench_damage``。全員に対してコインを投げ終わったら、
+    その間に出た「うら」の数 × ``self_per`` ダメージをワザを使ったポケモンに与える（v0.60。サンダーの「サンダーストーム」。docs/coins-defense-rebellion-v0.60.md 2 章）。
+
+    - 対象は、この要素を処理する時点の相手の控えの並び（ベンチの順）。コインは 1 匹 1 枚、並びの順に 1 回の ``flip`` で投げ、``i`` 枚目は ``i`` 番目の控えのもの（「おもて」の
+      数でまとめない。``by_heads`` は渡さない。先読みは 2 の控えの数乗通りを試す）。結果は ``fs.coins[name]`` とログ ``bench_coin_results``（控えの番号と面の対応）に残す
+    - すべて投げてから、「おもて」の控えに並びの順でダメージ（``deal_damage`` の ``OPPONENT_BENCH``・弱点・抵抗力なし）。そのあと同じコインの「うら」の数で自分へのダメージ
+      （ワザによる自分へのダメージ。「うら」が 0 なら与えない。投げ直さない）。控えがいなければコインも自分へのダメージもない
+    - 「とうめい」がはたらいている控えポケモンのあとに控えがいれば、コインの投げ方（すべて投げてからか、1 匹ずつか。印刷の文面・記録で決まらない）で乱数の割り当てが変わるので、
+      コインの前に TS1（``bench_coin_transparency_order``）で止める。2 匹以上の「とうめい」は今までどおり T27（``multiple_evasion``）
+    - コインが決めるのは控えへのダメージと自分へのダメージ（自分へのダメージは有効な要素）なので、受ける控えがみな無効（見えない壁）でもコインを投げる（``void_coin_question`` の
+      対象にしない）
+    """
+
+    bench_damage: int
+    self_per: int
+    name: str = "bench_coins"
+    phase: ClassVar[Phase] = Phase.DAMAGE
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        bench = list(state.players[1 - run.player].bench)
+        if not bench:
+            run.fs.coins[self.name] = CoinFlips(())
+            return False
+        if any(E.evasion_power(state, pokemon) is not None for pokemon in bench[:-1]):
+            raise run.res.question("bench_coin_transparency_order", f"控えのポケモン {[p.pokemon_id for p in bench]}")
+        flips = run.flip(len(bench))
+        run.fs.coins[self.name] = flips
+        state.add_event("bench_coin_results", player=run.player, pokemon=run.attacker().card, pokemon_id=run.attacker().pokemon_id, effect=str(run.key),
+                        targets=tuple(p.pokemon_id for p in bench), results=tuple(side.value for side in flips.results))
+        for pokemon, side in zip(bench, flips.results):
+            if side is HEADS:
+                deal_damage(run.res, run.fs, E.OPPONENT_BENCH, self.bench_damage, pokemon_id=pokemon.pokemon_id, weakness_resistance=False)
+        if flips.tails:
+            run.fs.results["self_damage"] = deal_damage(run.res, run.fs, SELF, flips.tails * self.self_per)
+        return False
+
+
+@dataclass(frozen=True)
+class SelfDamageGuard(Element):
+    """ワザを使ったポケモン自身に「かげぶんしん」の効果（``state.TailsDamageGuard``）を与える（v0.60。R団のストライクの「かげぶんしん」）。コインはない（コインはダメージを受ける時に
+    相手プレイヤーが投げる。``kernel.damage_guard_passes``）。自分自身への持続する効果（``SelfMaxHp`` と同じく「とうめい」は評価しない）。前の効果は理由 ``replaced`` で消す。
+    ワザを使ったポケモンがこのワザの中で HP 以上なら与えない（今の対応カードでは、ダメージのないこのワザで起こらない）。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=TailsDamageGuard.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        turn = run.state.turn_number
+        effect = TailsDamageGuard(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn)
+        replace_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
 class OwnCountersAtLeast(Element):
     """ワザを使うための条件「このワザは、自分にダメージカウンターが ``minimum`` つ以上のっているときだけ、使える」（v0.40。サカキのニドラン♂の「いかりのいちげき」）。
 
@@ -5326,6 +5390,10 @@ BUILDERS: dict[type, Any] = {
     E.ChooseOpponentPokemonDamageAndPowerLock: lambda e: (ChosenOpponentPokemonDamage(Fixed(e.damage)), LockChosenPowers()),
     E.DamagePoisonAndBenchDamage: lambda e: (Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage)), Status(POISON)),
     E.DamageThenAttachLockOnHeads: lambda e: (Damage(OPP, Printed()), OpponentAttachLock(local_coin=HEADS)),
+    # v0.60（docs/coins-defense-rebellion-v0.60.md）
+    E.DamageThenCoinPerOpponentBench: lambda e: (Damage(OPP, Printed()), CoinPerOpponentBench(e.bench_damage, e.self_per)),
+    E.SelfTailsDamageGuard: lambda e: (SelfDamageGuard(),),
+    E.DamageIgnoringDefenderEffects: lambda e: (Damage(OPP, Printed(), defender_effects=False),),
     E.SelfDestructThenDiscardStadium: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"),
         BenchDamage(Fixed(e.bench_damage), weakness_resistance=False),

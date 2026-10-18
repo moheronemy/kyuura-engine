@@ -25,10 +25,11 @@ from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
-from ..effects import AttackKey, AttackUse, PowerKey, attach_converted_energy, counts_as_knockout, max_hp, stadium_attack_coin_available, status_at_attack_blocked
+from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, max_hp, stadium_attack_coin_available,
+                       status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
-from ..zones import promote_from_bench
+from ..zones import promote_from_bench, return_in_play_to_deck, shuffle_deck
 
 from . import catalog as C
 from . import codec
@@ -36,7 +37,7 @@ from . import preflight as P
 from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
-from ..persistent import attack_coin_checks, destiny_bond
+from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_persistent_effects
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knocked, ko_prevention_offers, track_ko
 from .programs import AttackRun, decision_index, declare, program_may_fail, run_elements, with_stadium_self_damage
 from .questions import OpenQuestion, to_error
@@ -208,7 +209,7 @@ def _stadium_attack_coin(res: Resolution, player: int, attacker, key: AttackKey,
     ``res.stadium_coin``（決定をまたいでも運ぶ。投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージに 6 段階の +10（``kernel.deal_damage``）、「うら」なら
     並びに自分へのダメージの要素を入れる（``programs.with_stadium_self_damage``）。手順 4・5・ワザの失敗との順番が決まらない場合（VM1）はコインの前に止める。"""
     state = res.state
-    if attack_coin_checks(state, attacker) or attacker.conditions.confused or program_may_fail(program):
+    if attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker) or attacker.conditions.confused or program_may_fail(program):
         raise res.question("vermilion_attack_order", f"ポケモン {attacker.pokemon_id}")
     heads = flip_coins(state, player, 1, source="stadium", effect=state.cards[stadium].card_id, card=stadium,
                        pokemon_id=attacker.pokemon_id).results[0] is CoinSide.HEADS
@@ -237,16 +238,48 @@ def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey)
     """
     state = res.state
     checks = attack_coin_checks(state, attacker)
-    if not checks:
+    rebellions = attack_rebellion_powers(state, attacker)  # v0.60: ［はんこう］（ワザを使う時にはたらく特殊能力。手順 4 の効果）
+    if not checks and not rebellions:
         return False
-    if len(checks) > 1:
-        raise res.question("multiple_attack_checks", f"ポケモン {attacker.pokemon_id}（{len(checks)} つの効果）")
+    if len(checks) + len(rebellions) > 1:
+        raise res.question("multiple_attack_checks", f"ポケモン {attacker.pokemon_id}（{len(checks) + len(rebellions)} つの効果）")
+    if rebellions:
+        return _rebellion_failed(res, player, attacker, key, rebellions[0])
     if attacker.conditions.confused:
         raise res.question("attack_check_confusion", f"ポケモン {attacker.pokemon_id}")
     if PR.attack_coin_check(state, player, attacker, checks[0], effect=str(key)):
         return False
     state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key),
                     reason=PR.ATTACK_CHECK_FAILED)
+    return True
+
+
+REBELLION_FAILED = "power"  # v0.60: ［はんこう］のコインで失敗したワザ（ログ attack_failed の reason）
+
+
+def _rebellion_failed(res: Resolution, player: int, attacker, key: AttackKey, slot) -> bool:
+    """v0.60（docs/coins-defense-rebellion-v0.60.md 4 章）: カスミのギャラドスの［はんこう］（``effects.FailAndReturnOnAttack``）。p.309 の手順 4 の効果として、宣言のあと・こんらんの
+    コインの前に、持ち主がコインを ``coins`` 枚投げる（ログ ``coin_flip`` の ``source`` は ``"power"``・``rebellion_check``）。すべて「うら」ならワザは失敗し（ログ
+    ``attack_failed`` の ``reason`` ``"power"``）、このポケモンとついているすべてのカードを山札にもどし（``zones.return_in_play_to_deck`` の ``power``。きぜつではない）、持続する
+    効果を消して（理由 ``return_in_play_to_deck``）、山札を切る（先読みでは切らない。ワザはこのあと何も処理しない）。True を返す（呼ぶ側がワザのあとの処理に進む）。
+
+    - 「こんらん」状態でもはたらく。失敗しなければ手順 5（こんらんのコイン）に進む。失敗したら、もどしたポケモンにはこんらんのコインを投げない（処理の対象がない。p.309）。
+      すなかけなどの手順 4 の効果（v0.36 の AC6）とは違い、どちらの順番でも結果が決まる（手順 4 で失敗すればポケモンは場にいない）ので、こんらんで止めない
+    - コインの結果は「おもて」の数だけで使う（``by_heads``。先読みは 3 通り）"""
+    state = res.state
+    effect = slot.effect
+    power = str(slot.key)
+    flips = flip_coins(state, player, effect.coins, source="power", effect=power, card=slot.card, pokemon_id=attacker.pokemon_id, by_heads=True)
+    failed = flips.heads == 0
+    state.add_event("rebellion_check", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, power=power, effect=str(key),
+                    heads=flips.heads, failed=failed)
+    if not failed:
+        return False
+    state.add_event("attack_failed", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(key), reason=REBELLION_FAILED, power=power)
+    return_in_play_to_deck(state, player, attacker, power=power)
+    remove_persistent_effects(state, player, attacker, RETURN_IN_PLAY_TO_DECK)
+    if not res.dry_run:
+        shuffle_deck(state, player, power=power)
     return True
 
 

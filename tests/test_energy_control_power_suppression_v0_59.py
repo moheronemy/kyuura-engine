@@ -128,8 +128,8 @@ class CardDataTest(unittest.TestCase):
         for definition in pool.definitions.values():
             if definition.supported:
                 counts[definition.category] = counts.get(definition.category, 0) + 1
-        # v0.58 の 329・81・10（420）から、ポケモン 3 枚・トレーナー 3 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (332, 84, 10))
+        # v0.58 の 329・81・10（420）から、ポケモン 3 枚・トレーナー 3 枚を加えた（332・84・10）。v0.60 でポケモン 4 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (336, 84, 10))
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS

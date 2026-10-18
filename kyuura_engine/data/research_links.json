@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 123,
-    "engine_stop_codes": 122,
+    "engine_unresolved_rulings": 125,
+    "engine_stop_codes": 123,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1444,6 +1444,17 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.60",
+          "document": "docs/coins-defense-rebellion-v0.60.md",
+          "ruling_id": "TS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1482,6 +1493,18 @@
       "kyuura_issue": null,
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
+    },
+    "speed_star_scope": {
+      "engine_rulings": [
+        {
+          "version": "v0.60",
+          "document": "docs/coins-defense-rebellion-v0.60.md",
+          "ruling_id": "SS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": true
     }
   },
   "unresolved_without_code": [],
@@ -2341,7 +2364,12 @@
       "PMCG1-040/attack/0",
       "PMCG5-030/attack/0",
       "PMCG4-008/attack/0",
-      "PMCG4-008/attack/1"
+      "PMCG4-008/attack/1",
+      "PMCG3-026/attack/0",
+      "PMCG5-016/attack/0",
+      "PMCG5-035/power/0",
+      "PMCG5-050/attack/0",
+      "PMCG5-050/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

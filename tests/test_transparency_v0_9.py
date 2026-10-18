@@ -615,7 +615,8 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG1-039": ("PMCG1-036",), "PMCG3-006": ("PMCG1-006",),  # v0.39: 第1弾のレアコイル（コイルから）・化石の秘密のマタドガス（ドガースから）
               "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
               "PMCG4-048": ("PMCG2-036",),  # v0.41: わるいペルシアン（ニャースから）
-              "PMCG3-028": ("PMCG3-027",)}  # v0.42: ヤドラン（化石の秘密のヤドンから）
+              "PMCG3-028": ("PMCG3-027",),  # v0.42: ヤドラン（化石の秘密のヤドンから）
+              "PMCG5-050": ("PMCG5-043",)}  # v0.60: タケシのサンドパン（タケシのサンドから）
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -676,7 +677,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "のしかかり",
                                         # v0.48: ロケット団のポリゴンの「サイケこうせん」（ConfuseOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/effective-pokemon-properties-v0.48.md）
-                                        "サイケこうせん"]))
+                                        "サイケこうせん",
+                                        # v0.60: タケシのサンドパンの「とげボール」（PoisonOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/coins-defense-rebellion-v0.60.md）
+                                        "とげボール"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -689,6 +693,13 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         # ベトベトン自身のかがくへんかガスで「とうめい」の力が消えている（T14）ので止めない（ChemicalGasTest）
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
+                        continue
+                    if key.card_id == "PMCG5-050":
+                        # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
+                        # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
+                        # どくの要素を受ける前に「とうめい」のコインを投げる）
+                        after = apply_command(state, UseAttack(0, key.attack_index))
+                        self.assertTrue(any(e["kind"] == "damage" and e["amount"] == 0 for e in after.log[len(state.log):]))
                         continue
                     with self.assertRaises(UnsupportedError) as ctx:
                         apply_command(state, UseAttack(0, key.attack_index))

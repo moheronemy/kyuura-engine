@@ -36,6 +36,8 @@ from ..effects import (
     SELF_BENCH,
     AttackKey,
     DamageResult,
+    EXCLUDE_DEFENDER_HELD,
+    EXCLUDE_DEFENDER_SIDE,
     attack_damage_modifiers,
     counterattack_double_knockout_error,
     power_name_and_page,
@@ -51,7 +53,7 @@ from ..effects import (
     weakness_of,
 )
 from ..conditions import confuse
-from ..persistent import effect_attack_card, reduced_damage_to_source
+from ..persistent import effect_attack_card, reduced_damage_to_source, remove_on_damage, tails_damage_guard
 from ..state import RETALIATION_FIXED
 
 from . import catalog as C
@@ -185,10 +187,16 @@ def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: in
 # ---------------------------------------------------------------- ダメージの要素（窓: 適用の前 → 受けるとき → 適用 → 受けたとき）
 
 
-def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE) -> C.EffectInstance | None:
+def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE, *,
+               held_by_receiver: bool = True) -> C.EffectInstance | None:
     """受けるポケモンのダメージの要素を無効にする効果（「ダメージを受けない」状態。かたまる）のうち、今はたらいているもの。v0.31: ``window`` に
-    ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。"""
+    ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。
+
+    v0.60: ``held_by_receiver`` が False なら、受けるポケモン自身が持っている効果（持続する効果・特殊能力）は除く（タケシのサンドパンの「スピードスター」。トレーナーの
+    効果（見えない壁。プレイヤーの記録）は受けるポケモンの持っている効果ではないので残す）。"""
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
+        if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
+            continue
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
             return instance
     return None
@@ -237,7 +245,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
 
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
-                order_decision: bool = False, resistance: bool = True) -> DamageResult:
+                order_decision: bool = False, resistance: bool = True, defender_effects: bool = True) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -251,14 +259,29 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
 
     v0.45: ``resistance`` が False なら抵抗力（4 段階）だけを計算しない（「「抵抗力」の影響を受けない」。ログに ``ignore_resistance``）。8 段階の
     「決まった数より小さければ 0 にする」効果（「かたくなる」。``damage.ZERO_IF_BELOW``）を計算したら、ログに ``damage_zero_below``（(段階, 発生源のカード,
-    しきい値)）を残す。"""
+    しきい値)）を残す。
+
+    v0.60（docs/coins-defense-rebellion-v0.60.md）:
+
+    - ``defender_effects`` が False なら、受けるポケモン自身が持っている効果の影響を受けない（タケシのサンドパンの「スピードスター」の「相手の持っている「弱点・抵抗力・
+      特殊能力・その他の効果」の影響を受けない」）: 弱点・抵抗力を計算せず、受けるポケモンの持っている要素を無効にする効果（かたまる・バリアー）・ダメージを変える効果
+      （ディフェンダー・持続する効果・常にはたらく特殊能力）・ダメージを受ける前の置きかえ（とうめい・かげぶんしん）を当てはめない。ワザを使うポケモンの持っている効果・
+      場のほかのポケモン・スタジアムの効果は当てはめる。ダメージを受けたあとの反応（はんげき・返す効果・こんじょう）は「このワザのダメージ」への影響ではないので、今までどおり
+      （実装上の読み方）。受けるポケモンの持ち主の場のほかのポケモンの常にはたらく特殊能力を当てはめるかで最終ダメージが変わるなら SS1（コードのない問い。今の写しの
+      ［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身で、起こらない）
+    - 受けるポケモンが「かげぶんしん」の効果（``state.TailsDamageGuard``）を持ち、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受ける時、相手プレイヤー（ワザ・
+      返す効果を使うプレイヤー）がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``damage_guard_check``）、「うら」ならそのダメージを
+      受けない（``DamageResult.dodged``）。「おもて」ならダメージを受けて、効果は消える（``persistent.remove_on_damage``。理由 ``damaged``。どのダメージでも消える）
+    """
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
+    if not defender_effects and target != OPPONENT_ACTIVE:
+        raise ValueError(f"相手の持っている効果を除くダメージは相手の対戦ポケモンへのダメージだけ（{target!r}）")
     res.trace.record(DamageProposal(frame.id, receiver.pokemon_id, receiver_player, target, base))
     res.trace.record(WindowOpened(Window.BEFORE_DAMAGE, frame.id))
-    void = first_void(res, receiver_player, receiver)
+    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)
     if void is not None:
         # 無効（p.321）。計算しない。ログは v0.13 の damage_prevented
         state.add_event(
@@ -279,7 +302,12 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status)
+    exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status,
+                                        exclude=exclude)
+    if not defender_effects:
+        weakness_resistance = False
+        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, modifiers, orders, resistance)
     if res.stadium_coin is not None and res.stadium_coin[1] and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
         # v0.57: クチバシティジムの「おもて」（そのワザによって相手の対戦ポケモンに与えるダメージは「+10」。p.321 の 6 段階。控えへのダメージ・返す効果のダメージは
         # そのまま）
@@ -301,10 +329,13 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
     if target == SELF:
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
-    if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
+    if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
+    if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final):
+        res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
     deferred: list[Deferred] = []
     by_opponent = receiver_player != frame.player
     if calc.final > 0:
@@ -346,6 +377,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra["stopped_after_step_2"] = True
     if target != OPPONENT_ACTIVE:
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
+    if not defender_effects:
+        extra["ignore_defender_effects"] = True  # v0.60: 「スピードスター」（弱点・抵抗力も計算しない）
     if not weakness_resistance:
         extra["ignore_weakness_resistance"] = True  # v0.31
     elif not resistance:
@@ -363,6 +396,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         total_damage=receiver.damage,
         **extra,
     )
+    remove_on_damage(state, receiver_player, receiver, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
     res.trace.record(DamageApplied(frame.id, frame.damage_class, frame.source_pid, receiver.pokemon_id, receiver_player, calc.final,
                                    before, receiver.damage, by_opponent))
     track_ko(res, fs, receiver, before)
@@ -370,6 +404,53 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if target == OPPONENT_ACTIVE and calc.final > 0:
         trainer_poison_after_damage(res, attacker, receiver_player, receiver)
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))
+
+
+def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, final: int) -> bool:
+    """v0.60: 「かげぶんしん」（R団のストライク。``state.TailsDamageGuard``）。``pokemon``（持ち主 ``owner``）がこの効果を持っていれば、相手プレイヤー（``owner`` の相手。
+    ワザ・返す効果を使うプレイヤー）がコインを 1 枚投げ、「おもて」なら True（ダメージを受ける）、「うら」なら False（そのダメージを受けない）。効果がなければ True（コインなし）。
+
+    - 「ダメージを受ける時」は、相手のワザのダメージの要素で最終ダメージが 0 より大きいとき（呼ぶ側が確かめる。最終ダメージが 0 なら「ダメージを受けなかった」（p.319・p.321）
+      ので投げない。v0.9 の T21 と同じ読み方）。要素を無効にする効果（かたまる・バリアー）・「とうめい」で受けないと決まったなら、その前に終わっている
+    - ダメージ以外の効果は「そのまま」なので、受けないのはこのダメージの要素だけ（ワザ全体を無効にしない。``fs.evaded`` に入れない（T19b の「受けない」とは別））
+    - 「とうめい」と同じポケモンに重なることは、今の対応カードでは起こらない（R団のストライクは「とうめい」を持たず、［へんしん］で写す特殊能力は TF1 で止まる）ので、
+      重なったら ``RuntimeError``（順番を推測しない）
+    - コインは効果ごとではなくダメージの要素ごとに投げる（同じワザでもう一度ダメージを受ける時も、効果が残っていればまた投げる）。「おもて」でダメージを受けたら効果は消える
+      （``deal_damage`` が ``remove_on_damage`` を呼ぶ）ので、同じワザのあとのダメージには投げない"""
+    guard = tails_damage_guard(pokemon)
+    if guard is None:
+        return True
+    if pokemon.pokemon_id in fs.reception:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「とうめい」と「かげぶんしん」が重なった（今の対応カードでは起こらない。エンジンの不具合）")
+    state = res.state
+    frame = fs.frame
+    flips = flip_coins(state, 1 - owner, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    received = flips.results[0] is CoinSide.HEADS
+    state.add_event("damage_guard_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, flipped_by=1 - owner,
+                    persistent_effect=guard.kind, source_card=guard.source_card, created_turn=guard.created_turn, effect=str(frame.attack_key),
+                    amount=final, result=flips.results[0].value, received=received)
+    return received
+
+
+def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool) -> None:
+    """v0.60（SS1）: 「スピードスター」の「相手の持っている…その他の効果」が、相手の対戦ポケモン自身が持っている効果だけか、相手プレイヤーの場のほかのポケモンが持っている
+    効果（常にはたらく特殊能力。エリカのフシギソウの［くつろぐかおり］の「すべてのワザのダメージ」）も含むかは、印刷の文面・kyuura の記録から決まらない（太字の「相手」の
+    定義（p.320）は相手の対戦ポケモンだが、「相手の持っている」という言い方を扱う記録はない。v0.33 の CD4 と同じ理由で決めない）。2 つの読み方（``EXCLUDE_DEFENDER_HELD``・
+    ``EXCLUDE_DEFENDER_SIDE``）で最終ダメージ（または順番の決定の要否）が変わるときだけ止める（問い ``speed_star_scope``。今の写しでは起こらないのでコードのない問い。
+    当たったらエンジンの不具合として止まる。ワザのダメージを変える常にはたらく特殊能力で、バトル場以外ではたらくものを加えるときに見直す）。"""
+    state = res.state
+    side = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, attack_status=res.attack_status, exclude=EXCLUDE_DEFENDER_SIDE)
+    if tuple(side) == tuple(modifiers):
+        return
+    finals = set()
+    for variant in (modifiers, side):
+        try:
+            finals.add(same_for_type_readings(state, (attacker, receiver), lambda views, v=variant: calculate_with_stadium(state,
+                base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=resistance)).final)
+        except (TypeReadingsDiffer, DamageOrderRequired):
+            finals.add(None)
+    if len(finals) > 1:
+        raise res.question("speed_star_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}")
 
 
 def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, final: int,
@@ -630,6 +711,7 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
     extra = {} if not applied else {"amount_before": instance.implementation.amount, "received_modifiers": received_modifiers_log(applied)}
     state.add_event("counterattack", **base, amount=amount, total_damage=attacker.damage,
                     knocked_out=attacker.damage >= hp, **extra)
+    remove_on_damage(state, fs.frame.player, attacker, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（特殊能力のダメージでも）
     track_ko(res, child, attacker, before)
 
 

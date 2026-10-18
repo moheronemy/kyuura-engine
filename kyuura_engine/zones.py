@@ -73,7 +73,7 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
 
 
 def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, trainer: int | None = None,
-                           stadium: int | None = None) -> tuple[int, ...]:
+                           stadium: int | None = None, power: str | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
     ガス」の「自分と、自分についているすべてのカードを山札にもどす」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
 
@@ -92,12 +92,15 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
 
     v0.57: スタジアムの効果（セキチクシティジムの「自分の場にいる「キョウのポケモン」を1枚選び、そのポケモンと、それについているすべてのカードを山札にもどし」）
     では ``stadium``（場のスタジアムカードの uid。ログの ``stadium_card``）を渡す（``effect``・``trainer``・``stadium`` のちょうど一つ）。
+
+    v0.60: 特殊能力の効果（カスミのギャラドスの［はんこう］の「このカードと、これについているすべてのカードを山札にもどし」）では ``power``（``PowerKey`` の文字列。ログの
+    ``power``）を渡す（``effect``・``trainer``・``stadium``・``power`` のちょうど一つ）。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
-    sources = [value for value in (effect, trainer, stadium) if value is not None]
+    sources = [value for value in (effect, trainer, stadium, power) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     if p.active is pokemon:
@@ -105,7 +108,8 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.deck.extend(cards)
-    source = {"effect": effect} if effect is not None else {"trainer_card": trainer} if trainer is not None else {"stadium_card": stadium}
+    source = ({"effect": effect} if effect is not None else {"trainer_card": trainer} if trainer is not None
+              else {"stadium_card": stadium} if stadium is not None else {"power": power})
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)

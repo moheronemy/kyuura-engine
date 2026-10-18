@@ -26,7 +26,8 @@ from .effects import (
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
 )
 from .errors import UnsupportedError
-from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
+from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+                         remove_turn_start_expired_persistent_effects)
 from .state import POWER_SUPPRESSION, Halt, Phase
 from .zones import draw_cards
 
@@ -170,6 +171,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             amount=amount,
             total_damage=pokemon.damage,
         )
+        remove_on_damage(state, owner, pokemon, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（どくのダメージも「ダメージ」）
     return [
         (owner, pokemon)
         for owner in order
@@ -438,6 +440,7 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
         resistance=calc.resistance_applied,
         total_damage=pokemon.damage,
     )
+    remove_on_damage(state, player, pokemon, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（こんらんの 20 も「ダメージ」）
 
 
 def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None, counted: bool = True,

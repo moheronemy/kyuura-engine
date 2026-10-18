@@ -61,6 +61,7 @@ from .state import (
     ReducedDamageToSource,
     ResistanceChange,
     Retaliation,
+    TailsDamageGuard,
     WeaknessChange,
     ZeroDamageBelow,
 )
@@ -81,8 +82,10 @@ DISCARD_FROM_PLAY = "discard_from_play"
 # 期限のない効果（``lasting``）だけ。新しい効果のログ ``persistent_effect_added`` のすぐ前に残す）
 REPLACED = "replaced"
 # v0.50: 退化した（p.324「19」。CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION。理由の値は特殊状態の ``conditions.DEVOLVE`` と同じ）
+# v0.60: 効果を持つポケモンがダメージを受けた（R団のストライクの「かげぶんしん」の「このカードがダメージを受けるか…この効果は消える」。``remove_on_damage``）
+DAMAGED = "damaged"
 REMOVAL_REASONS = (EXPIRED, RETREAT, SWITCH, EVOLVE, KNOCK_OUT, FORCED_SWITCH, RETURN_IN_PLAY_TO_DECK, USED, RETURN_IN_PLAY_TO_HAND, DISCARD_FROM_PLAY,
-                   REPLACED, DEVOLVE)
+                   REPLACED, DEVOLVE, DAMAGED)
 
 
 def add_persistent_effect(state: GameState, owner: int, pokemon: PokemonInPlay, effect, *, attack: str, **extra) -> None:
@@ -332,6 +335,22 @@ def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[Attack
     v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
     もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
+
+
+def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:
+    """``pokemon`` の「かげぶんしん」の効果（v0.60。``TailsDamageGuard``）。なければ None。与えたときからはたらき、期限はない。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, TailsDamageGuard)), None)
+
+
+def remove_on_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> None:
+    """``pokemon`` が実際にダメージを受けた（``amount`` が 0 より大きい）ときに消える持続する効果（v0.60。「かげぶんしん」の「このカードがダメージを受けるか…この効果は
+    消える」）を、理由 ``damaged`` で消す。ダメージをのせるすべての処理（ワザ・特殊能力・こんらん・どく・特殊エネルギー・スタジアムのダメージ）が、のせたすぐあとに呼ぶ。
+    ダメージの出どころ・だれのワザかは問わない（説明は「相手のワザによる」と限っていない）。ダメージカウンターをのせる・移す効果はダメージではない
+    （GR-2000-P320-COUNTER-MOVE）ので呼ばない。0 以下（ダメージを受けなかった）なら何もしない。"""
+    if amount <= 0:
+        return
+    found = tuple(e for e in pokemon.persistent_effects if isinstance(e, TailsDamageGuard))
+    remove_persistent_effects(state, owner, pokemon, DAMAGED, found)
 
 
 def max_hp_set(pokemon: PokemonInPlay) -> MaxHpSet | None:
