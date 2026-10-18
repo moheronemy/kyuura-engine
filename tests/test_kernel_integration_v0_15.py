@@ -175,7 +175,11 @@ class DependencyTest(unittest.TestCase):
         v0.50: トレーナーの使用（``_play_trainer``・``_resume_trainer``）のあと、退化スプレーで最大HPがのっているダメージ以下になったポケモンのきぜつ・サイド・
         勝ち負け・バトル場に出す（p.323 の手順）は、特殊能力のあとと同じ解決の基盤の処理を使う（``_finish_trainer`` の ``resolution.after_trainer``。
         ``TrainerEffect.may_knock_out`` の実装だけ。docs/mew-devolution-spray-v0.50.md 4 章）。トレーナーの処理そのもの（確認・``resolve``・``resume``）は
-        engine.py と effects.py のまま。"""
+        engine.py と effects.py のまま。
+        v0.56: ロケット団員の「うら」（使い終えてトラッシュしてから番を終える）は、ワザのあとの番の終わりと同じ解決の基盤の処理を使う（``_finish_trainer`` の
+        ``resolution.end_turn_after_trainer``。ログ ``trainer_turn_end`` → 番の終わり → ポケモンチェック → 次の番。``TrainerEffect.may_end_turn`` の実装が ``resume`` で
+        ``END_TURN`` を返したときだけ）。マチスの交渉のサイドを取ったあとの勝ち負けの判定は ``resolution.after_trainer``（``takes_prizes``）。
+        docs/trainer-decisions-turn-effects-v0.56.md 3 章。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -206,7 +210,7 @@ class DependencyTest(unittest.TestCase):
             for node in ast.walk(function)
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }
-        self.assertEqual(trainer_names, {"Context", "after_trainer"})
+        self.assertEqual(trainer_names, {"Context", "after_trainer", "end_turn_after_trainer"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層

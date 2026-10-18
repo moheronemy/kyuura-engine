@@ -261,7 +261,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_55"], list(V0_55_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 56)  # 40（v0.54）+ 16
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 66)  # 40（v0.54）+ 16。v0.56 で 10 枚を加えた
 
     def test_registration_parameters(self):
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_55_CARDS}
@@ -337,7 +337,7 @@ class RegistrationTest(unittest.TestCase):
                 entry = links["stop_codes"][code]
                 self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
                 self.assertIn({"version": "v0.55", "document": "docs/instant-trainers-v0.55.md", "ruling_id": ruling}, entry["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (95, 96))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (101, 102))  # v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた
 
     def test_observation_tables(self):
         self.assertEqual((OPTION_MEANINGS[TAKE_LOOKED_CARDS], OPTION_MEANINGS[OPPONENT_HAND_TO_DECK], OPTION_MEANINGS[SELECT_COUNTER_COUNT]),
@@ -975,11 +975,13 @@ class GameTest(unittest.TestCase):
     """正式な対戦開始（new_game・60 枚・サイド 6 枚）からの対戦（tools/existing_effect_games.py の v0.55 の組の手順）。"""
 
     def test_batch_runs_without_audit_failures(self):
-        """v0.55 の 4 組を 2 seed ずつ（席を入れかえて 16 局）。どれも監査の失敗（不変条件・ログ（トレーナー 1 回ぶんの並び）・書き出し・受け付けた操作ごとの観測）・
+        """v0.55 の 4 組を 2 seed ずつ（席を入れかえて予定 16 局。G55-U55 と U55-G55 は同じデッキ・席・seed の同じ局なので、v0.56 から ``run`` が重複を除いて 12 局を
+        行う（v0.55 の文書の「40 局」は重複を含む回数で、異なる局は 30。docs/trainer-decisions-turn-effects-v0.56.md 8 章））。どれも監査の失敗（不変条件・ログ（トレーナー 1 回ぶんの並び）・書き出し・受け付けた操作ごとの観測）・
         想定外の拒否・内部エラー・手数の上限がなく、なんでもなおし（対戦ではいつも FH1。回復は単体テスト）を除く 15 枚が使われる。勝敗は判断に使わない。"""
         from tools import existing_effect_games as games
 
         results = games.run(range(2), pairings=games.PAIRINGS_V0_55)
+        self.assertEqual((sum(len(r["games"]) for r in results.values()), sum(len(r["duplicates"]) for r in results.values())), (12, 4))
         totals: dict = {}
         for run in results.values():
             for game in run["games"]:

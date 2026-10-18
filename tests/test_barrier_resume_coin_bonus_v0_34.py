@@ -410,7 +410,8 @@ class BarrierCoinTest(unittest.TestCase):
                     decided = list(program[index + 1:])
                 else:
                     continue
-                roles = [e.coin_receiver() for e in decided]
+                # v0.56: 控えへのダメージの要素（"bench"）はバリアーでは無効にならない（見えない壁だけ）ので、バリアーの分類では有効な要素と同じに数える
+                roles = [None if e.coin_receiver() == "bench" else e.coin_receiver() for e in decided]
                 (stopping if roles and None not in roles else flipping).add(type(effect).__name__)
         # v0.40: サカキのニドクインの「ラブラリアット」（FailOnTailsAmountIfBenchNamed。失敗のコインのあとはダメージだけ。
         # docs/count-condition-switch-return-v0.40.md の LR2）。v0.41: ナツメのモルフォンの「げんかくおんぱ」（DamageThenConfuseOnAnyHeads。ダメージのあとの

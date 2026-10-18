@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 96,
-    "engine_stop_codes": 95,
+    "engine_unresolved_rulings": 102,
+    "engine_stop_codes": 101,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1143,6 +1143,72 @@
           "version": "v0.55",
           "document": "docs/instant-trainers-v0.55.md",
           "ruling_id": "SB2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LT_SURGE_WITHOUT_BASIC": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "LS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "RT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "RG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "MY1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MISTY_SELF_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "MS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_KOGA_POISON_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.56",
+          "document": "docs/trainer-decisions-turn-effects-v0.56.md",
+          "ruling_id": "KG1"
         }
       ],
       "kyuura_issue": null,

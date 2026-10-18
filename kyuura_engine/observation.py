@@ -63,6 +63,11 @@ from .decisions import (
     TAKE_LOOKED_CARDS,
     OPPONENT_HAND_TO_DECK,
     SELECT_COUNTER_COUNT,
+    ACCEPT_REQUEST,
+    HAND_TO_ACTIVE,
+    OPPONENT_HAND_TO_BENCH,
+    SELECT_HAND_POSITIONS,
+    SWAP_WITH_PRIZE,
     SELECT_EVOLUTION_CARD,
     SELECT_HAND_CARD,
     SELECT_LOOK_COUNT,
@@ -102,12 +107,14 @@ OPTION_MEANINGS: dict[str, str] = {
     OPPONENT_HAND_TO_DECK: "card",  # v0.55: ロケット団のおねーさん（見た相手の手札のトレーナーカード。決めるプレイヤーは見ている）
     SELECT_COUNTER_COUNT: "number",  # v0.55: いいきずぐすりでとりのぞく数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
+    # v0.56: 相手の答え（1 = オーケー）・見た相手の手札のたねポケモン・相手の手札の位置（おもてを見ない）・手札からバトル場に出すたねポケモン・サイドと交換する手札のカード
+    ACCEPT_REQUEST: "number", OPPONENT_HAND_TO_BENCH: "card", SELECT_HAND_POSITIONS: "position", HAND_TO_ACTIVE: "card", SWAP_WITH_PRIZE: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
 # 続けて見せる効果ではないので、観測の手札は公開しない）
-LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK})
+LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH})  # v0.56: エリカの香水も見た相手の手札から選ぶ
 
 
 def _check_viewer(viewer) -> None:
@@ -275,8 +282,12 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "phase": state.phase.value,
         "players": players,
         "trainer_in_use": None if used is None else {"player": used.player, **_card(state, used.card)},
-        "trainer_locks": [{"player": lock.player, "source_player": lock.source_player, "effect": lock.effect, "expires_turn": lock.expires_turn}
+        "trainer_locks": [{"player": lock.player, "source_player": lock.source_player, "effect": lock.effect, "expires_turn": lock.expires_turn,
+                           "origin": lock.origin}
                           for lock in state.trainer_locks],
+        # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（カスミ・キョウ・見えない壁。公開の情報）
+        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn}
+                            for e in state.trainer_effects],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
     }
@@ -329,6 +340,11 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "look_at_hand": (("cards",), _hand_looker_or_owner),  # v0.54: スパイ作戦（見たプレイヤーと持ち主だけ。観戦者には見せない）
     "looked_to_hand": (("cards",), _only_player),  # v0.55: カスミのいかり（見た山札の上のカードから手札に加えたカード）
     "opponent_hand_to_deck": (("card",), _hand_owner_or_looker),  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤーだけ）
+    # v0.56: ロケット団のワナ（おもてを見ないで選んだ位置は公開、もどしたカードは持ち主だけ）・マチスの交渉で取ったサイド（取ったプレイヤーだけ。きぜつで取るサイドと同じ）・
+    # カスミのわがままで入れかえたカード（持ち主だけ。位置は公開）
+    "hand_positions_to_deck": (("cards",), _only_player),
+    "trainer_take_prize": (("card",), _only_player),
+    "swap_prize_with_hand": (("to_prize", "to_hand"), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -362,6 +378,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.55: 場のエネルギーカードをはがす（トラッシュ・手札・つけなおし）・入れ替えない・トラッシュと山札を入れ替える・見た山札の残りをトラッシュ（場・トラッシュは公開の情報）
     "trainer_discard_energy", "trainer_return_energy", "trainer_move_energy", "trainer_switch_skipped", "discard_pile_to_deck", "deck_top_to_discard",
     "looked_to_discard",
+    # v0.56: 相手の手札からベンチに出させた・手札から直接バトル場に出した（場は公開）・相手の答え・期限のある効果・トレーナーの効果で番が終わった
+    "trainer_bench_from_hand", "trainer_hand_to_active", "request_answered", "trainer_effect_added", "trainer_effect_removed", "trainer_turn_end",
 })
 
 

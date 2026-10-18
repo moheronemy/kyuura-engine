@@ -420,7 +420,8 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     gone = [(player, pokemon) for pokemon in state.players[player].in_play()
             if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
-        if any(state.players[p].active is None for p in PLAYERS):
+        # v0.56: 効果でサイドを取ったトレーナー（マチスの交渉）のあと、サイドが 0 枚のプレイヤーがいれば、勝ち負けの判定（p.311 の表。両方が 0 枚でも同じ表）
+        if any(state.players[p].active is None or not state.players[p].prizes for p in PLAYERS):
             _next_prize_or_judge(res, (), CONTINUE_TURN, ())
         return
     if len(gone) > 1:
@@ -430,6 +431,15 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
     _after_knockouts(res, _knock_out_all(state, gone, timing="trainer"), CONTINUE_TURN, candidates)
+
+
+def end_turn_after_trainer(state: GameState, ctx: Context, player: int, card: int) -> None:
+    """v0.56: トレーナーの説明の「あなたの番は終わりになる」（ロケット団員の「うら」）。使い終えたカードをトラッシュしたあと（``engine._finish_trainer``）に呼ぶ。ログ
+    ``trainer_turn_end``（``player``・``trainer_card``）のあと、ワザ・番を終える操作と同じ番の終わりの窓（期限: ついているトレーナー → 持続する効果 → … → ログ ``turn_end``）
+    → ポケモンチェック → 次の番（``_end_turn``）。ワザを使っていないので、ワザのあとのきぜつの処理はない。"""
+    require_turn(state, player)
+    state.add_event("trainer_turn_end", player=player, trainer_card=card)
+    _end_turn(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
 # ---------------------------------------------------------------- 番の終わり・ポケモンチェック

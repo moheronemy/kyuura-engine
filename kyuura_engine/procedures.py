@@ -78,6 +78,7 @@ def expire_at_turn_end(state: GameState) -> None:
     # v0.49: 「思い出させる」の「この番だけ」（docs/virtual-attacks-transformation-v0.49.md 6 章）。ログ ``recall`` の番で分かるので、消すログは出さない
     state.recalls = ()
     remove_expired_trainer_locks(state)  # v0.47
+    remove_expired_trainer_effects(state)  # v0.56
     state.add_event("turn_end", player=state.current_player)
 
 
@@ -88,11 +89,26 @@ def remove_expired_trainer_locks(state: GameState) -> None:
     kept = []
     for lock in state.trainer_locks:
         if lock.expires_turn == state.turn_number:
+            origin = {} if lock.origin == "attack" else {"origin": lock.origin}  # v0.56: トレーナーの効果の禁止だけ書く（ワザの禁止のログの形は v0.55 と同じ）
             state.add_event("trainer_lock_removed", player=lock.player, source_player=lock.source_player, effect=lock.effect,
-                            created_turn=lock.created_turn, expires_turn=lock.expires_turn, reason="expired")
+                            created_turn=lock.created_turn, expires_turn=lock.expires_turn, reason="expired", **origin)
         else:
             kept.append(lock)
     state.trainer_locks = tuple(kept)
+
+
+def remove_expired_trainer_effects(state: GameState) -> None:
+    """v0.56: 消える番（``expires_turn``）が今の番の、プレイヤーに与えた期限のあるトレーナーの効果（``GameState.trainer_effects``。カスミ・キョウの「この番」、見えない壁の
+    「次の相手の番が終わるまで」）を消す。1 つにつきログ ``trainer_effect_removed``（``player``・``effect_kind``・``trainer_card``・``card_id``・``created_turn``・``expires_turn``・
+    ``reason`` は ``expired``）。番の終わり方（ワザ・番を終える操作・ロケット団員の「うら」）によらず、この番の終わりの窓で消す。"""
+    kept = []
+    for record in state.trainer_effects:
+        if record.expires_turn == state.turn_number:
+            state.add_event("trainer_effect_removed", player=record.player, effect_kind=record.kind, trainer_card=record.source_card, card_id=record.card_id,
+                            created_turn=record.created_turn, expires_turn=record.expires_turn, reason="expired")
+        else:
+            kept.append(record)
+    state.trainer_effects = tuple(kept)
 
 
 def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | None:
