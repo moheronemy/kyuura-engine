@@ -384,12 +384,12 @@ class Cd4Test(unittest.TestCase):
         # v0.34 で 2 件（TP3・NK5）、v0.36 で 2 件（AC6・RD9）、v0.37 で 1 件（JS1）、v0.38 で 1 件（GK1）、v0.39 で 1 件（GS1）、v0.40 で 1 件（SG1）、
         # v0.41 で 1 件（CX1）、v0.42 で 2 件（PW1・PW2）、v0.43 で 2 件（PW3・PW4）、v0.44 で停止コード 2 件（FC1・TR1）とコードのない未解決 1 件（GV1）、
         # v0.45 で GV1 に停止コードを付け（未解決の裁定の数は同じ）、起こるようになった AC13 を停止コード・未解決の裁定に加えた。v0.46 で 2 件（CP1・CP2）、v0.47 で 4 件（PF1・PF2・PF3・KA1）、
-        # v0.48 で 3 件（VS1・PG1・MH1）、v0.49 で 11 件（TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4）、v0.50 で 5 件（DV1〜DV5）（CD4 はそのまま。docs/barrier-resume-coin-bonus-v0.34.md・docs/sand-attack-retreat-lock-v0.36.md・
+        # v0.48 で 3 件（VS1・PG1・MH1）、v0.49 で 11 件（TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4）、v0.50 で 5 件（DV1〜DV5）、v0.51 で 2 件（RV1・FT1）（CD4 はそのまま。docs/barrier-resume-coin-bonus-v0.34.md・docs/sand-attack-retreat-lock-v0.36.md・
         # docs/fifteen-reused-effects-v0.37.md・docs/bench-switch-combined-v0.38.md・docs/selfdestruct-spread-count-v0.39.md・
         # docs/count-condition-switch-return-v0.40.md・docs/heal-counter-status-v0.41.md・docs/power-decisions-v0.42.md・docs/declared-entry-powers-v0.43.md・
         # docs/search-evolution-once-attacks-v0.44.md・docs/conditional-damage-energy-v0.45.md・docs/continuous-powers-v0.46.md・docs/fossil-hidden-info-v0.47.md・
-        # docs/effective-pokemon-properties-v0.48.md・docs/virtual-attacks-transformation-v0.49.md・docs/mew-devolution-spray-v0.50.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (80, 81))
+        # docs/effective-pokemon-properties-v0.48.md・docs/virtual-attacks-transformation-v0.49.md・docs/mew-devolution-spray-v0.50.md・docs/discard-to-bench-v0.51.md）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (87, 88))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた
 
     def test_boundary(self):
         """相手の控えのカウンターが 0 なら（控えがいない・控えにカウンターがない）、相手の対戦ポケモンのカウンターだけで処理する。控えに 1 個でも

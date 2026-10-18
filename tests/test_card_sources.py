@@ -31,7 +31,7 @@ from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POK
 from tests.helpers import V0_44_CARDS, GIOVANNI, MISTYS_STARYU, BLANK_CHANSEY
 from tests.helpers import NO_BASE_HAUNTER_EFFECTS, V0_45_ADOPTED, BASE_HAUNTER, DARK_BLASTOISE, DARK_MAGNETON, RATICATE, BROCKS_GEODUDE_40, ROCKETS_HITMONCHAN
 from tests.helpers import V0_46_POKEMON, MR_MIME, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DARK_MUK, SNORLAX
-from tests.helpers import V0_47_CARDS, V0_48_POKEMON, V0_49_CARDS, V0_50_CARDS
+from tests.helpers import V0_47_CARDS, V0_48_POKEMON, V0_49_CARDS, V0_50_CARDS, V0_51_CARDS, V0_52_CARDS, V0_53_CARDS, V0_54_CARDS
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -175,12 +175,14 @@ class ShippedRecordTest(unittest.TestCase):
         # v0.48: 採用 7 枚（記録の中身は tests/test_effective_pokemon_properties_v0_48.py の CardDataTest が確かめる。docs/effective-pokemon-properties-v0.48.md）。
         # v0.49: 採用 4 枚（ポケモン 3 枚とトレーナーの思い出させる。記録の中身は tests/test_virtual_attacks_transformation_v0_49.py の CardDataTest が確かめる。
         # docs/virtual-attacks-transformation-v0.49.md）。v0.50: 採用 2 枚（ミュウとトレーナーの退化スプレー。記録の中身は tests/test_mew_devolution_v0_50.py の
-        # CardDataTest が確かめる。docs/mew-devolution-spray-v0.50.md）
+        # CardDataTest が確かめる。docs/mew-devolution-spray-v0.50.md）。v0.51: 採用 3 枚（ナツメのスリーパーとトレーナーの元気のかけら・ポケモンの笛。記録の中身は
+        # tests/test_discard_to_bench_v0_51.py の CardDataTest が確かめる。docs/discard-to-bench-v0.51.md）
         self.assertEqual(sorted(sources["cards"]), sorted(V0_29_POKEMON + V0_30_POKEMON + V0_31_POKEMON + V0_32_POKEMON + V0_33_POKEMON + V0_34_POKEMON
                                                           + (KANGASKHAN,) + V0_35_POKEMON + V0_36_POKEMON + V0_37_POKEMON + V0_38_POKEMON
                                                           + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON + V0_43_POKEMON
                                                           + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED + V0_46_POKEMON + V0_47_CARDS
-                                                          + V0_48_POKEMON + V0_49_CARDS + V0_50_CARDS))
+                                                          + V0_48_POKEMON + V0_49_CARDS + V0_50_CARDS + V0_51_CARDS + V0_52_CARDS + V0_53_CARDS
+                                                          + V0_54_CARDS))
         # v0.46: 採用の 11 枚は 2026-10-17 に記録し、pcg-search.com の同じ版のページと照合した。違いは 5 枚とも処理に影響しない（バリヤード・カビゴンの特殊能力の
         # 説明文の読点、エリカのフシギソウの「いる限り」と「いるかぎり」、わるいベトベトンの「2ぶん」と「2つぶん」、わるいオコリザルのワザの名前の「あばれくるう」と
         # 「あれくるう」（kyuura への報告事項））。処理に使う文面はどれも kyuura の印刷の文面
@@ -299,7 +301,9 @@ class ShippedRecordTest(unittest.TestCase):
         # 「ばける」）。説明文のないおにびと、トレーナーの思い出させるは区分の外。kyuura に LD-・エラッタ・裁定・card_differences の記録がない。タケシのキュウコンの
         # ERR-BROCK-NINETALES は 2000年5月の変更なので処理に使う文面にしていない。docs/virtual-attacks-transformation-v0.49.md）と、v0.50 の 2（ミュウの
         # サイコウェーブ・たいかビーム。トレーナーの退化スプレーは区分の外。kyuura に LD-・エラッタ・裁定・card_differences の記録がない。docs/mew-devolution-spray-v0.50.md）
-        self.assertEqual(len(section["adopted_printed_text"]), 405)
+        # v0.51 の 2（ナツメのスリーパーのよみがえらせる・ふりこののろい。トレーナーの元気のかけら・ポケモンの笛は区分の外。kyuura に LD-・エラッタ・裁定・
+        # card_differences の記録がない。docs/discard-to-bench-v0.51.md）
+        self.assertEqual(len(section["adopted_printed_text"]), 409)  # v0.52: ふぶき・つれさるを加えた
         self.assertNotIn(f"{ROCKETS_HITMONCHAN}/attack/0", section["adopted_printed_text"])
         self.assertEqual(section["registered"][f"{ROCKETS_HITMONCHAN}/attack/0"], "LD-PMCG5-054-ATK0")
         self.assertEqual((section["registered"][f"{BASE_HAUNTER}/attack/1"], section["recorded_in_card_checks"][f"{BASE_HAUNTER}/attack/0"]),
@@ -335,7 +339,7 @@ class ShippedRecordTest(unittest.TestCase):
 
     def test_history_is_kept(self):
         """過去の原典照合の記録（card_verification.json）は、2026-10-14 までに登録したカードの記録をそのまま持つ（履歴。新しい方針で書き換えない）。
-        v0.29〜v0.50 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
+        v0.29〜v0.54 の採用の記録で登録したカードは、過去の原典照合の記録に入れない（v0.30 のヒトカゲは v0.2a、v0.37 の化石の秘密のベトベターは
         v0.8、v0.45 の第1弾のゴーストは v0.9 の記録のあるカード）。"""
         verification = read_verification()
         sources = cs.load_sources()
@@ -344,7 +348,8 @@ class ShippedRecordTest(unittest.TestCase):
                    | set(V0_35_POKEMON) | set(V0_36_POKEMON) | set(V0_37_ADOPTED) | set(V0_38_POKEMON) | set(V0_39_POKEMON)
                    | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON) | set(V0_43_POKEMON)
                    | set(V0_44_CARDS) | set(V0_45_ADOPTED) | set(V0_46_POKEMON) | set(V0_47_CARDS) | set(V0_48_POKEMON)
-                   | set(V0_49_CARDS) | set(V0_50_CARDS))  # v0.35〜v0.50
+                   | set(V0_49_CARDS) | set(V0_50_CARDS) | set(V0_51_CARDS) | set(V0_52_CARDS) | set(V0_53_CARDS)
+                   | set(V0_54_CARDS))  # v0.35〜v0.54
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
         self.assertIn(BASE_HAUNTER, verification["cards"])  # v0.45 で登録した第1弾のゴーストは v0.9 の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))

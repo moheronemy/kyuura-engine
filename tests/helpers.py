@@ -463,6 +463,44 @@ MEW = "PMCG3-033"  # ミュウ（化石の秘密。HP 50・超・弱点 超・�
 DEVOLUTION_SPRAY = "PMCG1-086"  # 退化スプレー（第1弾。トレーナー）
 V0_50_POKEMON = (MEW,)
 V0_50_CARDS = (MEW, DEVOLUTION_SPRAY)  # 写しの組 pool_v0_50 の並び
+# v0.51（docs/discard-to-bench-v0.51.md）。トラッシュのたねポケモンを持ち主のベンチに出す共通の処理で加えた 3 枚（どれも kyuura データの採用）
+SABRINAS_HYPNO = "PMCG6-051"  # ナツメのスリーパー（闇からの挑戦。ナツメのスリープ（PMCG6-045）から進化する 1 進化。HP 70・超・弱点 超・にげる 2。よみがえらせる（超）・ふりこののろい（超超）20×）
+REVIVE = "PMCG1-078"  # 元気のかけら（第1弾。トレーナー）。元気のかたまり（写しにない）とは別のカード
+POKEMON_FLUTE = "PMCG1-084"  # ポケモンの笛（第1弾。トレーナー）
+V0_51_POKEMON = (SABRINAS_HYPNO,)
+V0_51_CARDS = (SABRINAS_HYPNO, REVIVE, POKEMON_FLUTE)  # 写しの組 pool_v0_51 の並び
+# v0.52（docs/field-return-v0.52.md）。場のポケモンを場から手札・山札にもどす共通の処理で加えた 3 枚（どれも kyuura データの採用）
+MR_FUJI = "PMCG3-048"  # フジろうじん（化石の秘密。トレーナー。pcg-search.com の一覧の番号は 047/048）
+SCOOP_UP = "PMCG1-092"  # ポケモン回収（第1弾。トレーナー。pcg-search.com の一覧の番号は 087/096）
+ERIKAS_DRAGONAIR = "PMCG5-066"  # エリカのハクリュー（リーダーズスタジアム。エリカのミニリュウから進化する 1 進化。HP 80・無色・弱点なし・抵抗力 超 -30・にげる 2。ふぶき（無無無）30・つれさる（無無無無））。DRAGONAIR（PMCG1-069）・DARK_DRAGONAIR（PMCG4-052）と別のカード
+V0_52_POKEMON = (ERIKAS_DRAGONAIR,)
+V0_52_CARDS = (MR_FUJI, SCOOP_UP, ERIKAS_DRAGONAIR)  # 写しの組 pool_v0_52 の並び
+# v0.53（docs/search-retrieval-trainers-v0.53.md）。山札・トラッシュからカードを選ぶトレーナー 10 枚（pcg-search.com の一覧の番号はコメントのとおり。カード id の番号とは別の体系）
+ENERGY_SEARCH = "PMCG3-044"  # エネルギー転送（化石の秘密。044/048）
+POKE_BALL = "PMCG2-048"  # モンスターボール（ポケモンジャングル。048/048）
+BOSS_WAY = "PMCG4-060"  # ボスのやりかた（ロケット団。058/065）
+BROCK_TRAINING = "PMCG5-077"  # タケシの育て方（リーダーズスタジアム。069/096）
+MISTYS_TEARS = "PMCG5-069"  # カスミのなみだ（リーダーズスタジアム。075/096）
+ERIKAS_MAIDS = "PMCG5-072"  # エリカのお付き（リーダーズスタジアム。085/096）
+MAINTENANCE = "PMCG1-085"  # メンテナンス（第1弾。095/096）
+ITEM_FINDER = "PMCG1-087"  # ダウジングマシーン（第1弾。077/096）
+RECYCLE = "PMCG3-047"  # リサイクル（化石の秘密。048/048）
+NIGHTLY_GARBAGE_RUN = "PMCG4-057"  # 夜の廃品回収（ロケット団。060/065）
+V0_53_CARDS = (ENERGY_SEARCH, POKE_BALL, BOSS_WAY, BROCK_TRAINING, MISTYS_TEARS, ERIKAS_MAIDS, MAINTENANCE, ITEM_FINDER, RECYCLE,
+               NIGHTLY_GARBAGE_RUN)  # 写しの組 pool_v0_53 の並び
+# v0.54（docs/hand-deck-trainers-v0.54.md）: 手札の入れ替え・ドロー・情報の確認のトレーナー 10 枚（kyuura データの採用。pcg-search.com の一覧の番号）
+IMPOSTER_OAK = "PMCG1-089"  # にせオーキドはかせ（第1弾。082/096）
+IMPOSTER_OAKS_REVENGE = "PMCG4-059"  # にせオーキドの逆襲（ロケット団。055/065）
+GAMBLER = "PMCG3-045"  # ギャンブラー（化石の秘密。045/048）
+SABRINAS_GAZE = "PMCG6-078"  # ナツメの眼（闇からの挑戦。076/098）
+BLAINES_LAST_RESORT = "PMCG6-081"  # カツラの奥の手（闇からの挑戦。086/098）
+ERIKA = "PMCG5-083"  # エリカ（リーダーズスタジアム。084/096）
+SECRET_MISSION = "PMCG5-088"  # スパイ作戦（リーダーズスタジアム。080/096）
+BLAINES_GAMBLE = "PMCG6-076"  # カツラのギャンブル（闇からの挑戦。087/098）
+LASS = "PMCG1-095"  # ミニスカート（第1弾。094/096）
+POKEDEX = "PMCG1-082"  # ポケモン図鑑 HANDY505（第1弾。089/096）
+V0_54_CARDS = (IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS,
+               POKEDEX)  # 写しの組 pool_v0_54 の並び
 MACHOKE = "PMCG1-055"  # ゴーリキー（v0.10。ワンリキーから進化する 1 進化。HP 80・闘・弱点 超・にげる 3。からてチョップ 50−・じごくぐるま 60）
 MACHAMP = "PMCG1-057"  # カイリキー（v0.10。ゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。はんげき・ちきゅうなげ 60）
 # サカキのカイリキー（v0.10 では参照カード。v0.11 で対応。サカキのゴーリキーから進化する 2 進化。HP 100・闘・弱点 超・にげる 3。ポケモンパワー
@@ -1038,6 +1076,11 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.50（docs/mew-devolution-spray-v0.50.md）
     _effects.DamageTimesDefenderEnergyCards,  # ミュウの「サイコウェーブ」
     _effects.DevolveChosenPokemon,  # ミュウの「たいかビーム」
+    # v0.51（docs/discard-to-bench-v0.51.md）
+    _effects.BenchBasicFromEitherDiscard,  # ナツメのスリーパーの「よみがえらせる」
+    _effects.CoinsPerDefenderCountersDamage,  # ナツメのスリーパーの「ふりこののろい」
+    # v0.52（docs/field-return-v0.52.md）
+    _effects.ReturnBothActivesToDeck,  # エリカのハクリューの「つれさる」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

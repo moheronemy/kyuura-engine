@@ -35,7 +35,7 @@ from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
 from ..decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DAMAGE_STEP_ORDER, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY,
     DISCARD_TO_DECK_TOP, FORCED_SWITCH, HAND_TO_DECK, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_TRAINER, REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK,
-    SELECT_COLOR, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION,
+    SELECT_COLOR, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, BENCH_FROM_DISCARD,
 )
 from ..decisions import ARRANGE_DECK_TOP, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT
 from ..errors import UnsupportedError
@@ -47,7 +47,7 @@ from ..state import (
     MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..zones import (
-    attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
+    attach_energy_from_hand, attach_from_deck, attach_from_discard, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_deck, draw_cards, promote_from_bench, put_discard_on_deck_top,
     return_discard_to_hand, return_hand_cards_to_deck, return_in_play_to_deck, return_in_play_to_hand, reveal_deck_to_hand, shuffle_deck, take_deck_top,
 )
 from ..zones import look_at_card
@@ -3160,6 +3160,54 @@ class ReturnOpponentToDeck(Element):
 
 
 @dataclass(frozen=True)
+class ReturnBothActivesToDeck(Element):
+    """ワザを使ったポケモンと相手の対戦ポケモン、それぞれについているすべてのカードを、それぞれの持ち主の山札にもどし、それぞれの山札をよく切る（v0.52。エリカの
+    ハクリューの「つれさる」。docs/field-return-v0.52.md 4 章）。
+
+    - 対象: ワザを使ったポケモン（自分）と相手の対戦ポケモン。このワザの中で HP 以上になっていれば、その側は処理の対象がない（p.309。こんじょうを使えるなら G37 と同じ問い。
+      このワザにダメージの要素はないので、今の対応カードでは起こらない）
+    - 同じワザで HP 以上になったポケモンがいれば RD9（もどす前・受けるかのコインの前。v0.36 と同じ問い）
+    - 自分 → 相手の順に、受けるか（「ワザをうけない」状態・「とうめい」。``reaches``。両方が「とうめい」なら T27）を評価し、受けるなら、もどす（``zones.return_in_play_to_deck``）
+      → 持続する効果を消す（理由 ``return_in_play_to_deck``）。受けない側はもどさない。対象は、効果を処理し始めたときの 2 匹（自分をもどしても、相手の対戦ポケモンは
+      変わらない）。そのあと、もどした側の山札を、自分 → 相手の順に切る（``shuffle_in_attack``。先読みでは切らない）。説明は「もどし、…切る」で、もどすことと切ることの順番だけを決めている。2 匹をもどす順・2 つの山札を切る順は
+      結果（どちらの山札にどのカードが入るか）を変えないので、説明の書かれた順（自分 → 相手）にした（実装上の判断。乱数の使い方だけが決まる）。英語版の「Then, your
+      opponent …」の順番は根拠にしない
+    - 片方がもどったあとも、もう片方の処理を続ける（ワザを使ったポケモンが場をはなれても、この要素の処理は終わらない）。きぜつではないので、サイド・きぜつしたときの
+      特殊能力はない。空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定（``flow._promotions_after_judge``。番でないプレイヤーが先）でうめる
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.RETURN_IN_PLAY_TO_DECK_ELEMENT
+
+    def run(self, run: AttackRun) -> bool:
+        state = run.state
+        opponent = 1 - run.player
+        sides = []
+        for owner, pokemon in ((run.player, run.attacker()), (opponent, run.opponent_active())):
+            if pokemon is None:
+                continue
+            if run.knocked_out(pokemon):
+                run.ko_prevention_conflict(pokemon, owner)
+                continue
+            sides.append((owner, pokemon))
+        from .kernel import knocked
+
+        gone = knocked(run.res)
+        if gone:
+            raise run.res.question("return_in_play_to_deck_with_knockout", f"ポケモン {[pokemon.pokemon_id for _, pokemon in gone]}")
+        returned = []
+        for owner, pokemon in sides:
+            if not reaches(run.res, run.fs, owner, pokemon, E.RETURN_IN_PLAY_TO_DECK_ELEMENT):
+                continue
+            return_in_play_to_deck(state, owner, pokemon, effect=str(run.key))
+            remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+            returned.append(owner)
+        for owner in returned:
+            shuffle_in_attack(run, self, owner)
+        return False
+
+
+@dataclass(frozen=True)
 class PrintedPlusBonusOnAllHeads:
     """コインを ``coins`` 枚投げ、すべて「おもて」なら、ダメージの目安の数字 + ``bonus``（v0.40。カスミのシードラの「きぜつばり」の「コインを2枚投げ、すべて「おもて」
     なら、60ダメージを追加する。」）。「おもて」の数に比例しない（1 枚だけ「おもて」なら目安の数字だけ）。コインはダメージの要素の中（ダメージの量だけを決める）で、
@@ -4759,6 +4807,80 @@ class DevolveChosenPokemon(Element):
         return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
 
+# ---------------------------------------------------------------- v0.51（docs/discard-to-bench-v0.51.md）
+
+
+@dataclass(frozen=True)
+class HeadsPerDefenderCounters:
+    """相手（相手の対戦ポケモン）にのっているダメージカウンターの数だけコインを投げ、「おもて」の数 × ``per``（v0.51。ナツメのスリーパーの「ふりこののろい」。p.321 の
+    1 段階の基本となるダメージ）。数えるのはダメージの要素を処理する時点のカウンター（ダメージ ÷ 10）で、0 個ならコインを投げず 0。コインはダメージの要素の中（ダメージの
+    量だけを決める）で、結果は「おもて」の数だけを使う（``by_heads``。先読みは「おもて」の数でまとめる。v0.35）。コイン 1 枚の「いかりのスーパーパンチ」
+    （``HeadsOwnCounters``）とは別の値。"""
+
+    per: int
+    by_heads: ClassVar[bool] = True
+
+    def coin_count(self, run: AttackRun) -> int:
+        return run.opponent_active().damage // run.state.rules.damage_per_counter
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return (0 if flips is None else flips.heads) * self.per
+
+
+@dataclass(frozen=True)
+class BenchFromEitherDiscard(Element):
+    """自分または相手のトラッシュから「たねポケモン」を 1 枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HP の半分（切り捨て）のダメージカウンターをのせる
+    （v0.51。ナツメのスリーパーの「よみがえらせる」。``effects.BenchBasicFromEitherDiscard``）。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``BENCH_FROM_DISCARD``。1 枚。省略できない）。選べるものは自分のトラッシュ → 相手のトラッシュの、たねポケモンのカードのうち、
+      持ち主のベンチに空きがあるもの（``effects.bench_from_discard_candidates``）。1 枚もなければ処理の対象がないので何もしない（p.309。ログ ``bench_from_discard_none``）
+    - 出す: ``zones.bench_from_discard``（持ち主のベンチ。同じ uid・新しい場のポケモンの番号・場に出た番は今の番）。ログ ``bench_from_discard``（``by_player`` はワザを
+      使ったプレイヤー）。場に出たときの特殊能力は ``effects.discard_entry_power_guard``（今の対応カードでは起こらない）
+    - そして、出したポケモンの今有効な最大HPの半分（切り捨て。``effects.half_hp_counters``）のダメージカウンターをのせる。ワザによるダメージではない。のせる前に「ワザを
+      うけない」状態・「とうめい」を評価する（``reaches`` の ``damage_counters``。持ち主が相手でも自分でも）。0 個なら効果を受けない（v0.41 と同じ）。ログ
+      ``place_damage_counters``（v0.41 と同じ形）
+    - 先読みは、選べるすべてのカードを試す（``all_answers``。選んだカードは場のポケモンになるので、v0.44 の ``card_id_answers`` でまとめない）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = BENCH_FROM_DISCARD
+    opponent_element: ClassVar[str] = E.COUNTERS_ELEMENT
+
+    def candidates(self, run: AttackRun) -> tuple[int, ...]:
+        return E.bench_from_discard_candidates(run.state, (run.player, 1 - run.player))
+
+    def run(self, run: AttackRun) -> bool:
+        candidates = self.candidates(run)
+        if not candidates:
+            attacker = run.attacker()
+            run.state.add_event("bench_from_discard_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key))
+            return False
+        run.suspend(kind=BENCH_FROM_DISCARD, player=run.player, options=candidates)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        if len(choices) != 1 or choices[0] not in self.candidates(run):
+            raise RuntimeError(f"よみがえらせるで選んだカード {choices} が、持ち主のベンチに出せるトラッシュのたねポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
+        card = choices[0]
+        owner = state.cards[card].owner
+        E.discard_entry_power_guard(state, card)
+        pokemon = bench_from_discard(state, card)
+        attacker = run.attacker()
+        E.log_bench_from_discard(state, pokemon, by_player=run.player,
+                                 source={"pokemon": attacker.card, "pokemon_id": attacker.pokemon_id, "effect": str(run.key)})
+        per = state.rules.damage_per_counter
+        count = E.half_hp_counters(state, E.max_hp(state, pokemon))  # 出したあとの今有効な最大HP（「そのポケモンに、HPの半分」）
+        if count <= 0 or not reaches(run.res, run.fs, owner, pokemon, E.COUNTERS_ELEMENT):
+            return
+        before = pokemon.damage
+        pokemon.damage = before + count * per
+        state.add_event("place_damage_counters", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(run.key),
+                        counters=count, amount=count * per, damage_before=before, total_damage=pokemon.damage, attacker=run.player,
+                        attacker_pokemon_id=run.fs.frame.source_pid)
+        _counters_changed(run, pokemon, before)
+
+
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
@@ -5104,6 +5226,11 @@ BUILDERS: dict[type, Any] = {
     # v0.50（docs/mew-devolution-spray-v0.50.md）
     E.DamageTimesDefenderEnergyCards: lambda e: (Damage(OPP, DefenderEnergyCardsTimes(e.per)),),
     E.DevolveChosenPokemon: lambda e: (DevolveChosenPokemon(),),
+    # v0.51（docs/discard-to-bench-v0.51.md）
+    E.BenchBasicFromEitherDiscard: lambda e: (BenchFromEitherDiscard(),),
+    E.CoinsPerDefenderCountersDamage: lambda e: (Damage(OPP, HeadsPerDefenderCounters(e.per)),),
+    # v0.52（docs/field-return-v0.52.md）
+    E.ReturnBothActivesToDeck: lambda e: (ReturnBothActivesToDeck(),),
 }
 
 

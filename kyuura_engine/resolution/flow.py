@@ -408,7 +408,10 @@ def after_trainer(state: GameState, ctx: Context) -> None:
       使っても番は終わらない。p.310）。こんじょう（相手のワザのダメージで「きぜつ」するとき）・みちづれ（ワザのあと）は候補にしない
     - ほかのポケモン（［へんしん］で退化したポケモンと同じカードとしてあつかう相手のメタモンなど）の最大HPが下がってダメージ以下になっても、ここではきぜつさせない
       （トレーナーの効果でほかのポケモンの最大HPが下がったときの判定は v0.48 の MH1。コマンドの入口が受け付けない）
-    - きぜつがなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
+    - v0.52: きぜつがなく、バトル場が空いたプレイヤーがいれば（ポケモン回収で自分のバトル場のポケモンを手札にもどした。きぜつではないのでサイドはない）、勝ち負けの判定
+      （場にポケモンがいない。p.311）→ バトル場に出す（``promote_active``。ワザ・特殊能力の効果で場をはなれたあとと同じ。v0.42 の ``after_power`` と同じ形）。続きは
+      ``CONTINUE_TURN``（同じ番の ``Phase.MAIN``）。トレーナーの効果の途中では出さない（使用中のカードをトラッシュしてから）
+    - どちらもなければ何もしない（番のプレイヤーの ``Phase.MAIN`` のまま）
 
     渡された状態（コマンドの入口が作った複製）を変える。"""
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
@@ -417,6 +420,8 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     gone = [(player, pokemon) for pokemon in state.players[player].in_play()
             if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
+        if any(state.players[p].active is None for p in PLAYERS):
+            _next_prize_or_judge(res, (), CONTINUE_TURN, ())
         return
     if len(gone) > 1:
         raise RuntimeError(f"トレーナーの使用のあとで 2 匹以上が HP 以上（{[p.pokemon_id for _, p in gone]}。1 回の使用で退化するのは 1 匹。エンジンの不具合）")
