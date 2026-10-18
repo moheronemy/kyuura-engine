@@ -535,8 +535,25 @@
     "PMCG1-095",
     "PMCG1-082"
   ],
-  "reference_only": [
+  "pool_v0_55": [
+    "PMCG5-075",
+    "PMCG4-061",
+    "PMCG5-082",
+    "PMCG6-077",
+    "PMCG1-070",
+    "PMCG1-088",
     "PMCG1-075",
+    "PMCG1-080",
+    "PMCG1-083",
+    "PMCG4-054",
+    "PMCG5-067",
+    "PMCG5-084",
+    "PMCG5-089",
+    "PMCG6-096",
+    "PMCG6-098",
+    "PMCG6-080"
+  ],
+  "reference_only": [
     "PMCG6-023"
   ],
   "cards": [
@@ -31834,6 +31851,235 @@
       }
     },
     {
+      "id": "PMCG5-075",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "カスミのいかり",
+        "en": "Misty's Wrath"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から7枚のカードを見て、その中から2枚を選んで手札に加え、残りをトラッシュする。",
+          "en": "Look at the top 7 cards of your deck. Choose 2 of those cards and put them into your hand. Discard the rest."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-075",
+        "pokemontcg": [
+          "gym1-114"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%81%84%E3%81%8B%E3%82%8A",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%81%84%E3%81%8B%E3%82%8A"
+      }
+    },
+    {
+      "id": "PMCG4-061",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団のおねーさん",
+        "en": "Rocket's Sneak Attack"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の手札を見る。その中にトレーナーカードがあれば、1枚を選び、それを相手の山札にもどさせる。その後、その山札をよく切る。",
+          "en": "Look at your opponent's hand. If he or she has any Trainer cards, choose 1 of them. Your opponent shuffles that card into his or her deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "regulation",
+          "summary": "2002年の公式大会でサポーターとして扱う（日本だけ）",
+          "ja": "2002年の公式大会（バトルロード スプリング2002・サマー2002）のレギュレーションの「サポーター適用カード」で、サポーターとして扱われた。印刷の文面は変わっていない。ふだんの対戦については、2001年10月の制作者のコラムが「カードの書かれている記述の通りにプレイしてください」としていた（data/rule_history.json の MIX-SUPPORTER-ERRATA）",
+          "en": "この扱いはない（トレーナーのまま）",
+          "confidence": "確実",
+          "sources": [
+            "P7",
+            "P19",
+            "P6",
+            "X17"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-061",
+        "pokemontcg": [
+          "base5-16",
+          "base5-72"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-061-rocketdannoonesan/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-061-rocketdannoonesan/"
+      }
+    },
+    {
+      "id": "PMCG5-082",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "礼儀作法",
+        "en": "Good Manners"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの手札に「たねポケモン」が1枚もない時だけ、使える。相手プレイヤーにあなたの手札を見せる。その後、あなたの山札から「たねポケモン」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": "In order to play this card, you can't have any Basic Pokémon cards in your hand. Show your hand to your opponent, then search your deck for a Basic Pokémon card, show it to your opponent, and put it into your hand. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-082",
+        "pokemontcg": [
+          "gym1-111"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E7%A4%BC%E5%84%80%E4%BD%9C%E6%B3%95",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E7%A4%BC%E5%84%80%E4%BD%9C%E6%B3%95"
+      }
+    },
+    {
+      "id": "PMCG6-077",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "トラッシュ交換",
+        "en": "Trash Exchange"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのトラッシュにあるカードの枚数を数えてから、それらをすべて山札にもどし、よく切る。その後、数えた枚数のカードを山札の上から取って、トラッシュする。",
+          "en": "Count the number of cards in your discard pile and shuffle them into your deck. Then discard that many cards from the top of your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-077",
+        "pokemontcg": [
+          "gym1-126"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E4%BA%A4%E6%8F%9B",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%88%E3%83%A9%E3%83%83%E3%82%B7%E3%83%A5%E4%BA%A4%E6%8F%9B"
+      }
+    },
+    {
+      "id": "PMCG1-070",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー・リムーブ",
+        "en": "Energy Removal"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の場のポケモンについているエネルギーカードを1枚はがしてすてる。",
+          "en": "Choose 1 Energy card attached to 1 of your opponent's Pokémon and discard it."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-070",
+        "pokemontcg": [
+          "base1-92"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-072-energyremove/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-072-energyremove/"
+      }
+    },
+    {
+      "id": "PMCG1-088",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "超エネルギーリムーブ",
+        "en": "Super Energy Removal"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のポケモンについているエネルギーカードを1枚はがしてすてることによって、相手の場のポケモン1匹から2枚のエネルギーカードをはがしてすてる。",
+          "en": "Discard 1 Energy card attached to 1 of your Pokémon in order to choose 1 of your opponent's Pokémon and up to 2 Energy cards attached to it. Discard those Energy cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-088",
+        "pokemontcg": [
+          "base1-79"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-078-choenergyremove/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-078-choenergyremove/"
+      }
+    },
+    {
       "id": "PMCG1-075",
       "jp_set": "PMCG1",
       "category": "trainer",
@@ -31868,6 +32114,344 @@
           "初版はレアリティマークなし"
         ],
         "source": "https://nazonobasho.com/pmcg01-070-iikizugusuri/"
+      }
+    },
+    {
+      "id": "PMCG1-080",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": "Full Heal"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "特殊状態にあるポケモンの全ての特殊状態を回復する。",
+          "en": "Your Active Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-080",
+        "pokemontcg": [
+          "base1-82"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-081-nandemonaoshi/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-081-nandemonaoshi/"
+      }
+    },
+    {
+      "id": "PMCG1-083",
+      "jp_set": "PMCG1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンセンター",
+        "en": "Pokémon Center"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "ダメージカウンターがのっている自分のポケモン全員から、ダメージカウンターとエネルギーカード全てをはがしてすてる。",
+          "en": "Remove all damage counters from all of your own Pokémon with damage counters on them, then discard all Energy cards attached to those Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG1-083",
+        "pokemontcg": [
+          "base1-85"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg01-090-pokemoncenter/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "第1弾拡張パック、スターターパック",
+        "remarks": [
+          "初版はレアリティマークなし"
+        ],
+        "source": "https://nazonobasho.com/pmcg01-090-pokemoncenter/"
+      }
+    },
+    {
+      "id": "PMCG4-054",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "ねむれ!ねむれ!",
+        "en": "Sleep!"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "rockets_secret_machine"
+        ],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、相手の対戦ポケモンを「ねむり」状態にする。",
+          "en": "Flip a coin. If heads, the Defending Pokémon is now Asleep."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "「!」の後の空白の有無はデータにより異なる"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG4-054",
+        "pokemontcg": [
+          "base5-79"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-056-nemurenemure/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-056-nemurenemure/"
+      }
+    },
+    {
+      "id": "PMCG5-067",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギーサーキュレート",
+        "en": "Energy Flow"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモンについている「基本エネルギーカード」を好きなだけはがし、手札に戻してよい。",
+          "en": "For each of your Pokémon, you may return any number of Energy cards attached to it to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "手札にもどせるエネルギーの種類",
+          "ja": "「あなたの場のポケモンについている『基本エネルギーカード』を好きなだけはがし、手札に戻してよい。」と、基本エネルギーに限っている（カードの画像で確認）。『ポケモンカードオフィシャルブック2000』（2000年2月）p.275 の最新の説明も「「基本エネルギーカード」を好きなだけはがし、手札に戻してよい」 [P43]",
+          "en": "「any number of Energy cards」と、特殊エネルギー（無色2個エネルギーなど）も含む",
+          "confidence": "確実",
+          "sources": [
+            "N2",
+            "N3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-067",
+        "pokemontcg": [
+          "gym1-122"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E3%82%B5%E3%83%BC%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%83%88",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E3%82%B5%E3%83%BC%E3%82%AD%E3%83%A5%E3%83%AC%E3%83%BC%E3%83%88"
+      }
+    },
+    {
+      "id": "PMCG5-084",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "エリカの親切",
+        "en": "Erika's Kindness"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いの場にいるポケモン全員から、それぞれ、ダメージカウンターを2つずつとりのぞく。",
+          "en": "Remove 2 damage counters from each Pokémon (yours and your opponent's) with any damage counters on it. If a Pokémon has just 1 damage counter, remove it."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-084",
+        "pokemontcg": [
+          "gym2-103"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E8%A6%AA%E5%88%87",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E8%A6%AA%E5%88%87"
+      }
+    },
+    {
+      "id": "PMCG5-089",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "タケシ",
+        "en": "Brock"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のすべてのポケモンから、それぞれ1つずつダメージカウンターをとりのぞく。",
+          "en": "Remove 1 damage counter from each of your Pokémon that has any damage counters on it."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-089",
+        "pokemontcg": [
+          "gym1-15",
+          "gym1-98"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-096",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "サカキの切り札",
+        "en": "Giovanni's Last Resort"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場にいる「サカキのポケモン」を1匹選び、そのポケモンにのっているダメージカウンターを、すべてとりのぞく。その後、あなたの手札をすべてトラッシュする。",
+          "en": "Remove all damage counters from 1 of your Pokémon with Giovanni in its name. Then discard your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-096",
+        "pokemontcg": [
+          "gym2-105"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E5%88%87%E3%82%8A%E6%9C%AD",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B5%E3%82%AB%E3%82%AD%E3%81%AE%E5%88%87%E3%82%8A%E6%9C%AD"
+      }
+    },
+    {
+      "id": "PMCG6-098",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ナツメ",
+        "en": "Sabrina"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場にいる「ナツメのポケモン」を1匹選び、それについているエネルギーカードをすべてはがす。そして、はがしたエネルギーカードすべてを、あなたの場にいる別の「ナツメのポケモン」1匹につけなおす。",
+          "en": "Take all Energy cards attached to 1 of your Pokémon with Sabrina in its name and attach them to another 1 of your Pokémon with Sabrina in its name."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-098",
+        "pokemontcg": [
+          "gym2-20",
+          "gym2-110"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-080",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ワープポイント",
+        "en": "Warp Point"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いの対戦ポケモンを、それぞれ、控えポケモンと入れ替える。入れ替わるポケモンは、それぞれ、持ち主が選ぶ。(入れ替えは、相手プレイヤーが先におこなう。控えがいないプレイヤーは、入れ替えをしない。",
+          "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with his or her Active Pokémon, then, if you have any Benched Pokémon, you switch 1 of them with your Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-080",
+        "pokemontcg": [
+          "gym2-126"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AF%E3%83%BC%E3%83%97%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AF%E3%83%BC%E3%83%97%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88"
       }
     },
     {

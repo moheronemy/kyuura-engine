@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 88,
-    "engine_stop_codes": 87,
+    "engine_unresolved_rulings": 96,
+    "engine_stop_codes": 95,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1055,6 +1055,94 @@
           "version": "v0.53",
           "document": "docs/search-retrieval-trainers-v0.53.md",
           "ruling_id": "NG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MISTYS_WRATH_SHORT_DECK": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "MW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "EM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "SP1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FULL_HEAL_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "FH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "GL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "GL2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "SB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.55",
+          "document": "docs/instant-trainers-v0.55.md",
+          "ruling_id": "SB2"
         }
       ],
       "kyuura_issue": null,

@@ -333,7 +333,7 @@ class CardDataTest(unittest.TestCase):
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.50", "docs/mew-devolution-spray-v0.50.md")])
         # v0.50 で 80・81。v0.51 で RV1・FT1 の 2 件を加えた（docs/discard-to-bench-v0.51.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (87, 88))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (95, 96))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた
         # v0.50 の版で結んだ記録（v0.51 からほかの版の記録も同じ一覧にある）
         applied = [record["kyuura_record"] for record in links["applied_rule_records"]
                    if any(engine["version"] == "v0.50" for engine in record["engine"])]

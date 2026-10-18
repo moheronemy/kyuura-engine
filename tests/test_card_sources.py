@@ -31,7 +31,7 @@ from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POK
 from tests.helpers import V0_44_CARDS, GIOVANNI, MISTYS_STARYU, BLANK_CHANSEY
 from tests.helpers import NO_BASE_HAUNTER_EFFECTS, V0_45_ADOPTED, BASE_HAUNTER, DARK_BLASTOISE, DARK_MAGNETON, RATICATE, BROCKS_GEODUDE_40, ROCKETS_HITMONCHAN
 from tests.helpers import V0_46_POKEMON, MR_MIME, ERIKAS_IVYSAUR, DARK_PRIMEAPE, DARK_MUK, SNORLAX
-from tests.helpers import V0_47_CARDS, V0_48_POKEMON, V0_49_CARDS, V0_50_CARDS, V0_51_CARDS, V0_52_CARDS, V0_53_CARDS, V0_54_CARDS
+from tests.helpers import V0_47_CARDS, V0_48_POKEMON, V0_49_CARDS, V0_50_CARDS, V0_51_CARDS, V0_52_CARDS, V0_53_CARDS, V0_54_CARDS, V0_55_CARDS
 
 TODAY = datetime.date(2026, 10, 20)
 COMMIT = read_extract()["source"]["commit"]
@@ -182,7 +182,7 @@ class ShippedRecordTest(unittest.TestCase):
                                                           + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON + V0_43_POKEMON
                                                           + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED + V0_46_POKEMON + V0_47_CARDS
                                                           + V0_48_POKEMON + V0_49_CARDS + V0_50_CARDS + V0_51_CARDS + V0_52_CARDS + V0_53_CARDS
-                                                          + V0_54_CARDS))
+                                                          + V0_54_CARDS + V0_55_CARDS))
         # v0.46: 採用の 11 枚は 2026-10-17 に記録し、pcg-search.com の同じ版のページと照合した。違いは 5 枚とも処理に影響しない（バリヤード・カビゴンの特殊能力の
         # 説明文の読点、エリカのフシギソウの「いる限り」と「いるかぎり」、わるいベトベトンの「2ぶん」と「2つぶん」、わるいオコリザルのワザの名前の「あばれくるう」と
         # 「あれくるう」（kyuura への報告事項））。処理に使う文面はどれも kyuura の印刷の文面
@@ -349,7 +349,7 @@ class ShippedRecordTest(unittest.TestCase):
                    | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON) | set(V0_43_POKEMON)
                    | set(V0_44_CARDS) | set(V0_45_ADOPTED) | set(V0_46_POKEMON) | set(V0_47_CARDS) | set(V0_48_POKEMON)
                    | set(V0_49_CARDS) | set(V0_50_CARDS) | set(V0_51_CARDS) | set(V0_52_CARDS) | set(V0_53_CARDS)
-                   | set(V0_54_CARDS))  # v0.35〜v0.54
+                   | set(V0_54_CARDS) | set(V0_55_CARDS))  # v0.35〜v0.55
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
         self.assertIn(BASE_HAUNTER, verification["cards"])  # v0.45 で登録した第1弾のゴーストは v0.9 の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))

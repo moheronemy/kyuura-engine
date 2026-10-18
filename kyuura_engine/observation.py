@@ -60,6 +60,9 @@ from .decisions import (
     SELECT_DECK_OWNER,
     SELECT_DEVOLVE_COUNT,
     SELECT_DRAW_COUNT,
+    TAKE_LOOKED_CARDS,
+    OPPONENT_HAND_TO_DECK,
+    SELECT_COUNTER_COUNT,
     SELECT_EVOLUTION_CARD,
     SELECT_HAND_CARD,
     SELECT_LOOK_COUNT,
@@ -95,10 +98,16 @@ OPTION_MEANINGS: dict[str, str] = {
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
+    TAKE_LOOKED_CARDS: "card",  # v0.55: カスミのいかり（見た山札の上のカード。決めるプレイヤーは見ている）
+    OPPONENT_HAND_TO_DECK: "card",  # v0.55: ロケット団のおねーさん（見た相手の手札のトレーナーカード。決めるプレイヤーは見ている）
+    SELECT_COUNTER_COUNT: "number",  # v0.55: いいきずぐすりでとりのぞく数
     SELECT_COLOR: "color",  # v0.48: ``effects.COLORS`` の位置（選べるものに色の名前を添える）
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
-DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP})
+DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS})
+# v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
+# 続けて見せる効果ではないので、観測の手札は公開しない）
+LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK})
 
 
 def _check_viewer(viewer) -> None:
@@ -172,8 +181,8 @@ def _color(color) -> str | None:
 
 def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> bool:
     """決定の選べるもののカード ``uid`` が、決めるプレイヤー ``viewer`` に見えるか。"""
-    if kind in DECK_REVEALING_KINDS:
-        return True  # 効果で山札をさがす・見たカードを並べる（選べるものは決めるプレイヤーが見ているカード）
+    if kind in DECK_REVEALING_KINDS or kind in LOOKED_HAND_KINDS:
+        return True  # 効果で山札をさがす・見たカードを並べる・見た相手の手札から選ぶ（選べるものは決めるプレイヤーが見ているカード）
     for owner, p in enumerate(state.players):
         if uid in p.discard:
             return True
@@ -294,6 +303,11 @@ def _hand_looker_or_owner(event, viewer) -> bool:
     return viewer is not None and viewer in (event.get("player"), event.get("owner"))
 
 
+def _hand_owner_or_looker(event, viewer) -> bool:
+    """v0.55: ロケット団のおねーさんで相手の山札にもどさせたカードは、手札の持ち主（``player``）と、手札を見て選んだプレイヤー（``looker``）に見える。"""
+    return viewer is not None and viewer in (event.get("player"), event.get("looker"))
+
+
 def _taken_deck_top(event, viewer) -> bool:
     """てつだうふり（v0.45）: トラッシュに置いたら公開。手札に加えたら、見たプレイヤーと持ち主。"""
     return event.get("destination") == "discard" or (viewer is not None and viewer in (event.get("looker"), event.get("player")))
@@ -313,6 +327,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "take_deck_top": (("card",), _taken_deck_top),
     "trainer_take_none": (("reason",), _only_player),  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
     "look_at_hand": (("cards",), _hand_looker_or_owner),  # v0.54: スパイ作戦（見たプレイヤーと持ち主だけ。観戦者には見せない）
+    "looked_to_hand": (("cards",), _only_player),  # v0.55: カスミのいかり（見た山札の上のカードから手札に加えたカード）
+    "opponent_hand_to_deck": (("card",), _hand_owner_or_looker),  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤーだけ）
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -343,6 +359,9 @@ PUBLIC_EVENTS = frozenset({
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",
     "turn_start", "type_shift",
+    # v0.55: 場のエネルギーカードをはがす（トラッシュ・手札・つけなおし）・入れ替えない・トラッシュと山札を入れ替える・見た山札の残りをトラッシュ（場・トラッシュは公開の情報）
+    "trainer_discard_energy", "trainer_return_energy", "trainer_move_energy", "trainer_switch_skipped", "discard_pile_to_deck", "deck_top_to_discard",
+    "looked_to_discard",
 })
 
 
