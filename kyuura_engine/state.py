@@ -965,6 +965,41 @@ class RecallEffect:
     trainer: int
 
 
+# v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカード（``SetAsideCards``）の種類。カードが物理的にある場所の名前で、手札・山札・ベンチ・場の
+# ポケモンのどれとも別の場所（見えないことだけを理由に、手札や山札と同じ場所として扱わない）
+SET_ASIDE_HAND = "hand_set_aside"  # くすぐりマシーン: 相手プレイヤーが手札をすべてうらにして置いておく（手札とはみなされない。期限の番の終わりに持ち主の手札にもどる）
+SET_ASIDE_FACE_DOWN_BENCH = "face_down_bench"  # たたきつけろ!挑戦状: 山札から選んでうらにしてベンチに出したポケモンのカード（お互いが出し終わるまで。そのあと表にして場に出す）
+SET_ASIDE_QUIZ = "quiz_card"  # カツラのクイズ その3: 手札からおもてを下にして置いたポケモンのカード（答えのあと表にし、手札にもどす）
+SET_ASIDE_KINDS = (SET_ASIDE_HAND, SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ)
+
+
+@dataclass(frozen=True)
+class SetAsideCards:
+    """v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: トレーナーの効果で一時的に置いておくカードのまとまり。
+
+    3 つのことを分けて持つ:
+
+    - カードが物理的にある場所: ``kind``（``SET_ASIDE_KINDS``）の場所に、持ち主 ``owner`` のカード ``cards``（同じ uid のまま。置いた順）がある。手札・山札・ベンチ・
+      場のポケモンには含まない（手札の枚数・手札をすべて動かす効果・手札を見る効果・ベンチのポケモンの数え方は、このカードを数えない）。カードの保存則では、この場所として
+      1 回だけ数える
+    - いま、だれがカードの中身を見られるか: ``visible_to``（プレイヤーの並び。くすぐりマシーンは空（だれも見ない。持ち主も見られない）、挑戦状・クイズは持ち主だけ）。
+      枚数はだれにも見える（場に置いたカードの枚数は見える）
+    - 確定した選択と、いつ表にする・もどすか: 置いたカードは置いたときに決まり、あとで入れかえない。``return_turn`` はくすぐりマシーンのもどす番（その番の終わりに持ち主の
+      手札にもどす）。挑戦状・クイズはトレーナーの効果の途中だけにあり（``return_turn`` は None）、効果が表にして場に出す・手札にもどす
+    - 出どころ: ``user``（トレーナーを使ったプレイヤー。持ち主とは別に持つ）・``trainer_card``（使ったトレーナーのカード）・``card_id``・``created_turn``（置いた番）
+    """
+
+    kind: str
+    owner: int
+    cards: tuple[int, ...]
+    visible_to: tuple[int, ...]
+    user: int
+    trainer_card: int
+    card_id: str
+    created_turn: int
+    return_turn: int | None = None
+
+
 # 特殊状態のないポケモン（共有してよい。frozen）
 NO_SPECIAL_CONDITIONS = SpecialConditions()
 # ねむり状態（持つ情報がないので 1 つを共有してよい。frozen）
@@ -1295,6 +1330,13 @@ class GameState:
     # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: エネルギーとしてついているカードの記録（``EnergyRole`` の並び。マルマインの［エネエネ］）。そのカードが
     # 場のポケモンについているあいだだけ、カードの定義はエネルギーとしての役割（``card_def``）。書き出しは形式 19 だけが表せる（空でなければ形式 1〜18 は ``ValueError``）
     energy_roles: tuple[EnergyRole, ...] = ()
+    # v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカードのまとまり（``SetAsideCards`` の並び。置いた順）。書き出しは形式 21 だけが表せる
+    # （空でなければ形式 1〜20 は ``ValueError``）
+    set_aside: tuple[SetAsideCards, ...] = ()
+    # v0.63: おもてになっているサイドのカード（ロケット団参上!の「お互いのプレイヤーのサイドカード全てをおもてにして」。カードの uid の並び。おもてにした順）。カードごとに
+    # 持つ（そのときサイドにあったカードだけがおもてになる。あとからサイドに置かれたカードは、おもてにする指示がないので裏のまま）。サイドをはなれたら（取った・入れかえた）
+    # 並びから除く（``zones.prize_left``）。書き出しは形式 21 だけが表せる（空でなければ形式 1〜20 は ``ValueError``）
+    face_up_prizes: tuple[int, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

@@ -16130,6 +16130,149 @@
       ],
       "issues": [],
       "notes": "v0.62 で加えた。kyuura の写しの元（ecb2d69）のワザ 1 の名前「したでなめる」・レベル 29 は、kyuura が研究の基準のコミット（3f34908）の照合の記録 CC-PMCG2-041-P234 で「まきつくベロ」・26 に直した（修正のコミット f52a8e2。kyuura が原典を読んだ記録 by: kyuura。エンジンが読み直したものではない）。写しには、この 2 欄だけを scripts/extract_kyuura_cards.py の CONFIRMED_CORRECTIONS で当てはめた（写しの corrections に欄・前・後・記録・コミット。出典の記録の欄 notes・ja_text_source は写しの元のまま）。効果文・エネルギー・ダメージは直す前から同じ。まきつくベロは ParalyzeOnHeads、ちょうおんぱは ConfuseOnHeadsWithoutDamage。ガルーラ（PMCG2-046）のコインの食い違い（v0.34 の保留）とは別の件で、これで解決したことにしない（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG4-062": {
+      "basis": "kyuura_data",
+      "name_ja": "ロケット団参上!",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4065.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "065/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（065）は kyuura の id の番号（062）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.63 で加えた。トレーナー。RevealAllPrizesTrainer（使ったプレイヤー → 相手プレイヤーの順に、そのときサイドにあるカードをすべておもてにする（カードごとの記録 GameState.face_up_prizes。zones.reveal_prizes・ログ prizes_revealed は公開）。あとからサイドに置かれたカードはおもてにしない。おもてのカードがサイドをはなれたら記録から除き、取った・入れかえたログにおもてだったことを書く（face_up）。手札は公開にならない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/hidden-card-trainers-v0.63.md）"
+    },
+    "PMCG6-084": {
+      "basis": "kyuura_data",
+      "name_ja": "くすぐりマシーン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2093.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "093/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（093）は kyuura の id の番号（084）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.63 で加えた。トレーナー（kyuura の種類 rockets_secret_machine。secret_machine_ok）。CoinSetAsideOpponentHandElseEndTurn（使ったプレイヤーがコインを 1 枚投げ、「おもて」なら相手プレイヤーの手札をすべて手札とは別の場所にうらにして置き（GameState.set_aside の SET_ASIDE_HAND。だれも見ない）、次の相手の番の終わりに同じカードを持ち主の手札にもどす。「うら」なら END_TURN（使用中のカードをトラッシュしてから番の終わり）。説明が使ったプレイヤーの番を書くので錯乱ジムで相手が使うことを選ぶと CH1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/hidden-card-trainers-v0.63.md）"
+    },
+    "PMCG4-058": {
+      "basis": "kyuura_data",
+      "name_ja": "たたきつけろ!挑戦状",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4054.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "054/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "name.ja",
+              "kyuura": "たたきつけろ!挑戦状",
+              "pcg_search": "たたきつけろ! 挑戦状",
+              "affects_behavior": false,
+              "note": "サイトの名前は「!」のあとに空白がある。kyuura の notes も「「!」の後の空白の有無はデータにより異なる」と書く。処理は変わらない"
+            },
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "あなたの挑戦を受けるかどうか、相手プレイヤーにたずねる。相手が挑戦を受けないなら、あなたは山札からカードを2枚引く。\n\n\n\n相手が挑戦を受けるのなら、お互いのプレイヤーは、それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す。(お互いが出し終わるまで、ポケモンはうらにしておく)。その後、それぞれの山札をよく切る。",
+              "pcg_search": "あなたの挑戦を受けるかどうか、相手プレイヤーにたずねる。相手が挑戦を受けないなら、あなたは山札からカードを2枚引く。相手が挑戦を受けるのなら、お互いのプレイヤーは、それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す。(お互いが出し終わるまで、ポケモンはうらにしておく)。その後、それぞれの山札をよく切る。",
+              "affects_behavior": false,
+              "note": "kyuura の文面は 2 つの文のあいだに空行（改行 4 つ）があり、サイトの文面にはない。文字は同じで、処理は変わらない（写しは直さない。kyuura への報告事項）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（054）は kyuura の id の番号（058）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.63 で加えた。トレーナー。ChallengeBenchFromDecks（相手プレイヤーにたずね（ACCEPT_REQUEST。答えは request_answered）、受けないなら使ったプレイヤーが 2 枚引く（引けるだけ）。受けるなら使ったプレイヤー → 相手プレイヤーの順に、自分の山札のたねポケモンのカードを 0〜ベンチの空き枚選び（CHALLENGE_BENCH）、うらにしてベンチに出す（場のポケモンにはしない。GameState.set_aside の SET_ASIDE_FACE_DOWN_BENCH。持ち主だけが見る）。お互いが出し終わったら置いた順に表にして場に出し（enter_play）、それぞれの山札を切る。選べるカードがあるのに 0 枚は HC5、まきちらせ!ベトベトガスの効果のはたらく間の特殊能力を持つたねポケモンは GG1。英語版の「(or if both Benches are full)」は持ち込まない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/hidden-card-trainers-v0.63.md）"
+    },
+    "PMCG6-082": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのクイズ その3",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2088.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "088/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない。 サイトの一覧の番号（088）は kyuura の id の番号（082）と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.63 で加えた。トレーナー。BlainesQuiz（手札のワザを持つポケモンのカードを 1 枚選んでおもてを下にして置き（QUIZ_CARD。GameState.set_aside の SET_ASIDE_QUIZ）、そのカードのワザの名前を 1 つ伝え（QUIZ_ATTACK。ログ quiz_hint はワザの名前だけ）、相手プレイヤーがカードの名前を答える（QUIZ_ANSWER。候補はカードのデータのポケモンの名前で、置いたカード・手札によらない）。おもてにし（quiz_reveal）、正解（名前が同じ）なら相手、正解でないなら使ったプレイヤーが 3 枚引き（引けるだけ）、置いたカードを手札にもどす。手札にワザを持つポケモンのカードがなければ QZ1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/hidden-card-trainers-v0.63.md）"
     }
   }
 }

@@ -5,7 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .stadiums import bench_limit
-from .state import AttachedTrainer, PokemonInPlay, StadiumInPlay, TrainerInUse
+from .state import (
+    SET_ASIDE_FACE_DOWN_BENCH,
+    SET_ASIDE_HAND,
+    SET_ASIDE_QUIZ,
+    AttachedTrainer,
+    PokemonInPlay,
+    SetAsideCards,
+    StadiumInPlay,
+    TrainerInUse,
+)
 
 if TYPE_CHECKING:
     from .state import GameState
@@ -666,8 +675,10 @@ def swap_prize_with_deck_top(state: GameState, player: int, position: int, *, po
     p = state.players[player]
     if not 0 <= position < len(p.prizes) or not p.deck:
         raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} と山札の一番上を入れかえられない（確認の漏れ。エンジンの不具合）")
+    face_up = prize_left(state, p.prizes[position])  # v0.63: おもてのサイドが山札にもどったら、おもての記録から除く（山札の一番上に来たカードは裏）
     p.prizes[position], p.deck[0] = p.deck[0], p.prizes[position]
-    state.add_event("swap_prize_with_deck_top", player=player, prize_position=position, power=power)
+    extra = {"face_up_card": p.deck[0]} if face_up else {}  # v0.63: おもてだったカードは、動かす前から全員に見えている
+    state.add_event("swap_prize_with_deck_top", player=player, prize_position=position, power=power, **extra)
 
 
 def look_at_card(state: GameState, viewer: int, owner: int, zone: str, position: int, *, effect: str | None = None, power: str | None = None,
@@ -898,8 +909,10 @@ def take_prize_by_trainer(state: GameState, player: int, position: int, *, train
     if not 0 <= position < len(p.prizes):
         raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} のカードを取れない（確認の漏れ。エンジンの不具合）")
     card = p.prizes.pop(position)
+    face_up = prize_left(state, card)  # v0.63
     p.hand.append(card)
-    state.add_event("trainer_take_prize", player=player, position=position, card=card, remaining=len(p.prizes), trainer_card=trainer)
+    state.add_event("trainer_take_prize", player=player, position=position, card=card, remaining=len(p.prizes), trainer_card=trainer,
+                    **face_up_fields(face_up, "card"))
     return card
 
 
@@ -911,10 +924,12 @@ def swap_prize_with_hand(state: GameState, player: int, position: int, card: int
     if not 0 <= position < len(p.prizes) or card not in p.hand:
         raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} と手札のカード {card} を入れかえられない（確認の漏れ。エンジンの不具合）")
     taken = p.prizes[position]
+    face_up = prize_left(state, taken)  # v0.63: サイドに置いた手札のカードは裏（おもてにする指示がない）
     p.hand.remove(card)
     p.prizes[position] = card
     p.hand.append(taken)
-    state.add_event("swap_prize_with_hand", player=player, position=position, to_prize=card, to_hand=taken, trainer_card=trainer)
+    state.add_event("swap_prize_with_hand", player=player, position=position, to_prize=card, to_hand=taken, trainer_card=trainer,
+                    **face_up_fields(face_up, "to_hand"))
     return taken
 
 
@@ -976,3 +991,131 @@ def return_attached_energy_by_stadium(state: GameState, owner: int, pokemon: Pok
     pokemon.energy.remove(card)
     state.players[owner].hand.append(card)
     state.add_event("stadium_return_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, stadium_card=stadium)
+
+
+# ---------------------------------------------------------------- 見えないカード・一時的に置くカード（v0.63。docs/hidden-card-trainers-v0.63.md）
+
+
+def face_up_fields(face_up: bool, *fields: str) -> dict:
+    """v0.63: ログのイベントの、おもてだった（全員に見えていた）カードの項目の印（``observation.visible_event`` が、その項目を全員に見せる）。おもてでなければ空（ログの形は
+    v0.62 と同じ）。"""
+    return {"face_up": tuple(fields)} if face_up else {}
+
+
+def prize_left(state: GameState, card: int) -> bool:
+    """サイドのカード ``card`` がサイドをはなれるとき（取った・山札や手札と入れかえた）に呼ぶ（v0.63）。おもてのサイドの並び（``GameState.face_up_prizes``）から除き、
+    おもてだったかを返す。サイドからカードを動かす処理（``take_prize_by_trainer``・``swap_prize_with_hand``・``swap_prize_with_deck_top``・解決の基盤の
+    ``_resume_take_prize``）は、どれもこの関数を通る。"""
+    if card not in state.face_up_prizes:
+        return False
+    state.face_up_prizes = tuple(uid for uid in state.face_up_prizes if uid != card)
+    return True
+
+
+def reveal_prizes(state: GameState, players: tuple[int, ...], *, trainer: int) -> None:
+    """プレイヤー ``players`` のサイドのカードをすべておもてにする（v0.63。ロケット団参上!の「お互いのプレイヤーのサイドカード全てをおもてにして、お互いのプレイヤーに
+    見えるようにする。(おもてになったサイドカードは、対戦が終わるまでそのまま)」）。カードは動かさない（サイドの位置・枚数は変えない）。
+
+    - おもてにするのは、いまサイドにあるカード（カードごとに ``GameState.face_up_prizes`` に加える）。あとからサイドに置かれたカードは、おもてにする指示がないので裏の
+      まま（くり返し使えば、そのときの裏のカードがおもてになる）
+    - プレイヤーごとにログ ``prizes_revealed``（``player``・``positions``・``cards``（新しくおもてにしたカード。公開）・``trainer_card``）。新しくおもてにするカードが
+      なくても書く（使ったことを残す）"""
+    for player in players:
+        prizes = state.players[player].prizes
+        positions = tuple(i for i, uid in enumerate(prizes) if uid not in state.face_up_prizes)
+        cards = tuple(prizes[i] for i in positions)
+        state.face_up_prizes = state.face_up_prizes + cards
+        state.add_event("prizes_revealed", player=player, positions=positions, cards=cards, trainer_card=trainer)
+
+
+def _add_set_aside(state: GameState, group: SetAsideCards) -> None:
+    if not group.cards:
+        raise RuntimeError(f"置いておくカードのない {group}（エンジンの不具合）")
+    state.set_aside = state.set_aside + (group,)
+
+
+def set_aside_hand(state: GameState, owner: int, *, user: int, trainer: int, card_id: str, return_turn: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` の手札をすべて、同じ uid のまま、うらにして置いておく（v0.63。くすぐりマシーンの「相手プレイヤーは、いま手札として持っているカードをすべて、
+    うらにして置いておく。置いたカードは、相手プレイヤーの手札とはみなされない。(相手プレイヤーは、それらのカードを見ることも、使うこともできない)」）。
+
+    - 手札から ``SET_ASIDE_HAND`` の場所に移す（手札に「使えない」印を付けて残さない）。だれも中身を見られない（``visible_to`` は空。持ち主も見られない）
+    - ``return_turn``: その番の終わりに持ち主の手札にもどす（``return_set_aside``。``procedures.expire_at_turn_end``）
+    - 手札が 0 枚なら置かない（まとまりを作らない）。ログ ``set_aside_hand``（``player`` は持ち主・``user``・``count``・``cards``（だれにも見せない）・``return_turn``・
+      ``trainer_card``）は 0 枚でも書く。置いたカードを返す"""
+    p = state.players[owner]
+    cards = tuple(p.hand)
+    p.hand.clear()
+    if cards:
+        _add_set_aside(state, SetAsideCards(SET_ASIDE_HAND, owner, cards, (), user, trainer, card_id, state.turn_number, return_turn))
+    state.add_event("set_aside_hand", player=owner, user=user, count=len(cards), cards=cards, return_turn=return_turn, trainer_card=trainer)
+    return cards
+
+
+def set_aside_face_down_bench(state: GameState, owner: int, cards: tuple[int, ...], *, user: int, trainer: int, card_id: str) -> None:
+    """プレイヤー ``owner`` の山札のたねポケモンのカード ``cards`` を、同じ uid のまま、うらにしてベンチに出す（v0.63。たたきつけろ!挑戦状の「それぞれの山札から
+    好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す。(お互いが出し終わるまで、ポケモンはうらにしておく)」）。
+
+    - 山札から ``SET_ASIDE_FACE_DOWN_BENCH`` の場所に移す。場のポケモンにはしない（うらのあいだは名前・タイプ・ワザ・特殊能力・履歴がない。表にするとき
+      ``reveal_face_down_bench`` が場に出す）。中身は持ち主だけが見る（``visible_to`` は持ち主）。枚数は見える
+    - 出してよいか（たねポケモン・ベンチの空き・決定）の確かめは呼ぶ側。山札にない・持ち主が違う・空なら ``RuntimeError``（状態を変える前）
+    - ログ ``face_down_bench``（``player``・``count``・``cards``（持ち主だけ）・``trainer_card``）"""
+    p = state.players[owner]
+    if not cards or len(set(cards)) != len(cards) or any(uid not in p.deck or state.cards[uid].owner != owner for uid in cards):
+        raise RuntimeError(f"プレイヤー {owner} の山札のカード {cards} をうらにしてベンチに出せない（確認の漏れ。エンジンの不具合）")
+    for uid in cards:
+        p.deck.remove(uid)
+    _add_set_aside(state, SetAsideCards(SET_ASIDE_FACE_DOWN_BENCH, owner, tuple(cards), (owner,), user, trainer, card_id, state.turn_number))
+    state.add_event("face_down_bench", player=owner, count=len(cards), cards=tuple(cards), trainer_card=trainer)
+
+
+def reveal_face_down_bench(state: GameState, group: SetAsideCards) -> tuple[PokemonInPlay, ...]:
+    """うらにしてベンチに出したカード（``SET_ASIDE_FACE_DOWN_BENCH`` のまとまり ``group``）を表にして、置いた順に持ち主のベンチの最後に場のポケモンとして出す（v0.63）。
+    場のポケモンの番号・場に出た番は手札・山札から出すときと同じ ``enter_play``（今の番に場に出たので、その番には進化できない）。ログ ``face_down_revealed``（``player``・
+    ``cards``・``pokemon_ids``・``trainer_card``。公開）。ベンチの空きは、うらにして出したときに確かめた（そのあいだに場は変わらない）。空きがなければ ``RuntimeError``。"""
+    p = state.players[group.owner]
+    if group not in state.set_aside or group.kind != SET_ASIDE_FACE_DOWN_BENCH or len(p.bench) + len(group.cards) > bench_limit(state, group.owner):
+        raise RuntimeError(f"うらにして出したカード {group} を表にして場に出せない（エンジンの不具合）")
+    state.set_aside = tuple(g for g in state.set_aside if g is not group)
+    placed = []
+    for uid in group.cards:
+        pokemon = enter_play(state, uid)
+        p.bench.append(pokemon)
+        placed.append(pokemon)
+    state.add_event("face_down_revealed", player=group.owner, cards=group.cards, pokemon_ids=tuple(pk.pokemon_id for pk in placed),
+                    trainer_card=group.trainer_card)
+    return tuple(placed)
+
+
+def set_aside_quiz_card(state: GameState, player: int, card: int, *, trainer: int, card_id: str) -> SetAsideCards:
+    """自分の手札のポケモンのカード ``card`` を、同じ uid のまま、おもてを下にして置く（v0.63。カツラのクイズ その3の「あなたの手札から「ポケモン」のカードを1枚選び、
+    おもてを下にして、置く」）。手札から ``SET_ASIDE_QUIZ`` の場所に移す（中身は置いたプレイヤーだけが見る）。ログ ``quiz_card_set``（``player``・``card``（置いた
+    プレイヤーだけ）・``trainer_card``）。手札にない・持ち主が違うなら ``RuntimeError``。置いたまとまりを返す。"""
+    p = state.players[player]
+    if card not in p.hand or state.cards[card].owner != player:
+        raise RuntimeError(f"プレイヤー {player} の手札にないカード {card} を置こうとした（エンジンの不具合）")
+    p.hand.remove(card)
+    group = SetAsideCards(SET_ASIDE_QUIZ, player, (card,), (player,), player, trainer, card_id, state.turn_number)
+    _add_set_aside(state, group)
+    state.add_event("quiz_card_set", player=player, card=card, trainer_card=trainer)
+    return group
+
+
+def return_set_aside(state: GameState, group: SetAsideCards, *, reason: str) -> tuple[int, ...]:
+    """置いておいたカードのまとまり ``group`` を、同じ uid のまま、置いた順に持ち主の手札の最後にもどす（v0.63。くすぐりマシーンの期限・カツラのクイズ その3の
+    「(置いたカードは、手札にもどす)」）。ログ ``set_aside_returned``（``player`` は持ち主・``cards``（持ち主だけ。クイズで表にしたカードは全員に見えている
+    （``face_up``））・``reason``（``expired``・``quiz``）・``trainer_card``）。まとまりがなければ ``RuntimeError``。もどしたカードを返す。"""
+    if group not in state.set_aside or group.kind == SET_ASIDE_FACE_DOWN_BENCH:
+        raise RuntimeError(f"置いておいたカード {group} を手札にもどせない（エンジンの不具合）")
+    state.set_aside = tuple(g for g in state.set_aside if g is not group)
+    state.players[group.owner].hand.extend(group.cards)
+    state.add_event("set_aside_returned", player=group.owner, cards=group.cards, reason=reason, trainer_card=group.trainer_card,
+                    **face_up_fields(group.kind == SET_ASIDE_QUIZ, "cards"))
+    return group.cards
+
+
+def return_expired_set_aside(state: GameState) -> None:
+    """v0.63: もどす番（``return_turn``）が今の番の、くすぐりマシーンで置いておいたカードを、置いた順に持ち主の手札にもどす（「次の相手の番の終わりまで」。番の終わりの
+    窓。``procedures.expire_at_turn_end``）。勝敗が決まった番は番の終わりが来ないので、置いたまま残る（v0.2c のついているトレーナーと同じ）。"""
+    for group in state.set_aside:
+        if group.kind == SET_ASIDE_HAND and group.return_turn == state.turn_number:
+            return_set_aside(state, group, reason="expired")

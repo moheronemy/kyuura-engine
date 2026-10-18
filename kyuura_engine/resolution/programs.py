@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import dataclasses
 import itertools
+import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -563,8 +564,20 @@ def combinations_answers(decision: PendingDecision, sizes) -> list[tuple[int, ..
 def all_answers(decision: PendingDecision, *, minimum: int = 0) -> list[tuple[int, ...]]:
     """決定に合うすべての答え（``min_choices``（と ``minimum`` の大きいほう）〜``max_choices`` 個の、重ならない選択の並び。
     ``decisions.check_choices`` が受け付けるもの）。代表を選ばない（v0.15c。docs/preflight-optimization-v0.15c.md 3 章）。"""
+    return list(iter_answers(decision, minimum=minimum))
+
+
+def iter_answers(decision: PendingDecision, *, minimum: int = 0):
+    """``all_answers`` と同じ答えを同じ順に 1 つずつ返す（v0.63。答えの数が多い決定（たたきつけろ!挑戦状の「好きなだけ」）で、すべてを並びにしない）。"""
     low = max(decision.min_choices, minimum)
-    return [answer for count in range(low, decision.max_choices + 1) for answer in itertools.permutations(decision.options, count)]
+    for count in range(low, decision.max_choices + 1):
+        yield from itertools.permutations(decision.options, count)
+
+
+def answer_count(decision: PendingDecision) -> int:
+    """``all_answers(decision)`` の数（v0.63。並びを作らずに数える）。"""
+    n = len(decision.options)
+    return sum(math.perm(n, count) for count in range(decision.min_choices, decision.max_choices + 1) if count <= n)
 
 
 @dataclass(frozen=True)

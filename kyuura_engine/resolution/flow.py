@@ -30,7 +30,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, 
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
 from ..history import close_probe, note_used
-from ..zones import promote_from_bench, return_in_play_to_deck, shuffle_deck
+from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 
 from . import catalog as C
 from . import codec
@@ -876,8 +876,9 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
     player = decision.player
     prizes = state.players[player].prizes
     uid = prizes.pop(choices[0])
+    face_up = prize_left(state, uid)  # v0.63: おもてのサイド（ロケット団参上!）を取ったら、おもての記録から除く（手札は公開にならない）
     state.players[player].hand.append(uid)
-    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
+    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes), **face_up_fields(face_up, "card"))
     _next_prize_or_judge(res, cont.remaining, cont.then, cont.post_knockout)
 
 

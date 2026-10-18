@@ -94,6 +94,10 @@
   "source", "declared", "processed", "damage", "reached", "voided"}``・``{"kind": "other_received", "turn", "card"}`` の並び。ワザは [カード id, 位置]）を加えたもの（v0.62。
   docs/history-attacks-v0.62.md 9 章）。履歴を読むワザのカードが対戦にないときは記録しないので空。形式 1〜19 は、記録があると ``ValueError``（なければ形式 1〜19 の
   書き出しは v0.61 と同じ）。
+- 21: 20 に、最上位の ``set_aside``（一時的に置いておくカードのまとまり。``{"kind", "owner", "cards", "card_ids", "visible_to", "user", "trainer_card", "card_id",
+  "created_turn", "return_turn"}`` の並び。くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3）・``face_up_prizes``（おもてになっているサイドのカードの uid の並び。
+  ロケット団参上!）を加えたもの（v0.63。docs/hidden-card-trainers-v0.63.md 7 章）。内部の完全な記録なので、置いたカード・おもてのサイドのカードを書く（プレイヤーに渡す
+  ときは観測 ``observation.observe`` を使う）。形式 1〜20 は、どちらかがあると ``ValueError``（なければ形式 1〜20 の書き出しは v0.62 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -178,7 +182,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -437,6 +441,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、エネルギーとしてついているカード（マルマインの［エネエネ］）を表せない（format_version=19 を使う）")
     if format_version < 20 and any(pokemon.history for p in state.players for pokemon in p.in_play()):
         raise ValueError(f"形式 {format_version} は、場のポケモンのワザの履歴（使ったワザ・受けたワザ）を表せない（format_version=20 を使う）")
+    if format_version < 21 and (state.set_aside or state.face_up_prizes):
+        raise ValueError(f"形式 {format_version} は、一時的に置いておくカード・おもてのサイドを表せない（format_version=21 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -566,4 +572,11 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
             {"card": r.card, "card_id": state.cards[r.card].card_id, "energy_type": r.energy_type.value, "units": r.units, "owner": r.owner, "turn": r.turn}
             for r in state.energy_roles
         ]
+    if format_version >= 21:
+        data["set_aside"] = [
+            {"kind": g.kind, "owner": g.owner, "cards": list(g.cards), "card_ids": [state.cards[uid].card_id for uid in g.cards], "visible_to": list(g.visible_to),
+             "user": g.user, "trainer_card": g.trainer_card, "card_id": g.card_id, "created_turn": g.created_turn, "return_turn": g.return_turn}
+            for g in state.set_aside
+        ]
+        data["face_up_prizes"] = list(state.face_up_prizes)
     return data

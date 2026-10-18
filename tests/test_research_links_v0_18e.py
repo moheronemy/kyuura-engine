@@ -158,7 +158,9 @@ class ResearchLinksTest(unittest.TestCase):
                                      "UNRESOLVED_TRAINER_DAMAGE_REDUCTION",
                                      # v0.62（docs/history-attacks-v0.62.md の MM1・MM2・OM1・OM2）
                                      "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS",
-                                     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"})
+                                     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK",
+                                     # v0.63（docs/hidden-card-trainers-v0.63.md の QZ1）
+                                     "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

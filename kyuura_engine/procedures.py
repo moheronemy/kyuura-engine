@@ -30,7 +30,7 @@ from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, rem
                          remove_turn_start_expired_persistent_effects)
 from .state import POWER_SUPPRESSION, Halt, Phase
 from .history import prune as prune_history
-from .zones import draw_cards
+from .zones import draw_cards, return_expired_set_aside
 
 if TYPE_CHECKING:
     from .state import GameResult, GameState, PokemonInPlay
@@ -100,6 +100,7 @@ def _expire_at_turn_end(state: GameState) -> None:
     state.recalls = ()
     remove_expired_trainer_locks(state)  # v0.47
     remove_expired_trainer_effects(state)  # v0.56
+    return_expired_set_aside(state)  # v0.63: くすぐりマシーンで置いておいたカード（「次の相手の番の終わりまで」）
     state.add_event("turn_end", player=state.current_player)
 
 

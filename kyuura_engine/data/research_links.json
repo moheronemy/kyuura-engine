@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 134,
-    "engine_stop_codes": 132,
+    "engine_unresolved_rulings": 135,
+    "engine_stop_codes": 133,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -439,6 +439,11 @@
         {
           "version": "v0.54",
           "document": "docs/hand-deck-trainers-v0.54.md",
+          "ruling_id": "HC5"
+        },
+        {
+          "version": "v0.63",
+          "document": "docs/hidden-card-trainers-v0.63.md",
           "ruling_id": "HC5"
         }
       ],
@@ -1566,6 +1571,17 @@
           "version": "v0.62",
           "document": "docs/history-attacks-v0.62.md",
           "ruling_id": "OM2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.63",
+          "document": "docs/hidden-card-trainers-v0.63.md",
+          "ruling_id": "QZ1"
         }
       ],
       "kyuura_issue": null,

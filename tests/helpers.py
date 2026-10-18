@@ -641,6 +641,12 @@ BROCKS_DUGTRIO = "PMCG6-060"  # タケシのダグトリオ（闇からの挑戦
 LICKITUNG = "PMCG2-041"  # ベロリンガ（ポケモンジャングル。043/048。HP 90・無色・弱点 闘・抵抗力 超・にげる 3。まきつくベロ（無）10・ちょうおんぱ（無無））
 V0_62_POKEMON = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
 V0_62_CARDS = V0_62_POKEMON
+# v0.63（docs/hidden-card-trainers-v0.63.md）: 公開・非公開の状態を扱うトレーナー 4 枚
+HERE_COMES_TEAM_ROCKET = "PMCG4-062"  # ロケット団参上!（第4弾ロケット団。お互いのサイドをすべておもてにする）
+TICKLING_MACHINE = "PMCG6-084"  # くすぐりマシーン（闇からの挑戦。ロケット団秘密メカ。「おもて」なら相手の手札を置いておく、「うら」なら番が終わる）
+CHALLENGE = "PMCG4-058"  # たたきつけろ!挑戦状（第4弾ロケット団。受けないなら 2 枚引く、受けるならお互いに山札からたねポケモンをうらにしてベンチに出す）
+BLAINES_QUIZ_3 = "PMCG6-082"  # カツラのクイズ その3（闇からの挑戦。手札のポケモンを置き、ワザの名前を伝え、相手が名前を答える）
+V0_63_CARDS = (HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})

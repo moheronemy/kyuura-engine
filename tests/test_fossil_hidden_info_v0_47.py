@@ -705,7 +705,8 @@ class RevealHandTest(unittest.TestCase):
             view = observe(state, viewer)
             for owner in (0, 1):
                 self.assertEqual(set(view["players"][owner]["deck"]), {"count"})
-                self.assertEqual(set(view["players"][owner]["prizes"]), {"count"})
+                self.assertEqual(set(view["players"][owner]["prizes"]), {"count", "face_up"})  # v0.63: おもてのサイド（ロケット団参上!）の一覧
+                self.assertEqual(view["players"][owner]["prizes"]["face_up"], [])
                 self.assertEqual(view["players"][owner]["hand"]["cards"] is None, viewer != owner)
         logged = visible_log(state, None)
         self.assertTrue(all("cards" not in e for e in logged if e["kind"] == "draw"))

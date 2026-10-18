@@ -301,7 +301,7 @@ class CardDataTest(unittest.TestCase):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.51", "docs/discard-to-bench-v0.51.md")])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (133, 135))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた
         applied = [record["kyuura_record"] for record in links["applied_rule_records"]
                    if any(engine["version"] == "v0.51" for engine in record["engine"])]
         self.assertEqual(sorted(applied), sorted(APPLIED_RECORDS))
@@ -817,7 +817,7 @@ class StateAndObservationTest(unittest.TestCase):
     def test_no_new_state_or_format(self):
         """状態の項目・書き出しの形式は加えていない（形式 15 のまま。出したポケモンは場に出た番を持つ、ふつうのたねポケモン）。古い形式（場に出た番をログから分かる形）でも
         書き出せる。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 20)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
+        self.assertEqual(max(FORMAT_VERSIONS), 21)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
         state = play(board(mon(HITMONCHAN), hand=(REVIVE,), discard=(HITMONCHAN,)), REVIVE)
         state = answer(state, [discard_uid(state, 0, HITMONCHAN)])
         audited(self, state)

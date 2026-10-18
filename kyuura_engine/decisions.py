@@ -248,6 +248,16 @@ EVOLUTION_HEAL = "evolution_heal"
 # v0.58（docs/stadium-reuse-special-energy-v0.58.md 4 章）: ナツメのサイキックコントロールの「おもて」で、相手のトラッシュから使うトレーナーカード。決めるのは使ったプレイヤー。
 # 選べるものは相手のトラッシュのトレーナーカード（トラッシュの並び。公開の情報）のうち、使えるもの。0〜1 枚（選ばない = 使わない。「使ってよい」）
 USE_DISCARD_TRAINER = "use_discard_trainer"
+# v0.63（docs/hidden-card-trainers-v0.63.md）。どれもトレーナーの効果の途中の決定（再開先は "trainer"、段階は Phase.DECISION）
+# たたきつけろ!挑戦状で、自分の山札から選んでうらにしてベンチに出すたねポケモンのカード。決めるのはそれぞれのプレイヤー（使ったプレイヤー → 相手プレイヤーの順）。選べるものは
+# 自分の山札のたねポケモンのカード（uid の小さい順）。0〜min(ベンチの空き, 選べる枚数) 枚（0 枚は HC5 で止める）。選べるもの・選ぶ数は決めるプレイヤーだけが見る（観測）
+CHALLENGE_BENCH = "challenge_bench"
+# カツラのクイズ その3で、おもてを下にして置く手札のポケモンのカード（ワザを持つもの）。決めるのは使ったプレイヤー。選べるもの・選ぶ数は使ったプレイヤーだけが見る
+QUIZ_CARD = "quiz_card"
+# 置いたカードの、相手に伝えるワザ。選べるものはそのカードのワザの位置。決めるのは使ったプレイヤー（選べるもの・選ぶ数は使ったプレイヤーだけが見る。相手にはワザの名前だけを伝える）
+QUIZ_ATTACK = "quiz_attack"
+# 相手プレイヤーが答えるカードの名前。選べるものは ``context`` の ``"names"``（カードのデータのポケモンの名前の並び。置いたカード・手札によらない）の位置。決めるのは相手プレイヤー
+QUIZ_ANSWER = "quiz_answer"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

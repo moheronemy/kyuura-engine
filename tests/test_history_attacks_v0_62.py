@@ -168,7 +168,7 @@ class RegistryTest(unittest.TestCase):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
         by_category = {c: sum(1 for d in supported if d.category == c) for c in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_category, {"pokemon": 345, "trainer": 85, "energy": 10})
+        self.assertEqual(by_category, {"pokemon": 345, "trainer": 89, "energy": 10})  # v0.63 でトレーナー 4 枚
         self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 586)
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 54)
 
@@ -608,7 +608,7 @@ class HurricaneTest(unittest.TestCase):
 class SaveTest(unittest.TestCase):
     def test_format_20_and_older_formats(self):
         state = act(table(dugtrio()), UseAttack(0, 0))
-        self.assertEqual(LATEST_FORMAT, 20)
+        self.assertEqual(LATEST_FORMAT, 21)
         data = state_to_dict(state, format_version=20)
         self.assertEqual(data["players"][0]["active"]["history"][0]["kind"], "used")
         for version in range(1, 20):

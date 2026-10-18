@@ -129,7 +129,7 @@ class CardDataTest(unittest.TestCase):
             if definition.supported:
                 counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.58 の 329・81・10（420）から、ポケモン 3 枚・トレーナー 3 枚を加えた（332・84・10）。v0.60 でポケモン 4 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (345, 85, 10))  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (345, 89, 10))  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS
@@ -150,8 +150,8 @@ class CardDataTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             self.assertIn(ruling, text)
             self.assertIn(code, text)
-        self.assertEqual(LATEST_FORMAT, 20)
-        self.assertEqual(max(FORMAT_VERSIONS), 20)
+        self.assertEqual(LATEST_FORMAT, 21)
+        self.assertEqual(max(FORMAT_VERSIONS), 21)
 
 
 class GoopGasTest(unittest.TestCase):

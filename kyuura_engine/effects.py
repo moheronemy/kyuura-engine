@@ -108,6 +108,7 @@ from .decisions import (
     ACCEPT_REQUEST, HAND_TO_ACTIVE, OPPONENT_HAND_TO_BENCH, SELECT_HAND_POSITIONS, SWAP_WITH_PRIZE,
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
     DAMAGE_STEP_ORDER,
+    CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -147,6 +148,7 @@ from .stadiums import bench_limit, stadium_in_play
 from .state import (
     ATTACK_DAMAGE_BONUS, BENCH_ATTACK_DAMAGE_PREVENTION, FIRE_DOUBLE_ATTACH, POWER_SUPPRESSION, NEXT_TURN_MULTIPLY, POISON_ON_ATTACK_DAMAGE, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation,
     StadiumInPlay, TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench, turn_owner,
+    SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ, SetAsideCards,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -157,6 +159,7 @@ from .zones import (
     discard_pile_to_deck, deck_top_to_discard,
     hand_to_bench_by_effect, hand_basic_to_active, hand_positions_to_deck, swap_prize_with_hand, take_prize_by_trainer,
     discard_attached_energy_by_stadium, return_attached_energy_by_stadium,
+    reveal_face_down_bench, reveal_prizes, return_set_aside, set_aside_face_down_bench, set_aside_hand, set_aside_quiz_card,
 )
 
 if TYPE_CHECKING:
@@ -17503,6 +17506,328 @@ class UseOpponentDiscardTrainer(TrainerEffect):
         return problems
 
 
+# ---------------------------------------------------------------- v0.63（docs/hidden-card-trainers-v0.63.md）。公開・非公開の状態を扱うトレーナー 4 枚（ロケット団参上!・
+# くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3。どれも kyuura の印刷の文面）
+
+HERE_COMES_TEAM_ROCKET_TEXT = "お互いのプレイヤーのサイドカード全てをおもてにして、お互いのプレイヤーに見えるようにする。(おもてになったサイドカードは、対戦が終わるまでそのまま)"
+TICKLING_MACHINE_TEXT = ("コインを投げて「おもて」なら、次の相手の番の終わりまで、相手プレイヤーは、いま手札として持っているカードをすべて、うらにして置いておく。"
+                         "置いたカードは、相手プレイヤーの手札とはみなされない。(相手プレイヤーは、それらのカードを見ることも、使うこともできない)。"
+                         "コインが「うら」なら、あなたの番は終わりになる。")
+CHALLENGE_TEXT = ("あなたの挑戦を受けるかどうか、相手プレイヤーにたずねる。相手が挑戦を受けないなら、あなたは山札からカードを2枚引く。\n\n\n\n"
+                  "相手が挑戦を受けるのなら、お互いのプレイヤーは、それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す。"
+                  "(お互いが出し終わるまで、ポケモンはうらにしておく)。その後、それぞれの山札をよく切る。")
+BLAINES_QUIZ_3_TEXT = ("あなたの手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く。そのカードが持っているワザの名前を1つ、相手プレイヤーに伝え、"
+                       "そのカードの名前を答えてもらう。その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを3枚引く。"
+                       "正解でないなら、あなたは山札からカードを3枚引く。(置いたカードは、手札にもどす)")
+
+# QZ1（v0.63）: カツラのクイズ その3で、手札にワザを持つポケモンのカードがないとき。説明は「手札から「ポケモン」のカードを1枚選び」「そのカードが持っているワザの名前を
+# 1つ…伝え」で、選べるカードがないときに使えるか（何も起こらずに使い終わるか・使えないか）を書いていない（ほかのカードの「対象がない」ときの問いとは別の問い）
+BLAINES_QUIZ_WITHOUT_POKEMON_CODE = "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON"
+BLAINES_QUIZ_WITHOUT_POKEMON_REASON = (
+    "カツラのクイズ その3: 手札に、ワザを持つポケモンのカードがない（伝えるワザの名前がないので、ワザを持たないポケモンのカード（メタモンなど）は選べない）。"
+    "説明は選べるカードがないときに使えるかを書いていないので決められない（QZ1）。ほかのカードの「対象がない」ときの問いの答えを当てはめない"
+)
+# HC5 と同じ問い（「好きなだけ」（「のぞむなら」のない）で 0 枚を選べるか）の、たたきつけろ!挑戦状の理由の文
+CHALLENGE_ZERO_REASON = (
+    "たたきつけろ!挑戦状: 「それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す」（「のぞむなら」のない「好きなだけ」）で、選べるカードが"
+    "あるのに 0 枚を選べるかは決められないので扱わない（v0.31 の HC5 と同じ言い回しの問い）。1 枚以上を選ぶ"
+)
+
+
+def next_turn_of(state: GameState, player: int) -> int:
+    """v0.63: 今の番より後の、プレイヤー ``player`` の最初の番の番号（番は交互に進む。v0.2e と同じ前提）。くすぐりマシーンの「次の相手の番」。"""
+    turn = state.turn_number + 1
+    return turn if turn_owner(state, turn) == player else turn + 1
+
+
+@dataclass(frozen=True)
+class RevealAllPrizesTrainer(TrainerEffect):
+    """v0.63（docs/hidden-card-trainers-v0.63.md 3 章）: お互いのプレイヤーのサイドをすべておもてにし、対戦が終わるまでそのままにする（ロケット団参上!）。
+
+    - おもてにするのは、使ったときにサイドにあるカード（カードごとに記録する ``GameState.face_up_prizes``。``zones.reveal_prizes``）。あとからサイドに置かれたカード（わるふざけ・
+      カスミのわがままで入れかえたカード）は、おもてにする指示がないので裏のまま。おもてのカードがサイドをはなれたら、記録から除く（手札に来ても手札は公開にならない。
+      取った・入れかえたログには、おもてだったことを書く）
+    - 「お互い」なので、使ったプレイヤー・持ち主・番のプレイヤーによらない（錯乱ジムで相手が使っても同じ）。もう一度使えば、そのときの裏のカードがおもてになる。サイドが
+      0 枚のプレイヤーは何もしない（対戦中にサイドが 0 枚なら対戦は終わっているので、使う前には起こらない）
+    - 英語版の「for the rest of the game」（遊ぶあいだずっとおもて）で、あとから置かれたカードまでおもてにしない
+    """
+
+    text: str
+    implementation_id = "reveal_all_prizes"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("お互いのプレイヤーのサイドカード全てをおもてにして" not in self.text or "対戦が終わるまでそのまま" not in self.text):
+            problems.append("文面と登録の処理（お互いのサイドをすべておもてにする・対戦が終わるまで）が合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        reveal_prizes(state, (use.player, 1 - use.player), trainer=use.card)
+
+
+@dataclass(frozen=True)
+class CoinSetAsideOpponentHandElseEndTurn(TrainerEffect):
+    """v0.63（docs/hidden-card-trainers-v0.63.md 4 章）: コインを投げて「おもて」なら、次の相手の番の終わりまで、相手プレイヤーの手札をすべてうらにして置いておく。「うら」なら
+    あなたの番は終わりになる（くすぐりマシーン。kyuura の種類 rockets_secret_machine）。
+
+    - 置いたカードは手札ではない（``zones.set_aside_hand`` が手札から一時的に置く場所 ``SET_ASIDE_HAND`` に移す。手札に「使えない」印を付けて残さない）。手札の枚数・手札を
+      すべて動かす効果・手札を見る効果（［おみとおし］・スパイ作戦）・使うための条件は、置いたカードを数えない。だれも中身を見られない（持ち主も見られない）
+    - 置いたあとに引いたカードはふつうの手札。次の相手の番の終わり（番の終わりの窓。``procedures.expire_at_turn_end``）に、同じカードを置いた順に持ち主の手札にもどす
+      （``return_turn`` は今の番より後の、相手プレイヤーの最初の番）。対戦が先に終わったら、置いたまま残る（番の終わりが来ない）
+    - 相手の手札が 0 枚なら、置くカードはない（何も起こらない。まとまりを作らない）。くり返し使えば、そのときの手札を別のまとまりとして置く（出どころ・もどす番をそれぞれ持つ）
+    - 「うら」: ``END_TURN`` を返す。エンジンが使用中のカード（サイキックコントロールの外側のカードも）をトラッシュしてから番の終わりに進む（ロケット団員と同じ）
+    - 使ったプレイヤー（``use.player``）の相手の手札を置く。持ち主（カードの持ち主）・番のプレイヤーとは別に扱う。説明が使ったプレイヤーの番を書く（「次の相手の番」「あなたの
+      番は終わり」）ので、錯乱ジムで相手が使うことを選ぶと CH1
+    """
+
+    refers_to_user_turn = True
+
+    text: str
+    implementation_id = "coin_set_aside_opponent_hand_else_end_turn"
+    may_end_turn = True
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self, secret_machine=True)
+        if not problems and ("次の相手の番の終わりまで" not in self.text or "うらにして置いておく" not in self.text or "手札とはみなされない" not in self.text
+                             or "あなたの番は終わりになる" not in self.text):
+            problems.append("文面と登録の処理（相手の手札を置いておく・次の相手の番の終わりまで・番の終わり）が合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse):
+        if not _trainer_coin(state, use):
+            return END_TURN
+        opponent = 1 - use.player
+        set_aside_hand(state, opponent, user=use.player, trainer=use.card, card_id=use.card_id, return_turn=next_turn_of(state, opponent))
+        return None
+
+
+def challenge_candidates(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.63: たたきつけろ!挑戦状で、プレイヤー ``player`` が山札から選べるカード（山札にある間の印刷の定義がたねポケモンのカード。uid の小さい順。なにかの化石・ピッピ人形は
+    山札ではトレーナーカードなので入らない。進化カード・トレーナー・エネルギーは入らない）。"""
+    return tuple(sorted(uid for uid in state.players[player].deck if state.card_def(uid).is_basic_pokemon))
+
+
+def challenge_room(state: GameState, player: int) -> int:
+    """v0.63: プレイヤー ``player`` のベンチの空き（``stadiums.bench_limit``。せまいジムを当てはめた数）。"""
+    return max(0, bench_limit(state, player) - len(state.players[player].bench))
+
+
+@dataclass(frozen=True)
+class ChallengeBenchFromDecks(TrainerEffect):
+    """v0.63（docs/hidden-card-trainers-v0.63.md 5 章）: 挑戦を受けるかを相手プレイヤーにたずね、受けないなら使ったプレイヤーが 2 枚引き、受けるならお互いのプレイヤーが自分の
+    山札からたねポケモンのカードを好きなだけ選んでうらにしてベンチに出し、お互いが出し終わったら表にして、それぞれの山札を切る（たたきつけろ!挑戦状）。
+
+    - たずねる（決定 ``ACCEPT_REQUEST``。決めるのは使ったプレイヤーの相手。この相手の決定は、このカードの ``decision_problems`` だけが許す）。答えはログ ``request_answered``
+    - 受けない: 使ったプレイヤーが 2 枚引く（効果で引く。山札が足りなければ引けるだけ。p.312）。英語版の「(or if both Benches are full)」を持ち込まない
+    - 受ける: 使ったプレイヤー → 相手プレイヤーの順（実装上の順番。うらのまま出すので、あとで選ぶプレイヤーは先のプレイヤーのカードを見ない）に、自分の山札から選ぶ（決定
+      ``CHALLENGE_BENCH``。選べるものは ``challenge_candidates``。0〜min(ベンチの空き, 選べる枚数) 枚）。選んだカードはうらにしてベンチに出す（``zones.set_aside_face_down_bench``。
+      場のポケモンにはしないので、うらのあいだは名前・タイプ・ワザ・特殊能力・履歴がない）。選べるカードがない・ベンチに空きがないプレイヤーは選ばずに次へ（ログ
+      ``challenge_bench_skipped``。理由（山札の中身・ベンチ）は選ぶプレイヤーだけが見る）。選べるカードがあるのに 0 枚を選ぶのは HC5 と同じ問いで止める
+    - お互いが出し終わったら、使ったプレイヤー → 相手プレイヤーの順に、置いた順に表にして場に出す（``zones.reveal_face_down_bench``。``enter_play``。今の番に場に出た）。
+      そのあと、それぞれの山札を切る（使ったプレイヤー → 相手プレイヤー。選ばなかったプレイヤーの山札も切る）
+    - まきちらせ!ベトベトガスの効果のはたらく間に、特殊能力を持つたねポケモンを選ぶと GG1（選べるが選ぶと止める）。場に出たときの特殊能力を持つたねポケモンは写しにない
+      （``placed_entry_power_guard``）
+    """
+
+    text: str
+    implementation_id = "challenge_bench_from_decks"
+    draw: int = 2
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (f"相手が挑戦を受けないなら、あなたは山札からカードを{self.draw}枚引く" not in self.text
+                             or "それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す" not in self.text
+                             or "お互いが出し終わるまで、ポケモンはうらにしておく" not in self.text or "それぞれの山札をよく切る" not in self.text):
+            problems.append("文面と登録の処理（たずねる・引く・お互いに山札からうらにしてベンチに出す・切る）が合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        _ask_opponent(state, use)
+
+    def _offer(self, state: GameState, use: TrainerUse, chooser: int) -> None:
+        candidates = challenge_candidates(state, chooser)
+        room = challenge_room(state, chooser)
+        if not candidates or not room:
+            state.add_event("challenge_bench_skipped", player=chooser, reason="no_candidates" if not candidates else "bench_full", trainer_card=use.card)
+            self._next(state, use, chooser)
+            return
+        stopped = []
+        for uid in candidates:
+            try:
+                goop_gas_entry_check(state, uid, how="enter")
+            except UnsupportedError:
+                stopped.append(uid)
+        if len(stopped) == len(candidates):
+            goop_gas_entry_check(state, candidates[0], how="enter")  # どれを選んでも止まる（0 枚は HC5）ので、この決定を出さない
+        unresolved = {}
+        if stopped:
+            try:
+                goop_gas_entry_check(state, stopped[0], how="enter")
+            except UnsupportedError as error:
+                unresolved = {"unresolved_choices": tuple(stopped), "unresolved_code": error.code, "unresolved_reason": error.message}
+        push_trainer_decision(state, use, kind=CHALLENGE_BENCH, player=chooser, options=candidates, min_choices=0, max_choices=min(room, len(candidates)),
+                              context=(("chooser", chooser),), **unresolved)
+
+    def _next(self, state: GameState, use: TrainerUse, chooser: int) -> None:
+        if chooser == use.player:
+            self._offer(state, use, 1 - use.player)
+            return
+        for player in (use.player, 1 - use.player):
+            group = next((g for g in state.set_aside if g.kind == SET_ASIDE_FACE_DOWN_BENCH and g.owner == player and g.trainer_card == use.card), None)
+            if group is not None:
+                for uid in group.cards:
+                    placed_entry_power_guard(state, uid)
+                reveal_face_down_bench(state, group)
+        for player in (use.player, 1 - use.player):
+            shuffle_deck(state, player)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == ACCEPT_REQUEST:
+            _answer_request(state, use, accepted=bool(choices))
+            if choices:
+                self._offer(state, use, use.player)
+            else:
+                _draw_up_to(state, use.player, self.draw)
+            return
+        chooser = decision.context_value("chooser")
+        if not choices:
+            raise UnsupportedError(DISCARD_ANY_NUMBER_ZERO_CODE, CHALLENGE_ZERO_REASON)
+        set_aside_face_down_bench(state, chooser, tuple(choices), user=use.player, trainer=use.card, card_id=use.card_id)
+        self._next(state, use, chooser)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        answers = _stage_events(state, use, "request_answered")
+        if decision.kind == ACCEPT_REQUEST:
+            problems = _decided_by(decision, 1 - use.player, what)
+            if decision.options != (1,) or (decision.min_choices, decision.max_choices) != (0, 1) or answers:
+                problems.append(f"{what}のたずねる決定 {decision.options} が、まだ答えていない 1 つの 0〜1 個ではない")
+            return problems
+        chooser = decision.context_value("chooser")
+        if decision.kind != CHALLENGE_BENCH or chooser not in (use.player, 1 - use.player):
+            return [f"{what}の決定 {decision.kind}（選ぶプレイヤー {chooser!r}）が正しくない"]
+        problems = _decided_by(decision, chooser, what)
+        candidates = challenge_candidates(state, chooser)
+        if decision.options != candidates or (decision.min_choices, decision.max_choices) != (0, min(challenge_room(state, chooser), len(candidates))) \
+                or not candidates:
+            problems.append(f"{what}の決定 {decision.options} {decision.min_choices}〜{decision.max_choices} が、プレイヤー {chooser} の山札のたねポケモン {candidates} と"
+                            "ベンチの空きから決まる形ではない")
+        if [a.get("accepted") for a in answers] != [True]:
+            problems.append(f"{what}の山札から選ぶ決定が、相手が挑戦を受けたあとではない")
+        placed = {g.owner for g in state.set_aside if g.kind == SET_ASIDE_FACE_DOWN_BENCH and g.trainer_card == use.card}
+        if chooser in placed or (chooser == use.player and placed):
+            problems.append(f"{what}の山札から選ぶ決定（プレイヤー {chooser}）の前に、うらにして出したカード {sorted(placed)} が正しくない")
+        return problems
+
+
+def quiz_candidates(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.63: カツラのクイズ その3で、プレイヤー ``player`` が手札から選べるカード（手札にある間の印刷の定義がポケモンのカードで、ワザを 1 つ以上持つもの。手札の並び）。
+    なにかの化石・ピッピ人形は手札ではトレーナーカード。ワザを持たないポケモンのカード（メタモン）は、伝えるワザの名前がないので入らない。"""
+    return tuple(uid for uid in state.players[player].hand if state.card_def(uid).category == "pokemon" and state.card_def(uid).attacks)
+
+
+def quiz_answer_names(state: GameState) -> tuple[str, ...]:
+    """v0.63: カツラのクイズ その3で、相手プレイヤーが答えられるカードの名前（同梱のカードのデータ（写し）と、この対戦のカードの定義の、ポケモンのカードの名前。重ねず、
+    文字の順）。置いたカード・手札・山札によらず決まる（答えの候補から置いたカードを推測できない）。同じ名前の別のカード（収録の違う同じ名前）は 1 つの名前。"""
+    from .cards import load_card_pool
+
+    names = {d.name_ja for d in load_card_pool().definitions.values() if d.category == "pokemon"}
+    names |= {d.name_ja for d in state.definitions.values() if d.category == "pokemon"}
+    return tuple(sorted(names))
+
+
+def _quiz_group(state: GameState, use: TrainerUse) -> SetAsideCards | None:
+    return next((g for g in state.set_aside if g.kind == SET_ASIDE_QUIZ and g.trainer_card == use.card), None)
+
+
+@dataclass(frozen=True)
+class BlainesQuiz(TrainerEffect):
+    """v0.63（docs/hidden-card-trainers-v0.63.md 6 章）: 手札のポケモンのカードを 1 枚おもてを下にして置き、そのカードのワザの名前を 1 つ相手プレイヤーに伝え、相手がカードの名前を
+    答える。そのあと置いたカードをおもてにして、正解なら相手プレイヤーが、正解でないなら使ったプレイヤーが 3 枚引く。置いたカードは手札にもどす（カツラのクイズ その3）。
+
+    - 説明の順: 選んで置く（決定 ``QUIZ_CARD``。``zones.set_aside_quiz_card``。置いたカードは手札ではなく、使ったプレイヤーだけが見る）→ ワザの名前を伝える（決定
+      ``QUIZ_ATTACK``。そのカードのワザの位置から 1 つ。相手に伝えるのはワザの名前だけ（ログ ``quiz_hint``）。カードの id・収録・HP は伝えない）→ 相手が答える（決定
+      ``QUIZ_ANSWER``。決めるのは相手プレイヤー。答えの候補は ``quiz_answer_names``。手札にない名前も答えられる）→ おもてにする（ログ ``quiz_reveal``。正解かを書く）→ 引く
+      （効果で引く。山札が足りなければ引けるだけ）→ 手札にもどす（``zones.return_set_aside``）。置いたカードと伝えたワザは、答えの前に決まり（続きの情報・置いた場所）、あとで
+      入れかえない
+    - 正解: 答えの名前が置いたカードの名前と同じ（同じ名前の別の収録のカードも正解。「わるい」「○○の」の付いた名前は別の名前）。候補にない値の答えは不正な操作（決定は
+      待ったまま）で、正解でない答えとは別
+    - 手札にワザを持つポケモンのカードがなければ QZ1 で使う前に止める
+    """
+
+    text: str
+    implementation_id = "blaines_quiz"
+    draw: int = 3
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く" not in self.text or "ワザの名前を1つ、相手プレイヤーに伝え" not in self.text
+                             or f"正解なら、相手プレイヤーは山札からカードを{self.draw}枚引く" not in self.text
+                             or f"正解でないなら、あなたは山札からカードを{self.draw}枚引く" not in self.text or "置いたカードは、手札にもどす" not in self.text):
+            problems.append("文面と登録の処理（置く・ワザの名前を伝える・答える・引く・手札にもどす）が合わない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not [uid for uid in quiz_candidates(state, use.player) if uid != use.card]:
+            raise UnsupportedError(BLAINES_QUIZ_WITHOUT_POKEMON_CODE, BLAINES_QUIZ_WITHOUT_POKEMON_REASON)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=QUIZ_CARD, player=use.player, options=quiz_candidates(state, use.player))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == QUIZ_CARD:
+            set_aside_quiz_card(state, use.player, choices[0], trainer=use.card, card_id=use.card_id)
+            attacks = state.card_def(choices[0]).attacks
+            push_trainer_decision(state, use, kind=QUIZ_ATTACK, player=use.player, options=range(len(attacks)), context=(("quiz_card", choices[0]),))
+            return
+        card = decision.context_value("quiz_card")
+        if decision.kind == QUIZ_ATTACK:
+            hint = state.card_def(card).attacks[choices[0]].name_ja
+            state.add_event("quiz_hint", player=use.player, attack_name=hint, trainer_card=use.card)
+            names = quiz_answer_names(state)
+            push_trainer_decision(state, use, kind=QUIZ_ANSWER, player=1 - use.player, options=range(len(names)),
+                                  context=(("quiz_card", card), ("hint", hint), ("names", names)))
+            return
+        answer = decision.context_value("names")[choices[0]]
+        name = state.card_def(card).name_ja
+        correct = answer == name
+        state.add_event("quiz_answer", player=1 - use.player, answer=answer, trainer_card=use.card)
+        state.add_event("quiz_reveal", player=use.player, card=card, card_id=state.cards[card].card_id, name=name, correct=correct, trainer_card=use.card)
+        _draw_up_to(state, 1 - use.player if correct else use.player, self.draw)
+        return_set_aside(state, _quiz_group(state, use), reason="quiz")
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        group = _quiz_group(state, use)
+        if decision.kind == QUIZ_CARD:
+            problems = _decided_by(decision, use.player, what)
+            candidates = quiz_candidates(state, use.player)
+            if decision.options != candidates or not candidates or (decision.min_choices, decision.max_choices) != (1, 1) or group is not None:
+                problems.append(f"{what}の置くカードを選ぶ決定 {decision.options} が、まだ置いていない手札のワザを持つポケモン {candidates} から 1 枚ではない")
+            return problems
+        card = decision.context_value("quiz_card")
+        if group is None or group.cards != (card,) or group.owner != use.player:
+            return [f"{what}の決定 {decision.kind} の置いたカード {card!r} が、置いた場所 {group} と合わない"]
+        attacks = state.card_def(card).attacks
+        if decision.kind == QUIZ_ATTACK:
+            problems = _decided_by(decision, use.player, what)
+            if decision.options != tuple(range(len(attacks))) or (decision.min_choices, decision.max_choices) != (1, 1):
+                problems.append(f"{what}のワザを選ぶ決定 {decision.options} が、置いたカードのワザの位置から 1 つではない")
+            return problems
+        if decision.kind != QUIZ_ANSWER:
+            return [f"{what}の決定 {decision.kind} が正しくない"]
+        problems = _decided_by(decision, 1 - use.player, what)
+        names = decision.context_value("names")
+        hint = decision.context_value("hint")
+        hints = [e["attack_name"] for e in _stage_events(state, use, "quiz_hint")]
+        if not isinstance(names, tuple) or list(names) != sorted(set(names)) or state.card_def(card).name_ja not in names \
+                or decision.options != tuple(range(len(names))) or (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}の答える決定の候補が、置いたカードの名前を含む重ならない名前の並びではない")
+        if hint not in {a.name_ja for a in attacks} or hints != [hint]:
+            problems.append(f"{what}の伝えたワザ {hint!r} が、置いたカードのワザ・伝えたログ {hints} と合わない")
+        return problems
+
+
 DEFAULT_EFFECTS = EffectRegistry(
     "kyuura-engine-0.13",
     _damage_only([
@@ -21699,6 +22024,17 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG5-076": TrainerEntry(AttackCoinStadium(VERMILION_GYM_TEXT), "クチバシティジム", VERMILION_GYM_TEXT, VERMILION_GYM_TEXT, _KYUURA_PRINTED_TEXT),
         "PMCG5-094": TrainerEntry(ExtraTrainerCostStadium(NO_REMOVAL_GYM_TEXT), "リムーブ禁止ジム", NO_REMOVAL_GYM_TEXT, NO_REMOVAL_GYM_TEXT, _KYUURA_PRINTED_TEXT),
         "PMCG5-087": TrainerEntry(TrainerCoinStadium(CHAOS_GYM_TEXT), "錯乱ジム", CHAOS_GYM_TEXT, CHAOS_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.63（docs/hidden-card-trainers-v0.63.md。どれも kyuura の印刷の文面）
+        # ロケット団参上!: お互いのサイドをすべておもてにする（そのときサイドにあるカード。対戦が終わるまでおもて）
+        "PMCG4-062": TrainerEntry(RevealAllPrizesTrainer(HERE_COMES_TEAM_ROCKET_TEXT), "ロケット団参上!", HERE_COMES_TEAM_ROCKET_TEXT, HERE_COMES_TEAM_ROCKET_TEXT,
+                                  _KYUURA_PRINTED_TEXT),
+        # くすぐりマシーン: 「おもて」なら相手の手札をすべてうらにして置いておく（手札ではない。次の相手の番の終わりに手札にもどす）。「うら」なら番が終わる
+        "PMCG6-084": TrainerEntry(CoinSetAsideOpponentHandElseEndTurn(TICKLING_MACHINE_TEXT), "くすぐりマシーン", TICKLING_MACHINE_TEXT, TICKLING_MACHINE_TEXT,
+                                  _KYUURA_PRINTED_TEXT),
+        # たたきつけろ!挑戦状: 相手にたずね、受けないなら 2 枚引く。受けるならお互いに山札からたねポケモンを好きなだけうらにしてベンチに出し、表にして、山札を切る
+        "PMCG4-058": TrainerEntry(ChallengeBenchFromDecks(CHALLENGE_TEXT), "たたきつけろ!挑戦状", CHALLENGE_TEXT, CHALLENGE_TEXT, _KYUURA_PRINTED_TEXT),
+        # カツラのクイズ その3: 手札のポケモンを置き、ワザの名前を伝え、相手が名前を答える。正解なら相手、正解でないなら自分が 3 枚引き、置いたカードを手札にもどす
+        "PMCG6-082": TrainerEntry(BlainesQuiz(BLAINES_QUIZ_3_TEXT), "カツラのクイズ その3", BLAINES_QUIZ_3_TEXT, BLAINES_QUIZ_3_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

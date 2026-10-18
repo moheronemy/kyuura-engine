@@ -150,8 +150,8 @@ class CardDataTest(unittest.TestCase):
             if definition.supported:
                 counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.59 の 332・84・10（426）から、ポケモン 4 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (345, 85, 10))  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた
-        self.assertEqual(sum(counts.values()), 440)  # v0.62 でポケモン 6 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (345, 89, 10))  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた
+        self.assertEqual(sum(counts.values()), 444)  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS
@@ -182,8 +182,8 @@ class CardDataTest(unittest.TestCase):
             self.assertIn(code, text)
         self.assertEqual(QUESTIONS["bench_coin_transparency_order"].code, "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER")
         self.assertIsNone(QUESTIONS["speed_star_scope"].code)  # 今の写しでは起こらない
-        self.assertEqual(LATEST_FORMAT, 20)
-        self.assertEqual(max(FORMAT_VERSIONS), 20)  # 形式は増やしていない
+        self.assertEqual(LATEST_FORMAT, 21)
+        self.assertEqual(max(FORMAT_VERSIONS), 21)  # 形式は増やしていない
 
 
 class ThunderstormTest(unittest.TestCase):

@@ -168,6 +168,11 @@ from .state import (
     ReducedDamageToSource,
     Retaliation,
     TERMINAL_PHASES,
+    SET_ASIDE_FACE_DOWN_BENCH,
+    SET_ASIDE_HAND,
+    SET_ASIDE_KINDS,
+    SET_ASIDE_QUIZ,
+    SetAsideCards,
     Asleep,
     CardInstance,
     Confused,
@@ -474,16 +479,15 @@ _ALTERNATIVE_ANSWER_LIMIT = 256
 def _decision_has_unstopped_answer(state: GameState, context: resolution.Context | None) -> bool:
     """保留中の決定に、決められない姿（v0.49）・最大HPの低下（MH1）にならない、受け付けられる答えがあるか。答えを 1 つずつ状態の複製の上で試す（状態を変えない）。
     答えの数が上限を超える決定は、あるとみなす（止めずに、そのコマンドを受け付けないだけ）。"""
-    from .resolution.programs import all_answers
+    from .resolution.programs import answer_count, iter_answers
 
     decision = state.decision
     if decision is None:
         return True
     handler = _HANDLERS[ResolveDecision]  # バトル場に出す・サイドを取る決定も、決定への答え（``ResolveDecision``）で試す
-    answers = all_answers(decision)
-    if len(answers) > _ALTERNATIVE_ANSWER_LIMIT:
-        return True
-    for choices in answers:
+    if answer_count(decision) > _ALTERNATIVE_ANSWER_LIMIT:
+        return True  # v0.63: 答えの並びを作らずに数える（たたきつけろ!挑戦状の「好きなだけ」は答えが多い）
+    for choices in iter_answers(decision):
         trial = state.clone()
         try:
             handler(trial, ResolveDecision(decision.player, decision.id, tuple(choices)), _context(state, context.preflight if context else "derived",
@@ -500,7 +504,7 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
     MH1）にならない答えの続きがなければ、止める (コード, 理由の文)（v0.49）。あれば None。答えを状態の複製の上で深さ優先で試し（状態を変えない）、続きが 1 つ見つかれば
     やめる。試す数が上限を超えたら、あるとみなす（止めない）。v0.48 までに起こる決定は、使うための条件の確認（``check_playable``）で続きがあることが決まっている
     （最初の答えで見つかる）。"""
-    from .resolution.programs import all_answers
+    from .resolution.programs import iter_answers
 
     handler = _HANDLERS[ResolveDecision]
     budget = [_ALTERNATIVE_ANSWER_LIMIT]
@@ -509,7 +513,7 @@ def _trainer_dead_end(before: GameState, after: GameState, context: resolution.C
 
     def reachable(state: GameState) -> bool:
         decision = state.decision
-        for choices in all_answers(decision):
+        for choices in iter_answers(decision):  # v0.63: 1 つずつ作る（上限で止めたら、残りの答えを作らない）
             budget[0] -= 1
             if budget[0] < 0:
                 return True
@@ -1190,7 +1194,9 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context, *, en
         # v0.56: 説明の「あなたの番は終わりになる」（ロケット団員の「うら」）。カードをトラッシュしてから、番の終わりの窓（期限 → ポケモンチェック → 次の番）に進む
         if effect.may_knock_out or effect.empties_active or effect.takes_prizes:
             raise RuntimeError(f"番を終えるトレーナー {type(effect).__name__} が、きぜつ・場をはなれる・サイドの処理も持つ（今の対応カードにない組み合わせ。エンジンの不具合）")
-        resolution.end_turn_after_trainer(state, context, used.player, used.card)
+        # v0.63: 番を終えるのは使ったプレイヤー（``using_player``）。サイキックコントロールで相手のトラッシュから使ったカードは ``player`` が持ち主（相手）なので、
+        # v0.62 まではここで NOT_YOUR_TURN になっていた（ロケット団員も同じ。docs/hidden-card-trainers-v0.63.md 8 章）
+        resolution.end_turn_after_trainer(state, context, used.using_player, used.card)
         return
     if effect.may_knock_out or effect.empties_active or effect.takes_prizes:
         # v0.52: 自分のバトル場のポケモンを場からはなれさせうるトレーナー（``empties_active``。ポケモン回収）も、使い終わってから勝ち負けの判定・バトル場に出す決定をする
@@ -1692,6 +1698,13 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append(f"外側のトレーナーの持ち主 {outer.player!r} が正しくない")
         else:
             place(outer.card, outer.player, "使用中のトレーナー（外側）")
+    # v0.63: 一時的に置いておくカード（くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3）も、持ち主のゾーンの 1 つとして数える（手札・山札・ベンチとは別の場所）
+    for group in state.set_aside:
+        if getattr(group, "owner", None) not in PLAYERS:
+            problems.append(f"置いておくカード {group!r} の持ち主が正しくない")
+            continue
+        for uid in group.cards:
+            place(uid, group.owner, f"置いておくカード（{group.kind}）")
     missing = set(state.cards) - set(seen)
     if missing:
         problems.append(f"どこにもないカード {sorted(missing)}")
@@ -1722,6 +1735,8 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_trainer_effect_problems(state))  # v0.56
     problems.extend(_energy_role_problems(state))  # v0.59
     problems.extend(_history_problems(state))  # v0.62
+    problems.extend(_set_aside_problems(state))  # v0.63
+    problems.extend(_face_up_prize_problems(state))  # v0.63
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
@@ -1729,6 +1744,8 @@ def check_invariants(state: GameState) -> list[str]:
             problems.append("対戦が終わっているのに、決定が残っている")
         if state.trainer_in_use is not None or state.trainer_stack:
             problems.append("対戦が終わっているのに、使用中のトレーナーが残っている")
+        if any(group.kind != SET_ASIDE_HAND for group in state.set_aside):
+            problems.append("対戦が終わっているのに、トレーナーの効果の途中に置いたカード（挑戦状・クイズ）が残っている")
         if phase is Phase.HALTED and state.halt is None:
             problems.append("止めた理由がないまま HALTED になっている")
         if phase is not Phase.HALTED and state.result is None:
@@ -3613,6 +3630,96 @@ def _decision_problems(state: GameState) -> list[str]:
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
+    return problems
+
+
+def _set_aside_problems(state: GameState) -> list[str]:
+    """v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカードのまとまり（``GameState.set_aside``）の形。
+
+    - 種類・持ち主・使ったプレイヤー・置いた番・カード（重ならない 1 枚以上）・見られるプレイヤー（くすぐりマシーンはだれも見ない、挑戦状・クイズは持ち主だけ）
+    - くすぐりマシーン（``SET_ASIDE_HAND``）: もどす番は置いた番より後で、対戦が続いていれば今の番より前ではない（期限の番の終わりに手札にもどす）。置いたトレーナーのカードは
+      くすぐりマシーンの実装（``CoinSetAsideOpponentHandElseEndTurn``）で、持ち主は使ったプレイヤーの相手
+    - 挑戦状・クイズ: トレーナーの効果の途中だけにある（使用中のトレーナーがそのカードで、その決定を待っている）。もどす番はない。挑戦状はたねポケモンのカード（山札から選んだ）で、
+      持ち主のベンチと合わせてベンチの上限まで。持ち主ごとに 1 つ。クイズは使ったプレイヤーのワザを持つポケモンのカード 1 枚
+    - ログ: 置いたログ（``set_aside_hand``・``face_down_bench``・``quiz_card_set``）があり、同じカードで、そのあとにもどした・表にしたログがない"""
+    problems: list[str] = []
+    if not isinstance(state.set_aside, tuple):
+        return [f"置いておくカードの並び {state.set_aside!r} がタプルではない"]
+    used = state.trainer_in_use
+    waiting = used is not None and state.decision is not None and state.decision.resume == "trainer"
+    seen_kinds: set = set()
+    put_events = {"set_aside_hand": SET_ASIDE_HAND, "face_down_bench": SET_ASIDE_FACE_DOWN_BENCH, "quiz_card_set": SET_ASIDE_QUIZ}
+    for group in state.set_aside:
+        if not isinstance(group, SetAsideCards) or group.kind not in SET_ASIDE_KINDS or group.owner not in PLAYERS or group.user not in PLAYERS:
+            problems.append(f"置いておくカード {group!r} の形が正しくない")
+            continue
+        cards = group.cards
+        if not cards or not isinstance(cards, tuple) or len(set(cards)) != len(cards) or any(uid not in state.cards for uid in cards):
+            problems.append(f"置いておくカード {group} のカードが正しくない")
+            continue
+        expected_visible = () if group.kind == SET_ASIDE_HAND else (group.owner,)
+        if group.visible_to != expected_visible:
+            problems.append(f"置いておくカード {group} の見られるプレイヤー {group.visible_to} が {expected_visible} ではない")
+        if not 1 <= group.created_turn <= state.turn_number or group.trainer_card not in state.cards or state.cards[group.trainer_card].card_id != group.card_id:
+            problems.append(f"置いておくカード {group} の置いた番・トレーナーのカードが正しくない")
+            continue
+        if group.kind == SET_ASIDE_HAND:
+            entry = state.effects.trainer_entry(group.card_id)
+            if entry is None or entry.effect.implementation_id != "coin_set_aside_opponent_hand_else_end_turn" or group.owner != 1 - group.user:
+                problems.append(f"手札を置いておくまとまり {group} の出どころ（トレーナー・持ち主）が正しくない")
+            ongoing = state.phase not in TERMINAL_PHASES
+            if not isinstance(group.return_turn, int) or group.return_turn <= group.created_turn or (ongoing and group.return_turn < state.turn_number):
+                problems.append(f"手札を置いておくまとまり {group} のもどす番 {group.return_turn!r} が正しくない（今の番 {state.turn_number}）")
+            elif group.return_turn != next_turn_after(state, group.created_turn, group.owner):
+                problems.append(f"手札を置いておくまとまり {group} のもどす番 {group.return_turn} が、置いた番のあとの持ち主の最初の番ではない")
+        else:
+            if group.return_turn is not None or not waiting or used.card != group.trainer_card or group.created_turn != state.turn_number:
+                problems.append(f"トレーナーの効果の途中に置いたカード {group} が、そのトレーナーの決定を待つ間ではない")
+            key = (group.kind, group.owner)
+            if key in seen_kinds:
+                problems.append(f"プレイヤー {group.owner} の {group.kind} のまとまりが 2 つある")
+            seen_kinds.add(key)
+            if group.kind == SET_ASIDE_FACE_DOWN_BENCH:
+                if any(not state.card_def(uid).is_basic_pokemon for uid in cards):
+                    problems.append(f"うらにしてベンチに出したカード {cards} に、たねポケモンでないカードがある")
+                if len(state.players[group.owner].bench) + len(cards) > _bench_limit_or_default(state, group.owner):
+                    problems.append(f"プレイヤー {group.owner} のベンチとうらにして出したカードが、ベンチの上限より多い")
+            elif len(cards) != 1 or group.owner != group.user or state.card_def(cards[0]).category != "pokemon" or not state.card_def(cards[0]).attacks:
+                problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーのワザを持つポケモンのカード 1 枚ではない")
+        put = [e for e in state.log if put_events.get(e["kind"]) == group.kind and e.get("player") == group.owner and e.get("trainer_card") == group.trainer_card
+               and tuple(e.get("cards", (e.get("card"),))) == cards]
+        if not put:
+            problems.append(f"置いておくカード {group} を置いたログがない")
+        else:
+            after = state.log[state.log.index(put[-1]) + 1:]
+            if any(e["kind"] in ("set_aside_returned", "face_down_revealed") and e.get("trainer_card") == group.trainer_card and e.get("player") == group.owner
+                   and tuple(e.get("cards", ())) == cards for e in after):
+                problems.append(f"置いておくカード {group} を、もどした・表にしたログのあとに、まだ置いている")
+    return problems
+
+
+def next_turn_after(state: GameState, turn: int, player: int) -> int:
+    """v0.63: 番 ``turn`` より後の、プレイヤー ``player`` の最初の番（番は交互に進む）。"""
+    following = turn + 1
+    return following if turn_owner(state, following) == player else following + 1
+
+
+def _face_up_prize_problems(state: GameState) -> list[str]:
+    """v0.63: おもてのサイドの記録（``GameState.face_up_prizes``。ロケット団参上!）が、重ならず、どれもいまサイドにあるカードで、おもてにしたログ（``prizes_revealed``）の
+    カードであること（あとからサイドに置かれたカードはおもてにならない）。"""
+    face_up = state.face_up_prizes
+    if not isinstance(face_up, tuple) or len(set(face_up)) != len(face_up):
+        return [f"おもてのサイドの記録 {face_up!r} が重ならない並びではない"]
+    if not face_up:
+        return []
+    problems = []
+    prizes = {uid for p in state.players for uid in p.prizes}
+    revealed = {uid for e in state.log if e["kind"] == "prizes_revealed" for uid in e["cards"]}
+    for uid in face_up:
+        if uid not in prizes:
+            problems.append(f"おもてのサイドの記録のカード {uid} が、サイドにない")
+        if uid not in revealed:
+            problems.append(f"おもてのサイドの記録のカード {uid} を、おもてにしたログがない")
     return problems
 
 

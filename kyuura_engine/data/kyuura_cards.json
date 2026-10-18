@@ -619,6 +619,12 @@
     "PMCG6-060",
     "PMCG2-041"
   ],
+  "pool_v0_63": [
+    "PMCG4-062",
+    "PMCG6-084",
+    "PMCG4-058",
+    "PMCG6-082"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -35436,6 +35442,162 @@
         "series": "ポケモンジャングル",
         "remarks": [],
         "source": "https://nazonobasho.com/pmcg02-043-beroringa/"
+      }
+    },
+    {
+      "id": "PMCG4-062",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団参上!",
+        "en": "Here Comes Team Rocket!"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いのプレイヤーのサイドカード全てをおもてにして、お互いのプレイヤーに見えるようにする。(おもてになったサイドカードは、対戦が終わるまでそのまま)",
+          "en": "Each player plays with his or her Prize cards face up for the rest of the game."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG4-062",
+        "pokemontcg": [
+          "base5-15",
+          "base5-71"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg04-062-rocketdansanjyo/",
+      "jp_print": {
+        "level": null,
+        "rarity": "☆(R)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg04-062-rocketdansanjyo/"
+      }
+    },
+    {
+      "id": "PMCG6-084",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "くすぐりマシーン",
+        "en": "Tickling Machine"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "rockets_secret_machine"
+        ],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、次の相手の番の終わりまで、相手プレイヤーは、いま手札として持っているカードをすべて、うらにして置いておく。置いたカードは、相手プレイヤーの手札とはみなされない。(相手プレイヤーは、それらのカードを見ることも、使うこともできない)。コインが「うら」なら、あなたの番は終わりになる。",
+          "en": "Flip a coin. If heads, your opponent sets aside all the cards in his or her hand face down. Nobody may look at those cards. At the end of your opponent's next turn, your opponent puts those cards back into his or her hand. If tails, your turn ends immediately (you can't attack this turn)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "print",
+          "summary": "英語版の分類表記の誤植",
+          "ja": "―",
+          "en": "Gym Heroes 版は「Rocket's Secret Machine」とすべきところが「Rocket's Secret Robot」と誤植された",
+          "confidence": "有力",
+          "sources": [
+            "X9"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-084",
+        "pokemontcg": [
+          "gym1-119"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%8F%E3%81%99%E3%81%90%E3%82%8A%E3%83%9E%E3%82%B7%E3%83%BC%E3%83%B3",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%8F%E3%81%99%E3%81%90%E3%82%8A%E3%83%9E%E3%82%B7%E3%83%BC%E3%83%B3"
+      }
+    },
+    {
+      "id": "PMCG4-058",
+      "jp_set": "PMCG4",
+      "category": "trainer",
+      "name": {
+        "ja": "たたきつけろ!挑戦状",
+        "en": "Challenge!"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの挑戦を受けるかどうか、相手プレイヤーにたずねる。相手が挑戦を受けないなら、あなたは山札からカードを2枚引く。\n\n\n\n相手が挑戦を受けるのなら、お互いのプレイヤーは、それぞれの山札から好きなだけポケモンカード(進化カード以外)を選び出し、ベンチに出す。(お互いが出し終わるまで、ポケモンはうらにしておく)。その後、それぞれの山札をよく切る。",
+          "en": "Ask your opponent if he or she accepts your challenge. If your opponent declines (or if both Benches are full), draw 2 cards. If your opponent accepts, each of you searches your decks for any number of Basic Pokémon cards and puts them face down onto your Benches. (A player can't do this if his or her Bench is full.) When you both have finished, shuffle your decks and turn those cards face up."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "「!」の後の空白の有無はデータにより異なる"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG4-058",
+        "pokemontcg": [
+          "base5-74"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/mcg04-054-tatakitsukerochosenjo/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "ロケット団",
+        "remarks": [],
+        "source": "https://nazonobasho.com/mcg04-054-tatakitsukerochosenjo/"
+      }
+    },
+    {
+      "id": "PMCG6-082",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラのクイズ その3",
+        "en": "Blaine's Quiz #3"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札から「ポケモン」のカードを1枚選び、おもてを下にして、置く。そのカードが持っているワザの名前を1つ、相手プレイヤーに伝え、そのカードの名前を答えてもらう。その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを3枚引く。正解でないなら、あなたは山札からカードを3枚引く。(置いたカードは、手札にもどす)",
+          "en": "Put a Basic or Evolution card from your hand face down in front of you and tell your opponent the name of an attack of that card. Your opponent guesses the name of that card. Flip the card over. If your opponent guessed right, he or she draws 3 cards. If your opponent guessed wrong, you draw 3 cards. Either way, return the card to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-082",
+        "pokemontcg": [
+          "gym2-112"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AF%E3%82%A4%E3%82%BA_%E3%81%9D%E3%81%AE3",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AF%E3%82%A4%E3%82%BA_%E3%81%9D%E3%81%AE3"
       }
     },
     {

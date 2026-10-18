@@ -468,6 +468,8 @@ V0_61 = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
 # タケシのダグトリオ（タケシのディグダから進化）・ベロリンガ（kyuura の確定した修正を当てはめた写し）
 PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG = "PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041"
 V0_62 = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
+HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3 = "PMCG4-062", "PMCG6-084", "PMCG4-058", "PMCG6-082"
+V0_63_TRAINERS = (HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -740,6 +742,14 @@ DECKS = {
     "H62": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), *TRAINERS, (GRASS, 15), (WATER, 14)),
     # v0.62: 闘・無色。タケシのディグダ → タケシのダグトリオ（あながくれ・ドリルホール）・オニスズメ → オニドリル・ベロリンガ
     "D62": ((BROCKS_DIGLETT, 4), (BROCKS_DUGTRIO, 3), (SPEAROW, 3), (FEAROW, 2), (LICKITUNG, 3), *TRAINERS, (FIGHTING, 20), (GRASS, 13)),
+    # v0.63: 無色（エネルギーは草・水）。ポッポ → ピジョン → ピジョット・オニスズメ → オニドリル・ベロリンガ（カツラのクイズで置くワザのあるポケモン）と、v0.63 の 4 枚・
+    # おもてになったサイドを取る・入れかえるマチスの交渉・カスミのわがまま
+    "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
+            (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
+    # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
+    # v0.63 の 4 枚
+    "Q63": ((BROCKS_DIGLETT, 4), (BROCKS_DUGTRIO, 3), (BROCKS_MANKEY, 4), (BROCKS_PRIMEAPE, 3), (BROCKS_GEODUDE, 4), (HERE_COMES_TEAM_ROCKET, 2),
+            (TICKLING_MACHINE, 3), (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (driver.BILL, 2), (SWITCH, 2), (FIGHTING, 27)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -824,6 +834,10 @@ PAIRINGS_V0_61 = (("G61", "P61"), ("P61", "M60"), ("G61", "Z60"), ("G61", "P31")
 # オニスズメのオウムがえし（マヒを与える・OM2）・ハリケーンとファイナルビーム）・D62 対 M60（はんげき・「とうめい」・はんこうのあとのドリルホール・オウムがえし）・
 # H62 対 P31（ピッピ・ピクシー・カスミのコダックが、オウムがえし・ドリルくちばし・ハリケーンを自分のワザとして使う）。``run`` が席を入れかえる
 PAIRINGS_V0_62 = (("H62", "D62"), ("H62", "G61"), ("D62", "M60"), ("H62", "P31"))
+# v0.63: T63 対 Q63（どちらの席でも 4 枚を使う。挑戦状を受ける・受けない、クイズの正解・不正解、くすぐりマシーンで置いた手札がもどる、ロケット団参上! のあとの
+# マチスの交渉・カスミのわがまま・サイドを取る）・T63 対 H62（v0.62 のオウムがえし・ハリケーンと、相手の手札を置いておく）・Q63 対 K56（ロケット団の実験・
+# キョウの効果と、挑戦状・クイズ）。``run`` が席を入れかえる
+PAIRINGS_V0_63 = (("T63", "Q63"), ("T63", "H62"), ("Q63", "K56"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -831,7 +845,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
-           "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62}
+           "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2909,6 +2923,119 @@ def v061_uses(state):
     return {k: v for k, v in counts.items() if v}
 
 
+def _v063_decision(state, counts):
+    """v0.63 の決定への答え（元の手順より先に答える。相手の決定にも答える）。
+
+    - 挑戦状のたずねる決定: 受ける・受けないを、番の番号とカードの番号で回す（``…_accept``・``…_refuse``）
+    - 挑戦状のうらにしてベンチに出すたねポケモン: 選べるものがあれば 1 匹 → 出せるだけ → 1 匹 の順に回す（0 匹は HC5 なので選ばない）。選ぶと止める選択（GG1）は除く
+    - クイズのポケモン: 選べるものを順に、ワザ: 選べる位置を順に、答え: 正解・不正解を同じように回す（``…_answer_correct``・``…_wrong``）
+    受け付けない答えは次の候補（``_v052_accepted``）。"""
+    d = state.decision
+    if d is None or d.resume != "trainer":
+        return None
+    use = d.context_value("use")
+    if use is None or use[2] not in (CHALLENGE, BLAINES_QUIZ_3):
+        return None
+    # 回し方の番号は状態から決める（手順が同じ決定に何度か呼ばれても同じ答えにする）
+    seen = state.turn_number // 2 + use[1]
+    counts[f"v063_{d.kind}_seen"] += 1
+    if d.kind == "accept_request":
+        candidates = [(tuple(d.options), "accept"), ((), "refuse")]
+        if seen % 2:
+            candidates.reverse()
+    elif d.kind == "challenge_bench":
+        stopped = set(d.context_value("unresolved_choices", ()))
+        free = [o for o in d.options if o not in stopped]
+        size = [1, d.max_choices, 1][seen % 3]
+        candidates = [(tuple(free[:size]), f"pick_{min(size, len(free))}"), (tuple(free[:1]), "pick_1")]
+    elif d.kind == "quiz_card":
+        candidates = [((d.options[(seen + i) % len(d.options)],), "card") for i in range(len(d.options))]
+    elif d.kind == "quiz_attack":
+        candidates = [((d.options[seen % len(d.options)],), f"attack_{seen % len(d.options)}")]
+    elif d.kind == "quiz_answer":
+        names = d.context_value("names")
+        right = names.index(state.card_def(d.context_value("quiz_card")).name_ja)
+        wrong = (right + 1) % len(names)
+        order = [(right, "correct"), (wrong, "wrong")] if seen % 2 == 0 else [(wrong, "wrong"), (right, "correct")]
+        candidates = [((index,), f"answer_{label}") for index, label in order]
+    else:
+        return None
+    for choices, label in candidates:
+        if d.min_choices <= len(choices) <= d.max_choices and _v052_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"v063_{use[2]}_{d.kind}_{label}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts[f"v063_{use[2]}_no_accepted_answer"] += 1
+    return None
+
+
+def _v063_trainer(state, tried, counts):
+    """v0.63: 4 枚を、受け付けるなら使う（種類ごとに 1 番に 1 回まで）。ロケット団参上! はサイドにうらのカードが残っているときだけ。使う前に止まる・拒否される場面
+    （QZ1・トレーナーの使用の禁止など）は使わず ``v063_<カード>_not_playable_<コード>`` に数える。"""
+    player = state.current_player
+    if "trainer_locked" in tried:
+        return None
+    p = state.players[player]
+    for card_id in V0_63_TRAINERS:
+        if (f"v063_{card_id}", state.turn_number) in tried:
+            continue
+        if card_id == HERE_COMES_TEAM_ROCKET and all(u in state.face_up_prizes for q in state.players for u in q.prizes):
+            continue
+        uid = next((u for u in p.hand if state.cards[u].card_id == card_id), None)
+        if uid is None:
+            continue
+        tried.add((f"v063_{card_id}", state.turn_number))
+        command = PlayTrainer(player, uid)
+        real = _V052_REAL.get("state")
+        try:
+            apply_command(real if real is not None and real.turn_number == state.turn_number and real.decision == state.decision else state, command)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v063_{card_id}_not_playable_{error.code}"] += 1
+            continue
+        counts[f"v063_play_{card_id}"] += 1
+        return command
+    return None
+
+
+def v063_uses(state):
+    """v0.63: ログから数えた v0.63 の 4 枚の動き（どれもない局では空）。
+
+    - ``prizes_revealed``・``face_up_prize_taken``・``face_up_prize_swapped``: ロケット団参上! とそのあと、おもてのサイドを取った（``take_prize``・``trainer_take_prize``）・
+      入れかえた（``swap_prize_with_hand``・``swap_prize_with_deck_top``）
+    - ``tickle_heads``・``tickle_cards_<枚数>``・``tickle_tails_turn_end``・``set_aside_returned_<理由>``: くすぐりマシーン（置いた枚数・「うら」で番が終わった・もどった理由）
+    - ``challenge_accepted``・``challenge_refused``・``face_down_bench_<枚数>``・``face_down_revealed``・``challenge_skipped_<理由>``: 挑戦状
+    - ``quiz_correct``・``quiz_wrong``・``quiz_stage_<段階>``: カツラのクイズ その3（置いたポケモンの段階）
+    """
+    counts = Counter()
+    log = state.log
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "prizes_revealed":
+            counts["prizes_revealed"] += 1
+        elif kind in ("take_prize", "trainer_take_prize") and e.get("face_up"):
+            counts["face_up_prize_taken"] += 1
+        elif kind == "swap_prize_with_hand" and e.get("face_up") or kind == "swap_prize_with_deck_top" and e.get("face_up_card") is not None:
+            counts["face_up_prize_swapped"] += 1
+        elif kind == "set_aside_hand":
+            counts["tickle_heads"] += 1
+            counts[f"tickle_cards_{e['count']}"] += 1
+        elif kind == "trainer_turn_end" and state.cards[e["trainer_card"]].card_id == TICKLING_MACHINE:
+            counts["tickle_tails_turn_end"] += 1
+        elif kind == "set_aside_returned":
+            counts[f"set_aside_returned_{e['reason']}"] += 1
+        elif kind == "request_answered" and e.get("trainer_card") is not None and state.cards[e["trainer_card"]].card_id == CHALLENGE:
+            counts["challenge_accepted" if e["accepted"] else "challenge_refused"] += 1
+        elif kind == "face_down_bench":
+            counts[f"face_down_bench_{len(e['cards'])}"] += 1
+        elif kind == "face_down_revealed":
+            counts["face_down_revealed"] += len(e["cards"])
+        elif kind == "challenge_bench_skipped":
+            counts[f"challenge_skipped_{e['reason']}"] += 1
+        elif kind == "quiz_reveal":
+            counts["quiz_correct" if e["correct"] else "quiz_wrong"] += 1
+            counts[f"quiz_stage_{state.definitions[e['card_id']].stage}"] += 1
+    return {k: v for k, v in counts.items() if v}
+
+
 def _v062_attack(state, tried, counts):
     """v0.62: 前の番の履歴を読むワザを、使える番に優先して使う（どれもない局では何もしない）。
 
@@ -3229,7 +3356,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
+            early = (_v063_decision(state, counts)  # v0.63: 挑戦状・クイズの決定（相手の決定にも答える）
+                     or _v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
                      or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
                      or _v047_decision(state, counts) or _v048_decision(state, counts)  # v0.47・v0.48
                      or _v049_decision(state, counts) or _v050_decision(state, counts)  # v0.49・v0.50
@@ -3266,7 +3394,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts)  # v0.57
                      or _v058_trainer(state, tried, counts)  # v0.58
                      or _v059_trainer(state, tried, counts) or _v059_power(state, tried, counts)  # v0.59
-                     or _v061_trainer(state, tried, counts))  # v0.61
+                     or _v061_trainer(state, tried, counts)  # v0.61
+                     or _v063_trainer(state, tried, counts))  # v0.63
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -3403,6 +3532,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v060"] = v060_uses(state)
         result["v061"] = v061_uses(state)
         result["v062"] = v062_uses(state)
+        result["v063"] = v063_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -3417,7 +3547,7 @@ def audit(result, state, commands):
     if state is None or result["outcome"] not in ("game_over", "sudden_death", "halted"):
         return {"not_audited": 1}
     current = new_game(*(deck_cards(label) for label in result["decks"]), result["seed"])
-    watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS
+    watch = any(state.cards[uid].card_id in V0_47 + V0_47_TRAINERS + V0_48 + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_63_TRAINERS
                 for uid in state.cards)  # v0.48: 観測の今有効な値も（v0.54・v0.55: 見る・見せるトレーナー）
     for command in commands:
         current = apply_command(current, command)
@@ -3834,7 +3964,8 @@ def summarize(games):
          "unresolved_rejections": Counter(), "audit_failures": Counter(), "end_conditions": Counter(), "wins": Counter(),
          "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter(), "v059": Counter(), "v059_policy": Counter(),
          "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter(), "v061": Counter(), "v061_games_with": Counter(),
-         "v061_policy": Counter(), "v062": Counter(), "v062_games_with": Counter(), "v062_policy": Counter()}
+         "v061_policy": Counter(), "v062": Counter(), "v062_games_with": Counter(), "v062_policy": Counter(),
+         "v063": Counter(), "v063_games_with": Counter(), "v063_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -3849,6 +3980,9 @@ def summarize(games):
         s["v062"].update(r.get("v062", {}))  # v0.62
         s["v062_games_with"].update({k: 1 for k, v in r.get("v062", {}).items() if v})
         s["v062_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v062_")})
+        s["v063"].update(r.get("v063", {}))  # v0.63
+        s["v063_games_with"].update({k: 1 for k, v in r.get("v063", {}).items() if v})
+        s["v063_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v063_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

@@ -80,6 +80,10 @@ from .decisions import (
     SELECT_PRIZE_CARD,
     SELECT_SPECIAL_CONDITION,
     TAKE_PRIZE,
+    CHALLENGE_BENCH,
+    QUIZ_ANSWER,
+    QUIZ_ATTACK,
+    QUIZ_CARD,
 )
 from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
@@ -118,9 +122,17 @@ OPTION_MEANINGS: dict[str, str] = {
     STADIUM_RETURN_BENCH: "pokemon", EVOLUTION_HEAL: "pokemon",
     # v0.58: ナツメのサイキックコントロールで使う相手のトラッシュのトレーナーカード（トラッシュは公開の情報）
     USE_DISCARD_TRAINER: "card",
+    # v0.63: たたきつけろ!挑戦状で山札から選ぶたねポケモン（決めるプレイヤーが自分の山札をさがす）・カツラのクイズ その3で置く手札のポケモン・伝えるワザの位置・
+    # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
+    CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
-DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS})
+DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH})
+# v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
+# カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
+HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK})
+# v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
+PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
 # 続けて見せる効果ではないので、観測の手札は公開しない）
 LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH})  # v0.56: エリカの香水も見た相手の手札から選ぶ
@@ -207,7 +219,9 @@ def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> b
             return True
         if uid in p.hand:
             return hand_visible_to(state, owner, viewer)
-        if uid in p.deck or uid in p.prizes:
+        if uid in p.prizes:
+            return uid in state.face_up_prizes  # v0.63: おもてのサイド（ロケット団参上!）は全員に見える
+        if uid in p.deck:
             return False
         for pokemon in p.in_play():
             if (uid == pokemon.card or uid == pokemon.disguise or uid in pokemon.evolution_stack or uid in pokemon.energy
@@ -215,6 +229,9 @@ def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> b
                 return True
     if state.stadium is not None and state.stadium.card == uid:
         return True
+    for group in state.set_aside:
+        if uid in group.cards:
+            return viewer in group.visible_to  # v0.63: 一時的に置いておくカードは、見られるプレイヤーにだけ
     used = state.trainer_in_use
     return used is not None and used.card == uid
 
@@ -225,7 +242,11 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
         return None
     view: dict[str, Any] = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices,
                             "option_count": len(d.options)}
+    if d.kind == QUIZ_ANSWER:
+        view["hint"] = d.context_value("hint")  # v0.63: 伝えたワザの名前（全員に伝えた情報。ログ quiz_hint）
     if viewer != d.player:
+        if d.kind in HIDDEN_COUNT_KINDS:
+            return {"kind": d.kind, "player": d.player}  # v0.63: 選ぶ数・選べるものの数も見せない
         return view  # 選べるもの（とその中身）は決めるプレイヤーだけに渡す
     meaning = OPTION_MEANINGS.get(d.kind)
     if meaning is None:
@@ -237,6 +258,14 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
             option["card_id"] = state.cards[value].card_id
         elif meaning == "color":
             option["color"] = COLORS[value].value
+        elif meaning == "name":
+            option["name"] = d.context_value("names")[value]  # v0.63: カツラのクイズ その3で答えるカードの名前
+        elif meaning == "position" and d.kind in PRIZE_POSITION_KINDS:
+            prizes = state.players[d.player].prizes
+            if 0 <= value < len(prizes) and prizes[value] in state.face_up_prizes:
+                option["card_id"] = state.cards[prizes[value]].card_id  # v0.63: おもてのサイド（ロケット団参上!）は位置のカードが見えている
+        if d.kind == QUIZ_ATTACK:
+            option["attack_name"] = state.card_def(d.context_value("quiz_card")).attacks[value].name_ja  # v0.63: 置いたカードは決めるプレイヤーが見ている
         elif meaning == "peek_target":
             target = d.context_value("targets")[value]
             option["target"] = {"zone": target[0], "owner": target[1], **({} if target[0] == "deck" else {"position": target[2]})}
@@ -283,7 +312,13 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                 "revealed_by": [list(source) for source in hand_revealed_by(state, owner)],
             },
             "deck": {"count": len(p.deck)},
-            "prizes": {"count": len(p.prizes)},
+            # v0.63: おもてのサイド（ロケット団参上!。全員に見える）は位置とカードを書く。裏のサイドは枚数だけ（uid も渡さない）
+            "prizes": {"count": len(p.prizes),
+                       "face_up": [{"position": i, **_card(state, uid)} for i, uid in enumerate(p.prizes) if uid in state.face_up_prizes]},
+            # v0.63: 一時的に置いておくカード（手札・山札・ベンチとは別の場所）。枚数・出どころ・もどす番は全員に見え、カードは見られるプレイヤーにだけ
+            "set_aside": [{"kind": g.kind, "count": len(g.cards), "cards": [_card(state, uid) for uid in g.cards] if viewer in g.visible_to else None,
+                           "user": g.user, "trainer_card": g.trainer_card, "card_id": g.card_id, "return_turn": g.return_turn}
+                          for g in state.set_aside if g.owner == owner],
             "discard": [_card(state, uid) for uid in p.discard],
             "active": (_pokemon(state, p.active) if board_visible else {"face_down": True}) if p.active is not None else None,
             "bench": [_pokemon(state, b) if board_visible else {"face_down": True} for b in p.bench],
@@ -363,6 +398,13 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "hand_positions_to_deck": (("cards",), _only_player),
     "trainer_take_prize": (("card",), _only_player),
     "swap_prize_with_hand": (("to_prize", "to_hand"), _only_player),
+    # v0.63: くすぐりマシーンで置いたカード（だれも見ない）・もどしたカード（持ち主だけ。クイズで表にしたカードは face_up で全員）・挑戦状でうらにして出したカード（持ち主だけ）・
+    # 選ばなかった理由（山札の中身なので選ぶプレイヤーだけ）・クイズで置いたカード（置いたプレイヤーだけ）
+    "set_aside_hand": (("cards",), _nobody),
+    "set_aside_returned": (("cards",), _only_player),
+    "face_down_bench": (("cards",), _only_player),
+    "challenge_bench_skipped": (("reason",), _only_player),
+    "quiz_card_set": (("card",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -409,6 +451,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.58: 特殊エネルギーをつけたときの効果（回復・ダメージ）・ばくれつのスタジアムがない場面・サイキックコントロールで使えるカードがない・使わなかった
     # （場・トラッシュは公開の情報）
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
+    # v0.63: おもてにしたサイド（全員に見えるようにした）・うらにして出したカードを表にした・クイズの伝えたワザ・答え・表にしたカード
+    "prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal",
 })
 
 
@@ -418,6 +462,10 @@ def visible_event(event, viewer: int | None) -> dict[str, Any]:
     if kind in PRIVATE_FIELDS:
         fields, sees = PRIVATE_FIELDS[kind]
         if sees(event, viewer):
+            return dict(event)
+        # v0.63: おもてだった（全員に見えていた）カードの項目（``face_up``。おもてのサイドを取った・クイズで表にしたカードを手札にもどした）は全員に見せる
+        fields = tuple(name for name in fields if name not in event.get("face_up", ()))
+        if not fields:
             return dict(event)
         copy = {name: value for name, value in event.items() if name not in fields}
         copy["hidden"] = {name: (len(event[name]) if isinstance(event[name], (tuple, list)) else None) for name in fields if name in event}
