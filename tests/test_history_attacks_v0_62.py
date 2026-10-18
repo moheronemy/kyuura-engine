@@ -168,8 +168,8 @@ class RegistryTest(unittest.TestCase):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
         by_category = {c: sum(1 for d in supported if d.category == c) for c in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_category, {"pokemon": 345, "trainer": 89, "energy": 10})  # v0.63 でトレーナー 4 枚
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 586)
+        self.assertEqual(by_category, {"pokemon": 348, "trainer": 89, "energy": 10})  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 591)  # v0.64 でワザ 5 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 54)
 
     def test_history_readers(self):

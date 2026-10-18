@@ -355,6 +355,31 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
     return False
 
 
+def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receiver: PokemonInPlay, target: str, *, defender_effects: bool = True) -> list:
+    """ワザの分類のダメージの要素 1 つの、場の変更効果（p.321 の 2・5〜8 段階。クチバシティジムのコインを除く）（v0.64。``deal_damage`` から分けた。先読みの
+    「うら」が出るまで投げるコインの組（``resolution.unbounded``）が同じ関数を使う）。状態を変えず、乱数を使わない。"""
+    exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
+    return list(attack_damage_modifiers(res.state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS,
+                                        attack_status=res.attack_status, exclude=exclude))
+
+
+def with_stadium_coin(res: Resolution, frame, target: str, modifiers: list) -> list:
+    """v0.57: クチバシティジムの「おもて」（そのワザによって相手の対戦ポケモンに与えるダメージは「+10」。p.321 の 6 段階。控えへのダメージ・返す効果のダメージは
+    そのまま）を加えた変更効果（v0.64。``deal_damage`` から分けた）。"""
+    if res.stadium_coin is not None and res.stadium_coin[1] and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
+        return [*modifiers, stadium_coin_modifier(res.state, res.stadium_coin[0])]
+    return modifiers
+
+
+def compute_damage(state: GameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, *, weakness_resistance: bool = True,
+                   orders=None, resistance: bool = True):
+    """p.321 の計算（v0.64。``deal_damage`` から分けた）。v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力
+    （``effects.definition_views``）。色の読み方（VS1）が 2 つあり、読み方で計算の結果が変わるなら ``TypeReadingsDiffer``（変わらなければ、読み方が 1 つのときと
+    同じ計算）。順番の決定が要れば ``DamageOrderRequired``。状態を変えず、乱数を使わない。"""
+    return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+        base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
+
+
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False, resistance: bool = True, defender_effects: bool = True) -> DamageResult:
@@ -415,23 +440,15 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
-    exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status,
-                                        exclude=exclude)
+    base_modifiers = attack_modifiers_of(res, frame, attacker, receiver, target, defender_effects=defender_effects)
     if not defender_effects:
         weakness_resistance = False
-        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, modifiers, orders, resistance)
-    if res.stadium_coin is not None and res.stadium_coin[1] and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
-        # v0.57: クチバシティジムの「おもて」（そのワザによって相手の対戦ポケモンに与えるダメージは「+10」。p.321 の 6 段階。控えへのダメージ・返す効果のダメージは
-        # そのまま）
-        modifiers = [*modifiers, stadium_coin_modifier(state, res.stadium_coin[0])]
+        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance)
+    modifiers = with_stadium_coin(res, frame, target, base_modifiers)
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
     try:
-        # v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力（``effects.definition_views``。テクスチャー・［へんしょく］）。色の読み方
-        # （VS1）が 2 つあり、読み方で計算の結果が変わるなら止める（変わらなければ、読み方が 1 つのときと同じ計算）
-        calc = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-            base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
+        calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)
     except TypeReadingsDiffer as differ:
         raise type_question(res, differ, f"ワザ {frame.attack_key} のダメージの計算（ワザを使うポケモンの色と受けるポケモンの弱点・抵抗力）") from None
     except DamageOrderRequired as need:
@@ -633,17 +650,23 @@ def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: Poke
     （GR-2000-P321-ATTACK-DAMAGE）だが、「ワザが使われた時」が返す効果を与えた前の番のワザか、きっかけになったこの番のワザかは決まらず、前の番のワザのときの
     特殊状態は記録していない。場所・かがくへんかガスの条件を満たす特殊能力があり、特殊状態によって当てはめるかどうかで最終ダメージ（または順番の決定の要否）が
     変わるなら止める（問い ``calming_retaliation``）。変わらなければ（半分にしても同じ数・特殊能力がない）止めない。"""
+    if calming_retaliation_differs(res.state, fs.frame.attack_key, attacker, receiver, base, target, weakness_resistance, resistance):
+        raise res.question("calming_retaliation", f"返すダメージ {base}（ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}）")
+
+
+def calming_retaliation_differs(state: GameState, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, target: str,
+                                weakness_resistance: bool, resistance: bool) -> bool:
+    """CP1 の比べ（v0.64。``calming_retaliation_question`` から分けた。先読みの「うら」が出るまで投げるコインの組も同じ関数で比べる）。状態を変えず、乱数を使わない。"""
     from ..effects import status_at_attack_powers
 
-    state = res.state
     if not status_at_attack_powers(state):
-        return
+        return False
     every = frozenset(p.pokemon_id for player in state.players for p in player.in_play())
     # v0.48: 色の読み方（VS1）が 2 つあるポケモンは、読み方の組ごとに比べる（どれかの組で当てはめるかどうかで変われば止める。読み方の違いそのものは deal_damage が VS1 で見る）
     readings = [(a, r) for a in definition_views(state, attacker) for r in definition_views(state, receiver)]
     by_reading: list[set] = [set() for _ in readings]
     for snapshot in (frozenset(), every):  # 当てはめる読み方・当てはめない読み方
-        modifiers = attack_damage_modifiers(state, attacker, receiver, attack=fs.frame.attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
+        modifiers = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
         for outcomes, (attacker_def, receiver_def) in zip(by_reading, readings):
             try:
                 calc = calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=weakness_resistance,
@@ -651,8 +674,34 @@ def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: Poke
                 outcomes.add(calc.final)
             except DamageOrderRequired:
                 outcomes.add(None)
-    if any(len(outcomes) > 1 for outcomes in by_reading):
-        raise res.question("calming_retaliation", f"返すダメージ {base}（ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}）")
+    return any(len(outcomes) > 1 for outcomes in by_reading)
+
+
+def _receiving_candidates(res: Resolution, frame, owner: int, pokemon: PokemonInPlay):
+    """「ダメージを受けるとき」の窓の候補のうち、枠のダメージの分類・相手のワザか・場所の条件に合うもの（v0.64。``receiving`` から分けた）。状態を変えない。"""
+    state = res.state
+    for instance in C.in_window(state, Window.DAMAGE_RECEIVING, owner, pokemon, res.catalog):
+        definition = instance.definition
+        if frame.damage_class not in definition.trigger_classes:
+            continue
+        if definition.by_opponent and owner == frame.player:
+            continue
+        if definition.active_only and state.players[owner].active is not pokemon:
+            continue  # v0.42: バトル場で受けたときだけ（ぼうぎょかふん）
+        yield instance
+
+
+def deferred_receivers(res: Resolution, frame, owner: int, pokemon: PokemonInPlay) -> list:
+    """``receiving`` が送る効果として集めるもの（``Timing.DEFER``・はたらいている・同じ定義は最初の 1 つ）と同じ候補（v0.64。状態・解決の記録・こんじょうの写しを
+    変えない。先読みの「うら」が出るまで投げるコインの組が使う）。"""
+    found: list = []
+    for instance in _receiving_candidates(res, frame, owner, pokemon):
+        definition = instance.definition
+        if definition.timing is C.Timing.DEFER and C.working(res.state, instance, pokemon):
+            if any(other.definition is definition for other in found):
+                continue
+            found.append(instance)
+    return found
 
 
 def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, received: int) -> list[Deferred]:
@@ -665,14 +714,8 @@ def receiving(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPla
     state = res.state
     frame = fs.frame
     found: list[Deferred] = []
-    for instance in C.in_window(state, Window.DAMAGE_RECEIVING, owner, pokemon, res.catalog):
+    for instance in _receiving_candidates(res, frame, owner, pokemon):
         definition = instance.definition
-        if frame.damage_class not in definition.trigger_classes:
-            continue
-        if definition.by_opponent and owner == frame.player:
-            continue
-        if definition.active_only and state.players[owner].active is not pokemon:
-            continue  # v0.42: バトル場で受けたときだけ（ぼうぎょかふん）
         if definition.timing is C.Timing.OFFER:
             # v0.13 と同じく、受けるたびに写しを書きかえる（同じポケモンが 1 つのコマンドで 2 回受けることは今の対応カードでは起こらない）
             res.ko_prevention_able[pokemon.pokemon_id] = not C.blocked_by_status(instance, pokemon)

@@ -16273,6 +16273,135 @@
       ],
       "issues": [],
       "notes": "v0.63 で加えた。トレーナー。BlainesQuiz（手札のワザを持つポケモンのカードを 1 枚選んでおもてを下にして置き（QUIZ_CARD。GameState.set_aside の SET_ASIDE_QUIZ）、そのカードのワザの名前を 1 つ伝え（QUIZ_ATTACK。ログ quiz_hint はワザの名前だけ）、相手プレイヤーがカードの名前を答える（QUIZ_ANSWER。候補はカードのデータのポケモンの名前で、置いたカード・手札によらない）。おもてにし（quiz_reveal）、正解（名前が同じ）なら相手、正解でないなら使ったプレイヤーが 3 枚引き（引けるだけ）、置いたカードを手札にもどす。手札にワザを持つポケモンのカードがなければ QZ1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合。英語版の文面・のちの版の規定は持ち込まない（docs/hidden-card-trainers-v0.63.md）"
+    },
+    "PMCG3-034": {
+      "basis": "kyuura_data",
+      "name_ja": "イシツブテ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3035.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "035/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・進化元・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.64 で加えた。タケシのイシツブテ（PMCG5-046・PMCG5-047）とは別のカード。れんぞくいしなげは CoinsUntilTailsDamage（要素 HeadsUntilTails。実際の対戦では「うら」が出るまで 1 枚ずつ投げ、上限はない。先読みは resolution.unbounded の「おもて」の数の有限の組）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。kyuura の日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので、pcg-search.com との照合は独立した照合（docs/geodude-line-unbounded-coins-v0.64.md）"
+    },
+    "PMCG3-037": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴローン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3036.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "036/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・進化元・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.64 で加えた。タケシのゴローン（PMCG5-052）とは別のカード。進化元はイシツブテ（名前の完全一致。化石の秘密のイシツブテとタケシのイシツブテのどちらからでもない: タケシのイシツブテの名前は「タケシのイシツブテ」）。かたくなるはイワーク（v0.45）と同じ ZeroDamageBelowNextTurn(40)（30 以下は 0、40 以上はそのまま。p.321 の 8 段階。書き方の違いは effects.zero_damage_below_texts の 2 つめとして明示的に受け付けた）。いわおとしは DamageOnly。kyuura の研究の基準のコミットに、このカードの記録はない（docs/geodude-line-unbounded-coins-v0.64.md）"
+    },
+    "PMCG3-038": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴローニャ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3037.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "037/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・進化元・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.64 で加えた。タケシのゴローニャ（PMCG5-053）とは別のカード。進化元はゴローン（名前の完全一致）。いわころがりは DamageOnly。じばくは化石の秘密のレアコイル（v0.39）と同じ SelfDestruct(100, 20, True)（「関係なく」のあとの読点のない書き方を SELF_DESTRUCT_TEXTS の 2 つめとして明示的に受け付けた。読点を一律に取り除く比べ方にしていない）。kyuura の研究の基準のコミットに、このカードの記録はない（docs/geodude-line-unbounded-coins-v0.64.md）"
     }
   }
 }

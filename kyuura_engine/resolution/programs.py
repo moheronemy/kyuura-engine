@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from .. import effects as E
 from ..cards import EnergyType
-from ..coins import CoinFlips, CoinSide, flip_coins
+from ..coins import CoinFlips, CoinSide, flip_coins, flip_until_tails
 from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
 from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
@@ -424,6 +424,38 @@ class HeadsTimes:
 
 
 @dataclass(frozen=True)
+class HeadsUntilTails:
+    """「うら」が出るまでコインを投げ続け、その間に出た「おもて」の数 × ``per``（v0.64。化石の秘密のイシツブテの「れんぞくいしなげ」。
+    docs/geodude-line-unbounded-coins-v0.64.md）。
+
+    - 実際の対戦では「うら」が出るまで 1 枚ずつ投げる（``coins.flip_until_tails``。枚数・ダメージに上限はない）。1 枚目が「うら」なら基本となるダメージは 0
+      （2 段階で計算を終える「ダメージを与えなかった」。ワザの失敗ではない）
+    - 先読みは「おもて」の数の有限の組（``resolution.unbounded.head_classes``）の代表だけを試す。代表の値を実際のダメージ・ログ・履歴に使わない
+    - コインはダメージの量だけを決めるので、「ダメージを受けない」相手には v0.4b の問い（``local_coins`` が 1 以上なのはそのため。``Damage.run``）
+    - コインを投げたあとで決定（順番の決定）をまたいでも、基本となるダメージを続きの情報で運び、投げ直さない（``Damage.resume``）"""
+
+    per: int
+    local_coins: ClassVar[int] = 1
+
+    def flip_until_tails(self, run: AttackRun, element: Damage) -> CoinFlips:
+        from .unbounded import head_classes
+
+        attacker = run.attacker()
+        found: list = []
+
+        def classes():
+            if not found:
+                found.append(head_classes(run, element, self.per))
+            return found[0]
+
+        return flip_until_tails(run.state, run.player, source="attack", effect=str(run.key), card=attacker.card, pokemon_id=attacker.pokemon_id,
+                                classes=classes)
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        return flips.heads * self.per
+
+
+@dataclass(frozen=True)
 class HeadsOwnCounters:
     per: int
     local_coins: ClassVar[int] = 1
@@ -766,7 +798,11 @@ class Damage(Element):
                 return False
         # v0.40: 相手プレイヤーが投げるコイン（``flipped_by_opponent``。ベンチをあやつる）
         flipper = 1 - run.player if getattr(self.base, "flipped_by_opponent", False) else None
-        flips = run.flip(coins, by_heads=getattr(self.base, "by_heads", False), player=flipper) if coins else None
+        until_tails = getattr(self.base, "flip_until_tails", None)
+        if until_tails is not None:
+            flips = until_tails(run, self)  # v0.64: 「うら」が出るまで投げるコイン（れんぞくいしなげ）
+        else:
+            flips = run.flip(coins, by_heads=getattr(self.base, "by_heads", False), player=flipper) if coins else None
         base = 0 if zero else self.base.value(run, flips)
         return self._deal(run, base, {})
 
@@ -5498,6 +5534,7 @@ class ReturnOpponentToHand(Element):
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
+    E.CoinsUntilTailsDamage: lambda e: (Damage(OPP, HeadsUntilTails(e.per)),),  # v0.64
     E.CoinHeadsDamagePerOwnCounter: lambda e: (Damage(OPP, HeadsOwnCounters(e.damage_per_counter)),),
     E.SelfDamageInsteadOnTails: lambda e: (
         Coin("coin"), Damage(OPP, Printed(), gate=("coin", HEADS)), Damage(SELF, Fixed(e.self_damage), name="self_damage", gate=("coin", TAILS)),

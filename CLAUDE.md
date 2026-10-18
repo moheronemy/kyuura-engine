@@ -2002,3 +2002,29 @@
   4 枚は `_v063_trainer`、挑戦状・クイズの決定は `_v063_decision`（相手の決定にも答え、受ける・受けない、正解・不正解を番の番号とカードの番号で回す。HC5 の 0 枚は選ばない）、数えた結果は
   `v063_uses`。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
 
+
+## 「うら」が出るまで投げるコインと、その先読みの有限の組と、化石の秘密のイシツブテの系統 3 枚（v0.64）
+
+- 依頼の 3 枚（イシツブテ PMCG3-034 のれんぞくいしなげ、ゴローン PMCG3-037 のかたくなる・いわおとし、ゴローニャ PMCG3-038 のいわころがり・じばく。どれも化石の秘密）を、kyuura データの
+  採用で、どのワザも登録しました（対応ポケモン 345 → 348・写しの組 `pool_v0_64`。写し 446 → 449 枚・対応するカード 444 → 447 枚。ワザの登録 586 → 591。PMCG1〜PMCG6 の未対応は 13 → 10 枚）。
+  カードごとの判断・有限の組の根拠・未解決とエンジンの未対応・互換性・検証は docs/geodude-line-unbounded-coins-v0.64.md。ガイドブックは読んでいません。テストの定数は tests/helpers.py の
+  `FOSSIL_GEODUDE`・`FOSSIL_GRAVELER`・`FOSSIL_GOLEM`・`V0_64_POKEMON`・`V0_64_CARDS`（「タケシの」系統（`BROCKS_GEODUDE` など）と取りちがえない。進化元は名前の完全一致）。v0.64 の型
+  `CoinsUntilTailsDamage` は `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません（`damage_profile` は `NotImplementedError`）。
+- 「うら」が出るまで投げるコインは `coins.flip_until_tails` だけで投げます（1 枚 1 回 `getrandbits(1)`。上限・打ち切り・分布が同じ別の乱数の使い方にしない。ログは 1 枚ごとの `coin_flip` に
+  `until: "tails"`）。値 `programs.HeadsUntilTails(per)` が「おもて」の数 × `per` を p.321 の 1 段階にし、要素 `Damage` は値が `flip_until_tails` を持つときだけそれを使います。1 枚目が「うら」なら
+  基本となるダメージ 0 で、ワザの失敗（`attack_failed`）にしないでください。順番の決定をまたぐときは基本となるダメージを続きの情報で運び、投げ直しません。
+- 宣言の前の先読みは、コインの結果を 1 つずつ試せないので、「おもて」の数 h を有限の組に分け、組ごとにいちばん小さい h だけを試します（`resolution/unbounded.py` の `head_classes`。
+  `preflight.Oracle.coin_run`・`RecordingRandom.record_run`）。組の key は実際の処理と同じ関数（`kernel.attack_modifiers_of`・`with_stadium_coin`・`compute_damage`・
+  `calming_retaliation_differs`・`deferred_receivers`）で求めた、計算の木と、残りの HP でまとめた最終ダメージと、受けたダメージで量が決まる返す効果の結果です。h が後の処理に入る場所を
+  加える（h を読む新しい効果・受けたダメージの量を読む新しい処理を先読みの範囲に加える）ときは、key に加え、docs 3.2 節の根拠を見直してください。key の関数と `deal_damage` の計算を別々に
+  書かないでください（同じ関数を使う）。代表の値は先読みの複製の上だけで使います。
+- 有限の根拠は、計算の操作（`unbounded.SUPPORTED_OPERATIONS`）が入力が十分大きければ一定か減らないことで、h_s・周期を盤面から求めます。`damage.DAMAGE_OPERATIONS` に操作を加えたら、
+  `SUPPORTED_OPERATIONS` に加える前に根拠（一定か減らない・周期）を確かめてください。前提を満たさない場（対応しない操作・ダメージカウンターの単位でない数・既定でない要素の項目）は、推測せず
+  問い `unbounded_coin_preflight`（`UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT`。エンジンの未対応。研究の対応表の停止コードに入れない）で止めます。実際の h の key が組にないなら `RuntimeError` です。
+  `MAX_BRANCHES` を上げて上限なしのコインを試す形にしないでください。テストで長いコインの並びを決めるときは tests/helpers.py の `with_coin_bits`（乱数の内部の状態を直接決める。624 枚まで）。
+- かたくなるは既存の `ZeroDamageBelowNextTurn(40)`（`effects.zero_damage_below_texts` にゴローンの書き方を 1 通り）、じばくは既存の `SelfDestruct(100, 20, True)`（`SELF_DESTRUCT_TEXTS[True]` に
+  読点のない書き方を 1 通り。スタジアムをトラッシュする「ばくれつ」の書き方には加えていない）です。書き方の比べ方を一律に緩めないでください。
+- 書き出しの形式は 21 のまま（監査の `LATEST_FORMAT` も 21。次の新しい形式は 22）。公開の API の呼び方・コマンド・決定の種類・ログのイベントの種類は変えていません（`coin_flip` に項目 `until`）。
+  新しい未解決の裁定はなく、エンジンが止める `UNRESOLVED_…` は 133 件、未解決の裁定は 135 件のままです。
+- 検証用デッキ `G64` と組（`PAIRINGS_V0_64`。`G64` 対 `H62`・`D46`・`P61`・`W45`）は tools/existing_effect_games.py の `--batch v0.64` です（前の版の組の結果は変わらない）。数えた結果は
+  `v064_uses`。ゆびをふる・オウムがえしでれんぞくいしなげを使う場面は単体テストで確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

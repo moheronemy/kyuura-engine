@@ -647,6 +647,12 @@ TICKLING_MACHINE = "PMCG6-084"  # くすぐりマシーン（闇からの挑戦�
 CHALLENGE = "PMCG4-058"  # たたきつけろ!挑戦状（第4弾ロケット団。受けないなら 2 枚引く、受けるならお互いに山札からたねポケモンをうらにしてベンチに出す）
 BLAINES_QUIZ_3 = "PMCG6-082"  # カツラのクイズ その3（闇からの挑戦。手札のポケモンを置き、ワザの名前を伝え、相手が名前を答える）
 V0_63_CARDS = (HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3)
+# v0.64（docs/geodude-line-unbounded-coins-v0.64.md）: 化石の秘密のイシツブテの系統 3 枚（「タケシの」系統とは別のカード）
+FOSSIL_GEODUDE = "PMCG3-034"  # イシツブテ（化石の秘密。035/048。HP 50・闘・弱点 草・にげる 1。れんぞくいしなげ（闘無）10×）
+FOSSIL_GRAVELER = "PMCG3-037"  # ゴローン（化石の秘密。036/048。イシツブテから進化。HP 60・闘・弱点 草・にげる 2。かたくなる（闘闘）・いわおとし（闘闘無）40）
+FOSSIL_GOLEM = "PMCG3-038"  # ゴローニャ（化石の秘密。037/048。ゴローンから進化。HP 80・闘・弱点 草・にげる 4。いわころがり（闘闘闘無）60・じばく（闘闘闘闘）100）
+V0_64_POKEMON = (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM)
+V0_64_CARDS = V0_64_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1193,6 +1199,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.RepeatReceivedAttack,  # v0.62: ピジョンの「オウムがえし」（前の相手の番に受けたワザの記録 B）
     _effects.ReflectReceivedDamageAndEffects,  # v0.62: オニスズメの「オウムがえし」（前の相手の番に受けた結果の記録 C）
     _effects.DamageThenReturnOpponentToHand,  # v0.62: ピジョットの「ハリケーン」
+) + (
+    # v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
+    _effects.CoinsUntilTailsDamage,  # 化石の秘密のイシツブテの「れんぞくいしなげ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1353,6 +1362,46 @@ def rng_for_coins(*sides: CoinSide, start: int = 0) -> random.Random:
         if [probe.getrandbits(1) for _ in wanted] == wanted:
             return random.Random(seed)
     raise AssertionError("条件に合う乱数が見つからない")
+
+
+def _untemper(y: int) -> int:
+    """MT19937 の出力の調律（tempering）の逆。"""
+    y ^= y >> 18
+    y ^= (y << 15) & 0xEFC60000
+    result = y
+    for _ in range(5):
+        result = y ^ ((result << 7) & 0x9D2C5680)
+    y = result
+    result = y
+    for _ in range(3):
+        result = y ^ (result >> 11)
+    return result & 0xFFFFFFFF
+
+
+def rng_with_coin_bits(*sides: CoinSide) -> random.Random:
+    """次に ``getrandbits(1)`` を len(sides) 回使うと、その結果（1 = おもて）になる乱数（v0.64。テスト専用）。seed を探さず、乱数の内部の状態（MT19937 の
+    624 語）を直接決める（``getrandbits(1)`` は次の 32 ビットの出力のいちばん上のビット）。624 回まで。そのあとの出力は決まった別の値（seed 0 の状態の続き）。
+    「うら」が出るまで投げるコインの長い「おもて」の並びを、seed を探さずに作るため（``rng_for_coins`` は 16 枚程度までしか見つけられない）。"""
+    if len(sides) > 624:
+        raise ValueError("624 枚まで")
+    words = list(random.Random(0).getstate()[1][:624])
+    for i, side in enumerate(sides):
+        top = 1 if side is CoinSide.HEADS else 0
+        words[i] = _untemper((top << 31) | 0x12345)
+    rng = random.Random()
+    rng.setstate((3, tuple(words) + (0,), None))
+    probe = random.Random()
+    probe.setstate(rng.getstate())
+    if [probe.getrandbits(1) for _ in sides] != [1 if side is CoinSide.HEADS else 0 for side in sides]:
+        raise AssertionError("乱数の状態の組み立ての誤り")
+    return rng
+
+
+def with_coin_bits(state: GameState, *sides: CoinSide) -> GameState:
+    """テスト専用（v0.64）: ``with_coin_results`` と同じく次のコインを ``sides`` にした状態（複製）。seed を探さない（``rng_with_coin_bits``）。"""
+    new = state.clone()
+    new.rng = rng_with_coin_bits(*sides)
+    return new
 
 
 def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:

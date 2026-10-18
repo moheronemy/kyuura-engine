@@ -113,3 +113,53 @@ def flip_coins(
             result=side.value,
         )
     return CoinFlips(tuple(results))
+
+
+def flip_until_tails(
+    state: GameState,
+    player: int,
+    *,
+    source: str,
+    effect: str,
+    card: int,
+    pokemon_id: int | None = None,
+    classes=None,
+) -> CoinFlips:
+    """「うら」が出るまでコインを 1 枚ずつ投げ続けて、結果（最後の 1 枚が「うら」）を返す（v0.64。化石の秘密のイシツブテの「れんぞくいしなげ」。
+    docs/geodude-line-unbounded-coins-v0.64.md 2 章）。
+
+    - 実際の対戦（ふつうの乱数）: 1 枚 1 回 ``getrandbits(1)`` を、「うら」（0）が出るまで続ける（枚数・「おもて」の数に上限はない。決まった枚数で
+      打ち切らない。分布が同じ別の乱数の使い方にしない）
+    - 先読みの乱数（``coin_run`` を持つ。``preflight.Oracle``）: ``classes()``（``resolution.unbounded.HeadClasses``）の代表の「おもて」の数の
+      どれかを 1 つの値で選び、「おもて」をその数だけ並べたあとに「うら」を 1 枚（その代表の並び）。代表は先読みの複製の上だけで使う
+    - 先読みの範囲を記録する乱数（``record_run`` を持つ。``preflight.RecordingRandom``）: 元の乱数で 1 枚ずつ投げ、実際に出た「おもて」の数の組の位置を
+      1 つの値として記録する（乱数の使い方は実際の対戦と同じ）
+    - ログは 1 枚ごとの ``coin_flip``（``count`` は投げた枚数。``until`` は ``"tails"``）。投げ終えてからまとめて残す（投げている間にほかの処理はない）
+    """
+    if player not in (0, 1):
+        raise ValueError(f"コインを投げるプレイヤーは 0 か 1（{player!r}）")
+    rng = state.rng
+    if getattr(type(rng), "coin_run", None) is not None:
+        if classes is None:
+            raise RuntimeError("先読みで「うら」が出るまで投げるコインに、「おもて」の数の組がない（エンジンの不具合）")
+        heads = rng.coin_run(classes)
+        bits = (1,) * heads + (0,)
+    elif getattr(type(rng), "record_run", None) is not None:
+        bits = tuple(rng.record_run(classes))
+    else:
+        found = []
+        while True:
+            bit = rng.getrandbits(1)
+            found.append(bit)
+            if not bit:
+                break
+        bits = tuple(found)
+    if not bits or bits[-1] != 0 or any(bit != 1 for bit in bits[:-1]):
+        raise RuntimeError(f"「うら」が出るまで投げたコインの結果 {bits!r} が、「おもて」の並びのあとに「うら」1 枚ではない（エンジンの不具合）")
+    results = []
+    for number, bit in enumerate(bits, start=1):
+        side = CoinSide.HEADS if bit else CoinSide.TAILS
+        results.append(side)
+        state.add_event("coin_flip", player=player, source=source, effect=effect, card=card, pokemon_id=pokemon_id, number=number, count=len(bits),
+                        result=side.value, until="tails")
+    return CoinFlips(tuple(results))

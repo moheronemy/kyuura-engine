@@ -2503,7 +2503,10 @@
       "PMCG6-060/attack/0",
       "PMCG6-060/attack/1",
       "PMCG2-041/attack/0",
-      "PMCG2-041/attack/1"
+      "PMCG2-041/attack/1",
+      "PMCG3-034/attack/0",
+      "PMCG3-037/attack/0",
+      "PMCG3-038/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

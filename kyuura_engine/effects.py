@@ -4224,7 +4224,9 @@ SELF_DESTRUCT_TEXTS = {
     False: lambda damage, self_damage, bench: (f"自分と相手に{damage}ダメージをあたえ、お互いの控えポケモン全員にも{bench}ダメージ。",)
     if self_damage == damage else (),
     # 化石の秘密のマタドガス・レアコイル。控えへのダメージは「弱点・抵抗力」に関係なく
-    True: lambda damage, self_damage, bench: (f"自分にも{self_damage}ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。",),
+    # v0.64: 化石の秘密のゴローニャ（PMCG3-038）は「関係なく」のあとの読点がない書き方（意味は同じ。読点の有無だけを、この 1 通りに限って受け付ける）
+    True: lambda damage, self_damage, bench: (f"自分にも{self_damage}ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。",
+                                              f"自分にも{self_damage}ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なくそれぞれ{bench}ダメージ。"),
 }
 
 
@@ -4291,7 +4293,8 @@ class SelfDestructThenDiscardStadium(SelfDestruct):
             return problems
         if not self.weakness_resistance_stated:
             return ["スタジアムをトラッシュする「じばく」は、控えへのダメージに「弱点・抵抗力」に関係なくと書く書き方だけを登録する"]
-        accepted = tuple(text + DISCARD_STADIUM_TEXT for text in SELF_DESTRUCT_TEXTS[True](attack.damage, self.self_damage, self.bench_damage))
+        # v0.64 の読点のない書き方（ゴローニャ）は、スタジアムをトラッシュする書き方には加えない（最初の 1 通りだけ）
+        accepted = tuple(text + DISCARD_STADIUM_TEXT for text in SELF_DESTRUCT_TEXTS[True](attack.damage, self.self_damage, self.bench_damage)[:1])
         return _check_exact_text(attack, "スタジアムをトラッシュするじばく", accepted)
 
 
@@ -10132,14 +10135,62 @@ class ZeroDamageBelowNextTurn(AttackEffect):
         _positive_tens(self.threshold, "ダメージを 0 にするしきい値")
 
     def check(self, attack: Attack) -> list[str]:
-        expected = f"次の相手の番に受けるダメージが0になる。ただしダメージが{self.threshold}以上の場合は、そのままダメージをうける。"
-        return _check_form(attack, "次の相手の番に小さいダメージを受けないワザ", damage="none") + _check_exact_text(attack, "次の相手の番に小さいダメージを受けないワザ", (expected,))
+        return _check_form(attack, "次の相手の番に小さいダメージを受けないワザ", damage="none") + _check_exact_text(
+            attack, "次の相手の番に小さいダメージを受けないワザ", zero_damage_below_texts(self.threshold))
 
     def threshold_terms(self) -> tuple[type, int]:
         from .state import ZeroDamageBelow
 
         return ZeroDamageBelow, self.threshold
 
+
+def zero_damage_below_texts(threshold: int) -> tuple[str, ...]:
+    """「かたくなる」（``ZeroDamageBelowNextTurn``）として受け付ける説明（v0.64）。どれも「次の相手の番、このカードが受ける ``threshold`` より小さい（ダメージカウンターの
+    単位で ``threshold`` − 10 以下の）ダメージは 0、``threshold`` 以上はそのまま」の書き方:
+
+    - イワーク（PMCG1-054。v0.45）「次の相手の番に受けるダメージが0になる。ただしダメージが40以上の場合は、そのままダメージをうける。」
+    - 化石の秘密のゴローン（PMCG3-037。v0.64）「次の相手の番にこのカードが受ける30以下のダメージは0になる。(ダメージ以外の効果はそのまま)。40以上のダメージはそのまま受ける。」
+      （「30以下」と「40以上」はダメージカウンターの単位（10）で隣り合い、あいだのダメージはない。「(ダメージ以外の効果はそのまま)」は、計算の結果が 0 でもダメージ以外の
+      効果は受けるという ``ZERO_IF_BELOW`` の扱い（v0.45）と同じ）
+    """
+    return (f"次の相手の番に受けるダメージが0になる。ただしダメージが{threshold}以上の場合は、そのままダメージをうける。",
+            f"次の相手の番にこのカードが受ける{threshold - 10}以下のダメージは0になる。(ダメージ以外の効果はそのまま)。{threshold}以上のダメージはそのまま受ける。")
+
+
+# ---------------------------------------------------------------- v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
+
+
+COINS_UNTIL_TAILS_TEXT = "「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数×{per}のダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinsUntilTailsDamage(AttackEffect):
+    """「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数 × ``per`` のダメージ（v0.64。化石の秘密のイシツブテ（PMCG3-034）の「れんぞくいしなげ」。kyuura の
+    印刷の文面）。
+
+    - 要素の並びは ``Damage(OPP, HeadsUntilTails(per))`` だけ。コインは p.309 の手順 6（ワザの内容）で投げる。手順 4 のコイン・こんらんのコインでワザが止まったら投げない
+    - 実際の対戦では「うら」が出るまで 1 枚ずつ投げる（``coins.flip_until_tails``。枚数・ダメージに上限はない。決まった枚数で打ち切らない）。「おもて」の数 × ``per`` が
+      p.321 の 1 段階（基本となるダメージ）で、弱点・抵抗力・変更効果・防ぐ効果・ダメージを受けたときの効果は、ほかのダメージの要素と同じ ``kernel.deal_damage``。1 枚目が
+      「うら」なら 0 で、2 段階で計算を終え「ダメージを与えなかった」（ワザの失敗ではない。v0.2d の ``CoinFlipDamage`` と同じ）
+    - コインはダメージの量だけを決めるので、「ダメージを受けない」状態・「ワザをうけない」状態の相手には、コインを投げる前に v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``
+    - 宣言の前の先読みは、「おもて」の数の有限の組（``resolution.unbounded``）の代表だけを試す（docs 3 章）。v0.13 の止める関数（``damage_profile``）は使えない
+      （候補を並べられない）ので、``v013_checks.VERIFIED`` に入れない
+    """
+
+    per: int
+    implementation_id = "coins_until_tails_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "「おもて」1 枚あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "「うら」が出るまでコインを投げるワザ", damage="modified", modifier="×")
+        if attack.damage != self.per:
+            problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した「おもて」1 枚あたりのダメージ {self.per} が違う")
+        return problems + _check_exact_text(attack, "「うら」が出るまでコインを投げるワザ", (COINS_UNTIL_TAILS_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        raise NotImplementedError(f"{self.implementation_id}: 「おもて」の数に上限がないので、基本となるダメージの候補を並べられない（先読みは resolution.unbounded の組を使う）")
 
 HALF_REMAINING_HP_TEXT = "相手の残りのHPの半分(切り上げ)のダメージをあたえる。"
 
@@ -17966,6 +18017,9 @@ DEFAULT_EFFECTS = EffectRegistry(
         ("PMCG1-054", 0, "いわおとし"),  # イワーク（第1弾。タケシのイワーク PMCG5-048 とは別のカード）
         ("PMCG1-062", 0, "かみつく"),  # ラッタ（第1弾）
         ("PMCG5-054", 1, "マグナムパンチ"),  # R団のエビワラー（リーダーズスタジアム）
+        # v0.64: 説明文のないワザ（kyuura データの採用。docs/geodude-line-unbounded-coins-v0.64.md。pcg-search.com の同じ版のページでも説明文がない）
+        ("PMCG3-037", 1, "いわおとし"),  # ゴローン（化石の秘密。タケシのゴローン PMCG5-052 とは別のカード）
+        ("PMCG3-038", 0, "いわころがり"),  # ゴローニャ（化石の秘密。タケシのゴローニャ PMCG5-053 とは別のカード）
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -21746,6 +21800,33 @@ DEFAULT_EFFECTS = EffectRegistry(
             "ちょうおんぱ",
             text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
             play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # v0.64（docs/geodude-line-unbounded-coins-v0.64.md）: 化石の秘密のイシツブテ（PMCG3-034。タケシのイシツブテ PMCG5-046・047 とは別のカード）のれんぞくいしなげ
+        # （闘無）10×: 「うら」が出るまでコインを投げ続け、「おもて」の数 × 10（枚数・ダメージに上限なし。先読みは resolution.unbounded の有限の組）
+        AttackKey("PMCG3-034", 0): AttackEntry(
+            CoinsUntilTailsDamage(10),
+            "れんぞくいしなげ",
+            text_ja="「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数×10のダメージ。",
+            play_text_ja="「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ゴローン（化石の秘密。イシツブテから進化）のかたくなる（闘闘）: イワーク（v0.45）と同じ型（次の相手の番、受けるダメージが 40 より小さければ 0。8 段階）。書き方の違いは
+        # ``zero_damage_below_texts`` の 2 つめ
+        AttackKey("PMCG3-037", 0): AttackEntry(
+            ZeroDamageBelowNextTurn(40),
+            "かたくなる",
+            text_ja="次の相手の番にこのカードが受ける30以下のダメージは0になる。(ダメージ以外の効果はそのまま)。40以上のダメージはそのまま受ける。",
+            play_text_ja="次の相手の番にこのカードが受ける30以下のダメージは0になる。(ダメージ以外の効果はそのまま)。40以上のダメージはそのまま受ける。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ゴローニャ（化石の秘密。ゴローンから進化）のじばく（闘闘闘闘）100: 化石の秘密のレアコイルと同じ型（自分にも 100、お互いの控え全員に 20（弱点・抵抗力に関係なく））。
+        # 「関係なく」のあとの読点のない書き方（``SELF_DESTRUCT_TEXTS`` の 2 つめ）
+        AttackKey("PMCG3-038", 1): AttackEntry(
+            SelfDestruct(self_damage=100, bench_damage=20, weakness_resistance_stated=True),
+            "じばく",
+            text_ja="自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なくそれぞれ20ダメージ。",
+            play_text_ja="自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なくそれぞれ20ダメージ。",
             source=_KYUURA_PRINTED_TEXT,
         ),
     },

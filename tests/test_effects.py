@@ -136,6 +136,8 @@ V0_61_WITH_TEXT = [AttackKey("PMCG4-025", 0), AttackKey("PMCG4-043", 0), AttackK
 # タケシのダグトリオのあながくれ・ドリルホール・ベロリンガのまきつくベロ・ちょうおんぱ（説明文のないワザはつつく・ドリルくちばし・つばさでうつ）
 V0_62_WITH_TEXT = [AttackKey("PMCG1-066", 0), AttackKey("PMCG1-066", 1), AttackKey("PMCG2-034", 1), AttackKey("PMCG2-038", 0), AttackKey("PMCG2-043", 1),
                    AttackKey("PMCG6-060", 0), AttackKey("PMCG6-060", 1), AttackKey("PMCG2-041", 0), AttackKey("PMCG2-041", 1)]
+# v0.64: れんぞくいしなげ・かたくなる・じばく（kyuura の印刷の文面。docs/geodude-line-unbounded-coins-v0.64.md）
+V0_64_WITH_TEXT = [AttackKey("PMCG3-034", 0), AttackKey("PMCG3-037", 0), AttackKey("PMCG3-038", 1)]
 
 
 class RecordingEffect(AttackEffect):
@@ -287,7 +289,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -443,7 +445,9 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + サンダー（化石の秘密）の「サンダーストーム」・R団のストライクの「かげぶんしん」「こうそくカマ」・カスミのギャラドスの「ハイドロクラッシュ」・タケシのサンドパンの
         #   「スピードスター」「とげボール」（v0.60。docs/coins-defense-rebellion-v0.60.md）
         # + わるいギャラドスの「れいとうビーム」・わるいダグトリオの「つきおとす」・タケシのオコリザルの「おおあばれ」（v0.61。docs/reactive-powers-trainer-damage-v0.61.md）
-        self.assertEqual(len(keys), 586)
+        # + 化石の秘密のイシツブテの「れんぞくいしなげ」・ゴローンの「かたくなる」「いわおとし」・ゴローニャの「いわころがり」「じばく」（v0.64。
+        #   docs/geodude-line-unbounded-coins-v0.64.md）
+        self.assertEqual(len(keys), 591)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

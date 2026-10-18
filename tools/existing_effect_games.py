@@ -430,7 +430,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + ("PMCG1-040", "PMCG5-030", "PMCG4-008")  # v0.59: マルマイン（第1弾）・カスミのメノクラゲ・わるいアーボック
            + ("PMCG3-026", "PMCG5-016", "PMCG5-035", "PMCG5-050")  # v0.60: サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン
            + ("PMCG4-025", "PMCG4-043", "PMCG5-051")  # v0.61: わるいギャラドス・わるいダグトリオ・タケシのオコリザル
-           + ("PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041"))  # v0.62
+           + ("PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041")  # v0.62
+           + ("PMCG3-034", "PMCG3-037", "PMCG3-038"))  # v0.64: 化石の秘密のイシツブテ・ゴローン・ゴローニャ
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -470,6 +471,9 @@ PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG = "PMCG1-066", "P
 V0_62 = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
 HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3 = "PMCG4-062", "PMCG6-084", "PMCG4-058", "PMCG6-082"
 V0_63_TRAINERS = (HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3)
+# v0.64（docs/geodude-line-unbounded-coins-v0.64.md）。化石の秘密のイシツブテ → ゴローン → ゴローニャ（「タケシの」系統とは別のカード）
+FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM = "PMCG3-034", "PMCG3-037", "PMCG3-038"
+V0_64 = (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -744,6 +748,8 @@ DECKS = {
     "D62": ((BROCKS_DIGLETT, 4), (BROCKS_DUGTRIO, 3), (SPEAROW, 3), (FEAROW, 2), (LICKITUNG, 3), *TRAINERS, (FIGHTING, 20), (GRASS, 13)),
     # v0.63: 無色（エネルギーは草・水）。ポッポ → ピジョン → ピジョット・オニスズメ → オニドリル・ベロリンガ（カツラのクイズで置くワザのあるポケモン）と、v0.63 の 4 枚・
     # おもてになったサイドを取る・入れかえるマチスの交渉・カスミのわがまま
+    # v0.64: 闘。化石の秘密のイシツブテ → ゴローン → ゴローニャ（れんぞくいしなげ・かたくなる・いわおとし・いわころがり・じばく）とイワーク（第1弾）
+    "G64": ((FOSSIL_GEODUDE, 4), (FOSSIL_GRAVELER, 3), (FOSSIL_GOLEM, 3), (ONIX, 4), *TRAINERS, (FIGHTING, 34)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -838,6 +844,9 @@ PAIRINGS_V0_62 = (("H62", "D62"), ("H62", "G61"), ("D62", "M60"), ("H62", "P31")
 # マチスの交渉・カスミのわがまま・サイドを取る）・T63 対 H62（v0.62 のオウムがえし・ハリケーンと、相手の手札を置いておく）・Q63 対 K56（ロケット団の実験・
 # キョウの効果と、挑戦状・クイズ）。``run`` が席を入れかえる
 PAIRINGS_V0_63 = (("T63", "Q63"), ("T63", "H62"), ("Q63", "K56"))
+# v0.64: G64 対 H62（ピジョンの「オウムがえし」で受けたれんぞくいしなげを出す・ワザの履歴）・G64 対 D46（わるいオコリザル・ドードリオなど。
+# 受けるダメージを変える効果のない相手）・G64 対 P61（タケシのオコリザルの［ずらかる］）・G64 対 W45（わるいカメールの「こうらがえし」）
+PAIRINGS_V0_64 = (("G64", "H62"), ("G64", "D46"), ("G64", "P61"), ("G64", "W45"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -845,7 +854,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
-           "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63}
+           "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
+           "v0.64": PAIRINGS_V0_64}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -3036,6 +3046,53 @@ def v063_uses(state):
     return {k: v for k, v in counts.items() if v}
 
 
+def v064_uses(state):
+    """v0.64: ログから数えた v0.64 の 3 枚の動き（どれもない局では空）。
+
+    - ``barrage``・``barrage_heads_<数>``（6 以上は ``barrage_heads_6plus``）・``barrage_zero``・``barrage_max_heads``: れんぞくいしなげ（実際に出た「おもて」の数・
+      1 枚目が「うら」の 0 ダメージ・1 局のいちばん長い「おもて」の並び）
+    - ``barrage_copied``: ほかのポケモンのワザ（ピジョンのオウムがえしなど）としてれんぞくいしなげを使った
+    - ``harden``・``harden_zeroed``・``harden_passed``: かたくなる（効果を与えた・受けたダメージを 0 にした（ログ damage_zero_below）・40 以上でそのまま受けた）
+    - ``rock_throw``・``avalanche``・``selfdestruct``・``selfdestruct_knock_outs``: いわおとし・いわころがり・じばく（じばくのあとのきぜつの数）
+    """
+    counts = Counter()
+    log = state.log
+    names = {(FOSSIL_GEODUDE, "れんぞくいしなげ"): "barrage", (FOSSIL_GRAVELER, "かたくなる"): "harden", (FOSSIL_GRAVELER, "いわおとし"): "rock_throw",
+             (FOSSIL_GOLEM, "いわころがり"): "avalanche", (FOSSIL_GOLEM, "じばく"): "selfdestruct"}
+    graveler = {uid for uid, c in state.cards.items() if c.card_id == FOSSIL_GRAVELER}
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "copy_attack" and e.get("copied") == f"{FOSSIL_GEODUDE}#0":
+            counts["barrage_copied"] += 1
+        if kind == "damage":
+            for _, source, _ in e.get("damage_zero_below", ()):
+                if source in graveler:
+                    counts["harden_zeroed" if e["amount"] == 0 else "harden_passed"] += 1
+        if kind != "attack":
+            continue
+        card_id = e.get("card_id") or state.cards[e["pokemon"]].card_id
+        name = names.get((card_id, e["attack"]))
+        if name is None:
+            continue
+        counts[name] += 1
+        window = []
+        for x in log[i + 1:]:
+            if x["kind"] in ("attack", "turn_end"):
+                break
+            window.append(x)
+        if name == "barrage":
+            heads = sum(1 for x in window if x["kind"] == "coin_flip" and x.get("until") == "tails" and x["result"] == "heads")
+            if any(x["kind"] == "coin_flip" and x.get("until") == "tails" for x in window):
+                counts[f"barrage_heads_{heads if heads < 6 else '6plus'}"] += 1
+                counts["barrage_max_heads"] = max(counts["barrage_max_heads"], heads)
+                if heads == 0:
+                    counts["barrage_zero"] += 1
+        if name == "selfdestruct":
+            counts["selfdestruct_knock_outs"] += sum(1 for x in window if x["kind"] == "knock_out")
+    return +counts
+
+
+
 def _v062_attack(state, tried, counts):
     """v0.62: 前の番の履歴を読むワザを、使える番に優先して使う（どれもない局では何もしない）。
 
@@ -3444,7 +3501,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -3533,6 +3590,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v061"] = v061_uses(state)
         result["v062"] = v062_uses(state)
         result["v063"] = v063_uses(state)
+        result["v064"] = v064_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -3965,7 +4023,7 @@ def summarize(games):
          "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter(), "v059": Counter(), "v059_policy": Counter(),
          "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter(), "v061": Counter(), "v061_games_with": Counter(),
          "v061_policy": Counter(), "v062": Counter(), "v062_games_with": Counter(), "v062_policy": Counter(),
-         "v063": Counter(), "v063_games_with": Counter(), "v063_policy": Counter()}
+         "v063": Counter(), "v063_games_with": Counter(), "v063_policy": Counter(), "v064": Counter(), "v064_games_with": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -3983,6 +4041,9 @@ def summarize(games):
         s["v063"].update(r.get("v063", {}))  # v0.63
         s["v063_games_with"].update({k: 1 for k, v in r.get("v063", {}).items() if v})
         s["v063_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v063_")})
+        s["v064"].update({k: v for k, v in r.get("v064", {}).items() if k != "barrage_max_heads"})  # v0.64
+        s["v064"]["barrage_max_heads"] = max(s["v064"]["barrage_max_heads"], r.get("v064", {}).get("barrage_max_heads", 0))
+        s["v064_games_with"].update({k: 1 for k, v in r.get("v064", {}).items() if v})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

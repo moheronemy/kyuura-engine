@@ -269,6 +269,9 @@ QUESTIONS: dict[str, Question] = {
                  "オニスズメの「オウムがえし」で、受けたダメージ・マヒ以外の効果（入れ替え・エネルギー・ダメージカウンター・回復など）を与えるのは、エンジンが対応していない"),
         Question("mirror_move_unsupported_attack", "UNSUPPORTED_MIRROR_MOVE_ATTACK", ("v0.62",), 10,
                  "ピジョンの「オウムがえし」で出すワザを、エンジンが自分のワザとして処理できない（場に出てから1回しか使えないワザ・要素の並びのないワザ）"),
+        # v0.64（docs/geodude-line-unbounded-coins-v0.64.md 3 章）。ルールの問いではなく、エンジンの未対応（今の写しでは起こらない場だけ）
+        Question("unbounded_coin_preflight", "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT", ("v0.64",), 10,
+                 "「うら」が出るまで投げるコインの、先読みの有限の組の根拠が扱っていない計算・前提の場（エンジンの未対応）"),
     )
 }
 

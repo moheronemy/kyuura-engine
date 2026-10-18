@@ -154,9 +154,9 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (345, 89, 10))
-        self.assertEqual(sum(counts.values()), 444)
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 586)  # ワザ・特殊能力は変えていない
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (348, 89, 10))  # v0.64 でポケモン 3 枚を加えた
+        self.assertEqual(sum(counts.values()), 447)  # v0.64 でポケモン 3 枚を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 591)  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 54)
 
     def test_registration_rejects_text_mismatches(self):

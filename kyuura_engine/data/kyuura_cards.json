@@ -625,6 +625,11 @@
     "PMCG4-058",
     "PMCG6-082"
   ],
+  "pool_v0_64": [
+    "PMCG3-034",
+    "PMCG3-037",
+    "PMCG3-038"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -35598,6 +35603,269 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%83%84%E3%83%A9%E3%81%AE%E3%82%AF%E3%82%A4%E3%82%BA_%E3%81%9D%E3%81%AE3"
+      }
+    },
+    {
+      "id": "PMCG3-034",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "イシツブテ",
+        "en": "Geodude"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          74
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れんぞくいしなげ",
+              "en": "Stone Barrage"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数×10のダメージ。",
+              "en": "Flip a coin until you get tails. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-034",
+        "pokemontcg": [
+          "base3-47"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-035-isitsubute/",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-035-isitsubute/"
+      }
+    },
+    {
+      "id": "PMCG3-037",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローン",
+        "en": "Graveler"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          75
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イシツブテ",
+          "en": "Geodude"
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かたくなる",
+              "en": "Harden"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番にこのカードが受ける30以下のダメージは0になる。(ダメージ以外の効果はそのまま)。40以上のダメージはそのまま受ける。",
+              "en": "During your opponent's next turn, whenever 30 or less damage is done to Graveler (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "いわおとし",
+              "en": "Rock Throw"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-037",
+        "pokemontcg": [
+          "base3-37"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-036-golone/",
+      "jp_print": {
+        "level": 29,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-036-golone/"
+      }
+    },
+    {
+      "id": "PMCG3-038",
+      "jp_set": "PMCG3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローニャ",
+        "en": "Golem"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          76
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ゴローン",
+          "en": "Graveler"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いわころがり",
+              "en": "Avalanche"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "じばく",
+              "en": "Selfdestruct"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分にも100ダメージ。お互いの控えポケモン全員にも、「弱点・抵抗力」に関係なくそれぞれ20ダメージ。",
+              "en": "Does 20 damage to each Pokémon on each player's Bench. (Don't apply Weakness and Resistance for Benched Pokémon.) Golem does 100 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG3-038",
+        "pokemontcg": [
+          "base3-36"
+        ]
+      },
+      "ja_text_source": "https://nazonobasho.com/pmcg03-037-golonya/",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "化石の秘密",
+        "remarks": [],
+        "source": "https://nazonobasho.com/pmcg03-037-golonya/"
       }
     },
     {
