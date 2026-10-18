@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 102,
-    "engine_stop_codes": 101,
+    "engine_unresolved_rulings": 110,
+    "engine_stop_codes": 109,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1209,6 +1209,94 @@
           "version": "v0.56",
           "document": "docs/trainer-decisions-turn-effects-v0.56.md",
           "ruling_id": "KG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "STB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "TG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "FG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "FG2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "EX1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "VG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "VM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHAOS_GYM_BORROWED_TURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.57",
+          "document": "docs/stadiums-v0.57.md",
+          "ruling_id": "CH1"
         }
       ],
       "kyuura_issue": null,

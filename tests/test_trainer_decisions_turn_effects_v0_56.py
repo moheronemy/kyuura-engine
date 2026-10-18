@@ -180,7 +180,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_56"], list(V0_56_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 66)  # 56（v0.55）+ 10
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 80)  # 56（v0.55）+ 10。v0.57 でスタジアム 14 枚を加えた
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_56_CARDS}
         self.assertEqual([c for c in V0_56_CARDS if e[c].may_end_turn], [ROCKET_GRUNT])
         self.assertEqual([c for c in V0_56_CARDS if e[c].takes_prizes], [LT_SURGES_TREATY])
@@ -257,7 +257,7 @@ class RegistrationTest(unittest.TestCase):
                 entry = links["stop_codes"][code]
                 self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
                 self.assertIn({"version": "v0.56", "document": "docs/trainer-decisions-turn-effects-v0.56.md", "ruling_id": ruling}, entry["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (101, 102))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (109, 110))  # v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1 を加えた
 
     def test_observation_tables(self):
         self.assertEqual([OPTION_MEANINGS[k] for k in (ACCEPT_REQUEST, OPPONENT_HAND_TO_BENCH, SELECT_HAND_POSITIONS, HAND_TO_ACTIVE, SWAP_WITH_PRIZE)],
@@ -716,7 +716,7 @@ class RocketsExperimentTest(unittest.TestCase):
 class SaveObservationTest(unittest.TestCase):
     def test_format_16_and_older_formats_reject(self):
         """期限のある効果（``trainer_effects``）・ロケット団の実験の禁止（``origin`` が trainer）は形式 16 で書き出し、形式 1〜15 は ``ValueError``（黙って落とさない）。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (16, 16))
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (17, 17))  # v0.57 で 17
         wall = use(board([INVISIBLE_WALL]), INVISIBLE_WALL)
         locked = use(board([ROCKETS_EXPERIMENT], deck=[G]), ROCKETS_EXPERIMENT, coins=(T,))
         for state in (wall, locked):

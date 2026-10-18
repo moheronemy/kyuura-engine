@@ -106,6 +106,7 @@ from .decisions import (
     SELECT_COLOR, SELECT_DEVOLVE_COUNT, BENCH_FROM_DISCARD, DISCARD_TO_DECK, SELECT_DRAW_COUNT, push_trainer_decision,
     TAKE_LOOKED_CARDS, OPPONENT_HAND_TO_DECK, SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST, HAND_TO_ACTIVE, OPPONENT_HAND_TO_BENCH, SELECT_HAND_POSITIONS, SWAP_WITH_PRIZE,
+    EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -138,9 +139,10 @@ from .persistent import (
     weakness_change,
     zero_damage_below,
 )
+from .stadiums import bench_limit, stadium_in_play
 from .state import (
     ATTACK_DAMAGE_BONUS, BENCH_ATTACK_DAMAGE_PREVENTION, NEXT_TURN_MULTIPLY, POISON_ON_ATTACK_DAMAGE, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation,
-    TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench,
+    StadiumInPlay, TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench, turn_owner,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -150,6 +152,7 @@ from .zones import (
     discard_attached_energy_cards, return_attached_energy_to_hand, move_attached_energy, opponent_hand_card_to_deck, take_looked_deck_cards,
     discard_pile_to_deck, deck_top_to_discard,
     hand_to_bench_by_effect, hand_basic_to_active, hand_positions_to_deck, swap_prize_with_hand, take_prize_by_trainer,
+    discard_attached_energy_by_stadium, return_attached_energy_by_stadium,
 )
 
 if TYPE_CHECKING:
@@ -609,8 +612,8 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
     # v0.48: 今有効な値の定義（``definition_views``）。色の読み方（VS1）で最終ダメージが変わるなら止める（``kernel.deal_damage`` と同じ判定）
     try:
-        return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
-            base, views[0], views[1], state.rules, modifiers).final)
+        return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], modifiers).final)
     except TypeReadingsDiffer as differ:
         raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算") from None
 
@@ -2795,8 +2798,8 @@ class PutBasicFromDeckOntoBench(AttackEffect):
 
     def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
         owner, _ = state.find_pokemon(attacker.pokemon_id)
-        if len(state.players[owner].bench) >= state.rules.max_bench:
-            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{state.rules.max_bench} 匹）ので、このワザは使えない（ワザの説明）")
+        if len(state.players[owner].bench) >= bench_limit(state, owner):
+            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{bench_limit(state, owner)} 匹）ので、このワザは使えない（ワザの説明）")
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
@@ -3298,8 +3301,8 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
 
     def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
         owner, _ = state.find_pokemon(attacker.pokemon_id)
-        if len(state.players[owner].bench) >= state.rules.max_bench:
-            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{state.rules.max_bench} 匹）ので、このワザは使えない（ワザの説明）")
+        if len(state.players[owner].bench) >= bench_limit(state, owner):
+            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{bench_limit(state, owner)} 匹）ので、このワザは使えない（ワザの説明）")
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
@@ -4472,7 +4475,7 @@ class CoinPoisonAndBenchDamage(AttackEffect):
 
 def _counts_and_space(state: GameState, player: int, names: tuple[str, ...]) -> tuple[list[int], int]:
     candidates = bench_from_deck_candidates(state, player, names)
-    return candidates, state.rules.max_bench - len(state.players[player].bench)
+    return candidates, bench_limit(state, player) - len(state.players[player].bench)
 
 
 @dataclass(frozen=True)
@@ -5524,6 +5527,19 @@ class TrainerEffect:
     # v0.56: True なら、効果でサイドを取る（マチスの交渉。きぜつで取るのではない）。エンジンが、使い終えてカードをトラッシュしたあとに勝ち負けの判定（``resolution.after_trainer``）を
     # する（効果の途中で対戦を終えない）。False のトレーナーのあとにサイドの枚数が減っていれば、ログの監査が見つける
     takes_prizes = False
+    # v0.57（docs/stadiums-v0.57.md 2 章）: True ならスタジアムカード（``StadiumEffect``）。エンジンが、手札から使ったら場に出し（使いすてのトレーナーとしてトラッシュしない）、
+    # 効果を場から問い合わせる。``bench_limit`` はスタジアムの「ベンチに出しておける控えポケモンの数」（せまいジム。``stadiums.bench_limit``）。ほかのトレーナーは None
+    is_stadium = False
+    bench_limit: int | None = None
+    # v0.57（docs/stadiums-v0.57.md 7 章）: True なら、説明が使ったプレイヤーの番を書く（「この番」「次の相手の番」「あなたの番は終わりになる」・自分のポケモンを進化させる
+    # 時）。錯乱ジムで相手プレイヤーが相手の番の中でかわりに使うと、どの番を指すかが決まらないので、使うことを選ぶと止める（CH1。``borrow_problem``）
+    refers_to_user_turn = False
+
+    def borrow_problem(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
+        """v0.57: 錯乱ジムで相手プレイヤー（``use.player``）がかわりに使うことを選ぶと止める理由 (コード, 理由の文)。なければ None。"""
+        if self.refers_to_user_turn:
+            return CHAOS_GYM_BORROWED_TURN_CODE, f"トレーナー {use.card_id}: {CHAOS_GYM_BORROWED_TURN_REASON}"
+        return None
 
     def turn_effect_terms(self) -> tuple[str, int, str | None, int | None] | None:
         """v0.56: プレイヤーに与える期限のある効果（``state.TrainerTurnEffect``）の登録の値 (種類, 消える番 − 与えた番, 名前の始まりの持ち主（「カスミ」）, 数)。与えない
@@ -5982,6 +5998,8 @@ class EvolveBasicToStage2(TrainerEffect):
     - 通常の操作（``EvolvePokemon``）の確認（名前・段階）は変えていない。たねポケモンに 2 進化カードを直接重ねられるのは、このカードの効果だけ。
     """
 
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
+
     implementation_id = "evolve_basic_to_stage2"
     skips_stage1_evolution = True
 
@@ -6045,10 +6063,15 @@ class EvolveBasicToStage2(TrainerEffect):
         if (card, SKIP_EVOLUTION_OK) not in _selectable_skip_evolutions(state, use.player).get(target, []):
             raise RuntimeError(f"場のポケモン {target} にカード {card} を 1 進化を飛ばして重ねられない（決定の確認の漏れ。エンジンの不具合）")
         pokemon = state.find_pokemon(target)[1]
+        before_name = form_def(state, pokemon).name_ja
         place_evolution_card(state, use.player, pokemon, card, trainer=use.card)
+        return_to = ("trainer", use.player, use.card, use.card_id)
+        # v0.57: トキワシティジム（「サカキのポケモン」を進化させる時）。答えたら、場に出たときの特殊能力の機会とこのトレーナーの処理にもどる（engine._resume_stadium）
+        if offer_evolution_heal(state, use.player, pokemon, before_name, then=("entry", 1, return_to)):
+            return
         # v0.43: 場に出たときに使える特殊能力（わるいカイリューの［てしたをよぶ］）があれば、使うかを聞き、そのあとこのトレーナーの処理（トラッシュ）にもどる
         # （手札から出したカード。docs/declared-entry-powers-v0.43.md 3 章）
-        offer_entry_power(state, use.player, pokemon, from_hand=True, return_to=("trainer", use.player, use.card, use.card_id))
+        offer_entry_power(state, use.player, pokemon, from_hand=True, return_to=return_to)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         """決定するのは使ったプレイヤー。段階 1 は進化させられる自分の場のたねポケモン（場の並び）から 1 匹、段階 2 はそのポケモンに
@@ -8459,11 +8482,11 @@ class BenchBasicsFromDeckOnEntry(EntryPower):
         return problems
 
     def _limit(self, state: GameState, use: PowerUse) -> int:
-        space = state.rules.max_bench - len(state.players[use.player].bench)
+        space = bench_limit(state, use.player) - len(state.players[use.player].bench)
         return min(self.max_cards, space, len(deck_basic_pokemon(state, use.player)))
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
-        if len(state.players[use.player].bench) >= state.rules.max_bench:
+        if len(state.players[use.player].bench) >= bench_limit(state, use.player):
             return _power_zero_cards("ベンチに空きがない")
         if not deck_basic_pokemon(state, use.player):
             return _power_zero_cards("山札にたねポケモンがない（山札が 0 枚を含む）")
@@ -9548,8 +9571,8 @@ class PutOwnerBasicFromDeckOntoBenchOnHeads(AttackEffect):
 
     def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
         owner, _ = state.find_pokemon(attacker.pokemon_id)
-        if len(state.players[owner].bench) >= state.rules.max_bench:
-            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{state.rules.max_bench} 匹）ので、このワザは使えない（ワザの説明）")
+        if len(state.players[owner].bench) >= bench_limit(state, owner):
+            return IllegalActionError("BENCH_FULL", f"自分のベンチに空きがない（{bench_limit(state, owner)} 匹）ので、このワザは使えない（ワザの説明）")
         return None
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
@@ -9673,7 +9696,11 @@ class CoinEvolveSelfFromDeck(PowerEffect):
         if applicable_entry_power(state, card, from_hand=False) is not None:
             raise RuntimeError(f"［うか］で重ねるカード {card} に場に出たときの特殊能力がある（今の対応カードでは起こらない。エンジンの不具合）")
         _, user = state.find_pokemon(use.pokemon_id)
+        before_name = form_def(state, user).name_ja
         place_evolution_card(state, use.player, user, card, power=str(use.key))
+        if evolution_heal_terms(state, user, before_name) is not None:
+            # v0.57: 特殊能力で山札から重ねる進化（［うか］）で「サカキのポケモン」を進化させるカードは写しにない（トキワシティジムの機会の続きは扱っていない）
+            raise RuntimeError("特殊能力による進化で、トキワシティジムの機会が来た（今の写しでは起こらない。エンジンの不具合）")
         shuffle_deck(state, use.player, power=str(use.key))
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
@@ -9756,6 +9783,8 @@ class EvolutionPermissionForOwnerPokemon(TrainerEffect):
     - 山札から重ねる効果（ワザ・特殊能力）で進化させるときに記録が当てはまるかは決められない（GV1）
     - 自分の場に「(``owner``)のポケモン」がいないときに使えるかは決められない（TR1。``UNRESOLVED_TRAINER_WITHOUT_TARGET``。使う前に止める）
     """
+
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
 
     owner: str
     implementation_id = "evolution_permission_for_owner_pokemon"
@@ -10142,45 +10171,75 @@ class RetreatCost:
     - ``printed``: バトル場のポケモンのいちばん上のカードの「にげる」の数（p.310）
     - ``increases``: 決まって増やす特殊能力（(持つポケモンの番号, ``PowerKey`` の文字列, 数)。ねんちゃくえき）
     - ``reductions``: 少なくできる特殊能力（同じ形。にげるサポート。少なくするかは選べる）
+    - ``stadium_increases``（v0.57）: 決まって増やす場のスタジアム（(スタジアムカード, 数)。ロケット団の特訓ジム）。特殊能力とは別に記録する
+    - ``stadium_reductions``（v0.57）: 決まってへらす場のスタジアム（(スタジアムカード, 数)。ハナダシティジム。選べない）
 
-    増やす数と少なくする数をまとめ、最後に 0 で下限をつける（``maximum`` = 印刷の数 + 増やす数、``minimum`` = max(0, ``maximum`` − 少なくできる数)）。少なくする数が
-    印刷の数より多く、増やす数もあるときは、先に少なくして 0 で止めてから増やす読み方（``floor_first_minimum``）と最後に下限をつける読み方で、トラッシュしてよい数が
-    変わる。どちらの読み方も記録から決まらない（CP2）ので、その違う数をトラッシュする「にげる」は止める（``engine._retreat``）。"""
+    増やす数とへらす数をまとめ、最後に 0 で下限をつける（``maximum`` = max(0, 印刷の数 + 増やす数 − 決まってへらす数)、``minimum`` = max(0, それ − 少なくできる数)）。
+    へらす数が印刷の数より多く、増やす数もあるときは、先にへらして 0 で止めてから増やす読み方（``floor_first_minimum``・``floor_first_maximum``）と最後に下限をつける
+    読み方で、トラッシュしてよい数が変わる。どちらの読み方も記録から決まらない（CP2）ので、読み方で答えが変わる数をトラッシュする「にげる」は止める（``engine._retreat``）。
+    スタジアムのない場合の数・範囲・止める数は v0.56 と同じ。"""
 
     printed: int
     increases: tuple[tuple[int, str, int], ...] = ()
     reductions: tuple[tuple[int, str, int], ...] = ()
+    stadium_increases: tuple[tuple[int, int], ...] = ()
+    stadium_reductions: tuple[tuple[int, int], ...] = ()
+
+    @property
+    def _increase(self) -> int:
+        return sum(amount for _, _, amount in self.increases) + sum(amount for _, amount in self.stadium_increases)
+
+    @property
+    def _forced_reduction(self) -> int:
+        return sum(amount for _, amount in self.stadium_reductions)
+
+    @property
+    def _optional_reduction(self) -> int:
+        return sum(amount for _, _, amount in self.reductions)
 
     @property
     def maximum(self) -> int:
-        return self.printed + sum(amount for _, _, amount in self.increases)
+        return max(0, self.printed + self._increase - self._forced_reduction)
 
     @property
     def minimum(self) -> int:
-        return max(0, self.maximum - sum(amount for _, _, amount in self.reductions))
+        return max(0, self.printed + self._increase - self._forced_reduction - self._optional_reduction)
+
+    @property
+    def floor_first_maximum(self) -> int:
+        """へらす数を先に当てはめて 0 で止めてから、増やす数を加える読み方の上限（v0.57。CP2 の比べ）。"""
+        return max(0, self.printed - self._forced_reduction) + self._increase
 
     @property
     def floor_first_minimum(self) -> int:
-        """少なくする数を先に当てはめて 0 で止めてから、増やす数を加える読み方の下限（CP2 の比べ）。"""
-        return max(0, self.printed - sum(amount for _, _, amount in self.reductions)) + sum(amount for _, _, amount in self.increases)
+        """へらす数を先に当てはめて 0 で止めてから、増やす数を加える読み方の下限（CP2 の比べ）。"""
+        return max(0, self.printed - self._forced_reduction - self._optional_reduction) + self._increase
 
-    def allows(self, count: int) -> bool:
+    def _last(self, count: int) -> bool:
         return self.minimum <= count <= self.maximum
 
+    def _first(self, count: int) -> bool:
+        return self.floor_first_minimum <= count <= self.floor_first_maximum
+
+    def allows(self, count: int) -> bool:
+        """どちらかの読み方で正しい数か（両方で正しくなければ ``WRONG_RETREAT_COST``）。"""
+        return self._last(count) or self._first(count)
+
     def floor_ambiguous(self, count: int) -> bool:
-        """``count`` 枚が、最後に下限をつける読み方では正しく、先に 0 で止める読み方では足りない（CP2）。"""
-        return self.minimum <= count < self.floor_first_minimum
+        """``count`` 枚が、読み方の一方では正しく、もう一方では正しくない（CP2）。"""
+        return self._last(count) != self._first(count)
 
     @property
     def modified(self) -> bool:
-        return bool(self.increases or self.reductions)
+        return bool(self.increases or self.reductions or self.stadium_increases or self.stadium_reductions)
 
 
 def retreat_cost(state: GameState, player: int) -> RetreatCost:
     """プレイヤー ``player`` のバトル場のポケモンが「にげる」ときにトラッシュするエネルギーの数（v0.46。公開の問い合わせ。``RetreatCost``）。増やすのは相手の
     はたらいている［ねんちゃくえき］、少なくできるのは自分のはたらいている［にげるサポート］。状態を変えず、乱数を使わない。バトル場にポケモンがいなければ ``ValueError``。
     v0.47: バトル場がなにかの化石・ピッピ人形（場での役割のあるカード）なら、にげるエネルギーの数が決まらない（PF2）ので ``UnsupportedError``
-    （``UNRESOLVED_PLAY_AS_POKEMON_RETREAT``。``engine._retreat`` と同じ問い）。"""
+    （``UNRESOLVED_PLAY_AS_POKEMON_RETREAT``。``engine._retreat`` と同じ問い）。v0.57: 場のスタジアム（ロケット団の特訓ジムは決まって増やし、ハナダシティジムは
+    「カスミのポケモン」なら決まってへらす。``stadium_retreat_terms``）も当てはめる。"""
     active = state.players[player].active
     if active is None:
         raise ValueError(f"プレイヤー {player} のバトル場にポケモンがいない")
@@ -10193,7 +10252,8 @@ def retreat_cost(state: GameState, player: int) -> RetreatCost:
             increases.append((holder.pokemon_id, str(key), effect.amount))
         elif isinstance(effect, ReduceOwnActiveRetreatCost) and owner == player:
             reductions.append((holder.pokemon_id, str(key), effect.amount))
-    return RetreatCost(definition.retreat_cost, tuple(increases), tuple(reductions))
+    stadium_increases, stadium_reductions = stadium_retreat_terms(state, player, active)
+    return RetreatCost(definition.retreat_cost, tuple(increases), tuple(reductions), stadium_increases, stadium_reductions)
 
 
 ALLERGIC_POLLEN_TEXT = "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。"
@@ -10542,8 +10602,8 @@ class PlayAsPokemon(TrainerEffect):
                               play_role=self.role)
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
-        if len(state.players[use.player].bench) >= state.rules.max_bench:
-            raise IllegalActionError("BENCH_FULL", f"ベンチに空きがないので、「{state.card_def(use.card).name_ja}」をポケモンとして場に出せない（ベンチは {state.rules.max_bench} 匹まで）")
+        if len(state.players[use.player].bench) >= bench_limit(state, use.player):
+            raise IllegalActionError("BENCH_FULL", f"ベンチに空きがないので、「{state.card_def(use.card).name_ja}」をポケモンとして場に出せない（ベンチは {bench_limit(state, use.player)} 匹まで）")
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         put_trainer_into_play(state, use.player, use.card)
@@ -11078,10 +11138,17 @@ def weakness_of(state: GameState, pokemon: PokemonInPlay) -> EnergyType | None:
 
 
 def resistance_of(state: GameState, pokemon: PokemonInPlay) -> tuple[EnergyType | None, int]:
-    """場のポケモンの今有効な抵抗力（色, 数）（v0.48）。「テクスチャー2」の効果（``persistent.resistance_change``）があれば色だけ変わる（数はカードの定義の値のまま）。"""
+    """場のポケモンの今有効な抵抗力（色, 数）（v0.48）。「テクスチャー2」の効果（``persistent.resistance_change``）があれば色だけ変わる（数はカードの定義の値のまま）。
+    v0.57: 場の抵抗力低下ジム（「すべてのポケモンの「抵抗力」は、20へる」）があれば、抵抗力のあるポケモンの数をへらす（0 より小さくしない。抵抗力のないポケモンに作らない。
+    色は変えない）。"""
     definition = form_def(state, pokemon)  # v0.49: 今の姿のカード
     change = resistance_change(pokemon)
-    return (change.color if change is not None else definition.resistance), definition.resistance_value
+    color = change.color if change is not None else definition.resistance
+    value = definition.resistance_value
+    reduction = stadium_resistance_reduction(state)
+    if reduction and color is not None:
+        value = max(0, value - reduction)
+    return color, value
 
 
 def type_shift_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, ShiftColor] | None:
@@ -11134,13 +11201,13 @@ def definition_views(state: GameState, pokemon: PokemonInPlay) -> tuple[CardDefi
     base = form_def(state, pokemon)  # v0.49: 今の姿のカード（［へんしん］・「ばける」）
     hp = max_hp(state, pokemon)
     weakness = weakness_of(state, pokemon)
-    resistance, _ = resistance_of(state, pokemon)
+    resistance, resistance_value = resistance_of(state, pokemon)  # v0.57: 抵抗力の数も（抵抗力低下ジム）
     views = []
     for color in type_readings(state, pokemon):
-        if (hp, color, weakness, resistance) == (base.hp, base.pokemon_type, base.weakness, base.resistance):
+        if (hp, color, weakness, resistance, resistance_value) == (base.hp, base.pokemon_type, base.weakness, base.resistance, base.resistance_value):
             views.append(base)
         else:
-            views.append(replace(base, hp=hp, pokemon_type=color, weakness=weakness, resistance=resistance))
+            views.append(replace(base, hp=hp, pokemon_type=color, weakness=weakness, resistance=resistance, resistance_value=resistance_value))
     return tuple(views)
 
 
@@ -12039,6 +12106,8 @@ class RecallPreEvolutionAttacks(TrainerEffect):
       いるときは RC4（使う前に止める）。使ったあとに対戦ポケモンが入れかわった・進化した・姿が変わったときは、進化前のワザを選ぶと止める（RC3・RC4。``available_attacks``）
     """
 
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
+
     implementation_id = "recall_pre_evolution_attacks"
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
@@ -12264,8 +12333,9 @@ def discard_basic_pokemon(state: GameState, player: int) -> tuple[int, ...]:
 
 
 def bench_has_space(state: GameState, player: int) -> bool:
-    """v0.51: プレイヤー ``player`` のベンチに空きがあるか（共通のルールの値 ``rules.max_bench``。p.312）。"""
-    return len(state.players[player].bench) < state.rules.max_bench
+    """v0.51: プレイヤー ``player`` のベンチに空きがあるか（共通のルールの値 ``rules.max_bench``。p.312）。v0.57: 場のスタジアムの「ベンチに出しておける控えポケモンの数」
+    （せまいジム）を当てはめた ``stadiums.bench_limit``。"""
+    return len(state.players[player].bench) < bench_limit(state, player)
 
 
 def bench_from_discard_candidates(state: GameState, players: Iterable[int]) -> tuple[int, ...]:
@@ -12708,13 +12778,19 @@ SELF_TRAINER_LOCK_TEXT = "「うら」なら、次のあなたの番が終わる
 SELF_TRAINER_LOCK_TURNS = 2  # 「次のあなたの番が終わるまで」: 与えた番（自分の番）+ 2 の番の終わりに消す（番は交互に進む。v0.2e と同じ前提）
 
 
+def self_lock_expiry(state: GameState, player: int, created_turn: int) -> int:
+    """「次のあなたの番が終わるまで」（ロケット団の実験の「うら」）の消える番: ``created_turn`` より後の、``player`` の最初の番（v0.57。自分の番に使えば与えた番 + 2
+    （``SELF_TRAINER_LOCK_TURNS``。v0.56 と同じ値）、錯乱ジムで相手の番の中でかわりに使えば与えた番 + 1）。番は交互に進む（v0.2e と同じ前提）。"""
+    return created_turn + (SELF_TRAINER_LOCK_TURNS if turn_owner(state, created_turn) == player else 1)
+
+
 def add_self_trainer_lock(state: GameState, use: TrainerUse) -> None:
     """v0.56: トレーナーを使ったプレイヤー自身に、期限のあるトレーナーカードの使用の禁止を与える（ロケット団の実験の「うら」）。v0.47 の ``TrainerUseLock`` を、出どころ
     ``origin="trainer"``（``player`` = ``source_player`` = 使ったプレイヤー、``source_card`` は使ったトレーナーのカード、``effect`` はそのカード id、消える番は与えた番 + 2）で
     使う。ログ ``trainer_lock_added``（``origin``・``trainer_card`` を加える。ワザの禁止のログの形は v0.55 と同じ）。この番の残りと次の自分の番に使えない（確かめるのは
     ``engine._play_trainer`` の ``trainer_use_blockers``。今使っているこのカードはもう使い終わるところなので関係しない）。同じプレイヤー・同じ出どころ・同じ消える番の禁止が
     重なることはない（禁止のあいだはこのカードを使えない。起こればエンジンの不具合）。ワザの禁止（ずつう・こうしゅうは）と重なっても、それぞれの期間で判定し、片方を消さない。"""
-    expires = state.turn_number + SELF_TRAINER_LOCK_TURNS
+    expires = self_lock_expiry(state, use.player, state.turn_number)
     if any(lock.player == use.player and lock.origin == "trainer" and lock.expires_turn == expires for lock in state.trainer_locks):
         raise RuntimeError(f"プレイヤー {use.player} に、消える番 {expires} のトレーナーの効果による禁止がすでにある（エンジンの不具合）")
     lock = TrainerUseLock(player=use.player, source_player=use.player, source_card=use.card, effect=use.card_id, created_turn=state.turn_number,
@@ -14435,7 +14511,7 @@ class LookOpponentHandThenBenchBasics(TrainerEffect):
         if not options:
             _trainer_take_none(state, use, "opponent_hand", no_target=True)
             return
-        space = state.rules.max_bench - len(state.players[opponent].bench)
+        space = bench_limit(state, opponent) - len(state.players[opponent].bench)
         push_trainer_decision(state, use, kind=OPPONENT_HAND_TO_BENCH, player=use.player, options=options, min_choices=0,
                               max_choices=min(space, len(options)))
 
@@ -14447,13 +14523,16 @@ class LookOpponentHandThenBenchBasics(TrainerEffect):
         ordered = tuple(uid for uid in state.players[opponent].hand if uid in set(choices))
         for uid in ordered:
             placed_entry_power_guard(state, uid)
-        hand_to_bench_by_effect(state, opponent, ordered, chooser=use.player, trainer=use.card)
+        placed = hand_to_bench_by_effect(state, opponent, ordered, chooser=use.player, trainer=use.card)
+        for pokemon in placed:
+            # v0.57: 場のロケット団の爆発ジム（手札からたねポケモンをベンチに出す時、持ち主がコインを投げ、「うら」なら 20 ダメージ）。出させたポケモンの持ち主は相手
+            bench_entry_damage(state, opponent, pokemon)
 
     def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
         what = f"トレーナー {use.card_id}"
         problems = _decided_by(decision, use.player, what)
         options = self._options(state, use)
-        space = state.rules.max_bench - len(state.players[1 - use.player].bench)
+        space = bench_limit(state, 1 - use.player) - len(state.players[1 - use.player].bench)
         if decision.kind != OPPONENT_HAND_TO_BENCH or decision.options != options or (decision.min_choices, decision.max_choices) != (0, min(space, len(options))):
             problems.append(f"{what}の決定 {decision.kind} {decision.options} {decision.min_choices}〜{decision.max_choices} が、相手の手札のたねポケモン {options} から "
                             f"0〜{min(space, len(options))} 枚ではない")
@@ -14576,6 +14655,8 @@ class CoinsReturnOpponentBenchElseEndTurn(TrainerEffect):
     - 1 枚でも「うら」: ``END_TURN`` を返す。エンジンがこのカードをトラッシュしてから番の終わり（番の終わりの期限 → ポケモンチェック → 次の番）に進む
       （``resolution.end_turn_after_trainer``。ログ ``trainer_turn_end``）。効果の中で番を終えない
     """
+
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
 
     text: str
     implementation_id = "coins_return_opponent_bench_else_end_turn"
@@ -14780,6 +14861,8 @@ class TrainerTurnEffectTrainer(TrainerEffect):
     - 型の ``check`` が、文面の言葉（この番だけ・次の相手の番が終わるまで・名前・数・条件）と登録の値を照らす
     """
 
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
+
     text: str
     kind: str
     offset: int
@@ -14920,6 +15003,727 @@ def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, Att
 # トレーナー（v0.2b）は p.254、プラスパワー（v0.2c）・ディフェンダー（v0.2e）は p.257、ドードーの「みだれづき」
 # （v0.2d）は p.231 の画像で「最新の説明」を確かめた（同じファイル。docs/trainers-v0.2b.md・
 # docs/pluspower-v0.2c.md・docs/coin-attacks-v0.2d.md・docs/defender-v0.2e.md）。
+# ---------------------------------------------------------------- スタジアム（v0.57。docs/stadiums-v0.57.md）
+#
+# スタジアムカードは、トレーナーカードの種類のひとつ（kyuura の種類 ``stadium``）で、自分の場と相手の場の境界線上に出し、両方の場に出ているカードとして扱う
+# （kyuura rule_differences の「stadium」の 2000.02.14 版の行・GR-2000-P312-FIELD）。手札から出すのはトレーナーカードを使うこと（トレーナーの使用の禁止で止まる）で、
+# 使いすてのトレーナーとしてトラッシュせず、場に残る（``engine._play_stadium``・``zones.place_stadium``）。新しいスタジアムが場に出たら古いスタジアムを持ち主の
+# トラッシュにすてる（どのスタジアムの印刷の文面にもある。同じ名前のスタジアムも別のカード）。1 番に出せる枚数の制限はない（2000.02.14 版の公式ルールに制限がない。
+# MIX-ADV-RULES-2003 の「これまでトレーナー「スタジアム」は、1回の自分の番に何枚でも出すことができたが、1枚だけになった」は 2003 年の変更で、使わない）。
+#
+# 効果は、問い合わせのたびに、場のスタジアムの実装（このクラスの部分型。型で探し、カード id では分けない）から求める。カードの定義・共有するルールの値に写さない。
+# かがくへんかガス・ポケモンの特殊状態ではスタジアムの効果は消えない（特殊能力ではない）。
+
+STADIUM_KIND = "stadium"
+
+# v0.57: 14 枚のスタジアムの印刷の文面（kyuura の写し。処理に使う文面も同じ。登録の照合と型の text_problems が照らす）
+PEWTER_GYM_TEXT = "このスタジアムカードが場にあるかぎり、「タケシのポケモン」が使うワザのダメージは「抵抗力」の影響を受けない。このスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。"
+CERULEAN_GYM_TEXT = "このスタジアムカードが場にあるかぎり、「カスミのポケモン」の「にげる時トラッシュするエネルギーの数」は「-1」される。(0より小さくなることはない)このスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。"
+RESISTANCE_GYM_TEXT = "すべてのポケモンの「抵抗力」は、20へる。(「抵抗力」が「-30」なら、「-10」になる)(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)"
+ROCKETS_TRAINING_GYM_TEXT = "お互いの対戦ポケモンは、「にげる」時、トラッシュするエネルギーが1つぶん多く必要になる。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)"
+CINNABAR_GYM_TEXT = "お互いのプレイヤーの「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を受けない。(このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする)"
+CELADON_GYM_TEXT = "お互いのプレイヤーは、のぞむなら、自分の番の中で、自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させてもよい。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)"
+FUCHSIA_GYM_TEXT = "お互いのプレイヤーは、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインが「おもて」なら、自分の場にいる「キョウのポケモン」を1枚選び、そのポケモンと、それについているすべてのカードを山札にもどし、その山札をよく切る。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。"
+SAFFRON_GYM_TEXT = "お互いのプレイヤーは、自分の番に、自分の「ナツメのポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)"
+NARROW_GYM_TEXT = "お互いのプレイヤーの「ベンチに出しておける控えポケモンの数」は、「4匹まで」となる。このカードが場に出た時、ベンチにポケモンが5匹いるプレイヤーは、その中から1匹を選び、そのカードと、それについているすべてのカードを手札にもどす。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)"
+MINEFIELD_GYM_TEXT = "手札から「たねポケモン」のカードをベンチに出す時、そのポケモンの持ち主はコインを投げる。コインが「うら」なら、そのポケモンに20ダメージ。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。"
+VIRIDIAN_GYM_TEXT = "お互いのプレイヤーは、自分の「サカキのポケモン」を進化させる時、のぞむなら、そのポケモンにのっているダメージカウンターを、2つとりのぞいてよい。このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。"
+VERMILION_GYM_TEXT = "お互いのプレイヤーは、のぞむなら、自分の番で「マチスのポケモン」がワザを使う時、コインを投げてもよい。コインが「おもて」なら、そのワザによって相手の対戦ポケモンに与えるダメージは「+10」される。(控えポケモンへのダメージは、そのまま)「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、10ダメージ。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)"
+NO_REMOVAL_GYM_TEXT = "お互いのプレイヤーは、「エネルギーリムーブ」「超エネルギーリムーブ」を使うことができない。ただし、それらを使う時に、自分の手札からカードを2枚選んでトラッシュするなら、使うことができる。(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)"
+CHAOS_GYM_TEXT = "このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。どちらかのプレイヤーが「トレーナーカード」(スタジアムカード以外)を使う時、そのプレイヤーはコインを投げる。コインが「うら」なら、そのプレイヤーは、そのカードを使うことができず、相手プレイヤーは、のぞむなら、そのカードを使ってもよい。相手プレイヤーが使う場合、ポケモンにつけて使うカード(「プラスパワー」など)や、場に出して使うカード(「ピッピ人形」など)は、使うことができない。また、そのカードの「使うための条件」(「手札からカードを1枚トラッシュする」など)を満たせない時も、使うことができない。使ったトレーナーカードは、持ち主のトラッシュにすてる。使えなかったり、使わなかったカードも、持ち主のトラッシュにすてる。"
+# 置き方の文（印刷の文面の書き方は 3 通り。どれも「バトル場の横に出して使う」と、別のスタジアムが場に出たらこのカードをトラッシュする文を持つ）
+STADIUM_PLACEMENT_TEXT = "バトル場の横に出して使う"
+STADIUM_REPLACEMENT_TEXTS = ("別のスタジアムカードが場に出た時、このカードをトラッシュする", "新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる",
+                             "このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする")
+
+# スタジアムの効果を使うことが、トレーナーカードの使用の禁止（［アレルギーかふん］・ずつう・こうしゅうは・ロケット団の実験の「うら」）の対象かは、記録から決まらない（STB1）
+STADIUM_UNDER_TRAINER_BAN_CODE = "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
+STADIUM_UNDER_TRAINER_BAN_REASON = (
+    "場のスタジアムカードの「お互いのプレイヤーは、…自分の番に…してよい」効果を使うことが、「トレーナーカードを使うことができない」（［アレルギーかふん］・ずつう・"
+    "こうしゅうは・ロケット団の実験の「うら」）の対象になるか（手札からトレーナーカードを使う p.310 の手順ではないが、スタジアムカードの効果を使う操作）は、2000.02.14 版の"
+    "公式ルール・kyuura の記録・印刷の文面から決められないので扱わない（STB1。docs/stadiums-v0.57.md 4 章）")
+
+
+def _owner_named(name: str, owner: str) -> bool:
+    """「(``owner``)のポケモン」か（名前の始まり。v0.44 の ``owner_pokemon``・v0.56 の ``_named_owner_pokemon`` と同じ判定。今の姿の名前を渡す）。"""
+    return name.startswith(f"{owner}の")
+
+
+@dataclass(frozen=True)
+class StadiumEffect(TrainerEffect):
+    """スタジアムカードの効果の実装の基底（v0.57）。``text`` は登録した印刷の文面（kyuura の写しと同じものだけを受け付ける）。
+
+    - ``is_stadium``: エンジンが、手札から使ったら場に出し（``zones.place_stadium``。トラッシュしない）、効果を場から問い合わせる印
+    - ``activated``: 自分の番に使ってよい効果を持つ（``UseStadium``。タマムシ・セキチク・ヤマブキ）。``once_per_turn``: 自分の番ごとに 1 回（セキチク）
+    - ``on_placed``: 場に出た時の効果（せまいジム）
+    - 効果の中身（ダメージの計算・にげる・ベンチ・反応）は、型ごとの問い合わせ（``stadium_damage_options``・``retreat_cost``・``stadiums.bench_limit`` など）が見る
+    """
+
+    text: str
+    implementation_id = "stadium"
+    is_stadium: ClassVar[bool] = True
+    activated: ClassVar[bool] = False
+    once_per_turn: ClassVar[bool] = False
+    what: ClassVar[str] = "スタジアム"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = []
+        if definition.trainer_kinds != (STADIUM_KIND,):
+            problems.append(f"種類 {list(definition.trainer_kinds)} は、スタジアム（{STADIUM_KIND}）だけではない")
+        text = definition.trainer_text_ja
+        if text != self.text:
+            problems.append(f"文面 {text!r} が、登録の文面ではない")
+            return problems
+        if STADIUM_PLACEMENT_TEXT not in text or not any(sentence in text for sentence in STADIUM_REPLACEMENT_TEXTS):
+            problems.append("文面に、スタジアムの置き方（バトル場の横に出す・別のスタジアムが場に出たらトラッシュする）がない")
+        problems += [f"文面と登録の「{name}」が合わない" for name in self.text_problems(text)]
+        return problems
+
+    def text_problems(self, text: str) -> list[str]:
+        """部分型が、文面と登録の値（持ち主の名前・数）を照らす（合わない項目の名前）。"""
+        return []
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        raise RuntimeError("スタジアムカードはエンジンが場に出す（engine._play_stadium。効果の resolve は呼ばない。エンジンの不具合）")
+
+    def on_placed(self, state: GameState, stadium: StadiumInPlay) -> None:
+        """場に出た時の効果（既定はない）。決定を出してよい（再開先 ``"stadium"``）。"""
+
+    # --- 自分の番に使ってよい効果（``activated``）
+
+    def check_activation(self, state: GameState, player: int, energy: int | None, stadium: StadiumInPlay) -> None:
+        """使えるかを確かめる（状態を変えない）。使えなければ ``IllegalActionError``、決められなければ ``UnsupportedError``。"""
+        raise IllegalActionError("STADIUM_NOT_USABLE", f"場のスタジアム「{state.card_def(stadium.card).name_ja}」に、自分の番に使ってよい効果はない")
+
+    def activate(self, state: GameState, player: int, energy: int | None, stadium: StadiumInPlay) -> None:
+        raise RuntimeError(f"{type(self).__name__} に使う効果がない（エンジンの不具合）")
+
+    def resume_stadium(self, state: GameState, stadium: StadiumInPlay, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        raise RuntimeError(f"{type(self).__name__} は決定を出さない（エンジンの不具合）")
+
+
+def stadium_of(state: GameState, kind: type | tuple[type, ...]) -> tuple[StadiumInPlay, StadiumEffect] | None:
+    """場のスタジアムの実装が ``kind`` の型なら (``StadiumInPlay``, 実装)。なければ None（v0.57。型で探す）。"""
+    found = stadium_in_play(state)
+    if found is None or not isinstance(found[1], kind):
+        return None
+    return found
+
+
+def _stadium_label(state: GameState, stadium: StadiumInPlay) -> str:
+    return state.card_def(stadium.card).name_ja
+
+
+# --- 1. 常にはたらく効果（ニビ・ハナダ・抵抗力低下・特訓・グレン）
+
+
+@dataclass(frozen=True)
+class IgnoreResistanceForOwnerStadium(StadiumEffect):
+    """このスタジアムカードが場にあるかぎり、「(``owner``)のポケモン」が使うワザのダメージは「抵抗力」の影響を受けない（ニビシティジム PMCG5-079。kyuura の
+    印刷の文面）。
+
+    - ワザを使うポケモンの今の姿の名前（［へんしん］・「ばける」の姿）で決める。相手のワザとして使うワザも、使ったのが「(``owner``)のポケモン」なら当てはまる
+    - p.321 の 4 段階（抵抗力）だけを計算しない（v0.45 の「スパイラルショット」と同じ計算 ``resistance=False``）。受けるポケモンの抵抗力そのもの（観測・問い合わせの
+      ``resistance_of``）は変えない。弱点（3 段階）・ほかの段階・「ダメージを受けない」状態は変わらない
+    - 当てはめるのは、そのワザによるダメージ（相手の対戦ポケモン・控え・自分へのダメージ。返す効果のダメージも、その効果を持つポケモンのワザのダメージ）。こんらんの 20
+      （ワザによるダメージかが決まらない。v0.3c）・特殊能力のダメージには当てはめない
+    """
+
+    owner: str = "タケシ"
+    implementation_id = "ignore_resistance_for_owner_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"「{self.owner}のポケモン」が使うワザのダメージは「抵抗力」の影響を受けない" in text else ["持ち主の名前"]
+
+
+@dataclass(frozen=True)
+class OwnerRetreatReductionStadium(StadiumEffect):
+    """このスタジアムカードが場にあるかぎり、「(``owner``)のポケモン」の「にげる時トラッシュするエネルギーの数」は「-``amount``」される（0 より小さくなることはない）
+    （ハナダシティジム PMCG5-080。kyuura の印刷の文面）。
+
+    - 決まってへらす（にげるサポートの「少なくできる」とは違い、選べない。へらさずに多くトラッシュすることはできない）。バトル場のポケモンの今の姿の名前で決める
+    - ``effects.retreat_cost`` の ``stadium_reductions``。数の下限 0 は、へらしたあとに付ける。増やす効果（［ねんちゃくえき］）と重なり、当てはめ方で答えが変わる数は
+      v0.46 の CP2（``UNRESOLVED_RETREAT_COST_FLOOR``）
+    """
+
+    owner: str = "カスミ"
+    amount: int = 1
+    implementation_id = "owner_retreat_reduction_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (f"「{self.owner}のポケモン」の「にげる時トラッシュするエネルギーの数」は「-{self.amount}」される" in text and "(0より小さくなることはない)" in text)
+        return [] if ok else ["持ち主の名前・数・下限"]
+
+
+@dataclass(frozen=True)
+class ReduceResistanceStadium(StadiumEffect):
+    """すべてのポケモンの「抵抗力」は、``amount`` へる（「抵抗力」が「-30」なら、「-10」になる）（抵抗力低下ジム PMCG5-091。kyuura の印刷の文面）。
+
+    - 今有効な抵抗力（``resistance_of``。今の姿・テクスチャー2 の色）の数をへらす（色は変えない）。抵抗力のないポケモンに抵抗力を作らない。0 より小さくしない
+    - 共有するカードの定義を書きかえない（``definition_views`` が今有効な値の定義を作る）
+    """
+
+    amount: int = 20
+    implementation_id = "reduce_resistance_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"すべてのポケモンの「抵抗力」は、{self.amount}へる。" in text else ["数"]
+
+
+@dataclass(frozen=True)
+class ActiveRetreatIncreaseStadium(StadiumEffect):
+    """お互いの対戦ポケモンは、「にげる」時、トラッシュするエネルギーが 1 つぶん多く必要になる（ロケット団の特訓ジム PMCG5-095。kyuura の印刷の文面）。
+
+    - 決まって増やす（``effects.retreat_cost`` の ``stadium_increases``。特殊能力の［ねんちゃくえき］とは別に記録する）。「にげる」ことができない効果・ねむり・マヒの確認は
+      今までどおり先（数を数える前に拒否する）。ポケモンいれかえ・突風・ワザの入れ替えには関係しない
+    """
+
+    amount: int = 1
+    implementation_id = "active_retreat_increase_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if "お互いの対戦ポケモンは、「にげる」時、トラッシュするエネルギーが1つぶん多く必要になる。" in text and self.amount == 1 else ["数"]
+
+
+@dataclass(frozen=True)
+class IgnoreWeaknessFromTypeStadium(StadiumEffect):
+    """お互いのプレイヤーの「(``owner``)のポケモン」は、「(``attacker_type``)」ポケモンからダメージを受ける時、「弱点」の影響を受けない（グレンタウンジム PMCG6-085。
+    kyuura の印刷の文面）。
+
+    - ダメージを受けるポケモンの今の姿の名前と、ダメージを与えるポケモン（ワザを使うポケモン）の今有効なタイプ（色の読み方 VS1 があれば読み方ごと）で決める
+    - p.321 の 3 段階（弱点）だけを計算しない。抵抗力・ほかの段階は変わらない。すべてのワザではなく、そのタイプのポケモンからのダメージだけ
+    """
+
+    owner: str = "カツラ"
+    attacker_type: EnergyType = EnergyType.WATER
+    implementation_id = "ignore_weakness_from_type_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"「{self.owner}のポケモン」は、「{self.attacker_type.ja}」ポケモンからダメージを受ける時、「弱点」の影響を受けない" in text else ["持ち主の名前・タイプ"]
+
+
+def stadium_damage_options(state: GameState, attacker: CardDefinition, receiver: CardDefinition) -> tuple[bool, bool, int | None]:
+    """ワザのダメージ（p.321）の計算で、場のスタジアムが変える計算の (弱点を計算するか, 抵抗力を計算するか, スタジアムカードの uid)（v0.57）。``attacker``・``receiver`` は
+    ダメージを与えるポケモン・受けるポケモンの今有効な値の定義（``definition_views``）。スタジアムがなければ (True, True, None)。"""
+    found = stadium_in_play(state)
+    if found is None:
+        return True, True, None
+    stadium, effect = found
+    weakness = resistance = True
+    if isinstance(effect, IgnoreResistanceForOwnerStadium) and _owner_named(attacker.name_ja, effect.owner):
+        resistance = False
+    if isinstance(effect, IgnoreWeaknessFromTypeStadium) and _owner_named(receiver.name_ja, effect.owner) and attacker.pokemon_type is effect.attacker_type:
+        weakness = False
+    return weakness, resistance, stadium.card
+
+
+def calculate_with_stadium(state: GameState, base: int, attacker: CardDefinition, receiver: CardDefinition, modifiers=(), *,
+                           weakness_resistance: bool = True, orders=None, resistance: bool = True):
+    """``damage.calculate_attack_damage`` に、場のスタジアムが変える計算（``stadium_damage_options``）を当てはめたもの（v0.57）。ワザのダメージを計算するところ
+    （実際の処理 ``kernel.deal_damage``・宣言の前の ``preview_attack_damage``・止める問いの比べ）はどれもこれを使う（片方だけに当てはめない）。"""
+    weakness, stadium_resistance, _ = stadium_damage_options(state, attacker, receiver)
+    return calculate_attack_damage(base, attacker, receiver, state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders,
+                                   resistance=resistance and stadium_resistance, weakness=weakness)
+
+
+def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) -> tuple[tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]]:
+    """プレイヤー ``player`` のバトル場のポケモン ``active`` の「にげる」の数を、場のスタジアムが (決まって増やす, 決まってへらす) 数（どちらも (スタジアムカード, 数)）。"""
+    found = stadium_in_play(state)
+    if found is None:
+        return (), ()
+    stadium, effect = found
+    if isinstance(effect, ActiveRetreatIncreaseStadium):
+        return ((stadium.card, effect.amount),), ()
+    if isinstance(effect, OwnerRetreatReductionStadium) and _owner_named(form_def(state, active).name_ja, effect.owner):
+        return (), ((stadium.card, effect.amount),)
+    return (), ()
+
+
+def stadium_resistance_reduction(state: GameState) -> int:
+    """場のスタジアムが、すべてのポケモンの抵抗力の数をへらす数（抵抗力低下ジム）。なければ 0。"""
+    found = stadium_of(state, ReduceResistanceStadium)
+    return 0 if found is None else found[1].amount
+
+
+# --- 2. 自分の番に使う効果（タマムシ・セキチク・ヤマブキ）
+
+
+def _check_stadium_trainer_ban(state: GameState, player: int) -> None:
+    """STB1: スタジアムの効果を使うプレイヤーがトレーナーカードを使えない（禁止がはたらいている）なら、決められないので止める（ほかの確認のあと）。"""
+    if trainer_use_blockers(state, player):
+        raise UnsupportedError(STADIUM_UNDER_TRAINER_BAN_CODE, STADIUM_UNDER_TRAINER_BAN_REASON)
+
+
+CELADON_GYM_WITHOUT_CONDITION_CODE = "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION"
+CELADON_GYM_WITHOUT_CONDITION_REASON = (
+    "タマムシシティジムの「自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復"
+    "させてもよい」を、特殊状態のないポケモン（ベンチのポケモンは特殊状態にならない）に使えるか（回復するものがなくてもトラッシュできるか）は、印刷の文面・kyuura の"
+    "記録から決められないので扱わない（TG1。docs/stadiums-v0.57.md 4 章）")
+
+
+@dataclass(frozen=True)
+class CureByDiscardingEnergyStadium(StadiumEffect):
+    """お互いのプレイヤーは、のぞむなら、自分の番の中で、自分の「(``owner``)のポケモン」についているエネルギーカードを 1 枚トラッシュして、そのポケモンの「どく・ねむり・
+    マヒ・こんらん」状態を、すべて回復させてもよい（タマムシシティジム PMCG5-078。kyuura の印刷の文面）。
+
+    - ``UseStadium(player, energy)``: トラッシュするエネルギーカード（自分の「(``owner``)のポケモン」についているもの。基本エネルギーに限らない）。カードがついている
+      ポケモンが回復するポケモン（トラッシュするカードと回復するポケモンを取りちがえない）。回数の制限は書かれていない（何度でも）
+    - 特殊状態を回復する（``conditions.clear_special_conditions``。理由 ``cured``）。ダメージ・ワザによる持続する効果は変えない
+    - そのポケモンに特殊状態がなければ TG1（ほかの確認のあと）。指定がない・ついていない・「(``owner``)のポケモン」でないカードは ``IllegalActionError``
+    """
+
+    owner: str = "エリカ"
+    implementation_id = "cure_by_discarding_energy_stadium"
+    activated: ClassVar[bool] = True
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (text.startswith("お互いのプレイヤーは、のぞむなら、自分の番の中で、") and f"自分の「{self.owner}のポケモン」についているエネルギーカードを1枚トラッシュして" in text
+              and "「どく・ねむり・マヒ・こんらん」状態を、すべて回復させてもよい" in text)
+        return [] if ok else ["持ち主の名前・トラッシュ・回復"]
+
+    def _target(self, state: GameState, player: int, energy: int | None) -> PokemonInPlay:
+        if energy is None:
+            raise IllegalActionError("STADIUM_CHOICE_REQUIRED", "トラッシュするエネルギーカード（energy）を指定する")
+        for pokemon in state.players[player].in_play():
+            if energy in pokemon.energy:
+                if not _owner_named(form_def(state, pokemon).name_ja, self.owner):
+                    raise IllegalActionError("NOT_STADIUM_TARGET", f"カード {energy} がついているポケモン {pokemon.pokemon_id} は「{self.owner}のポケモン」ではない")
+                return pokemon
+        raise IllegalActionError("ENERGY_NOT_ATTACHED", f"カード {energy} は自分の場のポケモンについていない")
+
+    def check_activation(self, state, player, energy, stadium):
+        pokemon = self._target(state, player, energy)
+        _check_stadium_trainer_ban(state, player)
+        if not pokemon.conditions.names():
+            raise UnsupportedError(CELADON_GYM_WITHOUT_CONDITION_CODE, f"ポケモン {pokemon.pokemon_id}: {CELADON_GYM_WITHOUT_CONDITION_REASON}")
+
+    def activate(self, state, player, energy, stadium):
+        pokemon = self._target(state, player, energy)
+        discard_attached_energy_by_stadium(state, player, pokemon, energy, stadium=stadium.card)
+        clear_special_conditions(state, player, pokemon, CURED, stadium_card=stadium.card)
+
+
+FUCHSIA_GYM_AFTER_REPLACEMENT_CODE = "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+FUCHSIA_GYM_AFTER_REPLACEMENT_REASON = (
+    "セキチクシティジムの「自分の番ごとに1回」を、この番に使ったあと別のセキチクシティジムのカードに入れかわったとき、新しいカードの効果としてもう一度使えるか（回数を"
+    "プレイヤーで数えるかカードで数えるか）は、印刷の文面・kyuura の記録から決められないので扱わない（FG1。docs/stadiums-v0.57.md 4 章）")
+FUCHSIA_GYM_WITHOUT_TARGET_CODE = "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET"
+FUCHSIA_GYM_WITHOUT_TARGET_REASON = (
+    "セキチクシティジムの「コインを投げてもよい。コインが「おもて」なら、自分の場にいる「キョウのポケモン」を1枚選び…」を、自分の場に「キョウのポケモン」がいないとき"
+    "に使えるか（コインだけを投げられるか）は、印刷の文面・kyuura の記録から決められないので扱わない（FG2。コインの前。docs/stadiums-v0.57.md 4 章）")
+
+
+@dataclass(frozen=True)
+class CoinReturnOwnerPokemonStadium(StadiumEffect):
+    """お互いのプレイヤーは、のぞむなら、自分の番ごとに 1 回、コインを投げてもよい。コインが「おもて」なら、自分の場にいる「(``owner``)のポケモン」を 1 枚選び、そのポケモン
+    と、それについているすべてのカードを山札にもどし、その山札をよく切る（セキチクシティジム PMCG6-086。kyuura の印刷の文面）。
+
+    - 順番は文面のとおり: 使う（記録 ``GameState.stadium_uses_this_turn``。コインの「うら」でも使ったことになる）→ 使ったプレイヤーがコインを 1 枚投げる → 「おもて」なら
+      ポケモンを選ぶ（決定 ``SELECT_POKEMON``。再開先 ``"stadium"``。1 匹でも選ぶ）→ 山札にもどす（``zones.return_in_play_to_deck``。持続する効果を消す）→ 切る
+    - 回数は (使ったプレイヤー, スタジアムカード) で数える。同じカードで 2 回目は ``STADIUM_ALREADY_USED``。この番に別のセキチクシティジムのカードで使っていたら FG1
+    - 自分の場に「(``owner``)のポケモン」がいなければ FG2（コインの前）。カードの持ち主でないプレイヤーも使える
+    - バトル場のポケモンをもどしたら、きぜつではない（サイドはない）。勝ち負けの判定 → バトル場に出す決定 → 同じ番（``resolution.after_stadium``）
+    """
+
+    owner: str = "キョウ"
+    implementation_id = "coin_return_owner_pokemon_stadium"
+    activated: ClassVar[bool] = True
+    once_per_turn: ClassVar[bool] = True
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (text.startswith("お互いのプレイヤーは、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインが「おもて」なら、")
+              and f"自分の場にいる「{self.owner}のポケモン」を1枚選び、そのポケモンと、それについているすべてのカードを山札にもどし、その山札をよく切る。" in text)
+        return [] if ok else ["持ち主の名前・コイン・山札にもどす"]
+
+    def targets(self, state: GameState, player: int) -> list[int]:
+        return [p.pokemon_id for p in state.players[player].in_play() if _owner_named(form_def(state, p).name_ja, self.owner)]
+
+    def check_activation(self, state, player, energy, stadium):
+        if energy is not None:
+            raise IllegalActionError("STADIUM_CHOICE_NOT_USED", "このスタジアムの効果はエネルギーカードを選ばない（energy は指定しない）")
+        if (player, stadium.card) in state.stadium_uses_this_turn:
+            raise IllegalActionError("STADIUM_ALREADY_USED", "このスタジアムの効果は、自分の番ごとに 1 回しか使えない")
+        _check_stadium_trainer_ban(state, player)
+        if any(user == player for user, _ in state.stadium_uses_this_turn):
+            raise UnsupportedError(FUCHSIA_GYM_AFTER_REPLACEMENT_CODE, FUCHSIA_GYM_AFTER_REPLACEMENT_REASON)
+        if not self.targets(state, player):
+            raise UnsupportedError(FUCHSIA_GYM_WITHOUT_TARGET_CODE, FUCHSIA_GYM_WITHOUT_TARGET_REASON)
+
+    def activate(self, state, player, energy, stadium):
+        flips = flip_coins(state, player, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card)
+        if flips.results[0] is not CoinSide.HEADS:
+            return
+        push_stadium_decision(state, stadium=stadium.card, stage="fuchsia", kind=SELECT_POKEMON, player=player, options=self.targets(state, player))
+
+    def resume_stadium(self, state, stadium, decision, choices):
+        player = decision.player
+        found = state.find_pokemon(choices[0])
+        if found is None or found[0] != player or not _owner_named(form_def(state, found[1]).name_ja, self.owner):
+            raise RuntimeError(f"セキチクシティジムで選んだポケモン {choices} が、自分の場の「{self.owner}のポケモン」ではない（エンジンの不具合）")
+        pokemon = found[1]
+        return_in_play_to_deck(state, player, pokemon, stadium=stadium.card)
+        remove_persistent_effects(state, player, pokemon, RETURN_IN_PLAY_TO_DECK)
+        shuffle_deck(state, player, stadium=stadium.card)
+
+
+@dataclass(frozen=True)
+class ReturnBasicEnergyStadium(StadiumEffect):
+    """お互いのプレイヤーは、自分の番に、自分の「(``owner``)のポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい（ヤマブキシティジム PMCG6-090。
+    kyuura の印刷の文面）。
+
+    - ``UseStadium(player, energy)``: 手札に加える基本エネルギーカード（カードの種類で決める。今出しているエネルギーのタイプ（エナジーバーンなど）では決めない）。1 回の
+      使用で 1 枚（何度でも使えるので、何枚でもはがせる。実装上の仮定。v0.7 のダメージスワップの S3 と同じ形）。回数の制限は書かれていない
+    - 手札からつける通常の操作の回数（``energy_attachments_this_turn``）・特殊能力でつけた枚数は変えない（つけた回数をもどさない）
+    - はがして最大HPがのっているダメージ以下になる（ナツメのゴースの［ガスのからだ］）なら、エンジンの共通の MH1 で受け付けない
+    """
+
+    owner: str = "ナツメ"
+    implementation_id = "return_basic_energy_stadium"
+    activated: ClassVar[bool] = True
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = text.startswith(f"お互いのプレイヤーは、自分の番に、自分の「{self.owner}のポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。")
+        return [] if ok else ["持ち主の名前・基本エネルギーカード"]
+
+    def _target(self, state: GameState, player: int, energy: int | None) -> PokemonInPlay:
+        if energy is None:
+            raise IllegalActionError("STADIUM_CHOICE_REQUIRED", "手札に加える基本エネルギーカード（energy）を指定する")
+        for pokemon in state.players[player].in_play():
+            if energy in pokemon.energy:
+                if not _owner_named(form_def(state, pokemon).name_ja, self.owner):
+                    raise IllegalActionError("NOT_STADIUM_TARGET", f"カード {energy} がついているポケモン {pokemon.pokemon_id} は「{self.owner}のポケモン」ではない")
+                if not state.card_def(energy).is_basic_energy:
+                    raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {energy} は基本エネルギーカードではない")
+                return pokemon
+        raise IllegalActionError("ENERGY_NOT_ATTACHED", f"カード {energy} は自分の場のポケモンについていない")
+
+    def check_activation(self, state, player, energy, stadium):
+        self._target(state, player, energy)
+        _check_stadium_trainer_ban(state, player)
+
+    def activate(self, state, player, energy, stadium):
+        return_attached_energy_by_stadium(state, player, self._target(state, player, energy), energy, stadium=stadium.card)
+
+
+# --- 3. 場に出た時・ベンチに出す時・進化させる時に起こること（せまい・爆発・トキワ）
+
+
+@dataclass(frozen=True)
+class BenchLimitStadium(StadiumEffect):
+    """お互いのプレイヤーの「ベンチに出しておける控えポケモンの数」は、「``limit`` 匹まで」となる。このカードが場に出た時、ベンチにポケモンが 5 匹いるプレイヤーは、
+    その中から 1 匹を選び、そのカードと、それについているすべてのカードを手札にもどす（せまいジム PMCG5-070。kyuura の印刷の文面）。
+
+    - ベンチの数の上限は ``stadiums.bench_limit``（ベンチに出すどの経路も確かめる）。共有するルールの値（``RuleSet.max_bench``）は変えない。場をはなれたら 5 匹にもどる
+      （手札にもどしたポケモンは自動では場にもどらない）
+    - 場に出た時（``on_placed``）: ベンチが上限より多いプレイヤーが、それぞれ 1 匹を選ぶ（決定 ``STADIUM_RETURN_BENCH``。決めるのはベンチの持ち主。再開先 ``"stadium"``）。
+      もどすのは ``zones.return_in_play_to_hand``（ポケモンと、ついているすべてのカード。持続する効果を消す）。きぜつではない（サイドはない）
+    - 両方のプレイヤーが 5 匹なら、番でないプレイヤーが先（実装上の順番。印刷の日本語の文面に順番はなく、英語版の「your opponent returns a Pokémon first」は根拠にしない。
+      どちらが先でも、選べるものは自分のベンチなので結果の場は同じ。p.323〜324 のバトル場に出す順番と同じ向きにそろえた）
+    - 決定を待つ間だけ、そのプレイヤーのベンチが上限より多いことを不変条件が許す（``engine._narrow_cleanup_pending``）
+    """
+
+    limit: int = 4
+    implementation_id = "bench_limit_stadium"
+
+    @property
+    def bench_limit(self) -> int:
+        return self.limit
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (f"お互いのプレイヤーの「ベンチに出しておける控えポケモンの数」は、「{self.limit}匹まで」となる。" in text
+              and f"このカードが場に出た時、ベンチにポケモンが{self.limit + 1}匹いるプレイヤーは、その中から1匹を選び、そのカードと、それについているすべてのカードを手札にもどす。" in text)
+        return [] if ok else ["数・場に出た時"]
+
+    def on_placed(self, state, stadium):
+        order = [1 - state.current_player, state.current_player]
+        pending = tuple(player for player in order if len(state.players[player].bench) > self.limit)
+        if pending:
+            self._ask(state, stadium, pending)
+
+    def _ask(self, state: GameState, stadium: StadiumInPlay, pending: tuple[int, ...]) -> None:
+        player, rest = pending[0], pending[1:]
+        push_stadium_decision(state, stadium=stadium.card, stage="narrow", kind=STADIUM_RETURN_BENCH, player=player,
+                              options=[p.pokemon_id for p in state.players[player].bench], context=(("remaining", rest),))
+
+    def resume_stadium(self, state, stadium, decision, choices):
+        player = decision.player
+        pokemon = state.players[player].find_by_pokemon_id(choices[0])
+        if pokemon is None or not any(b is pokemon for b in state.players[player].bench):
+            raise RuntimeError(f"せまいジムで選んだポケモン {choices} が、プレイヤー {player} の控えポケモンではない（エンジンの不具合）")
+        return_in_play_to_hand(state, player, pokemon, stadium=stadium.card)
+        remove_persistent_effects(state, player, pokemon, RETURN_IN_PLAY_TO_HAND)
+        rest = tuple(decision.context_value("remaining", ()))
+        if rest:
+            self._ask(state, stadium, rest)
+
+
+MINEFIELD_RECEIVED_POWER_CODE = "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER"
+
+
+@dataclass(frozen=True)
+class BenchEntryDamageStadium(StadiumEffect):
+    """手札から「たねポケモン」のカードをベンチに出す時、そのポケモンの持ち主はコインを投げる。コインが「うら」なら、そのポケモンに ``amount`` ダメージ（ロケット団の
+    爆発ジム PMCG6-092。kyuura の印刷の文面）。
+
+    - 当てはまるのは、手札のたねポケモンのカード（手札にある間の印刷の分類。なにかの化石・ピッピ人形は手札ではトレーナーカードなので当てはまらない）をベンチに出す経路
+      だけ: 通常の操作（``PlayBasicToBench``）・エリカの香水で出させる（相手の手札から相手のベンチ。持ち主は相手）。山札・トラッシュから出す・場のポケモンを動かす・
+      手札からバトル場に出す（マチス）は当てはまらない
+    - コインは持ち主が投げる（``flip_coins`` の ``source="stadium"``）。「うら」なら ``amount`` ダメージ（ダメージカウンターではなくダメージ。英語版の「put damage
+      counters」を根拠にしない）。ワザによるダメージではない（p.321。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」・「ダメージを
+      受けたとき」の効果を当てはめない）。受けるダメージ全体を書く常にはたらく特殊能力（カブトアーマー）を当てはめると量が変わるなら EX1 でコインの前に止める
+    - 今の写しのたねポケモンの HP はどれも 30 以上で、出したばかりのポケモンにダメージはないので、このダメージではきぜつしない（起こったらエンジンの不具合）
+    """
+
+    amount: int = 20
+    implementation_id = "bench_entry_damage_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = text.startswith(f"手札から「たねポケモン」のカードをベンチに出す時、そのポケモンの持ち主はコインを投げる。コインが「うら」なら、そのポケモンに{self.amount}ダメージ。")
+        return [] if ok else ["数・コイン"]
+
+
+def minefield_received_power_problem(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> str | None:
+    """ロケット団の爆発ジムのダメージ ``amount``（ポケモンからのダメージでも、ワザによるダメージでもない）を ``pokemon`` が受けるとき、受けるダメージ全体を書き、与える
+    ポケモンを書かない常にはたらく特殊能力（カブトアーマー・なぞのかべ）を当てはめると量が変わるなら、止める理由（EX1。v0.47 の KA1 と同じ形の別の問い）。"""
+    for _, holder, key, effect in continuous_powers(state):
+        if holder is not pokemon:
+            continue
+        modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
+        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
+            return (f"ポケモン {pokemon.pokemon_id} の {modifier.label} を、ロケット団の爆発ジムのダメージ {amount}（スタジアムカードによるダメージ。ワザによるダメージではない）に"
+                    "当てはめるか（説明の「受けるダメージ」がスタジアムのダメージを含むか）は決められないので扱わない（EX1。docs/stadiums-v0.57.md 5 章）")
+    return None
+
+
+def bench_entry_damage(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
+    """手札からベンチに出したたねポケモン ``pokemon``（持ち主 ``owner``）に、場のロケット団の爆発ジムの効果を当てはめる（v0.57。呼ぶのは手札からベンチに出す経路だけ）。"""
+    found = stadium_of(state, BenchEntryDamageStadium)
+    if found is None:
+        return
+    stadium, effect = found
+    problem = minefield_received_power_problem(state, owner, pokemon, effect.amount)
+    if problem is not None:
+        raise UnsupportedError(MINEFIELD_RECEIVED_POWER_CODE, problem)
+    flips = flip_coins(state, owner, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card, pokemon_id=pokemon.pokemon_id)
+    if flips.results[0] is not CoinSide.TAILS:
+        return
+    pokemon.damage += effect.amount
+    if pokemon.damage >= max_hp(state, pokemon):
+        raise RuntimeError(f"ロケット団の爆発ジムのダメージで、出したポケモン {pokemon.pokemon_id} が HP 以上になった（今の写しでは起こらない。エンジンの不具合）")
+    state.add_event("stadium_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, amount=effect.amount, total_damage=pokemon.damage,
+                    stadium_card=stadium.card)
+
+
+VIRIDIAN_GYM_ONE_COUNTER_CODE = "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER"
+VIRIDIAN_GYM_ONE_COUNTER_REASON = (
+    "トキワシティジムの「そのポケモンにのっているダメージカウンターを、2つとりのぞいてよい」を、ダメージカウンターが 1 つだけのポケモンに使ったとき、1 つをとりのぞくのか、"
+    "使えないのかは、日本語の印刷の文面・kyuura の記録から決められないので扱わない（英語版の「(or 1 if it only has 1)」は根拠にしない。VG1。docs/stadiums-v0.57.md 5 章）")
+
+
+@dataclass(frozen=True)
+class EvolutionHealStadium(StadiumEffect):
+    """お互いのプレイヤーは、自分の「(``owner``)のポケモン」を進化させる時、のぞむなら、そのポケモンにのっているダメージカウンターを、``counters`` つとりのぞいてよい
+    （トキワシティジム PMCG6-097。kyuura の印刷の文面）。
+
+    - 当てはまるのは進化させるすべての経路: 手札からの進化（``EvolvePokemon``）・ポケモン育て屋さん・ワザで山札から重ねる進化（つきのちから・たきのぼりしんか）。
+      「ばける」は進化ではないので当てはまらない。特殊能力で重ねる進化（［うか］）で「(``owner``)のポケモン」を進化させるカードは写しにない
+    - 「(``owner``)のポケモン」は、進化させるポケモン（重ねる前の今の姿の名前）で決める。写しの「サカキの」系統はどれも進化先も「サカキの」
+    - 進化の手順（``evolution.place_evolution_card``）のあと、場に出たときに使える特殊能力の機会（v0.43）の前に、持ち主に聞く（決定 ``EVOLUTION_HEAL``。0〜1 個。
+      選ばない = とりのぞかない）。答えたら、もとの処理（手札からの進化・トレーナー・ワザ）にもどる。のっているカウンターが 0 なら聞かない。1 つだけなら VG1（選ぶと止める）
+    - 進化したあとの HP がダメージ以下になる組は、とりのぞく前の進化の確認（H1）で止める（とりのぞくことで H1 を避けない）
+    """
+
+    owner: str = "サカキ"
+    counters: int = 2
+    implementation_id = "evolution_heal_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (f"お互いのプレイヤーは、自分の「{self.owner}のポケモン」を進化させる時、のぞむなら、そのポケモンにのっているダメージカウンターを、"
+              f"{'2つ' if self.counters == 2 else self.counters}とりのぞいてよい。" in text)
+        return [] if ok else ["持ち主の名前・数"]
+
+
+def evolution_heal_terms(state: GameState, pokemon: PokemonInPlay, before_name: str) -> tuple[StadiumInPlay, EvolutionHealStadium, bool] | None:
+    """進化させたポケモン ``pokemon``（進化させる前の今の姿の名前 ``before_name``）に、トキワシティジムのダメージカウンターをとりのぞく機会があるなら (スタジアム, 実装,
+    選ぶと止めるか（VG1）)。なければ None（スタジアムがない・「サカキのポケモン」でない・カウンターがない）。"""
+    found = stadium_of(state, EvolutionHealStadium)
+    if found is None:
+        return None
+    stadium, effect = found
+    if not _owner_named(before_name, effect.owner) or pokemon.damage <= 0:
+        return None
+    counters = pokemon.damage // state.rules.damage_per_counter
+    return stadium, effect, counters < effect.counters
+
+
+def offer_evolution_heal(state: GameState, owner: int, pokemon: PokemonInPlay, before_name: str, *, then: tuple) -> bool:
+    """手札からの進化・トレーナーによる進化のあとに、トキワシティジムの機会があれば決定（``EVOLUTION_HEAL``。再開先 ``"stadium"``）を出して True。``then`` は答えたあとの
+    続き（(``"entry"``, 手札から出したか, もどる先)。``engine._resume_stadium`` が場に出たときの特殊能力の機会（v0.43）ともどる先に進む）。"""
+    terms = evolution_heal_terms(state, pokemon, before_name)
+    if terms is None:
+        return False
+    stadium, _, one = terms
+    unresolved = {"unresolved_choices": (pokemon.pokemon_id,), "unresolved_code": VIRIDIAN_GYM_ONE_COUNTER_CODE,
+                  "unresolved_reason": VIRIDIAN_GYM_ONE_COUNTER_REASON} if one else {}
+    push_stadium_decision(state, stadium=stadium.card, stage="evolution_heal", kind=EVOLUTION_HEAL, player=owner, options=(pokemon.pokemon_id,),
+                          min_choices=0, max_choices=1, context=(("pokemon", pokemon.pokemon_id), ("after_heal", then)), **unresolved)
+    return True
+
+
+def apply_evolution_heal(state: GameState, owner: int, pokemon: PokemonInPlay, stadium: int, accepted: bool) -> None:
+    """トキワシティジムの答え（v0.57）。とりのぞくなら ``counters`` つ（ログ ``evolution_heal``）、とりのぞかないならログ ``evolution_heal_declined``。"""
+    effect = state.effects.trainer_entry(state.cards[stadium].card_id).effect
+    if not accepted:
+        state.add_event("evolution_heal_declined", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, stadium_card=stadium)
+        return
+    amount = effect.counters * state.rules.damage_per_counter
+    if pokemon.damage < amount:
+        raise RuntimeError(f"トキワシティジムで、ポケモン {pokemon.pokemon_id} のダメージ {pokemon.damage} から {amount} をとりのぞけない（VG1 の確認の漏れ。エンジンの不具合）")
+    pokemon.damage -= amount
+    state.add_event("evolution_heal", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, count=effect.counters, total_damage=pokemon.damage,
+                    stadium_card=stadium)
+
+
+# --- 4. 宣言・使用に関わる効果（クチバ・リムーブ禁止）
+
+
+VERMILION_GYM_ORDER_CODE = "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER"
+VERMILION_GYM_ORDER_REASON = (
+    "クチバシティジムのコイン（「ワザを使う時」）と、p.309 のワザを使う手順 4（ワザを失敗させる効果のコイン。すなかけなど）・手順 5（こんらんのコイン）・ワザの失敗の順番と、"
+    "ワザが失敗したときに「うら」の「ワザを使ったポケモン自身にも、そのワザのダメージとして、10ダメージ」を与えるかは、2000.02.14 版の公式ルール・印刷の文面・kyuura の"
+    "記録から決められないので扱わない（VM1。コインの前。docs/stadiums-v0.57.md 6 章）")
+
+
+@dataclass(frozen=True)
+class AttackCoinStadium(StadiumEffect):
+    """お互いのプレイヤーは、のぞむなら、自分の番で「(``owner``)のポケモン」がワザを使う時、コインを投げてもよい。「おもて」なら、そのワザによって相手の対戦ポケモンに
+    与えるダメージは「+``bonus``」される（控えポケモンへのダメージは、そのまま）。「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、``self_damage``
+    ダメージ（クチバシティジム PMCG5-076。kyuura の印刷の文面）。
+
+    - 投げるかはワザの宣言といっしょに選ぶ（``UseAttack.stadium_coin``）。ワザを使うポケモンの今の姿の名前で決める。宣言が拒否されたらコインは投げない
+    - コインは宣言（p.309 の手順 3）のあと・ワザの要素の前に、ワザを使ったプレイヤーが投げる（``flip_coins`` の ``source="stadium"``）。結果はそのワザの間（決定をまたいでも。
+      続きの情報の ``stadium_coin``）同じで、投げ直さない
+    - 「おもて」: そのワザの相手の対戦ポケモンへのダメージの要素に、p.321 の 6 段階（スタジアム）で +``bonus``（2 段階で 0 以下なら計算を終えるので加えない）。返す効果の
+      ダメージ・控えへのダメージには加えない
+    - 「うら」: ワザの要素の並びのダメージの要素の最後（なければ最初の効果の要素の前）に、自分への ``self_damage`` のダメージの要素（ワザによる自分へのダメージ。v0.2f）
+    - 手順 4 の効果を受けている・こんらん状態・ワザの要素に失敗しうるもの（コインで失敗するワザ）があるなら、VM1（コインの前）
+    """
+
+    owner: str = "マチス"
+    bonus: int = 10
+    self_damage: int = 10
+    implementation_id = "attack_coin_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = (f"お互いのプレイヤーは、のぞむなら、自分の番で「{self.owner}のポケモン」がワザを使う時、コインを投げてもよい。" in text
+              and f"コインが「おもて」なら、そのワザによって相手の対戦ポケモンに与えるダメージは「+{self.bonus}」される。(控えポケモンへのダメージは、そのまま)" in text
+              and f"「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、{self.self_damage}ダメージ。" in text)
+        return [] if ok else ["持ち主の名前・数"]
+
+
+def stadium_coin_modifier(state: GameState, stadium: int) -> DamageModifier:
+    """クチバシティジムの「おもて」の、相手の対戦ポケモンへのダメージの変更（p.321 の 6 段階で ``bonus`` を加える。発生源はスタジアムカード）。"""
+    effect = state.effects.trainer_entry(state.cards[stadium].card_id).effect
+    return DamageModifier(step=6, amount=effect.bonus, label=state.card_def(stadium).name_ja, source=stadium)
+
+
+def stadium_attack_coin_available(state: GameState, player: int, attacker: PokemonInPlay) -> tuple[StadiumInPlay, AttackCoinStadium] | None:
+    """ワザを使うポケモン ``attacker``（自分の番のプレイヤー ``player``）にクチバシティジムのコインを投げる機会があれば (スタジアム, 実装)。"""
+    found = stadium_of(state, AttackCoinStadium)
+    if found is None or player != state.current_player or not _owner_named(form_def(state, attacker).name_ja, found[1].owner):
+        return None
+    return found
+
+
+@dataclass(frozen=True)
+class ExtraTrainerCostStadium(StadiumEffect):
+    """お互いのプレイヤーは、「(``names``)」を使うことができない。ただし、それらを使う時に、自分の手札からカードを ``discard`` 枚選んでトラッシュするなら、使うことができる
+    （リムーブ禁止ジム PMCG5-094。kyuura の印刷の文面）。
+
+    - 当てはまるトレーナーは、登録の名前（``names``）と、トレーナーカードの名前を「・」を除いて比べて決める（文面の「エネルギーリムーブ」とカードの名前「エネルギー・
+      リムーブ」の書き方の違い。カード id では分けない）
+    - 追加の条件: このカードを除く自分の手札が ``discard`` 枚以上（足りなければ ``INSUFFICIENT_CARDS_IN_HAND``。カード自身の使うための条件（超エネルギーリムーブの
+      自分のエネルギーカード）の確認のあと・手札から出す前）。払うのは手札から出したあと、カードの効果の前（決定 ``DISCARD_FROM_HAND``。再開先 ``"trainer"``。続きの情報の
+      ``stadium_cost``）。そのあとカード自身の効果（自分のエネルギーのトラッシュなど）を今までどおり処理する（二重に払わない）
+    """
+
+    names: tuple[str, ...] = ("エネルギーリムーブ", "超エネルギーリムーブ")
+    discard: int = 2
+    implementation_id = "extra_trainer_cost_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        quoted = "".join(f"「{name}」" for name in self.names)
+        ok = (text.startswith(f"お互いのプレイヤーは、{quoted}を使うことができない。")
+              and f"ただし、それらを使う時に、自分の手札からカードを{self.discard}枚選んでトラッシュするなら、使うことができる。" in text)
+        return [] if ok else ["名前・枚数"]
+
+
+def _normalized_name(name: str) -> str:
+    return name.replace("・", "")
+
+
+def stadium_trainer_cost(state: GameState, definition: CardDefinition) -> tuple[StadiumInPlay, ExtraTrainerCostStadium] | None:
+    """トレーナー ``definition`` に、場のスタジアムが追加する使うための条件（リムーブ禁止ジム）があれば (スタジアム, 実装)。"""
+    found = stadium_of(state, ExtraTrainerCostStadium)
+    if found is None or _normalized_name(definition.name_ja) not in {_normalized_name(name) for name in found[1].names}:
+        return None
+    return found
+
+
+def pay_stadium_trainer_cost(state: GameState, player: int, cards: tuple[int, ...], stadium: int) -> None:
+    """リムーブ禁止ジムの追加の条件を払う: プレイヤー ``player`` が手札から選んだ ``cards`` をトラッシュする（``zones.discard_from_hand``。ログの出どころ ``stadium``）。
+    エンジンは手札をトラッシュする処理をここに委ねる（engine.py でトレーナーの効果の関数を直接呼ばない。v0.22 の約束）。"""
+    discard_from_hand(state, player, cards, stadium=stadium)
+
+
+# --- 5. トレーナーを使う時（錯乱ジム）
+
+
+CHAOS_GYM_BORROWED_TURN_CODE = "UNRESOLVED_CHAOS_GYM_BORROWED_TURN"
+CHAOS_GYM_BORROWED_TURN_REASON = (
+    "錯乱ジムで相手プレイヤーがかわりに使うトレーナーカードの説明が、使ったプレイヤーの番（「この番」「次の相手の番」「あなたの番は終わりになる」・自分のポケモンを進化させる"
+    "時など）を書くとき、相手の番の中で使った場合にどの番を指すか・できるかは、印刷の文面・2000.02.14 版の公式ルール・kyuura の記録から決められないので扱わない"
+    "（CH1。相手プレイヤーが使うことを選ぶと止める。docs/stadiums-v0.57.md 7 章）")
+
+
+@dataclass(frozen=True)
+class TrainerCoinStadium(StadiumEffect):
+    """どちらかのプレイヤーが「トレーナーカード」(スタジアムカード以外) を使う時、そのプレイヤーはコインを投げる。コインが「うら」なら、そのプレイヤーは、そのカードを
+    使うことができず、相手プレイヤーは、のぞむなら、そのカードを使ってもよい（錯乱ジム PMCG5-087。kyuura の印刷の文面。くわしくは docs/stadiums-v0.57.md 7 章）。
+
+    - コイン: 手札から出して相手に見せ、名前を伝えたあと（p.310 の手順 1・2）、使うための条件を払う前に、使ったプレイヤーが投げる（``flip_coins`` の ``source="stadium"``）。
+      使うための条件を満たせるかは、手札から出す前に今までどおり確かめる（満たせないカードは使えない。コインを投げない）。「おもて」なら今までどおり使う
+    - 「うら」: 使ったプレイヤーは使えない（条件を払わない）。相手プレイヤーが使えるか（ポケモンにつけて使うカード・場に出して使うカード（``stays_in_play``・
+      ``enters_play``）は使えない。使うための条件を相手として満たせない・相手がトレーナーカードを使えない（禁止）なら使えない）を確かめ、使えるなら相手プレイヤーに聞く
+      （決定 ``ACCEPT_REQUEST``。決めるのは相手）。使うなら、そのカードの説明の「あなた」は相手プレイヤー（手札・山札・場は相手のもの。``TrainerInUse.user``）。番の
+      プレイヤーは変えない。同じ使用で錯乱ジムのコインを 2 度投げない
+    - 使ったトレーナーカード・使えなかった・使わなかったカードは、持ち主のトラッシュにすてる
+    - 説明が使ったプレイヤーの番を書くトレーナー（``borrow_problem``）を相手が使うことを選ぶと CH1
+    """
+
+    implementation_id = "trainer_coin_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = ("どちらかのプレイヤーが「トレーナーカード」(スタジアムカード以外)を使う時、そのプレイヤーはコインを投げる。" in text
+              and "コインが「うら」なら、そのプレイヤーは、そのカードを使うことができず、相手プレイヤーは、のぞむなら、そのカードを使ってもよい。" in text
+              and "使ったトレーナーカードは、持ち主のトラッシュにすてる。使えなかったり、使わなかったカードも、持ち主のトラッシュにすてる。" in text)
+        return [] if ok else ["コイン・相手が使う・トラッシュ"]
+
+
+def borrow_unusable_reason(state: GameState, effect: TrainerEffect, use: TrainerUse) -> str | None:
+    """錯乱ジムで、相手プレイヤー（``use.player``）がかわりに使えない理由（ポケモンにつけて使う・場に出して使うカード・使うための条件を満たせない・トレーナーの使用の禁止）。
+    使えるなら None。決められない（使うための条件の確認が ``UnsupportedError``）なら、その例外をそのまま投げる（呼ぶ側が、使うことを選ぶと止める選択にする）。"""
+    if effect.stays_in_play or effect.enters_play or effect.is_stadium:
+        return "ポケモンにつけて使うカード・場に出して使うカード"
+    if trainer_use_blockers(state, use.player):
+        return "相手プレイヤーはトレーナーカードを使えない（禁止がはたらいている）"
+    try:
+        effect.check_playable(state, use)
+    except IllegalActionError as error:
+        return f"使うための条件を満たせない（{error.code}）"
+    return None
+
+
 DEFAULT_EFFECTS = EffectRegistry(
     "kyuura-engine-0.13",
     _damage_only([
@@ -18951,6 +19755,21 @@ DEFAULT_EFFECTS = EffectRegistry(
         # ロケット団の実験: 「おもて」なら山札から好きなカード 1 枚を手札に加えて切る（見せない。山札 0 枚は ST1）。「うら」なら次の自分の番が終わるまでトレーナーを使えない
         "PMCG6-091": TrainerEntry(SearchDeckTrainer(ROCKETS_EXPERIMENT_TEXT, CardFilter("any"), 1, optional=False, reveal=False, coin=True, tails_self_lock=True),
                                   "ロケット団の実験", ROCKETS_EXPERIMENT_TEXT, ROCKETS_EXPERIMENT_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.57（docs/stadiums-v0.57.md）: スタジアム 14 枚。処理に使う文面は kyuura の印刷の文面（LD- ・エラッタはない）
+        "PMCG5-079": TrainerEntry(IgnoreResistanceForOwnerStadium(PEWTER_GYM_TEXT), "ニビシティジム", PEWTER_GYM_TEXT, PEWTER_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-080": TrainerEntry(OwnerRetreatReductionStadium(CERULEAN_GYM_TEXT), "ハナダシティジム", CERULEAN_GYM_TEXT, CERULEAN_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-091": TrainerEntry(ReduceResistanceStadium(RESISTANCE_GYM_TEXT), "抵抗力低下ジム", RESISTANCE_GYM_TEXT, RESISTANCE_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-095": TrainerEntry(ActiveRetreatIncreaseStadium(ROCKETS_TRAINING_GYM_TEXT), "ロケット団の特訓ジム", ROCKETS_TRAINING_GYM_TEXT, ROCKETS_TRAINING_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG6-085": TrainerEntry(IgnoreWeaknessFromTypeStadium(CINNABAR_GYM_TEXT), "グレンタウンジム", CINNABAR_GYM_TEXT, CINNABAR_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-078": TrainerEntry(CureByDiscardingEnergyStadium(CELADON_GYM_TEXT), "タマムシシティジム", CELADON_GYM_TEXT, CELADON_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG6-086": TrainerEntry(CoinReturnOwnerPokemonStadium(FUCHSIA_GYM_TEXT), "セキチクシティジム", FUCHSIA_GYM_TEXT, FUCHSIA_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG6-090": TrainerEntry(ReturnBasicEnergyStadium(SAFFRON_GYM_TEXT), "ヤマブキシティジム", SAFFRON_GYM_TEXT, SAFFRON_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-070": TrainerEntry(BenchLimitStadium(NARROW_GYM_TEXT), "せまいジム", NARROW_GYM_TEXT, NARROW_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG6-092": TrainerEntry(BenchEntryDamageStadium(MINEFIELD_GYM_TEXT), "ロケット団の爆発ジム", MINEFIELD_GYM_TEXT, MINEFIELD_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG6-097": TrainerEntry(EvolutionHealStadium(VIRIDIAN_GYM_TEXT), "トキワシティジム", VIRIDIAN_GYM_TEXT, VIRIDIAN_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-076": TrainerEntry(AttackCoinStadium(VERMILION_GYM_TEXT), "クチバシティジム", VERMILION_GYM_TEXT, VERMILION_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-094": TrainerEntry(ExtraTrainerCostStadium(NO_REMOVAL_GYM_TEXT), "リムーブ禁止ジム", NO_REMOVAL_GYM_TEXT, NO_REMOVAL_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+        "PMCG5-087": TrainerEntry(TrainerCoinStadium(CHAOS_GYM_TEXT), "錯乱ジム", CHAOS_GYM_TEXT, CHAOS_GYM_TEXT, _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

@@ -181,6 +181,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.energy_attachments_this_turn = 0
     state.energy_attached_by_powers_this_turn = 0  # v0.6（ポケモンパワーで手札からつけた枚数）
     state.power_uses_this_turn = ()  # v0.31（「自分の番ごとに1回使える」特殊能力を使ったポケモン）
+    state.stadium_uses_this_turn = ()  # v0.57（「自分の番ごとに1回」のスタジアムの効果。セキチクシティジム）
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）

@@ -13,6 +13,7 @@ from kyuura_engine.cards import pool_from_extract, read_extract, read_verificati
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
+    V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
     ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT,
@@ -52,14 +53,14 @@ class CardPoolTest(unittest.TestCase):
         # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）、
         # サカキは v0.44（pool_v0_44）、ピッピ人形・なにかの化石は v0.47（pool_v0_47。ポケモンとして場に出せるが、印刷の分類はトレーナーカード）、
         # 思い出させるは v0.49（pool_v0_49）、退化スプレーは v0.50（pool_v0_50）、元気のかけら・ポケモンの笛は v0.51（pool_v0_51）、フジろうじん・ポケモン回収は v0.52（pool_v0_52）、山札・トラッシュからカードを選ぶ 10 枚は v0.53（pool_v0_53）、手札の入れ替え・ドロー・情報の確認の 10 枚は v0.54（pool_v0_54）、すぐに使い終わる 16 枚（いいきずぐすりは v0.54 まで参照カード）は v0.55（pool_v0_55）、相手の決定・番の終わり・期限のある効果の 10 枚は v0.56（pool_v0_56）
-        self.assertEqual(trainers, [ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER,
+        self.assertEqual(trainers, sorted(list(V0_57_CARDS) + [ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER,
                                     FULL_HEAL, PLUSPOWER, POKEDEX, POKEMON_CENTER, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER,
                                     SUPER_ENERGY_REMOVAL, IMPOSTER_OAK, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER,
                                     LASS, POKE_BALL, ENERGY_SEARCH, GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN,
                                     IMPOSTER_OAKS_REVENGE, BOSS_WAY, ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME,
                                     MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE,
                                     TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT, BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT,
-                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER])
+                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER]))  # v0.57 でスタジアム 14 枚（pool_v0_57）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))

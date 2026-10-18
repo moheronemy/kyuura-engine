@@ -189,7 +189,8 @@ class DependencyTest(unittest.TestCase):
         }
         self.assertEqual(users, {"_apply", "_context", "apply_command_with", "apply_command_traced", "_answer_decision", "_engine",
                                  "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play",
-                                 "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer"})
+                                 "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer",
+                                 "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")
@@ -206,11 +207,21 @@ class DependencyTest(unittest.TestCase):
         self.assertEqual(power_names, {"Context", "after_power"})
         trainer_names = {
             node.attr
-            for function in functions if function.name in ("_play_trainer", "_resume_trainer", "_finish_trainer")
+            for function in functions if function.name in ("_play_trainer", "_resume_trainer", "_finish_trainer", "_resolve_trainer", "_chaos_tails")
             for node in ast.walk(function)
             if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
         }
         self.assertEqual(trainer_names, {"Context", "after_trainer", "end_turn_after_trainer"})
+        # v0.57: スタジアムの効果を使う（``_use_stadium``）・その決定への答え（``_resume_stadium``）のあと、空いたバトル場の勝ち負け・バトル場に出す決定は、
+        # 特殊能力のあとと同じ形の ``resolution.after_stadium``（セキチクシティジムで対戦ポケモンを山札にもどしたとき。docs/stadiums-v0.57.md 3 章）。スタジアムの効果の処理
+        # そのもの（確認・``activate``・``resume_stadium``）は engine.py と effects.py のまま
+        stadium_names = {
+            node.attr
+            for function in functions if function.name in ("_use_stadium", "_resume_stadium")
+            for node in ast.walk(function)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "resolution"
+        }
+        self.assertEqual(stadium_names, {"Context", "after_stadium"})
 
     def test_no_copy_of_the_kernel_remains(self):
         """解決の基盤の実装は ``kyuura_engine/resolution`` だけ（コードの複製がない）。v0.15b〜v0.16c は v0.14 の名前の互換の層
@@ -267,7 +278,7 @@ class DispatchTest(unittest.TestCase):
         範囲外のコマンドは engine.py。"""
         self.assertEqual(set(resolution.COMMANDS), {UseAttack, EndTurn})
         self.assertEqual(resolution.RESUMES, {"attack", "knock_out", "post_knockout", "take_prize", "promote_active"})
-        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power"})
+        self.assertEqual(engine.DECISION_RESUMES, resolution.RESUMES | {"trainer", "power", "stadium"})  # v0.57: スタジアムの効果の途中の決定（stadium）
         for command in (UseAttack, EndTurn):
             self.assertIs(engine._HANDLERS[command], resolution.handle)
         waiting = kyuura_engine.apply_command(board(PONYTA_, {**GIOVANNI_, "damage": 80}), UseAttack(0, 1))  # こんじょうの決定（knock_out）

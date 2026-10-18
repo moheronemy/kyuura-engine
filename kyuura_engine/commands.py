@@ -83,6 +83,10 @@ class UseAttack:
     player: int
     attack_index: int
     card: int | None = None
+    # v0.57（docs/stadiums-v0.57.md 6 章）: クチバシティジムの「お互いのプレイヤーは、のぞむなら、自分の番で「マチスのポケモン」がワザを使う時、コインを投げてもよい」を
+    # 選ぶか（ワザの宣言といっしょに選ぶ）。False（既定。v0.56 までの形。辞書には書かない）なら投げない。場にクチバシティジムがない・ワザを使うのが「マチスのポケモン」
+    # でないのに True なら、状態を変えずに ``STADIUM_COIN_NOT_AVAILABLE``
+    stadium_coin: bool = False
 
 
 @dataclass(frozen=True)
@@ -213,6 +217,22 @@ class DiscardFromPlay:
     pokemon: int
 
 
+@dataclass(frozen=True)
+class UseStadium:
+    """場のスタジアムカードの、自分の番に使ってよい効果を使う（v0.57。docs/stadiums-v0.57.md 4 章）。スタジアムはお互いのプレイヤーの場に出ているカードとして扱うので、
+    カードの持ち主でないプレイヤーも、自分の番に使ってよい（印刷の文面「お互いのプレイヤーは、…自分の番…」）。トレーナーカードを手札から使うこと・特殊能力の使用では
+    ない（コマンドを分ける）。
+
+    - ``energy``: 説明が選ばせるエネルギーカードの uid（タマムシシティジム: 自分の「エリカのポケモン」についている、トラッシュするエネルギーカード。ヤマブキシティ
+      ジム: 自分の「ナツメのポケモン」についている、手札に加える基本エネルギーカード）。カードを指せばポケモンも決まる。選ばせない効果（セキチクシティジム。コインのあと
+      決定でポケモンを選ぶ）は None（指定したら ``STADIUM_CHOICE_NOT_USED``）
+    - 自分の番（``Phase.MAIN``）だけ。場のスタジアムに、自分の番に使ってよい効果がなければ ``STADIUM_NOT_USABLE``
+    """
+
+    player: int
+    energy: int | None = None
+
+
 COMMAND_TYPES: dict[str, type] = {
     "place_starting_pokemon": PlaceStartingPokemon,
     "draw_mulligan_cards": DrawMulliganCards,
@@ -230,6 +250,7 @@ COMMAND_TYPES: dict[str, type] = {
     "use_pokemon_power": UsePokemonPower,
     "discard_from_play": DiscardFromPlay,
     "remove_disguise": RemoveDisguise,  # v0.49
+    "use_stadium": UseStadium,  # v0.57
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -254,6 +275,7 @@ Command = (
     | UsePokemonPower
     | DiscardFromPlay
     | RemoveDisguise
+    | UseStadium
 )
 
 
@@ -268,6 +290,8 @@ def check_command_fields(command) -> None:
             ok = type(value) is int
         elif f.type == "int | None":  # v0.5（UsePokemonPower の選ばせるもの。使わない特殊能力では None）
             ok = value is None or type(value) is int
+        elif f.type == "bool":  # v0.57（UseAttack.stadium_coin）
+            ok = type(value) is bool
         else:  # "tuple[int, ...]"
             ok = isinstance(value, tuple) and all(type(v) is int for v in value)
         if not ok:
@@ -276,12 +300,17 @@ def check_command_fields(command) -> None:
 
 # v0.49: v0.48 までの形を変えないため、既定の値（None）のときは辞書に書かない項目（``UseAttack.card``・``UsePokemonPower.card``）
 _OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",)}
+# v0.57: 同じく、既定の値（False）のときは辞書に書かない項目（``UseAttack.stadium_coin``。v0.56 までの形を変えない）
+_OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin",)}
 
 
 def command_to_dict(command) -> dict:
     data = asdict(command)
     for name in _OMITTED_WHEN_NONE.get(type(command), ()):
         if data[name] is None:
+            del data[name]
+    for name in _OMITTED_WHEN_FALSE.get(type(command), ()):
+        if data[name] is False:
             del data[name]
     for key, value in data.items():
         if isinstance(value, tuple):

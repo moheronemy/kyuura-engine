@@ -1036,6 +1036,32 @@ class TrainerInUse:
 
     player: int
     card: int
+    # v0.57（docs/stadiums-v0.57.md 7 章）: 錯乱ジムで、コインが「うら」になり、相手プレイヤーがかわりに使っている（借りて使う）ときの、使っているプレイヤー。
+    # ``player`` はいつもカードの持ち主（使い終わったら持ち主のトラッシュにすてる）。None なら持ち主が使っている（v0.56 までと同じ値）
+    user: int | None = None
+
+    @property
+    def using_player(self) -> int:
+        """このトレーナーの効果を使っているプレイヤー（v0.57。借りて使っていれば相手プレイヤー、ほかは持ち主）。"""
+        return self.player if self.user is None else self.user
+
+
+@dataclass(frozen=True)
+class StadiumInPlay:
+    """場に出ているスタジアムカード（v0.57。docs/stadiums-v0.57.md 2 章）。
+
+    スタジアムカードはトレーナーカードの種類のひとつで、自分の場と相手の場の境界線上に出し、両方の場に出ているカードとして扱う（kyuura の rule_differences の
+    「stadium」の 2000.02.14 版の行・GR-2000-P312-FIELD「ポケモンや、ポケモンにつけて使うトレーナーカード、スタジアムカードを出す場所」）。
+
+    - 実際のカード 1 枚（``card`` の uid）を 1 か所に持つ（両方の場に写さない。カードの保存則では持ち主のゾーンとして 1 回だけ数える）
+    - ``owner``: カードの持ち主（場に出したプレイヤー。トラッシュするときは持ち主のトラッシュ）。効果を使うプレイヤー（お互いのプレイヤー）とは別
+    - ``placed_turn``: 場に出した番
+    - 場に出せるスタジアムは 1 枚（新しいスタジアムが場に出たら古いものをトラッシュする。どのスタジアムの印刷の文面にもある）
+    """
+
+    owner: int
+    card: int
+    placed_turn: int
 
 
 @dataclass(frozen=True)
@@ -1112,6 +1138,11 @@ class GameState:
     # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナーを使ったプレイヤーに与えた、期限のある効果（``TrainerTurnEffect`` の並び。与えた順）。消える番の
     # 終わりに消す（``procedures.expire_at_turn_end``。ログ ``trainer_effect_removed``）。書き出しは形式 16 だけが表せる（空でなければ形式 1〜15 は ``ValueError``）
     trainer_effects: tuple[TrainerTurnEffect, ...] = ()
+    # v0.57（docs/stadiums-v0.57.md 2 章）: 場に出ているスタジアムカード（なければ None）。書き出しは形式 17 だけが表せる（あれば形式 1〜16 は ``ValueError``）
+    stadium: StadiumInPlay | None = None
+    # v0.57: この番に使った「自分の番ごとに1回」のスタジアムの効果（(使ったプレイヤー, スタジアムカードの uid) の並び。セキチクシティジム）。番の最初に空にする。
+    # コインが「うら」でも使ったことになる（使うことを選んだときに記録する）。書き出しは形式 17 だけが表せる
+    stadium_uses_this_turn: tuple[tuple[int, int], ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

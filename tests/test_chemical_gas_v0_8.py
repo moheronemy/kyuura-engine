@@ -658,7 +658,7 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 16)  # 16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
+                self.assertEqual(LATEST_FORMAT, 17)  # 17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):

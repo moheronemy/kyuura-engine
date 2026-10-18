@@ -33,6 +33,7 @@ from kyuura_engine import (
     new_game,
 )
 from kyuura_engine.rules import RULES_2000_02_14
+from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.state import (
     ASLEEP,
     AttachedTrainer,
@@ -579,6 +580,23 @@ INVISIBLE_WALL = "PMCG6-079"  # 見えない壁（闇からの挑戦。082/098�
 ROCKETS_EXPERIMENT = "PMCG6-091"  # ロケット団の実験（闇からの挑戦。094/098）
 V0_56_CARDS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, LT_SURGES_TREATY, MISTYS_WISH, MISTY_TRAINER, KOGA_TRAINER, INVISIBLE_WALL,
                ROCKETS_EXPERIMENT)  # 写しの組 pool_v0_56 の並び
+# v0.57: スタジアム 14 枚（docs/stadiums-v0.57.md）。どれも kyuura データの採用
+PEWTER_CITY_GYM = "PMCG5-079"  # ニビシティジム（リーダーズスタジアム。071/096）
+CERULEAN_CITY_GYM = "PMCG5-080"  # ハナダシティジム（リーダーズスタジアム。077/096）
+RESISTANCE_GYM = "PMCG5-091"  # 抵抗力低下ジム（リーダーズスタジアム。093/096）
+ROCKETS_TRAINING_GYM = "PMCG5-095"  # ロケット団の特訓ジム（リーダーズスタジアム。095/096）
+CINNABAR_CITY_GYM = "PMCG6-085"  # グレンタウンジム（闇からの挑戦。089/098）
+CELADON_CITY_GYM = "PMCG5-078"  # タマムシシティジム（リーダーズスタジアム。090/096）
+FUCHSIA_CITY_GYM = "PMCG6-086"  # セキチクシティジム（闇からの挑戦。084/098）
+SAFFRON_CITY_GYM = "PMCG6-090"  # ヤマブキシティジム（闇からの挑戦。079/098）
+NARROW_GYM = "PMCG5-070"  # せまいジム（リーダーズスタジアム。091/096）
+ROCKETS_MINEFIELD_GYM = "PMCG6-092"  # ロケット団の爆発ジム（闇からの挑戦。096/098）
+VIRIDIAN_CITY_GYM = "PMCG6-097"  # トキワシティジム（闇からの挑戦。092/098）
+VERMILION_CITY_GYM = "PMCG5-076"  # クチバシティジム（リーダーズスタジアム。083/096）
+NO_REMOVAL_GYM = "PMCG5-094"  # リムーブ禁止ジム（リーダーズスタジアム。094/096）
+CHAOS_GYM = "PMCG5-087"  # 錯乱ジム（リーダーズスタジアム。092/096）
+V0_57_CARDS = (PEWTER_CITY_GYM, CERULEAN_CITY_GYM, RESISTANCE_GYM, ROCKETS_TRAINING_GYM, CINNABAR_CITY_GYM, CELADON_CITY_GYM, FUCHSIA_CITY_GYM,
+               SAFFRON_CITY_GYM, NARROW_GYM, ROCKETS_MINEFIELD_GYM, VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -849,7 +867,7 @@ def scripted_command(state: GameState, *, attack: bool = True, bench: bool = Tru
     if phase is Phase.MAIN:
         player = state.current_player
         p = state.players[player]
-        if bench and len(p.bench) < 5 and basics_in_hand(state, player):
+        if bench and len(p.bench) < bench_limit(state, player) and basics_in_hand(state, player):  # v0.57: せまいジムの上限
             return PlayBasicToBench(player, basics_in_hand(state, player)[0])
         if state.energy_attachments_this_turn == 0 and energy_in_hand(state, player):
             return AttachEnergy(player, energy_in_hand(state, player)[0], p.active.card)

@@ -24,8 +24,9 @@ from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
 from ..decisions import PROMOTE_ACTIVE, TAKE_PRIZE
-from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, max_hp, status_at_attack_blocked
-from ..errors import UnsupportedError
+from ..coins import CoinSide, flip_coins
+from ..effects import AttackKey, AttackUse, PowerKey, counts_as_knockout, max_hp, stadium_attack_coin_available, status_at_attack_blocked
+from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
 from ..zones import promote_from_bench
 
@@ -37,7 +38,7 @@ from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import attack_coin_checks, destiny_bond
 from .kernel import DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knocked, ko_prevention_offers, track_ko
-from .programs import AttackRun, decision_index, declare, run_elements
+from .programs import AttackRun, decision_index, declare, program_may_fail, run_elements, with_stadium_self_damage
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
@@ -110,14 +111,25 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     once = effect.once_after_entering_play  # v0.44: 場に出てから 1 回しか使えないワザ（宣言のときに使った記録を置く）
 
     option = request.option
+    coin_stadium = None
+    if cmd.stadium_coin:
+        # v0.57: クチバシティジムのコインを投げることを選んだ（ワザの宣言といっしょに選ぶ）。場にクチバシティジムがない・ワザを使うのが「マチスのポケモン」でないなら、
+        # 状態を変える前に拒否する。v0.13 の約束で書いた実装（テスト専用）は、要素の並びに自分へのダメージを入れられないので扱わない
+        found = stadium_attack_coin_available(state, cmd.player, attacker)
+        if found is None:
+            raise IllegalActionError("STADIUM_COIN_NOT_AVAILABLE", "場のクチバシティジムのコインを投げられない（場にない・ワザを使うのが「マチスのポケモン」ではない）")
+        contract_program = is_contract(program)
+        if contract_program:
+            raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、クチバシティジムのコインを扱わない（エンジンの未対応）")
+        coin_stadium = found[0].card
 
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium)
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
         （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。"""
-        if type(effect) not in v013_checks.VERIFIED:
+        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None:  # v0.57: クチバシティジムのコインは v0.13 の止める関数が知らない
             raise UnsupportedError(
                 "UNSUPPORTED_PREFLIGHT_LIMIT",
                 f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
@@ -134,7 +146,8 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
-    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED:
+    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None:
+        # v0.57: クチバシティジムのコインを投げるワザは、v0.13 の止める関数が知らない（コインの +10・自分への 10）ので、すべての結果を試す方法で確かめる
         v013_checks.check(state, use, effect, attacker, ctx.trace, mode="legacy")
     else:
         # derived_full。v0.17d から、比べる方法 legacy でも、v0.13 の止める関数で確かめていない型（VERIFIED にない。v0.17 から加えた型）は
@@ -147,7 +160,8 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
 
 
-def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None) -> None:
+def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
+                 coin_stadium: int | None = None) -> None:
     state = res.state
     if option is None or option.card == attacker.card:
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
@@ -181,10 +195,30 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         track_ko(res, fs, attacker, before)
         _finish_attack(res, use)
         return
+    if coin_stadium is not None:
+        program = _stadium_attack_coin(res, player, attacker, key, program, coin_stadium)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
     if run_elements(AttackRun(res, fs, program, attack), 0):
         return
     _finish_attack(res, use)
+
+
+def _stadium_attack_coin(res: Resolution, player: int, attacker, key: AttackKey, program: tuple, stadium: int) -> tuple:
+    """クチバシティジムのコイン（v0.57。docs/stadiums-v0.57.md 6 章）。ワザの宣言（p.309 の手順 3）のあと・ワザの要素の前に、ワザを使ったプレイヤーが 1 枚投げる。結果は
+    ``res.stadium_coin``（決定をまたいでも運ぶ。投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージに 6 段階の +10（``kernel.deal_damage``）、「うら」なら
+    並びに自分へのダメージの要素を入れる（``programs.with_stadium_self_damage``）。手順 4・5・ワザの失敗との順番が決まらない場合（VM1）はコインの前に止める。"""
+    state = res.state
+    if attack_coin_checks(state, attacker) or attacker.conditions.confused or program_may_fail(program):
+        raise res.question("vermilion_attack_order", f"ポケモン {attacker.pokemon_id}")
+    heads = flip_coins(state, player, 1, source="stadium", effect=state.cards[stadium].card_id, card=stadium,
+                       pokemon_id=attacker.pokemon_id).results[0] is CoinSide.HEADS
+    res.stadium_coin = (stadium, heads)
+    state.add_event("stadium_attack_coin", player=player, pokemon_id=attacker.pokemon_id, effect=str(key), stadium_card=stadium, heads=heads)
+    return program if heads else with_stadium_self_damage(program, stadium, _stadium_self_damage(state, stadium))
+
+
+def _stadium_self_damage(state, stadium: int) -> int:
+    return state.effects.trainer_entry(state.cards[stadium].card_id).effect.self_damage
 
 
 def _attack_check_failed(res: Resolution, player: int, attacker, key: AttackKey) -> bool:
@@ -416,8 +450,9 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     渡された状態（コマンドの入口が作った複製）を変える。"""
     res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
     state.phase = Phase.MAIN
-    player = state.current_player
-    gone = [(player, pokemon) for pokemon in state.players[player].in_play()
+    # v0.57: 錯乱ジムで相手プレイヤーがかわりに使った退化スプレーは、使ったプレイヤー（番でないプレイヤー）のポケモンを退化させるので、両方のプレイヤーを見る（今の番に
+    # 退化したほかのポケモンは、ワザのあとのきぜつの処理で残らない）
+    gone = [(player, pokemon) for player in PLAYERS for pokemon in state.players[player].in_play()
             if pokemon.devolved_turn == state.turn_number and pokemon.damage >= hp_of(state, pokemon)]
     if not gone:
         # v0.56: 効果でサイドを取ったトレーナー（マチスの交渉）のあと、サイドが 0 枚のプレイヤーがいれば、勝ち負けの判定（p.311 の表。両方が 0 枚でも同じ表）
@@ -431,6 +466,19 @@ def after_trainer(state: GameState, ctx: Context) -> None:
     except OpenQuestion as question:
         raise to_error(question.key, question.detail, question.error) from None
     _after_knockouts(res, _knock_out_all(state, gone, timing="trainer"), CONTINUE_TURN, candidates)
+
+
+def after_stadium(state: GameState, ctx: Context) -> None:
+    """場のスタジアムの効果（v0.57。``engine._use_stadium``・``_resume_stadium``）が終わったあと、場を整える。きぜつはない（スタジアムの効果でダメージをのせるのは
+    ロケット団の爆発ジムだけで、それはベンチに出す操作の中。今の写しではきぜつしない）。バトル場が空いたプレイヤーがいれば（セキチクシティジムでバトル場の「キョウの
+    ポケモン」を山札にもどした。きぜつではないのでサイドはない）、勝ち負けの判定（場にポケモンがいない。p.311）→ バトル場に出す（``promote_active``）→ 同じ番
+    （``CONTINUE_TURN``）。なければ番のプレイヤーの ``Phase.MAIN``。"""
+    res = Resolution(state, catalog=ctx.catalog, trace=ctx.trace)
+    state.phase = Phase.MAIN
+    if knocked(res):
+        raise RuntimeError("スタジアムの効果のあとに HP 以上のポケモンがいる（今の写しでは起こらない。エンジンの不具合）")
+    if any(state.players[p].active is None for p in PLAYERS):
+        _next_prize_or_judge(res, (), CONTINUE_TURN, ())
 
 
 def end_turn_after_trainer(state: GameState, ctx: Context, player: int, card: int) -> None:
@@ -502,6 +550,10 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     entry = state.effects.attack_entry(key.card_id, key.attack_index)
     attack = state.definitions[key.card_id].attacks[key.attack_index]
     program = program_for(entry.effect, attack.name_ja)
+    coin = carried.get("stadium_coin")
+    if coin is not None and not coin[1]:
+        # v0.57: クチバシティジムの「うら」の自分へのダメージの要素を、宣言のときと同じ位置に入れる（要素の位置を合わせる）
+        program = with_stadium_self_damage(program, coin[0], _stadium_self_damage(state, coin[0]))
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=pokemon_id, attack_key=key)
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried

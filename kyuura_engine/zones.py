@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .state import AttachedTrainer, PokemonInPlay, TrainerInUse
+from .stadiums import bench_limit
+from .state import AttachedTrainer, PokemonInPlay, StadiumInPlay, TrainerInUse
 
 if TYPE_CHECKING:
     from .state import GameState
@@ -32,7 +33,7 @@ def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
     ないなら、確認の漏れなので ``RuntimeError``（状態を変える前）。出した場のポケモンを返す。
     """
     p = state.players[player]
-    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench:
+    if card not in p.deck or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の山札のカード {card} をベンチに出せない（確認の漏れ。エンジンの不具合）")
     p.deck.remove(card)
     pokemon = enter_play(state, card)
@@ -53,12 +54,12 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     - 手札を通さず、山札を切らない（説明にない移動・シャッフルを加えない）
 
     出してよいか（カードの種類・決定・ベンチの空き）の確認とログは呼ぶ側が行う。カードが持ち主のトラッシュにない・トラッシュにある間のカードの定義がたねポケモンでない
-    （なにかの化石・ピッピ人形はトラッシュではトレーナーカード）・持ち主のベンチに空きがない（``rules.max_bench``）・のせる数が負なら、確認の漏れなので ``RuntimeError``
+    （なにかの化石・ピッピ人形はトラッシュではトレーナーカード）・持ち主のベンチに空きがない（``stadiums.bench_limit``）・のせる数が負なら、確認の漏れなので ``RuntimeError``
     （状態を変える前）。出した場のポケモンを返す。
     """
     owner = state.cards[card].owner if card in state.cards else None
     p = None if owner is None else state.players[owner]
-    if p is None or card not in p.discard or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench or counters < 0:
+    if p is None or card not in p.discard or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, owner) or counters < 0:
         raise RuntimeError(f"トラッシュのカード {card}（持ち主 {owner}）を持ち主のベンチに出せない（確認の漏れ。エンジンの不具合）")
     p.discard.remove(card)
     pokemon = enter_play(state, card)
@@ -67,7 +68,8 @@ def bench_from_discard(state: GameState, card: int, *, counters: int = 0) -> Pok
     return pokemon
 
 
-def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, trainer: int | None = None) -> tuple[int, ...]:
+def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, trainer: int | None = None,
+                           stadium: int | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の山札の一番下にもどす（v0.36。キョウのドガースの「くもがくれ
     ガス」の「自分と、自分についているすべてのカードを山札にもどす」。docs/sand-attack-retreat-lock-v0.36.md 4 章）。
 
@@ -83,19 +85,23 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
 
     v0.52: トレーナーの効果（フジろうじんの「自分の控えポケモンを1匹選び、そのカードとそれについているカード全てを自分の山札にもどす」）でも使う。そのときは
     ``effect`` の代わりに ``trainer``（使っているトレーナーのカードの uid。ログの ``trainer_card``）を渡す（どちらか一方。ワザのログの形は v0.51 と同じ）。
+
+    v0.57: スタジアムの効果（セキチクシティジムの「自分の場にいる「キョウのポケモン」を1枚選び、そのポケモンと、それについているすべてのカードを山札にもどし」）
+    では ``stadium``（場のスタジアムカードの uid。ログの ``stadium_card``）を渡す（``effect``・``trainer``・``stadium`` のちょうど一つ）。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
-    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or (effect is None) == (trainer is None):
+    sources = [value for value in (effect, trainer, stadium) if value is not None]
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を山札にもどせない（確認の漏れ。エンジンの不具合）")
     if p.active is pokemon:
         p.active = None
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.deck.extend(cards)
-    source = {"effect": effect} if effect is not None else {"trainer_card": trainer}
+    source = {"effect": effect} if effect is not None else {"trainer_card": trainer} if trainer is not None else {"stadium_card": stadium}
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_deck", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
@@ -145,7 +151,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
 
 
 def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None,
-                           trainer: int | None = None) -> tuple[int, ...]:
+                           trainer: int | None = None, stadium: int | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の手札にもどす（v0.42。docs/power-decisions-v0.42.md 4 章）。
 
     - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``。重なったカード全体が 1 匹。v0.36 の RD2 と同じ読み方）・
@@ -163,12 +169,15 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     v0.56: トレーナーの効果（ロケット団員の「そのポケモンと、それについているすべてのカードを持ち主の手札にもどす」。使ったプレイヤーの相手の控えポケモン）でもどすときは
     ``trainer``（使っているトレーナーのカードの uid。ログの ``trainer_card``）を渡す（``effect``・``power``・``trainer`` のちょうど一つ）。``player`` はポケモンの持ち主で、
     行き先はいつも持ち主の手札。
+
+    v0.57: スタジアムの効果（せまいジムの「このカードが場に出た時、ベンチにポケモンが5匹いるプレイヤーは、その中から1匹を選び、そのカードと、それについている
+    すべてのカードを手札にもどす」）では ``stadium``（場に出たスタジアムカードの uid。ログの ``stadium_card``）を渡す。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
-    sources = [value for value in (effect, power, trainer) if value is not None]
+    sources = [value for value in (effect, power, trainer, stadium) if value is not None]
     if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
     if p.active is pokemon:
@@ -176,7 +185,8 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.hand.extend(cards)
-    source = {"effect": effect} if effect is not None else {"power": power} if power is not None else {"trainer_card": trainer}
+    source = ({"effect": effect} if effect is not None else {"power": power} if power is not None else {"trainer_card": trainer} if trainer is not None
+              else {"stadium_card": stadium})
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
@@ -264,7 +274,7 @@ def discard_hand(state: GameState, player: int) -> tuple[int, ...]:
     return discarded
 
 
-def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...], *, power: str | None = None) -> tuple[int, ...]:
+def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...], *, power: str | None = None, stadium: int | None = None) -> tuple[int, ...]:
     """自分の手札のうち ``cards`` を、同じ uid のまま、手札の並びの順に自分のトラッシュに置く（v0.22。パソコン通信の「手札からカードを2枚
     選んでトラッシュしなければ、このカードは使えない」。p.260・p.310）。トラッシュしたカード（手札の並びの順）を返す。
 
@@ -273,13 +283,16 @@ def discard_from_hand(state: GameState, player: int, cards: tuple[int, ...], *, 
     は手札にないので選べない。ログの ``"discard_from_hand"`` の ``cards`` は全員に見える（トラッシュは表を上にして置く公開の情報。
     p.312）。オーキドはかせの ``discard_hand``（手札をすべて。ログの監査は手札の組み立て直しと同じことを確かめる）とは別のイベント。
     v0.42: 特殊能力（わるいユンゲラーの［ぶっしつこうかん］）でトラッシュしたときは、ログに ``power``（``PowerKey`` の文字列）を書く（トレーナーの
-    使うための条件でトラッシュしたログは v0.41 と同じ形）。
+    使うための条件でトラッシュしたログは v0.41 と同じ形）。v0.57: 場のスタジアムが加えた使うための条件（リムーブ禁止ジム）でトラッシュしたときは ``stadium``（スタジアム
+    カードの uid。ログの ``stadium_card``）を書く。
     """
     p = state.players[player]
     if len(set(cards)) != len(cards) or any(uid not in p.hand for uid in cards):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {cards} をトラッシュできない（確認の漏れ。エンジンの不具合）")
     discarded = _hand_to_discard(state, player, tuple(uid for uid in p.hand if uid in cards))
     extra = {} if power is None else {"power": power}
+    if stadium is not None:
+        extra["stadium_card"] = stadium
     state.add_event("discard_from_hand", player=player, cards=discarded, **extra)
     return discarded
 
@@ -470,7 +483,7 @@ def take_deck_top(state: GameState, owner: int, *, effect: str, looker: int) -> 
     return card, destination
 
 
-def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None) -> None:
+def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, power: str | None = None, stadium: int | None = None) -> None:
     """自分の山札を切る（乱数 ``state.rng`` で 1 回並べかえる。ログ ``"shuffle"``）。対戦の準備・切り直し（p.308。v0.1 から
     ``engine._shuffle_deck``）と、カードの効果で山札を切る処理（v0.22 のパソコン通信の「その後、その山札をよく切る。」。p.260）で共通。
     v0.21 までの ``engine._shuffle_deck`` の本体をそのまま関数にした（乱数の使い方・ログは同じ）。
@@ -478,11 +491,13 @@ def shuffle_deck(state: GameState, player: int, *, effect: str | None = None, po
     ``effect``（v0.40）: v0.40 から加えたワザの効果で山札を切るとき（タケシのマンキーの「ひまつぶし」・マンキーの「いたずら」・キョウのズバットの「むれでおそう」・
     わるいカイリキーの「つまみだす」）のワザの識別子。渡したときだけログに ``effect`` を書く（``player`` は切る山札の持ち主。v0.39 までの呼び出しのログの形は
     同じ）。v0.43: 特殊能力の効果で山札を切るとき（わるいハクリューの［しんかのひかり］・わるいカイリューの［てしたをよぶ］）は ``power``（``PowerKey`` の
-    文字列）を書く。"""
+    文字列）を書く。v0.57: スタジアムの効果で山札を切るとき（セキチクシティジム）は ``stadium``（スタジアムカードの uid。ログの ``stadium_card``）を書く。"""
     state.rng.shuffle(state.players[player].deck)
     extra = {} if effect is None else {"effect": effect}
     if power is not None:
         extra["power"] = power
+    if stadium is not None:
+        extra["stadium_card"] = stadium
     state.add_event("shuffle", player=player, **extra)
 
 
@@ -595,7 +610,7 @@ def put_trainer_into_play(state: GameState, player: int, card: int) -> PokemonIn
     出してよいか（ベンチの空き・番）の確認は呼ぶ側が済ませる。使っている最中のカードでない・ベンチに空きがないなら ``RuntimeError``（状態を変える前）。
     ログ ``play_trainer_as_pokemon``（``player``・``card``・``pokemon_id``。場のカードなので公開）。出した場のポケモンを返す。"""
     p = state.players[player]
-    if state.trainer_in_use != TrainerInUse(player, card) or len(p.bench) >= state.rules.max_bench:
+    if state.trainer_in_use != TrainerInUse(player, card) or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の使用中のカード {card} をポケモンとして場に出せない（確認の漏れ。エンジンの不具合）")
     state.trainer_in_use = None
     pokemon = enter_play(state, card)
@@ -821,7 +836,7 @@ def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...]
     場に出たカードなので公開）。出してよいか（たねポケモン・手札にある・ベンチの空き）の確認は呼ぶ側。漏れていれば ``RuntimeError``（状態を変える前）。"""
     p = state.players[owner]
     if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != owner or not state.card_def(uid).is_basic_pokemon for uid in cards) \
-            or len(p.bench) + len(cards) > state.rules.max_bench:
+            or len(p.bench) + len(cards) > bench_limit(state, owner):
         raise RuntimeError(f"プレイヤー {owner} の手札のカード {cards} をベンチに出せない（確認の漏れ。エンジンの不具合）")
     placed = []
     for uid in cards:
@@ -841,7 +856,7 @@ def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: i
     ポケモンがいる）の漏れは ``RuntimeError``（状態を変える前）。(ベンチにもどったポケモン, 出したポケモン) を返す。"""
     p = state.players[player]
     old = p.active
-    if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench:
+    if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= bench_limit(state, player):
         raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
     p.hand.remove(card)
     new = enter_play(state, card)
@@ -893,3 +908,61 @@ def swap_prize_with_hand(state: GameState, player: int, position: int, card: int
     p.hand.append(taken)
     state.add_event("swap_prize_with_hand", player=player, position=position, to_prize=card, to_hand=taken, trainer_card=trainer)
     return taken
+
+
+# ---------------------------------------------------------------- スタジアム（v0.57。docs/stadiums-v0.57.md 2 章）
+
+
+def place_stadium(state: GameState, player: int, card: int) -> StadiumInPlay | None:
+    """使っている最中のスタジアムカード ``card``（持ち主 ``player``）を、同じ uid のまま場（両方の場の境界線上）に出す（v0.57）。前に場に出ていたスタジアムが
+    あれば、新しいスタジアムが場に出たので、それを持ち主のトラッシュにすてる（``discard_stadium``。印刷の文面「別のスタジアムカードが場に出た時、このカードを
+    トラッシュする」・「新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる」。同じ名前のスタジアムも別のカードなので同じ）。
+
+    - 順番: 新しいスタジアムを場に出す（ログ ``stadium_placed``。``replaces`` は古いスタジアムのカード）→ 古いスタジアムをトラッシュする（ログ ``stadium_discarded``。
+      理由 ``replaced``）。古いスタジアムの効果は、この時点で場からなくなる（効果を状態に写していないので、残らない）
+    - カードは ``state.trainer_in_use`` から場に移る（同じカードが 2 か所にある瞬間を作らない。v0.2c の ``attach_trainer`` と同じ形）。使いすてのトレーナーとして
+      トラッシュしない
+    使っている最中のカードが ``card`` でなければ、確認の漏れなので ``RuntimeError``（状態を変える前）。トラッシュにすてた古いスタジアムを返す（なければ None）。"""
+    if state.trainer_in_use != TrainerInUse(player, card):
+        raise RuntimeError(f"使用中のトレーナー {state.trainer_in_use} が、場に出すスタジアム {card}（プレイヤー {player}）ではない（エンジンの不具合）")
+    old = state.stadium
+    state.trainer_in_use = None
+    state.stadium = StadiumInPlay(owner=player, card=card, placed_turn=state.turn_number)
+    state.add_event("stadium_placed", player=player, card=card, replaces=None if old is None else old.card)
+    if old is not None:
+        discard_stadium(state, old, reason="replaced", by_card=card)
+    return old
+
+
+def discard_stadium(state: GameState, stadium: StadiumInPlay, *, reason: str, by_card: int | None = None) -> None:
+    """場のスタジアム ``stadium``（または、新しいスタジアムを出す途中の古いスタジアム）を、同じ uid のまま持ち主のトラッシュにすてる（v0.57。スタジアムが場を
+    はなれる共通の処理）。ログ ``stadium_discarded``（``player`` は持ち主・``card``・``reason``（``replaced``: 新しいスタジアムが場に出た）・``by_card``）。
+    場から除く処理と、トラッシュに置く処理をここだけで行う（入れ替え・ワザや効果による明示的なトラッシュで共通。v0.57 の対応カードでトラッシュするのは入れ替えだけ。
+    タケシのオコリザルの「おおあばれ」などは次の再利用の対象）。"""
+    if state.stadium == stadium:
+        state.stadium = None
+    elif state.stadium is None or state.stadium.card == stadium.card:
+        raise RuntimeError(f"すてるスタジアム {stadium} が場にない（エンジンの不具合）")
+    state.players[stadium.owner].discard.append(stadium.card)
+    extra = {} if by_card is None else {"by_card": by_card}
+    state.add_event("stadium_discarded", player=stadium.owner, card=stadium.card, reason=reason, **extra)
+
+
+def discard_attached_energy_by_stadium(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, stadium: int) -> None:
+    """場のポケモン ``pokemon``（持ち主 ``owner``）についているエネルギーカード ``card`` を、同じ uid のまま持ち主のトラッシュにすてる（v0.57。タマムシシティジムの
+    「自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして」）。ログ ``stadium_discard_energy``（公開）。ついていなければ ``RuntimeError``。"""
+    if card not in pokemon.energy or state.cards[card].owner != owner:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} についていないカード {card} をトラッシュしようとした（エンジンの不具合）")
+    pokemon.energy.remove(card)
+    state.players[owner].discard.append(card)
+    state.add_event("stadium_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, stadium_card=stadium)
+
+
+def return_attached_energy_by_stadium(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, stadium: int) -> None:
+    """場のポケモン ``pokemon``（持ち主 ``owner``）についているエネルギーカード ``card`` を、同じ uid のまま持ち主の手札に加える（v0.57。ヤマブキシティジムの
+    「自分の「ナツメのポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい」）。ログ ``stadium_return_energy``（場のカードなので公開）。"""
+    if card not in pokemon.energy or state.cards[card].owner != owner:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} についていないカード {card} を手札にもどそうとした（エンジンの不具合）")
+    pokemon.energy.remove(card)
+    state.players[owner].hand.append(card)
+    state.add_event("stadium_return_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, stadium_card=stadium)

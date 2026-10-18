@@ -200,7 +200,7 @@ if str(ROOT) not in sys.path:
 
 from kyuura_engine import (  # noqa: E402
     EndTurn, EvolvePokemon, IllegalActionError, Phase, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, UseAttack, UsePokemonPower, apply_command,
-    check_invariants, max_hp, new_game, preset_deck,
+    UseStadium, check_invariants, max_hp, new_game, preset_deck,
 )
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.commands import DiscardFromPlay  # noqa: E402
@@ -227,6 +227,7 @@ from kyuura_engine.effects import (  # noqa: E402  v0.49
 )
 from kyuura_engine.decisions import SELECT_DEVOLVE_COUNT  # noqa: E402  v0.50
 from kyuura_engine.effects import devolution_candidates, devolution_forbidden  # noqa: E402  v0.50
+from kyuura_engine.stadiums import bench_limit  # v0.57
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
@@ -419,6 +420,12 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
+# v0.57: スタジアム 14 枚（docs/stadiums-v0.57.md）
+PEWTER_CITY_GYM, CERULEAN_CITY_GYM, RESISTANCE_GYM, ROCKETS_TRAINING_GYM, CINNABAR_CITY_GYM = "PMCG5-079", "PMCG5-080", "PMCG5-091", "PMCG5-095", "PMCG6-085"
+CELADON_CITY_GYM, FUCHSIA_CITY_GYM, SAFFRON_CITY_GYM, NARROW_GYM, ROCKETS_MINEFIELD_GYM = "PMCG5-078", "PMCG6-086", "PMCG6-090", "PMCG5-070", "PMCG6-092"
+VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM = "PMCG6-097", "PMCG5-076", "PMCG5-094", "PMCG5-087"
+V0_57_STADIUMS = (PEWTER_CITY_GYM, CERULEAN_CITY_GYM, RESISTANCE_GYM, ROCKETS_TRAINING_GYM, CINNABAR_CITY_GYM, CELADON_CITY_GYM, FUCHSIA_CITY_GYM,
+                  SAFFRON_CITY_GYM, NARROW_GYM, ROCKETS_MINEFIELD_GYM, VIRIDIAN_CITY_GYM, VERMILION_CITY_GYM, NO_REMOVAL_GYM, CHAOS_GYM)
 TRAINERS = ((driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (driver.PLUSPOWER, 2), (driver.DEFENDER, 2), (driver.GUST, 2))
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
@@ -646,6 +653,18 @@ DECKS = {
     # v0.56: 草・無色（ジム拡張第2弾）。キョウのポケモン（キョウ（どく）の相手）・見えない壁・ロケット団員・ロケット団の実験・なんでもなおし
     "K56": ((KOGAS_PIDGEY, 3), (KOGAS_PIDGEOTTO, 2), (KOGAS_KOFFING, 3), (KOGAS_WEEZING, 2), (KOGAS_EKANS, 3), (KOGAS_ARBOK, 2), (KOGAS_GRIMER, 2),
             (KOGA_TRAINER, 3), (INVISIBLE_WALL, 3), (ROCKET_GRUNT, 3), (ROCKETS_EXPERIMENT, 3), (FULL_HEAL, 3), (GRASS, 28)),
+    # v0.57: ジム拡張第1弾のスタジアム 9 枚と、タケシ・カスミ・エリカ・マチスのポケモン（ニビ: タケシのイシツブテの抵抗力・ハナダ: カスミのパウワウの「にげる」・
+    # タマムシ: エリカのナゾノクサの特殊状態・クチバ: マチスのコラッタのワザのコイン）。せまいジム・抵抗力低下ジム・ロケット団の特訓ジム・錯乱ジム（突風・きずぐすりを
+    # 相手が借りる）・リムーブ禁止ジム（エネルギー・リムーブの 2 枚の追加の条件）
+    "L57": ((BROCKS_GEODUDE, 4), (MISTYS_SEEL, 4), (MISTYS_DEWGONG, 2), (LT_SURGES_RATTATA, 4), (ERIKAS_ODDISH, 4),
+            (PEWTER_CITY_GYM, 2), (CERULEAN_CITY_GYM, 2), (CELADON_CITY_GYM, 2), (VERMILION_CITY_GYM, 2), (NARROW_GYM, 1), (RESISTANCE_GYM, 1),
+            (ROCKETS_TRAINING_GYM, 1), (CHAOS_GYM, 2), (NO_REMOVAL_GYM, 1), (ENERGY_REMOVAL, 2), (driver.POTION, 2), (driver.GUST, 2),
+            (FIGHTING, 8), (WATER, 8), (GRASS, 6)),
+    # v0.57: ジム拡張第2弾のスタジアム 5 枚と、キョウ・ナツメ・サカキ・カツラのポケモン（セキチク: キョウのドガース・ヤマブキ: ナツメのケーシィの基本エネルギー・
+    # トキワ: サカキのコイキング → ギャラドス・グレン: 水のワザを受けるカツラのポニータ・爆発ジム: ベンチに出すたねポケモン）
+    "D57": ((KOGAS_KOFFING, 4), (KOGAS_WEEZING, 2), (SABRINAS_ABRA, 4), (GIOVANNIS_MAGIKARP, 4), (GIOVANNIS_GYARADOS, 2), (BLAINES_PONYTA, 4),
+            (FUCHSIA_CITY_GYM, 2), (SAFFRON_CITY_GYM, 2), (CINNABAR_CITY_GYM, 2), (ROCKETS_MINEFIELD_GYM, 2), (VIRIDIAN_CITY_GYM, 2), (driver.POTION, 2),
+            (GRASS, 10), (PSYCHIC, 8), (WATER, 10)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -706,13 +725,17 @@ PAIRINGS_V0_55 = (("G55", "U55"), ("U55", "G55"), ("G55", "S48"), ("U55", "H54")
 # ワザを相手のワザとして使う）・M56 対 G55（トレーナーの多い相手の手札をエリカの香水で見る）・K56 対 U55（なんでもなおし・エネルギー・リムーブの相手に、キョウの
 # どく・見えない壁・ロケット団員）
 PAIRINGS_V0_56 = (("M56", "K56"), ("K56", "P31"), ("M56", "G55"), ("K56", "U55"))
+# v0.57: L57 対 D57（ジム拡張第1弾・第2弾のスタジアムを出し合い、入れかえる）・L57 対 U55（エネルギー・リムーブ・超エネルギーリムーブの相手のリムーブ禁止ジム。トレーナーの
+# 多い相手の錯乱ジム）・D57 対 M56（カスミのポケモンのいる相手のハナダシティジム・グレンタウンジム（水のワザ）。エリカの香水で出させるたねポケモンの爆発ジム）・
+# D57 対 P31（ピッピ・ピクシー・カスミのコダックがマチスのポケモンでないワザを使う相手）。``run`` が席を入れかえる
+PAIRINGS_V0_57 = (("L57", "D57"), ("L57", "U55"), ("D57", "M56"), ("D57", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
            "v0.43": PAIRINGS_V0_43, "v0.44": PAIRINGS_V0_44, "v0.45": PAIRINGS_V0_45, "v0.46": PAIRINGS_V0_46, "v0.47": PAIRINGS_V0_47,
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
-           "v0.56": PAIRINGS_V0_56}
+           "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -816,7 +839,7 @@ V031_STOPS = {
     # v0.32: なかまをよぶ・ふえる（ベンチに空きがなければ使えない。ワザを使うための条件）
     "BENCH_FULL": lambda st, c: (type(_attack_effect(st, c)).__name__ in ("PutBasicFromDeckOntoBench", "PutTypeBasicFromDeckOntoBench",  # v0.34 のたすけをよぶ
                                                                           "PutOwnerBasicFromDeckOntoBenchOnHeads")  # v0.45 のたすけをよぶ
-                                 and len(st.players[c.player].bench) >= st.rules.max_bench),
+                                 and len(st.players[c.player].bench) >= bench_limit(st, c.player)),
     # v0.32: ヨガのポーズ（相手の控えポケモンにダメージカウンターがのっている。CD4）
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": lambda st, c: (("DamagePlusDefenderCounters" in _attack_and_copied_types(st, c))
                                                            and any(p.damage for p in st.players[1 - c.player].bench)),
@@ -1668,7 +1691,7 @@ def _v047_trainer(state, tried, counts):
                 tried.add(("v047_discard", pokemon.pokemon_id))
                 counts["v047_discard_bench_doll"] += 1
                 return DiscardFromPlay(player, pokemon.pokemon_id)
-    if "trainer_locked" in tried or len(p.bench) >= state.rules.max_bench:
+    if "trainer_locked" in tried or len(p.bench) >= bench_limit(state, player):
         return None
     for uid in p.hand:
         card_id = state.cards[uid].card_id
@@ -2257,6 +2280,126 @@ def _v056_trainer(state, tried, counts, *, only=V0_56_TRAINERS):
     return None
 
 
+def _v057_accepted(state, command):
+    """v0.57: 手順の操作を、手札を隠した写しではなく本当の状態で受け付けるか（v0.52 の ``_v052_accepted`` と同じ）。"""
+    return _v052_accepted(state, command)
+
+
+def _v057_decision(state, counts):
+    """v0.57 のスタジアムの決定への答え（元の手順より先に答える）: せまいジムの控えを手札にもどす（後ろの控え）・セキチクシティジムのキョウのポケモン（いちばん後ろ）・
+    トキワシティジムのとりのぞく機会（使う → 使わないを交互に）・錯乱ジムの借りるかの問い（借りる → 借りないを交互に）・リムーブ禁止ジムの追加の 2 枚（手札の後ろの 2 枚）。
+    受け付けない答え（VG1・CH1 など選ぶと止める選択）は次の候補。"""
+    d = state.decision
+    if d is None:
+        return None
+    if d.resume == "stadium":
+        stage = d.context_value("stage")
+    elif d.resume == "trainer" and d.context_value("chaos") is not None:
+        stage = "chaos"
+    elif d.resume == "trainer" and d.context_value("stadium_cost") is not None:
+        stage = "stadium_cost"
+    else:
+        return None
+    seen = counts[f"v057_{stage}_seen"]
+    counts[f"v057_{stage}_seen"] += 1
+    if stage in ("evolution_heal", "chaos"):
+        candidates = [tuple(d.options) if seen % 2 == 0 else (), ()]
+    else:
+        size = max(d.min_choices, min(d.max_choices, len(d.options)))
+        candidates = [tuple(d.options[-size:]), tuple(d.options[:size])]
+    for choices in candidates:
+        if d.min_choices <= len(choices) <= d.max_choices and _v057_accepted(state, ResolveDecision(d.player, d.id, choices)):
+            counts[f"v057_{stage}_{len(choices)}"] += 1
+            return ResolveDecision(d.player, d.id, choices)
+    counts[f"v057_{stage}_no_accepted_answer"] += 1
+    return None
+
+
+def _v057_trainer(state, tried, counts):
+    """v0.57: 手札のスタジアムを、場に同じ名前のスタジアムがなければ出す（スタジアムごとに 1 番に 1 回まで。相手のスタジアムを入れかえる場面を起こす）。受け付けない場面
+    （トレーナーの使用の禁止など）は出さず ``v057_<カード>_not_playable_<コード>`` に数える。"""
+    player = state.current_player
+    p = state.players[player]
+    current = None if state.stadium is None else state.cards[state.stadium.card].card_id
+    for uid in p.hand:
+        card_id = state.cards[uid].card_id
+        if card_id not in V0_57_STADIUMS or card_id == current or (f"v057_{card_id}", state.turn_number) in tried:
+            continue
+        tried.add((f"v057_{card_id}", state.turn_number))
+        command = PlayTrainer(player, uid)
+        try:
+            apply_command(_V052_REAL.get("state") if _V052_REAL.get("state") is not None and _V052_REAL["state"].turn_number == state.turn_number
+                          and _V052_REAL["state"].decision == state.decision else state, command)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v057_{card_id}_not_playable_{error.code}"] += 1
+            continue
+        counts[f"v057_play_{card_id}" + ("_replacing" if current is not None else "")] += 1
+        return command
+    return None
+
+
+def _v057_stadium(state, tried, counts):
+    """v0.57: 自分の番に使うスタジアムの効果（タマムシ: 特殊状態のエリカのポケモンのエネルギーカード 1 枚・セキチク: 1 番に 1 回（2 番に 1 回まで）・ヤマブキ: 基本エネルギー
+    カードが 2 枚以上ついたナツメのポケモンから 1 枚（1 番に 1 回まで））を、受け付けるなら使う。止まる場面（TG1・FG1・FG2・STB1）は使わず数える。"""
+    stadium = state.stadium
+    if stadium is None:
+        return None
+    card_id = state.cards[stadium.card].card_id
+    player = state.current_player
+    p = state.players[player]
+    marker = ("v057_stadium", card_id, state.turn_number)
+    if marker in tried:
+        return None
+    command = None
+    if card_id == CELADON_CITY_GYM:
+        for pokemon in p.in_play():
+            if state.card_def(pokemon.card).name_ja.startswith("エリカの") and pokemon.conditions.names() and pokemon.energy:
+                command = UseStadium(player, pokemon.energy[-1])
+                break
+    elif card_id == FUCHSIA_CITY_GYM and state.turn_number % 4 in (1, 2):
+        command = UseStadium(player)
+    elif card_id == SAFFRON_CITY_GYM:
+        for pokemon in p.in_play():
+            basics = [u for u in pokemon.energy if state.card_def(u).is_basic_energy]
+            if state.card_def(pokemon.card).name_ja.startswith("ナツメの") and len(basics) >= 2:
+                command = UseStadium(player, basics[-1])
+                break
+    if command is None:
+        return None
+    tried.add(marker)
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v057_use_{card_id}_rejected_{error.code}"] += 1
+        return None
+    counts[f"v057_use_{card_id}"] += 1
+    return command
+
+
+def _v057_attack(state, command, tried, counts):
+    """v0.57: クチバシティジムが場にあり、マチスのポケモンがワザを使うときは、コインを投げることを交互に選ぶ（``UseAttack.stadium_coin``）。受け付けなければ元の操作。"""
+    if not isinstance(command, UseAttack) or command.stadium_coin or state.stadium is None:
+        return command
+    if state.cards[state.stadium.card].card_id != VERMILION_CITY_GYM:
+        return command
+    active = state.players[command.player].active
+    if active is None or not state.card_def(current_form(state, active).card).name_ja.startswith("マチスの"):
+        return command
+    seen = counts["v057_vermilion_attack_seen"]
+    counts["v057_vermilion_attack_seen"] += 1
+    if seen % 2:
+        counts["v057_vermilion_declined"] += 1
+        return command
+    coined = UseAttack(command.player, command.attack_index, card=command.card, stadium_coin=True)
+    try:
+        apply_command(state, coined)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v057_vermilion_rejected_{error.code}"] += 1
+        return command
+    counts["v057_vermilion_coin"] += 1
+    return coined
+
+
 def _v044_power(state, tried, counts):
     """v0.44 の宣言する特殊能力を使う手順: キョウのコクーンの［うか］（この番にまだ使っておらず、ねむり・マヒ・こんらんでなく、その番の最初から場にいて、おたがいの最初の番
     でないとき。山札にキョウのスピアーがなくても 2 回までは使う（「おもて」で重ねられない場合を起こす））。拒否を起こさない。"""
@@ -2403,7 +2546,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v049_decision(state, counts) or _v050_decision(state, counts)  # v0.49・v0.50
                      or _v051_decision(state, counts) or _v052_decision(state, counts)  # v0.51・v0.52
                      or _v053_decision(state, counts) or _v054_decision(state, counts)  # v0.53・v0.54
-                     or _v055_decision(state, counts) or _v056_decision(state, counts))  # v0.55・v0.56
+                     or _v055_decision(state, counts) or _v056_decision(state, counts)  # v0.55・v0.56
+                     or _v057_decision(state, counts))  # v0.57
             if early is not None:
                 return early
         command = base(state, janken_winner=janken_winner, cure=cure, tried=tried)
@@ -2424,7 +2568,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v050_trainer(state, tried, counts) or _v051_trainer(state, tried, counts)  # v0.50・v0.51
                      or _v052_trainer(state, tried, counts) or _v053_trainer(state, tried, counts)  # v0.52・v0.53
                      or _v054_trainer(state, tried, counts) or _v055_trainer(state, tried, counts)  # v0.54・v0.55
-                     or _v056_trainer(state, tried, counts))  # v0.56
+                     or _v056_trainer(state, tried, counts)  # v0.56
+                     or _v057_trainer(state, tried, counts) or _v057_stadium(state, tried, counts))  # v0.57
             if power is not None:
                 return power
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
@@ -2509,7 +2654,10 @@ def make_policy(seen: dict, counts: Counter):
             # v0.48: MH1 で拒否された特殊能力の使用をくり返さない（この番を終える）
             counts["v048_max_hp_drop_end_turn"] += 1
             return EndTurn(state.current_player)
-        return _v049_answer(state, command, counts)  # v0.49: 決められない姿・MH1 で拒否される決定の答えを避ける
+        command = _v049_answer(state, command, counts)  # v0.49: 決められない姿・MH1 で拒否される決定の答えを避ける
+        if state.phase is Phase.MAIN:
+            command = _v057_attack(state, command, tried, counts)  # v0.57: クチバシティジムのコイン
+        return command
 
     return policy
 
