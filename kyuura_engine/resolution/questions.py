@@ -248,6 +248,27 @@ QUESTIONS: dict[str, Question] = {
         Question("scram_power_restored", "UNRESOLVED_SCRAM_POWER_RESTORED", ("SC2",), 90,
                  "残りHPが「10」のまま、ねむり・マヒ・こんらん・かがくへんかガスなどで［ずらかる］の力が消えていたポケモンの力がもどったとき、「残りHPが「10」になった時」に"
                  "当たるかは、印刷の文面・kyuura の記録から決められない"),
+        # v0.62（docs/history-attacks-v0.62.md 7 章）: 前の番のワザの履歴を読むワザ
+        Question("earthdrill_copied_use", None, ("ED1",), 10,
+                 "タケシのダグトリオの「ドリルホール」の「このカードが、前の自分の番に「あながくれ」を使っていた」に、ほかのワザ（「ゆびをふる」など）で「あながくれ」を"
+                 "自分のワザとして使ったことが当たるかは、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_received_attack", "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", ("MM1",), 10,
+                 "ピジョンの「オウムがえし」の「前の相手の番で受けた「ワザ」」が、ダメージの要素だけを受けなかった（「ダメージを受けない」状態など）ワザ・相手のワザを"
+                 "自分のワザとして使ったワザ（宣言したワザと処理したワザのどちら）を指すかは、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_attack_conditions", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS", ("MM2",), 10,
+                 "ピジョンの「オウムがえし」で「同じ「ワザ」をだす」とき、そのワザに必要なエネルギー・説明が書く使うための条件をみたす必要があるか（「ゆびをふる」の"
+                 "「必要なエネルギーがついていなくても、かまわない」は書かれていない）は、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_lasting_effect", "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", ("OM1",), 10,
+                 "オニスズメの「オウムがえし」で、続く効果（ねむり・こんらん・どく・持続する効果）を与えるとき、「「オウムがえし」の効果は1回で消える」が、受けたものを"
+                 "1 度だけ与えることか、与えた効果が 1 回で消えることかは、印刷の文面・kyuura の記録から決められない（与えた効果が続くかが変わる）"),
+        Question("mirror_move_non_attack", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK", ("OM2",), 10,
+                 "オニスズメの「オウムがえし」の「前の相手の番に、このカードが受けたダメージと効果」に、相手のワザ以外（トレーナー・特殊能力など）で受けたダメージ・効果を"
+                 "含むかは、印刷の文面・kyuura の記録から決められない"),
+        # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("mirror_move_unsupported_effect", "UNSUPPORTED_MIRROR_MOVE_EFFECT", ("v0.62",), 10,
+                 "オニスズメの「オウムがえし」で、受けたダメージ・マヒ以外の効果（入れ替え・エネルギー・ダメージカウンター・回復など）を与えるのは、エンジンが対応していない"),
+        Question("mirror_move_unsupported_attack", "UNSUPPORTED_MIRROR_MOVE_ATTACK", ("v0.62",), 10,
+                 "ピジョンの「オウムがえし」で出すワザを、エンジンが自分のワザとして処理できない（場に出てから1回しか使えないワザ・要素の並びのないワザ）"),
     )
 }
 

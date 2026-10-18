@@ -455,6 +455,7 @@ POOL_KEYS = (
     "pool_v0_59",  # v0.59（マルマイン（第1弾）・カツラ・タケシの保護・カスミのメノクラゲ・わるいアーボック・まきちらせ!ベトベトガス。docs/energy-control-power-suppression-v0.59.md）
     "pool_v0_60",  # v0.60（サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン。docs/coins-defense-rebellion-v0.60.md）
     "pool_v0_61",  # v0.61（わるいギャラドス・わるいダグトリオ・タケシのオコリザル・バトル場は穴だらけ!。docs/reactive-powers-trainer-damage-v0.61.md）
+    "pool_v0_62",  # v0.62（ピジョン・オニスズメ・オニドリル・ピジョット・タケシのダグトリオ・ベロリンガ（確定した修正を当てはめた写し）。docs/history-attacks-v0.62.md）
 )
 
 

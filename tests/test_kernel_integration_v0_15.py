@@ -183,7 +183,9 @@ class DependencyTest(unittest.TestCase):
         v0.58: 手札からつけたレインボーエネルギーの 10 ダメージのきぜつは、特殊能力のあとと同じ形の ``resolution.after_energy``（``_attach_energy``）。トレーナーの
         使用の始まりと続き（``_start_trainer_use``・``_after_trainer_step``・``_start_nested_trainer``。サイキックコントロールの内側の使用）は型の注釈
         （``resolution.Context``）だけ。docs/stadium-reuse-special-energy-v0.58.md 2 章・4 章。
-        v0.61: 「にげる」のあとの［おとしあな］は ``resolution.after_retreat``（``_retreat``）。docs/reactive-powers-trainer-damage-v0.61.md 3 章。"""
+        v0.61: 「にげる」のあとの［おとしあな］は ``resolution.after_retreat``（``_retreat``）。docs/reactive-powers-trainer-damage-v0.61.md 3 章。
+        v0.62: ワザ以外で受けたことの比べを開くか（``_probes_receipts``）は、ワザの途中の決定の再開先（``resolution.RESUMES``）を読むだけ（解決の基盤の処理を
+        呼ばない）。docs/history-attacks-v0.62.md 2.3。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -195,7 +197,8 @@ class DependencyTest(unittest.TestCase):
                                  "_use_pokemon_power", "_after_power_step", "_resume_power", "_discard_from_play",
                                  "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer",
                                  "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium",
-                                 "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer", "_retreat"})
+                                 "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer", "_retreat",
+                                 "_probes_receipts"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")

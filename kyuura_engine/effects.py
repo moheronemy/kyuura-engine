@@ -107,6 +107,7 @@ from .decisions import (
     TAKE_LOOKED_CARDS, OPPONENT_HAND_TO_DECK, SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST, HAND_TO_ACTIVE, OPPONENT_HAND_TO_BENCH, SELECT_HAND_POSITIONS, SWAP_WITH_PRIZE,
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
+    DAMAGE_STEP_ORDER,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -269,6 +270,9 @@ class AttackEffect:
     # v0.44: 「このワザは、このカードが場に出てから、1回しか使えない」ワザ（``OnceAfterEntryNoDamageOnTails``）。宣言の確認（``checks.attack_request``）が、
     # 場のポケモンの記録（``PokemonInPlay.attacks_used_once``）にあれば ``ATTACK_ALREADY_USED`` で拒否し、宣言のときに記録する（``resolution.flow``）
     once_after_entering_play: ClassVar[bool] = False
+    # v0.62（docs/history-attacks-v0.62.md）: 前の番のこと（場のポケモンのワザの履歴 ``PokemonInPlay.history``）を読むワザ。対戦のカードにこのワザがあるときだけ、エンジンが
+    # 履歴を記録する（``history.history_needed``）
+    reads_history: ClassVar[bool] = False
 
     def check(self, attack: Attack) -> list[str]:
         return []
@@ -2298,9 +2302,11 @@ class ReduceDamageNextTurn(AttackEffect):
 
 
 def reduce_damage_next_turn_texts(amount: int) -> tuple[str, ...]:
-    """``ReduceDamageNextTurn`` が受け付ける説明の書き方（v0.37）。"""
+    """``ReduceDamageNextTurn`` が受け付ける説明の書き方（v0.37）。v0.62: タケシのダグトリオの「あながくれ」の「…受けるダメージは「-{n}」される。(ダメージ以外の効果はそのまま)」
+    （受けるダメージから決まった数をへらす。8 段階の受けるポケモンの効果。kyuura の GR-2000-P321-DAMAGE-ORDER。化石の秘密のベトベターの書き方と同じ意味）。"""
     return (f"次の相手の番でこのカードが受けるダメージが{amount}へる。",  # ピクシー（PMCG2-044）
-            f"次の相手の番でこのカードが受けるダメージは{amount}へる。(ダメージ以外の効果はそのまま)")  # 化石の秘密のベトベター（PMCG3-003）
+            f"次の相手の番でこのカードが受けるダメージは{amount}へる。(ダメージ以外の効果はそのまま)",  # 化石の秘密のベトベター（PMCG3-003）
+            f"次の相手の番、このカードが受けるダメージは「-{amount}」される。(ダメージ以外の効果はそのまま)")  # タケシのダグトリオ（PMCG6-060）
 
 
 @dataclass(frozen=True)
@@ -16382,6 +16388,163 @@ class DamageSelfDamageThenDiscardStadium(DamageAndSelfDamage):
         return problems + _check_exact_text(attack, "自分へのダメージとスタジアムのトラッシュのワザ", (f"自分にも{self.self_damage}ダメージ。" + DISCARD_STADIUM_TEXT,))
 
 
+# ---------------------------------------------------------------- v0.62（docs/history-attacks-v0.62.md）。前の番のワザの履歴を読むワザ・相手を手札にもどすワザ
+
+EARTHDRILL_TEXT = "このワザは、このカードが、前の自分の番に「{name}」を使っていた時だけ、使える。"
+# 使った記録の答え（``used_attack_last_turn``）
+USED = "used"  # 宣言したワザが、そのワザだった
+NOT_USED = "not_used"  # 使っていない（記録がない・ほかのワザ）
+USED_AS_COPY = "used_as_copy"  # 宣言したワザ（「ゆびをふる」など）が、そのワザを自分のワザとして使った（使っていたことになるかは決まらない。ED1）
+
+
+def used_attack_last_turn(state: GameState, pokemon: PokemonInPlay, attack_index: int, attack_name: str) -> str:
+    """v0.62: ``pokemon``（このカード）が、前の自分の番（今の番の 2 つ前。番は交互に進む）に、位置 ``attack_index``・名前 ``attack_name`` のワザを使っていたか（``USED``・
+    ``NOT_USED``・``USED_AS_COPY``）。使った記録（``history.used_on``。宣言のときの記録。手順 4 の失敗・こんらんの「うら」・ワザの失敗でも使ったことになる）で決める。ワザは位置と
+    名前で照らす（説明は名前で書く。同じ名前の別のカードのワザを、このカードのワザとして使った記録は ``USED_AS_COPY`` で区別する）。"""
+    from .history import used_on
+
+    def matches(key) -> bool:
+        if key is None or key[1] != attack_index:
+            return False
+        attacks = state.definitions[key[0]].attacks
+        return key[1] < len(attacks) and attacks[key[1]].name_ja == attack_name
+
+    records = used_on(pokemon, state.turn_number - 2)
+    if any(matches(record.declared) for record in records):
+        return USED
+    if any(matches(record.processed) for record in records):
+        return USED_AS_COPY
+    return NOT_USED
+
+
+@dataclass(frozen=True)
+class DamageIfUsedAttackLastTurn(AttackEffect):
+    """ダメージの目安の数字ぶんのダメージ。このワザは、このカードが、前の自分の番に、同じカードの位置 ``target_attack_index``（名前 ``target_attack_name``）のワザを使っていた
+    時だけ使える（v0.62。タケシのダグトリオの「ドリルホール」。kyuura の印刷の文面。docs 3 章）。
+
+    - 使えるかは、使った記録（``PokemonInPlay.history`` の ``AttackUsed``。宣言のときの記録）で決める（``used_attack_last_turn``）。前の相手の番のこと・場に出てから 1 度だけ
+      使えるワザの記録（``attacks_used_once``）・ログでは決めない
+    - 使っていなければ、ワザを使うための条件（``usage_problem``。必要なエネルギーの確認のあと・こんらんのコインの前。``PREVIOUS_ATTACK_NOT_USED``。状態・乱数・ログを変えない）
+    - 「あながくれ」を宣言したワザが失敗した（手順 4・こんらんの「うら」）ときも、使ったことになる（v0.44 の 1 度だけ使えるワザと同じ時点。p.323「12」・v0.3d の A12）
+    - 進化・退化したら、前のポケモンの記録は「このカード」のものではない（記録を消す。p.310）。にげる・入れ替えでは消えない（使ったことは変わらない）
+    - 「あながくれ」を自分のワザとして使った（「ゆびをふる」で選んだ）記録が使っていたことになるかは決まらない（ED1）。このワザを自分のワザとして使うとき（「ゆびをふる」・
+      ピジョンの「オウムがえし」）は、要素の ``copy_problem`` が答える
+    """
+
+    target_attack_index: int
+    target_attack_name: str
+    implementation_id = "damage_if_used_attack_last_turn"
+    reads_history = True
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "前の自分の番に使ったワザが条件のワザ", damage="fixed")
+        return problems + _check_exact_text(attack, "前の自分の番に使ったワザが条件のワザ", (EARTHDRILL_TEXT.format(name=self.target_attack_name),))
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        index = self.target_attack_index
+        if not 0 <= index < len(attacks) or attacks[index].name_ja != self.target_attack_name or attacks[index] is attack:
+            return [f"条件のワザ（位置 {index}・「{self.target_attack_name}」）が、同じカードのほかのワザにない"]
+        return []
+
+    def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
+        if used_attack_last_turn(state, attacker, self.target_attack_index, self.target_attack_name) == NOT_USED:
+            return IllegalActionError("PREVIOUS_ATTACK_NOT_USED", f"このカードは、前の自分の番に「{self.target_attack_name}」を使っていないので、このワザは使えない（ワザの説明）")
+        return None
+
+
+MIRROR_MOVE_REPEAT_TEXT = "前の相手の番で受けた「ワザ」と同じ「ワザ」をだす。"
+
+
+@dataclass(frozen=True)
+class RepeatReceivedAttack(AttackEffect):
+    """前の相手の番で受けた「ワザ」と同じ「ワザ」をだす（v0.62。ピジョン（PMCG1-066）の「オウムがえし」。kyuura の印刷の文面。要素 ``programs.RepeatReceivedAttack``。docs 4 章）。
+
+    - 受けた「ワザ」は、受けた記録（``AttackReceived`` の B）の処理したワザ。今の相手の対戦ポケモンのワザから選び直さない（「ゆびをふる」とは違う）。前の最終ダメージを
+      返さない（オニスズメの「オウムがえし」とは違う）。そのワザの要素の並びを、このワザの枠の中でワザを使ったポケモンのワザとして処理する（コイン・選ぶものは新しく決める）
+    - 受けたワザがない・どの要素も受けなかった（「ワザをうけない」状態・「とうめい」）なら、何もしない（p.309）。ダメージだけを受けなかった（「ダメージを受けない」状態など）・
+      受けたワザが相手のワザを自分のワザとして使ったものなら、どのワザを受けたかが決まらない（MM1）
+    - 出すワザに必要なエネルギー・使うための条件をみたす必要があるかは説明が書かない（「ゆびをふる」の「必要なエネルギーがついていなくても、かまわない」はない）。
+      このワザについているエネルギーで払え、条件もみたすなら、どちらの読み方でも同じに処理する。そうでなければ MM2
+    """
+
+    implementation_id = "repeat_received_attack"
+    reads_history = True
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "受けたワザと同じワザをだすワザ", damage="none") + _check_exact_text(attack, "受けたワザと同じワザをだすワザ",
+                                                                                                    (MIRROR_MOVE_REPEAT_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        copied = decision.context_value("copied")
+        if copied is None:
+            return [f"受けたワザと同じワザをだすワザの決定 {decision.kind} に、出したワザ（copied）がない"]
+        entry = state.effects.attack_entry(*copied)
+        if entry is None:
+            return [f"出したワザ {copied!r} の登録がない"]
+        return entry.effect.decision_problems(state, AttackUse(use.player, use.pokemon_id, AttackKey(*copied)), decision)
+
+
+MIRROR_MOVE_REFLECT_TEXT = "前の相手の番に、このカードが受けたダメージと効果を【相手】に与える。「オウムがえし」の効果は1回で消える。"
+# 「1回で消える」の読み方で、与えたあとに続くかが変わる効果（オニスズメの「オウムがえし」で返すと OM1）。ねむり・こんらん・どくは続く特殊状態、持続する効果はどれも続く
+LASTING_RECEIVED_ELEMENTS = frozenset({POISON, SLEEP, CONFUSION, ATTACK_LOCK_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT,
+                                       WEAKNESS_CHANGE_ELEMENT, RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT})
+# 返せる受けた要素（ダメージ・マヒ。どちらも「1回で消える」の読み方によらない）
+REFLECTABLE_RECEIVED_ELEMENTS = frozenset({DAMAGE_ELEMENT, PARALYSIS})
+
+
+@dataclass(frozen=True)
+class ReflectReceivedDamageAndEffects(AttackEffect):
+    """前の相手の番に、このカードが受けたダメージと効果を相手に与える。「オウムがえし」の効果は1回で消える（v0.62。オニスズメ（PMCG2-034）の「オウムがえし」。kyuura の印刷の
+    文面。要素 ``programs.ReflectCheck``・``ReflectedDamage``・``ReflectedParalysis``。docs 5 章）。
+
+    - 与えるのは、受けた記録（``AttackReceived`` の C）の実際に受けたもの。前のワザを処理し直さない（前のコインの結果・選んだものを使わない）
+    - ダメージ: 受けた最終ダメージ（合計）を、このワザによるダメージの基本となるダメージ（p.321 の 1 段階）にして、相手の対戦ポケモンに与える（kyuura の
+      GR-2000-P321-ATTACK-DAMAGE「ワザの効果がダメージをもたらしたときも、おおもとになったワザによるダメージ」と、こうらがえしの記録（受けたダメージを返し、弱点・抵抗力を計算する）と
+      同じ扱い）。受けた量と、与える量（弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」）は別に計算する
+    - 効果: 受けたマヒを与える（「とうめい」・「ワザをうけない」状態・［めんえき］・マヒの再付与は、ほかのマヒを与える要素と同じ）。続く効果（ねむり・こんらん・どく・持続する効果）を
+      与えたあと「1回で消える」かは決まらない（OM1）。ほかの効果（入れ替え・エネルギー・ダメージカウンター・回復など）を与えるのはエンジンの未対応（``UNSUPPORTED_MIRROR_MOVE_EFFECT``）
+    - 前の相手の番に、ワザ以外（トレーナー・特殊能力など）でダメージ・効果を受けていれば、それも与えるかが決まらない（OM2）
+    - 「1回で消える」の「オウムがえし」の効果を、受けたものを 1 度だけ与えることと読むなら、受けた記録は前の相手の番だけを読み、ワザは番に 1 回なので、同じ記録を 2 度与える
+      ことはない（記録を消費する状態は持たない）
+    """
+
+    implementation_id = "reflect_received_damage_and_effects"
+    reads_history = True
+    opponent_effect_elements = (PARALYSIS,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "受けたダメージと効果を与えるワザ", damage="none") + _check_exact_text(attack, "受けたダメージと効果を与えるワザ",
+                                                                                                    (MIRROR_MOVE_REFLECT_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.kind != DAMAGE_STEP_ORDER or decision.player != use.player:
+            return [f"受けたダメージと効果を与えるワザの決定 {decision.kind} が、ダメージの計算の順番の決定ではない"]
+        return []
+
+
+HURRICANE_TEXT = ("相手の対戦ポケモンが「きぜつ」しなければ、そのカードにのっていたダメージカウンターをとりのぞき、そのカードを持ち主の手札に戻す。"
+                  "そのカードについていた全てのカードも持ち主の手札にもどす。")
+
+
+@dataclass(frozen=True)
+class DamageThenReturnOpponentToHand(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手の対戦ポケモンが「きぜつ」しなければ、そのカードにのっていたダメージカウンターをとりのぞき、そのカードと
+    ついていた全てのカードを持ち主の手札にもどす（v0.62。ピジョット（PMCG2-043）の「ハリケーン」。kyuura の印刷の文面。要素 ``programs.ReturnOpponentToHand``。docs 6 章）。
+
+    - 「きぜつ」しないかは、ダメージのあとの相手の対戦ポケモン（HP 以上のダメージなら、きぜつするので処理しない。p.309・p.323）。こんじょうを使えるなら G37。ダメージを
+      受けなかった（「ダメージを受けない」状態・最終ダメージ 0）ときも「きぜつ」しないのでもどす（「ダメージを与えた後」の条件ではない）
+    - もどすのは v0.42 の ``zones.return_in_play_to_hand``（重なったカード・「ばける」でのせたカード・エネルギー（［エネエネ］のカードを含む）・トレーナーを持ち主の手札に。
+      ダメージカウンター・特殊状態はなくなる）→ 持続する効果を消す（理由 ``return_in_play_to_hand``）。相手への効果なので「ワザをうけない」状態・「とうめい」を評価する
+    - きぜつではない（サイドは取らない）。空いたバトル場は、ワザのあとの勝ち負けの判定・バトル場に出す決定でうめる（相手に控えがいなければ負け。p.311）
+    """
+
+    implementation_id = "damage_then_return_opponent_to_hand"
+    opponent_effect_elements = (RETURN_IN_PLAY_TO_HAND_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_damage_then_effect(attack, "相手を手札にもどす") + _check_exact_text(attack, "相手を手札にもどすワザ", (HURRICANE_TEXT,))
+
+
 @dataclass(frozen=True)
 class AlternateCoinsUntilTailsDamage(TrainerEffect):
     """お互いのプレイヤーは交互にコインを投げ、先に「うら」を出したプレイヤーの対戦ポケモンに（「弱点・抵抗力」に関係なく）``amount`` ダメージ。最初にコインを投げるのは
@@ -21201,6 +21364,65 @@ DEFAULT_EFFECTS = EffectRegistry(
         # タケシのオコリザル（PMCG5-051。タケシのマンキーから進化）のおおあばれ（闘闘闘）60: 相手に 60 → 自分にも 20 → 場のスタジアムをトラッシュ
         AttackKey("PMCG5-051", 0): AttackEntry(DamageSelfDamageThenDiscardStadium(20), "おおあばれ", text_ja=MEGA_THRASH_TEXT, play_text_ja=MEGA_THRASH_TEXT,
                                                source=_KYUURA_PRINTED_TEXT),
+        # v0.62（docs/history-attacks-v0.62.md）。処理に使う文面は kyuura の印刷の文面（ベロリンガのワザ名は kyuura の確定した修正を写しに当てはめた値）
+        # ピジョン（PMCG1-066。ポッポから進化）のふきとばし（無無）20: バタフリーのふきとばしと同じ型（ダメージ → 相手が選んだ控えと入れ替える。控えがいなければダメージだけ）
+        AttackKey("PMCG1-066", 0): AttackEntry(
+            DamageAndForceSwitch(),
+            "ふきとばし",
+            text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。控えポケモンは相手がえらぶ。控えポケモンがいないときにはダメージのみ。",
+            play_text_ja="相手の対戦ポケモンを控えポケモンと入れ替える。控えポケモンは相手がえらぶ。控えポケモンがいないときにはダメージのみ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ピジョンのオウムがえし（無無無）: 前の相手の番で受けたワザ（受けた記録の B）と同じワザを、このカードのワザとして出す
+        AttackKey("PMCG1-066", 1): AttackEntry(RepeatReceivedAttack(), "オウムがえし", text_ja=MIRROR_MOVE_REPEAT_TEXT, play_text_ja=MIRROR_MOVE_REPEAT_TEXT,
+                                               source=_KYUURA_PRINTED_TEXT),
+        # オニスズメ（PMCG2-034）のつつく（無）10
+        AttackKey("PMCG2-034", 0): AttackEntry(DAMAGE_ONLY, "つつく"),
+        # オニスズメのオウムがえし（無無無）: 前の相手の番に受けたダメージと効果（受けた記録の C）を相手に与える
+        AttackKey("PMCG2-034", 1): AttackEntry(ReflectReceivedDamageAndEffects(), "オウムがえし", text_ja=MIRROR_MOVE_REFLECT_TEXT,
+                                               play_text_ja=MIRROR_MOVE_REFLECT_TEXT, source=_KYUURA_PRINTED_TEXT),
+        # オニドリル（PMCG2-038。オニスズメから進化）のこうそくいどう（無無無）20: ギャロップのこうそくいどうと同じ文面・同じ型
+        AttackKey("PMCG2-038", 0): AttackEntry(
+            DamageThenSelfBarrierOnHeads(),
+            "こうそくいどう",
+            text_ja="コインを投げて「おもて」なら、このカードは次の相手の番にワザをうけない。",
+            play_text_ja="コインを投げて「おもて」なら、このカードは次の相手の番にワザをうけない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # オニドリルのドリルくちばし（無無無無）40
+        AttackKey("PMCG2-038", 1): AttackEntry(DAMAGE_ONLY, "ドリルくちばし"),
+        # ピジョット（PMCG2-043。ピジョンから進化）のつばさでうつ（無無）20
+        AttackKey("PMCG2-043", 0): AttackEntry(DAMAGE_ONLY, "つばさでうつ"),
+        # ピジョットのハリケーン（無無無）30: ダメージ → 相手の対戦ポケモンが「きぜつ」しなければ、ついているカードとともに持ち主の手札にもどす
+        AttackKey("PMCG2-043", 1): AttackEntry(DamageThenReturnOpponentToHand(), "ハリケーン", text_ja=HURRICANE_TEXT, play_text_ja=HURRICANE_TEXT,
+                                               source=_KYUURA_PRINTED_TEXT),
+        # タケシのダグトリオ（PMCG6-060。タケシのディグダから進化）のあながくれ（闘）: 化石の秘密のベトベターの「ちいさくなる」と同じ型（次の相手の番、受けるダメージ −20。8 段階）
+        AttackKey("PMCG6-060", 0): AttackEntry(
+            ReduceDamageNextTurn(20),
+            "あながくれ",
+            text_ja="次の相手の番、このカードが受けるダメージは「-20」される。(ダメージ以外の効果はそのまま)",
+            play_text_ja="次の相手の番、このカードが受けるダメージは「-20」される。(ダメージ以外の効果はそのまま)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # タケシのダグトリオのドリルホール（闘闘無）60: 前の自分の番に、このカードが「あながくれ」を使っていた時だけ使える（使った記録の A）
+        AttackKey("PMCG6-060", 1): AttackEntry(DamageIfUsedAttackLastTurn(0, "あながくれ"), "ドリルホール", text_ja=EARTHDRILL_TEXT.format(name="あながくれ"),
+                                               play_text_ja=EARTHDRILL_TEXT.format(name="あながくれ"), source=_KYUURA_PRINTED_TEXT),
+        # ベロリンガ（PMCG2-041）のまきつくベロ（無）10: コインの「おもて」でマヒ（モンジャラのしめつけると同じ型）
+        AttackKey("PMCG2-041", 0): AttackEntry(
+            ParalyzeOnHeads(),
+            "まきつくベロ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # ベロリンガのちょうおんぱ（無無。ダメージの目安なし）: コインの「おもて」でこんらん（サカキのニャースのねこノミと同じ型）
+        AttackKey("PMCG2-041", 1): AttackEntry(
+            ConfuseOnHeadsWithoutDamage(),
+            "ちょうおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(

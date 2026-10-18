@@ -29,6 +29,7 @@ from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
                          remove_turn_start_expired_persistent_effects)
 from .state import POWER_SUPPRESSION, Halt, Phase
+from .history import prune as prune_history
 from .zones import draw_cards
 
 if TYPE_CHECKING:
@@ -206,6 +207,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）
+    prune_history(state)  # v0.62: 2 つ前の番より古いワザの履歴を消す（ログは残さない）
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
         return
     if not state.players[player].deck:

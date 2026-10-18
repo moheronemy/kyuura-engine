@@ -29,6 +29,7 @@ from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, 
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
+from ..history import close_probe, note_used
 from ..zones import promote_from_bench, return_in_play_to_deck, shuffle_deck
 
 from . import catalog as C
@@ -182,6 +183,9 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
         # 状態ごと捨てるので記録は残らない。記録は場のポケモン（ワザを持つカードの uid とワザの位置）。ログ ``once_attack_recorded``
         attacker.attacks_used_once = attacker.attacks_used_once + ((attacker.card, key.attack_index),)
         state.add_event("once_attack_recorded", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, attack_index=key.attack_index)
+    # v0.62（docs/history-attacks-v0.62.md 2 章）: 使ったワザの記録（A）。宣言のとき（手順 4・5・ワザの要素より前）に置く（失敗・こんらんの「うら」でも使ったことになる）
+    note_used(state, attacker, key)
+    res.attack_declared = key
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
@@ -691,6 +695,7 @@ def end_turn_after_trainer(state: GameState, ctx: Context, player: int, card: in
 def _end_turn(res: Resolution) -> None:
     """番の終わりの窓（期限: ついているトレーナー → 持続する効果 → にげるの失敗の記録。v0.13 と同じ順番）→ ポケモンチェック。"""
     state = res.state
+    close_probe(state)  # v0.62: ワザ以外で受けたこと（番の終わりの前のこのコマンドの変化。``history.close_probe``）
     res.trace.record(WindowOpened(Window.TURN_END, None))
     if not PR.expire_at_turn_end(state):  # v0.13 の経路と同じ手続き
         return  # v0.59: まきちらせ!ベトベトガスの効果が消えると受け付けられない状態になるので、対戦を止めた（``Phase.HALTED``）
@@ -764,6 +769,7 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     if coin is not None and not coin[1]:
         # v0.57: クチバシティジムの「うら」の自分へのダメージの要素を、宣言のときと同じ位置に入れる（要素の位置を合わせる）
         program = with_stadium_self_damage(program, coin[0], _stadium_self_damage(state, coin[0]))
+    res.attack_declared = declared  # v0.62: 受けた記録の宣言したワザ（決定のあとの要素も同じワザの記録に加える）
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=pokemon_id, attack_key=key)
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried

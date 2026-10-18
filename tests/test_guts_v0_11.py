@@ -640,7 +640,9 @@ class G37Test(unittest.TestCase):
             "ReturnBothActivesToDeck",
             # v0.59（選んだ相手のポケモンが特殊能力を使えなくなる「ショックアイ」・どくと控えへのダメージ「どくのきり」・エネルギーカードをつけられなくなる
             # 「クリスタルビーム」。docs/energy-control-power-suppression-v0.59.md）
-            "ChooseOpponentPokemonDamageAndPowerLock", "DamagePoisonAndBenchDamage", "DamageThenAttachLockOnHeads"]))
+            "ChooseOpponentPokemonDamageAndPowerLock", "DamagePoisonAndBenchDamage", "DamageThenAttachLockOnHeads",
+            # v0.62（受けたマヒを与えるオニスズメの「オウムがえし」・相手を手札にもどすピジョットの「ハリケーン」。docs/history-attacks-v0.62.md）
+            "ReflectReceivedDamageAndEffects", "DamageThenReturnOpponentToHand"]))
 
 
 class DecisionTest(unittest.TestCase):

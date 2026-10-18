@@ -155,7 +155,10 @@ class ResearchLinksTest(unittest.TestCase):
                                      "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER",
                                      # v0.61（docs/reactive-powers-trainer-damage-v0.61.md の SH1・SC1・SC2・TD1。Z9 は kyuura の論点 UQ- のある行）
                                      "UNRESOLVED_SINKHOLE_TIMING", "UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED",
-                                     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION"})
+                                     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION",
+                                     # v0.62（docs/history-attacks-v0.62.md の MM1・MM2・OM1・OM2）
+                                     "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS",
+                                     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

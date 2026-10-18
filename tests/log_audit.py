@@ -158,6 +158,7 @@ from kyuura_engine.effects import (
     CoinDrawOrReturnHandToDeck,
     CoinEvolveSelfFromDeck,
     CoinPutOpponentDiscardOnDeckTop,
+    DamageThenReturnOpponentToHand,
     DamageThenReturnSelfToHandOnHeads,
     EvolutionPermissionForOwnerPokemon,
     EvolveSelfFromDeck,
@@ -284,14 +285,14 @@ EFFECT_COIN_AFTER_DAMAGE = ("poison_on_heads", "paralyze_on_heads", "confuse_on_
 POKEMON_FIELDS_SINCE = {
     "pokemon_id": 2, "trainers": 4, "special_conditions": 5, "retreat_failed_turn": 6, "evolution_stack": 7, "played_turn": 7,
     "evolved_turn": 7, "persistent_effects": 8, "attacks_used_once": 11, "evolution_permission_turn": 11, "type_shift": 13, "disguise": 14,
-    "devolved_turn": 15,
+    "devolved_turn": 15, "history": 20,
 }
 TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
     "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12, "recalls": 14,
     "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18, "energy_roles": 19,
 }
-LATEST_FORMAT = 19
+LATEST_FORMAT = 20
 
 
 def _project(data_latest: dict, version: int) -> dict:
@@ -363,6 +364,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 18)  # v0.58: 外側のトレーナーの効果で相手のトラッシュから使っているトレーナー（サイキックコントロール）
     if state.energy_roles:
         needed = max(needed, 19)  # v0.59: エネルギーとしてついているカード（マルマインの［エネエネ］）
+    if any(pokemon.history for pokemon in in_play):
+        needed = max(needed, 20)  # v0.62: 場のポケモンのワザの履歴
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -391,7 +394,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.59 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.62 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -3602,6 +3605,9 @@ def log_problems(state) -> list[str]:
                 user = trainer_user(e["trainer_card"])
                 valid = using_trainer.get(user) == e["trainer_card"] and isinstance(_trainer_effect_of(state, e["trainer_card"]), CoinsReturnOpponentBenchElseEndTurn) \
                     and e["player"] == 1 - user and active_of.get(e["player"]) != pid
+            elif _same_attack(attack_window, e) and isinstance(_effect_of_event(state, e), DamageThenReturnOpponentToHand):
+                # v0.62: ハリケーン（相手の対戦ポケモンを持ち主の手札へ。ダメージの要素のあと・きぜつしていないとき）
+                valid = e["player"] == 1 - attack_window["player"] and active_of.get(e["player"]) == pid and window_damaged(attack_window)
             else:
                 # v0.44: スターブーメラン（DamageThenReturnSelfToHandOnHeads。ワザを使ったポケモン自身）
                 valid = _same_attack(attack_window, e) and e["player"] == attack_window["player"] \

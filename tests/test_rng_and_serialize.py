@@ -113,8 +113,8 @@ class SerializeFormatTest(unittest.TestCase):
         # 11 は v0.44（場に出てから 1 度だけ使えるワザの記録・トレーナー「サカキ」の許可）、12 は v0.47（期限のあるトレーナーの使用の禁止）、13 は v0.48（［へんしょく］の記録）、
         # 14 は v0.49（「ばける」でのせたカード・「思い出させる」の記録）、15 は v0.50（退化した番）、16 は v0.56（期限のある効果・禁止の出どころ）、17 は v0.57（場のスタジアム・スタジアムの効果を使った記録・借りて使っているトレーナー）、
         # 18 は v0.58（外側のトレーナーの使用・相手のトラッシュから使っているトレーナーの外側のカード）、19 は v0.59（エネルギーとしてついているカードの記録）
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19))
-        for unknown in (0, 20, "5", None):
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20))  # 20 は v0.62（場のポケモンのワザの履歴）
+        for unknown in (0, 21, "5", None):
             with self.subTest(format_version=unknown), self.assertRaises(ValueError):
                 state_to_dict(state, format_version=unknown)
 

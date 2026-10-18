@@ -683,7 +683,9 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "とげボール",
                                         # v0.61: わるいギャラドスの「れいとうビーム」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/reactive-powers-trainer-damage-v0.61.md）
-                                        "れいとうビーム"]))
+                                        "れいとうビーム",
+                                        # v0.62: ベロリンガの「まきつくベロ」（ParalyzeOnHeads。既存の型の登録だけ。docs/history-attacks-v0.62.md）
+                                        "まきつくベロ"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

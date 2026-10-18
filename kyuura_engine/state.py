@@ -762,6 +762,60 @@ class TypeShift:
     returned_to_bench: bool = False
 
 
+@dataclass(frozen=True)
+class AttackUsed:
+    """場のポケモンがワザを使った記録（v0.62。docs/history-attacks-v0.62.md 2 章の A。タケシのダグトリオの「ドリルホール」の「このカードが、前の自分の番に
+    「あながくれ」を使っていた時だけ」）。
+
+    - ``turn``: 使った番（ワザの宣言の番。p.309 の手順 3）。宣言したワザは、手順 4 の失敗・こんらんの「うら」・ワザの失敗でも使ったことになる（p.323「12」・v0.3d の
+      A12・v0.44 の 1 度だけ使えるワザと同じ時点）。宣言の前に拒否したワザ（確認・先読み）は記録しない（状態ごと捨てる）
+    - ``card``: 使ったときのいちばん上のカード（「このカード」）。進化・退化したら記録を消す（p.310 の「別のポケモン」。``history.clear_history``）
+    - ``declared``: 宣言したワザ（(カード id, ワザの位置)。今の姿・［サイコリンク］・「思い出させる」のワザはそのワザを印刷したカードの id）
+    - ``processed``: 宣言したワザが相手のワザ・受けたワザを自分のワザとして使った（「ゆびをふる」・ピジョンの「オウムがえし」）ときの、処理したワザ。使っていなければ None
+    """
+
+    turn: int
+    card: int
+    declared: tuple[str, int]
+    processed: tuple[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class AttackReceived:
+    """場のポケモンが、相手の番に相手のワザを受けた記録（v0.62。docs 2 章の B と C）。相手のワザの要素（ダメージ・効果）がこのポケモンを対象にしたときに作る
+    （``history.note_received``。解決の基盤の ``deal_damage``・``reaches`` だけが呼ぶ）。
+
+    - B（受けたワザ）: ``player``・``source``（ワザを使ったプレイヤー・ポケモンの番号）・``declared``（宣言したワザ）・``processed``（処理したワザ。「ゆびをふる」なら
+      選んだワザ。自分のワザなら ``declared`` と同じ）
+    - C（実際に受けた結果）: ``damage``（受けたワザのダメージの最終ダメージの合計。のせた量）・``reached``（受けた要素の種類。``effects.ATTACK_ELEMENTS``。ダメージの
+      計算の結果が 0 のダメージの要素も ``damage`` として入れる）・``voided``（受けなかった要素 (種類, 理由)。理由は ``history.VOID_*``）
+    - ``turn``・``card``: 受けた番・受けたときのいちばん上のカード（``AttackUsed`` と同じ）
+    """
+
+    turn: int
+    card: int
+    player: int
+    source: int
+    declared: tuple[str, int]
+    processed: tuple[str, int]
+    damage: int = 0
+    reached: tuple[str, ...] = ()
+    voided: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
+class OtherReceived:
+    """場のポケモンが、相手の番に、ワザ以外（相手のトレーナー・特殊能力・スタジアムなど）でダメージ・効果を受けた記録（v0.62。docs 2 章）。ワザ以外の何で何を受けたかは
+    持たない（オニスズメの「オウムがえし」の「前の相手の番に、このカードが受けたダメージと効果」にワザ以外のものを含むかが決まらない（OM2）ので、受けたことだけが要る）。
+    コマンドの前後のこのポケモンの状態を比べて作る（``history.close_probe``）。"""
+
+    turn: int
+    card: int
+
+
+ATTACK_HISTORY_TYPES = (AttackUsed, AttackReceived, OtherReceived)
+
+
 def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
     """バトル場からベンチにもどったポケモンの、特殊能力で色を変えた記録（``TypeShift``）に、ベンチにもどったことを残す（v0.48）。記録がなければ何もしない。
     にげる・ポケモンいれかえ／突風・ワザによる入れ替えの 3 か所で、特殊状態・持続する効果を消すのと同じところで呼ぶ（ログは残さない。記録の項目が変わるだけ）。"""
@@ -994,6 +1048,10 @@ class PokemonInPlay:
     # 進化させられるか（p.310 の「その番の最初から場に出ていた」「その番に進化した」の当てはめ）は決まらないので、エンジンが止める（DV2。``evolution.evolution_block``）。
     # 進化しても消さない（いまの姿になった番は、進化した番と退化した番の新しいほう）。場をはなれたらなくなる
     devolved_turn: int | None = None
+    # v0.62（docs/history-attacks-v0.62.md 2 章）: このポケモンのワザの履歴（``AttackUsed``・``AttackReceived``・``OtherReceived`` の並び。番の順）。履歴を読む効果
+    # （``effects.HISTORY_READERS``）のカードが対戦にあるときだけ記録する（``history.history_needed``）。番の最初に、2 つ前の番より古い記録を消す。進化・退化で消し、
+    # にげる・入れ替え・番の終わりでは消さない。場をはなれたらなくなる。ログから作らない
+    history: tuple[Any, ...] = ()
 
     @property
     def current_form_turn(self) -> int:
@@ -1027,6 +1085,7 @@ class PokemonInPlay:
             self.type_shift,
             self.disguise,
             self.devolved_turn,
+            self.history,
         )
 
 

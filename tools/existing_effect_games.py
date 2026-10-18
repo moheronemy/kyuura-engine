@@ -235,6 +235,8 @@ from kyuura_engine.effects import DamageThenCoinPerOpponentBench, attack_rebelli
 from kyuura_engine.persistent import tails_damage_guard  # v0.60
 from kyuura_engine.decisions import KNOCK_OUT_POWER  # v0.61
 from kyuura_engine.effects import energy_unit_count  # v0.61
+from kyuura_engine.effects import LASTING_RECEIVED_ELEMENTS, REFLECTABLE_RECEIVED_ELEMENTS, used_attack_last_turn  # v0.62
+from kyuura_engine.history import other_received_on, received_on  # v0.62
 from kyuura_engine.decisions import BENCH_FROM_DISCARD  # noqa: E402  v0.51
 from kyuura_engine.effects import bench_from_discard_candidates, trainer_attack_damage_bonuses, trainer_poison_effects  # noqa: E402  v0.51・v0.56
 from kyuura_engine.resolution.programs import all_answers  # noqa: E402  v0.49
@@ -427,7 +429,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
            + ("PMCG1-040", "PMCG5-030", "PMCG4-008")  # v0.59: マルマイン（第1弾）・カスミのメノクラゲ・わるいアーボック
            + ("PMCG3-026", "PMCG5-016", "PMCG5-035", "PMCG5-050")  # v0.60: サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン
-           + ("PMCG4-025", "PMCG4-043", "PMCG5-051"))  # v0.61: わるいギャラドス・わるいダグトリオ・タケシのオコリザル
+           + ("PMCG4-025", "PMCG4-043", "PMCG5-051")  # v0.61: わるいギャラドス・わるいダグトリオ・タケシのオコリザル
+           + ("PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041"))  # v0.62
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -461,6 +464,10 @@ V0_60 = (FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH)
 # タケシのオコリザル（タケシのマンキーから進化）と、トレーナーのバトル場は穴だらけ!
 DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE, DIGGER = "PMCG4-025", "PMCG4-043", "PMCG5-051", "PMCG4-055"
 V0_61 = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
+# v0.62（docs/history-attacks-v0.62.md）。ピジョン（ポッポから進化）・オニスズメ・オニドリル（オニスズメから進化）・ピジョット（ピジョンから進化）・
+# タケシのダグトリオ（タケシのディグダから進化）・ベロリンガ（kyuura の確定した修正を当てはめた写し）
+PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG = "PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041"
+V0_62 = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -728,6 +735,11 @@ DECKS = {
     "G61": ((ROCKET_MAGIKARP, 4), (DARK_GYARADOS, 3), (ROCKET_DIGLETT, 4), (DARK_DUGTRIO, 3), (DIGGER, 4), *TRAINERS, (WATER, 18), (FIGHTING, 12)),
     # v0.61: 闘。タケシのマンキー → タケシのオコリザル（［ずらかる］・おおあばれ）・ニビシティジム（おおあばれでトラッシュするスタジアム）・バトル場は穴だらけ!
     "P61": ((BROCKS_MANKEY, 4), (BROCKS_PRIMEAPE, 4), (BROCKS_GEODUDE, 4), (DIGGER, 3), (PEWTER_CITY_GYM, 3), *TRAINERS, (FIGHTING, 30)),
+    # v0.62: 無色（エネルギーは草・水）。ポッポ → ピジョン（ふきとばし・オウムがえし）→ ピジョット（つばさでうつ・ハリケーン）・オニスズメ（つつく・オウムがえし）→
+    # オニドリル（こうそくいどう・ドリルくちばし）・ベロリンガ（まきつくベロ・ちょうおんぱ）
+    "H62": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), *TRAINERS, (GRASS, 15), (WATER, 14)),
+    # v0.62: 闘・無色。タケシのディグダ → タケシのダグトリオ（あながくれ・ドリルホール）・オニスズメ → オニドリル・ベロリンガ
+    "D62": ((BROCKS_DIGLETT, 4), (BROCKS_DUGTRIO, 3), (SPEAROW, 3), (FEAROW, 2), (LICKITUNG, 3), *TRAINERS, (FIGHTING, 20), (GRASS, 13)),
 }
 PRESETS = {"A2": driver.DECK_A2, "B2": driver.DECK_B2}
 PAIRINGS = (("W28", "G28"), ("W28", "B2"), ("G28", "A2"))
@@ -808,6 +820,10 @@ PAIRINGS_V0_60 = (("Z60", "M60"), ("M60", "Z59"), ("Z60", "D46"), ("Z60", "P31")
 # ［はんげき］・カスミのギャラドスの［はんこう］と［ずらかる］）・G61 対 Z60（R団のストライクのかげぶんしん・スピードスターの相手の［ファイナルビーム］）・G61 対 P31
 # （ピッピ・ピクシー・カスミのコダックが、つきおとす・れいとうビームを自分のワザとして使う）。``run`` が席を入れかえる
 PAIRINGS_V0_61 = (("G61", "P61"), ("P61", "M60"), ("G61", "Z60"), ("G61", "P31"))
+# v0.62: H62 対 D62（オウムがえし・ハリケーン・あながくれとドリルホール。どちらの席でも）・H62 対 G61（れいとうビームのマヒ・バトル場は穴だらけ!のダメージを受けた
+# オニスズメのオウムがえし（マヒを与える・OM2）・ハリケーンとファイナルビーム）・D62 対 M60（はんげき・「とうめい」・はんこうのあとのドリルホール・オウムがえし）・
+# H62 対 P31（ピッピ・ピクシー・カスミのコダックが、オウムがえし・ドリルくちばし・ハリケーンを自分のワザとして使う）。``run`` が席を入れかえる
+PAIRINGS_V0_62 = (("H62", "D62"), ("H62", "G61"), ("D62", "M60"), ("H62", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -815,7 +831,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.48": PAIRINGS_V0_48, "v0.49": PAIRINGS_V0_49, "v0.50": PAIRINGS_V0_50, "v0.51": PAIRINGS_V0_51,
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
-           "v0.61": PAIRINGS_V0_61}
+           "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -877,6 +893,12 @@ def _attack_and_copied_types(state, command):
     """v0.49: 使おうとするワザの実装の型の名前と、相手のワザを自分のワザとして使うワザ（ゆびをふる・ちょうのうりょく）なら、相手の対戦ポケモンが今持つワザ
     （［サイコリンク］で持つワザ・［へんしん］の今の姿のワザも）の実装の型の名前。宣言の前の先読みは、まねるワザの選び方のすべてを試す。"""
     names = {type(_attack_effect(state, command)).__name__}
+    if "RepeatReceivedAttack" in names:
+        # v0.62: ピジョンのオウムがえしは、前の相手の番に受けたワザ（受けた記録の処理したワザ）を出す
+        record = received_on(_attacker(state, command), state.turn_number - 1)
+        if record is not None:
+            definition = state.definitions[record.processed[0]]
+            names.add(type(state.effects.attack_effect(definition.id, definition.attacks[record.processed[1]], definition.attacks)).__name__)
     defender = _defender(state, command)
     if _copier(state, command) and defender is not None:
         for option in available_attacks(state, defender):
@@ -915,7 +937,7 @@ V031_STOPS = {
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": lambda st, c: any_color_energy(st, _attacker(st, c)),
     "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
     # HC4（第4弾のコダック・v0.34 のシャワーズの「みずでっぽう」）
-    "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: type(_attack_effect(st, c)).__name__ == "ExtraEnergyDamageMixed",
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS": lambda st, c: "ExtraEnergyDamageMixed" in _attack_and_copied_types(st, c),  # v0.62: オウムがえしで出すワザも
     "UNRESOLVED_PREVENTED_EFFECT_COIN": lambda st, c: attack_barrier(st, _defender(st, c)) is not None,  # HC3
     "UNRESOLVED_DESTINY_BOND_KNOCKOUT": lambda st, c: destiny_bond(st, _defender(st, c)) is not None,  # HC2
     # しっぽをふる。v0.40: すごむ（効果を与えたポケモンがバトル場にいる間）
@@ -998,7 +1020,27 @@ V031_STOPS = {
     "UNRESOLVED_MISTY_SELF_DAMAGE": lambda st, c: bool(trainer_attack_damage_bonuses(st, _attacker(st, c))),
     # v0.56: キョウのどくがはたらくワザを使うポケモンが、同じワザで受けるダメージの違う特殊などくを与える（KG1）
     "UNRESOLVED_KOGA_POISON_ORDER": lambda st, c: bool(trainer_poison_effects(st, _attacker(st, c))),
+    # v0.62: ドリルホール（前の自分の番に、このカードが「あながくれ」を使っていなければ使えない。ワザを使うための条件）
+    "PREVIOUS_ATTACK_NOT_USED": lambda st, c: (type(_attack_effect(st, c)).__name__ == "DamageIfUsedAttackLastTurn"
+                                               and used_attack_last_turn(st, _attacker(st, c), 0, "あながくれ") != "used"),
+    # v0.62: オウムがえし（ピジョン）: 受けた「ワザ」が決まらない（ダメージだけを受けなかった・受けたワザが相手のワザを自分のワザとして使ったもの。MM1）・
+    # 出すワザの必要なエネルギー・条件（MM2）・出すワザがエンジンの未対応
+    "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK": lambda st, c: _v062_received(st, c, lambda r: bool(r.voided) or r.declared != r.processed),
+    "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS": lambda st, c: _v062_received(st, c, lambda r: True),
+    "UNSUPPORTED_MIRROR_MOVE_ATTACK": lambda st, c: _v062_received(st, c, lambda r: True),
+    # v0.62: オウムがえし（オニスズメ）: 続く効果（OM1）・ワザ以外で受けた（OM2）・与えるのが未対応の効果
+    "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT": lambda st, c: _v062_received(st, c, lambda r: bool(set(r.reached) & LASTING_RECEIVED_ELEMENTS)),
+    "UNRESOLVED_MIRROR_MOVE_NON_ATTACK": lambda st, c: other_received_on(_attacker(st, c), st.turn_number - 1),
+    "UNSUPPORTED_MIRROR_MOVE_EFFECT": lambda st, c: _v062_received(st, c, lambda r: bool(set(r.reached) - REFLECTABLE_RECEIVED_ELEMENTS)),
 }
+
+
+def _v062_received(state, command, test) -> bool:
+    """v0.62: 使うワザがオウムがえし（ピジョン・オニスズメ）で、前の相手の番にバトル場のポケモン（このカード）が受けた記録があり、``test`` に当たる。"""
+    if type(_attack_effect(state, command)).__name__ not in ("RepeatReceivedAttack", "ReflectReceivedDamageAndEffects"):
+        return False
+    record = received_on(_attacker(state, command), state.turn_number - 1)
+    return record is not None and test(record)
 
 
 def _all_devolution_targets_disguised(state, command):
@@ -2867,6 +2909,103 @@ def v061_uses(state):
     return {k: v for k, v in counts.items() if v}
 
 
+def _v062_attack(state, tried, counts):
+    """v0.62: 前の番の履歴を読むワザを、使える番に優先して使う（どれもない局では何もしない）。
+
+    - タケシのダグトリオ: 前の自分の番に「あながくれ」を使っていて、ドリルホールを払えれば、ドリルホール（``v062_earthdrill``）。そうでなく「あながくれ」を払えれば、
+      2 回に 1 回は「あながくれ」（``v062_lie_low``。次の番のドリルホールのため）
+    - ピジョン・オニスズメ: 前の相手の番に受けた記録（``history.received_on``）があり、オウムがえしを払えれば、オウムがえし（``v062_mirror_<カード>``）。止まる場面
+      （MM1・MM2・OM1・OM2・未対応）は ``V031_STOPS`` で場から確かめ、別の操作を続ける
+    この番に拒否されたワザ（``("attack_index", 位置)``）は選ばない。"""
+    if "attack" in tried:
+        return None
+    player = state.current_player
+    active = state.players[player].active
+    if active is None or active.conditions.asleep or active.conditions.paralyzed or current_form(state, active).kind != "printed":
+        return None
+    card_id = state.cards[active.card].card_id
+    attacks = state.card_def(active.card).attacks
+
+    def payable(index):
+        return ("attack_index", index) not in tried and attack_cost_payable(state, active, attacks[index])
+
+    if card_id == BROCKS_DUGTRIO:
+        if used_attack_last_turn(state, active, 0, "あながくれ") == "used" and payable(1):
+            counts["v062_earthdrill"] += 1
+            return UseAttack(player, 1)
+        if payable(0) and counts["v062_lie_low_turns"] % 2 == 0:
+            counts["v062_lie_low_turns"] += 1
+            counts["v062_lie_low"] += 1
+            return UseAttack(player, 0)
+        counts["v062_lie_low_turns"] += 1
+        return None
+    if card_id in (PIDGEOTTO, SPEAROW) and received_on(active, state.turn_number - 1) is not None and payable(1):
+        counts[f"v062_mirror_{card_id}"] += 1
+        return UseAttack(player, 1)
+    return None
+
+
+def v062_uses(state):
+    """v0.62: ログから数えた v0.62 の 6 枚の動き（どれもない局では空）。
+
+    - ``lie_low``・``earthdrill``: あながくれ・ドリルホール（ドリルホールの直前の自分の番の宣言を確かめる）
+    - ``repeat``・``repeat_<出したワザ>``・``repeat_none_<理由>``: ピジョンのオウムがえし（出したワザ・何もしなかった理由）
+    - ``reflect``・``reflect_damage``・``reflect_paralysis``・``reflect_none_<理由>``: オニスズメのオウムがえし（与えたダメージ・マヒ・何もしなかった理由）
+    - ``hurricane``・``hurricane_returned``・``hurricane_knocked_out``: ハリケーン（手札にもどした・きぜつで処理しなかった）
+    - ``whirlwind``・``agility_barrier``・``drill_peck``・``wing_attack``・``peck``・``lickitung_paralysis``・``supersonic_confusion``: ほかのワザ
+    """
+    counts = Counter()
+    log = state.log
+    names = {(PIDGEOTTO, "ふきとばし"): "whirlwind", (FEAROW, "こうそくいどう"): "agility", (FEAROW, "ドリルくちばし"): "drill_peck",
+             (PIDGEOT, "つばさでうつ"): "wing_attack", (SPEAROW, "つつく"): "peck", (LICKITUNG, "まきつくベロ"): "tongue_wrap",
+             (LICKITUNG, "ちょうおんぱ"): "supersonic", (BROCKS_DUGTRIO, "あながくれ"): "lie_low", (BROCKS_DUGTRIO, "ドリルホール"): "earthdrill",
+             (PIDGEOT, "ハリケーン"): "hurricane", (PIDGEOTTO, "オウムがえし"): "repeat", (SPEAROW, "オウムがえし"): "reflect"}
+    for i, e in enumerate(log):
+        kind = e["kind"]
+        if kind == "attack":
+            card_id = e.get("card_id") or state.cards[e["pokemon"]].card_id
+            name = names.get((card_id, e["attack"]))
+            if name is None:
+                continue
+            counts[name] += 1
+            window = []
+            for x in log[i + 1:]:
+                if x["kind"] in ("attack", "turn_end"):
+                    break
+                window.append(x)
+            kinds = [x["kind"] for x in window]
+            if name == "hurricane":
+                if "return_in_play_to_hand" in kinds:
+                    counts["hurricane_returned"] += 1
+                elif any(x["kind"] == "knock_out" for x in window):
+                    counts["hurricane_knocked_out"] += 1
+            elif name == "repeat":
+                copy = next((x for x in window if x["kind"] == "copy_attack"), None)
+                if copy is not None:
+                    counts[f"repeat_{copy['copied_attack']}"] += 1
+                none = next((x for x in window if x["kind"] == "mirror_move_none"), None)
+                if none is not None:
+                    counts[f"repeat_none_{none['reason']}"] += 1
+            elif name == "reflect":
+                got = next((x for x in window if x["kind"] == "reflect_received"), None)
+                if got is not None:
+                    counts["reflect_received"] += 1
+                    counts["reflect_damage"] += bool(got["damage"])
+                    counts["reflect_paralysis"] += "paralysis" in got["effects"]
+                none = next((x for x in window if x["kind"] == "mirror_move_none"), None)
+                if none is not None:
+                    counts[f"reflect_none_{none['reason']}"] += 1
+            elif name == "agility" and "persistent_effect_added" in kinds:
+                counts["agility_barrier"] += 1
+            elif name == "tongue_wrap" and any(x["kind"] == "special_condition" and x.get("condition") == "paralysis" for x in window):
+                counts["tongue_wrap_paralysis"] += 1
+            elif name == "supersonic" and any(x["kind"] == "special_condition" and x.get("condition") == "confusion" for x in window):
+                counts["supersonic_confusion"] += 1
+            elif name == "whirlwind" and "forced_switch" in kinds:
+                counts["whirlwind_switch"] += 1
+    return {k: v for k, v in counts.items() if v}
+
+
 def v060_uses(state):
     """v0.60: ログから数えた v0.60 の 4 枚の動き（どれもない局では空）。
 
@@ -3130,6 +3269,9 @@ def make_policy(seen: dict, counts: Counter):
                      or _v061_trainer(state, tried, counts))  # v0.61
             if power is not None:
                 return power
+            history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
+            if history is not None:
+                return history
             virtual = _v049_attack(state, tried, counts)  # v0.49: 出どころがいちばん上のカードでないワザ
             if virtual is not None:
                 return virtual
@@ -3260,6 +3402,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v059"] = v059_uses(state)
         result["v060"] = v060_uses(state)
         result["v061"] = v061_uses(state)
+        result["v062"] = v062_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -3691,7 +3834,7 @@ def summarize(games):
          "unresolved_rejections": Counter(), "audit_failures": Counter(), "end_conditions": Counter(), "wins": Counter(),
          "cards": {}, "games_with": {}, "v058": Counter(), "v058_policy": Counter(), "v059": Counter(), "v059_policy": Counter(),
          "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter(), "v061": Counter(), "v061_games_with": Counter(),
-         "v061_policy": Counter()}
+         "v061_policy": Counter(), "v062": Counter(), "v062_games_with": Counter(), "v062_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -3703,6 +3846,9 @@ def summarize(games):
         s["v061"].update(r.get("v061", {}))  # v0.61
         s["v061_games_with"].update({k: 1 for k, v in r.get("v061", {}).items() if v})
         s["v061_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v061_")})
+        s["v062"].update(r.get("v062", {}))  # v0.62
+        s["v062_games_with"].update({k: 1 for k, v in r.get("v062", {}).items() if v})
+        s["v062_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v062_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

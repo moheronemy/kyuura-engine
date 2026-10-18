@@ -129,8 +129,8 @@ MUTANTS: tuple[Mutant, ...] = (
            '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target] + 10, target, res.state)',
            origin='v0.15d'),
     Mutant('M19', '複製でなく渡された状態を変える', 'kyuura_engine/engine.py',
-           '    new = state.clone()\n    handler(new, command,',
-           '    new = state\n    handler(new, command,',
+           '    new = state.clone()\n    if _probes_receipts(state, command):',  # v0.62: 複製と処理のあいだに、ワザ以外で受けたことの比べを開く
+           '    new = state\n    if _probes_receipts(state, command):',
            origin='v0.15d'),
     Mutant('M20', 'こんじょうの決定への答えを解決の基盤に送らない', 'kyuura_engine/engine.py',
            '    if decision.resume in resolution.RESUMES:',

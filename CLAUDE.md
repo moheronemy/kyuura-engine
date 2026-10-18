@@ -124,7 +124,7 @@
 
 - テストの段階: A（速い単体テスト）と B（決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行）は `python3 -m unittest` に入っています。C（前の版との大きな比較・大規模なストレス実行）は、ふだんのテストで走らせないでください（`python3 tools/compare_engine_versions.py --base <コミット>`・`python3 tools/stress_engine.py`）。
 - ログの監査（tests/log_audit.py の `log_problems`）は、ログだけから場のポケモンのダメージ・エネルギー・トラッシュ・サイドを組み立て直して状態と比べます。ダメージ・エネルギー・トラッシュを変えるログのイベントを加えたら、組み立て直しにも加えてください。ログは記録で、状態の正本ではありません（エンジンはログから状態を決めない）。
-- 書き出しの監査（`serialization_problems`）は、形式 1〜19（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 19）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 20 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
+- 書き出しの監査（`serialization_problems`）は、形式 1〜20（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19、v0.62 から 20）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 20）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 21 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
 - 前の版との比較の駆動（tools/compat_driver.py）は、エンジンの公開の API だけを使い、版ごとに別のプロセス（`python3 -I`）で、指定した木の `kyuura_engine` だけを読み込みます。比べないのは効果の登録表の id（`effects`）だけです。ルールの動きに関わる状態・ログを比較から除かないでください。
 - tests/fixtures/compat_base_4bd97bf.json は、基準の版（v0.4d の `4bd97bf`）で駆動が作った記録の指紋です。今の版から作り直さないでください（作り直すと前の版との比較ではなくなる）。駆動を変えたら、ファイルの `how` の引数で基準の版から作り直します。
 - テストの盤面にポケモンについているトレーナーを置くときは、`build_test_state` の `"trainers"`（[(カード id, トラッシュする番), ...]）を使います。
@@ -148,7 +148,7 @@
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。v0.49 から、今の姿（［へんしん］・「ばける」）のカードの特殊能力と、それを印刷したカードの uid（`effects.powers_of` の `PowerSlot`）で決めます（「ばける」でのせたカードの下のタケシのキュウコンの「ばける」も持つ）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
-- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）を加えた。次の新しい形式は 20）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）、v0.62 で形式 20（場のポケモンの `history`）を加えた。次の新しい形式は 21）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
 - エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
 - ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
 - やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
@@ -1820,7 +1820,7 @@
   BZ4（「ばける」）で止めます。手札からつける通常の操作・特殊エネルギーのつけたときの効果に数えないでください。
 - ショックアイでこんじょうを使えるポケモンを選ぶ場面は G37 です。宣言の前の先読みは、選ぶ答えのどれかが問いに当たれば宣言の前に止めるので、そのようなポケモンが相手の場にいると
   ほかのポケモンを選ぶつもりでもワザを使えません（v0.15c からの先読みの動き。変えていない）。
-- 書き出しの形式 19 = 形式 18 + 最上位の `energy_roles`（形式 1〜18 は記録があると `ValueError`）。監査の `LATEST_FORMAT` は 19。次の新しい形式は 20。持続する効果の種類
+- 書き出しの形式 19 = 形式 18 + 最上位の `energy_roles`（形式 1〜18 は記録があると `ValueError`）。監査の `LATEST_FORMAT` は 19（v0.62 で 20）。次の新しい形式は 20（v0.62 で加えた。その次は 21）。持続する効果の種類
   `cannot_use_powers`・`cannot_attach_energy` は形式 8 から書けます。新しい拒否のコードは `POWER_USE_PREVENTED`・`ENERGY_ATTACH_PREVENTED`・`DOUBLE_ATTACH_NOT_ALLOWED`・
   `NOT_FIRE_ENERGY`、新しいログのイベント（公開）は `energy_conversion`。不変条件 `engine._energy_role_problems`。ログの監査（tests/log_audit.py）は、まきちらせ!ベトベトガスの
   はたらく間の特殊能力の宣言・カツラの 2 枚・［エネエネ］のきぜつとエネルギーの組み立て直し・役割のカードの個数を確かめます。
@@ -1857,7 +1857,7 @@
   `kernel.first_void` の `held_by_receiver`・「とうめい」・かげぶんしん）を計算せず、ワザを使うポケモン・プレイヤー・スタジアムの効果と、ダメージを受けたあとの反応は今までどおりです。
   効果を持っているのがだれかで分け、だれが与えたかで分けないでください。相手の場のほかのポケモンの特殊能力を含むかは SS1（コードのない問い `speed_star_scope`。今の写しでは起こらない）。
   バトル場以外ではたらくワザのダメージを変える特殊能力を加えるときは、SS1 に当たるかを確かめてください。
-- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20）。持続する効果の種類 `tails_damage_guard` は形式 8 から書けます。新しいログのイベント（公開）は
+- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20。v0.62 で加えた）。持続する効果の種類 `tails_damage_guard` は形式 8 から書けます。新しいログのイベント（公開）は
   `bench_coin_results`・`damage_guard_check`・`rebellion_check`。公開の API の呼び方・コマンド・決定の種類・拒否のコードは変えていません。エンジンが止める `UNRESOLVED_…` は 123 件、
   未解決の裁定は 125 件です（TS1・SS1。kyuura の未解決の一覧にない）。
 - ログの監査（tests/log_audit.py）は、かげぶんしんの効果・コイン・ダメージのすぐあとの消去、［はんこう］のコインの並びと山札にもどしたポケモン、スピードスターのダメージに「とうめい」の
@@ -1901,7 +1901,7 @@
   「ダメージを受けない」状態なら受けません（v0.28 の p.235 の解説の記録の再利用。ログ `trainer_damage_prevented`）。受けるダメージを変えるほかの効果で量が変わるときは TD1
   （`UNRESOLVED_TRAINER_DAMAGE_REDUCTION`）。結果は「うら」の側だけで決まるので、コインの前に両方の結果を状態の複製で確かめます（`resolution.trainer_damage_stop`）。きぜつの処理は
   使い終えてトラッシュしたあと（`may_knock_out`。`resolution.after_trainer` がこのコマンドのログ `trainer_damage` のポケモンもきぜつさせる）。
-- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20）。公開の API の呼び方・コマンド・拒否のコードは変えていません。新しい決定の種類は `knock_out_power`、
+- 書き出しの形式は 19 のまま（監査の `LATEST_FORMAT` も 19。次の新しい形式は 20。v0.62 で加えた）。公開の API の呼び方・コマンド・拒否のコードは変えていません。新しい決定の種類は `knock_out_power`、
   新しいログのイベント（公開）は `knock_out_power_declined`・`knock_out_power_declared`・`knock_out_power_failed`・`knock_out_power_damage`・`scram`・`sinkhole_check`・`sinkhole_damage`・
   `digger_result`・`trainer_damage`・`trainer_damage_prevented`。解決の基盤の入口に `after_retreat`・`trainer_damage_stop` を加えました（tests/test_kernel_integration_v0_15.py の
   `DependencyTest`）。エンジンが止める `UNRESOLVED_…` は 128 件、未解決の裁定は 129 件です（SH1・SC1・SC2・TD1 は kyuura の未解決の一覧にない `not_in_kyuura`、Z9 は
@@ -1913,3 +1913,49 @@
   `v061_uses`。tests/v017_games.py の `play_game` は SH1・SC1・SC2・TD1 を場から確かめてから別の操作を続けます（`v061_stop_expected`）。tests/helpers.py の `trainer_policy_command` は、
   選べる答えがない（使うと止める）決定に、選ばない答えを返します。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
 
+
+## 前の番のワザの履歴を読むワザ・相手を手札にもどすワザの 5 枚と、確定した修正を当てはめたベロリンガ（v0.62）
+
+- 依頼の 6 枚（ピジョン PMCG1-066 のふきとばし・オウムがえし、オニスズメ PMCG2-034 のつつく・オウムがえし、オニドリル PMCG2-038 のこうそくいどう・ドリルくちばし、ピジョット PMCG2-043 の
+  つばさでうつ・ハリケーン、タケシのダグトリオ PMCG6-060 のあながくれ・ドリルホール、ベロリンガ PMCG2-041 のまきつくベロ・ちょうおんぱ）を、kyuura データの採用で、どのワザも登録しました
+  （対応ポケモン 339 → 345・写しの組 `pool_v0_62`。写し 436 → 442 枚・対応するカード 434 → 440 枚。ワザの登録 574 → 586。PMCG1〜PMCG6 の未対応は 23 → 17 枚）。履歴の意味と時点・
+  ピジョンとオニスズメの違い・修正の採用・未解決・互換性・検証は docs/history-attacks-v0.62.md。ガイドブックは読んでいません。テストの定数は tests/helpers.py の `PIDGEOTTO`・`SPEAROW`・
+  `FEAROW`・`PIDGEOT`・`BROCKS_DUGTRIO`・`LICKITUNG`・`V0_62_POKEMON`・`V0_62_CARDS`（`BROCKS_DUGTRIO` と第1弾・わるいダグトリオ、`FEAROW` とマチスのオニドリルを取りちがえない）。v0.62 の
+  効果の型は `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。
+- 前の番のことを読むワザのために、場のポケモンの `PokemonInPlay.history`（`kyuura_engine/history.py`）に 3 種類を分けて持ちます: 使ったワザ（`AttackUsed`。宣言のとき
+  `resolution.flow._attack_body`。相手のワザ・受けたワザを自分のワザとして使ったら処理したワザ `processed`。`programs.apply_redirect`）・受けた相手のワザと実際に受けた結果
+  （`AttackReceived`。解決の基盤の `kernel.deal_damage`・`kernel.reaches` がこのポケモンを対象にしたとき。最終ダメージの合計・受けた要素・受けなかった要素と理由）・ワザ以外で受けた
+  こと（`OtherReceived`。`engine._apply` がワザ・番の終わり・ワザの途中の決定への答え以外のコマンドの前後で、番でないプレイヤーの場のポケモンを比べる。`history.open_probe`・
+  `close_probe`）。1 つの「直前のワザ」にまとめないでください（ピジョンは受けたワザ、オニスズメは受けた結果を読む）。記録は状態の正本です。ログ・過去のコマンドを読み直して作ったり、
+  今の盤面から逆算したりしないでください。過去のカードの uid は「このカード」の確かめにだけ使います。
+- 記録するのは、履歴を読むワザ（`AttackEffect.reads_history`）を持つカードが対戦のカードの定義にあるときだけです（`history.history_needed`。ないときの状態・書き出し・ログは v0.61 と
+  同じ）。受けた記録は、番のプレイヤーのワザが相手の場のポケモンを対象にしたときだけ（自分へのダメージ・自分の控えへの効果・返す効果のダメージは記録しない）。進化・退化で消し
+  （`history.clear_history`。p.310 の別のポケモン）、にげる・入れ替え・［へんしん］・「ばける」では残し、番の最初に 2 つ前より古い記録を消します（`history.prune`。`procedures.begin_turn`）。
+  読むときは記録のカードと今の姿になった番も確かめます（`history._this_card`）。不変条件は `engine._history_problems`。ダメージ・効果を与える処理を解決の基盤の外に加えるときは、
+  受けた記録をどう作るかを決めてください（ワザの外のものはコマンドの前後の比べで `OtherReceived` になる）。
+- 「1回で消える」は消費の状態を持たずに表します（読むのは前の相手の番の記録だけで、ワザは番に 1 回）。読み方で結果が変わる続く効果は OM1 で止めます。
+- ドリルホール（`DamageIfUsedAttackLastTurn`）は、前の自分の番（今の番 − 2）の使った記録の宣言したワザが同じカードの位置 0・名前「あながくれ」なら使えます。使えなければワザを使うための
+  条件 `PREVIOUS_ATTACK_NOT_USED`（エネルギーの確認のあと・こんらんのコインの前）。宣言が失敗しても使ったことになります（宣言のときの記録）。ほかのワザで「あながくれ」を自分のワザとして
+  使った記録は ED1（コードのない問い。今の写しでは起こらない）。
+- ピジョンのオウムがえし（`RepeatReceivedAttack`・要素 `programs.RepeatReceivedAttack`）は、受けた記録の処理したワザの要素の並びに切りかえ、このワザの枠の中でピジョンのワザとして
+  処理します（v0.31 の「ゆびをふる」と同じ `run.redirect`。コイン・計算・選ぶものは新しく決める。前の結果を使わない。今の相手のワザから選び直さない）。ダメージの要素だけを受けなかった・
+  受けたワザが相手のワザを自分のワザとして使ったものなら MM1、出すワザのエネルギー・条件をピジョンでみたさなければ MM2、場に出てから 1 度だけ使えるワザ・要素の並びのないワザは
+  `UNSUPPORTED_MIRROR_MOVE_ATTACK`。出したふきとばしは相手が選ぶ決定のまま（`decision_problems` が `context` の `copied` に委ねる）。
+- オニスズメのオウムがえし（`ReflectReceivedDamageAndEffects`）は、受けた最終ダメージの合計をこのワザの基本となるダメージ（p.321 の 1 段階）にして、このワザのダメージとして計算し直し
+  （こうらがえしと同じ読み方。GR-2000-P321-ATTACK-DAMAGE）、受けたマヒを与えます。受けたダメージをそのまま相手にのせる・カウンターを移す処理にしないでください。続く効果（ねむり・
+  こんらん・どく・持続する効果）は OM1、ワザ以外で受けたものがあれば OM2、ほかの効果（入れ替え・エネルギー・カウンター・回復など）は `UNSUPPORTED_MIRROR_MOVE_EFFECT`。与える効果の
+  種類を加えるときは `effects.REFLECTABLE_RECEIVED_ELEMENTS`・`LASTING_RECEIVED_ELEMENTS` を見直してください。
+- ハリケーン（`DamageThenReturnOpponentToHand`・要素 `programs.ReturnOpponentToHand`）は、ダメージのあと相手の対戦ポケモンが HP 以上でなければ、v0.42 の `zones.return_in_play_to_hand`
+  で持ち主の手札にもどし、持続する効果を消します（きぜつではない）。「とうめい」・「ワザをうけない」を評価し、G37・RD9・SC1 は既存の問いのまま。
+- ベロリンガのワザ 0 の名前・レベルは、kyuura の照合の記録 CC-PMCG2-041-P234（研究の基準のコミットの記録。修正のコミット `f52a8e2`）の確定した修正を、写しの作り直しの道具で
+  当てはめます（`scripts/extract_kyuura_cards.py` の `CONFIRMED_CORRECTIONS`・`apply_corrections`・`correction_problems`。写しの `corrections` に出どころを書く）。写しを手で直したり、
+  写しの元のコミット（`KYUURA_COMMIT`）を一括に上げたりしないでください。修正を加えるときは、前の値・あとの値・記録の id・修正のコミット・記録のコミットを書き、作り直しの検査
+  （前の値が写しの元・あとの値が修正のコミット・記録に修正がある・子孫・ほかの項目が変わっていない）が通ることを確かめてください。ガルーラ PMCG2-046 の保留は別の問題です。
+- 書き出しの形式 20 = 形式 19 + 場のポケモンの `history`（`serialize.history_record`。形式 1〜19 は記録があると `ValueError`）。監査の `LATEST_FORMAT` は 20。次の新しい形式は 21。
+  観測（`observe`）の場のポケモンに `history`（公開の情報）。新しいログのイベント（公開）は `mirror_move_none`・`reflect_received`、`copy_attack` に `received_turn`。新しい拒否のコードは
+  `PREVIOUS_ATTACK_NOT_USED`。ログの監査（tests/log_audit.py）は、ハリケーンで手札にもどしたポケモンを確かめます。
+- エンジンが止める `UNRESOLVED_…` は 132 件、未解決の裁定は 134 件です（MM1・MM2・OM1・OM2 は kyuura の未解決の一覧にない `not_in_kyuura`、ED1 は `codeless_questions`）。
+- 検証用デッキ `H62`・`D62` と組（`PAIRINGS_V0_62`。`H62` 対 `D62`・`H62` 対 `G61`・`D62` 対 `M60`・`H62` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.62` です（前の版の
+  組の結果は変わらない）。履歴を読むワザは `_v062_attack`（ドリルホールを使える番に使い、2 回に 1 回あながくれ。オウムがえしは受けた記録があれば使う）、数えた結果は `v062_uses`。
+  MM1・MM2・OM1・OM2・未対応・`PREVIOUS_ATTACK_NOT_USED` は `V031_STOPS` で場から確かめます（オウムがえしで出すワザの型も見る `_attack_and_copied_types`）。受けたマヒを与える場面は、
+  マヒのあいだはワザを使えないので対戦では起こりにくく、単体テストで確かめます。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

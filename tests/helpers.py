@@ -632,6 +632,15 @@ BROCKS_PRIMEAPE = "PMCG5-051"  # タケシのオコリザル（リーダーズ�
 DIGGER = "PMCG4-055"  # バトル場は穴だらけ!（ロケット団。057/065。トレーナー。kyuura の種類 rockets_secret_machine）
 V0_61_POKEMON = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
 V0_61_CARDS = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE, DIGGER)
+# v0.62（docs/history-attacks-v0.62.md）。前の番のワザの履歴を読むワザ・相手を手札にもどすワザの 5 枚と、確定した修正を当てはめたベロリンガ
+PIDGEOTTO = "PMCG1-066"  # ピジョン（第1弾。060/096。ポッポから進化。HP 60・無色・弱点 雷・抵抗力 闘・にげる 1。ふきとばし（無無）20・オウムがえし（無無無））
+SPEAROW = "PMCG2-034"  # オニスズメ（ポケモンジャングル。035/048。HP 50・無色・弱点 雷・抵抗力 闘・にげる 0。つつく（無）10・オウムがえし（無無無））
+FEAROW = "PMCG2-038"  # オニドリル（ポケモンジャングル。036/048。オニスズメから進化。HP 70・無色・弱点 雷・抵抗力 闘・にげる 0。こうそくいどう（無無無）20・ドリルくちばし（無無無無）40）
+PIDGEOT = "PMCG2-043"  # ピジョット（ポケモンジャングル。034/048。ピジョンから進化。HP 80・無色・弱点 雷・抵抗力 闘・にげる 0。つばさでうつ（無無）20・ハリケーン（無無無）30）
+BROCKS_DUGTRIO = "PMCG6-060"  # タケシのダグトリオ（闇からの挑戦。056/098。タケシのディグダから進化。HP 60・闘・弱点 草・抵抗力 雷・にげる 1。あながくれ（闘）・ドリルホール（闘闘無）60）
+LICKITUNG = "PMCG2-041"  # ベロリンガ（ポケモンジャングル。043/048。HP 90・無色・弱点 闘・抵抗力 超・にげる 3。まきつくベロ（無）10・ちょうおんぱ（無無））
+V0_62_POKEMON = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
+V0_62_CARDS = V0_62_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1174,6 +1183,10 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageIgnoringDefenderEffects,  # v0.60: タケシのサンドパンの「スピードスター」（Damage の defender_effects）
     _effects.OpponentCoinTailsBonusDamage,  # v0.61: わるいダグトリオの「つきおとす」（相手が投げるコインの「うら」で追加。値 OpponentTailsBonus）
     _effects.DamageSelfDamageThenDiscardStadium,  # v0.61: タケシのオコリザルの「おおあばれ」（相手 → 自分 → スタジアムのトラッシュ）
+    _effects.DamageIfUsedAttackLastTurn,  # v0.62: タケシのダグトリオの「ドリルホール」（前の自分の番に使ったワザの記録 A）
+    _effects.RepeatReceivedAttack,  # v0.62: ピジョンの「オウムがえし」（前の相手の番に受けたワザの記録 B）
+    _effects.ReflectReceivedDamageAndEffects,  # v0.62: オニスズメの「オウムがえし」（前の相手の番に受けた結果の記録 C）
+    _effects.DamageThenReturnOpponentToHand,  # v0.62: ピジョットの「ハリケーン」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

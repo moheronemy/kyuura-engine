@@ -13,7 +13,7 @@ from kyuura_engine.cards import pool_from_extract, read_extract, read_verificati
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
-    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON,
+    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON,
     V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
@@ -240,7 +240,7 @@ class CardPoolTest(unittest.TestCase):
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
                  *V0_45_POKEMON, *V0_46_POKEMON, *V0_47_POKEMON, *V0_48_POKEMON, *V0_49_POKEMON, *V0_50_POKEMON, *V0_51_POKEMON, *V0_52_POKEMON,
-                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON)  # v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚
+                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON)  # v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

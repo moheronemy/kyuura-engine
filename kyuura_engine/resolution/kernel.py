@@ -58,6 +58,7 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, reduced_dam
 from ..zones import return_in_play_to_deck, shuffle_deck
 from .. import effects as E
 from ..state import RETALIATION_FIXED
+from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EVADED, VOID_IMMUNE, note_received
 
 from . import catalog as C
 from .events import (
@@ -143,6 +144,9 @@ class Resolution:
         # v0.61: 決定をまたいで運んだ、HP 以上になった場のポケモンのきぜつの原因（番号 → (原因の枠のプレイヤー, ダメージを与えたポケモン, ワザの分類か)）。決定の前の
         # ``knocked_by`` の枠は残らないので、［ファイナルビーム］の候補はこれで求める（``AttackRun.suspend``・``restore``）
         self.ko_carried: dict[int, tuple[int, int, bool]] = {}
+        # v0.62（docs/history-attacks-v0.62.md 2 章）: このワザの宣言したワザ（``AttackKey``。ワザの外では None）。受けた記録（``history.note_received``）の B に書く
+        # （処理したワザは枠の ``attack_key``）。``flow._attack_body``・``_resume_attack`` が置く
+        self.attack_declared: AttackKey | None = None
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -295,6 +299,21 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
     return None
 
 
+def note_receipt(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, **what) -> None:
+    """v0.62: 相手のワザの要素が ``pokemon`` を対象にしたことを、受けた記録（``history.note_received``）に加える。ワザの枠（``FrameKind.ATTACK``）だけ（こんらんの枠・
+    返す効果の枠は記録しない）。"""
+    frame = fs.frame
+    if frame.kind is not FrameKind.ATTACK or res.attack_declared is None:
+        return
+    note_received(res.state, attacker_player=frame.player, source=frame.source_pid, declared=res.attack_declared, processed=frame.attack_key,
+                  owner=owner, pokemon=pokemon, **what)
+
+
+def _void_reason(res: Resolution, owner: int, pokemon: PokemonInPlay) -> str:
+    """v0.62: ダメージの要素を無効にした効果が、効果の要素も無効にする効果（「ワザをうけない」）か、ダメージだけを無効にする効果か。"""
+    return VOID_ATTACK_BARRIER if first_void(res, owner, pokemon, Window.BEFORE_EFFECT) is not None else VOID_DAMAGE_ONLY
+
+
 def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | None = None) -> tuple[int, PokemonInPlay]:
     state = res.state
     if target == OPPONENT_ACTIVE:
@@ -388,6 +407,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             source_card=void.implementation.source_card,
         )
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, _void_reason(res, receiver_player, receiver)))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     if target in BENCH_TARGETS:
         cry = reduced_damage_to_source(state, attacker)
@@ -425,9 +445,11 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_EVADED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
     if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final):
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_DODGED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
     deferred: list[Deferred] = []
     by_opponent = receiver_player != frame.player
@@ -489,13 +511,14 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         total_damage=receiver.damage,
         **extra,
     )
+    note_receipt(res, fs, receiver_player, receiver, damage=calc.final)  # v0.62: 受けたダメージ（最終ダメージ。0 でも受けた要素として記録する）
     remove_on_damage(state, receiver_player, receiver, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
     res.trace.record(DamageApplied(frame.id, frame.damage_class, frame.source_pid, receiver.pokemon_id, receiver_player, calc.final,
                                    before, receiver.damage, by_opponent))
     track_ko(res, fs, receiver, before)
     fs.pending.extend(deferred)
     if target == OPPONENT_ACTIVE and calc.final > 0:
-        trainer_poison_after_damage(res, attacker, receiver_player, receiver)
+        trainer_poison_after_damage(res, attacker, receiver_player, receiver, fs)
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))
 
 
@@ -569,7 +592,7 @@ def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiv
         raise res.question("trainer_self_bonus", f"ポケモン {attacker.pokemon_id} の自分へのダメージ（{final} か {alternative}）")
 
 
-def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay) -> None:
+def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay, fs: FrameState | None = None) -> None:
     """v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナー「キョウ」の「この番に、「キョウのポケモン」が、ワザによって相手の対戦ポケモンにダメージを
     与えたら、ダメージを受けたポケモンを「どく」状態にする」。ワザのダメージの要素が相手の対戦ポケモンに 0 より大きいダメージをのせた直後に呼ぶ（``deal_damage``。無効・
     「とうめい」・最終ダメージ 0・控えポケモンへのダメージでは呼ばない）。
@@ -596,6 +619,9 @@ def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner:
                 raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
         return
     poison(state, owner, receiver, effect=records[0].card_id)
+    if fs is not None and receiver.conditions.poison is not None and E.status_immunity(state, owner, receiver) is None:
+        # v0.62: このワザのダメージにともなう、トレーナーの効果のどく（受けた記録の C に入れる。オニスズメの「オウムがえし」は、どくのような続く効果を返すときに止める）
+        note_receipt(res, fs, owner, receiver, reached=E.POISON)
     if receiver.conditions.poison is not None:
         res.trainer_poisoned.add(receiver.pokemon_id)
 
@@ -676,6 +702,7 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
             state.add_event("effect_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key),
                             element=element, persistent_effect=void.implementation.kind, source_card=void.implementation.source_card)
             res.trace.record(DamageVoided(frame.id, pokemon.pokemon_id, void.name))
+            note_receipt(res, fs, owner, pokemon, voided=(element, VOID_ATTACK_BARRIER))
             return False
     memo = fs.reception.get(pokemon.pokemon_id)
     if memo is None:
@@ -685,6 +712,7 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
                 instance = candidate
                 break
         if instance is None:
+            _note_reached(res, fs, owner, pokemon, element)
             return True
         if any(pid != pokemon.pokemon_id for pid in fs.reception):
             raise res.question("multiple_evasion", f"枠 {frame.id}")
@@ -711,7 +739,21 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
         state.add_event(
             "attack_evaded", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key), element=element, **extra
         )
+        note_receipt(res, fs, owner, pokemon, voided=(element, VOID_EVADED))
+    else:
+        _note_reached(res, fs, owner, pokemon, element)
     return memo
+
+
+def _note_reached(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, element: str) -> None:
+    """v0.62: 効果の要素が届いた（受ける）ことを受けた記録に加える。ダメージの要素は ``deal_damage`` がのせたあとに記録する（ここでは何もしない）。特殊状態にする要素で、
+    受けるポケモンが特殊状態にならない（［めんえき］）なら、受けなかった要素として記録する。"""
+    if element == DAMAGE_ELEMENT:
+        return
+    if element in (E.POISON, E.SLEEP, E.PARALYSIS, E.CONFUSION) and E.status_immunity(res.state, owner, pokemon) is not None:
+        note_receipt(res, fs, owner, pokemon, voided=(element, VOID_IMMUNE))
+        return
+    note_receipt(res, fs, owner, pokemon, reached=element)
 
 
 # ---------------------------------------------------------------- ダメージの要素のあとの窓（送る効果）

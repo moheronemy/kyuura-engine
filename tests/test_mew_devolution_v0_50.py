@@ -333,7 +333,7 @@ class CardDataTest(unittest.TestCase):
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.50", "docs/mew-devolution-spray-v0.50.md")])
         # v0.50 で 80・81。v0.51 で RV1・FT1 の 2 件を加えた（docs/discard-to-bench-v0.51.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (128, 129))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
         # v0.50 の版で結んだ記録（v0.51 からほかの版の記録も同じ一覧にある）
         applied = [record["kyuura_record"] for record in links["applied_rule_records"]
                    if any(engine["version"] == "v0.50" for engine in record["engine"])]
@@ -912,7 +912,7 @@ class StateAndSerializationTest(unittest.TestCase):
         """退化した番（``devolved_turn``）は形式 15 で書き出す。形式 1〜14 は、退化したポケモンがいると ``ValueError``（黙って落とさない）。"""
         state = board(mon(KADABRA, (P,)), hand=(DEVOLUTION_SPRAY,))
         pid = state.players[0].active.pokemon_id
-        self.assertEqual(max(FORMAT_VERSIONS), 19)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
+        self.assertEqual(max(FORMAT_VERSIONS), 20)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
         before = state_to_dict(state, format_version=14)
         self.assertNotIn("devolved_turn", json.dumps(before))
         state = spray(state, pid, 1)

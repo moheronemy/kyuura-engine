@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 19 あります（``format_version``）。
+形式は 20 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -90,6 +90,10 @@
   書き出しは v0.58 と同じ）。v0.59 の持続する効果の種類 ``"cannot_use_powers"``（「ショックアイ」）・``"cannot_attach_energy"``（「クリスタルビーム」）は共通の項目だけで、
   形式 8 から書ける（種類の値を加えただけ）。タケシの保護（場をはなれるまでついたまま）のついているトレーナーの ``discard_at_end_of_turn`` は ``None``。
   v0.60: 持続する効果の種類 ``"tails_damage_guard"``（R団のストライクの「かげぶんしん」）も共通の項目だけで、形式 8 から書ける（形式は増やしていない）。
+- 20: 19 に、場のポケモンごとの ``history``（ワザの履歴。``{"kind": "used", "turn", "card", "declared", "processed"}``・``{"kind": "received", "turn", "card", "player",
+  "source", "declared", "processed", "damage", "reached", "voided"}``・``{"kind": "other_received", "turn", "card"}`` の並び。ワザは [カード id, 位置]）を加えたもの（v0.62。
+  docs/history-attacks-v0.62.md 9 章）。履歴を読むワザのカードが対戦にないときは記録しないので空。形式 1〜19 は、記録があると ``ValueError``（なければ形式 1〜19 の
+  書き出しは v0.61 と同じ）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -143,6 +147,9 @@ from .state import (
     RETALIATION_FIXED,
     RETALIATION_RECEIVED,
     AttackBarrier,
+    AttackReceived,
+    AttackUsed,
+    OtherReceived,
     AttackCoinCheck,
     ZeroDamageBelow,
     Asleep,
@@ -171,7 +178,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -343,7 +350,23 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: in
         data["disguise"] = None if pokemon.disguise is None else {"card": pokemon.disguise, "card_id": state.cards[pokemon.disguise].card_id}
     if format_version >= 15:
         data["devolved_turn"] = pokemon.devolved_turn  # v0.50
+    if format_version >= 20:
+        data["history"] = [history_record(record) for record in pokemon.history]  # v0.62
     return data
+
+
+def history_record(record) -> dict[str, Any]:
+    """v0.62: ワザの履歴の記録 1 つ（``AttackUsed``・``AttackReceived``・``OtherReceived``）。"""
+    if isinstance(record, AttackUsed):
+        return {"kind": "used", "turn": record.turn, "card": record.card, "declared": list(record.declared),
+                "processed": None if record.processed is None else list(record.processed)}
+    if isinstance(record, AttackReceived):
+        return {"kind": "received", "turn": record.turn, "card": record.card, "player": record.player, "source": record.source,
+                "declared": list(record.declared), "processed": list(record.processed), "damage": record.damage, "reached": list(record.reached),
+                "voided": [list(v) for v in record.voided]}
+    if isinstance(record, OtherReceived):
+        return {"kind": "other_received", "turn": record.turn, "card": record.card}
+    raise ValueError(f"ワザの履歴の記録の型 {type(record).__name__} は書き出せない")
 
 
 def _plain(value: Any) -> Any:
@@ -412,6 +435,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         )
     if format_version < 19 and state.energy_roles:
         raise ValueError(f"形式 {format_version} は、エネルギーとしてついているカード（マルマインの［エネエネ］）を表せない（format_version=19 を使う）")
+    if format_version < 20 and any(pokemon.history for p in state.players for pokemon in p.in_play()):
+        raise ValueError(f"形式 {format_version} は、場のポケモンのワザの履歴（使ったワザ・受けたワザ）を表せない（format_version=20 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":

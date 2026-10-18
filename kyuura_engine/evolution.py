@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .conditions import DEVOLVE, EVOLVE, clear_special_conditions
+from .history import clear_history
 from .persistent import remove_persistent_effects
 
 if TYPE_CHECKING:
@@ -195,6 +196,8 @@ def place_evolution_card(state: GameState, player: int, target: PokemonInPlay, c
     # v0.48: 特殊能力で色を変えた記録（モルフォンの［へんしょく］。``TypeShift``）も、進化前のポケモンのものなので消す（進化したポケモンは別のポケモン。p.310。モルフォンから
     # 進化するカードは写しにないので、今の対応カードでは起こらない。ログは残さない）
     target.type_shift = None
+    # v0.62: ワザの履歴（使ったワザ・受けたワザ）も、進化前のポケモンのもの（別のポケモン。p.310。``history.clear_history``。ログは残さない）
+    clear_history(target)
     # 4. マーカー・カウンター（ダメージカウンター以外）・5. 進化によって引き起こされること: 対応カードにない
 
 
@@ -294,6 +297,7 @@ def devolve(state: GameState, owner: int, target: PokemonInPlay, count: int, *, 
         target.retreat_failed_turn = None
         state.add_event("retreat_failure_cleared", player=owner, pokemon=target.card, pokemon_id=target.pokemon_id, reason=DEVOLVE)
     target.type_shift = None
+    clear_history(target)  # v0.62: 退化前のポケモンのワザの履歴（退化したポケモンは別のポケモン。p.324「19」）
     if any(card in removed for card, _ in target.attacks_used_once):
         target.attacks_used_once = tuple(entry for entry in target.attacks_used_once if entry[0] not in removed)
     return removed

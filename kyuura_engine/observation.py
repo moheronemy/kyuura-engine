@@ -84,6 +84,7 @@ from .decisions import (
 from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
 )
+from .serialize import history_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -175,6 +176,9 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # v0.50（docs/mew-devolution-spray-v0.50.md 7 章）: 最後に退化した番（いまの姿になった番の決まり方の材料。退化していなければ None）。進化した番・場に出た番は
         # これまでどおり書かない（ログからわかる）
         "devolved_turn": pokemon.devolved_turn,
+        # v0.62（docs/history-attacks-v0.62.md 9 章）: ワザの履歴（使ったワザ・受けたワザと受けた結果・ワザ以外で受けたこと）。どれも表の情報（使った・受けたワザ、場のダメージと
+        # 効果）で、見えないカードを含まない。書き出しの形式 20 と同じ形
+        "history": [history_record(record) for record in pokemon.history],
         "attacks": [
             {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0]}
@@ -365,6 +369,8 @@ PUBLIC_EVENTS = frozenset({
     # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
     "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
     "digger_result", "trainer_damage", "trainer_damage_prevented",
+    # v0.62: オウムがえし（受けた記録は表の情報）
+    "mirror_move_none", "reflect_received",
     "attach_energy", "energy_conversion", "bench_coin_results", "damage_guard_check", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",

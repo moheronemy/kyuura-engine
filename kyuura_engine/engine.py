@@ -207,6 +207,7 @@ from .procedures import CONTINUE_TURN, NEXT_TURN
 from .procedures import halt as _halt
 from .procedures import begin_turn as _begin_turn
 from .procedures import confusion_check as _confusion_check
+from .history import close_probe, open_probe
 from . import resolution  # v0.15b: 効果の解決の基盤（engine.py を読み込まない）
 
 # PLAYERS（checks）・NEXT_TURN（procedures）は v0.15a で共通の部品に移した（上で読み込む。engine.PLAYERS・engine.NEXT_TURN のまま使える）
@@ -402,7 +403,10 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
     if state.phase is Phase.HALTED:
         raise UnsupportedError(state.halt.code, state.halt.message)
     new = state.clone()
+    if _probes_receipts(state, command):
+        open_probe(new)  # v0.62: ワザ以外で受けたこと（番でないプレイヤーの場のポケモンの、このコマンドの前後の比べ。``history``）
     handler(new, command, context if context is not None else _context(state, "derived", None))
+    close_probe(new)
     if new.energy_roles:
         # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: 場のポケモンについていなくなったエネルギーとしての役割の記録（マルマインの［エネエネ］）を消す
         # （ついていないあいだは印刷のポケモンのカード。実装上の判断）
@@ -443,6 +447,17 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
             raise UnsupportedError(*dead_end)
     _require_integrity(new)
     return new
+
+
+def _probes_receipts(state: GameState, command) -> bool:
+    """v0.62（docs/history-attacks-v0.62.md 2 章）: このコマンドで、番でないプレイヤーの場のポケモンがワザ以外で受けたダメージ・効果を比べるか。ワザ（``UseAttack``）・番の
+    終わり（``EndTurn``）・ワザとそのあとのきぜつの処理の決定への答え（再開先が解決の基盤のもの）は比べない（ワザの結果は受けた記録に、番の終わり・ポケモンチェックは
+    どちらの番でもない）。"""
+    if isinstance(command, (UseAttack, EndTurn)):
+        return False
+    if isinstance(command, (ResolveDecision, TakePrize, PromoteActive)):
+        return state.decision is not None and state.decision.resume not in resolution.RESUMES
+    return True
 
 
 def _fresh_form_problem(before: GameState, after: GameState) -> tuple[str, str] | None:
@@ -1706,6 +1721,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_trainer_lock_problems(state))  # v0.47
     problems.extend(_trainer_effect_problems(state))  # v0.56
     problems.extend(_energy_role_problems(state))  # v0.59
+    problems.extend(_history_problems(state))  # v0.62
     problems.extend(_stadium_problems(state))  # v0.57
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
@@ -3151,6 +3167,63 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
         # v0.47: なにかの化石・ピッピ人形を場からすてて空いたバトル場（``discard_from_play``）も、同じ続きで出す
         return ["特殊能力の処理のあとの決定（続き continue_turn）の前の、今の番の最後の宣言が、特殊能力の宣言・場からすてる操作ではない"]
     return []
+
+
+def _history_problems(state: GameState) -> list[str]:
+    """v0.62（docs/history-attacks-v0.62.md 2 章）: 場のポケモンのワザの履歴（``PokemonInPlay.history``）の不変条件。
+
+    - 履歴を読むワザのカードが対戦になければ、どのポケモンも記録を持たない（``history.history_needed``）
+    - 記録の型は ``ATTACK_HISTORY_TYPES``。番は今の番以下で、2 つ前の番より古くない（番の最初に消す）
+    - 記録は今の「このカード」のもの（いちばん上のカードが同じで、今の姿になった番より前でない。進化・退化で消す）
+    - 使った記録は持ち主の番、受けた記録・ワザ以外で受けた記録は相手の番のもの。受けたワザを使ったのは相手。同じ種類の記録は 1 つの番に 1 つ
+    - 使った記録の宣言したワザ・処理したワザ、受けた記録のワザは、効果の登録表にあるワザ。受けた要素の種類・受けなかった理由は決まったもの"""
+    from .effects import ATTACK_ELEMENTS, DAMAGE_ELEMENT
+    from .history import KEPT_TURNS, VOID_REASONS, history_needed
+    from .state import ATTACK_HISTORY_TYPES, AttackReceived, AttackUsed
+
+    problems = []
+    needed = None
+    for owner, p in enumerate(state.players):
+        for pokemon in p.in_play():
+            if not pokemon.history:
+                continue
+            if needed is None:
+                needed = history_needed(state)
+            if not needed:
+                problems.append(f"履歴を読むワザのない対戦で、ポケモン {pokemon.pokemon_id} がワザの履歴を持つ")
+            seen = set()
+            for record in pokemon.history:
+                label = f"ポケモン {pokemon.pokemon_id} のワザの履歴 {record!r}"
+                if type(record) not in ATTACK_HISTORY_TYPES:
+                    problems.append(f"{label} の型が履歴の記録ではない")
+                    continue
+                if not state.turn_number - KEPT_TURNS <= record.turn <= state.turn_number:
+                    problems.append(f"{label} の番が、今の番 {state.turn_number} から 2 つ前までにない")
+                if record.card != pokemon.card or record.turn < pokemon.current_form_turn:
+                    problems.append(f"{label} が今の「このカード」（カード {pokemon.card}・{pokemon.current_form_turn} 番から）のものではない")
+                key = (type(record).__name__, record.turn)
+                if key in seen:
+                    problems.append(f"{label} と同じ種類の記録が同じ番にもう 1 つある")
+                seen.add(key)
+                expected_owner = owner if isinstance(record, AttackUsed) else 1 - owner
+                if record.turn >= 1 and turn_owner(state, record.turn) != expected_owner:
+                    problems.append(f"{label} の番が、{'持ち主' if expected_owner == owner else '相手'}の番ではない")
+                keys = ()
+                if isinstance(record, AttackUsed):
+                    keys = (record.declared,) + (() if record.processed is None else (record.processed,))
+                elif isinstance(record, AttackReceived):
+                    keys = (record.declared, record.processed)
+                    if record.player != 1 - owner or record.damage < 0 or record.damage % 10:
+                        problems.append(f"{label} のワザを使ったプレイヤー・受けたダメージが正しくない")
+                    if any(kind not in ATTACK_ELEMENTS for kind in record.reached) or any(
+                            kind not in ATTACK_ELEMENTS or reason not in VOID_REASONS for kind, reason in record.voided):
+                        problems.append(f"{label} の受けた要素・受けなかった理由が決まったものではない")
+                    if record.damage and DAMAGE_ELEMENT not in record.reached:
+                        problems.append(f"{label} のダメージがあるのに、受けた要素にダメージがない")
+                for k in keys:
+                    if state.effects.attack_entry(k[0], k[1]) is None:
+                        problems.append(f"{label} のワザ {k!r} が効果の登録表にない")
+    return problems
 
 
 def _energy_role_problems(state: GameState) -> list[str]:
