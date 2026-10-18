@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 class Origin(str, Enum):
     PRINTED_POWER = "printed_power"  # いちばん上のカードの特殊能力（p.310）
     PERSISTENT_EFFECT = "persistent_effect"  # ワザによる持続する効果（PokemonInPlay.persistent_effects）
+    TRAINER_EFFECT = "trainer_effect"  # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（GameState.trainer_effects。見えない壁）
 
 
 class Mode(str, Enum):
@@ -138,6 +139,13 @@ RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
 )
+# v0.56: 見えない壁（「次の相手の番が終わるまで、あなたの控えポケモンは、ワザによるダメージを受けない。(ダメージ以外の効果はそのまま)」）。使ったプレイヤーの、ダメージを
+# 受ける時点の控えポケモンへのワザのダメージの要素を無効にする（「かたまる」と同じく計算しない。p.321）。効果の要素は無効にしない（BEFORE_EFFECT の窓に入れない）。
+# 特殊能力ではないので、特殊状態・かがくへんかガスでは消えない（``disabled_by`` は空、``suppressible`` は偽）。はたらく期間は状態の記録（``state.TrainerTurnEffect``）で決める
+INVISIBLE_WALL = EffectDefinition(
+    "invisible_wall", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
+    "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
+)
 
 # v0.13 の実装の型 → 効果の定義（型での振り分けはここだけ。部分型は親の型の定義を使う）
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
@@ -198,6 +206,10 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
         effect_definition = definition_for(effect, persistent)
         if effect_definition is not None:
             found.append(EffectInstance(effect_definition, owner, pokemon.pokemon_id, pokemon.card, implementation=effect))
+    # v0.56: プレイヤーに与えた期限のある効果のうち、このポケモンに今はたらくもの（見えない壁。持ち主が使ったもので、今そのポケモンが持ち主の控え）。場のポケモンに写さず、
+    # 問い合わせの時点の場で決める（``effects.bench_damage_preventions``）
+    for record in E.bench_damage_preventions(state, owner, pokemon):
+        found.append(EffectInstance(INVISIBLE_WALL, owner, pokemon.pokemon_id, pokemon.card, implementation=record))
     return tuple(found)
 
 

@@ -564,6 +564,15 @@ def void_coin_question(run: AttackRun, decided: list[Element]) -> None:
     roles = [element.coin_receiver() for element in decided]
     if not roles or None in roles:
         return
+    # v0.56: 控えポケモンへのダメージの要素（``BenchDamage``）は、受ける控えポケモンがみなダメージを受けない（見えない壁）ときだけ無効と数える。有効な要素があれば投げる。
+    # すべての要素が控えへのダメージで、どれも無効なら、v0.4b と同じ問い（ダメージを受けない相手へのダメージの量だけを決めるコインを投げるか）
+    bench = [element for element in decided if element.coin_receiver() == "bench"]
+    if bench:
+        if not all(element.void_for_all(run) for element in bench):
+            return
+        if len(bench) == len(decided):
+            raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン（見えない壁）への要素 {[type(e).__name__ for e in bench]} だけを決めるコイン")
+        roles = [role for role in roles if role != "bench"]
     from .kernel import first_void
 
     owner, target = 1 - run.player, run.opponent_active()
@@ -868,6 +877,11 @@ class Status(Element):
                 raise run.res.question("reparalysis_recovery_turn", problem.code, error=problem)
         if self.poison_damage is not None and not immune:
             current = target.conditions.poison
+            if target.pokemon_id in run.res.trainer_poisoned and current is not None and current.damage != self.poison_damage:
+                # v0.56（KG1）: このワザのダメージで、トレーナー「キョウ」の効果がどく状態にしたポケモンを、ワザの効果が受けるダメージの違うどく状態にする（キョウの
+                # どくどくガス）。キョウの効果とワザの効果の順番が決まらない（ワザの効果が先なら p.322 の特殊などく → 通常のどく、キョウの効果が先なら v0.3a の 15）。
+                # v0.3a の 15 の問い（TP3）より先に聞く
+                raise run.res.question("trainer_poison_order", f"ポケモン {target.pokemon_id}（どくのダメージ {current.damage} → {self.poison_damage}）")
             if current is not None and current.damage != self.poison_damage:
                 # v0.34: どく状態のポケモンが、どくのダメージの違う特殊などくを受ける（p.322 は特殊などく → 通常のどくの向きだけを書く。
                 # v0.3a の 15。「とうめい」のコインより先に聞く。先読みがすべての結果を試すので、どちらでも宣言の前に止まる）
@@ -1527,6 +1541,18 @@ class BenchDamage(Element):
             raise type_question(run.res, differ, f"ワザ {run.key} の控えポケモンへのダメージの対象（色で選ぶ）") from None
         return [p for p in named if p.pokemon_id in ids]
 
+    def coin_receiver(self) -> str | None:
+        """v0.56: 控えポケモンへのダメージの要素。受けるポケモンのどれかがダメージを受ければ有効（``void_coin_question`` が、受けるポケモンがみな無効（見えない壁）かを見る）。"""
+        return "bench"
+
+    def void_for_all(self, run: AttackRun) -> bool:
+        """v0.56: 受ける控えポケモンが 1 匹以上いて、どれもダメージの要素を無効にする状態（見えない壁）か。"""
+        from .kernel import first_void
+
+        side = run.player if self.own else 1 - run.player
+        targets = self.targets(run)
+        return bool(targets) and all(first_void(run.res, side, pokemon) is not None for pokemon in targets)
+
     def has_target(self, run: AttackRun) -> bool:
         return bool(self.targets(run))  # v0.38: 控えポケモンがいなければ、処理の対象がない
 
@@ -1590,8 +1616,14 @@ class ChosenBenchDamage(Element):
             if self.required:
                 raise RuntimeError(f"控えポケモンがいないのに、ワザ {run.key} の控えポケモンへのダメージに来た（使うための条件の確認の漏れ。エンジンの不具合）")
             return False
-        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
-            return False
+        if self.local_coin is not None:
+            from .kernel import first_void
+
+            if all(first_void(run.res, self.side(run), pokemon) is not None for pokemon in bench):
+                # v0.56: このコインが決めるのは控えポケモンへのダメージだけで、選べるどの控えもダメージを受けない（見えない壁）。v0.4b と同じ問い（投げるかが決まらない）
+                raise run.res.question("prevented_coin_damage", f"ダメージを受けない控えポケモン {[p.pokemon_id for p in bench]}（見えない壁）を選ぶダメージだけを決めるコイン")
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
         extra: tuple = ()
         if self.weakness_resistance is None:
             kind = E.SELF_BENCH if self.own else E.OPPONENT_BENCH
@@ -4559,7 +4591,8 @@ class LockOpponentTrainers(Element):
     - 相手プレイヤーに与える期限のある禁止（``state.TrainerUseLock``。``GameState.trainer_locks``。消える番は与えた番 + 1。番の終わりに消す）。場のポケモンに与える
       効果ではないので、「ワザをうけない」状態・「とうめい」は評価せず、相手の対戦ポケモンがこのワザのダメージで HP 以上でも与える。対戦ポケモンの入れ替え・ワザを
       使ったポケモンが場をはなれることでは消えない。ログ ``trainer_lock_added``
-    - 同じプレイヤー・同じ消える番の禁止が 2 つになることはない（1 番に使えるワザは 1 つ。起これば RuntimeError）
+    - 同じプレイヤー・同じ消える番のワザによる禁止が 2 つになることはない（1 番に使えるワザは 1 つ。起これば RuntimeError）。v0.56: ロケット団の実験の「うら」の
+      禁止（``origin`` が ``"trainer"``。消える番は使った番 + 2）とは別の記録で、同じ消える番に重なってよい（それぞれの記録として持ち、それぞれ消える）
     """
 
     local_coin: CoinSide | None = None
@@ -4571,7 +4604,7 @@ class LockOpponentTrainers(Element):
         state = run.state
         opponent = 1 - run.player
         expires = state.turn_number + 1
-        if any(lock.player == opponent and lock.expires_turn == expires for lock in state.trainer_locks):
+        if any(lock.player == opponent and lock.expires_turn == expires and lock.origin == "attack" for lock in state.trainer_locks):
             raise RuntimeError(f"プレイヤー {opponent} に、消える番 {expires} のトレーナーの使用の禁止がすでにある（エンジンの不具合）")
         lock = TrainerUseLock(player=opponent, source_player=run.player, source_card=run.attacker().card, effect=str(run.key),
                               created_turn=state.turn_number, expires_turn=expires)

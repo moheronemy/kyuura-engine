@@ -553,6 +553,18 @@
     "PMCG6-098",
     "PMCG6-080"
   ],
+  "pool_v0_56": [
+    "PMCG5-073",
+    "PMCG5-092",
+    "PMCG5-096",
+    "PMCG6-089",
+    "PMCG5-081",
+    "PMCG5-086",
+    "PMCG5-085",
+    "PMCG6-094",
+    "PMCG6-079",
+    "PMCG6-091"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -32452,6 +32464,359 @@
         "series": null,
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AF%E3%83%BC%E3%83%97%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88"
+      }
+    },
+    {
+      "id": "PMCG5-073",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "エリカの香水",
+        "en": "Erika's Perfume"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手プレイヤーの手札を見る。相手のベンチに空きがあれば、相手の手札から「たねポケモン」を好きなだけ選び、相手のベンチに出させてよい。",
+          "en": "Look at your opponent's hand. If he or she has any Basic Pokémon cards there, you may put any number of them onto your opponent's Bench (as long as there's room)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-073",
+        "pokemontcg": [
+          "gym1-110"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E9%A6%99%E6%B0%B4",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%AA%E3%82%AB%E3%81%AE%E9%A6%99%E6%B0%B4"
+      }
+    },
+    {
+      "id": "PMCG5-092",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "マチス",
+        "en": "Lt. Surge"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのバトル場にいるポケモンをベンチにもどし、手札から「たねポケモン」を直接バトル場に出す。(あなたのベンチに空きがない時、このカードは使えない)",
+          "en": "You can play this card only if you have at least 1 Basic Pokémon card in your hand. Put a Basic Pokémon card from your hand into play as your Active Pokémon. Put your old Active Pokémon onto your Bench. (You can't play this card if your Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-092",
+        "pokemontcg": [
+          "gym1-17",
+          "gym1-101"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-096",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団のワナ",
+        "en": "The Rocket's Trap"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、相手の手札から、おもてを見ないで最大3枚を選び、相手の山札にもどす。その後、その山札をよく切る。",
+          "en": "Flip a coin. If heads, choose up to 3 cards at random from your opponent's hand (don't look at them). Your opponent shuffles those cards into his or her deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-096",
+        "pokemontcg": [
+          "gym1-19"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E3%83%AF%E3%83%8A",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E3%83%AF%E3%83%8A"
+      }
+    },
+    {
+      "id": "PMCG6-089",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団員",
+        "en": "Minion of Team Rocket"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを2枚投げ、すべて「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンと、それについているすべてのカードを持ち主の手札にもどす。コインが1枚でも「うら」なら、あなたの番は終わりになる。",
+          "en": "Flip 2 coins. If both of them are heads, choose 1 of your opponent's Benched Pokémon and return it and all cards attached to it to his or her hand. If 1 or both of them are tails, your turn ends immediately (you can't attack this turn)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-089",
+        "pokemontcg": [
+          "gym1-113"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E5%93%A1_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E5%93%A1_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-081",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "マチスの交渉",
+        "en": "Lt. Surge's Treaty"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いにサイドカードを1枚ずつ取るかどうか、相手プレイヤーにたずねる。オーケーなら、お互いのプレイヤーは、それぞれ自分のサイドカードから1枚を選び、取って手札に加える。オーケーでないなら、あなたは山札からカードを1枚引く。",
+          "en": "Your opponent chooses 1 of the following: everyone chooses 1 of his or her own Prizes and put it into his or her hand, or you draw a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-081",
+        "pokemontcg": [
+          "gym1-112"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E4%BA%A4%E6%B8%89",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E4%BA%A4%E6%B8%89"
+      }
+    },
+    {
+      "id": "PMCG5-086",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "カスミのわがまま",
+        "en": "Misty's Wish"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのサイドカードから1枚を選び、おもてを見る。その後、そのカードを、あなたの手札の中の1枚と交換してもよいかどうか、相手プレイヤーにたずねる。オーケーなら、あなたの手札からカードを1枚選び、見たカードと交換する。オーケーでないなら、あなたは山札からカードを1枚引く。",
+          "en": "Look at 1 of your Prize cards. Then, ask your opponent if you may switch that card with 1 of the cards in your hand. If your opponent accepts and if you have any other cards in your hand, switch those cards. If your opponent declines, return the Prize card face down and draw a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-086",
+        "pokemontcg": [
+          "gym2-108"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%8F%E3%81%8C%E3%81%BE%E3%81%BE",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E3%82%8F%E3%81%8C%E3%81%BE%E3%81%BE"
+      }
+    },
+    {
+      "id": "PMCG5-085",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "カスミ",
+        "en": "Misty"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、この番だけ、そのダメージは「+20」される。(控えポケモンへのダメージは、そのまま)",
+          "en": "Discard 2 of the other cards in your hand in order to play this card. If this turn's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), and if the attacking Pokémon has Misty in its name, the attack does 20 more damage to the Defending Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-085",
+        "pokemontcg": [
+          "gym1-18",
+          "gym1-102"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-094",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "キョウ",
+        "en": "Koga"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "この番に、「キョウのポケモン」が、ワザによって相手の対戦ポケモンにダメージを与えたら、ダメージを受けたポケモンを「どく」状態にする。",
+          "en": "If an attack from a Pokémon with Koga in its name does damage to a Defending Pokémon this turn, that Pokémon is then Poisoned."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-094",
+        "pokemontcg": [
+          "gym2-19",
+          "gym2-106"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-079",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "見えない壁",
+        "en": "Transparent Walls"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "次の相手の番が終わるまで、あなたの控えポケモンは、ワザによるダメージを受けない。(ダメージ以外の効果はそのまま)",
+          "en": "Until the end of your opponent's next turn, prevent all damage from attacks done to your Benched Pokémon. (Any other effects of attacks still happen.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-079",
+        "pokemontcg": [
+          "gym2-125"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%84%E5%A3%81",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E8%A6%8B%E3%81%88%E3%81%AA%E3%81%84%E5%A3%81"
+      }
+    },
+    {
+      "id": "PMCG6-091",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団の実験",
+        "en": "Rocket's Secret Experiment"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたの山札からカードを1枚選び出し、手札に加える。その後、その山札をよく切る。「うら」なら、次のあなたの番が終わるまで、あなたはトレーナーカードを使えない。",
+          "en": "Flip a coin. If heads, search your deck for any card and put it into your hand. Shuffle your deck afterward. If tails, you can't play Trainer cards until the end of your next turn."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-091",
+        "pokemontcg": [
+          "gym2-120"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E5%AE%9F%E9%A8%93",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E5%AE%9F%E9%A8%93"
       }
     },
     {

@@ -216,9 +216,10 @@ MUTANTS: tuple[Mutant, ...] = (
            '    child = res.open_frame(FrameKind.POWER_DAMAGE, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
            '    child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id,',
            origin='v0.17d'),
+    # S07: v0.56 でダメージをのせたあとにキョウのどくの処理を加えたので、置きかえる前の文字列を送る効果を加える行の直後に絞った（同じ誤りを入れる）
     Mutant('S07', '処理窓を誤る（受けた直後に処理する）', R + 'kernel.py',
-           '    fs.pending.extend(deferred)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))',
-           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))',
+           '    fs.pending.extend(deferred)\n    if target == OPPONENT_ACTIVE and calc.final > 0:\n',
+           '    fs.pending.extend(deferred)\n    fire_pending(res, fs)\n    if target == OPPONENT_ACTIVE and calc.final > 0:\n',
            origin='v0.17d'),
     Mutant('S08', '同じ効果を二重に発動する', R + 'kernel.py',
            '        ACTIONS[deferred.instance.definition.action](res, fs, deferred)\n',

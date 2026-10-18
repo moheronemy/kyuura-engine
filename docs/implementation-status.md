@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.55）
+# 実装状況（v0.1〜v0.56）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -205,6 +205,12 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | ナツメで、「ナツメのポケモン」が 2 匹いないとき（SB1）・エネルギーカードのない「ナツメのポケモン」をはがすポケモンに選べるか（SB2）（v0.55） | 使う前に `UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON`・選ぶと止める（どれもそうなら使う前）`UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY` |
 | 超エネルギーリムーブの「相手の場のポケモン1匹から2枚」で、2 枚より少ないポケモン（v0.55。v0.44 の FC1 と同じ問い。のちの版の「2 枚まで」を持ち込まない） | 選ぶと止める（どれもそうなら使う前）`UNRESOLVED_STATED_CARDS_SHORT` |
 | ワープポイントで、使ったプレイヤーに控えがいないとき、相手が「すごむ」の効果を与えたポケモンをバトル場にもどす（v0.55。v0.40 の SG1 と同じ問い） | 選ぶと止める（どれもそうなら使う前）`UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED` |
+| マチスを、手札に「たねポケモン」がないときに使えるか（v0.56。LS1。バトル場が空いたまま番が続く状態を作らない） | 使う前に `UNRESOLVED_LT_SURGE_WITHOUT_BASIC` |
+| ロケット団のワナの「最大3枚」が 0 枚を含むか（v0.56。RT1。夜の廃品回収の NG1・ギガスパークの GS1 を流用しない） | 0 個の答えは止める（決定は待ったまま）。相手の手札 0 枚ならコインの前に `UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE` |
+| ロケット団員を、相手に控えポケモンがいないときに使えるか（v0.56。RG1。突風の GW5 を流用しない） | コインの前に `UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH` |
+| カスミのわがままを、このカードのほかに手札がないときに使えるか（v0.56。MY1） | 使う前に `UNRESOLVED_MISTYS_WISH_WITHOUT_HAND` |
+| カスミの + 20 を、ワザを使うポケモン自身へのダメージ（「自分にも」）に当てはめるか（v0.56。MS1） | 当てはめるかで最終ダメージが変わるとき、宣言の前に `UNRESOLVED_MISTY_SELF_DAMAGE` |
+| キョウのどくと、同じワザで受けるダメージの違う特殊などくの順番（v0.56。KG1。v0.3a の 15（TP3）とは別の問い） | 宣言の前に `UNRESOLVED_KOGA_POISON_ORDER` |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -2946,3 +2952,41 @@ PMCG1-088・いいきずぐすり PMCG1-075・なんでもなおし PMCG1-080・
   エリカの親切は使ったプレイヤー → 相手の順（EK1）、ナツメは 1 回でつけなおす（SA1）、ダメージのあるポケモンがいなければ何も起こらずに使い終わる（HE1）、なんでもなおしは
   どの読み方でも結果が同じ場合だけ回復する（FH2）、もどす位置は山札の一番下（PT7 と同じ）。
 - 正式な開始からの対戦では、なんでもなおしを使えた場面がなかった（いつも FH1）。回復は単体テストで確かめた。
+
+## v0.56 で加えたもの（相手の決定・番の終わり・期限のある効果のトレーナー 10 枚）
+
+依頼の 10 枚（エリカの香水 PMCG5-073・マチス PMCG5-092・ロケット団のワナ PMCG5-096・ロケット団員 PMCG6-089・マチスの交渉 PMCG5-081・カスミのわがまま PMCG5-086・カスミ PMCG5-085・
+キョウ PMCG6-094・見えない壁 PMCG6-079・ロケット団の実験 PMCG6-091）を、kyuura データの採用で登録して対応にしました（トレーナーの登録 56 → 66。対応ポケモン 327・ワザの登録 557・
+特殊能力の登録 49 は変わらない）。共通の進行は 10 枚に要るものだけです: 相手プレイヤーに答えさせる決定（`accept_request`）、手札のたねポケモンを相手のベンチ・自分のバトル場に出す
+（`zones.hand_to_bench_by_effect`・`hand_basic_to_active`。場に出たときの特殊能力を持つたねポケモンは写しにないので `effects.placed_entry_power_guard` で止める）、使用中のカードを
+トラッシュしてから番を終える（`TrainerEffect.may_end_turn`・`resolution.end_turn_after_trainer`）、きぜつによらずサイドを取って使い終えてから勝ち負けを判定する
+（`TrainerEffect.takes_prizes`・`resolution.after_trainer`）、期限のある効果（プレイヤーの記録 `GameState.trainer_effects`。カスミの + 20（p.321 の 6 段階）・キョウのどく・見えない壁の
+控えへのワザのダメージの無効。どれもダメージの時点の場で決める）と、ロケット団の実験の自分へのトレーナーの使用の禁止（v0.47 の `TrainerUseLock` の `origin="trainer"`。消える番は
+使った番 + 2）。書き出しの形式 16（最上位の `trainer_effects`・禁止の `origin`）。新しい決定の種類 `accept_request`・`opponent_hand_to_bench`・`select_hand_positions`・
+`hand_to_active`・`swap_with_prize`、新しいログのイベント（[trainer-decisions-turn-effects-v0.56.md](trainer-decisions-turn-effects-v0.56.md) 9 章）。公開の API の呼び方は変えて
+いません。カードごとの結果・進行・順番・未解決・互換性・検証は [trainer-decisions-turn-effects-v0.56.md](trainer-decisions-turn-effects-v0.56.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_trainer_decisions_turn_effects_v0_56.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 10 枚の登録（型と値）・文面と登録の値の照らし合わせ・採用の記録と外部照合・研究の対応表・観測の表・場に出たときの特殊能力の確かめ | kyuura の印刷の文面・pcg-search.com | `RegistrationTest`・test_card_sources.py |
+| 相手の手札・相手のベンチ・自分のバトル場（エリカの香水・マチス・ロケット団のワナ。見え方・位置で選ぶ・0 枚・条件・LS1・RT1） | 印刷の文面 | `ErikasPerfumeTest`・`LtSurgeTest`・`RocketsTrapTest` |
+| 番の終わり・相手の答え・サイド（ロケット団員・マチスの交渉・カスミのわがまま。RG1・MY1・使い終えてからの勝ち負けの判定・サドンデス） | 印刷の文面・p.311・p.312 | `RocketGruntTest`・`LtSurgesTreatyTest`・`MistysWishTest` |
+| 期限のある効果（カスミの 6 段階・今の姿・2 枚・MS1、キョウのどく・ダメージなし・控え・二重にしない・KG1、見えない壁の期限・かがくへんかガス・自分のワザ・コインの前の停止） | 印刷の文面・GR-2000-P321-DAMAGE-ORDER | `MistyTest`・`KogaTest`・`InvisibleWallTest` |
+| ロケット団の実験の自分への禁止（期限・重なる禁止）・ST1 | 印刷の文面・v0.47・v0.53 | `RocketsExperimentTest` |
+| 書き出し（形式 16・形式 1〜15 の拒否）・決定の途中の保存と復元・使用者・相手・観戦者の観測・渡した状態を変えない・カードの保存・トレーナーの使用の禁止が先 | — | `SaveObservationTest` |
+| 正式な開始からの対戦で 10 枚とも使われ、なんでもなおしが回復し、監査（不変条件・ログ・書き出し・受け付けた操作ごとの観測）がすべて通る | — | `GameTest`（`tools/existing_effect_games.py --batch v0.56` の 2 seed） |
+| v0.55 までのカードの動きが変わらない | 固定した v0.55（`352c0a2`）との比較 | tools/engine_lockstep.py と作業用の道具（[trainer-decisions-turn-effects-v0.56.md](trainer-decisions-turn-effects-v0.56.md) 12 章） |
+
+### 原典未確認・未解決
+
+- 新しい停止コードは LS1・RT1・RG1・MY1・MS1・KG1 の 6 件（停止コード 101 件・未解決の裁定 102 件。上の「裁定が未解決」の表）。ST1・G37・MH1・v0.4b の
+  `UNRESOLVED_PREVENTED_COIN_DAMAGE` は既存の問いのまま。
+- 技術的な制限: 場に出たときに使える特殊能力を持つたねポケモンを、エリカの香水・マチスで場に出す場面（写しにないので起こらない。来たら `RuntimeError`）。
+- 実装上の判断（原典で確かめた規定ではない）: マチスの交渉は使ったプレイヤー → 相手の順に取る、エリカの香水は手札の並びの順に出す、ロケット団のワナでもどす位置は山札の一番下、
+  「てよい」の 0 枚は出さないこと。
+- v0.55 の持ち越し: なんでもなおしの回復を正式な対戦で示した（v0.56 の検証用デッキで 12 回使い 12 回回復）。tools/existing_effect_games.py の `run` が同じ局の重複を除き、予定と
+  行った局数の両方を出す（v0.55 の「40 局」は重複を含み、異なる局は 30）。

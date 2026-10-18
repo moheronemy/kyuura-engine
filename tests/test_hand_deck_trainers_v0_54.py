@@ -223,7 +223,7 @@ class RegistrationTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text())
         self.assertIn({"version": "v0.54", "document": "docs/hand-deck-trainers-v0.54.md", "ruling_id": "HC5"},
                       links["stop_codes"][HC5]["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (95, 96))  # 新しい停止コード・裁定はない（v0.54）。v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (101, 102))  # 新しい停止コード・裁定はない（v0.54）。v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた
 
     def test_observation_tables(self):
         self.assertEqual(OPTION_MEANINGS[SELECT_DRAW_COUNT], "number")

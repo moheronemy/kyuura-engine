@@ -144,7 +144,8 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     return card, discarded
 
 
-def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None) -> tuple[int, ...]:
+def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None,
+                           trainer: int | None = None) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の手札にもどす（v0.42。docs/power-decisions-v0.42.md 4 章）。
 
     - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``。重なったカード全体が 1 匹。v0.36 の RD2 と同じ読み方）・
@@ -158,19 +159,24 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
 
     もどしてよいかの確認は呼ぶ側が済ませる。場にいない・持ち主の違うカードがある（今の対応カードでは起こらない）なら ``RuntimeError``（状態を変える前）。
     もどしたカードを返す。
+
+    v0.56: トレーナーの効果（ロケット団員の「そのポケモンと、それについているすべてのカードを持ち主の手札にもどす」。使ったプレイヤーの相手の控えポケモン）でもどすときは
+    ``trainer``（使っているトレーナーのカードの uid。ログの ``trainer_card``）を渡す（``effect``・``power``・``trainer`` のちょうど一つ）。``player`` はポケモンの持ち主で、
+    行き先はいつも持ち主の手札。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
     cards = (*pokemon.cards(), *pokemon.energy, *trainers)
     on_bench = any(b is pokemon for b in p.bench)
-    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or (effect is None) == (power is None):
+    sources = [value for value in (effect, power, trainer) if value is not None]
+    if (p.active is not pokemon and not on_bench) or any(state.cards[uid].owner != player for uid in cards) or len(sources) != 1:
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
     if p.active is pokemon:
         p.active = None
     else:
         del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
     p.hand.extend(cards)
-    source = {"effect": effect} if effect is not None else {"power": power}
+    source = {"effect": effect} if effect is not None else {"power": power} if power is not None else {"trainer_card": trainer}
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
     state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
@@ -641,18 +647,22 @@ def swap_prize_with_deck_top(state: GameState, player: int, position: int, *, po
     state.add_event("swap_prize_with_deck_top", player=player, prize_position=position, power=power)
 
 
-def look_at_card(state: GameState, viewer: int, owner: int, zone: str, position: int, *, effect: str | None = None, power: str | None = None) -> int:
+def look_at_card(state: GameState, viewer: int, owner: int, zone: str, position: int, *, effect: str | None = None, power: str | None = None,
+                 trainer: int | None = None) -> int:
     """プレイヤー ``viewer`` が、プレイヤー ``owner`` の ``zone``（``"deck"``: 山札の上から ``position`` 枚目（0 から）・``"prize"``: サイドの位置・``"hand"``: 手札の
     位置）のカードを見る（v0.47。マンキーの［スパイ］・マチスのイーブイの「おどろかす」）。カードは動かさない（「見たカードは元の場所に戻す」）。
 
     ログ ``look_at_card``（``player``（見たプレイヤー）・``owner``・``zone``・``position``・``card``）。``card`` は見たプレイヤーにだけ見える情報（手札のカードなら
-    持ち主も知っている。``observation.visible_log``）。相手にも見せる（公開する）処理ではない。見たカードの uid を返す。"""
+    持ち主も知っている。``observation.visible_log``）。相手にも見せる（公開する）処理ではない。見たカードの uid を返す。
+
+    v0.56: トレーナーの効果（カスミのわがままの「あなたのサイドカードから1枚を選び、おもてを見る」）で見るときは ``trainer``（ログの ``trainer_card``）を渡す（``effect``・
+    ``power``・``trainer`` のちょうど一つ）。"""
     p = state.players[owner]
     cards = {"deck": p.deck, "prize": p.prizes, "hand": p.hand}[zone]
-    if not 0 <= position < len(cards) or (effect is None) == (power is None):
+    if not 0 <= position < len(cards) or len([v for v in (effect, power, trainer) if v is not None]) != 1:
         raise RuntimeError(f"プレイヤー {owner} の {zone} の位置 {position} のカードを見られない（確認の漏れ。エンジンの不具合）")
     card = cards[position]
-    source = {"effect": effect} if effect is not None else {"power": power}
+    source = {"effect": effect} if effect is not None else {"power": power} if power is not None else {"trainer_card": trainer}
     state.add_event("look_at_card", player=viewer, owner=owner, zone=zone, position=position, card=card, **source)
     return card
 
@@ -799,3 +809,87 @@ def deck_top_to_discard(state: GameState, player: int, count: int, *, trainer: i
     cards = discard_from_deck(state, player, count)
     state.add_event("deck_top_to_discard", player=player, cards=cards, trainer_card=trainer)
     return cards
+
+
+# ---------------------------------------------------------------- v0.56（docs/trainer-decisions-turn-effects-v0.56.md 4 章）。どれも同じ uid・同じ持ち主のまま動かす
+
+
+def hand_to_bench_by_effect(state: GameState, owner: int, cards: tuple[int, ...], *, chooser: int, trainer: int) -> tuple[PokemonInPlay, ...]:
+    """プレイヤー ``owner`` の手札のたねポケモンのカード ``cards`` を、並びの順に ``owner`` のベンチの最後に出す（v0.56。エリカの香水の「相手の手札から「たねポケモン」を
+    好きなだけ選び、相手のベンチに出させてよい」。選ぶのは使ったプレイヤー ``chooser``）。場のポケモンは手札から出すときと同じ ``enter_play`` で作る（新しい場のポケモンの
+    番号・場に出た番は今の番。その番には進化できない）。1 枚ごとにログ ``trainer_bench_from_hand``（``player``（持ち主）・``card``・``pokemon_id``・``chooser``・``trainer_card``。
+    場に出たカードなので公開）。出してよいか（たねポケモン・手札にある・ベンチの空き）の確認は呼ぶ側。漏れていれば ``RuntimeError``（状態を変える前）。"""
+    p = state.players[owner]
+    if len(set(cards)) != len(cards) or any(uid not in p.hand or state.cards[uid].owner != owner or not state.card_def(uid).is_basic_pokemon for uid in cards) \
+            or len(p.bench) + len(cards) > state.rules.max_bench:
+        raise RuntimeError(f"プレイヤー {owner} の手札のカード {cards} をベンチに出せない（確認の漏れ。エンジンの不具合）")
+    placed = []
+    for uid in cards:
+        p.hand.remove(uid)
+        pokemon = enter_play(state, uid)
+        p.bench.append(pokemon)
+        state.add_event("trainer_bench_from_hand", player=owner, card=uid, pokemon_id=pokemon.pokemon_id, chooser=chooser, trainer_card=trainer)
+        placed.append(pokemon)
+    return tuple(placed)
+
+
+def hand_basic_to_active(state: GameState, player: int, card: int, *, trainer: int) -> tuple[PokemonInPlay, PokemonInPlay]:
+    """自分のバトル場のポケモンをベンチの最後にもどし、手札のたねポケモンのカード ``card`` を直接バトル場に出す（v0.56。トレーナー「マチス」）。もとのバトル場のポケモンは
+    場のポケモンごと（ついているカード・ダメージカウンター・重なり・番号）ベンチに移る。新しいポケモンは手札から出すときと同じ ``enter_play`` で作る（新しい場のポケモンの
+    番号・場に出た番は今の番）。ログ ``trainer_hand_to_active``（``player``・``old_active``・``old_active_pokemon_id``・``card``・``pokemon_id``・``trainer_card``。公開）。
+    ベンチにもどったポケモンの特殊状態・持続する効果を消すのは呼ぶ側（「にげる」・入れ替えと同じ規定）。確認（たねポケモン・手札にある・ベンチの空き・バトル場に
+    ポケモンがいる）の漏れは ``RuntimeError``（状態を変える前）。(ベンチにもどったポケモン, 出したポケモン) を返す。"""
+    p = state.players[player]
+    old = p.active
+    if old is None or card not in p.hand or state.cards[card].owner != player or not state.card_def(card).is_basic_pokemon or len(p.bench) >= state.rules.max_bench:
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をバトル場に出せない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(card)
+    new = enter_play(state, card)
+    p.bench.append(old)
+    p.active = new
+    state.add_event("trainer_hand_to_active", player=player, old_active=old.card, old_active_pokemon_id=old.pokemon_id, card=card,
+                    pokemon_id=new.pokemon_id, trainer_card=trainer)
+    return old, new
+
+
+def hand_positions_to_deck(state: GameState, owner: int, positions: tuple[int, ...], *, chooser: int, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` の手札の位置 ``positions``（0 から。おもてを見ないで選んだ位置）のカードを、手札の並びの順に ``owner`` の山札の一番下にもどす（v0.56。
+    ロケット団のワナの「相手の手札から、おもてを見ないで最大3枚を選び、相手の山札にもどす」。選ぶのは使ったプレイヤー ``chooser``）。位置からカードを、動かす前に
+    すべて決める（1 枚動かしたあとの位置で次を決めない）。もどす位置（一番下）は実装上の仮定（このあと必ず切る。v0.24 の PT7 と同じ）。ログ ``hand_positions_to_deck``
+    （``player``（持ち主）・``chooser``・``positions``（公開）・``cards``（持ち主だけが見る）・``trainer_card``）。もどしたカードを返す。"""
+    p = state.players[owner]
+    if len(set(positions)) != len(positions) or any(not 0 <= i < len(p.hand) for i in positions):
+        raise RuntimeError(f"プレイヤー {owner} の手札の位置 {positions} のカードをもどせない（確認の漏れ。エンジンの不具合）")
+    ordered = tuple(sorted(positions))
+    cards = tuple(p.hand[i] for i in ordered)
+    returned = _hand_to_deck_bottom(state, owner, cards)
+    state.add_event("hand_positions_to_deck", player=owner, chooser=chooser, positions=ordered, cards=returned, trainer_card=trainer)
+    return returned
+
+
+def take_prize_by_trainer(state: GameState, player: int, position: int, *, trainer: int) -> int:
+    """自分のサイドの位置 ``position`` のカードを取って手札に加える（v0.56。マチスの交渉の「それぞれ自分のサイドカードから1枚を選び、取って手札に加える」）。きぜつで
+    取るサイド（ログ ``take_prize``。解決の基盤の ``_resume_take_prize``）とは別のイベント ``trainer_take_prize``（``player``・``position``・``card``（取ったプレイヤー
+    だけが見る。きぜつで取るサイドと同じ扱い）・``remaining``・``trainer_card``）。勝ち負けの判定は、トレーナーを使い終えてから呼ぶ側がする。取ったカードを返す。"""
+    p = state.players[player]
+    if not 0 <= position < len(p.prizes):
+        raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} のカードを取れない（確認の漏れ。エンジンの不具合）")
+    card = p.prizes.pop(position)
+    p.hand.append(card)
+    state.add_event("trainer_take_prize", player=player, position=position, card=card, remaining=len(p.prizes), trainer_card=trainer)
+    return card
+
+
+def swap_prize_with_hand(state: GameState, player: int, position: int, card: int, *, trainer: int) -> int:
+    """自分のサイドの位置 ``position`` のカードと、自分の手札のカード ``card`` を入れかえる（v0.56。カスミのわがままの「あなたの手札からカードを1枚選び、見たカードと交換
+    する」）。サイドの枚数・位置は変えない（サイドを取ることではない）。手札に来たカードは手札の最後、サイドに置いたカードはその位置（裏のまま）。ログ
+    ``swap_prize_with_hand``（``player``・``position``（公開）・``to_prize``・``to_hand``（どちらも持ち主だけが見る）・``trainer_card``）。サイドに来たカードを返す。"""
+    p = state.players[player]
+    if not 0 <= position < len(p.prizes) or card not in p.hand:
+        raise RuntimeError(f"プレイヤー {player} のサイドの位置 {position} と手札のカード {card} を入れかえられない（確認の漏れ。エンジンの不具合）")
+    taken = p.prizes[position]
+    p.hand.remove(card)
+    p.prizes[position] = card
+    p.hand.append(taken)
+    state.add_event("swap_prize_with_hand", player=player, position=position, to_prize=card, to_hand=taken, trainer_card=trainer)
+    return taken

@@ -1,6 +1,6 @@
 """ゲーム状態を JSON にできる辞書にする（画面やほかの言語に渡すため・テストで比べるため）。
 
-形式は 15 あります（``format_version``）。
+形式は 16 あります（``format_version``）。
 
 - 1（既定）: v0.1 と同じ形。v0.1 の固定値のテストと互換性の参照データは、この形で比べる。
 - 2: 1 に次を加えたもの（v0.2a）。``format_version``、``effects``（効果の登録表の id）、
@@ -73,6 +73,10 @@
   docs/mew-devolution-spray-v0.50.md 7 章）。``power_uses_this_turn`` の 3 つの値の記録に、いちばん上のカードとして使ったあとで進化・退化していちばん上でなくなった
   カードの記録（[場のポケモンの番号, 特殊能力の位置, 使ったカードの uid]。``evolution.retag_power_uses``）が入る。形式 1〜14 は、退化した番のあるポケモン・その記録
   （今の番の特殊能力の宣言のログが「ばける」でのせたカードの使用でない 3 つの値の記録）があると ``ValueError``（なければ形式 1〜14 の書き出しは v0.49 と同じ）。
+- 16: 15 に、最上位の ``trainer_effects``（トレーナーを使ったプレイヤーに与えた期限のある効果。カスミ・キョウ・見えない壁。``{"kind", "player", "source_card",
+  "card_id", "created_turn", "expires_turn"}`` の並び）を加え、``trainer_locks`` の禁止に出どころ ``origin``（``"attack"``・``"trainer"``。ロケット団の実験の「うら」）を
+  加えたもの（v0.56。docs/trainer-decisions-turn-effects-v0.56.md 8 章）。形式 1〜15 は、期限のあるトレーナーの効果・トレーナーの効果の禁止があると ``ValueError``
+  （なければ形式 1〜15 の書き出しは v0.55 と同じ。ワザの禁止だけなら形式 12〜15 で今までどおり書ける）。
 
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
@@ -151,7 +155,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -374,6 +378,10 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(
             f"形式 {format_version} は、退化した番・進化や退化でいちばん上でなくなったカードの特殊能力の使用の記録を表せない（format_version=15 を使う）"
         )
+    if format_version < 16 and (state.trainer_effects or any(lock.origin != "attack" for lock in state.trainer_locks)):
+        raise ValueError(
+            f"形式 {format_version} は、期限のあるトレーナーの効果（カスミ・キョウ・見えない壁）・トレーナーの効果によるトレーナーの使用の禁止を表せない（format_version=16 を使う）"
+        )
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -470,7 +478,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         data["trainer_locks"] = [
             {"player": lock.player, "source_player": lock.source_player, "source_card": lock.source_card,
              "source_card_id": state.cards[lock.source_card].card_id, "effect": lock.effect, "created_turn": lock.created_turn,
-             "expires_turn": lock.expires_turn}
+             "expires_turn": lock.expires_turn, **({"origin": lock.origin} if format_version >= 16 else {})}
             for lock in state.trainer_locks
         ]
     if format_version >= 14:
@@ -478,5 +486,11 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
             {"player": r.player, "turn": r.turn, "pokemon_id": r.pokemon_id, "card": r.card, "card_id": state.cards[r.card].card_id,
              "trainer": r.trainer, "trainer_card_id": state.cards[r.trainer].card_id}
             for r in state.recalls
+        ]
+    if format_version >= 16:
+        data["trainer_effects"] = [
+            {"kind": e.kind, "player": e.player, "source_card": e.source_card, "card_id": e.card_id, "created_turn": e.created_turn,
+             "expires_turn": e.expires_turn}
+            for e in state.trainer_effects
         ]
     return data

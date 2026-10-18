@@ -135,7 +135,10 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_MISTYS_WRATH_SHORT_DECK", "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET",
                                          "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET", "UNRESOLVED_FULL_HEAL_SCOPE", "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET",
                                          "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET", "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON",
-                                         "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY"})
+                                         "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY",
+                                         # v0.56: LS1・RT1・RG1・MY1・MS1・KG1（docs/trainer-decisions-turn-effects-v0.56.md）
+                                         "UNRESOLVED_LT_SURGE_WITHOUT_BASIC", "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE", "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH",
+                                         "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND", "UNRESOLVED_MISTY_SELF_DAMAGE", "UNRESOLVED_KOGA_POISON_ORDER"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

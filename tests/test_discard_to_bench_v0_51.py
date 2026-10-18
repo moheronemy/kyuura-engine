@@ -301,7 +301,7 @@ class CardDataTest(unittest.TestCase):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.51", "docs/discard-to-bench-v0.51.md")])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (95, 96))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (101, 102))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた
         applied = [record["kyuura_record"] for record in links["applied_rule_records"]
                    if any(engine["version"] == "v0.51" for engine in record["engine"])]
         self.assertEqual(sorted(applied), sorted(APPLIED_RECORDS))
@@ -817,7 +817,7 @@ class StateAndObservationTest(unittest.TestCase):
     def test_no_new_state_or_format(self):
         """状態の項目・書き出しの形式は加えていない（形式 15 のまま。出したポケモンは場に出た番を持つ、ふつうのたねポケモン）。古い形式（場に出た番をログから分かる形）でも
         書き出せる。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 15)
+        self.assertEqual(max(FORMAT_VERSIONS), 16)  # v0.56 で 16（trainer_effects）を加えた（v0.51 では 15 のまま）
         state = play(board(mon(HITMONCHAN), hand=(REVIVE,), discard=(HITMONCHAN,)), REVIVE)
         state = answer(state, [discard_uid(state, 0, HITMONCHAN)])
         audited(self, state)

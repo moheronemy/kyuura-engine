@@ -468,7 +468,7 @@ class PendingDecisionStateTest(unittest.TestCase):
         表せる（新しい形式は要らない）。形式 1 はワザの途中の決定を表せないので ValueError（黙って落とさない）。v0.6 で加えた形式 9
         （あまごいで手札からつけた枚数）でも、決定の項目は同じ。"""
         d = self.state.decision
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))  # v0.4d では 8 まで。9 は v0.6、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
+        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16))  # 16 は v0.56。 v0.4d では 8 まで。9 は v0.6、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
         self.assertEqual(state_to_dict(self.state, format_version=9)["decision"], full(self.state)["decision"])
         data = full(self.state)
         self.assertEqual(data["decision"], {

@@ -61,6 +61,8 @@ from .decisions import (
 from .effects import (
     AttackKey,
     AttackUse,
+    END_TURN,
+    SELF_TRAINER_LOCK_TURNS,
     EntryPower,
     PowerKey,
     PowerUse,
@@ -106,6 +108,8 @@ from .persistent import DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_att
 from .rules import RULES_2000_02_14, RuleSet
 from .state import (
     PERSISTENT_EFFECT_TYPES,
+    TRAINER_TURN_EFFECT_KINDS,
+    TrainerTurnEffect,
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
     CannotRetreat,
@@ -826,9 +830,9 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
         # ポケモンについているトレーナーの効果・使っている最中のトレーナーは止めない。ポケモンとして場に出すトレーナー（なにかの化石・ピッピ人形）も、トレーナー
         # カードを使うことなので止める
         powers = [b[2] for b in blockers if b[0] == "power"]
-        locks = [(b[2], b[3]) for b in blockers if b[0] == "lock"]
+        locks = [(b[2], b[3]) for b in blockers if b[0] == "lock"]  # v0.56: ワザ（ずつう・こうしゅうは）かトレーナー（ロケット団の実験の「うら」）
         detail = "・".join(([f"場のポケモン {powers} の特殊能力がはたらいている"] if powers else [])
-                          + ([f"相手のワザ {[e for e, _ in locks]} の効果（{[t for _, t in locks]} 番の終わりまで）"] if locks else []))
+                          + ([f"期限のある禁止（ワザ・トレーナー {[e for e, _ in locks]}）の効果（{[t for _, t in locks]} 番の終わりまで）"] if locks else []))
         raise IllegalActionError("TRAINER_PREVENTED", f"{detail}ので、トレーナーカードを使えない")
     effect = state.effects.trainer_effect(definition)
     if effect is None:
@@ -842,12 +846,21 @@ def _play_trainer(state: GameState, cmd: PlayTrainer, context: resolution.Contex
     state.trainer_in_use = TrainerInUse(cmd.player, cmd.card)
     state.add_event("play_trainer", player=cmd.player, card=cmd.card, trainer=definition.name_ja)
     # 3・4. 使うための条件と、残りの説明にしたがう。決定を出したら、ここで止まり _resume_trainer から続ける
-    effect.resolve(state, use)
+    outcome = effect.resolve(state, use)
     if state.decision is None:
-        _finish_trainer(state, effect, context)
+        _finish_trainer(state, effect, context, end_turn=_ends_turn(effect, outcome))
 
 
-def _finish_trainer(state: GameState, effect, context: resolution.Context) -> None:
+def _ends_turn(effect, outcome) -> bool:
+    """v0.56: トレーナーの ``resolve``・``resume`` の戻り値が、番を終える印（``END_TURN``。ロケット団員の「うら」）か。``may_end_turn`` でない実装が返したらエンジンの不具合。"""
+    if outcome is None:
+        return False
+    if outcome != END_TURN or not effect.may_end_turn:
+        raise RuntimeError(f"トレーナーの実装 {type(effect).__name__} の戻り値 {outcome!r} が正しくない（エンジンの不具合）")
+    return True
+
+
+def _finish_trainer(state: GameState, effect, context: resolution.Context, *, end_turn: bool = False) -> None:
     """トレーナーを使い終えて、番の続きにもどる。
 
     - 使いすて（特に記述がないかぎり。p.310）: 使ったカードをトラッシュする。
@@ -868,8 +881,15 @@ def _finish_trainer(state: GameState, effect, context: resolution.Context) -> No
         state.players[used.player].discard.append(used.card)
         state.add_event("discard_trainer", player=used.player, card=used.card)
     state.phase = Phase.MAIN
-    if effect.may_knock_out or effect.empties_active:
+    if end_turn:
+        # v0.56: 説明の「あなたの番は終わりになる」（ロケット団員の「うら」）。カードをトラッシュしてから、番の終わりの窓（期限 → ポケモンチェック → 次の番）に進む
+        if effect.may_knock_out or effect.empties_active or effect.takes_prizes:
+            raise RuntimeError(f"番を終えるトレーナー {type(effect).__name__} が、きぜつ・場をはなれる・サイドの処理も持つ（今の対応カードにない組み合わせ。エンジンの不具合）")
+        resolution.end_turn_after_trainer(state, context, used.player, used.card)
+        return
+    if effect.may_knock_out or effect.empties_active or effect.takes_prizes:
         # v0.52: 自分のバトル場のポケモンを場からはなれさせうるトレーナー（``empties_active``。ポケモン回収）も、使い終わってから勝ち負けの判定・バトル場に出す決定をする
+        # v0.56: 効果でサイドを取るトレーナー（``takes_prizes``。マチスの交渉）も、使い終わってから勝ち負けを判定する（効果の途中で対戦を終えない）
         resolution.after_trainer(state, context)
 
 
@@ -877,9 +897,9 @@ def _resume_trainer(state: GameState, decision, choices: tuple[int, ...], contex
     """トレーナーの効果の途中で出した決定の続き。決定がなくなったら、カードをトラッシュして番にもどる。"""
     player, card, card_id = decision.context_value("use")
     entry = state.effects.trainer_entry(card_id)
-    entry.effect.resume(state, TrainerUse(player, card, card_id), decision, choices)
+    outcome = entry.effect.resume(state, TrainerUse(player, card, card_id), decision, choices)
     if state.decision is None:
-        _finish_trainer(state, entry.effect, context)
+        _finish_trainer(state, entry.effect, context, end_turn=_ends_turn(entry.effect, outcome))
 
 
 # ---------------------------------------------------------------- ポケモンパワー（特殊能力。v0.5）
@@ -1264,6 +1284,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_power_attachment_problems(state))
     problems.extend(_turn_power_problems(state))  # v0.31
     problems.extend(_trainer_lock_problems(state))  # v0.47
+    problems.extend(_trainer_effect_problems(state))  # v0.56
     problems.extend(_recall_problems(state))  # v0.49
     if phase in TERMINAL_PHASES:
         if state.decision is not None:
@@ -2043,11 +2064,16 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             problems.append(f"期限のあるトレーナーの使用の禁止 {lock!r} の型が TrainerUseLock ではない")
             continue
         where = f"プレイヤー {lock.player!r} のトレーナーの使用の禁止（{lock.effect}）"
-        if lock.player not in PLAYERS or lock.source_player != 1 - lock.player:
-            problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、使えなくなるプレイヤーの相手ではない")
+        trainer_origin = lock.origin == "trainer"  # v0.56: ロケット団の実験の「うら」（使ったプレイヤー自身。与えた番 + 2）
+        if lock.origin not in ("attack", "trainer"):
+            problems.append(f"{where} の出どころ {lock.origin!r} が attack・trainer ではない")
             continue
-        if type(lock.created_turn) is not int or lock.expires_turn != lock.created_turn + 1:
-            problems.append(f"{where} の消える番 {lock.expires_turn!r} が、与えた番 {lock.created_turn!r} + 1 ではない（次の相手の番の終わりまで）")
+        if lock.player not in PLAYERS or lock.source_player != (lock.player if trainer_origin else 1 - lock.player):
+            problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、{'使えなくなるプレイヤー自身' if trainer_origin else '使えなくなるプレイヤーの相手'}ではない")
+            continue
+        span = SELF_TRAINER_LOCK_TURNS if trainer_origin else 1
+        if type(lock.created_turn) is not int or lock.expires_turn != lock.created_turn + span:
+            problems.append(f"{where} の消える番 {lock.expires_turn!r} が、与えた番 {lock.created_turn!r} + {span} ではない")
             continue
         if not lock.created_turn <= state.turn_number <= lock.expires_turn:
             problems.append(f"{where} が、与えた番 {lock.created_turn}〜消える番 {lock.expires_turn} の外の今の番 {state.turn_number} に残っている")
@@ -2055,13 +2081,78 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             problems.append(f"{where} を与えた番 {lock.created_turn} が、与えたプレイヤー {lock.source_player} の番ではない")
         if lock.source_card not in state.cards:
             problems.append(f"{where} のワザを使ったカード {lock.source_card!r} が対戦のカードではない")
-        card_id, _, index = str(lock.effect).partition("#")
-        entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
-        if entry is None or getattr(entry.effect, "lock_terms", None) is None:
-            problems.append(f"{where} を与えたワザ {lock.effect!r} の登録された実装が、トレーナーの使用を禁止する実装ではない")
-        keys.append((lock.player, lock.expires_turn))
+        if trainer_origin:
+            entry = state.effects.trainer_entry(lock.effect)
+            if entry is None or not getattr(entry.effect, "tails_self_lock", False):
+                problems.append(f"{where} を与えたトレーナー {lock.effect!r} の登録された実装が、使ったプレイヤーにトレーナーの使用を禁止する実装ではない")
+            elif lock.source_card not in state.cards or state.cards[lock.source_card].card_id != lock.effect or state.cards[lock.source_card].owner != lock.player:
+                problems.append(f"{where} の使ったトレーナーのカード {lock.source_card!r} が、使ったプレイヤーのそのカードではない")
+        else:
+            card_id, _, index = str(lock.effect).partition("#")
+            entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+            if entry is None or getattr(entry.effect, "lock_terms", None) is None:
+                problems.append(f"{where} を与えたワザ {lock.effect!r} の登録された実装が、トレーナーの使用を禁止する実装ではない")
+        keys.append((lock.player, lock.expires_turn, lock.origin))
     if len(set(keys)) != len(keys):
-        problems.append(f"同じプレイヤー・同じ消える番のトレーナーの使用の禁止が重なっている {keys}")
+        problems.append(f"同じプレイヤー・同じ消える番・同じ出どころのトレーナーの使用の禁止が重なっている {keys}")
+    added: dict[tuple, dict] = {}
+    removed: set[tuple] = set()
+    starts = 0
+    for event in reversed(state.log):
+        kind = event["kind"]
+        if kind == "turn_start":
+            starts += 1
+            if starts >= 3:  # v0.56: トレーナーの効果の禁止は与えた番 + 2 まで残るので、今の番と前の 2 つの番のログを見る（v0.55 までは前の番まで）
+                break
+        elif kind == "trainer_lock_added":
+            added.setdefault((event.get("player"), event.get("expires_turn"), event.get("origin", "attack")), event)
+        elif kind == "trainer_lock_removed":
+            removed.add((event.get("player"), event.get("expires_turn"), event.get("origin", "attack")))
+    live = {key for key in added if key not in removed and key[1] >= state.turn_number}
+    if live != set(keys):
+        problems.append(f"期限のあるトレーナーの使用の禁止 {sorted(keys)} が、ログで与えてまだ消していない禁止 {sorted(live)} と違う")
+    for lock in locks:
+        event = added.get((lock.player, lock.expires_turn, lock.origin)) if isinstance(lock, TrainerUseLock) else None
+        if event is not None and (event.get("effect"), event.get("source_player"), event.get("source_card")) != (lock.effect, lock.source_player, lock.source_card):
+            problems.append(f"プレイヤー {lock.player} のトレーナーの使用の禁止 {lock!r} が、与えたログ {event!r} と合わない")
+    return problems
+
+
+def _trainer_effect_problems(state: GameState) -> list[str]:
+    """v0.56（形式 16）: プレイヤーに与えた期限のあるトレーナーの効果（``GameState.trainer_effects``。カスミ・キョウ・見えない壁）の整合。
+
+    - 型は ``TrainerTurnEffect``。種類は ``TRAINER_TURN_EFFECT_KINDS``。使ったプレイヤー ``player`` の番に与え（与えた番は ``player`` の番）、今の番は与えた番〜消える番
+    - 登録: ``card_id`` のトレーナーの実装の ``turn_effect_terms()`` の種類と期限（消える番 − 与えた番）が状態の記録と同じ。``source_card`` はそのカード id の、使った
+      プレイヤーのカード（トレーナーを使い終えたあとは持ち主のトラッシュにある。効果は場のカードに写していない）
+    - ログとの対応: 今の番と前の番のログで、与えた（``trainer_effect_added``）がまだ消していない（``trainer_effect_removed`` がない）効果と、状態の効果が同じ。エンジンは
+      効果をログから決めない"""
+    records = state.trainer_effects
+    if type(records) is not tuple:
+        return [f"期限のあるトレーナーの効果 {records!r} がタプルではない"]
+    problems: list[str] = []
+    keys = []
+    for record in records:
+        if not isinstance(record, TrainerTurnEffect):
+            problems.append(f"期限のあるトレーナーの効果 {record!r} の型が TrainerTurnEffect ではない")
+            continue
+        where = f"プレイヤー {record.player!r} のトレーナーの効果（{record.card_id}・{record.kind}）"
+        if record.kind not in TRAINER_TURN_EFFECT_KINDS or record.player not in PLAYERS or type(record.created_turn) is not int:
+            problems.append(f"{where} の種類・プレイヤー・与えた番が正しくない")
+            continue
+        entry = state.effects.trainer_entry(record.card_id)
+        terms = entry.effect.turn_effect_terms() if entry is not None else None
+        if terms is None or terms[0] != record.kind or record.expires_turn != record.created_turn + terms[1]:
+            problems.append(f"{where} の種類・消える番 {record.expires_turn} が、登録の実装 {terms!r} と合わない")
+        if not record.created_turn <= state.turn_number <= record.expires_turn:
+            problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
+        if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
+            problems.append(f"{where} を与えた番 {record.created_turn} が、使ったプレイヤーの番ではない")
+        card = state.cards.get(record.source_card)
+        if card is None or card.card_id != record.card_id or card.owner != record.player:
+            problems.append(f"{where} の使ったトレーナーのカード {record.source_card!r} が、使ったプレイヤーのそのカードではない")
+        keys.append((record.player, record.source_card, record.expires_turn))
+    if len(set(keys)) != len(keys):
+        problems.append(f"同じカードで与えた期限のあるトレーナーの効果が重なっている {keys}")
     added: dict[tuple, dict] = {}
     removed: set[tuple] = set()
     starts = 0
@@ -2071,17 +2162,17 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             starts += 1
             if starts >= 2:
                 break
-        elif kind == "trainer_lock_added":
-            added.setdefault((event.get("player"), event.get("expires_turn")), event)
-        elif kind == "trainer_lock_removed":
-            removed.add((event.get("player"), event.get("expires_turn")))
-    live = {key for key in added if key not in removed and key[1] >= state.turn_number}
+        elif kind == "trainer_effect_added":
+            added.setdefault((event.get("player"), event.get("trainer_card"), event.get("expires_turn")), event)
+        elif kind == "trainer_effect_removed":
+            removed.add((event.get("player"), event.get("trainer_card"), event.get("expires_turn")))
+    live = {key for key in added if key not in removed and key[2] >= state.turn_number}
     if live != set(keys):
-        problems.append(f"期限のあるトレーナーの使用の禁止 {sorted(keys)} が、ログで与えてまだ消していない禁止 {sorted(live)} と違う")
-    for lock in locks:
-        event = added.get((lock.player, lock.expires_turn)) if isinstance(lock, TrainerUseLock) else None
-        if event is not None and (event.get("effect"), event.get("source_player"), event.get("source_card")) != (lock.effect, lock.source_player, lock.source_card):
-            problems.append(f"プレイヤー {lock.player} のトレーナーの使用の禁止 {lock!r} が、与えたログ {event!r} と合わない")
+        problems.append(f"期限のあるトレーナーの効果 {sorted(keys)} が、ログで与えてまだ消していない効果 {sorted(live)} と違う")
+    for record in records:
+        event = added.get((record.player, record.source_card, record.expires_turn)) if isinstance(record, TrainerTurnEffect) else None
+        if event is not None and (event.get("effect_kind"), event.get("card_id")) != (record.kind, record.card_id):
+            problems.append(f"プレイヤー {record.player} のトレーナーの効果 {record!r} が、与えたログ {event!r} と合わない")
     return problems
 
 

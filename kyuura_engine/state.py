@@ -774,6 +774,40 @@ class TrainerUseLock:
     effect: str
     created_turn: int
     expires_turn: int
+    # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 6 章）: 禁止の出どころ。``"attack"``（既定。v0.47 のずつう・こうしゅうは。相手プレイヤーに与え、消える番は
+    # 与えた番 + 1）か ``"trainer"``（ロケット団の実験の「うら」の「次のあなたの番が終わるまで、あなたはトレーナーカードを使えない」。使ったプレイヤー自身に与え
+    # （``player`` = ``source_player``）、``source_card`` は使ったトレーナーのカード、``effect`` はそのカード id、消える番は与えた番 + 2）。既定の値の禁止は v0.55 と
+    # 同じ値・書き出し・ログ
+    origin: str = "attack"
+
+
+# v0.56: プレイヤーに与える、期限のあるトレーナーの効果（``TrainerTurnEffect``）の種類
+ATTACK_DAMAGE_BONUS = "attack_damage_bonus"  # カスミ: 「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、この番だけ +20（p.321 の 6 段階）
+POISON_ON_ATTACK_DAMAGE = "poison_on_attack_damage"  # キョウ: 「キョウのポケモン」がワザで相手の対戦ポケモンにダメージを与えたら、どく状態にする（この番）
+BENCH_ATTACK_DAMAGE_PREVENTION = "bench_attack_damage_prevention"  # 見えない壁: 次の相手の番が終わるまで、控えポケモンはワザによるダメージを受けない
+TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION)
+
+
+@dataclass(frozen=True)
+class TrainerTurnEffect:
+    """v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナーを使ったプレイヤーに与える、期限のある効果（カスミ・キョウ・見えない壁）。
+
+    - 場のポケモンに持たせない（効果を受けるポケモンは、はたらく時点の場で決める: カスミ・キョウはワザを使うポケモンの今の姿の名前、見えない壁はダメージを受ける時点の
+      持ち主の控えポケモン。使ったときの場のポケモンに写さないので、入れ替え・進化・あとから出したポケモンも同じに扱う）。トラッシュしたトレーナーのカード・今の
+      バトル場のポケモンの番号から求め直さない
+    - ``kind``: ``TRAINER_TURN_EFFECT_KINDS`` のどれか。数・名前（「カスミの」・+20）は効果の登録表の実装（``TrainerEffect.turn_effect_terms``）が持つ（状態に写さない）
+    - ``player``: 使ったプレイヤー。``source_card``: 使ったトレーナーのカード（ログ・ダメージの記録の発生源）。``card_id``: そのカード id（登録の実装を引く）
+    - ``created_turn``: 使った番（使ったプレイヤーの番）。``expires_turn``: 消える番（その番の終わりに消す。「この番」は使った番、「次の相手の番が終わるまで」は + 1）
+    - かがくへんかガス・特殊状態では消えない（特殊能力ではない）。番の終わり（ワザ・番を終える・ロケット団員の「うら」のどれで終わっても同じ ``procedures.expire_at_turn_end``）
+      に消す。勝敗が決まった番は番の終わりが来ないので残る（v0.2c のついているトレーナーと同じ）
+    """
+
+    kind: str
+    player: int
+    source_card: int
+    card_id: str
+    created_turn: int
+    expires_turn: int
 
 
 @dataclass(frozen=True)
@@ -1075,6 +1109,9 @@ class GameState:
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 6 章）: この番に使った「思い出させる」の記録（``RecallEffect`` の並び。使った順）。番の終わりに消す
     # （``procedures.expire_at_turn_end``）。書き出しは形式 14 だけが表せる（空でなければ形式 1〜13 は ``ValueError``）
     recalls: tuple[RecallEffect, ...] = ()
+    # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナーを使ったプレイヤーに与えた、期限のある効果（``TrainerTurnEffect`` の並び。与えた順）。消える番の
+    # 終わりに消す（``procedures.expire_at_turn_end``。ログ ``trainer_effect_removed``）。書き出しは形式 16 だけが表せる（空でなければ形式 1〜15 は ``ValueError``）
+    trainer_effects: tuple[TrainerTurnEffect, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))

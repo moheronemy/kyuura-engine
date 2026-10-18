@@ -121,6 +121,8 @@ class Resolution:
         # ［くつろぐかおり］）を持つ場のポケモンの番号（``effects.status_at_attack_blocked``）。ワザの宣言で写し（``flow._attack_body``）、決定をまたぐときは
         # 続きの情報で運ぶ（``AttackRun.suspend``）。ワザの外（None）では今の特殊状態で決める
         self.attack_status: frozenset[int] | None = None
+        # v0.56: このワザの中で、トレーナー「キョウ」の効果でどく状態にした場のポケモンの番号（KG1。``kernel.trainer_poison_after_damage``・``programs.Status``）
+        self.trainer_poisoned: set[int] = set()
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -288,6 +290,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         if order_decision:
             raise
         raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
+    if target == SELF:
+        trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
     if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -354,7 +358,63 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
                                    before, receiver.damage, by_opponent))
     track_ko(res, fs, receiver, before)
     fs.pending.extend(deferred)
+    if target == OPPONENT_ACTIVE and calc.final > 0:
+        trainer_poison_after_damage(res, attacker, receiver_player, receiver)
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))
+
+
+def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, final: int,
+                                weakness_resistance: bool, orders, resistance: bool) -> None:
+    """v0.56（MS1。docs/trainer-decisions-turn-effects-v0.56.md 7 章）: トレーナー「カスミ」の「「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、…+20」を、
+    ワザを使うポケモン自身（自分のバトル場の対戦ポケモン）へのダメージ（カスミのジュゴンの「とっしん」の「自分にも20ダメージ」）に当てはめるかは、印刷の文面（「対戦ポケモン」は
+    お互いのバトル場のポケモン。控えポケモンだけを除くと書く）・kyuura の記録で決まらない。当てはめるかどうかで最終ダメージが変わるときだけ止める（問い ``trainer_self_bonus``）。
+    当てはめない計算（``attack_damage_modifiers`` は自分へのダメージに +20 を入れない）の結果 ``final`` と、+20 を 6 段階に加えた計算を比べる。"""
+    from ..damage import DamageModifier
+    from ..effects import trainer_attack_damage_bonuses
+
+    state = res.state
+    bonuses = trainer_attack_damage_bonuses(state, attacker)
+    if not bonuses:
+        return
+    extra = tuple(DamageModifier(step=6, amount=amount, label=state.card_def(record.source_card).name_ja, source=record.source_card) for record, amount in bonuses)
+    try:
+        alternative = same_for_type_readings(state, (attacker, receiver), lambda views: calculate_attack_damage(
+            base, views[0], views[1], state.rules, (*modifiers, *extra), weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)).final
+    except (TypeReadingsDiffer, DamageOrderRequired):
+        alternative = None
+    if alternative != final:
+        raise res.question("trainer_self_bonus", f"ポケモン {attacker.pokemon_id} の自分へのダメージ（{final} か {alternative}）")
+
+
+def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay) -> None:
+    """v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナー「キョウ」の「この番に、「キョウのポケモン」が、ワザによって相手の対戦ポケモンにダメージを
+    与えたら、ダメージを受けたポケモンを「どく」状態にする」。ワザのダメージの要素が相手の対戦ポケモンに 0 より大きいダメージをのせた直後に呼ぶ（``deal_damage``。無効・
+    「とうめい」・最終ダメージ 0・控えポケモンへのダメージでは呼ばない）。
+
+    - 「キョウのポケモン」は、ダメージを与える時点のワザを使うポケモンの今の姿の名前（``effects.trainer_poison_effects``）。相手のワザとして使うワザ（ちょうのうりょく）も、
+      使ったのが「キョウのポケモン」なら当てはまる
+    - どく状態にするのは ``conditions.poison``（通常のどく。［めんえき］で防ぐ。すでにどく状態なら重ならない。特殊などく状態なら通常のどくになる（v0.3a の #14））。何枚
+      使っていても、1 つのダメージで 1 回（同じ結果）。トレーナーの効果なので「ワザをうけない」状態・「とうめい」は評価しない（ダメージをのせたあとなので、ダメージを受けて
+      いる）
+    - 受けたポケモンがこのダメージで HP 以上なら、きぜつするポケモンなのでどく状態にしない。ただし、そのポケモンがきぜつの判定で使える効果（こんじょう）を持つなら、
+      「おもて」で残ったポケモンが受けるかが決まらない（G37 と同じ問い ``ko_prevention_attack_effect``。そのダメージにともなう効果を受けるか）
+    - どく状態にしたポケモンを ``res.trainer_poisoned`` に記録する（同じワザのあとの要素がこのポケモンを受けるダメージの違うどく状態にするとき、順番が決まらない。KG1。
+      ``programs.Status`` が聞く）"""
+    from ..conditions import poison
+    from ..effects import trainer_poison_effects
+
+    state = res.state
+    records = trainer_poison_effects(state, attacker)
+    if not records:
+        return
+    if receiver.damage >= max_hp(state, receiver):
+        for instance in C.in_window(state, Window.KO_CHECK, owner, receiver, res.catalog):
+            if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.suppressors(state, instance):
+                raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
+        return
+    poison(state, owner, receiver, effect=records[0].card_id)
+    if receiver.conditions.poison is not None:
+        res.trainer_poisoned.add(receiver.pokemon_id)
 
 
 def calming_retaliation_question(res: Resolution, fs: FrameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, target: str,

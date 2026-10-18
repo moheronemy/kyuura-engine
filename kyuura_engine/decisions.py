@@ -221,6 +221,20 @@ TAKE_LOOKED_CARDS = "take_looked_cards"
 OPPONENT_HAND_TO_DECK = "opponent_hand_to_deck"
 # v0.55: いいきずぐすりで、選んだポケモンからとりのぞくダメージカウンターの数（0〜min(4, のっている数)。「4個まで…ことができる」）。決めるのは使ったプレイヤー
 SELECT_COUNTER_COUNT = "select_counter_count"
+# v0.56（docs/trainer-decisions-turn-effects-v0.56.md 3 章）: トレーナーの説明が「…かどうか、相手プレイヤーにたずねる」とき（マチスの交渉・カスミのわがまま）の、相手の
+# 答え。決めるのは使ったプレイヤーの相手。選べるものは 1（オーケー）だけで、0〜1 個（選ばない = オーケーでない）。続きの情報には使ったカードとたずねる内容の段階だけを
+# 書き、見たサイドのカードを書かない（相手に渡らない）
+ACCEPT_REQUEST = "accept_request"
+# v0.56: エリカの香水で、見た相手の手札の「たねポケモン」から相手のベンチに出させるもの。決めるのは使ったプレイヤー（手札を見た）。選べるものは相手の手札のたねポケモンの
+# uid（手札の並び）。0〜min(ベンチの空き, 数) 枚（「好きなだけ…てよい」）
+OPPONENT_HAND_TO_BENCH = "opponent_hand_to_bench"
+# v0.56: ロケット団のワナで、相手の手札から「おもてを見ないで」選ぶ位置。決めるのは使ったプレイヤー。選べるものは相手の手札の位置（0 から。カードの uid・中身は渡さない）
+SELECT_HAND_POSITIONS = "select_hand_positions"
+# v0.56: マチスで、手札から直接バトル場に出す「たねポケモン」。決めるのは使ったプレイヤー。選べるものは自分の手札のたねポケモンの uid（手札の並び）
+HAND_TO_ACTIVE = "hand_to_active"
+# v0.56: カスミのわがままで、見たサイドのカードと交換する手札のカード。決めるのは使ったプレイヤー。選べるものは自分の手札のカードの uid（手札の並び。使っているこの
+# カードは手札にない）
+SWAP_WITH_PRIZE = "swap_with_prize"
 
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 

@@ -566,6 +566,19 @@ DEFENDER = "PMCG1-079"  # ディフェンダー（v0.2e で対応）
 SUPER_POTION = "PMCG1-075"  # いいきずぐすり（v0.54 まで参照カード（実装を登録していないトレーナー）。v0.55 で対応。第1弾。070/096）
 V0_55_CARDS = (MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, SUPER_POTION, FULL_HEAL, POKEMON_CENTER,
                SLEEP_TRAINER, ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT)  # 写しの組 pool_v0_55 の並び
+# v0.56（docs/trainer-decisions-turn-effects-v0.56.md）: 相手の決定・相手の場へ出す・番を終える・効果でサイドを取る・期限のある効果のトレーナー 10 枚
+ERIKAS_PERFUME = "PMCG5-073"  # エリカの香水（リーダーズスタジアム。085/096）
+LT_SURGE_TRAINER = "PMCG5-092"  # マチス（リーダーズスタジアム。077/096。トレーナー。「マチスの」ポケモン・マチスの交渉と取りちがえない）
+ROCKETS_TRAP = "PMCG5-096"  # ロケット団のワナ（リーダーズスタジアム。095/096）
+ROCKET_GRUNT = "PMCG6-089"  # ロケット団員（闇からの挑戦。093/098）
+LT_SURGES_TREATY = "PMCG5-081"  # マチスの交渉（リーダーズスタジアム。080/096）
+MISTYS_WISH = "PMCG5-086"  # カスミのわがまま（リーダーズスタジアム。075/096）
+MISTY_TRAINER = "PMCG5-085"  # カスミ（リーダーズスタジアム。071/096。トレーナー。「カスミの」ポケモン・カスミのいかり・カスミのなみだと取りちがえない）
+KOGA_TRAINER = "PMCG6-094"  # キョウ（闇からの挑戦。079/098。トレーナー。「キョウの」ポケモンと取りちがえない）
+INVISIBLE_WALL = "PMCG6-079"  # 見えない壁（闇からの挑戦。082/098）
+ROCKETS_EXPERIMENT = "PMCG6-091"  # ロケット団の実験（闇からの挑戦。094/098）
+V0_56_CARDS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, LT_SURGES_TREATY, MISTYS_WISH, MISTY_TRAINER, KOGA_TRAINER, INVISIBLE_WALL,
+               ROCKETS_EXPERIMENT)  # 写しの組 pool_v0_56 の並び
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
