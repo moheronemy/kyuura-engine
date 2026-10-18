@@ -22,7 +22,10 @@ from kyuura_engine import (
     new_game, state_to_dict,
 )
 from kyuura_engine.effects import MAX_HP_DROP_CODE, PLAY_AS_POKEMON_RETREAT_CODE, evolution_preventers, max_hp, retreat_cost, trainer_use_blockers
-from kyuura_engine.persistent import cannot_retreat
+from kyuura_engine.continuous import goop_gas_effects  # v0.59
+from kyuura_engine.effects import GOOP_GAS_SCOPE_CODE, blaine_effects, energy_attach_block, energy_unit_count  # v0.59
+from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
+from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
 from tests.test_blastoise_games_v0_6 import R13
@@ -83,6 +86,25 @@ def special_energy_in_game(state) -> bool:
                for uid in [*player.hand, *(u for pokemon in player.in_play() for u in pokemon.energy)])
 
 
+# v0.59: クリスタルビームでつけられないポケモンへの手札からつける通常の操作・カツラの 2 枚目（BL1）
+V059_ATTACH_CODES = ("ENERGY_ATTACH_PREVENTED", "UNRESOLVED_BLAINE_SECOND_ATTACH")
+
+
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・［ずらかる］の力がもどる時（SC2）・
+# バトル場は穴だらけ!のダメージの変更（TD1）
+V061_CODES = ("UNRESOLVED_SINKHOLE_TIMING", "UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED", "UNRESOLVED_TRAINER_DAMAGE_REDUCTION")
+
+
+def v061_stop_expected(state, command, code) -> bool:
+    """v0.61: 場から確かめる。SH1 は「にげる」で、相手の場にはたらく［おとしあな］がある。SC1・SC2 は場に［ずらかる］を持つポケモンがいる。TD1 はバトル場は
+    穴だらけ!を使う。"""
+    if code == "UNRESOLVED_SINKHOLE_TIMING":
+        return isinstance(command, Retreat) and bool(retreat_trap_powers(state, command.player))
+    if code in ("UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED"):
+        return bool(scram_slots(state))
+    return isinstance(command, PlayTrainer) and state.cards[command.card].card_id == "PMCG4-055"
+
+
 def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), extra_stop: dict[str, Callable] | None = None,
               double_ko_check: Callable | None = None, policy=None):
     """``decks``（2 つの 60 枚）・``seed`` の対戦を終わるまで進める。受け付けた操作の列と、拒否された操作・場面の観測を返す。
@@ -127,6 +149,25 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     observed[f"stopped_PlayTrainer_{error.code}"] += 1
                     turn_tried.add(("max_hp_drop_card", command.card))
                     continue
+                if error.code == GOOP_GAS_SCOPE_CODE and goop_gas_effects(state):
+                    # v0.59: まきちらせ!ベトベトガスの効果がはたらいている間に、特殊能力を持つポケモンを場に出す・進化・退化させる（GG1）。場から確かめる
+                    # （効果がはたらいている）。同じカード・操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    card = getattr(command, "card", None)
+                    turn_tried.add(("max_hp_drop_card", card) if card is not None and card in state.players[command.player].hand
+                                   else ("max_hp_drop_command", command))
+                    continue
+                if error.code in V061_CODES and v061_stop_expected(state, command, error.code):
+                    # v0.61: ［おとしあな］の時点（SH1）・［ずらかる］の時点（SC1）・力がもどる時（SC2）・バトル場は穴だらけ!のダメージの変更（TD1）。場から確かめる
+                    # （［おとしあな］・［ずらかる］を持つポケモンが場にいる、バトル場は穴だらけ!を使う）。同じ操作を繰り返さない
+                    kind = type(command).__name__
+                    observed[f"stopped_{kind}_{error.code}"] += 1
+                    turn_tried.add("retreat" if kind == "Retreat" else ("max_hp_drop_card", command.card) if kind in ("PlayTrainer", "EvolvePokemon")
+                                   else ("attack_index", command.attack_index) if kind == "UseAttack" else ("max_hp_drop_command", command))
+                    if kind == "UseAttack":
+                        turn_tried.add(error.code)
+                    continue
                 if error.code == MAX_HP_DROP_CODE and isinstance(command, (Retreat, PlayTrainer, EvolvePokemon, UsePokemonPower)):
                     # v0.48: 最大HPが、ダメージ以外の原因（「きょだいか」の効果が消える・かがくへんかガスで［ガスのからだ］が消える）でのっているダメージ以下に
                     # 下がる（MH1）。場から確かめる（今有効な最大HPがカードの HP より大きく、のっているダメージがカードの HP 以上のポケモンがいる）
@@ -167,6 +208,22 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         continue
                     if error.code == "POWER_SUPPRESSED" and gas_on(state):
                         observed["suppressed_power"] += 1
+                        continue
+                    if error.code == "POWER_SUPPRESSED" and goop_gas_effects(state):
+                        # v0.59: まきちらせ!ベトベトガスの効果がはたらいている。この番は特殊能力を使わない
+                        observed["suppressed_power_goop_gas"] += 1
+                        turn_tried.add(("max_hp_drop_command", command))
+                        continue
+                    if error.code in ("ENERGY_ATTACH_PREVENTED", "UNRESOLVED_ATTACH_BLOCK_SCOPE") and any(
+                            energy_attach_block(state, pk) is not None for pl in state.players for pk in pl.in_play()):
+                        # v0.59: クリスタルビームを受けたポケモンに、あまごいでつける（ENERGY_ATTACH_PREVENTED）・エナジートランスなどでつけかえる（CB1）
+                        observed[f"stopped_power_{error.code}"] += 1
+                        turn_tried.add(("max_hp_drop_command", command))
+                        continue
+                    if error.code == "POWER_USE_PREVENTED" and powers_use_prevented(state, state.find_pokemon(command.pokemon)[1]) is not None:
+                        # v0.59: 「ショックアイ」を受けたポケモン。この番はその使用をくり返さない
+                        observed["stopped_power_POWER_USE_PREVENTED"] += 1
+                        turn_tried.add(("max_hp_drop_command", command))
                         continue
                     if error.code not in POWER_REJECTIONS:
                         raise
@@ -217,7 +274,9 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     # v0.46: 常にはたらく特殊能力（［ねんちゃくえき］・［にげるサポート］）で「にげる」のエネルギーの数が変わり、印刷の数で宣言した。場から確かめる
                     # （特殊能力がなければ、今までどおり想定外の拒否）
                     cost = retreat_cost(state, command.player)
-                    if not cost.modified or cost.allows(len(command.discard)):
+                    # v0.59: ［エネエネ］でエネルギーとして残ったカード（2 個）は、枚数とエネルギーの個数が違う。印刷の数の枚数で選ぶ手順は余計に選ぶ
+                    units = energy_unit_count(state, command.discard, state.players[command.player].active)
+                    if (not cost.modified and units == len(command.discard)) or cost.allows(units):
                         raise
                     observed["stopped_retreat_WRONG_RETREAT_COST"] += 1
                     turn_tried.add("retreat")
@@ -243,6 +302,16 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                         raise AssertionError(f"トレーナーカードを使えなくする特殊能力がはたらいていないのに TRAINER_PREVENTED: {command}")
                     observed["stopped_trainer_TRAINER_PREVENTED"] += 1
                     turn_tried.add("trainer_locked")
+                    continue
+                if isinstance(command, AttachEnergy) and error.code in V059_ATTACH_CODES:
+                    # v0.59: クリスタルビームでエネルギーカードをつけることができないポケモン（ENERGY_ATTACH_PREVENTED）・カツラの 1 枚目のあとの 2 枚目（BL1）。
+                    # 場から確かめる（受けているポケモン・この番のカツラの効果）。この番はつけない
+                    target = next((pk for pl in state.players for pk in pl.in_play() if pk.card == command.target), None)
+                    blocked = target is not None and energy_attach_block(state, target) is not None
+                    if not (blocked if error.code == "ENERGY_ATTACH_PREVENTED" else blaine_effects(state, command.player)):
+                        raise AssertionError(f"場から確かめると止まらないはずなのに {error.code}: {command}")
+                    observed[f"stopped_attach_{error.code}"] += 1
+                    turn_tried.add("attach_blocked")
                     continue
                 if isinstance(command, AttachEnergy):
                     if error.code != R13:

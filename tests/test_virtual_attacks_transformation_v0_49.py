@@ -343,7 +343,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(code=code):
                 self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
         # v0.49 で 75・76。v0.50 で DV1〜DV5 の 5 件を加えた（docs/mew-devolution-spray-v0.50.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (115, 116))  # v0.51 で RV1・FT1、v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.51 で RV1・FT1、v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
 
 
 # ---------------------------------------------------------------- ［サイコリンク］・メガバーン
@@ -1034,7 +1034,7 @@ class ObservationAndSerializationTest(unittest.TestCase):
     def test_format_14_and_older_formats(self):
         """「ばける」でのせたカード・「思い出させる」の記録・ほかのカードのワザが与えた効果は形式 14 で書き出す。形式 1〜13 は書き出せない（``ValueError``。黙って落とさない）。
         どれもなければ形式 13 と同じ。v0.50 で形式 15（退化した番。``devolved_turn``）を加えた（退化していなければ None）。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 18)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）を加えた
+        self.assertEqual(max(FORMAT_VERSIONS), 20)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
         plain = ninetales_board()
         latest, older = state_to_dict(plain, format_version=14), state_to_dict(plain, format_version=13)
         self.assertEqual(latest["recalls"], [])

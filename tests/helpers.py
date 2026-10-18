@@ -608,6 +608,39 @@ RAINBOW_ENERGY = "PMCG4-065"  # レインボーエネルギー（ロケット団
 V0_58_POKEMON = (BROCKS_GRAVELER, BROCKS_GOLEM)
 V0_58_ENERGIES = (DOUBLE_COLORLESS_ENERGY, POTION_ENERGY, FULL_HEAL_ENERGY, RAINBOW_ENERGY)
 V0_58_CARDS = (BROCKS_GRAVELER, BROCKS_GOLEM, SABRINAS_PSYCHIC_CONTROL, *V0_58_ENERGIES)
+# v0.59（docs/energy-control-power-suppression-v0.59.md）。特殊能力を止める効果・エネルギーの扱いを変える 6 枚
+BUZZAP_ELECTRODE = "PMCG1-040"  # マルマイン（第1弾。040/096。ビリリダマから進化。HP 80・雷・弱点 闘・にげる 1。［エネエネ］・でんげき（雷雷雷）50）。ELECTRODE（第2弾）と別のカード
+BLAINE_TRAINER = "PMCG6-093"  # カツラ（闇からの挑戦。085/000。トレーナー）。「カツラの」ポケモン・カツラの奥の手・カツラのギャンブルと別のカード
+BROCKS_PROTECTION = "PMCG5-090"  # タケシの保護（リーダーズスタジアム。070/096。トレーナー）
+MISTYS_TENTACOOL = "PMCG5-030"  # カスミのメノクラゲ（リーダーズスタジアム。025/096。HP 50・水・弱点 雷・にげる 1。クリスタルビーム（水無）20）。TENTACOOL と別の名前
+DARK_ARBOK = "PMCG4-008"  # わるいアーボック（ロケット団。002/065。アーボから進化。HP 60・草・弱点 超・にげる 2。ショックアイ（草草）・どくのきり（草草草）10）
+GOOP_GAS_ATTACK = "PMCG4-056"  # まきちらせ!ベトベトガス（ロケット団。059/065。トレーナー）
+V0_59_POKEMON = (BUZZAP_ELECTRODE, MISTYS_TENTACOOL, DARK_ARBOK)
+V0_59_TRAINERS = (BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK)
+V0_59_CARDS = (BUZZAP_ELECTRODE, BLAINE_TRAINER, BROCKS_PROTECTION, MISTYS_TENTACOOL, DARK_ARBOK, GOOP_GAS_ATTACK)
+# v0.60（docs/coins-defense-rebellion-v0.60.md）。控えへのコイン・ダメージを受けない効果・攻撃するときの特殊能力・相手の効果を受けないダメージの 4 枚
+FOSSIL_ZAPDOS = "PMCG3-026"  # サンダー（化石の秘密。026/048。HP 80・雷・抵抗力 闘・にげる 2。サンダーストーム（雷雷雷雷）40）。第1弾のサンダー ZAPDOS と別のカード
+ROCKETS_SCYTHER = "PMCG5-016"  # R団のストライク（リーダーズスタジアム。001/096。HP 60・草・弱点 炎・抵抗力 闘・にげる 1。かげぶんしん（草）・こうそくカマ（草無無）40）
+MISTYS_GYARADOS = "PMCG5-035"  # カスミのギャラドス（リーダーズスタジアム。035/096。カスミのコイキングから進化。HP 100・水・弱点 草・抵抗力 闘・にげる 3。［はんこう］・ハイドロクラッシュ（水水水水）70）
+BROCKS_SANDSLASH = "PMCG5-050"  # タケシのサンドパン（リーダーズスタジアム。045/096。タケシのサンドから進化。HP 70・闘・弱点 草・抵抗力 雷・にげる 1。スピードスター（闘無）20・とげボール（闘闘）30）
+V0_60_POKEMON = (FOSSIL_ZAPDOS, ROCKETS_SCYTHER, MISTYS_GYARADOS, BROCKS_SANDSLASH)
+V0_60_CARDS = V0_60_POKEMON
+# v0.61（docs/reactive-powers-trainer-damage-v0.61.md）。ワザ・にげる・残りHPではたらく特殊能力とトレーナーのダメージの 4 枚
+DARK_GYARADOS = "PMCG4-025"  # わるいギャラドス（ロケット団。024/065。コイキングから進化。HP 70・水・弱点 草・抵抗力 闘・にげる 2。［ファイナルビーム］・れいとうビーム（水水水）30）
+DARK_DUGTRIO = "PMCG4-043"  # わるいダグトリオ（ロケット団。039/065。ディグダから進化。HP 50・闘・弱点 草・抵抗力 雷・にげる 2。［おとしあな］・つきおとす（闘闘）20+）
+BROCKS_PRIMEAPE = "PMCG5-051"  # タケシのオコリザル（リーダーズスタジアム。048/096。タケシのマンキーから進化。HP 70・闘・弱点 超・にげる 1。［ずらかる］・おおあばれ（闘闘闘）60）
+DIGGER = "PMCG4-055"  # バトル場は穴だらけ!（ロケット団。057/065。トレーナー。kyuura の種類 rockets_secret_machine）
+V0_61_POKEMON = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE)
+V0_61_CARDS = (DARK_GYARADOS, DARK_DUGTRIO, BROCKS_PRIMEAPE, DIGGER)
+# v0.62（docs/history-attacks-v0.62.md）。前の番のワザの履歴を読むワザ・相手を手札にもどすワザの 5 枚と、確定した修正を当てはめたベロリンガ
+PIDGEOTTO = "PMCG1-066"  # ピジョン（第1弾。060/096。ポッポから進化。HP 60・無色・弱点 雷・抵抗力 闘・にげる 1。ふきとばし（無無）20・オウムがえし（無無無））
+SPEAROW = "PMCG2-034"  # オニスズメ（ポケモンジャングル。035/048。HP 50・無色・弱点 雷・抵抗力 闘・にげる 0。つつく（無）10・オウムがえし（無無無））
+FEAROW = "PMCG2-038"  # オニドリル（ポケモンジャングル。036/048。オニスズメから進化。HP 70・無色・弱点 雷・抵抗力 闘・にげる 0。こうそくいどう（無無無）20・ドリルくちばし（無無無無）40）
+PIDGEOT = "PMCG2-043"  # ピジョット（ポケモンジャングル。034/048。ピジョンから進化。HP 80・無色・弱点 雷・抵抗力 闘・にげる 0。つばさでうつ（無無）20・ハリケーン（無無無）30）
+BROCKS_DUGTRIO = "PMCG6-060"  # タケシのダグトリオ（闇からの挑戦。056/098。タケシのディグダから進化。HP 60・闘・弱点 草・抵抗力 雷・にげる 1。あながくれ（闘）・ドリルホール（闘闘無）60）
+LICKITUNG = "PMCG2-041"  # ベロリンガ（ポケモンジャングル。043/048。HP 90・無色・弱点 闘・抵抗力 超・にげる 3。まきつくベロ（無）10・ちょうおんぱ（無無））
+V0_62_POKEMON = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
+V0_62_CARDS = V0_62_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1142,6 +1175,18 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.52（docs/field-return-v0.52.md）
     _effects.ReturnBothActivesToDeck,  # エリカのハクリューの「つれさる」
     _effects.SelfDestructThenDiscardStadium,  # v0.58: タケシのゴローンの「ばくれつ」（v0.39 のじばく + 場のスタジアムをトラッシュする要素 DiscardStadium）
+    _effects.ChooseOpponentPokemonDamageAndPowerLock,  # v0.59: わるいアーボックの「ショックアイ」（相手の場のポケモン 1 匹に 10 + 持続する効果 CannotUsePowers）
+    _effects.DamagePoisonAndBenchDamage,  # v0.59: わるいアーボックの「どくのきり」
+    _effects.DamageThenAttachLockOnHeads,  # v0.59: カスミのメノクラゲの「クリスタルビーム」（持続する効果 CannotAttachEnergy）
+    _effects.DamageThenCoinPerOpponentBench,  # v0.60: サンダーの「サンダーストーム」（控えごとのコインと、同じコインの「うら」の数の自分へのダメージ。新しい要素 CoinPerOpponentBench）
+    _effects.SelfTailsDamageGuard,  # v0.60: R団のストライクの「かげぶんしん」（持続する効果 TailsDamageGuard）
+    _effects.DamageIgnoringDefenderEffects,  # v0.60: タケシのサンドパンの「スピードスター」（Damage の defender_effects）
+    _effects.OpponentCoinTailsBonusDamage,  # v0.61: わるいダグトリオの「つきおとす」（相手が投げるコインの「うら」で追加。値 OpponentTailsBonus）
+    _effects.DamageSelfDamageThenDiscardStadium,  # v0.61: タケシのオコリザルの「おおあばれ」（相手 → 自分 → スタジアムのトラッシュ）
+    _effects.DamageIfUsedAttackLastTurn,  # v0.62: タケシのダグトリオの「ドリルホール」（前の自分の番に使ったワザの記録 A）
+    _effects.RepeatReceivedAttack,  # v0.62: ピジョンの「オウムがえし」（前の相手の番に受けたワザの記録 B）
+    _effects.ReflectReceivedDamageAndEffects,  # v0.62: オニスズメの「オウムがえし」（前の相手の番に受けた結果の記録 C）
+    _effects.DamageThenReturnOpponentToHand,  # v0.62: ピジョットの「ハリケーン」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1258,6 +1303,8 @@ def trainer_policy_command(state: GameState, *, janken_winner: int = 0):
         options = [o for o in d.options if o not in unresolved]
         if d.context_value("use", (None, None, None))[2] == POTION:
             options.sort(key=lambda pid: -state.find_pokemon(pid)[1].damage)
+        if not options and d.min_choices == 0:
+            return ResolveDecision(d.player, d.id, ())  # v0.61: 使うと止める［ファイナルビーム］など、選ばない（使わない）だけが答えになる決定
         return ResolveDecision(d.player, d.id, (options[0],))
     if state.phase is Phase.MAIN:
         command = trainer_command(state)

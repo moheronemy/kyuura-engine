@@ -53,11 +53,15 @@ class PlayBasicToBench:
 
 @dataclass(frozen=True)
 class AttachEnergy:
-    """手札のエネルギーカードを自分の場のポケモンにつける（p.310）。"""
+    """手札のエネルギーカードを自分の場のポケモンにつける（p.310）。
+
+    v0.59（docs/energy-control-power-suppression-v0.59.md 4 章）: ``energy2`` は、トレーナー「カツラ」の効果（この番だけ、手札から「カツラのポケモン」につける「炎」
+    エネルギーカードの枚数を 1 枚でなく 2 枚にする）で、同じ 1 回の操作でいっしょにつける 2 枚目の「炎」エネルギーカード。None（既定。v0.58 までの形）なら 1 枚。"""
 
     player: int
     energy: int
     target: int
+    energy2: int | None = None
 
 
 @dataclass(frozen=True)
@@ -299,7 +303,7 @@ def check_command_fields(command) -> None:
 
 
 # v0.49: v0.48 までの形を変えないため、既定の値（None）のときは辞書に書かない項目（``UseAttack.card``・``UsePokemonPower.card``）
-_OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",)}
+_OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",), AttachEnergy: ("energy2",)}  # v0.59: AttachEnergy.energy2
 # v0.57: 同じく、既定の値（False）のときは辞書に書かない項目（``UseAttack.stadium_coin``。v0.56 までの形を変えない）
 _OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin",)}
 

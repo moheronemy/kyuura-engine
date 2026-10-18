@@ -67,7 +67,8 @@ MUTANTS: tuple[Mutant, ...] = (
            '        pass',
            origin='v0.15d'),
     Mutant('M04', 'かがくへんかガスを見ない', R + 'catalog.py',
-           '    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not suppressors(state, instance)',
+           # v0.59: かがくへんかガスとまきちらせ!ベトベトガスの確認を ``stopped`` にまとめたので、同じ誤り（はたらいているかでガスを見ない）をその呼び出しに入れる
+           '    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not stopped(state, instance)',
            '    return not blocked_by_status(instance, pokemon) and active_now(state, instance)',
            origin='v0.15d'),
     Mutant('M05', '持続する効果のはたらく番を見ない', R + 'catalog.py',
@@ -116,9 +117,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        if False:',
            origin='v0.15d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（上限を超えても受け付ける）を今の行に入れる
     Mutant('M16', 'ダメージを受けない状態を見ない', R + 'kernel.py',
-           '    void = first_void(res, receiver_player, receiver)\n    if void is not None:',
-           '    void = first_void(res, receiver_player, receiver)\n    if False:',
-           origin='v0.15d'),
+           '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if void is not None:',
+           '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if False:',
+           origin='v0.15d'),  # v0.60: 元の行に「スピードスター」の引数が加わったので、同じ誤り（無効を見ない）を今の行に入れる
     Mutant('M17', '解決の記録で結果を決める', R + 'kernel.py',
            '    frames = {res.knocked_by[pokemon.pokemon_id] for _, pokemon in knocked(res) if pokemon.pokemon_id in res.knocked_by}',
            '    recorded = {e.pid: e.frame for e in res.trace.of(KnockedOutRecorded)}\n    frames = {recorded[pokemon.pokemon_id] for _, pokemon in knocked(res) if pokemon.pokemon_id in recorded}',
@@ -128,8 +129,8 @@ MUTANTS: tuple[Mutant, ...] = (
            '    return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target] + 10, target, res.state)',
            origin='v0.15d'),
     Mutant('M19', '複製でなく渡された状態を変える', 'kyuura_engine/engine.py',
-           '    new = state.clone()\n    handler(new, command,',
-           '    new = state\n    handler(new, command,',
+           '    new = state.clone()\n    if _probes_receipts(state, command):',  # v0.62: 複製と処理のあいだに、ワザ以外で受けたことの比べを開く
+           '    new = state\n    if _probes_receipts(state, command):',
            origin='v0.15d'),
     Mutant('M20', 'こんじょうの決定への答えを解決の基盤に送らない', 'kyuura_engine/engine.py',
            '    if decision.resume in resolution.RESUMES:',
@@ -249,9 +250,11 @@ MUTANTS: tuple[Mutant, ...] = (
 
     # ---- v0.18e（研究との対応・Z23 の場合分け・窓の途中の決定の前提・ナツメのヤドン）
     Mutant('V01', 'Z23 の理由の文で場合を取り違える（要素が無効と最終ダメージが 0）', 'kyuura_engine/effects.py',
-           '    why = "「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded else "最終ダメージが 0"',
-           '    why = "最終ダメージが 0" if result.prevented else "「とうめい」で受けなかった" if result.evaded else "「ダメージを受けない」状態で無効"',
-           origin='v0.18e'),
+           '    why = ("「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded\n'
+           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged else "最終ダメージが 0")',
+           '    why = ("最終ダメージが 0" if result.prevented else "「とうめい」で受けなかった" if result.evaded\n'
+           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged else "「ダメージを受けない」状態で無効")',
+           origin='v0.18e'),  # v0.60: 元の行に「かげぶんしん」の場合を加えて 2 行にしたので、同じ誤り（無効と最終ダメージ 0 を取り違える）を今の 2 行に入れる
     Mutant('V02', '送る効果が残っていてもワザの途中の決定を出す（窓の途中で黙って止まる）', R + 'programs.py',
            '        if self.fs.pending and not carry:\n            raise RuntimeError("決定の前に送る効果が残っている',
            '        if False:\n            raise RuntimeError("決定の前に送る効果が残っている',

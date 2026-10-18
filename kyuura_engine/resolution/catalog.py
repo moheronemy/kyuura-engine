@@ -19,8 +19,9 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 from .. import effects as E
-from ..continuous import suppressors_of
-from ..decisions import KO_PREVENTION, POST_KNOCKOUT_POWER
+from ..continuous import goop_gas_effects, suppressors_of
+from ..persistent import powers_use_prevented
+from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER
 from ..state import AttackBarrier, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
@@ -135,6 +136,13 @@ DEFENSIVE_POLLEN = EffectDefinition(
     frozenset(), "on_damage", True, "damage_source", "power_confusion_to_damage_source", frozenset({DamageClass.ATTACK}), False,
     active_only=True,
 )
+# v0.61: わるいギャラドスの［ファイナルビーム］。こんじょうと同じ言い回し（「…「きぜつ」する時」）の任意の効果で、きぜつの判定の窓で持ち主に決定で聞く（決定の種類は
+# ``KNOCK_OUT_POWER``。こんじょうの ``KO_PREVENTION`` と分ける）。特殊状態はきぜつの判定の時点（「状態のまま「きぜつ」する時」）。候補は ``kernel.knock_out_power_offers``
+# （相手のワザ（ワザの分類の枠）で HP 以上になったポケモン。「ダメージを受けるとき」の写しはない）
+FINAL_BEAM = EffectDefinition(
+    "final_beam", Origin.PRINTED_POWER, Mode.OPTIONAL, Timing.OFFER, frozenset({Window.KO_CHECK}), BLOCKING_CONDITIONS, "on_knock_out", True,
+    "damage_source", "beam_on_knock_out", frozenset({DamageClass.ATTACK}), True, KNOCK_OUT_POWER,
+)
 RETALIATION = EffectDefinition(
     "retaliation", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
     frozenset(), "now", False, "damage_source", "attack_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
@@ -156,6 +164,7 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.ReturnToHandOnKnockOut, REBIRTH),
     (E.SuppressOtherPowers, CHEMICAL_GAS),
     (E.ConfuseDamageSourceOnHeads, DEFENSIVE_POLLEN),  # v0.42
+    (E.BeamOnKnockOut, FINAL_BEAM),  # v0.61
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
@@ -232,6 +241,20 @@ def suppressors(state: GameState, instance: EffectInstance) -> tuple[int, ...]:
     return suppressors_of(state, instance.power)
 
 
+def stopped(state: GameState, instance: EffectInstance) -> bool:
+    """この効果（印刷された特殊能力）が今「使えず、その力も消え」ているか（v0.59）: かがくへんかガス（``suppressors``）か、まきちらせ!ベトベトガスの効果
+    （``continuous.goop_gas_effects``）。印刷された特殊能力でない効果・消えない効果は False。"""
+    if instance.definition.origin is not Origin.PRINTED_POWER or not instance.definition.suppressible:
+        return False
+    return bool(goop_gas_effects(state)) or bool(suppressors_of(state, instance.power))
+
+
+def offer_stopped(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:
+    """宣言して使う任意の効果（こんじょう・ふしちょう。``Timing.OFFER``）を ``pokemon`` が今使えないか（v0.59）: ``stopped`` か、「ショックアイ」で特殊能力を使うことが
+    できない（``persistent.powers_use_prevented``。宣言して使う特殊能力の使用だけを止める。CR-CHEMICAL-GAS-USE-VS-POWER）。"""
+    return stopped(state, instance) or (instance.definition.origin is Origin.PRINTED_POWER and powers_use_prevented(state, pokemon) is not None)
+
+
 def active_now(state: GameState, instance: EffectInstance) -> bool:
     """持続する効果なら、はたらく番が今の番か（p.82・p.89・p.18「次の相手の番」）。印刷された特殊能力はいつも True。"""
     if instance.definition.origin is Origin.PERSISTENT_EFFECT:
@@ -241,7 +264,7 @@ def active_now(state: GameState, instance: EffectInstance) -> bool:
 
 def working(state: GameState, instance: EffectInstance, pokemon: PokemonInPlay) -> bool:
     """今の時点ではたらいているか（特殊状態・ガス・はたらく番）。"""
-    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not suppressors(state, instance)
+    return not blocked_by_status(instance, pokemon) and active_now(state, instance) and not stopped(state, instance)
 
 
 @dataclass(frozen=True)

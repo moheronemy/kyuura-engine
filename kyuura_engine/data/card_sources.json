@@ -15228,6 +15228,908 @@
         }
       ],
       "notes": "v0.58 で加えた。特殊エネルギー（「無色」エネルギー 2 個。1 枚で 2 個を出し、にげるでは分けてトラッシュできない）。処理に使う文面はない（日本語の説明がない）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（ERR-ENERGY-RETRIEVAL がエネルギー回収で拾えない特殊エネルギーの例として名前を挙げる）。同じ名前のデッキの枚数は 4 枚まで（GR-2000-P308-SAME-NAME。基本エネルギーだけが制限なし）（docs/stadium-reuse-special-energy-v0.58.md 3 章）"
+    },
+    "PMCG1-040": {
+      "basis": "kyuura_data",
+      "name_ja": "マルマイン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1040.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "040/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）。特殊能力の名前・説明文も比べた"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。［エネエネ］は宣言して使う特殊能力 ConvertSelfToEnergy（自分で「きぜつ」し、同じ uid のカードを自分の場のほかのポケモンにエネルギー 2 個分としてつける。state.EnergyRole）。相手のポケモンにつける（BZ1）・場のポケモンについたあとのそのカードのタイプを数える場面（BZ2）・基本エネルギーの 6 色のほかの色（BZ3）・「ばける」でのせたカードとして使う（BZ4）は決まらないので止める。2000年3月の『トレーナーズ』の説明（8 色）は 2000.02.14 版のあとの記録なので使わない。でんげきは SelfDamageOnTails(10)。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG6-093": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2085.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "085/000"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類「トレーナー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトのカードページの番号の表示は「085/000」（収録の総数の欄が 000。サイトの表示のまま書いた）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。TrainerTurnEffectTrainer（種類 fire_double_attach。この番だけ）。手札からつける通常の操作 1 回で、手札の「炎」エネルギーカード 2 枚を同じ「カツラのポケモン」につける（AttachEnergy.energy2）。1 枚目をつけたあとに 2 枚目を別の操作でつける場面は決まらない（BL1）。英語版の「(Playing additional copies of this card this turn has no effect.)」は根拠にしない（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG5-090": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシの保護",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1070.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "070/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類「トレーナー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。ProtectAttachedEnergy（自分の場の「タケシのポケモン」につけ、場をはなれるまでついたまま。つけているポケモンのエネルギーカードは、相手の使うワザ・トレーナーカードではがされない（トラッシュ・つけかえ・手札にもどす）。効果のほかの部分ははたらく）。つけるポケモンがいなければ TR1 を使う（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG5-030": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのメノクラゲ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1025.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "025/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。クリスタルビームは DamageThenAttachLockOnHeads（ダメージ → コイン →「おもて」なら相手に与える持続する効果 CannotAttachEnergy。次の相手の番）。手札からつける通常の操作・カツラ・あまごい・ワザでつける効果を止める。場のエネルギーのつけかえ・［エネエネ］がこれに当たるかは決まらない（CB1）（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG4-008": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいアーボック",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4002.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "002/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）。ショックアイのダメージの欄は空（写しも null）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。ショックアイは ChooseOpponentPokemonDamageAndPowerLock（相手の場のポケモン 1 匹に弱点・抵抗力に関係なく 10 → 持続する効果 CannotUsePowers。与えた番から次の相手の番の終わりまで、宣言して使う特殊能力を使えない。常にはたらく・自動的にはたらく力は消さない。kyuura の CR-CHEMICAL-GAS-USE-VS-POWER の読み方）。英語版の「that power stops working」は根拠にしない。どくのきりは DamagePoisonAndBenchDamage(10)。進化元はアーボ（名前の完全一致）（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG4-056": {
+      "basis": "kyuura_data",
+      "name_ja": "まきちらせ!ベトベトガス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4059.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "059/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "name.ja",
+              "kyuura": "まきちらせ!ベトベトガス",
+              "pcg_search": "まきちらせ! ベトベトガス",
+              "affects_behavior": false,
+              "note": "「!」のあとの空白の有無だけ。kyuura の写しの notes にも「「!」の後の空白の有無はデータにより異なる」とある。名前は処理に使わない"
+            },
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使うことができず、その力も消える。",
+              "pcg_search": "次の相手の番が終わるまで、すべてのポケモンは特殊能力を使うことができず、その力も消える。",
+              "affects_behavior": false,
+              "note": "サイトの説明文に「おたがいの場の」がない。どちらの文面でも、止める範囲が使った時点で場にいるポケモンだけか、あとから場に出たポケモンも含むかは決まらず（GG1）、エンジンは、効果のはたらく間に特殊能力を持つポケモンが場に出る・進化する・退化する操作を止めるので、場のポケモンの扱いはどちらの文面でも同じ。kyuura への報告事項（kyuura のデータは直さない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類「トレーナー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.59 で加えた。TrainerTurnEffectTrainer（種類 power_suppression。使った番から次の相手の番の終わりまで、場のすべての特殊能力を使えず、その力も消える。かがくへんかガスも消える（p.265 の解説の記録 CR-POWER-BACK-AFTER-RECOVERY）。止める範囲（kyuura の card_differences の PMCG4-056。確度は有力）が決まらないので、効果のはたらく間に特殊能力を持つポケモンが場に出る・進化する・退化する操作は GG1 で止める。錯乱ジムで相手が使う場面は CH1（docs/energy-control-power-suppression-v0.59.md）"
+    },
+    "PMCG3-026": {
+      "basis": "kyuura_data",
+      "name_ja": "サンダー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st3026.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第3弾 拡張パック「化石の秘密」",
+            "list_number": "026/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。同じ名前の別の版（第1弾のサンダー PMCG1-016 など。サイトの一覧では HP 90 ほか）ではなく、収録・一覧の番号・HP 80・ワザ（サンダーストーム）で版を決めた"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.60 で加えた。サンダーストームは DamageThenCoinPerOpponentBench(20, 10)（相手に 40 → 相手の控えそれぞれに 1 枚ずつコインを投げ、「おもて」の控えに弱点・抵抗力に関係なく 20 → 同じコインの「うら」の数 × 10 を自分に）。コインと控えの対応を持つ（「おもて」の数でまとめない）。「とうめい」の控えのあとに控えがいる場面は TS1。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/coins-defense-rebellion-v0.60.md）"
+    },
+    "PMCG5-016": {
+      "basis": "kyuura_data",
+      "name_ja": "R団のストライク",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1001.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "001/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].text.ja",
+              "kyuura": "これ以降、このカードが相手のワザによるダメージを受ける時、相手プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は、そのまま)。このカードがダメージを受けるか、バトル場をはなれた時、この効果は消える。",
+              "pcg_search": "これ以後、このカードが相手のワザによるダメージを受ける時、相手プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は、そのまま)。このカードがダメージを受けるか、バトル場をはなれた時、この効果は消える。",
+              "affects_behavior": false,
+              "note": "説明文の最初の「これ以降」と「これ以後」の違いだけ（同じ意味）。ほかの部分は同じ。kyuura への報告事項（kyuura のデータは直さない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。こうそくカマは説明文がない（サイトも同じ）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.60 で加えた。かげぶんしんは SelfTailsDamageGuard（自分に持続する効果 state.TailsDamageGuard。相手のワザのダメージ（最終ダメージが 0 より大きい）を受ける時に相手プレイヤーがコイン、「うら」ならそのダメージを受けない。ダメージ以外の効果は受ける。実際にダメージを受けるか、バトル場をはなれると消える）。こうそくカマは DAMAGE_ONLY。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/coins-defense-rebellion-v0.60.md）"
+    },
+    "PMCG5-035": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのギャラドス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1035.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "035/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.powers[0].text.ja",
+              "kyuura": "このカードがワザを使う時、コインを2枚投げる。コインがすべて「うら」なら、そのワザは失敗となり、このカードと、これについているすべてのカードを山札にもどし、その山札をよく切る。この力は、このカードが「こんらん」状態でも、必ずはたらく。",
+              "pcg_search": "このカードがワザを使う時、コインを2枚投げる。コインがすべて「うち」なら、そのワザは失敗となり、このカードと、これについているすべてのカードを山札にもどし、その山札をよく切る。この力は、このカードが「こんらん」状態でも、必ずはたらく。",
+              "affects_behavior": false,
+              "note": "サイトの説明文の「うち」は「うら」の誤記と読める（コインの面は「おもて」「うら」だけ）。ほかの部分は同じ。挙動は kyuura の文面（「うら」）で決めた。kyuura への報告事項ではない（サイトの表記の違い）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。特殊能力の名前・説明文も比べた。ハイドロクラッシュは説明文がない（サイトも同じ）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.60 で加えた。［はんこう］は自動的にはたらく特殊能力 FailAndReturnOnAttack（p.309 の手順 4 の効果として、宣言のあと・こんらんのコインの前に持ち主がコイン 2 枚。すべて「うら」ならワザは失敗し、このカードとついているカードを山札にもどして切る。きぜつではない。こんらんでもはたらく。かがくへんかガス・まきちらせ!ベトベトガスで消える。ほかの手順 4 の効果と重なれば AC13）。ハイドロクラッシュは DAMAGE_ONLY。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（kyuura の rule_history.json の「ポケボディー」のカードの一覧にある［はんこう］は後年の規定の記録なので使わない）（docs/coins-defense-rebellion-v0.60.md）"
+    },
+    "PMCG5-050": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのサンドパン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1045.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "045/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.60 で加えた。スピードスターは DamageIgnoringDefenderEffects（Damage の defender_effects=False。相手の対戦ポケモン自身が持っている弱点・抵抗力・ついているトレーナー・持続する効果・特殊能力を当てはめない。ワザを使うポケモン・場・スタジアムの効果は当てはめる。ダメージのあとの相手の反応は今までどおり。相手の場のほかのポケモンの常にはたらく特殊能力で結果が変わる場面は SS1）。とげボールは v0.3a の PoisonOnHeads。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/coins-defense-rebellion-v0.60.md）"
+    },
+    "PMCG4-025": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいギャラドス",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4024.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "024/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.powers[0].text.ja",
+              "kyuura": "この力は、このカードが相手のワザによって「きぜつ」する時、1度だけ使える。コインを投げて「おもて」なら、このカードを「きぜつ」させたポケモンに、このカードについている「水」エネルギーの数×20のダメージ。このカードが、「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
+              "pcg_search": "この力は、このカードが相手のワザによって「きぜつ」する時、1度だけ使える。コインを投げて「おもて」なら、このカードを「きぜつ」させたポケモンに、このカードについている「水」エネルギーの数×20のダメージ。このカードが「ねむり・マヒ・こんらん」状態のまま「きぜつ」する時、この力は使えない。",
+              "affects_behavior": false,
+              "note": "サイトの説明文は「このカードが「ねむり・マヒ・こんらん」状態のまま」（読点がない）。句読点の違いだけで、処理（きぜつする時の特殊状態で使えない）は変わらない。挙動は kyuura の文面で決めた"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・特殊能力の名前と説明文・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.61 で加えた。［ファイナルビーム］は宣言して使う任意の特殊能力 BeamOnKnockOut（相手のワザによって「きぜつ」する時、ワザのあとのきぜつの判定で持ち主に決定 knock_out_power を出す。使うならコイン 1 枚。「おもて」なら、きぜつさせたポケモンに、ついている「水」エネルギーの数 × 20 の特殊能力のダメージ。ねむり・マヒ・こんらん・かがくへんかガス・まきちらせ!ベトベトガス・ショックアイのとき使えない。弱点・抵抗力が書かれていないので、受けるポケモンの弱点・抵抗力が「水」なら Z9。レインボーエネルギーは RB1、［エネエネ］のカードは BZ2。そのダメージで相手もきぜつし、勝ち負けが変わるなら C18 と同じ問い）。れいとうビームは v0.4a のジュゴンと同じ ParalyzeOnHeads。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（kyuura の rule_history.json の「ポケボディー」のカードの一覧の［ファイナルビーム］は後年の規定の記録なので使わない）（docs/reactive-powers-trainer-damage-v0.61.md）"
+    },
+    "PMCG4-043": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいダグトリオ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4039.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "039/065"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・特殊能力の名前と説明文・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.61 で加えた。［おとしあな］は自動的にはたらく特殊能力 DamageOnOpponentRetreat（相手が「にげる」とき、入れ替えのあとに、にげたプレイヤーがコイン 1 枚。「うら」ならにげたポケモンに（弱点・抵抗力に関係なく）20 の特殊能力のダメージ。ポケモンいれかえなどの入れ替えでははたらかない。にげられなくする効果はない。ねむり・マヒ・こんらん・かがくへんかガス・まきちらせ!ベトベトガスで力が消える。こんらん状態の「にげる」と、入れ替えの前か後かで受けるダメージが変わる場合は SH1）。つきおとすは OpponentCoinTailsBonusDamage（相手プレイヤーが 1 枚投げ、「うら」なら 20 を追加。v0.40 の OpponentFlipsTailsDamage とは別の型）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/reactive-powers-trainer-damage-v0.61.md）"
+    },
+    "PMCG5-051": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのオコリザル",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "kyuura_printed_text",
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1048.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "048/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・特殊能力の名前と説明文・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.61 で加えた。［ずらかる］は自動的にはたらく特殊能力 ReturnToDeckAtRemainingHp（残りHPがちょうど「10」になった時、決まった時点（ワザのダメージの処理のまとまりのあと・ダメージ以外の要素のあと・きぜつの判定の前・特殊能力・エネルギー・トレーナー・にげる・どくのあと）で、このカードとついているすべてのカードを山札にもどして切る。きぜつではない。ねむり・マヒ・こんらん・かがくへんかガス・まきちらせ!ベトベトガスではたらかない。ワザの中ではたらく時点で結果が変わる場合は SC1、力が消えていたあいだに「10」になって力がもどった場合は SC2）。おおあばれは DamageSelfDamageThenDiscardStadium（相手 → 自分にも 20 → 場のスタジアムをトラッシュ。自分へのダメージで［ずらかる］がはたらいてもスタジアムのトラッシュは続ける）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/reactive-powers-trainer-damage-v0.61.md）"
+    },
+    "PMCG4-055": {
+      "basis": "kyuura_data",
+      "name_ja": "バトル場は穴だらけ!",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st4057.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第4弾 拡張パック「ロケット団」",
+            "list_number": "057/065"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "お互いのプレイヤーは交互にコインを投げ、先に「うら」を出したプレイヤーの対戦ポケモンに(「弱点・抵抗力」に関係なく)10ダメージ。(最初にコインを投げるのは、このカードを使ったプレイヤー)",
+              "pcg_search": "お互いのプレイヤーは交互にコインを投げ、先に「うら」を出したプレイヤーの対戦ポケモンに(「弱点・抵抗カ」に関係なく)10ダメージ。(最初にコインを投げるのは、このカードを使ったプレイヤー)",
+              "affects_behavior": false,
+              "note": "サイトの説明文は「抵抗カ」（カタカナの「カ」）。「抵抗力」の誤記と読める。挙動は kyuura の文面で決めた。kyuura への報告事項ではない（サイトの表記の違い）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類「トレーナー」・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.61 で加えた。AlternateCoinsUntilTailsDamage（実際に使ったプレイヤーから交互にコインを投げ、先に「うら」を出したプレイヤーの対戦ポケモンに（弱点・抵抗力に関係なく）10 のトレーナーのダメージ。コインの枚数に上限をつけない。「ダメージを受けない」状態なら受けない（v0.28 の p.235 のラッキーの解説）。受けるダメージを変えるほかの効果で量が変わるなら TD1。コインの前に、どちらが受けても止まらないことを確かめる。きぜつ・サイド・勝ち負けは使い終えてから）。kyuura の種類 rockets_secret_machine だけを持つ（secret_machine_ok）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（kyuura の curation/trainers.json の記録（確度: 有力）は印刷の文面と同じ内容）（docs/reactive-powers-trainer-damage-v0.61.md）"
+    },
+    "PMCG1-066": {
+      "basis": "kyuura_data",
+      "name_ja": "ピジョン",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st1060.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第1弾 拡張パック",
+            "list_number": "060/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。ふきとばしはバタフリー（PMCG2-007）と書き方の違う同じ意味の説明（相手が選ぶ控えと入れ替える。控えがいなければダメージだけ）で、既存の DamageAndForceSwitch。オウムがえしは RepeatReceivedAttack（前の相手の番に受けた記録の B の処理したワザを、このカードのワザとして出す。今の相手のワザから選び直さない。受けたワザが決まらない場合は MM1、必要なエネルギー・使うための条件は MM2）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・論点の記録はない（CR-SHELL-ATTACK-WHIRLWIND の notes がピジョンのふきとばしのダメージの目安に触れるだけ）（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG2-034": {
+      "basis": "kyuura_data",
+      "name_ja": "オニスズメ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2035.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "035/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[1].text.ja",
+              "kyuura": "前の相手の番に、このカードが受けたダメージと効果を【相手】に与える。「オウムがえし」の効果は1回で消える。",
+              "pcg_search": "前の相手の番に、このカードが受けたダメージと効果を相手に与える。「オウムがえし」の効果は1回で消える。",
+              "affects_behavior": false,
+              "note": "kyuura の文面は「【相手】」（すみ付き括弧）、サイトは「相手」。どちらも相手の対戦ポケモンを指す表記の違いで、処理は変わらない。挙動は kyuura の文面で決めた。kyuura への報告事項ではない（表記の違い）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。つつくは説明文のないワザ（DamageOnly）。オウムがえしは ReflectReceivedDamageAndEffects（前の相手の番に受けた記録の C（受けた最終ダメージ・マヒ）を、このワザのダメージ・効果として相手に与える。続く効果は OM1、ワザ以外で受けたものは OM2、ほかの効果はエンジンの未対応）。kyuura の説明の「【相手】」はサイトでは「相手」（括弧の表記の違い）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG2-038": {
+      "basis": "kyuura_data",
+      "name_ja": "オニドリル",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2036.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "036/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。こうそくいどうはギャロップ（PMCG2-019）と同じ文面の DamageThenSelfBarrierOnHeads（ダメージ → コインの「おもて」で次の相手の番にワザをうけない）。ドリルくちばしは説明文のないワザ（DamageOnly）。オニスズメから進化する（進化すると受けた・使ったワザの履歴は消える。p.310 の別のポケモン）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG2-043": {
+      "basis": "kyuura_data",
+      "name_ja": "ピジョット",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2034.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "034/048"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。つばさでうつは説明文のないワザ（DamageOnly）。ハリケーンは DamageThenReturnOpponentToHand（ダメージ → 相手の対戦ポケモンが「きぜつ」しなければ、ついているすべてのカードとともに持ち主の手札にもどす。v0.42 の zones.return_in_play_to_hand。こんじょうを使えるなら G37、同じワザで HP 以上のポケモンがいれば RD9、［ずらかる］は SC1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG6-060": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのダグトリオ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2056.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "056/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。あながくれは化石の秘密のベトベターの「ちいさくなる」と同じ意味の ReduceDamageNextTurn(20)（受けるダメージ −20。8 段階。「「-20」される」の書き方を受け付ける一覧に加えた）。ドリルホールは DamageIfUsedAttackLastTurn（前の自分の番に、このカードが「あながくれ」を宣言していた時だけ使える。使った記録の A。ほかのワザで自分のワザとして使った記録は ED1）。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない（docs/history-attacks-v0.62.md）"
+    },
+    "PMCG2-041": {
+      "basis": "kyuura_data",
+      "name_ja": "ベロリンガ",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-18",
+      "kyuura_records": [
+        "CC-PMCG2-041-P234"
+      ],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1st2043.php",
+          "checked_on": "2026-10-18",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "第2弾 拡張パック「ポケモンジャングル」",
+            "list_number": "043/048"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja",
+            "pokemon.attacks[1].name.ja",
+            "pokemon.attacks[1].cost",
+            "pokemon.attacks[1].damage",
+            "pokemon.attacks[1].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "pokemon.attacks[0].name.ja",
+              "kyuura": "まきつくベロ",
+              "pcg_search": "まきつくべロ",
+              "affects_behavior": false,
+              "note": "写しの値は、kyuura の写しの元（ecb2d69）の「したでなめる」に、kyuura が CC-PMCG2-041-P234 で直した値（f52a8e2。「まきつくベロ」）を当てはめたもの（写しの corrections）。サイトの「まきつくべロ」は「べ」がひらがなで、直した値と表記が違うだけ（ワザの名前は処理に使わない。効果文・エネルギー・ダメージは同じ）。kyuura への報告事項ではない（サイトの表記の違い）。この照合は、kyuura の修正（原典の画像を kyuura が読んだもの）とは別の資料で、エンジンが原典を読み直したことにはならない"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・にげるのエネルギーのアイコン・HP・ワザ名・ワザのエネルギーのアイコン・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。カードの画像は読んでいない。サイトの一覧の番号は kyuura の id の番号と違う（番号の体系の違いで、誤りではない）。レベルはサイトのページにない（照合していない）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.62 で加えた。kyuura の写しの元（ecb2d69）のワザ 1 の名前「したでなめる」・レベル 29 は、kyuura が研究の基準のコミット（3f34908）の照合の記録 CC-PMCG2-041-P234 で「まきつくベロ」・26 に直した（修正のコミット f52a8e2。kyuura が原典を読んだ記録 by: kyuura。エンジンが読み直したものではない）。写しには、この 2 欄だけを scripts/extract_kyuura_cards.py の CONFIRMED_CORRECTIONS で当てはめた（写しの corrections に欄・前・後・記録・コミット。出典の記録の欄 notes・ja_text_source は写しの元のまま）。効果文・エネルギー・ダメージは直す前から同じ。まきつくベロは ParalyzeOnHeads、ちょうおんぱは ConfuseOnHeadsWithoutDamage。ガルーラ（PMCG2-046）のコインの食い違い（v0.34 の保留）とは別の件で、これで解決したことにしない（docs/history-attacks-v0.62.md）"
     }
   }
 }

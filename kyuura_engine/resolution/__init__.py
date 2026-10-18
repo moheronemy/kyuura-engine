@@ -14,7 +14,8 @@ docs/kernel-integration-v0.15b.md・docs/kernel-consolidation-v0.16b.md・docs/e
 from .catalog import DEFAULT_CATALOG, Catalog, EffectDefinition, EffectInstance, Mode, Origin, Timing
 from .events import DamageClass, FrameKind, Trace, Window
 from .contract import Contract, ContractRuntime, open_attack, program_for
-from .flow import COMMANDS, CONTINUE_TURN, PREFLIGHT_MODES, RESUMES, Context, after_energy, after_power, after_stadium, after_trainer, end_turn_after_trainer, handle, processes, resume_decision
+from .flow import (COMMANDS, CONTINUE_TURN, PREFLIGHT_MODES, RESUMES, Context, after_energy, after_power, after_retreat, after_stadium, after_trainer,
+                   end_turn_after_trainer, handle, processes, resume_decision, trainer_damage_stop)
 from .programs import BUILDERS, UnsupportedByKernel, compile_attack
 from .questions import QUESTIONS
 
@@ -42,9 +43,11 @@ __all__ = [
     "Window",
     "after_energy",
     "after_power",
+    "after_retreat",
     "after_stadium",
     "after_trainer",
     "end_turn_after_trainer",
+    "trainer_damage_stop",
     "compile_attack",
     "handle",
     "open_attack",

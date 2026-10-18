@@ -63,7 +63,7 @@ class ResearchLinksTest(unittest.TestCase):
         self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
-        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 + v0.44 の 2 件 + v0.45 の 2 件 + v0.46 の 2 件 + v0.47 の 4 件 + v0.48 の 3 件 + v0.49 の 11 件 + v0.50 の 5 件 + v0.51 の 2 件 + v0.52 の 3 件 + v0.53 の 2 件 + v0.55 の 8 件 + v0.56 の 6 件 + v0.57 の 8 件 + v0.58 の 6 件 = 115 件）。論点のないものは kyuura の
+        """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 + v0.44 の 2 件 + v0.45 の 2 件 + v0.46 の 2 件 + v0.47 の 4 件 + v0.48 の 3 件 + v0.49 の 11 件 + v0.50 の 5 件 + v0.51 の 2 件 + v0.52 の 3 件 + v0.53 の 2 件 + v0.55 の 8 件 + v0.56 の 6 件 + v0.57 の 8 件 + v0.58 の 6 件 + v0.59 の 7 件 + v0.60 の 1 件 + v0.61 の 5 件 = 128 件）。論点のないものは kyuura の
         処理が out_of_scope。kyuura にまだ記録がない停止コードは not_in_kyuura（v0.21 の突風の UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH・v0.22 の
         パソコン通信の UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK・v0.23 のエネルギー回収の 2 件・v0.31 の HC1〜HC10 の 10 件・v0.32 の CD4・v0.34 の TP3・NK5・v0.36 の AC6・RD9・v0.37 の JS1・v0.38 の GK1・v0.39 の GS1・v0.40 の SG1・v0.41 の CX1・v0.42 の PW1・PW2・v0.43 の PW3・PW4・v0.44 の FC1・TR1・v0.45 の GV1・AC13・v0.46 の CP1・CP2・v0.47 の PF1・PF2・PF3・KA1・v0.48 の VS1・PG1・MH1・v0.49 の TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4・v0.50 の DV1〜DV5・v0.51 の RV1・FT1・v0.52 の FJ1・SU1・SU2・v0.53 の ST1・NG1・v0.55 の MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2・v0.56 の LS1・RT1・RG1・MY1・MS1・KG1・v0.57 の STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1。kyuura への報告事項）。
         v0.31 で、v0.30 まで起こらなかった（コードのない）5 件（T27・C34/C35・G40・P19・P32）が複数のポケモンにダメージを与えるワザで起こるように
@@ -146,11 +146,25 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER", "UNRESOLVED_CHAOS_GYM_BORROWED_TURN",
                                      "UNRESOLVED_RAINBOW_ENERGY_TYPE", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE",
                                      "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER",
-                                     "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY", "UNRESOLVED_RETREAT_OVERPAY"})
+                                     "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY", "UNRESOLVED_RETREAT_OVERPAY",
+                                     # v0.59（docs/energy-control-power-suppression-v0.59.md の GG1・BL1・CB1・BZ1〜BZ4）
+                                     "UNRESOLVED_GOOP_GAS_NEW_POKEMON", "UNRESOLVED_BLAINE_SECOND_ATTACH", "UNRESOLVED_ATTACH_BLOCK_SCOPE",
+                                     "UNRESOLVED_BUZZAP_OPPONENT_TARGET", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", "UNRESOLVED_BUZZAP_COLOR",
+                                     "UNRESOLVED_BUZZAP_DISGUISED",
+                                     # v0.60（docs/coins-defense-rebellion-v0.60.md の TS1）
+                                     "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER",
+                                     # v0.61（docs/reactive-powers-trainer-damage-v0.61.md の SH1・SC1・SC2・TD1。Z9 は kyuura の論点 UQ- のある行）
+                                     "UNRESOLVED_SINKHOLE_TIMING", "UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED",
+                                     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION",
+                                     # v0.62（docs/history-attacks-v0.62.md の MM1・MM2・OM1・OM2）
+                                     "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS",
+                                     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
-                                 "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": "P32"})
+                                 "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": "P32",
+                             # v0.61: ［ファイナルビーム］（弱点「水」のポケモンが受ける）で起こるようになった Z9 に停止コードを付けた
+                             "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": "Z9"})
         self.assertEqual(LINKS["unresolved_without_code"], [])
 
     def test_codeless_questions_exist(self):

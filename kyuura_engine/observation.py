@@ -44,6 +44,7 @@ from .decisions import (
     USE_DISCARD_TRAINER,
     FORCED_SWITCH,
     HAND_TO_DECK,
+    KNOCK_OUT_POWER,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -83,6 +84,7 @@ from .decisions import (
 from .effects import (
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
 )
+from .serialize import history_record
 from .state import GameState, PokemonInPlay
 
 VIEWERS = (0, 1, None)
@@ -93,7 +95,7 @@ VIEWERS = (0, 1, None)
 OPTION_MEANINGS: dict[str, str] = {
     TAKE_PRIZE: "position", SELECT_PRIZE_CARD: "position", SELECT_HAND_CARD: "position",
     PEEK_CARD: "peek_target",
-    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", ATTACH_TO_BENCH: "pokemon",
+    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon",
     ENTRY_POWER: "pokemon",
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
@@ -174,6 +176,9 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         # v0.50（docs/mew-devolution-spray-v0.50.md 7 章）: 最後に退化した番（いまの姿になった番の決まり方の材料。退化していなければ None）。進化した番・場に出た番は
         # これまでどおり書かない（ログからわかる）
         "devolved_turn": pokemon.devolved_turn,
+        # v0.62（docs/history-attacks-v0.62.md 9 章）: ワザの履歴（使ったワザ・受けたワザと受けた結果・ワザ以外で受けたこと）。どれも表の情報（使った・受けたワザ、場のダメージと
+        # 効果）で、見えないカードを含まない。書き出しの形式 20 と同じ形
+        "history": [history_record(record) for record in pokemon.history],
         "attacks": [
             {**_card(state, option.card), "attack_index": option.attack_index, "name_ja": attack_of(state, option.key).name_ja, "route": option.route,
              "provider": option.provider, "problem": None if option.problem is None else option.problem[0]}
@@ -361,7 +366,12 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
-    "attach_energy", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
+    # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
+    "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
+    "digger_result", "trainer_damage", "trainer_damage_prevented",
+    # v0.62: オウムがえし（受けた記録は表の情報）
+    "mirror_move_none", "reflect_received",
+    "attach_energy", "energy_conversion", "bench_coin_results", "damage_guard_check", "rebellion_check", "attach_energy_from_deck", "attach_energy_from_deck_none", "attach_energy_from_discard",
     "attach_energy_from_hand", "attach_trainer", "attack", "attack_attach_energy", "attack_check", "attack_evaded", "attack_failed", "attack_heal",
     "bench_from_deck", "bench_from_deck_declined", "bench_from_deck_none",
     "bench_from_discard", "bench_from_discard_declined", "bench_from_discard_none",  # v0.51: トラッシュと場は公開の情報

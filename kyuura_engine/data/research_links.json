@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 116,
-    "engine_stop_codes": 115,
+    "engine_unresolved_rulings": 134,
+    "engine_stop_codes": 132,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -197,6 +197,11 @@
           "version": "v0.17",
           "document": "docs/rocket-snorlax-v0.17b.md",
           "ruling_id": "Z13"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "C18"
         }
       ],
       "kyuura_issue": "UQ-COUNTERATTACK-DOUBLE-KO",
@@ -391,6 +396,11 @@
         {
           "version": "v0.31",
           "document": "docs/held-cards-v0.31.md",
+          "ruling_id": "HC2"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
           "ruling_id": "HC2"
         }
       ],
@@ -1367,21 +1377,202 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
-    }
-  },
-  "codeless_questions": {
-    "power_damage_weakness_resistance": {
+    },
+    "UNRESOLVED_GOOP_GAS_NEW_POKEMON": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "GG1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BLAINE_SECOND_ATTACH": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "BL1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACH_BLOCK_SCOPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "CB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BUZZAP_OPPONENT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "BZ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "BZ2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BUZZAP_COLOR": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "BZ3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BUZZAP_DISGUISED": {
+      "engine_rulings": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "BZ4"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.60",
+          "document": "docs/coins-defense-rebellion-v0.60.md",
+          "ruling_id": "TS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": {
       "engine_rulings": [
         {
           "version": "v0.17",
           "document": "docs/rocket-snorlax-v0.17b.md",
           "ruling_id": "Z9"
+        },
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "Z9"
         }
       ],
       "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
-      "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": true
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "Z9"
     },
+    "UNRESOLVED_SINKHOLE_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SH1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCRAM_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SCRAM_POWER_RESTORED": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "SC2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_TRAINER_DAMAGE_REDUCTION": {
+      "engine_rulings": [
+        {
+          "version": "v0.61",
+          "document": "docs/reactive-powers-trainer-damage-v0.61.md",
+          "ruling_id": "TD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.62",
+          "document": "docs/history-attacks-v0.62.md",
+          "ruling_id": "MM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS": {
+      "engine_rulings": [
+        {
+          "version": "v0.62",
+          "document": "docs/history-attacks-v0.62.md",
+          "ruling_id": "MM2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT": {
+      "engine_rulings": [
+        {
+          "version": "v0.62",
+          "document": "docs/history-attacks-v0.62.md",
+          "ruling_id": "OM1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRROR_MOVE_NON_ATTACK": {
+      "engine_rulings": [
+        {
+          "version": "v0.62",
+          "document": "docs/history-attacks-v0.62.md",
+          "ruling_id": "OM2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    }
+  },
+  "codeless_questions": {
     "ko_prevention_self_effect": {
       "engine_rulings": [
         {
@@ -1394,17 +1585,29 @@
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     },
-    "destiny_bond_with_ko_prevention": {
+    "speed_star_scope": {
       "engine_rulings": [
         {
-          "version": "v0.31",
-          "document": "docs/held-cards-v0.31.md",
-          "ruling_id": "HC2"
+          "version": "v0.60",
+          "document": "docs/coins-defense-rebellion-v0.60.md",
+          "ruling_id": "SS1"
         }
       ],
       "kyuura_issue": null,
       "reachable_with_current_cards": false,
-      "counted_as_engine_unresolved": false
+      "counted_as_engine_unresolved": true
+    },
+    "earthdrill_copied_use": {
+      "engine_rulings": [
+        {
+          "version": "v0.62",
+          "document": "docs/history-attacks-v0.62.md",
+          "ruling_id": "ED1"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": true
     }
   },
   "unresolved_without_code": [],
@@ -2259,7 +2462,32 @@
       "PMCG5-066/attack/0",
       "PMCG5-066/attack/1",
       "PMCG5-052/attack/1",
-      "PMCG5-053/attack/0"
+      "PMCG5-053/attack/0",
+      "PMCG1-040/power/0",
+      "PMCG1-040/attack/0",
+      "PMCG5-030/attack/0",
+      "PMCG4-008/attack/0",
+      "PMCG4-008/attack/1",
+      "PMCG3-026/attack/0",
+      "PMCG5-016/attack/0",
+      "PMCG5-035/power/0",
+      "PMCG5-050/attack/0",
+      "PMCG5-050/attack/1",
+      "PMCG4-025/power/0",
+      "PMCG4-025/attack/0",
+      "PMCG4-043/power/0",
+      "PMCG4-043/attack/0",
+      "PMCG5-051/power/0",
+      "PMCG5-051/attack/0",
+      "PMCG1-066/attack/0",
+      "PMCG1-066/attack/1",
+      "PMCG2-034/attack/1",
+      "PMCG2-038/attack/0",
+      "PMCG2-043/attack/1",
+      "PMCG6-060/attack/0",
+      "PMCG6-060/attack/1",
+      "PMCG2-041/attack/0",
+      "PMCG2-041/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -2512,6 +2740,16 @@
       "card_id": "PMCG6-023",
       "field": "jp_en_differences",
       "note": "kyuura が adf9710 でだつりょくえきの英語版の「if it has any」を記録した（参照カード。エンジンは使わない項目）"
+    },
+    {
+      "card_id": "PMCG2-041",
+      "field": "notes",
+      "note": "v0.62: kyuura が f52a8e2 で、なぞのばしょの誤記と p.234 で確かめたことを書き足した（出典の記録の欄。エンジンは使わない）。写しには、確定した修正（CC-PMCG2-041-P234 の corrections。ワザ 1 の名前・レベル）だけを当てはめた（scripts/extract_kyuura_cards.py の CONFIRMED_CORRECTIONS）"
+    },
+    {
+      "card_id": "PMCG2-041",
+      "field": "ja_text_source",
+      "note": "v0.62: kyuura が f52a8e2 で、日本語テキストの出典を p.234 とした（出典の記録の欄。エンジンは使わない。写しには当てはめていない）"
     }
   ],
   "applied_rule_records": [
@@ -2686,6 +2924,45 @@
         }
       ],
       "use": "場にあるエネルギーカードの移動（エナジートランス・ナツメ・エネルギーサーキュレートなど）は手札からつけることではないので、特殊エネルギーのつけたときの効果を起こさない"
+    },
+    {
+      "kyuura_record": "CR-CHEMICAL-GAS-USE-VS-POWER",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "PS-R1"
+        }
+      ],
+      "use": "「特殊能力を使うことができず」は宣言して使う特殊能力の使用を、「その力も消える」は常にはたらく・自動的にはたらく特殊能力の力を消すと読む。まきちらせ!ベトベトガスは両方、わるいアーボックのショックアイ（「使うことができない」だけ）は宣言して使う特殊能力の使用だけを止める"
+    },
+    {
+      "kyuura_record": "CR-CHEMICAL-GAS-ALL-POWERS",
+      "kind": "ruling",
+      "kyuura_status": "CONFIRMED",
+      "engine": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "PS-R2"
+        }
+      ],
+      "use": "「すべての特殊能力」は宣言して使う・常にはたらく・自動的にはたらく特殊能力のすべて。まきちらせ!ベトベトガスの効果は、はたらく間、場のすべての特殊能力を止める（continuous.power_suppressed）"
+    },
+    {
+      "kyuura_record": "CR-POWER-BACK-AFTER-RECOVERY",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.59",
+          "document": "docs/energy-control-power-suppression-v0.59.md",
+          "ruling_id": "PS-R3"
+        }
+      ],
+      "use": "p.265 のまきちらせ!ベトベトガスの解説「［かがくへんかガス］の力を一時的に消す」の記録。かがくへんかガスも止め（除かない）、効果が消えたら力がもどる（はたらいているかを状態に持たず、そのつど求める）"
     }
   ]
 }

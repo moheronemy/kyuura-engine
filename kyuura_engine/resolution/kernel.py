@@ -36,6 +36,8 @@ from ..effects import (
     SELF_BENCH,
     AttackKey,
     DamageResult,
+    EXCLUDE_DEFENDER_HELD,
+    EXCLUDE_DEFENDER_SIDE,
     attack_damage_modifiers,
     counterattack_double_knockout_error,
     power_name_and_page,
@@ -51,11 +53,16 @@ from ..effects import (
     weakness_of,
 )
 from ..conditions import confuse
-from ..persistent import effect_attack_card, reduced_damage_to_source
+from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION
+from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..zones import return_in_play_to_deck, shuffle_deck
+from .. import effects as E
 from ..state import RETALIATION_FIXED
+from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EVADED, VOID_IMMUNE, note_received
 
 from . import catalog as C
 from .events import (
+    DamageClass,
     SPAWN_REFUSALS,
     SPAWNS,
     Activated,
@@ -105,7 +112,8 @@ class Resolution:
     """
 
     def __init__(self, state: GameState, *, catalog: C.Catalog = C.DEFAULT_CATALOG, trace: Trace | None = None,
-                 dry_run: bool = False, oracle: Any = None, on_horizon: Callable[[], None] | None = None):
+                 dry_run: bool = False, oracle: Any = None, on_horizon: Callable[[], None] | None = None,
+                 dormant: frozenset[int] | None = None):
         self.state = state
         self.on_horizon = on_horizon
         self.catalog = catalog
@@ -128,6 +136,17 @@ class Resolution:
         # v0.57: このワザでクチバシティジムのコインを投げた結果（(スタジアムカード, 「おもて」か)。投げていなければ None）。ワザの宣言のあとに投げ（``flow._attack_body``）、
         # 決定をまたぐときは続きの情報の ``stadium_coin`` で運ぶ（投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージの要素に 6 段階の +10（``deal_damage``）
         self.stadium_coin: tuple[int, bool] | None = None
+        # v0.61: ［ずらかる］（``effects.ReturnToDeckAtRemainingHp``）。``dormant`` はコマンドの始めに、残りHPが「10」で力が消えていた場のポケモンの番号（SC2 の比べのもと。
+        # 渡さなければ、この解決を作った時点の状態から求める。コマンドの途中で作る解決（特殊能力・トレーナー・にげるのあと）は、コマンドの入口の状態から求めて渡す）。
+        # ``scram_touched`` は、この解決のダメージで、力がはたらいたまま残りHPが「10」になった場のポケモンの番号（ダメージの処理のまとまりの途中で「10」を通ったか。SC1）
+        self.dormant: frozenset[int] = E.dormant_scram(state) if dormant is None else dormant
+        self.scram_touched: set[int] = set()
+        # v0.61: 決定をまたいで運んだ、HP 以上になった場のポケモンのきぜつの原因（番号 → (原因の枠のプレイヤー, ダメージを与えたポケモン, ワザの分類か)）。決定の前の
+        # ``knocked_by`` の枠は残らないので、［ファイナルビーム］の候補はこれで求める（``AttackRun.suspend``・``restore``）
+        self.ko_carried: dict[int, tuple[int, int, bool]] = {}
+        # v0.62（docs/history-attacks-v0.62.md 2 章）: このワザの宣言したワザ（``AttackKey``。ワザの外では None）。受けた記録（``history.note_received``）の B に書く
+        # （処理したワザは枠の ``attack_key``）。``flow._attack_body``・``_resume_attack`` が置く
+        self.attack_declared: AttackKey | None = None
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -175,23 +194,124 @@ def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> Open
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
-    """ダメージで HP 以上になったら、その枠を記録する（きぜつの原因。4 章）。"""
+    """ダメージで HP 以上になったら、その枠を記録する（きぜつの原因。4 章）。v0.61: 力がはたらいている［ずらかる］のポケモンの残りHPが「10」になったら、それも記録する
+    （``note_scram``。ダメージの処理のまとまりの途中で「10」を通ったかを ``settle_scram`` が見る）。"""
     hp = hp_of(res.state, pokemon)
     if before < hp <= pokemon.damage:
         res.knocked_by[pokemon.pokemon_id] = fs.frame.id
         res.trace.record(KnockedOutRecorded(pokemon.pokemon_id, fs.frame.id))
+    note_scram(res, pokemon)
+
+
+# ---------------------------------------------------------------- ［ずらかる］（v0.61。docs/reactive-powers-trainer-damage-v0.61.md 4 章）
+
+
+def note_scram(res: Resolution, pokemon: PokemonInPlay) -> None:
+    """ダメージ・ダメージカウンターでのっている数が変わった ``pokemon`` が、力がはたらいている［ずらかる］を持ち、残りHPがちょうど「10」なら記録する（v0.61）。"""
+    state = res.state
+    for slot in E.powers_of(state, pokemon):
+        if isinstance(slot.effect, E.ReturnToDeckAtRemainingHp) and E.scram_due(state, pokemon, slot) and E.scram_working(state, pokemon, slot):
+            res.scram_touched.add(pokemon.pokemon_id)
+
+
+def settle_scram(res: Resolution, *, rest: tuple | None = None) -> list[int]:
+    """［ずらかる］を確かめる決まった時点（v0.61）: 残りHPがちょうど「10」で力がはたらいている場のポケモンを、山札にもどす（``fire_scram``）。もどした番号を返す。
+
+    呼ぶ時点: ワザの処理のダメージの要素のまとまりのあと・ダメージ以外の要素のあと（``programs.run_elements``）・きぜつの判定の窓の始め（``flow._finish_attack``）・
+    ［ファイナルビーム］のダメージのあと・特殊能力・エネルギー・トレーナー・にげる・ポケモンチェックのどくのあと。
+
+    - 決まった時点のあいだに残りHPが「10」を通って変わった（「10」になったあと、同じまとまりでさらにダメージを受けた）なら、はたらく時点で結果が変わるので SC1
+    - コマンドの始めに残りHPが「10」で力が消えていて、今もどった（``res.dormant``）なら SC2
+    - ワザの途中（``rest`` がワザの残りの要素）なら、残りの要素がどれもポケモンによらないもの（``independent_of_pokemon``。スタジアムのトラッシュ）でなければ SC1。2 匹以上が
+      同時にもどるなら、山札を切る順番が決まらないので SC1
+    """
+    state = res.state
+    touched, res.scram_touched = res.scram_touched, set()
+    due = []
+    for owner, pokemon, slot in E.scram_slots(state):
+        if not E.scram_due(state, pokemon, slot):
+            if pokemon.pokemon_id in touched:
+                raise res.question("scram_timing", f"ポケモン {pokemon.pokemon_id} の残りHPが「10」を通って変わった")
+            continue
+        if not E.scram_working(state, pokemon, slot):
+            continue
+        if pokemon.pokemon_id in res.dormant:
+            raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}")
+        due.append((owner, pokemon, slot))
+    if not due:
+        return []
+    if len(due) > 1:
+        raise res.question("scram_timing", f"ポケモン {[p.pokemon_id for _, p, _ in due]} が同時にもどる")
+    if rest and not all(getattr(element, "independent_of_pokemon", False) for element in rest):
+        raise res.question("scram_timing", f"ポケモン {due[0][1].pokemon_id}・ワザの残りの要素 {[type(e).__name__ for e in rest]}")
+    for owner, pokemon, slot in due:
+        fire_scram(res, owner, pokemon, slot)
+    return [pokemon.pokemon_id for _, pokemon, _ in due]
+
+
+def fire_scram(res: Resolution, owner: int, pokemon: PokemonInPlay, slot) -> None:
+    """［ずらかる］がはたらく（v0.61）: ログ ``scram`` → 場のポケモンを山札にもどす（``zones.return_in_play_to_deck``。出どころ ``power``）→ 持続する効果を消す → 山札を切る
+    （先読みでは切らない）。きぜつではない。"""
+    state = res.state
+    key = str(slot.key)
+    res.trace.record(Activated(Window.KO_CHECK, "scram", pokemon.pokemon_id, None))
+    state.add_event("scram", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=key, remaining_hp=slot.effect.remaining_hp)
+    return_in_play_to_deck(state, owner, pokemon, power=key)
+    remove_persistent_effects(state, owner, pokemon, RETURN_IN_PLAY_TO_DECK)
+    if not res.dry_run:
+        shuffle_deck(state, owner, power=key)
+
+
+def scram_restored_question(res: Resolution, gone) -> None:
+    """きぜつの処理でかがくへんかガスの発生源が場をはなれると、残りHPが「10」で力が消えていた［ずらかる］の力がもどるなら SC2（v0.61。きぜつの判定の窓で、きぜつの処理の
+    前に確かめる。先読みの範囲の中）。"""
+    state = res.state
+    gone_ids = {pokemon.pokemon_id for _, pokemon in gone}
+    from ..continuous import goop_gas_effects, suppressors_of
+
+    if goop_gas_effects(state):
+        return  # まきちらせ!ベトベトガスはきぜつで消えない
+    for _, pokemon, slot in E.scram_slots(state):
+        if pokemon.pokemon_id in gone_ids or not E.scram_due(state, pokemon, slot) or E.scram_working(state, pokemon, slot):
+            continue
+        if not slot.effect.is_able(pokemon):
+            continue
+        sources = suppressors_of(state, slot.power)
+        if sources and all(pid in gone_ids for pid in sources):
+            raise res.question("scram_power_restored", f"ポケモン {pokemon.pokemon_id}（かがくへんかガスのポケモン {list(sources)} がきぜつする）")
 
 
 # ---------------------------------------------------------------- ダメージの要素（窓: 適用の前 → 受けるとき → 適用 → 受けたとき）
 
 
-def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE) -> C.EffectInstance | None:
+def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Window = Window.BEFORE_DAMAGE, *,
+               held_by_receiver: bool = True) -> C.EffectInstance | None:
     """受けるポケモンのダメージの要素を無効にする効果（「ダメージを受けない」状態。かたまる）のうち、今はたらいているもの。v0.31: ``window`` に
-    ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。"""
+    ``Window.BEFORE_EFFECT`` を渡すと、効果の要素を無効にする効果（「ワザをうけない」状態。バリアー）。
+
+    v0.60: ``held_by_receiver`` が False なら、受けるポケモン自身が持っている効果（持続する効果・特殊能力）は除く（タケシのサンドパンの「スピードスター」。トレーナーの
+    効果（見えない壁。プレイヤーの記録）は受けるポケモンの持っている効果ではないので残す）。"""
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
+        if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
+            continue
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
             return instance
     return None
+
+
+def note_receipt(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, **what) -> None:
+    """v0.62: 相手のワザの要素が ``pokemon`` を対象にしたことを、受けた記録（``history.note_received``）に加える。ワザの枠（``FrameKind.ATTACK``）だけ（こんらんの枠・
+    返す効果の枠は記録しない）。"""
+    frame = fs.frame
+    if frame.kind is not FrameKind.ATTACK or res.attack_declared is None:
+        return
+    note_received(res.state, attacker_player=frame.player, source=frame.source_pid, declared=res.attack_declared, processed=frame.attack_key,
+                  owner=owner, pokemon=pokemon, **what)
+
+
+def _void_reason(res: Resolution, owner: int, pokemon: PokemonInPlay) -> str:
+    """v0.62: ダメージの要素を無効にした効果が、効果の要素も無効にする効果（「ワザをうけない」）か、ダメージだけを無効にする効果か。"""
+    return VOID_ATTACK_BARRIER if first_void(res, owner, pokemon, Window.BEFORE_EFFECT) is not None else VOID_DAMAGE_ONLY
 
 
 def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | None = None) -> tuple[int, PokemonInPlay]:
@@ -237,7 +357,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
 
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
-                order_decision: bool = False, resistance: bool = True) -> DamageResult:
+                order_decision: bool = False, resistance: bool = True, defender_effects: bool = True) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -251,14 +371,29 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
 
     v0.45: ``resistance`` が False なら抵抗力（4 段階）だけを計算しない（「「抵抗力」の影響を受けない」。ログに ``ignore_resistance``）。8 段階の
     「決まった数より小さければ 0 にする」効果（「かたくなる」。``damage.ZERO_IF_BELOW``）を計算したら、ログに ``damage_zero_below``（(段階, 発生源のカード,
-    しきい値)）を残す。"""
+    しきい値)）を残す。
+
+    v0.60（docs/coins-defense-rebellion-v0.60.md）:
+
+    - ``defender_effects`` が False なら、受けるポケモン自身が持っている効果の影響を受けない（タケシのサンドパンの「スピードスター」の「相手の持っている「弱点・抵抗力・
+      特殊能力・その他の効果」の影響を受けない」）: 弱点・抵抗力を計算せず、受けるポケモンの持っている要素を無効にする効果（かたまる・バリアー）・ダメージを変える効果
+      （ディフェンダー・持続する効果・常にはたらく特殊能力）・ダメージを受ける前の置きかえ（とうめい・かげぶんしん）を当てはめない。ワザを使うポケモンの持っている効果・
+      場のほかのポケモン・スタジアムの効果は当てはめる。ダメージを受けたあとの反応（はんげき・返す効果・こんじょう）は「このワザのダメージ」への影響ではないので、今までどおり
+      （実装上の読み方）。受けるポケモンの持ち主の場のほかのポケモンの常にはたらく特殊能力を当てはめるかで最終ダメージが変わるなら SS1（コードのない問い。今の写しの
+      ［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身で、起こらない）
+    - 受けるポケモンが「かげぶんしん」の効果（``state.TailsDamageGuard``）を持ち、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受ける時、相手プレイヤー（ワザ・
+      返す効果を使うプレイヤー）がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``damage_guard_check``）、「うら」ならそのダメージを
+      受けない（``DamageResult.dodged``）。「おもて」ならダメージを受けて、効果は消える（``persistent.remove_on_damage``。理由 ``damaged``。どのダメージでも消える）
+    """
     state = res.state
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
+    if not defender_effects and target != OPPONENT_ACTIVE:
+        raise ValueError(f"相手の持っている効果を除くダメージは相手の対戦ポケモンへのダメージだけ（{target!r}）")
     res.trace.record(DamageProposal(frame.id, receiver.pokemon_id, receiver_player, target, base))
     res.trace.record(WindowOpened(Window.BEFORE_DAMAGE, frame.id))
-    void = first_void(res, receiver_player, receiver)
+    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)
     if void is not None:
         # 無効（p.321）。計算しない。ログは v0.13 の damage_prevented
         state.add_event(
@@ -272,6 +407,7 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             source_card=void.implementation.source_card,
         )
         res.trace.record(DamageVoided(frame.id, receiver.pokemon_id, void.name))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, _void_reason(res, receiver_player, receiver)))
         return DamageResult(target, receiver_player, receiver.pokemon_id, True, None, receiver.damage >= hp_of(state, receiver))
     if target in BENCH_TARGETS:
         cry = reduced_damage_to_source(state, attacker)
@@ -279,7 +415,12 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
             raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
-    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status)
+    exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
+    modifiers = attack_damage_modifiers(state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS, attack_status=res.attack_status,
+                                        exclude=exclude)
+    if not defender_effects:
+        weakness_resistance = False
+        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, modifiers, orders, resistance)
     if res.stadium_coin is not None and res.stadium_coin[1] and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
         # v0.57: クチバシティジムの「おもて」（そのワザによって相手の対戦ポケモンに与えるダメージは「+10」。p.321 の 6 段階。控えへのダメージ・返す効果のダメージは
         # そのまま）
@@ -301,10 +442,15 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
     if target == SELF:
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
-    if calc.final > 0 and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
+    if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_EVADED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), evaded=True)
+    if calc.final > 0 and defender_effects and receiver_player != frame.player and not damage_guard_passes(res, fs, receiver_player, receiver, calc.final):
+        res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_DODGED))
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
     deferred: list[Deferred] = []
     by_opponent = receiver_player != frame.player
     if calc.final > 0:
@@ -346,6 +492,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         extra["stopped_after_step_2"] = True
     if target != OPPONENT_ACTIVE:
         extra.update(target=target, pokemon_id=receiver.pokemon_id, effect=str(frame.attack_key))
+    if not defender_effects:
+        extra["ignore_defender_effects"] = True  # v0.60: 「スピードスター」（弱点・抵抗力も計算しない）
     if not weakness_resistance:
         extra["ignore_weakness_resistance"] = True  # v0.31
     elif not resistance:
@@ -363,13 +511,62 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         total_damage=receiver.damage,
         **extra,
     )
+    note_receipt(res, fs, receiver_player, receiver, damage=calc.final)  # v0.62: 受けたダメージ（最終ダメージ。0 でも受けた要素として記録する）
+    remove_on_damage(state, receiver_player, receiver, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
     res.trace.record(DamageApplied(frame.id, frame.damage_class, frame.source_pid, receiver.pokemon_id, receiver_player, calc.final,
                                    before, receiver.damage, by_opponent))
     track_ko(res, fs, receiver, before)
     fs.pending.extend(deferred)
     if target == OPPONENT_ACTIVE and calc.final > 0:
-        trainer_poison_after_damage(res, attacker, receiver_player, receiver)
+        trainer_poison_after_damage(res, attacker, receiver_player, receiver, fs)
     return DamageResult(target, receiver_player, receiver.pokemon_id, False, calc.final, receiver.damage >= hp_of(state, receiver))
+
+
+def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, final: int) -> bool:
+    """v0.60: 「かげぶんしん」（R団のストライク。``state.TailsDamageGuard``）。``pokemon``（持ち主 ``owner``）がこの効果を持っていれば、相手プレイヤー（``owner`` の相手。
+    ワザ・返す効果を使うプレイヤー）がコインを 1 枚投げ、「おもて」なら True（ダメージを受ける）、「うら」なら False（そのダメージを受けない）。効果がなければ True（コインなし）。
+
+    - 「ダメージを受ける時」は、相手のワザのダメージの要素で最終ダメージが 0 より大きいとき（呼ぶ側が確かめる。最終ダメージが 0 なら「ダメージを受けなかった」（p.319・p.321）
+      ので投げない。v0.9 の T21 と同じ読み方）。要素を無効にする効果（かたまる・バリアー）・「とうめい」で受けないと決まったなら、その前に終わっている
+    - ダメージ以外の効果は「そのまま」なので、受けないのはこのダメージの要素だけ（ワザ全体を無効にしない。``fs.evaded`` に入れない（T19b の「受けない」とは別））
+    - 「とうめい」と同じポケモンに重なることは、今の対応カードでは起こらない（R団のストライクは「とうめい」を持たず、［へんしん］で写す特殊能力は TF1 で止まる）ので、
+      重なったら ``RuntimeError``（順番を推測しない）
+    - コインは効果ごとではなくダメージの要素ごとに投げる（同じワザでもう一度ダメージを受ける時も、効果が残っていればまた投げる）。「おもて」でダメージを受けたら効果は消える
+      （``deal_damage`` が ``remove_on_damage`` を呼ぶ）ので、同じワザのあとのダメージには投げない"""
+    guard = tails_damage_guard(pokemon)
+    if guard is None:
+        return True
+    if pokemon.pokemon_id in fs.reception:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「とうめい」と「かげぶんしん」が重なった（今の対応カードでは起こらない。エンジンの不具合）")
+    state = res.state
+    frame = fs.frame
+    flips = flip_coins(state, 1 - owner, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    received = flips.results[0] is CoinSide.HEADS
+    state.add_event("damage_guard_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, flipped_by=1 - owner,
+                    persistent_effect=guard.kind, source_card=guard.source_card, created_turn=guard.created_turn, effect=str(frame.attack_key),
+                    amount=final, result=flips.results[0].value, received=received)
+    return received
+
+
+def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool) -> None:
+    """v0.60（SS1）: 「スピードスター」の「相手の持っている…その他の効果」が、相手の対戦ポケモン自身が持っている効果だけか、相手プレイヤーの場のほかのポケモンが持っている
+    効果（常にはたらく特殊能力。エリカのフシギソウの［くつろぐかおり］の「すべてのワザのダメージ」）も含むかは、印刷の文面・kyuura の記録から決まらない（太字の「相手」の
+    定義（p.320）は相手の対戦ポケモンだが、「相手の持っている」という言い方を扱う記録はない。v0.33 の CD4 と同じ理由で決めない）。2 つの読み方（``EXCLUDE_DEFENDER_HELD``・
+    ``EXCLUDE_DEFENDER_SIDE``）で最終ダメージ（または順番の決定の要否）が変わるときだけ止める（問い ``speed_star_scope``。今の写しでは起こらないのでコードのない問い。
+    当たったらエンジンの不具合として止まる。ワザのダメージを変える常にはたらく特殊能力で、バトル場以外ではたらくものを加えるときに見直す）。"""
+    state = res.state
+    side = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, attack_status=res.attack_status, exclude=EXCLUDE_DEFENDER_SIDE)
+    if tuple(side) == tuple(modifiers):
+        return
+    finals = set()
+    for variant in (modifiers, side):
+        try:
+            finals.add(same_for_type_readings(state, (attacker, receiver), lambda views, v=variant: calculate_with_stadium(state,
+                base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=resistance)).final)
+        except (TypeReadingsDiffer, DamageOrderRequired):
+            finals.add(None)
+    if len(finals) > 1:
+        raise res.question("speed_star_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}")
 
 
 def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, final: int,
@@ -395,7 +592,7 @@ def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiv
         raise res.question("trainer_self_bonus", f"ポケモン {attacker.pokemon_id} の自分へのダメージ（{final} か {alternative}）")
 
 
-def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay) -> None:
+def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner: int, receiver: PokemonInPlay, fs: FrameState | None = None) -> None:
     """v0.56（docs/trainer-decisions-turn-effects-v0.56.md 5 章）: トレーナー「キョウ」の「この番に、「キョウのポケモン」が、ワザによって相手の対戦ポケモンにダメージを
     与えたら、ダメージを受けたポケモンを「どく」状態にする」。ワザのダメージの要素が相手の対戦ポケモンに 0 より大きいダメージをのせた直後に呼ぶ（``deal_damage``。無効・
     「とうめい」・最終ダメージ 0・控えポケモンへのダメージでは呼ばない）。
@@ -418,10 +615,13 @@ def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner:
         return
     if receiver.damage >= max_hp(state, receiver):
         for instance in C.in_window(state, Window.KO_CHECK, owner, receiver, res.catalog):
-            if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.suppressors(state, instance):
+            if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.offer_stopped(state, instance, receiver):
                 raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
         return
     poison(state, owner, receiver, effect=records[0].card_id)
+    if fs is not None and receiver.conditions.poison is not None and E.status_immunity(state, owner, receiver) is None:
+        # v0.62: このワザのダメージにともなう、トレーナーの効果のどく（受けた記録の C に入れる。オニスズメの「オウムがえし」は、どくのような続く効果を返すときに止める）
+        note_receipt(res, fs, owner, receiver, reached=E.POISON)
     if receiver.conditions.poison is not None:
         res.trainer_poisoned.add(receiver.pokemon_id)
 
@@ -502,6 +702,7 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
             state.add_event("effect_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key),
                             element=element, persistent_effect=void.implementation.kind, source_card=void.implementation.source_card)
             res.trace.record(DamageVoided(frame.id, pokemon.pokemon_id, void.name))
+            note_receipt(res, fs, owner, pokemon, voided=(element, VOID_ATTACK_BARRIER))
             return False
     memo = fs.reception.get(pokemon.pokemon_id)
     if memo is None:
@@ -511,6 +712,7 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
                 instance = candidate
                 break
         if instance is None:
+            _note_reached(res, fs, owner, pokemon, element)
             return True
         if any(pid != pokemon.pokemon_id for pid in fs.reception):
             raise res.question("multiple_evasion", f"枠 {frame.id}")
@@ -537,7 +739,21 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
         state.add_event(
             "attack_evaded", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key), element=element, **extra
         )
+        note_receipt(res, fs, owner, pokemon, voided=(element, VOID_EVADED))
+    else:
+        _note_reached(res, fs, owner, pokemon, element)
     return memo
+
+
+def _note_reached(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, element: str) -> None:
+    """v0.62: 効果の要素が届いた（受ける）ことを受けた記録に加える。ダメージの要素は ``deal_damage`` がのせたあとに記録する（ここでは何もしない）。特殊状態にする要素で、
+    受けるポケモンが特殊状態にならない（［めんえき］）なら、受けなかった要素として記録する。"""
+    if element == DAMAGE_ELEMENT:
+        return
+    if element in (E.POISON, E.SLEEP, E.PARALYSIS, E.CONFUSION) and E.status_immunity(res.state, owner, pokemon) is not None:
+        note_receipt(res, fs, owner, pokemon, voided=(element, VOID_IMMUNE))
+        return
+    note_receipt(res, fs, owner, pokemon, reached=element)
 
 
 # ---------------------------------------------------------------- ダメージの要素のあとの窓（送る効果）
@@ -630,6 +846,7 @@ def power_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Def
     extra = {} if not applied else {"amount_before": instance.implementation.amount, "received_modifiers": received_modifiers_log(applied)}
     state.add_event("counterattack", **base, amount=amount, total_damage=attacker.damage,
                     knocked_out=attacker.damage >= hp, **extra)
+    remove_on_damage(state, fs.frame.player, attacker, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（特殊能力のダメージでも）
     track_ko(res, child, attacker, before)
 
 
@@ -791,20 +1008,84 @@ def ko_prevention_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.Ef
     offers = []
     for owner, pokemon in knocked(res):
         for instance in C.in_window(state, Window.KO_CHECK, owner, pokemon, res.catalog):
-            if instance.definition.timing is not C.Timing.OFFER:
-                continue
+            if instance.definition.timing is not C.Timing.OFFER or instance.definition.decision_kind != KO_PREVENTION:
+                continue  # v0.61: ［ファイナルビーム］（KNOCK_OUT_POWER）は knock_out_power_offers
             able = res.ko_prevention_able.get(pokemon.pokemon_id)
             if able is None:
                 if owner == state.current_player:
                     break  # 相手のワザのダメージで HP 以上になったのではない（G4・G5）
                 raise RuntimeError(f"任意の効果を持つポケモン {pokemon.pokemon_id} が HP 以上なのに、ダメージを受けたときの写しがない（エンジンの不具合）")
-            if able and not C.suppressors(state, instance):
+            if able and not C.offer_stopped(state, instance, pokemon):
                 offers.append((owner, pokemon, instance))
                 res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
             break
     if len(offers) > 1:
         raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers]}")
     return offers
+
+
+def ko_cause(res: Resolution, pokemon_id: int) -> tuple[int, int, bool] | None:
+    """HP 以上になった場のポケモンのきぜつの原因（v0.61）: (原因の枠のプレイヤー, ダメージを与えたポケモンの番号, ワザの分類の枠か)。この解決の枠（``knocked_by``）か、決定を
+    またいで運んだ値（``ko_carried``）。どちらもなければ None。"""
+    if pokemon_id in res.knocked_by:
+        frame = res.frames[res.knocked_by[pokemon_id]].frame
+        return frame.player, frame.source_pid, frame.damage_class is DamageClass.ATTACK
+    return res.ko_carried.get(pokemon_id)
+
+
+def knock_out_power_offers(res: Resolution) -> list[tuple[int, PokemonInPlay, C.EffectInstance, int | None]]:
+    """きぜつの判定の窓: 相手のワザによって「きぜつ」する時に使えるダメージを与える特殊能力（［ファイナルビーム］。``KNOCK_OUT_POWER``）の候補 (持ち主, ポケモン, 効果,
+    「きぜつ」させたポケモンの番号)（v0.61）。
+
+    - 原因の枠がワザの分類（ワザ・返す効果のダメージ・ワザでのせたダメージカウンター）で、そのプレイヤーが持ち主の相手。特殊能力のダメージ・こんらん・自分のワザでは使えない
+    - きぜつの判定の時点でねむり・マヒ・こんらんでない（「状態のまま「きぜつ」する時」）、かがくへんかガス・まきちらせ!ベトベトガス・ショックアイでない（``offer_stopped``）
+    - 「きぜつ」させたポケモンが場にいる（いなければダメージを与える相手がいない）
+    - 「みちづれ」で「きぜつ」するポケモンは原因の枠がない（「きぜつ」させたポケモンは None。呼ぶ側が HC2 と同じ問いで止める）"""
+    state = res.state
+    offers = []
+    for owner, pokemon in knocked(res):
+        for instance in C.in_window(state, Window.KO_CHECK, owner, pokemon, res.catalog):
+            if instance.definition.decision_kind != KNOCK_OUT_POWER:
+                continue
+            if C.blocked_by_status(instance, pokemon) or C.offer_stopped(state, instance, pokemon):
+                break
+            if pokemon.pokemon_id in res.forced and pokemon.pokemon_id not in res.knocked_by:
+                offers.append((owner, pokemon, instance, None))
+                break
+            cause = ko_cause(res, pokemon.pokemon_id)
+            if cause is None or not cause[2] or cause[0] == owner:
+                break
+            located = state.find_pokemon(cause[1])
+            if located is None:
+                break
+            offers.append((owner, pokemon, instance, cause[1]))
+            res.trace.record(CandidateFound(Window.KO_CHECK, instance.name, pokemon.pokemon_id, None))
+            break
+    return offers
+
+
+def knock_out_beam_problem(res: Resolution, owner: int, pokemon: PokemonInPlay, instance: C.EffectInstance, source_id: int) -> tuple[str, str] | None:
+    """［ファイナルビーム］を使うを選んだときに止める理由（v0.61）: 数え方・弱点・抵抗力（RB1・BZ2・Z9。``effects.BeamOnKnockOut.use_problem``）と、ダメージで「きぜつ」させた
+    ポケモンもきぜつし、どちらのきぜつが先かで勝ち負けが変わる場合（C18 と同じ問い。同時のきぜつかが決まらない。勝ち負けが決まらなければ、どちらの読み方でもサイドを取る順番・
+    バトル場に出す順番は同じなので、同じきぜつの処理で扱う）。"""
+    state = res.state
+    source_owner, source = state.find_pokemon(source_id)
+    effect = instance.implementation
+    problem = effect.use_problem(state, pokemon, source)
+    if problem is not None:
+        return problem
+    amount, _ = received_power_damage(state, source_owner, source, pokemon, effect.energy_count(state, pokemon) * effect.per)
+    if amount <= 0 or source.damage + amount < hp_of(state, source):
+        return None
+    gone = knocked(res) + [(source_owner, source)]
+    taken = {player: sum(1 for o, p in gone if o != player and E.counts_as_knockout(state, p)) for player in (0, 1)}
+    ends = [(taken[player] and taken[player] >= len(state.players[player].prizes))
+            or not [p for p in state.players[player].in_play() if all(p is not k for _, k in gone)] for player in (0, 1)]
+    if any(ends):
+        return ("UNRESOLVED_COUNTERATTACK_DOUBLE_KNOCKOUT",
+                (f"［ファイナルビーム］のダメージ {amount} でポケモン {source_id} もきぜつする: ワザによるきぜつと、それがはたらかせた特殊能力のダメージによるきぜつが"
+                 "「同時に「きぜつ」した」ことになるか（p.324）は決められず、どちらのきぜつを先に処理するかで勝ち負けが変わる（C18 と同じ問い）"))
+    return None
 
 
 def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPlay]], *, record: bool = True) -> tuple[tuple[int, int, str, int], ...]:
@@ -827,8 +1108,8 @@ def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPla
             gas = C.suppressors(state, instance)
             if gas and all(pid in knocked_ids for pid in gas):
                 raise res.question("post_knockout_gas_source_knocked", f"{pokemon.pokemon_id} と {gas}")
-            if gas:
-                break
+            if gas or C.offer_stopped(state, instance, pokemon):
+                break  # v0.59: まきちらせ!ベトベトガス・「ショックアイ」（きぜつするときの状態で決める。P13〜P18 と同じ時点）
             candidates.append((owner, pokemon.card, instance.power_key.card_id, instance.power_key.power_index))
             if record:
                 res.trace.record(CandidateFound(Window.KO_PROCESS, instance.name, pokemon.pokemon_id, None))

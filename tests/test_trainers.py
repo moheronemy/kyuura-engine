@@ -31,6 +31,7 @@ from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
     SABRINAS_PSYCHIC_CONTROL, V0_57_CARDS,
+    BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
     ENERGY_FLOW, ERIKAS_KINDNESS, BROCK_TRAINER, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, WARP_POINT,
@@ -82,7 +83,8 @@ class TrainerRegistryTest(unittest.TestCase):
                           GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
-                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール
+                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -122,7 +124,9 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "coin_return_owner_pokemon_stadium", "return_basic_energy_stadium", "bench_limit_stadium",
                                            "bench_entry_damage_stadium", "evolution_heal_stadium", "attack_coin_stadium",
                                            "extra_trainer_cost_stadium", "trainer_coin_stadium",
-                                       "use_opponent_discard_trainer"})
+                                       "use_opponent_discard_trainer",
+                                           "protect_attached_energy",  # v0.59 のタケシの保護（カツラ・まきちらせ!ベトベトガスは v0.56 の trainer_turn_effect）
+                                       "alternate_coins_until_tails_damage"})  # v0.61 のバトル場は穴だらけ!
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -209,7 +213,8 @@ class TrainerRegistryTest(unittest.TestCase):
                           MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
-                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール
+                          BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

@@ -181,8 +181,8 @@ class CardDataTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             self.assertIn(ruling, text)
             self.assertIn(code, text)
-        self.assertEqual(LATEST_FORMAT, 18)
-        self.assertEqual(max(FORMAT_VERSIONS), 18)
+        self.assertEqual(LATEST_FORMAT, 20)  # v0.59 で 19（energy_roles）を加えた
+        self.assertEqual(max(FORMAT_VERSIONS), 20)
 
 
 class EnergyUnitsTest(unittest.TestCase):

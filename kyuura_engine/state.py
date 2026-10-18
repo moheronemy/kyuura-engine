@@ -68,7 +68,7 @@ class AttachedTrainer:
 
     card: int
     player: int
-    discard_at_end_of_turn: int
+    discard_at_end_of_turn: int | None  # v0.59: None は場をはなれるまでついたまま（タケシの保護）
 
 
 @dataclass(frozen=True)
@@ -719,6 +719,28 @@ class MaxHpSet:
 
 
 @dataclass(frozen=True)
+class TailsDamageGuard:
+    """ワザによる「持続する効果」（v0.60）のうち、R団のストライク（PMCG5-016）の「かげぶんしん」の「これ以降、このカードが相手のワザによるダメージを受ける時、相手
+    プレイヤーはコインを投げる。「うら」なら、このカードはそのダメージを受けない。(ダメージ以外の効果は、そのまま)。このカードがダメージを受けるか、バトル場をはなれた時、
+    この効果は消える。」（kyuura の印刷の文面。docs/coins-defense-rebellion-v0.60.md 3 章）。
+
+    自分自身に与え、与えたときからはたらき（「これ以降」）、期限では消えない（``lasting``）。消えるのは、このポケモンが実際にダメージを受けたとき（ワザ・特殊能力・こんらん・
+    どく・特殊エネルギー・スタジアムのどのダメージでも。``persistent.remove_on_damage``。理由 ``damaged``）と、バトル場をはなれたとき（にげる・入れ替え・きぜつ・山札や手札に
+    もどる。進化・退化でも消える（v0.4b からの持続する効果の規定。p.310・p.324））。コインは、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受ける時に、相手
+    プレイヤーが投げる（``resolution.kernel.deal_damage``）。ダメージだけを受けない（ワザの要素を無効にする「ワザをうけない」状態・「とうめい」とは別の型）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "tails_damage_guard"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -740,6 +762,60 @@ class TypeShift:
     returned_to_bench: bool = False
 
 
+@dataclass(frozen=True)
+class AttackUsed:
+    """場のポケモンがワザを使った記録（v0.62。docs/history-attacks-v0.62.md 2 章の A。タケシのダグトリオの「ドリルホール」の「このカードが、前の自分の番に
+    「あながくれ」を使っていた時だけ」）。
+
+    - ``turn``: 使った番（ワザの宣言の番。p.309 の手順 3）。宣言したワザは、手順 4 の失敗・こんらんの「うら」・ワザの失敗でも使ったことになる（p.323「12」・v0.3d の
+      A12・v0.44 の 1 度だけ使えるワザと同じ時点）。宣言の前に拒否したワザ（確認・先読み）は記録しない（状態ごと捨てる）
+    - ``card``: 使ったときのいちばん上のカード（「このカード」）。進化・退化したら記録を消す（p.310 の「別のポケモン」。``history.clear_history``）
+    - ``declared``: 宣言したワザ（(カード id, ワザの位置)。今の姿・［サイコリンク］・「思い出させる」のワザはそのワザを印刷したカードの id）
+    - ``processed``: 宣言したワザが相手のワザ・受けたワザを自分のワザとして使った（「ゆびをふる」・ピジョンの「オウムがえし」）ときの、処理したワザ。使っていなければ None
+    """
+
+    turn: int
+    card: int
+    declared: tuple[str, int]
+    processed: tuple[str, int] | None = None
+
+
+@dataclass(frozen=True)
+class AttackReceived:
+    """場のポケモンが、相手の番に相手のワザを受けた記録（v0.62。docs 2 章の B と C）。相手のワザの要素（ダメージ・効果）がこのポケモンを対象にしたときに作る
+    （``history.note_received``。解決の基盤の ``deal_damage``・``reaches`` だけが呼ぶ）。
+
+    - B（受けたワザ）: ``player``・``source``（ワザを使ったプレイヤー・ポケモンの番号）・``declared``（宣言したワザ）・``processed``（処理したワザ。「ゆびをふる」なら
+      選んだワザ。自分のワザなら ``declared`` と同じ）
+    - C（実際に受けた結果）: ``damage``（受けたワザのダメージの最終ダメージの合計。のせた量）・``reached``（受けた要素の種類。``effects.ATTACK_ELEMENTS``。ダメージの
+      計算の結果が 0 のダメージの要素も ``damage`` として入れる）・``voided``（受けなかった要素 (種類, 理由)。理由は ``history.VOID_*``）
+    - ``turn``・``card``: 受けた番・受けたときのいちばん上のカード（``AttackUsed`` と同じ）
+    """
+
+    turn: int
+    card: int
+    player: int
+    source: int
+    declared: tuple[str, int]
+    processed: tuple[str, int]
+    damage: int = 0
+    reached: tuple[str, ...] = ()
+    voided: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
+class OtherReceived:
+    """場のポケモンが、相手の番に、ワザ以外（相手のトレーナー・特殊能力・スタジアムなど）でダメージ・効果を受けた記録（v0.62。docs 2 章）。ワザ以外の何で何を受けたかは
+    持たない（オニスズメの「オウムがえし」の「前の相手の番に、このカードが受けたダメージと効果」にワザ以外のものを含むかが決まらない（OM2）ので、受けたことだけが要る）。
+    コマンドの前後のこのポケモンの状態を比べて作る（``history.close_probe``）。"""
+
+    turn: int
+    card: int
+
+
+ATTACK_HISTORY_TYPES = (AttackUsed, AttackReceived, OtherReceived)
+
+
 def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
     """バトル場からベンチにもどったポケモンの、特殊能力で色を変えた記録（``TypeShift``）に、ベンチにもどったことを残す（v0.48）。記録がなければ何もしない。
     にげる・ポケモンいれかえ／突風・ワザによる入れ替えの 3 か所で、特殊状態・持続する効果を消すのと同じところで呼ぶ（ログは残さない。記録の項目が変わるだけ）。"""
@@ -747,12 +823,52 @@ def mark_returned_to_bench(pokemon: PokemonInPlay) -> None:
         pokemon.type_shift = TypeShift(pokemon.type_shift.color, pokemon.type_shift.turn, pokemon.type_shift.source_card, True)
 
 
+@dataclass(frozen=True)
+class CannotUsePowers:
+    """ワザによる「持続する効果」（v0.59。docs/energy-control-power-suppression-v0.59.md 5 章）のうち、わるいアーボック（PMCG4-008）の「ショックアイ」の
+    「相手の場にいるポケモンから1匹を選び、…10ダメージ。次の相手の番の終わりまで、そのポケモンは特殊能力を使うことができない。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``）。受けるのは選んだ相手の場のポケモン（バトル場・ベンチのどちらでもよい。``bench_ok``）。はたらくのは与えた番から次の相手の番
+    （``active_turn`` = ``created_turn + 1``）の終わりまで（``from_creation``。「次の相手の番の終わりまで」）。その間、受けているポケモンは宣言して使う特殊能力の使用を
+    宣言できない（「使うことができない」。kyuura の CR-CHEMICAL-GAS-USE-VS-POWER の読み方（SUPPORTED。推論の範囲）で、まきちらせ!ベトベトガス・かがくへんかガスの
+    「その力も消える」とは違い、常にはたらく・自動的にはたらく特殊能力の力は消さない。``persistent.powers_use_prevented``）。消える契機はほかの持続する効果と同じ（期限・
+    ベンチにもどる・進化・場をはなれる）。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "cannot_use_powers"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+    from_creation: ClassVar[bool] = True  # 与えた番からはたらく（「次の相手の番の終わりまで」）
+    bench_ok: ClassVar[bool] = True  # ベンチのポケモンも受ける（「相手の場にいるポケモンから1匹を選び」）
+
+
+@dataclass(frozen=True)
+class CannotAttachEnergy:
+    """ワザによる「持続する効果」（v0.59）のうち、カスミのメノクラゲ（PMCG5-030）の「クリスタルビーム」の「コインを投げて「おもて」なら、次の相手の番、このワザを
+    受けた相手には、「エネルギーカード」をつけることができない。」（kyuura の印刷の文面）。
+
+    相手に与える効果（``on_opponent``。``CannotRetreat`` と同じ）。はたらく番は次の相手の番（``created_turn + 1``）で、その番の間、受けているポケモンにはエネルギー
+    カードをつけられない（手札からつける通常の操作・カツラ・あまごい・ワザで手札・山札・トラッシュからつける効果。``effects.energy_attach_block`` を共通に聞く）。
+    場のエネルギーのつけかえ・エネエネでつけることがこれに当たるかは決まらない（CB1。``effects.ATTACH_BLOCK_SCOPE_CODE``）。消える契機はほかの持続する効果と同じ。"""
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "cannot_attach_energy"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = True
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet)
+                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)
 
 
 @dataclass(frozen=True)
@@ -785,7 +901,27 @@ class TrainerUseLock:
 ATTACK_DAMAGE_BONUS = "attack_damage_bonus"  # カスミ: 「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、この番だけ +20（p.321 の 6 段階）
 POISON_ON_ATTACK_DAMAGE = "poison_on_attack_damage"  # キョウ: 「キョウのポケモン」がワザで相手の対戦ポケモンにダメージを与えたら、どく状態にする（この番）
 BENCH_ATTACK_DAMAGE_PREVENTION = "bench_attack_damage_prevention"  # 見えない壁: 次の相手の番が終わるまで、控えポケモンはワザによるダメージを受けない
-TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION)
+POWER_SUPPRESSION = "power_suppression"  # v0.59 まきちらせ!ベトベトガス: 次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使えず、その力も消える
+FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
+TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH)
+
+
+@dataclass(frozen=True)
+class EnergyRole:
+    """v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: マルマイン（PMCG1-040）の［エネエネ］の「マルマインはみずから「きぜつ」して好きな色の
+    エネルギー2個分になり、場のポケモンにつける」で、エネルギーとしてついているマルマインのカード。
+
+    - ``card``: エネルギーとしてついているカード（同じ uid のまま。印刷の定義は書きかえない）。``energy_type``: 選んだ色。``units``: 出すエネルギーの個数（2）
+    - ``owner``: 特殊能力を使ったプレイヤー（カードの持ち主）。``turn``: 使った番
+    この記録があり、そのカードが場のポケモンについているあいだだけ、カードの定義はエネルギーとしての役割（``GameState.card_def``。特殊エネルギーと同じ種類、出すエネルギーは
+    ``effects.energy_units`` が ``units`` 個の ``energy_type``）。場のポケモンのあいだのつけかえでは役割を保つ。ついていなくなったら（トラッシュ・手札など。実装上の判断）
+    印刷のポケモンのカードにもどり、記録はコマンドの終わりに消す（``engine._apply``）。"""
+
+    card: int
+    energy_type: EnergyType
+    units: int
+    owner: int
+    turn: int
 
 
 @dataclass(frozen=True)
@@ -912,6 +1048,10 @@ class PokemonInPlay:
     # 進化させられるか（p.310 の「その番の最初から場に出ていた」「その番に進化した」の当てはめ）は決まらないので、エンジンが止める（DV2。``evolution.evolution_block``）。
     # 進化しても消さない（いまの姿になった番は、進化した番と退化した番の新しいほう）。場をはなれたらなくなる
     devolved_turn: int | None = None
+    # v0.62（docs/history-attacks-v0.62.md 2 章）: このポケモンのワザの履歴（``AttackUsed``・``AttackReceived``・``OtherReceived`` の並び。番の順）。履歴を読む効果
+    # （``effects.HISTORY_READERS``）のカードが対戦にあるときだけ記録する（``history.history_needed``）。番の最初に、2 つ前の番より古い記録を消す。進化・退化で消し、
+    # にげる・入れ替え・番の終わりでは消さない。場をはなれたらなくなる。ログから作らない
+    history: tuple[Any, ...] = ()
 
     @property
     def current_form_turn(self) -> int:
@@ -945,6 +1085,7 @@ class PokemonInPlay:
             self.type_shift,
             self.disguise,
             self.devolved_turn,
+            self.history,
         )
 
 
@@ -1151,6 +1292,9 @@ class GameState:
     # 外側のトレーナーの使用（``TrainerInUse`` の並び。外側から順。ナツメのサイキックコントロール）。内側を使い終えたら、外側のカードも順にトラッシュする。カードの
     # 保存則の対象（使用中のトレーナーと同じ場所）。書き出しは形式 18 だけが表せる（空でなければ形式 1〜17 は ``ValueError``）
     trainer_stack: tuple[TrainerInUse, ...] = ()
+    # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: エネルギーとしてついているカードの記録（``EnergyRole`` の並び。マルマインの［エネエネ］）。そのカードが
+    # 場のポケモンについているあいだだけ、カードの定義はエネルギーとしての役割（``card_def``）。書き出しは形式 19 だけが表せる（空でなければ形式 1〜18 は ``ValueError``）
+    energy_roles: tuple[EnergyRole, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
@@ -1210,7 +1354,22 @@ class GameState:
             profile = self.effects.play_profile(definition)
             if profile is not None and self._as_pokemon_in_play(uid):
                 return profile
+        elif self.energy_roles:
+            role = self.energy_role(uid)
+            if role is not None:
+                return energy_role_definition(definition, role)
         return definition
+
+    def energy_role(self, uid: int) -> EnergyRole | None:
+        """カード ``uid`` が、エネルギーとしての役割（v0.59。``EnergyRole``）で場のポケモンについているなら、その記録。ついていなければ None（記録が残っていても）。"""
+        role = next((r for r in self.energy_roles if r.card == uid), None)
+        if role is None:
+            return None
+        for player in self.players:
+            for pokemon in player.in_play():
+                if uid in pokemon.energy:
+                    return role
+        return None
 
     def printed_def(self, uid: int) -> CardDefinition:
         """カード ``uid`` の印刷の定義（写しから読んだ定義。場所によらない。v0.47）。"""
@@ -1258,6 +1417,15 @@ class GameState:
             # ログの "turn" はいつも今の番（v0.3b で、イベントの項目が上書きしないように確かめる）
             raise ValueError(f"イベント {kind} の項目に turn は使えない（ログの番の番号と重なる）")
         self.log = self.log + (MappingProxyType({"kind": kind, "turn": self.turn_number, **data}),)
+
+
+def energy_role_definition(printed: CardDefinition, role: EnergyRole) -> CardDefinition:
+    """エネルギーとしての役割（v0.59。``EnergyRole``）でついているカードの定義。印刷のカードの id・名前のまま、種類は特殊エネルギー（基本エネルギーカードではない。
+    ``provides`` は None で、出すエネルギーは ``effects.energy_units`` が決める）。ポケモンの項目（HP・ワザ・特殊能力・段階）は持たない。"""
+    return CardDefinition(
+        id=printed.id, name_ja=printed.name_ja, name_en=printed.name_en, category="energy", supported=printed.supported,
+        unsupported_reasons=printed.unsupported_reasons, energy_kind="special",
+    )
 
 
 def freeze_mapping(mapping: Mapping) -> Mapping:

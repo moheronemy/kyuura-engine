@@ -26,8 +26,10 @@ from .effects import (
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
 )
 from .errors import UnsupportedError
-from .persistent import KNOCK_OUT, USED, remove_expired_persistent_effects, remove_persistent_effects, remove_turn_start_expired_persistent_effects
-from .state import Halt, Phase
+from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
+                         remove_turn_start_expired_persistent_effects)
+from .state import POWER_SUPPRESSION, Halt, Phase
+from .history import prune as prune_history
 from .zones import draw_cards
 
 if TYPE_CHECKING:
@@ -63,9 +65,28 @@ POKEMON_CHECK_DOUBLE_KNOCKOUT = Halt(
 )
 
 
-def expire_at_turn_end(state: GameState) -> None:
+def expire_at_turn_end(state: GameState) -> bool:
     """番の終わりの期限（v0.13 の ``engine._end_turn`` の前半と同じ順番）: ついているトレーナーのトラッシュ（v0.2c）→ ワザによる持続する
-    効果（v0.4b）→ こんらんで「にげる」に失敗した記録（v0.3c）→ ログ ``turn_end``。このあとにポケモンチェック。"""
+    効果（v0.4b）→ こんらんで「にげる」に失敗した記録（v0.3c）→ ログ ``turn_end``。このあとにポケモンチェック。
+
+    v0.59: この番の終わりに、まきちらせ!ベトベトガスの効果（``POWER_SUPPRESSION``）が消えるなら、消えたあと（特殊能力がまたはたらく。CR-POWER-BACK-AFTER-RECOVERY と同じ
+    読み方）の状態が受け付けられない状態（決められない姿・ダメージ以外の原因で最大HPがのっているダメージ以下。``effects.state_stop_after``）になるかを、期限の処理の前に
+    状態の複製の上で確かめ、なるなら対戦を止めて（``Phase.HALTED``）偽を返す（番の終わりのあとにきぜつの判定はなく、どの操作でも番は終わるので、コマンドを拒否しない。
+    v0.48 のポケモンチェックの MH1 と同じ形）。ほかは期限の処理をして真を返す。"""
+    if any(record.kind == POWER_SUPPRESSION and record.expires_turn == state.turn_number for record in state.trainer_effects):
+        trial = state.clone()
+        _expire_at_turn_end(trial)
+        stop = state_stop_after(state, trial)
+        if stop is not None:
+            code, message = stop
+            halt(state, Halt(code=code, message=f"番の終わりにまきちらせ!ベトベトガスの効果が消えると: {message}",
+                             references=("GR-2000-P323-KNOCKOUT", "CR-POWER-BACK-AFTER-RECOVERY", "docs/energy-control-power-suppression-v0.59.md")))
+            return False
+    _expire_at_turn_end(state)
+    return True
+
+
+def _expire_at_turn_end(state: GameState) -> None:
     discard_expired_attachments(state)
     remove_expired_persistent_effects(state)
     for p in state.players:
@@ -151,6 +172,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             amount=amount,
             total_damage=pokemon.damage,
         )
+        remove_on_damage(state, owner, pokemon, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（どくのダメージも「ダメージ」）
     return [
         (owner, pokemon)
         for owner in order
@@ -185,6 +207,7 @@ def begin_turn(state: GameState, player: int) -> None:
     state.phase = Phase.MAIN
     state.add_event("turn_start", player=player)
     remove_turn_start_expired_persistent_effects(state)  # v0.34: 「次の自分の番の始めに消える」持続する効果（「なきつく」）
+    prune_history(state)  # v0.62: 2 つ前の番より古いワザの履歴を消す（ログは残さない）
     if state.turn_number == 1 and not state.rules.first_player_draws_on_first_turn:
         return
     if not state.players[player].deck:
@@ -419,9 +442,11 @@ def confusion_damage(state: GameState, player: int, pokemon: PokemonInPlay, *, e
         resistance=calc.resistance_applied,
         total_damage=pokemon.damage,
     )
+    remove_on_damage(state, player, pokemon, calc.final)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（こんらんの 20 も「ダメージ」）
 
 
-def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None, counted: bool = True) -> None:
+def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous: bool = False, timing: str | None = None, counted: bool = True,
+              to_energy: bool = False) -> None:
     """きぜつ: ダメージカウンターを取りのぞき、ポケモンとついていたカードをすべてトラッシュする（p.323）。
 
     場を離れたので、このポケモンの番号（pokemon_id）は無効になり、特殊状態もいっしょになくなる（p.322）。
@@ -438,7 +463,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     else:
         p.bench.remove(pokemon)
     # 進化していれば、重なっているポケモンのカードもすべてトラッシュする（p.313・p.319・p.323。v0.4a）。サイドは 1 匹ぶん
-    p.discard.extend(pokemon.cards())
+    # v0.59: ``to_energy`` なら、いちばん上のカードはトラッシュしない（マルマインの［エネエネ］。呼ぶ側がすぐにエネルギーとしてつける。``effects.attach_converted_energy``）
+    p.discard.extend(uid for uid in pokemon.cards() if not (to_energy and uid == pokemon.card))
     p.discard.extend(pokemon.energy)
     # ついていたトレーナーカードもいっしょにトラッシュする（「それについていたすべてのカード」p.323。v0.2c）
     extra = {}
@@ -456,6 +482,8 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
         extra["timing"] = timing  # v0.3a: ポケモンチェック（どく）できぜつした。v0.42: 特殊能力の処理のあと（ゲンガーの「のろい」）は "power"
     if not counted:
         extra["counted"] = False  # v0.47: なにかの化石・ピッピ人形（進化カードがのっていない）。相手はサイドを取らない
+    if to_energy:
+        extra["to_energy"] = pokemon.card  # v0.59: トラッシュしないで、エネルギーとしてつけるカード（［エネエネ］）
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)

@@ -214,16 +214,61 @@ QUESTIONS: dict[str, Question] = {
         Question("trainer_poison_order", "UNRESOLVED_KOGA_POISON_ORDER", ("KG1",), 10,
                  "トレーナー「キョウ」の効果でどく状態にしたポケモンを、同じワザの効果が受けるダメージの違うどく状態（特殊などく）にするとき、キョウの効果とワザの効果の"
                  "順番（どちらのどく状態が残るか）は、印刷の文面・kyuura の記録から決められない"),
+        # v0.59（docs/energy-control-power-suppression-v0.59.md）
+        Question("buzzap_energy_type", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", ("BZ2",), 10,
+                 "マルマインの［エネエネ］で「○」エネルギー2個分になってついているマルマインのカードを、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶかは、"
+                 "印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる（出すエネルギーの個数と色は決まっている）"),
+        # v0.60（docs/coins-defense-rebellion-v0.60.md）
+        Question("bench_coin_transparency_order", "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER", ("TS1",), 70,
+                 "サンダーの「サンダーストーム」の控えポケモンそれぞれのコインを、すべて投げてからダメージを与えるのか、1 匹ずつ投げてダメージを与えるのかは、印刷の文面・"
+                 "kyuura の記録から決められない。どちらでも結果の分布は同じだが、「とうめい」のコインがあいだに入ると乱数の割り当てが変わる"),
         # 今の対応カードでは起こらない（コードがない。当たったらエンジンの不具合として止める）
         # v0.17b（docs/rocket-snorlax-v0.17b.md）
-        Question("power_damage_weakness_resistance", None, ("Z9",), 90,
+        # v0.61: わるいギャラドスの［ファイナルビーム］で起こるようになった（Z9 の停止コードを付けた。［ファイナルビーム］は決定で使うを選んだときに同じコードで止める。
+        # ``effects.BeamOnKnockOut.use_problem``）
+        Question("power_damage_weakness_resistance", "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE", ("Z9",), 90,
                  "説明に「弱点・抵抗力」に関係なく、と書かれていない特殊能力のダメージで、受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ"
                  "（弱点・抵抗力を計算するかで結果が変わる）"),
         Question("ko_prevention_self_effect", None, ("Z22",), 90,
                  "ワザを使ったポケモン自身への効果の前に、そのポケモンが HP 以上になり、きぜつの判定で任意の効果（こんじょう）を使える"),
-        # v0.31: 「みちづれ」がはたらくワザのきぜつの判定で、任意の効果（こんじょう）の候補もある（今の対応カードでは起こらない）
-        Question("destiny_bond_with_ko_prevention", None, ("HC2",), 90,
+        # v0.31: 「みちづれ」がはたらくワザのきぜつの判定で、任意の効果（こんじょう）の候補もある（v0.60 までは対応カードで起こらない、コードのない問い）。
+        # v0.61: 「みちづれ」で「きぜつ」するわるいギャラドスが［ファイナルビーム］を使えるか（みちづれのきぜつが「相手のワザによって」か。みちづれのきぜつの扱いの問いで、
+        # HC2 と同じコード。docs/reactive-powers-trainer-damage-v0.61.md 2.3 節）で起こるようになった
+        Question("destiny_bond_with_ko_prevention", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", ("HC2",), 90,
                  "「みちづれ」がはたらくワザのあとのきぜつの判定で、きぜつするときに使える特殊能力の候補もある"),
+        # v0.60（docs/coins-defense-rebellion-v0.60.md）: 「ワザのダメージを変える常にはたらく特殊能力」で、持っているのが相手の対戦ポケモン以外の相手の場のポケモンのものは、
+        # 今の写しにない（［くつろぐかおり］はバトル場にいる限りはたらくので、持っているのは受けるポケモン自身）
+        Question("speed_star_scope", None, ("SS1",), 90,
+                 "タケシのサンドパンの「スピードスター」の「相手の持っている…その他の効果」に、相手の対戦ポケモン自身が持っている効果だけでなく、相手の場のほかのポケモンが"
+                 "持っている常にはたらく特殊能力も含むかは、印刷の文面・kyuura の記録から決められず、最終ダメージが変わる"),
+        # v0.61（docs/reactive-powers-trainer-damage-v0.61.md 4 章）: タケシのオコリザルの［ずらかる］
+        Question("scram_timing", "UNRESOLVED_SCRAM_TIMING", ("SC1",), 90,
+                 "ワザの処理の途中で残りHPが「10」になったときに［ずらかる］がはたらく時点（その時点か、ダメージの処理のあとか、ワザのあとか）は、印刷の文面・2000.02.14 版の"
+                 "記録から決められず、時点で結果が変わる（「10」を通ってさらにダメージを受けた・そのポケモンによるワザの残りの要素がある・2 匹が同時にもどる）"),
+        Question("scram_power_restored", "UNRESOLVED_SCRAM_POWER_RESTORED", ("SC2",), 90,
+                 "残りHPが「10」のまま、ねむり・マヒ・こんらん・かがくへんかガスなどで［ずらかる］の力が消えていたポケモンの力がもどったとき、「残りHPが「10」になった時」に"
+                 "当たるかは、印刷の文面・kyuura の記録から決められない"),
+        # v0.62（docs/history-attacks-v0.62.md 7 章）: 前の番のワザの履歴を読むワザ
+        Question("earthdrill_copied_use", None, ("ED1",), 10,
+                 "タケシのダグトリオの「ドリルホール」の「このカードが、前の自分の番に「あながくれ」を使っていた」に、ほかのワザ（「ゆびをふる」など）で「あながくれ」を"
+                 "自分のワザとして使ったことが当たるかは、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_received_attack", "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", ("MM1",), 10,
+                 "ピジョンの「オウムがえし」の「前の相手の番で受けた「ワザ」」が、ダメージの要素だけを受けなかった（「ダメージを受けない」状態など）ワザ・相手のワザを"
+                 "自分のワザとして使ったワザ（宣言したワザと処理したワザのどちら）を指すかは、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_attack_conditions", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS", ("MM2",), 10,
+                 "ピジョンの「オウムがえし」で「同じ「ワザ」をだす」とき、そのワザに必要なエネルギー・説明が書く使うための条件をみたす必要があるか（「ゆびをふる」の"
+                 "「必要なエネルギーがついていなくても、かまわない」は書かれていない）は、印刷の文面・kyuura の記録から決められない"),
+        Question("mirror_move_lasting_effect", "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", ("OM1",), 10,
+                 "オニスズメの「オウムがえし」で、続く効果（ねむり・こんらん・どく・持続する効果）を与えるとき、「「オウムがえし」の効果は1回で消える」が、受けたものを"
+                 "1 度だけ与えることか、与えた効果が 1 回で消えることかは、印刷の文面・kyuura の記録から決められない（与えた効果が続くかが変わる）"),
+        Question("mirror_move_non_attack", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK", ("OM2",), 10,
+                 "オニスズメの「オウムがえし」の「前の相手の番に、このカードが受けたダメージと効果」に、相手のワザ以外（トレーナー・特殊能力など）で受けたダメージ・効果を"
+                 "含むかは、印刷の文面・kyuura の記録から決められない"),
+        # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("mirror_move_unsupported_effect", "UNSUPPORTED_MIRROR_MOVE_EFFECT", ("v0.62",), 10,
+                 "オニスズメの「オウムがえし」で、受けたダメージ・マヒ以外の効果（入れ替え・エネルギー・ダメージカウンター・回復など）を与えるのは、エンジンが対応していない"),
+        Question("mirror_move_unsupported_attack", "UNSUPPORTED_MIRROR_MOVE_ATTACK", ("v0.62",), 10,
+                 "ピジョンの「オウムがえし」で出すワザを、エンジンが自分のワザとして処理できない（場に出てから1回しか使えないワザ・要素の並びのないワザ）"),
     )
 }
 
