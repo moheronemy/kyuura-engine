@@ -195,7 +195,7 @@ BLAINES_KANGASKHAN = "PMCG6-069"  # カツラのガルーラ（HP 80・無色・
 KOFFING = "PMCG1-006"  # ドガース（第1弾。HP 50・草・弱点 超・にげる 1。くさいガス（草草）10）。ROCKET_KOFFING とは別のカード
 NIDOKING = "PMCG1-013"  # ニドキング（第1弾。ニドリーノから進化。HP 90・草・弱点 超・にげる 3。あばれる（草無無）30+・どくどく（草草草）20）
 EXEGGUTOR = "PMCG2-012"  # ナッシー（第2弾。タマタマから進化。HP 80・草・弱点 炎・にげる 3。テレポート（超）・たまなげMAX（無）20×）
-KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。保留。登録しない。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
+KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。v0.34〜v0.67 は保留。v0.68 で利用者が示した修正を写しに当てはめて対応。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
 CUBONE = "PMCG2-029"  # カラカラ（第2弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。なきつく（無）・いかり（闘闘）10+）
 MAROWAK = "PMCG2-032"  # ガラガラ（第2弾。カラカラから進化。HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 1。ほねブーメラン（闘闘）30×・たすけをよぶ（闘闘無））
 V0_34_POKEMON = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
@@ -666,6 +666,10 @@ MISTYS_DUEL = "PMCG5-068"  # カスミの勝負（リーダーズスタジアム
 V0_66_CARDS = (CHARITY, SABRINAS_ESP, MISTYS_DUEL)
 LT_SURGES_SECRET_PLAN = "PMCG5-093"  # マチスの秘策（リーダーズスタジアム。082/096。トレーナー。手札から 1 枚をうらにしてベンチに出してよい。v0.67）
 V0_67_CARDS = (LT_SURGES_SECRET_PLAN,)
+# v0.68（docs/final-pmcg-cards-v0.68.md）。PMCG1〜PMCG6 の残りのポケモン 3 枚
+IMAKUNI_DODUO = "PMCG6-074"  # イマクニ？のドードー（闇からの挑戦。［にげまくり］・ハモる。簡略化した仕様）
+V0_68_POKEMON = (KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO)
+V0_68_CARDS = V0_68_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1215,6 +1219,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
 ) + (
     # v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
     _effects.CoinsUntilTailsDamage,  # 化石の秘密のイシツブテの「れんぞくいしなげ」
+) + (
+    # v0.68（docs/final-pmcg-cards-v0.68.md 4 章）
+    _effects.SimplifiedSongDamage,  # イマクニ？のドードーの「ハモる」（簡略化した仕様。DamageOnly と同じ要素の並び）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる

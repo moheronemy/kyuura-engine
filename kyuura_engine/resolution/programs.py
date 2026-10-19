@@ -39,6 +39,7 @@ from ..decisions import (
     SELECT_COLOR, SELECT_OPPONENT_ATTACK, SELECT_POKEMON, SELECT_SPECIAL_CONDITION, BENCH_FROM_DISCARD, EVOLUTION_HEAL,
 )
 from ..decisions import ARRANGE_DECK_TOP, SELECT_DECK_OWNER, SELECT_HAND_CARD, SELECT_LOOK_COUNT
+from ..decisions import ENERGY_DRAIN_DISCARD
 from ..stadiums import bench_limit
 from ..errors import UnsupportedError
 from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
@@ -58,7 +59,7 @@ from ..zones import discard_stadium, look_at_card
 from . import catalog as C
 from . import codec
 from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
-from .kernel import BenchGuardRequest, Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
+from .kernel import BenchGuardRequest, EnergyDrainRequest, Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
 from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from .questions import QUESTIONS
 
@@ -398,7 +399,8 @@ def run_elements(run: AttackRun, start: int) -> bool:
                 # 入れ替え → 自分にも 20）。その効果を、ダメージの処理（自分へのダメージを含む）をすべてのせたあと・ダメージ以外の効果の前に処理する
                 # （CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING）時点がなく、決められない（GK1）
                 raise res.question("damage_trigger_timing", f"{[d.instance.name for d in run.fs.pending]}・{type(element).__name__} のあとのダメージの要素")
-            fire_pending(res, run.fs)
+            if fire_or_suspend(run, index):
+                return True  # v0.68: ［だつりょくえき］のトラッシュするカードの決定
         elif element.phase is Phase.NEUTRAL and run.fs.pending:
             if any(later.phase is Phase.DAMAGE for later in run.program[index + 1:]):
                 raise RuntimeError("ダメージの要素を決めるワザ全体のコイン・確認は、ダメージの要素より前に置く（エンジンの不具合）")
@@ -406,7 +408,8 @@ def run_elements(run: AttackRun, start: int) -> bool:
             # 「ねこにこばん」）。「ダメージを受けたとき」の効果は、そのワザのダメージの処理のあと・ダメージ以外の効果（効果を決めるコインを含む）の前に
             # 処理する（CR-COUNTERATTACK-TIMING・CR-FIRE-WALL-TIMING・CR-SHELL-ATTACK-TIMING）ので、コインの前に処理する。v0.40 までは、ここで
             # RuntimeError（内部エラー）になっていた（ねこにこばんをカイリキーの「はんげき」などに使うと止まった。docs/heal-counter-status-v0.41.md 3.5）
-            fire_pending(res, run.fs)
+            if fire_or_suspend(run, index):
+                return True
         if element.phase is not Phase.DAMAGE and res.flee_offers and offer_flee(run, index):
             return True  # v0.65: ［にげこむ］（ダメージの要素のあと・ダメージ以外の効果の前。送る効果のあと）
         if boundary and not run.fs.pending:
@@ -426,10 +429,24 @@ def run_elements(run: AttackRun, start: int) -> bool:
                 decision, run.suspended = run.suspended, None
                 element.resume(run, decision, res.oracle.choose(element.dry_choices(run, decision)))
         index += 1
-    fire_pending(res, run.fs)
+    if fire_or_suspend(run, len(run.program)):
+        return True
     if res.flee_offers and offer_flee(run, len(run.program)):
         return True  # v0.65: 最後のダメージの要素のあと（きぜつの判定の前）
     settle_scram(res, rest=())
+    return False
+
+
+def fire_or_suspend(run: AttackRun, index: int) -> bool:
+    """v0.68: 「ダメージの要素のあと」の窓（``kernel.fire_pending``）を開く。［だつりょくえき］の「おもて」で、トラッシュするエネルギーカードを持ち主に選ばせるなら
+    （``EnergyDrainRequest``。実際の処理だけ。先読みは答えを選んで続ける）、決定 ``ENERGY_DRAIN_DISCARD`` を出して True。続きの情報の "boundary" は次に処理する要素の位置
+    （送る効果はもう処理したので、再開では窓を開き直しても何もしない）、"drain" は (持ち主, ポケモンの番号, カード id, 特殊能力の位置, ダメージを与えたポケモンの番号)。"""
+    try:
+        fire_pending(run.res, run.fs)
+    except EnergyDrainRequest as request:
+        run.suspend(kind=ENERGY_DRAIN_DISCARD, player=request.entry[0], options=list(request.options), min_choices=1, max_choices=1, carry=True,
+                    extra=(("boundary", index), ("drain", request.entry)))
+        return True
     return False
 
 
@@ -5908,6 +5925,7 @@ class ReturnOpponentToHand(Element):
 
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
+    E.SimplifiedSongDamage: lambda e: (Damage(OPP, Printed()),),  # v0.68: ハモる（簡略化した仕様。すぐに 30）
     E.CoinFlipDamage: lambda e: (Damage(OPP, HeadsTimes(e.coins, e.damage_per_heads)),),
     E.CoinsUntilTailsDamage: lambda e: (Damage(OPP, HeadsUntilTails(e.per)),),  # v0.64
     E.CoinHeadsDamagePerOwnCounter: lambda e: (Damage(OPP, HeadsOwnCounters(e.damage_per_counter)),),

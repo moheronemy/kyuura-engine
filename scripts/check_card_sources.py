@@ -75,6 +75,13 @@ NAME_AND_SYMBOLS_SOURCE = "kyuura data/cards.json name.ja + pcg-search.com 1st10
 # docs/unresolved-research-v0.18b.md 4.1 に記録した文面の再利用）。許すのは ``ENGINE_RECORDS`` の根拠だけで、文面がその文書にそのまま書かれていること・研究の対応表の
 # registered_without_kyuura_record（kyuura に記録がない。kyuura への報告事項）にあること・印刷の文面と違うことを確かめる
 ENGINE_RECORDS = {"kyuura-engine docs/unresolved-research-v0.18b.md#4.1": ROOT / "docs" / "unresolved-research-v0.18b.md"}
+# v0.68（docs/final-pmcg-cards-v0.68.md 2 章）: 利用者が示した修正（写しの書き出しの ``user_provided_corrections``。scripts/extract_kyuura_cards.py の
+# USER_PROVIDED_CORRECTIONS）を当てはめた説明文を、処理に使う文面にした登録の根拠・出典（ガルーラの「こどものおつかい」）。kyuura の記録（CC-・LD-）ではない
+USER_CORRECTION = "user_provided_correction"
+USER_CORRECTION_SOURCE = "kyuura data/cards.json + USER_PROVIDED_CORRECTIONS"
+# v0.68（4 章）: エンジンの簡略化した仕様（公式の裁定・エラッタではない）を処理に使う文面にした登録の根拠・出典（イマクニ？のドードー）。文面がその文書の引用（「」）に
+# あること・印刷の文面と違うこと・研究の対応表の engine_simplified_text にあることを確かめる
+ENGINE_SIMPLIFICATIONS = {"kyuura-engine docs/final-pmcg-cards-v0.68.md#4": ROOT / "docs" / "final-pmcg-cards-v0.68.md"}
 RESULTS = ("match", "differences", "edition_not_listed", "inaccessible")
 COMPLETED = ("match", "differences")
 
@@ -234,7 +241,7 @@ def keys_problems(where: str, record: dict, required: set[str], optional: set[st
     return found
 
 
-def check_problems(where: str, check, card: dict, commit: str, today: datetime.date) -> list[str]:
+def check_problems(where: str, check, card: dict, commit: str, today: datetime.date, corrections: dict | None = None) -> list[str]:
     if not isinstance(check, dict):
         return [f"{where}: 照合の記録が辞書ではない"]
     found = keys_problems(where, check, CHECK_KEYS, {"note"})
@@ -307,7 +314,10 @@ def check_problems(where: str, check, card: dict, commit: str, today: datetime.d
             found.append(f"{here}: affects_behavior は true か false")
         if difference["kyuura"] == difference["pcg_search"]:
             found.append(f"{here}: kyuura と pcg-search.com の値が同じ（違いではない）")
-        if check["kyuura_commit"] == commit and field_value(card, difference["field"]) != difference["kyuura"] \
+        # v0.68: 利用者が示した修正を当てはめた欄は、写しの元の値（修正の before）と比べる（照合は写しの元のデータと比べた記録）
+        correction = (corrections or {}).get((card.get("id"), difference["field"]))
+        original = correction["before"] if correction else field_value(card, difference["field"])
+        if check["kyuura_commit"] == commit and original != difference["kyuura"] \
                 and field_problem(card, difference["field"]) is None:
             found.append(f"{here}: kyuura の値が写しの値と違う（写しの値をそのまま書く）")
     return found
@@ -342,12 +352,15 @@ def issue_problems(where: str, issues, card: dict) -> list[str]:
     return found
 
 
-def behaviour_affecting(record: dict) -> list[str]:
-    """挙動に影響するとした違い・論点の欄（または問い）。"""
+def behaviour_affecting(record: dict, corrections: dict | None = None, card_id: str | None = None) -> list[str]:
+    """挙動に影響するとした違い・論点の欄（または問い）。v0.68: 利用者が示した修正で写しを外部照合のサイトの値に直した欄の違いは、解消したので数えない。"""
     found = []
     for check in record.get("external_checks") or []:
         if isinstance(check, dict):
             for difference in check.get("differences") or []:
+                correction = (corrections or {}).get((card_id, difference.get("field"))) if isinstance(difference, dict) else None
+                if correction and correction["before"] == difference.get("kyuura") and correction["after"] == difference.get("pcg_search"):
+                    continue
                 if isinstance(difference, dict) and difference.get("affects_behavior") is True:
                     found.append(str(difference.get("field")))
     for issue in record.get("issues") or []:
@@ -356,7 +369,8 @@ def behaviour_affecting(record: dict) -> list[str]:
     return found
 
 
-def play_text_problems(where: str, record: dict, card: dict, registry, links: dict, expected: set[str] | None = None) -> list[str]:
+def play_text_problems(where: str, record: dict, card: dict, registry, links: dict, expected: set[str] | None = None,
+                       corrections: dict | None = None) -> list[str]:
     """``play_text`` の対象と根拠。``expected`` は書くべき対象（既定は、処理に使う文面のある登録すべて。過去の原典照合の記録のあるカードは、
     照合の記録に文面のない登録だけ。v0.30）。"""
     found = []
@@ -400,6 +414,31 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 根拠が {NAME_AND_SYMBOLS} なのに、出典が {entry.source!r}（{NAME_AND_SYMBOLS_SOURCE!r} にする）")
             if not any(isinstance(c, dict) and c.get("result") == "match" and "name.ja" in (c.get("checked_fields") or []) for c in record.get("external_checks") or []):
                 found.append(f"{where} {target}: 根拠 {NAME_AND_SYMBOLS} には、名前を照らした同じ版の外部照合（match）が要る")
+        elif basis == USER_CORRECTION:
+            # v0.68: 利用者が示した修正を当てはめた写しの説明文（処理に使う文面は、修正のあとの文面と同じ）
+            path = f"pokemon.{'attacks' if target.startswith('attack') else 'powers'}[{target.split('/')[1]}].text.ja" if "/" in target else None
+            correction = (corrections or {}).get((card["id"], path))
+            if correction is None:
+                found.append(f"{where} {target}: 根拠 {USER_CORRECTION} なのに、写しにこの欄の利用者が示した修正（user_provided_corrections）がない")
+            elif not (entry.text_ja == entry.play_text_ja == correction["after"] == printed_text(card, target)):
+                found.append(f"{where} {target}: 根拠 {USER_CORRECTION} の登録の文面が、修正のあとの写しの文面と違う")
+            if entry.source != USER_CORRECTION_SOURCE:
+                found.append(f"{where} {target}: 根拠が {USER_CORRECTION} なのに、出典が {entry.source!r}（{USER_CORRECTION_SOURCE!r} にする）")
+            if key not in links["latest_descriptions"].get("user_corrected_text", {}):
+                found.append(f"{where} {target}: 研究の対応表の user_corrected_text にない")
+            if key in adopted_printed:
+                found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {USER_CORRECTION}）")
+        elif isinstance(basis, str) and basis in ENGINE_SIMPLIFICATIONS:
+            if entry.source != basis:
+                found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
+            if entry.play_text_ja == entry.text_ja:
+                found.append(f"{where} {target}: 根拠がエンジンの簡略化した仕様なのに、処理に使う文面が印刷の文面と同じ")
+            if f"「{entry.play_text_ja}」" not in ENGINE_SIMPLIFICATIONS[basis].read_text(encoding="utf-8"):
+                found.append(f"{where} {target}: 処理に使う文面が、根拠の文書 {ENGINE_SIMPLIFICATIONS[basis].name} の引用（「」）にない")
+            if links["latest_descriptions"].get("engine_simplified_text", {}).get(key) != basis:
+                found.append(f"{where} {target}: 根拠 {basis} が研究の対応表の engine_simplified_text にない")
+            if key in adopted_printed:
+                found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         elif isinstance(basis, str) and basis in ENGINE_RECORDS:
             if entry.source != basis:
                 found.append(f"{where} {target}: 根拠が {basis} なのに、出典が {entry.source!r}")
@@ -433,7 +472,8 @@ def play_text_problems(where: str, record: dict, card: dict, registry, links: di
                 found.append(f"{where} {target}: 研究の対応表の adopted_printed_text にある（根拠は {basis}）")
         else:
             found.append(f"{where} {target}: 根拠 {basis!r} は {PRINTED_TEXT}・kyuura の記録の id（LD-・ERR-・TXT-・RUL-）・"
-                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id>・{NAME_AND_SYMBOLS}・このリポジトリの記録（{sorted(ENGINE_RECORDS)}）のどれでもない")
+                         f"{DIFFERENCE_TEXT_SOURCE}#<カード id>・{NAME_AND_SYMBOLS}・{USER_CORRECTION}・このリポジトリの記録（{sorted(ENGINE_RECORDS)}）・"
+                         f"エンジンの簡略化した仕様（{sorted(ENGINE_SIMPLIFICATIONS)}）のどれでもない")
     return found
 
 
@@ -447,7 +487,7 @@ def kyuura_records_problems(where: str, record: dict) -> list[str]:
 
 
 def card_problems(card_id: str, record, *, cards: dict, commit: str, verification: dict, registry, links: dict,
-                  today: datetime.date) -> list[str]:
+                  today: datetime.date, corrections: dict | None = None) -> list[str]:
     where = card_id
     if not isinstance(record, dict):
         return [f"{where}: 記録が辞書ではない"]
@@ -469,7 +509,7 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
     if not isinstance(checks, list):
         return [*found, f"{where}: external_checks はリスト"]
     for i, check in enumerate(checks):
-        found.extend(check_problems(f"{where} の外部照合 {i}", check, card, commit, today))
+        found.extend(check_problems(f"{where} の外部照合 {i}", check, card, commit, today, corrections))
     completed = {}
     for i, check in enumerate(checks):
         if isinstance(check, dict) and check.get("result") in COMPLETED and isinstance(check.get("edition"), dict):
@@ -509,7 +549,7 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
     if card_id in verification["cards"]:
         found.append(f"{where}: card_verification.json（過去の原典照合）にも記録がある（登録の根拠を 1 つにする）")
     registered = card_id in registered_cards(registry)
-    affecting = behaviour_affecting(record)
+    affecting = behaviour_affecting(record, corrections, card_id)
     if record["status"] == ADOPTED:
         if not registered:
             found.append(f"{where}: 採用したカードが登録されていない（登録したときに採用の記録を置く）")
@@ -520,7 +560,7 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
             found.append(f"{where}: 保留のカードが登録されている")
         if not affecting:
             found.append(f"{where}: 保留の理由（挙動に影響する論点）がない")
-    found.extend(play_text_problems(where, record, card, registry, links))
+    found.extend(play_text_problems(where, record, card, registry, links, corrections=corrections))
     return found
 
 
@@ -547,9 +587,10 @@ def problems(sources: dict | None = None, *, extract: dict | None = None, verifi
         return [*found, "cards は辞書"]
     cards = {c["id"]: c for c in extract["cards"]}
     commit = extract["source"]["commit"]
+    corrections = {(c["card_id"], c["field"]): c for c in extract.get("user_provided_corrections", [])}
     for card_id, record in sources["cards"].items():
         found.extend(card_problems(card_id, record, cards=cards, commit=commit, verification=verification, registry=registry,
-                                   links=links, today=today))
+                                   links=links, today=today, corrections=corrections))
     for card_id in sorted(registered_cards(registry)):
         basis = registration_basis(card_id, verification, sources)
         if basis is None:

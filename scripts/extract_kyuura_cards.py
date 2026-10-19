@@ -853,6 +853,12 @@ POOL_V0_67 = [
     "PMCG5-093",  # マチスの秘策（リーダーズスタジアム。手札から 1 枚をうらにしてベンチに出してよい。うらのあいだは「たねポケモン」としてあつかう）
 ]
 
+POOL_V0_68 = [
+    # PMCG1〜PMCG6 の残りのポケモン（docs/final-pmcg-cards-v0.68.md）。ガルーラ（PMCG2-046）は v0.34 から pool_v0_34 にある（保留を解いた。USER_PROVIDED_CORRECTIONS）
+    "PMCG6-023",  # キョウのベトベトン（闇からの挑戦。キョウのベトベターから進化。［だつりょくえき］・ヘドロのうず。v0.17c〜v0.67 は参照カード（REFERENCE_ONLY））
+    "PMCG6-074",  # イマクニ？のドードー（闇からの挑戦。［にげまくり］・ハモる。エンジンの簡略化した仕様で登録する）
+]
+
 # v0.62（docs/history-attacks-v0.62.md 8 章）: kyuura が確定した修正（研究の基準のコミットの照合の記録 CC- の ``corrections``）のうち、写しに当てはめるもの。
 # 写しの元のコミット（KYUURA_COMMIT）の値が ``before`` であること、修正のコミット（``commit``）の値が ``after`` であること、研究の基準のコミット（``record_commit``）の
 # 照合の記録 ``record`` に同じ修正（欄・前・後・コミット）があり、修正のコミットが写しの元のあと・研究の基準の前にあることを、書き出すたびに確かめる（違えば書き出さない）。
@@ -881,6 +887,26 @@ CONFIRMED_CORRECTIONS = [
 # 修正のコミットで、修正の欄のほかに変わってよい欄（出典の記録。エンジンは使わない。写しには当てはめない）
 CORRECTION_PROVENANCE_FIELDS = ("notes", "ja_text_source")
 
+# v0.68（docs/final-pmcg-cards-v0.68.md 2 章）: 利用者が示した修正（kyuura の記録ではない）。kyuura の照合の記録（CC-）・最新の説明（LD-）・修正のコミットはなく、
+# エラッタ・別の版の文面でもない。``CONFIRMED_CORRECTIONS`` と分けて持ち、書き出しでも別の欄（``user_provided_corrections``）に残す。書き出すたびに、写しの元
+# （KYUURA_COMMIT）の値が ``before`` であること・欄が説明文（``text.ja``）であること・カードが対戦用の組にあることを確かめる（違えば書き出さない）。当てはめるのは
+# この欄だけで、ほかの欄（名前・HP・エネルギー・ダメージ・出典の記録の欄）は写しの元のまま。kyuura のデータは直さない（kyuura への報告事項）
+USER_PROVIDED_CORRECTIONS = [
+    {
+        "card_id": "PMCG2-046",
+        "field": "pokemon.attacks[0].text.ja",
+        "before": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
+        "after": "自分の山札の上からカードを1枚ひいて、手札に加える。",
+        "basis": "user_provided",
+        "provided_on": "2026-10-19",
+        "provided_by": "利用者（2026-10-19 の依頼。実物のカード画像で確かめた、と利用者が示した）",
+        "statement": "ガルーラ LV.40 HP90 の「こどものおつかい」の文面は「自分の山札の上からカードを1枚ひいて、手札に加える。」で、コインの記載はない。"
+                     "kyuura の文面の先頭の「コインを投げて「おもて」なら、」は転記の誤り（kyuura の ja_text_source は nazonobasho.com）",
+        "engine_saw_image": False,
+        "consistent_with": "card_sources.json の PMCG2-046 の pcg-search.com の照合（2026-10-16。サイトの文面にコインの記載がない）。同じ結果だが、別の照合として数えない",
+    },
+]
+
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
     # リザードン（PMCG1-021）は v0.30 まで参照カードだった（エナジーバーン・ほのおのうずが未対応）。v0.31 で対戦用（POOL_V0_31）にした
@@ -889,9 +915,8 @@ REFERENCE_ONLY = [
     # 化石の秘密のベトベター（PMCG3-003）は v0.36 まで参照カードだった（「ちいさくなる」が未実装）。v0.37 で対戦用（POOL_V0_37）にした
     # 第1弾のゴースト（PMCG1-047）は v0.44 まで参照カードだった（「ゆめくい」（相手がねむり状態でないとき失敗する）が未実装）。v0.45 で対戦用（POOL_V0_45）にした
     # サカキのカイリキー（PMCG6-061）は v0.10 では参照カードだった。v0.11 で対戦用（POOL_V0_11）にした
-    # キョウのベトベトン（v0.17c。ポケモンパワー「だつりょくえき」（相手のワザのダメージを受けるとき、コインで相手のエネルギーを選んでトラッシュ）は
-    # 窓の途中の決定が要るので実装していない。docs/kogas-muk-event-design-v0.17c.md。進化元のキョウのベトベターは写していない）
-    "PMCG6-023",
+    # キョウのベトベトン（PMCG6-023）は v0.17c〜v0.67 は参照カードだった（［だつりょくえき］を延期。docs/kogas-muk-event-design-v0.17c.md）。v0.68 で、この特殊能力に限った
+    # 採用の仕様（docs/final-pmcg-cards-v0.68.md 3 章）で対戦用（POOL_V0_68）にした。参照カードは残っていない
 ]
 
 # コピーする項目（kyuura の記録のキー。値は書き換えない）
@@ -1034,13 +1059,48 @@ def apply_corrections(cards: list[dict]) -> list[dict]:
     return cards
 
 
+def user_correction_problems(source: dict) -> list[str]:
+    """利用者が示した修正（``USER_PROVIDED_CORRECTIONS``。v0.68）を確かめる。問題の一覧（空なら当てはめてよい）。kyuura の記録・コミットは要らない（記録がない修正）。"""
+    problems = []
+    original = {card["id"]: card for card in source["cards"]}
+    pools = set(POOL_V0_34 + POOL_V0_68)
+    seen = set()
+    for c in USER_PROVIDED_CORRECTIONS:
+        label = f"{c['card_id']} の {c['field']}（利用者が示した修正）"
+        if c.get("basis") != "user_provided" or c.get("engine_saw_image") is not False:
+            problems.append(f"{label}: basis は user_provided、engine_saw_image は False（エンジンが画像を見たと書かない）")
+        if any(key in c for key in ("record", "commit", "record_commit")):
+            problems.append(f"{label}: kyuura の記録・修正のコミットのない修正に、記録やコミットを書かない")
+        if not c["field"].endswith(".text.ja"):
+            problems.append(f"{label}: 当てはめるのは説明文（text.ja）だけ")
+        if c["card_id"] not in pools or c["card_id"] not in original:
+            problems.append(f"{label}: 対戦用の組のカードではない")
+            continue
+        if get_field(original[c["card_id"]], c["field"]) != c["before"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['before']!r} ではない")
+        if c["before"] == c["after"] or (c["card_id"], c["field"]) in seen:
+            problems.append(f"{label}: 前とあとが同じか、同じ欄に 2 つの修正がある")
+        if any(x["card_id"] == c["card_id"] and x["field"] == c["field"] for x in CONFIRMED_CORRECTIONS):
+            problems.append(f"{label}: kyuura が確定した修正と同じ欄")
+        seen.add((c["card_id"], c["field"]))
+    return problems
+
+
+def apply_user_corrections(cards: list[dict]) -> list[dict]:
+    """利用者が示した修正の欄だけを、写しのカードに当てはめる（v0.68。ほかの欄は写しの元のまま）。"""
+    by_id = {card["id"]: card for card in cards}
+    for c in USER_PROVIDED_CORRECTIONS:
+        set_field(by_id[c["card_id"]], c["field"], c["after"])
+    return cards
+
+
 def build_extract(source: dict) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + POOL_V0_66 + POOL_V0_67 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + POOL_V0_66 + POOL_V0_67 + POOL_V0_68 + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: json.loads(json.dumps(by_id[card_id][field])) for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + POOL_V0_66 + POOL_V0_67 + REFERENCE_ONLY]
-    cards = apply_corrections(cards)
+    cards = [{field: json.loads(json.dumps(by_id[card_id][field])) for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + POOL_V0_63 + POOL_V0_64 + POOL_V0_65 + POOL_V0_66 + POOL_V0_67 + POOL_V0_68 + REFERENCE_ONLY]
+    cards = apply_user_corrections(apply_corrections(cards))
     return {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -1128,8 +1188,10 @@ def build_extract(source: dict) -> dict:
         "pool_v0_65": POOL_V0_65,
         "pool_v0_66": POOL_V0_66,
         "pool_v0_67": POOL_V0_67,
+        "pool_v0_68": POOL_V0_68,
         "reference_only": REFERENCE_ONLY,
         "corrections": [dict(correction, source_commit=KYUURA_COMMIT) for correction in CONFIRMED_CORRECTIONS],
+        "user_provided_corrections": [dict(correction, source_commit=KYUURA_COMMIT) for correction in USER_PROVIDED_CORRECTIONS],
         "cards": cards,
     }
 
@@ -1146,7 +1208,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     source = read_kyuura_cards(args.kyuura)
-    problems = correction_problems(args.kyuura, source)
+    problems = correction_problems(args.kyuura, source) + user_correction_problems(source)
     if problems:
         print("確定した修正の出どころを確かめられない:\n" + "\n".join(problems), file=sys.stderr)
         return 1
@@ -1159,7 +1221,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(POOL_V0_32)} + {len(POOL_V0_33)} + {len(POOL_V0_34)} + {len(POOL_V0_35)} + {len(POOL_V0_36)} + {len(POOL_V0_37)} + {len(POOL_V0_38)} + {len(POOL_V0_39)} + {len(POOL_V0_40)} + {len(POOL_V0_41)} + {len(POOL_V0_42)} + {len(POOL_V0_43)} + {len(POOL_V0_44)} + {len(POOL_V0_45)} + {len(POOL_V0_46)} + {len(POOL_V0_47)} + {len(POOL_V0_48)} + {len(POOL_V0_49)} + {len(POOL_V0_50)} + {len(POOL_V0_51)} + {len(POOL_V0_52)} + {len(POOL_V0_53)} + {len(POOL_V0_54)} + {len(POOL_V0_55)} + {len(POOL_V0_56)} + {len(POOL_V0_57)} + {len(POOL_V0_58)} + {len(POOL_V0_59)} + {len(POOL_V0_60)} + {len(POOL_V0_61)} + {len(POOL_V0_62)} + {len(POOL_V0_63)} + {len(POOL_V0_64)} + {len(POOL_V0_65)} + {len(POOL_V0_66)} + {len(POOL_V0_67)} + {len(REFERENCE_ONLY)} 枚）")
+    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(POOL_V0_32)} + {len(POOL_V0_33)} + {len(POOL_V0_34)} + {len(POOL_V0_35)} + {len(POOL_V0_36)} + {len(POOL_V0_37)} + {len(POOL_V0_38)} + {len(POOL_V0_39)} + {len(POOL_V0_40)} + {len(POOL_V0_41)} + {len(POOL_V0_42)} + {len(POOL_V0_43)} + {len(POOL_V0_44)} + {len(POOL_V0_45)} + {len(POOL_V0_46)} + {len(POOL_V0_47)} + {len(POOL_V0_48)} + {len(POOL_V0_49)} + {len(POOL_V0_50)} + {len(POOL_V0_51)} + {len(POOL_V0_52)} + {len(POOL_V0_53)} + {len(POOL_V0_54)} + {len(POOL_V0_55)} + {len(POOL_V0_56)} + {len(POOL_V0_57)} + {len(POOL_V0_58)} + {len(POOL_V0_59)} + {len(POOL_V0_60)} + {len(POOL_V0_61)} + {len(POOL_V0_62)} + {len(POOL_V0_63)} + {len(POOL_V0_64)} + {len(POOL_V0_65)} + {len(POOL_V0_66)} + {len(POOL_V0_67)} + {len(POOL_V0_68)} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

@@ -186,8 +186,9 @@ class CardDataTest(unittest.TestCase):
         for card in V0_35_POKEMON:
             with self.subTest(card=card):
                 self.assertTrue(self.pool.is_playable(card))
-        self.assertFalse(self.pool.is_playable(KANGASKHAN))
-        self.assertFalse([k for k in E.DEFAULT_EFFECTS.attack_keys() if k.card_id == KANGASKHAN])
+        # v0.68: 利用者が示した訂正を写しの作り直しで当てはめて、保留を解いた（tests/test_final_pmcg_cards_v0_68.py）
+        self.assertTrue(self.pool.is_playable(KANGASKHAN))
+        self.assertEqual(len([k for k in E.DEFAULT_EFFECTS.attack_keys() if k.card_id == KANGASKHAN]), 2)
 
     def test_every_attack_is_registered_with_the_expected_type(self):
         """10 のワザがどれも登録され、型と値が表のとおり。名前・文面は写しと同じで、処理に使う文面は kyuura の印刷の文面。特殊能力を持つカードはない。"""
@@ -246,9 +247,11 @@ class CardDataTest(unittest.TestCase):
                     key = f"attack/{attack.index}"
                     self.assertEqual(record["play_text"][key], "kyuura_printed_text")
                     self.assertIn(f"{card}/{key}", adopted)
+        # v0.34 で保留したガルーラは、v0.68 で利用者が示した訂正（こどものおつかいの文面）を当てはめて採用した（論点はなくなった）
         hold = sources[KANGASKHAN]
-        self.assertEqual((hold["status"], hold["play_text"]), ("on_hold", {}))
-        self.assertEqual([i["fields"] for i in hold["issues"]], [["pokemon.attacks[0].text.ja"]])
+        self.assertEqual((hold["status"], hold["play_text"]),
+                         ("adopted", {"attack/0": "user_provided_correction", "attack/1": "kyuura_printed_text"}))
+        self.assertEqual(hold["issues"], [])
 
     def test_evolution_by_exact_name(self):
         """マチスのラッタはマチスのコラッタから、カスミのニョロゾはカスミのニョロモからだけ、通常の進化の操作で進化する（名前の完全な一致）。第1弾の

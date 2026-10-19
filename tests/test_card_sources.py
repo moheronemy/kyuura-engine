@@ -26,7 +26,7 @@ from unittest import mock
 from kyuura_engine.cards import read_extract, read_verification
 from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEntry, AttackKey
 from scripts import check_card_sources as cs
-from tests.helpers import V0_67_CARDS, V0_66_CARDS, V0_65_CARDS, V0_64_CARDS, V0_63_CARDS, NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_35_POKEMON, V0_36_POKEMON, KANGASKHAN
+from tests.helpers import KOGAS_MUK, IMAKUNI_DODUO, V0_67_CARDS, V0_66_CARDS, V0_65_CARDS, V0_64_CARDS, V0_63_CARDS, NO_CHARIZARD_EFFECTS, V0_29_POKEMON, V0_30_POKEMON, V0_31_POKEMON, V0_32_POKEMON, V0_33_POKEMON, V0_34_POKEMON, V0_35_POKEMON, V0_36_POKEMON, KANGASKHAN
 from tests.helpers import V0_37_ADOPTED, V0_37_POKEMON, V0_38_POKEMON, V0_39_POKEMON, V0_40_POKEMON, V0_41_POKEMON, V0_42_POKEMON, V0_43_POKEMON, FOSSIL_GRIMER, BROCKS_ONIX, PERSIAN
 from tests.helpers import V0_44_CARDS, GIOVANNI, MISTYS_STARYU, BLANK_CHANSEY
 from tests.helpers import NO_BASE_HAUNTER_EFFECTS, V0_45_ADOPTED, BASE_HAUNTER, DARK_BLASTOISE, DARK_MAGNETON, RATICATE, BROCKS_GEODUDE_40, ROCKETS_HITMONCHAN
@@ -183,7 +183,7 @@ class ShippedRecordTest(unittest.TestCase):
                                                           + V0_39_POKEMON + V0_40_POKEMON + V0_41_POKEMON + V0_42_POKEMON + V0_43_POKEMON
                                                           + V0_44_CARDS + (BASE_HAUNTER,) + V0_45_ADOPTED + V0_46_POKEMON + V0_47_CARDS
                                                           + V0_48_POKEMON + V0_49_CARDS + V0_50_CARDS + V0_51_CARDS + V0_52_CARDS + V0_53_CARDS
-                                                          + V0_54_CARDS + V0_55_CARDS + V0_56_CARDS + V0_57_CARDS + V0_58_CARDS + V0_59_CARDS + V0_60_CARDS + V0_61_CARDS + V0_62_CARDS + V0_63_CARDS + V0_64_CARDS + V0_65_CARDS + V0_66_CARDS + V0_67_CARDS))  # v0.67: 1 枚。v0.65: 3 枚。v0.57: スタジアム 14 枚、v0.58: 7 枚、v0.59: 6 枚、v0.60・v0.61: 4 枚ずつ、v0.62: 6 枚、v0.63: 4 枚、v0.64: 3 枚
+                                                          + V0_54_CARDS + V0_55_CARDS + V0_56_CARDS + V0_57_CARDS + V0_58_CARDS + V0_59_CARDS + V0_60_CARDS + V0_61_CARDS + V0_62_CARDS + V0_63_CARDS + V0_64_CARDS + V0_65_CARDS + V0_66_CARDS + V0_67_CARDS + (KOGAS_MUK, IMAKUNI_DODUO)))  # v0.68: キョウのベトベトン（v0.17c の照合の記録のある guidebook_record）・イマクニ？のドードー（ガルーラは v0.34 から記録がある）。v0.67: 1 枚。v0.65: 3 枚。v0.57: スタジアム 14 枚、v0.58: 7 枚、v0.59: 6 枚、v0.60・v0.61: 4 枚ずつ、v0.62: 6 枚、v0.63: 4 枚、v0.64: 3 枚
         # v0.46: 採用の 11 枚は 2026-10-17 に記録し、pcg-search.com の同じ版のページと照合した。違いは 5 枚とも処理に影響しない（バリヤード・カビゴンの特殊能力の
         # 説明文の読点、エリカのフシギソウの「いる限り」と「いるかぎり」、わるいベトベトンの「2ぶん」と「2つぶん」、わるいオコリザルのワザの名前の「あばれくるう」と
         # 「あれくるう」（kyuura への報告事項））。処理に使う文面はどれも kyuura の印刷の文面
@@ -278,11 +278,13 @@ class ShippedRecordTest(unittest.TestCase):
         self.assertEqual(sources["cards"]["PMCG1-022"]["play_text"]["attack/1"], RUL)
         self.assertEqual(sources["cards"]["PMCG1-021"]["play_text"]["power/0"], "TXT-CHARIZARD")
         self.assertEqual(sources["cards"]["PMCG1-067"]["play_text"]["attack/1"], f"{cs.DIFFERENCE_TEXT_SOURCE}#PMCG1-067")
-        # v0.34: ガルーラ（PMCG2-046）は pcg-search.com との照合で挙動に影響する違い（こどものおつかいのコイン）があるので保留（登録しない。論点を持つ）
+        # v0.34: ガルーラ（PMCG2-046）は pcg-search.com との照合で挙動に影響する違い（こどものおつかいのコイン）があるので保留した。v0.68 で、利用者が示した訂正
+        # （写しの作り直しの USER_PROVIDED_CORRECTIONS）を当てはめて採用した（論点はなくなった。docs/final-pmcg-cards-v0.68.md 2 章）
         kangaskhan = sources["cards"][KANGASKHAN]
-        self.assertEqual((kangaskhan["status"], kangaskhan["play_text"]), (cs.ON_HOLD, {}))
-        self.assertEqual([i["fields"] for i in kangaskhan["issues"] if i["affects_behavior"]], [["pokemon.attacks[0].text.ja"]])
-        self.assertNotIn(KANGASKHAN, cs.registered_cards(DEFAULT_EFFECTS))
+        self.assertEqual((kangaskhan["status"], kangaskhan["play_text"]),
+                         (cs.ADOPTED, {"attack/0": cs.USER_CORRECTION, "attack/1": "kyuura_printed_text"}))
+        self.assertEqual(kangaskhan["issues"], [])
+        self.assertIn(KANGASKHAN, cs.registered_cards(DEFAULT_EFFECTS))
         section = cs.load_links()["latest_descriptions"]
         # v0.29 の 14・v0.30 のとっしん・第4弾のポニータのひのこ（16）と、v0.31 の 45（特殊能力 2 を含む）と、v0.32 の 19 と、v0.33 の 25 と、
         # v0.34 の 26（ブースターのかえんほうしゃも印刷の文面。トラッシュの時点だけを RUL-ENERGY-DISCARD-ATTACKS の範囲とした）と、v0.35 の 10 と、
@@ -304,7 +306,7 @@ class ShippedRecordTest(unittest.TestCase):
         # サイコウェーブ・たいかビーム。トレーナーの退化スプレーは区分の外。kyuura に LD-・エラッタ・裁定・card_differences の記録がない。docs/mew-devolution-spray-v0.50.md）
         # v0.51 の 2（ナツメのスリーパーのよみがえらせる・ふりこののろい。トレーナーの元気のかけら・ポケモンの笛は区分の外。kyuura に LD-・エラッタ・裁定・
         # card_differences の記録がない。docs/discard-to-bench-v0.51.md）
-        self.assertEqual(len(section["adopted_printed_text"]), 442)  # v0.65: クラゲどく・ラリアット・［ベンチガード］を加えた  # v0.52: ふぶき・つれさるを加えた。v0.58: ばくれつ・いわなだれを加えた。v0.59: エネエネ・でんげき・クリスタルビーム・ショックアイ・どくのきりを加えた。v0.60: サンダーストーム・かげぶんしん・はんこう・スピードスター・とげボールを加えた。v0.61: ［ファイナルビーム］・れいとうビーム・［おとしあな］・つきおとす・［ずらかる］・おおあばれを加えた。v0.62: ふきとばし・オウムがえし 2・こうそくいどう・ハリケーン・あながくれ・ドリルホール・まきつくベロ・ちょうおんぱを加えた。v0.64: れんぞくいしなげ・かたくなる・じばくを加えた
+        self.assertEqual(len(section["adopted_printed_text"]), 443)  # v0.68: ガルーラのれんぞくパンチを加えた。v0.65: クラゲどく・ラリアット・［ベンチガード］を加えた  # v0.52: ふぶき・つれさるを加えた。v0.58: ばくれつ・いわなだれを加えた。v0.59: エネエネ・でんげき・クリスタルビーム・ショックアイ・どくのきりを加えた。v0.60: サンダーストーム・かげぶんしん・はんこう・スピードスター・とげボールを加えた。v0.61: ［ファイナルビーム］・れいとうビーム・［おとしあな］・つきおとす・［ずらかる］・おおあばれを加えた。v0.62: ふきとばし・オウムがえし 2・こうそくいどう・ハリケーン・あながくれ・ドリルホール・まきつくベロ・ちょうおんぱを加えた。v0.64: れんぞくいしなげ・かたくなる・じばくを加えた
         self.assertNotIn(f"{ROCKETS_HITMONCHAN}/attack/0", section["adopted_printed_text"])
         self.assertEqual(section["registered"][f"{ROCKETS_HITMONCHAN}/attack/0"], "LD-PMCG5-054-ATK0")
         self.assertEqual((section["registered"][f"{BASE_HAUNTER}/attack/1"], section["recorded_in_card_checks"][f"{BASE_HAUNTER}/attack/0"]),
@@ -350,9 +352,10 @@ class ShippedRecordTest(unittest.TestCase):
                    | set(V0_40_POKEMON) | set(V0_41_POKEMON) | set(V0_42_POKEMON) | set(V0_43_POKEMON)
                    | set(V0_44_CARDS) | set(V0_45_ADOPTED) | set(V0_46_POKEMON) | set(V0_47_CARDS) | set(V0_48_POKEMON)
                    | set(V0_49_CARDS) | set(V0_50_CARDS) | set(V0_51_CARDS) | set(V0_52_CARDS) | set(V0_53_CARDS)
-                   | set(V0_54_CARDS) | set(V0_55_CARDS) | set(V0_56_CARDS) | set(V0_57_CARDS) | set(V0_58_CARDS) | set(V0_59_CARDS) | set(V0_60_CARDS) | set(V0_61_CARDS) | set(V0_62_CARDS) | set(V0_63_CARDS) | set(V0_64_CARDS) | set(V0_65_CARDS) | set(V0_66_CARDS) | set(V0_67_CARDS))  # v0.35〜v0.67
+                   | set(V0_54_CARDS) | set(V0_55_CARDS) | set(V0_56_CARDS) | set(V0_57_CARDS) | set(V0_58_CARDS) | set(V0_59_CARDS) | set(V0_60_CARDS) | set(V0_61_CARDS) | set(V0_62_CARDS) | set(V0_63_CARDS) | set(V0_64_CARDS) | set(V0_65_CARDS) | set(V0_66_CARDS) | set(V0_67_CARDS) | {KANGASKHAN, IMAKUNI_DODUO})  # v0.35〜v0.68（v0.68 のキョウのベトベトンは v0.17c の照合の記録）
         self.assertIn(FOSSIL_GRIMER, verification["cards"])  # v0.37 で登録した化石の秘密のベトベターは v0.8 の照合の記録で登録した
         self.assertIn(BASE_HAUNTER, verification["cards"])  # v0.45 で登録した第1弾のゴーストは v0.9 の照合の記録で登録した
+        self.assertIn(KOGAS_MUK, verification["cards"])  # v0.68 で登録したキョウのベトベトンは v0.17c の照合の記録で登録した
         self.assertLessEqual(registered - adopted, set(verification["cards"]))
         self.assertFalse(adopted & set(verification["cards"]))
         self.assertIn(CHARMANDER, verification["cards"])

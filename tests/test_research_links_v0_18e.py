@@ -175,7 +175,9 @@ class ResearchLinksTest(unittest.TestCase):
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
                                  "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": "P32",
                              # v0.61: ［ファイナルビーム］（弱点「水」のポケモンが受ける）で起こるようになった Z9 に停止コードを付けた
-                             "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": "Z9"})
+                             "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": "Z9",
+                             # v0.68: だつりょくえきを採用の仕様で実装して起こるようになった DR8・DR13（kyuura の一覧ではカードの延期でコードのない行）に停止コードを付けた
+                             "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT": "DR8", "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY": "DR13"})
         self.assertEqual(LINKS["unresolved_without_code"], [])
 
     def test_codeless_questions_exist(self):
@@ -238,7 +240,9 @@ class ResearchLinksTest(unittest.TestCase):
         section = LINKS["latest_descriptions"]
         groups = {name: set(section[name]) for name in
                   ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record",
-                   "adopted_printed_text", "errata_text", "difference_text")}
+                   "adopted_printed_text", "errata_text", "difference_text",
+                   # v0.68: 利用者が示した訂正の文面（ガルーラのこどものおつかい）・エンジンの簡略化した仕様（イマクニ？のドードー）
+                   "user_corrected_text", "engine_simplified_text")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:

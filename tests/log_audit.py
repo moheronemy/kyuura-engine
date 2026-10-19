@@ -82,6 +82,7 @@ from kyuura_engine.decisions import DISCARD_ENERGY
 from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerPokemonStadium, OwnerRetreatReductionStadium  # v0.57
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
+from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
 from kyuura_engine.effects import ATTACK_ELEMENTS as _ATTACK_ELEMENTS, PlaceFaceDownOnBench  # v0.67
 from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
@@ -903,6 +904,9 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     if isinstance(effect, DamageOnOpponentRetreat):
         # v0.61: ［おとしあな］。にげたプレイヤーのコインのすぐあとに判定（sinkhole_check）
         return kind == "sinkhole_check" and e["power"] == coin["effect"] and e["flipper"] == coin["player"] and e["result"] == coin["result"]
+    if isinstance(effect, DiscardAttackerEnergyOnDamage):
+        # v0.68: ［だつりょくえき］。持ち主のコインのすぐあとに判定（energy_drain_check）。「おもて」ならそのあとに決定とトラッシュ（energy_drain_discard）
+        return kind == "energy_drain_check" and e["power"] == coin["effect"] and e["player"] == coin["player"] and e["result"] == coin["result"]
     if isinstance(effect, BeamOnKnockOut):
         # v0.61: ［ファイナルビーム］。「おもて」ならダメージ（knock_out_power_damage）、「うら」なら knock_out_power_failed
         return kind == ("knock_out_power_damage" if coin["result"] == "heads" else "knock_out_power_failed") and e["power"] == coin["effect"]
@@ -3292,6 +3296,18 @@ def log_problems(state) -> list[str]:
                 (discard if kind == "stadium_discard_energy" else hand)[e["player"]].append(e["card"])
                 if kind == "stadium_return_energy" and not state.printed_def(e["card"]).is_basic_energy:
                     problems.append(f"{e['turn']} 番にヤマブキシティジムで手札に加えたカード {e['card']} が、基本エネルギーカードではない")
+        elif kind == "energy_drain_discard":
+            # v0.68: ［だつりょくえき］の「おもて」。直前の判定（energy_drain_check）が同じ特殊能力・「おもて」で、ダメージを与えたポケモンのエネルギーカードを、その持ち主の
+            # トラッシュに置く（あいだにワザの途中の決定がある）
+            pid = e["attacker_pokemon_id"]
+            check = next((x for x in reversed(log[:next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)]) if x["kind"] == "energy_drain_check"), None)
+            if check is None or check["power"] != e["power"] or check["result"] != "heads" or check["attacker_pokemon_id"] != pid \
+                    or e["card"] not in energy.get(pid, []):
+                problems.append(f"{e['turn']} 番の［だつりょくえき］でトラッシュしたカード {e['card']} が、「おもて」の判定のあとの、ダメージを与えたポケモン {pid} の"
+                                "エネルギーカードではない")
+            else:
+                energy[pid].remove(e["card"])
+                discard[owner[e["card"]]].append(e["card"])
         elif kind in ("energy_heal", "energy_damage"):
             # v0.58: 特殊エネルギーを手札から出してつけたときの効果（きずぐすり配合エネルギーの回復・レインボーエネルギーの 10）。つけたログ（attach_energy・
             # power_attach_energy・attach_energy_from_hand）のすぐあとで、そのカードの登録の実装と量が合う

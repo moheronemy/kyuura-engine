@@ -140,6 +140,8 @@ V0_62_WITH_TEXT = [AttackKey("PMCG1-066", 0), AttackKey("PMCG1-066", 1), AttackK
 V0_64_WITH_TEXT = [AttackKey("PMCG3-034", 0), AttackKey("PMCG3-037", 0), AttackKey("PMCG3-038", 1)]
 # v0.65: クラゲどく・ラリアット（kyuura の印刷の文面。docs/reactive-decisions-v0.65.md）
 V0_65_WITH_TEXT = [AttackKey("PMCG5-033", 0), AttackKey("PMCG5-055", 0)]
+# v0.68: ガルーラのこどものおつかい（利用者が示した訂正の文面）・れんぞくパンチ、イマクニ？のドードーのハモる（簡略化した仕様。キョウのベトベトンのヘドロのうずは説明文なし）
+V0_68_WITH_TEXT = [AttackKey("PMCG2-046", 0), AttackKey("PMCG2-046", 1), AttackKey("PMCG6-074", 0)]
 
 
 class RecordingEffect(AttackEffect):
@@ -291,7 +293,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -450,7 +452,8 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + 化石の秘密のイシツブテの「れんぞくいしなげ」・ゴローンの「かたくなる」「いわおとし」・ゴローニャの「いわころがり」「じばく」（v0.64。
         #   docs/geodude-line-unbounded-coins-v0.64.md）
         # + カスミのドククラゲの「クラゲどく」・タケシのサイドンの「ラリアット」（v0.65。docs/reactive-decisions-v0.65.md）
-        self.assertEqual(len(keys), 593)
+        # + ガルーラの「こどものおつかい」「れんぞくパンチ」・キョウのベトベトンの「ヘドロのうず」・イマクニ？のドードーの「ハモる」（v0.68。docs/final-pmcg-cards-v0.68.md）
+        self.assertEqual(len(keys), 597)
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -491,8 +494,10 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                   PowerKey("PMCG5-051", 0),  # v0.61: タケシのオコリザルの［ずらかる］
                                   PowerKey("PMCG5-055", 0),  # v0.65: タケシのサイドンの［ベンチガード］
                                   PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
+                                  PowerKey("PMCG6-023", 0),  # v0.68: キョウのベトベトンの［だつりょくえき］
                                   PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
-                                  PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
+                                  PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0),
+                                  PowerKey("PMCG6-074", 0)))  # v0.68: イマクニ？のドードーの［にげまくり］
 
 
 if __name__ == "__main__":

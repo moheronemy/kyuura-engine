@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from .. import effects as E
 from ..errors import UnsupportedError
-from .kernel import Resolution, deal_damage, fire_pending, reaches
+from .kernel import EnergyDrainRequest, Resolution, deal_damage, fire_pending, reaches
 from .programs import BUILDERS, AttackRun, Element, Phase, decision_index, run_elements
 from .events import FrameKind
 
@@ -122,7 +122,11 @@ class ContractRuntime:
 
     def finish_damage_elements(self, state: GameState) -> None:
         self._check(state, "finish_damage_elements")
-        fire_pending(self.run.res, self.run.fs)
+        try:
+            fire_pending(self.run.res, self.run.fs)
+        except EnergyDrainRequest:
+            # v0.68: ［だつりょくえき］の決定は、実装の resolve の途中では出せない（続きの位置を表せない。エンジンの未対応）
+            raise self.run.res.question("energy_drain_decision", str(self.run.key)) from None
 
     def push_decision(self, state: GameState, *, kind: str, player: int, options, context, min_choices: int, max_choices: int) -> PendingDecision:
         self._check(state, "push_attack_decision")

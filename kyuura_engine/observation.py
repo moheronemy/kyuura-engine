@@ -52,6 +52,7 @@ from .decisions import (
     NINJA_TRICK,
     REACTION_SWITCH,
     BENCH_GUARD,
+    ENERGY_DRAIN_DISCARD,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -117,6 +118,7 @@ OPTION_MEANINGS: dict[str, str] = {
     DAMAGE_STEP_ORDER: "number", SELECT_ATTACK: "number", SELECT_OPPONENT_ATTACK: "number", SELECT_SPECIAL_CONDITION: "number",
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
+    ENERGY_DRAIN_DISCARD: "card",  # v0.68: ［だつりょくえき］（場についているエネルギーカード。公開）
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
@@ -453,6 +455,8 @@ PUBLIC_EVENTS = frozenset({
     "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",
     # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限
     "esp_redo", "esp_redo_declined", "duel_janken", "return_attached_trainer",
+    # v0.68: ［だつりょくえき］（コインの結果・場のエネルギーカードは表の情報）
+    "energy_drain_check", "energy_drain_discard",
     # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
     "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
     "digger_result", "trainer_damage", "trainer_damage_prevented",

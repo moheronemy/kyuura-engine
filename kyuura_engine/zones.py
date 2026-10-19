@@ -44,6 +44,10 @@ SECRET_PLAN_LOST_TARGET_CODE = "UNSUPPORTED_SECRET_PLAN_LOST_TARGET"  # v0.67: �
 # ``engine._apply`` が処理のたびに空の並びを置き、うらのカードの持ち主を加える（``designate_face_down``）。並びがあれば、受け付けるかを本当のカードによらない
 # ものにするため、ありうるカードのすべてで同じコマンドを確かめる（``engine._identity_independent``）。None なら記録しない（コマンドの外・確かめの中）
 IDENTITY_CONSULTED: list[int] | None = None
+# v0.68（docs/final-pmcg-cards-v0.68.md 5 章）: 受け付けるかを本当のカードによらないものにする確かめ（``engine._identity_independent``）の中だけ置く、相手のうらのカードに
+# ありうるカードを割り当てるもの（``assign(state, uid)``）。確かめの状態では、相手のうらのカードは割り当てる前の印（読めば止まる）にしてあり、効果の対象として指定された
+# ときに初めて、公開の情報だけから作ったありうるカード（デッキの中身を使わない）のどれかを割り当てる。None なら何もしない（ふつうの処理）
+IDENTITY_ORACLE = None
 
 
 def place_face_down(state: GameState, player: int, card: int, *, trainer: int) -> PokemonInPlay:
@@ -84,6 +88,8 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     on_bench = any(b is pokemon for b in p.bench)
     if not state.is_face_down(pokemon) or (p.active is not pokemon and not on_bench) or state.cards[pokemon.card].owner != owner:
         raise RuntimeError(f"プレイヤー {owner} の場のポケモン {pokemon.pokemon_id} はうらのカードではない（エンジンの不具合）")
+    if IDENTITY_ORACLE is not None:
+        IDENTITY_ORACLE.assign(state, pokemon.card)  # v0.68: 確かめの中で、指定を通らずにおもてにした（起こらないはず。割り当てる前の印なら止まる）
     state.face_down_cards = tuple(uid for uid in state.face_down_cards if uid != pokemon.card)
     extra = {} if by_player is None else {"by_player": by_player}
     state.add_event("secret_plan_revealed", player=owner, pokemon_id=pokemon.pokemon_id, card=pokemon.card, card_id=state.cards[pokemon.card].card_id,
@@ -122,6 +128,8 @@ def designate_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *,
         return pokemon
     if IDENTITY_CONSULTED is not None and by_player is not None and by_player != owner:
         IDENTITY_CONSULTED.append(owner)
+    if IDENTITY_ORACLE is not None:
+        IDENTITY_ORACLE.assign(state, pokemon.card)
     if not state.printed_def(pokemon.card).is_basic_pokemon and not can_lose:
         raise UnsupportedError(SECRET_PLAN_LOST_TARGET_CODE,
                                f"うらにしてベンチに出したカード（場のポケモン {pokemon.pokemon_id}）を効果の対象にした。おもてにしたカードをトラッシュしたあとの、この効果の残りの処理を"

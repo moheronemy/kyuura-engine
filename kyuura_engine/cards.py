@@ -492,6 +492,7 @@ POOL_KEYS = (
     "pool_v0_65",  # v0.65（キョウ秘伝,変わり身の術・カスミのドククラゲ・タケシのサイドン。docs/reactive-decisions-v0.65.md）
     "pool_v0_66",  # v0.66（お上品攻撃・ナツメのESP・カスミの勝負。docs/optional-trainers-v0.66.md）
     "pool_v0_67",  # v0.67（マチスの秘策。docs/secret-plan-preflight-v0.67.md）
+    "pool_v0_68",  # v0.68（キョウのベトベトン・イマクニ？のドードー。ガルーラは pool_v0_34。docs/final-pmcg-cards-v0.68.md）
 )
 
 

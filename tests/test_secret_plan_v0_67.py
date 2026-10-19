@@ -434,8 +434,12 @@ class GamesTest(unittest.TestCase):
                     self.assertEqual(game["halt_code"], "UNRESOLVED_MULLIGAN_COMPENSATION")
                 for key, count in game.get("v067", {}).items():
                     totals[key] = totals.get(key, 0) + count
-        for key in ("placed", "revealed_choice", "revealed_evolve", "revealed_attack", "revealed_damage", "revealed_basic", "discarded", "none_bench_full"):
+        # v0.68: 相手のダメージでおもてにする場面（revealed_damage）は、この 24 局では化石の秘密のゴローニャのじばく（相手の控えのうらのカード 2 枚以上）だけで起こっていた。
+        # v0.68 から、2 枚以上を指定するコマンドは受け付けない（エンジンの未対応 UNSUPPORTED_SECRET_PLAN_IDENTITIES。docs/final-pmcg-cards-v0.68.md 5.3 節・7 章。
+        # 対戦の手順は場から確かめて別の操作を続ける）ので、対戦では起こらなくなった（seed 0〜7 でも 0）。相手のダメージでおもてにすることは RevealTest で確かめる
+        for key in ("placed", "revealed_choice", "revealed_evolve", "revealed_attack", "revealed_basic", "discarded", "none_bench_full"):
             self.assertGreater(totals.get(key, 0), 0, key)
+        self.assertEqual(totals.get("revealed_damage", 0), 0)
 
 
 if __name__ == "__main__":

@@ -241,7 +241,10 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                       PowerKey("PMCG6-033", 0), PowerKey("PMCG5-014", 0),
                                       *(PowerKey(card, 0) for card in ("PMCG2-027", "PMCG5-063", "PMCG6-010", "PMCG4-041", "PMCG2-040", "PMCG4-007",
                                                                        "PMCG4-010", "PMCG2-047", "PMCG3-015", "PMCG3-035", "PMCG3-041", "PMCG6-049",
-                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035", "PMCG4-043", "PMCG5-051"))})
+                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035", "PMCG4-043", "PMCG5-051",
+                                                                       # v0.68: キョウのベトベトンの［だつりょくえき］（採用の仕様で自動的にはたらく）・イマクニ？のドードーの
+                                                                       # ［にげまくり］（簡略化した仕様。処理を変えない）
+                                                                       "PMCG6-023", "PMCG6-074"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

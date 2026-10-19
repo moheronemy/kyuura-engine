@@ -643,9 +643,11 @@
   "pool_v0_67": [
     "PMCG5-093"
   ],
-  "reference_only": [
-    "PMCG6-023"
+  "pool_v0_68": [
+    "PMCG6-023",
+    "PMCG6-074"
   ],
+  "reference_only": [],
   "corrections": [
     {
       "card_id": "PMCG2-041",
@@ -665,6 +667,21 @@
       "record": "CC-PMCG2-041-P234",
       "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
       "record_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
+      "source_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+    }
+  ],
+  "user_provided_corrections": [
+    {
+      "card_id": "PMCG2-046",
+      "field": "pokemon.attacks[0].text.ja",
+      "before": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
+      "after": "自分の山札の上からカードを1枚ひいて、手札に加える。",
+      "basis": "user_provided",
+      "provided_on": "2026-10-19",
+      "provided_by": "利用者（2026-10-19 の依頼。実物のカード画像で確かめた、と利用者が示した）",
+      "statement": "ガルーラ LV.40 HP90 の「こどものおつかい」の文面は「自分の山札の上からカードを1枚ひいて、手札に加える。」で、コインの記載はない。kyuura の文面の先頭の「コインを投げて「おもて」なら、」は転記の誤り（kyuura の ja_text_source は nazonobasho.com）",
+      "engine_saw_image": false,
+      "consistent_with": "card_sources.json の PMCG2-046 の pcg-search.com の照合（2026-10-16。サイトの文面にコインの記載がない）。同じ結果だが、別の照合として数えない",
       "source_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
     }
   ],
@@ -14479,7 +14496,7 @@
             "cost_total": 1,
             "damage": null,
             "text": {
-              "ja": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
+              "ja": "自分の山札の上からカードを1枚ひいて、手札に加える。",
               "en": "Draw a card."
             }
           },
@@ -36352,6 +36369,96 @@
         "series": "闇からの挑戦",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%A7%E3%82%A6%E3%81%AE%E3%83%99%E3%83%88%E3%83%99%E3%83%88%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG6-074",
+      "jp_set": "PMCG6",
+      "category": "pokemon",
+      "name": {
+        "ja": "イマクニ？のドードー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          84
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "にげまくり",
+              "en": null
+            },
+            "text": {
+              "ja": "このドードーがにげるときはカードを持ち、思い切り投げる。なぜなら逃げまくるから。スナップをきかせて水平に投げるとよく飛ぶぞ!",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハモる",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザを使ったプレイヤーはこのワザを使った瞬間から歌を歌いはじめなければならない。(歌を歌っている間、対戦は続行する。)歌が歌い終わったら、相手に30ダメージを与える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "英語版なし。ポケモンWiki ではシリーズ「闇からの挑戦」、レアリティ「☆」と記載。拡張パックへの封入のされ方は未確認"
+      ],
+      "source_ids": {
+        "tcgdex": "PMCG6-074",
+        "pokemontcg": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A4%E3%83%9E%E3%82%AF%E3%83%8B%3F_%E3%81%AE%E3%83%89%E3%83%BC%E3%83%89%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "☆",
+        "series": "闇からの挑戦",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A4%E3%83%9E%E3%82%AF%E3%83%8B%3F_%E3%81%AE%E3%83%89%E3%83%BC%E3%83%89%E3%83%BC_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
       }
     }
   ]

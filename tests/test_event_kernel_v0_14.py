@@ -606,7 +606,9 @@ class CatalogTest(unittest.TestCase):
                            # v0.60
                            "fail_and_return_on_attack",
                            # v0.61
-                           "damage_on_opponent_retreat", "return_to_deck_at_remaining_hp")
+                           "damage_on_opponent_retreat", "return_to_deck_at_remaining_hp",
+                           # v0.68: イマクニ？のドードーの［にげまくり］（簡略化した仕様。処理を変えないので、どの窓にも入れない）
+                           "simplified_run_away")
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
@@ -621,7 +623,7 @@ class CatalogTest(unittest.TestCase):
                          ["PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
-                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0"])
+                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

@@ -23,8 +23,9 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
+from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
@@ -39,7 +40,7 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
-from .kernel import (DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
+from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
                      ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
 from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
@@ -180,12 +181,16 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
       ``preview_attack_damage`` は減らす量を 0 として計算するので、減らした量でだけ当たる問い（CA1・返す効果・そろってのきぜつ）を見落とす
     - 場のうらのカード（v0.67。マチスの秘策）: ワザがダメージや効果を与える時におもてにし、「たねポケモン」でなければトラッシュする。v0.13 の止める関数はうらのカードの
       定義を読めず（FD1）、おもてにしたあとの結果も試さない
+    - 場の［だつりょくえき］（v0.68。キョウのベトベトン）: ダメージの要素のあとにコインと持ち主の決定があり、DR8・DR13 で止める。v0.13 の止める関数は知らない
     """
     found = []
     if any(state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage for t in attacker.trainers):
         found.append("お上品攻撃の減らす量")
     if state.face_down_cards:
         found.append("うらのカード")
+    if E.energy_drain_holders(state):
+        # v0.68: キョウのベトベトンの［だつりょくえき］（ダメージの要素のあとのコイン・持ち主が選ぶトラッシュ・DR8・DR13）。v0.13 の止める関数は知らない
+        found.append("だつりょくえき")
     return tuple(found)
 
 
@@ -825,6 +830,9 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
             apply_ninja_trick(run, tuple(carried["tricks"]), choices)
         elif decision.kind == REACTION_SWITCH:
             apply_flee(run, tuple(carried["flee"]), choices)
+        elif decision.kind == ENERGY_DRAIN_DISCARD:
+            # v0.68: ［だつりょくえき］のトラッシュするカード（コインはもう投げた。送る効果はもう処理したので、続きの位置で窓を開き直しても何もしない）
+            apply_energy_drain(state, tuple(carried["drain"]), choices)
         else:
             raise RuntimeError(f"要素のあいだの決定 {decision.kind} は扱わない（エンジンの不具合）")
         if run_elements(run, boundary):

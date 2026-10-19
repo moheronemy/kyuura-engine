@@ -56,6 +56,7 @@ from .decisions import (
     BENCH_GUARD,
     NINJA_TRICK,
     REACTION_SWITCH,
+    ENERGY_DRAIN_DISCARD,
     DISCARD_FROM_HAND,
     EVOLUTION_HEAL,
     SELECT_POKEMON,
@@ -211,6 +212,7 @@ from .state import (
 )
 from .zones import DISGUISE_REVERT, attach_energy_from_hand, designate_face_down, discard_from_play, draw_cards, enter_play, place_stadium, remove_disguise, reveal_face_down, shuffle_deck
 from . import zones as _zones
+from . import cards as cards_module
 from .coins import CoinSide, flip_coins
 
 # v0.15a: v0.13 まで engine.py にあった確認と共通の手続きを、engine.py を読み込まない部品に移した（docs/integration-dependencies-v0.15a.md）。
@@ -449,8 +451,9 @@ def _apply_checked(state: GameState, command, context: resolution.Context | None
     return _identity_independent(state, command, context, acting, result, error)
 
 
-# v0.67: ありうるカードの組の数の上限。超えたら、受け付けるかを本当のカードによらないものにできないので、受け付けない（エンジンの未対応）
-_IDENTITY_COMBINATION_LIMIT = 256
+# v0.68（docs/final-pmcg-cards-v0.68.md 5 章）: 受け付けるかを確かめる処理の回数の上限。ありうるカードは公開の情報（対応しているカードの一覧）から作るので、指定された相手の
+# うらのカードが 1 枚なら上限の中におさまり、2 枚以上なら超える（超えたら、受け付けるかを本当のカードによらないものにできないので受け付けない。エンジンの未対応）
+_IDENTITY_TRIAL_LIMIT = 512
 SECRET_PLAN_IDENTITIES_CODE = "UNSUPPORTED_SECRET_PLAN_IDENTITIES"
 
 
@@ -460,52 +463,147 @@ def _acting_player(state: GameState, command) -> int | None:
     return player if player in PLAYERS else None
 
 
-def _identity_independent(state: GameState, command, context: resolution.Context | None, acting: int, result, error):
-    """v0.67: 相手（``acting`` の相手）のうらのカードを、ありうるカード（そのプレイヤーのカードの id。デッキのカードの id の集まり）のどれに置きかえても、このコマンドを
-    受け付けるか・同じ理由で拒否するかを確かめる。どの組でも受け付けるなら本当の結果を返し、どれかの組で拒否するなら、カードの id の順で最初に拒否する組の例外の
-    種類とコードで拒否する（理由の文に、置きかえたカードを書かない）。本当のカードはありうるカードに入るので、本当の処理が拒否するなら、どれかの組でも拒否する。"""
-    import itertools
+class _NeedBranch(BaseException):
+    """v0.68: 確かめの処理が、まだ割り当てていない相手のうらのカードを指定した（ありうるカードを順に試す）。エンジンの処理が捕まえないように ``BaseException``。"""
 
-    hidden = [uid for uid in state.face_down_cards if state.cards[uid].owner != acting]
-    pools = []
-    for uid in hidden:
-        owner = state.cards[uid].owner
-        pools.append(sorted({card.card_id for card in state.cards.values() if card.owner == owner}))
-    total = 1
-    for pool in pools:
-        total *= len(pool)
-    if total > _IDENTITY_COMBINATION_LIMIT:
-        raise UnsupportedError(SECRET_PLAN_IDENTITIES_CODE,
-                               f"相手のうらのカード {len(hidden)} 枚のありうるカードの組（{total}）が上限（{_IDENTITY_COMBINATION_LIMIT}）を超え、受け付けるかを本当のカードによらない"
-                               "ものにできない（エンジンの未対応）")
-    saved = _zones.IDENTITY_CONSULTED
+
+class _OpaqueRead(BaseException):
+    """v0.68: 確かめの処理が、「たねポケモンでない」とだけ割り当てたうらのカードの、ほかの項目を読んだ（そのカードについては、たねポケモンでないカードをひとつずつ試す）。"""
+
+    def __init__(self, uid: int):
+        super().__init__(uid)
+        self.uid = uid
+
+
+_NONBASIC = "?nonbasic"  # v0.68: 「たねポケモン」でない、とだけ決めたカード（トラッシュしたあとに項目を読まなければ、どのカードでも同じ結果）
+_UNASSIGNED = "?unassigned"  # v0.68: まだ割り当てていない相手のうらのカード（読めば確かめの不具合）
+
+
+class _OpaqueDefinition(cards_module.CardDefinition):
+    """v0.68: 確かめの状態の、割り当てる前・「たねポケモンでない」とだけ決めたカードの定義。「たねポケモン」かのほかを読むと止まる。"""
+
+    def __getattribute__(self, name: str):
+        if name.startswith("_") or name in ("id", "__class__"):
+            return super().__getattribute__(name)
+        if name == "is_basic_pokemon" and super().__getattribute__("id") == _NONBASIC:
+            return False
+        raise _OpaqueRead(-1)
+
+    def __eq__(self, other) -> bool:
+        return self is other
+
+    def __hash__(self) -> int:
+        return id(self)
+
+
+_OPAQUE = {key: _OpaqueDefinition(id=key, name_ja="", name_en=None, category="trainer", supported=True, unsupported_reasons=())
+           for key in (_NONBASIC, _UNASSIGNED)}
+_PUBLIC_POOLS: dict[int, object] = {}
+
+
+def _public_pool(state: GameState):
+    """v0.68: 公開の情報だけから決まる、ありうるカードの一覧（対応しているカードの一覧。デッキの中身・山札・手札を使わない）。効果の登録表ごとに 1 度作る。"""
+    pool = _PUBLIC_POOLS.get(id(state.effects))
+    if pool is None:
+        from .cards import load_card_pool, pool_from_extract, read_extract
+
+        default = load_card_pool()
+        pool = default if default.effects is state.effects else pool_from_extract(read_extract(), state.effects)
+        _PUBLIC_POOLS[id(state.effects)] = pool
+    return pool
+
+
+class _IdentityOracle:
+    """v0.68: 確かめの 1 回ぶんの割り当て。相手のうらのカード（``scope``）が効果の対象として指定された順に、``script`` のカードを割り当てる（同じカードには、複製した
+    状態でも同じものを割り当てる）。``script`` を使い切ったら ``_NeedBranch`` で止まる（呼ぶ側が、次に試すカードを足してやり直す）。"""
+
+    def __init__(self, scope: frozenset[int], script: tuple[str, ...]):
+        self.scope = scope
+        self.script = script
+        self.order: list[int] = []
+        self.assigned: dict[int, str] = {}
+
+    def assign(self, state: GameState, uid: int) -> None:
+        if uid not in self.scope:
+            return
+        if uid not in self.assigned:
+            if len(self.order) >= len(self.script):
+                raise _NeedBranch()
+            self.order.append(uid)
+            self.assigned[uid] = self.script[len(self.order) - 1]
+        card_id = self.assigned[uid]
+        if state.cards[uid].card_id != card_id:
+            from types import MappingProxyType
+
+            cards = dict(state.cards)
+            cards[uid] = dataclasses.replace(cards[uid], card_id=card_id)
+            state.cards = MappingProxyType(cards)
+
+
+def _identity_trial_state(state: GameState, scope: frozenset[int]) -> GameState:
+    """v0.68: 確かめの状態の複製（返す状態にはしない）。相手のうらのカードを割り当てる前の印にし、ありうるカードの定義を加える。"""
+    from types import MappingProxyType
+
+    trial = state.clone()
+    cards = dict(trial.cards)
+    for uid in scope:
+        cards[uid] = dataclasses.replace(cards[uid], card_id=_UNASSIGNED)
+    trial.cards = MappingProxyType(cards)
+    trial.definitions = MappingProxyType({**_public_pool(state).definitions, **state.definitions, **_OPAQUE})
+    return trial
+
+
+def _identity_independent(state: GameState, command, context: resolution.Context | None, acting: int, result, error):
+    """v0.67・v0.68（docs/final-pmcg-cards-v0.68.md 5 章）: 相手（``acting`` の相手）のうらのカードの本当のカードによらず、このコマンドを受け付けるか・同じ理由で拒否するかを
+    確かめる。
+
+    v0.67 は、ありうるカードをうらのカードの持ち主のデッキのカード（見えない情報）から作り、組の数の上限で拒否していた（デッキの中身で受け付けるかが変わった）。v0.68 から:
+
+    - ありうるカードは公開の情報（対応しているカードの一覧。``_public_pool``）だけから作る。デッキ・山札・手札の中身は使わない
+    - 試すのは、このコマンドが効果の対象として指定した（おもてにした）相手のうらのカードだけ（指定した順に、``zones.IDENTITY_ORACLE`` が割り当てる）。指定するまでの処理は
+      うらのカードを読めない（FD1）ので、どのカードを指定するかは公開の情報で決まる
+    - 「たねポケモン」でないカードは、おもてにするとトラッシュする。トラッシュしたあとにほかの項目を読まなければ、どのカードでも同じ結果なので 1 回だけ試し
+      （``_NONBASIC``）、読んだら、たねポケモンでないカードをひとつずつ試す
+    - どの割り当てでも受け付けるなら本当の結果を返し、どれかで拒否するなら、試した順で最初に拒否した割り当ての例外の種類とコードで拒否する（理由の文に、割り当てたカードを
+      書かない）。試す回数が上限（``_IDENTITY_TRIAL_LIMIT``）を超えるなら ``UNSUPPORTED_SECRET_PLAN_IDENTITIES``。どちらも、試すカードの一覧が公開の情報だけで決まるので、
+      本当のカード・デッキの中身によらない"""
+    scope = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != acting)
+    pool = _public_pool(state)
+    basics = sorted(card_id for card_id in pool.playable_ids if pool.get(card_id).is_basic_pokemon)
+    nonbasics = sorted(card_id for card_id in pool.playable_ids if not pool.get(card_id).is_basic_pokemon)
+    trials = 0
+    pending: list[tuple[str, ...]] = [()]
+    saved_consulted, saved_oracle = _zones.IDENTITY_CONSULTED, _zones.IDENTITY_ORACLE
     _zones.IDENTITY_CONSULTED = []  # 確かめのあいだは記録しない（置きかえた状態の処理が、もう一度確かめない）
     try:
-        for combination in itertools.product(*pools):
-            trial = _with_identities(state, dict(zip(hidden, combination)))
+        while pending:
+            script = pending.pop(0)
+            trials += 1
+            if trials > _IDENTITY_TRIAL_LIMIT:
+                raise UnsupportedError(SECRET_PLAN_IDENTITIES_CODE,
+                                       "相手のうらのカードを 2 枚以上、効果の対象にするコマンドは、受け付けるかを本当のカードによらないものにできない（試す回数が上限を超える。"
+                                       "エンジンの未対応）")
+            oracle = _IdentityOracle(scope, script)
+            _zones.IDENTITY_ORACLE = oracle
+            trial = _identity_trial_state(state, scope)
             try:
                 _apply_once(trial, command, context and _context(trial, context.preflight, context.catalog), verify=False)
+            except _NeedBranch:
+                pending[0:0] = [script + (card_id,) for card_id in (*basics, _NONBASIC)]
+            except _OpaqueRead:
+                position = script.index(_NONBASIC) if _NONBASIC in script else None
+                if position is None:
+                    raise RuntimeError("確かめの処理が、割り当てる前の相手のうらのカードを、効果の対象として指定せずに読んだ（エンジンの不具合）") from None
+                pending[0:0] = [script[:position] + (card_id,) + script[position + 1:] for card_id in nonbasics]
             except (IllegalActionError, UnsupportedError) as exc:
                 cls = type(exc) if isinstance(exc, IllegalActionError) else UnsupportedError
                 raise cls(exc.code, f"相手のうらのカード（マチスの秘策）がありうるカードのどれかのとき、このコマンドは受け付けられない（{exc.code}。本当のカードによらず同じ理由で"
                                     "受け付けない）") from None
     finally:
-        _zones.IDENTITY_CONSULTED = saved
+        _zones.IDENTITY_CONSULTED, _zones.IDENTITY_ORACLE = saved_consulted, saved_oracle
     if error is not None:
         raise RuntimeError(f"本当のカードで拒否したコマンドが、ありうるカードのすべてで受け付けられた（{error.code}。エンジンの不具合）")
     return result
-
-
-def _with_identities(state: GameState, identities: dict[int, str]) -> GameState:
-    """v0.67: うらのカード ``uid`` の本当のカードを ``identities[uid]``（カードの id）に置きかえた状態の複製（確かめのためだけ。返す状態にはしない）。"""
-    from types import MappingProxyType
-
-    trial = state.clone()
-    cards = dict(trial.cards)
-    for uid, card_id in identities.items():
-        cards[uid] = dataclasses.replace(cards[uid], card_id=card_id)
-    trial.cards = MappingProxyType(cards)
-    return trial
 
 
 def _apply_once(state: GameState, command, context: resolution.Context | None, *, verify: bool = True) -> GameState:
@@ -4081,7 +4179,8 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     if card_id != expected:
         return [f"ワザの決定の続きのカード id {card_id} が、ワザを使ったポケモン {pokemon_id} の使ったワザのカード {expected} と違う"]
     problems = _carried_deferred_problems(state, d, player) + _carried_flee_problems(state, d)
-    if d.kind in (NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD):
+    if d.kind in (NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ENERGY_DRAIN_DISCARD):
+        # v0.68: ［だつりょくえき］のトラッシュするカードの決定（ENERGY_DRAIN_DISCARD）も、どのワザでも出しうる
         # v0.65: ワザの途中の任意の決定（変わり身の術・［にげこむ］・［ベンチガード］）は、どのワザでも出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
         return problems + _reaction_decision_problems(state, d, player)
     if d.kind == DAMAGE_STEP_ORDER:
@@ -4198,6 +4297,24 @@ def _reaction_decision_problems(state: GameState, d, player: int) -> list[str]:
             problems.append(f"［にげこむ］の決定 {d.id} に、続ける要素の位置がない")
         if d.options != bench or (d.min_choices, d.max_choices) != (0, 1):
             problems.append(f"［にげこむ］の決定 {d.id} の選べるもの {d.options}（{d.min_choices}〜{d.max_choices}）が、控え {bench} の 0〜1 個ではない")
+        return problems
+    if d.kind == ENERGY_DRAIN_DISCARD:
+        # v0.68: ［だつりょくえき］。決めるのは持ち主。そのポケモンが持ち主の場にいて、今その特殊能力を持つ。ダメージを与えたポケモンが場にいて、選べるものはそのポケモンに
+        # ついているエネルギーカード（ついている順）のちょうど 1 個
+        entry = d.context_value("drain")
+        if not (isinstance(entry, tuple) and len(entry) == 5) or entry[0] != owner:
+            return [f"［だつりょくえき］の決定 {d.id} の続きの情報 {entry!r} が正しくない"]
+        _, pid, card_id, power_index, source_pid = entry
+        holder = state.find_pokemon(pid)
+        if holder is None or holder[0] != owner or not any(slot.key == PowerKey(card_id, power_index) for slot in powers_of(state, holder[1])):
+            problems.append(f"［だつりょくえき］の決定 {d.id} のポケモン {pid} が、プレイヤー {owner} の場にいない・特殊能力を持たない")
+        source = state.find_pokemon(source_pid)
+        if source is None or source[0] == owner:
+            return problems + [f"［だつりょくえき］の決定 {d.id} のダメージを与えたポケモン {source_pid} が、相手の場にいない"]
+        if not isinstance(d.context_value("boundary"), int):
+            problems.append(f"［だつりょくえき］の決定 {d.id} に、続ける要素の位置がない")
+        if d.options != tuple(source[1].energy) or not d.options or (d.min_choices, d.max_choices) != (1, 1):
+            problems.append(f"［だつりょくえき］の決定 {d.id} の選べるもの {d.options}（{d.min_choices}〜{d.max_choices}）が、ポケモン {source_pid} のエネルギーカードの 1 個ではない")
         return problems
     carried = d.context_value("bench_guard")
     if not (isinstance(carried, tuple) and len(carried) == 3 and carried[0]):

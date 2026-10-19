@@ -16,7 +16,7 @@ from tests.helpers import (
     V0_63_CARDS,
     V0_66_CARDS,
     V0_67_CARDS,
-    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON, V0_64_POKEMON, V0_65_POKEMON, KOGAS_NINJA_TRICK,
+    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON, V0_64_POKEMON, V0_65_POKEMON, V0_68_POKEMON, KOGAS_NINJA_TRICK,
     V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
@@ -116,7 +116,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.17b（ねむり状態でだけはたらくポケモンパワーのわるいねぞう・自分をねむりにするワザのたおれこむ）。キョウのベトベトン（v0.17c）は参照カード
         self.assertEqual(read_extract()["pool_v0_17b"], [ROCKETS_SNORLAX])
         self.assertTrue(pool.is_playable(ROCKETS_SNORLAX) and pool.get(ROCKETS_SNORLAX).is_basic_pokemon)
-        self.assertFalse(pool.is_playable(KOGAS_MUK) or pool.get(KOGAS_MUK).supported)
+        # v0.68 でキョウのベトベトンを対応にした（pool_v0_68。［だつりょくえき］の採用の仕様。docs/final-pmcg-cards-v0.68.md 3 章）
+        self.assertTrue(pool.is_playable(KOGAS_MUK) and KOGAS_MUK in read_extract()["pool_v0_68"])
         # v0.18c（たおれこむと同じ実装の型で加えたナツメのヤドン。docs/kernel-reuse-v0.18c.md）
         self.assertEqual(read_extract()["pool_v0_18c"], [SABRINAS_SLOWPOKE])
         self.assertTrue(pool.is_playable(SABRINAS_SLOWPOKE) and pool.get(SABRINAS_SLOWPOKE).is_basic_pokemon)
@@ -190,10 +191,10 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             if not definition.is_basic_pokemon:
                 self.assertIn(definition.evolves_from, basics, card_id)
-        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは登録しないので対戦に使えない。
+        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは v0.67 まで登録しないので対戦に使えなかった（v0.68 で対応）。
         # 進化先 7 枚は、進化元（名前が完全に一致するポケモン。ニドキングは 1 進化のニドリーノ）が写しのどこかの組にある
         self.assertEqual(read_extract()["pool_v0_34"], list(V0_34_POOL))
-        self.assertFalse(pool.is_playable(KANGASKHAN))
+        self.assertTrue(pool.is_playable(KANGASKHAN))  # v0.68: 利用者が示した訂正を当てはめて対応にした
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
         for card_id in V0_34_POKEMON:
             definition = pool.get(card_id)
@@ -243,7 +244,7 @@ class CardPoolTest(unittest.TestCase):
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
                  *V0_45_POKEMON, *V0_46_POKEMON, *V0_47_POKEMON, *V0_48_POKEMON, *V0_49_POKEMON, *V0_50_POKEMON, *V0_51_POKEMON, *V0_52_POKEMON,
-                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON, *V0_64_POKEMON, *V0_65_POKEMON)  # v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
+                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON, *V0_64_POKEMON, *V0_65_POKEMON, *V0_68_POKEMON)  # v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

@@ -487,6 +487,9 @@ V0_66_DECISIONS = ("damage_reduction", "esp_redo", "janken_hand")
 # v0.67（docs/secret-plan-preflight-v0.67.md）。マチスの秘策（手札から 1 枚をうらにしてベンチに出してよい）
 LT_SURGES_SECRET_PLAN, HITMONCHAN = "PMCG5-093", "PMCG1-058"
 V0_67 = (LT_SURGES_SECRET_PLAN,)
+# v0.68（docs/final-pmcg-cards-v0.68.md）。ガルーラ（利用者が示した訂正の文面）・キョウのベトベトン（だつりょくえき）・イマクニ？のドードー（簡略化した仕様）
+KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO = "PMCG2-046", "PMCG6-023", "PMCG6-074"
+V0_68 = (KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO)
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -778,6 +781,8 @@ DECKS = {
     # v0.67: 闘・超。たねポケモン（ディグダ・エビワラー・ケーシィ）と 1 進化のユンゲラー・トレーナー（うらにして出すカードに、たねポケモン・進化カード・トレーナー・
     # エネルギーのどれもある）とマチスの秘策
     "L67": ((DIGLETT, 4), (HITMONCHAN, 4), (ABRA, 4), (KADABRA, 3), (LT_SURGES_SECRET_PLAN, 4), *TRAINERS, (FIGHTING, 15), (PSYCHIC, 14)),
+    # v0.68: 草・無色。ガルーラ（こどものおつかい・れんぞくパンチ）・キョウのベトベター → キョウのベトベトン（だつりょくえき・ヘドロのうず）・イマクニ？のドードー（ハモる）
+    "K68": ((KANGASKHAN, 4), (KOGAS_GRIMER, 4), (KOGAS_MUK, 3), (IMAKUNI_DODUO, 4), *TRAINERS, (GRASS, 33)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -882,6 +887,8 @@ PAIRINGS_V0_65 = (("K65", "R65"), ("R65", "L39"), ("R65", "Z60"), ("K65", "H62")
 PAIRINGS_V0_66 = (("S66", "C66"), ("C66", "P46"), ("S66", "H62"), ("C66", "R65"))
 # v0.67: L67 対 C66（相手のうらのカードにれんぞくいしなげ・お上品攻撃）・L67 対 R65（じしん系のベンチへのダメージ）・L67 対 S66・L67 対 G64
 PAIRINGS_V0_67 = (("L67", "C66"), ("L67", "R65"), ("L67", "S66"), ("L67", "G64"))
+# v0.68: K68 対 R65（ベンチへのダメージ・ラリアット）・K68 対 C66（れんぞくいしなげ）・K68 対 L67（マチスの秘策）・K68 対 P31
+PAIRINGS_V0_68 = (("K68", "R65"), ("K68", "C66"), ("K68", "L67"), ("K68", "P31"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -890,7 +897,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
            "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
-           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67}
+           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -992,6 +999,10 @@ def _thunderstorm_transparency(state, command) -> bool:
 
 
 V031_STOPS = {
+    # v0.68: 相手のうらのカード（マチスの秘策）を 2 枚以上、効果の対象にするコマンド（控え全員へのダメージなど）は、受け付けるかを本当のカードによらないものにできない
+    # （エンジンの未対応。docs/final-pmcg-cards-v0.68.md 5.3 節）。コマンドを出したプレイヤーの相手の場に、うらのカードが 2 枚以上ある
+    "UNSUPPORTED_SECRET_PLAN_IDENTITIES": lambda st, c: sum(
+        1 for q in st.players[1 - c.player].in_play() if st.is_face_down(q)) >= 2,
     # v0.49: ［へんしん］のメタモンが、タイプのエネルギーの数を数える・トラッシュするワザを使う（どの色としても数えるかが決まらない。TE1）
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": lambda st, c: any_color_energy(st, _attacker(st, c)),
     "UNRESOLVED_DISCARD_ENERGY_TIMING": lambda st, c: _attacker(st, c).conditions.confused,  # HC1
@@ -2747,6 +2758,26 @@ def _v058_retreat(state, tried, counts):
     return command
 
 
+def _v068_retreat(state, tried, counts):
+    """v0.68: バトル場のイマクニ？のドードー（にげるエネルギー 0。［にげまくり］は投げる動作を処理しない簡略化した仕様）に控えがいれば、3 番に 1 回、エネルギーカードを
+    トラッシュせずに「にげる」を試す（拒否は ``v068_doduo_retreat_rejected_<コード>`` に数え、別の操作を続ける）。"""
+    player = state.current_player
+    p = state.players[player]
+    active = p.active
+    if active is None or not p.bench or state.turn_number % 3 or state.cards[active.card].card_id != IMAKUNI_DODUO \
+            or ("v068_retreat", state.turn_number) in tried:
+        return None
+    tried.add(("v068_retreat", state.turn_number))
+    command = Retreat(player, (), p.bench[0].card)
+    try:
+        apply_command(state, command)
+    except (IllegalActionError, UnsupportedError) as error:
+        counts[f"v068_doduo_retreat_rejected_{error.code}"] += 1
+        return None
+    counts["v068_doduo_retreat"] += 1
+    return command
+
+
 def _v059_power(state, tried, counts):
     """v0.59: マルマイン（第1弾）の［エネエネ］を、自分の場にほかのポケモンがいて、受け付けるとき、番の番号が 3 の倍数か、マルマインにダメージがあれば使う（1 番に 1 回）。
     拒否（BZ1〜BZ4・まきちらせ!ベトベトガス・ショックアイなど）は ``v059_buzzap_rejected_<コード>`` に数える。"""
@@ -3114,6 +3145,34 @@ def _v067_fallback(state, tried, counts):
         counts[f"v067_fallback_{type(command).__name__}"] += 1
         return command
     raise AssertionError("うらのカードの定義を読めない手順の代わりのコマンドがない")
+
+
+def v068_uses(state):
+    """v0.68: ログから数えた 3 枚の動き（ない局では空）。``attack_<カード id>_<位置>``（ワザの宣言）・``fetch_draw``（こどものおつかいのあとの ``draw``）・
+    ``drain_heads``・``drain_tails``・``drain_discard``（だつりょくえきでトラッシュしたカード）・``drain_decision``（そのまえの決定。ログ ``energy_drain_discard`` の数と同じ）・
+    ``doduo_retreat_cost_<数>``（イマクニ？のドードーの「にげる」でトラッシュしたカードの数）。"""
+    counts = Counter()
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    last_attack = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            cid = card.get(e.get("pokemon")) if e.get("card_id") is None else e["card_id"]
+            last_attack = (cid, e.get("attack_index"))
+            if cid in V0_68:
+                counts[f"attack_{cid}_{e.get('attack_index')}"] += 1
+        elif kind == "draw" and last_attack == (KANGASKHAN, 0) and e.get("player") is not None:
+            counts["fetch_draw"] += 1
+            last_attack = None
+        elif kind == "energy_drain_check":
+            counts["drain_heads" if e.get("result") == "heads" else "drain_tails"] += 1
+        elif kind == "energy_drain_discard":
+            counts["drain_discard"] += 1
+        elif kind == "retreat" and card.get(e.get("old_active")) == IMAKUNI_DODUO:
+            counts[f"doduo_retreat_cost_{len(e.get('discarded') or ())}"] += 1
+        elif kind == "turn_start":
+            last_attack = None
+    return dict(counts)
 
 
 def v067_uses(state):
@@ -3883,7 +3942,7 @@ def make_policy(seen: dict, counts: Counter):
             probe = _v036_retreat_probe(state, tried, counts)  # v0.36
             if probe is not None:
                 return probe
-            retreat = (_v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts)  # v0.46・v0.58
+            retreat = (_v046_retreat(state, tried, counts) or _v058_retreat(state, tried, counts) or _v068_retreat(state, tried, counts)  # v0.46・v0.58
                        or _v061_retreat(state, tried, counts))  # v0.61
             if retreat is not None:
                 return retreat
@@ -4028,6 +4087,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v065"] = v065_uses(state)
         result["v066"] = v066_uses(state)
         result["v067"] = v067_uses(state)
+        result["v068"] = v068_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:

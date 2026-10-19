@@ -290,6 +290,15 @@ QUESTIONS: dict[str, Question] = {
         # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
         Question("damage_reduction_decision", "UNSUPPORTED_DAMAGE_REDUCTION_DECISION", ("v0.66",), 10,
                  "お上品攻撃で減らす量を選ぶ決定を、このダメージ（前の番のワザの効果で返すダメージ・前の要素の結果を運べない並び）では出せない（エンジンの未対応）"),
+        # v0.68（docs/final-pmcg-cards-v0.68.md 3 章）: キョウのベトベトンの［だつりょくえき］。採用の仕様（自動的にはたらく・ダメージの要素のあと）でも決まらない場合
+        Question("energy_drain_attacker_knocked_out", "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT", ("DR8",), 10,
+                 "［だつりょくえき］を処理する時点で、ダメージを与えたポケモンがすでに HP 以上のダメージを受けているとき（同じワザの自分へのダメージ・返す効果のダメージなど）、"
+                 "コインを投げ、エネルギーカードを選んでトラッシュするかは、印刷の文面・最新の説明・kyuura の記録（UQ-ENERGY-DRAIN-ATTACKER-KO）から決められない"),
+        Question("energy_drain_no_energy", "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY", ("DR13",), 10,
+                 "ダメージを与えたポケモンにエネルギーカードがついていないとき、［だつりょくえき］のコインを投げるかは、日本語の文面・kyuura の記録（UQ-ENERGY-DRAIN-NO-ENERGY）"
+                 "から決められない（英語版の「if it has any」は使わない）"),
+        Question("energy_drain_decision", "UNSUPPORTED_ENERGY_DRAIN_DECISION", ("v0.68",), 10,
+                 "［だつりょくえき］のトラッシュするカードの決定を、v0.13 の約束で書いたワザの実装の中では出せない（エンジンの未対応）"),
         # 今の写しのワザの並びでは起こらない（コードのない問い。当たったらエンジンの不具合）
         Question("esp_separate_coin_tosses", None, ("ES0",), 10,
                  "ナツメのESPのやり直しのあとに、同じワザの説明文のコイントスをもう一度投げる並びのワザは、今の写しにない（どのワザも説明文のコイントスは 1 回にまとまっている）"),

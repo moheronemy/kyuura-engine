@@ -1,5 +1,7 @@
 # キョウのベトベトン「だつりょくえき」の設計の検証（v0.17c）
 
+> v0.68 の追記: v0.68 で、DR1・DR6 を採用の仕様（kyuura の MIX-POWER-ERRATA・MIX-POWER-SPLIT をこの特殊能力に限って使う・p.89 の「こうらがえし」の解説からの類推）にして、案 B で実装した。DR8・DR13 は停止コード。DR1・DR6 は裁定としては UNRESOLVED のまま。この文書の本文は v0.17c の時点の記録で、書き換えていない（[final-pmcg-cards-v0.68.md](final-pmcg-cards-v0.68.md) 3 章）。
+
 キョウのベトベトン（PMCG6-023。ジム拡張第2弾闇からの挑戦）の特殊能力［だつりょくえき］を、解決の基盤（KERNEL）で扱えるかを検証した記録です（仮説 H3。設計だけで、本番の実装は求められていない）。
 
 - カードの選定と照合: [card-selection-v0.17a.md](card-selection-v0.17a.md) 4.4 章

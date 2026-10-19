@@ -112,12 +112,14 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual((C.RESTLESS_SLEEP.requires, C.RESTLESS_SLEEP.disabled_by, C.RESTLESS_SLEEP.action),
                          (frozenset({"sleep"}), frozenset(), C.STRIKES_BACK.action))
 
-    def test_kogas_muk_is_rejected(self):
-        """キョウのベトベトン（参照カード）は、だつりょくえきを実装していないので未対応（効果のないものとして扱わない。v0.17c）。"""
-        definition = load_card_pool().get(KOGAS_MUK)
+    def test_kogas_muk_is_rejected_without_the_power_registration(self):
+        """キョウのベトベトンは、だつりょくえきを実装していない登録表では未対応（効果のないものとして扱わない。v0.17c）。v0.68 でだつりょくえきを採用の仕様で登録したので、
+        同梱の登録表では対応（tests/test_final_pmcg_cards_v0_68.py）。"""
+        registry = E.DEFAULT_EFFECTS.without_powers("test-no-energy-drain", [E.PowerKey(KOGAS_MUK, 0)])
+        definition = pool_from_extract(read_extract(), registry).get(KOGAS_MUK)
         self.assertFalse(definition.supported)
         self.assertTrue(any("だつりょくえき" in reason for reason in definition.unsupported_reasons))
-        self.assertFalse(load_card_pool().is_playable(KOGAS_MUK))
+        self.assertTrue(load_card_pool().is_playable(KOGAS_MUK))
 
     def test_power_is_not_declarable(self):
         """宣言しない特殊能力（Z4）。使おうとしても状態・乱数・ログは変わらない。"""

@@ -249,8 +249,9 @@ class CardDataTest(unittest.TestCase):
         for card in V0_34_POKEMON:
             with self.subTest(card=card):
                 self.assertTrue(self.pool.is_playable(card))
-        self.assertFalse(self.pool.is_playable(KANGASKHAN))
-        self.assertFalse([k for k in E.DEFAULT_EFFECTS.attack_keys() if k.card_id == KANGASKHAN])
+        # v0.68: 利用者が示した修正（こどものおつかいにコインはない）を写しに当てはめ、保留を解いた（docs/final-pmcg-cards-v0.68.md 2 章）
+        self.assertTrue(self.pool.is_playable(KANGASKHAN))
+        self.assertEqual(len([k for k in E.DEFAULT_EFFECTS.attack_keys() if k.card_id == KANGASKHAN]), 2)
 
     def test_every_attack_is_registered_with_the_expected_type(self):
         """27 のワザがどれも登録され、型と値が表のとおり。名前・文面は写しと同じで、処理に使う文面は kyuura の印刷の文面（説明文のあるワザ）。特殊能力を
@@ -305,12 +306,14 @@ class CardDataTest(unittest.TestCase):
                         self.assertNotIn(key, record["play_text"])
         self.assertEqual({card: fields for card, fields in differences.items() if fields},
                          {JOLTEON: ["pokemon.attacks[1].text.ja"], TAUROS: ["pokemon.attacks[1].text.ja"]})
+        # v0.68: 保留したガルーラは、利用者が示した訂正（写しの作り直しの USER_PROVIDED_CORRECTIONS）を当てはめて採用した。外部照合の記録（違いの記録）は変えていない
         hold = sources[KANGASKHAN]
-        self.assertEqual((hold["status"], hold["play_text"]), ("on_hold", {}))
+        self.assertEqual((hold["status"], hold["play_text"]),
+                         ("adopted", {"attack/0": "user_provided_correction", "attack/1": "kyuura_printed_text"}))
         [check] = hold["external_checks"]
         self.assertEqual(check["edition"]["list_number"], "044/048")
         self.assertEqual([d["field"] for d in check["differences"] if d["affects_behavior"]], ["pokemon.attacks[0].text.ja"])
-        self.assertEqual([i["fields"] for i in hold["issues"]], [["pokemon.attacks[0].text.ja"]])
+        self.assertEqual(hold["issues"], [])
 
     def test_evolution_by_exact_name(self):
         """進化先 7 枚は、進化元の名前と完全に一致するポケモンからだけ、通常の進化の操作で進化する（ギャロップは第1弾・第4弾のどちらのポニータからも。

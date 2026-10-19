@@ -1190,10 +1190,66 @@ def power_confusion_to_damage_source(res: Resolution, fs: FrameState, deferred: 
         confuse(state, fs.frame.player, source, effect=str(instance.power_key))
 
 
+class EnergyDrainRequest(Exception):
+    """v0.68: ［だつりょくえき］の「おもて」で、トラッシュするエネルギーカードを持ち主に選ばせる（呼ぶ側の ``programs.run_elements`` が決定 ``ENERGY_DRAIN_DISCARD`` を出し、
+    答えのあとに ``apply_energy_drain`` で続ける）。コインはもう投げたので、答えのあとで投げ直さない。"""
+
+    def __init__(self, entry: tuple[int, int, str, int, int], options: tuple[int, ...]):
+        super().__init__(entry)
+        self.entry = entry  # (持ち主, ポケモンの番号, カード id, 特殊能力の位置, ダメージを与えたポケモンの番号)
+        self.options = options
+
+
+def drain_energy_from_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.68（docs/final-pmcg-cards-v0.68.md 3 章）: ［だつりょくえき］。コインを投げ、「おもて」なら、持ち主がダメージを与えたポケモンについているエネルギーカードを 1 枚選び、
+    その持ち主のトラッシュに置く。
+
+    - コインの前に、ダメージを与えたポケモンがすでに HP 以上なら DR8、エネルギーカードがついていなければ DR13 で止める（どちらも採用の仕様で決まらない。宣言の前に先読みが見つける）
+    - コインは持ち主（``source="power"``、``effect`` は ``PowerKey``。ログ ``energy_drain_check``）。特殊能力の効果なので「ワザをうけない」状態・「とうめい」は関係しない
+    - 「おもて」なら、先読みは答えのすべてを試し、実際の処理は ``EnergyDrainRequest`` で決定を出す（答えは ``apply_energy_drain``）"""
+    state = res.state
+    instance = deferred.instance
+    source = _damage_source(res, fs, "エネルギーカードのトラッシュ")
+    detail = f"{instance.power_key} → ポケモン {source.pokemon_id}"
+    if source.damage >= hp_of(state, source):
+        raise res.question("energy_drain_attacker_knocked_out", detail)
+    if not source.energy:
+        raise res.question("energy_drain_no_energy", detail)
+    flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
+    heads = flips.results[0] is CoinSide.HEADS
+    state.add_event("energy_drain_check", player=instance.owner, pokemon=instance.card, pokemon_id=instance.pokemon_id, power=str(instance.power_key),
+                    attacker=fs.frame.player, attacker_pokemon=source.card, attacker_pokemon_id=source.pokemon_id, effect=str(fs.frame.attack_key),
+                    result=flips.results[0].value)
+    if not heads:
+        return
+    key = instance.power_key
+    entry = (instance.owner, instance.pokemon_id, key.card_id, key.power_index, source.pokemon_id)
+    options = tuple(source.energy)
+    if res.dry_run:
+        apply_energy_drain(state, entry, res.oracle.choose([(card,) for card in options]))
+        return
+    raise EnergyDrainRequest(entry, options)
+
+
+def apply_energy_drain(state: GameState, entry: tuple, choices: tuple[int, ...]) -> None:
+    """v0.68: ［だつりょくえき］の答え。選んだエネルギーカードを、ダメージを与えたポケモンからはがして、そのカードの持ち主のトラッシュに置く（ログ ``energy_drain_discard``）。"""
+    owner, pokemon_id, card_id, power_index, source_pid = entry
+    located = state.find_pokemon(source_pid)
+    if located is None or len(choices) != 1 or choices[0] not in located[1].energy:
+        raise RuntimeError(f"［だつりょくえき］でトラッシュするエネルギーカード {choices} が、ポケモン {source_pid} についていない（エンジンの不具合）")
+    holder, source = located
+    card = choices[0]
+    source.energy.remove(card)
+    state.players[state.cards[card].owner].discard.append(card)
+    state.add_event("energy_drain_discard", player=owner, pokemon_id=pokemon_id, power=str(E.PowerKey(card_id, power_index)), attacker=holder,
+                    attacker_pokemon_id=source_pid, card=card)
+
+
 ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "power_damage_to_damage_source": power_damage_to_damage_source,
     "attack_damage_to_damage_source": attack_damage_to_damage_source,
     "power_confusion_to_damage_source": power_confusion_to_damage_source,  # v0.42
+    "drain_energy_from_damage_source": drain_energy_from_damage_source,  # v0.68
 }
 
 

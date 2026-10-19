@@ -4204,11 +4204,14 @@
     "PMCG2-046": {
       "basis": "kyuura_data",
       "name_ja": "ガルーラ",
-      "status": "on_hold",
+      "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
-      "recorded_on": "2026-10-16",
+      "recorded_on": "2026-10-19",
       "kyuura_records": [],
-      "play_text": {},
+      "play_text": {
+        "attack/0": "user_provided_correction",
+        "attack/1": "kyuura_printed_text"
+      },
       "external_checks": [
         {
           "site": "pcg-search.com",
@@ -4256,17 +4259,8 @@
           "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードの一覧のページ。カードの画像は読んでいない"
         }
       ],
-      "issues": [
-        {
-          "question": "こどものおつかいは、コインを投げて「おもて」のときだけ山札の上から 1 枚引くのか（kyuura の写しの文面）、コインを投げずに 1 枚引くのか（pcg-search.com の文面）。コインの有無で、引くかどうかと乱数の使い方が変わる",
-          "fields": [
-            "pokemon.attacks[0].text.ja"
-          ],
-          "affects_behavior": true,
-          "note": "kyuura の日本語の文面の元（ja_text_source）は nazonobasho.com で、pcg-search.com と食い違う。記録（LD-・CR-・UQ-・エラッタ・card_differences）にこのカードはない。ガイドブックは読んでいない（方針）。kyuura への報告事項"
-        }
-      ],
-      "notes": "v0.34 の依頼の 15 枚のうち、pcg-search.com との照合でこどものおつかいの文面に挙動に影響する違い（コインの有無）が見つかったので保留にした（登録しない。写しには保留の記録のために入れた）。れんぞくパンチの違い（サイトの脱字）は処理に影響しない。kyuura のデータ・写しは直さない（kyuura への報告事項）"
+      "issues": [],
+      "notes": "v0.34 で保留にした（pcg-search.com との照合で、こどものおつかいのコインの有無が違う）。v0.68 で、利用者が示した修正（2026-10-19 の依頼。実物のカード画像でガルーラ LV.40 HP90 のこどものおつかいが「自分の山札の上からカードを1枚ひいて、手札に加える。」でコインがないことを確かめた、と利用者が示した。エンジンは画像を見ていない）を、写しの書き出しの USER_PROVIDED_CORRECTIONS（scripts/extract_kyuura_cards.py）で写しのワザ 0 の説明文だけに当てはめ、保留を解いた（記録した日は v0.68 の採用の日。外部照合の記録（2026-10-16）は写しの元の値と比べた履歴のまま）。kyuura の文面の先頭の「コインを投げて「おもて」なら、」は転記の誤り（kyuura の ja_text_source は nazonobasho.com）で、kyuura の記録（CC-・LD-）・修正のコミットではない。エラッタ・別の版の文面でもない。こどものおつかいは DrawCardsAttack(1)（コインなし）、れんぞくパンチは CoinFlipDamage(coins=4, damage_per_heads=20)。kyuura のデータは直さない（kyuura への報告事項。docs/final-pmcg-cards-v0.68.md 2 章）"
     },
     "PMCG5-056": {
       "basis": "kyuura_data",
@@ -16674,6 +16668,93 @@
       ],
       "issues": [],
       "notes": "v0.67 で加えた。トレーナー。PlaceFaceDownOnBench（手札から 1 枚をうらにしてベンチに出してよい。うらのあいだは「たねポケモン」としてあつかい、名前・HP・タイプなどは読めない（FD1）。おもてにするのは、自分の番の RevealFaceDown・ワザ・特殊能力・進化・にげる・ダメージや効果を受けるとき。おもてにしてたねポケモンでなければ、ついているカードごとトラッシュ）。kyuura の研究の基準のコミットに、このカードの記録はない。日本語の文面の転記元（kyuura の ja_text_source）はポケモンWikiで pcg-search.com ではないので独立した照合。かがくへんかガスの記録（このリポジトリの docs/chemical-gas-v0.8.md 2 章・card_verification.json の PMCG3-007 の記録の p.277 の解説の 1 文）は、全体に働く効果についての解説として再利用した（このカード全体を照合した記録ではない。kyuura が原典を確かめた記録でもない）。英語版の「(You can't play this card if your Bench is full.)」「Flip the card if either player needs to know what it is」は持ち込まない（docs/secret-plan-preflight-v0.67.md）"
+    },
+    "PMCG6-023": {
+      "basis": "guidebook_record",
+      "name_ja": "キョウのベトベトン",
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2013.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "013/098"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードのページの番号（1stgym2013）。カードの画像は読んでいない"
+        }
+      ],
+      "notes": "v0.68 で登録した（v0.17c〜v0.67 は参照カード）。登録の根拠は v0.17c の過去の原典照合の記録（card_verification.json。p.49。履歴。書き換えない）で、［だつりょくえき］の処理に使う文面はその記録の最新の説明（kyuura の LD-PMCG6-023-PWR0 と同じ文面。v0.68 で読み直していない）。この記録には pcg-search.com の照合だけを書く。宣言するか（DR1。UQ-ENERGY-DRAIN-DECLARATION）・処理する時点（DR6。UQ-ENERGY-DRAIN-TIMING）は、この特殊能力に限った採用の仕様（自動的にはたらく。kyuura の MIX-POWER-ERRATA・MIX-POWER-SPLIT を根拠に採用した。時点はダメージの要素のあと・ダメージ以外の効果の前で、p.89 のこうらがえしの解説の時点を当てはめた類推）で、2000.02.14 版の裁定ではない（docs/final-pmcg-cards-v0.68.md 3 章）。DR8・DR13 は止める。ヘドロのうずは DamageOnly"
+    },
+    "PMCG6-074": {
+      "basis": "kyuura_data",
+      "name_ja": "イマクニ？のドードー",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4",
+        "power/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2098.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "098/098"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "pokemon.stage",
+            "pokemon.hp",
+            "pokemon.types",
+            "pokemon.weaknesses",
+            "pokemon.resistances",
+            "pokemon.retreat_cost",
+            "pokemon.powers[0].name.ja",
+            "pokemon.powers[0].text.ja",
+            "pokemon.attacks[0].name.ja",
+            "pokemon.attacks[0].cost",
+            "pokemon.attacks[0].damage",
+            "pokemon.attacks[0].text.ja"
+          ],
+          "differences": [
+            {
+              "field": "name.ja",
+              "kyuura": "イマクニ？のドードー",
+              "pcg_search": "イマクニ?のドードー",
+              "affects_behavior": false,
+              "note": "kyuura は全角の「？」、サイトは半角の「?」（表記の違い。処理に影響しない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・タイプと弱点・抵抗力・エネルギーのアイコン・HP・特殊能力・ワザ名・ダメージの表示・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はサイトのカードのページの番号（1stgym2098）。カードの画像は読んでいない"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.68 で加えた。印刷の文面（ハモるの歌を歌う・［にげまくり］のカードを投げる）はデータのまま照合に使い、処理はエンジンの簡略化した仕様（ハモるは使ったらすぐに 30 ダメージ。［にげまくり］の投げる動作は処理にふくめず、にげるはふつうの規定のまま（印刷のにげるエネルギー 0））。公式の裁定・エラッタではない（docs/final-pmcg-cards-v0.68.md 4 章）"
     }
   }
 }

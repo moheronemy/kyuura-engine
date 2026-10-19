@@ -19,6 +19,7 @@
 
 import copy
 import pickle
+import unicodedata
 import unittest
 
 from kyuura_engine import (
@@ -109,6 +110,8 @@ PSYLINK = PowerKey("PMCG6-053", 0)
 # v0.61（docs/reactive-powers-trainer-damage-v0.61.md）: わるいギャラドスの［ファイナルビーム］（相手のワザで「きぜつ」する時に使うかを決める）・わるいダグトリオの
 # ［おとしあな］（相手が「にげる」時にはたらく）・タケシのオコリザルの［ずらかる］（残りHPが「10」になった時にはたらく）
 FINAL_BEAM = PowerKey("PMCG4-025", 0)
+ENERGY_DRAIN = PowerKey("PMCG6-023", 0)  # v0.68
+RUN_AWAY = PowerKey("PMCG6-074", 0)  # v0.68
 SINKHOLE = PowerKey("PMCG4-043", 0)
 SCRAM = PowerKey("PMCG5-051", 0)
 FLEE = PowerKey("PMCG5-033", 0)  # v0.65: カスミのドククラゲの［にげこむ］
@@ -117,7 +120,7 @@ ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKE
               CHEMICAL_GAS, COWARDICE, CLAIRVOYANCE, STRANGE_BEHAVIOR, TRANSPARENCY, CURSE, KABUTO_ARMOR, PREHISTORIC_POWER, TRANSFORM, STEP_IN, POLLEN_STENCH,
               STICKY_GOO, SNEAK_ATTACK, ALLERGIC_POLLEN, GATHER_FIRE, FINAL_BEAM, LONG_DISTANCE_HYPNOSIS, MATTER_EXCHANGE, REEL_IN, FRENZY, SINKHOLE, TRICKERY,
               EVOLUTIONARY_LIGHT, SUMMON_MINIONS, SOAK_UP, DEFENSIVE_POLLEN, SWEET_TRAP, SHAPESHIFT, REBIRTH, FLEE, REBELLION, ENERGY_CHARGE, SCRAM, BENCH_GUARD, STRANGE_BARRIER,
-              CALMING_AROMA, METAMORPHOSIS, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP)
+              CALMING_AROMA, METAMORPHOSIS, ENERGY_DRAIN, NATURAL_CURE, FIRE_RECOVERY, GASEOUS_FORM, PSYLINK, GUTS, BOSS_CALL, RESTLESS_SLEEP, RUN_AWAY)
 
 
 def full(state):
@@ -207,7 +210,7 @@ class PowerRegistryTest(unittest.TestCase):
         使うかは持ち主が決める）を、カードのページ（p.193）と照合して加えた（7 つ。tests/test_guts_v0_11.py）。v0.12 で R団のファイヤーの
         「ふしちょう」（このカードが「きぜつ」したとき、使える。使うかは持ち主が決める）を、カードのページ（p.82）と照合して加えた（8 つ。
         tests/test_phoenix_v0_12.py）。"""
-        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つ、v0.44 で 2 つ、v0.46 で 8 つ、v0.47 で 5 つ、v0.48 で 2 つ、v0.49 で 3 つ、v0.59 で 1 つ（エネエネ）、v0.60 で 1 つ（はんこう）を加えた
+        self.assertEqual(DEFAULT_EFFECTS.power_keys(), ALL_POWERS)  # v0.31 でエナジーバーン・しぜんになおる・ほのおでかいふく、v0.42 で 8 つ、v0.43 で 9 つ、v0.44 で 2 つ、v0.46 で 8 つ、v0.47 で 5 つ、v0.48 で 2 つ、v0.49 で 3 つ、v0.59 で 1 つ（エネエネ）、v0.60 で 1 つ（はんこう）、v0.68 で 2 つ（だつりょくえき・にげまくり）を加えた
         entry = DEFAULT_EFFECTS.power_entry(VENUSAUR, 0)
         self.assertIsInstance(entry, PowerEntry)
         self.assertEqual(entry.effect, EnergyTransfer(energy_type=EnergyType.GRASS))
@@ -221,8 +224,8 @@ class PowerRegistryTest(unittest.TestCase):
         self.assertIsNone(NO_CHARIZARD_EFFECTS.power_entry(CHARIZARD, 0))
         self.assertIsNotNone(DEFAULT_EFFECTS.power_entry(CHARIZARD, 0))
         # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20、v0.43 は 29、v0.44 は 31、
-        # v0.46 は 39、v0.47 は 44、v0.48 は 46、v0.49 は 49、v0.59 は 50、v0.60 は 51、v0.61 は 54
-        self.assertIn("56 powers", repr(DEFAULT_EFFECTS))
+        # v0.46 は 39、v0.47 は 44、v0.48 は 46、v0.49 は 49、v0.59 は 50、v0.60 は 51、v0.61 は 54、v0.65 は 56、v0.68 は 58
+        self.assertIn("58 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -317,7 +320,9 @@ class PowerRegistryTest(unittest.TestCase):
             card_record = verification["cards"][key.card_id]
             self.assertEqual(entry.play_text_ja, card_record["power_latest_description_ja"][str(key.power_index)])
             image = card_record["power_card_image_text_ja"][str(key.power_index)]
-            if image != entry.text_ja:
+            if image != entry.text_ja and unicodedata.normalize("NFKC", image) != unicodedata.normalize("NFKC", entry.text_ja):
+                # v0.68: キョウのベトベトン（v0.17c の照合の記録。履歴なので書き換えない）は、図版の読みが全角のかっこ、kyuura の写しが半角のかっこだけの違いで、
+                # 不一致として記録していない（文字の幅だけの違いは、ここで不一致に数えない）
                 # v0.8: 図版の印刷の文面が kyuura の写しと違うと読めた（ベトベトンの「すべて／全て」）ときは、照合の記録の不一致
                 # （mismatches）に、kyuura の写しの値と図版の読みが書いてある（登録の照合は kyuura の写しの値のまま）
                 recorded = [m for m in card_record.get("mismatches", ()) if m["field"] == f"pokemon.powers[{key.power_index}].text.ja"]

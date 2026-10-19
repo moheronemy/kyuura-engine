@@ -18476,6 +18476,99 @@ class RockPaperScissorsRefreshHand(TrainerEffect):
         return problems
 
 
+# ---------------------------------------------------------------- v0.68（docs/final-pmcg-cards-v0.68.md）。PMCG1〜PMCG6 の残りのポケモン 3 枚
+#
+# - キョウのベトベトン（PMCG6-023）の［だつりょくえき］: 宣言するか（DR1）・処理する時点（DR6）が 2000.02.14 版の記録で決まらないので、v0.17c〜v0.67 は延期していた。v0.68 は、
+#   この特殊能力に限った採用の仕様（3 章）で実装する: 自動的にはたらく（kyuura の MIX-POWER-ERRATA（2002-05-24 の Q&A でポケボディーとして扱う一覧にある）・
+#   MIX-POWER-SPLIT（『トレーナーズ』Vol.13 の「自動的にはたらく特殊体質の「ポケボディー」」）。2000.02.14 版の裁定ではない。2002 年のほかの変更（サポーター・特殊状態の
+#   範囲）は持ち込まない）。処理する時点は、そのワザのダメージの処理がすべて終わったあと・ワザを使ったポケモンのダメージ以外の効果の前（p.89 の「こうらがえし」の解説の
+#   時点を当てはめた類推。DR6 を公式に決めたことにしない）。使わない選択はない
+# - イマクニ？のドードー（PMCG6-074）: 印刷の文面（歌を歌う・カードを投げる）はデータのまま持ち、エンジンは簡略化した仕様で処理する（公式の裁定・エラッタではない）
+
+ENERGY_DRAIN_TEXT = ("このカードが相手のワザによってダメージを受ける時、(このカードが「きぜつ」するしないにかかわらず、)コインを投げて「おもて」なら、ダメージを与えたポケモン"
+                     "についているエネルギーカードを1枚選び、トラッシュする。ダメージを受ける時、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。")
+# 最新の説明（『オフィシャルブック2000』p.49。v0.17c の過去の原典照合の記録 card_verification.json の power_latest_description_ja。kyuura の LD-PMCG6-023-PWR0 と同じ文面）。
+# 処理はこの文面にしたがう（印刷の文面とは書き方だけの違い）。v0.68 で読み直していない（記録の再利用）
+ENERGY_DRAIN_LATEST = ("このカードが相手のワザによってダメージを受けるとき、（それによってこのカードが「きぜつ」しても、）コインを投げて「おもて」なら、ダメージを与えたポケモン"
+                       "についている「エネルギーカード」を1枚選び、トラッシュする。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は使えない。")
+ENERGY_DRAIN_SOURCE = "P43 p.49"
+# DR8・DR13（v0.17c の記録。kyuura の UQ-ENERGY-DRAIN-ATTACKER-KO・UQ-ENERGY-DRAIN-NO-ENERGY）。採用の仕様でも決まらないので、宣言の前に止める
+ENERGY_DRAIN_ATTACKER_KO_CODE = "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT"
+ENERGY_DRAIN_NO_ENERGY_CODE = "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY"
+
+
+@dataclass(frozen=True)
+class DiscardAttackerEnergyOnDamage(PowerEffect):
+    """このカードが相手のワザによってダメージを受けるとき（きぜつしても）、コインを投げて「おもて」なら、ダメージを与えたポケモンについているエネルギーカードを 1 枚選び、
+    トラッシュする。ダメージを受けるとき、すでにねむり・マヒ・こんらん状態なら使えない（v0.68。キョウのベトベトンの［だつりょくえき］。処理に使う文面は v0.17c の照合の記録の
+    最新の説明（p.49。kyuura の LD-PMCG6-023-PWR0 と同じ文面））。
+
+    v0.68 の採用の仕様（docs/final-pmcg-cards-v0.68.md 3 章。DR1・DR6 を公式に決めたことにしない）:
+
+    - 自動的にはたらく（``declared`` が False。``UsePokemonPower`` は ``POWER_NOT_DECLARABLE``）。条件を満たしたらコインは必ず投げる（使わない選択はない）
+    - 候補になるのは、相手のワザの分類のダメージ（ワザのダメージ・返す効果のダメージ。最終ダメージが 0 より大きい）を受けるとき（DR2・DR3・DR4。はんげきと同じ窓。効果の定義
+      ``catalog.ENERGY_DRAIN``）。どく・こんらんの 20・特殊能力のダメージ・ダメージカウンターの移動ではない。バトル場でもベンチでも（DR17）、そのダメージできぜつしても（DR9）
+    - 特殊状態は受けるときの状態（「すでに」。DR15。どくは関係しない）、かがくへんかガス・まきちらせ!ベトベトガスも受けるとき（DR16）。ショックアイ（宣言して使う特殊能力の使用
+      だけを止める）は関係しない
+    - 処理する時点は、そのワザのダメージの要素のまとまりのあと・ダメージ以外の効果の前（解決の基盤の「ダメージの要素のあと」の窓。はんげきと同じ）
+    - コインは持ち主。「おもて」なら、持ち主がダメージを与えたポケモン（ワザを使ったポケモン。返す効果のダメージなら、その効果を持つポケモン）についているエネルギーカード
+      （ついている順。種類を問わない。DR11）から 1 枚選び（決定 ``energy_drain_discard``。1 枚しかなくても決定を出す。K2 と同じ実装上の仮定）、その持ち主のトラッシュに置く
+    - 処理する時点でダメージを与えたポケモンがすでに HP 以上なら DR8（``UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT``）、エネルギーカードがついていなければ DR13
+      （``UNRESOLVED_ENERGY_DRAIN_NO_ENERGY``）で、どちらもコインの前・宣言の前（先読み）に止める。ほかの「ダメージを受けたとき」の効果と重なるなら DR18（C34・C35 と同じ
+      ``UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS``）"""
+
+    implementation_id = "discard_attacker_energy_on_damage"
+    declared: ClassVar[bool] = False
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "相手のワザのダメージを受けたときにダメージを与えたポケモンのエネルギーカードをトラッシュする特殊能力", (ENERGY_DRAIN_TEXT,))
+
+
+def energy_drain_holders(state: GameState) -> list[tuple[int, PokemonInPlay]]:
+    """v0.68: 場のポケモンのうち、［だつりょくえき］（``DiscardAttackerEnergyOnDamage``）を今持つもの（持ち主, ポケモン）。はたらいているかは見ない（先読みの方法の選び方に使う）。"""
+    return [(owner, pokemon) for owner in (0, 1) for pokemon in state.players[owner].in_play() if not state.is_face_down(pokemon)
+            and any(isinstance(slot.effect, DiscardAttackerEnergyOnDamage) for slot in powers_of(state, pokemon))]
+
+
+HARMONIZE_TEXT = "このワザを使ったプレイヤーはこのワザを使った瞬間から歌を歌いはじめなければならない。(歌を歌っている間、対戦は続行する。)歌が歌い終わったら、相手に30ダメージを与える。"
+# エンジンの簡略化した仕様（docs/final-pmcg-cards-v0.68.md 4 章）。公式の裁定・エラッタではない。処理に使う文面として登録し、出典はこの文書
+HARMONIZE_PLAY_TEXT = "相手に30ダメージを与える。"
+RUN_AWAY_TEXT = "このドードーがにげるときはカードを持ち、思い切り投げる。なぜなら逃げまくるから。スナップをきかせて水平に投げるとよく飛ぶぞ!"
+RUN_AWAY_PLAY_TEXT = "(カードを投げる動作は対戦の処理にふくめない。にげるときは、ふつうの「にげる」として処理する。)"
+SIMPLIFIED_SPEC_SOURCE = "kyuura-engine docs/final-pmcg-cards-v0.68.md#4"
+# v0.68（2 章）: 利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS）を当てはめた写しの説明文を、処理に使う文面にした登録の出典
+# （ガルーラの「こどものおつかい」。kyuura の記録ではない。scripts/check_card_sources.py の USER_CORRECTION_SOURCE と同じ）
+USER_CORRECTED_TEXT_SOURCE = "kyuura data/cards.json + USER_PROVIDED_CORRECTIONS"
+
+
+@dataclass(frozen=True)
+class SimplifiedSongDamage(AttackEffect):
+    """イマクニ？のドードーの「ハモる」（v0.68）の、エンジンの簡略化した仕様: ワザを使ったら、ふつうのワザとしてすぐに相手の対戦ポケモンに 30 ダメージを与える（p.321 の計算・
+    弱点・抵抗力・ダメージを変える効果・こんらんの確認は、ほかのワザと同じ）。歌を歌う状態・歌い終わりの通知・音声の認識・非同期の処理は作らない。印刷の文面（歌を歌う）は
+    データのまま照合だけに使う（公式の裁定・エラッタではない。docs/final-pmcg-cards-v0.68.md 4 章）。要素の並びは ``DamageOnly`` と同じ（相手のワザとして使っても 30）。"""
+
+    implementation_id = "simplified_song_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "歌い終わったら相手にダメージを与えるワザ", damage="fixed")
+        if attack.damage != 30:
+            problems.append(f"ダメージの目安 {attack.damage!r} が 30 ではない")
+        return problems + _check_exact_text(attack, "歌い終わったら相手に30ダメージを与えるワザ", (HARMONIZE_TEXT,))
+
+
+@dataclass(frozen=True)
+class SimplifiedRunAway(PowerEffect):
+    """イマクニ？のドードーの［にげまくり］（v0.68）の、エンジンの簡略化した仕様: カードを持って投げる動作（物理的な動作）は対戦の処理にふくめない。この特殊能力は
+    状態・ログ・乱数を変えず、宣言もできない（``POWER_NOT_DECLARABLE``）。「にげる」はふつうの規定のまま（印刷のにげるエネルギー 0。ねむり・マヒでにげられない・こんらんの
+    コインなどもそのまま）。この型は印刷の文面がこのカードの［にげまくり］と同じときだけ登録できる（未対応の特殊能力を効果のないものとして受け付ける一般の仕組みではない）。"""
+
+    implementation_id = "simplified_run_away"
+    declared: ClassVar[bool] = False
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "にげるときにカードを投げる特殊能力", (RUN_AWAY_TEXT,))
+
+
 DEFAULT_EFFECTS = EffectRegistry(
     "kyuura-engine-0.13",
     _damage_only([
@@ -22443,6 +22536,33 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
             source=_KYUURA_PRINTED_TEXT,
         ),
+        # v0.68（docs/final-pmcg-cards-v0.68.md）: ガルーラ（PMCG2-046。ポケモンジャングル）のこどものおつかい（無）: 山札の上から 1 枚引く（コインなし）。写しの説明文は、
+        # 利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の文面の先頭の「コインを投げて「おもて」なら、」を除いた）を当てはめた値
+        AttackKey("PMCG2-046", 0): AttackEntry(
+            DrawCardsAttack(1),
+            "こどものおつかい",
+            text_ja="自分の山札の上からカードを1枚ひいて、手札に加える。",
+            play_text_ja="自分の山札の上からカードを1枚ひいて、手札に加える。",
+            source=USER_CORRECTED_TEXT_SOURCE,
+        ),
+        # ガルーラのれんぞくパンチ（無無無無）20×: コイン 4 枚の「おもて」の数 × 20（みだれづきと同じ型）
+        AttackKey("PMCG2-046", 1): AttackEntry(
+            CoinFlipDamage(coins=4, damage_per_heads=20),
+            "れんぞくパンチ",
+            text_ja="コインを4枚投げて「おもて」の数×20のダメージ。",
+            play_text_ja="コインを4枚投げて「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        # キョウのベトベトン（PMCG6-023。キョウのベトベターから進化）のヘドロのうず（草草無）40: 説明なし
+        AttackKey("PMCG6-023", 0): AttackEntry(DAMAGE_ONLY, "ヘドロのうず"),
+        # イマクニ？のドードー（PMCG6-074）のハモる（無無）30: エンジンの簡略化した仕様（ワザを使ったら、すぐに 30 ダメージ。歌を歌う動作は処理にふくめない）
+        AttackKey("PMCG6-074", 0): AttackEntry(
+            SimplifiedSongDamage(),
+            "ハモる",
+            text_ja=HARMONIZE_TEXT,
+            play_text_ja=HARMONIZE_PLAY_TEXT,
+            source=SIMPLIFIED_SPEC_SOURCE,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -23128,6 +23248,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         PowerKey("PMCG5-033", 0): PowerEntry(FleeAfterAttackDamage(), "にげこむ", FLEE_TEXT, FLEE_PLAY_TEXT, ENGINE_RECORD_FLEE_SOURCE),
         # タケシのサイドンの［ベンチガード］（自分の控えポケモンが受けるダメージのうち 10 を、かわりに受ける。kyuura の印刷の文面）
         PowerKey("PMCG5-055", 0): PowerEntry(TakeBenchDamageInstead(), "ベンチガード", BENCH_GUARD_TEXT, BENCH_GUARD_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.68（docs/final-pmcg-cards-v0.68.md）: キョウのベトベトンの［だつりょくえき］（この特殊能力に限った採用の仕様で、自動的にはたらく。処理に使う文面は v0.17c の照合の記録の最新の説明（p.49））
+        PowerKey("PMCG6-023", 0): PowerEntry(DiscardAttackerEnergyOnDamage(), "だつりょくえき", ENERGY_DRAIN_TEXT, ENERGY_DRAIN_LATEST, ENERGY_DRAIN_SOURCE),
+        # イマクニ？のドードーの［にげまくり］（カードを投げる動作は処理にふくめない。エンジンの簡略化した仕様）
+        PowerKey("PMCG6-074", 0): PowerEntry(SimplifiedRunAway(), "にげまくり", RUN_AWAY_TEXT, RUN_AWAY_PLAY_TEXT, SIMPLIFIED_SPEC_SOURCE),
     },
     energies={
         # v0.58（docs/stadium-reuse-special-energy-v0.58.md）。特殊エネルギー 4 枚

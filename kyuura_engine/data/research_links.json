@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 149,
-    "engine_stop_codes": 147,
+    "engine_unresolved_rulings": 151,
+    "engine_stop_codes": 149,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1740,6 +1740,40 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR8"
+        },
+        {
+          "version": "v0.68",
+          "document": "docs/final-pmcg-cards-v0.68.md",
+          "ruling_id": "DR8"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-ATTACKER-KO",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "DR8"
+    },
+    "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR13"
+        },
+        {
+          "version": "v0.68",
+          "document": "docs/final-pmcg-cards-v0.68.md",
+          "ruling_id": "DR13"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-NO-ENERGY",
+      "kyuura_disposition": "issue",
+      "kyuura_index_engine_key": "DR13"
     }
   },
   "codeless_questions": {
@@ -1817,57 +1851,7 @@
     }
   },
   "unresolved_without_code": [],
-  "deferred_card_questions": [
-    {
-      "card_id": "PMCG6-023",
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/kogas-muk-event-design-v0.17c.md",
-          "ruling_id": "DR1"
-        },
-        {
-          "version": "v0.17",
-          "document": "docs/kogas-muk-event-design-v0.17c.md",
-          "ruling_id": "DR12"
-        }
-      ],
-      "kyuura_issue": "UQ-ENERGY-DRAIN-DECLARATION"
-    },
-    {
-      "card_id": "PMCG6-023",
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/kogas-muk-event-design-v0.17c.md",
-          "ruling_id": "DR6"
-        }
-      ],
-      "kyuura_issue": "UQ-ENERGY-DRAIN-TIMING"
-    },
-    {
-      "card_id": "PMCG6-023",
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/kogas-muk-event-design-v0.17c.md",
-          "ruling_id": "DR8"
-        }
-      ],
-      "kyuura_issue": "UQ-ENERGY-DRAIN-ATTACKER-KO"
-    },
-    {
-      "card_id": "PMCG6-023",
-      "engine_rulings": [
-        {
-          "version": "v0.17",
-          "document": "docs/kogas-muk-event-design-v0.17c.md",
-          "ruling_id": "DR13"
-        }
-      ],
-      "kyuura_issue": "UQ-ENERGY-DRAIN-NO-ENERGY"
-    }
-  ],
+  "deferred_card_questions": [],
   "implementation_assumptions_with_issue": [
     {
       "engine_rulings": [
@@ -1889,6 +1873,43 @@
       ],
       "kyuura_issue": "UQ-PHOENIX-KO-PROCESS-ORDER",
       "engine_handling": "順番を正規化（サイド → 勝ち負け → ふしちょう → バトル場に出す）。結果が同じことを確かめた実装上の仮定で、裁定ではない（docs/post-knockout-powers-v0.12.md 3 章）"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR1"
+        },
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR12"
+        },
+        {
+          "version": "v0.68",
+          "document": "docs/final-pmcg-cards-v0.68.md",
+          "ruling_id": "DR1"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-DECLARATION",
+      "engine_handling": "v0.68 で、この特殊能力に限った採用の仕様として自動的にはたらく（使わない選択はない）にした。根拠は kyuura の MIX-POWER-ERRATA（2002-05-24 の Q&A がポケボディーとして扱う一覧）・MIX-POWER-SPLIT（『トレーナーズ』Vol.13 の「自動的にはたらく」）で、2000.02.14 版の裁定ではない。2002 年のほかの変更は持ち込まない（docs/final-pmcg-cards-v0.68.md 3 章）"
+    },
+    {
+      "engine_rulings": [
+        {
+          "version": "v0.17",
+          "document": "docs/kogas-muk-event-design-v0.17c.md",
+          "ruling_id": "DR6"
+        },
+        {
+          "version": "v0.68",
+          "document": "docs/final-pmcg-cards-v0.68.md",
+          "ruling_id": "DR6"
+        }
+      ],
+      "kyuura_issue": "UQ-ENERGY-DRAIN-TIMING",
+      "engine_handling": "v0.68 で、そのワザのダメージの要素のまとまりのあと・ダメージ以外の効果の前に処理する採用の仕様にした（p.89 のこうらがえしの解説の時点を当てはめた類推。すべての対象のダメージのあとにする順番も採用の仕様）。公式に決まったことにしない（docs/final-pmcg-cards-v0.68.md 3 章）"
     }
   ],
   "subcases": {
@@ -2200,7 +2221,8 @@
       "PMCG6-073/attack/0": "LD-PMCG6-073-ATK0",
       "PMCG6-073/power/0": "LD-PMCG6-073-PWR0",
       "PMCG1-047/attack/1": "LD-PMCG1-047-ATK1",
-      "PMCG5-054/attack/0": "LD-PMCG5-054-ATK0"
+      "PMCG5-054/attack/0": "LD-PMCG5-054-ATK0",
+      "PMCG6-023/power/0": "LD-PMCG6-023-PWR0"
     },
     "registered_without_kyuura_record": [
       "PMCG2-017/attack/0",
@@ -2219,10 +2241,8 @@
       "PMCG3-022/attack/1",
       "PMCG5-033/power/0"
     ],
-    "kyuura_records_not_registered": [
-      "LD-PMCG6-023-PWR0"
-    ],
-    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた",
+    "kyuura_records_not_registered": [],
+    "note": "登録した最新の説明（play_text_ja）を持つワザ・特殊能力（カード id/種類/位置）と kyuura の記録の対応。registered は kyuura の最新の説明（LD-）の id。recorded_in_card_checks は、印刷の文面と同じ最新の説明を kyuura が照合の記録（CC-）に書いたもの（照合した欄の文面、またはデータの誤りの資料の値がエンジンの最新の説明と同じ。kyuura は文面が同じ最新の説明を LD- にしない）。card_checks_without_text は、照合の記録はあるが、ワザの文面を照合した欄に入れていないもの（ドードーのみだれづき。図版の版が決まらない）。registered_without_kyuura_record は kyuura に記録のない登録（2026-10-15 の kyuura の取り込みのあとは空になった。v0.27 でストライクの「つるぎのまい」（PMCG2-017/attack/0。p.56・p.321。2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（「2倍」）だけで、最新の説明（「「60」になる」）の LD- はない）を加えた。v0.28 で、既存の効果の型の登録だけで加えたラプラス（PMCG3-022。p.116）・スターミー（PMCG1-026。p.112）・カイロス（PMCG2-018。p.58）・タマタマ（PMCG2-006。p.49）・プリン（PMCG2-035。p.225）・ラッキー（PMCG1-068。p.235）・スリープ（PMCG1-045。p.164）・シェルダー（PMCG3-012。p.103）の説明文のあるワザ 13 を加えた（2026-10-15 にエンジンが照合。kyuura の記録は印刷の文面（cards.json）だけで、LD-・CC- はない）。kyuura への報告事項）。文面の一致は scripts/check_research_links.py が kyuura の研究の基準のコミットで確かめる。adopted_printed_text（2026-10-15 からの方針。docs/card-data-policy.md）は、kyuura データの採用（kyuura_engine/data/card_sources.json）で、処理に使う文面を kyuura の印刷の文面（data/cards.json）にした登録（研究の基準のコミットに、その対象の LD- がないもの。LD- があれば registered に挙げ、最新の説明にしたがう）。エンジンが原典と照合した記録ではない（registered_without_kyuura_record とは別）。v0.29 で、既存の効果の型で加えたポケモン 14 枚の説明文のあるワザ 14 を加えた。errata_text（v0.30）は、kyuura のエラッタの記録（ERR-・TXT-・RUL-。data/rule_history.json の errata）を処理に使う文面にした登録（登録の出典がその id。文面は記録の notes の引用と同じ）。記録の cards にないカードに記録の範囲として当てはめるものは errata_scope に、当てはめる文（scope_quote）・処理に使う文面（play_text_quote）・印刷の文面（printed_text。記録が挙げるカードのワザと同じ）・対象を書く。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザ 4（ヒトカゲの「ひのこ」・リザード／ウインディ／ブーバーの「かえんほうしゃ」）をerrata_text に、ウインディの「とっしん」・第4弾のポニータの「ひのこ」を adopted_printed_text に加えた。difference_text（v0.31）は、処理に使う文面を kyuura の data/curation/card_differences.json の記録（確度: 確実）の最新の説明にした登録（LD- はない。kyuura への報告事項）。v0.31 でピッピの「ゆびをふる」、v0.42 でカイリューの［かけつける］（PMCG3-043/power/0）を加えた。user_corrected_text（v0.68）は、利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS。kyuura の記録ではない）を当てはめた写しの説明文を処理に使う文面にした登録（ガルーラの「こどものおつかい」。研究の基準のコミットの kyuura の文面は修正の前の値のまま。kyuura への報告事項）。engine_simplified_text（v0.68）は、エンジンの簡略化した仕様を処理に使う文面にした登録（イマクニ？のドードー。公式の裁定・エラッタではない）",
     "recorded_in_card_checks": {
       "PMCG1-002/attack/0": "CC-PMCG1-002-P17",
       "PMCG1-003/attack/1": "CC-PMCG1-003-P18",
@@ -2700,7 +2720,8 @@
       "PMCG3-038/attack/1",
       "PMCG5-033/attack/0",
       "PMCG5-055/attack/0",
-      "PMCG5-055/power/0"
+      "PMCG5-055/power/0",
+      "PMCG2-046/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -2728,6 +2749,13 @@
     "difference_text": {
       "PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067",
       "PMCG3-043/power/0": "kyuura data/curation/card_differences.json#PMCG3-043"
+    },
+    "user_corrected_text": {
+      "PMCG2-046/attack/0": "USER_PROVIDED_CORRECTIONS"
+    },
+    "engine_simplified_text": {
+      "PMCG6-074/attack/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4",
+      "PMCG6-074/power/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4"
     }
   },
   "card_checks": {
@@ -2963,6 +2991,11 @@
       "card_id": "PMCG2-041",
       "field": "ja_text_source",
       "note": "v0.62: kyuura が f52a8e2 で、日本語テキストの出典を p.234 とした（出典の記録の欄。エンジンは使わない。写しには当てはめていない）"
+    },
+    {
+      "card_id": "PMCG2-046",
+      "field": "pokemon",
+      "note": "v0.68: 写しのワザ 0 の説明文に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。「コインを投げて「おもて」なら、」を除いた）を当てはめた（kyuura の研究の基準のコミットは修正の前の値。kyuura への報告事項）"
     }
   ],
   "applied_rule_records": [
