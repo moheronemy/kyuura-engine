@@ -16,6 +16,8 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
   v0.69 から、kyuura が data/cards.json に当てはめたので当てはめ直さず、kyuura の台帳（data/curation/card_corrections.json）を確かめます
   （``KYUURA_CORRECTIONS``。書き出しの ``kyuura_corrections``）。前の写しの元（``PREVIOUS_KYUURA_COMMIT``）にあったカードの写す欄が、修正の欄と出典の記録の欄を
   除いて同じことも、書き出すたびに確かめます（docs/equivalent-non-pack-cards-v0.69.md 2 章）。
+- v0.70 から、kyuura にまだない利用者が示した訂正（``ENGINE_USER_CORRECTIONS``。PR1-069 の名前「？？？」→「ミュウ」）を、写しの作り直しで当てはめます
+  （書き出しの ``engine_user_corrections``。kyuura が当てはめた修正の表 ``KYUURA_CORRECTIONS`` とは別。docs/non-pack-effect-reuse-v0.70.md 3 章）。
 
 使い方::
 
@@ -965,6 +967,94 @@ POOL_V0_69 = [
     "NIP2-007",  # 超エネルギー（PMCG1-101 と同じ）
 ]
 
+# v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモンで、どのワザも既存の効果の型（と、ダメージのない小さな型 2 つ）で扱えるもの 82 枚
+# （kyuura の engine_targets.json の reuse_candidate。v0.69 の POOL_V0_69（処理に使う欄が登録したカードと全部同じカード）とは別。登録は id ごとに書く）。
+# 並びは依頼の並び
+POOL_V0_70 = [
+    "GD1-004",  # タケシのサンドパン
+    "GD1-008",  # タケシのゴローン
+    "GD2-005",  # カスミのパウワウ
+    "GD2-009",  # カスミのトサキント
+    "GD2-013",  # カスミのヒトデマン
+    "GD2-014",  # カスミのスターミー
+    "GD3-002",  # マチスのピカチュウ
+    "GD3-008",  # マチスのビリリダマ
+    "GD3-013",  # マチスのオニスズメ
+    "GD4-005",  # エリカのマダツボミ
+    "GD5-008",  # カツラのポニータ
+    "GD5-013",  # カツラのドードリオ
+    "GD6-006",  # ナツメのゴース
+    "ES1-004",  # ビードル
+    "ES1-008",  # ズバット
+    "ES1-012",  # カイロス
+    "ES1-016",  # ニョロモ
+    "ES1-017",  # ニョロゾ
+    "ES1-018",  # ニョロボン
+    "ES1-024",  # ポッポ
+    "ES1-030",  # ベロリンガ
+    "ES1-032",  # イーブイ
+    "ES2-008",  # シェルダー
+    "ES2-009",  # クラブ
+    "ES2-010",  # ラプラス
+    "ES2-019",  # ルージュラ
+    "ES2-022",  # ゴーリキー
+    "ES2-026",  # サワムラー
+    "ES2-031",  # オニドリル
+    "ES3-015",  # タッツー
+    "ES3-033",  # ガルーラ
+    "QSG-006",  # カイロス
+    "QSG-014",  # ニョロモ
+    "QSG-015",  # ニョロゾ
+    "QSG-016",  # ニョロボン
+    "QSG-019",  # ラプラス
+    "QSG-031",  # ルージュラ
+    "QSG-036",  # ゴーリキー
+    "QSG-042",  # ベロリンガ
+    "QSG-044",  # ガルーラ
+    "SI-001",  # レディバ
+    "SI-005",  # ピジョット
+    "SI-006",  # イワーク
+    "SI-007",  # トゲピー
+    "SI-009",  # ラッタ
+    "SI-015",  # カメール
+    "IP1-001",  # フシギダネ
+    "IP1-016",  # ニャース
+    "IP1-026",  # エレブー
+    "IP1-030",  # ドードー
+    "IP1-037",  # ルージュラ
+    "IP1-039",  # ドガース
+    "IP2-003",  # カメール
+    "IP2-013",  # オニスズメ
+    "IP2-016",  # ゼニガメ
+    "IP2-039",  # ブーバー
+    "PF1-007",  # ワニノコ
+    "PF2-004",  # エーフィ
+    "NIP1-001",  # チコリータ
+    "NIP1-002",  # ヒマナッツ
+    "NIP1-008",  # ヒメグマ
+    "NIP1-016",  # ヒノアラシ
+    "NIP1-022",  # パラス
+    "NIP1-024",  # ベイリーフ
+    "NIP2-002",  # マリル
+    "NIP2-003",  # ホーホー
+    "NIP2-004",  # アリゲイツ
+    "NIP2-016",  # ワニノコ
+    "NIP2-018",  # メリープ
+    "NIP2-024",  # ハリーセン
+    "NIP2-026",  # モココ
+    "NIP2X-004",  # ネイティ
+    "PR1-011",  # なみのりピカチュウ
+    "PR1-014",  # なみのりピカチュウ
+    "PR1-045",  # ディグダ
+    "PR1-066",  # マリル
+    "PR1-069",  # ミュウ（kyuura の名前は「？？？」。ENGINE_USER_CORRECTIONS で訂正する）
+    "PRN-006",  # チコリータ
+    "PRN-009",  # チコリータ
+    "PRN-013",  # ルージュラ
+    "PRN-038",  # ノコッチ
+    "PRN-047",  # ハネッコ
+]
+
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 2 章）: v0.62・v0.68 で写しに当てはめていた修正（v0.62 の確定した修正 CONFIRMED_CORRECTIONS・
 # v0.68 の利用者が示した修正 USER_PROVIDED_CORRECTIONS）は、kyuura の data/cards.json（KYUURA_COMMIT）に当てはめ済みになった（kyuura の台帳
 # data/curation/card_corrections.json とカードの記録の ``corrections``）。写しには当てはめ直さない（二重の修正をしない）。書き出すたびに、台帳とカードの記録に
@@ -1012,6 +1102,33 @@ KYUURA_CORRECTIONS = [
 ]
 # 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
 PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめる、利用者が示した訂正（kyuura にはまだない）。kyuura が当てはめた修正
+# （``KYUURA_CORRECTIONS``。台帳とカードの記録で確かめる）とは別の表で、書き出しでも別の欄（``engine_user_corrections``）に残す。kyuura の照合の記録（CC-）・
+# 最新の説明（LD-）・修正のコミットはなく、エラッタ・別の版の文面でもない。当てはめるのは名前（``name.ja``）だけで、ほかの欄（HP・タイプ・ワザなど）は写しの元の
+# まま。書き出すたびに、写しの元（KYUURA_COMMIT）の値と台帳・カードの記録を確かめる（``engine_user_correction_problems``）:
+# - 写しの元の値が ``before`` なら当てはめる。``after`` なら kyuura がすでに当てはめたので当てはめない（二重の修正をしない）が、表を KYUURA_CORRECTIONS に
+#   移すまで書き出さない（知らせる）。どちらでもなければ書き出さない
+# - kyuura の台帳・カードの記録に、同じ欄の修正があれば書き出さない（kyuura の修正として扱う）
+# kyuura のデータは直さない（kyuura への報告事項。docs/data-provenance.md）
+ENGINE_USER_CORRECTIONS = [
+    {
+        "card_id": "PR1-069",
+        "field": "name.ja",
+        "before": "？？？",
+        "after": "ミュウ",
+        "basis": "user_provided",
+        "provided_on": "2026-10-19",
+        "provided_by": "利用者（2026-10-19 の v0.70 の依頼。このカードをミュウ（Ancient Mew）と同定し、カード画像と補助資料の URL を示した）",
+        "statement": "PR1-069（プロモ。kyuura の名前は「？？？」）はミュウ。ルールに使う日本語の名前を「ミュウ」にする（同じ名前 4 枚の制限で、ほかのミュウと同じ名前として数える）",
+        "evidence": "利用者の同定と、利用者が示したカード画像",
+        "reference_url": "https://bulbapedia.bulbagarden.net/wiki/Ancient_Mew_(The_Power_of_One_promo)",
+        "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
+        "engine_saw_image": False,
+        "kyuura_saw_image": False,
+    },
+]
+ENGINE_USER_CORRECTION_FIELDS = ("name.ja",)
 
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
@@ -1191,6 +1308,50 @@ def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool:
     return problems
 
 
+def engine_user_correction_problems(kyuura: Path, source: dict, pool: list[str]) -> list[str]:
+    """エンジンが当てはめる利用者が示した訂正（``ENGINE_USER_CORRECTIONS``。v0.70）を確かめる。問題の一覧（空なら当てはめてよい）。"""
+    problems = []
+    ledger = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_CORRECTIONS_PATH).decode("utf-8"))["corrections"]
+    current = {card["id"]: card for card in source["cards"]}
+    seen = set()
+    for c in ENGINE_USER_CORRECTIONS:
+        label = f"{c['card_id']} の {c['field']}（エンジンが当てはめる利用者が示した訂正）"
+        if c.get("basis") != "user_provided" or c.get("engine_saw_image") is not False or c.get("kyuura_saw_image") is not False:
+            problems.append(f"{label}: basis は user_provided、engine_saw_image・kyuura_saw_image は False（画像を見たと書かない）")
+        if any(key in c for key in ("id", "record", "commit", "record_commit")):
+            problems.append(f"{label}: kyuura の台帳の id・照合の記録・修正のコミットを書かない（kyuura の記録ではない）")
+        if c["field"] not in ENGINE_USER_CORRECTION_FIELDS:
+            problems.append(f"{label}: 当てはめる欄は {ENGINE_USER_CORRECTION_FIELDS} だけ")
+        if c["before"] == c["after"] or (c["card_id"], c["field"]) in seen:
+            problems.append(f"{label}: 前とあとが同じか、同じ欄に 2 つの訂正がある")
+        seen.add((c["card_id"], c["field"]))
+        if any(x["card_id"] == c["card_id"] and x["field"] == c["field"] for x in KYUURA_CORRECTIONS):
+            problems.append(f"{label}: kyuura が当てはめた修正（KYUURA_CORRECTIONS）と同じ欄")
+        if c["card_id"] not in pool or c["card_id"] not in current:
+            problems.append(f"{label}: 対戦用の組のカードではない")
+            continue
+        card = current[c["card_id"]]
+        if any(entry.get("card_id") == c["card_id"] and entry.get("field") == c["field"] for entry in ledger) or any(
+                x.get("field") == c["field"] for x in card.get("corrections") or ()):
+            problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）の台帳かカードの記録に同じ欄の修正がある（KYUURA_CORRECTIONS に移す）")
+        value = get_field(card, c["field"])
+        if value == c["after"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値がすでに {c['after']!r}（kyuura が当てはめた。二重に当てはめない。KYUURA_CORRECTIONS に移す）")
+        elif value != c["before"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {value!r}（想定した前の値 {c['before']!r} でも、あとの値 {c['after']!r} でもない）")
+    return problems
+
+
+def apply_engine_user_corrections(cards: list[dict]) -> list[dict]:
+    """エンジンが当てはめる利用者が示した訂正の欄だけを、写しのカードに当てはめる（v0.70。``engine_user_correction_problems`` が空のときだけ呼ぶ）。"""
+    by_id = {card["id"]: card for card in cards}
+    for c in ENGINE_USER_CORRECTIONS:
+        if get_field(by_id[c["card_id"]], c["field"]) != c["before"]:
+            raise SystemExit(f"{c['card_id']} の {c['field']} が想定した前の値ではない（二重に当てはめない）")
+        set_field(by_id[c["card_id"]], c["field"], c["after"])
+    return cards
+
+
 def previous_copy_problems(source: dict, previous: dict, pool: list[str]) -> list[str]:
     """前の写しの元（PREVIOUS_KYUURA_COMMIT）にあったカードの写す欄が、修正の欄と出典の記録の欄（``PROVENANCE_FIELDS``）を除いて同じことを確かめる（v0.69）。"""
     problems = []
@@ -1312,6 +1473,7 @@ POOLS = [
     ("pool_v0_67", POOL_V0_67),
     ("pool_v0_68", POOL_V0_68),
     ("pool_v0_69", POOL_V0_69),
+    ("pool_v0_70", POOL_V0_70),
 ]
 
 
@@ -1324,7 +1486,7 @@ def build_extract(source: dict, targets: list[dict]) -> dict:
     missing = [card_id for card_id in all_pool_cards() + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [_copy(by_id[card_id]) for card_id in all_pool_cards() + REFERENCE_ONLY]
+    cards = apply_engine_user_corrections([_copy(by_id[card_id]) for card_id in all_pool_cards() + REFERENCE_ONLY])
     extract = {
         "format": "kyuura-engine card extract 1",
         "description": (
@@ -1352,6 +1514,7 @@ def build_extract(source: dict, targets: list[dict]) -> dict:
         "previous_provenance_fields": list(PROVENANCE_FIELDS),
     }
     extract["kyuura_corrections"] = [dict(correction, applied_in_source=KYUURA_COMMIT, previous_source=PREVIOUS_KYUURA_COMMIT) for correction in KYUURA_CORRECTIONS]
+    extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
     extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": targets}
     extract["cards"] = cards
     return extract
@@ -1372,7 +1535,8 @@ def main(argv: list[str] | None = None) -> int:
     previous = json.loads(_show(args.kyuura, PREVIOUS_KYUURA_COMMIT, KYUURA_PATH).decode("utf-8"))
     targets = equivalent_targets(args.kyuura)
     pool = all_pool_cards() + REFERENCE_ONLY
-    problems = kyuura_correction_problems(args.kyuura, source, previous, pool) + previous_copy_problems(source, previous, pool) + equivalent_target_problems(targets)
+    problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
+                + previous_copy_problems(source, previous, pool) + equivalent_target_problems(targets))
     if problems:
         print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1

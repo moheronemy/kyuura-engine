@@ -426,6 +426,9 @@ V0_56_TRAINERS = (ERIKAS_PERFUME, LT_SURGE_TRAINER, ROCKETS_TRAP, ROCKET_GRUNT, 
 # 決められない姿・MH1 で拒否される操作のコード（v0.49。場から確かめてから別の操作を続ける）
 V049_FORM_STOPS = ("UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER", "UNRESOLVED_SHAPESHIFT_SUPPRESSED",
                    "UNRESOLVED_MAX_HP_DROP")
+# v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚（写しの組 pool_v0_70。既存の効果の型の登録と、ダメージのない型 2 つ）。TARGETS に加え、
+# 使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる（v0.70 のカードのないデッキでは何もしない）
+V0_70 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_70"])
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -433,7 +436,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + ("PMCG3-026", "PMCG5-016", "PMCG5-035", "PMCG5-050")  # v0.60: サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン
            + ("PMCG4-025", "PMCG4-043", "PMCG5-051")  # v0.61: わるいギャラドス・わるいダグトリオ・タケシのオコリザル
            + ("PMCG1-066", "PMCG2-034", "PMCG2-038", "PMCG2-043", "PMCG6-060", "PMCG2-041")  # v0.62
-           + ("PMCG3-034", "PMCG3-037", "PMCG3-038"))  # v0.64: 化石の秘密のイシツブテ・ゴローン・ゴローニャ
+           + ("PMCG3-034", "PMCG3-037", "PMCG3-038")  # v0.64: 化石の秘密のイシツブテ・ゴローン・ゴローニャ
+           + V0_70)  # v0.70: 拡張パック以外の商品のポケモン 82 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -797,6 +801,28 @@ DECKS = {
     "S69": (("PMCG6-043", 4), ("GD6-003", 2), ("PMCG6-047", 1), ("GD6-004", 2), ("GD6-013", 2), ("GD4-013", 2), ("PR1-039", 2), ("GD4-006", 4),
             ("PMCG5-011", 3), ("GD4-008", 2), ("GD6-018", 3), ("GD4-018", 2), ("GD3-021", 2), ("GD3-025", 2), ("IP1-023", 2), *TRAINERS, ("IP1-024", 4),
             ("NIP2-007", 2), ("PMCG1-101", 1), ("IP1-004", 3), ("NIP1-003", 3)),
+    # v0.70: 水。ニョロモ（ES1-016・PMCG1-024）→ ニョロゾ（ES1-017・QSG-015。ぐるぐる）→ ニョロボン（ES1-018・QSG-016。ハイドロポンプ）・カスミのヒトデマン（GD2-013）→
+    # カスミのスターミー（GD2-014。みずでっぽう）・タッツー（ES3-015。かくれる・みずでっぽう）・ゼニガメ（IP2-016）→ カメール（SI-015・IP2-003）・ワニノコ（NIP2-016・PF1-007）→
+    # アリゲイツ（NIP2-004）・マリル（PR1-066・NIP2-002）・ラプラス（ES2-010・QSG-019）
+    "W70": (("ES1-016", 2), ("PMCG1-024", 2), ("ES1-017", 2), ("QSG-015", 1), ("ES1-018", 1), ("QSG-016", 1), ("GD2-013", 3), ("GD2-014", 2), ("ES3-015", 2),
+            ("IP2-016", 2), ("SI-015", 1), ("IP2-003", 1), ("NIP2-016", 2), ("PF1-007", 2), ("NIP2-004", 2), ("PR1-066", 2), ("NIP2-002", 1), ("ES2-010", 1),
+            ("QSG-019", 1), *TRAINERS, (WATER, 17)),
+    # v0.70: 草・雷。チコリータ（NIP1-001・PRN-006・PRN-009）→ ベイリーフ（NIP1-024）・メリープ（NIP2-018）→ モココ（NIP2-026）・マチスのピカチュウ（GD3-002。たいでん）・
+    # マチスのビリリダマ（GD3-008）・レディバ（SI-001。こうそくいどう）・エレブー（IP1-026）・ヒマナッツ（NIP1-002）・パラス（NIP1-022・PMCG2-003）・エリカのマダツボミ
+    # （GD4-005）・ドガース（IP1-039）・ハネッコ（PRN-047）
+    "L70": (("NIP1-001", 2), ("PRN-006", 1), ("PRN-009", 1), ("NIP1-024", 3), ("NIP2-018", 3), ("NIP2-026", 2), ("GD3-002", 3), ("GD3-008", 2), ("SI-001", 2),
+            ("IP1-026", 2), ("NIP1-002", 1), ("NIP1-022", 2), ("PMCG2-003", 1), ("GD4-005", 2), ("IP1-039", 2), ("PRN-047", 2), *TRAINERS, (GRASS, 9), (LIGHTNING, 8)),
+    # v0.70: 超・闘・無色・炎。ミュウ（PR1-069（名前を訂正した写し）・PMCG3-033）・ガルーラ（ES3-033・QSG-044・PMCG2-046）・ワンリキー（PMCG1-053）→ ゴーリキー（ES2-022・
+    # QSG-036）・サワムラー（ES2-026）・ルージュラ（ES2-019・QSG-031・IP1-037・PRN-013）・ポッポ（ES1-024）→ ピジョン（PMCG1-066）→ ピジョット（SI-005）・オニスズメ（IP2-013）
+    # → オニドリル（ES2-031）・カツラのポニータ（GD5-008。こうそくいどう）・ノコッチ（PRN-038）・トゲピー（SI-007）。同じ名前のカードは版をまたいで 4 枚まで
+    "C70": (("PR1-069", 2), ("PMCG3-033", 2), ("ES3-033", 2), ("QSG-044", 1), ("PMCG2-046", 1), ("PMCG1-053", 3), ("ES2-022", 2), ("QSG-036", 1), ("ES2-026", 2),
+            ("ES2-019", 1), ("QSG-031", 1), ("IP1-037", 1), ("PRN-013", 1), ("ES1-024", 2), ("PMCG1-066", 1), ("SI-005", 1), ("IP2-013", 2), ("ES2-031", 1),
+            ("GD5-008", 2), ("PRN-038", 1), ("SI-007", 1), *TRAINERS, (PSYCHIC, 6), (FIGHTING, 6), (WATER, 3), (FIRE, 2)),
+    # v0.70: 闘・超・水。タケシのサンド（PMCG5-043）→ タケシのサンドパン（GD1-004。ぜんしんばり・サンドストーム）・タケシのイシツブテ（PMCG5-046）→ タケシのゴローン（GD1-008）・
+    # ナツメのゴース（GD6-006。まとわりつく）・カツラのドードー（PMCG6-064）→ カツラのドードリオ（GD5-013）・イーブイ（ES1-032・PMCG2-037）→ エーフィ（PF2-004）・ベロリンガ
+    # （ES1-030・QSG-042）・ハリーセン（NIP2-024）・ネイティ（NIP2X-004）
+    "B70": (("PMCG5-043", 3), ("GD1-004", 2), ("PMCG5-046", 3), ("GD1-008", 2), ("GD6-006", 2), ("PMCG6-064", 2), ("GD5-013", 2), ("ES1-032", 2), ("PMCG2-037", 1),
+            ("PF2-004", 2), ("ES1-030", 1), ("QSG-042", 1), ("NIP2-024", 2), ("NIP2X-004", 2), *TRAINERS, (FIGHTING, 10), (PSYCHIC, 7), (WATER, 4)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -905,6 +931,8 @@ PAIRINGS_V0_67 = (("L67", "C66"), ("L67", "R65"), ("L67", "S66"), ("L67", "G64")
 PAIRINGS_V0_68 = (("K68", "R65"), ("K68", "C66"), ("K68", "L67"), ("K68", "P31"))
 # v0.69: M69 対 S69（新しい id どうし）・M69 対 R65（タケシのサイドンの新旧）・S69 対 S66（ナツメのESP・ナツメのポケモンの新旧）
 PAIRINGS_V0_69 = (("M69", "S69"), ("M69", "R65"), ("S69", "S66"))
+# v0.70: W70 対 L70・C70 対 B70・L70 対 C70・B70 対 W70（どのデッキも v0.70 のカードと前の版のカードを混ぜる）
+PAIRINGS_V0_70 = (("W70", "L70"), ("C70", "B70"), ("L70", "C70"), ("B70", "W70"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -914,7 +942,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
            "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
            "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68,
-           "v0.69": PAIRINGS_V0_69}
+           "v0.69": PAIRINGS_V0_69, "v0.70": PAIRINGS_V0_70}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -4093,7 +4121,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）

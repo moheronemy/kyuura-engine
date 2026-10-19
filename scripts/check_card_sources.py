@@ -92,7 +92,11 @@ GUIDEBOOK_KEYS = {"page", "pdf_page", "scan", "rules_page", "commentary_page", "
 KYUURA_DATA_KEYS = {"basis", "name_ja", "status", "kyuura_commit", "recorded_on", "kyuura_records", "play_text", "external_checks", "issues"}
 GUIDEBOOK_RECORD_KEYS = {"basis", "name_ja", "external_checks"}
 # v0.30: 過去の原典照合の記録のあるカードに、照合の記録に処理に使う文面のない登録の根拠（play_text・kyuura_records）を書ける
-OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
+OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to", "user_name_correction"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
+# v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめた、利用者が示した名前の訂正（写しの engine_user_corrections。PR1-069 の
+# 「？？？」→「ミュウ」）。採用の記録の ``user_name_correction`` に kyuura の値・採用した値・根拠を書き、写しの訂正と照らす（名前の比べ方はほかのカードと同じ。
+# 訂正のないカードに書けず、写しの訂正のあるカードには必ず書く）
+USER_NAME_CORRECTION_KEYS = {"field", "kyuura", "adopted", "basis", "evidence"}
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード（effects.EQUIVALENT_CARDS）の根拠。採用の記録の
 # ``equivalent_to`` が元のカードで、登録は元のカードの登録と同じもの（効果の実装・照合した文面・処理に使う文面・出典）。処理に使う文面の根拠は元のカードの根拠（元のカードの
 # 記録・研究の対応表の区分）で、新しいカードの記録としては書き直さない（再録のカードの画像を照合したことにしない）。確かめること: 写しの表と元のカード、元のカードの
@@ -504,7 +508,7 @@ def kyuura_records_problems(where: str, record: dict) -> list[str]:
 
 def card_problems(card_id: str, record, *, cards: dict, commit: str, verification: dict, registry, links: dict,
                   today: datetime.date, corrections: dict | None = None, earlier: frozenset = frozenset(), sources: dict | None = None,
-                  equivalents: dict | None = None) -> list[str]:
+                  equivalents: dict | None = None, user_corrections: dict | None = None) -> list[str]:
     where = card_id
     if not isinstance(record, dict):
         return [f"{where}: 記録が辞書ではない"]
@@ -522,6 +526,8 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
         return found
     if record["name_ja"] != card["name"]["ja"]:
         found.append(f"{where}: 名前 {record['name_ja']!r} が写しの名前 {card['name']['ja']!r} と違う")
+    if "user_name_correction" in record:
+        found.extend(user_name_correction_problems(where, record, card, user_corrections or {}))
     checks = record["external_checks"]
     if not isinstance(checks, list):
         return [*found, f"{where}: external_checks はリスト"]
@@ -584,6 +590,26 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
                                          sources=sources or {}, equivalents=equivalents or {}))
     else:
         found.extend(play_text_problems(where, record, card, registry, links, corrections=corrections))
+    return found
+
+
+def user_name_correction_problems(where: str, record: dict, card: dict, user_corrections: dict) -> list[str]:
+    """採用の記録の ``user_name_correction`` を、写しの ``engine_user_corrections`` と照らす（v0.70）。"""
+    value = record["user_name_correction"]
+    if not isinstance(value, dict):
+        return [f"{where}: user_name_correction は辞書"]
+    found = keys_problems(f"{where} の user_name_correction", value, USER_NAME_CORRECTION_KEYS)
+    if found:
+        return found
+    correction = user_corrections.get((card["id"], "name.ja"))
+    if correction is None:
+        return [f"{where}: user_name_correction があるのに、写しにこのカードの名前の訂正（engine_user_corrections）がない"]
+    if (value["field"], value["kyuura"], value["adopted"], value["basis"]) != ("name.ja", correction["before"], correction["after"], correction["basis"]):
+        found.append(f"{where}: user_name_correction が写しの訂正（{correction['before']!r} → {correction['after']!r}・{correction['basis']}）と違う")
+    if value["basis"] != "user_provided" or correction.get("engine_saw_image") is not False:
+        found.append(f"{where}: 名前の訂正の根拠は利用者が示したもの（user_provided。エンジンは画像を見ていない）")
+    if card["name"]["ja"] != value["adopted"] or record["name_ja"] != value["adopted"]:
+        found.append(f"{where}: 写し・採用の記録の名前が、採用した値 {value['adopted']!r} ではない")
     return found
 
 
@@ -713,10 +739,16 @@ def problems(sources: dict | None = None, *, extract: dict | None = None, verifi
     corrections = {(c["card_id"], c["field"]): c for c in extract.get("kyuura_corrections", [])}
     earlier, migration_problems = data_migrations(sources, extract)
     equivalents = {c["id"]: c["equivalent_to"] for c in (extract.get("equivalent_targets") or {}).get("cards", [])}
+    user_corrections = {(c["card_id"], c["field"]): c for c in extract.get("engine_user_corrections", [])}
     found.extend(migration_problems)
     for card_id, record in sources["cards"].items():
         found.extend(card_problems(card_id, record, cards=cards, commit=commit, verification=verification, registry=registry,
-                                   links=links, today=today, corrections=corrections, earlier=earlier, sources=sources, equivalents=equivalents))
+                                   links=links, today=today, corrections=corrections, earlier=earlier, sources=sources, equivalents=equivalents,
+                                   user_corrections=user_corrections))
+    for card_id, field in sorted(user_corrections):  # v0.70: 写しの名前の訂正は、採用の記録の user_name_correction に書く
+        record = sources["cards"].get(card_id)
+        if field != "name.ja" or not (isinstance(record, dict) and "user_name_correction" in record):
+            found.append(f"{card_id}: 写しの利用者が示した訂正（{field}）が、採用の記録の user_name_correction にない")
     for card_id in sorted(registered_cards(registry)):
         basis = registration_basis(card_id, verification, sources)
         if basis is None:

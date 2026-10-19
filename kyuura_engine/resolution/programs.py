@@ -6189,6 +6189,8 @@ BUILDERS: dict[type, Any] = {
     E.DamageThenStatusByCoin: lambda e: (
         Damage(OPP, Printed()), Status(e.heads, local_coin=HEADS, otherwise=e.tails, reparalysis_check=PARALYSIS in (e.heads, e.tails)),
     ),
+    # v0.70: ダメージのない「ぐるぐる」（ニョロゾ）。DamageThenStatusByCoin の Status と同じ
+    E.StatusByCoinWithoutDamage: lambda e: (Status(e.heads, local_coin=HEADS, otherwise=e.tails, reparalysis_check=PARALYSIS in (e.heads, e.tails)),),
     E.DamageThenChosenStatusOnHeads: lambda e: (Damage(OPP, Printed()), ChosenStatus()),
     E.CoinDamageAndConfuseElseSelfConfuse: lambda e: (
         Coin("coin"), Damage(OPP, Printed(), gate=("coin", HEADS)), Status(CONFUSION, gate=("coin", HEADS)),
@@ -6248,6 +6250,8 @@ BUILDERS: dict[type, Any] = {
     E.DiscardExcessEnergyForDamage: lambda e: (
         DiscardOwnEnergy(e.energy_type, count=None, excess_over_cost=True), Damage(OPP, PlusPerDiscarded("discard", e.per_energy))),
     E.DamageThenAttachEnergyFromDiscardToSelf: lambda e: (Damage(OPP, Printed()), AttachFromDiscard(e.energy_type, 1, exact=True)),
+    # v0.70: ダメージのない「たいでん」（マチスのピカチュウ）。DamageThenAttachEnergyFromDiscardToSelf の AttachFromDiscard と同じ（ちょうど 1 枚）
+    E.AttachEnergyFromDiscardToSelf: lambda e: (AttachFromDiscard(e.energy_type, 1, exact=True),),
     E.DamageAndSelfDamagePerAttachedEnergyCard: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, PerAttachedEnergyCards(e.energy_type, e.per_card), name="self_damage")),
     E.ZeroDamageBelowNextTurn: lambda e: (SelfPersistent(ZeroDamageBelow.kind, amount=e.threshold),),

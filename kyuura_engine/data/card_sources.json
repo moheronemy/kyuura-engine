@@ -1,6 +1,6 @@
 {
   "format": "kyuura-engine card sources 1",
-  "description": "2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録。kyuura の data/cards.json を基本データとして採用したカード（basis: kyuura_data。採用したデータのコミット・処理に使う文面の根拠・確かめた kyuura の記録の id）と、pcg-search.com との外部照合（external_checks。URL・確認日・対象の版・結果・照合した欄・違い）を持つ。『オフィシャルブック2000』との過去の照合は kyuura_engine/data/card_verification.json（履歴。書き換えない）にあり、この記録には書かない。2026-10-14 までに登録したカードはすべて過去の照合の記録で登録した。v0.29 で、既存の効果の型で加えたポケモン 14 枚を採用の記録で登録した（docs/existing-effect-pokemon-v0.29.md）。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザの共通の型で加えたポケモン 4 枚を採用の記録で登録し、過去の照合の記録のあるヒトカゲに、照合の記録に文面のない「ひのこ」の根拠（basis: guidebook_record の play_text）を置いた（docs/discard-energy-attacks-v0.30.md）。検査は scripts/check_card_sources.py。",
+  "description": "2026-10-15 からのカードデータの方針（docs/card-data-policy.md）の記録。kyuura の data/cards.json を基本データとして採用したカード（basis: kyuura_data。採用したデータのコミット・処理に使う文面の根拠・確かめた kyuura の記録の id）と、pcg-search.com との外部照合（external_checks。URL・確認日・対象の版・結果・照合した欄・違い）を持つ。『オフィシャルブック2000』との過去の照合は kyuura_engine/data/card_verification.json（履歴。書き換えない）にあり、この記録には書かない。2026-10-14 までに登録したカードはすべて過去の照合の記録で登録した。v0.29 で、既存の効果の型で加えたポケモン 14 枚を採用の記録で登録した（docs/existing-effect-pokemon-v0.29.md）。v0.30 で、エネルギーをトラッシュしてダメージを与えるワザの共通の型で加えたポケモン 4 枚を採用の記録で登録し、過去の照合の記録のあるヒトカゲに、照合の記録に文面のない「ひのこ」の根拠（basis: guidebook_record の play_text）を置いた（docs/discard-energy-attacks-v0.30.md）。検査は scripts/check_card_sources.py。 v0.70 で、拡張パック以外の商品のポケモン 82 枚を採用の記録で登録した（既存の効果の型と、ダメージのない型 2 つ。docs/non-pack-effect-reuse-v0.70.md）。PR1-069 の名前は、写しの作り直しでエンジンが当てはめた利用者が示した訂正（user_name_correction）。",
   "policy": {
     "since": "2026-10-15",
     "document": "docs/card-data-policy.md",
@@ -18236,6 +18236,1150 @@
       "issues": [],
       "equivalent_to": "PMCG1-035",
       "notes": "v0.69: ピカチュウ（NIP2。発売 2001-04-06）は、登録した PMCG1-035 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-035）。登録は PMCG1-035 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-035 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）。発売は 2000.02.14 版のルールのあと（2001-04-06）。発売日は変えず、2000.02.14 版までに発売されたカードとは扱わない（印刷の文面と処理は元のカードと同じ）"
+    },
+    "GD1-004": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのサンドパン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD1（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ぜんしんばり=DamageThenPoisonAndParalyzeOnHeads・サンドストーム=DamageThenAttackCoinCheck（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd1004（004/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD1-008": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのゴローン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD1（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: いわなげ=CoinFlipDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd1008（008/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD2-005": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのパウワウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD2（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: オーロラビーム=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd2005（005/024））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD2-009": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのトサキント",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD2（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: つのでつつく=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd2009（009/024））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD2-013": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのヒトデマン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD2（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: スピードスター=DamageIgnoringDefenderEffects（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd2013（013/024））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD2-014": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのスターミー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD2（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: みずでっぽう=ExtraEnergyDamage・バブルこうせん=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd2014（014/024））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD3-002": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD3（gym_deck。発売 1998-07-25）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいでん=AttachEnergyFromDiscardToSelf・でんきしっぽ=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd3002（002/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD3-008": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのビリリダマ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD3（gym_deck。発売 1998-07-25）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ブレイクボール=SelfDamageOnTails（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd3008（008/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD3-013": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのオニスズメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD3（gym_deck。発売 1998-07-25）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ドリルくちばし=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd3013（013/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD4-005": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのマダツボミ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD4（gym_deck。発売 1998-07-25）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: どくのしる=PoisonOnHeads・つるのムチ=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd4005（005/028））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD5-008": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのポニータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD5（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: こうそくいどう=DamageThenSelfBarrierOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd5008（008/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD5-013": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのドードリオ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD5（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: きあいづき=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd5013（013/025））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD6-006": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのゴース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。GD6（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: まとわりつく=DamageThenRetreatLock（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stgymd6006（006/026））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-004": {
+      "basis": "kyuura_data",
+      "name_ja": "ビードル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: つつく=DamageOnly・どくのつの=PoisonWithoutDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1004（004/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-008": {
+      "basis": "kyuura_data",
+      "name_ja": "ズバット",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・あやしいおんぱ=ConfuseOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1008（008/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-012": {
+      "basis": "kyuura_data",
+      "name_ja": "カイロス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: はさんでなげる=CoinBonusDamage・きりさく=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-012。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1012（012/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロモ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: あわ=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-016。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1016（016/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロゾ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ぐるぐる=StatusByCoinWithoutDamage・のしかかり=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-017。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1017（017/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロボン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: メガトンパンチ=DamageOnly・ハイドロポンプ=ExtraEnergyDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-018。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1018（018/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ポッポ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かぜおこし=DamageOnly・でんこうせっか=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1024（024/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-030": {
+      "basis": "kyuura_data",
+      "name_ja": "ベロリンガ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: なめる=ParalyzeOnHeadsWithoutDamage・ふみつけ=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-030。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1030（030/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES1-032": {
+      "basis": "kyuura_data",
+      "name_ja": "イーブイ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES1（expansion_sheet。発売 1998-03-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かじる=DamageOnly・とびかかる=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex1032（032/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-008": {
+      "basis": "kyuura_data",
+      "name_ja": "シェルダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: しおふき=ExtraEnergyDamageMixed（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2008（008/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-009": {
+      "basis": "kyuura_data",
+      "name_ja": "クラブ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: あわ=ParalyzeOnHeads・はさみギロチン=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2009（009/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-010": {
+      "basis": "kyuura_data",
+      "name_ja": "ラプラス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: うたう=SleepOnHeadsWithoutDamage・なみのり=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-010。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2010（010/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ルージュラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: れいとうパンチ=ParalyzeOnHeads・コールドブレス=DamageThenSleepOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-019。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2019（019/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴーリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: メガトンキック=DamageOnly・ワンツーパンチ=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-022。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2022（022/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-026": {
+      "basis": "kyuura_data",
+      "name_ja": "サワムラー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: にどげり=CoinFlipDamage・まわしげり=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2026（026/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-031": {
+      "basis": "kyuura_data",
+      "name_ja": "オニドリル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: でんこうせっか=CoinBonusDamage・ドリルこうか=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex2031（031/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES3-015": {
+      "basis": "kyuura_data",
+      "name_ja": "タッツー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES3（expansion_sheet。発売 1998-11-24）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かくれる=SelfBarrierOnHeads・みずでっぽう=ExtraEnergyDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex3015（015/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES3-033": {
+      "basis": "kyuura_data",
+      "name_ja": "ガルーラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。ES3（expansion_sheet。発売 1998-11-24）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・テールドロップ=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES3-033。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stex3033（033/036））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-006": {
+      "basis": "kyuura_data",
+      "name_ja": "カイロス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: はさんでなげる=CoinBonusDamage・きりさく=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-012。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg006（006/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-014": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロモ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: あわ=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-016。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg014（014/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-015": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロゾ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ぐるぐる=StatusByCoinWithoutDamage・のしかかり=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-017。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg015（015/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロボン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: メガトンパンチ=DamageOnly・ハイドロポンプ=ExtraEnergyDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-018。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg016（016/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ラプラス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: うたう=SleepOnHeadsWithoutDamage・なみのり=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-010。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg019（019/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-031": {
+      "basis": "kyuura_data",
+      "name_ja": "ルージュラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: れいとうパンチ=ParalyzeOnHeads・コールドブレス=DamageThenSleepOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-019。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg031（031/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-036": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴーリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: メガトンキック=DamageOnly・ワンツーパンチ=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-022。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg036（036/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-042": {
+      "basis": "kyuura_data",
+      "name_ja": "ベロリンガ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: なめる=ParalyzeOnHeadsWithoutDamage・ふみつけ=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES1-030。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg042（042/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-044": {
+      "basis": "kyuura_data",
+      "name_ja": "ガルーラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・テールドロップ=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES3-033。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stqsg044（044/058））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-001": {
+      "basis": "kyuura_data",
+      "name_ja": "レディバ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かじる=DamageOnly・こうそくいどう=DamageThenSelfBarrierOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv001（001/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-005": {
+      "basis": "kyuura_data",
+      "name_ja": "ピジョット",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: マッハひこう=FailOnTailsDamage・カッターウインド=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv005（002/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-006": {
+      "basis": "kyuura_data",
+      "name_ja": "イワーク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たたきつける=CoinFlipDamage・のしかかり=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv006（003/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-007": {
+      "basis": "kyuura_data",
+      "name_ja": "トゲピー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: おおごえでなく=ConfuseOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv007（001/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-009": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッタ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: するどいまえば=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv009（003/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-015": {
+      "basis": "kyuura_data",
+      "name_ja": "カメール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: みずでっぽう=ExtraEnergyDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stmv015（003/003））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-001": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・はっぱカッター=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1001（001/040）, 1stintro1035（035/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ニャース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・みだれひっかき=CoinFlipDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1016（016/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-026": {
+      "basis": "kyuura_data",
+      "name_ja": "エレブー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: でんきショック=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1026（026/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-030": {
+      "basis": "kyuura_data",
+      "name_ja": "ドードー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: みだれづき=CoinFlipDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-PMCG1-061。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1030（030/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-037": {
+      "basis": "kyuura_data",
+      "name_ja": "ルージュラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: はたく=DamageOnly・おうふくビンタ=CoinFlipDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1037（037/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP1-039": {
+      "basis": "kyuura_data",
+      "name_ja": "ドガース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP1（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: どくガス=PoisonOnHeads・こんらんガス=ConfuseOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro1039（039/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP2-003": {
+      "basis": "kyuura_data",
+      "name_ja": "カメール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP2（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: あわ=ParalyzeOnHeads・なみのり=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro2003（003/040）, 1stintro2010（010/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP2-013": {
+      "basis": "kyuura_data",
+      "name_ja": "オニスズメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP2（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: つつく=DamageOnly・つばさでうつ=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro2013（013/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP2-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ゼニガメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP2（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・ロケットずつき=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro2016（016/040）, 1stintro2037（037/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "IP2-039": {
+      "basis": "kyuura_data",
+      "name_ja": "ブーバー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。IP2（intro_pack。発売 1999-07-30）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ほのおパンチ=DamageOnly・スモッグ=PoisonOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stintro2039（039/040））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PF1-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ワニノコ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PF1（premium_file。発売 1999-12-10）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かみつく=DamageOnly・いかり=DamagePlusOwnCounters（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neopf1007（007/009））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PF2-004": {
+      "basis": "kyuura_data",
+      "name_ja": "エーフィ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PF2（premium_file。発売 2000-07-08）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: でんこうせっか=CoinBonusDamage・サイケこうせん=ConfuseOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neopf2004（004/009））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-001": {
+      "basis": "kyuura_data",
+      "name_ja": "チコリータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・はっぱカッター=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1001（001/030）, neointro1030（030/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒマナッツ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ぶつかる=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1002（002/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-008": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒメグマ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ひっかく=DamageOnly・みだれひっかき=CoinFlipDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1008（008/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒノアラシ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ひをふく=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1016（016/030）, neointro1023（023/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-022": {
+      "basis": "kyuura_data",
+      "name_ja": "パラス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ねむりのほうし=DamageThenSleepOnHeads・ひっかく=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-neo3-002。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1022（022/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ベイリーフ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・ねむりごな=SleepOpponent（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro1024（024/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-002": {
+      "basis": "kyuura_data",
+      "name_ja": "マリル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・ころがる=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2002（002/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ホーホー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ける=FailOnTailsDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2003（003/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-004": {
+      "basis": "kyuura_data",
+      "name_ja": "アリゲイツ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: きりさく=DamageOnly・かみつく=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2004（004/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ワニノコ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ひっかく=DamageOnly・かみつく=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2016（016/030）, neointro2021（021/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-018": {
+      "basis": "kyuura_data",
+      "name_ja": "メリープ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: でんげき=SelfDamageOnTails（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-neo2-020。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2018（018/030）, neointro2030（030/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ハリーセン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: どくばり=PoisonOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2024（024/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2-026": {
+      "basis": "kyuura_data",
+      "name_ja": "モココ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・でんきショック=ParalyzeOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2026（026/030））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2X-004": {
+      "basis": "kyuura_data",
+      "name_ja": "ネイティ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。NIP2X（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: あやしいひかり=ConfuseOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-neo2-022。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neointro2ex004（004/010））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-011": {
+      "basis": "kyuura_data",
+      "name_ja": "なみのりピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PR1（promo。発売 1997-08）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: なみのり=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-PR1-011。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp011（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-014": {
+      "basis": "kyuura_data",
+      "name_ja": "なみのりピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PR1（promo。発売 1997-08-15）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: なみのり=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-PR1-011。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp014（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-045": {
+      "basis": "kyuura_data",
+      "name_ja": "ディグダ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PR1（promo。発売 1998-11-13）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: つつく=DamageOnly・ころばす=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp045（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-066": {
+      "basis": "kyuura_data",
+      "name_ja": "マリル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PR1（promo。発売 1999-06-15）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: みずでっぽう=ExtraEnergyDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp066（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-069": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PR1（promo。発売 1999）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: Psyche(サイケ)=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp069（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。名前は、kyuura の値「？？？」に、写しの作り直しで利用者が示した訂正「ミュウ」を当てはめた（scripts/extract_kyuura_cards.py の ENGINE_USER_CORRECTIONS。kyuura への報告事項）。訂正したのは名前だけで、HP・タイプ・弱点・にげる・ワザ（Psyche(サイケ)。超超 40。説明なし）は kyuura のデータのまま",
+      "user_name_correction": {
+        "field": "name.ja",
+        "kyuura": "？？？",
+        "adopted": "ミュウ",
+        "basis": "user_provided",
+        "evidence": "利用者の同定と、利用者が示したカード画像（2026-10-19）。補助資料として利用者が示した URL https://bulbapedia.bulbagarden.net/wiki/Ancient_Mew_(The_Power_of_One_promo) の本文はネットワークのプロキシ（403）で取得できず、検証していない。ルーン文字の項目は解読していない"
+      }
+    },
+    "PRN-006": {
+      "basis": "kyuura_data",
+      "name_ja": "チコリータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2000）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・リフレクター=HalveDamageNextTurn（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-PRN-006。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop006（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-009": {
+      "basis": "kyuura_data",
+      "name_ja": "チコリータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2000）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: たいあたり=DamageOnly・リフレクター=HalveDamageNextTurn（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-PRN-006。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop009（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ルージュラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2000-01-22）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: れいとうパンチ=ParalyzeOnHeads・コールドブレス=DamageThenSleepOnHeads（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-ES2-019。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop013（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-038": {
+      "basis": "kyuura_data",
+      "name_ja": "ノコッチ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2001-01-01）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: にらむ=ParalyzeOnHeadsWithoutDamage・ドリルしっぽ=CoinBonusDamage（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop038（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-047": {
+      "basis": "kyuura_data",
+      "name_ja": "ハネッコ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2001-07-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ころがりタックル=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-neo2-004。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop047（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
     }
   }
 }

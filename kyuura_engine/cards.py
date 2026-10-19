@@ -494,6 +494,7 @@ POOL_KEYS = (
     "pool_v0_67",  # v0.67（マチスの秘策。docs/secret-plan-preflight-v0.67.md）
     "pool_v0_68",  # v0.68（キョウのベトベトン・イマクニ？のドードー。ガルーラは pool_v0_34。docs/final-pmcg-cards-v0.68.md）
     "pool_v0_69",  # v0.69（拡張パック以外の商品の、登録したカードと処理に使う欄が同じ 96 枚。effects.EQUIVALENT_CARDS。docs/equivalent-non-pack-cards-v0.69.md）
+    "pool_v0_70",  # v0.70（拡張パック以外の商品のポケモン 82 枚。どのワザも既存の効果の型と、ダメージのない小さな型 2 つ。PR1-069 は名前を訂正した写し。docs/non-pack-effect-reuse-v0.70.md）
 )
 
 

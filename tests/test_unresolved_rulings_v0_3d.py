@@ -185,7 +185,10 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                                    "PMCG6-045", "PMCG4-031", "PMCG4-037", "PMCG4-032", "PMCG6-048", "PMCG6-055",
                                    "PMCG6-052", "PMCG3-028", "PMCG6-043", "PMCG6-047", "PMCG4-034", "PMCG4-035", "PMCG4-033", "PMCG4-036",
                                    "PMCG6-046", "PMCG2-027", "PMCG3-032", "PMCG6-053", "PMCG3-033",
-                                   "PMCG6-051"})
+                                   "PMCG6-051",
+                                   # v0.70: 拡張パック以外の商品のポケモンで、超・弱点 超のもの（ルージュラ ES2-019・QSG-031・PRN-013・IP1-037、ミュウ PR1-069、ネイティ
+                                   # NIP2X-004、エーフィ PF2-004。kyuura データの採用）は 40
+                                   "ES2-019", "QSG-031", "PRN-013", "IP1-037", "PR1-069", "NIP2X-004", "PF2-004"})
         # v0.47: スリーパー（PMCG3-032。超・弱点 超。kyuura データの採用）は 40、プテラ（PMCG3-041。闘・抵抗力 闘）は 0
         # v0.49: ナツメのフーディン（PMCG6-053。超・弱点 超。kyuura データの採用）は 40。メタモン（PMCG3-042。無色・弱点 闘）・タケシのキュウコン（PMCG5-019。炎・弱点 水）は 20
         # （印刷の定義で確かめる。［へんしん］・「ばける」の今の姿のこんらんの 20 は、今有効なタイプ・弱点・抵抗力で計算する。docs/virtual-attacks-transformation-v0.49.md）

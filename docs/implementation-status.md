@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.69）
+# 実装状況（v0.1〜v0.70）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3533,4 +3533,20 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | マチスの秘策の受け付けるかの確かめは、処理の同じカードを 1 枚で代表する（試すカードは v0.68 と同じ 457 枚） | 実装済み・テスト済み | v0.68 の 5 章の方針（公開の情報だけで決める） | 同 `SecretPlanPoolTest` |
 | 2001 年に発売したカード 10 枚（NIP）は、発売日を変えずに持ち、2000.02.14 版のルールで処理する | 実装済み・テスト済み | kyuura data/engine_targets.json の発売日 | 同 `RecordTest.test_released_after_rule_base` |
 | 96 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（元のカードの照合を再利用） | — |
+
+## v0.70: 拡張パック以外の商品のポケモン 82 枚（既存の効果の再利用）
+
+[non-pack-effect-reuse-v0.70.md](non-pack-effect-reuse-v0.70.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 拡張パック以外の商品のポケモン 82 枚（`pool_v0_70`。kyuura の `reuse_candidate`）。どのワザも既存の効果の型の登録（説明文のないワザ 51・説明文のあるワザ 85） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用。LD-・CC-・CR-・UQ-・エラッタはない） | test_non_pack_effect_reuse_v0_70.py `TargetTest`・`UnsupportedWithoutRegistrationTest`・`RecordTest` |
+| ダメージのない型 2 つ: ぐるぐる（`StatusByCoinWithoutDamage`）・たいでん（`AttachEnergyFromDiscardToSelf`。ちょうど 1 枚） | 実装済み・テスト済み | 既存の要素（`Status`・`AttachFromDiscard`）の並び | 同 `SwirlTest`・`StaticChargeTest` |
+| こうそくいどう（カツラのポニータ・レディバ）の説明の書き方を `DamageThenSelfBarrierOnHeads` に 1 通り加えた | 実装済み・テスト済み | v0.37 の「しんだふり」と同じ文 | 同 `ReusedTypeTest`・`UnsupportedWithoutRegistrationTest` |
+| 必要なエネルギーが「水」だけのみずでっぽう・ハイドロポンプ 6 つは `ExtraEnergyDamage`（HC4 は当てはまらない） | 実装済み・テスト済み | v0.6 の型 | 同 `TargetTest`・`ReusedTypeTest` |
+| 同じデータの 12 枚は登録の値を共有する（`SAME_DATA_CARDS_V0_70`） | 実装済み・テスト済み | kyuura の同じカードの組・写しのデータ | 同 `SharedEntriesTest` |
+| PR1-069 の名前「？？？」→「ミュウ」（写しの作り直しで当てはめる利用者が示した訂正。名前だけ） | 実装済み・テスト済み | 利用者の同定と、利用者が示したカード画像（エンジンは画像を見ていない。補助資料の URL の本文は取得していない） | 同 `AncientMewTest`・`ExtractionCorrectionTest`・`RecordTest` |
+| マチスの秘策の試すカードは 527 枚（公開の情報だけ。上限 512 は変えていない） | 実装済み・テスト済み | v0.68・v0.69 の方針 | 同 `SecretPlanCandidatesTest`・test_final_pmcg_cards_v0_68.py `SecretPlanLeakTest` |
+| 82 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（日本語の文面は pcg-search.com の転記。同じサイトでは独立した照合にならない） | — |
+| GD5-007「カツラのウィンディ」・IP2-032「ウィンディ」（表記の違う同じ名前の制限） | 未対応 | 対象外（別の検討が要る） | — |
 

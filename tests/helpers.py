@@ -1222,6 +1222,10 @@ ATTACK_TYPES_SINCE_V0_17 = (
 ) + (
     # v0.68（docs/final-pmcg-cards-v0.68.md 4 章）
     _effects.SimplifiedSongDamage,  # イマクニ？のドードーの「ハモる」（簡略化した仕様。DamageOnly と同じ要素の並び）
+) + (
+    # v0.70（docs/non-pack-effect-reuse-v0.70.md）: ダメージのない型 2 つ（既存の要素だけの並び）
+    _effects.StatusByCoinWithoutDamage,  # ニョロゾ（ES1-017・QSG-015）の「ぐるぐる」
+    _effects.AttachEnergyFromDiscardToSelf,  # マチスのピカチュウ（GD3-002）の「たいでん」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1531,6 +1535,16 @@ V0_69_BASIC_ENERGIES = ("IP1-004", "IP1-006", "IP1-024", "IP2-004", "IP2-005", "
 V0_69_CARDS = V0_69_POKEMON + V0_69_TRAINERS + V0_69_SPECIAL_ENERGIES  # 登録のある 84 枚
 # 新しい id の特殊能力の登録（元のカードの登録を写した 10。登録の一覧を数えるテストは、v0.68 までの一覧とこれを分けて比べる）
 V0_69_POWER_CARDS = ("GD1-013", "GD2-004", "GD3-006", "GD4-008", "GD4-013", "GD5-002", "GD5-004", "GD6-004", "PR1-039", "PR1-061")
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚（写しの組 pool_v0_70。既存の効果の型の登録と、ダメージのない型 2 つ。特殊能力はない）
+V0_70_POKEMON = ("GD1-004", "GD1-008", "GD2-005", "GD2-009", "GD2-013", "GD2-014", "GD3-002", "GD3-008", "GD3-013", "GD4-005", "GD5-008", "GD5-013", "GD6-006",
+                 "ES1-004", "ES1-008", "ES1-012", "ES1-016", "ES1-017", "ES1-018", "ES1-024", "ES1-030", "ES1-032", "ES2-008", "ES2-009", "ES2-010", "ES2-019",
+                 "ES2-022", "ES2-026", "ES2-031", "ES3-015", "ES3-033", "QSG-006", "QSG-014", "QSG-015", "QSG-016", "QSG-019", "QSG-031", "QSG-036", "QSG-042",
+                 "QSG-044", "SI-001", "SI-005", "SI-006", "SI-007", "SI-009", "SI-015", "IP1-001", "IP1-016", "IP1-026", "IP1-030", "IP1-037", "IP1-039", "IP2-003",
+                 "IP2-013", "IP2-016", "IP2-039", "PF1-007", "PF2-004", "NIP1-001", "NIP1-002", "NIP1-008", "NIP1-016", "NIP1-022", "NIP1-024", "NIP2-002", "NIP2-003",
+                 "NIP2-004", "NIP2-016", "NIP2-018", "NIP2-024", "NIP2-026", "NIP2X-004", "PR1-011", "PR1-014", "PR1-045", "PR1-066", "PR1-069", "PRN-006", "PRN-009",
+                 "PRN-013", "PRN-038", "PRN-047")
+V0_70_CARDS = V0_70_POKEMON
 
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 7 章）: 研究の基準を kyuura 7d3f4ca に上げたので、採用の記録の kyuura_records（研究の基準のコミットでカードを指す kyuura の記録の id）に

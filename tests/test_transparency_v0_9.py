@@ -680,7 +680,10 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
               "PMCG4-048": ("PMCG2-036",),  # v0.41: わるいペルシアン（ニャースから）
               "PMCG3-028": ("PMCG3-027",),  # v0.42: ヤドラン（化石の秘密のヤドンから）
-              "PMCG5-050": ("PMCG5-043",)}  # v0.60: タケシのサンドパン（タケシのサンドから）
+              "PMCG5-050": ("PMCG5-043",),  # v0.60: タケシのサンドパン（タケシのサンドから）
+              # v0.70: 拡張パック以外の商品の進化カード（ニョロゾ・カスミのスターミー・カメール・モココ・エーフィ）
+              "ES1-017": ("ES1-016",), "QSG-015": ("QSG-014",), "GD2-014": ("GD2-013",), "IP2-003": ("IP2-016",), "NIP2-026": ("NIP2-018",),
+              "PF2-004": ("ES1-032",)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -751,7 +754,12 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         # docs/reactive-powers-trainer-damage-v0.61.md）
                                         "れいとうビーム",
                                         # v0.62: ベロリンガの「まきつくベロ」（ParalyzeOnHeads。既存の型の登録だけ。docs/history-attacks-v0.62.md）
-                                        "まきつくベロ"]))
+                                        "まきつくベロ",
+                                        # v0.70: 拡張パック以外の商品のポケモン 82 枚のうち、ParalyzeOnHeads・PoisonOnHeads・ConfuseOnHeads のワザ 24（既存の型の登録だけなので、同じ
+                                        # T19b で止まる。docs/non-pack-effect-reuse-v0.70.md）。サワムラー（ES2-026）の「まわしげり」はゴースト（抵抗力 闘）への最終ダメージが 0
+                                        "あやしいおんぱ", "あわ", "のしかかり", "あわ", "れいとうパンチ", "まわしげり", "バブルこうせん", "でんきしっぽ", "どくのしる",
+                                        "でんきショック", "どくガス", "こんらんガス", "あわ", "スモッグ", "どくばり", "でんきショック", "あやしいひかり", "サイケこうせん",
+                                        "れいとうパンチ", "あわ", "のしかかり", "れいとうパンチ", "のしかかり", "おおごえでなく"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -765,10 +773,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id == "PMCG5-050":
+                    if key.card_id in ("PMCG5-050", "ES2-026"):
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
-                        # どくの要素を受ける前に「とうめい」のコインを投げる）
+                        # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）
                         after = apply_command(state, UseAttack(0, key.attack_index))
                         self.assertTrue(any(e["kind"] == "damage" and e["amount"] == 0 for e in after.log[len(state.log):]))
                         continue

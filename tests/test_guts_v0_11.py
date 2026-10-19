@@ -642,7 +642,9 @@ class G37Test(unittest.TestCase):
             # 「クリスタルビーム」。docs/energy-control-power-suppression-v0.59.md）
             "ChooseOpponentPokemonDamageAndPowerLock", "DamagePoisonAndBenchDamage", "DamageThenAttachLockOnHeads",
             # v0.62（受けたマヒを与えるオニスズメの「オウムがえし」・相手を手札にもどすピジョットの「ハリケーン」。docs/history-attacks-v0.62.md）
-            "ReflectReceivedDamageAndEffects", "DamageThenReturnOpponentToHand"]))
+            "ReflectReceivedDamageAndEffects", "DamageThenReturnOpponentToHand",
+            # v0.70（ダメージのない「ぐるぐる」。DamageThenStatusByCoin と同じ Status の要素。docs/non-pack-effect-reuse-v0.70.md）
+            "StatusByCoinWithoutDamage"]))
 
 
 class DecisionTest(unittest.TestCase):

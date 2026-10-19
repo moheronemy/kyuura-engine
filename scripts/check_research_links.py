@@ -28,6 +28,9 @@ kyuura（https://github.com/moheronemy/kyuura）の ``research_commit`` の記�
    欄は、採用の記録の論点（``issues``）に挙げる。過去の原典照合の記録のあるカードに、照合の記録に文面のない登録の根拠（``play_text``）を
    書いた記録（``basis: guidebook_record``。v0.30）も同じに確かめる。
 
+v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: 6 のカードデータの比べ方で、エンジンが写しに当てはめた利用者が示した訂正（``engine_user_corrections``。PR1-069 の名前）だけは、
+   対応表・写し・写しの作り直しの表が同じ訂正で、研究の基準のコミットの値が訂正の前の値のときに、その欄を訂正のあとの値にして比べる。
+
 v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章・7 章）: 利用者が示した訂正（``user_corrected_text``）は kyuura の台帳（data/curation/card_corrections.json）の
    根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす。
    拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の登録（``equivalent_registrations``）は、元のカードの登録と文面・出典が同じで、元のカードの登録が
@@ -459,11 +462,35 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
         problems.append(f"写しのコミット {extract['source']['commit']} が対応表の card_data_commit と違う")
     allowed = {(d["card_id"], d["field"]) for d in links["card_data_differences"]}
     seen = set()
+    # v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめた、利用者が示した訂正（extract_kyuura_cards.ENGINE_USER_CORRECTIONS。
+    # 写しの engine_user_corrections）。対応表の engine_user_corrections に同じ訂正（カード・欄・kyuura の値・エンジンの値・根拠）があり、研究の基準のコミットの値が
+    # 訂正の前の値のときだけ、その欄だけを訂正のあとの値にして比べる（ほかの欄・ほかのカードの比べ方は変えない）
+    corrected = {}
+    listed = {(c["card_id"], c["field"]): c for c in links.get("engine_user_corrections", [])}
+    applied = {(c["card_id"], c["field"]): c for c in extract.get("engine_user_corrections", [])}
+    if set(listed) != set(applied) or set(applied) != {(c["card_id"], c["field"]) for c in extract_script.ENGINE_USER_CORRECTIONS}:
+        problems.append(f"対応表の engine_user_corrections {sorted(listed)} が、写しの engine_user_corrections {sorted(applied)}・ENGINE_USER_CORRECTIONS と違う")
+    for key, c in sorted(applied.items()):
+        entry = listed.get(key)
+        theirs = research_cards.get(c["card_id"])
+        if entry is None or theirs is None:
+            continue
+        if (entry.get("kyuura_value"), entry.get("engine_value"), entry.get("basis")) != (c["before"], c["after"], c["basis"]) or c["basis"] != "user_provided":
+            problems.append(f"{c['card_id']} の {c['field']}: 対応表の engine_user_corrections が写しの訂正と違う")
+            continue
+        if extract_script.get_field(theirs, c["field"]) != c["before"]:
+            problems.append(f"{c['card_id']} の {c['field']}: 研究の基準のコミットの値が訂正の前の値 {c['before']!r} ではない（kyuura が直したなら KYUURA_CORRECTIONS に移す）")
+            continue
+        corrected.setdefault(c["card_id"], []).append(c)
     for card in extract["cards"]:
         theirs = research_cards.get(card["id"])
         if theirs is None:
             problems.append(f"写しのカード {card['id']} が研究の基準のコミットにない")
             continue
+        if card["id"] in corrected:
+            theirs = json.loads(json.dumps(theirs))
+            for c in corrected[card["id"]]:
+                extract_script.set_field(theirs, c["field"], c["after"])
         for field in extract_script.FIELDS:
             if card.get(field) != theirs.get(field):
                 seen.add((card["id"], field))

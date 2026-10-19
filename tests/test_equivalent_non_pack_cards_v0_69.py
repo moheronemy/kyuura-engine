@@ -74,10 +74,11 @@ class TableTest(unittest.TestCase):
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
         categories = [pool.get(c).category for c in pool.playable_ids]
-        self.assertEqual(len(pool.playable_ids), 553)
-        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (410, 113, 30))
+        # v0.70 で拡張パック以外の商品のポケモン 82 枚（ワザ 136）を加えた（v0.69 は 553・(410, 113, 30)・ワザ 689）
+        self.assertEqual(len(pool.playable_ids), 635)
+        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (492, 113, 30))
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
-                         (689, 68, 113, 12))
+                         (825, 68, 113, 12))
         self.assertEqual(registry.id, "kyuura-engine-0.13")
         self.assertEqual(set(POOL_V0_69) - pool.playable_ids, set())
 
@@ -140,7 +141,7 @@ class ParityTest(unittest.TestCase):
             .without_trainers("t", [c for c in registry.trainer_ids() if c in E.EQUIVALENT_CARDS]) \
             .without_energies("t", [c for c in registry.energy_ids() if c in E.EQUIVALENT_CARDS])
         rebuilt = E._with_equivalent_cards(base, E.EQUIVALENT_CARDS)
-        self.assertEqual(len(rebuilt.attack_keys()), 689)
+        self.assertEqual(len(rebuilt.attack_keys()), 825)  # v0.70 で 136 を加えた（v0.69 は 689）
         with self.assertRaises(RuntimeError):
             E._with_equivalent_cards(base, {"GD1-002": "GD1-011"})  # 元のカードに登録がない
         with self.assertRaises(RuntimeError):
@@ -188,7 +189,9 @@ class RecordTest(unittest.TestCase):
         """v0.68 までの採用の記録の採用したときのデータのコミット・記録した日は書き換えない（data_migrations で移行を書く）。"""
         (migration,) = self.sources["data_migrations"]
         self.assertEqual((migration["from"], migration["to"]), (EXTRACT["previous_source"]["commit"], EXTRACT["source"]["commit"]))
-        old = [r for c, r in self.sources["cards"].items() if r.get("basis") == cs.KYUURA_DATA and c not in E.EQUIVALENT_CARDS]
+        # v0.70 の採用の記録（写しの元 7d3f4ca で採用した。拡張パック以外の商品のポケモン 82 枚）は、移行の前の記録ではない
+        v070 = set(read_extract()["pool_v0_70"])
+        old = [r for c, r in self.sources["cards"].items() if r.get("basis") == cs.KYUURA_DATA and c not in E.EQUIVALENT_CARDS and c not in v070]
         self.assertTrue(old)
         self.assertEqual({r["kyuura_commit"] for r in old}, {migration["from"]})
         self.assertTrue(all(r["recorded_on"] <= "2026-10-19" for r in old))
@@ -332,14 +335,16 @@ class DoubleColorlessTest(unittest.TestCase):
 
 class SecretPlanPoolTest(unittest.TestCase):
     """マチスの秘策の受け付けるかの確かめ: 対応しているカードの一覧が増えても、試すカードは処理の同じカードを 1 枚で代表する（v0.68 と同じ 457 枚。試す回数を
-    増やさない。公開の情報だけで決まる）。2 枚以上を指定するコマンドの制限は変えていない。"""
+    増やさない。公開の情報だけで決まる）。2 枚以上を指定するコマンドの制限は変えていない。v0.70 で拡張パック以外の商品のポケモン 82 枚（処理の違うカード 70 種類）が
+    加わり、試すカードは 527 枚（v0.69 の 457 枚 + 70。tests/test_non_pack_effect_reuse_v0_70.py）。v0.69 の新しい id を試すカードに加えないことは変えていない"""
 
     def test_candidates_unchanged(self):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
-        self.assertEqual(len(candidates), 457)
+        v070 = set(read_extract()["pool_v0_70"])
+        self.assertEqual(len(set(candidates) - v070), 457)
         self.assertFalse(set(candidates) & set(POOL_V0_69) - {c for c in POOL_V0_69 if c not in TABLE})
-        self.assertEqual(set(candidates), set(pool.playable_ids) - set(POOL_V0_69))
+        self.assertEqual(set(candidates) - v070, set(pool.playable_ids) - set(POOL_V0_69) - v070)
         keys = {engine_module._behavior_key(pool, c) for c in candidates}
         for new in POOL_V0_69:
             self.assertIn(engine_module._behavior_key(pool, new), keys, new)

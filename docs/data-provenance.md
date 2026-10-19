@@ -1743,3 +1743,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 2001 年に発売したイントロパック（neo）の 10 枚（NIP1-003 など）は、発売日 2001-04-06 を変えずに持つ（2000.02.14 版までに発売したカードとは扱わない。処理は元のカードと同じ）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.69 の登録を写すと、96 枚の `engine_status` が `registered` になる。
 
+## v0.70: 拡張パック以外の商品のポケモン 82 枚と、PR1-069 の名前の訂正
+
+[non-pack-effect-reuse-v0.70.md](non-pack-effect-reuse-v0.70.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_70`（82 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.69 までの
+  553 枚の記録は変わっていない（書き出しの差は、加えた 82 枚・組・`engine_user_corrections` だけ）。
+- 82 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし）。kyuura の日本語の文面は 82 枚とも pcg-search.com の転記
+  （`ja_text_source`）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。
+- PR1-069: kyuura の名前は「？？？」。利用者がこのカードをミュウ（Ancient Mew）と同定し、カード画像と補助資料の URL（https://bulbapedia.bulbagarden.net/wiki/Ancient_Mew_(The_Power_of_One_promo)）を
+  示した。エンジンは写しの作り直しで名前だけを「ミュウ」にする（scripts/extract_kyuura_cards.py の `ENGINE_USER_CORRECTIONS`。書き出しの `engine_user_corrections` に元のコミット・元の値・
+  採用した値・根拠を書く。kyuura が当てはめた修正の表 `KYUURA_CORRECTIONS` とは別）。エンジンは画像を読んでおらず、URL の本文はネットワークのプロキシ（403）で取得していない（サイトの本文の
+  検証・ルーン文字の解読はしていない）。
+- 報告事項（kyuura の作業）: PR1-069 の `name.ja`「？？？」（利用者の同定では「ミュウ」）。kyuura が台帳に記録して data/cards.json を直したら、エンジンの表を `KYUURA_CORRECTIONS` に移す
+  （写しの作り直しの道具が知らせる。二重に当てはめない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.70 の登録を写すと、82 枚の `engine_status` が `registered` になる。
+

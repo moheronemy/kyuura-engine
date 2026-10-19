@@ -3134,6 +3134,9 @@ SELF_BARRIER_ON_HEADS_TEXTS = (
     # v0.41: 第3弾のシードラの「こうそくいどう」。「ワザによるダメージや効果を受けない」は、v0.37 のカスミのコイキングの「しんだふり」（``SelfBarrierOnHeads``）・
     # v0.38 のキョウのピジョンの「こうそくひこう」で ``AttackBarrier`` として登録した書き方と同じ（docs/heal-counter-status-v0.41.md 2 章）
     "コインを投げて「おもて」なら、このカードは次の相手の番に、ワザによるダメージや効果を受けない。",
+    # v0.70: カツラのポニータ（GD5-008）・レディバ（SI-001）の「こうそくいどう」。v0.37 のカスミのコイキングの「しんだふり」（``SelfBarrierOnHeads``。ダメージなし）と
+    # 同じ文で、v0.41 のシードラの書き方の「次の相手の番に、」を「次の相手の番、このカードは」の順に書く（意味は同じ。docs/non-pack-effect-reuse-v0.70.md 4 章）
+    "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
 )
 
 
@@ -5277,6 +5280,36 @@ class DamageThenStatusByCoin(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         expected = f"コインを投げて「おもて」なら、相手を「{_CONDITION_JA[self.heads]}」状態に、「うら」なら「{_CONDITION_JA[self.tails]}」状態にする。"
         return _check_form(attack, "コインで相手の特殊状態が決まるワザ", damage="fixed") + _check_exact_text(attack, "コインで相手の特殊状態が決まるワザ", (expected,))
+
+
+@dataclass(frozen=True)
+class StatusByCoinWithoutDamage(AttackEffect):
+    """ダメージを与えず、コインを投げて「おもて」なら相手を ``heads`` に、「うら」なら ``tails`` にする（v0.70。ニョロゾ（ES1-017・QSG-015）の「ぐるぐる」の
+    「こんらん」・「ねむり」）。
+
+    - 要素は v0.41 の ``DamageThenStatusByCoin`` からダメージの要素を除いた ``Status(heads, local_coin=おもて, otherwise=tails)`` だけ（1 枚のコインで、どちらの状態に
+      するかが決まる。「うら」をワザの失敗にしない。投げ直さない）。``DamageThenStatusByCoin`` を 0 ダメージに広げない（ダメージの目安のないワザは、ダメージの要素も
+      ログ ``damage`` もない）
+    - 相手を受けないと決まっているとき（「とうめい」・「ワザをうけない」状態）・特殊状態の重なり・マヒの再付与は、``Status`` の共通の処理（T19b・HC3・p.322・
+      ``UNRESOLVED_REPARALYSIS_RECOVERY_TURN``）
+    """
+
+    heads: str
+    tails: str
+    implementation_id = "status_by_coin_without_damage"
+
+    def __post_init__(self) -> None:
+        if self.heads not in _CONDITION_JA or self.tails not in _CONDITION_JA or self.heads == self.tails:
+            raise ValueError(f"特殊状態の組 ({self.heads!r}, {self.tails!r}) が正しくない")
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return (self.heads, self.tails)
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"コインを投げて「おもて」なら、相手を「{_CONDITION_JA[self.heads]}」状態に、「うら」なら「{_CONDITION_JA[self.tails]}」状態にする。"
+        return _check_form(attack, "ダメージを与えずコインで相手の特殊状態が決まるワザ", damage="none") + _check_exact_text(
+            attack, "ダメージを与えずコインで相手の特殊状態が決まるワザ", (expected,))
 
 
 @dataclass(frozen=True)
@@ -10147,6 +10180,33 @@ class DamageThenAttachEnergyFromDiscardToSelf(AttackEffect):
         expected = f"自分のトラッシュに「{self.energy_type.ja}」エネルギーカードがあれば、1枚取り出して、自分につける。"
         return _check_form(attack, "トラッシュのエネルギーカードを自分につけるワザ", damage="fixed") + _check_exact_text(
             attack, "トラッシュのエネルギーカードを自分につけるワザ", (expected,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        options = [uid for uid in state.players[use.player].discard
+                   if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is self.energy_type]
+        return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DISCARD, player=use.player, choices=(1, 1), options=options)
+
+
+@dataclass(frozen=True)
+class AttachEnergyFromDiscardToSelf(AttackEffect):
+    """ダメージを与えず、自分のトラッシュに ``energy_type`` のエネルギーカードがあれば、1 枚取り出して、自分につける（v0.70。マチスのピカチュウ（GD3-002）の「たいでん」。
+    kyuura の印刷の文面）。
+
+    - 要素は v0.45 の ``DamageThenAttachEnergyFromDiscardToSelf`` からダメージの要素を除いた ``AttachFromDiscard(energy_type, 1, exact=True)`` だけ（選ぶのはワザを使った
+      プレイヤー。決定 ``ATTACH_FROM_DISCARD``。1 枚でも決定を出し、0 枚は選べない）。トラッシュになければ何もしない（「あれば」）。``DamageThenAttachEnergyFromDiscardToSelf`` を
+      0 ダメージに広げない
+    - v0.31 のマチスのエレブーの「たいでん」（``AttachDiscardEnergyToSelf``。「最大2枚」。0 枚は HC7）とは別の文面・別の型。この文面は「1枚取り出して」なので HC7 は入らない
+    - つけるのは手札からつける通常の操作ではない（``energy_attachments_this_turn``・特殊能力でつけた枚数に数えない）。つけたら ``effects.after_energy_attached``。
+      レインボーエネルギー（RB2）・つけることができない効果（v0.59）は ``AttachFromDiscard`` の共通の処理
+    """
+
+    energy_type: EnergyType
+    implementation_id = "attach_energy_from_discard_to_self"
+
+    def check(self, attack: Attack) -> list[str]:
+        expected = f"自分のトラッシュに「{self.energy_type.ja}」エネルギーカードがあれば、1枚取り出して、自分につける。"
+        return _check_form(attack, "ダメージを与えずトラッシュのエネルギーカードを自分につけるワザ", damage="none") + _check_exact_text(
+            attack, "ダメージを与えずトラッシュのエネルギーカードを自分につけるワザ", (expected,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = [uid for uid in state.players[use.player].discard
@@ -18712,6 +18772,59 @@ DEFAULT_EFFECTS = EffectRegistry(
         # v0.64: 説明文のないワザ（kyuura データの採用。docs/geodude-line-unbounded-coins-v0.64.md。pcg-search.com の同じ版のページでも説明文がない）
         ("PMCG3-037", 1, "いわおとし"),  # ゴローン（化石の秘密。タケシのゴローン PMCG5-052 とは別のカード）
         ("PMCG3-038", 0, "いわころがり"),  # ゴローニャ（化石の秘密。タケシのゴローニャ PMCG5-053 とは別のカード）
+        # v0.70: 説明文のないワザ（kyuura データの採用。docs/non-pack-effect-reuse-v0.70.md。拡張パック以外の商品のポケモン 82 枚の、説明文のないワザ 51）。
+        # PR1-069 のワザ名「Psyche(サイケ)」は kyuura の値のまま（写しで訂正したのはカードの名前だけ）
+        ("GD2-005", 0, "オーロラビーム"),  # カスミのパウワウ
+        ("GD3-013", 0, "ドリルくちばし"),  # マチスのオニスズメ
+        ("GD4-005", 1, "つるのムチ"),  # エリカのマダツボミ
+        ("ES1-004", 0, "つつく"),  # ビードル
+        ("ES1-008", 0, "かみつく"),  # ズバット
+        ("ES1-012", 1, "きりさく"),  # カイロス
+        ("ES1-018", 0, "メガトンパンチ"),  # ニョロボン
+        ("ES1-024", 0, "かぜおこし"),  # ポッポ
+        ("ES1-032", 0, "かじる"),  # イーブイ
+        ("ES2-009", 1, "はさみギロチン"),  # クラブ
+        ("ES2-010", 1, "なみのり"),  # ラプラス
+        ("ES2-022", 0, "メガトンキック"),  # ゴーリキー
+        ("ES3-033", 0, "かみつく"),  # ガルーラ
+        ("QSG-006", 1, "きりさく"),  # カイロス
+        ("QSG-016", 0, "メガトンパンチ"),  # ニョロボン
+        ("QSG-019", 1, "なみのり"),  # ラプラス
+        ("QSG-036", 0, "メガトンキック"),  # ゴーリキー
+        ("QSG-044", 0, "かみつく"),  # ガルーラ
+        ("SI-001", 0, "かじる"),  # レディバ
+        ("SI-005", 1, "カッターウインド"),  # ピジョット
+        ("IP1-001", 0, "たいあたり"),  # フシギダネ
+        ("IP1-001", 1, "はっぱカッター"),  # フシギダネ
+        ("IP1-016", 0, "かみつく"),  # ニャース
+        ("IP1-037", 0, "はたく"),  # ルージュラ
+        ("IP2-003", 1, "なみのり"),  # カメール
+        ("IP2-013", 0, "つつく"),  # オニスズメ
+        ("IP2-013", 1, "つばさでうつ"),  # オニスズメ
+        ("IP2-016", 0, "かみつく"),  # ゼニガメ
+        ("IP2-016", 1, "ロケットずつき"),  # ゼニガメ
+        ("IP2-039", 0, "ほのおパンチ"),  # ブーバー
+        ("PF1-007", 0, "かみつく"),  # ワニノコ
+        ("NIP1-001", 0, "たいあたり"),  # チコリータ
+        ("NIP1-001", 1, "はっぱカッター"),  # チコリータ
+        ("NIP1-002", 0, "ぶつかる"),  # ヒマナッツ
+        ("NIP1-008", 0, "ひっかく"),  # ヒメグマ
+        ("NIP1-022", 1, "ひっかく"),  # パラス
+        ("NIP1-024", 0, "たいあたり"),  # ベイリーフ
+        ("NIP2-002", 0, "たいあたり"),  # マリル
+        ("NIP2-002", 1, "ころがる"),  # マリル
+        ("NIP2-004", 0, "きりさく"),  # アリゲイツ
+        ("NIP2-004", 1, "かみつく"),  # アリゲイツ
+        ("NIP2-016", 0, "ひっかく"),  # ワニノコ
+        ("NIP2-016", 1, "かみつく"),  # ワニノコ
+        ("NIP2-026", 0, "たいあたり"),  # モココ
+        ("PR1-011", 0, "なみのり"),  # なみのりピカチュウ
+        ("PR1-014", 0, "なみのり"),  # なみのりピカチュウ
+        ("PR1-045", 0, "つつく"),  # ディグダ
+        ("PR1-069", 0, "Psyche(サイケ)"),  # ミュウ
+        ("PRN-006", 0, "たいあたり"),  # チコリータ
+        ("PRN-009", 0, "たいあたり"),  # チコリータ
+        ("PRN-047", 0, "ころがりタックル"),  # ハネッコ
     ])
     | {
         # ドードー（v0.2d）p.231。ダメージの目安「10×」、説明はコイン 2 枚の「おもて」の数×10
@@ -22565,6 +22678,613 @@ DEFAULT_EFFECTS = EffectRegistry(
             play_text_ja=HARMONIZE_PLAY_TEXT,
             source=SIMPLIFIED_SPEC_SOURCE,
         ),
+        # v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚の、説明文のあるワザ 85。kyuura データの採用（kyuura の研究の基準の
+        # コミットに、どのカードを指す最新の説明（LD-）・照合（CC-）・裁定（CR-）・論点（UQ-）・エラッタもないので、処理に使う文面は kyuura の印刷の文面
+        # （play_text_ja = text_ja。出典 _KYUURA_PRINTED_TEXT）。型とパラメーターは、同じ文面の既存の登録と、ダメージの目安の有無・コインの枚数・追加の量・必要な
+        # エネルギーで選んだ。v0.69 の EQUIVALENT_CARDS（処理に使う欄が全部同じカードの写し）ではない（HP・ワザの組・ダメージが元のカードと違う）
+        # - 必要なエネルギーが「水」だけのみずでっぽう・ハイドロポンプ（GD2-014・ES1-018・ES3-015・QSG-016・SI-015・PR1-066）は v0.6 の ExtraEnergyDamage（第4弾の
+        #   コダックの同じ文面の ExtraEnergyDamageMixed を写さない。多い「水」の数え方が決まるので HC4 は当てはまらない）。必要なエネルギーに無色がまざる
+        #   シェルダー（ES2-008）の「しおふき」は ExtraEnergyDamageMixed（HC4 の問いのまま）
+        # - こうそくいどう（GD5-008・SI-001）はダメージのある DamageThenSelfBarrierOnHeads（説明の書き方を 1 通り加えた。SELF_BARRIER_ON_HEADS_TEXTS）。タッツー
+        #   （ES3-015）の「かくれる」はダメージのない SelfBarrierOnHeads（v0.37 の書き方と同じ）
+        # - ガルーラ（ES3-033・QSG-044）は「かみつく」「テールドロップ」の版（ポケモンジャングルの PMCG2-046 の「こどものおつかい」の訂正とは別のワザ）。テールドロップは
+        #   2 枚とも「おもて」のときだけダメージ（FailOnTailsDamage(coins=2)。「おもて」の数に比例しない）
+        # - ダメージのない 2 つの型（v0.70）: StatusByCoinWithoutDamage（ニョロゾの「ぐるぐる」）・AttachEnergyFromDiscardToSelf（マチスのピカチュウの「たいでん」）
+        AttackKey("GD1-004", 0): AttackEntry(  # タケシのサンドパン。ぜんしんばり（闘闘）10
+            DamageThenPoisonAndParalyzeOnHeads(),
+            "ぜんしんばり",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」と「マヒ」の両方の状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」と「マヒ」の両方の状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD1-004", 1): AttackEntry(  # タケシのサンドパン。サンドストーム（闘闘）20
+            DamageThenAttackCoinCheck(),
+            "サンドストーム",
+            text_ja="このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。",
+            play_text_ja="このワザを受けたポケモンは、次の相手の番にワザを使う時にコインを投げ、「うら」ならワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD1-008", 0): AttackEntry(  # タケシのゴローン。いわなげ（闘無無）20×
+            CoinFlipDamage(coins=3, damage_per_heads=20),
+            "いわなげ",
+            text_ja="コインを3枚投げて「おもて」の数×20のダメージ。",
+            play_text_ja="コインを3枚投げて「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD2-009", 0): AttackEntry(  # カスミのトサキント。つのでつつく（水）30
+            FailOnTailsDamage(),
+            "つのでつつく",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD2-013", 0): AttackEntry(  # カスミのヒトデマン。スピードスター（水無）20
+            DamageIgnoringDefenderEffects(),
+            "スピードスター",
+            text_ja="このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。",
+            play_text_ja="このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD2-014", 0): AttackEntry(  # カスミのスターミー。みずでっぽう（水）10+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD2-014", 1): AttackEntry(  # カスミのスターミー。バブルこうせん（水水水）30
+            ParalyzeOnHeads(),
+            "バブルこうせん",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD3-002", 0): AttackEntry(  # マチスのピカチュウ。たいでん（無）ダメージの目安なし
+            AttachEnergyFromDiscardToSelf(EnergyType.LIGHTNING),
+            "たいでん",
+            text_ja="自分のトラッシュに「雷」エネルギーカードがあれば、1枚取り出して、自分につける。",
+            play_text_ja="自分のトラッシュに「雷」エネルギーカードがあれば、1枚取り出して、自分につける。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD3-002", 1): AttackEntry(  # マチスのピカチュウ。でんきしっぽ（雷雷）20
+            ParalyzeOnHeads(),
+            "でんきしっぽ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD3-008", 0): AttackEntry(  # マチスのビリリダマ。ブレイクボール（雷無）30
+            SelfDamageOnTails(self_damage=10),
+            "ブレイクボール",
+            text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            play_text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD4-005", 0): AttackEntry(  # エリカのマダツボミ。どくのしる（草）10
+            PoisonOnHeads(),
+            "どくのしる",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD5-008", 0): AttackEntry(  # カツラのポニータ。こうそくいどう（炎無）20
+            DamageThenSelfBarrierOnHeads(),
+            "こうそくいどう",
+            text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD5-013", 0): AttackEntry(  # カツラのドードリオ。きあいづき（無無）50
+            FailOnTailsDamage(),
+            "きあいづき",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("GD6-006", 0): AttackEntry(  # ナツメのゴース。まとわりつく（超無）20
+            DamageThenRetreatLock(),
+            "まとわりつく",
+            text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            play_text_ja="このワザを受けた相手は、次の相手の番に「にげる」ことができない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-004", 1): AttackEntry(  # ビードル。どくのつの（草）ダメージの目安なし
+            PoisonWithoutDamage(),
+            "どくのつの",
+            text_ja="相手を「どく」状態にする。",
+            play_text_ja="相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-008", 1): AttackEntry(  # ズバット。あやしいおんぱ（草無）10
+            ConfuseOnHeads(),
+            "あやしいおんぱ",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-012", 0): AttackEntry(  # カイロス。はさんでなげる（草）10+
+            CoinBonusDamage(10),
+            "はさんでなげる",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-016", 0): AttackEntry(  # ニョロモ。あわ（水）10
+            ParalyzeOnHeads(),
+            "あわ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-017", 0): AttackEntry(  # ニョロゾ。ぐるぐる（水水）ダメージの目安なし
+            StatusByCoinWithoutDamage(heads=CONFUSION, tails=SLEEP),
+            "ぐるぐる",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-017", 1): AttackEntry(  # ニョロゾ。のしかかり（水無無）20
+            ParalyzeOnHeads(),
+            "のしかかり",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-018", 1): AttackEntry(  # ニョロボン。ハイドロポンプ（水水水）40+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "ハイドロポンプ",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-024", 1): AttackEntry(  # ポッポ。でんこうせっか（無無）10+
+            CoinBonusDamage(20),
+            "でんこうせっか",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-030", 0): AttackEntry(  # ベロリンガ。なめる（無）ダメージの目安なし
+            ParalyzeOnHeadsWithoutDamage(),
+            "なめる",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-030", 1): AttackEntry(  # ベロリンガ。ふみつけ（無無）20+
+            CoinBonusDamage(10),
+            "ふみつけ",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES1-032", 1): AttackEntry(  # イーブイ。とびかかる（無）20
+            FailOnTailsDamage(),
+            "とびかかる",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-008", 0): AttackEntry(  # シェルダー。しおふき（水無）20+
+            ExtraEnergyDamageMixed(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "しおふき",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-009", 0): AttackEntry(  # クラブ。あわ（水）10
+            ParalyzeOnHeads(),
+            "あわ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-010", 0): AttackEntry(  # ラプラス。うたう（無）ダメージの目安なし
+            SleepOnHeadsWithoutDamage(),
+            "うたう",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-019", 0): AttackEntry(  # ルージュラ。れいとうパンチ（水）10
+            ParalyzeOnHeads(),
+            "れいとうパンチ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-019", 1): AttackEntry(  # ルージュラ。コールドブレス（水水）20
+            DamageThenSleepOnHeads(),
+            "コールドブレス",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-022", 1): AttackEntry(  # ゴーリキー。ワンツーパンチ（闘闘闘）30+
+            CoinBonusDamage(20),
+            "ワンツーパンチ",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-026", 0): AttackEntry(  # サワムラー。にどげり（闘闘）30×
+            CoinFlipDamage(coins=2, damage_per_heads=30),
+            "にどげり",
+            text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×30のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-026", 1): AttackEntry(  # サワムラー。まわしげり（闘闘無）30
+            ParalyzeOnHeads(),
+            "まわしげり",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-031", 0): AttackEntry(  # オニドリル。でんこうせっか（無無）10+
+            CoinBonusDamage(20),
+            "でんこうせっか",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES2-031", 1): AttackEntry(  # オニドリル。ドリルこうか（無無無）50
+            FailOnTailsDamage(),
+            "ドリルこうか",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES3-015", 0): AttackEntry(  # タッツー。かくれる（無）ダメージの目安なし
+            SelfBarrierOnHeads(),
+            "かくれる",
+            text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES3-015", 1): AttackEntry(  # タッツー。みずでっぽう（水）10+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("ES3-033", 1): AttackEntry(  # ガルーラ。テールドロップ（無無無）80
+            FailOnTailsDamage(coins=2),
+            "テールドロップ",
+            text_ja="コインを2枚投げ、1つでも「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを2枚投げ、1つでも「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-006", 0): AttackEntry(  # カイロス。はさんでなげる（草）10+
+            CoinBonusDamage(10),
+            "はさんでなげる",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-014", 0): AttackEntry(  # ニョロモ。あわ（水）10
+            ParalyzeOnHeads(),
+            "あわ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-015", 0): AttackEntry(  # ニョロゾ。ぐるぐる（水水）ダメージの目安なし
+            StatusByCoinWithoutDamage(heads=CONFUSION, tails=SLEEP),
+            "ぐるぐる",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態に、「うら」なら「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-015", 1): AttackEntry(  # ニョロゾ。のしかかり（水無無）20
+            ParalyzeOnHeads(),
+            "のしかかり",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-016", 1): AttackEntry(  # ニョロボン。ハイドロポンプ（水水水）40+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "ハイドロポンプ",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-019", 0): AttackEntry(  # ラプラス。うたう（無）ダメージの目安なし
+            SleepOnHeadsWithoutDamage(),
+            "うたう",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-031", 0): AttackEntry(  # ルージュラ。れいとうパンチ（水）10
+            ParalyzeOnHeads(),
+            "れいとうパンチ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-031", 1): AttackEntry(  # ルージュラ。コールドブレス（水水）20
+            DamageThenSleepOnHeads(),
+            "コールドブレス",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-036", 1): AttackEntry(  # ゴーリキー。ワンツーパンチ（闘闘闘）30+
+            CoinBonusDamage(20),
+            "ワンツーパンチ",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-042", 0): AttackEntry(  # ベロリンガ。なめる（無）ダメージの目安なし
+            ParalyzeOnHeadsWithoutDamage(),
+            "なめる",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-042", 1): AttackEntry(  # ベロリンガ。ふみつけ（無無）20+
+            CoinBonusDamage(10),
+            "ふみつけ",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("QSG-044", 1): AttackEntry(  # ガルーラ。テールドロップ（無無無）80
+            FailOnTailsDamage(coins=2),
+            "テールドロップ",
+            text_ja="コインを2枚投げ、1つでも「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを2枚投げ、1つでも「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-001", 1): AttackEntry(  # レディバ。こうそくいどう（草草）20
+            DamageThenSelfBarrierOnHeads(),
+            "こうそくいどう",
+            text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            play_text_ja="コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-005", 0): AttackEntry(  # ピジョット。マッハひこう（無無）40
+            FailOnTailsDamage(),
+            "マッハひこう",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-006", 0): AttackEntry(  # イワーク。たたきつける（無無）20×
+            CoinFlipDamage(coins=2, damage_per_heads=20),
+            "たたきつける",
+            text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-006", 1): AttackEntry(  # イワーク。のしかかり（闘闘闘闘）40
+            ParalyzeOnHeads(),
+            "のしかかり",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-007", 0): AttackEntry(  # トゲピー。おおごえでなく（無）10
+            ConfuseOnHeads(),
+            "おおごえでなく",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-009", 0): AttackEntry(  # ラッタ。するどいまえば（無無）10+
+            CoinBonusDamage(30),
+            "するどいまえば",
+            text_ja="コインを投げて「おもて」なら、30ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、30ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("SI-015", 0): AttackEntry(  # カメール。みずでっぽう（水水）20+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-016", 1): AttackEntry(  # ニャース。みだれひっかき（無無）10×
+            CoinFlipDamage(coins=3, damage_per_heads=10),
+            "みだれひっかき",
+            text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            play_text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-026", 0): AttackEntry(  # エレブー。でんきショック（雷雷無）30
+            ParalyzeOnHeads(),
+            "でんきショック",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-030", 0): AttackEntry(  # ドードー。みだれづき（無）10×
+            CoinFlipDamage(coins=2, damage_per_heads=10),
+            "みだれづき",
+            text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            play_text_ja="コインを2枚投げて「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-037", 1): AttackEntry(  # ルージュラ。おうふくビンタ（超無）20×
+            CoinFlipDamage(coins=2, damage_per_heads=20),
+            "おうふくビンタ",
+            text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            play_text_ja="コインを2枚投げ、「おもて」の数×20のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-039", 0): AttackEntry(  # ドガース。どくガス（草）10
+            PoisonOnHeads(),
+            "どくガス",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP1-039", 1): AttackEntry(  # ドガース。こんらんガス（草草）20
+            ConfuseOnHeads(),
+            "こんらんガス",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP2-003", 0): AttackEntry(  # カメール。あわ（水）10
+            ParalyzeOnHeads(),
+            "あわ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("IP2-039", 1): AttackEntry(  # ブーバー。スモッグ（炎炎）20
+            PoisonOnHeads(),
+            "スモッグ",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PF1-007", 1): AttackEntry(  # ワニノコ。いかり（水無）10+
+            DamagePlusOwnCounters(10),
+            "いかり",
+            text_ja="自分にのっているダメージカウンターの数×10のダメージを追加する。",
+            play_text_ja="自分にのっているダメージカウンターの数×10のダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PF2-004", 0): AttackEntry(  # エーフィ。でんこうせっか（無無）10+
+            CoinBonusDamage(20),
+            "でんこうせっか",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PF2-004", 1): AttackEntry(  # エーフィ。サイケこうせん（超超無）30
+            ConfuseOnHeads(),
+            "サイケこうせん",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP1-008", 1): AttackEntry(  # ヒメグマ。みだれひっかき（無無）10×
+            CoinFlipDamage(coins=3, damage_per_heads=10),
+            "みだれひっかき",
+            text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            play_text_ja="コインを3枚投げ、「おもて」の数×10のダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP1-016", 0): AttackEntry(  # ヒノアラシ。ひをふく（炎）10+
+            CoinBonusDamage(10),
+            "ひをふく",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP1-022", 0): AttackEntry(  # パラス。ねむりのほうし（草）10
+            DamageThenSleepOnHeads(),
+            "ねむりのほうし",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP1-024", 1): AttackEntry(  # ベイリーフ。ねむりごな（草草無）30
+            SleepOpponent(),
+            "ねむりごな",
+            text_ja="相手を「ねむり」状態にする。",
+            play_text_ja="相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP2-003", 0): AttackEntry(  # ホーホー。ける（無）20
+            FailOnTailsDamage(),
+            "ける",
+            text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            play_text_ja="コインを投げて「うら」なら、このワザは失敗する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP2-018", 0): AttackEntry(  # メリープ。でんげき（雷無）30
+            SelfDamageOnTails(self_damage=10),
+            "でんげき",
+            text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            play_text_ja="コインを投げて「うら」なら、自分にも10ダメージ。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP2-024", 0): AttackEntry(  # ハリーセン。どくばり（水無）20
+            PoisonOnHeads(),
+            "どくばり",
+            text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「どく」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP2-026", 1): AttackEntry(  # モココ。でんきショック（雷雷無）30
+            ParalyzeOnHeads(),
+            "でんきショック",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("NIP2X-004", 0): AttackEntry(  # ネイティ。あやしいひかり（超）10
+            ConfuseOnHeads(),
+            "あやしいひかり",
+            text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PR1-045", 1): AttackEntry(  # ディグダ。ころばす（闘無）20+
+            CoinBonusDamage(10),
+            "ころばす",
+            text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、10ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PR1-066", 0): AttackEntry(  # マリル。みずでっぽう（水水）20+
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            "みずでっぽう",
+            text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-006", 1): AttackEntry(  # チコリータ。リフレクター（草）ダメージの目安なし
+            HalveDamageNextTurn(),
+            "リフレクター",
+            text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            play_text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-009", 1): AttackEntry(  # チコリータ。リフレクター（草）ダメージの目安なし
+            HalveDamageNextTurn(),
+            "リフレクター",
+            text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            play_text_ja="次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-013", 0): AttackEntry(  # ルージュラ。れいとうパンチ（水）10
+            ParalyzeOnHeads(),
+            "れいとうパンチ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-013", 1): AttackEntry(  # ルージュラ。コールドブレス（水水）20
+            DamageThenSleepOnHeads(),
+            "コールドブレス",
+            text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-038", 0): AttackEntry(  # ノコッチ。にらむ（無）ダメージの目安なし
+            ParalyzeOnHeadsWithoutDamage(),
+            "にらむ",
+            text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            play_text_ja="コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
+        AttackKey("PRN-038", 1): AttackEntry(  # ノコッチ。ドリルしっぽ（無無）10+
+            CoinBonusDamage(20),
+            "ドリルしっぽ",
+            text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            play_text_ja="コインを投げて「おもて」なら、20ダメージを追加する。",
+            source=_KYUURA_PRINTED_TEXT,
+        ),
     },
     {
         "PMCG1-071": TrainerEntry(
@@ -23423,3 +24143,43 @@ def _with_equivalent_cards(registry: EffectRegistry, table: Mapping[str, str]) -
 
 
 DEFAULT_EFFECTS = _with_equivalent_cards(DEFAULT_EFFECTS, EQUIVALENT_CARDS)
+
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md 5 章）: v0.70 で加えた 82 枚のうち、ほかの v0.70 のカードと処理に使う欄（日本語）が同じカード（kyuura の同じカードの組。
+# 新しい id → 同じデータの v0.70 のカード）。登録は id ごとに書き（上の v0.70 の登録）、ここでは同じ値の登録を、同じ登録の値（不変なオブジェクト）に置きかえるだけ
+# （EQUIVALENT_CARDS（engine_targets.json の mechanically_equivalent。前の版で登録したカードの写し）とは別。HP・ワザなどの違うカードを入れない。データが同じことは
+# tests/test_non_pack_effect_reuse_v0_70.py が写しで確かめる）
+SAME_DATA_CARDS_V0_70: Mapping[str, str] = MappingProxyType({
+    "QSG-006": "ES1-012",  # カイロス（SC-ES1-012）
+    "QSG-014": "ES1-016",  # ニョロモ（SC-ES1-016）
+    "QSG-015": "ES1-017",  # ニョロゾ（SC-ES1-017）
+    "QSG-016": "ES1-018",  # ニョロボン（SC-ES1-018）
+    "QSG-042": "ES1-030",  # ベロリンガ（SC-ES1-030）
+    "QSG-019": "ES2-010",  # ラプラス（SC-ES2-010）
+    "QSG-031": "ES2-019",  # ルージュラ（SC-ES2-019）
+    "PRN-013": "ES2-019",  # ルージュラ（SC-ES2-019）
+    "QSG-036": "ES2-022",  # ゴーリキー（SC-ES2-022）
+    "QSG-044": "ES3-033",  # ガルーラ（SC-ES3-033）
+    "PR1-014": "PR1-011",  # なみのりピカチュウ（SC-PR1-011）
+    "PRN-009": "PRN-006",  # チコリータ（SC-PRN-006）
+})
+
+
+def _with_shared_entries(registry: EffectRegistry, table: Mapping[str, str]) -> EffectRegistry:
+    """``table``（id → 同じデータのカードの id）の id の登録を、同じデータのカードの登録の値に置きかえた登録表（v0.70）。どちらのカードにもワザだけがあり、ワザの位置の組と
+    登録の値（効果の実装・名前・照合した文面・処理に使う文面・出典）が同じでなければ ``RuntimeError``（違う登録を黙ってまとめない）。"""
+    attacks = dict(registry._attacks)
+    for new, original in table.items():
+        if original in table:
+            raise RuntimeError(f"{new} の同じデータのカード {original} が、ほかのカードに置きかえられる")
+        mine = {k.attack_index: registry.attack_entry(new, k.attack_index) for k in registry.attack_keys() if k.card_id == new}
+        theirs = {k.attack_index: registry.attack_entry(original, k.attack_index) for k in registry.attack_keys() if k.card_id == original}
+        powers = [k for k in registry.power_keys() if k.card_id in (new, original)]
+        if not mine or mine != theirs or powers or new in registry.trainer_ids() or new in registry.energy_ids():
+            raise RuntimeError(f"{new} の登録が {original} の登録と同じではない（まとめない）")
+        for index, entry in theirs.items():
+            attacks[AttackKey(new, index)] = entry
+    return EffectRegistry(registry.id, attacks, registry._trainers, registry._powers, registry._energies)
+
+
+DEFAULT_EFFECTS = _with_shared_entries(DEFAULT_EFFECTS, SAME_DATA_CARDS_V0_70)
