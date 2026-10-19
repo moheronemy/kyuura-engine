@@ -153,7 +153,9 @@ class ResearchLinksTest(unittest.TestCase):
                    # v0.68: 利用者が示した訂正の文面（ガルーラのこどものおつかい）・エンジンの簡略化した仕様（イマクニ？のドードー）
                    "user_corrected_text", "engine_simplified_text",
                    # v0.69: 拡張パック以外の商品の同じカードの登録（元のカードの登録の区分にしたがう）
-                   "equivalent_registrations")}
+                   "equivalent_registrations",
+                   # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録
+                   "reprint_registrations")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:

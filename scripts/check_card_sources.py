@@ -92,7 +92,7 @@ GUIDEBOOK_KEYS = {"page", "pdf_page", "scan", "rules_page", "commentary_page", "
 KYUURA_DATA_KEYS = {"basis", "name_ja", "status", "kyuura_commit", "recorded_on", "kyuura_records", "play_text", "external_checks", "issues"}
 GUIDEBOOK_RECORD_KEYS = {"basis", "name_ja", "external_checks"}
 # v0.30: 過去の原典照合の記録のあるカードに、照合の記録に処理に使う文面のない登録の根拠（play_text・kyuura_records）を書ける
-OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to", "user_name_correction"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
+OPTIONAL_CARD_KEYS = {KYUURA_DATA: {"notes", "equivalent_to", "user_name_correction", "reprint_of", "reprint_scope", "behavior_differs"}, GUIDEBOOK_RECORD: {"issues", "notes", "play_text", "kyuura_records"}}
 # v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめた、利用者が示した名前の訂正（写しの engine_user_corrections。PR1-069 の
 # 「？？？」→「ミュウ」）。採用の記録の ``user_name_correction`` に kyuura の値・採用した値・根拠を書き、写しの訂正と照らす（名前の比べ方はほかのカードと同じ。
 # 訂正のないカードに書けず、写しの訂正のあるカードには必ず書く）
@@ -102,6 +102,20 @@ USER_NAME_CORRECTION_KEYS = {"field", "kyuura", "adopted", "basis", "evidence"}
 # 記録・研究の対応表の区分）で、新しいカードの記録としては書き直さない（再録のカードの画像を照合したことにしない）。確かめること: 写しの表と元のカード、元のカードの
 # 登録の根拠、登録が同じもの、写しのカードの処理に使う欄（日本語）と同じカードの組（same_card_group）が同じ、研究の対応表の equivalent_registrations
 EQUIVALENT = "equivalent_registration"
+# v0.71（docs/reprint-text-variants-v0.71.md 3 章）: 再録のカード（effects.REPRINT_CARDS）で、元のカードの記録の最新の説明・エラッタを処理に使う文面にした登録の根拠
+# （``play_text`` の値）。登録の処理に使う文面と出典は元のカードの登録と同じで、``reprint_scope`` に、元のカードの出典・その対象の記録の id（研究の対応表の CC-・LD-・
+# エラッタ）・過去の原典照合の記録（``card_verification <元のカード>``）・その記録の収録の一覧にこの版の商品があるか（``listed_product``）を書く。再録のカードを照合した
+# 記録ではない（元のカードの記録の範囲を当てはめたもの。GR-P43-P6-LATEST-DESCRIPTION と同じカードの組）。元のカードが印刷の文面にしたがう登録・処理が違う登録
+# （``behavior_differs``）は、この版の印刷の文面（``kyuura_printed_text``）
+REPRINT = "reprint_original_play_text"
+REPRINT_SCOPE_KEYS = {"original_source", "records", "verification", "listed_product"}
+REPRINT_SCOPE_OPTIONAL = {"scope_quote", "note"}
+# 過去の原典照合の記録（card_verification.json の notes の「収録「…」」）での商品の名前（写しの jp_set → 名前）。ここにない商品（プロモ・イントロパックのおまけカード・
+# イントロパック★neo（2001 年））は、2000 年の本の収録の一覧にない
+REPRINT_PRODUCT_NAMES = {
+    "GD1": "ポケモンジム第1弾タケシ", "GD2": "ポケモンジム第1弾カスミ", "GD3": "ポケモンジム第2弾マチス", "GD4": "ポケモンジム第2弾エリカ",
+    "GD5": "ポケモンジム第3弾カツラ", "GD6": "ポケモンジム第3弾ナツメ", "QSG": "クイックスターターギフトパック", "IP1": "イントロパック", "IP2": "イントロパック",
+}
 ENGINE_FIELDS = ("category", "name", "pokemon", "trainer", "energy")
 CHECK_KEYS = {"site", "url", "checked_on", "kyuura_commit", "edition", "result", "checked_fields", "differences"}
 DIFFERENCE_KEYS = {"field", "kyuura", "pcg_search", "affects_behavior"}
@@ -508,7 +522,7 @@ def kyuura_records_problems(where: str, record: dict) -> list[str]:
 
 def card_problems(card_id: str, record, *, cards: dict, commit: str, verification: dict, registry, links: dict,
                   today: datetime.date, corrections: dict | None = None, earlier: frozenset = frozenset(), sources: dict | None = None,
-                  equivalents: dict | None = None, user_corrections: dict | None = None) -> list[str]:
+                  equivalents: dict | None = None, user_corrections: dict | None = None, reprints: dict | None = None) -> list[str]:
     where = card_id
     if not isinstance(record, dict):
         return [f"{where}: 記録が辞書ではない"]
@@ -585,7 +599,10 @@ def card_problems(card_id: str, record, *, cards: dict, commit: str, verificatio
             found.append(f"{where}: 保留のカードが登録されている")
         if not affecting:
             found.append(f"{where}: 保留の理由（挙動に影響する論点）がない")
-    if "equivalent_to" in record or any(v == EQUIVALENT for v in (record.get("play_text") or {}).values()):
+    if "reprint_of" in record or any(v == REPRINT for v in (record.get("play_text") or {}).values()):
+        found.extend(reprint_problems(where, record, card, cards=cards, registry=registry, links=links, verification=verification,
+                                      sources=sources or {}, reprints=reprints or {}, corrections=corrections))
+    elif "equivalent_to" in record or any(v == EQUIVALENT for v in (record.get("play_text") or {}).values()):
         found.extend(equivalent_problems(where, record, card, cards=cards, registry=registry, links=links, verification=verification,
                                          sources=sources or {}, equivalents=equivalents or {}))
     else:
@@ -689,6 +706,125 @@ def equivalent_problems(where: str, record: dict, card: dict, *, cards: dict, re
     return found
 
 
+def text_free_view(card: dict) -> dict:
+    """``engine_view`` から効果の文面（トレーナーの文面・ワザと特殊能力の説明文）と名前を除いたもの（v0.71。再録のカードの、文面のほかの処理に使う欄の比べ方）。"""
+    view = json.loads(json.dumps(engine_view(card), ensure_ascii=False))
+    view.pop("name")
+    if "trainer" in view:
+        view["trainer"]["text"] = None
+    for part in ("powers", "attacks"):
+        for item in (view.get("pokemon") or {}).get(part, []):
+            item["text"] = None
+    return view
+
+
+def reprint_problems(where: str, record: dict, card: dict, *, cards: dict, registry, links: dict, verification: dict, sources: dict,
+                     reprints: dict, corrections: dict | None) -> list[str]:
+    """v0.71: 再録のカード（``reprint_of``。effects.REPRINT_CARDS）の採用の記録。元のカードとの関係（写しの reprint_targets・同じカードの組・文面と名前のほかの処理に
+    使う欄が同じ・元のカードの登録の根拠）、登録が元のカードの登録から決まりどおりに作られていること（効果の実装・照合した文面・処理に使う文面・出典）、処理に使う文面の
+    根拠（``reprint_scope``・研究の対応表）を確かめる。"""
+    from dataclasses import fields, replace
+
+    from kyuura_engine.deck import same_name
+    from kyuura_engine.effects import REPRINT_CARDS
+
+    found = []
+    original = record.get("reprint_of")
+    reprint = REPRINT_CARDS.get(card["id"])
+    if record.get("status") != ADOPTED:
+        return [f"{where}: reprint_of は採用（adopted）の記録だけに書く"]
+    if not isinstance(original, str) or original not in cards:
+        return [f"{where}: reprint_of {original!r} が写しのカードではない"]
+    if reprint is None or reprint.original != original:
+        return [f"{where}: effects.REPRINT_CARDS の元のカードが {getattr(reprint, 'original', None)!r}（記録は {original}）"]
+    if "equivalent_to" in record:
+        found.append(f"{where}: 再録の記録に equivalent_to を書かない（v0.69 の処理に使う欄が全部同じカードとは別）")
+    if reprints.get(card["id"]) != [original]:
+        found.append(f"{where}: 写しの reprint_targets（kyuura engine_targets.json）のいちばん近い登録したカードが {reprints.get(card['id'])!r}（記録は {original}）")
+    if registration_basis(original, verification, sources) is None:
+        found.append(f"{where}: 元のカード {original} に登録の根拠（過去の原典照合の記録か採用の記録）がない")
+    if card.get("same_card_group") is None or card.get("same_card_group") != cards[original].get("same_card_group"):
+        found.append(f"{where}: 同じカードの組（same_card_group）が元のカード {original} と同じでない")
+    if text_free_view(card) != text_free_view(cards[original]):
+        found.append(f"{where}: 写しの文面のほかの処理に使う欄が、元のカード {original} と違う")
+    if same_name(card["name"]["ja"]) != same_name(cards[original]["name"]["ja"]):
+        found.append(f"{where}: 名前 {card['name']['ja']!r} が元のカード {original} の名前と同じ名前でない（deck.SAME_NAME_SPELLINGS）")
+    if record.get("external_checks"):
+        found.append(f"{where}: 再録の記録に外部照合を書かない（v0.71 では照合していない）")
+    mine, theirs = _registrations(registry, card["id"]), _registrations(registry, original)
+    if set(mine) != set(theirs):
+        return [*found, f"{where}: 登録の対象 {sorted(mine)} が元のカード {original} の登録 {sorted(theirs)} と違う"]
+    behavior = record.get("behavior_differs", [])
+    if not isinstance(behavior, list) or set(behavior) != set(reprint.behavior):
+        found.append(f"{where}: behavior_differs {behavior!r} が effects.REPRINT_CARDS の処理が違う登録 {sorted(reprint.behavior)} と違う")
+    reused, printed = set(), set()
+    for target, entry in mine.items():
+        base = theirs[target]
+        if base.text_ja is None:
+            if entry is not base:
+                found.append(f"{where} {target}: 説明文のない登録が、元のカードの登録と同じものでない")
+            continue
+        if entry.text_ja != printed_text(card, target):
+            found.append(f"{where} {target}: 登録の印刷の文面（text_ja）が写しの文面と違う")
+        if target == "trainer" and entry.name_ja != card["name"]["ja"]:
+            found.append(f"{where} {target}: 登録の名前が写しの名前と違う")
+        if target in reprint.behavior:
+            if entry.effect == base.effect:
+                found.append(f"{where} {target}: 処理が違うとした登録の実装が、元のカードと同じ")
+            printed.add(target)
+            continue
+        effect = base.effect
+        if any(f.name == "text" for f in fields(effect)):
+            effect = replace(effect, text=entry.text_ja)
+        if entry.effect != effect:
+            found.append(f"{where} {target}: 登録の実装が、元のカードの実装（文面の引数をこの版の文面にしたもの）と違う")
+        if base.source == PRINTED_TEXT_SOURCE and base.play_text_ja == base.text_ja:
+            printed.add(target)
+        else:
+            reused.add(target)
+            if (entry.play_text_ja, entry.source) != (base.play_text_ja, base.source):
+                found.append(f"{where} {target}: 処理に使う文面・出典が、元のカードの登録と違う")
+    play_text = record.get("play_text")
+    expected = {t: REPRINT for t in reused} | {t: PRINTED_TEXT for t in printed}
+    if play_text != expected:
+        found.append(f"{where}: play_text {play_text!r} が {expected!r} ではない（元のカードの記録の文面は {REPRINT}、ほかは {PRINTED_TEXT}）")
+    elif printed:
+        subset = dict(record, play_text={t: PRINTED_TEXT for t in printed})
+        found.extend(play_text_problems(where, subset, card, registry, links, expected=printed, corrections=corrections))
+    scope = record.get("reprint_scope", {})
+    if not isinstance(scope, dict) or set(scope) != reused:
+        return [*found, f"{where}: reprint_scope の対象 {sorted(scope) if isinstance(scope, dict) else scope!r} が {sorted(reused)} と違う"]
+    section = links["latest_descriptions"]
+    for target in sorted(reused):
+        here, value = f"{where} {target}", scope[target]
+        problems_ = keys_problems(f"{here} の reprint_scope", value, REPRINT_SCOPE_KEYS, REPRINT_SCOPE_OPTIONAL) if isinstance(value, dict) else [f"{here}: reprint_scope は辞書"]
+        if problems_:
+            found.extend(problems_)
+            continue
+        key = f"{original}/{target}"
+        records = set(links["card_checks"]["engine_verified"].get(original, []))
+        if target == "trainer":
+            records |= {section.get("registered_trainers", {}).get(original)} - {None}
+        else:
+            records |= {section["registered"].get(key), section.get("errata_text", {}).get(key)} - {None}
+        if value["original_source"] != theirs[target].source:
+            found.append(f"{here}: reprint_scope の original_source が元のカードの出典 {theirs[target].source!r} と違う")
+        if not records or set(value["records"]) != records:
+            found.append(f"{here}: reprint_scope の records {value['records']} が、研究の対応表の元のカードの記録 {sorted(records)} と違う")
+        if any(r.split("-")[0] in ("ERR", "TXT", "RUL") for r in records) and not value.get("scope_quote"):
+            found.append(f"{here}: エラッタの記録の範囲として当てはめるので、記録の notes の引用（scope_quote）が要る")
+        legacy = verification["cards"].get(original)
+        if value["verification"] != (f"card_verification {original}" if legacy else None):
+            found.append(f"{here}: reprint_scope の verification が {value['verification']!r}（元のカードの過去の原典照合の記録を指す）")
+        name = REPRINT_PRODUCT_NAMES.get(card.get("jp_set"))
+        listed = name if legacy and name and f"「{name}」" in (legacy.get("notes") or "") else None
+        if value["listed_product"] != listed:
+            found.append(f"{here}: reprint_scope の listed_product {value['listed_product']!r} が、元のカードの照合の記録の収録の一覧から決まる {listed!r} と違う")
+        if target != "trainer" and section.get("reprint_registrations", {}).get(f"{card['id']}/{target}", {}).get("original") != key:
+            found.append(f"{here}: 研究の対応表の reprint_registrations にない")
+    return found
+
+
 def data_migrations(sources: dict, extract: dict) -> tuple[frozenset, list[str]]:
     """v0.69: 写しの元を上げた記録（``data_migrations``）。移行の前のコミットの集まりと、問題の一覧。移行の前のコミットは、写しの書き出しの
     ``previous_source``（写しの作り直しの検査が、写す欄が修正の欄と出典の記録の欄を除いて同じことを確かめたコミット）と同じでなければならない。"""
@@ -740,11 +876,18 @@ def problems(sources: dict | None = None, *, extract: dict | None = None, verifi
     earlier, migration_problems = data_migrations(sources, extract)
     equivalents = {c["id"]: c["equivalent_to"] for c in (extract.get("equivalent_targets") or {}).get("cards", [])}
     user_corrections = {(c["card_id"], c["field"]): c for c in extract.get("engine_user_corrections", [])}
+    reprints = {c["id"]: [x["id"] for x in c.get("nearest_registered") or []] for c in (extract.get("reprint_targets") or {}).get("cards", [])}
     found.extend(migration_problems)
     for card_id, record in sources["cards"].items():
         found.extend(card_problems(card_id, record, cards=cards, commit=commit, verification=verification, registry=registry,
                                    links=links, today=today, corrections=corrections, earlier=earlier, sources=sources, equivalents=equivalents,
-                                   user_corrections=user_corrections))
+                                   user_corrections=user_corrections, reprints=reprints))
+    from kyuura_engine.effects import REPRINT_CARDS
+
+    for card_id in sorted(set(REPRINT_CARDS) & registered_cards(registry)):  # v0.71: 登録した再録の表のカードは、reprint_of のある採用の記録を持つ
+        record = sources["cards"].get(card_id)
+        if not (isinstance(record, dict) and record.get("reprint_of") == REPRINT_CARDS[card_id].original):
+            found.append(f"{card_id}: effects.REPRINT_CARDS のカードに、元のカード {REPRINT_CARDS[card_id].original} を reprint_of とする採用の記録がない")
     for card_id, field in sorted(user_corrections):  # v0.70: 写しの名前の訂正は、採用の記録の user_name_correction に書く
         record = sources["cards"].get(card_id)
         if field != "name.ja" or not (isinstance(record, dict) and "user_name_correction" in record):

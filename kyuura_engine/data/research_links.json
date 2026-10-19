@@ -2798,7 +2798,18 @@
       "PRN-013/attack/0",
       "PRN-013/attack/1",
       "PRN-038/attack/0",
-      "PRN-038/attack/1"
+      "PRN-038/attack/1",
+      "GD1-006/attack/0",
+      "GD1-006/attack/1",
+      "GD4-004/attack/0",
+      "GD4-004/power/0",
+      "GD5-011/attack/0",
+      "GD5-011/attack/1",
+      "GD6-010/attack/0",
+      "GD6-010/attack/1",
+      "IP2-009/attack/0",
+      "PR1-030/attack/0",
+      "PR1-033/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
@@ -2917,6 +2928,57 @@
       "PR1-089/attack/1": "PMCG1-014/attack/1",
       "NIP1-010/attack/1": "PMCG4-005/attack/1",
       "NIP2-001/attack/1": "PMCG1-035/attack/1"
+    },
+    "reprint_registrations": {
+      "IPH-001/power/0": {
+        "original": "PMCG1-011/power/0",
+        "records": [
+          "CC-PMCG1-011-P43",
+          "LD-PMCG1-011-PWR0"
+        ]
+      },
+      "IPH-002/attack/0": {
+        "original": "PMCG1-032/attack/0",
+        "records": [
+          "CC-PMCG1-032-P43",
+          "LD-PMCG1-032-ATK0"
+        ]
+      },
+      "IPH-002/power/0": {
+        "original": "PMCG1-032/power/0",
+        "records": [
+          "CC-PMCG1-032-P43",
+          "LD-PMCG1-032-PWR0"
+        ]
+      },
+      "PR1-028/attack/0": {
+        "original": "PMCG1-032/attack/0",
+        "records": [
+          "CC-PMCG1-032-P43",
+          "LD-PMCG1-032-ATK0"
+        ]
+      },
+      "PR1-028/power/0": {
+        "original": "PMCG1-032/power/0",
+        "records": [
+          "CC-PMCG1-032-P43",
+          "LD-PMCG1-032-PWR0"
+        ]
+      },
+      "PR1-029/power/0": {
+        "original": "PMCG1-011/power/0",
+        "records": [
+          "CC-PMCG1-011-P43",
+          "LD-PMCG1-011-PWR0"
+        ]
+      },
+      "PR1-030/power/0": {
+        "original": "PMCG1-021/power/0",
+        "records": [
+          "TXT-CHARIZARD"
+        ],
+        "scope_quote": "1998年2月の「とりかえっこプリーズ」キャンペーンのプロモ（1stp030）は、「自分の番の中で何度でも使える」「このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりに元にもどる」「「ねむり・マヒ・こんらん」状態の時、この力は消える」と書き換えられている [N3]。"
+      }
     }
   },
   "card_checks": {
@@ -3412,6 +3474,18 @@
         }
       ],
       "use": "お上品攻撃で小さくしたダメージは、受けたダメージで量が決まる返す効果（こうらがえし・クロスカウンター）の「受けたダメージ」に含まれる（p.279 の解説の例。受けたダメージは p.321 の計算の最終的なダメージ）"
+    },
+    {
+      "kyuura_record": "GR-P43-P6-LATEST-DESCRIPTION",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.71",
+          "document": "docs/reprint-text-variants-v0.71.md",
+          "ruling_id": "RP-R1"
+        }
+      ],
+      "use": "再録のカード（effects.REPRINT_CARDS）の、元のカードの記録（最新の説明・エラッタ）を処理に使う文面にした登録: 同じカードの組の再録の版にも、元のカードの最新の説明を当てはめる（カード自体のあいまいな表現・判断のむずかしい表現は最新の説明にしたがう）。再録の版を照合した記録ではない（card_sources.json の reprint_scope が元のカードの記録と、その照合の記録の収録の一覧に再録の版の商品があるかを書く）"
     }
   ],
   "engine_user_corrections": [

@@ -72,6 +72,7 @@ from tests.helpers import (
     POTION,
     RATTATA,
     V0_69_POWER_CARDS,
+    V0_71_POWER_CARDS,
     VENUSAUR,
     build_test_state,
     expand_decklist,
@@ -163,8 +164,8 @@ ALL_POWERS = (ENERGY_TRANS, ENERGY_BURN, RAIN_DANCE, BUZZAP, DAMAGE_SWAP, STRIKE
 
 
 def _original_power_keys(registry):
-    """v0.68 までのカードの特殊能力の登録（v0.69 の新しい id の写し V0_69_POWER_CARDS を除く。その一覧は別に比べる）。"""
-    return tuple(k for k in registry.power_keys() if k.card_id not in V0_69_POWER_CARDS)
+    """v0.68 までのカードの特殊能力の登録（v0.69 の新しい id の写し V0_69_POWER_CARDS・v0.71 の再録のカード V0_71_POWER_CARDS を除く。その一覧は別に比べる）。"""
+    return tuple(k for k in registry.power_keys() if k.card_id not in V0_69_POWER_CARDS and k.card_id not in V0_71_POWER_CARDS)
 
 
 def full(state):
@@ -270,8 +271,9 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.5 は 1、v0.6 は 2、v0.7 は 3、v0.8 は 4、v0.9 は 5、v0.10 は 6、v0.11 は 7、v0.12 は 8、v0.17b は 9、v0.31 は 12、v0.42 は 20、v0.43 は 29、v0.44 は 31、
         # v0.46 は 39、v0.47 は 44、v0.48 は 46、v0.49 は 49、v0.59 は 50、v0.60 は 51、v0.61 は 54、v0.65 は 56、v0.68 は 58、
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
-        self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), V0_69_POWER_CARDS)
-        self.assertIn("68 powers", repr(DEFAULT_EFFECTS))
+        # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
+        self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
+        self.assertIn("74 powers", repr(DEFAULT_EFFECTS))
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ

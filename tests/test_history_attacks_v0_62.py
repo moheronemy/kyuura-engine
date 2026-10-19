@@ -168,9 +168,9 @@ class RegistryTest(unittest.TestCase):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
         by_category = {c: sum(1 for d in supported if d.category == c) for c in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_category, {"pokemon": 492, "trainer": 113, "energy": 30})  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚、v0.65 でポケモン 2 枚・トレーナー 1 枚  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 825)  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 68)  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で［にげこむ］・［ベンチガード］を加えた
+        self.assertEqual(by_category, {"pokemon": 503, "trainer": 180, "energy": 30})  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚、v0.65 でポケモン 2 枚・トレーナー 1 枚  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 840)  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で［にげこむ］・［ベンチガード］を加えた
 
     def test_history_readers(self):
         readers = {type(e.effect).__name__ for e in E.DEFAULT_EFFECTS._attacks.values() if e.effect.reads_history}
@@ -227,8 +227,9 @@ class CorrectionTest(unittest.TestCase):
         self.assertEqual(fields[(LICKITUNG, "jp_print.level")]["before"], 29)
 
     def test_only_lickitung_and_kangaskhan_are_corrected(self):
-        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, {LICKITUNG, "PMCG2-046"})
-        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, {LICKITUNG, "PMCG2-046"})
+        # v0.71: 写しに加えたナツメのスリーパー（GD6-010。ふりこののろいのダメージの「×」。kyuura の前の判定による台帳の修正）
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, {LICKITUNG, "PMCG2-046", "GD6-010"})
+        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, {LICKITUNG, "PMCG2-046", "GD6-010"})
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):
@@ -243,7 +244,7 @@ class CorrectionTest(unittest.TestCase):
         self.assertEqual(module.kyuura_correction_problems(KYUURA, source, previous, pool), [])
         self.assertEqual(module.previous_copy_problems(source, previous, pool), [])
         targets = module.equivalent_targets(KYUURA)
-        self.assertEqual(module.render(module.build_extract(source, targets)), (ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
+        self.assertEqual(module.render(module.build_extract(source, targets, module.reprint_targets(KYUURA))), (ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
         original = list(module.KYUURA_CORRECTIONS)
         try:
             # 前の値・あとの値・記録・コミットが台帳やコミットの値と違えば、書き出さない

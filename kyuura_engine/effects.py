@@ -2195,6 +2195,42 @@ class DiscardEnergyBeforeDamage(AttackEffect):
                               options=_attached_energy_cards(state, attacker, self.energy_type))
 
 
+# v0.71: プロモのリザードン（PR1-030。とりかえっこプリーズ）の「ほのおのうず」の印刷の文面。``{count}`` はトラッシュするエネルギーカードの枚数
+DISCARD_ENERGY_CARDS_ZERO_IF_LACKING_TEXT = "このカードについているエネルギーカードを{count}枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)"
+
+
+@dataclass(frozen=True)
+class DiscardEnergyCardsThenDamageZeroIfLacking(AttackEffect):
+    """このカードについているエネルギーカードを ``count`` 枚トラッシュする。（トラッシュできない時、このワザのダメージは 0 になる）（v0.71。プロモのリザードン（PR1-030）の
+    「ほのおのうず」。kyuura の印刷の文面。docs/reprint-text-variants-v0.71.md 6 章）。要素 ``DiscardOwnEnergy(None, count, when_lacking=LACKING_ZERO, timing=TIMING_EFFECT)``
+    → ``Damage(OPP, Printed(), requires="discard")``。
+
+    - トラッシュするのはカードの枚数（どのタイプのエネルギーカードでもよい。特殊エネルギーも 1 枚。無色2個エネルギーも 1 枚で、出すエネルギーの個数で数えない）。選ぶのは
+      ワザを使ったプレイヤー（決定 ``discard_energy``。ちょうど ``count`` 枚）
+    - 説明がトラッシュできないときの処理（ダメージは 0）を書いているので、トラッシュはワザの効果（ワザを使うための条件ではない）。時点はこんらんのコインのあと、ダメージの
+      前（p.309 の手順 5 のあと。第1弾のリザードン（PMCG1-021）の「はがしてすてる」の HC1 はこのカードには当たらない）。こんらんの「うら」ならトラッシュしない
+    - ``count`` 枚に足りなければ 1 枚もトラッシュせず（一部だけトラッシュしない）、このワザのダメージは 0（ワザの失敗ではない。ワザを使うための条件の違反でもない。ログ
+      ``discard_energy_failed`` の ``outcome`` は ``zero``）。ワザに必要なエネルギーから、ふつうは起こらない（相手のワザを自分のワザとして使うとき・無色2個エネルギーで
+      必要なエネルギーを払ったときに起こる）
+    - v0.31 の ``DiscardEnergyBeforeDamage``（トラッシュの時点をワザの効果にできるのは「炎」エネルギーカードのワザだけ）の確かめを、この文面のために緩めない（別の型）
+    """
+
+    count: int
+    implementation_id = "discard_energy_cards_then_damage_zero_if_lacking"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュしてダメージを与えるワザ（トラッシュできなければダメージは 0）"
+        problems = _check_form(attack, what, damage="fixed")
+        if self.count < 1:
+            problems.append(f"トラッシュする枚数 {self.count} が 1 より少ない")
+        return problems + _check_exact_text(attack, what, (DISCARD_ENERGY_CARDS_ZERO_IF_LACKING_TEXT.format(count=self.count),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        return _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(self.count, self.count),
+                              options=_attached_energy_cards(state, attacker, None))
+
+
 @dataclass(frozen=True)
 class SleepOnHeadsWithoutDamage(AttackEffect):
     """コインを投げて「おもて」なら、相手を「ねむり」状態にする（ダメージの目安なし。v0.31。第1弾のゴースの「さいみんガス」・ピッピの「うたう」）。
@@ -8063,6 +8099,9 @@ def _opponent_pokemon(state: GameState, use: PowerUse, pokemon_id: int, role: st
 DEFENSIVE_POLLEN_TEXTS = (
     "このカードがバトル場でワザによるダメージを受けた時、（このカードが「きぜつ」するかしないかにかかわらず）コインを投げ、「おもて」なら、ダメージを与えたポケモンを"
     "「こんらん」状態にする。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。",
+    # v0.71: ポケモンジム第2弾のエリカのラフレシア（GD4-004）の書き方（かっこが半角・「きぜつ」するしないにかかわらず）。同じ意味（きぜつするかどうかによらない）
+    ("このカードがバトル場でワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)コインを投げ、「おもて」なら、ダメージを与えたポケモンを"
+     "「こんらん」状態にする。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。"),
 )
 
 
@@ -9661,6 +9700,9 @@ ONCE_AFTER_ENTRY_NO_DAMAGE_ON_TAILS_TEXTS = (
     # カモネギ（PMCG1-063）の「ネギでたたく」（「場に出してから1度しか使えない」。場に出てからの使用が 1 回、で同じ意味。「うら」でも使ったことは、p.323「12」の
     # 「ワザが失敗した場合でも、そのポケモンは、そのワザを使ったことになります」と同じ）
     "コインを投げて「うら」なら、ダメージをあたえられない。場に出してから1度しか使えない。",
+    # v0.71: プロモのカモネギ（PR1-033）の書き方（回数の制限が先、「うら」なら「このワザのダメージは0になる」。ダメージの要素だけを決めるコインで、「ダメージは
+    # 与えられない」と同じ処理（相手にダメージを与えない。ワザの失敗ではない））
+    "このワザは、このカードが場に出てから、1回しか使えない。コインを投げて「うら」なら、このワザのダメージは0になる。",
 )
 
 
@@ -10414,7 +10456,9 @@ class PutOwnerBasicFromDeckOntoBenchOnHeads(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         expected = (f"コインを投げて「おもて」なら、「{self.owner}のポケモン」(進化カード以外)を自分の山札から1枚選び出し、自分のベンチに出してよい。その後、その山札を"
                     "よく切る。(自分のベンチに空きが無い時、このワザは使えない)")
-        return _check_form(attack, "コインで山札からベンチに出すワザ", damage="none") + _check_exact_text(attack, "コインで山札からベンチに出すワザ", (expected,))
+        # v0.71: ポケモンジム第1弾のタケシのイシツブテ（GD1-006）の書き方（「空きがない」）。同じ意味
+        variants = (expected, expected.replace("空きが無い時", "空きがない時"))
+        return _check_form(attack, "コインで山札からベンチに出すワザ", damage="none") + _check_exact_text(attack, "コインで山札からベンチに出すワザ", variants)
 
     def usage_problem(self, state: GameState, attacker: PokemonInPlay) -> IllegalActionError | None:
         owner, _ = state.find_pokemon(attacker.pokemon_id)
@@ -13391,6 +13435,8 @@ class DevolveOwnPokemon(TrainerEffect):
 # ---------------------------------------------------------------- トラッシュのたねポケモンを持ち主のベンチに出す効果（v0.51。docs/discard-to-bench-v0.51.md）
 
 INVIGORATE_TEXT = "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切り捨て)のダメージカウンターをのせる。"
+# v0.71: ポケモンジム第3弾のナツメのスリーパー（GD6-010）の書き方（「切りすて」）。同じ意味（v0.51 の half_hp_counters の切り捨て）
+INVIGORATE_TEXTS = (INVIGORATE_TEXT, INVIGORATE_TEXT.replace("(切り捨て)", "(切りすて)"))
 PENDULUM_CURSE_TEXT = "相手にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×{per}のダメージ。"
 REVIVE_TEXT = "トラッシュからポケモンカードを1枚選んで、HPの半分(きりすて)のダメージカウンターをのせた状態でベンチに出すことができる。進化カードを選ぶことはできない。"
 POKEMON_FLUTE_TEXT = "相手のトラッシュからポケモンカードを1枚選び、相手のベンチに出させることができる。ただし進化カードを選ぶことはできない。"
@@ -13486,7 +13532,7 @@ class BenchBasicFromEitherDiscard(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "トラッシュのたねポケモンを持ち主のベンチに出すワザ"
-        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (INVIGORATE_TEXT,))
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, INVIGORATE_TEXTS)
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = bench_from_discard_candidates(state, (use.player, 1 - use.player))
@@ -13624,6 +13670,78 @@ class BenchBasicFromOpponentDiscard(_BenchBasicFromDiscardTrainer):
 
     def from_player(self, use: TrainerUse) -> int:
         return 1 - use.player
+
+
+# v0.71: ポケモンジム第1弾の元気のかけら（GD1-017）の印刷の文面。第1弾の元気のかけら（PMCG1-078。REVIVE_TEXT）とは処理が違う（使えない場合・選ばなくてよいか・
+# ダメージカウンターをのせる順番。docs/reprint-text-variants-v0.71.md 5 章）
+REVIVE_GYM_TEXT = ("あなたのトラッシュから、たねポケモンカードを1枚選び、あなたのベンチに出す。その後、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。"
+                   "(あなたのトラッシュにたねポケモンカードがない時や、あなたのベンチに空きがない時、このカードは使えない)")
+
+
+@dataclass(frozen=True)
+class BenchBasicFromOwnDiscardThenCounters(_BenchBasicFromDiscardTrainer):
+    """あなたのトラッシュから、たねポケモンカードを 1 枚選び、あなたのベンチに出す。その後、そのポケモンに、HP の半分（切りすて）のダメージカウンターをのせる。（あなたの
+    トラッシュにたねポケモンカードがない時や、あなたのベンチに空きがない時、このカードは使えない）（v0.71。ポケモンジム第1弾の元気のかけら（GD1-017）。kyuura の印刷の
+    文面。第1弾の元気のかけら（``BenchBasicFromOwnDiscardWithCounters``）とは別の型）。
+
+    - 自分のトラッシュにたねポケモンカードがない・自分のベンチに空きがない（``stadiums.bench_limit``）なら使えない（使うための条件。手札から出す前に
+      ``IllegalActionError``。``NO_BASIC_POKEMON_IN_DISCARD``・``BENCH_FULL``。状態・乱数・ログを変えない）。第1弾の版の RV1 とは別（その版の文面には使えない場合がない）
+    - 選ぶのは使ったプレイヤー（決定 ``bench_from_discard``。ちょうど 1 枚。「選び、…出す」で、第1弾の版の「ことができる」がない。選ばない答えはない）
+    - 順番は「ベンチに出す。その後、…のせる」（v0.51 のよみがえらせると同じ）: ``zones.bench_from_discard``（カウンターをのせない。同じ uid・新しい場のポケモンの番号・場に
+      出た番は今の番）→ 出したあとの今有効な最大HP（``max_hp``）の半分（ダメージカウンターの単位で切り捨て。``half_hp_counters``）のダメージカウンターをのせる（ダメージでは
+      ない。GR-2000-P320-COUNTER-MOVE と同じ読み方。トレーナーの効果なので「ワザをうけない」状態・「とうめい」は関係しない。ログ ``trainer_place_damage_counters``）。
+      第1弾の版の「のせた状態でベンチに出す」（出す前のカードの HP で数え、出すときにのっている）とは順番と HP を読む時が違う（今の対応カードのたねポケモンでは、のせる数は
+      同じ。tests が確かめる）。カウンターをのせるのは 1 回だけ（出すときにはのせない）
+    - ベンチに出すのはトラッシュからで、手札から出すことではない（爆発ジムの反応・場に出たときの特殊能力の「手札から出した時」の機会はない。v0.51 の
+      ``discard_entry_power_guard``）。きぜつしない（HP の半分）ので、使い終えたあとのきぜつの処理（``may_knock_out``）はしない
+    """
+
+    implementation_id = "bench_basic_from_own_discard_then_counters"
+    text: ClassVar[str] = REVIVE_GYM_TEXT
+    without_target: ClassVar[tuple[str, str]] = ("", "")
+
+    def from_player(self, use: TrainerUse) -> int:
+        return use.player
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not discard_basic_pokemon(state, use.player):
+            raise IllegalActionError("NO_BASIC_POKEMON_IN_DISCARD", "あなたのトラッシュにたねポケモンカードがないので、このカードは使えない（カードの説明）")
+        if not bench_has_space(state, use.player):
+            raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=BENCH_FROM_DISCARD, player=use.player, options=self.candidates(state, use), min_choices=1, max_choices=1)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        source = {"trainer_card": use.card, "trainer": use.card_id}
+        if len(choices) != 1 or choices[0] not in self.candidates(state, use):
+            raise RuntimeError(f"{self.implementation_id} で選んだカード {choices} が、選べるトラッシュのたねポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
+        (card,) = choices
+        discard_entry_power_guard(state, card)
+        pokemon = bench_from_discard(state, card)
+        log_bench_from_discard(state, pokemon, by_player=use.player, source=source)
+        count = half_hp_counters(state, max_hp(state, pokemon))  # 出したあとの今有効な最大HP（「その後、そのポケモンに、HPの半分」）
+        if count <= 0:
+            return
+        per = state.rules.damage_per_counter
+        before = pokemon.damage
+        pokemon.damage = before + count * per
+        state.add_event("trainer_place_damage_counters", player=use.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, counters=count,
+                        amount=count * per, damage_before=before, total_damage=pokemon.damage, **source)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = []
+        if decision.kind != BENCH_FROM_DISCARD:
+            problems.append(f"{what}の決定の種類が {decision.kind!r}（{BENCH_FROM_DISCARD} のはず）")
+        if decision.player != use.player:
+            problems.append(f"{what}の決定をするのがプレイヤー {decision.player}（使ったプレイヤー {use.player} のはず）")
+        if (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}で選ぶ数が {decision.min_choices}〜{decision.max_choices}（1 のはず）")
+        expected = self.candidates(state, use)
+        if decision.options != expected:
+            problems.append(f"{what}の決定の選べるもの {decision.options} が、トラッシュの出せるたねポケモンのカード {expected} と合わない")
+        return problems
 
 
 # ---------------------------------------------------------------- 場のポケモンを場から山札・手札にもどすトレーナー（v0.52。docs/field-return-v0.52.md）
@@ -14338,7 +14456,8 @@ class ReturnHandsToDeckTrainer(TrainerEffect):
         coin = self.coin_draws or (0, 0)
         expected = {
             "相手の手札": ("相手の手札をすべて" in text, self.who == HANDS_OPPONENT),
-            "自分の手札": ("自分の手札を自分の山札に全てもどし" in text, self.who == HANDS_SELF),
+            # v0.71: 再録の版（QSG-050）の書き方「あなたの手札をすべて山札にもどし」
+            "自分の手札": ("自分の手札を自分の山札に全てもどし" in text or text.startswith("あなたの手札をすべて山札にもどし"), self.who == HANDS_SELF),
             "お互いのプレイヤー": (text.startswith("お互いのプレイヤーは"), self.who == HANDS_BOTH),
             "トレーナーカードだけ": ("トレーナーカードを全て山札に戻す" in text, self.returns == "trainers"),
             "見せ合う": ("見せ合い" in text, self.reveal),
@@ -14616,7 +14735,10 @@ class ArrangeOwnDeckTopTrainer(TrainerEffect):
         problems = super().check(definition)
         if definition.trainer_text_ja != self.text:
             problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
-        elif f"自分の山札を上から{self.max_cards}枚まで見て" not in self.text or "ことができる" not in self.text:
+        elif not ((f"自分の山札を上から{self.max_cards}枚まで見て" in self.text and "ことができる" in self.text)
+                  # v0.71: 再録の版（GD1-022・GD5-023）の書き方「あなたの山札の上から最大5枚のカードを見て、…山札の上にもどす。」（「最大」で、見ない（0 枚）を選べる。
+                  # 同じ意味。v0.54 の look_at_deck_top_declined）
+                  or self.text == f"あなたの山札の上から最大{self.max_cards}枚のカードを見て、好きな順番に入れ替えてから、山札の上にもどす。"):
             problems.append("文面と登録の枚数・「ことができる」が合わない")
         return problems
 
@@ -14922,7 +15044,11 @@ class DiscardAttachedEnergyTrainer(TrainerEffect):
         expected = {
             "自分のエネルギーカードをはがしてすてる条件": ("自分の場のポケモンについているエネルギーカードを1枚はがしてすてることによって" in self.text, self.own_cost == 1),
             "相手のポケモン 1 匹から 2 枚": ("相手の場のポケモン1匹から2枚のエネルギーカードをはがしてすてる" in self.text, self.opponent_cards == 2),
-            "相手のエネルギーカード 1 枚": ("相手の場のポケモンについているエネルギーカードを1枚はがしてすてる" in self.text, self.opponent_cards == 1),
+            # v0.71: 再録の版（IP2-019）の書き方「相手の場のポケモンを1匹選ぶ。そのポケモンについているエネルギーカードを1枚選び、トラッシュさせる。」（選ぶのは使った
+            # プレイヤー。v0.55 と同じ）
+            "相手のエネルギーカード 1 枚": ("相手の場のポケモンについているエネルギーカードを1枚はがしてすてる" in self.text
+                                          or self.text == "相手の場のポケモンを1匹選ぶ。そのポケモンについているエネルギーカードを1枚選び、トラッシュさせる。",
+                                          self.opponent_cards == 1),
         }
         problems += [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
         return problems
@@ -15037,8 +15163,10 @@ class DiscardEnergyThenHealTrainer(TrainerEffect):
 
     def check(self, definition: CardDefinition) -> list[str]:
         problems = _require_text(definition, self.text, self)
-        if not problems and (f"ダメージカウンターを{self.max_counters}個までとりのぞくことができる" not in self.text
-                             or "エネルギーカードを1枚はがしてすてることによって" not in self.text):
+        reprint = (f"エネルギーカードのついているものを1匹選ぶ。そのポケモンについているエネルギーカードを1枚トラッシュして、そのポケモンにのっているダメージカウンターを"
+                   f"最大{self.max_counters}個、とりのぞく。")  # v0.71: 再録の版（GD3-014）の書き方（「最大4個」。同じ意味）
+        if not problems and reprint not in self.text and (f"ダメージカウンターを{self.max_counters}個までとりのぞくことができる" not in self.text
+                                                          or "エネルギーカードを1枚はがしてすてることによって" not in self.text):
             problems.append("文面と登録の数（はがす 1 枚・とりのぞく数まで）が合わない")
         return problems
 
@@ -15101,6 +15229,15 @@ class DiscardEnergyThenHealTrainer(TrainerEffect):
         return problems
 
 
+# v0.55: なんでもなおし（PMCG1-080）の印刷の文面。v0.71: 再録の版（ポケモンジム・イントロパックなど）の書き方「あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、
+# すべて回復させる。」。特殊状態（p.322 の 4 つ）をすべて回復する処理は同じ。再録の版の文面は対象を「あなたの対戦ポケモン」と書くが、v0.71 では処理を変えない（FH1 の
+# 止める範囲のまま。docs/reprint-text-variants-v0.71.md 4 章）
+FULL_HEAL_TEXTS = (
+    "特殊状態にあるポケモンの全ての特殊状態を回復する。",
+    "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+)
+
+
 @dataclass(frozen=True)
 class CureSpecialConditionsTrainer(TrainerEffect):
     """v0.55: 特殊状態にあるポケモンの全ての特殊状態を回復する（なんでもなおし）。
@@ -15117,7 +15254,7 @@ class CureSpecialConditionsTrainer(TrainerEffect):
 
     def check(self, definition: CardDefinition) -> list[str]:
         problems = _require_text(definition, self.text, self)
-        if not problems and "特殊状態にあるポケモンの全ての特殊状態を回復する" not in self.text:
+        if not problems and self.text not in FULL_HEAL_TEXTS:
             problems.append("文面と登録の処理（特殊状態の回復）が合わない")
         return problems
 
@@ -15250,7 +15387,10 @@ class HealEachDamagedPokemonTrainer(TrainerEffect):
             "お互いの場": ("お互いの場" in self.text, self.who == HEAL_BOTH),
             "2 つずつ": ("ダメージカウンターを2つずつとりのぞく" in self.text, self.counters == 2),
             "1 つずつ": ("1つずつダメージカウンターをとりのぞく" in self.text, self.counters == 1),
-            "エネルギーカード全てをはがしてすてる": ("ダメージカウンターとエネルギーカード全てをはがしてすてる" in self.text, self.discard_energy and self.counters is None),
+            # v0.71: 再録の版（GD1-023・GD6-022）の書き方「ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)」
+            "エネルギーカード全てをはがしてすてる": ("ダメージカウンターとエネルギーカード全てをはがしてすてる" in self.text
+                                                   or "ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)" in self.text,
+                                                   self.discard_energy and self.counters is None),
         }
         problems += [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
         if self.who not in (HEAL_SELF, HEAL_BOTH):
@@ -24183,3 +24323,171 @@ def _with_shared_entries(registry: EffectRegistry, table: Mapping[str, str]) -> 
 
 
 DEFAULT_EFFECTS = _with_shared_entries(DEFAULT_EFFECTS, SAME_DATA_CARDS_V0_70)
+
+
+# v0.71（docs/reprint-text-variants-v0.71.md）: 拡張パック以外の商品の再録のカードで、元のカードと日本語のゲーム用データ（HP・タイプ・弱点・抵抗力・にげる・段階・進化元・
+# ワザの名前と必要なエネルギーとダメージの目安・特殊能力の名前・トレーナーの種類）が同じで、効果の文面（とポケモン図鑑の名前の空白 1 つ）だけが違うもの 78 枚。v0.69 の
+# EQUIVALENT_CARDS（処理に使う欄が全部同じカードの写し）とは別の表で、登録は元のカードの登録から次のとおりに作る（``_with_reprint_cards``）:
+#
+# - 照合する文面（``text_ja``）は、この版の印刷の文面（kyuura の写しのまま）。文面を引数に持つ型（``text``）は、引数をこの版の文面にする（型の ``check`` が、数・種類・対象・
+#   順番をこの版の文面で確かめる。書き方を受け付ける一覧はそれぞれの型にある）
+# - 処理に使う文面（``play_text_ja``）と出典（``source``）: 元のカードが記録の最新の説明・エラッタにしたがう登録（出典が誌面のページ・kyuura の記録の id）なら、元のカードの
+#   登録と同じ（再録のカードを照合した記録ではない。元のカードの記録の範囲を当てはめたもの。根拠は scripts/check_card_sources.py の reprint_problems が確かめる）。元のカードが
+#   印刷の文面にしたがう登録（出典 ``kyuura data/cards.json``）なら、この版の印刷の文面（出典も同じ）
+# - ``behavior``: 元のカードと処理が違う登録（エネルギー転送・ポケモンジム第1弾の元気のかけら・プロモのリザードンの「ほのおのうず」）。処理に使う文面はこの版の印刷の文面
+# - ``name``: トレーナーの名前が元のカードと違うとき（ポケモン図鑑の空白。デッキの同じ名前の数え方は deck.SAME_NAME_SPELLINGS）
+@dataclass(frozen=True)
+class Reprint:
+    original: str
+    texts: Mapping[str, str]
+    behavior: Mapping[str, Any] = field(default_factory=dict)
+    name: str | None = None
+
+
+# エネルギー転送の再録の版（ポケモンジム第2弾エリカ・クイックスターターギフト）の印刷の文面
+_REPRINT_ENERGY_SEARCH_TEXT = "あなたの山札から「基本エネルギーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。"
+
+REPRINT_CARDS: Mapping[str, Reprint] = MappingProxyType({
+    "GD1-006": Reprint("PMCG5-047", {"attack/0": "コインを投げて「おもて」なら、「タケシのポケモン」(進化カード以外)を自分の山札から1枚選び出し、自分のベンチに出してよい。その後、その山札をよく切る。(自分のベンチに空きがない時、このワザは使えない)", "attack/1": "このワザのダメージは、「抵抗力」の影響を受けない。"}),  # タケシのイシツブテ（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-014": Reprint("PMCG1-076", {"trainer": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)"}),  # エネルギー回収（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-016": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-017": Reprint("PMCG1-078", {"trainer": "あなたのトラッシュから、たねポケモンカードを1枚選び、あなたのベンチに出す。その後、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。(あなたのトラッシュにたねポケモンカードがない時や、あなたのベンチに空きがない時、このカードは使えない)"}, behavior={"trainer": BenchBasicFromOwnDiscardThenCounters()}),  # 元気のかけら（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-018": Reprint("PMCG5-089", {"trainer": "自分の場のすべてのポケモンから、それぞれ1つずつダメージカウンターをとりのぞく。(ダメージカウンターののっていないポケモンには、何もおこらない)"}),  # タケシ（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-020": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-021": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)"}),  # ポケモンいれかえ（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-022": Reprint("PMCG1-082", {"trainer": "あなたの山札の上から最大5枚のカードを見て、好きな順番に入れ替えてから、山札の上にもどす。"}, name="ポケモン図鑑HANDY505"),  # ポケモン図鑑HANDY505（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-023": Reprint("PMCG1-083", {"trainer": "あなたの場の、ダメージカウンターがのっているすべてのポケモンから、ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)"}),  # ポケモンセンター（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD1-024": Reprint("PMCG5-079", {"trainer": "このスタジアムカードが場にあるかぎり、「タケシのポケモン」が使うワザのダメージは「抵抗力」の影響を受けない。\nこのスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。"}),  # ニビシティジム（ポケモンジム第1弾「ニビシティジム タケシ」）
+    "GD2-019": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（ポケモンジム第1弾「ハナダシティジム カスミ」）
+    "GD2-020": Reprint("PMCG1-079", {"trainer": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。"}),  # ディフェンダー（ポケモンジム第1弾「ハナダシティジム カスミ」）
+    "GD2-021": Reprint("PMCG1-072", {"trainer": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このカードは使えない)"}),  # 突風（ポケモンジム第1弾「ハナダシティジム カスミ」）
+    "GD2-022": Reprint("PMCG2-048", {"trainer": "コインを投げて「おもて」なら、自分の山札から、たねポケモンカードまたは進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。"}),  # モンスターボール（ポケモンジム第1弾「ハナダシティジム カスミ」）
+    "GD2-023": Reprint("PMCG5-080", {"trainer": "このスタジアムカードが場にあるかぎり、「カスミのポケモン」の「にげる時トラッシュするエネルギーの数」は「-1」される。(0より小さくなることはない)\nこのスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。"}),  # ハナダシティジム（ポケモンジム第1弾「ハナダシティジム カスミ」）
+    "GD3-014": Reprint("PMCG1-075", {"trainer": "あなたの場にいるポケモンから、エネルギーカードのついているものを1匹選ぶ。そのポケモンについているエネルギーカードを1枚トラッシュして、そのポケモンにのっているダメージカウンターを最大4個、とりのぞく。"}),  # いいきずぐすり（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-017": Reprint("PMCG1-079", {"trainer": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。"}),  # ディフェンダー（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-018": Reprint("PMCG1-072", {"trainer": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このカードは使えない)"}),  # 突風（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-019": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-020": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)"}),  # ポケモンいれかえ（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-023": Reprint("PMCG2-048", {"trainer": "コインを投げて「おもて」なら、自分の山札から、たねポケモンカードまたは進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。"}),  # モンスターボール（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD3-024": Reprint("PMCG5-076", {"trainer": "お互いのプレイヤーは、のぞむなら、自分の番で「マチスのポケモン」がワザを使う時、コインを投げてもよい。コインが「おもて」なら、そのワザによって相手の対戦ポケモンに与えるダメージは「+10」される。(控えポケモンへのダメージは、そのまま)「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、10ダメージ。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)"}),  # クチバシティジム（ポケモンジム第2弾「クチバシティジム マチス」）
+    "GD4-004": Reprint("PMCG5-014", {"attack/0": "相手にダメージを与えたら、与えたダメージの半分(切り上げ)のダメージカウンターを、自分からとりのぞく。", "power/0": "このカードがバトル場でワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)コインを投げ、「おもて」なら、ダメージを与えたポケモンを「こんらん」状態にする。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。"}),  # エリカのラフレシア（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-014": Reprint("PMCG1-076", {"trainer": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)"}),  # エネルギー回収（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-015": Reprint("PMCG3-044", {"trainer": _REPRINT_ENERGY_SEARCH_TEXT}, behavior={"trainer": SearchDeckTrainer(_REPRINT_ENERGY_SEARCH_TEXT, CardFilter("basic_energy"), count=1, optional=True, reveal=True)}),  # エネルギー転送（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-019": Reprint("PMCG5-074", {"trainer": "このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」した時は、このカードもトラッシュする)このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。"}),  # お上品攻撃（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-020": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-021": Reprint("PMCG1-079", {"trainer": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。"}),  # ディフェンダー（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-022": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-023": Reprint("PMCG1-081", {"trainer": "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与える時、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)"}),  # プラスパワー（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-024": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)"}),  # ポケモンいれかえ（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-025": Reprint("PMCG3-047", {"trainer": "コインを投げて「おもて」なら、あなたのトラッシュからカードを1枚選び、あなたの山札の1番上に置く。"}),  # リサイクル（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD4-027": Reprint("PMCG5-078", {"trainer": "お互いのプレイヤーは、のぞむなら、自分の番の中で、自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させてもよい。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)"}),  # タマムシシティジム（ポケモンジム第2弾「タマムシシティジム エリカ」）
+    "GD5-011": Reprint("PMCG6-031", {"attack/0": "コインを投げて「おもて」なら、10ダメージを追加する。", "attack/1": "自分の山札の上から、カードを5枚トラッシュする。トラッシュした5枚の中にあった「炎」エネルギーカードの数×20のダメージ。"}),  # カツラのブーバー（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD5-018": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD5-020": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD5-022": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)"}),  # ポケモンいれかえ（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD5-023": Reprint("PMCG1-082", {"trainer": "あなたの山札の上から最大5枚のカードを見て、好きな順番に入れ替えてから、山札の上にもどす。"}, name="ポケモン図鑑HANDY505"),  # ポケモン図鑑HANDY505（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD5-024": Reprint("PMCG6-085", {"trainer": "お互いのプレイヤーの「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を受けない。\n(このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする)"}),  # グレンタウンジム（ポケモンジム第3弾「グレンタウンジム カツラ」）
+    "GD6-010": Reprint("PMCG6-051", {"attack/0": "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。", "attack/1": "相手にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×20のダメージ。"}),  # ナツメのスリーパー（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-014": Reprint("PMCG1-076", {"trainer": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)"}),  # エネルギー回収（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-015": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-016": Reprint("PMCG1-079", {"trainer": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。"}),  # ディフェンダー（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-020": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-021": Reprint("PMCG1-081", {"trainer": "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与える時、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)"}),  # プラスパワー（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-022": Reprint("PMCG1-083", {"trainer": "あなたの場の、ダメージカウンターがのっているすべてのポケモンから、ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)"}),  # ポケモンセンター（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-024": Reprint("PMCG6-080", {"trainer": "お互いの対戦ポケモンを、それぞれ、控えポケモンと入れ替える。入れ替わるポケモンは、それぞれ、持ち主が選ぶ。(入れ替えは、相手プレイヤーが先におこなう。控えがいないプレイヤーは、入れ替えをしない)"}),  # ワープポイント（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "GD6-025": Reprint("PMCG6-090", {"trainer": "お互いのプレイヤーは、自分の番に、自分の「ナツメのポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)"}),  # ヤマブキシティジム（ポケモンジム第3弾「ヤマブキシティジム ナツメ」）
+    "QSG-047": Reprint("PMCG1-076", {"trainer": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)"}),  # エネルギー回収（クイックスターターギフト）
+    "QSG-048": Reprint("PMCG3-044", {"trainer": _REPRINT_ENERGY_SEARCH_TEXT}, behavior={"trainer": SearchDeckTrainer(_REPRINT_ENERGY_SEARCH_TEXT, CardFilter("basic_energy"), count=1, optional=True, reveal=True)}),  # エネルギー転送（クイックスターターギフト）
+    "QSG-049": Reprint("PMCG1-071", {"trainer": "あなたの場にいるポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（クイックスターターギフト）
+    "QSG-050": Reprint("PMCG3-045", {"trainer": "あなたの手札をすべて山札にもどし、その山札をよく切る。その後、コインを投げて「おもて」なら8枚、「うら」なら1枚のカードを山札から引いて、手札にする。"}),  # ギャンブラー（クイックスターターギフト）
+    "QSG-051": Reprint("PMCG1-072", {"trainer": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。"}),  # 突風（クイックスターターギフト）
+    "QSG-052": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。"}),  # ポケモンいれかえ（クイックスターターギフト）
+    "QSG-053": Reprint("PMCG1-093", {"trainer": "手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができない時、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。"}),  # ポケモン交換おじさん（クイックスターターギフト）
+    "IP1-007": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（イントロパック(フシギダネデッキ)）
+    "IP1-019": Reprint("PMCG1-073", {"trainer": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。"}),  # ポケモンいれかえ（イントロパック(フシギダネデッキ)）
+    "IP1-028": Reprint("PMCG1-072", {"trainer": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。"}),  # 突風（イントロパック(フシギダネデッキ)）
+    "IP2-007": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（イントロパック(ゼニガメデッキ)）
+    "IP2-009": Reprint("PMCG1-024", {"attack/0": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー１つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)"}),  # ニョロモ（イントロパック(ゼニガメデッキ)）
+    "IP2-019": Reprint("PMCG1-070", {"trainer": "相手の場のポケモンを1匹選ぶ。そのポケモンについているエネルギーカードを1枚選び、トラッシュさせる。"}),  # エネルギー・リムーブ（イントロパック(ゼニガメデッキ)）
+    "IP2-024": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。"}),  # きずぐすり（イントロパック(ゼニガメデッキ)）
+    "IPH-001": Reprint("PMCG1-011", {"power/0": "この力は、自分の番の中で何度でも使える。自分の場のポケモンについている「草」エネルギーを、自分の場の別のポケモンにつけかえてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。"}),  # フシギバナ（イントロパック(おまけカード)）
+    "IPH-002": Reprint("PMCG1-032", {"attack/0": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー１つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)", "power/0": "この力は、自分の中で何度でも使える。このカードの持ち主は、手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。"}),  # カメックス（イントロパック(おまけカード)）
+    "PR1-028": Reprint("PMCG1-032", {"attack/0": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)", "power/0": "この力は、自分の番の中で何度でも使える。このカードの持ち主は、手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。"}),  # カメックス（プロモ(旧裏)）
+    "PR1-029": Reprint("PMCG1-011", {"power/0": "この力は、自分の番の中で何度でも使える。自分の場のポケモンについている「草」エネルギーを、自分の場の別のポケモンにつけかえてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。"}),  # フシギバナ（プロモ(旧裏)）
+    "PR1-030": Reprint("PMCG1-021", {"attack/0": "このカードについているエネルギーカードを2枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)", "power/0": "この力は自分の番の中で何度でも使える。このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりに元にもどる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。"}, behavior={"attack/0": DiscardEnergyCardsThenDamageZeroIfLacking(2)}),  # リザードン（プロモ(旧裏)）
+    "PR1-033": Reprint("PMCG1-063", {"attack/0": "このワザは、このカードが場に出てから、1回しか使えない。コインを投げて「うら」なら、このワザのダメージは0になる。"}),  # カモネギ（プロモ(旧裏)）
+    "NIP1-007": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（イントロパック★neo(チコリータデッキ)）
+    "NIP1-015": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。"}),  # きずぐすり（イントロパック★neo(チコリータデッキ)）
+    "NIP1-020": Reprint("PMCG1-074", {"trainer": "あなたの山札からカードを2枚引いて、手札に加える。"}),  # マサキ（イントロパック★neo(チコリータデッキ)）
+    "NIP1X-006": Reprint("PMCG1-081", {"trainer": "このカードは、あなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される(控えポケモンへのダメージは、そのまま)。"}),  # プラスパワー（イントロパック★neo(チコリータデッキ：拡張カード)）
+    "NIP1X-007": Reprint("PMCG1-073", {"trainer": "あなたの控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいないとき、このカードを使うことはできない。)"}),  # ポケモンいれかえ（イントロパック★neo(チコリータデッキ：拡張カード)）
+    "NIP2-008": Reprint("PMCG1-080", {"trainer": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。"}),  # なんでもなおし（イントロパック★neo(ワニノコデッキ)）
+    "NIP2-020": Reprint("PMCG1-071", {"trainer": "あなたの場のポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。"}),  # きずぐすり（イントロパック★neo(ワニノコデッキ)）
+    "NIP2-025": Reprint("PMCG1-074", {"trainer": "あなたの山札からカードを2枚引いて、手札に加える。"}),  # マサキ（イントロパック★neo(ワニノコデッキ)）
+    "NIP2X-006": Reprint("PMCG1-079", {"trainer": "このカードは、あなたの場のポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンが、ワザによるダメージを受けるとき、そのダメージは「-20」される。"}),  # ディフェンダー（イントロパック★neo(ワニノコデッキ：拡張カード)）
+    "NIP2X-007": Reprint("PMCG1-072", {"trainer": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいないとき、このカードを使うことはできない。)"}),  # 突風（イントロパック★neo(ワニノコデッキ：拡張カード)）
+})
+
+
+def _with_reprint_cards(registry: EffectRegistry, table: Mapping[str, Reprint]) -> EffectRegistry:
+    """``table``（新しい id → ``Reprint``）の新しい id に、元のカードの登録から作った登録を加えた登録表（v0.71）。
+
+    新しい id にすでに登録がある・元のカードに登録がない・元のカードがほかの表（写し・再録）の新しい id・文面の対象が元のカードの文面のある登録と違う・``behavior`` の対象が文面の
+    対象にないときは ``RuntimeError``（表の誤りを黙って通さない）。同じ元のカード・対象・文面・処理の登録は、同じ登録の値（不変なオブジェクト）を使う。"""
+    from dataclasses import fields as dataclass_fields
+    from dataclasses import replace as replace_dataclass
+
+    attacks = dict(registry._attacks)
+    powers = dict(registry._powers)
+    trainers = dict(registry._trainers)
+    registered = ({k.card_id for k in registry.attack_keys()} | {k.card_id for k in registry.power_keys()} | set(registry.trainer_ids())
+                  | set(registry.energy_ids()))
+    shared: dict[tuple, Any] = {}
+
+    def entry_for(original_entry, target: str, text: str, behavior, name: str | None):
+        key = (id(original_entry), target, text, behavior, name)
+        if key not in shared:
+            effect = behavior if behavior is not None else original_entry.effect
+            if behavior is None and any(f.name == "text" for f in dataclass_fields(effect)):
+                effect = replace_dataclass(effect, text=text)
+            printed = original_entry.source == _KYUURA_PRINTED_TEXT and original_entry.play_text_ja == original_entry.text_ja
+            play_text, source = (text, _KYUURA_PRINTED_TEXT) if behavior is not None or printed else (original_entry.play_text_ja, original_entry.source)
+            changes = {"effect": effect, "text_ja": text, "play_text_ja": play_text, "source": source}
+            if name is not None:
+                changes["name_ja"] = name
+            shared[key] = replace_dataclass(original_entry, **changes)
+        return shared[key]
+
+    for new, reprint in table.items():
+        original = reprint.original
+        if new in registered:
+            raise RuntimeError(f"{new} にはすでに登録がある（再録の表に書かない）")
+        if original in table or original in EQUIVALENT_CARDS or original not in registered:
+            raise RuntimeError(f"{new} の元のカード {original} が、登録のあるカードではない・ほかの表の新しい id")
+        targets: dict[str, Any] = {}
+        for key in registry.attack_keys():
+            if key.card_id == original:
+                targets[f"attack/{key.attack_index}"] = registry.attack_entry(original, key.attack_index)
+        for key in registry.power_keys():
+            if key.card_id == original:
+                targets[f"power/{key.power_index}"] = registry.power_entry(original, key.power_index)
+        if original in registry.trainer_ids():
+            targets["trainer"] = registry.trainer_entry(original)
+        if original in registry.energy_ids():
+            raise RuntimeError(f"{new} の元のカード {original} はエネルギーカード（再録の表は扱わない）")
+        with_text = {t for t, e in targets.items() if e.text_ja is not None}
+        if set(reprint.texts) != with_text or not set(reprint.behavior) <= with_text or (reprint.name is not None and "trainer" not in targets):
+            raise RuntimeError(f"{new} の文面・処理の対象 {sorted(reprint.texts)}・{sorted(reprint.behavior)} が、元のカード {original} の文面のある登録 {sorted(with_text)} と合わない")
+        for target, entry in targets.items():
+            if target in with_text:
+                entry = entry_for(entry, target, reprint.texts[target], reprint.behavior.get(target), reprint.name if target == "trainer" else None)
+            if target == "trainer":
+                trainers[new] = entry
+            elif target.startswith("attack/"):
+                attacks[AttackKey(new, int(target.split("/")[1]))] = entry
+            else:
+                powers[PowerKey(new, int(target.split("/")[1]))] = entry
+    return EffectRegistry(registry.id, attacks, trainers, powers, registry._energies)
+
+
+DEFAULT_EFFECTS = _with_reprint_cards(DEFAULT_EFFECTS, REPRINT_CARDS)

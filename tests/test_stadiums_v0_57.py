@@ -157,7 +157,7 @@ class CardDataTest(unittest.TestCase):
                 effect = E.DEFAULT_EFFECTS.trainer_effect(definition)
                 self.assertTrue(effect.is_stadium)
                 self.assertEqual(effect.check(definition), [])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 113)  # v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 180)  # v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
 
     def test_adoption_records_and_external_checks(self):
         """採用の記録（kyuura_data）と pcg-search.com の照合。違いはどれも処理に影響しない（スタジアムの出し方とトラッシュの文の有無・1枚と1匹・別のとこのカード以外）。"""

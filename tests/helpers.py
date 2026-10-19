@@ -1226,6 +1226,9 @@ ATTACK_TYPES_SINCE_V0_17 = (
     # v0.70（docs/non-pack-effect-reuse-v0.70.md）: ダメージのない型 2 つ（既存の要素だけの並び）
     _effects.StatusByCoinWithoutDamage,  # ニョロゾ（ES1-017・QSG-015）の「ぐるぐる」
     _effects.AttachEnergyFromDiscardToSelf,  # マチスのピカチュウ（GD3-002）の「たいでん」
+) + (
+    # v0.71（docs/reprint-text-variants-v0.71.md 6 章）: エネルギーカードをトラッシュする要素とダメージ（既存の要素だけの並び）
+    _effects.DiscardEnergyCardsThenDamageZeroIfLacking,  # プロモのリザードン（PR1-030）の「ほのおのうず」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1235,8 +1238,9 @@ NO_EMBER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(C
 # v0.30 まで、リザードン（PMCG1-021）は「実装を登録していないポケモンパワー（エナジーバーン）とワザ（ほのおのうず）を持つ 2 進化」の参照カードで、
 # 未対応のカードの例に使っていた（v0.7 でフーディンから引き継いだ）。v0.31 で対応にしたので、その性質を確かめるテストは、この 2 つの登録だけを除いた
 # 登録表と、その登録表で分類した写しのカードの組（``no_charizard_pool``）を使う（製品の登録表は変えない）
-NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0)]).without_attacks(
-    "test-no-charizard", [AttackKey(CHARIZARD, 0)])
+# v0.71: プロモのリザードン（PR1-030。リザードンの再録の版。effects.REPRINT_CARDS）の登録も除く（元のカードを保留にする場面で、再録の版だけが残らないように）
+NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0), _effects.PowerKey("PR1-030", 0)]).without_attacks(
+    "test-no-charizard", [AttackKey(CHARIZARD, 0), AttackKey("PR1-030", 0)])
 
 
 def no_charizard_pool():
@@ -1545,6 +1549,23 @@ V0_70_POKEMON = ("GD1-004", "GD1-008", "GD2-005", "GD2-009", "GD2-013", "GD2-014
                  "NIP2-004", "NIP2-016", "NIP2-018", "NIP2-024", "NIP2-026", "NIP2X-004", "PR1-011", "PR1-014", "PR1-045", "PR1-066", "PR1-069", "PRN-006", "PRN-009",
                  "PRN-013", "PRN-038", "PRN-047")
 V0_70_CARDS = V0_70_POKEMON
+
+# v0.71（docs/reprint-text-variants-v0.71.md）: 拡張パック以外の商品の再録のカード 78 枚（写しの組 pool_v0_71。effects.REPRINT_CARDS。元のカードと効果の文面だけが違う）
+V0_71_POKEMON = ("GD1-006", "GD4-004", "GD5-011", "GD6-010", "IP2-009", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030", "PR1-033")
+V0_71_TRAINERS = ("GD1-014", "GD1-016", "GD1-017", "GD1-018", "GD1-020", "GD1-021", "GD1-022", "GD1-023", "GD1-024", "GD2-019", "GD2-020", "GD2-021", "GD2-022",
+                  "GD2-023", "GD3-014", "GD3-017", "GD3-018", "GD3-019", "GD3-020", "GD3-023", "GD3-024", "GD4-014", "GD4-015", "GD4-019", "GD4-020", "GD4-021",
+                  "GD4-022", "GD4-023", "GD4-024", "GD4-025", "GD4-027", "GD5-018", "GD5-020", "GD5-022", "GD5-023", "GD5-024", "GD6-014", "GD6-015", "GD6-016",
+                  "GD6-020", "GD6-021", "GD6-022", "GD6-024", "GD6-025", "QSG-047", "QSG-048", "QSG-049", "QSG-050", "QSG-051", "QSG-052", "QSG-053", "IP1-007",
+                  "IP1-019", "IP1-028", "IP2-007", "IP2-019", "IP2-024", "NIP1-007", "NIP1-015", "NIP1-020", "NIP1X-006", "NIP1X-007", "NIP2-008", "NIP2-020",
+                  "NIP2-025", "NIP2X-006", "NIP2X-007")
+# 特殊能力の登録のある再録のカード（元のカードの登録から作った 6。登録の一覧を数えるテストは、v0.70 までの一覧とこれを分けて比べる）
+V0_71_POWER_CARDS = ("GD4-004", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030")
+V0_71_CARDS = ("GD1-006", "GD1-014", "GD1-016", "GD1-017", "GD1-018", "GD1-020", "GD1-021", "GD1-022", "GD1-023", "GD1-024", "GD2-019", "GD2-020", "GD2-021", "GD2-022",
+               "GD2-023", "GD3-014", "GD3-017", "GD3-018", "GD3-019", "GD3-020", "GD3-023", "GD3-024", "GD4-004", "GD4-014", "GD4-015", "GD4-019", "GD4-020", "GD4-021",
+               "GD4-022", "GD4-023", "GD4-024", "GD4-025", "GD4-027", "GD5-011", "GD5-018", "GD5-020", "GD5-022", "GD5-023", "GD5-024", "GD6-010", "GD6-014", "GD6-015",
+               "GD6-016", "GD6-020", "GD6-021", "GD6-022", "GD6-024", "GD6-025", "QSG-047", "QSG-048", "QSG-049", "QSG-050", "QSG-051", "QSG-052", "QSG-053", "IP1-007",
+               "IP1-019", "IP1-028", "IP2-007", "IP2-009", "IP2-019", "IP2-024", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030", "PR1-033", "NIP1-007",
+               "NIP1-015", "NIP1-020", "NIP1X-006", "NIP1X-007", "NIP2-008", "NIP2-020", "NIP2-025", "NIP2X-006", "NIP2X-007")  # 依頼の並び（V0_71_POKEMON と V0_71_TRAINERS を合わせたもの）
 
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 7 章）: 研究の基準を kyuura 7d3f4ca に上げたので、採用の記録の kyuura_records（研究の基準のコミットでカードを指す kyuura の記録の id）に

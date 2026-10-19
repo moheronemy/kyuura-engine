@@ -5974,6 +5974,10 @@ BUILDERS: dict[type, Any] = {
     E.DiscardEnergyBeforeDamage: lambda e: (
         DiscardOwnEnergy(e.energy_type, count=e.count, when_lacking=e.when_lacking, timing=e.timing), Damage(OPP, Printed(), requires="discard"),
     ),
+    # v0.71: プロモのリザードンの「ほのおのうず」（エネルギーカードを count 枚。トラッシュはワザの効果。足りなければトラッシュせず、ダメージは 0）
+    E.DiscardEnergyCardsThenDamageZeroIfLacking: lambda e: (
+        DiscardOwnEnergy(None, count=e.count, when_lacking=LACKING_ZERO, timing=TIMING_EFFECT), Damage(OPP, Printed(), requires="discard"),
+    ),
     E.SleepOnHeadsWithoutDamage: lambda e: (Status(SLEEP, local_coin=HEADS),),
     E.DiscardEnergyThenSelfEffect: lambda e: (
         DiscardOwnEnergy(e.energy_type, when_lacking=LACKING_CONDITION, timing=TIMING_UNRESOLVED), SelfPersistent(e.effect_kind, requires="discard"),

@@ -18,6 +18,7 @@ tests/test_muk_games_v0_8.py）。
 """
 
 import copy
+import dataclasses
 import pickle
 import unittest
 
@@ -51,6 +52,7 @@ from kyuura_engine.decisions import DECISION_PHASES
 from kyuura_engine.effects import (
     DEFAULT_EFFECTS,
     EQUIVALENT_CARDS,
+    REPRINT_CARDS,
     PowerEffect,
     PowerKey,
     SuppressOtherPowers,
@@ -77,6 +79,7 @@ from tests.helpers import (
     SQUIRTLE,
     SWITCH,
     V0_69_POWER_CARDS,
+    V0_71_POWER_CARDS,
     VENUSAUR,
     WARTORTLE,
     WATER,
@@ -250,8 +253,15 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         # docs/coins-defense-rebellion-v0.60.md）と、v0.61 のわるいダグトリオの［おとしあな］（相手が「にげる」時に自動的にはたらく）・タケシのオコリザルの
         # ［ずらかる］（残りHPが「10」になった時に自動的にはたらく。docs/reactive-powers-trainer-damage-v0.61.md）だけ
         # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_POWER_CARDS）は元のカードと同じ登録なので、別に比べる
+        # v0.71: 拡張パック以外の商品の再録のカード（V0_71_POWER_CARDS）も元のカードの登録から作るので、別に比べる
         undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared
-                      and k.card_id not in V0_69_POWER_CARDS}
+                      and k.card_id not in V0_69_POWER_CARDS and k.card_id not in V0_71_POWER_CARDS}
+        for card in V0_71_POWER_CARDS:
+            new, original = DEFAULT_EFFECTS.power_entry(card, 0), DEFAULT_EFFECTS.power_entry(REPRINT_CARDS[card].original, 0)
+            effect = original.effect
+            if hasattr(effect, "text"):
+                effect = dataclasses.replace(effect, text=new.text_ja)  # 文面を引数に持つ型は、引数をこの版の文面にした（effects._with_reprint_cards）
+            self.assertEqual((new.effect, new.play_text_ja), (effect, original.play_text_ja if original.source != "kyuura data/cards.json" else new.text_ja))
         for card in V0_69_POWER_CARDS:
             self.assertIs(DEFAULT_EFFECTS.power_entry(card, 0), DEFAULT_EFFECTS.power_entry(EQUIVALENT_CARDS[card], 0))
         self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0),

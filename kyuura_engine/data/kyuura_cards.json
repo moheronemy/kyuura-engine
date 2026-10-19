@@ -838,6 +838,86 @@
     "PRN-038",
     "PRN-047"
   ],
+  "pool_v0_71": [
+    "GD1-006",
+    "GD1-014",
+    "GD1-016",
+    "GD1-017",
+    "GD1-018",
+    "GD1-020",
+    "GD1-021",
+    "GD1-022",
+    "GD1-023",
+    "GD1-024",
+    "GD2-019",
+    "GD2-020",
+    "GD2-021",
+    "GD2-022",
+    "GD2-023",
+    "GD3-014",
+    "GD3-017",
+    "GD3-018",
+    "GD3-019",
+    "GD3-020",
+    "GD3-023",
+    "GD3-024",
+    "GD4-004",
+    "GD4-014",
+    "GD4-015",
+    "GD4-019",
+    "GD4-020",
+    "GD4-021",
+    "GD4-022",
+    "GD4-023",
+    "GD4-024",
+    "GD4-025",
+    "GD4-027",
+    "GD5-011",
+    "GD5-018",
+    "GD5-020",
+    "GD5-022",
+    "GD5-023",
+    "GD5-024",
+    "GD6-010",
+    "GD6-014",
+    "GD6-015",
+    "GD6-016",
+    "GD6-020",
+    "GD6-021",
+    "GD6-022",
+    "GD6-024",
+    "GD6-025",
+    "QSG-047",
+    "QSG-048",
+    "QSG-049",
+    "QSG-050",
+    "QSG-051",
+    "QSG-052",
+    "QSG-053",
+    "IP1-007",
+    "IP1-019",
+    "IP1-028",
+    "IP2-007",
+    "IP2-009",
+    "IP2-019",
+    "IP2-024",
+    "IPH-001",
+    "IPH-002",
+    "PR1-028",
+    "PR1-029",
+    "PR1-030",
+    "PR1-033",
+    "NIP1-007",
+    "NIP1-015",
+    "NIP1-020",
+    "NIP1X-006",
+    "NIP1X-007",
+    "NIP2-008",
+    "NIP2-020",
+    "NIP2-025",
+    "NIP2X-006",
+    "NIP2X-007"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -886,6 +966,27 @@
       "kyuura_saw_image": false,
       "engine_saw_image": false,
       "engine_history": "v0.68 は、写しの元（ecb2d69）の値に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。2026-10-19）として当てはめていた。転記の誤りの訂正で、公式エラッタ・別の版の文面・画像の読み直しではない",
+      "applied_in_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "previous_source": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+    },
+    {
+      "id": "FIX-GD6-010-ATK1-DAMAGE",
+      "card_id": "GD6-010",
+      "field": "pokemon.attacks[1].damage",
+      "before": {
+        "base": 20,
+        "modifier": null,
+        "display": "20"
+      },
+      "after": {
+        "base": 20,
+        "modifier": "×",
+        "display": "20×"
+      },
+      "basis": "kyuura_existing_record",
+      "kyuura_record": "data/curation/other_products.json reprint_checks「ナツメのスリーパー」",
+      "engine_saw_image": false,
+      "engine_history": "v0.71 で写しに加えた（前の版の写しにないカード）",
       "applied_in_source": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
       "previous_source": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
     }
@@ -2270,6 +2371,1656 @@
         "released_after_rule_base": true,
         "category": "candidate",
         "category_reasons": [],
+        "play_scope": "standard"
+      }
+    ]
+  },
+  "reprint_targets": {
+    "path": "data/engine_targets.json",
+    "commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+    "cards": [
+      {
+        "id": "GD1-006",
+        "name_ja": "タケシのイシツブテ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-047",
+            "differences": [
+              "pokemon.attacks[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD1-006",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-014",
+        "name_ja": "エネルギー回収",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-076",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-076",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-016",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-017",
+        "name_ja": "元気のかけら",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-078",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-078",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-018",
+        "name_ja": "タケシ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-089",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD1-018",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-020",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-021",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-022",
+        "name_ja": "ポケモン図鑑HANDY505",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-082",
+            "differences": [
+              "name.ja",
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-082",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-023",
+        "name_ja": "ポケモンセンター",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-083",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-083",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD1-024",
+        "name_ja": "ニビシティジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD1-024",
+        "product_group": "gym_deck",
+        "jp_set": "GD1",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD2-019",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "gym_deck",
+        "jp_set": "GD2",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD2-020",
+        "name_ja": "ディフェンダー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-079",
+        "product_group": "gym_deck",
+        "jp_set": "GD2",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD2-021",
+        "name_ja": "突風",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-072",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-072",
+        "product_group": "gym_deck",
+        "jp_set": "GD2",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD2-022",
+        "name_ja": "モンスターボール",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG2-048",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG2-048",
+        "product_group": "gym_deck",
+        "jp_set": "GD2",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD2-023",
+        "name_ja": "ハナダシティジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD2-023",
+        "product_group": "gym_deck",
+        "jp_set": "GD2",
+        "release_date": "1998-04-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-014",
+        "name_ja": "いいきずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-075",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-075",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-017",
+        "name_ja": "ディフェンダー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-079",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-018",
+        "name_ja": "突風",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-072",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-072",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-019",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-020",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-023",
+        "name_ja": "モンスターボール",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG2-048",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG2-048",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD3-024",
+        "name_ja": "クチバシティジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-076",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD3-024",
+        "product_group": "gym_deck",
+        "jp_set": "GD3",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-004",
+        "name_ja": "エリカのラフレシア",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-014",
+            "differences": [
+              "pokemon.attacks[0].text.ja",
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD4-004",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-014",
+        "name_ja": "エネルギー回収",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-076",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-076",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-015",
+        "name_ja": "エネルギー転送",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG3-044",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG3-044",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-019",
+        "name_ja": "お上品攻撃",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-074",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD4-019",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-020",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-021",
+        "name_ja": "ディフェンダー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-079",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-022",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-023",
+        "name_ja": "プラスパワー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-081",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-081",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-024",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-025",
+        "name_ja": "リサイクル",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG3-047",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG3-047",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD4-027",
+        "name_ja": "タマムシシティジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG5-078",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD4-027",
+        "product_group": "gym_deck",
+        "jp_set": "GD4",
+        "release_date": "1998-07-25",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-011",
+        "name_ja": "カツラのブーバー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG6-031",
+            "differences": [
+              "pokemon.attacks[1].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD5-011",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-018",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-020",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-022",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-023",
+        "name_ja": "ポケモン図鑑HANDY505",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-082",
+            "differences": [
+              "name.ja",
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-082",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD5-024",
+        "name_ja": "グレンタウンジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG6-085",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD5-024",
+        "product_group": "gym_deck",
+        "jp_set": "GD5",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-010",
+        "name_ja": "ナツメのスリーパー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG6-051",
+            "differences": [
+              "pokemon.attacks[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD6-010",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-014",
+        "name_ja": "エネルギー回収",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-076",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-076",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-015",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-016",
+        "name_ja": "ディフェンダー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-079",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-020",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-021",
+        "name_ja": "プラスパワー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-081",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-081",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-022",
+        "name_ja": "ポケモンセンター",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-083",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-083",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-024",
+        "name_ja": "ワープポイント",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG6-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD6-024",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "GD6-025",
+        "name_ja": "ヤマブキシティジム",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG6-090",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-GD6-025",
+        "product_group": "gym_deck",
+        "jp_set": "GD6",
+        "release_date": "1999-02-26",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-047",
+        "name_ja": "エネルギー回収",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-076",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-076",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-048",
+        "name_ja": "エネルギー転送",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG3-044",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG3-044",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-049",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-050",
+        "name_ja": "ギャンブラー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG3-045",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG3-045",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-051",
+        "name_ja": "突風",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-072",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-072",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-052",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "QSG-053",
+        "name_ja": "ポケモン交換おじさん",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-093",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-093",
+        "product_group": "quick_starter_gift",
+        "jp_set": "QSG",
+        "release_date": "1998-12-04",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP1-007",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "intro_pack",
+        "jp_set": "IP1",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP1-019",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "intro_pack",
+        "jp_set": "IP1",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP1-028",
+        "name_ja": "突風",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-072",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-072",
+        "product_group": "intro_pack",
+        "jp_set": "IP1",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP2-007",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "intro_pack",
+        "jp_set": "IP2",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP2-009",
+        "name_ja": "ニョロモ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-024",
+            "differences": [
+              "pokemon.attacks[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-024",
+        "product_group": "intro_pack",
+        "jp_set": "IP2",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP2-019",
+        "name_ja": "エネルギー・リムーブ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-070",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-070",
+        "product_group": "intro_pack",
+        "jp_set": "IP2",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IP2-024",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "intro_pack",
+        "jp_set": "IP2",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IPH-001",
+        "name_ja": "フシギバナ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-011",
+            "differences": [
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-011",
+        "product_group": "intro_pack",
+        "jp_set": "IPH",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "IPH-002",
+        "name_ja": "カメックス",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-032",
+            "differences": [
+              "pokemon.attacks[0].text.ja",
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-032",
+        "product_group": "intro_pack",
+        "jp_set": "IPH",
+        "release_date": "1999-07-30",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "PR1-028",
+        "name_ja": "カメックス",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-032",
+            "differences": [
+              "pokemon.attacks[0].text.ja",
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-032",
+        "product_group": "promo",
+        "jp_set": "PR1",
+        "release_date": "1998-02",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "PR1-029",
+        "name_ja": "フシギバナ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-011",
+            "differences": [
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-011",
+        "product_group": "promo",
+        "jp_set": "PR1",
+        "release_date": "1998-02",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "PR1-030",
+        "name_ja": "リザードン",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-021",
+            "differences": [
+              "pokemon.attacks[0].text.ja",
+              "pokemon.powers[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-021",
+        "product_group": "promo",
+        "jp_set": "PR1",
+        "release_date": "1998-02",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "PR1-033",
+        "name_ja": "カモネギ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-063",
+            "differences": [
+              "pokemon.attacks[0].text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-063",
+        "product_group": "promo",
+        "jp_set": "PR1",
+        "release_date": "1998-03-15",
+        "released_after_rule_base": false,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP1-007",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "intro_pack",
+        "jp_set": "NIP1",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP1-015",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "intro_pack",
+        "jp_set": "NIP1",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP1-020",
+        "name_ja": "マサキ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-074",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-074",
+        "product_group": "intro_pack",
+        "jp_set": "NIP1",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP1X-006",
+        "name_ja": "プラスパワー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-081",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-081",
+        "product_group": "intro_pack",
+        "jp_set": "NIP1X",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP1X-007",
+        "name_ja": "ポケモンいれかえ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-073",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-073",
+        "product_group": "intro_pack",
+        "jp_set": "NIP1X",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP2-008",
+        "name_ja": "なんでもなおし",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-080",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-080",
+        "product_group": "intro_pack",
+        "jp_set": "NIP2",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP2-020",
+        "name_ja": "きずぐすり",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-071",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-071",
+        "product_group": "intro_pack",
+        "jp_set": "NIP2",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP2-025",
+        "name_ja": "マサキ",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-074",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-074",
+        "product_group": "intro_pack",
+        "jp_set": "NIP2",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP2X-006",
+        "name_ja": "ディフェンダー",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-079",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-079",
+        "product_group": "intro_pack",
+        "jp_set": "NIP2X",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
+        "play_scope": "standard"
+      },
+      {
+        "id": "NIP2X-007",
+        "name_ja": "突風",
+        "engine_status": "reuse_candidate",
+        "reuse_basis": "same_card_group",
+        "nearest_registered": [
+          {
+            "id": "PMCG1-072",
+            "differences": [
+              "trainer.text.ja"
+            ]
+          }
+        ],
+        "same_card_group": "SC-PMCG1-072",
+        "product_group": "intro_pack",
+        "jp_set": "NIP2X",
+        "release_date": "2001-04-06",
+        "released_after_rule_base": true,
+        "category": "candidate",
         "play_scope": "standard"
       }
     ]
@@ -57703,6 +59454,4547 @@
         {
           "page": "neop047",
           "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "GD1-006",
+      "jp_set": "GD1",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのイシツブテ",
+        "en": "Brock's Geodude"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          74
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たすけをよぶ",
+              "en": "Call for Friend"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、「タケシのポケモン」(進化カード以外)を自分の山札から1枚選び出し、自分のベンチに出してよい。その後、その山札をよく切る。(自分のベンチに空きがない時、このワザは使えない)",
+              "en": "Flip a coin. If heads, you may search your deck for a Basic Pokémon card with Brock in its name and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "スパイラルショット",
+              "en": "Hook Shot"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、「抵抗力」の影響を受けない。",
+              "en": "Don't apply Resistance for this attack. (Any other effects that would happen after applying Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-66"
+        ],
+        "pcg_search": [
+          "1stgymd1006"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1006.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1006.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD1-006",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-66",
+        "pokemon.dex": "pokemontcg:gym1-66"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1006",
+          "list_number": "006/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-014",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー回収",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1014.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-076",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1014",
+          "list_number": "014/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-016",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1016.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1016",
+          "list_number": "016/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-017",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "元気のかけら",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのトラッシュから、たねポケモンカードを1枚選び、あなたのベンチに出す。その後、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。(あなたのトラッシュにたねポケモンカードがない時や、あなたのベンチに空きがない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1017.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-078",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1017",
+          "list_number": "017/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-018",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "タケシ",
+        "en": "Brock"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の場のすべてのポケモンから、それぞれ1つずつダメージカウンターをとりのぞく。(ダメージカウンターののっていないポケモンには、何もおこらない)",
+          "en": "Remove 1 damage counter from each of your Pokémon that has any damage counters on it."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-15"
+        ],
+        "pcg_search": [
+          "1stgymd1018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1018.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD1-018",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-15"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1018",
+          "list_number": "018/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-020",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1020",
+          "list_number": "020/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-021",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1021.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1021",
+          "list_number": "021/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-022",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン図鑑HANDY505",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から最大5枚のカードを見て、好きな順番に入れ替えてから、山札の上にもどす。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1022.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-082",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1022",
+          "list_number": "022/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-023",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンセンター",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場の、ダメージカウンターがのっているすべてのポケモンから、ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd1023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-083",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1023",
+          "list_number": "023/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-024",
+      "jp_set": "GD1",
+      "category": "trainer",
+      "name": {
+        "ja": "ニビシティジム",
+        "en": "Pewter City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "このスタジアムカードが場にあるかぎり、「タケシのポケモン」が使うワザのダメージは「抵抗力」の影響を受けない。\nこのスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Don't apply Resistance to any attacks made by Pokémon with Brock in their names."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-115"
+        ],
+        "pcg_search": [
+          "1stgymd1024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1024.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD1-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-115"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1024",
+          "list_number": "024/025"
+        }
+      ]
+    },
+    {
+      "id": "GD2-019",
+      "jp_set": "GD2",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd2019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2019.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2019",
+          "list_number": "019/024"
+        }
+      ]
+    },
+    {
+      "id": "GD2-020",
+      "jp_set": "GD2",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd2020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-079",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2020",
+          "list_number": "020/024"
+        }
+      ]
+    },
+    {
+      "id": "GD2-021",
+      "jp_set": "GD2",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd2021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2021.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-072",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2021",
+          "list_number": "021/024"
+        }
+      ]
+    },
+    {
+      "id": "GD2-022",
+      "jp_set": "GD2",
+      "category": "trainer",
+      "name": {
+        "ja": "モンスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、自分の山札から、たねポケモンカードまたは進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd2022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2022.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG2-048",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2022",
+          "list_number": "022/024"
+        }
+      ]
+    },
+    {
+      "id": "GD2-023",
+      "jp_set": "GD2",
+      "category": "trainer",
+      "name": {
+        "ja": "ハナダシティジム",
+        "en": "Cerulean City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "このスタジアムカードが場にあるかぎり、「カスミのポケモン」の「にげる時トラッシュするエネルギーの数」は「-1」される。(0より小さくなることはない)\nこのスタジアムカードは、バトル場の横に出して使う。新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Each player pays Colorless less to retreat his or her Pokémon if it has Misty in its name."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-108"
+        ],
+        "pcg_search": [
+          "1stgymd2023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD2-023",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-108"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2023",
+          "list_number": "023/024"
+        }
+      ]
+    },
+    {
+      "id": "GD3-014",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "いいきずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場にいるポケモンから、エネルギーカードのついているものを1匹選ぶ。そのポケモンについているエネルギーカードを1枚トラッシュして、そのポケモンにのっているダメージカウンターを最大4個、とりのぞく。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3014.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-075",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3014",
+          "list_number": "014/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-017",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3017.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-079",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3017",
+          "list_number": "017/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-018",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3018.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-072",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3018",
+          "list_number": "018/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-019",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3019.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3019",
+          "list_number": "019/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-020",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3020",
+          "list_number": "020/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-023",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "モンスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、自分の山札から、たねポケモンカードまたは進化カードを1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd3023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG2-048",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3023",
+          "list_number": "023/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-024",
+      "jp_set": "GD3",
+      "category": "trainer",
+      "name": {
+        "ja": "クチバシティジム",
+        "en": "Vermilion City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番で「マチスのポケモン」がワザを使う時、コインを投げてもよい。コインが「おもて」なら、そのワザによって相手の対戦ポケモンに与えるダメージは「+10」される。(控えポケモンへのダメージは、そのまま)「うら」なら、ワザを使ったポケモン自身にも、そのワザのダメージとして、10ダメージ。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Whenever a player attacks with a Pokémon with Lt. Surge in its name, he or she may flip a coin. If heads, and if that Pokémon's attack does damage to the Defending Pokémon (after applying Weakness and Resistance), that attack does 10 more damage to the Defending Pokémon. If tails, the attacking Pokémon does 10 damage to itself in addition to whatever its attack usually does."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-120"
+        ],
+        "pcg_search": [
+          "1stgymd3024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3024.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD3-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-120"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3024",
+          "list_number": "024/025"
+        }
+      ]
+    },
+    {
+      "id": "GD4-004",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのラフレシア",
+        "en": "Erika's Vileplume"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          45
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "エリカのクサイハナ",
+          "en": "Erika's Gloom"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ぼうぎょかふん",
+              "en": "Pollen Defense"
+            },
+            "text": {
+              "ja": "このカードがバトル場でワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず)コインを投げ、「おもて」なら、ダメージを与えたポケモンを「こんらん」状態にする。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。",
+              "en": "If an attack does damage to Erika's Vileplume while it's your Active Pokémon (even if it's Knocked Out), flip a coin. If heads, your opponent's Active Pokémon is now Confused. This power works even while Erika's Vileplume is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メガドレイン",
+              "en": "Mega Drain"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたダメージの半分(切り上げ)のダメージカウンターを、自分からとりのぞく。",
+              "en": "If Erika's Vileplume does damage to the Defending Pokémon (after applying Weakness and Resistance), remove a number of damage counters from Erika's Vileplume equal to half the damage done to the Defending Pokémon (rounded up to the nearest 10). If Erika's Vileplume has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-5"
+        ],
+        "pcg_search": [
+          "1stgymd4004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4004.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4004.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD4-004",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-5",
+        "pokemon.dex": "pokemontcg:gym1-5",
+        "pokemon.evolves_from": "same_card:PMCG5-014"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4004",
+          "list_number": "004/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-014",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー回収",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4014.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-076",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4014",
+          "list_number": "014/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-015",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー転送",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から「基本エネルギーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4015"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4015.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4015.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG3-044",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4015",
+          "list_number": "015/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-019",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "お上品攻撃",
+        "en": "Charity"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」した時は、このカードもトラッシュする)このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。",
+          "en": "Attach Charity to your Active Pokémon. Unless that Pokémon gets Knocked Out, return Charity to your hand at the end of your turn. If that Pokémon attacks and does damage to the Defending Pokémon, you may reduce that damage by any amount (rounded to the nearest 10)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-99"
+        ],
+        "pcg_search": [
+          "1stgymd4019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4019.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD4-019",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-99"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4019",
+          "list_number": "019/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-020",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4020",
+          "list_number": "020/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-021",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4021.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-079",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4021",
+          "list_number": "021/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-022",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4022.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4022",
+          "list_number": "022/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-023",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "プラスパワー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与える時、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-081",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4023",
+          "list_number": "023/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-024",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4024.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4024",
+          "list_number": "024/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-025",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "リサイクル",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたのトラッシュからカードを1枚選び、あなたの山札の1番上に置く。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd4025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4025.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG3-047",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4025",
+          "list_number": "025/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-027",
+      "jp_set": "GD4",
+      "category": "trainer",
+      "name": {
+        "ja": "タマムシシティジム",
+        "en": "Celadon City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番の中で、自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させてもよい。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. During each player's turn, that player may choose to discard an Energy card attached to 1 of his or her Pokémon with Erika in its name. If that player does so, that Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-107"
+        ],
+        "pcg_search": [
+          "1stgymd4027"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4027.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4027.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD4-027",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-107"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4027",
+          "list_number": "027/028"
+        }
+      ]
+    },
+    {
+      "id": "GD5-011",
+      "jp_set": "GD5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのブーバー",
+        "en": "Blaine's Magmar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          126
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひをふく",
+              "en": "Firebreathing"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "マグマふんしゅつ",
+              "en": "Lava Burst"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "自分の山札の上から、カードを5枚トラッシュする。トラッシュした5枚の中にあった「炎」エネルギーカードの数×20のダメージ。",
+              "en": "Discard the top 5 cards of your deck. (If there are fewer than 5 cards in your deck, discard all of them.) This attack does 20 damage for each Fire Energy card you discarded in this way."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-37"
+        ],
+        "pcg_search": [
+          "1stgymd5011"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5011.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5011.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD5-011",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-37",
+        "pokemon.dex": "pokemontcg:gym1-37"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5011",
+          "list_number": "011/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-018",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd5018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5018.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5018",
+          "list_number": "018/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-020",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd5020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5020",
+          "list_number": "020/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-022",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd5022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5022.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5022",
+          "list_number": "022/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-023",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン図鑑HANDY505",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から最大5枚のカードを見て、好きな順番に入れ替えてから、山札の上にもどす。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd5023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-082",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5023",
+          "list_number": "023/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-024",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "グレンタウンジム",
+        "en": "Cinnabar City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーの「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を受けない。\n(このスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする)",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. Ignore Weakness when a Water Pokémon does damage to a Pokémon with Blaine in its name."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-113"
+        ],
+        "pcg_search": [
+          "1stgymd5024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5024.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD5-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-113"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5024",
+          "list_number": "024/025"
+        }
+      ]
+    },
+    {
+      "id": "GD6-010",
+      "jp_set": "GD6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのスリーパー",
+        "en": "Sabrina's Hypno"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          97
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナツメのスリープ",
+          "en": "Sabrina's Drowzee"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "よみがえらせる",
+              "en": "Invigorate"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分または相手のトラッシュから「たねポケモン」を1枚選び出し、持ち主のベンチに出す。そして、そのポケモンに、HPの半分(切りすて)のダメージカウンターをのせる。",
+              "en": "Choose 1 Basic Pokémon in any player's discard pile. Put it onto that player's Bench. Put a number of damage counters on that Pokémon equal to half its HP (rounded down to the nearest 10). (You can't put a Pokémon on a Bench that's full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ふりこののろい",
+              "en": "Pendulum Curse"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "相手にのっているダメージカウンターの数だけコインを投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip a number of coins equal to the number of damage counters on the Defending Pokémon. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "訂正（FIX-GD6-010-ATK1-DAMAGE）: pokemon.attacks[1].damage を直した（20 → 20×）。根拠: kyuura が前に pcg-search のカードの画像で「20×」を確かめ、転記の「×」の落ちとした判定（data/curation/other_products.json の reprint_checks「ナツメのスリーパー」。**確実**）。同じカードの拡張パックの記録（PMCG6-051）も「20×」"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-56"
+        ],
+        "pcg_search": [
+          "1stgymd6010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6010.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-GD6-010",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-56",
+        "pokemon.dex": "pokemontcg:gym2-56",
+        "pokemon.evolves_from": "same_card:PMCG6-051"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6010",
+          "list_number": "010/026"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "FIX-GD6-010-ATK1-DAMAGE",
+          "field": "pokemon.attacks[1].damage",
+          "before": {
+            "base": 20,
+            "modifier": null,
+            "display": "20"
+          },
+          "after": {
+            "base": 20,
+            "modifier": "×",
+            "display": "20×"
+          },
+          "basis": "kyuura_existing_record",
+          "decided_on": "2026-10-19"
+        }
+      ]
+    },
+    {
+      "id": "GD6-014",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー回収",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6014.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-076",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6014",
+          "list_number": "014/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-015",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6015"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6015.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6015.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6015",
+          "list_number": "015/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-016",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンがワザによるダメージを受ける時、そのダメージは「-20」される。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6016.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-079",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6016",
+          "list_number": "016/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-020",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6020.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6020",
+          "list_number": "020/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-021",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "プラスパワー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与える時、そのダメージは「+10」される。(控えポケモンへのダメージは、そのまま)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6021.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-081",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6021",
+          "list_number": "021/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-022",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンセンター",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場の、ダメージカウンターがのっているすべてのポケモンから、ダメージカウンターとエネルギーカードをすべてとりのぞく。(エネルギーカードはトラッシュする)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stgymd6022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6022.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-083",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6022",
+          "list_number": "022/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-024",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "ワープポイント",
+        "en": "Warp Point"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "お互いの対戦ポケモンを、それぞれ、控えポケモンと入れ替える。入れ替わるポケモンは、それぞれ、持ち主が選ぶ。(入れ替えは、相手プレイヤーが先におこなう。控えがいないプレイヤーは、入れ替えをしない)",
+          "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with his or her Active Pokémon, then, if you have any Benched Pokémon, you switch 1 of them with your Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-126"
+        ],
+        "pcg_search": [
+          "1stgymd6024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6024.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD6-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-126"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6024",
+          "list_number": "024/026"
+        }
+      ]
+    },
+    {
+      "id": "GD6-025",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "ヤマブキシティジム",
+        "en": "Saffron City Gym"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、自分の番に、自分の「ナツメのポケモン」についている「基本エネルギーカード」をはがし、手札に加えてよい。\n(このスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。)",
+          "en": "This card stays in play after being played. Discard this card if another Stadium card comes into play. As often as each player like during his or her turn (before attacking), that player may return 1 basic Energy card attached to 1 of his or her Pokémon with Sabrina in its name to his or her hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-122"
+        ],
+        "pcg_search": [
+          "1stgymd6025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6025.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-GD6-025",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-122"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6025",
+          "list_number": "025/026"
+        }
+      ]
+    },
+    {
+      "id": "QSG-047",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー回収",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを1枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから基本エネルギーカードを最大2枚選び、手札に加えてよい。(ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg047"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg047.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg047.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-076",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg047",
+          "list_number": "047/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-048",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー転送",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から「基本エネルギーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg048"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg048.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg048.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG3-044",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg048",
+          "list_number": "048/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-049",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場にいるポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg049"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg049.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg049.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg049",
+          "list_number": "049/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-050",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "ギャンブラー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札をすべて山札にもどし、その山札をよく切る。その後、コインを投げて「おもて」なら8枚、「うら」なら1枚のカードを山札から引いて、手札にする。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg050"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg050.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg050.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG3-045",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg050",
+          "list_number": "050/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-051",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg051"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg051.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg051.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-072",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg051",
+          "list_number": "051/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-052",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg052"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg052.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg052.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg052",
+          "list_number": "052/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-053",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン交換おじさん",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札から「たねポケモン」または「進化カード」を1枚選び、相手プレイヤーに見せてから、あなたの山札にもどす。それができない時、このカードは使えない。あなたの山札から「たねポケモン」または「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg053"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg053.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg053.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-093",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg053",
+          "list_number": "053/058"
+        }
+      ]
+    },
+    {
+      "id": "IP1-007",
+      "jp_set": "IP1",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro1007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1007.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro1007",
+          "list_number": "007/040"
+        }
+      ]
+    },
+    {
+      "id": "IP1-019",
+      "jp_set": "IP1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのベンチから控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro1019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1019.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro1019",
+          "list_number": "019/040"
+        }
+      ]
+    },
+    {
+      "id": "IP1-028",
+      "jp_set": "IP1",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro1028"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1028.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1028.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-072",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro1028",
+          "list_number": "028/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-007",
+      "jp_set": "IP2",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2007.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro2007",
+          "list_number": "007/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-009",
+      "jp_set": "IP2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニョロモ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー１つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2009.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro2009",
+          "list_number": "009/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-019",
+      "jp_set": "IP2",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー・リムーブ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の場のポケモンを1匹選ぶ。そのポケモンについているエネルギーカードを1枚選び、トラッシュさせる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2019.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-070",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro2019",
+          "list_number": "019/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-024",
+      "jp_set": "IP2",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモン1匹を選び、そのポケモンにのっているダメージカウンターを最大2個、とりのぞいてよい。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro2024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2024.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stintro2024",
+          "list_number": "024/040"
+        }
+      ]
+    },
+    {
+      "id": "IPH-001",
+      "jp_set": "IPH",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギバナ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "フシギソウ",
+          "en": "Ivysaur"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジートランス",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何度でも使える。自分の場のポケモンについている「草」エネルギーを、自分の場の別のポケモンにつけかえてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ソーラービーム",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "イントロパック(おまけカード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro001.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-011",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "same_card:PMCG1-011"
+      },
+      "copies": [
+        {
+          "page": "1stintro001",
+          "list_number": "001/002"
+        }
+      ]
+    },
+    {
+      "id": "IPH-002",
+      "jp_set": "IPH",
+      "category": "pokemon",
+      "name": {
+        "ja": "カメックス",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "カメール",
+          "en": "Wartortle"
+        },
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "あまごい",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の中で何度でも使える。このカードの持ち主は、手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハイドロポンプ",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー１つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "イントロパック(おまけカード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro002.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-032",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "same_card:PMCG1-032"
+      },
+      "copies": [
+        {
+          "page": "1stintro002",
+          "list_number": "002/002"
+        }
+      ]
+    },
+    {
+      "id": "PR1-028",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カメックス",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "カメール",
+          "en": "Wartortle"
+        },
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "あまごい",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何度でも使える。このカードの持ち主は、手札から「水」エネルギーカードを出して、自分の場の「水」ポケモンにつけてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ハイドロポンプ",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついている時、多い「水」エネルギー1つにつき、10ダメージを追加する。(ダメージ追加は2つぶんまで)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp028"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp028.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp028.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-032",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "same_card:PMCG1-032"
+      },
+      "copies": [
+        {
+          "page": "1stp028",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-029",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギバナ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "フシギソウ",
+          "en": "Ivysaur"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジートランス",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何度でも使える。自分の場のポケモンについている「草」エネルギーを、自分の場の別のポケモンにつけかえてよい。このカードが「ねむり・マヒ・こんらん」状態の時、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ソーラービーム",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp029.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-011",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "same_card:PMCG1-011"
+      },
+      "copies": [
+        {
+          "page": "1stp029",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-030",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "リザードン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "リザード",
+          "en": "Charmeleon"
+        },
+        "hp": 120,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーバーン",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は自分の番の中で何度でも使える。このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりに元にもどる。このカードが「ねむり・マヒ・こんらん」状態の時、この力は消える。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのうず",
+              "en": null
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "このカードについているエネルギーカードを2枚トラッシュする。(トラッシュできない時、このワザのダメージは0になる)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp030"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp030.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp030.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-021",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "same_card:PMCG1-021"
+      },
+      "copies": [
+        {
+          "page": "1stp030",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-033",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カモネギ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ネギでたたく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "このワザは、このカードが場に出てから、1回しか使えない。コインを投げて「うら」なら、このワザのダメージは0になる。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ナベでたたく",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp033"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp033.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp033.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PMCG1-063",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp033",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "NIP1-007",
+      "jp_set": "NIP1",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1007.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1007",
+          "list_number": "007/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP1-015",
+      "jp_set": "NIP1",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1015"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1015.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1015.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1015",
+          "list_number": "015/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP1-020",
+      "jp_set": "NIP1",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキ",
+        "en": "Bill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札からカードを2枚引いて、手札に加える。",
+          "en": "Draw 2 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "base1-91"
+        ],
+        "pcg_search": [
+          "neointro1020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1020.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-074",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:PMCG1-074",
+        "english_text": "same_card:PMCG1-074"
+      },
+      "copies": [
+        {
+          "page": "neointro1020",
+          "list_number": "020/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-006",
+      "jp_set": "NIP1X",
+      "category": "trainer",
+      "name": {
+        "ja": "プラスパワー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの対戦ポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される(控えポケモンへのダメージは、そのまま)。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex006"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex006.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex006.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-081",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex006",
+          "list_number": "006/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-007",
+      "jp_set": "NIP1X",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンいれかえ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの控えポケモンを1匹選び、あなたの対戦ポケモンと入れ替える。(あなたに控えがいないとき、このカードを使うことはできない。)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex007.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-073",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex007",
+          "list_number": "007/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2-008",
+      "jp_set": "NIP2",
+      "category": "trainer",
+      "name": {
+        "ja": "なんでもなおし",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2008.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-080",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2008",
+          "list_number": "008/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP2-020",
+      "jp_set": "NIP2",
+      "category": "trainer",
+      "name": {
+        "ja": "きずぐすり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場のポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、2個とりのぞく。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2020.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-071",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2020",
+          "list_number": "020/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP2-025",
+      "jp_set": "NIP2",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキ",
+        "en": "Bill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札からカードを2枚引いて、手札に加える。",
+          "en": "Draw 2 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "base1-91"
+        ],
+        "pcg_search": [
+          "neointro2025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2025.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-074",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:PMCG1-074",
+        "english_text": "same_card:PMCG1-074"
+      },
+      "copies": [
+        {
+          "page": "neointro2025",
+          "list_number": "025/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-006",
+      "jp_set": "NIP2X",
+      "category": "trainer",
+      "name": {
+        "ja": "ディフェンダー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの場のポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンが、ワザによるダメージを受けるとき、そのダメージは「-20」される。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2ex006"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex006.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex006.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-079",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex006",
+          "list_number": "006/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-007",
+      "jp_set": "NIP2X",
+      "category": "trainer",
+      "name": {
+        "ja": "突風",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。(相手に控えがいないとき、このカードを使うことはできない。)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2ex007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex007.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PMCG1-072",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex007",
+          "list_number": "007/010"
         }
       ]
     }

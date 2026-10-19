@@ -19380,6 +19380,1701 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.70 で加えた（docs/non-pack-effect-reuse-v0.70.md）。PRN（promo。発売 2001-07-23）。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: ころがりタックル=DamageOnly（既存の効果の型と、v0.70 のダメージのない型。処理に使う文面は kyuura の印刷の文面）。同じカードの組 SC-neo2-004。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: neop047（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD1-006": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのイシツブテ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-047",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG5-047 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-047。同じカードの組 SC-GD1-006。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 PutOwnerBasicFromDeckOntoBenchOnHeads）・attack/1: この版の印刷の文面（元のカードと同じ型 DamageIgnoringResistance）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-014": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー回収",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-076",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-076-P257",
+            "LD-PMCG1-076-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-076",
+          "listed_product": "ポケモンジム第1弾タケシ",
+          "note": "最新の説明（LD-PMCG1-076-TRAINER）にしたがう（基本エネルギーカードだけ・トラッシュしたカードを除く・最大 2 枚）。印刷の「手札に加えてよい」は 0 枚を選べることを決めない（ER9・ER10 はそのまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-076 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-076。同じカードの組 SC-PMCG1-076。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "ポケモンジム第1弾タケシ",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-017": {
+      "basis": "kyuura_data",
+      "name_ja": "元気のかけら",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-078",
+      "behavior_differs": [
+        "trainer"
+      ],
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-078 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-078。同じカードの組 SC-PMCG1-078。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードと処理が違う（この版の印刷の文面。BenchBasicFromOwnDiscardThenCounters）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-018": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-089",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG5-089 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-089。同じカードの組 SC-GD1-018。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 HealEachDamagedPokemonTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-020": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-021": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "ポケモンジム第1弾タケシ",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン図鑑HANDY505",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-082",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-082 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-082。同じカードの組 SC-PMCG1-082。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面と名前の空白（deck.SAME_NAME_SPELLINGS）だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 ArrangeOwnDeckTopTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-023": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンセンター",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-083",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG1-083 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-083。同じカードの組 SC-PMCG1-083。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 HealEachDamagedPokemonTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD1-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ニビシティジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-079",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD1（gym_deck。ポケモンジム第1弾「ニビシティジム タケシ」。発売 1998-04-26）。PMCG5-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-079。同じカードの組 SC-GD1-024。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 IgnoreResistanceForOwnerStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD2-019": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "ポケモンジム第1弾カスミ",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD2（gym_deck。ポケモンジム第1弾「ハナダシティジム カスミ」。発売 1998-04-26）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD2-020": {
+      "basis": "kyuura_data",
+      "name_ja": "ディフェンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-079",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-079-P257"
+          ],
+          "verification": "card_verification PMCG1-079",
+          "listed_product": "ポケモンジム第1弾カスミ",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD2（gym_deck。ポケモンジム第1弾「ハナダシティジム カスミ」。発売 1998-04-26）。PMCG1-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-079。同じカードの組 SC-PMCG1-079。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD2-021": {
+      "basis": "kyuura_data",
+      "name_ja": "突風",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-072",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.255",
+          "records": [
+            "CC-PMCG1-072-P255",
+            "LD-PMCG1-072-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-072",
+          "listed_product": "ポケモンジム第1弾カスミ",
+          "note": "最新の説明（LD-PMCG1-072-TRAINER）は「相手に控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で GW5（UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH）を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD2（gym_deck。ポケモンジム第1弾「ハナダシティジム カスミ」。発売 1998-04-26）。PMCG1-072 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-072。同じカードの組 SC-PMCG1-072。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.255）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD2-022": {
+      "basis": "kyuura_data",
+      "name_ja": "モンスターボール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG2-048",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD2（gym_deck。ポケモンジム第1弾「ハナダシティジム カスミ」。発売 1998-04-26）。PMCG2-048 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG2-048。同じカードの組 SC-PMCG2-048。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 SearchDeckTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD2-023": {
+      "basis": "kyuura_data",
+      "name_ja": "ハナダシティジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD2（gym_deck。ポケモンジム第1弾「ハナダシティジム カスミ」。発売 1998-04-26）。PMCG5-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-080。同じカードの組 SC-GD2-023。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 OwnerRetreatReductionStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-014": {
+      "basis": "kyuura_data",
+      "name_ja": "いいきずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-075",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG1-075 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-075。同じカードの組 SC-PMCG1-075。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 DiscardEnergyThenHealTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ディフェンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-079",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-079-P257"
+          ],
+          "verification": "card_verification PMCG1-079",
+          "listed_product": "ポケモンジム第2弾マチス",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG1-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-079。同じカードの組 SC-PMCG1-079。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-018": {
+      "basis": "kyuura_data",
+      "name_ja": "突風",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-072",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.255",
+          "records": [
+            "CC-PMCG1-072-P255",
+            "LD-PMCG1-072-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-072",
+          "listed_product": "ポケモンジム第2弾マチス",
+          "note": "最新の説明（LD-PMCG1-072-TRAINER）は「相手に控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で GW5（UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH）を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG1-072 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-072。同じカードの組 SC-PMCG1-072。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.255）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-019": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-020": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "ポケモンジム第2弾マチス",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-023": {
+      "basis": "kyuura_data",
+      "name_ja": "モンスターボール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG2-048",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG2-048 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG2-048。同じカードの組 SC-PMCG2-048。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 SearchDeckTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD3-024": {
+      "basis": "kyuura_data",
+      "name_ja": "クチバシティジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-076",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD3（gym_deck。ポケモンジム第2弾「クチバシティジム マチス」。発売 1998-07-25）。PMCG5-076 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-076。同じカードの組 SC-GD3-024。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 AttackCoinStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-004": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのラフレシア",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-014",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG5-014 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-014。同じカードの組 SC-GD4-004。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 DamageAndDrain）・power/0: この版の印刷の文面（元のカードと同じ型 ConfuseDamageSourceOnHeads）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-014": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー回収",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-076",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-076-P257",
+            "LD-PMCG1-076-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-076",
+          "listed_product": "ポケモンジム第2弾エリカ",
+          "note": "最新の説明（LD-PMCG1-076-TRAINER）にしたがう（基本エネルギーカードだけ・トラッシュしたカードを除く・最大 2 枚）。印刷の「手札に加えてよい」は 0 枚を選べることを決めない（ER9・ER10 はそのまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-076 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-076。同じカードの組 SC-PMCG1-076。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-015": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー転送",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG3-044",
+      "behavior_differs": [
+        "trainer"
+      ],
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG3-044 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG3-044。同じカードの組 SC-PMCG3-044。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードと処理が違う（この版の印刷の文面。SearchDeckTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-019": {
+      "basis": "kyuura_data",
+      "name_ja": "お上品攻撃",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-074",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG5-074 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-074。同じカードの組 SC-GD4-019。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 ReduceAttackDamageAsWished）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-020": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "ポケモンジム第2弾エリカ",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-021": {
+      "basis": "kyuura_data",
+      "name_ja": "ディフェンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-079",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-079-P257"
+          ],
+          "verification": "card_verification PMCG1-079",
+          "listed_product": "ポケモンジム第2弾エリカ",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-079。同じカードの組 SC-PMCG1-079。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-022": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-023": {
+      "basis": "kyuura_data",
+      "name_ja": "プラスパワー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-081",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-081-P257"
+          ],
+          "verification": "card_verification PMCG1-081",
+          "listed_product": "ポケモンジム第2弾エリカ",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-081 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-081。同じカードの組 SC-PMCG1-081。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "ポケモンジム第2弾エリカ",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-025": {
+      "basis": "kyuura_data",
+      "name_ja": "リサイクル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG3-047",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG3-047 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG3-047。同じカードの組 SC-PMCG3-047。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 TakeFromDiscardTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD4-027": {
+      "basis": "kyuura_data",
+      "name_ja": "タマムシシティジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG5-078",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD4（gym_deck。ポケモンジム第2弾「タマムシシティジム エリカ」。発売 1998-07-25）。PMCG5-078 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG5-078。同じカードの組 SC-GD4-027。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureByDiscardingEnergyStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-011": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのブーバー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG6-031",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG6-031 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG6-031。同じカードの組 SC-GD5-011。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 CoinBonusDamage）・attack/1: この版の印刷の文面（元のカードと同じ型 MillSelfThenDamage）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-018": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "ポケモンジム第3弾カツラ",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-020": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "ポケモンジム第3弾カツラ",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-023": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン図鑑HANDY505",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-082",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG1-082 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-082。同じカードの組 SC-PMCG1-082。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面と名前の空白（deck.SAME_NAME_SPELLINGS）だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 ArrangeOwnDeckTopTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD5-024": {
+      "basis": "kyuura_data",
+      "name_ja": "グレンタウンジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG6-085",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD5（gym_deck。ポケモンジム第3弾「グレンタウンジム カツラ」。発売 1999-02-26）。PMCG6-085 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG6-085。同じカードの組 SC-GD5-024。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 IgnoreWeaknessFromTypeStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-010": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのスリーパー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG6-051",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG6-051 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG6-051。同じカードの組 SC-GD6-010。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 BenchBasicFromEitherDiscard）・attack/1: この版の印刷の文面（元のカードと同じ型 CoinsPerDefenderCountersDamage）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-014": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー回収",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-076",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-076-P257",
+            "LD-PMCG1-076-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-076",
+          "listed_product": "ポケモンジム第3弾ナツメ",
+          "note": "最新の説明（LD-PMCG1-076-TRAINER）にしたがう（基本エネルギーカードだけ・トラッシュしたカードを除く・最大 2 枚）。印刷の「手札に加えてよい」は 0 枚を選べることを決めない（ER9・ER10 はそのまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-076 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-076。同じカードの組 SC-PMCG1-076。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-015": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "ポケモンジム第3弾ナツメ",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ディフェンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-079",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-079-P257"
+          ],
+          "verification": "card_verification PMCG1-079",
+          "listed_product": "ポケモンジム第3弾ナツメ",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-079。同じカードの組 SC-PMCG1-079。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-020": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-021": {
+      "basis": "kyuura_data",
+      "name_ja": "プラスパワー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-081",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-081-P257"
+          ],
+          "verification": "card_verification PMCG1-081",
+          "listed_product": "ポケモンジム第3弾ナツメ",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-081 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-081。同じカードの組 SC-PMCG1-081。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンセンター",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-083",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG1-083 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-083。同じカードの組 SC-PMCG1-083。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 HealEachDamagedPokemonTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-024": {
+      "basis": "kyuura_data",
+      "name_ja": "ワープポイント",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG6-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG6-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG6-080。同じカードの組 SC-GD6-024。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 SwitchBothActivesTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "GD6-025": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤマブキシティジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG6-090",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。GD6（gym_deck。ポケモンジム第3弾「ヤマブキシティジム ナツメ」。発売 1999-02-26）。PMCG6-090 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG6-090。同じカードの組 SC-GD6-025。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 ReturnBasicEnergyStadium）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-047": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー回収",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-076",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-076-P257",
+            "LD-PMCG1-076-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-076",
+          "listed_product": "クイックスターターギフトパック",
+          "note": "最新の説明（LD-PMCG1-076-TRAINER）にしたがう（基本エネルギーカードだけ・トラッシュしたカードを除く・最大 2 枚）。印刷の「手札に加えてよい」は 0 枚を選べることを決めない（ER9・ER10 はそのまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG1-076 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-076。同じカードの組 SC-PMCG1-076。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-048": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー転送",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG3-044",
+      "behavior_differs": [
+        "trainer"
+      ],
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG3-044 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG3-044。同じカードの組 SC-PMCG3-044。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードと処理が違う（この版の印刷の文面。SearchDeckTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-049": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "クイックスターターギフトパック",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-050": {
+      "basis": "kyuura_data",
+      "name_ja": "ギャンブラー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG3-045",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG3-045 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG3-045。同じカードの組 SC-PMCG3-045。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 ReturnHandsToDeckTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-051": {
+      "basis": "kyuura_data",
+      "name_ja": "突風",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-072",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.255",
+          "records": [
+            "CC-PMCG1-072-P255",
+            "LD-PMCG1-072-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-072",
+          "listed_product": "クイックスターターギフトパック",
+          "note": "最新の説明（LD-PMCG1-072-TRAINER）は「相手に控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で GW5（UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH）を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG1-072 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-072。同じカードの組 SC-PMCG1-072。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.255）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-052": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "クイックスターターギフトパック",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "QSG-053": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン交換おじさん",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-093",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.259",
+          "records": [
+            "CC-PMCG1-093-P259",
+            "LD-PMCG1-093-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-093",
+          "listed_product": "クイックスターターギフトパック",
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。QSG（quick_starter_gift。クイックスターターギフト。発売 1998-12-04）。PMCG1-093 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-093。同じカードの組 SC-PMCG1-093。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.259）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP1-007": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "イントロパック",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP1（intro_pack。イントロパック(フシギダネデッキ)。発売 1999-07-30）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP1-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": "イントロパック",
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP1（intro_pack。イントロパック(フシギダネデッキ)。発売 1999-07-30）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP1-028": {
+      "basis": "kyuura_data",
+      "name_ja": "突風",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-072",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.255",
+          "records": [
+            "CC-PMCG1-072-P255",
+            "LD-PMCG1-072-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-072",
+          "listed_product": "イントロパック",
+          "note": "最新の説明（LD-PMCG1-072-TRAINER）は「相手に控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で GW5（UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH）を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP1（intro_pack。イントロパック(フシギダネデッキ)。発売 1999-07-30）。PMCG1-072 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-072。同じカードの組 SC-PMCG1-072。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.255）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP2-007": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP2（intro_pack。イントロパック(ゼニガメデッキ)。発売 1999-07-30）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP2-009": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロモ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-024",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP2（intro_pack。イントロパック(ゼニガメデッキ)。発売 1999-07-30）。PMCG1-024 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-024。同じカードの組 SC-PMCG1-024。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 ExtraEnergyDamage）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP2-019": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー・リムーブ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-070",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP2（intro_pack。イントロパック(ゼニガメデッキ)。発売 1999-07-30）。PMCG1-070 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-070。同じカードの組 SC-PMCG1-070。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 DiscardAttachedEnergyTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IP2-024": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": "イントロパック",
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品がある"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IP2（intro_pack。イントロパック(ゼニガメデッキ)。発売 1999-07-30）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IPH-001": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギバナ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-011",
+      "reprint_scope": {
+        "power/0": {
+          "original_source": "P43 p.16・p.323",
+          "records": [
+            "CC-PMCG1-011-P43",
+            "LD-PMCG1-011-PWR0"
+          ],
+          "verification": "card_verification PMCG1-011",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-011-PWR0）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IPH（intro_pack。イントロパック(おまけカード)。発売 1999-07-30）。PMCG1-011 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-011。同じカードの組 SC-PMCG1-011。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: power/0: 元のカードの登録の処理に使う文面（P43 p.16・p.323）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "IPH-002": {
+      "basis": "kyuura_data",
+      "name_ja": "カメックス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "reprint_original_play_text",
+        "power/0": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [
+        {
+          "question": "［あまごい］の印刷の文面「この力は、自分の中で何度でも使える。」は「番」が落ちている候補（同じ組のプロモの版 PR1-028 は「自分の番の中で」）。写しは直さず、処理は元のカードの最新の説明（LD-PMCG1-032-PWR0）にしたがう",
+          "fields": [
+            "pokemon.powers[0].text.ja"
+          ],
+          "affects_behavior": false,
+          "note": "kyuura への報告事項（転記の誤りか印刷の誤りかは確かめていない）"
+        }
+      ],
+      "reprint_of": "PMCG1-032",
+      "reprint_scope": {
+        "attack/0": {
+          "original_source": "P43 p.90",
+          "records": [
+            "CC-PMCG1-032-P43",
+            "LD-PMCG1-032-ATK0"
+          ],
+          "verification": "card_verification PMCG1-032",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-032-*）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        },
+        "power/0": {
+          "original_source": "P43 p.90",
+          "records": [
+            "CC-PMCG1-032-P43",
+            "LD-PMCG1-032-PWR0"
+          ],
+          "verification": "card_verification PMCG1-032",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-032-*）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。IPH（intro_pack。イントロパック(おまけカード)。発売 1999-07-30）。PMCG1-032 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-032。同じカードの組 SC-PMCG1-032。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: 元のカードの登録の処理に使う文面（P43 p.90）・power/0: 元のカードの登録の処理に使う文面（P43 p.90）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "PR1-028": {
+      "basis": "kyuura_data",
+      "name_ja": "カメックス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "reprint_original_play_text",
+        "power/0": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-032",
+      "reprint_scope": {
+        "attack/0": {
+          "original_source": "P43 p.90",
+          "records": [
+            "CC-PMCG1-032-P43",
+            "LD-PMCG1-032-ATK0"
+          ],
+          "verification": "card_verification PMCG1-032",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-032-*）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        },
+        "power/0": {
+          "original_source": "P43 p.90",
+          "records": [
+            "CC-PMCG1-032-P43",
+            "LD-PMCG1-032-PWR0"
+          ],
+          "verification": "card_verification PMCG1-032",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-032-*）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。PR1（promo。プロモ(旧裏)。発売 1998-02）。PMCG1-032 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-032。同じカードの組 SC-PMCG1-032。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: 元のカードの登録の処理に使う文面（P43 p.90）・power/0: 元のカードの登録の処理に使う文面（P43 p.90）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "PR1-029": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギバナ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-011",
+      "reprint_scope": {
+        "power/0": {
+          "original_source": "P43 p.16・p.323",
+          "records": [
+            "CC-PMCG1-011-P43",
+            "LD-PMCG1-011-PWR0"
+          ],
+          "verification": "card_verification PMCG1-011",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-011-PWR0）にしたがう。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。PR1（promo。プロモ(旧裏)。発売 1998-02）。PMCG1-011 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-011。同じカードの組 SC-PMCG1-011。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: power/0: 元のカードの登録の処理に使う文面（P43 p.16・p.323）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "PR1-030": {
+      "basis": "kyuura_data",
+      "name_ja": "リザードン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-021",
+      "reprint_scope": {
+        "power/0": {
+          "original_source": "TXT-CHARIZARD",
+          "records": [
+            "TXT-CHARIZARD"
+          ],
+          "verification": null,
+          "listed_product": null,
+          "scope_quote": "1998年2月の「とりかえっこプリーズ」キャンペーンのプロモ（1stp030）は、「自分の番の中で何度でも使える」「このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりに元にもどる」「「ねむり・マヒ・こんらん」状態の時、この力は消える」と書き換えられている [N3]。",
+          "note": "TXT-CHARIZARD の notes が、とりかえっこプリーズのプロモ（1stp030。この版）の文面を挙げ、『オフィシャルブック2000』p.66 が第1弾の版ととりかえっこプリーズの版の両方を最新の説明で載せる、とする。印刷の「この力は消える」で新しい止める処理・取り消しを作らない。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "behavior_differs": [
+        "attack/0"
+      ],
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。PR1（promo。プロモ(旧裏)。発売 1998-02）。PMCG1-021 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-021。同じカードの組 SC-PMCG1-021。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: 元のカードと処理が違う（この版の印刷の文面。DiscardEnergyCardsThenDamageZeroIfLacking）・power/0: 元のカードの登録の処理に使う文面（TXT-CHARIZARD）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "PR1-033": {
+      "basis": "kyuura_data",
+      "name_ja": "カモネギ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-063",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。PR1（promo。プロモ(旧裏)。発売 1998-03-15）。PMCG1-063 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-063。同じカードの組 SC-PMCG1-063。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: attack/0: この版の印刷の文面（元のカードと同じ型 OnceAfterEntryNoDamageOnTails）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP1-007": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP1（intro_pack。イントロパック★neo(チコリータデッキ)。発売 2001-04-06）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP1-015": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": null,
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP1（intro_pack。イントロパック★neo(チコリータデッキ)。発売 2001-04-06）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP1-020": {
+      "basis": "kyuura_data",
+      "name_ja": "マサキ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-074",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-074-P254"
+          ],
+          "verification": "card_verification PMCG1-074",
+          "listed_product": null,
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP1（intro_pack。イントロパック★neo(チコリータデッキ)。発売 2001-04-06）。PMCG1-074 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-074。同じカードの組 SC-PMCG1-074。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP1X-006": {
+      "basis": "kyuura_data",
+      "name_ja": "プラスパワー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-081",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-081-P257"
+          ],
+          "verification": "card_verification PMCG1-081",
+          "listed_product": null,
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP1X（intro_pack。イントロパック★neo(チコリータデッキ：拡張カード)。発売 2001-04-06）。PMCG1-081 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-081。同じカードの組 SC-PMCG1-081。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP1X-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンいれかえ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-073",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-073-P254"
+          ],
+          "verification": "card_verification PMCG1-073",
+          "listed_product": null,
+          "note": "最新の説明は「あなたに控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で UNRESOLVED_SWITCH_WITHOUT_BENCH を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP1X（intro_pack。イントロパック★neo(チコリータデッキ：拡張カード)。発売 2001-04-06）。PMCG1-073 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-073。同じカードの組 SC-PMCG1-073。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP2-008": {
+      "basis": "kyuura_data",
+      "name_ja": "なんでもなおし",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-080",
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP2（intro_pack。イントロパック★neo(ワニノコデッキ)。発売 2001-04-06）。PMCG1-080 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-080。同じカードの組 SC-PMCG1-080。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: この版の印刷の文面（元のカードと同じ型 CureSpecialConditionsTrainer）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP2-020": {
+      "basis": "kyuura_data",
+      "name_ja": "きずぐすり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-071",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-071-P254"
+          ],
+          "verification": "card_verification PMCG1-071",
+          "listed_product": null,
+          "note": "元のカードの照合の記録（p.254）の解説「…ダメージカウンターが2個のっているのに1個だけとることはできません。2個のっていたら2個とってください。」と最新の説明にしたがい、2 個以上なら 2 個・1 個なら 1 個とりのぞく（印刷の「最大2個、とりのぞいてよい」から、とりのぞく数を選ぶ決定を作らない）。のっていないポケモン・ダメージのないときの既存の問い（UNRESOLVED_POTION_WITHOUT_DAMAGE）はそのまま。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP2（intro_pack。イントロパック★neo(ワニノコデッキ)。発売 2001-04-06）。PMCG1-071 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-071。同じカードの組 SC-PMCG1-071。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP2-025": {
+      "basis": "kyuura_data",
+      "name_ja": "マサキ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-074",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.254",
+          "records": [
+            "CC-PMCG1-074-P254"
+          ],
+          "verification": "card_verification PMCG1-074",
+          "listed_product": null,
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP2（intro_pack。イントロパック★neo(ワニノコデッキ)。発売 2001-04-06）。PMCG1-074 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-074。同じカードの組 SC-PMCG1-074。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.254）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP2X-006": {
+      "basis": "kyuura_data",
+      "name_ja": "ディフェンダー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-079",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.257",
+          "records": [
+            "CC-PMCG1-079-P257"
+          ],
+          "verification": "card_verification PMCG1-079",
+          "listed_product": null,
+          "note": "元のカードの照合の記録の最新の説明にしたがう（処理は元のカードと同じ）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP2X（intro_pack。イントロパック★neo(ワニノコデッキ：拡張カード)。発売 2001-04-06）。PMCG1-079 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-079。同じカードの組 SC-PMCG1-079。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.257）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
+    },
+    "NIP2X-007": {
+      "basis": "kyuura_data",
+      "name_ja": "突風",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "reprint_original_play_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "reprint_of": "PMCG1-072",
+      "reprint_scope": {
+        "trainer": {
+          "original_source": "P43 p.255",
+          "records": [
+            "CC-PMCG1-072-P255",
+            "LD-PMCG1-072-TRAINER"
+          ],
+          "verification": "card_verification PMCG1-072",
+          "listed_product": null,
+          "note": "最新の説明（LD-PMCG1-072-TRAINER）は「相手に控えがいない時、このカードは使えない」を書かないので、印刷の文面の一文で GW5（UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH）を決めない（停止のまま）。元のカードの照合の記録の収録の一覧に、この版の商品はない（同じカードの組と GR-P43-P6-LATEST-DESCRIPTION による当てはめ）"
+        }
+      },
+      "notes": "v0.71 で加えた（docs/reprint-text-variants-v0.71.md）。NIP2X（intro_pack。イントロパック★neo(ワニノコデッキ：拡張カード)。発売 2001-04-06）。PMCG1-072 の再録（kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。いちばん近い登録したカード PMCG1-072。同じカードの組 SC-PMCG1-072。索引で、処理が同じことの証拠ではない）。元のカードと違う処理に使う欄は効果の文面だけ。登録: trainer: 元のカードの登録の処理に使う文面（P43 p.255）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない（元のカードの記録を使うものは reprint_scope）。kyuura の日本語の文面は pcg-search.com の転記なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（カードの画像は読んでいない）"
     }
   }
 }

@@ -482,6 +482,7 @@ PUBLIC_EVENTS = frozenset({
     "retreat", "retreat_failed", "retreat_failure_cleared", "retrieve_energy", "return_energy_to_hand", "return_in_play_to_deck",
     "return_in_play_to_hand",
     "return_basic_to_hand",  # v0.52: ポケモン回収（場のカード → 手札・トラッシュ。手札にもどしたカードは場にあったので公開）
+    "trainer_place_damage_counters",  # v0.71: ポケモンジム第1弾の元気のかけら（出したポケモンにのせたダメージカウンター）
     "reveal_hand", "revealed_hand_to_deck",  # v0.54: ミニスカート（見せ合った手札・見せた手札から山札にもどしたトレーナーカード）
     "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined",  # v0.54: 引かない・トラッシュしない・見ない（山札・手札の枚数は公開）
     "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報

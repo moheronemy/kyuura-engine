@@ -1759,3 +1759,20 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   （写しの作り直しの道具が知らせる。二重に当てはめない）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.70 の登録を写すと、82 枚の `engine_status` が `registered` になる。
 
+
+## v0.71: 拡張パック以外の商品の再録 78 枚（効果の文面の違い）
+
+[reprint-text-variants-v0.71.md](reprint-text-variants-v0.71.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_71`（78 枚。kyuura data/engine_targets.json の `reuse_candidate`）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.70 までの 635 枚の記録は変わっていない。書き出しに、78 枚の `nearest_registered` の索引（`reprint_targets`）を加えた（処理が同じことの証拠ではない）。
+- 78 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし・`reprint_of`・`reprint_scope`）。元のカードの記録の
+  最新の説明を処理に使う登録は、kyuura の規定 GR-P43-P6-LATEST-DESCRIPTION による当てはめで、再録の版の独立した照合ではない（元のカードの記録の確認日・出典は元のカードのまま）。
+- ナツメのスリーパー（GD6-010）のふりこののろいのダメージ「20×」は、kyuura が台帳で直した値（`FIX-GD6-010-ATK1-DAMAGE`。根拠は kyuura の前の作業の pcg-search.com の画像の判定
+  data/curation/other_products.json の `reprint_checks`「ナツメのスリーパー」）。エンジンは画像を見ていない。写しの作り直しの道具は `KYUURA_CORRECTIONS` に根拠 `kyuura_existing_record` で
+  挙げ、台帳・カードの記録・判定の記録があることを確かめる（当てはめ直さない）。
+- 報告事項（kyuura の作業）: IPH-002 の［あまごい］の印刷の文面「この力は、自分の中で何度でも使える。」は「番」が落ちている候補（採用の記録の `issues`。`affects_behavior: false`。
+  処理は元のカードの最新の説明 LD-PMCG1-032-PWR0。写しは直していない）。
+- 報告事項（kyuura の作業）: 再録の版の元のカードの照合の記録（CC-）の収録の一覧に、イントロパック★neo・プロモ・おまけカードの版などがない（15 の対象。同じカードの組と
+  GR-P43-P6-LATEST-DESCRIPTION による当てはめで、版ごとの照合ではない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.71 の登録を写すと、78 枚の `engine_status` が `registered` になる。

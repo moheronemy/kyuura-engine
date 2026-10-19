@@ -121,8 +121,8 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         playable = [pool.get(c) for c in pool.definitions if pool.is_playable(c)]
         by = {k: sum(1 for d in playable if d.category == k) for k in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by, {"pokemon": 492, "trainer": 113, "energy": 30})  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.66 でトレーナー 3 枚を加えた  # v0.67 でトレーナー 1 枚
-        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (825, 68, 113))  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92・特殊能力 10・トレーナー 19（拡張パック以外の商品の同じカードの写し）  # v0.68 でワザ 4・特殊能力 2  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
+        self.assertEqual(by, {"pokemon": 503, "trainer": 180, "energy": 30})  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.66 でトレーナー 3 枚を加えた  # v0.67 でトレーナー 1 枚
+        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (840, 74, 180))  # v0.71 でワザ 15・特殊能力 6・トレーナー 67（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92・特殊能力 10・トレーナー 19（拡張パック以外の商品の同じカードの写し）  # v0.68 でワザ 4・特殊能力 2  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
         for card in (KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON):
             self.assertTrue(pool.is_playable(card), card)
 

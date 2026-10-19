@@ -83,6 +83,7 @@ from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerP
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
 from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
+from kyuura_engine.effects import BenchBasicFromOwnDiscardThenCounters  # v0.71
 from kyuura_engine.effects import ATTACK_ELEMENTS as _ATTACK_ELEMENTS, PlaceFaceDownOnBench  # v0.67
 from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
@@ -1219,6 +1220,7 @@ def log_problems(state) -> list[str]:
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
     discard_entered: dict[int, int] = {}  # v0.51: トラッシュからベンチに出したポケモンの番号 → 出した番（状態の場に出た番と同じはず）
+    revive_then_counters: tuple | None = None  # v0.71: ポケモンジム第1弾の元気のかけらで出したポケモン（番号・トレーナーのカード・番）。すぐあとにカウンターをのせる
     # v0.38: 直前の、山札を切らずにもどした return_in_play_to_deck（キョウのポッポの「でんれい」。かわりの対戦ポケモンを出してから山札をさがし、その
     # すぐあとに切る。もどしたあとに切らない）
     search_due: dict | None = None
@@ -2319,7 +2321,9 @@ def log_problems(state) -> list[str]:
                 effect = None if trainer_entry is None else trainer_entry.effect
                 source_ok = using_trainer.get(e["by_player"]) == via and e["by_player"] == turn_player and (
                     (isinstance(effect, BenchBasicFromOwnDiscardWithCounters) and e["player"] == e["by_player"] and "counters" in e)
-                    or (isinstance(effect, BenchBasicFromOpponentDiscard) and e["player"] == 1 - e["by_player"] and "counters" not in e))
+                    or (isinstance(effect, BenchBasicFromOpponentDiscard) and e["player"] == 1 - e["by_player"] and "counters" not in e)
+                    # v0.71: ポケモンジム第1弾の元気のかけら（自分のトラッシュから、カウンターをのせずに出す。のせるのはすぐあとの trainer_place_damage_counters）
+                    or (isinstance(effect, BenchBasicFromOwnDiscardThenCounters) and e["player"] == e["by_player"] and "counters" not in e))
             bench_count = sum(1 for pid in in_play if pokemon_owner.get(pid) == e["player"]) - (1 if active_of.get(e["player"]) in in_play else 0)
             if not source_ok or owner.get(uid) != e["player"] or uid not in discard[e["player"]] or not state.printed_def(uid).is_basic_pokemon \
                     or bench_count >= bench_limit_now() or (e["from_zone"], e["to_zone"]) != ("discard", "bench"):
@@ -2340,6 +2344,21 @@ def log_problems(state) -> list[str]:
                 damage[pid] = e["damage"]
             if via is None:
                 attack_window["discard_entered"] = pid
+            elif isinstance(effect, BenchBasicFromOwnDiscardThenCounters):
+                revive_then_counters = (pid, via, e["turn"])
+        elif kind == "trainer_place_damage_counters":
+            # v0.71: ポケモンジム第1弾の元気のかけら（GD1-017）。同じトレーナーでトラッシュからベンチに出したポケモンに、出したあとの今有効な最大HPの半分（切り捨て）の
+            # ダメージカウンター（ダメージではない）。出したすぐあと・1 回だけ
+            pid = e["pokemon_id"]
+            per = state.rules.damage_per_counter
+            if revive_then_counters != (pid, e.get("trainer_card"), e["turn"]) or prior is None or prior["kind"] != "bench_from_discard" \
+                    or e["damage_before"] != damage[pid] or e["counters"] != max_hp_now(pid) // per // 2 or e["counters"] <= 0 \
+                    or e["amount"] != e["counters"] * per or pokemon_owner.get(pid) != e["player"]:
+                problems.append(f"{e['turn']} 番の trainer_place_damage_counters（ポケモン {pid}）が、元気のかけらで出したすぐあとに HP の半分（切り捨て）をのせる処理と合わない")
+            revive_then_counters = None
+            damage[pid] += e["amount"]
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の trainer_place_damage_counters のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind in ("bench_from_discard_none", "bench_from_discard_declined"):
             # v0.51: よみがえらせるで出せるカードがなかった（ワザの処理の中）・元気のかけら・ポケモンの笛で 0 枚を選んだ（使っている最中のトレーナー）
             if kind == "bench_from_discard_none":

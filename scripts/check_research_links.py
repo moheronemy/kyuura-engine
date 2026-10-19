@@ -218,8 +218,9 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した訂正（kyuura の照合の記録・最新の説明ではない。v0.69 から kyuura の台帳の記録）
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
     equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
+    reprinted = section.get("reprint_registrations", {})  # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
-                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(equivalent))
+                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(equivalent) | set(reprinted))
     without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
@@ -402,6 +403,39 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: 研究の基準のコミットで、元のカード {theirs[0]} と同じカードの組（same_card_group）にない")
         if printed_at_research(target) != printed_at_research(original):
             problems.append(f"{target}: 研究の基準のコミットの印刷の文面が、元のカード {theirs[0]} と違う")
+
+    # 4h. v0.71（docs/reprint-text-variants-v0.71.md 3 章）: 再録のカード（effects.REPRINT_CARDS）の、元のカードの記録（最新の説明・エラッタ）の文面を処理に使う登録。
+    # 元のカードと研究の基準のコミットで同じカードの組にあり、処理に使う文面・出典が元のカードの登録と同じで、元のカードの登録の記録が研究の対応表のとおり。エラッタの記録の
+    # 範囲として当てはめるもの（TXT-CHARIZARD）は、記録の notes の引用（scope_quote）が研究の基準のコミットにある。印刷の文面は元のカードと違ってよい（効果の文面の違い）
+    reprints = getattr(E, "REPRINT_CARDS", {})
+    actual = {t for t in texts if t.split("/")[0] in reprints and (texts[t] == texts.get(f"{reprints[t.split('/')[0]].original}/{t.split('/', 1)[1]}"))
+              and texts[t][1] != "kyuura data/cards.json"}
+    if set(reprinted) != actual:
+        problems.append(f"reprint_registrations の一覧が違う: 実際だけ {sorted(actual - set(reprinted))}、対応表だけ {sorted(set(reprinted) - actual)}")
+    if set(reprinted) & (others | set(equivalent)):
+        problems.append("reprint_registrations の登録が、ほかの区分にも入っている")
+    for target, value in reprinted.items():
+        card, kind, index = target.split("/")
+        original = value.get("original", "")
+        theirs = original.split("/")
+        if card not in reprints or reprints[card].original != theirs[0] or theirs[1:] != [kind, index]:
+            problems.append(f"{target}: reprint_registrations の元 {original} が effects.REPRINT_CARDS の元のカードの同じ対象でない")
+            continue
+        if original not in others:
+            problems.append(f"{target}: 元のカードの登録 {original} が、研究の対応表のどの区分にもない")
+        if target not in texts or original not in texts or texts[target] != texts[original]:
+            problems.append(f"{target}: 処理に使う文面・出典が、元のカードの登録 {original} と違う")
+        group = (research_cards.get(card) or {}).get("same_card_group")
+        if group is None or group != (research_cards.get(theirs[0]) or {}).get("same_card_group"):
+            problems.append(f"{target}: 研究の基準のコミットで、元のカード {theirs[0]} と同じカードの組（same_card_group）にない")
+        expected = {section["registered"].get(original), errata_text.get(original)} | set(links["card_checks"]["engine_verified"].get(theirs[0], []))
+        if set(value.get("records") or []) != expected - {None}:
+            problems.append(f"{target}: reprint_registrations の records が、元のカードの登録の記録 {sorted(expected - {None})} と違う")
+        for rid in value.get("records") or []:
+            if rid.split("-")[0] in ("ERR", "TXT", "RUL"):
+                record = errata_by_id.get(rid)
+                if record is None or not value.get("scope_quote") or value["scope_quote"] not in "\n".join(record.get("notes") or []):
+                    problems.append(f"{target}: エラッタの記録 {rid} の範囲の引用（scope_quote）が研究の基準のコミットの記録の notes にない")
 
     # 4c. kyuura データの採用で、処理に使う文面を kyuura の印刷の文面にした登録（2026-10-15 からの方針）
     data_errors = {(x["card_id"], e.get("field")) for x in checks for e in (x.get("data_error") or [])}
