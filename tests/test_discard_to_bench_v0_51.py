@@ -817,7 +817,7 @@ class StateAndObservationTest(unittest.TestCase):
     def test_no_new_state_or_format(self):
         """状態の項目・書き出しの形式は加えていない（形式 15 のまま。出したポケモンは場に出た番を持つ、ふつうのたねポケモン）。古い形式（場に出た番をログから分かる形）でも
         書き出せる。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 21)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
+        self.assertEqual(max(FORMAT_VERSIONS), 22)  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた（v0.51 では 15 のまま）
         state = play(board(mon(HITMONCHAN), hand=(REVIVE,), discard=(HITMONCHAN,)), REVIVE)
         state = answer(state, [discard_uid(state, 0, HITMONCHAN)])
         audited(self, state)

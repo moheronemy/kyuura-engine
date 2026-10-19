@@ -154,7 +154,7 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 93, 10))  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 94, 10))  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
         self.assertEqual(sum(counts.values()), 454)  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 593)  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 56)  # v0.65 で 2 つを加えた
@@ -195,7 +195,7 @@ class RegistrationTest(unittest.TestCase):
             self.assertIn(event, PRIVATE_FIELDS)
         for event in ("prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal"):
             self.assertIn(event, PUBLIC_EVENTS)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (21, 21))
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22
 
     def test_no_card_id_branches_in_engine_or_resolution(self):
         texts = [(ROOT / "kyuura_engine" / "engine.py").read_text(encoding="utf-8")]
@@ -283,7 +283,7 @@ class HereComesTeamRocketTest(unittest.TestCase):
         again = use(state, HERE_COMES_TEAM_ROCKET)
         self.assertEqual([e["cards"] for e in again.log if e["kind"] == "prizes_revealed"][-2:], [(), ()])
         self.assertEqual(again.face_up_prizes, state.face_up_prizes)
-        for version in FORMAT_VERSIONS[:-1]:
+        for version in [v for v in FORMAT_VERSIONS if v < 21]:  # v0.67: 形式 22 はうらのカードの項目だけ
             with self.assertRaises(ValueError):
                 state_to_dict(again, format_version=version)
         self.assertEqual(state_to_dict(again, format_version=21)["face_up_prizes"], list(again.face_up_prizes))
@@ -496,7 +496,7 @@ class ChallengeTest(unittest.TestCase):
         state = answer(state, (state.decision.options[0],))
         restored = pickle.loads(pickle.dumps(state))
         self.assertEqual(state_to_dict(restored, format_version=21), state_to_dict(state, format_version=21))
-        for version in FORMAT_VERSIONS[:-1]:
+        for version in [v for v in FORMAT_VERSIONS if v < 21]:  # v0.67: 形式 22 はうらのカードの項目だけ
             with self.assertRaises(ValueError):
                 state_to_dict(state, format_version=version)
         a = answer(state, (state.decision.options[0],))

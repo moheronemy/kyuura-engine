@@ -154,7 +154,7 @@ class CardDataTest(unittest.TestCase):
             if definition.supported:
                 counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.60 の 336・84・10（430）から、ポケモン 3 枚・トレーナー 1 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 93, 10))  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 94, 10))  # v0.67 でトレーナー 1 枚  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
         self.assertEqual(sum(counts.values()), 454)  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
 
     def test_registrations(self):
@@ -186,8 +186,8 @@ class CardDataTest(unittest.TestCase):
         self.assertEqual(QUESTIONS["power_damage_weakness_resistance"].code, "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE")
         self.assertEqual(QUESTIONS["scram_timing"].code, "UNRESOLVED_SCRAM_TIMING")
         self.assertEqual(QUESTIONS["scram_power_restored"].code, "UNRESOLVED_SCRAM_POWER_RESTORED")
-        self.assertEqual(LATEST_FORMAT, 21)
-        self.assertEqual(max(FORMAT_VERSIONS), 21)  # 形式は増やしていない（決定の context と既存の項目で表す）
+        self.assertEqual(LATEST_FORMAT, 22)  # v0.67 で 22
+        self.assertEqual(max(FORMAT_VERSIONS), 22)  # v0.67 で 22（face_down_cards）  # 形式は増やしていない（決定の context と既存の項目で表す）
 
 
 # ---------------------------------------------------------------- ファイナルビーム

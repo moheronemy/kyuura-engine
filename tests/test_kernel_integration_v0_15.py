@@ -185,7 +185,9 @@ class DependencyTest(unittest.TestCase):
         （``resolution.Context``）だけ。docs/stadium-reuse-special-energy-v0.58.md 2 章・4 章。
         v0.61: 「にげる」のあとの［おとしあな］は ``resolution.after_retreat``（``_retreat``）。docs/reactive-powers-trainer-damage-v0.61.md 3 章。
         v0.62: ワザ以外で受けたことの比べを開くか（``_probes_receipts``）は、ワザの途中の決定の再開先（``resolution.RESUMES``）を読むだけ（解決の基盤の処理を
-        呼ばない）。docs/history-attacks-v0.62.md 2.3。"""
+        呼ばない）。docs/history-attacks-v0.62.md 2.3。
+        v0.67: うらのカードをおもてにしてトラッシュしたあとの交代は ``resolution.after_power``（``_reveal_for_action``・``_reveal_face_down``）。コマンドの入口を分けた
+        関数は設定（``resolution.Context``）を渡すだけ。docs/secret-plan-preflight-v0.67.md 4 章・6 章。"""
         tree = ast.parse((PACKAGE / "engine.py").read_text(encoding="utf-8"))
         functions = [function for function in tree.body if isinstance(function, ast.FunctionDef)]
         users = {
@@ -198,7 +200,11 @@ class DependencyTest(unittest.TestCase):
                                  "_decision_has_unstopped_answer", "_trainer_dead_end", "_play_trainer", "_resume_trainer", "_finish_trainer",
                                  "_resolve_trainer", "_chaos_tails", "_use_stadium", "_resume_stadium",
                                  "_attach_energy", "_start_trainer_use", "_after_trainer_step", "_start_nested_trainer", "_retreat",
-                                 "_probes_receipts"})
+                                 "_probes_receipts",
+                                 # v0.67: うらのカード（マチスの秘策）。コマンドの入口の分け方（``_apply_checked``・``_apply_once``・``_identity_independent``）は型の注釈と
+                                 # 設定（``resolution.Context``）だけ。おもてにしてトラッシュしたあとの交代は、特殊能力のあとと同じ ``resolution.after_power``
+                                 # （``_reveal_for_action``・``_reveal_face_down``）
+                                 "_apply_checked", "_apply_once", "_identity_independent", "_reveal_for_action", "_reveal_face_down"})
         trial_names = {
             node.attr
             for function in functions if function.name in ("_decision_has_unstopped_answer", "_trainer_dead_end")

@@ -15,6 +15,7 @@ from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 from tests.helpers import (
     V0_63_CARDS,
     V0_66_CARDS,
+    V0_67_CARDS,
     SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON, V0_64_POKEMON, V0_65_POKEMON, KOGAS_NINJA_TRICK,
     V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
@@ -63,7 +64,7 @@ class CardPoolTest(unittest.TestCase):
                                     IMPOSTER_OAKS_REVENGE, BOSS_WAY, ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME,
                                     MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE,
                                     TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT, BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT,
-                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER] + list(V0_63_CARDS) + list(V0_66_CARDS)))  # v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
+                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER] + list(V0_63_CARDS) + list(V0_66_CARDS) + list(V0_67_CARDS)))  # v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))

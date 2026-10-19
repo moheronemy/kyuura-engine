@@ -2295,7 +2295,8 @@
 ### 決められない場合と変えていないもの
 
 - 新しい停止コードは FD1（`UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY`）・FD2（`UNRESOLVED_SECRET_PLAN_MINEFIELD`。爆発ジム。出すと止める）の 2 件で、どちらも `not_in_kyuura`。
-  ［へんしん］のメタモンが相手のうらのカードを写す場面は FD1 で止めます（v0.49 の TF2 と同じ形）。エンジンが止める `UNRESOLVED_…` は 147 件、未解決の裁定は 149 件です。
+  ［へんしん］のメタモンが相手のうらのカードを写す場面は FD1 で止めます（v0.49 の TF2 と同じ形）。決定への答えがどれも FD1 なら、答えのない決定を残さずに、その前の状態で
+  対戦を止めます（`Phase.HALTED`。`engine._apply`）。エンジンが止める `UNRESOLVED_…` は 147 件、未解決の裁定は 149 件です。
 - 書き出しの形式 22 = 形式 21 + 最上位の `face_down_cards`（形式 1〜21 はうらのカードがあると `ValueError`）。監査の `LATEST_FORMAT` は 22。次の新しい形式は 23。
 - 新しいコマンド `RevealFaceDown(player, pokemon)`・拒否のコード `NOT_FACE_DOWN`・決定の種類 `secret_plan_card`（観測の意味は `card`。出さない（0 個）がいつも答え）・
   ログのイベント `secret_plan_placed`（`card` は持ち主だけ）・`secret_plan_none`・`secret_plan_declined`・`secret_plan_revealed`・`secret_plan_discarded`・`secret_plan_target_lost`。

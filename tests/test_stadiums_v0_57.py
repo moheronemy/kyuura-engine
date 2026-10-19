@@ -222,7 +222,7 @@ class PlacementTest(unittest.TestCase):
 
     def test_format_17_observation_and_command_dict(self):
         state = placed(NARROW_GYM)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (21, 21))  # v0.63 で形式 21。 v0.58 で形式 18、v0.59 で形式 19 を加えた
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22  # v0.63 で形式 21。 v0.58 で形式 18、v0.59 で形式 19 を加えた
         data = state_to_dict(state, format_version=17)
         self.assertEqual(data["stadium"]["card_id"], NARROW_GYM)
         for version in range(1, 17):
