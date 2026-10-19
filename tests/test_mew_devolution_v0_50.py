@@ -50,6 +50,8 @@ from kyuura_engine.resolution import PREFLIGHT_MODES, contract, programs, v013_c
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from scripts import check_card_sources as cs
 from tests.helpers import (
+    V0_69_STOP_CODE_ISSUES,
+    kyuura_records_since_v0_69,
     ABRA,
     AERODACTYL,
     ATTACK_TYPES_SINCE_V0_17,
@@ -314,7 +316,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = records[card]
                 self.assertEqual((record["basis"], record["status"]), ("kyuura_data", "adopted"))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 checks = record["external_checks"]
                 self.assertEqual(len(checks), 1)
                 self.assertTrue(checks[0]["url"].startswith("https://pcg-search.com/"))
@@ -329,7 +331,7 @@ class CardDataTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         for code in NEW_CODES:
             with self.subTest(code=code):
-                self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
+                self.assertEqual((links["stop_codes"][code]["kyuura_disposition"], links["stop_codes"][code]["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.50", "docs/mew-devolution-spray-v0.50.md")])
         # v0.50 で 80・81。v0.51 で RV1・FT1 の 2 件を加えた（docs/discard-to-bench-v0.51.md）

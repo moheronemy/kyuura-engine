@@ -154,8 +154,8 @@ class CardDataTest(unittest.TestCase):
             if definition.supported:
                 counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.60 の 336・84・10（430）から、ポケモン 3 枚・トレーナー 1 枚を加えた
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (353, 94, 10))  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 457)  # v0.68 で 3 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (410, 113, 30))  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
+        self.assertEqual(sum(counts.values()), 553)  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS

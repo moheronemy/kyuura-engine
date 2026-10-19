@@ -59,6 +59,7 @@ from tests.helpers import (
 from tests.log_audit import observation_problems, serialization_problems
 
 ROOT = Path(__file__).resolve().parent.parent
+KYUURA = ROOT.parent / "kyuura"
 IMAKUNI_DODUO = "PMCG6-074"
 FOSSIL_GRIMER = "PMCG3-003"
 GASTLY = "PMCG3-029"
@@ -87,13 +88,13 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (353, 94, 10))
-        self.assertEqual(len(pool.playable_ids), 457)
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (410, 113, 30))  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）
+        self.assertEqual(len(pool.playable_ids), 553)  # v0.68 は 457
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 457)  # 写しのカードはすべて対応（参照カードは残っていない）
+        self.assertEqual(len(extract["cards"]), 553)  # 写しのカードはすべて対応（参照カードは残っていない）
         self.assertEqual(extract["reference_only"], [])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 597)
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 58)
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 689)  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 68)  # v0.69 で 10
 
     def test_three_cards_are_supported_with_their_types(self):
         pool = load_card_pool()
@@ -127,33 +128,40 @@ class RegistrationTest(unittest.TestCase):
                     self.assertTrue(E.SimplifiedSongDamage().check(attack), card_id)
 
     def test_kangaskhan_text_is_the_user_provided_correction(self):
+        """v0.68 はエンジンが写しの元（ecb2d69）の値に利用者が示した修正を当てはめていた。v0.69 から kyuura が同じ訂正を data/cards.json に当てはめた
+        （台帳 FIX-PMCG2-046-ATK0-TEXT。根拠は user_provided、kyuura は画像を見ていない）。エンジンは当てはめ直さず、出どころを確かめる。"""
         extract = read_extract()
         card = next(c for c in extract["cards"] if c["id"] == KANGASKHAN)
         self.assertEqual(card["pokemon"]["attacks"][0]["text"]["ja"], "自分の山札の上からカードを1枚ひいて、手札に加える。")
-        self.assertEqual(card["pokemon"]["attacks"][1]["text"]["ja"], "コインを4枚投げて「おもて」の数×20のダメージ。")  # ほかの欄は写しの元のまま
-        (correction,) = extract["user_provided_corrections"]
-        self.assertEqual((correction["card_id"], correction["field"], correction["basis"], correction["engine_saw_image"]),
-                         (KANGASKHAN, "pokemon.attacks[0].text.ja", "user_provided", False))
+        self.assertEqual(card["pokemon"]["attacks"][1]["text"]["ja"], "コインを4枚投げて「おもて」の数×20のダメージ。")
+        self.assertNotIn("user_provided_corrections", extract)
+        (correction,) = [c for c in extract["kyuura_corrections"] if c["card_id"] == KANGASKHAN]
+        self.assertEqual((correction["id"], correction["field"], correction["basis"], correction["kyuura_saw_image"], correction["engine_saw_image"]),
+                         ("FIX-PMCG2-046-ATK0-TEXT", "pokemon.attacks[0].text.ja", "user_provided", False, False))
         self.assertTrue(correction["before"].startswith("コインを投げて「おもて」なら、"))
-        self.assertNotIn("record", correction)  # kyuura の記録（CC-・LD-）・修正のコミットはない
-        self.assertEqual({c["card_id"] for c in extract["corrections"]}, {"PMCG2-041"})  # kyuura が確定した修正とは別の欄
+        self.assertNotIn("record", correction)  # kyuura の照合の記録（CC-）・最新の説明（LD-）・修正のコミットはない
+        self.assertEqual([x["id"] for x in card["corrections"]], ["FIX-PMCG2-046-ATK0-TEXT"])
 
     def test_extraction_rejects_a_bad_user_correction(self):
+        if not (KYUURA / ".git").exists():
+            self.skipTest("../kyuura がない")
         spec = importlib.util.spec_from_file_location("extract_v068", ROOT / "scripts" / "extract_kyuura_cards.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        source = {"cards": [json.loads(json.dumps(c)) for c in read_extract()["cards"]]}
-        kangaskhan = next(c for c in source["cards"] if c["id"] == KANGASKHAN)
-        kangaskhan["pokemon"]["attacks"][0]["text"]["ja"] = module.USER_PROVIDED_CORRECTIONS[0]["before"]  # 写しの元の値にもどす
-        self.assertEqual(module.user_correction_problems(source), [])
-        original = list(module.USER_PROVIDED_CORRECTIONS)
+        source = module.read_kyuura_cards(KYUURA)
+        previous = json.loads(module._show(KYUURA, module.PREVIOUS_KYUURA_COMMIT, module.KYUURA_PATH).decode("utf-8"))
+        pool = module.all_pool_cards()
+        self.assertEqual(module.kyuura_correction_problems(KYUURA, source, previous, pool), [])
+        original = list(module.KYUURA_CORRECTIONS)
+        index = next(i for i, c in enumerate(original) if c["card_id"] == KANGASKHAN)
         try:
-            for bad in (dict(original[0], before="ちがう文面"), dict(original[0], field="pokemon.hp"), dict(original[0], engine_saw_image=True),
-                        dict(original[0], record="CC-PMCG2-046-P1")):
-                module.USER_PROVIDED_CORRECTIONS[:] = [bad]
-                self.assertTrue(module.user_correction_problems(source), bad)
+            for bad in (dict(original[index], before="ちがう文面"), dict(original[index], basis="kyuura_source_check"),
+                        dict(original[index], engine_saw_image=True), dict(original[index], kyuura_saw_image=True),
+                        dict(original[index], record="CC-PMCG2-046-P1")):
+                module.KYUURA_CORRECTIONS[:] = [*original[:index], bad, *original[index + 1:]]
+                self.assertTrue(module.kyuura_correction_problems(KYUURA, source, previous, pool), bad)
         finally:
-            module.USER_PROVIDED_CORRECTIONS[:] = original
+            module.KYUURA_CORRECTIONS[:] = original
 
 
 class KangaskhanTest(unittest.TestCase):
@@ -405,7 +413,10 @@ class SecretPlanLeakTest(unittest.TestCase):
 
         a, b = secret_plan_board(), secret_plan_board(DODUO)
         self.assertIs(engine._public_pool(a), engine._public_pool(b))
-        self.assertEqual(len(engine._public_pool(a).playable_ids), 457)
+        self.assertEqual(len(engine._public_pool(a).playable_ids), 553)  # v0.69 で 96 枚を加えた（v0.68 は 457）
+        # v0.69: 試すカードは、処理の同じカードを 1 枚で代表する（v0.68 と同じ 457 枚。どちらのデッキでも同じ）
+        self.assertEqual(engine._identity_candidates(engine._public_pool(a)), engine._identity_candidates(engine._public_pool(b)))
+        self.assertEqual(len(engine._identity_candidates(engine._public_pool(a))), 457)
 
     def test_two_face_down_targets_are_refused_for_both_hidden_decks(self):
         """相手のうらのカードを 2 枚以上、効果の対象にするコマンドは、試す回数が上限を超えるので受け付けない（エンジンの未対応。化石の秘密のレアコイルのじばく。

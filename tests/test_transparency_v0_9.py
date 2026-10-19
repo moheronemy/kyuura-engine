@@ -19,23 +19,87 @@ import unittest
 from unittest import mock
 
 from kyuura_engine import (
-    DEFAULT_EFFECTS, EngineError, EndTurn, EvolvePokemon, IllegalActionError, PlayTrainer, PowerKey, ResolveDecision, UnsupportedError,
-    UseAttack, UsePokemonPower, apply_command, check_invariants, load_card_pool, power_suppressors, state_to_dict, working_evasion_power,
-)
-from kyuura_engine.effects import (
-    DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackImmunityOnHeads, AttackKey, AttackUse, ConfuseOnHeads, ParalyzeOnHeads,
-    DamageAndSelfSleep, PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
+    DEFAULT_EFFECTS,
+    EndTurn,
+    EngineError,
+    EvolvePokemon,
+    IllegalActionError,
+    PlayTrainer,
+    PowerKey,
+    ResolveDecision,
+    UnsupportedError,
+    UseAttack,
+    UsePokemonPower,
+    apply_command,
+    check_invariants,
+    load_card_pool,
+    power_suppressors,
+    state_to_dict,
+    working_evasion_power,
 )
 from kyuura_engine.conditions import SLEEP
+from kyuura_engine.effects import (
+    DAMAGE_ELEMENT,
+    SELF,
+    AttackEffect,
+    AttackEntry,
+    AttackImmunityOnHeads,
+    AttackKey,
+    AttackUse,
+    ConfuseOnHeads,
+    DamageAndSelfSleep,
+    ParalyzeOnHeads,
+    PoisonOnHeads,
+    attack_reaches,
+    deal_attack_damage,
+    evasion_power,
+)
 from kyuura_engine.resolution import codec, open_attack, programs
 from kyuura_engine.resolution.questions import OpenQuestion
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import Asleep
-
 from tests.helpers import (
-    ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
-    KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, STARMIE, STARYU, build_test_state, coin_events, no_base_haunter_pool, uids, with_coin_results,
+    ABRA,
+    ALAKAZAM,
+    BASE_HAUNTER,
+    BULBASAUR,
+    BUTTERFREE,
+    CATERPIE,
+    DEFENDER,
+    DEWGONG,
+    DODUO,
+    FIGHTING,
+    FIRE,
+    GASTLY,
+    GRASS,
+    GRIMER,
+    HAUNTER,
+    IVYSAUR,
+    KADABRA,
+    KAKUNA,
+    LIGHTNING,
+    MACHOP,
+    METAPOD,
+    MUK,
+    PARAS,
+    PIKACHU,
+    PLUSPOWER,
+    PONYTA,
+    POTION,
+    PSYCHIC,
+    RATTATA,
+    SEEL,
+    STARMIE,
+    STARYU,
+    V0_69_CARDS,
+    WEEDLE,
+    H,
+    T,
+    build_test_state,
+    coin_events,
+    no_base_haunter_pool,
+    uids,
+    with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -624,8 +688,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
     ワザの宣言の前（こんらんのコインの前）に止める。状態・乱数・ログは変わらない。"""
 
     def keys(self):
+        # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_CARDS）は元のカードと同じ登録なので数えない
+        # （同じ登録であることは tests/test_equivalent_non_pack_cards_v0_69.py が確かめる）
         return sorted((k for k in DEFAULT_EFFECTS.attack_keys() if isinstance(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect,
-                                                                                EFFECT_COIN_TYPES)), key=str)
+                                                                                EFFECT_COIN_TYPES) and k.card_id not in V0_69_CARDS), key=str)
 
     def test_every_registered_attack_stops_before_any_coin(self):
         keys = self.keys()

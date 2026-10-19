@@ -49,6 +49,7 @@ from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import MaxHpSet, ResistanceChange, WeaknessChange
 from scripts import check_card_sources as cs
 from tests.helpers import (
+    kyuura_records_since_v0_69,
     GIOVANNIS_NIDOKING,
     GIOVANNIS_NIDORAN_M,
     GIOVANNIS_NIDORINO,
@@ -319,7 +320,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = records[card]
                 self.assertEqual((record["basis"], record["status"]), ("kyuura_data", "adopted"))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 checks = record["external_checks"]
                 self.assertEqual(len(checks), 1)
                 self.assertTrue(checks[0]["url"].startswith("https://pcg-search.com/"))

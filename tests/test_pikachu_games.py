@@ -28,6 +28,8 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    CARD_DATA_COMMIT_SINCE_V0_69,
+    with_card_data_commit_before_v0_69,
     DEFENDER, PIKACHU_DECK, PIKACHU_DECK_B, PLUSPOWER, coin_events, trainer_policy_command,
 )
 
@@ -175,6 +177,9 @@ class GoldenSuddenDeathGameTest(unittest.TestCase):
         self.assertEqual((len(commands), state.turn_number, state.phase), (193, 79, Phase.SUDDEN_DEATH))
         self.assertEqual(state.result.conditions, ((0, "ALL_PRIZES_TAKEN"), (1, "ALL_PRIZES_TAKEN")))
         data = full(state)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), DEFAULT_EFFECTS.id)
         digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         self.assertEqual(digest, GOLDEN_SEED_9)

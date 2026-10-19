@@ -15,16 +15,40 @@ import itertools
 import unittest
 
 from kyuura_engine import (
-    AttachEnergy, EndTurn, EngineError, Phase, PlayTrainer, ResolveDecision, Retreat, UnsupportedError, apply_command,
-    check_invariants, load_card_pool, state_to_dict,
+    AttachEnergy,
+    EndTurn,
+    EngineError,
+    Phase,
+    PlayTrainer,
+    ResolveDecision,
+    Retreat,
+    UnsupportedError,
+    apply_command,
+    check_invariants,
+    load_card_pool,
+    state_to_dict,
 )
 from kyuura_engine.conditions import paralyze
-from kyuura_engine.damage import DamageModifier, calculate_attack_damage, calculate_confusion_damage
+from kyuura_engine.damage import (
+    DamageModifier,
+    calculate_attack_damage,
+    calculate_confusion_damage,
+)
+from kyuura_engine.effects import EQUIVALENT_CARDS
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.rules import RULES_2000_02_14
-
 from tests.helpers import (
-    FIRE, GROWLITHE, H, PONYTA, RATTATA, SWITCH, T, VULPIX, build_test_state, with_coin_results,
+    FIRE,
+    GROWLITHE,
+    PONYTA,
+    RATTATA,
+    SWITCH,
+    V0_69_POKEMON,
+    VULPIX,
+    H,
+    T,
+    build_test_state,
+    with_coin_results,
 )
 
 
@@ -128,8 +152,14 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
         結果を比べず、ダメージを変えるカードがついていれば止める（v0.3c のまま。止める範囲はこの組だけ必要より広い。docs/fossil-hidden-info-v0.47.md 10 章）。
         その組を ``coinciding`` に挙げ、ほかのポケモン・組では今までどおり結果が変わることを確かめる。"""
         pool = load_card_pool()
-        pokemon = [pool.get(c) for c in sorted(pool.playable_ids) if pool.get(c).category == "pokemon"]
+        # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_POKEMON）は、元のカードと同じ結果になることを別に確かめる
+        pokemon = [pool.get(c) for c in sorted(pool.playable_ids) if pool.get(c).category == "pokemon" and c not in V0_69_POKEMON]
         self.assertGreater(len(pokemon), 10)
+        for card in V0_69_POKEMON:
+            for pluspowers, defenders in itertools.product(range(3), repeat=2):
+                with self.subTest(pokemon=card, pluspowers=pluspowers, defenders=defenders):
+                    self.assertEqual(confusion_interpretations(pool.get(card), pluspowers, defenders),
+                                     confusion_interpretations(pool.get(EQUIVALENT_CARDS[card]), pluspowers, defenders))
         coinciding = set()
         for definition in pokemon:
             for pluspowers, defenders in itertools.product(range(3), repeat=2):

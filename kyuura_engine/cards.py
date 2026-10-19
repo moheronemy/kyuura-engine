@@ -493,6 +493,7 @@ POOL_KEYS = (
     "pool_v0_66",  # v0.66（お上品攻撃・ナツメのESP・カスミの勝負。docs/optional-trainers-v0.66.md）
     "pool_v0_67",  # v0.67（マチスの秘策。docs/secret-plan-preflight-v0.67.md）
     "pool_v0_68",  # v0.68（キョウのベトベトン・イマクニ？のドードー。ガルーラは pool_v0_34。docs/final-pmcg-cards-v0.68.md）
+    "pool_v0_69",  # v0.69（拡張パック以外の商品の、登録したカードと処理に使う欄が同じ 96 枚。effects.EQUIVALENT_CARDS。docs/equivalent-non-pack-cards-v0.69.md）
 )
 
 

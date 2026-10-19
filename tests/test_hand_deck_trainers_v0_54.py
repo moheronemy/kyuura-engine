@@ -64,6 +64,7 @@ from tests.helpers import (
     T,
     apply_kernel,
     build_test_state,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import (
@@ -212,7 +213,7 @@ class RegistrationTest(unittest.TestCase):
             with self.subTest(card_id=card_id):
                 record = sources[card_id]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_records"], record["play_text"]),
-                                 ("kyuura_data", "adopted", [], {"trainer": "kyuura_printed_text"}))
+                                 ("kyuura_data", "adopted", kyuura_records_since_v0_69(card_id), {"trainer": "kyuura_printed_text"}))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 (check,) = record["external_checks"]
                 self.assertEqual((check["site"], check["edition"]["list_number"]), ("pcg-search.com", EDITIONS[card_id]))
                 if card_id in NOTATION_ONLY:

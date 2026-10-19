@@ -268,9 +268,10 @@ class CoverageTest(unittest.TestCase):
         import re
 
         links = json.loads((pathlib.Path(__file__).resolve().parent.parent / "kyuura_engine" / "data" / "research_links.json").read_text("utf-8"))
-        # v0.61 で kyuura の未解決の一覧の行（Z9）に停止コードを付けた（v0.31 の行ではない。tests/test_reactive_powers_trainer_damage_v0_61.py）
+        # v0.61 で kyuura の未解決の一覧の行（Z9）に停止コードを付けた（v0.31 の行ではない。tests/test_reactive_powers_trainer_damage_v0_61.py）。
+        # v0.69 で kyuura の未解決の一覧がこれらの停止コードを持つようになり、kyuura_index_engine_key を外したので、裁定の番号で探す
         new = {code for code, entry in links["stop_codes"].items() if any(r["version"] == "v0.31" for r in entry["engine_rulings"])
-               or entry.get("kyuura_index_engine_key") in ("T27", "C34/C35", "G40", "P19", "P32")}
+               or {r["ruling_id"] for r in entry["engine_rulings"]} & {"T27", "C34", "C35", "G40", "P19", "P32"}}
         text = pathlib.Path(__file__).read_text("utf-8")
         found = set(re.findall(r'"(UNRESOLVED_[A-Z_]+)"', text))
         self.assertEqual(len(new), 15)

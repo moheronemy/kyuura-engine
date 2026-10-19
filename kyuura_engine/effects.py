@@ -91,6 +91,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 
 from .cards import EnergyType, can_pay_with_units
@@ -18536,9 +18537,10 @@ HARMONIZE_PLAY_TEXT = "相手に30ダメージを与える。"
 RUN_AWAY_TEXT = "このドードーがにげるときはカードを持ち、思い切り投げる。なぜなら逃げまくるから。スナップをきかせて水平に投げるとよく飛ぶぞ!"
 RUN_AWAY_PLAY_TEXT = "(カードを投げる動作は対戦の処理にふくめない。にげるときは、ふつうの「にげる」として処理する。)"
 SIMPLIFIED_SPEC_SOURCE = "kyuura-engine docs/final-pmcg-cards-v0.68.md#4"
-# v0.68（2 章）: 利用者が示した修正（scripts/extract_kyuura_cards.py の USER_PROVIDED_CORRECTIONS）を当てはめた写しの説明文を、処理に使う文面にした登録の出典
-# （ガルーラの「こどものおつかい」。kyuura の記録ではない。scripts/check_card_sources.py の USER_CORRECTION_SOURCE と同じ）
-USER_CORRECTED_TEXT_SOURCE = "kyuura data/cards.json + USER_PROVIDED_CORRECTIONS"
+# v0.68（2 章）: 利用者が示した修正を当てはめた写しの説明文を、処理に使う文面にした登録の出典（ガルーラの「こどものおつかい」。kyuura の照合の記録・最新の説明ではない。
+# scripts/check_card_sources.py の USER_CORRECTION_SOURCE と同じ）。v0.68 はエンジンが写しに当てはめていた。v0.69 から kyuura が data/cards.json に当てはめた
+# （台帳 data/curation/card_corrections.json の FIX-PMCG2-046-ATK0-TEXT。根拠 user_provided。kyuura もエンジンも画像を見ていない）
+USER_CORRECTED_TEXT_SOURCE = "kyuura data/cards.json + data/curation/card_corrections.json (user_provided)"
 
 
 @dataclass(frozen=True)
@@ -23275,3 +23277,149 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG4-065": EnergyEntry(RainbowEnergy(10), "レインボーエネルギー", RAINBOW_TEXT.format(amount=10), RAINBOW_TEXT.format(amount=10), _KYUURA_PRINTED_TEXT),
     },
 )
+
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md 3 章）: 拡張パック以外の商品（ポケモンジム・イントロパック・プロモーション・2001 年のイントロパック）のカードのうち、
+# 登録したカードと処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の engine_status ``mechanically_equivalent``）。新しいカードの id → 元のカードの id。
+# 元のカードの登録（ワザ・特殊能力・トレーナー・特殊エネルギー）を、新しい id ごとに同じ登録で写す（``_with_equivalent_cards``）。同じ名前のカードを自動で対応させない
+# （この表に書いたカードだけ）。登録の照合（名前・文面・実装の ``check``）は新しい id のデータでも行う（データが違えば、そのカードは未対応になる）。
+# 基本エネルギー（12 枚）は登録がない（公式ルールの規定だけで扱う）ので、この表に書かない（写しの組 pool_v0_69 にはある）
+EQUIVALENT_CARDS: Mapping[str, str] = MappingProxyType({
+    "GD1-002": "PMCG5-018",  # タケシのロコン（1998-04-26）
+    "GD1-009": "PMCG5-053",  # タケシのゴローニャ（1998-04-26）
+    "GD1-011": "PMCG5-048",  # タケシのイワーク（1998-04-26）
+    "GD1-013": "PMCG5-055",  # タケシのサイドン（1998-04-26）
+    "GD1-015": "PMCG5-071",  # 思い出させる（1998-04-26）
+    "GD1-019": "PMCG5-077",  # タケシの育て方（1998-04-26）
+    "GD1-025": "PMCG1-096",  # 無色2個エネルギー（1998-04-26）
+    "GD2-004": "PMCG5-033",  # カスミのドククラゲ（1998-04-26）
+    "GD2-008": "PMCG5-025",  # カスミのタッツー（1998-04-26）
+    "GD2-010": "PMCG5-026",  # カスミのトサキント（1998-04-26）
+    "GD2-012": "PMCG5-027",  # カスミのヒトデマン（1998-04-26）
+    "GD2-015": "PMCG5-085",  # カスミ（1998-04-26）
+    "GD2-016": "PMCG5-075",  # カスミのいかり（1998-04-26）
+    "GD2-017": "PMCG5-068",  # カスミの勝負（1998-04-26）
+    "GD2-018": "PMCG5-069",  # カスミのなみだ（1998-04-26）
+    "GD2-024": "PMCG1-096",  # 無色2個エネルギー（1998-04-26）
+    "GD3-001": "PMCG5-036",  # マチスのピカチュウ（1998-07-25）
+    "GD3-004": "PMCG5-039",  # マチスのコイル（1998-07-25）
+    "GD3-005": "PMCG5-037",  # マチスのコイル（1998-07-25）
+    "GD3-006": "PMCG5-040",  # マチスのレアコイル（1998-07-25）
+    "GD3-007": "PMCG5-038",  # マチスのビリリダマ（1998-07-25）
+    "GD3-015": "PMCG5-067",  # エネルギーサーキュレート（1998-07-25）
+    "GD3-016": "PMCG5-088",  # スパイ作戦（1998-07-25）
+    "GD3-021": "PMCG5-092",  # マチス（1998-07-25）
+    "GD3-022": "PMCG5-081",  # マチスの交渉（1998-07-25）
+    "GD3-025": "PMCG1-096",  # 無色2個エネルギー（1998-07-25）
+    "GD4-002": "PMCG5-002",  # エリカのナゾノクサ（1998-07-25）
+    "GD4-006": "PMCG5-005",  # エリカのマダツボミ（1998-07-25）
+    "GD4-008": "PMCG5-015",  # エリカのウツボット（1998-07-25）
+    "GD4-010": "PMCG5-013",  # エリカのナッシー（1998-07-25）
+    "GD4-011": "PMCG5-006",  # エリカのモンジャラ（1998-07-25）
+    "GD4-013": "PMCG5-063",  # エリカのミニリュウ（1998-07-25）
+    "GD4-016": "PMCG5-083",  # エリカ（1998-07-25）
+    "GD4-017": "PMCG5-072",  # エリカのお付き（1998-07-25）
+    "GD4-018": "PMCG5-073",  # エリカの香水（1998-07-25）
+    "GD4-026": "PMCG5-082",  # 礼儀作法（1998-07-25）
+    "GD4-028": "PMCG1-096",  # 無色2個エネルギー（1998-07-25）
+    "GD5-002": "PMCG6-026",  # カツラのロコン（1999-02-26）
+    "GD5-004": "PMCG6-033",  # カツラのキュウコン（1999-02-26）
+    "GD5-009": "PMCG6-028",  # カツラのポニータ（1999-02-26）
+    "GD5-010": "PMCG6-030",  # カツラのギャロップ（1999-02-26）
+    "GD5-012": "PMCG6-064",  # カツラのドードー（1999-02-26）
+    "GD5-014": "PMCG6-093",  # カツラ（1999-02-26）
+    "GD5-015": "PMCG6-076",  # カツラのギャンブル（1999-02-26）
+    "GD5-025": "PMCG1-096",  # 無色2個エネルギー（1999-02-26）
+    "GD6-003": "PMCG6-047",  # ナツメのユンゲラー（1999-02-26）
+    "GD6-004": "PMCG6-053",  # ナツメのフーディン（1999-02-26）
+    "GD6-013": "PMCG6-066",  # ナツメのポリゴン（1999-02-26）
+    "GD6-017": "PMCG6-098",  # ナツメ（1999-02-26）
+    "GD6-018": "PMCG6-087",  # ナツメのESP（1999-02-26）
+    "GD6-019": "PMCG6-078",  # ナツメの眼（1999-02-26）
+    "GD6-026": "PMCG1-096",  # 無色2個エネルギー（1999-02-26）
+    "IP1-002": "PMCG1-045",  # スリープ（1999-07-30）
+    "IP1-013": "PMCG1-035",  # ピカチュウ（1999-07-30）
+    "IP1-023": "PMCG1-096",  # 無色2個エネルギー（1999-07-30）
+    "IP2-001": "PMCG1-018",  # ガーディ（1999-07-30）
+    "IP2-002": "PMCG1-052",  # ディグダ（1999-07-30）
+    "IP2-014": "PMCG2-035",  # プリン（1999-07-30）
+    "IP2-025": "PMCG1-096",  # 無色2個エネルギー（1999-07-30）
+    "IP2-035": "PMCG1-053",  # ワンリキー（1999-07-30）
+    "PR1-019": "PMCG4-048",  # わるいペルシアン（1997-11-18）
+    "PR1-031": "PMCG5-027",  # カスミのヒトデマン（1998-02-15）
+    "PR1-032": "PMCG5-048",  # タケシのイワーク（1998-02-15）
+    "PR1-039": "PMCG5-063",  # エリカのミニリュウ（1998-07-15）
+    "PR1-047": "PMCG5-007",  # エリカのフシギダネ（1998-11-15）
+    "PR1-048": "PMCG5-030",  # カスミのメノクラゲ（1998-11-15）
+    "PR1-049": "PMCG5-045",  # タケシのマンキー（1998-11-15）
+    "PR1-050": "PMCG5-042",  # マチスのサンダース（1998-11-15）
+    "PR1-061": "PMCG2-028",  # マンキー（1999-05-22）
+    "PR1-076": "PMCG3-010",  # コダック（1999-09-22）
+    "PR1-080": "PMCG1-034",  # ギャラドス（1999）
+    "PR1-081": "PMCG1-035",  # ピカチュウ（1999）
+    "PR1-082": "PMCG1-024",  # ニョロモ（1999）
+    "PR1-083": "PMCG1-001",  # フシギダネ（1999）
+    "PR1-084": "PMCG1-031",  # コイキング（1999）
+    "PR1-085": "PMCG1-023",  # ゼニガメ（1999）
+    "PR1-086": "PMCG1-006",  # ドガース（1999）
+    "PR1-087": "PMCG1-068",  # ラッキー（1999）
+    "PR1-088": "PMCG3-023",  # フリーザー（1999）
+    "PR1-089": "PMCG1-014",  # ヒトカゲ（1999）
+    "NIP1-010": "PMCG4-005",  # ドガース（2001-04-06）
+    "NIP1-012": "PMCG1-018",  # ガーディ（2001-04-06）
+    "NIP1X-003": "PMCG4-040",  # ワンリキー（2001-04-06）
+    "NIP2-001": "PMCG1-035",  # ピカチュウ（2001-04-06）
+})
+
+# v0.69: 同じ表の基本エネルギー（登録がないので写さない。基本エネルギーは公式ルールの規定だけで扱う）。新しいカードの id → 元のカードの id。EQUIVALENT_CARDS と合わせて、
+# 写しの組 pool_v0_69 の 96 枚（kyuura の engine_targets.json の mechanically_equivalent のすべて）。受け付けるかの確かめ（engine._identity_candidates）が、
+# 処理の同じカードを元のカードで代表するときに使う
+EQUIVALENT_BASIC_ENERGY: Mapping[str, str] = MappingProxyType({
+    "IP1-004": "PMCG1-097",  # 草エネルギー（1999-07-30）
+    "IP1-006": "PMCG1-100",  # 雷エネルギー（1999-07-30）
+    "IP1-024": "PMCG1-101",  # 超エネルギー（1999-07-30）
+    "IP2-004": "PMCG1-098",  # 炎エネルギー（1999-07-30）
+    "IP2-005": "PMCG1-099",  # 水エネルギー（1999-07-30）
+    "IP2-012": "PMCG1-102",  # 闘エネルギー（1999-07-30）
+    "NIP1-003": "PMCG1-097",  # 草エネルギー（2001-04-06）
+    "NIP1-005": "PMCG1-098",  # 炎エネルギー（2001-04-06）
+    "NIP1-006": "PMCG1-102",  # 闘エネルギー（2001-04-06）
+    "NIP2-005": "PMCG1-099",  # 水エネルギー（2001-04-06）
+    "NIP2-006": "PMCG1-100",  # 雷エネルギー（2001-04-06）
+    "NIP2-007": "PMCG1-101",  # 超エネルギー（2001-04-06）
+})
+
+
+def _with_equivalent_cards(registry: EffectRegistry, table: Mapping[str, str]) -> EffectRegistry:
+    """``table``（新しい id → 元のカードの id）の新しい id に、元のカードの登録をそのまま写した登録表（v0.69）。
+
+    元のカードに登録がない・新しい id にすでに登録がある・元のカードがほかのカードの写しのときは ``RuntimeError``（表の誤りを黙って通さない）。登録の値（``AttackEntry`` など）は
+    元のカードと同じものを使う（効果の実装・照合した文面・処理に使う文面・出典を同じにする）。"""
+    attacks: dict[AttackKey, AttackEntry] = {}
+    powers: dict[PowerKey, PowerEntry] = {}
+    trainers: dict[str, TrainerEntry] = {}
+    energies: dict[str, EnergyEntry] = {}
+    registered = ({k.card_id for k in registry.attack_keys()} | {k.card_id for k in registry.power_keys()} | set(registry.trainer_ids())
+                  | set(registry.energy_ids()))
+    for new, original in table.items():
+        if new in registered:
+            raise RuntimeError(f"{new} にはすでに登録がある（写しの表に書かない）")
+        if original in table:
+            raise RuntimeError(f"{new} の元のカード {original} が、ほかのカードの写し")
+        if original not in registered:
+            raise RuntimeError(f"{new} の元のカード {original} に登録がない")
+        for key in registry.attack_keys():
+            if key.card_id == original:
+                attacks[AttackKey(new, key.attack_index)] = registry.attack_entry(original, key.attack_index)
+        for key in registry.power_keys():
+            if key.card_id == original:
+                powers[PowerKey(new, key.power_index)] = registry.power_entry(original, key.power_index)
+        if original in registry.trainer_ids():
+            trainers[new] = registry.trainer_entry(original)
+        if original in registry.energy_ids():
+            energies[new] = registry.energy_entry(original)
+    return EffectRegistry(registry.id, {**registry._attacks, **attacks}, {**registry._trainers, **trainers}, {**registry._powers, **powers},
+                          {**registry._energies, **energies})
+
+
+DEFAULT_EFFECTS = _with_equivalent_cards(DEFAULT_EFFECTS, EQUIVALENT_CARDS)

@@ -82,10 +82,12 @@ from tests.helpers import (
     SABRINAS_ABRA,
     SAFFRON_CITY_GYM,
     V0_57_CARDS,
+    V0_69_STOP_CODE_ISSUES,
     VERMILION_CITY_GYM,
     VIRIDIAN_CITY_GYM,
     WATER,
     apply_kernel,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import LATEST_FORMAT, observation_problems, serialization_problems
@@ -155,7 +157,7 @@ class CardDataTest(unittest.TestCase):
                 effect = E.DEFAULT_EFFECTS.trainer_effect(definition)
                 self.assertTrue(effect.is_stadium)
                 self.assertEqual(effect.check(definition), [])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 94)  # v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 113)  # v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
 
     def test_adoption_records_and_external_checks(self):
         """採用の記録（kyuura_data）と pcg-search.com の照合。違いはどれも処理に影響しない（スタジアムの出し方とトラッシュの文の有無・1枚と1匹・別のとこのカード以外）。"""
@@ -163,7 +165,7 @@ class CardDataTest(unittest.TestCase):
         for card_id in V0_57_CARDS:
             with self.subTest(card=card_id):
                 record = sources[card_id]
-                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", []))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", kyuura_records_since_v0_69(card_id)))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 check = record["external_checks"][0]
                 self.assertEqual(check["site"], "pcg-search.com")
                 self.assertIn(check["result"], ("match", "differences"))
@@ -175,7 +177,7 @@ class CardDataTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             with self.subTest(code=code):
                 entry = links["stop_codes"][code]
-                self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
+                self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
                 self.assertEqual(entry["engine_rulings"], [{"version": "v0.57", "document": "docs/stadiums-v0.57.md", "ruling_id": ruling}])
 
     def test_doc_names_every_new_code(self):

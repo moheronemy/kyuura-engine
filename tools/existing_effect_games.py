@@ -490,6 +490,8 @@ V0_67 = (LT_SURGES_SECRET_PLAN,)
 # v0.68（docs/final-pmcg-cards-v0.68.md）。ガルーラ（利用者が示した訂正の文面）・キョウのベトベトン（だつりょくえき）・イマクニ？のドードー（簡略化した仕様）
 KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO = "PMCG2-046", "PMCG6-023", "PMCG6-074"
 V0_68 = (KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO)
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md）。拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード（写しの組 pool_v0_69）を、元のカードと混ぜたデッキ
+V0_69 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_69"])
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -783,6 +785,18 @@ DECKS = {
     "L67": ((DIGLETT, 4), (HITMONCHAN, 4), (ABRA, 4), (KADABRA, 3), (LT_SURGES_SECRET_PLAN, 4), *TRAINERS, (FIGHTING, 15), (PSYCHIC, 14)),
     # v0.68: 草・無色。ガルーラ（こどものおつかい・れんぞくパンチ）・キョウのベトベター → キョウのベトベトン（だつりょくえき・ヘドロのうず）・イマクニ？のドードー（ハモる）
     "K68": ((KANGASKHAN, 4), (KOGAS_GRIMER, 4), (KOGAS_MUK, 3), (IMAKUNI_DODUO, 4), *TRAINERS, (GRASS, 33)),
+    # v0.69: 水・闘。カスミのメノクラゲ（PMCG5-030・PR1-048）→ カスミのドククラゲ（PMCG5-033・GD2-004。［にげこむ］）・タケシのサイホーン → タケシのサイドン（PMCG5-055・
+    # GD1-013。［ベンチガード］）・カスミのヒトデマン（GD2-012・PR1-031）・カスミのタッツー（GD2-008）・カスミの勝負（GD2-017）・カスミ（GD2-015）・無色2個エネルギー
+    # （PMCG1-096・GD1-025）・基本エネルギー（IP2-005・NIP2-005・PMCG1-099・IP2-012・NIP1-006）。同じ名前のカードは版をまたいで 4 枚まで
+    "M69": (("PMCG5-030", 2), ("PR1-048", 2), ("PMCG5-033", 1), ("GD2-004", 2), ("PMCG5-049", 4), ("PMCG5-055", 1), ("GD1-013", 2), ("GD2-012", 2),
+            ("PR1-031", 2), ("GD2-008", 3), ("GD2-017", 2), ("GD2-015", 2), ("PMCG1-096", 2), ("GD1-025", 2), *TRAINERS, ("IP2-005", 5), ("NIP2-005", 2),
+            ("PMCG1-099", 5), ("IP2-012", 4), ("NIP1-006", 3)),
+    # v0.69: 超・草。ナツメのケーシィ（PMCG6-043）→ ナツメのユンゲラー（GD6-003・PMCG6-047）→ ナツメのフーディン（GD6-004。［サイコリンク］）・ナツメのポリゴン（GD6-013）・
+    # エリカのミニリュウ（GD4-013・PR1-039。［ふしぎなバリアー］）・エリカのマダツボミ（GD4-006）→ エリカのウツドン（PMCG5-011）→ エリカのウツボット（GD4-008。［かおりのわな］）・
+    # ナツメのESP（GD6-018）・エリカの香水（GD4-018）・マチス（GD3-021）・無色2個エネルギー（GD3-025・IP1-023）・基本エネルギー（IP1-024・NIP2-007・PMCG1-101・IP1-004・NIP1-003）
+    "S69": (("PMCG6-043", 4), ("GD6-003", 2), ("PMCG6-047", 1), ("GD6-004", 2), ("GD6-013", 2), ("GD4-013", 2), ("PR1-039", 2), ("GD4-006", 4),
+            ("PMCG5-011", 3), ("GD4-008", 2), ("GD6-018", 3), ("GD4-018", 2), ("GD3-021", 2), ("GD3-025", 2), ("IP1-023", 2), *TRAINERS, ("IP1-024", 4),
+            ("NIP2-007", 2), ("PMCG1-101", 1), ("IP1-004", 3), ("NIP1-003", 3)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -889,6 +903,8 @@ PAIRINGS_V0_66 = (("S66", "C66"), ("C66", "P46"), ("S66", "H62"), ("C66", "R65")
 PAIRINGS_V0_67 = (("L67", "C66"), ("L67", "R65"), ("L67", "S66"), ("L67", "G64"))
 # v0.68: K68 対 R65（ベンチへのダメージ・ラリアット）・K68 対 C66（れんぞくいしなげ）・K68 対 L67（マチスの秘策）・K68 対 P31
 PAIRINGS_V0_68 = (("K68", "R65"), ("K68", "C66"), ("K68", "L67"), ("K68", "P31"))
+# v0.69: M69 対 S69（新しい id どうし）・M69 対 R65（タケシのサイドンの新旧）・S69 対 S66（ナツメのESP・ナツメのポケモンの新旧）
+PAIRINGS_V0_69 = (("M69", "S69"), ("M69", "R65"), ("S69", "S66"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -897,7 +913,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
            "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
-           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68}
+           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68,
+           "v0.69": PAIRINGS_V0_69}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -3147,6 +3164,101 @@ def _v067_fallback(state, tried, counts):
     raise AssertionError("うらのカードの定義を読めない手順の代わりのコマンドがない")
 
 
+def _v069_step(state, command, tried, counts):
+    """v0.69: 写しの組 pool_v0_69 のカード（新しい id）を、元のカードの手順（カード id で選ぶ）のかわりに使う手順（新しい id がない局では何もしない。前の版の局の操作は
+    変わらない）。手札からつける通常の操作の前に、無色2個エネルギー（新しい id）をバトル場につける（2 番に 1 回）。宣言して使う特殊能力（新しい id）と、トレーナー
+    （新しい id）を、受け付けるなら使う（どれもカード id ごとに 1 番に 1 回）。決定への答えは元の手順（決定の種類で答える）。受け付けない操作は使わず
+    ``v069_<id>_not_usable_<コード>`` に数える。"""
+    if state.phase is not Phase.MAIN or not isinstance(command, (AttachEnergy, UseAttack, EndTurn)):
+        return None
+    player = state.current_player
+    p = state.players[player]
+    new = set(V0_69)
+    if not state.energy_attachments_this_turn and ("v069_energy", state.turn_number) not in tried and (state.turn_number // 2) % 2 == 0:
+        tried.add(("v069_energy", state.turn_number))
+        for uid in p.hand:
+            card_id = state.cards[uid].card_id
+            if card_id in new and state.card_def(uid).is_special_energy:
+                attach = AttachEnergy(player, uid, p.active.card)
+                if _v052_accepted(state, attach):
+                    counts[f"v069_attach_{card_id}"] += 1
+                    return attach
+                counts[f"v069_{card_id}_not_usable"] += 1
+    if not isinstance(command, (UseAttack, EndTurn)):
+        return None
+    for pokemon in p.in_play():
+        card_id = state.cards[pokemon.card].card_id
+        if card_id not in new or (f"v069_power_{card_id}", state.turn_number) in tried:
+            continue
+        for power in state.card_def(pokemon.card).powers:
+            effect = state.effects.power_entry(card_id, power.index)
+            if effect is None or not getattr(effect.effect, "declared", True):
+                continue
+            tried.add((f"v069_power_{card_id}", state.turn_number))
+            use = UsePokemonPower(player, pokemon.pokemon_id, power.index)
+            if _v052_accepted(state, use):
+                counts[f"v069_power_{card_id}"] += 1
+                return use
+            counts[f"v069_{card_id}_power_not_usable"] += 1
+    if "trainer_locked" in tried:
+        return None
+    for uid in p.hand:
+        card_id = state.cards[uid].card_id
+        if card_id not in new or state.card_def(uid).category != "trainer" or (f"v069_trainer_{card_id}", state.turn_number) in tried:
+            continue
+        tried.add((f"v069_trainer_{card_id}", state.turn_number))
+        play = PlayTrainer(player, uid)
+        if _v052_accepted(state, play):
+            counts[f"v069_trainer_{card_id}"] += 1
+            return play
+        counts[f"v069_{card_id}_not_usable"] += 1
+    return None
+
+
+def _v069_decision(state, counts):
+    """v0.69: 新しい id のトレーナーを使っている最中の決定（元の手順はカード id で答えるので、新しい id では答えられないことがある）のうち、ほかの手順が答えないものに、受け付ける答えのうち最初のもの
+    （選べるものの並びの前から、選ぶ数の下限（0 なら 1）だけ）で答える。新しい id のトレーナーを使っていなければ何もしない（前の版の局の操作は変わらない）。"""
+    d = state.decision
+    use = state.trainer_in_use
+    if d is None or d.resume != "trainer" or use is None or state.cards[use.card].card_id not in set(V0_69):
+        return None
+    count = max(d.min_choices, 1) if d.max_choices else 0
+    for start in range(max(1, len(d.options) - count + 1)):
+        answer = ResolveDecision(d.player, d.id, tuple(d.options[start:start + count]))
+        if _v052_accepted(state, answer):
+            counts[f"v069_decision_{d.kind}"] += 1
+            return answer
+    return None
+
+
+def v069_uses(state):
+    """v0.69: ログから数えた、写しの組 pool_v0_69 のカード（新しい id）の動き（ない局では空）。``in_deck``（デッキの枚数）・``attack_<id>_<位置>``・``power_<id>_<位置>``・
+    ``trainer_<id>``・``attach_<id>``（手札からつけた）・``evolve_<下の id>_to_<上の id>``（進化の重なりの新しい id をふくむもの）・``bench_<id>``（ベンチに出した）。"""
+    counts = Counter()
+    new = set(V0_69)
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    counts["in_deck"] = sum(1 for cid in card.values() if cid in new)
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            cid = e.get("card_id") or card.get(e.get("pokemon"))
+            if cid in new:
+                counts[f"attack_{cid}_{e.get('attack_index')}"] += 1
+        elif kind == "pokemon_power" and card.get(e.get("pokemon")) in new:
+            counts[f"power_{card[e['pokemon']]}_{e.get('power_index')}"] += 1
+        elif kind == "play_trainer" and card.get(e.get("card")) in new:
+            counts[f"trainer_{card[e['card']]}"] += 1
+        elif kind == "attach_energy" and card.get(e.get("energy")) in new:
+            counts[f"attach_{card[e['energy']]}"] += 1
+        elif kind == "evolve" and (e.get("from_card_id") in new or e.get("to_card_id") in new):
+            counts[f"evolve_{e.get('from_card_id')}_to_{e.get('to_card_id')}"] += 1
+        elif kind == "play_to_bench" and card.get(e.get("card")) in new:
+            counts[f"bench_{card[e['card']]}"] += 1
+        elif kind in ("bench_guard", "flee", "flee_declined", "esp_redo", "esp_redo_declined", "duel_janken"):
+            counts[kind] += 1
+    return dict(counts)
+
+
 def v068_uses(state):
     """v0.68: ログから数えた 3 枚の動き（ない局では空）。``attack_<カード id>_<位置>``（ワザの宣言）・``fetch_draw``（こどものおつかいのあとの ``draw``）・
     ``drain_heads``・``drain_tails``・``drain_discard``（だつりょくえきでトラッシュしたカード）・``drain_decision``（そのまえの決定。ログ ``energy_drain_discard`` の数と同じ）・
@@ -3889,7 +4001,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v053_decision(state, counts) or _v054_decision(state, counts)  # v0.53・v0.54
                      or _v055_decision(state, counts) or _v056_decision(state, counts)  # v0.55・v0.56
                      or _v057_decision(state, counts) or _v058_decision(state, counts)  # v0.57・v0.58
-                     or _v059_decision(state, counts) or _v061_decision(state, counts))  # v0.59・v0.61
+                     or _v059_decision(state, counts) or _v061_decision(state, counts)  # v0.59・v0.61
+                     or _v069_decision(state, counts))  # v0.69: 新しい id のトレーナーの決定（ほかの手順が答えないときだけ。新しい id がなければ何もしない）
             if early is not None:
                 return early
         reveal = _v067_reveal(state, tried, counts)  # v0.67: 自分のうらのカード（元の手順の前。元の手順はうらのカードの定義を読まない）
@@ -3907,7 +4020,8 @@ def make_policy(seen: dict, counts: Counter):
             if surge is not None:
                 return surge
         special = (_v059_energy(state, command, tried, counts)  # v0.59: カツラの 2 枚（カツラの効果がなければ何もしない）
-                   or _v058_energy(state, command, tried, counts))  # v0.58: 特殊エネルギー（手札にないデッキでは何もしない）
+                   or _v058_energy(state, command, tried, counts)  # v0.58: 特殊エネルギー（手札にないデッキでは何もしない）
+                   or _v069_step(state, command, tried, counts))  # v0.69: 新しい id の特殊エネルギー・特殊能力・トレーナー（ないデッキでは何もしない）
         if special is not None:
             return special
         if state.phase is Phase.DECISION:
@@ -4088,6 +4202,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v066"] = v066_uses(state)
         result["v067"] = v067_uses(state)
         result["v068"] = v068_uses(state)
+        result["v069"] = v069_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -4187,8 +4302,9 @@ def card_uses(state):
       ナツメのスリーパー）で数える
     """
     card = {uid: c.card_id for uid, c in state.cards.items()}
+    # v0.69: 写しの組 pool_v0_69 のカード（新しい id）も、元のカードと同じ数え方で数える（元のカードの欄に混ぜない）
     uses = {cid: Counter() for cid in TARGETS + V0_47_TRAINERS + V0_49_TRAINERS + V0_50_TRAINERS + V0_51_TRAINERS + V0_52_TRAINERS + V0_53_TRAINERS
-            + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS}
+            + V0_54_TRAINERS + V0_55_TRAINERS + V0_56_TRAINERS + V0_69}
     using55: dict[int, str] = {}  # v0.55: 使っている最中の v0.55 のトレーナー（使ったプレイヤー → カード id）
     using56: dict[int, str] = {}  # v0.56: 使っている最中の v0.56 のトレーナー（使ったプレイヤー → カード id）
     using54: dict[int, str] = {}  # v0.54: 使っている最中の v0.54 のトレーナー（使ったプレイヤー → カード id）

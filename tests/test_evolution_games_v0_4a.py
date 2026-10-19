@@ -24,6 +24,8 @@ from kyuura_engine.cards import can_pay_cost
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    CARD_DATA_COMMIT_SINCE_V0_69,
+    with_card_data_commit_before_v0_69,
     BILL, CATERPIE, DEFENDER, DEWGONG, FIRE, GRASS, PARAS, PARASECT, PLUSPOWER, POTION, SEEL, SWITCH, VULPIX, WATER, WEEDLE,
     coin_events, expand_decklist,
 )
@@ -238,6 +240,9 @@ class GoldenEvolutionGameTest(unittest.TestCase):
         counted = count_events(state)
         self.assertGreater(counted["evolve"], 0)
         data = full(state)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), "kyuura-engine-0.13")  # v0.4b・v0.4c・v0.4d・v0.5・v0.6・v0.7・v0.8・v0.9・v0.10・v0.11・v0.12・v0.13 で登録表の id だけ変わった（結果は同じ）
         self.assertEqual(hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest(), GOLDEN_DIGEST)
 

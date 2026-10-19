@@ -86,6 +86,7 @@ from tests.helpers import (
     ROCKETS_EXPERIMENT,
     ROCKETS_TRAP,
     V0_56_CARDS,
+    V0_69_STOP_CODE_ISSUES,
     WATER,
     H,
     T,
@@ -180,7 +181,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_56"], list(V0_56_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 94)  # v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 113)  # v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_56_CARDS}
         self.assertEqual([c for c in V0_56_CARDS if e[c].may_end_turn], [ROCKET_GRUNT])
         self.assertEqual([c for c in V0_56_CARDS if e[c].takes_prizes], [LT_SURGES_TREATY])
@@ -255,7 +256,7 @@ class RegistrationTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             with self.subTest(code=code):
                 entry = links["stop_codes"][code]
-                self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
+                self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
                 self.assertIn({"version": "v0.56", "document": "docs/trainer-decisions-turn-effects-v0.56.md", "ruling_id": ruling}, entry["engine_rulings"])
         self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (149, 151))  # v0.68 で DR8・DR13 を加えた。v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
 

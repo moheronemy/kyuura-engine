@@ -21,8 +21,8 @@
 
 ## 研究資料の参照コミットを固定する
 
-- 参照する kyuura のコミットは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` です（scripts/extract_kyuura_cards.py の `KYUURA_COMMIT`）。
-- 研究の基準（裁定・論点・最新の説明・照合の記録を照らすコミット）は `3f349085645f47d0649a6cacece3680caeae50bf` です（ブランチ `claude/cool-ptolemy-5vtgsg`。kyuura の既定のブランチにも、v0.25 までの記録の取り込み（kyuura の PR #1）で含まれた。`kyuura_engine/data/research_links.json` の `research_commit`）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。docs/research-alignment-v0.18a.md）で、2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ、差分を確かめてから上げました（docs/verified-record-reuse.md）。写しのコミットと分けているのは、状態がカードデータの元のコミットを持ち、上げると固定した参照データが変わるからです。エンジンが使う項目が同じことは `scripts/check_research_links.py`（v0.18e）が確かめます。
+- 参照する kyuura のコミットは `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` です（scripts/extract_kyuura_cards.py の `KYUURA_COMMIT`。v0.69 から。kyuura の main。形式 3 のカードデータ）。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（`PREVIOUS_KYUURA_COMMIT`。写しの作り直しの検査が、このコミットにあったカードの写す欄が、kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じことを確かめる）。
+- 研究の基準（裁定・論点・最新の説明・照合の記録を照らすコミット）は、v0.69 から写しの元と同じ `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` です（`kyuura_engine/data/research_links.json` の `research_commit`。docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf` です（ブランチ `claude/cool-ptolemy-5vtgsg`。kyuura の既定のブランチにも、v0.25 までの記録の取り込み（kyuura の PR #1）で含まれた。`kyuura_engine/data/research_links.json` の `research_commit`）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。docs/research-alignment-v0.18a.md）で、2026-10-15 に、エンジンの照合の記録を kyuura に取り込んだあとのコミットへ、差分を確かめてから上げました（docs/verified-record-reuse.md）。写しのコミットと分けているのは、状態がカードデータの元のコミットを持ち、上げると固定した参照データが変わるからです。エンジンが使う項目が同じことは `scripts/check_research_links.py`（v0.18e）が確かめます。
 - カードデータの写し `kyuura_engine/data/kyuura_cards.json` は手で編集せず、`python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` で作り直します。
 - 参照するコミットを上げるときは、写しを作り直し、変わった項目に対応するテストと docs を見直します。
 
@@ -2386,3 +2386,85 @@
 - 検証用デッキ `K68` と組 `PAIRINGS_V0_68`（`K68` 対 `R65`・`C66`・`L67`・`P31`）は tools/existing_effect_games.py の `--batch v0.68` です。前の版の組の結果は変わりません。
 - イマクニ？のドードーの「にげる」は `_v068_retreat`、数えた結果は `v068_uses`。だつりょくえきの決定には元の手順が答えます。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## kyuura の形式 3 のカードデータへの移行と、拡張パック以外の商品の同じカード 96 枚（v0.69）
+
+### 対象と数
+
+- 写しの元・研究の基準を kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（形式 3 のカードデータと、v0.68 までのエンジンの記録を取り込んだ研究の記録）に上げました。
+- kyuura の data/engine_targets.json の `engine_status` が `mechanically_equivalent` の 96 枚（拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード）を登録しました。
+  種類でしぼっていません（無色2個エネルギー 8 枚は `data_missing`）。
+- 数の変化:
+
+  | | v0.68 | v0.69 |
+  |---|---|---|
+  | 写し・対応するカード | 457・457 | 553・553 |
+  | 対応ポケモン・トレーナー・エネルギー | 353・94・10 | 410・113・30 |
+  | ワザ・特殊能力・特殊エネルギーの登録 | 597・58・4 | 689・68・12 |
+
+- 写しの組は `pool_v0_69`（`POOLS` の最後。`cards.POOL_KEYS` にも加えた）。カードごとの対応・根拠・互換性・検証は docs/equivalent-non-pack-cards-v0.69.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。96 枚の pcg-search.com・カードの画像との照合もしていません（元のカードの照合を再利用する）。
+
+### 写しの移行
+
+- 写しに `product_group`・`play_scope`・`data_gaps`・`same_card_group`（いつもある欄）と `field_sources`・`copies`・`corrections`（あるときだけ。`OPTIONAL_FIELDS`）を加えました。
+  処理には使いません。書き出しの形式の名前は `kyuura-engine card extract 1` のままです。
+- 書き出すたびに、`PREVIOUS_KYUURA_COMMIT`（`ecb2d69`）にあったカードの写す欄が、kyuura が当てはめた修正の欄と出典の記録の欄（`PROVENANCE_FIELDS`）を除いて同じことを確かめます
+  （`previous_copy_problems`）。違えば書き出しません。
+- v0.62 の `CONFIRMED_CORRECTIONS`・v0.68 の `USER_PROVIDED_CORRECTIONS` は外しました（kyuura が data/cards.json に当てはめた）。かわりに `KYUURA_CORRECTIONS` が、kyuura の台帳
+  （data/curation/card_corrections.json）とカードの記録の `corrections` に同じ記録があること・前後のコミットの値・根拠ごとの出どころを確かめます（`kyuura_correction_problems`）。
+  修正を写しに当てはめ直さないでください（二重の修正）。写しのカードに台帳の修正が加わったら、`KYUURA_CORRECTIONS` に挙げるまで書き出しません。
+- ガルーラの「こどものおつかい」は、利用者が示した転記の誤りの訂正のままです（kyuura の台帳の根拠 `user_provided`。公式エラッタ・別の版の文面・画像の読み直しではない。kyuura も
+  エンジンも画像を見ていない）。登録の根拠の名前（`user_provided_correction`）は変えていません。
+- 写しを手で直さないでください。kyuura のほかの記録（対応していない 824 件）を対戦用にしないでください。
+
+### 登録の写し方
+
+- `effects.EQUIVALENT_CARDS`（84 枚。新しい id → 元のカードの id）と `_with_equivalent_cards` が、元のカードの登録を新しい id ごとに同じ登録で写します。基本エネルギー 12 枚は登録が
+  ないので `EQUIVALENT_BASIC_ENERGY` に対応だけを書きます。同じ名前のカードを自動で対応させないでください（表に書いたカードだけ）。
+- `_with_equivalent_cards` は、元のカードに登録がない・新しい id にすでに登録がある・元のカードがほかのカードの写しなら `RuntimeError` です。登録の照合（名前・文面・実装の `check`）は
+  新しい id のデータでも行います（データが違えば、そのカードは未対応）。
+- `engine.py`・`resolution/` にカード id の分岐を加えないでください。状態・ログ・書き出しには新しい id・uid をそのまま持ちます（元の id に置きかえない）。
+- 最新の説明・エラッタ・日英の違いの記録（どれもカード id ごと）を新しい id に当てはめるのは、研究の基準のコミットで、新しい id と元のカードが同じカードの組（`same_card_group`）にあり、
+  印刷の文面が同じときだけです（`scripts/check_research_links.py` の 4g。研究の対応表の `equivalent_registrations`）。
+- 採用の記録（84 枚）は `equivalent_to`（元のカード）と `play_text` の `equivalent_registration` を持ち、外部照合を書きません（`scripts/check_card_sources.py` の `equivalent_problems`）。
+  元のカードの照合の記録（CC-）・最新の説明（LD-）を、新しい商品のカードを照合したものとして写さないでください。
+- 無色2個エネルギーの新しい id は、v0.58 の `ColorlessUnitsByName(2)`（`DCE_SOURCE`）と同じ登録です（名前・種類・個数が同じ）。説明の文面を作らないでください（kyuura の説明は null）。
+- 2001 年に発売したイントロパック（neo）の 10 枚（NIP1-003 など）は、発売日（2001-04-06）を変えずに持ちます。2000.02.14 版までに発売したカードとは扱わず、のちのルール・ベイビィの
+  ルールを持ち込まないでください。
+- 同じ名前の 4 枚の制限は id をまたいで名前で数えます。進化は名前と段階で決まります（商品によらない）。
+
+### 採用の記録と研究の対応表
+
+- v0.68 までの採用の記録の `kyuura_commit`（採用したときのデータのコミット `ecb2d69`）・`recorded_on`・外部照合の確認日と照らしたコミットは書き換えないでください。写しの元の移行は
+  card_sources.json の `data_migrations` に書き、`scripts/check_card_sources.py` が、移行の前のコミットが写しの `previous_source` と同じことを確かめます。古い確認日を一括で
+  上げたり、採用し直した・照合し直したことにしたりしないでください。
+- `kyuura_records` は研究の基準のコミットでカードを指す kyuura の記録の id なので、研究の基準を上げたら合わせます（v0.69 で 92 件。記録を読み直したことにしない）。
+- 研究の対応表: 停止コードの kyuura の処理は kyuura の未解決の一覧に合わせました（124 件。`not_in_kyuura` は 0 件）。kyuura の論点 71 件・エンジンの未解決の裁定 151 件・停止コード 149 件を
+  まとめないでください（同じ論点を指す停止コードもそれぞれ数える）。トレーナーの最新の説明（LD-…-TRAINER）は `registered_trainers` に結びます。
+- だつりょくえきの採用の仕様（DR1・DR6）・イマクニ？のドードーの簡略化した仕様・マチスの秘策の受け付けの制限は、裁定ではないままです。
+
+### 互換性
+
+- 状態は写しの元を `card_data.commit` とログ `game_created` の `card_data_commit` に持つので、新しい対戦ではこの 2 か所が変わります。固定の参照データ（v0_1_reference.json・
+  test_reproducibility.py の固定値など）を作り直さないでください。比べるときは tests/helpers.py の `with_card_data_commit_before_v0_69`（この 2 か所だけを、確かめた移行で
+  もどす。もどす前の値が今の写しの元でなければ失敗）を使い、状態の指紋・ログ・乱数・`card_data` のほかの項目を比べる対象から除かないでください。
+- tools/engine_lockstep.py の `record --card-data-commit <この木の写しの元>=<比べる木の写しの元>` は、同じ 2 か所だけをもどした指紋で比べ、もどす前の指紋の違いも数えます。
+- 書き出しの形式は 22 のままです（次の新しい形式は 23）。
+
+### マチスの秘策の確かめ
+
+- 受け付けるかの確かめ（`engine._identity_independent`）で試すカードは、処理が同じカード（定義が id と英語の欄を除いて同じで、効果の登録が同じもの）を 1 枚で代表します
+  （`engine._identity_candidates`）。試すカードは v0.68 と同じ 457 枚です。対応しているカードを加えたら、試すカードの数が上限（512）の中にあることを確かめてください。
+  上限の数・2 枚以上を指定するコマンドの制限を変えないでください。
+
+### 検証用デッキ
+
+- 検証用デッキ `M69`・`S69`（新しい id と元のカードを混ぜたデッキ）と組 `PAIRINGS_V0_69`（`M69` 対 `S69`・`M69` 対 `R65`・`S69` 対 `S66`）は tools/existing_effect_games.py の
+  `--batch v0.69` です。前の版の組の結果は変わりません。
+- 対戦の手順はカードの手順をカード id で選ぶので、新しい id のカードは `_v069_step`（特殊エネルギー・宣言して使う特殊能力・トレーナーを、受け付けるなら使う）と `_v069_decision`
+  （新しい id のトレーナーの決定のうち、ほかの手順が答えないものに、受け付ける最初の答え）で使います。数えた結果は `v069_uses`。
+- 新しい id の仕組みの動きは、元のカードの仕組みのテストのクラスを、カードの定数だけを新しい id に置きかえてもう一度走らせて確かめます
+  （tests/test_equivalent_non_pack_cards_v0_69.py の `substituted`。テストの中身・期待は変えない）。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+

@@ -30,13 +30,27 @@ from kyuura_engine import (
 )
 from kyuura_engine import effects as E
 from kyuura_engine.cards import Attack, load_card_pool, read_extract
-from kyuura_engine.persistent import attack_barrier, cannot_attack, damage_prevention, damage_reduction, reduced_damage_to_source
+from kyuura_engine.persistent import (
+    attack_barrier,
+    cannot_attack,
+    damage_prevention,
+    damage_reduction,
+    reduced_damage_to_source,
+)
 from kyuura_engine.resolution import PREFLIGHT_MODES, v013_checks
 from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.rng import rng_fingerprint
-from kyuura_engine.state import AttackBarrier, CannotAttack, CannotUseAttack, DamageReduction, ReducedDamageToSource
+from kyuura_engine.state import (
+    AttackBarrier,
+    CannotAttack,
+    CannotUseAttack,
+    DamageReduction,
+    ReducedDamageToSource,
+)
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import (
+    PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT,  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
+)
 from tests.helpers import (
     BROCKS_ONIX,
     BROCKS_SANDSHREW,
@@ -76,8 +90,8 @@ from tests.helpers import (
     RATTATA,
     RHYHORN,
     ROCKET_EEVEE,
-    STARYU,
     SABRINAS_DROWZEE,
+    STARYU,
     V0_37_ADOPTED,
     V0_37_POKEMON,
     WATER,
@@ -85,10 +99,19 @@ from tests.helpers import (
     T,
     apply_kernel,
     build_test_state,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import serialization_problems
-from tests.test_barrier_resume_coin_bonus_v0_34 import assert_stops, coins, events, full, kinds, play, with_barrier
+from tests.test_barrier_resume_coin_bonus_v0_34 import (
+    assert_stops,
+    coins,
+    events,
+    full,
+    kinds,
+    play,
+    with_barrier,
+)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TURN = 7
@@ -199,7 +222,15 @@ class CardDataTest(unittest.TestCase):
         for card in V0_37_POKEMON:
             with self.subTest(card=card):
                 self.assertTrue(self.pool.is_playable(card))
-        from tests.helpers import BROCKS_RHYHORN, DROWZEE, GIOVANNIS_MEOWTH, MAGIKARP, ROCKET_EKANS, SANDSHREW, TANGELA
+        from tests.helpers import (
+            BROCKS_RHYHORN,
+            DROWZEE,
+            GIOVANNIS_MEOWTH,
+            MAGIKARP,
+            ROCKET_EKANS,
+            SANDSHREW,
+            TANGELA,
+        )
 
         for ours, other in ((RHYHORN, BROCKS_RHYHORN), (FOSSIL_GRIMER, GRIMER), (ROCKET_EEVEE, EEVEE), (BROCKS_SANDSHREW, SANDSHREW),
                             (SABRINAS_DROWZEE, DROWZEE), (FOSSIL_EKANS, ROCKET_EKANS), (MEOWTH, GIOVANNIS_MEOWTH), (KOGAS_TANGELA, TANGELA),
@@ -248,8 +279,8 @@ class CardDataTest(unittest.TestCase):
                 if card == FOSSIL_GRIMER:
                     self.assertEqual(record["basis"], cs.GUIDEBOOK_RECORD)
                 else:
-                    self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, KYUURA_COMMIT))
-                    self.assertEqual(record["kyuura_records"], ["CC-PMCG5-048-P200"] if card == BROCKS_ONIX else [])
+                    self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT))
+                    self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card, ["CC-PMCG5-048-P200"] if card == BROCKS_ONIX else []))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 [check] = record["external_checks"]
                 self.assertEqual((check["site"], check["edition"]["list_number"], check["checked_on"]), ("pcg-search.com", EDITIONS[card], "2026-10-16"))
                 self.assertFalse(any(d["affects_behavior"] for d in check["differences"]))
@@ -354,7 +385,9 @@ class TextVariantTest(unittest.TestCase):
         water = printed(POLIWRATH, 0)
         self.assertTrue(E.ExtraEnergyDamageMixed(E.EnergyType.WATER, 20, 2).check(water))
         self.assertTrue(E.ExtraEnergyDamageMixed(E.EnergyType.WATER, 10, 3).check(water))
-        from tests.helpers import CLEFABLE as _CLEFABLE, EEVEE as _EEVEE, PSYDUCK, VAPOREON
+        from tests.helpers import CLEFABLE as _CLEFABLE
+        from tests.helpers import EEVEE as _EEVEE
+        from tests.helpers import PSYDUCK, VAPOREON
 
         for card, index in ((_EEVEE, 0), (_CLEFABLE, 1), (PSYDUCK, 1), (VAPOREON, 1)):  # 登録済みの書き方は変わらず受け付ける
             with self.subTest(card=card):

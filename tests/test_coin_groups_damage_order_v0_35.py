@@ -49,7 +49,7 @@ from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.state import PERSISTENT_EFFECT_TYPES, CannotUseAttack, CannotUseOwnAttack, NextTurnAttackDamage
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
     BLAINES_TAUROS,
     BROCKS_RHYHORN,
@@ -237,7 +237,7 @@ class CardDataTest(unittest.TestCase):
         for card in V0_35_POKEMON:
             record = sources[card]
             with self.subTest(card=card):
-                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", KYUURA_COMMIT))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", ADOPTED_COMMIT))
                 self.assertEqual(record["kyuura_records"], [])
                 self.assertNotIn(f'"{card}"', verification)
                 [check] = record["external_checks"]

@@ -2,19 +2,19 @@
   "format": "kyuura-engine research links 1",
   "description": "エンジンの停止コード・未解決の裁定・実装上の仮定・登録した最新の説明・照合の記録と、kyuura の研究の記録（論点 UQ-・裁定 CR-・最新の説明 LD-・照合 CC-）の対応表。kyuura の記録の写しではなく、id の対応だけを持つ（文面・分類の正本は kyuura）。docs/research-alignment-v0.18a.md・docs/verification-reproducibility-v0.18e.md kyuura の engine_unresolved_index にまだない停止コード（エンジンが新しく加えたもの）は kyuura_disposition を not_in_kyuura にし、kyuura への報告事項にする（v0.21 の突風・v0.22 のパソコン通信・v0.23 のエネルギー回収・v0.36 の AC6（手順 4 のコインとこんらん）・RD9（山札にもどす効果ときぜつ）・v0.37 の JS1（説明に弱点・抵抗力のない控えへのダメージ）。kyuura に記録ができたら scripts/check_research_links.py が知らせる）。 v0.31 で、コードのない未解決（T27・C34/C35・G40・P19・P32）に停止コードを付けた。kyuura の未解決の一覧はこれらをコードなし（stop_code が null）で挙げているので、kyuura_index_engine_key でその行と照らす（kyuura の一覧にコードが書かれたら scripts/check_research_links.py が知らせる）。 v0.50 で、退化の処理に使う kyuura の規定・裁定（GR-2000-P324-DEVOLUTION・CR-SHELL-ATTACK-ENDS-ON-DEVOLUTION・CR-CHEMICAL-GAS-LEAVES・GR-2000-P323-KNOCKOUT）を applied_rule_records に結び付けた（id の対応だけ。scripts/check_research_links.py が研究の基準のコミットにあることと分類を確かめる）。 v0.51 で、トラッシュのたねポケモンを持ち主のベンチに出す処理に使う kyuura の規定（GR-2000-P309-ATTACK-PROCEDURE・GR-2000-P319-HP-AND-DAMAGE・GR-2000-P320-COUNTER-MOVE）を applied_rule_records に結び付けた（v0.50 と同じく id の対応だけ）。",
   "repository": "https://github.com/moheronemy/kyuura",
-  "research_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
-  "research_branch": "claude/cool-ptolemy-5vtgsg",
+  "research_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+  "research_branch": "main",
   "research_files": [
     "data/sidecar/rulings.json",
     "data/sidecar/latest_descriptions.json",
     "data/sidecar/card_checks.json"
   ],
-  "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+  "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
     "engine_unresolved_rulings": 151,
     "engine_stop_codes": 149,
-    "kyuura_issues": 19
+    "kyuura_issues": 71
   },
   "stop_codes": {
     "UNRESOLVED_MULLIGAN_COMPENSATION": {
@@ -129,8 +129,8 @@
           "ruling_id": null
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "out_of_scope"
+      "kyuura_issue": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_PREVENTED_COIN_DAMAGE": {
       "engine_rulings": [
@@ -259,8 +259,8 @@
           "ruling_id": "GW5"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-GUST-WITHOUT-OPPONENT-BENCH",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK": {
       "engine_rulings": [
@@ -270,8 +270,8 @@
           "ruling_id": "CS6"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COMPUTER-SEARCH-EMPTY-DECK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -281,8 +281,8 @@
           "ruling_id": "ER10"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ENERGY-RETRIEVAL-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": {
       "engine_rulings": [
@@ -292,8 +292,8 @@
           "ruling_id": "ER9"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ENERGY-RETRIEVAL-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRANSPARENCY_COIN_ORDER": {
       "engine_rulings": [
@@ -304,8 +304,7 @@
         }
       ],
       "kyuura_issue": "UQ-TRANSPARENCY-COIN-ORDER",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "T27"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": {
       "engine_rulings": [
@@ -336,8 +335,7 @@
         }
       ],
       "kyuura_issue": "UQ-MULTIPLE-DAMAGE-TRIGGERS-ONE-ATTACK",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "C34/C35"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_KO_PREVENTION_ORDER": {
       "engine_rulings": [
@@ -353,8 +351,7 @@
         }
       ],
       "kyuura_issue": "UQ-KO-PREVENTION-ORDER",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "G40"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": {
       "engine_rulings": [
@@ -365,8 +362,7 @@
         }
       ],
       "kyuura_issue": "UQ-PHOENIX-GAS-SOURCE-KO",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "P19"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": {
       "engine_rulings": [
@@ -377,8 +373,7 @@
         }
       ],
       "kyuura_issue": "UQ-POST-KO-POWERS-ORDER",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "P32"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DISCARD_ENERGY_TIMING": {
       "engine_rulings": [
@@ -388,8 +383,8 @@
           "ruling_id": "HC1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-DISCARD-ENERGY-TIMING-CONFUSION",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DESTINY_BOND_KNOCKOUT": {
       "engine_rulings": [
@@ -404,8 +399,8 @@
           "ruling_id": "HC2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-DESTINY-BOND-KO",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_PREVENTED_EFFECT_COIN": {
       "engine_rulings": [
@@ -415,8 +410,8 @@
           "ruling_id": "HC3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COIN-IN-NULLIFIED-ELEMENT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_EXTRA_ENERGY_COLORLESS": {
       "engine_rulings": [
@@ -426,8 +421,8 @@
           "ruling_id": "HC4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-EXTRA-ENERGY-COLORLESS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": {
       "engine_rulings": [
@@ -447,8 +442,8 @@
           "ruling_id": "HC5"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DISCARD_DECK_SHORT": {
       "engine_rulings": [
@@ -458,8 +453,8 @@
           "ruling_id": "HC6"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO": {
       "engine_rulings": [
@@ -469,8 +464,8 @@
           "ruling_id": "HC7"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE": {
       "engine_rulings": [
@@ -480,8 +475,8 @@
           "ruling_id": "HC8"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TARGET-WITHOUT-EFFECT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_COPIED_ATTACK": {
       "engine_rulings": [
@@ -491,8 +486,8 @@
           "ruling_id": "HC9"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_BURN_TRANSFER": {
       "engine_rulings": [
@@ -502,8 +497,8 @@
           "ruling_id": "HC10"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ENERGY-BURN-TRANSFER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": {
       "engine_rulings": [
@@ -513,8 +508,8 @@
           "ruling_id": "CD4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-OPPONENT-POKEMON-COUNTERS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SPECIAL_POISON_OVERWRITE": {
       "engine_rulings": [
@@ -529,8 +524,8 @@
           "ruling_id": "TP3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-POISON-OVERWRITE-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": {
       "engine_rulings": [
@@ -540,8 +535,8 @@
           "ruling_id": "NK5"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REDUCED-DAMAGE-BENCH-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ATTACK_CHECK_CONFUSION": {
       "engine_rulings": [
@@ -551,8 +546,8 @@
           "ruling_id": "AC6"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": {
       "engine_rulings": [
@@ -562,8 +557,8 @@
           "ruling_id": "RD9"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RETURN-TO-DECK-KO-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE": {
       "engine_rulings": [
@@ -573,8 +568,8 @@
           "ruling_id": "JS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-BENCH-DAMAGE-WEAKNESS-RESISTANCE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DAMAGE_TRIGGER_TIMING": {
       "engine_rulings": [
@@ -584,8 +579,8 @@
           "ruling_id": "GK1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-DAMAGE-TRIGGER-TIMING",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE": {
       "engine_rulings": [
@@ -595,8 +590,8 @@
           "ruling_id": "GS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED": {
       "engine_rulings": [
@@ -606,8 +601,8 @@
           "ruling_id": "SG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACK-LOCK-SOURCE-RETURNED",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": {
       "engine_rulings": [
@@ -617,8 +612,8 @@
           "ruling_id": "CX1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COUNTER-TRANSFER-PROTECTED",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH": {
       "engine_rulings": [
@@ -628,8 +623,8 @@
           "ruling_id": "PW1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND": {
       "engine_rulings": [
@@ -639,8 +634,8 @@
           "ruling_id": "PW2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_ZERO_CARDS": {
       "engine_rulings": [
@@ -650,8 +645,8 @@
           "ruling_id": "PW3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENTRY_POWER_DURING_ATTACK": {
       "engine_rulings": [
@@ -661,8 +656,8 @@
           "ruling_id": "PW4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ENTRY-POWER-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_STATED_CARDS_SHORT": {
       "engine_rulings": [
@@ -677,8 +672,8 @@
           "ruling_id": "FC1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRAINER_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -688,8 +683,8 @@
           "ruling_id": "TR1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": {
       "engine_rulings": [
@@ -704,8 +699,8 @@
           "ruling_id": "GV1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-EVOLUTION-PERMISSION-FROM-DECK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": {
       "engine_rulings": [
@@ -720,8 +715,8 @@
           "ruling_id": "AC13"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_CALMING_AROMA_RETALIATION": {
       "engine_rulings": [
@@ -731,8 +726,8 @@
           "ruling_id": "CP1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CALMING-AROMA-RETALIATION",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RETREAT_COST_FLOOR": {
       "engine_rulings": [
@@ -742,8 +737,8 @@
           "ruling_id": "CP2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RETREAT-COST-PAYMENT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_PLAY_AS_POKEMON_SETUP": {
       "engine_rulings": [
@@ -753,8 +748,8 @@
           "ruling_id": "PF1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-PLAY-AS-POKEMON",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_PLAY_AS_POKEMON_RETREAT": {
       "engine_rulings": [
@@ -764,8 +759,8 @@
           "ruling_id": "PF2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-PLAY-AS-POKEMON",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON": {
       "engine_rulings": [
@@ -775,8 +770,8 @@
           "ruling_id": "PF3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-PLAY-AS-POKEMON",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER": {
       "engine_rulings": [
@@ -786,8 +781,8 @@
           "ruling_id": "KA1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SHIFT_COLOR_DURATION": {
       "engine_rulings": [
@@ -797,8 +792,8 @@
           "ruling_id": "VS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHIFT-COLOR-DURATION",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": {
       "engine_rulings": [
@@ -808,8 +803,8 @@
           "ruling_id": "PG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CHANGE-ABSENT-WEAKNESS-RESISTANCE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MAX_HP_DROP": {
       "engine_rulings": [
@@ -819,8 +814,8 @@
           "ruling_id": "MH1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": {
       "engine_rulings": [
@@ -830,8 +825,8 @@
           "ruling_id": "TE1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRANSFORM-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRANSFORM_COPIED_POWER": {
       "engine_rulings": [
@@ -841,8 +836,8 @@
           "ruling_id": "TF1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRANSFORM-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER": {
       "engine_rulings": [
@@ -852,8 +847,8 @@
           "ruling_id": "TF2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRANSFORM-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SHAPESHIFT_SUPPRESSED": {
       "engine_rulings": [
@@ -863,8 +858,8 @@
           "ruling_id": "DG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHAPESHIFT-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SHAPESHIFT_ENTRY_POWER": {
       "engine_rulings": [
@@ -874,8 +869,8 @@
           "ruling_id": "DG2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHAPESHIFT-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SHAPESHIFT_AGAIN": {
       "engine_rulings": [
@@ -885,8 +880,8 @@
           "ruling_id": "DG3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHAPESHIFT-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_VIRTUAL_ONCE_ATTACK": {
       "engine_rulings": [
@@ -896,8 +891,8 @@
           "ruling_id": "VA1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK": {
       "engine_rulings": [
@@ -907,8 +902,8 @@
           "ruling_id": "RC1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RECALL-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RECALL_EARLIER_STAGE": {
       "engine_rulings": [
@@ -918,8 +913,8 @@
           "ruling_id": "RC2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RECALL-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RECALL_TARGET_CHANGED": {
       "engine_rulings": [
@@ -929,8 +924,8 @@
           "ruling_id": "RC3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RECALL-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RECALL_FORM": {
       "engine_rulings": [
@@ -940,8 +935,8 @@
           "ruling_id": "RC4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RECALL-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT": {
       "engine_rulings": [
@@ -951,8 +946,8 @@
           "ruling_id": "DV1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": {
       "engine_rulings": [
@@ -962,8 +957,8 @@
           "ruling_id": "DV2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-DEVOLUTION-SAME-TURN",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION": {
       "engine_rulings": [
@@ -973,8 +968,8 @@
           "ruling_id": "DV3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-DEVOLUTION-SAME-TURN",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -984,8 +979,8 @@
           "ruling_id": "DV4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": {
       "engine_rulings": [
@@ -995,8 +990,8 @@
           "ruling_id": "DV5"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHAPESHIFT-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_REVIVE_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1006,8 +1001,8 @@
           "ruling_id": "RV1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1017,8 +1012,8 @@
           "ruling_id": "FT1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MR_FUJI_WITHOUT_BENCH": {
       "engine_rulings": [
@@ -1028,8 +1023,8 @@
           "ruling_id": "FJ1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER": {
       "engine_rulings": [
@@ -1039,8 +1034,8 @@
           "ruling_id": "SU1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SCOOP_UP_LAST_POKEMON": {
       "engine_rulings": [
@@ -1050,8 +1045,8 @@
           "ruling_id": "SU2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1061,8 +1056,8 @@
           "ruling_id": "ST1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE": {
       "engine_rulings": [
@@ -1072,8 +1067,8 @@
           "ruling_id": "NG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MISTYS_WRATH_SHORT_DECK": {
       "engine_rulings": [
@@ -1083,8 +1078,8 @@
           "ruling_id": "MW1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1094,8 +1089,8 @@
           "ruling_id": "EM1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET": {
       "engine_rulings": [
@@ -1105,8 +1100,8 @@
           "ruling_id": "SP1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TARGET-WITHOUT-EFFECT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_FULL_HEAL_SCOPE": {
       "engine_rulings": [
@@ -1116,8 +1111,8 @@
           "ruling_id": "FH1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1127,8 +1122,8 @@
           "ruling_id": "GL1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET": {
       "engine_rulings": [
@@ -1138,8 +1133,8 @@
           "ruling_id": "GL2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TARGET-WITHOUT-EFFECT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON": {
       "engine_rulings": [
@@ -1149,8 +1144,8 @@
           "ruling_id": "SB1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY": {
       "engine_rulings": [
@@ -1160,8 +1155,8 @@
           "ruling_id": "SB2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TARGET-WITHOUT-EFFECT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_LT_SURGE_WITHOUT_BASIC": {
       "engine_rulings": [
@@ -1171,8 +1166,8 @@
           "ruling_id": "LS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE": {
       "engine_rulings": [
@@ -1182,8 +1177,8 @@
           "ruling_id": "RT1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH": {
       "engine_rulings": [
@@ -1193,8 +1188,8 @@
           "ruling_id": "RG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND": {
       "engine_rulings": [
@@ -1204,8 +1199,8 @@
           "ruling_id": "MY1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MISTY_SELF_DAMAGE": {
       "engine_rulings": [
@@ -1215,8 +1210,8 @@
           "ruling_id": "MS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-MISTY-SELF-DAMAGE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_KOGA_POISON_ORDER": {
       "engine_rulings": [
@@ -1226,8 +1221,8 @@
           "ruling_id": "KG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-POISON-OVERWRITE-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN": {
       "engine_rulings": [
@@ -1237,8 +1232,8 @@
           "ruling_id": "STB1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRAINER-BAN-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION": {
       "engine_rulings": [
@@ -1248,8 +1243,8 @@
           "ruling_id": "TG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TARGET-WITHOUT-EFFECT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT": {
       "engine_rulings": [
@@ -1259,8 +1254,8 @@
           "ruling_id": "FG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-FUCHSIA-GYM-ONCE-PER-TURN",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET": {
       "engine_rulings": [
@@ -1270,8 +1265,8 @@
           "ruling_id": "FG2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER": {
       "engine_rulings": [
@@ -1281,8 +1276,8 @@
           "ruling_id": "EX1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER": {
       "engine_rulings": [
@@ -1292,8 +1287,8 @@
           "ruling_id": "VG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-STATED-COUNT-SHORT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER": {
       "engine_rulings": [
@@ -1303,8 +1298,8 @@
           "ruling_id": "VM1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_CHAOS_GYM_BORROWED_TURN": {
       "engine_rulings": [
@@ -1314,8 +1309,8 @@
           "ruling_id": "CH1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CHAOS-GYM-BORROWED-TURN",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RAINBOW_ENERGY_TYPE": {
       "engine_rulings": [
@@ -1325,8 +1320,8 @@
           "ruling_id": "RB1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE": {
       "engine_rulings": [
@@ -1336,8 +1331,8 @@
           "ruling_id": "RB2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD": {
       "engine_rulings": [
@@ -1347,8 +1342,8 @@
           "ruling_id": "RB3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER": {
       "engine_rulings": [
@@ -1358,8 +1353,8 @@
           "ruling_id": "RB4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY": {
       "engine_rulings": [
@@ -1369,8 +1364,8 @@
           "ruling_id": "TE2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_RETREAT_OVERPAY": {
       "engine_rulings": [
@@ -1380,8 +1375,8 @@
           "ruling_id": "RT1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-RETREAT-COST-PAYMENT",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_GOOP_GAS_NEW_POKEMON": {
       "engine_rulings": [
@@ -1391,8 +1386,8 @@
           "ruling_id": "GG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-GOOP-GAS-NEW-POKEMON",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BLAINE_SECOND_ATTACH": {
       "engine_rulings": [
@@ -1402,8 +1397,8 @@
           "ruling_id": "BL1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-BLAINE-SECOND-ATTACH",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ATTACH_BLOCK_SCOPE": {
       "engine_rulings": [
@@ -1413,8 +1408,8 @@
           "ruling_id": "CB1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACH-BLOCK-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BUZZAP_OPPONENT_TARGET": {
       "engine_rulings": [
@@ -1424,8 +1419,8 @@
           "ruling_id": "BZ1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-BUZZAP-TARGET-AND-COLOR",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE": {
       "engine_rulings": [
@@ -1435,8 +1430,8 @@
           "ruling_id": "BZ2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BUZZAP_COLOR": {
       "engine_rulings": [
@@ -1446,8 +1441,8 @@
           "ruling_id": "BZ3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-BUZZAP-TARGET-AND-COLOR",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BUZZAP_DISGUISED": {
       "engine_rulings": [
@@ -1457,8 +1452,8 @@
           "ruling_id": "BZ4"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SHAPESHIFT-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER": {
       "engine_rulings": [
@@ -1468,8 +1463,8 @@
           "ruling_id": "TS1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRANSPARENCY-COIN-ORDER",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": {
       "engine_rulings": [
@@ -1485,8 +1480,7 @@
         }
       ],
       "kyuura_issue": "UQ-POWER-DAMAGE-WEAKNESS-RESISTANCE",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "Z9"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SINKHOLE_TIMING": {
       "engine_rulings": [
@@ -1496,8 +1490,8 @@
           "ruling_id": "SH1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SINKHOLE-TIMING",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SCRAM_TIMING": {
       "engine_rulings": [
@@ -1507,8 +1501,8 @@
           "ruling_id": "SC1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SCRAM-TIMING",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SCRAM_POWER_RESTORED": {
       "engine_rulings": [
@@ -1518,8 +1512,8 @@
           "ruling_id": "SC2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-SCRAM-TIMING",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION": {
       "engine_rulings": [
@@ -1529,8 +1523,8 @@
           "ruling_id": "TD1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK": {
       "engine_rulings": [
@@ -1540,8 +1534,8 @@
           "ruling_id": "MM1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS": {
       "engine_rulings": [
@@ -1551,8 +1545,8 @@
           "ruling_id": "MM2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT": {
       "engine_rulings": [
@@ -1562,8 +1556,8 @@
           "ruling_id": "OM1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_MIRROR_MOVE_NON_ATTACK": {
       "engine_rulings": [
@@ -1573,8 +1567,8 @@
           "ruling_id": "OM2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-COPIED-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON": {
       "engine_rulings": [
@@ -1584,8 +1578,8 @@
           "ruling_id": "QZ1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CARD-USE-WITHOUT-TARGET",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER": {
       "engine_rulings": [
@@ -1595,8 +1589,8 @@
           "ruling_id": "NT1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON": {
       "engine_rulings": [
@@ -1606,8 +1600,8 @@
           "ruling_id": "NT2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN": {
       "engine_rulings": [
@@ -1617,8 +1611,8 @@
           "ruling_id": "NT3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-TRAINER-BAN-SCOPE",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER": {
       "engine_rulings": [
@@ -1628,8 +1622,8 @@
           "ruling_id": "RX1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_FLEE_DURING_OWN_ATTACK": {
       "engine_rulings": [
@@ -1639,8 +1633,8 @@
           "ruling_id": "FL1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BENCH_GUARD_RECOMPUTE": {
       "engine_rulings": [
@@ -1650,8 +1644,8 @@
           "ruling_id": "BG1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION": {
       "engine_rulings": [
@@ -1661,8 +1655,8 @@
           "ruling_id": "BG2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON": {
       "engine_rulings": [
@@ -1672,8 +1666,8 @@
           "ruling_id": "KD1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_CHARITY_BELOW_ZERO": {
       "engine_rulings": [
@@ -1683,8 +1677,8 @@
           "ruling_id": "CA1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-CHARITY-BELOW-ZERO",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ESP_OPPONENT_COIN_TOSS": {
       "engine_rulings": [
@@ -1694,8 +1688,8 @@
           "ruling_id": "ES1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ESP-REDO",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ESP_MULTIPLE": {
       "engine_rulings": [
@@ -1705,8 +1699,8 @@
           "ruling_id": "ES2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ESP-REDO",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS": {
       "engine_rulings": [
@@ -1716,8 +1710,8 @@
           "ruling_id": "ES3"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-ESP-REDO",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": {
       "engine_rulings": [
@@ -1727,8 +1721,8 @@
           "ruling_id": "FD1"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-FACE-DOWN-CARD",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_SECRET_PLAN_MINEFIELD": {
       "engine_rulings": [
@@ -1738,8 +1732,8 @@
           "ruling_id": "FD2"
         }
       ],
-      "kyuura_issue": null,
-      "kyuura_disposition": "not_in_kyuura"
+      "kyuura_issue": "UQ-FACE-DOWN-CARD",
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT": {
       "engine_rulings": [
@@ -1755,8 +1749,7 @@
         }
       ],
       "kyuura_issue": "UQ-ENERGY-DRAIN-ATTACKER-KO",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "DR8"
+      "kyuura_disposition": "issue"
     },
     "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY": {
       "engine_rulings": [
@@ -1772,8 +1765,7 @@
         }
       ],
       "kyuura_issue": "UQ-ENERGY-DRAIN-NO-ENERGY",
-      "kyuura_disposition": "issue",
-      "kyuura_index_engine_key": "DR13"
+      "kyuura_disposition": "issue"
     }
   },
   "codeless_questions": {
@@ -1797,7 +1789,7 @@
           "ruling_id": "SS1"
         }
       ],
-      "kyuura_issue": null,
+      "kyuura_issue": "UQ-SPEED-STAR-SCOPE",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": true
     },
@@ -1809,7 +1801,7 @@
           "ruling_id": "ED1"
         }
       ],
-      "kyuura_issue": null,
+      "kyuura_issue": "UQ-COPIED-ATTACK",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": true
     },
@@ -1821,7 +1813,7 @@
           "ruling_id": "FL0"
         }
       ],
-      "kyuura_issue": null,
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     },
@@ -1833,7 +1825,7 @@
           "ruling_id": "BG0"
         }
       ],
-      "kyuura_issue": null,
+      "kyuura_issue": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     },
@@ -1845,7 +1837,7 @@
           "ruling_id": "ES0"
         }
       ],
-      "kyuura_issue": null,
+      "kyuura_issue": "UQ-ESP-REDO",
       "reachable_with_current_cards": false,
       "counted_as_engine_unresolved": false
     }
@@ -2222,23 +2214,15 @@
       "PMCG6-073/power/0": "LD-PMCG6-073-PWR0",
       "PMCG1-047/attack/1": "LD-PMCG1-047-ATK1",
       "PMCG5-054/attack/0": "LD-PMCG5-054-ATK0",
-      "PMCG6-023/power/0": "LD-PMCG6-023-PWR0"
+      "PMCG6-023/power/0": "LD-PMCG6-023-PWR0",
+      "PMCG2-017/attack/0": "LD-PMCG2-017-ATK0",
+      "PMCG1-026/attack/0": "LD-PMCG1-026-ATK0",
+      "PMCG1-068/attack/0": "LD-PMCG1-068-ATK0",
+      "PMCG2-006/attack/1": "LD-PMCG2-006-ATK1",
+      "PMCG3-012/attack/1": "LD-PMCG3-012-ATK1",
+      "PMCG3-022/attack/0": "LD-PMCG3-022-ATK0"
     },
     "registered_without_kyuura_record": [
-      "PMCG2-017/attack/0",
-      "PMCG1-026/attack/0",
-      "PMCG1-026/attack/1",
-      "PMCG1-045/attack/1",
-      "PMCG1-068/attack/0",
-      "PMCG1-068/attack/1",
-      "PMCG2-006/attack/0",
-      "PMCG2-006/attack/1",
-      "PMCG2-018/attack/0",
-      "PMCG2-035/attack/0",
-      "PMCG3-012/attack/0",
-      "PMCG3-012/attack/1",
-      "PMCG3-022/attack/0",
-      "PMCG3-022/attack/1",
       "PMCG5-033/power/0"
     ],
     "kyuura_records_not_registered": [],
@@ -2273,7 +2257,15 @@
       "PMCG6-061/attack/0": "CC-PMCG6-061-P193",
       "PMCG6-063/attack/0": "CC-PMCG6-063-P229",
       "PMCG3-003/attack/0": "CC-PMCG3-003-P47",
-      "PMCG1-047/attack/0": "CC-PMCG1-047-P160"
+      "PMCG1-047/attack/0": "CC-PMCG1-047-P160",
+      "PMCG1-026/attack/1": "CC-PMCG1-026-P112",
+      "PMCG1-045/attack/1": "CC-PMCG1-045-P164",
+      "PMCG1-068/attack/1": "CC-PMCG1-068-P235",
+      "PMCG2-006/attack/0": "CC-PMCG2-006-P49",
+      "PMCG2-018/attack/0": "CC-PMCG2-018-P58",
+      "PMCG2-035/attack/0": "CC-PMCG2-035-P225",
+      "PMCG3-012/attack/0": "CC-PMCG3-012-P103",
+      "PMCG3-022/attack/1": "CC-PMCG3-022-P116"
     },
     "card_checks_without_text": {
       "PMCG1-061/attack/0": "CC-PMCG1-061-P231"
@@ -2751,11 +2743,95 @@
       "PMCG3-043/power/0": "kyuura data/curation/card_differences.json#PMCG3-043"
     },
     "user_corrected_text": {
-      "PMCG2-046/attack/0": "USER_PROVIDED_CORRECTIONS"
+      "PMCG2-046/attack/0": "kyuura data/curation/card_corrections.json#FIX-PMCG2-046-ATK0-TEXT"
     },
     "engine_simplified_text": {
       "PMCG6-074/attack/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4",
       "PMCG6-074/power/0": "kyuura-engine docs/final-pmcg-cards-v0.68.md#4"
+    },
+    "registered_trainers": {
+      "PMCG1-077": "LD-PMCG1-077-TRAINER",
+      "PMCG1-072": "LD-PMCG1-072-TRAINER",
+      "PMCG1-090": "LD-PMCG1-090-TRAINER",
+      "PMCG1-076": "LD-PMCG1-076-TRAINER",
+      "PMCG1-093": "LD-PMCG1-093-TRAINER",
+      "PMCG1-094": "LD-PMCG1-094-TRAINER"
+    },
+    "equivalent_registrations": {
+      "GD1-002/attack/1": "PMCG5-018/attack/1",
+      "GD1-009/attack/0": "PMCG5-053/attack/0",
+      "GD1-011/attack/0": "PMCG5-048/attack/0",
+      "GD1-013/attack/0": "PMCG5-055/attack/0",
+      "GD1-013/power/0": "PMCG5-055/power/0",
+      "GD2-004/attack/0": "PMCG5-033/attack/0",
+      "GD2-004/power/0": "PMCG5-033/power/0",
+      "GD2-008/attack/1": "PMCG5-025/attack/1",
+      "GD2-010/attack/0": "PMCG5-026/attack/0",
+      "GD2-010/attack/1": "PMCG5-026/attack/1",
+      "GD2-012/attack/0": "PMCG5-027/attack/0",
+      "GD3-001/attack/0": "PMCG5-036/attack/0",
+      "GD3-004/attack/0": "PMCG5-039/attack/0",
+      "GD3-004/attack/1": "PMCG5-039/attack/1",
+      "GD3-005/attack/0": "PMCG5-037/attack/0",
+      "GD3-006/attack/0": "PMCG5-040/attack/0",
+      "GD3-006/power/0": "PMCG5-040/power/0",
+      "GD3-007/attack/0": "PMCG5-038/attack/0",
+      "GD3-007/attack/1": "PMCG5-038/attack/1",
+      "GD4-002/attack/0": "PMCG5-002/attack/0",
+      "GD4-002/attack/1": "PMCG5-002/attack/1",
+      "GD4-006/attack/0": "PMCG5-005/attack/0",
+      "GD4-008/power/0": "PMCG5-015/power/0",
+      "GD4-010/attack/0": "PMCG5-013/attack/0",
+      "GD4-010/attack/1": "PMCG5-013/attack/1",
+      "GD4-011/attack/1": "PMCG5-006/attack/1",
+      "GD4-013/attack/0": "PMCG5-063/attack/0",
+      "GD4-013/power/0": "PMCG5-063/power/0",
+      "GD5-002/attack/0": "PMCG6-026/attack/0",
+      "GD5-002/power/0": "PMCG6-026/power/0",
+      "GD5-004/attack/0": "PMCG6-033/attack/0",
+      "GD5-004/power/0": "PMCG6-033/power/0",
+      "GD5-009/attack/0": "PMCG6-028/attack/0",
+      "GD5-010/attack/1": "PMCG6-030/attack/1",
+      "GD5-012/attack/0": "PMCG6-064/attack/0",
+      "GD5-012/attack/1": "PMCG6-064/attack/1",
+      "GD6-003/attack/0": "PMCG6-047/attack/0",
+      "GD6-004/attack/0": "PMCG6-053/attack/0",
+      "GD6-004/power/0": "PMCG6-053/power/0",
+      "GD6-013/attack/1": "PMCG6-066/attack/1",
+      "IP1-002/attack/1": "PMCG1-045/attack/1",
+      "IP1-013/attack/1": "PMCG1-035/attack/1",
+      "IP2-014/attack/0": "PMCG2-035/attack/0",
+      "PR1-019/attack/0": "PMCG4-048/attack/0",
+      "PR1-019/attack/1": "PMCG4-048/attack/1",
+      "PR1-031/attack/0": "PMCG5-027/attack/0",
+      "PR1-032/attack/0": "PMCG5-048/attack/0",
+      "PR1-039/attack/0": "PMCG5-063/attack/0",
+      "PR1-039/power/0": "PMCG5-063/power/0",
+      "PR1-047/attack/0": "PMCG5-007/attack/0",
+      "PR1-047/attack/1": "PMCG5-007/attack/1",
+      "PR1-048/attack/0": "PMCG5-030/attack/0",
+      "PR1-049/attack/0": "PMCG5-045/attack/0",
+      "PR1-049/attack/1": "PMCG5-045/attack/1",
+      "PR1-050/attack/0": "PMCG5-042/attack/0",
+      "PR1-050/attack/1": "PMCG5-042/attack/1",
+      "PR1-061/power/0": "PMCG2-028/power/0",
+      "PR1-076/attack/0": "PMCG3-010/attack/0",
+      "PR1-076/attack/1": "PMCG3-010/attack/1",
+      "PR1-080/attack/1": "PMCG1-034/attack/1",
+      "PR1-081/attack/1": "PMCG1-035/attack/1",
+      "PR1-082/attack/0": "PMCG1-024/attack/0",
+      "PR1-083/attack/0": "PMCG1-001/attack/0",
+      "PR1-084/attack/1": "PMCG1-031/attack/1",
+      "PR1-085/attack/0": "PMCG1-023/attack/0",
+      "PR1-085/attack/1": "PMCG1-023/attack/1",
+      "PR1-086/attack/0": "PMCG1-006/attack/0",
+      "PR1-087/attack/0": "PMCG1-068/attack/0",
+      "PR1-087/attack/1": "PMCG1-068/attack/1",
+      "PR1-088/attack/0": "PMCG3-023/attack/0",
+      "PR1-088/attack/1": "PMCG3-023/attack/1",
+      "PR1-089/attack/1": "PMCG1-014/attack/1",
+      "NIP1-010/attack/1": "PMCG4-005/attack/1",
+      "NIP2-001/attack/1": "PMCG1-035/attack/1"
     }
   },
   "card_checks": {
@@ -2945,6 +3021,57 @@
       ],
       "PMCG6-073": [
         "CC-PMCG6-073-P245"
+      ],
+      "PMCG1-077": [
+        "CC-PMCG1-077-P255"
+      ],
+      "PMCG1-072": [
+        "CC-PMCG1-072-P255"
+      ],
+      "PMCG1-090": [
+        "CC-PMCG1-090-P260"
+      ],
+      "PMCG1-076": [
+        "CC-PMCG1-076-P257"
+      ],
+      "PMCG1-093": [
+        "CC-PMCG1-093-P259"
+      ],
+      "PMCG1-094": [
+        "CC-PMCG1-094-P259"
+      ],
+      "PMCG2-017": [
+        "CC-PMCG2-017-P56"
+      ],
+      "PMCG3-022": [
+        "CC-PMCG3-022-P116"
+      ],
+      "PMCG1-026": [
+        "CC-PMCG1-026-P112"
+      ],
+      "PMCG2-021": [
+        "CC-PMCG2-021-P108"
+      ],
+      "PMCG2-022": [
+        "CC-PMCG2-022-P109"
+      ],
+      "PMCG2-018": [
+        "CC-PMCG2-018-P58"
+      ],
+      "PMCG2-006": [
+        "CC-PMCG2-006-P49"
+      ],
+      "PMCG2-035": [
+        "CC-PMCG2-035-P225"
+      ],
+      "PMCG1-068": [
+        "CC-PMCG1-068-P235"
+      ],
+      "PMCG1-045": [
+        "CC-PMCG1-045-P164"
+      ],
+      "PMCG3-012": [
+        "CC-PMCG3-012-P103"
       ]
     },
     "not_in_engine": {
@@ -2955,49 +3082,10 @@
         "CC-PMCG5-048-P200"
       ]
     },
-    "engine_verified_without_kyuura_record": [
-      "PMCG1-077",
-      "PMCG1-072",
-      "PMCG1-090",
-      "PMCG1-076",
-      "PMCG1-093",
-      "PMCG1-094",
-      "PMCG2-017",
-      "PMCG3-022",
-      "PMCG1-026",
-      "PMCG2-021",
-      "PMCG2-022",
-      "PMCG2-018",
-      "PMCG2-006",
-      "PMCG2-035",
-      "PMCG1-068",
-      "PMCG1-045",
-      "PMCG3-012"
-    ],
+    "engine_verified_without_kyuura_record": [],
     "note": "エンジンの照合の記録（card_verification.json）のあるカード → kyuura の CC- の id。kyuura の照合の記録のないカードは engine_verified_without_kyuura_record（kyuura への報告事項。2026-10-15 に kyuura がエンジンの照合の記録を取り込んで空になった。取り込んだ記録は kyuura の import_provenance を持ち、kyuura は原典の画像を読み直していない。v0.19 のオーキドはかせ（PMCG1-077。p.255。2026-10-15 にエンジンが照合）・v0.21 の突風（PMCG1-072。p.255。2026-10-15 にエンジンが照合）・v0.22 のパソコン通信（PMCG1-090。p.260。2026-10-15 にエンジンが照合）・v0.23 のエネルギー回収（PMCG1-076。p.257。2026-10-15 にエンジンが照合。kyuura の rule_history.json の ERR-ENERGY-RETRIEVAL に同じ最新の説明の記録はあるが、照合の記録（CC-）はない）・v0.24 のポケモン交換おじさん（PMCG1-093。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・再録の書き方の違い（docs/cards/reprints.md）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.25 のポケモン育て屋さん（PMCG1-094。p.259。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）・2002 年のサポーター適用カードの一覧（MIX-SUPPORTER-ERRATA）・p.88 の第4弾のゼニガメの解説の例（CC-PMCG4-018-P43。エンジンの記録の取り込み）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.27 のストライク（PMCG2-017。p.56・p.57・p.321。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）があるが、最新の説明（LD-）・照合の記録（CC-）はない）・v0.28 の既存の効果の型の登録だけで加えた 10 枚（ラプラス PMCG3-022・スターミー PMCG1-026・トサキント PMCG2-021・アズマオウ PMCG2-022・カイロス PMCG2-018・タマタマ PMCG2-006・プリン PMCG2-035・ラッキー PMCG1-068・スリープ PMCG1-045・シェルダー PMCG3-012。2026-10-15 にエンジンが照合。kyuura には印刷の文面（cards.json）だけがある）は kyuura に記録がないので挙げる）"
   },
-  "card_data_differences": [
-    {
-      "card_id": "PMCG6-023",
-      "field": "jp_en_differences",
-      "note": "kyuura が adf9710 でだつりょくえきの英語版の「if it has any」を記録した（参照カード。エンジンは使わない項目）"
-    },
-    {
-      "card_id": "PMCG2-041",
-      "field": "notes",
-      "note": "v0.62: kyuura が f52a8e2 で、なぞのばしょの誤記と p.234 で確かめたことを書き足した（出典の記録の欄。エンジンは使わない）。写しには、確定した修正（CC-PMCG2-041-P234 の corrections。ワザ 1 の名前・レベル）だけを当てはめた（scripts/extract_kyuura_cards.py の CONFIRMED_CORRECTIONS）"
-    },
-    {
-      "card_id": "PMCG2-041",
-      "field": "ja_text_source",
-      "note": "v0.62: kyuura が f52a8e2 で、日本語テキストの出典を p.234 とした（出典の記録の欄。エンジンは使わない。写しには当てはめていない）"
-    },
-    {
-      "card_id": "PMCG2-046",
-      "field": "pokemon",
-      "note": "v0.68: 写しのワザ 0 の説明文に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。「コインを投げて「おもて」なら、」を除いた）を当てはめた（kyuura の研究の基準のコミットは修正の前の値。kyuura への報告事項）"
-    }
-  ],
+  "card_data_differences": [],
   "applied_rule_records": [
     {
       "kyuura_record": "GR-2000-P324-DEVOLUTION",

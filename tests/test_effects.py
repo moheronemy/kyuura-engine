@@ -13,7 +13,7 @@ from kyuura_engine import (
     new_game, state_to_dict,
 )
 from kyuura_engine.cards import pool_from_extract, read_extract
-from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey, PowerKey
+from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, EQUIVALENT_CARDS, AttackEffect, AttackEntry, AttackKey, PowerKey
 
 from tests.helpers import (
     CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, NO_EMBER_EFFECTS, PONYTA, VENUSAUR, WATER_FIGHTING_DECK,
@@ -144,6 +144,7 @@ V0_65_WITH_TEXT = [AttackKey("PMCG5-033", 0), AttackKey("PMCG5-055", 0)]
 V0_68_WITH_TEXT = [AttackKey("PMCG2-046", 0), AttackKey("PMCG2-046", 1), AttackKey("PMCG6-074", 0)]
 
 
+
 class RecordingEffect(AttackEffect):
     """テスト専用の実装: ダメージを与えず、呼ばれたことをログに残すだけ（製品のコードには登録しない）。"""
 
@@ -268,7 +269,7 @@ class DefaultRegistryTest(unittest.TestCase):
         # ウインディの「とっしん」（印刷の文面）。v0.31 で v0.30 の保留の 22 枚と進化元・依存のカードを加えた（V0_31_WITH_TEXT。
         # どれも採用の記録の play_text（kyuura の印刷の文面・エラッタ・card_differences の最新の説明）と合う。
         # scripts/check_card_sources.py。docs/held-cards-v0.31.md）
-        self.assertEqual(with_text, sorted([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+        expected = ([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-014", 1), AttackKey("PMCG1-015", 0),
                                      AttackKey("PMCG1-017", 1), AttackKey("PMCG1-019", 0), AttackKey("PMCG1-019", 1), AttackKey("PMCG1-020", 1),
@@ -293,7 +294,10 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT)
+        # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
+        expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
+        self.assertEqual(with_text, sorted(expected))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -453,7 +457,7 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   docs/geodude-line-unbounded-coins-v0.64.md）
         # + カスミのドククラゲの「クラゲどく」・タケシのサイドンの「ラリアット」（v0.65。docs/reactive-decisions-v0.65.md）
         # + ガルーラの「こどものおつかい」「れんぞくパンチ」・キョウのベトベトンの「ヘドロのうず」・イマクニ？のドードーの「ハモる」（v0.68。docs/final-pmcg-cards-v0.68.md）
-        self.assertEqual(len(keys), 597)
+        self.assertEqual(len(keys), 689)  # v0.69: 拡張パック以外の商品の同じカード 84 枚のワザ 92 を加えた（元のカードの登録を写した）
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -475,7 +479,7 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.49 でメタモンの［へんしん］（PMCG3-042）・タケシのキュウコンの「ばける」（PMCG5-019）・ナツメのフーディンの［サイコリンク］（PMCG6-053）を加えた
         # （docs/virtual-attacks-transformation-v0.49.md）
         # v0.59 でマルマイン（第1弾。PMCG1-040）の［エネエネ］を加えた（docs/energy-control-power-suppression-v0.59.md）。
-        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-040", 0), PowerKey("PMCG1-049", 0),
+        ORIGINAL_POWERS = (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-040", 0), PowerKey("PMCG1-049", 0),
                                   PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG2-015", 0), PowerKey("PMCG2-027", 0), PowerKey("PMCG2-028", 0),
                                   PowerKey("PMCG2-040", 0), PowerKey("PMCG2-047", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
                                   PowerKey("PMCG3-015", 0), PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0),
@@ -497,7 +501,12 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                   PowerKey("PMCG6-023", 0),  # v0.68: キョウのベトベトンの［だつりょくえき］
                                   PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
                                   PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0),
-                                  PowerKey("PMCG6-074", 0)))  # v0.68: イマクニ？のドードーの［にげまくり］
+                                  PowerKey("PMCG6-074", 0))  # v0.68: イマクニ？のドードーの［にげまくり］
+        # v0.69: 拡張パック以外の商品の同じカードの新しい id 10 枚の特殊能力（元のカードの登録を写した）
+        self.assertEqual(tuple(k for k in powers if k.card_id.startswith("PMCG")), ORIGINAL_POWERS)
+        self.assertEqual(tuple(k for k in powers if not k.card_id.startswith("PMCG")),
+                         (PowerKey("GD1-013", 0), PowerKey("GD2-004", 0), PowerKey("GD3-006", 0), PowerKey("GD4-008", 0), PowerKey("GD4-013", 0),
+                          PowerKey("GD5-002", 0), PowerKey("GD5-004", 0), PowerKey("GD6-004", 0), PowerKey("PR1-039", 0), PowerKey("PR1-061", 0)))
 
 
 if __name__ == "__main__":

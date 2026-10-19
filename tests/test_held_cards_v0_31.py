@@ -235,7 +235,7 @@ class CardDataTest(unittest.TestCase):
             record = records[card_id]
             with self.subTest(card=card_id):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]),
-                                 ("kyuura_data", "adopted", read_extract()["source"]["commit"]))
+                                 ("kyuura_data", "adopted", read_extract()["previous_source"]["commit"]))  # v0.69: 採用したときのデータのコミット
                 [check] = record["external_checks"]
                 self.assertEqual(check["site"], "pcg-search.com")
                 self.assertTrue(check["url"].startswith("https://pcg-search.com/"))

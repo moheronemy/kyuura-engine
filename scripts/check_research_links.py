@@ -28,6 +28,11 @@ kyuura（https://github.com/moheronemy/kyuura）の ``research_commit`` の記�
    欄は、採用の記録の論点（``issues``）に挙げる。過去の原典照合の記録のあるカードに、照合の記録に文面のない登録の根拠（``play_text``）を
    書いた記録（``basis: guidebook_record``。v0.30）も同じに確かめる。
 
+v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章・7 章）: 利用者が示した訂正（``user_corrected_text``）は kyuura の台帳（data/curation/card_corrections.json）の
+   根拠 ``user_provided`` の記録に結ぶ。トレーナーの最新の説明（LD-…-TRAINER）は ``registered_trainers`` に結び、登録の処理に使う文面と出典のページと照らす。
+   拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の登録（``equivalent_registrations``）は、元のカードの登録と文面・出典が同じで、元のカードの登録が
+   ほかの区分にあり、研究の基準のコミットで同じカードの組（same_card_group）にあって印刷の文面が同じ（4g）。
+
 kyuura のデータの写しは作らない（id と、照らした結果だけを使う）。問題があれば終了コード 1。
 
     python3 scripts/check_research_links.py --kyuura ../kyuura
@@ -165,7 +170,9 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     # 4. 最新の説明
     texts = registered_texts(registry)
     ld = {x["id"]: x for x in descriptions}
-    ld_by_target = {f"{x['card_id']}/{x['target']['kind']}/{x['target']['index']}": x["id"] for x in descriptions}
+    ld_by_target = {f"{x['card_id']}/{x['target']['kind']}/{x['target']['index']}": x["id"] for x in descriptions if x["target"]["kind"] != "trainer"}
+    # v0.69: kyuura はトレーナーの最新の説明も記録した（LD-…-TRAINER。target に位置がない）。登録の TrainerEntry の play_text_ja・出典（ページ）と照らす
+    trainer_ld = {x["card_id"]: x for x in descriptions if x["target"]["kind"] == "trainer"}
     section = links["latest_descriptions"]
     for target, ld_id in section["registered"].items():
         record = ld.get(ld_id)
@@ -184,13 +191,32 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
         if source != ld_id and source != f"P43 p.{record['latest_description']['page']}" \
                 and not (source or "").startswith(f"P43 p.{record['latest_description']['page']}"):
             problems.append(f"{target}: 出典 {source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
+    registry_ = E.DEFAULT_EFFECTS if registry is None else registry
+    trainers_listed = section.get("registered_trainers", {})
+    if set(trainers_listed) != set(trainer_ld):
+        problems.append(f"トレーナーの最新の説明（LD-…-TRAINER）の一覧が違う: kyuura だけ {sorted(set(trainer_ld) - set(trainers_listed))}、"
+                        f"対応表だけ {sorted(set(trainers_listed) - set(trainer_ld))}")
+    for card, ld_id in trainers_listed.items():
+        record = trainer_ld.get(card)
+        entry = registry_.trainer_entry(card)
+        if record is None or record["id"] != ld_id:
+            problems.append(f"{card}: トレーナーの最新の説明 {ld_id} が kyuura にない、またはカードが違う")
+            continue
+        if entry is None:
+            problems.append(f"{card}: トレーナーの最新の説明 {ld_id} のカードが登録されていない")
+            continue
+        if record["latest_description"]["text_ja"] != entry.play_text_ja:
+            problems.append(f"{card}: 登録の処理に使う文面が kyuura の {ld_id} と違う")
+        if entry.source != f"P43 p.{record['latest_description']['page']}":
+            problems.append(f"{card}: 出典 {entry.source} が kyuura の {ld_id} のページ（p.{record['latest_description']['page']}）と違う")
     adopted_printed = set(section.get("adopted_printed_text", []))
     errata_text = section.get("errata_text", {})
     difference_text = section.get("difference_text", {})
-    user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した修正を当てはめた写しの説明文（kyuura の記録ではない）
+    user_corrected = section.get("user_corrected_text", {})  # v0.68: 利用者が示した訂正（kyuura の照合の記録・最新の説明ではない。v0.69 から kyuura の台帳の記録）
     simplified = section.get("engine_simplified_text", {})  # v0.68: エンジンの簡略化した仕様（公式の裁定・エラッタではない）
+    equivalent = section.get("equivalent_registrations", {})  # v0.69: 登録したカードと処理に使う欄が同じカードの登録 → 元のカードの登録
     in_checks = (set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {})) | adopted_printed
-                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified))
+                 | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified) | set(equivalent))
     without = sorted(t for t in texts if t not in ld_by_target and t not in in_checks)
     if without != sorted(section["registered_without_kyuura_record"]):
         problems.append(f"kyuura の記録のない登録の一覧が違う: 実際 {without}")
@@ -318,21 +344,25 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
     others = accounted | set(section["registered_without_kyuura_record"]) | adopted_printed | set(errata_text) | set(difference_text)
     if (set(user_corrected) | set(simplified)) & others or set(user_corrected) & set(simplified):
         problems.append("user_corrected_text・engine_simplified_text の登録が、ほかの区分にも入っている")
-    user_corrections = {(c["card_id"], c["field"]): c for c in
-                        json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8")).get("user_provided_corrections", [])}
+    # v0.69: 利用者が示した訂正は、kyuura が data/cards.json に当てはめた（台帳 data/curation/card_corrections.json の根拠 user_provided の記録）。根拠は台帳の記録の id で、
+    # 研究の基準のコミットの台帳・カードの記録の corrections に同じ記録があり、文面が訂正のあとの値と同じ・訂正の前の値と違う・kyuura が画像を見ていないことを確かめる
+    ledger = {x["id"]: x for x in git_show(kyuura, commit, "data/curation/card_corrections.json")["corrections"]}
     for target, basis in user_corrected.items():
         card, kind, index = target.split("/")
-        correction = user_corrections.get((card, f"pokemon.{'attacks' if kind == 'attack' else 'powers'}[{index}].text.ja"))
-        if basis != "USER_PROVIDED_CORRECTIONS" or correction is None:
-            problems.append(f"{target}: user_corrected_text の根拠が、写しの利用者が示した修正（user_provided_corrections）でない")
+        path = f"pokemon.{'attacks' if kind == 'attack' else 'powers'}[{index}].text.ja"
+        prefix = "kyuura data/curation/card_corrections.json#"
+        correction = ledger.get(basis.removeprefix(prefix)) if basis.startswith(prefix) else None
+        if correction is None or (correction.get("card_id"), correction.get("field"), correction.get("basis")) != (card, path, "user_provided"):
+            problems.append(f"{target}: user_corrected_text の根拠 {basis!r} が、研究の基準のコミットの台帳のこの欄の利用者が示した訂正（user_provided）でない")
             continue
+        if correction.get("kyuura_saw_image") is not False:
+            problems.append(f"{target}: 台帳の訂正 {correction['id']} が、kyuura が画像を見たと書いている（利用者が示した訂正として扱えない）")
+        if correction["id"] not in {x.get("id") for x in (research_cards.get(card) or {}).get("corrections") or ()}:
+            problems.append(f"{target}: 研究の基準のコミットのカードの記録の corrections に {correction['id']} がない")
         if target not in texts or texts[target][0] != correction["after"]:
-            problems.append(f"{target}: 処理に使う文面が、利用者が示した修正のあとの文面と違う")
-        research = printed_at_research(target)
-        if research == correction["after"]:
-            problems.append(f"{target}: kyuura の研究の基準のコミットの文面が修正のあとの値と同じ（kyuura が直した。adopted_printed_text に移す）")
-        elif research != correction["before"]:
-            problems.append(f"{target}: kyuura の研究の基準のコミットの文面が、利用者が示した修正の前の値と違う")
+            problems.append(f"{target}: 処理に使う文面が、利用者が示した訂正のあとの文面と違う")
+        if printed_at_research(target) != correction["after"] or correction["before"] == correction["after"]:
+            problems.append(f"{target}: kyuura の研究の基準のコミットの文面が、訂正のあとの値でない")
         if target in ld_by_target:
             problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（registered に移し、最新の説明にしたがう）")
     for target, basis in simplified.items():
@@ -342,6 +372,33 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
             problems.append(f"{target}: engine_simplified_text の対象に、研究の基準のコミットの印刷の文面がない")
         if target in ld_by_target:
             problems.append(f"{target}: kyuura に最新の説明の記録 {ld_by_target[target]} がある（registered に移し、最新の説明にしたがう）")
+
+    # 4g. v0.69（docs/equivalent-non-pack-cards-v0.69.md 4 章）: 登録したカードと処理に使う欄が同じカード（拡張パック以外の商品）の登録。元のカードの登録の区分にしたがう。
+    # 元のカードと、研究の基準のコミットで同じカードの組（same_card_group）にあり、印刷の文面が同じで、登録の処理に使う文面・出典が元のカードと同じ。元のカードの登録は
+    # ほかの区分にある（最新の説明・エラッタなどの記録は元のカードのもので、再録のカードの照合の記録ではない）
+    others = (set(section["registered"]) | set(section.get("recorded_in_card_checks", {})) | set(section.get("card_checks_without_text", {}))
+              | adopted_printed | set(errata_text) | set(difference_text) | set(user_corrected) | set(simplified)
+              | set(section["registered_without_kyuura_record"]))
+    actual = {t for t in texts if t.split("/")[0] in getattr(E, "EQUIVALENT_CARDS", {})}
+    if set(equivalent) != actual:
+        problems.append(f"equivalent_registrations の一覧が違う: 実際だけ {sorted(actual - set(equivalent))}、対応表だけ {sorted(set(equivalent) - actual)}")
+    if set(equivalent) & others:
+        problems.append("equivalent_registrations の登録が、ほかの区分にも入っている")
+    for target, original in equivalent.items():
+        card, kind, index = target.split("/")
+        theirs = original.split("/")
+        if getattr(E, "EQUIVALENT_CARDS", {}).get(card) != theirs[0] or theirs[1:] != [kind, index]:
+            problems.append(f"{target}: equivalent_registrations の元 {original} が effects.EQUIVALENT_CARDS の元のカードの同じ対象でない")
+            continue
+        if original not in others:
+            problems.append(f"{target}: 元のカードの登録 {original} が、研究の対応表のどの区分にもない")
+        if target not in texts or original not in texts or texts[target] != texts[original]:
+            problems.append(f"{target}: 処理に使う文面・出典が、元のカードの登録 {original} と違う")
+        group = (research_cards.get(card) or {}).get("same_card_group")
+        if group is None or group != (research_cards.get(theirs[0]) or {}).get("same_card_group"):
+            problems.append(f"{target}: 研究の基準のコミットで、元のカード {theirs[0]} と同じカードの組（same_card_group）にない")
+        if printed_at_research(target) != printed_at_research(original):
+            problems.append(f"{target}: 研究の基準のコミットの印刷の文面が、元のカード {theirs[0]} と違う")
 
     # 4c. kyuura データの採用で、処理に使う文面を kyuura の印刷の文面にした登録（2026-10-15 からの方針）
     data_errors = {(x["card_id"], e.get("field")) for x in checks for e in (x.get("data_error") or [])}

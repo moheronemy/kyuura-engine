@@ -166,8 +166,8 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         playable = [pool.get(c) for c in pool.definitions if pool.is_playable(c)]
         by = {k: sum(1 for d in playable if d.category == k) for k in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by, {"pokemon": 353, "trainer": 94, "energy": 10})  # v0.68 でポケモン 3 枚  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた  # v0.67 でトレーナー 1 枚
-        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (597, 58, 94))  # v0.68 でワザ 4・特殊能力 2  # v0.65 でワザ 2・特殊能力 2・トレーナー 1  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
+        self.assertEqual(by, {"pokemon": 410, "trainer": 113, "energy": 30})  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた  # v0.67 でトレーナー 1 枚
+        self.assertEqual((len(DEFAULT_EFFECTS._attacks), len(DEFAULT_EFFECTS._powers), len(DEFAULT_EFFECTS._trainers)), (689, 68, 113))  # v0.69 でワザ 92・特殊能力 10・トレーナー 19（拡張パック以外の商品の同じカードの写し）  # v0.68 でワザ 4・特殊能力 2  # v0.65 でワザ 2・特殊能力 2・トレーナー 1  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
         for card in (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM):
             self.assertTrue(pool.is_playable(card))
 

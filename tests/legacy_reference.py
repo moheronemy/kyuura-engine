@@ -28,6 +28,7 @@ from pathlib import Path
 
 from kyuura_engine import EngineError, command_to_dict, state_to_dict
 from kyuura_engine.rng import rng_fingerprint
+from tests.helpers import with_card_data_commit_before_v0_69
 
 PATH = Path(__file__).resolve().parent / "fixtures" / "legacy_reference_v0_15.json"
 RECORD_ENV = "KYUURA_RECORD_LEGACY_REFERENCE"
@@ -44,8 +45,9 @@ HOW = (
 
 
 def digest(state) -> str:
-    """状態の指紋（書き出しの形式 9 の全体。ログ・乱数の指紋・決定・止めた理由を含む）。"""
-    data = json.dumps(state_to_dict(state, format_version=9), sort_keys=True, ensure_ascii=False, default=repr)
+    """状態の指紋（書き出しの形式 9 の全体。ログ・乱数の指紋・決定・止めた理由を含む）。v0.69: 写しの元（card_data.commit・ログ game_created の card_data_commit）の
+    2 か所だけを、確かめた移行（tests/helpers.py の ``with_card_data_commit_before_v0_69``）でもどしてから指紋をとる（参照データは v0.68 までの写しの元で記録した。作り直さない）。"""
+    data = json.dumps(with_card_data_commit_before_v0_69(state_to_dict(state, format_version=9)), sort_keys=True, ensure_ascii=False, default=repr)
     return hashlib.sha256(data.encode("utf-8")).hexdigest()[:32]
 
 

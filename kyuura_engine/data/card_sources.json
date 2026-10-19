@@ -7,6 +7,16 @@
     "card_data": "kyuura data/cards.json",
     "external_site": "pcg-search.com"
   },
+  "data_migrations": [
+    {
+      "from": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "to": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "on": "2026-10-19",
+      "check": "scripts/extract_kyuura_cards.py の previous_copy_problems・kyuura_correction_problems（写す欄が、kyuura が当てはめた修正の欄と出典の記録の欄を除いて同じ）",
+      "document": "docs/equivalent-non-pack-cards-v0.69.md",
+      "note": "v0.69 で写しの元を ecb2d69 から 7d3f4ca に上げた。v0.68 までの採用の記録の kyuura_commit（採用したときのデータのコミット）・記録した日・外部照合の確認日と照らしたコミットは書き換えない（採用し直した・照合し直したことにしない）。kyuura_records は、研究の基準のコミットを 7d3f4ca に上げたので、そのコミットでカードを指す kyuura の記録の id に合わせた（記録を読み直したのではなく、id の対応を直した）"
+    }
+  ],
   "cards": {
     "PMCG1-024": {
       "basis": "kyuura_data",
@@ -915,7 +925,8 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
       "kyuura_records": [
-        "TXT-CHARIZARD"
+        "TXT-CHARIZARD",
+        "UQ-ENERGY-BURN-TRANSFER"
       ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
@@ -1014,7 +1025,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DESTINY-BOND-KO"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1106,7 +1119,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1160,7 +1175,11 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DISCARD-ENERGY-TIMING-CONFUSION",
+        "UQ-STATED-COUNT-SHORT",
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1596,7 +1615,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1732,7 +1753,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -1939,7 +1962,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COIN-IN-NULLIFIED-ELEMENT"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura data/curation/card_differences.json#PMCG1-067"
@@ -2031,7 +2056,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-EXTRA-ENERGY-COLORLESS"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -2085,7 +2112,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -2126,7 +2155,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-15",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-TARGET-WITHOUT-EFFECT"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -2660,7 +2691,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-OPPONENT-POKEMON-COUNTERS"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -4023,7 +4056,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-POISON-OVERWRITE-ORDER"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -4115,7 +4150,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-REDUCED-DAMAGE-BENCH-TARGET"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -4498,7 +4535,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -4930,7 +4969,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-RETURN-TO-DECK-KO-ORDER"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -5239,7 +5280,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BENCH-DAMAGE-WEAKNESS-RESISTANCE"
+      ],
       "play_text": {
         "attack/1": "kyuura_printed_text"
       },
@@ -5964,7 +6007,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DAMAGE-TRIGGER-TIMING"
+      ],
       "play_text": {
         "attack/1": "kyuura_printed_text"
       },
@@ -6604,7 +6649,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -7360,7 +7407,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACK-LOCK-SOURCE-RETURNED"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -8437,7 +8486,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COUNTER-TRANSFER-PROTECTED"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -8870,7 +8921,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text"
       },
@@ -8913,7 +8966,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -9092,7 +9147,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ENTRY-POWER-DURING-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -9313,7 +9370,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -9401,7 +9460,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -9550,7 +9611,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -9905,7 +9968,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -10042,7 +10107,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -10133,7 +10200,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -10240,7 +10309,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-EVOLUTION-PERMISSION-FROM-DECK"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -10309,7 +10381,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-16",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -11074,7 +11148,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CALMING-AROMA-RETALIATION"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text",
         "attack/0": "kyuura_printed_text"
@@ -11178,7 +11254,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-RETREAT-COST-PAYMENT"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text",
         "attack/0": "kyuura_printed_text"
@@ -11508,7 +11586,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-PLAY-AS-POKEMON"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -11540,7 +11620,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-PLAY-AS-POKEMON"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -11670,7 +11752,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text"
       },
@@ -12087,7 +12171,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CHANGE-ABSENT-WEAKNESS-RESISTANCE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -12187,7 +12273,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SHIFT-COLOR-DURATION"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -12231,7 +12319,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-EVOLUTION-HP-BELOW-DAMAGE"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text"
       },
@@ -12451,7 +12541,11 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+        "UQ-TRANSFORM-SCOPE"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text"
       },
@@ -12491,7 +12585,8 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
       "kyuura_records": [
-        "ERR-BROCK-NINETALES"
+        "ERR-BROCK-NINETALES",
+        "UQ-SHAPESHIFT-SCOPE"
       ],
       "play_text": {
         "power/0": "kyuura_printed_text"
@@ -12535,7 +12630,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-RECALL-SCOPE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -12567,7 +12664,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-DEVOLUTION-SAME-TURN"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -12612,7 +12711,12 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-DEVOLUTION-SAME-TURN",
+        "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+        "UQ-SHAPESHIFT-SCOPE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -12697,7 +12801,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -12729,7 +12835,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -12761,7 +12869,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -12793,7 +12903,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13063,7 +13176,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13127,7 +13242,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13159,7 +13276,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-17",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13423,7 +13542,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13527,7 +13648,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13655,7 +13778,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13727,7 +13852,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-TARGET-WITHOUT-EFFECT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13759,7 +13886,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13967,7 +14096,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-TARGET-WITHOUT-EFFECT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -13999,7 +14131,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-TARGET-WITHOUT-EFFECT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14103,7 +14238,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14135,7 +14272,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14167,7 +14306,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14231,7 +14372,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14263,7 +14406,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-MISTY-SELF-DAMAGE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14295,7 +14440,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-POISON-OVERWRITE-ORDER"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14359,7 +14506,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-TRAINER-BAN-SCOPE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14591,7 +14740,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-TARGET-WITHOUT-EFFECT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14631,7 +14782,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET",
+        "UQ-FUCHSIA-GYM-ONCE-PER-TURN"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14751,7 +14905,10 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-FACE-DOWN-CARD",
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14791,7 +14948,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-STATED-COUNT-SHORT"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14831,7 +14990,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -14911,7 +15072,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CHAOS-GYM-BORROWED-TURN"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15154,7 +15317,9 @@
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
       "kyuura_records": [
-        "CR-ENERGY-TRANS-RAINBOW"
+        "CR-ENERGY-TRANS-RAINBOW",
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY"
       ],
       "play_text": {
         "energy": "kyuura_printed_text"
@@ -15188,7 +15353,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-RETREAT-COST-PAYMENT"
+      ],
       "play_text": {
         "energy": "card_name_and_edition_symbols"
       },
@@ -15229,7 +15396,11 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BUZZAP-TARGET-AND-COLOR",
+        "UQ-SHAPESHIFT-SCOPE",
+        "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text",
         "attack/0": "kyuura_printed_text"
@@ -15273,7 +15444,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-BLAINE-SECOND-ATTACH"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15337,7 +15510,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACH-BLOCK-SCOPE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text"
       },
@@ -15424,7 +15599,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-GOOP-GAS-NEW-POKEMON"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15614,7 +15791,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SPEED-STAR-SCOPE"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -15712,7 +15891,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SINKHOLE-TIMING"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text",
         "attack/0": "kyuura_printed_text"
@@ -15756,7 +15937,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-SCRAM-TIMING"
+      ],
       "play_text": {
         "power/0": "kyuura_printed_text",
         "attack/0": "kyuura_printed_text"
@@ -15800,7 +15983,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-NON-ATTACK-DAMAGE-MODIFIERS"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -15840,7 +16025,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -15886,7 +16073,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/1": "kyuura_printed_text"
       },
@@ -16029,7 +16218,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-COPIED-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "attack/1": "kyuura_printed_text"
@@ -16195,7 +16386,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-UP-TO-ZERO-CHOICE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16242,7 +16435,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CARD-USE-WITHOUT-TARGET"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16403,7 +16598,11 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+        "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+        "UQ-TRAINER-BAN-SCOPE"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16435,7 +16634,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-REACTIVE-SWITCH-DURING-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura-engine docs/unresolved-research-v0.18b.md#4.1"
@@ -16487,7 +16688,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-18",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-REACTIVE-SWITCH-DURING-ATTACK"
+      ],
       "play_text": {
         "attack/0": "kyuura_printed_text",
         "power/0": "kyuura_printed_text"
@@ -16531,7 +16734,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-19",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-CHARITY-BELOW-ZERO"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16571,7 +16776,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-19",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-ESP-REDO"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16635,7 +16842,9 @@
       "status": "adopted",
       "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
       "recorded_on": "2026-10-19",
-      "kyuura_records": [],
+      "kyuura_records": [
+        "UQ-FACE-DOWN-CARD"
+      ],
       "play_text": {
         "trainer": "kyuura_printed_text"
       },
@@ -16755,6 +16964,1278 @@
       ],
       "issues": [],
       "notes": "v0.68 で加えた。印刷の文面（ハモるの歌を歌う・［にげまくり］のカードを投げる）はデータのまま照合に使い、処理はエンジンの簡略化した仕様（ハモるは使ったらすぐに 30 ダメージ。［にげまくり］の投げる動作は処理にふくめず、にげるはふつうの規定のまま（印刷のにげるエネルギー 0））。公式の裁定・エラッタではない（docs/final-pmcg-cards-v0.68.md 4 章）"
+    },
+    "GD1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのロコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-018",
+      "notes": "v0.69: タケシのロコン（GD1。発売 1998-04-26）は、登録した PMCG5-018 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD1-002）。登録は PMCG5-018 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-018 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-009": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのゴローニャ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-053",
+      "notes": "v0.69: タケシのゴローニャ（GD1。発売 1998-04-26）は、登録した PMCG5-053 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD1-009）。登録は PMCG5-053 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-053 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-011": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのイワーク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-048",
+      "notes": "v0.69: タケシのイワーク（GD1。発売 1998-04-26）は、登録した PMCG5-048 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-032）。登録は PMCG5-048 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-048 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのサイドン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-055",
+      "notes": "v0.69: タケシのサイドン（GD1。発売 1998-04-26）は、登録した PMCG5-055 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD1-013）。登録は PMCG5-055 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-055 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-015": {
+      "basis": "kyuura_data",
+      "name_ja": "思い出させる",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-071",
+      "notes": "v0.69: 思い出させる（GD1。発売 1998-04-26）は、登録した PMCG5-071 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD1-015）。登録は PMCG5-071 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-071 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-019": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシの育て方",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-077",
+      "notes": "v0.69: タケシの育て方（GD1。発売 1998-04-26）は、登録した PMCG5-077 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD1-019）。登録は PMCG5-077 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-077 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD1-025": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD1。発売 1998-04-26）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-004": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのドククラゲ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-033",
+      "notes": "v0.69: カスミのドククラゲ（GD2。発売 1998-04-26）は、登録した PMCG5-033 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-004）。登録は PMCG5-033 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-033 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-008": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのタッツー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-025",
+      "notes": "v0.69: カスミのタッツー（GD2。発売 1998-04-26）は、登録した PMCG5-025 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-008）。登録は PMCG5-025 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-025 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-010": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのトサキント",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-026",
+      "notes": "v0.69: カスミのトサキント（GD2。発売 1998-04-26）は、登録した PMCG5-026 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-010）。登録は PMCG5-026 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-026 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-012": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのヒトデマン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-027",
+      "notes": "v0.69: カスミのヒトデマン（GD2。発売 1998-04-26）は、登録した PMCG5-027 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-031）。登録は PMCG5-027 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-027 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-015": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-085",
+      "notes": "v0.69: カスミ（GD2。発売 1998-04-26）は、登録した PMCG5-085 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-015）。登録は PMCG5-085 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-085 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-016": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのいかり",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-075",
+      "notes": "v0.69: カスミのいかり（GD2。発売 1998-04-26）は、登録した PMCG5-075 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-016）。登録は PMCG5-075 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-075 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-017": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミの勝負",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-068",
+      "notes": "v0.69: カスミの勝負（GD2。発売 1998-04-26）は、登録した PMCG5-068 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-017）。登録は PMCG5-068 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-068 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-018": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのなみだ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-069",
+      "notes": "v0.69: カスミのなみだ（GD2。発売 1998-04-26）は、登録した PMCG5-069 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD2-018）。登録は PMCG5-069 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-069 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD2-024": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD2。発売 1998-04-26）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-001": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-036",
+      "notes": "v0.69: マチスのピカチュウ（GD3。発売 1998-07-25）は、登録した PMCG5-036 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-001）。登録は PMCG5-036 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-036 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-004": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-039",
+      "notes": "v0.69: マチスのコイル（GD3。発売 1998-07-25）は、登録した PMCG5-039 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-004）。登録は PMCG5-039 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-039 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-005": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-037",
+      "notes": "v0.69: マチスのコイル（GD3。発売 1998-07-25）は、登録した PMCG5-037 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-005）。登録は PMCG5-037 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-037 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-006": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのレアコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-040",
+      "notes": "v0.69: マチスのレアコイル（GD3。発売 1998-07-25）は、登録した PMCG5-040 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-006）。登録は PMCG5-040 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-040 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-007": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのビリリダマ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-038",
+      "notes": "v0.69: マチスのビリリダマ（GD3。発売 1998-07-25）は、登録した PMCG5-038 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-007）。登録は PMCG5-038 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-038 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-015": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギーサーキュレート",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-067",
+      "notes": "v0.69: エネルギーサーキュレート（GD3。発売 1998-07-25）は、登録した PMCG5-067 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-015）。登録は PMCG5-067 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-067 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-016": {
+      "basis": "kyuura_data",
+      "name_ja": "スパイ作戦",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-088",
+      "notes": "v0.69: スパイ作戦（GD3。発売 1998-07-25）は、登録した PMCG5-088 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-016）。登録は PMCG5-088 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-088 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-021": {
+      "basis": "kyuura_data",
+      "name_ja": "マチス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-092",
+      "notes": "v0.69: マチス（GD3。発売 1998-07-25）は、登録した PMCG5-092 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-021）。登録は PMCG5-092 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-092 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-022": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスの交渉",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-081",
+      "notes": "v0.69: マチスの交渉（GD3。発売 1998-07-25）は、登録した PMCG5-081 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD3-022）。登録は PMCG5-081 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-081 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD3-025": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD3。発売 1998-07-25）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-002": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのナゾノクサ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-002",
+      "notes": "v0.69: エリカのナゾノクサ（GD4。発売 1998-07-25）は、登録した PMCG5-002 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-002）。登録は PMCG5-002 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-002 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-006": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのマダツボミ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-005",
+      "notes": "v0.69: エリカのマダツボミ（GD4。発売 1998-07-25）は、登録した PMCG5-005 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-006）。登録は PMCG5-005 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-005 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-008": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのウツボット",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-015",
+      "notes": "v0.69: エリカのウツボット（GD4。発売 1998-07-25）は、登録した PMCG5-015 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-008）。登録は PMCG5-015 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-015 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-010": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのナッシー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-013",
+      "notes": "v0.69: エリカのナッシー（GD4。発売 1998-07-25）は、登録した PMCG5-013 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-010）。登録は PMCG5-013 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-013 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-011": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのモンジャラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-006",
+      "notes": "v0.69: エリカのモンジャラ（GD4。発売 1998-07-25）は、登録した PMCG5-006 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-011）。登録は PMCG5-006 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-006 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-013": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのミニリュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-063",
+      "notes": "v0.69: エリカのミニリュウ（GD4。発売 1998-07-25）は、登録した PMCG5-063 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-039）。登録は PMCG5-063 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-063 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-016": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-083",
+      "notes": "v0.69: エリカ（GD4。発売 1998-07-25）は、登録した PMCG5-083 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-016）。登録は PMCG5-083 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-083 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-017": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのお付き",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-072",
+      "notes": "v0.69: エリカのお付き（GD4。発売 1998-07-25）は、登録した PMCG5-072 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-017）。登録は PMCG5-072 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-072 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-018": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカの香水",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-073",
+      "notes": "v0.69: エリカの香水（GD4。発売 1998-07-25）は、登録した PMCG5-073 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-018）。登録は PMCG5-073 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-073 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-026": {
+      "basis": "kyuura_data",
+      "name_ja": "礼儀作法",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-082",
+      "notes": "v0.69: 礼儀作法（GD4。発売 1998-07-25）は、登録した PMCG5-082 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD4-026）。登録は PMCG5-082 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-082 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD4-028": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD4。発売 1998-07-25）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-002": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのロコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-026",
+      "notes": "v0.69: カツラのロコン（GD5。発売 1999-02-26）は、登録した PMCG6-026 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-002）。登録は PMCG6-026 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-026 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-004": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのキュウコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-033",
+      "notes": "v0.69: カツラのキュウコン（GD5。発売 1999-02-26）は、登録した PMCG6-033 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-004）。登録は PMCG6-033 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-033 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-009": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのポニータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-028",
+      "notes": "v0.69: カツラのポニータ（GD5。発売 1999-02-26）は、登録した PMCG6-028 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-009）。登録は PMCG6-028 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-028 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-010": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのギャロップ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-030",
+      "notes": "v0.69: カツラのギャロップ（GD5。発売 1999-02-26）は、登録した PMCG6-030 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-010）。登録は PMCG6-030 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-030 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-012": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのドードー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-064",
+      "notes": "v0.69: カツラのドードー（GD5。発売 1999-02-26）は、登録した PMCG6-064 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-012）。登録は PMCG6-064 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-064 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-014": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-093",
+      "notes": "v0.69: カツラ（GD5。発売 1999-02-26）は、登録した PMCG6-093 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-014）。登録は PMCG6-093 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-093 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-015": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのギャンブル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-076",
+      "notes": "v0.69: カツラのギャンブル（GD5。発売 1999-02-26）は、登録した PMCG6-076 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD5-015）。登録は PMCG6-076 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-076 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD5-025": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD5。発売 1999-02-26）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのユンゲラー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-047",
+      "notes": "v0.69: ナツメのユンゲラー（GD6。発売 1999-02-26）は、登録した PMCG6-047 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-003）。登録は PMCG6-047 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-047 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-004": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのフーディン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-053",
+      "notes": "v0.69: ナツメのフーディン（GD6。発売 1999-02-26）は、登録した PMCG6-053 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-004）。登録は PMCG6-053 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-053 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのポリゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-066",
+      "notes": "v0.69: ナツメのポリゴン（GD6。発売 1999-02-26）は、登録した PMCG6-066 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-013）。登録は PMCG6-066 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-066 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-098",
+      "notes": "v0.69: ナツメ（GD6。発売 1999-02-26）は、登録した PMCG6-098 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-017）。登録は PMCG6-098 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-098 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのESP",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-087",
+      "notes": "v0.69: ナツメのESP（GD6。発売 1999-02-26）は、登録した PMCG6-087 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-018）。登録は PMCG6-087 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-087 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメの眼",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG6-078",
+      "notes": "v0.69: ナツメの眼（GD6。発売 1999-02-26）は、登録した PMCG6-078 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-GD6-019）。登録は PMCG6-078 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG6-078 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "GD6-026": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（GD6。発売 1999-02-26）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "スリープ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-045",
+      "notes": "v0.69: スリープ（IP1。発売 1999-07-30）は、登録した PMCG1-045 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-045）。登録は PMCG1-045 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-045 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-035",
+      "notes": "v0.69: ピカチュウ（IP1。発売 1999-07-30）は、登録した PMCG1-035 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-035）。登録は PMCG1-035 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-035 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP1-023": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（IP1。発売 1999-07-30）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP2-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ガーディ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-018",
+      "notes": "v0.69: ガーディ（IP2。発売 1999-07-30）は、登録した PMCG1-018 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-018）。登録は PMCG1-018 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-018 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP2-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ディグダ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-052",
+      "notes": "v0.69: ディグダ（IP2。発売 1999-07-30）は、登録した PMCG1-052 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-052）。登録は PMCG1-052 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-052 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP2-014": {
+      "basis": "kyuura_data",
+      "name_ja": "プリン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG2-035",
+      "notes": "v0.69: プリン（IP2。発売 1999-07-30）は、登録した PMCG2-035 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG2-035）。登録は PMCG2-035 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG2-035 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP2-025": {
+      "basis": "kyuura_data",
+      "name_ja": "無色2個エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-096",
+      "notes": "v0.69: 無色2個エネルギー（IP2。発売 1999-07-30）は、登録した PMCG1-096 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-096）。登録は PMCG1-096 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-096 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "IP2-035": {
+      "basis": "kyuura_data",
+      "name_ja": "ワンリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-053",
+      "notes": "v0.69: ワンリキー（IP2。発売 1999-07-30）は、登録した PMCG1-053 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-053）。登録は PMCG1-053 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-053 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-019": {
+      "basis": "kyuura_data",
+      "name_ja": "わるいペルシアン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG4-048",
+      "notes": "v0.69: わるいペルシアン（PR1。発売 1997-11-18）は、登録した PMCG4-048 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-019）。登録は PMCG4-048 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG4-048 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-031": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのヒトデマン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-027",
+      "notes": "v0.69: カスミのヒトデマン（PR1。発売 1998-02-15）は、登録した PMCG5-027 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-031）。登録は PMCG5-027 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-027 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-032": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのイワーク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-048",
+      "notes": "v0.69: タケシのイワーク（PR1。発売 1998-02-15）は、登録した PMCG5-048 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-032）。登録は PMCG5-048 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-048 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-039": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのミニリュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-063",
+      "notes": "v0.69: エリカのミニリュウ（PR1。発売 1998-07-15）は、登録した PMCG5-063 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PR1-039）。登録は PMCG5-063 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-063 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-047": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのフシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-007",
+      "notes": "v0.69: エリカのフシギダネ（PR1。発売 1998-11-15）は、登録した PMCG5-007 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG5-007）。登録は PMCG5-007 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-007 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-048": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミのメノクラゲ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-030",
+      "notes": "v0.69: カスミのメノクラゲ（PR1。発売 1998-11-15）は、登録した PMCG5-030 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG5-030）。登録は PMCG5-030 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-030 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-049": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのマンキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-045",
+      "notes": "v0.69: タケシのマンキー（PR1。発売 1998-11-15）は、登録した PMCG5-045 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG5-045）。登録は PMCG5-045 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-045 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-050": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのサンダース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG5-042",
+      "notes": "v0.69: マチスのサンダース（PR1。発売 1998-11-15）は、登録した PMCG5-042 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG5-042）。登録は PMCG5-042 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG5-042 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-061": {
+      "basis": "kyuura_data",
+      "name_ja": "マンキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "power/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG2-028",
+      "notes": "v0.69: マンキー（PR1。発売 1999-05-22）は、登録した PMCG2-028 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG2-028）。登録は PMCG2-028 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG2-028 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-076": {
+      "basis": "kyuura_data",
+      "name_ja": "コダック",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG3-010",
+      "notes": "v0.69: コダック（PR1。発売 1999-09-22）は、登録した PMCG3-010 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG3-010）。登録は PMCG3-010 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG3-010 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-080": {
+      "basis": "kyuura_data",
+      "name_ja": "ギャラドス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-034",
+      "notes": "v0.69: ギャラドス（PR1。発売 1999）は、登録した PMCG1-034 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-034）。登録は PMCG1-034 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-034 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-081": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-035",
+      "notes": "v0.69: ピカチュウ（PR1。発売 1999）は、登録した PMCG1-035 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-035）。登録は PMCG1-035 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-035 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-082": {
+      "basis": "kyuura_data",
+      "name_ja": "ニョロモ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-024",
+      "notes": "v0.69: ニョロモ（PR1。発売 1999）は、登録した PMCG1-024 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-024）。登録は PMCG1-024 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-024 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-083": {
+      "basis": "kyuura_data",
+      "name_ja": "フシギダネ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-001",
+      "notes": "v0.69: フシギダネ（PR1。発売 1999）は、登録した PMCG1-001 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-001）。登録は PMCG1-001 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-001 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-084": {
+      "basis": "kyuura_data",
+      "name_ja": "コイキング",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-031",
+      "notes": "v0.69: コイキング（PR1。発売 1999）は、登録した PMCG1-031 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-031）。登録は PMCG1-031 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-031 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-085": {
+      "basis": "kyuura_data",
+      "name_ja": "ゼニガメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-023",
+      "notes": "v0.69: ゼニガメ（PR1。発売 1999）は、登録した PMCG1-023 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-023）。登録は PMCG1-023 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-023 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-086": {
+      "basis": "kyuura_data",
+      "name_ja": "ドガース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-006",
+      "notes": "v0.69: ドガース（PR1。発売 1999）は、登録した PMCG1-006 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-006）。登録は PMCG1-006 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-006 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-087": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-068",
+      "notes": "v0.69: ラッキー（PR1。発売 1999）は、登録した PMCG1-068 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-068）。登録は PMCG1-068 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-068 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-088": {
+      "basis": "kyuura_data",
+      "name_ja": "フリーザー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "equivalent_registration",
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG3-023",
+      "notes": "v0.69: フリーザー（PR1。発売 1999）は、登録した PMCG3-023 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG3-023）。登録は PMCG3-023 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG3-023 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "PR1-089": {
+      "basis": "kyuura_data",
+      "name_ja": "ヒトカゲ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-014",
+      "notes": "v0.69: ヒトカゲ（PR1。発売 1999）は、登録した PMCG1-014 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-014）。登録は PMCG1-014 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-014 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）"
+    },
+    "NIP1-010": {
+      "basis": "kyuura_data",
+      "name_ja": "ドガース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG4-005",
+      "notes": "v0.69: ドガース（NIP1。発売 2001-04-06）は、登録した PMCG4-005 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG4-005）。登録は PMCG4-005 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG4-005 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）。発売は 2000.02.14 版のルールのあと（2001-04-06）。発売日は変えず、2000.02.14 版までに発売されたカードとは扱わない（印刷の文面と処理は元のカードと同じ）"
+    },
+    "NIP1-012": {
+      "basis": "kyuura_data",
+      "name_ja": "ガーディ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-018",
+      "notes": "v0.69: ガーディ（NIP1。発売 2001-04-06）は、登録した PMCG1-018 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-018）。登録は PMCG1-018 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-018 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）。発売は 2000.02.14 版のルールのあと（2001-04-06）。発売日は変えず、2000.02.14 版までに発売されたカードとは扱わない（印刷の文面と処理は元のカードと同じ）"
+    },
+    "NIP1X-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ワンリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {},
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG4-040",
+      "notes": "v0.69: ワンリキー（NIP1X。発売 2001-04-06）は、登録した PMCG4-040 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG4-040）。登録は PMCG4-040 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG4-040 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）。発売は 2000.02.14 版のルールのあと（2001-04-06）。発売日は変えず、2000.02.14 版までに発売されたカードとは扱わない（印刷の文面と処理は元のカードと同じ）"
+    },
+    "NIP2-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "equivalent_registration"
+      },
+      "external_checks": [],
+      "issues": [],
+      "equivalent_to": "PMCG1-035",
+      "notes": "v0.69: ピカチュウ（NIP2。発売 2001-04-06）は、登録した PMCG1-035 と処理に使う欄が同じカード（kyuura data/engine_targets.json（7d3f4ca）の mechanically_equivalent。同じカードの組 SC-PMCG1-035）。登録は PMCG1-035 の登録と同じもの（effects.EQUIVALENT_CARDS）で、処理に使う文面の根拠は PMCG1-035 の根拠（元のカードの記録・研究の対応表の区分）。このカードの画像・pcg-search.com のページは照合していない（外部照合なし）。発売は 2000.02.14 版のルールのあと（2001-04-06）。発売日は変えず、2000.02.14 版までに発売されたカードとは扱わない（印刷の文面と処理は元のカードと同じ）"
     }
   }
 }

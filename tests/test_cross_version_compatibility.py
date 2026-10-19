@@ -36,6 +36,20 @@ driver = _load("compat_driver")
 compare = _load("compare_engine_versions")
 
 
+class _BeforeV069:
+    """v0.69: 今の版の ``kyuura_engine`` と同じで、``state_to_dict`` だけが写しの元の 2 か所（card_data.commit・ログ game_created の card_data_commit）を、確かめた
+    移行（tests/helpers.py の ``with_card_data_commit_before_v0_69``）でもどす。基準の版の参照データ（作り直さない）と比べるため。駆動（compat_driver）は変えない。"""
+
+    def __getattr__(self, name):
+        return getattr(kyuura_engine, name)
+
+    @staticmethod
+    def state_to_dict(state, format_version=1):
+        from tests.helpers import with_card_data_commit_before_v0_69
+
+        return with_card_data_commit_before_v0_69(kyuura_engine.state_to_dict(state, format_version=format_version))
+
+
 class FixtureComparisonTest(unittest.TestCase):
     """基準の版（4bd97bf）の記録と、今の版の記録が、すべての手で同じ。"""
 
@@ -55,7 +69,7 @@ class FixtureComparisonTest(unittest.TestCase):
             steps = max(step[0] for step in game["steps"])
             scenario = driver.Scenario(**{**scenario.__dict__, "steps": max(steps, 1)})
             with self.subTest(scenario=scenario.name, seed=game["seed"]):
-                records = driver.run_scenario(kyuura_engine, scenario, game["seed"])
+                records = driver.run_scenario(_BeforeV069(), scenario, game["seed"])
                 current = [[r["i"], r["res"], driver.record_digest(r)] for r in records]
                 for expected, actual in zip(game["steps"], current):
                     if expected != actual:

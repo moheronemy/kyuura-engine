@@ -29,6 +29,8 @@ from kyuura_engine.conditions import CONFUSION, PARALYSIS, POISON
 from kyuura_engine.resolution import contract, programs
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from tests.helpers import (
+    CARD_DATA_COMMIT_SINCE_V0_69,
+    with_card_data_commit_before_v0_69,
     ABRA, BILL, BULBASAUR, DEFENDER, DIGLETT, FIGHTING, FIRE, GASTLY, GIOVANNIS_MEOWTH, GRASS, H, HAUNTER, IVYSAUR, KADABRA, MACHAMP,
     MACHOKE, MACHOP, PLUSPOWER, POTION, PSYCHIC, RATTATA, SWITCH, T, TANGELA, build_test_state, coin_events, coin_results, expand_decklist,
     with_coin_results,
@@ -395,6 +397,9 @@ class GoldenGameTest(unittest.TestCase):
         state, commands, observed = play_game(decks(GOLDEN_SEED), GOLDEN_SEED, cure=GOLDEN_SEED % 3 != 0)
         self.assertTrue(all(observed[f"attack_{key}"] > 0 for key in ("PMCG1-007#0", "PMCG1-007#1", "PMCG6-063#0", "PMCG6-063#1")))
         data = full(state)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), "kyuura-engine-0.13")
         digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         self.assertEqual((len(commands), state.turn_number, state.phase, digest), GOLDEN)

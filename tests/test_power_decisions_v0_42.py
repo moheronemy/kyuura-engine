@@ -40,8 +40,10 @@ from kyuura_engine.resolution import PREFLIGHT_MODES, programs, v013_checks
 from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.state import Phase
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
+    V0_69_STOP_CODE_ISSUES,
+    kyuura_records_since_v0_69,
     ABRA,
     ALAKAZAM,
     ATTACK_TYPES_SINCE_V0_17,
@@ -332,7 +334,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = sources[card]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"]),
-                                 ("kyuura_data", "adopted", KYUURA_COMMIT, []))
+                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, kyuura_records_since_v0_69(card)))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 expected = {f"attack/{a.index}" for a in self.pool.get(card).attacks if a.text_ja} | {
                     f"power/{i}" for i, _ in enumerate(self.pool.get(card).powers)}
                 self.assertEqual(set(record["play_text"]), expected)
@@ -370,7 +372,7 @@ class CardDataTest(unittest.TestCase):
         for code, ruling in (("UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH", "PW1"), ("UNRESOLVED_POWER_DISCARD_WITHOUT_HAND", "PW2")):
             entry = links[code]
             self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"], entry["engine_rulings"][0]["ruling_id"]),
-                             ("not_in_kyuura", None, ruling))
+                             ("issue", V0_69_STOP_CODE_ISSUES[code], ruling))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
         codes = {q.code for q in QUESTIONS.values()}
         for code in ("UNRESOLVED_DISCARD_ENERGY_TIMING", "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
                      "UNRESOLVED_PREVENTED_EFFECT_COIN", "UNRESOLVED_EVADED_EFFECT_COIN", "UNRESOLVED_TRANSPARENCY_COIN_ORDER"):

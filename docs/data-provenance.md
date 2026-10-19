@@ -9,9 +9,9 @@
 | 項目 | 内容 |
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
-| 元のコミット | `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」とするコミット。v0.18 でも変えていない） |
-| 研究の基準 | `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
-| 元のファイル | `data/cards.json`（schema_version 2） |
+| 元のコミット | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
+| 研究の基準 | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
 | 採用・外部照合の記録 | `kyuura_engine/data/card_sources.json`（2026-10-15 からの方針。kyuura データの採用と pcg-search.com との照合。[card-data-policy.md](card-data-policy.md)。まだ記録はない） |
@@ -1724,3 +1724,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 1. ガルーラのこどものおつかいの先頭の「コインを投げて「おもて」なら、」は転記の誤り、と利用者が示した（エンジンは画像を見ていない）。
 2. イマクニ？のドードーの名前の「？」（全角）と、pcg-search.com の「?」（半角）。
 3. ［だつりょくえき］の DR1・DR6 は採用の仕様で処理し、DR8・DR13 に停止コードを付けた（kyuura の一覧ではコードのない行）。
+
+## v0.69: 写しの元の移行（`ecb2d69` → `7d3f4ca`）と、拡張パック以外の商品の同じカード 96 枚
+
+[equivalent-non-pack-cards-v0.69.md](equivalent-non-pack-cards-v0.69.md)。
+
+- 写しの元・研究の基準を kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（kyuura の main）に上げた。kyuura のカードデータは形式 3（1,377 件）。写しに `product_group`・`play_scope`・`data_gaps`・
+  `same_card_group`（いつもある欄）と `field_sources`・`copies`・`corrections`（あるときだけ）を加えた（出典の確認用。処理には使わない）。写しは作り直しの道具で作った（手で直していない）。
+- v0.68 の 457 枚は、処理に使う欄が `ecb2d69` と同じ（kyuura が当てはめた修正の欄を除く）。違ったのは出典の記録の欄（`source_ids` は 457 枚すべてで pcg-search.com のページを加えた・
+  `notes`（PMCG2-041・PMCG2-046）・`ja_text_source`（PMCG2-041）・`jp_en_differences`（PMCG6-023））。書き出すたびに確かめる（`previous_copy_problems`）。
+- v0.62 の確定した修正（ベロリンガ PMCG2-041 のワザ 0 の名前・レベル）と v0.68 の利用者が示した訂正（ガルーラ PMCG2-046 のこどものおつかい）は、kyuura が data/cards.json に当てはめた
+  （台帳 data/curation/card_corrections.json の FIX-PMCG2-041-ATK0-NAME・FIX-PMCG2-041-LEVEL・FIX-PMCG2-046-ATK0-TEXT）。写しに当てはめ直さず、台帳・カードの記録・前後のコミットの値を
+  確かめる（`KYUURA_CORRECTIONS`）。ガルーラの訂正は、利用者が示した転記の誤りの訂正のまま（公式エラッタ・別の版の文面・画像の読み直しではない。kyuura もエンジンも画像を見ていない）。
+- 拡張パック以外の商品の 96 枚（kyuura data/engine_targets.json の `mechanically_equivalent` のすべて。写しの組 `pool_v0_69`）は、元のカードの登録を写して登録した。84 枚に採用の記録
+  （`equivalent_to`・`play_text` は `equivalent_registration`・外部照合なし。記録した日 2026-10-19・採用したデータのコミット `7d3f4ca`）を置いた。基本エネルギー 12 枚は登録がないので記録もない。
+- v0.68 までの採用の記録の採用したデータのコミット（`ecb2d69`）・記録した日・外部照合の確認日と照らしたコミットは書き換えていない。写しの元の移行は card_sources.json の `data_migrations` に書いた。
+  `kyuura_records`（研究の基準のコミットでカードを指す kyuura の記録の id）は、研究の基準を上げたので 92 件で直した（kyuura が論点に結んだ停止コードのカード。記録を読み直したのではない）。
+- 2001 年に発売したイントロパック（neo）の 10 枚（NIP1-003 など）は、発売日 2001-04-06 を変えずに持つ（2000.02.14 版までに発売したカードとは扱わない。処理は元のカードと同じ）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.69 の登録を写すと、96 枚の `engine_status` が `registered` になる。
+

@@ -74,11 +74,13 @@ from tests.helpers import (
     ROCKET_ODDISH,
     ROCKET_ZUBAT,
     V0_53_CARDS,
+    V0_69_STOP_CODE_ISSUES,
     WATER,
     H,
     T,
     apply_kernel,
     build_test_state,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import (
@@ -224,13 +226,13 @@ class RegistrationTest(unittest.TestCase):
             with self.subTest(card_id=card_id):
                 record = sources[card_id]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_records"], record["play_text"]),
-                                 ("kyuura_data", "adopted", [], {"trainer": "kyuura_printed_text"}))
+                                 ("kyuura_data", "adopted", kyuura_records_since_v0_69(card_id), {"trainer": "kyuura_printed_text"}))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 (check,) = record["external_checks"]
                 self.assertEqual((check["site"], check["result"], check["edition"]["list_number"], check["differences"]),
                                  ("pcg-search.com", "match", EDITIONS[card_id], []))
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text())
         for code in NEW_CODES:
-            self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
+            self.assertEqual((links["stop_codes"][code]["kyuura_disposition"], links["stop_codes"][code]["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
             self.assertEqual(links["stop_codes"][code]["engine_rulings"][0]["document"], "docs/search-retrieval-trainers-v0.53.md")
         self.assertIn({"version": "v0.53", "document": "docs/search-retrieval-trainers-v0.53.md", "ruling_id": "FC1"},
                       links["stop_codes"][FC1]["engine_rulings"])

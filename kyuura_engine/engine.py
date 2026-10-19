@@ -513,6 +513,39 @@ def _public_pool(state: GameState):
     return pool
 
 
+_IDENTITY_CANDIDATES: dict[int, tuple[str, ...]] = {}
+
+
+def _behavior_key(pool, card_id: str):
+    """v0.69: カードの処理を決めるもの（定義の id・英語の欄を除いたもの、効果の登録表のそのカードの登録）。同じなら、どの処理でも同じに扱われる。"""
+    definition = pool.get(card_id)
+    effects = pool.effects
+    plain = dataclasses.replace(
+        definition, id="", name_en=None, energy_text_en=None, trainer_text_en=None,
+        attacks=tuple(dataclasses.replace(a, name_en=None, text_en=None) for a in definition.attacks),
+        powers=tuple(dataclasses.replace(w, name_en=None, text_en=None) for w in definition.powers))
+    entries = (tuple(effects.attack_entry(card_id, a.index) for a in definition.attacks),
+               tuple(effects.power_entry(card_id, w.index) for w in definition.powers),
+               effects.trainer_entry(card_id), effects.energy_entry(card_id))
+    return plain, tuple(tuple(id(e) for e in group) if isinstance(group, tuple) else id(group) for group in entries)
+
+
+def _identity_candidates(pool) -> tuple[str, ...]:
+    """v0.69（docs/equivalent-non-pack-cards-v0.69.md 5 章）: 受け付けるかの確かめで試す、ありうるカード。処理が同じカード（``_behavior_key``。拡張パック以外の商品の
+    同じカード ``effects.EQUIVALENT_CARDS`` など）は 1 枚で代表する（どれを割り当てても同じ結果なので、試す回数を対応しているカードの数で増やさない）。代表は、
+    写しの表（``EQUIVALENT_CARDS``・``EQUIVALENT_BASIC_ENERGY``）の新しい id でないカード（同じなら id の小さいもの）。公開の情報（対応しているカードの一覧と効果の登録表）だけで決まる"""
+    found = _IDENTITY_CANDIDATES.get(id(pool))
+    if found is None:
+        from .effects import EQUIVALENT_BASIC_ENERGY, EQUIVALENT_CARDS
+
+        classes: dict[object, str] = {}
+        for card_id in sorted(pool.playable_ids, key=lambda c: (c in EQUIVALENT_CARDS or c in EQUIVALENT_BASIC_ENERGY, c)):
+            classes.setdefault(_behavior_key(pool, card_id), card_id)
+        found = tuple(sorted(classes.values()))
+        _IDENTITY_CANDIDATES[id(pool)] = found
+    return found
+
+
 class _IdentityOracle:
     """v0.68: 確かめの 1 回ぶんの割り当て。相手のうらのカード（``scope``）が効果の対象として指定された順に、``script`` のカードを割り当てる（同じカードには、複製した
     状態でも同じものを割り当てる）。``script`` を使い切ったら ``_NeedBranch`` で止まる（呼ぶ側が、次に試すカードを足してやり直す）。"""
@@ -569,8 +602,9 @@ def _identity_independent(state: GameState, command, context: resolution.Context
       本当のカード・デッキの中身によらない"""
     scope = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != acting)
     pool = _public_pool(state)
-    basics = sorted(card_id for card_id in pool.playable_ids if pool.get(card_id).is_basic_pokemon)
-    nonbasics = sorted(card_id for card_id in pool.playable_ids if not pool.get(card_id).is_basic_pokemon)
+    candidates = _identity_candidates(pool)
+    basics = sorted(card_id for card_id in candidates if pool.get(card_id).is_basic_pokemon)
+    nonbasics = sorted(card_id for card_id in candidates if not pool.get(card_id).is_basic_pokemon)
     trials = 0
     pending: list[tuple[str, ...]] = [()]
     saved_consulted, saved_oracle = _zones.IDENTITY_CONSULTED, _zones.IDENTITY_ORACLE

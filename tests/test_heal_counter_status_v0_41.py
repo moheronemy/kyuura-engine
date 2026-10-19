@@ -44,8 +44,10 @@ from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import CannotRetreat, CannotUseOwnAttack
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
+    V0_69_STOP_CODE_ISSUES,
+    kyuura_records_since_v0_69,
     ATTACK_TYPES_SINCE_V0_17,
     BELLSPROUT,
     BLAINES_MOLTRES,
@@ -318,7 +320,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = sources[card]
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"]),
-                                 ("kyuura_data", "adopted", KYUURA_COMMIT, []))
+                                 ("kyuura_data", "adopted", ADOPTED_COMMIT, kyuura_records_since_v0_69(card)))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 with_text = {f"attack/{a.index}" for a in self.pool.get(card).attacks if a.text_ja}
                 self.assertEqual(set(record["play_text"]), with_text)
                 self.assertTrue(all(v == "kyuura_printed_text" for v in record["play_text"].values()))
@@ -353,7 +355,7 @@ class CardDataTest(unittest.TestCase):
                      "UNRESOLVED_REPARALYSIS_RECOVERY_TURN"):
             self.assertIn(code, codes)
         entry = cs.load_links()["stop_codes"]["UNRESOLVED_COUNTER_TRANSFER_PROTECTED"]
-        self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("not_in_kyuura", None))
+        self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES["UNRESOLVED_COUNTER_TRANSFER_PROTECTED"]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
         self.assertEqual(entry["engine_rulings"][0]["ruling_id"], "CX1")
 
 

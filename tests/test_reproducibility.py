@@ -7,7 +7,7 @@ import unittest
 
 from kyuura_engine import AttachEnergy, EndTurn, apply_command, new_game, state_to_dict
 
-from tests.helpers import FIRE, FIRE_DECK, GROWLITHE, STARYU, WATER_FIGHTING_DECK, active, build_test_state, play_until_end, replay
+from tests.helpers import CARD_DATA_COMMIT_SINCE_V0_69, FIRE, FIRE_DECK, GROWLITHE, STARYU, WATER_FIGHTING_DECK, active, build_test_state, play_until_end, replay, with_card_data_commit_before_v0_69
 
 
 class ReproducibilityTest(unittest.TestCase):
@@ -62,7 +62,11 @@ class GoldenValueTest(unittest.TestCase):
         state, commands = play_until_end(new_game(FIRE_DECK, WATER_FIGHTING_DECK, 42))
         self.assertEqual((len(commands), state.result.winner, state.turn_number), (37, 1, 12))
         self.assertEqual(state.result.conditions, ((1, "OPPONENT_CANNOT_FIELD_ACTIVE"),))
-        text = json.dumps(state_to_dict(state), sort_keys=True, ensure_ascii=False)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所（card_data.commit・game_created の card_data_commit）だけを確かめた移行で
+        # もどして同じ指紋になることを確かめる（tests/helpers.py。状態・ログ・乱数のほかの値は v0.68 と同じ）
+        data = state_to_dict(state)
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        text = json.dumps(with_card_data_commit_before_v0_69(data), sort_keys=True, ensure_ascii=False)
         self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), "83f9ccbfc48be56325d17b6b33debedd781d41f2647f7eacee5fca8190355bf3")
 
 
