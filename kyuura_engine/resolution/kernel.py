@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from ..coins import CoinSide, flip_coins
 from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, DamageReductionRequired
 from ..effects import (
+    knocked_by_hp,
     calculate_with_stadium,
     stadium_coin_modifier,
     ATTACK_ELEMENTS,
@@ -56,7 +57,7 @@ from ..effects import (
 from ..conditions import confuse
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
 from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
-from ..zones import return_in_play_to_deck, shuffle_deck
+from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from .. import effects as E
 from ..state import RETALIATION_FIXED
 from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EVADED, VOID_FLED, VOID_IMMUNE, note_received
@@ -153,6 +154,9 @@ class Resolution:
         # 番号。このワザの残りのダメージ以外の効果をどちらにも与えない。``reaches``）。決定をまたぐときは続きの情報で運ぶ（``AttackRun.suspend``）
         self.flee_offers: list[tuple[int, int, str, int, int]] = []
         self.fled: dict[int, int] = {}
+        # v0.67（docs/secret-plan-preflight-v0.67.md 4 章）: このワザの要素が対象にして、おもてにしたら「たねポケモン」でなくトラッシュした、うらのカードの場のポケモン（番号 →
+        # (持ち主, 場をはなれた場のポケモン)）。このワザの残りの要素では対象がいない（ダメージ・効果を与えない。効果を決めるコインも投げない）。決定をまたぐときは続きの情報で運ぶ
+        self.secret_lost: dict[int, tuple[int, PokemonInPlay, bool]] = {}  # 番号 → (持ち主, 場をはなれた場のポケモン, バトル場にいたか)
 
     def open_frame(self, kind: FrameKind, *, parent: int | None, player: int, source_pid: int, attack_key: AttackKey) -> FrameState:
         if parent is not None:
@@ -320,16 +324,45 @@ def _void_reason(res: Resolution, owner: int, pokemon: PokemonInPlay) -> str:
     return VOID_ATTACK_BARRIER if first_void(res, owner, pokemon, Window.BEFORE_EFFECT) is not None else VOID_DAMAGE_ONLY
 
 
+def lost_pokemon(res: Resolution, owner: int, pokemon_id: int | None = None) -> PokemonInPlay | None:
+    """v0.67: このワザで、おもてにしてトラッシュした持ち主 ``owner`` のうらのカードの場のポケモン（``pokemon_id`` を省けば、持ち主のバトル場にいたもの）。なければ None。"""
+    for pid, (side, pokemon, was_active) in res.secret_lost.items():
+        if side == owner and (pid == pokemon_id or (pokemon_id is None and was_active)):
+            return pokemon
+    return None
+
+
+def designate(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, cause: str) -> PokemonInPlay | None:
+    """v0.67: ワザの要素がダメージ・効果を与える場のポケモン ``pokemon`` がうらのカード（マチスの秘策）なら、その前におもてにする（``zones.designate_face_down``）。
+    本当のカードが「たねポケモン」なら同じポケモンを返し、そうでなければトラッシュして ``res.secret_lost`` に加え None を返す（このワザの残りの要素では対象がいない）。
+    うらでなければそのまま返す。"""
+    if pokemon.pokemon_id in res.secret_lost:
+        return None
+    state = res.state
+    if not state.is_face_down(pokemon):
+        return pokemon
+    was_active = state.players[owner].active is pokemon
+    revealed = designate_face_down(state, owner, pokemon, by_player=fs.frame.player, cause=cause, can_lose=True)
+    if revealed is None:
+        res.secret_lost[pokemon.pokemon_id] = (owner, pokemon, was_active)
+    return revealed
+
+
 def receiver_of(res: Resolution, fs: FrameState, target: str, pokemon_id: int | None = None) -> tuple[int, PokemonInPlay]:
     state = res.state
     if target == OPPONENT_ACTIVE:
-        return 1 - fs.frame.player, state.players[1 - fs.frame.player].active
+        active = state.players[1 - fs.frame.player].active
+        if active is None and res.secret_lost:
+            active = lost_pokemon(res, 1 - fs.frame.player)  # v0.67: おもてにしてトラッシュしたバトル場のうらのカード（対象がいない）
+        return 1 - fs.frame.player, active
     if target == SELF:
         return fs.frame.player, state.find_pokemon(fs.frame.source_pid)[1]
     if target in (OPPONENT_BENCH, SELF_BENCH):
         # v0.31: 相手の控えポケモン（ワザの説明が選ばせる・決める場のポケモンの番号）。v0.33: 自分の控えポケモン（タケシのディグダの「ミニじしん」）
         side = 1 - fs.frame.player if target == OPPONENT_BENCH else fs.frame.player
         found = next((p for p in state.players[side].bench if p.pokemon_id == pokemon_id), None)
+        if found is None and pokemon_id in res.secret_lost:
+            found = res.secret_lost[pokemon_id][1]  # v0.67: おもてにしてトラッシュした控えのうらのカード（対象がいない）
         if found is None:
             raise RuntimeError(f"ダメージを受ける{'相手' if target == OPPONENT_BENCH else '自分'}の控えポケモン {pokemon_id!r} がいない（エンジンの不具合）")
         return side, found
@@ -423,7 +456,7 @@ def _bench_guard_unresolved(res: Resolution, fs: FrameState, attacker, owner: in
     if reacting and len(options) >= final // 10:
         # 2 匹以上のサイドンで、もとのポケモンのダメージがすべて移る答えだけが止まる（選択ごとには表せない。今の写しでは控えに［ベンチガード］が 2 匹・ちょうど 20 など）
         raise res.question("bench_guard_zero_reaction", f"ポケモン {receiver.pokemon_id}・{final} ダメージ・サイドン {list(options)}")
-    knocked_out = tuple(p.pokemon_id for p, _ in holders if p.damage >= E.max_hp(state, p))
+    knocked_out = tuple(p.pokemon_id for p, _ in holders if E.knocked_by_hp(state, p))
     if knocked_out:
         # KD1。ほかのサイドンの BG1 の確かめより先（同じ決定に両方がいるときも、すでに HP 以上のサイドンだけを KD1 で止め、残りは下で確かめる）
         rest = [(p, slot) for p, slot in holders if p.pokemon_id not in knocked_out]
@@ -510,6 +543,9 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     frame = fs.frame
     _, attacker = state.find_pokemon(frame.source_pid)
     receiver_player, receiver = receiver_of(res, fs, target, pokemon_id)
+    if receiver.pokemon_id in res.secret_lost or (state.is_face_down(receiver) and designate(res, fs, receiver_player, receiver, "damage") is None):
+        # v0.67: うらのカード（マチスの秘策）は、ダメージを受ける時におもてにする。「たねポケモン」でなければトラッシュしたので、このダメージの要素の対象はいない
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, False, lost=True)
     if res.fled and frame.kind is FrameKind.ATTACK and receiver.pokemon_id in res.fled.values():
         # v0.65: ［にげこむ］のあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来た（今の写しのワザの並びでは起こらない。コードのない問い）
         raise res.question("flee_then_damage", f"ポケモン {receiver.pokemon_id}")
@@ -784,7 +820,7 @@ def trainer_poison_after_damage(res: Resolution, attacker: PokemonInPlay, owner:
     records = trainer_poison_effects(state, attacker)
     if not records:
         return
-    if receiver.damage >= max_hp(state, receiver):
+    if knocked_by_hp(state, receiver):
         for instance in C.in_window(state, Window.KO_CHECK, owner, receiver, res.catalog):
             if instance.definition.timing is C.Timing.OFFER and res.ko_prevention_able.get(receiver.pokemon_id) and not C.offer_stopped(state, instance, receiver):
                 raise res.question("ko_prevention_attack_effect", f"ポケモン {receiver.pokemon_id}（トレーナー「{state.card_def(records[0].source_card).name_ja}」のどく）")
@@ -899,6 +935,10 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
     if element != DAMAGE_ELEMENT and fs.pending:
         raise RuntimeError(f"効果の要素 {element} の前に、送る効果が残っている（窓の位置の誤り。エンジンの不具合）")
     window = Window.BEFORE_DAMAGE if element == DAMAGE_ELEMENT else Window.BEFORE_EFFECT
+    if pokemon.pokemon_id in res.secret_lost or (state.is_face_down(pokemon) and designate(res, fs, owner, pokemon, element) is None):
+        # v0.67: うらのカード（マチスの秘策）は、効果を受ける時におもてにする。「たねポケモン」でなければトラッシュしたので、この要素の対象はいない（ログは
+        # ``secret_plan_revealed``・``secret_plan_discarded``。前にトラッシュしたなら、何も残さない）
+        return False
     if element != DAMAGE_ELEMENT and res.fled and frame.kind is FrameKind.ATTACK and (
             pokemon.pokemon_id in res.fled or pokemon.pokemon_id in res.fled.values()):
         # v0.65: ［にげこむ］で入れ替えたポケモンは、そのワザによる「ダメージ以外の効果」を受けない（p.100 の最新の説明。v0.18b の記録の再利用）。かわりに出たポケモンにも、
@@ -1168,7 +1208,7 @@ def knocked_out(state: GameState, forced: set[int] | frozenset[int] = frozenset(
         (owner, pokemon)
         for owner in (1 - current, current)
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= hp_of(state, pokemon) or pokemon.pokemon_id in forced
+        if pokemon.pokemon_id in forced or (not state.is_face_down(pokemon) and pokemon.damage >= hp_of(state, pokemon))  # v0.67: うらのカードはダメージなし
     ]
 
 

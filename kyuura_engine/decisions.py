@@ -281,6 +281,10 @@ QUIZ_ATTACK = "quiz_attack"
 # 相手プレイヤーが答えるカードの名前。選べるものは ``context`` の ``"names"``（カードのデータのポケモンの名前の並び。置いたカード・手札によらない）の位置。決めるのは相手プレイヤー
 QUIZ_ANSWER = "quiz_answer"
 
+# v0.67（docs/secret-plan-preflight-v0.67.md）: マチスの秘策で、うらにしてベンチに出す手札のカード。決めるのは使ったプレイヤー。選べるものは手札のカード（どの種類でもよい）。
+# 0〜1 枚（0 枚は出さない）。選べるもの・選ぶ数は使ったプレイヤーだけが見る（観測）
+SECRET_PLAN_CARD = "secret_plan_card"
+
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
 # 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。

@@ -113,9 +113,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        if branches >= limit:',
            origin='v0.15d'),
     Mutant('M15', '上限を超えても受け付ける', R + 'flow.py',
-           '        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None:',
+           '        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None or unknown:',
            '        if False:',
-           origin='v0.15d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（上限を超えても受け付ける）を今の行に入れる
+           origin='v0.15d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（上限を超えても受け付ける）を今の行に入れる。v0.67: 知らない選択・役割の条件（unknown）も加わった
     Mutant('M16', 'ダメージを受けない状態を見ない', R + 'kernel.py',
            '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if void is not None:',
            '    void = first_void(res, receiver_player, receiver, held_by_receiver=defender_effects)\n    if False:',
@@ -241,9 +241,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '    if False:',
            origin='v0.17d'),
     Mutant('S12', '比べる方法 legacy で VERIFIED にない型も v0.13 の止める関数で確かめる', R + 'flow.py',
-           '    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None:',
-           '    if ctx.preflight == "legacy" and coin_stadium is None:',
-           origin='v0.17d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（VERIFIED の条件を落とす）を今の行に入れる
+           '    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None and not unknown:',
+           '    if ctx.preflight == "legacy" and coin_stadium is None and not unknown:',
+           origin='v0.17d'),  # v0.57: 元の行にクチバシティジムのコインの条件が加わったので、同じ誤り（VERIFIED の条件を落とす）を今の行に入れる。v0.67: unknown の条件も加わった
     Mutant('S11', '未解決を勝手に解決する（C18: わるいねぞうのそろってのきぜつを止めない）', R + 'kernel.py',
            '    if len(frames) < 2:\n        return\n    involved =',
            '    if len(frames) < 2 or any(f.origin is not None and f.origin.definition.name == "restless_sleep" for f in res.frames.values()):\n        return\n    involved =',
@@ -252,10 +252,12 @@ MUTANTS: tuple[Mutant, ...] = (
     # ---- v0.18e（研究との対応・Z23 の場合分け・窓の途中の決定の前提・ナツメのヤドン）
     Mutant('V01', 'Z23 の理由の文で場合を取り違える（要素が無効と最終ダメージが 0）', 'kyuura_engine/effects.py',
            '    why = ("「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded\n'
-           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged else "最終ダメージが 0")',
+           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged\n'
+           '           else "うらのカードをおもてにしたら「たねポケモン」でなくトラッシュし、対象がいない（Z23-d）" if result.lost else "最終ダメージが 0")',
            '    why = ("最終ダメージが 0" if result.prevented else "「とうめい」で受けなかった" if result.evaded\n'
-           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged else "「ダメージを受けない」状態で無効")',
-           origin='v0.18e'),  # v0.60: 元の行に「かげぶんしん」の場合を加えて 2 行にしたので、同じ誤り（無効と最終ダメージ 0 を取り違える）を今の 2 行に入れる
+           '           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged\n'
+           '           else "うらのカードをおもてにしたら「たねポケモン」でなくトラッシュし、対象がいない（Z23-d）" if result.lost else "「ダメージを受けない」状態で無効")',
+           origin='v0.18e'),  # v0.60: 元の行に「かげぶんしん」の場合を加えて 2 行にしたので、同じ誤り（無効と最終ダメージ 0 を取り違える）を今の 2 行に入れる。v0.67: うらのカードの場合（Z23-d）の行を加えて 3 行にした
     Mutant('V02', '送る効果が残っていてもワザの途中の決定を出す（窓の途中で黙って止まる）', R + 'programs.py',
            '        if self.fs.pending and not carry:\n            raise RuntimeError("決定の前に送る効果が残っている',
            '        if False:\n            raise RuntimeError("決定の前に送る効果が残っている',

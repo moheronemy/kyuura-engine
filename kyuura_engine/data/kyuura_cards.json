@@ -640,6 +640,9 @@
     "PMCG6-087",
     "PMCG5-068"
   ],
+  "pool_v0_67": [
+    "PMCG5-093"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -36226,6 +36229,41 @@
         "series": null,
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E5%8B%9D%E8%B2%A0"
+      }
+    },
+    {
+      "id": "PMCG5-093",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "マチスの秘策",
+        "en": "Lt. Surge's Secret Plan"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたは、手札からカードを1枚選び、うらにしてベンチに出してよい。そのカードは「たねポケモン」でなくてもよく、うらになっている限り、「たねポケモン」としてあつかわれる。のぞむなら、あなたの番の中で、あなたはいつでもそのカードをおもてにしてよい。そのカードが「ワザ・特殊能力」を使う時や、「進化・にげる」をする時、また、そのカードが「ダメージや効果」を受ける時も、そのカードをおもてにする。(「おもて」にしたカードが「たねポケモン」でなかったなら、そのカードと、それについているすべてのカードをトラッシュする)",
+          "en": "Put 1 card from your hand face down onto your Bench. (You can't play this card if your Bench is full.) Treat that card as a Basic Pokémon as long as it's face down. Flip the card if either player needs to know what it is in order to use an attack, a Pokémon Power, or a Trainer card. Flip the card if it ever uses an attack or Pokémon Power, evolves, retreats, is damaged by an attack, or is otherwise affected by an attack. At any time during your turn, you may flip the card over. When you flip that card over, if it isn't a Basic Pokémon, discard it and all cards attached to it."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-093",
+        "pokemontcg": [
+          "gym2-107"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E7%A7%98%E7%AD%96",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "リーダーズスタジアム",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%81%E3%82%B9%E3%81%AE%E7%A7%98%E7%AD%96"
       }
     },
     {

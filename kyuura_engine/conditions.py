@@ -77,6 +77,13 @@ def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: 
     （防ぐのは新しく付けることだけ）。"""
     from .effects import status_immunity  # effects.py は conditions.py を読み込むので、使うときに読み込む
 
+    if state.is_face_down(pokemon):
+        # v0.67: うらのカード（マチスの秘策）は、効果を受ける時におもてにする（ワザの要素は ``kernel.reaches`` が先におもてにする。ここに来るのは、トレーナー・特殊能力の
+        # 効果で特殊状態にするとき）。「たねポケモン」でなくトラッシュしたら、特殊状態にする対象はいない
+        from .zones import designate_face_down
+
+        if designate_face_down(state, owner, pokemon, by_player=state.current_player, cause=condition, can_lose=True) is None:
+            return True
     key = status_immunity(state, owner, pokemon)
     if key is None:
         return False

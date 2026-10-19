@@ -38,6 +38,97 @@ def enter_play(state: GameState, uid: int) -> PokemonInPlay:
     return pokemon
 
 
+SECRET_PLAN_LOST_TARGET_CODE = "UNSUPPORTED_SECRET_PLAN_LOST_TARGET"  # v0.67: おもてにしたら「たねポケモン」でなくトラッシュする対象の、残りの処理を扱えない（エンジンの未対応）
+
+# v0.67: コマンドを処理しているあいだに、そのコマンドのプレイヤーの相手のうらのカードの本当のカードを使った（おもてにする・おもてにしたら残るかを見た）か。
+# ``engine._apply`` が処理のたびに空の並びを置き、うらのカードの持ち主を加える（``designate_face_down``）。並びがあれば、受け付けるかを本当のカードによらない
+# ものにするため、ありうるカードのすべてで同じコマンドを確かめる（``engine._identity_independent``）。None なら記録しない（コマンドの外・確かめの中）
+IDENTITY_CONSULTED: list[int] | None = None
+
+
+def place_face_down(state: GameState, player: int, card: int, *, trainer: int) -> PokemonInPlay:
+    """自分の手札のカード ``card`` を、同じ uid のまま、うらにして自分のベンチの最後に出す（v0.67。マチスの秘策の「手札からカードを1枚選び、うらにしてベンチに
+    出してよい。そのカードは「たねポケモン」でなくてもよく、うらになっている限り、「たねポケモン」としてあつかわれる」。docs/secret-plan-preflight-v0.67.md 3 章）。
+
+    - 場のポケモンは手札・山札・トラッシュから出すときと同じ ``enter_play``（新しい場のポケモンの番号・場に出た番は今の番。その番には進化できない。p.310）。
+      ``enter_play`` の前に ``face_down_cards`` に加えるので、場に出すときの確かめ（まきちらせ!ベトベトガスの GG1）もうらのカードの定義（特殊能力なし）を見る
+    - ログ ``secret_plan_placed``（``player``・``pokemon_id``・``trainer_card``・``card``）。``card`` は持ち主だけが見る（``observation.PRIVATE_FIELDS``）
+
+    出してよいか（手札にある・ベンチの空き）の確認は呼ぶ側が済ませる。手札にない・持ち主が違う・ベンチに空きがないなら ``RuntimeError``（状態を変える前）。"""
+    p = state.players[player]
+    if card not in p.hand or state.cards[card].owner != player or len(p.bench) >= bench_limit(state, player):
+        raise RuntimeError(f"プレイヤー {player} の手札のカード {card} をうらにしてベンチに出せない（確認の漏れ。エンジンの不具合）")
+    p.hand.remove(card)
+    state.face_down_cards = (*state.face_down_cards, card)
+    pokemon = enter_play(state, card)
+    p.bench.append(pokemon)
+    state.add_event("secret_plan_placed", player=player, pokemon_id=pokemon.pokemon_id, trainer_card=trainer, card=card)
+    return pokemon
+
+
+def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, cause: str, by_player: int | None = None) -> PokemonInPlay | None:
+    """うらにしてベンチに出したカード（v0.67）をおもてにする。本当のカードが「たねポケモン」なら同じ場のポケモン（同じ番号・ついているカード・場に出た番）のまま
+    返し、「たねポケモン」でなければ、そのカードとついているすべてのカードを持ち主のトラッシュに置いて None を返す（「(おもてにしたカードが「たねポケモン」で
+    なかったなら、そのカードと、それについているすべてのカードをトラッシュする)」）。
+
+    - 「たねポケモン」かは本当のカード（印刷の定義 ``printed_def``）の種類と段階で決める。なにかの化石・ピッピ人形はトレーナーカード（場に出す前の分類）なので
+      「たねポケモン」ではない（うらのあいだの「たねポケモン」としてのあつかいとは別）
+    - おもてにすることは場に出すことではない（場に出たときの特殊能力の機会・場に出た番・場のポケモンの番号は変えない）
+    - トラッシュはきぜつではない（サイドは取られない。ログ ``knock_out`` ではない。きぜつしたときの特殊能力はない）。うらのあいだは、ダメージ・特殊状態・持続する
+      効果・重なり・のせたカードはない（不変条件）ので、置くのはカードだけ。ついているトレーナーはつけたプレイヤーのトラッシュ（きぜつと同じ）。空いたバトル場は呼ぶ側
+    - ログ ``secret_plan_revealed``（``player``・``pokemon_id``・``card``・``card_id``・``cause``・``by_player``。公開）、トラッシュしたら続けて ``secret_plan_discarded``
+      （``player``・``pokemon_id``・``cards``・``energy``・``trainers``・``zone``（``active``・``bench``）。公開）
+
+    うらのカードでない・場にいないなら ``RuntimeError``。"""
+    p = state.players[owner]
+    on_bench = any(b is pokemon for b in p.bench)
+    if not state.is_face_down(pokemon) or (p.active is not pokemon and not on_bench) or state.cards[pokemon.card].owner != owner:
+        raise RuntimeError(f"プレイヤー {owner} の場のポケモン {pokemon.pokemon_id} はうらのカードではない（エンジンの不具合）")
+    state.face_down_cards = tuple(uid for uid in state.face_down_cards if uid != pokemon.card)
+    extra = {} if by_player is None else {"by_player": by_player}
+    state.add_event("secret_plan_revealed", player=owner, pokemon_id=pokemon.pokemon_id, card=pokemon.card, card_id=state.cards[pokemon.card].card_id,
+                    cause=cause, **extra)
+    if state.printed_def(pokemon.card).is_basic_pokemon:
+        return pokemon
+    if pokemon.evolution_stack or pokemon.disguise is not None or pokemon.persistent_effects or pokemon.damage:
+        raise RuntimeError(f"うらのカード {pokemon.pokemon_id} に、重なり・のせたカード・持続する効果・ダメージがある（エンジンの不具合）")
+    zone = "active" if p.active is pokemon else "bench"
+    if p.active is pokemon:
+        p.active = None
+    else:
+        del p.bench[next(i for i, b in enumerate(p.bench) if b is pokemon)]
+    energy = tuple(pokemon.energy)
+    trainers = tuple(t.card for t in pokemon.trainers)
+    p.discard.append(pokemon.card)
+    p.discard.extend(energy)
+    for attached in pokemon.trainers:
+        state.players[attached.player].discard.append(attached.card)
+    state.add_event("secret_plan_discarded", player=owner, pokemon_id=pokemon.pokemon_id, cards=(pokemon.card, *energy, *trainers), energy=energy,
+                    trainers=trainers, zone=zone)
+    return None
+
+
+def designate_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, by_player: int | None, cause: str,
+                        can_lose: bool) -> PokemonInPlay | None:
+    """効果の対象として指定された場のポケモン ``pokemon`` がうらのカード（v0.67）なら、おもてにする（「そのカードが「ダメージや効果」を受ける時も、そのカードを
+    おもてにする」・p.277 の解説の「効果の対象として指定されないかぎり、裏のままでOK」）。うらでなければそのまま返す。
+
+    - 本当のカードが「たねポケモン」なら、おもてにして同じポケモンを返す（呼ぶ側の処理はそのまま続ける）
+    - 「たねポケモン」でなければ、``can_lose``（対象がいなくなったあとの残りの処理を呼ぶ側が扱える）ならおもてにしてトラッシュし None を返す。扱えない呼ぶ側では、
+      状態を変える前に ``UnsupportedError``（``UNSUPPORTED_SECRET_PLAN_LOST_TARGET``。エンジンの未対応。理由の文に本当のカードを書かない）
+    - ``by_player``（効果を使うプレイヤー）が持ち主でなければ、本当のカードを使ったことを ``IDENTITY_CONSULTED`` に記録する（相手は本当のカードを知らないので、受け付けるか
+      を本当のカードによらないものにする。``engine._identity_independent``）"""
+    if not state.is_face_down(pokemon):
+        return pokemon
+    if IDENTITY_CONSULTED is not None and by_player is not None and by_player != owner:
+        IDENTITY_CONSULTED.append(owner)
+    if not state.printed_def(pokemon.card).is_basic_pokemon and not can_lose:
+        raise UnsupportedError(SECRET_PLAN_LOST_TARGET_CODE,
+                               f"うらにしてベンチに出したカード（場のポケモン {pokemon.pokemon_id}）を効果の対象にした。おもてにしたカードをトラッシュしたあとの、この効果の残りの処理を"
+                               "扱えない（エンジンの未対応）")
+    return reveal_face_down(state, owner, pokemon, cause=cause, by_player=by_player)
+
+
 def bench_from_deck(state: GameState, player: int, card: int) -> PokemonInPlay:
     """自分の山札のたねポケモンのカード ``card`` を、同じ uid のまま、手札を通さずに自分のベンチの最後に出す（v0.32。ワザの「自分の山札から「○○」を
     1匹さがしてベンチに出す」。docs/bench-search-counter-drain-v0.32.md）。場のポケモンの番号・場に出た番は手札から出すときと同じ ``enter_play``。
@@ -545,6 +636,8 @@ def attach_trainer(state: GameState, player: int, card: int, pokemon: PokemonInP
     """
     if state.trainer_in_use != TrainerInUse(player, card):
         raise RuntimeError(f"使っている最中でないカード {card} をつけようとした（エンジンの不具合）")
+    owner = next(i for i, side in enumerate(state.players) if any(q is pokemon for q in side.in_play()))
+    designate_face_down(state, owner, pokemon, by_player=player, cause="trainer", can_lose=False)  # v0.67: つけるポケモンは効果の対象
     state.trainer_in_use = None
     attached = AttachedTrainer(card, player, discard_at_end_of_turn)
     pokemon.trainers.append(attached)

@@ -130,17 +130,26 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     def body(res: Resolution) -> None:
         _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium)
 
+    # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
+    # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
+    unknown = legacy_unknown_features(state, attacker)
+
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
-        （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。"""
-        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None:  # v0.57: クチバシティジムのコインは v0.13 の止める関数が知らない
+        （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。v0.67: v0.13 の止める関数が知らない選択・役割（お上品攻撃の
+        減らす量・うらのカード）がある盤面では、v0.13 の止める関数で確かめず拒否する（試していない結果があることを、安全とみなさない）。"""
+        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None or unknown:  # v0.57: クチバシティジムのコインは v0.13 の止める関数が知らない
+            extra = f"（v0.13 の止める関数が知らない {'・'.join(unknown)} があるので、それでも確かめない）" if unknown and type(effect) in v013_checks.VERIFIED else ""
             raise UnsupportedError(
                 "UNSUPPORTED_PREFLIGHT_LIMIT",
                 f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
-                "ないことを確かめられないので扱わない",
+                f"ないことを確かめられないので扱わない{extra}",
             )
         v013_checks.check(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
 
+    if is_contract(program) and unknown:
+        raise UnsupportedError("UNSUPPORTED_LEGACY_PREFLIGHT",
+                               f"v0.13 の約束で書いたワザの実装は、宣言の前に v0.13 の止める関数だけで確かめるが、その関数が知らない {'・'.join(unknown)} がある（エンジンの未対応）")
     if is_contract(program):
         # v0.13 の約束で書いた実装（v0.16b のアダプタ。contract.py）: 宣言の前の確認は実装の宣言（problem と v0.13 の止める関数）だけ。
         # resolve の中身は先読みから見えず、副作用のある resolve を何度も呼ばない（v0.13・v0.15 と同じ確認。先読みの方法によらない）
@@ -150,7 +159,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
-    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None:
+    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None and not unknown:  # v0.67: 知らない選択・役割があればすべての結果を試す
         # v0.57: クチバシティジムのコインを投げるワザは、v0.13 の止める関数が知らない（コインの +10・自分への 10）ので、すべての結果を試す方法で確かめる
         v013_checks.check(state, use, effect, attacker, ctx.trace, mode="legacy")
     else:
@@ -162,6 +171,22 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         except P.BranchLimit:
             on_limit()
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
+
+
+def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
+    """v0.67: v0.13 の止める関数（``v013_checks``。v0.13 までの選択と役割だけを知る）が知らない、この盤面の選択・役割の名前。ないなら ()。
+
+    - ワザを使うポケモンについているお上品攻撃（v0.66。``reduces_attack_damage``）: 減らす量をワザを使ったプレイヤーが選ぶ。v0.13 の止める関数が使う
+      ``preview_attack_damage`` は減らす量を 0 として計算するので、減らした量でだけ当たる問い（CA1・返す効果・そろってのきぜつ）を見落とす
+    - 場のうらのカード（v0.67。マチスの秘策）: ワザがダメージや効果を与える時におもてにし、「たねポケモン」でなければトラッシュする。v0.13 の止める関数はうらのカードの
+      定義を読めず（FD1）、おもてにしたあとの結果も試さない
+    """
+    found = []
+    if any(state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage for t in attacker.trainers):
+        found.append("お上品攻撃の減らす量")
+    if state.face_down_cards:
+        found.append("うらのカード")
+    return tuple(found)
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,

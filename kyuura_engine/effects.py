@@ -111,7 +111,7 @@ from .decisions import (
     ACCEPT_REQUEST, HAND_TO_ACTIVE, OPPONENT_HAND_TO_BENCH, SELECT_HAND_POSITIONS, SWAP_WITH_PRIZE,
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
     DAMAGE_STEP_ORDER,
-    CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD,
+    CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND,
 )
 from .errors import IllegalActionError, UnsupportedError
@@ -148,7 +148,7 @@ from .persistent import (
     weakness_change,
     zero_damage_below,
 )
-from .stadiums import bench_limit, stadium_in_play
+from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
     ATTACK_DAMAGE_BONUS, BENCH_ATTACK_DAMAGE_PREVENTION, FIRE_DOUBLE_ATTACH, POWER_SUPPRESSION, NEXT_TURN_MULTIPLY, POISON_ON_ATTACK_DAMAGE, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation,
     StadiumInPlay, TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench, turn_owner,
@@ -164,6 +164,7 @@ from .zones import (
     hand_to_bench_by_effect, hand_basic_to_active, hand_positions_to_deck, swap_prize_with_hand, take_prize_by_trainer,
     discard_attached_energy_by_stadium, return_attached_energy_by_stadium,
     reveal_face_down_bench, reveal_prizes, return_set_aside, set_aside_face_down_bench, set_aside_hand, set_aside_quiz_card,
+    place_face_down, designate_face_down,
 )
 
 if TYPE_CHECKING:
@@ -588,6 +589,7 @@ class DamageResult:
     knocked_out: bool
     evaded: bool = False
     dodged: bool = False
+    lost: bool = False  # v0.67: 受けるポケモンがうらのカード（マチスの秘策）で、おもてにしたら「たねポケモン」でなくトラッシュした（対象がいない。``amount`` は None）
 
     @property
     def dealt(self) -> int:
@@ -752,7 +754,8 @@ def effect_after_no_damage_error(attack: str, result: DamageResult, condition: s
     そのダメージの要素がダメージを与えなかった（``result``: 防いだ・「とうめい」で受けなかった・最終ダメージが 0）。v0.36: 特殊状態でない効果は
     ``what``（説明のその部分。キョウのドガースの「くもがくれガス」の「自分と、自分についているすべてのカードを山札にもどす」）で書く（同じ問い）。"""
     why = ("「ダメージを受けない」状態で無効" if result.prevented else "「とうめい」で受けなかった" if result.evaded
-           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged else "最終ダメージが 0")
+           else "「かげぶんしん」のコインが「うら」で受けなかった" if result.dodged
+           else "うらのカードをおもてにしたら「たねポケモン」でなくトラッシュし、対象がいない（Z23-d）" if result.lost else "最終ダメージが 0")
     effect_text = what if what is not None else f"「{ {POISON: 'どく', SLEEP: 'ねむり', PARALYSIS: 'マヒ', CONFUSION: 'こんらん'}[condition]}」状態にする"
     return UnsupportedError(
         "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE",
@@ -5823,6 +5826,9 @@ class TrainerEffect:
     # v0.57（docs/stadiums-v0.57.md 7 章）: True なら、説明が使ったプレイヤーの番を書く（「この番」「次の相手の番」「あなたの番は終わりになる」・自分のポケモンを進化させる
     # 時）。錯乱ジムで相手プレイヤーが相手の番の中でかわりに使うと、どの番を指すかが決まらないので、使うことを選ぶと止める（CH1。``borrow_problem``）
     refers_to_user_turn = False
+    # v0.67: 効果の決定で 1 匹だけを指定するトレーナーで、指定したうらのカード（マチスの秘策）をおもてにしたら「たねポケモン」でなくトラッシュしたとき、対象がいないので
+    # 効果が終わるもの（入れ替えのトレーナー。``engine._designate_answer``）。ほかは、そのあとの処理を扱えないので ``UNSUPPORTED_SECRET_PLAN_LOST_TARGET``
+    ends_on_lost_target = False
 
     def borrow_problem(self, state: GameState, use: TrainerUse) -> tuple[str, str] | None:
         """v0.57: 錯乱ジムで相手プレイヤー（``use.player``）がかわりに使うことを選ぶと止める理由 (コード, 理由の文)。なければ None。"""
@@ -6504,6 +6510,7 @@ class SwitchWithBench(TrainerEffect):
     """
 
     implementation_id = "switch_with_bench"
+    ends_on_lost_target = True  # v0.67
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[use.player].bench:
@@ -6631,6 +6638,7 @@ class SwitchOpponentWithBench(TrainerEffect):
     """
 
     implementation_id = "switch_opponent_with_bench"
+    ends_on_lost_target = True  # v0.67
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[1 - use.player].bench:
@@ -8719,7 +8727,7 @@ class DamageOpponentPokemonOnEntry(EntryPower):
         extra = {} if not applied else {"amount_before": self.amount, "received_modifiers": received_modifiers_log(applied)}
         state.add_event("power_damage", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key),
                         target_player=1 - use.player, target=target.card, target_pokemon_id=target.pokemon_id, amount=amount,
-                        total_damage=target.damage, knocked_out=target.damage >= max_hp(state, target), **extra)
+                        total_damage=target.damage, knocked_out=knocked_by_hp(state, target), **extra)
         remove_on_damage(state, 1 - use.player, target, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
 
     def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
@@ -9188,6 +9196,11 @@ def energy_attached_from_hand(state: GameState, player: int, card: int, target: 
     effect = special_energy_effect(state, card) if state.card_def(card).is_special_energy else None
     if effect is None:
         return False
+    if type(effect).on_attached_from_hand is not SpecialEnergyEffect.on_attached_from_hand and state.is_face_down(target):
+        # v0.67: つけたときの効果（回復・10 ダメージ・特殊状態の回復）は、つけたポケモンが受ける効果なので、うらのカードはおもてにする（つけることは効果ではないので、
+        # 効果のない基本エネルギーカードではおもてにしない）。「たねポケモン」でなければ、エネルギーカードといっしょにトラッシュしたあとの処理を扱えない（エンジンの未対応）
+        owner = next(i for i, side in enumerate(state.players) if any(q is target for q in side.in_play()))
+        designate_face_down(state, owner, target, by_player=player, cause="energy", can_lose=False)
     if type(effect).on_attached_from_hand is not SpecialEnergyEffect.on_attached_from_hand and _energy_attach_power_triggers(state, target, card):
         raise RuntimeError(f"特殊エネルギー {card} の効果と、つけたときにはたらく特殊能力が同じタイミングに起こった（順番の決定は未実装。今の写しでは起こらない）")
     effect.on_attached_from_hand(state, player, card, target)
@@ -11900,7 +11913,10 @@ def max_hp(state: GameState, pokemon: PokemonInPlay, *, card: int | None = None)
 
 
 def knocked_by_hp(state: GameState, pokemon: PokemonInPlay) -> bool:
-    """のっているダメージが今有効な最大HP以上か（v0.48。HP 以上のダメージを受けた。``max_hp``）。"""
+    """のっているダメージが今有効な最大HP以上か（v0.48。HP 以上のダメージを受けた。``max_hp``）。v0.67: うらのカード（マチスの秘策）はダメージがのっていないので偽
+    （HP を読まない）。"""
+    if state.is_face_down(pokemon):
+        return False
     return pokemon.damage >= max_hp(state, pokemon)
 
 
@@ -12045,12 +12061,13 @@ def max_hp_drops(before: GameState, after: GameState) -> list[tuple[int, Pokemon
 
     同じ場のポケモンの番号で比べる（``before`` にいなかったポケモン・場をはなれたポケモンは数えない）。ダメージを受けて HP 以上になったポケモン（最大HPは下がっていない）は
     数えない（ワザのあとのきぜつの判定・こんじょうなどの既存の処理）。状態を変えず、乱数を使わない。"""
-    previous = {pokemon.pokemon_id: max_hp(before, pokemon) for player in before.players for pokemon in player.in_play()}
+    # v0.67: うらのカード（マチスの秘策）は HP が決まらないが、ダメージがのっていない（うらのあいだはダメージを受けない）ので数えない
+    previous = {pokemon.pokemon_id: max_hp(before, pokemon) for player in before.players for pokemon in player.in_play() if not before.is_face_down(pokemon)}
     found = []
     for owner, player in enumerate(after.players):
         for pokemon in player.in_play():
             old = previous.get(pokemon.pokemon_id)
-            if old is None:
+            if old is None or after.is_face_down(pokemon):
                 continue
             hp = max_hp(after, pokemon)
             if hp < old and pokemon.damage >= hp:
@@ -13216,7 +13233,7 @@ def devolve_count_problems(state: GameState, player: int, pokemon_id: int, card:
     results = []  # はがした枚数 k（1 から）ごとの (きぜつするか, カウントされるか)
     for _ in range(len(pokemon.evolution_stack)):
         devolve(trial, player, pokemon, 1, destination=DEVOLVE_TO_DISCARD, by_player=player, trainer=card)
-        results.append((pokemon.damage >= max_hp(trial, pokemon), counts_as_knockout(trial, pokemon)))
+        results.append((knocked_by_hp(trial, pokemon), counts_as_knockout(trial, pokemon)))
     problems = {}
     for count in range(2, len(results) + 1):
         first = next((k for k in range(count - 1) if results[k][0]), None)
@@ -16748,6 +16765,8 @@ def trainer_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount:
     - それ以外は ``amount`` をのせる（ログ ``trainer_damage``）。「かげぶんしん」はダメージを受けたら消える（``remove_on_damage``）。きぜつの処理はトレーナーのあと"""
     from .persistent import damage_prevention, remove_on_damage
 
+    if designate_face_down(state, owner, pokemon, by_player=use.player, cause="damage", can_lose=True) is None:
+        return  # v0.67: うらのカードは、ダメージを受ける時におもてにする。「たねポケモン」でなくトラッシュしたら、ダメージを受けるポケモンはいない
     base = {"player": owner, "pokemon": pokemon.card, "pokemon_id": pokemon.pokemon_id, "trainer_card": use.card, "user": use.player}
     prevention = damage_prevention(state, pokemon)
     if prevention is not None:
@@ -17294,7 +17313,7 @@ def bench_entry_damage(state: GameState, owner: int, pokemon: PokemonInPlay) -> 
     if flips.results[0] is not CoinSide.TAILS:
         return
     pokemon.damage += effect.amount
-    if pokemon.damage >= max_hp(state, pokemon):
+    if knocked_by_hp(state, pokemon):
         raise RuntimeError(f"ロケット団の爆発ジムのダメージで、出したポケモン {pokemon.pokemon_id} が HP 以上になった（今の写しでは起こらない。エンジンの不具合）")
     state.add_event("stadium_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, amount=effect.amount, total_damage=pokemon.damage,
                     stadium_card=stadium.card)
@@ -17833,6 +17852,72 @@ class ChallengeBenchFromDecks(TrainerEffect):
         placed = {g.owner for g in state.set_aside if g.kind == SET_ASIDE_FACE_DOWN_BENCH and g.trainer_card == use.card}
         if chooser in placed or (chooser == use.player and placed):
             problems.append(f"{what}の山札から選ぶ決定（プレイヤー {chooser}）の前に、うらにして出したカード {sorted(placed)} が正しくない")
+        return problems
+
+
+LT_SURGES_SECRET_PLAN_TEXT = ("あなたは、手札からカードを1枚選び、うらにしてベンチに出してよい。そのカードは「たねポケモン」でなくてもよく、うらになっている限り、「たねポケモン」として"
+                              "あつかわれる。のぞむなら、あなたの番の中で、あなたはいつでもそのカードをおもてにしてよい。そのカードが「ワザ・特殊能力」を使う時や、「進化・にげる」を"
+                              "する時、また、そのカードが「ダメージや効果」を受ける時も、そのカードをおもてにする。(「おもて」にしたカードが「たねポケモン」でなかったなら、そのカードと、"
+                              "それについているすべてのカードをトラッシュする)")
+SECRET_PLAN_MINEFIELD_CODE = "UNRESOLVED_SECRET_PLAN_MINEFIELD"
+SECRET_PLAN_MINEFIELD_REASON = ("場にロケット団の爆発ジム（「手札から「たねポケモン」のカードをベンチに出す時」）がある。マチスの秘策で手札のカードをうらにしてベンチに出すことが、その「出す時」に"
+                                "当たるか（うらのカードは「たねポケモン」としてあつかわれるが、手札にある間のカードの分類は本当のカードのもの）は決められないので扱わない（FD2）")
+
+
+@dataclass(frozen=True)
+class PlaceFaceDownOnBench(TrainerEffect):
+    """v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: 手札からカードを 1 枚選び、うらにしてベンチに出してよい（マチスの秘策 PMCG5-093。kyuura の印刷の文面）。
+
+    - 決定 ``SECRET_PLAN_CARD``（決めるのは使ったプレイヤー。選べるものは手札のカード（どの種類でもよい。「「たねポケモン」でなくてもよく」）。0〜1 枚。選べるもの・選ぶ数は
+      使ったプレイヤーだけが見る）。0 枚は「出してよい」の出さないこと（ログ ``secret_plan_declined``）
+    - 手札にカードがない・ベンチに空きがない（``bench_has_room``。せまいジム）なら、決定を出さずに何もしない（ログ ``secret_plan_none``）。日本語の文面に「使えない」はない
+      ので、使うための条件にしない（英語版の「(You can't play this card if your Bench is full.)」を持ち込まない）
+    - 選んだカードは ``zones.place_face_down``（うらのまま場のポケモン。場に出た番は今の番）
+    - 場にロケット団の爆発ジムがあれば、どのカードを選んでも FD2（``UNRESOLVED_SECRET_PLAN_MINEFIELD``。選べるが選ぶと止める。出さないことはいつも答え）
+    - おもてにするのは、あとの処理（``RevealFaceDown``・ワザ・特殊能力・進化・にげる・ダメージや効果を受けるとき。``zones.designate_face_down``）"""
+
+    text: str
+    implementation_id = "place_face_down_on_bench"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("手札からカードを1枚選び、うらにしてベンチに出してよい" not in self.text or "「たねポケモン」としてあつかわれる" not in self.text
+                             or "あなたはいつでもそのカードをおもてにしてよい" not in self.text or "「ダメージや効果」を受ける時も、そのカードをおもてにする" not in self.text
+                             or "それについているすべてのカードをトラッシュする" not in self.text):
+            problems.append("文面と登録の処理（手札から 1 枚うらにしてベンチに出す・おもてにする時・たねポケモンでなければトラッシュ）が合わない")
+        return problems
+
+    def candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        """出せる手札のカード（手札の並び）。ベンチに空きがなければ ()。"""
+        if not bench_has_room(state, player):
+            return ()
+        return tuple(state.players[player].hand)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        candidates = self.candidates(state, use.player)
+        if not candidates:
+            reason = "bench_full" if not bench_has_room(state, use.player) else "no_cards"
+            state.add_event("secret_plan_none", player=use.player, trainer_card=use.card, reason=reason)
+            return
+        unresolved = {}
+        if stadium_of(state, BenchEntryDamageStadium) is not None:
+            unresolved = {"unresolved_choices": candidates, "unresolved_code": SECRET_PLAN_MINEFIELD_CODE, "unresolved_reason": SECRET_PLAN_MINEFIELD_REASON}
+        push_trainer_decision(state, use, kind=SECRET_PLAN_CARD, player=use.player, options=candidates, min_choices=0, max_choices=1, **unresolved)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            state.add_event("secret_plan_declined", player=use.player, trainer_card=use.card)
+            return
+        if stadium_of(state, BenchEntryDamageStadium) is not None:
+            raise UnsupportedError(SECRET_PLAN_MINEFIELD_CODE, SECRET_PLAN_MINEFIELD_REASON)
+        place_face_down(state, use.player, choices[0], trainer=use.card)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = super().decision_problems(state, use, decision)
+        candidates = self.candidates(state, use.player)
+        if decision.kind != SECRET_PLAN_CARD or decision.options != candidates or (decision.min_choices, decision.max_choices) != (0, 1) or not candidates:
+            problems.append(f"{what}の決定 {decision.kind} {decision.options} が、手札のカード {candidates} から 0〜1 枚を選ぶ形ではない")
         return problems
 
 
@@ -22653,6 +22738,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG4-058": TrainerEntry(ChallengeBenchFromDecks(CHALLENGE_TEXT), "たたきつけろ!挑戦状", CHALLENGE_TEXT, CHALLENGE_TEXT, _KYUURA_PRINTED_TEXT),
         # カツラのクイズ その3: 手札のポケモンを置き、ワザの名前を伝え、相手が名前を答える。正解なら相手、正解でないなら自分が 3 枚引き、置いたカードを手札にもどす
         "PMCG6-082": TrainerEntry(BlainesQuiz(BLAINES_QUIZ_3_TEXT), "カツラのクイズ その3", BLAINES_QUIZ_3_TEXT, BLAINES_QUIZ_3_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.67（docs/secret-plan-preflight-v0.67.md。kyuura の印刷の文面）
+        # マチスの秘策: 手札から 1 枚をうらにしてベンチに出してよい（うらのあいだは「たねポケモン」としてあつかう。おもてにしてたねポケモンでなければ、ついているカードごとトラッシュ）
+        "PMCG5-093": TrainerEntry(PlaceFaceDownOnBench(LT_SURGES_SECRET_PLAN_TEXT), "マチスの秘策", LT_SURGES_SECRET_PLAN_TEXT, LT_SURGES_SECRET_PLAN_TEXT,
+                                  _KYUURA_PRINTED_TEXT),
     },
     {
         # フシギバナ（v0.5）p.16（カードのページ）・p.323（公式ルール「14 ポケモンの特殊能力」に同じ最新の説明）。エナジートランス: 自分の

@@ -189,7 +189,9 @@ def _gust_target(state, options):
         pokemon = state.find_pokemon(pid)[1]
         # v0.47: なにかの化石・ピッピ人形の「にげる」は決まらない（PF2。印刷の数がない）ので 0 として並べる（ほかのポケモンの並びは変わらない）
         return (_remaining_hp(state, pokemon), -(state.card_def(pokemon.card).retreat_cost or 0), len(pokemon.energy), options.index(pid))
-    return min(options, key=key)
+    # v0.67: うらのカード（マチスの秘策）は HP などが決まらないので、ほかに選べるものがあれば並べない
+    known = [pid for pid in options if not state.is_face_down(state.find_pokemon(pid)[1])]
+    return min(known, key=key) if known else options[0]
 
 
 def _gust_worth(state, player):
@@ -198,6 +200,8 @@ def _gust_worth(state, player):
     if not opponent.bench:
         return "no_opponent_bench"  # 控えがいないときに使えるかは原典で決められない（GW5）ので使わない
     target = state.find_pokemon(_gust_target(state, [b.pokemon_id for b in opponent.bench]))[1]
+    if state.is_face_down(target) or state.is_face_down(opponent.active):
+        return "no_better_target"  # v0.67: うらのカードの残りの HP は決まらない
     if _remaining_hp(state, target) >= _remaining_hp(state, opponent.active):
         return "no_better_target"
     return None

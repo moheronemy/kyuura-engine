@@ -124,7 +124,7 @@
 
 - テストの段階: A（速い単体テスト）と B（決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行）は `python3 -m unittest` に入っています。C（前の版との大きな比較・大規模なストレス実行）は、ふだんのテストで走らせないでください（`python3 tools/compare_engine_versions.py --base <コミット>`・`python3 tools/stress_engine.py`）。
 - ログの監査（tests/log_audit.py の `log_problems`）は、ログだけから場のポケモンのダメージ・エネルギー・トラッシュ・サイドを組み立て直して状態と比べます。ダメージ・エネルギー・トラッシュを変えるログのイベントを加えたら、組み立て直しにも加えてください。ログは記録で、状態の正本ではありません（エンジンはログから状態を決めない）。
-- 書き出しの監査（`serialization_problems`）は、形式 1〜21（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19、v0.62 から 20、v0.63 から 21）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 21）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 22 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
+- 書き出しの監査（`serialization_problems`）は、形式 1〜22（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19、v0.62 から 20、v0.63 から 21、v0.67 から 22）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 22）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 23 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
 - 前の版との比較の駆動（tools/compat_driver.py）は、エンジンの公開の API だけを使い、版ごとに別のプロセス（`python3 -I`）で、指定した木の `kyuura_engine` だけを読み込みます。比べないのは効果の登録表の id（`effects`）だけです。ルールの動きに関わる状態・ログを比較から除かないでください。
 - tests/fixtures/compat_base_4bd97bf.json は、基準の版（v0.4d の `4bd97bf`）で駆動が作った記録の指紋です。今の版から作り直さないでください（作り直すと前の版との比較ではなくなる）。駆動を変えたら、ファイルの `how` の引数で基準の版から作り直します。
 - テストの盤面にポケモンについているトレーナーを置くときは、`build_test_state` の `"trainers"`（[(カード id, トラッシュする番), ...]）を使います。
@@ -148,7 +148,7 @@
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。v0.49 から、今の姿（［へんしん］・「ばける」）のカードの特殊能力と、それを印刷したカードの uid（`effects.powers_of` の `PowerSlot`）で決めます（「ばける」でのせたカードの下のタケシのキュウコンの「ばける」も持つ）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
-- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）、v0.62 で形式 20（場のポケモンの `history`）、v0.63 で形式 21（最上位の `set_aside`・`face_up_prizes`）を加えた。次の新しい形式は 22）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）、v0.62 で形式 20（場のポケモンの `history`）、v0.63 で形式 21（最上位の `set_aside`・`face_up_prizes`）、v0.67 で形式 22（最上位の `face_down_cards`）を加えた。次の新しい形式は 23）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
 - エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
 - ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
 - やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
@@ -2233,4 +2233,75 @@
 - 検証用デッキ `S66`・`C66` と組 `PAIRINGS_V0_66`（`S66` 対 `C66`・`C66` 対 `P46`・`S66` 対 `H62`・`C66` 対 `R65`）は tools/existing_effect_games.py の `--batch v0.66` です。
   前の版の組の結果は変わりません。
 - 手順は `_v066_trainer`・`_v066_decision`（相手の決定にも答える。じゃんけんは 2 人の回し方を変える）、数えた結果は `v066_uses`。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## マチスの秘策と、うらのカード・先読みのフォールバックの修正（v0.67）
+
+### 対象と数
+
+- 依頼の 1 枚のトレーナー（マチスの秘策 PMCG5-093）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.66 | v0.67 |
+  |---|---|---|
+  | トレーナーの登録 | 93 | 94 |
+  | 写し | 455 枚 | 456 枚 |
+  | 対応するカード | 453 枚 | 454 枚 |
+  | PMCG1〜PMCG6 の未対応 | 4 | 3 |
+  | 書き出しの形式 | 21 | 22 |
+
+- 写しの組は `pool_v0_67`。カードごとの結果・おもてにする時・見えない情報・未解決・実装上の判断・互換性・検証は docs/secret-plan-preflight-v0.67.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。英語版の文面（「(You can't play this card if your Bench is full.)」「Flip the card if either player needs to know what it is」）・
+  現代のルールで日本語の不足を補わないでください。
+- テストの定数は tests/helpers.py の `LT_SURGES_SECRET_PLAN`・`V0_67_CARDS`。
+
+### うらのカードの持ち方
+
+- うらのカードは `GameState.face_down_cards`（uid の並び）だけに持ちます（`GameState.is_face_down`）。v0.63 の置いておくカード（`SetAsideCards`）・場のポケモンの印にしないでください。
+- うらのあいだ、`GameState.card_def(uid)` は `cards.FACE_DOWN_DEFINITION` を返します（種類「ポケモン」・段階「たね」・特殊能力なし）。ほかの項目（`FACE_DOWN_HIDDEN_FIELDS`）を読むと
+  `HiddenPropertyRead`（FD1。`UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY`）。印刷の定義・共有する `CardDefinition`・カードの id を書きかえないでください。
+- 場のポケモンを調べる共通の処理（`effects.knocked_by_hp`・`max_hp_drops`・`kernel.knocked_out`）は、うらのカードを飛ばします。場のポケモンの定義を読む処理を加えるときは、
+  うらのカードを飛ばすか、おもてにする（指定する）かを決めてください。`damage >= max_hp` を直接書かず `knocked_by_hp` を使ってください。
+- 不変条件（`engine._face_down_pokemon_problems`・`_face_down_list_problems`）は、うらのあいだにダメージ・特殊状態・持続する効果・ついているトレーナー・重なり・のせたカード・
+  ほかの記録がないことを確かめます。
+
+### おもてにする時
+
+- 自分の番の `MAIN` に選んで（`RevealFaceDown`。ログ `secret_plan_revealed` の `cause` `choice`）・自分の操作（ワザ・にげる・特殊能力・進化。`engine._reveal_for_action`）・
+  ダメージや効果を受ける時（`kernel.designate`（`deal_damage`・`reaches`）・`conditions._prevented`・`effects.trainer_damage`・決定の答えの指定 `engine._designate_answer`・特殊能力の
+  選ばせるもの・トレーナーをつける・つけたときの効果のある特殊エネルギー）。おもてにするのは `zones.reveal_face_down`、指定は `zones.designate_face_down` だけです。
+  ダメージ・効果を与える処理を加えるときは、そのまえにこれらを通してください。
+- 全体に働く効果ではおもてにしません（かがくへんかガスの p.277 の解説の記録の再利用。広げない）。
+- たねポケモンでなければ、ついているカードごとトラッシュ（ログ `secret_plan_discarded`。きぜつではない。サイドは取られない）。空いたバトル場は `resolution.after_power`・
+  `after_trainer` で出します（不変条件 `engine._power_aftermath_problems` は `secret_plan_discarded` の `zone` が `active` のときの続きを許す）。
+- 自分の操作で、おもてにしたたねポケモンの操作が受け付けられなければ、コマンドごと拒否します（うらのまま）。うらにして出した番には進化できません。
+- ワザの途中にトラッシュしたポケモンは `Resolution.secret_lost` に記録し（決定をまたぐときは続きの情報で運ぶ）、ダメージは `DamageResult.lost`。対象がいなくなったら効果が終わる
+  トレーナーは `TrainerEffect.ends_on_lost_target`、ほかの扱えない指定は `UNSUPPORTED_SECRET_PLAN_LOST_TARGET`（エンジンの未対応）。
+
+### 見えない情報
+
+- 観測は本当のカード（`real`）を持ち主だけに見せ、HP・タイプ・ワザなどは書きません。ログの写しは、見る人の相手の今うらのカードの uid を、カードの uid を書く項目
+  （`observation.UID_FIELDS` と `…_card`・`…_cards`）から除きます。カードの uid を書くログの項目を加えるときは、この名前の決まりにしたがってください（場のポケモンの番号は `pokemon_id`）。
+- 相手のうらのカードがあり、相手のコマンドの処理が本当のカードを使ったら（`zones.IDENTITY_CONSULTED`）、`engine._identity_independent` が持ち主のデッキのカードの id のすべての組で
+  同じコマンドを確かめます（受け付けるか・拒否の種類とコード。理由の文に本当のカードを書かない）。組が 256 を超えたら `UNSUPPORTED_SECRET_PLAN_IDENTITIES`。この確かめを外して、
+  本当のカードの結果で受け付けるかを決めないでください。
+
+### 先読みのフォールバックの修正（v0.66 の文書 2.5 節）
+
+- `flow.legacy_unknown_features` が、ワザを使うポケモンについているお上品攻撃（`reduces_attack_damage`）・場のうらのカードを見つけたら、上限を超えたときに v0.13 の止める関数で
+  確かめず `UNSUPPORTED_PREFLIGHT_LIMIT`、比べる方法 legacy は `derived_full`、v0.13 の約束の実装は `UNSUPPORTED_LEGACY_PREFLIGHT`。v0.13 の止める関数が知らない選択・役割を
+  加えたら、ここに加えてください。上限の数（`MAX_BRANCHES` = 4,096）を上げないでください。
+
+### 決められない場合と変えていないもの
+
+- 新しい停止コードは FD1（`UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY`）・FD2（`UNRESOLVED_SECRET_PLAN_MINEFIELD`。爆発ジム。出すと止める）の 2 件で、どちらも `not_in_kyuura`。
+  ［へんしん］のメタモンが相手のうらのカードを写す場面は FD1 で止めます（v0.49 の TF2 と同じ形）。エンジンが止める `UNRESOLVED_…` は 147 件、未解決の裁定は 149 件です。
+- 書き出しの形式 22 = 形式 21 + 最上位の `face_down_cards`（形式 1〜21 はうらのカードがあると `ValueError`）。監査の `LATEST_FORMAT` は 22。次の新しい形式は 23。
+- 新しいコマンド `RevealFaceDown(player, pokemon)`・拒否のコード `NOT_FACE_DOWN`・決定の種類 `secret_plan_card`（観測の意味は `card`。出さない（0 個）がいつも答え）・
+  ログのイベント `secret_plan_placed`（`card` は持ち主だけ）・`secret_plan_none`・`secret_plan_declined`・`secret_plan_revealed`・`secret_plan_discarded`・`secret_plan_target_lost`。
+
+### 検証用デッキ
+
+- 検証用デッキ `L67` と組 `PAIRINGS_V0_67`（`L67` 対 `C66`・`R65`・`S66`・`G64`）は tools/existing_effect_games.py の `--batch v0.67` です。前の版の組の結果は変わりません。
+- 手順は `_v067_trainer`・`_v067_decision`・`_v067_reveal`、数えた結果は `v067_uses`。既存の手順で場のポケモンの定義を読むところは、うらのカードを飛ばします。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

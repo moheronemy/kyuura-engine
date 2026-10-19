@@ -144,7 +144,12 @@ class AttackRun:
         return self.state.find_pokemon(self.fs.frame.source_pid)[1]
 
     def opponent_active(self) -> PokemonInPlay:
-        return self.state.players[1 - self.player].active
+        active = self.state.players[1 - self.player].active
+        if active is None and self.res.secret_lost:
+            from .kernel import lost_pokemon
+
+            return lost_pokemon(self.res, 1 - self.player)  # v0.67: おもてにしてトラッシュしたバトル場のうらのカード（対象がいない。``knocked_out`` が真）
+        return active
 
     def flip(self, count: int, *, by_heads: bool = False, player: int | None = None) -> CoinFlips:
         """コインを ``count`` 枚投げる。``by_heads``（v0.35）: 結果を「おもて」の数だけで使うコイン（先読みが「おもて」の数でまとめて試せる。
@@ -246,6 +251,11 @@ class AttackRun:
         # v0.65: ［にげこむ］のまだ聞いていない候補と、入れ替えたポケモン（もと → かわり）
         self.res.flee_offers = [tuple(entry) for entry in frame.get("flee", ())]
         self.res.fled = {orig: new for orig, new in frame.get("fled", ())}
+        from ..state import PokemonInPlay
+
+        # v0.67: おもてにしてトラッシュしたうらのカード（場をはなれたので、番号だけを持つ場のポケモンとして作り直す。対象がいないことを確かめるだけに使う）
+        self.res.secret_lost = {pid: (owner, PokemonInPlay(card, pokemon_id=pid, played_turn=0), bool(was_active))
+                                for pid, owner, card, was_active in frame.get("secret_lost", ())}
         # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）。決定の前の宣言で写した値（書いていなければ空。決定をまたいでも今の特殊状態で決め直さない）
         self.res.attack_status = frozenset(carried.get("attack_status", ()))
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
@@ -253,14 +263,21 @@ class AttackRun:
         self.res.stadium_coin = None if coin is None else (coin[0], bool(coin[1]))
 
     def knocked_out(self, pokemon: PokemonInPlay) -> bool:
-        """効果の対象が、このワザの処理の中で HP 以上になった（p.309「処理の対象がなくなってしまっている場合」。きぜつの処理はワザのあと）。
+        """v0.67: おもてにしてトラッシュしたうらのカード（``res.secret_lost``）は、処理の対象がいない（効果を与えない・効果を決めるコインを投げない。HP 以上になった
+        対象と同じ扱い）。うらのカード（まだおもてにしていない）は、ダメージがのっていない（うらのあいだはダメージを受けない）ので HP 以上ではない（HP を読まない）。
+
+        効果の対象が、このワザの処理の中で HP 以上になった（p.309「処理の対象がなくなってしまっている場合」。きぜつの処理はワザのあと）。
         v0.13 では、ワザの実装によって今のダメージで比べるものと、ダメージの要素の結果で見るものがあった（audit 4.3）。ここでは今のダメージで
         比べる（今の対応カードでは同じ答え）。"""
         if self.res.fled and (pokemon.pokemon_id in self.res.fled or pokemon.pokemon_id in self.res.fled.values()):
             # v0.65: ［にげこむ］で入れ替えたポケモンと、かわりに出たポケモンは、このワザの残りの「ダメージ以外の効果」の対象ではない（効果を移さない）。処理の対象がない
             # ときと同じく、その効果を決めるコインも投げない（p.309。HP 以上になった対象と同じ扱い）
             return True
-        return pokemon.damage >= E.max_hp(self.state, pokemon)  # v0.48: 今有効な最大HP
+        if pokemon.pokemon_id in self.res.secret_lost:
+            return True
+        if self.state.is_face_down(pokemon):
+            return False
+        return E.knocked_by_hp(self.state, pokemon)  # v0.48: 今有効な最大HP
 
     def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
         """効果の対象がきぜつして効果を飛ばすとき、その対象がきぜつの判定で任意の効果（こんじょう）を使えるなら、効果を受けるかが原典で
@@ -290,7 +307,7 @@ class AttackRun:
 
     def _knocked_pid(self, pid: int) -> bool:
         located = self.state.find_pokemon(pid)
-        return located is not None and located[1].damage >= E.max_hp(self.state, located[1])
+        return located is not None and E.knocked_by_hp(self.state, located[1])
 
     def suspend(self, *, kind: str, player: int, options, extra: tuple = (), min_choices: int = 1, max_choices: int = 1,
                 carry: bool = False) -> None:
@@ -321,6 +338,10 @@ class AttackRun:
         # v0.65: ［にげこむ］のまだ聞いていない候補・入れ替えたポケモン。なければ書かない（v0.64 までの決定の形は変えない）
         flee = ((("flee", tuple(self.res.flee_offers)),) if self.res.flee_offers else ()) + (
             (("fled", tuple(sorted(self.res.fled.items()))),) if self.res.fled else ())
+        if self.res.secret_lost:
+            # v0.67: このワザでおもてにしてトラッシュしたうらのカード（(番号, 持ち主, カード, バトル場にいたか)）。なければ書かない（v0.66 までの決定の形は変えない）
+            flee += (("secret_lost", tuple(sorted((pid, owner, pokemon.card, int(was_active))
+                                                 for pid, (owner, pokemon, was_active) in self.res.secret_lost.items()))),)
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -518,7 +539,7 @@ def offer_flee(run: AttackRun, index: int) -> bool:
         if instance is None or C.offer_stopped(state, instance, pokemon):
             continue
         options = tuple(b.pokemon_id for b in p.bench)
-        if pokemon.damage >= E.max_hp(state, pokemon):
+        if E.knocked_by_hp(state, pokemon):
             unresolved, code, reason = options, E.KNOCKED_OUT_REACTION_CODE, E.KNOCKED_OUT_REACTION_REASON  # KD1（同じワザのダメージで HP 以上）
         elif own_attack:
             unresolved, code, reason = options, E.FLEE_OWN_ATTACK_CODE, E.FLEE_OWN_ATTACK_REASON
@@ -1058,6 +1079,14 @@ class Damage(Element):
             flips = until_tails(run, self)  # v0.64: 「うら」が出るまで投げるコイン（れんぞくいしなげ）
         else:
             flips = run.flip(coins, by_heads=getattr(self.base, "by_heads", False), player=flipper) if coins else None
+        if self.target == OPP and run.state.is_face_down(run.opponent_active()):
+            # v0.67: うらのカード（マチスの秘策）は、ダメージを受ける時におもてにする。基本となるダメージ（受けるポケモンを読む値。「相手のエネルギーの数」など）を
+            # 求める前におもてにする。「たねポケモン」でなくトラッシュしたら、このダメージの要素の対象はいない
+            from .kernel import designate
+
+            if designate(run.res, run.fs, 1 - run.player, run.opponent_active(), "damage") is None:
+                run.fs.results[self.name] = E.DamageResult(OPP, 1 - run.player, run.opponent_active().pokemon_id, False, None, False, lost=True)
+                return False
         base = 0 if zero else self.base.value(run, flips)
         return self._deal(run, base, {})
 
@@ -5521,7 +5550,7 @@ def _hp_dropped_in_attack(run: AttackRun) -> None:
     res = run.res
     for player in (run.player, 1 - run.player):
         for pokemon in run.state.players[player].in_play():
-            if pokemon.damage >= E.max_hp(run.state, pokemon) and pokemon.pokemon_id not in res.knocked_by:
+            if E.knocked_by_hp(run.state, pokemon) and pokemon.pokemon_id not in res.knocked_by:
                 res.knocked_by[pokemon.pokemon_id] = run.fs.frame.id
                 res.trace.record(KnockedOutRecorded(pokemon.pokemon_id, run.fs.frame.id))
                 res.ko_prevention_able[pokemon.pokemon_id] = False

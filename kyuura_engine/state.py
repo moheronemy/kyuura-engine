@@ -20,7 +20,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, Mapping
 
-from .cards import CardDefinition, EnergyType
+from .cards import FACE_DOWN_DEFINITION, CardDefinition, EnergyType
 from .rng import copy_rng
 
 if TYPE_CHECKING:
@@ -1337,6 +1337,10 @@ class GameState:
     # 持つ（そのときサイドにあったカードだけがおもてになる。あとからサイドに置かれたカードは、おもてにする指示がないので裏のまま）。サイドをはなれたら（取った・入れかえた）
     # 並びから除く（``zones.prize_left``）。書き出しは形式 21 だけが表せる（空でなければ形式 1〜20 は ``ValueError``）
     face_up_prizes: tuple[int, ...] = ()
+    # v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: うらにしてベンチに出したカード（マチスの秘策。カードの uid の並び。出した順）。どれも場のポケモンのいちばん上の
+    # カード（重なり・のせたカードはない）で、うらのあいだはカードの定義が「たねポケモン」としてあつかう定義（``FACE_DOWN_DEFINITION``。名前・HP・タイプなどは読めない）。
+    # おもてにしたら並びから除く（``zones.reveal_face_down``）。書き出しは形式 22 だけが表せる（空でなければ形式 1〜21 は ``ValueError``）
+    face_down_cards: tuple[int, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
@@ -1391,6 +1395,9 @@ class GameState:
         ``play_profile``）は、場のポケモンのカード（いちばん上のカードか、進化して下に重なったカード）であるあいだだけ、場での役割の定義（``category`` は
         "pokemon"・``play_role`` あり）を返す。手札・山札・サイド・トラッシュ・使用中のトレーナーでは、印刷の定義（トレーナーカード）のまま（「場に出ている
         とき以外は、トレーナーカードとしてあつかう」）。ほかのカードは、どこにあっても印刷の定義（v0.46 までと同じ）。印刷の定義・写しは変えない。"""
+        if self.face_down_cards and uid in self.face_down_cards:
+            # v0.67: うらにしてベンチに出したカード（マチスの秘策）。「たねポケモン」としてあつかい、本当のカードの名前・HP・タイプなどは読めない
+            return FACE_DOWN_DEFINITION
         definition = self.definitions[self.cards[uid].card_id]
         if definition.category == "trainer":
             profile = self.effects.play_profile(definition)
@@ -1434,6 +1441,10 @@ class GameState:
                 if pokemon.card == uid or uid in pokemon.evolution_stack:
                     return True
         return False
+
+    def is_face_down(self, pokemon: PokemonInPlay) -> bool:
+        """場のポケモン ``pokemon`` が、うらにしてベンチに出したカード（v0.67。マチスの秘策）のままか。"""
+        return bool(self.face_down_cards) and pokemon.card in self.face_down_cards
 
     def find_pokemon(self, pokemon_id: int) -> tuple[int, PokemonInPlay] | None:
         """場のポケモンの番号から、(持ち主, ポケモン) を返す。場にいなければ None。"""

@@ -167,6 +167,37 @@ class CardDefinition:
         return self.category == "energy" and self.energy_kind == "special"
 
 
+# v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: うらにしてベンチに出したカード（マチスの秘策）の、うらのあいだのカードの定義で、読めない項目
+FACE_DOWN_HIDDEN_FIELDS = frozenset({"id", "name_ja", "name_en", "hp", "pokemon_type", "weakness", "resistance", "resistance_value", "retreat_cost", "attacks"})
+
+
+class FaceDownDefinition(CardDefinition):
+    """うらにしてベンチに出したカード（v0.67。マチスの秘策）の、うらのあいだのカードの定義（``GameState.card_def``）。
+
+    「うらになっている限り、「たねポケモン」としてあつかわれる」ので、種類は "pokemon"・段階は "basic"。特殊能力はない（うらのカード自身の特殊能力ははたらかない）。
+    ほかの項目（``FACE_DOWN_HIDDEN_FIELDS``。名前・HP・タイプ・弱点・抵抗力・にげる・ワザ・カードの id）は本文が決めないので、読むと ``HiddenPropertyRead``（FD1）。
+    決まった値（化石・人形の HP 10 など）を置かない。印刷の定義・写しは変えない（``printed_def`` は本当のカードの定義のまま）。"""
+
+    def __getattribute__(self, name: str):
+        if name in FACE_DOWN_HIDDEN_FIELDS:
+            from .errors import HiddenPropertyRead
+
+            raise HiddenPropertyRead(name)
+        return super().__getattribute__(name)
+
+    def __repr__(self) -> str:
+        return "FaceDownDefinition()"
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, FaceDownDefinition)
+
+    def __hash__(self) -> int:
+        return hash("FaceDownDefinition")
+
+
+FACE_DOWN_DEFINITION = FaceDownDefinition(id="", name_ja="", name_en=None, category="pokemon", supported=True, unsupported_reasons=(), stage="basic")
+
+
 def can_pay_cost(cost: Iterable[EnergyType], provided: Iterable[EnergyType]) -> bool:
     """ワザに必要なエネルギーが足りているか（p.320）。
 
@@ -460,6 +491,7 @@ POOL_KEYS = (
     "pool_v0_64",  # v0.64（化石の秘密のイシツブテ・ゴローン・ゴローニャ。docs/geodude-line-unbounded-coins-v0.64.md）
     "pool_v0_65",  # v0.65（キョウ秘伝,変わり身の術・カスミのドククラゲ・タケシのサイドン。docs/reactive-decisions-v0.65.md）
     "pool_v0_66",  # v0.66（お上品攻撃・ナツメのESP・カスミの勝負。docs/optional-trainers-v0.66.md）
+    "pool_v0_67",  # v0.67（マチスの秘策。docs/secret-plan-preflight-v0.67.md）
 )
 
 

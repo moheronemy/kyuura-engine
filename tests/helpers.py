@@ -664,6 +664,8 @@ CHARITY = "PMCG5-074"  # お上品攻撃（リーダーズスタジアム。087/
 SABRINAS_ESP = "PMCG6-087"  # ナツメのESP（闇からの挑戦。075/000。トレーナー。ナツメのポケモンにつけ、ワザの説明文のコイントスをやり直してよい。番の終わりにトラッシュ）
 MISTYS_DUEL = "PMCG5-068"  # カスミの勝負（リーダーズスタジアム。074/096。トレーナー。じゃんけんの勝者が手札を山札にもどして切り、5 枚引く）
 V0_66_CARDS = (CHARITY, SABRINAS_ESP, MISTYS_DUEL)
+LT_SURGES_SECRET_PLAN = "PMCG5-093"  # マチスの秘策（リーダーズスタジアム。082/096。トレーナー。手札から 1 枚をうらにしてベンチに出してよい。v0.67）
+V0_67_CARDS = (LT_SURGES_SECRET_PLAN,)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})

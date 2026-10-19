@@ -36,6 +36,7 @@ from .decisions import (
     DAMAGE_REDUCTION,
     ESP_REDO,
     JANKEN_HAND,
+    SECRET_PLAN_CARD,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
@@ -134,6 +135,8 @@ OPTION_MEANINGS: dict[str, str] = {
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
     DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken",
+    # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
+    SECRET_PLAN_CARD: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH})
@@ -159,6 +162,31 @@ def hand_visible_to(state: GameState, owner: int, viewer: int | None) -> bool:
 
 def _card(state: GameState, uid: int) -> dict[str, Any]:
     return {"card": uid, "card_id": state.cards[uid].card_id}
+
+
+def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.67（docs/secret-plan-preflight-v0.67.md 7 章）: うらにしてベンチに出したカード（マチスの秘策）。全員に見えるのは、場のポケモンの番号・うらであること・ついている
+    エネルギーカード（手札からつけた表のカード）・ダメージ（うらのあいだは 0）だけ。本当のカード（uid・カードの id・名前。uid はデッキの並びからカードがわかる）は持ち主
+    だけに見える。HP・タイプ・弱点・抵抗力・ワザ・特殊能力・今の姿は、うらのあいだは決まらないので書かない（持ち主にも書かない。エンジンが読まない値）。"""
+    view: dict[str, Any] = {
+        "pokemon_id": pokemon.pokemon_id,
+        "face_down": True,
+        "damage": pokemon.damage,
+        "energy": [_card(state, uid) for uid in pokemon.energy],
+        "trainers": [_card(state, t.card) for t in pokemon.trainers],
+        "special_conditions": list(pokemon.conditions.names()),
+        "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
+    }
+    if viewer == owner:
+        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja}
+    return view
+
+
+def _field_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.67: 場のポケモンの観測（うらのカードは ``_face_down_pokemon``）。"""
+    if state.is_face_down(pokemon):
+        return _face_down_pokemon(state, pokemon, owner, viewer)
+    return _pokemon(state, pokemon)
 
 
 def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -331,8 +359,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                            "user": g.user, "trainer_card": g.trainer_card, "card_id": g.card_id, "return_turn": g.return_turn}
                           for g in state.set_aside if g.owner == owner],
             "discard": [_card(state, uid) for uid in p.discard],
-            "active": (_pokemon(state, p.active) if board_visible else {"face_down": True}) if p.active is not None else None,
-            "bench": [_pokemon(state, b) if board_visible else {"face_down": True} for b in p.bench],
+            "active": (_field_pokemon(state, p.active, owner, viewer) if board_visible else {"face_down": True}) if p.active is not None else None,
+            "bench": [_field_pokemon(state, b, owner, viewer) if board_visible else {"face_down": True} for b in p.bench],
         })
     used = state.trainer_in_use
     return {
@@ -416,9 +444,13 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "face_down_bench": (("cards",), _only_player),
     "challenge_bench_skipped": (("reason",), _only_player),
     "quiz_card_set": (("card",), _only_player),
+    # v0.67: マチスの秘策でうらにしてベンチに出したカード（持ち主だけ。おもてにしたら ``secret_plan_revealed`` で全員）
+    "secret_plan_placed": (("card",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.67: マチスの秘策（出さなかった・出せなかった理由・おもてにした本当のカード・トラッシュしたカード・指定した対象がいなくなった。どれも表の情報）
+    "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",
     # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限
     "esp_redo", "esp_redo_declined", "duel_janken", "return_attached_trainer",
     # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
@@ -488,7 +520,34 @@ def visible_event(event, viewer: int | None) -> dict[str, Any]:
     raise ValueError(f"ログのイベント {kind!r} の見える範囲が決まっていない（observation.PRIVATE_FIELDS・PUBLIC_EVENTS に加える）")
 
 
+def _uid_field(name: str) -> bool:
+    """v0.67: カードの uid を書く項目の名前か（``UID_FIELDS``・``…_card``・``…_cards``）。"""
+    return name in UID_FIELDS or name.endswith("_card") or name.endswith("_cards")
+
+
+# v0.67: カードの uid を書くログの項目（``_card``・``_cards`` で終わる名前のほか）。場のポケモンの番号は ``pokemon_id``・``…_pokemon_id`` に書く
+UID_FIELDS = frozenset({"pokemon", "card", "cards", "old_active", "new_active", "target", "active", "bench", "energy", "discarded", "discarded_energy"})
+
+
+def _mask_face_down(event: dict[str, Any], hidden: frozenset[int]) -> dict[str, Any]:
+    """v0.67: 見る人の相手のうらのカード（``hidden``。今うらのもの）の uid を、カードの uid を書く項目から除いた写し（uid はデッキの並びからカードがわかる。おもてにしたら
+    前のイベントの項目も見える）。"""
+    masked = dict(event)
+    for name, value in event.items():
+        if not _uid_field(name):
+            continue
+        if type(value) is int and value in hidden:
+            masked[name] = None
+        elif isinstance(value, (tuple, list)) and any(type(v) is int and v in hidden for v in value):
+            masked[name] = type(value)(None if type(v) is int and v in hidden else v for v in value)
+    return masked
+
+
 def visible_log(state: GameState, viewer: int | None) -> list[dict[str, Any]]:
-    """ログを、``viewer``（0・1・``None`` は観戦者）に見える項目だけにした写しの並び。状態を変えない。"""
+    """ログを、``viewer``（0・1・``None`` は観戦者）に見える項目だけにした写しの並び。状態を変えない。v0.67: ``viewer`` の相手のうらのカード（マチスの秘策）の uid は
+    見せない（``_mask_face_down``）。"""
     _check_viewer(viewer)
-    return [visible_event(event, viewer) for event in state.log]
+    hidden = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != viewer)
+    if not hidden:
+        return [visible_event(event, viewer) for event in state.log]
+    return [_mask_face_down(visible_event(event, viewer), hidden) for event in state.log]

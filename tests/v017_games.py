@@ -343,7 +343,7 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
         observed["accepted"] += 1
         if isinstance(command, UseAttack):
             attacker = state.players[command.player].active
-            observed[f"attack_{state.card_def(attacker.card).id}#{command.attack_index}"] += 1
+            observed[f"attack_{state.cards[attacker.card].card_id}#{command.attack_index}"] += 1  # v0.67: うらのカードでも数える
         commands.append(command)
         state = new
     raise AssertionError("決まった手数で終わらなかった")

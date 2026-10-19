@@ -237,6 +237,22 @@ class UseStadium:
     energy: int | None = None
 
 
+@dataclass(frozen=True)
+class RevealFaceDown:
+    """うらにしてベンチに出したカード（マチスの秘策）を、自分の番におもてにする（v0.67。「のぞむなら、あなたの番の中で、あなたはいつでもそのカードをおもてにしてよい」。
+    docs/secret-plan-preflight-v0.67.md 4 章）。
+
+    - ``pokemon``: おもてにする自分の場のポケモンの番号（バトル場でもベンチでもよい）
+    - 自分の番（``Phase.MAIN``）だけ。決定を待っているあいだ・ほかの処理の途中では使えない（「いつでも」は、ほかの処理に割りこむことではない。実装上の読み方）。
+      トレーナーカードの使用・特殊能力の使用ではない（使用の禁止・かがくへんかガスは関係しない）
+    - おもてにしたカードが「たねポケモン」でなければ、ついているすべてのカードといっしょにトラッシュする（きぜつではない）。バトル場が空いたら、勝ち負けの判定・
+      バトル場に出す決定のあと、自分の番にもどる
+    """
+
+    player: int
+    pokemon: int
+
+
 COMMAND_TYPES: dict[str, type] = {
     "place_starting_pokemon": PlaceStartingPokemon,
     "draw_mulligan_cards": DrawMulliganCards,
@@ -255,6 +271,7 @@ COMMAND_TYPES: dict[str, type] = {
     "discard_from_play": DiscardFromPlay,
     "remove_disguise": RemoveDisguise,  # v0.49
     "use_stadium": UseStadium,  # v0.57
+    "reveal_face_down": RevealFaceDown,  # v0.67
 }
 
 # ルールにはあるが、まだ対応していない操作（受け取ると UnsupportedError）。EvolvePokemon は v0.4a、UsePokemonPower は v0.5 で対応した
@@ -280,6 +297,7 @@ Command = (
     | DiscardFromPlay
     | RemoveDisguise
     | UseStadium
+    | RevealFaceDown
 )
 
 

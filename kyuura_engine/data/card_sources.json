@@ -16634,6 +16634,46 @@
       ],
       "issues": [],
       "notes": "v0.66 で加えた。トレーナー。RockPaperScissorsRefreshHand（使ったプレイヤー → 相手の順にじゃんけんの手を決定 janken_hand で決め、両方の手を決めてからログ duel_janken で見せる。あいこはくり返す。勝ったプレイヤーが手札をすべて山札にもどして切り、5 枚引く）。kyuura の研究の基準のコミットに、このカードの記録はない。日本語の文面の転記元は pcg-search.com ではないので独立した照合。英語版の「flip a coin to decide who's the winner」は持ち込まない（docs/optional-trainers-v0.66.md）"
+    },
+    "PMCG5-093": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスの秘策",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1082.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "082/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "あなたは、手札からカードを1枚選び、うらにしてベンチに出してよい。そのカードは「たねポケモン」でなくてもよく、うらになっている限り、「たねポケモン」としてあつかわれる。のぞむなら、あなたの番の中で、あなたはいつでもそのカードをおもてにしてよい。そのカードが「ワザ・特殊能力」を使う時や、「進化・にげる」をする時、また、そのカードが「ダメージや効果」を受ける時も、そのカードをおもてにする。(「おもて」にしたカードが「たねポケモン」でなかったなら、そのカードと、それについているすべてのカードをトラッシュする)",
+              "pcg_search": "あなたは、手札からカードを1枚選び、うらにしてベンチに出してよい。そのカードは「たねポケモン」でなくてもよく、うらになっている限り、「たねポケモン」としてあつかわれる。のぞむなら、あなたの番の中で、あなたはいつでもそのカードをおもてにしてよい。そのカードが「ワザ・特殊能力」を使う時や、「進化・にげる」をする時、また、そのカードが「ダメージや効果」を受ける時も、そのカードをおもてにする。(おもてにしたカードが「たねポケモン」でなかったなら、そのカードと、それについているすべてのカードをトラッシュする)",
+              "affects_behavior": false,
+              "note": "かっこ書きの最初の「おもて」のかぎかっこの有無だけが違う（表記の違い。処理に使う意味は同じで、挙動に影響しない）"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はカードページの番号。カードの画像は読んでいない。サイトの番号（082）は kyuura の id の番号（093）と違う"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.67 で加えた。トレーナー。PlaceFaceDownOnBench（手札から 1 枚をうらにしてベンチに出してよい。うらのあいだは「たねポケモン」としてあつかい、名前・HP・タイプなどは読めない（FD1）。おもてにするのは、自分の番の RevealFaceDown・ワザ・特殊能力・進化・にげる・ダメージや効果を受けるとき。おもてにしてたねポケモンでなければ、ついているカードごとトラッシュ）。kyuura の研究の基準のコミットに、このカードの記録はない。日本語の文面の転記元（kyuura の ja_text_source）はポケモンWikiで pcg-search.com ではないので独立した照合。かがくへんかガスの記録（このリポジトリの docs/chemical-gas-v0.8.md 2 章・card_verification.json の PMCG3-007 の記録の p.277 の解説の 1 文）は、全体に働く効果についての解説として再利用した（このカード全体を照合した記録ではない。kyuura が原典を確かめた記録でもない）。英語版の「(You can't play this card if your Bench is full.)」「Flip the card if either player needs to know what it is」は持ち込まない（docs/secret-plan-preflight-v0.67.md）"
     }
   }
 }

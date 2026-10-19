@@ -99,6 +99,10 @@
   ロケット団参上!）を加えたもの（v0.63。docs/hidden-card-trainers-v0.63.md 7 章）。内部の完全な記録なので、置いたカード・おもてのサイドのカードを書く（プレイヤーに渡す
   ときは観測 ``observation.observe`` を使う）。形式 1〜20 は、どちらかがあると ``ValueError``（なければ形式 1〜20 の書き出しは v0.62 と同じ）。
 
+- 22: 21 に、最上位の ``face_down_cards``（うらにしてベンチに出したカードの uid の並び。マチスの秘策）を加えたもの（v0.67。docs/secret-plan-preflight-v0.67.md 7 章）。
+  内部の完全な記録なので、場のポケモンの ``card_id``・``name``・``hp`` は本当のカードの値を書く（プレイヤーに渡すときは観測 ``observation.observe`` を使う）。形式 1〜21 は、
+  うらのカードがあると ``ValueError``（なければ形式 1〜21 の書き出しは v0.66 と同じ）。
+
 形式 1・2 は、トレーナーを使っている最中（決定を待っている間）の状態を表せない（そのカードがどの
 ゾーンにも出てこない）。その状態を形式 1・2 で書き出そうとすると ``ValueError`` にする（黙って
 カードを落とさない）。同じように、形式 1〜3 はポケモンについているトレーナー（プラスパワーなど）を
@@ -182,7 +186,7 @@ from .state import (
     WeaknessChange,
 )
 
-FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21)
+FORMAT_VERSIONS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22)
 
 
 def _special_conditions(pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -310,7 +314,8 @@ def _uses_v050_fields(state: GameState) -> bool:
 def _pokemon(state: GameState, pokemon: PokemonInPlay | None, format_version: int) -> dict[str, Any] | None:
     if pokemon is None:
         return None
-    definition = state.card_def(pokemon.card)
+    # v0.67: うらにしてベンチに出したカードも、内部の完全な記録なので本当のカードの定義を書く（うらであることは最上位の ``face_down_cards``）
+    definition = state.in_play_def(pokemon.card) if state.is_face_down(pokemon) else state.card_def(pokemon.card)
     data = {
         "card": pokemon.card,
         "card_id": definition.id,
@@ -443,6 +448,8 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
         raise ValueError(f"形式 {format_version} は、場のポケモンのワザの履歴（使ったワザ・受けたワザ）を表せない（format_version=20 を使う）")
     if format_version < 21 and (state.set_aside or state.face_up_prizes):
         raise ValueError(f"形式 {format_version} は、一時的に置いておくカード・おもてのサイドを表せない（format_version=21 を使う）")
+    if format_version < 22 and state.face_down_cards:
+        raise ValueError(f"形式 {format_version} は、うらにしてベンチに出したカード（マチスの秘策）を表せない（format_version=22 を使う）")
     if format_version == 1 and state.decision is not None and state.decision.context_value("then") is not None:
         raise ValueError("形式 1 は、ポケモンチェックの中のきぜつのあとの決定（続き）を表せない（format_version=2 以上を使う）")
     if format_version == 1 and state.decision is not None and state.decision.resume == "attack":
@@ -579,4 +586,6 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
             for g in state.set_aside
         ]
         data["face_up_prizes"] = list(state.face_up_prizes)
+    if format_version >= 22:
+        data["face_down_cards"] = list(state.face_down_cards)  # v0.67
     return data

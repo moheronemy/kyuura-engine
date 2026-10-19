@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 147,
-    "engine_stop_codes": 145,
+    "engine_unresolved_rulings": 149,
+    "engine_stop_codes": 147,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1714,6 +1714,28 @@
           "version": "v0.66",
           "document": "docs/optional-trainers-v0.66.md",
           "ruling_id": "ES3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": {
+      "engine_rulings": [
+        {
+          "version": "v0.67",
+          "document": "docs/secret-plan-preflight-v0.67.md",
+          "ruling_id": "FD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SECRET_PLAN_MINEFIELD": {
+      "engine_rulings": [
+        {
+          "version": "v0.67",
+          "document": "docs/secret-plan-preflight-v0.67.md",
+          "ruling_id": "FD2"
         }
       ],
       "kyuura_issue": null,

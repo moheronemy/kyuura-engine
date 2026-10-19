@@ -22,6 +22,7 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
 from .effects import (
+    knocked_by_hp,
     EXPIRE_TO_HAND,
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
@@ -179,7 +180,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         (owner, pokemon)
         for owner in order
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= max_hp(state, pokemon)
+        if knocked_by_hp(state, pokemon)
     ]
 
 

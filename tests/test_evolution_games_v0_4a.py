@@ -63,7 +63,7 @@ def evolution_command(state, *, tried=()):
         if not definition.is_stage1_pokemon:
             continue
         for target in p.in_play():
-            if state.card_def(target.card).name_ja != definition.evolves_from:
+            if state.is_face_down(target) or state.card_def(target.card).name_ja != definition.evolves_from:  # v0.67: うらのカードは別の手順
                 continue
             ok = state.turn_number > 2 and target.current_form_turn < state.turn_number
             (eligible if ok else ineligible).append(EvolvePokemon(player, uid, target.pokemon_id))

@@ -151,7 +151,7 @@ class CardDataTest(unittest.TestCase):
                 counts[definition.category] = counts.get(definition.category, 0) + 1
         # v0.59 の 332・84・10（426）から、ポケモン 4 枚を加えた
         self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (350, 93, 10))  # v0.61 でポケモン 3 枚・トレーナー 1 枚を加えた  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 453)  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた
+        self.assertEqual(sum(counts.values()), 454)  # v0.62 でポケモン 6 枚を加えた  # v0.63 でトレーナー 4 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
 
     def test_registrations(self):
         reg = E.DEFAULT_EFFECTS
