@@ -44,11 +44,13 @@ from ..damage import (
     HALVE_DOWN,
     HALVE_UP,
     MULTIPLY,
+    REDUCE_CHOICE,
     SET,
     SET_IF_AT_LEAST,
     ZERO_IF_AT_LEAST,
     ZERO_IF_BELOW,
     DamageOrderRequired,
+    DamageReductionRequired,
     step_orders,
 )
 from ..effects import (
@@ -150,19 +152,38 @@ def _key_and_bound(run: AttackRun, element: Damage, per: int) -> tuple[Callable[
     receiver_views = definition_views(state, receiver)
     readings = len(definition_views(state, attacker)) * len(receiver_views)
     resistance = max((view.resistance_value or 0) for view in receiver_views)
-    period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, state.rules.weakness_multiplier, unit)
-    period *= periods
+    reducing = any(m.operation == REDUCE_CHOICE for m in modifiers)
+    if reducing:
+        # v0.66（docs/optional-trainers-v0.66.md 2.5 節）: お上品攻撃（5 段階で好きなだけ小さくしてよい）。減らしたあとの 5 段階のダメージ x の選び方は 0〜v（v は 5 段階の
+        # 減らす前のダメージ）のすべてで、そのあとの計算（6〜8 段階・残りの HP・返す効果）は x だけで決まる。6〜8 段階の計算は、x が tail_bound 以上で一定か周期 tail_period
+        # （ダメージカウンターの数）で同じになる（3.2 節の根拠を 6〜8 段階だけに当てはめる）ので、x を 0〜min(v, cap) に限っても、選べる結果の集まりは同じ。cap を飽和の値に
+        # 加えて、1〜5 段階の道（v）が増えるなら v ≥ cap になる h の下限を求める（v が一定の道は key が一定）
+        tail = [m for m in modifiers if m.step > 5]
+        before = [m for m in modifiers if m.step <= 5 and m.operation != REDUCE_CHOICE]
+        tail_period, tail_bound = _pipeline_bound([tail], 0, saturation, readings, 1, unit)
+        cap = tail_bound + (tail_period + 1) * unit
+        period, bound = _pipeline_bound([before], resistance, cap, readings, state.rules.weakness_multiplier, unit)
+    else:
+        period, bound = _pipeline_bound([modifiers], resistance, saturation, readings, state.rules.weakness_multiplier, unit)
+        period *= periods
 
     def key(heads: int):
         base = per * heads
 
-        def tree(orders: dict[int, tuple[int, ...]]):
+        def tree(orders: dict[int, tuple[int, ...]], reduction: int | None = None):
             try:
-                calc = K.compute_damage(state, attacker, receiver, base, modifiers, orders=orders or None)
+                calc = K.compute_damage(state, attacker, receiver, base, modifiers, orders=orders or None, reduction=reduction)
             except TypeReadingsDiffer:
                 return ("readings",)
             except DamageOrderRequired as need:
-                return ("order", need.step, tuple(tree({**orders, need.step: order}) for order in step_orders(len(need.modifiers))))
+                return ("order", need.step, tuple(tree({**orders, need.step: order}, reduction) for order in step_orders(len(need.modifiers))))
+            except DamageReductionRequired as need:
+                if need.below_zero:
+                    return ("below_zero",)  # CA1（``deal_damage`` が止める）
+                value = need.value
+                # 減らしたあとのダメージ x（v から小さい順）を 0〜min(v, cap) に限る（それより大きい x の結果は、この範囲のどれかと同じ）
+                kept = range(0, min(value, cap) + 1, unit) if value > 0 else (value,)
+                return ("reduce", frozenset(tree(orders, value - x) for x in kept))
             final = calc.final
             # 受けるときの窓（送る効果）は最終ダメージが 0 より大きいときだけ（``deal_damage`` の ``receiving``）
             returned = tuple(g(final) for g in returns) if final > 0 else ()

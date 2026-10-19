@@ -12,8 +12,8 @@
   "card_data_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 143,
-    "engine_stop_codes": 141,
+    "engine_unresolved_rulings": 147,
+    "engine_stop_codes": 145,
     "kyuura_issues": 19
   },
   "stop_codes": {
@@ -1674,6 +1674,50 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_CHARITY_BELOW_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "CA1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_OPPONENT_COIN_TOSS": {
+      "engine_rulings": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "ES1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_MULTIPLE": {
+      "engine_rulings": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "ES2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS": {
+      "engine_rulings": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "ES3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -1731,6 +1775,18 @@
           "version": "v0.65",
           "document": "docs/reactive-decisions-v0.65.md",
           "ruling_id": "BG0"
+        }
+      ],
+      "kyuura_issue": null,
+      "reachable_with_current_cards": false,
+      "counted_as_engine_unresolved": false
+    },
+    "esp_separate_coin_tosses": {
+      "engine_rulings": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "ES0"
         }
       ],
       "kyuura_issue": null,
@@ -2958,9 +3014,14 @@
           "version": "v0.51",
           "document": "docs/discard-to-bench-v0.51.md",
           "ruling_id": "RB4"
+        },
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "CH-R3"
         }
       ],
-      "use": "「HPの半分(切り捨て)のダメージカウンター」: ダメージカウンター 1 個は 10 ダメージなので、HP をダメージカウンターの数で表して半分にし、切りすてる（effects.half_hp_counters。HP 70 なら 3 個。v0.45 の「いかりのまえば」・v0.46 のリフレクターと同じ単位）"
+      "use": "「HPの半分(切り捨て)のダメージカウンター」: ダメージカウンター 1 個は 10 ダメージなので、HP をダメージカウンターの数で表して半分にし、切りすてる（effects.half_hp_counters。HP 70 なら 3 個。v0.45 の「いかりのまえば」・v0.46 のリフレクターと同じ単位）。v0.66: お上品攻撃で減らす量は、ダメージカウンターの単位（10）ずつ、0（減らさない）から 5 段階のダメージまで（実装上の読み方。英語版の「rounded to the nearest 10」は根拠にしない）"
     },
     {
       "kyuura_record": "GR-2000-P320-COUNTER-MOVE",
@@ -3098,6 +3159,31 @@
         }
       ],
       "use": "p.265 のまきちらせ!ベトベトガスの解説「［かがくへんかガス］の力を一時的に消す」の記録。かがくへんかガスも止め（除かない）、効果が消えたら力がもどる（はたらいているかを状態に持たず、そのつど求める）"
+    },
+    {
+      "kyuura_record": "GR-2000-P321-DAMAGE-ORDER",
+      "kind": "rule_clause",
+      "engine": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "CH-R1"
+        }
+      ],
+      "use": "お上品攻撃の「そのダメージを好きなだけ小さくしてよい」は、ワザを使うポケモンについているトレーナーカードの効果なので p.321 の 5 段階（damage.REDUCE_CHOICE。同じ 5 段階のプラスパワー（加算）のあと。6〜8 段階（ディフェンダー・なぞのかべ・リフレクターなど）は減らしたあとのダメージで計算する）。最終ダメージから差し引かない"
+    },
+    {
+      "kyuura_record": "CR-SHELL-ATTACK-ATTACKER-PLUSPOWER",
+      "kind": "ruling",
+      "kyuura_status": "SUPPORTED",
+      "engine": [
+        {
+          "version": "v0.66",
+          "document": "docs/optional-trainers-v0.66.md",
+          "ruling_id": "CH-R2"
+        }
+      ],
+      "use": "お上品攻撃で小さくしたダメージは、受けたダメージで量が決まる返す効果（こうらがえし・クロスカウンター）の「受けたダメージ」に含まれる（p.279 の解説の例。受けたダメージは p.321 の計算の最終的なダメージ）"
     }
   ]
 }

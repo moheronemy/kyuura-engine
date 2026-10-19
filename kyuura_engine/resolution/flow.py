@@ -23,7 +23,7 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
@@ -41,7 +41,7 @@ from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
 from .kernel import (DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
                      ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
-from .programs import (AttackRun, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
+from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
 
@@ -781,6 +781,17 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried
     run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
+    esp = carried.get("esp")
+    if esp is not None:
+        # v0.66: ナツメのESPのやり直しの決定。答え（やり直す・やり直さない）を当てはめて、コインを投げた要素をもう一度処理する（採った結果を使う。それまでの要素・コインは
+        # くり返さない）
+        if decision.kind != ESP_REDO:
+            raise RuntimeError(f"ESPの続きの情報のある決定 {decision.kind} は扱わない（エンジンの不具合）")
+        index = apply_esp_redo(run, tuple(esp), choices)
+        if run_elements(run, index):
+            return
+        _finish_attack(res, cont.use)
+        return
     boundary = carried.get("boundary")
     if boundary is not None:
         # v0.65: 要素と要素のあいだの決定（変わり身の術はワザの要素の前、［にげこむ］はダメージの要素のあと）。答えを処理して、その位置の要素から続ける（それまでの要素・コインは
@@ -801,10 +812,14 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     elif not (0 <= index < len(program) and program[index].decides(decision.kind)):
         raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
     run.index = index
-    if decision.kind == BENCH_GUARD:
-        resume_guarded(run, program[index], decision, choices)  # v0.65: ダメージの要素の中の［ベンチガード］の決定
-    else:
-        program[index].resume(run, decision, choices)
+    try:
+        if decision.kind == BENCH_GUARD:
+            resume_guarded(run, program[index], decision, choices)  # v0.65: ダメージの要素の中の［ベンチガード］の決定
+        else:
+            program[index].resume(run, decision, choices)
+    except EspRedoOffer:
+        # v0.66: 決定のあとの続きの中で説明文のコインを投げる要素は、今の写しにない（要素をもう一度処理すると決定の前の処理をくり返す）
+        raise RuntimeError(f"決定 {decision.kind} のあとの続きで、ナツメのESPのやり直しを聞くコインを投げた（今の写しでは起こらない。エンジンの不具合）") from None
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
         return
     if run_elements(run, index + 1):

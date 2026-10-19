@@ -32,7 +32,7 @@ from ..cards import EnergyType
 from ..coins import CoinFlips, CoinSide, flip_coins, flip_until_tails
 from ..conditions import CONFUSION, PARALYSIS, POISON, SLEEP, clear_special_conditions, confuse, paralysis_problem, paralyze, poison, put_to_sleep
 from ..conditions import FORCED_SWITCH as FORCED_SWITCH_REASON
-from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
+from ..damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, DamageReductionRequired, step_orders
 from ..decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DAMAGE_STEP_ORDER, DISCARD_ENERGY, DISCARD_OPPONENT_ENERGY,
     DISCARD_TO_DECK_TOP, FORCED_SWITCH, HAND_TO_DECK, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_TRAINER, REMOVE_COUNTERS, RETURN_ENERGY, SEARCH_DECK, SELECT_ATTACK,
@@ -59,7 +59,7 @@ from . import catalog as C
 from . import codec
 from .events import ElementStarted, KnockedOutRecorded, Suspended, Window
 from .kernel import BenchGuardRequest, Resolution, check_simultaneous, deal_damage, fire_pending, reaches, settle_scram, track_ko, type_question, weakness_resistance_matters
-from ..decisions import BENCH_GUARD, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
+from ..decisions import BENCH_GUARD, DAMAGE_REDUCTION, ESP_REDO, KO_PREVENTION, NINJA_TRICK, REACTION_SWITCH
 from .questions import QUESTIONS
 
 if TYPE_CHECKING:
@@ -71,6 +71,20 @@ if TYPE_CHECKING:
 
 class UnsupportedByKernel(NotImplementedError):
     """プロトタイプの対応表にないワザの実装（黙って効果のないワザとして処理しない）。"""
+
+
+class EspRedoOffer(Exception):
+    """v0.66: ナツメのESPのやり直しの決定を出す（``AttackRun.flip`` が、ワザの説明文のコインを投げた直後・結果を使う前に投げる）。``run_elements`` が受け取って
+    決定（``ESP_REDO``）を出し、答えのあとに同じ要素をもう一度処理する（``esp_preset``）。"""
+
+    def __init__(self, count: int, by_heads: bool, flipper: int, flips, cards: tuple[int, ...], problem):
+        super().__init__(f"ナツメのESPのやり直し（{count} 枚）")
+        self.count = count
+        self.by_heads = by_heads
+        self.flipper = flipper
+        self.flips = flips
+        self.cards = cards
+        self.problem = problem
 
 
 class Phase(str, Enum):
@@ -109,6 +123,10 @@ class AttackRun:
         self.failed = False
         self.redirect: tuple | None = None
         self.index = 0  # v0.65: 処理している要素の位置（``run_elements``。ダメージの要素の中の決定（［ベンチガード］）の続きの情報の "element"）
+        # v0.66: ナツメのESPのやり直しの決定のあとに、もう一度処理する要素が使うコインの結果（(枚数, 採った結果)）。``flip`` が投げずに返す
+        self.esp_preset: tuple[int, tuple] | None = None
+        self.esp_done = False  # v0.66: このワザで、ESPのやり直しを聞いた（説明文のコイントスを投げた）
+        self.element_log = 0  # v0.66: 処理している要素を始めたときのログの長さ（もう一度処理する要素が、コインの前にログを残していないか）
 
     @property
     def state(self) -> GameState:
@@ -136,8 +154,39 @@ class AttackRun:
         「ベンチをあやつる」）は相手。乱数の使い方（1 枚 1 回 ``getrandbits(1)``）は同じで、ログ ``coin_flip`` の ``player`` だけが変わる（``card``・
         ``pokemon_id``・``effect`` はワザを使ったポケモンとワザ）。"""
         attacker = self.attacker()
-        return flip_coins(self.state, self.player if player is None else player, count, source="attack", effect=str(self.key), card=attacker.card,
-                          pokemon_id=attacker.pokemon_id, by_heads=by_heads)
+        flipper = self.player if player is None else player
+        if self.esp_preset is not None:
+            # v0.66: ナツメのESPのやり直しの決定のあと、要素をもう一度処理している。決定の前に投げたコイン（やり直したなら、やり直したコイン）の結果を使う（投げ直さない）
+            preset_count, results = self.esp_preset
+            if preset_count != count or len(self.state.log) != self.element_log:
+                raise RuntimeError("ナツメのESPのやり直しのあとの要素が、決定の前と違うコイン・ログの処理をした（エンジンの不具合）")
+            self.esp_preset = None
+            return CoinFlips(tuple(results))
+        flips = flip_coins(self.state, flipper, count, source="attack", effect=str(self.key), card=attacker.card,
+                           pokemon_id=attacker.pokemon_id, by_heads=by_heads)
+        cards = E.esp_cards(self.state, attacker)
+        if not cards or count == 0:
+            return flips
+        if self.esp_done:
+            raise self.res.question("esp_separate_coin_tosses", f"ポケモン {attacker.pokemon_id}・ワザ {self.key}")
+        self.esp_done = True
+        problem = E.esp_redo_problem(self.state, attacker, cards, flipper, self.player)
+        if self.res.dry_run:
+            # 先読み: やり直さない・やり直す（止める選択は試さない）の両方を試す。やり直すなら、同じ枚数を投げ直す
+            answers = [()] + ([] if problem is not None else [(1,)])
+            if not self.res.oracle.choose(answers):
+                return flips
+            return self._esp_reflip(count, by_heads, flipper, cards, flips)
+        raise EspRedoOffer(count, by_heads, flipper, flips, cards, problem)
+
+    def _esp_reflip(self, count: int, by_heads: bool, flipper: int, cards: tuple[int, ...], original) -> CoinFlips:
+        """v0.66: ナツメのESPで、説明文のコイントスをすべて投げ直す（同じ枚数・同じプレイヤー。最初の結果は使わない）。ログ ``esp_redo``（最初の結果・やり直した結果）。"""
+        attacker = self.attacker()
+        redone = flip_coins(self.state, flipper, count, source="attack", effect=str(self.key), card=attacker.card, pokemon_id=attacker.pokemon_id,
+                            by_heads=by_heads)
+        self.state.add_event("esp_redo", player=self.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(self.key), cards=tuple(cards),
+                             original=tuple(side.value for side in original.results), redone=tuple(side.value for side in redone.results))
+        return redone
 
     def coin_is(self, gate: tuple) -> bool:
         """ワザ全体のコインの面（(名前, CoinSide)）か、v0.31 の「おもて」の数（(名前, 数)）が合うか。"""
@@ -343,7 +392,13 @@ def run_elements(run: AttackRun, start: int) -> bool:
             settle_scram(res, rest=run.program[index:])
         res.trace.record(ElementStarted(run.fs.frame.id, index, type(element).__name__, element.phase.value))
         run.index = index
-        if element.run(run):
+        run.element_log = len(res.state.log)
+        try:
+            suspended = element.run(run)
+        except EspRedoOffer as offer:
+            suspend_esp_redo(run, index, offer)
+            return True
+        if suspended:
             if not res.dry_run:
                 return True
             while run.suspended is not None:  # 先読み: 決定の答えを選んで続ける（答えのあとでもう一度決定を出す要素もある）
@@ -355,6 +410,34 @@ def run_elements(run: AttackRun, start: int) -> bool:
         return True  # v0.65: 最後のダメージの要素のあと（きぜつの判定の前）
     settle_scram(res, rest=())
     return False
+
+
+def suspend_esp_redo(run: AttackRun, index: int, offer: EspRedoOffer) -> None:
+    """v0.66: ナツメのESPのやり直しの決定（``ESP_REDO``）をワザを使ったプレイヤーに出す。続きの情報の ``esp`` は (コインを投げた要素の位置, 枚数, 「おもて」の数でまとめる
+    コインか, 投げたプレイヤー, 最初の結果, ESPのカード)。答えのあとに、その要素をもう一度処理する（それまでの要素・コイン・ダメージはくり返さない）。"""
+    if run.esp_preset is not None:
+        raise RuntimeError("ナツメのESPのやり直しの決定を待つ間に、もう一度決定を出そうとした（エンジンの不具合）")
+    esp = (index, offer.count, offer.by_heads, offer.flipper, tuple(side.value for side in offer.flips.results), tuple(offer.cards))
+    unresolved = _unresolved_extra((1,), *offer.problem) if offer.problem is not None else ()
+    run.suspend(kind=ESP_REDO, player=run.player, options=(1,), min_choices=0, max_choices=1, carry=True, extra=(("esp", esp),) + unresolved)
+
+
+def apply_esp_redo(run: AttackRun, esp: tuple, choices: tuple[int, ...]) -> int:
+    """v0.66: ESPのやり直しの決定の答え。やり直すなら同じ枚数を投げ直し（ログ ``esp_redo``）、やり直さないならログ ``esp_redo_declined``。採った結果を ``esp_preset`` に置き、
+    もう一度処理する要素の位置を返す。"""
+    from ..coins import CoinFlips
+
+    index, count, by_heads, flipper, original, cards = esp
+    flips = CoinFlips(tuple(CoinSide(side) for side in original))
+    attacker = run.attacker()
+    if choices:
+        flips = run._esp_reflip(count, by_heads, flipper, tuple(cards), flips)
+    else:
+        run.state.add_event("esp_redo_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            cards=tuple(cards), original=tuple(original))
+    run.esp_done = True
+    run.esp_preset = (count, flips.results)
+    return index
 
 
 # ---------------------------------------------------------------- v0.65 ワザの途中の任意の決定（docs/reactive-decisions-v0.65.md 2 章）
@@ -603,6 +686,10 @@ class HeadsUntilTails:
         from .unbounded import head_classes
 
         attacker = run.attacker()
+        if E.esp_cards(run.state, attacker):
+            # v0.66: ナツメのESPのやり直しは ``AttackRun.flip`` のコインだけで聞く。「うら」が出るまで投げるコインを「ナツメのポケモン」が使う場面は今の写しでは起こらない
+            # （黙ってやり直しを聞かない処理にしない。docs/optional-trainers-v0.66.md 9.5 節）
+            raise RuntimeError(f"ナツメのESPのついたポケモン {attacker.pokemon_id} が「うら」が出るまで投げるコインのワザを使った（v0.66 では起こらない組み合わせ。エンジンの不具合）")
         found: list = []
 
         def classes():
@@ -931,8 +1018,8 @@ class Damage(Element):
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
-        # ``element``（要素の位置）で区別する（``flow._resume_attack``）
-        return kind == DAMAGE_STEP_ORDER
+        # ``element``（要素の位置）で区別する（``flow._resume_attack``）。v0.66: お上品攻撃の減らす量の決定（``DAMAGE_REDUCTION``）も
+        return kind in (DAMAGE_STEP_ORDER, DAMAGE_REDUCTION)
 
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
@@ -974,20 +1061,30 @@ class Damage(Element):
         base = 0 if zero else self.base.value(run, flips)
         return self._deal(run, base, {})
 
-    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]]) -> bool:
-        """基本となるダメージ ``base`` を与える。同じ段階の変更効果の計算の順番によって結果が変わるなら、順番の決定を出して止まる（v0.35）。"""
+    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None) -> bool:
+        """基本となるダメージ ``base`` を与える。同じ段階の変更効果の計算の順番によって結果が変わるなら、順番の決定を出して止まる（v0.35）。v0.66: お上品攻撃
+        （5 段階で好きなだけ小さくしてよい）の減らす量がまだ決まっていなければ、減らす量の決定を出して止まる（``reduction`` は決めた量）。"""
         try:
             run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
                                                     orders=orders or None, order_decision=True, resistance=self.resistance,
-                                                    defender_effects=self.defender_effects)
+                                                    defender_effects=self.defender_effects, reduction=reduction)
         except DamageOrderRequired as need:
-            suspend_step_order(run, self, need, base, orders)
+            suspend_step_order(run, self, need, base, orders, reduction)
+            return True
+        except DamageReductionRequired as need:
+            if run.res.dry_run:
+                # 先読み: 選べる量のうち、計算の結果（最終ダメージと 2 段階で終えるか）が同じ量は 1 つにまとめて試す（そのあとの処理は計算の結果だけを使う）
+                return self._deal(run, base, orders, run.res.oracle.choose(reduction_answers(run, self, base, orders, need)))
+            suspend_damage_reduction(run, self, need, base, orders)
             return True
         return False
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
-        base, orders = resume_step_order(run, self, decision, choices)
-        self._deal(run, base, orders)
+        if decision.kind == DAMAGE_REDUCTION:
+            base, orders, reduction = resume_damage_reduction(run, self, decision, choices)
+        else:
+            base, orders, reduction = resume_step_order(run, self, decision, choices)
+        self._deal(run, base, orders, reduction)
 
 
 @dataclass(frozen=True)
@@ -998,7 +1095,7 @@ class StadiumSelfDamage(Damage):
 
     stadium: int = 0
 
-    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]]) -> bool:
+    def _deal(self, run: AttackRun, base: int, orders: dict[int, tuple[int, ...]], reduction: int | None = None) -> bool:
         try:
             run.fs.results[self.name] = deal_damage(run.res, run.fs, self.target, base, weakness_resistance=self.weakness_resistance,
                                                     orders=orders or None, order_decision=True, resistance=self.resistance,
@@ -1026,7 +1123,8 @@ def program_may_fail(program: tuple) -> bool:
                or (isinstance(element, DiscardOwnEnergy) and element.when_lacking == LACKING_FAIL) for element in program)
 
 
-def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequired, base: int, orders: dict[int, tuple[int, ...]]) -> None:
+def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequired, base: int, orders: dict[int, tuple[int, ...]],
+                       reduction: int | None = None) -> None:
     """同じ段階の変更効果の計算の順番によって結果が変わる（v0.35。``damage.DamageOrderRequired``）。``DAMAGE_STEP_CHOOSER`` のプレイヤー（2・5・6 段階は
     ワザを使うプレイヤー、7・8 段階はダメージを受けるポケモンの持ち主。p.321）に、順番の決定（``DAMAGE_STEP_ORDER``）を出して止まる。
 
@@ -1052,11 +1150,78 @@ def suspend_step_order(run: AttackRun, element: Element, need: DamageOrderRequir
     described = tuple((m.label, m.source, m.operation, m.amount) for m in need.modifiers)
     # v0.45: 「抵抗力」の影響を受けないダメージ（スパイラルショット）だけ ``resistance`` を書く（v0.44 までの決定の形は変えない）
     resistance = (("resistance", False),) if getattr(element, "resistance", True) is False else ()
+    # v0.66: お上品攻撃で決めた減らす量（6〜8 段階の順番の決定は減らす量のあと）。決めていなければ書かない（v0.65 までの決定の形は変えない）
+    reduced = (("reduction", reduction),) if reduction is not None else ()
     run.suspend(kind=DAMAGE_STEP_ORDER, player=chooser, options=tuple(range(len(permutations))),
                 extra=(("element", index), ("base", base), ("orders", tuple(sorted(orders.items()))), ("step", need.step), ("target", target),
                        ("receiver", receiver.pokemon_id), ("weakness_resistance", getattr(element, "weakness_resistance", True)),
-                       *resistance, ("modifiers", described), ("permutations", permutations)),
+                       *resistance, *reduced, ("modifiers", described), ("permutations", permutations)),
                 carry=True)
+
+
+def _carry_check(run: AttackRun, element: Element, what: str) -> int:
+    """決定を出すダメージの要素の位置（v0.66。``suspend_step_order`` と同じ確かめ: 前の要素がダメージを与えた並び・前の要素の結果を後の要素が使う並びでは、決定を
+    またいで運べないので、エンジンの未対応として止める）。"""
+    index = next((i for i, candidate in enumerate(run.program) if candidate is element), None)
+    if index is None:
+        raise RuntimeError(f"{what}の決定を出すダメージの要素が、処理している要素の並びにない（エンジンの不具合）")
+    used_later = {value for later in run.program[index + 1:] for value in _result_names(later)}
+    if run.fs.applied or run.fs.evaded or any(name in used_later for name in run.fs.results if name != getattr(element, "name", None)):
+        raise run.res.question("damage_reduction_decision", f"ポケモン {run.fs.frame.source_pid}・{what}（前の要素の結果を決定のあとに運べない）")
+    return index
+
+
+def reduction_answers(run: AttackRun, element: Element, base: int, orders: dict[int, tuple[int, ...]], need) -> list[int]:
+    """先読みで試す減らす量（v0.66）: 選べる量のうち、計算の結果（最終ダメージ・2 段階で終えるか・6〜8 段階の順番の決定の要否）が同じものは、いちばん小さい量だけ。
+    減らす量のあとの処理（「とうめい」・ダメージを受けたときの効果・きぜつ・返すダメージ）は、計算の結果だけを使う（``kernel.deal_damage``）。"""
+    from .kernel import attack_modifiers_of, compute_damage
+
+    state = run.state
+    _owner, receiver = receiver_of_target(run, element.target)
+    attacker = run.attacker()
+    modifiers = with_coin_modifiers(run, element.target, attack_modifiers_of(run.res, run.fs.frame, attacker, receiver, element.target))
+    seen: dict = {}
+    for amount in need.choices:
+        try:
+            calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=element.weakness_resistance, orders=orders or None,
+                                  resistance=element.resistance, reduction=amount)
+            key = ("final", calc.final, calc.stopped_after_step_2)
+        except DamageOrderRequired as order:
+            key = ("order", amount, order.step)  # 順番の決定が要る量は、まとめずに試す
+        seen.setdefault(key, amount)
+    return list(seen.values())
+
+
+def with_coin_modifiers(run: AttackRun, target: str, modifiers: list) -> list:
+    from .kernel import with_stadium_coin
+
+    return with_stadium_coin(run.res, run.fs.frame, target, modifiers)
+
+
+def suspend_damage_reduction(run: AttackRun, element: Element, need, base: int, orders: dict[int, tuple[int, ...]]) -> None:
+    """お上品攻撃の減らす量の決定（v0.66。``DAMAGE_REDUCTION``）を、ワザを使ったプレイヤーに出して止まる。続きの情報は順番の決定と同じ形（要素の位置・基本となる
+    ダメージ（コインを投げ直さない）・前に選んだ段階の順番・受けるポケモン）と、5 段階の減らす前のダメージ（``value``）。ダメージはまだ与えていない。"""
+    index = _carry_check(run, element, "お上品攻撃の減らす量")
+    target = element.target
+    _owner, receiver = receiver_of_target(run, target)
+    resistance = (("resistance", False),) if getattr(element, "resistance", True) is False else ()
+    run.suspend(kind=DAMAGE_REDUCTION, player=run.player, options=tuple(need.choices),
+                extra=(("element", index), ("base", base), ("orders", tuple(sorted(orders.items()))), ("target", target), ("receiver", receiver.pokemon_id),
+                       ("weakness_resistance", getattr(element, "weakness_resistance", True)), *resistance, ("value", need.value),
+                       ("reducers", tuple(m.source for m in need.modifiers))),
+                carry=True)
+
+
+def resume_damage_reduction(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> tuple[int, dict, int]:
+    """減らす量の決定の答えのあと（v0.66）: 続きの情報の基本となるダメージ・段階の順番と、選んだ量を返す（コインを投げ直さない）。"""
+    carried = run.carried
+    if decision.kind != DAMAGE_REDUCTION or len(choices) != 1 or choices[0] not in decision.options:
+        raise RuntimeError(f"減らす量の決定の答え {choices!r} が、選べる量ではない（エンジンの不具合）")
+    _, receiver = receiver_of_target(run, element.target)
+    if receiver.pokemon_id != carried["receiver"]:
+        raise RuntimeError("減らす量の決定を待つ間に、ダメージを受けるポケモンが変わった（エンジンの不具合）")
+    orders = {int(k): tuple(v) for k, v in carried.get("orders", ())}
+    return carried["base"], orders, choices[0]
 
 
 def resume_step_order(run: AttackRun, element: Element, decision: PendingDecision, choices: tuple[int, ...]) -> tuple[int, dict[int, tuple[int, ...]]]:
@@ -1072,7 +1237,7 @@ def resume_step_order(run: AttackRun, element: Element, decision: PendingDecisio
         raise RuntimeError("順番の決定を待つ間に、ダメージを受けるポケモンが変わった（エンジンの不具合）")
     orders = {int(k): tuple(v) for k, v in carried.get("orders", ())}
     orders[step] = permutations[choices[0]]
-    return carried["base"], orders
+    return carried["base"], orders, carried.get("reduction")
 
 
 def receiver_of_target(run: AttackRun, target: str) -> tuple[int, PokemonInPlay]:

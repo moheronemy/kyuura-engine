@@ -1656,3 +1656,25 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
    - 処理は p.100 の最新の説明にしたがうので変わらない。
 3. ［にげこむ］の p.100 の記録が kyuura の研究の基準のコミットにない。
 4. 新しい未解決 8 件（NT1〜NT3・RX1・FL1・BG1・BG2・KD1）は kyuura の未解決の一覧にない。
+
+## v0.66 で加えたカード 3 枚（お上品攻撃・ナツメのESP・カスミの勝負）
+
+写しを作り直しました（`pool_v0_66`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_66` に 3 枚を加えた）。
+  - 写しのカードは 452 枚から 455 枚になりました（ほかのカードの記録は変わっていない）。
+  - v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています。
+- 根拠は、`kyuura_engine/data/card_sources.json` の採用の記録と、pcg-search.com の同じ版のページとの照合です。
+  - 採用の記録: 3 件 `adopted`。記録した日 2026-10-19。`kyuura_records` は空。処理に使う文面は kyuura の印刷の文面（研究の対応表の `adopted_printed_text`）。
+  - 照合: 2026-10-19。ジム拡張第1弾「リーダーズスタジアム」087/096（お上品攻撃）・074/096（カスミの勝負）、ジム拡張第2弾「闇からの挑戦」075/000（ナツメのESP）。
+  - 結果: ナツメのESPとカスミの勝負は `match`、お上品攻撃は `differences`（「きぜつ」したとき／時 の書き方だけ。`affects_behavior` false）。
+  - カードの画像・『オフィシャルブック2000』は読んでいません（`card_verification.json` に加えていない）。
+- お上品攻撃の手札にもどす期限（「相手の番が終わったら、手札にもどす」）は、kyuura の data/curation/card_differences.json の PMCG5-074（確度: 確実）をカード id で引いて再利用しました。英語版の「at the end of your turn」にしていません。
+- 当てはめた kyuura の一般の規定・裁定（研究の対応表の `applied_rule_records`）: GR-2000-P321-DAMAGE-ORDER（CH-R1）・CR-SHELL-ATTACK-ATTACKER-PLUSPOWER（CH-R2）・GR-2000-P319-HP-AND-DAMAGE（CH-R3）。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 3 枚に、最新の説明・エラッタ・裁定・照合の記録がない。
+2. お上品攻撃の kyuura の文面（「きぜつ」したとき）と pcg-search.com の同じ版の文面（「きぜつ」した時）の書き方の違い（処理は同じ）。
+3. 新しい未解決 4 件（CA1・ES1〜ES3）は kyuura の未解決の一覧にない。

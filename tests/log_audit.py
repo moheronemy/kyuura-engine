@@ -84,6 +84,7 @@ from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
 from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
+from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
 from kyuura_engine.effects import BlainesQuiz, ChallengeBenchFromDecks, CoinSetAsideOpponentHandElseEndTurn, RevealAllPrizesTrainer  # v0.63
 from kyuura_engine.effects import (
     AskOpponentEachTakePrizeElseDraw,
@@ -1741,11 +1742,21 @@ def log_problems(state) -> list[str]:
     turn_now = 0  # v0.46: 今処理しているイベントの番（continuous_expected が持続する効果のはたらく番を見る）
     declared = None  # 直前の特殊能力の宣言（番・プレイヤー・ポケモン）。移動のログはその直後に続く（v0.5）
     last_damage = None  # v0.65: 直前のログ damage（［ベンチガード］の確かめ）
+    duel_winner = {}  # v0.66: カスミの勝負のカード → 直前のじゃんけん（duel_janken）で勝ったプレイヤー（あいこなら None）
     for e in log:
         kind = e["kind"]
         turn_now = e["turn"]
         if kind == "damage":
             last_damage = e
+        if kind == "duel_janken":
+            # v0.66: カスミの勝負のじゃんけん。使っている最中のそのカードで、両方の手と勝ったプレイヤー（あいこなら None）が手の組と合う
+            from kyuura_engine.effects import JANKEN_HANDS, janken_winner
+            result = janken_winner(*(JANKEN_HANDS.index(h) for h in e["hands"]))
+            expected = None if result is None else (e["player"] if result == 0 else e["opponent"])
+            if not isinstance(_trainer_effect_of(state, e["trainer_card"]), RockPaperScissorsRefreshHand) or e["winner"] != expected \
+                    or e["opponent"] != 1 - e["player"]:
+                problems.append(f"{e['turn']} 番のカスミの勝負のじゃんけん {e['hands']} の勝ち負け {e['winner']} が、手の組と合わない")
+            duel_winner[e["trainer_card"]] = e["winner"]
         if kind == "trainer_effect_added" and e["effect_kind"] == "power_suppression":
             goop_gases[e["trainer_card"]] = e["expires_turn"]
         elif kind == "trainer_effect_removed" and e.get("effect_kind") == "power_suppression":
@@ -2917,6 +2928,8 @@ def log_problems(state) -> list[str]:
             user = trainer_user(e["trainer_card"])
             if using_trainer.get(user) != e["trainer_card"] \
                     or not (isinstance(trainer_effect, (SearchDeckTrainer, ReturnHandToDeckThenDraw)) and e["player"] == user
+                            or isinstance(trainer_effect, RockPaperScissorsRefreshHand) and duel_winner.get(e["trainer_card"]) == e["player"]
+                            and sorted(e["cards"]) == sorted(hand[e["player"]])  # v0.66: カスミの勝負（じゃんけんに勝ったプレイヤーの手札のすべて）
                             or isinstance(trainer_effect, ReturnHandsToDeckTrainer) and not trainer_effect.reveal
                             and e["player"] in {"self": (user,), "opponent": (1 - user,), "both": (0, 1)}[trainer_effect.who]
                             and sorted(e["cards"]) == sorted(hand[e["player"]])):
@@ -3443,6 +3456,12 @@ def log_problems(state) -> list[str]:
                 face_up_log.discard(e["face_up_card"])
         elif kind == "discard_attached_trainer":
             discard[owner[e["card"]]].append(e["card"])
+        elif kind == "return_attached_trainer":
+            # v0.66: お上品攻撃。有効期限の番の終わりに、つけたプレイヤー（持ち主）の手札にもどす（ついているトレーナーの行き先が手札の実装だけ）
+            if getattr(_trainer_effect_of(state, e["card"]), "expiry_destination", None) != EXPIRE_TO_HAND or owner[e["card"]] != e["player"] \
+                    or e.get("reason") != "end_of_turn":
+                problems.append(f"{e['turn']} 番に手札にもどしたついているトレーナー {e['card']} が、行き先が手札のトレーナーの有効期限の処理ではない")
+            hand[e["player"]].append(e["card"])
         elif kind == "disguise":
             # v0.49: 「ばける」。宣言（pokemon_power）と手札の進化カードを選ぶ決定のあと、使ったポケモンの上に手札の進化カードをのせる（進化ではない。番号・いちばん上の
             # カードは変わらない）

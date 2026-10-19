@@ -33,6 +33,9 @@ from .decisions import (
     BENCH_FROM_DECK,
     BENCH_FROM_DISCARD,
     DAMAGE_STEP_ORDER,
+    DAMAGE_REDUCTION,
+    ESP_REDO,
+    JANKEN_HAND,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
@@ -89,6 +92,7 @@ from .decisions import (
     QUIZ_CARD,
 )
 from .effects import (
+    JANKEN_HANDS,
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
 )
 from .serialize import history_record
@@ -128,6 +132,8 @@ OPTION_MEANINGS: dict[str, str] = {
     # v0.63: たたきつけろ!挑戦状で山札から選ぶたねポケモン（決めるプレイヤーが自分の山札をさがす）・カツラのクイズ その3で置く手札のポケモン・伝えるワザの位置・
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
+    # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH})
@@ -263,6 +269,8 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
             option["color"] = COLORS[value].value
         elif meaning == "name":
             option["name"] = d.context_value("names")[value]  # v0.63: カツラのクイズ その3で答えるカードの名前
+        elif meaning == "janken":
+            option["hand"] = JANKEN_HANDS[value]  # v0.66: カスミの勝負のじゃんけんの手（rock・scissors・paper）
         elif meaning == "position" and d.kind in PRIZE_POSITION_KINDS:
             prizes = state.players[d.player].prizes
             if 0 <= value < len(prizes) and prizes[value] in state.face_up_prizes:
@@ -411,6 +419,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限
+    "esp_redo", "esp_redo_declined", "duel_janken", "return_attached_trainer",
     # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
     "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
     "digger_result", "trainer_damage", "trainer_damage_prevented",

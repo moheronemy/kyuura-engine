@@ -61,6 +61,8 @@ from .decisions import (
     USE_DISCARD_TRAINER,
     push_trainer_decision,
     DAMAGE_STEP_ORDER,
+    DAMAGE_REDUCTION,
+    ESP_REDO,
     DECISION_PHASES,
     ENTRY_POWER,
     KNOCK_OUT_POWER,
@@ -449,7 +451,8 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
         # 残りHPが「10」で力がはたらく［ずらかる］が残っていれば、決まった時点で確かめていない経路（エンジンの不具合）。ワザの途中の決定を待つ間は、決定のあとの時点で確かめる
         if not (new.decision is not None and new.decision.resume == "attack") and scram_unsettled(new):
             raise RuntimeError(f"残りHPが「10」で［ずらかる］の力がはたらくポケモン {scram_unsettled(new)} が残っている（確かめる時点がない経路。エンジンの不具合）")
-    if new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision)):
+    if (new.trainer_in_use is not None and new.decision is not None and isinstance(command, (PlayTrainer, ResolveDecision))
+            and new.effects.trainer_entry(new.cards[new.trainer_in_use.card].card_id).effect.changes_field):
         # v0.49（docs 7 章）: トレーナーの効果の途中の決定（入れ替える・進化させるトレーナーなど）で、どの答えの続きも受け付けられない状態（決められない姿・MH1）
         # になるなら、このコマンド（使う・前の段階の答え）を受け付けない。答えのない決定を、使用中のトレーナーを残したまま止めない
         dead_end = _trainer_dead_end(state, new, context)
@@ -3634,7 +3637,8 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.58: ナツメのサイキックコントロールで使うカード（USE_DISCARD_TRAINER）も、使わない（0 個。「使ってよい」）がいつも答えになる（CH1 など選ぶと止めるカード）
         # v0.61: ［ファイナルビーム］の使う機会（KNOCK_OUT_POWER。Z9・C18・RB1・BZ2 など使うと止める場合）も、使わない（0 個）がいつも答えになる
         # v0.65: 変わり身の術・［にげこむ］・［ベンチガード］の機会（NINJA_TRICK・REACTION_SWITCH・BENCH_GUARD。NT3・RX1・FL1・BG1・BG2・KD1 で使うと止める場合）も同じ
-        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+        # v0.66: ナツメのESPのやり直しの機会（ESP_REDO。ES1〜ES3 でやり直すと止める場合）も、やり直さない（0 個）がいつも答えになる
+        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
@@ -3825,7 +3829,79 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     if d.kind == DAMAGE_STEP_ORDER:
         # v0.35: ダメージの計算の順番の決定は、どのワザのダメージの要素も出しうる（効果ごとの decision_problems ではなく、共通に確かめる）
         return problems + _damage_order_decision_problems(state, d, player, attacker)
+    if d.kind == DAMAGE_REDUCTION:
+        # v0.66: お上品攻撃の減らす量の決定も、どのワザのダメージの要素も出しうる
+        return problems + _damage_reduction_decision_problems(state, d, player, attacker)
+    if d.kind == ESP_REDO:
+        # v0.66: ナツメのESPのやり直しの決定も、説明文のコインを投げるどのワザも出しうる
+        return problems + _esp_redo_decision_problems(state, d, player, attacker)
     return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
+
+
+def _damage_reduction_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
+    """v0.66（docs/optional-trainers-v0.66.md 2 章）: お上品攻撃の減らす量の決定（``DAMAGE_REDUCTION``）。決めるのはワザを使ったプレイヤー、選ぶのは 1 つ。受けるポケモンは
+    相手の対戦ポケモンで、続きの情報の基本となるダメージ・前に選んだ順番から今の場で計算し直すと、減らす量の決定が要り（``damage.DamageReductionRequired``）、選べるものが
+    その選べる量と同じ。ワザを使ったポケモンに、お上品攻撃（``reduces_attack_damage``）がついている。"""
+    from .damage import DamageReductionRequired
+    from .effects import (
+        OPPONENT_ACTIVE,
+        attack_damage_modifiers,
+        calculate_with_stadium,
+        stadium_coin_modifier,
+    )
+
+    context = dict(d.context)
+    base, target = context.get("base"), context.get("target")
+    if d.player != player or (d.min_choices, d.max_choices) != (1, 1):
+        return [f"減らす量の決定を決めるのがプレイヤー {d.player}・選ぶ数 {(d.min_choices, d.max_choices)}（ワザを使ったプレイヤー {player}・1 つのはず）"]
+    if target != OPPONENT_ACTIVE or type(base) is not int:
+        return [f"減らす量の決定の続きの情報（受けるポケモン {target!r}・基本となるダメージ {base!r}）が正しくない"]
+    receiver = state.players[1 - player].active
+    if receiver is None or receiver.pokemon_id != context.get("receiver"):
+        return [f"減らす量の決定の受けるポケモン {context.get('receiver')!r} が、相手の対戦ポケモンではない"]
+    reducers = tuple(t.card for t in attacker.trainers if state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage)
+    if tuple(context.get("reducers", ())) != reducers[:len(tuple(context.get("reducers", ())))] or not reducers:
+        return [f"減らす量の決定のお上品攻撃 {context.get('reducers')!r} が、ワザを使ったポケモンについているカード {reducers} と合わない"]
+    copied = context.get("copied")
+    use = d.context_value("use")
+    key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
+    orders = {k: tuple(v) for k, v in context.get("orders", ())}
+    collected = attack_damage_modifiers(state, attacker, receiver, attack=key, attack_status=frozenset(context.get("attack_status", ())))
+    coin = context.get("stadium_coin")
+    if coin is not None and coin[1]:
+        collected = (*collected, stadium_coin_modifier(state, coin[0]))
+    try:
+        calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
+                               weakness_resistance=context.get("weakness_resistance", True), orders=orders, resistance=context.get("resistance", True))
+    except DamageReductionRequired as need:
+        if tuple(d.options) != need.choices or context.get("value") != need.value:
+            return [f"減らす量の決定の選べるもの {d.options!r}（5 段階のダメージ {context.get('value')!r}）が、今の場の計算の {need.choices}（{need.value}）と違う"]
+        return []
+    except Exception as error:  # noqa: BLE001  順番の決定・色の読み方は、減らす量の決定より先に決まっている。計算し直せない理由は何でも不変条件の違反として返す
+        return [f"減らす量の決定の続きの情報で計算し直せない（{error}）"]
+    return ["減らす量の決定の続きの情報で計算し直すと、減らす量の決定は要らない"]
+
+
+def _esp_redo_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
+    """v0.66（docs/optional-trainers-v0.66.md 3 章）: ナツメのESPのやり直しの決定（``ESP_REDO``）。決めるのはワザを使ったプレイヤー、選べるものは (1,)・0〜1 個。続きの情報の
+    ``esp`` の ESP のカードが、ワザを使ったポケモンについているESPと同じで、最初の結果の枚数が投げた枚数と同じ。今の番のログの最後のコインの結果（``coin_flip``）が、最初の
+    結果と同じ並び。"""
+    from .effects import esp_cards
+
+    esp = d.context_value("esp")
+    if d.player != player or tuple(d.options) != (1,) or (d.min_choices, d.max_choices) != (0, 1):
+        return [f"ESPのやり直しの決定の形（決める {d.player}・選べるもの {d.options}・{d.min_choices}〜{d.max_choices}）が正しくない"]
+    if not (isinstance(esp, tuple) and len(esp) == 6):
+        return [f"ESPのやり直しの続きの情報 {esp!r} が正しくない"]
+    _index, count, _by_heads, flipper, original, cards = esp
+    if tuple(cards) != esp_cards(state, attacker) or not cards:
+        return [f"ESPのやり直しのカード {cards!r} が、ワザを使ったポケモンについているESP {esp_cards(state, attacker)} と違う"]
+    if type(count) is not int or count < 1 or len(original) != count or flipper not in (0, 1):
+        return [f"ESPのやり直しの最初の結果 {original!r}（{count!r} 枚・投げたプレイヤー {flipper!r}）が正しくない"]
+    flips = [e for e in _events_since_turn_start(state) if e["kind"] == "coin_flip"][:count]  # 新しい順
+    if tuple(e.get("result") for e in reversed(flips)) != tuple(original) or any(e.get("player") != flipper or e.get("source") != "attack" for e in flips):
+        return [f"ESPのやり直しの最初の結果 {original!r} が、今の番の最後のワザのコイン {[e.get('result') for e in reversed(flips)]} と違う"]
+    return []
 
 
 def _reaction_decision_problems(state: GameState, d, player: int) -> list[str]:

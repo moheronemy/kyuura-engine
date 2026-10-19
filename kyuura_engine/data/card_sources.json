@@ -16530,6 +16530,110 @@
       ],
       "issues": [],
       "notes": "v0.65 で加えた。タケシのサイホーン（PMCG5-049）から進化。［ベンチガード］は TakeBenchDamageInstead（ワザのダメージの要素で、ほかの自分の控えポケモンが受けるダメージを計算したあと・のせる前に、持ち主が決定 bench_guard で使うかを決める。ワザでないダメージで聞く決定はエンジンの未対応 UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK）。ラリアットは FailOnTailsDamage。新しい未解決は BG1・BG2・KD1。kyuura の研究の基準のコミット（3f34908）に、このカードの最新の説明・エラッタ・裁定・論点の記録はない。英語版の文面（「may do 10 of that damage」など）は持ち込まない（docs/reactive-decisions-v0.65.md）"
+    },
+    "PMCG5-074": {
+      "basis": "kyuura_data",
+      "name_ja": "お上品攻撃",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1087.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "087/096"
+          },
+          "result": "differences",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [
+            {
+              "field": "trainer.text.ja",
+              "kyuura": "このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」したときは、このカードもトラッシュする)このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。",
+              "pcg_search": "このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」した時は、このカードもトラッシュする)このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。",
+              "affects_behavior": false,
+              "note": "「とき」と「時」の書き方の違いだけで、処理は同じ"
+            }
+          ],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はカードページの番号。カードの画像は読んでいない。サイトの番号（087）は kyuura の id の番号（074）と違う（番号の体系の違い）"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.66 で加えた。トレーナー。ReduceAttackDamageAsWished（自分の対戦ポケモンにつけ、つけたポケモンのワザが相手の対戦ポケモンにダメージを与える時、p.321 の 5 段階で減らす量を決定 damage_reduction で選ぶ。相手の番が終わったら手札にもどす（expiry_destination）。きぜつしたらトラッシュ）。手札にもどす期限は kyuura の data/curation/card_differences.json の PMCG5-074（確度: 確実）の記録の再利用（原典を読み直していない）。5 段階の位置は GR-2000-P321-DAMAGE-ORDER、返すダメージへの影響は CR-SHELL-ATTACK-ATTACKER-PLUSPOWER（研究の対応表の applied_rule_records）。kyuura の研究の基準のコミットに、このカードを cards・related_cards に挙げる記録はない（kyuura_records は空）。日本語の文面の転記元は pcg-search.com ではない（ja_text_source）ので独立した照合。英語版の「at the end of your turn」「rounded to the nearest 10」は持ち込まない（docs/optional-trainers-v0.66.md）"
+    },
+    "PMCG6-087": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのESP",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym2075.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第2弾「闇からの挑戦」",
+            "list_number": "075/000"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はカードページの番号。カードの画像は読んでいない。サイトの一覧の分母は 000 と表示される（ナツメのサイキックコントロールと同じ）。サイトの番号（075）は kyuura の id の番号（087）と違う"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.66 で加えた。トレーナー。RedoAttackCoins（自分の場の「ナツメのポケモン」につけ、自分の番の終わりにトラッシュ。ワザの説明文のコイントスを投げた直後に、すべてをやり直すかを決定 esp_redo で聞く）。新しい未解決は ES1〜ES3（やり直すを選ぶと止める）。kyuura の研究の基準のコミットに、このカードの記録はない。日本語の文面の転記元は pcg-search.com ではないので独立した照合。英語版の「re-flip those coins once」は持ち込まない（docs/optional-trainers-v0.66.md）"
+    },
+    "PMCG5-068": {
+      "basis": "kyuura_data",
+      "name_ja": "カスミの勝負",
+      "status": "adopted",
+      "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+      "recorded_on": "2026-10-19",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [
+        {
+          "site": "pcg-search.com",
+          "url": "https://pcg-search.com/card/1st/1stgym1074.php",
+          "checked_on": "2026-10-19",
+          "kyuura_commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
+          "edition": {
+            "expansion": "ジム拡張第1弾「リーダーズスタジアム」",
+            "list_number": "074/096"
+          },
+          "result": "match",
+          "checked_fields": [
+            "name.ja",
+            "trainer.text.ja"
+          ],
+          "differences": [],
+          "note": "サイトのカードページの記載（種類・名前・説明文）を kyuura の写しの元（ecb2d69）と比べた。一覧の番号はカードページの番号。カードの画像は読んでいない。サイトの番号（074）は kyuura の id の番号（068）と違う"
+        }
+      ],
+      "issues": [],
+      "notes": "v0.66 で加えた。トレーナー。RockPaperScissorsRefreshHand（使ったプレイヤー → 相手の順にじゃんけんの手を決定 janken_hand で決め、両方の手を決めてからログ duel_janken で見せる。あいこはくり返す。勝ったプレイヤーが手札をすべて山札にもどして切り、5 枚引く）。kyuura の研究の基準のコミットに、このカードの記録はない。日本語の文面の転記元は pcg-search.com ではないので独立した照合。英語版の「flip a coin to decide who's the winner」は持ち込まない（docs/optional-trainers-v0.66.md）"
     }
   }
 }

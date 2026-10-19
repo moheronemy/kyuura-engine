@@ -659,6 +659,11 @@ MISTYS_TENTACRUEL = "PMCG5-033"  # カスミのドククラゲ（リーダーズ
 BROCKS_RHYDON = "PMCG5-055"  # タケシのサイドン（リーダーズスタジアム。055/096。タケシのサイホーンから進化。HP 80・闘・弱点 草・抵抗力 雷 -30・にげる 3。［ベンチガード］・ラリアット（闘闘無無）70）
 V0_65_POKEMON = (MISTYS_TENTACRUEL, BROCKS_RHYDON)
 V0_65_CARDS = (KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON)
+# v0.66（docs/optional-trainers-v0.66.md）。のぞむなら選ぶ効果・コインのやり直し・じゃんけんのトレーナー 3 枚
+CHARITY = "PMCG5-074"  # お上品攻撃（リーダーズスタジアム。087/096。トレーナー。対戦ポケモンにつけ、ワザのダメージを好きなだけ小さくしてよい。相手の番が終わったら手札にもどす）
+SABRINAS_ESP = "PMCG6-087"  # ナツメのESP（闇からの挑戦。075/000。トレーナー。ナツメのポケモンにつけ、ワザの説明文のコイントスをやり直してよい。番の終わりにトラッシュ）
+MISTYS_DUEL = "PMCG5-068"  # カスミの勝負（リーダーズスタジアム。074/096。トレーナー。じゃんけんの勝者が手札を山札にもどして切り、5 枚引く）
+V0_66_CARDS = (CHARITY, SABRINAS_ESP, MISTYS_DUEL)
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})

@@ -165,7 +165,10 @@ class ResearchLinksTest(unittest.TestCase):
                                  "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER", "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON",
                                  "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN", "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER",
                                  "UNRESOLVED_FLEE_DURING_OWN_ATTACK", "UNRESOLVED_BENCH_GUARD_RECOMPUTE",
-                                 "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION", "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON"})
+                                 "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION", "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON",
+                                 # v0.66（docs/optional-trainers-v0.66.md の CA1・ES1〜ES3）
+                                 "UNRESOLVED_CHARITY_BELOW_ZERO", "UNRESOLVED_ESP_OPPONENT_COIN_TOSS", "UNRESOLVED_ESP_MULTIPLE",
+                                 "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS"})
         moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
         self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
                                  "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",

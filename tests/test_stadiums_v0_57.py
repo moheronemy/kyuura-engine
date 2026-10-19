@@ -155,7 +155,7 @@ class CardDataTest(unittest.TestCase):
                 effect = E.DEFAULT_EFFECTS.trainer_effect(definition)
                 self.assertTrue(effect.is_stadium)
                 self.assertEqual(effect.check(definition), [])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 90)  # v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 93)  # v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
 
     def test_adoption_records_and_external_checks(self):
         """採用の記録（kyuura_data）と pcg-search.com の照合。違いはどれも処理に影響しない（スタジアムの出し方とトラッシュの文の有無・1枚と1匹・別のとこのカード以外）。"""
@@ -171,7 +171,7 @@ class CardDataTest(unittest.TestCase):
 
     def test_research_links(self):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (141, 143))  # v0.58 で 6 件を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (145, 147))  # v0.58 で 6 件を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた
         for ruling, code in NEW_CODES.items():
             with self.subTest(code=code):
                 entry = links["stop_codes"][code]

@@ -635,6 +635,11 @@
     "PMCG5-033",
     "PMCG5-055"
   ],
+  "pool_v0_66": [
+    "PMCG5-074",
+    "PMCG6-087",
+    "PMCG5-068"
+  ],
   "reference_only": [
     "PMCG6-023"
   ],
@@ -36103,6 +36108,124 @@
         "series": "ニビシティジム タケシ・リーダーズスタジアム",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%BF%E3%82%B1%E3%82%B7%E3%81%AE%E3%82%B5%E3%82%A4%E3%83%89%E3%83%B3_(%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E3%82%B8%E3%83%A0)"
+      }
+    },
+    {
+      "id": "PMCG5-074",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "お上品攻撃",
+        "en": "Charity"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」したときは、このカードもトラッシュする)このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。",
+          "en": "Attach Charity to your Active Pokémon. Unless that Pokémon gets Knocked Out, return Charity to your hand at the end of your turn. If that Pokémon attacks and does damage to the Defending Pokémon, you may reduce that damage by any amount (rounded to the nearest 10)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "手札にもどすタイミング",
+          "ja": "「相手の番が終わったら、手札にもどす」と、相手の番のあいだもつけたままにする（カードの画像で確認）。『ポケモンカードオフィシャルブック2000』（2000年2月）p.279 の最新の説明も「相手の番が終わったら、手札にもどす」で、解説は「相手の番の終わりに手札にもどってくる効果があるカードはこれだけです」とする [P43]",
+          "en": "「return Charity to your hand at the end of your turn」と、自分の番の終わりにもどす",
+          "confidence": "確実",
+          "sources": [
+            "N2",
+            "N3",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-074",
+        "pokemontcg": [
+          "gym1-99"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%8A%E4%B8%8A%E5%93%81%E6%94%BB%E6%92%83",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%8A%E4%B8%8A%E5%93%81%E6%94%BB%E6%92%83"
+      }
+    },
+    {
+      "id": "PMCG6-087",
+      "jp_set": "PMCG6",
+      "category": "trainer",
+      "name": {
+        "ja": "ナツメのESP",
+        "en": "Sabrina's ESP"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの場にいる「ナツメのポケモン」につけて使い、あなたの番の終わりにトラッシュする。のぞむなら、このカードをつけた「ナツメのポケモン」がワザを使った時、そのワザの説明文に書かれているすべてのコイントスを、もう1度やり直してよい。",
+          "en": "Attach Sabrina's ESP to 1 of your Pokémon with Sabrina in its name. At the end of your turn, discard Sabrina's ESP. If that Pokémon uses and attack that involves flipping coins, Sabrina's ESP lets you re-flip those coins once. If you do, re-flip all the coins."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG6-087",
+        "pokemontcg": [
+          "gym1-117"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AEESP",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8A%E3%83%84%E3%83%A1%E3%81%AEESP"
+      }
+    },
+    {
+      "id": "PMCG5-068",
+      "jp_set": "PMCG5",
+      "category": "trainer",
+      "name": {
+        "ja": "カスミの勝負",
+        "en": "Misty's Duel"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手プレイヤーと「じゃんけん」をする。勝ったプレイヤーは手札をすべて山札にもどし、その山札をよく切ってから、カードを5枚引いて、手札にする。",
+          "en": "You and your opponent play a game of Rock-Paper-Scissors. The winner shuffles his or her hand into his or her deck and draws a new hand of 5 cards. (If you don't know how to play Rock-Paper-Scissors, flip a coin to decide who's the winner.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "PMCG5-068",
+        "pokemontcg": [
+          "gym1-123"
+        ]
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E5%8B%9D%E8%B2%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AB%E3%82%B9%E3%83%9F%E3%81%AE%E5%8B%9D%E8%B2%A0"
       }
     },
     {

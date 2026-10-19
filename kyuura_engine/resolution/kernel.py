@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable
 
 from ..coins import CoinSide, flip_coins
-from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired
+from ..damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageOrderRequired, DamageReductionRequired
 from ..effects import (
     calculate_with_stadium,
     stadium_coin_modifier,
@@ -356,7 +356,7 @@ def weakness_resistance_matters(res: Resolution, fs: FrameState, target: str, ba
                           for flag in (True, False)}
                 if len(finals) > 1:
                     return True
-    except DamageOrderRequired:
+    except (DamageOrderRequired, DamageReductionRequired):
         return False
     return False
 
@@ -378,12 +378,12 @@ def with_stadium_coin(res: Resolution, frame, target: str, modifiers: list) -> l
 
 
 def compute_damage(state: GameState, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, *, weakness_resistance: bool = True,
-                   orders=None, resistance: bool = True):
+                   orders=None, resistance: bool = True, reduction: int | None = None):
     """p.321 の計算（v0.64。``deal_damage`` から分けた）。v0.48: ワザを使うポケモン・受けるポケモンの今有効な最大HP・タイプ（色）・弱点・抵抗力
     （``effects.definition_views``）。色の読み方（VS1）が 2 つあり、読み方で計算の結果が変わるなら ``TypeReadingsDiffer``（変わらなければ、読み方が 1 つのときと
     同じ計算）。順番の決定が要れば ``DamageOrderRequired``。状態を変えず、乱数を使わない。"""
     return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-        base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance))
+        base, views[0], views[1], modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance, reduction=reduction))
 
 
 class BenchGuardRequest(Exception):
@@ -440,7 +440,7 @@ def _bench_guard_unresolved(res: Resolution, fs: FrameState, attacker, owner: in
         try:
             modifiers = with_stadium_coin(res, frame, target, attack_modifiers_of(res, frame, attacker, holder, target))
             again = compute_damage(state, attacker, holder, 10, modifiers, weakness_resistance=weakness_resistance, resistance=resistance).final
-        except (TypeReadingsDiffer, DamageOrderRequired):
+        except (TypeReadingsDiffer, DamageOrderRequired, DamageReductionRequired):
             again = None
         if again != 10:
             differs.append(holder.pokemon_id)
@@ -478,7 +478,7 @@ def bench_guard_answer(res: Resolution, fs: FrameState, attacker, owner: int, re
 def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_extra: dict | None = None, pokemon_id: int | None = None,
                 weakness_resistance: bool = True, orders: dict[int, tuple[int, ...]] | None = None,
                 order_decision: bool = False, resistance: bool = True, defender_effects: bool = True,
-                guard: tuple[int, ...] | None = None, guard_suspend: bool = False) -> DamageResult:
+                guard: tuple[int, ...] | None = None, guard_suspend: bool = False, reduction: int | None = None) -> DamageResult:
     """ワザの分類のダメージの要素 1 つ（v0.13 の ``deal_attack_damage`` と同じ結果・ログ・乱数）。
 
     v0.31: ``target`` が ``OPPONENT_BENCH`` なら ``pokemon_id`` の相手の控えポケモン（プラスパワーは変えない。``attack_damage_modifiers`` の
@@ -542,20 +542,35 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     base_modifiers = attack_modifiers_of(res, frame, attacker, receiver, target, defender_effects=defender_effects)
     if not defender_effects:
         weakness_resistance = False
-        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance)
+        speed_star_scope_question(res, frame.attack_key, attacker, receiver, base, base_modifiers, orders, resistance, reduction)
     modifiers = with_stadium_coin(res, frame, target, base_modifiers)
     if frame.kind is FrameKind.RETALIATION:
         calming_retaliation_question(res, fs, attacker, receiver, base, target, weakness_resistance, resistance)
-    try:
-        calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance)
-    except TypeReadingsDiffer as differ:
-        raise type_question(res, differ, f"ワザ {frame.attack_key} のダメージの計算（ワザを使うポケモンの色と受けるポケモンの弱点・抵抗力）") from None
-    except DamageOrderRequired as need:
-        # v0.35: p.321 の同じ段階に、順番によって結果が変わる効果が重なった（「つるぎのまい」・「きあいだめ」と「なきつく」など）。計算の順番は
-        # DAMAGE_STEP_CHOOSER のプレイヤーが決める（p.321。SC15）。決定を出せる呼ぶ側（ダメージの要素）に返す。出せない呼ぶ側では v0.34 と同じ問いで止める
-        if order_decision:
-            raise
-        raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
+    while True:
+        try:
+            calc = compute_damage(state, attacker, receiver, base, modifiers, weakness_resistance=weakness_resistance, orders=orders, resistance=resistance,
+                                  reduction=reduction)
+            break
+        except TypeReadingsDiffer as differ:
+            raise type_question(res, differ, f"ワザ {frame.attack_key} のダメージの計算（ワザを使うポケモンの色と受けるポケモンの弱点・抵抗力）") from None
+        except DamageOrderRequired as need:
+            # v0.35: p.321 の同じ段階に、順番によって結果が変わる効果が重なった（「つるぎのまい」・「きあいだめ」と「なきつく」など）。計算の順番は
+            # DAMAGE_STEP_CHOOSER のプレイヤーが決める（p.321。SC15）。決定を出せる呼ぶ側（ダメージの要素）に返す。出せない呼ぶ側では v0.34 と同じ問いで止める
+            if order_decision:
+                raise
+            raise res.question("damage_step_order", f"ポケモン {attacker.pokemon_id}・{need.step} 段階の効果 {[m.label for m in need.modifiers]}") from None
+        except DamageReductionRequired as need:
+            # v0.66（docs/optional-trainers-v0.66.md 2 章）: お上品攻撃の「のぞむなら、そのダメージを好きなだけ小さくしてよい」（5 段階）。0 より小さくすることで結果が
+            # 変わるなら CA1。減らせるダメージがなければ（5 段階で 0 以下）決定を出さずに減らさない。決定を出せる呼ぶ側（ワザのダメージの要素）に返し、出せない呼ぶ側
+            # （返す効果のダメージ）ではエンジンの未対応として止める
+            if need.below_zero:
+                raise res.question("charity_below_zero", f"ポケモン {attacker.pokemon_id}・5 段階のダメージ {need.value}") from None
+            if len(need.choices) == 1:
+                reduction = 0
+                continue
+            if order_decision and frame.kind is FrameKind.ATTACK:
+                raise
+            raise res.question("damage_reduction_decision", f"ポケモン {attacker.pokemon_id}・{frame.kind.value} の枠のダメージ {need.value}") from None
     if target == SELF:
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
     if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
@@ -609,6 +624,9 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
     halved = tuple((m.step, m.source, "up" if m.operation == HALVE_UP else "down") for m in calc.modifiers if m.operation in (HALVE_UP, HALVE_DOWN))
     if halved:
         extra["damage_halved"] = halved  # ［くつろぐかおり］（切り上げ）・「リフレクター」（切りすて）。(段階, 発生源のカード, 丸め)
+    if calc.reduction:
+        # v0.66: お上品攻撃で小さくした量（(段階, 発生源のカード, 減らした数)）。減らさなかったら書かない（v0.65 までのログの形は変えない）
+        extra["damage_reduced"] = ((5, calc.reduced_by[0], calc.reduction),)
     if orders:
         # v0.35: 順番の決定で選んだ計算の順番（(段階, その段階の変更効果の名前を計算した順に)）
         extra["step_orders"] = tuple((step, tuple(m.label for m in calc.modifiers if m.step == step)) for step in sorted(orders))
@@ -686,7 +704,8 @@ def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: Po
     return received
 
 
-def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool) -> None:
+def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool,
+                              reduction: int | None = None) -> None:
     """v0.60（SS1）: 「スピードスター」の「相手の持っている…その他の効果」が、相手の対戦ポケモン自身が持っている効果だけか、相手プレイヤーの場のほかのポケモンが持っている
     効果（常にはたらく特殊能力。エリカのフシギソウの［くつろぐかおり］の「すべてのワザのダメージ」）も含むかは、印刷の文面・kyuura の記録から決まらない（太字の「相手」の
     定義（p.320）は相手の対戦ポケモンだが、「相手の持っている」という言い方を扱う記録はない。v0.33 の CD4 と同じ理由で決めない）。2 つの読み方（``EXCLUDE_DEFENDER_HELD``・
@@ -698,13 +717,27 @@ def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPl
         return
     finals = set()
     for variant in (modifiers, side):
-        try:
-            finals.add(same_for_type_readings(state, (attacker, receiver), lambda views, v=variant: calculate_with_stadium(state,
-                base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=resistance)).final)
-        except (TypeReadingsDiffer, DamageOrderRequired):
-            finals.add(None)
+        finals.add(_finals_over_reductions(lambda r, v=variant: same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+            base, views[0], views[1], v, weakness_resistance=False, orders=orders, resistance=resistance, reduction=r)), reduction))
     if len(finals) > 1:
         raise res.question("speed_star_scope", f"ポケモン {attacker.pokemon_id} → ポケモン {receiver.pokemon_id}")
+
+
+def _finals_over_reductions(compute, reduction: int | None):
+    """``compute(reduction)`` の最終ダメージ（v0.66。比べる問い（SS1）が使う）。お上品攻撃の減らす量がまだ決まっていなければ、選べる量ごとの最終ダメージの並び
+    （どの量を選んでも 2 つの読み方で同じかを比べる）。順番の決定・色の読み方で求められなければ None。"""
+    try:
+        return compute(reduction).final
+    except (TypeReadingsDiffer, DamageOrderRequired):
+        return None
+    except DamageReductionRequired as need:
+        outcomes = []
+        for choice in need.choices:
+            try:
+                outcomes.append(compute(choice).final)
+            except (TypeReadingsDiffer, DamageOrderRequired):
+                outcomes.append(None)
+        return ("reduce", need.below_zero, tuple(outcomes))
 
 
 def trainer_self_bonus_question(res: Resolution, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, final: int,
@@ -790,9 +823,8 @@ def calming_retaliation_differs(state: GameState, attack_key, attacker: PokemonI
         modifiers = attack_damage_modifiers(state, attacker, receiver, attack=attack_key, bench=target in BENCH_TARGETS, attack_status=snapshot)
         for outcomes, (attacker_def, receiver_def) in zip(by_reading, readings):
             try:
-                calc = calculate_with_stadium(state, base, attacker_def, receiver_def, modifiers, weakness_resistance=weakness_resistance,
-                                               resistance=resistance)
-                outcomes.add(calc.final)
+                outcomes.add(_finals_over_reductions(lambda r, a=attacker_def, d=receiver_def, m=modifiers: calculate_with_stadium(
+                    state, base, a, d, m, weakness_resistance=weakness_resistance, resistance=resistance, reduction=r), None))
             except DamageOrderRequired:
                 outcomes.add(None)
     return any(len(outcomes) > 1 for outcomes in by_reading)

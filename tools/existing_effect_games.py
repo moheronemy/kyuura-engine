@@ -478,6 +478,10 @@ V0_64 = (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM)
 KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON = "PMCG6-083", "PMCG5-033", "PMCG5-055"
 V0_65 = (KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON)
 V0_65_REACTIONS = ("ninja_trick", "reaction_switch", "bench_guard")
+# v0.66（docs/optional-trainers-v0.66.md）。お上品攻撃・ナツメのESP・カスミの勝負（どれもトレーナー）
+CHARITY, SABRINAS_ESP, MISTYS_DUEL = "PMCG5-074", "PMCG6-087", "PMCG5-068"
+V0_66 = (CHARITY, SABRINAS_ESP, MISTYS_DUEL)
+V0_66_DECISIONS = ("damage_reduction", "esp_redo", "janken_hand")
 # 検証用デッキ（(カード id, 枚数) の並び）。第2版の固定のデッキはそのまま使う
 DECKS = {
     "W28": ((LAPRAS, 3), (STARYU, 3), (STARMIE, 2), (GOLDEEN, 3), (SEAKING, 2), (SHELLDER, 3), (CHANSEY, 2), *TRAINERS, (WATER, 30)),
@@ -760,6 +764,12 @@ DECKS = {
             *TRAINERS, (GRASS, 13), (WATER, 12)),
     # v0.65: 闘。タケシのサイホーン → タケシのサイドン（［ベンチガード］・ラリアット）を控えに置き、タケシのサンド・タケシのディグダで戦う
     "R65": ((BROCKS_RHYHORN, 4), (BROCKS_RHYDON, 4), (BROCKS_SANDSHREW, 4), (BROCKS_DIGLETT, 4), *TRAINERS, (FIGHTING, 32)),
+    # v0.66: 草・超・水。ナツメのコンパン → ナツメのモルフォン（はかいビーム・かいふくりんぷん）・ナツメのコダック（こまったねんりき）・ナツメのゴース → ゴースト → ゲンガー
+    # （やみのこえ）とナツメのESP、カスミの勝負
+    "S66": ((SABRINAS_VENONAT, 4), (SABRINAS_VENOMOTH, 3), (SABRINAS_PSYDUCK, 4), (SABRINAS_GASTLY, 3), (SABRINAS_HAUNTER, 2), (SABRINAS_GENGAR, 2),
+            (SABRINAS_ESP, 4), (MISTYS_DUEL, 3), *TRAINERS, (PSYCHIC, 12), (GRASS, 7), (WATER, 4)),
+    # v0.66: 闘。化石の秘密のイシツブテ → ゴローン（れんぞくいしなげ・かたくなる）・イワークとお上品攻撃、カスミの勝負
+    "C66": ((FOSSIL_GEODUDE, 4), (FOSSIL_GRAVELER, 3), (ONIX, 4), (CHARITY, 4), (MISTYS_DUEL, 3), *TRAINERS, (FIGHTING, 30)),
     "T63": ((PIDGEY, 4), (PIDGEOTTO, 3), (PIDGEOT, 2), (SPEAROW, 4), (FEAROW, 3), (LICKITUNG, 3), (HERE_COMES_TEAM_ROCKET, 2), (TICKLING_MACHINE, 3),
             (CHALLENGE, 3), (BLAINES_QUIZ_3, 3), (LT_SURGES_TREATY, 2), (MISTYS_WISH, 2), (driver.BILL, 2), (SWITCH, 2), (GRASS, 11), (WATER, 11)),
     # v0.63: 闘。タケシのディグダ → タケシのダグトリオ・タケシのマンキー → タケシのオコリザル・タケシのイシツブテ（挑戦状でうらにしてベンチに出すたねポケモンが多い）と、
@@ -860,6 +870,8 @@ PAIRINGS_V0_64 = (("G64", "H62"), ("G64", "D46"), ("G64", "P61"), ("G64", "W45")
 # v0.65: K65 対 R65（変わり身の術・［にげこむ］と［ベンチガード］）・R65 対 L39（控えへのダメージ（じばく・スパーク・ビリビリ）で［ベンチガード］）・R65 対 Z60
 # （サンダーストーム）・K65 対 H62（ふきとばし・ハリケーンの相手に変わり身の術・［にげこむ］）
 PAIRINGS_V0_65 = (("K65", "R65"), ("R65", "L39"), ("R65", "Z60"), ("K65", "H62"))
+# v0.66: S66 対 C66（ESP・お上品攻撃・カスミの勝負）・C66 対 P46（お上品攻撃とバリヤードの［なぞのかべ］・エリカのミニリュウの［ふしぎなバリアー］）・S66 対 H62・C66 対 R65
+PAIRINGS_V0_66 = (("S66", "C66"), ("C66", "P46"), ("S66", "H62"), ("C66", "R65"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -868,7 +880,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.52": PAIRINGS_V0_52, "v0.53": PAIRINGS_V0_53, "v0.54": PAIRINGS_V0_54, "v0.55": PAIRINGS_V0_55,
            "v0.56": PAIRINGS_V0_56, "v0.57": PAIRINGS_V0_57, "v0.58": PAIRINGS_V0_58, "v0.59": PAIRINGS_V0_59, "v0.60": PAIRINGS_V0_60,
            "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
-           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65}
+           "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -2888,6 +2900,115 @@ def _v065_trainer(state, tried, counts):
     return command
 
 
+def _v066_decision(state, counts):
+    """v0.66 の決定への答え（元の手順より先に答える）: お上品攻撃のへらす数・ナツメのESPのやり直し・カスミの勝負の手（相手の決定にも答える）。
+    選ぶと止める選択は選ばない。へらす数は 0・いちばん大きい数・真ん中を順に、ESP はやり直す・やり直さないを交互に、じゃんけんの手は決めるプレイヤーごとに
+    グー・チョキ・パーを順に回す（2 人の回し方を変えて、あいこも勝ち負けも起こる）。"""
+    d = state.decision
+    if d is None or d.kind not in V0_66_DECISIONS:
+        return None
+    stopped = set(d.context_value("unresolved_choices", ()))
+    free = [o for o in d.options if o not in stopped]
+    if stopped:
+        counts[f"v066_{d.kind}_stopped_{d.context_value('unresolved_code')}"] += 1
+    counts[f"v066_{d.kind}_offers"] += 1
+    n = counts[f"v066_{d.kind}_offers"]
+    if d.kind == "esp_redo":
+        if not free or n % 2 == 0:
+            counts["v066_esp_declined_by_policy"] += 1
+            return ResolveDecision(d.player, d.id, ())
+        counts["v066_esp_redo_by_policy"] += 1
+        return ResolveDecision(d.player, d.id, (free[0],))
+    if d.kind == "damage_reduction":
+        if not free:
+            raise AssertionError("お上品攻撃のへらす数に選べる答えがない")
+        pick = (free[0], free[-1], free[len(free) // 2])[n % 3]
+        counts[f"v066_reduction_{'zero' if pick == 0 else 'some'}"] += 1
+        return ResolveDecision(d.player, d.id, (pick,))
+    key = f"v066_janken_{d.player}"
+    counts[key] += 1
+    m = counts[key]
+    # 2 人が同じ手を回し続けるとあいこが終わらないので、2 人目（プレイヤー 1）は回し方を変える（ときどきあいこになる）
+    return ResolveDecision(d.player, d.id, (free[(m if d.player == 0 else m + m // 2) % len(free)],))
+
+
+def _v066_trainer(state, command, tried, counts):
+    """v0.66: お上品攻撃（ワザを使う番に、バトル場のポケモンにまだついていなければ）・ナツメのESP（ワザを使う番に、バトル場の「ナツメのポケモン」にまだついていなければ）・
+    カスミの勝負（1 番に 1 回）を、受け付けるなら使う。拒否・止まる場面は ``v066_<カード>_rejected_<コード>``。"""
+    player = state.current_player
+    p = state.players[player]
+    if "trainer_locked" in tried or p.active is None:
+        return None
+    attached = {state.cards[t.card].card_id for t in p.active.trainers}
+    wanted = []
+    if isinstance(command, UseAttack):
+        if CHARITY not in attached:
+            wanted.append(("charity", CHARITY))
+        if SABRINAS_ESP not in attached and state.card_def(p.active.card).name_ja.startswith("ナツメの"):
+            wanted.append(("esp", SABRINAS_ESP))
+    wanted.append(("duel", MISTYS_DUEL))
+    for label, card_id in wanted:
+        if (f"v066_{label}", state.turn_number) in tried:
+            continue
+        uid = next((u for u in p.hand if state.cards[u].card_id == card_id), None)
+        if uid is None:
+            continue
+        tried.add((f"v066_{label}", state.turn_number))
+        trainer = PlayTrainer(player, uid)
+        try:
+            apply_command(state, trainer)
+        except (IllegalActionError, UnsupportedError) as error:
+            counts[f"v066_{label}_rejected_{error.code}"] += 1
+            continue
+        counts[f"v066_{label}_played"] += 1
+        return trainer
+    return None
+
+
+def v066_uses(state):
+    """v0.66: ログから数えた v0.66 の 3 枚の動き（どれもない局では空）。
+
+    - ``charity_played``・``charity_reduced``・``charity_reduced_to_zero``・``charity_returned``・``charity_discarded``: お上品攻撃（使った・へらした・最終ダメージが 0 に
+      なった・相手の番の終わりに手札にもどった・きぜつしてトラッシュした）
+    - ``esp_played``・``esp_redo``・``esp_redo_declined``・``esp_redo_changed``・``esp_discarded``: ナツメのESP（やり直した・やり直さなかった・やり直して「おもて」の数が
+      変わった・番の終わりにトラッシュした）
+    - ``duel_played``・``janken``・``janken_tie``・``duel_won_by_user``・``duel_won_by_opponent``・``duel_draw_<枚数>``: カスミの勝負
+    """
+    counts = Counter()
+    card = {uid: c.card_id for uid, c in state.cards.items()}
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "play_trainer":
+            label = {CHARITY: "charity", SABRINAS_ESP: "esp", MISTYS_DUEL: "duel"}.get(card.get(e.get("card")))
+            if label:
+                counts[f"{label}_played"] += 1
+        elif kind == "damage" and e.get("damage_reduced"):
+            counts["charity_reduced"] += 1
+            if e.get("amount") == 0:
+                counts["charity_reduced_to_zero"] += 1
+        elif kind == "return_attached_trainer" and card.get(e.get("card")) == CHARITY:
+            counts["charity_returned"] += 1
+        elif kind in ("discard_attached_trainer", "knock_out"):
+            for uid in (e.get("discarded_trainers", ()) if kind == "knock_out" else (e.get("card"),)):
+                if card.get(uid) == CHARITY:
+                    counts["charity_discarded"] += 1
+                elif card.get(uid) == SABRINAS_ESP:
+                    counts["esp_discarded"] += 1
+        elif kind == "esp_redo":
+            counts["esp_redo"] += 1
+            if e.get("original", ()).count("heads") != e.get("redone", ()).count("heads"):
+                counts["esp_redo_changed"] += 1
+        elif kind == "esp_redo_declined":
+            counts["esp_redo_declined"] += 1
+        elif kind == "duel_janken":
+            counts["janken"] += 1
+            if e.get("winner") is None:
+                counts["janken_tie"] += 1
+            else:
+                counts["duel_won_by_user" if e["winner"] == e["player"] else "duel_won_by_opponent"] += 1
+    return counts
+
+
 def v065_uses(state):
     """v0.65: ログから数えた v0.65 の 3 枚の動き（どれもない局では空）。
 
@@ -3505,7 +3626,8 @@ def make_policy(seen: dict, counts: Counter):
         if state.phase is Phase.DECISION:
             # v0.43: v0.43 のカードの決定（場に出たときの特殊能力の使う機会など）は、元の手順より先に答える（元の手順は、選ぶと止める選択しかない決定（使うことを選ぶと
             # PW3 で止まる使う機会）に答えられない）。v0.43 のカードのない局では何もしない
-            early = (_v065_decision(state, counts)  # v0.65: 変わり身の術・［にげこむ］・［ベンチガード］（ワザを受ける相手の決定）
+            early = (_v066_decision(state, counts)  # v0.66: お上品攻撃・ナツメのESP・カスミの勝負（相手の決定にも答える）
+                     or _v065_decision(state, counts)  # v0.65: 変わり身の術・［にげこむ］・［ベンチガード］（ワザを受ける相手の決定）
                      or _v063_decision(state, counts)  # v0.63: 挑戦状・クイズの決定（相手の決定にも答える）
                      or _v043_decision(state, counts) or _v044_decision(state, counts)  # v0.44 の決定も元の手順より先に答える
                      or _v045_decision(state, counts) or _v046_decision(state, counts)  # v0.45・v0.46 の決定も
@@ -3546,7 +3668,8 @@ def make_policy(seen: dict, counts: Counter):
                      or _v059_trainer(state, tried, counts) or _v059_power(state, tried, counts)  # v0.59
                      or _v061_trainer(state, tried, counts)  # v0.61
                      or _v063_trainer(state, tried, counts)  # v0.63
-                     or _v065_trainer(state, tried, counts))  # v0.65
+                     or _v065_trainer(state, tried, counts)  # v0.65
+                     or _v066_trainer(state, command, tried, counts))  # v0.66
             if power is not None:
                 return power
             history = _v062_attack(state, tried, counts)  # v0.62: 履歴を読むワザ（ドリルホール・オウムがえし）を使える番に使う
@@ -3686,6 +3809,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v063"] = v063_uses(state)
         result["v064"] = v064_uses(state)
         result["v065"] = v065_uses(state)
+        result["v066"] = v066_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -4119,7 +4243,8 @@ def summarize(games):
          "v059_games_with": Counter(), "v060": Counter(), "v060_games_with": Counter(), "v061": Counter(), "v061_games_with": Counter(),
          "v061_policy": Counter(), "v062": Counter(), "v062_games_with": Counter(), "v062_policy": Counter(),
          "v063": Counter(), "v063_games_with": Counter(), "v063_policy": Counter(), "v064": Counter(), "v064_games_with": Counter(),
-         "v065": Counter(), "v065_games_with": Counter(), "v065_policy": Counter()}
+         "v065": Counter(), "v065_games_with": Counter(), "v065_policy": Counter(),
+         "v066": Counter(), "v066_games_with": Counter(), "v066_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -4143,6 +4268,9 @@ def summarize(games):
         s["v065"].update(r.get("v065", {}))  # v0.65
         s["v065_games_with"].update({k: 1 for k, v in r.get("v065", {}).items() if v})
         s["v065_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v065_")})
+        s["v066"].update(r.get("v066", {}))  # v0.66
+        s["v066_games_with"].update({k: 1 for k, v in r.get("v066", {}).items() if v})
+        s["v066_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v066_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

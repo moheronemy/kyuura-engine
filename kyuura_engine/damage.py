@@ -71,6 +71,10 @@ SET_IF_AT_LEAST = "set_if_at_least"
 HALVE_UP = "halve_up"
 HALVE_DOWN = "halve_down"
 DAMAGE_OPERATIONS = (ADD, SET, MULTIPLY, ZERO_IF_BELOW, ZERO_IF_AT_LEAST, SET_IF_AT_LEAST, HALVE_UP, HALVE_DOWN)
+# v0.66（docs/optional-trainers-v0.66.md 2 章）: 5 段階の「のぞむなら、そのダメージを好きなだけ小さくしてよい」（お上品攻撃。ワザを使うポケモンについているトレーナーカードの
+# 効果）。減らす量はワザを使うプレイヤーが決定で選ぶ（``DamageReductionRequired``・``reduction``）。``amount`` は使わない（0）。``DAMAGE_OPERATIONS`` には入れない
+# （ほかの計算と同じ並べかえの対象にしない。同じ 5 段階のほかの効果のあとに当てはめる）
+REDUCE_CHOICE = "reduce_choice"
 
 
 @dataclass(frozen=True)
@@ -98,7 +102,7 @@ class DamageModifier:
     def __post_init__(self) -> None:
         if self.step not in DAMAGE_STEP_CHOOSER:
             raise ValueError(f"ダメージを変更する効果の段階は 2・5・6・7・8（{self.step!r}）")
-        if self.operation not in DAMAGE_OPERATIONS:
+        if self.operation not in DAMAGE_OPERATIONS and self.operation != REDUCE_CHOICE:
             raise ValueError(f"ダメージを変更する効果の計算は {DAMAGE_OPERATIONS} のどれか（{self.operation!r}）")
         if self.operation == MULTIPLY and (type(self.amount) is not int or self.amount < 2):
             raise ValueError(f"ダメージにかける数は 2 以上の整数（{self.amount!r}）")
@@ -111,6 +115,8 @@ class DamageModifier:
             raise ValueError(f"しきい値（threshold）は、しきい値以上のダメージをその数にする効果だけに書く（{self.operation!r}）")
         if self.operation in (HALVE_UP, HALVE_DOWN) and self.amount != 2:
             raise ValueError(f"半分にする効果の割る数は 2（{self.amount!r}）")
+        if self.operation == REDUCE_CHOICE and (self.step != 5 or self.amount != 0):
+            raise ValueError(f"好きなだけ小さくする効果は 5 段階・数 0（{self.step!r}・{self.amount!r}）")
 
     def apply(self, amount: int, unit: int = 10) -> int:
         """この効果を、その段階のダメージ ``amount`` に当てはめた数（v0.35）。v0.46: ``unit`` はダメージカウンター 1 個のダメージ（半分にするときの端数の単位。
@@ -125,6 +131,8 @@ class DamageModifier:
             return 0 if amount >= self.amount else amount
         if self.operation == SET_IF_AT_LEAST:
             return self.amount if amount >= self.threshold else amount
+        if self.operation == REDUCE_CHOICE:
+            raise RuntimeError("好きなだけ小さくする効果は、選んだ量で計算する（``_calculate`` の ``reduction``。エンジンの不具合）")
         if self.operation in (HALVE_UP, HALVE_DOWN):
             if amount <= 0:
                 return amount
@@ -156,6 +164,31 @@ class DamageOrderRequired(RuntimeError):
         )
 
 
+class DamageReductionRequired(RuntimeError):
+    """5 段階の「好きなだけ小さくしてよい」効果（``REDUCE_CHOICE``。お上品攻撃）があり、減らす量が渡されていない（v0.66）。
+
+    - ``value``: 5 段階のほかの効果を当てはめたあとのダメージ（減らす前）
+    - ``choices``: 選べる減らす量（0 = 減らさない、ダメージカウンターの単位ずつ ``value`` まで。``value`` が 0 以下なら (0,)）
+    - ``below_zero``: 0 より小さくすることで、0 にしたときと違う計算の結果（最終ダメージと 2 段階で終えるか）になるか（6〜8 段階に、ダメージを増やす
+      効果があるとき。「好きなだけ」が 0 より小さくすることを含むかは決まらない（CA1。``kernel.deal_damage`` が止める））
+    - ``modifiers``: その効果（集めた順番）。``chooser`` はワザを使うプレイヤー（``"attacker"``。p.321 の 5 段階の効果の持ち主）
+
+    呼ぶ側（解決の基盤のダメージの要素）が決定で量を選ばせて、``reduction`` に渡してもう一度計算する。``RuntimeError`` の部分型なのは、``DamageOrderRequired``
+    と同じく、決定を出せない古い計算でこの場合に来たら、黙って減らす量を決めずに止めるため。"""
+
+    def __init__(self, value: int, choices: tuple[int, ...], below_zero: bool, modifiers: tuple[DamageModifier, ...]):
+        self.value = value
+        self.choices = choices
+        self.below_zero = below_zero
+        self.modifiers = modifiers
+        self.chooser = "attacker"
+        super().__init__(f"5 段階の「好きなだけ小さくしてよい」効果（{[m.label for m in modifiers]}）の減らす量が渡されていない（{value} ダメージ）")
+
+    def outcome(self) -> tuple:
+        """色の読み方ごとの比べ（``effects.same_for_type_readings``）に使う値。"""
+        return ("reduce", self.value, self.choices, self.below_zero, tuple(m.label for m in self.modifiers))
+
+
 def step_orders(count: int) -> tuple[tuple[int, ...], ...]:
     """同じ段階の ``count`` 個の変更効果の計算の順番のすべて（集めた順番の番号の並べかえ。辞書順。順番の決定の選べるものの番号はこの並びの位置）。"""
     return tuple(itertools.permutations(range(count)))
@@ -170,6 +203,8 @@ class DamageCalculation:
     final: int  # 相手に与えるダメージ。0 なら「ダメージを与えなかった」
     steps: tuple[tuple[str, int], ...]
     modifiers: tuple[DamageModifier, ...] = ()  # 計算に使った変更効果（v0.2c）。2 段階で終えたら 2 段階のものだけ（v0.2d）
+    reduction: int = 0  # v0.66: 5 段階で「好きなだけ小さく」した量（お上品攻撃。減らさなければ 0）
+    reduced_by: tuple[int | None, ...] = ()  # v0.66: その効果の発生源のカード（減らす量を決めたときだけ。量が 0 でも書く）
 
 
 def calculate_attack_damage(
@@ -183,6 +218,7 @@ def calculate_attack_damage(
     orders: Mapping[int, tuple[int, ...]] | None = None,
     resistance: bool = True,
     weakness: bool = True,
+    reduction: int | None = None,
 ) -> DamageCalculation:
     """バトル場のポケモンがワザで相手のバトル場のポケモンに与えるダメージ。
 
@@ -196,8 +232,17 @@ def calculate_attack_damage(
     タケシのイシツブテの「スパイラルショット」）。弱点（3 段階）とほかの段階は計算する。
     ``weakness``（v0.57）: False なら 3 段階（弱点）だけを計算しない（グレンタウンジムの「「カツラのポケモン」は、「水」ポケモンからダメージを受ける時、「弱点」の影響を
     受けない」。``effects.calculate_with_stadium``）。抵抗力とほかの段階は計算する。
+    ``reduction``（v0.66）: 5 段階の「好きなだけ小さくしてよい」効果（``REDUCE_CHOICE``。お上品攻撃）で減らす量。その効果があり、2 段階で計算を終えないのに
+    渡されていなければ ``DamageReductionRequired``（呼ぶ側が決定で選ばせる）。2 段階の順番の決定は減らす量より先、6〜8 段階の順番の決定は減らす量のあと（減らした
+    あとのダメージで比べる）。``REDUCE_CHOICE`` は 5 段階のほかの効果（加算だけ）のあとに当てはめる（docs/optional-trainers-v0.66.md 2.3 節）。
     """
     used = tuple(modifiers)
+    reducers = tuple(m for m in used if m.operation == REDUCE_CHOICE)
+    used = tuple(m for m in used if m.operation != REDUCE_CHOICE)
+    if reducers and any(m.step == 5 and m.operation != ADD for m in used):
+        raise RuntimeError("5 段階に、好きなだけ小さくする効果と加算でない効果がある（今の写しでは起こらない。当てはめる順番を決めていない）")
+    if reduction is not None and not reducers:
+        raise ValueError(f"減らす量 {reduction!r} を渡したが、好きなだけ小さくする効果がない")
     chosen = dict(orders or {})
     for step, order in chosen.items():
         at_step = [m for m in used if m.step == step]
@@ -205,15 +250,22 @@ def calculate_attack_damage(
             raise ValueError(f"{step} 段階の計算の順番 {order!r} が、その段階の {len(at_step)} つの変更効果の並べかえではない")
     for step in DAMAGE_STEP_CHOOSER:
         at_step = tuple(m for m in used if m.step == step)
+        if step > 5 and reducers and reduction is None:
+            # v0.66: 6〜8 段階の順番は減らしたあとのダメージで比べるので、先に減らす量を決める（2 段階で終えるなら、減らす量は要らない）
+            _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance, weakness, reducers=reducers)
+            break
         if step in chosen or len(at_step) < 2 or all(m.operation == ADD for m in at_step):
             continue
         # 加算でない効果は、同じ段階のほかの効果との順番で結果が変わりうる。p.321 は順番を DAMAGE_STEP_CHOOSER のプレイヤーが決めるとする。
         # どの順番でも結果（最終ダメージと 2 段階で終えるか）が同じなら決めさせない（あとの段階は、渡された順番か集めた順番で比べる）
-        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}, resistance, weakness))
+        # v0.66: 減らす量がまだ決まっていない 2 段階の順番は、5 段階の減らす前のダメージ（と 2 段階で終えるか）で比べる
+        partial = bool(reducers) and reduction is None
+        outcomes = {_outcome(_calculate(base, attacker, defender, rules, used, weakness_resistance, {**chosen, step: order}, resistance, weakness,
+                                        reducers=reducers, reduction=reduction, partial=partial))
                     for order in step_orders(len(at_step))}
         if len(outcomes) > 1:
             raise DamageOrderRequired(step, at_step)
-    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance, weakness)
+    return _calculate(base, attacker, defender, rules, used, weakness_resistance, chosen, resistance, weakness, reducers=reducers, reduction=reduction)
 
 
 def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
@@ -221,7 +273,8 @@ def _outcome(calc: DamageCalculation) -> tuple[int, bool]:
 
 
 def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, rules: RuleSet, used: tuple[DamageModifier, ...],
-               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]], resistance: bool = True, weakness: bool = True) -> DamageCalculation:
+               weakness_resistance: bool, orders: Mapping[int, tuple[int, ...]], resistance: bool = True, weakness: bool = True, *,
+               reducers: tuple[DamageModifier, ...] = (), reduction: int | None = None, partial: bool = False) -> DamageCalculation:
     """p.321 の 8 段階の計算（順番の確かめは ``calculate_attack_damage``）。段階の中の変更効果は、``orders`` にあればその順番、なければ集めた順番。
 
     結果の ``modifiers`` は v0.34 と同じ集めた順番（2 段階で終えたら 2 段階のものだけ）で、順番を選んだ段階のものだけ、その段階の位置の中で選んだ
@@ -267,13 +320,50 @@ def _calculate(base: int, attacker: CardDefinition, defender: CardDefinition, ru
         steps.append(("4 抵抗力", amount))
 
     # 5. ワザを使うポケモンについているカードの効果（プラスパワーなど）
+    amount = apply(5, amount)
+    applied_reduction = 0
+    if reducers:
+        # v0.66: 5 段階の「好きなだけ小さくしてよい」（お上品攻撃）。5 段階のほかの効果のあと
+        if partial:
+            return DamageCalculation(base, weakness_applied, resistance_applied, False, amount, tuple(steps), ())
+        if reduction is None:
+            unit = rules.damage_per_counter
+
+            def tail(value: int) -> tuple[int, bool]:
+                return _outcome(_finish(value, [], base, weakness_applied, resistance_applied, used, orders, rules))
+
+            choices = tuple(range(0, amount + 1, unit)) if amount > 0 else (0,)
+            reachable = {tail(amount - r) for r in choices}
+            floor = min(amount, 0)
+            depth = unit + sum(abs(m.amount) + (m.threshold or 0) for m in used if m.step > 5 and m.operation not in (MULTIPLY, HALVE_UP, HALVE_DOWN))
+            below = any(tail(floor - k) not in reachable for k in range(unit, depth + 2 * unit, unit))
+            raise DamageReductionRequired(amount, choices, below, reducers)
+        if reduction < 0 or reduction % rules.damage_per_counter or reduction > max(amount, 0):
+            raise ValueError(f"減らす量 {reduction!r} が、0 からダメージ {amount} までのダメージカウンターの単位の数ではない")
+        applied_reduction = reduction
+        amount -= reduction
+        steps.append((f"5 {reducers[0].label}", amount))
+    return _finish(amount, steps, base, weakness_applied, resistance_applied, used, orders, rules, applied_reduction, reducers)
+
+
+def _finish(amount: int, steps: list, base: int, weakness_applied: bool, resistance_applied: bool, used: tuple[DamageModifier, ...],
+            orders: Mapping[int, tuple[int, ...]], rules: RuleSet, reduction: int = 0, reducers: tuple[DamageModifier, ...] = ()) -> DamageCalculation:
+    """6〜8 段階と最終ダメージ（v0.66。``_calculate`` から分けた。5 段階の減らす量の比べにも使う）。"""
+    def at(step: int) -> list[DamageModifier]:
+        found = [m for m in used if m.step == step]
+        order = orders.get(step)
+        return found if order is None else [found[i] for i in order]
+
     # 6. それ以外の効果、7. ワザを受けるポケモンについているカードの効果、8. ワザを受けるポケモンの効果
-    for step in (5, 6, 7, 8):
-        amount = apply(step, amount)
+    for step in (6, 7, 8):
+        for modifier in at(step):
+            amount = modifier.apply(amount, rules.damage_per_counter)
+            steps.append((f"{step} {modifier.label}", amount))
 
     # 最終的に 0 以下なら「ダメージを与えなかった」（p.319, p.321）
     final = amount if amount > 0 else 0
-    return DamageCalculation(base, weakness_applied, resistance_applied, False, final, tuple(steps), _in_order(used, orders))
+    return DamageCalculation(base, weakness_applied, resistance_applied, False, final, tuple(steps), _in_order(used, orders), reduction,
+                             tuple(m.source for m in reducers))
 
 
 def _in_order(modifiers: tuple[DamageModifier, ...], orders: Mapping[int, tuple[int, ...]]) -> tuple[DamageModifier, ...]:

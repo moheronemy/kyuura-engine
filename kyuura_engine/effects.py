@@ -96,7 +96,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
 from .cards import EnergyType, can_pay_with_units
 from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION, CURED, PARALYSIS, POISON, SLEEP, SWITCH, clear_special_conditions, confuse, put_to_sleep
-from .damage import HALVE_DOWN, HALVE_UP, MULTIPLY, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, calculate_attack_damage
+from .damage import (
+    HALVE_DOWN, HALVE_UP, MULTIPLY, REDUCE_CHOICE, SET, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST, ZERO_IF_BELOW, DamageModifier, DamageReductionRequired,
+    calculate_attack_damage,
+)
 from .decisions import (
     ATTACH_FROM_DECK, ATTACH_FROM_DISCARD, ATTACH_FROM_HAND, ATTACH_TO_BENCH, BENCH_FROM_DECK, DISCARD_ENERGY, DISCARD_FROM_HAND, DISCARD_OPPONENT_ENERGY, ENTRY_POWER, FORCED_SWITCH,
     DISCARD_TO_DECK_TOP, HAND_TO_DECK, MOVE_ENERGY, MOVE_OPPONENT_ENERGY, RECOVER_ENERGY, RECOVER_POKEMON, RECOVER_TRAINER, REMOVE_COUNTERS, RETRIEVE_ENERGY, RETURN_ENERGY,
@@ -109,6 +112,7 @@ from .decisions import (
     EVOLUTION_HEAL, STADIUM_RETURN_BENCH, push_stadium_decision, USE_DISCARD_TRAINER,
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD,
+    JANKEN_HAND,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -625,8 +629,14 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
     # v0.48: 今有効な値の定義（``definition_views``）。色の読み方（VS1）で最終ダメージが変わるなら止める（``kernel.deal_damage`` と同じ判定）
     try:
-        return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-            base, views[0], views[1], modifiers).final)
+        try:
+            return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+                base, views[0], views[1], modifiers).final)
+        except DamageReductionRequired:
+            # v0.66: お上品攻撃（5 段階で好きなだけ小さくしてよい）。この計算（v0.13 の止める関数の比べ）は減らす量の決定を出せないので、減らさない量（最も大きい
+            # ダメージ）で求める（docs/optional-trainers-v0.66.md 2.6 節。解決の基盤の処理・先読みは、選べるすべての量を試す）
+            return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
+                base, views[0], views[1], modifiers, reduction=0).final)
     except TypeReadingsDiffer as differ:
         raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算") from None
 
@@ -5654,6 +5664,12 @@ def attack_damage_modifiers(
         if cry is not None and defender.card == cry.source_card:
             modifiers.append(DamageModifier(step=2, amount=-cry.amount, label=_persistent_effect_name(state, cry), source=cry.source_card))
         if defender is not attacker:
+            # v0.66: お上品攻撃（つけているポケモンのワザが相手の対戦ポケモンにダメージを与える時、のぞむなら好きなだけ小さくしてよい）。ワザを使うポケモンについている
+            # トレーナーカードの効果なので p.321 の 5 段階（GR-2000-P321-DAMAGE-ORDER）。控えへのダメージ（``bench``）・自分へのダメージには当てはめない
+            for attached in attacker.trainers:
+                if state.effects.trainer_entry(state.cards[attached.card].card_id).effect.reduces_attack_damage:
+                    modifiers.append(DamageModifier(step=5, amount=0, label=state.card_def(attached.card).name_ja, source=attached.card,
+                                                    operation=REDUCE_CHOICE))
             # v0.56: トレーナー「カスミ」の「「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、この番だけ、そのダメージは「+20」される。(控えポケモンへの
             # ダメージは、そのまま)」。ワザを使うポケモンの持っている効果でも、ついているカードでもないので p.321 の 6 段階（それ以外の「ダメージを変更する効果」。
             # GR-2000-P321-DAMAGE-ORDER）。控えポケモンへのダメージ（``bench``）には当てはめない。ワザを使うポケモン自身へのダメージに当てはめるかは決まらない（MS1。
@@ -5776,6 +5792,17 @@ class TrainerEffect:
     discard_on_leaving_active = False
     # v0.65: 相手がワザを使う時、持ち主が決定で使うかを決める（変わり身の術。``resolution.flow`` の決定 ``NINJA_TRICK``）
     reacts_to_opponent_attack = False
+    # v0.66（docs/optional-trainers-v0.66.md 2 章）: 有効期限の番の終わりに、ついているトレーナーをどこに置くか（``EXPIRE_TO_DISCARD``・``EXPIRE_TO_HAND``。お上品攻撃は
+    # 「相手の番が終わったら、手札にもどす」。``procedures.discard_expired_attachments``）。きぜつしたときは、どれもポケモンといっしょにトラッシュする
+    expiry_destination = "discard"
+    # v0.66: True なら、つけているポケモンのワザが相手の対戦ポケモンにダメージを与える時、のぞむならそのダメージを好きなだけ小さくしてよい（お上品攻撃。p.321 の 5 段階。
+    # ``attack_damage_modifiers`` が ``damage.REDUCE_CHOICE`` の変更効果を加える）
+    reduces_attack_damage = False
+    # v0.66: True なら、つけているポケモンがワザを使った時、そのワザの説明文のコイントスをすべてもう 1 度やり直してよい（ナツメのESP。``resolution.programs.AttackRun.flip``）
+    redoes_attack_coins = False
+    # v0.66: False なら、効果の途中の決定のどの答えも、決められない姿・最大HPの低下を新しく作らない（場を変えない。カスミの勝負）。エンジンが答えの続きを試す確かめ
+    # （``engine._trainer_dead_end``）をしない（引き分けがくり返す「じゃんけん」の決定の続きを、上限まで深く試さない）
+    changes_field = True
     # v0.50: True なら、効果で自分のポケモンの最大HPを下げ（退化）、のっているダメージ以下になったポケモンが「きぜつ」しうる（退化スプレー）。エンジンが、使い終わって
     # カードをトラッシュしたあとに、きぜつの処理（``resolution.after_trainer``）をする。False のトレーナーのあとに HP 以上のポケモンが残れば、v0.48 の MH1 で受け付けない
     may_knock_out = False
@@ -6654,6 +6681,10 @@ def _returning_lock_sources(state: GameState, user: int) -> tuple[int, ...]:
     sources = {effect.source_card for effect in active.persistent_effects
                if isinstance(effect, CannotAttackWhileSourceActive) and effect.active_turn == state.turn_number and effect.source_player == 1 - user}
     return tuple(pokemon.pokemon_id for pokemon in state.players[1 - user].bench if pokemon.card in sources)
+
+
+EXPIRE_TO_DISCARD = "discard"
+EXPIRE_TO_HAND = "hand"
 
 
 @dataclass(frozen=True)
@@ -11966,7 +11997,7 @@ def same_for_type_readings(state: GameState, pokemons: Iterable[PokemonInPlay], 
     同じ計算）。計算の順番の決定が要る（``damage.DamageOrderRequired``）のも結果の 1 つとして比べ、どの読み方でも同じならそのまま投げる。"""
     from itertools import product
 
-    from .damage import DamageOrderRequired
+    from .damage import DamageOrderRequired, DamageReductionRequired
 
     pokemons = tuple(pokemons)
     choices = [definition_views(state, p) for p in pokemons]
@@ -11978,9 +12009,11 @@ def same_for_type_readings(state: GameState, pokemons: Iterable[PokemonInPlay], 
             outcomes.append(("value", compute(combo)))
         except DamageOrderRequired as need:
             outcomes.append(("order", need.step, tuple(m.label for m in need.modifiers)))
+        except DamageReductionRequired as need:
+            outcomes.append(need.outcome())  # v0.66: 減らす量の決定（お上品攻撃）が要るのも結果の 1 つとして比べる
     if any(outcome != outcomes[0] for outcome in outcomes[1:]):
         raise TypeReadingsDiffer([p for p, c in zip(pokemons, choices) if len(c) > 1])
-    if outcomes[0][0] == "order":
+    if outcomes[0][0] in ("order", "reduce"):
         return compute(tuple(c[0] for c in choices))  # どの読み方でも同じ段階の順番の決定が要る（呼ぶ側が決定を出す）
     return outcomes[0][1]
 
@@ -16958,12 +16991,12 @@ def stadium_damage_options(state: GameState, attacker: CardDefinition, receiver:
 
 
 def calculate_with_stadium(state: GameState, base: int, attacker: CardDefinition, receiver: CardDefinition, modifiers=(), *,
-                           weakness_resistance: bool = True, orders=None, resistance: bool = True):
+                           weakness_resistance: bool = True, orders=None, resistance: bool = True, reduction: int | None = None):
     """``damage.calculate_attack_damage`` に、場のスタジアムが変える計算（``stadium_damage_options``）を当てはめたもの（v0.57）。ワザのダメージを計算するところ
     （実際の処理 ``kernel.deal_damage``・宣言の前の ``preview_attack_damage``・止める問いの比べ）はどれもこれを使う（片方だけに当てはめない）。"""
     weakness, stadium_resistance, _ = stadium_damage_options(state, attacker, receiver)
     return calculate_attack_damage(base, attacker, receiver, state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders,
-                                   resistance=resistance and stadium_resistance, weakness=weakness)
+                                   resistance=resistance and stadium_resistance, weakness=weakness, reduction=reduction)
 
 
 def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) -> tuple[tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]]:
@@ -18150,6 +18183,212 @@ def bench_guard_outside_attack_check(state: GameState, owner: int, receiver: Pok
     """v0.65: ワザでないダメージ ``amount`` を ``owner`` の控えポケモン ``receiver`` に与える前に、［ベンチガード］を使える場面なら止める（エンジンの未対応。状態を変える前）。"""
     if amount >= 10 and bench_guard_holders(state, owner, receiver):
         raise UnsupportedError(BENCH_GUARD_OUTSIDE_ATTACK_CODE, f"控えのポケモン {receiver.pokemon_id} の {amount} ダメージ: {BENCH_GUARD_OUTSIDE_ATTACK_REASON}")
+
+
+# ---------------------------------------------------------------- v0.66（docs/optional-trainers-v0.66.md）。お上品攻撃・ナツメのESP・カスミの勝負。処理に使う文面は
+# kyuura の印刷の文面（英語版の「at the end of your turn」「rounded to the nearest 10」「re-flip those coins once」「If you don't know how to play Rock-Paper-Scissors,
+# flip a coin」は持ち込まない）
+
+CHARITY_TEXT = ("このカードはあなたの対戦ポケモンにつけて使い、相手の番が終わったら、手札にもどす。(そのポケモンが「きぜつ」したときは、このカードもトラッシュする)"
+                "このカードをつけているポケモンのワザが、相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい。")
+SABRINAS_ESP_TEXT = ("このカードは、あなたの場にいる「ナツメのポケモン」につけて使い、あなたの番の終わりにトラッシュする。のぞむなら、このカードをつけた「ナツメのポケモン」が"
+                     "ワザを使った時、そのワザの説明文に書かれているすべてのコイントスを、もう1度やり直してよい。")
+MISTYS_DUEL_TEXT = "相手プレイヤーと「じゃんけん」をする。勝ったプレイヤーは手札をすべて山札にもどし、その山札をよく切ってから、カードを5枚引いて、手札にする。"
+
+# v0.66 の未解決（docs 5 章）。CA1 は解決の基盤の問い（``charity_below_zero``）。ES1〜ES3 はナツメのESPのやり直しの決定の「選べるが選ぶと止める」選択
+ESP_OPPONENT_COINS_CODE = "UNRESOLVED_ESP_OPPONENT_COIN_TOSS"
+ESP_OPPONENT_COINS_REASON = ("ナツメのESPの「そのワザの説明文に書かれているすべてのコイントス」が、説明が相手プレイヤーに投げさせるコイン（わるいスリーパーの「ベンチをあやつる」を"
+                             "［サイコリンク］で使う）を含むか、含むならだれが投げ直すかは、印刷の文面・kyuura の記録から決められない（ES1）")
+ESP_MULTIPLE_CODE = "UNRESOLVED_ESP_MULTIPLE"
+ESP_MULTIPLE_REASON = ("ナツメのESPが 2 枚以上ついているポケモンのワザで、やり直したあとにもう 1 枚のESPでまたやり直せるか（「もう1度」がカードごとか、そのワザで 1 度か）は、"
+                       "印刷の文面・kyuura の記録から決められない（ES2）")
+ESP_HOLDER_CODE = "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS"
+ESP_HOLDER_REASON = ("ナツメのESPをつけたあとに、つけたポケモンの今の姿の名前が「ナツメの」で始まらなくなった（［へんしん］のメタモンの写す相手が変わったなど）とき、"
+                     "「このカードをつけた「ナツメのポケモン」がワザを使った時」に当たるかは、印刷の文面・kyuura の記録から決められない（ES3）")
+
+JANKEN_HANDS = ("rock", "scissors", "paper")  # じゃんけんの手（決定の選べるもの 0 グー・1 チョキ・2 パー）
+JANKEN_HANDS_JA = ("グー", "チョキ", "パー")
+
+
+def janken_winner(first: int, second: int) -> int | None:
+    """じゃんけんの手 ``first``（1 人目）・``second``（2 人目）の勝ち（0 なら 1 人目、1 なら 2 人目、あいこなら None）。グーはチョキに、チョキはパーに、パーはグーに勝つ。"""
+    if first == second:
+        return None
+    return 0 if (second - first) % 3 == 1 else 1
+
+
+@dataclass(frozen=True)
+class ReduceAttackDamageAsWished(TrainerEffect):
+    """あなたの対戦ポケモンにつけて使い、相手の番が終わったら手札にもどす（きぜつしたときはトラッシュ）。つけているポケモンのワザが相手の対戦ポケモンにダメージを与える時、
+    のぞむなら、そのダメージを好きなだけ小さくしてよい（お上品攻撃 PMCG5-074。kyuura の印刷の文面。docs/optional-trainers-v0.66.md 2 章）。
+
+    - つけるのは自分のバトル場のポケモン（選ぶものはないので決定は出さない。プラスパワーと同じ）。ついているトレーナーの共通の処理（``zones.attach_trainer``）
+    - 有効期限は次の相手の番の終わり（``discard_turn_offset = 1``）で、期限の番の終わりに持ち主の手札にもどす（``expiry_destination``。トラッシュしない）。kyuura の
+      card_differences の PMCG5-074（確度: 確実。日本語の文面とカードの画像・『オフィシャルブック2000』p.279 の最新の説明が「相手の番が終わったら、手札にもどす」）。英語版の
+      「at the end of your turn」にしない。きぜつしたらポケモンといっしょにトラッシュ（共通の処理）
+    - 効果は p.321 の 5 段階（ワザを使うポケモンについているトレーナーカードの効果。GR-2000-P321-DAMAGE-ORDER）。``attack_damage_modifiers`` が ``damage.REDUCE_CHOICE`` を
+      加え、減らす量はワザを使うプレイヤーが決定（``DAMAGE_REDUCTION``）で選ぶ。0 は減らさない。ダメージカウンターの単位（10）ずつ、5 段階のダメージまで（実装上の読み方。
+      GR-2000-P319-HP-AND-DAMAGE。英語版の「rounded to the nearest 10」は根拠にしない）。0 より小さくして結果が変わる場合は CA1
+    - 相手の控えへのダメージ・自分へのダメージには当てはめない（「相手の対戦ポケモンにダメージを与える時」）
+    """
+
+    text: str
+    stays_in_play = True
+    discard_turn_offset = 1
+    expiry_destination = EXPIRE_TO_HAND
+    reduces_attack_damage = True
+    implementation_id = "reduce_attack_damage_as_wished"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("あなたの対戦ポケモンにつけて使い" not in self.text or "相手の番が終わったら、手札にもどす" not in self.text
+                             or "相手の対戦ポケモンにダメージを与える時、のぞむなら、そのダメージを好きなだけ小さくしてよい" not in self.text):
+            problems.append("文面と登録の処理（つける先・相手の番の終わりに手札にもどす・相手の対戦ポケモンへのダメージを好きなだけ小さく）が合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        active = state.players[use.player].active
+        attach_trainer(state, use.player, use.card, active, discard_at_end_of_turn=self.attachment_discard_turn(state))
+
+
+@dataclass(frozen=True)
+class RedoAttackCoins(TrainerEffect):
+    """あなたの場にいる「(``owner``)のポケモン」につけて使い、あなたの番の終わりにトラッシュする。のぞむなら、このカードをつけた「(``owner``)のポケモン」がワザを使った時、
+    そのワザの説明文に書かれているすべてのコイントスを、もう 1 度やり直してよい（ナツメのESP PMCG6-087。kyuura の印刷の文面。docs/optional-trainers-v0.66.md 3 章）。
+
+    - つける先は、今の姿の名前が「(``owner``)の」で始まる自分の場のポケモン（バトル場・ベンチ。1 匹でも選ぶ決定 ``SELECT_POKEMON``）。いなければ v0.44 の TR1
+    - 有効期限は使った番の終わり（``discard_turn_offset = 0``）。トラッシュする
+    - やり直しは、ワザの説明文のコイン（解決の基盤の ``AttackRun.flip``。こんらん・すなかけ（手順 4）・スタジアム・「とうめい」・［はんこう］のコインは含まない）を投げた
+      直後、その結果を使う前に、ワザを使ったプレイヤーに決定（``ESP_REDO``）で聞く。やり直すなら同じ枚数をすべて投げ直し、やり直した結果を使う（一部だけを投げ直さない）。
+      今の写しのワザは、どれも説明文のコイントスを 1 回にまとめて投げる（docs 3.1 節の表）。2 回目のコイントスは ES0（コードのない問い）
+    - 説明が相手に投げさせるコイン（ES1）・2 枚以上のESP（ES2）・つけたあとに「(``owner``)のポケモン」でなくなった（ES3）は、やり直すを選ぶと止める
+    """
+
+    text: str
+    owner: str = "ナツメ"
+    stays_in_play = True
+    discard_turn_offset = 0
+    redoes_attack_coins = True
+    implementation_id = "redo_attack_coins"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (f"あなたの場にいる「{self.owner}のポケモン」につけて使い、あなたの番の終わりにトラッシュする" not in self.text
+                             or "そのワザの説明文に書かれているすべてのコイントスを、もう1度やり直してよい" not in self.text):
+            problems.append("文面と登録の処理（つける先・番の終わりにトラッシュ・説明文のすべてのコイントスのやり直し）が合わない")
+        return problems
+
+    def _targets(self, state: GameState, player: int) -> list[int]:
+        return [p.pokemon_id for p in state.players[player].in_play() if _owner_named(form_def(state, p).name_ja, self.owner)]
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not self._targets(state, use.player):
+            raise UnsupportedError(
+                TRAINER_WITHOUT_TARGET_CODE,
+                f"自分の場に「{self.owner}のポケモン」がいない。説明がつける対象（「あなたの場にいる「{self.owner}のポケモン」につけて使い」）がないときにこのトレーナーを"
+                "使えるかは、kyuura の記録・印刷の文面から決められないので扱わない（TR1）",
+            )
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=self._targets(state, use.player))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        owner, pokemon = state.find_pokemon(choices[0])
+        if owner != use.player:
+            raise RuntimeError(f"相手の場のポケモン {choices[0]} にナツメのESPをつけようとした（エンジンの不具合）")
+        attach_trainer(state, use.player, use.card, pokemon, discard_at_end_of_turn=self.attachment_discard_turn(state))
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        return _select_own_pokemon_problems(decision, use, self._targets(state, use.player), "ナツメのESP")
+
+
+def esp_cards(state: GameState, pokemon: PokemonInPlay) -> tuple[int, ...]:
+    """v0.66: ポケモン ``pokemon`` についているナツメのESP（説明文のコイントスをやり直してよいトレーナー。``redoes_attack_coins``）のカード（ついている順）。"""
+    return tuple(t.card for t in pokemon.trainers if state.effects.trainer_entry(state.cards[t.card].card_id).effect.redoes_attack_coins)
+
+
+def esp_redo_problem(state: GameState, pokemon: PokemonInPlay, cards: tuple[int, ...], flipper: int, player: int) -> tuple[str, str] | None:
+    """v0.66: ナツメのESPのやり直しを選ぶと止める理由 (コード, 理由の文)（ES1〜ES3。docs 5 章）。止めなければ None。"""
+    if flipper != player:
+        return ESP_OPPONENT_COINS_CODE, ESP_OPPONENT_COINS_REASON
+    if len(cards) > 1:
+        return ESP_MULTIPLE_CODE, ESP_MULTIPLE_REASON
+    owners = {state.effects.trainer_entry(state.cards[card].card_id).effect.owner for card in cards}
+    if not all(_owner_named(form_def(state, pokemon).name_ja, owner) for owner in owners):
+        return ESP_HOLDER_CODE, ESP_HOLDER_REASON
+    return None
+
+
+@dataclass(frozen=True)
+class RockPaperScissorsRefreshHand(TrainerEffect):
+    """相手プレイヤーと「じゃんけん」をする。勝ったプレイヤーは手札をすべて山札にもどし、その山札をよく切ってから、カードを ``draw`` 枚引いて、手札にする（カスミの勝負
+    PMCG5-068。kyuura の印刷の文面。docs/optional-trainers-v0.66.md 4 章）。
+
+    - じゃんけんは、使ったプレイヤー → 相手プレイヤーの順に、手（決定 ``JANKEN_HAND``。0 グー・1 チョキ・2 パー）を 1 つずつ決める（実装上の順番。どちらの手も、両方が決める
+      まで、だれにも見せない: 1 人目の手は 2 人目の決定の続きの情報（``context`` の ``"first"``）にだけ持ち、観測（``observation``）は続きの情報を見せない。ログに書くのは、
+      両方が決めたあとのログ ``duel_janken``（全員に見える）だけ）。あいこならくり返す（``"round"`` を 1 つ増やす）。勝ち負けをコイン・乱数で決めない（英語版の「flip a coin」を
+      持ち込まない）
+    - 勝ったプレイヤーの手札（使っているこのカードは含まない）を ``zones.return_hand_cards_to_deck`` でもどし（ログ ``hand_to_deck`` の ``cards`` は持ち主だけ。0 枚なら
+      もどすログはない）→ その山札を切る（``zones.shuffle_deck``）→ ``draw`` 枚引く（山札が足りなければ引けるだけ。p.312。v0.54 の処理と同じ）
+    - 使ったプレイヤー（``use.player``）・カードの持ち主（ナツメのサイキックコントロールで相手のトラッシュから使うとき）・勝ったプレイヤーは別の値。手札・山札は勝ったプレイヤーのもの
+    - 場を変えないので、答えの続きを試す確かめ（``engine._trainer_dead_end``）をしない（``changes_field = False``。あいこのくり返しを深く試さない）
+    """
+
+    text: str
+    draw: int = 5
+    changes_field = False
+    implementation_id = "rock_paper_scissors_refresh_hand"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and ("相手プレイヤーと「じゃんけん」をする" not in self.text
+                             or f"勝ったプレイヤーは手札をすべて山札にもどし、その山札をよく切ってから、カードを{self.draw}枚引いて、手札にする" not in self.text):
+            problems.append("文面と登録の処理（じゃんけん・勝ったプレイヤーの手札・山札を切る・引く枚数）が合わない")
+        return problems
+
+    def _ask(self, state: GameState, use: TrainerUse, round_: int) -> None:
+        push_trainer_decision(state, use, kind=JANKEN_HAND, player=use.player, options=range(len(JANKEN_HANDS)), context=(("round", round_), ("stage", 0)))
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        self._ask(state, use, 1)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        round_ = decision.context_value("round")
+        if decision.context_value("stage") == 0:
+            push_trainer_decision(state, use, kind=JANKEN_HAND, player=1 - use.player, options=range(len(JANKEN_HANDS)),
+                                  context=(("round", round_), ("stage", 1), ("first", choices[0])))
+            return
+        first, second = decision.context_value("first"), choices[0]
+        result = janken_winner(first, second)
+        winner = None if result is None else (use.player if result == 0 else 1 - use.player)
+        state.add_event("duel_janken", player=use.player, opponent=1 - use.player, round=round_, hands=(JANKEN_HANDS[first], JANKEN_HANDS[second]),
+                        winner=winner, trainer_card=use.card)
+        if winner is None:
+            self._ask(state, use, round_ + 1)  # あいこ: もう一度（同じ順番で手を決める）
+            return
+        hand = tuple(state.players[winner].hand)
+        if hand:
+            return_hand_cards_to_deck(state, winner, hand, trainer=use.card)
+        shuffle_deck(state, winner)
+        _draw_up_to(state, winner, self.draw)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        stage, round_ = decision.context_value("stage"), decision.context_value("round")
+        problems = []
+        if decision.kind != JANKEN_HAND:
+            return [f"{what}の決定の種類が {decision.kind!r}（{JANKEN_HAND} のはず）"]
+        if stage not in (0, 1) or type(round_) is not int or round_ < 1:
+            return [f"{what}のじゃんけんの続きの情報（stage {stage!r}・round {round_!r}）が正しくない"]
+        expected = use.player if stage == 0 else 1 - use.player
+        if decision.player != expected:
+            problems.append(f"{what}のじゃんけんの手を決めるのがプレイヤー {decision.player}（{expected} のはず）")
+        if decision.options != tuple(range(len(JANKEN_HANDS))) or (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}のじゃんけんの決定の選べるもの・選ぶ数が正しくない")
+        first = decision.context_value("first")
+        if (stage == 1) != (first is not None) or (first is not None and first not in range(len(JANKEN_HANDS))):
+            problems.append(f"{what}のじゃんけんの 1 人目の手 {first!r} が正しくない")
+        return problems
 
 
 DEFAULT_EFFECTS = EffectRegistry(
@@ -22255,6 +22494,12 @@ DEFAULT_EFFECTS = EffectRegistry(
         "PMCG4-055": TrainerEntry(AlternateCoinsUntilTailsDamage(DIGGER_TEXT), "バトル場は穴だらけ!", DIGGER_TEXT, DIGGER_TEXT, _KYUURA_PRINTED_TEXT),
         # v0.65: キョウ秘伝,変わり身の術（バトル場の「キョウのポケモン」につけ、相手がワザを使う時に控えと入れ替えてよい。バトル場をはなれた時にトラッシュ）
         "PMCG6-083": TrainerEntry(NinjaTrick(NINJA_TRICK_TEXT), "キョウ秘伝,変わり身の術", NINJA_TRICK_TEXT, NINJA_TRICK_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.66: お上品攻撃（対戦ポケモンにつけ、ワザが相手の対戦ポケモンにダメージを与える時、のぞむなら好きなだけ小さくしてよい（5 段階）。相手の番が終わったら手札にもどす）
+        "PMCG5-074": TrainerEntry(ReduceAttackDamageAsWished(CHARITY_TEXT), "お上品攻撃", CHARITY_TEXT, CHARITY_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.66: ナツメのESP（場の「ナツメのポケモン」につけ、ワザの説明文のすべてのコイントスを 1 度やり直してよい。番の終わりにトラッシュ）
+        "PMCG6-087": TrainerEntry(RedoAttackCoins(SABRINAS_ESP_TEXT), "ナツメのESP", SABRINAS_ESP_TEXT, SABRINAS_ESP_TEXT, _KYUURA_PRINTED_TEXT),
+        # v0.66: カスミの勝負（じゃんけんの勝ったプレイヤーが手札を山札にもどして切り、5 枚引く）
+        "PMCG5-068": TrainerEntry(RockPaperScissorsRefreshHand(MISTYS_DUEL_TEXT), "カスミの勝負", MISTYS_DUEL_TEXT, MISTYS_DUEL_TEXT, _KYUURA_PRINTED_TEXT),
         # v0.53（docs/search-retrieval-trainers-v0.53.md 3 章）。山札・トラッシュからカードを選ぶトレーナー。処理に使う文面は kyuura の印刷の文面（英語版の「basic Energy」
         # 「Basic Pokémon or Evolution card」「in order to」「Shuffle … into your deck」などは持ち込まない）
         # エネルギー転送: 山札の基本エネルギーカードを 1 枚、見せずに手札に加えて切る（選べなければ ST1）
