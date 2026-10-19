@@ -522,7 +522,7 @@ def visible_event(event, viewer: int | None) -> dict[str, Any]:
 
 def _uid_field(name: str) -> bool:
     """v0.67: カードの uid を書く項目の名前か（``UID_FIELDS``・``…_card``・``…_cards``）。"""
-    return name in UID_FIELDS or name.endswith("_card") or name.endswith("_cards")
+    return name in UID_FIELDS or name.endswith(("_card", "_cards"))
 
 
 # v0.67: カードの uid を書くログの項目（``_card``・``_cards`` で終わる名前のほか）。場のポケモンの番号は ``pokemon_id``・``…_pokemon_id`` に書く

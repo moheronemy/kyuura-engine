@@ -203,7 +203,7 @@ from kyuura_engine import (  # noqa: E402
     UseStadium, check_invariants, max_hp, new_game, preset_deck,
     RevealFaceDown,
 )
-from kyuura_engine.errors import HiddenPropertyRead  # noqa: E402  v0.67
+from kyuura_engine.errors import HiddenPropertyRead  # v0.67
 from kyuura_engine.cards import EnergyType, can_pay_cost  # noqa: E402
 from kyuura_engine.commands import DiscardFromPlay  # noqa: E402
 from kyuura_engine.decisions import (  # noqa: E402

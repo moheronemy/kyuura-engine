@@ -83,9 +83,6 @@ from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerP
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
 from kyuura_engine.effects import ATTACK_ELEMENTS as _ATTACK_ELEMENTS, PlaceFaceDownOnBench  # v0.67
-# v0.67: うらのカードをおもてにする理由（``zones.reveal_face_down`` の ``cause``）
-SECRET_PLAN_CAUSES = frozenset({"choice", "attack", "power", "evolve", "retreat", "damage", "effect", "trainer", "energy", "heal", "devolve",
-                                "damage_counters", "switch", "energy_move", "poison", "sleep", "paralysis", "confusion"}) | frozenset(_ATTACK_ELEMENTS)
 from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
 from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
@@ -300,6 +297,11 @@ TOP_FIELDS_SINCE = {
 }
 LATEST_FORMAT = 22
 
+
+
+# v0.67: うらのカードをおもてにする理由（``zones.reveal_face_down`` の ``cause``）
+SECRET_PLAN_CAUSES = frozenset({"choice", "attack", "power", "evolve", "retreat", "damage", "effect", "trainer", "energy", "heal", "devolve",
+                                "damage_counters", "switch", "energy_move", "poison", "sleep", "paralysis", "confusion"}) | frozenset(_ATTACK_ELEMENTS)
 
 def _project(data_latest: dict, version: int) -> dict:
     """最新の形式（9）の書き出しから、形式 ``version`` にない項目を除いたもの。"""
@@ -4376,7 +4378,7 @@ def _audit_masked(event, hidden):
         return event
     masked = dict(event)
     for name, value in event.items():
-        if not (name in AUDIT_UID_FIELDS or name.endswith("_card") or name.endswith("_cards")):
+        if not (name in AUDIT_UID_FIELDS or name.endswith(("_card", "_cards"))):
             continue
         if type(value) is int and value in hidden:
             masked[name] = None

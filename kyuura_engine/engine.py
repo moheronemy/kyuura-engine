@@ -156,7 +156,7 @@ from .effects import (
 from .continuous import goop_gas_effects, power_suppressed, suppressors_of
 from .deck import deck_problems
 from .evolution import DEVOLVED_THIS_TURN_CODE, evolution_block, place_evolution_card, skipped_stage1_basic
-from .errors import DeckValidationError, IllegalActionError, StateIntegrityError, UnsupportedError
+from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError, StateIntegrityError, UnsupportedError
 from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, energy_attach_blocked, expires_at_turn_start, lasting, powers_use_prevented,
                          remove_persistent_effects)
 from .rules import RULES_2000_02_14, RuleSet
@@ -411,6 +411,23 @@ def _apply(state: GameState, command, context: resolution.Context | None) -> Gam
     v0.67（docs/secret-plan-preflight-v0.67.md 6 章）: 相手のうらのカード（マチスの秘策）があるとき、このコマンドの処理が相手のうらのカードの本当のカードを使ったら
     （おもてにした・おもてにしたら残るかを見た。``zones.IDENTITY_CONSULTED``）、受け付けるか・拒否の理由が本当のカードによらないように、ありうるカードのすべてで同じ
     コマンドを確かめる（``_identity_independent``）。"""
+    try:
+        return _apply_checked(state, command, context)
+    except HiddenPropertyRead as exc:
+        # v0.67（FD1）: 決定への答えが、どの答えでもうらのカードの決まらない項目を読むなら（［へんしん］のメタモンの前にうらのカードしか出せないなど）、答えのない決定を
+        # 残さずに、その前の状態で対戦を止める。ほかの答えがあれば、この答えを受け付けないだけ
+        if (_zones.IDENTITY_CONSULTED is None and isinstance(command, (TakePrize, PromoteActive, ResolveDecision)) and state.decision is not None
+                and not _decision_has_unstopped_answer(state, context)):
+            halted = state.clone()
+            _halt(halted, Halt(code=exc.code, message=f"どの答え（続け方）でも次の処理になるので、対戦を止める: {exc.message}",
+                               references=("docs/secret-plan-preflight-v0.67.md",)))
+            _require_integrity(halted)
+            return halted
+        raise
+
+
+def _apply_checked(state: GameState, command, context: resolution.Context | None) -> GameState:
+    """``_apply`` の本体（v0.67。うらのカードを置きかえて受け付けるかを確かめる）。"""
     acting = _acting_player(state, command)
     if _zones.IDENTITY_CONSULTED is not None or acting is None or not any(
             state.cards[uid].owner != acting for uid in state.face_down_cards):
@@ -642,9 +659,9 @@ def _designate_answer(state: GameState, decision, choices: tuple[int, ...], effe
     lost = False
     can_lose = bool(getattr(effect, "ends_on_lost_target", False)) and len(designated) == 1
     for owner, pokemon in designated:
-        if state.is_face_down(pokemon):
-            if designate_face_down(state, owner, pokemon, by_player=decision.player, cause="effect", can_lose=can_lose) is None:
-                lost = True
+        if state.is_face_down(pokemon) and designate_face_down(state, owner, pokemon, by_player=decision.player, cause="effect",
+                                                                can_lose=can_lose) is None:
+            lost = True
     return lost
 
 
@@ -688,8 +705,11 @@ def _decision_has_unstopped_answer(state: GameState, context: resolution.Context
                                                                                               context.catalog if context else None))
         except (IllegalActionError, UnsupportedError):
             continue
-        if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial):
-            return True
+        try:
+            if _fresh_form_problem(state, trial) is None and not max_hp_drops(state, trial) and not scram_restored(state, trial):
+                return True
+        except HiddenPropertyRead:
+            continue  # v0.67: うらのカードの決まらない項目を読む答え（FD1）は、受け付けられない答え
     return False
 
 
