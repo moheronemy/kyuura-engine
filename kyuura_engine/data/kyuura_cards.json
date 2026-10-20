@@ -918,6 +918,51 @@
     "NIP2X-006",
     "NIP2X-007"
   ],
+  "pool_v0_72": [
+    "GD1-003",
+    "GD1-012",
+    "GD2-002",
+    "GD3-010",
+    "GD4-003",
+    "GD4-007",
+    "GD4-009",
+    "GD4-012",
+    "GD5-005",
+    "GD6-012",
+    "ES1-006",
+    "ES1-009",
+    "ES1-011",
+    "ES1-019",
+    "ES1-020",
+    "ES1-025",
+    "ES1-029",
+    "ES1-031",
+    "ES2-023",
+    "ES2-024",
+    "ES2-027",
+    "ES2-030",
+    "ES3-003",
+    "ES3-005",
+    "ES3-008",
+    "ES3-013",
+    "QSG-004",
+    "QSG-020",
+    "QSG-026",
+    "QSG-037",
+    "QSG-038",
+    "QSG-039",
+    "QSG-043",
+    "QSG-054",
+    "IP1-022",
+    "PR1-036",
+    "PR1-037",
+    "PR1-040",
+    "PR1-059",
+    "PF3-009",
+    "NIP2-010",
+    "NIP2X-003",
+    "PRN-042"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -63995,6 +64040,4609 @@
         {
           "page": "neointro2ex007",
           "list_number": "007/010"
+        }
+      ]
+    },
+    {
+      "id": "GD1-003",
+      "jp_set": "GD1",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのサンド",
+        "en": "Brock's Sandshrew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          27
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まるくなる",
+              "en": "Defense Curl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードは次の相手の番にダメージを受けない。(ダメージ以外の効果は受ける)",
+              "en": "Flip a coin. If heads, prevent all damage done to Brock's Sandshrew during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ボールアタック",
+              "en": "Rolling Attack"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-71"
+        ],
+        "pcg_search": [
+          "1stgymd1003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1003.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-71",
+        "pokemon.dex": "pokemontcg:gym1-71"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1003",
+          "list_number": "003/025"
+        }
+      ]
+    },
+    {
+      "id": "GD1-012",
+      "jp_set": "GD1",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのサイホーン",
+        "en": "Brock's Rhyhorn"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          111
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つのでなげる",
+              "en": "Horn Toss"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、相手の対戦ポケモンを控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "とっしん",
+              "en": "Take Down"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分にも10ダメージ。",
+              "en": "Brock's Rhyhorn does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-22"
+        ],
+        "pcg_search": [
+          "1stgymd1012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1012.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-22",
+        "pokemon.dex": "pokemontcg:gym1-22"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1012",
+          "list_number": "012/025"
+        }
+      ]
+    },
+    {
+      "id": "GD2-002",
+      "jp_set": "GD2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カスミのニョロモ",
+        "en": "Misty's Poliwag"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          60
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "めまわし",
+              "en": "Hypnotic Stare"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態に、「うら」なら「ねむり」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, the Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "しっぽビンタ",
+              "en": "Tail Rap"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×20のダメージ。",
+              "en": "Flip 2 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-87"
+        ],
+        "pcg_search": [
+          "1stgymd2002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd2002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ハナダシティジム カスミ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd2002.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-87",
+        "pokemon.dex": "pokemontcg:gym1-87"
+      },
+      "copies": [
+        {
+          "page": "1stgymd2002",
+          "list_number": "002/024"
+        }
+      ]
+    },
+    {
+      "id": "GD3-010",
+      "jp_set": "GD3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのエレブー",
+        "en": "Lt. Surge's Electabuzz"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          125
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいでん",
+              "en": "Charge"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分のトラッシュに「雷」エネルギーカードがあれば、最大2枚を取り出して、自分につける。",
+              "en": "Take up to 2 Lightning Energy cards from your discard pile and attach them to Lt. Surge's Electabuzz."
+            }
+          },
+          {
+            "name": {
+              "ja": "デンキとばし",
+              "en": "Electric Current"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分についている「雷」エネルギーカードを1枚選んではがす。その後、自分に控えポケモンがいれば1匹を選び、はがしたエネルギーをそれにつける。(自分に控えがいない時、はがしたエネルギーはトラッシュする)",
+              "en": "Take 1 Lightning Energy card attached to Lt. Surge's Electabuzz and attach it to 1 of your Benched Pokémon. If you have no Benched Pokémon, discard that Energy card."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-27"
+        ],
+        "pcg_search": [
+          "1stgymd3010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3010.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-040",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-27",
+        "pokemon.dex": "pokemontcg:gym1-27"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3010",
+          "list_number": "010/025"
+        }
+      ]
+    },
+    {
+      "id": "GD4-003",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのクサイハナ",
+        "en": "Erika's Gloom"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          44
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのナゾノクサ",
+          "en": "Erika's Oddish"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ゆめみのまい",
+              "en": "Dream Dance"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分と相手を、それぞれ「ねむり」状態にする。",
+              "en": "Both the Defending Pokémon and Erika's Gloom are now Asleep (after doing damage)."
+            }
+          },
+          {
+            "name": {
+              "ja": "くさいにおい",
+              "en": "Vile Smell"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "ダメージを与えた後、自分と相手を、それぞれ「こんらん」状態にする。",
+              "en": "Both the Defending Pokémon and Erika's Gloom are now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-46"
+        ],
+        "pcg_search": [
+          "1stgymd4003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4003.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-46",
+        "pokemon.dex": "pokemontcg:gym1-46",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4003",
+          "list_number": "003/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-007",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのウツドン",
+        "en": "Erika's Weepinbell"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          70
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "エリカのマダツボミ",
+          "en": "Erika's Bellsprout"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむけどく",
+              "en": "Sleep Poison"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手を「どく」と「ねむり」の両方の状態にする。",
+              "en": "The Defending Pokémon is now Asleep and Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "つるのムチ",
+              "en": "Vine Whip"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-49"
+        ],
+        "pcg_search": [
+          "1stgymd4007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4007.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-49",
+        "pokemon.dex": "pokemontcg:gym1-49",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4007",
+          "list_number": "007/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-009",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのタマタマ",
+        "en": "Erika's Exeggcute"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          102
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たまなげ",
+              "en": "Eggsplosion"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "自分についているエネルギーの数だけコインを投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip a number of coins equal to the number of Energy attached to Erika's Exeggcute. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": "Psychic"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についているエネルギーカード×10のダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-77"
+        ],
+        "pcg_search": [
+          "1stgymd4009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4009.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-77",
+        "pokemon.dex": "pokemontcg:gym1-77"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4009",
+          "list_number": "009/028"
+        }
+      ]
+    },
+    {
+      "id": "GD4-012",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのピッピ",
+        "en": "Erika's Clefairy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          35
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おつきみ",
+              "en": "Moonwatching"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「基本エネルギーカード」1枚を選び出し、相手に見せてから、手札に加えてよい。その後、その山札をよく切る。",
+              "en": "Search your deck for a basic Energy card. Show that card to your opponent, then put it into your hand. Shuffle your deck afterward."
+            }
+          },
+          {
+            "name": {
+              "ja": "れんぞくビンタ",
+              "en": "Comet Slap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-25"
+        ],
+        "pcg_search": [
+          "1stgymd4012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4012.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-25",
+        "pokemon.dex": "pokemontcg:gym1-25"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4012",
+          "list_number": "012/028"
+        }
+      ]
+    },
+    {
+      "id": "GD5-005",
+      "jp_set": "GD5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのガーディ",
+        "en": "Blaine's Growlithe"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          58
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふりとばす",
+              "en": "Shake"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を、控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおタックル",
+              "en": "Fire Tackle"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Blaine's Growlithe does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-35"
+        ],
+        "pcg_search": [
+          "1stgymd5005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5005.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-059",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-35",
+        "pokemon.dex": "pokemontcg:gym1-35"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5005",
+          "list_number": "005/025"
+        }
+      ]
+    },
+    {
+      "id": "GD6-012",
+      "jp_set": "GD6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのルージュラ",
+        "en": "Sabrina's Jynx"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          124
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おやすみのキッス",
+              "en": "Good Night"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "めざめのキッス",
+              "en": "Good Morning"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態から、回復させる。",
+              "en": "If the Defending Pokémon was Asleep, it is no longer Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-59"
+        ],
+        "pcg_search": [
+          "1stgymd6012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6012.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-59",
+        "pokemon.dex": "pokemontcg:gym1-59"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6012",
+          "list_number": "012/026"
+        }
+      ]
+    },
+    {
+      "id": "ES1-006",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドラン♀",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽをふる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番にワザを使えない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1006"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1006.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1006.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-006",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1006",
+          "list_number": "006/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-009",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴルバット",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ズバット",
+          "en": null
+        },
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きゅうけつ",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたぶんのダメージカウンターを、このカードから取りのぞいてよい。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きゅうこうか",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分にも40ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1009.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1009",
+          "list_number": "009/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-011",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "パラセクト",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パラス",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくのほうし",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を「どく」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "きゅうけつ",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、与えたぶんのダメージカウンターを、このカードから取りのぞいてよい。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1011"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1011.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1011.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1011",
+          "list_number": "011/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-019",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくいどう",
+              "en": "Agility"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードは次の相手の番で、ワザによるダメージや効果を受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Pikachu."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-27"
+        ],
+        "pcg_search": [
+          "1stex1019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1019.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-019",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-27",
+        "pokemon.dex": "pokemontcg:basep-27"
+      },
+      "copies": [
+        {
+          "page": "1stex1019",
+          "list_number": "019/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-020",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ケーシィ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイキックビーム",
+              "en": null
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1020.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stex1020",
+          "list_number": "020/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-025",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コラッタ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "しっぽをふる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番にワザを使えない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1025"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1025.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1025.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-025",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1025",
+          "list_number": "025/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-029",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ドードリオ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ドードー",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けとばす",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "トライアタック",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×20のダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1029.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1029",
+          "list_number": "029/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-031",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラッキー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "うたう",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "おうふくビンタ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×20のダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1031"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1031.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1031.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-031",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1031",
+          "list_number": "031/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-023",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴローン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イシツブテ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "れんぞくいわなげ",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "「うら」が出るまでコインを投げ続け、その間に出た「おもて」の数×20ダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "じしん",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分の控えポケモン全員にも、(「弱点・抵抗力」に関係なく)それぞれ10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2023.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex2023",
+          "list_number": "023/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-024",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "イワーク",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しめつける",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いわふうじ",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番で「にげる」ことができない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2024"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2024.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2024.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2024",
+          "list_number": "024/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-027",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "エビワラー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マッハパンチ",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の控えポケモンから1匹を選び、そのポケモンにも(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2027"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2027.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2027.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-027",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2027",
+          "list_number": "027/036"
+        }
+      ]
+    },
+    {
+      "id": "ES2-030",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "オニスズメ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれづき",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×10のダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かぜおこし",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2030"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2030.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2030.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stex2030",
+          "list_number": "030/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-003",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドリーノ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ニドラン♂",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こうそくづき",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 60,
+              "modifier": null,
+              "display": "60"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、相手にダメージを与えられず、自分に20ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3003.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3003",
+          "list_number": "003/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-005",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マダツボミ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ゆれる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードは次の相手の番にダメージを受けない。(ダメージ以外の効果はそのまま)",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "しびれごな",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3005.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex3005",
+          "list_number": "005/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-008",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ストライク",
+        "en": "Scyther"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          123
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スラッシュダウン",
+              "en": "Slashing Strike"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードは「スラッシュダウン」を使えない。",
+              "en": "Scyther can't use this attack during your next turn. (Benching or evolving Scyther ends this effect.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-45"
+        ],
+        "pcg_search": [
+          "1stex3008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3008.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES3-008",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-45",
+        "pokemon.dex": "pokemontcg:basep-45"
+      },
+      "copies": [
+        {
+          "page": "1stex3008",
+          "list_number": "008/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-013",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴルダック",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コダック",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についているエネルギーカード×10のダメージを追加する。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "スプラッシュ",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3013"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3013.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3013.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex3013",
+          "list_number": "013/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-004",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニドラン♀",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽをふる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番にワザを使えない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": null
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg004.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg004.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-006",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg004",
+          "list_number": "004/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-020",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": null
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくいどう",
+              "en": null
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このカードは次の相手の番で、ワザによるダメージや効果を受けない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg020.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-019",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stqsg020",
+          "list_number": "020/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-026",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ケーシィ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サイキックビーム",
+              "en": null
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg026"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg026.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg026.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stqsg026",
+          "list_number": "026/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-037",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "イワーク",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しめつける",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いわふうじ",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番で「にげる」ことができない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg037"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg037.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg037.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-024",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg037",
+          "list_number": "037/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-038",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "エビワラー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "マッハパンチ",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の控えポケモンから1匹を選び、そのポケモンにも(「弱点・抵抗力」に関係なく)10ダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg038"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg038.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg038.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-027",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg038",
+          "list_number": "038/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-039",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "コラッタ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひっかく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "しっぽをふる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、このワザを受けた相手は、次の相手の番にワザを使えない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg039"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg039.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg039.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-025",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg039",
+          "list_number": "039/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-043",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラッキー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "うたう",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「ねむり」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "おうふくビンタ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて「おもて」の数×20のダメージ。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg043"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg043.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg043.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-031",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg043",
+          "list_number": "043/058"
+        }
+      ]
+    },
+    {
+      "id": "QSG-054",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ストライク",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スラッシュダウン",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードは「スラッシュダウン」を使えない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg054"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg054.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg054.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES3-008",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg054",
+          "list_number": "054/058"
+        }
+      ]
+    },
+    {
+      "id": "IP1-022",
+      "jp_set": "IP1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フシギソウ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "フシギダネ",
+          "en": null
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やどりぎのたね",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、自分にのっているダメージカウンターを1つとりのぞく。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "つるのムチ",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stintro1022",
+          "1stintro1032"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1022.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stintro1022",
+          "list_number": "022/040"
+        },
+        {
+          "page": "1stintro1032",
+          "list_number": "032/040"
+        }
+      ]
+    },
+    {
+      "id": "PR1-036",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "コイキング",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "びちびち",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×10のダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "りゅうのいかり",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、1つでも「うら」なら、このワザは失敗する。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp036"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp036.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp036.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp036",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-037",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ガルーラ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ピヨピヨパンチ",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×10のダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "メガトンパンチ",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp037"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp037.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp037.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp037",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-040",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのエレブー",
+        "en": "Lt. Surge's Electabuzz"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          125
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいでん",
+              "en": "Charge"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分のトラッシュに「雷」エネルギーカードがあれば、最大2枚を取り出して、自分につける。",
+              "en": "Take up to 2 Lightning Energy cards from your discard pile and attach them to Lt. Surge's Electabuzz."
+            }
+          },
+          {
+            "name": {
+              "ja": "デンキとばし",
+              "en": "Electric Current"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分についている「雷」エネルギーカードを1枚選んではがす。その後、自分に控えポケモンがいれば1匹を選び、はがしたエネルギーをそれにつける。(自分に控えがいない時、はがしたエネルギーはトラッシュする)",
+              "en": "Take 1 Lightning Energy card attached to Lt. Surge's Electabuzz and attach it to 1 of your Benched Pokémon. If you have no Benched Pokémon, discard that Energy card."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-27"
+        ],
+        "pcg_search": [
+          "1stp040"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp040.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp040.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-040",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-27",
+        "pokemon.dex": "pokemontcg:gym1-27"
+      },
+      "copies": [
+        {
+          "page": "1stp040",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-059",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのガーディ",
+        "en": "Blaine's Growlithe"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          58
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふりとばす",
+              "en": "Shake"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手を、控えポケモンと入れ替える。入れ替わるポケモンは、相手が選ぶ。",
+              "en": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. (Do the damage before switching the Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおタックル",
+              "en": "Fire Tackle"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分にも10ダメージ。",
+              "en": "Blaine's Growlithe does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-35"
+        ],
+        "pcg_search": [
+          "1stp059"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp059.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp059.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PR1-059",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-35",
+        "pokemon.dex": "pokemontcg:gym1-35"
+      },
+      "copies": [
+        {
+          "page": "1stp059",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PF3-009",
+      "jp_set": "PF3",
+      "category": "pokemon",
+      "name": {
+        "ja": "エアームド",
+        "en": "Skarmory"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          227
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれづき",
+              "en": "Fury Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくいどう",
+              "en": "Agility"
+            },
+            "cost": [
+              "metal",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Skarmory."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-23"
+        ],
+        "pcg_search": [
+          "neopf3009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf3009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル3",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf3009.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo3-23",
+        "pokemon.dex": "pokemontcg:neo3-23"
+      },
+      "copies": [
+        {
+          "page": "neopf3009",
+          "list_number": "009/009"
+        }
+      ]
+    },
+    {
+      "id": "NIP2-010",
+      "jp_set": "NIP2",
+      "category": "pokemon",
+      "name": {
+        "ja": "テッポウオ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": null
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "ワザに必要な「エネルギー」よりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2010.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2010",
+          "list_number": "010/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-003",
+      "jp_set": "NIP2X",
+      "category": "pokemon",
+      "name": {
+        "ja": "ケーシィ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はたく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "はかいビーム",
+              "en": null
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手についている「エネルギーカード」を1枚トラッシュする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2ex003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex003.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex003",
+          "list_number": "003/010"
+        }
+      ]
+    },
+    {
+      "id": "PRN-042",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ルギア",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "エアロブラスト",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×20のダメージを追加する。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop042"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop042.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop042.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neop042",
+          "list_number": "-/-"
         }
       ]
     }

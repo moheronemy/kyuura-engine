@@ -1229,6 +1229,16 @@ ATTACK_TYPES_SINCE_V0_17 = (
 ) + (
     # v0.71（docs/reprint-text-variants-v0.71.md 6 章）: エネルギーカードをトラッシュする要素とダメージ（既存の要素だけの並び）
     _effects.DiscardEnergyCardsThenDamageZeroIfLacking,  # プロモのリザードン（PR1-030）の「ほのおのうず」
+) + (
+    # v0.72（docs/status-coins-effect-reuse-v0.72.md 3 章）: 拡張パック以外の商品のポケモン 43 枚のうち、既存の型で表せないワザ
+    _effects.CoinsHeadsTimesBonusDamage,  # ルギア（PRN-042）の「エアロブラスト」（値 PrintedPlusHeadsTimes）
+    _effects.DamageThenStatusSelfAndOpponent,  # エリカのクサイハナ（GD4-003）の「ゆめみのまい」・「くさいにおい」
+    _effects.PoisonAndSleepWithoutDamage,  # エリカのウツドン（GD4-007）の「ねむけどく」
+    _effects.DamageThenWakeOpponent,  # ナツメのルージュラ（GD6-012）の「めざめのキッス」（要素 WakeOpponent）
+    _effects.DamageAndOptionalFullDrain,  # ゴルバット（ES1-009）・パラセクト（ES1-011）の「きゅうけつ」（Drain の optional）
+    _effects.DamageThenMoveOneEnergyToBench,  # マチスのエレブー（GD3-010・PR1-040）の「デンキとばし」（要素 MoveOneEnergyToBench）
+    _effects.RevealBasicEnergyFromDeck,  # エリカのピッピ（GD4-012）の「おつきみ」（RevealTrainerFromDeck の category）
+    _effects.DamageThenForceSwitchAfterDamage,  # タケシのサイホーン（GD1-012）の「つのでなげる」（ForceSwitch の after_damage）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1566,6 +1576,12 @@ V0_71_CARDS = ("GD1-006", "GD1-014", "GD1-016", "GD1-017", "GD1-018", "GD1-020",
                "GD6-016", "GD6-020", "GD6-021", "GD6-022", "GD6-024", "GD6-025", "QSG-047", "QSG-048", "QSG-049", "QSG-050", "QSG-051", "QSG-052", "QSG-053", "IP1-007",
                "IP1-019", "IP1-028", "IP2-007", "IP2-009", "IP2-019", "IP2-024", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030", "PR1-033", "NIP1-007",
                "NIP1-015", "NIP1-020", "NIP1X-006", "NIP1X-007", "NIP2-008", "NIP2-020", "NIP2-025", "NIP2X-006", "NIP2X-007")  # 依頼の並び（V0_71_POKEMON と V0_71_TRAINERS を合わせたもの）
+# v0.72（docs/status-coins-effect-reuse-v0.72.md）: 拡張パック以外の商品のポケモン 43 枚（写しの組 pool_v0_72。kyuura データの採用）
+V0_72_POKEMON = ("GD1-003", "GD1-012", "GD2-002", "GD3-010", "GD4-003", "GD4-007", "GD4-009", "GD4-012", "GD5-005", "GD6-012",
+                 "ES1-006", "ES1-009", "ES1-011", "ES1-019", "ES1-020", "ES1-025", "ES1-029", "ES1-031", "ES2-023", "ES2-024", "ES2-027", "ES2-030",
+                 "ES3-003", "ES3-005", "ES3-008", "ES3-013", "QSG-004", "QSG-020", "QSG-026", "QSG-037", "QSG-038", "QSG-039", "QSG-043", "QSG-054",
+                 "IP1-022", "PR1-036", "PR1-037", "PR1-040", "PR1-059", "PF3-009", "NIP2-010", "NIP2X-003", "PRN-042")
+V0_72_CARDS = V0_72_POKEMON
 
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 7 章）: 研究の基準を kyuura 7d3f4ca に上げたので、採用の記録の kyuura_records（研究の基準のコミットでカードを指す kyuura の記録の id）に
@@ -1799,3 +1815,14 @@ V0_69_STOP_CODE_ISSUES = {
     "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER": "UQ-STATED-COUNT-SHORT",
     "UNRESOLVED_VIRTUAL_ONCE_ATTACK": "UQ-COPIED-ATTACK",
 }
+
+
+def assert_stop_code_counts_since(test, links, stop_codes: int, unresolved: int) -> None:
+    """v0.72: 研究の対応表の停止コード・未解決の裁定の数が、ある版の数（``stop_codes``・``unresolved``）から減っていないこと。
+
+    v0.71 までの版のテストは、そのときの総数を等号で固定していて、あとの版で停止コードを加えるたびに関係のないテストが壊れていた。総数がエンジンの側の集合と同じことは
+    tests/test_research_links_v0_18e.py が等号で確かめるので、版ごとのテストはその版の数を下限として確かめる（その版で加えたコードがあることは各テストが確かめる）。"""
+    counts = links["counts"]
+    test.assertEqual(counts["engine_stop_codes"], len(links["stop_codes"]))
+    test.assertGreaterEqual(counts["engine_stop_codes"], stop_codes)
+    test.assertGreaterEqual(counts["engine_unresolved_rulings"], unresolved)

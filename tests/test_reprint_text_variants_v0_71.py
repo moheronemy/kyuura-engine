@@ -50,6 +50,7 @@ from tests.helpers import (
     DOUBLE_COLORLESS_ENERGY,
     ENERGY_SEARCH,
     FIRE,
+    FULL_HEAL,
     HITMONCHAN,
     NARROW_GYM,
     POKEDEX,
@@ -91,7 +92,10 @@ REQUESTED = {
     "PR1-030": "PMCG1-021", "PR1-033": "PMCG1-063", "NIP1-007": "PMCG1-080", "NIP1-015": "PMCG1-071", "NIP1-020": "PMCG1-074", "NIP1X-006": "PMCG1-081",
     "NIP1X-007": "PMCG1-073", "NIP2-008": "PMCG1-080", "NIP2-020": "PMCG1-071", "NIP2-025": "PMCG1-074", "NIP2X-006": "PMCG1-079", "NIP2X-007": "PMCG1-072",
 }
-BEHAVIOR = {"GD4-015": ("trainer",), "QSG-048": ("trainer",), "GD1-017": ("trainer",), "PR1-030": ("attack/0",)}
+BEHAVIOR = {"GD4-015": ("trainer",), "QSG-048": ("trainer",), "GD1-017": ("trainer",), "PR1-030": ("attack/0",),
+            # v0.72: なんでもなおしの再録の版（対象を明示する）・ポケモン図鑑の再録の版（「最大」だけで 0 枚を選べるとは読まない）も処理が違う登録にした
+            # （docs/status-coins-effect-reuse-v0.72.md 2 章）
+            **{c: ("trainer",) for c in ("GD1-020", "GD3-019", "GD4-022", "GD5-020", "GD6-020", "IP2-007", "NIP1-007", "NIP2-008", "GD1-022", "GD5-023")}}
 # 処理に使う文面が、元のカードの記録（card_verification.json の最新の説明・kyuura の LD-・TXT-CHARIZARD）のもの
 REUSED = {"PMCG1-071": "trainer", "PMCG1-072": "trainer", "PMCG1-073": "trainer", "PMCG1-074": "trainer", "PMCG1-076": "trainer", "PMCG1-079": "trainer",
           "PMCG1-081": "trainer", "PMCG1-093": "trainer"}
@@ -177,12 +181,12 @@ class TargetTest(unittest.TestCase):
         self.assertEqual(set(V0_71_POKEMON) | set(V0_71_TRAINERS), set(POOL_V0_71))
         self.assertEqual((len(V0_71_POKEMON), len(V0_71_TRAINERS)), (11, 67))
         self.assertEqual({k: v.original for k, v in E.REPRINT_CARDS.items()}, REQUESTED)
-        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key != "pool_v0_71" for c in pool}
+        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key not in ("pool_v0_71", "pool_v0_72") for c in pool}
         self.assertEqual(len(earlier), 635)
         self.assertFalse(set(POOL_V0_71) & earlier)
         self.assertTrue(set(REQUESTED.values()) <= earlier)
         self.assertFalse(set(POOL_V0_71) & set(E.EQUIVALENT_CARDS))
-        self.assertEqual(len(EXTRACT["cards"]), 713)
+        self.assertEqual(len(EXTRACT["cards"]), 756)  # v0.72 で 43 枚を加えた
         targets = {c["id"]: c for c in EXTRACT["reprint_targets"]["cards"]}
         for new, original in REQUESTED.items():
             with self.subTest(card=new):
@@ -205,11 +209,11 @@ class TargetTest(unittest.TestCase):
     def test_counts_from_the_registry(self):
         pool = load_card_pool()
         playable = pool.playable_ids
-        self.assertEqual(len(playable), 713)
+        self.assertEqual(len(playable), 756)  # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた
         counts = {k: sum(1 for c in playable if pool.get(c).category == k) for k in ("pokemon", "trainer", "energy")}
-        self.assertEqual(counts, {"pokemon": 503, "trainer": 180, "energy": 30})
+        self.assertEqual(counts, {"pokemon": 546, "trainer": 180, "energy": 30})
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())), (840, 74, 180, 12))
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())), (917, 74, 180, 12))
         self.assertTrue(all(pool.get(c).supported for c in POOL_V0_71))
 
     def test_new_type_is_a_kernel_program_outside_the_v013_contract(self):
@@ -308,7 +312,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
             .without_trainers("t", [c for c in registry.trainer_ids() if c in POOL_V0_71])
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_71 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 635)
+        self.assertEqual(len(pool.playable_ids), 678)  # v0.72 の 43 枚を含む（v0.71 の時点は 635）
 
     def test_data_mismatch_makes_the_card_unsupported(self):
         def trainer_text(value):
@@ -347,8 +351,15 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         """書き方を受け付ける一覧に加えたのは、意味を確かめた書き方 1 通りずつ。登録の引数（数・種類・プレイヤー）と合わないものは受け付けない。"""
         pool = load_card_pool()
         pokedex = pool.get(POKEDEX_GYM)
-        self.assertEqual(E.ArrangeOwnDeckTopTrainer(pokedex.trainer_text_ja, 5).check(pokedex), [])
-        self.assertTrue(E.ArrangeOwnDeckTopTrainer(pokedex.trainer_text_ja, 4).check(pokedex))
+        self.assertEqual(E.ArrangeOwnDeckTopTrainer(pokedex.trainer_text_ja, 5, zero_allowed=False).check(pokedex), [])
+        self.assertTrue(E.ArrangeOwnDeckTopTrainer(pokedex.trainer_text_ja, 4, zero_allowed=False).check(pokedex))
+        # v0.72: 再録の版の「最大」は 0 枚を選べる設定（旧版の「ことができる」）と結びつけない
+        self.assertTrue(E.ArrangeOwnDeckTopTrainer(pokedex.trainer_text_ja, 5).check(pokedex))
+        full_heal = pool.get("GD1-020")
+        self.assertEqual(E.CureSpecialConditionsTrainer(full_heal.trainer_text_ja, E.FULL_HEAL_SCOPE_OWN_ACTIVE).check(full_heal), [])
+        self.assertTrue(E.CureSpecialConditionsTrainer(full_heal.trainer_text_ja).check(full_heal))
+        old_full_heal = pool.get("PMCG1-080")
+        self.assertTrue(E.CureSpecialConditionsTrainer(old_full_heal.trainer_text_ja, E.FULL_HEAL_SCOPE_OWN_ACTIVE).check(old_full_heal))
         center = pool.get("GD1-023")
         self.assertEqual(E.HealEachDamagedPokemonTrainer(center.trainer_text_ja, E.HEAL_SELF, None, True).check(center), [])
         self.assertTrue(E.HealEachDamagedPokemonTrainer(center.trainer_text_ja, E.HEAL_SELF, None, False).check(center))
@@ -438,18 +449,58 @@ class ReusedLatestDescriptionTest(unittest.TestCase):
         after = audited(self, answer(state, tuple(state.decision.options)))
         self.assertEqual(sorted(after.cards[u].card_id for u in after.players[0].hand), sorted([FIRE, WATER]))
 
-    def test_full_heal_reprints_keep_the_fh1_scope(self):
-        """なんでもなおしの再録の版（対象を「あなたの対戦ポケモン」と書く）も、v0.55 の処理のまま: 特殊状態のポケモンが自分の対戦ポケモンだけなら回復し、
-        ほかは FH1（この版にとっては必要より広い止める範囲。docs/reprint-text-variants-v0.71.md 4 章）。"""
-        for card_id in ("GD1-020", "NIP2-008"):
+    def test_full_heal_reprints_cure_only_the_own_active(self):
+        """v0.72: なんでもなおしの再録の版（「あなたの対戦ポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。」）は、文面のとおり自分の対戦ポケモンだけを
+        回復する。相手の対戦ポケモンが特殊状態でも止めず、相手の特殊状態は残す（v0.71 は FH1 で止めていた。必要より広い拒否）。自分の対戦ポケモンに特殊状態がないときに
+        使えるかは別の問い（FH2）で、止めたまま（状態を変えない）。旧版（PMCG1-080。対象を書かない）の FH1 は変えない。"""
+        for card_id in ("GD1-020", "GD3-019", "GD4-022", "GD5-020", "GD6-020", "IP2-007", "NIP1-007", "NIP2-008"):
             with self.subTest(card=card_id):
                 state = board([card_id], active={"card": HITMONCHAN, "poison": 10, "confusion": True})
                 done = audited(self, play(state, card_id))
                 self.assertIsNone(done.decision)
                 self.assertEqual(done.players[0].active.conditions.names(), ())
-                assert_rejected(self, board([card_id]), PlayTrainer(0, uid(board([card_id]), card_id)), "UNRESOLVED_FULL_HEAL_SCOPE", UnsupportedError)
                 both = board([card_id], active={"card": HITMONCHAN, "poison": 10}, opponent={"card": HITMONCHAN, "sleep": True})
-                assert_rejected(self, both, PlayTrainer(0, uid(both, card_id)), "UNRESOLVED_FULL_HEAL_SCOPE", UnsupportedError)
+                done = audited(self, play(both, card_id))
+                self.assertEqual(done.players[0].active.conditions.names(), ())
+                self.assertEqual(done.players[1].active.conditions.names(), both.players[1].active.conditions.names())
+                self.assertTrue(done.players[1].active.conditions.names())
+                removed = [e for e in done.log[len(both.log):] if e["kind"] == "special_conditions_removed"]
+                self.assertEqual([e["player"] for e in removed], [0])
+                self.assertIn(card_id, [done.cards[u].card_id for u in done.players[0].discard])
+                only_opponent = board([card_id], opponent={"card": HITMONCHAN, "sleep": True})
+                assert_rejected(self, only_opponent, PlayTrainer(0, uid(only_opponent, card_id)), "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", UnsupportedError)
+                assert_rejected(self, board([card_id]), PlayTrainer(0, uid(board([card_id]), card_id)), "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", UnsupportedError)
+        old_both = board([FULL_HEAL], active={"card": HITMONCHAN, "poison": 10}, opponent={"card": HITMONCHAN, "sleep": True})
+        assert_rejected(self, old_both, PlayTrainer(0, uid(old_both, FULL_HEAL)), "UNRESOLVED_FULL_HEAL_SCOPE", UnsupportedError)
+        assert_rejected(self, board([FULL_HEAL]), PlayTrainer(0, uid(board([FULL_HEAL]), FULL_HEAL)), "UNRESOLVED_FULL_HEAL_SCOPE", UnsupportedError)
+        old = audited(self, play(board([FULL_HEAL], active={"card": HITMONCHAN, "poison": 10}), FULL_HEAL))
+        self.assertEqual(old.players[0].active.conditions.names(), ())
+
+    def test_pokedex_reprints_stop_only_on_zero(self):
+        """v0.72: ポケモン図鑑の再録の版（「あなたの山札の上から最大5枚のカードを見て、…もどす。」）は「てよい」「ことができる」がなく、山札があるのに 0 枚を選べるかは
+        決まらない（kyuura の UQ-UP-TO-ZERO-CHOICE と同じ形。PD2）。0 枚の答えだけを止め（決定は待ったまま・状態は変わらない）、1〜min(5, 山札) 枚は見る。旧版（PMCG1-082）の
+        「…ことができる」の 0 枚（PD1。見ない）と、山札が 0 枚で見るカードがない場合は変えない。"""
+        deck = [RATTATA] * 3
+        for card_id in (POKEDEX_GYM, POKEDEX_GYM5):
+            with self.subTest(card=card_id):
+                state = play(board([card_id], deck=deck), card_id)
+                self.assertEqual(state.decision.kind, "select_look_count")
+                self.assertEqual(state.decision.options, (0, 1, 2, 3))
+                before = snapshot(state)
+                with self.assertRaises(UnsupportedError) as raised:
+                    answer(state, (0,))
+                self.assertEqual(raised.exception.code, "UNRESOLVED_POKEDEX_UP_TO_ZERO")
+                self.assertEqual(snapshot(state), before)
+                for count in (1, 2, 3):
+                    after = audited(self, answer(state, (count,)))
+                    looked = [e for e in after.log if e["kind"] == "look_at_deck_top"]
+                    self.assertEqual(looked[-1]["count"], count)
+                empty = audited(self, play(board([card_id], deck=[]), card_id))
+                self.assertEqual([e["kind"] for e in empty.log[-3:]].count("look_at_deck_top_none"), 1)
+                self.assertIsNone(empty.decision)
+        old = play(board([POKEDEX], deck=deck), POKEDEX)
+        declined = audited(self, answer(old, (0,)))
+        self.assertIn("look_at_deck_top_declined", [e["kind"] for e in declined.log])
 
     def test_rain_dance_reprints_follow_the_latest_description(self):
         """カメックスの再録（IPH-002 の「この力は、自分の中で何度でも使える」は「番」が落ちた候補）も、元のカードの最新の説明（LD-PMCG1-032-PWR0）。写しは直さない。"""
@@ -751,7 +802,8 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
-        self.assertEqual((len(candidates), len(basics)), (572, 245))
+        v072 = set(EXTRACT["pool_v0_72"])  # v0.72: 試すカードの数は固定しない（v0.72 の 43 枚を除いて比べる）
+        self.assertEqual((len(set(candidates) - v072), len(set(basics) - v072)), (572, 245))
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)
         self.assertEqual(len(set(candidates) & set(POOL_V0_71)), 45)  # 同じデータの 33 枚は 1 枚で代表する

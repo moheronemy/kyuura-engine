@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.71）
+# 実装状況（v0.1〜v0.72）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3562,6 +3562,23 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | ポケモンジム第1弾の元気のかけら（GD1-017）: 使うための条件・ちょうど 1 枚・ベンチに出してから HP の半分のカウンター | 実装済み・テスト済み | この版の印刷の文面 | 同 `ReviveGymTest` |
 | プロモのリザードンの「ほのおのうず」（PR1-030）: エネルギーカード 2 枚をワザの効果でトラッシュ・足りなければダメージ 0 | 実装済み・テスト済み | この版の印刷の文面 | 同 `FireSpinPromoTest` |
 | ポケモン図鑑の名前の空白の違い（同じ名前 4 枚の数え方だけでまとめる） | 実装済み・テスト済み | 写しのデータ（データで書いた組） | 同 `SameNameTest` |
-| なんでもなおしの再録の版（対象を「あなたの対戦ポケモン」と書く） | 実装済み（FH1 の止める範囲のまま。この版には必要より広い） | v0.55 の処理 | 同 `ReusedLatestDescriptionTest` |
+| なんでもなおしの再録の版（対象を「あなたの対戦ポケモン」と書く） | 実装済み（v0.71 は FH1 の止める範囲のまま。v0.72 で自分の対戦ポケモンだけを回復するように直した。下の v0.72） | v0.55 の処理 | 同 `ReusedLatestDescriptionTest` |
 | 78 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | マチスの秘策の試す回数の上限を超える経路（v0.70 の文書の「529 回」） | 未確認（条件つきの見積もり。経路に入る盤面は見つけていない） | コードの確かめと計測 | — |
+
+## v0.72: 拡張パック以外の商品のポケモン 43 枚と、再録のなんでもなおし・ポケモン図鑑の扱い
+
+[status-coins-effect-reuse-v0.72.md](status-coins-effect-reuse-v0.72.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 拡張パック以外の商品のポケモン 43 枚（`pool_v0_72`。kyuura の `new_effect_needed`）。ワザ 77 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_status_coins_effect_reuse_v0_72.py `TargetTest`・`UnsupportedWithoutRegistrationTest`・`RecordTest` |
+| 新しい型 8 つ（エアロブラスト・ゆめみのまい／くさいにおい・ねむけどく・めざめのキッス・きゅうけつ（取りのぞいてよい）・デンキとばし・おつきみ・つのでなげる） | 実装済み・テスト済み | 印刷の文面と既存の規定（Z23・p.309・CR-TRANSPARENCY-ENERGY-BOMB など） | 同 `AeroblastTest`・`SelfAndOpponentStatusTest`・`PoisonAndSleepTest`・`WakeUpKissTest`・`OptionalDrainTest`・`MoveOneEnergyTest`・`MoonGazeTest`・`SwitchTest` |
+| 既存の型の書き方 8 つ（しっぽをふる・こうそくいどう・れんぞくいわなげ・じしん・いわふうじ・マッハパンチ・はかいビーム・たまなげ） | 実装済み・テスト済み | 型の引数と結びつけた書き方 | 同 `UnsupportedWithoutRegistrationTest`・`ReusedTypeTest` |
+| ゆめみのまいで両方の対戦ポケモンがねむりになる | 未解決で止める（既存の `UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`。ポケモンチェックの前に対戦を止める） | v0.3b の規定 | 同 `SelfAndOpponentStatusTest` |
+| きゅうけつの「取りのぞいてよい」 | 実装済み（与えたぶんを取りのぞくかどうかの選択。実装上の読み方） | 印刷の文面 | 同 `OptionalDrainTest` |
+| エアームド（PF3-009）の「こうそくいどう」（必要なエネルギーに「鋼」） | 実装済み（ふつうの対戦では「鋼」のエネルギーがないので使えない。［へんしん］で確かめた） | 印刷の文面 | 同 `ReusedTypeTest` |
+| 同じデータの 10 枚の登録の共有（`SAME_DATA_CARDS_V0_72`） | 実装済み・テスト済み | 写しのデータ | 同 `SharedEntriesTest` |
+| 再録のなんでもなおし（8 枚）: 自分の対戦ポケモンだけを回復。特殊状態がなければ FH2 | 実装済み・テスト済み（FH2 は未解決で止める） | この版の印刷の文面 | test_reprint_text_variants_v0_71.py `test_full_heal_reprints_cure_only_the_own_active` |
+| 再録のポケモン図鑑（2 枚）: 「最大5枚」の 0 枚は PD2。1〜5 枚は今までどおり | 実装済み・テスト済み（PD2 は未解決で止める） | この版の印刷の文面 | 同 `test_pokedex_reprints_stop_only_on_zero` |
+| 43 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |

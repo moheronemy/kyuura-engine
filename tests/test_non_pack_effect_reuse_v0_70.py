@@ -260,7 +260,7 @@ class TargetTest(unittest.TestCase):
     def test_targets_are_the_requested_82_cards(self):
         self.assertEqual(POOL_V0_70, tuple(REQUESTED))
         self.assertEqual(len(set(POOL_V0_70)), 82)
-        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_70", "pool_v0_71") for card_id in pool}
+        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_70", "pool_v0_71", "pool_v0_72") for card_id in pool}
         self.assertFalse(set(POOL_V0_70) & earlier)  # v0.69 までの 553 枚に入っていない
         self.assertEqual(len(earlier), 553)
         self.assertFalse(set(POOL_V0_70) & set(E.EQUIVALENT_CARDS))
@@ -277,11 +277,12 @@ class TargetTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS
         categories = [pool.get(c).category for c in pool.playable_ids]
         # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67。ワザ 15・特殊能力 6・トレーナー 67）を加えた。
-        self.assertEqual(len(pool.playable_ids), 713)
-        self.assertEqual(len(EXTRACT["cards"]), 713)
-        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (503, 180, 30))
+        # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた。
+        self.assertEqual(len(pool.playable_ids), 756)
+        self.assertEqual(len(EXTRACT["cards"]), 756)
+        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (546, 180, 30))
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
-                         (840, 74, 180, 12))
+                         (917, 74, 180, 12))
         new = [k for k in registry.attack_keys() if k.card_id in POOL_V0_70]
         self.assertEqual(len(new), 136)
         self.assertEqual(len(new), sum(len(CARDS[c]["pokemon"]["attacks"]) for c in POOL_V0_70))
@@ -348,7 +349,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS.without_attacks("test-no-v070", keys)
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_70 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 631)  # v0.71 の再録 78 枚を含む（v0.70 の時点は 553）
+        self.assertEqual(len(pool.playable_ids), 674)  # v0.71 の再録 78 枚・v0.72 の 43 枚を含む（v0.70 の時点は 553）
         one = E.DEFAULT_EFFECTS.without_attacks("test-no-tail-drop", [AttackKey(KANGASKHAN, 1)])
         pool = pool_from_extract(read_extract(), one)
         self.assertFalse(pool.get(KANGASKHAN).supported)
@@ -409,7 +410,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         self.assertEqual(E.SelfBarrierOnHeads().check(hide), [])
         self.assertTrue(E.DamageThenSelfBarrierOnHeads().check(hide))
         self.assertIn("コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。", E.SELF_BARRIER_ON_HEADS_TEXTS)
-        self.assertEqual(len(E.SELF_BARRIER_ON_HEADS_TEXTS), 4)
+        self.assertEqual(len(E.SELF_BARRIER_ON_HEADS_TEXTS), 5)  # v0.72 でピカチュウ（ES1-019・QSG-020）の書き方を加えた
         with self.assertRaises(ValueError):
             E.StatusByCoinWithoutDamage(SLEEP, SLEEP)
 
@@ -776,11 +777,12 @@ class SecretPlanCandidatesTest(unittest.TestCase):
     def test_candidates(self):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
-        self.assertEqual(len(candidates), 572)  # v0.71 で再録のカード（処理の違う 45 種類）が加わった（v0.70 の時点は 527）
+        v072 = set(EXTRACT["pool_v0_72"])  # v0.72: 試すカードの数は固定しない（v0.72 の 43 枚を除いて比べる）
+        self.assertEqual(len(set(candidates) - v072), 572)  # v0.71 で再録のカード（処理の違う 45 種類）が加わった（v0.70 の時点は 527）
         self.assertEqual(set(candidates) & set(POOL_V0_70), set(POOL_V0_70) - set(E.SAME_DATA_CARDS_V0_70))
         self.assertFalse(set(candidates) & set(E.EQUIVALENT_CARDS))
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
-        self.assertEqual(len(basics), 245)  # v0.71 で再録のたねポケモン 4（v0.70 の時点は 241）
+        self.assertEqual(len(set(basics) - v072), 245)  # v0.71 で再録のたねポケモン 4（v0.70 の時点は 241）
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         # 1 枚を指定するコマンドの試す回数: 割り当てる前 1 回 + たねポケモン + 「たねポケモンでない」1（v0.70 は 243、v0.71 は 247。トラッシュしたあとに項目を読まなければ）
         self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)

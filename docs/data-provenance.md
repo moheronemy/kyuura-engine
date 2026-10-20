@@ -1776,3 +1776,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: 再録の版の元のカードの照合の記録（CC-）の収録の一覧に、イントロパック★neo・プロモ・おまけカードの版などがない（15 の対象。同じカードの組と
   GR-P43-P6-LATEST-DESCRIPTION による当てはめで、版ごとの照合ではない）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.71 の登録を写すと、78 枚の `engine_status` が `registered` になる。
+
+## v0.72: 拡張パック以外の商品のポケモン 43 枚と、再録のなんでもなおし・ポケモン図鑑の扱い
+
+[status-coins-effect-reuse-v0.72.md](status-coins-effect-reuse-v0.72.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_72`（43 枚。kyuura data/engine_targets.json の `new_effect_needed`）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.71 までの 713 枚の記録は変わっていない。
+- 43 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし。処理に使う文面は kyuura の印刷の文面）。kyuura の日本語の文面は
+  pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- 再録のなんでもなおし（8 件）・ポケモン図鑑（2 件）の採用の記録の `behavior_differs` に `trainer` を加えた（処理がこの版の印刷の文面で元のカードと違う。記録した日・コミットは変えていない）。
+- PF3-009・NIP2-010・NIP2X-003・PRN-042 は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`）。発売日を変えずに持つ。
+- 報告事項（kyuura の作業）: FH2（再録のなんでもなおしを、自分の対戦ポケモンに特殊状態がないときに使えるか）・PD2（再録のポケモン図鑑の「最大5枚」の 0 枚）は、kyuura の未解決の一覧にない
+  （同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.72 の登録を写すと、43 枚の `engine_status` が `registered` になる。

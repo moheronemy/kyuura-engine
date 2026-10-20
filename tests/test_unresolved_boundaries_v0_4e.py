@@ -220,6 +220,8 @@ ALL_CODES = (
     "UNRESOLVED_SECRET_PLAN_MINEFIELD",  # v0.67: FD2
     "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT",  # v0.68: DR8（止まる場合と隣の止まらない場合は tests/test_final_pmcg_cards_v0_68.py の EnergyDrainTest）
     "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY",  # v0.68: DR13（同じ）
+    "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION",  # v0.72: FH2（止まる場合と隣の止まらない場合は tests/test_reprint_text_variants_v0_71.py の test_full_heal_reprints_cure_only_the_own_active）
+    "UNRESOLVED_POKEDEX_UP_TO_ZERO",  # v0.72: PD2（同じファイルの test_pokedex_reprints_stop_only_on_zero）
 )
 TURN = 7
 

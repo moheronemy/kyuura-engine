@@ -71,9 +71,12 @@ def board(active=BULBASAUR, bench=(), hand=(VENUSAUR,), *, turn_number=TURN, poo
 
 
 def without_card(extract, card_id):
-    """写しから 1 枚を除いた写し（テスト専用。カードの組からも除く）。"""
-    pools = {k: [c for c in v if c != card_id] for k, v in extract.items() if k.startswith("pool_") or k == "reference_only"}
-    return {**extract, **pools, "cards": [c for c in extract["cards"] if c["id"] != card_id]}
+    """写しから、``card_id`` と同じ名前のカードをすべて除いた写し（テスト専用。カードの組からも除く）。v0.72: イントロパックのフシギソウ（IP1-022）が加わり、
+    1 枚を除いただけでは同じ名前の 1 進化カードが写しに残るので、名前で除く（「写しに 1 進化カードがない」場合を作る）。"""
+    name = next(c for c in extract["cards"] if c["id"] == card_id)["name"]["ja"]
+    removed = {c["id"] for c in extract["cards"] if c["name"]["ja"] == name}
+    pools = {k: [c for c in v if c not in removed] for k, v in extract.items() if k.startswith("pool_") or k == "reference_only"}
+    return {**extract, **pools, "cards": [c for c in extract["cards"] if c["id"] not in removed]}
 
 
 def pokemon_of(state, player, card_id):

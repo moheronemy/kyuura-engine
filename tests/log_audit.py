@@ -158,6 +158,7 @@ from kyuura_engine.effects import (
     DamageThenMoveOpponentEnergyToBench,
     PutOwnerBasicFromDeckOntoBenchOnHeads,
     ENERGY_MOVE_ELEMENT,
+    WAKE_ELEMENT,
     RETALIATION_COIN_TAILS,
     # v0.44（docs/search-evolution-once-attacks-v0.44.md）
     CoinDrawOrReturnHandToDeck,
@@ -200,7 +201,7 @@ from kyuura_engine.effects import (
     RemoveOwnCounterOncePerTurn,
     CounterattackDamage,
     DamageAndDrain,
-    DamageAndFullDrain,
+    DamageAndFullDrain, DamageAndOptionalFullDrain, RevealBasicEnergyFromDeck,
     DamageAndRemoveCounters,
     DiscardEnergyAndRemoveAllCounters,
     DiscardEnergyThenDamage,
@@ -229,7 +230,7 @@ from kyuura_engine.effects import (
 from kyuura_engine.damage import ADD, HALVE_DOWN, HALVE_UP, SET_IF_AT_LEAST, ZERO_IF_AT_LEAST
 from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.resolution.programs import (
-    BUILDERS, Damage, DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage, ReturnOwnEnergyToHand,
+    BUILDERS, Damage, DiscardOwnEnergy, MoveOneEnergyToBench, MoveOwnEnergyToBench, OptionalDiscardBenchDamage, ReturnOwnEnergyToHand,
 )
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import (
@@ -262,7 +263,7 @@ LASTING_KINDS = (*V048_LASTING_KINDS, TailsDamageGuard.kind)
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
-    "special_condition", "forced_switch", "forced_switch_skipped", "drain_heal", "drain_heal_skipped", "knock_out", "turn_end", "game_end",
+    "special_condition", "forced_switch", "forced_switch_skipped", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "knock_out", "turn_end", "game_end",
     "halted", "recover_energy", "discard_energy", "remove_all_damage_counters", "persistent_effect_added", "persistent_effect_skipped",
     # v0.31: ダメージ以外の効果（エネルギーのトラッシュ・つける・回復・トレーナーの回収・山札・引く）と、ワザの失敗・効果を受けない状態
     "discard_attached_energy", "attack_heal", "recover_trainer", "attach_energy_from_discard", "attack_attach_energy", "discard_from_deck",
@@ -808,7 +809,8 @@ def _poison_problems(state, e: dict, current: int | None) -> list[str]:
 
 # v0.31: ワザを使ったポケモンのエネルギーカードをトラッシュしうる要素（トラッシュの要素・自分に控えがいない／受けなかったときにトラッシュする
 # エナジーボム・のぞむならトラッシュするひばしら）
-DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, OptionalDiscardBenchDamage)
+# v0.72: デンキとばし（MoveOneEnergyToBench）も、控えがいない・つける控えが受けなかったときにトラッシュする
+DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, MoveOneEnergyToBench, OptionalDiscardBenchDamage)
 
 
 # v0.42: 宣言する特殊能力の宣言（pokemon_power）のすぐあとに続く処理のログ（v0.41 までの move_energy・power_attach_energy・move_damage_counter・
@@ -1104,7 +1106,7 @@ def log_problems(state) -> list[str]:
                 problems.append("1 回のワザで入れ替えの結果が 2 回以上")
             if window["counterattack"] + window["counterattack_skipped"] > 1:
                 problems.append(f"1 回のワザで「はんげき」が {window['counterattack'] + window['counterattack_skipped']} 回（今の対応カードでは 1 回まで）")
-            if window["drain_heal"] + window["drain_heal_skipped"] > 1:
+            if window["drain_heal"] + window["drain_heal_skipped"] + window["drain_heal_declined"] > 1:  # v0.72: 取りのぞかなかった（きゅうけつの「取りのぞいてよい」）
                 problems.append("1 回のワザで回復の結果が 2 回以上")
             # v0.11: 「こんじょう」を使うかの決定はワザ 1 回につき 1 回まで（今の対応カードでは、ワザのダメージを受ける相手のポケモンは 1 匹）。
             # 宣言 1 回につき結果（ko_prevented・ko_prevention_failed）が 1 回
@@ -2134,6 +2136,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], ENERGY_DISCARD_ELEMENT)
         elif kind == "attack_attach_energy":
             received(e, e["to_pokemon_id"], ENERGY_ATTACH_ELEMENT)
+        elif kind == "special_conditions_removed" and attack_window is not None and e.get("effect") == attack_window["effect"]:
+            received(e, e["pokemon_id"], WAKE_ELEMENT)  # v0.72: めざめのキッス（ワザの効果でねむりから回復させる。相手のポケモンへの効果）
         elif kind == "persistent_effect_added" and e["persistent_effect"] in (CannotAttack.kind, CannotUseAttack.kind, CannotAttackWhileSourceActive.kind):
             received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)  # v0.35: 「ドわすれ」も相手の対戦ポケモンが受ける効果。v0.40: 「すごむ」も
         elif kind == "persistent_effect_added" and e["persistent_effect"] == ReducedDamageToSource.kind:
@@ -2545,6 +2549,14 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番の「こんじょう」の「おもて」のあとのダメージ {e['total_damage']} が、残り HP {geffect.remaining_hp}（ダメージ {hp - geffect.remaining_hp}）ではない（G18・G20）")
             elif e["total_damage"] != damage[pid]:
                 problems.append(f"{e['turn']} 番の ko_prevention_failed のダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う（「うら」はダメージを変えない。G19）")
+        elif kind == "drain_heal_declined":
+            # v0.72: きゅうけつ（「取りのぞいてよい」）で取りのぞかなかった。登録の実装が DamageAndOptionalFullDrain で、与えたぶんのカウンターの数・取りのぞけるカウンターがあったこと
+            # （なければ決定を出さない）を確かめる。ダメージは変えない
+            per = state.rules.damage_per_counter
+            entry = state.effects.attack_entry(*_attack_key(e["effect"]))
+            if entry is None or not isinstance(entry.effect, DamageAndOptionalFullDrain) or e["dealt"] <= 0 or e["drain_counters"] != e["dealt"] // per \
+                    or damage[e["pokemon_id"]] // per <= 0:
+                problems.append(f"{e['turn']} 番の drain_heal_declined（ワザ {e['effect']}・与えたダメージ {e['dealt']}）が、取りのぞいてよいワザの決定の答えと合わない")
         elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters", "remove_all_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
             if kind == "drain_heal":
@@ -2553,7 +2565,7 @@ def log_problems(state) -> list[str]:
                 per = state.rules.damage_per_counter
                 entry = state.effects.attack_entry(*_attack_key(e["effect"]))
                 effect = entry.effect if entry is not None else None
-                expected = (e["dealt"] // per if isinstance(effect, DamageAndFullDrain) else (e["dealt"] // per + 1) // 2 if isinstance(effect, DamageAndDrain)
+                expected = (e["dealt"] // per if isinstance(effect, (DamageAndFullDrain, DamageAndOptionalFullDrain)) else (e["dealt"] // per + 1) // 2 if isinstance(effect, DamageAndDrain)
                             else effect.counters if isinstance(effect, DamageAndRemoveCounters) else None)
                 if expected is None or e["drain_counters"] != expected or e["dealt"] <= 0 \
                         or e["counters"] != min(e["drain_counters"], damage[pid] // per) or e["amount"] != e["counters"] * per:
@@ -2909,13 +2921,13 @@ def log_problems(state) -> list[str]:
                 kind_ok = trainer_effect.target.matches(definition)  # v0.53: 説明の種類のカード（モンスターボール・ボスのやりかた など）
             elif isinstance(revealer, SearchTrainerOnHeads):
                 kind_ok = definition.category == "trainer"
-            elif isinstance(revealer, ReturnHandThenRevealBasicEnergy):
-                kind_ok = definition.is_basic_energy
+            elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck)):
+                kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード
             else:
                 kind_ok = definition.is_basic_pokemon or definition.is_evolution_pokemon
             if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not kind_ok:
                 problems.append(f"{e['turn']} 番に山札から見せて手札に加えたカード {uid} が、プレイヤー {e['player']} の山札のたねポケモン・進化カード"
-                                "（おつかいならトレーナー、てじななら基本エネルギーカード）ではない")
+                                "（おつかいならトレーナー、てじな・おつきみなら基本エネルギーカード）ではない")
             if "power" in e:
                 # v0.43: しんかのひかり。山札の進化カードを見せて手札に加え、すぐあとに山札を切る
                 if not isinstance(_power_effect(state, e["power"]), SearchEvolutionCardToHand) or not state.printed_def(uid).is_evolution_pokemon:

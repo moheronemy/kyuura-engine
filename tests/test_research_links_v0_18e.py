@@ -82,8 +82,9 @@ class ResearchLinksTest(unittest.TestCase):
                 else:
                     self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
         # v0.69: kyuura が、v0.68 までのエンジンの記録を取り込んで、not_in_kyuura だった停止コード 123 件をすべて論点（UQ-）に結んだ（kyuura の未解決の一覧。
-        # docs/equivalent-non-pack-cards-v0.69.md 7 章）。kyuura への報告事項として残る停止コードはない
-        self.assertEqual(not_in_kyuura, set())
+        # docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.72 で加えた FH2・PD2 は kyuura の一覧にまだないので not_in_kyuura（kyuura への報告事項。同じ形の論点は
+        # UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE。docs/status-coins-effect-reuse-v0.72.md）
+        self.assertEqual(not_in_kyuura, {"UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", "UNRESOLVED_POKEDEX_UP_TO_ZERO"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

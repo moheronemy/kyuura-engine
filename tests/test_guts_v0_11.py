@@ -587,7 +587,9 @@ class G37Test(unittest.TestCase):
             effect = DEFAULT_EFFECTS.attack_entry(key.card_id, key.attack_index).effect
             elements = set(programs.opponent_effect_elements(programs.compile_attack(effect)))
             if elements:
-                found[type(effect).__name__] = elements
+                # v0.72: 要素が登録の値で決まる型（StatusByCoinWithoutDamage のマヒとねむり（めまわし）・こんらんとねむり（ぐるぐる））は、登録したワザの要素を合わせて数える
+                # （宣言の側の合わせ方と同じ。v0.71 までは、その型の登録の要素がどれも同じだった）
+                found.setdefault(type(effect).__name__, set()).update(elements)
         self.assertEqual(declared, found)
         self.assertTrue(all(elements <= set(ATTACK_ELEMENTS) - {DAMAGE_ELEMENT} for elements in declared.values()))
         # v0.17a で ConfuseOnHeadsWithoutDamage（ねこノミ。こんらん）を加えた。v0.31 で、相手の対戦ポケモンに効果を与える 6 つの型を加えた
@@ -644,7 +646,10 @@ class G37Test(unittest.TestCase):
             # v0.62（受けたマヒを与えるオニスズメの「オウムがえし」・相手を手札にもどすピジョットの「ハリケーン」。docs/history-attacks-v0.62.md）
             "ReflectReceivedDamageAndEffects", "DamageThenReturnOpponentToHand",
             # v0.70（ダメージのない「ぐるぐる」。DamageThenStatusByCoin と同じ Status の要素。docs/non-pack-effect-reuse-v0.70.md）
-            "StatusByCoinWithoutDamage"]))
+            "StatusByCoinWithoutDamage",
+            # v0.72（ダメージを与えた後に自分と相手を特殊状態にする・ダメージのないどくとねむり・ねむりから回復させる・ダメージを与えた後に入れ替える。
+            # docs/status-coins-effect-reuse-v0.72.md）
+            "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage"]))
 
 
 class DecisionTest(unittest.TestCase):

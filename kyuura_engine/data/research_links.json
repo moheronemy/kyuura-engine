@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 151,
-    "engine_stop_codes": 149,
+    "engine_unresolved_rulings": 153,
+    "engine_stop_codes": 151,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -1766,6 +1766,28 @@
       ],
       "kyuura_issue": "UQ-ENERGY-DRAIN-NO-ENERGY",
       "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION": {
+      "engine_rulings": [
+        {
+          "version": "v0.72",
+          "document": "docs/status-coins-effect-reuse-v0.72.md",
+          "ruling_id": "FH2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEDEX_UP_TO_ZERO": {
+      "engine_rulings": [
+        {
+          "version": "v0.72",
+          "document": "docs/status-coins-effect-reuse-v0.72.md",
+          "ruling_id": "PD2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2809,7 +2831,74 @@
       "GD6-010/attack/1",
       "IP2-009/attack/0",
       "PR1-030/attack/0",
-      "PR1-033/attack/0"
+      "PR1-033/attack/0",
+      "GD1-003/attack/0",
+      "GD1-012/attack/0",
+      "GD1-012/attack/1",
+      "GD2-002/attack/0",
+      "GD2-002/attack/1",
+      "GD3-010/attack/0",
+      "GD3-010/attack/1",
+      "GD4-003/attack/0",
+      "GD4-003/attack/1",
+      "GD4-007/attack/0",
+      "GD4-009/attack/0",
+      "GD4-009/attack/1",
+      "GD4-012/attack/0",
+      "GD4-012/attack/1",
+      "GD5-005/attack/0",
+      "GD5-005/attack/1",
+      "GD6-012/attack/0",
+      "GD6-012/attack/1",
+      "ES1-006/attack/0",
+      "ES1-006/attack/1",
+      "ES1-009/attack/0",
+      "ES1-009/attack/1",
+      "ES1-011/attack/0",
+      "ES1-011/attack/1",
+      "ES1-019/attack/0",
+      "ES1-019/attack/1",
+      "ES1-020/attack/0",
+      "ES1-025/attack/1",
+      "ES1-029/attack/1",
+      "ES1-031/attack/0",
+      "ES1-031/attack/1",
+      "ES2-023/attack/0",
+      "ES2-023/attack/1",
+      "ES2-024/attack/0",
+      "ES2-024/attack/1",
+      "ES2-027/attack/0",
+      "ES2-030/attack/0",
+      "ES3-003/attack/0",
+      "ES3-005/attack/0",
+      "ES3-005/attack/1",
+      "ES3-008/attack/0",
+      "ES3-013/attack/0",
+      "QSG-004/attack/0",
+      "QSG-004/attack/1",
+      "QSG-020/attack/0",
+      "QSG-020/attack/1",
+      "QSG-026/attack/0",
+      "QSG-037/attack/0",
+      "QSG-037/attack/1",
+      "QSG-038/attack/0",
+      "QSG-039/attack/1",
+      "QSG-043/attack/0",
+      "QSG-043/attack/1",
+      "QSG-054/attack/0",
+      "IP1-022/attack/0",
+      "PR1-036/attack/0",
+      "PR1-036/attack/1",
+      "PR1-037/attack/0",
+      "PR1-040/attack/0",
+      "PR1-040/attack/1",
+      "PR1-059/attack/0",
+      "PR1-059/attack/1",
+      "PF3-009/attack/0",
+      "PF3-009/attack/1",
+      "NIP2-010/attack/0",
+      "NIP2X-003/attack/1",
+      "PRN-042/attack/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

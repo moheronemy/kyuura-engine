@@ -75,10 +75,11 @@ class TableTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS
         categories = [pool.get(c).category for c in pool.playable_ids]
         # v0.70 で拡張パック以外の商品のポケモン 82 枚（ワザ 136）を加えた（v0.69 は 553・(410, 113, 30)・ワザ 689）。v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67。ワザ 15・特殊能力 6・トレーナー 67）を加えた。
-        self.assertEqual(len(pool.playable_ids), 713)
-        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (503, 180, 30))
+        # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた。
+        self.assertEqual(len(pool.playable_ids), 756)
+        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (546, 180, 30))
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
-                         (840, 74, 180, 12))
+                         (917, 74, 180, 12))
         self.assertEqual(registry.id, "kyuura-engine-0.13")
         self.assertEqual(set(POOL_V0_69) - pool.playable_ids, set())
 
@@ -141,7 +142,7 @@ class ParityTest(unittest.TestCase):
             .without_trainers("t", [c for c in registry.trainer_ids() if c in E.EQUIVALENT_CARDS]) \
             .without_energies("t", [c for c in registry.energy_ids() if c in E.EQUIVALENT_CARDS])
         rebuilt = E._with_equivalent_cards(base, E.EQUIVALENT_CARDS)
-        self.assertEqual(len(rebuilt.attack_keys()), 840)  # v0.71 で 15、v0.70 で 136 を加えた（v0.69 は 689）
+        self.assertEqual(len(rebuilt.attack_keys()), 917)  # v0.72 で 77、v0.71 で 15、v0.70 で 136 を加えた（v0.69 は 689）
         with self.assertRaises(RuntimeError):
             E._with_equivalent_cards(base, {"GD1-002": "GD1-011"})  # 元のカードに登録がない
         with self.assertRaises(RuntimeError):
@@ -190,7 +191,7 @@ class RecordTest(unittest.TestCase):
         (migration,) = self.sources["data_migrations"]
         self.assertEqual((migration["from"], migration["to"]), (EXTRACT["previous_source"]["commit"], EXTRACT["source"]["commit"]))
         # v0.70 の採用の記録（写しの元 7d3f4ca で採用した。拡張パック以外の商品のポケモン 82 枚）は、移行の前の記録ではない
-        v070 = set(read_extract()["pool_v0_70"]) | set(read_extract()["pool_v0_71"])  # v0.71 の再録 78 枚も写しの元 7d3f4ca で採用した
+        v070 = set(read_extract()["pool_v0_70"]) | set(read_extract()["pool_v0_71"]) | set(read_extract()["pool_v0_72"])  # v0.71 の再録 78 枚・v0.72 の 43 枚も写しの元 7d3f4ca で採用した
         old = [r for c, r in self.sources["cards"].items() if r.get("basis") == cs.KYUURA_DATA and c not in E.EQUIVALENT_CARDS and c not in v070]
         self.assertTrue(old)
         self.assertEqual({r["kyuura_commit"] for r in old}, {migration["from"]})
@@ -341,7 +342,7 @@ class SecretPlanPoolTest(unittest.TestCase):
     def test_candidates_unchanged(self):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
-        v070 = set(read_extract()["pool_v0_70"]) | set(read_extract()["pool_v0_71"])  # v0.71: 再録のカード（処理の違う 45 種類）も除いて比べる
+        v070 = set(read_extract()["pool_v0_70"]) | set(read_extract()["pool_v0_71"]) | set(read_extract()["pool_v0_72"])  # v0.71: 再録のカード（処理の違う 45 種類）・v0.72 の 43 枚も除いて比べる
         self.assertEqual(len(set(candidates) - v070), 457)
         self.assertFalse(set(candidates) & set(POOL_V0_69) - {c for c in POOL_V0_69 if c not in TABLE})
         self.assertEqual(set(candidates) - v070, set(pool.playable_ids) - set(POOL_V0_69) - v070)

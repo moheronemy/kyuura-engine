@@ -168,8 +168,8 @@ class RegistryTest(unittest.TestCase):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
         by_category = {c: sum(1 for d in supported if d.category == c) for c in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_category, {"pokemon": 503, "trainer": 180, "energy": 30})  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚、v0.65 でポケモン 2 枚・トレーナー 1 枚  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 840)  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
+        self.assertEqual(by_category, {"pokemon": 546, "trainer": 180, "energy": 30})  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚、v0.65 でポケモン 2 枚・トレーナー 1 枚  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 917)  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で［にげこむ］・［ベンチガード］を加えた
 
     def test_history_readers(self):

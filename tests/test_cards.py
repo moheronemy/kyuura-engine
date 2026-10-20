@@ -24,6 +24,7 @@ from tests.helpers import (
     V0_71_TRAINERS,
     V0_70_POKEMON,
     V0_71_POKEMON,
+    V0_72_POKEMON,
     SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON, V0_64_POKEMON, V0_65_POKEMON, V0_68_POKEMON, KOGAS_NINJA_TRICK,
     V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
@@ -256,7 +257,7 @@ class CardPoolTest(unittest.TestCase):
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
                  *V0_45_POKEMON, *V0_46_POKEMON, *V0_47_POKEMON, *V0_48_POKEMON, *V0_49_POKEMON, *V0_50_POKEMON, *V0_51_POKEMON, *V0_52_POKEMON,
                  *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON, *V0_64_POKEMON, *V0_65_POKEMON, *V0_68_POKEMON,
-                 *V0_69_POKEMON, *V0_69_SPECIAL_ENERGIES, *V0_69_BASIC_ENERGIES, *V0_70_POKEMON, *V0_71_POKEMON)  # v0.71: 拡張パック以外の商品の再録のポケモン 11 枚。v0.70: 拡張パック以外の商品のポケモン 82 枚。v0.69: 拡張パック以外の商品の同じカード（ポケモン 57・特殊エネルギー 8・基本エネルギー 12）。v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
+                 *V0_69_POKEMON, *V0_69_SPECIAL_ENERGIES, *V0_69_BASIC_ENERGIES, *V0_70_POKEMON, *V0_71_POKEMON, *V0_72_POKEMON)  # v0.72: 拡張パック以外の商品のポケモン 43 枚。v0.71: 拡張パック以外の商品の再録のポケモン 11 枚。v0.70: 拡張パック以外の商品のポケモン 82 枚。v0.69: 拡張パック以外の商品の同じカード（ポケモン 57・特殊エネルギー 8・基本エネルギー 12）。v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

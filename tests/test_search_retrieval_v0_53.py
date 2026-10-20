@@ -79,6 +79,7 @@ from tests.helpers import (
     H,
     T,
     apply_kernel,
+    assert_stop_code_counts_since,
     build_test_state,
     kyuura_records_since_v0_69,
     with_coin_results,
@@ -236,7 +237,7 @@ class RegistrationTest(unittest.TestCase):
             self.assertEqual(links["stop_codes"][code]["engine_rulings"][0]["document"], "docs/search-retrieval-trainers-v0.53.md")
         self.assertIn({"version": "v0.53", "document": "docs/search-retrieval-trainers-v0.53.md", "ruling_id": "FC1"},
                       links["stop_codes"][FC1]["engine_rulings"])
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (149, 151))  # v0.68 で DR8・DR13 を加えた。v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
+        assert_stop_code_counts_since(self, links, 149, 151)  # v0.72: 総数の等号は test_research_links_v0_18e が確かめる。  # v0.68 で DR8・DR13 を加えた。v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
 
     def test_observation_tables(self):
         self.assertIn("discard_to_deck", PUBLIC_EVENTS)

@@ -36,6 +36,7 @@ from .decisions import (
     DAMAGE_REDUCTION,
     ESP_REDO,
     JANKEN_HAND,
+    OPTIONAL_DRAIN,
     SECRET_PLAN_CARD,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
@@ -136,7 +137,7 @@ OPTION_MEANINGS: dict[str, str] = {
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
-    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken",
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
     SECRET_PLAN_CARD: "card",
 }
@@ -470,7 +471,7 @@ PUBLIC_EVENTS = frozenset({
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
     "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
-    "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "effect_prevented", "effect_skipped",
+    "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "effect_prevented", "effect_skipped",
     "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
     "evolve_from_deck_none", "forced_switch", "forced_switch_skipped", "game_end", "halted", "janken", "knock_out", "ko_prevented",
     "ko_prevention_declared", "ko_prevention_declined", "ko_prevention_failed", "look_at_deck_top_none", "move_damage_counter", "move_energy",

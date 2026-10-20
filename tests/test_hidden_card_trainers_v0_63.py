@@ -83,6 +83,7 @@ from tests.helpers import (
     H,
     T,
     apply_kernel,
+    assert_stop_code_counts_since,
     build_test_state,
     with_coin_results,
 )
@@ -154,9 +155,9 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (503, 180, 30))  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 713)  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 840)  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (546, 180, 30))  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
+        self.assertEqual(sum(counts.values()), 756)  # v0.72 で 43 枚を加えた  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 917)  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で 2 つを加えた
 
     def test_registration_rejects_text_mismatches(self):
@@ -184,7 +185,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertEqual((check["site"], check["result"]), ("pcg-search.com", result))
                 self.assertTrue(all(not d["affects_behavior"] for d in check["differences"]))
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (149, 151))  # v0.68 で DR8・DR13 を加えた。v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
+        assert_stop_code_counts_since(self, links, 149, 151)  # v0.72: 総数の等号は test_research_links_v0_18e が確かめる。  # v0.68 で DR8・DR13 を加えた。v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
         # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura）
         self.assertEqual((links["stop_codes"][QZ1]["kyuura_disposition"], links["stop_codes"][QZ1]["kyuura_issue"]), ("issue", "UQ-CARD-USE-WITHOUT-TARGET"))
         self.assertIn({"version": "v0.63", "document": "docs/hidden-card-trainers-v0.63.md", "ruling_id": "HC5"},
