@@ -137,6 +137,7 @@ from .persistent import (
     powers_use_prevented,
     damage_reduction,
     doubled_damage,
+    expires_at_turn_start,
     effect_attack_card,
     halved_damage,
     max_hp_set,
@@ -1531,6 +1532,11 @@ class SetNextTurnAttackDamage(AttackEffect):
     target_attack_index: int
     target_attack_name: str
     damage: int
+    # v0.76（docs/persistent-attack-modifiers-v0.76.md 3 章）: ダメージが変わるワザの説明（印刷の文面）。None なら v0.27 のとおり、説明のない、ダメージの目安の数字だけの
+    # ワザ（ストライクの「きりさく」）。値があれば、その説明（ダメージのあとの独立した効果。マリルの「とびのる」の「コインを投げて「おもて」なら、相手を「マヒ」状態に
+    # する。」）の、ダメージの目安が数字だけ（「+」「×」「−」なし）のワザで、このワザ自身の説明も「次の自分の番、このカードが使う「<名前>」のダメージは「<数>」になる。」
+    # でなければならない。「その数にする」のは 2 段階のダメージだけで、変わるワザの説明の効果（コイン・マヒ）は変わるワザの登録のまま処理する（コインを足さない・消さない）
+    target_text: str | None = None
     implementation_id = "set_next_turn_attack_damage"
 
     def __post_init__(self) -> None:
@@ -1545,6 +1551,10 @@ class SetNextTurnAttackDamage(AttackEffect):
             problems.append("ダメージの目安のあるワザを、次の自分の番のワザのダメージを変える効果のワザとして登録している")
         if attack.text_ja is None:
             problems.append("説明文のないワザを、次の自分の番のワザのダメージを変える効果のワザとして登録している")
+        if self.target_text is not None:
+            expected = f"次の自分の番、このカードが使う「{self.target_attack_name}」のダメージは「{self.damage}」になる。"
+            if attack.text_ja != expected:
+                problems.append(f"説明 {attack.text_ja!r} が {expected!r} ではない")
         return problems
 
     def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
@@ -1555,8 +1565,11 @@ class SetNextTurnAttackDamage(AttackEffect):
         problems = []
         if target.name_ja != self.target_attack_name:
             problems.append(f"ダメージが変わるワザの名前「{self.target_attack_name}」が、{index} 番目のワザ「{target.name_ja}」と違う")
-        if target.text_ja is not None or target.text_en is not None or target.damage_modifier is not None or type(target.damage) is not int:
-            problems.append(f"ダメージが変わるワザ「{target.name_ja}」が、説明のない、ダメージの目安の数字だけのワザではない")
+        if self.target_text is None:
+            if target.text_ja is not None or target.text_en is not None or target.damage_modifier is not None or type(target.damage) is not int:
+                problems.append(f"ダメージが変わるワザ「{target.name_ja}」が、説明のない、ダメージの目安の数字だけのワザではない")
+        elif target.text_ja != self.target_text or target.damage_modifier is not None or type(target.damage) is not int:
+            problems.append(f"ダメージが変わるワザ「{target.name_ja}」が、説明 {self.target_text!r} の、ダメージの目安の数字だけのワザではない")
         return problems
 
     def next_turn_terms(self) -> tuple[int, int]:
@@ -3419,6 +3432,17 @@ class PutTypeBasicFromDeckOntoBench(AttackEffect):
 # （docs/coin-groups-damage-order-v0.35.md）。処理は解決の基盤の要素の並び（resolution/programs.py の BUILDERS）。処理に使う文面は kyuura の印刷の文面。
 
 
+# v0.35・v0.76: ``MultiplyNextTurnAttackDamage`` が受け付ける説明の前半（kyuura の印刷の文面。後半「「<ワザの名前>」のダメージは<倍数>倍になる。」は登録の値で作る）。
+# v0.76 に加えた 3 つは「次の自分の番だけ」（「だけ」は効果のはたらく番を次の自分の番に限ることで、v0.35 の「次の自分の番、」と同じ期限）・「このカード」（ワザを使った
+# ポケモン自身。v0.35 の「この「<カードの名前>」」と同じ）・「つかう」（「使う」のかな書き）の違いだけ（docs/persistent-attack-modifiers-v0.76.md 3 章）。組を広げない
+MULTIPLY_NEXT_TURN_TEXT_HEADS = (
+    "次の自分の番、この「[^」]+」が使う",  # v0.35: マチスのコラッタ（PMCG5-056）・マチスのラッタ
+    "次の自分の番だけ、この「[^」]+」が使う",  # v0.76: マチスのコラッタ（GD3-011）
+    "次の自分の番だけ、このカードがつかう",  # v0.76: ニドラン♂（ES1-007・QSG-005）
+    "次の自分の番だけ、このカードが使う",  # v0.76: ゼニガメ（ES1-015・QSG-013・IP2-018）の 3 倍
+)
+
+
 @dataclass(frozen=True)
 class MultiplyNextTurnAttackDamage(AttackEffect):
     """ダメージの要素のないワザ。ワザを使ったポケモン自身に、「次の自分の番、このカードが使う ``target_attack_name`` のダメージは ``factor`` 倍になる」
@@ -3452,8 +3476,8 @@ class MultiplyNextTurnAttackDamage(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "次の自分の番のワザのダメージをかける効果のワザ", damage="none")
         clause = f"(自分へのダメージも{self.factor}倍)" if self.includes_self_damage else ""
-        pattern = f"次の自分の番、この「[^」]+」が使う「{re.escape(self.target_attack_name)}」のダメージは{self.factor}倍になる。{re.escape(clause)}"
-        if re.fullmatch(pattern, attack.text_ja or "") is None:
+        rest = f"「{re.escape(self.target_attack_name)}」のダメージは{self.factor}倍になる。{re.escape(clause)}"
+        if not any(re.fullmatch(head + rest, attack.text_ja or "") for head in MULTIPLY_NEXT_TURN_TEXT_HEADS):
             problems.append(f"説明 {attack.text_ja!r} が、「{self.target_attack_name}」のダメージを {self.factor} 倍にする効果"
                             f"（自分へのダメージ {'も' if self.includes_self_damage else 'なし'}）の説明ではない")
         return problems
@@ -3510,6 +3534,8 @@ class DamageThenLockSelfOnTails(AttackEffect):
 LOCK_OPPONENT_ATTACK_TEXTS = (
     "相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。",
     "相手の対戦ポケモンの「ワザ」を1つ選ぶ。次の相手の番でその「ワザ」はつかえない。",
+    # v0.76: ヤドン（PR1-006）の「ドわすれ」。v0.37 のニョロゾの書き方の「つかえない」を漢字で書いただけ（docs/persistent-attack-modifiers-v0.76.md 6 章）
+    "相手の対戦ポケモンの「ワザ」を1つ選ぶ。次の相手の番でその「ワザ」は使えない。",
 )
 
 
@@ -11489,6 +11515,13 @@ def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay,
     特殊能力のダメージに当てはめるかが決まらないので ``UnsupportedError``（量を変える前。呼ぶ側が状態を変える前に聞く）。"""
     if amount > 0 and doubled_damage(state, receiver) is not None:
         raise UnsupportedError(DOUBLED_POWER_DAMAGE_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {amount}: {DOUBLED_POWER_DAMAGE_REASON}")
+    growl = reduced_damage_to_source(state, source)
+    if amount > 0 and growl is not None and not expires_at_turn_start(growl) and growl.source_card == receiver.card:
+        # v0.76: 「なきごえ」（説明は「…このカードにダメージを与える時」で、ワザに限らない）を受けたポケモンが、はたらく番に、効果を与えたポケモンに特殊能力のダメージを
+        # 与える。はたらく番は受けたポケモンの持ち主の番で、その番にこのポケモンが与えうる特殊能力のダメージ（はんげき・わるいねぞう・ファイナルビームは相手のワザの
+        # ダメージ、こっそりかみつくは進化で効果が消える）は、今の対応カードでは起こらない（docs/persistent-attack-modifiers-v0.76.md 4 章）。黙って減らさずに続けないよう、
+        # 起こったらエンジンの不具合として止める
+        raise RuntimeError(f"「なきごえ」を受けたポケモン {source.pokemon_id} が、効果を与えたポケモン {receiver.pokemon_id} に特殊能力のダメージを与える（到達しない場面。エンジンの不具合）")
     applied = []
     for holder_owner, holder, key, effect in continuous_powers(state):
         if holder is not receiver:
@@ -26538,3 +26571,232 @@ SAME_DATA_CARDS_V0_75: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_75_ATTACKS), SAME_DATA_CARDS_V0_75)
+
+
+# ---------------------------------------------------------------- v0.76（docs/persistent-attack-modifiers-v0.76.md）
+# 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚。処理は既存の要素（resolution/programs.py）と、その小さな項目（``SelfNextTurnAttackDamage.gate``・
+# ``SelfAttackLock`` の ``target_attack_index``・``gate``・``OpponentAttackLock.local_coin``・``OpponentReducedDamage.until_turn_end``・``OpponentAttackLockWhileSourceActive`` の
+# ``max_hp`` None と ``local_coin``）の組み合わせ。説明の文面は、登録したワザの印刷の文面（kyuura の写し）と完全に同じものだけを受け付ける
+
+
+# v0.76: 「なきごえ」の説明（kyuura の印刷の文面）。ヒトカゲ（ES1-013・QSG-007）は句点がない。意味（受けた相手が、次の相手の番に、このカード（ワザを使ったポケモン）に
+# 与えるダメージを減らす）は 3 つとも同じ
+GROWL_TEXTS = (
+    "このワザを受けた相手は、次の相手の番でこのカードにダメージを与える時、そのダメージが「-{n}」される",  # ヒトカゲ（ES1-013・QSG-007）
+    "このワザを受けた相手は、次の相手の番でこのカードにダメージを与える時、そのダメージが「-{n}」される。",  # ドードー（ES1-028・QSG-041）・ピカチュウ（IP1-040）
+    "次の相手の番、このワザを受けた相手がこのカードに与えるダメージは「-{n}」される。",  # パウワウ（ES2-006・QSG-017）・チコリータ（PF1-001）
+)
+
+
+@dataclass(frozen=True)
+class ReduceDamageToSelfNextOpponentTurn(AttackEffect):
+    """ダメージの要素のないワザ。このワザを受けた相手の対戦ポケモンは、次の相手の番にこのカードへ与えるダメージが ``amount`` へる（v0.76。「なきごえ」）。
+
+    - 相手に与える持続する効果 ``state.ReducedDamageToSourceNextTurn``（v0.34 の「なきつく」の ``ReducedDamageToSource`` の部分型）。はたらく番・相手に与えること・
+      「このカード」に与えるダメージを p.321 の 2 段階（ワザを使うポケモン（受けた相手）の持っている「ダメージを変更する効果」）で減らすことは「なきつく」と同じ。受け手
+      （このカード）の 8 段階の軽減ではない（「このワザを受けた相手は、…ダメージを与える時、そのダメージが「-10」される」）
+    - 期限は説明のとおり「次の相手の番」（はたらく番の終わりに消える）。「なきつく」の「この状態は次の自分の番の始めに消える」は持ち込まない（型と種類を分けた）
+    - 相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する（v0.34 と同じ要素 ``OpponentReducedDamage``）。「ダメージを受けない」状態は効果を止めない
+    - 効果を与えたポケモンが控えにいるときの、控えへのダメージに当てはめるかは、v0.34 の NK5 と同じ確かめで止める（説明の書き方は違うが、控えのこのカードへのダメージに
+      当てはめるかは記録で決まらない。docs 4 章）
+    """
+
+    amount: int
+    implementation_id = "reduce_damage_to_self_next_opponent_turn"
+    opponent_effect_elements = (REDUCED_DAMAGE_ELEMENT,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.amount, "減らすダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "次の相手の番にこのカードへのダメージを減らすワザ", damage="none") + _check_exact_text(
+            attack, "次の相手の番にこのカードへのダメージを減らすワザ", tuple(text.format(n=self.amount) for text in GROWL_TEXTS))
+
+
+@dataclass(frozen=True)
+class LockOpponentAttackOnHeads(LockOpponentAttack):
+    """ダメージの要素のないワザ。コインを投げて「おもて」なら、相手の対戦ポケモンのワザを 1 つ選び、次の相手の番、そのポケモンはそのワザを使えない（v0.76。コンパンの
+    「かなしばり」）。
+
+    - v0.35 の「ドわすれ」（``LockOpponentAttack``）と同じ持続する効果 ``CannotUseAttack``・決定 ``select_opponent_attack``（選ぶのはワザを使ったプレイヤー。選べるものは
+      相手の対戦ポケモンが今持つワザ）に、この要素のコイン（``OpponentAttackLock.local_coin``）を加えた形。「うら」なら選ばず、効果を与えない（ワザの失敗ではない）
+    - コインは選ぶ前。選ぶワザがない相手（ワザを持たないポケモンとして出したトレーナーカード）には投げない（処理の対象がない。p.309）。「とうめい」で受けないと決まった
+      相手・「ワザをうけない」相手には、効果だけを決めるコインなので T19b・HC3。「ダメージを受けない」状態の相手には投げる
+    """
+
+    implementation_id = "lock_opponent_attack_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "コインで相手のワザを使えなくするワザ", damage="none") + _check_exact_text(
+            attack, "コインの「おもて」で相手のワザを 1 つ選んで次の相手の番に使えなくするワザ",
+            ("コインを投げて「おもて」なら、相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。",))
+
+
+@dataclass(frozen=True)
+class CoinNextTurnMultiplyElseLockAttack(AttackEffect):
+    """ダメージの要素のないワザ。コインを 1 枚投げ、「おもて」なら次の自分の番、このカードが使う ``target_attack_name`` のダメージは ``factor`` 倍、「うら」なら次の自分の番、
+    このカードはそのワザを使えない（v0.76。ワンリキー（ES2-021・QSG-035）の「きあいいっぱつ」）。
+
+    - 1 枚のワザ全体のコイン（``programs.Coin``）の同じ結果で、どちらか一方だけを与える（要素ごとに投げ直さない。両方を与えることはない）
+    - 「おもて」: v0.35 の「きあいだめ」と同じ持続する効果 ``NextTurnAttackDamage``（``NEXT_TURN_MULTIPLY``。p.321 の 2 段階。弱点・抵抗力・プラスパワーはそのあと）
+    - 「うら」: v0.35 の「あわあわ」と同じ持続する効果 ``CannotUseOwnAttack``。使えなくなるのは ``target_attack_index`` のワザ（「どつく」）だけで、使ったワザ
+      「きあいいっぱつ」は使える（``SelfAttackLock.target_attack_index``。ワザの失敗ではない）
+    - どちらも、はたらくのは次の自分の番（与えた番 + 2）で、あいだの相手の番には何もしない。その番の終わりに消える。ベンチにもどる・進化・きぜつで消える
+    - 自分への効果なので、相手の状態（「ワザをうけない」など）によらずコインを投げる（v0.34 の ``void_coin_question``）
+    """
+
+    target_attack_index: int
+    target_attack_name: str
+    factor: int = 2
+    implementation_id = "coin_next_turn_multiply_else_lock_attack"
+
+    def __post_init__(self) -> None:
+        if type(self.target_attack_index) is not int or self.target_attack_index < 0:
+            raise ValueError(f"ダメージが変わる・使えなくなるワザの位置は 0 以上の整数（{self.target_attack_index!r}）")
+        if type(self.factor) is not int or self.factor < 2:
+            raise ValueError(f"ダメージにかける数は 2 以上の整数（{self.factor!r}）")
+
+    def check(self, attack: Attack) -> list[str]:
+        name = self.target_attack_name
+        expected = (f"コインを投げて「おもて」なら、次の自分の番、この「[^」]+」が使う「{re.escape(name)}」のダメージは{self.factor}倍になる。"
+                    f"「うら」なら、次の自分の番、この「[^」]+」は「{re.escape(name)}」を使えない。")
+        problems = _check_form(attack, "コインで次の自分の番のワザを強くするか使えなくするワザ", damage="none")
+        if re.fullmatch(expected, attack.text_ja or "") is None:
+            problems.append(f"説明 {attack.text_ja!r} が、「{name}」を「おもて」で {self.factor} 倍・「うら」で使えなくする説明ではない")
+        return problems
+
+    def card_problems(self, attack: Attack, attacks: tuple[Attack, ...]) -> list[str]:
+        index = self.target_attack_index
+        if index == attack.index or not 0 <= index < len(attacks):
+            return [f"ダメージが変わる・使えなくなるワザの位置 {index} が、このカードのほかのワザではない"]
+        target = attacks[index]
+        problems = []
+        if target.name_ja != self.target_attack_name:
+            problems.append(f"ダメージが変わる・使えなくなるワザの名前「{self.target_attack_name}」が、{index} 番目のワザ「{target.name_ja}」と違う")
+        if type(target.damage) is not int or "自分にも" in (target.text_ja or ""):
+            problems.append(f"ダメージが変わるワザ「{target.name_ja}」にダメージの目安がない・自分へのダメージがある")
+        return problems
+
+    def next_turn_terms(self) -> tuple[int, int, str, bool]:
+        """「おもて」で与える ``NextTurnAttackDamage`` の (変わるワザの位置, かける数, 変え方, 自分へのダメージにも)（不変条件・ログの監査が照らす）。"""
+        return self.target_attack_index, self.factor, NEXT_TURN_MULTIPLY, False
+
+    def attack_lock_terms(self) -> tuple[type, int | None]:
+        """「うら」で与える持続する効果の型と、使えなくなるワザの位置（不変条件が照らす）。"""
+        from .state import CannotUseOwnAttack
+
+        return CannotUseOwnAttack, self.target_attack_index
+
+
+# v0.76: 「にらみつける」・「しっぽをふる」（ヒノアラシ PF1-004・ウパー PRN-003・ワニノコ PRN-008・PRN-011）の説明。「限り」と「かぎり」の違いだけ
+LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS = (
+    "コインを投げて「おもて」なら、次の相手の番、このカードがバトル場にいる限り、このワザを受けた相手は、ワザを使えない。",
+    "コインを投げて「おもて」なら、次の相手の番、このカードがバトル場にいるかぎり、このワザを受けた相手は、ワザを使えない。",
+)
+
+
+@dataclass(frozen=True)
+class AttackLockWhileSourceActiveOnHeads(AttackEffect):
+    """ダメージの要素のないワザ。コインを投げて「おもて」なら、次の相手の番、このカードがバトル場にいる限り、このワザを受けた相手はワザを使えない（v0.76。ヒノアラシ・
+    ワニノコの「にらみつける」・ウパーの「しっぽをふる」）。
+
+    - v0.40 の「すごむ」（``AttackLockWhileSourceActive``）と同じ持続する効果 ``CannotAttackWhileSourceActive``（「このカードがバトル場にいる限り」はワザの宣言のときに確かめる。
+      効果を与えたポケモンがはなれても効果は消さない。同じ番にもどる場合は SG1）。違うのは、最大HPの条件がなく（どの最大HPの相手にも）、この要素のコインがあること
+      （``OpponentAttackLockWhileSourceActive`` の ``max_hp`` が None・``local_coin``）
+    - 「うら」なら効果を与えない（ワザの失敗ではない）。相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価し、効果だけを決めるコインは T19b・HC3（v0.36 と同じ）
+    - 受けたポケモンのワザだけを止める（相手のほかのポケモン・プレイヤー全体のワザは止めない）。受けたポケモンがベンチにもどる・進化・きぜつで消える
+    """
+
+    implementation_id = "attack_lock_while_source_active_on_heads"
+    opponent_effect_elements = (ATTACK_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "コインで発生源がバトル場にいる間ワザを使えなくするワザ", damage="none") + _check_exact_text(
+            attack, "コインで発生源がバトル場にいる間ワザを使えなくするワザ", LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS)
+
+    def conditional_lock_terms(self) -> tuple[type, int | None]:
+        """不変条件（``engine._given_by_attack_problems``）が照らす、与える持続する効果の型と最大 HP の上限（なし）。"""
+        from .state import CannotAttackWhileSourceActive
+
+        return CannotAttackWhileSourceActive, None
+
+
+def _v0_76_same_data(cards: Iterable[str], attacks: tuple[AttackEntry, ...]) -> dict[AttackKey, AttackEntry]:
+    """同じデータのカード（kyuura の同じカードの組）に、id ごとに同じ登録を書く（v0.76。v0.75 の ``_v0_75_same_data`` と同じ）。"""
+    return {AttackKey(card, index): entry for card in cards for index, entry in enumerate(attacks)}
+
+
+_PARALYZE_ON_HEADS_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"
+
+# v0.76: 24 枚のワザ 48（kyuura データの採用。採用したデータのコミット 7d3f4ca。処理に使う文面は kyuura の印刷の文面）。ダメージの目安だけのワザは DAMAGE_ONLY。ひのこ（IP2-026）の
+# トラッシュの時点は v0.75 のガーディ（ES3-010）と同じく RUL-ENERGY-DISCARD-ATTACKS の範囲（炎エネルギーカードをトラッシュするワザはワザの効果。文面は印刷の文面）
+V0_76_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("GD3-011", 0): _printed(MultiplyNextTurnAttackDamage(1, "かじる", 2), "きあいだめ",
+                                      "次の自分の番だけ、この「マチスのコラッタ」が使う「かじる」のダメージは2倍になる。"),
+    AttackKey("GD3-011", 1): AttackEntry(DAMAGE_ONLY, "かじる"),
+    **_v0_76_same_data(("ES1-007", "QSG-005"), (
+        _printed(MultiplyNextTurnAttackDamage(1, "つのでとっしん", 2), "きあいだめ", "次の自分の番だけ、このカードがつかう「つのでとっしん」のダメージは2倍になる。"),
+        _printed(FailOnTailsDamage(1), "つのでとっしん", "コインを投げて「うら」なら、このワザは失敗する。"),
+    )),
+    **_v0_76_same_data(("ES1-015", "QSG-013", "IP2-018"), (
+        _printed(MultiplyNextTurnAttackDamage(1, "はたく", 3), "ウォーターパワー", "次の自分の番だけ、このカードが使う「はたく」のダメージは3倍になる。"),
+        AttackEntry(DAMAGE_ONLY, "はたく"),
+    )),
+    AttackKey("PRN-028", 0): _printed(SetNextTurnAttackDamage(1, "とびのる", 30, target_text=_PARALYZE_ON_HEADS_TEXT), "はずむ",
+                                      "次の自分の番、このカードが使う「とびのる」のダメージは「30」になる。"),
+    AttackKey("PRN-028", 1): _printed(ParalyzeOnHeads(), "とびのる", _PARALYZE_ON_HEADS_TEXT),
+    **_v0_76_same_data(("ES1-013", "QSG-007"), (
+        _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[0].format(n=10)),
+        AttackEntry(DAMAGE_ONLY, "ほのおのしっぽ"),
+    )),
+    **_v0_76_same_data(("ES1-028", "QSG-041"), (
+        _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[1].format(n=10)),
+        AttackEntry(DAMAGE_ONLY, "つつく"),
+    )),
+    **_v0_76_same_data(("ES2-006", "QSG-017"), (
+        _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[2].format(n=10)),
+        _printed(ParalyzeOnHeads(), "れいとうビーム", _PARALYZE_ON_HEADS_TEXT),
+    )),
+    AttackKey("IP1-040", 0): _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[1].format(n=10)),
+    AttackKey("IP1-040", 1): _printed(ParalyzeOnHeads(), "でんきショック", _PARALYZE_ON_HEADS_TEXT),
+    AttackKey("PF1-001", 0): _printed(ReduceDamageToSelfNextOpponentTurn(10), "なきごえ", GROWL_TEXTS[2].format(n=10)),
+    AttackKey("PF1-001", 1): AttackEntry(DAMAGE_ONLY, "はっぱカッター"),
+    AttackKey("PR1-006", 0): AttackEntry(DAMAGE_ONLY, "ずつき"),
+    AttackKey("PR1-006", 1): _printed(LockOpponentAttack(), "ドわすれ", LOCK_OPPONENT_ATTACK_TEXTS[2]),
+    AttackKey("ES3-004", 0): _printed(LockOpponentAttackOnHeads(), "かなしばり",
+                                      "コインを投げて「おもて」なら、相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。"),
+    AttackKey("ES3-004", 1): _printed(ConfuseOnHeads(), "サイケこうせん", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    **_v0_76_same_data(("ES2-021", "QSG-035"), (
+        _printed(CoinNextTurnMultiplyElseLockAttack(1, "どつく", 2), "きあいいっぱつ",
+                 "コインを投げて「おもて」なら、次の自分の番、この「ワンリキー」が使う「どつく」のダメージは2倍になる。「うら」なら、次の自分の番、この「ワンリキー」は「どつく」を使えない。"),
+        AttackEntry(DAMAGE_ONLY, "どつく"),
+    )),
+    AttackKey("PF1-004", 0): _printed(AttackLockWhileSourceActiveOnHeads(), "にらみつける", LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS[0]),
+    AttackKey("PF1-004", 1): _printed(DamageIgnoringDefenderEffects(), "スピードスター",
+                                      "このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。"),
+    AttackKey("PRN-003", 0): _printed(AttackLockWhileSourceActiveOnHeads(), "しっぽをふる", LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS[0]),
+    AttackKey("PRN-003", 1): _printed(ExtraEnergyDamage(EnergyType.WATER, 10, 2), "みずでっぽう",
+                                      "ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1つにつき、10ダメージを追加する。ダメージ追加は2つぶんまで。"),
+    **_v0_76_same_data(("PRN-008", "PRN-011"), (
+        _printed(AttackLockWhileSourceActiveOnHeads(), "にらみつける", LOCK_WHILE_SOURCE_ACTIVE_ON_HEADS_TEXTS[1]),
+        _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "みだれひっかき", "コインを3枚投げ、「おもて」の数×10のダメージ。"),
+    )),
+    AttackKey("IP2-026", 0): _printed(FailOnTailsDamage(1), "とびかかる", "コインを投げて「うら」なら、このワザは失敗する。"),
+    AttackKey("IP2-026", 1): _printed(DiscardEnergyBeforeDamage(EnergyType.FIRE, 1, "effect", "cannot_use"), "ひのこ",
+                                      "自分についている「炎」エネルギーカードを1枚トラッシュしなければ、このワザは使えない。"),
+})
+
+# v0.76: 24 枚のうち、ほかの v0.76 のカードと処理に使う欄（日本語）が同じカード（kyuura の同じカードの組。7 組・16 枚）。id ごとに書いた登録を同じ値にまとめる（v0.70 の
+# ``_with_shared_entries``。元データの id は消さない。データが同じことは tests/test_persistent_attack_modifiers_v0_76.py が写しで確かめる）
+SAME_DATA_CARDS_V0_76: Mapping[str, str] = MappingProxyType({
+    "QSG-005": "ES1-007",  # ニドラン♂
+    "QSG-013": "ES1-015",  # ゼニガメ
+    "IP2-018": "ES1-015",  # ゼニガメ
+    "QSG-007": "ES1-013",  # ヒトカゲ
+    "QSG-041": "ES1-028",  # ドードー
+    "QSG-017": "ES2-006",  # パウワウ
+    "QSG-035": "ES2-021",  # ワンリキー
+    "PRN-011": "PRN-008",  # ワニノコ
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_76_ATTACKS), SAME_DATA_CARDS_V0_76)

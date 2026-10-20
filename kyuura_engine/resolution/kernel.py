@@ -56,7 +56,7 @@ from ..effects import (
 )
 from ..conditions import confuse
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
-from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from .. import effects as E
 from ..state import RETALIATION_FIXED
@@ -574,7 +574,10 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         if cry is not None and cry.source_card == receiver.card:
             # v0.34: 「なきつく」を受けたポケモンのワザが、効果を与えたポケモン（「このカード」）が控えにいるときにダメージを与える。説明の「このカードに
             # ワザを使う時」に控えポケモンへのダメージを含むかは決められない（NK5）
-            raise res.question("reduced_damage_bench_target", f"ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
+            # v0.76: 「なきごえ」（期限が次の相手の番の終わりの部分型。説明は「このカードにダメージを与える時」）も、控えにいるこのカードへのダメージに当てはめるかは記録で
+            # 決まらないので同じ問い（NK5）。理由の文（「なきつく」の文）は v0.75 までと同じにし、なきごえのときだけ補足に書く
+            growl = f"「なきごえ」（このカードにダメージを与える時、そのダメージが「-{cry.amount}」）の効果。" if not expires_at_turn_start(cry) else ""
+            raise res.question("reduced_damage_bench_target", f"{growl}ポケモン {attacker.pokemon_id} → 控えのポケモン {receiver.pokemon_id}")
     base_modifiers = attack_modifiers_of(res, frame, attacker, receiver, target, defender_effects=defender_effects)
     if not defender_effects:
         weakness_resistance = False

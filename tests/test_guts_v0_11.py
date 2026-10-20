@@ -649,7 +649,9 @@ class G37Test(unittest.TestCase):
             "StatusByCoinWithoutDamage",
             # v0.72（ダメージを与えた後に自分と相手を特殊状態にする・ダメージのないどくとねむり・ねむりから回復させる・ダメージを与えた後に入れ替える。
             # docs/status-coins-effect-reuse-v0.72.md）
-            "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage"]))
+            "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage",
+            # v0.76（なきごえ・かなしばり・にらみつける。docs/persistent-attack-modifiers-v0.76.md）
+            "ReduceDamageToSelfNextOpponentTurn", "LockOpponentAttackOnHeads", "AttackLockWhileSourceActiveOnHeads"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -2836,3 +2836,52 @@
 
 - 検証用デッキ `W75`・`F75` と組 `PAIRINGS_V0_75`（`W75` 対 `F75`・`F75` 対 `T74`・`W75` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.75` です（前の版の組の結果は変わらない）。
   決定は `_v075_decision`、数えた結果は `v075_uses`。公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 持続する効果・ワザの使用の制限を中心とするポケモン 24 枚（v0.76）
+
+### 対象と数
+
+- kyuura の data/engine_targets.json の `new_effect_needed` のポケモン 24 枚（ワザ 48。写しの組 `pool_v0_76`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.75 | v0.76 |
+  |---|---|---|
+  | 写し・対応するカード | 802・802 | 826・826 |
+  | 対応ポケモン・トレーナー・エネルギー | 561・211・30 | 585・211・30 |
+  | ワザ・特殊能力の登録 | 947・74 | 995・74 |
+  | 停止コード・未解決の裁定 | 163・165 | 163・165 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API は変えていません。カードごとの型・根拠・検証は docs/persistent-attack-modifiers-v0.76.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。24 枚の pcg-search.com・カードの画像との照合もしていません。英語の欄・現代のルール・後年の裁定で補わないでください。
+- テストの定数は tests/helpers.py の `V0_76_POKEMON`・`V0_76_CARDS`（`LT_SURGES_RATTATA_GD3` と PMCG5-056、`GROWLITHE_IP2` と `GROWLITHE_ES3` などを取りちがえない）。
+
+### 共通の処理
+
+- 指定したワザの 2 倍・3 倍は v0.35 の `MultiplyNextTurnAttackDamage`（p.321 の 2 段階）。説明の前半は `effects.MULTIPLY_NEXT_TURN_TEXT_HEADS` の 4 つだけを受け付け、後半は登録の値で作ります。
+  「その数にする」（SET）・最終ダメージの倍数と取りちがえないでください。自分へのダメージにも当てはめるのは説明にあるときだけです。
+- 説明（独立した効果）のあるワザのダメージを「その数にする」（マリルの「はずむ」）は、v0.27 の `SetNextTurnAttackDamage` の `target_text`（変わるワザの説明の全文）で登録します。
+  `target_text` が None なら v0.27 と同じく説明のないワザだけです。`card_problems` を空にしないでください。変わるワザの効果（コイン・マヒ）は、そのワザの登録のまま処理します。
+- 「なきごえ」は `state.ReducedDamageToSourceNextTurn`（v0.34 の `ReducedDamageToSource` の部分型。種類 `reduced_damage_to_source_next_turn`。期限は次の相手の番の終わり）で、要素は
+  `OpponentReducedDamage(until_turn_end=True)`。v0.34 の「なきつく」の期限（次の自分の番の始め。`expires_at_turn_start`）を、説明の違うワザに当てはめないでください。控えにいる効果を
+  与えたポケモンへのダメージは NK5（理由の文はなきつくの文のまま、補足になきごえと書く）。ワザでないダメージに当てはめるかは今の対応カードでは起こらず、
+  `effects.received_power_damage` がエンジンの不具合として止めます。
+- 相手のワザを選んで使えなくする効果のコインは `OpponentAttackLock.local_coin`（かなしばり）。コインは選ぶ前で、選ぶワザがなければ投げません。効果だけを決めるコインの問い
+  （T19b・HC3）は `programs.effect_coin_questions` で、`OpponentAttackLockWhileSourceActive`（v0.76 から `max_hp` None と `local_coin`。にらみつける・しっぽをふる）も同じです。
+- 1 枚のコインでどちらか一方を与える（きあいいっぱつ）は、`Coin` と、`SelfNextTurnAttackDamage`・`SelfAttackLock` の `gate` です。`SelfAttackLock.target_attack_index`（None なら
+  このワザ自身）で、使えなくなるのは「どつく」だけです。不変条件 `engine._attack_lock_problems` は登録の `attack_lock_terms()` の位置と照らします（あわあわ・きあいずつきは None のまま）。
+  ログの監査 `tests/log_audit.coin_gated_effect_problems` は、コインの面と与えた効果（両方を与えない）を確かめます。コインの面で効果を決める型を加えたら、監査にも加えてください。
+- 新しい 4 つの型は `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。まねるワザ（ゆびをふるなど）での次の自分の番の効果・ドわすれ・かなしばりは
+  既存のエンジンの未対応（`UNSUPPORTED_COPIED_ATTACK`）のままです。`engine.py`・`resolution/` にカード id の分岐を加えないでください。
+
+### 同じデータのカード・記録
+
+- 同じデータの 7 組（16 枚）は `effects.SAME_DATA_CARDS_V0_76`（v0.70 の `_with_shared_entries`）で同じ登録の値にまとめます。元データの id は消しません。
+- 採用の記録 24 件（`kyuura_records` 空・外部照合なし）。研究の対応表の `adopted_printed_text` に説明文のあるワザ 36 を加えました。
+- 新しいポケモンの名前はウパーだけです（カツラのクイズの候補が 1 つ増える）。マチスの秘策の試すカードは公開の登録の一覧から作り、上限（512）は変えていません。
+- v0.75 の文書の誤り 2 点（クイズの候補の位置・ほうしをとばすのカード）を直しました（docs 12 章）。
+
+### 検証用デッキ
+
+- 検証用デッキ `K76`・`W76` と組 `PAIRINGS_V0_76`（`K76` 対 `W76`・`K76` 対 `P31`・`W76` 対 `C72`）は tools/existing_effect_games.py の `--batch v0.76` です（前の版の組の結果は変わらない）。
+  ドわすれ・かなしばりの決定は `_v076_decision`、数えた結果は `v076_uses`（集計の `v076`）。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

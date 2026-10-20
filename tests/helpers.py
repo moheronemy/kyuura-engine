@@ -1249,6 +1249,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinAttachEnergyFromDeckToSelf,  # キングラー（ES3-014）の「しおまねき」（AttachFromDeck の max_cards・local_coin・shuffle）
     _effects.DamageThenDoubleDamageNextTurn,  # キングラー（ES3-014）の「もろばバサミ」（持続する効果 DoubledDamage）
     _effects.AttachDiscardEnergyCardsToSelf,  # ミュウツー（PR1-007・PR1-008）の「エネルギーきゅうしゅう」（AttachFromDiscard の energy_type None）
+) + (
+    # v0.76（docs/persistent-attack-modifiers-v0.76.md）
+    _effects.ReduceDamageToSelfNextOpponentTurn,  # ヒトカゲ（ES1-013）などの「なきごえ」（OpponentReducedDamage の until_turn_end）
+    _effects.LockOpponentAttackOnHeads,  # コンパン（ES3-004）の「かなしばり」（OpponentAttackLock の local_coin）
+    _effects.CoinNextTurnMultiplyElseLockAttack,  # ワンリキー（ES2-021・QSG-035）の「きあいいっぱつ」（Coin → SelfNextTurnAttackDamage・SelfAttackLock の gate）
+    _effects.AttackLockWhileSourceActiveOnHeads,  # ヒノアラシ（PF1-004）などの「にらみつける」（OpponentAttackLockWhileSourceActive の max_hp None・local_coin）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1870,3 +1876,26 @@ SUNKERN_PRN = "PRN-032"  # ヒマナッツ（せいちょう・メガドレイ�
 V0_75_POKEMON = (BROCKS_ZUBAT_GD1, MISTYS_PSYDUCK_GD2, MISTYS_TENTACOOL_GD2, BLAINES_VULPIX_GD5, BLAINES_GROWLITHE_GD5, SABRINAS_DROWZEE_GD6, PARAS_ES1,
                  GROWLITHE_ES3, GROWLITHE_QSG, KINGLER_ES3, PIKACHU_QSG, PIKACHU_PR1, MEWTWO_PR1, MEWTWO_PR1_B, SUNKERN_PRN)
 V0_75_CARDS = V0_75_POKEMON
+
+
+# v0.76（docs/persistent-attack-modifiers-v0.76.md）: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚（kyuura データの採用）
+LT_SURGES_RATTATA_GD3 = "GD3-011"  # マチスのコラッタ（きあいだめ・かじる。PMCG5-056 とは別のカード）
+NIDORAN_M_ES1, NIDORAN_M_QSG = "ES1-007", "QSG-005"  # ニドラン♂（きあいだめ・つのでとっしん。同じデータ）
+SQUIRTLE_ES1, SQUIRTLE_QSG, SQUIRTLE_IP2 = "ES1-015", "QSG-013", "IP2-018"  # ゼニガメ（ウォーターパワー・はたく。同じデータ）
+MARILL_PRN = "PRN-028"  # マリル（はずむ・とびのる）
+CHARMANDER_ES1, CHARMANDER_QSG = "ES1-013", "QSG-007"  # ヒトカゲ（なきごえ・ほのおのしっぽ。同じデータ）
+DODUO_ES1, DODUO_QSG = "ES1-028", "QSG-041"  # ドードー（なきごえ・つつく。同じデータ）
+SEEL_ES2, SEEL_QSG = "ES2-006", "QSG-017"  # パウワウ（なきごえ・れいとうビーム。同じデータ）
+PIKACHU_IP1 = "IP1-040"  # ピカチュウ（なきごえ・でんきショック）
+CHIKORITA_PF1 = "PF1-001"  # チコリータ（なきごえ・はっぱカッター）
+SLOWPOKE_PR1 = "PR1-006"  # ヤドン（ずつき・ドわすれ）
+VENONAT_ES3 = "ES3-004"  # コンパン（かなしばり・サイケこうせん）
+MACHOP_ES2, MACHOP_QSG = "ES2-021", "QSG-035"  # ワンリキー（きあいいっぱつ・どつく。同じデータ）
+CYNDAQUIL_PF1 = "PF1-004"  # ヒノアラシ（にらみつける・スピードスター）
+WOOPER_PRN = "PRN-003"  # ウパー（しっぽをふる・みずでっぽう）
+TOTODILE_PRN, TOTODILE_PRN_B = "PRN-008", "PRN-011"  # ワニノコ（にらみつける・みだれひっかき。同じデータ）
+GROWLITHE_IP2 = "IP2-026"  # ガーディ（とびかかる・ひのこ。ES3-010 とは別のデータ）
+V0_76_POKEMON = (LT_SURGES_RATTATA_GD3, NIDORAN_M_ES1, NIDORAN_M_QSG, SQUIRTLE_ES1, SQUIRTLE_QSG, SQUIRTLE_IP2, MARILL_PRN, CHARMANDER_ES1, CHARMANDER_QSG,
+                 DODUO_ES1, DODUO_QSG, SEEL_ES2, SEEL_QSG, PIKACHU_IP1, CHIKORITA_PF1, SLOWPOKE_PR1, VENONAT_ES3, MACHOP_ES2, MACHOP_QSG, CYNDAQUIL_PF1,
+                 WOOPER_PRN, TOTODILE_PRN, TOTODILE_PRN_B, GROWLITHE_IP2)
+V0_76_CARDS = V0_76_POKEMON

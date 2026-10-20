@@ -1836,3 +1836,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: ナツメのスリープ GD6-009 の「エナジーサポート」の英語の欄（手札に加える）は、日本語の文面（自分の控えポケモンにつける）と処理が違う。エンジンは日本語にしたがった。
 - 報告事項（kyuura の作業）: RB5・DB1 は kyuura の未解決の一覧にない（RB5 は UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY と同じ形）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.75 の登録を写すと、15 枚の `engine_status` が `registered` になる。
+
+## v0.76: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚
+
+[persistent-attack-modifiers-v0.76.md](persistent-attack-modifiers-v0.76.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_76`（24 枚。kyuura data/engine_targets.json の `new_effect_needed` のポケモン）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.75 までの 802 枚の記録は変わっていない。
+- 24 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、24 の id と
+  旧 pcg-search のページの id を指す LD-・CC-・CR-・UQ-・訂正の記録はない（収録の記録と同じカードの組だけ）。
+- kyuura の日本語の文面は 24 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- PRN-028・PRN-003・PRN-008・PRN-011（プロモ neo）・PF1-001・PF1-004（プレミアムファイル）は 2000.02.14 版のあとに発売したカードを含む。発売日を変えずに持ち、のちのルールは持ち込まない。
+- ガーディ IP2-026 のひのこのトラッシュの時点は、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（v0.75 のガーディ ES3-010 と同じ文面・同じ登録）。
+- 報告事項（kyuura の作業）: 同じカードの組 SC-ES1-028（ドードー ES1-028・QSG-041）の `text_difference` の要約は、この組のワザの文面に当たらない。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.76 の登録を写すと、24 枚の `engine_status` が `registered` になる。

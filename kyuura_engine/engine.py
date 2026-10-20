@@ -2693,8 +2693,10 @@ def _attack_lock_problems(state: GameState, pokemon: PokemonInPlay, effect, wher
     terms = getattr(entry.effect, "attack_lock_terms", None) if entry is not None else None
     if terms is None or terms()[0] is not type(effect) or (terms()[1] is not None and terms()[1] != effect.target_attack_index):
         return [f"{where} {effect!r} が、カード {source.id} の {effect.attack_index} 番目のワザ（登録された実装）の効果と合わない"]
-    if isinstance(effect, CannotUseOwnAttack) and effect.target_attack_index != effect.attack_index:
-        return [f"{where} {effect!r} の使えなくなるワザが、効果を与えたワザ（このカードの同じワザ）ではない"]
+    # v0.76: 「あわあわ」・「きあいずつき」（登録の位置が None）は効果を与えたワザ自身、ワンリキーの「きあいいっぱつ」は登録の位置（「どつく」）
+    own_target = effect.attack_index if terms()[1] is None else terms()[1]
+    if isinstance(effect, CannotUseOwnAttack) and effect.target_attack_index != own_target:
+        return [f"{where} {effect!r} の使えなくなるワザが、効果を与えたワザの登録（このカードの {own_target} 番目のワザ）と違う"]
     # v0.49: 使えなくなるワザを印刷したカード（「あわあわ」は効果を与えたワザと同じカード、「ドわすれ」は ``target_attack_card``。なければこのポケモンのカード）
     if isinstance(effect, CannotUseOwnAttack):
         target = source

@@ -500,6 +500,7 @@ POOL_KEYS = (
     "pool_v0_73",  # v0.73（拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚。docs/search-recovery-trainers-v0.73.md）
     "pool_v0_74",  # v0.74（拡張パック以外の商品のスタジアム 13 枚。docs/remaining-stadiums-v0.74.md）
     "pool_v0_75",  # v0.75（拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚。docs/search-energy-pokemon-v0.75.md）
+    "pool_v0_76",  # v0.76（拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚。docs/persistent-attack-modifiers-v0.76.md）
 )
 
 

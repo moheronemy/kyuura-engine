@@ -93,6 +93,7 @@ from kyuura_engine.effects import (  # v0.75
     AttachDiscardEnergyCardsToSelf, AttachEnergyFromDeckToBench, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, RevealNamedPokemonFromDeckAny,
 )
 from kyuura_engine.effects import CoinBenchOwnerBasicFromDeckStadium, CoinRetrieveBasicEnergyStadium, DiscardToHandSuppressionStadium  # v0.74
+from kyuura_engine.effects import AttackLockWhileSourceActiveOnHeads, CoinNextTurnMultiplyElseLockAttack, LockOpponentAttackOnHeads  # v0.76
 from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
 from kyuura_engine.effects import BlainesQuiz, ChallengeBenchFromDecks, CoinSetAsideOpponentHandElseEndTurn, RevealAllPrizesTrainer  # v0.63
 from kyuura_engine.effects import (
@@ -257,6 +258,7 @@ from kyuura_engine.state import (
     NextTurnAttackDamage,
     Phase,
     ReducedDamageToSource,
+    ReducedDamageToSourceNextTurn,
     ResistanceChange,
     TailsDamageGuard,
     WeaknessChange,
@@ -267,6 +269,8 @@ TERMINAL = (Phase.GAME_OVER, Phase.SUDDEN_DEATH, Phase.HALTED)
 V048_LASTING_KINDS = (WeaknessChange.kind, ResistanceChange.kind, MaxHpSet.kind)
 # v0.60: 「かげぶんしん」（与えた番からはたらき、期限では消えない。ダメージを受けた・ベンチにもどる・進化・場をはなれると消える）
 LASTING_KINDS = (*V048_LASTING_KINDS, TailsDamageGuard.kind)
+# v0.76: 「このカード」に与えるダメージを 2 段階で減らす相手に与える効果（なきつく・かみつく は次の自分の番の始め、なきごえ は次の相手の番の終わりに消える）
+REDUCED_DAMAGE_KINDS = (ReducedDamageToSource.kind, ReducedDamageToSourceNextTurn.kind)
 
 # v0.10: はたらいた「はんげき」より先にあってはならない、ワザのダメージ以外の効果・きぜつ・番の終わり（p.89）
 COUNTER_BARRIERS = (
@@ -767,6 +771,46 @@ def _effect_of_event(state, e: dict):
 def _same_attack(attack_window: dict | None, e: dict) -> bool:
     """ワザの効果のログ ``e`` の ``effect`` が、今のワザ（``attack_window``）か、そのワザが自分のワザとして使った相手のワザ（``copy_attack`` の ``copied``）か（v0.44）。"""
     return attack_window is not None and e.get("effect") is not None and e.get("effect") in (attack_window["effect"], attack_window.get("copied"))
+
+
+def coin_gated_effect_problems(state, log: list[dict]) -> list[str]:
+    """v0.76（docs/persistent-attack-modifiers-v0.76.md 8 章）: コインの面で与える持続する効果が決まるワザの、コインと与えた効果の対応。
+
+    - ワンリキーの「きあいいっぱつ」（``CoinNextTurnMultiplyElseLockAttack``）: ワザ全体のコインを 1 枚だけ投げ、「おもて」なら「数をかける」効果
+      （``next_turn_attack_damage_multiplier``）、「うら」なら登録の位置（``attack_lock_terms``）のワザを使えない効果（``cannot_use_own_attack``）を、ワザを使ったポケモンに
+      ちょうど 1 つ与える（両方を与えない）
+    - コンパンの「かなしばり」（``LockOpponentAttackOnHeads``）・「にらみつける」など（``AttackLockWhileSourceActiveOnHeads``）: コインは 1 枚まで。「うら」なら効果を与えない。
+      効果を与えたら、そのすぐ前のこのワザのコインが「おもて」
+    ワザの処理は、そのワザの ``attack`` のあと、次の ``attack``・``turn_start`` の前までのログ（決定をまたいでも同じ番の中）。"""
+    problems = []
+    gated = (CoinNextTurnMultiplyElseLockAttack, LockOpponentAttackOnHeads, AttackLockWhileSourceActiveOnHeads)
+    for i, e in enumerate(log):
+        if e["kind"] != "attack":
+            continue
+        effect = _attack_effect_of(state, e)
+        if not isinstance(effect, gated):
+            continue
+        key = f"{_attack_card_id(state, e)}#{e['attack_index']}"
+        end = next((j for j in range(i + 1, len(log)) if log[j]["kind"] in ("attack", "turn_start")), len(log))
+        window = log[i + 1:end]
+        coins = [x for x in window if x["kind"] == "coin_flip" and x.get("source") == "attack" and x.get("effect") == key]
+        given = [x for x in window if x["kind"] == "persistent_effect_added" and x.get("effect") == key]
+        where = f"{e['turn']} 番のワザ {key}"
+        if len(coins) > 1 or len(given) > 1:
+            problems.append(f"{where} のコイン {len(coins)} 枚・与えた効果 {len(given)} つが、1 つまでではない")
+            continue
+        if given and (not coins or coins[0]["result"] != "heads") and not isinstance(effect, CoinNextTurnMultiplyElseLockAttack):
+            problems.append(f"{where} が、「おもて」のコインなしに効果を与えた")
+        if isinstance(effect, CoinNextTurnMultiplyElseLockAttack) and coins:
+            # 「数をかける」効果のログは位置・かける数を書かない（v0.35 と同じ形。状態の効果の位置・数は不変条件 ``engine._next_turn_attack_damage_problems`` が
+            # 登録の ``next_turn_terms`` と照らす）。使えなくなる効果のログは使えなくなるワザの位置を書く
+            heads = coins[0]["result"] == "heads"
+            expected = ("next_turn_attack_damage_multiplier", None) if heads else ("cannot_use_own_attack", effect.attack_lock_terms()[1])
+            found = [(x["persistent_effect"], x.get("target_attack_index")) for x in given]
+            skipped = any(x["kind"] == "persistent_effect_skipped" and x.get("effect") == key for x in window)
+            if found != [expected] and not (skipped and not found):
+                problems.append(f"{where} のコイン {coins[0]['result']} で与えた効果 {found} が、{expected} の 1 つではない")
+    return problems
 
 
 def _attack_key(text: str) -> tuple[str, int]:
@@ -1533,11 +1577,12 @@ def log_problems(state) -> list[str]:
         for (effect_pid, _), info in alive.items():
             # v0.34: 「なきつく」を受けたポケモン（ワザを使ったポケモン）が、なきつくを使ったポケモン（効果の発生源のカード）の対戦ポケモンにワザの
             # ダメージを与えるときは、p.321 の 2 段階で効果の量をへらす
-            if (effect_pid == attack_window["pokemon_id"] and info["kind"] == ReducedDamageToSource.kind and info["active_turn"] == e["turn"]
+            # v0.76: 「なきごえ」（期限が次の相手の番の終わり。種類 reduced_damage_to_source_next_turn）も同じ 2 段階
+            if (effect_pid == attack_window["pokemon_id"] and info["kind"] in REDUCED_DAMAGE_KINDS and info["active_turn"] == e["turn"]
                     and target is None and e["pokemon"] == info["source_card"]):
                 card_id, index = info["effect"].split("#")
                 amount = state.effects.attack_entry(card_id, int(index)).effect.amount
-                expected.append((f"{state.printed_def(info['source_card']).name_ja}（{ReducedDamageToSource.kind}）", "add", -amount, info["source_card"]))
+                expected.append((f"{state.printed_def(info['source_card']).name_ja}（{info['kind']}）", "add", -amount, info["source_card"]))
         steps = [tuple(step) for step in (e.get("steps") or ())]
         # v0.46: 常にはたらく特殊能力の 2 段階の記録（くつろぐかおり・きょうぼう）は continuous_damage_problems が確かめる（ここでは並びの位置だけに数える）
         step2_all = [step for step in steps if str(step[0]).startswith("2 ")]
@@ -2167,8 +2212,8 @@ def log_problems(state) -> list[str]:
             received(e, e["pokemon_id"], WAKE_ELEMENT)  # v0.72: めざめのキッス（ワザの効果でねむりから回復させる。相手のポケモンへの効果）
         elif kind == "persistent_effect_added" and e["persistent_effect"] in (CannotAttack.kind, CannotUseAttack.kind, CannotAttackWhileSourceActive.kind):
             received(e, e["pokemon_id"], ATTACK_LOCK_ELEMENT)  # v0.35: 「ドわすれ」も相手の対戦ポケモンが受ける効果。v0.40: 「すごむ」も
-        elif kind == "persistent_effect_added" and e["persistent_effect"] == ReducedDamageToSource.kind:
-            received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34
+        elif kind == "persistent_effect_added" and e["persistent_effect"] in REDUCED_DAMAGE_KINDS:
+            received(e, e["pokemon_id"], REDUCED_DAMAGE_ELEMENT)  # v0.34（v0.76: なきごえも）
         elif kind == "persistent_effect_added" and e["persistent_effect"] == AttackCoinCheck.kind:
             received(e, e["pokemon_id"], ATTACK_CHECK_ELEMENT)  # v0.36
         elif kind == "move_opponent_energy":
@@ -4407,6 +4452,7 @@ def log_problems(state) -> list[str]:
             problems.append(f"持続する効果 {key} が、消したログがないのに状態にない")
         if not alive and key in remaining:
             problems.append(f"持続する効果 {key} が、消したあとも状態に残っている")
+    problems.extend(coin_gated_effect_problems(state, log))  # v0.76
     return problems
 
 

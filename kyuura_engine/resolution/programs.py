@@ -48,7 +48,7 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_per
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventDamage,
-    MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
+    MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..history import note_processed
 from ..zones import (
@@ -1438,6 +1438,17 @@ def prevented_effect_coin(run: AttackRun, owner: int, target: PokemonInPlay) -> 
         raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{void.implementation.kind}）")
 
 
+def effect_coin_questions(run: AttackRun, owner: int, target: PokemonInPlay) -> None:
+    """相手の対戦ポケモンへの効果だけを決めるこの要素のコインの前の問い（v0.76。v0.36 の ``OpponentAttackCheck`` の ``local_coin`` と同じ順番を関数にした）: 前の要素の
+    「とうめい」で受けないと決まっていれば T19b（``evaded_effect_coin``）、効果の要素を無効にする状態（「ワザをうけない」。バリアー）なら HC3（``prevented_effect_coin``）。
+    ダメージだけを防ぐ状態（「ダメージを受けない」）では効果は受けるので、止めずに投げる。"""
+    if run.fs.reception.get(target.pokemon_id) is False:
+        final = run.fs.evaded.get(target.pokemon_id)
+        raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                               None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+    prevented_effect_coin(run, owner, target)
+
+
 @dataclass(frozen=True)
 class ForceSwitch(Element):
     """相手の対戦ポケモンをベンチにもどし、相手が選んだ控えと入れ替える（ふきとばし。v0.13 の ``DamageAndForceSwitch`` と同じ結果・ログ）。"""
@@ -1669,6 +1680,8 @@ class SelfNextTurnAttackDamage(Element):
     amount: int
     operation: str = NEXT_TURN_SET  # v0.35: ``NEXT_TURN_MULTIPLY`` なら「数をかける」（「きあいだめ」の 2 倍。``amount`` はかける数）
     includes_self_damage: bool = False  # v0.35: そのワザの自分へのダメージにも（マチスのラッタの「(自分へのダメージも2倍)」）
+    # v0.76: ワザ全体のコインの面（ワンリキーの「きあいいっぱつ」は、同じ 1 枚のコインの「おもて」で与え、「うら」で ``SelfAttackLock`` を与える）。None ならいつも与える
+    gate: tuple | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
@@ -1677,6 +1690,8 @@ class SelfNextTurnAttackDamage(Element):
         return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない"
 
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         attacker = run.attacker()
         turn = run.state.turn_number
         effect = NextTurnAttackDamage(source_card=attacker.card, source_player=run.player, created_turn=turn,
@@ -3104,6 +3119,11 @@ class SelfAttackLock(Element):
 
     # v0.41: None ならコインを投げずにいつも与える（ナツメのヤドランの「きあいずつき」の「次の自分の番、このカードは「きあいずつき」を使えない。」）
     local_coin: CoinSide | None = TAILS
+    # v0.76: 使えなくなるワザの位置（同じカードのワザ）。None なら、このワザ自身（v0.75 までのあわあわ・きあいずつきと同じ）。ワンリキーの「きあいいっぱつ」は
+    # 「うら」なら「どつく」（位置 1）を使えなくする（使ったワザ「きあいいっぱつ」は使える）
+    target_attack_index: int | None = None
+    # v0.76: ワザ全体のコインの面（「きあいいっぱつ」の同じ 1 枚のコインの「うら」）。None ならこの要素のコイン（``local_coin``）だけ
+    gate: tuple | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
@@ -3112,6 +3132,8 @@ class SelfAttackLock(Element):
         return UNSUPPORTED, "番をまたぐ効果を、効果を持つポケモンのカードのワザの位置で記録するので、相手のワザとして使った効果を表せない"
 
     def run(self, run: AttackRun) -> bool:
+        if self.gate is not None and not run.coin_is(self.gate):
+            return False
         attacker = run.attacker()
         if run.knocked_out(attacker):
             run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
@@ -3120,9 +3142,9 @@ class SelfAttackLock(Element):
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
         turn = run.state.turn_number
-        index = run.key.attack_index
+        index = run.key.attack_index if self.target_attack_index is None else self.target_attack_index
         effect = CannotUseOwnAttack(source_card=attacker.card, source_player=run.player, created_turn=turn,
-                                    active_turn=turn + CannotUseOwnAttack.turns_until_active, attack_index=index, target_attack_index=index,
+                                    active_turn=turn + CannotUseOwnAttack.turns_until_active, attack_index=run.key.attack_index, target_attack_index=index,
                                     attack_card=effect_attack_card_of(run, attacker))
         add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key), target_attack_index=index)
         return False
@@ -3134,6 +3156,10 @@ class OpponentAttackLock(Element):
     （v0.35。カスミのニョロモの「ドわすれ」。持続する効果 ``CannotUseAttack``）。相手に与える効果なので、選ぶ前に「ワザをうけない」状態・「とうめい」を
     評価する（受けないなら選ばない。v0.31 の ``DiscardOpponentEnergy`` と同じ順番）。選べるものは、そのポケモンのいちばん上のカードのワザの位置。"""
 
+    # v0.76: この要素のコイン（コンパンの「かなしばり」は「おもて」なら選ぶ）。相手がこのワザで HP 以上・選ぶワザがない（処理の対象がない。p.309）なら投げない。「とうめい」で
+    # 受けないと決まった相手・「ワザをうけない」相手には、効果だけを決めるコインなので T19b・HC3（v0.36 の ``OpponentAttackCheck`` と同じ）。「うら」なら選ばず、効果も
+    # 与えない（ワザの失敗ではない）。コインは選ぶ前で、決定をまたいで投げ直さない（決定のあとは ``resume`` だけ）
+    local_coin: CoinSide | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_OPPONENT_ATTACK
     opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
@@ -3150,6 +3176,12 @@ class OpponentAttackLock(Element):
         if run.knocked_out(target):
             run.ko_prevention_conflict(target)
             return False
+        if self.local_coin is not None:
+            if not E.held_attack_keys(run.state, target)[0]:
+                return False  # v0.76: 選ぶワザがない（処理の対象がない。p.309）。コインを投げない
+            effect_coin_questions(run, opponent, target)
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
         if not reaches(run.res, run.fs, opponent, target, E.ATTACK_LOCK_ELEMENT):
             return False
         # v0.49: 選べるものは相手の対戦ポケモンが今持つワザ（``E.held_attack_keys``。今の姿のカード・［サイコリンク］で持つワザを含む。ワザごとに 1 つ）。並びが
@@ -3201,6 +3233,8 @@ class OpponentReducedDamage(Element):
     カラカラの「なきつく」。持続する効果 ``ReducedDamageToSource``。相手に与える効果なので「とうめい」・「ワザをうけない」状態を評価する）。"""
 
     amount: int
+    # v0.76: 期限が「次の相手の番」（はたらく番の終わり）の「なきごえ」（``ReducedDamageToSourceNextTurn``）。False なら v0.34 の「なきつく」の「次の自分の番の始め」
+    until_turn_end: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.REDUCED_DAMAGE_ELEMENT
 
@@ -3214,8 +3248,8 @@ class OpponentReducedDamage(Element):
             return False
         attacker = run.attacker()
         turn = run.state.turn_number
-        effect = ReducedDamageToSource(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + 1,
-                                       amount=self.amount)
+        kind = ReducedDamageToSourceNextTurn if self.until_turn_end else ReducedDamageToSource
+        effect = kind(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn + 1, amount=self.amount)
         add_persistent_effect(run.state, opponent, target, effect, attack=str(run.key))
         return False
 
@@ -3848,7 +3882,10 @@ class OpponentAttackLockWhileSourceActive(Element):
     - 「このカードがバトル場にいる限り」は、ワザの宣言のときに効果を与えたポケモンがバトル場にいるかで確かめる（``persistent.cannot_attack_while_source_active``）
     """
 
-    max_hp: int
+    max_hp: int | None  # v0.76: None なら最大HPの条件がない（ヒノアラシ・ワニノコの「にらみつける」・ウパーの「しっぽをふる」）
+    # v0.76: この要素のコイン（「コインを投げて「おもて」なら、…」）。相手がこのワザで HP 以上なら投げない（p.309）。「とうめい」で受けないと決まった相手・「ワザをうけない」相手には、
+    # 効果だけを決めるコインなので T19b・HC3（v0.36 の ``OpponentAttackCheck`` と同じ）。「うら」なら効果を与えない（ワザの失敗ではない）
+    local_coin: CoinSide | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.ATTACK_LOCK_ELEMENT
 
@@ -3858,8 +3895,12 @@ class OpponentAttackLockWhileSourceActive(Element):
         if run.knocked_out(target):
             run.ko_prevention_conflict(target)
             return False
-        if E.max_hp(run.state, target) > self.max_hp:  # v0.48: 今有効な最大HP（受けるとき）
+        if self.max_hp is not None and E.max_hp(run.state, target) > self.max_hp:  # v0.48: 今有効な最大HP（受けるとき）
             return False
+        if self.local_coin is not None:
+            effect_coin_questions(run, opponent, target)
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
         if not reaches(run.res, run.fs, opponent, target, E.ATTACK_LOCK_ELEMENT):
             return False
         attacker = run.attacker()
@@ -6742,6 +6783,15 @@ BUILDERS: dict[type, Any] = {
     E.AttachEnergyFromDeckToBench: lambda e: (AttachFromDeckToBench(e.energy_type),),
     E.CoinAttachEnergyFromDeckToSelf: lambda e: (AttachFromDeck(e.energy_type, e.max_cards, zero=ZERO_UNRESOLVED, local_coin=HEADS, shuffle=False),),
     E.DamageThenDoubleDamageNextTurn: lambda e: (Damage(OPP, Printed()), SelfPersistent(DoubledDamage.kind)),
+    # v0.76（docs/persistent-attack-modifiers-v0.76.md）
+    E.ReduceDamageToSelfNextOpponentTurn: lambda e: (OpponentReducedDamage(e.amount, until_turn_end=True),),
+    E.LockOpponentAttackOnHeads: lambda e: (OpponentAttackLock(local_coin=HEADS),),
+    E.CoinNextTurnMultiplyElseLockAttack: lambda e: (
+        Coin("coin"),
+        SelfNextTurnAttackDamage(e.target_attack_index, e.factor, operation=NEXT_TURN_MULTIPLY, gate=("coin", HEADS)),
+        SelfAttackLock(local_coin=None, target_attack_index=e.target_attack_index, gate=("coin", TAILS)),
+    ),
+    E.AttackLockWhileSourceActiveOnHeads: lambda e: (OpponentAttackLockWhileSourceActive(None, local_coin=HEADS),),
     E.AttachDiscardEnergyCardsToSelf: lambda e: (AttachFromDiscard(None, e.max_cards),),
 }
 

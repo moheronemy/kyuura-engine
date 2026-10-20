@@ -765,7 +765,11 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "どくばり", "どくばり", "でんきショック", "でんきショック", "しめつける", "しめつける", "しびれごな",
                                         # v0.75: カツラのガーディ（GD5-006）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/search-energy-pokemon-v0.75.md）
-                                        "のしかかり"]))
+                                        "のしかかり",
+                                        # v0.76: マリル（PRN-028）の「とびのる」・パウワウ（ES2-006・QSG-017）の「れいとうビーム」・ピカチュウ（IP1-040）の「でんきショック」
+                                        # （ParalyzeOnHeads）・コンパン（ES3-004）の「サイケこうせん」（ConfuseOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
+                                        # （docs/persistent-attack-modifiers-v0.76.md）
+                                        "とびのる", "れいとうビーム", "れいとうビーム", "でんきショック", "サイケこうせん"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

@@ -175,18 +175,18 @@ class RegistrationTest(unittest.TestCase):
         self.assertNotIn("自分の番ごとに1回", registry.trainer_entry(LUCKY_STADIUM_027).text_ja)
 
     def test_counts_from_the_registry(self):
-        """対応するカード 802（ポケモン 561・トレーナー 211・エネルギー 30）、スタジアムの登録 33、ワザ 947・特殊能力 74（登録から数える。v0.74 は 787・546・917。v0.75 で
+        """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、スタジアムの登録 33、ワザ 995・特殊能力 74（v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた。登録から数える。v0.74 は 787・546・917。v0.75 で
         拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた）。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (802, 561, 211, 30))  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (826, 585, 211, 30))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
         registry = E.DEFAULT_EFFECTS
         self.assertEqual(len(registry.trainer_ids()), 211)
         self.assertEqual(sum(1 for c in registry.trainer_ids() if registry.trainer_entry(c).effect.is_stadium), 33)
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys())), (947, 74))  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys())), (995, 74))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
 
     def test_non_pack_unsupported_count(self):
-        """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 252 枚（v0.74 は 267 枚・v0.73 は 280 枚。v0.75 で 15 枚を加えた）。"""
+        """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚・v0.74 は 267 枚・v0.73 は 280 枚。v0.75 で 15 枚を加えた）。"""
         import subprocess
         raw = subprocess.run(["git", "-C", str(ROOT.parent / "kyuura"), "show", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3:data/engine_targets.json"],
                              capture_output=True, text=True, check=False)
@@ -195,7 +195,7 @@ class RegistrationTest(unittest.TestCase):
         data = json.loads(raw.stdout)
         targets = data["cards"] if isinstance(data, dict) else data
         pool = load_card_pool()
-        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 252)
+        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 228)
 
     def test_text_and_values_are_checked_together(self):
         """登録の値と印刷の文面を照らす（ほかの版の文面・ちがう値の登録・持ち主の名前は受け付けない）。広い言い回しで受け付けない。"""

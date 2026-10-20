@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.75）
+# 実装状況（v0.1〜v0.76）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3637,3 +3637,20 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | もろばバサミ（次の相手の番、受けるワザのダメージは 8 段階で 2 倍） | 実装済み・テスト済み（トレーナーのダメージは TD1、特殊能力のダメージは DB1 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER | 同 `DoubleEdgedTest` |
 | `SEARCH_DECK`・`ATTACH_FROM_DECK` の選べるものの数を相手の観測に見せない | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `RegistrationTest.test_observation_tables`・tests/log_audit.py |
 | 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.76: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚
+
+[persistent-attack-modifiers-v0.76.md](persistent-attack-modifiers-v0.76.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 24 枚（`pool_v0_76`。kyuura の `new_effect_needed` のポケモン）・ワザ 48・同じデータの 7 組（16 枚）の共有 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_persistent_attack_modifiers_v0_76.py `RegistrationTest` |
+| 指定したワザの 2 倍・3 倍（きあいだめ・ウォーターパワー。p.321 の 2 段階） | 実装済み・テスト済み | 印刷の文面と GR-2000-P321-DAMAGE-ORDER（v0.35 の型） | 同 `MultiplyNextTurnTest` |
+| 説明のあるワザを「30」にする（はずむ。とびのるのマヒのコインは残す） | 実装済み・テスト済み | 印刷の文面（v0.27 の型に `target_text`） | 同 `SetNextTurnWithEffectTest` |
+| なきごえ（相手に与える効果。2 段階で −10。期限は次の相手の番の終わり） | 実装済み・テスト済み（控えへのダメージは NK5 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER・GR-2000-P322-PERSISTENT-EFFECTS | 同 `GrowlTest` |
+| ドわすれ・かなしばり（コインの「おもて」で選ぶ。選ぶのはワザを使ったプレイヤー） | 実装済み・テスト済み（「ワザをうけない」相手は HC3） | 印刷の文面（v0.35・v0.49 の型） | 同 `OpponentAttackLockTest` |
+| きあいいっぱつ（1 枚のコインで、どつくの 2 倍か、どつくだけを使えない） | 実装済み・テスト済み | 印刷の文面 | 同 `FocusPunchTest` |
+| にらみつける・しっぽをふる（コインの「おもて」で、発生源がバトル場にいる間ワザを使えない。最大HPの条件なし） | 実装済み・テスト済み（同じ番に発生源がもどる場面は SG1） | 印刷の文面（v0.40 の型） | 同 `LockWhileSourceActiveTest` |
+| ガーディ IP2-026（とびかかる・ひのこ） | 実装済み・テスト済み | v0.75 のガーディと同じ登録（RUL-ENERGY-DISCARD-ATTACKS） | 同 `GrowlitheAndOthersTest` |
+| まねるワザでの、次の自分の番の効果・ドわすれ・かなしばり | エンジンの未対応（`UNSUPPORTED_COPIED_ATTACK`。状態を変える前に拒否） | 既存の制限のまま | 同 `test_copied_effects_are_rejected_before_state_changes` |
+| 24 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |

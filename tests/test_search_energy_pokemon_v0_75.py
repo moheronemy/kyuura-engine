@@ -203,15 +203,15 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(dict(E.SAME_DATA_CARDS_V0_75), {GROWLITHE_QSG: GROWLITHE_ES3, PIKACHU_PR1: PIKACHU_QSG, MEWTWO_PR1_B: MEWTWO_PR1})
 
     def test_counts_from_the_registry(self):
-        """対応するカード 802（ポケモン 561・トレーナー 211・エネルギー 30）、ワザ 947・特殊能力 74（登録から数える）。"""
+        """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、ワザ 995・特殊能力 74（登録から数える。v0.75 は 802・561・947。v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた）。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (802, 561, 211, 30))
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (826, 585, 211, 30))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (947, 74, 211))
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (995, 74, 211))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
 
     def test_non_pack_unsupported_count(self):
-        """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 252 枚（v0.74 は 267 枚）。"""
+        """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚・v0.74 は 267 枚。v0.76 で 24 枚を加えた）。"""
         raw = subprocess.run(["git", "-C", str(ROOT.parent / "kyuura"), "show", "7d3f4ca76c084774efb4ac6a1d3a943387e183c3:data/engine_targets.json"],
                              capture_output=True, text=True, check=False)
         if raw.returncode != 0:
@@ -219,7 +219,7 @@ class RegistrationTest(unittest.TestCase):
         data = json.loads(raw.stdout)
         targets = data["cards"] if isinstance(data, dict) else data
         pool = load_card_pool()
-        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 252)
+        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 228)
 
     def test_text_variants_are_narrow(self):
         """既存の型に加えた書き方（ほうしをとばす・おつかい・せいちょう）は、意味を確かめた 1 通りだけ。値の違う登録・書き方の違う文面は受け付けない。"""

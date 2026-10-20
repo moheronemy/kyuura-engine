@@ -511,6 +511,22 @@ class ReducedDamageToSource:
 
 
 @dataclass(frozen=True)
+class ReducedDamageToSourceNextTurn(ReducedDamageToSource):
+    """ワザによる「持続する効果」（v0.76。docs/persistent-attack-modifiers-v0.76.md 4 章）のうち、ヒトカゲ（ES1-013 など）・ドードー・パウワウ・ピカチュウ（IP1-040）・
+    チコリータの「なきごえ」の「このワザを受けた相手は、次の相手の番でこのカードにダメージを与える時、そのダメージが「-10」される」・「次の相手の番、このワザを
+    受けた相手がこのカードに与えるダメージは「-10」される。」（kyuura の印刷の文面）。
+
+    はたらく番・相手に与えること・「このカード」に与えるダメージの 2 段階で減らすことは v0.34 の ``ReducedDamageToSource``（「なきつく」）と同じ（部分型なので、
+    ``persistent.reduced_damage_to_source``・ダメージの計算・NK5 の確かめ・書き出しの ``amount`` はそのまま当てはまる）。違うのは期限だけで、説明は「次の相手の番」
+    （はたらく番の終わりに消える。ほかの持続する効果と同じ ``persistent.remove_expired_persistent_effects``）。「なきつく」の「この状態は次の自分の番の始めに消える」
+    （``expires_at_turn_start``）を、説明の違うワザに当てはめない。種類 ``kind`` も分ける（v0.75 までのエンジンは知らない種類として読まない）。
+    """
+
+    kind: ClassVar[str] = "reduced_damage_to_source_next_turn"
+    expires_at_turn_start: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class CannotUseOwnAttack:
     """ワザによる「持続する効果」（v0.35）のうち、カスミのニョロモ（PMCG5-022）の「あわあわ」の「コインを投げて「うら」なら、次の自分の番、このカードは
     「あわあわ」を使えない。」（kyuura の印刷の文面）。
@@ -892,7 +908,8 @@ class DoubledDamage:
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
                            ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
-                           DoubledDamage)  # v0.75: DoubledDamage（もろばバサミ）
+                           DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
+                           ReducedDamageToSourceNextTurn)  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
 
 
 @dataclass(frozen=True)
