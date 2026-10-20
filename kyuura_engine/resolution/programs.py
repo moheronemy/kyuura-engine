@@ -47,7 +47,7 @@ from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
-    CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, HalvedDamage, NextTurnAttackDamage, PreventDamage,
+    CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..history import note_processed
@@ -2317,6 +2317,8 @@ class SelfPersistent(Element):
             effect = ZeroDamageBelow(**common, threshold=self.amount)  # v0.45: イワークの「かたくなる」（しきい値 ``amount``）
         elif self.kind == HalvedDamage.kind:
             effect = HalvedDamage(**common)  # v0.46: エリカのタマタマの「リフレクター」（半分（切りすて））
+        elif self.kind == DoubledDamage.kind:
+            effect = DoubledDamage(**common)  # v0.75: キングラーの「もろばバサミ」（2 倍）
         else:
             raise ValueError(f"知らない持続する効果の種類 {self.kind!r}")
         add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
@@ -2540,7 +2542,7 @@ class AttachFromDiscard(Element):
     """自分のトラッシュに ``energy_type`` の基本エネルギーカードがあれば、最大 ``max_cards`` 枚を取り出して、自分（ワザを使ったポケモン）につける
     （v0.31。マチスのエレブーの「たいでん」）。なければ何もしない（「あれば」）。0 枚を選べるかは決められない（HC7。答えのときに止める）。"""
 
-    energy_type: EnergyType
+    energy_type: EnergyType | None  # v0.75: None は「エネルギーカード」（種類・タイプを問わない。ミュウツーの「エネルギーきゅうしゅう」）
     max_cards: int
     # v0.45: ちょうど ``max_cards`` 枚（R団のサンダーの「プラズマ」の「あれば、1枚取り出して」。0 枚は選べない）。v0.31 の「たいでん」は「最大2枚」（0 枚は HC7）
     exact: bool = False
@@ -2548,6 +2550,10 @@ class AttachFromDiscard(Element):
     decision_kind: ClassVar[str] = ATTACH_FROM_DISCARD
 
     def _candidates(self, run: AttackRun) -> list[int]:
+        if self.energy_type is None:
+            # v0.75: ミュウツー（PR1-007・PR1-008）の「エネルギーきゅうしゅう」の「エネルギーカード」（種類・タイプを問わない。特殊エネルギーも 1 枚。カードの枚数で数える）。
+            # 色を選ぶ効果ではないので RB2 に当たらない
+            return [uid for uid in run.state.players[run.player].discard if run.state.card_def(uid).category == "energy"]
         rainbow_attach_question(run, run.state.players[run.player].discard, self.energy_type)  # v0.58: RB2
         return [uid for uid in run.state.players[run.player].discard
                 if run.state.card_def(uid).is_basic_energy and run.state.card_def(uid).provides is self.energy_type]
@@ -2571,6 +2577,12 @@ class AttachFromDiscard(Element):
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if not choices:
+            if self.energy_type is None:
+                raise UnsupportedError(
+                    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO",
+                    f"トラッシュにエネルギーカードがあるときに 0 枚を選べるか（「エネルギーカードを最大{self.max_cards}枚選び、このカードにつける」が 0 枚を含むか）は"
+                    "決められないので扱わない（v0.31 の HC7 と同じ問い）。1 枚以上を選ぶ",
+                )
             raise UnsupportedError(
                 "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO",
                 "トラッシュに「雷」エネルギーカードがあるときに 0 枚を選べるか（「最大2枚を取り出して」が 0 枚を含むか）は決められないので扱わない（HC7）。"
@@ -2578,7 +2590,7 @@ class AttachFromDiscard(Element):
             )
         candidates = self._candidates(run)
         if any(uid not in candidates for uid in choices):
-            raise RuntimeError(f"つけるカード {choices} が、トラッシュの「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
+            raise RuntimeError(f"つけるカード {choices} が、トラッシュの選べるエネルギーカードではない（エンジンの不具合）")
         cards = tuple(uid for uid in run.state.players[run.player].discard if uid in choices)  # トラッシュの並びの順につける（選んだ順によらない）
         attacker = run.attacker()
         attach_from_discard(run.state, run.player, cards, attacker)
@@ -2991,8 +3003,16 @@ class SelfSwitch(Element):
     # 与えなかったら Z23。v0.36 の ``ReturnSelfToDeck`` と同じ問い・同じ時点（ワザを使ったポケモンの確認の前））
     optional: bool = False
     after_damage: str | None = None
+    # v0.75: タケシのズバットの「しらせる」の「自分に控えがいない時、このワザは使えない」（ワザを使うための条件。実装の ``usage_problem`` が宣言の前に拒否する。
+    # 相手のワザとして使うときは ``copy_problem``）
+    required: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_POKEMON
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        if self.required and not run.state.players[run.player].bench:
+            return (ILLEGAL if clause in (CANNOT_USE, FOLLOW_TEXT) else UNRESOLVED), "自分に控えポケモンがいない（ワザを使うための条件）"
+        return None
 
     def run(self, run: AttackRun) -> bool:
         if self.after_damage is not None:
@@ -4319,15 +4339,32 @@ class AttachFromDeck(Element):
     - 山札から直接つける（``zones.attach_from_deck``。ログ ``attach_energy_from_deck``。つけたカードは公開。山札の中身はログに書かない）。手札からつける通常の操作・
       特殊能力でつけた枚数には数えない。つけたあと ``effects.after_energy_attached``（v0.31 の「ほのおでかいふく」などのエネルギーカードをつけたときの効果）
     - そのあと、どの場合も山札を切る（``shuffle_in_attack``。ログ ``shuffle`` に ``effect``。先読みでは切らない）
+
+    v0.75（docs/search-energy-pokemon-v0.75.md 3 章）: 説明ごとの違いを明示した項目で表す（カードごとの分岐にしない）。
+
+    - ``max_cards``: つける最大の枚数（キングラーの「しおまねき」は 3。つけるのは山札の uid の小さい順。選んだ順によらない）
+    - ``zero``: 0 枚の答え。``ZERO_ALLOWED``（「つけてよい」。ひなたぼっこ・じゅうでん）・``ZERO_REQUIRED``（ちょうど 1 枚。0 枚は選べない。カツラのガーディの「もえあがる」の
+      「…1枚を選び出し、自分につける」）・``ZERO_UNRESOLVED``（「最大3枚選び出し」。選べるものがあるときの 0 枚は v0.31 の HC7 と同じ問いで、答えのときに止める）
+    - ``local_coin``: この要素のコイン（しおまねきは「おもて」なら）。山札の中身によらず投げる（自分の山札への効果。山札の中身を投げるかで漏らさない）。ワザを使ったポケモンが
+      エネルギーカードをつけることができない（クリスタルビーム。公開の情報）なら、処理の対象がないので投げない
+    - ``shuffle``: 山札を切るか（しおまねきの説明に「その後、その山札をよく切る」がないので切らない。GR-2000-P312-DECK-HAND-DISCARD）
     """
 
     energy_type: EnergyType
+    max_cards: int = 1
+    zero: str = "allowed"
+    local_coin: CoinSide | None = None
+    shuffle: bool = True
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = ATTACH_FROM_DECK
 
     def candidates(self, run: AttackRun) -> list[int]:
         rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
         return E.deck_energy_candidates(run.state, run.player, self.energy_type)
+
+    def has_target(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        return not run.knocked_out(attacker) and E.energy_attach_block(run.state, attacker) is None
 
     def run(self, run: AttackRun) -> bool:
         attacker = run.attacker()
@@ -4337,31 +4374,240 @@ class AttachFromDeck(Element):
             # v0.59: クリスタルビームを受けている（エネルギーカードをつけることができない）。つけない（「つけてよい」の、つけないこと）。山札は今までどおり切る
             self._none(run, attacker, "attach_prevented")
             return False
+        if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
+            return False  # v0.75: 「うら」なら何もしない（山札を見ない・切らない）
         candidates = self.candidates(run)
         if not candidates:
             self._none(run, attacker, "no_candidates")
             return False
-        run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=candidates, min_choices=0, max_choices=1)
+        run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=candidates, min_choices=1 if self.zero == ZERO_REQUIRED else 0,
+                    max_choices=min(self.max_cards, len(candidates)))
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         state = run.state
         attacker = run.attacker()
         if not choices:
+            if self.zero == ZERO_UNRESOLVED:
+                raise UnsupportedError(
+                    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO",
+                    f"山札に「{self.energy_type.ja}」エネルギーカードがあるときに 0 枚を選べるか（「最大{self.max_cards}枚選び出し、このカードにつける」が 0 枚を含むか）は"
+                    "決められないので扱わない（v0.31 の HC7 と同じ問い）。1 枚以上を選ぶ",
+                )
+            if self.zero == ZERO_REQUIRED:
+                raise RuntimeError(f"ワザ {run.key} で、つけるカードを選ばなかった（ちょうど 1 枚。エンジンの不具合）")
             self._none(run, attacker, "declined")
             return
-        card = choices[0]
-        if card not in self.candidates(run):
+        candidates = self.candidates(run)
+        if len(set(choices)) != len(choices) or any(card not in candidates for card in choices):
             raise RuntimeError(f"つけるカード {choices} が、山札の「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
-        attach_from_deck(state, run.player, card, attacker)
-        state.add_event("attach_energy_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), card=card)
-        E.after_energy_attached(state, run.player, attacker, card)
+        cards = tuple(uid for uid in candidates if uid in choices)  # 山札の uid の小さい順につける（選んだ順によらない）
+        for card in cards:
+            attach_from_deck(state, run.player, card, attacker)
+            state.add_event("attach_energy_from_deck", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), card=card)
+        for card in cards:
+            E.after_energy_attached(state, run.player, attacker, card)
+        if self.shuffle:
+            shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if self.max_cards == 1 and self.zero == ZERO_ALLOWED:
+            return all_answers(decision)  # v0.41 のひなたぼっこと同じ（変えない）
+        # v0.75: 同じカード id の基本エネルギーカードは、つけたあとも内容（カードの定義）が同じで、カードごとの状態を持たない。uid だけが違う答えは uid を入れかえた
+        # 同じ形の状態になる（v0.46 の「せいちょう」（``AttachFromHand``）と同じまとめ方）。0 枚が問いになる説明（HC7）は、0 枚を試さない（答えのときに止める）
+        low = 0 if self.zero == ZERO_ALLOWED else 1
+        return card_id_answers(run.state, decision, range(low, decision.max_choices + 1))
+
+    def _none(self, run: AttackRun, attacker: PokemonInPlay, reason: str) -> None:
+        run.state.add_event("attach_energy_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                            energy_type=self.energy_type.value, reason=reason)
+        if self.shuffle:
+            shuffle_in_attack(run, self, run.player)
+
+
+# v0.75: ``AttachFromDeck.zero`` の値
+ZERO_ALLOWED = "allowed"
+ZERO_REQUIRED = "required"
+ZERO_UNRESOLVED = "unresolved"
+
+
+@dataclass(frozen=True)
+class AttachFromDeckToBench(Element):
+    """自分の山札から ``energy_type`` の基本エネルギーカードを 1 枚選び出し、自分の控えポケモンにつける。その後、山札をよく切る（v0.75。ナツメのスリープ（GD6-009）の
+    「エナジーサポート」。kyuura の日本語の印刷の文面。英語の欄（手札に加える）とは違う。日本語の文面にしたがう）。
+
+    - 決定は 2 つ: つけるカード（``ATTACH_FROM_DECK``。``context`` の ``"stage"`` は ``"card"``。ちょうど 1 枚（「…1枚選び出し、…つける」。「てよい」がない））→ つける控え
+      （``ATTACH_TO_BENCH``。``"stage"`` は ``"bench"``・``"card"`` は選んだカード。1 匹）。どちらもワザを使ったプレイヤーが選ぶ。2 つの決定のあいだ、カードは山札にある
+    - 控えポケモンがいない・山札に選べるカードがない: 処理の対象がないのでつけない（p.309。ログ ``attach_energy_from_deck_none`` の ``reason`` は ``no_bench``・
+      ``no_candidates``）。どちらの場合も山札は切る（説明の「その後、山札をよく切る」に条件がない。v0.41 のひなたぼっこと同じ読み方）
+    - つけるのはワザの効果なので、つける控えの「とうめい」を評価する。受けないなら、カードは持ち主のトラッシュに置く（v0.45 の「じりょくせん」・CR-TRANSPARENCY-ENERGY-BOMB と
+      同じ読み方。実装上の判断。ログ ``deck_energy_evaded``）。エネルギーカードをつけることができない控え（v0.59）は選べるものに入れない
+    - 山札から直接つける（``zones.attach_from_deck``。ログ ``attach_energy_from_deck`` の ``pokemon`` はつけた控え）。手札からつける通常の操作・特殊能力でつけた枚数には
+      数えない。つけたら ``effects.after_energy_attached``
+    """
+
+    energy_type: EnergyType
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = ATTACH_FROM_DECK
+
+    def decides(self, kind: str) -> bool:
+        return kind in (ATTACH_FROM_DECK, ATTACH_TO_BENCH)
+
+    def candidates(self, run: AttackRun) -> list[int]:
+        rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
+        return E.deck_energy_candidates(run.state, run.player, self.energy_type)
+
+    def targets(self, run: AttackRun) -> list[PokemonInPlay]:
+        return [p for p in run.state.players[run.player].bench if E.energy_attach_block(run.state, p) is None]
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            raise RuntimeError(f"ワザ {run.key} を使ったポケモンが、山札からエネルギーをつける前に HP 以上（このワザにダメージの要素はない。エンジンの不具合）")
+        if not self.targets(run):
+            self._none(run, attacker, "no_bench")
+            return False
+        candidates = self.candidates(run)
+        if not candidates:
+            self._none(run, attacker, "no_candidates")
+            return False
+        run.suspend(kind=ATTACH_FROM_DECK, player=run.player, options=candidates, min_choices=1, max_choices=1, carry=True, extra=(("stage", "card"),))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        state = run.state
+        if decision.kind == ATTACH_FROM_DECK:
+            if len(choices) != 1 or choices[0] not in self.candidates(run):
+                raise RuntimeError(f"つけるカード {choices} が、山札の「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
+            run.suspend(kind=ATTACH_TO_BENCH, player=run.player, options=[p.pokemon_id for p in self.targets(run)], carry=True,
+                        extra=(("stage", "bench"), ("card", choices[0])))
+            return
+        card = run.carried["card"]
+        target = next((p for p in self.targets(run) if p.pokemon_id == choices[0]), None)
+        if card not in state.players[run.player].deck or target is None:
+            raise RuntimeError(f"つけるカード {card}・控えポケモン {choices} が正しくない（エンジンの不具合）")
+        if reaches(run.res, run.fs, run.player, target, E.ENERGY_ATTACH_ELEMENT):
+            attach_from_deck(state, run.player, card, target)
+            state.add_event("attach_energy_from_deck", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
+            E.after_energy_attached(state, run.player, target, card)
+        else:
+            state.players[run.player].deck.remove(card)
+            state.players[run.player].discard.append(card)  # 「とうめい」の「おもて」: カードは持ち主のトラッシュ（CR-TRANSPARENCY-ENERGY-BOMB と同じ読み方）
+            state.add_event("deck_energy_evaded", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key), card=card)
         shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        if decision.kind == ATTACH_FROM_DECK:
+            return card_id_answers(run.state, decision, (1,))  # 同じカード id の基本エネルギーカードは、どれをつけても同じ形の状態（v0.46 の AttachFromHand と同じ）
+        return all_answers(decision)
 
     def _none(self, run: AttackRun, attacker: PokemonInPlay, reason: str) -> None:
         run.state.add_event("attach_energy_from_deck_none", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             energy_type=self.energy_type.value, reason=reason)
         shuffle_in_attack(run, self, run.player)
+
+
+@dataclass(frozen=True)
+class RevealNamedPokemonFromDeck(Element):
+    """自分の山札から、名前が ``names`` のどれかのポケモンのカードを好きなだけさがし出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る
+    （v0.75。カスミのメノクラゲ（GD2-003）の「くらげのむれ」。kyuura の印刷の文面。docs/search-energy-pokemon-v0.75.md 4 章）。
+
+    - 選べるものは山札の、名前（その場所の印刷の名前）が ``names`` のどれかと完全に同じポケモンのカード（段階は問わない。同じ名前の別の id のカードも選べる。uid の小さい順。
+      ``effects.deck_named_pokemon``）。名前の一部・「カスミの」などの始まりで選ばない
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SEARCH_DECK``。0〜選べるものの数。「好きなだけ」「加えてよい」なので 0 枚・すべても選べる。0 枚は「てよい」の、加えないこと
+      （ログ ``reveal_from_deck_declined``）で、v0.39 の GS1（「最大3匹」）・v0.31 の HC7（「最大2枚」）の問いとは書き方が違う）。同じカードを 2 回選べない
+      （``DUPLICATE_CHOICE``）。山札にないカードは選べない
+    - 選んだカードだけを見せて手札に加える（v0.24 の ``zones.reveal_deck_to_hand``。1 枚に 1 つのログ ``reveal_from_deck``。山札の uid の小さい順。選んだ順によらない）。
+      選べたほかのカードはログに書かない。選べるものがなければ加えない（ログ ``reveal_from_deck_none``）
+    - そのあと、どの場合も山札を 1 回だけ切る（``shuffle_in_attack``）
+    - 先読み: 選んだカードは手札に入るだけで、このあとの要素はない（最後の要素。山札の並びを使う要素もない）。同じカード id のカードは内容が同じなので、uid だけが違う答えを
+      まとめる（``card_id_answers``。v0.44）。選ぶ枚数・カード id の組み合わせは、すべて試す（1 つの代表にまとめない）
+    """
+
+    names: tuple[str, ...]
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = SEARCH_DECK
+
+    def candidates(self, run: AttackRun) -> list[int]:
+        return E.deck_named_pokemon(run.state, run.player, self.names)
+
+    def run(self, run: AttackRun) -> bool:
+        candidates = self.candidates(run)
+        if not candidates:
+            run.state.add_event("reveal_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category="named_pokemon")
+            shuffle_in_attack(run, self, run.player)
+            return False
+        run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=0, max_choices=len(candidates))
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if choices:
+            candidates = self.candidates(run)
+            if len(set(choices)) != len(choices) or any(card not in candidates for card in choices):
+                raise RuntimeError(f"選んだカード {choices} が、山札の選べるポケモンのカードではない（エンジンの不具合）")
+            for card in sorted(choices):
+                reveal_deck_to_hand(run.state, run.player, card, effect=str(run.key))
+        else:
+            run.state.add_event("reveal_from_deck_declined", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category="named_pokemon")
+        shuffle_in_attack(run, self, run.player)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return card_id_answers(run.state, decision, range(decision.max_choices + 1))
+
+
+@dataclass(frozen=True)
+class RecoverEnergyByHeads(Element):
+    """ワザ全体のコイン ``heads_of`` の「おもて」の数ぶんの ``energy_type`` エネルギーカードを、自分のトラッシュから選び出し、手札に加える（v0.75。カツラのロコン（GD5-003）の
+    「おにびあつめ」の「コインを3枚投げ、「おもて」の数ぶんの「炎」エネルギーカードを自分のトラッシュから選び出し、手札に加える。」。kyuura の印刷の文面）。
+
+    - 選べるものは自分のトラッシュの ``energy_type`` の基本エネルギーカード。トラッシュのレインボーエネルギーが「「炎」エネルギーカード」に当たるかは決まらない（RB5。v0.58 の
+      RB2・v0.73 の FV1 と同じ種類の、別の場面の問い）ので、あれば止める（コインの前。先読みが宣言の前に見つける）
+    - 「おもて」が 0 なら何もしない（ワザの失敗ではない）。選べるものの数が「おもて」の数以上なら、ちょうど「おもて」の数を選ぶ（決定 ``RECOVER_ENERGY``。ワザを使ったプレイヤー）。
+      「おもての数ぶん」を「最大」と読みかえない。選べるものが 1 枚以上で「おもて」の数より少ないときは、説明の枚数を選べないので決められない（v0.44 の FC1
+      ``stated_cards_short``。kyuura の UQ-STATED-COUNT-SHORT。先読みが宣言の前に見つける）。選べるものがなければ処理の対象がない（p.309）
+    - 選べるものがないなら、このコインが決める要素に処理の対象がないので、コインを投げない（v0.38 の ``has_target``）。トラッシュは公開の情報
+    - 場のポケモンタワー（v0.74）で、この要素（トラッシュから手札に加える）の効果が消える。処理の対象がないので、コインを投げない（ログ ``discard_to_hand_suppressed``）
+    - 手札に加えるのは ``zones.return_discard_to_hand``（ログ ``recover_energy``。v0.9 のエナジーへんかんと同じ形。トラッシュの並びの順。選んだ順によらない）
+    """
+
+    energy_type: EnergyType
+    heads_of: str
+    phase: ClassVar[Phase] = Phase.EFFECT
+    decision_kind: ClassVar[str] = RECOVER_ENERGY
+
+    def candidates(self, run: AttackRun) -> list[int]:
+        rainbow = E.rainbow_cards_in(run.state, run.state.players[run.player].discard)
+        if rainbow:
+            raise run.res.question("rainbow_recover_type", f"トラッシュのレインボーエネルギー {rainbow}・「{self.energy_type.ja}」エネルギーカード")
+        return [uid for uid in run.state.players[run.player].discard
+                if run.state.card_def(uid).is_basic_energy and run.state.card_def(uid).provides is self.energy_type]
+
+    def has_target(self, run: AttackRun) -> bool:
+        return E.discard_to_hand_suppressor(run.state) is None and bool(self.candidates(run))
+
+    def run(self, run: AttackRun) -> bool:
+        if suppressed_discard_to_hand(run):
+            return False  # v0.74: ポケモンタワーで、この要素の効果が消える
+        heads = run.heads(self.heads_of)
+        candidates = self.candidates(run)
+        if not heads or not candidates:
+            return False
+        if len(candidates) < heads:
+            raise run.res.question("stated_cards_short", f"トラッシュの「{self.energy_type.ja}」エネルギーカード {len(candidates)} 枚（「おもて」の数 {heads}）")
+        run.suspend(kind=RECOVER_ENERGY, player=run.player, options=candidates, min_choices=heads, max_choices=heads)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        candidates = self.candidates(run)
+        if len(choices) != run.heads(self.heads_of) or len(set(choices)) != len(choices) or any(uid not in candidates for uid in choices):
+            raise RuntimeError(f"手札に加えるカード {choices} が、トラッシュの「{self.energy_type.ja}」エネルギーカードの「おもて」の数ではない（エンジンの不具合）")
+        cards = tuple(uid for uid in run.state.players[run.player].discard if uid in choices)
+        return_discard_to_hand(run.state, run.player, cards)
+        attacker = run.attacker()
+        run.state.add_event("recover_energy", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key), cards=cards)
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        return card_id_answers(run.state, decision, (decision.min_choices,))
 
 
 # ---------------------------------------------------------------- v0.42（docs/power-decisions-v0.42.md）
@@ -6488,6 +6734,15 @@ BUILDERS: dict[type, Any] = {
     E.DamageThenMoveOneEnergyToBench: lambda e: (Damage(OPP, Printed()), MoveOneEnergyToBench(e.energy_type)),
     E.RevealBasicEnergyFromDeck: lambda e: (RevealTrainerFromDeck(local_coin=None, category="basic_energy"),),
     E.DamageThenForceSwitchAfterDamage: lambda e: (Damage(OPP, Printed()), ForceSwitch(after_damage="damage")),
+    # v0.75（docs/search-energy-pokemon-v0.75.md）
+    E.DrawThenSwitchSelf: lambda e: (Draw(e.count), SelfSwitch(required=True)),
+    E.RevealNamedPokemonFromDeckAny: lambda e: (RevealNamedPokemonFromDeck(e.names),),
+    E.CoinsRecoverEnergyByHeads: lambda e: (Coin("coin", count=e.coins), RecoverEnergyByHeads(e.energy_type, heads_of="coin")),
+    E.AttachEnergyFromDeckToSelfExactly: lambda e: (AttachFromDeck(e.energy_type, zero=ZERO_REQUIRED),),
+    E.AttachEnergyFromDeckToBench: lambda e: (AttachFromDeckToBench(e.energy_type),),
+    E.CoinAttachEnergyFromDeckToSelf: lambda e: (AttachFromDeck(e.energy_type, e.max_cards, zero=ZERO_UNRESOLVED, local_coin=HEADS, shuffle=False),),
+    E.DamageThenDoubleDamageNextTurn: lambda e: (Damage(OPP, Printed()), SelfPersistent(DoubledDamage.kind)),
+    E.AttachDiscardEnergyCardsToSelf: lambda e: (AttachFromDiscard(None, e.max_cards),),
 }
 
 

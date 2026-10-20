@@ -1239,6 +1239,16 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenMoveOneEnergyToBench,  # マチスのエレブー（GD3-010・PR1-040）の「デンキとばし」（要素 MoveOneEnergyToBench）
     _effects.RevealBasicEnergyFromDeck,  # エリカのピッピ（GD4-012）の「おつきみ」（RevealTrainerFromDeck の category）
     _effects.DamageThenForceSwitchAfterDamage,  # タケシのサイホーン（GD1-012）の「つのでなげる」（ForceSwitch の after_damage）
+) + (
+    # v0.75（docs/search-energy-pokemon-v0.75.md）
+    _effects.DrawThenSwitchSelf,  # タケシのズバット（GD1-001）の「しらせる」（Draw → SelfSwitch の required）
+    _effects.RevealNamedPokemonFromDeckAny,  # カスミのメノクラゲ（GD2-003）の「くらげのむれ」
+    _effects.CoinsRecoverEnergyByHeads,  # カツラのロコン（GD5-003）の「おにびあつめ」
+    _effects.AttachEnergyFromDeckToSelfExactly,  # カツラのガーディ（GD5-006）の「もえあがる」（AttachFromDeck の zero=required）
+    _effects.AttachEnergyFromDeckToBench,  # ナツメのスリープ（GD6-009）の「エナジーサポート」
+    _effects.CoinAttachEnergyFromDeckToSelf,  # キングラー（ES3-014）の「しおまねき」（AttachFromDeck の max_cards・local_coin・shuffle）
+    _effects.DamageThenDoubleDamageNextTurn,  # キングラー（ES3-014）の「もろばバサミ」（持続する効果 DoubledDamage）
+    _effects.AttachDiscardEnergyCardsToSelf,  # ミュウツー（PR1-007・PR1-008）の「エネルギーきゅうしゅう」（AttachFromDiscard の energy_type None）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1842,3 +1852,21 @@ def assert_stop_code_counts_since(test, links, stop_codes: int, unresolved: int)
     test.assertEqual(counts["engine_stop_codes"], len(links["stop_codes"]))
     test.assertGreaterEqual(counts["engine_stop_codes"], stop_codes)
     test.assertGreaterEqual(counts["engine_unresolved_rulings"], unresolved)
+
+
+# v0.75（docs/search-energy-pokemon-v0.75.md）: 拡張パック以外の商品のポケモン 15 枚（kyuura データの採用）
+BROCKS_ZUBAT_GD1 = "GD1-001"  # タケシのズバット（ポケモンジム第1弾。しらせる・つばさでうつ。PMCG5-001 とは別のカード）
+MISTYS_PSYDUCK_GD2 = "GD2-001"  # カスミのコダック（ポケモンジム第1弾。ひっかく・たすけをよぶ。PMCG5-021 とは別のカード）
+MISTYS_TENTACOOL_GD2 = "GD2-003"  # カスミのメノクラゲ（ふしぎなひかり・くらげのむれ。PMCG5-030 とは別のカード）
+BLAINES_VULPIX_GD5 = "GD5-003"  # カツラのロコン（かみつく・おにびあつめ）
+BLAINES_GROWLITHE_GD5 = "GD5-006"  # カツラのガーディ（もえあがる・のしかかり。GD5-005 とは別のカード）
+SABRINAS_DROWZEE_GD6 = "GD6-009"  # ナツメのスリープ（エナジーサポート・マインドショック。PMCG6-045 とは別のカード）
+PARAS_ES1 = "ES1-010"  # パラス（ひっかく・ほうしをとばす）
+GROWLITHE_ES3, GROWLITHE_QSG = "ES3-010", "QSG-009"  # ガーディ（おつかい・ひのこ。同じデータ）
+KINGLER_ES3 = "ES3-014"  # キングラー（クラブから進化。しおまねき・もろばバサミ。PMCG3-019 とは別のカード）
+PIKACHU_QSG, PIKACHU_PR1 = "QSG-021", "PR1-020"  # ピカチュウ（じゅうでん・10まんボルト。同じデータ）
+MEWTWO_PR1, MEWTWO_PR1_B = "PR1-007", "PR1-008"  # ミュウツー（エネルギーきゅうしゅう・サイコバーン。同じデータ）
+SUNKERN_PRN = "PRN-032"  # ヒマナッツ（せいちょう・メガドレイン）
+V0_75_POKEMON = (BROCKS_ZUBAT_GD1, MISTYS_PSYDUCK_GD2, MISTYS_TENTACOOL_GD2, BLAINES_VULPIX_GD5, BLAINES_GROWLITHE_GD5, SABRINAS_DROWZEE_GD6, PARAS_ES1,
+                 GROWLITHE_ES3, GROWLITHE_QSG, KINGLER_ES3, PIKACHU_QSG, PIKACHU_PR1, MEWTWO_PR1, MEWTWO_PR1_B, SUNKERN_PRN)
+V0_75_CARDS = V0_75_POKEMON

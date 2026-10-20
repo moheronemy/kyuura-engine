@@ -204,6 +204,10 @@ QUESTIONS: dict[str, Question] = {
                  "決められない"),
         Question("rainbow_basic_energy_card", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", ("RB3",), 10,
                  "場のポケモンについているレインボーエネルギーを、説明の「基本エネルギーカード」として選べるかは、印刷の文面・kyuura の記録から決められない"),
+        # v0.75（docs/search-energy-pokemon-v0.75.md 5 章）
+        Question("rainbow_recover_type", "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", ("RB5",), 10,
+                 "トラッシュのレインボーエネルギー（場の外の特殊エネルギーカード）を、ワザの効果でトラッシュから手札に加える「「○」エネルギーカード」として選べるかは、"
+                 "印刷の文面・kyuura の記録から決められない（RB2・FV1 と同じ種類の、別の場面の問い）"),
         # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 7 章）
         Question("trainer_self_bonus", "UNRESOLVED_MISTY_SELF_DAMAGE", ("MS1",), 10,
                  "トレーナー「カスミ」の「「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、…「+20」される。(控えポケモンへのダメージは、そのまま)」を、"

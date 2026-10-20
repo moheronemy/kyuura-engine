@@ -1822,3 +1822,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   （エンジンは同じ番の再使用を LK1 で止める）。
 - 報告事項（kyuura の作業）: RS1・LK1・EN1・NJ1・PT1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-FUCHSIA-GYM-ONCE-PER-TURN はある）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.74 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.75: 拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚
+
+[search-energy-pokemon-v0.75.md](search-energy-pokemon-v0.75.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_75`（15 枚。kyuura data/engine_targets.json の `new_effect_needed` のポケモン）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.74 までの 787 枚の記録は変わっていない。
+- 15 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。
+- kyuura の日本語の文面は 15 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- PRN-032（ヒマナッツ）は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2000-08-23）。発売日を変えずに持ち、のちのルールは持ち込まない。
+- ひのこ（ES3-010・QSG-009）のトラッシュの時点は、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（v0.31 のカツラのウインディと同じ扱い。文面は印刷の文面）。
+- 報告事項（kyuura の作業）: ナツメのスリープ GD6-009 の「エナジーサポート」の英語の欄（手札に加える）は、日本語の文面（自分の控えポケモンにつける）と処理が違う。エンジンは日本語にしたがった。
+- 報告事項（kyuura の作業）: RB5・DB1 は kyuura の未解決の一覧にない（RB5 は UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY と同じ形）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.75 の登録を写すと、15 枚の `engine_status` が `registered` になる。

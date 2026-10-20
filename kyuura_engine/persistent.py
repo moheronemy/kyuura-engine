@@ -54,6 +54,7 @@ from .state import (
     CannotUsePowers,
     DamageReduction,
     DestinyBond,
+    DoubledDamage,
     HalvedDamage,
     MaxHpSet,
     NextTurnAttackDamage,
@@ -279,6 +280,11 @@ def zero_damage_below(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageBel
 def halved_damage(state: GameState, pokemon: PokemonInPlay) -> HalvedDamage | None:
     """今の番に ``pokemon`` が受けるワザのダメージを半分（切りすて）にする効果（v0.46。エリカのタマタマの「リフレクター」）がはたらいているなら、その効果。"""
     return _active(state, pokemon, HalvedDamage)
+
+
+def doubled_damage(state: GameState, pokemon: PokemonInPlay) -> DoubledDamage | None:
+    """今の番に ``pokemon`` が受けるワザのダメージを 2 倍にする効果（v0.75。キングラーの「もろばバサミ」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, DoubledDamage)
 
 
 def destiny_bond(state: GameState, pokemon: PokemonInPlay) -> DestinyBond | None:

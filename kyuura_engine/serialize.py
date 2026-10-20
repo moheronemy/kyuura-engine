@@ -171,6 +171,7 @@ from .state import (
     DestinyBond,
     GameState,
     HalvedDamage,
+    DoubledDamage,
     MaxHpSet,
     TailsDamageGuard,
     NEXT_TURN_MULTIPLY,
@@ -268,7 +269,7 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, MaxHpSet):
         data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
-                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)):
+                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):

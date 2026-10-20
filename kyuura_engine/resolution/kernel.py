@@ -1416,12 +1416,15 @@ def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPla
             if C.blocked_by_status(instance, pokemon):
                 break  # ねむり・マヒ・こんらんのまま「きぜつ」する（P13〜P15）
             gas = C.suppressors(state, instance)
-            if gas and all(pid in knocked_ids for pid in gas):
+            tower = E.discard_to_hand_suppressor(state)
+            towered = tower is not None and getattr(instance.implementation, "discard_to_hand_only", False)
+            if gas and all(pid in knocked_ids for pid in gas) and not towered:
                 raise res.question("post_knockout_gas_source_knocked", f"{pokemon.pokemon_id} と {gas}")
+            # v0.75: ポケモンタワーで効果が消える特殊能力（ふしちょう）は、ガスの発生源がいっしょにきぜつしても、ガスで消えていても消えていなくても
+            # 使っても状態が同じなので P19 に当たらず、機会を出さない（P19 の問いそのものは変えない。タワーがなければ今までどおり止める）
             if gas or C.offer_stopped(state, instance, pokemon):
                 break  # v0.59: まきちらせ!ベトベトガス・「ショックアイ」（きぜつするときの状態で決める。P13〜P18 と同じ時点）
-            tower = E.discard_to_hand_suppressor(state)
-            if tower is not None and getattr(instance.implementation, "discard_to_hand_only", False):
+            if towered:
                 # v0.74: ポケモンタワーで、ふしちょう（トラッシュから手札に加える。CR-PHOENIX-RETURN）の効果が消える。使っても状態は同じなので、機会を出さない
                 # （きぜつ・トラッシュ・サイドは変えない）
                 if record:

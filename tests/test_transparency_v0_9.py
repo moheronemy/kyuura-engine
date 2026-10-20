@@ -762,7 +762,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "れいとうパンチ", "あわ", "のしかかり", "れいとうパンチ", "のしかかり", "おおごえでなく",
                                         # v0.72: 拡張パック以外の商品のポケモン 43 枚のうち、PoisonOnHeads・ParalyzeOnHeads のワザ 7（既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/status-coins-effect-reuse-v0.72.md）。イワーク（ES2-024・QSG-037）の「しめつける」はゴースト（抵抗力 闘）への最終ダメージが 0
-                                        "どくばり", "どくばり", "でんきショック", "でんきショック", "しめつける", "しめつける", "しびれごな"]))
+                                        "どくばり", "どくばり", "でんきショック", "でんきショック", "しめつける", "しめつける", "しびれごな",
+                                        # v0.75: カツラのガーディ（GD5-006）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/search-energy-pokemon-v0.75.md）
+                                        "のしかかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

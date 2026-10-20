@@ -234,6 +234,9 @@ ALL_CODES = (
     "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET",  # EN1（EnergyStadiumTest）
     "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",  # NJ1（NinjaGymTest）
     "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT",  # PT1（PokemonTowerTest）
+    # v0.75（tests/test_search_energy_pokemon_v0_75.py）
+    "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE",  # RB5（CallWillOTheWispTest）
+    "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",  # DB1（DoubleEdgedTest）
 )
 TURN = 7
 

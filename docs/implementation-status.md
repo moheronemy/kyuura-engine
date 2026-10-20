@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.74）
+# 実装状況（v0.1〜v0.75）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3618,3 +3618,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | ふしちょう・［つりあげる］の機会をタワーの下で出さない | 実装済み・テスト済み | 実装上の正規化（使っても使わなくても状態が同じ。使えないと決めたのではない） | 同 `PokemonTowerTest.test_phoenix_is_not_offered`・`test_entry_power_reel_in_is_not_offered` |
 | `BENCH_FROM_DECK` の選べるものの数を相手の観測に見せない（v0.32 からのワザ・特殊能力も） | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `NinjaGymTest`・tests/log_audit.py `observation_problems` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.75: 拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚
+
+[search-energy-pokemon-v0.75.md](search-energy-pokemon-v0.75.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 15 枚（`pool_v0_75`。kyuura の `new_effect_needed` のポケモン）・ワザ 30 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_search_energy_pokemon_v0_75.py `RegistrationTest` |
+| ポケモンタワーの場での P19 の過剰な停止の修正 | 実装済み・テスト済み（タワーのない場は P19 のまま） | ふしちょうは使っても状態が同じ（v0.74 の正規化） | 同 `PhoenixGasTowerTest` |
+| しらせる（引く → 入れ替え。控えがいなければ使えない） | 実装済み・テスト済み | 印刷の文面と p.312 | 同 `AlertTest` |
+| くらげのむれ（名前の決まったポケモンを好きなだけ） | 実装済み・テスト済み | 印刷の文面 | 同 `JellyfishPodTest` |
+| おにびあつめ（「おもて」の数ぶん。不足は FC1・レインボーは RB5・タワーで消える） | 実装済み・テスト済み | 印刷の文面 | 同 `CallWillOTheWispTest` |
+| 山札からつける（もえあがる・じゅうでん・しおまねき・エナジーサポート） | 実装済み・テスト済み（しおまねきの 0 枚は HC7） | 印刷の文面と GR-2000-P312-DECK-HAND-DISCARD（しおまねきは切らない） | 同 `AttachFromDeckTest` |
+| エナジーサポートの「とうめい」の控えのカードをトラッシュ | 実装済み・テスト済み | 実装上の判断（v0.45 のじりょくせんと同じ読み方） | 同 `test_energy_support_evaded_goes_to_discard` |
+| エネルギーきゅうしゅう（「エネルギーカード」を最大 2 枚） | 実装済み・テスト済み（0 枚は HC7） | 印刷の文面 | 同 `EnergyAbsorptionTest` |
+| ひのこ（RUL-ENERGY-DISCARD-ATTACKS の範囲）・10まんボルト（HC1） | 実装済み・テスト済み | kyuura の RUL-ENERGY-DISCARD-ATTACKS の再利用 | 同 `DiscardEnergyAttackTest` |
+| もろばバサミ（次の相手の番、受けるワザのダメージは 8 段階で 2 倍） | 実装済み・テスト済み（トレーナーのダメージは TD1、特殊能力のダメージは DB1 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER | 同 `DoubleEdgedTest` |
+| `SEARCH_DECK`・`ATTACH_FROM_DECK` の選べるものの数を相手の観測に見せない | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `RegistrationTest.test_observation_tables`・tests/log_audit.py |
+| 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |

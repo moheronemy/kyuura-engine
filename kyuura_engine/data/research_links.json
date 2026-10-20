@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 163,
-    "engine_stop_codes": 161,
+    "engine_unresolved_rulings": 165,
+    "engine_stop_codes": 163,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -1898,6 +1898,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.75",
+          "document": "docs/search-energy-pokemon-v0.75.md",
+          "ruling_id": "RB5"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE": {
+      "engine_rulings": [
+        {
+          "version": "v0.75",
+          "document": "docs/search-energy-pokemon-v0.75.md",
+          "ruling_id": "DB1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3008,7 +3030,31 @@
       "PF3-009/attack/1",
       "NIP2-010/attack/0",
       "NIP2X-003/attack/1",
-      "PRN-042/attack/0"
+      "PRN-042/attack/0",
+      "GD1-001/attack/0",
+      "GD2-001/attack/1",
+      "GD2-003/attack/0",
+      "GD2-003/attack/1",
+      "GD5-003/attack/1",
+      "GD5-006/attack/0",
+      "GD5-006/attack/1",
+      "GD6-009/attack/0",
+      "GD6-009/attack/1",
+      "ES1-010/attack/1",
+      "ES3-010/attack/0",
+      "ES3-010/attack/1",
+      "QSG-009/attack/0",
+      "QSG-009/attack/1",
+      "ES3-014/attack/0",
+      "ES3-014/attack/1",
+      "QSG-021/attack/0",
+      "QSG-021/attack/1",
+      "PR1-020/attack/0",
+      "PR1-020/attack/1",
+      "PR1-007/attack/0",
+      "PR1-008/attack/0",
+      "PRN-032/attack/0",
+      "PRN-032/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

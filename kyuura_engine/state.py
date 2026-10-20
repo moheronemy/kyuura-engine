@@ -863,12 +863,36 @@ class CannotAttachEnergy:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class DoubledDamage:
+    """ワザによる「持続する効果」（v0.75）のうち、キングラー（ES3-014）の「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」（kyuura の印刷の
+    文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンが相手のワザのダメージを受けるとき、p.321 の 8 段階（「ワザを受けるポケモンの持っている「ダメージを
+    変更する効果」」）で、その段階のダメージを 2 倍にする（``damage.MULTIPLY``。``effects.attack_damage_modifiers``）。同じ段階にほかの効果があり順番で結果が変わるときは、
+    v0.35 の決定（``damage_step_order``）で受けるポケモンの持ち主が選ぶ。
+
+    ワザでないダメージ（特殊能力・トレーナーのダメージ）に当てはめるかは、印刷の文面・kyuura の記録から決まらない（推測で広げない）: トレーナーのダメージは v0.61 の
+    TD1、特殊能力のダメージは DB1（``effects.received_power_damage`` が量を変える前に止める）。ポケモンチェックのどくは、効果が番の終わり（ポケモンチェックの前）に
+    消えるので当たらない。消える契機は ``PreventDamage`` と同じ（期限・ベンチ・進化・きぜつ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "doubled_damage"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)
+                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
+                           DoubledDamage)  # v0.75: DoubledDamage（もろばバサミ）
 
 
 @dataclass(frozen=True)

@@ -177,6 +177,7 @@ from .state import (
     CannotUseOwnAttack,
     DamageReduction,
     HalvedDamage,
+    DoubledDamage,
     NextTurnAttackDamage,
     ReducedDamageToSource,
     Retaliation,
@@ -2555,6 +2556,8 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_zero_damage_below_problems(state, pokemon, effect, where))  # v0.45
         if isinstance(effect, HalvedDamage):
             problems.extend(_halved_damage_problems(state, pokemon, effect, where))  # v0.46
+        if isinstance(effect, DoubledDamage):
+            problems.extend(_terms_problems(state, pokemon, effect, where, "doubled_terms", (DoubledDamage,)))  # v0.75
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
             problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
@@ -2620,6 +2623,20 @@ def _zero_damage_below_problems(state: GameState, pokemon: PokemonInPlay, effect
     entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
     terms = getattr(entry.effect, "threshold_terms", None) if entry is not None else None
     if terms is None or terms() != (ZeroDamageBelow, effect.threshold):
+        return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
+    return []
+
+
+def _terms_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str, method: str, expected: tuple) -> list[str]:
+    """持続する効果が、効果を与えたワザ（ログ ``persistent_effect_added`` の ``effect``）の登録された実装（``method`` の値が ``expected``）の効果と合うか（v0.75。
+    「もろばバサミ」の ``doubled_terms``）。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
+    added = _persistent_effect_added_event(state, pokemon, effect)
+    if added is None:
+        return []
+    card_id, _, index = str(added.get("effect", "")).partition("#")
+    entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+    terms = getattr(entry.effect, method, None) if entry is not None else None
+    if terms is None or terms() != expected:
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装）の効果と合わない"]
     return []
 
