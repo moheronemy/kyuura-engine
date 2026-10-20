@@ -39,6 +39,9 @@ def registered_targets() -> set[str]:
              if registry.attack_entry(k.card_id, k.attack_index).play_text_ja is not None}
     found |= {f"{k.card_id}/power/{k.power_index}" for k in registry.power_keys()
               if getattr(registry.power_entry(k.card_id, k.power_index), "play_text_ja", None) is not None}
+    # v0.73: トレーナーの処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にした登録（超エネルギー回収。研究の対応表の errata_text の <カード id>/trainer）
+    found |= {f"{card}/trainer" for card in registry.trainer_ids()
+              if (registry.trainer_entry(card).source or "").split("-")[0] in ("ERR", "TXT", "RUL")}
     return found
 
 
@@ -57,10 +60,12 @@ class ResearchLinksTest(unittest.TestCase):
         """研究の基準（kyuura 3f34908。2026-10-15 に adf9710 から上げた。docs/verified-record-reuse.md）とカードの写しの元（ecb2d69）を
         分けて持つ。写しの元は同梱の写しのコミットと同じ。"""
         self.assertRegex(LINKS["research_commit"], r"^[0-9a-f]{40}$")
-        self.assertEqual(LINKS["research_commit"], "3f349085645f47d0649a6cacece3680caeae50bf")
+        # v0.69: 研究の基準を kyuura 7d3f4ca（v0.68 までのエンジンの記録を取り込んだコミット。kyuura の main）に上げ、写しの元も同じコミットにした
+        # （docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.68 までは研究の基準 3f34908・写しの元 ecb2d69 を分けて持っていた
+        self.assertEqual(LINKS["research_commit"], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")
         self.assertEqual(LINKS["engine_import_id"], "ENGINE-46A3E2E")
         self.assertEqual(LINKS["card_data_commit"], read_extract()["source"]["commit"])
-        self.assertNotEqual(LINKS["research_commit"], LINKS["card_data_commit"])
+        self.assertEqual(LINKS["research_commit"], LINKS["card_data_commit"])
 
     def test_every_stop_code_is_linked(self):
         """エンジンの停止コードの集合と、対応表の停止コードの集合が同じ（v0.30 までの 22 件 + v0.31 の 15 件 + v0.32 の 1 件 + v0.34 の 2 件 + v0.36 の 2 件 + v0.37 の 1 件 + v0.38 の 1 件 + v0.39 の 1 件 + v0.40 の 1 件 + v0.41 の 1 件 + v0.42 の 2 件 + v0.43 の 2 件 + v0.44 の 2 件 + v0.45 の 2 件 + v0.46 の 2 件 + v0.47 の 4 件 + v0.48 の 3 件 + v0.49 の 11 件 + v0.50 の 5 件 + v0.51 の 2 件 + v0.52 の 3 件 + v0.53 の 2 件 + v0.55 の 8 件 + v0.56 の 6 件 + v0.57 の 8 件 + v0.58 の 6 件 + v0.59 の 7 件 + v0.60 の 1 件 + v0.61 の 5 件 = 128 件）。論点のないものは kyuura の
@@ -79,92 +84,23 @@ class ResearchLinksTest(unittest.TestCase):
                     not_in_kyuura.add(code)
                 else:
                     self.assertEqual(entry["kyuura_disposition"], "issue" if entry["kyuura_issue"] else "out_of_scope")
-        self.assertEqual(not_in_kyuura, {"UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK",
-                                         "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
-                                         # v0.31（docs/held-cards-v0.31.md の HC1〜HC10）
-                                         "UNRESOLVED_DISCARD_ENERGY_TIMING", "UNRESOLVED_DESTINY_BOND_KNOCKOUT", "UNRESOLVED_PREVENTED_EFFECT_COIN",
-                                         "UNRESOLVED_EXTRA_ENERGY_COLORLESS", "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO", "UNRESOLVED_DISCARD_DECK_SHORT",
-                                         "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO", "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE", "UNRESOLVED_COPIED_ATTACK",
-                                         "UNRESOLVED_ENERGY_BURN_TRANSFER",
-                                         # v0.32（docs/bench-search-counter-drain-v0.32.md の CD4）
-                                         "UNRESOLVED_OPPONENT_POKEMON_COUNTERS",
-                                         # v0.34（docs/barrier-resume-coin-bonus-v0.34.md の TP3（v0.3a の 15）・NK5）
-                                         "UNRESOLVED_SPECIAL_POISON_OVERWRITE", "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",
-                                         # v0.36（docs/sand-attack-retreat-lock-v0.36.md の AC6・RD9）
-                                         "UNRESOLVED_ATTACK_CHECK_CONFUSION", "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT",
-                                         # v0.37（docs/fifteen-reused-effects-v0.37.md の JS1）
-                                         "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE",
-                                         # v0.38（docs/bench-switch-combined-v0.38.md の GK1）
-                                         "UNRESOLVED_DAMAGE_TRIGGER_TIMING",
-                                         # v0.39（docs/selfdestruct-spread-count-v0.39.md の GS1）
-                                         "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE",
-                                         # v0.40（docs/count-condition-switch-return-v0.40.md の SG1）
-                                         "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED",
-                                         # v0.41（docs/heal-counter-status-v0.41.md の CX1）
-                                         "UNRESOLVED_COUNTER_TRANSFER_PROTECTED",
-                                         # v0.42（docs/power-decisions-v0.42.md の PW1・PW2）
-                                         "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH", "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND",
-                                         # v0.43（docs/declared-entry-powers-v0.43.md の PW3・PW4）
-                                         "UNRESOLVED_POWER_ZERO_CARDS", "UNRESOLVED_ENTRY_POWER_DURING_ATTACK",
-                                         # v0.44（docs/search-evolution-once-attacks-v0.44.md の FC1・TR1）
-                                         "UNRESOLVED_STATED_CARDS_SHORT", "UNRESOLVED_TRAINER_WITHOUT_TARGET",
-                                         # v0.45（docs/conditional-damage-energy-v0.45.md の GV1（v0.44 はコードのない問い）・AC13（v0.36 は起こらない
-                                         # RuntimeError））
-                                         "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK", "UNRESOLVED_MULTIPLE_ATTACK_CHECKS",
-                                         # v0.46（docs/continuous-powers-v0.46.md の CP1・CP2）
-                                         "UNRESOLVED_CALMING_AROMA_RETALIATION", "UNRESOLVED_RETREAT_COST_FLOOR",
-                                         # v0.47（docs/fossil-hidden-info-v0.47.md の PF1・PF2・PF3・KA1）
-                                         "UNRESOLVED_PLAY_AS_POKEMON_SETUP", "UNRESOLVED_PLAY_AS_POKEMON_RETREAT",
-                                         "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON", "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER",
-                                         # v0.48: VS1・PG1・MH1（docs/effective-pokemon-properties-v0.48.md）
-                                         "UNRESOLVED_SHIFT_COLOR_DURATION", "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE", "UNRESOLVED_MAX_HP_DROP",
-                                         # v0.49: TE1・TF1・TF2・DG1〜DG3・VA1・RC1〜RC4（docs/virtual-attacks-transformation-v0.49.md）
-                                         "UNRESOLVED_TRANSFORM_ENERGY_COUNT", "UNRESOLVED_TRANSFORM_COPIED_POWER", "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER",
-                                         "UNRESOLVED_SHAPESHIFT_SUPPRESSED", "UNRESOLVED_SHAPESHIFT_ENTRY_POWER", "UNRESOLVED_SHAPESHIFT_AGAIN", "UNRESOLVED_VIRTUAL_ONCE_ATTACK",
-                                         "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK", "UNRESOLVED_RECALL_EARLIER_STAGE", "UNRESOLVED_RECALL_TARGET_CHANGED", "UNRESOLVED_RECALL_FORM",
-                                         # v0.50: DV1〜DV5（docs/mew-devolution-spray-v0.50.md）
-                                         "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT", "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION",
-                                         "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET", "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED",
-                                         # v0.51: RV1・FT1（docs/discard-to-bench-v0.51.md）
-                                         "UNRESOLVED_REVIVE_WITHOUT_TARGET", "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET",
-                                         # v0.52: FJ1・SU1・SU2（docs/field-return-v0.52.md）
-                                         "UNRESOLVED_MR_FUJI_WITHOUT_BENCH", "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER", "UNRESOLVED_SCOOP_UP_LAST_POKEMON",
-                                         # v0.53: ST1・NG1（docs/search-retrieval-trainers-v0.53.md）
-                                         "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET", "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE",
-                                         # v0.55: MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2（docs/instant-trainers-v0.55.md）
-                                         "UNRESOLVED_MISTYS_WRATH_SHORT_DECK", "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET",
-                                         "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET", "UNRESOLVED_FULL_HEAL_SCOPE", "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET",
-                                         "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET", "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON",
-                                         "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY",
-                                         # v0.56: LS1・RT1・RG1・MY1・MS1・KG1（docs/trainer-decisions-turn-effects-v0.56.md）
-                                         "UNRESOLVED_LT_SURGE_WITHOUT_BASIC", "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE", "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH",
-                                         "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND", "UNRESOLVED_MISTY_SELF_DAMAGE", "UNRESOLVED_KOGA_POISON_ORDER",
-                                         # v0.57（docs/stadiums-v0.57.md の STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1）
-                                         "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN", "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION",
-                                         "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT", "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET",
-                                         "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER", "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER",
-                                         "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER", "UNRESOLVED_CHAOS_GYM_BORROWED_TURN",
-                                     "UNRESOLVED_RAINBOW_ENERGY_TYPE", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE",
-                                     "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER",
-                                     "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY", "UNRESOLVED_RETREAT_OVERPAY",
-                                     # v0.59（docs/energy-control-power-suppression-v0.59.md の GG1・BL1・CB1・BZ1〜BZ4）
-                                     "UNRESOLVED_GOOP_GAS_NEW_POKEMON", "UNRESOLVED_BLAINE_SECOND_ATTACH", "UNRESOLVED_ATTACH_BLOCK_SCOPE",
-                                     "UNRESOLVED_BUZZAP_OPPONENT_TARGET", "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE", "UNRESOLVED_BUZZAP_COLOR",
-                                     "UNRESOLVED_BUZZAP_DISGUISED",
-                                     # v0.60（docs/coins-defense-rebellion-v0.60.md の TS1）
-                                     "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER",
-                                     # v0.61（docs/reactive-powers-trainer-damage-v0.61.md の SH1・SC1・SC2・TD1。Z9 は kyuura の論点 UQ- のある行）
-                                     "UNRESOLVED_SINKHOLE_TIMING", "UNRESOLVED_SCRAM_TIMING", "UNRESOLVED_SCRAM_POWER_RESTORED",
-                                     "UNRESOLVED_TRAINER_DAMAGE_REDUCTION",
-                                     # v0.62（docs/history-attacks-v0.62.md の MM1・MM2・OM1・OM2）
-                                     "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK", "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS",
-                                     "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT", "UNRESOLVED_MIRROR_MOVE_NON_ATTACK"})
-        moved = {code: entry["kyuura_index_engine_key"] for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}
-        self.assertEqual(moved, {"UNRESOLVED_TRANSPARENCY_COIN_ORDER": "T27", "UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS": "C34/C35",
-                                 "UNRESOLVED_KO_PREVENTION_ORDER": "G40", "UNRESOLVED_PHOENIX_GAS_SOURCE_KNOCKOUT": "P19",
-                                 "UNRESOLVED_POST_KNOCKOUT_POWERS_ORDER": "P32",
-                             # v0.61: ［ファイナルビーム］（弱点「水」のポケモンが受ける）で起こるようになった Z9 に停止コードを付けた
-                             "UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE": "Z9"})
+        # v0.69: kyuura が、v0.68 までのエンジンの記録を取り込んで、not_in_kyuura だった停止コード 123 件をすべて論点（UQ-）に結んだ（kyuura の未解決の一覧。
+        # docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.72 で加えた FH2・PD2 は kyuura の一覧にまだないので not_in_kyuura（kyuura への報告事項。同じ形の論点は
+        # UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE。docs/status-coins-effect-reuse-v0.72.md）
+        # v0.73 で加えた MR1・ML1・SR1・SR2・FV1 も kyuura の一覧にない（docs/search-recovery-trainers-v0.73.md 6 章）
+        self.assertEqual(not_in_kyuura, {"UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", "UNRESOLVED_POKEDEX_UP_TO_ZERO",
+                                         "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET", "UNRESOLVED_MASTER_BALL_SHORT_DECK",
+                                         "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE",
+                                         "UNRESOLVED_FERVOR_RAINBOW_ENERGY",
+                                         # v0.74 で加えた RS1・LK1・EN1・NJ1・PT1 も kyuura の一覧にない（docs/remaining-stadiums-v0.74.md 7 章）
+                                         "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT", "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+                                         "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET", "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
+                                         "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT",
+                                         # v0.75 で加えた RB5・DB1 も kyuura の一覧にない（docs/search-energy-pokemon-v0.75.md 5 章）
+                                         "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"})
+        # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
+        # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
+        self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())
         self.assertEqual(LINKS["unresolved_without_code"], [])
 
     def test_codeless_questions_exist(self):
@@ -227,7 +163,13 @@ class ResearchLinksTest(unittest.TestCase):
         section = LINKS["latest_descriptions"]
         groups = {name: set(section[name]) for name in
                   ("registered", "recorded_in_card_checks", "card_checks_without_text", "registered_without_kyuura_record",
-                   "adopted_printed_text", "errata_text", "difference_text")}
+                   "adopted_printed_text", "errata_text", "difference_text",
+                   # v0.68: 利用者が示した訂正の文面（ガルーラのこどものおつかい）・エンジンの簡略化した仕様（イマクニ？のドードー）
+                   "user_corrected_text", "engine_simplified_text",
+                   # v0.69: 拡張パック以外の商品の同じカードの登録（元のカードの登録の区分にしたがう）
+                   "equivalent_registrations",
+                   # v0.71: 再録のカードの、元のカードの記録の文面を処理に使う登録
+                   "reprint_registrations")}
         names = list(groups)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -248,10 +190,12 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.30: 炎エネルギーをトラッシュするワザは kyuura の RUL-ENERGY-DISCARD-ATTACKS の文面にしたがう。記録の cards はウインディだけなので、
         # ほかのワザは適用の範囲（errata_scope。記録の notes の引用・同じ印刷の文面）で結ぶ。照らすのは scripts/check_research_links.py
         # v0.31: リザードンの「エナジーバーン」は TXT-CHARIZARD（記録の cards にリザードンがある。適用の範囲ではない）
-        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS", "TXT-CHARIZARD"})
+        # v0.73: 超エネルギー回収（PR1-009/trainer）は ERR-SUPER-ENERGY-RETRIEVAL（記録の cards は pcg-search.com の id 1stp009。対応は errata_card_ids）
+        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS", "TXT-CHARIZARD", "ERR-SUPER-ENERGY-RETRIEVAL"})
         self.assertEqual(section["errata_text"]["PMCG1-021/power/0"], "TXT-CHARIZARD")
+        self.assertEqual(section["errata_text"]["PR1-009/trainer"], "ERR-SUPER-ENERGY-RETRIEVAL")
         scoped = {target for scope in section["errata_scope"] for target in scope["targets"]}
-        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0"})
+        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0", "PR1-009/trainer"})
         # v0.31: ピッピの「ゆびをふる」は kyuura の card_differences の最新の説明（p.223 の解説の記録。LD- はない。kyuura への報告事項）
         # v0.42: カイリューの［かけつける］は kyuura の card_differences の最新の説明（p.249 の記録。特殊状態の記述がない。LD- はない）
         self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067",

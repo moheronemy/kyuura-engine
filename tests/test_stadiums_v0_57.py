@@ -82,10 +82,13 @@ from tests.helpers import (
     SABRINAS_ABRA,
     SAFFRON_CITY_GYM,
     V0_57_CARDS,
+    V0_69_STOP_CODE_ISSUES,
     VERMILION_CITY_GYM,
     VIRIDIAN_CITY_GYM,
     WATER,
     apply_kernel,
+    assert_stop_code_counts_since,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import LATEST_FORMAT, observation_problems, serialization_problems
@@ -155,7 +158,7 @@ class CardDataTest(unittest.TestCase):
                 effect = E.DEFAULT_EFFECTS.trainer_effect(definition)
                 self.assertTrue(effect.is_stadium)
                 self.assertEqual(effect.check(definition), [])
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 85)  # v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 211)  # v0.74 で拡張パック以外の商品のスタジアム 13 枚を加えた。v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚を加えた。v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 v0.58 でナツメのサイキックコントロールを加えて 81、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガスを加えて 84、v0.61 でバトル場は穴だらけ!を加えた
 
     def test_adoption_records_and_external_checks(self):
         """採用の記録（kyuura_data）と pcg-search.com の照合。違いはどれも処理に影響しない（スタジアムの出し方とトラッシュの文の有無・1枚と1匹・別のとこのカード以外）。"""
@@ -163,7 +166,7 @@ class CardDataTest(unittest.TestCase):
         for card_id in V0_57_CARDS:
             with self.subTest(card=card_id):
                 record = sources[card_id]
-                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", []))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_records"]), ("kyuura_data", "adopted", kyuura_records_since_v0_69(card_id)))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 check = record["external_checks"][0]
                 self.assertEqual(check["site"], "pcg-search.com")
                 self.assertIn(check["result"], ("match", "differences"))
@@ -171,11 +174,11 @@ class CardDataTest(unittest.TestCase):
 
     def test_research_links(self):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.58 で 6 件を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
+        assert_stop_code_counts_since(self, links, 149, 151)  # v0.72: 総数の等号は test_research_links_v0_18e が確かめる。  # v0.68 で DR8・DR13 を加えた。v0.58 で 6 件を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
         for ruling, code in NEW_CODES.items():
             with self.subTest(code=code):
                 entry = links["stop_codes"][code]
-                self.assertEqual(entry["kyuura_disposition"], "not_in_kyuura")
+                self.assertEqual((entry["kyuura_disposition"], entry["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
                 self.assertEqual(entry["engine_rulings"], [{"version": "v0.57", "document": "docs/stadiums-v0.57.md", "ruling_id": ruling}])
 
     def test_doc_names_every_new_code(self):
@@ -222,7 +225,7 @@ class PlacementTest(unittest.TestCase):
 
     def test_format_17_observation_and_command_dict(self):
         state = placed(NARROW_GYM)
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (20, 20))  # v0.58 で形式 18、v0.59 で形式 19 を加えた
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22  # v0.63 で形式 21。 v0.58 で形式 18、v0.59 で形式 19 を加えた
         data = state_to_dict(state, format_version=17)
         self.assertEqual(data["stadium"]["card_id"], NARROW_GYM)
         for version in range(1, 17):

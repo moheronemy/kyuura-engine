@@ -12,8 +12,12 @@ v0.4c 以降の 2 進化ポケモン。v0.11 はサカキのワンリキー・�
 - kyuura の checkout がどのコミットにあっても、KYUURA_COMMIT の内容を読みます。
 - 記録の値は書き換えずにコピーします。照合の結果はこのファイルではなく
   ``kyuura_engine/data/card_verification.json`` に書きます。
-- v0.62: kyuura が確定した修正（研究の基準のコミットの照合の記録の ``corrections``）だけは、出どころを確かめてから当てはめます
-  （``CONFIRMED_CORRECTIONS``。書き出しの ``corrections`` に、欄・前・後・記録・コミットを残す）。
+- v0.62〜v0.68 は、kyuura が確定した修正（``CONFIRMED_CORRECTIONS``）と利用者が示した修正（``USER_PROVIDED_CORRECTIONS``）を写しに当てはめていました。
+  v0.69 から、kyuura が data/cards.json に当てはめたので当てはめ直さず、kyuura の台帳（data/curation/card_corrections.json）を確かめます
+  （``KYUURA_CORRECTIONS``。書き出しの ``kyuura_corrections``）。前の写しの元（``PREVIOUS_KYUURA_COMMIT``）にあったカードの写す欄が、修正の欄と出典の記録の欄を
+  除いて同じことも、書き出すたびに確かめます（docs/equivalent-non-pack-cards-v0.69.md 2 章）。
+- v0.70 から、kyuura にまだない利用者が示した訂正（``ENGINE_USER_CORRECTIONS``。PR1-069 の名前「？？？」→「ミュウ」）を、写しの作り直しで当てはめます
+  （書き出しの ``engine_user_corrections``。kyuura が当てはめた修正の表 ``KYUURA_CORRECTIONS`` とは別。docs/non-pack-effect-reuse-v0.70.md 3 章）。
 
 使い方::
 
@@ -30,7 +34,7 @@ import sys
 from pathlib import Path
 
 KYUURA_REPOSITORY = "https://github.com/moheronemy/kyuura"
-KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
 KYUURA_PATH = "data/cards.json"
 
 # v0.1 の対戦で使うカード（kyuura docs/engine-readiness.md 5章の段階 1 のたねポケモンと基本エネルギー）
@@ -819,33 +823,520 @@ POOL_V0_62 = [
     "PMCG2-041",  # ベロリンガ（ポケモンジャングル。まきつくベロ・ちょうおんぱ。CONFIRMED_CORRECTIONS の修正を当てはめる）
 ]
 
-# v0.62（docs/history-attacks-v0.62.md 8 章）: kyuura が確定した修正（研究の基準のコミットの照合の記録 CC- の ``corrections``）のうち、写しに当てはめるもの。
-# 写しの元のコミット（KYUURA_COMMIT）の値が ``before`` であること、修正のコミット（``commit``）の値が ``after`` であること、研究の基準のコミット（``record_commit``）の
-# 照合の記録 ``record`` に同じ修正（欄・前・後・コミット）があり、修正のコミットが写しの元のあと・研究の基準の前にあることを、書き出すたびに確かめる（違えば書き出さない）。
-# 修正のコミットで変わったそのカードの欄が、修正の欄と出典の記録の欄（``CORRECTION_PROVENANCE_FIELDS``）だけであることも確かめる。当てはめるのは修正の欄だけで、
-# ほかの欄（出典の記録の欄を含む）は写しの元の値のまま。写しの元の値として書かず、書き出しの ``corrections`` に、どの値をどの記録で直したかを残す
-CONFIRMED_CORRECTIONS = [
+POOL_V0_63 = [
+    # 公開・非公開の状態を扱うトレーナー 4 枚（docs/hidden-card-trainers-v0.63.md）
+    "PMCG4-062",  # ロケット団参上!（第4弾ロケット団。お互いのサイドをすべておもてにする）
+    "PMCG6-084",  # くすぐりマシーン（闇からの挑戦。ロケット団秘密メカ。「おもて」なら相手の手札をうらにして置いておく、「うら」なら番が終わる）
+    "PMCG4-058",  # たたきつけろ!挑戦状（第4弾ロケット団。相手がたずねに答え、受けるならお互いに山札からたねポケモンをうらにしてベンチに出す）
+    "PMCG6-082",  # カツラのクイズ その3（闇からの挑戦。手札のポケモンを置き、ワザの名前を伝え、相手がカードの名前を答える）
+]
+
+POOL_V0_64 = [
+    # 化石の秘密のイシツブテの系統 3 枚（docs/geodude-line-unbounded-coins-v0.64.md。「タケシの」系統（PMCG5-046・047・052・053）とは別のカード）
+    "PMCG3-034",  # イシツブテ（化石の秘密。れんぞくいしなげ）
+    "PMCG3-037",  # ゴローン（化石の秘密。イシツブテから進化。かたくなる・いわおとし）
+    "PMCG3-038",  # ゴローニャ（化石の秘密。ゴローンから進化。いわころがり・じばく）
+]
+
+POOL_V0_65 = [
+    # ワザの途中の任意の決定（相手がワザを使う時・ダメージを受ける処理の中・ダメージのあと）を使う 3 枚（docs/reactive-decisions-v0.65.md）
+    "PMCG6-083",  # キョウ秘伝,変わり身の術（闇からの挑戦。相手がワザを使う時、つけたキョウのポケモンを控えと入れ替えてよい）
+    "PMCG5-033",  # カスミのドククラゲ（リーダーズスタジアム。カスミのメノクラゲから進化。［にげこむ］・クラゲどく）
+    "PMCG5-055",  # タケシのサイドン（リーダーズスタジアム。タケシのサイホーンから進化。［ベンチガード］・ラリアット）
+]
+
+POOL_V0_66 = [
+    # のぞむなら選ぶ効果・コインのやり直し・じゃんけんのトレーナー 3 枚（docs/optional-trainers-v0.66.md）
+    "PMCG5-074",  # お上品攻撃（リーダーズスタジアム。つけたポケモンのワザのダメージを好きなだけ小さくしてよい。相手の番が終わったら手札にもどす）
+    "PMCG6-087",  # ナツメのESP（闇からの挑戦。ナツメのポケモンのワザの説明文のコイントスをやり直してよい）
+    "PMCG5-068",  # カスミの勝負（リーダーズスタジアム。じゃんけんに勝ったプレイヤーが手札を山札にもどして切り、5 枚引く）
+]
+
+POOL_V0_67 = [
+    # うらにしてベンチに出すトレーナー 1 枚（docs/secret-plan-preflight-v0.67.md）
+    "PMCG5-093",  # マチスの秘策（リーダーズスタジアム。手札から 1 枚をうらにしてベンチに出してよい。うらのあいだは「たねポケモン」としてあつかう）
+]
+
+POOL_V0_68 = [
+    # PMCG1〜PMCG6 の残りのポケモン（docs/final-pmcg-cards-v0.68.md）。ガルーラ（PMCG2-046）は v0.34 から pool_v0_34 にある（保留を解いた。USER_PROVIDED_CORRECTIONS）
+    "PMCG6-023",  # キョウのベトベトン（闇からの挑戦。キョウのベトベターから進化。［だつりょくえき］・ヘドロのうず。v0.17c〜v0.67 は参照カード（REFERENCE_ONLY））
+    "PMCG6-074",  # イマクニ？のドードー（闇からの挑戦。［にげまくり］・ハモる。エンジンの簡略化した仕様で登録する）
+]
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md 3 章）: 拡張パック以外の商品のカードのうち、kyuura の data/engine_targets.json（KYUURA_COMMIT）で
+# engine_status が ``mechanically_equivalent``（登録したカードと処理に使う欄が同じ）の 96 枚。種類（category）でしぼらない（無色2個エネルギー 8 枚は data_missing）。
+# 並びは engine_targets.json の並び。対応する元のカード（equivalent_to）は書き出しの ``equivalent_targets`` に写し、登録は kyuura_engine/effects.py の
+# ``EQUIVALENT_CARDS`` で元のカードの登録を id ごとに写す（同じ名前で自動に対応させない）。書き出すたびに、この並びが engine_targets.json の
+# mechanically_equivalent のすべてと同じであることを確かめる
+POOL_V0_69 = [
+    "GD1-002",  # タケシのロコン（PMCG5-018 と同じ）
+    "GD1-009",  # タケシのゴローニャ（PMCG5-053 と同じ）
+    "GD1-011",  # タケシのイワーク（PMCG5-048 と同じ）
+    "GD1-013",  # タケシのサイドン（PMCG5-055 と同じ）
+    "GD1-015",  # 思い出させる（PMCG5-071 と同じ）
+    "GD1-019",  # タケシの育て方（PMCG5-077 と同じ）
+    "GD1-025",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "GD2-004",  # カスミのドククラゲ（PMCG5-033 と同じ）
+    "GD2-008",  # カスミのタッツー（PMCG5-025 と同じ）
+    "GD2-010",  # カスミのトサキント（PMCG5-026 と同じ）
+    "GD2-012",  # カスミのヒトデマン（PMCG5-027 と同じ）
+    "GD2-015",  # カスミ（PMCG5-085 と同じ）
+    "GD2-016",  # カスミのいかり（PMCG5-075 と同じ）
+    "GD2-017",  # カスミの勝負（PMCG5-068 と同じ）
+    "GD2-018",  # カスミのなみだ（PMCG5-069 と同じ）
+    "GD2-024",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "GD3-001",  # マチスのピカチュウ（PMCG5-036 と同じ）
+    "GD3-004",  # マチスのコイル（PMCG5-039 と同じ）
+    "GD3-005",  # マチスのコイル（PMCG5-037 と同じ）
+    "GD3-006",  # マチスのレアコイル（PMCG5-040 と同じ）
+    "GD3-007",  # マチスのビリリダマ（PMCG5-038 と同じ）
+    "GD3-015",  # エネルギーサーキュレート（PMCG5-067 と同じ）
+    "GD3-016",  # スパイ作戦（PMCG5-088 と同じ）
+    "GD3-021",  # マチス（PMCG5-092 と同じ）
+    "GD3-022",  # マチスの交渉（PMCG5-081 と同じ）
+    "GD3-025",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "GD4-002",  # エリカのナゾノクサ（PMCG5-002 と同じ）
+    "GD4-006",  # エリカのマダツボミ（PMCG5-005 と同じ）
+    "GD4-008",  # エリカのウツボット（PMCG5-015 と同じ）
+    "GD4-010",  # エリカのナッシー（PMCG5-013 と同じ）
+    "GD4-011",  # エリカのモンジャラ（PMCG5-006 と同じ）
+    "GD4-013",  # エリカのミニリュウ（PMCG5-063 と同じ）
+    "GD4-016",  # エリカ（PMCG5-083 と同じ）
+    "GD4-017",  # エリカのお付き（PMCG5-072 と同じ）
+    "GD4-018",  # エリカの香水（PMCG5-073 と同じ）
+    "GD4-026",  # 礼儀作法（PMCG5-082 と同じ）
+    "GD4-028",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "GD5-002",  # カツラのロコン（PMCG6-026 と同じ）
+    "GD5-004",  # カツラのキュウコン（PMCG6-033 と同じ）
+    "GD5-009",  # カツラのポニータ（PMCG6-028 と同じ）
+    "GD5-010",  # カツラのギャロップ（PMCG6-030 と同じ）
+    "GD5-012",  # カツラのドードー（PMCG6-064 と同じ）
+    "GD5-014",  # カツラ（PMCG6-093 と同じ）
+    "GD5-015",  # カツラのギャンブル（PMCG6-076 と同じ）
+    "GD5-025",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "GD6-003",  # ナツメのユンゲラー（PMCG6-047 と同じ）
+    "GD6-004",  # ナツメのフーディン（PMCG6-053 と同じ）
+    "GD6-013",  # ナツメのポリゴン（PMCG6-066 と同じ）
+    "GD6-017",  # ナツメ（PMCG6-098 と同じ）
+    "GD6-018",  # ナツメのESP（PMCG6-087 と同じ）
+    "GD6-019",  # ナツメの眼（PMCG6-078 と同じ）
+    "GD6-026",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "IP1-002",  # スリープ（PMCG1-045 と同じ）
+    "IP1-004",  # 草エネルギー（PMCG1-097 と同じ）
+    "IP1-006",  # 雷エネルギー（PMCG1-100 と同じ）
+    "IP1-013",  # ピカチュウ（PMCG1-035 と同じ）
+    "IP1-023",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "IP1-024",  # 超エネルギー（PMCG1-101 と同じ）
+    "IP2-001",  # ガーディ（PMCG1-018 と同じ）
+    "IP2-002",  # ディグダ（PMCG1-052 と同じ）
+    "IP2-004",  # 炎エネルギー（PMCG1-098 と同じ）
+    "IP2-005",  # 水エネルギー（PMCG1-099 と同じ）
+    "IP2-012",  # 闘エネルギー（PMCG1-102 と同じ）
+    "IP2-014",  # プリン（PMCG2-035 と同じ）
+    "IP2-025",  # 無色2個エネルギー（PMCG1-096 と同じ）
+    "IP2-035",  # ワンリキー（PMCG1-053 と同じ）
+    "PR1-019",  # わるいペルシアン（PMCG4-048 と同じ）
+    "PR1-031",  # カスミのヒトデマン（PMCG5-027 と同じ）
+    "PR1-032",  # タケシのイワーク（PMCG5-048 と同じ）
+    "PR1-039",  # エリカのミニリュウ（PMCG5-063 と同じ）
+    "PR1-047",  # エリカのフシギダネ（PMCG5-007 と同じ）
+    "PR1-048",  # カスミのメノクラゲ（PMCG5-030 と同じ）
+    "PR1-049",  # タケシのマンキー（PMCG5-045 と同じ）
+    "PR1-050",  # マチスのサンダース（PMCG5-042 と同じ）
+    "PR1-061",  # マンキー（PMCG2-028 と同じ）
+    "PR1-076",  # コダック（PMCG3-010 と同じ）
+    "PR1-080",  # ギャラドス（PMCG1-034 と同じ）
+    "PR1-081",  # ピカチュウ（PMCG1-035 と同じ）
+    "PR1-082",  # ニョロモ（PMCG1-024 と同じ）
+    "PR1-083",  # フシギダネ（PMCG1-001 と同じ）
+    "PR1-084",  # コイキング（PMCG1-031 と同じ）
+    "PR1-085",  # ゼニガメ（PMCG1-023 と同じ）
+    "PR1-086",  # ドガース（PMCG1-006 と同じ）
+    "PR1-087",  # ラッキー（PMCG1-068 と同じ）
+    "PR1-088",  # フリーザー（PMCG3-023 と同じ）
+    "PR1-089",  # ヒトカゲ（PMCG1-014 と同じ）
+    "NIP1-003",  # 草エネルギー（PMCG1-097 と同じ）
+    "NIP1-005",  # 炎エネルギー（PMCG1-098 と同じ）
+    "NIP1-006",  # 闘エネルギー（PMCG1-102 と同じ）
+    "NIP1-010",  # ドガース（PMCG4-005 と同じ）
+    "NIP1-012",  # ガーディ（PMCG1-018 と同じ）
+    "NIP1X-003",  # ワンリキー（PMCG4-040 と同じ）
+    "NIP2-001",  # ピカチュウ（PMCG1-035 と同じ）
+    "NIP2-005",  # 水エネルギー（PMCG1-099 と同じ）
+    "NIP2-006",  # 雷エネルギー（PMCG1-100 と同じ）
+    "NIP2-007",  # 超エネルギー（PMCG1-101 と同じ）
+]
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモンで、どのワザも既存の効果の型（と、ダメージのない小さな型 2 つ）で扱えるもの 82 枚
+# （kyuura の engine_targets.json の reuse_candidate。v0.69 の POOL_V0_69（処理に使う欄が登録したカードと全部同じカード）とは別。登録は id ごとに書く）。
+# 並びは依頼の並び
+POOL_V0_70 = [
+    "GD1-004",  # タケシのサンドパン
+    "GD1-008",  # タケシのゴローン
+    "GD2-005",  # カスミのパウワウ
+    "GD2-009",  # カスミのトサキント
+    "GD2-013",  # カスミのヒトデマン
+    "GD2-014",  # カスミのスターミー
+    "GD3-002",  # マチスのピカチュウ
+    "GD3-008",  # マチスのビリリダマ
+    "GD3-013",  # マチスのオニスズメ
+    "GD4-005",  # エリカのマダツボミ
+    "GD5-008",  # カツラのポニータ
+    "GD5-013",  # カツラのドードリオ
+    "GD6-006",  # ナツメのゴース
+    "ES1-004",  # ビードル
+    "ES1-008",  # ズバット
+    "ES1-012",  # カイロス
+    "ES1-016",  # ニョロモ
+    "ES1-017",  # ニョロゾ
+    "ES1-018",  # ニョロボン
+    "ES1-024",  # ポッポ
+    "ES1-030",  # ベロリンガ
+    "ES1-032",  # イーブイ
+    "ES2-008",  # シェルダー
+    "ES2-009",  # クラブ
+    "ES2-010",  # ラプラス
+    "ES2-019",  # ルージュラ
+    "ES2-022",  # ゴーリキー
+    "ES2-026",  # サワムラー
+    "ES2-031",  # オニドリル
+    "ES3-015",  # タッツー
+    "ES3-033",  # ガルーラ
+    "QSG-006",  # カイロス
+    "QSG-014",  # ニョロモ
+    "QSG-015",  # ニョロゾ
+    "QSG-016",  # ニョロボン
+    "QSG-019",  # ラプラス
+    "QSG-031",  # ルージュラ
+    "QSG-036",  # ゴーリキー
+    "QSG-042",  # ベロリンガ
+    "QSG-044",  # ガルーラ
+    "SI-001",  # レディバ
+    "SI-005",  # ピジョット
+    "SI-006",  # イワーク
+    "SI-007",  # トゲピー
+    "SI-009",  # ラッタ
+    "SI-015",  # カメール
+    "IP1-001",  # フシギダネ
+    "IP1-016",  # ニャース
+    "IP1-026",  # エレブー
+    "IP1-030",  # ドードー
+    "IP1-037",  # ルージュラ
+    "IP1-039",  # ドガース
+    "IP2-003",  # カメール
+    "IP2-013",  # オニスズメ
+    "IP2-016",  # ゼニガメ
+    "IP2-039",  # ブーバー
+    "PF1-007",  # ワニノコ
+    "PF2-004",  # エーフィ
+    "NIP1-001",  # チコリータ
+    "NIP1-002",  # ヒマナッツ
+    "NIP1-008",  # ヒメグマ
+    "NIP1-016",  # ヒノアラシ
+    "NIP1-022",  # パラス
+    "NIP1-024",  # ベイリーフ
+    "NIP2-002",  # マリル
+    "NIP2-003",  # ホーホー
+    "NIP2-004",  # アリゲイツ
+    "NIP2-016",  # ワニノコ
+    "NIP2-018",  # メリープ
+    "NIP2-024",  # ハリーセン
+    "NIP2-026",  # モココ
+    "NIP2X-004",  # ネイティ
+    "PR1-011",  # なみのりピカチュウ
+    "PR1-014",  # なみのりピカチュウ
+    "PR1-045",  # ディグダ
+    "PR1-066",  # マリル
+    "PR1-069",  # ミュウ（kyuura の名前は「？？？」。ENGINE_USER_CORRECTIONS で訂正する）
+    "PRN-006",  # チコリータ
+    "PRN-009",  # チコリータ
+    "PRN-013",  # ルージュラ
+    "PRN-038",  # ノコッチ
+    "PRN-047",  # ハネッコ
+]
+
+
+# v0.71（docs/reprint-text-variants-v0.71.md）: 拡張パック以外の商品の再録のカードで、元のカードと日本語のゲーム用データの差が効果の文面（とポケモン図鑑の名前の
+# 空白 1 つ）だけのもの 78 枚（トレーナー 67 枚・ポケモン 11 枚。kyuura の engine_targets.json の reuse_candidate）。登録は effects.REPRINT_CARDS（v0.69 の
+# EQUIVALENT_CARDS とは別）。並びは依頼の並び
+POOL_V0_71 = [
+    "GD1-006",  # タケシのイシツブテ（PMCG5-047 の再録）
+    "GD1-014",  # エネルギー回収（PMCG1-076 の再録）
+    "GD1-016",  # きずぐすり（PMCG1-071 の再録）
+    "GD1-017",  # 元気のかけら（PMCG1-078 の再録）
+    "GD1-018",  # タケシ（PMCG5-089 の再録）
+    "GD1-020",  # なんでもなおし（PMCG1-080 の再録）
+    "GD1-021",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "GD1-022",  # ポケモン図鑑HANDY505（PMCG1-082 の再録）
+    "GD1-023",  # ポケモンセンター（PMCG1-083 の再録）
+    "GD1-024",  # ニビシティジム（PMCG5-079 の再録）
+    "GD2-019",  # きずぐすり（PMCG1-071 の再録）
+    "GD2-020",  # ディフェンダー（PMCG1-079 の再録）
+    "GD2-021",  # 突風（PMCG1-072 の再録）
+    "GD2-022",  # モンスターボール（PMCG2-048 の再録）
+    "GD2-023",  # ハナダシティジム（PMCG5-080 の再録）
+    "GD3-014",  # いいきずぐすり（PMCG1-075 の再録）
+    "GD3-017",  # ディフェンダー（PMCG1-079 の再録）
+    "GD3-018",  # 突風（PMCG1-072 の再録）
+    "GD3-019",  # なんでもなおし（PMCG1-080 の再録）
+    "GD3-020",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "GD3-023",  # モンスターボール（PMCG2-048 の再録）
+    "GD3-024",  # クチバシティジム（PMCG5-076 の再録）
+    "GD4-004",  # エリカのラフレシア（PMCG5-014 の再録）
+    "GD4-014",  # エネルギー回収（PMCG1-076 の再録）
+    "GD4-015",  # エネルギー転送（PMCG3-044 の再録）
+    "GD4-019",  # お上品攻撃（PMCG5-074 の再録）
+    "GD4-020",  # きずぐすり（PMCG1-071 の再録）
+    "GD4-021",  # ディフェンダー（PMCG1-079 の再録）
+    "GD4-022",  # なんでもなおし（PMCG1-080 の再録）
+    "GD4-023",  # プラスパワー（PMCG1-081 の再録）
+    "GD4-024",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "GD4-025",  # リサイクル（PMCG3-047 の再録）
+    "GD4-027",  # タマムシシティジム（PMCG5-078 の再録）
+    "GD5-011",  # カツラのブーバー（PMCG6-031 の再録）
+    "GD5-018",  # きずぐすり（PMCG1-071 の再録）
+    "GD5-020",  # なんでもなおし（PMCG1-080 の再録）
+    "GD5-022",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "GD5-023",  # ポケモン図鑑HANDY505（PMCG1-082 の再録）
+    "GD5-024",  # グレンタウンジム（PMCG6-085 の再録）
+    "GD6-010",  # ナツメのスリーパー（PMCG6-051 の再録）
+    "GD6-014",  # エネルギー回収（PMCG1-076 の再録）
+    "GD6-015",  # きずぐすり（PMCG1-071 の再録）
+    "GD6-016",  # ディフェンダー（PMCG1-079 の再録）
+    "GD6-020",  # なんでもなおし（PMCG1-080 の再録）
+    "GD6-021",  # プラスパワー（PMCG1-081 の再録）
+    "GD6-022",  # ポケモンセンター（PMCG1-083 の再録）
+    "GD6-024",  # ワープポイント（PMCG6-080 の再録）
+    "GD6-025",  # ヤマブキシティジム（PMCG6-090 の再録）
+    "QSG-047",  # エネルギー回収（PMCG1-076 の再録）
+    "QSG-048",  # エネルギー転送（PMCG3-044 の再録）
+    "QSG-049",  # きずぐすり（PMCG1-071 の再録）
+    "QSG-050",  # ギャンブラー（PMCG3-045 の再録）
+    "QSG-051",  # 突風（PMCG1-072 の再録）
+    "QSG-052",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "QSG-053",  # ポケモン交換おじさん（PMCG1-093 の再録）
+    "IP1-007",  # きずぐすり（PMCG1-071 の再録）
+    "IP1-019",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "IP1-028",  # 突風（PMCG1-072 の再録）
+    "IP2-007",  # なんでもなおし（PMCG1-080 の再録）
+    "IP2-009",  # ニョロモ（PMCG1-024 の再録）
+    "IP2-019",  # エネルギー・リムーブ（PMCG1-070 の再録）
+    "IP2-024",  # きずぐすり（PMCG1-071 の再録）
+    "IPH-001",  # フシギバナ（PMCG1-011 の再録）
+    "IPH-002",  # カメックス（PMCG1-032 の再録）
+    "PR1-028",  # カメックス（PMCG1-032 の再録）
+    "PR1-029",  # フシギバナ（PMCG1-011 の再録）
+    "PR1-030",  # リザードン（PMCG1-021 の再録）
+    "PR1-033",  # カモネギ（PMCG1-063 の再録）
+    "NIP1-007",  # なんでもなおし（PMCG1-080 の再録）
+    "NIP1-015",  # きずぐすり（PMCG1-071 の再録）
+    "NIP1-020",  # マサキ（PMCG1-074 の再録）
+    "NIP1X-006",  # プラスパワー（PMCG1-081 の再録）
+    "NIP1X-007",  # ポケモンいれかえ（PMCG1-073 の再録）
+    "NIP2-008",  # なんでもなおし（PMCG1-080 の再録）
+    "NIP2-020",  # きずぐすり（PMCG1-071 の再録）
+    "NIP2-025",  # マサキ（PMCG1-074 の再録）
+    "NIP2X-006",  # ディフェンダー（PMCG1-079 の再録）
+    "NIP2X-007",  # 突風（PMCG1-072 の再録）
+]
+
+
+# v0.72（docs/status-coins-effect-reuse-v0.72.md）: 拡張パック以外の商品のポケモン 43 枚（kyuura の engine_targets.json の new_effect_needed。ワザ 77・特殊能力なし）。
+# どれも id で版を決める（同じ名前の PMCG の別のカードと取りちがえない）。並びは依頼の並び
+POOL_V0_72 = [
+    "GD1-003",  # タケシのサンド（GD1）
+    "GD1-012",  # タケシのサイホーン（GD1）
+    "GD2-002",  # カスミのニョロモ（GD2）
+    "GD3-010",  # マチスのエレブー（GD3）
+    "GD4-003",  # エリカのクサイハナ（GD4）
+    "GD4-007",  # エリカのウツドン（GD4）
+    "GD4-009",  # エリカのタマタマ（GD4）
+    "GD4-012",  # エリカのピッピ（GD4）
+    "GD5-005",  # カツラのガーディ（GD5）
+    "GD6-012",  # ナツメのルージュラ（GD6）
+    "ES1-006",  # ニドラン♀（ES1）
+    "ES1-009",  # ゴルバット（ES1）
+    "ES1-011",  # パラセクト（ES1）
+    "ES1-019",  # ピカチュウ（ES1）
+    "ES1-020",  # ケーシィ（ES1）
+    "ES1-025",  # コラッタ（ES1）
+    "ES1-029",  # ドードリオ（ES1）
+    "ES1-031",  # ラッキー（ES1）
+    "ES2-023",  # ゴローン（ES2）
+    "ES2-024",  # イワーク（ES2）
+    "ES2-027",  # エビワラー（ES2）
+    "ES2-030",  # オニスズメ（ES2）
+    "ES3-003",  # ニドリーノ（ES3）
+    "ES3-005",  # マダツボミ（ES3）
+    "ES3-008",  # ストライク（ES3）
+    "ES3-013",  # ゴルダック（ES3）
+    "QSG-004",  # ニドラン♀（QSG）
+    "QSG-020",  # ピカチュウ（QSG）
+    "QSG-026",  # ケーシィ（QSG）
+    "QSG-037",  # イワーク（QSG）
+    "QSG-038",  # エビワラー（QSG）
+    "QSG-039",  # コラッタ（QSG）
+    "QSG-043",  # ラッキー（QSG）
+    "QSG-054",  # ストライク（QSG）
+    "IP1-022",  # フシギソウ（IP1）
+    "PR1-036",  # コイキング（PR1）
+    "PR1-037",  # ガルーラ（PR1）
+    "PR1-040",  # マチスのエレブー（PR1）
+    "PR1-059",  # カツラのガーディ（PR1）
+    "PF3-009",  # エアームド（PF3）
+    "NIP2-010",  # テッポウオ（NIP2）
+    "NIP2X-003",  # ケーシィ（NIP2X）
+    "PRN-042",  # ルギア（PRN）
+]
+
+
+# v0.73（docs/search-recovery-trainers-v0.73.md）: 拡張パック以外の商品の、山札・トラッシュからカードを選ぶ・手札にもどす・引くトレーナー 18 枚（kyuura の
+# engine_targets.json の new_effect_needed のトレーナー）。並びは依頼の並び
+POOL_V0_73 = [
+    "GD5-019",  # 元気のかたまり（GD5）
+    "ES2-034",  # 元気のかたまり（ES2。ベンチに空きがない時、使えない）
+    "GD5-021",  # 熱血!（GD5）
+    "GD6-023",  # マスターボール（GD6）
+    "ES2-036",  # マスターボール（ES2）
+    "QSG-058",  # マスターボール（QSG）
+    "NIP1-021",  # マスターボール（NIP1。「カードを7枚見る」の書き方）
+    "NIP2-022",  # マスターボール（NIP2。「カードを7枚見る」の書き方）
+    "ES1-035",  # 化石の発掘（ES1）
+    "ES1-036",  # 月の石（ES1）
+    "ES3-035",  # ポケモン再転送（ES3）
+    "IP1-009",  # スーパーポケモン回収（IP1）
+    "IP2-029",  # スーパーポケモン回収（IP2）
+    "IP1-020",  # マサキの転送装置（IP1）
+    "IP2-021",  # マサキの転送装置（IP2）
+    "PR1-009",  # 超エネルギー回収（PR1。処理に使う文面は ERR-SUPER-ENERGY-RETRIEVAL）
+    "PR1-026",  # パソコン大暴走！（PR1）
+    "PR1-041",  # パソコン大暴走！（PR1）
+]
+
+# v0.74（docs/remaining-stadiums-v0.74.md）: kyuura の engine_targets.json の new_effect_needed のスタジアム 13 枚（4 つの名前・印刷の文面 6 組）。
+POOL_V0_74 = [
+    "ES3-036",  # ポケモンタワー（ES3。トラッシュから手札に加える効果を消す）
+    "PR1-067",  # キョウの忍者ジム（PR1）
+    "NIP1X-009",  # エネルギースタジアム（NIP1X）
+    "NIP2X-009",  # ラッキースタジアム（NIP2X。「自分の山札から」「投げてよい」の書き方）
+    "PRN-015",  # ラッキースタジアム（PRN。PRN-015〜PRN-022 は同じ文面）
+    "PRN-016",
+    "PRN-017",
+    "PRN-018",
+    "PRN-019",
+    "PRN-020",
+    "PRN-021",
+    "PRN-022",
+    "PRN-027",  # ラッキースタジアム（PRN。日本語と英語の併記。日本語に「自分の番ごとに1回」がない）
+]
+
+# v0.75（docs/search-energy-pokemon-v0.75.md）: 拡張パック以外の商品のポケモン 15 枚（engine_targets.json の new_effect_needed のうち、山札・トラッシュのカードを
+# 選ぶワザ・エネルギーをつけるワザ・受けるダメージを 2 倍にするワザを持つもの）。kyuura データの採用（ガイドブックは読んでいない）
+POOL_V0_75 = [
+    "GD1-001",  # タケシのズバット（しらせる・つばさでうつ）
+    "GD2-001",  # カスミのコダック（ひっかく・たすけをよぶ）
+    "GD2-003",  # カスミのメノクラゲ（ふしぎなひかり・くらげのむれ）
+    "GD5-003",  # カツラのロコン（かみつく・おにびあつめ）
+    "GD5-006",  # カツラのガーディ（もえあがる・のしかかり）
+    "GD6-009",  # ナツメのスリープ（エナジーサポート・マインドショック）
+    "ES1-010",  # パラス（ひっかく・ほうしをとばす）
+    "ES3-010",  # ガーディ（おつかい・ひのこ）
+    "QSG-009",  # ガーディ（ES3-010 と同じデータ）
+    "ES3-014",  # キングラー（しおまねき・もろばバサミ。クラブから進化）
+    "QSG-021",  # ピカチュウ（じゅうでん・10まんボルト）
+    "PR1-020",  # ピカチュウ（QSG-021 と同じデータ）
+    "PR1-007",  # ミュウツー（エネルギーきゅうしゅう・サイコバーン）
+    "PR1-008",  # ミュウツー（PR1-007 と同じデータ）
+    "PRN-032",  # ヒマナッツ（せいちょう・メガドレイン）
+]
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md 2 章）: v0.62・v0.68 で写しに当てはめていた修正（v0.62 の確定した修正 CONFIRMED_CORRECTIONS・
+# v0.68 の利用者が示した修正 USER_PROVIDED_CORRECTIONS）は、kyuura の data/cards.json（KYUURA_COMMIT）に当てはめ済みになった（kyuura の台帳
+# data/curation/card_corrections.json とカードの記録の ``corrections``）。写しには当てはめ直さない（二重の修正をしない）。書き出すたびに、台帳とカードの記録に
+# 同じ記録（id・欄・前・後・根拠）があること、KYUURA_COMMIT の値が ``after``・前の写しの元（PREVIOUS_KYUURA_COMMIT）の値が ``before`` であること、根拠ごとの
+# 出どころ（kyuura の照合の記録とコミット・利用者が示した訂正で kyuura もエンジンも画像を見ていない）を確かめる（違えば書き出さない）。写しのカードに
+# kyuura の台帳の修正があれば、ここに挙げていなければ書き出さない（知らない修正を黙って受け入れない）
+PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+KYUURA_CORRECTIONS_PATH = "data/curation/card_corrections.json"
+KYUURA_TARGETS_PATH = "data/engine_targets.json"
+KYUURA_CORRECTIONS = [
     {
+        "id": "FIX-PMCG2-041-ATK0-NAME",
         "card_id": "PMCG2-041",
         "field": "pokemon.attacks[0].name.ja",
         "before": "したでなめる",
         "after": "まきつくベロ",
+        "basis": "kyuura_source_check",
         "record": "CC-PMCG2-041-P234",
         "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
-        "record_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
+        "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
     },
     {
+        "id": "FIX-PMCG2-041-LEVEL",
         "card_id": "PMCG2-041",
         "field": "jp_print.level",
         "before": 29,
         "after": 26,
+        "basis": "kyuura_source_check",
         "record": "CC-PMCG2-041-P234",
         "commit": "f52a8e2e9d65055727f7b8bc3165e0fd15b96967",
-        "record_commit": "3f349085645f47d0649a6cacece3680caeae50bf",
+        "engine_history": "v0.62〜v0.68 は、写しの元（ecb2d69）の値に、エンジンが確定した修正（CONFIRMED_CORRECTIONS）として当てはめていた",
+    },
+    {
+        "id": "FIX-PMCG2-046-ATK0-TEXT",
+        "card_id": "PMCG2-046",
+        "field": "pokemon.attacks[0].text.ja",
+        "before": "コインを投げて「おもて」なら、自分の山札の上からカードを1枚ひいて、手札に加える。",
+        "after": "自分の山札の上からカードを1枚ひいて、手札に加える。",
+        "basis": "user_provided",
+        "kyuura_saw_image": False,
+        "engine_saw_image": False,
+        "engine_history": "v0.68 は、写しの元（ecb2d69）の値に、利用者が示した修正（USER_PROVIDED_CORRECTIONS。2026-10-19）として当てはめていた。"
+                          "転記の誤りの訂正で、公式エラッタ・別の版の文面・画像の読み直しではない",
+    },
+    {
+        # v0.71: 写しに加えたナツメのスリーパー（ポケモンジム第3弾）。kyuura が前の作業で pcg-search.com のカードの画像を見て「20×」とした判定
+        # （data/curation/other_products.json の reprint_checks）を、kyuura が台帳で当てはめたもの。エンジンは画像を見ていない。前の写しの元（ecb2d69）にないカード
+        "id": "FIX-GD6-010-ATK1-DAMAGE",
+        "card_id": "GD6-010",
+        "field": "pokemon.attacks[1].damage",
+        "before": {"base": 20, "modifier": None, "display": "20"},
+        "after": {"base": 20, "modifier": "×", "display": "20×"},
+        "basis": "kyuura_existing_record",
+        "kyuura_record": "data/curation/other_products.json reprint_checks「ナツメのスリーパー」",
+        "engine_saw_image": False,
+        "engine_history": "v0.71 で写しに加えた（前の版の写しにないカード）",
     },
 ]
-# 修正のコミットで、修正の欄のほかに変わってよい欄（出典の記録。エンジンは使わない。写しには当てはめない）
-CORRECTION_PROVENANCE_FIELDS = ("notes", "ja_text_source")
+# 前の写しの元と比べるときに、変わってよい欄（出典の記録。エンジンは使わない）。ほかの欄は修正の欄を除いて同じでなければ書き出さない
+PROVENANCE_FIELDS = ("notes", "ja_text_source", "source_ids", "jp_en_differences")
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md 3 章）: エンジンが写しの作り直しで当てはめる、利用者が示した訂正（kyuura にはまだない）。kyuura が当てはめた修正
+# （``KYUURA_CORRECTIONS``。台帳とカードの記録で確かめる）とは別の表で、書き出しでも別の欄（``engine_user_corrections``）に残す。kyuura の照合の記録（CC-）・
+# 最新の説明（LD-）・修正のコミットはなく、エラッタ・別の版の文面でもない。当てはめるのは名前（``name.ja``）だけで、ほかの欄（HP・タイプ・ワザなど）は写しの元の
+# まま。書き出すたびに、写しの元（KYUURA_COMMIT）の値と台帳・カードの記録を確かめる（``engine_user_correction_problems``）:
+# - 写しの元の値が ``before`` なら当てはめる。``after`` なら kyuura がすでに当てはめたので当てはめない（二重の修正をしない）が、表を KYUURA_CORRECTIONS に
+#   移すまで書き出さない（知らせる）。どちらでもなければ書き出さない
+# - kyuura の台帳・カードの記録に、同じ欄の修正があれば書き出さない（kyuura の修正として扱う）
+# kyuura のデータは直さない（kyuura への報告事項。docs/data-provenance.md）
+ENGINE_USER_CORRECTIONS = [
+    {
+        "card_id": "PR1-069",
+        "field": "name.ja",
+        "before": "？？？",
+        "after": "ミュウ",
+        "basis": "user_provided",
+        "provided_on": "2026-10-19",
+        "provided_by": "利用者（2026-10-19 の v0.70 の依頼。このカードをミュウ（Ancient Mew）と同定し、カード画像と補助資料の URL を示した）",
+        "statement": "PR1-069（プロモ。kyuura の名前は「？？？」）はミュウ。ルールに使う日本語の名前を「ミュウ」にする（同じ名前 4 枚の制限で、ほかのミュウと同じ名前として数える）",
+        "evidence": "利用者の同定と、利用者が示したカード画像",
+        "reference_url": "https://bulbapedia.bulbagarden.net/wiki/Ancient_Mew_(The_Power_of_One_promo)",
+        "reference_url_role": "利用者が示した補助資料。エンジンは本文を取得していない（ネットワークのプロキシが 403）。サイトの本文を検証した・ルーン文字を解読したとは扱わない",
+        "engine_saw_image": False,
+        "kyuura_saw_image": False,
+    },
+]
+ENGINE_USER_CORRECTION_FIELDS = ("name.ja",)
 
 # 対戦には使わない。未対応のカード・ワザを正しく「未対応」と分類できるかのテストに使う
 REFERENCE_ONLY = [
@@ -855,9 +1346,8 @@ REFERENCE_ONLY = [
     # 化石の秘密のベトベター（PMCG3-003）は v0.36 まで参照カードだった（「ちいさくなる」が未実装）。v0.37 で対戦用（POOL_V0_37）にした
     # 第1弾のゴースト（PMCG1-047）は v0.44 まで参照カードだった（「ゆめくい」（相手がねむり状態でないとき失敗する）が未実装）。v0.45 で対戦用（POOL_V0_45）にした
     # サカキのカイリキー（PMCG6-061）は v0.10 では参照カードだった。v0.11 で対戦用（POOL_V0_11）にした
-    # キョウのベトベトン（v0.17c。ポケモンパワー「だつりょくえき」（相手のワザのダメージを受けるとき、コインで相手のエネルギーを選んでトラッシュ）は
-    # 窓の途中の決定が要るので実装していない。docs/kogas-muk-event-design-v0.17c.md。進化元のキョウのベトベターは写していない）
-    "PMCG6-023",
+    # キョウのベトベトン（PMCG6-023）は v0.17c〜v0.67 は参照カードだった（［だつりょくえき］を延期。docs/kogas-muk-event-design-v0.17c.md）。v0.68 で、この特殊能力に限った
+    # 採用の仕様（docs/final-pmcg-cards-v0.68.md 3 章）で対戦用（POOL_V0_68）にした。参照カードは残っていない
 ]
 
 # コピーする項目（kyuura の記録のキー。値は書き換えない）
@@ -875,6 +1365,19 @@ FIELDS = [
     "source_ids",
     "ja_text_source",
     "jp_print",
+    # v0.69: kyuura のデータの形式 3（schema_version 3）の欄のうち、商品・使える範囲・欠けている欄・欄の出どころ・同じカードの組を写す（出典の確認用。
+    # エンジンは使わない）。kyuura の記録にいつもある欄
+    "product_group",
+    "play_scope",
+    "data_gaps",
+    "same_card_group",
+]
+
+# v0.69: kyuura の記録に、あるときだけある欄（ないときは写しにも書かない。値は書き換えない）。``corrections`` は kyuura が当てはめた修正の記録（KYUURA_CORRECTIONS）
+OPTIONAL_FIELDS = [
+    "field_sources",
+    "copies",
+    "corrections",
 ]
 
 # エンジンが対戦の処理に使う項目（それ以外は出典の確認用にコピーしているだけ）
@@ -951,63 +1454,289 @@ def _is_ancestor(kyuura: Path, older: str, newer: str) -> bool:
     return subprocess.run(["git", "-C", str(kyuura), "merge-base", "--is-ancestor", older, newer], capture_output=True, check=False).returncode == 0
 
 
-def correction_problems(kyuura: Path, source: dict) -> list[str]:
-    """確定した修正（``CONFIRMED_CORRECTIONS``）の出どころを、kyuura の固定したコミットで確かめる（v0.62）。問題の一覧（空なら当てはめてよい）。"""
+def _records(data):
+    return data["records"] if isinstance(data, dict) and "records" in data else data
+
+
+def kyuura_correction_problems(kyuura: Path, source: dict, previous: dict, pool: list[str]) -> list[str]:
+    """kyuura が当てはめた修正（``KYUURA_CORRECTIONS``。v0.69）を、台帳・カードの記録・前の写しの元で確かめる。問題の一覧（空なら書き出してよい）。"""
     problems = []
-    original = {card["id"]: card for card in source["cards"]}
-    fixed_cards: dict[str, dict] = {}
-    records: dict[str, list] = {}
-    for c in CONFIRMED_CORRECTIONS:
-        label = f"{c['card_id']} の {c['field']}（{c['record']}）"
-        if c["commit"] not in fixed_cards:
-            fixed_cards[c["commit"]] = {card["id"]: card for card in json.loads(_show(kyuura, c["commit"], KYUURA_PATH).decode("utf-8"))["cards"]}
-        if c["record_commit"] not in records:
-            data = json.loads(_show(kyuura, c["record_commit"], "data/sidecar/card_checks.json").decode("utf-8"))
-            records[c["record_commit"]] = data["records"] if isinstance(data, dict) and "records" in data else data
-        if get_field(original[c["card_id"]], c["field"]) != c["before"]:
-            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['before']!r} ではない")
-        if get_field(fixed_cards[c["commit"]][c["card_id"]], c["field"]) != c["after"]:
-            problems.append(f"{label}: 修正のコミット（{c['commit'][:7]}）の値が {c['after']!r} ではない")
-        record = next((r for r in records[c["record_commit"]] if isinstance(r, dict) and r.get("id") == c["record"]), None)
-        if record is None or record.get("card_id") != c["card_id"]:
-            problems.append(f"{label}: 研究の基準のコミット（{c['record_commit'][:7]}）に、このカードの照合の記録がない")
-        elif not any(x.get("field") == c["field"] and x.get("before") == c["before"] and x.get("after") == c["after"] and x.get("commit") == c["commit"]
-                     for x in record.get("corrections", ())):
-            problems.append(f"{label}: 照合の記録の corrections に、同じ修正（欄・前・後・コミット）がない")
-        if not (_is_ancestor(kyuura, KYUURA_COMMIT, c["commit"]) and _is_ancestor(kyuura, c["commit"], c["record_commit"])):
-            problems.append(f"{label}: 修正のコミットが、写しの元のあと・研究の基準の前にない")
-    for commit, cards in fixed_cards.items():
-        for card_id in {c["card_id"] for c in CONFIRMED_CORRECTIONS if c["commit"] == commit}:
-            corrected = {c["field"].split(".")[0] for c in CONFIRMED_CORRECTIONS if c["commit"] == commit and c["card_id"] == card_id}
-            before = json.loads(json.dumps(original[card_id]))
-            for c in CONFIRMED_CORRECTIONS:
-                if c["commit"] == commit and c["card_id"] == card_id:
-                    set_field(before, c["field"], c["after"])
-            for field in FIELDS:
-                if field in CORRECTION_PROVENANCE_FIELDS:
-                    continue
-                if before.get(field) != cards[card_id].get(field):
-                    problems.append(f"{card_id} の {field} が、修正の欄のほかにも修正のコミット（{commit[:7]}）で変わっている"
-                                    f"（修正した欄 {sorted(corrected)}）")
+    ledger = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_CORRECTIONS_PATH).decode("utf-8"))["corrections"]
+    by_ledger = {entry["id"]: entry for entry in ledger}
+    current = {card["id"]: card for card in source["cards"]}
+    old = {card["id"]: card for card in previous["cards"]}
+    checks = None
+    known = set()
+    for c in KYUURA_CORRECTIONS:
+        label = f"{c['card_id']} の {c['field']}（{c['id']}）"
+        known.add(c["id"])
+        entry = by_ledger.get(c["id"])
+        if entry is None:
+            problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）の {KYUURA_CORRECTIONS_PATH} に記録がない")
+            continue
+        for key in ("card_id", "field", "before", "after", "basis"):
+            if entry.get(key) != c[key]:
+                problems.append(f"{label}: 台帳の {key} が {entry.get(key)!r}（写しの記録は {c[key]!r}）")
+        card = current.get(c["card_id"])
+        if card is None:
+            problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）にカードがない")
+            continue
+        if not any(x.get("id") == c["id"] and all(x.get(k) == c[k] for k in ("field", "before", "after", "basis")) for x in card.get("corrections") or ()):
+            problems.append(f"{label}: カードの記録の corrections に同じ修正がない")
+        if get_field(card, c["field"]) != c["after"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {c['after']!r} ではない（修正が当てはまっていない）")
+        if c["card_id"] in old and get_field(old[c["card_id"]], c["field"]) != c["before"]:
+            problems.append(f"{label}: 前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）の値が {c['before']!r} ではない")
+        if c["card_id"] not in old and c["basis"] != "kyuura_existing_record":
+            problems.append(f"{label}: 前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）にカードがない")
+        if c["basis"] == "kyuura_source_check":
+            if entry.get("record") != c.get("record") or entry.get("commit") != c.get("commit"):
+                problems.append(f"{label}: 台帳の照合の記録・コミットが違う")
+            if checks is None:
+                checks = _records(json.loads(_show(kyuura, KYUURA_COMMIT, "data/sidecar/card_checks.json").decode("utf-8")))
+            record = next((r for r in checks if isinstance(r, dict) and r.get("id") == c.get("record")), None)
+            if record is None or record.get("card_id") != c["card_id"] or not any(
+                    x.get("field") == c["field"] and x.get("before") == c["before"] and x.get("after") == c["after"] and x.get("commit") == c.get("commit")
+                    for x in record.get("corrections", ())):
+                problems.append(f"{label}: 照合の記録 {c.get('record')} の corrections に、同じ修正（欄・前・後・コミット）がない")
+            if not (c.get("commit") and _is_ancestor(kyuura, PREVIOUS_KYUURA_COMMIT, c["commit"]) and _is_ancestor(kyuura, c["commit"], KYUURA_COMMIT)):
+                problems.append(f"{label}: 修正のコミットが、前の写しの元のあと・写しの元の前にない")
+        elif c["basis"] == "user_provided":
+            if entry.get("kyuura_saw_image") is not False or c.get("kyuura_saw_image") is not False or c.get("engine_saw_image") is not False:
+                problems.append(f"{label}: 利用者が示した訂正は、kyuura もエンジンも画像を見ていない（kyuura_saw_image・engine_saw_image は False）")
+            if any(key in c or key in entry for key in ("record", "commit")):
+                problems.append(f"{label}: 利用者が示した訂正に、照合の記録・修正のコミットを書かない")
+        elif c["basis"] == "kyuura_existing_record":
+            # v0.71: kyuura の前の作業の判定（data/curation/other_products.json の reprint_checks。キーはカード名）を、kyuura が台帳で当てはめた修正
+            if c.get("engine_saw_image") is not False or any(key in c for key in ("record", "commit")):
+                problems.append(f"{label}: kyuura の前の判定による修正は、エンジンが画像を見ていない（engine_saw_image は False）・照合の記録とコミットを書かない")
+            other = json.loads(_show(kyuura, KYUURA_COMMIT, "data/curation/other_products.json").decode("utf-8"))
+            name = card["name"]["ja"]
+            if c.get("kyuura_record") != f"data/curation/other_products.json reprint_checks「{name}」" or name not in (other.get("reprint_checks") or {}):
+                problems.append(f"{label}: kyuura の data/curation/other_products.json の reprint_checks に「{name}」の判定がない")
+            if c["card_id"] in old:
+                problems.append(f"{label}: 前の写しの元にあるカードの修正は、台帳の根拠の記録（照合の記録とコミット）で確かめる")
+        else:
+            problems.append(f"{label}: 根拠 {c['basis']!r} を扱えない")
+    for entry in ledger:
+        if entry["card_id"] in pool and entry["id"] not in known:
+            problems.append(f"{entry['card_id']}: kyuura の台帳の修正 {entry['id']} を KYUURA_CORRECTIONS に挙げていない")
+    for card_id in pool:
+        for x in current[card_id].get("corrections") or ():
+            if x.get("id") not in known:
+                problems.append(f"{card_id}: カードの記録の修正 {x.get('id')} を KYUURA_CORRECTIONS に挙げていない")
     return problems
 
 
-def apply_corrections(cards: list[dict]) -> list[dict]:
-    """確定した修正の欄だけを、写しのカードに当てはめる（v0.62。ほかの欄は写しの元のまま）。"""
+def engine_user_correction_problems(kyuura: Path, source: dict, pool: list[str]) -> list[str]:
+    """エンジンが当てはめる利用者が示した訂正（``ENGINE_USER_CORRECTIONS``。v0.70）を確かめる。問題の一覧（空なら当てはめてよい）。"""
+    problems = []
+    ledger = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_CORRECTIONS_PATH).decode("utf-8"))["corrections"]
+    current = {card["id"]: card for card in source["cards"]}
+    seen = set()
+    for c in ENGINE_USER_CORRECTIONS:
+        label = f"{c['card_id']} の {c['field']}（エンジンが当てはめる利用者が示した訂正）"
+        if c.get("basis") != "user_provided" or c.get("engine_saw_image") is not False or c.get("kyuura_saw_image") is not False:
+            problems.append(f"{label}: basis は user_provided、engine_saw_image・kyuura_saw_image は False（画像を見たと書かない）")
+        if any(key in c for key in ("id", "record", "commit", "record_commit")):
+            problems.append(f"{label}: kyuura の台帳の id・照合の記録・修正のコミットを書かない（kyuura の記録ではない）")
+        if c["field"] not in ENGINE_USER_CORRECTION_FIELDS:
+            problems.append(f"{label}: 当てはめる欄は {ENGINE_USER_CORRECTION_FIELDS} だけ")
+        if c["before"] == c["after"] or (c["card_id"], c["field"]) in seen:
+            problems.append(f"{label}: 前とあとが同じか、同じ欄に 2 つの訂正がある")
+        seen.add((c["card_id"], c["field"]))
+        if any(x["card_id"] == c["card_id"] and x["field"] == c["field"] for x in KYUURA_CORRECTIONS):
+            problems.append(f"{label}: kyuura が当てはめた修正（KYUURA_CORRECTIONS）と同じ欄")
+        if c["card_id"] not in pool or c["card_id"] not in current:
+            problems.append(f"{label}: 対戦用の組のカードではない")
+            continue
+        card = current[c["card_id"]]
+        if any(entry.get("card_id") == c["card_id"] and entry.get("field") == c["field"] for entry in ledger) or any(
+                x.get("field") == c["field"] for x in card.get("corrections") or ()):
+            problems.append(f"{label}: kyuura（{KYUURA_COMMIT[:7]}）の台帳かカードの記録に同じ欄の修正がある（KYUURA_CORRECTIONS に移す）")
+        value = get_field(card, c["field"])
+        if value == c["after"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値がすでに {c['after']!r}（kyuura が当てはめた。二重に当てはめない。KYUURA_CORRECTIONS に移す）")
+        elif value != c["before"]:
+            problems.append(f"{label}: 写しの元（{KYUURA_COMMIT[:7]}）の値が {value!r}（想定した前の値 {c['before']!r} でも、あとの値 {c['after']!r} でもない）")
+    return problems
+
+
+def apply_engine_user_corrections(cards: list[dict]) -> list[dict]:
+    """エンジンが当てはめる利用者が示した訂正の欄だけを、写しのカードに当てはめる（v0.70。``engine_user_correction_problems`` が空のときだけ呼ぶ）。"""
     by_id = {card["id"]: card for card in cards}
-    for c in CONFIRMED_CORRECTIONS:
+    for c in ENGINE_USER_CORRECTIONS:
+        if get_field(by_id[c["card_id"]], c["field"]) != c["before"]:
+            raise SystemExit(f"{c['card_id']} の {c['field']} が想定した前の値ではない（二重に当てはめない）")
         set_field(by_id[c["card_id"]], c["field"], c["after"])
     return cards
 
 
-def build_extract(source: dict) -> dict:
+def previous_copy_problems(source: dict, previous: dict, pool: list[str]) -> list[str]:
+    """前の写しの元（PREVIOUS_KYUURA_COMMIT）にあったカードの写す欄が、修正の欄と出典の記録の欄（``PROVENANCE_FIELDS``）を除いて同じことを確かめる（v0.69）。"""
+    problems = []
+    current = {card["id"]: card for card in source["cards"]}
+    old = {card["id"]: card for card in previous["cards"]}
+    for card_id in pool:
+        if card_id not in old:
+            continue
+        before = json.loads(json.dumps(old[card_id]))
+        for c in KYUURA_CORRECTIONS:
+            if c["card_id"] == card_id:
+                set_field(before, c["field"], c["after"])
+        for field in FIELDS:
+            if field in PROVENANCE_FIELDS or field not in before:
+                continue
+            if before[field] != current[card_id][field]:
+                problems.append(f"{card_id} の {field} が、前の写しの元（{PREVIOUS_KYUURA_COMMIT[:7]}）と修正の欄のほかでも違う")
+    return problems
+
+
+def equivalent_targets(kyuura: Path) -> list[dict]:
+    """engine_targets.json（KYUURA_COMMIT）の mechanically_equivalent の記録（v0.69。値は書き換えない）。"""
+    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    keys = ("id", "name_ja", "equivalent_to", "product_group", "jp_set", "release_date", "released_after_rule_base", "category", "category_reasons", "play_scope")
+    return [{key: card.get(key) for key in keys} for card in data["cards"] if card.get("engine_status") == "mechanically_equivalent"]
+
+
+def equivalent_target_problems(targets: list[dict]) -> list[str]:
+    problems = []
+    if [t["id"] for t in targets] != POOL_V0_69:
+        problems.append("POOL_V0_69 が engine_targets.json の mechanically_equivalent のすべて（並びも）と同じではない")
+    for t in targets:
+        if len(t["equivalent_to"] or ()) != 1:
+            problems.append(f"{t['id']}: 対応する元のカードがちょうど 1 枚ではない（{t['equivalent_to']}）")
+        if t["play_scope"] != "standard":
+            problems.append(f"{t['id']}: play_scope が standard ではない")
+    return problems
+
+
+def reprint_targets(kyuura: Path) -> list[dict]:
+    """engine_targets.json（KYUURA_COMMIT）の、POOL_V0_71 の記録（v0.71。値は書き換えない）。``nearest_registered`` は kyuura が見つけた、登録したカードの中で
+    いちばん近いカードと違う欄（索引。処理が同じことの証拠ではない。エンジンは effects.REPRINT_CARDS と scripts/check_card_sources.py で確かめる）。"""
+    data = json.loads(_show(kyuura, KYUURA_COMMIT, KYUURA_TARGETS_PATH).decode("utf-8"))
+    keys = ("id", "name_ja", "engine_status", "reuse_basis", "nearest_registered", "same_card_group", "product_group", "jp_set", "release_date",
+            "released_after_rule_base", "category", "play_scope")
+    by_id = {card["id"]: card for card in data["cards"]}
+    return [{key: by_id[card_id].get(key) for key in keys} for card_id in POOL_V0_71 if card_id in by_id]
+
+
+def reprint_target_problems(targets: list[dict]) -> list[str]:
+    problems = []
+    if [t["id"] for t in targets] != POOL_V0_71:
+        problems.append("POOL_V0_71 のカードが engine_targets.json にない")
+    for t in targets:
+        if t["engine_status"] != "reuse_candidate":
+            problems.append(f"{t['id']}: engine_status が reuse_candidate ではない（{t['engine_status']}）")
+        if len(t["nearest_registered"] or ()) != 1:
+            problems.append(f"{t['id']}: いちばん近い登録したカードがちょうど 1 枚ではない")
+        if t["play_scope"] != "standard":
+            problems.append(f"{t['id']}: play_scope が standard ではない")
+    return problems
+
+
+def _copy(card: dict) -> dict:
+    copied = {field: json.loads(json.dumps(card[field])) for field in FIELDS}
+    copied.update({field: json.loads(json.dumps(card[field])) for field in OPTIONAL_FIELDS if field in card})
+    return copied
+
+
+# 対戦用の組（書き出しの鍵と並び）。並びは写しのカードの並び（v0.69 から 1 か所にまとめた。値と並びは v0.68 までと同じで、最後に pool_v0_69）
+POOLS = [
+    ("pool_v0_1", POOL_V0_1),
+    ("pool_v0_2b", POOL_V0_2B),
+    ("pool_v0_2c", POOL_V0_2C),
+    ("pool_v0_2d", POOL_V0_2D),
+    ("pool_v0_2e", POOL_V0_2E),
+    ("pool_v0_2f", POOL_V0_2F),
+    ("pool_v0_3a", POOL_V0_3A),
+    ("pool_v0_3b", POOL_V0_3B),
+    ("pool_v0_3c", POOL_V0_3C),
+    ("pool_v0_4a", POOL_V0_4A),
+    ("pool_v0_4b", POOL_V0_4B),
+    ("pool_v0_4c", POOL_V0_4C),
+    ("pool_v0_4d", POOL_V0_4D),
+    ("pool_v0_5", POOL_V0_5),
+    ("pool_v0_6", POOL_V0_6),
+    ("pool_v0_7", POOL_V0_7),
+    ("pool_v0_8", POOL_V0_8),
+    ("pool_v0_9", POOL_V0_9),
+    ("pool_v0_10", POOL_V0_10),
+    ("pool_v0_11", POOL_V0_11),
+    ("pool_v0_12", POOL_V0_12),
+    ("pool_v0_13", POOL_V0_13),
+    ("pool_v0_17a", POOL_V0_17A),
+    ("pool_v0_17b", POOL_V0_17B),
+    ("pool_v0_18c", POOL_V0_18C),
+    ("pool_v0_19", POOL_V0_19),
+    ("pool_v0_21", POOL_V0_21),
+    ("pool_v0_22", POOL_V0_22),
+    ("pool_v0_23", POOL_V0_23),
+    ("pool_v0_24", POOL_V0_24),
+    ("pool_v0_25", POOL_V0_25),
+    ("pool_v0_27", POOL_V0_27),
+    ("pool_v0_28", POOL_V0_28),
+    ("pool_v0_29", POOL_V0_29),
+    ("pool_v0_30", POOL_V0_30),
+    ("pool_v0_31", POOL_V0_31),
+    ("pool_v0_32", POOL_V0_32),
+    ("pool_v0_33", POOL_V0_33),
+    ("pool_v0_34", POOL_V0_34),
+    ("pool_v0_35", POOL_V0_35),
+    ("pool_v0_36", POOL_V0_36),
+    ("pool_v0_37", POOL_V0_37),
+    ("pool_v0_38", POOL_V0_38),
+    ("pool_v0_39", POOL_V0_39),
+    ("pool_v0_40", POOL_V0_40),
+    ("pool_v0_41", POOL_V0_41),
+    ("pool_v0_42", POOL_V0_42),
+    ("pool_v0_43", POOL_V0_43),
+    ("pool_v0_44", POOL_V0_44),
+    ("pool_v0_45", POOL_V0_45),
+    ("pool_v0_46", POOL_V0_46),
+    ("pool_v0_47", POOL_V0_47),
+    ("pool_v0_48", POOL_V0_48),
+    ("pool_v0_49", POOL_V0_49),
+    ("pool_v0_50", POOL_V0_50),
+    ("pool_v0_51", POOL_V0_51),
+    ("pool_v0_52", POOL_V0_52),
+    ("pool_v0_53", POOL_V0_53),
+    ("pool_v0_54", POOL_V0_54),
+    ("pool_v0_55", POOL_V0_55),
+    ("pool_v0_56", POOL_V0_56),
+    ("pool_v0_57", POOL_V0_57),
+    ("pool_v0_58", POOL_V0_58),
+    ("pool_v0_59", POOL_V0_59),
+    ("pool_v0_60", POOL_V0_60),
+    ("pool_v0_61", POOL_V0_61),
+    ("pool_v0_62", POOL_V0_62),
+    ("pool_v0_63", POOL_V0_63),
+    ("pool_v0_64", POOL_V0_64),
+    ("pool_v0_65", POOL_V0_65),
+    ("pool_v0_66", POOL_V0_66),
+    ("pool_v0_67", POOL_V0_67),
+    ("pool_v0_68", POOL_V0_68),
+    ("pool_v0_69", POOL_V0_69),
+    ("pool_v0_70", POOL_V0_70),
+    ("pool_v0_71", POOL_V0_71),
+    ("pool_v0_72", POOL_V0_72),
+    ("pool_v0_73", POOL_V0_73),
+    ("pool_v0_74", POOL_V0_74),
+    ("pool_v0_75", POOL_V0_75),
+]
+
+
+def all_pool_cards() -> list[str]:
+    return [card_id for _, pool in POOLS for card_id in pool]
+
+
+def build_extract(source: dict, targets: list[dict], reprints: list[dict]) -> dict:
     by_id = {card["id"]: card for card in source["cards"]}
-    missing = [card_id for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + REFERENCE_ONLY if card_id not in by_id]
+    missing = [card_id for card_id in all_pool_cards() + REFERENCE_ONLY if card_id not in by_id]
     if missing:
         raise SystemExit(f"kyuura {KYUURA_COMMIT} に次のカードがない: {missing}")
-    cards = [{field: json.loads(json.dumps(by_id[card_id][field])) for field in FIELDS} for card_id in POOL_V0_1 + POOL_V0_2B + POOL_V0_2C + POOL_V0_2D + POOL_V0_2E + POOL_V0_2F + POOL_V0_3A + POOL_V0_3B + POOL_V0_3C + POOL_V0_4A + POOL_V0_4B + POOL_V0_4C + POOL_V0_4D + POOL_V0_5 + POOL_V0_6 + POOL_V0_7 + POOL_V0_8 + POOL_V0_9 + POOL_V0_10 + POOL_V0_11 + POOL_V0_12 + POOL_V0_13 + POOL_V0_17A + POOL_V0_17B + POOL_V0_18C + POOL_V0_19 + POOL_V0_21 + POOL_V0_22 + POOL_V0_23 + POOL_V0_24 + POOL_V0_25 + POOL_V0_27 + POOL_V0_28 + POOL_V0_29 + POOL_V0_30 + POOL_V0_31 + POOL_V0_32 + POOL_V0_33 + POOL_V0_34 + POOL_V0_35 + POOL_V0_36 + POOL_V0_37 + POOL_V0_38 + POOL_V0_39 + POOL_V0_40 + POOL_V0_41 + POOL_V0_42 + POOL_V0_43 + POOL_V0_44 + POOL_V0_45 + POOL_V0_46 + POOL_V0_47 + POOL_V0_48 + POOL_V0_49 + POOL_V0_50 + POOL_V0_51 + POOL_V0_52 + POOL_V0_53 + POOL_V0_54 + POOL_V0_55 + POOL_V0_56 + POOL_V0_57 + POOL_V0_58 + POOL_V0_59 + POOL_V0_60 + POOL_V0_61 + POOL_V0_62 + REFERENCE_ONLY]
-    cards = apply_corrections(cards)
-    return {
+    cards = apply_engine_user_corrections([_copy(by_id[card_id]) for card_id in all_pool_cards() + REFERENCE_ONLY])
+    extract = {
         "format": "kyuura-engine card extract 1",
         "description": (
             "kyuura の data/cards.json から、kyuura-engine が使うカードの記録を抜き出した写し。"
@@ -1021,78 +1750,24 @@ def build_extract(source: dict) -> dict:
             "schema_version": source.get("schema_version"),
         },
         "fields_copied": FIELDS,
+        "fields_copied_when_present": OPTIONAL_FIELDS,
         "fields_used_by_engine": FIELDS_USED_BY_ENGINE,
-        "pool_v0_1": POOL_V0_1,
-        "pool_v0_2b": POOL_V0_2B,
-        "pool_v0_2c": POOL_V0_2C,
-        "pool_v0_2d": POOL_V0_2D,
-        "pool_v0_2e": POOL_V0_2E,
-        "pool_v0_2f": POOL_V0_2F,
-        "pool_v0_3a": POOL_V0_3A,
-        "pool_v0_3b": POOL_V0_3B,
-        "pool_v0_3c": POOL_V0_3C,
-        "pool_v0_4a": POOL_V0_4A,
-        "pool_v0_4b": POOL_V0_4B,
-        "pool_v0_4c": POOL_V0_4C,
-        "pool_v0_4d": POOL_V0_4D,
-        "pool_v0_5": POOL_V0_5,
-        "pool_v0_6": POOL_V0_6,
-        "pool_v0_7": POOL_V0_7,
-        "pool_v0_8": POOL_V0_8,
-        "pool_v0_9": POOL_V0_9,
-        "pool_v0_10": POOL_V0_10,
-        "pool_v0_11": POOL_V0_11,
-        "pool_v0_12": POOL_V0_12,
-        "pool_v0_13": POOL_V0_13,
-        "pool_v0_17a": POOL_V0_17A,
-        "pool_v0_17b": POOL_V0_17B,
-        "pool_v0_18c": POOL_V0_18C,
-        "pool_v0_19": POOL_V0_19,
-        "pool_v0_21": POOL_V0_21,
-        "pool_v0_22": POOL_V0_22,
-        "pool_v0_23": POOL_V0_23,
-        "pool_v0_24": POOL_V0_24,
-        "pool_v0_25": POOL_V0_25,
-        "pool_v0_27": POOL_V0_27,
-        "pool_v0_28": POOL_V0_28,
-        "pool_v0_29": POOL_V0_29,
-        "pool_v0_30": POOL_V0_30,
-        "pool_v0_31": POOL_V0_31,
-        "pool_v0_32": POOL_V0_32,
-        "pool_v0_33": POOL_V0_33,
-        "pool_v0_34": POOL_V0_34,
-        "pool_v0_35": POOL_V0_35,
-        "pool_v0_36": POOL_V0_36,
-        "pool_v0_37": POOL_V0_37,
-        "pool_v0_38": POOL_V0_38,
-        "pool_v0_39": POOL_V0_39,
-        "pool_v0_40": POOL_V0_40,
-        "pool_v0_41": POOL_V0_41,
-        "pool_v0_42": POOL_V0_42,
-        "pool_v0_43": POOL_V0_43,
-        "pool_v0_44": POOL_V0_44,
-        "pool_v0_45": POOL_V0_45,
-        "pool_v0_46": POOL_V0_46,
-        "pool_v0_47": POOL_V0_47,
-        "pool_v0_48": POOL_V0_48,
-        "pool_v0_49": POOL_V0_49,
-        "pool_v0_50": POOL_V0_50,
-        "pool_v0_51": POOL_V0_51,
-        "pool_v0_52": POOL_V0_52,
-        "pool_v0_53": POOL_V0_53,
-        "pool_v0_54": POOL_V0_54,
-        "pool_v0_55": POOL_V0_55,
-        "pool_v0_56": POOL_V0_56,
-        "pool_v0_57": POOL_V0_57,
-        "pool_v0_58": POOL_V0_58,
-        "pool_v0_59": POOL_V0_59,
-        "pool_v0_60": POOL_V0_60,
-        "pool_v0_61": POOL_V0_61,
-        "pool_v0_62": POOL_V0_62,
-        "reference_only": REFERENCE_ONLY,
-        "corrections": [dict(correction, source_commit=KYUURA_COMMIT) for correction in CONFIRMED_CORRECTIONS],
-        "cards": cards,
     }
+    for key, pool in POOLS:
+        extract[key] = pool
+    extract["reference_only"] = REFERENCE_ONLY
+    extract["previous_source"] = {
+        "commit": PREVIOUS_KYUURA_COMMIT,
+        "note": "v0.68 までの写しの元。このコミットにあったカードの写す欄は、kyuura_corrections の欄と出典の記録の欄（previous_provenance_fields）を除いて同じ"
+                "（書き出すたびに previous_copy_problems で確かめる）",
+        "previous_provenance_fields": list(PROVENANCE_FIELDS),
+    }
+    extract["kyuura_corrections"] = [dict(correction, applied_in_source=KYUURA_COMMIT, previous_source=PREVIOUS_KYUURA_COMMIT) for correction in KYUURA_CORRECTIONS]
+    extract["engine_user_corrections"] = [dict(correction, source_commit=KYUURA_COMMIT) for correction in ENGINE_USER_CORRECTIONS]
+    extract["equivalent_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": targets}
+    extract["reprint_targets"] = {"path": KYUURA_TARGETS_PATH, "commit": KYUURA_COMMIT, "cards": reprints}
+    extract["cards"] = cards
+    return extract
 
 
 def render(extract: dict) -> str:
@@ -1107,11 +1782,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     source = read_kyuura_cards(args.kyuura)
-    problems = correction_problems(args.kyuura, source)
+    previous = json.loads(_show(args.kyuura, PREVIOUS_KYUURA_COMMIT, KYUURA_PATH).decode("utf-8"))
+    targets = equivalent_targets(args.kyuura)
+    reprints = reprint_targets(args.kyuura)
+    pool = all_pool_cards() + REFERENCE_ONLY
+    problems = (kyuura_correction_problems(args.kyuura, source, previous, pool) + engine_user_correction_problems(args.kyuura, source, pool)
+                + previous_copy_problems(source, previous, pool) + equivalent_target_problems(targets)
+                + reprint_target_problems(reprints))
     if problems:
-        print("確定した修正の出どころを確かめられない:\n" + "\n".join(problems), file=sys.stderr)
+        print("kyuura のデータを写しにできない:\n" + "\n".join(problems), file=sys.stderr)
         return 1
-    text = render(build_extract(source))
+    text = render(build_extract(source, targets, reprints))
     if args.check:
         current = args.output.read_text(encoding="utf-8") if args.output.exists() else ""
         if current != text:
@@ -1120,7 +1801,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{args.output} は kyuura {KYUURA_COMMIT} と一致しています")
         return 0
     args.output.write_text(text, encoding="utf-8")
-    print(f"{args.output} を書き出しました（{len(POOL_V0_1)} + {len(POOL_V0_2B)} + {len(POOL_V0_2C)} + {len(POOL_V0_2D)} + {len(POOL_V0_2E)} + {len(POOL_V0_2F)} + {len(POOL_V0_3A)} + {len(POOL_V0_3B)} + {len(POOL_V0_3C)} + {len(POOL_V0_4A)} + {len(POOL_V0_4B)} + {len(POOL_V0_4C)} + {len(POOL_V0_4D)} + {len(POOL_V0_5)} + {len(POOL_V0_6)} + {len(POOL_V0_7)} + {len(POOL_V0_8)} + {len(POOL_V0_9)} + {len(POOL_V0_10)} + {len(POOL_V0_11)} + {len(POOL_V0_12)} + {len(POOL_V0_13)} + {len(POOL_V0_17A)} + {len(POOL_V0_17B)} + {len(POOL_V0_18C)} + {len(POOL_V0_19)} + {len(POOL_V0_21)} + {len(POOL_V0_22)} + {len(POOL_V0_23)} + {len(POOL_V0_24)} + {len(POOL_V0_25)} + {len(POOL_V0_27)} + {len(POOL_V0_28)} + {len(POOL_V0_29)} + {len(POOL_V0_30)} + {len(POOL_V0_31)} + {len(POOL_V0_32)} + {len(POOL_V0_33)} + {len(POOL_V0_34)} + {len(POOL_V0_35)} + {len(POOL_V0_36)} + {len(POOL_V0_37)} + {len(POOL_V0_38)} + {len(POOL_V0_39)} + {len(POOL_V0_40)} + {len(POOL_V0_41)} + {len(POOL_V0_42)} + {len(POOL_V0_43)} + {len(POOL_V0_44)} + {len(POOL_V0_45)} + {len(POOL_V0_46)} + {len(POOL_V0_47)} + {len(POOL_V0_48)} + {len(POOL_V0_49)} + {len(POOL_V0_50)} + {len(POOL_V0_51)} + {len(POOL_V0_52)} + {len(POOL_V0_53)} + {len(POOL_V0_54)} + {len(POOL_V0_55)} + {len(POOL_V0_56)} + {len(POOL_V0_57)} + {len(POOL_V0_58)} + {len(POOL_V0_59)} + {len(POOL_V0_60)} + {len(POOL_V0_61)} + {len(POOL_V0_62)} + {len(REFERENCE_ONLY)} 枚）")
+    counts = " + ".join(str(len(pool)) for _, pool in POOLS)
+    print(f"{args.output} を書き出しました（{counts} + {len(REFERENCE_ONLY)} 枚）")
     return 0
 
 

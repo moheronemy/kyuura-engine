@@ -62,8 +62,9 @@ KERNEL_RESUMES = frozenset({"attack", "knock_out", "post_knockout", "take_prize"
 
 
 class Recorder:
-    def __init__(self, engine, apply, out, *, save_every: int = 0, timing: bool = False):
+    def __init__(self, engine, apply, out, *, save_every: int = 0, timing: bool = False, card_data_commit: tuple[str, str] | None = None):
         self.engine = engine
+        self.card_data_commit = card_data_commit
         self.apply = apply
         self.out = out
         self.save_every = save_every
@@ -78,13 +79,22 @@ class Recorder:
         self.step = 0
         self.counts["games"] += 1
 
-    def digest(self, state) -> str:
-        data = json.dumps(self.engine.state_to_dict(state, format_version=9), sort_keys=True, ensure_ascii=False, default=repr)
-        return hashlib.sha256(data.encode("utf-8")).hexdigest()[:32]
+    def digest(self, state, *, raw: bool = False) -> str:
+        data = self.engine.state_to_dict(state, format_version=9)
+        if self.card_data_commit is not None and not raw:
+            data = map_card_data_commit(data, *self.card_data_commit)
+        text = json.dumps(data, sort_keys=True, ensure_ascii=False, default=repr)
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()[:32]
+
+    def _digests(self, state) -> dict:
+        found = {"h": self.digest(state)}
+        if self.card_data_commit is not None:
+            found["r"] = self.digest(state, raw=True)  # v0.69: もどす前の指紋（生の構造の違いを数える）
+        return found
 
     def initial(self, state) -> None:
         """対戦の始めの状態（``new_game`` の結果。対戦準備の途中で止まった対戦も比べられるように）。"""
-        self.out.write(json.dumps({"g": self.game, "i": "init", "h": self.digest(state)}, ensure_ascii=False) + "\n")
+        self.out.write(json.dumps({"g": self.game, "i": "init", **self._digests(state)}, ensure_ascii=False) + "\n")
 
     def kind(self, state, command) -> str:
         name = type(command).__name__
@@ -111,7 +121,7 @@ class Recorder:
             self.counts[f"time_n:{label}"] += 1
         record = {"g": self.game, "i": self.step, "c": hashlib.sha1(cmd.encode()).hexdigest()[:16], "o": outcome}
         if error is None:
-            record["h"] = self.digest(new)
+            record.update(self._digests(new))
         elif error.code == "WRONG_PHASE":
             record["m"] = error.message  # v0.16: 並びの違いだけを許すかを、文そのもので確かめる（compare）
         self.out.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -126,6 +136,20 @@ class Recorder:
             new = pickle.loads(pickle.dumps(new))
             self.counts["restored"] += 1
         return new
+
+
+def map_card_data_commit(data: dict, new: str, old: str) -> dict:
+    """v0.69: 書き出しの写しの元（``card_data.commit``・ログ ``game_created`` の ``card_data_commit``）の 2 か所だけを、確かめた移行の値（``new`` → ``old``）で
+    もどした新しい値。ほかの値は変えない。もどす前の値が ``new`` でなければ ``SystemExit``（知らない値を黙って置きかえない）。"""
+    result = json.loads(json.dumps(data, default=repr))
+    if result.get("card_data", {}).get("commit") != new:
+        raise SystemExit(f"card_data.commit が {new} ではない: {result.get('card_data')}")
+    result["card_data"]["commit"] = old
+    created = [event for event in result.get("log", []) if event.get("kind") == "game_created"]
+    if len(created) != 1 or created[0].get("card_data_commit") != new:
+        raise SystemExit(f"game_created の card_data_commit が {new} ではない")
+    created[0]["card_data_commit"] = old
+    return result
 
 
 def _apply_function(engine_module, route: str | None, preflight: str | None):
@@ -165,7 +189,10 @@ def record(args) -> int:
     started = time.perf_counter()
     errors = 0
     with opener(args.out, "wt", encoding="utf-8") as out:
-        rec = Recorder(engine, apply, out, save_every=args.save_every, timing=args.timing)
+        mapping = tuple(args.card_data_commit.split("=")) if args.card_data_commit else None
+        if mapping is not None and (len(mapping) != 2 or not all(re.fullmatch(r"[0-9a-f]{40}", c) for c in mapping)):
+            raise SystemExit("--card-data-commit は <この木の写しの元>=<比べる木の写しの元>（40 桁の SHA）")
+        rec = Recorder(engine, apply, out, save_every=args.save_every, timing=args.timing, card_data_commit=mapping)
         if args.corpus in ("natural", "all"):
             modules = args.modules.split(",") if args.modules else NATURAL_MODULES
             for name in modules:
@@ -213,7 +240,7 @@ def record(args) -> int:
                             continue
         summary = {"summary": dict(rec.counts), "errors": errors, "elapsed": round(time.perf_counter() - started, 1),
                    "root": str(root), "route": args.route, "preflight": args.preflight, "version": getattr(engine, "__version__", "?"),
-                   "hash_randomization": sys.flags.hash_randomization}
+                   "hash_randomization": sys.flags.hash_randomization, "card_data_commit": args.card_data_commit or None}
         if args.timing:
             summary["times_ms"] = {k: round(v / rec.counts[f"time_n:{k}"] * 1000, 4) for k, v in rec.times.items()}
             summary["times_total_s"] = {k: round(v, 4) for k, v in rec.times.items()}
@@ -273,8 +300,17 @@ def compare(args) -> int:
     if order_a != order_b:
         print(f"対戦の並びが違う（{len(order_a)} と {len(order_b)}）")
         divergences += 1
+    raw: Counter = Counter()
     for game in order_a:
         ra, rb = a.get(game, []), b.get(game, [])
+        # v0.69: 写しの元をもどした記録（record の --card-data-commit）は、もどした指紋（h）で比べ、もどす前の指紋（r）と相手の指紋の違いを数える
+        for xs, ys in ((ra, rb), (rb, ra)):
+            for x, y in zip(xs, ys):
+                if "r" in x:
+                    raw["steps_with_raw"] += 1
+                    raw["raw_differs"] += x["r"] != y.get("h")
+        ra = [{k: v for k, v in item.items() if k != "r"} for item in ra]
+        rb = [{k: v for k, v in item.items() if k != "r"} for item in rb]
         n = min(len(ra), len(rb))
         first = None
         for i in range(n):
@@ -296,9 +332,11 @@ def compare(args) -> int:
     print(f"対戦 {len(order_a)}・一致した歩 {steps}・食い違い {divergences}・許した差 {sum(allowed.values())} {dict(allowed)}")
     for example in examples:
         print(f"  許した差の例: {example}")
+    if raw:
+        print(f"写しの元をもどして比べた歩 {raw['steps_with_raw']}（もどす前の指紋が相手と違った歩 {raw['raw_differs']}）")
     for label, s in (("a", sa), ("b", sb)):
         if s is not None:
-            print(label, json.dumps({k: s[k] for k in ("root", "route", "preflight", "version", "elapsed", "errors")}, ensure_ascii=False))
+            print(label, json.dumps({k: s.get(k) for k in ("root", "route", "preflight", "version", "elapsed", "errors", "card_data_commit")}, ensure_ascii=False))
     return 1 if divergences else 0
 
 
@@ -352,6 +390,7 @@ def main(argv=None) -> int:
     r.add_argument("--illegal-rate", type=float, default=0.05)
     r.add_argument("--save-every", type=int, default=0)
     r.add_argument("--timing", action="store_true")
+    r.add_argument("--card-data-commit", default="", help="v0.69: <この木の写しの元>=<比べる木の写しの元>。書き出しの写しの元の 2 か所だけをもどして指紋をとる")
     r.add_argument("--out", required=True)
     c = sub.add_parser("compare")
     c.add_argument("a")

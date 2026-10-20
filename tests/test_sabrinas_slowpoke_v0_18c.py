@@ -31,6 +31,8 @@ from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.rules import RULES_2000_02_14
 from kyuura_engine.state import PreventDamage
 from tests.helpers import (
+    CARD_DATA_COMMIT_SINCE_V0_69,
+    with_card_data_commit_before_v0_69,
     ATTACK_TYPES_SINCE_V0_17, BILL, CATERPIE, DEFENDER, DODUO, DRATINI, GASTLY, GIOVANNIS_MEOWTH, H, HAUNTER, MACHOP, METAPOD,
     PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, ROCKETS_MOLTRES, ROCKETS_SNORLAX, SABRINAS_SLOWPOKE, SWITCH, T, apply_kernel,
     build_test_state, coin_events, expand_decklist, with_coin_results,
@@ -346,6 +348,9 @@ class GoldenGameTest(unittest.TestCase):
         self.assertGreater(count(state)["lazy_self_sleep"], 0)
         self.assertGreater(observed[f"z23_Z23-b-resistance_{SABRINAS_SLOWPOKE}"], 0)
         data = full(state)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        data = with_card_data_commit_before_v0_69(data)
         data.pop("effects")
         digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         self.assertEqual((len(commands), state.turn_number, state.phase, digest), self.GOLDEN)

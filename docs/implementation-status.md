@@ -1,6 +1,6 @@
-# 実装状況（v0.1〜v0.62）
+# 実装状況（v0.1〜v0.75）
 
-基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
+基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
 v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果を実装するための構造を整えた版です（[アーキテクチャ](architecture-v0.2a.md)）。v0.2b は、その構造を使ってトレーナーカード 3 枚（マサキ・きずぐすり・ポケモンいれかえ）を実装した版です（[アーキテクチャ](architecture-v0.2b.md)、[原典照合](trainers-v0.2b.md)）。v0.2c は、プラスパワーと、場に残るトレーナー・有効期限・ダメージ計算の段階への効果の適用を加えた版です（[アーキテクチャ](architecture-v0.2c.md)、[原典照合](pluspower-v0.2c.md)）。v0.2d は、コイントスと、コインの結果でダメージが変わるワザ（ドードーの「みだれづき」）を加えた版です（[アーキテクチャ](architecture-v0.2d.md)、[コイントスの規定](coin-rules-v0.2d.md)、[みだれづき](coin-attacks-v0.2d.md)）。v0.2e は、ディフェンダーと、防御側のダメージ変更・相手の番にまたがる有効期限を加えた版です（[アーキテクチャ](architecture-v0.2e.md)、[原典照合](defender-v0.2e.md)）。v0.2f は、ワザで自分に与えるダメージと、同時のきぜつ（両方のプレイヤーのポケモンが 1 つのワザできぜつする）を、ピカチュウの「かじる」「でんげき」とともに加えた版です（[アーキテクチャ](architecture-v0.2f.md)、[自分へのダメージ](self-damage-v0.2f.md)、[同時のきぜつ](simultaneous-ko-v0.2f.md)、[ピカチュウ](pikachu-v0.2f.md)）。v0.3a は、特殊状態の共通基盤と「どく」、番と番のあいだのポケモンチェックを、ビードルの「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.3a.md)、[特殊状態](special-conditions-v0.3a.md)、[ポケモンチェック](pokemon-check-v0.3a.md)、[ビードル](weedle-v0.3a.md)）。v0.3b は、ねむり・マヒと、それによるワザ・にげるの制限、ポケモンチェックの 3（ねむりのコイン）・4（マヒの回復）を、キャタピーの「いとをはく」・パラスの「ひっかく」「キノコのほうし」とともに加えた版です（[アーキテクチャ](architecture-v0.3b.md)、[ねむり・マヒ](sleep-paralysis-v0.3b.md)、[ポケモンチェック](pokemon-check-v0.3b.md)、[キャタピー・パラス](cards-v0.3b.md)）。v0.3c は、こんらんと、こんらん状態のポケモンのワザ（コイン・自分への 20 ダメージ）・にげる（コイン・エネルギー・同じ番の再宣言の制限）を、ロコンの「あやしいひかり」とともに加えた版です（[アーキテクチャ](architecture-v0.3c.md)、[こんらん](confusion-v0.3c.md)、[ワザ・ロコン](confusion-attacks-v0.3c.md)、[にげる](retreat-confusion-v0.3c.md)）。v0.3d は、カード・ルールを加えず、特殊状態 4 種類の総合検証・未解決の裁定の再調査・コインの前の検証・進化の準備の調査をした版です（[アーキテクチャ](architecture-v0.3d.md)、[総合検証](special-conditions-audit-v0.3d.md)、[未解決の裁定](unresolved-rulings-v0.3d.md)、[コインの前の検証](effect-preflight-v0.3d.md)、[進化の準備](evolution-readiness-v0.4.md)）。v0.4a は、たねポケモン → 1 進化ポケモンの進化（`EvolvePokemon`）を、パラセクト（パラスから進化）・ジュゴン（パウワウから進化）とともに加えた版です（[アーキテクチャ](architecture-v0.4a.md)、[進化のルール](evolution-rules-v0.4a.md)、[カード](evolution-cards-v0.4a.md)、[状態](evolution-state-v0.4a.md)）。v0.4b は、ワザによる持続する効果（番をまたいで残り、期限・ベンチ・進化・きぜつで消える）を、トランセル（キャタピーから進化）・コクーン（ビードルから進化）の「かたまる」とともに加えた版です（[アーキテクチャ](architecture-v0.4b.md)、[持続する効果](persistent-effects-v0.4b.md)、[かたまる](harden-v0.4b.md)、[ダメージ計算](persistent-damage-v0.4b.md)）。v0.4c は、1 進化ポケモン → 2 進化ポケモンの進化（たね・1 進化・2 進化の 3 枚で構成される 1 匹のポケモン）を、スピアー（コクーンから進化）の「ダブルニードル」「どくばり」とともに加えた版です（[アーキテクチャ](architecture-v0.4c.md)、[2 進化のルール](stage2-evolution-v0.4c.md)、[スピアー](beedrill-v0.4c.md)、[状態](stage2-state-v0.4c.md)）。v0.4d は、ワザの途中で相手プレイヤーの決定を待って同じワザを再開する処理（相手の強制交代）と、ワザが与えたダメージの結果を後の要素に渡して回復する処理を、バタフリー（トランセルから進化する 2 進化）の「ふきとばし」「メガドレイン」とともに加えた版です（[アーキテクチャ](architecture-v0.4d.md)、[強制交代](forced-switch-v0.4d.md)、[与えたダメージと回復](damage-drain-v0.4d.md)、[バタフリー](butterfree-v0.4d.md)）。v0.4e は、カード・ルールを加えず、v0.4a〜v0.4d の総合監査（組み合わせの表・不変条件・ログと書き出しの監査・前の版との比較・負荷・変異）と、見つけた不変条件の検出の漏れの修正、比較と負荷の道具をした版です（[総合監査](integration-audit-v0.4e.md)、[組み合わせの表](interaction-matrix-v0.4e.md)、[互換性](compatibility-v0.4e.md)、[未解決の範囲](unresolved-audit-v0.4e.md)、[アーキテクチャ](architecture-v0.4e.md)、[v0.5 の準備](v0.5-readiness.md)）。v0.5 は、ポケモンパワー（特殊能力）の基盤（`UsePokemonPower`・パワーの登録表）を、フシギバナの「エナジートランス」と、進化元のフシギダネ（やどりぎのタネ）・フシギソウ（つるのむち・どくのこな）とともに加えた版です（[アーキテクチャ](architecture-v0.5.md)、[ポケモンパワーの規定](pokemon-powers-v0.5.md)、[フシギバナ](venusaur-v0.5.md)、[フシギダネ・フシギソウ](bulbasaur-line-v0.5.md)、[エナジートランスの処理](energy-transfer-v0.5.md)、[確かめた結果](v0.5-verification.md)）。v0.6 は、カメックスのポケモンパワー「あまごい」（手札の「水」エネルギーカードを自分の場の「水」ポケモンにつける）とワザ「ハイドロポンプ」、進化元のゼニガメ・カメールを加えた版です（[原典の照合と裁定](rain-dance-v0.6.md)、[アーキテクチャ](architecture-v0.6.md)、[確かめた結果](v0.6-verification.md)）。v0.7 は、フーディンのポケモンパワー「ダメージスワップ」（自分の場のポケモンのダメージカウンターを、きぜつさせない範囲で自分の場の別のポケモンへのせかえる）とワザ「あやしいひかり」、進化元のケーシィ（ねんりき）・ユンゲラー（じこさいせい・ちょうねんりき）を加えた版です（[ダメージスワップの照合と裁定](damage-swap-v0.7.md)、[ケーシィ・ユンゲラー・フーディン](alakazam-line-v0.7.md)、[アーキテクチャ](architecture-v0.7.md)、[確かめた結果](v0.7-verification.md)）。v0.8 は、ベトベトンのポケモンパワー「かがくへんかガス」（常にはたらいていて宣言しない。場にいるかぎり、ほかのすべての特殊能力を使えなくし、その力も消す。ねむり・マヒ・こんらんのときは消える）とワザ「ヘドロこうげき」、進化元のロケット団のベトベター（どくガス・ねばりつく）を加えた版です（[かがくへんかガスの照合と裁定](chemical-gas-v0.8.md)、[ベトベター・ベトベトン](grimer-line-v0.8.md)、[常にはたらく効果](continuous-effects-v0.8.md)、[アーキテクチャ](architecture-v0.8.md)、[確かめた結果](v0.8-verification.md)）。v0.9 は、化石の秘密のゴーストのポケモンパワー「とうめい」（ワザによってダメージや効果を受けるときに自動的にはたらき、コインが「おもて」なら、そのダメージと効果を受けない。ねむり・マヒ・こんらんのときは消える）とワザ「あくむ」、進化元の化石の秘密のゴース（したでなめる・エナジーへんかん）を加えた版です（[とうめいの照合と裁定](transparency-v0.9.md)、[ゴース・ゴースト](haunter-line-v0.9.md)、[自動的にはたらく特殊能力](automatic-powers-v0.9.md)、[アーキテクチャ](architecture-v0.9.md)、[確かめた結果](v0.9-verification.md)）。v0.10 は、カイリキーのポケモンパワー「はんげき」（相手のワザによってダメージを受けたときに自動的にはたらき、それによってきぜつしても、ダメージを与えたポケモンに弱点・抵抗力に関係なく 10 ダメージ。ダメージを受けるとき、すでにねむり・マヒ・こんらんならはたらかない）とワザ「ちきゅうなげ」、進化元のゴーリキー（からてチョップ・じごくぐるま）を加えた版です（[はんげきの照合と裁定](counterattack-v0.10.md)、[ワンリキー・ゴーリキー・カイリキー](machamp-line-v0.10.md)、[ダメージを受けたあとにはたらく特殊能力](post-damage-powers-v0.10.md)、[アーキテクチャ](architecture-v0.10.md)、[確かめた結果](v0.10-verification.md)）。それぞれの状況は [v0.2a の章](#v02a-で加えた構造)・[v0.2b の章](#v02b-で加えたものトレーナー)・[v0.2c の章](#v02c-で加えたものプラスパワー)・[v0.2d の章](#v02d-で加えたものコイントスとみだれづき)・[v0.2e の章](#v02e-で加えたものディフェンダー)・[v0.2f の章](#v02f-で加えたもの自分へのダメージと同時のきぜつ)・[v0.3a の章](#v03a-で加えたもの特殊状態どくポケモンチェック)・[v0.3b の章](#v03b-で加えたものねむりマヒポケモンチェックの-34)・[v0.3c の章](#v03c-で加えたものこんらん)・[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)・[v0.4a の章](#v04a-で加えたもの進化-たねポケモン--1-進化ポケモン)・[v0.4b の章](#v04b-で加えたものワザによる持続する効果とかたまる)・[v0.4c の章](#v04c-で加えたもの2-進化とスピアー)・[v0.4d の章](#v04d-で加えたもの相手の強制交代与えたダメージによる回復バタフリー)・[v0.4e の章](#v04e-で確かめたことv04av04d-の総合監査)・[v0.5 の章](#v05-で加えたものポケモンパワーとフシギバナ)・[v0.6 の章](#v06-で加えたものあまごいとカメックス)・[v0.7 の章](#v07-で加えたものダメージスワップとフーディン)・[v0.8 の章](#v08-で加えたものかがくへんかガスとベトベトン)・[v0.9 の章](#v09-で加えたものとうめいとゴースト)・[v0.10 の章](#v010-で加えたものはんげきとカイリキー)・[v0.11 の章](#v011-で加えたものこんじょうとサカキのカイリキー) にあります。
 
@@ -91,7 +91,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 照合はスキャンによる | 公式ルールとカードのページは Internet Archive のスキャン [J38] を画像で読んだ。印刷物の実物は確かめていない |
 | 先攻の最初の番にワザを使えること | 本文（pp.306〜325）を画像で通読した範囲では制限の規定がない（最初の番の規定は進化だけ、p.310）。規定がないことの確認なので、読み落としの可能性は残る。kyuura は当時の資料から「制限しない」と判断している（first_turn_actions） |
 | ポニータ（PMCG1-016）のワザ名 | kyuura は「けりとばす」、『オフィシャルブック2000』p.75 は「けとばす」。どちらが第1弾の印刷どおりかは未確認（[カードデータの由来](data-provenance.md)） |
-| 参照カード（PMCG6-023。v0.54 までは PMCG1-075 いいきずぐすりも（v0.55 で対応にした）。v0.44 までは PMCG1-047 第1弾のゴーストも（v0.45 で対応にした）。v0.36 までは PMCG3-003 化石の秘密のベトベターも（v0.37 で対応にした）。v0.30 までは PMCG1-021 リザードンも（v0.31 で対応にした）。v0.4e までは PMCG1-011 フシギバナ、v0.5 では PMCG1-032 カメックス、v0.6 では PMCG1-049 フーディン、v0.10 では PMCG6-061 サカキのカイリキー。どれも照合して対応にした） | 対戦には使わないので、『オフィシャルブック2000』と照合していない（リザードン（PMCG1-021）は v0.7 で照合していない（v0.31 で kyuura データの採用で対応にした。ガイドブックとは照合していない）。化石の秘密のベトベター（PMCG3-003）は v0.8 で p.47 と照合したが、「ちいさくなる」が未実装なので参照カードのまま。第1弾のゴースト（PMCG1-047）は v0.9 で p.160 の見出しと「ワザ」欄を照合したが、「ゆめくい」（ワザの失敗）が未実装なので v0.44 まで参照カードだった（v0.45 で、その照合の記録の最新の説明で登録して対応にした）。PMCG1-014 ヒトカゲは、v0.2a で「ひっかく」を登録するために p.63 と照合した（v0.30 で「ひのこ」を kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明で登録し、対戦用にした。参照カードではなくなった）。きずぐすりは v0.2b、ドードー（PMCG1-061）は v0.2d で対戦用に移し、p.254・p.231 と照合した） |
+| 参照カード（v0.68 からはない。v0.67 までは PMCG6-023 キョウのベトベトン（v0.68 で、v0.17c の照合の記録で登録して対応にした）。v0.54 までは PMCG1-075 いいきずぐすりも（v0.55 で対応にした）。v0.44 までは PMCG1-047 第1弾のゴーストも（v0.45 で対応にした）。v0.36 までは PMCG3-003 化石の秘密のベトベターも（v0.37 で対応にした）。v0.30 までは PMCG1-021 リザードンも（v0.31 で対応にした）。v0.4e までは PMCG1-011 フシギバナ、v0.5 では PMCG1-032 カメックス、v0.6 では PMCG1-049 フーディン、v0.10 では PMCG6-061 サカキのカイリキー。どれも照合して対応にした） | 対戦には使わないので、『オフィシャルブック2000』と照合していない（リザードン（PMCG1-021）は v0.7 で照合していない（v0.31 で kyuura データの採用で対応にした。ガイドブックとは照合していない）。化石の秘密のベトベター（PMCG3-003）は v0.8 で p.47 と照合したが、「ちいさくなる」が未実装なので参照カードのまま。第1弾のゴースト（PMCG1-047）は v0.9 で p.160 の見出しと「ワザ」欄を照合したが、「ゆめくい」（ワザの失敗）が未実装なので v0.44 まで参照カードだった（v0.45 で、その照合の記録の最新の説明で登録して対応にした）。PMCG1-014 ヒトカゲは、v0.2a で「ひっかく」を登録するために p.63 と照合した（v0.30 で「ひのこ」を kyuura の RUL-ENERGY-DISCARD-ATTACKS の最新の説明で登録し、対戦用にした。参照カードではなくなった）。きずぐすりは v0.2b、ドードー（PMCG1-061）は v0.2d で対戦用に移し、p.254・p.231 と照合した） |
 | トレーナー 3 枚の図版の版 | p.254 のきずぐすり・ポケモンいれかえの図版には番号（⑦・⑲）があり、第1弾の版ではない可能性が高い。どの版の文面かは確かめていない。処理は最新の説明にしたがうので影響しない |
 | 先攻の最初の番にトレーナーを使えること | ワザと同じく、本文に制限の規定がないことの確認（読み落としの可能性は残る）。kyuura first_turn_actions |
 | 基本エネルギーの名前 | p.318 は基本エネルギーカードに名前が書かれていないとする。名前（「炎エネルギー」など）は kyuura の値をそのまま使っている（同じ名前の枚数制限の対象外なので処理には影響しない） |
@@ -135,7 +135,7 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | 「ダメージを受けない」状態（「かたまる」）のポケモンに、コインでダメージの量を決める要素だけのワザ（ドードーの「みだれづき」）を使うとき、無効になる要素のコインを投げるか（v0.4b） | ワザの宣言・こんらんのコインの前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_PREVENTED_COIN_DAMAGE`）で拒否。状態も乱数も変わらない。自然な対戦 40 局で 13 回起こった。v0.4c のスピアーの「ダブルニードル」（同じ `CoinFlipDamage`）にも同じく当てはまる（v0.4c の自然な対戦 40 局で 5 回）。通常の相手には使える。test_harden_v0_4b.py `test_coin_damage_against_prevention_is_unresolved`・test_stage2_v0_4c.py `PreventedTargetTest`・test_effect_preflight_v0_3d.py `CoinIndependenceTest`（[persistent-damage-v0.4b.md](persistent-damage-v0.4b.md) 5 章） |
 | 「わるいねぞう」（特殊能力によるダメージ）の 20 に弱点・抵抗力を計算するか（v0.17b。Z9） | 計算するかで結果が変わる場合（受けるポケモンの弱点・抵抗力が与えるポケモンのタイプ）だけ止める（問い `power_damage_weakness_resistance`。R団のカビゴンは無色で、無色の弱点・抵抗力を持つカードはないので起こらない）。v0.61 で［ファイナルビーム］（弱点「水」のポケモンが受ける）で起こるようになり、停止コード `UNRESOLVED_POWER_DAMAGE_WEAKNESS_RESISTANCE` を付けた（使うを選ぶと止める）。test_rocket_snorlax_v0_17b.py `test_weakness_resistance_guard`・test_reactive_powers_trainer_damage_v0_61.py |
 | 「ダメージを与えた後、…」の効果（たおれこむ・v0.18c からナツメのヤドンのぐうたらこうげき）で、そのダメージの要素がダメージを与えなかったときに効果を与えるか（v0.17b。Z23。v0.18b で場合を Z23-a 要素が無効・Z23-b 計算の結果が 0（ディフェンダー・抵抗力）・Z23-c「とうめい」・Z23-d 対象がいない（起こらない）に分けた） | ワザの宣言の前に `UseAttack` を `UnsupportedError`（`UNRESOLVED_EFFECT_AFTER_NO_DAMAGE`。理由の文が場合を書く）。test_rocket_snorlax_v0_17b.py `test_no_damage_stops_before_the_attack`、test_unresolved_boundaries_v0_4e.py `EffectAfterNoDamageBoundaryTest`、test_unresolved_research_v0_18b.py `EffectAfterNoDamageSubcaseTest`・`TargetGoneIsUnreachableTest`、test_sabrinas_slowpoke_v0_18c.py `NoDamageStopTest` |
-| キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
+| キョウのベトベトンの「だつりょくえき」が宣言する特殊能力か・処理する時点・ダメージを与えたポケモンがすでに HP 以上のとき・エネルギーカードがないとき・ほかの効果と重なるとき（v0.17c。DR1・DR6・DR8・DR13・DR18） | v0.68 から、DR1・DR6 は採用の仕様で処理する（自動的にはたらく・ダメージのあと追加の効果の前。裁定としては UNRESOLVED のまま）。DR8 は `UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT`・DR13 は `UNRESOLVED_ENERGY_DRAIN_NO_ENERGY`・DR18 は `UNRESOLVED_MULTIPLE_DAMAGE_TRIGGERS` で止める（[final-pmcg-cards-v0.68.md](final-pmcg-cards-v0.68.md) 3 章）。v0.67 までは、カードを未対応にしたまま（実装を延期。エンジンの止める処理はない）。v0.18b で調べ直し、DR1・DR6 は UNRESOLVED のまま。v0.18d の結論も DEFER。[kogas-muk-event-design-v0.17c.md](kogas-muk-event-design-v0.17c.md)・[unresolved-research-v0.18b.md](unresolved-research-v0.18b.md)・[mid-window-decisions-v0.18d.md](mid-window-decisions-v0.18d.md) |
 | 「みちづれ」で相手の対戦ポケモンも「きぜつ」するとき、同時のきぜつか（v0.31。HC2） | 勝ち負けが決まる場合（サイドを取りきる・場にポケモンがいなくなる）だけ、相手のワザの宣言の前に `UNRESOLVED_DESTINY_BOND_KNOCKOUT` で止める。決まらなければ両方がサイドを取る |
 | 「ワザをうけない」状態（バリアー）のポケモンへの効果だけを決めるコインを投げるか（v0.31。HC3） | 宣言の前に `UNRESOLVED_PREVENTED_EFFECT_COIN` で止める。v0.34 から、要素の並びのコインが決める要素がどれも相手の対戦ポケモンへの要素で、効果を含み、どれも無効なとき（ねばりつく・じごくがため・からではさむ・くさいガス）も同じ（[barrier-resume-coin-bonus-v0.34.md](barrier-resume-coin-bonus-v0.34.md) 2 章） |
 | 無色をふくむワザで、多い水エネルギーの数（v0.31。HC4。第4弾のコダックの「みずでっぽう」） | 読み方で数が変わるときだけ、宣言の前に `UNRESOLVED_EXTRA_ENERGY_COLORLESS` で止める |
@@ -244,6 +244,24 @@ v0.2a は、v0.1 のルールと対戦の結果を変えずに、カード効果
 | オニスズメの「オウムがえし」で続く効果（ねむり・こんらん・どく・持続する効果）を与えるときの「1回で消える」の読み方（v0.62。OM1） | ワザの宣言の前に `UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT` |
 | オニスズメの「オウムがえし」の「受けたダメージと効果」に、相手のワザ以外で受けたものを含むか（v0.62。OM2） | ワザの宣言の前に `UNRESOLVED_MIRROR_MOVE_NON_ATTACK` |
 | ほかのワザで「あながくれ」を自分のワザとして使った記録が、ドリルホールの「使っていた」に当たるか（v0.62。ED1。今の写しでは起こらない） | コードのない問い（起こったら宣言の前に止める） |
+| カツラのクイズ その3で、手札にワザを持つポケモンのカードがないとき使えるか（v0.63。QZ1） | 使う前に `UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON` |
+| たたきつけろ!挑戦状で、選べるたねポケモンがあるのに 0 枚を選べるか（v0.63。v0.31 の HC5 と同じ問い） | その答えを `UNRESOLVED_DISCARD_ANY_NUMBER_ZERO` で受け付けない（決定は待ったまま） |
+| 変わり身の術の入れ替えと、宣言のあと・ワザの要素の前のコイン（手順 4・こんらん・クチバシティジム）のどちらが先か（v0.65。NT1） | 変わり身の術を使える状態で、そのコインがあるワザの宣言の前に `UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER` |
+| 変わり身の術のついたポケモンを、ついているカードといっしょに山札・手札にもどすとき、このカードもいっしょにもどすか、トラッシュするか（v0.65。NT2） | 状態を変える前（ワザは宣言の前）に `UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON` |
+| トレーナーカードを使えない効果がはたらいているときに、ついている変わり身の術の入れ替えを使えるか（v0.65。NT3） | 入れ替えを選ぶと `UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN`（使わないことはできる） |
+| ワザの途中の入れ替え（変わり身の術・［にげこむ］）で、ワザを使っている［へんしん］のメタモンの今の姿が変わるとき（v0.65。RX1） | その控えを選ぶと `UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER` |
+| カスミのドククラゲが自分のワザの中で返す効果のダメージを受けたとき、［にげこむ］を使えるか（v0.65。FL1） | 使うを選ぶと `UNRESOLVED_FLEE_DURING_OWN_ATTACK` |
+| ［ベンチガード］でかわりに受ける 10 を、サイドンの弱点・抵抗力・受けるダメージを変える効果で計算し直すか（v0.65。BG1） | 計算し直すかで量が変わるサイドンを選ぶと `UNRESOLVED_BENCH_GUARD_RECOMPUTE` |
+| ［ベンチガード］で、もとのポケモンの受けるダメージが 0 になるとき、そのポケモンの「ダメージを受けたとき」の効果・こんじょうがはたらくか（v0.65。BG2） | その答えを `UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION` |
+| 同じワザのダメージで HP 以上になったポケモンが、そのワザの最中に［にげこむ］・［ベンチガード］を使えるか（v0.65。KD1） | そのポケモンの特殊能力を使う答えを `UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON` |
+| ［にげこむ］のあと、かわりに出たポケモンがそのワザのダメージを受ける（v0.65。FL0。今の写しでは GK1 が先に止める）・`guarded_damages` を使わない要素で［ベンチガード］を聞く（BG0。今の写しでは起こらない） | コードのない問い（起こったら宣言の前に止める） |
+| お上品攻撃で、5 段階のダメージを 0 より小さくできるか（そのあとにダメージを増やす効果があり、結果が変わるとき。v0.66。CA1） | ワザの宣言の前に `UNRESOLVED_CHARITY_BELOW_ZERO` |
+| ナツメのESPのやり直しが、説明が相手プレイヤーに投げさせるコインを含むか・だれが投げ直すか（v0.66。ES1） | やり直すを選ぶと `UNRESOLVED_ESP_OPPONENT_COIN_TOSS` |
+| ナツメのESPが 2 枚以上ついているときのやり直しの回数（v0.66。ES2） | やり直すを選ぶと `UNRESOLVED_ESP_MULTIPLE` |
+| ナツメのESPをつけたポケモンが「ナツメのポケモン」でなくなったとき（v0.66。ES3） | やり直すを選ぶと `UNRESOLVED_ESP_HOLDER_NOT_SABRINAS` |
+| 1 つのワザで説明文のコインを 2 回に分けて投げるときのナツメのESP（v0.66。ES0。今の写しでは起こらない） | 問い `esp_separate_coin_tosses`（コードなし） |
+| マチスの秘策でうらにして出したカードの、うらのあいだは決まらない項目（名前・HP・タイプ・弱点・抵抗力・にげる・ワザ・カードの id）を、おもてにしないまま読む処理（名前・タイプで数える・選ぶ効果、［へんしん］が写すなど。v0.67。FD1） | そのコマンドを `UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY`（本当のカードによらず同じ理由） |
+| 場にロケット団の爆発ジムがあるときに、マチスの秘策でうらにして出すことが「手札から「たねポケモン」のカードをベンチに出す時」に当たるか（v0.67。FD2） | 出すカードを選ぶと `UNRESOLVED_SECRET_PLAN_MINEFIELD`（出さないことはできる） |
 
 v0.3d で、上の表の v0.2b〜v0.3c の事項を原典で調べ直しました（[unresolved-rulings-v0.3d.md](unresolved-rulings-v0.3d.md)）。どれも決められないので、止める処理を維持しています。v0.2f の「ワザで自分に与えるダメージに弱点・抵抗力を計算するか」は、p.90 の解説から SUPPORTED（計算する）にしたので、この表から外しました（[v0.3d の章](#v03d-で確かめたこと特殊状態の総合検証未解決の裁定)）。
 
@@ -1431,7 +1449,7 @@ v0.18 は、研究（kyuura）とエンジンが同じ出典・裁定を追跡�
 
 ### 未実装
 
-- キョウのベトベトンの［だつりょくえき］（延期。v0.18d の結論も DEFER）。窓の途中の決定の基盤（案 B）も入れていない。
+- キョウのベトベトンの［だつりょくえき］（延期。v0.18d の結論も DEFER。v0.68 で採用の仕様で実装した）。窓の途中の決定の基盤（案 B）も入れていない。
 - kyuura の論点のうち、コインの有無・順番だけが変わる 4 件（rng_only）を実装の約束として決めることは採っていない。
 
 ### 原典未確認・未解決
@@ -2175,7 +2193,7 @@ v0.32 の CD4 を既存の記録で再検討し（決まらないので未解決
 
 - 固定した v0.34 との比較で、順番の決定のない計算でもログ `damage` の `modifiers` の並びが変わっていたことを見つけ、v0.34 と同じ並びにもどしました
   （v0.35 の作業の途中の誤り。コミットしたコードには含まれない）。
-- ガルーラ（PMCG2-046）は v0.34 の保留のまま（kyuura への報告事項。[data-provenance.md](data-provenance.md) の v0.34 の章）。
+- ガルーラ（PMCG2-046）は v0.34 の保留のまま（v0.68 で、利用者が示した訂正を当てはめて対応にした）（kyuura への報告事項。[data-provenance.md](data-provenance.md) の v0.34 の章）。
 
 ## v0.36 で加えたもの（p.309 の手順 4 のコイン・「にげる」ことができない効果・自分を山札にもどす効果と、11 枚）
 
@@ -3235,3 +3253,387 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 
 kyuura への報告事項（kyuura のデータ・記録は変えていない）: MM1・MM2・OM1・OM2・ED1 は kyuura の未解決の一覧にない、5 枚に最新の説明・照合の記録がない、ベロリンガの修正は写しの元の
 コミットにまだない、pcg-search.com との表記の違い 2 件。
+
+## v0.63 で加えたもの（公開・非公開の状態を扱うトレーナー 4 枚）
+
+依頼の 4 枚（ロケット団参上! PMCG4-062・くすぐりマシーン PMCG6-084・たたきつけろ!挑戦状 PMCG4-058・カツラのクイズ その3 PMCG6-082）を、kyuura データの採用で登録して対応に
+しました（ポケモン 345・トレーナー 85 → 89・エネルギー 10。対応するカード 440 → 444。PMCG1〜PMCG6 の未対応は 17 → 13 枚）。共通の処理は、一時的に置いておくカード
+（`GameState.set_aside` の `SetAsideCards`。物理的な置き場所の種類・持ち主・カード・見られるプレイヤー・出どころ・置いた番・もどす番。手札・山札・ベンチと混ぜない）と、
+おもてのサイド（`GameState.face_up_prizes`。カードごと。サイドをはなれたら除く）です。期限のもどしは番の終わりの窓（`procedures.expire_at_turn_end`）で行います。書き出しの
+形式 21。新しい決定の種類 `challenge_bench`・`quiz_card`・`quiz_attack`・`quiz_answer`、新しいログのイベント `prizes_revealed`・`set_aside_hand`・`set_aside_returned`・
+`face_down_bench`・`face_down_revealed`・`challenge_bench_skipped`・`quiz_card_set`・`quiz_hint`・`quiz_answer`・`quiz_reveal`、ログの項目 `face_up`。新しい停止コード QZ1。
+サイキックコントロールで使った番を終えるトレーナー（ロケット団員の「うら」）の番の終わりで、持ち主の番を終えようとしていた不具合を直しました。カードごとの順番・根拠・未解決・
+互換性・検証は [hidden-card-trainers-v0.63.md](hidden-card-trainers-v0.63.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_hidden_card_trainers_v0_63.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 4 枚の登録・数・文面の確かめ・採用の記録と外部照合・研究の対応表・書き出しの表 | kyuura の印刷の文面・pcg-search.com | `RegistrationTest`・test_card_sources.py |
+| ロケット団参上!（使ったときのサイドだけ・取る・入れかえる・再利用・錯乱ジム・観測） | 印刷の文面 | `HereComesTeamRocketTest` |
+| くすぐりマシーン（手札でないこと・手札を見る効果・期限のもどし・2 つのまとまり・対戦の終わり・「うら」の番の終わり・CH1・サイキックコントロール） | 印刷の文面・v0.56・v0.57・v0.58 の処理 | `TicklingMachineTest` |
+| たたきつけろ!挑戦状（受ける・受けない・うらのベンチ・ベンチの空き・せまいジム・HC5・GG1・保存と復元・区別できないこと） | 印刷の文面・v0.31 の HC5・v0.59 の GG1 | `ChallengeTest` |
+| カツラのクイズ その3（ヒントはワザの名前だけ・名前での判定・候補が置いたカードによらない・不正な答え・段階とワザの数・QZ1・山札が少ない・区別できないこと・保存と復元） | 印刷の文面 | `BlainesQuizTest` |
+| 正式な開始からの対戦（v0.63 の 3 組・12 局） | — | `GamesTest` |
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）: QZ1 は kyuura の未解決の一覧にない、4 枚に最新の説明・照合の記録がない、たたきつけろ!挑戦状の説明文の空行と名前の
+空白（pcg-search.com と違う。処理は同じ）。
+
+## v0.64 で加えたもの（化石の秘密のイシツブテの系統 3 枚と、「うら」が出るまで投げるコインの先読み）
+
+依頼の 3 枚（イシツブテ PMCG3-034・ゴローン PMCG3-037・ゴローニャ PMCG3-038。化石の秘密。「タケシの」系統とは別のカード）を、kyuura データの採用で、5 つのワザを登録して対応に
+しました（ポケモン 345 → 348・トレーナー 89・エネルギー 10。対応するカード 444 → 447。PMCG1〜PMCG6 の未対応は 13 → 10 枚。ワザの登録 586 → 591・特殊能力の登録 54）。
+れんぞくいしなげは新しい型 `CoinsUntilTailsDamage(10)`（要素 `Damage(OPP, HeadsUntilTails(10))`）で、実際の対戦では「うら」が出るまで上限なしに 1 枚ずつ投げます
+（`coins.flip_until_tails`。ログ `coin_flip` の項目 `until`）。1 枚目が「うら」なら基本となるダメージ 0 の「ダメージを与えなかった」で、ワザの失敗ではありません。宣言の前の
+先読みは、「おもて」の数を後の処理の結果（計算の木・残りの HP でまとめた最終ダメージ・受けたダメージで量が決まる返す効果の結果）が同じになる有限の組に分け、組の代表だけを試します
+（`resolution/unbounded.py`。`Oracle.coin_run`・`RecordingRandom.record_run`。`MAX_BRANCHES` は変えていない）。根拠の前提（対応する計算の操作・ダメージカウンターの単位）を満たさない
+場はエンジンの未対応 `UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT`（問い `unbounded_coin_preflight`。研究の対応表の停止コードに入れていない。今の写しでは起こらない）。かたくなる・じばくは
+既存の `ZeroDamageBelowNextTurn(40)`・`SelfDestruct(100, 20, True)` に書き方の違いを 1 通りずつ加えました。書き出しの形式は 21 のまま、公開の API・決定の種類は変えていません。
+新しい未解決の裁定はありません（停止コード 133 件・未解決の裁定 135 件）。カードごとの判断・有限の組の根拠・互換性・検証は
+[geodude-line-unbounded-coins-v0.64.md](geodude-line-unbounded-coins-v0.64.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_geodude_line_v0_64.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 3 枚の登録・数・型・書き方の違いの範囲・カード id の分岐がないこと | kyuura の印刷の文面・pcg-search.com | `RegistrationTest`・test_card_sources.py |
+| れんぞくいしなげ（コインの数・ログ・乱数の使い方・250 枚・計算・防ぐ効果の停止・こんらん・ワザの履歴。3 つの先読みの方法） | 印刷の文面・p.321 の段階（既存の処理） | `StoneBarrageTest` |
+| 先読みの有限の組（周期性・代表と全数の答えの一致・［ずらかる］・こうらがえし・直接作った計算・前提を満たさない計算の停止） | docs 3.2 節の議論 | `PreflightFinitenessTest` |
+| こんじょうの決定の保存と復元・ゆびをふる・オウムがえし（MM2） | 既存の処理 | `InteractionTest` |
+| かたくなる（30・40・50・ダメージ以外の効果） | 印刷の文面・v0.45 の `ZERO_IF_BELOW` | `GravelerTest` |
+| じばく（順番・同時のきぜつ・ディフェンダーでの自分へのダメージ） | 印刷の文面・v0.39 の `SelfDestruct` | `GolemTest` |
+| 正式な開始からの対戦（v0.64 の 4 組） | — | `GamesTest` |
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）: 3 枚に最新の説明・照合の記録がない、かたくなる・じばくの書き方がほかのカードと違う（意味は同じ。pcg-search.com の文面と同じ）。
+
+## v0.65 で加えたもの（ワザの最中の任意の決定と、変わり身の術・カスミのドククラゲ・タケシのサイドン）
+
+依頼の 3 枚を、kyuura データの採用で、どのワザも、特殊能力も、トレーナーも登録して対応にしました。
+
+- キョウ秘伝,変わり身の術 PMCG6-083
+- カスミのドククラゲ PMCG5-033（［にげこむ］・クラゲどく）
+- タケシのサイドン PMCG5-055（［ベンチガード］・ラリアット）
+
+数は次のとおりです。
+
+| | v0.64 | v0.65 |
+|---|---|---|
+| ポケモン | 348 | 350 |
+| トレーナー | 89 | 90 |
+| エネルギー | 10 | 10 |
+| 対応するカード | 447 | 450 |
+| PMCG1〜PMCG6 の未対応 | 10 枚 | 7 枚 |
+| ワザの登録 | 591 | 593 |
+| 特殊能力の登録 | 54 | 56 |
+| トレーナーの登録 | 89 | 90 |
+
+［にげこむ］の処理に使う文面は、このリポジトリの v0.18b の p.100 の記録（2026-10-14 に読んだ最新の説明と解説）の再利用です。v0.65 では原典を開いていません。
+
+3 つの効果は、ワザを受ける側のプレイヤーが既存のワザの途中の決定で選びます（`ninja_trick`・`reaction_switch`・`bench_guard`。再開先 `"attack"`）。
+
+| 効果 | 時点 |
+|---|---|
+| 変わり身の術 | 宣言のあと・ワザの要素の前 |
+| ［ベンチガード］ | 控えのダメージを計算したあと・のせる前 |
+| ［にげこむ］ | ダメージのまとまりのあと・ダメージ以外の要素の前 |
+
+- 続きの情報は決定の `context` の明示的なデータで持ちます。
+- 保存と復元・不正な答え・先読み・コインを投げ直さないことを確かめました。
+- 新しい停止コードは NT1〜NT3・RX1・FL1・BG1・BG2・KD1 の 8 件です（停止コード 141 件・未解決の裁定 143 件）。
+- ワザでないダメージの［ベンチガード］は、エンジンの未対応 `UNSUPPORTED_BENCH_GUARD_OUTSIDE_ATTACK` です。
+- 書き出しの形式は 21 のままです。
+- だつりょくえきの DR1・DR6 は未解決のままです。
+
+詳しくは [reactive-decisions-v0.65.md](reactive-decisions-v0.65.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_reactive_decisions_v0_65.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 3 枚の登録・数・型・［にげこむ］の文面の出典・宣言できないこと・カード id の分岐がないこと | kyuura の印刷の文面・pcg-search.com・v0.18b の記録 | `RegistrationTest`・test_card_sources.py |
+| ［にげこむ］（時点・決める人・入れ替え・ダメージ以外の効果とそのコインを受けない・使わないとき・受けたときの特殊状態・かがくへんかガス・控えがいない・0 ダメージ・れんぞくいしなげのあと・KD1・保存と復元・不正な答え） | v0.18b の p.100 の記録 | `FleeTest` |
+| 変わり身の術（つける条件・入れ替えのあとの対象・使わないとき・バトル場をはなれた時のトラッシュ・きぜつとサイド・NT1〜NT3・RX1・保存と復元・不正な答え） | 印刷の文面 | `NinjaTrickTest` |
+| ［ベンチガード］（10・20・サイドン 2 匹・0 ダメージ・かがくへんかガス・ショックアイ・BG1・BG2・KD1・保存と復元・ワザでないダメージの未対応） | 印刷の文面 | `BenchGuardTest` |
+| ラリアット・クラゲどく・観測 | 印刷の文面 | `AttackTest`・`ObservationTest` |
+| 正式な開始からの対戦（v0.65 の 4 組） | — | `GamesTest` |
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+- 3 枚に最新の説明・照合の記録がない。
+- ［にげこむ］の kyuura の文面に「ダメージ以外の効果」を受けない文がない（pcg-search.com・p.100 と違う。処理は p.100 にしたがうので変わらない）。
+- kyuura は p.100 を確かめていない。
+- 新しい未解決 8 件は kyuura の未解決の一覧にない。
+
+## v0.68 で加えたもの（ガルーラ・キョウのベトベトン・イマクニ？のドードーと、マチスの秘策の受け付けの修正）
+
+PMCG1〜PMCG6 の残りのポケモン 3 枚を対応にしました。
+
+- ガルーラ PMCG2-046（v0.34 から保留。利用者が示した訂正の文面を写しの作り直しで当てはめた）
+- キョウのベトベトン PMCG6-023（［だつりょくえき］は採用の仕様。v0.17c の照合の記録で登録）
+- イマクニ？のドードー PMCG6-074（簡略化した仕様）
+
+数は次のとおりです。
+
+| | v0.67 | v0.68 |
+|---|---|---|
+| ポケモン | 350 | 353 |
+| トレーナー | 94 | 94 |
+| エネルギー | 10 | 10 |
+| 対応するカード | 454 | 457 |
+| PMCG1〜PMCG6 の未対応 | 3 枚 | 0 枚 |
+| ワザの登録 | 593 | 597 |
+| 特殊能力の登録 | 56 | 58 |
+| トレーナーの登録 | 94 | 94 |
+
+- ガルーラ: こどものおつかいはコインなしで 1 枚引く（`DrawCardsAttack(1)`。乱数を使わない）、れんぞくパンチは 4 枚のコイン ×20。文面は利用者が示した訂正（`USER_PROVIDED_CORRECTIONS`。
+  記録の id・コミットを持たない。エンジンは画像を見ていない）です。
+- キョウのベトベトン: ［だつりょくえき］は DR1（自動的にはたらく）・DR6（ダメージのあと・追加の効果の前）を採用の仕様にしました（公式の裁定ではない。kyuura の論点は UNRESOLVED のまま）。
+  コインは持ち主、「おもて」なら持ち主が選ぶ決定 `energy_drain_discard`（ワザの途中の決定。続きの情報は決定の `context`）。DR8・DR13 は停止コード、DR18 は C34/C35。
+- イマクニ？のドードー: ハモるはすぐに 30 ダメージ、［にげまくり］は投げる動作を処理しない（ふつうの「にげる」。にげるエネルギー 0）。公式の裁定・エラッタではない簡略化した仕様です。
+- マチスの秘策: 相手のコマンドを受け付けるかを、公開の情報（対応しているカードの一覧）だけから作ったありうるカードで確かめるようにしました。見えないデッキの中身で受け付けるかが変わりません。
+  相手のうらのカードを 2 枚以上指定するコマンドは `UNSUPPORTED_SECRET_PLAN_IDENTITIES`（エンジンの未対応）。
+- 停止コード 149 件・未解決の裁定 151 件。書き出しの形式は 22 のまま。
+
+詳しくは [final-pmcg-cards-v0.68.md](final-pmcg-cards-v0.68.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_final_pmcg_cards_v0_68.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 登録・数・型・簡略化した型の文面の確かめ・利用者の訂正の検査 | 利用者が示した訂正・kyuura の印刷の文面・p.49 の照合の記録・docs 4 章 | `RegistrationTest`・test_card_sources.py |
+| ガルーラ（コインなしで引く・山札 0 枚・れんぞくパンチの 0〜4 枚の「おもて」） | 利用者が示した訂正・印刷の文面 | `KangaskhanTest` |
+| だつりょくえき（コイン・決定・不正な答え・きぜつ・ベンチ・特殊状態の時点・ガス・特殊能力のダメージ・返す効果・DR8・DR13・DR18） | p.49・採用の仕様 | `EnergyDrainTest` |
+| イマクニ？のドードー（30・エネルギー・こんらん・まねたハモる・宣言できない・にげる 0） | docs 4 章 | `ImakuniDoduoTest` |
+| マチスの秘策の受け付けが見えないデッキによらない（利用者の再現例・2 枚以上の指定） | — | `SecretPlanLeakTest` |
+| 正式な開始からの対戦（v0.68 の 4 組） | — | tools/existing_effect_games.py `--batch v0.68` |
+
+## v0.67 で加えたもの（マチスの秘策と、先読みのフォールバックの修正）
+
+依頼の 1 枚のトレーナーを、kyuura データの採用で対応にしました。
+
+- マチスの秘策 PMCG5-093
+
+数は次のとおりです。
+
+| | v0.66 | v0.67 |
+|---|---|---|
+| ポケモン | 350 | 350 |
+| トレーナー | 93 | 94 |
+| エネルギー | 10 | 10 |
+| 対応するカード | 453 | 454 |
+| PMCG1〜PMCG6 の未対応 | 4 枚 | 3 枚 |
+| ワザの登録 | 593 | 593 |
+| 特殊能力の登録 | 56 | 56 |
+| トレーナーの登録 | 93 | 94 |
+
+- うらのカードは `GameState.face_down_cards` に持ち、v0.63 の置いておくカード（`SetAsideCards`）とは別の状態です。うらのあいだ、カードの定義は「たねポケモン」だけが決まった定義
+  （`cards.FACE_DOWN_DEFINITION`）で、ほかの項目を読むと FD1。
+- おもてにする時: 自分の番に選んで（新しいコマンド `RevealFaceDown`）・ワザ・特殊能力・進化・にげる・ダメージや効果を受ける時。全体に働く効果ではおもてにしない（かがくへんかガスの
+  p.277 の解説の記録の再利用）。たねポケモンでなければ、ついているカードごとトラッシュ（きぜつではない。サイドは取られない）。
+- 本当のカードは持ち主だけに見えます（観測の `real`・ログの写しの uid を除く）。相手のコマンドの処理が本当のカードを使ったら、ありうるカードのすべてで受け付けるかを確かめます
+  （`engine._identity_independent`。組が 256 を超えたら `UNSUPPORTED_SECRET_PLAN_IDENTITIES`）。
+- 新しい停止コードは FD1・FD2 の 2 件です（停止コード 147 件・未解決の裁定 149 件）。エンジンの未対応 `UNSUPPORTED_SECRET_PLAN_LOST_TARGET`・`UNSUPPORTED_SECRET_PLAN_IDENTITIES`・
+  `UNSUPPORTED_LEGACY_PREFLIGHT`。
+- 先読みのフォールバックの修正: ワザを使うポケモンにお上品攻撃がついている・場にうらのカードがあるとき、試す結果の数が上限を超えても v0.13 の止める関数で確かめず
+  `UNSUPPORTED_PREFLIGHT_LIMIT`、比べる方法 legacy はすべての結果を試す方法（`flow.legacy_unknown_features`）。上限の数は 4,096 のまま。
+- 書き出しの形式 22（最上位の `face_down_cards`）。
+
+詳しくは [secret-plan-preflight-v0.67.md](secret-plan-preflight-v0.67.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_secret_plan_v0_67.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 登録・型・うらの定義 | kyuura の印刷の文面・pcg-search.com | `RegistrationTest`・test_card_sources.py |
+| うらにして出す（どの種類のカードでも・0 枚・手札なし・ベンチに空きなし・カードの保存則・FD2） | 印刷の文面 | `PlacementTest` |
+| 見えない情報（観測・ログの写しが本当のカードによらない・uid を除く） | 印刷の文面 | `HiddenInformationTest`・log_audit.py の `observation_problems` |
+| おもてにする時・トラッシュ（選んで・相手のワザのダメージ・自分のワザ・にげる・進化・全体に働く効果ではおもてにしない・拒否で状態を変えない） | 印刷の文面・p.277 の解説の記録 | `RevealTest` |
+| 受け付けるかが本当のカードによらない（［のろい］・突風・［へんしん］） | — | `IdentityIndependenceTest` |
+| 先読みのフォールバックの修正 | v0.66 の文書 2.5 節 | `PreflightFallbackTest` |
+| 正式な開始からの対戦（v0.67 の 4 組） | — | `GamesTest`・tools/existing_effect_games.py `--batch v0.67` |
+
+## v0.66 で加えたもの（お上品攻撃・ナツメのESP・カスミの勝負）
+
+依頼の 3 枚のトレーナーを、kyuura データの採用で対応にしました。
+
+- お上品攻撃 PMCG5-074
+- ナツメのESP PMCG6-087
+- カスミの勝負 PMCG5-068
+
+数は次のとおりです。
+
+| | v0.65 | v0.66 |
+|---|---|---|
+| ポケモン | 350 | 350 |
+| トレーナー | 90 | 93 |
+| エネルギー | 10 | 10 |
+| 対応するカード | 450 | 453 |
+| PMCG1〜PMCG6 の未対応 | 7 枚 | 4 枚 |
+| ワザの登録 | 593 | 593 |
+| 特殊能力の登録 | 56 | 56 |
+| トレーナーの登録 | 90 | 93 |
+
+| 効果 | 決定 | 時点 |
+|---|---|---|
+| お上品攻撃 | `damage_reduction`（ワザを使ったプレイヤー。減らす量） | ワザのダメージの計算の 5 段階（プラスパワーのあと・6〜8 段階の前） |
+| ナツメのESP | `esp_redo`（ワザを使ったプレイヤー） | ワザの説明文のコインを投げた直後・結果を使う前 |
+| カスミの勝負 | `janken_hand`（使ったプレイヤー → 相手の順。両方が決めてから見せる） | トレーナーの効果 |
+
+- お上品攻撃の有効期限の行き先は手札です（`TrainerEffect.expiry_destination`。kyuura の card_differences の PMCG5-074）。きぜつしたらトラッシュ。
+- 続きの情報は決定の `context` の明示的なデータで持ちます。保存と復元・不正な答え・先読み・コインを投げ直さないことを確かめました。
+- 新しい停止コードは CA1・ES1〜ES3 の 4 件です（停止コード 145 件・未解決の裁定 147 件）。コードのない問い ES0。
+- お上品攻撃の減らす量の決定を出せない呼ぶ側（返す効果のダメージなど）は、エンジンの未対応 `UNSUPPORTED_DAMAGE_REDUCTION_DECISION` です。
+- 書き出しの形式は 21 のままです。
+- だつりょくえきの DR1・DR6 は未解決のままです。
+
+詳しくは [optional-trainers-v0.66.md](optional-trainers-v0.66.md)。
+
+### 実装済み・テスト済み
+
+テストのファイルは tests/test_optional_trainers_v0_66.py です。
+
+| 項目 | 根拠 | テスト |
+|---|---|---|
+| 3 枚の登録・型・新しい問いのコード | kyuura の印刷の文面・pcg-search.com | `RegistrationTest`・test_card_sources.py |
+| お上品攻撃の 5 段階（減らす量・不正な答え・プラスパワー・なぞのかべ・ディフェンダー・こうらがえし・控えと自分へのダメージ・CA1・保存と復元） | GR-2000-P321-DAMAGE-ORDER・CR-SHELL-ATTACK-ATTACKER-PLUSPOWER・GR-2000-P319-HP-AND-DAMAGE | `CharityDamageStepTest` |
+| お上品攻撃の期限（相手の番の終わりに手札・きぜつでトラッシュ） | kyuura の card_differences の PMCG5-074 | `CharityExpiryTest` |
+| お上品攻撃とれんぞくいしなげ（選べる量が増える・先読みの組） | v0.64 の組の根拠 | `CharityUnboundedCoinTest` |
+| ナツメのESP（はかいビーム・こまったねんりき・かいふくりんぷん・やみのこえ・不正な答え・保存と復元・番の終わり・2 枚・ES1〜ES3） | 印刷の文面 | `EspTest` |
+| カスミの勝負（9 通りの手・1 人目の手が見えない・手札 0 枚と山札の不足・同じ番の 2 回目・決める人・サイキックコントロール） | 印刷の文面 | `MistysDuelTest` |
+| 正式な開始からの対戦（v0.66 の 4 組） | — | tools/existing_effect_games.py `--batch v0.66` |
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+- 3 枚に最新の説明・照合の記録・裁定の記録がない。
+- お上品攻撃の kyuura の文面と pcg-search.com の文面に、「とき」と「時」の書き方の違いがある（処理は同じ）。
+- 新しい未解決 4 件は kyuura の未解決の一覧にない。
+
+## v0.69: kyuura の形式 3 のカードデータへの移行と、拡張パック以外の商品の同じカード 96 枚
+
+[equivalent-non-pack-cards-v0.69.md](equivalent-non-pack-cards-v0.69.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 写しの元を kyuura `7d3f4ca`（形式 3）に上げた。v0.68 の 457 枚の処理に使う欄は、kyuura が当てはめた修正の欄のほかは同じ | 実装済み・テスト済み | kyuura data/cards.json・data/curation/card_corrections.json | test_cards.py `ProvenanceTest`・test_history_attacks_v0_62.py `CorrectionTest`・test_final_pmcg_cards_v0_68.py `RegistrationTest` |
+| ベロリンガ・ガルーラの修正は kyuura の台帳を確かめ、写しに当てはめ直さない | 実装済み・テスト済み | FIX-PMCG2-041-ATK0-NAME・FIX-PMCG2-041-LEVEL・FIX-PMCG2-046-ATK0-TEXT | 同上 |
+| 拡張パック以外の商品の、登録したカードと処理に使う欄が同じ 96 枚（`pool_v0_69`）。元のカードの登録を id ごとに写す（`EQUIVALENT_CARDS`）。基本エネルギー 12 枚は登録なし | 実装済み・テスト済み | kyuura data/engine_targets.json（`mechanically_equivalent`）・元のカードの根拠 | test_equivalent_non_pack_cards_v0_69.py `TableTest`・`ParityTest`・`RecordTest` |
+| 同じ名前の 4 枚の制限は id をまたいで数える。進化は名前と段階で決まる | 実装済み・テスト済み | p.308・p.310 | 同 `DeckTest`・`MixedEvolutionTest` |
+| 無色2個エネルギーの新しい id（8 枚）は 1 枚で無色 2 個・基本エネルギーカードではない | 実装済み・テスト済み | v0.58 の登録（名前・種類・個数） | 同 `DoubleColorlessTest`・`DceUnitsReprintTest`・`DceRetreatReprintTest` |
+| 新しい id の特殊能力・トレーナー・決定と再開（元のカードの仕組みのテストを新しい id で走らせる） | 実装済み・テスト済み | 元のカードの記録 | 同 `…ReprintTest`（16 クラス） |
+| マチスの秘策の受け付けるかの確かめは、処理の同じカードを 1 枚で代表する（試すカードは v0.68 と同じ 457 枚） | 実装済み・テスト済み | v0.68 の 5 章の方針（公開の情報だけで決める） | 同 `SecretPlanPoolTest` |
+| 2001 年に発売したカード 10 枚（NIP）は、発売日を変えずに持ち、2000.02.14 版のルールで処理する | 実装済み・テスト済み | kyuura data/engine_targets.json の発売日 | 同 `RecordTest.test_released_after_rule_base` |
+| 96 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（元のカードの照合を再利用） | — |
+
+## v0.70: 拡張パック以外の商品のポケモン 82 枚（既存の効果の再利用）
+
+[non-pack-effect-reuse-v0.70.md](non-pack-effect-reuse-v0.70.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 拡張パック以外の商品のポケモン 82 枚（`pool_v0_70`。kyuura の `reuse_candidate`）。どのワザも既存の効果の型の登録（説明文のないワザ 51・説明文のあるワザ 85） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用。LD-・CC-・CR-・UQ-・エラッタはない） | test_non_pack_effect_reuse_v0_70.py `TargetTest`・`UnsupportedWithoutRegistrationTest`・`RecordTest` |
+| ダメージのない型 2 つ: ぐるぐる（`StatusByCoinWithoutDamage`）・たいでん（`AttachEnergyFromDiscardToSelf`。ちょうど 1 枚） | 実装済み・テスト済み | 既存の要素（`Status`・`AttachFromDiscard`）の並び | 同 `SwirlTest`・`StaticChargeTest` |
+| こうそくいどう（カツラのポニータ・レディバ）の説明の書き方を `DamageThenSelfBarrierOnHeads` に 1 通り加えた | 実装済み・テスト済み | v0.37 の「しんだふり」と同じ文 | 同 `ReusedTypeTest`・`UnsupportedWithoutRegistrationTest` |
+| 必要なエネルギーが「水」だけのみずでっぽう・ハイドロポンプ 6 つは `ExtraEnergyDamage`（HC4 は当てはまらない） | 実装済み・テスト済み | v0.6 の型 | 同 `TargetTest`・`ReusedTypeTest` |
+| 同じデータの 12 枚は登録の値を共有する（`SAME_DATA_CARDS_V0_70`） | 実装済み・テスト済み | kyuura の同じカードの組・写しのデータ | 同 `SharedEntriesTest` |
+| PR1-069 の名前「？？？」→「ミュウ」（写しの作り直しで当てはめる利用者が示した訂正。名前だけ） | 実装済み・テスト済み | 利用者の同定と、利用者が示したカード画像（エンジンは画像を見ていない。補助資料の URL の本文は取得していない） | 同 `AncientMewTest`・`ExtractionCorrectionTest`・`RecordTest` |
+| マチスの秘策の試すカードは 527 枚（公開の情報だけ。上限 512 は変えていない） | 実装済み・テスト済み | v0.68・v0.69 の方針 | 同 `SecretPlanCandidatesTest`・test_final_pmcg_cards_v0_68.py `SecretPlanLeakTest` |
+| 82 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（日本語の文面は pcg-search.com の転記。同じサイトでは独立した照合にならない） | — |
+| GD5-007「カツラのウィンディ」・IP2-032「ウィンディ」（表記の違う同じ名前の制限） | 未対応 | 対象外（別の検討が要る） | — |
+
+## v0.71: 拡張パック以外の商品の再録 78 枚（効果の文面の違い）
+
+[reprint-text-variants-v0.71.md](reprint-text-variants-v0.71.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 再録のトレーナー 67 枚・ポケモン 11 枚（`pool_v0_71`。kyuura の `reuse_candidate`）。元のカードの登録から作る（`effects.REPRINT_CARDS`） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面と、元のカードの記録の最新の説明（GR-P43-P6-LATEST-DESCRIPTION による当てはめ。独立した照合ではない） | test_reprint_text_variants_v0_71.py `TargetTest`・`RegistrationTest`・`RecordTest`・`UnsupportedWithoutRegistrationTest` |
+| きずぐすりの再録の版は 2 個のっていれば 2 個（元のカードの最新の説明と解説）。いれかえ・突風・エネルギー回収の既存の止める処理（GW5・ER9・ER10 など）はそのまま | 実装済み・テスト済み | 元のカードの照合の記録（p.254 ほか）の再利用 | 同 `ReusedLatestDescriptionTest` |
+| エネルギー転送の再録の版（GD4-015・QSG-048）: 基本エネルギーカード 1 枚・見せる・選ばなくてよい | 実装済み・テスト済み | この版の印刷の文面 | 同 `EnergySearchReprintTest` |
+| ポケモンジム第1弾の元気のかけら（GD1-017）: 使うための条件・ちょうど 1 枚・ベンチに出してから HP の半分のカウンター | 実装済み・テスト済み | この版の印刷の文面 | 同 `ReviveGymTest` |
+| プロモのリザードンの「ほのおのうず」（PR1-030）: エネルギーカード 2 枚をワザの効果でトラッシュ・足りなければダメージ 0 | 実装済み・テスト済み | この版の印刷の文面 | 同 `FireSpinPromoTest` |
+| ポケモン図鑑の名前の空白の違い（同じ名前 4 枚の数え方だけでまとめる） | 実装済み・テスト済み | 写しのデータ（データで書いた組） | 同 `SameNameTest` |
+| なんでもなおしの再録の版（対象を「あなたの対戦ポケモン」と書く） | 実装済み（v0.71 は FH1 の止める範囲のまま。v0.72 で自分の対戦ポケモンだけを回復するように直した。下の v0.72） | v0.55 の処理 | 同 `ReusedLatestDescriptionTest` |
+| 78 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| マチスの秘策の試す回数の上限を超える経路（v0.70 の文書の「529 回」） | 未確認（条件つきの見積もり。経路に入る盤面は見つけていない） | コードの確かめと計測 | — |
+
+## v0.72: 拡張パック以外の商品のポケモン 43 枚と、再録のなんでもなおし・ポケモン図鑑の扱い
+
+[status-coins-effect-reuse-v0.72.md](status-coins-effect-reuse-v0.72.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 拡張パック以外の商品のポケモン 43 枚（`pool_v0_72`。kyuura の `new_effect_needed`）。ワザ 77 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_status_coins_effect_reuse_v0_72.py `TargetTest`・`UnsupportedWithoutRegistrationTest`・`RecordTest` |
+| 新しい型 8 つ（エアロブラスト・ゆめみのまい／くさいにおい・ねむけどく・めざめのキッス・きゅうけつ（取りのぞいてよい）・デンキとばし・おつきみ・つのでなげる） | 実装済み・テスト済み | 印刷の文面と既存の規定（Z23・p.309・CR-TRANSPARENCY-ENERGY-BOMB など） | 同 `AeroblastTest`・`SelfAndOpponentStatusTest`・`PoisonAndSleepTest`・`WakeUpKissTest`・`OptionalDrainTest`・`MoveOneEnergyTest`・`MoonGazeTest`・`SwitchTest` |
+| 既存の型の書き方 8 つ（しっぽをふる・こうそくいどう・れんぞくいわなげ・じしん・いわふうじ・マッハパンチ・はかいビーム・たまなげ） | 実装済み・テスト済み | 型の引数と結びつけた書き方 | 同 `UnsupportedWithoutRegistrationTest`・`ReusedTypeTest` |
+| ゆめみのまいで両方の対戦ポケモンがねむりになる | 未解決で止める（既存の `UNRESOLVED_POKEMON_CHECK_SLEEP_COIN_ORDER`。ポケモンチェックの前に対戦を止める） | v0.3b の規定 | 同 `SelfAndOpponentStatusTest` |
+| きゅうけつの「取りのぞいてよい」 | 実装済み（与えたぶんを取りのぞくかどうかの選択。実装上の読み方） | 印刷の文面 | 同 `OptionalDrainTest` |
+| エアームド（PF3-009）の「こうそくいどう」（必要なエネルギーに「鋼」） | 実装済み（ふつうの対戦では「鋼」のエネルギーがないので使えない。［へんしん］で確かめた） | 印刷の文面 | 同 `ReusedTypeTest` |
+| 同じデータの 10 枚の登録の共有（`SAME_DATA_CARDS_V0_72`） | 実装済み・テスト済み | 写しのデータ | 同 `SharedEntriesTest` |
+| 再録のなんでもなおし（8 枚）: 自分の対戦ポケモンだけを回復。特殊状態がなければ FH2 | 実装済み・テスト済み（FH2 は未解決で止める） | この版の印刷の文面 | test_reprint_text_variants_v0_71.py `test_full_heal_reprints_cure_only_the_own_active` |
+| 再録のポケモン図鑑（2 枚）: 「最大5枚」の 0 枚は PD2。1〜5 枚は今までどおり | 実装済み・テスト済み（PD2 は未解決で止める） | この版の印刷の文面 | 同 `test_pokedex_reprints_stop_only_on_zero` |
+| 43 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.73: 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚
+
+[search-recovery-trainers-v0.73.md](search-recovery-trainers-v0.73.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 18 枚（`pool_v0_73`。kyuura の `new_effect_needed` のトレーナー）。10 の処理 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用）。超エネルギー回収はエラッタの記録 | test_search_recovery_trainers_v0_73.py `RegistrationTest` |
+| 元気のかたまり（手札のエネルギーカード 2 枚 → トラッシュのたねポケモン 1 枚をベンチへ。カウンターなし。ES2 の版だけベンチに空きがないと使えない） | 実装済み・テスト済み（MR1 は未解決で止める） | 印刷の文面 | 同 `MaxReviveTest` |
+| 熱血!（山札の上 3 枚をトラッシュ → その中の「炎」の基本エネルギーカードを手札へ。切らない） | 実装済み・テスト済み（山札不足は HC6、レインボーエネルギーは FV1 で止める） | 印刷の文面 | 同 `FervorTest` |
+| マスターボール（上の 7 枚のうちのポケモンのカードから必ず 1 枚 → 切る） | 実装済み・テスト済み（山札 7 枚未満は ML1 で止める） | 印刷の文面 | 同 `MasterBallTest` |
+| 化石の発掘・月の石・ポケモン再転送（`CardFilter` の名前の完全一致・ポケモンのタイプ） | 実装済み・テスト済み（ポケモン再転送の対象なしは ST1） | 印刷の文面 | 同 `FossilMoonRetrieverTest`・`RegistrationTest.test_card_filter_pokemon_type_and_exact_name` |
+| スーパーポケモン回収（コイン → 自分の場のポケモンとついているすべてのカードを手札へ。バトル場なら交代、最後の 1 匹なら負け） | 実装済み・テスト済み | 印刷の文面と p.311 の規定 | 同 `ScoopUpAndTeleporterTest` |
+| マサキの転送装置（コイン → 4 枚引く。引けるだけ） | 実装済み・テスト済み | 印刷の文面と p.312 の規定 | 同 `ScoopUpAndTeleporterTest` |
+| 超エネルギー回収（手札 2 枚 → 基本エネルギーカード最大 4 枚。トラッシュしたカードを除く） | 実装済み・テスト済み（SR1・SR2 は未解決で止める） | kyuura ERR-SUPER-ENERGY-RETRIEVAL の最新の説明（p.292 の引用の再利用。適用開始日は未確認） | 同 `SuperEnergyRetrievalTest`・`RegistrationTest.test_research_check_rejects_a_wrong_id_quote_or_condition` |
+| パソコン大暴走！（お互い最大 5 枚 → 使ったプレイヤーの番が終わる） | 実装済み・テスト済み | 印刷の文面 | 同 `ComputerErrorTest` |
+| 同じデータの 6 枚の登録の共有（`SAME_DATA_CARDS_V0_73`。マスターボールの 2 つの組はまとめない） | 実装済み・テスト済み | 写しのデータ | 同 `RegistrationTest` |
+| 18 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.74: 拡張パック以外の商品のスタジアム 13 枚
+
+[remaining-stadiums-v0.74.md](remaining-stadiums-v0.74.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 13 枚（`pool_v0_74`。kyuura の `new_effect_needed` のスタジアム）。4 つの名前・印刷の文面 6 組 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_remaining_stadiums_v0_74.py `RegistrationTest` |
+| 置き方の段落（イントロパック・プロモの書き方、PRN-027 の英語を併記した段落）の全文の照合 | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest.test_text_and_values_are_checked_together` |
+| 使った記録の系統（同じ名前）と FG1 の範囲の修正（名前の違うスタジアムの記録では止めない） | 実装済み・テスト済み（FG1・RS1 は未解決で止める） | 実装上の判断（回数の数え方は記録で決まらない） | 同 `UseCountTest` |
+| ラッキースタジアム（コイン →「おもて」なら 1 枚引く。引けるだけ） | 実装済み・テスト済み | 印刷の文面と p.312 の規定 | 同 `UseCountTest` |
+| ラッキースタジアム PRN-027（「自分の番ごとに1回」がない）: 最初の 1 回 | 実装済み・テスト済み（同じ番の再使用は LK1 で止める） | 印刷の文面（英語の併記・wording の分類で補わない） | 同 `UseCountTest.test_prn027_first_use_and_repeat_boundary` |
+| エネルギースタジアム（コイン →「おもて」ならトラッシュの基本エネルギーカード 1 枚を見せて手札へ） | 実装済み・テスト済み（トラッシュにないときは EN1） | 印刷の文面 | 同 `EnergyStadiumTest` |
+| キョウの忍者ジム（コイン →「おもて」なら山札の「キョウのたねポケモン」1 枚をベンチへ → 切る） | 実装済み・テスト済み（候補なし・ベンチに空きなしは NJ1、GG1） | 印刷の文面 | 同 `NinjaGymTest` |
+| ポケモンタワー（トラッシュから手札に加える部分だけを消す。ワザ・特殊能力・トレーナーの全経路） | 実装済み・テスト済み（効果がすべて消えるトレーナーは PT1） | 印刷の文面。ふしちょうは CR-PHOENIX-TIMING・CR-PHOENIX-RETURN の再利用 | 同 `PokemonTowerTest` |
+| ふしちょう・［つりあげる］の機会をタワーの下で出さない | 実装済み・テスト済み | 実装上の正規化（使っても使わなくても状態が同じ。使えないと決めたのではない） | 同 `PokemonTowerTest.test_phoenix_is_not_offered`・`test_entry_power_reel_in_is_not_offered` |
+| `BENCH_FROM_DECK` の選べるものの数を相手の観測に見せない（v0.32 からのワザ・特殊能力も） | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `NinjaGymTest`・tests/log_audit.py `observation_problems` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.75: 拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚
+
+[search-energy-pokemon-v0.75.md](search-energy-pokemon-v0.75.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 15 枚（`pool_v0_75`。kyuura の `new_effect_needed` のポケモン）・ワザ 30 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_search_energy_pokemon_v0_75.py `RegistrationTest` |
+| ポケモンタワーの場での P19 の過剰な停止の修正 | 実装済み・テスト済み（タワーのない場は P19 のまま） | ふしちょうは使っても状態が同じ（v0.74 の正規化） | 同 `PhoenixGasTowerTest` |
+| しらせる（引く → 入れ替え。控えがいなければ使えない） | 実装済み・テスト済み | 印刷の文面と p.312 | 同 `AlertTest` |
+| くらげのむれ（名前の決まったポケモンを好きなだけ） | 実装済み・テスト済み | 印刷の文面 | 同 `JellyfishPodTest` |
+| おにびあつめ（「おもて」の数ぶん。不足は FC1・レインボーは RB5・タワーで消える） | 実装済み・テスト済み | 印刷の文面 | 同 `CallWillOTheWispTest` |
+| 山札からつける（もえあがる・じゅうでん・しおまねき・エナジーサポート） | 実装済み・テスト済み（しおまねきの 0 枚は HC7） | 印刷の文面と GR-2000-P312-DECK-HAND-DISCARD（しおまねきは切らない） | 同 `AttachFromDeckTest` |
+| エナジーサポートの「とうめい」の控えのカードをトラッシュ | 実装済み・テスト済み | 実装上の判断（v0.45 のじりょくせんと同じ読み方） | 同 `test_energy_support_evaded_goes_to_discard` |
+| エネルギーきゅうしゅう（「エネルギーカード」を最大 2 枚） | 実装済み・テスト済み（0 枚は HC7） | 印刷の文面 | 同 `EnergyAbsorptionTest` |
+| ひのこ（RUL-ENERGY-DISCARD-ATTACKS の範囲）・10まんボルト（HC1） | 実装済み・テスト済み | kyuura の RUL-ENERGY-DISCARD-ATTACKS の再利用 | 同 `DiscardEnergyAttackTest` |
+| もろばバサミ（次の相手の番、受けるワザのダメージは 8 段階で 2 倍） | 実装済み・テスト済み（トレーナーのダメージは TD1、特殊能力のダメージは DB1 で止める） | 印刷の文面と GR-2000-P321-DAMAGE-ORDER | 同 `DoubleEdgedTest` |
+| `SEARCH_DECK`・`ATTACH_FROM_DECK` の選べるものの数を相手の観測に見せない | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `RegistrationTest.test_observation_tables`・tests/log_audit.py |
+| 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |

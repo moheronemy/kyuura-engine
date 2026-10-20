@@ -19,23 +19,87 @@ import unittest
 from unittest import mock
 
 from kyuura_engine import (
-    DEFAULT_EFFECTS, EngineError, EndTurn, EvolvePokemon, IllegalActionError, PlayTrainer, PowerKey, ResolveDecision, UnsupportedError,
-    UseAttack, UsePokemonPower, apply_command, check_invariants, load_card_pool, power_suppressors, state_to_dict, working_evasion_power,
-)
-from kyuura_engine.effects import (
-    DAMAGE_ELEMENT, SELF, AttackEffect, AttackEntry, AttackImmunityOnHeads, AttackKey, AttackUse, ConfuseOnHeads, ParalyzeOnHeads,
-    DamageAndSelfSleep, PoisonOnHeads, attack_reaches, deal_attack_damage, evasion_power,
+    DEFAULT_EFFECTS,
+    EndTurn,
+    EngineError,
+    EvolvePokemon,
+    IllegalActionError,
+    PlayTrainer,
+    PowerKey,
+    ResolveDecision,
+    UnsupportedError,
+    UseAttack,
+    UsePokemonPower,
+    apply_command,
+    check_invariants,
+    load_card_pool,
+    power_suppressors,
+    state_to_dict,
+    working_evasion_power,
 )
 from kyuura_engine.conditions import SLEEP
+from kyuura_engine.effects import (
+    DAMAGE_ELEMENT,
+    SELF,
+    AttackEffect,
+    AttackEntry,
+    AttackImmunityOnHeads,
+    AttackKey,
+    AttackUse,
+    ConfuseOnHeads,
+    DamageAndSelfSleep,
+    ParalyzeOnHeads,
+    PoisonOnHeads,
+    attack_reaches,
+    deal_attack_damage,
+    evasion_power,
+)
 from kyuura_engine.resolution import codec, open_attack, programs
 from kyuura_engine.resolution.questions import OpenQuestion
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 from kyuura_engine.state import Asleep
-
 from tests.helpers import (
-    ABRA, ALAKAZAM, BULBASAUR, BUTTERFREE, CATERPIE, DEFENDER, DEWGONG, DODUO, FIRE, GASTLY, GRASS, GRIMER, H, HAUNTER, IVYSAUR,
-    KADABRA, KAKUNA, MACHOP, FIGHTING, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, POTION, PSYCHIC, RATTATA, SEEL, T,
-    WEEDLE, BASE_HAUNTER, LIGHTNING, STARMIE, STARYU, build_test_state, coin_events, no_base_haunter_pool, uids, with_coin_results,
+    ABRA,
+    ALAKAZAM,
+    BASE_HAUNTER,
+    BULBASAUR,
+    BUTTERFREE,
+    CATERPIE,
+    DEFENDER,
+    DEWGONG,
+    DODUO,
+    FIGHTING,
+    FIRE,
+    GASTLY,
+    GRASS,
+    GRIMER,
+    HAUNTER,
+    IVYSAUR,
+    KADABRA,
+    KAKUNA,
+    LIGHTNING,
+    MACHOP,
+    METAPOD,
+    MUK,
+    PARAS,
+    PIKACHU,
+    PLUSPOWER,
+    PONYTA,
+    POTION,
+    PSYCHIC,
+    RATTATA,
+    SEEL,
+    STARMIE,
+    STARYU,
+    V0_69_CARDS,
+    WEEDLE,
+    H,
+    T,
+    build_test_state,
+    coin_events,
+    no_base_haunter_pool,
+    uids,
+    with_coin_results,
 )
 from tests.test_effect_preflight_v0_3d import ATTACKS, EVOLVED_FROM, energy_for
 
@@ -616,7 +680,10 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG6-014": ("PMCG6-005",),  # v0.40: キョウのゴルバット（キョウのズバットから）
               "PMCG4-048": ("PMCG2-036",),  # v0.41: わるいペルシアン（ニャースから）
               "PMCG3-028": ("PMCG3-027",),  # v0.42: ヤドラン（化石の秘密のヤドンから）
-              "PMCG5-050": ("PMCG5-043",)}  # v0.60: タケシのサンドパン（タケシのサンドから）
+              "PMCG5-050": ("PMCG5-043",),  # v0.60: タケシのサンドパン（タケシのサンドから）
+              # v0.70: 拡張パック以外の商品の進化カード（ニョロゾ・カスミのスターミー・カメール・モココ・エーフィ）
+              "ES1-017": ("ES1-016",), "QSG-015": ("QSG-014",), "GD2-014": ("GD2-013",), "IP2-003": ("IP2-016",), "NIP2-026": ("NIP2-018",),
+              "PF2-004": ("ES1-032",)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -624,8 +691,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
     ワザの宣言の前（こんらんのコインの前）に止める。状態・乱数・ログは変わらない。"""
 
     def keys(self):
+        # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_CARDS）は元のカードと同じ登録なので数えない
+        # （同じ登録であることは tests/test_equivalent_non_pack_cards_v0_69.py が確かめる）
         return sorted((k for k in DEFAULT_EFFECTS.attack_keys() if isinstance(DEFAULT_EFFECTS.attack_entry(k.card_id, k.attack_index).effect,
-                                                                                EFFECT_COIN_TYPES)), key=str)
+                                                                                EFFECT_COIN_TYPES) and k.card_id not in V0_69_CARDS), key=str)
 
     def test_every_registered_attack_stops_before_any_coin(self):
         keys = self.keys()
@@ -685,7 +754,18 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         # docs/reactive-powers-trainer-damage-v0.61.md）
                                         "れいとうビーム",
                                         # v0.62: ベロリンガの「まきつくベロ」（ParalyzeOnHeads。既存の型の登録だけ。docs/history-attacks-v0.62.md）
-                                        "まきつくベロ"]))
+                                        "まきつくベロ",
+                                        # v0.70: 拡張パック以外の商品のポケモン 82 枚のうち、ParalyzeOnHeads・PoisonOnHeads・ConfuseOnHeads のワザ 24（既存の型の登録だけなので、同じ
+                                        # T19b で止まる。docs/non-pack-effect-reuse-v0.70.md）。サワムラー（ES2-026）の「まわしげり」はゴースト（抵抗力 闘）への最終ダメージが 0
+                                        "あやしいおんぱ", "あわ", "のしかかり", "あわ", "れいとうパンチ", "まわしげり", "バブルこうせん", "でんきしっぽ", "どくのしる",
+                                        "でんきショック", "どくガス", "こんらんガス", "あわ", "スモッグ", "どくばり", "でんきショック", "あやしいひかり", "サイケこうせん",
+                                        "れいとうパンチ", "あわ", "のしかかり", "れいとうパンチ", "のしかかり", "おおごえでなく",
+                                        # v0.72: 拡張パック以外の商品のポケモン 43 枚のうち、PoisonOnHeads・ParalyzeOnHeads のワザ 7（既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/status-coins-effect-reuse-v0.72.md）。イワーク（ES2-024・QSG-037）の「しめつける」はゴースト（抵抗力 闘）への最終ダメージが 0
+                                        "どくばり", "どくばり", "でんきショック", "でんきショック", "しめつける", "しめつける", "しびれごな",
+                                        # v0.75: カツラのガーディ（GD5-006）の「のしかかり」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/search-energy-pokemon-v0.75.md）
+                                        "のしかかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}
@@ -699,10 +779,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                         self.assertIsNone(working_evasion_power(state, state.players[1].active.pokemon_id))
                         self.assertEqual(power_coins(apply_command(state, UseAttack(0, key.attack_index)).log), [])
                         continue
-                    if key.card_id == "PMCG5-050":
+                    if key.card_id in ("PMCG5-050", "ES2-026", "ES2-024", "QSG-037"):  # v0.72: イワークの「しめつける」10 も最終ダメージが 0
                         # v0.60: タケシのサンドパン（闘）の「とげボール」30 は、ゴースト（抵抗力 闘 -30）への最終ダメージが 0 なので「ダメージを受けなかった」（T21）。
                         # 「とうめい」はダメージの要素ではたらかず、受けないと決まっていないので、そのあとのどくのコインを投げる（T19b に当たらない。「おもて」なら、
-                        # どくの要素を受ける前に「とうめい」のコインを投げる）
+                        # どくの要素を受ける前に「とうめい」のコインを投げる）。v0.70: サワムラー（闘）の「まわしげり」30 も同じ（マヒのコイン）
                         after = apply_command(state, UseAttack(0, key.attack_index))
                         self.assertTrue(any(e["kind"] == "damage" and e["amount"] == 0 for e in after.log[len(state.log):]))
                         continue

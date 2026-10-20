@@ -77,6 +77,13 @@ def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: 
     （防ぐのは新しく付けることだけ）。"""
     from .effects import status_immunity  # effects.py は conditions.py を読み込むので、使うときに読み込む
 
+    if state.is_face_down(pokemon):
+        # v0.67: うらのカード（マチスの秘策）は、効果を受ける時におもてにする（ワザの要素は ``kernel.reaches`` が先におもてにする。ここに来るのは、トレーナー・特殊能力の
+        # 効果で特殊状態にするとき）。「たねポケモン」でなくトラッシュしたら、特殊状態にする対象はいない
+        from .zones import designate_face_down
+
+        if designate_face_down(state, owner, pokemon, by_player=state.current_player, cause=condition, can_lose=True) is None:
+            return True
     key = status_immunity(state, owner, pokemon)
     if key is None:
         return False
@@ -236,6 +243,14 @@ def recover_from_sleep(state: GameState, owner: int, pokemon: PokemonInPlay) -> 
     _remove_exclusive(state, owner, pokemon, SLEEP_COIN)
 
 
+def wake_up(state: GameState, owner: int, pokemon: PokemonInPlay, effect: str) -> None:
+    """v0.72: ワザの効果で、ねむり状態から回復させる（ナツメのルージュラ（GD6-012）の「めざめのキッス」の「相手を「ねむり」状態から、回復させる。」）。ねむりだけを消し、
+    どく状態はそのまま（p.322 の重複の規定）。理由は ``CURED``（ログ ``special_conditions_removed`` の ``effect`` はワザ）。"""
+    if not pokemon.conditions.asleep:
+        raise RuntimeError(f"ねむり状態でないポケモン {pokemon.pokemon_id} をねむりから回復させようとした（エンジンの不具合）")
+    _remove_exclusive(state, owner, pokemon, CURED, effect=effect)
+
+
 def recover_from_paralysis(state: GameState, owner: int, pokemon: PokemonInPlay) -> None:
     """ポケモンチェックの 4: マヒ状態から自動的に回復する（p.322・p.323）。どく状態はそのまま。"""
     if not pokemon.conditions.paralyzed:
@@ -278,8 +293,9 @@ def _log_applied(
     )
 
 
-def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str) -> None:
-    """「ねむり」「マヒ」「こんらん」（``SpecialConditions.exclusive``）だけを消す。どく状態は残す（p.322 の重複の規定）。"""
+def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reason: str, **fields: object) -> None:
+    """「ねむり」「マヒ」「こんらん」（``SpecialConditions.exclusive``）だけを消す。どく状態は残す（p.322 の重複の規定）。v0.72: ``fields`` はログに加える項目
+    （ワザの効果で回復させたときの ``effect``。ほかの呼び出しは渡さない）。"""
     name = pokemon.conditions.exclusive.name
     pokemon.conditions = replace(pokemon.conditions, exclusive=None)
     state.add_event(
@@ -289,6 +305,7 @@ def _remove_exclusive(state: GameState, owner: int, pokemon: PokemonInPlay, reas
         pokemon_id=pokemon.pokemon_id,
         conditions=(name,),
         reason=reason,
+        **fields,
     )
 
 

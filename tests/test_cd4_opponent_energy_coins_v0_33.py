@@ -46,7 +46,8 @@ from kyuura_engine.resolution.programs import (
 from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.rng import rng_fingerprint
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
+from tests.helpers import assert_stop_code_counts_since
 from tests.helpers import (
     BLAINES_DODUO,
     BLAINES_RHYHORN,
@@ -281,7 +282,7 @@ class CardDataTest(unittest.TestCase):
         for card in V0_33_POKEMON:
             record = sources[card]
             with self.subTest(card=card):
-                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", KYUURA_COMMIT))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", ADOPTED_COMMIT))
                 self.assertEqual(record["kyuura_records"], [])
                 self.assertNotIn(f'"{card}"', verification)
                 [check] = record["external_checks"]
@@ -389,7 +390,7 @@ class Cd4Test(unittest.TestCase):
         # docs/count-condition-switch-return-v0.40.md・docs/heal-counter-status-v0.41.md・docs/power-decisions-v0.42.md・docs/declared-entry-powers-v0.43.md・
         # docs/search-evolution-once-attacks-v0.44.md・docs/conditional-damage-energy-v0.45.md・docs/continuous-powers-v0.46.md・docs/fossil-hidden-info-v0.47.md・
         # docs/effective-pokemon-properties-v0.48.md・docs/virtual-attacks-transformation-v0.49.md・docs/mew-devolution-spray-v0.50.md・docs/discard-to-bench-v0.51.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
+        assert_stop_code_counts_since(self, links, 149, 151)  # v0.72: 総数の等号は test_research_links_v0_18e が確かめる。  # v0.68 で DR8・DR13 を加えた。v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
 
     def test_boundary(self):
         """相手の控えのカウンターが 0 なら（控えがいない・控えにカウンターがない）、相手の対戦ポケモンのカウンターだけで処理する。控えに 1 個でも

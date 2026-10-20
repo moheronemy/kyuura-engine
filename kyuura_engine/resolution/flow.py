@@ -23,14 +23,15 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import KNOCK_OUT_POWER, PROMOTE_ACTIVE, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
-from ..effects import (AttackKey, AttackUse, PowerKey, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
+from .. import effects as E
+from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
 from ..state import GameState, Phase
 from ..history import close_probe, note_used
-from ..zones import promote_from_bench, return_in_play_to_deck, shuffle_deck
+from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 
 from . import catalog as C
 from . import codec
@@ -39,9 +40,10 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
-from .kernel import (DryRunComplete, Resolution, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
+from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
                      ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
-from .programs import AttackRun, decision_index, declare, program_may_fail, run_elements, with_stadium_self_damage
+from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
+                       with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
 
 PREFLIGHT_MODES = P.PREFLIGHT_MODES
@@ -129,17 +131,26 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     def body(res: Resolution) -> None:
         _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium)
 
+    # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
+    # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
+    unknown = legacy_unknown_features(state, attacker)
+
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
-        （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。"""
-        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None:  # v0.57: クチバシティジムのコインは v0.13 の止める関数が知らない
+        （止めなければ、実際の処理が自分の結果の問いを検出する）。ほかは推測で受け付けず拒否する。v0.67: v0.13 の止める関数が知らない選択・役割（お上品攻撃の
+        減らす量・うらのカード）がある盤面では、v0.13 の止める関数で確かめず拒否する（試していない結果があることを、安全とみなさない）。"""
+        if type(effect) not in v013_checks.VERIFIED or coin_stadium is not None or unknown:  # v0.57: クチバシティジムのコインは v0.13 の止める関数が知らない
+            extra = f"（v0.13 の止める関数が知らない {'・'.join(unknown)} があるので、それでも確かめない）" if unknown and type(effect) in v013_checks.VERIFIED else ""
             raise UnsupportedError(
                 "UNSUPPORTED_PREFLIGHT_LIMIT",
                 f"ワザ「{attack.name_ja}」の宣言の前の先読みで試す結果の数が上限（{P.MAX_BRANCHES}）を超えた。原典で決められない場合に当たる結果が"
-                "ないことを確かめられないので扱わない",
+                f"ないことを確かめられないので扱わない{extra}",
             )
         v013_checks.check(ctx.original, use, effect, ctx.original.find_pokemon(pid)[1], ctx.trace, mode="legacy_after_limit")
 
+    if is_contract(program) and unknown:
+        raise UnsupportedError("UNSUPPORTED_LEGACY_PREFLIGHT",
+                               f"v0.13 の約束で書いたワザの実装は、宣言の前に v0.13 の止める関数だけで確かめるが、その関数が知らない {'・'.join(unknown)} がある（エンジンの未対応）")
     if is_contract(program):
         # v0.13 の約束で書いた実装（v0.16b のアダプタ。contract.py）: 宣言の前の確認は実装の宣言（problem と v0.13 の止める関数）だけ。
         # resolve の中身は先読みから見えず、副作用のある resolve を何度も呼ばない（v0.13・v0.15 と同じ確認。先読みの方法によらない）
@@ -149,7 +160,7 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
     if ctx.preflight == "derived":
         P.after_real_run(state, ctx.original, body, ctx.catalog, ctx.trace, on_limit)  # 実際の処理を含む
         return
-    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None:
+    if ctx.preflight == "legacy" and type(effect) in v013_checks.VERIFIED and coin_stadium is None and not unknown:  # v0.67: 知らない選択・役割があればすべての結果を試す
         # v0.57: クチバシティジムのコインを投げるワザは、v0.13 の止める関数が知らない（コインの +10・自分への 10）ので、すべての結果を試す方法で確かめる
         v013_checks.check(state, use, effect, attacker, ctx.trace, mode="legacy")
     else:
@@ -161,6 +172,26 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         except P.BranchLimit:
             on_limit()
     body(Resolution(state, catalog=ctx.catalog, trace=ctx.trace))
+
+
+def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
+    """v0.67: v0.13 の止める関数（``v013_checks``。v0.13 までの選択と役割だけを知る）が知らない、この盤面の選択・役割の名前。ないなら ()。
+
+    - ワザを使うポケモンについているお上品攻撃（v0.66。``reduces_attack_damage``）: 減らす量をワザを使ったプレイヤーが選ぶ。v0.13 の止める関数が使う
+      ``preview_attack_damage`` は減らす量を 0 として計算するので、減らした量でだけ当たる問い（CA1・返す効果・そろってのきぜつ）を見落とす
+    - 場のうらのカード（v0.67。マチスの秘策）: ワザがダメージや効果を与える時におもてにし、「たねポケモン」でなければトラッシュする。v0.13 の止める関数はうらのカードの
+      定義を読めず（FD1）、おもてにしたあとの結果も試さない
+    - 場の［だつりょくえき］（v0.68。キョウのベトベトン）: ダメージの要素のあとにコインと持ち主の決定があり、DR8・DR13 で止める。v0.13 の止める関数は知らない
+    """
+    found = []
+    if any(state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage for t in attacker.trainers):
+        found.append("お上品攻撃の減らす量")
+    if state.face_down_cards:
+        found.append("うらのカード")
+    if E.energy_drain_holders(state):
+        # v0.68: キョウのベトベトンの［だつりょくえき］（ダメージの要素のあとのコイン・持ち主が選ぶトラッシュ・DR8・DR13）。v0.13 の止める関数は知らない
+        found.append("だつりょくえき")
+    return tuple(found)
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
@@ -188,6 +219,10 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     res.attack_declared = key
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
+    if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
+                                                   or attacker.conditions.confused or coin_stadium is not None):
+        # v0.65（NT1）: 変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの要素より先に投げるコイン（手順 4・5・クチバシティジム）の順番が決まらない（コインの前）
+        raise res.question("ninja_trick_attack_order", f"ポケモン {attacker.pokemon_id} のワザ・変わり身の術 {list(usable_ninja_tricks(state, 1 - player))}")
     if _attack_check_failed(res, player, attacker, key):  # v0.36: p.309 の手順 4（「すなかけ」・「えんまく」など）
         _finish_attack(res, use)
         return
@@ -204,7 +239,9 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     if coin_stadium is not None:
         program = _stadium_attack_coin(res, player, attacker, key, program, coin_stadium)
     fs = res.open_frame(FrameKind.ATTACK, parent=None, player=player, source_pid=attacker.pokemon_id, attack_key=key)
-    if run_elements(AttackRun(res, fs, program, attack), 0):
+    run = AttackRun(res, fs, program, attack)
+    # v0.65: 相手がワザを使う時（宣言が受け付けられ、ワザの要素の前）の変わり身の術。入れ替えたら、ワザのダメージや効果は入れ替えのあとでおこる（宣言・コインはやり直さない）
+    if offer_ninja_trick(run) or run_elements(run, 0):
         return
     _finish_attack(res, use)
 
@@ -774,12 +811,48 @@ def _resume_attack(res: Resolution, decision, cont: codec.AttackContinuation, ch
     run = AttackRun(res, fs, program, attack, declared=declared)
     run.carried = carried
     run.restore(carried)  # v0.31: 決定をまたいで運んだコインの結果・枠の値
+    esp = carried.get("esp")
+    if esp is not None:
+        # v0.66: ナツメのESPのやり直しの決定。答え（やり直す・やり直さない）を当てはめて、コインを投げた要素をもう一度処理する（採った結果を使う。それまでの要素・コインは
+        # くり返さない）
+        if decision.kind != ESP_REDO:
+            raise RuntimeError(f"ESPの続きの情報のある決定 {decision.kind} は扱わない（エンジンの不具合）")
+        index = apply_esp_redo(run, tuple(esp), choices)
+        if run_elements(run, index):
+            return
+        _finish_attack(res, cont.use)
+        return
+    boundary = carried.get("boundary")
+    if boundary is not None:
+        # v0.65: 要素と要素のあいだの決定（変わり身の術はワザの要素の前、［にげこむ］はダメージの要素のあと）。答えを処理して、その位置の要素から続ける（それまでの要素・コインは
+        # 繰り返さない）
+        if decision.kind == NINJA_TRICK:
+            apply_ninja_trick(run, tuple(carried["tricks"]), choices)
+        elif decision.kind == REACTION_SWITCH:
+            apply_flee(run, tuple(carried["flee"]), choices)
+        elif decision.kind == ENERGY_DRAIN_DISCARD:
+            # v0.68: ［だつりょくえき］のトラッシュするカード（コインはもう投げた。送る効果はもう処理したので、続きの位置で窓を開き直しても何もしない）
+            apply_energy_drain(state, tuple(carried["drain"]), choices)
+        else:
+            raise RuntimeError(f"要素のあいだの決定 {decision.kind} は扱わない（エンジンの不具合）")
+        if run_elements(run, boundary):
+            return
+        _finish_attack(res, cont.use)
+        return
     index = carried.get("element")  # v0.35: 決定を出した要素の位置（ダメージの要素の順番の決定。並びにダメージの要素が 2 つ以上あることがある）
     if index is None:
         index = decision_index(program, decision.kind)
     elif not (0 <= index < len(program) and program[index].decides(decision.kind)):
         raise RuntimeError(f"決定 {decision.kind} の続きの要素の位置 {index!r} が、その決定を出す要素ではない（エンジンの不具合）")
-    program[index].resume(run, decision, choices)
+    run.index = index
+    try:
+        if decision.kind == BENCH_GUARD:
+            resume_guarded(run, program[index], decision, choices)  # v0.65: ダメージの要素の中の［ベンチガード］の決定
+        else:
+            program[index].resume(run, decision, choices)
+    except EspRedoOffer:
+        # v0.66: 決定のあとの続きの中で説明文のコインを投げる要素は、今の写しにない（要素をもう一度処理すると決定の前の処理をくり返す）
+        raise RuntimeError(f"決定 {decision.kind} のあとの続きで、ナツメのESPのやり直しを聞くコインを投げた（今の写しでは起こらない。エンジンの不具合）") from None
     if run.suspended is not None:  # 答えのあとで、もう一度決定を出した（v0.13 の約束の 2 段階の決定。v0.16b）
         return
     if run_elements(run, index + 1):
@@ -876,8 +949,9 @@ def _resume_take_prize(res: Resolution, decision, cont: codec.AftermathContinuat
     player = decision.player
     prizes = state.players[player].prizes
     uid = prizes.pop(choices[0])
+    face_up = prize_left(state, uid)  # v0.63: おもてのサイド（ロケット団参上!）を取ったら、おもての記録から除く（手札は公開にならない）
     state.players[player].hand.append(uid)
-    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes))
+    state.add_event("take_prize", player=player, card=uid, remaining=len(prizes), **face_up_fields(face_up, "card"))
     _next_prize_or_judge(res, cont.remaining, cont.then, cont.post_knockout)
 
 

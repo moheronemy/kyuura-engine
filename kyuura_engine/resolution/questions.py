@@ -204,6 +204,10 @@ QUESTIONS: dict[str, Question] = {
                  "決められない"),
         Question("rainbow_basic_energy_card", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", ("RB3",), 10,
                  "場のポケモンについているレインボーエネルギーを、説明の「基本エネルギーカード」として選べるかは、印刷の文面・kyuura の記録から決められない"),
+        # v0.75（docs/search-energy-pokemon-v0.75.md 5 章）
+        Question("rainbow_recover_type", "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", ("RB5",), 10,
+                 "トラッシュのレインボーエネルギー（場の外の特殊エネルギーカード）を、ワザの効果でトラッシュから手札に加える「「○」エネルギーカード」として選べるかは、"
+                 "印刷の文面・kyuura の記録から決められない（RB2・FV1 と同じ種類の、別の場面の問い）"),
         # v0.56（docs/trainer-decisions-turn-effects-v0.56.md 7 章）
         Question("trainer_self_bonus", "UNRESOLVED_MISTY_SELF_DAMAGE", ("MS1",), 10,
                  "トレーナー「カスミ」の「「カスミのポケモン」が使うワザが対戦ポケモンにダメージを与える時、…「+20」される。(控えポケモンへのダメージは、そのまま)」を、"
@@ -269,6 +273,44 @@ QUESTIONS: dict[str, Question] = {
                  "オニスズメの「オウムがえし」で、受けたダメージ・マヒ以外の効果（入れ替え・エネルギー・ダメージカウンター・回復など）を与えるのは、エンジンが対応していない"),
         Question("mirror_move_unsupported_attack", "UNSUPPORTED_MIRROR_MOVE_ATTACK", ("v0.62",), 10,
                  "ピジョンの「オウムがえし」で出すワザを、エンジンが自分のワザとして処理できない（場に出てから1回しか使えないワザ・要素の並びのないワザ）"),
+        # v0.64（docs/geodude-line-unbounded-coins-v0.64.md 3 章）。ルールの問いではなく、エンジンの未対応（今の写しでは起こらない場だけ）
+        Question("unbounded_coin_preflight", "UNSUPPORTED_UNBOUNDED_COIN_PREFLIGHT", ("v0.64",), 10,
+                 "「うら」が出るまで投げるコインの、先読みの有限の組の根拠が扱っていない計算・前提の場（エンジンの未対応）"),
+        # v0.65（docs/reactive-decisions-v0.65.md 6 章）
+        Question("ninja_trick_attack_order", "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER", ("NT1",), 10,
+                 "キョウ秘伝,変わり身の術の「相手がワザを使う時」の入れ替えと、ワザの宣言のあとにワザの要素より先に投げるコイン（p.309 の手順 4（すなかけ・［はんこう］）・手順 5"
+                 "（こんらん）・クチバシティジム）のどちらが先かは、印刷の文面・kyuura の記録から決められない（入れ替えるかを決めるときにコインの結果が分かるか・ワザが失敗したあとも"
+                 "入れ替えられるかが変わる）"),
+        Question("ninja_trick_leaves_play", "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON", ("NT2",), 10,
+                 "キョウ秘伝,変わり身の術がついているポケモンを、ついているすべてのカードといっしょに山札・手札にもどす効果で、このカードもいっしょにもどすか、「そのポケモンがバトル場を"
+                 "はなれた時、このカードをトラッシュする」にしたがってトラッシュするかは、印刷の文面・kyuura の記録から決められない"),
+        Question("bench_guard_zero_reaction", "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION", ("BG2",), 10,
+                 "［ベンチガード］で、もとのポケモンが受けるダメージがすべてサイドンに移って 0 になるとき、もとのポケモンが「ダメージを受けた」ことになるか（「ダメージを受けたとき」の"
+                 "効果・こんじょうがはたらくか）は、印刷の文面・kyuura の記録から決められない（2 匹以上のサイドンで 0 になる答えがある）"),
+        # v0.66（docs/optional-trainers-v0.66.md 5 章）
+        Question("charity_below_zero", "UNRESOLVED_CHARITY_BELOW_ZERO", ("CA1",), 10,
+                 "お上品攻撃の「そのダメージを好きなだけ小さくしてよい」が、p.321 の 5 段階のダメージを 0 より小さくすること（そのあとの段階で増える効果があるとき、0 にしたときと"
+                 "結果が変わる）を含むかは、印刷の文面・kyuura の記録から決められない（p.321 は計算の途中の 0・マイナスを認めるが、「小さくする」量の下限は書かれていない）"),
+        # ルールの問いではなく、エンジンの未対応（コードは UNSUPPORTED_…。研究の対応表の停止コードには入れない）
+        Question("damage_reduction_decision", "UNSUPPORTED_DAMAGE_REDUCTION_DECISION", ("v0.66",), 10,
+                 "お上品攻撃で減らす量を選ぶ決定を、このダメージ（前の番のワザの効果で返すダメージ・前の要素の結果を運べない並び）では出せない（エンジンの未対応）"),
+        # v0.68（docs/final-pmcg-cards-v0.68.md 3 章）: キョウのベトベトンの［だつりょくえき］。採用の仕様（自動的にはたらく・ダメージの要素のあと）でも決まらない場合
+        Question("energy_drain_attacker_knocked_out", "UNRESOLVED_ENERGY_DRAIN_ATTACKER_KNOCKED_OUT", ("DR8",), 10,
+                 "［だつりょくえき］を処理する時点で、ダメージを与えたポケモンがすでに HP 以上のダメージを受けているとき（同じワザの自分へのダメージ・返す効果のダメージなど）、"
+                 "コインを投げ、エネルギーカードを選んでトラッシュするかは、印刷の文面・最新の説明・kyuura の記録（UQ-ENERGY-DRAIN-ATTACKER-KO）から決められない"),
+        Question("energy_drain_no_energy", "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY", ("DR13",), 10,
+                 "ダメージを与えたポケモンにエネルギーカードがついていないとき、［だつりょくえき］のコインを投げるかは、日本語の文面・kyuura の記録（UQ-ENERGY-DRAIN-NO-ENERGY）"
+                 "から決められない（英語版の「if it has any」は使わない）"),
+        Question("energy_drain_decision", "UNSUPPORTED_ENERGY_DRAIN_DECISION", ("v0.68",), 10,
+                 "［だつりょくえき］のトラッシュするカードの決定を、v0.13 の約束で書いたワザの実装の中では出せない（エンジンの未対応）"),
+        # 今の写しのワザの並びでは起こらない（コードのない問い。当たったらエンジンの不具合）
+        Question("esp_separate_coin_tosses", None, ("ES0",), 10,
+                 "ナツメのESPのやり直しのあとに、同じワザの説明文のコイントスをもう一度投げる並びのワザは、今の写しにない（どのワザも説明文のコイントスは 1 回にまとまっている）"),
+        # 今の写しのワザの並びでは起こらない（コードのない問い。当たったらエンジンの不具合）
+        Question("flee_then_damage", None, ("FL0",), 10,
+                 "［にげこむ］で入れ替えたあとに、そのワザの残りのダメージの要素がかわりに出たポケモンに来る並びのワザは、今の写しにない"),
+        Question("bench_guard_element", None, ("BG0",), 10,
+                 "［ベンチガード］の決定を出せないダメージの要素で、控えポケモンが 10 以上のダメージを受ける（今の写しのワザの要素はどれも出せる）"),
     )
 }
 

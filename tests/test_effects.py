@@ -13,7 +13,7 @@ from kyuura_engine import (
     new_game, state_to_dict,
 )
 from kyuura_engine.cards import pool_from_extract, read_extract
-from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, AttackEffect, AttackEntry, AttackKey, PowerKey
+from kyuura_engine.effects import DAMAGE_ONLY, DEFAULT_EFFECTS, EQUIVALENT_CARDS, REPRINT_CARDS, AttackEffect, AttackEntry, AttackKey, PowerKey
 
 from tests.helpers import (
     CHARMANDER, DIGLETT, FIGHTING, FIRE, FIRE_DECK, GROWLITHE, MACHOP, NO_EMBER_EFFECTS, PONYTA, VENUSAUR, WATER_FIGHTING_DECK,
@@ -136,6 +136,22 @@ V0_61_WITH_TEXT = [AttackKey("PMCG4-025", 0), AttackKey("PMCG4-043", 0), AttackK
 # タケシのダグトリオのあながくれ・ドリルホール・ベロリンガのまきつくベロ・ちょうおんぱ（説明文のないワザはつつく・ドリルくちばし・つばさでうつ）
 V0_62_WITH_TEXT = [AttackKey("PMCG1-066", 0), AttackKey("PMCG1-066", 1), AttackKey("PMCG2-034", 1), AttackKey("PMCG2-038", 0), AttackKey("PMCG2-043", 1),
                    AttackKey("PMCG6-060", 0), AttackKey("PMCG6-060", 1), AttackKey("PMCG2-041", 0), AttackKey("PMCG2-041", 1)]
+# v0.64: れんぞくいしなげ・かたくなる・じばく（kyuura の印刷の文面。docs/geodude-line-unbounded-coins-v0.64.md）
+V0_64_WITH_TEXT = [AttackKey("PMCG3-034", 0), AttackKey("PMCG3-037", 0), AttackKey("PMCG3-038", 1)]
+# v0.65: クラゲどく・ラリアット（kyuura の印刷の文面。docs/reactive-decisions-v0.65.md）
+V0_65_WITH_TEXT = [AttackKey("PMCG5-033", 0), AttackKey("PMCG5-055", 0)]
+# v0.68: ガルーラのこどものおつかい（利用者が示した訂正の文面）・れんぞくパンチ、イマクニ？のドードーのハモる（簡略化した仕様。キョウのベトベトンのヘドロのうずは説明文なし）
+V0_68_WITH_TEXT = [AttackKey("PMCG2-046", 0), AttackKey("PMCG2-046", 1), AttackKey("PMCG6-074", 0)]
+# v0.70: 拡張パック以外の商品のポケモン 82 枚の、説明文のあるワザ 85（写しの説明文で数える。処理に使う文面は kyuura の印刷の文面）
+V0_70_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_70"]
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.72: 拡張パック以外の商品のポケモン 43 枚の、説明文のあるワザ 67（写しの説明文で数える。処理に使う文面は kyuura の印刷の文面）
+V0_72_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_72"]
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.75（docs/search-energy-pokemon-v0.75.md）: 拡張パック以外の商品のポケモン 15 枚の説明文のあるワザ（24。処理に使う文面は kyuura の印刷の文面）
+V0_75_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_75"]
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+
 
 
 class RecordingEffect(AttackEffect):
@@ -262,7 +278,7 @@ class DefaultRegistryTest(unittest.TestCase):
         # ウインディの「とっしん」（印刷の文面）。v0.31 で v0.30 の保留の 22 枚と進化元・依存のカードを加えた（V0_31_WITH_TEXT。
         # どれも採用の記録の play_text（kyuura の印刷の文面・エラッタ・card_differences の最新の説明）と合う。
         # scripts/check_card_sources.py。docs/held-cards-v0.31.md）
-        self.assertEqual(with_text, sorted([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
+        expected = ([AttackKey("PMCG1-001", 0), AttackKey("PMCG1-002", 0), AttackKey("PMCG1-003", 0), AttackKey("PMCG1-003", 1),
                                      AttackKey("PMCG1-004", 0), AttackKey("PMCG1-007", 0), AttackKey("PMCG1-007", 1), AttackKey("PMCG1-008", 1), AttackKey("PMCG1-009", 0), AttackKey("PMCG1-009", 1),
                                      AttackKey("PMCG1-012", 0), AttackKey("PMCG1-012", 1), AttackKey("PMCG1-014", 1), AttackKey("PMCG1-015", 0),
                                      AttackKey("PMCG1-017", 1), AttackKey("PMCG1-019", 0), AttackKey("PMCG1-019", 1), AttackKey("PMCG1-020", 1),
@@ -287,7 +303,12 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT))
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT)
+        # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
+        expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
+        # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）
+        expected = expected + [AttackKey(new, key.attack_index) for new, reprint in REPRINT_CARDS.items() for key in expected if key.card_id == reprint.original]
+        self.assertEqual(with_text, sorted(expected))
 
     def test_pool_and_game_use_the_same_registry(self):
         state = new_game(FIRE_DECK, WATER_FIGHTING_DECK, 1)
@@ -443,7 +464,11 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # + サンダー（化石の秘密）の「サンダーストーム」・R団のストライクの「かげぶんしん」「こうそくカマ」・カスミのギャラドスの「ハイドロクラッシュ」・タケシのサンドパンの
         #   「スピードスター」「とげボール」（v0.60。docs/coins-defense-rebellion-v0.60.md）
         # + わるいギャラドスの「れいとうビーム」・わるいダグトリオの「つきおとす」・タケシのオコリザルの「おおあばれ」（v0.61。docs/reactive-powers-trainer-damage-v0.61.md）
-        self.assertEqual(len(keys), 586)
+        # + 化石の秘密のイシツブテの「れんぞくいしなげ」・ゴローンの「かたくなる」「いわおとし」・ゴローニャの「いわころがり」「じばく」（v0.64。
+        #   docs/geodude-line-unbounded-coins-v0.64.md）
+        # + カスミのドククラゲの「クラゲどく」・タケシのサイドンの「ラリアット」（v0.65。docs/reactive-decisions-v0.65.md）
+        # + ガルーラの「こどものおつかい」「れんぞくパンチ」・キョウのベトベトンの「ヘドロのうず」・イマクニ？のドードーの「ハモる」（v0.68。docs/final-pmcg-cards-v0.68.md）
+        self.assertEqual(len(keys), 947)  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72: 拡張パック以外の商品のポケモン 43 枚のワザ 77 を加えた。v0.71: 拡張パック以外の商品の再録 11 枚のワザ 15 を加えた（元のカードの登録から作った）。v0.70: 拡張パック以外の商品のポケモン 82 枚のワザ 136 を加えた。v0.69: 拡張パック以外の商品の同じカード 84 枚のワザ 92 を加えた（元のカードの登録を写した）
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)
@@ -465,7 +490,7 @@ class RegistryImmutabilityTest(unittest.TestCase):
         # v0.49 でメタモンの［へんしん］（PMCG3-042）・タケシのキュウコンの「ばける」（PMCG5-019）・ナツメのフーディンの［サイコリンク］（PMCG6-053）を加えた
         # （docs/virtual-attacks-transformation-v0.49.md）
         # v0.59 でマルマイン（第1弾。PMCG1-040）の［エネエネ］を加えた（docs/energy-control-power-suppression-v0.59.md）。
-        self.assertEqual(powers, (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-040", 0), PowerKey("PMCG1-049", 0),
+        ORIGINAL_POWERS = (PowerKey(VENUSAUR, 0), PowerKey("PMCG1-021", 0), PowerKey("PMCG1-032", 0), PowerKey("PMCG1-040", 0), PowerKey("PMCG1-049", 0),
                                   PowerKey("PMCG1-057", 0), PowerKey("PMCG2-014", 0), PowerKey("PMCG2-015", 0), PowerKey("PMCG2-027", 0), PowerKey("PMCG2-028", 0),
                                   PowerKey("PMCG2-040", 0), PowerKey("PMCG2-047", 0), PowerKey("PMCG3-007", 0), PowerKey("PMCG3-011", 0),
                                   PowerKey("PMCG3-015", 0), PowerKey("PMCG3-028", 0), PowerKey("PMCG3-030", 0), PowerKey("PMCG3-031", 0),
@@ -478,12 +503,23 @@ class RegistryImmutabilityTest(unittest.TestCase):
                                   PowerKey("PMCG4-052", 0),
                                   PowerKey("PMCG4-053", 0),
                                   PowerKey("PMCG5-010", 0), PowerKey("PMCG5-014", 0), PowerKey("PMCG5-015", 0), PowerKey("PMCG5-019", 0), PowerKey("PMCG5-020", 0),
+                                  PowerKey("PMCG5-033", 0),  # v0.65: カスミのドククラゲの［にげこむ］
                                   PowerKey("PMCG5-035", 0),  # v0.60: カスミのギャラドスの［はんこう］
                                   PowerKey("PMCG5-040", 0),
                                   PowerKey("PMCG5-051", 0),  # v0.61: タケシのオコリザルの［ずらかる］
+                                  PowerKey("PMCG5-055", 0),  # v0.65: タケシのサイドンの［ベンチガード］
                                   PowerKey("PMCG5-063", 0), PowerKey("PMCG6-010", 0), PowerKey("PMCG6-011", 0),
+                                  PowerKey("PMCG6-023", 0),  # v0.68: キョウのベトベトンの［だつりょくえき］
                                   PowerKey("PMCG6-026", 0), PowerKey("PMCG6-033", 0), PowerKey("PMCG6-049", 0), PowerKey("PMCG6-053", 0),
-                                  PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0)))
+                                  PowerKey("PMCG6-061", 0), PowerKey("PMCG6-071", 0), PowerKey("PMCG6-073", 0),
+                                  PowerKey("PMCG6-074", 0))  # v0.68: イマクニ？のドードーの［にげまくり］
+        # v0.69: 拡張パック以外の商品の同じカードの新しい id 10 枚の特殊能力（元のカードの登録を写した）
+        self.assertEqual(tuple(k for k in powers if k.card_id.startswith("PMCG")), ORIGINAL_POWERS)
+        # v0.71: 拡張パック以外の商品の再録のカードの特殊能力 6（元のカードの登録から作った）
+        self.assertEqual(tuple(k for k in powers if not k.card_id.startswith("PMCG")),
+                         tuple(sorted((PowerKey("GD1-013", 0), PowerKey("GD2-004", 0), PowerKey("GD3-006", 0), PowerKey("GD4-008", 0), PowerKey("GD4-013", 0),
+                                       PowerKey("GD5-002", 0), PowerKey("GD5-004", 0), PowerKey("GD6-004", 0), PowerKey("PR1-039", 0), PowerKey("PR1-061", 0),
+                                       *(PowerKey(card, 0) for card in ("GD4-004", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030"))))))
 
 
 if __name__ == "__main__":

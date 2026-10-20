@@ -168,9 +168,9 @@ class RegistryTest(unittest.TestCase):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
         by_category = {c: sum(1 for d in supported if d.category == c) for c in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_category, {"pokemon": 345, "trainer": 85, "energy": 10})
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 586)
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 54)
+        self.assertEqual(by_category, {"pokemon": 561, "trainer": 211, "energy": 30})  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚  # v0.68 でポケモン 3 枚  # v0.63 でトレーナー 4 枚、v0.64 でポケモン 3 枚、v0.65 でポケモン 2 枚・トレーナー 1 枚  # v0.66 でトレーナー 3 枚  # v0.67 でトレーナー 1 枚
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 947)  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で［にげこむ］・［ベンチガード］を加えた
 
     def test_history_readers(self):
         readers = {type(e.effect).__name__ for e in E.DEFAULT_EFFECTS._attacks.values() if e.effect.reads_history}
@@ -195,7 +195,9 @@ class RegistryTest(unittest.TestCase):
 
 
 class CorrectionTest(unittest.TestCase):
-    """ベロリンガの確定した修正（CC-PMCG2-041-P234）を写しに当てはめる道（scripts/extract_kyuura_cards.py の CONFIRMED_CORRECTIONS）。"""
+    """ベロリンガの確定した修正（CC-PMCG2-041-P234）。v0.62〜v0.68 はエンジンが写しの元（ecb2d69）の値に当てはめていた（CONFIRMED_CORRECTIONS）。
+    v0.69 から、kyuura が data/cards.json に当てはめた（台帳 data/curation/card_corrections.json の FIX-PMCG2-041-ATK0-NAME・FIX-PMCG2-041-LEVEL）ので、
+    エンジンは当てはめ直さず、台帳・カードの記録・前後のコミットの値を確かめる（scripts/extract_kyuura_cards.py の KYUURA_CORRECTIONS）。"""
 
     def setUp(self):
         self.data = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
@@ -204,27 +206,30 @@ class CorrectionTest(unittest.TestCase):
     def test_corrected_values_in_copy(self):
         self.assertEqual(self.card["pokemon"]["attacks"][0]["name"]["ja"], "まきつくベロ")
         self.assertEqual(self.card["jp_print"]["level"], 26)
-        # 修正の欄のほかは写しの元のまま（効果文・エネルギー・ダメージは直す前から同じ。出典の記録の欄は写しの元の値）
+        # 修正の欄のほかの処理に使う欄は直す前から同じ。出典の記録の欄（notes・ja_text_source）は kyuura の値（v0.69 から写しの元が 7d3f4ca）
         self.assertEqual(self.card["pokemon"]["attacks"][0]["text"]["ja"], "コインを投げて「おもて」なら、相手を「マヒ」状態にする。")
         self.assertEqual(self.card["pokemon"]["attacks"][0]["cost"], ["colorless"])
         self.assertEqual(self.card["pokemon"]["attacks"][0]["damage"]["display"], "10")
-        self.assertEqual(self.card["notes"], [])
-        self.assertEqual(self.card["ja_text_source"], "https://nazonobasho.com/pmcg02-043-beroringa/")
+        self.assertEqual({x["id"] for x in self.card["corrections"]}, {"FIX-PMCG2-041-ATK0-NAME", "FIX-PMCG2-041-LEVEL"})
 
     def test_corrections_recorded_with_source(self):
-        self.assertEqual(self.data["source"]["commit"], "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691")  # 写しの元は上げていない
-        fields = {(c["card_id"], c["field"]): c for c in self.data["corrections"]}
+        self.assertEqual(self.data["source"]["commit"], "7d3f4ca76c084774efb4ac6a1d3a943387e183c3")
+        self.assertNotIn("corrections", self.data)  # エンジンが当てはめる修正はもうない（二重の修正をしない）
+        fields = {(c["card_id"], c["field"]): c for c in self.data["kyuura_corrections"] if c["card_id"] == LICKITUNG}
         self.assertEqual(set(fields), {(LICKITUNG, "pokemon.attacks[0].name.ja"), (LICKITUNG, "jp_print.level")})
         for c in fields.values():
+            self.assertEqual(c["basis"], "kyuura_source_check")
             self.assertEqual(c["record"], "CC-PMCG2-041-P234")
             self.assertEqual(c["commit"], "f52a8e2e9d65055727f7b8bc3165e0fd15b96967")
-            self.assertEqual(c["record_commit"], "3f349085645f47d0649a6cacece3680caeae50bf")
-            self.assertEqual(c["source_commit"], self.data["source"]["commit"])
+            self.assertEqual(c["applied_in_source"], self.data["source"]["commit"])
+            self.assertEqual(c["previous_source"], "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691")
         self.assertEqual(fields[(LICKITUNG, "pokemon.attacks[0].name.ja")]["before"], "したでなめる")
         self.assertEqual(fields[(LICKITUNG, "jp_print.level")]["before"], 29)
 
-    def test_only_lickitung_is_corrected(self):
-        self.assertEqual({c["card_id"] for c in self.data["corrections"]}, {LICKITUNG})
+    def test_only_lickitung_and_kangaskhan_are_corrected(self):
+        # v0.71: 写しに加えたナツメのスリーパー（GD6-010。ふりこののろいのダメージの「×」。kyuura の前の判定による台帳の修正）
+        self.assertEqual({c["card_id"] for c in self.data["kyuura_corrections"]}, {LICKITUNG, "PMCG2-046", "GD6-010"})
+        self.assertEqual({c["id"] for c in self.data["cards"] if c.get("corrections")}, {LICKITUNG, "PMCG2-046", "GD6-010"})
 
     @unittest.skipUnless((KYUURA / ".git").exists(), "../kyuura がない")
     def test_correction_sources_check_and_tampering(self):
@@ -234,21 +239,29 @@ class CorrectionTest(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         source = module.read_kyuura_cards(KYUURA)
-        self.assertEqual(module.correction_problems(KYUURA, source), [])
-        self.assertEqual(module.render(module.build_extract(source)), (ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
-        original = list(module.CONFIRMED_CORRECTIONS)
+        previous = json.loads(module._show(KYUURA, module.PREVIOUS_KYUURA_COMMIT, module.KYUURA_PATH).decode("utf-8"))
+        pool = module.all_pool_cards() + module.REFERENCE_ONLY
+        self.assertEqual(module.kyuura_correction_problems(KYUURA, source, previous, pool), [])
+        self.assertEqual(module.previous_copy_problems(source, previous, pool), [])
+        targets = module.equivalent_targets(KYUURA)
+        self.assertEqual(module.render(module.build_extract(source, targets, module.reprint_targets(KYUURA))), (ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text(encoding="utf-8"))
+        original = list(module.KYUURA_CORRECTIONS)
         try:
-            # 写しの元の値・修正のあとの値・記録が違えば、当てはめない（書き出さない）
-            module.CONFIRMED_CORRECTIONS[:] = [dict(original[0], before="ちがう名前")]
-            self.assertTrue(any("写しの元" in p for p in module.correction_problems(KYUURA, source)))
-            module.CONFIRMED_CORRECTIONS[:] = [dict(original[0], after="ちがう名前")]
-            self.assertTrue(any("修正のコミット" in p for p in module.correction_problems(KYUURA, source)))
-            module.CONFIRMED_CORRECTIONS[:] = [dict(original[0], record="CC-PMCG2-041-P999")]
-            self.assertTrue(any("照合の記録" in p for p in module.correction_problems(KYUURA, source)))
-            module.CONFIRMED_CORRECTIONS[:] = [dict(original[0], card_id="PMCG2-046", field="pokemon.hp", before=70, after=70)]
-            self.assertTrue(module.correction_problems(KYUURA, source))  # ガルーラのコインの食い違いは別の件（修正の記録はない）
+            # 前の値・あとの値・記録・コミットが台帳やコミットの値と違えば、書き出さない
+            module.KYUURA_CORRECTIONS[:] = [dict(original[0], before="ちがう名前"), *original[1:]]
+            self.assertTrue(any("前の写しの元" in p for p in module.kyuura_correction_problems(KYUURA, source, previous, pool)))
+            module.KYUURA_CORRECTIONS[:] = [dict(original[0], after="ちがう名前"), *original[1:]]
+            self.assertTrue(any("当てはまっていない" in p for p in module.kyuura_correction_problems(KYUURA, source, previous, pool)))
+            module.KYUURA_CORRECTIONS[:] = [dict(original[0], record="CC-PMCG2-041-P999"), *original[1:]]
+            self.assertTrue(any("照合の記録" in p for p in module.kyuura_correction_problems(KYUURA, source, previous, pool)))
+            # 台帳の修正を挙げていなければ、知らない修正として書き出さない
+            module.KYUURA_CORRECTIONS[:] = original[1:]
+            self.assertTrue(any("挙げていない" in p for p in module.kyuura_correction_problems(KYUURA, source, previous, pool)))
+            # 修正の欄を当てはめずに比べると、前の写しの元と違う欄として見つかる（修正のほかの欄の変化を見落とさない）
+            module.KYUURA_CORRECTIONS[:] = original[2:]
+            self.assertTrue(any("PMCG2-041" in p for p in module.previous_copy_problems(source, previous, pool)))
         finally:
-            module.CONFIRMED_CORRECTIONS[:] = original
+            module.KYUURA_CORRECTIONS[:] = original
         result = subprocess.run(["python3", str(ROOT / "scripts" / "extract_kyuura_cards.py"), "--kyuura", str(KYUURA), "--check"], capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -608,7 +621,7 @@ class HurricaneTest(unittest.TestCase):
 class SaveTest(unittest.TestCase):
     def test_format_20_and_older_formats(self):
         state = act(table(dugtrio()), UseAttack(0, 0))
-        self.assertEqual(LATEST_FORMAT, 20)
+        self.assertEqual(LATEST_FORMAT, 22)  # v0.67 で 22
         data = state_to_dict(state, format_version=20)
         self.assertEqual(data["players"][0]["active"]["history"][0]["kind"], "used")
         for version in range(1, 20):

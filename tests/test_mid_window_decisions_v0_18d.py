@@ -66,11 +66,16 @@ class DesignAssumptionTest(unittest.TestCase):
         """ダメージの要素のあとの窓で処理する効果（DEFER）は、どれも決定を出さない（decision_kind が None）。処理（ACTIONS）は 3 つだけで、
         どれも決定を出さない（関数の中で決定の口を使わない）。v0.42 でエリカのラフレシアの「ぼうぎょかふん」（同じ窓。持ち主のコインで、ダメージを
         与えたポケモンをこんらんにする。``power_confusion_to_damage_source``）を加えた。決定を出さないので、この文書の前提（窓の途中の決定はない）は
-        変わらない（docs/power-decisions-v0.42.md）。"""
+        変わらない（docs/power-decisions-v0.42.md）。
+
+        v0.68（docs/final-pmcg-cards-v0.68.md 3 章）: キョウのベトベトンの［だつりょくえき］（``drain_energy_from_damage_source``）を同じ窓に加えた。この処理も決定の口を
+        直接使わず、「おもて」のときは ``kernel.EnergyDrainRequest`` を投げ、窓を開いた ``programs.fire_or_suspend`` が、次の要素の位置（"boundary"）を続きの情報にして
+        決定を出す（v0.65 の要素のあいだの決定と同じ持ち方。案 B）。窓の途中でほかの送る効果が残ることはない（1 つの枠で 2 つ以上なら C34・C35 で止める）。"""
         definitions = [d for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS if d.timing is C.Timing.DEFER]
-        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "restless_sleep", "retaliation", "strikes_back"])
+        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "energy_drain", "restless_sleep", "retaliation", "strikes_back"])
         self.assertTrue(all(d.decision_kind is None for d in definitions))
-        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "power_confusion_to_damage_source", "power_damage_to_damage_source"])
+        self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "drain_energy_from_damage_source", "power_confusion_to_damage_source",
+                                                  "power_damage_to_damage_source"])
         for action in kernel.ACTIONS.values():
             source = inspect.getsource(action)
             self.assertNotIn("push_decision", source)
@@ -80,14 +85,14 @@ class DesignAssumptionTest(unittest.TestCase):
         """再開先は v0.16 からの 5 つのまま（窓の途中の再開先はない）。"""
         self.assertEqual(codec.RESUMES, frozenset({"attack", "knock_out", "post_knockout", "take_prize", "promote_active"}))
 
-    def test_kogas_muk_is_still_deferred(self):
-        """キョウのベトベトンは未対応のまま（効果のないものとして扱わない）。登録表にも効果の定義にもない。"""
+    def test_kogas_muk_is_supported_with_the_v0_68_spec(self):
+        """v0.18d の時点ではキョウのベトベトンは未対応だった（DEFER）。v0.68 で、この特殊能力に限った採用の仕様（自動的にはたらく・ダメージの要素のあと。
+        docs/final-pmcg-cards-v0.68.md 3 章。DR1・DR6 を公式に決めたことにしない）で対応にした。効果の定義は 1 か所（``catalog.ENERGY_DRAIN``）。"""
         definition = load_card_pool().get(KOGAS_MUK)
-        self.assertFalse(definition.supported)
-        self.assertTrue(any("だつりょくえき" in reason for reason in definition.unsupported_reasons))
-        self.assertIsNone(E.DEFAULT_EFFECTS.power_entry(KOGAS_MUK, 0))
-        names = {d.name for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS}
-        self.assertNotIn("energy_drain", names)
+        self.assertTrue(definition.supported)
+        self.assertIsInstance(E.DEFAULT_EFFECTS.power_entry(KOGAS_MUK, 0).effect, E.DiscardAttackerEnergyOnDamage)
+        names = [d.name for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS]
+        self.assertEqual(names.count("energy_drain"), 1)
 
 
 if __name__ == "__main__":

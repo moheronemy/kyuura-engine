@@ -50,7 +50,7 @@ from kyuura_engine.resolution import PREFLIGHT_MODES, programs, v013_checks
 from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.state import Phase
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
     ATTACK_TYPES_SINCE_V0_17,
     BLAINES_MANKEY,
@@ -339,7 +339,7 @@ class CardDataTest(unittest.TestCase):
         for card in V0_44_CARDS:
             record = sources[card]
             with self.subTest(card=card):
-                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, KYUURA_COMMIT))
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT))
                 [check] = record["external_checks"]
                 self.assertEqual(check["edition"]["list_number"], EDITIONS[card])
                 self.assertTrue(check["url"].startswith("https://pcg-search.com/card/"))

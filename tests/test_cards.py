@@ -1,7 +1,8 @@
 """カードデータの読み込みと、対応・未対応の分類。
 
 カードデータの由来: kyuura（https://github.com/moheronemy/kyuura）commit
-ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691 の data/cards.json。照合は kyuura_engine/data/card_verification.json。
+7d3f4ca76c084774efb4ac6a1d3a943387e183c3 の data/cards.json（v0.69 から。v0.68 までは ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691）。
+過去の原典照合は kyuura_engine/data/card_verification.json（ecb2d69 の写しと照らした履歴）。
 """
 
 import subprocess
@@ -13,7 +14,21 @@ from kyuura_engine.cards import pool_from_extract, read_extract, read_verificati
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackKey
 
 from tests.helpers import (
-    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON,
+    V0_63_CARDS,
+    V0_66_CARDS,
+    V0_67_CARDS,
+    V0_69_BASIC_ENERGIES,
+    V0_69_POKEMON,
+    V0_69_SPECIAL_ENERGIES,
+    V0_69_TRAINERS,
+    V0_71_TRAINERS,
+    V0_73_CARDS,
+    V0_74_CARDS,
+    V0_75_POKEMON,
+    V0_70_POKEMON,
+    V0_71_POKEMON,
+    V0_72_POKEMON,
+    SABRINAS_PSYCHIC_CONTROL, V0_58_POKEMON, V0_58_ENERGIES, V0_59_POKEMON, V0_59_TRAINERS, V0_60_POKEMON, DIGGER, V0_61_POKEMON, V0_62_POKEMON, V0_64_POKEMON, V0_65_POKEMON, V0_68_POKEMON, KOGAS_NINJA_TRICK,
     V0_57_CARDS,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
     MISTYS_WRATH, ROCKETS_SNEAK_ATTACK, GOOD_MANNERS, TRASH_EXCHANGE, ENERGY_REMOVAL, SUPER_ENERGY_REMOVAL, FULL_HEAL, POKEMON_CENTER, SLEEP_TRAINER,
@@ -30,7 +45,9 @@ from tests.helpers import (
     V0_45_POKEMON, V0_46_POKEMON, V0_47_POKEMON, V0_48_POKEMON, V0_49_POKEMON, V0_50_POKEMON, V0_51_POKEMON, V0_52_POKEMON, no_base_haunter_pool,
 )
 
-KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+KYUURA_COMMIT = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+# v0.68 までの写しの元。過去の原典照合の記録（card_verification.json。履歴）はこのコミットの写しと照らした
+PREVIOUS_KYUURA_COMMIT = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -54,14 +71,15 @@ class CardPoolTest(unittest.TestCase):
         # オーキドはかせは v0.19（pool_v0_19）、突風は v0.21（pool_v0_21）、パソコン通信は v0.22（pool_v0_22）、エネルギー回収は v0.23（pool_v0_23）、ポケモン交換おじさんは v0.24（pool_v0_24）、ポケモン育て屋さんは v0.25（pool_v0_25）、
         # サカキは v0.44（pool_v0_44）、ピッピ人形・なにかの化石は v0.47（pool_v0_47。ポケモンとして場に出せるが、印刷の分類はトレーナーカード）、
         # 思い出させるは v0.49（pool_v0_49）、退化スプレーは v0.50（pool_v0_50）、元気のかけら・ポケモンの笛は v0.51（pool_v0_51）、フジろうじん・ポケモン回収は v0.52（pool_v0_52）、山札・トラッシュからカードを選ぶ 10 枚は v0.53（pool_v0_53）、手札の入れ替え・ドロー・情報の確認の 10 枚は v0.54（pool_v0_54）、すぐに使い終わる 16 枚（いいきずぐすりは v0.54 まで参照カード）は v0.55（pool_v0_55）、相手の決定・番の終わり・期限のある効果の 10 枚は v0.56（pool_v0_56）
-        self.assertEqual(trainers, sorted(list(V0_57_CARDS) + list(V0_59_TRAINERS) + [ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER,
+        self.assertEqual(trainers, sorted(list(V0_57_CARDS) + list(V0_59_TRAINERS) + [KOGAS_NINJA_TRICK, ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER,
                                     FULL_HEAL, PLUSPOWER, POKEDEX, POKEMON_CENTER, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER,
                                     SUPER_ENERGY_REMOVAL, IMPOSTER_OAK, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER,
                                     LASS, POKE_BALL, ENERGY_SEARCH, GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN,
                                     IMPOSTER_OAKS_REVENGE, BOSS_WAY, ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME,
                                     MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE,
                                     TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT, BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT,
-                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER]))  # v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）
+                                    KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER] + list(V0_63_CARDS) + list(V0_66_CARDS) + list(V0_67_CARDS)
+                                   + list(V0_69_TRAINERS) + list(V0_71_TRAINERS) + list(V0_73_CARDS) + list(V0_74_CARDS)))  # v0.74 で拡張パック以外の商品のスタジアム 13 枚（pool_v0_74）、v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚（pool_v0_73）、v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚（pool_v0_71）、v0.69 で拡張パック以外の商品の同じトレーナー 19 枚（pool_v0_69）、v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -113,7 +131,8 @@ class CardPoolTest(unittest.TestCase):
         # v0.17b（ねむり状態でだけはたらくポケモンパワーのわるいねぞう・自分をねむりにするワザのたおれこむ）。キョウのベトベトン（v0.17c）は参照カード
         self.assertEqual(read_extract()["pool_v0_17b"], [ROCKETS_SNORLAX])
         self.assertTrue(pool.is_playable(ROCKETS_SNORLAX) and pool.get(ROCKETS_SNORLAX).is_basic_pokemon)
-        self.assertFalse(pool.is_playable(KOGAS_MUK) or pool.get(KOGAS_MUK).supported)
+        # v0.68 でキョウのベトベトンを対応にした（pool_v0_68。［だつりょくえき］の採用の仕様。docs/final-pmcg-cards-v0.68.md 3 章）
+        self.assertTrue(pool.is_playable(KOGAS_MUK) and KOGAS_MUK in read_extract()["pool_v0_68"])
         # v0.18c（たおれこむと同じ実装の型で加えたナツメのヤドン。docs/kernel-reuse-v0.18c.md）
         self.assertEqual(read_extract()["pool_v0_18c"], [SABRINAS_SLOWPOKE])
         self.assertTrue(pool.is_playable(SABRINAS_SLOWPOKE) and pool.get(SABRINAS_SLOWPOKE).is_basic_pokemon)
@@ -187,10 +206,10 @@ class CardPoolTest(unittest.TestCase):
             self.assertTrue(pool.is_playable(card_id), card_id)
             if not definition.is_basic_pokemon:
                 self.assertIn(definition.evolves_from, basics, card_id)
-        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは登録しないので対戦に使えない。
+        # v0.34（docs/barrier-resume-coin-bonus-v0.34.md）。写しの組は保留のガルーラを含む 15 枚で、ガルーラは v0.67 まで登録しないので対戦に使えなかった（v0.68 で対応）。
         # 進化先 7 枚は、進化元（名前が完全に一致するポケモン。ニドキングは 1 進化のニドリーノ）が写しのどこかの組にある
         self.assertEqual(read_extract()["pool_v0_34"], list(V0_34_POOL))
-        self.assertFalse(pool.is_playable(KANGASKHAN))
+        self.assertTrue(pool.is_playable(KANGASKHAN))  # v0.68: 利用者が示した訂正を当てはめて対応にした
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
         for card_id in V0_34_POKEMON:
             definition = pool.get(card_id)
@@ -240,7 +259,8 @@ class CardPoolTest(unittest.TestCase):
                  *V0_31_POKEMON, *V0_32_POKEMON, *V0_33_POKEMON, *V0_34_POKEMON, *V0_35_POKEMON, *V0_36_POKEMON, *V0_37_POKEMON, *V0_38_POKEMON,
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
                  *V0_45_POKEMON, *V0_46_POKEMON, *V0_47_POKEMON, *V0_48_POKEMON, *V0_49_POKEMON, *V0_50_POKEMON, *V0_51_POKEMON, *V0_52_POKEMON,
-                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON)  # v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚
+                 *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON, *V0_64_POKEMON, *V0_65_POKEMON, *V0_68_POKEMON,
+                 *V0_69_POKEMON, *V0_69_SPECIAL_ENERGIES, *V0_69_BASIC_ENERGIES, *V0_70_POKEMON, *V0_71_POKEMON, *V0_72_POKEMON, *V0_75_POKEMON)  # v0.75: 拡張パック以外の商品のポケモン 15 枚。v0.72: 拡張パック以外の商品のポケモン 43 枚。v0.71: 拡張パック以外の商品の再録のポケモン 11 枚。v0.70: 拡張パック以外の商品のポケモン 82 枚。v0.69: 拡張パック以外の商品の同じカード（ポケモン 57・特殊エネルギー 8・基本エネルギー 12）。v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)
@@ -350,7 +370,11 @@ class ProvenanceTest(unittest.TestCase):
     def test_every_pool_card_has_a_verification_record(self):
         extract = read_extract()
         verification = read_verification()
-        self.assertEqual(verification["kyuura_commit"], extract["source"]["commit"])
+        # v0.69: 照合の記録は履歴で書き換えない（ecb2d69 の写しと照らした）。写しの元は 7d3f4ca で、写しの作り直しの検査（previous_copy_problems）が、
+        # ecb2d69 にあったカードの写す欄が kyuura の修正の欄と出典の記録の欄を除いて同じことを確かめる
+        self.assertEqual(verification["kyuura_commit"], PREVIOUS_KYUURA_COMMIT)
+        self.assertEqual({c["previous_source"] for c in extract["kyuura_corrections"]}, {PREVIOUS_KYUURA_COMMIT})
+        self.assertEqual(extract["source"]["commit"], KYUURA_COMMIT)
         for card_id in extract["pool_v0_1"]:
             record = verification["cards"][card_id]
             self.assertIn(record["status"], verification["status_values"])

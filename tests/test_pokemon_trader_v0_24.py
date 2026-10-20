@@ -100,7 +100,8 @@ class RegistrationTest(unittest.TestCase):
                 self.assertIsNone(re.search(r"TradePokemonWithDeck|RETURN_TO_DECK|return_hand_to_deck", text))
                 uses = [m.start() for m in re.finditer(r"reveal_deck_to_hand\(", text)]
                 if path.name == "programs.py":
-                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy")
+                    # v0.75: カスミのメノクラゲの「くらげのむれ」（``RevealNamedPokemonFromDeck``）も同じ共通の関数を使う
+                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy", "RevealNamedPokemonFromDeck")
                     spans = []
                     for name in elements:
                         start = text.index(f"class {name}(")

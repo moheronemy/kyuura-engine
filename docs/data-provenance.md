@@ -9,9 +9,9 @@
 | 項目 | 内容 |
 |---|---|
 | 元のリポジトリ | https://github.com/moheronemy/kyuura |
-| 元のコミット | `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」とするコミット。v0.18 でも変えていない） |
-| 研究の基準 | `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
-| 元のファイル | `data/cards.json`（schema_version 2） |
+| 元のコミット | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。kyuura の main。形式 3 のカードデータ。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`（kyuura docs/engine-readiness.md が「基準にする調査データ」としたコミット。過去の原典照合の記録 card_verification.json はこのコミットの写しと照らした履歴）。下の v0.69 の章） |
+| 研究の基準 | `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。写しの元と同じ。下の v0.69 の章）。v0.68 までは `3f349085645f47d0649a6cacece3680caeae50bf`（2026-10-15 から。ブランチ `claude/cool-ptolemy-5vtgsg`。裁定・論点・最新の説明・照合の記録を照らすコミット。カードの写しは作り直していない。[verified-record-reuse.md](verified-record-reuse.md)）。v0.18a〜v0.18 は `adf97107ee0d9755cd7ddedae298ecb02914128e`（ブランチ `claude/engine-findings-through-v0.17`。[research-alignment-v0.18a.md](research-alignment-v0.18a.md)） |
+| 元のファイル | `data/cards.json`（schema_version 3。v0.68 までは 2） |
 | 生成 | `scripts/extract_kyuura_cards.py`（`git show <コミット>:data/cards.json` で読むので、kyuura の作業ツリーの状態に左右されない。kyuura は読むだけで変更しない） |
 | 照合の記録 | `kyuura_engine/data/card_verification.json`（このリポジトリの作業記録。2026-10-14 までの『オフィシャルブック2000』との照合。履歴として残し、書き換えない） |
 | 採用・外部照合の記録 | `kyuura_engine/data/card_sources.json`（2026-10-15 からの方針。kyuura データの採用と pcg-search.com との照合。[card-data-policy.md](card-data-policy.md)。まだ記録はない） |
@@ -600,7 +600,7 @@ kyuura への報告事項（kyuura 側の作業。このリポジトリでは ky
 | PMCG1-021 | リザードン | 実装を登録していないポケモンパワー「エナジーバーン」、登録のないワザ「ほのおのうず」（説明文あり）。v0.7 で、対応にしたフーディン（PMCG1-049。v0.6 の参照カード。v0.5 ではカメックス、v0.4e まではフシギバナ）の代わりに加えた。2 進化（リザードから進化）。v0.30 でリザード・ヒトカゲを対戦用にした（リザードンは参照カードのまま） |
 | PMCG3-003 | ベトベター（ポケモンカード第3弾化石の秘密） | v0.36 までの参照カード。v0.8〜v0.36 は実装を登録していないワザ「ベトベト」「ちいさくなる」（ちいさくなるは、ワザによって受けるダメージを減らす持続する効果で、型が未実装）を持ち、ベトベトンの進化元が 2 枚あることと、対応にしていないほうのカードがデッキに入らないことを確かめるために使った（p.47 と照合した）。v0.37 で、v0.8 の照合の記録の最新の説明にしたがって 2 つのワザを登録し、対戦用（`pool_v0_37`）に移した（下の v0.37 の章） |
 | PMCG1-047 | ゴースト（ポケモンカード第1弾） | 実装を登録していないワザ「さいみんじゅつ」「ゆめくい」（ゆめくいは「このワザは失敗する」（p.323「12 ワザの失敗」）の処理が未実装）。特殊能力を持たない。v0.9 で、化石の秘密のゴースト（PMCG3-030）と同じ名前の別のカードがデッキに入らないことを確かめるために加えた（p.160 と照合した）。v0.44 までの参照カード。v0.45 で、v0.9 の照合の記録の最新の説明にしたがって 2 つのワザを登録し、対戦用（`pool_v0_45`）に移した（下の v0.45 の章） |
-| PMCG6-023 | キョウのベトベトン（ジム拡張第2弾闇からの挑戦） | 実装を登録していないポケモンパワー「だつりょくえき」（宣言するか・処理する時点が原典で決まらないので延期。v0.17c）、登録のないワザ「ヘドロのうず」。1 進化（キョウのベトベター（PMCG6-007。写していない）から進化）なので、進化でも拒否される（`UNSUPPORTED_EVOLUTION`） |
+| PMCG6-023 | キョウのベトベトン（ジム拡張第2弾闇からの挑戦） | 実装を登録していないポケモンパワー「だつりょくえき」（宣言するか・処理する時点が原典で決まらないので延期。v0.17c）、登録のないワザ「ヘドロのうず」。1 進化（キョウのベトベター（PMCG6-007。写していない）から進化）なので、進化でも拒否される（`UNSUPPORTED_EVOLUTION`）（v0.68 で対応にした。下の v0.68 の章） |
 | PMCG1-075 | いいきずぐすり | v0.54 までの参照カード。v0.2b〜v0.54 は効果の実装を登録していないトレーナー（v0.2b で、対戦用に移したきずぐすりの代わりに加えた）。v0.55 で kyuura データの採用で登録し、対戦用（`pool_v0_55`）に移した（下の v0.55 の章） |
 
 これらは `tests/test_cards.py`・`tests/test_deck.py`・`tests/test_combat.py`・`tests/test_trainers.py` で、未対応として扱われる（デッキに入れられない、効果のあるワザが使えない）ことを確かめるために使います。参照カードは、v0.44 までの第1弾のゴースト（PMCG1-047、p.160 と照合。v0.9）を除いて、『オフィシャルブック2000』と照合していません（未照合）。第1弾のゴーストは v0.45 で対戦用（`pool_v0_45`）に移しました（v0.44 まで確かめていた「同じ名前の別のカードで、登録のないワザを持つカードはデッキに入らない」性質は、その 2 つの登録を除いた登録表（tests/helpers.py の `NO_BASE_HAUNTER_EFFECTS`・`no_base_haunter_pool`）で確かめています）。ドードー（PMCG1-061）は v0.2d で対戦用（`pool_v0_2d`）に移しました。サカキのカイリキー（PMCG6-061。v0.10 の参照カード。p.193 と照合）は v0.11 で対戦用（`pool_v0_11`）に移しました。化石の秘密のベトベター（PMCG3-003。p.47 と照合した v0.8 の参照カード）は v0.37 で対戦用（`pool_v0_37`）に移しました（v0.36 まで確かめていた「登録のないワザを持つカードはデッキに入らない」性質は、その 2 つの登録を除いた登録表（tests/helpers.py の `NO_FOSSIL_GRIMER_EFFECTS`）で確かめています）。ヒトカゲ（PMCG1-014。v0.2a に「ひっかく」を効果の登録表に登録するため p.63 と照合した参照カード）は v0.30 で対戦用（`pool_v0_30`）に移しました（「ひのこ」の処理に使う文面は kyuura の RUL-ENERGY-DISCARD-ATTACKS。下の v0.30 の章）。v0.29 まで「ひのこ」で確かめていた「登録のないワザ」の性質は、その登録だけを除いた登録表（tests/helpers.py の `NO_EMBER_EFFECTS`）で確かめています。「×」のワザが登録なしでは未対応になることは、ドードーの登録を除いた登録表で確かめています（tests/test_cards.py `test_damage_modifier_is_unsupported`）。いいきずぐすり（PMCG1-075）は v0.55 で対戦用（`pool_v0_55`）に移しました（v0.54 まで確かめていた「実装を登録していないトレーナーは使えない・デッキに入らない」性質は、その登録だけを除いた登録表（tests/helpers.py の `NO_SUPER_POTION_EFFECTS`・`no_super_potion_pool`）で確かめています）。
@@ -763,7 +763,7 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 処理に使う文面はどれも kyuura の印刷の文面です（研究の基準のコミットに、5 枚を指す最新の説明・エラッタ・裁定・論点の記録はない。研究の対応表の
   `adopted_printed_text` に 10 のワザを加えた）。
 - 検証用デッキ `S35`（tools/existing_effect_games.py）を使います。公開の固定のデッキ・既存の変種は変えていません。
-- v0.34 で保留にしたガルーラ（PMCG2-046）は保留のままです（記録は変えていない。上の v0.34 の章の報告事項 1）。
+- v0.34 で保留にしたガルーラ（PMCG2-046）は保留のままです（記録は変えていない。上の v0.34 の章の報告事項 1。v0.68 で、利用者が示した訂正を当てはめて採用した。下の v0.68 の章）。
 
 kyuura への報告事項（kyuura のデータ・記録は変えていない）: 新しいものはありません（5 枚とも pcg-search.com と違いがなく、kyuura に記録のない論点もありません）。
 
@@ -1591,3 +1591,248 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 1. ベロリンガの修正は研究の基準のコミットの記録にあり、写しの元のコミットの `data/cards.json` にはまだない（エンジンは 2 項目だけを当てはめている）。
 2. 5 枚に、最新の説明・エラッタ・裁定・照合の記録がない。新しい問い MM1・MM2・OM1・OM2・ED1 は kyuura の未解決の一覧にない。
 3. pcg-search.com との表記の違い 2 件（処理に影響しない）。
+
+## v0.63 で加えたカード 4 枚（ロケット団参上!・くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3）
+
+写しを作り直しました（`pool_v0_63`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_63` に 4 枚を加えた）。写しのカードは 442 枚から 446 枚になりました（ほかのカードの記録は
+  変わっていない）。v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています（`--check` が確かめる）。
+- 根拠: `kyuura_engine/data/card_sources.json` の採用の記録（4 件 `adopted`。記録した日 2026-10-18。`kyuura_records` は空）と、pcg-search.com の同じ版のページとの照合（2026-10-18）:
+  ロケット団参上!（第4弾 065/065）・くすぐりマシーン（ジム拡張第2弾 093/098）・カツラのクイズ その3（ジム拡張第2弾 088/098）は `match`、たたきつけろ!挑戦状（第4弾 054/065）は
+  `differences`（名前の「!」のあとの空白、説明文の 2 つの文のあいだの空行）。どちらも処理に影響しない。カードの画像・『オフィシャルブック2000』は読んでいません
+  （`card_verification.json` に加えていない）。
+- 処理に使う文面: kyuura の印刷の文面（研究の対応表の `adopted_printed_text`）。くすぐりマシーンの kyuura の種類 `rockets_secret_machine` は、v0.53・v0.55 と同じく受け付けた。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. たたきつけろ!挑戦状の kyuura の説明文に、2 つの文のあいだの空行（改行 4 つ）がある（pcg-search.com の文面にはない）。名前の「!」のあとの空白の有無もデータで違う。
+2. 4 枚に、最新の説明・エラッタ・裁定・照合の記録がない。新しい問い QZ1 は kyuura の未解決の一覧にない。
+
+## v0.64 で加えたカード 3 枚（化石の秘密のイシツブテ・ゴローン・ゴローニャ）
+
+写しを作り直しました（`pool_v0_64`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_64` に 3 枚を加えた）。写しのカードは 446 枚から 449 枚になりました（ほかのカードの記録は
+  変わっていない）。v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています（`--check` が確かめる）。
+- 根拠: `kyuura_engine/data/card_sources.json` の採用の記録（3 件 `adopted`。記録した日 2026-10-18。`kyuura_records` は空）と、pcg-search.com の同じ版のページとの照合（2026-10-18。
+  第3弾 拡張パック「化石の秘密」の 035/048・036/048・037/048。3 件とも `match`）。カードの画像・『オフィシャルブック2000』は読んでいません（`card_verification.json` に加えていない）。
+- 処理に使う文面: kyuura の印刷の文面（研究の対応表の `adopted_printed_text`。PMCG3-034/attack/0・PMCG3-037/attack/0・PMCG3-038/attack/1）。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 3 枚に、最新の説明・エラッタ・裁定・照合の記録がない。
+2. かたくなるの書き方がイワーク（PMCG1-054）とゴローン（PMCG3-037）で、じばくの書き方が化石の秘密のレアコイル（PMCG3-025）とゴローニャ（PMCG3-038）で違う（意味は同じ。どちらも
+   pcg-search.com の同じ版の文面と同じで、転記の誤りではない）。
+
+## v0.65 で加えたカード 3 枚（キョウ秘伝,変わり身の術・カスミのドククラゲ・タケシのサイドン）
+
+写しを作り直しました（`pool_v0_65`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_65` に 3 枚を加えた）。
+  - 写しのカードは 449 枚から 452 枚になりました（ほかのカードの記録は変わっていない）。
+  - v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています。
+- 根拠は、`kyuura_engine/data/card_sources.json` の採用の記録と、pcg-search.com の同じ版のページとの照合です。
+  - 採用の記録: 3 件 `adopted`。記録した日 2026-10-18。`kyuura_records` は空。
+  - 照合: 2026-10-18。ジム拡張第2弾「闇からの挑戦」081/098、ジム拡張第1弾「リーダーズスタジアム」026/096・055/096。
+  - 結果: 変わり身の術とタケシのサイドンは `match`、カスミのドククラゲは［にげこむ］の文面が `differences`（`affects_behavior` false）。
+  - カードの画像・『オフィシャルブック2000』は読んでいません（`card_verification.json` に加えていない）。
+- 処理に使う文面:
+  - kyuura の印刷の文面（研究の対応表の `adopted_printed_text`）: PMCG5-033/attack/0・PMCG5-055/attack/0・PMCG5-055/power/0、変わり身の術。
+  - ［にげこむ］（PMCG5-033/power/0）は、このリポジトリの v0.18b の記録（docs/unresolved-research-v0.18b.md 4.1。2026-10-14 に p.100 を 600dpi の画像で読んだ最新の説明と解説）の再利用です（研究の対応表の `registered_without_kyuura_record`。`card_sources.json` の `play_text` は `kyuura-engine docs/unresolved-research-v0.18b.md#4.1`）。
+    - v0.65 では原典を開いていません。
+    - その記録は［にげこむ］の最新の説明と解説だけで、カードの全体を照合した記録ではありません。
+    - kyuura は p.100 を確かめていません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 3 枚に、最新の説明・エラッタ・裁定・照合の記録がない。
+2. カスミのドククラゲの［にげこむ］の kyuura の文面（ポケモンWiki からの転記）に、「そのワザによる「ダメージ以外の効果」を受けない」の文がない。
+   - pcg-search.com の同じ版の文面と、このリポジトリの v0.18b の記録（p.100 の最新の説明）にはこの文がある。
+   - どちらの収録の印刷がどちらの文面かは確かめていない（印刷の文面と最新の説明の違いとして扱い、転記の誤りとはしていない）。
+   - 処理は p.100 の最新の説明にしたがうので変わらない。
+3. ［にげこむ］の p.100 の記録が kyuura の研究の基準のコミットにない。
+4. 新しい未解決 8 件（NT1〜NT3・RX1・FL1・BG1・BG2・KD1）は kyuura の未解決の一覧にない。
+
+## v0.67 で加えたカード 1 枚（マチスの秘策）
+
+写しを作り直しました（`pool_v0_67`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_67` に 1 枚を加えた）。
+  - 写しのカードは 455 枚から 456 枚になりました（ほかのカードの記録は変わっていない）。
+  - v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています。
+- 根拠は、`kyuura_engine/data/card_sources.json` の採用の記録と、pcg-search.com の同じ版のページとの照合です。
+  - 採用の記録: `adopted`。記録した日 2026-10-19。`kyuura_records` は空。処理に使う文面は kyuura の印刷の文面（研究の対応表の `adopted_printed_text`）。
+  - 照合: 2026-10-19。ジム拡張第1弾「リーダーズスタジアム」082/096（kyuura の id の番号 093 とサイトの番号が違う）。
+  - 結果: `differences`（かっこ書きの最初の「おもて」のかぎかっこの有無だけ。`affects_behavior` false）。
+  - カードの画像・『オフィシャルブック2000』は読んでいません（`card_verification.json` に加えていない）。
+- 全体に働く効果ではおもてにしないことは、このリポジトリのかがくへんかガス（PMCG3-007）の記録（docs/chemical-gas-v0.8.md 2 章。p.277 の解説の 1 文）の再利用です。このカード全体を照合した
+  記録ではなく、kyuura が原典を確かめた記録でもありません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. マチスの秘策に、最新の説明・エラッタ・裁定・照合の記録がない。
+2. kyuura の文面と pcg-search.com の同じ版の文面の表記の違い（かぎかっこの有無。処理は同じ）。
+3. 新しい未解決 2 件（FD1・FD2）は kyuura の未解決の一覧にない。
+
+## v0.66 で加えたカード 3 枚（お上品攻撃・ナツメのESP・カスミの勝負）
+
+写しを作り直しました（`pool_v0_66`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_66` に 3 枚を加えた）。
+  - 写しのカードは 452 枚から 455 枚になりました（ほかのカードの記録は変わっていない）。
+  - v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています。
+- 根拠は、`kyuura_engine/data/card_sources.json` の採用の記録と、pcg-search.com の同じ版のページとの照合です。
+  - 採用の記録: 3 件 `adopted`。記録した日 2026-10-19。`kyuura_records` は空。処理に使う文面は kyuura の印刷の文面（研究の対応表の `adopted_printed_text`）。
+  - 照合: 2026-10-19。ジム拡張第1弾「リーダーズスタジアム」087/096（お上品攻撃）・074/096（カスミの勝負）、ジム拡張第2弾「闇からの挑戦」075/000（ナツメのESP）。
+  - 結果: ナツメのESPとカスミの勝負は `match`、お上品攻撃は `differences`（「きぜつ」したとき／時 の書き方だけ。`affects_behavior` false）。
+  - カードの画像・『オフィシャルブック2000』は読んでいません（`card_verification.json` に加えていない）。
+- お上品攻撃の手札にもどす期限（「相手の番が終わったら、手札にもどす」）は、kyuura の data/curation/card_differences.json の PMCG5-074（確度: 確実）をカード id で引いて再利用しました。英語版の「at the end of your turn」にしていません。
+- 当てはめた kyuura の一般の規定・裁定（研究の対応表の `applied_rule_records`）: GR-2000-P321-DAMAGE-ORDER（CH-R1）・CR-SHELL-ATTACK-ATTACKER-PLUSPOWER（CH-R2）・GR-2000-P319-HP-AND-DAMAGE（CH-R3）。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. 3 枚に、最新の説明・エラッタ・裁定・照合の記録がない。
+2. お上品攻撃の kyuura の文面（「きぜつ」したとき）と pcg-search.com の同じ版の文面（「きぜつ」した時）の書き方の違い（処理は同じ）。
+3. 新しい未解決 4 件（CA1・ES1〜ES3）は kyuura の未解決の一覧にない。
+
+## v0.68 で加えたカード 3 枚（ガルーラ・キョウのベトベトン・イマクニ？のドードー）
+
+写しを作り直しました（`pool_v0_68`）。
+
+- 参照するコミット `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691` は変えていません。研究の基準 `3f34908` も変えていません。
+- 生成は `python3 scripts/extract_kyuura_cards.py --kyuura ../kyuura` です（`POOL_V0_68` にキョウのベトベトン・イマクニ？のドードーを加えた。`REFERENCE_ONLY` は空）。
+  - 写しのカードは 456 枚から 457 枚になりました（キョウのベトベトンは参照カードとして写しにあった）。
+  - v0.62 のベロリンガの確定した修正（`CONFIRMED_CORRECTIONS`）は、作り直しでもそのまま当てはまっています。
+- ガルーラ PMCG2-046 のこどものおつかいの文面は、利用者が実物のカード画像で確かめたと示した訂正（2026-10-19）で、写しの作り直しの `USER_PROVIDED_CORRECTIONS` で当てはめます
+  （写しの `user_provided_corrections`。前の値・あとの値・`basis` `user_provided`・`engine_saw_image` false）。kyuura の確定した修正（記録の id・修正のコミットを持つ）とは別の記録で、
+  エラッタ・別の版ではありません。エンジンは画像を見ていません。採用の記録の `play_text` は `user_provided_correction`、論点は外しました（v0.34 の保留を解いた）。
+- キョウのベトベトン PMCG6-023 は v0.17c の過去の原典照合の記録（`card_verification.json`。p.49）で登録し、`card_sources.json` には pcg-search.com の照合だけを書きます
+  （`basis: guidebook_record`。照合の記録（履歴）は書き換えていない）。処理に使う文面は p.49 の最新の説明（LD-PMCG6-023-PWR0）。
+- イマクニ？のドードー PMCG6-074 は kyuura データの採用で、処理に使う文面は印刷の文面ではなく、エンジンの簡略化した仕様（docs/final-pmcg-cards-v0.68.md 4 章。研究の対応表の
+  `engine_simplified_text`）です。公式の裁定・エラッタではありません。
+- pcg-search.com との照合（2026-10-19）: ジム拡張第2弾「闇からの挑戦」013/098（キョウのベトベトン。`match`）・098/098（イマクニ？のドードー。`differences`: 名前の「？」と「?」の表記だけ。
+  処理に影響しない）。カードの画像・『オフィシャルブック2000』は読んでいません。
+
+kyuura への報告事項（kyuura のデータ・記録は変えていない）:
+
+1. ガルーラのこどものおつかいの先頭の「コインを投げて「おもて」なら、」は転記の誤り、と利用者が示した（エンジンは画像を見ていない）。
+2. イマクニ？のドードーの名前の「？」（全角）と、pcg-search.com の「?」（半角）。
+3. ［だつりょくえき］の DR1・DR6 は採用の仕様で処理し、DR8・DR13 に停止コードを付けた（kyuura の一覧ではコードのない行）。
+
+## v0.69: 写しの元の移行（`ecb2d69` → `7d3f4ca`）と、拡張パック以外の商品の同じカード 96 枚
+
+[equivalent-non-pack-cards-v0.69.md](equivalent-non-pack-cards-v0.69.md)。
+
+- 写しの元・研究の基準を kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（kyuura の main）に上げた。kyuura のカードデータは形式 3（1,377 件）。写しに `product_group`・`play_scope`・`data_gaps`・
+  `same_card_group`（いつもある欄）と `field_sources`・`copies`・`corrections`（あるときだけ）を加えた（出典の確認用。処理には使わない）。写しは作り直しの道具で作った（手で直していない）。
+- v0.68 の 457 枚は、処理に使う欄が `ecb2d69` と同じ（kyuura が当てはめた修正の欄を除く）。違ったのは出典の記録の欄（`source_ids` は 457 枚すべてで pcg-search.com のページを加えた・
+  `notes`（PMCG2-041・PMCG2-046）・`ja_text_source`（PMCG2-041）・`jp_en_differences`（PMCG6-023））。書き出すたびに確かめる（`previous_copy_problems`）。
+- v0.62 の確定した修正（ベロリンガ PMCG2-041 のワザ 0 の名前・レベル）と v0.68 の利用者が示した訂正（ガルーラ PMCG2-046 のこどものおつかい）は、kyuura が data/cards.json に当てはめた
+  （台帳 data/curation/card_corrections.json の FIX-PMCG2-041-ATK0-NAME・FIX-PMCG2-041-LEVEL・FIX-PMCG2-046-ATK0-TEXT）。写しに当てはめ直さず、台帳・カードの記録・前後のコミットの値を
+  確かめる（`KYUURA_CORRECTIONS`）。ガルーラの訂正は、利用者が示した転記の誤りの訂正のまま（公式エラッタ・別の版の文面・画像の読み直しではない。kyuura もエンジンも画像を見ていない）。
+- 拡張パック以外の商品の 96 枚（kyuura data/engine_targets.json の `mechanically_equivalent` のすべて。写しの組 `pool_v0_69`）は、元のカードの登録を写して登録した。84 枚に採用の記録
+  （`equivalent_to`・`play_text` は `equivalent_registration`・外部照合なし。記録した日 2026-10-19・採用したデータのコミット `7d3f4ca`）を置いた。基本エネルギー 12 枚は登録がないので記録もない。
+- v0.68 までの採用の記録の採用したデータのコミット（`ecb2d69`）・記録した日・外部照合の確認日と照らしたコミットは書き換えていない。写しの元の移行は card_sources.json の `data_migrations` に書いた。
+  `kyuura_records`（研究の基準のコミットでカードを指す kyuura の記録の id）は、研究の基準を上げたので 92 件で直した（kyuura が論点に結んだ停止コードのカード。記録を読み直したのではない）。
+- 2001 年に発売したイントロパック（neo）の 10 枚（NIP1-003 など）は、発売日 2001-04-06 を変えずに持つ（2000.02.14 版までに発売したカードとは扱わない。処理は元のカードと同じ）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.69 の登録を写すと、96 枚の `engine_status` が `registered` になる。
+
+## v0.70: 拡張パック以外の商品のポケモン 82 枚と、PR1-069 の名前の訂正
+
+[non-pack-effect-reuse-v0.70.md](non-pack-effect-reuse-v0.70.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_70`（82 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.69 までの
+  553 枚の記録は変わっていない（書き出しの差は、加えた 82 枚・組・`engine_user_corrections` だけ）。
+- 82 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし）。kyuura の日本語の文面は 82 枚とも pcg-search.com の転記
+  （`ja_text_source`）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。
+- PR1-069: kyuura の名前は「？？？」。利用者がこのカードをミュウ（Ancient Mew）と同定し、カード画像と補助資料の URL（https://bulbapedia.bulbagarden.net/wiki/Ancient_Mew_(The_Power_of_One_promo)）を
+  示した。エンジンは写しの作り直しで名前だけを「ミュウ」にする（scripts/extract_kyuura_cards.py の `ENGINE_USER_CORRECTIONS`。書き出しの `engine_user_corrections` に元のコミット・元の値・
+  採用した値・根拠を書く。kyuura が当てはめた修正の表 `KYUURA_CORRECTIONS` とは別）。エンジンは画像を読んでおらず、URL の本文はネットワークのプロキシ（403）で取得していない（サイトの本文の
+  検証・ルーン文字の解読はしていない）。
+- 報告事項（kyuura の作業）: PR1-069 の `name.ja`「？？？」（利用者の同定では「ミュウ」）。kyuura が台帳に記録して data/cards.json を直したら、エンジンの表を `KYUURA_CORRECTIONS` に移す
+  （写しの作り直しの道具が知らせる。二重に当てはめない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.70 の登録を写すと、82 枚の `engine_status` が `registered` になる。
+
+
+## v0.71: 拡張パック以外の商品の再録 78 枚（効果の文面の違い）
+
+[reprint-text-variants-v0.71.md](reprint-text-variants-v0.71.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_71`（78 枚。kyuura data/engine_targets.json の `reuse_candidate`）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.70 までの 635 枚の記録は変わっていない。書き出しに、78 枚の `nearest_registered` の索引（`reprint_targets`）を加えた（処理が同じことの証拠ではない）。
+- 78 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし・`reprint_of`・`reprint_scope`）。元のカードの記録の
+  最新の説明を処理に使う登録は、kyuura の規定 GR-P43-P6-LATEST-DESCRIPTION による当てはめで、再録の版の独立した照合ではない（元のカードの記録の確認日・出典は元のカードのまま）。
+- ナツメのスリーパー（GD6-010）のふりこののろいのダメージ「20×」は、kyuura が台帳で直した値（`FIX-GD6-010-ATK1-DAMAGE`。根拠は kyuura の前の作業の pcg-search.com の画像の判定
+  data/curation/other_products.json の `reprint_checks`「ナツメのスリーパー」）。エンジンは画像を見ていない。写しの作り直しの道具は `KYUURA_CORRECTIONS` に根拠 `kyuura_existing_record` で
+  挙げ、台帳・カードの記録・判定の記録があることを確かめる（当てはめ直さない）。
+- 報告事項（kyuura の作業）: IPH-002 の［あまごい］の印刷の文面「この力は、自分の中で何度でも使える。」は「番」が落ちている候補（採用の記録の `issues`。`affects_behavior: false`。
+  処理は元のカードの最新の説明 LD-PMCG1-032-PWR0。写しは直していない）。
+- 報告事項（kyuura の作業）: 再録の版の元のカードの照合の記録（CC-）の収録の一覧に、イントロパック★neo・プロモ・おまけカードの版などがない（15 の対象。同じカードの組と
+  GR-P43-P6-LATEST-DESCRIPTION による当てはめで、版ごとの照合ではない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.71 の登録を写すと、78 枚の `engine_status` が `registered` になる。
+
+## v0.72: 拡張パック以外の商品のポケモン 43 枚と、再録のなんでもなおし・ポケモン図鑑の扱い
+
+[status-coins-effect-reuse-v0.72.md](status-coins-effect-reuse-v0.72.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_72`（43 枚。kyuura data/engine_targets.json の `new_effect_needed`）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.71 までの 713 枚の記録は変わっていない。
+- 43 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-19・`kyuura_records` は空・外部照合なし。処理に使う文面は kyuura の印刷の文面）。kyuura の日本語の文面は
+  pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- 再録のなんでもなおし（8 件）・ポケモン図鑑（2 件）の採用の記録の `behavior_differs` に `trainer` を加えた（処理がこの版の印刷の文面で元のカードと違う。記録した日・コミットは変えていない）。
+- PF3-009・NIP2-010・NIP2X-003・PRN-042 は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`）。発売日を変えずに持つ。
+- 報告事項（kyuura の作業）: FH2（再録のなんでもなおしを、自分の対戦ポケモンに特殊状態がないときに使えるか）・PD2（再録のポケモン図鑑の「最大5枚」の 0 枚）は、kyuura の未解決の一覧にない
+  （同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.72 の登録を写すと、43 枚の `engine_status` が `registered` になる。
+
+## v0.73: 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚
+
+[search-recovery-trainers-v0.73.md](search-recovery-trainers-v0.73.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_73`（18 枚。kyuura data/engine_targets.json の `new_effect_needed` のトレーナー）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.72 までの 756 枚の記録は変わっていない。
+- 18 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし）。処理に使う文面は kyuura の印刷の文面、超エネルギー回収（PR1-009）だけは kyuura の data/rule_history.json の
+  ERR-SUPER-ENERGY-RETRIEVAL の notes が引用する最新の説明（『オフィシャルブック2000』p.292 の引用。エンジンはガイドブックを読み直していない）で、`kyuura_records` は `["ERR-SUPER-ENERGY-RETRIEVAL"]`。
+  エラッタの適用開始日は記録のとおり未確認（会報 Vol.5 の発行日 1998-06-10 を適用開始日としない）。印刷の文面（写し）は書き換えていない。
+- kyuura の日本語の文面は 18 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- NIP1-021・NIP2-022（マスターボール）は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2001-04-06）。発売日を変えずに持ち、のちのルールは持ち込まない。
+- 報告事項（kyuura の作業）: ERR-SUPER-ENERGY-RETRIEVAL の `cards` はカードを pcg-search.com の id（1stp009）で挙げ、kyuura のカード id（PR1-009）で挙げていない（エンジンは研究の対応表の
+  `errata_card_ids` で、kyuura のカードの `source_ids.pcg_search` と照らして対応させた）。
+- 報告事項（kyuura の作業）: MR1・ML1・SR1・SR2・FV1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE・UQ-STATED-COUNT-SHORT はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.73 の登録を写すと、18 枚の `engine_status` が `registered` になる。
+
+## v0.74: 拡張パック以外の商品のスタジアム 13 枚
+
+[remaining-stadiums-v0.74.md](remaining-stadiums-v0.74.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_74`（13 枚。kyuura data/engine_targets.json の `new_effect_needed` のスタジアム）を加え、写しの作り直しの
+  道具で作った（手で直していない。PRN-027 の日本語の欄の英語の併記も原データのまま）。v0.73 までの 774 枚の記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。
+- kyuura の日本語の文面は 13 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- NIP1X-009・NIP2X-009 は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2001-04-06）。発売日を変えずに持ち、のちのルールは持ち込まない。PRN-015〜PRN-027 の
+  発売日は kyuura に年だけ（2000）。
+- ポケモンタワーの下のふしちょうは、kyuura の CR-PHOENIX-TIMING・CR-PHOENIX-RETURN（このカードをトラッシュからとり出して手札に加える）の再利用。kyuura の記録を読み直したことにしていない。
+- 報告事項（kyuura の作業）: data/curation/other_products.json のラッキースタジアムの `kind: wording` は文面の分類で、「自分の番ごとに1回」のない PRN-027 の回数を決める記録ではない
+  （エンジンは同じ番の再使用を LK1 で止める）。
+- 報告事項（kyuura の作業）: RS1・LK1・EN1・NJ1・PT1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-FUCHSIA-GYM-ONCE-PER-TURN はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.74 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.75: 拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚
+
+[search-energy-pokemon-v0.75.md](search-energy-pokemon-v0.75.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_75`（15 枚。kyuura data/engine_targets.json の `new_effect_needed` のポケモン）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.74 までの 787 枚の記録は変わっていない。
+- 15 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。
+- kyuura の日本語の文面は 15 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- PRN-032（ヒマナッツ）は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2000-08-23）。発売日を変えずに持ち、のちのルールは持ち込まない。
+- ひのこ（ES3-010・QSG-009）のトラッシュの時点は、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（v0.31 のカツラのウインディと同じ扱い。文面は印刷の文面）。
+- 報告事項（kyuura の作業）: ナツメのスリープ GD6-009 の「エナジーサポート」の英語の欄（手札に加える）は、日本語の文面（自分の控えポケモンにつける）と処理が違う。エンジンは日本語にしたがった。
+- 報告事項（kyuura の作業）: RB5・DB1 は kyuura の未解決の一覧にない（RB5 は UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY と同じ形）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.75 の登録を写すと、15 枚の `engine_status` が `registered` になる。

@@ -20,6 +20,7 @@ from .commands import (
     ReportJankenResult,
     ResolveDecision,
     Retreat,
+    RevealFaceDown,
     TakePrize,
     UseAttack,
     UsePokemonPower,
@@ -72,7 +73,7 @@ from .state import (
     TrainerInUse,
 )
 
-__version__ = "0.62.0"
+__version__ = "0.75.0"
 
 __all__ = [
     "Asleep",
@@ -109,6 +110,7 @@ __all__ = [
     "PlayTrainer",
     "PromoteActive",
     "RemoveDisguise",
+    "RevealFaceDown",
     "RULE_REFERENCES",
     "RULES_2000_02_14",
     "ReportJankenResult",

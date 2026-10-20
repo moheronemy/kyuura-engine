@@ -167,6 +167,37 @@ class CardDefinition:
         return self.category == "energy" and self.energy_kind == "special"
 
 
+# v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: うらにしてベンチに出したカード（マチスの秘策）の、うらのあいだのカードの定義で、読めない項目
+FACE_DOWN_HIDDEN_FIELDS = frozenset({"id", "name_ja", "name_en", "hp", "pokemon_type", "weakness", "resistance", "resistance_value", "retreat_cost", "attacks"})
+
+
+class FaceDownDefinition(CardDefinition):
+    """うらにしてベンチに出したカード（v0.67。マチスの秘策）の、うらのあいだのカードの定義（``GameState.card_def``）。
+
+    「うらになっている限り、「たねポケモン」としてあつかわれる」ので、種類は "pokemon"・段階は "basic"。特殊能力はない（うらのカード自身の特殊能力ははたらかない）。
+    ほかの項目（``FACE_DOWN_HIDDEN_FIELDS``。名前・HP・タイプ・弱点・抵抗力・にげる・ワザ・カードの id）は本文が決めないので、読むと ``HiddenPropertyRead``（FD1）。
+    決まった値（化石・人形の HP 10 など）を置かない。印刷の定義・写しは変えない（``printed_def`` は本当のカードの定義のまま）。"""
+
+    def __getattribute__(self, name: str):
+        if name in FACE_DOWN_HIDDEN_FIELDS:
+            from .errors import HiddenPropertyRead
+
+            raise HiddenPropertyRead(name)
+        return super().__getattribute__(name)
+
+    def __repr__(self) -> str:
+        return "FaceDownDefinition()"
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, FaceDownDefinition)
+
+    def __hash__(self) -> int:
+        return hash("FaceDownDefinition")
+
+
+FACE_DOWN_DEFINITION = FaceDownDefinition(id="", name_ja="", name_en=None, category="pokemon", supported=True, unsupported_reasons=(), stage="basic")
+
+
 def can_pay_cost(cost: Iterable[EnergyType], provided: Iterable[EnergyType]) -> bool:
     """ワザに必要なエネルギーが足りているか（p.320）。
 
@@ -456,6 +487,19 @@ POOL_KEYS = (
     "pool_v0_60",  # v0.60（サンダー（化石の秘密）・R団のストライク・カスミのギャラドス・タケシのサンドパン。docs/coins-defense-rebellion-v0.60.md）
     "pool_v0_61",  # v0.61（わるいギャラドス・わるいダグトリオ・タケシのオコリザル・バトル場は穴だらけ!。docs/reactive-powers-trainer-damage-v0.61.md）
     "pool_v0_62",  # v0.62（ピジョン・オニスズメ・オニドリル・ピジョット・タケシのダグトリオ・ベロリンガ（確定した修正を当てはめた写し）。docs/history-attacks-v0.62.md）
+    "pool_v0_63",  # v0.63（ロケット団参上!・くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3。docs/hidden-card-trainers-v0.63.md）
+    "pool_v0_64",  # v0.64（化石の秘密のイシツブテ・ゴローン・ゴローニャ。docs/geodude-line-unbounded-coins-v0.64.md）
+    "pool_v0_65",  # v0.65（キョウ秘伝,変わり身の術・カスミのドククラゲ・タケシのサイドン。docs/reactive-decisions-v0.65.md）
+    "pool_v0_66",  # v0.66（お上品攻撃・ナツメのESP・カスミの勝負。docs/optional-trainers-v0.66.md）
+    "pool_v0_67",  # v0.67（マチスの秘策。docs/secret-plan-preflight-v0.67.md）
+    "pool_v0_68",  # v0.68（キョウのベトベトン・イマクニ？のドードー。ガルーラは pool_v0_34。docs/final-pmcg-cards-v0.68.md）
+    "pool_v0_69",  # v0.69（拡張パック以外の商品の、登録したカードと処理に使う欄が同じ 96 枚。effects.EQUIVALENT_CARDS。docs/equivalent-non-pack-cards-v0.69.md）
+    "pool_v0_70",  # v0.70（拡張パック以外の商品のポケモン 82 枚。どのワザも既存の効果の型と、ダメージのない小さな型 2 つ。PR1-069 は名前を訂正した写し。docs/non-pack-effect-reuse-v0.70.md）
+    "pool_v0_71",  # v0.71（拡張パック以外の商品の再録で、元のカードと効果の文面だけが違う 78 枚。effects.REPRINT_CARDS。docs/reprint-text-variants-v0.71.md）
+    "pool_v0_72",  # v0.72（拡張パック以外の商品のポケモン 43 枚。docs/status-coins-effect-reuse-v0.72.md）
+    "pool_v0_73",  # v0.73（拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚。docs/search-recovery-trainers-v0.73.md）
+    "pool_v0_74",  # v0.74（拡張パック以外の商品のスタジアム 13 枚。docs/remaining-stadiums-v0.74.md）
+    "pool_v0_75",  # v0.75（拡張パック以外の商品の、山札・トラッシュのカードを選ぶ・エネルギーをつけるポケモン 15 枚。docs/search-energy-pokemon-v0.75.md）
 )
 
 

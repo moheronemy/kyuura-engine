@@ -195,7 +195,7 @@ BLAINES_KANGASKHAN = "PMCG6-069"  # カツラのガルーラ（HP 80・無色・
 KOFFING = "PMCG1-006"  # ドガース（第1弾。HP 50・草・弱点 超・にげる 1。くさいガス（草草）10）。ROCKET_KOFFING とは別のカード
 NIDOKING = "PMCG1-013"  # ニドキング（第1弾。ニドリーノから進化。HP 90・草・弱点 超・にげる 3。あばれる（草無無）30+・どくどく（草草草）20）
 EXEGGUTOR = "PMCG2-012"  # ナッシー（第2弾。タマタマから進化。HP 80・草・弱点 炎・にげる 3。テレポート（超）・たまなげMAX（無）20×）
-KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。保留。登録しない。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
+KANGASKHAN = "PMCG2-046"  # ガルーラ（第2弾。v0.34〜v0.67 は保留。v0.68 で利用者が示した修正を写しに当てはめて対応。こどものおつかい（無）・れんぞくパンチ（無無無無）20×）
 CUBONE = "PMCG2-029"  # カラカラ（第2弾。HP 40・闘・弱点 草・抵抗力 雷 -30・にげる 1。なきつく（無）・いかり（闘闘）10+）
 MAROWAK = "PMCG2-032"  # ガラガラ（第2弾。カラカラから進化。HP 60・闘・弱点 草・抵抗力 雷 -30・にげる 1。ほねブーメラン（闘闘）30×・たすけをよぶ（闘闘無））
 V0_34_POKEMON = (RAPIDASH, FLAREON, VAPOREON, JOLTEON, ELECTABUZZ, TAUROS, BROCKS_VULPIX, GIOVANNIS_PINSIR, BLAINES_KANGASKHAN, KOFFING, NIDOKING,
@@ -641,6 +641,35 @@ BROCKS_DUGTRIO = "PMCG6-060"  # タケシのダグトリオ（闇からの挑戦
 LICKITUNG = "PMCG2-041"  # ベロリンガ（ポケモンジャングル。043/048。HP 90・無色・弱点 闘・抵抗力 超・にげる 3。まきつくベロ（無）10・ちょうおんぱ（無無））
 V0_62_POKEMON = (PIDGEOTTO, SPEAROW, FEAROW, PIDGEOT, BROCKS_DUGTRIO, LICKITUNG)
 V0_62_CARDS = V0_62_POKEMON
+# v0.63（docs/hidden-card-trainers-v0.63.md）: 公開・非公開の状態を扱うトレーナー 4 枚
+HERE_COMES_TEAM_ROCKET = "PMCG4-062"  # ロケット団参上!（第4弾ロケット団。お互いのサイドをすべておもてにする）
+TICKLING_MACHINE = "PMCG6-084"  # くすぐりマシーン（闇からの挑戦。ロケット団秘密メカ。「おもて」なら相手の手札を置いておく、「うら」なら番が終わる）
+CHALLENGE = "PMCG4-058"  # たたきつけろ!挑戦状（第4弾ロケット団。受けないなら 2 枚引く、受けるならお互いに山札からたねポケモンをうらにしてベンチに出す）
+BLAINES_QUIZ_3 = "PMCG6-082"  # カツラのクイズ その3（闇からの挑戦。手札のポケモンを置き、ワザの名前を伝え、相手が名前を答える）
+V0_63_CARDS = (HERE_COMES_TEAM_ROCKET, TICKLING_MACHINE, CHALLENGE, BLAINES_QUIZ_3)
+# v0.64（docs/geodude-line-unbounded-coins-v0.64.md）: 化石の秘密のイシツブテの系統 3 枚（「タケシの」系統とは別のカード）
+FOSSIL_GEODUDE = "PMCG3-034"  # イシツブテ（化石の秘密。035/048。HP 50・闘・弱点 草・にげる 1。れんぞくいしなげ（闘無）10×）
+FOSSIL_GRAVELER = "PMCG3-037"  # ゴローン（化石の秘密。036/048。イシツブテから進化。HP 60・闘・弱点 草・にげる 2。かたくなる（闘闘）・いわおとし（闘闘無）40）
+FOSSIL_GOLEM = "PMCG3-038"  # ゴローニャ（化石の秘密。037/048。ゴローンから進化。HP 80・闘・弱点 草・にげる 4。いわころがり（闘闘闘無）60・じばく（闘闘闘闘）100）
+V0_64_POKEMON = (FOSSIL_GEODUDE, FOSSIL_GRAVELER, FOSSIL_GOLEM)
+V0_64_CARDS = V0_64_POKEMON
+# v0.65（docs/reactive-decisions-v0.65.md）: ワザの途中の任意の決定を使う 3 枚
+KOGAS_NINJA_TRICK = "PMCG6-083"  # キョウ秘伝,変わり身の術（闇からの挑戦。081/098。トレーナー。バトル場の「キョウのポケモン」につけ、相手がワザを使う時に控えと入れ替えてよい）
+MISTYS_TENTACRUEL = "PMCG5-033"  # カスミのドククラゲ（リーダーズスタジアム。026/096。カスミのメノクラゲから進化。HP 70・水・弱点 雷・にげる 0。［にげこむ］・クラゲどく（水水無無）30）
+BROCKS_RHYDON = "PMCG5-055"  # タケシのサイドン（リーダーズスタジアム。055/096。タケシのサイホーンから進化。HP 80・闘・弱点 草・抵抗力 雷 -30・にげる 3。［ベンチガード］・ラリアット（闘闘無無）70）
+V0_65_POKEMON = (MISTYS_TENTACRUEL, BROCKS_RHYDON)
+V0_65_CARDS = (KOGAS_NINJA_TRICK, MISTYS_TENTACRUEL, BROCKS_RHYDON)
+# v0.66（docs/optional-trainers-v0.66.md）。のぞむなら選ぶ効果・コインのやり直し・じゃんけんのトレーナー 3 枚
+CHARITY = "PMCG5-074"  # お上品攻撃（リーダーズスタジアム。087/096。トレーナー。対戦ポケモンにつけ、ワザのダメージを好きなだけ小さくしてよい。相手の番が終わったら手札にもどす）
+SABRINAS_ESP = "PMCG6-087"  # ナツメのESP（闇からの挑戦。075/000。トレーナー。ナツメのポケモンにつけ、ワザの説明文のコイントスをやり直してよい。番の終わりにトラッシュ）
+MISTYS_DUEL = "PMCG5-068"  # カスミの勝負（リーダーズスタジアム。074/096。トレーナー。じゃんけんの勝者が手札を山札にもどして切り、5 枚引く）
+V0_66_CARDS = (CHARITY, SABRINAS_ESP, MISTYS_DUEL)
+LT_SURGES_SECRET_PLAN = "PMCG5-093"  # マチスの秘策（リーダーズスタジアム。082/096。トレーナー。手札から 1 枚をうらにしてベンチに出してよい。v0.67）
+V0_67_CARDS = (LT_SURGES_SECRET_PLAN,)
+# v0.68（docs/final-pmcg-cards-v0.68.md）。PMCG1〜PMCG6 の残りのポケモン 3 枚
+IMAKUNI_DODUO = "PMCG6-074"  # イマクニ？のドードー（闇からの挑戦。［にげまくり］・ハモる。簡略化した仕様）
+V0_68_POKEMON = (KANGASKHAN, KOGAS_MUK, IMAKUNI_DODUO)
+V0_68_CARDS = V0_68_POKEMON
 
 # 60 枚の合法なデッキ（たねポケモン 20 枚 + 基本エネルギー 40 枚）
 FIRE_DECK = expand_decklist({GROWLITHE: 4, PONYTA: 4, RATTATA: 4, DRATINI: 4, VOLTORB: 4, FIRE: 40})
@@ -1187,6 +1216,39 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.RepeatReceivedAttack,  # v0.62: ピジョンの「オウムがえし」（前の相手の番に受けたワザの記録 B）
     _effects.ReflectReceivedDamageAndEffects,  # v0.62: オニスズメの「オウムがえし」（前の相手の番に受けた結果の記録 C）
     _effects.DamageThenReturnOpponentToHand,  # v0.62: ピジョットの「ハリケーン」
+) + (
+    # v0.64（docs/geodude-line-unbounded-coins-v0.64.md）
+    _effects.CoinsUntilTailsDamage,  # 化石の秘密のイシツブテの「れんぞくいしなげ」
+) + (
+    # v0.68（docs/final-pmcg-cards-v0.68.md 4 章）
+    _effects.SimplifiedSongDamage,  # イマクニ？のドードーの「ハモる」（簡略化した仕様。DamageOnly と同じ要素の並び）
+) + (
+    # v0.70（docs/non-pack-effect-reuse-v0.70.md）: ダメージのない型 2 つ（既存の要素だけの並び）
+    _effects.StatusByCoinWithoutDamage,  # ニョロゾ（ES1-017・QSG-015）の「ぐるぐる」
+    _effects.AttachEnergyFromDiscardToSelf,  # マチスのピカチュウ（GD3-002）の「たいでん」
+) + (
+    # v0.71（docs/reprint-text-variants-v0.71.md 6 章）: エネルギーカードをトラッシュする要素とダメージ（既存の要素だけの並び）
+    _effects.DiscardEnergyCardsThenDamageZeroIfLacking,  # プロモのリザードン（PR1-030）の「ほのおのうず」
+) + (
+    # v0.72（docs/status-coins-effect-reuse-v0.72.md 3 章）: 拡張パック以外の商品のポケモン 43 枚のうち、既存の型で表せないワザ
+    _effects.CoinsHeadsTimesBonusDamage,  # ルギア（PRN-042）の「エアロブラスト」（値 PrintedPlusHeadsTimes）
+    _effects.DamageThenStatusSelfAndOpponent,  # エリカのクサイハナ（GD4-003）の「ゆめみのまい」・「くさいにおい」
+    _effects.PoisonAndSleepWithoutDamage,  # エリカのウツドン（GD4-007）の「ねむけどく」
+    _effects.DamageThenWakeOpponent,  # ナツメのルージュラ（GD6-012）の「めざめのキッス」（要素 WakeOpponent）
+    _effects.DamageAndOptionalFullDrain,  # ゴルバット（ES1-009）・パラセクト（ES1-011）の「きゅうけつ」（Drain の optional）
+    _effects.DamageThenMoveOneEnergyToBench,  # マチスのエレブー（GD3-010・PR1-040）の「デンキとばし」（要素 MoveOneEnergyToBench）
+    _effects.RevealBasicEnergyFromDeck,  # エリカのピッピ（GD4-012）の「おつきみ」（RevealTrainerFromDeck の category）
+    _effects.DamageThenForceSwitchAfterDamage,  # タケシのサイホーン（GD1-012）の「つのでなげる」（ForceSwitch の after_damage）
+) + (
+    # v0.75（docs/search-energy-pokemon-v0.75.md）
+    _effects.DrawThenSwitchSelf,  # タケシのズバット（GD1-001）の「しらせる」（Draw → SelfSwitch の required）
+    _effects.RevealNamedPokemonFromDeckAny,  # カスミのメノクラゲ（GD2-003）の「くらげのむれ」
+    _effects.CoinsRecoverEnergyByHeads,  # カツラのロコン（GD5-003）の「おにびあつめ」
+    _effects.AttachEnergyFromDeckToSelfExactly,  # カツラのガーディ（GD5-006）の「もえあがる」（AttachFromDeck の zero=required）
+    _effects.AttachEnergyFromDeckToBench,  # ナツメのスリープ（GD6-009）の「エナジーサポート」
+    _effects.CoinAttachEnergyFromDeckToSelf,  # キングラー（ES3-014）の「しおまねき」（AttachFromDeck の max_cards・local_coin・shuffle）
+    _effects.DamageThenDoubleDamageNextTurn,  # キングラー（ES3-014）の「もろばバサミ」（持続する効果 DoubledDamage）
+    _effects.AttachDiscardEnergyCardsToSelf,  # ミュウツー（PR1-007・PR1-008）の「エネルギーきゅうしゅう」（AttachFromDiscard の energy_type None）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1196,8 +1258,9 @@ NO_EMBER_EFFECTS = DEFAULT_EFFECTS.without_attacks("test-no-ember", [AttackKey(C
 # v0.30 まで、リザードン（PMCG1-021）は「実装を登録していないポケモンパワー（エナジーバーン）とワザ（ほのおのうず）を持つ 2 進化」の参照カードで、
 # 未対応のカードの例に使っていた（v0.7 でフーディンから引き継いだ）。v0.31 で対応にしたので、その性質を確かめるテストは、この 2 つの登録だけを除いた
 # 登録表と、その登録表で分類した写しのカードの組（``no_charizard_pool``）を使う（製品の登録表は変えない）
-NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0)]).without_attacks(
-    "test-no-charizard", [AttackKey(CHARIZARD, 0)])
+# v0.71: プロモのリザードン（PR1-030。リザードンの再録の版。effects.REPRINT_CARDS）の登録も除く（元のカードを保留にする場面で、再録の版だけが残らないように）
+NO_CHARIZARD_EFFECTS = DEFAULT_EFFECTS.without_powers("test-no-charizard", [_effects.PowerKey(CHARIZARD, 0), _effects.PowerKey("PR1-030", 0)]).without_attacks(
+    "test-no-charizard", [AttackKey(CHARIZARD, 0), AttackKey("PR1-030", 0)])
 
 
 def no_charizard_pool():
@@ -1349,6 +1412,46 @@ def rng_for_coins(*sides: CoinSide, start: int = 0) -> random.Random:
     raise AssertionError("条件に合う乱数が見つからない")
 
 
+def _untemper(y: int) -> int:
+    """MT19937 の出力の調律（tempering）の逆。"""
+    y ^= y >> 18
+    y ^= (y << 15) & 0xEFC60000
+    result = y
+    for _ in range(5):
+        result = y ^ ((result << 7) & 0x9D2C5680)
+    y = result
+    result = y
+    for _ in range(3):
+        result = y ^ (result >> 11)
+    return result & 0xFFFFFFFF
+
+
+def rng_with_coin_bits(*sides: CoinSide) -> random.Random:
+    """次に ``getrandbits(1)`` を len(sides) 回使うと、その結果（1 = おもて）になる乱数（v0.64。テスト専用）。seed を探さず、乱数の内部の状態（MT19937 の
+    624 語）を直接決める（``getrandbits(1)`` は次の 32 ビットの出力のいちばん上のビット）。624 回まで。そのあとの出力は決まった別の値（seed 0 の状態の続き）。
+    「うら」が出るまで投げるコインの長い「おもて」の並びを、seed を探さずに作るため（``rng_for_coins`` は 16 枚程度までしか見つけられない）。"""
+    if len(sides) > 624:
+        raise ValueError("624 枚まで")
+    words = list(random.Random(0).getstate()[1][:624])
+    for i, side in enumerate(sides):
+        top = 1 if side is CoinSide.HEADS else 0
+        words[i] = _untemper((top << 31) | 0x12345)
+    rng = random.Random()
+    rng.setstate((3, tuple(words) + (0,), None))
+    probe = random.Random()
+    probe.setstate(rng.getstate())
+    if [probe.getrandbits(1) for _ in sides] != [1 if side is CoinSide.HEADS else 0 for side in sides]:
+        raise AssertionError("乱数の状態の組み立ての誤り")
+    return rng
+
+
+def with_coin_bits(state: GameState, *sides: CoinSide) -> GameState:
+    """テスト専用（v0.64）: ``with_coin_results`` と同じく次のコインを ``sides`` にした状態（複製）。seed を探さない（``rng_with_coin_bits``）。"""
+    new = state.clone()
+    new.rng = rng_with_coin_bits(*sides)
+    return new
+
+
 def with_coin_results(state: GameState, *sides: CoinSide) -> GameState:
     """テスト専用: 次に投げるコインの結果を ``sides`` にした状態（複製。渡した状態は変えない）。"""
     new = state.clone()
@@ -1416,3 +1519,354 @@ def no_super_potion_pool():
     """いいきずぐすりの登録を除いた登録表（``NO_SUPER_POTION_EFFECTS``）で分類した、同梱の写しのカードの組（v0.55）。"""
     from kyuura_engine.cards import pool_from_extract, read_extract
     return pool_from_extract(read_extract(), NO_SUPER_POTION_EFFECTS)
+
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md 6 章）: 写しの元（カードデータのコミット）を ecb2d69 から 7d3f4ca に上げた。状態は写しの元を
+# ``card_data.commit``（state_to_dict）とログ ``game_created`` の ``card_data_commit`` に持つので、v0.68 までに作った固定の参照データ（作り直さない）と比べるときは、
+# この 2 か所の値だけを、確かめた移行（今の写しの元 → v0.68 までの写しの元）でもどしてから比べる。ほかの値（状態・ログ・乱数の状態の指紋・card_data のほかの項目）は
+# 変えない。もどす前の値が今の写しの元でなければ AssertionError（知らない値を黙って置きかえない）
+CARD_DATA_COMMIT_BEFORE_V0_69 = "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691"
+CARD_DATA_COMMIT_SINCE_V0_69 = "7d3f4ca76c084774efb4ac6a1d3a943387e183c3"
+
+
+def with_card_data_commit_before_v0_69(data: dict) -> dict:
+    """state_to_dict の値（の写し）の、写しの元の 2 か所だけを v0.68 までの値にもどした新しい値（``data`` は変えない）。もどした数も確かめる。"""
+    import copy
+
+    result = copy.deepcopy(data)
+    card_data = result.get("card_data")
+    assert isinstance(card_data, dict) and card_data.get("commit") == CARD_DATA_COMMIT_SINCE_V0_69, card_data
+    card_data["commit"] = CARD_DATA_COMMIT_BEFORE_V0_69
+    # 正式な開始（new_game）の状態はログ game_created が 1 つ、盤面を直接作った状態（build_test_state）にはない
+    created = [event for event in result.get("log", []) if event.get("kind") == "game_created"]
+    assert len(created) <= 1 and all(event.get("card_data_commit") == CARD_DATA_COMMIT_SINCE_V0_69 for event in created), created
+    for event in created:
+        event["card_data_commit"] = CARD_DATA_COMMIT_BEFORE_V0_69
+    return result
+
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md）: 拡張パック以外の商品の、登録したカードと処理に使う欄が同じカード（写しの組 pool_v0_69 のうち登録のある 84 枚。
+# kyuura_engine.effects.EQUIVALENT_CARDS）。登録の一覧を数えるテストは、ここから数える（元のカードの一覧に混ぜない）
+V0_69_TRAINERS = ("GD1-015", "GD1-019", "GD2-015", "GD2-016", "GD2-017", "GD2-018", "GD3-015", "GD3-016", "GD3-021", "GD3-022", "GD4-016", "GD4-017",
+                  "GD4-018", "GD4-026", "GD5-014", "GD5-015", "GD6-017", "GD6-018", "GD6-019")
+V0_69_POKEMON = ("GD1-002", "GD1-009", "GD1-011", "GD1-013", "GD2-004", "GD2-008", "GD2-010", "GD2-012", "GD3-001", "GD3-004", "GD3-005", "GD3-006",
+                 "GD3-007", "GD4-002", "GD4-006", "GD4-008", "GD4-010", "GD4-011", "GD4-013", "GD5-002", "GD5-004", "GD5-009", "GD5-010", "GD5-012",
+                 "GD6-003", "GD6-004", "GD6-013", "IP1-002", "IP1-013", "IP2-001", "IP2-002", "IP2-014", "IP2-035", "PR1-019", "PR1-031", "PR1-032",
+                 "PR1-039", "PR1-047", "PR1-048", "PR1-049", "PR1-050", "PR1-061", "PR1-076", "PR1-080", "PR1-081", "PR1-082", "PR1-083", "PR1-084",
+                 "PR1-085", "PR1-086", "PR1-087", "PR1-088", "PR1-089", "NIP1-010", "NIP1-012", "NIP1X-003", "NIP2-001")
+V0_69_SPECIAL_ENERGIES = ("GD1-025", "GD2-024", "GD3-025", "GD4-028", "GD5-025", "GD6-026", "IP1-023", "IP2-025")
+V0_69_BASIC_ENERGIES = ("IP1-004", "IP1-006", "IP1-024", "IP2-004", "IP2-005", "IP2-012", "NIP1-003", "NIP1-005", "NIP1-006", "NIP2-005", "NIP2-006", "NIP2-007")
+V0_69_CARDS = V0_69_POKEMON + V0_69_TRAINERS + V0_69_SPECIAL_ENERGIES  # 登録のある 84 枚
+# 新しい id の特殊能力の登録（元のカードの登録を写した 10。登録の一覧を数えるテストは、v0.68 までの一覧とこれを分けて比べる）
+V0_69_POWER_CARDS = ("GD1-013", "GD2-004", "GD3-006", "GD4-008", "GD4-013", "GD5-002", "GD5-004", "GD6-004", "PR1-039", "PR1-061")
+
+# v0.70（docs/non-pack-effect-reuse-v0.70.md）: 拡張パック以外の商品のポケモン 82 枚（写しの組 pool_v0_70。既存の効果の型の登録と、ダメージのない型 2 つ。特殊能力はない）
+V0_70_POKEMON = ("GD1-004", "GD1-008", "GD2-005", "GD2-009", "GD2-013", "GD2-014", "GD3-002", "GD3-008", "GD3-013", "GD4-005", "GD5-008", "GD5-013", "GD6-006",
+                 "ES1-004", "ES1-008", "ES1-012", "ES1-016", "ES1-017", "ES1-018", "ES1-024", "ES1-030", "ES1-032", "ES2-008", "ES2-009", "ES2-010", "ES2-019",
+                 "ES2-022", "ES2-026", "ES2-031", "ES3-015", "ES3-033", "QSG-006", "QSG-014", "QSG-015", "QSG-016", "QSG-019", "QSG-031", "QSG-036", "QSG-042",
+                 "QSG-044", "SI-001", "SI-005", "SI-006", "SI-007", "SI-009", "SI-015", "IP1-001", "IP1-016", "IP1-026", "IP1-030", "IP1-037", "IP1-039", "IP2-003",
+                 "IP2-013", "IP2-016", "IP2-039", "PF1-007", "PF2-004", "NIP1-001", "NIP1-002", "NIP1-008", "NIP1-016", "NIP1-022", "NIP1-024", "NIP2-002", "NIP2-003",
+                 "NIP2-004", "NIP2-016", "NIP2-018", "NIP2-024", "NIP2-026", "NIP2X-004", "PR1-011", "PR1-014", "PR1-045", "PR1-066", "PR1-069", "PRN-006", "PRN-009",
+                 "PRN-013", "PRN-038", "PRN-047")
+V0_70_CARDS = V0_70_POKEMON
+
+# v0.71（docs/reprint-text-variants-v0.71.md）: 拡張パック以外の商品の再録のカード 78 枚（写しの組 pool_v0_71。effects.REPRINT_CARDS。元のカードと効果の文面だけが違う）
+V0_71_POKEMON = ("GD1-006", "GD4-004", "GD5-011", "GD6-010", "IP2-009", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030", "PR1-033")
+V0_71_TRAINERS = ("GD1-014", "GD1-016", "GD1-017", "GD1-018", "GD1-020", "GD1-021", "GD1-022", "GD1-023", "GD1-024", "GD2-019", "GD2-020", "GD2-021", "GD2-022",
+                  "GD2-023", "GD3-014", "GD3-017", "GD3-018", "GD3-019", "GD3-020", "GD3-023", "GD3-024", "GD4-014", "GD4-015", "GD4-019", "GD4-020", "GD4-021",
+                  "GD4-022", "GD4-023", "GD4-024", "GD4-025", "GD4-027", "GD5-018", "GD5-020", "GD5-022", "GD5-023", "GD5-024", "GD6-014", "GD6-015", "GD6-016",
+                  "GD6-020", "GD6-021", "GD6-022", "GD6-024", "GD6-025", "QSG-047", "QSG-048", "QSG-049", "QSG-050", "QSG-051", "QSG-052", "QSG-053", "IP1-007",
+                  "IP1-019", "IP1-028", "IP2-007", "IP2-019", "IP2-024", "NIP1-007", "NIP1-015", "NIP1-020", "NIP1X-006", "NIP1X-007", "NIP2-008", "NIP2-020",
+                  "NIP2-025", "NIP2X-006", "NIP2X-007")
+# 特殊能力の登録のある再録のカード（元のカードの登録から作った 6。登録の一覧を数えるテストは、v0.70 までの一覧とこれを分けて比べる）
+V0_71_POWER_CARDS = ("GD4-004", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030")
+V0_71_CARDS = ("GD1-006", "GD1-014", "GD1-016", "GD1-017", "GD1-018", "GD1-020", "GD1-021", "GD1-022", "GD1-023", "GD1-024", "GD2-019", "GD2-020", "GD2-021", "GD2-022",
+               "GD2-023", "GD3-014", "GD3-017", "GD3-018", "GD3-019", "GD3-020", "GD3-023", "GD3-024", "GD4-004", "GD4-014", "GD4-015", "GD4-019", "GD4-020", "GD4-021",
+               "GD4-022", "GD4-023", "GD4-024", "GD4-025", "GD4-027", "GD5-011", "GD5-018", "GD5-020", "GD5-022", "GD5-023", "GD5-024", "GD6-010", "GD6-014", "GD6-015",
+               "GD6-016", "GD6-020", "GD6-021", "GD6-022", "GD6-024", "GD6-025", "QSG-047", "QSG-048", "QSG-049", "QSG-050", "QSG-051", "QSG-052", "QSG-053", "IP1-007",
+               "IP1-019", "IP1-028", "IP2-007", "IP2-009", "IP2-019", "IP2-024", "IPH-001", "IPH-002", "PR1-028", "PR1-029", "PR1-030", "PR1-033", "NIP1-007",
+               "NIP1-015", "NIP1-020", "NIP1X-006", "NIP1X-007", "NIP2-008", "NIP2-020", "NIP2-025", "NIP2X-006", "NIP2X-007")  # 依頼の並び（V0_71_POKEMON と V0_71_TRAINERS を合わせたもの）
+# v0.72（docs/status-coins-effect-reuse-v0.72.md）: 拡張パック以外の商品のポケモン 43 枚（写しの組 pool_v0_72。kyuura データの採用）
+V0_72_POKEMON = ("GD1-003", "GD1-012", "GD2-002", "GD3-010", "GD4-003", "GD4-007", "GD4-009", "GD4-012", "GD5-005", "GD6-012",
+                 "ES1-006", "ES1-009", "ES1-011", "ES1-019", "ES1-020", "ES1-025", "ES1-029", "ES1-031", "ES2-023", "ES2-024", "ES2-027", "ES2-030",
+                 "ES3-003", "ES3-005", "ES3-008", "ES3-013", "QSG-004", "QSG-020", "QSG-026", "QSG-037", "QSG-038", "QSG-039", "QSG-043", "QSG-054",
+                 "IP1-022", "PR1-036", "PR1-037", "PR1-040", "PR1-059", "PF3-009", "NIP2-010", "NIP2X-003", "PRN-042")
+V0_72_CARDS = V0_72_POKEMON
+
+# v0.73（docs/search-recovery-trainers-v0.73.md）: 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚（kyuura データの採用。並びは依頼の並び）
+MAX_REVIVE, MAX_REVIVE_ES2, FERVOR = "GD5-019", "ES2-034", "GD5-021"
+MASTER_BALL, MASTER_BALL_ES2, MASTER_BALL_QSG, MASTER_BALL_NIP1, MASTER_BALL_NIP2 = "GD6-023", "ES2-036", "QSG-058", "NIP1-021", "NIP2-022"
+FOSSIL_EXCAVATION, MOON_STONE, POKEMON_RETRIEVER = "ES1-035", "ES1-036", "ES3-035"
+SUPER_SCOOP_UP, SUPER_SCOOP_UP_IP2, BILLS_TELEPORTER, BILLS_TELEPORTER_IP2 = "IP1-009", "IP2-029", "IP1-020", "IP2-021"
+SUPER_ENERGY_RETRIEVAL, COMPUTER_ERROR, COMPUTER_ERROR_041 = "PR1-009", "PR1-026", "PR1-041"
+V0_73_CARDS = (MAX_REVIVE, MAX_REVIVE_ES2, FERVOR, MASTER_BALL, MASTER_BALL_ES2, MASTER_BALL_QSG, MASTER_BALL_NIP1, MASTER_BALL_NIP2,
+               FOSSIL_EXCAVATION, MOON_STONE, POKEMON_RETRIEVER, SUPER_SCOOP_UP, SUPER_SCOOP_UP_IP2, BILLS_TELEPORTER, BILLS_TELEPORTER_IP2,
+               SUPER_ENERGY_RETRIEVAL, COMPUTER_ERROR, COMPUTER_ERROR_041)
+
+# v0.74（docs/remaining-stadiums-v0.74.md）: 拡張パック以外の商品のスタジアム 13 枚（kyuura データの採用。並びは依頼の並び）
+POKEMON_TOWER, KOGAS_NINJA_GYM, ENERGY_STADIUM, LUCKY_STADIUM_NIP2X = "ES3-036", "PR1-067", "NIP1X-009", "NIP2X-009"
+LUCKY_STADIUM_PRN = ("PRN-015", "PRN-016", "PRN-017", "PRN-018", "PRN-019", "PRN-020", "PRN-021", "PRN-022")
+LUCKY_STADIUM, LUCKY_STADIUM_027 = "PRN-015", "PRN-027"
+V0_74_CARDS = (POKEMON_TOWER, KOGAS_NINJA_GYM, ENERGY_STADIUM, LUCKY_STADIUM_NIP2X, *LUCKY_STADIUM_PRN, LUCKY_STADIUM_027)
+
+
+# v0.69（docs/equivalent-non-pack-cards-v0.69.md 7 章）: 研究の基準を kyuura 7d3f4ca に上げたので、採用の記録の kyuura_records（研究の基準のコミットでカードを指す kyuura の記録の id）に
+# 加わった記録（kyuura が論点に結んだ停止コードのカード）。記録を確かめるテストは、v0.68 までの記録の値にこれを加えた値と比べる（tests/test_equivalent_non_pack_cards_v0_69.py が、
+# 同梱の記録と同じことを確かめる）
+V0_69_KYUURA_RECORDS_ADDED = {
+    "PMCG1-013": ('UQ-POISON-OVERWRITE-ORDER',),
+    "PMCG1-021": ('UQ-ENERGY-BURN-TRANSFER',),
+    "PMCG1-040": ('UQ-BUZZAP-TARGET-AND-COLOR', 'UQ-SHAPESHIFT-SCOPE', 'UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY'),
+    "PMCG1-044": ('UQ-DESTINY-BOND-KO',),
+    "PMCG1-048": ('UQ-OPPONENT-POKEMON-COUNTERS',),
+    "PMCG1-051": ('UQ-ATTACK-PRE-DAMAGE-COIN-ORDER',),
+    "PMCG1-056": ('UQ-BENCH-DAMAGE-WEAKNESS-RESISTANCE',),
+    "PMCG1-063": ('UQ-COPIED-ATTACK',),
+    "PMCG1-064": ('UQ-CHANGE-ABSENT-WEAKNESS-RESISTANCE',),
+    "PMCG1-066": ('UQ-COPIED-ATTACK',),
+    "PMCG1-067": ('UQ-COIN-IN-NULLIFIED-ELEMENT',),
+    "PMCG1-070": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG1-075": ('UQ-TARGET-WITHOUT-EFFECT',),
+    "PMCG1-078": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG1-080": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG1-084": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG1-085": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG1-086": ('UQ-CARD-USE-WITHOUT-TARGET', 'UQ-DEVOLUTION-SAME-TURN', 'UQ-EVOLUTION-HP-BELOW-DAMAGE', 'UQ-SHAPESHIFT-SCOPE'),
+    "PMCG1-091": ('UQ-PLAY-AS-POKEMON',),
+    "PMCG1-092": ('UQ-ATTACHED-CARDS-WHEN-RETURNED', 'UQ-CARD-USE-WITHOUT-TARGET'),
+    "PMCG1-096": ('UQ-RETREAT-COST-PAYMENT',),
+    "PMCG2-015": ('UQ-SHIFT-COLOR-DURATION',),
+    "PMCG2-029": ('UQ-REDUCED-DAMAGE-BENCH-TARGET',),
+    "PMCG2-033": ('UQ-DAMAGE-TRIGGER-TIMING',),
+    "PMCG2-034": ('UQ-COPIED-ATTACK',),
+    "PMCG2-040": ('UQ-RETREAT-COST-PAYMENT',),
+    "PMCG2-044": ('UQ-COPIED-ATTACK',),
+    "PMCG3-009": ('UQ-DISCARD-ENERGY-TIMING-CONFUSION', 'UQ-STATED-COUNT-SHORT', 'UQ-UP-TO-ZERO-CHOICE'),
+    "PMCG3-024": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG3-033": ('UQ-DEVOLUTION-SAME-TURN',),
+    "PMCG3-035": ('UQ-NON-ATTACK-DAMAGE-MODIFIERS',),
+    "PMCG3-042": ('UQ-REACTIVE-SWITCH-DURING-ATTACK', 'UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY', 'UQ-TRANSFORM-SCOPE'),
+    "PMCG3-046": ('UQ-PLAY-AS-POKEMON',),
+    "PMCG3-047": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG3-048": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG4-019": ('UQ-EXTRA-ENERGY-COLORLESS',),
+    "PMCG4-034": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG4-043": ('UQ-SINKHOLE-TIMING',),
+    "PMCG4-052": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG4-053": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG4-055": ('UQ-NON-ATTACK-DAMAGE-MODIFIERS',),
+    "PMCG4-056": ('UQ-GOOP-GAS-NEW-POKEMON',),
+    "PMCG4-057": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG4-058": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG4-065": ('UQ-NON-ATTACK-DAMAGE-MODIFIERS', 'UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY'),
+    "PMCG5-010": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG5-015": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG5-019": ('UQ-SHAPESHIFT-SCOPE',),
+    "PMCG5-021": ('UQ-COPIED-ATTACK',),
+    "PMCG5-024": ('UQ-ATTACK-PRE-DAMAGE-COIN-ORDER',),
+    "PMCG5-030": ('UQ-ATTACH-BLOCK-SCOPE',),
+    "PMCG5-033": ('UQ-REACTIVE-SWITCH-DURING-ATTACK',),
+    "PMCG5-041": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG5-050": ('UQ-SPEED-STAR-SCOPE',),
+    "PMCG5-051": ('UQ-SCRAM-TIMING',),
+    "PMCG5-055": ('UQ-REACTIVE-SWITCH-DURING-ATTACK',),
+    "PMCG5-060": ('UQ-ENTRY-POWER-DURING-ATTACK',),
+    "PMCG5-071": ('UQ-RECALL-SCOPE',),
+    "PMCG5-074": ('UQ-CHARITY-BELOW-ZERO',),
+    "PMCG5-075": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG5-076": ('UQ-ATTACK-PRE-DAMAGE-COIN-ORDER',),
+    "PMCG5-078": ('UQ-TARGET-WITHOUT-EFFECT',),
+    "PMCG5-085": ('UQ-MISTY-SELF-DAMAGE',),
+    "PMCG5-086": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG5-087": ('UQ-CHAOS-GYM-BORROWED-TURN',),
+    "PMCG5-092": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG5-093": ('UQ-FACE-DOWN-CARD',),
+    "PMCG5-096": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG6-010": ('UQ-CALMING-AROMA-RETALIATION',),
+    "PMCG6-015": ('UQ-RETURN-TO-DECK-KO-ORDER',),
+    "PMCG6-021": ('UQ-ATTACK-LOCK-SOURCE-RETURNED',),
+    "PMCG6-026": ('UQ-TARGET-WITHOUT-EFFECT',),
+    "PMCG6-031": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG6-046": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG6-049": ('UQ-EVOLUTION-HP-BELOW-DAMAGE',),
+    "PMCG6-055": ('UQ-COUNTER-TRANSFER-PROTECTED',),
+    "PMCG6-060": ('UQ-COPIED-ATTACK',),
+    "PMCG6-075": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG6-076": ('UQ-UP-TO-ZERO-CHOICE',),
+    "PMCG6-082": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG6-083": ('UQ-ATTACHED-CARDS-WHEN-RETURNED', 'UQ-REACTIVE-SWITCH-DURING-ATTACK', 'UQ-TRAINER-BAN-SCOPE'),
+    "PMCG6-086": ('UQ-CARD-USE-WITHOUT-TARGET', 'UQ-FUCHSIA-GYM-ONCE-PER-TURN'),
+    "PMCG6-087": ('UQ-ESP-REDO',),
+    "PMCG6-089": ('UQ-CARD-USE-WITHOUT-TARGET',),
+    "PMCG6-091": ('UQ-TRAINER-BAN-SCOPE',),
+    "PMCG6-092": ('UQ-FACE-DOWN-CARD', 'UQ-NON-ATTACK-DAMAGE-MODIFIERS'),
+    "PMCG6-093": ('UQ-BLAINE-SECOND-ATTACH',),
+    "PMCG6-094": ('UQ-POISON-OVERWRITE-ORDER',),
+    "PMCG6-095": ('UQ-CARD-USE-WITHOUT-TARGET', 'UQ-EVOLUTION-PERMISSION-FROM-DECK'),
+    "PMCG6-096": ('UQ-CARD-USE-WITHOUT-TARGET', 'UQ-TARGET-WITHOUT-EFFECT'),
+    "PMCG6-097": ('UQ-STATED-COUNT-SHORT',),
+    "PMCG6-098": ('UQ-CARD-USE-WITHOUT-TARGET', 'UQ-TARGET-WITHOUT-EFFECT'),
+}
+
+
+def kyuura_records_since_v0_69(card_id: str, before: list | tuple = ()) -> list:
+    """v0.68 までの kyuura_records（``before``）に、v0.69 で加わった記録を加えた値（並びは id の順）。"""
+    return sorted([*before, *V0_69_KYUURA_RECORDS_ADDED.get(card_id, ())])
+
+
+# v0.69: kyuura の未解決の一覧で論点に結ばれた停止コード（v0.68 までは not_in_kyuura。進化のあとの HP だけは out_of_scope）→ kyuura の論点
+V0_69_STOP_CODE_ISSUES = {
+    "UNRESOLVED_ATTACH_BLOCK_SCOPE": "UQ-ATTACH-BLOCK-SCOPE",
+    "UNRESOLVED_ATTACH_FROM_DISCARD_ZERO": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_ATTACK_CHECK_CONFUSION": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+    "UNRESOLVED_ATTACK_LOCK_SOURCE_RETURNED": "UQ-ATTACK-LOCK-SOURCE-RETURNED",
+    "UNRESOLVED_BENCH_COIN_TRANSPARENCY_ORDER": "UQ-TRANSPARENCY-COIN-ORDER",
+    "UNRESOLVED_BENCH_DAMAGE_WEAKNESS_RESISTANCE": "UQ-BENCH-DAMAGE-WEAKNESS-RESISTANCE",
+    "UNRESOLVED_BENCH_GUARD_RECOMPUTE": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_BENCH_GUARD_ZERO_DAMAGE_REACTION": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_BENCH_TARGETS_ZERO_CHOICE": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_BLAINES_QUIZ_WITHOUT_POKEMON": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_BLAINE_SECOND_ATTACH": "UQ-BLAINE-SECOND-ATTACH",
+    "UNRESOLVED_BREEDER_ON_PLAY_AS_POKEMON": "UQ-PLAY-AS-POKEMON",
+    "UNRESOLVED_BUZZAP_COLOR": "UQ-BUZZAP-TARGET-AND-COLOR",
+    "UNRESOLVED_BUZZAP_DISGUISED": "UQ-SHAPESHIFT-SCOPE",
+    "UNRESOLVED_BUZZAP_ENERGY_CARD_TYPE": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+    "UNRESOLVED_BUZZAP_OPPONENT_TARGET": "UQ-BUZZAP-TARGET-AND-COLOR",
+    "UNRESOLVED_CALMING_AROMA_RETALIATION": "UQ-CALMING-AROMA-RETALIATION",
+    "UNRESOLVED_CELADON_GYM_WITHOUT_CONDITION": "UQ-TARGET-WITHOUT-EFFECT",
+    "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE": "UQ-CHANGE-ABSENT-WEAKNESS-RESISTANCE",
+    "UNRESOLVED_CHAOS_GYM_BORROWED_TURN": "UQ-CHAOS-GYM-BORROWED-TURN",
+    "UNRESOLVED_CHARITY_BELOW_ZERO": "UQ-CHARITY-BELOW-ZERO",
+    "UNRESOLVED_COMPUTER_SEARCH_EMPTY_DECK": "UQ-COMPUTER-SEARCH-EMPTY-DECK",
+    "UNRESOLVED_COPIED_ATTACK": "UQ-COPIED-ATTACK",
+    "UNRESOLVED_COUNTER_TRANSFER_PROTECTED": "UQ-COUNTER-TRANSFER-PROTECTED",
+    "UNRESOLVED_DAMAGE_TRIGGER_TIMING": "UQ-DAMAGE-TRIGGER-TIMING",
+    "UNRESOLVED_DESTINY_BOND_KNOCKOUT": "UQ-DESTINY-BOND-KO",
+    "UNRESOLVED_DEVOLUTION_INTERMEDIATE_KNOCKOUT": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+    "UNRESOLVED_DEVOLUTION_SPRAY_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_DEVOLUTION_TARGET_DISGUISED": "UQ-SHAPESHIFT-SCOPE",
+    "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_DISCARD_DECK_SHORT": "UQ-STATED-COUNT-SHORT",
+    "UNRESOLVED_DISCARD_ENERGY_TIMING": "UQ-DISCARD-ENERGY-TIMING-CONFUSION",
+    "UNRESOLVED_ENERGY_BURN_TRANSFER": "UQ-ENERGY-BURN-TRANSFER",
+    "UNRESOLVED_ENERGY_REMOVAL_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": "UQ-ENERGY-RETRIEVAL-WITHOUT-TARGET",
+    "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE": "UQ-ENERGY-RETRIEVAL-ZERO-CHOICE",
+    "UNRESOLVED_ENTRY_POWER_DURING_ATTACK": "UQ-ENTRY-POWER-DURING-ATTACK",
+    "UNRESOLVED_ESP_HOLDER_NOT_SABRINAS": "UQ-ESP-REDO",
+    "UNRESOLVED_ESP_MULTIPLE": "UQ-ESP-REDO",
+    "UNRESOLVED_ESP_OPPONENT_COIN_TOSS": "UQ-ESP-REDO",
+    "UNRESOLVED_EVOLUTION_HP": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+    "UNRESOLVED_EVOLUTION_PERMISSION_FROM_DECK": "UQ-EVOLUTION-PERMISSION-FROM-DECK",
+    "UNRESOLVED_EVOLVE_AFTER_DEVOLUTION": "UQ-DEVOLUTION-SAME-TURN",
+    "UNRESOLVED_EXTRA_ENERGY_COLORLESS": "UQ-EXTRA-ENERGY-COLORLESS",
+    "UNRESOLVED_FLEE_DURING_OWN_ATTACK": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT": "UQ-FUCHSIA-GYM-ONCE-PER-TURN",
+    "UNRESOLVED_FUCHSIA_GYM_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_FULL_HEAL_SCOPE": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_GOOP_GAS_NEW_POKEMON": "UQ-GOOP-GAS-NEW-POKEMON",
+    "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH": "UQ-GUST-WITHOUT-OPPONENT-BENCH",
+    "UNRESOLVED_KOGA_POISON_ORDER": "UQ-POISON-OVERWRITE-ORDER",
+    "UNRESOLVED_LAST_RESORT_UNDAMAGED_TARGET": "UQ-TARGET-WITHOUT-EFFECT",
+    "UNRESOLVED_LAST_RESORT_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_LT_SURGE_WITHOUT_BASIC": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_MAX_HP_DROP": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
+    "UNRESOLVED_MINEFIELD_DAMAGE_RECEIVED_POWER": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+    "UNRESOLVED_MIRROR_MOVE_ATTACK_CONDITIONS": "UQ-COPIED-ATTACK",
+    "UNRESOLVED_MIRROR_MOVE_LASTING_EFFECT": "UQ-COPIED-ATTACK",
+    "UNRESOLVED_MIRROR_MOVE_NON_ATTACK": "UQ-COPIED-ATTACK",
+    "UNRESOLVED_MIRROR_MOVE_RECEIVED_ATTACK": "UQ-COPIED-ATTACK",
+    "UNRESOLVED_MISTYS_WISH_WITHOUT_HAND": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_MISTYS_WRATH_SHORT_DECK": "UQ-STATED-COUNT-SHORT",
+    "UNRESOLVED_MISTY_SELF_DAMAGE": "UQ-MISTY-SELF-DAMAGE",
+    "UNRESOLVED_MR_FUJI_WITHOUT_BENCH": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_MULTIPLE_ATTACK_CHECKS": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+    "UNRESOLVED_NIGHTLY_GARBAGE_RUN_ZERO_CHOICE": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_NINJA_TRICK_ATTACK_COIN_ORDER": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_NINJA_TRICK_LEAVES_WITH_POKEMON": "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+    "UNRESOLVED_NINJA_TRICK_UNDER_TRAINER_BAN": "UQ-TRAINER-BAN-SCOPE",
+    "UNRESOLVED_OPPONENT_POKEMON_COUNTERS": "UQ-OPPONENT-POKEMON-COUNTERS",
+    "UNRESOLVED_PLAY_AS_POKEMON_RETREAT": "UQ-PLAY-AS-POKEMON",
+    "UNRESOLVED_PLAY_AS_POKEMON_SETUP": "UQ-PLAY-AS-POKEMON",
+    "UNRESOLVED_POISON_DAMAGE_RECEIVED_POWER": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+    "UNRESOLVED_POKEMON_FLUTE_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_POWER_DISCARD_WITHOUT_HAND": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_POWER_HEAL_WITHOUT_DAMAGE": "UQ-TARGET-WITHOUT-EFFECT",
+    "UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION": "UQ-DEVOLUTION-SAME-TURN",
+    "UNRESOLVED_POWER_SWITCH_WITHOUT_OPPONENT_BENCH": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_POWER_ZERO_CARDS": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_PREVENTED_EFFECT_COIN": "UQ-COIN-IN-NULLIFIED-ELEMENT",
+    "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+    "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+    "UNRESOLVED_RAINBOW_DAMAGE_RECEIVED_POWER": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+    "UNRESOLVED_RAINBOW_ENERGY_TYPE": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+    "UNRESOLVED_REACTION_BY_KNOCKED_OUT_POKEMON": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_REACTIVE_SWITCH_TRANSFORMED_ATTACKER": "UQ-REACTIVE-SWITCH-DURING-ATTACK",
+    "UNRESOLVED_RECALL_EARLIER_STAGE": "UQ-RECALL-SCOPE",
+    "UNRESOLVED_RECALL_FORM": "UQ-RECALL-SCOPE",
+    "UNRESOLVED_RECALL_TARGET_CHANGED": "UQ-RECALL-SCOPE",
+    "UNRESOLVED_RECALL_WITHOUT_PRE_EVOLUTION_ATTACK": "UQ-RECALL-SCOPE",
+    "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET": "UQ-REDUCED-DAMAGE-BENCH-TARGET",
+    "UNRESOLVED_RETREAT_COST_FLOOR": "UQ-RETREAT-COST-PAYMENT",
+    "UNRESOLVED_RETREAT_OVERPAY": "UQ-RETREAT-COST-PAYMENT",
+    "UNRESOLVED_RETURN_IN_PLAY_TO_DECK_KNOCKOUT": "UQ-RETURN-TO-DECK-KO-ORDER",
+    "UNRESOLVED_REVIVE_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_ROCKETS_TRAP_ZERO_CHOICE": "UQ-UP-TO-ZERO-CHOICE",
+    "UNRESOLVED_ROCKET_GRUNT_WITHOUT_BENCH": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_SABRINA_SOURCE_WITHOUT_ENERGY": "UQ-TARGET-WITHOUT-EFFECT",
+    "UNRESOLVED_SABRINA_WITHOUT_TWO_POKEMON": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_SCOOP_UP_ATTACHED_TRAINER": "UQ-ATTACHED-CARDS-WHEN-RETURNED",
+    "UNRESOLVED_SCOOP_UP_LAST_POKEMON": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_SCRAM_POWER_RESTORED": "UQ-SCRAM-TIMING",
+    "UNRESOLVED_SCRAM_TIMING": "UQ-SCRAM-TIMING",
+    "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": "UQ-FACE-DOWN-CARD",
+    "UNRESOLVED_SECRET_PLAN_MINEFIELD": "UQ-FACE-DOWN-CARD",
+    "UNRESOLVED_SHAPESHIFT_AGAIN": "UQ-SHAPESHIFT-SCOPE",
+    "UNRESOLVED_SHAPESHIFT_ENTRY_POWER": "UQ-SHAPESHIFT-SCOPE",
+    "UNRESOLVED_SHAPESHIFT_SUPPRESSED": "UQ-SHAPESHIFT-SCOPE",
+    "UNRESOLVED_SHIFT_COLOR_DURATION": "UQ-SHIFT-COLOR-DURATION",
+    "UNRESOLVED_SINKHOLE_TIMING": "UQ-SINKHOLE-TIMING",
+    "UNRESOLVED_SPECIAL_POISON_OVERWRITE": "UQ-POISON-OVERWRITE-ORDER",
+    "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN": "UQ-TRAINER-BAN-SCOPE",
+    "UNRESOLVED_STATED_CARDS_SHORT": "UQ-STATED-COUNT-SHORT",
+    "UNRESOLVED_SUPER_POTION_UNDAMAGED_TARGET": "UQ-TARGET-WITHOUT-EFFECT",
+    "UNRESOLVED_TRAINER_DAMAGE_REDUCTION": "UQ-NON-ATTACK-DAMAGE-MODIFIERS",
+    "UNRESOLVED_TRAINER_WITHOUT_TARGET": "UQ-CARD-USE-WITHOUT-TARGET",
+    "UNRESOLVED_TRANSFORM_COPIED_POWER": "UQ-TRANSFORM-SCOPE",
+    "UNRESOLVED_TRANSFORM_ENERGY_COUNT": "UQ-TRANSFORM-SCOPE",
+    "UNRESOLVED_TRANSFORM_MODIFIED_DEFENDER": "UQ-TRANSFORM-SCOPE",
+    "UNRESOLVED_TRANSFORM_SPECIAL_ENERGY": "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY",
+    "UNRESOLVED_VERMILION_GYM_ATTACK_ORDER": "UQ-ATTACK-PRE-DAMAGE-COIN-ORDER",
+    "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER": "UQ-STATED-COUNT-SHORT",
+    "UNRESOLVED_VIRTUAL_ONCE_ATTACK": "UQ-COPIED-ATTACK",
+}
+
+
+def assert_stop_code_counts_since(test, links, stop_codes: int, unresolved: int) -> None:
+    """v0.72: 研究の対応表の停止コード・未解決の裁定の数が、ある版の数（``stop_codes``・``unresolved``）から減っていないこと。
+
+    v0.71 までの版のテストは、そのときの総数を等号で固定していて、あとの版で停止コードを加えるたびに関係のないテストが壊れていた。総数がエンジンの側の集合と同じことは
+    tests/test_research_links_v0_18e.py が等号で確かめるので、版ごとのテストはその版の数を下限として確かめる（その版で加えたコードがあることは各テストが確かめる）。"""
+    counts = links["counts"]
+    test.assertEqual(counts["engine_stop_codes"], len(links["stop_codes"]))
+    test.assertGreaterEqual(counts["engine_stop_codes"], stop_codes)
+    test.assertGreaterEqual(counts["engine_unresolved_rulings"], unresolved)
+
+
+# v0.75（docs/search-energy-pokemon-v0.75.md）: 拡張パック以外の商品のポケモン 15 枚（kyuura データの採用）
+BROCKS_ZUBAT_GD1 = "GD1-001"  # タケシのズバット（ポケモンジム第1弾。しらせる・つばさでうつ。PMCG5-001 とは別のカード）
+MISTYS_PSYDUCK_GD2 = "GD2-001"  # カスミのコダック（ポケモンジム第1弾。ひっかく・たすけをよぶ。PMCG5-021 とは別のカード）
+MISTYS_TENTACOOL_GD2 = "GD2-003"  # カスミのメノクラゲ（ふしぎなひかり・くらげのむれ。PMCG5-030 とは別のカード）
+BLAINES_VULPIX_GD5 = "GD5-003"  # カツラのロコン（かみつく・おにびあつめ）
+BLAINES_GROWLITHE_GD5 = "GD5-006"  # カツラのガーディ（もえあがる・のしかかり。GD5-005 とは別のカード）
+SABRINAS_DROWZEE_GD6 = "GD6-009"  # ナツメのスリープ（エナジーサポート・マインドショック。PMCG6-045 とは別のカード）
+PARAS_ES1 = "ES1-010"  # パラス（ひっかく・ほうしをとばす）
+GROWLITHE_ES3, GROWLITHE_QSG = "ES3-010", "QSG-009"  # ガーディ（おつかい・ひのこ。同じデータ）
+KINGLER_ES3 = "ES3-014"  # キングラー（クラブから進化。しおまねき・もろばバサミ。PMCG3-019 とは別のカード）
+PIKACHU_QSG, PIKACHU_PR1 = "QSG-021", "PR1-020"  # ピカチュウ（じゅうでん・10まんボルト。同じデータ）
+MEWTWO_PR1, MEWTWO_PR1_B = "PR1-007", "PR1-008"  # ミュウツー（エネルギーきゅうしゅう・サイコバーン。同じデータ）
+SUNKERN_PRN = "PRN-032"  # ヒマナッツ（せいちょう・メガドレイン）
+V0_75_POKEMON = (BROCKS_ZUBAT_GD1, MISTYS_PSYDUCK_GD2, MISTYS_TENTACOOL_GD2, BLAINES_VULPIX_GD5, BLAINES_GROWLITHE_GD5, SABRINAS_DROWZEE_GD6, PARAS_ES1,
+                 GROWLITHE_ES3, GROWLITHE_QSG, KINGLER_ES3, PIKACHU_QSG, PIKACHU_PR1, MEWTWO_PR1, MEWTWO_PR1_B, SUNKERN_PRN)
+V0_75_CARDS = V0_75_POKEMON

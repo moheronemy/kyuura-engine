@@ -32,7 +32,9 @@ from kyuura_engine.resolution import PREFLIGHT_MODES
 from kyuura_engine.resolution.programs import BUILDERS, BenchFromDeck, Drain
 from kyuura_engine.rng import rng_fingerprint
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import (
+    PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT,  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
+)
 from tests.helpers import (
     BELLSPROUT,
     BROCKS_ZUBAT,
@@ -74,6 +76,7 @@ from tests.helpers import (
     T,
     apply_kernel,
     build_test_state,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import serialization_problems
@@ -217,8 +220,8 @@ class CardDataTest(unittest.TestCase):
         for card in V0_32_POKEMON:
             record = sources[card]
             with self.subTest(card=card):
-                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", KYUURA_COMMIT))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", ADOPTED_COMMIT))
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 self.assertNotIn(card, verified)
                 [check] = record["external_checks"]
                 self.assertEqual(check["site"], "pcg-search.com")

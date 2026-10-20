@@ -30,6 +30,14 @@ from kyuura_engine.rng import rng_fingerprint, rng_from_json, rng_state_to_json
 from kyuura_engine.state import TrainerInUse
 
 from tests.helpers import (
+    KOGAS_NINJA_TRICK,
+    V0_63_CARDS,
+    V0_66_CARDS,
+    V0_67_CARDS,
+    V0_69_TRAINERS,
+    V0_71_TRAINERS,
+    V0_73_CARDS,
+    V0_74_CARDS,
     SABRINAS_PSYCHIC_CONTROL, V0_57_CARDS,
     BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
@@ -77,14 +85,14 @@ class TrainerRegistryTest(unittest.TestCase):
         # v0.2d はワザ（ドードーの「みだれづき」）を加えたので id が変わった。v0.2e でディフェンダーを加えた。
         # トレーナーの登録は v0.2e から v0.18 まで同じ。v0.19 でオーキドはかせ、v0.21 で突風、v0.22 でパソコン通信、v0.23 でエネルギー回収、v0.24 でポケモン交換おじさん、v0.25 でポケモン育て屋さん、v0.44 でサカキ、v0.47 でピッピ人形・なにかの化石、v0.49 で思い出させる、v0.50 で退化スプレー、v0.51 で元気のかけら・ポケモンの笛、v0.52 でフジろうじん・ポケモン回収、v0.53 で山札・トラッシュからカードを選ぶ 10 枚、v0.54 で手札の入れ替え・ドロー・情報の確認の 10 枚、v0.55 ですぐに使い終わる 16 枚、v0.56 で相手の決定・番の終わり・期限のある効果の 10 枚、v0.57 でスタジアム 14 枚を加えた（登録表の id は
         # v0.17・v0.18 と同じく変えていない）
-        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), tuple(sorted(V0_57_CARDS + (ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, FULL_HEAL,
+        self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), tuple(sorted(V0_57_CARDS + (KOGAS_NINJA_TRICK, ENERGY_REMOVAL, POTION, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, FULL_HEAL,
                           PLUSPOWER, POKEDEX, POKEMON_CENTER, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER, SUPER_ENERGY_REMOVAL,
                           IMPOSTER_OAK, COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER, LASS, POKE_BALL, ENERGY_SEARCH,
                           GAMBLER, MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS)))  # v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -103,6 +111,7 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "recall_pre_evolution_attacks",  # v0.49 の思い出させる
                                            "devolve_own_pokemon",  # v0.50 の退化スプレー
                                            "bench_basic_from_own_discard_with_counters", "bench_basic_from_opponent_discard",  # v0.51 の元気のかけら・ポケモンの笛
+                                           "bench_basic_from_own_discard_then_counters",  # v0.71 のポケモンジム第1弾の元気のかけら
                                            "return_benched_pokemon_to_deck", "return_own_pokemon_basic_to_hand",  # v0.52 のフジろうじん・ポケモン回収
                                            # v0.53 の山札・トラッシュからカードを選ぶ 10 枚（共通の 3 つの型）
                                            "search_deck_trainer", "take_from_discard_trainer", "return_hand_to_deck_then_draw",
@@ -126,7 +135,23 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "extra_trainer_cost_stadium", "trainer_coin_stadium",
                                        "use_opponent_discard_trainer",
                                            "protect_attached_energy",  # v0.59 のタケシの保護（カツラ・まきちらせ!ベトベトガスは v0.56 の trainer_turn_effect）
-                                       "alternate_coins_until_tails_damage"})  # v0.61 のバトル場は穴だらけ!
+                                       "alternate_coins_until_tails_damage",  # v0.61 のバトル場は穴だらけ!
+                                   # v0.63 のロケット団参上!・くすぐりマシーン・たたきつけろ!挑戦状・カツラのクイズ その3
+                                   "reveal_all_prizes", "coin_set_aside_opponent_hand_else_end_turn", "challenge_bench_from_decks", "blaines_quiz",
+                               # v0.65 のキョウ秘伝,変わり身の術
+                               "ninja_trick",
+                               # v0.66 のお上品攻撃・ナツメのESP・カスミの勝負
+                               "reduce_attack_damage_as_wished", "redo_attack_coins", "rock_paper_scissors_refresh_hand",
+                               # v0.67 のマチスの秘策
+                               "place_face_down_on_bench",
+                                           # v0.73: 検索・回収・ドローのトレーナー 18 枚の新しい型（月の石・ポケモン再転送は v0.53 の型）
+                                           "discard_energy_then_bench_basic_from_discard", "discard_deck_top_then_return_type_energy",
+                                           "look_top_take_pokemon_then_shuffle", "search_named_from_deck_or_discard",
+                                           "coin_return_own_pokemon_with_attached_to_hand", "coin_draw_trainer", "super_energy_retrieval",
+                                           "each_player_may_draw_then_end_turn",
+                                           # v0.74: スタジアム 13 枚の新しい型（ポケモンタワー・エネルギースタジアム・ラッキースタジアム・キョウの忍者ジム）
+                                           "discard_to_hand_suppression_stadium", "coin_retrieve_basic_energy_stadium", "coin_draw_stadium",
+                                           "coin_bench_owner_basic_from_deck_stadium"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -207,14 +232,14 @@ class TrainerRegistryTest(unittest.TestCase):
         self.assertEqual(added.trainer_ids(), trainers)  # ワザを加えてもトレーナーの登録は残る
         removed = DEFAULT_EFFECTS.without_trainers("y", [POTION])
         # PLUSPOWER は v0.2c、DEFENDER は v0.2e、PROFESSOR_OAK は v0.19、GUST は v0.21、COMPUTER_SEARCH は v0.22、ENERGY_RETRIEVAL は v0.23、POKEMON_TRADER は v0.24、POKEMON_BREEDER は v0.25、GIOVANNI は v0.44、CLEFAIRY_DOLL・MYSTERIOUS_FOSSIL は v0.47、RECALL は v0.49、SCOOP_UP・MR_FUJI は v0.52、MAINTENANCE〜BROCK_TRAINING の 10 枚は v0.53、IMPOSTER_OAK〜POKEDEX の 10 枚は v0.54、ENERGY_REMOVAL・SUPER_POTION など v0.55 の 16 枚は v0.55、ERIKAS_PERFUME〜KOGA_TRAINER の 10 枚は v0.56
-        self.assertEqual(removed.trainer_ids(), tuple(sorted(V0_57_CARDS + (ENERGY_REMOVAL, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, FULL_HEAL, PLUSPOWER,
+        self.assertEqual(removed.trainer_ids(), tuple(sorted(V0_57_CARDS + (KOGAS_NINJA_TRICK, ENERGY_REMOVAL, GUST, SWITCH, BILL, SUPER_POTION, ENERGY_RETRIEVAL, PROFESSOR_OAK, REVIVE, DEFENDER, FULL_HEAL, PLUSPOWER,
                           POKEDEX, POKEMON_CENTER, POKEMON_FLUTE, MAINTENANCE, DEVOLUTION_SPRAY, ITEM_FINDER, SUPER_ENERGY_REMOVAL, IMPOSTER_OAK,
                           COMPUTER_SEARCH, CLEFAIRY_DOLL, SCOOP_UP, POKEMON_TRADER, POKEMON_BREEDER, LASS, POKE_BALL, ENERGY_SEARCH, GAMBLER,
                           MYSTERIOUS_FOSSIL, RECYCLE, MR_FUJI, SLEEP_TRAINER, NIGHTLY_GARBAGE_RUN, IMPOSTER_OAKS_REVENGE, BOSS_WAY,
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER))))  # v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS)))  # v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

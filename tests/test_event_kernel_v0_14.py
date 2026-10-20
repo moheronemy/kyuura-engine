@@ -22,28 +22,64 @@ import unittest
 from pathlib import Path
 
 from kyuura_engine import (
-    DEFAULT_EFFECTS, EndTurn, EngineError, Phase, PromoteActive, ResolveDecision, TakePrize, UseAttack,
-    check_invariants, state_to_dict,
+    DEFAULT_EFFECTS,
+    EndTurn,
+    EngineError,
+    Phase,
+    PromoteActive,
+    ResolveDecision,
+    TakePrize,
+    UseAttack,
+    check_invariants,
+    state_to_dict,
 )
 from kyuura_engine.decisions import FORCED_SWITCH, KO_PREVENTION, POST_KNOCKOUT_POWER
 from kyuura_engine.effects import AttackKey
-from kyuura_engine.rng import rng_fingerprint
-from tests.helpers import (
-    BUTTERFREE, DARK_WARTORTLE, DODUO, FIGHTING, FIRE, GASTLY, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, GRASS, H,
-    HAUNTER, LIGHTNING, MACHAMP, MACHOKE, MACHOP, METAPOD, MUK, PARAS, PIKACHU, PLUSPOWER, PONYTA, PSYCHIC, RATTATA,
-    ROCKET_SQUIRTLE, ROCKETS_MOLTRES, T, WEEDLE, ATTACK_TYPES_SINCE_V0_17, build_test_state, with_coin_results,
-)
-from tests import legacy_reference
-from tests.log_audit import log_problems, serialization_problems
 
 # v0.16d: v0.14 の名前の互換の層（experiments.event_kernel）を外したので、本番の解決の基盤と内部の入口を直接使う
 from kyuura_engine.engine import apply_command_traced, apply_command_with
-from kyuura_engine.resolution import BUILDERS, PREFLIGHT_MODES
+from kyuura_engine.resolution import BUILDERS, PREFLIGHT_MODES, codec
 from kyuura_engine.resolution import catalog as C
-from kyuura_engine.resolution import codec
 from kyuura_engine.resolution import events as EV
 from kyuura_engine.resolution import kernel as KN
 from kyuura_engine.resolution.questions import QUESTIONS
+from kyuura_engine.rng import rng_fingerprint
+from tests import legacy_reference
+from tests.helpers import (
+    ATTACK_TYPES_SINCE_V0_17,
+    BUTTERFREE,
+    DARK_WARTORTLE,
+    DODUO,
+    FIGHTING,
+    FIRE,
+    GASTLY,
+    GIOVANNIS_MACHAMP,
+    GIOVANNIS_MACHOKE,
+    GIOVANNIS_MACHOP,
+    GRASS,
+    HAUNTER,
+    LIGHTNING,
+    MACHAMP,
+    MACHOKE,
+    MACHOP,
+    METAPOD,
+    MUK,
+    PARAS,
+    PIKACHU,
+    PLUSPOWER,
+    PONYTA,
+    PSYCHIC,
+    RATTATA,
+    ROCKET_SQUIRTLE,
+    ROCKETS_MOLTRES,
+    V0_69_POWER_CARDS,
+    WEEDLE,
+    H,
+    T,
+    build_test_state,
+    with_coin_results,
+)
+from tests.log_audit import log_problems, serialization_problems
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT / "tools") not in sys.path:
@@ -606,20 +642,26 @@ class CatalogTest(unittest.TestCase):
                            # v0.60
                            "fail_and_return_on_attack",
                            # v0.61
-                           "damage_on_opponent_retreat", "return_to_deck_at_remaining_hp")
+                           "damage_on_opponent_retreat", "return_to_deck_at_remaining_hp",
+                           # v0.68: イマクニ？のドードーの［にげまくり］（簡略化した仕様。処理を変えないので、どの窓にも入れない）
+                           "simplified_run_away")
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
             with self.subTest(power=str(key)):
                 expected = ((not effect.declared and effect.implementation_id not in outside_windows)
-                            or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out", "beam_on_knock_out"))
+                            or effect.implementation_id in ("prevent_knock_out_on_heads", "return_to_hand_on_knock_out", "beam_on_knock_out",
+                                                           # v0.65: ［にげこむ］・［ベンチガード］（宣言する。ワザの途中の決定を出す定義が対応表にある）
+                                                           "flee_after_attack_damage", "take_bench_damage_instead"))
                 self.assertEqual(definition is not None, expected)
+        # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_POWER_CARDS）は元のカードと同じ登録なので、ここでは数えない
         self.assertEqual([str(k) for k in DEFAULT_EFFECTS.power_keys()
-                          if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows],
+                          if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows
+                          and k.card_id not in V0_69_POWER_CARDS],
                          ["PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
-                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0"])
+                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

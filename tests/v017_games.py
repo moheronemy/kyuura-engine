@@ -25,6 +25,7 @@ from kyuura_engine.effects import MAX_HP_DROP_CODE, PLAY_AS_POKEMON_RETREAT_CODE
 from kyuura_engine.continuous import goop_gas_effects  # v0.59
 from kyuura_engine.effects import GOOP_GAS_SCOPE_CODE, blaine_effects, energy_attach_block, energy_unit_count  # v0.59
 from kyuura_engine.effects import retreat_trap_powers, scram_slots  # v0.61
+from kyuura_engine.effects import POKEMON_TOWER_TRAINER_CODE, discard_to_hand_suppressor  # v0.74
 from kyuura_engine.persistent import cannot_retreat, powers_use_prevented
 from tests.helpers import GIOVANNIS_MACHAMP, HAUNTER, MACHAMP, MUK, ROCKETS_MOLTRES
 from tests.test_alakazam_games_v0_7 import POWER_REJECTIONS
@@ -146,6 +147,14 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     active = state.players[command.player].active
                     if active.evolution_stack and active.disguise is None:
                         raise AssertionError(f"対戦ポケモンが進化していて「ばける」でもないのに {error.code}: {command}")
+                    observed[f"stopped_PlayTrainer_{error.code}"] += 1
+                    turn_tried.add(("max_hp_drop_card", command.card))
+                    continue
+                if error.code == POKEMON_TOWER_TRAINER_CODE and isinstance(command, PlayTrainer):
+                    # v0.74: ポケモンタワーで効果がすべて消えるトレーナー（エネルギー回収・ダウジングマシーンなど。PT1）。場から確かめる（場のスタジアムがポケモンタワー）。
+                    # この番はそのカードを使わない
+                    if discard_to_hand_suppressor(state) is None:
+                        raise AssertionError(f"場のスタジアムがポケモンタワーでないのに {error.code}: {command}")
                     observed[f"stopped_PlayTrainer_{error.code}"] += 1
                     turn_tried.add(("max_hp_drop_card", command.card))
                     continue
@@ -343,7 +352,7 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
         observed["accepted"] += 1
         if isinstance(command, UseAttack):
             attacker = state.players[command.player].active
-            observed[f"attack_{state.card_def(attacker.card).id}#{command.attack_index}"] += 1
+            observed[f"attack_{state.cards[attacker.card].card_id}#{command.attack_index}"] += 1  # v0.67: うらのカードでも数える
         commands.append(command)
         state = new
     raise AssertionError("決まった手数で終わらなかった")

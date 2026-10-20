@@ -59,10 +59,11 @@ class Oracle:
     v0.35: 結果を「おもて」の数だけで使う 2 枚以上のコイン（``coin_group``）は、1 つの値で「おもて」の数を選ぶ（``group`` が False なら、
     今までどおり 1 枚ずつ。まとめた先読みと、まとめない先読みを比べるテストのため）。"""
 
-    def __init__(self, script: tuple[int, ...], group: bool = True):
+    def __init__(self, script: tuple[int, ...], group: bool = True, memo: dict | None = None):
         self.script = script
         self.used = 0
         self.group = group
+        self.memo = {} if memo is None else memo  # v0.64: 1 回の先読み（``explore``）の中で共有する、「おもて」の数の組
 
     def _next(self, n: int) -> int:
         if self.used < len(self.script):
@@ -85,6 +86,21 @@ class Oracle:
         heads = self._next(count + 1)
         return (0,) * (count - heads) + (1,) * heads
 
+    def coin_run(self, classes) -> int:
+        """「うら」が出るまで投げるコイン（v0.64。``coins.flip_until_tails``）。台本の 1 つの値で、「おもて」の数の組の代表（``resolution.unbounded``）の
+        どれかを選ぶ（値の小さい順 = 「おもて」の数の小さい順）。
+
+        組（``classes()``）は、この先読みの中で、ここまでに使った台本の値が同じなら同じ（複製の上の処理は台本の値だけで決まる）ので、使った値の並びで
+        ``memo`` に覚えて、ほかの結果を試すときに求め直さない。"""
+        prefix = self.script[:self.used]
+        found = self.memo.get(prefix)
+        if found is None:
+            found = self.memo[prefix] = classes()
+        representatives = found.representatives
+        if not representatives:
+            raise RuntimeError("先読みで「おもて」の数の組がない（エンジンの不具合）")
+        return representatives[self._next(len(representatives))]
+
     def choose(self, alternatives: list):
         if not alternatives:
             raise RuntimeError("先読みで選べるものがない決定（エンジンの不具合）")
@@ -102,10 +118,11 @@ def explore(state: GameState, body: Callable[[Resolution], None], catalog: Catal
     found: dict[str, OpenQuestion] = {}
     branches = 0
     stack: list[tuple[int, ...]] = list(reversed(roots))
+    memo: dict = {}
     while stack:
         script = stack.pop()
         sim = state.clone()
-        oracle = Oracle(script, group)
+        oracle = Oracle(script, group, memo)
         sim.rng = oracle
         res = Resolution(sim, catalog=catalog, trace=Trace(), dry_run=True, oracle=oracle)
         try:
@@ -166,6 +183,19 @@ class RecordingRandom:
         bits = tuple(self._rng.getrandbits(1) for _ in range(count))
         self.tokens.append((sum(bits), count + 1))
         return bits
+
+    def record_run(self, classes) -> tuple[int, ...]:
+        """「うら」が出るまで投げるコイン（v0.64）。元の乱数で 1 枚ずつ「うら」が出るまで投げ（乱数の使い方は実際の対戦と同じ）、実際に出た「おもて」の数の
+        組の位置を (位置, 組の数) として 1 つ記録する（``Oracle.coin_run`` と同じ値の意味）。"""
+        bits = []
+        while True:
+            bit = self._rng.getrandbits(1)
+            bits.append(bit)
+            if not bit:
+                break
+        found = classes()
+        self.tokens.append((found.index_of_heads(len(bits) - 1), len(found.representatives)))
+        return tuple(bits)
 
     def __getattr__(self, name):
         self.opaque = True

@@ -39,8 +39,9 @@ from kyuura_engine.resolution import PREFLIGHT_MODES
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import AttackCoinCheck, CannotRetreat
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
+    kyuura_records_since_v0_69,
     CLEFABLE,
     CLEFAIRY,
     DARK_JOLTEON,
@@ -693,7 +694,7 @@ class CardDataTest(unittest.TestCase):
             record = sources["cards"][card]
             with self.subTest(card=card):
                 self.assertEqual((record["basis"], record["status"], record["kyuura_commit"], record["kyuura_records"]),
-                                 (cs.KYUURA_DATA, cs.ADOPTED, KYUURA_COMMIT, []))
+                                 (cs.KYUURA_DATA, cs.ADOPTED, ADOPTED_COMMIT, kyuura_records_since_v0_69(card)))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 [check] = record["external_checks"]
                 self.assertEqual((check["site"], check["edition"]["list_number"], check["checked_on"]), ("pcg-search.com", EDITIONS[card], "2026-10-16"))
                 self.assertFalse(any(d["affects_behavior"] for d in check["differences"]))

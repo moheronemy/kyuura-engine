@@ -49,7 +49,10 @@ from kyuura_engine.observation import PUBLIC_EVENTS
 from kyuura_engine.resolution import PREFLIGHT_MODES, contract, programs, v013_checks
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from scripts import check_card_sources as cs
+from tests.helpers import assert_stop_code_counts_since
 from tests.helpers import (
+    V0_69_STOP_CODE_ISSUES,
+    kyuura_records_since_v0_69,
     ABRA,
     AERODACTYL,
     ATTACK_TYPES_SINCE_V0_17,
@@ -314,7 +317,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = records[card]
                 self.assertEqual((record["basis"], record["status"]), ("kyuura_data", "adopted"))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 checks = record["external_checks"]
                 self.assertEqual(len(checks), 1)
                 self.assertTrue(checks[0]["url"].startswith("https://pcg-search.com/"))
@@ -329,11 +332,11 @@ class CardDataTest(unittest.TestCase):
         links = json.loads((ROOT / "kyuura_engine" / "data" / "research_links.json").read_text(encoding="utf-8"))
         for code in NEW_CODES:
             with self.subTest(code=code):
-                self.assertEqual(links["stop_codes"][code]["kyuura_disposition"], "not_in_kyuura")
+                self.assertEqual((links["stop_codes"][code]["kyuura_disposition"], links["stop_codes"][code]["kyuura_issue"]), ("issue", V0_69_STOP_CODE_ISSUES[code]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
                 self.assertEqual([(r["version"], r["document"]) for r in links["stop_codes"][code]["engine_rulings"]],
                                  [("v0.50", "docs/mew-devolution-spray-v0.50.md")])
         # v0.50 で 80・81。v0.51 で RV1・FT1 の 2 件を加えた（docs/discard-to-bench-v0.51.md）
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (132, 134))  # v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた
+        assert_stop_code_counts_since(self, links, 149, 151)  # v0.72: 総数の等号は test_research_links_v0_18e が確かめる。  # v0.68 で DR8・DR13 を加えた。v0.52 で FJ1・SU1・SU2、v0.53 で ST1・NG1 を加えた、v0.55 で MW1・EM1・SP1・FH1・GL1・GL2・SB1・SB2 を加えた、v0.56 で LS1・RT1・RG1・MY1・MS1・KG1 を加えた、v0.57 で STB1・TG1・FG1・FG2・EX1・VG1・VM1・CH1、v0.58 で RB1〜RB4・TE2・RT1 を加えた、v0.59 で GG1・BL1・CB1・BZ1〜BZ4 を加えた。v0.60 で TS1 を加え、コードのない SS1 を数えた。v0.61 で SH1・SC1・SC2・TD1 を加え、Z9 に停止コードを付けた。v0.62 で MM1・MM2・OM1・OM2 を加え、コードのない ED1 を数えた。v0.63 で QZ1 を加えた  # v0.65 で NT1〜NT3・RX1・FL1・BG1・BG2・KD1 を加えた。v0.66 で CA1・ES1〜ES3 を加えた  # v0.67 で FD1・FD2 を加えた
         # v0.50 の版で結んだ記録（v0.51 からほかの版の記録も同じ一覧にある）
         applied = [record["kyuura_record"] for record in links["applied_rule_records"]
                    if any(engine["version"] == "v0.50" for engine in record["engine"])]
@@ -912,7 +915,7 @@ class StateAndSerializationTest(unittest.TestCase):
         """退化した番（``devolved_turn``）は形式 15 で書き出す。形式 1〜14 は、退化したポケモンがいると ``ValueError``（黙って落とさない）。"""
         state = board(mon(KADABRA, (P,)), hand=(DEVOLUTION_SPRAY,))
         pid = state.players[0].active.pokemon_id
-        self.assertEqual(max(FORMAT_VERSIONS), 20)  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
+        self.assertEqual(max(FORMAT_VERSIONS), 22)  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
         before = state_to_dict(state, format_version=14)
         self.assertNotIn("devolved_turn", json.dumps(before))
         state = spray(state, pid, 1)

@@ -29,6 +29,8 @@ from kyuura_engine.effects import DEFAULT_EFFECTS
 from kyuura_engine.rng import copy_rng, rng_fingerprint
 
 from tests.helpers import (
+    CARD_DATA_COMMIT_SINCE_V0_69,
+    with_card_data_commit_before_v0_69,
     driver_retreat_cost,
     BILL, CATERPIE, DEFENDER, DIGLETT, FIGHTING, GRASS, PARAS, PLUSPOWER, POTION, RATTATA, SWITCH, WEEDLE, coin_events,
     energy_in_hand, expand_decklist, trainer_policy_command,
@@ -296,6 +298,9 @@ class GoldenSleepParalysisGameTest(unittest.TestCase):
         self.assertGreater(counted["applied_sleep"], 0)
         self.assertGreater(counted["applied_paralysis"], 0)
         data = full(state)
+        # v0.69: 写しの元を上げた（7d3f4ca）。固定値は変えず、写しの元の 2 か所だけを確かめた移行でもどして比べる（tests/helpers.py）
+        self.assertEqual(data["card_data"]["commit"], CARD_DATA_COMMIT_SINCE_V0_69)
+        data = with_card_data_commit_before_v0_69(data)
         self.assertEqual(data.pop("effects"), DEFAULT_EFFECTS.id)
         digest = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         self.assertEqual(digest, GOLDEN_DIGEST)

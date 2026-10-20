@@ -22,6 +22,8 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
 from .effects import (
+    knocked_by_hp,
+    EXPIRE_TO_HAND,
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after,
 )
@@ -30,7 +32,7 @@ from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, rem
                          remove_turn_start_expired_persistent_effects)
 from .state import POWER_SUPPRESSION, Halt, Phase
 from .history import prune as prune_history
-from .zones import draw_cards
+from .zones import draw_cards, return_expired_set_aside
 
 if TYPE_CHECKING:
     from .state import GameResult, GameState, PokemonInPlay
@@ -100,6 +102,7 @@ def _expire_at_turn_end(state: GameState) -> None:
     state.recalls = ()
     remove_expired_trainer_locks(state)  # v0.47
     remove_expired_trainer_effects(state)  # v0.56
+    return_expired_set_aside(state)  # v0.63: くすぐりマシーンで置いておいたカード（「次の相手の番の終わりまで」）
     state.add_event("turn_end", player=state.current_player)
 
 
@@ -177,7 +180,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         (owner, pokemon)
         for owner in order
         for pokemon in state.players[owner].in_play()
-        if pokemon.damage >= max_hp(state, pokemon)
+        if knocked_by_hp(state, pokemon)
     ]
 
 
@@ -227,6 +230,17 @@ def discard_expired_attachments(state: GameState) -> None:
             expired = [t for t in pokemon.trainers if t.discard_at_end_of_turn == state.turn_number]
             for attached in expired:
                 pokemon.trainers.remove(attached)
+                card_owner = state.cards[attached.card].owner
+                destination = state.effects.trainer_entry(state.cards[attached.card].card_id).effect.expiry_destination
+                if destination == EXPIRE_TO_HAND:
+                    # v0.66: お上品攻撃の「相手の番が終わったら、手札にもどす」。つけたプレイヤー（``attached.player``）と持ち主は同じ（つけて使うトレーナーは錯乱ジム・
+                    # サイキックコントロールで借りて使えない）。違えば、もどす手札が決まらないのでエンジンの不具合
+                    if card_owner != attached.player:
+                        raise RuntimeError(f"ついているトレーナー {attached.card} をつけたプレイヤー {attached.player} が持ち主 {card_owner} と違う（エンジンの不具合）")
+                    state.players[card_owner].hand.append(attached.card)
+                    state.add_event("return_attached_trainer", player=card_owner, card=attached.card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id,
+                                    reason="end_of_turn")
+                    continue
                 state.players[attached.player].discard.append(attached.card)
                 state.add_event(
                     "discard_attached_trainer",

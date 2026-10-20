@@ -36,8 +36,10 @@ from kyuura_engine.resolution.questions import QUESTIONS
 from kyuura_engine.rng import rng_fingerprint
 from kyuura_engine.state import AttackBarrier, DamageReduction
 from scripts import check_card_sources as cs
-from scripts.extract_kyuura_cards import KYUURA_COMMIT
+from scripts.extract_kyuura_cards import PREVIOUS_KYUURA_COMMIT as ADOPTED_COMMIT  # v0.69: 採用したときのデータのコミット（採用の記録は書き換えない）
 from tests.helpers import (
+    V0_69_STOP_CODE_ISSUES,
+    kyuura_records_since_v0_69,
     ABRA,
     ARBOK,
     ARTICUNO,
@@ -269,8 +271,8 @@ class CardDataTest(unittest.TestCase):
         for card in V0_38_POKEMON:
             with self.subTest(card=card):
                 record = sources[card]
-                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", KYUURA_COMMIT))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual((record["basis"], record["status"], record["kyuura_commit"]), ("kyuura_data", "adopted", ADOPTED_COMMIT))
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 with_text = {f"attack/{a.index}" for a in self.pool.get(card).attacks if a.text_ja}
                 self.assertEqual(set(record["play_text"]), with_text)
                 self.assertTrue(all(v == "kyuura_printed_text" for v in record["play_text"].values()))
@@ -295,7 +297,8 @@ class CardDataTest(unittest.TestCase):
         self.assertEqual((question.code, question.rulings), ("UNRESOLVED_DAMAGE_TRIGGER_TIMING", ("GK1",)))
         self.assertEqual([q.key for q in QUESTIONS.values() if q.code == question.code], ["damage_trigger_timing"])
         links = cs.load_links()
-        self.assertEqual(links["stop_codes"]["UNRESOLVED_DAMAGE_TRIGGER_TIMING"]["kyuura_disposition"], "not_in_kyuura")
+        self.assertEqual((links["stop_codes"]["UNRESOLVED_DAMAGE_TRIGGER_TIMING"]["kyuura_disposition"], links["stop_codes"]["UNRESOLVED_DAMAGE_TRIGGER_TIMING"]["kyuura_issue"]),
+                         ("issue", V0_69_STOP_CODE_ISSUES["UNRESOLVED_DAMAGE_TRIGGER_TIMING"]))  # v0.69: kyuura が論点に結んだ（v0.68 までは not_in_kyuura。tests/helpers.py の V0_69_STOP_CODE_ISSUES）
         # 停止コード・未解決の裁定の全体の数（v0.38 で 44・45）は tests/test_cd4_opponent_energy_coins_v0_33.py と tests/test_research_links_v0_18e.py が
         # 確かめる（後の版で増えるので、ここでは確かめない。v0.39）
         self.assertIn("GK1", DOC.read_text(encoding="utf-8"))

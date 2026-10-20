@@ -18,6 +18,7 @@ tests/test_muk_games_v0_8.py）。
 """
 
 import copy
+import dataclasses
 import pickle
 import unittest
 
@@ -39,10 +40,23 @@ from kyuura_engine import (
     state_to_dict,
     working_power_suppressors,
 )
-from kyuura_engine.cards import EnergyType, load_card_pool, pool_from_extract, read_extract, read_verification
+from kyuura_engine.cards import (
+    EnergyType,
+    load_card_pool,
+    pool_from_extract,
+    read_extract,
+    read_verification,
+)
 from kyuura_engine.continuous import suppressors_of
 from kyuura_engine.decisions import DECISION_PHASES
-from kyuura_engine.effects import DEFAULT_EFFECTS, PowerEffect, PowerKey, SuppressOtherPowers
+from kyuura_engine.effects import (
+    DEFAULT_EFFECTS,
+    EQUIVALENT_CARDS,
+    REPRINT_CARDS,
+    PowerEffect,
+    PowerKey,
+    SuppressOtherPowers,
+)
 from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import (
     ABRA,
@@ -64,6 +78,8 @@ from tests.helpers import (
     SEEL,
     SQUIRTLE,
     SWITCH,
+    V0_69_POWER_CARDS,
+    V0_71_POWER_CARDS,
     VENUSAUR,
     WARTORTLE,
     WATER,
@@ -236,12 +252,26 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
         # （どちらも常にはたらく。docs/virtual-attacks-transformation-v0.49.md）と、v0.60 のカスミのギャラドスの［はんこう］（ワザを使う時に自動的にはたらく。
         # docs/coins-defense-rebellion-v0.60.md）と、v0.61 のわるいダグトリオの［おとしあな］（相手が「にげる」時に自動的にはたらく）・タケシのオコリザルの
         # ［ずらかる］（残りHPが「10」になった時に自動的にはたらく。docs/reactive-powers-trainer-damage-v0.61.md）だけ
-        undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared}
+        # v0.69 の拡張パック以外の商品の同じカードの新しい id（tests/helpers.py の V0_69_POWER_CARDS）は元のカードと同じ登録なので、別に比べる
+        # v0.71: 拡張パック以外の商品の再録のカード（V0_71_POWER_CARDS）も元のカードの登録から作るので、別に比べる
+        undeclared = {k for k in DEFAULT_EFFECTS.power_keys() if not DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.declared
+                      and k.card_id not in V0_69_POWER_CARDS and k.card_id not in V0_71_POWER_CARDS}
+        for card in V0_71_POWER_CARDS:
+            new, original = DEFAULT_EFFECTS.power_entry(card, 0), DEFAULT_EFFECTS.power_entry(REPRINT_CARDS[card].original, 0)
+            effect = original.effect
+            if hasattr(effect, "text"):
+                effect = dataclasses.replace(effect, text=new.text_ja)  # 文面を引数に持つ型は、引数をこの版の文面にした（effects._with_reprint_cards）
+            self.assertEqual((new.effect, new.play_text_ja), (effect, original.play_text_ja if original.source != "kyuura data/cards.json" else new.text_ja))
+        for card in V0_69_POWER_CARDS:
+            self.assertIs(DEFAULT_EFFECTS.power_entry(card, 0), DEFAULT_EFFECTS.power_entry(EQUIVALENT_CARDS[card], 0))
         self.assertEqual(undeclared, {CHEMICAL_GAS, PowerKey("PMCG3-030", 0), PowerKey("PMCG1-057", 0), PowerKey("PMCG6-073", 0),
                                       PowerKey("PMCG6-033", 0), PowerKey("PMCG5-014", 0),
                                       *(PowerKey(card, 0) for card in ("PMCG2-027", "PMCG5-063", "PMCG6-010", "PMCG4-041", "PMCG2-040", "PMCG4-007",
                                                                        "PMCG4-010", "PMCG2-047", "PMCG3-015", "PMCG3-035", "PMCG3-041", "PMCG6-049",
-                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035", "PMCG4-043", "PMCG5-051"))})
+                                                                       "PMCG6-053", "PMCG3-042", "PMCG5-035", "PMCG4-043", "PMCG5-051",
+                                                                       # v0.68: キョウのベトベトンの［だつりょくえき］（採用の仕様で自動的にはたらく）・イマクニ？のドードーの
+                                                                       # ［にげまくり］（簡略化した仕様。処理を変えない）
+                                                                       "PMCG6-023", "PMCG6-074"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）
@@ -660,7 +690,7 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 20)  # 19 は v0.59（energy_roles）。18 は v0.58（trainer_stack・trainer_in_use の via）。17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
+                self.assertEqual(LATEST_FORMAT, 22)  # v0.67 で 22  # 19 は v0.59（energy_roles）。18 は v0.58（trainer_stack・trainer_in_use の via）。17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):

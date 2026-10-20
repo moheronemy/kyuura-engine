@@ -20,7 +20,7 @@ from enum import Enum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, Mapping
 
-from .cards import CardDefinition, EnergyType
+from .cards import FACE_DOWN_DEFINITION, CardDefinition, EnergyType
 from .rng import copy_rng
 
 if TYPE_CHECKING:
@@ -863,12 +863,36 @@ class CannotAttachEnergy:
     on_opponent: ClassVar[bool] = True
 
 
+@dataclass(frozen=True)
+class DoubledDamage:
+    """ワザによる「持続する効果」（v0.75）のうち、キングラー（ES3-014）の「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」（kyuura の印刷の
+    文面）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンが相手のワザのダメージを受けるとき、p.321 の 8 段階（「ワザを受けるポケモンの持っている「ダメージを
+    変更する効果」」）で、その段階のダメージを 2 倍にする（``damage.MULTIPLY``。``effects.attack_damage_modifiers``）。同じ段階にほかの効果があり順番で結果が変わるときは、
+    v0.35 の決定（``damage_step_order``）で受けるポケモンの持ち主が選ぶ。
+
+    ワザでないダメージ（特殊能力・トレーナーのダメージ）に当てはめるかは、印刷の文面・kyuura の記録から決まらない（推測で広げない）: トレーナーのダメージは v0.61 の
+    TD1、特殊能力のダメージは DB1（``effects.received_power_damage`` が量を変える前に止める）。ポケモンチェックのどくは、効果が番の終わり（ポケモンチェックの前）に
+    消えるので当たらない。消える契機は ``PreventDamage`` と同じ（期限・ベンチ・進化・きぜつ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "doubled_damage"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
 PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
-                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard)
+                           ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
+                           DoubledDamage)  # v0.75: DoubledDamage（もろばバサミ）
 
 
 @dataclass(frozen=True)
@@ -963,6 +987,41 @@ class RecallEffect:
     pokemon_id: int
     card: int
     trainer: int
+
+
+# v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカード（``SetAsideCards``）の種類。カードが物理的にある場所の名前で、手札・山札・ベンチ・場の
+# ポケモンのどれとも別の場所（見えないことだけを理由に、手札や山札と同じ場所として扱わない）
+SET_ASIDE_HAND = "hand_set_aside"  # くすぐりマシーン: 相手プレイヤーが手札をすべてうらにして置いておく（手札とはみなされない。期限の番の終わりに持ち主の手札にもどる）
+SET_ASIDE_FACE_DOWN_BENCH = "face_down_bench"  # たたきつけろ!挑戦状: 山札から選んでうらにしてベンチに出したポケモンのカード（お互いが出し終わるまで。そのあと表にして場に出す）
+SET_ASIDE_QUIZ = "quiz_card"  # カツラのクイズ その3: 手札からおもてを下にして置いたポケモンのカード（答えのあと表にし、手札にもどす）
+SET_ASIDE_KINDS = (SET_ASIDE_HAND, SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ)
+
+
+@dataclass(frozen=True)
+class SetAsideCards:
+    """v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: トレーナーの効果で一時的に置いておくカードのまとまり。
+
+    3 つのことを分けて持つ:
+
+    - カードが物理的にある場所: ``kind``（``SET_ASIDE_KINDS``）の場所に、持ち主 ``owner`` のカード ``cards``（同じ uid のまま。置いた順）がある。手札・山札・ベンチ・
+      場のポケモンには含まない（手札の枚数・手札をすべて動かす効果・手札を見る効果・ベンチのポケモンの数え方は、このカードを数えない）。カードの保存則では、この場所として
+      1 回だけ数える
+    - いま、だれがカードの中身を見られるか: ``visible_to``（プレイヤーの並び。くすぐりマシーンは空（だれも見ない。持ち主も見られない）、挑戦状・クイズは持ち主だけ）。
+      枚数はだれにも見える（場に置いたカードの枚数は見える）
+    - 確定した選択と、いつ表にする・もどすか: 置いたカードは置いたときに決まり、あとで入れかえない。``return_turn`` はくすぐりマシーンのもどす番（その番の終わりに持ち主の
+      手札にもどす）。挑戦状・クイズはトレーナーの効果の途中だけにあり（``return_turn`` は None）、効果が表にして場に出す・手札にもどす
+    - 出どころ: ``user``（トレーナーを使ったプレイヤー。持ち主とは別に持つ）・``trainer_card``（使ったトレーナーのカード）・``card_id``・``created_turn``（置いた番）
+    """
+
+    kind: str
+    owner: int
+    cards: tuple[int, ...]
+    visible_to: tuple[int, ...]
+    user: int
+    trainer_card: int
+    card_id: str
+    created_turn: int
+    return_turn: int | None = None
 
 
 # 特殊状態のないポケモン（共有してよい。frozen）
@@ -1295,6 +1354,17 @@ class GameState:
     # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: エネルギーとしてついているカードの記録（``EnergyRole`` の並び。マルマインの［エネエネ］）。そのカードが
     # 場のポケモンについているあいだだけ、カードの定義はエネルギーとしての役割（``card_def``）。書き出しは形式 19 だけが表せる（空でなければ形式 1〜18 は ``ValueError``）
     energy_roles: tuple[EnergyRole, ...] = ()
+    # v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカードのまとまり（``SetAsideCards`` の並び。置いた順）。書き出しは形式 21 だけが表せる
+    # （空でなければ形式 1〜20 は ``ValueError``）
+    set_aside: tuple[SetAsideCards, ...] = ()
+    # v0.63: おもてになっているサイドのカード（ロケット団参上!の「お互いのプレイヤーのサイドカード全てをおもてにして」。カードの uid の並び。おもてにした順）。カードごとに
+    # 持つ（そのときサイドにあったカードだけがおもてになる。あとからサイドに置かれたカードは、おもてにする指示がないので裏のまま）。サイドをはなれたら（取った・入れかえた）
+    # 並びから除く（``zones.prize_left``）。書き出しは形式 21 だけが表せる（空でなければ形式 1〜20 は ``ValueError``）
+    face_up_prizes: tuple[int, ...] = ()
+    # v0.67（docs/secret-plan-preflight-v0.67.md 3 章）: うらにしてベンチに出したカード（マチスの秘策。カードの uid の並び。出した順）。どれも場のポケモンのいちばん上の
+    # カード（重なり・のせたカードはない）で、うらのあいだはカードの定義が「たねポケモン」としてあつかう定義（``FACE_DOWN_DEFINITION``。名前・HP・タイプなどは読めない）。
+    # おもてにしたら並びから除く（``zones.reveal_face_down``）。書き出しは形式 22 だけが表せる（空でなければ形式 1〜21 は ``ValueError``）
+    face_down_cards: tuple[int, ...] = ()
 
     def clone(self) -> GameState:
         new = object.__new__(type(self))
@@ -1349,6 +1419,9 @@ class GameState:
         ``play_profile``）は、場のポケモンのカード（いちばん上のカードか、進化して下に重なったカード）であるあいだだけ、場での役割の定義（``category`` は
         "pokemon"・``play_role`` あり）を返す。手札・山札・サイド・トラッシュ・使用中のトレーナーでは、印刷の定義（トレーナーカード）のまま（「場に出ている
         とき以外は、トレーナーカードとしてあつかう」）。ほかのカードは、どこにあっても印刷の定義（v0.46 までと同じ）。印刷の定義・写しは変えない。"""
+        if self.face_down_cards and uid in self.face_down_cards:
+            # v0.67: うらにしてベンチに出したカード（マチスの秘策）。「たねポケモン」としてあつかい、本当のカードの名前・HP・タイプなどは読めない
+            return FACE_DOWN_DEFINITION
         definition = self.definitions[self.cards[uid].card_id]
         if definition.category == "trainer":
             profile = self.effects.play_profile(definition)
@@ -1392,6 +1465,10 @@ class GameState:
                 if pokemon.card == uid or uid in pokemon.evolution_stack:
                     return True
         return False
+
+    def is_face_down(self, pokemon: PokemonInPlay) -> bool:
+        """場のポケモン ``pokemon`` が、うらにしてベンチに出したカード（v0.67。マチスの秘策）のままか。"""
+        return bool(self.face_down_cards) and pokemon.card in self.face_down_cards
 
     def find_pokemon(self, pokemon_id: int) -> tuple[int, PokemonInPlay] | None:
         """場のポケモンの番号から、(持ち主, ポケモン) を返す。場にいなければ None。"""

@@ -114,6 +114,7 @@ from tests.helpers import (
     apply_kernel,
     build_test_state,
     expand_decklist,
+    kyuura_records_since_v0_69,
     with_coin_results,
 )
 from tests.log_audit import log_problems, observation_problems, serialization_problems
@@ -396,7 +397,7 @@ class CardDataTest(unittest.TestCase):
             with self.subTest(card=card):
                 record = records[card]
                 self.assertEqual((record["basis"], record["status"]), ("kyuura_data", "adopted"))
-                self.assertEqual(record["kyuura_records"], [])
+                self.assertEqual(record["kyuura_records"], kyuura_records_since_v0_69(card))  # v0.69: 研究の基準を上げて加わった kyuura の記録（tests/helpers.py の V0_69_KYUURA_RECORDS_ADDED）
                 checks = record["external_checks"]
                 self.assertEqual(len(checks), 1)
                 self.assertTrue(checks[0]["url"].startswith("https://pcg-search.com/"))
@@ -705,7 +706,8 @@ class RevealHandTest(unittest.TestCase):
             view = observe(state, viewer)
             for owner in (0, 1):
                 self.assertEqual(set(view["players"][owner]["deck"]), {"count"})
-                self.assertEqual(set(view["players"][owner]["prizes"]), {"count"})
+                self.assertEqual(set(view["players"][owner]["prizes"]), {"count", "face_up"})  # v0.63: おもてのサイド（ロケット団参上!）の一覧
+                self.assertEqual(view["players"][owner]["prizes"]["face_up"], [])
                 self.assertEqual(view["players"][owner]["hand"]["cards"] is None, viewer != owner)
         logged = visible_log(state, None)
         self.assertTrue(all("cards" not in e for e in logged if e["kind"] == "draw"))

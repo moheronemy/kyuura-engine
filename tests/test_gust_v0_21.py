@@ -106,7 +106,11 @@ class RegistrationTest(unittest.TestCase):
         v0.34: ナッシーの「テレポート」（ワザ。要素 ``programs.SelfSwitch``）が、ポケモンいれかえと同じ入れ替えの関数（``_switch_active_with_bench``）で
         ワザを使ったプレイヤー自身の場を入れ替える（docs/barrier-resume-coin-bonus-v0.34.md 6.4）。resolution/ でその関数を呼ぶのは、この 1 か所
         （``run.player`` の場）だけで、突風の実装・相手の場の入れ替えはない。"""
-        expected_calls = {"programs.py": ["E._switch_active_with_bench(run.state, run.player, choices[0], effect=str(run.key))"]}
+        # v0.65: ワザを受ける側の入れ替え（変わり身の術・［にげこむ］。決めるのはワザを受ける持ち主で、その持ち主の場。trainer・power を書く）の 2 か所を加えた。
+        # 突風の実装・ワザを使ったプレイヤーが相手の場を入れ替える呼び出しは、今もない
+        expected_calls = {"programs.py": ["E._switch_active_with_bench(state, owner, choices[0], trainer=tricks[0])",
+                                          "E._switch_active_with_bench(state, owner, choices[0], power=key)",
+                                          "E._switch_active_with_bench(run.state, run.player, choices[0], effect=str(run.key))"]}
         for path in [ROOT / "kyuura_engine" / "engine.py", *(ROOT / "kyuura_engine" / "resolution").glob("*.py")]:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")

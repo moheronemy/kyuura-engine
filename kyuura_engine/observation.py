@@ -33,6 +33,13 @@ from .decisions import (
     BENCH_FROM_DECK,
     BENCH_FROM_DISCARD,
     DAMAGE_STEP_ORDER,
+    DAMAGE_REDUCTION,
+    ESP_REDO,
+    JANKEN_HAND,
+    OPTIONAL_DRAIN,
+    SEARCH_DECK_OR_DISCARD,
+    TAKE_LOOKED_POKEMON,
+    SECRET_PLAN_CARD,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
@@ -45,6 +52,10 @@ from .decisions import (
     FORCED_SWITCH,
     HAND_TO_DECK,
     KNOCK_OUT_POWER,
+    NINJA_TRICK,
+    REACTION_SWITCH,
+    BENCH_GUARD,
+    ENERGY_DRAIN_DISCARD,
     KO_PREVENTION,
     MOVE_ENERGY,
     MOVE_OPPONENT_ENERGY,
@@ -80,8 +91,13 @@ from .decisions import (
     SELECT_PRIZE_CARD,
     SELECT_SPECIAL_CONDITION,
     TAKE_PRIZE,
+    CHALLENGE_BENCH,
+    QUIZ_ANSWER,
+    QUIZ_ATTACK,
+    QUIZ_CARD,
 )
 from .effects import (
+    JANKEN_HANDS,
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
 )
 from .serialize import history_record
@@ -95,7 +111,7 @@ VIEWERS = (0, 1, None)
 OPTION_MEANINGS: dict[str, str] = {
     TAKE_PRIZE: "position", SELECT_PRIZE_CARD: "position", SELECT_HAND_CARD: "position",
     PEEK_CARD: "peek_target",
-    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon",
+    PROMOTE_ACTIVE: "pokemon", SELECT_POKEMON: "pokemon", FORCED_SWITCH: "pokemon", KO_PREVENTION: "pokemon", KNOCK_OUT_POWER: "pokemon", ATTACH_TO_BENCH: "pokemon", NINJA_TRICK: "pokemon", REACTION_SWITCH: "pokemon", BENCH_GUARD: "pokemon",
     ENTRY_POWER: "pokemon",
     DISCARD_ENERGY: "card", RECOVER_ENERGY: "card", POST_KNOCKOUT_POWER: "card", DISCARD_FROM_HAND: "card", SEARCH_DECK: "card",
     RETURN_TO_DECK: "card", SELECT_EVOLUTION_CARD: "card", RETRIEVE_ENERGY: "card", DISCARD_OPPONENT_ENERGY: "card", RECOVER_TRAINER: "card",
@@ -105,6 +121,7 @@ OPTION_MEANINGS: dict[str, str] = {
     DAMAGE_STEP_ORDER: "number", SELECT_ATTACK: "number", SELECT_OPPONENT_ATTACK: "number", SELECT_SPECIAL_CONDITION: "number",
     REMOVE_COUNTERS: "number", SELECT_DECK_OWNER: "number", SELECT_LOOK_COUNT: "number",
     SELECT_DEVOLVE_COUNT: "number",  # v0.50: 退化スプレーではがす枚数
+    ENERGY_DRAIN_DISCARD: "card",  # v0.68: ［だつりょくえき］（場についているエネルギーカード。公開）
     BENCH_FROM_DISCARD: "card",  # v0.51: トラッシュ（公開）のたねポケモンのカード
     DISCARD_TO_DECK: "card",  # v0.53: 夜の廃品回収（トラッシュ（公開）のカード）
     SELECT_DRAW_COUNT: "number",  # v0.54: エリカで引く枚数
@@ -118,9 +135,29 @@ OPTION_MEANINGS: dict[str, str] = {
     STADIUM_RETURN_BENCH: "pokemon", EVOLUTION_HEAL: "pokemon",
     # v0.58: ナツメのサイキックコントロールで使う相手のトラッシュのトレーナーカード（トラッシュは公開の情報）
     USE_DISCARD_TRAINER: "card",
+    # v0.63: たたきつけろ!挑戦状で山札から選ぶたねポケモン（決めるプレイヤーが自分の山札をさがす）・カツラのクイズ その3で置く手札のポケモン・伝えるワザの位置・
+    # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
+    CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
+    # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
+    # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
+    SECRET_PLAN_CARD: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
-DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS})
+# v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
+DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
+                                  TAKE_LOOKED_POKEMON})
+# v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
+# カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
+# v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
+# v0.74: 山札のたねポケモンをベンチに出す決定（キョウの忍者ジムの「キョウのたねポケモン」、v0.32 からのワザ・特殊能力の山札から出すたねポケモン）も、選べるものの数・選ぶ数が
+# 山札の中身を漏らすので見せない（v0.73 までは、ワザ・特殊能力の BENCH_FROM_DECK の数を決めるプレイヤーでない人にも見せていた。意図した変更）
+# v0.75: 山札のカードを選ぶ決定（SEARCH_DECK。カスミのメノクラゲの「くらげのむれ」は選べるものの数だけ選べる）・山札のエネルギーカードをつける決定（ATTACH_FROM_DECK。キングラーの
+# 「しおまねき」は最大 3 枚）も、選べるものの数・選ぶ数が山札の中身を漏らすので見せない（v0.74 までは、トレーナー・ワザのこの 2 つの決定の数を決めるプレイヤーでない人にも
+# 見せていた。意図した変更）
+HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK})
+# v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
+PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
 # 続けて見せる効果ではないので、観測の手札は公開しない）
 LOOKED_HAND_KINDS = frozenset({OPPONENT_HAND_TO_DECK, OPPONENT_HAND_TO_BENCH})  # v0.56: エリカの香水も見た相手の手札から選ぶ
@@ -138,6 +175,31 @@ def hand_visible_to(state: GameState, owner: int, viewer: int | None) -> bool:
 
 def _card(state: GameState, uid: int) -> dict[str, Any]:
     return {"card": uid, "card_id": state.cards[uid].card_id}
+
+
+def _face_down_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.67（docs/secret-plan-preflight-v0.67.md 7 章）: うらにしてベンチに出したカード（マチスの秘策）。全員に見えるのは、場のポケモンの番号・うらであること・ついている
+    エネルギーカード（手札からつけた表のカード）・ダメージ（うらのあいだは 0）だけ。本当のカード（uid・カードの id・名前。uid はデッキの並びからカードがわかる）は持ち主
+    だけに見える。HP・タイプ・弱点・抵抗力・ワザ・特殊能力・今の姿は、うらのあいだは決まらないので書かない（持ち主にも書かない。エンジンが読まない値）。"""
+    view: dict[str, Any] = {
+        "pokemon_id": pokemon.pokemon_id,
+        "face_down": True,
+        "damage": pokemon.damage,
+        "energy": [_card(state, uid) for uid in pokemon.energy],
+        "trainers": [_card(state, t.card) for t in pokemon.trainers],
+        "special_conditions": list(pokemon.conditions.names()),
+        "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
+    }
+    if viewer == owner:
+        view["real"] = {**_card(state, pokemon.card), "name_ja": state.printed_def(pokemon.card).name_ja}
+    return view
+
+
+def _field_pokemon(state: GameState, pokemon: PokemonInPlay, owner: int, viewer: int | None) -> dict[str, Any]:
+    """v0.67: 場のポケモンの観測（うらのカードは ``_face_down_pokemon``）。"""
+    if state.is_face_down(pokemon):
+        return _face_down_pokemon(state, pokemon, owner, viewer)
+    return _pokemon(state, pokemon)
 
 
 def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
@@ -207,7 +269,9 @@ def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> b
             return True
         if uid in p.hand:
             return hand_visible_to(state, owner, viewer)
-        if uid in p.deck or uid in p.prizes:
+        if uid in p.prizes:
+            return uid in state.face_up_prizes  # v0.63: おもてのサイド（ロケット団参上!）は全員に見える
+        if uid in p.deck:
             return False
         for pokemon in p.in_play():
             if (uid == pokemon.card or uid == pokemon.disguise or uid in pokemon.evolution_stack or uid in pokemon.energy
@@ -215,6 +279,9 @@ def _visible_to_decider(state: GameState, uid: int, viewer: int, kind: str) -> b
                 return True
     if state.stadium is not None and state.stadium.card == uid:
         return True
+    for group in state.set_aside:
+        if uid in group.cards:
+            return viewer in group.visible_to  # v0.63: 一時的に置いておくカードは、見られるプレイヤーにだけ
     used = state.trainer_in_use
     return used is not None and used.card == uid
 
@@ -225,7 +292,11 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
         return None
     view: dict[str, Any] = {"kind": d.kind, "player": d.player, "min_choices": d.min_choices, "max_choices": d.max_choices,
                             "option_count": len(d.options)}
+    if d.kind == QUIZ_ANSWER:
+        view["hint"] = d.context_value("hint")  # v0.63: 伝えたワザの名前（全員に伝えた情報。ログ quiz_hint）
     if viewer != d.player:
+        if d.kind in HIDDEN_COUNT_KINDS:
+            return {"kind": d.kind, "player": d.player}  # v0.63: 選ぶ数・選べるものの数も見せない
         return view  # 選べるもの（とその中身）は決めるプレイヤーだけに渡す
     meaning = OPTION_MEANINGS.get(d.kind)
     if meaning is None:
@@ -237,6 +308,16 @@ def _decision(state: GameState, viewer: int | None) -> dict[str, Any] | None:
             option["card_id"] = state.cards[value].card_id
         elif meaning == "color":
             option["color"] = COLORS[value].value
+        elif meaning == "name":
+            option["name"] = d.context_value("names")[value]  # v0.63: カツラのクイズ その3で答えるカードの名前
+        elif meaning == "janken":
+            option["hand"] = JANKEN_HANDS[value]  # v0.66: カスミの勝負のじゃんけんの手（rock・scissors・paper）
+        elif meaning == "position" and d.kind in PRIZE_POSITION_KINDS:
+            prizes = state.players[d.player].prizes
+            if 0 <= value < len(prizes) and prizes[value] in state.face_up_prizes:
+                option["card_id"] = state.cards[prizes[value]].card_id  # v0.63: おもてのサイド（ロケット団参上!）は位置のカードが見えている
+        if d.kind == QUIZ_ATTACK:
+            option["attack_name"] = state.card_def(d.context_value("quiz_card")).attacks[value].name_ja  # v0.63: 置いたカードは決めるプレイヤーが見ている
         elif meaning == "peek_target":
             target = d.context_value("targets")[value]
             option["target"] = {"zone": target[0], "owner": target[1], **({} if target[0] == "deck" else {"position": target[2]})}
@@ -283,10 +364,16 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                 "revealed_by": [list(source) for source in hand_revealed_by(state, owner)],
             },
             "deck": {"count": len(p.deck)},
-            "prizes": {"count": len(p.prizes)},
+            # v0.63: おもてのサイド（ロケット団参上!。全員に見える）は位置とカードを書く。裏のサイドは枚数だけ（uid も渡さない）
+            "prizes": {"count": len(p.prizes),
+                       "face_up": [{"position": i, **_card(state, uid)} for i, uid in enumerate(p.prizes) if uid in state.face_up_prizes]},
+            # v0.63: 一時的に置いておくカード（手札・山札・ベンチとは別の場所）。枚数・出どころ・もどす番は全員に見え、カードは見られるプレイヤーにだけ
+            "set_aside": [{"kind": g.kind, "count": len(g.cards), "cards": [_card(state, uid) for uid in g.cards] if viewer in g.visible_to else None,
+                           "user": g.user, "trainer_card": g.trainer_card, "card_id": g.card_id, "return_turn": g.return_turn}
+                          for g in state.set_aside if g.owner == owner],
             "discard": [_card(state, uid) for uid in p.discard],
-            "active": (_pokemon(state, p.active) if board_visible else {"face_down": True}) if p.active is not None else None,
-            "bench": [_pokemon(state, b) if board_visible else {"face_down": True} for b in p.bench],
+            "active": (_field_pokemon(state, p.active, owner, viewer) if board_visible else {"face_down": True}) if p.active is not None else None,
+            "bench": [_field_pokemon(state, b, owner, viewer) if board_visible else {"face_down": True} for b in p.bench],
         })
     used = state.trainer_in_use
     return {
@@ -363,9 +450,24 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "hand_positions_to_deck": (("cards",), _only_player),
     "trainer_take_prize": (("card",), _only_player),
     "swap_prize_with_hand": (("to_prize", "to_hand"), _only_player),
+    # v0.63: くすぐりマシーンで置いたカード（だれも見ない）・もどしたカード（持ち主だけ。クイズで表にしたカードは face_up で全員）・挑戦状でうらにして出したカード（持ち主だけ）・
+    # 選ばなかった理由（山札の中身なので選ぶプレイヤーだけ）・クイズで置いたカード（置いたプレイヤーだけ）
+    "set_aside_hand": (("cards",), _nobody),
+    "set_aside_returned": (("cards",), _only_player),
+    "face_down_bench": (("cards",), _only_player),
+    "challenge_bench_skipped": (("reason",), _only_player),
+    "quiz_card_set": (("card",), _only_player),
+    # v0.67: マチスの秘策でうらにしてベンチに出したカード（持ち主だけ。おもてにしたら ``secret_plan_revealed`` で全員）
+    "secret_plan_placed": (("card",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.67: マチスの秘策（出さなかった・出せなかった理由・おもてにした本当のカード・トラッシュしたカード・指定した対象がいなくなった。どれも表の情報）
+    "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",
+    # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限
+    "esp_redo", "esp_redo_declined", "duel_janken", "return_attached_trainer",
+    # v0.68: ［だつりょくえき］（コインの結果・場のエネルギーカードは表の情報）
+    "energy_drain_check", "energy_drain_discard",
     # v0.61: ［ファイナルビーム］・［ずらかる］・［おとしあな］・バトル場は穴だらけ!（どれも表の情報）
     "knock_out_power_declined", "knock_out_power_declared", "knock_out_power_failed", "knock_out_power_damage", "scram", "sinkhole_check", "sinkhole_damage",
     "digger_result", "trainer_damage", "trainer_damage_prevented",
@@ -379,7 +481,7 @@ PUBLIC_EVENTS = frozenset({
     "counterattack", "counterattack_skipped", "damage", "damage_prevented", "deck_out", "destiny_bond", "devolve", "devolve_declined", "devolve_none",
     "discard_attached_cards",
     "discard_attached_energy", "discard_attached_trainer", "discard_energy", "discard_energy_failed", "discard_from_deck", "discard_from_hand",
-    "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "effect_prevented", "effect_skipped",
+    "bench_guard", "flee", "flee_declined", "flee_effect_skipped", "ninja_trick", "ninja_trick_declined", "discard_from_play", "discard_hand", "discard_trainer", "disguise", "disguise_removed", "drain_heal", "drain_heal_skipped", "drain_heal_declined", "effect_prevented", "effect_skipped",
     "end_turn_without_attack", "energy_burn", "entry_power_declined", "evade_check", "evolution_permission", "evolve", "evolve_from_deck_declined",
     "evolve_from_deck_none", "forced_switch", "forced_switch_skipped", "game_end", "halted", "janken", "knock_out", "ko_prevented",
     "ko_prevention_declared", "ko_prevention_declined", "ko_prevention_failed", "look_at_deck_top_none", "move_damage_counter", "move_energy",
@@ -391,9 +493,11 @@ PUBLIC_EVENTS = frozenset({
     "retreat", "retreat_failed", "retreat_failure_cleared", "retrieve_energy", "return_energy_to_hand", "return_in_play_to_deck",
     "return_in_play_to_hand",
     "return_basic_to_hand",  # v0.52: ポケモン回収（場のカード → 手札・トラッシュ。手札にもどしたカードは場にあったので公開）
+    "trainer_place_damage_counters",  # v0.71: ポケモンジム第1弾の元気のかけら（出したポケモンにのせたダメージカウンター）
     "reveal_hand", "revealed_hand_to_deck",  # v0.54: ミニスカート（見せ合った手札・見せた手札から山札にもどしたトレーナーカード）
     "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined",  # v0.54: 引かない・トラッシュしない・見ない（山札・手札の枚数は公開）
     "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報
+    "milled_to_hand",  # v0.73: 熱血!（山札の上からトラッシュしたカードのうち手札に加えたもの。トラッシュから動いたので公開）
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",
@@ -409,6 +513,12 @@ PUBLIC_EVENTS = frozenset({
     # v0.58: 特殊エネルギーをつけたときの効果（回復・ダメージ）・ばくれつのスタジアムがない場面・サイキックコントロールで使えるカードがない・使わなかった
     # （場・トラッシュは公開の情報）
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
+    # v0.63: おもてにしたサイド（全員に見えるようにした）・うらにして出したカードを表にした・クイズの伝えたワザ・答え・表にしたカード
+    "prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal",
+    # v0.74: ポケモンタワーで消えた効果・エネルギースタジアムで手札に加えた（見せた）カード・キョウの忍者ジムでベンチに出したカード（トラッシュ・場は公開の情報）
+    "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
+    # v0.75: エナジーサポートで、つける控えが「とうめい」で受けなかったので持ち主のトラッシュに置いたカード（トラッシュは公開の情報）
+    "deck_energy_evaded",
 })
 
 
@@ -419,6 +529,10 @@ def visible_event(event, viewer: int | None) -> dict[str, Any]:
         fields, sees = PRIVATE_FIELDS[kind]
         if sees(event, viewer):
             return dict(event)
+        # v0.63: おもてだった（全員に見えていた）カードの項目（``face_up``。おもてのサイドを取った・クイズで表にしたカードを手札にもどした）は全員に見せる
+        fields = tuple(name for name in fields if name not in event.get("face_up", ()))
+        if not fields:
+            return dict(event)
         copy = {name: value for name, value in event.items() if name not in fields}
         copy["hidden"] = {name: (len(event[name]) if isinstance(event[name], (tuple, list)) else None) for name in fields if name in event}
         return copy
@@ -427,7 +541,34 @@ def visible_event(event, viewer: int | None) -> dict[str, Any]:
     raise ValueError(f"ログのイベント {kind!r} の見える範囲が決まっていない（observation.PRIVATE_FIELDS・PUBLIC_EVENTS に加える）")
 
 
+def _uid_field(name: str) -> bool:
+    """v0.67: カードの uid を書く項目の名前か（``UID_FIELDS``・``…_card``・``…_cards``）。"""
+    return name in UID_FIELDS or name.endswith(("_card", "_cards"))
+
+
+# v0.67: カードの uid を書くログの項目（``_card``・``_cards`` で終わる名前のほか）。場のポケモンの番号は ``pokemon_id``・``…_pokemon_id`` に書く
+UID_FIELDS = frozenset({"pokemon", "card", "cards", "old_active", "new_active", "target", "active", "bench", "energy", "discarded", "discarded_energy"})
+
+
+def _mask_face_down(event: dict[str, Any], hidden: frozenset[int]) -> dict[str, Any]:
+    """v0.67: 見る人の相手のうらのカード（``hidden``。今うらのもの）の uid を、カードの uid を書く項目から除いた写し（uid はデッキの並びからカードがわかる。おもてにしたら
+    前のイベントの項目も見える）。"""
+    masked = dict(event)
+    for name, value in event.items():
+        if not _uid_field(name):
+            continue
+        if type(value) is int and value in hidden:
+            masked[name] = None
+        elif isinstance(value, (tuple, list)) and any(type(v) is int and v in hidden for v in value):
+            masked[name] = type(value)(None if type(v) is int and v in hidden else v for v in value)
+    return masked
+
+
 def visible_log(state: GameState, viewer: int | None) -> list[dict[str, Any]]:
-    """ログを、``viewer``（0・1・``None`` は観戦者）に見える項目だけにした写しの並び。状態を変えない。"""
+    """ログを、``viewer``（0・1・``None`` は観戦者）に見える項目だけにした写しの並び。状態を変えない。v0.67: ``viewer`` の相手のうらのカード（マチスの秘策）の uid は
+    見せない（``_mask_face_down``）。"""
     _check_viewer(viewer)
-    return [visible_event(event, viewer) for event in state.log]
+    hidden = frozenset(uid for uid in state.face_down_cards if state.cards[uid].owner != viewer)
+    if not hidden:
+        return [visible_event(event, viewer) for event in state.log]
+    return [_mask_face_down(visible_event(event, viewer), hidden) for event in state.log]
