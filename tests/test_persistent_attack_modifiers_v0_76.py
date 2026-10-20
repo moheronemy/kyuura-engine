@@ -221,7 +221,7 @@ class RegistrationTest(unittest.TestCase):
             self.assertIn(new_type, PG.BUILDERS)
 
     def test_same_data_cards_share_one_registration(self):
-        """日本語のゲーム用データが同じ 7 組（16 枚）は、HP・タイプ・弱点・抵抗力・にげる・段階・名前・全ワザが同じで、登録の値を共有する（id は消さない）。"""
+        """日本語のゲーム用データが同じ 7 組（15 枚）は、HP・タイプ・弱点・抵抗力・にげる・段階・名前・全ワザが同じで、登録の値を共有する（id は消さない）。"""
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
 
@@ -243,12 +243,13 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(len(V0_76_POKEMON) - len(E.SAME_DATA_CARDS_V0_76), 16)  # 24 枚で、日本語のゲーム用データは 16 通り
 
     def test_counts_from_the_registry(self):
-        """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、ワザ 995・特殊能力 74（登録から数える）。"""
+        """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、ワザ 995・特殊能力 74（登録から数える）。v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・
+        ワザ 77・トレーナー 2）を加えたので、今の数は 878（635・213・30）、ワザ 1,072。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (826, 585, 211, 30))
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (878, 635, 213, 30))
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (995, 74, 211))
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1072, 74, 213))
 
     def test_non_pack_unsupported_count(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚）。"""

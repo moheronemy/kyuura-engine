@@ -52,7 +52,7 @@ kyuura の data/engine_targets.json（7d3f4ca）の `new_effect_needed` のう�
 どれも既存の要素（`resolution/programs.py`）の組み合わせです（`ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていない）。`engine.py`・`resolution/` にカード id の
 分岐はありません。
 
-### 2.1 同じデータのカード（7 組・16 枚）
+### 2.1 同じデータのカード（7 組・15 枚）
 
 日本語のゲーム用データ（名前・HP・タイプ・弱点・抵抗力・にげる・段階・進化元・すべてのワザの名前・必要なエネルギー・ダメージ・説明）が同じ 7 組は、id ごとに登録したうえで、
 v0.70 の `_with_shared_entries` で同じ登録の値にまとめました（`effects.SAME_DATA_CARDS_V0_76`。元データの id は消さない）。24 枚で日本語のゲーム用データは 16 通りです。

@@ -154,6 +154,9 @@ V0_75_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["
 # v0.76（docs/persistent-attack-modifiers-v0.76.md）: 拡張パック以外の商品のポケモン 24 枚の説明文のあるワザ（処理に使う文面は kyuura の印刷の文面）
 V0_76_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_76"]
                    for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
+# v0.77（docs/neo-existing-effects-v0.77.md）: neo 期の拡張パックのポケモン 50 枚の説明文のあるワザ（50。処理に使う文面は kyuura の印刷の文面）
+V0_77_WITH_TEXT = [AttackKey(c["id"], i) for c in read_extract()["cards"] if c["id"] in read_extract()["pool_v0_77"] and c["category"] == "pokemon"
+                   for i, a in enumerate(c["pokemon"]["attacks"]) if a["text"]["ja"] is not None]
 
 
 
@@ -306,7 +309,7 @@ class DefaultRegistryTest(unittest.TestCase):
                                     + V0_35_WITH_TEXT + V0_36_WITH_TEXT + V0_37_WITH_TEXT + V0_38_WITH_TEXT
                                     + V0_39_WITH_TEXT + V0_40_WITH_TEXT + V0_41_WITH_TEXT + V0_42_WITH_TEXT + V0_43_WITH_TEXT
                                 + V0_44_WITH_TEXT + V0_45_WITH_TEXT + V0_46_WITH_TEXT + V0_47_WITH_TEXT + V0_48_WITH_TEXT
-                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT)
+                                + V0_49_WITH_TEXT + V0_50_WITH_TEXT + V0_51_WITH_TEXT + V0_52_WITH_TEXT + V0_58_WITH_TEXT + V0_59_WITH_TEXT + V0_60_WITH_TEXT + V0_61_WITH_TEXT + V0_62_WITH_TEXT + V0_64_WITH_TEXT + V0_65_WITH_TEXT + V0_68_WITH_TEXT + V0_70_WITH_TEXT + V0_72_WITH_TEXT + V0_75_WITH_TEXT + V0_76_WITH_TEXT + V0_77_WITH_TEXT)
         # v0.69: 拡張パック以外の商品の同じカード（effects.EQUIVALENT_CARDS）の新しい id には、元のカードと同じ登録（説明文のあるワザも同じ）がある
         expected = expected + [AttackKey(new, key.attack_index) for new, original in EQUIVALENT_CARDS.items() for key in expected if key.card_id == original]
         # v0.71: 拡張パック以外の商品の再録のカード（effects.REPRINT_CARDS）の新しい id にも、元のカードの説明文のあるワザの登録がある（照合する文面はこの版の印刷の文面）
@@ -471,7 +474,7 @@ class RegistryImmutabilityTest(unittest.TestCase):
         #   docs/geodude-line-unbounded-coins-v0.64.md）
         # + カスミのドククラゲの「クラゲどく」・タケシのサイドンの「ラリアット」（v0.65。docs/reactive-decisions-v0.65.md）
         # + ガルーラの「こどものおつかい」「れんぞくパンチ」・キョウのベトベトンの「ヘドロのうず」・イマクニ？のドードーの「ハモる」（v0.68。docs/final-pmcg-cards-v0.68.md）
-        self.assertEqual(len(keys), 995)  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72: 拡張パック以外の商品のポケモン 43 枚のワザ 77 を加えた。v0.71: 拡張パック以外の商品の再録 11 枚のワザ 15 を加えた（元のカードの登録から作った）。v0.70: 拡張パック以外の商品のポケモン 82 枚のワザ 136 を加えた。v0.69: 拡張パック以外の商品の同じカード 84 枚のワザ 92 を加えた（元のカードの登録を写した）
+        self.assertEqual(len(keys), 1072)  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.72: 拡張パック以外の商品のポケモン 43 枚のワザ 77 を加えた。v0.71: 拡張パック以外の商品の再録 11 枚のワザ 15 を加えた（元のカードの登録から作った）。v0.70: 拡張パック以外の商品のポケモン 82 枚のワザ 136 を加えた。v0.69: 拡張パック以外の商品の同じカード 84 枚のワザ 92 を加えた（元のカードの登録を写した）
         # ポケモンパワー（v0.5）の登録も同じく変わらない（with_powers・without_powers は新しい登録表を返す）
         powers = DEFAULT_EFFECTS.power_keys()
         DEFAULT_EFFECTS.without_powers("z", powers)

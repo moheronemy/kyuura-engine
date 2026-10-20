@@ -169,7 +169,9 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                         self.assertEqual(set(results.values()), {calculate_confusion_damage(definition, RULES_2000_02_14, 20).final})
                     elif len(set(results.values())) == 1:
                         coinciding.add((definition.id, pluspowers, defenders))
-        self.assertEqual(coinciding, {("PMCG3-041", p, d) for p in range(2) for d in range(3)} - {("PMCG3-041", 0, 0)})
+        # v0.77: グライガー（neo1-052。闘・抵抗力 闘 -30。kyuura データの採用）もプテラと同じ組で結果が同じ（止める範囲はこの組だけ必要より広い。v0.3c のまま）
+        self.assertEqual(coinciding, {(card, p, d) for card in ("PMCG3-041", "neo1-052") for p in range(2) for d in range(3)}
+                         - {("PMCG3-041", 0, 0), ("neo1-052", 0, 0)})
         # 自分のタイプを弱点に持つポケモン（v0.7 の超のポケモン・v0.18c のナツメのヤドン（超・弱点 超。p.155）・v0.28 のスリープ（超・弱点 超。
         # p.164）・v0.31 のミュウツー（PMCG1-050）・化石の秘密のヤドン（PMCG3-027）（どちらも超・弱点 超。kyuura データの採用。採用の記録の
         # カードデータ）・v0.32 のルージュラ（PMCG1-048。超・弱点 超。kyuura データの採用）・v0.37 のナツメのスリープ（PMCG6-045。超・弱点 超。kyuura
@@ -196,14 +198,16 @@ class ConfusionDamageModifiersTest(unittest.TestCase):
                                    # v0.75: ナツメのスリープ GD6-009・ミュウツー PR1-007・PR1-008（超・弱点 超。kyuura データの採用）は 40
                                    "GD6-009", "PR1-007", "PR1-008",
                                    # v0.76: ヤドン PR1-006（超・弱点 超。kyuura データの採用）は 40
-                                   "PR1-006"})
+                                   "PR1-006",
+                                   # v0.77: タマタマ neo4-049（超・弱点 超。kyuura データの採用）は 40
+                                   "neo4-049"})
         # v0.47: スリーパー（PMCG3-032。超・弱点 超。kyuura データの採用）は 40、プテラ（PMCG3-041。闘・抵抗力 闘）は 0
         # v0.49: ナツメのフーディン（PMCG6-053。超・弱点 超。kyuura データの採用）は 40。メタモン（PMCG3-042。無色・弱点 闘）・タケシのキュウコン（PMCG5-019。炎・弱点 水）は 20
         # （印刷の定義で確かめる。［へんしん］・「ばける」の今の姿のこんらんの 20 は、今有効なタイプ・弱点・抵抗力で計算する。docs/virtual-attacks-transformation-v0.49.md）
         # v0.50: ミュウ（PMCG3-033。超・弱点 超。kyuura データの採用）は 40
         # v0.51: ナツメのスリーパー（PMCG6-051。超・弱点 超。kyuura データの採用）は 40
         zeroed = {d.id for d in pokemon if calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 0}
-        self.assertEqual(zeroed, {"PMCG3-041"})
+        self.assertEqual(zeroed, {"PMCG3-041", "neo1-052"})  # v0.77: グライガー（neo1-052。闘・抵抗力 闘）は 0
         self.assertTrue(all(calculate_confusion_damage(d, RULES_2000_02_14, 20).final == 20 for d in pokemon if d.id not in doubled | zeroed))
 
 

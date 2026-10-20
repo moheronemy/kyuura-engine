@@ -1850,3 +1850,18 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - ガーディ IP2-026 のひのこのトラッシュの時点は、kyuura の RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（v0.75 のガーディ ES3-010 と同じ文面・同じ登録）。
 - 報告事項（kyuura の作業）: 同じカードの組 SC-ES1-028（ドードー ES1-028・QSG-041）の `text_difference` の要約は、この組のワザの文面に当たらない。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.76 の登録を写すと、24 枚の `engine_status` が `registered` になる。
+
+## v0.77: neo 期の拡張パックの対象化と、既存の効果の型で表せる 52 枚
+
+[neo-existing-effects-v0.77.md](neo-existing-effects-v0.77.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_77`（52 枚。neo1〜neo4 のカード。id は kyuura の小文字の id のまま）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.76 までの 826 枚の記録は変わっていない。
+- 実装の対象に neo1〜neo4（kyuura data/engine_targets.json の 323 件）を加えた。全対象は 1,377 件（PMCG1〜6 の 457・拡張パック以外の 597・neo の 323）。未対応の数は engine_targets.json の
+  `engine_status`（v0.68 の索引）ではなく、今の登録を差し引いて数えた（全対象 499・neo 271・拡張パック以外 228）。
+- 52 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  52 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。既存の登録の照合の出典（「P43 p.xx」など）は、新しいカードの照合として写していない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（28 枚）・ポケモンWiki（24 枚）の転記で、そのページを開き直すことは独立した照合にならない。pcg-search.com も開いていない。
+- neo1（2000-02-04）は 2000.02.14 版の前、neo2〜neo4 はあとに発売したカード。発売日を変えずに持ち、ルールの基準は 2000.02.14 版のまま（後年のルール・2002 年の特殊能力の分類は持ち込まない）。
+- 報告事項（kyuura の作業）: ニョロボン neo2-037 のワザ 0 の名前「とづく」は写しの値のまま使った（誤記かどうかは確かめていない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.77 の登録を写すと、52 枚の `engine_status` が `registered` になる。

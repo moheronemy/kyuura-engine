@@ -419,6 +419,12 @@ class CoinFlipDamage(AttackEffect):
             problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した「おもて」1 枚あたりのダメージ {self.damage_per_heads} が違う")
         if attack.text_ja is None:
             problems.append("説明文のないワザを、コインを投げるワザとして登録している")
+        else:
+            # v0.77: 説明のコインの枚数と登録の ``coins`` を照らす（書き方は版ごとに違う（「投げ、」「投げて」「出た数」など）ので、枚数の数字だけを比べる。
+            # v0.76 までの登録はどれも同じ枚数。処理は変えていない）
+            stated = re.match(r"コインを(\d+)枚投げ", attack.text_ja)
+            if stated is None or int(stated.group(1)) != self.coins:
+                problems.append(f"説明 {attack.text_ja!r} のコインの枚数と、登録したコインの枚数 {self.coins} が違う")
         return problems
 
     def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
@@ -26786,7 +26792,7 @@ V0_76_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
                                       "自分についている「炎」エネルギーカードを1枚トラッシュしなければ、このワザは使えない。"),
 })
 
-# v0.76: 24 枚のうち、ほかの v0.76 のカードと処理に使う欄（日本語）が同じカード（kyuura の同じカードの組。7 組・16 枚）。id ごとに書いた登録を同じ値にまとめる（v0.70 の
+# v0.76: 24 枚のうち、ほかの v0.76 のカードと処理に使う欄（日本語）が同じカード（kyuura の同じカードの組。7 組・15 枚）。id ごとに書いた登録を同じ値にまとめる（v0.70 の
 # ``_with_shared_entries``。元データの id は消さない。データが同じことは tests/test_persistent_attack_modifiers_v0_76.py が写しで確かめる）
 SAME_DATA_CARDS_V0_76: Mapping[str, str] = MappingProxyType({
     "QSG-005": "ES1-007",  # ニドラン♂
@@ -26800,3 +26806,115 @@ SAME_DATA_CARDS_V0_76: Mapping[str, str] = MappingProxyType({
 })
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_76_ATTACKS), SAME_DATA_CARDS_V0_76)
+
+
+# ---------------------------------------------------------------- v0.77（docs/neo-existing-effects-v0.77.md）
+# neo 期の拡張パック（neo1〜neo4。kyuura の id（小文字の ``neo1-006`` など）をそのまま使う）の、既存の効果の型で表せるカード 52 枚（ポケモン 50 枚・ワザ 77、トレーナー 2 枚）。
+# どれも kyuura データの採用（採用したデータのコミット 7d3f4ca。処理に使う文面は kyuura の印刷の文面）。新しい型・要素・決定・状態はない。型の選び方は、同じ文面の既存の登録と、
+# ダメージの目安の有無・コインの枚数・追加の量・効果の順番・必要なエネルギーで決めた（docs 4 章）。既存の登録の照合の出典（「P43 p.xx」など）は写さない（新しいカードの照合の実績
+# ではない）。ルールの基準は 2000.02.14 版のまま（後年のルール・2002 年の特殊能力の分類を持ち込まない）
+
+V0_77_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo1-006", 0): _printed(AttachEnergyFromHandOnHeads(EnergyType.GRASS, 2), "せいちょう", "コインを投げて「おもて」なら、自分の手札にある「草」エネルギーカードを最大2枚、自分につける。"),
+    AttackKey("neo1-006", 1): _printed(DamageAndDrain(), "メガドレイン", "相手にダメージを与えたら、与えたダメージの半分(切り上げ)のダメージカウンターを、自分からとりのぞく。"),
+    AttackKey("neo1-012", 0): _printed(PoisonOpponent(), "どくのこな", "相手を「どく」状態にする。"),
+    AttackKey("neo1-012", 1): _printed(ParalyzeOnHeads(), "しびれごな", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo1-019", 0): AttackEntry(DAMAGE_ONLY, "しっぽでたたく"),
+    AttackKey("neo1-019", 1): AttackEntry(DAMAGE_ONLY, "マグマパンチ"),
+    AttackKey("neo1-024", 0): _printed(AttackLockWhileSourceActiveOnHeads(), "にらみつける", "コインを投げて「おもて」なら、次の相手の番、このカードがバトル場にいるかぎり、このワザを受けた相手は、ワザを使えない。"),
+    AttackKey("neo1-024", 1): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "みだれひっかき", "コインを3枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo1-026", 0): _printed(LockOpponentAttack(), "ドわすれ", "相手のワザを1つ選ぶ。次の相手の番、そのポケモンは、そのワザを使えない。"),
+    AttackKey("neo1-026", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=20), "たたきつける", "コインを2枚投げ、「おもて」の数×20のダメージ。"),
+    AttackKey("neo1-027", 0): _printed(SleepOpponent(), "こなゆき", "相手を「ねむり」状態にする。"),
+    AttackKey("neo1-028", 0): _printed(DamageThenSelfBarrierOnHeads(), "ゆらゆらおよぐ", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    AttackKey("neo1-031", 0): AttackEntry(DAMAGE_ONLY, "なみのり"),
+    AttackKey("neo1-031", 1): _printed(DamageAndOwnBenchDamage(10, True), "じしん", "自分の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("neo1-035", 0): _printed(DamageThenSelfBarrierOnHeads(), "こうそくいどう", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    AttackKey("neo1-035", 1): _printed(DamageThenSwitchOpponentIfNotKnockedOut(), "りゅうのたつまき", "相手が「きぜつ」しなければ、相手の控えポケモンを1匹選び、相手と入れ替える。"),
+    AttackKey("neo1-039", 0): AttackEntry(DAMAGE_ONLY, "パンチ"),
+    AttackKey("neo1-039", 1): _printed(DamageIgnoringDefenderEffects(), "スピードスター", "このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。"),
+    AttackKey("neo1-047", 0): _printed(DamageThenSelfBarrierOnHeads(), "こうそくいどう", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    AttackKey("neo1-047", 1): _printed(ConfuseOnHeads(), "サイケこうせん", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo1-051", 0): _printed(DamageTimesOwnCounters(10), "じたばた", "自分にのっているダメージカウンターの数×10のダメージ。"),
+    AttackKey("neo1-051", 1): AttackEntry(DAMAGE_ONLY, "いわおとし"),
+    AttackKey("neo1-052", 0): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("neo1-052", 1): AttackEntry(DAMAGE_ONLY, "きりさく"),
+    AttackKey("neo1-059", 0): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "みだれひっかき", "コインを3枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo1-060", 0): _printed(PutToSleep(), "さいみんじゅつ", "相手を「ねむり」状態にする。"),
+    AttackKey("neo1-060", 1): AttackEntry(DAMAGE_ONLY, "つつく"),
+    AttackKey("neo1-062", 0): _printed(CoinBonusDamage(10), "ふみつけ", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo1-062", 1): _printed(ConfuseOnHeads(), "つのでまどわす", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo1-064", 0): _printed(CoinBonusDamage(10), "でんこうせっか", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo1-064", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=30), "たたきつける", "コインを2枚投げ、「おもて」の数×30のダメージ。"),
+    AttackKey("neo1-066", 0): _printed(PoisonOpponent(), "どくのトゲ", "相手を「どく」状態にする。"),
+    AttackKey("neo2-001", 0): _printed(DamageAndSelfDamage(10), "ころころタックル", "自分にも10ダメージ。"),
+    AttackKey("neo2-003", 0): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("neo2-004", 0): AttackEntry(DAMAGE_ONLY, "ころがりタックル"),
+    AttackKey("neo2-013", 0): AttackEntry(DAMAGE_ONLY, "ころがる"),
+    AttackKey("neo2-013", 1): _printed(PutToSleep(), "さいみんじゅつ", "相手を「ねむり」状態にする。"),
+    AttackKey("neo2-020", 0): _printed(SelfDamageOnTails(10), "でんげき", "コインを投げて「うら」なら、自分にも10ダメージ。"),
+    AttackKey("neo2-034", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo2-037", 0): AttackEntry(DAMAGE_ONLY, "とづく"),
+    AttackKey("neo2-037", 1): _printed(DamageAndSelfDamage(20), "じごくぐるま", "自分にも20ダメージ。"),
+    AttackKey("neo2-047", 0): _printed(ParalyzeOnHeads(), "へびにらみ", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo3-001", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo3-001", 1): _printed(PoisonWithoutDamage(), "どくをとばす", "相手を「どく」状態にする。"),
+    AttackKey("neo3-002", 0): _printed(DamageThenSleepOnHeads(), "ねむりのほうし", "コインを投げて「おもて」なら、相手を「ねむり」状態にする。"),
+    AttackKey("neo3-002", 1): AttackEntry(DAMAGE_ONLY, "ひっかく"),
+    AttackKey("neo3-003", 0): AttackEntry(DAMAGE_ONLY, "はねる"),
+    AttackKey("neo3-003", 1): _printed(ConfuseOnHeads(), "ふしぎなこな", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo3-012", 0): _printed(CoinFlipDamage(coins=2, damage_per_heads=10), "ひれビンタ", "コインを2枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo3-013", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo3-013", 1): _printed(ParalyzeOnHeads(), "バブルこうせん", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo3-037", 0): AttackEntry(DAMAGE_ONLY, "げんこつ"),
+    AttackKey("neo3-038", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo3-038", 1): _printed(DamageAndSelfDamage(10), "とっしん", "自分にも10ダメージ。"),
+    AttackKey("neo4-001", 0): AttackEntry(DAMAGE_ONLY, "かじる"),
+    AttackKey("neo4-001", 1): _printed(PoisonOpponent(), "どくのこな", "相手を「どく」状態にする。"),
+    AttackKey("neo4-005", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo4-007", 0): _printed(DamageThenSelfBarrierOnHeads(), "こうそくいどう", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    AttackKey("neo4-007", 1): AttackEntry(DAMAGE_ONLY, "するどいカマ"),
+    AttackKey("neo4-009", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo4-009", 1): _printed(CoinBonusDamage(30), "とつげきホーン", "コインを投げて「おもて」なら、30ダメージを追加する。"),
+    AttackKey("neo4-015", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo4-017", 0): AttackEntry(DAMAGE_ONLY, "かえん"),
+    AttackKey("neo4-027", 0): _printed(DamageAndSelfDamage(10), "とっしん", "自分にも10ダメージ。"),
+    AttackKey("neo4-028", 0): _printed(ExtraEnergyDamage(EnergyType.WATER, 10, 2), "みずでっぽう", "ワザに必要な「エネルギー」よりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。"),
+    AttackKey("neo4-029", 0): _printed(ParalyzeOnHeads(), "こおらせる", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo4-030", 0): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "みだれうち", "コインを3枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo4-042", 0): AttackEntry(DAMAGE_ONLY, "ずつき"),
+    AttackKey("neo4-048", 0): _printed(SleepOpponent(), "あくむ", "相手を「ねむり」状態にする。"),
+    AttackKey("neo4-049", 0): _printed(SleepOpponent(), "ねむりごな", "相手を「ねむり」状態にする。"),
+    AttackKey("neo4-049", 1): _printed(ParalyzeOnHeads(), "ねんりき", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo4-069", 0): AttackEntry(DAMAGE_ONLY, "チョップ"),
+    AttackKey("neo4-069", 1): AttackEntry(DAMAGE_ONLY, "パンチ"),
+    AttackKey("neo4-072", 0): _printed(CoinBonusDamage(10), "ふみつける", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo4-075", 0): _printed(CoinFlipDamage(coins=2, damage_per_heads=20), "にだんげり", "コインを2枚投げ、「おもて」の数×20のダメージ。"),
+    AttackKey("neo4-075", 1): _printed(FailOnTailsDamage(1), "かかとおとし", "コインを投げて「うら」なら、このワザは失敗する。"),
+    AttackKey("neo4-086", 0): AttackEntry(DAMAGE_ONLY, "かくばる"),
+})
+
+# v0.77: 52 枚のうち、前の版で登録したカードと処理に使う欄（日本語）が同じポケモン（kyuura の同じカードの組。新しい id → 前の版のカード。名前が同じだけのカードは入れない）。
+# id ごとに書いた登録を同じ値にまとめる（v0.70 の ``_with_shared_entries``。元データの id は消さない。データが同じことは tests/test_neo_existing_effects_v0_77.py が写しで確かめる）
+SAME_DATA_CARDS_V0_77: Mapping[str, str] = MappingProxyType({
+    "neo1-006": "PRN-032",  # ヒマナッツ
+    "neo1-024": "PRN-008",  # ワニノコ（PRN-011 も PRN-008 と同じデータ）
+    "neo2-004": "PRN-047",  # ハネッコ
+    "neo2-020": "NIP2-018",  # メリープ
+    "neo3-002": "NIP1-022",  # パラス
+})
+
+# v0.77: 2 枚のトレーナー（v0.73 のスーパーポケモン回収・マサキの転送装置と同じ印刷の文面。同じデータのカードは下の SAME_DATA_TRAINERS_V0_77 で同じ登録の値にまとめる）
+V0_77_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "neo1-083": TrainerEntry(CoinReturnOwnPokemonWithAttachedToHand(SUPER_SCOOP_UP_TEXT), "スーパーポケモン回収", SUPER_SCOOP_UP_TEXT, SUPER_SCOOP_UP_TEXT,
+                             _KYUURA_PRINTED_TEXT),
+    "neo1-084": TrainerEntry(CoinDrawTrainer(BILLS_TELEPORTER_TEXT), "マサキの転送装置", BILLS_TELEPORTER_TEXT, BILLS_TELEPORTER_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+SAME_DATA_TRAINERS_V0_77: Mapping[str, str] = MappingProxyType({
+    "neo1-083": "IP1-009",  # スーパーポケモン回収（IP2-029 も IP1-009 と同じデータ）
+    "neo1-084": "IP1-020",  # マサキの転送装置（IP2-021 も IP1-020 と同じデータ）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_77_ATTACKS), SAME_DATA_CARDS_V0_77)
+DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_77_TRAINERS), SAME_DATA_TRAINERS_V0_77)

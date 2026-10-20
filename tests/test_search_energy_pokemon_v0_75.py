@@ -206,9 +206,9 @@ class RegistrationTest(unittest.TestCase):
         """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、ワザ 995・特殊能力 74（登録から数える。v0.75 は 802・561・947。v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた）。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (826, 585, 211, 30))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (878, 635, 213, 30))  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (995, 74, 211))  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1072, 74, 213))  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた
 
     def test_non_pack_unsupported_count(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚・v0.74 は 267 枚。v0.76 で 24 枚を加えた）。"""

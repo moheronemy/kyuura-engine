@@ -1899,3 +1899,38 @@ V0_76_POKEMON = (LT_SURGES_RATTATA_GD3, NIDORAN_M_ES1, NIDORAN_M_QSG, SQUIRTLE_E
                  DODUO_ES1, DODUO_QSG, SEEL_ES2, SEEL_QSG, PIKACHU_IP1, CHIKORITA_PF1, SLOWPOKE_PR1, VENONAT_ES3, MACHOP_ES2, MACHOP_QSG, CYNDAQUIL_PF1,
                  WOOPER_PRN, TOTODILE_PRN, TOTODILE_PRN_B, GROWLITHE_IP2)
 V0_76_CARDS = V0_76_POKEMON
+
+# v0.77（docs/neo-existing-effects-v0.77.md）: neo 期の拡張パック（neo1〜neo4）の、既存の効果の型で表せるカード 52 枚（kyuura データの採用。id は kyuura の小文字の id のまま）
+SUNKERN_NEO1 = "neo1-006"  # ヒマナッツ（せいちょう・メガドレイン。PRN-032 と同じデータ）
+SKIPLOOM_NEO1 = "neo1-012"  # ポポッコ（どくのこな・しびれごな。ハネッコから進化）
+TOTODILE_NEO1 = "neo1-024"  # ワニノコ（にらみつける・みだれひっかき。PRN-008 と同じデータ）
+WOOPER_NEO1 = "neo1-026"  # ウパー（ドわすれ・たたきつける）
+MANTINE_NEO1 = "neo1-028"  # マンタイン（ゆらゆらおよぐ）
+QUAGSIRE_NEO1 = "neo1-031"  # ヌオー（なみのり・じしん。ウパーから進化）
+KINGDRA_NEO1 = "neo1-035"  # キングドラ（こうそくいどう・りゅうのたつまき。シードラから進化する 2 進化）
+ELECTABUZZ_NEO1 = "neo1-039"  # エレブー（パンチ・スピードスター）
+SUDOWOODO_NEO1 = "neo1-051"  # ウソッキー（じたばた・いわおとし）
+SENTRET_NEO1 = "neo1-059"  # オタチ（みだれひっかき）
+FURRET_NEO1 = "neo1-064"  # オオタチ（でんこうせっか・たたきつける。オタチから進化）
+SUPER_SCOOP_UP_NEO1 = "neo1-083"  # スーパーポケモン回収（IP1-009 と同じデータ）
+BILLS_TELEPORTER_NEO1 = "neo1-084"  # マサキの転送装置（IP1-020 と同じデータ）
+HOPPIP_NEO2 = "neo2-004"  # ハネッコ（ころがりタックル。PRN-047 と同じデータ）
+MAREEP_NEO2 = "neo2-020"  # メリープ（でんげき。NIP2-018 と同じデータ）
+POLIWRATH_NEO2 = "neo2-037"  # ニョロボン（とづく・じごくぐるま。ニョロゾから進化する 2 進化）
+ZUBAT_NEO3 = "neo3-001"  # ズバット（かみつく・どくをとばす）
+PARAS_NEO3 = "neo3-002"  # パラス（ねむりのほうし・ひっかく。NIP1-022 と同じデータ）
+SKIPLOOM_NEO3 = "neo3-003"  # ポポッコ（はねる・ふしぎなこな。ハネッコから進化）
+SCYTHER_NEO4 = "neo4-007"  # ストライク（こうそくいどう・するどいカマ）
+HERACROSS_NEO4 = "neo4-009"  # ヘラクロス（たいあたり・とつげきホーン）
+TOTODILE_NEO4 = "neo4-028"  # ワニノコ（みずでっぽう）
+HITMONLEE_NEO4 = "neo4-075"  # サワムラー（にだんげり・かかとおとし）
+V0_77_CARDS = (
+    "neo1-006", "neo1-012", "neo1-019", "neo1-024", "neo1-026", "neo1-027", "neo1-028", "neo1-031", "neo1-035", "neo1-039", "neo1-047", "neo1-051",
+    "neo1-052", "neo1-059", "neo1-060", "neo1-062", "neo1-064", "neo1-066", "neo1-083", "neo1-084",
+    "neo2-001", "neo2-003", "neo2-004", "neo2-013", "neo2-020", "neo2-034", "neo2-037", "neo2-047",
+    "neo3-001", "neo3-002", "neo3-003", "neo3-012", "neo3-013", "neo3-037", "neo3-038",
+    "neo4-001", "neo4-005", "neo4-007", "neo4-009", "neo4-015", "neo4-017", "neo4-027", "neo4-028", "neo4-029", "neo4-030", "neo4-042", "neo4-048",
+    "neo4-049", "neo4-069", "neo4-072", "neo4-075", "neo4-086",
+)
+V0_77_TRAINERS = (SUPER_SCOOP_UP_NEO1, BILLS_TELEPORTER_NEO1)
+V0_77_POKEMON = tuple(card for card in V0_77_CARDS if card not in V0_77_TRAINERS)

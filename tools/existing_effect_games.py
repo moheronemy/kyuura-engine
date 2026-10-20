@@ -447,6 +447,11 @@ V0_75 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_
 # v0.76（docs/persistent-attack-modifiers-v0.76.md）: 拡張パック以外の商品の、持続する効果・ワザの使用の制限を中心とするポケモン 24 枚（写しの組 pool_v0_76）。v0.75 と同じく TARGETS に
 # 加え、使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる。ドわすれ・かなしばりの決定（SELECT_OPPONENT_ATTACK）は ``_v076_decision``
 V0_76 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_76"])
+# v0.77（docs/neo-existing-effects-v0.77.md）: neo 期の拡張パック（neo1〜neo4）の、既存の効果の型で表せるカード 52 枚（写しの組 pool_v0_77）。ポケモン 50 枚は v0.76 と同じく TARGETS に
+# 加え、使っていないワザを選ぶ手順・エネルギーをためる手順を重ねる。ドわすれの決定は ``_v076_decision``、2 枚のトレーナー（v0.73 と同じ型）は ``_v073_trainer``・``_v073_decision`` で使う
+V0_77 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_77"])
+V0_77_TRAINERS = ("neo1-083", "neo1-084")  # スーパーポケモン回収・マサキの転送装置
+V0_77_POKEMON = tuple(card for card in V0_77 if card not in V0_77_TRAINERS)
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -458,7 +463,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_70  # v0.70: 拡張パック以外の商品のポケモン 82 枚
            + V0_72  # v0.72: 拡張パック以外の商品のポケモン 43 枚
            + V0_75  # v0.75: 拡張パック以外の商品のポケモン 15 枚
-           + V0_76)  # v0.76: 拡張パック以外の商品のポケモン 24 枚
+           + V0_76  # v0.76: 拡張パック以外の商品のポケモン 24 枚
+           + V0_77_POKEMON)  # v0.77: neo 期の拡張パックのポケモン 50 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -912,6 +918,22 @@ DECKS = {
     # チコリータ（PF1-001。なきごえ）・ヤドン（PR1-006。ドわすれ）・ウパー（PRN-003。しっぽをふる・みずでっぽう）・ワニノコ（PRN-008・PRN-011。にらみつける・みだれひっかき）
     "W76": (("ES1-015", 2), ("QSG-013", 1), ("IP2-018", 1), ("PRN-028", 3), ("ES2-006", 2), ("QSG-017", 1), ("IP1-040", 3), ("PF1-001", 3), ("PR1-006", 3),
             ("PRN-003", 3), ("PRN-008", 2), ("PRN-011", 1), *TRAINERS, (WATER, 7), (LIGHTNING, 4), (GRASS, 4), (PSYCHIC, 8)),
+    # v0.77: 草・超。ヒマナッツ（せいちょう・メガドレイン）・ハネッコ（neo2-004）→ ポポッコ（neo1-012・neo3-003）・キャタピー・イトマル・ズバット（どくをとばす）・パラス・コンパン・
+    # クヌギダマ・ストライク（こうそくいどう）・ヘラクロス（とつげきホーン）・タマタマ・ゴースと、スーパーポケモン回収・マサキの転送装置
+    "G77": (("neo1-006", 2), ("neo2-004", 3), ("neo1-012", 2), ("neo3-003", 1), ("neo2-001", 2), ("neo2-003", 2), ("neo3-001", 2), ("neo3-002", 2),
+            ("neo4-001", 2), ("neo4-005", 2), ("neo4-007", 2), ("neo4-009", 2), ("neo4-049", 2), ("neo4-048", 2), *TRAINERS, ("neo1-083", 2), ("neo1-084", 2),
+            (GRASS, 12), (PSYCHIC, 4)),
+    # v0.77: 水・闘。ウパー（ドわすれ）→ ヌオー（じしん）・ワニノコ（neo1-024 にらみつける・neo4-028 みずでっぽう）・ウリムー・マンタイン・タッツー → シードラ → キングドラ
+    # （りゅうのたつまき）・ニョロモ（neo2-013）→ ニョロゾ（PMCG1-028）→ ニョロボン（neo2-037）・トサキント・ヒトデマン・パウワウ・テッポウオと、マサキの転送装置
+    "W77": (("neo1-026", 3), ("neo1-031", 2), ("neo1-024", 2), ("neo4-028", 2), ("neo1-027", 1), ("neo4-029", 1), ("neo1-028", 2), ("PMCG3-014", 2),
+            ("PMCG3-020", 1), ("neo1-035", 1), ("neo2-013", 2), ("PMCG1-028", 2), ("neo2-037", 1), ("neo3-012", 1), ("neo3-013", 1), ("neo4-027", 1),
+            ("neo4-030", 1), *TRAINERS, ("neo1-084", 2), (WATER, 13), (FIGHTING, 7)),
+    # v0.77: 無色・闘・炎・雷・超。オタチ → オオタチ・ホーホー・オドシシ・トゲピー・ポリゴン・エレブー（スピードスター）・キリンリキ・ウソッキー（じたばた）・グライガー・ヨーギラス・
+    # ノコッチ・イシツブテ・ウリムー（neo3-038）・ブーバー・ガーディ・マグマッグ・メリープ（neo2-020・neo4-042）・ワンリキー・ゴマゾウ・サワムラー（かかとおとし）と、スーパーポケモン回収
+    "C77": (("neo1-059", 3), ("neo1-064", 2), ("neo1-060", 2), ("neo1-062", 1), ("neo1-066", 1), ("neo4-086", 1), ("neo1-039", 1), ("neo1-047", 1),
+            ("neo1-051", 2), ("neo1-052", 2), ("neo2-034", 1), ("neo2-047", 1), ("neo3-037", 1), ("neo3-038", 1), ("neo1-019", 1), ("neo4-015", 1),
+            ("neo4-017", 1), ("neo2-020", 1), ("neo4-042", 1), ("neo4-069", 1), ("neo4-072", 1), ("neo4-075", 1), *TRAINERS, ("neo1-083", 2),
+            (FIGHTING, 8), (FIRE, 4), (LIGHTNING, 4), (PSYCHIC, 2)),
     # v0.74: 草。キョウのアーボ → キョウのアーボック・キョウのドガース → キョウのマタドガス・キョウのベトベター・キョウのズバット → キョウのゴルバットと、キョウの忍者ジム・
     # ラッキースタジアム（NIP2X-009・PRN-015・PRN-016・PRN-027。同じ名前 4 枚まで）・セキチクシティジム（名前の違うスタジアムの記録で FG1 にしない）
     "L74": (("PMCG6-002", 4), ("PMCG6-019", 2), ("PMCG6-015", 3), ("PMCG6-016", 2), ("PMCG6-007", 3), ("PMCG6-005", 3), ("PMCG6-014", 2), ("PR1-067", 3),
@@ -1037,6 +1059,8 @@ PAIRINGS_V0_74 = (("T74", "L74"), ("T74", "S73"), ("L74", "R73"))
 PAIRINGS_V0_75 = (("W75", "F75"), ("F75", "T74"), ("W75", "P31"))
 # v0.76: K76 対 W76・K76 対 P31（ゆびをふる・ちょうのうりょくで v0.76 のワザをまねる）・W76 対 C72
 PAIRINGS_V0_76 = (("K76", "W76"), ("K76", "P31"), ("W76", "C72"))
+# v0.77: G77 対 W77・C77 対 G77・W77 対 C77（どのデッキも v0.77 のカードで組み、W77 は前の版のタッツー・シードラ・ニョロゾで 2 進化の系統を通す）
+PAIRINGS_V0_77 = (("G77", "W77"), ("C77", "G77"), ("W77", "C77"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1047,7 +1071,8 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.61": PAIRINGS_V0_61, "v0.62": PAIRINGS_V0_62, "v0.63": PAIRINGS_V0_63,
            "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68,
            "v0.69": PAIRINGS_V0_69, "v0.70": PAIRINGS_V0_70, "v0.71": PAIRINGS_V0_71, "v0.72": PAIRINGS_V0_72, "v0.73": PAIRINGS_V0_73,
-           "v0.74": PAIRINGS_V0_74, "v0.75": PAIRINGS_V0_75, "v0.76": PAIRINGS_V0_76}
+           "v0.74": PAIRINGS_V0_74, "v0.75": PAIRINGS_V0_75, "v0.76": PAIRINGS_V0_76,
+           "v0.77": PAIRINGS_V0_77}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -1541,15 +1566,16 @@ def _v076_decision(state, counts):
     use = d.context_value("use")
     copied = d.context_value("copied")
     card = copied[0] if copied else (use[2] if use is not None else None)
-    if card not in V0_76:
+    if card not in V0_76 + V0_77:
         return None
     blocked = set(d.context_value("unresolved_choices") or ())
     options = tuple(o for o in d.options if o not in blocked)
     if not options:
         return None
-    counts["v076_select_opponent_attack"] += 1
-    pick = options[(counts["v076_select_opponent_attack"] - 1) % len(options)]
-    counts[f"v076_select_opponent_attack_{pick}"] += 1
+    prefix = "v076" if card in V0_76 else "v077"  # v0.77: ウパー（neo1-026）のドわすれも同じ手順で答える（v0.76 のカードの数え方は変えない）
+    counts[f"{prefix}_select_opponent_attack"] += 1
+    pick = options[(counts[f"{prefix}_select_opponent_attack"] - 1) % len(options)]
+    counts[f"{prefix}_select_opponent_attack_{pick}"] += 1
     return ResolveDecision(d.player, d.id, (pick,))
 
 
@@ -3443,7 +3469,7 @@ def _v073_decision(state, counts):
     if d is None or d.resume != "trainer":
         return None
     use = d.context_value("use")
-    if use is None or use[2] not in V0_73:
+    if use is None or use[2] not in V0_73 + V0_77_TRAINERS:  # v0.77: neo1 のスーパーポケモン回収・マサキの転送装置も同じ手順で答える
         return None
     seen = counts[f"v073_{use[2]}_{d.kind}_seen"]
     counts[f"v073_{use[2]}_{d.kind}_seen"] += 1
@@ -3591,6 +3617,65 @@ def v076_uses(state):
             counts[f"coin_{effect}_{e['result']}"] += 1
         elif kind == "attack_failed":
             counts["failed"] += 1
+    return dict(counts)
+
+
+def v077_uses(state):
+    """v0.77: ログから数えた v0.77 のカードの動き（ない局では空）。``attack_<id>#<位置>``（宣言。まねたワザは ``copied_<id>#<位置>``）・``coin_<id>#<位置>_<面>``・``effect_<種類>``
+    （v0.77 のワザが与えた持続する効果）・``status_<種類>``（v0.77 のワザで付けた特殊状態）・``failed``・``self_damage``・``bench_damage``（じしんの自分の控え）・``switch``
+    （りゅうのたつまき）・``drain``（メガドレイン）・``attach_from_hand``（せいちょう）・``evolve_<id>``（v0.77 のカードへの進化）・``trainer_<id>``（使ったトレーナー）・
+    ``trainer_coin_<id>_<面>``・``scoop_cards``（スーパーポケモン回収で手札にもどしたカード）・``teleporter_draw``（マサキの転送装置で引いた枚数）。"""
+    counts = Counter()
+    current = None
+    trainer = None
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "turn_start":
+            trainer = None  # 番の最初に引くカードを、マサキの転送装置で引いた枚数に数えない
+            continue
+        if kind == "attack":
+            current = f"{state.cards[e['pokemon']].card_id}#{e['attack_index']}" if "card_id" not in e else f"{e['card_id']}#{e['attack_index']}"
+            if current.split("#")[0] in V0_77:
+                counts[f"attack_{current}"] += 1
+            trainer = None
+            continue
+        if kind == "play_trainer":
+            trainer = state.cards[e["card"]].card_id if e.get("card") in state.cards else None
+            if trainer in V0_77:
+                counts[f"trainer_{trainer}"] += 1
+            continue
+        if kind == "evolve" and e.get("to_card_id") in V0_77:
+            counts[f"evolve_{e['to_card_id']}"] += 1
+        if kind == "copy_attack" and str(e.get("copied", "")).split("#")[0] in V0_77:
+            counts[f"copied_{e['copied']}"] += 1
+        if trainer in V0_77_TRAINERS:
+            if kind == "coin_flip" and e.get("source") == "trainer":
+                counts[f"trainer_coin_{trainer}_{e['result']}"] += 1
+            elif kind == "return_in_play_to_hand":
+                counts["scoop_cards"] += len(e.get("cards") or ())
+            elif kind == "draw":
+                counts["teleporter_draw"] += len(e.get("cards") or ()) if isinstance(e.get("cards"), (list, tuple)) else e.get("count", 0)
+        effect = str(e.get("effect", ""))
+        if effect.split("#")[0] not in V0_77:
+            continue
+        if kind == "persistent_effect_added":
+            counts[f"effect_{e['persistent_effect']}"] += 1
+        elif kind == "coin_flip" and e.get("source") == "attack":
+            counts[f"coin_{effect}_{e['result']}"] += 1
+        elif kind == "special_condition":
+            counts[f"status_{e.get('condition')}"] += 1
+        elif kind == "attack_failed":
+            counts["failed"] += 1
+        elif kind == "damage" and e.get("target") == "self":
+            counts["self_damage"] += 1
+        elif kind == "damage" and e.get("target") == "self_bench":
+            counts["bench_damage"] += 1
+        elif kind == "switch":
+            counts["switch"] += 1
+        elif kind == "drain_heal":
+            counts["drain"] += 1
+        elif kind == "attach_energy_from_hand":
+            counts["attach_from_hand"] += 1
     return dict(counts)
 
 
@@ -4582,6 +4667,7 @@ def make_policy(seen: dict, counts: Counter):
                      or _v066_trainer(state, command, tried, counts)  # v0.66
                      or _v067_trainer(state, tried, counts)  # v0.67
                      or _v073_trainer(state, command, tried, counts)  # v0.73
+                     or _v073_trainer(state, command, tried, counts, only=V0_77_TRAINERS)  # v0.77: neo1 のスーパーポケモン回収・マサキの転送装置
                      or _v074_trainer(state, tried, counts) or _v074_stadium(state, tried, counts))  # v0.74
             if power is not None:
                 return power
@@ -4631,7 +4717,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -4746,6 +4832,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v074"] = v074_uses(state)
         result["v075"] = v075_uses(state)
         result["v076"] = v076_uses(state)
+        result["v077"] = v077_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -5183,7 +5270,8 @@ def summarize(games):
          "v065": Counter(), "v065_games_with": Counter(), "v065_policy": Counter(),
          "v066": Counter(), "v066_games_with": Counter(), "v066_policy": Counter(),
          "v067": Counter(), "v067_games_with": Counter(), "v067_policy": Counter(),
-         "v076": Counter(), "v076_games_with": Counter(), "v076_policy": Counter()}
+         "v076": Counter(), "v076_games_with": Counter(), "v076_policy": Counter(),
+         "v077": Counter(), "v077_games_with": Counter(), "v077_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -5216,6 +5304,9 @@ def summarize(games):
         s["v076"].update(r.get("v076", {}))  # v0.76
         s["v076_games_with"].update({k: 1 for k, v in r.get("v076", {}).items() if v})
         s["v076_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v076_")})
+        s["v077"].update(r.get("v077", {}))  # v0.77
+        s["v077_games_with"].update({k: 1 for k, v in r.get("v077", {}).items() if v})
+        s["v077_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith(("v077_", "v073_neo"))})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))
