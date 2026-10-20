@@ -1806,3 +1806,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   `errata_card_ids` で、kyuura のカードの `source_ids.pcg_search` と照らして対応させた）。
 - 報告事項（kyuura の作業）: MR1・ML1・SR1・SR2・FV1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE・UQ-STATED-COUNT-SHORT はある）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.73 の登録を写すと、18 枚の `engine_status` が `registered` になる。
+
+## v0.74: 拡張パック以外の商品のスタジアム 13 枚
+
+[remaining-stadiums-v0.74.md](remaining-stadiums-v0.74.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_74`（13 枚。kyuura data/engine_targets.json の `new_effect_needed` のスタジアム）を加え、写しの作り直しの
+  道具で作った（手で直していない。PRN-027 の日本語の欄の英語の併記も原データのまま）。v0.73 までの 774 枚の記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。
+- kyuura の日本語の文面は 13 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- NIP1X-009・NIP2X-009 は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2001-04-06）。発売日を変えずに持ち、のちのルールは持ち込まない。PRN-015〜PRN-027 の
+  発売日は kyuura に年だけ（2000）。
+- ポケモンタワーの下のふしちょうは、kyuura の CR-PHOENIX-TIMING・CR-PHOENIX-RETURN（このカードをトラッシュからとり出して手札に加える）の再利用。kyuura の記録を読み直したことにしていない。
+- 報告事項（kyuura の作業）: data/curation/other_products.json のラッキースタジアムの `kind: wording` は文面の分類で、「自分の番ごとに1回」のない PRN-027 の回数を決める記録ではない
+  （エンジンは同じ番の再使用を LK1 で止める）。
+- 報告事項（kyuura の作業）: RS1・LK1・EN1・NJ1・PT1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-FUCHSIA-GYM-ONCE-PER-TURN はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.74 の登録を写すと、13 枚の `engine_status` が `registered` になる。

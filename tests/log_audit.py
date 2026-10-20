@@ -89,6 +89,7 @@ from kyuura_engine.effects import DiscardEnergyThenBenchBasicFromDiscard, Discar
 from kyuura_engine.effects import ATTACK_ELEMENTS as _ATTACK_ELEMENTS, PlaceFaceDownOnBench  # v0.67
 from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, ReturnToDeckAtRemainingHp  # v0.61
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
+from kyuura_engine.effects import CoinBenchOwnerBasicFromDeckStadium, CoinRetrieveBasicEnergyStadium, DiscardToHandSuppressionStadium  # v0.74
 from kyuura_engine.effects import EXPIRE_TO_HAND, RockPaperScissorsRefreshHand  # v0.66
 from kyuura_engine.effects import BlainesQuiz, ChallengeBenchFromDecks, CoinSetAsideOpponentHandElseEndTurn, RevealAllPrizesTrainer  # v0.63
 from kyuura_engine.effects import (
@@ -1324,8 +1325,14 @@ def log_problems(state) -> list[str]:
             if isinstance(effect, EntryPower):
                 if (effect.from_hand_only and not from_hand) or [pid for pid, gas in working_gases() if gas.suppresses(power)]:
                     return None
+                if effect.discard_to_hand_only and tower_in_play():
+                    return None  # v0.74: ポケモンタワーで効果が消える（使う機会を出さない）
                 return f"{definition.id}@power{index}"
         return None
+
+    def tower_in_play() -> bool:
+        """v0.74: ログから組み立てた今の場のスタジアムが、ポケモンタワー（トラッシュから手札に加える効果を消す）か。"""
+        return stadium_zone is not None and isinstance(_trainer_effect_of(state, stadium_zone[0]), DiscardToHandSuppressionStadium)
 
     def working_gases() -> list[tuple[int, SuppressOtherPowers]]:
         """ログから組み立てた今の場で、はたらいている「ほかの特殊能力を消す」特殊能力（v0.8。かがくへんかガス）。"""
@@ -3345,6 +3352,38 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の {kind} のスタジアム {card} が、ログから組み立てた場のスタジアム {stadium_zone} ではない")
             if kind in ("stadium_used", "stadium_attack_coin") and e["player"] != turn_player:
                 problems.append(f"{e['turn']} 番の {kind} が、番のプレイヤーの操作ではない")
+        elif kind == "discard_to_hand_suppressed":
+            # v0.74: ポケモンタワーで「トラッシュからカードを取り出して手札に加える」効果が消えた。場のスタジアムがポケモンタワーのとき
+            if stadium_zone is None or stadium_zone[0] != e["stadium_card"] or not tower_in_play():
+                problems.append(f"{e['turn']} 番の discard_to_hand_suppressed のスタジアム {e['stadium_card']} が、ログから組み立てた場のポケモンタワー（{stadium_zone}）ではない")
+        elif kind == "stadium_retrieve_energy":
+            # v0.74: エネルギースタジアムの「おもて」。番のプレイヤーのトラッシュの基本エネルギーカードを手札へ（直前のこのスタジアムのコインが「おもて」）
+            uid = e["card"]
+            effect = None if stadium_zone is None else _trainer_effect_of(state, stadium_zone[0])
+            coin = next((x for x in reversed(log[:next(i for i in range(len(log) - 1, -1, -1) if log[i] is e)]) if x["kind"] == "coin_flip"), None)
+            if not isinstance(effect, CoinRetrieveBasicEnergyStadium) or stadium_zone[0] != e["stadium_card"] or e["player"] != turn_player \
+                    or uid not in discard[e["player"]] or not state.printed_def(uid).is_basic_energy or coin is None or coin["source"] != "stadium" \
+                    or coin.get("card") != e["stadium_card"] or coin["result"] != "heads":
+                problems.append(f"{e['turn']} 番にエネルギースタジアムで手札に加えたカード {uid} が、「おもて」のあとの番のプレイヤーのトラッシュの基本エネルギーカードではない")
+            else:
+                discard[e["player"]].remove(uid)
+                hand[e["player"]].append(uid)
+        elif kind == "stadium_bench_from_deck":
+            # v0.74: キョウの忍者ジムの「おもて」。番のプレイヤーの山札の「キョウのたねポケモン」を手札を通さずにベンチへ。すぐあとに同じプレイヤーの山札を切る
+            uid = e["card"]
+            effect = None if stadium_zone is None else _trainer_effect_of(state, stadium_zone[0])
+            definition = state.printed_def(uid)
+            if not isinstance(effect, CoinBenchOwnerBasicFromDeckStadium) or stadium_zone[0] != e["stadium_card"] or e["player"] != turn_player \
+                    or owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or ids.get(uid) in in_play \
+                    or not definition.is_basic_pokemon or not definition.name_ja.startswith(f"{effect.owner}の"):
+                # 場にいないこと（ids は場をはなれたカードも残す。セキチクシティジム・くもがくれガスで山札にもどったカードも、また山札から出せる）
+                problems.append(f"{e['turn']} 番にキョウの忍者ジムでベンチに出したカード {uid} が、番のプレイヤーの山札の「キョウのたねポケモン」ではない")
+            enter(uid)
+            if ids[uid] != e["to_pokemon_id"]:
+                problems.append(f"{e['turn']} 番にベンチに出したポケモンの番号 {e['to_pokemon_id']} が、ログから組み立てた {ids[uid]} と違う")
+            after = log[next(i for i in range(len(log) - 1, -1, -1) if log[i] is e) + 1:]
+            if not after or after[0]["kind"] != "shuffle" or after[0]["player"] != e["player"] or after[0].get("stadium_card") != e["stadium_card"]:
+                problems.append(f"{e['turn']} 番にキョウの忍者ジムでベンチに出したあとに、山札を切ったログがない")
         elif kind in ("stadium_discard_energy", "stadium_return_energy"):
             # v0.57: タマムシシティジム（エネルギーカードをトラッシュ）・ヤマブキシティジム（基本エネルギーカードを手札に）。番のプレイヤーの場のポケモンから
             pid = e["pokemon_id"]
@@ -4064,6 +4103,8 @@ def log_problems(state) -> list[str]:
                 # v0.12: 「ふしちょう」を使えるか（きぜつするときのねむり・マヒ・こんらん（P13〜P17）・はたらいているかがくへんかガス（P18））
                 gases = [gas_pid for gas_pid, gas in working_gases() if gas.suppresses(rpower) and gas_pid != pid]
                 blocked = f"{exclusive[pid]} 状態" if pid in exclusive else f"かがくへんかガス（ポケモン {gases}）" if gases else None
+                if blocked is None and tower_in_play():
+                    blocked = "ポケモンタワー"  # v0.74: 効果が消えるので、使う機会を出さない（答えがないのが正しい）
                 rebirth_pending.append({"card": e["pokemon"], "player": e["player"], "power": rkey, "turn": e["turn"], "blocked": blocked})
             in_play.discard(pid)
             exclusive.pop(pid, None)
@@ -4557,7 +4598,7 @@ def observation_problems(state) -> list[str]:
         d, dv = state.decision, view["decision"]
         if d is not None:
             # v0.63: 選ぶ数・選べるものの数も見せない決定。v0.73: 化石の発掘・マスターボール（選べるものの数が山札の中身を漏らす）
-            hidden_count = d.kind in ("challenge_bench", "quiz_card", "quiz_attack", "search_deck_or_discard", "take_looked_pokemon")
+            hidden_count = d.kind in ("challenge_bench", "quiz_card", "quiz_attack", "search_deck_or_discard", "take_looked_pokemon", "bench_from_deck")  # v0.74: bench_from_deck
             if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":

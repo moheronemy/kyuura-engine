@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 158,
-    "engine_stop_codes": 156,
+    "engine_unresolved_rulings": 163,
+    "engine_stop_codes": 161,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -1839,6 +1839,61 @@
           "version": "v0.73",
           "document": "docs/search-recovery-trainers-v0.73.md",
           "ruling_id": "FV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT": {
+      "engine_rulings": [
+        {
+          "version": "v0.74",
+          "document": "docs/remaining-stadiums-v0.74.md",
+          "ruling_id": "RS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT": {
+      "engine_rulings": [
+        {
+          "version": "v0.74",
+          "document": "docs/remaining-stadiums-v0.74.md",
+          "ruling_id": "LK1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.74",
+          "document": "docs/remaining-stadiums-v0.74.md",
+          "ruling_id": "EN1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.74",
+          "document": "docs/remaining-stadiums-v0.74.md",
+          "ruling_id": "NJ1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT": {
+      "engine_rulings": [
+        {
+          "version": "v0.74",
+          "document": "docs/remaining-stadiums-v0.74.md",
+          "ruling_id": "PT1"
         }
       ],
       "kyuura_issue": null,

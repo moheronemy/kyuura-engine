@@ -1593,6 +1593,12 @@ V0_73_CARDS = (MAX_REVIVE, MAX_REVIVE_ES2, FERVOR, MASTER_BALL, MASTER_BALL_ES2,
                FOSSIL_EXCAVATION, MOON_STONE, POKEMON_RETRIEVER, SUPER_SCOOP_UP, SUPER_SCOOP_UP_IP2, BILLS_TELEPORTER, BILLS_TELEPORTER_IP2,
                SUPER_ENERGY_RETRIEVAL, COMPUTER_ERROR, COMPUTER_ERROR_041)
 
+# v0.74（docs/remaining-stadiums-v0.74.md）: 拡張パック以外の商品のスタジアム 13 枚（kyuura データの採用。並びは依頼の並び）
+POKEMON_TOWER, KOGAS_NINJA_GYM, ENERGY_STADIUM, LUCKY_STADIUM_NIP2X = "ES3-036", "PR1-067", "NIP1X-009", "NIP2X-009"
+LUCKY_STADIUM_PRN = ("PRN-015", "PRN-016", "PRN-017", "PRN-018", "PRN-019", "PRN-020", "PRN-021", "PRN-022")
+LUCKY_STADIUM, LUCKY_STADIUM_027 = "PRN-015", "PRN-027"
+V0_74_CARDS = (POKEMON_TOWER, KOGAS_NINJA_GYM, ENERGY_STADIUM, LUCKY_STADIUM_NIP2X, *LUCKY_STADIUM_PRN, LUCKY_STADIUM_027)
+
 
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 7 章）: 研究の基準を kyuura 7d3f4ca に上げたので、採用の記録の kyuura_records（研究の基準のコミットでカードを指す kyuura の記録の id）に
 # 加わった記録（kyuura が論点に結んだ停止コードのカード）。記録を確かめるテストは、v0.68 までの記録の値にこれを加えた値と比べる（tests/test_equivalent_non_pack_cards_v0_69.py が、

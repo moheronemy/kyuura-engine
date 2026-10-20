@@ -21985,6 +21985,188 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.73 で加えた（docs/search-recovery-trainers-v0.73.md）。PR1（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。EachPlayerMayDrawThenEndTurn（PR1-026 と同じ登録の値。SAME_DATA_CARDS_V0_73）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source。kyuura の copies: 1stp041（-/-））なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2002 年のサポーターの規定は持ち込まない"
+    },
+    "ES3-036": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンタワー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。ES3（expansion_sheet）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。DiscardToHandSuppressionStadium（場にある間、お互いのワザ・特殊能力・トレーナーカードの「トラッシュからカードを取り出して手札に加える」効果を消す。ほかの部分は残す。効果がすべて消えるトレーナーは PT1）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PR1-067": {
+      "basis": "kyuura_data",
+      "name_ja": "キョウの忍者ジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PR1（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinBenchOwnerBasicFromDeckStadium（自分の番ごとに 1 回、のぞむならコイン →「おもて」なら山札の「キョウのたねポケモン」を 1 枚ベンチへ → 山札を切る。選べるカード・ベンチの空きがなければ NJ1、同じ名前の別のカードのあとは RS1）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "NIP1X-009": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。NIP1X（intro_pack。2001-04-06 発売。2000.02.14 版の枠組みで扱い、のちのルールを持ち込まない）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinRetrieveBasicEnergyStadium（自分の番ごとに 1 回、のぞむならコイン →「おもて」なら自分のトラッシュの基本エネルギーカードを 1 枚見せて手札へ。トラッシュになければ EN1、同じ名前の別のカードのあとは RS1）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "NIP2X-009": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。NIP2X（intro_pack。2001-04-06 発売。2000.02.14 版の枠組みで扱い、のちのルールを持ち込まない）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015 と書き方が違う（「自分の山札から」「投げてよい」）のでまとめない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-015": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-017": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-019": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-020": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-021": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated。自分の番ごとに 1 回、のぞむならコイン →「おもて」なら 1 枚引く。PRN-015〜PRN-022 は同じ文面で、登録を共有する（SAME_DATA_CARDS_V0_74））。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
+    },
+    "PRN-027": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.74 で加えた（docs/remaining-stadiums-v0.74.md）。PRN（promo。日本語と英語の併記）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。スタジアム。CoinDrawStadium（once_stated が偽。日本語の文面に「自分の番ごとに1回」がない。この番の最初の 1 回を処理し、同じ番の再使用は LK1 で止める（回数の制限の有無を決めない）。英語の併記・kyuura の other_products.json の wording の分類で回数を補わない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・2003 年以後のスタジアムの使用の制限は持ち込まない"
     }
   }
 }

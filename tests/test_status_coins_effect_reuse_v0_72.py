@@ -225,7 +225,7 @@ class TargetTest(unittest.TestCase):
     def test_targets_are_the_requested_43_cards(self):
         self.assertEqual(POOL_V0_72, REQUESTED)
         self.assertEqual(len(set(POOL_V0_72)), 43)
-        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_72", "pool_v0_73") for card_id in pool}  # v0.73 の組はあとの版
+        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_72", "pool_v0_73", "pool_v0_74") for card_id in pool}  # v0.73 の組はあとの版
         self.assertFalse(set(POOL_V0_72) & earlier)
         self.assertEqual(len(earlier), 713)
         self.assertFalse(set(POOL_V0_72) & set(E.EQUIVALENT_CARDS))
@@ -241,7 +241,7 @@ class TargetTest(unittest.TestCase):
     def test_counts_from_the_registry(self):
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
-        later = set(EXTRACT["pool_v0_73"])  # v0.73 の 18 枚（トレーナー）を除いて比べる
+        later = set(EXTRACT["pool_v0_73"]) | set(EXTRACT["pool_v0_74"])  # v0.73 の 18 枚・v0.74 の 13 枚（トレーナー）を除いて比べる
         playable = pool.playable_ids - later
         categories = [pool.get(c).category for c in playable]
         self.assertEqual(len(playable), 756)
@@ -314,7 +314,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS.without_attacks("test-no-v072", keys)
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_72 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"])), 713)  # v0.73 の 18 枚は除いて比べる
+        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"]) - set(EXTRACT["pool_v0_74"])), 713)  # v0.73 の 18 枚・v0.74 の 13 枚は除いて比べる
 
     def test_data_mismatch_makes_the_card_unsupported(self):
         def text(card_id, index, value):

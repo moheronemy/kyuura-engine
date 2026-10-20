@@ -127,6 +127,7 @@ from .effects import (
     TrainerCoinStadium,
     BenchLimitStadium,
     CoinReturnOwnerPokemonStadium,
+    COIN_CHOICE_STAGES,
     EvolutionHealStadium,
     apply_evolution_heal,
     bench_entry_damage,
@@ -161,7 +162,7 @@ from .errors import DeckValidationError, HiddenPropertyRead, IllegalActionError,
 from .persistent import (DISCARD_FROM_PLAY, KNOCK_OUT, cannot_retreat, effect_attack_card, energy_attach_blocked, expires_at_turn_start, lasting, powers_use_prevented,
                          remove_persistent_effects)
 from .rules import RULES_2000_02_14, RuleSet
-from .stadiums import bench_limit, stadium_in_play
+from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
     PERSISTENT_EFFECT_TYPES,
     TRAINER_TURN_EFFECT_KINDS,
@@ -1767,7 +1768,8 @@ def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context)
     - 自分の番（``Phase.MAIN``）だけ。カードの持ち主でないプレイヤーも使える（お互いのプレイヤーの場に出ているカード）
     - 確かめる順番: 番・段階 → 場のスタジアムがある（``NO_STADIUM``）→ 実装の ``check_activation``（使う効果がない ``STADIUM_NOT_USABLE``・選ばせるもの・回数・
       決められない場合）。どれも状態を変える前
-    - 使う（ログ ``stadium_used``）→「自分の番ごとに1回」なら記録（``stadium_uses_this_turn``。「うら」でも使ったことになる）→ 実装の ``activate``。決定を出したら
+    - 使う（ログ ``stadium_used``）→「自分の番ごとに1回」なら記録（``stadium_uses_this_turn``。「うら」でも使ったことになる。v0.74 から ``records_uses``。回数の書かれていない
+      PRN-027 のラッキースタジアムも、同じ番の再使用（LK1）を確かめるために記録する）→ 実装の ``activate``。決定を出したら
       再開先 ``"stadium"``（``_resume_stadium``）で続ける。終わったら空いたバトル場（セキチクシティジムでバトル場のポケモンを山札にもどした）の勝ち負け・交代
       （``resolution.after_stadium``）。番は終わらない
     - トレーナーカードを手札から使うこと・特殊能力の使用ではない（かがくへんかガス・特殊状態は関係しない）。トレーナーの使用の禁止の対象かは STB1
@@ -1779,7 +1781,7 @@ def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context)
     stadium, effect = found
     effect.check_activation(state, cmd.player, cmd.energy, stadium)
     state.add_event("stadium_used", player=cmd.player, card=stadium.card, owner=stadium.owner)
-    if effect.once_per_turn:
+    if effect.records_uses:  # v0.74: 「自分の番ごとに1回」と、同じ番の再使用を確かめる効果（PRN-027 のラッキースタジアム）
         state.stadium_uses_this_turn = state.stadium_uses_this_turn + ((cmd.player, stadium.card),)
     effect.activate(state, cmd.player, cmd.energy, stadium)
     if state.decision is None:
@@ -3861,15 +3863,15 @@ def _stadium_problems(state: GameState) -> list[str]:
             continue
         player, card = record
         entry = state.effects.trainer_entry(state.cards[card].card_id)
-        if entry is None or not entry.effect.is_stadium or not entry.effect.once_per_turn:
-            problems.append(f"スタジアムの効果の記録 {record} のカードが、「自分の番ごとに1回」のスタジアムではない")
+        if entry is None or not entry.effect.is_stadium or not entry.effect.records_uses:
+            problems.append(f"スタジアムの効果の記録 {record} のカードが、使った記録を残すスタジアム（「自分の番ごとに1回」など。v0.74 の records_uses）ではない")
         if player != state.current_player:
             problems.append(f"スタジアムの効果の記録 {record} のプレイヤーが、番のプレイヤーではない")
         logged = sum(1 for e in recent if e["kind"] == "stadium_used" and e.get("player") == player and e.get("card") == card)
         if logged != 1:
             problems.append(f"スタジアムの効果の記録 {record} に対応する、今の番のログ stadium_used が {logged} 回")
     once_logged = [(e.get("player"), e.get("card")) for e in recent if e["kind"] == "stadium_used" and e.get("card") in state.cards
-                   and getattr((state.effects.trainer_entry(state.cards[e["card"]].card_id) or E_NONE).effect, "once_per_turn", False)]
+                   and getattr((state.effects.trainer_entry(state.cards[e["card"]].card_id) or E_NONE).effect, "records_uses", False)]
     if sorted(once_logged) != sorted(uses):
         problems.append(f"今の番のログの「自分の番ごとに1回」のスタジアムの使用 {once_logged} が、記録 {uses} と違う")
     return problems
@@ -3923,6 +3925,25 @@ def _stadium_decision_problems(state: GameState, d) -> list[str]:
             problems.append(f"{where} の種類 {d.kind}・プレイヤー {d.player} が、番のプレイヤーのポケモンを選ぶ決定ではない")
         elif d.options != tuple(effect.targets(state, d.player)) or (d.min_choices, d.max_choices) != (1, 1):
             problems.append(f"{where} の選べるもの {d.options} が、自分の場の「{effect.owner}のポケモン」1 匹ではない")
+        return problems
+    if stage in COIN_CHOICE_STAGES:
+        # v0.74: エネルギースタジアム・キョウの忍者ジムの「おもて」のあと（段階と決定の種類は実装の ``choice_stage``・``choice_kind``）。決めるのは番のプレイヤー（使ったプレイヤー）
+        # で、この番にこのカードを使った記録とログ stadium_used・「おもて」のコインがある。選べるものは実装の ``candidates``（ちょうど 1 枚）
+        problems = []
+        if getattr(effect, "choice_stage", None) != stage or d.kind != effect.choice_kind or d.player != state.current_player:
+            return [f"{where} の種類 {d.kind}・プレイヤー {d.player}・場のスタジアムが、番のプレイヤーの段階 {stage} の決定ではない"]
+        options = tuple(effect.candidates(state, d.player))
+        if not options or d.options != options or (d.min_choices, d.max_choices) != (1, 1):
+            problems.append(f"{where} の選べるもの {d.options}（{d.min_choices}〜{d.max_choices}）が、{options} から 1 枚ではない")
+        if effect.needs_bench_room and not bench_has_room(state, d.player):
+            problems.append(f"{where} のプレイヤー {d.player} のベンチに空きがない")
+        if (d.player, card) not in state.stadium_uses_this_turn:
+            problems.append(f"{where} のプレイヤー {d.player} が、この番にスタジアム {card} を使った記録がない")
+        recent = list(reversed(_events_since_turn_start(state)))  # 古い順
+        used = [i for i, e in enumerate(recent) if e["kind"] == "stadium_used" and e.get("player") == d.player and e.get("card") == card]
+        coins = [e for e in recent[used[-1]:] if e["kind"] == "coin_flip" and e.get("source") == "stadium" and e.get("card") == card] if used else []
+        if len(coins) != 1 or coins[0].get("result") != "heads":
+            problems.append(f"{where} の前に、このスタジアムの「おもて」のコインが 1 枚ない")
         return problems
     return [f"{where} の段階が正しくない"]
 

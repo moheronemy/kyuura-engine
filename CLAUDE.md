@@ -2713,3 +2713,71 @@
 - 検証用デッキ `S73`・`R73` と組 `PAIRINGS_V0_73`（`S73` 対 `R73`・`S73` 対 `C72`・`R73` 対 `F72`）は tools/existing_effect_games.py の `--batch v0.73` です（前の版の組の結果は変わらない）。
   手順は `_v073_trainer`（パソコン大暴走！は手順が番を終えるところでだけ、元気のかたまりは手順がエネルギーをつける前に試す）・`_v073_decision`、数えた結果は `v073_uses`。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 拡張パック以外の商品のスタジアム 13 枚（v0.74）
+
+### 対象と数
+
+- kyuura の data/engine_targets.json の `new_effect_needed` のスタジアム 13 枚（4 つの名前・印刷の文面 6 組。写しの組 `pool_v0_74`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.73 | v0.74 |
+  |---|---|---|
+  | 写し・対応するカード | 774・774 | 787・787 |
+  | 対応ポケモン・トレーナー・エネルギー | 546・198・30 | 546・211・30 |
+  | スタジアムの登録（トレーナーの登録のうち） | 20 | 33 |
+  | 停止コード・未解決の裁定 | 156・158 | 161・163 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API・状態の項目は変えていません。カードごとの処理・根拠・検証は docs/remaining-stadiums-v0.74.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。13 枚の pcg-search.com・カードの画像との照合もしていません。英語版の文面（PRN-027 の英語の併記を含む）・現代のルール・
+  2003 年以後のスタジアムの使用の制限で補わないでください。
+- テストの定数は tests/helpers.py の `POKEMON_TOWER`・`KOGAS_NINJA_GYM`・`ENERGY_STADIUM`・`LUCKY_STADIUM_NIP2X`・`LUCKY_STADIUM_PRN`・`LUCKY_STADIUM_027`・`V0_74_CARDS`。
+
+### 置き方の段落と回数
+
+- 置き方の段落は、v0.57 の 3 通りの文に加え、イントロパック・プロモの段落と PRN-027 の段落（英語の併記を含む）を、印刷の文面の最後の段落として全文で照らします
+  （`effects.STADIUM_PLACEMENT_PARAGRAPHS`）。広い言い回しで受け付けないでください。版ごとの全文と登録の値は型の `text_problems` が照らします（`LUCKY_STADIUM_TEXTS`）。
+- 使った記録は `stadium_uses_this_turn` だけに持ち、残すかは実装の `records_uses`（既定は `once_per_turn`。PRN-027 も残す）。記録はスタジアムカードごとで、同じ名前のカードを同じ効果の
+  系統として見ます（`effects.stadium_use_history`）。名前の違うスタジアムの使用は数えません。
+- セキチクシティジムの FG1 は、v0.74 から同じ名前の別のカードで使った記録だけで止めます（v0.73 までは記録が何でもあれば止めていた。意図した変更）。FG1 そのものは解決していません。
+- ラッキースタジアム・エネルギースタジアム・キョウの忍者ジムを、同じ名前の別のカードに入れかわったあとにもう一度使うのは RS1。PRN-027（日本語に「自分の番ごとに1回」がない）は、この番の
+  最初の 1 回だけを処理し、同じ番の再使用は LK1。回数の制限の有無を、ほかの版の文面・英語の併記・kyuura の `wording` の分類で決めないでください。STB1 は解決していません。
+- 手札から出せるスタジアムの枚数・同じ名前の入れかえ・古いカードを持ち主のトラッシュに置くことは、v0.57 のままです。
+
+### 起動する効果
+
+- どれも `UseStadium(player)`（`energy` は使わない。指定したら `STADIUM_CHOICE_NOT_USED`）→ 記録 → 使ったプレイヤーのコイン 1 枚（`source` `"stadium"`）。「うら」でも使ったことに
+  なります。ワザの説明文のコインではないので、ナツメのESPのやり直しの対象にしないでください。決定からの再開でコインを投げ直さないでください。
+- ラッキースタジアム（`CoinDrawStadium`）は「おもて」で 1 枚引く（引けるだけ。0 枚でも負けではない）。決定は出しません。
+- エネルギースタジアム（`CoinRetrieveBasicEnergyStadium`）は「おもて」で、使ったプレイヤーのトラッシュの基本エネルギーカード（レインボーエネルギーは選べない）から、1 枚でも決定
+  （`RETRIEVE_ENERGY`。段階 `energy_stadium`）を出します。トラッシュに基本エネルギーカードがなければ EN1（コインの前）。
+- キョウの忍者ジム（`CoinBenchOwnerBasicFromDeckStadium`）は「おもて」で、山札の「キョウの」たねポケモン（`CardFilter("basic_pokemon", name_prefix=…)`）からちょうど 1 枚（決定
+  `BENCH_FROM_DECK`。段階 `ninja_gym`）を手札を通さずにベンチへ出し、山札を 1 回切ります。「うら」なら切りません。候補なし・山札 0 枚・ベンチに空きなしは NJ1（コインの前）。ほかの
+  カードの「ベンチに空きがない時、使えない」を写さないでください。
+- スタジアムの決定の不変条件は、実装の `choice_stage`・`choice_kind`・`candidates`・`needs_bench_room`（`effects.COIN_CHOICE_STAGES`）で確かめます。engine.py に決定の種類の名前を
+  書かないでください（tests/test_energy_retrieval_v0_23.py が確かめる）。
+
+### ポケモンタワー
+
+- 消えるかは場のスタジアムから問い合わせます（`effects.discard_to_hand_suppressor`）。印・一覧を状態に持たず、両方のプレイヤーに同じに当てはめ、`engine.py`・`resolution/` にカード id の
+  分岐を加えないでください。消えたらログ `discard_to_hand_suppressed`（公開）。
+- 消すのは「トラッシュからカードを取り出して手札に加える」部分だけです。場 → 手札・トラッシュ → ベンチ・トラッシュ → 山札・トラッシュ → 場のポケモンにつける効果は消さないでください。
+  `zones.return_discard_to_hand` を何もしない関数にする形にしないでください（使うための条件・候補・決定・先読み・ログが合わなくなる）。
+- 経路: ワザの要素 `RecoverEnergy`・`RecoverTrainer`（`programs.suppressed_discard_to_hand`。まねたワザ・再録にも当てはまる。コスト・自分へのダメージは残す）、特殊能力
+  `ReturnToHandOnKnockOut`・`RecoverPokemonFromDiscardOnEntry`（`PowerEffect.discard_to_hand_only`。使っても使わなくても状態が同じなので機会を出さない。正規化で、使えないと決めた
+  のではない。きぜつ・トラッシュ・サイドは変えない）、トレーナー `DiscardFromHandThenRetrieveEnergy`・`TakeFromDiscardTrainer`（手札へ）（効果がすべて消えるので PT1。使うための条件の
+  確かめのあと・手札から出す前。`effects.check_tower_trainer`）、熱血!（トラッシュは残り、FV1 で止めない。HC6 は残す）、化石の発掘（候補が山札だけになる。山札を切ることは残る）。
+- トラッシュから手札に加える処理を加えるときは、この問い合わせを通してください（ワザは要素の中、特殊能力は機会、トレーナーは使う前と候補）。
+
+### 観測・ログ・道具
+
+- `BENCH_FROM_DECK` を `observation.HIDDEN_COUNT_KINDS` に加えました（v0.32 からのワザ・特殊能力の選べるものの数も、v0.74 から相手に見せない。意図した変更）。新しいログのイベント（公開）は
+  `discard_to_hand_suppressed`・`stadium_retrieve_energy`・`stadium_bench_from_deck`。決定の種類は増やしていません。
+- マチスの秘策の試すカードは 617 → 623（たねポケモン 269 のまま）。カツラのクイズの候補は変わりません。
+
+### 検証用デッキ
+
+- 検証用デッキ `T74`・`L74` と組 `PAIRINGS_V0_74`（`T74` 対 `L74`・`T74` 対 `S73`・`L74` 対 `R73`）は tools/existing_effect_games.py の `--batch v0.74` です（前の版の組の結果は変わらない）。
+  手順は `_v074_trainer`・`_v074_stadium`・`_v074_decision`、数えた結果は `v074_uses`。tests/v017_games.py の `play_game` は PT1 を場から確かめてから別の操作を続けます。
+- 対戦の手順の Z23 の確かめ（`_after_damage_without_damage`）は、v0.74 から相手の「とうめい」も見ます（エンジンの処理は変えていない）。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

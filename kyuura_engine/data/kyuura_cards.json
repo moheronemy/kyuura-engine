@@ -983,6 +983,21 @@
     "PR1-026",
     "PR1-041"
   ],
+  "pool_v0_74": [
+    "ES3-036",
+    "PR1-067",
+    "NIP1X-009",
+    "NIP2X-009",
+    "PRN-015",
+    "PRN-016",
+    "PRN-017",
+    "PRN-018",
+    "PRN-019",
+    "PRN-020",
+    "PRN-021",
+    "PRN-022",
+    "PRN-027"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -69598,6 +69613,725 @@
       "copies": [
         {
           "page": "1stp041",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "ES3-036",
+      "jp_set": "ES3",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンタワー",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのポケモンやプレイヤーの使う「ワザ・特殊能力・トレーナーカード」の効果のうち、「トラッシュからカードを取り出して手札に加える」効果は、すべて消える。(それ以外の効果は、そのまま)\nこのスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3036"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3036.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3036.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex3036",
+          "list_number": "036/036"
+        }
+      ]
+    },
+    {
+      "id": "PR1-067",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "キョウの忍者ジム",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "お互いのプレイヤーは、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインが「おもて」なら、自分の山札から「キョウのたねポケモン」のカードを1枚選び出し、ベンチに出す。その場合、その山札をよく切る。\nこのスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp067"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp067.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp067.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp067",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-009",
+      "jp_set": "NIP1X",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギースタジアム",
+        "en": "Energy Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分のトラッシュから「基本エネルギーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player puts a basic Energy card from his or her discard pile into his or her hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-99"
+        ],
+        "pcg_search": [
+          "neointro1ex009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex009.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-NIP1X-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-101",
+        "english_text": "same_card:neo4-101"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex009",
+          "list_number": "009/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-009",
+      "jp_set": "NIP2X",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分の山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neointro2ex009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex009.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex009",
+          "list_number": "009/010"
+        }
+      ]
+    },
+    {
+      "id": "PRN-015",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop015"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop015.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(九州地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop015.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop015",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-016",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop016"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop016.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(関東地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop016.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop016",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-017",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(関西地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop017.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop017",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-018",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop018"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop018.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(中国・四国地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop018.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop018",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-019",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(中部地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop019.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop019",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-020",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(東北地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop020.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop020",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-021",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(北信越地方)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop021.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop021",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-022",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": [
+          "neop022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [
+          "ポケモンカードワールドチャレンジ(北海道)"
+        ],
+        "source": "https://pcg-search.com/card/neo/neop022.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo4-106",
+        "english_text": "same_card:neo4-106"
+      },
+      "copies": [
+        {
+          "page": "neop022",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-027",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーの番の間(ワザを使う前)に、その番のプレイヤーはコインを投げてもよい。「おもて」なら、そのプレイヤーはカードを1枚引く。(During each player's turn(before he or she attacks). that player may flip a coin. If heads, he or she draws a card.)\nこのカードは、対戦が終わるまで場に出しておく。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。(This card stays in play after being played. Discard this card if another Stadium card comes into play.)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop027"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop027.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop027.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-015",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neop027",
           "list_number": "-/-"
         }
       ]

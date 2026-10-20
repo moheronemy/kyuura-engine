@@ -1883,6 +1883,16 @@ class HealAllCounters(Element):
         return False
 
 
+def suppressed_discard_to_hand(run: AttackRun) -> bool:
+    """v0.74: 場のポケモンタワーで、ワザの「トラッシュからカードを取り出して手札に加える」要素の効果が消えるなら、ログ ``discard_to_hand_suppressed`` を残して True。
+    相手のワザとして使った（まねた）ワザ・再録の登録も同じ要素なので、同じに当てはまる。実際の処理と先読み（状態の複製）で同じ問い合わせ。"""
+    tower = E.discard_to_hand_suppressor(run.state)
+    if tower is None:
+        return False
+    E.log_discard_to_hand_suppressed(run.state, run.player, tower, effect=str(run.key))
+    return True
+
+
 @dataclass(frozen=True)
 class RecoverEnergy(Element):
     """自分のトラッシュのエネルギーカードを ``max_cards`` 枚まで選んで手札に加える（エナジーへんかん。0 枚は原典で決められない。H4）。"""
@@ -1896,6 +1906,8 @@ class RecoverEnergy(Element):
         return [uid for uid in run.state.players[run.player].discard if run.state.card_def(uid).category == "energy"]
 
     def run(self, run: AttackRun) -> bool:
+        if suppressed_discard_to_hand(run):
+            return False  # v0.74: ポケモンタワーで、この要素（トラッシュから手札に加える）の効果が消える。次の要素（自分へのダメージ）はそのまま
         candidates = self._candidates(run)
         if not candidates:
             return False  # 選べるものがない。手札に加えるものはなく、次の要素へ（H5）
@@ -2474,6 +2486,8 @@ class RecoverTrainer(Element):
             discarded = run.fs.results.get(self.requires)
             if discarded is not None and discarded.outcome != "done":
                 return False
+        if suppressed_discard_to_hand(run):
+            return False  # v0.74: ポケモンタワー（エネルギーのトラッシュはすんでいて、取り消さない）
         candidates = self._candidates(run)
         if not candidates:
             return False

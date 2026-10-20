@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.73）
+# 実装状況（v0.1〜v0.74）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3600,3 +3600,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | パソコン大暴走！（お互い最大 5 枚 → 使ったプレイヤーの番が終わる） | 実装済み・テスト済み | 印刷の文面 | 同 `ComputerErrorTest` |
 | 同じデータの 6 枚の登録の共有（`SAME_DATA_CARDS_V0_73`。マスターボールの 2 つの組はまとめない） | 実装済み・テスト済み | 写しのデータ | 同 `RegistrationTest` |
 | 18 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |
+
+## v0.74: 拡張パック以外の商品のスタジアム 13 枚
+
+[remaining-stadiums-v0.74.md](remaining-stadiums-v0.74.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 13 枚（`pool_v0_74`。kyuura の `new_effect_needed` のスタジアム）。4 つの名前・印刷の文面 6 組 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_remaining_stadiums_v0_74.py `RegistrationTest` |
+| 置き方の段落（イントロパック・プロモの書き方、PRN-027 の英語を併記した段落）の全文の照合 | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest.test_text_and_values_are_checked_together` |
+| 使った記録の系統（同じ名前）と FG1 の範囲の修正（名前の違うスタジアムの記録では止めない） | 実装済み・テスト済み（FG1・RS1 は未解決で止める） | 実装上の判断（回数の数え方は記録で決まらない） | 同 `UseCountTest` |
+| ラッキースタジアム（コイン →「おもて」なら 1 枚引く。引けるだけ） | 実装済み・テスト済み | 印刷の文面と p.312 の規定 | 同 `UseCountTest` |
+| ラッキースタジアム PRN-027（「自分の番ごとに1回」がない）: 最初の 1 回 | 実装済み・テスト済み（同じ番の再使用は LK1 で止める） | 印刷の文面（英語の併記・wording の分類で補わない） | 同 `UseCountTest.test_prn027_first_use_and_repeat_boundary` |
+| エネルギースタジアム（コイン →「おもて」ならトラッシュの基本エネルギーカード 1 枚を見せて手札へ） | 実装済み・テスト済み（トラッシュにないときは EN1） | 印刷の文面 | 同 `EnergyStadiumTest` |
+| キョウの忍者ジム（コイン →「おもて」なら山札の「キョウのたねポケモン」1 枚をベンチへ → 切る） | 実装済み・テスト済み（候補なし・ベンチに空きなしは NJ1、GG1） | 印刷の文面 | 同 `NinjaGymTest` |
+| ポケモンタワー（トラッシュから手札に加える部分だけを消す。ワザ・特殊能力・トレーナーの全経路） | 実装済み・テスト済み（効果がすべて消えるトレーナーは PT1） | 印刷の文面。ふしちょうは CR-PHOENIX-TIMING・CR-PHOENIX-RETURN の再利用 | 同 `PokemonTowerTest` |
+| ふしちょう・［つりあげる］の機会をタワーの下で出さない | 実装済み・テスト済み | 実装上の正規化（使っても使わなくても状態が同じ。使えないと決めたのではない） | 同 `PokemonTowerTest.test_phoenix_is_not_offered`・`test_entry_power_reel_in_is_not_offered` |
+| `BENCH_FROM_DECK` の選べるものの数を相手の観測に見せない（v0.32 からのワザ・特殊能力も） | 実装済み・テスト済み | 見えない情報の扱い（意図した変更） | 同 `NinjaGymTest`・tests/log_audit.py `observation_problems` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |

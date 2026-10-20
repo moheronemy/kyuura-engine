@@ -6139,6 +6139,7 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
                 f"このカードを除く手札が {len(others)} 枚で、使うための条件（手札からカードを{self.discard}枚選んでトラッシュする）を"
                 "満たせない（p.257・p.310）",
             )
+        check_tower_trainer(state, use)  # v0.74（PT1）: 効果がすべてトラッシュから手札に加える効果
         if not _retrievable_energy(state, use.player, ()):
             raise UnsupportedError(*self.WITHOUT_TARGET)
 
@@ -7112,6 +7113,9 @@ class PowerEffect:
     implementation_id = "abstract"
     declared: ClassVar[bool] = True
     once_per_turn: ClassVar[bool] = False  # v0.31: 「自分の番ごとに1回使える」（使った回数は ``GameState.power_uses_this_turn``）
+    # v0.74: 効果がすべて「トラッシュからカードを取り出して手札に加える」効果（ふしちょう・つりあげる）。場のポケモンタワーでは効果が消えるので、使う機会を出さない
+    # （使っても使わなくても状態が同じ。使えるか・使えないかを決めたのではない。docs/remaining-stadiums-v0.74.md 5 章）
+    discard_to_hand_only: ClassVar[bool] = False
     # v0.49: ワザのないカードに、ほかのカードのワザを持たせる特殊能力（メタモンの［へんしん］）。ワザのないポケモンを対応にするのは、これが登録されているときだけ
     supplies_attacks: ClassVar[bool] = False
     # v0.42: 説明が、処理の結果としてポケモンを「きぜつ」させうるか（ゲンガーの［のろい］だけ。説明に「きぜつ」しない範囲の条件がない）。偽の特殊能力の
@@ -7694,6 +7698,7 @@ class ReturnToHandOnKnockOut(PowerEffect):
     """
 
     implementation_id = "return_to_hand_on_knock_out"
+    discard_to_hand_only: ClassVar[bool] = True  # v0.74: このカードをトラッシュから手札に加える（CR-PHOENIX-TIMING・CR-PHOENIX-RETURN。場から手札ではない）
 
     def check(self, power: Power) -> list[str]:
         problems = []
@@ -8736,7 +8741,7 @@ def entry_power(state: GameState, card: int) -> tuple[int, EntryPower] | None:
     return None
 
 
-def applicable_entry_power(state: GameState, card: int, *, from_hand: bool) -> tuple[int, EntryPower] | None:
+def applicable_entry_power(state: GameState, card: int, *, from_hand: bool, tower: bool = True) -> tuple[int, EntryPower] | None:
     """カード ``card`` が場に出たときに、その経路（``from_hand``: 手札から出した）で使う機会がある特殊能力（v0.43）。経路が合わない（「手札から」の特殊能力を
     山札から重ねた）・今はたらいている「かがくへんかガス」に消されているなら None（``continuous.suppressors_of``。消された特殊能力には機会がない。p.323）。"""
     from .continuous import power_suppressed  # continuous.py は effects.py を読み込むので、使うときに読み込む
@@ -8749,6 +8754,8 @@ def applicable_entry_power(state: GameState, card: int, *, from_hand: bool) -> t
         return None
     if power_suppressed(state, state.card_def(card).powers[index]):
         return None
+    if tower and effect.discard_to_hand_only and discard_to_hand_suppressor(state) is not None:
+        return None  # v0.74: ポケモンタワーで効果が消えた（使っても状態は同じなので、機会を出さない。``tower`` が偽なら、タワーを見ない）
     return found
 
 
@@ -8763,6 +8770,10 @@ def offer_entry_power(state: GameState, owner: int, pokemon: PokemonInPlay, *, f
     """
     found = applicable_entry_power(state, pokemon.card, from_hand=from_hand)
     if found is None:
+        hidden = applicable_entry_power(state, pokemon.card, from_hand=from_hand, tower=False)
+        tower = discard_to_hand_suppressor(state)
+        if hidden is not None and tower is not None:  # v0.74: ポケモンタワーで効果が消えたので機会を出さない（ログだけ残す）
+            log_discard_to_hand_suppressed(state, owner, tower, power=str(PowerKey(state.card_def(pokemon.card).id, hidden[0])), pokemon_id=pokemon.pokemon_id)
         return False
     index, effect = found
     definition = state.card_def(pokemon.card)
@@ -8854,6 +8865,7 @@ class RecoverPokemonFromDiscardOnEntry(EntryPower):
 
     max_cards: int
     implementation_id = "recover_pokemon_from_discard_on_entry"
+    discard_to_hand_only: ClassVar[bool] = True  # v0.74: ポケモンタワー
 
     def check(self, power: Power) -> list[str]:
         problems = _check_power_text(power, "手札から場に出したときにトラッシュのポケモンのカードを手札に加える特殊能力", REEL_IN_TEXTS)
@@ -14562,6 +14574,9 @@ class TakeFromDiscardTrainer(TrainerEffect):
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if self.discard_cost:
             _hand_cost_problem(state, use, self.discard_cost, "すてる")
+        if self.destination == TO_HAND:
+            check_tower_trainer(state, use)  # v0.74（PT1）: 効果がすべてトラッシュから手札に加える効果（ダウジングマシーン）
+        if self.discard_cost:
             return  # 選べるものは、すてたあとに求める（すてたカードも選べる）。選ばなくてよい（「ことができる」）ので、選べるカードがなくても止めない
         if not self.optional and not self.candidates(state, use):
             if self.zero_undetermined:
@@ -17334,6 +17349,13 @@ CHAOS_GYM_TEXT = "このスタジアムカードは、バトル場の横に出�
 STADIUM_PLACEMENT_TEXT = "バトル場の横に出して使う"
 STADIUM_REPLACEMENT_TEXTS = ("別のスタジアムカードが場に出た時、このカードをトラッシュする", "新しいスタジアムカードが場に出た時、古いスタジアムカードはトラッシュされる",
                              "このカード以外のスタジアムカードが場に出た時、このカードをトラッシュする")
+# v0.74: 拡張パック以外の商品のスタジアムの置き方の段落（印刷の文面の最後の段落と全文で照らす。言い回しの一部だけで受け付けない）。イントロパック・プロモの
+# 「「スタジアムカード」は、バトル場の横に出して使う。…」と、日本語と英語を併記した PRN-027 の「このカードは、対戦が終わるまで場に出しておく。…」（英語の併記は原データの
+# まま照らすだけで、日本語の不足を補わない）
+STADIUM_NEO_PLACEMENT_PARAGRAPH = "「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。"
+STADIUM_STAYS_PLACEMENT_PARAGRAPH = ("このカードは、対戦が終わるまで場に出しておく。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。(This card stays in play after "
+                                     "being played. Discard this card if another Stadium card comes into play.)")
+STADIUM_PLACEMENT_PARAGRAPHS = (STADIUM_NEO_PLACEMENT_PARAGRAPH, STADIUM_STAYS_PLACEMENT_PARAGRAPH)
 
 # スタジアムの効果を使うことが、トレーナーカードの使用の禁止（［アレルギーかふん］・ずつう・こうしゅうは・ロケット団の実験の「うら」）の対象かは、記録から決まらない（STB1）
 STADIUM_UNDER_TRAINER_BAN_CODE = "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
@@ -17373,7 +17395,8 @@ class StadiumEffect(TrainerEffect):
         if text != self.text:
             problems.append(f"文面 {text!r} が、登録の文面ではない")
             return problems
-        if STADIUM_PLACEMENT_TEXT not in text or not any(sentence in text for sentence in STADIUM_REPLACEMENT_TEXTS):
+        placed = STADIUM_PLACEMENT_TEXT in text and any(sentence in text for sentence in STADIUM_REPLACEMENT_TEXTS)
+        if not placed and not any(text.endswith("\n" + paragraph) for paragraph in STADIUM_PLACEMENT_PARAGRAPHS):
             problems.append("文面に、スタジアムの置き方（バトル場の横に出す・別のスタジアムが場に出たらトラッシュする）がない")
         problems += [f"文面と登録の「{name}」が合わない" for name in self.text_problems(text)]
         return problems
@@ -17381,6 +17404,12 @@ class StadiumEffect(TrainerEffect):
     def text_problems(self, text: str) -> list[str]:
         """部分型が、文面と登録の値（持ち主の名前・数）を照らす（合わない項目の名前）。"""
         return []
+
+    @property
+    def records_uses(self) -> bool:
+        """v0.74: 使ったことを記録する（``GameState.stadium_uses_this_turn``）か。「自分の番ごとに1回」の効果（``once_per_turn``）と、回数が書かれていないが同じ番の
+        再使用を確かめる効果（PRN-027 のラッキースタジアム）。"""
+        return self.once_per_turn
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         raise RuntimeError("スタジアムカードはエンジンが場に出す（engine._play_stadium。効果の resolve は呼ばない。エンジンの不具合）")
@@ -17411,6 +17440,23 @@ def stadium_of(state: GameState, kind: type | tuple[type, ...]) -> tuple[Stadium
 
 def _stadium_label(state: GameState, stadium: StadiumInPlay) -> str:
     return state.card_def(stadium.card).name_ja
+
+
+def stadium_use_history(state: GameState, player: int, stadium: StadiumInPlay) -> tuple[bool, bool]:
+    """v0.74: この番に、プレイヤー ``player`` が (このスタジアムカードの効果を使った, 同じ名前の別のスタジアムカードの効果を使った)（``stadium_uses_this_turn``）。
+
+    回数の記録はスタジアムカード（uid）ごとで、同じ名前のカードを同じ効果の系統として見る（名前の完全一致）。名前の違うスタジアムの使用は、どちらにも数えない（セキチクシティジムの
+    あとのラッキースタジアムは別の効果。v0.73 までは、セキチクシティジムが「どの記録でも」 FG1 にしていた）。"""
+    name = state.card_def(stadium.card).name_ja
+    same = other = False
+    for user, card in state.stadium_uses_this_turn:
+        if user != player:
+            continue
+        if card == stadium.card:
+            same = True
+        elif state.card_def(card).name_ja == name:
+            other = True
+    return same, other
 
 
 # --- 1. 常にはたらく効果（ニビ・ハナダ・抵抗力低下・特訓・グレン）
@@ -17620,6 +17666,7 @@ class CoinReturnOwnerPokemonStadium(StadiumEffect):
     - 順番は文面のとおり: 使う（記録 ``GameState.stadium_uses_this_turn``。コインの「うら」でも使ったことになる）→ 使ったプレイヤーがコインを 1 枚投げる → 「おもて」なら
       ポケモンを選ぶ（決定 ``SELECT_POKEMON``。再開先 ``"stadium"``。1 匹でも選ぶ）→ 山札にもどす（``zones.return_in_play_to_deck``。持続する効果を消す）→ 切る
     - 回数は (使ったプレイヤー, スタジアムカード) で数える。同じカードで 2 回目は ``STADIUM_ALREADY_USED``。この番に別のセキチクシティジムのカードで使っていたら FG1
+      （v0.74 から、名前の違うスタジアムの使用の記録では止めない。``stadium_use_history``）
     - 自分の場に「(``owner``)のポケモン」がいなければ FG2（コインの前）。カードの持ち主でないプレイヤーも使える
     - バトル場のポケモンをもどしたら、きぜつではない（サイドはない）。勝ち負けの判定 → バトル場に出す決定 → 同じ番（``resolution.after_stadium``）
     """
@@ -17643,7 +17690,7 @@ class CoinReturnOwnerPokemonStadium(StadiumEffect):
         if (player, stadium.card) in state.stadium_uses_this_turn:
             raise IllegalActionError("STADIUM_ALREADY_USED", "このスタジアムの効果は、自分の番ごとに 1 回しか使えない")
         _check_stadium_trainer_ban(state, player)
-        if any(user == player for user, _ in state.stadium_uses_this_turn):
+        if stadium_use_history(state, player, stadium)[1]:  # v0.74: 同じ名前（セキチクシティジム）の別のカードで使った記録だけ（ほかのスタジアムの記録では止めない）
             raise UnsupportedError(FUCHSIA_GYM_AFTER_REPLACEMENT_CODE, FUCHSIA_GYM_AFTER_REPLACEMENT_REASON)
         if not self.targets(state, player):
             raise UnsupportedError(FUCHSIA_GYM_WITHOUT_TARGET_CODE, FUCHSIA_GYM_WITHOUT_TARGET_REASON)
@@ -17714,6 +17761,285 @@ class ReturnBasicEnergyStadium(StadiumEffect):
 
     def activate(self, state, player, energy, stadium):
         return_attached_energy_by_stadium(state, player, self._target(state, player, energy), energy, stadium=stadium.card)
+
+
+# --- v0.74: 拡張パック以外の商品のスタジアム（docs/remaining-stadiums-v0.74.md）
+
+KOGAS_NINJA_GYM_TEXT = ("お互いのプレイヤーは、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインが「おもて」なら、自分の山札から「キョウのたねポケモン」のカードを1枚選び出し、"
+                        "ベンチに出す。その場合、その山札をよく切る。\nこのスタジアムカードは、バトル場の横に出して使う。このカード以外のスタジアムカードが場に出た時、このカードを"
+                        "トラッシュする。")
+ENERGY_STADIUM_TEXT = ("おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分のトラッシュから「基本エネルギーカード」を"
+                       "1枚選び出し、相手プレイヤーに見せてから、手札に加える。\n" + STADIUM_NEO_PLACEMENT_PARAGRAPH)
+LUCKY_STADIUM_NIP2X_TEXT = ("おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分の山札からカードを1枚引いて、"
+                            "手札に加える。\n" + STADIUM_NEO_PLACEMENT_PARAGRAPH)
+LUCKY_STADIUM_PRN_TEXT = ("おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、"
+                          "手札に加える。\n" + STADIUM_NEO_PLACEMENT_PARAGRAPH)
+LUCKY_STADIUM_PRN027_TEXT = ("おたがいのプレイヤーの番の間(ワザを使う前)に、その番のプレイヤーはコインを投げてもよい。「おもて」なら、そのプレイヤーはカードを1枚引く。(During each "
+                             "player's turn(before he or she attacks). that player may flip a coin. If heads, he or she draws a card.)\n" + STADIUM_STAYS_PLACEMENT_PARAGRAPH)
+POKEMON_TOWER_TEXT = ("お互いのポケモンやプレイヤーの使う「ワザ・特殊能力・トレーナーカード」の効果のうち、「トラッシュからカードを取り出して手札に加える」効果は、すべて消える。"
+                      "(それ以外の効果は、そのまま)\nこのスタジアムカードは、バトル場の横に出して使う。別のスタジアムカードが場に出た時、このカードをトラッシュする。")
+
+# ラッキースタジアムの印刷の文面ごとの「自分の番ごとに1回」の有無（登録の値と照らす）。PRN-027 の日本語の文面には「自分の番ごとに1回」がない（英語の併記・kyuura の
+# other_products.json の kind ``wording`` の分類で回数を補わない）
+LUCKY_STADIUM_TEXTS: Mapping[str, bool] = MappingProxyType({
+    LUCKY_STADIUM_NIP2X_TEXT: True,
+    LUCKY_STADIUM_PRN_TEXT: True,
+    LUCKY_STADIUM_PRN027_TEXT: False,
+})
+
+STADIUM_REUSE_AFTER_REPLACEMENT_CODE = "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+STADIUM_REUSE_AFTER_REPLACEMENT_REASON = (
+    "「自分の番ごとに1回」のスタジアム（ラッキースタジアム・エネルギースタジアム・キョウの忍者ジム）を、この番に使ったあと、同じ名前の別のスタジアムカードに入れかわったとき、"
+    "新しいカードの効果としてもう一度使えるか（回数をプレイヤー・名前で数えるかカードで数えるか）は、印刷の文面・kyuura の記録から決められないので扱わない（RS1。セキチクシティジムの"
+    "FG1 と同じ形の、別のカードの問い。docs/remaining-stadiums-v0.74.md 4 章）")
+LUCKY_STADIUM_REPEAT_CODE = "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT"
+LUCKY_STADIUM_REPEAT_REASON = (
+    "日本語の文面に「自分の番ごとに1回」がないラッキースタジアム（PRN-027）を、同じ番にもう一度使えるか（この番にラッキースタジアムを使ったあと）は、2000.02.14 版の公式ルール・"
+    "印刷の文面・kyuura の記録から決められないので扱わない（LK1。ほかの版の「自分の番ごとに1回」・英語の併記・kyuura の wording の分類で決めない。docs/remaining-stadiums-v0.74.md 4 章）")
+ENERGY_STADIUM_WITHOUT_TARGET_CODE = "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET"
+ENERGY_STADIUM_WITHOUT_TARGET_REASON = (
+    "エネルギースタジアムの「コインを投げてよい。…「おもて」なら、自分のトラッシュから「基本エネルギーカード」を1枚選び出し…」を、自分のトラッシュに基本エネルギーカードがないときに"
+    "使えるか（コインだけを投げられるか）は、印刷の文面・kyuura の記録から決められないので扱わない（EN1。UQ-CARD-USE-WITHOUT-TARGET と同じ形の問い。コインの前。"
+    "docs/remaining-stadiums-v0.74.md 4 章）")
+NINJA_GYM_WITHOUT_TARGET_CODE = "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET"
+NINJA_GYM_WITHOUT_TARGET_REASON = (
+    "キョウの忍者ジムの「コインを投げてもよい。コインが「おもて」なら、自分の山札から「キョウのたねポケモン」のカードを1枚選び出し、ベンチに出す。」を、山札に「キョウのたねポケモン」が"
+    "ない・ベンチに空きがないときに使えるか（コインだけを投げられるか）は、印刷の文面・kyuura の記録から決められないので扱わない（NJ1。印刷の文面に「ベンチに空きがない時、使えない」は"
+    "ない。UQ-CARD-USE-WITHOUT-TARGET と同じ形の問い。コインの前。docs/remaining-stadiums-v0.74.md 4 章）")
+
+
+def _check_stadium_use_count(state: GameState, player: int, stadium: StadiumInPlay, *, once_stated: bool) -> None:
+    """v0.74: ラッキースタジアム・エネルギースタジアム・キョウの忍者ジムの回数の確かめ（``StadiumEffect.check_activation`` の中で、選ばせるものの確かめのあと）。
+
+    - 「自分の番ごとに1回」（``once_stated``）: このカードで使っていれば ``STADIUM_ALREADY_USED``。そのあと STB1（トレーナーの使用の禁止）。同じ名前の別のカードで使っていれば RS1
+    - 書かれていない（PRN-027）: STB1 のあと、この番に同じ名前のスタジアム（このカードを含む）を使っていれば LK1（最初の 1 回は使える）
+    名前の違うスタジアムの使用は数えない（``stadium_use_history``）。"""
+    same, other = stadium_use_history(state, player, stadium)
+    if once_stated and same:
+        raise IllegalActionError("STADIUM_ALREADY_USED", "このスタジアムの効果は、自分の番ごとに 1 回しか使えない")
+    _check_stadium_trainer_ban(state, player)
+    if not once_stated and (same or other):
+        raise UnsupportedError(LUCKY_STADIUM_REPEAT_CODE, LUCKY_STADIUM_REPEAT_REASON)
+    if once_stated and other:
+        raise UnsupportedError(STADIUM_REUSE_AFTER_REPLACEMENT_CODE, STADIUM_REUSE_AFTER_REPLACEMENT_REASON)
+
+
+def _no_stadium_choice(energy: int | None) -> None:
+    if energy is not None:
+        raise IllegalActionError("STADIUM_CHOICE_NOT_USED", "このスタジアムの効果はエネルギーカードを選ばない（energy は指定しない）")
+
+
+def _stadium_coin(state: GameState, player: int, stadium: StadiumInPlay) -> bool:
+    """v0.74: スタジアムの効果のコインを 1 枚投げ、「おもて」なら True（投げるのは使ったプレイヤー。``source`` ``"stadium"``・``effect`` はスタジアムのカード id。セキチクシティジムと
+    同じ形）。ワザの説明文のコインではないので、ナツメのESP（``AttackRun.flip``）のやり直しの対象ではない。"""
+    flips = flip_coins(state, player, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card)
+    return flips.results[0] is CoinSide.HEADS
+
+
+@dataclass(frozen=True)
+class CoinDrawStadium(StadiumEffect):
+    """お互いのプレイヤーは、それぞれ、のぞむなら、（自分の番ごとに 1 回、）コインを投げてよい。コインを投げて「おもて」なら、山札からカードを 1 枚引いて、手札に加える
+    （v0.74。ラッキースタジアム（NIP2X-009・PRN-015〜PRN-022・PRN-027）。kyuura の印刷の文面）。
+
+    - ``UseStadium(player)``（``energy`` は使わない）: 使う（ログ ``stadium_used``。記録 ``stadium_uses_this_turn``。「うら」でも使ったことになる）→ 使ったプレイヤーがコインを 1 枚
+      投げる（``source`` ``"stadium"``）→「おもて」なら「カードを引く」（``zones.draw_cards``。p.312。山札が足りなければ引けるだけ。0 枚でも負けではない。ログ ``draw`` は引いた
+      プレイヤーだけ）。「うら」なら何もしない
+    - ``once_stated``: 印刷の文面に「自分の番ごとに1回」がある（NIP2X-009・PRN-015〜PRN-022）。ない版（PRN-027）は、この番の最初の 1 回だけを処理し、同じ番の再使用は LK1 で止める
+      （回数の制限があることにも、ないことにも決めない）。印刷の文面ごとの値は ``LUCKY_STADIUM_TEXTS`` と照らす
+    - カードの持ち主でないプレイヤーも使える。決定は出さない
+    """
+
+    once_stated: bool = True
+    implementation_id = "coin_draw_stadium"
+    activated: ClassVar[bool] = True
+
+    @property
+    def once_per_turn(self) -> bool:  # type: ignore[override]
+        return self.once_stated
+
+    @property
+    def records_uses(self) -> bool:
+        return True
+
+    def text_problems(self, text: str) -> list[str]:
+        if text not in LUCKY_STADIUM_TEXTS:
+            return ["ラッキースタジアムの印刷の文面"]
+        return [] if LUCKY_STADIUM_TEXTS[text] == self.once_stated else ["自分の番ごとに1回"]
+
+    def check_activation(self, state, player, energy, stadium):
+        _no_stadium_choice(energy)
+        _check_stadium_use_count(state, player, stadium, once_stated=self.once_stated)
+
+    def activate(self, state, player, energy, stadium):
+        if _stadium_coin(state, player, stadium):
+            _draw_up_to(state, player, 1)
+
+
+@dataclass(frozen=True)
+class CoinRetrieveBasicEnergyStadium(StadiumEffect):
+    """お互いのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに 1 回、コインを投げてよい。コインを投げて「おもて」なら、自分のトラッシュから「基本エネルギーカード」を 1 枚選び出し、
+    相手プレイヤーに見せてから、手札に加える（v0.74。エネルギースタジアム（NIP1X-009）。kyuura の印刷の文面）。
+
+    - 選べるものは、使ったプレイヤーのトラッシュの基本エネルギーカード（トラッシュにある間の印刷の定義。レインボーエネルギーなど特殊エネルギーカードは基本エネルギーカードではない。
+      同じ名前の別のカードは別のカード）。相手のトラッシュ・山札は選ばない
+    - トラッシュに基本エネルギーカードがなければ EN1（コインの前）。「おもて」なら、1 枚でも決定（``RETRIEVE_ENERGY``。再開先 ``"stadium"``。段階 ``energy_stadium``。ちょうど 1 枚。
+      選んだカードを見せる）を出す（v0.7 のじこさいせいの K2 と同じ方針）→ ``zones.return_discard_to_hand``（ログ ``stadium_retrieve_energy``。公開）
+    """
+
+    implementation_id = "coin_retrieve_basic_energy_stadium"
+    activated: ClassVar[bool] = True
+    once_per_turn: ClassVar[bool] = True
+    choice_stage: ClassVar[str] = "energy_stadium"  # 「おもて」のあとの決定の段階と種類（不変条件 ``engine._stadium_decision_problems`` が見る）
+    choice_kind: ClassVar[str] = RETRIEVE_ENERGY
+    needs_bench_room: ClassVar[bool] = False
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if text == ENERGY_STADIUM_TEXT else ["エネルギースタジアムの印刷の文面"]
+
+    @staticmethod
+    def candidates(state: GameState, player: int) -> tuple[int, ...]:
+        return discard_cards_matching(state, player, CardFilter("basic_energy"))
+
+    def check_activation(self, state, player, energy, stadium):
+        _no_stadium_choice(energy)
+        _check_stadium_use_count(state, player, stadium, once_stated=True)
+        if not self.candidates(state, player):
+            raise UnsupportedError(ENERGY_STADIUM_WITHOUT_TARGET_CODE, ENERGY_STADIUM_WITHOUT_TARGET_REASON)
+
+    def activate(self, state, player, energy, stadium):
+        if not _stadium_coin(state, player, stadium):
+            return
+        push_stadium_decision(state, stadium=stadium.card, stage=self.choice_stage, kind=self.choice_kind, player=player, options=self.candidates(state, player))
+
+    def resume_stadium(self, state, stadium, decision, choices):
+        player = decision.player
+        (card,) = choices
+        if card not in self.candidates(state, player):
+            raise RuntimeError(f"エネルギースタジアムで選んだカード {card} が、トラッシュの基本エネルギーカードではない（決定の確認の漏れ。エンジンの不具合）")
+        return_discard_to_hand(state, player, (card,))
+        state.add_event("stadium_retrieve_energy", player=player, card=card, stadium_card=stadium.card)
+
+
+@dataclass(frozen=True)
+class CoinBenchOwnerBasicFromDeckStadium(StadiumEffect):
+    """お互いのプレイヤーは、のぞむなら、自分の番ごとに 1 回、コインを投げてもよい。コインが「おもて」なら、自分の山札から「(``owner``)のたねポケモン」のカードを 1 枚選び出し、
+    ベンチに出す。その場合、その山札をよく切る（v0.74。キョウの忍者ジム（PR1-067）。kyuura の印刷の文面）。
+
+    - 選べるものは、山札の、名前が「(``owner``)の」で始まるたねポケモンのカード（``CardFilter("basic_pokemon", name_prefix=…)``。山札にある間の印刷の定義。進化カード・ほかの
+      名前のたねポケモンは選べない。uid の小さい順で、山札の並びを決定に写さない）
+    - 山札に選べるカードがない・ベンチに空きがない（``stadiums.bench_limit``）ときは NJ1（コインの前。ほかのカードの「ベンチに空きがない時、使えない」を写さない）。
+      まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1（選べるが選ぶと止める。どれもそうならコインの前）
+    - 「おもて」なら、ちょうど 1 枚（決定 ``BENCH_FROM_DECK``。再開先 ``"stadium"``。段階 ``ninja_gym``。任意なのはコインを投げることで、出す数は省略できない）→ 手札を通さずに
+      ベンチへ（``zones.bench_from_deck``。場に出た番は今の番で、その番には進化できない。手札から出したことにしない。ログ ``stadium_bench_from_deck`` は公開）→ 山札を 1 回切る。
+      「うら」なら何もしない（山札を切らない）
+    """
+
+    owner: str = "キョウ"
+    implementation_id = "coin_bench_owner_basic_from_deck_stadium"
+    activated: ClassVar[bool] = True
+    once_per_turn: ClassVar[bool] = True
+    choice_stage: ClassVar[str] = "ninja_gym"
+    choice_kind: ClassVar[str] = BENCH_FROM_DECK
+    needs_bench_room: ClassVar[bool] = True
+
+    def text_problems(self, text: str) -> list[str]:
+        ok = text == KOGAS_NINJA_GYM_TEXT and f"自分の山札から「{self.owner}のたねポケモン」のカードを1枚選び出し、ベンチに出す。その場合、その山札をよく切る。" in text
+        return [] if ok else ["持ち主の名前・コイン・ベンチに出す"]
+
+    def target(self) -> CardFilter:
+        return CardFilter("basic_pokemon", name_prefix=f"{self.owner}の")
+
+    def candidates(self, state: GameState, player: int) -> tuple[int, ...]:
+        return deck_cards_matching(state, player, self.target())
+
+    @staticmethod
+    def _blocked(state: GameState, candidates: tuple[int, ...]) -> tuple[tuple[int, ...], UnsupportedError | None]:
+        """まきちらせ!ベトベトガスで選ぶと止めるカードと、その理由（v0.59 の GG1）。"""
+        blocked, error = [], None
+        for card in candidates:
+            try:
+                goop_gas_entry_check(state, card, how="enter")
+            except UnsupportedError as found:
+                blocked.append(card)
+                error = error or found
+        return tuple(blocked), error
+
+    def check_activation(self, state, player, energy, stadium):
+        _no_stadium_choice(energy)
+        _check_stadium_use_count(state, player, stadium, once_stated=True)
+        candidates = self.candidates(state, player)
+        if not candidates or not bench_has_room(state, player):
+            raise UnsupportedError(NINJA_GYM_WITHOUT_TARGET_CODE, NINJA_GYM_WITHOUT_TARGET_REASON)
+        for card in candidates:
+            placed_entry_power_guard(state, card)  # 場に出たときの特殊能力を持つたねポケモンは写しにない（来たらエンジンの不具合）
+        blocked, error = self._blocked(state, candidates)
+        if len(blocked) == len(candidates):
+            raise error
+
+    def activate(self, state, player, energy, stadium):
+        if not _stadium_coin(state, player, stadium):
+            return
+        candidates = self.candidates(state, player)
+        blocked, error = self._blocked(state, candidates)
+        extra = {} if not blocked else {"unresolved_choices": blocked, "unresolved_code": error.code, "unresolved_reason": error.message}
+        push_stadium_decision(state, stadium=stadium.card, stage=self.choice_stage, kind=self.choice_kind, player=player, options=candidates, **extra)
+
+    def resume_stadium(self, state, stadium, decision, choices):
+        player = decision.player
+        (card,) = choices
+        if card not in self.candidates(state, player) or not bench_has_room(state, player):
+            raise RuntimeError(f"キョウの忍者ジムで選んだカード {card} が、山札の「{self.owner}のたねポケモン」ではない（または空きがない。エンジンの不具合）")
+        pokemon = bench_from_deck(state, player, card)
+        state.add_event("stadium_bench_from_deck", player=player, card=card, to_pokemon_id=pokemon.pokemon_id, stadium_card=stadium.card)
+        shuffle_deck(state, player, stadium=stadium.card)
+
+
+@dataclass(frozen=True)
+class DiscardToHandSuppressionStadium(StadiumEffect):
+    """お互いのポケモンやプレイヤーの使う「ワザ・特殊能力・トレーナーカード」の効果のうち、「トラッシュからカードを取り出して手札に加える」効果は、すべて消える。(それ以外の
+    効果は、そのまま)（v0.74。ポケモンタワー（ES3-036）。kyuura の印刷の文面）。
+
+    - 常にはたらく（使う効果はない）。消えるかは、効果がはたらく時点で場のスタジアムから問い合わせる（``discard_to_hand_suppressor``。印・一覧を状態に持たない。両方のプレイヤーに
+      同じに当てはめる。かがくへんかガス・特殊状態では消えない）
+    - 消すのはトラッシュから手札に加える部分だけ（行き先が手札で、出どころがトラッシュ）。場から手札（スーパーポケモン回収・ポケモン回収・おくびょう）・トラッシュからベンチ（元気の
+      かけら・元気のかたまり）・トラッシュから山札（夜の廃品回収・リサイクル・ポケモン再転送）・トラッシュから場のポケモンにつける効果は消さない
+    - 経路ごとの扱いは docs/remaining-stadiums-v0.74.md 5 章（ワザの要素 ``RecoverEnergy``・``RecoverTrainer``、特殊能力 ``ReturnToHandOnKnockOut``・``RecoverPokemonFromDiscardOnEntry``、
+      トレーナー ``DiscardFromHandThenRetrieveEnergy``・``TakeFromDiscardTrainer``（手札へ）・``DiscardDeckTopThenReturnTypeEnergy``・``SearchNamedFromDeckOrDiscard``）
+    """
+
+    implementation_id = "discard_to_hand_suppression_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if text == POKEMON_TOWER_TEXT else ["ポケモンタワーの印刷の文面"]
+
+
+# v0.74: 「おもて」のあとに 1 枚を選ぶ決定を出すスタジアムの段階（再開先 ``"stadium"``）
+COIN_CHOICE_STAGES = frozenset({CoinRetrieveBasicEnergyStadium.choice_stage, CoinBenchOwnerBasicFromDeckStadium.choice_stage})
+
+POKEMON_TOWER_TRAINER_CODE = "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT"
+POKEMON_TOWER_TRAINER_REASON = (
+    "場のポケモンタワーで「トラッシュからカードを取り出して手札に加える」効果が消え、効果がすべて消えるトレーナーカード（エネルギー回収・超エネルギー回収・ダウジングマシーン）を、"
+    "使えるか（使うための条件だけを払って使い終われるか）は、2000.02.14 版の公式ルール・印刷の文面・kyuura の記録から決められないので扱わない（PT1。「使用禁止」にも「使えるが何も"
+    "起こらない」にも決めない。UQ-CARD-USE-WITHOUT-TARGET と同じ形の問い。手札から出す前。docs/remaining-stadiums-v0.74.md 5 章）")
+
+
+def discard_to_hand_suppressor(state: GameState) -> StadiumInPlay | None:
+    """v0.74: 場のスタジアムが、トラッシュから手札に加える効果を消すもの（ポケモンタワー）なら、その ``StadiumInPlay``。なければ None（問い合わせのたびに場から求める）。"""
+    found = stadium_of(state, DiscardToHandSuppressionStadium)
+    return None if found is None else found[0]
+
+
+def log_discard_to_hand_suppressed(state: GameState, player: int, stadium: StadiumInPlay, **source: Any) -> None:
+    """v0.74: ポケモンタワーで、トラッシュから手札に加える効果が消えたことのログ ``discard_to_hand_suppressed``（公開。``source`` はワザ ``effect``・特殊能力 ``power``・
+    トレーナー ``trainer_card`` のどれか）。"""
+    state.add_event("discard_to_hand_suppressed", player=player, stadium_card=stadium.card, **source)
+
+
+def check_tower_trainer(state: GameState, use: TrainerUse) -> None:
+    """v0.74（PT1）: 効果がすべて「トラッシュからカードを取り出して手札に加える」効果のトレーナーを、ポケモンタワーの場で使うなら ``UnsupportedError``（手札から出す前。使うための
+    条件の確かめ（``IllegalActionError``）のあとに呼ぶ）。"""
+    if discard_to_hand_suppressor(state) is not None:
+        raise UnsupportedError(POKEMON_TOWER_TRAINER_CODE, f"{POKEMON_TOWER_TRAINER_REASON}。トレーナー {use.card_id}")
 
 
 # --- 3. 場に出た時・ベンチに出す時・進化させる時に起こること（せまい・爆発・トキワ）
@@ -25488,6 +25814,8 @@ class DiscardDeckTopThenReturnTypeEnergy(TrainerEffect):
         if len(p.deck) < self.count:
             raise UnsupportedError("UNRESOLVED_DISCARD_DECK_SHORT", f"山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合の処理は、原典から決められない"
                                    f"（HC6。熱血!で山札が {len(p.deck)} 枚）")
+        if discard_to_hand_suppressor(state) is not None:
+            return  # v0.74: ポケモンタワーで手札に加える部分が消える（レインボーエネルギーを「炎」エネルギーカードとして加えるかを決める必要がない。FV1 で止めない。HC6 は別の問い）
         hidden = rainbow_cards_in(state, (*p.deck, *(uid for uid in p.prizes if uid is not None)))
         if hidden:
             raise UnsupportedError(FERVOR_RAINBOW_CODE, FERVOR_RAINBOW_REASON)
@@ -25504,6 +25832,11 @@ class DiscardDeckTopThenReturnTypeEnergy(TrainerEffect):
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         cards = deck_top_to_discard(state, use.player, self.count, trainer=use.card)
+        tower = discard_to_hand_suppressor(state)
+        if tower is not None:
+            # v0.74: ポケモンタワーで「手札に加える」部分だけが消える（トラッシュはする。どのカードを加えるかを決めない）
+            log_discard_to_hand_suppressed(state, use.player, tower, trainer_card=use.card)
+            return
         returned = self.returned(state, cards)
         if returned:
             return_discard_to_hand(state, use.player, returned)
@@ -25603,9 +25936,15 @@ class SearchNamedFromDeckOrDiscard(TrainerEffect):
         return problems
 
     def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
-        return (*deck_cards_matching(state, use.player, self.target), *discard_cards_matching(state, use.player, self.target))
+        deck = deck_cards_matching(state, use.player, self.target)
+        if discard_to_hand_suppressor(state) is not None:
+            return deck  # v0.74: ポケモンタワーで、トラッシュから手札に加える部分が消える（山札から選ぶ部分・山札を切ることは残る）
+        return (*deck, *discard_cards_matching(state, use.player, self.target))
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
+        tower = discard_to_hand_suppressor(state)
+        if tower is not None:
+            log_discard_to_hand_suppressed(state, use.player, tower, trainer_card=use.card)
         options = self.candidates(state, use)
         if not options:
             _trainer_take_none(state, use, "deck_or_discard", no_target=True)
@@ -25843,3 +26182,22 @@ def _with_shared_trainers(registry: EffectRegistry, table: Mapping[str, str]) ->
 
 
 DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_73_TRAINERS), SAME_DATA_CARDS_V0_73)
+
+
+# v0.74: 拡張パック以外の商品のスタジアム 13 枚（docs/remaining-stadiums-v0.74.md）。どれも kyuura の印刷の文面（照合と処理に使う文面が同じ）。
+V0_74_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "ES3-036": TrainerEntry(DiscardToHandSuppressionStadium(POKEMON_TOWER_TEXT), "ポケモンタワー", POKEMON_TOWER_TEXT, POKEMON_TOWER_TEXT, _KYUURA_PRINTED_TEXT),
+    "PR1-067": TrainerEntry(CoinBenchOwnerBasicFromDeckStadium(KOGAS_NINJA_GYM_TEXT), "キョウの忍者ジム", KOGAS_NINJA_GYM_TEXT, KOGAS_NINJA_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+    "NIP1X-009": TrainerEntry(CoinRetrieveBasicEnergyStadium(ENERGY_STADIUM_TEXT), "エネルギースタジアム", ENERGY_STADIUM_TEXT, ENERGY_STADIUM_TEXT, _KYUURA_PRINTED_TEXT),
+    "NIP2X-009": TrainerEntry(CoinDrawStadium(LUCKY_STADIUM_NIP2X_TEXT), "ラッキースタジアム", LUCKY_STADIUM_NIP2X_TEXT, LUCKY_STADIUM_NIP2X_TEXT, _KYUURA_PRINTED_TEXT),
+    **{card: TrainerEntry(CoinDrawStadium(LUCKY_STADIUM_PRN_TEXT), "ラッキースタジアム", LUCKY_STADIUM_PRN_TEXT, LUCKY_STADIUM_PRN_TEXT, _KYUURA_PRINTED_TEXT)
+       for card in ("PRN-015", "PRN-016", "PRN-017", "PRN-018", "PRN-019", "PRN-020", "PRN-021", "PRN-022")},
+    "PRN-027": TrainerEntry(CoinDrawStadium(LUCKY_STADIUM_PRN027_TEXT, once_stated=False), "ラッキースタジアム", LUCKY_STADIUM_PRN027_TEXT, LUCKY_STADIUM_PRN027_TEXT,
+                            _KYUURA_PRINTED_TEXT),
+})
+
+# v0.74: 13 枚のうち、PRN-015 と処理に使う欄（名前・印刷の文面）が同じカード。NIP2X-009（「自分の山札から」「投げてよい」）・PRN-027（「自分の番ごとに1回」がない）は文面が違うので
+# まとめない（それぞれの印刷の文面と出典を保つ）
+SAME_DATA_CARDS_V0_74: Mapping[str, str] = MappingProxyType({card: "PRN-015" for card in ("PRN-016", "PRN-017", "PRN-018", "PRN-019", "PRN-020", "PRN-021", "PRN-022")})
+
+DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_74_TRAINERS), SAME_DATA_CARDS_V0_74)

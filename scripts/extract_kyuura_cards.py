@@ -1213,6 +1213,23 @@ POOL_V0_73 = [
     "PR1-041",  # パソコン大暴走！（PR1）
 ]
 
+# v0.74（docs/remaining-stadiums-v0.74.md）: kyuura の engine_targets.json の new_effect_needed のスタジアム 13 枚（4 つの名前・印刷の文面 6 組）。
+POOL_V0_74 = [
+    "ES3-036",  # ポケモンタワー（ES3。トラッシュから手札に加える効果を消す）
+    "PR1-067",  # キョウの忍者ジム（PR1）
+    "NIP1X-009",  # エネルギースタジアム（NIP1X）
+    "NIP2X-009",  # ラッキースタジアム（NIP2X。「自分の山札から」「投げてよい」の書き方）
+    "PRN-015",  # ラッキースタジアム（PRN。PRN-015〜PRN-022 は同じ文面）
+    "PRN-016",
+    "PRN-017",
+    "PRN-018",
+    "PRN-019",
+    "PRN-020",
+    "PRN-021",
+    "PRN-022",
+    "PRN-027",  # ラッキースタジアム（PRN。日本語と英語の併記。日本語に「自分の番ごとに1回」がない）
+]
+
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 2 章）: v0.62・v0.68 で写しに当てはめていた修正（v0.62 の確定した修正 CONFIRMED_CORRECTIONS・
 # v0.68 の利用者が示した修正 USER_PROVIDED_CORRECTIONS）は、kyuura の data/cards.json（KYUURA_COMMIT）に当てはめ済みになった（kyuura の台帳
 # data/curation/card_corrections.json とカードの記録の ``corrections``）。写しには当てはめ直さない（二重の修正をしない）。書き出すたびに、台帳とカードの記録に
@@ -1684,6 +1701,7 @@ POOLS = [
     ("pool_v0_71", POOL_V0_71),
     ("pool_v0_72", POOL_V0_72),
     ("pool_v0_73", POOL_V0_73),
+    ("pool_v0_74", POOL_V0_74),
 ]
 
 

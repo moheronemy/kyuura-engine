@@ -206,10 +206,12 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
-        categories = [pool.get(c).category for c in pool.playable_ids]
-        self.assertEqual((len(extract["cards"]), len(pool.playable_ids)), (774, 774))
+        later = set(extract["pool_v0_74"])  # v0.74 の 13 枚（スタジアム）を除いて比べる
+        playable = pool.playable_ids - later
+        categories = [pool.get(c).category for c in playable]
+        self.assertEqual((len(extract["cards"]) - len(later), len(playable)), (774, 774))
         self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (546, 198, 30))
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in later]), len(registry.energy_ids())),
                          (917, 74, 198, 12))
 
     @unittest.skipUnless((ROOT.parent / "kyuura" / ".git").exists(), "../kyuura がない")
@@ -223,7 +225,8 @@ class RegistrationTest(unittest.TestCase):
         groups = {c["id"]: c["product_group"] for c in show("data/cards.json")["cards"]}
         pool = load_card_pool()
         targets = show("data/engine_targets.json")["cards"]
-        self.assertEqual(sum(1 for x in targets if groups[x["id"]] != "expansion_pack" and x["id"] not in pool.playable_ids), 280)
+        later = set(json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())["pool_v0_74"])  # v0.74 の 13 枚は未対応として数える（v0.73 の時点の数）
+        self.assertEqual(sum(1 for x in targets if groups[x["id"]] != "expansion_pack" and x["id"] not in pool.playable_ids - later), 280)
         self.assertTrue(all(groups[c] != "expansion_pack" for c in V0_73_CARDS))
 
     def test_same_data_cards_share_one_entry_but_the_two_master_ball_groups_do_not(self):

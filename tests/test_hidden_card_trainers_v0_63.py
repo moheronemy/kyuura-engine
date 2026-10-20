@@ -155,8 +155,8 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (546, 198, 30))  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
-        self.assertEqual(sum(counts.values()), 774)  # v0.73 で 18 枚を加えた  # v0.72 で 43 枚を加えた  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (546, 211, 30))  # v0.74 で拡張パック以外の商品のスタジアム 13 枚  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）  # v0.68 でポケモン 3 枚  # v0.67 でトレーナー 1 枚  # v0.64 でポケモン 3 枚を加えた  # v0.65 でポケモン 2 枚・トレーナー 1 枚を加えた  # v0.66 でトレーナー 3 枚を加えた
+        self.assertEqual(sum(counts.values()), 787)  # v0.74 で 13 枚を加えた  # v0.73 で 18 枚を加えた  # v0.72 で 43 枚を加えた  # v0.71 で 78 枚を加えた  # v0.70 で 82 枚を加えた  # v0.69 で 96 枚を加えた  # v0.68 で 3 枚を加えた  # v0.64 でポケモン 3 枚を加えた  # v0.65 で 3 枚を加えた  # v0.66 で 3 枚を加えた  # v0.67 で 1 枚を加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 917)  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（拡張パック以外の商品の再録）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）  # v0.68 でワザ 4 つ  # v0.63 ではワザ・特殊能力を変えていない。v0.64 でワザ 5 つ、v0.65 でワザ 2 つを加えた
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録）  # v0.69 で 10  # v0.68 で 2 つ  # v0.65 で 2 つを加えた
 
@@ -195,7 +195,8 @@ class RegistrationTest(unittest.TestCase):
         for kind in (CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, QUIZ_ANSWER):
             self.assertIn(kind, OPTION_MEANINGS)
         # v0.73: 化石の発掘・マスターボールの決定も数を見せない（docs/search-recovery-trainers-v0.73.md 5 章）
-        self.assertEqual(HIDDEN_COUNT_KINDS, frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, "search_deck_or_discard", "take_looked_pokemon"}))
+        # v0.74: 山札のたねポケモンをベンチに出す決定（キョウの忍者ジム・v0.32 からのワザ・特殊能力）も数を見せない（docs/remaining-stadiums-v0.74.md 6 章）
+        self.assertEqual(HIDDEN_COUNT_KINDS, frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, "search_deck_or_discard", "take_looked_pokemon", "bench_from_deck"}))
         for event in ("set_aside_hand", "set_aside_returned", "face_down_bench", "challenge_bench_skipped", "quiz_card_set"):
             self.assertIn(event, PRIVATE_FIELDS)
         for event in ("prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal"):

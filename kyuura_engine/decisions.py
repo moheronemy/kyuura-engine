@@ -481,7 +481,8 @@ def push_stadium_decision(
 ) -> PendingDecision:
     """場のスタジアムの効果の途中で決定を出す（v0.57。再開先 ``"stadium"``。``engine._resume_stadium`` が ``stage`` で続きを選ぶ）。``context`` の ``"stadium"`` は
     スタジアムカードの uid、``"stage"`` は段階（``narrow``: せまいジムが場に出た時の控えポケモンを手札にもどす・``fuchsia``: セキチクシティジムの「おもて」のあとの
-    ポケモンを選ぶ・``evolution_heal``: トキワシティジムの進化の時のダメージカウンター）。``unresolved_choices`` はトレーナーの決定と同じ（選ぶと止める）。"""
+    ポケモンを選ぶ・``evolution_heal``: トキワシティジムの進化の時のダメージカウンター。v0.74 から ``energy_stadium``: エネルギースタジアムの「おもて」のあとのトラッシュの基本
+    エネルギーカード・``ninja_gym``: キョウの忍者ジムの「おもて」のあとの山札の「キョウのたねポケモン」）。``unresolved_choices`` はトレーナーの決定と同じ（選ぶと止める）。"""
     entries = [("stadium", stadium), ("stage", stage)]
     unresolved = tuple(unresolved_choices)
     if unresolved:

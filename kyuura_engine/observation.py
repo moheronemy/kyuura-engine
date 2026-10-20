@@ -150,7 +150,9 @@ DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
 # v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
-HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON})
+# v0.74: 山札のたねポケモンをベンチに出す決定（キョウの忍者ジムの「キョウのたねポケモン」、v0.32 からのワザ・特殊能力の山札から出すたねポケモン）も、選べるものの数・選ぶ数が
+# 山札の中身を漏らすので見せない（v0.73 までは、ワザ・特殊能力の BENCH_FROM_DECK の数を決めるプレイヤーでない人にも見せていた。意図した変更）
+HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -510,6 +512,8 @@ PUBLIC_EVENTS = frozenset({
     "energy_heal", "energy_damage", "stadium_discard_none", "discard_trainer_use_none", "discard_trainer_use_declined",
     # v0.63: おもてにしたサイド（全員に見えるようにした）・うらにして出したカードを表にした・クイズの伝えたワザ・答え・表にしたカード
     "prizes_revealed", "face_down_revealed", "quiz_hint", "quiz_answer", "quiz_reveal",
+    # v0.74: ポケモンタワーで消えた効果・エネルギースタジアムで手札に加えた（見せた）カード・キョウの忍者ジムでベンチに出したカード（トラッシュ・場は公開の情報）
+    "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
 })
 
 

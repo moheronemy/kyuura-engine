@@ -1420,6 +1420,13 @@ def capture_post_knockout(res: Resolution, knocked: list[tuple[int, PokemonInPla
                 raise res.question("post_knockout_gas_source_knocked", f"{pokemon.pokemon_id} と {gas}")
             if gas or C.offer_stopped(state, instance, pokemon):
                 break  # v0.59: まきちらせ!ベトベトガス・「ショックアイ」（きぜつするときの状態で決める。P13〜P18 と同じ時点）
+            tower = E.discard_to_hand_suppressor(state)
+            if tower is not None and getattr(instance.implementation, "discard_to_hand_only", False):
+                # v0.74: ポケモンタワーで、ふしちょう（トラッシュから手札に加える。CR-PHOENIX-RETURN）の効果が消える。使っても状態は同じなので、機会を出さない
+                # （きぜつ・トラッシュ・サイドは変えない）
+                if record:
+                    E.log_discard_to_hand_suppressed(state, owner, tower, power=str(instance.power_key), card=pokemon.card)
+                break
             candidates.append((owner, pokemon.card, instance.power_key.card_id, instance.power_key.power_index))
             if record:
                 res.trace.record(CandidateFound(Window.KO_PROCESS, instance.name, pokemon.pokemon_id, None))
