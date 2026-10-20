@@ -277,6 +277,30 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
         items = ((research_cards.get(card) or {}).get("pokemon") or {}).get("attacks" if kind == "attack" else "powers") or []
         return (items[int(index)].get("text") or {}).get("ja") if int(index) < len(items) else None
 
+    # v0.73（docs/search-recovery-trainers-v0.73.md 4 章）: エラッタの記録の ``cards`` がカードを pcg-search.com の id で挙げるもの（ERR-SUPER-ENERGY-RETRIEVAL の 1stp009）の、
+    # エンジンのカード id との対応（``errata_card_ids``。カード id → {record, record_card, page}）。対応は、記録の cards がその id を挙げ、研究の基準のコミットの
+    # data/cards.json でそのカードの source_ids.pcg_search がその id を持ち、ほかのカードは持たないときだけ認める（名前・カード id の形で推測しない）
+    errata_card_ids = section.get("errata_card_ids", {})
+    mapped_errata: dict[str, set[str]] = {}
+    for card, item in errata_card_ids.items():
+        where = f"errata_card_ids {card}"
+        record = errata_by_id.get(item.get("record"))
+        old_id = item.get("record_card")
+        holders = sorted(c for c, x in research_cards.items() if old_id in ((x.get("source_ids") or {}).get("pcg_search") or []))
+        if record is None:
+            problems.append(f"{where}: エラッタの記録 {item.get('record')} が研究の基準のコミットにない")
+            continue
+        found_here = []
+        if old_id not in (record.get("cards") or []):
+            found_here.append(f"{where}: エラッタの記録 {record['id']} の cards が {old_id} を挙げていない")
+        if holders != [card]:
+            found_here.append(f"{where}: pcg-search.com の id {old_id} を持つ kyuura のカードが {holders}（{card} だけのはず）")
+        if not str(item.get("page") or "").startswith("p."):
+            found_here.append(f"{where}: 引用のページ（page）がない")
+        problems += found_here
+        if not found_here:
+            mapped_errata.setdefault(card, set()).add(record["id"])
+
     scoped: dict[str, str] = {}
     for i, scope in enumerate(section.get("errata_scope", [])):
         where = f"errata_scope {i}（{scope.get('record')}）"
@@ -307,6 +331,26 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
         record = errata_by_id.get(rid)
         if record is None:
             problems.append(f"{target}: エラッタの記録 {rid} が研究の基準のコミットにない")
+            continue
+        if target.endswith("/trainer"):
+            # v0.73: トレーナーの処理に使う文面をエラッタにした登録（超エネルギー回収）。文面が、記録の notes の、対応のページ（errata_card_ids の page）を書いた 1 つの
+            # note に「」でちょうど引用されていること（文面の一部・別のページの引用では通さない）・出典が記録の id・登録の照合した文面が研究の基準のコミットの印刷の文面と
+            # 同じ・記録の cards がこのカード（カード id か、errata_card_ids の対応）を挙げること
+            card = target.split("/")[0]
+            entry = registry_.trainer_entry(card)
+            item = errata_card_ids.get(card) or {}
+            if entry is None:
+                problems.append(f"{target}: errata_text の登録が、トレーナーの登録にない")
+                continue
+            if entry.source != rid:
+                problems.append(f"{target}: 出典 {entry.source} が、根拠のエラッタ {rid} と違う")
+            if not any(f"「{entry.play_text_ja}」" in note and item.get("page") and item["page"] in note for note in record.get("notes") or []):
+                problems.append(f"{target}: 処理に使う文面が、エラッタの記録 {rid} の notes の {item.get('page')} の引用（「」）にない")
+            printed = (((research_cards.get(card) or {}).get("trainer") or {}).get("text") or {}).get("ja")
+            if entry.text_ja != printed:
+                problems.append(f"{target}: 登録の照合した文面が、研究の基準のコミットの印刷の文面と違う")
+            if card not in (record.get("cards") or []) and rid not in mapped_errata.get(card, set()):
+                problems.append(f"{target}: エラッタの記録 {rid} がこのカードを挙げていない（pcg-search.com の id で挙げるなら errata_card_ids に書く）")
             continue
         if target not in texts:
             problems.append(f"{target}: errata_text の登録に、処理に使う文面がない")
@@ -549,6 +593,7 @@ def check(kyuura: Path, *, links: dict | None = None, sources: dict | None = Non
                   if card in {c.get("card_id") for c in x.get("cards") or []} | set(x.get("related_cards") or [])}
         found |= {x["id"] for x in rulings["issues"] if card in {c.get("card_id") for c in x.get("cases") or []}}
         found |= {x["id"] for x in errata if card in (x.get("cards") or [])}
+        found |= mapped_errata.get(card, set())  # v0.73: pcg-search.com の id で挙げたエラッタ（errata_card_ids で確かめた対応だけ）
         if card in scope_cards:  # v0.30: エラッタの記録の範囲として当てはめたもの（errata_scope）
             found.add(scope_cards[card])
         listed = set(record.get("kyuura_records") or [])

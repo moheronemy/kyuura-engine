@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 153,
-    "engine_stop_codes": 151,
+    "engine_unresolved_rulings": 158,
+    "engine_stop_codes": 156,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -1788,6 +1788,61 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.73",
+          "document": "docs/search-recovery-trainers-v0.73.md",
+          "ruling_id": "MR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MASTER_BALL_SHORT_DECK": {
+      "engine_rulings": [
+        {
+          "version": "v0.73",
+          "document": "docs/search-recovery-trainers-v0.73.md",
+          "ruling_id": "ML1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "engine_rulings": [
+        {
+          "version": "v0.73",
+          "document": "docs/search-recovery-trainers-v0.73.md",
+          "ruling_id": "SR1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE": {
+      "engine_rulings": [
+        {
+          "version": "v0.73",
+          "document": "docs/search-recovery-trainers-v0.73.md",
+          "ruling_id": "SR2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_FERVOR_RAINBOW_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.73",
+          "document": "docs/search-recovery-trainers-v0.73.md",
+          "ruling_id": "FV1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -2906,7 +2961,8 @@
       "PMCG1-019/attack/0": "RUL-ENERGY-DISCARD-ATTACKS",
       "PMCG1-020/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
       "PMCG1-022/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",
-      "PMCG1-021/power/0": "TXT-CHARIZARD"
+      "PMCG1-021/power/0": "TXT-CHARIZARD",
+      "PR1-009/trainer": "ERR-SUPER-ENERGY-RETRIEVAL"
     },
     "errata_scope": [
       {
@@ -3067,6 +3123,13 @@
           "TXT-CHARIZARD"
         ],
         "scope_quote": "1998年2月の「とりかえっこプリーズ」キャンペーンのプロモ（1stp030）は、「自分の番の中で何度でも使える」「このカードについているすべてのエネルギーは「炎」エネルギーになり、自分の番の終わりに元にもどる」「「ねむり・マヒ・こんらん」状態の時、この力は消える」と書き換えられている [N3]。"
+      }
+    },
+    "errata_card_ids": {
+      "PR1-009": {
+        "record": "ERR-SUPER-ENERGY-RETRIEVAL",
+        "record_card": "1stp009",
+        "page": "p.292"
       }
     }
   },

@@ -225,7 +225,7 @@ class TargetTest(unittest.TestCase):
     def test_targets_are_the_requested_43_cards(self):
         self.assertEqual(POOL_V0_72, REQUESTED)
         self.assertEqual(len(set(POOL_V0_72)), 43)
-        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key != "pool_v0_72" for card_id in pool}
+        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_72", "pool_v0_73") for card_id in pool}  # v0.73 の組はあとの版
         self.assertFalse(set(POOL_V0_72) & earlier)
         self.assertEqual(len(earlier), 713)
         self.assertFalse(set(POOL_V0_72) & set(E.EQUIVALENT_CARDS))
@@ -241,11 +241,13 @@ class TargetTest(unittest.TestCase):
     def test_counts_from_the_registry(self):
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
-        categories = [pool.get(c).category for c in pool.playable_ids]
-        self.assertEqual(len(pool.playable_ids), 756)
-        self.assertEqual(len(EXTRACT["cards"]), 756)
+        later = set(EXTRACT["pool_v0_73"])  # v0.73 の 18 枚（トレーナー）を除いて比べる
+        playable = pool.playable_ids - later
+        categories = [pool.get(c).category for c in playable]
+        self.assertEqual(len(playable), 756)
+        self.assertEqual(len(EXTRACT["cards"]) - len(later), 756)
         self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (546, 180, 30))
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in later]), len(registry.energy_ids())),
                          (917, 74, 180, 12))
         new = [k for k in registry.attack_keys() if k.card_id in POOL_V0_72]
         self.assertEqual(len(new), 77)
@@ -312,7 +314,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS.without_attacks("test-no-v072", keys)
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_72 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 713)
+        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"])), 713)  # v0.73 の 18 枚は除いて比べる
 
     def test_data_mismatch_makes_the_card_unsupported(self):
         def text(card_id, index, value):

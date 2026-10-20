@@ -88,10 +88,10 @@ class RegistrationTest(unittest.TestCase):
         counts = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             counts[pool.get(card_id).category] += 1
-        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (546, 180, 30))  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）
-        self.assertEqual(len(pool.playable_ids), 756)  # v0.72 で 43 枚、v0.71 で 78 枚、v0.70 で 82 枚を加えた（v0.69 は 553、v0.68 は 457）
+        self.assertEqual((counts["pokemon"], counts["trainer"], counts["energy"]), (546, 198, 30))  # v0.73 で拡張パック以外の商品のトレーナー 18 枚  # v0.72 で拡張パック以外の商品のポケモン 43 枚  # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67）  # v0.70 で拡張パック以外の商品のポケモン 82 枚  # v0.69 で拡張パック以外の商品の同じカード 96 枚（ポケモン 57・トレーナー 19・エネルギー 20）
+        self.assertEqual(len(pool.playable_ids), 774)  # v0.73 で 18 枚、v0.72 で 43 枚、v0.71 で 78 枚、v0.70 で 82 枚を加えた（v0.69 は 553、v0.68 は 457）
         extract = read_extract()
-        self.assertEqual(len(extract["cards"]), 756)  # 写しのカードはすべて対応（参照カードは残っていない）
+        self.assertEqual(len(extract["cards"]), 774)  # v0.73 で 18 枚を加えた。写しのカードはすべて対応（参照カードは残っていない）
         self.assertEqual(extract["reference_only"], [])
         self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 917)  # v0.72 でワザ 77（拡張パック以外の商品のポケモン 43 枚）  # v0.71 でワザ 15（再録のカード）  # v0.70 でワザ 136（拡張パック以外の商品のポケモン 82 枚）  # v0.69 でワザ 92（拡張パック以外の商品の同じカード。元のカードの登録を写した）
         self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)  # v0.71 で 6（再録のカード）。v0.69 で 10
@@ -413,12 +413,12 @@ class SecretPlanLeakTest(unittest.TestCase):
 
         a, b = secret_plan_board(), secret_plan_board(DODUO)
         self.assertIs(engine._public_pool(a), engine._public_pool(b))
-        self.assertEqual(len(engine._public_pool(a).playable_ids), 756)  # v0.72 で 43 枚、v0.71 で 78 枚、v0.70 で 82 枚、v0.69 で 96 枚を加えた（v0.68 は 457）
+        self.assertEqual(len(engine._public_pool(a).playable_ids), 774)  # v0.73 で 18 枚、v0.72 で 43 枚、v0.71 で 78 枚、v0.70 で 82 枚、v0.69 で 96 枚を加えた（v0.68 は 457）
         # v0.69: 試すカードは、処理の同じカードを 1 枚で代表する（v0.68 と同じ 457 枚。どちらのデッキでも同じ）。v0.70: 拡張パック以外の商品のポケモン 82 枚で
         # ありうるカードの種類が増えた（同じデータの 12 枚は 1 枚で代表するので 527 枚。どちらのデッキでも同じ。tests/test_non_pack_effect_reuse_v0_70.py）
         self.assertEqual(engine._identity_candidates(engine._public_pool(a)), engine._identity_candidates(engine._public_pool(b)))
         # v0.72: 試すカードの数はカードを加えるたびに変わるので固定しない。v0.72 の 43 枚（処理の違う 33 種類）を除いた数が v0.71 の 572
-        self.assertEqual(len(set(engine._identity_candidates(engine._public_pool(a))) - set(read_extract()["pool_v0_72"])), 572)
+        self.assertEqual(len(set(engine._identity_candidates(engine._public_pool(a))) - set(read_extract()["pool_v0_72"]) - set(read_extract()["pool_v0_73"])), 572)  # v0.73 の 18 枚（トレーナー）も除く
 
     def test_two_face_down_targets_are_refused_for_both_hidden_decks(self):
         """相手のうらのカードを 2 枚以上、効果の対象にするコマンドは、試す回数が上限を超えるので受け付けない（エンジンの未対応。化石の秘密のレアコイルのじばく。

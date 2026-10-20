@@ -222,6 +222,12 @@ ALL_CODES = (
     "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY",  # v0.68: DR13（同じ）
     "UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION",  # v0.72: FH2（止まる場合と隣の止まらない場合は tests/test_reprint_text_variants_v0_71.py の test_full_heal_reprints_cure_only_the_own_active）
     "UNRESOLVED_POKEDEX_UP_TO_ZERO",  # v0.72: PD2（同じファイルの test_pokedex_reprints_stop_only_on_zero）
+    # v0.73（止まる場合と隣の止まらない場合は tests/test_search_recovery_trainers_v0_73.py）
+    "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET",  # MR1（MaxReviveTest）
+    "UNRESOLVED_MASTER_BALL_SHORT_DECK",  # ML1（MasterBallTest）
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET",  # SR1（SuperEnergyRetrievalTest）
+    "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE",  # SR2（同）
+    "UNRESOLVED_FERVOR_RAINBOW_ENERGY",  # FV1（FervorTest）
 )
 TURN = 7
 

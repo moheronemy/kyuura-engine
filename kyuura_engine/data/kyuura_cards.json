@@ -963,6 +963,26 @@
     "NIP2X-003",
     "PRN-042"
   ],
+  "pool_v0_73": [
+    "GD5-019",
+    "ES2-034",
+    "GD5-021",
+    "GD6-023",
+    "ES2-036",
+    "QSG-058",
+    "NIP1-021",
+    "NIP2-022",
+    "ES1-035",
+    "ES1-036",
+    "ES3-035",
+    "IP1-009",
+    "IP2-029",
+    "IP1-020",
+    "IP2-021",
+    "PR1-009",
+    "PR1-026",
+    "PR1-041"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -68642,6 +68662,942 @@
       "copies": [
         {
           "page": "neop042",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "GD5-019",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "元気のかたまり",
+        "en": "Max Revive"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からエネルギーカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「たねポケモン」を1枚選び出し、あなたのベンチに出す。",
+          "en": "Discard 2 Energy cards from your hand in order to put 1 Basic Pokémon from your discard pile onto your Bench. (You can't play Max Revive if your Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-117"
+        ],
+        "pcg_search": [
+          "1stgymd5019"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5019.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5019.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-034",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-117"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5019",
+          "list_number": "019/025"
+        }
+      ]
+    },
+    {
+      "id": "ES2-034",
+      "jp_set": "ES2",
+      "category": "trainer",
+      "name": {
+        "ja": "元気のかたまり",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からエネルギーカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「たねポケモン」を1枚選び出し、あなたのベンチに出す。(あなたのベンチに空きがない時、このカードは使えない)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2034"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2034.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2034.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-034",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2034",
+          "list_number": "034/036"
+        }
+      ]
+    },
+    {
+      "id": "GD5-021",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "熱血!",
+        "en": "Fervor"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から、カードを3枚トラッシュする。トラッシュした3枚の中にあった「炎」エネルギーカードを、すべてあなたの手札に加える。",
+          "en": "Show the top 3 cards of your deck to all players. Put any Fire Energy cards there into your hand and discard the rest."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-124"
+        ],
+        "pcg_search": [
+          "1stgymd5021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5021.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-124"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5021",
+          "list_number": "021/025"
+        }
+      ]
+    },
+    {
+      "id": "GD6-023",
+      "jp_set": "GD6",
+      "category": "trainer",
+      "name": {
+        "ja": "マスターボール",
+        "en": "Master Ball"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から7枚を見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": "Look at 7 cards from the top of your deck. You may choose a Basic Pokémon or Evolution card from those cards, show it to your opponent, then put it into your hand. Shuffle the rest into your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-116"
+        ],
+        "pcg_search": [
+          "1stgymd6023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6023.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-036",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-116"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6023",
+          "list_number": "023/026"
+        }
+      ]
+    },
+    {
+      "id": "ES2-036",
+      "jp_set": "ES2",
+      "category": "trainer",
+      "name": {
+        "ja": "マスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から7枚を見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2036"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2036.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2036.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-036",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2036",
+          "list_number": "036/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-058",
+      "jp_set": "QSG",
+      "category": "trainer",
+      "name": {
+        "ja": "マスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から7枚を見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg058"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg058.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg058.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-036",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg058",
+          "list_number": "058/058"
+        }
+      ]
+    },
+    {
+      "id": "NIP1-021",
+      "jp_set": "NIP1",
+      "category": "trainer",
+      "name": {
+        "ja": "マスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上からカードを7枚見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1021.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-036",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1021",
+          "list_number": "021/030"
+        }
+      ]
+    },
+    {
+      "id": "NIP2-022",
+      "jp_set": "NIP2",
+      "category": "trainer",
+      "name": {
+        "ja": "マスターボール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上からカードを7枚見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2022.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-ES2-036",
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro2022",
+          "list_number": "022/030"
+        }
+      ]
+    },
+    {
+      "id": "ES1-035",
+      "jp_set": "ES1",
+      "category": "trainer",
+      "name": {
+        "ja": "化石の発掘",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札、またはあなたのトラッシュから「なにかの化石」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、あなたの山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1035"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1035.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1035.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1035",
+          "list_number": "035/036"
+        }
+      ]
+    },
+    {
+      "id": "ES1-036",
+      "jp_set": "ES1",
+      "category": "trainer",
+      "name": {
+        "ja": "月の石",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から、「無色」ポケモンへの「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1036"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1036.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1036.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex1036",
+          "list_number": "036/036"
+        }
+      ]
+    },
+    {
+      "id": "ES3-035",
+      "jp_set": "ES3",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン再転送",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたのトラッシュから「進化カード」を1枚選び出し、相手プレイヤーに見せてから、自分の山札の上に置く。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3035"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3035.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3035.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex3035",
+          "list_number": "035/036"
+        }
+      ]
+    },
+    {
+      "id": "IP1-009",
+      "jp_set": "IP1",
+      "category": "trainer",
+      "name": {
+        "ja": "スーパーポケモン回収",
+        "en": "Super Scoop Up"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたの場のポケモンを1匹選び、そのポケモンと、それについているすべてのカードを、あなたの手札にもどす。",
+          "en": "Flip a coin. If heads, return 1 of your Pokémon and all cards attached to it to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-98"
+        ],
+        "pcg_search": [
+          "1stintro1009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1009.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-IP1-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-083",
+        "english_text": "same_card:neo1-083"
+      },
+      "copies": [
+        {
+          "page": "1stintro1009",
+          "list_number": "009/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-029",
+      "jp_set": "IP2",
+      "category": "trainer",
+      "name": {
+        "ja": "スーパーポケモン回収",
+        "en": "Super Scoop Up"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたの場のポケモンを1匹選び、そのポケモンと、それについているすべてのカードを、あなたの手札にもどす。",
+          "en": "Flip a coin. If heads, return 1 of your Pokémon and all cards attached to it to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-98"
+        ],
+        "pcg_search": [
+          "1stintro2029"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2029.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2029.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-IP1-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-083",
+        "english_text": "same_card:neo1-083"
+      },
+      "copies": [
+        {
+          "page": "1stintro2029",
+          "list_number": "029/040"
+        }
+      ]
+    },
+    {
+      "id": "IP1-020",
+      "jp_set": "IP1",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキの転送装置",
+        "en": "Bill's Teleporter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、山札からカードを4枚引いて、手札に加える。",
+          "en": "Flip a coin. If heads, draw 4 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-91"
+        ],
+        "pcg_search": [
+          "1stintro1020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro1020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(フシギダネデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro1020.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-IP1-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-084",
+        "english_text": "same_card:neo1-084"
+      },
+      "copies": [
+        {
+          "page": "1stintro1020",
+          "list_number": "020/040"
+        }
+      ]
+    },
+    {
+      "id": "IP2-021",
+      "jp_set": "IP2",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキの転送装置",
+        "en": "Bill's Teleporter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、山札からカードを4枚引いて、手札に加える。",
+          "en": "Flip a coin. If heads, draw 4 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-91"
+        ],
+        "pcg_search": [
+          "1stintro2021"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stintro2021.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック(ゼニガメデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stintro2021.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-IP1-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-084",
+        "english_text": "same_card:neo1-084"
+      },
+      "copies": [
+        {
+          "page": "1stintro2021",
+          "list_number": "021/040"
+        }
+      ]
+    },
+    {
+      "id": "PR1-009",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "超エネルギー回収",
+        "en": "Super Energy Retrieval"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードを使うためには、手札からカードを2枚選んで捨てなければならない。その後、自分のトラッシュから最大4枚のエネルギーカードを選び、手札に加える。ただし、いま捨てたカードは選べない。",
+          "en": "Trade 2 of the other cards in your hand for 4 basic Energy cards from your discard pile. If you have fewer than 4 basic Energy cards there, take all of them."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "errata",
+          "summary": "拾えるエネルギーカードの種類（日本の当初の文面とエラッタ）",
+          "ja": "「自分のトラッシュから最大4枚のエネルギーカードを選び」と、基本エネルギーに限っていない（カードの画像で確認）。『ポケモンカード・ファンクラブ』Vol.5 pp.16〜17（1998年6月10日発行）が、エネルギー回収と一緒に特殊エネルギーを拾えないように変更したと説明した [P2]。ただし 1998年6月10日は会報の発行日で、古いカードへの適用開始日は未確認。『ポケモンカードオフィシャルブック2000』（2000年2月29日発行）p.292 は付録の版も「「基本エネルギーカード」を最大4枚」の最新の説明で載せている [P43]。neo 第1弾の再録は「「基本エネルギーカード」を最大4枚」",
+          "en": "「4 basic Energy cards」と、基本エネルギーだけ（日本のエラッタ後と同じ）",
+          "confidence": "確実",
+          "sources": [
+            "N3",
+            "P2",
+            "X52",
+            "P43"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-89"
+        ],
+        "pcg_search": [
+          "1stp009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp009.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PR1-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-89"
+      },
+      "copies": [
+        {
+          "page": "1stp009",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-026",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "パソコン大暴走！",
+        "en": "Computer Error"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードを使ったら、あなたの番は自動的に終わりになる。お互いのプレイヤーは、のぞむなら、最大5枚までカードを引いてよい。(あなたがカードを引き終わってから、相手プレイヤーが引く)",
+          "en": "You may draw up to 5 cards, then your opponent may draw up to 5 cards. Your turn is over now (you don't get to attack)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-16"
+        ],
+        "pcg_search": [
+          "1stp026"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp026.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp026.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PR1-026",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-16"
+      },
+      "copies": [
+        {
+          "page": "1stp026",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-041",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "パソコン大暴走！",
+        "en": "Computer Error"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードを使ったら、あなたの番は自動的に終わりになる。お互いのプレイヤーは、のぞむなら、最大5枚までカードを引いてよい。(あなたがカードを引き終わってから、相手プレイヤーが引く)",
+          "en": "You may draw up to 5 cards, then your opponent may draw up to 5 cards. Your turn is over now (you don't get to attack)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-16"
+        ],
+        "pcg_search": [
+          "1stp041"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp041.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp041.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PR1-026",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-16"
+      },
+      "copies": [
+        {
+          "page": "1stp041",
           "list_number": "-/-"
         }
       ]

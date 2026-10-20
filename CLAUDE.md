@@ -2643,3 +2643,73 @@
 - 検証用デッキ `F72`・`G72`・`C72` と組 `PAIRINGS_V0_72`（`F72` 対 `G72`・`C72` 対 `F72`・`G72` 対 `C72`・`C72` 対 `W70`）は tools/existing_effect_games.py の `--batch v0.72` です
   （前の版の組の結果は変わらない）。決定の答え方は `_v072_decision`。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚（v0.73）
+
+### 対象と数
+
+- kyuura の data/engine_targets.json の `new_effect_needed` のトレーナー 18 枚（10 の処理。写しの組 `pool_v0_73`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.72 | v0.73 |
+  |---|---|---|
+  | 写し・対応するカード | 756・756 | 774・774 |
+  | 対応ポケモン・トレーナー・エネルギー | 546・180・30 | 546・198・30 |
+  | ワザ・特殊能力・トレーナー・特殊エネルギーの登録 | 917・74・180・12 | 917・74・198・12 |
+  | 停止コード・未解決の裁定 | 151・153 | 156・158 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API は変えていません。カードごとの処理・根拠・検証は docs/search-recovery-trainers-v0.73.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。18 枚の pcg-search.com・カードの画像との照合もしていません。英語版の文面・現代のルール・2002 年のサポーターの規定で補わないでください。
+- テストの定数は tests/helpers.py の `MAX_REVIVE`〜`COMPUTER_ERROR_041`・`V0_73_CARDS`。
+
+### 処理と型
+
+- 元気のかたまり（`DiscardEnergyThenBenchBasicFromDiscard`）: 使うための条件は、このカードを除く手札のエネルギーカード 2 枚（カードの枚数。トレーナー・ポケモンでは払えない。
+  `INSUFFICIENT_ENERGY_CARDS_IN_HAND`）。トラッシュのたねポケモン 1 枚を v0.51 の `zones.bench_from_discard` でベンチへ（カウンターはのせない）。「ベンチに空きがない時、このカードは
+  使えない」は印刷の文面にある ES2-034 だけ（`bench_full_unusable`。`BENCH_FULL`）で、ほかの版に持ち込まないでください。
+- 熱血!（`DiscardDeckTopThenReturnTypeEnergy`）: `zones.deck_top_to_discard` が返した uid のうち、その色の基本エネルギーカードだけを手札へ（ログ `milled_to_hand`）。前からトラッシュに
+  あったカードを加えないでください。印刷の文面にない「基本」の条件は書き足さず、レインボーエネルギーは FV1 で止めます。
+- マスターボール（`LookTopTakePokemonThenShuffle`）: 山札の上の `look` 枚だけを見て、そのうちのポケモンのカードからちょうど 1 枚（決定 `take_looked_pokemon`）。山札全体をさがす
+  `SearchDeckTrainer`・残りをトラッシュするカスミのいかりの型と取りちがえないでください。2 つの組（「7枚を見る」「カードを7枚見る」）は登録をまとめません。
+- `CardFilter` の `name`（名前の完全一致）・`pokemon_type`（ポケモンのカードの印刷のタイプ）は v0.73 から。`energy_type` は基本エネルギーカードの色の条件で、ほかの種類に使うと
+  作るときに `ValueError` です（黙って無視しない）。
+- 化石の発掘（`SearchNamedFromDeckOrDiscard`。決定 `search_deck_or_discard`）は山札とトラッシュを合わせて 0〜1 枚で、いつも山札を切ります。月の石は v0.53 の `SearchDeckTrainer`、
+  ポケモン再転送は v0.53 の `TakeFromDiscardTrainer`（`TO_DECK_TOP`。「山札の上に置く」も受け付ける）。
+- スーパーポケモン回収（`CoinReturnOwnPokemonWithAttachedToHand`）: v0.42 の `zones.return_in_play_to_hand`（`log_zone`。このカードのときだけログに `zone`）。`empties_active` なので
+  使い終えてから `resolution.after_trainer` が交代・勝ち負けを判定します（最後の 1 匹なら負け）。ポケモン回収の `return_basic_to_hand`・SU1・SU2 を持ち込まないでください。
+- マサキの転送装置（`CoinDrawTrainer`）は「おもて」で引けるだけ引きます。
+- 超エネルギー回収（`SuperEnergyRetrieval`）は v0.23 の `DiscardFromHandThenRetrieveEnergy` の部分型で、決められない場面の (コード, 理由) をクラスの値 `WITHOUT_TARGET`・`ZERO_CHOICE` で
+  上書きします（SR1・SR2。エネルギー回収の ER10・ER9 のコードは変えていない。答えを流用しないでください）。
+- パソコン大暴走！（`EachPlayerMayDrawThenEndTurn`）は v0.54 のエリカの部分型で、両方の処理が終わったら `END_TURN` を返します（`may_end_turn`・`refers_to_user_turn`）。
+  エリカに番の終わりを持ち込まないでください（`EachPlayerMayDraw._offer` は決定を出したかを返すだけ）。
+- 新しいトレーナーは `_with_trainers`（すでに登録のある id には加えない）、同じデータのカードは `_with_shared_trainers`（`SAME_DATA_CARDS_V0_73`。登録の値が違えば `RuntimeError`）で
+  登録します。`engine.py`・`resolution/` にカード id の分岐を加えないでください。
+
+### 超エネルギー回収のエラッタ
+
+- 処理に使う文面は kyuura の data/rule_history.json の ERR-SUPER-ENERGY-RETRIEVAL の notes が引用する最新の説明（p.292 の引用。エンジンはガイドブックを読み直していない）。印刷の文面
+  （写し）は照合だけに使い、書き換えないでください。適用開始日は記録のとおり未確認のままで、会報の発行日を適用開始日と書かないでください。
+- 記録の `cards` はカードを pcg-search.com の id（1stp009）で挙げます。研究の対応表の `latest_descriptions.errata_card_ids`（カード id → record・record_card・page）で対応させ、
+  `scripts/check_research_links.py` が、記録の cards・kyuura のカードの `source_ids.pcg_search`（そのカードだけが持つ）・page の note の「」の引用・出典・印刷の文面を照らします。
+  名前・id の形で対応を推測しないでください。トレーナーの `errata_text` のキーは `<カード id>/trainer` です。
+
+### 決められない場合
+
+- 新しい停止コードは 5 件で、どれも `not_in_kyuura`: MR1（`UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET`）・ML1（`UNRESOLVED_MASTER_BALL_SHORT_DECK`）・SR1
+  （`UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET`）・SR2（`UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE`）・FV1（`UNRESOLVED_FERVOR_RAINBOW_ENERGY`。山札・サイドにレインボー
+  エネルギーがあれば使う前に止める。見えない山札の上の並びで止めるかを変えない）。
+- 同じ問いとして既存のコードを使う場面: 熱血!の山札 3 枚未満は HC6（`UNRESOLVED_DISCARD_DECK_SHORT`）、ポケモン再転送の対象なしは ST1。ほかのカードの「対象がない」「最大」の
+  問いの答え（RV1・FT1・MW1・ER9・ER10・SU1・SU2・GS1 など）を流用しないでください。
+
+### 観測・マチスの秘策
+
+- 新しい決定 `search_deck_or_discard`・`take_looked_pokemon` は、観測の `DECK_REVEALING_KINDS`・`HIDDEN_COUNT_KINDS`（選べるものの数が山札の中身を漏らす）に入れました。
+  見えないカードを選ぶ決定を加えたら、数の漏れも確かめてください。新しいログのイベントは `milled_to_hand`（公開）。
+- マチスの秘策の試すカードは 605 → 617（増えた 12 はどれも v0.73 のトレーナーの代表）。たねポケモンの候補は 269 のままで、1 枚を指定するコマンドの試す回数は変わりません。
+  上限（512）は変えていません。新しいポケモンの名前はないので、カツラのクイズの候補の並びは変わりません。
+
+### 検証用デッキ
+
+- 検証用デッキ `S73`・`R73` と組 `PAIRINGS_V0_73`（`S73` 対 `R73`・`S73` 対 `C72`・`R73` 対 `F72`）は tools/existing_effect_games.py の `--batch v0.73` です（前の版の組の結果は変わらない）。
+  手順は `_v073_trainer`（パソコン大暴走！は手順が番を終えるところでだけ、元気のかたまりは手順がエネルギーをつける前に試す）・`_v073_decision`、数えた結果は `v073_uses`。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

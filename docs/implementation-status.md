@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.72）
+# 実装状況（v0.1〜v0.73）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3582,3 +3582,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 再録のなんでもなおし（8 枚）: 自分の対戦ポケモンだけを回復。特殊状態がなければ FH2 | 実装済み・テスト済み（FH2 は未解決で止める） | この版の印刷の文面 | test_reprint_text_variants_v0_71.py `test_full_heal_reprints_cure_only_the_own_active` |
 | 再録のポケモン図鑑（2 枚）: 「最大5枚」の 0 枚は PD2。1〜5 枚は今までどおり | 実装済み・テスト済み（PD2 は未解決で止める） | この版の印刷の文面 | 同 `test_pokedex_reprints_stop_only_on_zero` |
 | 43 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+
+## v0.73: 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚
+
+[search-recovery-trainers-v0.73.md](search-recovery-trainers-v0.73.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 18 枚（`pool_v0_73`。kyuura の `new_effect_needed` のトレーナー）。10 の処理 | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用）。超エネルギー回収はエラッタの記録 | test_search_recovery_trainers_v0_73.py `RegistrationTest` |
+| 元気のかたまり（手札のエネルギーカード 2 枚 → トラッシュのたねポケモン 1 枚をベンチへ。カウンターなし。ES2 の版だけベンチに空きがないと使えない） | 実装済み・テスト済み（MR1 は未解決で止める） | 印刷の文面 | 同 `MaxReviveTest` |
+| 熱血!（山札の上 3 枚をトラッシュ → その中の「炎」の基本エネルギーカードを手札へ。切らない） | 実装済み・テスト済み（山札不足は HC6、レインボーエネルギーは FV1 で止める） | 印刷の文面 | 同 `FervorTest` |
+| マスターボール（上の 7 枚のうちのポケモンのカードから必ず 1 枚 → 切る） | 実装済み・テスト済み（山札 7 枚未満は ML1 で止める） | 印刷の文面 | 同 `MasterBallTest` |
+| 化石の発掘・月の石・ポケモン再転送（`CardFilter` の名前の完全一致・ポケモンのタイプ） | 実装済み・テスト済み（ポケモン再転送の対象なしは ST1） | 印刷の文面 | 同 `FossilMoonRetrieverTest`・`RegistrationTest.test_card_filter_pokemon_type_and_exact_name` |
+| スーパーポケモン回収（コイン → 自分の場のポケモンとついているすべてのカードを手札へ。バトル場なら交代、最後の 1 匹なら負け） | 実装済み・テスト済み | 印刷の文面と p.311 の規定 | 同 `ScoopUpAndTeleporterTest` |
+| マサキの転送装置（コイン → 4 枚引く。引けるだけ） | 実装済み・テスト済み | 印刷の文面と p.312 の規定 | 同 `ScoopUpAndTeleporterTest` |
+| 超エネルギー回収（手札 2 枚 → 基本エネルギーカード最大 4 枚。トラッシュしたカードを除く） | 実装済み・テスト済み（SR1・SR2 は未解決で止める） | kyuura ERR-SUPER-ENERGY-RETRIEVAL の最新の説明（p.292 の引用の再利用。適用開始日は未確認） | 同 `SuperEnergyRetrievalTest`・`RegistrationTest.test_research_check_rejects_a_wrong_id_quote_or_condition` |
+| パソコン大暴走！（お互い最大 5 枚 → 使ったプレイヤーの番が終わる） | 実装済み・テスト済み | 印刷の文面 | 同 `ComputerErrorTest` |
+| 同じデータの 6 枚の登録の共有（`SAME_DATA_CARDS_V0_73`。マスターボールの 2 つの組はまとめない） | 実装済み・テスト済み | 写しのデータ | 同 `RegistrationTest` |
+| 18 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com の転記） | — |

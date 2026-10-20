@@ -182,7 +182,7 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_56"], list(V0_56_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 180)  # v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 198)  # v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚を加えた。v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_56_CARDS}
         self.assertEqual([c for c in V0_56_CARDS if e[c].may_end_turn], [ROCKET_GRUNT])
         self.assertEqual([c for c in V0_56_CARDS if e[c].takes_prizes], [LT_SURGES_TREATY])

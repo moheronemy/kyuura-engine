@@ -1189,6 +1189,30 @@ POOL_V0_72 = [
     "PRN-042",  # ルギア（PRN）
 ]
 
+
+# v0.73（docs/search-recovery-trainers-v0.73.md）: 拡張パック以外の商品の、山札・トラッシュからカードを選ぶ・手札にもどす・引くトレーナー 18 枚（kyuura の
+# engine_targets.json の new_effect_needed のトレーナー）。並びは依頼の並び
+POOL_V0_73 = [
+    "GD5-019",  # 元気のかたまり（GD5）
+    "ES2-034",  # 元気のかたまり（ES2。ベンチに空きがない時、使えない）
+    "GD5-021",  # 熱血!（GD5）
+    "GD6-023",  # マスターボール（GD6）
+    "ES2-036",  # マスターボール（ES2）
+    "QSG-058",  # マスターボール（QSG）
+    "NIP1-021",  # マスターボール（NIP1。「カードを7枚見る」の書き方）
+    "NIP2-022",  # マスターボール（NIP2。「カードを7枚見る」の書き方）
+    "ES1-035",  # 化石の発掘（ES1）
+    "ES1-036",  # 月の石（ES1）
+    "ES3-035",  # ポケモン再転送（ES3）
+    "IP1-009",  # スーパーポケモン回収（IP1）
+    "IP2-029",  # スーパーポケモン回収（IP2）
+    "IP1-020",  # マサキの転送装置（IP1）
+    "IP2-021",  # マサキの転送装置（IP2）
+    "PR1-009",  # 超エネルギー回収（PR1。処理に使う文面は ERR-SUPER-ENERGY-RETRIEVAL）
+    "PR1-026",  # パソコン大暴走！（PR1）
+    "PR1-041",  # パソコン大暴走！（PR1）
+]
+
 # v0.69（docs/equivalent-non-pack-cards-v0.69.md 2 章）: v0.62・v0.68 で写しに当てはめていた修正（v0.62 の確定した修正 CONFIRMED_CORRECTIONS・
 # v0.68 の利用者が示した修正 USER_PROVIDED_CORRECTIONS）は、kyuura の data/cards.json（KYUURA_COMMIT）に当てはめ済みになった（kyuura の台帳
 # data/curation/card_corrections.json とカードの記録の ``corrections``）。写しには当てはめ直さない（二重の修正をしない）。書き出すたびに、台帳とカードの記録に
@@ -1659,6 +1683,7 @@ POOLS = [
     ("pool_v0_70", POOL_V0_70),
     ("pool_v0_71", POOL_V0_71),
     ("pool_v0_72", POOL_V0_72),
+    ("pool_v0_73", POOL_V0_73),
 ]
 
 

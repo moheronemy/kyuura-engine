@@ -37,6 +37,8 @@ from .decisions import (
     ESP_REDO,
     JANKEN_HAND,
     OPTIONAL_DRAIN,
+    SEARCH_DECK_OR_DISCARD,
+    TAKE_LOOKED_POKEMON,
     SECRET_PLAN_CARD,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
@@ -137,15 +139,18 @@ OPTION_MEANINGS: dict[str, str] = {
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
-    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon",
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
     SECRET_PLAN_CARD: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
-DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH})
+# v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
+DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
+                                  TAKE_LOOKED_POKEMON})
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
-HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK})
+# v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
+HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -487,6 +492,7 @@ PUBLIC_EVENTS = frozenset({
     "reveal_hand", "revealed_hand_to_deck",  # v0.54: ミニスカート（見せ合った手札・見せた手札から山札にもどしたトレーナーカード）
     "trainer_draw_declined", "trainer_discard_declined", "look_at_deck_top_declined",  # v0.54: 引かない・トラッシュしない・見ない（山札・手札の枚数は公開）
     "discard_to_deck", "retrieve_trainer",  # v0.53: 夜の廃品回収（見せて山札にもどす）・ダウジングマシーン（トラッシュ → 手札）。トラッシュは公開の情報
+    "milled_to_hand",  # v0.73: 熱血!（山札の上からトラッシュしたカードのうち手札に加えたもの。トラッシュから動いたので公開）
     "return_to_deck", "return_to_hand", "reveal_from_deck", "reveal_from_deck_declined", "reveal_from_deck_none",
     "reveal_pokemon", "set_prizes", "shuffle", "sleep_check", "special_condition", "special_condition_prevented", "special_conditions_removed",
     "swap_damage_counters", "swap_prize_with_deck_top", "switch", "switch_declined", "trainer_lock_added", "trainer_lock_removed", "turn_end",

@@ -181,12 +181,12 @@ class TargetTest(unittest.TestCase):
         self.assertEqual(set(V0_71_POKEMON) | set(V0_71_TRAINERS), set(POOL_V0_71))
         self.assertEqual((len(V0_71_POKEMON), len(V0_71_TRAINERS)), (11, 67))
         self.assertEqual({k: v.original for k, v in E.REPRINT_CARDS.items()}, REQUESTED)
-        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key not in ("pool_v0_71", "pool_v0_72") for c in pool}
+        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key not in ("pool_v0_71", "pool_v0_72", "pool_v0_73") for c in pool}
         self.assertEqual(len(earlier), 635)
         self.assertFalse(set(POOL_V0_71) & earlier)
         self.assertTrue(set(REQUESTED.values()) <= earlier)
         self.assertFalse(set(POOL_V0_71) & set(E.EQUIVALENT_CARDS))
-        self.assertEqual(len(EXTRACT["cards"]), 756)  # v0.72 で 43 枚を加えた
+        self.assertEqual(len(EXTRACT["cards"]) - len(EXTRACT["pool_v0_73"]), 756)  # v0.72 で 43 枚を加えた（v0.73 の 18 枚を除いて比べる）
         targets = {c["id"]: c for c in EXTRACT["reprint_targets"]["cards"]}
         for new, original in REQUESTED.items():
             with self.subTest(card=new):
@@ -208,12 +208,12 @@ class TargetTest(unittest.TestCase):
 
     def test_counts_from_the_registry(self):
         pool = load_card_pool()
-        playable = pool.playable_ids
+        playable = pool.playable_ids - set(EXTRACT["pool_v0_73"])  # v0.73 の 18 枚（トレーナー）を除いて比べる
         self.assertEqual(len(playable), 756)  # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた
         counts = {k: sum(1 for c in playable if pool.get(c).category == k) for k in ("pokemon", "trainer", "energy")}
         self.assertEqual(counts, {"pokemon": 546, "trainer": 180, "energy": 30})
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())), (917, 74, 180, 12))
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in EXTRACT["pool_v0_73"]]), len(registry.energy_ids())), (917, 74, 180, 12))
         self.assertTrue(all(pool.get(c).supported for c in POOL_V0_71))
 
     def test_new_type_is_a_kernel_program_outside_the_v013_contract(self):
@@ -312,7 +312,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
             .without_trainers("t", [c for c in registry.trainer_ids() if c in POOL_V0_71])
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_71 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 678)  # v0.72 の 43 枚を含む（v0.71 の時点は 635）
+        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"])), 678)  # v0.72 の 43 枚を含む（v0.71 の時点は 635。v0.73 の 18 枚は除いて比べる）
 
     def test_data_mismatch_makes_the_card_unsupported(self):
         def trainer_text(value):
@@ -802,7 +802,7 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
-        v072 = set(EXTRACT["pool_v0_72"])  # v0.72: 試すカードの数は固定しない（v0.72 の 43 枚を除いて比べる）
+        v072 = set(EXTRACT["pool_v0_72"]) | set(EXTRACT["pool_v0_73"])  # v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚を除いて比べる）
         self.assertEqual((len(set(candidates) - v072), len(set(basics) - v072)), (572, 245))
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)

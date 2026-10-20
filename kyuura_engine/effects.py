@@ -114,6 +114,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     CHALLENGE_BENCH, QUIZ_ANSWER, QUIZ_ATTACK, QUIZ_CARD, SECRET_PLAN_CARD,
     JANKEN_HAND, OPTIONAL_DRAIN,
+    SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON,
 )
 from .errors import IllegalActionError, UnsupportedError
 from .evolution import (
@@ -6117,6 +6118,17 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
     discard: int
     retrieve: int
     implementation_id = "discard_from_hand_then_retrieve_energy"
+    # v0.73: 決められない場面の (コード, 理由)。超エネルギー回収（``SuperEnergyRetrieval``）は同じ形の別のカードの問いなので、別のコードで上書きする（答えを流用しない）
+    WITHOUT_TARGET: ClassVar[tuple[str, str]] = (
+        "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+        ("トラッシュに基本エネルギーカードがない（このカードを使うためにトラッシュするカードは選べない）。このときに「エネルギー回収」を"
+         "使えるか（手札をトラッシュするだけで使えるか）は、『オフィシャルブック2000』（p.257・p.310）から決められないので扱わない"),
+    )
+    ZERO_CHOICE: ClassVar[tuple[str, str]] = (
+        "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
+        ("トラッシュに選べる基本エネルギーカードがあるのに 0 枚を選んだ。「最大2枚」が 0 枚を含むか（手札に加えずに終われるか）は、"
+         "『オフィシャルブック2000』（p.257）から決められないので扱わない（1 枚以上を選び直せる）"),
+    )
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         p = state.players[use.player]
@@ -6128,11 +6140,7 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
                 "満たせない（p.257・p.310）",
             )
         if not _retrievable_energy(state, use.player, ()):
-            raise UnsupportedError(
-                "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
-                "トラッシュに基本エネルギーカードがない（このカードを使うためにトラッシュするカードは選べない）。このときに「エネルギー回収」を"
-                "使えるか（手札をトラッシュするだけで使えるか）は、『オフィシャルブック2000』（p.257・p.310）から決められないので扱わない",
-            )
+            raise UnsupportedError(*self.WITHOUT_TARGET)
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         push_trainer_decision(
@@ -6152,11 +6160,7 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
             )
             return
         if not choices:
-            raise UnsupportedError(
-                "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",
-                "トラッシュに選べる基本エネルギーカードがあるのに 0 枚を選んだ。「最大2枚」が 0 枚を含むか（手札に加えずに終われるか）は、"
-                "『オフィシャルブック2000』（p.257）から決められないので扱わない（1 枚以上を選び直せる）",
-            )
+            raise UnsupportedError(*self.ZERO_CHOICE)
         cards = tuple(uid for uid in state.players[use.player].discard if uid in choices)
         return_discard_to_hand(state, use.player, cards)
         state.add_event("retrieve_energy", player=use.player, cards=cards)
@@ -14164,12 +14168,28 @@ class CardFilter:
       カード以外)」）・``"basic_pokemon"``（v0.55。たねポケモンのカード。礼儀作法の「「たねポケモン」」）
     - ``name_prefix``: 名前の始まり（ボスのやりかたの「わるい」、タケシの育て方の「タケシの」、エリカのお付きの「エリカの」）。進化カードの名前で決め、進化前のポケモンの
       名前・カード id の一覧で決めない
+    - ``name``（v0.73）: 名前の完全一致（化石の発掘の「「なにかの化石」」）。名前の一部・カード id で決めない。``name_prefix`` とどちらか一方
+    - ``pokemon_type``（v0.73）: ポケモンのカードの印刷のタイプ（月の石の「「無色」ポケモンへの「進化カード」」。進化カード自身のタイプ）。``kind`` が ``"pokemon"``・
+      ``"basic_pokemon"`` のときだけ。``energy_type`` は基本エネルギーカードの色の条件で、ポケモンのタイプの条件ではない（意味のない組み合わせは作るときに ``ValueError``）
     """
 
     kind: str
     energy_type: EnergyType | None = None
     name_prefix: str | None = None
     evolution_only: bool = False
+    name: str | None = None
+    pokemon_type: EnergyType | None = None
+
+    def __post_init__(self) -> None:
+        # v0.73: どの種類にも当てはまらない条件を黙って無視しない（v0.72 までは ``CardFilter("pokemon", energy_type=…)`` が色を無視していた）
+        if self.energy_type is not None and self.kind != "basic_energy":
+            raise ValueError(f"energy_type は基本エネルギーカード（kind basic_energy）の色の条件で、kind {self.kind!r} には使えない")
+        if self.pokemon_type is not None and self.kind not in ("pokemon", "basic_pokemon"):
+            raise ValueError(f"pokemon_type はポケモンのカードのタイプの条件で、kind {self.kind!r} には使えない")
+        if self.evolution_only and self.kind != "pokemon":
+            raise ValueError(f"evolution_only は kind pokemon だけの条件で、kind {self.kind!r} には使えない")
+        if self.name is not None and self.name_prefix is not None:
+            raise ValueError("名前の完全一致（name）と名前の始まり（name_prefix）は、どちらか一方")
 
     def matches(self, definition: CardDefinition) -> bool:
         pokemon = definition.is_basic_pokemon or definition.is_evolution_pokemon
@@ -14187,6 +14207,10 @@ class CardFilter:
             ok = pokemon or definition.is_basic_energy
         else:
             raise ValueError(f"カードの種類 {self.kind!r} は CardFilter の種類ではない")
+        if self.pokemon_type is not None and definition.pokemon_type is not self.pokemon_type:
+            ok = False
+        if self.name is not None and definition.name_ja != self.name:
+            ok = False
         return ok and (self.name_prefix is None or definition.name_ja.startswith(self.name_prefix))
 
 
@@ -14310,6 +14334,9 @@ class SearchDeckTrainer(TrainerEffect):
             "手札にたねポケモンがない条件": ("あなたの手札に「たねポケモン」が1枚もない時だけ、使える" in text, self.no_basic_in_hand),
             "手札を見せる": ("相手プレイヤーにあなたの手札を見せる" in text, self.reveal_hand),
             "「うら」の使用の禁止": (SELF_TRAINER_LOCK_TEXT in text, self.tails_self_lock),
+            # v0.73: 「「X」ポケモンへの「進化カード」」（月の石）の X と、登録のポケモンのタイプ
+            "ポケモンのタイプ": (m.group(1) if (m := re.search(r"「([^「」]+)」ポケモンへの「進化カード」", text)) else None,
+                         self.target.pokemon_type.ja if self.target.pokemon_type is not None else None),
         }
         problems += [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
         if self.discard_cost and self.return_cost:
@@ -14512,7 +14539,8 @@ class TakeFromDiscardTrainer(TrainerEffect):
             "最大": ("最大" in text, self.count > 1),
             "コイン": (text.startswith("コインを投げて「おもて」なら"), self.coin),
             "すてる条件": (f"手札からカードを{self.discard_cost}枚すてることによって" in text, self.discard_cost > 0),
-            "山札の一番上": ("山札の1番上に置く" in text, self.destination == TO_DECK_TOP),
+            # v0.73: ポケモン再転送の「自分の山札の上に置く」（リサイクルの「山札の1番上に置く」と同じ行き先）
+            "山札の一番上": (re.search(r"山札の(1番)?上に置く", text) is not None, self.destination == TO_DECK_TOP),
             "手札に加える": ("手札に加える" in text, self.destination == TO_HAND),
             "山札にもどして切る": ("山札にもどす。その後、その山札をよく切る" in text, self.destination == TO_DECK),
         }
@@ -14847,13 +14875,15 @@ class EachPlayerMayDraw(TrainerEffect):
     def resolve(self, state: GameState, use: TrainerUse) -> None:
         self._offer(state, use, 0)
 
-    def _offer(self, state: GameState, use: TrainerUse, stage: int) -> None:
+    def _offer(self, state: GameState, use: TrainerUse, stage: int) -> bool:
+        """段階 ``stage`` から、山札のあるプレイヤーに引く枚数の決定を出す。出したら True（v0.73。決定を出さずに終わったら False）。"""
         for current in range(stage, 2):
             player = self._drawer(use, current)
             if state.players[player].deck:
                 push_trainer_decision(state, use, kind=SELECT_DRAW_COUNT, player=player, options=self._options(state, player), context=(("stage", current),))
-                return
+                return True
             state.add_event("trainer_draw_declined", player=player, trainer_card=use.card, reason="empty_deck")
+        return False
 
     def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         stage = decision.context_value("stage")
@@ -25271,3 +25301,545 @@ def _with_reprint_cards(registry: EffectRegistry, table: Mapping[str, Reprint]) 
 
 
 DEFAULT_EFFECTS = _with_reprint_cards(DEFAULT_EFFECTS, REPRINT_CARDS)
+
+
+# ---------------------------------------------------------------- 検索・回収・ドローのトレーナー（v0.73。docs/search-recovery-trainers-v0.73.md）
+# 拡張パック以外の商品のトレーナー 18 枚（10 の処理）。どれも kyuura の印刷の文面にしたがう（超エネルギー回収は kyuura のエラッタの記録 ERR-SUPER-ENERGY-RETRIEVAL の
+# 最新の説明）。既存の選択・カードの移動・見せる・引く・番を終える処理を使い、カード id で分けない
+
+MAX_REVIVE_TEXT = "手札からエネルギーカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「たねポケモン」を1枚選び出し、あなたのベンチに出す。"
+MAX_REVIVE_BENCH_FULL_TEXT = MAX_REVIVE_TEXT + "(あなたのベンチに空きがない時、このカードは使えない)"
+FERVOR_TEXT = "あなたの山札の上から、カードを3枚トラッシュする。トラッシュした3枚の中にあった「炎」エネルギーカードを、すべてあなたの手札に加える。"
+MASTER_BALL_TEXT = ("あなたの山札の上から7枚を見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。"
+                    "その後、その山札をよく切る。")
+MASTER_BALL_NEO_TEXT = ("あなたの山札の上からカードを7枚見る。その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える。"
+                        "その後、その山札をよく切る。")
+FOSSIL_EXCAVATION_TEXT = "あなたの山札、またはあなたのトラッシュから「なにかの化石」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、あなたの山札をよく切る。"
+MOON_STONE_TEXT = "あなたの山札から、「無色」ポケモンへの「進化カード」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、その山札をよく切る。"
+POKEMON_RETRIEVER_TEXT = "あなたのトラッシュから「進化カード」を1枚選び出し、相手プレイヤーに見せてから、自分の山札の上に置く。"
+SUPER_SCOOP_UP_TEXT = "コインを投げて「おもて」なら、あなたの場のポケモンを1匹選び、そのポケモンと、それについているすべてのカードを、あなたの手札にもどす。"
+BILLS_TELEPORTER_TEXT = "コインを投げて「おもて」なら、山札からカードを4枚引いて、手札に加える。"
+SUPER_ENERGY_RETRIEVAL_TEXT = ("このカードを使うためには、手札からカードを2枚選んで捨てなければならない。その後、自分のトラッシュから最大4枚のエネルギーカードを選び、"
+                               "手札に加える。ただし、いま捨てたカードは選べない。")
+# 処理に使う文面: kyuura の data/rule_history.json の ERR-SUPER-ENERGY-RETRIEVAL（記録の cards は pcg-search.com の id 1stp009 = PR1-009）の notes が引用する最新の説明
+# （『オフィシャルブック2000』p.292 の引用。エンジンはガイドブックを読み直していない。記録の引用の再利用）。エラッタの適用開始日は記録で「未確認」のまま
+SUPER_ENERGY_RETRIEVAL_PLAY_TEXT = ("手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「基本エネルギーカード」を最大4枚選び出し、"
+                                    "手札に加える。ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。")
+SUPER_ENERGY_RETRIEVAL_SOURCE = "ERR-SUPER-ENERGY-RETRIEVAL"
+COMPUTER_ERROR_TEXT = ("このカードを使ったら、あなたの番は自動的に終わりになる。お互いのプレイヤーは、のぞむなら、最大5枚までカードを引いてよい。"
+                       "(あなたがカードを引き終わってから、相手プレイヤーが引く)")
+
+# MR1: 元気のかたまりで、自分のトラッシュに「たねポケモン」がない・（ポケモンジム第3弾の版で）自分のベンチに空きがないとき。印刷の文面（「…選び出し、あなたのベンチに出す」）に
+# 選べない・出せないときの記述がない（拡張シート第2弾の版の「(あなたのベンチに空きがない時、このカードは使えない)」は、その版だけの文面で、ほかの版に持ち込まない）。
+# 元気のかけらの RV1・ポケモンの笛の FT1・ポケモンジム第1弾の元気のかけらの使うための条件の答えを流用しない
+MAX_REVIVE_WITHOUT_TARGET_CODE = "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET"
+MAX_REVIVE_WITHOUT_TARGET_REASON = (
+    "元気のかたまりで、自分のトラッシュに「たねポケモン」がない・ベンチに出せない（使えないと書かれていない版でベンチに空きがない）ときに使えるか（使えない・エネルギーカードを"
+    "トラッシュするだけで使えるのどちらか）は、印刷の文面・kyuura の記録で決まらないので扱わない（MR1。ほかのカード・ほかの版の答えを流用しない）"
+)
+# ML1: マスターボールで、山札が 7 枚より少ないとき（0 枚を含む）。「山札の上から7枚を見る」に足りないときの記述がない。カスミのいかりの MW1（同じ形の別のカードの問い）・
+# 「カードを引く」ときの「引けるだけ」（p.312）を当てはめない
+MASTER_BALL_SHORT_DECK_CODE = "UNRESOLVED_MASTER_BALL_SHORT_DECK"
+MASTER_BALL_SHORT_DECK_REASON = (
+    "マスターボールで、山札が 7 枚より少ないとき（「山札の上から7枚を見る」に足りないとき）に、使えるか・あるだけを見るかは、印刷の文面・kyuura の記録で決まらないので扱わない"
+    "（ML1。カスミのいかりの MW1・「カードを引く」ときの「引けるだけ」を当てはめない）"
+)
+# SR1・SR2: 超エネルギー回収の、トラッシュに選べる基本エネルギーカードがない・0 枚を選ぶ場面。エネルギー回収の ER10・ER9 と同じ形の、別のカードの問い（エラッタの最新の
+# 説明はエネルギー回収と同じ言い回しで「最大4枚」）。どちらかの答えでもう一方を決めない
+SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET_CODE = "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET_REASON = (
+    "トラッシュに基本エネルギーカードがない（このカードを使うためにトラッシュするカードは選べない）。このときに「超エネルギー回収」を使えるか（手札をトラッシュするだけで使えるか）は、"
+    "エラッタの最新の説明（ERR-SUPER-ENERGY-RETRIEVAL）・kyuura の記録で決まらないので扱わない（SR1。エネルギー回収の ER10 と同じ形の別のカードの問い）"
+)
+SUPER_ENERGY_RETRIEVAL_ZERO_CODE = "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE"
+SUPER_ENERGY_RETRIEVAL_ZERO_REASON = (
+    "トラッシュに選べる基本エネルギーカードがあるのに 0 枚を選んだ。「最大4枚」が 0 枚を含むか（手札に加えずに終われるか）は、エラッタの最新の説明・kyuura の記録で決まらないので"
+    "扱わない（SR2。エネルギー回収の ER9 と同じ形の別のカードの問い。1 枚以上を選び直せる）"
+)
+# FV1: 熱血!の「「炎」エネルギーカード」に、山札の上から落ちたレインボーエネルギー（場の外の特殊エネルギーカード）が当たるか。印刷の文面に「基本」はない（「基本エネルギーカード」
+# の条件を書き足さない）。レインボーエネルギーの「どの色の基本エネルギーカードとして使ってもよい」は場のカードの文面で、場の外の扱いは記録で決まらない（RB1〜RB3 と同じ
+# 種類の、別の場面の問い）。落ちる前には山札の上のカードは分からないので、使う前に、持ち主に見えないカード（山札・サイド）にレインボーエネルギーがあれば止める
+FERVOR_RAINBOW_CODE = "UNRESOLVED_FERVOR_RAINBOW_ENERGY"
+FERVOR_RAINBOW_REASON = (
+    "熱血!で山札の上からトラッシュしたレインボーエネルギーが「「炎」エネルギーカード」に当たるか（手札に加えるか）は、印刷の文面・kyuura の記録で決まらないので扱わない"
+    "（FV1。トラッシュするまで山札の上のカードは分からないので、山札・サイドにレインボーエネルギーがあるとき、使う前に止める）"
+)
+
+
+def _energy_cards_in_hand(state: GameState, use: TrainerUse) -> tuple[int, ...]:
+    """v0.73: このカードを除く手札のエネルギーカード（手札の並び。手札にある間の印刷の定義。基本エネルギー・特殊エネルギーのどちらも 1 枚 1 枚。無色2個エネルギーも 1 枚）。"""
+    return tuple(uid for uid in state.players[use.player].hand if uid != use.card and state.card_def(uid).category == "energy")
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenBenchBasicFromDiscard(TrainerEffect):
+    """手札からエネルギーカードを ``discard`` 枚選んでトラッシュしなければ、このカードは使えない。あなたのトラッシュから「たねポケモン」を 1 枚選び出し、あなたのベンチに出す
+    （v0.73。元気のかたまり（GD5-019・ES2-034）。kyuura の印刷の文面。docs/search-recovery-trainers-v0.73.md 3 章）。
+
+    - 使うための条件: このカードを除く手札のエネルギーカード（``_energy_cards_in_hand``）が ``discard`` 枚以上（足りなければ手札から出す前に
+      ``INSUFFICIENT_ENERGY_CARDS_IN_HAND``）。トレーナーカード・ポケモンのカードでは払えない。無色2個エネルギーは 1 枚と数える（エネルギーの個数ではなく、カードの枚数）
+    - ``bench_full_unusable``（拡張シート第2弾の版の「(あなたのベンチに空きがない時、このカードは使えない)」）: ベンチに空きがなければ、手札から出す前に ``BENCH_FULL``
+    - 自分のトラッシュに「たねポケモン」がない・（使えないと書かれていない版で）ベンチに空きがないときは MR1 で、使う前に止める（ほかの確認のあと。状態を変えない）
+    - 段階 1: トラッシュするエネルギーカードを選ぶ（決定 ``DISCARD_FROM_HAND``。選べるものは手札のエネルギーカードだけ。ちょうど ``discard`` 枚）→ ``zones.discard_from_hand``
+    - 段階 2: トラッシュのたねポケモンのカードを 1 枚選ぶ（決定 ``BENCH_FROM_DISCARD``。ちょうど 1 枚。「選び出し、…出す」で選ばなくてよいと書かれていない）→
+      ``zones.bench_from_discard``（同じ uid・新しい場のポケモンの番号・場に出た番は今の番（その番には進化できない）。ダメージカウンターはのせない（元気のかけらの HP の
+      半分を持ち込まない））。トラッシュしたエネルギーカードはたねポケモンではないので、選べるものは使う前と同じ
+    - 段階 2 の不正な答えで、段階 1 のトラッシュは取り消さない
+    """
+
+    text: str
+    discard: int = 2
+    bench_full_unusable: bool = False
+    implementation_id = "discard_energy_then_bench_basic_from_discard"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if problems:
+            return problems
+        expected = {
+            "トラッシュの条件": (f"手札からエネルギーカードを{self.discard}枚選んでトラッシュしなければ、このカードは使えない" in self.text, True),
+            "ベンチに出す": ("あなたのトラッシュから「たねポケモン」を1枚選び出し、あなたのベンチに出す" in self.text, True),
+            "ベンチに空きがない時": ("あなたのベンチに空きがない時、このカードは使えない" in self.text, self.bench_full_unusable),
+        }
+        return [f"文面と登録の「{name}」が合わない" for name, (found, registered) in expected.items() if found != registered]
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return bench_from_discard_candidates(state, (use.player,))
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if self.bench_full_unusable and not bench_has_space(state, use.player):
+            raise IllegalActionError("BENCH_FULL", f"あなたのベンチに空きがない（{bench_limit(state, use.player)} 匹）ので、このカードは使えない（カードの説明）")
+        energy = _energy_cards_in_hand(state, use)
+        if len(energy) < self.discard:
+            raise IllegalActionError(
+                "INSUFFICIENT_ENERGY_CARDS_IN_HAND",
+                f"このカードを除く手札のエネルギーカードが {len(energy)} 枚で、使うための条件（手札からエネルギーカードを{self.discard}枚選んでトラッシュする）を満たせない",
+            )
+        if not self.candidates(state, use):
+            scene = "ベンチに空きがない" if discard_basic_pokemon(state, use.player) else "トラッシュに「たねポケモン」がない"
+            raise UnsupportedError(MAX_REVIVE_WITHOUT_TARGET_CODE, f"{MAX_REVIVE_WITHOUT_TARGET_REASON}。{scene}")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=DISCARD_FROM_HAND, player=use.player, options=_energy_cards_in_hand(state, use),
+                              min_choices=self.discard, max_choices=self.discard)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.kind == DISCARD_FROM_HAND:
+            if any(uid not in _energy_cards_in_hand(state, use) for uid in choices):
+                raise RuntimeError(f"{use.card_id} でトラッシュするカード {choices} が、手札のエネルギーカードではない（決定の確認の漏れ。エンジンの不具合）")
+            discard_from_hand(state, use.player, choices)
+            options = self.candidates(state, use)
+            if not options:
+                raise RuntimeError(f"{use.card_id} で出せるたねポケモンのカードがない（使う前の確認の漏れ。エンジンの不具合）")
+            push_trainer_decision(state, use, kind=BENCH_FROM_DISCARD, player=use.player, options=options, min_choices=1, max_choices=1)
+            return
+        (card,) = choices
+        if card not in self.candidates(state, use):
+            raise RuntimeError(f"{use.card_id} で選んだカード {card} が、出せるトラッシュのたねポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
+        discard_entry_power_guard(state, card)
+        pokemon = bench_from_discard(state, card)
+        log_bench_from_discard(state, pokemon, by_player=use.player, source={"trainer_card": use.card, "trainer": use.card_id})
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = _decided_by(decision, use.player, what)
+        if decision.kind == DISCARD_FROM_HAND:
+            expected, bounds = _energy_cards_in_hand(state, use), (self.discard, self.discard)
+        elif decision.kind == BENCH_FROM_DISCARD:
+            expected, bounds = self.candidates(state, use), (1, 1)
+            if not any(e["kind"] == "discard_from_hand" for e in _last_trainer_events(state, use)):
+                problems.append(f"{what}のベンチに出す決定が、使うための条件（エネルギーカードのトラッシュ）のあとではない")
+        else:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}"]
+        if (decision.min_choices, decision.max_choices) != bounds:
+            problems.append(f"{what}の決定 {decision.kind} で選ぶ数が {decision.min_choices}〜{decision.max_choices}（{bounds} のはず）")
+        if decision.options != expected or not expected:
+            problems.append(f"{what}の決定 {decision.kind} の選べるもの {decision.options} が {expected} と合わない")
+        return problems
+
+
+@dataclass(frozen=True)
+class DiscardDeckTopThenReturnTypeEnergy(TrainerEffect):
+    """あなたの山札の上から、カードを ``count`` 枚トラッシュする。トラッシュした ``count`` 枚の中にあった「``energy_type``」エネルギーカードを、すべてあなたの手札に加える
+    （v0.73。熱血!（GD5-021）。kyuura の印刷の文面）。
+
+    - 山札の上から ``count`` 枚をトラッシュする（``zones.deck_top_to_discard``。ログ ``deck_top_to_discard`` は公開）。「カードを引く」ではない。山札を切らない
+    - そのトラッシュしたカード（返された uid）のうち、その色の基本エネルギーカードだけを、同じ uid のまま手札に加える（``zones.return_discard_to_hand``。ログ ``milled_to_hand``。
+      トラッシュから手札に動いたので公開）。前からトラッシュにあった同じ色のエネルギーカードは加えない。特殊エネルギーのうち、その色を出さないもの（無色2個エネルギーなど）は
+      加えない。印刷の文面にない「基本」の条件は書き足さない（レインボーエネルギーは FV1）
+    - 山札が ``count`` 枚より少ないとき（0 枚を含む）は HC6（v0.31 の「山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合」と同じ問い。
+      ``UNRESOLVED_DISCARD_DECK_SHORT``）で、使う前に止める（山札を変えない）。持ち主に見えないカード（山札・サイド）にレインボーエネルギーがあれば FV1 で使う前に止める
+    """
+
+    text: str
+    count: int = 3
+    energy_type: EnergyType = EnergyType.FIRE
+    implementation_id = "discard_deck_top_then_return_type_energy"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (f"山札の上から、カードを{self.count}枚トラッシュする" not in self.text
+                             or f"トラッシュした{self.count}枚の中にあった「{self.energy_type.ja}」エネルギーカードを、すべてあなたの手札に加える" not in self.text):
+            problems.append("文面と登録の枚数・色が合わない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        p = state.players[use.player]
+        if len(p.deck) < self.count:
+            raise UnsupportedError("UNRESOLVED_DISCARD_DECK_SHORT", f"山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合の処理は、原典から決められない"
+                                   f"（HC6。熱血!で山札が {len(p.deck)} 枚）")
+        hidden = rainbow_cards_in(state, (*p.deck, *(uid for uid in p.prizes if uid is not None)))
+        if hidden:
+            raise UnsupportedError(FERVOR_RAINBOW_CODE, FERVOR_RAINBOW_REASON)
+
+    def returned(self, state: GameState, cards: Iterable[int]) -> tuple[int, ...]:
+        found = []
+        for uid in cards:
+            definition = state.card_def(uid)
+            if rainbow_cards_in(state, (uid,)):
+                raise RuntimeError(f"熱血!でトラッシュしたカード {uid} がレインボーエネルギー（使う前の確認の漏れ。エンジンの不具合）")
+            if definition.is_basic_energy and definition.provides is self.energy_type:
+                found.append(uid)
+        return tuple(found)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        cards = deck_top_to_discard(state, use.player, self.count, trainer=use.card)
+        returned = self.returned(state, cards)
+        if returned:
+            return_discard_to_hand(state, use.player, returned)
+        state.add_event("milled_to_hand", player=use.player, cards=returned, trainer_card=use.card)
+
+
+@dataclass(frozen=True)
+class LookTopTakePokemonThenShuffle(TrainerEffect):
+    """あなたの山札の上から ``look`` 枚を見る。その中に「たねポケモン」または「進化カード」があれば、1 枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札を
+    よく切る（v0.73。マスターボール（GD6-023・ES2-036・QSG-058・NIP1-021・NIP2-022）。kyuura の印刷の文面）。
+
+    - 見る（ログ ``look_at_deck_top`` の ``cards`` は使ったプレイヤーだけ）。山札全体はさがさない（v0.53 の ``SearchDeckTrainer`` ではない）
+    - 見たカードのうち、たねポケモンのカード・進化カード（山札にある間の印刷の定義。なにかの化石・ピッピ人形はトレーナーカード）があれば、ちょうど 1 枚を選ぶ（決定
+      ``TAKE_LOOKED_POKEMON``。選べるものは見たカードのうちのポケモンのカード（山札の上からの順）。「あれば、1枚を選び」で、あるのに選ばない答えはない）→ 見せて手札に加える
+      （``zones.reveal_deck_to_hand``。ログ ``reveal_from_deck`` は公開）。選ばなかったカードは見せず、山札に残す（トラッシュしない。v0.55 のカスミのいかりではない）
+    - なければ何も手札に加えない（ログ ``trainer_take_none`` の理由は使ったプレイヤーだけ）
+    - どちらのときも、そのあと山札を 1 回切る（``zones.shuffle_deck``）
+    - 山札が ``look`` 枚より少ないとき（0 枚を含む）は ML1 で、使う前に止める
+    """
+
+    text: str
+    look: int = 7
+    implementation_id = "look_top_take_pokemon_then_shuffle"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if problems:
+            return problems
+        looks = f"山札の上から{self.look}枚を見る" in self.text or f"山札の上からカードを{self.look}枚見る" in self.text
+        if not looks or "その中に「たねポケモン」または「進化カード」があれば、1枚を選び、相手プレイヤーに見せてから、手札に加える" not in self.text \
+                or "その後、その山札をよく切る" not in self.text:
+            problems.append("文面と登録の枚数・処理（見る・選ぶ・見せる・切る）が合わない")
+        return problems
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        deck = state.players[use.player].deck
+        if len(deck) < self.look:
+            raise UnsupportedError(MASTER_BALL_SHORT_DECK_CODE, f"{MASTER_BALL_SHORT_DECK_REASON}。山札が {len(deck)} 枚")
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return tuple(uid for uid in state.players[use.player].deck[:self.look] if CardFilter("pokemon").matches(state.card_def(uid)))
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        cards = tuple(state.players[use.player].deck[:self.look])
+        state.add_event("look_at_deck_top", player=use.player, owner=use.player, count=self.look, cards=cards, trainer_card=use.card)
+        options = self.candidates(state, use)
+        if options:
+            push_trainer_decision(state, use, kind=TAKE_LOOKED_POKEMON, player=use.player, options=options)
+            return
+        _trainer_take_none(state, use, "deck", no_target=True)
+        shuffle_deck(state, use.player)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (card,) = choices
+        if card not in self.candidates(state, use):
+            raise RuntimeError(f"{use.card_id} で選んだカード {card} が、見たカードのポケモンのカードではない（決定の確認の漏れ。エンジンの不具合）")
+        reveal_deck_to_hand(state, use.player, card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = _decided_by(decision, use.player, what)
+        if decision.kind != TAKE_LOOKED_POKEMON:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}（{TAKE_LOOKED_POKEMON} のはず）"]
+        expected = self.candidates(state, use)
+        if not expected or decision.options != expected or (decision.min_choices, decision.max_choices) != (1, 1):
+            problems.append(f"{what}の決定 {decision.options}（{decision.min_choices}〜{decision.max_choices}）が、見た {self.look} 枚のポケモンのカード {expected} から 1 枚ではない")
+        looked = [e for e in _last_trainer_events(state, use) if e["kind"] == "look_at_deck_top" and e.get("trainer_card") == use.card]
+        if len(looked) != 1 or tuple(looked[0]["cards"]) != tuple(state.players[use.player].deck[:self.look]):
+            problems.append(f"{what}の決定の前に、山札の上の {self.look} 枚を見たログがない")
+        return problems
+
+
+@dataclass(frozen=True)
+class SearchNamedFromDeckOrDiscard(TrainerEffect):
+    """あなたの山札、またはあなたのトラッシュから「``target`` の名前」を 1 枚選び出し、相手プレイヤーに見せてから、手札に加えてよい。その後、あなたの山札をよく切る（v0.73。
+    化石の発掘（ES1-035）。kyuura の印刷の文面）。
+
+    - 選べるものは、山札の名前の完全一致のカード（uid の小さい順）→ トラッシュの名前の完全一致のカード（トラッシュの並び）。山札・トラッシュにある間の印刷の定義（なにかの
+      化石はトレーナーカード）。合わせて 0〜1 枚（決定 ``SEARCH_DECK_OR_DISCARD``。0 枚は「てよい」の、加えないこと）
+    - 山札のカードは見せて手札に加える（``zones.reveal_deck_to_hand``。ログ ``reveal_from_deck``）、トラッシュのカードは手札に加える（``zones.return_discard_to_hand``・ログ
+      ``retrieve_trainer``。トラッシュは公開の情報）
+    - 選んでも選ばなくても、選べるカードがなくても、そのあと自分の山札を 1 回切る（「その後、あなたの山札をよく切る」。トラッシュから選んだときも）
+    """
+
+    text: str
+    target: CardFilter
+    implementation_id = "search_named_from_deck_or_discard"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if problems:
+            return problems
+        if self.target.name is None or f"あなたの山札、またはあなたのトラッシュから「{self.target.name}」を1枚選び出し、相手プレイヤーに見せてから、手札に加えてよい" not in self.text \
+                or "その後、あなたの山札をよく切る" not in self.text:
+            problems.append("文面と登録の名前・処理（山札またはトラッシュ・選ばなくてよい・見せる・切る）が合わない")
+        return problems
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return (*deck_cards_matching(state, use.player, self.target), *discard_cards_matching(state, use.player, self.target))
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        options = self.candidates(state, use)
+        if not options:
+            _trainer_take_none(state, use, "deck_or_discard", no_target=True)
+            shuffle_deck(state, use.player)
+            return
+        push_trainer_decision(state, use, kind=SEARCH_DECK_OR_DISCARD, player=use.player, options=options, min_choices=0, max_choices=1)
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        p = state.players[use.player]
+        if not choices:
+            _trainer_take_none(state, use, "deck_or_discard", no_target=False)
+        else:
+            (card,) = choices
+            if card not in self.candidates(state, use):
+                raise RuntimeError(f"{use.card_id} で選んだカード {card} が、選べるカードではない（決定の確認の漏れ。エンジンの不具合）")
+            if card in p.deck:
+                reveal_deck_to_hand(state, use.player, card)
+            else:
+                return_discard_to_hand(state, use.player, (card,))
+                state.add_event("retrieve_trainer", player=use.player, card=card, trainer_card=use.card)
+        shuffle_deck(state, use.player)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        what = f"トレーナー {use.card_id}"
+        problems = _decided_by(decision, use.player, what)
+        if decision.kind != SEARCH_DECK_OR_DISCARD:
+            return problems + [f"{what}の決定の種類が {decision.kind!r}（{SEARCH_DECK_OR_DISCARD} のはず）"]
+        expected = self.candidates(state, use)
+        if not expected or decision.options != expected or (decision.min_choices, decision.max_choices) != (0, 1):
+            problems.append(f"{what}の決定 {decision.options}（{decision.min_choices}〜{decision.max_choices}）が、山札・トラッシュの {expected} から 0〜1 枚ではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinReturnOwnPokemonWithAttachedToHand(TrainerEffect):
+    """コインを投げて「おもて」なら、あなたの場のポケモンを 1 匹選び、そのポケモンと、それについているすべてのカードを、あなたの手札にもどす（v0.73。スーパーポケモン回収
+    （IP1-009・IP2-029）。kyuura の印刷の文面）。
+
+    - コイン 1 枚（使ったプレイヤー。``source`` ``"trainer"``）を、使うための確認のあと・選ぶ前に投げる。「うら」なら何もしない。決定のあとで投げ直さない
+    - 「おもて」: 使ったプレイヤーが自分の場のポケモン（バトル場 → ベンチ）から 1 匹を選ぶ（決定 ``SELECT_POKEMON``）→ ``zones.return_in_play_to_hand``（重なったカード（進化カード・
+      「ばける」でのせた進化カード）・エネルギーカード・トレーナーカードのすべてを、同じ uid のまま手札へ。ダメージカウンター・特殊状態はなくなる。ログの ``zone``）→ 持続する効果を
+      理由 ``return_in_play_to_hand`` で消す。きぜつではない（サイドは取られない）。v0.52 のポケモン回収（いちばん下のたねポケモンだけ手札へ）・ロケット団員（相手の控え）とは
+      もどすカード・ポケモンが違う。［へんしん］のメタモンは、もどすのはメタモン自身のカード（写した姿のカードではない）
+    - バトル場のポケモンをもどしたら、使い終えて（カードをトラッシュして）から、勝ち負けの判定・バトル場に出す決定（``empties_active``。``resolution.after_trainer``）。控えが
+      いなければ、代わりのポケモンを出せないので負け（p.311 の規定のまま。きぜつでなくても同じ。v0.36 のくもがくれガス・v0.42 のおくびょうと同じ）
+    """
+
+    text: str
+    implementation_id = "coin_return_own_pokemon_with_attached_to_hand"
+    empties_active = True
+    ends_on_lost_target = True  # v0.67: 選んだうらのカード（マチスの秘策）が「たねポケモン」でなくトラッシュしたら、もどすポケモンがいないので終わる
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (not self.text.startswith("コインを投げて「おもて」なら") or "あなたの場のポケモンを1匹選び" not in self.text
+                             or "そのポケモンと、それについているすべてのカードを、あなたの手札にもどす" not in self.text):
+            problems.append("文面と登録の処理（コイン・自分の場のポケモン・ついているカードといっしょに手札へ）が合わない")
+        return problems
+
+    def candidates(self, state: GameState, use: TrainerUse) -> tuple[int, ...]:
+        return tuple(pokemon.pokemon_id for pokemon in state.players[use.player].in_play())
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if not _trainer_coin(state, use):
+            return
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=self.candidates(state, use))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (target,) = choices
+        pokemon = state.players[use.player].find_by_pokemon_id(target)
+        if pokemon is None:
+            raise RuntimeError(f"スーパーポケモン回収で選んだポケモン {target} が自分の場にいない（決定の確認の漏れ。エンジンの不具合）")
+        return_in_play_to_hand(state, use.player, pokemon, trainer=use.card, log_zone=True)
+        remove_persistent_effects(state, use.player, pokemon, RETURN_IN_PLAY_TO_HAND)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        problems = _select_own_pokemon_problems(decision, use, self.candidates(state, use), "「スーパーポケモン回収」")
+        flips = [e for e in _last_trainer_events(state, use) if e["kind"] == "coin_flip" and e["source"] == "trainer" and e["card"] == use.card]
+        if len(flips) != 1 or flips[0]["result"] != "heads":
+            problems.append("「スーパーポケモン回収」の決定が、「おもて」のコイン 1 枚のあとではない")
+        return problems
+
+
+@dataclass(frozen=True)
+class CoinDrawTrainer(TrainerEffect):
+    """コインを投げて「おもて」なら、山札からカードを ``count`` 枚引いて、手札に加える（v0.73。マサキの転送装置（IP1-020・IP2-021）。kyuura の印刷の文面）。
+
+    - コイン 1 枚（使ったプレイヤー。``source`` ``"trainer"``）。「うら」なら何もしない
+    - 「おもて」なら「カードを引く」（``zones.draw_cards``。p.312）。山札が足りなければ引けるだけ（0 枚でも負けではない。マサキ・オーキドはかせと同じ規定。``_draw_up_to``）。
+      引いたカードは引いたプレイヤーだけが見る（ログ ``draw``）
+    """
+
+    text: str
+    count: int = 4
+    implementation_id = "coin_draw_trainer"
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = _require_text(definition, self.text, self)
+        if not problems and (not self.text.startswith("コインを投げて「おもて」なら") or f"山札からカードを{self.count}枚引いて、手札に加える" not in self.text):
+            problems.append("文面と登録の処理（コイン・引く枚数）が合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        if _trainer_coin(state, use):
+            _draw_up_to(state, use.player, self.count)
+
+
+@dataclass(frozen=True)
+class SuperEnergyRetrieval(DiscardFromHandThenRetrieveEnergy):
+    """超エネルギー回収（PR1-009）。処理は kyuura のエラッタの記録 ERR-SUPER-ENERGY-RETRIEVAL の最新の説明（``play_text``）にしたがう（v0.73。印刷の文面「…最大4枚の
+    エネルギーカードを選び…」は照合だけに使う）: 手札からカードを ``discard`` 枚選んでトラッシュしなければ使えない。トラッシュの「基本エネルギーカード」（場の外の特殊エネルギー
+    カードは基本エネルギーカードではない）を最大 ``retrieve`` 枚選び出し、手札に加える。このカードを使うためにトラッシュしたカードは選べない。
+
+    処理はエネルギー回収（v0.23 の ``DiscardFromHandThenRetrieveEnergy``）と同じ形で、枚数と、決められない場面のコード（SR1・SR2。ER10・ER9 と同じ形の、別のカードの問い）だけが違う。
+    """
+
+    play_text: str = SUPER_ENERGY_RETRIEVAL_PLAY_TEXT
+    implementation_id = "super_energy_retrieval"
+    WITHOUT_TARGET: ClassVar[tuple[str, str]] = (SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET_CODE, SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET_REASON)
+    ZERO_CHOICE: ClassVar[tuple[str, str]] = (SUPER_ENERGY_RETRIEVAL_ZERO_CODE, SUPER_ENERGY_RETRIEVAL_ZERO_REASON)
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = super().check(definition)
+        printed = definition.trainer_text_ja or ""
+        if f"手札からカードを{self.discard}枚選んで捨てなければならない" not in printed or f"最大{self.retrieve}枚のエネルギーカードを選び" not in printed:
+            problems.append("印刷の文面と登録の枚数（トラッシュ・回収）が合わない")
+        if f"手札からカードを{self.discard}枚選んでトラッシュしなければ、このカードは使えない" not in self.play_text \
+                or f"あなたのトラッシュから「基本エネルギーカード」を最大{self.retrieve}枚選び出し、手札に加える" not in self.play_text \
+                or "ただし、このカードを使うためにトラッシュしたカードを選ぶことはできない" not in self.play_text:
+            problems.append("処理に使う文面（エラッタ）と登録の枚数・条件（基本エネルギーカード・トラッシュしたカードを除く）が合わない")
+        return problems
+
+
+@dataclass(frozen=True)
+class EachPlayerMayDrawThenEndTurn(EachPlayerMayDraw):
+    """このカードを使ったら、あなたの番は自動的に終わりになる。お互いのプレイヤーは、のぞむなら、最大 ``max_count`` 枚までカードを引いてよい。（あなたがカードを引き終わって
+    から、相手プレイヤーが引く）（v0.73。パソコン大暴走！（PR1-026・PR1-041）。kyuura の印刷の文面）。
+
+    - 引く処理は v0.54 のエリカ（``EachPlayerMayDraw``）と同じ: 使ったプレイヤー → 相手プレイヤーの順に、それぞれ自分で 0〜min(``max_count``, 自分の山札の枚数) 枚を決めて引く
+      （決定 ``SELECT_DRAW_COUNT``。相手は使ったプレイヤーが引き終わってから決める。山札が 0 枚のプレイヤーには決定を出さない。引いたカードは引いたプレイヤーだけ・枚数は公開）
+    - 両方の処理が終わったら（両方が 0 枚でも）``END_TURN`` を返す。エンジンが使い終えたこのカードをトラッシュしてから、使ったプレイヤーの番を終える
+      （``resolution.end_turn_after_trainer``。サイキックコントロールで使ったら、使ったプレイヤー = 番のプレイヤーの番。効果の中で番を終えない）。エリカは番を終えない
+    """
+
+    implementation_id = "each_player_may_draw_then_end_turn"
+    may_end_turn = True
+    refers_to_user_turn = True  # v0.57: 説明が使ったプレイヤーの番を書く（錯乱ジムで相手がかわりに使うと CH1）
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = TrainerEffect.check(self, definition)
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
+        elif ("このカードを使ったら、あなたの番は自動的に終わりになる" not in self.text or f"のぞむなら、最大{self.max_count}枚までカードを引いてよい" not in self.text
+              or "あなたがカードを引き終わってから、相手プレイヤーが引く" not in self.text):
+            problems.append("文面と登録の枚数・順番・番の終わりが合わない")
+        return problems
+
+    def resolve(self, state: GameState, use: TrainerUse):
+        return None if self._offer(state, use, 0) else END_TURN
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]):
+        stage = decision.context_value("stage")
+        player = self._drawer(use, stage)
+        if choices[0]:
+            draw_cards(state, player, choices[0])
+        else:
+            state.add_event("trainer_draw_declined", player=player, trainer_card=use.card, reason="declined")
+        if stage == 0 and self._offer(state, use, 1):
+            return None
+        return END_TURN
+
+
+# v0.73 の 18 枚の登録（並びは依頼の並び）。同じデータのカードも id ごとに書き、下の SAME_DATA_CARDS_V0_73 で同じ登録の値にまとめる
+_MOON_STONE_TARGET = CardFilter("pokemon", evolution_only=True, pokemon_type=EnergyType.COLORLESS)
+V0_73_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "GD5-019": TrainerEntry(DiscardEnergyThenBenchBasicFromDiscard(MAX_REVIVE_TEXT), "元気のかたまり", MAX_REVIVE_TEXT, MAX_REVIVE_TEXT, _KYUURA_PRINTED_TEXT),
+    "ES2-034": TrainerEntry(DiscardEnergyThenBenchBasicFromDiscard(MAX_REVIVE_BENCH_FULL_TEXT, bench_full_unusable=True), "元気のかたまり", MAX_REVIVE_BENCH_FULL_TEXT,
+                            MAX_REVIVE_BENCH_FULL_TEXT, _KYUURA_PRINTED_TEXT),
+    "GD5-021": TrainerEntry(DiscardDeckTopThenReturnTypeEnergy(FERVOR_TEXT), "熱血!", FERVOR_TEXT, FERVOR_TEXT, _KYUURA_PRINTED_TEXT),
+    "GD6-023": TrainerEntry(LookTopTakePokemonThenShuffle(MASTER_BALL_TEXT), "マスターボール", MASTER_BALL_TEXT, MASTER_BALL_TEXT, _KYUURA_PRINTED_TEXT),
+    "ES2-036": TrainerEntry(LookTopTakePokemonThenShuffle(MASTER_BALL_TEXT), "マスターボール", MASTER_BALL_TEXT, MASTER_BALL_TEXT, _KYUURA_PRINTED_TEXT),
+    "QSG-058": TrainerEntry(LookTopTakePokemonThenShuffle(MASTER_BALL_TEXT), "マスターボール", MASTER_BALL_TEXT, MASTER_BALL_TEXT, _KYUURA_PRINTED_TEXT),
+    "NIP1-021": TrainerEntry(LookTopTakePokemonThenShuffle(MASTER_BALL_NEO_TEXT), "マスターボール", MASTER_BALL_NEO_TEXT, MASTER_BALL_NEO_TEXT, _KYUURA_PRINTED_TEXT),
+    "NIP2-022": TrainerEntry(LookTopTakePokemonThenShuffle(MASTER_BALL_NEO_TEXT), "マスターボール", MASTER_BALL_NEO_TEXT, MASTER_BALL_NEO_TEXT, _KYUURA_PRINTED_TEXT),
+    "ES1-035": TrainerEntry(SearchNamedFromDeckOrDiscard(FOSSIL_EXCAVATION_TEXT, CardFilter("trainer", name="なにかの化石")), "化石の発掘", FOSSIL_EXCAVATION_TEXT,
+                            FOSSIL_EXCAVATION_TEXT, _KYUURA_PRINTED_TEXT),
+    "ES1-036": TrainerEntry(SearchDeckTrainer(MOON_STONE_TEXT, _MOON_STONE_TARGET, 1, optional=True, reveal=True), "月の石", MOON_STONE_TEXT, MOON_STONE_TEXT,
+                            _KYUURA_PRINTED_TEXT),
+    "ES3-035": TrainerEntry(TakeFromDiscardTrainer(POKEMON_RETRIEVER_TEXT, CardFilter("pokemon", evolution_only=True), 1, TO_DECK_TOP), "ポケモン再転送",
+                            POKEMON_RETRIEVER_TEXT, POKEMON_RETRIEVER_TEXT, _KYUURA_PRINTED_TEXT),
+    "IP1-009": TrainerEntry(CoinReturnOwnPokemonWithAttachedToHand(SUPER_SCOOP_UP_TEXT), "スーパーポケモン回収", SUPER_SCOOP_UP_TEXT, SUPER_SCOOP_UP_TEXT, _KYUURA_PRINTED_TEXT),
+    "IP2-029": TrainerEntry(CoinReturnOwnPokemonWithAttachedToHand(SUPER_SCOOP_UP_TEXT), "スーパーポケモン回収", SUPER_SCOOP_UP_TEXT, SUPER_SCOOP_UP_TEXT, _KYUURA_PRINTED_TEXT),
+    "IP1-020": TrainerEntry(CoinDrawTrainer(BILLS_TELEPORTER_TEXT), "マサキの転送装置", BILLS_TELEPORTER_TEXT, BILLS_TELEPORTER_TEXT, _KYUURA_PRINTED_TEXT),
+    "IP2-021": TrainerEntry(CoinDrawTrainer(BILLS_TELEPORTER_TEXT), "マサキの転送装置", BILLS_TELEPORTER_TEXT, BILLS_TELEPORTER_TEXT, _KYUURA_PRINTED_TEXT),
+    "PR1-009": TrainerEntry(SuperEnergyRetrieval(discard=2, retrieve=4), "超エネルギー回収", SUPER_ENERGY_RETRIEVAL_TEXT, SUPER_ENERGY_RETRIEVAL_PLAY_TEXT,
+                            SUPER_ENERGY_RETRIEVAL_SOURCE),
+    "PR1-026": TrainerEntry(EachPlayerMayDrawThenEndTurn(COMPUTER_ERROR_TEXT, 5), "パソコン大暴走！", COMPUTER_ERROR_TEXT, COMPUTER_ERROR_TEXT, _KYUURA_PRINTED_TEXT),
+    "PR1-041": TrainerEntry(EachPlayerMayDrawThenEndTurn(COMPUTER_ERROR_TEXT, 5), "パソコン大暴走！", COMPUTER_ERROR_TEXT, COMPUTER_ERROR_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+# v0.73: 18 枚のうち、ほかの v0.73 のカードと処理に使う欄（日本語の名前・文面）が同じカード（kyuura の同じカードの組）。新しい id → 同じデータの v0.73 のカード。マスターボールの
+# 2 つの組（「7枚を見る」と「カードを7枚見る」）は印刷の文面が少し違うのでまとめない
+SAME_DATA_CARDS_V0_73: Mapping[str, str] = MappingProxyType({
+    "ES2-036": "GD6-023",  # マスターボール
+    "QSG-058": "GD6-023",  # マスターボール
+    "NIP2-022": "NIP1-021",  # マスターボール（「カードを7枚見る」）
+    "IP2-029": "IP1-009",  # スーパーポケモン回収
+    "IP2-021": "IP1-020",  # マサキの転送装置
+    "PR1-041": "PR1-026",  # パソコン大暴走！
+})
+
+
+def _with_trainers(registry: EffectRegistry, entries: Mapping[str, TrainerEntry]) -> EffectRegistry:
+    """``entries`` のトレーナーの登録を加えた登録表（v0.73）。すでに登録のある id なら ``RuntimeError``（登録を黙って上書きしない）。"""
+    trainers = dict(registry._trainers)
+    for card, entry in entries.items():
+        if card in trainers or any(k.card_id == card for k in registry.attack_keys()) or card in registry.energy_ids():
+            raise RuntimeError(f"{card} にはすでに登録がある")
+        trainers[card] = entry
+    return EffectRegistry(registry.id, registry._attacks, trainers, registry._powers, registry._energies)
+
+
+def _with_shared_trainers(registry: EffectRegistry, table: Mapping[str, str]) -> EffectRegistry:
+    """``table``（id → 同じデータのカードの id）のトレーナーの登録を、同じデータのカードの登録の値に置きかえた登録表（v0.73。v0.70 の ``_with_shared_entries`` のトレーナー版）。
+    どちらもトレーナーの登録だけがあり、登録の値（効果の実装・名前・照合した文面・処理に使う文面・出典）が同じでなければ ``RuntimeError``（違う登録を黙ってまとめない）。"""
+    trainers = dict(registry._trainers)
+    for new, original in table.items():
+        if original in table:
+            raise RuntimeError(f"{new} の同じデータのカード {original} が、ほかのカードに置きかえられる")
+        mine, theirs = registry.trainer_entry(new), registry.trainer_entry(original)
+        if mine is None or mine != theirs:
+            raise RuntimeError(f"{new} のトレーナーの登録が {original} の登録と同じではない（まとめない）")
+        trainers[new] = theirs
+    return EffectRegistry(registry.id, registry._attacks, trainers, registry._powers, registry._energies)
+
+
+DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_73_TRAINERS), SAME_DATA_CARDS_V0_73)

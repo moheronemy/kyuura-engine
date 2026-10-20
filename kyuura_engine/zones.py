@@ -269,7 +269,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
 
 
 def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, effect: str | None = None, power: str | None = None,
-                           trainer: int | None = None, stadium: int | None = None) -> tuple[int, ...]:
+                           trainer: int | None = None, stadium: int | None = None, log_zone: bool = False) -> tuple[int, ...]:
     """自分の場のポケモン ``pokemon`` と、ついているすべてのカードを、同じ uid のまま自分の手札にもどす（v0.42。docs/power-decisions-v0.42.md 4 章）。
 
     - もどすカード: 重なったポケモンのカード（進化していれば、下から ``PokemonInPlay.cards()``。重なったカード全体が 1 匹。v0.36 の RD2 と同じ読み方）・
@@ -290,6 +290,9 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
 
     v0.57: スタジアムの効果（せまいジムの「このカードが場に出た時、ベンチにポケモンが5匹いるプレイヤーは、その中から1匹を選び、そのカードと、それについている
     すべてのカードを手札にもどす」）では ``stadium``（場に出たスタジアムカードの uid。ログの ``stadium_card``）を渡す。
+
+    v0.73: ``log_zone`` なら、ログに ``zone``（``"active"``・``"bench"``。もどす前にいた場所）を書く（スーパーポケモン回収。自分のバトル場のポケモンを手札にもどしうる
+    トレーナーのあとのバトル場に出す決定を、不変条件がこの項目で確かめる。ほかの呼び出しのログの形は v0.72 と同じ）。
     """
     p = state.players[player]
     trainers = tuple(t.card for t in pokemon.trainers)
@@ -307,6 +310,8 @@ def return_in_play_to_hand(state: GameState, player: int, pokemon: PokemonInPlay
     source = ({"effect": effect} if effect is not None else {"power": power} if power is not None else {"trainer_card": trainer} if trainer is not None
               else {"stadium_card": stadium})
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}  # v0.49: 「ばける」でのせていた進化カード（いっしょにもどす）
+    if log_zone:
+        source["zone"] = "bench" if on_bench else "active"
     state.add_event("return_in_play_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, cards=cards,
                     evolution_stack=pokemon.evolution_stack, energy=tuple(pokemon.energy), trainers=trainers, damage=pokemon.damage, **disguise)
     return cards

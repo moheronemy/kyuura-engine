@@ -3573,7 +3573,9 @@ def _power_aftermath_problems(state: GameState) -> list[str]:
         since = _events_since_turn_start(state)[:_events_since_turn_start(state).index(last)]
         knocked = any(e["kind"] == "knock_out" and e.get("timing") == "trainer" for e in since)
         # v0.52: 自分のバトル場のポケモンを手札にもどすトレーナー（ポケモン回収。``empties_active``）のあとの、バトル場に出す決定
-        emptied = any(e["kind"] == "return_basic_to_hand" and e.get("zone") == "active" and e.get("trainer_card") == uid for e in since)
+        # v0.73: スーパーポケモン回収（ついているカードといっしょに手札へ。``return_in_play_to_hand`` の ``zone``）
+        emptied = any(e["kind"] in ("return_basic_to_hand", "return_in_play_to_hand") and e.get("zone") == "active" and e.get("trainer_card") == uid
+                      for e in since)
         if entry is None or not ((entry.effect.may_knock_out and knocked) or (entry.effect.empties_active and emptied)):
             return [("トレーナーの使用のあとの決定（続き continue_turn）の前に、きぜつさせうるトレーナーの使用と、そのあとのきぜつ（timing trainer）・"
                      "バトル場のポケモンを場からはなれさせたトレーナーの使用がない")]

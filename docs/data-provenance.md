@@ -1790,3 +1790,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: FH2（再録のなんでもなおしを、自分の対戦ポケモンに特殊状態がないときに使えるか）・PD2（再録のポケモン図鑑の「最大5枚」の 0 枚）は、kyuura の未解決の一覧にない
   （同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE はある）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.72 の登録を写すと、43 枚の `engine_status` が `registered` になる。
+
+## v0.73: 拡張パック以外の商品の、検索・回収・ドローのトレーナー 18 枚
+
+[search-recovery-trainers-v0.73.md](search-recovery-trainers-v0.73.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_73`（18 枚。kyuura data/engine_targets.json の `new_effect_needed` のトレーナー）を加え、写しの作り直しの
+  道具で作った（手で直していない）。v0.72 までの 756 枚の記録は変わっていない。
+- 18 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし）。処理に使う文面は kyuura の印刷の文面、超エネルギー回収（PR1-009）だけは kyuura の data/rule_history.json の
+  ERR-SUPER-ENERGY-RETRIEVAL の notes が引用する最新の説明（『オフィシャルブック2000』p.292 の引用。エンジンはガイドブックを読み直していない）で、`kyuura_records` は `["ERR-SUPER-ENERGY-RETRIEVAL"]`。
+  エラッタの適用開始日は記録のとおり未確認（会報 Vol.5 の発行日 1998-06-10 を適用開始日としない）。印刷の文面（写し）は書き換えていない。
+- kyuura の日本語の文面は 18 枚とも pcg-search.com の転記で、同じサイトでの照合は独立した照合にならない。
+- NIP1-021・NIP2-022（マスターボール）は 2000.02.14 版のあとに発売したカード（kyuura の `released_after_rule_base`。2001-04-06）。発売日を変えずに持ち、のちのルールは持ち込まない。
+- 報告事項（kyuura の作業）: ERR-SUPER-ENERGY-RETRIEVAL の `cards` はカードを pcg-search.com の id（1stp009）で挙げ、kyuura のカード id（PR1-009）で挙げていない（エンジンは研究の対応表の
+  `errata_card_ids` で、kyuura のカードの `source_ids.pcg_search` と照らして対応させた）。
+- 報告事項（kyuura の作業）: MR1・ML1・SR1・SR2・FV1 は kyuura の未解決の一覧にない（同じ形の論点 UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE・UQ-STATED-COUNT-SHORT はある）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.73 の登録を写すと、18 枚の `engine_status` が `registered` になる。

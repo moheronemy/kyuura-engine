@@ -39,6 +39,9 @@ def registered_targets() -> set[str]:
              if registry.attack_entry(k.card_id, k.attack_index).play_text_ja is not None}
     found |= {f"{k.card_id}/power/{k.power_index}" for k in registry.power_keys()
               if getattr(registry.power_entry(k.card_id, k.power_index), "play_text_ja", None) is not None}
+    # v0.73: トレーナーの処理に使う文面を kyuura のエラッタ（ERR-・TXT-・RUL-）にした登録（超エネルギー回収。研究の対応表の errata_text の <カード id>/trainer）
+    found |= {f"{card}/trainer" for card in registry.trainer_ids()
+              if (registry.trainer_entry(card).source or "").split("-")[0] in ("ERR", "TXT", "RUL")}
     return found
 
 
@@ -84,7 +87,11 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.69: kyuura が、v0.68 までのエンジンの記録を取り込んで、not_in_kyuura だった停止コード 123 件をすべて論点（UQ-）に結んだ（kyuura の未解決の一覧。
         # docs/equivalent-non-pack-cards-v0.69.md 7 章）。v0.72 で加えた FH2・PD2 は kyuura の一覧にまだないので not_in_kyuura（kyuura への報告事項。同じ形の論点は
         # UQ-CARD-USE-WITHOUT-TARGET・UQ-UP-TO-ZERO-CHOICE。docs/status-coins-effect-reuse-v0.72.md）
-        self.assertEqual(not_in_kyuura, {"UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", "UNRESOLVED_POKEDEX_UP_TO_ZERO"})
+        # v0.73 で加えた MR1・ML1・SR1・SR2・FV1 も kyuura の一覧にない（docs/search-recovery-trainers-v0.73.md 6 章）
+        self.assertEqual(not_in_kyuura, {"UNRESOLVED_FULL_HEAL_WITHOUT_CONDITION", "UNRESOLVED_POKEDEX_UP_TO_ZERO",
+                                         "UNRESOLVED_MAX_REVIVE_WITHOUT_TARGET", "UNRESOLVED_MASTER_BALL_SHORT_DECK",
+                                         "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_WITHOUT_TARGET", "UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE",
+                                         "UNRESOLVED_FERVOR_RAINBOW_ENERGY"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())
@@ -177,10 +184,12 @@ class ResearchLinksTest(unittest.TestCase):
         # v0.30: 炎エネルギーをトラッシュするワザは kyuura の RUL-ENERGY-DISCARD-ATTACKS の文面にしたがう。記録の cards はウインディだけなので、
         # ほかのワザは適用の範囲（errata_scope。記録の notes の引用・同じ印刷の文面）で結ぶ。照らすのは scripts/check_research_links.py
         # v0.31: リザードンの「エナジーバーン」は TXT-CHARIZARD（記録の cards にリザードンがある。適用の範囲ではない）
-        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS", "TXT-CHARIZARD"})
+        # v0.73: 超エネルギー回収（PR1-009/trainer）は ERR-SUPER-ENERGY-RETRIEVAL（記録の cards は pcg-search.com の id 1stp009。対応は errata_card_ids）
+        self.assertEqual(set(section["errata_text"].values()), {"RUL-ENERGY-DISCARD-ATTACKS", "TXT-CHARIZARD", "ERR-SUPER-ENERGY-RETRIEVAL"})
         self.assertEqual(section["errata_text"]["PMCG1-021/power/0"], "TXT-CHARIZARD")
+        self.assertEqual(section["errata_text"]["PR1-009/trainer"], "ERR-SUPER-ENERGY-RETRIEVAL")
         scoped = {target for scope in section["errata_scope"] for target in scope["targets"]}
-        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0"})
+        self.assertEqual(scoped, set(section["errata_text"]) - {"PMCG1-019/attack/0", "PMCG1-021/power/0", "PR1-009/trainer"})
         # v0.31: ピッピの「ゆびをふる」は kyuura の card_differences の最新の説明（p.223 の解説の記録。LD- はない。kyuura への報告事項）
         # v0.42: カイリューの［かけつける］は kyuura の card_differences の最新の説明（p.249 の記録。特殊状態の記述がない。LD- はない）
         self.assertEqual(section["difference_text"], {"PMCG1-067/attack/1": "kyuura data/curation/card_differences.json#PMCG1-067",
