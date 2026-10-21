@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.80）
+# 実装状況（v0.1〜v0.81）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3721,3 +3721,28 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 404・neo 202・拡張パック以外 202） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
 | 30 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
 | ポケモンのどうぐ・ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.81: ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚と、v0.80 の修正
+
+[pokemon-tools-stadiums-v0.81.md](pokemon-tools-stadiums-v0.81.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 手札・山札の中身から選ぶ決定 7 種類の選べるものの数を、決めるプレイヤーでない人の観測に見せない（`HIDDEN_COUNT_KINDS`） | 実装済み・テスト済み | 見えない情報（v0.63 の形） | test_pokemon_tools_stadiums_v0_81.py `HiddenCountTest` |
+| v0.80 の文書の誤り 3 点（エネルギーアークのコインの枚数・メタルクラッシュの比べ・SRD1 の条件）の訂正 | 直した（文書だけ） | v0.80 の実装とテスト | 同 `DocCorrectionTest` |
+| ポケモンのどうぐの共通の処理（共通の文の 2 通りの書き方・1 匹に 1 枚まで・有効期限なし・つけられるポケモンがいなければ TR1） | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest`・`ToolCommonTest` |
+| きのみ・おうごんのみ・きせきのみ（ポケモンチェックの 1） | 実装済み・テスト済み | 印刷の文面・GR-2000-P323-POKEMON-CHECK | 同 `BerryTest` |
+| 悪エネルギーの効果ときのみの順番で結果が変わる（BY1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_darkness_energy_and_berry_order_stops_only_when_it_matters` |
+| ふうせんのみ（「にげる」の数を 0。にげたらトラッシュ。ほかの増減とは CP2） | 実装済み・テスト済み | 印刷の文面 | 同 `BalloonAndBumpyTest` |
+| こんらん状態でふうせんのみのあるポケモンの「にげる」（BB1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_confused_retreat_with_balloon_is_bb1` |
+| きあいのハチマキ（きぜつの判定の窓。コインの「おもて」で残りHP 10） | 実装済み・テスト済み | 印刷の文面 | 同 `FocusBandTest` |
+| きあいのハチマキのコインを投げる時点で結果が変わる（FB1） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_effect_after_damage_is_fb1` |
+| はんげきのツメ（「ダメージを受けたとき」の効果の窓。ダメージカウンター 2 個。勝ち負けが変わるそろってのきぜつは C18） | 実装済み・テスト済み | 印刷の文面・GR-2000-P320-COUNTER-MOVE | 同 `CounterClawTest` |
+| 学習装置（きぜつの判定の窓の任意の決定 `exp_all_energy`） | 実装済み・テスト済み | 印刷の文面 | 同 `ExpAllTest` |
+| ピントレンズ（相手の対戦ポケモンへのワザのダメージで抵抗力を計算しない。使った番の終わりにトラッシュ） | 実装済み・テスト済み | 印刷の文面 | 同 `DamageStadiumAndLensTest` |
+| マダツボミのとう（「無色」ポケモンのワザのダメージを 6 段階で -30。こんらんの 20 は既存の問いで止める） | 実装済み・テスト済み | 印刷の文面・GR-2000-P321-DAMAGE-ORDER | 同 `DamageStadiumAndLensTest` |
+| ロケット団のアジト（「わるい」ポケモンの最大HP + 20） | 実装済み・テスト済み | 印刷の文面 | 同 `test_hideout_raises_max_hp_of_dark_pokemon` |
+| でこぼこジム（たねポケモンの「にげる」の数 + 1） | 実装済み・テスト済み | 印刷の文面 | 同 `test_bumpy_gym_adds_one_to_basic_only` |
+| 未対応の数（全対象 389・neo 191・拡張パック以外 198） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |

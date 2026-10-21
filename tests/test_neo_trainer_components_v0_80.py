@@ -451,10 +451,10 @@ class RegistrationTest(unittest.TestCase):
     def test_counts(self):
         pool = load_card_pool()
         supported = [d for d in pool.definitions.values() if d.supported]
-        self.assertEqual(len(supported), 973)
+        self.assertEqual(len(supported), 988)  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた
         by_kind = {kind: sum(1 for d in supported if d.category == kind) for kind in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_kind, {"pokemon": 695, "trainer": 243, "energy": 35})
-        self.assertEqual(sum(1 for d in supported if E.STADIUM_KIND in d.trainer_kinds), 37)
+        self.assertEqual(by_kind, {"pokemon": 695, "trainer": 258, "energy": 35})  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた
+        self.assertEqual(sum(1 for d in supported if E.STADIUM_KIND in d.trainer_kinds), 40)  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた
 
     def test_unsupported_counts(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引くと、未対応は全対象 404・neo 202・拡張パック以外 202（v0.79 は 434・227・207）。
@@ -468,7 +468,7 @@ class RegistrationTest(unittest.TestCase):
         playable = load_card_pool().playable_ids
         missing = [c for c in targets["cards"] if c["id"] not in playable]
         self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                          sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 404, 202, 202))
+                          sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 389, 191, 198))  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた
 
     def test_unregistered_without_the_v0_80_entries(self):
         registry = without_v0_80(E.DEFAULT_EFFECTS)

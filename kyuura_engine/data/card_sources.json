@@ -24817,6 +24817,216 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。AttachedEffectGuard: 自分の場のポケモンにつけ、次の相手の番の終わりにトラッシュする。つけているポケモンは相手のワザによるダメージ以外の効果を受けない（解決の基盤の効果の定義 EFFECT_GUARD）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-073": {
+      "basis": "kyuura_data",
+      "name_ja": "きのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterBerry(2): ポケモンのどうぐ。ポケモンチェックの 1 で、ダメージカウンターが 2 個以上なら 2 個とりのぞいてトラッシュ。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "PRN-004": {
+      "basis": "kyuura_data",
+      "name_ja": "きのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。PRN（promo。発売 2000）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterBerry(2): neo1-073 と同じ処理（書き方も同じ）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "NIP1X-008": {
+      "basis": "kyuura_data",
+      "name_ja": "きのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。NIP1X（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterBerry(2): 見出し「…あなたの場のポケモンにつけて使い…」の書き方。処理は neo1-073 と同じ。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "NIP2X-008": {
+      "basis": "kyuura_data",
+      "name_ja": "きのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。NIP2X（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterBerry(2): NIP1X-008 と同じ書き方・処理。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-079": {
+      "basis": "kyuura_data",
+      "name_ja": "おうごんのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterBerry(4): ポケモンチェックの 1 で、ダメージカウンターが 4 個以上なら 4 個とりのぞいてトラッシュ。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-081": {
+      "basis": "kyuura_data",
+      "name_ja": "きせきのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。MiracleBerry: ポケモンチェックの 1 で、特殊状態なら回復してトラッシュ（そのポケモンチェックのどくのダメージはない）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "PRN-005": {
+      "basis": "kyuura_data",
+      "name_ja": "きせきのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。PRN（promo。発売 2000）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。MiracleBerry: neo1-081 と同じ処理（書き方も同じ）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo3-055": {
+      "basis": "kyuura_data",
+      "name_ja": "ふうせんのみ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo3（expansion_pack。発売 2000-11-23）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。BalloonBerry: にげるエネルギーを 0 にし、にげたらトラッシュ（にげる時の読み方で答えが変わる数は CP2、こんらんのにげるは BB1）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-088": {
+      "basis": "kyuura_data",
+      "name_ja": "きあいのハチマキ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。FocusBand: 相手のワザのダメージで HP 以上になったとき、きぜつの判定の窓でコイン 1 枚、「おもて」なら残り HP 10 にしてトラッシュ（時点で結果が変わるときは FB1）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-103": {
+      "basis": "kyuura_data",
+      "name_ja": "はんげきのツメ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。CounterClaw: 相手の番に、バトル場で相手のワザのダメージを受けたら、持ち主のコイン 1 枚、「おもて」なら与えたポケモンにダメージカウンター 2 個（ダメージではない）をのせてトラッシュ。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-109": {
+      "basis": "kyuura_data",
+      "name_ja": "学習装置",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモンのどうぐ。ExpAll: バトル場のポケモンがきぜつするとき、つけているベンチのポケモンへ基本エネルギーカード 1 枚を移すかを選び、移したらトラッシュ。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-104": {
+      "basis": "kyuura_data",
+      "name_ja": "ピントレンズ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の対象。トレーナー。PinpointLens: ポケモンのどうぐではない、つけて使うトレーナー。その番の終わりにトラッシュ。つけているポケモンのワザのダメージで、相手の対戦ポケモンの抵抗力を計算しない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-085": {
+      "basis": "kyuura_data",
+      "name_ja": "マダツボミのとう",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の対象。スタジアム。ColorlessAttackDamageReductionStadium: スタジアム。無色のポケモンのワザのダメージを p.321 の 6 段階で 30 へらす。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo3-057": {
+      "basis": "kyuura_data",
+      "name_ja": "ロケット団のアジト",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo3（expansion_pack。発売 2000-11-23）。kyuura data/engine_targets.json（7d3f4ca）の対象。スタジアム。NamedMaxHpStadium: スタジアム。名前が「わるい」ではじまる場のポケモンの最大HP + 20。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-110": {
+      "basis": "kyuura_data",
+      "name_ja": "でこぼこジム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.81 で加えた（docs/pokemon-tools-stadiums-v0.81.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の対象。スタジアム。BasicRetreatIncreaseStadium: スタジアム。たねポケモンのにげるエネルギー + 1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
     }
   }
 }

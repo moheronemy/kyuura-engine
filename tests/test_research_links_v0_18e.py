@@ -105,7 +105,8 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET", "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE",
                                          "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET", "UNRESOLVED_DECK_TOP_SHORT", "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",
                                          "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET", "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",
-                                         "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET", "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE"})
+                                         "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET", "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE",
+                                         "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER", "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT", "UNRESOLVED_FOCUS_BAND_TIMING"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

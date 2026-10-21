@@ -44,7 +44,7 @@ v0.79 のメタルクラッシュ（ハガネール PRN-014。`FailOnTailsDamage
 
 - `programs.FailOnTails.run` は、`void_coin_question` に `after_failure` でない要素だけを渡す（失敗しても処理する要素は、コインの結果で変わらない）。
 - メタルクラッシュを「ダメージを受けない」相手に使うと、どの先読みの方法（`derived`・`derived_full`・`legacy`）・どちらのコインの面でも、宣言の前に既存の
-  `UNRESOLVED_PREVENTED_COIN_DAMAGE` で止まる（デルビル neo4-081 のおいつめるとの比べ: 同じ問い）。ふつうの相手には今までどおりコインを投げ、どちらの面でも効果を与える。
+  `UNRESOLVED_PREVENTED_COIN_DAMAGE` で止まる（デルビル neo4-081 の「とびかかる」（コインの「うら」で失敗するダメージだけのワザ）との比べ: 同じ問い。v0.81 の訂正: v0.80 の版では「おいつめる」と書いていた）。ふつうの相手には今までどおりコインを投げ、どちらの面でも効果を与える。
 
 ## 4. エフェクトガード（ES2-033）と、コインの前の確かめ
 
@@ -90,10 +90,10 @@ v0.79 のメタルクラッシュ（ハガネール PRN-014。`FailOnTailsDamage
 
 | id | 名前 | 型・処理 |
 |---|---|---|
-| neo1-074 | すごいつりざお | `CoinTakeEvolutionOrBasicFromDiscard`: 「おもて」なら進化カード、「うら」ならたねポケモンを 1 枚トラッシュから手札に。どちらもなければ SRD1（コインの前） |
+| neo1-074 | すごいつりざお | `CoinTakeEvolutionOrBasicFromDiscard`: 「おもて」なら進化カード、「うら」ならたねポケモンを 1 枚トラッシュから手札に。どちらかの種類のカードがなければ SRD1（コインの前。v0.81 の訂正: v0.80 の版では「どちらもなければ」と書いていた） |
 | neo1-087 | エネルギーチャージ | `CoinReturnEnergyFromDiscardToDeck`: 「おもて」ならトラッシュのエネルギーカード（基本・特殊）を最大 2 枚山札にもどして切る。0 枚の答えは UPZ1、対象なしは UPZ2 |
 | neo1-092 | 超エネルギー回収 | `SuperEnergyRetrievalPrinted`: この版の印刷の文面。PR1-009 のエラッタ ERR-SUPER-ENERGY-RETRIEVAL の範囲としては扱わない（記録の cards は 1stp009 だけ）。処理は v0.73 と同じ（SR1・SR2） |
-| neo2-053 | エネルギーアーク | `CoinsSearchBasicEnergyPerHeads`: コイン 3 枚の「おもて」の数ちょうどの基本エネルギーカードを見せて手札に。足りなければ FC1（コインの前） |
+| neo2-053 | エネルギーアーク | `CoinsSearchBasicEnergyPerHeads`: コイン 2 枚の「おもて」の数ちょうどの基本エネルギーカードを見せて手札に。足りなければ FC1（コインの前。v0.81 の訂正: v0.80 の版ではコインの枚数を 3 と書いていた） |
 | neo4-102 | エネルギー増幅装置 | `ReturnHandEnergyThenCoinSearchBasicEnergy`: 手札のエネルギーカード 1 枚を見せて山札にもどし、「おもて」なら基本エネルギーカード 3 枚まで。FC1・UPZ1・UPZ2 |
 | neo1-078 | ウツギはかせ | `ReturnHandDrawThenHandLock`: 手札をすべて山札にもどして切り、7 枚引く。手札から出して使うことの禁止 |
 | neo1-089 | クルミ | `DrawThenReturnHandCardsToDeck`: 2 枚引き、手札からちょうど 2 枚を見せずに山札にもどして切る。FC1 |
@@ -127,7 +127,7 @@ v0.79 のメタルクラッシュ（ハガネール PRN-014。`FailOnTailsDamage
 
 | id | コード | 場面 |
 |---|---|---|
-| SRD1 | `UNRESOLVED_SUPER_ROD_WITHOUT_TARGET` | すごいつりざおで、トラッシュに進化カードもたねポケモンもない（コインの前） |
+| SRD1 | `UNRESOLVED_SUPER_ROD_WITHOUT_TARGET` | すごいつりざおで、トラッシュに進化カードかたねポケモンのどちらかがない（コインの前） |
 | UPZ1 | `UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE` | 「最大」「まで」の選択で、選べるのに 0 枚を答えた（決定は待ったまま） |
 | UPZ2 | `UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET` | 「最大」「まで」の選択で、選べるカードがない |
 | TOP1 | `UNRESOLVED_DECK_TOP_SHORT` | 山札の上から決まった枚数を見る・見せるのに、山札が足りない |

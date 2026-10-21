@@ -249,6 +249,9 @@ ALL_CODES = (
     "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",  # MK1（v0.80。tests/test_neo_trainer_components_v0_80.py）
     "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET",  # BP1（v0.80。tests/test_neo_trainer_components_v0_80.py）
     "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE",  # HF1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_POKEMON_CHECK_BERRY_ORDER",  # BY1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
+    "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT",  # BB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
+    "UNRESOLVED_FOCUS_BAND_TIMING",  # FB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
 )
 TURN = 7
 

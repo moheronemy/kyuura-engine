@@ -91,7 +91,7 @@ from __future__ import annotations
 
 import itertools
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace as _dataclass_replace
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, Mapping, Sequence
 
@@ -642,16 +642,17 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
     if damage_prevention(state, receiver) is not None or attack_barrier(state, receiver) is not None:  # v0.31: 「バリアー」も要素を無効にする
         return None
     modifiers = attack_damage_modifiers(state, attacker, receiver, attack=use.key)
+    resistance = attack_ignores_resistance(state, attacker, receiver) is None  # v0.81: ピントレンズ
     # v0.48: 今有効な値の定義（``definition_views``）。色の読み方（VS1）で最終ダメージが変わるなら止める（``kernel.deal_damage`` と同じ判定）
     try:
         try:
             return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-                base, views[0], views[1], modifiers).final)
+                base, views[0], views[1], modifiers, resistance=resistance).final)
         except DamageReductionRequired:
             # v0.66: お上品攻撃（5 段階で好きなだけ小さくしてよい）。この計算（v0.13 の止める関数の比べ）は減らす量の決定を出せないので、減らさない量（最も大きい
             # ダメージ）で求める（docs/optional-trainers-v0.66.md 2.6 節。解決の基盤の処理・先読みは、選べるすべての量を試す）
             return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
-                base, views[0], views[1], modifiers, reduction=0).final)
+                base, views[0], views[1], modifiers, reduction=0, resistance=resistance).final)
     except TypeReadingsDiffer as differ:
         raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算") from None
 
@@ -11695,6 +11696,7 @@ class RetreatCost:
     reductions: tuple[tuple[int, str, int], ...] = ()
     stadium_increases: tuple[tuple[int, int], ...] = ()
     stadium_reductions: tuple[tuple[int, int], ...] = ()
+    zeroed: tuple[int, ...] = ()  # v0.81: ふうせんのみ（「にげる」ときに必要な「エネルギー」は、すべてなくなる）のカード
 
     @property
     def _increase(self) -> int:
@@ -11710,11 +11712,27 @@ class RetreatCost:
 
     @property
     def maximum(self) -> int:
+        if self.zeroed:
+            return max(high for _, high in self.readings)
         return max(0, self.printed + self._increase - self._forced_reduction)
 
     @property
     def minimum(self) -> int:
+        if self.zeroed:
+            return min(low for low, _ in self.readings)
         return max(0, self.printed + self._increase - self._forced_reduction - self._optional_reduction)
+
+    @property
+    def readings(self) -> tuple[tuple[int, int], ...]:
+        """トラッシュしてよい数の範囲（下限, 上限）の読み方ごとの並び（v0.81）。ふうせんのみ（``zeroed``）がなければ、最後に下限をつける読み方と、先にへらして 0 で止める
+        読み方（v0.46 の CP2 の 2 つ）。ふうせんのみがあれば、「すべてなくなる」を最後に当てはめる読み方（0）と、先に当てはめる読み方（印刷の数を 0 として、増やす・へらす数を
+        当てはめる 2 つ）。読み方で答えが変わる数は CP2 で止める（``floor_ambiguous``）。"""
+        if not self.zeroed:
+            return ((max(0, self.printed + self._increase - self._forced_reduction - self._optional_reduction),
+                     max(0, self.printed + self._increase - self._forced_reduction)),
+                    (self.floor_first_minimum, self.floor_first_maximum))
+        first = _dataclass_replace(self, printed=0, zeroed=())
+        return ((0, 0),) + first.readings
 
     @property
     def floor_first_maximum(self) -> int:
@@ -11733,16 +11751,21 @@ class RetreatCost:
         return self.floor_first_minimum <= count <= self.floor_first_maximum
 
     def allows(self, count: int) -> bool:
-        """どちらかの読み方で正しい数か（両方で正しくなければ ``WRONG_RETREAT_COST``）。"""
+        """どちらかの読み方で正しい数か（両方で正しくなければ ``WRONG_RETREAT_COST``）。v0.81: ふうせんのみがあれば、どれかの読み方（``readings``）で正しい数か。"""
+        if self.zeroed:
+            return any(low <= count <= high for low, high in self.readings)
         return self._last(count) or self._first(count)
 
     def floor_ambiguous(self, count: int) -> bool:
-        """``count`` 枚が、読み方の一方では正しく、もう一方では正しくない（CP2）。"""
+        """``count`` 枚が、読み方の一方では正しく、もう一方では正しくない（CP2）。v0.81: ふうせんのみがあれば、読み方（``readings``）のどれかで正しく、どれかで正しくない。"""
+        if self.zeroed:
+            fits = [low <= count <= high for low, high in self.readings]
+            return any(fits) and not all(fits)
         return self._last(count) != self._first(count)
 
     @property
     def modified(self) -> bool:
-        return bool(self.increases or self.reductions or self.stadium_increases or self.stadium_reductions)
+        return bool(self.increases or self.reductions or self.stadium_increases or self.stadium_reductions or self.zeroed)
 
 
 def retreat_cost(state: GameState, player: int) -> RetreatCost:
@@ -11764,7 +11787,8 @@ def retreat_cost(state: GameState, player: int) -> RetreatCost:
         elif isinstance(effect, ReduceOwnActiveRetreatCost) and owner == player:
             reductions.append((holder.pokemon_id, str(key), effect.amount))
     stadium_increases, stadium_reductions = stadium_retreat_terms(state, player, active)
-    return RetreatCost(definition.retreat_cost, tuple(increases), tuple(reductions), stadium_increases, stadium_reductions)
+    # v0.81: ふうせんのみ（ついているどうぐ。「にげる」ときに必要な「エネルギー」は、すべてなくなる）
+    return RetreatCost(definition.retreat_cost, tuple(increases), tuple(reductions), stadium_increases, stadium_reductions, balloon_berries(state, active))
 
 
 ALLERGIC_POLLEN_TEXT = "このカードが場にいる限り、誰もトレーナーカードを使うことができない。「ねむり・マヒ・こんらん」状態の時、この力は消える。"
@@ -12668,9 +12692,18 @@ def max_hp(state: GameState, pokemon: PokemonInPlay, *, card: int | None = None)
         raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} のカード {definition.id} に HP がない（エンジンの不具合）")
     fixed = max_hp_set(pokemon) if card is None else None
     bonus = sum(effect.hp_bonus(state, pokemon) for _, effect in _own_working_continuous(state, pokemon, MaxHpPerAttachedEnergyCards, card=card))
+    bonus += stadium_max_hp_bonus(state, definition)  # v0.81: ロケット団のアジト（今の姿の名前が「わるい」で始まるポケモン）
     if fixed is not None and bonus:
         raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} の最大HPを、その数にする効果と大きくする特殊能力が同時に変える（今の写しでは起こらない）")
     return fixed.amount if fixed is not None else definition.hp + bonus
+
+
+def stadium_max_hp_bonus(state: GameState, definition: CardDefinition) -> int:
+    """場のスタジアムが、今の姿のカード ``definition`` の場のポケモンの最大HPを大きくする数（v0.81。ロケット団のアジト（``NamedMaxHpStadium``）。名前の始まりで決める）。"""
+    found = stadium_in_play(state)
+    if found is None or not isinstance(found[1], NamedMaxHpStadium):
+        return 0
+    return found[1].amount if definition.name_ja.startswith(found[1].prefix) else 0
 
 
 def knocked_by_hp(state: GameState, pokemon: PokemonInPlay) -> bool:
@@ -18007,8 +18040,18 @@ def calculate_with_stadium(state: GameState, base: int, attacker: CardDefinition
     """``damage.calculate_attack_damage`` に、場のスタジアムが変える計算（``stadium_damage_options``）を当てはめたもの（v0.57）。ワザのダメージを計算するところ
     （実際の処理 ``kernel.deal_damage``・宣言の前の ``preview_attack_damage``・止める問いの比べ）はどれもこれを使う（片方だけに当てはめない）。"""
     weakness, stadium_resistance, _ = stadium_damage_options(state, attacker, receiver)
+    modifiers = tuple(modifiers) + stadium_attack_damage_modifiers(state, attacker)
     return calculate_attack_damage(base, attacker, receiver, state.rules, modifiers, weakness_resistance=weakness_resistance, orders=orders,
                                    resistance=resistance and stadium_resistance, weakness=weakness, reduction=reduction)
+
+
+def stadium_attack_damage_modifiers(state: GameState, attacker: CardDefinition) -> tuple[DamageModifier, ...]:
+    """v0.81: 場のスタジアムの、ワザのダメージの変更効果（p.321 の 6 段階。マダツボミのとう（``ColorlessAttackDamageReductionStadium``）の「無色」ポケモンの使ったワザの
+    「-30」）。``attacker`` はダメージを与えるポケモンの今有効な値の定義（色の読み方ごとに ``calculate_with_stadium`` から呼ばれる）。受けるポケモンによらない。"""
+    found = stadium_in_play(state)
+    if found is None or not isinstance(found[1], ColorlessAttackDamageReductionStadium) or attacker.pokemon_type is not found[1].attacker_type:
+        return ()
+    return (DamageModifier(step=6, amount=-found[1].amount, label=state.card_def(found[0].card).name_ja, source=found[0].card),)
 
 
 def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) -> tuple[tuple[tuple[int, int], ...], tuple[tuple[int, int], ...]]:
@@ -18021,6 +18064,8 @@ def stadium_retreat_terms(state: GameState, player: int, active: PokemonInPlay) 
         return ((stadium.card, effect.amount),), ()
     if isinstance(effect, OwnerRetreatReductionStadium) and _owner_named(form_def(state, active).name_ja, effect.owner):
         return (), ((stadium.card, effect.amount),)
+    if isinstance(effect, BasicRetreatIncreaseStadium) and form_def(state, active).stage == "basic":
+        return ((stadium.card, effect.amount),), ()  # v0.81: でこぼこジム（今の姿の段階が「たね」。ベイビィポケモンはこのエンジンでは場に出ない）
     return (), ()
 
 
@@ -29397,3 +29442,453 @@ DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_80_TRAINERS)
 
 # v0.80: 使ったプレイヤーに「手札から「トレーナーカード」を出して使うことができない」を与える実装の型（不変条件 ``engine._hand_trainer_lock_problems`` が登録と照らす）
 HAND_LOCK_TRAINERS = (ReturnHandDrawThenHandLock, EachPlayerReturnDiscardToDeckThenHandLock, LookTopTakeTrainerThenShuffleLock)
+
+
+# ======================================================================== v0.81（docs/pokemon-tools-stadiums-v0.81.md）
+# ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚。どれも kyuura データの採用（処理に使う文面は kyuura の印刷の文面）。ガイドブックは読んでいない
+
+POKEMON_TOOL_KIND = "pokemon_tool"
+# ポケモンのどうぐの共通の文（印刷の文面の最初の 2 文）。書き方は 2 通り（「あなたの場にいるポケモン」（neo1・neo4・PRN）・「あなたの場のポケモン」（neo3・イントロパック））で、
+# どちらも同じ意味として明示的に登録する（一般の言い換え・文の正規化はしない）。登録の ``header`` はこのどちらか、``separator`` は効果の文との間の改行の有無
+TOOL_HEADER_IN_PLAY = ("「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」を"
+                       "つけているポケモンには、つけることができない。")
+TOOL_HEADER_FIELD = ("「ポケモンのどうぐ」は、あなたの場のポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」を"
+                     "つけているポケモンには、つけることができない。")
+TOOL_HEADERS = (TOOL_HEADER_IN_PLAY, TOOL_HEADER_FIELD)
+TOOL_SEPARATORS = ("\n", "")
+TOOL_USED = "used"  # ログ discard_attached_trainer の reason（効果を使い終えたどうぐ）
+TOOL_RETREAT = "retreat"  # ふうせんのみ（「にげる」とき）
+
+TOOL_WITHOUT_TARGET_REASON = (
+    "自分の場のポケモンのどれにも「ポケモンのどうぐ」がついている。説明の「すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない」で、つけられるポケモンが"
+    "いないときにこのカードを使えるかは、kyuura の記録・印刷の文面から決められないので扱わない（TR1 と同じ問い。docs/pokemon-tools-stadiums-v0.81.md 3 章）")
+
+
+def is_pokemon_tool_card(state: GameState, uid: int) -> bool:
+    """カード ``uid`` が「ポケモンのどうぐ」か（v0.81。印刷の分類。kyuura の種類 ``pokemon_tool``。効果の実装の型では決めない）。"""
+    return POKEMON_TOOL_KIND in state.card_def(uid).trainer_kinds
+
+
+def attached_tools(state: GameState, pokemon: PokemonInPlay) -> tuple[AttachedTrainer, ...]:
+    """場のポケモン ``pokemon`` についている「ポケモンのどうぐ」（ついている順。v0.81。1 匹に 1 枚まで。不変条件 ``engine._attached_trainer_problems``）。"""
+    return tuple(attached for attached in pokemon.trainers if is_pokemon_tool_card(state, attached.card))
+
+
+def tool_effect_of(state: GameState, pokemon: PokemonInPlay, kind) -> tuple[AttachedTrainer, TrainerEffect] | None:
+    """``pokemon`` についている「ポケモンのどうぐ」のうち、効果の実装が ``kind`` の型のもの（v0.81。型で探す。カード id で分けない）。なければ None。"""
+    for attached in attached_tools(state, pokemon):
+        effect = state.effects.trainer_entry(state.cards[attached.card].card_id).effect
+        if isinstance(effect, kind):
+            return attached, effect
+    return None
+
+
+def tool_targets(state: GameState, player: int) -> list[int]:
+    """プレイヤー ``player`` の場のポケモンのうち、「ポケモンのどうぐ」をつけられるもの（どうぐのついていないポケモン。場の並び）の番号（v0.81）。"""
+    return [pokemon.pokemon_id for pokemon in state.players[player].in_play() if not attached_tools(state, pokemon)]
+
+
+def discard_attached_tool(state: GameState, pokemon: PokemonInPlay, attached: AttachedTrainer, reason: str) -> None:
+    """ついている「ポケモンのどうぐ」（``attached``）を、使ったプレイヤー（持ち主）のトラッシュに置く（v0.81。ログ ``discard_attached_trainer``。``reason`` は ``used``・
+    ``retreat``）。ポケモンといっしょに場をはなれる（きぜつ・山札や手札にもどる）ときは、ほかのついているカードと同じく動く（ここを呼ばない）。"""
+    if attached not in pokemon.trainers:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} についていないどうぐ {attached.card} をトラッシュしようとした（エンジンの不具合）")
+    pokemon.trainers.remove(attached)
+    state.players[attached.player].discard.append(attached.card)
+    state.add_event("discard_attached_trainer", player=attached.player, card=attached.card, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, reason=reason)
+
+
+@dataclass(frozen=True)
+class PokemonToolEffect(TrainerEffect):
+    """「ポケモンのどうぐ」の共通の処理（v0.81。docs/pokemon-tools-stadiums-v0.81.md 3 章）。
+
+    - 印刷の文面は、共通の文（``header``。``TOOL_HEADERS`` のどちらか）・``separator``（改行か、なし）・効果の文（``body``）をつないだもの。種類は kyuura の
+      ``pokemon_tool`` だけ。登録の値と文面を全文で照らす
+    - 使う: 自分の場の、どうぐのついていないポケモン 1 匹を選んでつける（決定 ``SELECT_POKEMON``。1 匹でも決定を出す）。ついているトレーナーの共通の処理（v0.2c の
+      ``zones.attach_trainer``）。有効期限はない（番の終わりにトラッシュしない。``discard_at_end_of_turn`` は None）。プラスパワー・ディフェンダーなど、どうぐでない
+      ついているトレーナーとは同じポケモンにいっしょにつく。進化・退化・にげる・入れ替えでは受け継ぐ（v0.2c・v0.4a の E8'）。きぜつしたらポケモンといっしょにトラッシュ
+    - つけられるポケモンがいなければ TR1（使う前に止める。``TOOL_WITHOUT_TARGET_REASON``）
+    """
+
+    header: str
+    separator: str
+    implementation_id = "pokemon_tool"
+    stays_in_play = True
+    discard_turn_offset = None
+
+    def body(self) -> str:
+        raise NotImplementedError
+
+    @property
+    def text(self) -> str:
+        return self.header + self.separator + self.body()
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = []
+        if definition.trainer_kinds != (POKEMON_TOOL_KIND,):
+            problems.append(f"種類 {list(definition.trainer_kinds)} は、ポケモンのどうぐ（{POKEMON_TOOL_KIND}）だけではない")
+        if self.header not in TOOL_HEADERS or self.separator not in TOOL_SEPARATORS:
+            problems.append("登録の共通の文・改行が、ポケモンのどうぐの書き方（TOOL_HEADERS・TOOL_SEPARATORS）ではない")
+        if definition.trainer_text_ja != self.text:
+            problems.append(f"文面 {definition.trainer_text_ja!r} が、登録の文面ではない")
+        return problems
+
+    def attachment_discard_turn(self, state: GameState) -> None:
+        return None
+
+    def check_playable(self, state: GameState, use: TrainerUse) -> None:
+        if not tool_targets(state, use.player):
+            raise UnsupportedError(TRAINER_WITHOUT_TARGET_CODE, TOOL_WITHOUT_TARGET_REASON)
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=tool_targets(state, use.player))
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        owner, pokemon = state.find_pokemon(choices[0])
+        if owner != use.player or attached_tools(state, pokemon):
+            raise RuntimeError(f"ポケモン {choices[0]} に、ポケモンのどうぐをつけられない（確認の漏れ。エンジンの不具合）")
+        attach_trainer(state, use.player, use.card, pokemon, discard_at_end_of_turn=None)
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        return _select_own_pokemon_problems(decision, use, tool_targets(state, use.player), f"「{state.card_def(use.card).name_ja}」")
+
+
+# --- 1. ポケモンチェックのきのみ（きのみ・おうごんのみ・きせきのみ）
+
+def _counter_berry_body(counters: int) -> str:
+    return (f"ポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが{counters}個以上のっているなら、それを{counters}個とりのぞき、"
+            "このカードをトラッシュする。")
+
+
+MIRACLE_BERRY_BODY = "ポケモンチェックのとき、このカードをつけているポケモンが「どく・ねむり・マヒ・こんらん」状態なら、それらをすべて回復し、このカードをトラッシュする。"
+
+
+class PokemonCheckBerry(PokemonToolEffect):
+    """ポケモンチェックの 1（「指示されたこと」。GR-2000-P323-POKEMON-CHECK の順番: 指示されたこと → どく → ねむり → マヒ）ではたらくどうぐの共通（v0.81）。
+    ``triggers`` が真なら ``consume`` で効果を処理し、このカードをトラッシュする（``procedures.pokemon_check_poison``）。"""
+
+    def triggers(self, state: GameState, pokemon: PokemonInPlay) -> bool:
+        raise NotImplementedError
+
+    def consume(self, state: GameState, owner: int, pokemon: PokemonInPlay, attached: AttachedTrainer) -> None:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class CounterBerry(PokemonCheckBerry):
+    """ポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが ``counters`` 個以上のっているなら、それを ``counters`` 個とりのぞき、このカードを
+    トラッシュする（v0.81。きのみ（neo1-073・PRN-004・NIP1X-008・NIP2X-008。2 個）・おうごんのみ（neo1-079。4 個）。kyuura の印刷の文面）。
+
+    - ダメージカウンターをとりのぞく（回復。ダメージではない。GR-2000-P320-RECOVERY）。ログ ``tool_heal``（とりのぞいた数・のっている数）→ ``discard_attached_trainer``
+      （``reason`` ``used``）。足りなければ何もしない（このカードは残る）
+    - ポケモンチェックの 1 の中の悪エネルギーの効果との順番は決まらない（ポケモンチェックはどちらの番でもないので、番のプレイヤーが順番を決める規定（GR-2000-P325-SAME-TIMING）を
+      当てはめない）。同じポケモンの順番で結果が変わる場合だけ止める（BY1。``procedures.berry_order_problem``）
+    """
+
+    counters: int = 2
+    implementation_id = "counter_berry"
+
+    def body(self) -> str:
+        return _counter_berry_body(self.counters)
+
+    def triggers(self, state: GameState, pokemon: PokemonInPlay) -> bool:
+        return pokemon.damage >= self.counters * state.rules.damage_per_counter
+
+    def consume(self, state: GameState, owner: int, pokemon: PokemonInPlay, attached: AttachedTrainer) -> None:
+        removed = self.counters * state.rules.damage_per_counter
+        pokemon.damage -= removed
+        state.add_event("tool_heal", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=attached.card, counters=self.counters,
+                        total_damage=pokemon.damage)
+        discard_attached_tool(state, pokemon, attached, TOOL_USED)
+
+
+@dataclass(frozen=True)
+class MiracleBerry(PokemonCheckBerry):
+    """ポケモンチェックのとき、このカードをつけているポケモンが「どく・ねむり・マヒ・こんらん」状態なら、それらをすべて回復し、このカードをトラッシュする（v0.81。
+    きせきのみ（neo1-081・PRN-005）。kyuura の印刷の文面）。
+
+    - 特殊状態があれば、すべて消す（``conditions.clear_special_conditions``。理由 ``cured``。ログの ``tool_card``）→ このカードをトラッシュ。特殊状態がなければ何もしない
+      （このカードは残る）。特殊などく（どくのダメージが 20）も「どく」状態なので回復する
+    - ポケモンチェックの 1 で回復するので、2 の「どく」・3 の「ねむり」・4 の「マヒ」は、そのポケモンには起こらない（順番は記録のとおり）
+    """
+
+    implementation_id = "miracle_berry"
+
+    def body(self) -> str:
+        return MIRACLE_BERRY_BODY
+
+    def triggers(self, state: GameState, pokemon: PokemonInPlay) -> bool:
+        return bool(pokemon.conditions.names())
+
+    def consume(self, state: GameState, owner: int, pokemon: PokemonInPlay, attached: AttachedTrainer) -> None:
+        clear_special_conditions(state, owner, pokemon, CURED, tool_card=attached.card)
+        discard_attached_tool(state, pokemon, attached, TOOL_USED)
+
+
+def pokemon_check_berries(state: GameState, order: tuple[int, int]) -> list[tuple[int, PokemonInPlay, AttachedTrainer, PokemonCheckBerry]]:
+    """ポケモンチェックの 1 ではたらきうるきのみ（持ち主・ポケモン・ついているカード・実装。``order`` のプレイヤーの場の並び）（v0.81）。"""
+    found = []
+    for owner in order:
+        for pokemon in state.players[owner].in_play():
+            tool = tool_effect_of(state, pokemon, PokemonCheckBerry)
+            if tool is not None:
+                found.append((owner, pokemon, tool[0], tool[1]))
+    return found
+
+
+# --- 2. ふうせんのみ
+
+BALLOON_BERRY_BODY = "このカードをつけているポケモンの「にげる」ときに必要な「エネルギー」は、すべてなくなる。このカードをつけているポケモンが「にげる」とき、このカードをトラッシュする。"
+BALLOON_BERRY_FAILED_RETREAT_CODE = "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT"
+BALLOON_BERRY_FAILED_RETREAT_REASON = (
+    "ふうせんのみの「このカードをつけているポケモンが「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で「にげる」に失敗したとき（宣言してエネルギーを"
+    "トラッシュしたが、入れ替えない。p.311）にも当てはまるかは、印刷の文面・kyuura の記録から決められないので扱わない（BB1。コインの結果で受け付けるかを変えないよう、"
+    "こんらん状態のポケモンの「にげる」を、エネルギーのトラッシュ・コインの前に止める）")
+
+
+@dataclass(frozen=True)
+class BalloonBerry(PokemonToolEffect):
+    """このカードをつけているポケモンの「にげる」ときに必要な「エネルギー」は、すべてなくなる。このカードをつけているポケモンが「にげる」とき、このカードをトラッシュする
+    （v0.81。ふうせんのみ（neo3-055）。kyuura の印刷の文面）。
+
+    - 「にげる」でトラッシュするエネルギーの数（``effects.retreat_cost`` の ``zeroed``）を 0 にする。増やす効果（［ねんちゃくえき］・ロケット団の特訓ジム・でこぼこジム）と
+      いっしょにはたらくとき、「なくなる」を最後に当てはめるか先に当てはめるかで数が変わるなら、既存の CP2（``UNRESOLVED_RETREAT_COST_FLOOR``。当てはめる順番が決まらない）で止める
+    - 「にげる」が成り立って入れ替えたあと、このカードをトラッシュする（ログ ``discard_attached_trainer`` の ``reason`` ``retreat``）。ポケモンいれかえ・突風・ワザの入れ替えは
+      「にげる」ではない（p.325）ので、トラッシュしない。こんらん状態の「にげる」の失敗は BB1（コインの前に止める）
+    """
+
+    implementation_id = "balloon_berry"
+
+    def body(self) -> str:
+        return BALLOON_BERRY_BODY
+
+
+def balloon_berries(state: GameState, pokemon: PokemonInPlay) -> tuple[int, ...]:
+    """``pokemon`` についているふうせんのみ（「にげる」ときに必要なエネルギーをなくす。v0.81）のカード。"""
+    tool = tool_effect_of(state, pokemon, BalloonBerry)
+    return () if tool is None else (tool[0].card,)
+
+
+# --- 3. きあいのハチマキ・はんげきのツメ・学習装置（相手のワザのダメージ・きぜつではたらくどうぐ）
+
+FOCUS_BAND_BODY = ("相手のワザによるダメージで、このカードをつけているポケモンの残りHPがなくなったとき、コインを投げる。「おもて」なら、このカードをつけているポケモンは「きぜつ」"
+                   "せず、このカードをつけているポケモンの残りHPは「10」になる。その後、このカードをトラッシュする。")
+COUNTER_CLAW_BODY = ("このカードをつけているポケモンが、相手の番に、バトル場で、相手のワザによるダメージを受けたとき（それによって、このカードをつけているポケモンが「きぜつ」"
+                     "しても）、このカードの持ち主はコインを投げる。「おもて」なら、相手の対戦ポケモンに、ダメージカウンターを2個のせる。その後、このカードをトラッシュする。")
+EXP_ALL_BODY = ("相手の番に、あなたの対戦ポケモンが、バトル場でワザによるダメージを受けて「きぜつ」するとき、のぞむなら、あなたの対戦ポケモンについている「基本エネルギー"
+                "カード」を1枚選んでよい。選んだ場合、その「エネルギーカード」を、このカードをつけているポケモンにつけ替える。その後、このカードをトラッシュする。")
+
+FOCUS_BAND_TIMING_CODE = "UNRESOLVED_FOCUS_BAND_TIMING"
+FOCUS_BAND_TIMING_REASON = (
+    "きあいのハチマキの「相手のワザによるダメージで、…残りHPがなくなったとき、コインを投げる」を、残りHPがなくなったすぐあと（ワザの残りの処理の前）に処理するか、ワザの処理が"
+    "すべて終わったあとのきぜつの判定の時に処理するかは、印刷の文面・kyuura の記録から決められず、同じワザのあとの処理がこのポケモンにダメージ・効果を与える（与えない）ので、"
+    "どちらかで結果が変わる。扱わない（FB1。宣言の前に止める）")
+
+
+@dataclass(frozen=True)
+class FocusBand(PokemonToolEffect):
+    """相手のワザによるダメージで、このカードをつけているポケモンの残りHPがなくなったとき、コインを投げる。「おもて」なら「きぜつ」せず、残りHPは「10」になる。その後、
+    このカードをトラッシュする（v0.81。きあいのハチマキ（neo1-088）。kyuura の印刷の文面）。
+
+    - 処理するのは、ワザの処理のあと・きぜつの処理の前（解決の基盤の ``flow._finish_attack`` のきぜつの判定の窓。こんじょうと同じ窓）。「ダメージで…残りHPがなくなった」は、
+      相手のワザの分類の枠（ワザ・返す効果のダメージ）のダメージ（``kernel.deal_damage``）で HP 以上になったこと（``res.damage_ko``）。ダメージカウンターの移動・こんらん・どく・
+      特殊能力・トレーナーのダメージ・自分のワザのダメージでは処理しない
+    - 使うかを選ばない（「コインを投げる」。決定を出さない）。コインは持ち主（``source="trainer"``）。「おもて」ならのっているダメージを今有効な最大HP − 10 にし（ログ
+      ``focus_band``）、このカードをトラッシュする。「うら」ならそのままきぜつし、このカードはほかのついているカードといっしょにトラッシュする（「その後、このカードを
+      トラッシュする」は、どちらの結果でもこのカードが場をはなれる）
+    - 残りHPがなくなったすぐあとに処理するかで結果が変わる場合（そのあとの同じワザの処理が、このポケモンにダメージ・効果を与える・与えない）は FB1。きぜつの判定の窓で使える
+      ほかの効果（こんじょう・［ファイナルビーム］・学習装置・もう 1 つのきあいのハチマキ）と重なれば既存の G40、みちづれとは既存の HC2
+    """
+
+    remaining_hp: int = 10
+    implementation_id = "focus_band"
+
+    def body(self) -> str:
+        return FOCUS_BAND_BODY
+
+
+@dataclass(frozen=True)
+class CounterClaw(PokemonToolEffect):
+    """このカードをつけているポケモンが、相手の番に、バトル場で、相手のワザによるダメージを受けたとき（きぜつしても）、持ち主はコインを投げる。「おもて」なら、相手の対戦
+    ポケモンにダメージカウンターを ``counters`` 個のせる。その後、このカードをトラッシュする（v0.81。はんげきのツメ（neo4-103）。kyuura の印刷の文面）。
+
+    - 処理する時点は、はんげき（v0.10）と同じ「ダメージを受けたとき」の効果の窓（そのワザのダメージの要素のまとまりのあと・ダメージ以外の効果の前。CR-COUNTERATTACK-TIMING）。
+      解決の基盤の効果の定義 ``catalog.COUNTER_CLAW``（ついているトレーナーの効果。特殊状態・かがくへんかガスでは消えない）。1 つのワザでほかの「ダメージを受けたとき」の効果と
+      重なれば既存の C34・C35
+    - のせるのはダメージカウンター（ダメージではない。GR-2000-P320-COUNTER-MOVE）。弱点・抵抗力・プラスパワー・ディフェンダー・「ダメージを受けない」状態・「とうめい」を
+      当てはめない。相手の対戦ポケモンがのせたカウンターできぜつし、勝ち負けがきぜつの順番で変わるなら既存の C18（同時のきぜつか決まらない）
+    - 「その後、このカードをトラッシュする」は「おもて」の処理のあと（v0.53 の MB1・v0.44 のおつかいと同じ読み方。「うら」ならついたまま）
+    """
+
+    counters: int = 2
+    implementation_id = "counter_claw"
+
+    def body(self) -> str:
+        return COUNTER_CLAW_BODY
+
+
+@dataclass(frozen=True)
+class ExpAll(PokemonToolEffect):
+    """相手の番に、あなたの対戦ポケモンが、バトル場でワザによるダメージを受けて「きぜつ」するとき、のぞむなら、対戦ポケモンについている「基本エネルギーカード」を 1 枚選んでよい。
+    選んだ場合、このカードをつけているポケモンにつけ替える。その後、このカードをトラッシュする（v0.81。学習装置（neo4-109）。kyuura の印刷の文面）。
+
+    - 処理するのは、きぜつの判定の窓（こんじょう・［ファイナルビーム］と同じ「きぜつするとき」）。持ち主に決定 ``EXP_ALL_ENERGY`` で聞く（選べるものは対戦ポケモンの
+      基本エネルギーカード。0〜1 枚。レインボーエネルギーは RB3 で、選ぶと止める）
+    - このカードをつけているポケモンが、きぜつする対戦ポケモンと同じ・同じ判定できぜつするなら、つけ替えても結果が変わらないので聞かない（実装上の読み方）
+    - つけ替えはエネルギーカードを動かすだけ（手札からつける操作ではない。CR-ENERGY-TRANS-NOT-ATTACHMENT と同じ読み方）。つけ替える先がクリスタルビームの効果を受けていれば
+      CB1（選ぶと止める）。「その後、このカードをトラッシュする」は選んだ場合だけ（選ばなければついたまま）
+    """
+
+    implementation_id = "exp_all"
+
+    def body(self) -> str:
+        return EXP_ALL_BODY
+
+
+# --- 4. ピントレンズ（ポケモンのどうぐではない）
+
+PINPOINT_LENS_TEXT = "このカードは、あなたの場のポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンが使うワザは、相手の対戦ポケモンの「抵抗力」に関係なく、ダメージを与える。"
+
+
+@dataclass(frozen=True)
+class PinpointLens(TrainerEffect):
+    """このカードは、あなたの場のポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンが使うワザは、相手の対戦ポケモンの「抵抗力」に関係なく、
+    ダメージを与える（v0.81。ピントレンズ（neo4-104）。kyuura の印刷の文面。kyuura の種類はなく、ポケモンのどうぐではない）。
+
+    - つける（決定 ``SELECT_POKEMON``。自分の場のポケモン。どうぐの 1 匹 1 枚の制限は当てはまらない）。有効期限は使った番の終わり（``discard_turn_offset`` 0。プラスパワーと同じ）
+    - このカードをつけているポケモンのワザが相手の対戦ポケモンに与えるダメージの計算で、p.321 の 4 段階（抵抗力）を計算しない（``effects.attack_ignores_resistance``。
+      解決の基盤の ``kernel.deal_damage``・宣言の前の計算が同じ関数を使う）。控えポケモン・自分へのダメージ・弱点・ほかの段階は変えない。ワザでないダメージには関係しない
+    """
+
+    text: str
+    implementation_id = "pinpoint_lens"
+    stays_in_play = True
+    discard_turn_offset = 0
+    ignores_defender_resistance = True
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        return _require_v080_text(definition, self.text, self, "あなたの場のポケモンにつけて使い、あなたの番の終わりにトラッシュする",
+                                  "相手の対戦ポケモンの「抵抗力」に関係なく、ダメージを与える")
+
+    def resolve(self, state: GameState, use: TrainerUse) -> None:
+        own = state.players[use.player].in_play()
+        push_trainer_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=[pokemon.pokemon_id for pokemon in own])
+
+    def resume(self, state: GameState, use: TrainerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        owner, pokemon = state.find_pokemon(choices[0])
+        if owner != use.player:
+            raise RuntimeError(f"相手の場のポケモン {choices[0]} にピントレンズをつけようとした（エンジンの不具合）")
+        attach_trainer(state, use.player, use.card, pokemon, discard_at_end_of_turn=self.attachment_discard_turn(state))
+
+    def decision_problems(self, state: GameState, use: TrainerUse, decision: PendingDecision) -> list[str]:
+        own = state.players[use.player].in_play()
+        return _select_own_pokemon_problems(decision, use, (pokemon.pokemon_id for pokemon in own), "「ピントレンズ」")
+
+
+def attack_ignores_resistance(state: GameState, attacker: PokemonInPlay, receiver: PokemonInPlay) -> int | None:
+    """``attacker`` のワザが ``receiver`` に与えるダメージで、p.321 の 4 段階（抵抗力）を計算しないついているトレーナー（ピントレンズ）のカード（v0.81）。受けるのが
+    ``attacker`` の持ち主の相手の対戦ポケモンのときだけ（控え・自分は変えない）。なければ None。ワザのダメージを計算するところ（``kernel.compute_damage``・宣言の前の
+    ``preview_attack_damage``・決定の不変条件）はどれもこれを聞く。"""
+    located = state.find_pokemon(attacker.pokemon_id)
+    if located is None or state.players[1 - located[0]].active is not receiver:
+        return None
+    for attached in attacker.trainers:
+        entry = state.effects.trainer_entry(state.cards[attached.card].card_id)
+        if entry is not None and getattr(entry.effect, "ignores_defender_resistance", False):
+            return attached.card
+    return None
+
+
+# --- 5. 常にはたらくスタジアム（マダツボミのとう・ロケット団のアジト・でこぼこジム）
+
+
+@dataclass(frozen=True)
+class ColorlessAttackDamageReductionStadium(StadiumEffect):
+    """「無色」ポケモンの使ったワザが、ポケモンにダメージを与えるとき、そのダメージは、それぞれ「-``amount``」される（v0.81。マダツボミのとう（neo1-085）。kyuura の印刷の文面）。
+
+    - ワザを使うポケモン（返す効果のダメージは、その効果のワザのポケモン）の今有効なタイプ（色の読み方 VS1 があれば読み方ごと。``effects.calculate_with_stadium`` が今有効な値の
+      定義で決める）が「無色」なら、受けるポケモンがだれでも（相手の対戦ポケモン・控えポケモン・自分）、p.321 の 6 段階（スタジアムの効果。GR-2000-P321-DAMAGE-ORDER）に
+      「-``amount``」。ワザでないダメージ（特殊能力・どく・トレーナー）には当てはめない。こんらんの 20 に当てはめるかは既存の問い（``UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS``）
+    """
+
+    text: str
+    amount: int = 30
+    attacker_type: EnergyType = EnergyType.COLORLESS
+    implementation_id = "colorless_attack_damage_reduction_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"「{self.attacker_type.ja}」ポケモンの使ったワザが、ポケモンにダメージを与えるとき、そのダメージは、それぞれ「-{self.amount}」される。" in text else ["タイプ・数"]
+
+
+@dataclass(frozen=True)
+class NamedMaxHpStadium(StadiumEffect):
+    """おたがいの場の「``prefix``」ポケモン最大HPは、「``amount``」ぶん大きいものになる（v0.81。ロケット団のアジト（neo3-057）。kyuura の印刷の文面）。
+
+    - 場のポケモンの今の姿の名前が「``prefix``」で始まる（わるいポケモン）なら、今有効な最大HP（``effects.max_hp``）を ``amount`` 大きくする。お互いの場のどのポケモンにも
+      はたらく。スタジアムがトラッシュされて最大HPが下がり、のっているダメージ以下になる場合は既存の処理（ワザの効果ならワザのあとのきぜつの判定、ほかの操作なら MH1）
+    """
+
+    text: str
+    prefix: str = "わるい"
+    amount: int = 20
+    implementation_id = "named_max_hp_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"おたがいの場の「{self.prefix}」ポケモン最大HPは、「{self.amount}」ぶん大きいものになる。" in text else ["名前・数"]
+
+
+@dataclass(frozen=True)
+class BasicRetreatIncreaseStadium(StadiumEffect):
+    """おたがいの場の「ベイビィポケモン」と「たねポケモン」は、「にげる」ときに必要な「エネルギー」が、``amount`` 個ぶん多くなる（v0.81。でこぼこジム（neo4-110）。kyuura の
+    印刷の文面）。
+
+    - バトル場のポケモンの今の姿の段階が「たね」なら、「にげる」の数を決まって増やす（``effects.retreat_cost`` の ``stadium_increases``）。ベイビィポケモンはこのエンジンでは
+      対応していない（場に出ない）。進化・退化で段階が変わればそのときの段階で決める
+    """
+
+    text: str
+    amount: int = 1
+    implementation_id = "basic_retreat_increase_stadium"
+
+    def text_problems(self, text: str) -> list[str]:
+        return [] if f"おたがいの場の「ベイビィポケモン」と「たねポケモン」は、「にげる」ときに必要な「エネルギー」が、{self.amount}個ぶん多くなる。" in text else ["数"]
+
+
+BERRY_TEXT_IN_PLAY = TOOL_HEADER_IN_PLAY + "\n" + _counter_berry_body(2)
+BERRY_TEXT_FIELD = TOOL_HEADER_FIELD + "\n" + _counter_berry_body(2)
+GOLD_BERRY_TEXT = TOOL_HEADER_IN_PLAY + "\n" + _counter_berry_body(4)
+MIRACLE_BERRY_TEXT = TOOL_HEADER_IN_PLAY + "\n" + MIRACLE_BERRY_BODY
+BALLOON_BERRY_TEXT = TOOL_HEADER_FIELD + BALLOON_BERRY_BODY
+FOCUS_BAND_TEXT = TOOL_HEADER_IN_PLAY + "\n" + FOCUS_BAND_BODY
+COUNTER_CLAW_TEXT = TOOL_HEADER_IN_PLAY + COUNTER_CLAW_BODY
+EXP_ALL_TEXT = TOOL_HEADER_IN_PLAY + EXP_ALL_BODY
+BELLSPROUT_TOWER_TEXT = "「無色」ポケモンの使ったワザが、ポケモンにダメージを与えるとき、そのダメージは、それぞれ「-30」される。\n" + STADIUM_NEO_PLACEMENT_PARAGRAPH
+ROCKETS_HIDEOUT_TEXT = "おたがいの場の「わるい」ポケモン最大HPは、「20」ぶん大きいものになる。" + STADIUM_NEO_PLACEMENT_PARAGRAPH
+BUMPY_GYM_TEXT = "おたがいの場の「ベイビィポケモン」と「たねポケモン」は、「にげる」ときに必要な「エネルギー」が、1個ぶん多くなる。" + STADIUM_NEO_PLACEMENT_PARAGRAPH
+
+
+def _tool_entry(effect: PokemonToolEffect, name: str) -> TrainerEntry:
+    return TrainerEntry(effect, name, effect.text, effect.text, _KYUURA_PRINTED_TEXT)
+
+
+# v0.81 の 15 枚の登録（並びは依頼の並び）。どれも kyuura の印刷の文面（照合と処理に使う文面が同じ）
+V0_81_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
+    "neo1-073": _tool_entry(CounterBerry(TOOL_HEADER_IN_PLAY, "\n", 2), "きのみ"),
+    "PRN-004": _tool_entry(CounterBerry(TOOL_HEADER_IN_PLAY, "\n", 2), "きのみ"),
+    "NIP1X-008": _tool_entry(CounterBerry(TOOL_HEADER_FIELD, "\n", 2), "きのみ"),
+    "NIP2X-008": _tool_entry(CounterBerry(TOOL_HEADER_FIELD, "\n", 2), "きのみ"),
+    "neo1-079": _tool_entry(CounterBerry(TOOL_HEADER_IN_PLAY, "\n", 4), "おうごんのみ"),
+    "neo1-081": _tool_entry(MiracleBerry(TOOL_HEADER_IN_PLAY, "\n"), "きせきのみ"),
+    "PRN-005": _tool_entry(MiracleBerry(TOOL_HEADER_IN_PLAY, "\n"), "きせきのみ"),
+    "neo3-055": _tool_entry(BalloonBerry(TOOL_HEADER_FIELD, ""), "ふうせんのみ"),
+    "neo1-088": _tool_entry(FocusBand(TOOL_HEADER_IN_PLAY, "\n"), "きあいのハチマキ"),
+    "neo4-103": _tool_entry(CounterClaw(TOOL_HEADER_IN_PLAY, ""), "はんげきのツメ"),
+    "neo4-109": _tool_entry(ExpAll(TOOL_HEADER_IN_PLAY, ""), "学習装置"),
+    "neo4-104": TrainerEntry(PinpointLens(PINPOINT_LENS_TEXT), "ピントレンズ", PINPOINT_LENS_TEXT, PINPOINT_LENS_TEXT, _KYUURA_PRINTED_TEXT),
+    "neo1-085": TrainerEntry(ColorlessAttackDamageReductionStadium(BELLSPROUT_TOWER_TEXT), "マダツボミのとう", BELLSPROUT_TOWER_TEXT, BELLSPROUT_TOWER_TEXT,
+                             _KYUURA_PRINTED_TEXT),
+    "neo3-057": TrainerEntry(NamedMaxHpStadium(ROCKETS_HIDEOUT_TEXT), "ロケット団のアジト", ROCKETS_HIDEOUT_TEXT, ROCKETS_HIDEOUT_TEXT, _KYUURA_PRINTED_TEXT),
+    "neo4-110": TrainerEntry(BasicRetreatIncreaseStadium(BUMPY_GYM_TEXT), "でこぼこジム", BUMPY_GYM_TEXT, BUMPY_GYM_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_81_TRAINERS)

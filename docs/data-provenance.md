@@ -1910,3 +1910,18 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - kyuura の日本語の文面は nazonobasho.com（neo1・neo2）・ポケモンWiki（neo3・neo4）・pcg-search.com（GD5・PR1・PRN・ES2）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
 - 報告事項（kyuura の作業）: スロットゲーム（neo1-090）の `ja_text_source` の URL の番号が 091（neo01-091-slotgame）で、カード番号と違う。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.80 の登録を写すと、30 枚の `engine_status` が `registered` になる。
+
+## v0.81: ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚
+
+[pokemon-tools-stadiums-v0.81.md](pokemon-tools-stadiums-v0.81.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_81`（15 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.80 までの 973 枚の
+  記録は変わっていない。
+- 15 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  15 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（neo1）・ポケモンWiki（neo3・neo4）・pcg-search.com（PRN・NIP1X・NIP2X）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 3 件（BY1・BB1・FB1）を研究の対応表の `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: ポケモンのどうぐの共通の文の書き方が 2 通りある（「あなたの場にいるポケモン」（neo1・neo4・PRN）・「あなたの場のポケモン」（neo3・NIP1X・NIP2X））。エンジンは同じ意味として
+  明示的に登録した。どちらが印刷どおりかは確かめていない。
+- 報告事項（kyuura の作業）: 研究の基準のコミットの記録（rule_history.json の NEO-2000-OFFICIAL-RULES・rule_differences.json）に「ポケモンのどうぐ」の一般の規定の記録がない（NEO-2000-PLAYRULE の notes に『トレーナーズ』Vol.4 の予告記事があるだけ。エンジンは規定として使っていない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.81 の登録を写すと、15 枚の `engine_status` が `registered` になる。

@@ -3138,3 +3138,66 @@
   手順は `_v080_trainer`・`_v080_stadium`・`_v080_decision`（相手の決定にも答える）、数えた結果は `v080_uses`。tests/v017_games.py の `play_game` は、退化スプレーHYPER の `EVOLUTION_PREVENTED` を
   場から確かめてから別の操作を続けます。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚と、v0.80 の修正（v0.81）
+
+### 対象と数
+
+- ポケモンのどうぐ 11 枚（きのみ neo1-073・PRN-004・NIP1X-008・NIP2X-008、おうごんのみ neo1-079、きせきのみ neo1-081・PRN-005、ふうせんのみ neo3-055、きあいのハチマキ neo1-088、
+  はんげきのツメ neo4-103、学習装置 neo4-109）・ピントレンズ neo4-104・スタジアム 3 枚（マダツボミのとう neo1-085・ロケット団のアジト neo3-057・でこぼこジム neo4-110）を、kyuura データの採用で
+  登録しました（写しの組 `pool_v0_81`）。
+- 数の変化:
+
+  | | v0.80 | v0.81 |
+  |---|---|---|
+  | 写し・対応するカード | 973・973 | 988・988 |
+  | 対応ポケモン・トレーナー・エネルギー | 695・243・35 | 695・258・35 |
+  | スタジアム（トレーナーの登録のうち） | 37 | 40 |
+  | 未対応（全対象・neo・拡張パック以外） | 404・202・202 | 389・191・198 |
+  | 停止コード・未解決の裁定 | 175・177 | 178・180 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API・状態の項目・ワザと特殊能力の登録は変えていません。カードごとの処理・根拠・検証は docs/pokemon-tools-stadiums-v0.81.md。
+- 公式ガイドブックの新しいキャプチャ・OCR・読み直しは行っていません。15 枚の pcg-search.com・カードの画像との照合もしていません。英語版の文面（「you may remove」など）・現代のルール・
+  2002 年の分類・『トレーナーズ』Vol.4 の予告記事で補わないでください。
+- テストの定数は tests/helpers.py の `V0_81_CARDS`。
+
+### v0.80 の修正
+
+- 手札・山札の中身から選ぶ決定 7 種類（`return_to_deck`・`select_evolution_card`・`attach_from_hand`・`hand_to_active`・`discard_from_hand`・`opponent_hand_to_deck`・`opponent_hand_to_bench`）を
+  `observation.HIDDEN_COUNT_KINDS` に加えました（選べるものの数が見えないカードの数を漏らす）。手札・山札・相手の手札のカードを選ぶ決定を加えたら、この表に入れるかを確かめてください。
+- v0.80 の文書の誤り 3 点（エネルギーアークのコインは 2 枚・メタルクラッシュの比べは「とびかかる」・SRD1 は「どちらか」の種類がないとき）を直しました（実装は変えていない）。
+
+### ポケモンのどうぐ
+
+- どうぐかは印刷の分類（kyuura の種類 `pokemon_tool`。`effects.is_pokemon_tool_card`）で決めます。実装は `effects.PokemonToolEffect` の部分型で、印刷の文面は共通の文（`TOOL_HEADERS` の 2 通り）・
+  改行の有無・効果の文で、型の `check` が全文で照らします。一般の言い換え・正規化をしないでください。
+- v0.2c のついているトレーナー（`PokemonInPlay.trainers`）に持ち、有効期限はありません（`discard_at_end_of_turn` None）。1 匹に 1 枚まで（不変条件 `engine._attached_trainer_problems`）。どうぐでない
+  ついているトレーナーはいっしょにつきます。つけられるポケモンがいなければ TR1。どうぐの印・一覧を別に持たないでください。
+- 効果を使い終えてトラッシュするのは `effects.discard_attached_tool`（ログ `discard_attached_trainer` の `reason` `used`・`retreat`）だけです。
+- きのみ（`CounterBerry`・`MiracleBerry`）はポケモンチェックの 1（悪エネルギーの効果と同じ「指示されたこと」）で、`procedures.pokemon_check_poison` が処理します。同じポケモンの悪エネルギーの
+  効果との順番で結果が変わるなら BY1（`UNRESOLVED_POKEMON_CHECK_BERRY_ORDER`。ダメージを与える前）。番のプレイヤーが順番を決める規定を当てはめないでください。PK1 の比べはきのみのあとの状態で行います。
+- ふうせんのみは `RetreatCost.zeroed`（`readings` の読み方ごと）で、ほかの増減と当てはめ方で答えが変わる数は既存の CP2。こんらん状態の「にげる」は BB1（`UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT`。
+  エネルギーのトラッシュ・コインの前）。「にげる」が成り立ったあとだけトラッシュします（ポケモンいれかえ・突風・ワザの入れ替えではトラッシュしない）。
+- きあいのハチマキ・学習装置は、解決の基盤のきぜつの判定の窓（`flow._finish_attack`。こんじょう・［ファイナルビーム］と同じ窓。G40・HC2 で重なりを止める）です。「相手のワザによるダメージで」は
+  `Resolution.damage_ko`（`kernel.note_damage_ko`。決定をまたぐときは続きの情報で運ぶ）で決め、ダメージカウンターの移動・ワザでないダメージではたらかせないでください。きあいのハチマキは決定を出さず、
+  コインを投げる時点で結果が変わる場面は FB1（`UNRESOLVED_FOCUS_BAND_TIMING`。`kernel.focus_band_timing`。宣言の前）。HP 以上のポケモンにダメージ・カウンター・効果を与える処理を加えるときは、
+  `focus_band_timing` を通してください。学習装置は決定 `exp_all_energy`（つけ替えない（0 個）がいつも答えになる。不変条件の例外にこの決定を加えた。広げない）で、つけ替えはエネルギーカードを
+  動かすだけです（手札からつける操作ではない）。
+- はんげきのツメは、はんげきと同じ「ダメージを受けたとき」の効果の窓（効果の定義 `catalog.COUNTER_CLAW`。新しい項目 `opponent_turn_only`）で、ダメージカウンターをのせます（ダメージではない。
+  `kernel.counters_to_damage_source_on_heads`。勝ち負けが変わるそろってのきぜつは C18）。のせたカウンターで HP 以上になったワザを使ったポケモンが、ワザの途中の決定を待つ間場に残ることを
+  不変条件が許します（`tool_damage_counters`。広げない）。
+
+### ピントレンズとスタジアム
+
+- ピントレンズはポケモンのどうぐではありません（使った番の終わりにトラッシュ）。抵抗力を計算しないかは `effects.attack_ignores_resistance`（相手の対戦ポケモンへのワザのダメージだけ）で、
+  ワザのダメージを計算するところ（`kernel.deal_damage`・`compute_damage`・`preview_attack_damage`・決定の不変条件）はどれもこれを聞きます。最終ダメージを直接書きかえないでください。
+- マダツボミのとうは p.321 の 6 段階（`effects.stadium_attack_damage_modifiers`。`calculate_with_stadium`）。こんらんの 20 に当てはまりうるなら既存の `UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS`（コインの前）。
+- ロケット団のアジトは `effects.max_hp`（`stadium_max_hp_bonus`。今の姿の名前が「わるい」ではじまる）、でこぼこジムは `effects.retreat_cost` の `stadium_increases`（今の姿の段階が「たね」）。
+  どちらも状態に写さず、場のスタジアムから問い合わせます。
+
+### 変えていないもの・検証用デッキ
+
+- 新しい決定の種類は `exp_all_energy`、新しいログのイベント（公開）は `tool_heal`・`focus_band`・`counter_claw`・`tool_damage_counters`・`tool_move_energy`・`exp_all_declined`。
+- 検証用デッキ `T81`・`D81` と組 `PAIRINGS_V0_81`（`T81` 対 `D81`・`T81` 対 `P31`・`D81` 対 `N80`）は tools/existing_effect_games.py の `--batch v0.81` です（前の版の組の結果は変わらない）。
+  手順は `_v081_trainer`・`_v081_decision`、数えた結果は `v081_uses`。G40・FB1・C18 で止まったワザは `V031_STOPS` で場から確かめます。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

@@ -54,6 +54,7 @@ from .decisions import (
     FORCED_SWITCH,
     HAND_TO_DECK,
     KNOCK_OUT_POWER,
+    EXP_ALL_ENERGY,
     NINJA_TRICK,
     REACTION_SWITCH,
     BENCH_GUARD,
@@ -146,6 +147,8 @@ OPTION_MEANINGS: dict[str, str] = {
     SECRET_PLAN_CARD: "card",
     # v0.80: カードめくりゲームで選ぶ相手のサイドの位置（裏のカード）・ポケモンギアで見た 7 枚から手札に加えるトレーナーカード
     SELECT_OPPONENT_PRIZE: "position", TAKE_LOOKED_TRAINER: "card",
+    # v0.81: 学習装置でつけ替える、きぜつする対戦ポケモンについているエネルギーカード（場のカード。公開）
+    EXP_ALL_ENERGY: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
@@ -161,7 +164,14 @@ DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK
 # 見せていた。意図した変更）
 # v0.80: ポケモンギアの見た 7 枚のうちのトレーナーカード（TAKE_LOOKED_TRAINER）も、選べるものの数が山札の中身を漏らすので見せない
 HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK,
-                                TAKE_LOOKED_TRAINER})
+                                TAKE_LOOKED_TRAINER,
+                                # v0.81（docs/pokemon-tools-stadiums-v0.81.md 2 章）: 決めるプレイヤーの手札（相手の手札を見た決定は、見た相手の手札）から種類でしぼったカードを
+                                # 選べるものにする決定も、選べるものの数・選ぶ数が見えない手札の中身を漏らすので見せない。エネルギーアンプの段階 1・ポケモン交換おじさん
+                                # （RETURN_TO_DECK）、ポケモン育て屋さん・「ばける」（SELECT_EVOLUTION_CARD）、せいちょう（ATTACH_FROM_HAND）、マチス（HAND_TO_ACTIVE）、
+                                # 元気のかたまり（DISCARD_FROM_HAND の手札のエネルギーカード）、ロケット団のおねーさん（OPPONENT_HAND_TO_DECK）、エリカの香水（OPPONENT_HAND_TO_BENCH）。
+                                # 同じ種類の、手札すべてを選べるものにする決定（パソコン通信など）の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
+                                RETURN_TO_DECK, SELECT_EVOLUTION_CARD, ATTACH_FROM_HAND, HAND_TO_ACTIVE, DISCARD_FROM_HAND, OPPONENT_HAND_TO_DECK,
+                                OPPONENT_HAND_TO_BENCH})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -478,6 +488,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
+    "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",
     "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）
     # v0.67: マチスの秘策（出さなかった・出せなかった理由・おもてにした本当のカード・トラッシュしたカード・指定した対象がいなくなった。どれも表の情報）
     "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",

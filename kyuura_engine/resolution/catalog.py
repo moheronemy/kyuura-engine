@@ -89,6 +89,8 @@ class EffectDefinition:
     # v0.42: 受けるポケモンがバトル場にいるときだけ候補になる（エリカのラフレシアの［ぼうぎょかふん］「このカードがバトル場でワザによるダメージを受けた時」）。
     # 既定（はんげき・わるいねぞう・返す効果）は場所を見ない（p.311・p.323）
     active_only: bool = False
+    # v0.81: 受けるポケモンの持ち主の相手の番だけ候補になる（はんげきのツメ「相手の番に」）
+    opponent_turn_only: bool = False
 
 
 TRANSPARENCY = EffectDefinition(
@@ -184,6 +186,17 @@ EFFECT_GUARD = EffectDefinition(
 )
 
 
+# v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: はんげきのツメ（ポケモンのどうぐ）。はんげきと同じ窓（受けるときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
+# 効果の前に処理する。CR-COUNTERATTACK-TIMING）で、処理は「持ち主がコインを投げ、「おもて」なら相手の対戦ポケモンにダメージカウンターを 2 個のせる。その後、このカードを
+# トラッシュする」（``kernel.counters_to_damage_source_on_heads``）。ついているトレーナーの効果なので、特殊状態・かがくへんかガスでは消えない。相手の番に（``opponent_turn_only``）、
+# バトル場で（``active_only``）、相手のワザ（``by_opponent``）のダメージを受けたとき
+COUNTER_CLAW = EffectDefinition(
+    "counter_claw", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    frozenset(), "on_damage", False, "damage_source", "counters_to_damage_source_on_heads", frozenset({DamageClass.ATTACK}), True,
+    active_only=True, opponent_turn_only=True,
+)
+
+
 @dataclass(frozen=True)
 class EffectGuardRecord:
     """v0.80: エフェクトガードの効果のもと（ついているカード）。``first_void`` が返す効果の ``implementation``（ログ ``effect_prevented`` の ``persistent_effect``・``source_card``）。"""
@@ -261,6 +274,10 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
     # v0.80: ついているエフェクトガード（効果の登録表の実装が ``blocks_attack_effects``。カード id で分けない）
     for card in E.effect_guards(state, pokemon):
         found.append(EffectInstance(EFFECT_GUARD, owner, pokemon.pokemon_id, pokemon.card, implementation=EffectGuardRecord(card)))
+    # v0.81: ついているはんげきのツメ（ポケモンのどうぐ。効果の登録表の実装の型で探す）。実装は (ついているカード, 実装)
+    claw = E.tool_effect_of(state, pokemon, E.CounterClaw)
+    if claw is not None:
+        found.append(EffectInstance(COUNTER_CLAW, owner, pokemon.pokemon_id, pokemon.card, implementation=claw))
     return tuple(found)
 
 

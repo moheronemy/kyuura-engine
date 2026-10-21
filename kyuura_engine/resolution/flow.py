@@ -23,7 +23,7 @@ from .. import judge
 from .. import procedures as PR
 from ..checks import PLAYERS, attack_request, require_turn
 from ..commands import EndTurn, PromoteActive, ResolveDecision, TakePrize, UseAttack
-from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
+from ..decisions import BENCH_GUARD, ENERGY_DRAIN_DISCARD, ESP_REDO, EXP_ALL_ENERGY, KNOCK_OUT_POWER, NINJA_TRICK, PROMOTE_ACTIVE, REACTION_SWITCH, TAKE_PRIZE
 from ..coins import CoinSide, flip_coins
 from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
@@ -40,8 +40,9 @@ from . import v013_checks
 from .contract import is_contract, program_for
 from .events import FrameKind, Suspended, Trace, Window, WindowOpened
 from ..persistent import RETURN_IN_PLAY_TO_DECK, attack_coin_checks, destiny_bond, remove_on_damage, remove_persistent_effects
-from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked,
-                     ko_prevention_offers, scram_restored_question, settle_scram, track_ko)
+from .kernel import (DryRunComplete, Resolution, apply_energy_drain, capture_post_knockout, check_simultaneous, exp_all_offers, exp_all_options, exp_all_unresolved,
+                     focus_band_offers, hp_of, knock_out_beam_problem, knock_out_power_offers, knocked, ko_prevention_offers, scram_restored_question, settle_scram,
+                     track_ko)
 from .programs import (AttackRun, EspRedoOffer, apply_esp_redo, apply_flee, apply_ninja_trick, decision_index, declare, offer_ninja_trick, program_may_fail, resume_guarded, run_elements,
                        with_stadium_self_damage)
 from .questions import OpenQuestion, to_error
@@ -197,6 +198,10 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if E.energy_drain_holders(state):
         # v0.68: キョウのベトベトンの［だつりょくえき］（ダメージの要素のあとのコイン・持ち主が選ぶトラッシュ・DR8・DR13）。v0.13 の止める関数は知らない
         found.append("だつりょくえき")
+    if any(E.tool_effect_of(state, pokemon, (E.FocusBand, E.CounterClaw, E.ExpAll)) for side in state.players for pokemon in side.in_play()):
+        # v0.81: きあいのハチマキ（きぜつの判定のコイン・FB1）・はんげきのツメ（ダメージのあとのコインとダメージカウンター）・学習装置（きぜつの判定の決定）。v0.13 の止める関数は
+        # 知らない
+        found.append("ワザに反応するポケモンのどうぐ")
     return tuple(found)
 
 
@@ -340,11 +345,14 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
     bonded = _destiny_bond(res)  # v0.31: 「みちづれ」
     offers = ko_prevention_offers(res)
     beams = knock_out_power_offers(res)  # v0.61: ［ファイナルビーム］
-    if bonded and (offers or beams):
-        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
-    if len(offers) + len(beams) > 1:
-        # v0.61: こんじょうと［ファイナルビーム］・2 匹の［ファイナルビーム］など、きぜつするときに使える特殊能力の候補が 2 つ以上（G40 と同じ問い）
-        raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams]}")
+    bands = focus_band_offers(res)  # v0.81: きあいのハチマキ
+    exps = exp_all_offers(res)  # v0.81: 学習装置
+    if bonded and (offers or beams or bands):
+        raise res.question("destiny_bond_with_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams + bands]}")
+    if len(offers) + len(beams) + len(bands) + len(exps) > 1:
+        # v0.61: こんじょうと［ファイナルビーム］・2 匹の［ファイナルビーム］など、きぜつするときに使える特殊能力の候補が 2 つ以上（G40 と同じ問い）。v0.81: きあいのハチマキ・
+        # 学習装置（きぜつの判定の窓ではたらくどうぐ）も同じ窓の候補として数える（どれを先に処理するかで結果・コインの割り当てが変わる。ポケモンの番号・学習装置をつけたポケモン）
+        raise res.question("multiple_ko_prevention", f"{[o[1].pokemon_id for o in offers + beams + bands]}・学習装置 {[e[2].pokemon_id for e in exps]}")
     scram_restored_question(res, knocked(res))  # v0.61: きぜつの処理でかがくへんかガスの発生源が場をはなれ、［ずらかる］の力がもどる（SC2）
     # v0.31: きぜつの処理の窓の問い（P19・P32）を、先読みの範囲の中で確かめる（控えポケモンへのダメージで起こるようになった。記録は残さない。
     # 実際の写しはきぜつの処理の前に ``_knock_out_after_attack`` が行う）
@@ -370,7 +378,56 @@ def _finish_attack(res: Resolution, use: tuple[int, int, str, int]) -> None:
         codec.ko_check_decision(state, cont, player=owner, pokemon_id=pokemon.pokemon_id, kind=KNOCK_OUT_POWER, extra=extra)
         res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
         return
+    if bands:
+        _focus_band(res, *bands[0])  # v0.81: きあいのハチマキ（決定を出さない。コインはここ）
+    if exps:
+        # v0.81: 学習装置（つけ替えるかを持ち主に聞く。選ぶと止めるカードは ``unresolved_choices``。つけ替えない（0 個）はいつも答えになる）
+        owner, active, holder, attached = exps[0]
+        unresolved, code, reason = exp_all_unresolved(state, active, holder)
+        extra = () if not unresolved else (("unresolved_choices", unresolved), ("unresolved_code", code), ("unresolved_reason", reason))
+        codec.exp_all_decision(state, codec.KoCheckContinuation(use, None), player=owner, options=exp_all_options(state, active), tool=attached.card,
+                               holder=holder.pokemon_id, source=active.pokemon_id, extra=extra)
+        res.trace.record(Suspended(codec.KNOCK_OUT, state.decision.kind, owner))
+        return
     _knock_out_after_attack(res)
+
+
+def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:
+    """v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキ。持ち主がコインを 1 枚投げ（``source="trainer"``）、「おもて」ならのっているダメージを今有効な最大HP
+    − ``remaining_hp`` にして（「きぜつ」せず、残りHPは「10」。ログ ``focus_band`` の ``survived``）、このカードをトラッシュする（``reason`` ``used``）。「うら」ならそのまま
+    （きぜつの処理でほかのついているカードといっしょにトラッシュする）。そのあと［ずらかる］を確かめる（残りHPが「10」になった）。"""
+    state = res.state
+    flips = flip_coins(state, owner, 1, source="trainer", effect=state.cards[attached.card].card_id, card=attached.card, pokemon_id=pokemon.pokemon_id)
+    survived = flips.results[0] is CoinSide.HEADS
+    if survived:
+        pokemon.damage = max(0, max_hp(state, pokemon) - effect.remaining_hp)
+    state.add_event("focus_band", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=attached.card, result=flips.results[0].value,
+                    survived=survived, total_damage=pokemon.damage)
+    if survived:
+        E.discard_attached_tool(state, pokemon, attached, E.TOOL_USED)
+        settle_scram(res)
+
+
+def _resume_exp_all(res: Resolution, decision, choices) -> None:
+    """v0.81: 学習装置の答えのあと。選ばなければ何もしない（ログ ``exp_all_declined``。学習装置はついたまま）。選んだら、そのエネルギーカードを学習装置をつけたポケモンに
+    つけ替え（手札からつける操作ではない。ログ ``tool_move_energy``）、学習装置をトラッシュする。"""
+    state = res.state
+    owner = decision.player
+    tool = decision.context_value("tool")
+    holder = state.find_pokemon(decision.context_value("holder"))
+    source = state.find_pokemon(decision.context_value("source"))
+    if holder is None or source is None:
+        raise RuntimeError("学習装置の決定のポケモンが場にいない（決定を待つ間に場は変わらない。エンジンの不具合）")
+    base = {"player": owner, "card": tool, "pokemon_id": holder[1].pokemon_id, "source_pokemon_id": source[1].pokemon_id}
+    if not choices:
+        state.add_event("exp_all_declined", **base)
+        return
+    card = choices[0]
+    source[1].energy.remove(card)
+    holder[1].energy.append(card)
+    state.add_event("tool_move_energy", **base, energy=card)
+    attached = next(a for a in holder[1].trainers if a.card == tool)
+    E.discard_attached_tool(state, holder[1], attached, E.TOOL_USED)
 
 
 def _destiny_bond(res: Resolution) -> bool:
@@ -879,6 +936,10 @@ def _offer_effect(res: Resolution, card_id: str, power_index: int):
 def _resume_ko_check(res: Resolution, decision, cont: codec.KoCheckContinuation, choices) -> None:
     """きぜつの判定の任意の効果（こんじょう）の答えのあと: 宣言と効果の中身（v0.13 の実装の ``prevent``）→ きぜつの処理。"""
     state = res.state
+    if decision.kind == EXP_ALL_ENERGY:
+        _resume_exp_all(res, decision, choices)  # v0.81: 学習装置
+        _knock_out_after_attack(res)
+        return
     owner = decision.player
     pokemon_id = decision.options[0]
     _, pokemon = state.find_pokemon(pokemon_id)

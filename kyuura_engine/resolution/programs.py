@@ -258,6 +258,8 @@ class AttackRun:
         # v0.67: おもてにしてトラッシュしたうらのカード（場をはなれたので、番号だけを持つ場のポケモンとして作り直す。対象がいないことを確かめるだけに使う）
         self.res.secret_lost = {pid: (owner, PokemonInPlay(card, pokemon_id=pid, played_turn=0), bool(was_active))
                                 for pid, owner, card, was_active in frame.get("secret_lost", ())}
+        for pid, player, source in frame.get("damage_ko", ()):
+            self.res.damage_ko.setdefault(pid, (player, source))  # v0.81
         # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）。決定の前の宣言で写した値（書いていなければ空。決定をまたいでも今の特殊状態で決め直さない）
         self.res.attack_status = frozenset(carried.get("attack_status", ()))
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
@@ -279,7 +281,14 @@ class AttackRun:
             return True
         if self.state.is_face_down(pokemon):
             return False
-        return E.knocked_by_hp(self.state, pokemon)  # v0.48: 今有効な最大HP
+        knocked = E.knocked_by_hp(self.state, pokemon)  # v0.48: 今有効な最大HP
+        if knocked:
+            # v0.81（FB1）: きあいのハチマキのついたポケモンが、相手のワザのダメージで HP 以上になったあとに、同じワザの要素の対象になる（すぐあとにコインを投げる読み方では
+            # 残りHP 10 で対象になりうる）
+            from .kernel import focus_band_timing
+
+            focus_band_timing(self.res, pokemon, f"HP 以上になったあとのワザ {self.key} の要素")
+        return knocked
 
     def ko_prevention_conflict(self, target: PokemonInPlay, owner: int | None = None) -> None:
         """効果の対象がきぜつして効果を飛ばすとき、その対象がきぜつの判定で任意の効果（こんじょう）を使えるなら、効果を受けるかが原典で
@@ -344,6 +353,10 @@ class AttackRun:
             # v0.67: このワザでおもてにしてトラッシュしたうらのカード（(番号, 持ち主, カード, バトル場にいたか)）。なければ書かない（v0.66 までの決定の形は変えない）
             flee += (("secret_lost", tuple(sorted((pid, owner, pokemon.card, int(was_active))
                                                  for pid, (owner, pokemon, was_active) in self.res.secret_lost.items()))),)
+        damage_ko = tuple(sorted((pid, player, source) for pid, (player, source) in self.res.damage_ko.items() if self._knocked_pid(pid)))
+        if damage_ko:
+            # v0.81: ワザの分類のダメージで HP 以上になったポケモン（きあいのハチマキ・学習装置）。なければ書かない（v0.80 までの決定の形は変えない）
+            flee += (("damage_ko", damage_ko),)
         if carry:
             frame = (
                 ("reception", tuple(sorted((pid, int(value)) for pid, value in self.fs.reception.items()))),
@@ -4181,6 +4194,10 @@ def _counters_changed(run: AttackRun, pokemon: PokemonInPlay, before: int) -> No
     （相手のワザのダメージで HP 以上になったのではない。v0.11 の G3〜G7。``ko_prevention_able`` を偽にする）。"""
     track_ko(run.res, run.fs, pokemon, before)
     hp = E.max_hp(run.state, pokemon)  # v0.48: 今有効な最大HP
+    if before >= hp and pokemon.damage != before:
+        from .kernel import focus_band_timing
+
+        focus_band_timing(run.res, pokemon, "HP 以上になったあとのダメージカウンター")  # v0.81（FB1）
     if before < hp <= pokemon.damage:
         run.res.ko_prevention_able[pokemon.pokemon_id] = False
 

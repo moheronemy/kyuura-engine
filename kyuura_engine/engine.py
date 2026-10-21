@@ -69,6 +69,7 @@ from .decisions import (
     SECRET_PLAN_CARD,
     DECISION_PHASES,
     ENTRY_POWER,
+    EXP_ALL_ENERGY,
     KNOCK_OUT_POWER,
     KO_PREVENTION,
     POST_KNOCKOUT_POWER,
@@ -77,6 +78,13 @@ from .decisions import (
     phase_for,
 )
 from .effects import (
+    BALLOON_BERRY_FAILED_RETREAT_CODE,
+    BALLOON_BERRY_FAILED_RETREAT_REASON,
+    TOOL_RETREAT,
+    discard_attached_tool,
+    is_pokemon_tool_card,
+    tool_effect_of,
+    BalloonBerry,
     HAND_LOCK_TRAINERS,
     HAND_TRAINER_LOCK,
     LookDeckTopStadium,
@@ -1255,7 +1263,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
             "UNRESOLVED_RETREAT_COST_FLOOR",
             f"「にげる」でトラッシュするエネルギーの数（印刷の {cost.printed}、増やす {[a for _, _, a in cost.increases]}、少なくできる {[a for _, _, a in cost.reductions]}"
             + (f"、スタジアムで増やす {[a for _, a in cost.stadium_increases]}・へらす {[a for _, a in cost.stadium_reductions]}"
-               if cost.stadium_increases or cost.stadium_reductions else "") + "）を、"
+               if cost.stadium_increases or cost.stadium_reductions else "")
+            + (f"、ふうせんのみ {list(cost.zeroed)}（すべてなくなる）" if cost.zeroed else "") + "）を、"
             f"少なくしてから 0 で止めて増やすか、合わせてから 0 で止めるかで、{units if units != len(discard) else len(discard)} {'個' if units != len(discard) else '枚'}が足りるかが変わる。どちらの読み方かは kyuura の記録・印刷の文面から決められない"
             "ので扱わない（CP2）",
         )
@@ -1266,6 +1275,10 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # v0.61（docs/reactive-powers-trainer-damage-v0.61.md 3 章）: 相手の［おとしあな］。こんらん状態の「にげる」と、入れ替えの前か後かで受けるダメージが変わる場合は SH1、
     # 2 つ以上の［おとしあな］の途中で［ずらかる］の残りHPが「10」を通る場合は SC1。どれもエネルギーのトラッシュ・コインの前に止める
     _sinkhole_check(state, cmd.player, active, index)
+    if cost.zeroed and active.conditions.confused:
+        # v0.81（BB1）: ふうせんのみの「「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で失敗した「にげる」にも当てはまるかは決まらない。
+        # コインの結果で受け付けるかを変えないよう、エネルギーのトラッシュ・コインの前に止める
+        raise UnsupportedError(BALLOON_BERRY_FAILED_RETREAT_CODE, f"こんらん状態のポケモン {active.pokemon_id}（ふうせんのみ {list(cost.zeroed)}）: {BALLOON_BERRY_FAILED_RETREAT_REASON}")
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
@@ -1276,6 +1289,8 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         # v0.57: 場のスタジアムで数が変わったときだけ、(スタジアムカード, 数（増やすなら正、へらすなら負）) を書く（特殊能力の記録とは分ける）
         cost_log["retreat_cost_stadium"] = tuple((card, amount) for card, amount in cost.stadium_increases) + tuple(
             (card, -amount) for card, amount in cost.stadium_reductions)
+    if cost.zeroed:
+        cost_log["retreat_cost_zeroed"] = cost.zeroed  # v0.81: ふうせんのみ（「にげる」ときに必要なエネルギーはすべてなくなる）
     if active.conditions.confused and not _confusion_check(state, cmd.player, active, action="retreat", effect="retreat"):
         # 「にげる」は失敗。トラッシュしたエネルギーは取り戻せず、入れ替えはしない（p.311 の手順 3・4。v0.3c）
         active.retreat_failed_turn = state.turn_number
@@ -1292,6 +1307,9 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     remove_persistent_effects(state, cmd.player, active, RETREAT)
     mark_returned_to_bench(active)  # v0.48: 特殊能力で色を変えた記録に、ベンチにもどったことを残す（VS1）
     discard_on_leaving_active(state, cmd.player, active)  # v0.65: バトル場をはなれた時にトラッシュするついているトレーナー（変わり身の術）
+    balloon = tool_effect_of(state, active, BalloonBerry)
+    if balloon is not None:
+        discard_attached_tool(state, active, balloon[0], TOOL_RETREAT)  # v0.81: ふうせんのみ（「にげる」とき、このカードをトラッシュする）
     resolution.after_retreat(state, context, cmd.player, active)  # v0.61: 相手の［おとしあな］（入れ替えのあと。きぜつ・交代・同じ番）
 
 
@@ -3269,6 +3287,9 @@ def _counter_knocked_out_attacker_awaiting(state: GameState, player: int, pokemo
         if (event["kind"] == "damage" and event.get("retaliation") and event.get("pokemon_id") == pokemon.pokemon_id
                 and event.get("total_damage") == pokemon.damage):
             return True
+        if (event["kind"] == "tool_damage_counters" and event.get("target_pokemon_id") == pokemon.pokemon_id
+                and event.get("total_damage") == pokemon.damage):
+            return True  # v0.81: 相手のはんげきのツメのダメージカウンター（「ダメージを受けたとき」の効果の窓。効果の前）
     return False
 
 
@@ -3306,8 +3327,8 @@ def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPla
         return False
     if player == d.player and pokemon.pokemon_id in d.options:
         return True
-    if d.kind == KNOCK_OUT_POWER:
-        return True  # v0.61: ［ファイナルビーム］の決定を待つ間は、同じワザで HP 以上になったほかのポケモンも残る（答えのあとのきぜつの処理でまとめて処理する）
+    if d.kind in (KNOCK_OUT_POWER, EXP_ALL_ENERGY):
+        return True  # v0.61: ［ファイナルビーム］（v0.81: 学習装置も）の決定を待つ間は、同じワザで HP 以上になったほかのポケモンも残る（答えのあとのきぜつの処理でまとめて処理する）
     attack = d.context_value("attack")
     if not isinstance(attack, tuple) or len(attack) != 4 or (attack[0], attack[1]) != (player, pokemon.pokemon_id):
         return False
@@ -3316,7 +3337,7 @@ def _ko_prevention_awaiting(state: GameState, player: int, pokemon: PokemonInPla
             return False
         if (event["kind"] == "damage" and event.get("target") == "self" and event.get("pokemon_id") == pokemon.pokemon_id) or (
             event["kind"] == "counterattack" and event.get("attacker_pokemon_id") == pokemon.pokemon_id
-        ):
+        ) or (event["kind"] == "tool_damage_counters" and event.get("target_pokemon_id") == pokemon.pokemon_id):  # v0.81: はんげきのツメ
             return event.get("total_damage") == pokemon.damage
     return False
 
@@ -3350,6 +3371,33 @@ def _knock_out_power_decision_problems(state: GameState, d) -> list[str]:
         problems.append(f"［ファイナルビーム］の決定の「きぜつ」させたポケモン {source!r} が、相手の場にいない")
     if not any(event["kind"] == "attack" for event in _events_since_turn_start(state)):
         problems.append("［ファイナルビーム］の決定の前に、今の番のワザの宣言がない")
+    return problems
+
+
+def _exp_all_decision_problems(state: GameState, d) -> list[str]:
+    """学習装置の決定（v0.81。``EXP_ALL_ENERGY``・再開先 ``"knock_out"``）の整合性: 選ぶ数（0〜1）、決めるのは番でないプレイヤー、``"source"`` がそのプレイヤーの対戦ポケモンで HP 以上、
+    ``"holder"`` がそのプレイヤーの別の場のポケモンで、``"tool"`` の学習装置がついている、選べるものが対戦ポケモンの選べるエネルギーカード、今の番にワザの宣言がある。"""
+    from .effects import ExpAll
+    from .resolution.kernel import exp_all_options
+
+    if d.resume != "knock_out" or (d.min_choices, d.max_choices) != (0, 1):
+        return [f"学習装置の決定の再開先 {d.resume!r}・選ぶ数 {d.min_choices}〜{d.max_choices} が正しくない（knock_out・0〜1 枚）"]
+    if d.player != 1 - state.current_player:
+        return [f"学習装置の決定を決めるのがプレイヤー {d.player}（番でないプレイヤー {1 - state.current_player} のはず）"]
+    source = state.find_pokemon(d.context_value("source"))
+    holder = state.find_pokemon(d.context_value("holder"))
+    if source is None or source[0] != d.player or state.players[d.player].active is not source[1] or source[1].damage < max_hp(state, source[1]):
+        return [f"学習装置の決定の対戦ポケモン {d.context_value('source')!r} が、決めるプレイヤーの HP 以上のバトル場のポケモンではない"]
+    if holder is None or holder[0] != d.player or holder[1] is source[1]:
+        return [f"学習装置の決定の学習装置をつけたポケモン {d.context_value('holder')!r} が、決めるプレイヤーの別の場のポケモンではない"]
+    tool = tool_effect_of(state, holder[1], ExpAll)
+    problems = []
+    if tool is None or tool[0].card != d.context_value("tool"):
+        problems.append(f"学習装置の決定の学習装置 {d.context_value('tool')!r} が、ポケモン {holder[1].pokemon_id} についていない")
+    if tuple(d.options) != exp_all_options(state, source[1]):
+        problems.append(f"学習装置の決定の選べるもの {d.options} が、対戦ポケモンのエネルギーカード {exp_all_options(state, source[1])} と合わない")
+    if not any(event["kind"] == "attack" for event in _events_since_turn_start(state)):
+        problems.append("学習装置の決定の前に、今の番のワザの宣言がない")
     return problems
 
 
@@ -4099,6 +4147,8 @@ def _decision_problems(state: GameState) -> list[str]:
         problems.extend(_attack_decision_problems(state, d))
     if d.kind == KNOCK_OUT_POWER:
         problems.extend(_knock_out_power_decision_problems(state, d))  # v0.61
+    elif d.kind == EXP_ALL_ENERGY:
+        problems.extend(_exp_all_decision_problems(state, d))  # v0.81
     elif d.kind == KO_PREVENTION or d.resume == "knock_out":
         problems.extend(_ko_prevention_decision_problems(state, d))  # v0.11
     if d.kind == POST_KNOCKOUT_POWER or d.resume == "post_knockout":
@@ -4120,7 +4170,8 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.65: 変わり身の術・［にげこむ］・［ベンチガード］の機会（NINJA_TRICK・REACTION_SWITCH・BENCH_GUARD。NT3・RX1・FL1・BG1・BG2・KD1 で使うと止める場合）も同じ
         # v0.66: ナツメのESPのやり直しの機会（ESP_REDO。ES1〜ES3 でやり直すと止める場合）も、やり直さない（0 個）がいつも答えになる
         # v0.67: マチスの秘策で出すカード（SECRET_PLAN_CARD。FD2 で出すと止める場合）も、出さない（0 個。「出してよい」）がいつも答えになる
-        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
+        # v0.81: 学習装置（EXP_ALL_ENERGY。RB3・CB1 で選ぶと止める場合）も、つけ替えない（0 個）がいつも答えになる
+        no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
                                        SECRET_PLAN_CARD) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
@@ -4344,6 +4395,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
     from .effects import (
         OPPONENT_ACTIVE,
         attack_damage_modifiers,
+        attack_ignores_resistance,
         calculate_with_stadium,
         stadium_coin_modifier,
     )
@@ -4370,7 +4422,8 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
         collected = (*collected, stadium_coin_modifier(state, coin[0]))
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
-                               weakness_resistance=context.get("weakness_resistance", True), orders=orders, resistance=context.get("resistance", True))
+                               weakness_resistance=context.get("weakness_resistance", True), orders=orders,
+                               resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageReductionRequired as need:
         if tuple(d.options) != need.choices or context.get("value") != need.value:
             return [f"減らす量の決定の選べるもの {d.options!r}（5 段階のダメージ {context.get('value')!r}）が、今の場の計算の {need.choices}（{need.value}）と違う"]
@@ -4522,7 +4575,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     決めるプレイヤー（2・5・6 段階はワザを使うプレイヤー、7・8 段階は受けるポケモンの持ち主。p.321）・選べるもの（並べかえの位置）・選ぶ数を確かめる。"""
     from .damage import DAMAGE_STEP_CHOOSER, DamageOrderRequired, step_orders
     from .effects import calculate_with_stadium
-    from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers
+    from .effects import OPPONENT_ACTIVE, SELF, attack_damage_modifiers, attack_ignores_resistance
 
     context = dict(d.context)
     step, target, base = context.get("step"), context.get("target"), context.get("base")
@@ -4553,7 +4606,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     try:
         calculate_with_stadium(state, base, definition_views(state, attacker)[0], definition_views(state, receiver)[0], collected,
                                 weakness_resistance=context.get("weakness_resistance", True), orders=orders,
-                                resistance=context.get("resistance", True))
+                                resistance=context.get("resistance", True) and attack_ignores_resistance(state, attacker, receiver) is None)
     except DamageOrderRequired as need:
         if need.step == step:
             return []
@@ -4617,6 +4670,10 @@ def _attached_trainer_problems(state: GameState, player: int, pokemon: PokemonIn
     有効期限が過ぎたもの（番の終わりにトラッシュしていないもの）は残らない（終わった対戦は除く）。
     """
     problems: list[str] = []
+    tools = [attached.card for attached in pokemon.trainers if attached.card in state.cards and is_pokemon_tool_card(state, attached.card)]
+    if len(tools) > 1:
+        # v0.81: 「すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない」（1 匹に 1 枚まで。どうぐでないついているトレーナーはいっしょにつく）
+        problems.append(f"ポケモン {pokemon.pokemon_id} に、ポケモンのどうぐが {len(tools)} 枚ついている（{tools}。1 匹に 1 枚まで）")
     for attached in pokemon.trainers:
         place(attached.card, player, "場（ついているトレーナー）")
         if attached.card not in state.cards:

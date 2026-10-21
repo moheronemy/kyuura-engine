@@ -1196,6 +1196,23 @@
     "neo4-112",
     "ES2-033"
   ],
+  "pool_v0_81": [
+    "neo1-073",
+    "PRN-004",
+    "NIP1X-008",
+    "NIP2X-008",
+    "neo1-079",
+    "neo1-081",
+    "PRN-005",
+    "neo3-055",
+    "neo1-088",
+    "neo4-103",
+    "neo4-109",
+    "neo4-104",
+    "neo1-085",
+    "neo3-057",
+    "neo4-110"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -86707,6 +86724,692 @@
           "list_number": "033/036"
         }
       ]
+    },
+    {
+      "id": "neo1-073",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "きのみ",
+        "en": "Berry"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが2個以上のっているなら、それを2個とりのぞき、このカードをトラッシュする。",
+          "en": "Attach Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-073",
+        "pokemontcg": [
+          "neo1-99"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-073-kinomi/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-073-kinomi/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-004"
+    },
+    {
+      "id": "PRN-004",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "きのみ",
+        "en": "Berry"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが2個以上のっているなら、それを2個とりのぞき、このカードをトラッシュする。",
+          "en": "Attach Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-99"
+        ],
+        "pcg_search": [
+          "neop004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop004.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop004.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-004",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-073",
+        "english_text": "same_card:neo1-073"
+      },
+      "copies": [
+        {
+          "page": "neop004",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-008",
+      "jp_set": "NIP1X",
+      "category": "trainer",
+      "name": {
+        "ja": "きのみ",
+        "en": "Berry"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場のポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが2個以上のっているなら、それを2個とりのぞき、このカードをトラッシュする。",
+          "en": "Attach Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-99"
+        ],
+        "pcg_search": [
+          "neointro1ex008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex008.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-004",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-073",
+        "english_text": "same_card:neo1-073"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex008",
+          "list_number": "008/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-008",
+      "jp_set": "NIP2X",
+      "category": "trainer",
+      "name": {
+        "ja": "きのみ",
+        "en": "Berry"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場のポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが2個以上のっているなら、それを2個とりのぞき、このカードをトラッシュする。",
+          "en": "Attach Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-99"
+        ],
+        "pcg_search": [
+          "neointro2ex008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex008.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-004",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-073",
+        "english_text": "same_card:neo1-073"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex008",
+          "list_number": "008/010"
+        }
+      ]
+    },
+    {
+      "id": "neo1-079",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "おうごんのみ",
+        "en": "Gold Berry"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンにダメージカウンターが4個以上のっているなら、それを4個とりのぞき、このカードをトラッシュする。",
+          "en": "Attach Gold Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, you may remove 4 of them and discard Gold Berry. At the start of each turn, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, remove 4 of them and discard Gold Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-079",
+        "pokemontcg": [
+          "neo1-93"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-079-ougonnomi/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-079-ougonnomi/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-081",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "きせきのみ",
+        "en": "Miracle Berry"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンが「どく・ねむり・マヒ・こんらん」状態なら、それらをすべて回復し、このカードをトラッシュする。",
+          "en": "Attach Miracle Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, you may remove all those effects from that Pokémon and discard Miracle Berry. At the start of each turn, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, remove all of those effects from that Pokémon and discard Miracle Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-081",
+        "pokemontcg": [
+          "neo1-94"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-081-kisekinomi/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-081-kisekinomi/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-005"
+    },
+    {
+      "id": "PRN-005",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "きせきのみ",
+        "en": "Miracle Berry"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\nポケモンチェックのとき、このカードをつけているポケモンが「どく・ねむり・マヒ・こんらん」状態なら、それらをすべて回復し、このカードをトラッシュする。",
+          "en": "Attach Miracle Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. At any time between turns, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, you may remove all those effects from that Pokémon and discard Miracle Berry. At the start of each turn, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, remove all of those effects from that Pokémon and discard Miracle Berry."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-94"
+        ],
+        "pcg_search": [
+          "neop005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop005.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-005",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-081",
+        "english_text": "same_card:neo1-081"
+      },
+      "copies": [
+        {
+          "page": "neop005",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo3-055",
+      "jp_set": "neo3",
+      "category": "trainer",
+      "name": {
+        "ja": "ふうせんのみ",
+        "en": "Balloon Berry"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場のポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。このカードをつけているポケモンの「にげる」ときに必要な「エネルギー」は、すべてなくなる。このカードをつけているポケモンが「にげる」とき、このカードをトラッシュする。",
+          "en": "Attach Balloon Berry to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. When the Pokémon Balloon Berry is attached to retreats, discard Balloon Berry instead of discarding Energy cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-055",
+        "pokemontcg": [
+          "neo3-60"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B5%E3%81%86%E3%81%9B%E3%82%93%E3%81%AE%E3%81%BF",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B5%E3%81%86%E3%81%9B%E3%82%93%E3%81%AE%E3%81%BF"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-088",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "きあいのハチマキ",
+        "en": "Focus Band"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。\n相手のワザによるダメージで、このカードをつけているポケモンの残りHPがなくなったとき、コインを投げる。「おもて」なら、このカードをつけているポケモンは「きぜつ」せず、このカードをつけているポケモンの残りHPは「10」になる。その後、このカードをトラッシュする。",
+          "en": "Attach Focus Band to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. If the Pokémon Focus Band is attached to would be Knocked Out by your opponent's attack, flip a coin. If heads, that Pokémon is not Knocked Out and its remaining HP become 10 instead. Then, discard Focus Band."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-088",
+        "pokemontcg": [
+          "neo1-86"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-088-kiainohachimaki/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-088-kiainohachimaki/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-103",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "はんげきのツメ",
+        "en": "Counterattack Claws"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。このカードをつけているポケモンが、相手の番に、バトル場で、相手のワザによるダメージを受けたとき（それによって、このカードをつけているポケモンが「きぜつ」しても）、このカードの持ち主はコインを投げる。「おもて」なら、相手の対戦ポケモンに、ダメージカウンターを2個のせる。その後、このカードをトラッシュする。",
+          "en": "Attach Counterattack Claws to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. During your opponent's turn, if the Pokémon Counterattack Claws is attached to is your Active Pokémon and an opponent's attack damages it (even if it is Knocked Out), flip a coin. If heads, put 2 damage counters on the Defending Pokémon. Then, discard Counterattack Claws."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-103",
+        "pokemontcg": [
+          "neo4-97"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%AF%E3%82%93%E3%81%92%E3%81%8D%E3%81%AE%E3%83%84%E3%83%A1",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%AF%E3%82%93%E3%81%92%E3%81%8D%E3%81%AE%E3%83%84%E3%83%A1"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-109",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "学習装置",
+        "en": "EXP.ALL"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "pokemon_tool"
+        ],
+        "text": {
+          "ja": "「ポケモンのどうぐ」は、あなたの場にいるポケモンにつけて使い、そのポケモンが「きぜつ」したとき、トラッシュする。すでに「ポケモンのどうぐ」をつけているポケモンには、つけることができない。相手の番に、あなたの対戦ポケモンが、バトル場でワザによるダメージを受けて「きぜつ」するとき、のぞむなら、あなたの対戦ポケモンについている「基本エネルギーカード」を1枚選んでよい。選んだ場合、その「エネルギーカード」を、このカードをつけているポケモンにつけ替える。その後、このカードをトラッシュする。",
+          "en": "Attach EXP.ALL to 1 of your Pokémon that doesn't have a Pokémon Tool attached to it. During your opponent's turn, if your Active Pokémon would be Knocked Out by your opponent's attack, you may take 1 of the basic Energy cards attached to your Active Pokémon and attach it to the Pokémon with EXP.ALL attached to it. If you do, discard EXP.ALL."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-109",
+        "pokemontcg": [
+          "neo4-93"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E5%AD%A6%E7%BF%92%E8%A3%85%E7%BD%AE",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E5%AD%A6%E7%BF%92%E8%A3%85%E7%BD%AE"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-104",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ピントレンズ",
+        "en": "Magnifier"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの場のポケモンにつけて使い、あなたの番の終わりにトラッシュする。このカードをつけているポケモンが使うワザは、相手の対戦ポケモンの「抵抗力」に関係なく、ダメージを与える。",
+          "en": "Attach Magnifier to 1 of your Pokémon. At the end of your turn, discard Magnifier. If the Pokémon Magnifier is attached to attacks, don't apply Resistance for that attack."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-104",
+        "pokemontcg": [
+          "neo4-101"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%94%E3%83%B3%E3%83%88%E3%83%AC%E3%83%B3%E3%82%BA_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%94%E3%83%B3%E3%83%88%E3%83%AC%E3%83%B3%E3%82%BA_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-085",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "マダツボミのとう",
+        "en": "Sprout Tower"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "「無色」ポケモンの使ったワザが、ポケモンにダメージを与えるとき、そのダメージは、それぞれ「-30」される。\n「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. All damage done by Colorless Pokémon's attacks is reduced by 30 (after applying Weakness and Resistance)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-085",
+        "pokemontcg": [
+          "neo1-97"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-085-madatsubominotou/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-085-madatsubominotou/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-057",
+      "jp_set": "neo3",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団のアジト",
+        "en": "Rocket's Hideout"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいの場の「わるい」ポケモン最大HPは、「20」ぶん大きいものになる。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Each Pokémon in play with Dark in its name (even your opponent's) gets +20 HP."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-057",
+        "pokemontcg": [
+          "neo3-63"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E3%82%A2%E3%82%B8%E3%83%88",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E3%82%A2%E3%82%B8%E3%83%88"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-110",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "でこぼこジム",
+        "en": "Broken Ground Gym"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいの場の「ベイビィポケモン」と「たねポケモン」は、「にげる」ときに必要な「エネルギー」が、1個ぶん多くなる。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Each player pays Colorless more to retreat a Baby Pokémon or Basic Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-110",
+        "pokemontcg": [
+          "neo4-92"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%A7%E3%81%93%E3%81%BC%E3%81%93%E3%82%B8%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%A7%E3%81%93%E3%81%BC%E3%81%93%E3%82%B8%E3%83%A0"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }

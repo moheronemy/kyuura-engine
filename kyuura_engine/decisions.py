@@ -77,6 +77,11 @@ KO_PREVENTION = "ko_prevention"
 # 持ち主が決める。選べるものはそのポケモンの番号 1 つで、0 個（使わない）か 1 個（使用を宣言する）。``context`` は "attack"・"power"（こんじょうと同じ）と "source"
 # （「きぜつ」させたポケモンの番号）。コインは答えのあと。再開先は "knock_out"（こんじょうと同じ続きの情報。特殊能力の定義で処理を分ける）。段階は Phase.DECISION
 KNOCK_OUT_POWER = "knock_out_power"
+# v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: ワザのあとのきぜつの判定で、相手の番にワザのダメージで「きぜつ」する対戦ポケモンについている基本エネルギーカードを、
+# 学習装置をつけたポケモンにつけ替えるか（どれをつけ替えるか）を、持ち主が決める。選べるものはきぜつする対戦ポケモンについている基本エネルギーカード（とレインボーエネルギー。
+# 選ぶと RB3 で止める）で、0 個（つけ替えない）か 1 個。``context`` は "attack"（こんじょうと同じ）・"tool"（学習装置のカード）・"holder"（学習装置をつけたポケモンの番号）・
+# "source"（きぜつする対戦ポケモンの番号）。再開先は "knock_out"。段階は Phase.DECISION
+EXP_ALL_ENERGY = "exp_all_energy"
 # v0.65（docs/reactive-decisions-v0.65.md）: ワザの途中の任意の決定（再開先は "attack"。続きの情報は ``resolution.codec.AttackContinuation`` の extra。段階は Phase.DECISION）
 # - 相手がワザを使う時（ワザの要素の前）に、つけた「キョウ秘伝,変わり身の術」で入れ替えるか。決めるのは、つけたポケモンの持ち主（ワザを使われた側）。選べるものは自分の控えの
 #   番号で、0 個（入れ替えない）か 1 個。``context`` の "boundary"（入れ替えのあとに処理を始める要素の位置。0）・"tricks"（ついている変わり身の術のカード）
