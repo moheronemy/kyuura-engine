@@ -977,7 +977,9 @@ POISON_ON_ATTACK_DAMAGE = "poison_on_attack_damage"  # キョウ: 「キョウ�
 BENCH_ATTACK_DAMAGE_PREVENTION = "bench_attack_damage_prevention"  # 見えない壁: 次の相手の番が終わるまで、控えポケモンはワザによるダメージを受けない
 POWER_SUPPRESSION = "power_suppression"  # v0.59 まきちらせ!ベトベトガス: 次の相手の番が終わるまで、おたがいの場のすべてのポケモンは特殊能力を使えず、その力も消える
 FIRE_DOUBLE_ATTACH = "fire_double_attach"  # v0.59 カツラ: この番だけ、手札から「カツラのポケモン」につける「炎」エネルギーカードの枚数を 1 枚でなく 2 枚にする
-TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH)
+# v0.80 退化スプレーHYPER: 「(退化させたポケモンを、同じ番に進化させることはできない。)」。この番の終わりまで、``TrainerTurnEffect.pokemon_id`` の場のポケモンを進化させない
+EVOLUTION_BAN = "evolution_ban"
+TRAINER_TURN_EFFECT_KINDS = (ATTACK_DAMAGE_BONUS, POISON_ON_ATTACK_DAMAGE, BENCH_ATTACK_DAMAGE_PREVENTION, POWER_SUPPRESSION, FIRE_DOUBLE_ATTACH, EVOLUTION_BAN)
 
 
 @dataclass(frozen=True)
@@ -1018,6 +1020,8 @@ class TrainerTurnEffect:
     card_id: str
     created_turn: int
     expires_turn: int
+    # v0.80: 効果を受ける場のポケモンの番号（``EVOLUTION_BAN`` だけ。退化スプレーHYPER で退化させたポケモン）。ほかの種類は None（書き出しの形は v0.79 と同じ）
+    pokemon_id: int | None = None
 
 
 @dataclass(frozen=True)

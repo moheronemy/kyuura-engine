@@ -77,6 +77,10 @@ from .decisions import (
     phase_for,
 )
 from .effects import (
+    HAND_LOCK_TRAINERS,
+    HAND_TRAINER_LOCK,
+    LookDeckTopStadium,
+    hand_lock_expiry,
     knocked_by_hp,
     AttackKey,
     AttackUse,
@@ -166,6 +170,7 @@ from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
     PERSISTENT_EFFECT_TYPES,
     TRAINER_TURN_EFFECT_KINDS,
+    EVOLUTION_BAN,
     TrainerTurnEffect,
     AttackCoinCheck,
     CannotAttackWhileSourceActive,
@@ -2989,8 +2994,12 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
             continue
         where = f"プレイヤー {lock.player!r} のトレーナーの使用の禁止（{lock.effect}）"
         trainer_origin = lock.origin == "trainer"  # v0.56: ロケット団の実験の「うら」（使ったプレイヤー自身。与えた番 + 2）
+        if lock.origin == HAND_TRAINER_LOCK:
+            problems += _hand_trainer_lock_problems(state, lock, where)
+            keys.append((lock.player, lock.expires_turn, lock.origin))
+            continue
         if lock.origin not in ("attack", "trainer"):
-            problems.append(f"{where} の出どころ {lock.origin!r} が attack・trainer ではない")
+            problems.append(f"{where} の出どころ {lock.origin!r} が attack・trainer・hand ではない")
             continue
         if lock.player not in PLAYERS or lock.source_player != (lock.player if trainer_origin else 1 - lock.player):
             problems.append(f"{where} の与えたプレイヤー {lock.source_player!r} が、{'使えなくなるプレイヤー自身' if trainer_origin else '使えなくなるプレイヤーの相手'}ではない")
@@ -3049,6 +3058,27 @@ def _trainer_lock_problems(state: GameState) -> list[str]:
     return problems
 
 
+def _hand_trainer_lock_problems(state: GameState, lock: TrainerUseLock, where: str) -> list[str]:
+    """v0.80: 「次の相手の番が終わるまで、あなたは手札から「トレーナーカード」を出して使うことができない」（ウツギはかせ・タイムカプセル・ポケモンギア。出どころ
+    ``HAND_TRAINER_LOCK``）の整合: 使ったプレイヤー自身に与え（``source_player`` = ``player``）、消える番は与えた番より後の相手の最初の番（``hand_lock_expiry``）。今の番は与えた番〜
+    消える番。与えたトレーナーの登録された実装が、この禁止を与える実装（``HAND_LOCK_TRAINERS`` の型）。使ったカードはそのカード id のカード（サイキックコントロールで使ったときは
+    相手のカード）。"""
+    problems = []
+    if lock.player not in PLAYERS or lock.source_player != lock.player or type(lock.created_turn) is not int:
+        return [f"{where} の与えたプレイヤー・与えた番が正しくない（使ったプレイヤー自身に与える）"]
+    if state.first_player in PLAYERS and lock.expires_turn != hand_lock_expiry(state, lock.player, lock.created_turn):
+        problems.append(f"{where} の消える番 {lock.expires_turn!r} が、与えた番 {lock.created_turn} より後の相手の最初の番ではない")
+    if not lock.created_turn <= state.turn_number <= lock.expires_turn:
+        problems.append(f"{where} が、与えた番 {lock.created_turn}〜消える番 {lock.expires_turn} の外の今の番 {state.turn_number} に残っている")
+    entry = state.effects.trainer_entry(lock.effect)
+    if entry is None or not isinstance(entry.effect, HAND_LOCK_TRAINERS):
+        problems.append(f"{where} を与えたトレーナー {lock.effect!r} の登録された実装が、手札から使うことを禁止する実装ではない")
+    card = state.cards.get(lock.source_card)
+    if card is None or card.card_id != lock.effect:
+        problems.append(f"{where} の使ったトレーナーのカード {lock.source_card!r} が、そのカード id のカードではない")
+    return problems
+
+
 def _trainer_effect_problems(state: GameState) -> list[str]:
     """v0.56（形式 16）: プレイヤーに与えた期限のあるトレーナーの効果（``GameState.trainer_effects``。カスミ・キョウ・見えない壁）の整合。
 
@@ -3076,6 +3106,16 @@ def _trainer_effect_problems(state: GameState) -> list[str]:
             problems.append(f"{where} の種類・消える番 {record.expires_turn} が、登録の実装 {terms!r} と合わない")
         if not record.created_turn <= state.turn_number <= record.expires_turn:
             problems.append(f"{where} が、与えた番 {record.created_turn}〜消える番 {record.expires_turn} の外の今の番 {state.turn_number} に残っている")
+        if record.kind == EVOLUTION_BAN:
+            # v0.80: 退化スプレーHYPER の「同じ番に進化させることはできない」（退化させたポケモンの番号。使った番だけ。錯乱ジム・サイキックコントロールで使ったときは、
+            # 番の持ち主・カードの持ち主が使ったプレイヤーでないことがある）
+            card = state.cards.get(record.source_card)
+            if type(record.pokemon_id) is not int or card is None or card.card_id != record.card_id:
+                problems.append(f"{where} の退化させたポケモン {record.pokemon_id!r}・使ったカード {record.source_card!r} が正しくない")
+            keys.append((record.player, record.source_card, record.expires_turn))
+            continue
+        if record.pokemon_id is not None:
+            problems.append(f"{where} にポケモンの番号 {record.pokemon_id!r} がある（退化スプレーHYPER の禁止だけ）")
         if state.first_player in PLAYERS and turn_owner(state, record.created_turn) != record.player:
             problems.append(f"{where} を与えた番 {record.created_turn} が、使ったプレイヤーの番ではない")
         card = state.cards.get(record.source_card)
@@ -3945,6 +3985,17 @@ def _stadium_decision_problems(state: GameState, d) -> list[str]:
         elif d.options != tuple(effect.targets(state, d.player)) or (d.min_choices, d.max_choices) != (1, 1):
             problems.append(f"{where} の選べるもの {d.options} が、自分の場の「{effect.owner}のポケモン」1 匹ではない")
         return problems
+    if stage == LookDeckTopStadium.choice_stage:
+        # v0.80: ラジオとうで見る枚数（決めるのは番のプレイヤー。この番にこのカードを使った記録とログ stadium_used がある）
+        problems = []
+        if not isinstance(effect, LookDeckTopStadium) or d.kind != effect.choice_kind or d.player != state.current_player:
+            return [f"{where} の種類 {d.kind}・プレイヤー {d.player}・場のスタジアムが、番のプレイヤーのラジオとうの決定ではない"]
+        options = effect.counts(state, d.player)
+        if not state.players[d.player].deck or d.options != options or (d.min_choices, d.max_choices) != (1, 1):
+            problems.append(f"{where} の選べるもの {d.options} が、見る枚数 {options} から 1 つではない")
+        if (d.player, card) not in state.stadium_uses_this_turn:
+            problems.append(f"{where} のプレイヤー {d.player} が、この番にスタジアム {card} を使った記録がない")
+        return problems
     if stage in COIN_CHOICE_STAGES:
         # v0.74: エネルギースタジアム・キョウの忍者ジムの「おもて」のあと（段階と決定の種類は実装の ``choice_stage``・``choice_kind``）。決めるのは番のプレイヤー（使ったプレイヤー）
         # で、この番にこのカードを使った記録とログ stadium_used・「おもて」のコインがある。選べるものは実装の ``candidates``（ちょうど 1 枚）
@@ -4128,7 +4179,7 @@ def _set_aside_problems(state: GameState) -> list[str]:
                     problems.append(f"うらにしてベンチに出したカード {cards} に、たねポケモンでないカードがある")
                 if len(state.players[group.owner].bench) + len(cards) > _bench_limit_or_default(state, group.owner):
                     problems.append(f"プレイヤー {group.owner} のベンチとうらにして出したカードが、ベンチの上限より多い")
-            elif len(cards) != 1 or group.owner != group.user or state.card_def(cards[0]).category != "pokemon" or not state.card_def(cards[0]).attacks:
+            elif len(cards) != 1 or group.owner != group.user or not _quiz_card_accepted(state, group.card_id, cards[0]):
                 problems.append(f"クイズで置いたカード {group} が、使ったプレイヤーのワザを持つポケモンのカード 1 枚ではない")
         put = [e for e in state.log if put_events.get(e["kind"]) == group.kind and e.get("player") == group.owner and e.get("trainer_card") == group.trainer_card
                and tuple(e.get("cards", (e.get("card"),))) == cards]
@@ -4140,6 +4191,19 @@ def _set_aside_problems(state: GameState) -> list[str]:
                    and tuple(e.get("cards", ())) == cards for e in after):
                 problems.append(f"置いておくカード {group} を、もどした・表にしたログのあとに、まだ置いている")
     return problems
+
+
+def _quiz_card_accepted(state: GameState, card_id: str, card: int) -> bool:
+    """v0.63・v0.80: クイズで置いてよいカードか（カツラのクイズ その3 はワザを持つポケモンのカード、その2 は手札のどのカードでも、ポケモン性格判定は進化カード。登録の実装の
+    ``kinds`` で決め、カード id で分けない）。"""
+    entry = state.effects.trainer_entry(card_id)
+    kinds = getattr(entry.effect, "kinds", None) if entry is not None else None
+    definition = state.card_def(card)
+    if kinds == "card_kind":
+        return True
+    if kinds == "personality":
+        return definition.is_evolution_pokemon
+    return definition.category == "pokemon" and bool(definition.attacks)
 
 
 def next_turn_after(state: GameState, turn: int, player: int) -> int:
@@ -4159,6 +4223,7 @@ def _face_up_prize_problems(state: GameState) -> list[str]:
     problems = []
     prizes = {uid for p in state.players for uid in p.prizes}
     revealed = {uid for e in state.log if e["kind"] == "prizes_revealed" for uid in e["cards"]}
+    revealed |= {e["card"] for e in state.log if e["kind"] == "prize_revealed"}  # v0.80: カードめくりゲーム
     for uid in face_up:
         if uid not in prizes:
             problems.append(f"おもてのサイドの記録のカード {uid} が、サイドにない")

@@ -24397,6 +24397,426 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: おうふくびんた=CoinFlipDamage、タマゴなげ=FailOnTailsDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-074": {
+      "basis": "kyuura_data",
+      "name_ja": "すごいつりざお",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinTakeEvolutionOrBasicFromDiscard: コインの「おもて」なら進化カード、「うら」ならたねポケモンのカードを、トラッシュから 1 枚手札に加える。どちらの種類のカードもなければ SRD1（コインの前）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-087": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギーチャージ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinReturnEnergyFromDiscardToDeck: コインの「おもて」なら、トラッシュのエネルギーカード（基本・特殊）を最大 2 枚山札にもどして切る。トラッシュにエネルギーカードがなければ UPZ2（コインの前）、0 枚の答えは UPZ1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-092": {
+      "basis": "kyuura_data",
+      "name_ja": "超エネルギー回収",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。SuperEnergyRetrievalPrinted: 手札 2 枚のトラッシュが使うための条件、トラッシュした 2 枚を除く基本エネルギーカードを最大 4 枚。処理に使う文面はこのカードの印刷の文面で、PR1-009 のエラッタ ERR-SUPER-ENERGY-RETRIEVAL の範囲としては扱わない（記録の cards は 1stp009 だけ）。決められない場面は同じ名前のカードの SR1・SR2。同じカードの組 SC-PR1-009（索引で、処理が同じことの証拠ではない）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo2-053": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギーアーク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo2（expansion_pack。発売 2000-07-07）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinsSearchBasicEnergyPerHeads: コイン 3 枚の「おもて」の数ちょうどの基本エネルギーカードを、山札から見せて手札に加え、切る。山札の基本エネルギーカードが 3 枚より少なければ FC1（コインの前）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-102": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギー増幅装置",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ReturnHandEnergyThenCoinSearchBasicEnergy: 手札のエネルギーカード 1 枚を見せて山札にもどして切り、コインの「おもて」なら基本エネルギーカードを 3 枚まで見せて手札に加え、切る。手札にエネルギーカードがなければ FC1、0 枚の答えは UPZ1、もどしたあと選べるカードがない選択は UPZ2。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-078": {
+      "basis": "kyuura_data",
+      "name_ja": "ウツギはかせ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ReturnHandDrawThenHandLock: 手札をすべて山札にもどして切り、7 枚引く。次の相手の番が終わるまで、手札からトレーナーカードを出して使えない（origin hand のトレーナーの使用の禁止）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-089": {
+      "basis": "kyuura_data",
+      "name_ja": "クルミ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。DrawThenReturnHandCardsToDeck: 2 枚引き、手札からちょうど 2 枚を見せずに山札にもどして切る。手札が足りなければ FC1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-091": {
+      "basis": "kyuura_data",
+      "name_ja": "タイムカプセル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。EachPlayerReturnDiscardToDeckThenHandLock: おたがいのプレイヤーが、のぞむならトラッシュのたねポケモン・進化カード・基本エネルギーカードを最大 5 枚見せて山札にもどし、それぞれの山札を切る。そのあと使ったプレイヤーに手札からのトレーナーの使用の禁止。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-100": {
+      "basis": "kyuura_data",
+      "name_ja": "マサキのメール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。DrawUntilHandSize: 手札が 4 枚になるまで引く。このカードを含む手札が 5 枚以上なら手札から出す前に TOO_MANY_CARDS_IN_HAND。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-082": {
+      "basis": "kyuura_data",
+      "name_ja": "新ポケモン図鑑HANDY808",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ShuffleThenArrangeDeckTop: 山札を切り、上から 5 枚を見て好きな順にもどす。山札が 5 枚より少なければ TOP1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-090": {
+      "basis": "kyuura_data",
+      "name_ja": "スロットゲーム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。RevealDeckTopTakeSameNamed: 山札を切り、上から 3 枚を見せ、2 枚以上の同じ名前のカードを手札に加え、残りをもどして切る。山札が 3 枚より少なければ TOP1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-093": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンギア",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。LookTopTakeTrainerThenShuffleLock: 山札の上から 7 枚を見て、トレーナーカードがあれば 1 枚を見せて手札に加え、切る。そのあと手札からのトレーナーの使用の禁止。山札が 7 枚より少なければ TOP1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-075": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンぎゃくしめい",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。OpponentChoosesMySwitchThenISwitchTheirs: 相手プレイヤーが使ったプレイヤーの控えを選んで入れ替え、そのあと使ったプレイヤーが相手の控えを選んで入れ替える。控えがいない側は入れ替えない。すごむの効果は SG1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-076": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモンマーチ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。EachPlayerMayBenchBasicFromDeck: おたがいのプレイヤーが、のぞむなら山札のたねポケモン 1 枚をベンチに出し、それぞれの山札を切る（ベンチに空きがないプレイヤーは何もしない）。まきちらせ!ベトベトガスのはたらく間の特殊能力を持つカードは GG1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo2-056": {
+      "basis": "kyuura_data",
+      "name_ja": "退化スプレーHYPER",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo2（expansion_pack。発売 2000-07-07）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。DevolveOneToHandWithBan: 自分の進化ポケモン 1 匹のいちばん上の進化カードを手札にもどして退化させ、この番はそのポケモンを進化させない（期限のある効果 EVOLUTION_BAN。EVOLUTION_PREVENTED）。進化ポケモンがいなければ HY1、「ばける」のポケモンは DV5。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "GD5-017": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのクイズ その2",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。GD5（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。SetAsideGuessKindQuiz: 手札のカード 1 枚を伏せて置き、相手プレイヤーが種類（ポケモン・エネルギーカード・トレーナーカード）を答え、正解なら相手が、正解でないなら使ったプレイヤーが 2 枚引く。置いたカードは手札にもどす。このカードを除く手札がなければ FC1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-080": {
+      "basis": "kyuura_data",
+      "name_ja": "カードめくりゲーム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。GuessOpponentPrizeKind: 相手のうらのサイドを 1 枚選んで種類を答え、おもてにして（そのまま）、正解なら 2 枚引く。うらの相手のサイドがなければ FC1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-105": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン性格判定",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。SetAsideGuessKindQuiz: 手札の進化カード 1 枚を伏せて置き、相手プレイヤーが「わるい」「やさしい」それ以外を答え、正解なら相手が、正解でないなら使ったプレイヤーが 3 枚引く。手札に進化カードがなければ手札から出す前に NO_EVOLUTION_CARD_IN_HAND。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-107": {
+      "basis": "kyuura_data",
+      "name_ja": "ロケット団の暗躍",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。LookOpponentHandReturnOneThenMayDraw: 相手の手札を見て 1 枚を相手の山札にもどして切り、相手プレイヤーはのぞむなら 2 枚まで引く。相手の手札が 0 枚なら FC1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-111": {
+      "basis": "kyuura_data",
+      "name_ja": "にせオーキドの発明",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。LookOpponentPrizesMayRedeal: 相手のサイドをすべて見て、のぞむならすべて相手の山札にもどして切り、上から同じ枚数をうらのままサイドに置く。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "PR1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "イマクニ？",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。PR1（promo。発売 1997-08-15）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ConditionOwnActiveTrainer: 自分の対戦ポケモンをこんらん状態にする。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "PR1-074": {
+      "basis": "kyuura_data",
+      "name_ja": "トロピカルウインド",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。PR1（promo。発売 1999）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinHealBothElseSleepBoth: コインの「おもて」ならおたがいの対戦ポケモンのダメージカウンターを 2 個ずつとりのぞき、「うら」ならおたがいの対戦ポケモンをねむり状態にする。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "PRN-026": {
+      "basis": "kyuura_data",
+      "name_ja": "おどれ！neo★イマクニ？",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。PRN（promo。発売 2000-06-28）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ConditionOwnActiveTrainer: どく・ねむり・マヒ・こんらんから 1 つを選び、自分の対戦ポケモンをその状態にする。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo1-077": {
+      "basis": "kyuura_data",
+      "name_ja": "モーモーミルク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo1（expansion_pack。発売 2000-02-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。ChooseOwnPokemonCoinsHeal: 自分の場のポケモン 1 匹を選び、コイン 2 枚の「おもて」の数 × 2 個のダメージカウンターをとりのぞく。ダメージカウンターののっていないポケモンは MK1。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-099": {
+      "basis": "kyuura_data",
+      "name_ja": "ばんのうごな",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinHealAndCureOwnActive: コインの「おもて」なら、自分の対戦ポケモンのダメージカウンターを 2 個とりのぞき、特殊状態を回復する。どちらの対象もなければ BP1（コインの前）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo3-054": {
+      "basis": "kyuura_data",
+      "name_ja": "いやしの野原",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo3（expansion_pack。発売 2000-11-23）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinHealOwnActiveStadium: スタジアム。自分の番ごとに 1 回、コインの「おもて」なら自分の対戦ポケモンのダメージカウンターを 2 個とりのぞく。ダメージカウンターがなければ HF1（コインの前）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-101": {
+      "basis": "kyuura_data",
+      "name_ja": "エネルギースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinRetrieveBasicEnergyStadium: スタジアム。v0.74 の CoinRetrieveBasicEnergyStadium と同じ処理（この版の印刷の文面は改行の位置だけが違う）。同じカードの組 SC-NIP1X-009（索引で、処理が同じことの証拠ではない）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-106": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキースタジアム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。CoinDrawStadium: スタジアム。v0.74 の CoinDrawStadium と同じ処理（この版の印刷の文面は改行の位置だけが違う）。同じカードの組 SC-PRN-015（索引で、処理が同じことの証拠ではない）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo4-112": {
+      "basis": "kyuura_data",
+      "name_ja": "ラジオとう",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。neo4（expansion_pack。発売 2001-04-20）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。LookDeckTopStadium: スタジアム。自分の番ごとに 1 回、山札の上から 2 枚まで見る（順番を変えない・切らない。見たカードは使ったプレイヤーだけ）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "ES2-033": {
+      "basis": "kyuura_data",
+      "name_ja": "エフェクトガード",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.80 で加えた（docs/neo-trainer-components-v0.80.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。トレーナー。AttachedEffectGuard: 自分の場のポケモンにつけ、次の相手の番の終わりにトラッシュする。つけているポケモンは相手のワザによるダメージ以外の効果を受けない（解決の基盤の効果の定義 EFFECT_GUARD）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定は持ち込まない"
     }
   }
 }

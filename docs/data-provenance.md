@@ -1896,3 +1896,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: ヤドン（neo1-045）・ネイティ（neo1-046）の `ja_text_source` の URL の番号が入れかわっている（neo01-046-yadon・neo01-045-naty）。
 - 報告事項（kyuura の作業）: マチスのラッタ（GD3-012）のいかりのまえばのダメージの目安が null（「?」がない）。エンジンは写しに「?」を足さず、この書き方と組にして受け付けた。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.79 の登録を写すと、52 枚の `engine_status` が `registered` になる。
+
+## v0.80: v0.79 の共通処理の修正と、トレーナー 30 枚
+
+[neo-trainer-components-v0.80.md](neo-trainer-components-v0.80.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_80`（30 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.79 までの 943 枚の
+  記録は変わっていない。
+- 30 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  30 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- neo1-092（超エネルギー回収の neo の版）は同じカードの組 SC-PR1-009 にあるが、ERR-SUPER-ENERGY-RETRIEVAL の `cards` は 1stp009 だけなので、エラッタの範囲として当てはめず、この版の印刷の
+  文面で処理する（研究の対応表の `errata_card_ids` に加えていない）。
+- kyuura の日本語の文面は nazonobasho.com（neo1・neo2）・ポケモンWiki（neo3・neo4）・pcg-search.com（GD5・PR1・PRN・ES2）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: スロットゲーム（neo1-090）の `ja_text_source` の URL の番号が 091（neo01-091-slotgame）で、カード番号と違う。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.80 の登録を写すと、30 枚の `engine_status` が `registered` になる。

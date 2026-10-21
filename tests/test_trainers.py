@@ -39,6 +39,7 @@ from tests.helpers import (
     V0_73_CARDS,
     V0_74_CARDS,
     V0_77_TRAINERS,
+    V0_80_CARDS,
     SABRINAS_PSYCHIC_CONTROL, V0_57_CARDS,
     BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER,
     IMPOSTER_OAK, IMPOSTER_OAKS_REVENGE, GAMBLER, SABRINAS_GAZE, BLAINES_LAST_RESORT, ERIKA, SECRET_MISSION, BLAINES_GAMBLE, LASS, POKEDEX,
@@ -93,7 +94,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS)))  # v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS)))  # v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         # v0.2f・v0.3a・v0.3b・v0.3c・v0.4a・v0.4b・v0.4c・v0.4d はワザ（ピカチュウ・ビードル・キャタピーとパラス・ロコン・
         # パラセクトとジュゴン・トランセルとコクーン・スピアー・バタフリー）を加えた。v0.5 はワザとポケモンパワー（フシギダネ・
         # フシギソウ・フシギバナ）を加えた。v0.6 はワザとポケモンパワー（ゼニガメ・カメール・カメックス）を加えた。v0.7 はワザと
@@ -152,7 +153,17 @@ class TrainerRegistryTest(unittest.TestCase):
                                            "each_player_may_draw_then_end_turn",
                                            # v0.74: スタジアム 13 枚の新しい型（ポケモンタワー・エネルギースタジアム・ラッキースタジアム・キョウの忍者ジム）
                                            "discard_to_hand_suppression_stadium", "coin_retrieve_basic_energy_stadium", "coin_draw_stadium",
-                                           "coin_bench_owner_basic_from_deck_stadium"})
+                                           "coin_bench_owner_basic_from_deck_stadium",
+                                       # v0.80: トレーナー 30 枚（neo の 2 枚のスタジアムは v0.74 の実装を使う）
+                                       "coin_take_evolution_or_basic_from_discard", "coin_return_energy_from_discard_to_deck", "super_energy_retrieval_printed",
+                                       "coins_search_basic_energy_per_heads", "return_hand_energy_then_coin_search_basic_energy", "return_hand_draw_then_hand_lock",
+                                       "draw_then_return_hand_cards_to_deck", "each_player_return_discard_to_deck_then_hand_lock", "draw_until_hand_size",
+                                       "shuffle_then_arrange_deck_top", "reveal_deck_top_take_same_named", "look_top_take_trainer_then_shuffle_lock",
+                                       "opponent_chooses_my_switch_then_i_switch_theirs", "each_player_may_bench_basic_from_deck", "devolve_one_to_hand_with_ban",
+                                       "set_aside_guess_kind_quiz", "guess_opponent_prize_kind", "look_opponent_hand_return_one_then_may_draw",
+                                       "look_opponent_prizes_may_redeal", "condition_own_active_trainer", "coin_heal_both_else_sleep_both",
+                                       "choose_own_pokemon_coins_heal", "coin_heal_and_cure_own_active", "coin_heal_own_active_stadium", "look_deck_top_stadium",
+                                       "attached_effect_guard"})
 
     def test_registered_trainers_are_playable_and_match_the_data(self):
         pool = load_card_pool()
@@ -240,7 +251,7 @@ class TrainerRegistryTest(unittest.TestCase):
                           ROCKETS_SNEAK_ATTACK, ENERGY_FLOW, MISTYS_TEARS, RECALL, ERIKAS_MAIDS, ERIKAS_PERFUME, MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA,
                           ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE, TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT,
                           BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT, KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL,
-                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS)))  # v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
+                          BLAINE_TRAINER, BROCKS_PROTECTION, GOOP_GAS_ATTACK, DIGGER) + V0_63_CARDS + V0_66_CARDS + V0_67_CARDS + V0_69_TRAINERS + V0_71_TRAINERS + V0_73_CARDS + V0_74_CARDS + V0_77_TRAINERS + V0_80_CARDS)))  # v0.80: トレーナー 30 枚。v0.77: neo1 のスーパーポケモン回収・マサキの転送装置。v0.74: スタジアム 13 枚。v0.73: 検索・回収・ドローのトレーナー 18 枚。v0.71: 再録のトレーナー 67 枚。v0.69: 新しい id 19 枚。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス、v0.61 でバトル場は穴だらけ!、v0.63 で 4 枚
         self.assertEqual(removed.attack_keys(), attacks)
         self.assertEqual(DEFAULT_EFFECTS.trainer_ids(), trainers)  # 元は変わらない
         self.assertEqual(DEFAULT_EFFECTS.attack_keys(), attacks)

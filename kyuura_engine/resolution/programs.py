@@ -980,15 +980,18 @@ def void_coin_question(run: AttackRun, decided: list[Element]) -> None:
         final = run.fs.evaded.get(target.pokemon_id)
         raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
                                None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
-    if "effect" in roles:
-        void = first_void(run.res, owner, target, Window.BEFORE_EFFECT)
-        if void is not None:
-            raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{void.implementation.kind}。ダメージと効果を決めるコイン）")
+    # v0.80（docs/neo-trainer-components-v0.80.md 6 章）: ダメージの要素と効果の要素は、それぞれを無効にする効果で別々に確かめる（v0.79 までは「効果の要素を無効にするなら
+    # ダメージの要素も無効」として、効果の要素があれば効果の窓だけを見ていた。エフェクトガードは効果の要素だけを無効にする）。どれかの要素が有効なら投げる
+    effect_void = first_void(run.res, owner, target, Window.BEFORE_EFFECT) if "effect" in roles else None
+    damage_void = first_void(run.res, owner, target) if "damage" in roles else None
+    if ("effect" in roles and effect_void is None) or ("damage" in roles and damage_void is None):
         return
-    void = first_void(run.res, owner, target)
-    if void is not None:
-        raise run.res.question("prevented_coin_damage", f"ポケモン {target.pokemon_id}",
-                               E.prevented_coin_damage_error(target.pokemon_id, void.implementation.kind))
+    if "effect" in roles:
+        covers = Window.BEFORE_DAMAGE in effect_void.definition.windows  # バリアーはダメージの要素も無効にする（v0.79 までと同じ理由の文）
+        kinds = effect_void.implementation.kind if covers or damage_void is None else f"{effect_void.implementation.kind}・{damage_void.implementation.kind}"
+        raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{kinds}。ダメージと効果を決めるコイン）")
+    raise run.res.question("prevented_coin_damage", f"ポケモン {target.pokemon_id}",
+                           E.prevented_coin_damage_error(target.pokemon_id, damage_void.implementation.kind))
 
 
 @dataclass(frozen=True)
@@ -1010,7 +1013,9 @@ class FailOnTails(Element):
         index = next((i for i, element in enumerate(run.program) if element is self), None)
         if index is None:
             raise RuntimeError("ワザの失敗のコインの要素が、処理している要素の並びにない（エンジンの不具合）")
-        void_coin_question(run, list(run.program[index + 1:]))
+        # v0.80（docs/neo-trainer-components-v0.80.md 2 章）: ワザが失敗しても処理する要素（``after_failure``。メタルクラッシュの「(その場合も、…)」）は、このコインの結果で
+        # 処理が決まらないので、コインが決める要素に数えない（v0.79 は数えていて、「ダメージを受けない」相手にも投げていた）
+        void_coin_question(run, [element for element in run.program[index + 1:] if not element.after_failure])
         flips = run.flip(self.count, by_heads=True)  # v0.35: すべて「おもて」か（「おもて」の数が枚数か）だけを使う
         run.fs.coins[self.name] = flips
         if any(side is TAILS for side in flips.results):

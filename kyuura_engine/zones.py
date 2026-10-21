@@ -1137,6 +1137,55 @@ def reveal_prizes(state: GameState, players: tuple[int, ...], *, trainer: int) -
         state.add_event("prizes_revealed", player=player, positions=positions, cards=cards, trainer_card=trainer)
 
 
+def reveal_prize(state: GameState, owner: int, position: int, *, trainer: int) -> int:
+    """プレイヤー ``owner`` のサイドの位置 ``position`` のうらのカードを、おもてにする（v0.80。カードめくりゲームの「そのカードをおもてにして、…おもてにした「サイドカード」は、そのまま
+    にしておく」）。カードは動かさない。``GameState.face_up_prizes`` に加える（サイドをはなれたら ``prize_left`` で除く。v0.63 のロケット団参上!と同じ記録）。ログ ``prize_revealed``
+    （``player``・``position``・``card``（公開）・``trainer_card``）。位置にカードがない・もうおもてなら ``RuntimeError``。おもてにしたカードを返す。"""
+    prizes = state.players[owner].prizes
+    if not 0 <= position < len(prizes) or prizes[position] in state.face_up_prizes:
+        raise RuntimeError(f"プレイヤー {owner} のサイドの位置 {position} のうらのカードをおもてにできない（確認の漏れ。エンジンの不具合）")
+    card = prizes[position]
+    state.face_up_prizes = state.face_up_prizes + (card,)
+    state.add_event("prize_revealed", player=owner, position=position, card=card, trainer_card=trainer)
+    return card
+
+
+def look_at_prizes(state: GameState, viewer: int, owner: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``viewer`` が、プレイヤー ``owner`` のサイドをすべて見る（v0.80。にせオーキドの発明の「相手の「サイドカード」を、すべて見る」）。カードは動かさない。ログ
+    ``look_at_prizes``（``cards`` は見たプレイヤーだけ。サイドの持ち主も見ない）。見たカード（サイドの並び）を返す。"""
+    cards = tuple(state.players[owner].prizes)
+    state.add_event("look_at_prizes", player=viewer, owner=owner, cards=cards, trainer_card=trainer)
+    return cards
+
+
+def prizes_to_deck(state: GameState, owner: int, *, trainer: int, looker: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` のサイドをすべて、同じ uid のまま ``owner`` の山札（一番下。このあと必ず切る）にもどす（v0.80。にせオーキドの発明の「それらをすべて相手の山札に
+    もどし」）。サイドを取ることではない（きぜつ・サイドを取る処理・勝ち負けの判定をしない）。おもてのサイドの記録は ``prize_left`` で除く。ログ ``prizes_to_deck``（``count`` は
+    公開・``cards`` は見たプレイヤー ``looker`` だけ）。もどしたカードを返す。"""
+    p = state.players[owner]
+    cards = tuple(p.prizes)
+    for card in cards:
+        prize_left(state, card)
+    p.prizes.clear()
+    p.deck.extend(cards)
+    state.add_event("prizes_to_deck", player=owner, count=len(cards), cards=cards, looker=looker, trainer_card=trainer)
+    return cards
+
+
+def deck_top_to_prizes(state: GameState, owner: int, count: int, *, trainer: int) -> tuple[int, ...]:
+    """プレイヤー ``owner`` の山札の上から ``count`` 枚を、おもてを見ないで、同じ uid のまま ``owner`` のサイドに置く（v0.80。にせオーキドの発明の「相手の山札の上から、
+    もどした枚数ぶんのカードを、おもてを見ないで引いて、相手の「サイドカード」におく」）。「カードを引く」（p.312）ではない（手札に加えない）。だれも見ない（ログ
+    ``deck_top_to_prizes`` は ``count`` だけ。カードを書かない）。山札が足りないなら ``RuntimeError``。置いたカードを返す。"""
+    p = state.players[owner]
+    if count > len(p.deck):
+        raise RuntimeError(f"プレイヤー {owner} の山札 {len(p.deck)} 枚から {count} 枚をサイドに置けない（エンジンの不具合）")
+    cards = tuple(p.deck[:count])
+    del p.deck[:count]
+    p.prizes.extend(cards)
+    state.add_event("deck_top_to_prizes", player=owner, count=count, trainer_card=trainer)
+    return cards
+
+
 def _add_set_aside(state: GameState, group: SetAsideCards) -> None:
     if not group.cards:
         raise RuntimeError(f"置いておくカードのない {group}（エンジンの不具合）")

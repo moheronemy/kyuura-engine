@@ -219,17 +219,17 @@ class RegistrationTest(unittest.TestCase):
         for code, ruling in (("UNRESOLVED_METAL_ENERGY_POWER_ORDER", "MT1"), ("UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER", "DE1")):
             entry = links["stop_codes"][code]
             self.assertEqual((entry["kyuura_disposition"], entry["engine_rulings"][0]["ruling_id"]), ("not_in_kyuura", ruling))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (166, 168))  # v0.79 で PK1 を加えた（v0.78 は 165・167）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (175, 177))  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた（v0.78 は 165・167）
 
     def test_counts(self):
         """写し・対応するカード 891、ポケモン 643・トレーナー 213・エネルギー 35、ワザ 1,088・特殊能力 74・特殊エネルギー 17。v0.79 でポケモン 52 枚（ワザ 94）を
         加えたので、今の数は 943（695・213・35）、ワザ 1,182。"""
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual(len(read_extract()["cards"]), 943)
-        self.assertEqual(len(pool.playable_ids), 943)
+        self.assertEqual(len(read_extract()["cards"]), 973)  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた
+        self.assertEqual(len(pool.playable_ids), 973)  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた
         categories = Counter(pool.get(c).category for c in pool.playable_ids)
-        self.assertEqual(dict(categories), {"pokemon": 695, "trainer": 213, "energy": 35})
+        self.assertEqual(dict(categories), {"pokemon": 695, "trainer": 243, "energy": 35})  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.energy_ids())), (1182, 74, 17))
 
     def test_unsupported_counts(self):
@@ -247,18 +247,18 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         ids = [x["id"] for x in targets]
         self.assertTrue(set(V0_78_CARDS) <= set(ids))
-        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 434)  # v0.79 で 52 枚を加えた
-        self.assertEqual(sum(1 for x in targets if x["id"].startswith("neo") and x["id"] not in pool.playable_ids), 227)  # v0.79 で neo 36 枚を加えた
-        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 207)  # v0.79 で拡張パック以外 16 枚を加えた
+        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 404)  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で 52 枚を加えた
+        self.assertEqual(sum(1 for x in targets if x["id"].startswith("neo") and x["id"] not in pool.playable_ids), 202)  # v0.80 で neo のトレーナー 25 枚を加えた  # v0.79 で neo 36 枚を加えた
+        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 202)  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で拡張パック以外 16 枚を加えた
 
     def test_unregistered_without_the_v0_78_entries(self):
-        """v0.78 の登録だけを除くと、13 枚とも未対応にもどり（v0.78 の時点では v0.77 の 878 枚。v0.79 の 52 枚を加えて 930 枚）、ほかのカードの対応は変わらない。"""
+        """v0.78 の登録だけを除くと、13 枚とも未対応にもどり（v0.78 の時点では v0.77 の 878 枚。v0.79 の 52 枚・v0.80 の 30 枚を加えて 960 枚）、ほかのカードの対応は変わらない。"""
         reduced = without_v0_78(E.DEFAULT_EFFECTS)
         before = pool_from_extract(read_extract(), reduced)
         after = load_card_pool()
         self.assertFalse(before.playable_ids & set(V0_78_CARDS))
         self.assertEqual(after.playable_ids - before.playable_ids, frozenset(V0_78_CARDS))
-        self.assertEqual(len(before.playable_ids), 930)  # v0.79 の 52 枚を含む（v0.78 では 878）
+        self.assertEqual(len(before.playable_ids), 960)  # v0.79 の 52 枚・v0.80 の 30 枚を含む（v0.78 では 878）
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(V0_78_CARDS))
         self.assertFalse(set(E.REPRINT_CARDS) & set(V0_78_CARDS))
 

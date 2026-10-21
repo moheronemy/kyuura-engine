@@ -1164,6 +1164,38 @@
     "neo4-089",
     "neo4-092"
   ],
+  "pool_v0_80": [
+    "neo1-074",
+    "neo1-087",
+    "neo1-092",
+    "neo2-053",
+    "neo4-102",
+    "neo1-078",
+    "neo1-089",
+    "neo1-091",
+    "neo4-100",
+    "neo1-082",
+    "neo1-090",
+    "neo1-093",
+    "neo1-075",
+    "neo1-076",
+    "neo2-056",
+    "GD5-017",
+    "neo1-080",
+    "neo4-105",
+    "neo4-107",
+    "neo4-111",
+    "PR1-013",
+    "PR1-074",
+    "PRN-026",
+    "neo1-077",
+    "neo4-099",
+    "neo3-054",
+    "neo4-101",
+    "neo4-106",
+    "neo4-112",
+    "ES2-033"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -85395,6 +85427,1286 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": null
+    },
+    {
+      "id": "neo1-074",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "すごいつりざお",
+        "en": "Super Rod"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら「進化カード」を、「うら」なら「たねポケモン」を1枚、あなたのトラッシュから選び出し、手札に加える。",
+          "en": "Flip a coin. If heads, put an Evolution card from your discard pile, if any, into your hand. If tails, put a Basic Pokémon card from your discard pile, if any, into your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-074",
+        "pokemontcg": [
+          "neo1-103"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-074-sugoitsurizao/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-074-sugoitsurizao/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-087",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギーチャージ",
+        "en": "Energy Charge"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたのトラッシュから「エネルギーカード」を最大2枚選び出し、山札にもどす。その後、その山札をよく切る。",
+          "en": "Flip a coin. If heads, shuffle up to 2 Energy cards from your discard pile into your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-087",
+        "pokemontcg": [
+          "neo1-85"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-087-energycharge/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-087-energycharge/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-092",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "超エネルギー回収",
+        "en": "Super Energy Retrieval"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "手札からカードを2枚選んでトラッシュしなければ、このカードは使えない。\nあなたのトラッシュから「基本エネルギーカード」を最大4枚選び出し、手札に加える。\nただし、このカードを使うためにトラッシュしたカードを選ぶことはできない。",
+          "en": "Trade 2 of the other cards in your hand for 4 basic Energy cards from your discard pile. If you have fewer than 4 basic Energy cards there, take all of them."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-092",
+        "pokemontcg": [
+          "neo1-89"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-092-choenergykaishu/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-092-choenergykaishu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PR1-009"
+    },
+    {
+      "id": "neo2-053",
+      "jp_set": "neo2",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギーアーク",
+        "en": "Energy Ark"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを2枚投げ、「おもて」の数ぶんの「基本エネルギーカード」をあなたの山札から選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": "Flip 2 coins. For each heads, search your deck for a Basic Energy card. Show that card to your opponent, then put it into your hand. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-053",
+        "pokemontcg": [
+          "neo2-75"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-053-energyark/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-053-energyark/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-102",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギー増幅装置",
+        "en": "Energy Amplifier"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札から「エネルギーカード」を1枚選び、相手プレイヤーに見せてから、山札にもどす。その後、その山札をよく切る。コインを投げて「おもて」なら、あなたの山札から「基本エネルギーカード」を3枚まで選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": "Choose an Energy card in your hand, show it to your opponent, and shuffle it into your deck. Then flip a coin. If heads, search your deck for up to 3 basic Energy cards. Show them to your opponent, and put them into your hand. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-102",
+        "pokemontcg": [
+          "neo4-98"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E5%A2%97%E5%B9%85%E8%A3%85%E7%BD%AE",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E5%A2%97%E5%B9%85%E8%A3%85%E7%BD%AE"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-078",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "ウツギはかせ",
+        "en": "Professor Elm"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札をすべて山札にもどし、その山札をよく切る。その後、山札からカードを7枚引いて、手札にする。\n次の相手の番が終わるまで、あなたは手札から「トレーナーカード」を出して使うことができない。",
+          "en": "Shuffle your hand into your deck. Then, draw 7 cards. You can't play any more Trainer cards this turn."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-078",
+        "pokemontcg": [
+          "neo1-96"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-078-utsugihakese/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-078-utsugihakese/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-089",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "クルミ",
+        "en": "Mary"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "山札からカードを2枚引いて、手札に加える。その後、手札からカードを2枚選び、山札にもどして、よく切る。",
+          "en": "Draw 2 cards. Then, shuffle 2 cards from your hand into your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-089",
+        "pokemontcg": [
+          "neo1-87"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-089-kurumi/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-089-kurumi/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-091",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "タイムカプセル",
+        "en": "Time Capsule"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュにある「ベイビィポケモン」「たねポケモン」「進化カード」「基本エネルギーカード」から最大5枚を選び出し、相手プレイヤーに見せてから、山札にもどしてよい。その後、それぞれの山札をよく切る。\n次の相手の番が終わるまで、あなたは手札から「トレーナーカード」を出して使うことができない。",
+          "en": "Your opponent may choose 5 Basic Pokémon, Evolution, and/or basic Energy cards in his or her discard pile. (If your opponent doesn't have that many, he or she chooses all or none of them.) If your opponent chooses any cards, he or she shuffles them into his or her deck. Either way, you may do the same, and you can't play any more Trainer cards this turn."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-091",
+        "pokemontcg": [
+          "neo1-90"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-091-timecapsule/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-091-timecapsule/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-100",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "マサキのメール",
+        "en": "Mail from Bill"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札から、あなたの手札が4枚になるまで、カードを引く。(あなたの手札が、このカードを含め5枚以上あるとき、このカードを使うことはできない。)",
+          "en": "You can't play this card if you have 5 or more cards in your hand (including this one). Draw cards until you have exactly 4 cards in your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-100",
+        "pokemontcg": [
+          "neo4-105"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B5%E3%82%AD%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B5%E3%82%AD%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-082",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "新ポケモン図鑑HANDY808",
+        "en": "New Pokédex"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札をよく切る。その後、あなたの山札の上から5枚のカードを見て、好きな順番に入れ替えて、山札の上にもどす。",
+          "en": "Shuffle your deck. Then, look at up to 5 cards from the top of your deck and rearrange them as you like."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-082",
+        "pokemontcg": [
+          "neo1-95"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-082-shinpokemonzukanhandy808/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-082-shinpokemonzukanhandy808/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-090",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "スロットゲーム",
+        "en": "Arcade Game"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "goldenrod_game_corner"
+        ],
+        "text": {
+          "ja": "あなたの山札をよく切り、その上から3枚のカードを見て、相手プレイヤーにも見せる。その中に2枚以上「同じ名前のカード」があったら、それらをあなたの手札に加える。\nその後、「同じ名前のカード」でなかったカードを山札にもどし、その山札をよく切る。",
+          "en": "Shuffle your deck, then reveal the top 3 cards of it. If at least 2 of those cards share the same name, put all the ones with that name into your hand and shuffle the rest into your deck. If none of them do, shuffle all 3 into your deck."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-090",
+        "pokemontcg": [
+          "neo1-83"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-091-slotgame/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-091-slotgame/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-093",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンギア",
+        "en": "PokéGear"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの山札の上から7枚のカードを見る。その中に「トレーナーカード」があれば1枚を選び、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。\n次の相手の番が終わるまで、あなたは手札から「トレーナーカード」を出して使うことができない。",
+          "en": "Look at the top 7 cards of your deck. If any of them are Trainer cards, you may show 1 of them to your opponent and put it into your hand. Shuffle your deck afterward. You can't play any more Trainer cards this turn."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-093",
+        "pokemontcg": [
+          "neo1-88"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-093-pokemongear/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-093-pokemongear/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-075",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンぎゃくしめい",
+        "en": "Double Gust"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手プレイヤーに、あなたの控えポケモンを1匹選ばせ、あなたの対戦ポケモンと入れ替える。その後、相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。\n(控えがいない側は、入れ替えをしない)",
+          "en": "If you have any Benched Pokémon, your opponent chooses 1 of them and switches it with your Active Pokémon. Then, if your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-075",
+        "pokemontcg": [
+          "neo1-100"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-075-pokemongyakushimei/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-075-pokemongyakushimei/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-076",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモンマーチ",
+        "en": "Pokémon March"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の山札から「ベイビィポケモン」または「たねポケモン」を1匹選びだし、ベンチに出してよい。その後、それぞれの山札をよく切る。\n(ベンチに空きがないプレイヤーは、なにもしない)",
+          "en": "Your opponent may search his or her deck for 1 Basic Pokémon card and put it onto his or her Bench. Then, you may search your deck for 1 Basic Pokémon card and put it onto your Bench. Then, each player shuffles his or her deck. (A player can't do any of this if his or her Bench is full.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-076",
+        "pokemontcg": [
+          "neo1-102"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-076-pokemonmarch/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-076-pokemonmarch/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-056",
+      "jp_set": "neo2",
+      "category": "trainer",
+      "name": {
+        "ja": "退化スプレーHYPER",
+        "en": "Hyper Devolution Spray"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場の「進化ポケモン」を1匹選ぶ。そのポケモンにのっている「進化カード」を上から1枚はがして、手札にもどし、そのポケモンを退化させる。\n(退化させたポケモンを、同じ番に進化させることはできない。)",
+          "en": "Choose 1 of your evolved Pokémon. Take the highest Stage Evolution card from that Pokémon and put it into your hand. (You can't evolve a Pokémon the turn you devolve it.)"
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-056",
+        "pokemontcg": [
+          "neo2-73"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-056-taikasprayhyper/",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-056-taikasprayhyper/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD5-017",
+      "jp_set": "GD5",
+      "category": "trainer",
+      "name": {
+        "ja": "カツラのクイズ その2",
+        "en": "Blaine's Quiz 2"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札からカードを1枚選び、おもてを下にして、置く。そのカードが「ポケモン」か「エネルギーカード」か「トレーナーカード」かを、相手プレイヤーに答えてもらう。その後、置いたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを2枚引く。正解でないなら、あなたは山札からカードを2枚引く。(置いたカードは、手札にもどす)",
+          "en": "Put a card from your hand face down in front of you. Your opponent guesses whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card over. If your opponent guessed right, he or she draws 2 cards. If your opponent guessed wrong, you draw 2 cards. Either way, return the card to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-111"
+        ],
+        "pcg_search": [
+          "1stgymd5017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5017.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5017.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-111"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5017",
+          "list_number": "017/025"
+        }
+      ]
+    },
+    {
+      "id": "neo1-080",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "カードめくりゲーム",
+        "en": "Card-Flip Game"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "goldenrod_game_corner"
+        ],
+        "text": {
+          "ja": "うらになっている相手の「サイドカード」を1枚選び、そのカードが「ポケモン(ベイビィポケモン・たねポケモン・進化カード)」か「トレーナーカード」か「エネルギーカード」かを答える。その後、そのカードをおもてにして、正解なら、あなたは山札からカードを2枚引いて、手札に加える。\nおもてにした「サイドカード」は、そのままにしておく。",
+          "en": "Choose 1 of your opponent's face-down Prizes. Guess whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card face up (and leave it face up). If you guessed right, draw 2 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-080",
+        "pokemontcg": [
+          "neo1-92"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-080-cardmekurigame/",
+      "jp_print": {
+        "level": null,
+        "rarity": "♦(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-080-cardmekurigame/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-105",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン性格判定",
+        "en": "Pokémon Personality Test"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの手札にある「進化カード」を1枚選び、おもてを下にして、おく。そのカードが、「わるい」ポケモン、「やさしい」ポケモン、それ以外の「進化カード」のうち、どのカードかを、相手プレイヤーに答えてもらう。おいたカードをおもてにして、正解なら、相手プレイヤーは山札からカードを3枚引いて、手札に加える。正解でないなら、あなたは山札からカードを3枚引いて、手札に加える。その後、おいたカードを、あなたの手札にもどす。(あなたの手札に「進化カード」がないとき、このカードを使うことはできない。)",
+          "en": "Put an Evolution card from your hand face down in front of you. Your opponent guesses whether it is a Pokémon card with Light in its name, a Pokémon card with Dark in its name, or neither one. Flip the card over. If your opponent guessed right, he or she draws 3 cards. If your opponent guessed wrong, you draw 3 cards. Either way, return the card to your hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-105",
+        "pokemontcg": [
+          "neo4-102"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E6%80%A7%E6%A0%BC%E5%88%A4%E5%AE%9A",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E6%80%A7%E6%A0%BC%E5%88%A4%E5%AE%9A"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-107",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ロケット団の暗躍",
+        "en": "Team Rocket's Evil Deeds"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手プレイヤーの手札を見る。その中から好きなカードを1枚選び出し、相手の山札にもどし、その山札をよく切る。その後、相手プレイヤーは、のぞむなら、山札からカードを2枚まで引いて、手札に加えてよい。",
+          "en": "Look at your opponent's hand and choose a card there. Your opponent shuffles that card into his or her deck. Then, your opponent may draw up to 2 cards."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-107",
+        "pokemontcg": [
+          "neo4-103"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E6%9A%97%E8%BA%8D",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B1%E3%83%83%E3%83%88%E5%9B%A3%E3%81%AE%E6%9A%97%E8%BA%8D"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-111",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "にせオーキドの発明",
+        "en": "Impostor Professor Oak's Invention"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "相手の「サイドカード」を、すべて見る。のぞむなら、相手の「サイドカード」の枚数を数え、それらをすべて相手の山札にもどし、その山札をよく切る。その後、相手の山札の上から、もどした枚数ぶんのカードを、おもてを見ないで引いて、相手の「サイドカード」におく。以後、それらのカードを相手の「サイドカード」にする。",
+          "en": "Look at your opponent's Prize cards. You may have your opponent shuffle them into his or her deck. If you do, your opponent takes that many cards from the top of his or her deck and sets them aside as his or her new Prize cards (without looking at them)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-111",
+        "pokemontcg": [
+          "neo4-94"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%AB%E3%81%9B%E3%82%AA%E3%83%BC%E3%82%AD%E3%83%89%E3%81%AE%E7%99%BA%E6%98%8E",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%AB%E3%81%9B%E3%82%AA%E3%83%BC%E3%82%AD%E3%83%89%E3%81%AE%E7%99%BA%E6%98%8E"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PR1-013",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "イマクニ？",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "自分の対戦ポケモンは「こんらん」状態になる。このカードをポケモンとして場に出すことはできない。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "カードの補足欄（説明の文）: ポケモンカードゲームのTV-CFソング「ポケモン言えるかな？」をうたっておどる、なぞの歌手。街でみかけたら、「イマクニ？さん、こんにちは」と必ずあいさつしよう。"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp013"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp013.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp013.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp013",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-074",
+      "jp_set": "PR1",
+      "category": "trainer",
+      "name": {
+        "ja": "トロピカルウインド",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、お互いの対戦ポケモンから、それぞれダメージカウンターを2つずつ、とりのぞく。「うら」なら、お互いの対戦ポケモンを「ねむり」状態にする。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stp074"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp074.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp074.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stp074",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-026",
+      "jp_set": "PRN",
+      "category": "trainer",
+      "name": {
+        "ja": "おどれ！neo★イマクニ？",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "「どく・ねむり・マヒ・こんらん」状態から1つを選び、あなたの対戦ポケモンを、その状態にする。このカードをポケモンとして場に出すことはできない。",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "カードの補足欄（説明の文）: 大きくなったらポケモンか、課長になりたいイマクニ？。どちらの夢もちょっとムリっぽいけど、「ポケモン言えるかneo？」を歌わせたら天下一品。「言えるかな業」に専念しようぜ、イマクニ？。"
+      ],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop026"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop026.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop026.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neop026",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo1-077",
+      "jp_set": "neo1",
+      "category": "trainer",
+      "name": {
+        "ja": "モーモーミルク",
+        "en": "Moo-Moo Milk"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場にいるポケモンを1匹選び、コインを2枚投げ、「おもて」の数×2個のダメージカウンターを、そのポケモンからとりのぞく。",
+          "en": "Choose 1 of your Pokémon. Flip 2 coins. Remove 2 damage counters times the number of heads from that Pokémon. If the Pokémon has fewer damage counters than that, remove all of them."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "art",
+          "summary": "イラスト",
+          "ja": "オタチがミルタンクの乳を飲んでいる",
+          "en": "不適切とされ、納屋に置かれたモーモーミルクの缶とピィのイラストに変更",
+          "confidence": "確実",
+          "sources": [
+            "X45"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-077",
+        "pokemontcg": [
+          "neo1-101"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-077-momomilk/",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-077-momomilk/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-099",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ばんのうごな",
+        "en": "Heal Powder"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "コインを投げて「おもて」なら、あなたの対戦ポケモンにのっているダメージカウンターを、2個とりのぞき、そのポケモンの「どく・ねむり・マヒ・こんらん」状態を、すべて回復させる。",
+          "en": "Flip a coin. If heads, your Active Pokémon is no longer Asleep, Confused, Paralyzed, or Poisoned and remove 2 damage counters from it. If your Active Pokémon has fewer damage counters than that, remove all of them."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-099",
+        "pokemontcg": [
+          "neo4-104"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B0%E3%82%93%E3%81%AE%E3%81%86%E3%81%94%E3%81%AA_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B0%E3%82%93%E3%81%AE%E3%81%86%E3%81%94%E3%81%AA_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-054",
+      "jp_set": "neo3",
+      "category": "trainer",
+      "name": {
+        "ja": "いやしの野原",
+        "en": "Healing Field"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分の対戦ポケモンにのっているダメージカウンターを、2個とりのぞく。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn, he or she may flip a coin. If heads, that player removes 2 damage counters from his or her Active Pokémon (1 if it only has 1)."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-054",
+        "pokemontcg": [
+          "neo3-61"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%84%E3%82%84%E3%81%97%E3%81%AE%E9%87%8E%E5%8E%9F",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%84%E3%82%84%E3%81%97%E3%81%AE%E9%87%8E%E5%8E%9F"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-101",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "エネルギースタジアム",
+        "en": "Energy Stadium"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分のトラッシュから「基本エネルギーカード」を1枚選び出し、相手プレイヤーに見せてから、手札に加える。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player puts a basic Energy card from his or her discard pile into his or her hand."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-101",
+        "pokemontcg": [
+          "neo4-99"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E3%82%B9%E3%82%BF%E3%82%B8%E3%82%A2%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC%E3%82%B9%E3%82%BF%E3%82%B8%E3%82%A2%E3%83%A0"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": "SC-NIP1X-009"
+    },
+    {
+      "id": "neo4-106",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ラッキースタジアム",
+        "en": "Lucky Stadium"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてよい。コインを投げて「おもて」なら、自分の山札からカードを1枚引いて、手札に加える。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may flip a coin. If heads, that player draws a card."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-106",
+        "pokemontcg": [
+          "neo4-100"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%83%E3%82%AD%E3%83%BC%E3%82%B9%E3%82%BF%E3%82%B8%E3%82%A2%E3%83%A0",
+      "jp_print": {
+        "level": null,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%83%E3%82%AD%E3%83%BC%E3%82%B9%E3%82%BF%E3%82%B8%E3%82%A2%E3%83%A0"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": "SC-PRN-015"
+    },
+    {
+      "id": "neo4-112",
+      "jp_set": "neo4",
+      "category": "trainer",
+      "name": {
+        "ja": "ラジオとう",
+        "en": "Radio Tower"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [
+          "stadium"
+        ],
+        "text": {
+          "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、自分の山札の上からカードを2枚まで見てよい。見たカードは、順番を変えずに、もとの山札にもどす。「スタジアムカード」は、バトル場の横に出して使う。別の「スタジアムカード」が場に出たとき、このカードをトラッシュする。",
+          "en": "This card stays in play when you play it. Discard this card if another Stadium card comes into play. Once during each player's turn (before attacking), that player may look at the top 2 cards of his or her deck and put them back in the same order."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-112",
+        "pokemontcg": [
+          "neo4-95"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%82%B8%E3%82%AA%E3%81%A8%E3%81%86_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%82%B8%E3%82%AA%E3%81%A8%E3%81%86_(%E3%82%AB%E3%83%BC%E3%83%89%E3%82%B2%E3%83%BC%E3%83%A0)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES2-033",
+      "jp_set": "ES2",
+      "category": "trainer",
+      "name": {
+        "ja": "エフェクトガード",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "このカードは、あなたの場にいるポケモンにつけて使い、次の相手の番の終わりにトラッシュする。このカードをつけているポケモンは、相手のワザによる「ダメージ以外の効果」を受けない。(ダメージは、そのまま受ける)",
+          "en": null
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2033"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2033.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2033.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2033",
+          "list_number": "033/036"
+        }
+      ]
     }
   ]
 }

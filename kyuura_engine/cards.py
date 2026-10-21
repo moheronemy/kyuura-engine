@@ -504,6 +504,7 @@ POOL_KEYS = (
     "pool_v0_77",  # v0.77（neo 期の拡張パック（neo1〜neo4）の、既存の効果の型で表せるカード 52 枚。docs/neo-existing-effects-v0.77.md）
     "pool_v0_78",  # v0.78（悪・鋼エネルギー 5 枚と、「悪」「鋼」エネルギーを使うポケモン 8 枚。docs/darkness-metal-energy-v0.78.md）
     "pool_v0_79",  # v0.79（既存の効果の型と、それを組み合わせた 11 の組で表せるポケモン 52 枚。docs/shared-checks-pokemon-reuse-v0.79.md）
+    "pool_v0_80",  # v0.80（トレーナー 30 枚。スタジアム 4 枚を含む。docs/neo-trainer-components-v0.80.md）
 )
 
 

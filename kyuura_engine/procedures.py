@@ -287,8 +287,11 @@ def mid_check_knockout_divergence(state: GameState, order: tuple[int, int], pena
     """1 の悪エネルギーのあとに HP 以上のポケモンがいるとき、そのポケモンが 1 と 2 のあいだに場をはなれる読み方と、2 のあとまで場に残る読み方で、ほかのポケモンの 2 の処理・
     2 のあとのきぜつの判定の問い合わせ（``_mid_check_view``）が変わるなら、止める理由（PK1。v0.79）。変わらないなら None（v0.78 と同じに処理する）。
 
-    1 の結果は状態の複製の上でのせ（悪エネルギーのダメージ・ダメージカウンター）、場をはなれる読み方の複製では、HP 以上のポケモンを場から除く（カードの行き先・サイドは
-    問い合わせに関係しないので扱わない）。カード id で分けず、場の問い合わせだけで比べる。状態を変えない。"""
+    1 の結果は状態の複製の上でのせ（悪エネルギーのダメージ・ダメージカウンター）、場をはなれる読み方の複製では、HP 以上のポケモンを場から除く。v0.80
+    （docs/neo-trainer-components-v0.80.md 2 章）: 場をはなれる読み方では、バトル場が空いたプレイヤーが 2 の前にバトル場に出しうるポケモン（控えのどれか）を、
+    出しうるすべての組で出してから比べる（出したポケモンで［へんしん］の姿・最大HP・特殊能力が変わる）。控えがいなければ空のまま。また、場をはなれる読み方で 2 の前に
+    対戦が終わりうる（ポケモンがいなくなる・サイドがなくなる）のに、場に残る読み方の 2 のあとに HP 以上になるポケモンがいれば、勝ち負けが変わりうるので止める。
+    カード id で分けず、場の問い合わせだけで比べる。状態を変えない。"""
     after = state.clone()
     per = state.rules.damage_per_counter
     for owner, pokemon, _, kind in penalties:
@@ -298,19 +301,64 @@ def mid_check_knockout_divergence(state: GameState, order: tuple[int, int], pena
     if not knocked:
         return None
     keep = frozenset(p.pokemon_id for o in order for p in after.players[o].in_play()) - knocked
-    left = after.clone()
+    stay = _mid_check_view(after, order, keep)
+    for promoted, left in _mid_check_leave_readings(after, order, knocked):
+        leave = _mid_check_view(left, order, keep)
+        changed = sorted(pid for pid in keep if stay.get(pid) != leave.get(pid))
+        where = f"（バトル場に出すポケモン {promoted}）" if promoted else ""
+        if changed:
+            return (f"ポケモンチェックの 1（悪エネルギー）でポケモン {sorted(knocked)} が HP 以上になり、1 と 2 のあいだにきぜつの判定をする（場をはなれる）かで、ポケモン {changed} の"
+                    f" 2 の「どく」・きぜつの判定の問い合わせが変わる{where}（場に残る: {[stay.get(pid) for pid in changed]}、場をはなれる: {[leave.get(pid) for pid in changed]}）。"
+                    "1 と 2 のあいだのきぜつの判定の時点は公式ルール 2000.02.14版（p.323）と記録から決められないので、ダメージを与える前に対戦を止める（PK1）")
+        later = sorted(pid for pid in keep if isinstance(stay.get(pid), tuple) and len(stay[pid]) == 4 and stay[pid][1])
+        if later and _mid_check_game_ends(after, left, order, knocked):
+            return (f"ポケモンチェックの 1（悪エネルギー）でポケモン {sorted(knocked)} が HP 以上になり、1 と 2 のあいだにきぜつの判定をする（場をはなれる）と 2 の前に対戦が"
+                    f"終わりうるが、2 のあとまで場に残るなら 2 のあとにポケモン {later} も HP 以上になる（勝ち負けが変わりうる）。1 と 2 のあいだのきぜつの判定の時点は公式ルール"
+                    " 2000.02.14版（p.323）と記録から決められないので、ダメージを与える前に対戦を止める（PK1）")
+    return None
+
+
+def _mid_check_leave_readings(after: GameState, order: tuple[int, int], knocked: set[int]):
+    """v0.80: 場をはなれる読み方の複製（HP 以上のポケモンを除き、バトル場が空いたプレイヤーは控えのどれかを出す）を、出しうるすべての組で返す（(出したポケモンの番号の並び,
+    状態)）。控えのいないプレイヤーのバトル場は空のまま。"""
+    import itertools
+
+    choices = []
     for owner in order:
-        player = left.players[owner]
-        if player.active is not None and player.active.pokemon_id in knocked:
-            player.active = None
-        player.bench = [p for p in player.bench if p.pokemon_id not in knocked]
-    stay, leave = _mid_check_view(after, order, keep), _mid_check_view(left, order, keep)
-    changed = sorted(pid for pid in keep if stay.get(pid) != leave.get(pid))
-    if not changed:
-        return None
-    return (f"ポケモンチェックの 1（悪エネルギー）でポケモン {sorted(knocked)} が HP 以上になり、1 と 2 のあいだにきぜつの判定をする（場をはなれる）かで、ポケモン {changed} の"
-            f" 2 の「どく」・きぜつの判定の問い合わせが変わる（場に残る: {[stay.get(pid) for pid in changed]}、場をはなれる: {[leave.get(pid) for pid in changed]}）。"
-            "1 と 2 のあいだのきぜつの判定の時点は公式ルール 2000.02.14版（p.323）と記録から決められないので、ダメージを与える前に対戦を止める（PK1）")
+        player = after.players[owner]
+        bench = [p.pokemon_id for p in player.bench if p.pokemon_id not in knocked]
+        emptied = player.active is not None and player.active.pokemon_id in knocked
+        choices.append([(owner, pid) for pid in bench] if emptied and bench else [None])
+    for combination in itertools.product(*choices):
+        left = after.clone()
+        for owner in order:
+            player = left.players[owner]
+            if player.active is not None and player.active.pokemon_id in knocked:
+                player.active = None
+            player.bench = [p for p in player.bench if p.pokemon_id not in knocked]
+        promoted = []
+        for pick in combination:
+            if pick is None:
+                continue
+            owner, pid = pick
+            player = left.players[owner]
+            player.active = next(p for p in player.bench if p.pokemon_id == pid)
+            player.bench = [p for p in player.bench if p.pokemon_id != pid]
+            promoted.append(pid)
+        yield tuple(promoted), left
+
+
+def _mid_check_game_ends(after: GameState, left: GameState, order: tuple[int, int], knocked: set[int]) -> bool:
+    """v0.80: 場をはなれる読み方で、2 の前に対戦が終わりうるか（ポケモンがいなくなったプレイヤーがいる、またはきぜつで取るサイドがサイドの枚数以上になる。p.311）。"""
+    from .effects import counts_as_knockout
+
+    for owner in order:
+        if not left.players[owner].in_play():
+            return True
+        taken = sum(1 for p in after.players[1 - owner].in_play() if p.pokemon_id in knocked and counts_as_knockout(after, p))
+        if taken and taken >= len(after.players[owner].prizes):
+            return True
+    return False
 
 
 def finish(state: GameState, result: GameResult) -> None:

@@ -330,9 +330,11 @@ def play_game(decks, seed, *, cure=True, max_steps=10000, not_declarable=(), ext
                     continue
                 if isinstance(command, EvolvePokemon) and error.code == "EVOLUTION_PREVENTED":
                     # v0.47: はたらいている［げんしのちから］（プテラ）。場から確かめる（重ねる前に拒否）
-                    if not evolution_preventers(state):
+                    # v0.80: 退化スプレーHYPER でその番に退化させたポケモン（evolution_ban）も、同じコードで拒否する
+                    banned = any(record.kind == "evolution_ban" and record.pokemon_id == command.target for record in state.trainer_effects)
+                    if not evolution_preventers(state) and not banned:
                         raise AssertionError(f"進化できなくする特殊能力がはたらいていないのに EVOLUTION_PREVENTED: {command}")
-                    observed["stopped_evolve_EVOLUTION_PREVENTED"] += 1
+                    observed["stopped_evolve_EVOLUTION_PREVENTED_ban" if banned else "stopped_evolve_EVOLUTION_PREVENTED"] += 1
                     turn_tried.update({"evolution_prevented", "evolve", "evolve2"})
                     continue
                 if isinstance(command, EvolvePokemon):

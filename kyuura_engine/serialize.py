@@ -561,7 +561,7 @@ def state_to_dict(state: GameState, format_version: int = 1) -> dict[str, Any]:
     if format_version >= 16:
         data["trainer_effects"] = [
             {"kind": e.kind, "player": e.player, "source_card": e.source_card, "card_id": e.card_id, "created_turn": e.created_turn,
-             "expires_turn": e.expires_turn}
+             "expires_turn": e.expires_turn, **({} if e.pokemon_id is None else {"pokemon_id": e.pokemon_id})}  # v0.80: 退化スプレーHYPER の禁止だけ
             for e in state.trainer_effects
         ]
     if format_version >= 17:

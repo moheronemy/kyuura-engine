@@ -302,6 +302,12 @@ QUIZ_ANSWER = "quiz_answer"
 # 0〜1 枚（0 枚は出さない）。選べるもの・選ぶ数は使ったプレイヤーだけが見る（観測）
 SECRET_PLAN_CARD = "secret_plan_card"
 
+# v0.80（docs/neo-trainer-components-v0.80.md）。どれもトレーナーの効果の途中の決定（再開先は "trainer"、段階は Phase.DECISION）
+# カードめくりゲームで選ぶ、うらになっている相手のサイドの位置。決めるのは使ったプレイヤー（位置で選ぶ。選ぶ前に内容を見せない）
+SELECT_OPPONENT_PRIZE = "select_opponent_prize"
+# ポケモンギアで、見た山札の上の 7 枚のうちのトレーナーカードから手札に加える 1 枚。決めるのは使ったプレイヤー（選べるものの数は山札の中身を漏らすので、ほかの人に見せない）
+TAKE_LOOKED_TRAINER = "take_looked_trainer"
+
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
 # 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。

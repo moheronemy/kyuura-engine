@@ -40,6 +40,8 @@ from .decisions import (
     SEARCH_DECK_OR_DISCARD,
     TAKE_LOOKED_POKEMON,
     SECRET_PLAN_CARD,
+    SELECT_OPPONENT_PRIZE,
+    TAKE_LOOKED_TRAINER,
     DISCARD_ENERGY,
     DISCARD_FROM_HAND,
     DISCARD_OPPONENT_ENERGY,
@@ -142,11 +144,13 @@ OPTION_MEANINGS: dict[str, str] = {
     DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
     SECRET_PLAN_CARD: "card",
+    # v0.80: カードめくりゲームで選ぶ相手のサイドの位置（裏のカード）・ポケモンギアで見た 7 枚から手札に加えるトレーナーカード
+    SELECT_OPPONENT_PRIZE: "position", TAKE_LOOKED_TRAINER: "card",
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
-                                  TAKE_LOOKED_POKEMON})
+                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER})
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
 # v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
@@ -155,7 +159,9 @@ DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK
 # v0.75: 山札のカードを選ぶ決定（SEARCH_DECK。カスミのメノクラゲの「くらげのむれ」は選べるものの数だけ選べる）・山札のエネルギーカードをつける決定（ATTACH_FROM_DECK。キングラーの
 # 「しおまねき」は最大 3 枚）も、選べるものの数・選ぶ数が山札の中身を漏らすので見せない（v0.74 までは、トレーナー・ワザのこの 2 つの決定の数を決めるプレイヤーでない人にも
 # 見せていた。意図した変更）
-HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK})
+# v0.80: ポケモンギアの見た 7 枚のうちのトレーナーカード（TAKE_LOOKED_TRAINER）も、選べるものの数が山札の中身を漏らすので見せない
+HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_DECK_OR_DISCARD, TAKE_LOOKED_POKEMON, BENCH_FROM_DECK, SEARCH_DECK, ATTACH_FROM_DECK,
+                                TAKE_LOOKED_TRAINER})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -387,7 +393,8 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
                            "origin": lock.origin}
                           for lock in state.trainer_locks],
         # v0.56: トレーナーを使ったプレイヤーに与えた期限のある効果（カスミ・キョウ・見えない壁。公開の情報）
-        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn}
+        "trainer_effects": [{"kind": e.kind, "player": e.player, "card": e.source_card, "card_id": e.card_id, "expires_turn": e.expires_turn,
+                             **({} if e.pokemon_id is None else {"pokemon_id": e.pokemon_id})}  # v0.80: 退化スプレーHYPER の禁止
                             for e in state.trainer_effects],
         # v0.57: 場に出ているスタジアム（両方の場の境界線上。公開の情報）と、この番にスタジアムの効果を使ったプレイヤー
         "stadium": None if state.stadium is None else {"owner": state.stadium.owner, "placed_turn": state.stadium.placed_turn,
@@ -422,6 +429,11 @@ def _hand_looker_or_owner(event, viewer) -> bool:
 def _hand_owner_or_looker(event, viewer) -> bool:
     """v0.55: ロケット団のおねーさんで相手の山札にもどさせたカードは、手札の持ち主（``player``）と、手札を見て選んだプレイヤー（``looker``）に見える。"""
     return viewer is not None and viewer in (event.get("player"), event.get("looker"))
+
+
+def _looker_only(event, viewer) -> bool:
+    """v0.80: にせオーキドの発明で相手の山札にもどしたサイドは、サイドを見たプレイヤー（``looker``）だけに見える（サイドの持ち主は見ていない）。"""
+    return viewer is not None and viewer == event.get("looker")
 
 
 def _taken_deck_top(event, viewer) -> bool:
@@ -459,6 +471,10 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "quiz_card_set": (("card",), _only_player),
     # v0.67: マチスの秘策でうらにしてベンチに出したカード（持ち主だけ。おもてにしたら ``secret_plan_revealed`` で全員）
     "secret_plan_placed": (("card",), _only_player),
+    # v0.80: にせオーキドの発明で見た相手のサイド（見たプレイヤーだけ）・山札にもどしたサイド（見たプレイヤーだけ。枚数は公開）・ポケモンマーチで出さなかった理由（山札の中身の情報）
+    "look_at_prizes": (("cards",), _only_player),
+    "prizes_to_deck": (("cards",), _looker_only),
+    "trainer_bench_from_deck_declined": (("reason",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
@@ -520,6 +536,9 @@ PUBLIC_EVENTS = frozenset({
     "discard_to_hand_suppressed", "stadium_retrieve_energy", "stadium_bench_from_deck",
     # v0.75: エナジーサポートで、つける控えが「とうめい」で受けなかったので持ち主のトラッシュに置いたカード（トラッシュは公開の情報）
     "deck_energy_evaded",
+    # v0.80: カードめくりゲーム（おもてにしたサイド・答え）・山札の上から置いたサイド（枚数だけ）・スロットゲーム（見せた 3 枚）・クイズの種類の答えと表にしたカード・ポケモンマーチで
+    # ベンチに出したカード・いやしの野原（場は公開の情報）
+    "prize_revealed", "prize_guess", "deck_top_to_prizes", "reveal_deck_top", "quiz_kind_answer", "quiz_kind_reveal", "trainer_bench_from_deck", "stadium_heal",
 })
 
 

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.79）
+# 実装状況（v0.1〜v0.80）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3703,3 +3703,21 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 434・neo 227・拡張パック以外 207） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts` |
 | 52 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com・nazonobasho.com・ポケモンWiki の転記） | — |
 | リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.80: v0.79 の共通処理の修正（A・B）と、トレーナー 30 枚
+
+[neo-trainer-components-v0.80.md](neo-trainer-components-v0.80.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| A: PK1 の確かめで、2 の前にバトル場に出しうる控えを出してから比べる（出し方のすべての組。対戦が終わりうる読み方も） | 実装済み・テスト済み（PK1 の裁定は未解決のまま） | GR-2000-P323-POKEMON-CHECK の順番だけでは決まらない | test_neo_trainer_components_v0_80.py `MidCheckReplacementTest` |
+| B: ワザが失敗しても処理する要素を、失敗のコインが決める要素に数えない | 実装済み・テスト済み（「ダメージを受けない」相手は既存の `UNRESOLVED_PREVENTED_COIN_DAMAGE`。3 つの先読みの方法・両方のコインの面） | 印刷の文面（PRN-014） | 同 `FailureSurvivingElementTest` |
+| エフェクトガード（相手のワザのダメージ以外の効果を受けない。コインの前の確かめでダメージと効果を別々に） | 実装済み・テスト済み（両方が無効なら既存の HC3） | 印刷の文面（ES2-033） | 同 `EffectGuardCoinTableTest` |
+| 手札から出して使うことの禁止（ウツギはかせ・タイムカプセル・ポケモンギア。次の相手の番の終わりまで。スタジアム・ついているカードは止めない） | 実装済み・テスト済み | 印刷の文面 | 同 `HandTrainerLockTest` |
+| 錯乱ジムで、手札から出して使うことの禁止を受けているプレイヤーがかわりに使う（TL1） | 裁定が未解決（使うを選ぶと止める） | 記録で決まらない | 同 `test_borrowing_under_a_hand_lock_is_tl1` |
+| 退化スプレーHYPER（その番の進化の禁止 `EVOLUTION_BAN`） | 実装済み・テスト済み（ほかの効果で退化したポケモンの DV2 は未解決のまま） | 印刷の文面 | 同 `DevolutionSprayHyperTest` |
+| トレーナー 30 枚（スタジアム 4 枚） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | 同 `RegistrationTest` とカードごとのテスト |
+| SRD1・UPZ1・UPZ2・TOP1・HY1・MK1・BP1・HF1 | 裁定が未解決（止める） | 記録で決まらない | 同 カードごとのテスト |
+| 未対応の数（全対象 404・neo 202・拡張パック以外 202） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 30 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| ポケモンのどうぐ・ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |

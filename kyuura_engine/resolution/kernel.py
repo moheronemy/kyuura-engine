@@ -60,7 +60,7 @@ from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from .. import effects as E
 from ..state import RETALIATION_FIXED
-from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EVADED, VOID_FLED, VOID_IMMUNE, note_received
+from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EFFECT_ONLY, VOID_EVADED, VOID_FLED, VOID_IMMUNE, note_received
 
 from . import catalog as C
 from .events import (
@@ -304,6 +304,8 @@ def first_void(res: Resolution, owner: int, pokemon: PokemonInPlay, window: Wind
     for instance in C.in_window(res.state, window, owner, pokemon, res.catalog):
         if not held_by_receiver and instance.definition.origin is not C.Origin.TRAINER_EFFECT and instance.pokemon_id == pokemon.pokemon_id:
             continue
+        if instance.definition.by_opponent and instance.definition.timing is C.Timing.VOID and owner == res.state.current_player:
+            continue  # v0.80: 「相手のワザによる」（エフェクトガード）。受けるポケモンの持ち主のワザ（自分のワザの自分への効果）には当てはめない
         if instance.definition.timing is C.Timing.VOID and C.working(res.state, instance, pokemon):
             return instance
     return None
@@ -321,7 +323,10 @@ def note_receipt(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonIn
 
 def _void_reason(res: Resolution, owner: int, pokemon: PokemonInPlay) -> str:
     """v0.62: ダメージの要素を無効にした効果が、効果の要素も無効にする効果（「ワザをうけない」）か、ダメージだけを無効にする効果か。"""
-    return VOID_ATTACK_BARRIER if first_void(res, owner, pokemon, Window.BEFORE_EFFECT) is not None else VOID_DAMAGE_ONLY
+    # v0.80: ダメージの要素を無効にした効果そのものが、効果の要素も無効にするか（エフェクトガードは効果の要素だけを無効にするので、「ダメージを受けない」状態と重なっても
+    # ダメージだけの無効のまま）
+    void = first_void(res, owner, pokemon)
+    return VOID_ATTACK_BARRIER if void is not None and Window.BEFORE_EFFECT in void.definition.windows else VOID_DAMAGE_ONLY
 
 
 def lost_pokemon(res: Resolution, owner: int, pokemon_id: int | None = None) -> PokemonInPlay | None:
@@ -959,7 +964,8 @@ def reaches(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay,
             state.add_event("effect_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, effect=str(frame.attack_key),
                             element=element, persistent_effect=void.implementation.kind, source_card=void.implementation.source_card)
             res.trace.record(DamageVoided(frame.id, pokemon.pokemon_id, void.name))
-            note_receipt(res, fs, owner, pokemon, voided=(element, VOID_ATTACK_BARRIER))
+            reason = VOID_ATTACK_BARRIER if Window.BEFORE_DAMAGE in void.definition.windows else VOID_EFFECT_ONLY  # v0.80: エフェクトガード
+            note_receipt(res, fs, owner, pokemon, voided=(element, reason))
             return False
     memo = fs.reception.get(pokemon.pokemon_id)
     if memo is None:

@@ -175,6 +175,21 @@ INVISIBLE_WALL = EffectDefinition(
     "invisible_wall", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
     "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
 )
+# v0.80（docs/neo-trainer-components-v0.80.md 6 章）: エフェクトガード（「このカードをつけているポケモンは、相手のワザによる「ダメージ以外の効果」を受けない。(ダメージは、そのまま
+# 受ける)」）。ついているトレーナーの効果で、効果の要素の前の窓（BEFORE_EFFECT）だけで無効にする（ダメージの要素は無効にしない。BEFORE_DAMAGE の窓に入れない）。「相手の」ワザだけ
+# （``by_opponent``。受けるポケモンの持ち主がワザを使うプレイヤーなら当てはめない。``kernel.first_void``）。特殊能力ではないので、特殊状態・かがくへんかガスでは消えない
+EFFECT_GUARD = EffectDefinition(
+    "effect_guard", Origin.TRAINER_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), frozenset(), "now", False,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+
+
+@dataclass(frozen=True)
+class EffectGuardRecord:
+    """v0.80: エフェクトガードの効果のもと（ついているカード）。``first_void`` が返す効果の ``implementation``（ログ ``effect_prevented`` の ``persistent_effect``・``source_card``）。"""
+
+    source_card: int
+    kind: str = "effect_guard"
 
 # v0.13 の実装の型 → 効果の定義（型での振り分けはここだけ。部分型は親の型の定義を使う）
 POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
@@ -243,6 +258,9 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
     # 問い合わせの時点の場で決める（``effects.bench_damage_preventions``）
     for record in E.bench_damage_preventions(state, owner, pokemon):
         found.append(EffectInstance(INVISIBLE_WALL, owner, pokemon.pokemon_id, pokemon.card, implementation=record))
+    # v0.80: ついているエフェクトガード（効果の登録表の実装が ``blocks_attack_effects``。カード id で分けない）
+    for card in E.effect_guards(state, pokemon):
+        found.append(EffectInstance(EFFECT_GUARD, owner, pokemon.pokemon_id, pokemon.card, implementation=EffectGuardRecord(card)))
     return tuple(found)
 
 

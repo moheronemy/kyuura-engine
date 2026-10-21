@@ -100,7 +100,12 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",
                                          "UNRESOLVED_METAL_ENERGY_POWER_ORDER", "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",
                                          # v0.79 で加えた PK1 も kyuura の一覧にない（docs/shared-checks-pokemon-reuse-v0.79.md 2 章）
-                                         "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"})
+                                         "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",
+                                         # v0.80 で加えた 9 件も kyuura の一覧にない（docs/neo-trainer-components-v0.80.md 7 章）
+                                         "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET", "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE",
+                                         "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET", "UNRESOLVED_DECK_TOP_SHORT", "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",
+                                         "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET", "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",
+                                         "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET", "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

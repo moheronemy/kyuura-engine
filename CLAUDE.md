@@ -3067,3 +3067,74 @@
 - 検証用デッキ `W79`・`P79`・`F79`・`C79` と組 `PAIRINGS_V0_79`（`W79` 対 `C79`・`P79` 対 `F79`・`W79` 対 `P79`・`C79` 対 `P79`）は tools/existing_effect_games.py の `--batch v0.79` です（前の版の組の
   結果は変わらない）。v0.79 のポケモンは TARGETS に加え、使っていないワザを選ぶ手順・エネルギーをためる手順を重ね、払えるかはエンジンの支払いの問い合わせで見ます。数えた結果は `v079_uses`。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## v0.79 の共通処理の修正（A・B）と、トレーナー 30 枚（v0.80）
+
+### 対象と数
+
+- kyuura の data/engine_targets.json の対象から、トレーナー 30 枚（スタジアム 4 枚を含む。neo 期の拡張パックと拡張パック以外の商品。写しの組 `pool_v0_80`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.79 | v0.80 |
+  |---|---|---|
+  | 写し・対応するカード | 943・943 | 973・973 |
+  | 対応ポケモン・トレーナー・エネルギー | 695・213・35 | 695・243・35 |
+  | スタジアム（トレーナーの登録のうち） | 33 | 37 |
+  | 未対応（全対象・neo・拡張パック以外） | 434・227・207 | 404・202・202 |
+  | 停止コード・未解決の裁定 | 166・168 | 175・177 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API・ワザと特殊能力の登録（1,182・74）は変えていません。カードごとの処理・根拠・検証は docs/neo-trainer-components-v0.80.md。
+- 公式ガイドブックの新しいキャプチャ・OCR・読み直しは行っていません。30 枚の pcg-search.com・カードの画像との照合もしていません。英語版の文面・現代のルール・2000.02.14 版のあとの規定
+  （サポーター・ポケモンのどうぐの区分など）で補わないでください。
+- テストの定数は tests/helpers.py の `V0_80_CARDS`。
+
+### A: PK1 の確かめと交代
+
+- `procedures.mid_check_knockout_divergence` は、場をはなれる読み方で、バトル場が空いたプレイヤーが 2 の前に出しうる控えの出し方のすべての組（`_mid_check_leave_readings`）を作って比べます。
+  ［へんしん］のメタモンの姿・最大HP など、出したポケモンで問い合わせが変わるからです。バトル場を空けたまま比べないでください。
+- 場をはなれる読み方で 2 の前に対戦が終わりうる（`_mid_check_game_ends`）のに、場に残る読み方で 2 のあとにほかのきぜつがあれば止めます。変わらない盤面は v0.79 と同じに進みます。PK1 の裁定は決めていません。
+
+### B: ワザが失敗しても処理する要素
+
+- `programs.FailOnTails.run` は、`after_failure` の要素（失敗しても処理する要素）を、失敗のコインが決める要素として `void_coin_question` に渡しません。「ダメージを受けない」相手へのメタルクラッシュは、
+  どの先読みの方法・コインの面でも既存の `UNRESOLVED_PREVENTED_COIN_DAMAGE` で止まります。
+
+### エフェクトガード
+
+- 効果の定義 `catalog.EFFECT_GUARD`（出どころ `TRAINER_EFFECT`・窓は `BEFORE_EFFECT` だけ・`by_opponent`）。相手のワザの効果の要素だけを無効にし、ダメージの要素・自分のワザ・トレーナー・特殊能力・
+  ワザでないダメージは止めません。場のついているカード（`effects.effect_guards`。実装の `blocks_attack_effects`）から問い合わせ、状態に印を持たないでください。
+- `EffectDefinition.by_opponent` の効果は、その持ち主の番のワザには当てはめません（`kernel.first_void`）。履歴の理由は `VOID_EFFECT_ONLY`。
+- コインの前の確かめ（`programs.void_coin_question`）は、コインが決める要素の役割ごとに、効果の要素とダメージの要素を別々に確かめます。どれかが有効なら投げ、どれも無効なら既存の HC3
+  （効果を含む）か `UNRESOLVED_PREVENTED_COIN_DAMAGE` です。新しい問いにしないでください。
+
+### 共通の処理
+
+- 手札から出して使うことの禁止（ウツギはかせ・タイムカプセル・ポケモンギア）は、v0.47 の `TrainerUseLock` の出どころ `HAND_TRAINER_LOCK`（`"hand"`。`add_hand_trainer_lock`・`hand_lock_expiry`。
+  次の相手の番の終わり）です。ロケット団の実験の `origin="trainer"`（+ 2）を流用・変更しないでください。止めるのは手札から出して使うことだけで（`trainer_use_blockers(..., from_hand=True)`）、
+  スタジアムを使うこと（STB1 は `from_hand=False`）・ついているカードの効果は止めません。不変条件は `engine._hand_trainer_lock_problems`（`HAND_LOCK_TRAINERS`）。錯乱ジムで、この禁止を受けている
+  プレイヤーがかわりに使うのは TL1（使うを選ぶと止める）。
+- その番の進化の禁止（退化スプレーHYPER）は、期限のある効果 `TrainerTurnEffect` の種類 `EVOLUTION_BAN` と `pokemon_id`（ほかの種類は `pokemon_id` を持たない）。`evolution_forbidden` が
+  `EVOLUTION_PREVENTED` で拒否します。ほかの効果で退化したポケモンの DV2 を、これで解決したことにしないでください。
+- 相手のサイドを扱うゾーンの関数は `reveal_prize`・`look_at_prizes`・`prizes_to_deck`（サイドを取ることではない。おもての記録を除く）・`deck_top_to_prizes` です。サイドからカードを動かすときは、
+  v0.63 の `prize_left` を通してください。
+- kyuura の種類 `goldenrod_game_corner` は、この種類だけのときに受け付けます（`game_corner_ok`）。この種類を参照するカードを加えるときは見直してください。
+- スタジアムの置き方の文が同じ行に続く書き方（`STADIUM_INLINE_PLACEMENTS`）と、neo4 のエネルギースタジアム・ラッキースタジアムの改行の位置の違い（`ENERGY_STADIUM_NEO_TEXT`・
+  `LUCKY_STADIUM_NEO_TEXT`）は、全文で照らします。一律の正規化をしないでください。
+- neo1-092（超エネルギー回収）は、この版の印刷の文面で処理します（`SuperEnergyRetrievalPrinted`）。ERR-SUPER-ENERGY-RETRIEVAL の `cards` は 1stp009 だけなので、同じカードの組（SC-PR1-009）で
+  あることを理由にエラッタを当てはめないでください。
+- `engine.py`・`resolution/` にカード id の分岐を加えないでください。新しい決定の種類は `select_opponent_prize`・`take_looked_trainer`（観測の選べるものの数を相手に見せない）、新しいログの
+  イベントは docs 5 章。ログの監査（tests/log_audit.py）は、30 枚のイベントの組み立て直しを持ちます。トレーナーを加えたら、監査にも加えてください。
+
+### 決められない場合
+
+- 新しい停止コードは 9 件（どれも `not_in_kyuura`）: SRD1 `UNRESOLVED_SUPER_ROD_WITHOUT_TARGET`・UPZ1 `UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE`・UPZ2 `UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET`・
+  TOP1 `UNRESOLVED_DECK_TOP_SHORT`・TL1 `UNRESOLVED_HAND_TRAINER_LOCK_BORROW`・HY1 `UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET`・MK1 `UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET`・
+  BP1 `UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET`・HF1 `UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE`。
+- 既存の問いを使う場面（FC1・SR1・SR2・DV5・SG1・GG1・EN1・CH1・HC3）は docs 7 章。ほかのカードの「対象がない」「0 枚」の問いの答えを流用しないでください。
+
+### 検証用デッキ
+
+- 検証用デッキ `N80`・`S80` と組 `PAIRINGS_V0_80`（`N80` 対 `S80`・`N80` 対 `P31`・`S80` 対 `W79`）は tools/existing_effect_games.py の `--batch v0.80` です（前の版の組の結果は変わらない）。
+  手順は `_v080_trainer`・`_v080_stadium`・`_v080_decision`（相手の決定にも答える）、数えた結果は `v080_uses`。tests/v017_games.py の `play_game` は、退化スプレーHYPER の `EVOLUTION_PREVENTED` を
+  場から確かめてから別の操作を続けます。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

@@ -240,6 +240,15 @@ ALL_CODES = (
     "UNRESOLVED_METAL_ENERGY_POWER_ORDER",  # MT1（test_darkness_metal_energy_v0_78.py NonAttackDamageTest）
     "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",  # DE1（test_darkness_metal_energy_v0_78.py PokemonCheckTest）
     "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",  # PK1（test_shared_checks_pokemon_reuse_v0_79.py MidCheckKnockoutTest）
+    "UNRESOLVED_SUPER_ROD_WITHOUT_TARGET",  # SRD1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_TRAINER_UP_TO_ZERO_CHOICE",  # UPZ1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_TRAINER_UP_TO_WITHOUT_TARGET",  # UPZ2（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_DECK_TOP_SHORT",  # TOP1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",  # TL1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_DEVOLUTION_SPRAY_HYPER_WITHOUT_TARGET",  # HY1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_MOOMOO_MILK_UNDAMAGED_TARGET",  # MK1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_ALL_PURPOSE_POWDER_WITHOUT_TARGET",  # BP1（v0.80。tests/test_neo_trainer_components_v0_80.py）
+    "UNRESOLVED_HEALING_FIELD_WITHOUT_DAMAGE",  # HF1（v0.80。tests/test_neo_trainer_components_v0_80.py）
 )
 TURN = 7
 
