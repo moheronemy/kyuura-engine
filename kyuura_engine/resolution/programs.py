@@ -47,7 +47,7 @@ from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
 from ..state import (
     NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
-    CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventDamage,
+    CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
 from ..history import note_processed
@@ -389,9 +389,14 @@ def run_elements(run: AttackRun, start: int) -> bool:
         if run.redirect is not None:
             run.apply_redirect()
             index = 0
-        if run.failed or index >= len(run.program):
+        if index >= len(run.program):
             break
         element = run.program[index]
+        if run.failed and not element.after_failure:
+            # v0.79: ワザが失敗したら、残りの要素は処理しない。ただし、説明が失敗しても与えると書く効果（ハガネールの「メタルクラッシュ」の「次の自分の番、このカードは
+            # ワザを使えない」。``Element.after_failure``）は処理する
+            index += 1
+            continue
         # v0.61: ［ずらかる］を確かめる決まった時点（ダメージの要素のまとまりのあと・ダメージ以外の要素の前とあと。送る効果を処理したあと）
         boundary = element.phase is not Phase.DAMAGE or (index > 0 and run.program[index - 1].phase is not Phase.DAMAGE)
         if element.phase is Phase.EFFECT:
@@ -829,6 +834,11 @@ class Element:
 
     # v0.65: 控えポケモンへのダメージを ``guarded_damages`` で与える要素（［ベンチガード］の決定を出して続けられる）
     guards_bench: ClassVar[bool] = False
+
+    @property
+    def after_failure(self) -> bool:
+        """v0.79: ワザが失敗した（``run.failed``）あとも処理する要素か（既定は偽。失敗したら残りの要素を処理しない。v0.31）。"""
+        return False
 
     def after_guarded(self, run: AttackRun, after: Any) -> None:
         """［ベンチガード］の決定のあと、控えポケモンへのダメージをすべて与えてからの、この要素の続き（v0.65。既定はない）。"""
@@ -1709,6 +1719,10 @@ LACKING_ZERO = "zero"  # このワザのダメージは 0 になる（わるい�
 LACKING_NONE = "none"  # このワザのダメージ（効果）はなくなる（RUL-ENERGY-DISCARD-ATTACKS の最新の説明・じこさいせいの K3）
 LACKING_CONDITION = "condition"  # 印刷の文面が「はがしてすてる」の形（ワザを使うための条件か効果かが決められない。HC1）
 LACKING_CANNOT_USE = "cannot_use"  # 説明が「…トラッシュしなければ（はがしてすてなければ）、このワザは使えない」と書いている
+# v0.79: トラッシュできない（選べるカードがない）なら、処理の対象がないので何もしない（p.309。それまでの要素（ダメージ）はそのまま。カツラのヒトカゲ（GD5-001）の
+# 「ファイヤーテール」の「コインを投げて「うら」なら、自分についている「炎」エネルギーカードを1枚選び、トラッシュする。」。説明はトラッシュできないときを書かない）。
+# この要素のコインは、選べるカードがなければ投げない（コインが決めるのはこのトラッシュだけ）
+LACKING_SKIP = "skip"
 
 # v0.31: トラッシュの時点（``DiscardOwnEnergy.timing``）
 TIMING_EFFECT = "effect"  # ワザの効果（こんらんのコインのあと。説明がワザの効果として書かれている・RUL-ENERGY-DISCARD-ATTACKS）
@@ -1789,6 +1803,8 @@ class DiscardOwnEnergy(Element):
             return (ILLEGAL, what) if clause == CANNOT_USE else (UNRESOLVED, f"{what}（ワザを使うための条件か効果か決められない。HC1）")
         if self.when_lacking in (LACKING_FAIL, LACKING_ZERO, LACKING_NONE) and clause != CANNOT_USE:
             return None  # 説明がトラッシュできないときの処理を書いている
+        if self.when_lacking == LACKING_SKIP:
+            return None  # v0.79: トラッシュはワザを使うための条件ではなく、選べるカードがなければ処理の対象がない（p.309）
         return UNRESOLVED, f"{what}（使うワザの説明と、トラッシュできないときの処理が合わない・書かれていない）"
 
     def run(self, run: AttackRun) -> bool:
@@ -1799,6 +1815,10 @@ class DiscardOwnEnergy(Element):
             # 処理の対象（ワザを使ったポケモン）がいなくなった（相手の「はんげき」などで HP 以上。p.309。C16 と同じ）
             run.state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 element="discard_energy", reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        if self.when_lacking == LACKING_SKIP and not self._candidates(run):
+            run.state.add_event("discard_energy_failed", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                effect=str(run.key), needed=self.count, attached=0, outcome=LACKING_SKIP)
             return False
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
@@ -2013,6 +2033,20 @@ class PlusOwnCounters:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return run.attack.damage + run.attacker().damage // run.state.rules.damage_per_counter * self.per
+
+
+@dataclass(frozen=True)
+class HeadsPlusOwnCounters:
+    """v0.79: ダメージの目安の数字 +（コインが「おもて」なら）自分にのっているダメージカウンターの数 × ``per``（ブルー（neo3-048）の「いかりのずつき」）。p.321 の 1 段階。
+    コインはダメージの要素の中で、ダメージの量だけを決める（v0.11 の ``HeadsOwnCounters``・v0.2d の ``HeadsBonus`` と同じ。受けるポケモンがダメージを受けない状態なら
+    投げるかが決まらない v0.4b の問い）。「うら」・カウンターが 0 個なら目安の数字（0 にしない）。"""
+
+    per: int
+    local_coins: ClassVar[int] = 1
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        counters = run.attacker().damage // run.state.rules.damage_per_counter
+        return run.attack.damage + (counters * self.per if flips.results[0] is HEADS else 0)
 
 
 @dataclass(frozen=True)
@@ -2326,6 +2360,8 @@ class SelfPersistent(Element):
             effect = AttackBarrier(**common)
         elif self.kind == DamageReduction.kind:
             effect = DamageReduction(**common, amount=self.amount)
+        elif self.kind == PreventAttackDamage.kind:
+            effect = PreventAttackDamage(**common)  # v0.79: ピカチュウ（neo1-036）の「こうそくいどう」（ワザによるダメージだけを受けない）
         elif self.kind == PreventDamage.kind:
             effect = PreventDamage(**common)  # v0.45: わるいカメックスの「ロケットタックル」（自分へのダメージのあとのコイン。HP 以上なら投げない）
         elif self.kind == ZeroDamageBelow.kind:
@@ -5017,6 +5053,9 @@ class RevealTrainerFromDeck(Element):
     # v0.72: 選べるカードの種類。"trainer"（トレーナーカード。おつかい）か "basic_energy"（基本エネルギーカード。どのタイプでも。エリカのピッピ（GD4-012）の「おつきみ」。
     # コインなし）。ログの ``category`` もこの値
     category: str = "trainer"
+    # v0.79: 「手札に加える」（「てよい」がない。ヤドキング（SI-014）の「ひらめく」）。選べるカードがあれば、ちょうど 1 枚（0 枚の答えはない）。選べるカードがない（山札に
+    # トレーナーカードがない・山札が 0 枚）なら、処理の対象がないので加えずに山札を切る（p.309。v0.75 の「もえあがる」（``AttachFromDeck`` の ``ZERO_REQUIRED``）と同じ読み方）
+    required: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SEARCH_DECK
 
@@ -5035,10 +5074,12 @@ class RevealTrainerFromDeck(Element):
             run.state.add_event("reveal_from_deck_none", player=run.player, pokemon_id=run.fs.frame.source_pid, effect=str(run.key), category=self.category)
             shuffle_in_attack(run, self, run.player)
             return False
-        run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=0, max_choices=1)
+        run.suspend(kind=SEARCH_DECK, player=run.player, options=candidates, min_choices=1 if self.required else 0, max_choices=1)
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if self.required and not choices:
+            raise RuntimeError("「手札に加える」（ちょうど 1 枚）の決定に、0 枚の答えが来た（決定の確認の漏れ。エンジンの不具合）")
         if choices:
             if choices[0] not in self.candidates(run):
                 raise RuntimeError(f"選んだカード {choices} が、山札の選べるカード（{self.category}）ではない（エンジンの不具合）")
@@ -5048,7 +5089,7 @@ class RevealTrainerFromDeck(Element):
         shuffle_in_attack(run, self, run.player)
 
     def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
-        return card_id_answers(run.state, decision, (0, 1))
+        return card_id_answers(run.state, decision, (1,) if self.required else (0, 1))
 
 
 @dataclass(frozen=True)
@@ -6398,38 +6439,69 @@ class DiscardOpponentTrainers(Element):
       ``effect`` はワザ）
     """
 
+    # v0.79: 相手の場のポケモン全員（バトル場 → ベンチの並び）についているトレーナーカード（ニューラ（PF3-003）の「だましとる」）。偽なら相手の対戦ポケモンだけ（v0.78）
+    all_pokemon: bool = False
+    # v0.79: この要素のコイン（「だましとる」は「おもて」なら）。処理の対象（トレーナーカードのついている相手のポケモン）がなければ投げない（p.309）
+    local_coin: CoinSide | None = None
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.TRAINER_DISCARD_ELEMENT
 
+    def _targets(self, run: AttackRun) -> list[PokemonInPlay]:
+        p = run.state.players[1 - run.player]
+        candidates = ([p.active] if p.active is not None else []) + (list(p.bench) if self.all_pokemon else [])
+        return [pokemon for pokemon in candidates if pokemon.trainers]
+
     def has_target(self, run: AttackRun) -> bool:
-        target = run.opponent_active()
-        return target is not None and bool(target.trainers)
+        return bool(self._targets(run))
 
     def run(self, run: AttackRun) -> bool:
         opponent = 1 - run.player
-        target = run.opponent_active()
-        if target is None or not target.trainers:
+        targets = []
+        for target in self._targets(run):
+            if run.knocked_out(target):
+                run.ko_prevention_conflict(target, opponent)
+                continue
+            targets.append(target)
+        if not targets:
             return False
-        if run.knocked_out(target):
-            run.ko_prevention_conflict(target)
-            return False
-        if not reaches(run.res, run.fs, opponent, target, E.TRAINER_DISCARD_ELEMENT):
-            return False
+        if self.local_coin is not None:
+            from .kernel import first_void
+
+            if all(run.fs.reception.get(pokemon.pokemon_id) is False for pokemon in targets):
+                raise run.res.question("evaded_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
+            if all(first_void(run.res, opponent, pokemon, Window.BEFORE_EFFECT) is not None for pokemon in targets):
+                # このコインが決めるのは相手のポケモンへの効果だけで、どの対象も「ワザをうけない」状態（HC3。v0.31 のスーパーデストロイと同じ形）
+                raise run.res.question("prevented_effect_coin", f"ポケモン {[pokemon.pokemon_id for pokemon in targets]}")
+            if run.flip(1).results[0] is not self.local_coin:
+                return False
         state = run.state
-        for attached in list(target.trainers):
-            target.trainers.remove(attached)
-            state.players[attached.player].discard.append(attached.card)
-            state.add_event("discard_attached_trainer", player=attached.player, card=attached.card, pokemon=target.card, pokemon_id=target.pokemon_id,
-                            reason="attack", effect=str(run.key))
+        for target in targets:
+            # ポケモンごとに、トラッシュの前に「ワザをうけない」状態・「とうめい」を評価する（2 匹以上の「とうめい」は T27。``reaches``）
+            if not reaches(run.res, run.fs, opponent, target, E.TRAINER_DISCARD_ELEMENT):
+                continue
+            for attached in list(target.trainers):
+                target.trainers.remove(attached)
+                state.players[attached.player].discard.append(attached.card)
+                state.add_event("discard_attached_trainer", player=attached.player, card=attached.card, pokemon=target.card, pokemon_id=target.pokemon_id,
+                                reason="attack", effect=str(run.key))
         return False
 
 
 @dataclass(frozen=True)
 class SelfCannotAttack(Element):
     """次の自分の番、ワザを使ったポケモンはワザ（すべて）を使えない（v0.78。エアームドの「メタルスラッシュ」。持続する効果 ``CannotAttackNextOwnTurn``）。ワザを使った
-    ポケモンへの効果（v0.35 の ``SelfAttackLock`` と同じく「とうめい」を評価しない）。このワザの中で HP 以上になっていれば与えない（p.309）。"""
+    ポケモンへの効果（v0.35 の ``SelfAttackLock`` と同じく「とうめい」を評価しない）。このワザの中で HP 以上になっていれば与えない（p.309）。
 
+    v0.79: ``even_if_failed`` なら、ワザが失敗しても与える（ハガネール（PRN-014）の「メタルクラッシュ」の「コインを投げて「うら」なら、このワザは失敗する。(その場合も、
+    ワザは使ったことになる)。次の自分の番、このカードはワザを使えない。」。失敗を決めるコインのあと、ダメージの要素のあとに置き、コインの結果（ナツメのESPでやり直したら
+    やり直した結果）にかかわらず 1 回だけ与える）。"""
+
+    even_if_failed: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
+
+    @property
+    def after_failure(self) -> bool:
+        return self.even_if_failed
 
     def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
         return None  # 効果はワザの位置を記録しない（すべてのワザ）ので、相手のワザとして使っても使ったポケモンに与えられる
@@ -6862,6 +6934,21 @@ BUILDERS: dict[type, Any] = {
     E.DiscardOpponentTrainersThenDamage: lambda e: (DiscardOpponentTrainers(), Damage(OPP, Printed())),
     E.RetreatLockWithoutDamage: lambda e: (OpponentRetreatLock(),),
     E.DamageThenSelfCannotAttack: lambda e: (Damage(OPP, Printed()), SelfCannotAttack()),
+    # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 5 章）。既存の要素を組み合わせた 11 の型
+    E.DamageThenParalyzeAndOpponentBenchOnHeads: lambda e: (
+        ReparalysisGuard(), Coin("coin"), Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS)),
+        Status(PARALYSIS, gate=("coin", HEADS)),
+    ),
+    E.DamageThenPreventAttackDamageOnHeads: lambda e: (Damage(OPP, Printed()), SelfPersistent(PreventAttackDamage.kind, local_coin=HEADS)),
+    E.DamageThenOpponentBenchOnHeads: lambda e: (Coin("coin"), Damage(OPP, Printed()), BenchDamage(Fixed(e.bench_damage), gate=("coin", HEADS))),
+    E.CoinBonusDamageAndConfuse: lambda e: (Coin("coin"), Damage(OPP, PrintedPlusBonus("coin", e.bonus)), Status(CONFUSION, gate=("coin", HEADS))),
+    E.CoinBonusPerOwnCounter: lambda e: (Damage(OPP, HeadsPlusOwnCounters(e.per)),),
+    E.HealSelfWithoutDamage: lambda e: (HealCounters(e.counters),),
+    E.DamageThenDiscardOneOnTails: lambda e: (Damage(OPP, Printed()), DiscardOwnEnergy(e.energy_type, local_coin=TAILS, when_lacking=LACKING_SKIP)),
+    E.CoinChooseOpponentBenchDamage: lambda e: (ChosenBenchDamage(Fixed(e.damage)),),
+    E.SearchTrainerRequiredOnHeads: lambda e: (RevealTrainerFromDeck(required=True),),
+    E.CoinDiscardAllOpponentTrainers: lambda e: (DiscardOpponentTrainers(all_pokemon=True, local_coin=HEADS),),
+    E.FailOnTailsDamageThenSelfCannotAttack: lambda e: (FailOnTails(), Damage(OPP, Printed()), SelfCannotAttack(even_if_failed=True)),
 }
 
 

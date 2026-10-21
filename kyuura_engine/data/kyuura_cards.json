@@ -1110,6 +1110,60 @@
     "NIP1X-005",
     "NIP2X-005"
   ],
+  "pool_v0_79": [
+    "ES2-020",
+    "QSG-033",
+    "ES3-022",
+    "QSG-028",
+    "GD1-005",
+    "GD3-012",
+    "GD5-001",
+    "GD6-007",
+    "NIP1-013",
+    "PF3-003",
+    "PR1-010",
+    "PR1-064",
+    "PRN-014",
+    "SI-012",
+    "SI-014",
+    "SI-017",
+    "neo1-001",
+    "neo1-002",
+    "neo1-003",
+    "neo1-007",
+    "neo1-013",
+    "neo1-016",
+    "neo1-025",
+    "neo1-029",
+    "neo1-034",
+    "neo1-036",
+    "neo1-037",
+    "neo1-043",
+    "neo1-045",
+    "neo1-046",
+    "neo2-010",
+    "neo2-012",
+    "neo2-017",
+    "neo2-022",
+    "neo2-029",
+    "neo2-035",
+    "neo2-038",
+    "neo3-008",
+    "neo3-011",
+    "neo3-015",
+    "neo3-016",
+    "neo3-017",
+    "neo3-018",
+    "neo3-027",
+    "neo3-048",
+    "neo4-014",
+    "neo4-031",
+    "neo4-071",
+    "neo4-085",
+    "neo4-087",
+    "neo4-089",
+    "neo4-092"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -80237,6 +80291,5110 @@
           "list_number": "005/010"
         }
       ]
+    },
+    {
+      "id": "ES2-020",
+      "jp_set": "ES2",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンド",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "スピードスター",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の持っている「弱点・抵抗カ・特殊能力・その他の効果」の影響を受けない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex2020"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex2020.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第2弾(赤版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex2020.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stex2020",
+          "list_number": "020/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-033",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "サンド",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "スピードスター",
+              "en": null
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "このワザのダメージは、相手の持っている「弱点・抵抗カ・特殊能力・その他の効果」の影響を受けない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg033"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg033.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg033.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES2-020",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "1stqsg033",
+          "list_number": "033/058"
+        }
+      ]
+    },
+    {
+      "id": "ES3-022",
+      "jp_set": "ES3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴース",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こわがらせる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "あんこく",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex3022"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex3022.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第3弾(緑版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex3022.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES3-022",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stex3022",
+          "list_number": "022/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-028",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ゴース",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こわがらせる",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "あんこく",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg028"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg028.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg028.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES3-022",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stqsg028",
+          "list_number": "028/058"
+        }
+      ]
+    },
+    {
+      "id": "GD1-005",
+      "jp_set": "GD1",
+      "category": "pokemon",
+      "name": {
+        "ja": "タケシのマンキー",
+        "en": "Brock's Mankey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          56
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "からかう",
+              "en": "Taunt"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and switch it with the Defending Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "けとばす",
+              "en": "Light Kick"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-67"
+        ],
+        "pcg_search": [
+          "1stgymd1005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd1005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第1弾「ニビシティジム タケシ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd1005.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-67",
+        "pokemon.dex": "pokemontcg:gym1-67"
+      },
+      "copies": [
+        {
+          "page": "1stgymd1005",
+          "list_number": "005/025"
+        }
+      ]
+    },
+    {
+      "id": "GD3-012",
+      "jp_set": "GD3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マチスのラッタ",
+        "en": "Lt. Surge's Raticate"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          20
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マチスのコラッタ",
+          "en": "Lt. Surge's Rattata"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いかりのまえば",
+              "en": "Super Fang"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の残りHPの半分(切り上げ)のダメージを与える。",
+              "en": "Does damage to the Defending Pokémon equal to half the Defending Pokémon's remaining HP (rounded up to the nearest 10)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-51"
+        ],
+        "pcg_search": [
+          "1stgymd3012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd3012.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「クチバシティジム マチス」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd3012.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-51",
+        "pokemon.dex": "pokemontcg:gym1-51",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd3012",
+          "list_number": "012/025"
+        }
+      ]
+    },
+    {
+      "id": "GD5-001",
+      "jp_set": "GD5",
+      "category": "pokemon",
+      "name": {
+        "ja": "カツラのヒトカゲ",
+        "en": "Blaine's Charmander"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          4
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ファイヤーテール",
+              "en": "Fire Tail Slap"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、自分についている「炎」エネルギーカードを1枚選び、トラッシュする。",
+              "en": "Use this attack only if there are any Fire Energy cards attached to Blaine's Charmander. Flip a coin. If tails, discard 1 of those cards."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-60"
+        ],
+        "pcg_search": [
+          "1stgymd5001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd5001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「グレンタウンジム カツラ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd5001.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-60",
+        "pokemon.dex": "pokemontcg:gym2-60"
+      },
+      "copies": [
+        {
+          "page": "1stgymd5001",
+          "list_number": "001/025"
+        }
+      ]
+    },
+    {
+      "id": "GD6-007",
+      "jp_set": "GD6",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナツメのゴースト",
+        "en": "Sabrina's Haunter"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          93
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ナツメのゴース",
+          "en": "Sabrina's Gastly"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あくむ",
+              "en": "Nightmare"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "かげからおそう",
+              "en": "Shadow Attack"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、「弱点・抵抗力」に関係なく、30ダメージ。",
+              "en": "Flip a coin. If heads, and if your opponent has any Benched Pokémon, choose 1 of them and this attack does 30 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym2-55"
+        ],
+        "pcg_search": [
+          "1stgymd6007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd6007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第3弾「ヤマブキシティジム ナツメ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd6007.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym2-55",
+        "pokemon.dex": "pokemontcg:gym2-55",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stgymd6007",
+          "list_number": "007/026"
+        }
+      ]
+    },
+    {
+      "id": "NIP1-013",
+      "jp_set": "NIP1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マグマラシ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒノアラシ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "かえんほうしゃ",
+              "en": null
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1013"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1013.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1013.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neointro1013",
+          "list_number": "013/030"
+        }
+      ]
+    },
+    {
+      "id": "PF3-003",
+      "jp_set": "PF3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニューラ",
+        "en": "Sneasel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          215
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "だましとる",
+              "en": "Swipe"
+            },
+            "cost": [
+              "darkness"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモン全員についている「トレーナーカード」を、すべてトラッシュする。",
+              "en": "Flip a coin. If heads, discard all Trainer cards attached to your opponent's Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-24"
+        ],
+        "pcg_search": [
+          "neopf3003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf3003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル3",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf3003.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo3-24",
+        "pokemon.dex": "pokemontcg:neo3-24"
+      },
+      "copies": [
+        {
+          "page": "neopf3003",
+          "list_number": "003/009"
+        }
+      ]
+    },
+    {
+      "id": "PR1-010",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "エレブー",
+        "en": "Electabuzz"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          125
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひかりのかべ",
+              "en": "Light Screen"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番で、このカードがうけるダメージは半分(切り捨て)になる。(ダメージ以外の効果はそのまま)",
+              "en": "Whenever an attack does damage to Electabuzz (after applying Weakness and Resistance) during your opponent's next turn, that attack only does half the damage to Electabuzz (rounded down to the nearest 10). (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-2"
+        ],
+        "pcg_search": [
+          "1stp010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp010.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-2",
+        "pokemon.dex": "pokemontcg:basep-2"
+      },
+      "copies": [
+        {
+          "page": "1stp010",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PR1-064",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "フリーザー",
+        "en": "Articuno"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          144
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ダイヤモンドダスト",
+              "en": "Diamond Dust"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-22"
+        ],
+        "pcg_search": [
+          "1stp064"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp064.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp064.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-22",
+        "pokemon.dex": "pokemontcg:basep-22"
+      },
+      "copies": [
+        {
+          "page": "1stp064",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "PRN-014",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ハガネール",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イワーク",
+          "en": null
+        },
+        "hp": 100,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "メタルクラッシュ",
+              "en": null
+            },
+            "cost": [
+              "metal"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。(その場合も、ワザは使ったことになる)。次の自分の番、このカードはワザを使えない。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "じひびき",
+              "en": null
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手は「にげる」ことができない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop014.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neop014",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "SI-012",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "オコリザル",
+        "en": "Primeape"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          57
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マンキー",
+          "en": "Mankey"
+        },
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "けたぐり",
+              "en": "Low Kick"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりくるう",
+              "en": "Rampage"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンターの数×10のダメージを追加する。その後、コインを投げて「うら」なら、自分を「こんらん」状態にする。",
+              "en": "Does 20 damage plus 10 more damage for each damage counter on Primeape. Flip a coin. If tails, Primeape is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-18"
+        ],
+        "pcg_search": [
+          "1stmv012"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv012.php",
+      "jp_print": {
+        "level": 26,
+        "rarity": "-",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド ジャングル"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv012.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-18",
+        "pokemon.dex": "pokemontcg:si1-18",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stmv012",
+          "list_number": "003/003"
+        }
+      ]
+    },
+    {
+      "id": "SI-014",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドキング",
+        "en": "Slowking"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          199
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": "Slowpoke"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひらめく",
+              "en": "Revelation"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の山札から「トレーナーカード」1枚を選び出し、相手に見せてから、手札に加える。その後、その山札をよく切る。",
+              "en": "Flip a coin. If heads, search your deck for a Trainer card, show it to your opponent, and put it into your hand. Shuffle your deck afterward."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": "Psychic"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についているエネルギーカードの数×10のダメージを、追加する。",
+              "en": "Does 10 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-14"
+        ],
+        "pcg_search": [
+          "1stmv014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv014.php",
+      "jp_print": {
+        "level": 36,
+        "rarity": "-(キラ)",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド 海辺"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv014.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-14",
+        "pokemon.dex": "pokemontcg:si1-14",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stmv014",
+          "list_number": "002/003"
+        }
+      ]
+    },
+    {
+      "id": "SI-017",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "マリル",
+        "en": "Marill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          183
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずとばし",
+              "en": "Squirt"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": "Choose 1 of your opponent's Pokémon. This attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance."
+            }
+          },
+          {
+            "name": {
+              "ja": "ころがりタックル",
+              "en": "Rolling Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-11"
+        ],
+        "pcg_search": [
+          "1stmv017"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv017.php",
+      "jp_print": {
+        "level": 10,
+        "rarity": "-(キラ)",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "トロピカルアイランド 海"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv017.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-11",
+        "pokemon.dex": "pokemontcg:si1-11"
+      },
+      "copies": [
+        {
+          "page": "1stmv017",
+          "list_number": "002/003"
+        }
+      ]
+    },
+    {
+      "id": "neo1-001",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ナゾノクサ",
+        "en": "Oddish"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          43
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かくれる",
+              "en": "Hide"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Oddish."
+            }
+          },
+          {
+            "name": {
+              "ja": "すいとる",
+              "en": "Absorb"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、その半分(切り上げ)のダメージカウンターを、自分からとりのぞく。",
+              "en": "Remove a number of damage counters from Oddish equal to half the damage done to the Defending Pokémon (after applying Weakness and Resistance) (rounded up to the nearest 10). If Oddish has fewer damage counters than that, remove all of them."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-001",
+        "pokemontcg": [
+          "neo1-68"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-001-nazonokusa/",
+      "jp_print": {
+        "level": 7,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-001-nazonokusa/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-002",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "チコリータ",
+        "en": "Chikorita"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          152
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "リフレクター",
+              "en": "Deflector"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果は受ける)",
+              "en": "During your opponent's next turn, whenever Chikorita takes damage, divide that damage in half (rounded down to the nearest 10). (Any other effects still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-002",
+        "pokemontcg": [
+          "neo1-53"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-002-chicorita/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-002-chicorita/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-006"
+    },
+    {
+      "id": "neo1-003",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "レディバ",
+        "en": "Ledyba"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          165
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "れんぞくパンチ",
+              "en": "Comet Punch"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 4 coins. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-003",
+        "pokemontcg": [
+          "neo1-63"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-003-rediba/",
+      "jp_print": {
+        "level": 19,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-003-rediba/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-007",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ツボツボ",
+        "en": "Shuckle"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          213
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "からにこもる",
+              "en": "Withdraw"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）",
+              "en": "Flip a coin. If heads, prevent all damage done to Shuckle during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "まきつく",
+              "en": "Wrap"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-007",
+        "pokemontcg": [
+          "neo1-72"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-007-tsubotsubo/",
+      "jp_print": {
+        "level": 32,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-007-tsubotsubo/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-013",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "キマワリ",
+        "en": "Sunflora"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          192
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒマナッツ",
+          "en": "Sunkern"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "はなびらのまい",
+              "en": "Petal Dance"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×30のダメージ。その後、自分を「こんらん」状態にする。",
+              "en": "Flip 3 coins. This attack does 30 damage times the number of heads. Sunflora is now Confused (after doing damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-013",
+        "pokemontcg": [
+          "neo1-50"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-013-kimawari/",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-013-kimawari/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-016",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ワタッコ",
+        "en": "Jumpluff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          189
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ポポッコ",
+          "en": "Skiploom"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねむりごな",
+              "en": "Sleep Powder"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "やどりぎのたね",
+              "en": "Leech Seed"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手にダメージを与えたら、自分にのっているダメージカウンターを、1個とりのぞく。",
+              "en": "If this attack damages the Defending Pokémon (after applying Weakness and Resistance), remove 1 damage counter from Jumpluff, if it has any."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-016",
+        "pokemontcg": [
+          "neo1-7"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-016-watacco/",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-016-watacco/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-025",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マリル",
+        "en": "Marill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          183
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まるくなる",
+              "en": "Defense Curl"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。(ダメージ以外の効果は受ける)",
+              "en": "Flip a coin. If heads, prevent all damage done to Marill during your opponent's next turn. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "バブルボム",
+              "en": "Bubble Bomb"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、自分にも10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, Marill does 10 damage to itself."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-025",
+        "pokemontcg": [
+          "neo1-66"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-025-maril/",
+      "jp_print": {
+        "level": 9,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-025-maril/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-029",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "シードラ",
+        "en": "Seadra"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          117
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "タッツー",
+          "en": "Horsea"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あわ",
+              "en": "Bubble"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "だくりゅう",
+              "en": "Mud Splash"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて、「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and flip a coin. If heads, this attack does 10 damage to that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-029",
+        "pokemontcg": [
+          "neo1-48"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-029-seadra/",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-029-seadra/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-034",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "マリルリ",
+        "en": "Azumarill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          184
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マリル",
+          "en": "Marill"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "バブルシャワー",
+              "en": "Bubble Shower"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-034",
+        "pokemontcg": [
+          "neo1-2"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-034-marilli/",
+      "jp_print": {
+        "level": 29,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-034-marilli/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-036",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ピカチュウ",
+        "en": "Pikachu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          25
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "でんこうせっか",
+              "en": "Quick Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "こうそくいどう",
+              "en": "Agility"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージを受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Pikachu."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-036",
+        "pokemontcg": [
+          "neo1-70"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-036-pikachu/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-036-pikachu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-037",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "チョンチー",
+        "en": "Chinchou"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          170
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ちょうおんぱ",
+              "en": "Supersonic"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "じたばた",
+              "en": "Flail"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンターの数×10ダメージ。",
+              "en": "Does 10 damage times the number of damage counters on Chinchou."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-037",
+        "pokemontcg": [
+          "neo1-55"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-037-chonchie/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-037-chonchie/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-043",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "デンリュウ",
+        "en": "Ampharos"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          181
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "モココ",
+          "en": "Flaaffy"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ギガショック",
+              "en": "Gigaspark"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-043",
+        "pokemontcg": [
+          "neo1-1"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-043-denryu/",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-043-denryu/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-045",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ヤドン",
+        "en": "Slowpoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          79
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねんりき",
+              "en": "Psyshock"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "みずでっぽう",
+              "en": "Water Gun"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",
+              "en": "Does 10 damage plus 10 more damage for each Water Energy attached to Slowpoke but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "TCGdex の日本版データでは HP 40（英語版は 50）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo1-045",
+        "pokemontcg": [
+          "neo1-73"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-046-yadon/",
+      "jp_print": {
+        "level": 20,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-046-yadon/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-046",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ネイティ",
+        "en": "Natu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          177
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つつく",
+              "en": "Peck"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "テレキネシス",
+              "en": "Telekinesis"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、20ダメージ。",
+              "en": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-046",
+        "pokemontcg": [
+          "neo1-67"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-045-naty/",
+      "jp_print": {
+        "level": 10,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-045-naty/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-010",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "スピアー",
+        "en": "Beedrill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          15
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "コクーン",
+          "en": "Kakuna"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "さんばいどく",
+              "en": "Triple Poison"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、30ダメージ。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned. Your opponent now puts 3 damage counters on it instead of 1 after each player's turn (even if it was already Poisoned)."
+            }
+          },
+          {
+            "name": {
+              "ja": "ミサイルばり",
+              "en": "Pin Missile"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip 4 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-010",
+        "pokemontcg": [
+          "neo2-18"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-010-spear/",
+      "jp_print": {
+        "level": 36,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-010-spear/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-012",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "デルビル",
+        "en": "Houndour"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          228
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "スモッグ",
+              "en": "Smog"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "ほのおをまとう",
+              "en": "Collect Fire"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分のトラッシュに「炎」エネルギーカードがあれば、1枚を選び出し、自分につける。",
+              "en": "If there are any Fire Energy cards in your discard pile, choose 1 of them and attach it to Houndour."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-012",
+        "pokemontcg": [
+          "neo2-5",
+          "neo2-24"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-012-delvil/",
+      "jp_print": {
+        "level": 22,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-012-delvil/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-017",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "サニーゴ",
+        "en": "Corsola"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          222
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "じこさいせい",
+              "en": "Recover"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「水」エネルギーカードを1枚トラッシュして、自分にのっているダメージカウンターを、すべてとりのぞく。「水」エネルギーカードをトラッシュできないとき、この効果はなくなる。",
+              "en": "Discard 1 Water Energy card attached to Corsola or this attack does nothing. Remove all damage counters from Corsola."
+            }
+          },
+          {
+            "name": {
+              "ja": "とげキャノン",
+              "en": "Spike Cannon"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×30のダメージ。",
+              "en": "Flip 2 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-017",
+        "pokemontcg": [
+          "neo2-37"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-017-sunnygo/",
+      "jp_print": {
+        "level": 27,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-017-sunnygo/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-022",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ネイティ",
+        "en": "Natu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          177
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて、「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-022",
+        "pokemontcg": [
+          "neo2-59"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-022-naty/",
+      "jp_print": {
+        "level": 13,
+        "rarity": "●(C)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-022-naty/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo2-022"
+    },
+    {
+      "id": "neo2-029",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "エーフィ",
+        "en": "Espeon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          196
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": "Psychic"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "相手についている「エネルギーカード」の数×10のダメージを追加する。",
+              "en": "Does 30 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-029",
+        "pokemontcg": [
+          "neo2-1"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-029-eifie/",
+      "jp_print": {
+        "level": 45,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-029-eifie/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-035",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "オムスター",
+        "en": "Omastar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          139
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "オムナイト",
+          "en": "Omanyte"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しめあげる",
+              "en": "Squeeze"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加し、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage and the Defending Pokémon is now Paralyzed. If tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "とげとげMAX",
+              "en": "Spike Barrage"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "自分についている「水」エネルギーの数ぶんコインを投げ、「おもて」の数×20のダメージを追加する。",
+              "en": "Flip a number of coins equal to the number of Water Energy attached to Omastar. This attack does 20 damage plus 20 more damage for each heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-035",
+        "pokemontcg": [
+          "neo2-43"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-035-omstar/",
+      "jp_print": {
+        "level": 39,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-035-omstar/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-038",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "カポエラー",
+        "en": "Hitmontop"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          237
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みきり",
+              "en": "Detect"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードは相手のワザによるダメージや効果を受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Hitmontop."
+            }
+          },
+          {
+            "name": {
+              "ja": "トリプルキック",
+              "en": "Triple Kick"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "×",
+              "display": "30×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×30ダメージ。",
+              "en": "Flip 3 coins. This attack does 30 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-038",
+        "pokemontcg": [
+          "neo2-3",
+          "neo2-22"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-038-kapoerer/",
+      "jp_print": {
+        "level": 31,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-038-kapoerer/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-008",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "マグマッグ",
+        "en": "Slugma"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          218
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのお",
+              "en": "Flare"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "マグマでかこむ",
+              "en": "Magma Ring"
+            },
+            "cost": [
+              "fire",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手は「にげる」ことができない。",
+              "en": "The Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-008",
+        "pokemontcg": [
+          "neo3-53"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B0%E3%83%9E%E3%83%83%E3%82%B0_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 27,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%82%B0%E3%83%9E%E3%83%83%E3%82%B0_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-011",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ホウオウ",
+        "en": "Ho-oh"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          250
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "もえあがる",
+              "en": "Stoke"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「炎」エネルギーカードを1枚選び出し、自分につける。その後、その山札をよく切る。",
+              "en": "You may search your deck for a Fire Energy card and attach it to Ho-Oh. Shuffle your deck afterward."
+            }
+          },
+          {
+            "name": {
+              "ja": "せいなるほのお",
+              "en": "Sacred Fire"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、40ダメージ。",
+              "en": "Flip a coin. If heads, choose 1 of your opponent's Pokémon. This attack does 40 damage to that Pokémon. Don't apply Weakness and Resistance."
+            }
+          },
+          {
+            "name": {
+              "ja": "ゴッドバード",
+              "en": "Dive Bomb"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 5,
+            "damage": {
+              "base": 90,
+              "modifier": null,
+              "display": "90"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-011",
+        "pokemontcg": [
+          "neo3-7"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9B%E3%82%A6%E3%82%AA%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 45,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9B%E3%82%A6%E3%82%AA%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-015",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ハリーセン",
+        "en": "Qwilfish"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          211
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくばり",
+              "en": "Poison Sting"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "はりせんぼん",
+              "en": "Needle Storm"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×20のダメージ。",
+              "en": "Flip a coin until you get tails. This attack does 20 damage times the number of heads you get."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-015",
+        "pokemontcg": [
+          "neo3-49"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%AA%E3%83%BC%E3%82%BB%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%8F%E3%83%AA%E3%83%BC%E3%82%BB%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-016",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "テッポウオ",
+        "en": "Remoraid"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          223
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ねらいうち",
+              "en": "Sharpshooting"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、20ダメージ。",
+              "en": "Flip a coin. If heads, choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-016",
+        "pokemontcg": [
+          "neo3-50"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%86%E3%83%83%E3%83%9D%E3%82%A6%E3%82%AA_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%86%E3%83%83%E3%83%9D%E3%82%A6%E3%82%AA_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-017",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "アズマオウ",
+        "en": "Seaking"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          119
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "トサキント",
+          "en": "Goldeen"
+        },
+        "hp": 70,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つきあげる",
+              "en": "Rising Lunge"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 more damage. If tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "つのでいちげき",
+              "en": "Horn Swipe"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、すべて「おもて」なら、40ダメージを追加する。",
+              "en": "Flip 2 coins. If both are heads, this attack does 20 damage plus 40 more damage. If 1 or both of them are tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-017",
+        "pokemontcg": [
+          "neo3-37"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%82%BA%E3%83%9E%E3%82%AA%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 29,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%A2%E3%82%BA%E3%83%9E%E3%82%AA%E3%82%A6_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-018",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ルージュラ",
+        "en": "Jynx"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          124
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こごえるキッス",
+              "en": "Freezing Kiss Goodnight"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "あやしいおどり",
+              "en": "Strange Dance"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加し、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, this attack does 20 damage plus 20 more damage and the Defending Pokémon is now Confused. If tails, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-018",
+        "pokemontcg": [
+          "neo3-31"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AB%E3%83%BC%E3%82%B8%E3%83%A5%E3%83%A9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 20,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AB%E3%83%BC%E3%82%B8%E3%83%A5%E3%83%A9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-027",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "モココ",
+        "en": "Flaaffy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          180
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "メリープ",
+          "en": "Mareep"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ビリリパンチ",
+              "en": "Electric Punch"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "エレキテール",
+              "en": "Tail Shock"
+            },
+            "cost": [
+              "lightning",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-027",
+        "pokemontcg": [
+          "neo3-28"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A2%E3%82%B3%E3%82%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A2%E3%82%B3%E3%82%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-048",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ブルー",
+        "en": "Snubbull"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          209
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "いかりのずつき",
+              "en": "Raging Headbutt"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分にのっているダメージカウンターの数×10のダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 10 damage times the number of damage counters on Snubbull. If tails, this attack does 10 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-048",
+        "pokemontcg": [
+          "neo3-55"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%96%E3%83%AB%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 21,
+        "rarity": "●(C)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%96%E3%83%AB%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-014",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ロコン",
+        "en": "Vulpix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          37
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひのこ",
+              "en": "Ember"
+            },
+            "cost": [
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": "Discard 1 Fire Energy card attached to Vulpix in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-014",
+        "pokemontcg": [
+          "neo4-91"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B3%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 15,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AD%E3%82%B3%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-031",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "マンタイン",
+        "en": "Mantine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          226
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おおなみ",
+              "en": "Giant Wave"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードはワザを使うことができない。",
+              "en": "Mantine can't attack during your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-031",
+        "pokemontcg": [
+          "neo4-74"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%B3%E3%82%BF%E3%82%A4%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9E%E3%83%B3%E3%82%BF%E3%82%A4%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-071",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "グライガー",
+        "en": "Gligar"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          207
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しんけいどく",
+              "en": "Stun Poison"
+            },
+            "cost": [
+              "fighting",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」と「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-071",
+        "pokemontcg": [
+          "neo4-67"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B0%E3%83%A9%E3%82%A4%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 26,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B0%E3%83%A9%E3%82%A4%E3%82%AC%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-085",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "プリン",
+        "en": "Jigglypuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          39
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふくらむ",
+              "en": "Expand"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "次の相手の番、このカードが受けるダメージは「-10」される（ダメージ以外の効果はそのまま）。",
+              "en": "All damage done to Jigglypuff during your opponent's next turn is reduced by 10 (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-085",
+        "pokemontcg": [
+          "neo4-44"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%97%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 11,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%97%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-087",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミニリュウ",
+        "en": "Dratini"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          147
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "だっぴ",
+              "en": "Shed"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分にのっているダメージカウンターを、1個とりのぞく。",
+              "en": "Remove 1 damage counter from Dratini."
+            }
+          },
+          {
+            "name": {
+              "ja": "みだれづき",
+              "en": "Fury Attack"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて、「おもて」の数×10のダメージ。",
+              "en": "Flip 2 coins. This attack does 10 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-087",
+        "pokemontcg": [
+          "neo4-63"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9F%E3%83%8B%E3%83%AA%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 14,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9F%E3%83%8B%E3%83%AA%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-089",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "キリンリキ",
+        "en": "Girafarig"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          203
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しっぽでかみつく",
+              "en": "Tail Bite"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコキネシス",
+              "en": "Psychic"
+            },
+            "cost": [
+              "psychic",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "相手についている「エネルギーカード」の数×10のダメージを追加する。",
+              "en": "Does 10 damage plus 10 more damage for each Energy card attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-089",
+        "pokemontcg": [
+          "neo4-66"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%AA%E3%83%B3%E3%83%AA%E3%82%AD_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 29,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%AD%E3%83%AA%E3%83%B3%E3%83%AA%E3%82%AD_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-092",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ラッキー",
+        "en": "Chansey"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          113
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おうふくびんた",
+              "en": "Doubleslap"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを2枚投げて、「おもて」の数×20のダメージ。",
+              "en": "Flip 2 coins. This attack does 20 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "タマゴなげ",
+              "en": "Egg Toss"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "コインを2枚投げて、1枚でも「うら」なら、このワザは失敗する。",
+              "en": "Flip 2 coins. If either of them is tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-092",
+        "pokemontcg": [
+          "neo4-31"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%83%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 38,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%83%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }

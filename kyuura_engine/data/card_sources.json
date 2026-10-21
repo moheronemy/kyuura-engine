@@ -23638,6 +23638,765 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。NIP2X（イントロパック（neo）。intro_pack。発売 2001-04-06）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かみつく=DamageOnly、ごうだつ=DiscardOpponentTrainersThenDamage。neo2-039 と処理に使う欄が同じ（登録の値を共有。SAME_DATA_CARDS_V0_78）（処理に使う文面は kyuura の印刷の文面）。kyuura のデータの欠け（data_gaps）: ['jp_print.level']（処理に使う欄ではない）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES2-020": {
+      "basis": "kyuura_data",
+      "name_ja": "サンド",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。ES2（expansion_sheet。発売 1998-06-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: どくばり=PoisonOnHeads、スピードスター=DamageIgnoringDefenderEffects（処理に使う文面は kyuura の印刷の文面）。スピードスターの説明は kyuura の写しで「抵抗カ」（カタカナの「カ」）。写しを直さず、その書き方をそのまま受け付けた（kyuura への報告事項）。QSG-033 と同じデータ（SAME_DATA_CARDS_V0_79）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-033": {
+      "basis": "kyuura_data",
+      "name_ja": "サンド",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: どくばり=PoisonOnHeads、スピードスター=DamageIgnoringDefenderEffects（処理に使う文面は kyuura の印刷の文面）。ES2-020 と同じデータ（SAME_DATA_CARDS_V0_79。登録の値は同じ・記録は id ごと）。スピードスターの「抵抗カ」は ES2-020 と同じ（kyuura への報告事項）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "ES3-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。ES3（expansion_sheet。発売 1998-11-24）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: こわがらせる=LockOpponentTrainersNextTurn、あんこく=ConfuseOnHeads（処理に使う文面は kyuura の印刷の文面）。QSG-028 と同じデータ（SAME_DATA_CARDS_V0_79）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "QSG-028": {
+      "basis": "kyuura_data",
+      "name_ja": "ゴース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。QSG（quick_starter_gift。発売 1998-12-04）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: こわがらせる=LockOpponentTrainersNextTurn、あんこく=ConfuseOnHeads（処理に使う文面は kyuura の印刷の文面）。ES3-022 と同じデータ（SAME_DATA_CARDS_V0_79。登録の値は同じ・記録は id ごと）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD1-005": {
+      "basis": "kyuura_data",
+      "name_ja": "タケシのマンキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。GD1（gym_deck。発売 1998-04-26）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: からかう=SwitchOpponentActive、けとばす=DamageOnly（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD3-012": {
+      "basis": "kyuura_data",
+      "name_ja": "マチスのラッタ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。GD3（gym_deck。発売 1998-07-25）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: いかりのまえば=HalfRemainingHpDamage（処理に使う文面は kyuura の印刷の文面）。マチスのコラッタから進化（名前の完全一致・商品をまたぐ）。いかりのまえばのダメージの目安は kyuura の写しで null（「?」がない）。写しに「?」を足さず、この書き方と組にして受け付けた（切り上げ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD5-001": {
+      "basis": "kyuura_data",
+      "name_ja": "カツラのヒトカゲ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。GD5（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ファイヤーテール=DamageThenDiscardOneOnTails（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "GD6-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ナツメのゴースト",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。GD6（gym_deck。発売 1999-02-26）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: あくむ=SleepOpponent、かげからおそう=CoinChooseOpponentBenchDamage（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。ナツメのゴースから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "マグマラシ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。NIP1（intro_pack。発売 2001-04-06）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: たいあたり=DamageOnly、かえんほうしゃ=DiscardEnergyThenDamage（処理に使う文面は kyuura の印刷の文面）。ヒノアラシから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PF3-003": {
+      "basis": "kyuura_data",
+      "name_ja": "ニューラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。PF3（premium_file。発売 2000-11-23）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: だましとる=CoinDiscardAllOpponentTrainers（v0.79 の新しい型）、でんこうせっか=CoinBonusDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-010": {
+      "basis": "kyuura_data",
+      "name_ja": "エレブー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。PR1（promo。発売 1997-08）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ひかりのかべ=HalveDamageNextTurn、でんこうせっか=CoinBonusDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PR1-064": {
+      "basis": "kyuura_data",
+      "name_ja": "フリーザー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。PR1（promo。発売 1997-08）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ダイヤモンドダスト=DamageThenParalyzeAndOpponentBenchOnHeads（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-014": {
+      "basis": "kyuura_data",
+      "name_ja": "ハガネール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。PRN（promo。発売 2000）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: メタルクラッシュ=FailOnTailsDamageThenSelfCannotAttack（v0.79 の新しい型）、じひびき=DamageThenRetreatLock（処理に使う文面は kyuura の印刷の文面）。イワークから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-012": {
+      "basis": "kyuura_data",
+      "name_ja": "オコリザル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: けたぐり=DamageOnly、いかりくるう=DamagePlusOwnCountersThenSelfConfuseOnTails（処理に使う文面は kyuura の印刷の文面）。マンキーから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-014": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤドキング",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ひらめく=SearchTrainerRequiredOnHeads（v0.79 の新しい型）、サイコキネシス=DamagePlusDefenderEnergy（処理に使う文面は kyuura の印刷の文面）。ヤドンから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "SI-017": {
+      "basis": "kyuura_data",
+      "name_ja": "マリル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。SI（southern_islands。発売 1999-07-17）。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: みずとばし=ChooseOpponentPokemonDamage、ころがりタックル=DamageOnly（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）なので、同じサイトでの日本語の欄の照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-001": {
+      "basis": "kyuura_data",
+      "name_ja": "ナゾノクサ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かくれる=SelfBarrierOnHeads、すいとる=DamageAndDrain（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "チコリータ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: たいあたり=DamageOnly、リフレクター=HalveDamageNextTurn（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-003": {
+      "basis": "kyuura_data",
+      "name_ja": "レディバ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ちょうおんぱ=ConfuseOnHeadsWithoutDamage、れんぞくパンチ=CoinFlipDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ツボツボ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: からにこもる=PreventDamageOnHeads、まきつく=ParalyzeOnHeads（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-013": {
+      "basis": "kyuura_data",
+      "name_ja": "キマワリ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: はなびらのまい=CoinFlipDamageThenSelfConfuse（処理に使う文面は kyuura の印刷の文面）。ヒマナッツから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-016": {
+      "basis": "kyuura_data",
+      "name_ja": "ワタッコ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ねむりごな=SleepOpponent、やどりぎのたね=DamageAndRemoveCounters（処理に使う文面は kyuura の印刷の文面）。ポポッコから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-025": {
+      "basis": "kyuura_data",
+      "name_ja": "マリル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: まるくなる=PreventDamageOnHeads、バブルボム=DamageThenParalyzeOrSelfDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-029": {
+      "basis": "kyuura_data",
+      "name_ja": "シードラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: あわ=ParalyzeOnHeads、だくりゅう=DamageThenCoinBenchDamage（処理に使う文面は kyuura の印刷の文面）。タッツーから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-034": {
+      "basis": "kyuura_data",
+      "name_ja": "マリルリ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: たいあたり=DamageOnly、バブルシャワー=DamageThenParalyzeAndOpponentBenchOnHeads（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。マリルから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-036": {
+      "basis": "kyuura_data",
+      "name_ja": "ピカチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: でんこうせっか=CoinBonusDamage、こうそくいどう=DamageThenPreventAttackDamageOnHeads（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-037": {
+      "basis": "kyuura_data",
+      "name_ja": "チョンチー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ちょうおんぱ=ConfuseOnHeadsWithoutDamage、じたばた=DamageTimesOwnCounters（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-043": {
+      "basis": "kyuura_data",
+      "name_ja": "デンリュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ギガショック=DamageThenParalyzeAndOpponentBenchOnHeads（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。モココから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-045": {
+      "basis": "kyuura_data",
+      "name_ja": "ヤドン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ねんりき=ParalyzeOnHeads、みずでっぽう=ExtraEnergyDamage（処理に使う文面は kyuura の印刷の文面）。kyuura の ja_text_source の URL が neo01-046-yadon（ネイティ neo1-046 の URL が neo01-045-naty）で、番号が入れかわっている（名前・ワザは合う。処理に使う欄ではない。kyuura への報告事項）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-046": {
+      "basis": "kyuura_data",
+      "name_ja": "ネイティ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: つつく=DamageOnly、テレキネシス=ChooseOpponentPokemonDamage（処理に使う文面は kyuura の印刷の文面）。kyuura の ja_text_source の URL が neo01-045-naty（ヤドン neo1-045 と番号が入れかわっている。kyuura への報告事項）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-010": {
+      "basis": "kyuura_data",
+      "name_ja": "スピアー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: さんばいどく=DamageThenSpecialPoisonOnHeads、ミサイルばり=CoinFlipDamage（処理に使う文面は kyuura の印刷の文面）。コクーンから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-012": {
+      "basis": "kyuura_data",
+      "name_ja": "デルビル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: スモッグ=PoisonOnHeads、ほのおをまとう=DamageThenAttachEnergyFromDiscardToSelf（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-017": {
+      "basis": "kyuura_data",
+      "name_ja": "サニーゴ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: じこさいせい=DiscardEnergyAndRemoveAllCounters、とげキャノン=CoinFlipDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ネイティ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: あやしいひかり=ConfuseOnHeads（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-029": {
+      "basis": "kyuura_data",
+      "name_ja": "エーフィ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かみつく=DamageOnly、サイコキネシス=DamagePlusDefenderEnergy（処理に使う文面は kyuura の印刷の文面）。イーブイから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-035": {
+      "basis": "kyuura_data",
+      "name_ja": "オムスター",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: しめあげる=CoinBonusDamageAndParalyze、とげとげMAX=CoinsPerAttachedTypeBonusDamage（処理に使う文面は kyuura の印刷の文面）。オムナイトから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-038": {
+      "basis": "kyuura_data",
+      "name_ja": "カポエラー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: みきり=SelfBarrierOnHeads、トリプルキック=CoinFlipDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-008": {
+      "basis": "kyuura_data",
+      "name_ja": "マグマッグ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ほのお=DamageOnly、マグマでかこむ=DamageThenRetreatLock（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-011": {
+      "basis": "kyuura_data",
+      "name_ja": "ホウオウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text",
+        "attack/2": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: もえあがる=AttachEnergyFromDeckToSelfExactly、せいなるほのお=CoinChooseOpponentPokemonDamage、ゴッドバード=FailOnTailsDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-015": {
+      "basis": "kyuura_data",
+      "name_ja": "ハリーセン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: どくばり=PoisonOnHeads、はりせんぼん=CoinsUntilTailsDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-016": {
+      "basis": "kyuura_data",
+      "name_ja": "テッポウオ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ねらいうち=CoinChooseOpponentPokemonDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-017": {
+      "basis": "kyuura_data",
+      "name_ja": "アズマオウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: つきあげる=CoinBonusDamage、つのでいちげき=CoinsAllHeadsBonusDamage（処理に使う文面は kyuura の印刷の文面）。トサキントから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-018": {
+      "basis": "kyuura_data",
+      "name_ja": "ルージュラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: こごえるキッス=PutToSleep、あやしいおどり=CoinBonusDamageAndConfuse（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-027": {
+      "basis": "kyuura_data",
+      "name_ja": "モココ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ビリリパンチ=DamageOnly、エレキテール=DamageThenOpponentBenchOnHeads（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。メリープから進化（名前の完全一致・商品をまたぐ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo3-048": {
+      "basis": "kyuura_data",
+      "name_ja": "ブルー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo3（めざめる伝説。expansion_pack。発売 2000-11-23）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かみつく=DamageOnly、いかりのずつき=CoinBonusPerOwnCounter（v0.79 の新しい型）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-014": {
+      "basis": "kyuura_data",
+      "name_ja": "ロコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ひのこ=DiscardEnergyThenDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-031": {
+      "basis": "kyuura_data",
+      "name_ja": "マンタイン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: おおなみ=DamageThenSelfCannotAttack（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-071": {
+      "basis": "kyuura_data",
+      "name_ja": "グライガー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: しんけいどく=DamageThenPoisonAndParalyzeOnHeads（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-085": {
+      "basis": "kyuura_data",
+      "name_ja": "プリン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: ふくらむ=DamageThenReduceDamageNextTurn（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-087": {
+      "basis": "kyuura_data",
+      "name_ja": "ミニリュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: だっぴ=HealSelfWithoutDamage（v0.79 の新しい型）、みだれづき=CoinFlipDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-089": {
+      "basis": "kyuura_data",
+      "name_ja": "キリンリキ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: しっぽでかみつく=CoinBonusDamage、サイコキネシス=DamagePlusDefenderEnergy（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-092": {
+      "basis": "kyuura_data",
+      "name_ja": "ラッキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.79 で加えた（docs/shared-checks-pokemon-reuse-v0.79.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: おうふくびんた=CoinFlipDamage、タマゴなげ=FailOnTailsDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面はポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
     }
   }
 }

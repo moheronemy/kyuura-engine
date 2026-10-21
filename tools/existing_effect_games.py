@@ -458,6 +458,9 @@ V0_77_POKEMON = tuple(card for card in V0_77 if card not in V0_77_TRAINERS)
 V0_78 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_78"])
 V0_78_ENERGIES = ("neo1-094", "neo1-095", "NIP1X-010", "NIP2X-010", "PRN-002")
 V0_78_POKEMON = tuple(card for card in V0_78 if card not in V0_78_ENERGIES)
+# v0.79（docs/shared-checks-pokemon-reuse-v0.79.md）: ポケモン 52 枚（写しの組 pool_v0_79）。v0.77 と同じく TARGETS に加え、使っていないワザを選ぶ手順を重ねる。ワザの決定
+# （ファイヤーテールのトラッシュ・かげからおそうの控え・ひらめくの山札）は元の手順と ``_v079_decision``（ひらめくは 1 枚を選ぶ）
+V0_79 = tuple(__import__("kyuura_engine.cards", fromlist=["read_extract"]).read_extract()["pool_v0_79"])
 TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36 + V0_37 + V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43
            + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_49 + V0_50 + V0_51 + V0_52
            + ("PMCG5-052", "PMCG5-053")  # ワザの選び方を重ね、動きを数えるカード（v0.58: タケシのゴローン・ゴローニャ）
@@ -471,7 +474,8 @@ TARGETS = (V0_28 + V0_29 + V0_30 + V0_31 + V0_32 + V0_33 + V0_34 + V0_35 + V0_36
            + V0_75  # v0.75: 拡張パック以外の商品のポケモン 15 枚
            + V0_76  # v0.76: 拡張パック以外の商品のポケモン 24 枚
            + V0_77_POKEMON  # v0.77: neo 期の拡張パックのポケモン 50 枚
-           + V0_78_POKEMON)  # v0.78: 「悪」「鋼」エネルギーを使うポケモン 8 枚
+           + V0_78_POKEMON  # v0.78: 「悪」「鋼」エネルギーを使うポケモン 8 枚
+           + V0_79)  # v0.79: ポケモン 52 枚
 STARYU = "PMCG1-025"
 GRASS, FIRE, WATER, LIGHTNING, PSYCHIC, FIGHTING = "PMCG1-097", "PMCG1-098", "PMCG1-099", "PMCG1-100", "PMCG1-101", "PMCG1-102"
 SWITCH = "PMCG1-073"
@@ -950,6 +954,27 @@ DECKS = {
     # 4 枚まで）と、鋼エネルギー 4 枚（neo1-095・NIP1X-010。同じ名前 4 枚まで）。「鋼」でないイワーク・ストライクに鋼エネルギーがつくと、与えるワザのダメージも -10
     "M78": (("PMCG1-054", 3), ("neo1-057", 2), ("PMCG2-017", 3), ("neo2-045", 2), ("neo1-058", 2), ("NIP1X-005", 2), *TRAINERS,
             ("neo1-095", 2), ("NIP1X-010", 2), ("PMCG1-077", 4), (FIGHTING, 11), (GRASS, 11), (DOUBLE_COLORLESS, 4)),
+    # v0.79: 水・雷。マリル（neo1-025・SI-017）→ マリルリ（バブルシャワー）・メリープ → モココ（エレキテール）→ デンリュウ（ギガショック）・ピカチュウ（neo1-036。こうそくいどう）・
+    # チョンチー・フリーザー（PR1-064。ダイヤモンドダスト）・エレブー（PR1-010）・ハリーセン・テッポウオ・タッツー → シードラ（neo1-029）・トサキント → アズマオウ（neo3-017）・
+    # サニーゴ・マンタイン
+    "W79": (("neo1-025", 3), ("SI-017", 1), ("neo1-034", 2), ("neo2-020", 3), ("neo3-027", 2), ("neo1-043", 1), ("neo1-036", 2), ("neo1-037", 2),
+            ("PR1-064", 1), ("PR1-010", 1), ("neo3-015", 1), ("neo3-016", 1), ("PMCG3-014", 2), ("neo1-029", 1), ("PMCG2-021", 2), ("neo3-017", 1),
+            ("neo2-017", 1), ("neo4-031", 1), (driver.BILL, 2), (SWITCH, 2), (driver.POTION, 2), (WATER, 14), (LIGHTNING, 10), (FIGHTING, 2)),
+    # v0.79: 超・水。ヤドン（neo1-045）→ ヤドキング（ひらめく）・ネイティ（neo1-046 テレキネシス・neo2-022）・ゴース（ES3-022・QSG-028。こわがらせる）・ナツメのゴース → ナツメのゴースト
+    # （かげからおそう）・ルージュラ（あやしいおどり）・イーブイ → エーフィ・キリンリキと、プラスパワー・ディフェンダー（だましとるの相手）
+    "P79": (("neo1-045", 3), ("SI-014", 2), ("neo1-046", 2), ("neo2-022", 2), ("ES3-022", 2), ("QSG-028", 2), ("PMCG6-049", 3), ("GD6-007", 2),
+            ("neo3-018", 2), ("PMCG2-037", 2), ("neo2-029", 1), ("neo4-089", 2), *TRAINERS, (PSYCHIC, 19), (WATER, 4)),
+    # v0.79: 草・炎。ナゾノクサ・チコリータ・レディバ・ツボツボ・ヒマナッツ → キマワリ・ハネッコ → ポポッコ → ワタッコ・ビードル → コクーン → スピアー（さんばいどく）・デルビル
+    # （neo2-012）・ロコン（neo4-014）・マグマッグ・ホウオウ・カツラのヒトカゲ（ファイヤーテール）・ヒノアラシ → マグマラシ
+    "F79": (("neo1-001", 2), ("neo1-002", 2), ("neo1-003", 2), ("neo1-007", 1), ("neo1-006", 2), ("neo1-013", 1), ("neo2-004", 2), ("neo1-012", 1),
+            ("neo1-016", 1), ("PMCG1-004", 2), ("PMCG1-009", 1), ("neo2-010", 1), ("neo2-012", 2), ("neo4-014", 2), ("neo3-008", 1), ("neo3-011", 1),
+            ("GD5-001", 3), ("PF1-004", 2), ("NIP1-013", 1), (driver.BILL, 2), (SWITCH, 1), (GRASS, 13), (FIRE, 14)),
+    # v0.79: 闘・無色・悪・鋼。サンド（ES2-020・QSG-033。スピードスター）・タケシのマンキー（からかう）・マンキー → オコリザル（SI-012）・マチスのコラッタ → マチスのラッタ（GD3-012）・
+    # ニューラ（PF3-003。だましとる）・イワーク → ハガネール（PRN-014。メタルクラッシュ）・カポエラー・グライガー・プリン（neo4-085）・ミニリュウ（neo4-087。だっぴ）・ブルー（いかりのずつき）・
+    # ラッキー（neo4-092）と、悪・鋼エネルギー・無色2個エネルギー
+    "C79": (("ES2-020", 2), ("QSG-033", 2), ("GD1-005", 2), ("PMCG2-028", 2), ("SI-012", 1), ("GD3-011", 2), ("GD3-012", 1), ("PF3-003", 2),
+            ("PMCG1-054", 2), ("PRN-014", 1), ("neo2-038", 2), ("neo4-071", 2), ("neo4-085", 2), ("neo4-087", 2), ("neo3-048", 2), ("neo4-092", 1),
+            (driver.BILL, 2), (SWITCH, 2), ("neo1-094", 4), ("neo1-095", 4), (DOUBLE_COLORLESS, 2), (FIGHTING, 18)),
     # v0.74: 草。キョウのアーボ → キョウのアーボック・キョウのドガース → キョウのマタドガス・キョウのベトベター・キョウのズバット → キョウのゴルバットと、キョウの忍者ジム・
     # ラッキースタジアム（NIP2X-009・PRN-015・PRN-016・PRN-027。同じ名前 4 枚まで）・セキチクシティジム（名前の違うスタジアムの記録で FG1 にしない）
     "L74": (("PMCG6-002", 4), ("PMCG6-019", 2), ("PMCG6-015", 3), ("PMCG6-016", 2), ("PMCG6-007", 3), ("PMCG6-005", 3), ("PMCG6-014", 2), ("PR1-067", 3),
@@ -1079,6 +1104,9 @@ PAIRINGS_V0_76 = (("K76", "W76"), ("K76", "P31"), ("W76", "C72"))
 PAIRINGS_V0_77 = (("G77", "W77"), ("C77", "G77"), ("W77", "C77"))
 # v0.78: D78 対 M78（悪エネルギーの + 10 と鋼エネルギーの - 10 が同じダメージに重なる）・D78 対 G77・M78 対 C77
 PAIRINGS_V0_78 = (("D78", "M78"), ("D78", "G77"), ("M78", "C77"))
+# v0.79: W79 対 C79・P79 対 F79・W79 対 P79（どのデッキも v0.79 のカードを中心に組む。P79 のプラスパワー・ディフェンダーは C79 のニューラのだましとるの相手にならないので、
+# C79 対 P79 も加える）
+PAIRINGS_V0_79 = (("W79", "C79"), ("P79", "F79"), ("W79", "P79"), ("C79", "P79"))
 BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, "v0.31": PAIRINGS_V0_31, "v0.32": PAIRINGS_V0_32,
            "v0.33": PAIRINGS_V0_33, "v0.34": PAIRINGS_V0_34, "v0.35": PAIRINGS_V0_35, "v0.36": PAIRINGS_V0_36, "v0.37": PAIRINGS_V0_37,
            "v0.38": PAIRINGS_V0_38, "v0.39": PAIRINGS_V0_39, "v0.40": PAIRINGS_V0_40, "v0.41": PAIRINGS_V0_41, "v0.42": PAIRINGS_V0_42,
@@ -1090,7 +1118,7 @@ BATCHES = {"v0.28": PAIRINGS, "v0.29": PAIRINGS_V0_29, "v0.30": PAIRINGS_V0_30, 
            "v0.64": PAIRINGS_V0_64, "v0.65": PAIRINGS_V0_65, "v0.66": PAIRINGS_V0_66, "v0.67": PAIRINGS_V0_67, "v0.68": PAIRINGS_V0_68,
            "v0.69": PAIRINGS_V0_69, "v0.70": PAIRINGS_V0_70, "v0.71": PAIRINGS_V0_71, "v0.72": PAIRINGS_V0_72, "v0.73": PAIRINGS_V0_73,
            "v0.74": PAIRINGS_V0_74, "v0.75": PAIRINGS_V0_75, "v0.76": PAIRINGS_V0_76,
-           "v0.77": PAIRINGS_V0_77, "v0.78": PAIRINGS_V0_78}
+           "v0.77": PAIRINGS_V0_77, "v0.78": PAIRINGS_V0_78, "v0.79": PAIRINGS_V0_79}
 CHECK_FAILURES = ("check_decision_player_mismatch", "check_in_use_mismatch", "check_in_use_left_in_main")
 # ワザの結果として数えるログ（v0.28・v0.29 のカードのワザの中に出たもの）
 RESULT_EVENTS = ("special_condition", "persistent_effect_added", "discard_energy", "remove_all_damage_counters", "drain_heal",
@@ -3679,11 +3707,54 @@ def _v078_energy(state, command, tried, counts):
     return None
 
 
+def v079_uses(state):
+    """v0.79: ログから数えた v0.79 のカードの動き（ない局では空）。``attack_<id>#<位置>``（宣言。まねたワザは数えない）・``coin_<id>#<位置>_<面>``・``effect_<種類>``（v0.79 の
+    ワザが与えた持続する効果）・``status_<種類>``（v0.79 のワザで付けた特殊状態）・``failed``・``bench_damage``（控えへのダメージ）・``discard_energy``・``discard_energy_skipped``・
+    ``trainers_discarded``（だましとる）・``search``・``search_none``（ひらめく）・``heal``・``evolve_<id>``・``locked_attack``（メタルクラッシュ・おおなみの効果のある番の
+    ワザの宣言の拒否は手順が数える）。"""
+    counts = Counter()
+    for e in state.log:
+        kind = e["kind"]
+        if kind == "attack":
+            current = f"{state.cards[e['pokemon']].card_id}#{e['attack_index']}" if "card_id" not in e else f"{e['card_id']}#{e['attack_index']}"
+            if current.split("#")[0] in V0_79:
+                counts[f"attack_{current}"] += 1
+        if kind == "evolve" and e.get("to_card_id") in V0_79:
+            counts[f"evolve_{e['to_card_id']}"] += 1
+        effect = str(e.get("effect", ""))
+        if effect.split("#")[0] not in V0_79:
+            continue
+        if kind == "persistent_effect_added":
+            counts[f"effect_{e['persistent_effect']}"] += 1
+        elif kind == "special_condition":
+            counts[f"status_{e.get('condition')}"] += 1
+        elif kind == "coin_flip" and e.get("source") == "attack":
+            counts[f"coin_{effect}_{e['result']}"] += 1
+        elif kind == "attack_failed":
+            counts["failed"] += 1
+        elif kind == "damage" and e.get("target") in ("opponent_bench", "self_bench"):
+            counts["bench_damage"] += 1
+        elif kind == "discard_energy":
+            counts["discard_energy"] += 1
+        elif kind == "discard_energy_failed":
+            counts["discard_energy_skipped"] += 1
+        elif kind == "discard_attached_trainer" and e.get("reason") == "attack":
+            counts["trainers_discarded"] += 1
+        elif kind == "reveal_from_deck":
+            counts["search"] += 1
+        elif kind == "reveal_from_deck_none":
+            counts["search_none"] += 1
+        elif kind == "attack_heal":
+            counts["heal"] += 1
+    return counts
+
+
 def v078_uses(state):
     """v0.78: ログから数えた v0.78 のカードの動き（ない局では空）。``attack_<id>#<位置>``（宣言）・``coin_<id>#<位置>_<面>``・``effect_<種類>``（v0.78 のワザが与えた持続する
     効果）・``failed``・``plunder_trainers``（ごうだつでトラッシュしたトレーナー）・``evolve_<id>``・``darkness_bonus``・``metal_attacker``・``metal_defender``（ワザのダメージの
     5・7 段階に悪・鋼エネルギーがあった回数）・``darkness_damage``・``darkness_damage_reduced``・``darkness_counters``（ポケモンチェックの悪エネルギー）・``metal_nonattack``
-    （ワザでないダメージを鋼エネルギー（NIP1X-010）で減らした回数）・``attached_<id>``（手札からつけた悪・鋼エネルギー）。"""
+    （ワザでないダメージを鋼エネルギー（NIP1X-010）で減らした回数）・``nonattack_zeroed``（v0.79: そのうち最終のダメージが 0 になった回数。悪エネルギーのダメージも含む。
+    ``darkness_damage_reduced`` は悪エネルギーの 10 ダメージを減らした回数だけで、意味を変えていない）・``attached_<id>``（手札からつけた悪・鋼エネルギー）。"""
     counts = Counter()
     for e in state.log:
         kind = e["kind"]
@@ -3703,12 +3774,14 @@ def v078_uses(state):
         if kind == "darkness_energy_damage":
             counts["darkness_damage"] += 1
             counts["darkness_damage_reduced"] += 1 if e.get("energy_reduction") else 0
+            counts["nonattack_zeroed"] += 1 if e.get("energy_reduction") and e["amount"] == 0 else 0
         if kind == "darkness_energy_counters":
             counts["darkness_counters"] += 1
         if kind in ("poison_damage", "power_damage", "counterattack", "trainer_damage", "energy_damage", "stadium_damage", "sinkhole_damage",
                     "knock_out_power_damage") and (e.get("energy_reduction") or any(m[0] in state.cards and state.cards[m[0]].card_id == "NIP1X-010"
                                                                                       for m in e.get("received_modifiers", ()))):
             counts["metal_nonattack"] += 1
+            counts["nonattack_zeroed"] += 1 if e.get("amount") == 0 else 0
         effect = str(e.get("effect", ""))
         if effect.split("#")[0] not in V0_78:
             continue
@@ -4798,7 +4871,7 @@ def make_policy(seen: dict, counts: Counter):
         attacks = state.card_def(active.card).attacks
         provided = state.energy_types(active)
         usable = [a.index for a in attacks if can_pay_cost(a.cost, provided) and ("attack_index", a.index) not in tried]
-        if card_id in V0_78_POKEMON:
+        if card_id in V0_78_POKEMON + V0_79:  # v0.79 のポケモンも（C79 は悪・鋼エネルギーを使う）
             # v0.78: 悪・鋼エネルギー（特殊エネルギー）は ``state.energy_types`` では数えられない（provides がない）ので、エンジンの支払いの問い合わせで払えるかを見る
             # （v0.78 のポケモンだけ。前の版の組の手順は変えない）
             usable = [a.index for a in attacks if attack_cost_payable(state, active, a) and ("attack_index", a.index) not in tried]
@@ -4825,7 +4898,7 @@ def make_policy(seen: dict, counts: Counter):
             # 使えるワザをどれも 2 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v031_wait_{card_id}"] += 1
             return EndTurn(player)
-        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
+        if card_id in V0_38 + V0_39 + V0_40 + V0_41 + V0_42 + V0_43 + V0_44 + V0_45 + V0_46 + V0_47 + V0_48 + V0_51 + V0_52 + V0_58 + V0_64 + V0_70 + V0_72 + V0_75 + V0_76 + V0_77_POKEMON + V0_79 and all(used[i] >= 1 for i in usable) and any(used[a.index] == 0 and a.index not in usable for a in attacks):
             # v0.38: 必要なエネルギーの少ないワザ（でんれい・どくばりタックルなど）を使い続けると、もう一つのワザが使えるようにならない（でんれいは自分を
             # 山札にもどす）。使えるワザをどれも 1 回以上使い、まだ使っていないワザが必要なエネルギーの不足で使えないときは、この番はワザを使わずに番を終える
             counts[f"v038_wait_{card_id}"] += 1  # v0.39〜v0.41 のカードも同じ手順（じばく・メガトンパンチ・ギガスパーク・ひのとりなど）
@@ -4942,6 +5015,7 @@ def play(labels, seed, *, max_steps=8000, keep_state=False):
         result["v076"] = v076_uses(state)
         result["v077"] = v077_uses(state)
         result["v078"] = v078_uses(state)
+        result["v079"] = v079_uses(state)
         result["trainer_sequence_problems"] = driver.trainer_sequence_problems(state)
     result["audit"] = audit(result, state, commands)
     if keep_state:
@@ -5381,7 +5455,8 @@ def summarize(games):
          "v067": Counter(), "v067_games_with": Counter(), "v067_policy": Counter(),
          "v076": Counter(), "v076_games_with": Counter(), "v076_policy": Counter(),
          "v077": Counter(), "v077_games_with": Counter(), "v077_policy": Counter(),
-         "v078": Counter(), "v078_games_with": Counter(), "v078_policy": Counter()}
+         "v078": Counter(), "v078_games_with": Counter(), "v078_policy": Counter(),
+         "v079": Counter(), "v079_games_with": Counter(), "v079_policy": Counter()}
     for r in games:
         s["v058"].update(r.get("v058", {}))  # v0.58
         s["v058_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v058_")})
@@ -5420,6 +5495,9 @@ def summarize(games):
         s["v078"].update(r.get("v078", {}))  # v0.78
         s["v078_games_with"].update({k: 1 for k, v in r.get("v078", {}).items() if v})
         s["v078_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v078_")})
+        s["v079"].update(r.get("v079", {}))  # v0.79
+        s["v079_games_with"].update({k: 1 for k, v in r.get("v079", {}).items() if v})
+        s["v079_policy"].update({k: v for k, v in r.get("policy", {}).items() if k.startswith("v079_")})
         s["unresolved_rejections"].update(r["unresolved_rejections"])
         s["audit_failures"].update(r["audit"])
         s["end_conditions"].update(r.get("conditions", []))

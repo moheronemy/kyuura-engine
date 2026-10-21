@@ -89,10 +89,11 @@
 
 from __future__ import annotations
 
+import itertools
 import re
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Mapping
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, Mapping, Sequence
 
 from .cards import EnergyType, can_pay_with_units
 from .coins import CoinSide, flip_coins
@@ -1288,7 +1289,12 @@ class CoinBonusDamageAndParalyze(AttackEffect):
             problems.append("ダメージが 10 の倍数の正の数ではない")
         if attack.text_ja is None:
             problems.append("説明文のないワザを、コインでダメージを追加してマヒ状態にするワザとして登録している")
-        return problems
+            return problems
+        # v0.79: 説明の文面も確かめる（v0.78 までは形だけで、ルージュラ（neo3-018）の「あやしいおどり」（こんらん）も通っていた）。追加の量と特殊状態の種類（マヒ）が
+        # 登録と合う書き方だけを受け付ける（オムスター（neo2-035）の「しめあげる」は「追加し、」と書くだけの違い）
+        return problems + _check_exact_text(attack, "コインでダメージを追加してマヒ状態にするワザ", (
+            f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加して、相手を「マヒ」状態にする。",
+            f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加し、相手を「マヒ」状態にする。"))
 
     def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
         # 「うら」なら目安の数字、「おもて」なら bonus を加えた数（v0.10）
@@ -2172,6 +2178,7 @@ class SwitchOpponentActive(AttackEffect):
 SWITCH_OPPONENT_ACTIVE_TEXTS = (
     "相手の控えポケモンを選んで、相手の対戦ポケモンと入れ替える。",
     "相手の控えポケモンを選び、相手の対戦ポケモンと入れ替える。",
+    "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。",  # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 6 章）: タケシのマンキー（GD1-005）の「からかう」（「1匹」を書くだけの違い）
 )
 
 
@@ -2423,7 +2430,9 @@ class FailOnTailsDamage(AttackEffect):
         problems = _check_form(attack, "コインでワザが失敗するワザ", damage="fixed")
         text = attack.text_ja or ""
         expected = "コインを投げて「うら」なら、このワザは失敗する。" if self.coins == 1 else f"コインを{self.coins}枚投げ、1つでも「うら」なら、このワザは失敗する。"
-        if text != expected:
+        # v0.79: ラッキー（neo4-092）の「タマゴなげ」の書き方（「投げて、1枚でも」。コインの枚数は登録の数と同じときだけ）
+        variants = (expected,) if self.coins == 1 else (expected, f"コインを{self.coins}枚投げて、1枚でも「うら」なら、このワザは失敗する。")
+        if text not in variants:
             problems.append(f"説明 {text!r} が、コイン {self.coins} 枚で失敗するワザの説明 {expected!r} と違う")
         return problems
 
@@ -2593,7 +2602,11 @@ class DamageThenDiscardAllOnTails(AttackEffect):
     implementation_id = "damage_then_discard_all_on_tails"
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "コインでエネルギーをすべてトラッシュするワザ", damage="fixed")
+        # v0.79: 説明の文面も確かめる（v0.78 までは形だけで、カツラのヒトカゲ（GD5-001）の「ファイヤーテール」（1 枚選んでトラッシュ）も通っていた）。「すべて」と
+        # トラッシュするエネルギーの種類が登録と合う書き方だけを受け付ける
+        kind = "エネルギーカード" if self.energy_type is None else f"「{self.energy_type.ja}」エネルギーカード"
+        return _check_form(attack, "コインでエネルギーをすべてトラッシュするワザ", damage="fixed") + _check_exact_text(
+            attack, "コインでエネルギーをすべてトラッシュするワザ", (f"コインを投げて「うら」なら、自分についている{kind}を、すべてトラッシュする。",))
 
 
 @dataclass(frozen=True)
@@ -3133,7 +3146,9 @@ class DamageThenCoinBenchDamage(AttackEffect):
         # v0.72: エビワラー（ES2-027・QSG-038）の「マッハパンチ」の書き方（「控えポケモンから1匹を選び」・「弱点・抵抗力」に関係なくを括弧に入れる。意味は同じ。
         # docs/status-coins-effect-reuse-v0.72.md 4 章）
         expected = (f"コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。",
-                    f"コインを投げて「おもて」なら、相手の控えポケモンから1匹を選び、そのポケモンにも(「弱点・抵抗力」に関係なく){self.bench_damage}ダメージ。")
+                    f"コインを投げて「おもて」なら、相手の控えポケモンから1匹を選び、そのポケモンにも(「弱点・抵抗力」に関係なく){self.bench_damage}ダメージ。",
+                    # v0.79: シードラ（neo1-029）の「だくりゅう」の書き方（「投げて、」の読点だけの違い）
+                    f"コインを投げて、「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。")
         if attack.text_ja not in expected:
             problems.append(f"説明 {attack.text_ja!r} が {expected[0]!r} ではない")
         return problems
@@ -3236,7 +3251,9 @@ class DamagePlusOwnCountersThenSelfConfuseOnTails(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "自分のダメージカウンターで追加ダメージ・コインで自分がこんらんのワザ", damage="modified", modifier="+")
         expected = f"自分にのっているダメージカウンター×{self.per}のダメージを追加する。その後、コインを投げて「うら」なら、【自分】は「こんらん」状態になる。"
-        if attack.text_ja != expected:
+        # v0.79: オコリザル（SI-012）の「いかりくるう」の書き方（「の数」・「自分を「こんらん」状態にする」。意味は同じ）
+        variant = f"自分にのっているダメージカウンターの数×{self.per}のダメージを追加する。その後、コインを投げて「うら」なら、自分を「こんらん」状態にする。"
+        if attack.text_ja not in (expected, variant):
             problems.append(f"説明 {attack.text_ja!r} が {expected!r} ではない")
         return problems
 
@@ -3618,7 +3635,9 @@ class CoinsPerAttachedTypeBonusDamage(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "ついているエネルギーの数のコインで追加ダメージのワザ", damage="modified", modifier="+")
         expected = f"このカードについている「{self.energy_type.ja}」エネルギーの数ぶんコインを投げ、「おもて」の数×{self.per}のダメージを追加する。"
-        if attack.text_ja != expected:
+        # v0.79: オムスター（neo2-035）の「とげとげMAX」の書き方（「自分についている」。このカードのこと）
+        variant = f"自分についている「{self.energy_type.ja}」エネルギーの数ぶんコインを投げ、「おもて」の数×{self.per}のダメージを追加する。"
+        if attack.text_ja not in (expected, variant):
             problems.append(f"説明 {attack.text_ja!r} が {expected!r} ではない")
         return problems
 
@@ -3664,6 +3683,8 @@ ATTACK_COIN_CHECK_TEXTS: dict[str, bool] = {
     "このワザを受けた相手は、次の相手の番でワザを使う時にコインを投げ、「うら」なら、ワザは失敗する。": False,
 }
 RETREAT_LOCK_TEXT = "このワザを受けた相手は、次の相手の番に「にげる」ことができない。"
+# v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 6 章）: ハガネール（PRN-014）の「じひびき」・マグマッグ（neo3-008）の「マグマでかこむ」の書き方（「次の相手の番、」を前に書くだけの違い）
+RETREAT_LOCK_TEXTS = (RETREAT_LOCK_TEXT, "次の相手の番、このワザを受けた相手は「にげる」ことができない。")
 RETURN_SELF_TO_DECK_TEXT = "コインを投げて「おもて」なら、ダメージを与えた後、自分と、自分についているすべてのカードを山札にもどす。その後、その山札をよく切る。"
 
 
@@ -3710,7 +3731,7 @@ class DamageThenRetreatLock(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         problems = _check_form(attack, "次の相手の番に「にげる」ことができなくするワザ", damage="fixed")
-        if attack.text_ja != RETREAT_LOCK_TEXT:
+        if attack.text_ja not in RETREAT_LOCK_TEXTS:
             problems.append(f"説明 {attack.text_ja!r} が {RETREAT_LOCK_TEXT!r} ではない")
         return problems
 
@@ -3852,7 +3873,9 @@ class SelfBarrierOnHeads(AttackEffect):
     def check(self, attack: Attack) -> list[str]:
         return _check_form(attack, "コインで次の相手の番にワザを受けなくなるワザ", damage="none") + _check_exact_text(
             attack, "コインの「おもて」で次の相手の番にワザによるダメージや効果を受けないワザ",
-            ("コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",))
+            ("コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+             # v0.79: カポエラー（neo2-038）の「みきり」の書き方（「相手のワザ」。次の相手の番に受けるワザは相手のワザなので、意味は同じ）
+             "コインを投げて「おもて」なら、次の相手の番、このカードは相手のワザによるダメージや効果を受けない。"))
 
 
 @dataclass(frozen=True)
@@ -3945,8 +3968,10 @@ def choose_opponent_pokemon_damage_texts(damage: int) -> tuple[str, ...]:
     """v0.43: 相手の場のポケモンを選んでダメージを与えるワザの説明（わるいゴルバット（PMCG4-009）の「ふらふらとぶ」）。"""
     # v0.44: ロケット団のディグダ（PMCG4-038）の「じめんにもぐる」の書き方（「相手の場のポケモンを1匹選び、…」。助詞「を」の位置だけの違いで、選ぶのはワザを使った
     # プレイヤー・相手の場のポケモン（バトル場・ベンチ）1 匹・弱点・抵抗力に関係なく、で同じ意味）も受け付ける
+    # v0.79: マリル（SI-017）の「みずとばし」・ネイティ（neo1-046）の「テレキネシス」の書き方（「弱点・抵抗力」に関係なくを括弧に入れない。意味は同じ）
     return (f"相手の場のポケモン1匹を選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。",
-            f"相手の場のポケモンを1匹選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。")
+            f"相手の場のポケモンを1匹選び、(「弱点・抵抗力」に関係なく){damage}ダメージ。",
+            f"相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、{damage}ダメージ。")
 
 
 @dataclass(frozen=True)
@@ -4260,10 +4285,13 @@ class DamageThenReduceDamageNextTurn(AttackEffect):
         _positive_tens(self.amount, "へらすダメージ")
 
     def check(self, attack: Attack) -> list[str]:
-        expected = (f"コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-{self.amount}」される。" if self.on_heads
-                    else f"次の相手の番、このカードがワザによって受けるダメージは「-{self.amount}」される。")
+        expected = ((f"コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-{self.amount}」される。",) if self.on_heads
+                    else (f"次の相手の番、このカードがワザによって受けるダメージは「-{self.amount}」される。",
+                          # v0.79: プリン（neo4-085）の「ふくらむ」の書き方。ダメージのない v0.62 の「あながくれ」（``reduce_damage_next_turn_texts``）と同じ言い回しで、
+                          # 同じ持続する効果（``DamageReduction``。p.321 の 8 段階）
+                          f"次の相手の番、このカードが受けるダメージは「-{self.amount}」される（ダメージ以外の効果はそのまま）。"))
         return _check_form(attack, "ダメージのあと次の相手の番に受けるダメージがへるワザ", damage="fixed") + _check_exact_text(
-            attack, "ダメージのあと次の相手の番に受けるダメージがへるワザ", (expected,))
+            attack, "ダメージのあと次の相手の番に受けるダメージがへるワザ", expected)
 
 
 DISCARD_ATTACHED_RETURN_TEXT = "このカードにのっているダメージカウンターをすべてとりのぞき、ついているカードをすべてトラッシュする。その後、このカードを山札にもどし、その山札をよく切る。"
@@ -4571,6 +4599,8 @@ class SelfTailsDamageGuard(AttackEffect):
 
 
 SWIFT_TEXT = "このワザのダメージは、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない。"
+# v0.79: サンド（ES2-020・QSG-033）の「スピードスター」は、kyuura の写しで「抵抗カ」（カタカナの「カ」）。写しを直さず、この書き方をそのまま受け付ける（kyuura への報告事項）
+SWIFT_TEXTS = (SWIFT_TEXT, "このワザのダメージは、相手の持っている「弱点・抵抗カ・特殊能力・その他の効果」の影響を受けない。")
 
 
 @dataclass(frozen=True)
@@ -4590,7 +4620,7 @@ class DamageIgnoringDefenderEffects(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         return _check_form(attack, "相手の持っている効果の影響を受けないワザ", damage="fixed") + _check_exact_text(
-            attack, "相手の持っている効果の影響を受けないワザ", (SWIFT_TEXT,))
+            attack, "相手の持っている効果の影響を受けないワザ", SWIFT_TEXTS)
 
 
 @dataclass(frozen=True)
@@ -6993,7 +7023,9 @@ class CoinFlipDamageThenSelfConfuse(AttackEffect):
         if attack.damage != self.damage_per_heads:
             problems.append(f"ダメージの目安の数字 {attack.damage!r} と、登録した「おもて」1 枚あたりのダメージ {self.damage_per_heads} が違う")
         expected = f"コインを{self.coins}枚投げて「おもて」の数×{self.damage_per_heads}のダメージ。その後、自分は「こんらん」状態になる。"
-        return problems + _check_exact_text(attack, "コインの数でダメージを与えて自分がこんらんになるワザ", (expected,))
+        # v0.79: キマワリ（neo1-013）の「はなびらのまい」の書き方（「投げ、」・「自分を「こんらん」状態にする」。意味は同じ）
+        variant = f"コインを{self.coins}枚投げ、「おもて」の数×{self.damage_per_heads}のダメージ。その後、自分を「こんらん」状態にする。"
+        return problems + _check_exact_text(attack, "コインの数でダメージを与えて自分がこんらんになるワザ", (expected, variant))
 
     def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
         return DamageProfile(opponent=tuple(heads * self.damage_per_heads for heads in range(self.coins + 1)))
@@ -9232,7 +9264,7 @@ class RainbowEnergy(SpecialEnergyEffect):
             if holder is not target:
                 continue
             modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
-            if modifier is not None and modifier.apply(self.amount, state.rules.damage_per_counter) != self.amount:
+            if modifier is not None and _power_change_matters(state, target, self.amount, modifier):
                 return (RAINBOW_RECEIVED_POWER_CODE,
                         (f"ポケモン {target.pokemon_id} の {modifier.label} を、レインボーエネルギーの {self.amount} ダメージ（特殊エネルギーカードによるダメージ。ワザ・特殊能力の"
                          "ダメージではない）に当てはめるかは決められないので扱わない（RB4。v0.57 の EX1 と同じ形の別の問い）"))
@@ -9406,6 +9438,35 @@ def energy_received_damage(state: GameState, pokemon: PokemonInPlay, amount: int
     return max(0, amount - sum(special_energy_effect(state, uid).received_damage_reduction() for uid in cards)), cards
 
 
+def non_attack_change_matters(state: GameState, pokemon: PokemonInPlay, amount: int, changes: Sequence[Callable[[int], int]]) -> tuple[int, ...]:
+    """v0.79: ワザでないダメージ ``amount`` を ``pokemon`` が受けるとき、当てはめるかが決まらない「受けるダメージを変える効果」（``changes``。量の関数）を、当てはめると
+    最終の量が変わるものの位置（docs/shared-checks-pokemon-reuse-v0.79.md 3 章）。
+
+    最終の量は、ついている特殊エネルギーの「-10」（NIP1X-010。説明のとおり当てはめる。``energy_received_damage``）も含めて比べる: どれも当てはめない量と、効果の
+    組（空でないもの）を当てはめる量を、当てはめる順番（鋼エネルギーの前・あと。ワザでないダメージには p.321 の段階がない）のすべてで比べ、違う量になる組の効果の位置を
+    返す。どの読み方でも同じ量（たとえばどれも 0）なら空（止めない）。v0.78 までは鋼エネルギーを数えずに比べていた（最終が 0 でも止めていた）。状態を変えない。"""
+    def metal(value: int) -> int:
+        return energy_received_damage(state, pokemon, value)[0]
+
+    base = metal(amount)
+    flagged: set[int] = set()
+    for size in range(1, len(changes) + 1):
+        for subset in itertools.combinations(range(len(changes)), size):
+            for order in itertools.permutations((*subset, None)):
+                value = amount
+                for index in order:
+                    value = metal(value) if index is None else changes[index](value)
+                if value != base:
+                    flagged.update(subset)
+    return tuple(sorted(flagged))
+
+
+def _power_change_matters(state: GameState, pokemon: PokemonInPlay, amount: int, modifier: DamageModifier) -> bool:
+    """受けるダメージを変える常にはたらく特殊能力 ``modifier`` 1 つを、ワザでないダメージ ``amount`` に当てはめると最終の量が変わるか（v0.79。DE1・KA1・RB4・EX1）。"""
+    per = state.rules.damage_per_counter
+    return bool(non_attack_change_matters(state, pokemon, amount, (lambda value: modifier.apply(value, per),)))
+
+
 # DE1（v0.78）: 悪エネルギー（neo1-094・PRN-002）のポケモンチェックの 10 ダメージ（ワザ・特殊能力のダメージではない）に、受けるダメージを変える常にはたらく特殊能力
 # （カブトアーマー・なぞのかべ）を当てはめるか（v0.47 の KA1・v0.57 の EX1・v0.58 の RB4 と同じ形の別の問い）
 DARKNESS_RECEIVED_POWER_CODE = "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"
@@ -9417,7 +9478,7 @@ def darkness_received_power_problem(state: GameState, pokemon: PokemonInPlay, am
         if holder is not pokemon:
             continue
         modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
-        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
+        if modifier is not None and _power_change_matters(state, pokemon, amount, modifier):
             return (f"ポケモン {pokemon.pokemon_id} の {modifier.label} を、悪エネルギーのポケモンチェックのダメージ {amount}（特殊エネルギーカードによるダメージ。ワザ・特殊能力の"
                     "ダメージではない）に当てはめるか（説明の「受けるダメージ」がそのダメージを含むか）は決められないので扱わない（DE1。v0.47 の KA1 と同じ形の別の問い）")
     return None
@@ -9898,7 +9959,10 @@ COIN_CHOOSE_OPPONENT_POKEMON_DAMAGE_TEXT = "コインを投げて「おもて」
 # v0.45: カツラのリザードン（PMCG6-032）の「かえんひこう」の書き方（「相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、」。選ぶのは相手の場のポケモン 1 匹で、
 # 弱点・抵抗力を計算しないことは同じ。ダメージの目安の数字はない）
 COIN_CHOOSE_OPPONENT_POKEMON_DAMAGE_TEXTS = (COIN_CHOOSE_OPPONENT_POKEMON_DAMAGE_TEXT,
-                                             "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、{damage}ダメージ。")
+                                             "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、{damage}ダメージ。",
+                                             # v0.79: ホウオウ（neo3-011）の「せいなるほのお」・テッポウオ（neo3-016）の「ねらいうち」の書き方（「そのポケモンに、」を書くだけの違い。
+                                             # 選ぶのは相手の場（バトル場・ベンチ）のポケモン）
+                                             "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、{damage}ダメージ。")
 
 
 @dataclass(frozen=True)
@@ -10109,8 +10173,9 @@ class DamageThenPoisonAndParalyzeOnHeads(AttackEffect):
     opponent_effect_elements = (POISON, PARALYSIS)
 
     def check(self, attack: Attack) -> list[str]:
-        expected = "コインを投げて「おもて」なら、相手を「どく」と「マヒ」の両方の状態にする。"
-        return _check_form(attack, "コインでどくとマヒの両方にするワザ", damage="fixed") + _check_exact_text(attack, "コインでどくとマヒの両方にするワザ", (expected,))
+        expected = ("コインを投げて「おもて」なら、相手を「どく」と「マヒ」の両方の状態にする。",
+                    "コインを投げて「おもて」なら、相手を「どく」と「マヒ」状態にする。")  # v0.79: グライガー（neo4-071）の「しんけいどく」（「両方の」を書かない）
+        return _check_form(attack, "コインでどくとマヒの両方にするワザ", damage="fixed") + _check_exact_text(attack, "コインでどくとマヒの両方にするワザ", expected)
 
 
 @dataclass(frozen=True)
@@ -10529,8 +10594,10 @@ class DamageThenAttachEnergyFromDiscardToSelf(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         expected = f"自分のトラッシュに「{self.energy_type.ja}」エネルギーカードがあれば、1枚取り出して、自分につける。"
+        # v0.79: デルビル（neo2-012）の「ほのおをまとう」の書き方（「1枚を選び出し、」。ちょうど 1 枚で意味は同じ）
+        variant = f"自分のトラッシュに「{self.energy_type.ja}」エネルギーカードがあれば、1枚を選び出し、自分につける。"
         return _check_form(attack, "トラッシュのエネルギーカードを自分につけるワザ", damage="fixed") + _check_exact_text(
-            attack, "トラッシュのエネルギーカードを自分につけるワザ", (expected,))
+            attack, "トラッシュのエネルギーカードを自分につけるワザ", (expected, variant))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         options = [uid for uid in state.players[use.player].discard
@@ -10858,7 +10925,8 @@ class RevealBasicEnergyFromDeck(AttackEffect):
 
 COINS_UNTIL_TAILS_TEXT = "「うら」が出るまでコインを投げ続ける。その間に出た「おもて」の数×{per}のダメージ。"
 # v0.72: ゴローン（ES2-023）の「れんぞくいわなげ」の書き方（文を読点でつなぎ、「の」を書かない。意味は同じ。docs/status-coins-effect-reuse-v0.72.md 4 章）
-COINS_UNTIL_TAILS_TEXTS = (COINS_UNTIL_TAILS_TEXT, "「うら」が出るまでコインを投げ続け、その間に出た「おもて」の数×{per}ダメージ。")
+COINS_UNTIL_TAILS_TEXTS = (COINS_UNTIL_TAILS_TEXT, "「うら」が出るまでコインを投げ続け、その間に出た「おもて」の数×{per}ダメージ。",
+                           "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×{per}のダメージ。")  # v0.79: ハリーセン（neo3-015）の「はりせんぼん」（かなの違い）
 
 
 @dataclass(frozen=True)
@@ -10891,6 +10959,7 @@ class CoinsUntilTailsDamage(AttackEffect):
         raise NotImplementedError(f"{self.implementation_id}: 「おもて」の数に上限がないので、基本となるダメージの候補を並べられない（先読みは resolution.unbounded の組を使う）")
 
 HALF_REMAINING_HP_TEXT = "相手の残りのHPの半分(切り上げ)のダメージをあたえる。"
+HALF_REMAINING_HP_NO_MARK_TEXT = "相手の残りHPの半分(切り上げ)のダメージを与える。"  # v0.79: マチスのラッタ（GD3-012。ダメージの目安なし）
 
 
 @dataclass(frozen=True)
@@ -10908,8 +10977,15 @@ class HalfRemainingHpDamage(AttackEffect):
     implementation_id = "half_remaining_hp_damage"
 
     def check(self, attack: Attack) -> list[str]:
+        # v0.79: マチスのラッタ（GD3-012）の「いかりのまえば」は、kyuura の写しでダメージの目安がない（``damage`` が null）。写しに「?」を足さず、この書き方と組にして
+        # だけ受け付ける（切り上げ。ダメージの目安のある書き方・ほかの書き方では受け付けない）
+        accepted = ({(HALF_REMAINING_HP_DOWN_TEXT, "?")} if self.round_down
+                    else {(HALF_REMAINING_HP_TEXT, "?"), (HALF_REMAINING_HP_NO_MARK_TEXT, None)})
+        mark = "?" if attack.damage is None and attack.damage_modifier == "?" else None if attack.damage is None and attack.damage_modifier is None else "other"
+        if (attack.text_ja, mark) in accepted:
+            return []
         problems = []
-        if attack.damage is not None or attack.damage_modifier != "?":
+        if mark != "?":
             problems.append("ダメージの目安が「?」でないワザを、相手の残りの HP の半分のダメージのワザとして登録している")
         expected = HALF_REMAINING_HP_DOWN_TEXT if self.round_down else HALF_REMAINING_HP_TEXT
         return problems + _check_exact_text(attack, "相手の残りの HP の半分のダメージのワザ", (expected,))
@@ -11944,7 +12020,10 @@ class HalveDamageNextTurn(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         return _check_form(attack, "次の相手の番に受けるダメージを半分にするワザ", damage="none") + _check_exact_text(
-            attack, "次の相手の番に受けるダメージを半分にするワザ", ("次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",))
+            attack, "次の相手の番に受けるダメージを半分にするワザ", ("次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果はそのまま)",
+                                                                # v0.79: エレブー（PR1-010）の「ひかりのかべ」・チコリータ（neo1-002）の「リフレクター」の書き方（意味は同じ）
+                                                                "次の相手の番で、このカードがうけるダメージは半分(切り捨て)になる。(ダメージ以外の効果はそのまま)",
+                                                                "次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果は受ける)"))
 
     def halved_terms(self) -> tuple[type]:
         from .state import HalvedDamage
@@ -12201,7 +12280,7 @@ def poison_received_power_problem(state: GameState, owner: int, pokemon: Pokemon
         if holder is not pokemon:
             continue
         modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
-        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
+        if modifier is not None and _power_change_matters(state, pokemon, amount, modifier):
             return (f"ポケモン {pokemon.pokemon_id} の {modifier.label} を、ポケモンチェックのどくのダメージ {amount}（ワザによるダメージではない。p.321・p.322）に"
                     "当てはめるか（説明の「受けるダメージ」がどくのダメージを含むか）は決められないので扱わない（KA1）")
     return None
@@ -12388,6 +12467,8 @@ class LookOpponentHandCardToDeck(AttackEffect):
 
 
 HEADACHE_TEXT = "次の相手の番の終わりまで、相手プレイヤーはトレーナーカードを使うことができない。"
+# v0.79: ゴース（ES3-022・QSG-028）の「こわがらせる」の書き方（「次の相手の番が終わるまで」・「」の有無。期限は同じ次の相手の番の終わり）
+HEADACHE_TEXTS = (HEADACHE_TEXT, "次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。")
 HIGH_VOLTAGE_TEXT = "コインを投げて「おもて」なら、次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。"
 
 
@@ -12400,7 +12481,7 @@ class LockOpponentTrainersNextTurn(AttackEffect):
     implementation_id = "lock_opponent_trainers_next_turn"
 
     def check(self, attack: Attack) -> list[str]:
-        return _check_form(attack, "相手のトレーナーの使用を禁止するワザ", damage="none") + _check_exact_text(attack, "相手のトレーナーの使用を禁止するワザ", (HEADACHE_TEXT,))
+        return _check_form(attack, "相手のトレーナーの使用を禁止するワザ", damage="none") + _check_exact_text(attack, "相手のトレーナーの使用を禁止するワザ", HEADACHE_TEXTS)
 
     def lock_terms(self) -> tuple[bool]:
         """不変条件（``engine._trainer_lock_problems``）が照らす値: (コインの「おもて」で与えるか,)。"""
@@ -17578,20 +17659,24 @@ class AlternateCoinsUntilTailsDamage(TrainerEffect):
 def trainer_damage_modifiers(state: GameState, owner: int, pokemon: PokemonInPlay, amount: int) -> list[str]:
     """v0.61（TD1）: トレーナーのダメージ ``amount`` を ``pokemon`` が受けるとき、当てはめると量が変わる、受けるダメージを変える効果の名前（持続する効果（ちいさくなる・かたくなる・
     リフレクター）と、受けるダメージ全体を書く常にはたらく特殊能力（カブトアーマー・なぞのかべ。v0.57 の EX1 と同じ ``poison_damage_modifier``））。状態を変えない。"""
-    found = []
+    names: list[str] = []
+    changes: list[Callable[[int], int]] = []
     for effect in pokemon.persistent_effects:
         if getattr(effect, "active_turn", None) != state.turn_number:
             continue  # はたらく番（次の相手の番）でない効果
-        reduced = trainer_damage_after_persistent(state, effect, amount)
-        if reduced is not None and reduced != amount:
-            found.append(effect.kind)
+        if trainer_damage_after_persistent(state, effect, amount) is not None:
+            names.append(effect.kind)
+            changes.append(lambda value, effect=effect: trainer_damage_after_persistent(state, effect, value))
+    per = state.rules.damage_per_counter
     for _, holder, key, effect in continuous_powers(state):
         if holder is not pokemon:
             continue
         modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
-        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
-            found.append(modifier.label)
-    return found
+        if modifier is not None:
+            names.append(modifier.label)
+            changes.append(lambda value, modifier=modifier: modifier.apply(value, per))
+    # v0.79: 鋼エネルギー（NIP1X-010）を含めた最終の量で比べる（``non_attack_change_matters``）
+    return [names[i] for i in non_attack_change_matters(state, pokemon, amount, changes)]
 
 
 def trainer_damage_after_persistent(state: GameState, effect, amount: int) -> int | None:
@@ -17623,6 +17708,8 @@ def trainer_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount:
         return  # v0.67: うらのカードは、ダメージを受ける時におもてにする。「たねポケモン」でなくトラッシュしたら、ダメージを受けるポケモンはいない
     base = {"player": owner, "pokemon": pokemon.card, "pokemon_id": pokemon.pokemon_id, "trainer_card": use.card, "user": use.player}
     prevention = damage_prevention(state, pokemon)
+    if prevention is not None and prevention.attack_only:
+        prevention = None  # v0.79: 「ワザによるダメージを受けない」（``PreventAttackDamage``）は、トレーナーのダメージを防がない
     if prevention is not None:
         state.add_event("trainer_damage_prevented", **base, amount=amount, persistent_effect=prevention.kind)
         return
@@ -18460,7 +18547,7 @@ def minefield_received_power_problem(state: GameState, owner: int, pokemon: Poke
         if holder is not pokemon:
             continue
         modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
-        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
+        if modifier is not None and _power_change_matters(state, pokemon, amount, modifier):
             return (f"ポケモン {pokemon.pokemon_id} の {modifier.label} を、ロケット団の爆発ジムのダメージ {amount}（スタジアムカードによるダメージ。ワザによるダメージではない）に"
                     "当てはめるか（説明の「受けるダメージ」がスタジアムのダメージを含むか）は決められないので扱わない（EX1。docs/stadiums-v0.57.md 5 章）")
     return None
@@ -26637,6 +26724,8 @@ class CoinsRecoverEnergyByHeads(AttackEffect):
 
 
 STOKE_TEXT = "自分の山札から「{type}」エネルギーカード1枚を選び出し、自分につける。その後、その山札をよく切る。"
+# v0.79: ホウオウ（neo3-011）の「もえあがる」の書き方（「エネルギーカードを1枚選び出し」。助詞の位置だけの違い）
+STOKE_TEXTS = (STOKE_TEXT, "自分の山札から「{type}」エネルギーカードを1枚選び出し、自分につける。その後、その山札をよく切る。")
 
 
 @dataclass(frozen=True)
@@ -26650,7 +26739,7 @@ class AttachEnergyFromDeckToSelfExactly(AttackEffect):
 
     def check(self, attack: Attack) -> list[str]:
         what = "山札のエネルギーカードを 1 枚自分につけるワザ"
-        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (STOKE_TEXT.format(type=self.energy_type.ja),))
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, tuple(text.format(type=self.energy_type.ja) for text in STOKE_TEXTS))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         return _decision_form(decision, _label(state, use), kind=ATTACH_FROM_DECK, player=use.player, choices=(1, 1),
@@ -27321,3 +27410,354 @@ def _with_energies(registry: EffectRegistry, entries: Mapping[str, EnergyEntry])
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_78_ATTACKS), SAME_DATA_CARDS_V0_78)
 DEFAULT_EFFECTS = _with_energies(DEFAULT_EFFECTS, V0_78_ENERGIES)
+
+
+# ---------------------------------------------------------------- v0.79（docs/shared-checks-pokemon-reuse-v0.79.md）。ポケモン 52 枚・ワザ 94。
+# 既存の効果の型で表せるワザ（81）と、既存の要素を組み合わせた 11 の型（13 のワザ）。処理に使う文面は kyuura の印刷の文面（英語の文面・後年のルールは持ち込まない）。
+# どの型も、説明の文面を登録の値（ダメージ・コインの面・特殊状態・対象・枚数）と結びつけて照らす（一般の正規化・部分一致にしない）
+
+PARALYZE_AND_BENCH_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
+
+
+@dataclass(frozen=True)
+class DamageThenParalyzeAndOpponentBenchOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手をマヒ状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、
+    それぞれ ``bench_damage``（v0.79。マリルリ（neo1-034）の「バブルシャワー」・デンリュウ（neo1-043）の「ギガショック」・フリーザー（PR1-064）の「ダイヤモンドダスト」）。
+
+    - 1 枚のワザ全体のコインで、マヒと控えへのダメージの両方を決める（要素ごとに投げ直さない。先読みも同じ 1 枚）。相手の控えだけ（自分の控えは受けない）
+    - 要素の並びは コイン → 相手の対戦ポケモンへのダメージ → 相手の控えへのダメージ → マヒ（ダメージの要素をまとめてのせてから、ダメージ以外の効果。p.89 の
+      「ダメージを受けたとき」の効果の時点。v0.39 の ``DamagePoisonAndBenchDamage`` と同じ順番）。マヒの再付与は、コインの前に確かめる（v0.8 の ``ReparalysisGuard``）
+    - 相手の対戦ポケモンがこのワザで HP 以上・「ワザをうけない」状態でも、控えへのダメージは残る（控えへの要素は対戦ポケモンの状態で無効にならない。v0.34 の
+      ``void_coin_question``）。控えがいなければ、マヒだけを決めるコイン
+    - 控えへのダメージは p.320 のダメージの (2)（プラスパワーは変えない・ディフェンダーは変える・弱点・抵抗力なし）。「とうめい」・見えない壁・［ベンチガード］・
+      ［だつりょくえき］は既存の控えへのダメージの処理のまま
+    """
+
+    bench_damage: int
+    implementation_id = "damage_then_paralyze_and_opponent_bench_on_heads"
+    opponent_effect_elements = (PARALYSIS,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでマヒと相手の控え全員へのダメージのワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (PARALYZE_AND_BENCH_TEXT.format(bench=self.bench_damage),))
+
+
+AGILITY_ATTACK_DAMAGE_TEXT = "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージを受けない。"
+
+
+@dataclass(frozen=True)
+class DamageThenPreventAttackDamageOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージを受けない（v0.79。ピカチュウ
+    （neo1-036）の「こうそくいどう」）。
+
+    - 効果は持続する効果 ``state.PreventAttackDamage``（自分自身に与え、次の相手の番に、このポケモンへのワザのダメージの要素は計算の前に無効。ダメージ以外の効果は受ける。
+      トレーナーのダメージは防がない）。「ワザによるダメージや効果を受けない」（バリアー。``SelfBarrierOnHeads``）とは違う
+    - コインはダメージのあと（説明の順）。自分への効果なので、相手の状態によらず投げる。このカードがこのワザで HP 以上なら、処理の対象がないので投げない（p.309）
+    """
+
+    implementation_id = "damage_then_prevent_attack_damage_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで次の相手の番にワザによるダメージを受けなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (AGILITY_ATTACK_DAMAGE_TEXT,))
+
+
+OPPONENT_BENCH_ON_HEADS_TEXT = "コインを投げて「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
+
+
+@dataclass(frozen=True)
+class DamageThenOpponentBenchOnHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ
+    ``bench_damage``（v0.79。モココ（neo3-027）の「エレキテール」）。v0.39 の「おならガス」（お互いの控え）・v0.38 の「ふぶき」（「うら」なら自分の控え）と違い、
+    相手の控えだけ。相手に控えがいなければ、このコインが決める要素に対象がないので投げない（v0.38 の ``has_target``）。"""
+
+    bench_damage: int
+    implementation_id = "damage_then_opponent_bench_on_heads"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bench_damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の控え全員にダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (OPPONENT_BENCH_ON_HEADS_TEXT.format(bench=self.bench_damage),))
+
+
+@dataclass(frozen=True)
+class CoinBonusDamageAndConfuse(AttackEffect):
+    """コインを投げて「おもて」なら、ダメージの目安の数字に ``bonus`` を加えたダメージを与え、相手をこんらん状態にする。「うら」なら目安の数字ぶんのダメージだけ（v0.79。
+    ルージュラ（neo3-018）の「あやしいおどり」）。v0.8 の ``CoinBonusDamageAndParalyze``（マヒ）と同じ形で、特殊状態の種類が違う（同じ型を流用しない）。1 枚のワザ全体の
+    コインで、追加のダメージとこんらんの両方を決める（「ワザをうけない」相手には HC3。v0.34 の ``void_coin_question``）。"""
+
+    bonus: int
+    implementation_id = "coin_bonus_damage_and_confuse"
+    opponent_effect_elements = (CONFUSION,)
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.bonus, "「おもて」のときに追加するダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでダメージを追加してこんらん状態にするワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (f"コインを投げて「おもて」なら、{self.bonus}ダメージを追加し、相手を「こんらん」状態にする。",))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        attack = attack_of(state, use.key)
+        return DamageProfile(opponent=(attack.damage, attack.damage + self.bonus))
+
+
+@dataclass(frozen=True)
+class CoinBonusPerOwnCounter(AttackEffect):
+    """コインを投げて「おもて」なら、自分にのっているダメージカウンターの数 × ``per`` のダメージを追加する（v0.79。ブルー（neo3-048）の「いかりのずつき」）。
+    「うら」なら目安の数字ぶん（0 にしない。v0.11 の「いかりのスーパーパンチ」（``CoinHeadsDamagePerOwnCounter``。「うら」なら 0）・v0.40 の「いかりくるう」（コインなし）
+    と違う）。p.321 の 1 段階（値 ``programs.HeadsPlusOwnCounters``）。コインはダメージの量だけを決める（「ダメージを受けない」相手には v0.4b の問い）。"""
+
+    per: int
+    implementation_id = "coin_bonus_per_own_counter"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.per, "ダメージカウンター 1 個あたりのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで自分のダメージカウンターの数のダメージを追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(
+            attack, what, (f"コインを投げて「おもて」なら、自分にのっているダメージカウンターの数×{self.per}のダメージを追加する。",))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        attack = attack_of(state, use.key)
+        return DamageProfile(opponent=(attack.damage, attack.damage + attacker.damage // state.rules.damage_per_counter * self.per))
+
+
+@dataclass(frozen=True)
+class HealSelfWithoutDamage(AttackEffect):
+    """ダメージの目安の数字はない。自分にのっているダメージカウンターを ``counters`` 個とりのぞく（v0.79。ミニリュウ（neo4-087）の「だっぴ」）。v0.41 の要素
+    ``HealCounters``（``HEAL_SELF``。のっている数まで。0 個なら効果を受けない。自分への効果も「とうめい」・「ワザをうけない」状態を評価する）。コインはない（v0.41 の
+    ``CoinHealSelf`` と違う）。使うための条件はない（カウンターが 0 個でも使える）。"""
+
+    counters: int
+    implementation_id = "heal_self_without_damage"
+
+    def __post_init__(self) -> None:
+        _positive_count(self.counters, "とりのぞくダメージカウンターの数")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (f"自分にのっているダメージカウンターを、{self.counters}個とりのぞく。",))
+
+
+@dataclass(frozen=True)
+class DamageThenDiscardOneOnTails(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを投げて「うら」なら、自分についている ``energy_type`` のエネルギーカードを 1 枚選び、トラッシュする
+    （v0.79。カツラのヒトカゲ（GD5-001）の「ファイヤーテール」）。v0.31 の ``DamageThenDiscardAllOnTails``（すべて）とは枚数が違う。
+
+    - トラッシュはダメージのあと（説明の順）。選ぶのはワザを使ったプレイヤー（決定 ``DISCARD_ENERGY``。1 枚しかなくても出す。K2）。不正な答えは状態を変えない
+    - 選べるカードがない（相手のワザとして使ったなど）なら、処理の対象がないので何もしない（与えたダメージは残る。コインも投げない。``LACKING_SKIP``）
+    - 自分への効果なので、相手の状態によらずコインを投げる。このカードがこのワザで HP 以上なら、処理の対象がないので投げない（p.309）
+    """
+
+    energy_type: EnergyType
+    implementation_id = "damage_then_discard_one_on_tails"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインでエネルギーを 1 枚トラッシュするワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(
+            attack, what, (f"コインを投げて「うら」なら、自分についている「{self.energy_type.ja}」エネルギーカードを1枚選び、トラッシュする。",))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return discard_attached_energy_decision_problems(state, use, decision, self.energy_type, _label(state, use))
+
+
+@dataclass(frozen=True)
+class CoinChooseOpponentBenchDamage(AttackEffect):
+    """ダメージの目安の数字はない（相手の対戦ポケモンにダメージを与えない）。コインを投げて「おもて」なら、相手の控えポケモンを 1 匹選び、「弱点・抵抗力」に関係なく、
+    ``damage`` ダメージ（v0.79。ナツメのゴースト（GD6-007）の「かげからおそう」）。v0.33 の要素 ``ChosenBenchDamage``（「おもて」・弱点・抵抗力なし。選ぶのはワザを
+    使ったプレイヤー。控えが 1 匹でも決定を出す）。相手に控えがいなければ、処理の対象がないのでコインを投げず何もしない（p.309。説明は「控えポケモンがいないとき、
+    このワザは使えない」と書かないので、使うための条件にしない。v0.38 の「のびるつる」と同じ読み方）。"""
+
+    damage: int
+    implementation_id = "coin_choose_opponent_bench_damage"
+
+    def __post_init__(self) -> None:
+        _positive_tens(self.damage, "控えポケモンへのダメージ")
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の控えポケモンを選んでダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(
+            attack, what, (f"コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、「弱点・抵抗力」に関係なく、{self.damage}ダメージ。",))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        bench = state.players[1 - use.player].bench
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1), options=(p.pokemon_id for p in bench))
+
+
+REQUIRED_TRAINER_SEARCH_TEXT = "コインを投げて「おもて」なら、自分の山札から「トレーナーカード」1枚を選び出し、相手に見せてから、手札に加える。その後、その山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class SearchTrainerRequiredOnHeads(AttackEffect):
+    """コインを投げて「おもて」なら、自分の山札から「トレーナーカード」1 枚を選び出し、相手に見せてから、手札に加える。その後、その山札をよく切る（v0.79。ヤドキング
+    （SI-014）の「ひらめく」）。v0.44 の「おつかい」（``SearchTrainerOnHeads``。「加えてよい」）と違い、選べるカードがあればちょうど 1 枚（要素 ``RevealTrainerFromDeck`` の
+    ``required``）。選べるカードがない・山札が 0 枚なら、処理の対象がないので加えずに山札を切る（p.309。v0.75 の「もえあがる」と同じ読み方）。「うら」なら山札を見ない・
+    切らない。選べるカードの一覧と数は、使ったプレイヤーだけに見える（観測の ``HIDDEN_COUNT_KINDS``）。"""
+
+    implementation_id = "search_trainer_required_on_heads"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札のトレーナーカードを必ず手札に加えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (REQUIRED_TRAINER_SEARCH_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1),
+                              options=deck_trainer_cards(state, use.player))
+
+
+SNATCH_TRAINERS_TEXT = "コインを投げて「おもて」なら、相手の場のポケモン全員についている「トレーナーカード」を、すべてトラッシュする。"
+
+
+@dataclass(frozen=True)
+class CoinDiscardAllOpponentTrainers(AttackEffect):
+    """ダメージの目安の数字はない。コインを投げて「おもて」なら、相手の場のポケモン全員（バトル場・ベンチ）についているトレーナーカードを、すべてトラッシュする（v0.79。
+    ニューラ（PF3-003）の「だましとる」）。v0.78 の要素 ``DiscardOpponentTrainers``（``all_pokemon``・``local_coin``）。
+
+    - 相手のポケモンごとに「ワザをうけない」状態・「とうめい」を評価する（2 匹以上の「とうめい」は T27）。カードはつけたプレイヤー（持ち主）のトラッシュに置く
+    - トレーナーカードだけ。自分のカード・エネルギーカード・進化カード・場のスタジアム・プレイヤーに与えた効果（カスミ・キョウの記録など）は変えない
+    - トレーナーカードのついている相手のポケモンがいなければ、処理の対象がないのでコインを投げない（p.309）
+    """
+
+    implementation_id = "coin_discard_all_opponent_trainers"
+    opponent_effect_elements = (TRAINER_DISCARD_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで相手の場のトレーナーカードをすべてトラッシュするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SNATCH_TRAINERS_TEXT,))
+
+
+METAL_CRUSH_TEXT = "コインを投げて「うら」なら、このワザは失敗する。(その場合も、ワザは使ったことになる)。次の自分の番、このカードはワザを使えない。"
+
+
+@dataclass(frozen=True)
+class FailOnTailsDamageThenSelfCannotAttack(AttackEffect):
+    """コインを投げて「うら」なら、このワザは失敗する（ワザは使ったことになる）。「おもて」ならダメージの目安の数字ぶんのダメージ。どちらでも、次の自分の番、このカードは
+    ワザ（すべて）を使えない（v0.79。ハガネール（PRN-014）の「メタルクラッシュ」）。
+
+    - 要素の並びは 失敗のコイン（v0.31 の ``FailOnTails``）→ ダメージ → 自分への持続する効果（v0.78 の ``SelfCannotAttack`` の ``even_if_failed``）。ワザが失敗しても、
+      失敗のあとに処理する要素として与える（``Element.after_failure``）。効果を与えるのはコインの結果（ナツメのESPでやり直したら、やり直した結果）を採ったあとの 1 回だけ
+    - 効果は v0.78 の「メタルスラッシュ」と同じ ``CannotAttackNextOwnTurn``（はたらく番は与えた番 + 2・期限はその番の終わり・ベンチにもどる・進化・きぜつで消える）。
+      相手のワザとして使ったワザも含め、すべてのワザの宣言を拒否する（``ATTACK_PREVENTED``）。「にげる」・トレーナー・特殊能力は止めない
+    - コインが決める要素に自分への効果があるので、相手の状態によらずコインを投げる（v0.34 の ``void_coin_question``）
+    """
+
+    implementation_id = "fail_on_tails_damage_then_self_cannot_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで失敗し、次の自分の番にワザを使えなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (METAL_CRUSH_TEXT,))
+
+# v0.79: 52 枚のポケモンのワザ（94）。ES2-020 と QSG-033（サンド）・ES3-022 と QSG-028（ゴース）は同じデータ（下の SAME_DATA_CARDS_V0_79 で同じ登録の値にまとめる。
+# 記録は id ごと）。ほかのカードは名前・同じカードの組で自動ではまとめない
+V0_79_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("ES2-020", 0): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("ES2-020", 1): _printed(DamageIgnoringDefenderEffects(), "スピードスター", "このワザのダメージは、相手の持っている「弱点・抵抗カ・特殊能力・その他の効果」の影響を受けない。"),
+    AttackKey("QSG-033", 0): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("QSG-033", 1): _printed(DamageIgnoringDefenderEffects(), "スピードスター", "このワザのダメージは、相手の持っている「弱点・抵抗カ・特殊能力・その他の効果」の影響を受けない。"),
+    AttackKey("ES3-022", 0): _printed(LockOpponentTrainersNextTurn(), "こわがらせる", "次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。"),
+    AttackKey("ES3-022", 1): _printed(ConfuseOnHeads(), "あんこく", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("QSG-028", 0): _printed(LockOpponentTrainersNextTurn(), "こわがらせる", "次の相手の番が終わるまで、相手プレイヤーは「トレーナーカード」を使うことができない。"),
+    AttackKey("QSG-028", 1): _printed(ConfuseOnHeads(), "あんこく", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("GD1-005", 0): _printed(SwitchOpponentActive(), "からかう", "相手の控えポケモンを1匹選び、相手の対戦ポケモンと入れ替える。"),
+    AttackKey("GD1-005", 1): AttackEntry(DAMAGE_ONLY, "けとばす"),
+    AttackKey("GD3-012", 0): _printed(HalfRemainingHpDamage(round_down=False), "いかりのまえば", "相手の残りHPの半分(切り上げ)のダメージを与える。"),
+    AttackKey("GD5-001", 0): _printed(DamageThenDiscardOneOnTails(EnergyType.FIRE), "ファイヤーテール", "コインを投げて「うら」なら、自分についている「炎」エネルギーカードを1枚選び、トラッシュする。"),
+    AttackKey("GD6-007", 0): _printed(SleepOpponent(), "あくむ", "相手を「ねむり」状態にする。"),
+    AttackKey("GD6-007", 1): _printed(CoinChooseOpponentBenchDamage(30), "かげからおそう", "コインを投げて「おもて」なら、相手の控えポケモンを1匹選び、「弱点・抵抗力」に関係なく、30ダメージ。"),
+    AttackKey("NIP1-013", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("NIP1-013", 1): _printed(DiscardEnergyThenDamage(EnergyType.FIRE), "かえんほうしゃ", "自分についている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)"),
+    AttackKey("PF3-003", 0): _printed(CoinDiscardAllOpponentTrainers(), "だましとる", "コインを投げて「おもて」なら、相手の場のポケモン全員についている「トレーナーカード」を、すべてトラッシュする。"),
+    AttackKey("PF3-003", 1): _printed(CoinBonusDamage(20), "でんこうせっか", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    AttackKey("PR1-010", 0): _printed(HalveDamageNextTurn(), "ひかりのかべ", "次の相手の番で、このカードがうけるダメージは半分(切り捨て)になる。(ダメージ以外の効果はそのまま)"),
+    AttackKey("PR1-010", 1): _printed(CoinBonusDamage(20), "でんこうせっか", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    AttackKey("PR1-064", 0): _printed(DamageThenParalyzeAndOpponentBenchOnHeads(10), "ダイヤモンドダスト", "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("PRN-014", 0): _printed(FailOnTailsDamageThenSelfCannotAttack(), "メタルクラッシュ", "コインを投げて「うら」なら、このワザは失敗する。(その場合も、ワザは使ったことになる)。次の自分の番、このカードはワザを使えない。"),
+    AttackKey("PRN-014", 1): _printed(DamageThenRetreatLock(), "じひびき", "次の相手の番、このワザを受けた相手は「にげる」ことができない。"),
+    AttackKey("SI-012", 0): AttackEntry(DAMAGE_ONLY, "けたぐり"),
+    AttackKey("SI-012", 1): _printed(DamagePlusOwnCountersThenSelfConfuseOnTails(10), "いかりくるう", "自分にのっているダメージカウンターの数×10のダメージを追加する。その後、コインを投げて「うら」なら、自分を「こんらん」状態にする。"),
+    AttackKey("SI-014", 0): _printed(SearchTrainerRequiredOnHeads(), "ひらめく", "コインを投げて「おもて」なら、自分の山札から「トレーナーカード」1枚を選び出し、相手に見せてから、手札に加える。その後、その山札をよく切る。"),
+    AttackKey("SI-014", 1): _printed(DamagePlusDefenderEnergy(10), "サイコキネシス", "相手についているエネルギーカードの数×10のダメージを、追加する。"),
+    AttackKey("SI-017", 0): _printed(ChooseOpponentPokemonDamage(10), "みずとばし", "相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、10ダメージ。"),
+    AttackKey("SI-017", 1): AttackEntry(DAMAGE_ONLY, "ころがりタックル"),
+    AttackKey("neo1-001", 0): _printed(SelfBarrierOnHeads(), "かくれる", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    AttackKey("neo1-001", 1): _printed(DamageAndDrain(), "すいとる", "相手にダメージを与えたら、その半分(切り上げ)のダメージカウンターを、自分からとりのぞく。"),
+    AttackKey("neo1-002", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo1-002", 1): _printed(HalveDamageNextTurn(), "リフレクター", "次の相手の番、このカードが受けるダメージは半分(切りすて)になる。(ダメージ以外の効果は受ける)"),
+    AttackKey("neo1-003", 0): _printed(ConfuseOnHeadsWithoutDamage(), "ちょうおんぱ", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo1-003", 1): _printed(CoinFlipDamage(coins=4, damage_per_heads=10), "れんぞくパンチ", "コインを4枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo1-007", 0): _printed(PreventDamageOnHeads(), "からにこもる", "コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。（ダメージ以外の効果は受ける）"),
+    AttackKey("neo1-007", 1): _printed(ParalyzeOnHeads(), "まきつく", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo1-013", 0): _printed(CoinFlipDamageThenSelfConfuse(3, 30), "はなびらのまい", "コインを3枚投げ、「おもて」の数×30のダメージ。その後、自分を「こんらん」状態にする。"),
+    AttackKey("neo1-016", 0): _printed(SleepOpponent(), "ねむりごな", "相手を「ねむり」状態にする。"),
+    AttackKey("neo1-016", 1): _printed(DamageAndRemoveCounters(1), "やどりぎのたね", "相手にダメージを与えたら、自分にのっているダメージカウンターを、1個とりのぞく。"),
+    AttackKey("neo1-025", 0): _printed(PreventDamageOnHeads(), "まるくなる", "コインを投げて「おもて」なら、次の相手の番、このカードはダメージを受けない。(ダメージ以外の効果は受ける)"),
+    AttackKey("neo1-025", 1): _printed(DamageThenParalyzeOrSelfDamage(10), "バブルボム", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、自分にも10ダメージ。"),
+    AttackKey("neo1-029", 0): _printed(ParalyzeOnHeads(), "あわ", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo1-029", 1): _printed(DamageThenCoinBenchDamage(10), "だくりゅう", "コインを投げて、「おもて」なら、相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、10ダメージ。"),
+    AttackKey("neo1-034", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo1-034", 1): _printed(DamageThenParalyzeAndOpponentBenchOnHeads(10), "バブルシャワー", "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("neo1-036", 0): _printed(CoinBonusDamage(10), "でんこうせっか", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo1-036", 1): _printed(DamageThenPreventAttackDamageOnHeads(), "こうそくいどう", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージを受けない。"),
+    AttackKey("neo1-037", 0): _printed(ConfuseOnHeadsWithoutDamage(), "ちょうおんぱ", "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo1-037", 1): _printed(DamageTimesOwnCounters(10), "じたばた", "自分にのっているダメージカウンターの数×10ダメージ。"),
+    AttackKey("neo1-043", 0): _printed(DamageThenParalyzeAndOpponentBenchOnHeads(10), "ギガショック", "コインを投げて「おもて」なら、相手を「マヒ」状態にし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("neo1-045", 0): _printed(ParalyzeOnHeads(), "ねんりき", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("neo1-045", 1): _printed(ExtraEnergyDamage(EnergyType.WATER, 10, 2), "みずでっぽう", "ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。"),
+    AttackKey("neo1-046", 0): AttackEntry(DAMAGE_ONLY, "つつく"),
+    AttackKey("neo1-046", 1): _printed(ChooseOpponentPokemonDamage(20), "テレキネシス", "相手の場のポケモンを1匹選び、「弱点・抵抗力」に関係なく、20ダメージ。"),
+    AttackKey("neo2-010", 0): _printed(DamageThenSpecialPoisonOnHeads(30), "さんばいどく", "コインを投げて「おもて」なら、相手を「どく」状態にする。このワザによって「どく」状態になったポケモンがポケモンチェックで受ける「どく」のダメージは、30ダメージ。"),
+    AttackKey("neo2-010", 1): _printed(CoinFlipDamage(coins=4, damage_per_heads=20), "ミサイルばり", "コインを4枚投げ、「おもて」の数×20のダメージ。"),
+    AttackKey("neo2-012", 0): _printed(PoisonOnHeads(), "スモッグ", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("neo2-012", 1): _printed(DamageThenAttachEnergyFromDiscardToSelf(EnergyType.FIRE), "ほのおをまとう", "自分のトラッシュに「炎」エネルギーカードがあれば、1枚を選び出し、自分につける。"),
+    AttackKey("neo2-017", 0): _printed(DiscardEnergyAndRemoveAllCounters(EnergyType.WATER), "じこさいせい", "自分についている「水」エネルギーカードを1枚トラッシュして、自分にのっているダメージカウンターを、すべてとりのぞく。「水」エネルギーカードをトラッシュできないとき、この効果はなくなる。"),
+    AttackKey("neo2-017", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=30), "とげキャノン", "コインを2枚投げ、「おもて」の数×30のダメージ。"),
+    AttackKey("neo2-022", 0): _printed(ConfuseOnHeads(), "あやしいひかり", "コインを投げて、「おもて」なら、相手を「こんらん」状態にする。"),
+    AttackKey("neo2-029", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo2-029", 1): _printed(DamagePlusDefenderEnergy(10), "サイコキネシス", "相手についている「エネルギーカード」の数×10のダメージを追加する。"),
+    AttackKey("neo2-035", 0): _printed(CoinBonusDamageAndParalyze(20), "しめあげる", "コインを投げて「おもて」なら、20ダメージを追加し、相手を「マヒ」状態にする。"),
+    AttackKey("neo2-035", 1): _printed(CoinsPerAttachedTypeBonusDamage(EnergyType.WATER, 20), "とげとげMAX", "自分についている「水」エネルギーの数ぶんコインを投げ、「おもて」の数×20のダメージを追加する。"),
+    AttackKey("neo2-038", 0): _printed(SelfBarrierOnHeads(), "みきり", "コインを投げて「おもて」なら、次の相手の番、このカードは相手のワザによるダメージや効果を受けない。"),
+    AttackKey("neo2-038", 1): _printed(CoinFlipDamage(coins=3, damage_per_heads=30), "トリプルキック", "コインを3枚投げ、「おもて」の数×30ダメージ。"),
+    AttackKey("neo3-008", 0): AttackEntry(DAMAGE_ONLY, "ほのお"),
+    AttackKey("neo3-008", 1): _printed(DamageThenRetreatLock(), "マグマでかこむ", "次の相手の番、このワザを受けた相手は「にげる」ことができない。"),
+    AttackKey("neo3-011", 0): _printed(AttachEnergyFromDeckToSelfExactly(EnergyType.FIRE), "もえあがる", "自分の山札から「炎」エネルギーカードを1枚選び出し、自分につける。その後、その山札をよく切る。"),
+    AttackKey("neo3-011", 1): _printed(CoinChooseOpponentPokemonDamage(40), "せいなるほのお", "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、40ダメージ。"),
+    AttackKey("neo3-011", 2): _printed(FailOnTailsDamage(1), "ゴッドバード", "コインを投げて「うら」なら、このワザは失敗する。"),
+    AttackKey("neo3-015", 0): _printed(PoisonOnHeads(), "どくばり", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("neo3-015", 1): _printed(CoinsUntilTailsDamage(20), "はりせんぼん", "「うら」が出るまでコインを投げつづけ、その間に出た「おもて」の数×20のダメージ。"),
+    AttackKey("neo3-016", 0): _printed(CoinChooseOpponentPokemonDamage(20), "ねらいうち", "コインを投げて「おもて」なら、相手の場のポケモンを1匹選び、そのポケモンに、「弱点・抵抗力」に関係なく、20ダメージ。"),
+    AttackKey("neo3-017", 0): _printed(CoinBonusDamage(10), "つきあげる", "コインを投げて「おもて」なら、10ダメージを追加する。"),
+    AttackKey("neo3-017", 1): _printed(CoinsAllHeadsBonusDamage(2, 40), "つのでいちげき", "コインを2枚投げ、すべて「おもて」なら、40ダメージを追加する。"),
+    AttackKey("neo3-018", 0): _printed(PutToSleep(), "こごえるキッス", "相手を「ねむり」状態にする。"),
+    AttackKey("neo3-018", 1): _printed(CoinBonusDamageAndConfuse(20), "あやしいおどり", "コインを投げて「おもて」なら、20ダメージを追加し、相手を「こんらん」状態にする。"),
+    AttackKey("neo3-027", 0): AttackEntry(DAMAGE_ONLY, "ビリリパンチ"),
+    AttackKey("neo3-027", 1): _printed(DamageThenOpponentBenchOnHeads(10), "エレキテール", "コインを投げて「おもて」なら、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。"),
+    AttackKey("neo3-048", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo3-048", 1): _printed(CoinBonusPerOwnCounter(10), "いかりのずつき", "コインを投げて「おもて」なら、自分にのっているダメージカウンターの数×10のダメージを追加する。"),
+    AttackKey("neo4-014", 0): _printed(DiscardEnergyThenDamage(EnergyType.FIRE), "ひのこ", "自分についている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)"),
+    AttackKey("neo4-031", 0): _printed(DamageThenSelfCannotAttack(), "おおなみ", "次の自分の番、このカードはワザを使うことができない。"),
+    AttackKey("neo4-071", 0): _printed(DamageThenPoisonAndParalyzeOnHeads(), "しんけいどく", "コインを投げて「おもて」なら、相手を「どく」と「マヒ」状態にする。"),
+    AttackKey("neo4-085", 0): _printed(DamageThenReduceDamageNextTurn(10), "ふくらむ", "次の相手の番、このカードが受けるダメージは「-10」される（ダメージ以外の効果はそのまま）。"),
+    AttackKey("neo4-087", 0): _printed(HealSelfWithoutDamage(1), "だっぴ", "自分にのっているダメージカウンターを、1個とりのぞく。"),
+    AttackKey("neo4-087", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=10), "みだれづき", "コインを2枚投げて、「おもて」の数×10のダメージ。"),
+    AttackKey("neo4-089", 0): _printed(CoinBonusDamage(20), "しっぽでかみつく", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    AttackKey("neo4-089", 1): _printed(DamagePlusDefenderEnergy(10), "サイコキネシス", "相手についている「エネルギーカード」の数×10のダメージを追加する。"),
+    AttackKey("neo4-092", 0): _printed(CoinFlipDamage(coins=2, damage_per_heads=20), "おうふくびんた", "コインを2枚投げて、「おもて」の数×20のダメージ。"),
+    AttackKey("neo4-092", 1): _printed(FailOnTailsDamage(2), "タマゴなげ", "コインを2枚投げて、1枚でも「うら」なら、このワザは失敗する。"),
+})
+
+SAME_DATA_CARDS_V0_79: Mapping[str, str] = MappingProxyType({
+    "QSG-033": "ES2-020",  # サンド（どくばり・スピードスター。「抵抗カ」の書き方も同じ）
+    "QSG-028": "ES3-022",  # ゴース（こわがらせる・あんこく）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_79_ATTACKS), SAME_DATA_CARDS_V0_79)

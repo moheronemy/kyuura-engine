@@ -178,6 +178,7 @@ from kyuura_engine.effects import (
     ReturnHandThenRevealBasicEnergy,
     SearchNamedTrainerOnEntry,
     SearchTrainerOnHeads,
+    SearchTrainerRequiredOnHeads,
     SpecialPoisonOnHeadsWithoutDamage,
     TakeEnergiesToSelf,
     TakeEnergyToSelf,
@@ -3020,8 +3021,8 @@ def log_problems(state) -> list[str]:
                 kind_ok = trainer_effect.target.matches(definition)  # v0.53: 説明の種類のカード（モンスターボール・ボスのやりかた など）。v0.73: 化石の発掘
             elif isinstance(trainer_effect, LookTopTakePokemonThenShuffle):
                 kind_ok = definition.is_basic_pokemon or definition.is_evolution_pokemon  # v0.73: マスターボール（見た 7 枚のうちのポケモンのカード）
-            elif isinstance(revealer, SearchTrainerOnHeads):
-                kind_ok = definition.category == "trainer"
+            elif isinstance(revealer, (SearchTrainerOnHeads, SearchTrainerRequiredOnHeads)):
+                kind_ok = definition.category == "trainer"  # v0.79: ひらめく（SearchTrainerRequiredOnHeads。ちょうど 1 枚）も
             elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck)):
                 kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード
             elif isinstance(revealer, RevealNamedPokemonFromDeckAny):

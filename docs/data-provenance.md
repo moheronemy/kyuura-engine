@@ -1882,3 +1882,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: NIP1X-005 の `pokemon.dex`・`jp_print.level`、NIP2X-005 の `jp_print.level` が欠けている（処理に使う欄ではない）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.78 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.79: v0.78 の共通処理の修正と、ポケモン 52 枚
+
+[shared-checks-pokemon-reuse-v0.79.md](shared-checks-pokemon-reuse-v0.79.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_79`（52 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.78 までの 891 枚の
+  記録は変わっていない。
+- 52 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-21・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  52 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は pcg-search.com（拡張シート・クイックスターターギフト・ポケモンジム・イントロパック・プレミアムファイル・プロモ・サザンアイランドの 16 枚）・nazonobasho.com（neo1・neo2）・
+  ポケモンWiki（neo3・neo4）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: サンド（ES2-020・QSG-033）のスピードスターの説明の「抵抗カ」（カタカナの「カ」）。エンジンは写しを直さず、その書き方をそのまま受け付けた。
+- 報告事項（kyuura の作業）: ヤドン（neo1-045）・ネイティ（neo1-046）の `ja_text_source` の URL の番号が入れかわっている（neo01-046-yadon・neo01-045-naty）。
+- 報告事項（kyuura の作業）: マチスのラッタ（GD3-012）のいかりのまえばのダメージの目安が null（「?」がない）。エンジンは写しに「?」を足さず、この書き方と組にして受け付けた。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.79 の登録を写すと、52 枚の `engine_status` が `registered` になる。

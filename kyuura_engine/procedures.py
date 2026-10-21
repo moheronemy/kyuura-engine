@@ -179,6 +179,12 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         if problem is not None:
             halt(state, Halt(code=POISON_RECEIVED_POWER.code, message=f"{problem}。{POISON_RECEIVED_POWER.message}", references=POISON_RECEIVED_POWER.references))
             return None
+    if penalties:
+        divergence = mid_check_knockout_divergence(state, order, penalties)
+        if divergence is not None:
+            halt(state, Halt(code=MID_CHECK_KNOCKOUT_CODE, message=divergence,
+                             references=("GR-2000-P323-POKEMON-CHECK", "docs/darkness-metal-energy-v0.78.md 6 章", "docs/shared-checks-pokemon-reuse-v0.79.md 2 章")))
+            return None
     per = state.rules.damage_per_counter
     steps: dict[int, list[int]] = {}  # ポケモンの番号 → 1・2 の処理ごとののっている数（はじめの数から）
     for _, pokemon, _, kind in penalties:
@@ -238,6 +244,73 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         for pokemon in state.players[owner].in_play()
         if knocked_by_hp(state, pokemon)
     ]
+
+
+# v0.79（PK1。docs/shared-checks-pokemon-reuse-v0.79.md 2 章）: ポケモンチェックの 1（悪エネルギー）でポケモンが HP 以上になったとき、1 と 2 のあいだにきぜつの判定をする
+# （そのポケモンが場をはなれてから 2 の「どく」を処理する）か、2 のあとにまとめて判定するかは、公式ルール 2000.02.14版の p.323 の順番（指示されたこと → どく → ねむり →
+# マヒ）と記録から決まらない。v0.78 は、どの時点でも結果が変わらない場合だけを処理するとしていたが、そのポケモンが場をはなれると 2 の処理・2 のあとのきぜつの判定の
+# 問い合わせ（かがくへんかガスで消えていた特殊能力がもどる・［へんしん］の姿が変わる など）が変わる場合を確かめていなかった
+MID_CHECK_KNOCKOUT_CODE = "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"
+
+
+def _mid_check_view(state: GameState, order: tuple[int, int], keep: frozenset[int]) -> dict[int, tuple]:
+    """ポケモンチェックの 2 の「どく」と 2 のあとのきぜつの判定が使う問い合わせの答え（v0.79。``keep`` の番号の場のポケモンごと）: どくのダメージ（KA1 で止めるか・
+    鋼エネルギーを当てはめた量）・2 のあとに今有効な最大HP以上になるか・2 のあとに［ずらかる］の残りHP「10」になるか、と、2 のあとに HP 以上になるポケモンの特殊能力が消えているか（きぜつするときに使える
+    特殊能力の機会）。答えを求めると止まる（VS1 など）なら、その停止コード。状態を変えない。"""
+    from .continuous import power_suppressed
+    from .effects import powers_of
+
+    view: dict[int, tuple] = {}
+    for owner in order:
+        for pokemon in state.players[owner].in_play():
+            if pokemon.pokemon_id not in keep:
+                continue
+            try:
+                poison = pokemon.conditions.poison
+                if poison is None:
+                    received = None
+                elif poison_received_power_problem(state, owner, pokemon, poison.damage) is not None:
+                    received = POISON_RECEIVED_POWER.code
+                else:
+                    received = energy_received_damage(state, pokemon, poison.damage)[0]
+                final = pokemon.damage + (received if isinstance(received, int) else 0)
+                hp = max_hp(state, pokemon)
+                knocked = final >= hp
+                powers = tuple((str(slot.key), power_suppressed(state, slot.power)) for slot in powers_of(state, pokemon)) if knocked else ()
+                view[pokemon.pokemon_id] = (received, knocked, hp - final == 10 and scram_watch(state, pokemon), powers)
+            except (UnsupportedError, TypeReadingsDiffer) as error:
+                view[pokemon.pokemon_id] = ("stop", getattr(error, "code", type(error).__name__))
+    return view
+
+
+def mid_check_knockout_divergence(state: GameState, order: tuple[int, int], penalties) -> str | None:
+    """1 の悪エネルギーのあとに HP 以上のポケモンがいるとき、そのポケモンが 1 と 2 のあいだに場をはなれる読み方と、2 のあとまで場に残る読み方で、ほかのポケモンの 2 の処理・
+    2 のあとのきぜつの判定の問い合わせ（``_mid_check_view``）が変わるなら、止める理由（PK1。v0.79）。変わらないなら None（v0.78 と同じに処理する）。
+
+    1 の結果は状態の複製の上でのせ（悪エネルギーのダメージ・ダメージカウンター）、場をはなれる読み方の複製では、HP 以上のポケモンを場から除く（カードの行き先・サイドは
+    問い合わせに関係しないので扱わない）。カード id で分けず、場の問い合わせだけで比べる。状態を変えない。"""
+    after = state.clone()
+    per = state.rules.damage_per_counter
+    for owner, pokemon, _, kind in penalties:
+        target = next(p for p in after.players[owner].in_play() if p.pokemon_id == pokemon.pokemon_id)
+        target.damage += energy_received_damage(after, target, DARKNESS_BONUS)[0] if kind == PENALTY_DAMAGE else per
+    knocked = {p.pokemon_id for o in order for p in after.players[o].in_play() if p.damage >= max_hp(after, p)}
+    if not knocked:
+        return None
+    keep = frozenset(p.pokemon_id for o in order for p in after.players[o].in_play()) - knocked
+    left = after.clone()
+    for owner in order:
+        player = left.players[owner]
+        if player.active is not None and player.active.pokemon_id in knocked:
+            player.active = None
+        player.bench = [p for p in player.bench if p.pokemon_id not in knocked]
+    stay, leave = _mid_check_view(after, order, keep), _mid_check_view(left, order, keep)
+    changed = sorted(pid for pid in keep if stay.get(pid) != leave.get(pid))
+    if not changed:
+        return None
+    return (f"ポケモンチェックの 1（悪エネルギー）でポケモン {sorted(knocked)} が HP 以上になり、1 と 2 のあいだにきぜつの判定をする（場をはなれる）かで、ポケモン {changed} の"
+            f" 2 の「どく」・きぜつの判定の問い合わせが変わる（場に残る: {[stay.get(pid) for pid in changed]}、場をはなれる: {[leave.get(pid) for pid in changed]}）。"
+            "1 と 2 のあいだのきぜつの判定の時点は公式ルール 2000.02.14版（p.323）と記録から決められないので、ダメージを与える前に対戦を止める（PK1）")
 
 
 def finish(state: GameState, result: GameResult) -> None:

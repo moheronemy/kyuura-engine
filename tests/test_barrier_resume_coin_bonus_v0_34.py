@@ -427,7 +427,9 @@ class BarrierCoinTest(unittest.TestCase):
         # docs/effective-pokemon-properties-v0.48.md）
         self.assertEqual(stopping, {"CoinBonusDamageAndParalyze", "DamageAndParalyzeOnHeadsElseFail", "FailOnTailsDamage", "FailOnTailsAmountIfBenchNamed",
                                     "DamageThenConfuseOnAnyHeads", "DamageThenPoisonAndParalyzeOnHeads", "DamageThenPoisonAndConfuseOnAllHeads",
-                                    "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck"})
+                                    "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck",
+                                    # v0.79: ルージュラの「あやしいおどり」（CoinBonusDamageAndConfuse。1 枚のコインが追加のダメージとこんらんを決める。ねばりつくと同じ形）
+                                    "CoinBonusDamageAndConfuse"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

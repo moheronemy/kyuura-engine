@@ -653,7 +653,10 @@ class G37Test(unittest.TestCase):
             # v0.76（なきごえ・かなしばり・にらみつける。docs/persistent-attack-modifiers-v0.76.md）
             "ReduceDamageToSelfNextOpponentTurn", "LockOpponentAttackOnHeads", "AttackLockWhileSourceActiveOnHeads",
             # v0.78（ダメージの前に相手のトレーナーをトラッシュする「ごうだつ」・ダメージのない「おいつめる」。docs/darkness-metal-energy-v0.78.md）
-            "DiscardOpponentTrainersThenDamage", "RetreatLockWithoutDamage"]))
+            "DiscardOpponentTrainersThenDamage", "RetreatLockWithoutDamage",
+            # v0.79（1 枚のコインでマヒと相手の控えへのダメージ・1 枚のコインでダメージとこんらん・相手の場のトレーナーをすべてトラッシュする。
+            # docs/shared-checks-pokemon-reuse-v0.79.md）
+            "DamageThenParalyzeAndOpponentBenchOnHeads", "CoinBonusDamageAndConfuse", "CoinDiscardAllOpponentTrainers"]))
 
 
 class DecisionTest(unittest.TestCase):

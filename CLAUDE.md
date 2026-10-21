@@ -3008,3 +3008,62 @@
   悪・鋼エネルギーは `_v078_energy` がつけ、v0.78 のポケモンの払えるワザはエンジンの支払いの問い合わせ（`attack_cost_payable`）で見ます（`state.energy_types` は特殊エネルギーを数えない）。
   エネルギーをためる手順（v038_wait）は重ねていません（同じ名前 4 枚までで足りなくなる）。数えた結果は `v078_uses`。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## v0.78 の共通処理の修正と、ポケモン 52 枚・ワザ 94（v0.79）
+
+### 対象と数
+
+- kyuura の data/engine_targets.json の対象から、既存の効果の型と、それを組み合わせた 11 の型で表せるポケモン 52 枚（neo 36 枚・拡張パック以外の商品 16 枚。ワザ 94。写しの組 `pool_v0_79`）を、
+  kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.78 | v0.79 |
+  |---|---|---|
+  | 写し・対応するカード | 891・891 | 943・943 |
+  | 対応ポケモン・トレーナー・エネルギー | 643・213・35 | 695・213・35 |
+  | ワザ・特殊能力・特殊エネルギーの登録 | 1,088・74・17 | 1,182・74・17 |
+  | 未対応（全対象・neo・拡張パック以外） | 486・263・223 | 434・227・207 |
+  | 停止コード・未解決の裁定 | 165・167 | 166・168 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API・ルールの基準（2000.02.14 版）は変えていません。カードごとの型・根拠・検証は docs/shared-checks-pokemon-reuse-v0.79.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。52 枚の pcg-search.com・カードの画像との照合もしていません。英語の欄・現代のルール・後年の裁定で補わないでください。
+- テストの定数は tests/helpers.py の `V0_79_POKEMON`・`V0_79_CARDS`（`ARTICUNO_PR1`・`STEELIX_PRN` など）。
+
+### ポケモンチェックの途中のきぜつ（PK1）
+
+- ポケモンチェックの 1（悪エネルギー）で HP 以上になったポケモンがいるとき、そのポケモンが 1 と 2 のあいだに場をはなれる読み方と残る読み方で、ほかのポケモンの 2 の「どく」・2 のあとの
+  きぜつの判定の問い合わせが変わるなら、ダメージを与える前に `UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT`（PK1。`not_in_kyuura`）で止めます（`procedures.mid_check_knockout_divergence`）。
+- 比べるのは状態の複製の上の問い合わせ（`_mid_check_view`）で、カード id で分けません。2 の処理・きぜつの判定が新しい問い合わせを使うようにしたら、`_mid_check_view` に加えてください。
+  変わらない盤面は v0.78 と同じに進みます。裁定は決めていません（1 と 2 のあいだのきぜつの判定の時点を決めない）。
+
+### ワザでないダメージの止める確かめ
+
+- DE1・KA1・RB4・EX1・TD1 は、鋼エネルギー（NIP1X-010）の「-10」を含めた最終の量で比べます（`effects.non_attack_change_matters`。当てはめない・当てはめる・当てはめる順番のどれでも同じ量なら
+  止めない）。受けるダメージを変える効果の確かめを加えるときは、この関数を使ってください（鋼エネルギーを数えずに比べない）。問いそのものは解決していません。
+
+### 組み合わせの型
+
+- 11 の型（`DamageThenParalyzeAndOpponentBenchOnHeads`・`DamageThenPreventAttackDamageOnHeads`・`DamageThenOpponentBenchOnHeads`・`CoinBonusDamageAndConfuse`・`CoinBonusPerOwnCounter`・
+  `HealSelfWithoutDamage`・`DamageThenDiscardOneOnTails`・`CoinChooseOpponentBenchDamage`・`SearchTrainerRequiredOnHeads`・`CoinDiscardAllOpponentTrainers`・`FailOnTailsDamageThenSelfCannotAttack`）は、
+  既存の要素の組み合わせです。`ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。説明の全文を登録の値と結びつけて照らします。
+- 1 枚のワザ全体のコインで複数の効果を決めるワザは、`Coin` と要素の `gate` で表し、要素ごとに投げ直さないでください。
+- ワザが失敗したら残りの要素を処理しません（v0.31）。説明が失敗しても与えると書く効果だけ、要素の `after_failure`（`SelfCannotAttack` の `even_if_failed`）を真にします。広げないでください。
+- 持続する効果の種類 `prevent_attack_damage`（`state.PreventAttackDamage`。`PreventDamage` の部分型）は、ワザによるダメージだけを防ぎます（トレーナーのダメージは受ける。`attack_only`）。
+  「ダメージを受けない」（かたまる）・「ワザによるダメージや効果を受けない」（バリアー）と混ぜないでください。
+- `DiscardOwnEnergy` の `LACKING_SKIP` は、説明がトラッシュできないときを書かない「…1枚選び、トラッシュする」（ファイヤーテール）だけに使います（選べるカードがなければコインを投げず何もしない）。
+- `RevealTrainerFromDeck` の `required`（ひらめく）はちょうど 1 枚、`DiscardOpponentTrainers` の `all_pokemon`・`local_coin`（だましとる）は相手の場のポケモン全員です。
+- v0.78 まで形だけを確かめていた `CoinBonusDamageAndParalyze`・`DamageThenDiscardAllOnTails` は、v0.79 から文面も確かめます（あやしいおどり・ファイヤーテールを受け付けない）。
+
+### 既存の型・記録
+
+- 既存の型が受け付ける書き方を、意味を確かめて 1 通りずつ加えました（docs 6 章の表）。一律の正規化・部分一致にしないでください。サンドの「抵抗カ」・マチスのラッタのダメージの目安なしは、
+  写しのまま受け付けます（写しを直さない。kyuura への報告事項）。
+- ES2-020 と QSG-033・ES3-022 と QSG-028 は同じデータで、`effects.SAME_DATA_CARDS_V0_79` で同じ登録の値にまとめます。ほかのカードを名前・同じカードの組で自動ではまとめないでください。
+- 採用の記録 52 件（`kyuura_records` 空・外部照合なし）。研究の対応表の `adopted_printed_text` に説明文のあるワザ 83 を加えました。
+- v0.78 の文書の検証の報告の誤り（ワザでないダメージの 0 化）を直しました（docs 4 章）。`v078_uses` に `nonattack_zeroed` を加えました（`darkness_damage_reduced` の意味は変えていない）。
+
+### 検証用デッキ
+
+- 検証用デッキ `W79`・`P79`・`F79`・`C79` と組 `PAIRINGS_V0_79`（`W79` 対 `C79`・`P79` 対 `F79`・`W79` 対 `P79`・`C79` 対 `P79`）は tools/existing_effect_games.py の `--batch v0.79` です（前の版の組の
+  結果は変わらない）。v0.79 のポケモンは TARGETS に加え、使っていないワザを選ぶ手順・エネルギーをためる手順を重ね、払えるかはエンジンの支払いの問い合わせで見ます。数えた結果は `v079_uses`。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.78）
+# 実装状況（v0.1〜v0.79）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3687,3 +3687,19 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | MT1（`UNRESOLVED_METAL_ENERGY_POWER_ORDER`）・DE1（`UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER`） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_metal_and_received_power_order_is_unresolved`・`test_kabuto_armor_is_unresolved` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
 | リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.79: v0.78 の共通処理の修正と、ポケモン 52 枚
+
+[shared-checks-pokemon-reuse-v0.79.md](shared-checks-pokemon-reuse-v0.79.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ポケモンチェックの 1 と 2 のあいだのきぜつで、2 の問い合わせが変わる盤面（PK1。`UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT`） | 裁定が未解決（止める。変わらない盤面は v0.78 と同じ） | GR-2000-P323-POKEMON-CHECK の順番だけでは決まらない | test_shared_checks_pokemon_reuse_v0_79.py `MidCheckKnockoutTest` |
+| DE1・KA1・RB4・EX1・TD1 を、鋼エネルギー（NIP1X-010）を含めた最終の量で比べる | 実装済み・テスト済み（どの読み方でも同じ量なら止めない。問いそのものは未解決のまま） | 印刷の文面（鋼エネルギーは説明のとおり当てはめる） | 同 `FinalAmountTest` |
+| ポケモン 52 枚・ワザ 94（既存の型 81・組み合わせの型 11（13 のワザ）） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | 同 `RegistrationTest` と組み合わせごとのテスト |
+| 持続する効果 `prevent_attack_damage`（ワザによるダメージだけを受けない。トレーナーのダメージは受ける） | 実装済み・テスト済み | 印刷の文面（neo1-036 のこうそくいどう） | 同 `PreventAttackDamageTest` |
+| ワザの失敗のあとも処理する要素（メタルクラッシュの次の自分の番の使用の禁止） | 実装済み・テスト済み | 印刷の文面（PRN-014） | 同 `MetalCrushTest` |
+| `CoinBonusDamageAndParalyze`・`DamageThenDiscardAllOnTails` の文面の確かめ（あやしいおどり・ファイヤーテールを受け付けない） | 実装済み・テスト済み | 印刷の文面 | 同 `test_wrong_reuses_are_rejected` |
+| 未対応の数（全対象 434・neo 227・拡張パック以外 207） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts` |
+| 52 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は pcg-search.com・nazonobasho.com・ポケモンWiki の転記） | — |
+| リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |

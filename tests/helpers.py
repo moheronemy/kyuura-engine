@@ -1261,6 +1261,18 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DiscardOpponentTrainersThenDamage,  # デルビル（neo2-039・NIP2X-005）の「ごうだつ」（DiscardOpponentTrainers → Damage）
     _effects.RetreatLockWithoutDamage,  # デルビル（neo4-081）の「おいつめる」（OpponentRetreatLock だけ）
     _effects.DamageThenSelfCannotAttack,  # エアームド（NIP1X-005）の「メタルスラッシュ」（持続する効果 CannotAttackNextOwnTurn）
+    # v0.79（docs/shared-checks-pokemon-reuse-v0.79.md 5 章）: 既存の要素を組み合わせた 11 の型
+    _effects.DamageThenParalyzeAndOpponentBenchOnHeads,  # バブルシャワー・ギガショック・ダイヤモンドダスト
+    _effects.DamageThenPreventAttackDamageOnHeads,  # ピカチュウ（neo1-036）の「こうそくいどう」（PreventAttackDamage）
+    _effects.DamageThenOpponentBenchOnHeads,  # モココ（neo3-027）の「エレキテール」
+    _effects.CoinBonusDamageAndConfuse,  # ルージュラ（neo3-018）の「あやしいおどり」
+    _effects.CoinBonusPerOwnCounter,  # ブルー（neo3-048）の「いかりのずつき」
+    _effects.HealSelfWithoutDamage,  # ミニリュウ（neo4-087）の「だっぴ」
+    _effects.DamageThenDiscardOneOnTails,  # カツラのヒトカゲ（GD5-001）の「ファイヤーテール」
+    _effects.CoinChooseOpponentBenchDamage,  # ナツメのゴースト（GD6-007）の「かげからおそう」
+    _effects.SearchTrainerRequiredOnHeads,  # ヤドキング（SI-014）の「ひらめく」
+    _effects.CoinDiscardAllOpponentTrainers,  # ニューラ（PF3-003）の「だましとる」
+    _effects.FailOnTailsDamageThenSelfCannotAttack,  # ハガネール（PRN-014）の「メタルクラッシュ」
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1958,3 +1970,59 @@ HOUNDOUR_NIP2X = "NIP2X-005"  # デルビル（かみつく・ごうだつ。neo
 V0_78_ENERGIES = (DARKNESS_ENERGY_NEO1, METAL_ENERGY_NEO1, METAL_ENERGY_NIP1X, DARKNESS_ENERGY_NIP2X, DARKNESS_ENERGY_PRN)
 V0_78_POKEMON = (SNEASEL_NEO1, STEELIX_NEO1, SKARMORY_NEO1, HOUNDOUR_NEO2, SCIZOR_NEO2, HOUNDOUR_NEO4, SKARMORY_NIP1X, HOUNDOUR_NIP2X)
 V0_78_CARDS = V0_78_ENERGIES + V0_78_POKEMON
+
+# v0.79（docs/shared-checks-pokemon-reuse-v0.79.md）: ポケモン 52 枚（写しの組 pool_v0_79。neo 36 枚・拡張パック以外の商品 16 枚）
+SANDSHREW_ES2 = "ES2-020"  # サンド（どくばり・スピードスター）
+SANDSHREW_QSG = "QSG-033"  # サンド（どくばり・スピードスター）
+GASTLY_ES3 = "ES3-022"  # ゴース（こわがらせる・あんこく）
+GASTLY_QSG = "QSG-028"  # ゴース（こわがらせる・あんこく）
+BROCKS_MANKEY_GD1 = "GD1-005"  # タケシのマンキー（からかう・けとばす）
+LT_SURGES_RATICATE_GD3 = "GD3-012"  # マチスのラッタ（いかりのまえば）
+BLAINES_CHARMANDER_GD5 = "GD5-001"  # カツラのヒトカゲ（ファイヤーテール）
+SABRINAS_HAUNTER_GD6 = "GD6-007"  # ナツメのゴースト（あくむ・かげからおそう）
+QUILAVA_NIP1 = "NIP1-013"  # マグマラシ（たいあたり・かえんほうしゃ）
+SNEASEL_PF3 = "PF3-003"  # ニューラ（だましとる・でんこうせっか）
+ELECTABUZZ_PR1 = "PR1-010"  # エレブー（ひかりのかべ・でんこうせっか）
+ARTICUNO_PR1 = "PR1-064"  # フリーザー（ダイヤモンドダスト）
+STEELIX_PRN = "PRN-014"  # ハガネール（メタルクラッシュ・じひびき）
+PRIMEAPE_SI = "SI-012"  # オコリザル（けたぐり・いかりくるう）
+SLOWKING_SI = "SI-014"  # ヤドキング（ひらめく・サイコキネシス）
+MARILL_SI = "SI-017"  # マリル（みずとばし・ころがりタックル）
+ODDISH_NEO1 = "neo1-001"  # ナゾノクサ（かくれる・すいとる）
+CHIKORITA_NEO1 = "neo1-002"  # チコリータ（たいあたり・リフレクター）
+LEDYBA_NEO1 = "neo1-003"  # レディバ（ちょうおんぱ・れんぞくパンチ）
+SHUCKLE_NEO1 = "neo1-007"  # ツボツボ（からにこもる・まきつく）
+SUNFLORA_NEO1 = "neo1-013"  # キマワリ（はなびらのまい）
+JUMPLUFF_NEO1 = "neo1-016"  # ワタッコ（ねむりごな・やどりぎのたね）
+MARILL_NEO1 = "neo1-025"  # マリル（まるくなる・バブルボム）
+SEADRA_NEO1 = "neo1-029"  # シードラ（あわ・だくりゅう）
+AZUMARILL_NEO1 = "neo1-034"  # マリルリ（たいあたり・バブルシャワー）
+PIKACHU_NEO1 = "neo1-036"  # ピカチュウ（でんこうせっか・こうそくいどう）
+CHINCHOU_NEO1 = "neo1-037"  # チョンチー（ちょうおんぱ・じたばた）
+AMPHAROS_NEO1 = "neo1-043"  # デンリュウ（ギガショック）
+SLOWPOKE_NEO1 = "neo1-045"  # ヤドン（ねんりき・みずでっぽう）
+NATU_NEO1 = "neo1-046"  # ネイティ（つつく・テレキネシス）
+BEEDRILL_NEO2 = "neo2-010"  # スピアー（さんばいどく・ミサイルばり）
+HOUNDOUR_NEO2_FIRE = "neo2-012"  # デルビル（スモッグ・ほのおをまとう）
+CORSOLA_NEO2 = "neo2-017"  # サニーゴ（じこさいせい・とげキャノン）
+NATU_NEO2 = "neo2-022"  # ネイティ（あやしいひかり）
+ESPEON_NEO2 = "neo2-029"  # エーフィ（かみつく・サイコキネシス）
+OMASTAR_NEO2 = "neo2-035"  # オムスター（しめあげる・とげとげMAX）
+HITMONTOP_NEO2 = "neo2-038"  # カポエラー（みきり・トリプルキック）
+SLUGMA_NEO3 = "neo3-008"  # マグマッグ（ほのお・マグマでかこむ）
+HO_OH_NEO3 = "neo3-011"  # ホウオウ（もえあがる・せいなるほのお・ゴッドバード）
+QWILFISH_NEO3 = "neo3-015"  # ハリーセン（どくばり・はりせんぼん）
+REMORAID_NEO3 = "neo3-016"  # テッポウオ（ねらいうち）
+SEAKING_NEO3 = "neo3-017"  # アズマオウ（つきあげる・つのでいちげき）
+JYNX_NEO3 = "neo3-018"  # ルージュラ（こごえるキッス・あやしいおどり）
+FLAAFFY_NEO3 = "neo3-027"  # モココ（ビリリパンチ・エレキテール）
+SNUBBULL_NEO3 = "neo3-048"  # ブルー（かみつく・いかりのずつき）
+VULPIX_NEO4 = "neo4-014"  # ロコン（ひのこ）
+MANTINE_NEO4 = "neo4-031"  # マンタイン（おおなみ）
+GLIGAR_NEO4 = "neo4-071"  # グライガー（しんけいどく）
+JIGGLYPUFF_NEO4 = "neo4-085"  # プリン（ふくらむ）
+DRATINI_NEO4 = "neo4-087"  # ミニリュウ（だっぴ・みだれづき）
+GIRAFARIG_NEO4 = "neo4-089"  # キリンリキ（しっぽでかみつく・サイコキネシス）
+CHANSEY_NEO4 = "neo4-092"  # ラッキー（おうふくびんた・タマゴなげ）
+V0_79_POKEMON = (SANDSHREW_ES2, SANDSHREW_QSG, GASTLY_ES3, GASTLY_QSG, BROCKS_MANKEY_GD1, LT_SURGES_RATICATE_GD3, BLAINES_CHARMANDER_GD5, SABRINAS_HAUNTER_GD6, QUILAVA_NIP1, SNEASEL_PF3, ELECTABUZZ_PR1, ARTICUNO_PR1, STEELIX_PRN, PRIMEAPE_SI, SLOWKING_SI, MARILL_SI, ODDISH_NEO1, CHIKORITA_NEO1, LEDYBA_NEO1, SHUCKLE_NEO1, SUNFLORA_NEO1, JUMPLUFF_NEO1, MARILL_NEO1, SEADRA_NEO1, AZUMARILL_NEO1, PIKACHU_NEO1, CHINCHOU_NEO1, AMPHAROS_NEO1, SLOWPOKE_NEO1, NATU_NEO1, BEEDRILL_NEO2, HOUNDOUR_NEO2_FIRE, CORSOLA_NEO2, NATU_NEO2, ESPEON_NEO2, OMASTAR_NEO2, HITMONTOP_NEO2, SLUGMA_NEO3, HO_OH_NEO3, QWILFISH_NEO3, REMORAID_NEO3, SEAKING_NEO3, JYNX_NEO3, FLAAFFY_NEO3, SNUBBULL_NEO3, VULPIX_NEO4, MANTINE_NEO4, GLIGAR_NEO4, JIGGLYPUFF_NEO4, DRATINI_NEO4, GIRAFARIG_NEO4, CHANSEY_NEO4)
+V0_79_CARDS = V0_79_POKEMON

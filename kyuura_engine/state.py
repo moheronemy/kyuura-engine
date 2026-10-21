@@ -191,6 +191,8 @@ class PreventDamage:
     active_turn: int
     kind: ClassVar[str] = "prevent_damage"
     turns_until_active: ClassVar[int] = 1  # はたらく番は効果を与えた番の何番あとか（v0.27。次の相手の番）
+    # v0.79: 防ぐのがワザによるダメージだけか（``PreventAttackDamage``）。「ダメージを受けない」（かたまる）は、トレーナーのダメージも防ぐ（v0.61。p.235 の解説の記録）
+    attack_only: ClassVar[bool] = False
     on_opponent: ClassVar[bool] = False  # 相手に与える効果か（v0.31。v0.30 までの効果はどれも自分自身）
 
 
@@ -201,6 +203,21 @@ RETALIATION_KINDS = {RETALIATION_FIXED: "retaliation", RETALIATION_RECEIVED: "re
 # v0.45: 受けたダメージで決まり、倍数（``multiplier``）か、はたらくときのコイン（``on_heads``）のある効果の種類（R団のエビワラーの「クロスカウンター」。
 # 「こうらがえし」と同じ決め方 ``RETALIATION_RECEIVED`` に、量の倍数とコインの条件を明示した値。v0.44 までの読み手は知らない種類として拒否する）
 RETALIATION_RECEIVED_SCALED_KIND = "retaliation_received_damage_scaled"
+
+
+@dataclass(frozen=True)
+class PreventAttackDamage(PreventDamage):
+    """ワザによる「持続する効果」（v0.79。docs/shared-checks-pokemon-reuse-v0.79.md 7 章）のうち、ピカチュウ（neo1-036）の「こうそくいどう」の「コインを投げて「おもて」なら、
+    次の相手の番、このカードはワザによるダメージを受けない。」（kyuura の印刷の文面）。
+
+    はたらく番・自分自身に与えること・ワザのダメージの要素を計算の前に無効にすること・ダメージ以外の効果は受けること・消える契機は ``PreventDamage``（「かたまる」）と同じ
+    （部分型なので ``persistent.damage_prevention`` が見つける）。違うのは、説明が「ワザによるダメージ」と書くので、トレーナーのダメージ（バトル場は穴だらけ!）は防がない
+    こと（``attack_only``。v0.61 の「ダメージを受けない」状態はトレーナーのダメージも防ぐ）。「ワザによるダメージや効果を受けない」（バリアー ``AttackBarrier``）とも違う
+    （効果は受ける）。種類 ``kind`` を分ける（v0.78 までのエンジンは知らない種類として読まない）。
+    """
+
+    kind: ClassVar[str] = "prevent_attack_damage"
+    attack_only: ClassVar[bool] = True
 
 
 @dataclass(frozen=True)
@@ -920,7 +937,7 @@ class DoubledDamage:
 # ワザによる持続する効果の型（v0.4b。v0.12 で Retaliation、v0.27 で NextTurnAttackDamage、v0.31 で DestinyBond・AttackBarrier・DamageReduction・
 # CannotAttack、v0.34 で ReducedDamageToSource、v0.35 で CannotUseOwnAttack・CannotUseAttack、v0.36 で AttackCoinCheck・CannotRetreat、v0.40 で
 # CannotAttackWhileSourceActive、v0.45 で ZeroDamageBelow、v0.46 で HalvedDamage、v0.48 で WeaknessChange・ResistanceChange・MaxHpSet を加えた）。加えるときは、消える契機（ベンチ・進化・きぜつ・期限）と不変条件を見直す
-PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
+PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, NextTurnAttackDamage, DestinyBond, AttackBarrier, DamageReduction, CannotAttack,
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
                            ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
                            DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）

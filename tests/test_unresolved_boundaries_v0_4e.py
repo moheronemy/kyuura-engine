@@ -239,6 +239,7 @@ ALL_CODES = (
     "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",  # DB1（DoubleEdgedTest）
     "UNRESOLVED_METAL_ENERGY_POWER_ORDER",  # MT1（test_darkness_metal_energy_v0_78.py NonAttackDamageTest）
     "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",  # DE1（test_darkness_metal_energy_v0_78.py PokemonCheckTest）
+    "UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT",  # PK1（test_shared_checks_pokemon_reuse_v0_79.py MidCheckKnockoutTest）
 )
 TURN = 7
 

@@ -219,21 +219,22 @@ class RegistrationTest(unittest.TestCase):
         for code, ruling in (("UNRESOLVED_METAL_ENERGY_POWER_ORDER", "MT1"), ("UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER", "DE1")):
             entry = links["stop_codes"][code]
             self.assertEqual((entry["kyuura_disposition"], entry["engine_rulings"][0]["ruling_id"]), ("not_in_kyuura", ruling))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (165, 167))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (166, 168))  # v0.79 で PK1 を加えた（v0.78 は 165・167）
 
     def test_counts(self):
-        """写し・対応するカード 891、ポケモン 643・トレーナー 213・エネルギー 35、ワザ 1,088・特殊能力 74・特殊エネルギー 17。"""
+        """写し・対応するカード 891、ポケモン 643・トレーナー 213・エネルギー 35、ワザ 1,088・特殊能力 74・特殊エネルギー 17。v0.79 でポケモン 52 枚（ワザ 94）を
+        加えたので、今の数は 943（695・213・35）、ワザ 1,182。"""
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual(len(read_extract()["cards"]), 891)
-        self.assertEqual(len(pool.playable_ids), 891)
+        self.assertEqual(len(read_extract()["cards"]), 943)
+        self.assertEqual(len(pool.playable_ids), 943)
         categories = Counter(pool.get(c).category for c in pool.playable_ids)
-        self.assertEqual(dict(categories), {"pokemon": 643, "trainer": 213, "energy": 35})
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.energy_ids())), (1088, 74, 17))
+        self.assertEqual(dict(categories), {"pokemon": 695, "trainer": 213, "energy": 35})
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.energy_ids())), (1182, 74, 17))
 
     def test_unsupported_counts(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から登録を差し引く（engine_status は v0.68 の時点の索引なので使わない）。全対象の未対応 486・neo 263・
-        拡張パック以外 223（v0.77 は 499・271・228）。"""
+        拡張パック以外 223（v0.77 は 499・271・228）。v0.79 で 52 枚（neo 36・拡張パック以外 16）を加えたので、今の数は 434・227・207。"""
         import json
         import subprocess
 
@@ -246,18 +247,18 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         ids = [x["id"] for x in targets]
         self.assertTrue(set(V0_78_CARDS) <= set(ids))
-        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 486)
-        self.assertEqual(sum(1 for x in targets if x["id"].startswith("neo") and x["id"] not in pool.playable_ids), 263)
-        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 223)
+        self.assertEqual(sum(1 for c in ids if c not in pool.playable_ids), 434)  # v0.79 で 52 枚を加えた
+        self.assertEqual(sum(1 for x in targets if x["id"].startswith("neo") and x["id"] not in pool.playable_ids), 227)  # v0.79 で neo 36 枚を加えた
+        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 207)  # v0.79 で拡張パック以外 16 枚を加えた
 
     def test_unregistered_without_the_v0_78_entries(self):
-        """v0.78 の登録だけを除くと、13 枚とも未対応にもどり（v0.77 の 878 枚）、ほかのカードの対応は変わらない。"""
+        """v0.78 の登録だけを除くと、13 枚とも未対応にもどり（v0.78 の時点では v0.77 の 878 枚。v0.79 の 52 枚を加えて 930 枚）、ほかのカードの対応は変わらない。"""
         reduced = without_v0_78(E.DEFAULT_EFFECTS)
         before = pool_from_extract(read_extract(), reduced)
         after = load_card_pool()
         self.assertFalse(before.playable_ids & set(V0_78_CARDS))
         self.assertEqual(after.playable_ids - before.playable_ids, frozenset(V0_78_CARDS))
-        self.assertEqual(len(before.playable_ids), 878)
+        self.assertEqual(len(before.playable_ids), 930)  # v0.79 の 52 枚を含む（v0.78 では 878）
         self.assertFalse(set(E.EQUIVALENT_CARDS) & set(V0_78_CARDS))
         self.assertFalse(set(E.REPRINT_CARDS) & set(V0_78_CARDS))
 
@@ -608,7 +609,7 @@ class SecretPlanAndQuizTest(unittest.TestCase):
     def test_quiz_names(self):
         extract = read_extract()
         cards = {c["id"]: c for c in extract["cards"]}
-        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and cards[c]["category"] == "pokemon"}
+        earlier = {cards[c]["name"]["ja"] for c in cards if c not in V0_78_CARDS and c not in extract["pool_v0_79"] and cards[c]["category"] == "pokemon"}  # v0.79 で同じ名前のカードを加えた
         new = sorted({cards[c]["name"]["ja"] for c in V0_78_POKEMON} - earlier)
         self.assertEqual(new, sorted(["ニューラ", "ハガネール", "デルビル", "ハッサム"]))
         state = build_test_state([{"active": "PMCG1-018"}, {"active": "PMCG1-018"}])
