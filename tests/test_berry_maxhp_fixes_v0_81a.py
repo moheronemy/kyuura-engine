@@ -104,7 +104,7 @@ class DarknessTargetAfterCureTest(unittest.TestCase):
         audited(self, after)
 
     def test_cured_dark_ditto_with_darkness_and_no_change_proceeds(self):
-        """回復しても色が変わらない（相手が無色のラッタ）なら、どちらの順番でも 10 なので止めない（全部の場面を止めない）。"""
+        """回復しても色が変わらない（相手が無色のコラッタ）なら、どちらの順番でも 10 なので止めない（全部の場面を止めない）。"""
         state = check_board(mon(H.DITTO, (DK,), confusion=True, trainers=[berry()]), mon(H.RATTATA))
         after = end(state)
         self.assertIs(after.phase, Phase.MAIN)

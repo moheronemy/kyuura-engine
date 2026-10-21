@@ -35,6 +35,7 @@ from .decisions import (
     DAMAGE_STEP_ORDER,
     DAMAGE_REDUCTION,
     ESP_REDO,
+    OPTIONAL_DISCARD_ALL,
     JANKEN_HAND,
     OPTIONAL_DRAIN,
     SEARCH_DECK_OR_DISCARD,
@@ -142,7 +143,7 @@ OPTION_MEANINGS: dict[str, str] = {
     # 答えるカードの名前（``context`` の ``"names"`` の位置。選べるものに名前を添える）
     CHALLENGE_BENCH: "card", QUIZ_CARD: "card", QUIZ_ATTACK: "number", QUIZ_ANSWER: "name",
     # v0.66: お上品攻撃で減らす量・ナツメのESPのやり直し（1 = やり直す）・カスミの勝負のじゃんけんの手（選べるものに手の名前を添える。もう 1 人の手は続きの情報にあり、見せない）
-    DAMAGE_REDUCTION: "number", ESP_REDO: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
+    DAMAGE_REDUCTION: "number", ESP_REDO: "number", OPTIONAL_DISCARD_ALL: "number", JANKEN_HAND: "janken", OPTIONAL_DRAIN: "pokemon", SEARCH_DECK_OR_DISCARD: "card", TAKE_LOOKED_POKEMON: "card",
     # v0.67: マチスの秘策でうらにして出す手札のカード（決めるプレイヤーの手札）
     SECRET_PLAN_CARD: "card",
     # v0.80: カードめくりゲームで選ぶ相手のサイドの位置（裏のカード）・ポケモンギアで見た 7 枚から手札に加えるトレーナーカード
@@ -488,6 +489,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.82: 場からトラッシュに置かれて手札にもどしたエネルギーカード（場・トラッシュのカードは公開の情報）・のぞむならトラッシュしなかったこと
+    "energy_returned_to_hand", "discard_energy_declined",
     # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
     "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",
     "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）

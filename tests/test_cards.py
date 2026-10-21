@@ -32,6 +32,9 @@ from tests.helpers import (
     V0_77_TRAINERS,
     V0_80_CARDS,
     V0_81_CARDS,
+    ECOGYM,
+    RECYCLE_ENERGY,
+    V0_82_POKEMON,
     V0_70_POKEMON,
     V0_71_POKEMON,
     V0_72_POKEMON,
@@ -86,7 +89,7 @@ class CardPoolTest(unittest.TestCase):
                                     MISTYS_WRATH, BROCK_TRAINING, LT_SURGES_TREATY, GOOD_MANNERS, ERIKA, ERIKAS_KINDNESS, MISTY_TRAINER, MISTYS_WISH, SECRET_MISSION, BROCK_TRAINER, LT_SURGE_TRAINER, ROCKETS_TRAP, BLAINES_GAMBLE,
                                     TRASH_EXCHANGE, SABRINAS_GAZE, INVISIBLE_WALL, WARP_POINT, BLAINES_LAST_RESORT, ROCKET_GRUNT, ROCKETS_EXPERIMENT,
                                     KOGA_TRAINER, GIOVANNI, GIOVANNIS_LAST_RESORT, SABRINA_TRAINER, SABRINAS_PSYCHIC_CONTROL, DIGGER] + list(V0_63_CARDS) + list(V0_66_CARDS) + list(V0_67_CARDS)
-                                   + list(V0_69_TRAINERS) + list(V0_71_TRAINERS) + list(V0_73_CARDS) + list(V0_74_CARDS) + list(V0_77_TRAINERS) + list(V0_80_CARDS) + list(V0_81_CARDS)))  # v0.80 でトレーナー 30 枚（pool_v0_80）、v0.77 で neo1 のスーパーポケモン回収・マサキの転送装置、v0.74 で拡張パック以外の商品のスタジアム 13 枚（pool_v0_74）、v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚（pool_v0_73）、v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚（pool_v0_71）、v0.69 で拡張パック以外の商品の同じトレーナー 19 枚（pool_v0_69）、v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
+                                   + list(V0_69_TRAINERS) + list(V0_71_TRAINERS) + list(V0_73_CARDS) + list(V0_74_CARDS) + list(V0_77_TRAINERS) + list(V0_80_CARDS) + list(V0_81_CARDS) + [ECOGYM]))  # v0.82 でエコロジム（pool_v0_82）。 v0.80 でトレーナー 30 枚（pool_v0_80）、v0.77 で neo1 のスーパーポケモン回収・マサキの転送装置、v0.74 で拡張パック以外の商品のスタジアム 13 枚（pool_v0_74）、v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚（pool_v0_73）、v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚（pool_v0_71）、v0.69 で拡張パック以外の商品の同じトレーナー 19 枚（pool_v0_69）、v0.67 でマチスの秘策（pool_v0_67）、v0.57 でスタジアム 14 枚（pool_v0_57）、v0.58 でナツメのサイキックコントロール（pool_v0_58）、v0.59 でカツラ・タケシの保護・まきちらせ!ベトベトガス（pool_v0_59）、v0.61 でバトル場は穴だらけ!（pool_v0_61）、v0.63 で公開・非公開の状態を扱う 4 枚（pool_v0_63）
         self.assertEqual(read_extract()["pool_v0_2e"], [DEFENDER])
         self.assertEqual(read_extract()["pool_v0_2f"], [PIKACHU])
         self.assertTrue(pool.is_playable(PIKACHU))
@@ -267,7 +270,7 @@ class CardPoolTest(unittest.TestCase):
                  *V0_39_POKEMON, *V0_40_POKEMON, *V0_41_POKEMON, *V0_42_POKEMON, *V0_43_POKEMON, *V0_44_POKEMON,
                  *V0_45_POKEMON, *V0_46_POKEMON, *V0_47_POKEMON, *V0_48_POKEMON, *V0_49_POKEMON, *V0_50_POKEMON, *V0_51_POKEMON, *V0_52_POKEMON,
                  *V0_58_POKEMON, *V0_58_ENERGIES, *V0_59_POKEMON, *V0_60_POKEMON, *V0_61_POKEMON, *V0_62_POKEMON, *V0_64_POKEMON, *V0_65_POKEMON, *V0_68_POKEMON,
-                 *V0_69_POKEMON, *V0_69_SPECIAL_ENERGIES, *V0_69_BASIC_ENERGIES, *V0_70_POKEMON, *V0_71_POKEMON, *V0_72_POKEMON, *V0_75_POKEMON, *V0_76_POKEMON, *V0_77_POKEMON, *V0_78_CARDS, *V0_79_POKEMON)  # v0.79: ポケモン 52 枚。v0.78: 悪・鋼エネルギー 5 枚とポケモン 8 枚。v0.77: neo 期の拡張パックのポケモン 50 枚。v0.76: 拡張パック以外の商品のポケモン 24 枚。v0.75: 拡張パック以外の商品のポケモン 15 枚。v0.72: 拡張パック以外の商品のポケモン 43 枚。v0.71: 拡張パック以外の商品の再録のポケモン 11 枚。v0.70: 拡張パック以外の商品のポケモン 82 枚。v0.69: 拡張パック以外の商品の同じカード（ポケモン 57・特殊エネルギー 8・基本エネルギー 12）。v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
+                 *V0_69_POKEMON, *V0_69_SPECIAL_ENERGIES, *V0_69_BASIC_ENERGIES, *V0_70_POKEMON, *V0_71_POKEMON, *V0_72_POKEMON, *V0_75_POKEMON, *V0_76_POKEMON, *V0_77_POKEMON, *V0_78_CARDS, *V0_79_POKEMON, *V0_82_POKEMON, RECYCLE_ENERGY)  # v0.82: ポケモン 18 枚・リサイクルエネルギー。v0.79: ポケモン 52 枚。v0.78: 悪・鋼エネルギー 5 枚とポケモン 8 枚。v0.77: neo 期の拡張パックのポケモン 50 枚。v0.76: 拡張パック以外の商品のポケモン 24 枚。v0.75: 拡張パック以外の商品のポケモン 15 枚。v0.72: 拡張パック以外の商品のポケモン 43 枚。v0.71: 拡張パック以外の商品の再録のポケモン 11 枚。v0.70: 拡張パック以外の商品のポケモン 82 枚。v0.69: 拡張パック以外の商品の同じカード（ポケモン 57・特殊エネルギー 8・基本エネルギー 12）。v0.68: ガルーラ・キョウのベトベトン・イマクニ？のドードー。v0.58: タケシのゴローン・ゴローニャと特殊エネルギー 4 枚。v0.59: マルマイン・カスミのメノクラゲ・わるいアーボック。v0.60: 4 枚。v0.61: 3 枚。v0.62: 6 枚。v0.64: 3 枚
         playable = [pool.get(c) for c in sorted(pool.playable_ids) if c not in trainers and c not in later]
         self.assertEqual(len(playable), 16)
         self.assertEqual(sum(d.is_basic_pokemon for d in playable), 10)

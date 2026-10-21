@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.81a）
+# 実装状況（v0.1〜v0.82）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3759,3 +3759,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 最大HPを決まった数にする効果と大きくする効果が同時にはたらく（MH2。v0.81 は `RuntimeError`） | 裁定が未解決（止める） | 記録で決まらない | 同 `HideoutAndGrowTest`・`HideoutAndGrowOtherPathsTest` |
 | ログの監査の観測と照らす最大HPに、ロケット団のアジトの + 20 | 直した・テスト済み | 印刷の文面 | 同 `LogAuditHideoutTest` |
 | BY1・KA1・MH1・PK1・DE1・SC1 の問いそのもの | 裁定が未解決（止める。変えていない） | 記録で決まらない | 前の版のテスト |
+
+## v0.82: 場からトラッシュに置かれたエネルギーカードの共通の処理と、リサイクルエネルギー・エコロジム・ポケモン 18 枚
+
+[energy-discard-return-v0.82.md](energy-discard-return-v0.82.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| きのみどうしで、回復でかがくへんかガス・［へんしん］がもどってほかのポケモンの問い合わせが変わる場合も、並べ方を比べて BY1（v0.81a の修正の漏れ） | 直した・テスト済み | v0.81a の BY1・MH1 | test_berry_order_v0_82.py `BerryVersusBerryOrderTest` |
+| 比べるきのみが 3 つより多い場（`UNSUPPORTED_BERRY_ORDER_LIMIT`） | 未対応（エンジンの制限。止める） | — | 同 `test_too_many_interacting_berries_halt_as_unsupported` |
+| 場のエネルギーカードをトラッシュに置くすべての経路の共通の処理（原因・使ったプレイヤーの記録、置いたあとのもどし） | 実装済み・テスト済み | 印刷の文面 | test_energy_discard_return_v0_82.py `RecycleEnergyTest`・`EcogymTest` |
+| リサイクルエネルギー（「無色」1 個。どの原因でも場からトラッシュに置かれたら持ち主の手札へ。ポケモンタワーで消えない） | 実装済み・テスト済み | 印刷の文面（日本語の説明） | 同 `RecycleEnergyTest` |
+| エコロジム（相手のワザ・特殊能力・トレーナーでトラッシュされた「無色」以外のエネルギーカード。きぜつ・にげる・自分の効果は当たらない） | 実装済み・テスト済み | 印刷の文面・GR-2000-P323-KNOCKOUT | 同 `EcogymTest` |
+| エコロジムで［へんしん］のメタモンの無色の特殊エネルギー（TE2） | 裁定が未解決（止める） | v0.58 の TE2 | 同 `test_transformed_ditto_colorless_special_energy_is_te2` |
+| ひかるリザードンのルール文（そのカードの名前のデッキの上限 1 枚） | 実装済み・テスト済み | 印刷の文面 | 同 `ShiningCharizardDeckTest` |
+| ポケモン 18 枚のワザ 33（同じデータの 3 組 7 枚は同じ登録の値） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面 | 同 `RegistrationTest`・`SparkTest` ほか |
+| `DiscardEnergyThenDamage`・`DiscardAllThenCoinDamage`・`DamageThenMoveOneEnergyToBench` の確かめを全文で照らす | 直した・テスト済み | 印刷の文面 | 同 `TightenedChecksTest` |
+| 未対応の数（全対象 369・neo 182・拡張パック以外 187） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 20 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
+| ベイビィ・ほかのひかるポケモン・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |

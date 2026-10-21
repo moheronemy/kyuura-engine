@@ -779,7 +779,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         # 「あんこく」・ネイティ（neo2-022）の「あやしいひかり」（ConfuseOnHeads）、ツボツボの「まきつく」・シードラ（neo1-029）の「あわ」・ヤドン
                                         # （neo1-045）の「ねんりき」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる（docs/shared-checks-pokemon-reuse-v0.79.md）。
                                         # サンドの「どくばり」はゴースト（抵抗力 闘）への最終ダメージが 0
-                                        "どくばり", "どくばり", "どくばり", "スモッグ", "あんこく", "あんこく", "あやしいひかり", "まきつく", "あわ", "ねんりき"]))
+                                        "どくばり", "どくばり", "どくばり", "スモッグ", "あんこく", "あんこく", "あやしいひかり", "まきつく", "あわ", "ねんりき",
+                                        # v0.82: ライチュウ（neo3-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
+                                        # docs/energy-discard-return-v0.82.md）
+                                        "でんきショック"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

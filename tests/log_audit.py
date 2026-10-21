@@ -101,6 +101,7 @@ from kyuura_engine.effects import BeamOnKnockOut, DamageOnOpponentRetreat, Retur
 from kyuura_engine.effects import FailAndReturnOnAttack  # v0.60
 from kyuura_engine.effects import (  # v0.75
     AttachDiscardEnergyCardsToSelf, AttachEnergyFromDeckToBench, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, RevealNamedPokemonFromDeckAny,
+    ChooseBenchThenAttachFromDeck, OptionalDiscardEnergyBonusDamage,
 )
 from kyuura_engine.effects import CoinBenchOwnerBasicFromDeckStadium, CoinRetrieveBasicEnergyStadium, DiscardToHandSuppressionStadium  # v0.74
 from kyuura_engine.effects import AttackLockWhileSourceActiveOnHeads, CoinNextTurnMultiplyElseLockAttack, LockOpponentAttackOnHeads  # v0.76
@@ -249,6 +250,7 @@ from kyuura_engine.damage import ADD, HALVE_DOWN, HALVE_UP, MULTIPLY, SET_IF_AT_
 from kyuura_engine.evolution import skipped_stage1_basic
 from kyuura_engine.resolution.programs import (
     BUILDERS, Damage, DiscardOwnEnergy, MoveOneEnergyToBench, MoveOwnEnergyToBench, OptionalDiscardBenchDamage, ReturnOwnEnergyToHand,
+    DiscardEachType, OptionalDiscardAll, OptionalDiscardForBonus,
 )
 from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import (
@@ -875,7 +877,8 @@ def _poison_problems(state, e: dict, current: int | None) -> list[str]:
 # v0.31: ワザを使ったポケモンのエネルギーカードをトラッシュしうる要素（トラッシュの要素・自分に控えがいない／受けなかったときにトラッシュする
 # エナジーボム・のぞむならトラッシュするひばしら）
 # v0.72: デンキとばし（MoveOneEnergyToBench）も、控えがいない・つける控えが受けなかったときにトラッシュする
-DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, MoveOneEnergyToBench, OptionalDiscardBenchDamage)
+DISCARDING_ELEMENTS = (DiscardOwnEnergy, MoveOwnEnergyToBench, MoveOneEnergyToBench, OptionalDiscardBenchDamage,
+                       OptionalDiscardForBonus, OptionalDiscardAll, DiscardEachType)  # v0.82
 
 
 # v0.42: 宣言する特殊能力の宣言（pokemon_power）のすぐあとに続く処理のログ（v0.41 までの move_energy・power_attach_energy・move_damage_counter・
@@ -1040,8 +1043,10 @@ def _discard_energy_window_problems(state, effect, window: Counter, *, log_ended
             return ["1 回のワザで、エネルギーのトラッシュとダメージカウンターをすべてとりのぞく処理の数が違う（じこさいせい）"]
         return []
     if isinstance(effect, DiscardEnergyThenDamage):
-        if window["confusion_damage"]:
-            expected = {0}  # こんらんで「うら」なら、もとのワザの要素はない（p.309 の手順 5）
+        if window["confusion_damage"] or window["discard_energy_failed"]:
+            # こんらんで「うら」なら、もとのワザの要素はない（p.309 の手順 5）。v0.82: 相手のワザとして使い、トラッシュできなかった（v0.31 から起こりうる。ログ
+            # discard_energy_failed。この確かめが数えていなかった）
+            expected = {0}
         elif log_ended and state.decision is not None and state.decision.kind == DISCARD_ENERGY:
             expected = {0}  # トラッシュするカードを選ぶ決定を待っている（最後のワザ）
         else:
@@ -1212,7 +1217,9 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザのダメージの要素のあと")
             if position == "after" and not (window["damage:opponent"] + window["prevented:opponent_active"] + window["attack_evaded"]):
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、そのワザの相手へのダメージの要素より前")
-            if (e["player"], e["pokemon"]) != (attack_event["player"], attack_event["pokemon"]):
+            bench_discard = (isinstance(effect, OptionalDiscardEnergyBonusDamage) and effect.include_bench and e["player"] == attack_event["player"]
+                             and e.get("attacker_pokemon_id") is not None)  # v0.82: ファイヤーバーンの控えのカード（ワザを使ったポケモンの番号を書く）
+            if (e["player"], e["pokemon"]) != (attack_event["player"], attack_event["pokemon"]) and not bench_discard:
                 problems.append(f"{e['turn']} 番のワザのエネルギーのトラッシュが、ワザを使ったポケモンのものでない")
             elements = _discard_elements(program)
             types = {getattr(element, "energy_type", None) for element in elements} if elements else {getattr(effect, "energy_type", None)}
@@ -2582,6 +2589,19 @@ def log_problems(state) -> list[str]:
             pid = e["pokemon_id"]
             if attack_window is None or pid != attack_window["pokemon_id"] or pid not in in_play or damage[pid] < max_hp_now(pid):
                 problems.append(f"{e['turn']} 番に、きぜつしていないポケモン {pid} の持続する効果（{e['persistent_effect']}）を与えなかった")
+        elif kind == "energy_returned_to_hand":
+            # v0.82: 場からトラッシュに置かれたエネルギーカードを、持ち主の手札にもどす（リサイクルエネルギー・エコロジム）。すぐ前に同じカードをトラッシュに置いた
+            # （ログから組み立てたトラッシュにある）・理由と原因が合う（リサイクルエネルギーは登録の実装、エコロジムは相手が使ったワザ・特殊能力・トレーナー）
+            reasons = tuple(e["reasons"])
+            definition = state.printed_def(e["card"])
+            recycle = definition.is_special_energy and getattr(state.effects.energy_effect(definition), "returns_from_play", False)
+            ecogym_ok = e["cause"] in ("attack", "power", "trainer") and e.get("by_player") not in (None, e["player"]) and e.get("stadium_card") is not None
+            if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or not reasons \
+                    or not set(reasons) <= {"recycle_energy", "ecogym"} or ("recycle_energy" in reasons) != recycle or ("ecogym" in reasons and not ecogym_ok):
+                problems.append(f"{e['turn']} 番に手札にもどしたエネルギーカード {e['card']} が、ログから組み立てたトラッシュにない・理由 {reasons}（{e['cause']}）が合わない")
+            else:
+                discard[e["player"]].remove(e["card"])
+                hand[e["player"]].append(e["card"])
         elif kind == "return_to_hand":
             # v0.12: 「ふしちょう」でトラッシュから手札に加えたカード（きぜつしたポケモンのカード 1 枚だけ。P22〜P24）
             if e["card"] not in discard[e["player"]] or owner.get(e["card"]) != e["player"] or state.printed_def(e["card"]).category != "pokemon":
@@ -4094,8 +4114,10 @@ def log_problems(state) -> list[str]:
             # deck_energy_evaded。カードは持ち主のトラッシュ）
             pid = e["pokemon_id"]
             effect = _effect_of_event(state, e) if attack_window is not None else None
-            to_bench = isinstance(effect, AttachEnergyFromDeckToBench) and kind != "attach_energy_from_deck_none"
-            if not isinstance(effect, (AttachEnergyFromDeckToSelf, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, AttachEnergyFromDeckToBench)) \
+            # v0.82: あたためる（ChooseBenchThenAttachFromDeck）も自分の控えポケモンにつける（控え → カードの順に選ぶ）
+            to_bench = isinstance(effect, (AttachEnergyFromDeckToBench, ChooseBenchThenAttachFromDeck)) and kind != "attach_energy_from_deck_none"
+            if not isinstance(effect, (AttachEnergyFromDeckToSelf, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, AttachEnergyFromDeckToBench,
+                                       ChooseBenchThenAttachFromDeck)) \
                     or (kind == "deck_energy_evaded") != (to_bench and kind == "deck_energy_evaded") \
                     or (pid == attack_window["pokemon_id"]) == to_bench or e["player"] != attack_window["player"] \
                     or to_bench and (pokemon_owner.get(pid) != e["player"] or pid not in in_play):

@@ -99,6 +99,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
     if pokemon.evolution_stack or pokemon.disguise is not None or pokemon.persistent_effects or pokemon.damage:
         raise RuntimeError(f"うらのカード {pokemon.pokemon_id} に、重なり・のせたカード・持続する効果・ダメージがある（エンジンの不具合）")
     zone = "active" if p.active is pokemon else "bench"
+    returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
     else:
@@ -111,6 +112,7 @@ def reveal_face_down(state: GameState, owner: int, pokemon: PokemonInPlay, *, ca
         state.players[attached.player].discard.append(attached.card)
     state.add_event("secret_plan_discarded", player=owner, pokemon_id=pokemon.pokemon_id, cards=(pokemon.card, *energy, *trainers), energy=energy,
                     trainers=trainers, zone=zone)
+    _return_energy(state, returns)
     return None
 
 
@@ -226,6 +228,20 @@ def return_in_play_to_deck(state: GameState, player: int, pokemon: PokemonInPlay
     return cards
 
 
+def _energy_plan(state: GameState, pokemon: PokemonInPlay, cards, cause: str, by_player: int | None = None):
+    """v0.82: ``effects.energy_discard_plan``（場からトラッシュに置くエネルギーカードのうち、そのあと手札にもどすもの。動かす前に呼ぶ）。"""
+    from .effects import energy_discard_plan
+
+    return energy_discard_plan(state, pokemon, cards, cause=cause, by_player=by_player)
+
+
+def _return_energy(state: GameState, plan) -> None:
+    """v0.82: ``effects.return_discarded_energy``（トラッシュに置いてログを残したあとに呼ぶ）。"""
+    from .effects import return_discarded_energy
+
+    return_discarded_energy(state, plan)
+
+
 def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, *, trainer: int) -> tuple[int, tuple[int, ...]]:
     """自分の場のポケモン ``pokemon`` のいちばん下のカードを、同じ uid のまま自分の手札にもどし、のっている進化カード・エネルギーカードを自分のトラッシュに
     置く（v0.52。ポケモン回収（PMCG1-092）の「自分の場のポケモン1匹を手札に戻す。そのポケモンのダメージカウンター、エネルギーカード、進化カードは全てはがして
@@ -255,6 +271,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} を手札にもどせない（確認の漏れ。エンジンの不具合）")
     card, evolution_cards = stack[0], stack[1:]
     discarded = (*evolution_cards, *energy)
+    returns = _energy_plan(state, pokemon, energy, "trainer", player)  # v0.82: リサイクルエネルギー
     zone = "active" if p.active is pokemon else "bench"
     if p.active is pokemon:
         p.active = None
@@ -265,6 +282,7 @@ def return_basic_to_hand(state: GameState, player: int, pokemon: PokemonInPlay, 
     disguise = {} if pokemon.disguise is None else {"disguise": pokemon.disguise}
     state.add_event("return_basic_to_hand", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, zone=zone, trainer_card=trainer, card=card,
                     discarded=discarded, evolution_cards=evolution_cards, energy=energy, damage=pokemon.damage, **disguise)
+    _return_energy(state, returns)
     return card, discarded
 
 
@@ -338,12 +356,14 @@ def discard_attached_cards(state: GameState, player: int, pokemon: PokemonInPlay
     if (p.active is not pokemon and not any(b is pokemon for b in p.bench)) or any(state.cards[uid].owner != player for uid in (*energy, *trainers)) \
             or (effect is None) == (power is None):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} についているカードをトラッシュできない（確認の漏れ。エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, energy, "attack" if effect is not None else "power", player)  # v0.82: 自分のワザ・特殊能力
     pokemon.energy.clear()
     pokemon.trainers.clear()
     p.discard.extend((*energy, *trainers))
     source = {"effect": effect} if effect is not None else {"power": power}
     state.add_event("discard_attached_cards", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, **source, energy=energy,
                     trainers=trainers)
+    _return_energy(state, returns)
     return energy, trainers
 
 
@@ -760,6 +780,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     on_bench = any(b is pokemon for b in p.bench)
     if (p.active is not pokemon and not on_bench) or pokemon.evolution_stack or any(state.cards[uid].owner != player for uid in (pokemon.card, *pokemon.energy)):
         raise RuntimeError(f"プレイヤー {player} の場のポケモン {pokemon.pokemon_id} をトラッシュできない（確認の漏れ。エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, pokemon.energy, "rule")  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
     else:
@@ -772,6 +793,7 @@ def discard_from_play(state: GameState, player: int, pokemon: PokemonInPlay) -> 
     cards = (pokemon.card, *pokemon.energy, *trainers)
     state.add_event("discard_from_play", player=player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=cards, energy=tuple(pokemon.energy),
                     trainers=trainers, damage=pokemon.damage)
+    _return_energy(state, returns)
     return cards
 
 
@@ -870,10 +892,12 @@ def discard_attached_energy_cards(state: GameState, owner: int, pokemon: Pokemon
     ``trainer_discard_energy``（``player`` はカードの持ち主、``user`` はトレーナーを使ったプレイヤー。場のカードとトラッシュは公開の情報なので ``cards`` は公開）。
     ワザの効果のトラッシュ（``discard_energy``・``discard_attached_energy``）とは出どころが違うので、ログを分ける。トラッシュしたカード（ついていた順）を返す。"""
     moved = _attached_energy_cards(state, owner, pokemon, cards)
+    returns = _energy_plan(state, pokemon, moved, "trainer", user)  # v0.82: リサイクルエネルギー・エコロジム（相手が使ったトレーナー）
     for uid in moved:
         pokemon.energy.remove(uid)
     state.players[owner].discard.extend(moved)
     state.add_event("trainer_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, cards=moved, trainer_card=trainer, user=user)
+    _return_energy(state, returns)
     return moved
 
 
@@ -1087,9 +1111,11 @@ def discard_attached_energy_by_stadium(state: GameState, owner: int, pokemon: Po
     「自分の「エリカのポケモン」についているエネルギーカードを1枚トラッシュして」）。ログ ``stadium_discard_energy``（公開）。ついていなければ ``RuntimeError``。"""
     if card not in pokemon.energy or state.cards[card].owner != owner:
         raise RuntimeError(f"ポケモン {pokemon.pokemon_id} についていないカード {card} をトラッシュしようとした（エンジンの不具合）")
+    returns = _energy_plan(state, pokemon, (card,), "stadium", owner)  # v0.82: リサイクルエネルギー
     pokemon.energy.remove(card)
     state.players[owner].discard.append(card)
     state.add_event("stadium_discard_energy", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=card, stadium_card=stadium)
+    _return_energy(state, returns)
 
 
 def return_attached_energy_by_stadium(state: GameState, owner: int, pokemon: PokemonInPlay, card: int, *, stadium: int) -> None:

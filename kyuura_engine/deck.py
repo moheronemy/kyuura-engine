@@ -51,9 +51,18 @@ def deck_problems(cards: Sequence[str], pool: CardPool | None = None, rules: Rul
 
     # 同じ名前は 4 枚まで。基本エネルギーカードだけは制限なし。名前が同じなら別のカードでも同じ名前（p.308）
     names = Counter(same_name(pool.get(c).name_ja) for c in known if not pool.get(c).is_basic_energy)
+    # v0.82: ルール文で、同じ名前の枚数の上限をもっと小さくするポケモン（ひかるリザードンの「デッキに1枚まで」。``CardDefinition.deck_limit``）。同じ名前で数える
+    limits: dict[str, int] = {}
+    for c in known:
+        limit = pool.get(c).deck_limit
+        if limit is not None:
+            key = same_name(pool.get(c).name_ja)
+            limits[key] = min(limit, limits.get(key, limit))
     for name, count in sorted(names.items()):
         if count > rules.max_copies_per_name:
             problems.append(f"TOO_MANY_COPIES: 「{name}」が {count} 枚（同じ名前は {rules.max_copies_per_name} 枚まで）")
+        elif name in limits and count > limits[name]:
+            problems.append(f"TOO_MANY_COPIES: 「{name}」が {count} 枚（カードのルール文で、デッキに {limits[name]} 枚まで）")
 
     # たねポケモン（ベイビィポケモン）を必ず入れる（p.308）
     if not any(pool.get(c).is_basic_pokemon for c in known):

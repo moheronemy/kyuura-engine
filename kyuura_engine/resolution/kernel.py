@@ -1292,10 +1292,10 @@ def apply_energy_drain(state: GameState, entry: tuple, choices: tuple[int, ...])
         raise RuntimeError(f"［だつりょくえき］でトラッシュするエネルギーカード {choices} が、ポケモン {source_pid} についていない（エンジンの不具合）")
     holder, source = located
     card = choices[0]
-    source.energy.remove(card)
-    state.players[state.cards[card].owner].discard.append(card)
-    state.add_event("energy_drain_discard", player=owner, pokemon_id=pokemon_id, power=str(E.PowerKey(card_id, power_index)), attacker=holder,
-                    attacker_pokemon_id=source_pid, card=card)
+    E.discard_energy_from_play(  # v0.82: 相手（だつりょくえきの持ち主）の特殊能力でトラッシュ（リサイクルエネルギー・エコロジム）
+        state, source, (card,), cause=E.DISCARD_BY_POWER, by_player=owner,
+        log=lambda: state.add_event("energy_drain_discard", player=owner, pokemon_id=pokemon_id, power=str(E.PowerKey(card_id, power_index)), attacker=holder,
+                                    attacker_pokemon_id=source_pid, card=card))
 
 
 def counters_to_damage_source_on_heads(res: Resolution, fs: FrameState, deferred: Deferred) -> None:

@@ -3238,3 +3238,65 @@
 ### ログの監査
 
 - `tests/log_audit._effective_from_state`（観測と照らす最大HP）に、ロケット団のアジトの + 20 を加えました（ログから組み立てる `max_hp_now` と同じ）。最大HPを変える効果を加えたら、両方に加えてください。
+
+## 場からトラッシュに置かれたエネルギーカードの共通の処理と、リサイクルエネルギー・エコロジム・ポケモン 18 枚（v0.82）
+
+### 対象と数
+
+- 依頼の 20 枚（リサイクルエネルギー neo1-096・エコロジム neo1-086・エネルギーカードをトラッシュするワザを持つポケモン 18 枚。写しの組 `pool_v0_82`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.81a | v0.82 |
+  |---|---|---|
+  | 写し・対応するカード | 988・988 | 1,008・1,008 |
+  | 対応ポケモン・トレーナー・エネルギー | 695・258・35 | 713・259・36 |
+  | ワザ・特殊能力・スタジアム（トレーナーの登録のうち） | 1,182・74・40 | 1,215・74・41 |
+  | 未対応（全対象・neo・拡張パック以外） | 389・191・198 | 369・182・187 |
+  | 停止コード・未解決の裁定 | 179・181 | 179・181 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API は変えていません。カードごとの処理・根拠・検証は docs/energy-discard-return-v0.82.md。
+- 公式ガイドブックの新しいキャプチャ・OCR・読み直しは行っていません。20 枚の pcg-search.com・カードの画像との照合もしていません。英語の説明（エコロジムの括弧書きなど）・現代のルール・
+  のちのひかるポケモンの規定で補わないでください。
+- テストの定数は tests/helpers.py の `RECYCLE_ENERGY`・`ECOGYM`・`V0_82_POKEMON`・`V0_82_CARDS`。
+
+### きのみどうしの順番（v0.81a の修正の漏れ）
+
+- ポケモンチェックの 1 で、きのみを 1 つだけ先に処理してほかの場のポケモンの問い合わせ（最大HP・今の姿・特殊能力が消えているか・きのみがはたらくか。`procedures._berry_view`）が変わる
+  きのみを、順番を比べるきのみにします（`_influential_berries`）。それらの並べ方と、ほかのきのみのまとまりをはさむ位置をすべて比べ（`_berry_plans`）、結果か止める理由が変われば BY1 です。
+- 比べるきのみが 3 つ（`MAX_INFLUENTIAL_BERRIES`）より多ければ、比べずにエンジンの未対応 `UNSUPPORTED_BERRY_ORDER_LIMIT`（研究の対応表の停止コードに入れない）。上限を上げたり、
+  きのみ全体の順列を数え上げたり、順番を決めたりしないでください。
+
+### 場からトラッシュに置かれたエネルギーカード
+
+- 場のエネルギーカードをトラッシュに置くどの経路も、置く前に `effects.energy_discard_plan(state, holder, cards, cause=…, by_player=…)`、置いてログを残したあとに
+  `effects.return_discarded_energy(state, plan)`（まとめた入口は `discard_energy_from_play`）を通します。原因は `DISCARD_BY_ATTACK`・`POWER`・`TRAINER`・`STADIUM`・`RETREAT`・
+  `KNOCK_OUT`・`RULE`、`by_player` は実際に使ったプレイヤー（印刷したカードの持ち主ではない）。場のエネルギーカードをトラッシュする処理を加えるときは、この 2 つを通してください。
+- トラッシュに置かれたこと（ログ・トラッシュした数の記録 `Discarded`）は消しません。もどすのは置いたその uid だけで、ログ `energy_returned_to_hand`（公開）。手札・山札からのトラッシュ・
+  つけかえ・直接手札や山札にもどす効果は対象にしません。1 枚に理由が 2 つ当たってももどすのは 1 回で、連鎖しません。
+- リサイクルエネルギー（`RecycleEnergy`。`SpecialEnergyEffect.returns_from_play`）は「無色」1 個（kyuura の空の `energy.provides` を「出さない」と読まない）で、どの原因でも持ち主の手札に
+  もどります。ポケモンタワーでは消えません（エネルギーカードの効果。実装上の読み方）。
+- エコロジム（`EnergyReturnStadium`）は場のスタジアムから問い合わせ、原因が `attack`・`power`・`trainer` で使ったプレイヤーが持ち主の相手のときだけ、「無色」以外（`effects._not_colorless`。
+  出すエネルギーの色）のカードをもどします。きぜつ（ルールの処理）・にげる・自分の効果は当たりません。［へんしん］のメタモンの無色の特殊エネルギーは TE2。
+- サイドの並びの不変条件（`engine._prize_queue_problems`）は、きぜつのあとのもどしのログを読み飛ばします。
+
+### ひかるリザードンのルール文
+
+- 「「ひかるリザードン」はデッキに1枚までしか入れることができません。」を、そのカードの名前の上限 `CardDefinition.deck_limit`（`cards._deck_limit_rule`。名前と文が同じときだけ）として
+  読み、`deck.deck_problems` が `TOO_MANY_COPIES` で確かめます。ひかるポケモン全体の上限・のちの規定にしないでください。ほかのルール文のあるポケモンは未対応のままです。
+
+### ワザ
+
+- 9 つの新しい型（`CoinDiscardEnergyCardThenDamage`・`OptionalDiscardEnergyBonusDamage`・`DamageThenDiscardAllEnergyCards`・`OptionalDiscardAllSetDamage`・`DiscardEachTypeThenDamage`・
+  `ChooseBenchThenAttachFromDeck`・`CoinsDiscardThenBonusDamage`・`CoinDiscardOneOrAllThenDamage`・`DamageThenChosenBenchCoinDamage`）は既存の要素と新しい要素（`OptionalDiscardForBonus`・
+  `OptionalDiscardAll`（決定 `optional_discard_all`）・`DiscardEachType`・`ChosenBenchCoinDamage`）の組み合わせです。`ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。
+- 「のぞむなら」の 0 枚は「トラッシュしない」（ログ `discard_energy_declined`）で、HC5・GS1・HC7 を当てはめないでください。色ごとに 1 枚ずつトラッシュするワザで足りない色があれば、
+  1 枚もトラッシュせずダメージもない（一部だけトラッシュしない）。`DiscardOwnEnergy.decides` は、決定を出さない形（すべて・そのほかの選び方なし）で偽です。
+- `DiscardEnergyThenDamage`・`DiscardAllThenCoinDamage`・`DamageThenMoveOneEnergyToBench` は v0.82 から説明の全文を登録の値と照らします（ルギアのエレメンタルブラストを炎 1 枚の型で
+  受け付けない）。一律の正規化・形だけの確かめにもどさないでください。
+- 同じデータの 3 組 7 枚は `effects.SAME_DATA_CARDS_V0_82`（`_with_shared_entries`）で同じ登録の値にまとめます。名前の同じほかの版とはまとめないでください。
+
+### 検証用デッキ
+
+- 検証用デッキ `E82`・`L82` と組 `PAIRINGS_V0_82`（`E82` 対 `L82`・`E82` 対 `P31`・`L82` 対 `W79`）は tools/existing_effect_games.py の `--batch v0.82` です（前の版の組の結果は変わらない）。
+  手順は `_v082_decision`・`_v082_trainer`・`_v082_energy`、数えた結果は `v082_uses`。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

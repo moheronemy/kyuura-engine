@@ -29,6 +29,7 @@ from .effects import (
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after, stadium_attack_damage_modifiers,
     pokemon_check_berries, special_energy_effect,
+    DISCARD_BY_KNOCK_OUT, energy_discard_plan, return_discarded_energy,
 )
 from .errors import UnsupportedError
 from .persistent import (KNOCK_OUT, USED, remove_expired_persistent_effects, remove_on_damage, remove_persistent_effects,
@@ -155,7 +156,11 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
     order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
     # v0.81a（docs/berry-maxhp-fixes-v0.81a.md 2 章）: 1 の「指示されたこと」（悪エネルギーの効果・きのみ）を、決まらない順番の読み方ごとに状態の複製の上で処理し、
     # どの効果もそれを処理する時点の場で判断する（回復の前の場で求めた対象・止める理由を、回復のあとに使い回さない）。結果・止める理由が読み方で変わるなら BY1
-    readings = _step_one_readings(state, order)
+    try:
+        readings = _step_one_readings(state, order)
+    except UnsupportedError as error:  # v0.82: 順番を比べるきのみが上限より多い（エンジンの未対応）
+        halt(state, Halt(code=error.code, message=error.message, references=("GR-2000-P323-POKEMON-CHECK", "docs/energy-discard-return-v0.82.md 2 章")))
+        return None
     stop = _step_one_stop(readings)
     if stop is not None:
         halt(state, stop)
@@ -277,6 +282,7 @@ class _StepOneReading:
         self.penalties: list[tuple[int, int, int, str, int]] = []
         self.passed: tuple[int, ...] = ()
         self.track = _StepTrack()
+        self.plans: tuple = ((), ())
 
     def signature(self) -> tuple:
         if self.stop is not None:
@@ -290,6 +296,87 @@ def _run_berries(state: GameState, order: tuple[int, int], pids: frozenset[int])
     for owner, pokemon, attached, effect in pokemon_check_berries(state, order):
         if pokemon.pokemon_id in pids and effect.triggers(state, pokemon):
             effect.consume(state, owner, pokemon, attached)
+
+
+def _run_berry_plan(state: GameState, order: tuple[int, int], plan: tuple[frozenset[int], ...], reading: _StepOneReading) -> None:
+    """きのみを ``plan`` のまとまりの順に処理し、まとまりごとに受け付けられない状態を確かめる（v0.82。止める理由は ``UnsupportedError``）。"""
+    for group in plan:
+        before = state.clone()
+        _run_berries(state, order, group)
+        reading.track.record(state, order)
+        found = state_stop_after(before, state)
+        if found is not None:
+            raise UnsupportedError(*found)
+
+
+def _berry_view(state: GameState, order: tuple[int, int], skip: int) -> tuple:
+    """きのみの順番に関わる、場のポケモン（``skip`` の番号を除く）の問い合わせの答え（v0.82）: 今有効な最大HP（求めると止まるならその停止コード）・今の姿・特殊能力が
+    消えているか・きのみがはたらくか。状態を変えない。"""
+    from .continuous import power_suppressed
+    from .effects import current_form, powers_of
+
+    triggers = {p.pokemon_id: effect.triggers(state, p) for _, p, _, effect in pokemon_check_berries(state, order)}
+    view = []
+    for owner in order:
+        for pokemon in state.players[owner].in_play():
+            if pokemon.pokemon_id == skip or state.is_face_down(pokemon):
+                continue
+            try:
+                hp = max_hp(state, pokemon)
+                form = repr(current_form(state, pokemon))
+                powers = tuple(power_suppressed(state, slot.power) for slot in powers_of(state, pokemon))
+            except UnsupportedError as error:
+                hp, form, powers = error.code, None, None
+            view.append((pokemon.pokemon_id, hp, form, powers, triggers.get(pokemon.pokemon_id)))
+    return tuple(view)
+
+
+def _influential_berries(state: GameState, order: tuple[int, int], pids: frozenset[int]) -> list[int]:
+    """``pids`` のきのみのうち、それだけを先に処理すると、ほかの場のポケモンの最大HP・姿・特殊能力・きのみがはたらくかが変わるもの（v0.82。かがくへんかガス・
+    ［へんしん］のポケモンの回復など）。ほかのきのみはつけているポケモンのダメージ・特殊状態・どうぐだけを変え、ほかのポケモンの問い合わせを変えないので、たがいの順番で
+    結果は変わらない。状態を変えない。"""
+    found = []
+    for pid in sorted(pids):
+        trial = state.clone()
+        before = _berry_view(trial, order, pid)
+        try:
+            _run_berries(trial, order, frozenset({pid}))
+            after = _berry_view(trial, order, pid)
+        except UnsupportedError:
+            after = None
+        if after != before:
+            found.append(pid)
+    return found
+
+
+# v0.82: 順番を比べるきのみ（ほかのポケモンの問い合わせを変えるきのみ）の数の上限。並べ方は（数）! ×（数 + 1）通りなので、場に 4 つ以上あれば比べずに止める（エンジンの未対応）
+MAX_INFLUENTIAL_BERRIES = 3
+BERRY_ORDER_LIMIT_CODE = "UNSUPPORTED_BERRY_ORDER_LIMIT"
+
+
+def _berry_plans(state: GameState, order: tuple[int, int], pids: frozenset[int]) -> list[tuple[frozenset[int], ...]]:
+    """``pids`` のきのみの、比べる処理の順番（v0.82。docs/energy-discard-return-v0.82.md 2 章）。ほかのポケモンの問い合わせを変えるきのみ（``_influential_berries``）が
+    なければ、まとめて 1 つ。あれば、それらのすべての並べ方と、ほかのきのみのまとまりをはさむ位置のすべて（ほかのきのみの結果は、先に処理した変えるきのみの組だけで
+    決まり、どの組も並べ方の先頭の部分になる）。変えるきのみが ``MAX_INFLUENTIAL_BERRIES`` より多ければ、比べずに止める（エンジンの未対応）。"""
+    from itertools import permutations
+
+    if not pids:
+        return [()]
+    influential = _influential_berries(state, order, pids)
+    if not influential:
+        return [(pids,)]
+    if len(influential) > MAX_INFLUENTIAL_BERRIES:
+        raise UnsupportedError(BERRY_ORDER_LIMIT_CODE,
+                               f"ポケモンチェックの 1 で、ほかのポケモンの問い合わせを変えるきのみが {len(influential)} つあり、比べる順番の上限（{MAX_INFLUENTIAL_BERRIES}）を超える（エンジンの未対応）")
+    others = pids - frozenset(influential)
+    plans = []
+    for perm in permutations(influential):
+        for cut in range(len(perm) + 1):
+            groups = [frozenset({pid}) for pid in perm[:cut]] + ([others] if others else []) + [frozenset({pid}) for pid in perm[cut:]]
+            plan = tuple(groups)
+            if plan not in plans:
+                plans.append(plan)
+    return plans
 
 
 def _run_penalties(state: GameState, order: tuple[int, int], reading: _StepOneReading) -> None:
@@ -311,30 +398,20 @@ def _run_penalties(state: GameState, order: tuple[int, int], reading: _StepOneRe
         reading.track.record(state, order)
 
 
-def _read_step_one(state: GameState, order: tuple[int, int], first: frozenset[int], everyone: frozenset[int]) -> _StepOneReading:
+def _read_step_one(state: GameState, order: tuple[int, int], first: frozenset[int], first_plan: tuple[frozenset[int], ...],
+                   rest_plan: tuple[frozenset[int], ...]) -> _StepOneReading:
     reading = _StepOneReading(first)
+    reading.plans = (first_plan, rest_plan)
     trial = state.clone()
     reading.track.record(trial, order)
     stage = "berry"
     try:
-        if first:
-            before = trial.clone()
-            _run_berries(trial, order, first)
-            reading.track.record(trial, order)
-            found = state_stop_after(before, trial)
-            if found is not None:
-                raise UnsupportedError(*found)
+        _run_berry_plan(trial, order, first_plan, reading)
         stage = "darkness"
         _run_penalties(trial, order, reading)
         stage = "berry"
         after_darkness = trial.clone()
-        rest = everyone - first
-        if rest:
-            _run_berries(trial, order, rest)
-            reading.track.record(trial, order)
-            found = state_stop_after(after_darkness, trial)
-            if found is not None:
-                raise UnsupportedError(*found)
+        _run_berry_plan(trial, order, rest_plan, reading)
         # 悪エネルギーのあとに HP 以上になり、そのあとのきのみで HP より小さくなる（1 の途中のきぜつの判定の時点で結果が変わる）ポケモン
         reading.passed = tuple(sorted(p.pokemon_id for player in trial.players for p in player.in_play()
                                       if not knocked_by_hp(trial, p) and after_darkness.find_pokemon(p.pokemon_id) is not None
@@ -345,7 +422,8 @@ def _read_step_one(state: GameState, order: tuple[int, int], first: frozenset[in
                                 references=("GR-2000-P323-POKEMON-CHECK", "docs/darkness-metal-energy-v0.78.md 5 章"))
         else:
             reading.stop = Halt(code=error.code, message=f"ポケモンチェックの 1 のきのみ（どうぐ）で回復すると: {error.message}",
-                                references=("GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT", "docs/berry-maxhp-fixes-v0.81a.md 2 章"))
+                                references=("GR-2000-P323-POKEMON-CHECK", "GR-2000-P323-KNOCKOUT", "docs/berry-maxhp-fixes-v0.81a.md 2 章",
+                                            "docs/energy-discard-return-v0.82.md 2 章"))
         return reading
     reading.state = trial
     return reading
@@ -354,21 +432,26 @@ def _read_step_one(state: GameState, order: tuple[int, int], first: frozenset[in
 def _step_one_readings(state: GameState, order: tuple[int, int]) -> list[_StepOneReading]:
     """ポケモンチェックの 1 の「指示されたこと」の、比べる読み方（v0.81a。docs/berry-maxhp-fixes-v0.81a.md 2 章）。最初は悪エネルギーが先（実際の処理の順番）。
 
-    悪エネルギーの効果どうしは、のせるダメージ・カウンターがほかの悪エネルギーの効果の対象・量を変えないので、まとめて処理する。きのみどうしも、ダメージ・特殊状態を
-    変えるのはつけているポケモンだけなので、まとめて処理する（受け付けられない状態の確かめは、まとめた前後で行う。番の終わりの期限と同じ形）。悪エネルギーの効果は、
+    悪エネルギーの効果どうしは、のせるダメージ・カウンターがほかの悪エネルギーの効果の対象・量を変えないので、まとめて処理する。悪エネルギーの効果は、
     きのみの回復（特殊状態がなくなる → かがくへんかガス・［へんしん］がもどる）で対象・量・止める理由が変わり、きのみはつけているポケモンの悪エネルギーのダメージで
     はたらくかが変わるので、場に悪エネルギーの効果があるときは、悪エネルギーより先に処理するきのみの組をすべて比べる（きのみの数を k として 2^k 通り。場のポケモンの
-    数までなので有限）。悪エネルギーの効果がなければ、読み方は 1 つ。状態を変えない。"""
+    数までなので有限）。
+
+    v0.82（docs/energy-discard-return-v0.82.md 2 章）: きのみどうしも、回復でかがくへんかガス・［へんしん］がもどって、ほかのポケモンの最大HP・特殊能力・きのみが
+    はたらくかが変わるなら、順番で結果（受け付けられない状態になるか）が変わる。そのようなきのみ（``_influential_berries``）があれば、まとまりの中の順番を
+    ``_berry_plans`` のとおり比べる（v0.81a はまとめた前後だけを確かめていた）。状態を変えない。"""
     everyone = frozenset(p.pokemon_id for _, p, _, _ in pokemon_check_berries(state, order))
-    readings = [_read_step_one(state, order, frozenset(), everyone)]
     has_darkness = any(state.card_def(uid).is_special_energy and special_energy_effect(state, uid).pokemon_check_penalty
                        for o in order for p in state.players[o].in_play() for uid in p.energy)
-    if not (everyone and has_darkness):
-        return readings
-    ids = sorted(everyone)
-    for mask in range(1, 1 << len(ids)):
-        first = frozenset(pid for bit, pid in enumerate(ids) if mask >> bit & 1)
-        readings.append(_read_step_one(state, order, first, everyone))
+    subsets = [frozenset()]
+    if everyone and has_darkness:
+        ids = sorted(everyone)
+        subsets += [frozenset(pid for bit, pid in enumerate(ids) if mask >> bit & 1) for mask in range(1, 1 << len(ids))]
+    readings = []
+    for first in subsets:
+        for first_plan in _berry_plans(state, order, first):
+            for rest_plan in _berry_plans(state, order, everyone - first):
+                readings.append(_read_step_one(state, order, first, first_plan, rest_plan))
     return readings
 
 
@@ -380,14 +463,15 @@ def _step_one_stop(readings: list[_StepOneReading]) -> Halt | None:
     if len(signatures) == 1 and not passed:
         return readings[0].stop
     detail = "・".join(
-        f"きのみ {sorted(r.first) or 'なし'} を先: " + (f"止まる（{r.stop.code}）" if r.stop is not None else
+        f"きのみ {sorted(r.first) or 'なし'} を先" + (f"（順番 {[sorted(g) for plan in r.plans for g in plan]}）" if len(readings) > 1 else "") + ": " + (f"止まる（{r.stop.code}）" if r.stop is not None else
                                                     f"ダメージ {[(p.pokemon_id, p.damage) for pl in r.state.players for p in pl.in_play()]}"
                                                     + (f"・途中で HP 以上 {list(r.passed)}" if r.passed else ""))
         for r in readings)
     return Halt(code=BERRY_ORDER_CODE,
-                message=(f"ポケモンチェックの 1 の「指示されたこと」で、悪エネルギーの効果ときのみを処理する順番で結果が変わる（{detail}）。ポケモンチェックはどちらの番でもない"
+                message=(f"ポケモンチェックの 1 の「指示されたこと」で、悪エネルギーの効果・きのみを処理する順番で結果が変わる（{detail}）。ポケモンチェックはどちらの番でもない"
                          "（p.323）ので、番のプレイヤーが順番を決める規定（p.325）は当てはめられず、順番は公式ルール 2000.02.14版と記録から決められないので、対戦を止める（BY1）"),
-                references=("GR-2000-P323-POKEMON-CHECK", "GR-2000-P325-SAME-TIMING", "docs/pokemon-tools-stadiums-v0.81.md 4 章", "docs/berry-maxhp-fixes-v0.81a.md 2 章"))
+                references=("GR-2000-P323-POKEMON-CHECK", "GR-2000-P325-SAME-TIMING", "docs/pokemon-tools-stadiums-v0.81.md 4 章", "docs/berry-maxhp-fixes-v0.81a.md 2 章",
+                            "docs/energy-discard-return-v0.82.md 2 章"))
 
 
 # v0.79（PK1。docs/shared-checks-pokemon-reuse-v0.79.md 2 章）: ポケモンチェックの 1（悪エネルギー）でポケモンが HP 以上になったとき、1 と 2 のあいだにきぜつの判定をする
@@ -802,6 +886,7 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     同じで、相手はサイドを取らない。ログに ``counted`` が False と書く。真なら書かない（v0.46 までと同じ形））。サイドを取るプレイヤーを決めるのは呼ぶ側。
     """
     p = state.players[owner]
+    returns = energy_discard_plan(state, pokemon, pokemon.energy, cause=DISCARD_BY_KNOCK_OUT)  # v0.82: リサイクルエネルギー（場をはなれる前の場で決める）
     if p.active is pokemon:
         p.active = None
     else:
@@ -831,4 +916,5 @@ def knock_out(state: GameState, owner: int, pokemon: PokemonInPlay, simultaneous
     state.add_event("knock_out", player=owner, pokemon=pokemon.card, discarded_energy=tuple(pokemon.energy), **extra)
     # 場をはなれたので、ワザによる持続する効果も消える（p.322。v0.4b）。カードではないので、トラッシュには何も置かない
     remove_persistent_effects(state, owner, pokemon, KNOCK_OUT)
+    return_discarded_energy(state, returns)  # v0.82: トラッシュに置いたあと（ログ knock_out のあと）
 

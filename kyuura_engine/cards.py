@@ -134,6 +134,9 @@ class CardDefinition:
     # だけに付ける印（"fossil"・"doll"）。印刷の定義（写しから読んだ ``category`` が "trainer" の定義）はいつも None で、変えない。場での役割の定義は効果の登録表
     # （``effects.PlayAsPokemon.in_play_definition``）が印刷の定義から別のインスタンスとして作り、``GameState.card_def`` が、そのカードが場にいるあいだだけ返す
     play_role: str | None = None
+    # v0.82（docs/energy-discard-return-v0.82.md 5 章）: ポケモンのルール文「「（このカードの名前）」はデッキに1枚までしか入れることができません。」の枚数（ひかるリザードン
+    # neo4-025）。同じ名前のカードの枚数の上限（デッキの検査 ``deck.deck_problems``）。ほかのルール文のあるポケモンは今までどおり未対応
+    deck_limit: int | None = None
 
     @property
     def is_basic_pokemon(self) -> bool:
@@ -334,8 +337,11 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
     for power in powers:
         if not power.supported:
             reasons.append(f"ポケモンパワー「{power.name_ja}」: {power.unsupported_reason}")
+    deck_limit = None
     if pokemon.get("rules_text") is not None:
-        reasons.append("ルール文のあるポケモンは未実装")
+        deck_limit = _deck_limit_rule(record["name"].get("ja") or "", pokemon["rules_text"].get("ja"))
+        if deck_limit is None:
+            reasons.append("ルール文のあるポケモンは未実装")
     if len(pokemon["types"]) != 1:
         reasons.append("タイプが 1 つではない")
     if pokemon["hp"] % 10 != 0:
@@ -381,7 +387,15 @@ def classify_record(record: dict, effects: EffectRegistry | None = None) -> Card
         retreat_cost=pokemon["retreat_cost"],
         attacks=attacks,
         powers=powers,
+        deck_limit=deck_limit,
     )
+
+
+def _deck_limit_rule(name: str, text: str | None) -> int | None:
+    """ポケモンのルール文が、このカード自身の名前の「デッキに1枚まで」だけなら 1（v0.82。ひかるリザードン neo4-025 の「「ひかるリザードン」はデッキに1枚までしか入れることが
+    できません。」）。ほかの書き方・ほかの名前・ほかの規定のルール文は None（未対応のまま。ルール文のあるポケモンを一括で対応にしない。ひかるポケモン全体を合わせた上限・
+    のちのルールの「ひかるポケモン」の規定を持ち込まない）。"""
+    return 1 if name and text == f"「{name}」はデッキに1枚までしか入れることができません。" else None
 
 
 def _annotate_attack(card_id: str, attack: Attack, effects: EffectRegistry, attacks: tuple[Attack, ...]) -> Attack:
@@ -506,6 +520,7 @@ POOL_KEYS = (
     "pool_v0_79",  # v0.79（既存の効果の型と、それを組み合わせた 11 の組で表せるポケモン 52 枚。docs/shared-checks-pokemon-reuse-v0.79.md）
     "pool_v0_80",  # v0.80（トレーナー 30 枚。スタジアム 4 枚を含む。docs/neo-trainer-components-v0.80.md）
     "pool_v0_81",  # v0.81（ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚。docs/pokemon-tools-stadiums-v0.81.md）
+    "pool_v0_82",  # v0.82（リサイクルエネルギー・エコロジムと、エネルギーカードをトラッシュするワザを持つポケモン 18 枚。docs/energy-discard-return-v0.82.md）
 )
 
 

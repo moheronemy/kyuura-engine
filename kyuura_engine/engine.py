@@ -79,6 +79,9 @@ from .decisions import (
 )
 from .effects import (
     BALLOON_BERRY_FAILED_RETREAT_CODE,
+    DISCARD_BY_RETREAT,
+    energy_discard_plan,
+    return_discarded_energy,
     BALLOON_BERRY_FAILED_RETREAT_REASON,
     TOOL_RETREAT,
     discard_attached_tool,
@@ -1287,6 +1290,7 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         # v0.81（BB1）: ふうせんのみの「「にげる」とき、このカードをトラッシュする」が、こんらんのコインの「うら」で失敗した「にげる」にも当てはまるかは決まらない。
         # コインの結果で受け付けるかを変えないよう、エネルギーのトラッシュ・コインの前に止める
         raise UnsupportedError(BALLOON_BERRY_FAILED_RETREAT_CODE, f"こんらん状態のポケモン {active.pokemon_id}（ふうせんのみ {list(cost.zeroed)}）: {BALLOON_BERRY_FAILED_RETREAT_REASON}")
+    returns = energy_discard_plan(state, active, discard, cause=DISCARD_BY_RETREAT)  # v0.82: リサイクルエネルギー（トラッシュに置いたあと、ログ retreat のあとにもどす）
     for uid in discard:
         active.energy.remove(uid)
         p.discard.append(uid)
@@ -1305,10 +1309,12 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
         state.add_event(
             "retreat_failed", player=cmd.player, pokemon=active.card, pokemon_id=active.pokemon_id, discarded=discard, **cost_log,
         )
+        return_discarded_energy(state, returns)
         return
     # ついているカード・ダメージはいっしょに移動する（p.311）
     p.active, p.bench[index] = p.bench[index], active
     state.add_event("retreat", player=cmd.player, discarded=discard, old_active=active.card, new_active=cmd.new_active, **cost_log)
+    return_discarded_energy(state, returns)
     # ベンチに戻ったら、特殊状態はすべて消える（p.311・p.322。v0.3a）
     clear_special_conditions(state, cmd.player, active, RETREAT)
     # ワザによる持続する効果も消える（p.311「…や、「持続する効果」は、すべて消えてなくなります」・p.322。v0.4b）。特殊状態とは別の処理
@@ -4316,6 +4322,8 @@ def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]
             continue
         elif kind == "energy_conversion" and not seen_knock_out:
             continue  # v0.59: ［エネエネ］できぜつしたマルマインのカードを、きぜつのすぐあと（サイドの前）にエネルギーとしてつけた
+        elif kind == "energy_returned_to_hand" and event.get("cause") == "knock_out":
+            continue  # v0.82: きぜつでトラッシュに置かれたリサイクルエネルギーを、すぐあとに持ち主の手札にもどした
         else:
             break
     if not knocked:

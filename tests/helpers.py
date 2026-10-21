@@ -1273,6 +1273,17 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.SearchTrainerRequiredOnHeads,  # ヤドキング（SI-014）の「ひらめく」
     _effects.CoinDiscardAllOpponentTrainers,  # ニューラ（PF3-003）の「だましとる」
     _effects.FailOnTailsDamageThenSelfCannotAttack,  # ハガネール（PRN-014）の「メタルクラッシュ」
+) + (
+    # v0.82: エネルギーをトラッシュするワザの 9 つの型（docs/energy-discard-return-v0.82.md）
+    _effects.CoinDiscardEnergyCardThenDamage,
+    _effects.OptionalDiscardEnergyBonusDamage,
+    _effects.DamageThenDiscardAllEnergyCards,
+    _effects.OptionalDiscardAllSetDamage,
+    _effects.DiscardEachTypeThenDamage,
+    _effects.ChooseBenchThenAttachFromDeck,
+    _effects.CoinsDiscardThenBonusDamage,
+    _effects.CoinDiscardOneOrAllThenDamage,
+    _effects.DamageThenChosenBenchCoinDamage,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2037,3 +2048,11 @@ V0_81_CARDS = (
     "neo1-073", "PRN-004", "NIP1X-008", "NIP2X-008", "neo1-079", "neo1-081", "PRN-005", "neo3-055", "neo1-088", "neo4-103",
     "neo4-109", "neo4-104", "neo1-085", "neo3-057", "neo4-110",
 )
+# v0.82（docs/energy-discard-return-v0.82.md）: リサイクルエネルギー・エコロジムと、エネルギーカードをトラッシュするワザを持つポケモン 18 枚（写しの組 pool_v0_82 の並び）
+RECYCLE_ENERGY = "neo1-096"
+ECOGYM = "neo1-086"
+V0_82_POKEMON = (
+    "neo1-018", "PRN-007", "PRN-010", "ES3-011", "QSG-010", "ES3-012", "QSG-012", "QSG-011", "IP1-003", "PR1-062", "neo3-025", "neo1-041", "neo1-072",
+    "neo4-025", "neo4-019", "PR1-071", "PF1-005", "neo3-014",
+)
+V0_82_CARDS = (RECYCLE_ENERGY, ECOGYM, *V0_82_POKEMON)
