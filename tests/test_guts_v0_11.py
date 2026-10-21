@@ -651,7 +651,9 @@ class G37Test(unittest.TestCase):
             # docs/status-coins-effect-reuse-v0.72.md）
             "DamageThenStatusSelfAndOpponent", "PoisonAndSleepWithoutDamage", "DamageThenWakeOpponent", "DamageThenForceSwitchAfterDamage",
             # v0.76（なきごえ・かなしばり・にらみつける。docs/persistent-attack-modifiers-v0.76.md）
-            "ReduceDamageToSelfNextOpponentTurn", "LockOpponentAttackOnHeads", "AttackLockWhileSourceActiveOnHeads"]))
+            "ReduceDamageToSelfNextOpponentTurn", "LockOpponentAttackOnHeads", "AttackLockWhileSourceActiveOnHeads",
+            # v0.78（ダメージの前に相手のトレーナーをトラッシュする「ごうだつ」・ダメージのない「おいつめる」。docs/darkness-metal-energy-v0.78.md）
+            "DiscardOpponentTrainersThenDamage", "RetreatLockWithoutDamage"]))
 
 
 class DecisionTest(unittest.TestCase):

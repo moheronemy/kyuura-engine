@@ -2940,3 +2940,71 @@
 - 検証用デッキ `G77`・`W77`・`C77` と組 `PAIRINGS_V0_77`（`G77` 対 `W77`・`C77` 対 `G77`・`W77` 対 `C77`）は tools/existing_effect_games.py の `--batch v0.77` です（前の版の組の結果は変わらない）。
   ドわすれは `_v076_decision`、2 枚のトレーナーは `_v073_trainer`・`_v073_decision` で使い、数えた結果は `v077_uses`。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## 悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚（v0.78）
+
+### 対象と数
+
+- 特殊エネルギー 5 枚（悪エネルギー neo1-094・PRN-002・NIP2X-010、鋼エネルギー neo1-095・NIP1X-010）と、ポケモン 8 枚（ワザ 16。写しの組 `pool_v0_78`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.77 | v0.78 |
+  |---|---|---|
+  | 写し・対応するカード | 878・878 | 891・891 |
+  | 対応ポケモン・トレーナー・エネルギー | 635・213・30 | 643・213・35 |
+  | ワザ・特殊能力・特殊エネルギーの登録 | 1,072・74・12 | 1,088・74・17 |
+  | 未対応（全対象・neo・拡張パック以外） | 499・271・228 | 486・263・223 |
+  | 停止コード・未解決の裁定 | 163・165 | 165・167 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・書き出しの形式（22）・公開の API・コマンド・決定の種類は変えていません。カードごとの処理・根拠・検証は docs/darkness-metal-energy-v0.78.md。
+- 公式ガイドブックのキャプチャ・OCR・読み直しは行っていません。13 枚の pcg-search.com・カードの画像との照合もしていません。英語の文面（「after/before applying Weakness and Resistance」
+  「put 1 damage counter」「has Dark in its name」）・現代のルールで日本語の範囲を補わないでください。
+- テストの定数は tests/helpers.py の `DARKNESS_ENERGY_NEO1`〜`HOUNDOUR_NIP2X`・`V0_78_ENERGIES`・`V0_78_POKEMON`・`V0_78_CARDS`。
+
+### エネルギーの単位
+
+- 悪エネルギーは「悪」1 個、鋼エネルギーは「鋼」1 個（`SpecialEnergyEffect.units`。`DARKNESS_UNIT`・`METAL_UNIT`）。kyuura の空の `energy.provides` を「エネルギーを出さない」と読まないでください。
+  どちらも「無色」の記号を払えます。基本エネルギーではありません（基本エネルギーを選ぶ・回収する効果に入らない。同じ名前 4 枚の制限は id をまたぐ）。
+- レインボーエネルギー・［エネエネ］の色を 8 色に広げないでください（`BASIC_ENERGY_COLORS` は 6 色。BZ3 は変えていない）。
+
+### ダメージを変える特殊エネルギー
+
+- `SpecialEnergyEffect.attack_damage_modifiers(state, holder, card, role, attacker, defender)` を、`effects.attack_damage_modifiers` が、ついているトレーナーと同じ所で聞きます（`energy_damage_modifiers`）。
+  ワザを使うポケモンについているカードは 5 段階、受けるポケモンについているカードは 7 段階（GR-2000-P321-DAMAGE-ORDER）。最終ダメージに直接足さないでください。
+  - 悪エネルギー: 受ける時点で相手のバトル場のポケモン（`is_opponent_active`）へのダメージだけ +10（カードごと）。控え・自分へのダメージには当てはめない。
+  - 鋼エネルギー: 受けるポケモンについていれば -10（カードごと。受けるポケモンがだれでも）。ワザを使うポケモンの今有効なタイプが「鋼」でないなら、与えるダメージも -10。VS1 で「鋼」かが
+    変わるなら VS1 で止める。
+  - 自分へのダメージでは、それぞれの文を自分の立場で 1 回ずつ当てはめます（同じ文を二重に数えない）。「スピードスター」は受けるポケモンのカードを聞かない（ワザを使うポケモンのカードは聞く）。
+- ワザでないダメージを減らす特殊エネルギー（NIP1X-010。`received_damage_reduction`）は、ダメージをのせる経路が `effects.energy_received_damage` で当てはめます（特殊能力のダメージは
+  `received_power_damage`、どく・悪エネルギーは `procedures.pokemon_check_poison`、トレーナー・レインボーエネルギー・爆発ジム）。ワザでないダメージをのせる経路を加えるときは、この関数を
+  通してください。ダメージカウンターをのせる・移す効果には当てはめないでください。neo1-095 はワザによるダメージだけ（同じカードの組でも処理は同じではない。kyuura card_differences の neo1-095）。
+- 既存の KA1・RB4・EX1・TD1（受けるダメージを変える特殊能力・持続する効果）は解決していません。特殊能力のダメージに、受けるダメージを変える特殊能力と NIP1X-010 の両方が当てはまり、順番で
+  量が変わるなら MT1（`UNRESOLVED_METAL_ENERGY_POWER_ORDER`。今の写しでは起こらない）。
+- こんらん状態のポケモンに鋼エネルギーがついていれば、既存の `UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS` でコインの前に止まります（こんらんの 20 が「ワザによるダメージ」か決まらない）。
+- v0.13 の止める関数（`legacy`・上限を超えたときのフォールバック）は、場に悪・鋼エネルギーがあれば使いません（`flow.legacy_unknown_features`。`affects_damage`）。
+
+### ポケモンチェックの悪エネルギー
+
+- `procedures.pokemon_check_poison` の最初（1 の「指示されたこと」）。順番は 悪エネルギー → どく → ねむり → マヒ（GR-2000-P323-POKEMON-CHECK）。両方のプレイヤーの場のすべてのポケモン。
+  特殊状態・かがくへんかガス・まきちらせ!ベトベトガスに関係ない。今有効なタイプが「悪」、または今の姿の名前が「わるい」ではじまるポケモンは受けない（`darkness_exempt`。VS1 で止める）。
+- neo1-094・PRN-002 はカードごとに 10 ダメージ（ワザ・特殊能力のダメージではない。「ダメージを受けない」状態・持続する効果は見ない。ログ `darkness_energy_damage`）、NIP2X-010 はカードごとに
+  ダメージカウンター 1 個（ダメージではない。ログ `darkness_energy_counters`）。悪エネルギーの効果を持つかは `SpecialEnergyEffect.pokemon_check_penalty`。カード id で分けないでください。
+- 止める場面（どれもダメージを与える前）: DE1（`UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER`。受けるダメージを変える常にはたらく特殊能力で 10 の量が変わる）・控えの［ベンチガード］（v0.65 の
+  エンジンの未対応）・VS1・両方のプレイヤーのポケモンがきぜつ（1・2 を合わせて `UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT`）・［ずらかる］のポケモンの残りHPが 1・2 の途中で「10」を通る（SC1）。
+  1 と 2 のあいだのきぜつの判定の時点・悪エネルギーの効果どうしの順番は決めていません（結果が変わらない場合だけ処理する。uid の順で決めた裁定にしない）。
+
+### ワザ
+
+- ふくろだたき `CoinsPerOwnPokemonDamage`（v0.48 の `HeadsTimesNamedPokemon` の名前 None）・ごうだつ `DiscardOpponentTrainersThenDamage`（要素 `DiscardOpponentTrainers`。要素の種類
+  `TRAINER_DISCARD_ELEMENT`。トラッシュしてからダメージ）・おいつめる `RetreatLockWithoutDamage`（ダメージのない `OpponentRetreatLock`）・メタルスラッシュ `DamageThenSelfCannotAttack`
+  （持続する効果 `state.CannotAttackNextOwnTurn`。`CannotAttack` の部分型。はたらく番は与えた番 + 2。`ATTACK_PREVENTED`）は新しい型で、`ATTACK_TYPES_SINCE_V0_17` に加え、
+  `v013_checks.VERIFIED` には入れていません。`SelfAttackLock` の `target_attack_index` None（このワザだけ）の意味を変えないでください。
+- はがねのつばさは `DamageThenReduceDamageNextTurn` の `on_heads`、みねうちは `HalfRemainingHpDamage` の `round_down`（切りすて。既定は切り上げのまま）。
+- NIP2X-005 は neo2-039 と同じ登録の値（`SAME_DATA_CARDS_V0_78`）。特殊エネルギーの登録は `_with_energies`（すでに登録のある id には加えない）。
+
+### 検証用デッキ
+
+- 検証用デッキ `D78`・`M78` と組 `PAIRINGS_V0_78`（`D78` 対 `M78`・`D78` 対 `G77`・`M78` 対 `C77`）は tools/existing_effect_games.py の `--batch v0.78` です（前の版の組の結果は変わらない）。
+  悪・鋼エネルギーは `_v078_energy` がつけ、v0.78 のポケモンの払えるワザはエンジンの支払いの問い合わせ（`attack_cost_payable`）で見ます（`state.energy_types` は特殊エネルギーを数えない）。
+  エネルギーをためる手順（v038_wait）は重ねていません（同じ名前 4 枚までで足りなくなる）。数えた結果は `v078_uses`。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

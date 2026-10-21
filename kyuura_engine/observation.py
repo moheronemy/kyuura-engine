@@ -462,6 +462,7 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）
     # v0.67: マチスの秘策（出さなかった・出せなかった理由・おもてにした本当のカード・トラッシュしたカード・指定した対象がいなくなった。どれも表の情報）
     "secret_plan_none", "secret_plan_declined", "secret_plan_revealed", "secret_plan_discarded", "secret_plan_target_lost",
     # v0.66: ナツメのESPのやり直し（投げたコインは表の情報）・カスミの勝負のじゃんけん（両方の手を決めたあとに見せる）・お上品攻撃の手札にもどす期限

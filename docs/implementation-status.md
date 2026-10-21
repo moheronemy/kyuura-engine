@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.77）
+# 実装状況（v0.1〜v0.78）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3670,3 +3670,20 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | neo を含む全対象（1,377）の未対応の数（全対象 499・neo 271・拡張パック以外 228） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts_with_neo_in_scope` |
 | ハガネール neo1-057（鋼が必要）・ベイビィ・アンノーン・ひかるポケモン・新しい特殊エネルギー | 未対応（今回の範囲の外） | — | — |
 | 52 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki の転記） | — |
+
+## v0.78: 悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚
+
+[darkness-metal-energy-v0.78.md](darkness-metal-energy-v0.78.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| 特殊エネルギー 5 枚（悪エネルギー neo1-094・PRN-002・NIP2X-010、鋼エネルギー neo1-095・NIP1X-010） | 実装済み・テスト済み | kyuura data/cards.json（7d3f4ca）の印刷の文面（kyuura データの採用） | test_darkness_metal_energy_v0_78.py `RegistrationTest`・`UnitsAndPaymentTest` |
+| ポケモン 8 枚・ワザ 16（新しい型 4・引数を加えた型 2） | 実装済み・テスト済み | 印刷の文面 | 同 `RegistrationTest`・`AttackEffectTest` |
+| ワザのダメージの悪エネルギー（5 段階 +10。対戦ポケモンだけ）・鋼エネルギー（7 段階 -10、「鋼」でないなら 5 段階 -10） | 実装済み・テスト済み | GR-2000-P321-DAMAGE-ORDER・kyuura card_differences の neo1-095（日本語の範囲） | 同 `AttackDamageTest` |
+| NIP1X-010 のワザでないダメージの -10（特殊能力・どく・トレーナー・スタジアム・特殊エネルギー・悪エネルギーのダメージ） | 実装済み・テスト済み（受けるダメージを変える特殊能力と順番で量が変わるなら MT1 で止める） | 印刷の文面（「ダメージを受けるとき」） | 同 `NonAttackDamageTest` |
+| ポケモンチェックの悪エネルギー（10 ダメージ・ダメージカウンター 1 個。「悪」「わるい」は受けない） | 実装済み・テスト済み（DE1・ベンチガード・VS1・両方のきぜつ・SC1 で止める） | GR-2000-P323-POKEMON-CHECK・GR-2000-P320-COUNTER-MOVE | 同 `PokemonCheckTest` |
+| 同じ名前 4 枚・基本エネルギーではない・PF3-009 のこうそくいどうを鋼エネルギーで払える | 実装済み・テスト済み | GR-2000-P308-SAME-NAME | 同 `test_same_name_limit_and_not_basic`・`test_pf3_skarmory_can_now_pay_metal` |
+| 未対応の数（全対象 486・neo 263・拡張パック以外 223） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `test_unsupported_counts` |
+| MT1（`UNRESOLVED_METAL_ENERGY_POWER_ORDER`）・DE1（`UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER`） | 裁定が未解決（止める） | 記録で決まらない | 同 `test_metal_and_received_power_order_is_unresolved`・`test_kabuto_armor_is_unresolved` |
+| 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
+| リサイクルエネルギー・ミラクルエネルギー・ベイビィ・ひかるポケモン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |

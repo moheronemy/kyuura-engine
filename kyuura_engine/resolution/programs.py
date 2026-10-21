@@ -46,7 +46,7 @@ from ..errors import UnsupportedError
 from ..evolution import DEVOLVE_TO_HAND, devolve, place_evolution_card
 from ..persistent import RETURN_IN_PLAY_TO_DECK, RETURN_IN_PLAY_TO_HAND, add_persistent_effect, max_hp_set, remove_persistent_effects, replace_persistent_effect
 from ..state import (
-    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack,
+    NEXT_TURN_MULTIPLY, NEXT_TURN_SET, RETALIATION_FIXED, RETALIATION_RECEIVED, AttackBarrier, AttackCoinCheck, CannotAttack, CannotAttackNextOwnTurn,
     CannotAttachEnergy, CannotAttackWhileSourceActive, CannotRetreat, CannotUseAttack, CannotUsePowers, CannotUseOwnAttack, DamageReduction, DestinyBond, DoubledDamage, HalvedDamage, NextTurnAttackDamage, PreventDamage,
     MaxHpSet, ReducedDamageToSource, ReducedDamageToSourceNextTurn, ResistanceChange, Retaliation, TailsDamageGuard, TrainerUseLock, WeaknessChange, ZeroDamageBelow, mark_returned_to_bench,
 )
@@ -5419,12 +5419,14 @@ class PerAttachedEnergyCards:
 
 @dataclass(frozen=True)
 class HalfRemainingHp:
-    """相手の対戦ポケモンの残りの HP の半分（ダメージカウンターの単位で切り上げ）（v0.45。ラッタの「いかりのまえば」。p.321 の 1 段階）。"""
+    """相手の対戦ポケモンの残りの HP の半分（ダメージカウンターの単位で切り上げ）（v0.45。ラッタの「いかりのまえば」。p.321 の 1 段階）。v0.78: ``round_down`` なら
+    切りすて（ハッサムの「みねうち」）。"""
 
+    round_down: bool = False
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        return E.half_remaining_hp(run.state, run.opponent_active())
+        return E.half_remaining_hp(run.state, run.opponent_active(), round_down=self.round_down)
 
 
 @dataclass(frozen=True)
@@ -6384,6 +6386,67 @@ class MoveOneEnergyToBench(Element):
                             energy=energy, reason="evaded", to_pokemon_id=target.pokemon_id)
 
 
+@dataclass(frozen=True)
+class DiscardOpponentTrainers(Element):
+    """相手の対戦ポケモンについているトレーナーカードを、すべてトラッシュする（v0.78。デルビルの「ごうだつ」の「ダメージを与える前に、相手についている「トレーナーカード」を
+    すべてトラッシュする。」）。ダメージの要素より前に置く（トラッシュしたあとの場でダメージを計算する）。
+
+    - ついているトレーナーがなければ処理の対象がない（p.309。「とうめい」・「ワザをうけない」状態を評価しない）
+    - 相手の対戦ポケモンへの効果（要素の種類 ``TRAINER_DISCARD_ELEMENT``）なので、トラッシュの前に「ワザをうけない」状態・「とうめい」を評価する（「とうめい」の結果は
+      このワザの中で記録され、あとのダメージの要素も同じ結果を使う）
+    - カードはつけたプレイヤー（``AttachedTrainer.player``。持ち主）のトラッシュに置く。ついている順に 1 枚ずつログ ``discard_attached_trainer``（``reason`` は ``attack``・
+      ``effect`` はワザ）
+    """
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+    opponent_element: ClassVar[str] = E.TRAINER_DISCARD_ELEMENT
+
+    def has_target(self, run: AttackRun) -> bool:
+        target = run.opponent_active()
+        return target is not None and bool(target.trainers)
+
+    def run(self, run: AttackRun) -> bool:
+        opponent = 1 - run.player
+        target = run.opponent_active()
+        if target is None or not target.trainers:
+            return False
+        if run.knocked_out(target):
+            run.ko_prevention_conflict(target)
+            return False
+        if not reaches(run.res, run.fs, opponent, target, E.TRAINER_DISCARD_ELEMENT):
+            return False
+        state = run.state
+        for attached in list(target.trainers):
+            target.trainers.remove(attached)
+            state.players[attached.player].discard.append(attached.card)
+            state.add_event("discard_attached_trainer", player=attached.player, card=attached.card, pokemon=target.card, pokemon_id=target.pokemon_id,
+                            reason="attack", effect=str(run.key))
+        return False
+
+
+@dataclass(frozen=True)
+class SelfCannotAttack(Element):
+    """次の自分の番、ワザを使ったポケモンはワザ（すべて）を使えない（v0.78。エアームドの「メタルスラッシュ」。持続する効果 ``CannotAttackNextOwnTurn``）。ワザを使った
+    ポケモンへの効果（v0.35 の ``SelfAttackLock`` と同じく「とうめい」を評価しない）。このワザの中で HP 以上になっていれば与えない（p.309）。"""
+
+    phase: ClassVar[Phase] = Phase.EFFECT
+
+    def copy_problem(self, run: AttackRun, copier: PokemonInPlay, clause: str | None) -> tuple[str, str] | None:
+        return None  # 効果はワザの位置を記録しない（すべてのワザ）ので、相手のワザとして使っても使ったポケモンに与えられる
+
+    def run(self, run: AttackRun) -> bool:
+        attacker = run.attacker()
+        if run.knocked_out(attacker):
+            run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
+                                persistent_effect=CannotAttackNextOwnTurn.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
+            return False
+        turn = run.state.turn_number
+        effect = CannotAttackNextOwnTurn(source_card=attacker.card, source_player=run.player, created_turn=turn,
+                                         active_turn=turn + CannotAttackNextOwnTurn.turns_until_active)
+        add_persistent_effect(run.state, run.player, attacker, effect, attack=str(run.key))
+        return False
+
+
 BUILDERS: dict[type, Any] = {
     E.DamageOnly: lambda e: (Damage(OPP, Printed()),),
     E.SimplifiedSongDamage: lambda e: (Damage(OPP, Printed()),),  # v0.68: ハモる（簡略化した仕様。すぐに 30）
@@ -6573,7 +6636,8 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndSelfDamageThenPoisonOnHeads: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, Fixed(e.self_damage), name="self_damage"), Status(POISON, local_coin=HEADS),
     ),
-    E.DamageThenReduceDamageNextTurn: lambda e: (Damage(OPP, Printed()), SelfPersistent(DamageReduction.kind, amount=e.amount)),
+    E.DamageThenReduceDamageNextTurn: lambda e: (Damage(OPP, Printed()),
+                                                 SelfPersistent(DamageReduction.kind, amount=e.amount, local_coin=HEADS if e.on_heads else None)),
     E.DiscardAttachedAndReturnSelfToDeck: lambda e: (ReturnSelfToDeck(local_coin=None, after_damage=None, discard_attached=True),),
     E.ReturnSelfToDeckThenSearchPokemon: lambda e: (
         ReturnSelfToDeck(local_coin=None, after_damage=None, shuffle=False), PromoteFromBench(), RevealPokemonFromDeck(e.excluded),
@@ -6720,7 +6784,7 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndSelfDamagePerAttachedEnergyCard: lambda e: (
         Damage(OPP, Printed()), Damage(SELF, PerAttachedEnergyCards(e.energy_type, e.per_card), name="self_damage")),
     E.ZeroDamageBelowNextTurn: lambda e: (SelfPersistent(ZeroDamageBelow.kind, amount=e.threshold),),
-    E.HalfRemainingHpDamage: lambda e: (Damage(OPP, HalfRemainingHp()),),
+    E.HalfRemainingHpDamage: lambda e: (Damage(OPP, HalfRemainingHp(e.round_down)),),
     E.ReturnReceivedDamageOnHeads: lambda e: (SelfRetaliation(None, multiplier=e.multiplier, on_heads=True),),
     E.PutOwnerBasicFromDeckOntoBenchOnHeads: lambda e: (BenchFromDeck((), owner=e.owner, optional=True, local_coin=HEADS),),
     E.DamageIgnoringResistance: lambda e: (Damage(OPP, Printed(), resistance=False),),
@@ -6793,6 +6857,11 @@ BUILDERS: dict[type, Any] = {
     ),
     E.AttackLockWhileSourceActiveOnHeads: lambda e: (OpponentAttackLockWhileSourceActive(None, local_coin=HEADS),),
     E.AttachDiscardEnergyCardsToSelf: lambda e: (AttachFromDiscard(None, e.max_cards),),
+    # v0.78（docs/darkness-metal-energy-v0.78.md）
+    E.CoinsPerOwnPokemonDamage: lambda e: (Damage(OPP, HeadsTimesNamedPokemon(e.per, None)),),
+    E.DiscardOpponentTrainersThenDamage: lambda e: (DiscardOpponentTrainers(), Damage(OPP, Printed())),
+    E.RetreatLockWithoutDamage: lambda e: (OpponentRetreatLock(),),
+    E.DamageThenSelfCannotAttack: lambda e: (Damage(OPP, Printed()), SelfCannotAttack()),
 }
 
 

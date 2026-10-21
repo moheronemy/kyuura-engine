@@ -1095,6 +1095,21 @@
     "neo4-075",
     "neo4-086"
   ],
+  "pool_v0_78": [
+    "neo1-094",
+    "neo1-095",
+    "NIP1X-010",
+    "NIP2X-010",
+    "PRN-002",
+    "neo1-056",
+    "neo1-057",
+    "neo1-058",
+    "neo2-039",
+    "neo2-045",
+    "neo4-081",
+    "NIP1X-005",
+    "NIP2X-005"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -79133,6 +79148,1095 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": null
+    },
+    {
+      "id": "neo1-094",
+      "jp_set": "neo1",
+      "category": "energy",
+      "name": {
+        "ja": "悪エネルギー",
+        "en": "Darkness Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは「悪」エネルギー1個ぶんとしてあつかう。\nこのカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。\n\nこのカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら、ポケモンチェックのたび、このカードをつけているポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+          "en": "If the Pokémon Darkness Energy is attached to damages the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon. At the end of every turn, put 1 damage counter on the Pokémon Darkness Energy is attached to, unless it's Darkness or has Dark in its name.\nDarkness Energy provides Darkness Energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-094",
+        "pokemontcg": [
+          "neo1-104"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-094-akuenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [
+          "修正版は説明文の一部が変更されている",
+          "修正前：このカードをつけているポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+          "修正後：このカードをつけているポケモンに、ダメージカウンターを1個のせる。"
+        ],
+        "source": "https://nazonobasho.com/neo01-094-akuenergy/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-002"
+    },
+    {
+      "id": "neo1-095",
+      "jp_set": "neo1",
+      "category": "energy",
+      "name": {
+        "ja": "鋼エネルギー",
+        "en": "Metal Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは「鋼」エネルギー1個ぶんとしてあつかう。\nこのカードをつけているポケモンがワザによるダメージを受けるとき、そのダメージは「-10」される。\n\nこのカードをつけているポケモンが「鋼」ポケモンでないなら、このカードをつけているポケモンがワザによって与えるダメージも、「-10」される。",
+          "en": "Damage done to the Pokémon Metal Energy is attached to is reduced by 10 (after applying Weakness and Resistance). If the Pokémon Metal Energy is attached to isn't Metal, whenever it damages a Pokémon, reduce that damage by 10 (before applying Weakness and Resistance).\nMetal Energy provides Metal Energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "鋼エネルギーが減らすダメージの範囲",
+          "ja": "「このカードをつけているポケモンがワザによるダメージを受けるとき、そのダメージは『-10』される」と、ワザによるダメージに限っている",
+          "en": "「Damage done to the Pokémon … is reduced by 10」とワザに限定していない",
+          "confidence": "確実",
+          "sources": [
+            "N1",
+            "X3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-095",
+        "pokemontcg": [
+          "neo1-19"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-095-haganeenergy/",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-095-haganeenergy/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo1-095"
+    },
+    {
+      "id": "NIP1X-010",
+      "jp_set": "NIP1X",
+      "category": "energy",
+      "name": {
+        "ja": "鋼エネルギー",
+        "en": "Metal Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは「鋼」エネルギー1個ぶんとしてあつかう。このカードをつけているポケモンがダメージを受けるとき、そのダメージは「-10」される。\nこのカードをつけているポケモンが「鋼」ポケモンでないなら、このカードをつけているポケモンがワザによるダメージを与えるとき、そのダメージは「-10」される。",
+          "en": "Damage done to the Pokémon Metal Energy is attached to is reduced by 10 (after applying Weakness and Resistance). If the Pokémon Metal Energy is attached to isn't Metal, whenever it damages a Pokémon, reduce that damage by 10 (before applying Weakness and Resistance).\nMetal Energy provides Metal Energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-19"
+        ],
+        "pcg_search": [
+          "neointro1ex010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex010.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo1-095",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-095",
+        "english_text": "same_card:neo1-095"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex010",
+          "list_number": "010/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-010",
+      "jp_set": "NIP2X",
+      "category": "energy",
+      "name": {
+        "ja": "悪エネルギー",
+        "en": "Darkness Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは、「悪」エネルギー1個ぶんとしてあつかう。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。\nこのカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら、ポケモンチェックのたび、このカードをつけているポケモンに、ダメージカウンターを1個のせる。",
+          "en": "If the Pokémon Darkness Energy is attached to damages the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon. At the end of every turn, put 1 damage counter on the Pokémon Darkness Energy is attached to, unless it's Darkness or has Dark in its name.\nDarkness Energy provides Darkness Energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-104"
+        ],
+        "pcg_search": [
+          "neointro2ex010"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex010.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex010.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-002",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-094",
+        "english_text": "same_card:neo1-094"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex010",
+          "list_number": "010/010"
+        }
+      ]
+    },
+    {
+      "id": "PRN-002",
+      "jp_set": "PRN",
+      "category": "energy",
+      "name": {
+        "ja": "悪エネルギー",
+        "en": "Darkness Energy"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは「悪」エネルギー1個ぶんとしてあつかう。このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。\nこのカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら、ポケモンチェックのたび、このカードをつけているポケモンに、「弱点・抵抗力」に関係なく、10ダメージ。",
+          "en": "If the Pokémon Darkness Energy is attached to damages the Defending Pokémon (after applying Weakness and Resistance), the attack does 10 more damage to the Defending Pokémon. At the end of every turn, put 1 damage counter on the Pokémon Darkness Energy is attached to, unless it's Darkness or has Dark in its name.\nDarkness Energy provides Darkness Energy. (Doesn't count as a basic Energy card.)"
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-104"
+        ],
+        "pcg_search": [
+          "neop002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop002.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-PRN-002",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "en_print": "same_card:neo1-094",
+        "english_text": "same_card:neo1-094"
+      },
+      "copies": [
+        {
+          "page": "neop002",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo1-056",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ニューラ",
+        "en": "Sneasel"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          215
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みだれひっかき",
+              "en": "Fury Swipes"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げ、「おもて」の数×10のダメージ。",
+              "en": "Flip 3 coins. This attack does 10 damage times the number of heads."
+            }
+          },
+          {
+            "name": {
+              "ja": "ふくろだたき",
+              "en": "Beat Up"
+            },
+            "cost": [
+              "darkness",
+              "darkness"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "自分の場にいるポケモンの数ぶんコインを投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip a coin for each of your Pokémon in play (including this one). This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-056",
+        "pokemontcg": [
+          "neo1-25"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-056-nyula/",
+      "jp_print": {
+        "level": 34,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-056-nyula/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-057",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ハガネール",
+        "en": "Steelix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          208
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イワーク",
+          "en": "Onix"
+        },
+        "hp": 110,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "テールクラッシュ",
+              "en": "Tail Crush"
+            },
+            "cost": [
+              "metal",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 30 damage plus 20 more damage; if tails, this attack does 30 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-057",
+        "pokemontcg": [
+          "neo1-15"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-057-haganeil/",
+      "jp_print": {
+        "level": 64,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-057-haganeil/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-058",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "エアームド",
+        "en": "Skarmory"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          227
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かぎづめ",
+              "en": "Claw"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "はがねのつばさ",
+              "en": "Steel Wing"
+            },
+            "cost": [
+              "metal",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-20」される。",
+              "en": "Flip a coin. If heads, all damage done by attacks to Skarmory during your opponent's next turn is reduced by 20 (after applying Weakness and Resistance)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-058",
+        "pokemontcg": [
+          "neo1-13"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-058-airmd/",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-058-airmd/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo2-039",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "デルビル",
+        "en": "Houndour"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          228
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ごうだつ",
+              "en": "Plunder"
+            },
+            "cost": [
+              "darkness",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与える前に、相手についている「トレーナーカード」をすべてトラッシュする。",
+              "en": "Before doing damage, discard all Trainer cards attached to the Defending Pokémon (before they affect the damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-039",
+        "pokemontcg": [
+          "neo2-39"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-039-delvil/",
+      "jp_print": {
+        "level": 15,
+        "rarity": "◆(U)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-039-delvil/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": "SC-neo2-039"
+    },
+    {
+      "id": "neo2-045",
+      "jp_set": "neo2",
+      "category": "pokemon",
+      "name": {
+        "ja": "ハッサム",
+        "en": "Scizor"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          212
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ストライク",
+          "en": "Scyther"
+        },
+        "hp": 80,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みねうち",
+              "en": "False Swipe"
+            },
+            "cost": [
+              "metal"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": null,
+              "modifier": "?",
+              "display": "?"
+            },
+            "text": {
+              "ja": "相手の残りHPの半分(切りすて)のダメージを与える。",
+              "en": "Does damage equal to half the Defending Pokémon's remaining HP (rounded down to the nearest 10)."
+            }
+          },
+          {
+            "name": {
+              "ja": "ダブルクロー",
+              "en": "Double Claw"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×20のダメージを追加する。",
+              "en": "Flip 2 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo2-045",
+        "pokemontcg": [
+          "neo2-10",
+          "neo2-29"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo2-045-hassam/",
+      "jp_print": {
+        "level": 42,
+        "rarity": "★(R)",
+        "series": "遺跡をこえて...",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo2-045-hassam/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-081",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "デルビル",
+        "en": "Houndour"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          228
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "おいつめる",
+              "en": "Corner"
+            },
+            "cost": [
+              "darkness"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このワザを受けた相手は「にげる」ことができない。",
+              "en": "The Defending Pokémon can't retreat during your opponent's next turn."
+            }
+          },
+          {
+            "name": {
+              "ja": "とびかかる",
+              "en": "Lunge"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。",
+              "en": "Flip a coin. If tails, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: ●／別データ: ◆）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-081",
+        "pokemontcg": [
+          "neo4-43"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%87%E3%83%AB%E3%83%93%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 16,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%87%E3%83%AB%E3%83%93%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "NIP1X-005",
+      "jp_set": "NIP1X",
+      "category": "pokemon",
+      "name": {
+        "ja": "エアームド",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つつく",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "メタルスラッシュ",
+              "en": null
+            },
+            "cost": [
+              "metal",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "次の自分の番、このカードはワザを使うことができない。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex005.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex005",
+          "list_number": "005/010"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-005",
+      "jp_set": "NIP2X",
+      "category": "pokemon",
+      "name": {
+        "ja": "デルビル",
+        "en": "Houndour"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          228
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "darkness"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かみつく",
+              "en": "Bite"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ごうだつ",
+              "en": "Plunder"
+            },
+            "cost": [
+              "darkness",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "ダメージを与える前に、相手についている「トレーナーカード」をすべてトラッシュする。",
+              "en": "Before doing damage, discard all Trainer cards attached to the Defending Pokémon (before they affect the damage)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo2-39"
+        ],
+        "pcg_search": [
+          "neointro2ex005"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex005.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex005.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-neo2-039",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "same_card:neo2-039",
+        "english_text": "same_card:neo2-039",
+        "pokemon.dex": "same_card:neo2-039"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex005",
+          "list_number": "005/010"
+        }
+      ]
     }
   ]
 }

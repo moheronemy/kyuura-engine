@@ -247,6 +247,7 @@ from kyuura_engine.state import (
     RETALIATION_RECEIVED_SCALED_KIND,
     NEXT_TURN_DAMAGE_KINDS,
     CannotAttack,
+    CannotAttackNextOwnTurn,
     CannotAttackWhileSourceActive,
     AttackCoinCheck,
     CannotRetreat,
@@ -2631,6 +2632,27 @@ def log_problems(state) -> list[str]:
             if entry is None or not isinstance(entry.effect, DamageAndOptionalFullDrain) or e["dealt"] <= 0 or e["drain_counters"] != e["dealt"] // per \
                     or damage[e["pokemon_id"]] // per <= 0:
                 problems.append(f"{e['turn']} 番の drain_heal_declined（ワザ {e['effect']}・与えたダメージ {e['dealt']}）が、取りのぞいてよいワザの決定の答えと合わない")
+        elif kind in ("darkness_energy_damage", "darkness_energy_counters"):
+            # v0.78: ポケモンチェックの悪エネルギー（ダメージ・ダメージカウンター）。ついている悪エネルギーのカードで、ダメージは 10 から鋼エネルギー（NIP1X-010）の数 × 10 を
+            # 引いた数（0 より小さくしない）、ダメージカウンターは 1 個
+            pid = e["pokemon_id"]
+            per = state.rules.damage_per_counter
+            card = state.card_def(e["energy"])
+            effect = state.effects.energy_effect(card) if card.is_special_energy else None
+            if e["energy"] not in energy.get(pid, ()) or effect is None or not effect.pokemon_check_penalty:
+                problems.append(f"{e['turn']} 番の {kind}（ポケモン {pid}）のカード {e['energy']} が、そのポケモンについている悪エネルギーではない")
+            if kind == "darkness_energy_damage":
+                reducers = tuple(e.get("energy_reduction", ()))
+                if any(uid not in energy.get(pid, ()) for uid in reducers) or e["amount"] != max(0, 10 - per * len(reducers)) \
+                        or e.get("amount_before", 10) != 10:
+                    problems.append(f"{e['turn']} 番の悪エネルギーのダメージ {e['amount']}（ポケモン {pid}）が、ついている鋼エネルギー {reducers} と合わない")
+                damage[pid] += e["amount"]
+            else:
+                damage[pid] += e["counters"] * per
+                if e["counters"] != 1:
+                    problems.append(f"{e['turn']} 番の悪エネルギーのダメージカウンター {e['counters']}（ポケモン {pid}）が 1 個ではない")
+            if damage[pid] != e["total_damage"]:
+                problems.append(f"{e['turn']} 番の {kind} のあとのダメージ {e['total_damage']} が、ログから組み立てた {damage[pid]} と違う")
         elif kind in ("damage", "poison_damage", "confusion_damage", "drain_heal", "remove_damage_counters", "remove_all_damage_counters"):
             pid = e["pokemon_id"] if "pokemon_id" in e else ids[e["pokemon"]]
             if kind == "drain_heal":
@@ -2771,7 +2793,7 @@ def log_problems(state) -> list[str]:
         elif kind == "poison_damage":
             # v0.34: ポケモンチェックのどくのダメージは、そのポケモンのどくの量（通常 10・特殊などくはその量。p.322・p.323）
             # 盤面を直接作ったテスト（build_test_state）は、どく状態にしたログがないので、ログで組み立てたどくだけを確かめる
-            if e["pokemon_id"] in poisoned and poisoned[e["pokemon_id"]] != e["amount"]:
+            if e["pokemon_id"] in poisoned and poisoned[e["pokemon_id"]] != e.get("amount_before", e["amount"]):  # v0.78: 鋼エネルギー（NIP1X-010）で減らす前の量
                 problems.append(f"{e['turn']} 番のポケモン {e['pokemon_id']} のどくのダメージ {e['amount']} が、ログから組み立てたどくの量 {poisoned.get(e['pokemon_id'])} と違う")
         elif kind == "energy_conversion":
             # v0.59: ［エネエネ］できぜつしたマルマインのカード（直前のきぜつの to_energy）を、使ったプレイヤーの場のほかのポケモンにエネルギーとしてつける
@@ -4250,7 +4272,9 @@ def log_problems(state) -> list[str]:
             if e.get("lasting") and (e["persistent_effect"] != AttackCoinCheck.kind or e.get("single_use")):
                 problems.append(f"{e['turn']} 番の期限のない持続する効果（ポケモン {e['pokemon_id']}）が、手順 4 のコインの「1回できえる」でない効果ではない")
             # v0.35: 「きあいだめ」（next_turn_attack_damage_multiplier）・「あわあわ」（cannot_use_own_attack）も次の自分の番
-            offset = (NextTurnAttackDamage.turns_until_active if e["persistent_effect"] in (*NEXT_TURN_DAMAGE_KINDS.values(), CannotUseOwnAttack.kind)
+            # v0.78: 「メタルスラッシュ」（cannot_attack_next_own_turn）も次の自分の番
+            offset = (NextTurnAttackDamage.turns_until_active
+                      if e["persistent_effect"] in (*NEXT_TURN_DAMAGE_KINDS.values(), CannotUseOwnAttack.kind, CannotAttackNextOwnTurn.kind)
                       else 0 if e["persistent_effect"] in LASTING_KINDS else 1)
             if e["active_turn"] != e["turn"] + offset:
                 problems.append(

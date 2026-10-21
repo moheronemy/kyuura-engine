@@ -1255,6 +1255,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.LockOpponentAttackOnHeads,  # コンパン（ES3-004）の「かなしばり」（OpponentAttackLock の local_coin）
     _effects.CoinNextTurnMultiplyElseLockAttack,  # ワンリキー（ES2-021・QSG-035）の「きあいいっぱつ」（Coin → SelfNextTurnAttackDamage・SelfAttackLock の gate）
     _effects.AttackLockWhileSourceActiveOnHeads,  # ヒノアラシ（PF1-004）などの「にらみつける」（OpponentAttackLockWhileSourceActive の max_hp None・local_coin）
+) + (
+    # v0.78（docs/darkness-metal-energy-v0.78.md）
+    _effects.CoinsPerOwnPokemonDamage,  # ニューラ（neo1-056）の「ふくろだたき」（HeadsTimesNamedPokemon の names None）
+    _effects.DiscardOpponentTrainersThenDamage,  # デルビル（neo2-039・NIP2X-005）の「ごうだつ」（DiscardOpponentTrainers → Damage）
+    _effects.RetreatLockWithoutDamage,  # デルビル（neo4-081）の「おいつめる」（OpponentRetreatLock だけ）
+    _effects.DamageThenSelfCannotAttack,  # エアームド（NIP1X-005）の「メタルスラッシュ」（持続する効果 CannotAttackNextOwnTurn）
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -1934,3 +1940,21 @@ V0_77_CARDS = (
 )
 V0_77_TRAINERS = (SUPER_SCOOP_UP_NEO1, BILLS_TELEPORTER_NEO1)
 V0_77_POKEMON = tuple(card for card in V0_77_CARDS if card not in V0_77_TRAINERS)
+
+# v0.78（docs/darkness-metal-energy-v0.78.md）: 悪・鋼エネルギー 5 枚と、「悪」「鋼」エネルギーを使うポケモン 8 枚（写しの組 pool_v0_78）
+DARKNESS_ENERGY_NEO1 = "neo1-094"  # 悪エネルギー（ポケモンチェックで 10 ダメージ）
+METAL_ENERGY_NEO1 = "neo1-095"  # 鋼エネルギー（受けるワザのダメージ -10）
+METAL_ENERGY_NIP1X = "NIP1X-010"  # 鋼エネルギー（受けるダメージ -10。ワザに限らない）
+DARKNESS_ENERGY_NIP2X = "NIP2X-010"  # 悪エネルギー（ポケモンチェックでダメージカウンター 1 個）
+DARKNESS_ENERGY_PRN = "PRN-002"  # 悪エネルギー（neo1-094 と同じ処理）
+SNEASEL_NEO1 = "neo1-056"  # ニューラ（みだれひっかき・ふくろだたき）
+STEELIX_NEO1 = "neo1-057"  # ハガネール（たいあたり・テールクラッシュ。イワークから進化）
+SKARMORY_NEO1 = "neo1-058"  # エアームド（かぎづめ・はがねのつばさ）
+HOUNDOUR_NEO2 = "neo2-039"  # デルビル（かみつく・ごうだつ）
+SCIZOR_NEO2 = "neo2-045"  # ハッサム（みねうち・ダブルクロー。ストライクから進化）
+HOUNDOUR_NEO4 = "neo4-081"  # デルビル（おいつめる・とびかかる）
+SKARMORY_NIP1X = "NIP1X-005"  # エアームド（つつく・メタルスラッシュ）
+HOUNDOUR_NIP2X = "NIP2X-005"  # デルビル（かみつく・ごうだつ。neo2-039 と同じデータ）
+V0_78_ENERGIES = (DARKNESS_ENERGY_NEO1, METAL_ENERGY_NEO1, METAL_ENERGY_NIP1X, DARKNESS_ENERGY_NIP2X, DARKNESS_ENERGY_PRN)
+V0_78_POKEMON = (SNEASEL_NEO1, STEELIX_NEO1, SKARMORY_NEO1, HOUNDOUR_NEO2, SCIZOR_NEO2, HOUNDOUR_NEO4, SKARMORY_NIP1X, HOUNDOUR_NIP2X)
+V0_78_CARDS = V0_78_ENERGIES + V0_78_POKEMON

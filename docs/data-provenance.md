@@ -1865,3 +1865,20 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - neo1（2000-02-04）は 2000.02.14 版の前、neo2〜neo4 はあとに発売したカード。発売日を変えずに持ち、ルールの基準は 2000.02.14 版のまま（後年のルール・2002 年の特殊能力の分類は持ち込まない）。
 - 報告事項（kyuura の作業）: ニョロボン neo2-037 のワザ 0 の名前「とづく」は写しの値のまま使った（誤記かどうかは確かめていない）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.77 の登録を写すと、52 枚の `engine_status` が `registered` になる。
+
+## v0.78: 悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚
+
+[darkness-metal-energy-v0.78.md](darkness-metal-energy-v0.78.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_78`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.77 までの 878 枚の
+  記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-20・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面（特殊エネルギーは
+  `play_text` の `energy`）。研究の基準のコミットに、13 の id を指す LD-・CC-・CR-・UQ-・訂正の記録はない。鋼エネルギーの受けるダメージの範囲は kyuura data/curation/card_differences.json の
+  neo1-095（確度: 確実。日本語は「ワザによるダメージ」、英語はワザに限らない）にしたがい、日本語の範囲を使った。`card_verification.json` には加えていない。
+- kyuura の日本語の文面は nazonobasho.com（7 枚）・ポケモンWiki（1 枚）・pcg-search.com（イントロパック・プロモの 5 枚）の転記。同じサイトとの照合は独立した照合にならない。外部照合はしていない。
+- 報告事項（kyuura の作業）: 5 枚の特殊エネルギーの `energy.provides` が空（エンジンは日本語の説明の「「悪」エネルギー1個ぶん」「「鋼」エネルギー1個ぶん」で決めた）。
+- 報告事項（kyuura の作業）: 同じカードの組 SC-neo1-095（neo1-095・NIP1X-010）は受けるダメージの範囲が、SC-PRN-002（neo1-094・PRN-002・NIP2X-010）はポケモンチェックの効果（10 ダメージか
+  ダメージカウンター 1 個か）が版で違う。card_differences は neo1-095 の日英の違いだけを記録している。
+- 報告事項（kyuura の作業）: NIP1X-005 の `pokemon.dex`・`jp_print.level`、NIP2X-005 の `jp_print.level` が欠けている（処理に使う欄ではない）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.78 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+

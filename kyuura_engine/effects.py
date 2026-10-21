@@ -692,10 +692,11 @@ POWER_LOCK_ELEMENT = "power_lock"
 ATTACH_LOCK_ELEMENT = "attach_lock"
 # v0.72: 相手の対戦ポケモンをねむり状態から回復させる効果（ナツメのルージュラ（GD6-012）の「めざめのキッス」。相手のポケモンへの効果なので「ワザをうけない」状態・「とうめい」を評価する）
 WAKE_ELEMENT = "wake"
+TRAINER_DISCARD_ELEMENT = "trainer_discard"  # v0.78: 相手の対戦ポケモンについているトレーナーカードをすべてトラッシュする（デルビルの「ごうだつ」）
 ATTACK_ELEMENTS = (DAMAGE_ELEMENT, FORCED_SWITCH_ELEMENT, POISON, SLEEP, PARALYSIS, CONFUSION, ENERGY_DISCARD_ELEMENT, ATTACK_LOCK_ELEMENT,
                    ENERGY_ATTACH_ELEMENT, REDUCED_DAMAGE_ELEMENT, ATTACK_CHECK_ELEMENT, RETREAT_LOCK_ELEMENT, RETURN_IN_PLAY_TO_DECK_ELEMENT,
                    HEAL_ELEMENT, COUNTERS_ELEMENT, EVOLVE_ELEMENT, RETURN_IN_PLAY_TO_HAND_ELEMENT, ENERGY_MOVE_ELEMENT, WEAKNESS_CHANGE_ELEMENT,
-                   RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT)
+                   RESISTANCE_CHANGE_ELEMENT, MAX_HP_ELEMENT, DEVOLVE_ELEMENT, POWER_LOCK_ELEMENT, ATTACH_LOCK_ELEMENT, WAKE_ELEMENT, TRAINER_DISCARD_ELEMENT)
 
 
 def evasion_power(state: GameState, pokemon: PokemonInPlay) -> tuple[PowerKey, AttackImmunityOnHeads] | None:
@@ -4250,13 +4251,17 @@ class DamageThenReduceDamageNextTurn(AttackEffect):
     HP 以上になったら与えない（p.309。ログ ``persistent_effect_skipped``）。"""
 
     amount: int
+    # v0.78: コインの「おもて」のときだけ与える（エアームド（neo1-058）の「はがねのつばさ」の「コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受ける
+    # ダメージは「-20」される。」）。コインは自分への効果を決めるコイン（相手の状態によらず投げる。このカードがこのワザで HP 以上なら投げない）。既定の偽は v0.38 と同じ
+    on_heads: bool = False
     implementation_id = "damage_then_reduce_damage_next_turn"
 
     def __post_init__(self) -> None:
         _positive_tens(self.amount, "へらすダメージ")
 
     def check(self, attack: Attack) -> list[str]:
-        expected = f"次の相手の番、このカードがワザによって受けるダメージは「-{self.amount}」される。"
+        expected = (f"コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-{self.amount}」される。" if self.on_heads
+                    else f"次の相手の番、このカードがワザによって受けるダメージは「-{self.amount}」される。")
         return _check_form(attack, "ダメージのあと次の相手の番に受けるダメージがへるワザ", damage="fixed") + _check_exact_text(
             attack, "ダメージのあと次の相手の番に受けるダメージがへるワザ", (expected,))
 
@@ -5788,6 +5793,10 @@ def attack_damage_modifiers(
                 modifiers.extend(entry.effect.damage_modifiers(state, attached, role, bench=True))
             else:
                 modifiers.extend(entry.effect.damage_modifiers(state, attached, role))
+        # v0.78: ついている特殊エネルギー（悪エネルギーの 5 段階の + 10・鋼エネルギーの 5 段階・7 段階の - 10）。ついているトレーナーと同じ立場で聞く（ワザを使うポケモンに
+        # ついているカードは 5 段階、受けるポケモンについているカードは 7 段階）。自分へのダメージでは同じポケモンを両方の立場で聞くが、それぞれの文は自分の立場でだけ
+        # 効果を返すので二重に数えない。受けるポケモンの持っている効果を集めない「スピードスター」（``defender_held``）では受けるポケモンのカードを聞かない（上の ``continue``）
+        modifiers.extend(energy_damage_modifiers(state, holder, role, attacker, defender))
     if attack is not None and not bench:
         # v0.34: ワザを使うポケモンの持っている「ダメージを変更する効果」（p.321 の 2 段階）のうち、カラカラの「なきつく」を受けた状態
         # （``ReducedDamageToSource``）。受けるのが効果を与えたポケモン（「このカード」）のときだけ。控えポケモンへのダメージで受けるのが
@@ -9094,6 +9103,20 @@ class SpecialEnergyEffect:
     def on_attached_from_hand(self, state: GameState, player: int, card: int, target: PokemonInPlay) -> None:
         return None
 
+    # v0.78（docs/darkness-metal-energy-v0.78.md）: ダメージを変える特殊エネルギー（悪・鋼エネルギー）
+    affects_damage: ClassVar[bool] = False  # ワザのダメージ・ワザでないダメージ・ポケモンチェックのどれかを変えるか（v0.13 の止める関数が知らない役割。``flow.legacy_unknown_features``）
+    pokemon_check_penalty: ClassVar[str | None] = None  # ポケモンチェックのたびの効果（``PENALTY_DAMAGE``・``PENALTY_COUNTER``）。なければ None
+
+    def attack_damage_modifiers(self, state: GameState, holder: PokemonInPlay, card: int, role: str, attacker: PokemonInPlay,
+                                defender: PokemonInPlay) -> tuple[DamageModifier, ...]:
+        """ワザでダメージを与えるときの、このカード（``holder`` についている ``card``）の変更効果（v0.78）。``role`` は ``"attacker"``（ワザを使うポケモンについている。
+        p.321 の 5 段階）か ``"defender"``（ダメージを受けるポケモンについている。7 段階）。``attack_damage_modifiers`` が、ついているトレーナーと同じ所で聞く。"""
+        return ()
+
+    def received_damage_reduction(self) -> int:
+        """ワザでないダメージ（特殊能力・どく・トレーナー・スタジアム・特殊エネルギーのダメージ）を、このカードをつけているポケモンが受けるときに減らす数（v0.78）。0 なら変えない。"""
+        return 0
+
 
 @dataclass(frozen=True)
 class ColorlessUnitsByName(SpecialEnergyEffect):
@@ -9218,10 +9241,215 @@ class RainbowEnergy(SpecialEnergyEffect):
         return None
 
     def on_attached_from_hand(self, state: GameState, player: int, card: int, target: PokemonInPlay) -> None:
-        target.damage += self.amount
-        state.add_event("energy_damage", player=player, pokemon=target.card, pokemon_id=target.pokemon_id, energy=card, amount=self.amount,
-                        total_damage=target.damage)
-        remove_on_damage(state, player, target, self.amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
+        amount, cards = energy_received_damage(state, target, self.amount)  # v0.78: 鋼エネルギー（NIP1X-010。ワザに限らない「-10」）
+        target.damage += amount
+        state.add_event("energy_damage", player=player, pokemon=target.card, pokemon_id=target.pokemon_id, energy=card, amount=amount,
+                        total_damage=target.damage, **energy_reduction_log(self.amount, amount, cards))
+        remove_on_damage(state, player, target, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える
+
+
+DARKNESS_UNIT = frozenset({EnergyType.DARKNESS})
+METAL_UNIT = frozenset({EnergyType.METAL})
+PENALTY_DAMAGE = "damage"  # ポケモンチェックのたび、「弱点・抵抗力」に関係なく 10 ダメージ（neo1-094・PRN-002）
+PENALTY_COUNTER = "counter"  # ポケモンチェックのたび、ダメージカウンターを 1 個のせる（NIP2X-010。ダメージではない）
+DARKNESS_BONUS = 10
+METAL_REDUCTION = 10
+DARKNESS_TEXT_HEAD = "このカードは{comma}「悪」エネルギー1個ぶんとしてあつかう。"
+DARKNESS_TEXT_BONUS = "このカードをつけているポケモンのワザが、対戦ポケモンにダメージを与えるとき、そのダメージは「+10」される。"
+DARKNESS_TEXT_CONDITION = "このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら、ポケモンチェックのたび、このカードをつけているポケモンに、"
+# 印刷の文面（kyuura data/cards.json の energy.text.ja。改行の位置は版で違う）。v0.78 では、この表の書き方だけを受け付ける（一般の正規化をしない）
+DARKNESS_TEXTS: Mapping[str, tuple[str, ...]] = MappingProxyType({
+    PENALTY_DAMAGE: (
+        DARKNESS_TEXT_HEAD.format(comma="") + "\n" + DARKNESS_TEXT_BONUS + "\n\n" + DARKNESS_TEXT_CONDITION + "「弱点・抵抗力」に関係なく、10ダメージ。",  # neo1-094
+        DARKNESS_TEXT_HEAD.format(comma="") + DARKNESS_TEXT_BONUS + "\n" + DARKNESS_TEXT_CONDITION + "「弱点・抵抗力」に関係なく、10ダメージ。",  # PRN-002
+    ),
+    PENALTY_COUNTER: (
+        DARKNESS_TEXT_HEAD.format(comma="、") + DARKNESS_TEXT_BONUS + "\n" + DARKNESS_TEXT_CONDITION + "ダメージカウンターを1個のせる。",  # NIP2X-010
+    ),
+})
+METAL_TEXT_HEAD = "このカードは「鋼」エネルギー1個ぶんとしてあつかう。"
+METAL_TEXTS: Mapping[bool, tuple[str, ...]] = MappingProxyType({
+    # neo1-095: 受けるのは「ワザによるダメージ」だけ（kyuura data/curation/card_differences.json の neo1-095。英語の文面はワザに限っていない。日本語にしたがう）
+    False: (METAL_TEXT_HEAD + "\nこのカードをつけているポケモンがワザによるダメージを受けるとき、そのダメージは「-10」される。\n\n"
+            "このカードをつけているポケモンが「鋼」ポケモンでないなら、このカードをつけているポケモンがワザによって与えるダメージも、「-10」される。",),
+    # NIP1X-010: 受けるダメージは、ワザに限らない書き方（「ダメージを受けるとき」）
+    True: (METAL_TEXT_HEAD + "このカードをつけているポケモンがダメージを受けるとき、そのダメージは「-10」される。\n"
+           "このカードをつけているポケモンが「鋼」ポケモンでないなら、このカードをつけているポケモンがワザによるダメージを与えるとき、そのダメージは「-10」される。",),
+})
+
+
+def _owner_of(state: GameState, pokemon: PokemonInPlay) -> int:
+    return next(i for i, side in enumerate(state.players) if any(q is pokemon for q in side.in_play()))
+
+
+def is_opponent_active(state: GameState, attacker: PokemonInPlay, defender: PokemonInPlay) -> bool:
+    """``defender`` が ``attacker`` の持ち主の相手の対戦ポケモン（バトル場のポケモン）か（v0.78。悪エネルギーの「対戦ポケモンにダメージを与えるとき」）。自分へのダメージ・
+    控えポケモンへのダメージは入らない。受ける時点の場で決める（ワザの要素の並びの ``target`` ではなく、今どこにいるか）。"""
+    if defender is attacker:
+        return False
+    owner = _owner_of(state, defender)
+    return owner != _owner_of(state, attacker) and state.players[owner].active is defender
+
+
+@dataclass(frozen=True)
+class DarknessEnergy(SpecialEnergyEffect):
+    """「悪」エネルギー 1 個（v0.78。悪エネルギー neo1-094・NIP2X-010・PRN-002。kyuura の印刷の文面。docs/darkness-metal-energy-v0.78.md 3 章）。
+
+    - つけているポケモンのワザが、対戦ポケモン（相手のバトル場のポケモン）にダメージを与えるとき、p.321 の 5 段階（ワザを使うポケモンについているカードの効果。
+      GR-2000-P321-DAMAGE-ORDER）で + 10（カードごと）。英語の文面の「after applying Weakness and Resistance」ではなく日本語の範囲（対戦ポケモンだけ）にしたがう。
+      控えポケモン・自分へのダメージには当てはめない。2 段階で 0 以下なら計算を終える（p.321。5 段階は計算しない）
+    - ポケモンチェックのたび（p.323 の 1「指示されたこと」）、つけているポケモンの今有効なタイプが「悪」でなく、今の姿の名前が「わるい」ではじまらない（「わるい」ポケモンで
+      ない）なら、``penalty`` が ``PENALTY_DAMAGE`` なら「弱点・抵抗力」に関係なく 10 ダメージ（ワザ・特殊能力のダメージではない）、``PENALTY_COUNTER`` ならダメージカウンター
+      を 1 個のせる（ダメージではない。GR-2000-P320-COUNTER-MOVE）。処理は ``procedures.pokemon_check_poison``（``darkness_penalties``）
+    - 特殊エネルギーの効果なので、かがくへんかガス・特殊状態では消えない
+    """
+
+    penalty: str = PENALTY_DAMAGE
+    implementation_id: ClassVar[str] = "darkness_energy"
+    affects_damage: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        if self.penalty not in DARKNESS_TEXTS:
+            raise ValueError(f"悪エネルギーのポケモンチェックの効果 {self.penalty!r} は {tuple(DARKNESS_TEXTS)} のどれか")
+
+    @property
+    def pokemon_check_penalty(self) -> str:  # type: ignore[override]
+        return self.penalty
+
+    def units(self) -> tuple[frozenset[EnergyType], ...]:
+        return (DARKNESS_UNIT,)
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = []
+        if definition.name_ja != "悪エネルギー":
+            problems.append(f"名前 {definition.name_ja!r} が「悪エネルギー」ではない")
+        if definition.energy_text_ja not in DARKNESS_TEXTS[self.penalty]:
+            problems.append(f"説明 {definition.energy_text_ja!r} が、登録した悪エネルギーの説明（{self.penalty}）の書き方ではない")
+        return problems
+
+    def attack_damage_modifiers(self, state, holder, card, role, attacker, defender):
+        if role == "attacker" and holder is attacker and is_opponent_active(state, attacker, defender):
+            return (DamageModifier(step=5, amount=DARKNESS_BONUS, label=state.card_def(card).name_ja, source=card),)
+        return ()
+
+
+@dataclass(frozen=True)
+class MetalEnergy(SpecialEnergyEffect):
+    """「鋼」エネルギー 1 個（v0.78。鋼エネルギー neo1-095・NIP1X-010。kyuura の印刷の文面。docs/darkness-metal-energy-v0.78.md 4 章）。
+
+    - つけているポケモンがワザのダメージを受けるとき、p.321 の 7 段階（ワザを受けるポケモンについているカードの効果）で - 10（カードごと。受けるポケモンがだれでも:
+      対戦ポケモン・控えポケモン・自分へのダメージ・返す効果のダメージ）
+    - つけているポケモンの今有効なタイプが「鋼」でないなら、そのポケモンがワザで与えるダメージも 5 段階（ワザを使うポケモンについているカードの効果）で - 10。英語の文面の
+      「before applying Weakness and Resistance」ではなく、日本語の書き方（カードの効果）と GR-2000-P321-DAMAGE-ORDER の段階にしたがう。自分へのダメージでは、与える
+      ダメージの - 10 と受けるダメージの - 10 を、それぞれ 1 回ずつ当てはめる（同じ文を二重に数えない）
+    - ``any_damage``（NIP1X-010）: 受けるダメージの文が「ワザによる」に限らない書き方。ワザでないダメージ（特殊能力・どく・トレーナー・スタジアム・特殊エネルギーのダメージ）も
+      - 10（``received_damage_reduction``。``energy_received_damage``）。ダメージカウンターをのせる・移す効果は、ダメージではないので変えない（GR-2000-P320-COUNTER-MOVE）。
+      neo1-095 はワザによるダメージだけ（kyuura data/curation/card_differences.json の neo1-095。同じカードの組（``same_card_group``）でも処理は同じではない）
+    - 色の読み方（VS1）で「鋼」ポケモンかが変わるなら止める
+    """
+
+    any_damage: bool = False
+    implementation_id: ClassVar[str] = "metal_energy"
+    affects_damage: ClassVar[bool] = True
+
+    def units(self) -> tuple[frozenset[EnergyType], ...]:
+        return (METAL_UNIT,)
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        problems = []
+        if definition.name_ja != "鋼エネルギー":
+            problems.append(f"名前 {definition.name_ja!r} が「鋼エネルギー」ではない")
+        if definition.energy_text_ja not in METAL_TEXTS[self.any_damage]:
+            problems.append(f"説明 {definition.energy_text_ja!r} が、登録した鋼エネルギーの説明（ワザに限らない: {self.any_damage}）の書き方ではない")
+        return problems
+
+    def attack_damage_modifiers(self, state, holder, card, role, attacker, defender):
+        label = state.card_def(card).name_ja
+        if role == "defender" and holder is defender:
+            return (DamageModifier(step=7, amount=-METAL_REDUCTION, label=label, source=card),)
+        if role == "attacker" and holder is attacker:
+            readings = {color is EnergyType.METAL for color in type_readings(state, holder)}
+            if len(readings) > 1:
+                raise shift_duration_error(holder, f"鋼エネルギー {card} の「このカードをつけているポケモンが「鋼」ポケモンでないなら」")
+            if readings == {False}:
+                return (DamageModifier(step=5, amount=-METAL_REDUCTION, label=label, source=card),)
+        return ()
+
+    def received_damage_reduction(self) -> int:
+        return METAL_REDUCTION if self.any_damage else 0
+
+
+def energy_damage_modifiers(state: GameState, holder: PokemonInPlay, role: str, attacker: PokemonInPlay, defender: PokemonInPlay) -> list[DamageModifier]:
+    """``holder`` についている特殊エネルギーの、ワザのダメージの変更効果（v0.78。ついている順）。"""
+    found: list[DamageModifier] = []
+    for uid in holder.energy:
+        if not state.card_def(uid).is_special_energy:
+            continue
+        effect = special_energy_effect(state, uid)
+        if effect is not None and effect.affects_damage:
+            found.extend(effect.attack_damage_modifiers(state, holder, uid, role, attacker, defender))
+    return found
+
+
+def energy_damage_reducers(state: GameState, pokemon: PokemonInPlay) -> tuple[int, ...]:
+    """``pokemon`` についている、ワザでないダメージも減らす特殊エネルギー（NIP1X-010 の鋼エネルギー）のカード（v0.78。ついている順）。"""
+    return tuple(uid for uid in pokemon.energy
+                 if state.card_def(uid).is_special_energy and special_energy_effect(state, uid).received_damage_reduction())
+
+
+def energy_received_damage(state: GameState, pokemon: PokemonInPlay, amount: int) -> tuple[int, tuple[int, ...]]:
+    """ワザでないダメージ ``amount`` を ``pokemon`` が受けるときの、ついている特殊エネルギーの「ダメージを受けるとき、そのダメージは「-10」」（v0.78。NIP1X-010 の鋼
+    エネルギー。カードごと）を当てはめた数（0 より小さくしない）と、当てはめたカードの uid。当てはまるカードがなく・ダメージが 0 以下なら (``amount``, ())。状態を変えない。"""
+    cards = energy_damage_reducers(state, pokemon)
+    if amount <= 0 or not cards:
+        return amount, ()
+    return max(0, amount - sum(special_energy_effect(state, uid).received_damage_reduction() for uid in cards)), cards
+
+
+# DE1（v0.78）: 悪エネルギー（neo1-094・PRN-002）のポケモンチェックの 10 ダメージ（ワザ・特殊能力のダメージではない）に、受けるダメージを変える常にはたらく特殊能力
+# （カブトアーマー・なぞのかべ）を当てはめるか（v0.47 の KA1・v0.57 の EX1・v0.58 の RB4 と同じ形の別の問い）
+DARKNESS_RECEIVED_POWER_CODE = "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"
+
+
+def darkness_received_power_problem(state: GameState, pokemon: PokemonInPlay, amount: int) -> str | None:
+    """悪エネルギーのポケモンチェックのダメージ ``amount`` を ``pokemon`` が受けるとき、受けるダメージを変える常にはたらく特殊能力を当てはめると量が変わるなら、止める理由（DE1）。"""
+    for _, holder, key, effect in continuous_powers(state):
+        if holder is not pokemon:
+            continue
+        modifier = effect.poison_damage_modifier(state, holder, _power_label(state, holder, key))
+        if modifier is not None and modifier.apply(amount, state.rules.damage_per_counter) != amount:
+            return (f"ポケモン {pokemon.pokemon_id} の {modifier.label} を、悪エネルギーのポケモンチェックのダメージ {amount}（特殊エネルギーカードによるダメージ。ワザ・特殊能力の"
+                    "ダメージではない）に当てはめるか（説明の「受けるダメージ」がそのダメージを含むか）は決められないので扱わない（DE1。v0.47 の KA1 と同じ形の別の問い）")
+    return None
+
+
+def darkness_exempt(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """悪エネルギーの「このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら」の、「悪」または「わるい」ポケモンか（v0.78）。今有効なタイプ（色）が「悪」か、
+    今の姿の名前が「わるい」ではじまる（日本語のカードの名前。英語の「has Dark in its name」ではない）なら真。色の読み方（VS1）で答えが変わるなら ``shift_duration_error``。"""
+    if form_def(state, pokemon).name_ja.startswith("わるい"):
+        return True
+    readings = {color is EnergyType.DARKNESS for color in type_readings(state, pokemon)}
+    if len(readings) > 1:
+        raise shift_duration_error(pokemon, "悪エネルギーの「このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら」")
+    return readings == {True}
+
+
+def darkness_penalties(state: GameState, order: Iterable[int]) -> list[tuple[int, PokemonInPlay, int, str]]:
+    """ポケモンチェックのたびの悪エネルギーの効果を受ける (持ち主, 場のポケモン, 悪エネルギーのカード, ``PENALTY_DAMAGE``・``PENALTY_COUNTER``)（v0.78）。並びは ``order`` の
+    プレイヤーの場（バトル場 → ベンチ）・ついている順（ログの順。並びで結果は変わらない: どれもコイン・決定のないダメージ・ダメージカウンター）。特殊状態・かがくへんかガスに
+    関係なく、両方のプレイヤーの場のすべてのポケモン。「悪」「わるい」ポケモンは受けない（``darkness_exempt``。VS1 で決まらなければ止める）。"""
+    found = []
+    for owner in order:
+        for pokemon in state.players[owner].in_play():
+            cards = [uid for uid in pokemon.energy if state.card_def(uid).is_special_energy and special_energy_effect(state, uid).pokemon_check_penalty]
+            if cards and not darkness_exempt(state, pokemon):
+                found.extend((owner, pokemon, uid, special_energy_effect(state, uid).pokemon_check_penalty) for uid in cards)
+    return found
+
+
+def energy_reduction_log(before: int, after: int, cards: tuple[int, ...]) -> dict[str, Any]:
+    """ワザでないダメージのログに書く、鋼エネルギーで減らした記録（v0.78。減らしたときだけ ``amount_before``・``energy_reduction``）。"""
+    return {} if not cards else {"amount_before": before, "energy_reduction": cards}
 
 
 # 無色2個エネルギーの登録の出典（v0.58）: 日本語の説明がないので、処理に使う文面はなく、個数と色を kyuura の名前と pcg-search.com の同じ版のカードの記号で決めた
@@ -10675,25 +10903,33 @@ class HalfRemainingHpDamage(AttackEffect):
       のせない。ダメージの要素）
     """
 
+    # v0.78: 切りすて（ハッサム（neo2-045）の「みねうち」の「相手の残りHPの半分(切りすて)のダメージを与える。」）。既定の偽は v0.45 の切り上げ（「いかりのまえば」）
+    round_down: bool = False
     implementation_id = "half_remaining_hp_damage"
 
     def check(self, attack: Attack) -> list[str]:
         problems = []
         if attack.damage is not None or attack.damage_modifier != "?":
             problems.append("ダメージの目安が「?」でないワザを、相手の残りの HP の半分のダメージのワザとして登録している")
-        return problems + _check_exact_text(attack, "相手の残りの HP の半分のダメージのワザ", (HALF_REMAINING_HP_TEXT,))
+        expected = HALF_REMAINING_HP_DOWN_TEXT if self.round_down else HALF_REMAINING_HP_TEXT
+        return problems + _check_exact_text(attack, "相手の残りの HP の半分のダメージのワザ", (expected,))
 
     def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
-        return DamageProfile(opponent=(half_remaining_hp(state, state.players[1 - use.player].active),))
+        return DamageProfile(opponent=(half_remaining_hp(state, state.players[1 - use.player].active, round_down=self.round_down),))
 
 
-def half_remaining_hp(state: GameState, pokemon: PokemonInPlay) -> int:
-    """場のポケモンの残りの HP の半分（ダメージカウンターの単位で切り上げ）（v0.45。「いかりのまえば」）。"""
+HALF_REMAINING_HP_DOWN_TEXT = "相手の残りHPの半分(切りすて)のダメージを与える。"
+
+
+def half_remaining_hp(state: GameState, pokemon: PokemonInPlay, *, round_down: bool = False) -> int:
+    """場のポケモンの残りの HP の半分（ダメージカウンターの単位で切り上げ）（v0.45。「いかりのまえば」）。v0.78: ``round_down`` なら切りすて（「みねうち」。残り 70 → 30、
+    50 → 20、30 → 10、10 → 0。0 なら p.321 の 2 段階で計算を終え、ダメージを与えない）。"""
     per = state.rules.damage_per_counter
     remaining = max_hp(state, pokemon) - pokemon.damage  # v0.48: 今有効な最大HPから残りの HP を求める
     if remaining <= 0 or remaining % per:
         raise RuntimeError(f"ポケモン {pokemon.pokemon_id} の残りの HP {remaining} が、ダメージカウンターの単位の正の倍数ではない（エンジンの不具合）")
-    return (remaining // per + 1) // 2 * per
+    counters = remaining // per
+    return (counters // 2 if round_down else (counters + 1) // 2) * per
 
 
 CROSS_COUNTER_TEXT = ("次の相手の番、このカードが相手のワザによるダメージを受けた時、(このカードが「きぜつ」するしないにかかわらず、)コインを投げる。「おもて」なら、"
@@ -11537,9 +11773,23 @@ def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay,
             applied.append(modifier)
     if len(applied) > 1:
         raise RuntimeError(f"特殊能力のダメージを受けるポケモン {receiver.pokemon_id} に、受けるダメージを変える特殊能力が 2 つ以上ある（順番が決まらない。エンジンの不具合）")
+    per = state.rules.damage_per_counter
+    printed = amount
     for modifier in applied:
-        amount = modifier.apply(amount, state.rules.damage_per_counter)
-    return amount, tuple(applied)
+        amount = modifier.apply(amount, per)
+    # v0.78: 受けるポケモンについている鋼エネルギー（NIP1X-010。「ダメージを受けるとき、そのダメージは「-10」」。ワザに限らない）。受けるダメージを変える特殊能力と
+    # 両方が当てはまり、当てはめる順番で量が変わるなら、ワザでないダメージには p.321 の段階がないので決まらない（MT1）
+    reduced, used = energy_received_damage(state, receiver, amount)
+    cards = energy_damage_reducers(state, receiver) if printed > 0 else ()
+    if cards and applied:
+        other, _ = energy_received_damage(state, receiver, printed)
+        for modifier in applied:
+            other = modifier.apply(other, per)
+        if other != reduced:
+            raise UnsupportedError(METAL_POWER_ORDER_CODE, f"ポケモン {receiver.pokemon_id} の特殊能力のダメージ {printed}（{applied[0].label}・鋼エネルギー {list(cards)}）: "
+                                   + METAL_POWER_ORDER_REASON)
+    applied.extend(DamageModifier(step=7, amount=-METAL_REDUCTION, label=state.card_def(uid).name_ja, source=uid) for uid in used)
+    return reduced, tuple(applied)
 
 
 def received_modifiers_log(applied: tuple[DamageModifier, ...]) -> tuple[tuple, ...]:
@@ -16869,6 +17119,14 @@ DOUBLED_POWER_DAMAGE_REASON = (
     "「もろばバサミ」の「次の相手の番、このカードが受けるダメージは2倍になる。」を、特殊能力のダメージ（ワザによるダメージではない。p.321「8」）に当てはめるかは、"
     "印刷の文面・kyuura の記録から決められない（DB1。ワザのダメージは p.321 の 8 段階で 2 倍。トレーナーのダメージは TD1）"
 )
+# MT1（v0.78）: ワザでないダメージに、受けるダメージを変える常にはたらく特殊能力と、鋼エネルギー（NIP1X-010。ワザに限らない「-10」）の両方が当てはまり、当てはめる順番で
+# 量が変わる場合
+METAL_POWER_ORDER_CODE = "UNRESOLVED_METAL_ENERGY_POWER_ORDER"
+METAL_POWER_ORDER_REASON = (
+    "受けるダメージを変える常にはたらく特殊能力（なぞのかべ・ふしぎなバリアーなど）と、鋼エネルギー（NIP1X-010）の「このカードをつけているポケモンがダメージを受けるとき、"
+    "そのダメージは「-10」される。」を、ワザでないダメージ（特殊能力のダメージ。p.321 の段階の計算をしない）に当てはめる順番は、印刷の文面・kyuura の記録から決められないので扱わない"
+    "（MT1。当てはめる順番で量が変わる場合だけ止める。ワザのダメージは p.321 の 7 段階・8 段階）"
+)
 # TD1: トレーナーのダメージに、受けるダメージを変える効果（「ダメージを受けない」以外）を当てはめるか
 TRAINER_DAMAGE_MODIFIER_CODE = "UNRESOLVED_TRAINER_DAMAGE_REDUCTION"
 TRAINER_DAMAGE_MODIFIER_REASON = (
@@ -17039,6 +17297,11 @@ def scram_working(state: GameState, pokemon: PokemonInPlay, slot: PowerSlot) -> 
 def scram_due(state: GameState, pokemon: PokemonInPlay, slot: PowerSlot) -> bool:
     """v0.61: 残りHPがちょうど［ずらかる］の数（10）か。"""
     return max_hp(state, pokemon) - pokemon.damage == slot.effect.remaining_hp
+
+
+def scram_watch(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """v0.78: ``pokemon`` が、力がはたらいている［ずらかる］を持つか（ポケモンチェックの 1・2 の途中で残りHPが「10」を通ったかを見るとき。数は呼ぶ側が比べる）。"""
+    return any(isinstance(slot.effect, ReturnToDeckAtRemainingHp) and scram_working(state, pokemon, slot) for slot in powers_of(state, pokemon))
 
 
 def dormant_scram(state: GameState) -> frozenset[int]:
@@ -17366,9 +17629,11 @@ def trainer_damage(state: GameState, owner: int, pokemon: PokemonInPlay, amount:
     changed = trainer_damage_modifiers(state, owner, pokemon, amount)
     if changed:
         raise UnsupportedError(TRAINER_DAMAGE_MODIFIER_CODE, f"ポケモン {pokemon.pokemon_id} の {changed}: {TRAINER_DAMAGE_MODIFIER_REASON}")
-    pokemon.damage += amount
-    state.add_event("trainer_damage", **base, amount=amount, total_damage=pokemon.damage)
-    remove_on_damage(state, owner, pokemon, amount)
+    # v0.78: 鋼エネルギー（NIP1X-010。受けるダメージはワザに限らない書き方）。TD1 の効果（ワザに限らないかが決まらない効果）とは別に、説明のとおり当てはめる
+    final, cards = energy_received_damage(state, pokemon, amount)
+    pokemon.damage += final
+    state.add_event("trainer_damage", **base, amount=final, total_damage=pokemon.damage, **energy_reduction_log(amount, final, cards))
+    remove_on_damage(state, owner, pokemon, final)
 
 
 def _damage_only(entries: Iterable[tuple[str, int, str]]) -> dict[AttackKey, AttackEntry]:
@@ -18214,12 +18479,13 @@ def bench_entry_damage(state: GameState, owner: int, pokemon: PokemonInPlay) -> 
     flips = flip_coins(state, owner, 1, source="stadium", effect=state.cards[stadium.card].card_id, card=stadium.card, pokemon_id=pokemon.pokemon_id)
     if flips.results[0] is not CoinSide.TAILS:
         return
-    pokemon.damage += effect.amount
+    amount, cards = energy_received_damage(state, pokemon, effect.amount)  # v0.78: 出したばかりのたねポケモンにはエネルギーがないので、今は変わらない
+    pokemon.damage += amount
     if knocked_by_hp(state, pokemon):
         raise RuntimeError(f"ロケット団の爆発ジムのダメージで、出したポケモン {pokemon.pokemon_id} が HP 以上になった（今の写しでは起こらない。エンジンの不具合）")
-    state.add_event("stadium_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, amount=effect.amount, total_damage=pokemon.damage,
-                    stadium_card=stadium.card)
-    remove_on_damage(state, owner, pokemon, effect.amount)  # v0.60: 出したばかりのたねポケモンは持続する効果を持たないので、今の対応カードでは何も消えない
+    state.add_event("stadium_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, amount=amount, total_damage=pokemon.damage,
+                    stadium_card=stadium.card, **energy_reduction_log(effect.amount, amount, cards))
+    remove_on_damage(state, owner, pokemon, amount)  # v0.60: 出したばかりのたねポケモンは持続する効果を持たないので、今の対応カードでは何も消えない
 
 
 VIRIDIAN_GYM_ONE_COUNTER_CODE = "UNRESOLVED_VIRIDIAN_GYM_ONE_COUNTER"
@@ -26918,3 +27184,140 @@ SAME_DATA_TRAINERS_V0_77: Mapping[str, str] = MappingProxyType({
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_77_ATTACKS), SAME_DATA_CARDS_V0_77)
 DEFAULT_EFFECTS = _with_shared_trainers(_with_trainers(DEFAULT_EFFECTS, V0_77_TRAINERS), SAME_DATA_TRAINERS_V0_77)
+
+
+# ---------------------------------------------------------------- v0.78（docs/darkness-metal-energy-v0.78.md）。悪・鋼エネルギーと、「悪」「鋼」エネルギーを使うポケモン 8 枚。
+# 処理に使う文面は kyuura の印刷の文面（英語の文面・後年のルールは持ち込まない）
+
+BEAT_UP_TEXT = "自分の場にいるポケモンの数ぶんコインを投げ、「おもて」の数×{per}のダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnPokemonDamage(AttackEffect):
+    """自分の場にいるポケモン（バトル場とベンチ。このカードも数える）の数だけコインを投げ、「おもて」の数 × ``per`` のダメージ（v0.78。ニューラ（neo1-056）の「ふくろだたき」）。
+
+    v0.48 の「ナイトスピリッツ」（``CoinsPerNamedPokemonDamage``）と同じ値（``programs.HeadsTimesNamedPokemon``）で、名前をしぼらない（``names`` が None）。数えるのはダメージの
+    要素を処理する時点の場（進化して重なったカードは 1 匹。v0.39 の ``counted_pokemon``）。コインは「おもて」の数でまとめて先読みし、実際の対戦では 1 枚ずつ投げる。"""
+
+    per: int
+    implementation_id = "coins_per_own_pokemon_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        problems = _check_form(attack, "場のポケモンの数のコインでダメージのワザ", damage="modified", modifier="×")
+        expected = BEAT_UP_TEXT.format(per=self.per)
+        if attack.text_ja != expected or attack.damage != self.per:
+            problems.append(f"説明 {attack.text_ja!r}・ダメージ {attack.damage} が {expected!r}・{self.per} ではない")
+        return problems
+
+
+PLUNDER_TEXT = "ダメージを与える前に、相手についている「トレーナーカード」をすべてトラッシュする。"
+
+
+@dataclass(frozen=True)
+class DiscardOpponentTrainersThenDamage(AttackEffect):
+    """ダメージを与える前に、相手（相手の対戦ポケモン）についているトレーナーカードをすべてトラッシュする。そのあとダメージの目安の数字ぶんのダメージ（v0.78。デルビル
+    （neo2-039・NIP2X-005）の「ごうだつ」）。
+
+    - トラッシュは相手の対戦ポケモンへの効果（要素の種類 ``TRAINER_DISCARD_ELEMENT``）なので、「ワザをうけない」状態・「とうめい」を評価する（ついているトレーナーが
+      なければ処理の対象がなく、評価しない。p.309）。カードはつけたプレイヤー（持ち主）のトラッシュに置く（ログ ``discard_attached_trainer`` の ``reason`` は ``attack``）
+    - ダメージはトラッシュしたあとの場で計算する（ディフェンダー・お上品攻撃のないダメージ。p.321 の計算はダメージを与えるときの効果で）
+    """
+
+    implementation_id = "discard_opponent_trainers_then_damage"
+    opponent_effect_elements = (TRAINER_DISCARD_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "トレーナーをトラッシュしてからダメージのワザ", damage="fixed") + _check_exact_text(
+            attack, "トレーナーをトラッシュしてからダメージのワザ", (PLUNDER_TEXT,))
+
+
+CORNER_TEXT = "次の相手の番、このワザを受けた相手は「にげる」ことができない。"
+
+
+@dataclass(frozen=True)
+class RetreatLockWithoutDamage(AttackEffect):
+    """ダメージの要素のないワザ。次の相手の番、このワザを受けた相手（相手の対戦ポケモン）は「にげる」ことができない（v0.78。デルビル（neo4-081）の「おいつめる」）。
+    v0.36 の「アイスバーン」（``DamageThenRetreatLock``。ダメージのあと）と同じ持続する効果 ``CannotRetreat``・要素 ``OpponentRetreatLock`` で、ダメージがない（ダメージの
+    あるワザの型を 0 ダメージに広げない）。相手に与える効果なので「ワザをうけない」状態・「とうめい」を評価する。"""
+
+    implementation_id = "retreat_lock_without_damage"
+    opponent_effect_elements = (RETREAT_LOCK_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "ダメージのない「にげる」ことができなくするワザ", damage="none") + _check_exact_text(
+            attack, "ダメージのない「にげる」ことができなくするワザ", (CORNER_TEXT,))
+
+    def retreat_lock_terms(self) -> type:
+        from .state import CannotRetreat
+
+        return CannotRetreat
+
+
+METAL_SLASH_TEXT = "次の自分の番、このカードはワザを使うことができない。"
+
+
+@dataclass(frozen=True)
+class DamageThenSelfCannotAttack(AttackEffect):
+    """ダメージの目安の数字ぶんのダメージ。次の自分の番、このカードはワザを使うことができない（すべてのワザ。v0.78。エアームド（NIP1X-005）の「メタルスラッシュ」）。
+
+    - 自分自身に与える持続する効果 ``state.CannotAttackNextOwnTurn``（はたらく番は与えた番 + 2。期限はその番の終わり。ベンチにもどる・進化・きぜつで消える）。その番、
+      このポケモンのワザの宣言は v0.31 の「しっぽをふる」と同じ所・同じコードで拒否する（``ATTACK_PREVENTED``）
+    - v0.41 の「きあいずつき」（``SelfAttackLock`` の ``target_attack_index`` None = このワザだけ）とは意味が違う（None の意味を変えない）
+    - このカードがこのワザで HP 以上（相手の「はんげき」など）なら与えない（p.309）
+    """
+
+    implementation_id = "damage_then_self_cannot_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "次の自分の番にワザを使えなくなるワザ", damage="fixed") + _check_exact_text(
+            attack, "次の自分の番にワザを使えなくなるワザ", (METAL_SLASH_TEXT,))
+
+
+# v0.78: 8 枚のポケモンのワザ（16）。NIP2X-005 のデルビルは neo2-039 と同じデータ（下の SAME_DATA_CARDS_V0_78 で同じ登録の値にまとめる）
+_PLUNDER = _printed(DiscardOpponentTrainersThenDamage(), "ごうだつ", PLUNDER_TEXT)
+V0_78_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    AttackKey("neo1-056", 0): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "みだれひっかき", "コインを3枚投げ、「おもて」の数×10のダメージ。"),
+    AttackKey("neo1-056", 1): _printed(CoinsPerOwnPokemonDamage(20), "ふくろだたき", BEAT_UP_TEXT.format(per=20)),
+    AttackKey("neo1-057", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),
+    AttackKey("neo1-057", 1): _printed(CoinBonusDamage(20), "テールクラッシュ", "コインを投げて「おもて」なら、20ダメージを追加する。"),
+    AttackKey("neo1-058", 0): _printed(FailOnTailsDamage(1), "かぎづめ", "コインを投げて「うら」なら、このワザは失敗する。"),
+    AttackKey("neo1-058", 1): _printed(DamageThenReduceDamageNextTurn(20, on_heads=True), "はがねのつばさ",
+                                       "コインを投げて「おもて」なら、次の相手の番、このカードが、ワザによって受けるダメージは「-20」される。"),
+    AttackKey("neo2-039", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("neo2-039", 1): _PLUNDER,
+    AttackKey("neo2-045", 0): _printed(HalfRemainingHpDamage(round_down=True), "みねうち", HALF_REMAINING_HP_DOWN_TEXT),
+    AttackKey("neo2-045", 1): _printed(CoinsHeadsTimesBonusDamage(2, 20), "ダブルクロー", "コインを2枚投げ、「おもて」の数×20のダメージを追加する。"),
+    AttackKey("neo4-081", 0): _printed(RetreatLockWithoutDamage(), "おいつめる", CORNER_TEXT),
+    AttackKey("neo4-081", 1): _printed(FailOnTailsDamage(1), "とびかかる", "コインを投げて「うら」なら、このワザは失敗する。"),
+    AttackKey("NIP1X-005", 0): AttackEntry(DAMAGE_ONLY, "つつく"),
+    AttackKey("NIP1X-005", 1): _printed(DamageThenSelfCannotAttack(), "メタルスラッシュ", METAL_SLASH_TEXT),
+    AttackKey("NIP2X-005", 0): AttackEntry(DAMAGE_ONLY, "かみつく"),
+    AttackKey("NIP2X-005", 1): _PLUNDER,
+})
+
+SAME_DATA_CARDS_V0_78: Mapping[str, str] = MappingProxyType({
+    "NIP2X-005": "neo2-039",  # デルビル（かみつく・ごうだつ）
+})
+
+# v0.78: 特殊エネルギー 5 枚（kyuura の印刷の文面。照合する文面と処理に使う文面は同じ）。neo1-094 と PRN-002 は同じ処理（書き方の改行だけが違う）、NIP2X-010 は
+# ポケモンチェックでダメージカウンターをのせる。neo1-095 と NIP1X-010 は受けるダメージの範囲が違う（同じカードの組でも処理は同じではない）
+V0_78_ENERGIES: Mapping[str, EnergyEntry] = MappingProxyType({
+    "neo1-094": EnergyEntry(DarknessEnergy(PENALTY_DAMAGE), "悪エネルギー", DARKNESS_TEXTS[PENALTY_DAMAGE][0], DARKNESS_TEXTS[PENALTY_DAMAGE][0], _KYUURA_PRINTED_TEXT),
+    "PRN-002": EnergyEntry(DarknessEnergy(PENALTY_DAMAGE), "悪エネルギー", DARKNESS_TEXTS[PENALTY_DAMAGE][1], DARKNESS_TEXTS[PENALTY_DAMAGE][1], _KYUURA_PRINTED_TEXT),
+    "NIP2X-010": EnergyEntry(DarknessEnergy(PENALTY_COUNTER), "悪エネルギー", DARKNESS_TEXTS[PENALTY_COUNTER][0], DARKNESS_TEXTS[PENALTY_COUNTER][0],
+                             _KYUURA_PRINTED_TEXT),
+    "neo1-095": EnergyEntry(MetalEnergy(any_damage=False), "鋼エネルギー", METAL_TEXTS[False][0], METAL_TEXTS[False][0], _KYUURA_PRINTED_TEXT),
+    "NIP1X-010": EnergyEntry(MetalEnergy(any_damage=True), "鋼エネルギー", METAL_TEXTS[True][0], METAL_TEXTS[True][0], _KYUURA_PRINTED_TEXT),
+})
+
+
+def _with_energies(registry: EffectRegistry, entries: Mapping[str, EnergyEntry]) -> EffectRegistry:
+    """``entries`` の特殊エネルギーの登録を加えた登録表（v0.78）。すでに登録のある id なら ``RuntimeError``（登録を黙って上書きしない）。"""
+    for card in entries:
+        if card in registry.energy_ids() or card in registry.trainer_ids() or any(k.card_id == card for k in registry.attack_keys()):
+            raise RuntimeError(f"{card} にはすでに登録がある")
+    return EffectRegistry(registry.id, registry._attacks, registry._trainers, registry._powers, {**registry._energies, **entries})
+
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_78_ATTACKS), SAME_DATA_CARDS_V0_78)
+DEFAULT_EFFECTS = _with_energies(DEFAULT_EFFECTS, V0_78_ENERGIES)

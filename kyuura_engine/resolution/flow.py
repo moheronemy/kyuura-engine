@@ -182,12 +182,18 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     - 場のうらのカード（v0.67。マチスの秘策）: ワザがダメージや効果を与える時におもてにし、「たねポケモン」でなければトラッシュする。v0.13 の止める関数はうらのカードの
       定義を読めず（FD1）、おもてにしたあとの結果も試さない
     - 場の［だつりょくえき］（v0.68。キョウのベトベトン）: ダメージの要素のあとにコインと持ち主の決定があり、DR8・DR13 で止める。v0.13 の止める関数は知らない
+    - 場の悪・鋼エネルギー（v0.78）: ワザでないダメージの「-10」（NIP1X-010）を、v0.13 の止める関数の特殊能力のダメージの見積もりは知らない
     """
     found = []
     if any(state.effects.trainer_entry(state.cards[t.card].card_id).effect.reduces_attack_damage for t in attacker.trainers):
         found.append("お上品攻撃の減らす量")
     if state.face_down_cards:
         found.append("うらのカード")
+    if any(state.card_def(uid).is_special_energy and E.special_energy_effect(state, uid).affects_damage
+           for side in state.players for pokemon in side.in_play() for uid in pokemon.energy):
+        # v0.78: 場の悪・鋼エネルギー（ワザのダメージの 5・7 段階・ワザでないダメージの「-10」）。v0.13 の止める関数の特殊能力のダメージの見積もり（はんげきの 10 など）は、
+        # 鋼エネルギー（NIP1X-010）で減らした量を知らない
+        found.append("悪・鋼エネルギー")
     if E.energy_drain_holders(state):
         # v0.68: キョウのベトベトンの［だつりょくえき］（ダメージの要素のあとのコイン・持ち主が選ぶトラッシュ・DR8・DR13）。v0.13 の止める関数は知らない
         found.append("だつりょくえき")
@@ -742,7 +748,7 @@ def _end_turn(res: Resolution) -> None:
 def _pokemon_check(res: Resolution) -> None:
     """ポケモンチェック（p.323）。どくのきぜつのあとは、ワザのあとと同じきぜつの処理の窓（ふしちょうの写し）を通る。"""
     state = res.state
-    knocked = PR.pokemon_check_poison(state)  # 始まり・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
+    knocked = PR.pokemon_check_poison(state)  # 始まり・1 の悪エネルギー（v0.78）・2 の「どく」・両方のきぜつで止める処理（v0.13 の経路と同じ手続き）
     if knocked is None:
         return
     try:

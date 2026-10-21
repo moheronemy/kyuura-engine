@@ -260,7 +260,7 @@ class TargetTest(unittest.TestCase):
     def test_targets_are_the_requested_82_cards(self):
         self.assertEqual(POOL_V0_70, tuple(REQUESTED))
         self.assertEqual(len(set(POOL_V0_70)), 82)
-        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_70", "pool_v0_71", "pool_v0_72", "pool_v0_73", "pool_v0_74", "pool_v0_75", "pool_v0_76", "pool_v0_77") for card_id in pool}
+        earlier = {card_id for key, pool in EXTRACT.items() if key.startswith("pool_v0_") and key not in ("pool_v0_70", "pool_v0_71", "pool_v0_72", "pool_v0_73", "pool_v0_74", "pool_v0_75", "pool_v0_76", "pool_v0_77", "pool_v0_78") for card_id in pool}
         self.assertFalse(set(POOL_V0_70) & earlier)  # v0.69 までの 553 枚に入っていない
         self.assertEqual(len(earlier), 553)
         self.assertFalse(set(POOL_V0_70) & set(E.EQUIVALENT_CARDS))
@@ -278,11 +278,11 @@ class TargetTest(unittest.TestCase):
         categories = [pool.get(c).category for c in pool.playable_ids]
         # v0.71 で拡張パック以外の商品の再録 78 枚（ポケモン 11・トレーナー 67。ワザ 15・特殊能力 6・トレーナー 67）を加えた。
         # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた。v0.73 で拡張パック以外の商品のトレーナー 18 枚を加えた。v0.74 で拡張パック以外の商品のスタジアム 13 枚を加えた。
-        self.assertEqual(len(pool.playable_ids), 878)  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
-        self.assertEqual(len(EXTRACT["cards"]), 878)  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
-        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (635, 213, 30))  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+        self.assertEqual(len(pool.playable_ids), 891)  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+        self.assertEqual(len(EXTRACT["cards"]), 891)  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+        self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (643, 213, 35))  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids()), len(registry.energy_ids())),
-                         (1072, 74, 213, 12))  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+                         (1088, 74, 213, 17))  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
         new = [k for k in registry.attack_keys() if k.card_id in POOL_V0_70]
         self.assertEqual(len(new), 136)
         self.assertEqual(len(new), sum(len(CARDS[c]["pokemon"]["attacks"]) for c in POOL_V0_70))
@@ -349,7 +349,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
         registry = E.DEFAULT_EFFECTS.without_attacks("test-no-v070", keys)
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_70 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids), 796)  # v0.71 の再録 78 枚・v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚・v0.75 の 15 枚・v0.76 の 24 枚・v0.77 の 52 枚を含む（v0.70 の時点は 553）
+        self.assertEqual(len(pool.playable_ids), 809)  # v0.78 の 13 枚も含む。 v0.71 の再録 78 枚・v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚・v0.75 の 15 枚・v0.76 の 24 枚・v0.77 の 52 枚を含む（v0.70 の時点は 553）
         one = E.DEFAULT_EFFECTS.without_attacks("test-no-tail-drop", [AttackKey(KANGASKHAN, 1)])
         pool = pool_from_extract(read_extract(), one)
         self.assertFalse(pool.get(KANGASKHAN).supported)
@@ -431,7 +431,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
                     self.assertIn(stages[d.stage], names.get(d.evolves_from, set()))
         for stage1, basic in (("NIP1-024", "チコリータ"), ("NIP2-004", "ワニノコ"), ("NIP2-026", "メリープ")):
             self.assertEqual(pool.get(stage1).evolves_from, basic)
-            self.assertTrue(all(pool.get(c).name_ja != basic or c in POOL_V0_70 + tuple(EXTRACT["pool_v0_76"]) + tuple(EXTRACT["pool_v0_77"]) for c in pool.playable_ids))  # v0.77: ワニノコ neo1-024・neo4-028・ウパー neo1-026。v0.76: チコリータ PF1-001・ワニノコ PRN-008・PRN-011
+            self.assertTrue(all(pool.get(c).name_ja != basic or c in POOL_V0_70 + tuple(EXTRACT["pool_v0_76"]) + tuple(EXTRACT["pool_v0_77"]) + tuple(EXTRACT["pool_v0_78"]) for c in pool.playable_ids))  # v0.77: ワニノコ neo1-024・neo4-028・ウパー neo1-026。v0.76: チコリータ PF1-001・ワニノコ PRN-008・PRN-011
 
 
 class SharedEntriesTest(unittest.TestCase):
@@ -777,7 +777,7 @@ class SecretPlanCandidatesTest(unittest.TestCase):
     def test_candidates(self):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
-        v072 = set(EXTRACT["pool_v0_72"]) | set(EXTRACT["pool_v0_73"]) | set(EXTRACT["pool_v0_74"]) | set(EXTRACT["pool_v0_75"]) | set(EXTRACT["pool_v0_76"]) | set(EXTRACT["pool_v0_77"])  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
+        v072 = set(EXTRACT["pool_v0_72"]) | set(EXTRACT["pool_v0_73"]) | set(EXTRACT["pool_v0_74"]) | set(EXTRACT["pool_v0_75"]) | set(EXTRACT["pool_v0_76"]) | set(EXTRACT["pool_v0_77"]) | set(EXTRACT["pool_v0_78"])  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
         self.assertEqual(len(set(candidates) - v072), 572)  # v0.71 で再録のカード（処理の違う 45 種類）が加わった（v0.70 の時点は 527）
         self.assertEqual(set(candidates) & set(POOL_V0_70), set(POOL_V0_70) - set(E.SAME_DATA_CARDS_V0_70))
         self.assertFalse(set(candidates) & set(E.EQUIVALENT_CARDS))

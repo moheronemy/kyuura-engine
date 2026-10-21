@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 165,
-    "engine_stop_codes": 163,
+    "engine_unresolved_rulings": 167,
+    "engine_stop_codes": 165,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -1920,6 +1920,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_METAL_ENERGY_POWER_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.78",
+          "document": "docs/darkness-metal-energy-v0.78.md",
+          "ruling_id": "MT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER": {
+      "engine_rulings": [
+        {
+          "version": "v0.78",
+          "document": "docs/darkness-metal-energy-v0.78.md",
+          "ruling_id": "DE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3140,7 +3162,19 @@
       "neo4-049/attack/1",
       "neo4-072/attack/0",
       "neo4-075/attack/0",
-      "neo4-075/attack/1"
+      "neo4-075/attack/1",
+      "neo1-056/attack/0",
+      "neo1-056/attack/1",
+      "neo1-057/attack/1",
+      "neo1-058/attack/0",
+      "neo1-058/attack/1",
+      "neo2-039/attack/1",
+      "neo2-045/attack/0",
+      "neo2-045/attack/1",
+      "neo4-081/attack/0",
+      "neo4-081/attack/1",
+      "NIP1X-005/attack/1",
+      "NIP2X-005/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

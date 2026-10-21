@@ -22,6 +22,8 @@ from .coins import CoinSide, flip_coins
 from .conditions import CONFUSION_DAMAGE, paralysis_recovery_turn, recover_from_paralysis, recover_from_sleep
 from .damage import calculate_confusion_damage
 from .effects import (
+    DARKNESS_BONUS, DARKNESS_RECEIVED_POWER_CODE, PENALTY_DAMAGE, bench_guard_outside_attack_check, darkness_penalties, darkness_received_power_problem,
+    energy_received_damage, energy_reduction_log, scram_watch, SCRAM_TIMING_CODE,
     knocked_by_hp,
     EXPIRE_TO_HAND,
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
@@ -136,14 +138,34 @@ def remove_expired_trainer_effects(state: GameState) -> None:
 
 
 def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | None:
-    """ポケモンチェック（p.323）の始まりと 2 の「どく」のダメージ（v0.13 の ``engine._pokemon_check`` の前半と同じ）。
+    """ポケモンチェック（p.323）の始まりと 1 の「指示されたこと」（v0.78 の悪エネルギー）と 2 の「どく」のダメージ（v0.13 の ``engine._pokemon_check`` の前半と同じ）。
 
-    ログ ``pokemon_check`` → どく状態のポケモンにダメージ（ログ ``poison_damage``）。HP 以上のダメージのポケモン（番を終えたプレイヤーの
-    場から。バトル場 → ベンチ）を返す。両方のプレイヤーのポケモンが「どく」できぜつする場合は、ダメージを与える前に対戦を止め
+    ログ ``pokemon_check`` →（v0.78）悪エネルギーの効果（ログ ``darkness_energy_damage``・``darkness_energy_counters``）→ どく状態のポケモンにダメージ（ログ ``poison_damage``）。
+    HP 以上のダメージのポケモン（番を終えたプレイヤーの場から。バトル場 → ベンチ）を返す。両方のプレイヤーのポケモンがきぜつする場合は、ダメージを与える前に対戦を止め
     （``UNRESOLVED_POKEMON_CHECK_DOUBLE_KNOCKOUT``）、None を返す。
+
+    v0.78（docs/darkness-metal-energy-v0.78.md 5 章）: 1 と 2 のあいだのきぜつの判定の時点は決めない（どの時点でも結果が変わらない場合だけを処理する: 両方のプレイヤーの
+    ポケモンがきぜつするなら 1・2 を合わせて止める）。［ずらかる］のポケモンの残りHPが、1・2 の途中で「10」になってそのあと変わるなら、はたらく時点で結果が変わるので、
+    ダメージを与える前に止める（SC1）。悪エネルギーの効果は、ワザによるダメージではないので「ダメージを受けない」状態・持続する効果（どちらの番でもない。p.323）を
+    見ない（どくと同じ）。受けるダメージを変える常にはたらく特殊能力で量が変わるなら DE1、控えの［ベンチガード］は v0.65 のエンジンの未対応、「悪」「わるい」ポケモンかが
+    VS1 で決まらなければ VS1 で、どれもダメージを与える前に止める。鋼エネルギー（NIP1X-010）は悪エネルギーのダメージ（カードごと）・どくのダメージを「-10」する。
     """
     state.add_event("pokemon_check")
     order = (state.current_player, 1 - state.current_player)  # ログの順（番を終えたプレイヤーの場から）
+    try:
+        penalties = darkness_penalties(state, order)
+        for owner, pokemon, _, kind in penalties:
+            if kind != PENALTY_DAMAGE:
+                continue
+            problem = darkness_received_power_problem(state, pokemon, DARKNESS_BONUS)
+            if problem is not None:
+                raise UnsupportedError(DARKNESS_RECEIVED_POWER_CODE, problem)
+            if state.players[owner].active is not pokemon:
+                bench_guard_outside_attack_check(state, owner, pokemon, energy_received_damage(state, pokemon, DARKNESS_BONUS)[0])
+    except UnsupportedError as error:
+        halt(state, Halt(code=error.code, message=f"ポケモンチェックの悪エネルギーで: {error.message}",
+                         references=("GR-2000-P323-POKEMON-CHECK", "docs/darkness-metal-energy-v0.78.md 5 章")))
+        return None
     poisoned = [
         (owner, pokemon)
         for owner in order
@@ -157,15 +179,48 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
         if problem is not None:
             halt(state, Halt(code=POISON_RECEIVED_POWER.code, message=f"{problem}。{POISON_RECEIVED_POWER.message}", references=POISON_RECEIVED_POWER.references))
             return None
+    per = state.rules.damage_per_counter
+    steps: dict[int, list[int]] = {}  # ポケモンの番号 → 1・2 の処理ごとののっている数（はじめの数から）
+    for _, pokemon, _, kind in penalties:
+        seq = steps.setdefault(pokemon.pokemon_id, [pokemon.damage])
+        seq.append(seq[-1] + (energy_received_damage(state, pokemon, DARKNESS_BONUS)[0] if kind == PENALTY_DAMAGE else per))
+    for _, pokemon in poisoned:
+        seq = steps.setdefault(pokemon.pokemon_id, [pokemon.damage])
+        seq.append(seq[-1] + energy_received_damage(state, pokemon, pokemon.conditions.poison.damage)[0])
+    projected = {pid: seq[-1] for pid, seq in steps.items()}
+    for owner in order:
+        for pokemon in state.players[owner].in_play():
+            seq = steps.get(pokemon.pokemon_id, ())
+            if any(max_hp(state, pokemon) - value == 10 and value != seq[-1] for value in seq[1:-1]) and scram_watch(state, pokemon):
+                # v0.78: ［ずらかる］（残りHPが「10」になった時）。1・2 の途中で「10」を通る（そのあときぜつする）なら、はたらく時点が決まらない（SC1。v0.61 と同じ問い）
+                halt(state, Halt(code=SCRAM_TIMING_CODE, message=f"ポケモンチェックの悪エネルギー・「どく」の途中で、ポケモン {pokemon.pokemon_id} の残りHPが「10」を通る（SC1）",
+                                 references=("GR-2000-P323-POKEMON-CHECK", "docs/reactive-powers-trainer-damage-v0.61.md", "docs/darkness-metal-energy-v0.78.md 5 章")))
+                return None
     knocked_owners = {
-        owner for owner, pokemon in poisoned
-        if pokemon.damage + pokemon.conditions.poison.damage >= max_hp(state, pokemon)  # v0.48: 今有効な最大HP
+        owner for owner in order for pokemon in state.players[owner].in_play()
+        if pokemon.pokemon_id in projected and projected[pokemon.pokemon_id] >= max_hp(state, pokemon)  # v0.48: 今有効な最大HP
     }
     if len(knocked_owners) > 1:
-        halt(state, POKEMON_CHECK_DOUBLE_KNOCKOUT)
+        if not penalties:
+            halt(state, POKEMON_CHECK_DOUBLE_KNOCKOUT)
+        else:
+            halt(state, Halt(code=POKEMON_CHECK_DOUBLE_KNOCKOUT.code, message="（v0.78: 悪エネルギーの効果を含む）" + POKEMON_CHECK_DOUBLE_KNOCKOUT.message,
+                             references=POKEMON_CHECK_DOUBLE_KNOCKOUT.references + ("docs/darkness-metal-energy-v0.78.md 5 章",)))
         return None
+    for owner, pokemon, uid, kind in penalties:
+        if kind == PENALTY_DAMAGE:
+            amount, cards = energy_received_damage(state, pokemon, DARKNESS_BONUS)
+            pokemon.damage += amount
+            state.add_event("darkness_energy_damage", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, energy=uid, amount=amount,
+                            total_damage=pokemon.damage, **energy_reduction_log(DARKNESS_BONUS, amount, cards))
+            remove_on_damage(state, owner, pokemon, amount)
+        else:
+            pokemon.damage += per
+            state.add_event("darkness_energy_counters", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, energy=uid, counters=1,
+                            total_damage=pokemon.damage)
     for owner, pokemon in poisoned:
-        amount = pokemon.conditions.poison.damage
+        printed = pokemon.conditions.poison.damage
+        amount, cards = energy_received_damage(state, pokemon, printed)  # v0.78: 鋼エネルギー（NIP1X-010）
         pokemon.damage += amount
         state.add_event(
             "poison_damage",
@@ -174,6 +229,7 @@ def pokemon_check_poison(state: GameState) -> list[tuple[int, PokemonInPlay]] | 
             pokemon_id=pokemon.pokemon_id,
             amount=amount,
             total_damage=pokemon.damage,
+            **energy_reduction_log(printed, amount, cards),
         )
         remove_on_damage(state, owner, pokemon, amount)  # v0.60: 「かげぶんしん」はダメージを受けたら消える（どくのダメージも「ダメージ」）
     return [

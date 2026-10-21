@@ -97,7 +97,8 @@ class ResearchLinksTest(unittest.TestCase):
                                          "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET", "UNRESOLVED_NINJA_GYM_WITHOUT_TARGET",
                                          "UNRESOLVED_POKEMON_TOWER_TRAINER_WITHOUT_EFFECT",
                                          # v0.75 で加えた RB5・DB1 も kyuura の一覧にない（docs/search-energy-pokemon-v0.75.md 5 章）
-                                         "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE"})
+                                         "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE", "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",
+                                         "UNRESOLVED_METAL_ENERGY_POWER_ORDER", "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

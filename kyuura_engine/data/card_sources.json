@@ -23452,6 +23452,192 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.77 で加えた（docs/neo-existing-effects-v0.77.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の reuse_candidate。ワザ: かくばる=DamageOnly（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-094": {
+      "basis": "kyuura_data",
+      "name_ja": "悪エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。特殊エネルギー（「悪」エネルギー 1 個。ワザのダメージを対戦ポケモンにだけ p.321 の 5 段階で +10。ポケモンチェックのたび、「悪」「わるい」ポケモンでないなら「弱点・抵抗力」に関係なく 10 ダメージ）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-095": {
+      "basis": "kyuura_data",
+      "name_ja": "鋼エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。特殊エネルギー（「鋼」エネルギー 1 個。受けるワザのダメージを p.321 の 7 段階で -10。「鋼」ポケモンでないなら与えるワザのダメージも 5 段階で -10）。受けるダメージは「ワザによるダメージ」だけ（kyuura data/curation/card_differences.json の neo1-095 の日英の違い（確実）。英語の文面はワザに限っていない。日本語にしたがう）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1X-010": {
+      "basis": "kyuura_data",
+      "name_ja": "鋼エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。NIP1X（イントロパック（neo）。intro_pack。発売 2001-04-06）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。特殊エネルギー（「鋼」エネルギー 1 個。受けるダメージはワザに限らない書き方で、ワザのダメージは 7 段階で -10、ワザでないダメージ（特殊能力・どく・トレーナー・スタジアム・特殊エネルギーのダメージ）も -10。ダメージカウンターをのせる・移す効果は変えない。「鋼」ポケモンでないなら与えるワザのダメージも 5 段階で -10）。同じカードの組（SC-neo1-095）でも neo1-095 と処理は同じではない。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2X-010": {
+      "basis": "kyuura_data",
+      "name_ja": "悪エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。NIP2X（イントロパック（neo）。intro_pack。発売 2001-04-06）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。特殊エネルギー（「悪」エネルギー 1 個。ワザのダメージは neo1-094 と同じ。ポケモンチェックのたびの効果はダメージカウンターを 1 個のせる（ダメージではない））。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "PRN-002": {
+      "basis": "kyuura_data",
+      "name_ja": "悪エネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。PRN（プロモーションカード（neo）。promo。発売 1999-12-01）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。特殊エネルギー（neo1-094 と同じ処理。印刷の文面の改行だけが違う）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-056": {
+      "basis": "kyuura_data",
+      "name_ja": "ニューラ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: みだれひっかき=CoinFlipDamage、ふくろだたき=CoinsPerOwnPokemonDamage（v0.78 の新しい型。v0.48 のナイトスピリッツの値で名前をしぼらない）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-057": {
+      "basis": "kyuura_data",
+      "name_ja": "ハガネール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: たいあたり=DamageOnly、テールクラッシュ=CoinBonusDamage。イワークから進化（名前の完全一致・商品をまたぐ）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo1-058": {
+      "basis": "kyuura_data",
+      "name_ja": "エアームド",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo1（金、銀、新世界へ...。expansion_pack。発売 2000-02-04）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かぎづめ=FailOnTailsDamage、はがねのつばさ=DamageThenReduceDamageNextTurn（v0.78 で on_heads を加えた。v0.38 のバリアアタックと同じ持続する効果 DamageReduction。p.321 の 8 段階）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-039": {
+      "basis": "kyuura_data",
+      "name_ja": "デルビル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かみつく=DamageOnly、ごうだつ=DiscardOpponentTrainersThenDamage（v0.78 の新しい型。トラッシュしてからダメージ）（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo2-045": {
+      "basis": "kyuura_data",
+      "name_ja": "ハッサム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo2（遺跡をこえて...。expansion_pack。発売 2000-07-07）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: みねうち=HalfRemainingHpDamage（v0.78 で round_down を加えた。切りすて）、ダブルクロー=CoinsHeadsTimesBonusDamage。ストライクから進化（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は nazonobasho.com の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "neo4-081": {
+      "basis": "kyuura_data",
+      "name_ja": "デルビル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。neo4（闇、そして光へ...。expansion_pack。発売 2001-04-20）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: おいつめる=RetreatLockWithoutDamage（v0.78 の新しい型。ダメージのない「にげる」ことができない効果。CannotRetreat）、とびかかる=FailOnTailsDamage（処理に使う文面は kyuura の印刷の文面）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）。そのページを開き直すことは独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP1X-005": {
+      "basis": "kyuura_data",
+      "name_ja": "エアームド",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。NIP1X（イントロパック（neo）。intro_pack。発売 2001-04-06）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: つつく=DamageOnly、メタルスラッシュ=DamageThenSelfCannotAttack（v0.78 の新しい型。次の自分の番にすべてのワザを使えない。CannotAttackNextOwnTurn）（処理に使う文面は kyuura の印刷の文面）。kyuura のデータの欠け（data_gaps）: ['pokemon.dex', 'jp_print.level']（処理に使う欄ではない）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
+    },
+    "NIP2X-005": {
+      "basis": "kyuura_data",
+      "name_ja": "デルビル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-20",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.78 で加えた（docs/darkness-metal-energy-v0.78.md）。NIP2X（イントロパック（neo）。intro_pack。発売 2001-04-06）。2000.02.14 版のあとに発売したカード（released_after_rule_base）。発売日を変えずに持ち、のちのルール・2002 年の特殊能力の分類・ベイビィのルールを持ち込まない。kyuura data/engine_targets.json（7d3f4ca）の new_effect_needed。ワザ: かみつく=DamageOnly、ごうだつ=DiscardOpponentTrainersThenDamage。neo2-039 と処理に使う欄が同じ（登録の値を共有。SAME_DATA_CARDS_V0_78）（処理に使う文面は kyuura の印刷の文面）。kyuura のデータの欠け（data_gaps）: ['jp_print.level']（処理に使う欄ではない）。既存の登録の照合の出典（「P43 p.xx」など）は写していない（このカードの照合の実績ではない）。kyuura の日本語の文面は pcg-search.com の転記（ja_text_source）。同じサイトとの照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）"
     }
   }
 }

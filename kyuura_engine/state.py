@@ -485,6 +485,21 @@ class CannotAttack:
 
 
 @dataclass(frozen=True)
+class CannotAttackNextOwnTurn(CannotAttack):
+    """ワザによる「持続する効果」（v0.78）のうち、エアームド（NIP1X-005）の「メタルスラッシュ」の「次の自分の番、このカードはワザを使うことができない。」（kyuura の
+    印刷の文面）。
+
+    v0.31 の ``CannotAttack``（「しっぽをふる」。相手に与え、次の相手の番）と同じく、はたらく番の間このポケモンのすべてのワザを使えなくする（``checks.attack_request`` の
+    ``persistent.cannot_attack``。同じ所・同じコード）。自分自身に与え（``on_opponent`` が偽。``source_card`` は自分のカード）、はたらく番は次の自分の番
+    （``created_turn + 2``）。消える契機はほかの持続する効果と同じ（期限・ベンチにもどる・進化・きぜつ）。v0.35 の ``CannotUseOwnAttack``（1 つのワザだけ）とは別。
+    """
+
+    kind: ClassVar[str] = "cannot_attack_next_own_turn"
+    turns_until_active: ClassVar[int] = 2
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class ReducedDamageToSource:
     """ワザによる「持続する効果」（v0.34）のうち、カラカラ（PMCG2-029）の「なきつく」の「「なきつく」を受けた相手は、このカードにワザを使う時、与える
     ダメージが20へる。この状態は次の自分の番の始めに消える。」（kyuura の印刷の文面）。
@@ -909,7 +924,8 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, Retaliation, NextTurnAttackDamage, Des
                            ReducedDamageToSource, CannotUseOwnAttack, CannotUseAttack, AttackCoinCheck, CannotRetreat, CannotAttackWhileSourceActive,
                            ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
                            DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
-                           ReducedDamageToSourceNextTurn)  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
+                           ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
+                           CannotAttackNextOwnTurn)  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
 
 
 @dataclass(frozen=True)

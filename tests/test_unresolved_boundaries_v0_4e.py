@@ -237,6 +237,8 @@ ALL_CODES = (
     # v0.75（tests/test_search_energy_pokemon_v0_75.py）
     "UNRESOLVED_RAINBOW_RECOVER_AS_TYPE",  # RB5（CallWillOTheWispTest）
     "UNRESOLVED_DOUBLED_DAMAGE_POWER_DAMAGE",  # DB1（DoubleEdgedTest）
+    "UNRESOLVED_METAL_ENERGY_POWER_ORDER",  # MT1（test_darkness_metal_energy_v0_78.py NonAttackDamageTest）
+    "UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER",  # DE1（test_darkness_metal_energy_v0_78.py PokemonCheckTest）
 )
 TURN = 7
 

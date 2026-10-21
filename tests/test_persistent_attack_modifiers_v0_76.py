@@ -244,12 +244,12 @@ class RegistrationTest(unittest.TestCase):
 
     def test_counts_from_the_registry(self):
         """対応するカード 826（ポケモン 585・トレーナー 211・エネルギー 30）、ワザ 995・特殊能力 74（登録から数える）。v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・
-        ワザ 77・トレーナー 2）を加えたので、今の数は 878（635・213・30）、ワザ 1,072。"""
+        ワザ 77・トレーナー 2）、v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えたので、今の数は 891（643・213・35）、ワザ 1,088。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (878, 635, 213, 30))
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (891, 643, 213, 35))
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1072, 74, 213))
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1088, 74, 213))
 
     def test_non_pack_unsupported_count(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚）。"""
@@ -260,7 +260,7 @@ class RegistrationTest(unittest.TestCase):
         data = json.loads(raw.stdout)
         targets = data["cards"] if isinstance(data, dict) else data
         pool = load_card_pool()
-        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 228)
+        self.assertEqual(sum(1 for x in targets if x["product_group"] != "expansion_pack" and x["id"] not in pool.playable_ids), 223)  # v0.78 で拡張パック以外の 5 枚（イントロパック・プロモ）を加えた（v0.76・v0.77 は 228）
 
     def test_text_variants_are_narrow(self):
         """既存の型に加えた書き方は、意味を確かめたものだけで、登録の値（倍数・名前・位置・数）と結びつく。違う値・違う書き方は受け付けない。"""
@@ -316,7 +316,7 @@ class RegistrationTest(unittest.TestCase):
                     key = f"attack/{index}"
                     self.assertEqual(key in record["play_text"], attack_def.text_ja is not None)
                     self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (163, 165))
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (165, 167))  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
 
     def test_state_type_and_expiry_are_explicit(self):
         """なきごえの状態は「なきつく」の部分型で、種類と期限だけが違う（「次の相手の番」= はたらく番の終わり）。なきつくの期限は変えない。"""
