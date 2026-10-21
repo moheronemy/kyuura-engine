@@ -6730,15 +6730,21 @@ def switch_max_hp_drop_check(state: GameState, owner: int) -> None:
         return
     # v0.49: メタモンの［へんしん］では、入れ替えでバトル場に出る控え（相手の対戦ポケモン）によって最大HPが変わるので、どの控えを選んでも下がるときだけ止める
     # （最初の控えの理由の文。v0.48 までに起こる組は、どの控えでも同じ）。一部の控えで下がるなら、その答えを受け付けない（``engine._apply``）
-    first = None
+    # v0.81a（MH2）: 入れ替えたあと最大HPを決まった数にする効果と大きくする効果が同時にはたらく控え（ロケット団のアジト・「きょだいか」の［へんしん］のメタモン）も、選べない控えと
+    # して数える（安全な控えが 1 つでもあれば使える。その答えは ``engine._apply`` が受け付けない）
+    first: UnsupportedError | None = None
     for pokemon in p.bench:
         trial = state.clone()
         _switch_active_with_bench(trial, owner, pokemon.pokemon_id)
+        order = next(((code, message) for code, message in form_problems(trial) if code == MAX_HP_ORDER_CODE), None)
+        if order is not None:
+            first = first or UnsupportedError(*order)
+            continue
         drops = max_hp_drops(state, trial)
         if not drops:
             return
-        first = drops if first is None else first
-    raise max_hp_drop_error(first)
+        first = first or max_hp_drop_error(drops)
+    raise first
 
 
 def switch_choice_stops(state: GameState, owner: int) -> list[tuple[int, str, str]]:
@@ -12684,18 +12690,46 @@ def max_hp(state: GameState, pokemon: PokemonInPlay, *, card: int | None = None)
     - もとの値はカードの定義の HP（``GameState.card_def``。場での役割（v0.47）を含む。いちばん上のカード）
     - 「きょだいか」の効果（``persistent.max_hp_set``。ワザによる持続する効果）がはたらいていれば、その数（「「80」になる」）
     - はたらいている［ガスのからだ］（``MaxHpPerAttachedEnergyCards``）の分だけ大きくなる
-    - 2 つが同時にはたらくポケモンは今の写しにない（その数にするのと足すのの順番は決まらない）ので ``RuntimeError``
+    - ロケット団のアジト（v0.81）の + 20 も大きくする効果（``max_hp_bonus``）
+    - その数にする効果と大きくする効果が同時にはたらくポケモン（v0.81 のロケット団のアジトと［へんしん］で届く）は、順番が決まらないので ``MaxHpOrderUndetermined``（MH2。
+      v0.81 まで ``RuntimeError``）。``form_problems`` が同じ状態を決められない状態として数えるので、コマンドはその状態にならない（v0.81a）
     ``card`` を渡したら、そのカードがいちばん上だとしたときの最大HP（進化の確かめ。H1・``evolution_hp``。進化すると持続する効果は消えるので、常にはたらく特殊能力だけを
     当てはめる）。状態を変えず、乱数を使わない。"""
     definition = form_def(state, pokemon) if card is None else state.card_def(card)  # v0.49: 今の姿のカード（［へんしん］・「ばける」）
     if definition.hp is None:
         raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} のカード {definition.id} に HP がない（エンジンの不具合）")
     fixed = max_hp_set(pokemon) if card is None else None
-    bonus = sum(effect.hp_bonus(state, pokemon) for _, effect in _own_working_continuous(state, pokemon, MaxHpPerAttachedEnergyCards, card=card))
-    bonus += stadium_max_hp_bonus(state, definition)  # v0.81: ロケット団のアジト（今の姿の名前が「わるい」で始まるポケモン）
+    bonus = max_hp_bonus(state, pokemon, card=card)
     if fixed is not None and bonus:
-        raise RuntimeError(f"場のポケモン {pokemon.pokemon_id} の最大HPを、その数にする効果と大きくする特殊能力が同時に変える（今の写しでは起こらない）")
+        raise MaxHpOrderUndetermined(pokemon, fixed.amount, bonus)  # v0.81a（MH2）: v0.81 まで RuntimeError（ロケット団のアジトで届いた）
     return fixed.amount if fixed is not None else definition.hp + bonus
+
+
+def max_hp_bonus(state: GameState, pokemon: PokemonInPlay, *, card: int | None = None) -> int:
+    """場のポケモン ``pokemon`` の最大HPを大きくする数（v0.81a。はたらいている［ガスのからだ］と、場のロケット団のアジト（今の姿の名前が「わるい」で始まるポケモン））。
+    ``card`` は ``max_hp`` と同じ。状態を変えず、乱数を使わない。"""
+    definition = form_def(state, pokemon) if card is None else state.card_def(card)
+    bonus = sum(effect.hp_bonus(state, pokemon) for _, effect in _own_working_continuous(state, pokemon, MaxHpPerAttachedEnergyCards, card=card))
+    return bonus + stadium_max_hp_bonus(state, definition)  # v0.81: ロケット団のアジト
+
+
+# MH2（v0.81a。docs/berry-maxhp-fixes-v0.81a.md 3 章）: 最大HPを決まった数にする効果（「きょだいか」の「最大HPは「80」になる」）と、大きくする効果（ロケット団のアジトの
+# 「最大HPは、それぞれ20大きくなる」・［ガスのからだ］）が同じポケモンに同時にはたらくときの最大HP（80 か 100 か）
+MAX_HP_ORDER_CODE = "UNRESOLVED_MAX_HP_SET_AND_INCREASE"
+MAX_HP_ORDER_REASON = (
+    "最大HPを決まった数にする効果（「きょだいか」）と、大きくする効果（ロケット団のアジト・［ガスのからだ］）が同じポケモンに同時にはたらくとき、どちらを先に当てはめるか"
+    "（決まった数のままか、決まった数に足すか）は、印刷の文面・公式ルール 2000.02.14版・kyuura の記録（ダメージの計算の順番 GR-2000-P321-DAMAGE-ORDER は最大HPの規定ではない）"
+    "から決められないので、その状態にしない（MH2。状態を変える前に止める）"
+)
+
+
+class MaxHpOrderUndetermined(UnsupportedError):
+    """最大HPを決まった数にする効果と大きくする効果が同じポケモンに同時にはたらく状態の最大HPを読んだ（v0.81a。MH2）。``engine._apply`` は、コマンドでこの状態に
+    なるなら受け付けない（決められない姿と同じ。``form_problems``）。"""
+
+    def __init__(self, pokemon: PokemonInPlay, fixed: int, bonus: int):
+        super().__init__(MAX_HP_ORDER_CODE, f"場のポケモン {pokemon.pokemon_id}（最大HPを {fixed} にする効果と、{bonus} 大きくする効果）: {MAX_HP_ORDER_REASON}")
+        self.pokemon_id = pokemon.pokemon_id
 
 
 def stadium_max_hp_bonus(state: GameState, definition: CardDefinition) -> int:
@@ -17157,6 +17191,13 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
                 slot = shapeshift_slot(state, pokemon)
                 if slot is not None and power_suppressed(state, slot.power):
                     problems.append((SHAPESHIFT_SUPPRESSED_CODE, f"プレイヤー {owner} のポケモン {pokemon.pokemon_id}（のせたカード {pokemon.disguise}）: {SHAPESHIFT_SUPPRESSED_REASON}"))
+            fixed = max_hp_set(pokemon)
+            if fixed is not None:
+                bonus = max_hp_bonus(state, pokemon)
+                if bonus:
+                    # v0.81a（MH2）: 最大HPを決まった数にする効果と大きくする効果が同時にはたらく（どちらを先に当てはめるかで最大HPが変わる）
+                    problems.append((MAX_HP_ORDER_CODE, f"プレイヤー {owner} のポケモン {pokemon.pokemon_id}（最大HPを {fixed.amount} にする効果と、{bonus} 大きくする効果）: "
+                                     + MAX_HP_ORDER_REASON))
             for _, effect in _own_working_continuous(state, pokemon, MaxHpPerAttachedEnergyCards):
                 # v0.58（RB1）: はたらいている［ガスのからだ］（「超」エネルギーカードの数で最大HPが変わる）のポケモンに、レインボーエネルギーがついている（その色の
                 # エネルギーカードとして数えるかで最大HPが変わる）
@@ -29582,7 +29623,8 @@ class CounterBerry(PokemonCheckBerry):
     - ダメージカウンターをとりのぞく（回復。ダメージではない。GR-2000-P320-RECOVERY）。ログ ``tool_heal``（とりのぞいた数・のっている数）→ ``discard_attached_trainer``
       （``reason`` ``used``）。足りなければ何もしない（このカードは残る）
     - ポケモンチェックの 1 の中の悪エネルギーの効果との順番は決まらない（ポケモンチェックはどちらの番でもないので、番のプレイヤーが順番を決める規定（GR-2000-P325-SAME-TIMING）を
-      当てはめない）。同じポケモンの順番で結果が変わる場合だけ止める（BY1。``procedures.berry_order_problem``）
+      当てはめない）。読み方で結果が変わる場合だけ止める（BY1。v0.81a から、ちがうポケモンの効果どうし（きのみの回復でかがくへんかガス・［へんしん］がもどる）も
+      比べる。``procedures._step_one_readings``）
     """
 
     counters: int = 2

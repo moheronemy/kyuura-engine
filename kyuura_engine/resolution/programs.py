@@ -5930,6 +5930,11 @@ class SelfMaxHp(Element):
             run.state.add_event("persistent_effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id,
                                 persistent_effect=MaxHpSet.kind, effect=str(run.key), reason=E.EFFECT_TARGET_KNOCKED_OUT)
             return False
+        if E.max_hp_bonus(run.state, attacker):
+            # v0.81a（MH2）: 最大HPを大きくする効果がはたらいているポケモンに決まった数にする効果を与えると、最大HPが決まらない。コインの結果で受け付けるかが変わらないよう、
+            # コインの前に止める（今の写しのワザの組み合わせでは、「きょだいか」を使うポケモンに大きくする効果ははたらかない）
+            fixed = MaxHpSet(source_card=attacker.card, source_player=run.player, created_turn=0, active_turn=0, amount=self.amount)
+            raise E.MaxHpOrderUndetermined(attacker, fixed.amount, E.max_hp_bonus(run.state, attacker))
         if self.local_coin is not None and run.flip(1).results[0] is not self.local_coin:
             return False
         turn = run.state.turn_number

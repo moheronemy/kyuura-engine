@@ -153,6 +153,7 @@ from .effects import (
     max_hp,
     max_hp_drop_error,
     max_hp_drops,
+    MaxHpOrderUndetermined,
     type_shift_power,
     SCRAM_TIMING_CODE,
     SCRAM_TIMING_REASON,
@@ -673,9 +674,16 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     if _probes_receipts(state, command):
         open_probe(new)  # v0.62: ワザ以外で受けたこと（番でないプレイヤーの場のポケモンの、このコマンドの前後の比べ。``history``）
     ctx = context if context is not None else _context(state, "derived", None)
-    if not _reveal_for_action(new, command, ctx):
-        handler(new, command, ctx)
-    close_probe(new)
+    order_stop = None
+    try:
+        if not _reveal_for_action(new, command, ctx):
+            handler(new, command, ctx)
+    except MaxHpOrderUndetermined as error:
+        # v0.81a（MH2）: 処理の途中で、最大HPを決まった数にする効果と大きくする効果が同時にはたらく状態の最大HPを読んだ（その状態になる）。決められない姿と同じく、
+        # このコマンドを受け付けない（答えのない決定は、その前の状態で止める）
+        order_stop = (error.code, error.message)
+    if order_stop is None:
+        close_probe(new)
     if new.energy_roles:
         # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: 場のポケモンについていなくなったエネルギーとしての役割の記録（マルマインの［エネエネ］）を消す
         # （ついていないあいだは印刷のポケモンのカード。実装上の判断）
@@ -683,7 +691,7 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 5 章・7 章）: このコマンドで、決められない姿（TF1・TF2・DG1。``effects.form_problems``）が新しくできたら、
     # このコマンドを受け付けない。決定への答え・対戦準備の最後（ポケモンを表にする）で、どの答えでもできるなら、その前の状態で対戦を止める（``Phase.HALTED``。
     # 答えのない決定を残さない）
-    fresh = _fresh_form_problem(state, new)
+    fresh = order_stop or _fresh_form_problem(state, new)
     if fresh is not None:
         if isinstance(command, ReportJankenResult) or (
                 isinstance(command, (TakePrize, PromoteActive, ResolveDecision)) and not _decision_has_unstopped_answer(state, context)):

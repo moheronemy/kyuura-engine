@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.81）
+# 実装状況（v0.1〜v0.81a）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3746,3 +3746,16 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 389・neo 191・拡張パック以外 198） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
 | 15 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない（kyuura の日本語の文面は nazonobasho.com・ポケモンWiki・pcg-search.com の転記） | — |
 | ベイビィ・ひかるポケモン・リサイクルエネルギー・ミラクルエネルギー・GD5-007／IP2-032 のウィンディ・NIP1X-004 | 未対応（今回の範囲の外） | — | — |
+
+## v0.81a: 回復したあとの場での判断と、最大HPの到達しうる組み合わせの修正
+
+[berry-maxhp-fixes-v0.81a.md](berry-maxhp-fixes-v0.81a.md)。新しいカードはない。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| ポケモンチェックの 1 の悪エネルギーの効果・きのみを、決まらない順番の読み方ごとに、処理する時点の場で判断する（A: 回復で［へんしん］がもどって対象が変わる → BY1） | 直した・テスト済み | GR-2000-P323-POKEMON-CHECK・印刷の文面 | test_berry_maxhp_fixes_v0_81a.py `DarknessTargetAfterCureTest` |
+| 2 の「どく」の KA1 を 1 のあとの場で判断する（B: 回復でかがくへんかガスがもどる）・ちがうポケモンの効果どうしも BY1 で比べる | 直した・テスト済み | 同 | 同 `GasReturnsAfterCureTest` |
+| きのみの回復で最大HPがのっているダメージ以下に下がる（C）を、状態を変える前に MH1 で止める | 直した・テスト済み | v0.48 の MH1 | 同 `MaxHpDropAfterCureTest` |
+| 最大HPを決まった数にする効果と大きくする効果が同時にはたらく（MH2。v0.81 は `RuntimeError`） | 裁定が未解決（止める） | 記録で決まらない | 同 `HideoutAndGrowTest`・`HideoutAndGrowOtherPathsTest` |
+| ログの監査の観測と照らす最大HPに、ロケット団のアジトの + 20 | 直した・テスト済み | 印刷の文面 | 同 `LogAuditHideoutTest` |
+| BY1・KA1・MH1・PK1・DE1・SC1 の問いそのもの | 裁定が未解決（止める。変えていない） | 記録で決まらない | 前の版のテスト |

@@ -317,7 +317,7 @@ class RegistrationTest(unittest.TestCase):
                     key = f"attack/{index}"
                     self.assertEqual(key in record["play_text"], attack_def.text_ja is not None)
                     self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (178, 180))  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (179, 181))  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
 
     def test_state_type_and_expiry_are_explicit(self):
         """なきごえの状態は「なきつく」の部分型で、種類と期限だけが違う（「次の相手の番」= はたらく番の終わり）。なきつくの期限は変えない。"""

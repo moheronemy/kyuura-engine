@@ -219,7 +219,7 @@ class RegistrationTest(unittest.TestCase):
         for code, ruling in (("UNRESOLVED_METAL_ENERGY_POWER_ORDER", "MT1"), ("UNRESOLVED_DARKNESS_DAMAGE_RECEIVED_POWER", "DE1")):
             entry = links["stop_codes"][code]
             self.assertEqual((entry["kyuura_disposition"], entry["engine_rulings"][0]["ruling_id"]), ("not_in_kyuura", ruling))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (178, 180))  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた（v0.78 は 165・167）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (179, 181))  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた（v0.78 は 165・167）
 
     def test_counts(self):
         """写し・対応するカード 891、ポケモン 643・トレーナー 213・エネルギー 35、ワザ 1,088・特殊能力 74・特殊エネルギー 17。v0.79 でポケモン 52 枚（ワザ 94）を

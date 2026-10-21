@@ -1497,7 +1497,7 @@ def log_problems(state) -> list[str]:
             if isinstance(hideout, NamedMaxHpStadium) and form.name_ja.startswith(hideout.prefix):
                 bonus += hideout.amount  # v0.81: ロケット団のアジト（今の姿の名前が「わるい」で始まるポケモン）
         if fixed is not None and bonus:
-            problems.append(f"ポケモン {pid} の最大HPを、その数にする効果と大きくする特殊能力が同時に変えている（今の写しでは起こらない）")
+            problems.append(f"ポケモン {pid} の最大HPを、その数にする効果と大きくする特殊能力が同時に変えている（MH2。その状態にならないはず）")
         return fixed if fixed is not None else form.hp + bonus
 
     def hp_of(pid: int) -> int:
@@ -4731,8 +4731,12 @@ def _effective_from_state(state, pokemon) -> dict:
                                     if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is effect.energy_type])
         if isinstance(effect, ShiftColor):
             shift_works = pokemon.conditions.exclusive is None and not power_suppressed(state, power)
+    if state.stadium is not None:
+        hideout = _trainer_effect_of(state, state.stadium.card)
+        if isinstance(hideout, NamedMaxHpStadium) and definition.name_ja.startswith(hideout.prefix):
+            hp += hideout.amount  # v0.81a: ロケット団のアジト（今の姿の名前が「わるい」で始まるポケモン。v0.81 は ``max_hp_now`` だけに足していた）
     if MaxHpSet in effects:
-        hp = effects[MaxHpSet].amount
+        hp = effects[MaxHpSet].amount  # 大きくする効果と同時にはたらく状態（MH2）にはならない（ログの組み立て直しの ``max_hp_now`` が確かめる）
     shift = pokemon.type_shift
     if shift is None:
         readings = [definition.pokemon_type]

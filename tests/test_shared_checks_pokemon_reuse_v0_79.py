@@ -330,7 +330,7 @@ class RegistrationTest(unittest.TestCase):
         self.assertEqual(texts, 83)
         entry = links["stop_codes"]["UNRESOLVED_POKEMON_CHECK_MID_KNOCKOUT"]
         self.assertEqual((entry["kyuura_disposition"], entry["engine_rulings"][0]["ruling_id"]), ("not_in_kyuura", "PK1"))
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (178, 180))  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (179, 181))  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた
 
     def test_counts(self):
         """写し・対応するカード 943、ポケモン 695・トレーナー 213・エネルギー 35、ワザ 1,182・特殊能力 74・特殊エネルギー 17。"""

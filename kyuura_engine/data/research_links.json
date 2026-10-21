@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 180,
-    "engine_stop_codes": 178,
+    "engine_unresolved_rulings": 181,
+    "engine_stop_codes": 179,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -816,6 +816,17 @@
       ],
       "kyuura_issue": "UQ-EVOLUTION-HP-BELOW-DAMAGE",
       "kyuura_disposition": "issue"
+    },
+    "UNRESOLVED_MAX_HP_SET_AND_INCREASE": {
+      "engine_rulings": [
+        {
+          "version": "v0.81a",
+          "document": "docs/berry-maxhp-fixes-v0.81a.md",
+          "ruling_id": "MH2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     },
     "UNRESOLVED_TRANSFORM_ENERGY_COUNT": {
       "engine_rulings": [

@@ -342,7 +342,7 @@ class RegistrationTest(unittest.TestCase):
                     self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
                     texts += attack_def.text_ja is not None
         self.assertEqual(texts, 50)
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (178, 180))  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (179, 181))  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
 
     def test_rule_base_and_release_dates_are_kept(self):
         """発売日は写しの欄のまま（neo1 は 2000.02.14 版の前、neo2〜neo4 はあと）。ルールの基準は 2000.02.14 版のまま（カードの範囲を広げただけ）。"""
