@@ -1284,6 +1284,32 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.CoinsDiscardThenBonusDamage,
     _effects.CoinDiscardOneOrAllThenDamage,
     _effects.DamageThenChosenBenchCoinDamage,
+) + (
+    # v0.83: ひかるポケモン・やさしいポケモンのワザの 24 の型（docs/shining-gentle-pokemon-v0.83.md）
+    _effects.ChooseBenchThenDamageAndEnergyBenchDamage,
+    _effects.ChooseOwnTypeThenAttachFromHand,
+    _effects.CoinBonusAndBenchElseSelfDamage,
+    _effects.CoinWashChosenBench,
+    _effects.CoinsPerDefenderEnergyChosenStatus,
+    _effects.DamageSleepThenHealBothBench,
+    _effects.DiscardEnergyThenCoinConfuseElseSleep,
+    _effects.DiscardEnergyThenPlusDefenderEnergyUnits,
+    _effects.DiscardEnergyThenSpreadThenCoinDiscardEach,
+    _effects.EachPlayerLookTopTakeBasicEnergy,
+    _effects.EachPlayerMayDrawAttack,
+    _effects.EachPlayerRecoverFromDiscard,
+    _effects.ExcessEnergyDamageIgnoringResistance,
+    _effects.FailOnTailsPlusOwnCounters,
+    _effects.FailOnTailsSpreadBothThenSelfCannotAttack,
+    _effects.FailUnlessEqualEnergyCardsDamage,
+    _effects.HealChosenBenchByEnergy,
+    _effects.HealOwnPokemonWithoutDamage,
+    _effects.LookTopTakeOneThenShuffle,
+    _effects.PlusDefenderSpecialEnergyCardsDamage,
+    _effects.PlusIfDefenderMoreEnergyDamage,
+    _effects.RevealOneNamedPokemonFromDeck,
+    _effects.SelfReflectShield,
+    _effects.ThreeCoinsStatusByHeads,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2056,3 +2082,13 @@ V0_82_POKEMON = (
     "neo4-025", "neo4-019", "PR1-071", "PF1-005", "neo3-014",
 )
 V0_82_CARDS = (RECYCLE_ENERGY, ECOGYM, *V0_82_POKEMON)
+# v0.83（docs/shining-gentle-pokemon-v0.83.md）: ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ（ES1-014）（写しの組 pool_v0_83 の並び）
+SHINING_MAGIKARP, SHINING_MAGIKARP_PRN, SHINING_GYARADOS = "neo3-022", "PRN-046", "neo3-023"
+SHINING_CELEBI, SHINING_RAICHU, SHINING_MEWTWO, SHINING_KABUTOPS = "neo4-013", "neo4-047", "neo4-068", "neo4-080"
+SHINING_STEELIX, SHINING_NOCTOWL, SHINING_MEW = "neo4-084", "neo4-098", "PRN-044"
+LIGHT_SUNFLORA, LIGHT_VENOMOTH, LIGHT_GOLDUCK, LIGHT_VAPOREON = "neo4-004", "neo4-006", "neo4-032", "neo4-034"
+LIGHT_LANTURN, LIGHT_SLOWBRO, LIGHT_DRAGONAIR, RAPIDASH_ES1 = "neo4-045", "neo4-054", "neo4-093", "ES1-014"
+V0_83_SHINING = (SHINING_MAGIKARP, SHINING_MAGIKARP_PRN, SHINING_GYARADOS, SHINING_CELEBI, SHINING_RAICHU, SHINING_MEWTWO, SHINING_KABUTOPS,
+                 SHINING_STEELIX, SHINING_NOCTOWL, SHINING_MEW)
+V0_83_POKEMON = (*V0_83_SHINING, LIGHT_SUNFLORA, LIGHT_VENOMOTH, LIGHT_GOLDUCK, LIGHT_VAPOREON, LIGHT_LANTURN, LIGHT_SLOWBRO, LIGHT_DRAGONAIR, RAPIDASH_ES1)
+V0_83_CARDS = V0_83_POKEMON

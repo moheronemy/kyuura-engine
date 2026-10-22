@@ -172,7 +172,10 @@ HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_
                                 # 元気のかたまり（DISCARD_FROM_HAND の手札のエネルギーカード）、ロケット団のおねーさん（OPPONENT_HAND_TO_DECK）、エリカの香水（OPPONENT_HAND_TO_BENCH）。
                                 # 同じ種類の、手札すべてを選べるものにする決定（パソコン通信など）の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
                                 RETURN_TO_DECK, SELECT_EVOLUTION_CARD, ATTACH_FROM_HAND, HAND_TO_ACTIVE, DISCARD_FROM_HAND, OPPONENT_HAND_TO_DECK,
-                                OPPONENT_HAND_TO_BENCH})
+                                OPPONENT_HAND_TO_BENCH,
+                                # v0.83: 見た山札の上のカードから選ぶ決定（やさしいゴルダックの「みずかき」は見た 3 枚のうちの基本エネルギーカードの数が選べるもの・選ぶ数になる）。
+                                # カスミのいかり（v0.55。見た 7 枚から 2 枚）・ひかるミュウの「フラッシュサーチ」の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
+                                TAKE_LOOKED_CARDS})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -486,11 +489,17 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "look_at_prizes": (("cards",), _only_player),
     "prizes_to_deck": (("cards",), _looker_only),
     "trainer_bench_from_deck_declined": (("reason",), _only_player),
+    # v0.83: やさしいゴルダックの「みずかき」で、見た山札の上から選ばなかった理由（選べるカードがなかった・選ばなかった。山札の上の中身の情報なので、見たプレイヤーだけ）
+    "deck_top_take_declined": (("reason",), _only_player),
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
     # v0.82: 場からトラッシュに置かれて手札にもどしたエネルギーカード（場・トラッシュのカードは公開の情報）・のぞむならトラッシュしなかったこと
     "energy_returned_to_hand", "discard_energy_declined",
+    # v0.83: おたがいのプレイヤーが選ぶワザ（引かなかった（山札の枚数は公開）・トラッシュから見せて手札に加えた・山札にもどした・選ばなかった（トラッシュは公開））と、
+    # 「リフレクトシールド」（コイン・相手に与えたダメージ・与えなかった）
+    "attack_draw_declined", "each_player_recover", "each_player_discard_to_deck", "each_player_declined",
+    "reflect_shield_check", "reflect_shield_damage", "reflect_shield_skipped",
     # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
     "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",
     "darkness_energy_damage", "darkness_energy_counters",  # v0.78: ポケモンチェックの悪エネルギー（場のカードの公開の情報）

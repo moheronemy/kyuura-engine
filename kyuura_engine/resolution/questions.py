@@ -301,6 +301,13 @@ QUESTIONS: dict[str, Question] = {
         Question("energy_drain_no_energy", "UNRESOLVED_ENERGY_DRAIN_NO_ENERGY", ("DR13",), 10,
                  "ダメージを与えたポケモンにエネルギーカードがついていないとき、［だつりょくえき］のコインを投げるかは、日本語の文面・kyuura の記録（UQ-ENERGY-DRAIN-NO-ENERGY）"
                  "から決められない（英語版の「if it has any」は使わない）"),
+        Question("reflect_shield_timing", "UNRESOLVED_REFLECT_SHIELD_TIMING", ("RS1",), 50,
+                 "「リフレクトシールド」の「おもて」の「相手に20ダメージを与え」を、ダメージを受けるときにすぐ与えるか、そのワザのダメージの要素のあとに与えるかは、"
+                 "日本語の文面・kyuura の記録から決められない。コインのあとにダメージを与えたポケモンのダメージが変わる（同じワザの自分へのダメージなど）と、"
+                 "どちらの時点かで結果（きぜつ・返す効果の対象）が変わりうる"),
+        Question("attack_deck_top_short", "UNRESOLVED_ATTACK_DECK_TOP_SHORT", ("LT1",), 10,
+                 "「山札の上からカードを3枚見る」ワザ（ひかるミュウの「フラッシュサーチ」・やさしいゴルダックの「みずかき」）で、見るプレイヤーの山札が 3 枚より"
+                 "少ないとき（あるだけ見るか）は、日本語の文面・kyuura の記録から決められない（トレーナーの TOP1・ML1・MW1 と同じ形の、別のカードの問い）"),
         Question("energy_drain_decision", "UNSUPPORTED_ENERGY_DRAIN_DECISION", ("v0.68",), 10,
                  "［だつりょくえき］のトラッシュするカードの決定を、v0.13 の約束で書いたワザの実装の中では出せない（エンジンの未対応）"),
         # v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキのコインを投げる時点（残りHPがなくなったすぐあとか、きぜつの判定の時か）で結果が変わる場合

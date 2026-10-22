@@ -656,7 +656,11 @@ class G37Test(unittest.TestCase):
             "DiscardOpponentTrainersThenDamage", "RetreatLockWithoutDamage",
             # v0.79（1 枚のコインでマヒと相手の控えへのダメージ・1 枚のコインでダメージとこんらん・相手の場のトレーナーをすべてトラッシュする。
             # docs/shared-checks-pokemon-reuse-v0.79.md）
-            "DamageThenParalyzeAndOpponentBenchOnHeads", "CoinBonusDamageAndConfuse", "CoinDiscardAllOpponentTrainers"]))
+            "DamageThenParalyzeAndOpponentBenchOnHeads", "CoinBonusDamageAndConfuse", "CoinDiscardAllOpponentTrainers",
+            # v0.83（相手のエネルギーカードをトラッシュする「やきつくす」・選んだ特殊状態の「ミラクルリーフ」・「おもて」の数で特殊状態が決まる「フラッシュアイ」・
+            # 1 枚のコインでこんらんかねむりの「ふしぎなほのお」・ねむりと控えの回復の「ヒプノシャワー」。docs/shining-gentle-pokemon-v0.83.md）
+            "DiscardEnergyThenSpreadThenCoinDiscardEach", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
+            "DiscardEnergyThenCoinConfuseElseSleep", "DamageSleepThenHealBothBench"]))
 
 
 class DecisionTest(unittest.TestCase):

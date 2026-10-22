@@ -101,7 +101,9 @@ class RegistrationTest(unittest.TestCase):
                 uses = [m.start() for m in re.finditer(r"reveal_deck_to_hand\(", text)]
                 if path.name == "programs.py":
                     # v0.75: カスミのメノクラゲの「くらげのむれ」（``RevealNamedPokemonFromDeck``）も同じ共通の関数を使う
-                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy", "RevealNamedPokemonFromDeck")
+                    # v0.83: やさしいゴルダックの「みずかき」（``EachPlayerLooksTakesBasicEnergy``。見た中の基本エネルギーカードを見せて手札に加える）も同じ共通の関数を使う
+                    elements = ("RevealPokemonFromDeck", "RevealTrainerFromDeck", "ReturnHandThenRevealEnergy", "RevealNamedPokemonFromDeck",
+                                "EachPlayerLooksTakesBasicEnergy")
                     spans = []
                     for name in elements:
                         start = text.index(f"class {name}(")

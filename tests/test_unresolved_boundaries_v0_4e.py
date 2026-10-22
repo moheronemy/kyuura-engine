@@ -253,6 +253,8 @@ ALL_CODES = (
     "UNRESOLVED_BALLOON_BERRY_FAILED_RETREAT",  # BB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
     "UNRESOLVED_FOCUS_BAND_TIMING",  # FB1（v0.81。tests/test_pokemon_tools_stadiums_v0_81.py）
     "UNRESOLVED_MAX_HP_SET_AND_INCREASE",  # MH2（v0.81a。tests/test_berry_maxhp_fixes_v0_81a.py）
+    "UNRESOLVED_REFLECT_SHIELD_TIMING",  # RS1（v0.83。tests/test_shining_gentle_v0_83.py）
+    "UNRESOLVED_ATTACK_DECK_TOP_SHORT",  # LT1（v0.83。tests/test_shining_gentle_v0_83.py）
 )
 TURN = 7
 

@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 181,
-    "engine_stop_codes": 179,
+    "engine_unresolved_rulings": 183,
+    "engine_stop_codes": 181,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2096,6 +2096,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REFLECT_SHIELD_TIMING": {
+      "engine_rulings": [
+        {
+          "version": "v0.83",
+          "document": "docs/shining-gentle-pokemon-v0.83.md",
+          "ruling_id": "RS1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_ATTACK_DECK_TOP_SHORT": {
+      "engine_rulings": [
+        {
+          "version": "v0.83",
+          "document": "docs/shining-gentle-pokemon-v0.83.md",
+          "ruling_id": "LT1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3438,7 +3460,39 @@
       "PR1-071/attack/0",
       "PF1-005/attack/0",
       "PF1-005/attack/1",
-      "neo3-014/attack/1"
+      "neo3-014/attack/1",
+      "neo3-022/attack/0",
+      "neo3-022/attack/1",
+      "PRN-046/attack/0",
+      "PRN-046/attack/1",
+      "neo3-023/attack/0",
+      "neo3-023/attack/1",
+      "neo4-013/attack/0",
+      "neo4-013/attack/1",
+      "neo4-047/attack/0",
+      "neo4-068/attack/0",
+      "neo4-068/attack/1",
+      "neo4-080/attack/0",
+      "neo4-080/attack/1",
+      "neo4-084/attack/0",
+      "neo4-098/attack/0",
+      "PRN-044/attack/0",
+      "PRN-044/attack/1",
+      "neo4-004/attack/0",
+      "neo4-006/attack/0",
+      "neo4-006/attack/1",
+      "neo4-032/attack/0",
+      "neo4-032/attack/1",
+      "neo4-034/attack/0",
+      "neo4-034/attack/1",
+      "neo4-045/attack/0",
+      "neo4-045/attack/1",
+      "neo4-054/attack/0",
+      "neo4-054/attack/1",
+      "neo4-093/attack/0",
+      "neo4-093/attack/1",
+      "ES1-014/attack/0",
+      "ES1-014/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

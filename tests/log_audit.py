@@ -83,6 +83,9 @@ from kyuura_engine.effects import ActiveRetreatIncreaseStadium, CoinReturnOwnerP
 from kyuura_engine.effects import HealOnAttachEnergy, RainbowEnergy  # v0.58
 from kyuura_engine.effects import ConvertSelfToEnergy  # v0.59
 from kyuura_engine.effects import DiscardAttackerEnergyOnDamage  # v0.68
+from kyuura_engine.effects import EachPlayerRecoverFromDiscard  # v0.83
+from kyuura_engine.effects import CoinWashChosenBench, DamageSleepThenHealBothBench, EachPlayerLookTopTakeBasicEnergy, HealChosenBenchByEnergy  # v0.83
+from kyuura_engine.effects import HealOwnPokemonWithoutDamage, LookTopTakeOneThenShuffle  # v0.83
 from kyuura_engine.effects import BenchBasicFromOwnDiscardThenCounters  # v0.71
 from kyuura_engine.effects import CoinReturnOwnPokemonWithAttachedToHand, DiscardDeckTopThenReturnTypeEnergy, LookTopTakePokemonThenShuffle  # v0.73
 from kyuura_engine.effects import DiscardEnergyThenBenchBasicFromDiscard, DiscardFromHandThenRetrieveEnergy, SearchNamedFromDeckOrDiscard  # v0.73
@@ -1171,6 +1174,10 @@ def log_problems(state) -> list[str]:
                 if (window["reveal_from_deck_none"] + window["reveal_from_deck_declined"]) and window["reveal_from_deck"] \
                         or window["reveal_from_deck_none"] + window["reveal_from_deck_declined"] > 1:
                     problems.append(f"くらげのむれで、見せて手札に加えた処理の回数が合わない {dict(window)}")
+            elif isinstance(window_effect, EachPlayerLookTopTakeBasicEnergy):
+                # v0.83: みずかき。おたがいのプレイヤーが、それぞれ見た中の基本エネルギーカードを好きなだけ見せて手札に加える（見せない回は deck_top_take_declined）
+                if window["reveal_from_deck_none"]:
+                    problems.append(f"みずかきで、見せて手札に加えた処理の回数が合わない {dict(window)}")
             elif window["reveal_from_deck"] + window["reveal_from_deck_none"] > 1:
                 problems.append("1 回のワザで山札から見せて手札に加える処理（reveal_from_deck・reveal_from_deck_none）が 2 回以上")  # v0.38
             if window["bench_from_deck"] + window["bench_from_deck_none"] > 1 and not (
@@ -3137,7 +3144,7 @@ def log_problems(state) -> list[str]:
                 kind_ok = definition.is_basic_pokemon or definition.is_evolution_pokemon  # v0.73: マスターボール（見た 7 枚のうちのポケモンのカード）
             elif isinstance(revealer, (SearchTrainerOnHeads, SearchTrainerRequiredOnHeads)):
                 kind_ok = definition.category == "trainer"  # v0.79: ひらめく（SearchTrainerRequiredOnHeads。ちょうど 1 枚）も
-            elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck)):
+            elif isinstance(revealer, (ReturnHandThenRevealBasicEnergy, RevealBasicEnergyFromDeck, EachPlayerLookTopTakeBasicEnergy)):
                 kind_ok = definition.is_basic_energy  # v0.72: おつきみ（RevealBasicEnergyFromDeck）も基本エネルギーカード
             elif isinstance(revealer, RevealNamedPokemonFromDeckAny):
                 kind_ok = definition.category == "pokemon" and definition.name_ja in revealer.names  # v0.75: くらげのむれ（名前の完全一致）
@@ -3327,6 +3334,20 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番に山札にもどしたカード {uid} が、使ったプレイヤーのトラッシュのカードではない")
                 else:
                     discard[e["player"]].remove(uid)
+        elif kind in ("each_player_recover", "each_player_discard_to_deck"):
+            # v0.83: おたがいのプレイヤーが選ぶワザ（ふしぎなはばたき・あかりでてらす・すくいあげる）。そのプレイヤー自身のトラッシュの、ワザの登録の種類のカードを、手札に加える・
+            # 山札にもどす（山札は組み立て直さない。このあと、もどしたプレイヤーの山札を切る）
+            effect = _effect_of_event(state, e)
+            to_hand = kind == "each_player_recover"
+            ok = isinstance(effect, EachPlayerRecoverFromDiscard) and (effect.destination == "hand") == to_hand and len(e["cards"]) <= effect.max_cards
+            for uid in e["cards"]:
+                if not ok or owner.get(uid) != e["player"] or uid not in discard[e["player"]] or (
+                        effect.category == "pokemon" and state.printed_def(uid).category != "pokemon"):
+                    problems.append(f"{e['turn']} 番に{'手札に加えた' if to_hand else '山札にもどした'}カード {uid} が、プレイヤー {e['player']} のトラッシュの選べるカードではない")
+                else:
+                    discard[e["player"]].remove(uid)
+                    if to_hand:
+                        hand[e["player"]].append(uid)
         elif kind == "milled_to_hand":
             # v0.73: 熱血!。すぐ前に同じトレーナーで山札の上からトラッシュしたカード（deck_top_to_discard）のうち、その色の基本エネルギーカードのすべてを手札に加える
             # （前からトラッシュにあったカードは加えない）
@@ -3878,7 +3899,15 @@ def log_problems(state) -> list[str]:
         elif kind in ("look_at_deck_top", "look_at_deck_top_none"):
             # v0.47: みらいよち。ワザを使ったプレイヤーが、自分または相手の山札の上から見る（相手には見せない）
             effect = _effect_of_event(state, e)
-            if not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or not isinstance(effect, ArrangeDeckTopEffect) \
+            if isinstance(effect, (LookTopTakeOneThenShuffle, EachPlayerLookTopTakeBasicEnergy)) and kind == "look_at_deck_top":
+                # v0.83: フラッシュサーチ（ワザを使ったプレイヤーが自分の山札の上を見て 1 枚を手札に加える）・みずかき（おたがいのプレイヤーが、それぞれ自分の山札の
+                # 上を見る）。見るのは山札の上から ``look`` 枚（山札が足りなければ LT1 で止まるので、いつもちょうど ``look`` 枚）
+                each = isinstance(effect, EachPlayerLookTopTakeBasicEnergy)
+                if not _same_attack(attack_window, e) or e["owner"] != e["player"] or (not each and e["player"] != attack_window["player"]) \
+                        or e["count"] != effect.look or len(e["cards"]) != e["count"] or len(set(e["cards"])) != e["count"] \
+                        or any(owner.get(uid) != e["owner"] or uid in hand[e["owner"]] or uid in discard[e["owner"]] for uid in e["cards"]):
+                    problems.append(f"{e['turn']} 番の {kind} が、山札の上から {getattr(effect, 'look', None)} 枚を見るワザの処理ではない")
+            elif not _same_attack(attack_window, e) or e["player"] != attack_window["player"] or not isinstance(effect, ArrangeDeckTopEffect) \
                     or e["owner"] not in (0, 1):
                 problems.append(f"{e['turn']} 番の {kind} が、山札の上を見て並べかえるワザの処理ではない")
             elif kind == "look_at_deck_top":
@@ -4045,8 +4074,14 @@ def log_problems(state) -> list[str]:
                 # v0.42: よいおこない。相手の場のポケモン 1 匹から、選んだ数（1 つ以上）。すぐあとに、ワザを使ったプレイヤーがとりのぞいた数まで引く
                 allowed = pid in in_play and pokemon_owner.get(pid) != attack_window["player"] and e.get("attacker") == attack_window["player"]
                 draw_due = (attack_window["player"], e["counters"], e["turn"], "よいおこないの attack_heal")
-            elif isinstance(effect, (CoinsHealOwnPokemon, MoveOwnCountersToOpponent)):
+            elif isinstance(effect, (CoinsHealOwnPokemon, MoveOwnCountersToOpponent, HealOwnPokemonWithoutDamage)):
                 allowed = pid in in_play and pokemon_owner.get(pid) == attack_window["player"]
+            elif isinstance(effect, (HealChosenBenchByEnergy, CoinWashChosenBench)):
+                # v0.83: いやしのみず・あらいながす。自分の控えポケモン 1 匹
+                allowed = pid in in_play and pokemon_owner.get(pid) == attack_window["player"] and pid != attack_window["pokemon_id"]
+            elif isinstance(effect, DamageSleepThenHealBothBench):
+                # v0.83: ヒプノシャワー。おたがいの控えポケモン全員（バトル場のポケモンは除く）
+                allowed = pid in in_play and pid != attack_window["pokemon_id"] and pid != active_of.get(1 - attack_window["player"])
             else:
                 allowed = attack_window is not None and pid == attack_window["pokemon_id"]
             per = state.rules.damage_per_counter
@@ -4920,7 +4955,8 @@ def observation_problems(state) -> list[str]:
                                       "search_deck", "attach_from_deck", "take_looked_trainer",  # v0.74: bench_from_deck。v0.80: ポケモンギア
                                       # v0.81: 手札（見た相手の手札）から種類でしぼったカードを選ぶ決定（docs/pokemon-tools-stadiums-v0.81.md 2 章）
                                       "return_to_deck", "select_evolution_card", "attach_from_hand", "hand_to_active", "discard_from_hand",
-                                      "opponent_hand_to_deck", "opponent_hand_to_bench")
+                                      "opponent_hand_to_deck", "opponent_hand_to_bench",
+                                      "take_looked_cards")  # v0.83: 見た山札の上のカードから選ぶ決定（docs/shining-gentle-pokemon-v0.83.md 3.1）
             if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":

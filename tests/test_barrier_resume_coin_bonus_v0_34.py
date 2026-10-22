@@ -429,7 +429,11 @@ class BarrierCoinTest(unittest.TestCase):
                                     "DamageThenConfuseOnAnyHeads", "DamageThenPoisonAndParalyzeOnHeads", "DamageThenPoisonAndConfuseOnAllHeads",
                                     "DamageThenPoisonAndConfuseOnHeads", "DamageThenCoinsReturnOpponentToDeck",
                                     # v0.79: ルージュラの「あやしいおどり」（CoinBonusDamageAndConfuse。1 枚のコインが追加のダメージとこんらんを決める。ねばりつくと同じ形）
-                                    "CoinBonusDamageAndConfuse"})
+                                    "CoinBonusDamageAndConfuse",
+                                    # v0.83: ひかるギャラドスの「げきりん」（FailOnTailsPlusOwnCounters。失敗のコインのあとはダメージだけ）・ひかるセレビィの「ミラクルリーフ」
+                                    # （CoinsPerDefenderEnergyChosenStatus。コインは選んだ特殊状態だけを決める）・ひかるヨルノズクの「フラッシュアイ」（ThreeCoinsStatusByHeads。
+                                    # 3 枚のコインは相手の特殊状態だけを決める。docs/shining-gentle-pokemon-v0.83.md）
+                                    "FailOnTailsPlusOwnCounters", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

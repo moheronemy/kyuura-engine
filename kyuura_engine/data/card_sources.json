@@ -25316,6 +25316,272 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.82 で加えた（docs/energy-discard-return-v0.82.md）。neo3（expansion_pack）。kyuura data/engine_targets.json（7d3f4ca）の対象。どろかけ=DamageOnly、うずしお=DamageThenDiscardOpponentEnergy(False)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は ポケモンWiki の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定は持ち込まない"
+    },
+    "neo3-022": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるコイキング",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo3。kyuura data/engine_targets.json（7d3f4ca）の対象。きんいろのうろこ=EachPlayerMayDrawAttack(2)、りゅうのきずな=RevealOneNamedPokemonFromDeck(ギャラドス・わるいギャラドス・ひかるギャラドス)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%B3%E3%82%A4%E3%82%AD%E3%83%B3%E3%82%B0_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "PRN-046": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるコイキング",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の対象。neo3-022 と同じデータ（SAME_DATA_CARDS_V0_83 で同じ登録の値）。きんいろのうろこ=EachPlayerMayDrawAttack(2)、りゅうのきずな=RevealOneNamedPokemonFromDeck。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neop046.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo3-023": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるギャラドス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo3。kyuura data/engine_targets.json（7d3f4ca）の対象。げきりん=FailOnTailsPlusOwnCounters(10)、やきつくす=DiscardEnergyThenSpreadThenCoinDiscardEach(炎, 2, 10)（炎エネルギーカードのトラッシュは RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果）。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AE%E3%83%A3%E3%83%A9%E3%83%89%E3%82%B9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-013": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるセレビィ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。いやしのみず=HealChosenBenchByEnergy(水)、ミラクルリーフ=CoinsPerDefenderEnergyChosenStatus。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%BB%E3%83%AC%E3%83%93%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-047": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるライチュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。サンダースコール=ChooseBenchThenDamageAndEnergyBenchDamage(水, 10)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A9%E3%82%A4%E3%83%81%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-068": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるミュウツー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。リフレクトシールド=SelfReflectShield(20)（持続する効果 ReflectShield）、サイコバースト=DiscardEnergyThenPlusDefenderEnergyUnits(炎, 10)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%9F%E3%83%A5%E3%82%A6%E3%83%84%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-080": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるカブトプス",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。いなずまぎり=CoinBonusAndBenchElseSelfDamage(10, 10, 10)、ウォータースラッシュ=ExcessEnergyDamageIgnoringResistance(水, 10)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AB%E3%83%96%E3%83%88%E3%83%97%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-084": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるハガネール",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。アースクラッシュ=FailOnTailsSpreadBothThenSelfCannotAttack(10)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%8F%E3%82%AC%E3%83%8D%E3%83%BC%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-098": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるヨルノズク",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。フラッシュアイ=ThreeCoinsStatusByHeads。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A8%E3%83%AB%E3%83%8E%E3%82%BA%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "PRN-044": {
+      "basis": "kyuura_data",
+      "name_ja": "ひかるミュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。PRN（promo）。kyuura data/engine_targets.json（7d3f4ca）の対象。フラッシュサーチ=LookTopTakeOneThenShuffle(3)、ふしぎなほのお=DiscardEnergyThenCoinConfuseElseSleep(炎)。ルール文「…デッキに1枚までしか入れることができません。」は名前ごとの上限（v0.82 の CardDefinition.deck_limit）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neop044.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-004": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいキマワリ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。ひざしをかえす=ChooseOwnTypeThenAttachFromHand(草, 2)、ソーラービーム=DamageOnly。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%9E%E3%83%AF%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-006": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいモルフォン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。ふしぎなはばたき=EachPlayerRecoverFromDiscard(ポケモンのカード, 1, 手札)、シンクロウェーブ=FailUnlessEqualEnergyCardsDamage。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A2%E3%83%AB%E3%83%95%E3%82%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-032": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいゴルダック",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。みずかき=EachPlayerLookTopTakeBasicEnergy(3)、コアブラスト=PlusDefenderSpecialEnergyCardsDamage(20)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%AB%E3%83%80%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-034": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいシャワーズ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。あらいながす=CoinWashChosenBench、ヒプノシャワー=DamageSleepThenHealBothBench(1)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B7%E3%83%A3%E3%83%AF%E3%83%BC%E3%82%BA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-045": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいランターン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。あかりでてらす=EachPlayerRecoverFromDiscard(カード, 1, 手札, コイン)、スパーク=DamageThenChosenBenchDamage(10)（書き方の違いを受け付ける一覧に 1 通り加えた）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A9%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-054": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいヤドラン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。すくいあげる=EachPlayerRecoverFromDiscard(ポケモンのカード, 3, 山札)（kyuura の印刷の文面の最後が読点「よく切る、」。写しは書き換えない。kyuura への報告事項）、みずあそび=PlusIfDefenderMoreEnergyDamage(20)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A4%E3%83%89%E3%83%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo4-093": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいハクリュー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。いやしのひかり=HealOwnPokemonWithoutDamage(1)、まもりのはどう=DamageThenSelfBarrierOnHeads（v0.70 の書き方）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%8F%E3%82%AF%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "ES1-014": {
+      "basis": "kyuura_data",
+      "name_ja": "ギャロップ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-21",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。ES1（expansion_sheet）。kyuura data/engine_targets.json（7d3f4ca）の対象。QSG-011（v0.82）と同じデータ（SAME_DATA_CARDS_V0_83 で同じ登録の値）。かえんじごく=OptionalDiscardEnergyBonusDamage(炎, 20, このカードだけ, 最大 2 枚)、けりとばす=DamageAndForceSwitch。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/1st/1stex1014.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
     }
   }
 }

@@ -56,12 +56,12 @@ from ..effects import (
 )
 from ..conditions import confuse
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
-from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, remove_on_damage, remove_persistent_effects, tails_damage_guard
+from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
 from ..errors import UnsupportedError
 from .. import effects as E
-from ..state import RETALIATION_FIXED
-from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EFFECT_ONLY, VOID_EVADED, VOID_FLED, VOID_IMMUNE, note_received
+from ..state import RETALIATION_FIXED, Retaliation
+from ..history import VOID_ATTACK_BARRIER, VOID_DAMAGE_ONLY, VOID_DODGED, VOID_EFFECT_ONLY, VOID_EVADED, VOID_FLED, VOID_IMMUNE, VOID_REFLECTED, note_received
 
 from . import catalog as C
 from .events import (
@@ -660,6 +660,11 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
         note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_DODGED))
         return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
+    if calc.final > 0 and defender_effects and receiver_player != frame.player and reflect_shield_holds(res, fs, receiver_player, receiver, attacker, calc.final):
+        # v0.83: 「リフレクトシールド」の「おもて」。このダメージの要素で受けるダメージはない（のせない。受けたときの効果・きぜつ・こんじょうの写しもない）
+        res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
+        note_receipt(res, fs, receiver_player, receiver, voided=(DAMAGE_ELEMENT, VOID_REFLECTED))
+        return DamageResult(target, receiver_player, receiver.pokemon_id, False, None, receiver.damage >= hp_of(state, receiver), dodged=True)
     # v0.65: ［ベンチガード］（控えポケモンが受けるダメージを計算したあと・のせる前。受けるときの候補（送る効果・こんじょうの写し）は、もとのポケモンが受ける量で集める）
     guarded = ()
     if target in BENCH_TARGETS and calc.final >= 10:
@@ -786,6 +791,79 @@ def damage_guard_passes(res: Resolution, fs: FrameState, owner: int, pokemon: Po
                     persistent_effect=guard.kind, source_card=guard.source_card, created_turn=guard.created_turn, effect=str(frame.attack_key),
                     amount=final, result=flips.results[0].value, received=received)
     return received
+
+
+REFLECT_SHIELD_RETURN = C.EffectDefinition(
+    "reflect_shield", C.Origin.PERSISTENT_EFFECT, C.Mode.AUTOMATIC, C.Timing.DEFER, frozenset({Window.AFTER_DAMAGE_ELEMENTS}), frozenset(), "now", False,
+    "damage_source", "reflect_damage_to_damage_source", frozenset({DamageClass.ATTACK}), True,
+)
+
+
+def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: PokemonInPlay, attacker: PokemonInPlay, final: int) -> bool:
+    """v0.83: 「リフレクトシールド」（ひかるミュウツー。``state.ReflectShield``）。``pokemon``（持ち主 ``owner``）が今この効果を持ち、相手のワザによるダメージ（最終ダメージが 0 より
+    大きい。呼ぶ側が確かめる）を受けるとき、持ち主がコインを 1 枚投げ（``coin_flip`` の ``source`` は ``"persistent_effect"``。ログ ``reflect_shield_check``）、「おもて」なら
+    True（このダメージの要素で受けるダメージはない）。相手（ダメージを与えたポケモン）に与える ``amount`` は、このワザのダメージの要素のあとの窓で与える（``fs.pending`` に
+    送る効果を加える。``reflect_damage_to_damage_source``）。効果がない・「うら」なら False（ダメージを受ける。効果は消えない）。
+
+    - 「受けるとき」は、要素を無効にする効果（かたまる・バリアー）・「とうめい」・「かげぶんしん」で受けないと決まったあと、［ベンチガード］・ダメージをのせる前（呼ぶ側の順番）。
+      最終ダメージが 0 なら「ダメージを受けなかった」（p.319・p.321）ので投げない
+    - 「かげぶんしん」と同じポケモンに重なることは、今の対応カードでは起こらない（ひかるミュウツーは「かげぶんしん」を使わない。［へんしん］で写すのは相手の姿で、受けている
+      効果は写さない）ので、重なったら ``RuntimeError``（順番を推測しない）
+    - 送る効果の ``received`` には、コインの時点のダメージを与えたポケモンのダメージを書く（与える時点までにそのポケモンのダメージが変わっていれば、20 を与える時点で結果が
+      変わりうるので止める。``reflect_damage_to_damage_source``）"""
+    shield = reflect_shield(res.state, pokemon)
+    if shield is None:
+        return False
+    if tails_damage_guard(pokemon) is not None or pokemon.pokemon_id in fs.reception:
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「リフレクトシールド」と「かげぶんしん」・「とうめい」が重なった（今の対応カードでは起こらない。エンジンの不具合）")
+    state = res.state
+    frame = fs.frame
+    flips = flip_coins(state, owner, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
+    held = flips.results[0] is CoinSide.HEADS
+    state.add_event("reflect_shield_check", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, persistent_effect=shield.kind,
+                    source_card=shield.source_card, created_turn=shield.created_turn, effect=str(frame.attack_key), attacker=frame.player,
+                    attacker_pokemon_id=attacker.pokemon_id, amount=final, result=flips.results[0].value, reflected=held)
+    if held:
+        instance = C.EffectInstance(REFLECT_SHIELD_RETURN, owner, pokemon.pokemon_id, pokemon.card, implementation=shield)
+        fs.pending.append(Deferred(instance, frame.id, attacker.damage))
+        res.trace.record(CandidateFound(Window.DAMAGE_RECEIVING, REFLECT_SHIELD_RETURN.name, pokemon.pokemon_id, frame.id))
+    return held
+
+
+def reflect_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.83: 「リフレクトシールド」の「おもて」の「相手に20ダメージを与え」。効果を与えたワザ（``ReflectShield.attack_index``）によるダメージとして、ダメージを与えたポケモン
+    （相手の対戦ポケモン）に与える（返す効果の枠（ワザの分類）を起こし、``deal_damage`` で弱点・抵抗力・ディフェンダーなどを計算する。v0.12 の「ほのおのかべ」と同じ処理）。
+    ログ ``reflect_shield_damage``。
+
+    - 時点: そのワザのダメージの要素のあとの窓（ダメージ以外の効果の前）。説明は「受けるとき」に与えると書くので、コインを投げた時点と、この窓のあいだにダメージを与えた
+      ポケモンのダメージが変わったら（同じワザの自分へのダメージ・ほかの「ダメージを受けたとき」の効果）、20 をどちらの時点で与えるかで結果（きぜつの原因・返す効果の対象）が
+      変わりうるので、問い ``reflect_shield_timing``（RS1）で止める（先読みが宣言の前に見つける）。変わらなければ、どちらの時点でも同じ
+    - ダメージを与えたポケモンがすでに HP 以上なら与えない（ログ ``reflect_shield_skipped``。C15 と同じ読み方。上の確かめで、コインの時点でもすでに HP 以上）"""
+    state = res.state
+    instance = deferred.instance
+    shield = instance.implementation
+    attacker = _damage_source(res, fs, "「リフレクトシールド」のダメージ")
+    holder_found = state.find_pokemon(instance.pokemon_id)
+    if holder_found is None or holder_found[0] != instance.owner:
+        raise RuntimeError(f"「リフレクトシールド」の効果を持つポケモン {instance.pokemon_id} が場にいない（エンジンの不具合）")
+    if attacker.damage != deferred.received:
+        raise res.question("reflect_shield_timing", f"ポケモン {attacker.pokemon_id}（コインの時点のダメージ {deferred.received}・窓の時点 {attacker.damage}）")
+    key = AttackKey(effect_attack_card(state, shield), shield.attack_index)
+    base = {
+        "player": instance.owner, "pokemon": instance.card, "pokemon_id": instance.pokemon_id, "persistent_effect": shield.kind, "source_card": shield.source_card,
+        "effect": str(key), "trigger": str(fs.frame.attack_key), "attacker": fs.frame.player, "attacker_pokemon": attacker.card,
+        "attacker_pokemon_id": attacker.pokemon_id,
+    }
+    if attacker.damage >= hp_of(state, attacker):
+        state.add_event("reflect_shield_skipped", **base, reason=RETALIATION_TARGET_KNOCKED_OUT)
+        return
+    if state.players[1 - instance.owner].active is not attacker:
+        raise RuntimeError(f"「リフレクトシールド」のダメージの相手が、ワザを使ったポケモン {attacker.pokemon_id} ではない（エンジンの不具合）")
+    state.add_event("reflect_shield_damage", **base, amount=shield.amount)
+    child = res.open_frame(FrameKind.RETALIATION, parent=fs.frame.id, player=instance.owner, source_pid=instance.pokemon_id, attack_key=key)
+    child.origin = instance
+    deal_damage(res, child, OPPONENT_ACTIVE, shield.amount, log_extra={"retaliation": True, "effect": str(key), "pokemon_id": attacker.pokemon_id})
+    fire_pending(res, child)
 
 
 def speed_star_scope_question(res: Resolution, attack_key, attacker: PokemonInPlay, receiver: PokemonInPlay, base: int, modifiers, orders, resistance: bool,
@@ -1247,10 +1325,11 @@ class EnergyDrainRequest(Exception):
     """v0.68: ［だつりょくえき］の「おもて」で、トラッシュするエネルギーカードを持ち主に選ばせる（呼ぶ側の ``programs.run_elements`` が決定 ``ENERGY_DRAIN_DISCARD`` を出し、
     答えのあとに ``apply_energy_drain`` で続ける）。コインはもう投げたので、答えのあとで投げ直さない。"""
 
-    def __init__(self, entry: tuple[int, int, str, int, int], options: tuple[int, ...]):
+    def __init__(self, entry: tuple[int, int, str, int, int], options: tuple[int, ...], unresolved: tuple = ((), None, None)):
         super().__init__(entry)
         self.entry = entry  # (持ち主, ポケモンの番号, カード id, 特殊能力の位置, ダメージを与えたポケモンの番号)
         self.options = options
+        self.unresolved = unresolved  # v0.83: (選ぶと止めるカード, 停止コード, 理由)。TE2
 
 
 def drain_energy_from_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
@@ -1278,10 +1357,15 @@ def drain_energy_from_damage_source(res: Resolution, fs: FrameState, deferred: D
     key = instance.power_key
     entry = (instance.owner, instance.pokemon_id, key.card_id, key.power_index, source.pokemon_id)
     options = tuple(source.energy)
+    # v0.83: 手札にもどるかが TE2 の答えで変わるカード（エコロジムと［へんしん］のメタモンの無色の特殊エネルギー）は、選べるが選ぶと止める。どれもそうなら止める
+    problems = {uid: E.energy_discard_problem(state, source, uid, cause=E.DISCARD_BY_POWER, by_player=instance.owner) for uid in options}
+    blocked = tuple(uid for uid in options if problems[uid] is not None)
+    if blocked and len(blocked) == len(options):
+        raise UnsupportedError(*problems[blocked[0]])
     if res.dry_run:
-        apply_energy_drain(state, entry, res.oracle.choose([(card,) for card in options]))
+        apply_energy_drain(state, entry, res.oracle.choose([(card,) for card in options if card not in blocked]))
         return
-    raise EnergyDrainRequest(entry, options)
+    raise EnergyDrainRequest(entry, options, (blocked, *problems[blocked[0]]) if blocked else ((), None, None))
 
 
 def apply_energy_drain(state: GameState, entry: tuple, choices: tuple[int, ...]) -> None:
@@ -1354,6 +1438,7 @@ ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "power_confusion_to_damage_source": power_confusion_to_damage_source,  # v0.42
     "drain_energy_from_damage_source": drain_energy_from_damage_source,  # v0.68
     "counters_to_damage_source_on_heads": counters_to_damage_source_on_heads,  # v0.81
+    "reflect_damage_to_damage_source": reflect_damage_to_damage_source,  # v0.83
 }
 
 
@@ -1402,8 +1487,8 @@ def _damage_target(res: Resolution, fs: FrameState) -> int:
 def _retaliation_error(res: Resolution, fs: FrameState):
     """W24・S37 の理由の文（v0.13 と同じ文。``effects.retaliation_double_knockout_error``）。返すダメージは、この枠でのせた最終ダメージ。"""
     target = _damage_target(res, fs)
-    if fs.origin is None or target not in fs.applied:
-        return None  # 理由の文の値がない（questions の表の文を使う）
+    if fs.origin is None or target not in fs.applied or not isinstance(fs.origin.implementation, Retaliation):
+        return None  # 理由の文の値がない（questions の表の文を使う。v0.83: 「リフレクトシールド」の枠も表の文）
     return retaliation_double_knockout_error(fs.frame.source_pid, fs.origin.implementation, fs.applied[target], target, res.state)
 
 

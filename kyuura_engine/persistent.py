@@ -60,6 +60,7 @@ from .state import (
     NextTurnAttackDamage,
     PreventDamage,
     ReducedDamageToSource,
+    ReflectShield,
     ResistanceChange,
     Retaliation,
     TailsDamageGuard,
@@ -341,6 +342,11 @@ def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[Attack
     v0.36 の効果だけなら 0 か 1 つ（効果を与えたワザは前の番の 1 回だけで、効果は次の番の終わりまで）。v0.45 から、期限のない効果を受けたポケモンが
     もう 1 つの効果を受けると 2 つ以上になる（その状態でワザを使うときは AC13。``flow._attack_check_failed``）。"""
     return tuple(e for e in pokemon.persistent_effects if isinstance(e, AttackCoinCheck) and e.active_on(state.turn_number))
+
+
+def reflect_shield(state: GameState, pokemon: PokemonInPlay) -> ReflectShield | None:
+    """``pokemon`` の今はたらいている「リフレクトシールド」の効果（v0.83。``ReflectShield``。はたらく番が今の番）。なければ None。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, ReflectShield) and e.active_turn == state.turn_number), None)
 
 
 def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:

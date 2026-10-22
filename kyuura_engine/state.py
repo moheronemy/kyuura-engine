@@ -789,6 +789,38 @@ class TailsDamageGuard:
 
 
 @dataclass(frozen=True)
+class ReflectShield:
+    """ワザによる「持続する効果」（v0.83）のうち、ひかるミュウツー（neo4-068）の「リフレクトシールド」の「次の相手の番、このカードが相手のワザによるダメージを受けるとき、
+    このカードの持ち主はコインを投げる。「おもて」なら、相手に20ダメージを与え、このカードが受けるダメージは、すべてなくなる(ダメージ以外の効果は、そのまま受ける)。」
+    （kyuura の印刷の文面。docs/shining-gentle-pokemon-v0.83.md 5 章）。
+
+    自分自身に与え、はたらく番は次の相手の番（``created_turn + 1``）、その番の終わりに消える（v0.4b の期限）。ベンチにもどる・場をはなれる・進化・きぜつで消える。ダメージを
+    受けても消えない（「かげぶんしん」の ``TailsDamageGuard`` と違う）。コインは、相手のワザによるダメージ（最終ダメージが 0 より大きい）を受けるときに、このカードの持ち主が
+    投げる（``resolution.kernel.deal_damage``）。「おもて」なら、そのダメージの要素で受けるダメージはなく、相手（ダメージを与えたポケモン）に ``amount`` のダメージを与える
+    （このワザ（``attack_index``）によるダメージ。そのワザのダメージの要素のあとの窓。``kernel.reflect_damage_to_damage_source``）。
+
+    - ``attack_index``: 効果を与えたワザの位置。``attack_card`` は v0.49 の ``Retaliation`` と同じ（いちばん上のカードと違うときだけ）
+    - ``amount``: 相手に与えるダメージの基本となるダメージ（20）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    amount: int
+    attack_card: str | None = None
+    kind: ClassVar[str] = "reflect_shield"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        if type(self.amount) is not int or self.amount <= 0 or type(self.attack_index) is not int:
+            raise ValueError(f"与えるダメージ・ワザの位置は整数（{self.amount!r}・{self.attack_index!r}）")
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -942,7 +974,8 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            ZeroDamageBelow, HalvedDamage, WeaknessChange, ResistanceChange, MaxHpSet, CannotUsePowers, CannotAttachEnergy, TailsDamageGuard,
                            DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
                            ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
-                           CannotAttackNextOwnTurn)  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
+                           CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
+                           ReflectShield)  # v0.83: ReflectShield（リフレクトシールド）
 
 
 @dataclass(frozen=True)

@@ -174,6 +174,7 @@ from .state import (
     DoubledDamage,
     MaxHpSet,
     TailsDamageGuard,
+    ReflectShield,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -268,6 +269,9 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
         data["color"] = effect.color.value  # v0.48: 「テクスチャー1」「テクスチャー2」の変えた色
     elif isinstance(effect, MaxHpSet):
         data["amount"] = effect.amount  # v0.48: 「きょだいか」の最大HP
+    elif isinstance(effect, ReflectShield):
+        data["attack_index"] = effect.attack_index  # v0.83: 「リフレクトシールド」（相手に与えるダメージ）
+        data["amount"] = effect.amount
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
                                          CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")

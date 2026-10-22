@@ -521,6 +521,7 @@ POOL_KEYS = (
     "pool_v0_80",  # v0.80（トレーナー 30 枚。スタジアム 4 枚を含む。docs/neo-trainer-components-v0.80.md）
     "pool_v0_81",  # v0.81（ポケモンのどうぐ 11 枚・ピントレンズ・常にはたらくスタジアム 3 枚。docs/pokemon-tools-stadiums-v0.81.md）
     "pool_v0_82",  # v0.82（リサイクルエネルギー・エコロジムと、エネルギーカードをトラッシュするワザを持つポケモン 18 枚。docs/energy-discard-return-v0.82.md）
+    "pool_v0_83",  # v0.83（ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ ES1-014。docs/shining-gentle-pokemon-v0.83.md）
 )
 
 

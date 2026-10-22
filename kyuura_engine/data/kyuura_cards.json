@@ -1235,6 +1235,26 @@
     "PF1-005",
     "neo3-014"
   ],
+  "pool_v0_83": [
+    "neo3-022",
+    "PRN-046",
+    "neo3-023",
+    "neo4-013",
+    "neo4-047",
+    "neo4-068",
+    "neo4-080",
+    "neo4-084",
+    "neo4-098",
+    "PRN-044",
+    "neo4-004",
+    "neo4-006",
+    "neo4-032",
+    "neo4-034",
+    "neo4-045",
+    "neo4-054",
+    "neo4-093",
+    "ES1-014"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -89400,6 +89420,1780 @@
       "play_scope": "standard",
       "data_gaps": [],
       "same_card_group": null
+    },
+    {
+      "id": "neo3-022",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるコイキング",
+        "en": "Shining Magikarp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          129
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるコイキング」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Magikarp in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きんいろのうろこ",
+              "en": "Gold Scale"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、のぞむなら、それぞれの山札からカードを最大2枚まで引いて、手札に加えてよい。",
+              "en": "Your opponent may draw 2 cards. Either way, you may draw 2 cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "りゅうのきずな",
+              "en": "Dragon Bond"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「ギャラドス」「わるいギャラドス」「ひかるギャラドス」のうち、1枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+              "en": "Search your deck for a card named Gyarados, Dark Gyarados, or Shining Gyarados. Show it to your opponent and put it into your hand. Shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Secret Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo3-022",
+        "pokemontcg": [
+          "neo3-66"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%B3%E3%82%A4%E3%82%AD%E3%83%B3%E3%82%B0_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 11,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%B3%E3%82%A4%E3%82%AD%E3%83%B3%E3%82%B0_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": "SC-neo3-022"
+    },
+    {
+      "id": "PRN-046",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるコイキング",
+        "en": "Shining Magikarp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          129
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるコイキング」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Magikarp in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きんいろのうろこ",
+              "en": "Gold Scale"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、のぞむなら、それぞれの山札からカードを最大2枚まで引いて、手札に加えてよい。",
+              "en": "Your opponent may draw 2 cards. Either way, you may draw 2 cards."
+            }
+          },
+          {
+            "name": {
+              "ja": "りゅうのきずな",
+              "en": "Dragon Bond"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札から「ギャラドス」「わるいギャラドス」「ひかるギャラドス」のうち、1枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+              "en": "Search your deck for a card named Gyarados, Dark Gyarados, or Shining Gyarados. Show it to your opponent and put it into your hand. Shuffle your deck afterward."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-66"
+        ],
+        "pcg_search": [
+          "neop046"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop046.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★★★(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop046.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-neo3-022",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note",
+        "en_print": "same_card:neo3-022",
+        "english_text": "same_card:neo3-022",
+        "pokemon.dex": "same_card:neo3-022"
+      },
+      "copies": [
+        {
+          "page": "neop046",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo3-023",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるギャラドス",
+        "en": "Shining Gyarados"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          130
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": {
+          "ja": "「ひかるギャラドス」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Gyarados in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "げきりん",
+              "en": "Outrage"
+            },
+            "cost": [
+              "water",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、自分にのっているダメージカウンターの数×10のダメージを追加する。",
+              "en": "Flip a coin. If heads, this attack does 30 damage plus 10 more damage for each damage counter on Shining Gyarados. If tails, this attack does nothing."
+            }
+          },
+          {
+            "name": {
+              "ja": "やきつくす",
+              "en": "Devastate"
+            },
+            "cost": [
+              "water",
+              "water",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを2枚トラッシュし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。その後、コインを投げて「おもて」なら、相手の場のポケモン全員についている「エネルギーカード」を、それぞれ1枚ずつトラッシュする。(自分についている「炎」エネルギーカードをトラッシュできないとき、このワザは失敗する。)",
+              "en": "Discard 2 Fire Energy cards attached to Shining Gyarados or this attack does nothing. This attack does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Then, flip a coin. If heads, choose 1 Energy card attached to each of your opponent's Pokémon that has any Energy cards attached to it and discard those Energy cards."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Secret Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo3-023",
+        "pokemontcg": [
+          "neo3-65"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AE%E3%83%A3%E3%83%A9%E3%83%89%E3%82%B9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 44,
+        "rarity": "★★★",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AE%E3%83%A3%E3%83%A9%E3%83%89%E3%82%B9_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-013",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるセレビィ",
+        "en": "Shining Celebi"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          251
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるセレビィ」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Celebi in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いやしのみず",
+              "en": "Healing Water"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の控えポケモンを1匹選ぶ。その後、自分についている「水」エネルギーの数ぶんのダメージカウンターを、選んだポケモンからとりのぞく。(自分に控えがいないとき、このワザは失敗する。)",
+              "en": "Remove a number of damage counters from 1 of your Benched Pokémon equal to the number of Water Energy cards attached to Shining Celebi. If the Pokémon has fewer damage counters than that, remove all of them."
+            }
+          },
+          {
+            "name": {
+              "ja": "ミラクルリーフ",
+              "en": "Miracle Leaf"
+            },
+            "cost": [
+              "grass",
+              "psychic"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "相手についている「エネルギー」の数ぶんコインを投げる。1枚でも「おもて」なら、「どく・ねむり・こんらん」の中から1つを選び、相手をその状態にする。",
+              "en": "Flip a number of coins equal to the number of Energy attached to the Defending Pokémon. If you get 1 or more heads, the Defending Pokémon is now Asleep, Confused, or Poisoned (your choice)."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-013",
+        "pokemontcg": [
+          "neo4-106"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%BB%E3%83%AC%E3%83%93%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 18,
+        "rarity": null,
+        "series": null,
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%BB%E3%83%AC%E3%83%93%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.series"
+      ],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-047",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるライチュウ",
+        "en": "Shining Raichu"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          26
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるライチュウ」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Raichu in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "サンダースコール",
+              "en": "Thundersquall"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "water",
+              "water"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手の控えポケモンを1匹選ぶ。その後、自分についている「水」エネルギーの数×10のダメージを、選んだポケモンにも、「弱点・抵抗力」に関係なく与える。(相手に控えがいないとき、控えへのダメージはなくなる。)",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to that Pokémon for each Water Energy attached to Shining Raichu. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-047",
+        "pokemontcg": [
+          "neo4-111"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A9%E3%82%A4%E3%83%81%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 30,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A9%E3%82%A4%E3%83%81%E3%83%A5%E3%82%A6_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-068",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるミュウツー",
+        "en": "Shining Mewtwo"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          150
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": {
+          "ja": "「ひかるミュウツー」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Mewtwo in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "リフレクトシールド",
+              "en": "Reflect Shield"
+            },
+            "cost": [
+              "psychic",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードが相手のワザによるダメージを受けるとき、このカードの持ち主はコインを投げる。「おもて」なら、相手に20ダメージを与え、このカードが受けるダメージは、すべてなくなる(ダメージ以外の効果は、そのまま受ける)。",
+              "en": "If an attack does damage to Shining Mewtwo during your opponent's next turn (even if Shining Mewtwo is Knocked Out), flip a coin. If heads, prevent all damage done to Shining Mewtwo from that attack (any other effects of attacks still happen) and do 20 damage to the attacking Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "サイコバースト",
+              "en": "Psyburst"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "+",
+              "display": "40+"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュする。その後、相手についている「エネルギー」の数×10のダメージを追加する。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": "Discard a Fire Energy card attached to Shining Mewtwo or this attack does nothing. This attack does 40 damage plus 10 damage for each Energy attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-068",
+        "pokemontcg": [
+          "neo4-109"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%9F%E3%83%A5%E3%82%A6%E3%83%84%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 63,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%9F%E3%83%A5%E3%82%A6%E3%83%84%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-080",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるカブトプス",
+        "en": "Shining Kabutops"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          141
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": {
+          "ja": "「ひかるカブトプス」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Kabutops in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いなずまぎり",
+              "en": "Lightning Cut"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "lightning"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、10ダメージを追加し、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。「うら」なら、自分にも10ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 30 damage plus 10 more damage and does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) If tails, this attack does 30 damage and Shining Kabutops does 10 damage to itself."
+            }
+          },
+          {
+            "name": {
+              "ja": "ウォータースラッシュ",
+              "en": "Water Slash"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "water",
+              "water"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": "+",
+              "display": "50+"
+            },
+            "text": {
+              "ja": "ワザに必要な「エネルギー」よりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。このワザは、相手の「抵抗力」に関係なく、ダメージを与える。",
+              "en": "Does 50 damage plus 10 more damage for each Water Energy attached to Shining Kabutops but not used to pay for this attack's Energy cost. Don't apply Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-080",
+        "pokemontcg": [
+          "neo4-108"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AB%E3%83%96%E3%83%88%E3%83%97%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%82%AB%E3%83%96%E3%83%88%E3%83%97%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-084",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるハガネール",
+        "en": "Shining Steelix"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          208
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 4,
+        "rules_text": {
+          "ja": "「ひかるハガネール」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Steelix in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "アースクラッシュ",
+              "en": "Crushing Earth"
+            },
+            "cost": [
+              "metal",
+              "metal",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ10ダメージ。このワザを使ったら、次の自分の番、このカードはワザを使うことができない。(「うら」の場合も、このワザを使ったことになる。)",
+              "en": "Flip a coin. If heads, this attack does 10 damage to each Benched Pokémon (yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.) If tails, this attack does nothing. Either way, Shining Steelix can't attack during your next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-084",
+        "pokemontcg": [
+          "neo4-112"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%8F%E3%82%AC%E3%83%8D%E3%83%BC%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 53,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%8F%E3%82%AC%E3%83%8D%E3%83%BC%E3%83%AB_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-098",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるヨルノズク",
+        "en": "Shining Noctowl"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          164
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるヨルノズク」はデッキに1枚までしか入れることができません。",
+          "en": "You can't have more than 1 Shining Noctowl in your deck."
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "フラッシュアイ",
+              "en": "Flashing Eyes"
+            },
+            "cost": [
+              "psychic",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを3枚投げる。「おもて」が1枚なら相手を「ねむり」状態に、「おもて」が2枚なら相手を「こんらん」状態に、すべて「おもて」なら相手を「マヒ」状態にする。",
+              "en": "Flip 3 coins. If exactly 1 is heads, the Defending Pokémon is now Asleep. If exactly 2 are heads, the Defending Pokémon is now Confused. If all 3 are heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [
+        "レアリティ表記は出典データにより異なる（TCGdex: Rare／別データ: ★キラ）"
+      ],
+      "source_ids": {
+        "tcgdex": "neo4-098",
+        "pokemontcg": [
+          "neo4-110"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A8%E3%83%AB%E3%83%8E%E3%82%BA%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 24,
+        "rarity": "★★★",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%81%B2%E3%81%8B%E3%82%8B%E3%83%A8%E3%83%AB%E3%83%8E%E3%82%BA%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PRN-044",
+      "jp_set": "PRN",
+      "category": "pokemon",
+      "name": {
+        "ja": "ひかるミュウ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": {
+          "ja": "「ひかるミュウ」はデッキに1枚までしか入れることができません。",
+          "en": null
+        },
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "フラッシュサーチ",
+              "en": null
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の山札の上からカードを3枚見る。その中から好きなカードを1枚選び出し、自分の手札に加える。その後、その山札をよく切る。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "ふしぎなほのお",
+              "en": null
+            },
+            "cost": [
+              "psychic",
+              "fire"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュし、コインを投げる。「おもて」なら相手を「こんらん」状態に、「うら」なら相手を「ねむり」状態にする。(トラッシュできないとき、このワザは失敗する。)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neop044"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neop044.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "★★★(キラ)",
+        "series": "プロモ(neo)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neop044.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.rules_text.ja": "pcg_search.note"
+      },
+      "copies": [
+        {
+          "page": "neop044",
+          "list_number": "-/-"
+        }
+      ]
+    },
+    {
+      "id": "neo4-004",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいキマワリ",
+        "en": "Light Sunflora"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          192
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒマナッツ",
+          "en": "Sunkern"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひざしをかえす",
+              "en": "Reflected Sunlight"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の場の「草」ポケモンを1匹選ぶ。その後、自分の手札にある「草」エネルギーカードを2枚まで選び、選んだポケモンにつける。",
+              "en": "Attach up to 2 Grass Energy cards from your hand to 1 of your Grass Pokémon."
+            }
+          },
+          {
+            "name": {
+              "ja": "ソーラービーム",
+              "en": "Solarbeam"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-004",
+        "pokemontcg": [
+          "neo4-72"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%9E%E3%83%AF%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 42,
+        "rarity": "●(C)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%9E%E3%83%AF%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-006",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいモルフォン",
+        "en": "Light Venomoth"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          49
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コンパン",
+          "en": "Venonat"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ふしぎなはばたき",
+              "en": "Mysterious Wing"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュから「ポケモンのカード」を1枚選び出してよい。選び出したプレイヤーは、そのカードを相手プレイヤーに見せてから、自分の手札に加える。",
+              "en": "Your opponent may choose a Baby Pokémon, Basic Pokémon, or Evolution card from his or her discard pile and put it into his or her hand. Either way, you may do the same."
+            }
+          },
+          {
+            "name": {
+              "ja": "シンクロウェーブ",
+              "en": "Synchronize"
+            },
+            "cost": [
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "自分と相手に、同じ枚数の「エネルギーカード」がついていないとき、このワザは失敗する。",
+              "en": "If Light Venomoth and the Defending Pokémon have a different number of Energy cards attached to them, this attack does nothing."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-006",
+        "pokemontcg": [
+          "neo4-53"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A2%E3%83%AB%E3%83%95%E3%82%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A2%E3%83%AB%E3%83%95%E3%82%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-032",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいゴルダック",
+        "en": "Light Golduck"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          55
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コダック",
+          "en": "Psyduck"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "みずかき",
+              "en": "Flipper Stroke"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、それぞれ、自分の山札の上からカードを3枚見る。その後、それぞれ、見た中にある「基本エネルギーカード」を好きなだけ選び出し、相手プレイヤーに見せてから、自分の手札に加える。山札を見たプレイヤーは、その山札をよく切る。",
+              "en": "Your opponent looks at the top 3 cards of his or her deck. If any of them are basic Energy cards, he or she may show any number of them to you and put them into his or her hand. You do the same. Either way, each player shuffles his or her deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "コアブラスト",
+              "en": "Core Blast"
+            },
+            "cost": [
+              "psychic",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "相手についている「特殊エネルギーカード」の枚数×20のダメージを追加する。",
+              "en": "This attack does 30 damage plus 20 more damage for each Special Energy card attached to the Defending Pokémon."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-032",
+        "pokemontcg": [
+          "neo4-47"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%AB%E3%83%80%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 36,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%AB%E3%83%80%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-034",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいシャワーズ",
+        "en": "Light Vaporeon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          134
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あらいながす",
+              "en": "Wash Away"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の控えポケモンを1匹選ぶ。その後、そのポケモンにのっているダメージカウンターを、すべてとりのぞき、そのポケモンについている「エネルギーカード」を、すべてトラッシュする。(自分に控えがいないとき、このワザは失敗する。)",
+              "en": "If you have any Benched Pokémon, flip a coin. If heads, remove all damage counters from 1 of your Benched Pokémon and discard all Energy cards attached to it."
+            }
+          },
+          {
+            "name": {
+              "ja": "ヒプノシャワー",
+              "en": "Hypnoshower"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にし、おたがいの控えポケモン全員にのっているダメージカウンターを、それぞれ1個ずつとりのぞく。",
+              "en": "The Defending Pokémon is now Asleep. Remove 1 damage counter from each Benched Pokémon (yours and your opponent's) with any damage counters on it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-034",
+        "pokemontcg": [
+          "neo4-52"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B7%E3%83%A3%E3%83%AF%E3%83%BC%E3%82%BA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 41,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B7%E3%83%A3%E3%83%AF%E3%83%BC%E3%82%BA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-045",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいランターン",
+        "en": "Light Lanturn"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          171
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "チョンチー",
+          "en": "Chinchou"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あかりでてらす",
+              "en": "Searchlight"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュからカードを1枚選び出してよい。選び出したプレイヤーは、そのカードを相手プレイヤーに見せてから、自分の手札に加える。",
+              "en": "Flip a coin. If heads, each player may choose a card from his or her discard pile and put it into his or her hand."
+            }
+          },
+          {
+            "name": {
+              "ja": "スパーク",
+              "en": "Spark"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、10ダメージ。",
+              "en": "If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-045",
+        "pokemontcg": [
+          "neo4-23"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A9%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A9%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-054",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいヤドラン",
+        "en": "Light Slowbro"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          80
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヤドン",
+          "en": "Slowpoke"
+        },
+        "hp": 80,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "すくいあげる",
+              "en": "Fish Out"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュから「ポケモンのカード」を3枚まで選び出してよい。選び出したプレイヤーは、それらのカードを相手プレイヤーに見せてから、自分の山札にもどす。その後、その山札をよく切る、",
+              "en": "Your opponent may choose up to 3 Baby Pokémon, Basic Pokémon, and/or Evolution cards from his or her discard pile and shuffle them into his or her deck. Either way, you may do the same."
+            }
+          },
+          {
+            "name": {
+              "ja": "みずあそび",
+              "en": "Splash About"
+            },
+            "cost": [
+              "water",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": "+",
+              "display": "20+"
+            },
+            "text": {
+              "ja": "相手についている「エネルギー」の数が自分についている「エネルギー」の数より多いとき、20ダメージを追加する。",
+              "en": "If there are more Energy attached to the Defending Pokémon than to Light Slowbro, this attack does 20 damage plus 20 more damage. If not, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-054",
+        "pokemontcg": [
+          "neo4-51"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A4%E3%83%89%E3%83%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%A4%E3%83%89%E3%83%A9%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-093",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいハクリュー",
+        "en": "Light Dragonair"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          148
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ミニリュウ",
+          "en": "Dratini"
+        },
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いやしのひかり",
+              "en": "Healing Light"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "自分の場のポケモン全員にのっているダメージカウンターを、それぞれ1個ずつとりのぞく。",
+              "en": "Remove 1 damage counter from each of your Pokémon that has any damage counters on it."
+            }
+          },
+          {
+            "name": {
+              "ja": "まもりのはどう",
+              "en": "Protective Wave"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。",
+              "en": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Light Dragonair."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-093",
+        "pokemontcg": [
+          "neo4-22"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%8F%E3%82%AF%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 35,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%8F%E3%82%AF%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES1-014",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ギャロップ",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ポニータ",
+          "en": null
+        },
+        "hp": 60,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かえんじごく",
+              "en": null
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "のぞむなら、このカードについている「炎」エネルギーカードを最大2枚はがしてトラッシュし、トラッシュした「炎」エネルギーカードの数×20のダメージを追加してよい。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "けりとばす",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1014"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1014.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1014.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-014",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "1stex1014",
+          "list_number": "014/036"
+        }
+      ]
     }
   ]
 }

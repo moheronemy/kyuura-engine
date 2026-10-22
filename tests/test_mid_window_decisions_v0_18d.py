@@ -78,7 +78,9 @@ class DesignAssumptionTest(unittest.TestCase):
         self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "energy_drain", "restless_sleep", "retaliation", "strikes_back"])
         self.assertTrue(all(d.decision_kind is None for d in definitions))
         self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "counters_to_damage_source_on_heads", "drain_energy_from_damage_source",
-                                                  "power_confusion_to_damage_source", "power_damage_to_damage_source"])
+                                                  "power_confusion_to_damage_source", "power_damage_to_damage_source",
+                                                  # v0.83: リフレクトシールドの 20（効果の定義 REFLECT_SHIELD_RETURN。決定を出さない。docs/shining-gentle-pokemon-v0.83.md 6 章）
+                                                  "reflect_damage_to_damage_source"])
         self.assertEqual(C.COUNTER_CLAW.timing, C.Timing.DEFER)
         self.assertIsNone(C.COUNTER_CLAW.decision_kind)
         for action in kernel.ACTIONS.values():

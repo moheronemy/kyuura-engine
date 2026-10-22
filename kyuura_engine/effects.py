@@ -4050,7 +4050,10 @@ class DamageThenChosenBenchDamage(AttackEffect):
             # v0.42: ゲンガーの「ナイトヘッド」の書き方（「相手の控えポケモンから1匹選び、「弱点・抵抗力」に関係なく10ダメージ。相手に控えポケモンがいない時には、
             # この効果はない。」。選ぶのはワザを使ったプレイヤー・控えがいなければ何もしない・弱点・抵抗力に関係なく、で同じ意味）も受け付ける
             expected = (f"相手に控えポケモンがいれば、1匹を選び、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。",
-                        f"相手の控えポケモンから1匹選び、「弱点・抵抗力」に関係なく{self.bench_damage}ダメージ。相手に控えポケモンがいない時には、この効果はない。")
+                        f"相手の控えポケモンから1匹選び、「弱点・抵抗力」に関係なく{self.bench_damage}ダメージ。相手に控えポケモンがいない時には、この効果はない。",
+                        # v0.83: やさしいランターンの「スパーク」（選ぶのはワザを使ったプレイヤー・弱点・抵抗力に関係なく。控えがいないときの文はないが、処理の対象がないので
+                        # 何もしない（p.309。v0.38 の「ほのおのわ」の「いれば」と同じ結果））
+                        f"相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、{self.bench_damage}ダメージ。")
         else:
             expected = (f"相手の控えポケモンから1匹選び、そのポケモンにも{self.bench_damage}ダメージ。相手の控えポケモンが1匹もいないときにはこの効果はない。",)
         return _check_form(attack, "相手の控えにもダメージを与えるワザ", damage="fixed") + _check_exact_text(attack, "相手の控えにもダメージを与えるワザ",
@@ -5240,6 +5243,7 @@ class DamageThenSelfConfuseOnTails(AttackEffect):
 HEAL_SELF = "self"  # ワザを使ったポケモン（「自分」）
 HEAL_OWN_ALL = "own_all"  # ワザを使ったポケモンと自分の控えポケモン全員（「自分と自分の控えポケモン全員」）
 HEAL_BOTH_ALL = "both_all"  # お互いの場のポケモン全員（「お互いの場にいるポケモン全員」）
+HEAL_BOTH_BENCH = "both_bench"  # v0.83: おたがいの控えポケモン全員（やさしいシャワーズの「ヒプノシャワー」）
 # エリカのクサイハナの「ミラクルかふん」の選べる特殊状態（説明の「ねむり・マヒ・こんらん・どく」の並び。決定 ``select_special_condition`` の番号）
 CHOSEN_CONDITIONS = (SLEEP, PARALYSIS, CONFUSION, POISON)
 _CONDITION_JA = {POISON: "どく", SLEEP: "ねむり", PARALYSIS: "マヒ", CONFUSION: "こんらん"}
@@ -9643,18 +9647,18 @@ class EnergyReturn:
     stadium: int | None = None  # エコロジムのカード（``RETURN_ECOGYM`` のとき）
 
 
-def _not_colorless(state: GameState, holder: PokemonInPlay, uid: int) -> bool:
+def _not_colorless(state: GameState, holder: PokemonInPlay, uid: int) -> bool | None:
     """ついているエネルギーカード ``uid`` が「無色」以外のエネルギーカードか（v0.82。エコロジム）。出すエネルギーの色（``energy_units``。カードの枚数・個数ではない）で決める:
     基本エネルギー・悪・鋼は「無色」以外、無色2個エネルギー・リサイクルエネルギー・きずぐすり配合エネルギーなどは「無色」。レインボーエネルギーは 6 色のどれとしても
     「無色」以外なので、色の選び方によらず「無色」以外（RB1 の問いに当たらない）。エナジーバーンの「炎」・［エネエネ］で決めた色も、出すエネルギーの色で決まる。
-    ［へんしん］のメタモンの「どの色としても使える」が無色の特殊エネルギーにも当てはまるかで答えが変わる（TE2 と同じ問い）なら止める。"""
+    ［へんしん］のメタモンの「どの色としても使える」が無色の特殊エネルギーにも当てはまるかで答えが変わる（TE2 と同じ問い）なら、決まらないので None（v0.83。止めるかは
+    呼ぶ側が、結果が変わるかで決める）。"""
     units = energy_units(state, holder, uid)
     colorless = [EnergyType.COLORLESS in unit for unit in units]
     if any(colorless) and not all(colorless):
         raise RuntimeError(f"エネルギーカード {uid} が「無色」と「無色」以外のエネルギーを出す（今の写しにない。エンジンの不具合）")
     if all(colorless) and state.card_def(uid).is_special_energy and any_color_energy(state, holder):
-        raise UnsupportedError(TRANSFORM_SPECIAL_ENERGY_CODE, f"ポケモン {holder.pokemon_id} の特殊エネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に"
-                                                              f"当たるか: {TRANSFORM_SPECIAL_ENERGY_REASON}")
+        return None
     return not all(colorless)
 
 
@@ -9685,11 +9689,36 @@ def energy_discard_plan(state: GameState, holder: PokemonInPlay, cards: Iterable
         effect = special_energy_effect(state, uid)
         if effect is not None and effect.returns_from_play:
             reasons.append(RETURN_RECYCLE)
-        if eco is not None and cause in ECOGYM_CAUSES and by_player is not None and by_player != owner and _not_colorless(state, holder, uid):
-            reasons.append(RETURN_ECOGYM)
+        if eco is not None and cause in ECOGYM_CAUSES and by_player is not None and by_player != owner:
+            colored = _not_colorless(state, holder, uid)
+            if colored is None and not reasons:
+                raise UnsupportedError(*energy_discard_problem(state, holder, uid, cause=cause, by_player=by_player))
+            # ほかの理由（リサイクルエネルギー）でもどることが決まっていれば、エコロジムが当たるかで結果（同じカードが 1 回だけ持ち主の手札にもどる）は変わらない。
+            # 当たると決まらない理由は記録しない（v0.83）
+            if colored:
+                reasons.append(RETURN_ECOGYM)
         if reasons:
             plan.append(EnergyReturn(uid, owner, holder.pokemon_id, cause, by_player, tuple(reasons), eco[0].card if RETURN_ECOGYM in reasons else None))
     return tuple(plan)
+
+
+def energy_discard_problem(state: GameState, holder: PokemonInPlay, uid: int, *, cause: str, by_player: int | None) -> tuple[str, str] | None:
+    """``holder`` についているエネルギーカード ``uid`` を場からトラッシュに置くと、そのあと持ち主の手札にもどるかが決まらないなら (停止コード, 理由)（v0.83。状態を変えない）。
+
+    エコロジムの「「無色」以外の「エネルギーカード」」に当たるかが TE2 の答えで変わり（［へんしん］のメタモンの無色の特殊エネルギー）、ほかの理由（リサイクルエネルギー）で
+    もどることも決まっていないときだけ。リサイクルエネルギーなら、どちらの読み方でも同じカードが 1 回だけもどるので止めない。選ばせる決定は、これに当たるカードを
+    選べるが選ぶと止めるものにする（``unresolved_choices``）。"""
+    eco = stadium_of(state, EnergyReturnStadium)
+    owner = state.cards[uid].owner
+    if eco is None or cause not in ECOGYM_CAUSES or by_player is None or by_player == owner:
+        return None
+    effect = special_energy_effect(state, uid)
+    if effect is not None and effect.returns_from_play:
+        return None
+    if _not_colorless(state, holder, uid) is not None:
+        return None
+    return (TRANSFORM_SPECIAL_ENERGY_CODE, (f"ポケモン {holder.pokemon_id} の特殊エネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に当たるか"
+                                            f"（手札にもどるかが変わる）: {TRANSFORM_SPECIAL_ENERGY_REASON}"))
 
 
 def return_discarded_energy(state: GameState, plan: Iterable[EnergyReturn]) -> tuple[int, ...]:
@@ -30518,3 +30547,593 @@ V0_82_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_82_ATTACKS), SAME_DATA_CARDS_V0_82)
 DEFAULT_EFFECTS = _with_energies(DEFAULT_EFFECTS, V0_82_ENERGIES)
 DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_82_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.83（docs/shining-gentle-pokemon-v0.83.md）。ひかるポケモン 10 枚・やさしいポケモン 7 枚・ギャロップ（ES1-014）
+
+
+def _each_player_decision_problems(state: GameState, use: AttackUse, decision: PendingDecision, kind: str) -> list[str]:
+    """v0.83: 「おたがいのプレイヤーは、それぞれ、…」のワザの決定（``programs.EachPlayerStep``）の形。決めるのは段階（``context`` の ``"stage"``）のプレイヤー自身（0: ワザを
+    使ったプレイヤー、1: 相手プレイヤー）。相手が決める決定を許すのは、このワザの型だけ（ほかのワザの「ワザを使ったプレイヤーが決める」約束は変えない）。"""
+    label = _label(state, use)
+    if decision.kind != kind:
+        return [f"「{label}」の決定の種類が {decision.kind!r}（{kind} のはず）"]
+    stage = decision.context_value("stage")
+    if stage not in (0, 1):
+        return [f"「{label}」の決定の段階 {stage!r} が 0・1 ではない"]
+    player = use.player if stage == 0 else 1 - use.player
+    if decision.player != player:
+        return [f"「{label}」の段階 {stage} の決定をするのがプレイヤー {decision.player}（{player} のはず）"]
+    return []
+
+
+EACH_PLAYER_DRAW_TEXT = "おたがいのプレイヤーは、のぞむなら、それぞれの山札からカードを最大{n}枚まで引いて、手札に加えてよい。"
+
+
+@dataclass(frozen=True)
+class EachPlayerMayDrawAttack(AttackEffect):
+    """おたがいのプレイヤーは、のぞむなら、それぞれの山札からカードを最大 ``max_cards`` 枚まで引いて、手札に加えてよい（v0.83。ひかるコイキングの「きんいろのうろこ」。ダメージの
+    目安なし）。要素 ``programs.EachPlayerDraws``（ワザを使ったプレイヤー → 相手プレイヤーの順に、引くプレイヤー自身が 0〜min(``max_cards``, 山札の枚数) 枚を決める。決定
+    ``SELECT_DRAW_COUNT``。v0.54 のエリカの決定と同じ種類）。英語版の「2 枚引くか、引かないか」にしない（0・1・2 枚を選べる）。"""
+
+    max_cards: int = 2
+    implementation_id = "each_player_may_draw_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいのプレイヤーがのぞむなら引くワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (EACH_PLAYER_DRAW_TEXT.format(n=self.max_cards),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _each_player_decision_problems(state, use, decision, SELECT_DRAW_COUNT)
+
+
+DRAGON_BOND_TEXT = "自分の山札から{names}のうち、1枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class RevealOneNamedPokemonFromDeck(AttackEffect):
+    """自分の山札から ``names`` のどれかの名前のカードのうち 1 枚を選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る（v0.83。ひかるコイキングの
+    「りゅうのきずな」。ダメージの目安なし）。要素 ``programs.RevealNamedPokemonFromDeck(names, exactly_one=True)``（v0.75 の「くらげのむれ」の要素。名前の完全一致・段階は
+    問わない。ちょうど 1 枚（「てよい」「好きなだけ」がない）。山札に選べるカードがなければ見せずに切る（p.309））。"""
+
+    names: tuple[str, ...]
+    implementation_id = "reveal_one_named_pokemon_from_deck"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札から名前の決まったポケモンを 1 枚選び出すワザ"
+        text = DRAGON_BOND_TEXT.format(names="".join(f"「{name}」" for name in self.names))
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        options = deck_named_pokemon(state, use.player, self.names)
+        return _decision_form(decision, _label(state, use), kind=SEARCH_DECK, player=use.player, choices=(1, 1), options=options)
+
+
+OUTRAGE_TEXT = "コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、自分にのっているダメージカウンターの数×{per}のダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class FailOnTailsPlusOwnCounters(AttackEffect):
+    """コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、自分にのっているダメージカウンターの数 × ``per`` のダメージを追加する（v0.83。ひかるギャラドスの「げきりん」）。
+    要素は ``FailOnTails`` → ``Damage(OPP, PlusOwnCountersOnHeads(per))``（p.321 の 1 段階）。v0.79 の ``CoinBonusPerOwnCounter``（「うら」でも目安の数字のダメージを与える）とは
+    「うら」の扱いが違う。"""
+
+    per: int
+    implementation_id = "fail_on_tails_plus_own_counters"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインの「うら」で失敗し、「おもて」で自分のダメージカウンターの数ぶん追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (OUTRAGE_TEXT.format(per=self.per),))
+
+
+BURN_UP_TEXT = ("自分についている「{ja}」エネルギーカードを{count}枚トラッシュし、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
+                "その後、コインを投げて「おもて」なら、相手の場のポケモン全員についている「エネルギーカード」を、それぞれ1枚ずつトラッシュする。"
+                "(自分についている「{ja}」エネルギーカードをトラッシュできないとき、このワザは失敗する。)")
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenSpreadThenCoinDiscardEach(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードを ``count`` 枚トラッシュし、相手の対戦ポケモンにダメージの目安の数字ぶん、相手の控えポケモン全員にも「弱点・抵抗力」に
+    関係なく ``bench_damage`` ずつ。その後、コインを投げて「おもて」なら、相手の場のポケモン全員についている「エネルギーカード」をそれぞれ 1 枚ずつトラッシュする。トラッシュ
+    できないとき、このワザは失敗する（v0.83。ひかるギャラドスの「やきつくす」）。
+
+    - 要素は ``DiscardOwnEnergy(energy_type, count, when_lacking=LACKING_FAIL)`` → ``Damage(OPP)`` → ``BenchDamage(bench_damage)`` → ``DiscardOpponentEnergy(each_bench=True,
+      local_coin=HEADS)``（v0.31 の「スーパーデストロイ」の要素。コインは 1 枚で、ポケモンごとに投げ直さない。エネルギーカードのついていないポケモンは飛ばす。どのポケモンにも
+      ついていなければコインを投げない（p.309））
+    - 「炎」エネルギーカードのトラッシュは、RUL-ENERGY-DISCARD-ATTACKS の範囲（「炎」エネルギーカードをトラッシュするタイプのワザ）として、ワザの効果（こんらんのコインのあと）。
+      説明の順に、トラッシュ → ダメージ（相手の対戦ポケモン → 控え）→ コイン → 相手のエネルギーカードのトラッシュ。「ダメージを受けたとき」の効果は、ダメージの要素のまとまりの
+      あと（コインの前）に処理する（CR-COUNTERATTACK-TIMING）
+    - 相手のエネルギーカードのトラッシュは相手のポケモンへの効果（ポケモンごとに「ワザをうけない」状態・「とうめい」を評価する）。v0.82 の共通の処理を通す（リサイクルエネルギー・
+      エコロジム）"""
+
+    energy_type: EnergyType
+    count: int
+    bench_damage: int
+    implementation_id = "discard_energy_then_spread_then_coin_discard_each"
+    opponent_effect_elements = (ENERGY_DISCARD_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュして控えにもダメージを与え、コインで相手のエネルギーをトラッシュするワザ"
+        text = BURN_UP_TEXT.format(ja=self.energy_type.ja, count=self.count, bench=self.bench_damage)
+        return _check_form(attack, what, damage="fixed", cost_types=(self.energy_type,)) + _check_exact_text(attack, what, (text,))
+
+
+HEALING_WATER_TEXT = ("自分の控えポケモンを1匹選ぶ。その後、自分についている「{ja}」エネルギーの数ぶんのダメージカウンターを、選んだポケモンからとりのぞく。"
+                      "(自分に控えがいないとき、このワザは失敗する。)")
+
+
+@dataclass(frozen=True)
+class HealChosenBenchByEnergy(AttackEffect):
+    """自分の控えポケモンを 1 匹選び、自分についている「``energy_type``」エネルギーの数ぶんのダメージカウンターをとりのぞく。自分に控えがいないとき、このワザは失敗する（v0.83。
+    ひかるセレビィの「いやしのみず」。ダメージの目安なし）。要素 ``programs.HealChosenOwnBench``（控えがいなければ宣言では拒否せず、ワザの内容を処理するときに失敗。エネルギーの
+    個数で数える）。"""
+
+    energy_type: EnergyType
+    implementation_id = "heal_chosen_bench_by_energy"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "選んだ控えのダメージカウンターをエネルギーの数ぶんとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (HEALING_WATER_TEXT.format(ja=self.energy_type.ja),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1),
+                              options=(p.pokemon_id for p in state.players[use.player].bench))
+
+
+MIRACLE_LEAF_TEXT = "相手についている「エネルギー」の数ぶんコインを投げる。1枚でも「おもて」なら、「どく・ねむり・こんらん」の中から1つを選び、相手をその状態にする。"
+MIRACLE_LEAF_CONDITIONS = (POISON, SLEEP, CONFUSION)
+
+
+@dataclass(frozen=True)
+class CoinsPerDefenderEnergyChosenStatus(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手についている「エネルギー」の数ぶんコインを投げ、1 枚でも「おもて」なら、「どく・ねむり・こんらん」の中から 1 つを
+    選び、相手をその状態にする（v0.83。ひかるセレビィの「ミラクルリーフ」）。
+
+    - 要素は ``Damage(OPP)`` → ``Coin(per_opponent_energy=True)``（エネルギーの個数。カードの枚数ではない。無色2個エネルギーは 2 枚投げる。0 なら投げない）→
+      ``ChosenStatus(gate=AtLeast(1), conditions=どく・ねむり・こんらん)``（v0.41 の決定 ``SELECT_SPECIAL_CONDITION``。選ぶのはワザを使ったプレイヤー。1 つだけ。コインごとに
+      1 つずつ与えない）
+    - コインは「おもて」の数だけを使うので、先読みは「おもて」の数でまとめる（v0.35）。相手がダメージで HP 以上になったら、処理の対象がないのでコインを投げない"""
+
+    implementation_id = "coins_per_defender_energy_chosen_status"
+    opponent_effect_elements = MIRACLE_LEAF_CONDITIONS
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のエネルギーの数ぶんコインを投げて特殊状態を選ぶワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (MIRACLE_LEAF_TEXT,))
+
+
+THUNDER_SQUALL_TEXT = ("相手の控えポケモンを1匹選ぶ。その後、自分についている「{ja}」エネルギーの数×{per}のダメージを、選んだポケモンにも、「弱点・抵抗力」に関係なく与える。"
+                       "(相手に控えがいないとき、控えへのダメージはなくなる。)")
+
+
+@dataclass(frozen=True)
+class ChooseBenchThenDamageAndEnergyBenchDamage(AttackEffect):
+    """相手の控えポケモンを 1 匹選ぶ。その後、相手の対戦ポケモンにダメージの目安の数字ぶんのダメージと、自分についている「``energy_type``」エネルギーの数 × ``per`` のダメージを
+    選んだポケモンにも「弱点・抵抗力」に関係なく与える。相手に控えがいないとき、控えへのダメージはなくなる（v0.83。ひかるライチュウの「サンダースコール」）。
+
+    - 要素は ``ChooseOpponentBench``（ダメージより先に選ぶ。決定 ``SELECT_POKEMON``。控えがいなければ選ばない）→ ``Damage(OPP)`` → ``ChosenTargetDamage(OwnTypedEnergyTimes)``
+      （エネルギーの個数。0 なら与えない）。相手の対戦ポケモンへのダメージはどの場合も与える（ワザは失敗しない）
+    - 選んだ番号は、あとのダメージの要素が順番の決定で止まっても続きの情報（``chosen``）で運び、選び直さない"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "choose_bench_then_damage_and_energy_bench_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の控えを先に選び、エネルギーの数ぶんのダメージを与えるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (THUNDER_SQUALL_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1),
+                              options=(p.pokemon_id for p in state.players[1 - use.player].bench))
+
+
+REFLECT_SHIELD_TEXT = ("次の相手の番、このカードが相手のワザによるダメージを受けるとき、このカードの持ち主はコインを投げる。「おもて」なら、相手に{amount}ダメージを与え、"
+                       "このカードが受けるダメージは、すべてなくなる(ダメージ以外の効果は、そのまま受ける)。")
+
+
+@dataclass(frozen=True)
+class SelfReflectShield(AttackEffect):
+    """次の相手の番、このカードが相手のワザによるダメージを受けるとき、持ち主がコインを投げ、「おもて」なら相手に ``amount`` ダメージを与え、受けるダメージはすべてなくなる
+    （v0.83。ひかるミュウツーの「リフレクトシールド」。ダメージの目安なし）。要素 ``programs.SelfReflectShield``（持続する効果 ``state.ReflectShield``）。"""
+
+    amount: int = 20
+    implementation_id = "self_reflect_shield"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "次の相手の番に受けるダメージを、コインでなくし相手にダメージを与えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (REFLECT_SHIELD_TEXT.format(amount=self.amount),))
+
+    def shield_terms(self) -> int:
+        """不変条件が持続する効果と照らす値（与えるダメージ）。"""
+        return self.amount
+
+
+PSYCHO_BURST_TEXT = ("自分についている「{ja}」エネルギーカードを1枚トラッシュする。その後、相手についている「エネルギー」の数×{per}のダメージを追加する。"
+                     "(トラッシュできないとき、このワザのダメージはなくなる。)")
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenPlusDefenderEnergyUnits(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードを 1 枚トラッシュする。その後、相手についている「エネルギー」の数 × ``per`` のダメージを追加する。トラッシュできないとき、
+    このワザのダメージはなくなる（v0.83。ひかるミュウツーの「サイコバースト」）。
+
+    - 要素は ``DiscardOwnEnergy(energy_type, when_lacking=LACKING_NONE)`` → ``Damage(OPP, PlusDefenderEnergyUnits(per), requires="discard")``。トラッシュできないときは
+      ダメージの要素を処理しない（「このワザのダメージはなくなる」。ダメージの計算をしない（0 のダメージを与えたことにしない）。ワザの失敗ではない。ログ ``discard_energy_failed`` の
+      ``outcome`` は ``none``。RUL-ENERGY-DISCARD-ATTACKS の「ダメージはなくなる」と同じ）。「炎」エネルギーカードのトラッシュは RUL-ENERGY-DISCARD-ATTACKS の
+      範囲でワザの効果
+    - 数えるのは相手の対戦ポケモンについているエネルギーの個数（無色2個エネルギーは 2）。v0.31 の「サイコキネシス」（エネルギーカードの枚数）とは別の値"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "discard_energy_then_plus_defender_energy_units"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュして相手のエネルギーの数ぶん追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+", cost_types=(self.energy_type,)) + _check_exact_text(
+            attack, what, (PSYCHO_BURST_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+
+LIGHTNING_SLASH_TEXT = "コインを投げて「おもて」なら、{bonus}ダメージを追加し、相手の控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。「うら」なら、自分にも{self_damage}ダメージ。"
+
+
+@dataclass(frozen=True)
+class CoinBonusAndBenchElseSelfDamage(AttackEffect):
+    """コインを投げて「おもて」なら ``bonus`` を追加し、相手の控えポケモン全員にも「弱点・抵抗力」に関係なくそれぞれ ``bench_damage``。「うら」なら自分にも ``self_damage``（v0.83。
+    ひかるカブトプスの「いなずまぎり」）。要素は ``Coin`` → ``Damage(OPP, PrintedPlusBonus)`` → ``BenchDamage(gate=おもて)`` → ``Damage(SELF, gate=うら)``。1 枚のコインで
+    すべてを決める（要素ごとに投げ直さない）。「うら」でも目安の数字のダメージは与える（ワザは失敗しない）。"""
+
+    bonus: int
+    bench_damage: int
+    self_damage: int
+    implementation_id = "coin_bonus_and_bench_else_self_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで追加と控えへのダメージ、または自分へのダメージを与えるワザ"
+        text = LIGHTNING_SLASH_TEXT.format(bonus=self.bonus, bench=self.bench_damage, self_damage=self.self_damage)
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (text,))
+
+
+WATER_SLASH_TEXT = "ワザに必要な「エネルギー」よりも多く「{ja}」エネルギーがついているとき、多い「{ja}」エネルギー1個につき、{per}ダメージを追加する。このワザは、相手の「抵抗力」に関係なく、ダメージを与える。"
+
+
+@dataclass(frozen=True)
+class ExcessEnergyDamageIgnoringResistance(AttackEffect):
+    """ワザに必要なエネルギーよりも多く「``energy_type``」エネルギーがついているとき、多い 1 個につき ``per`` を追加する。相手の「抵抗力」に関係なくダメージを与える（v0.83。
+    ひかるカブトプスの「ウォータースラッシュ」）。要素は ``Damage(OPP, ExcessTypedEnergy(energy_type, per), resistance=False)``（v0.45 のスパイラルショットと同じく抵抗力だけを
+    計算しない。弱点は計算する）。
+
+    - 必要なエネルギーに無色の記号がない書き方だけを登録する（``check``。無色がまざるときの、どのエネルギーで払ったかの扱い（v0.31 の HC4）はこの書き方では起こらない）"""
+
+    energy_type: EnergyType
+    per: int
+    implementation_id = "excess_energy_damage_ignoring_resistance"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "多い「水」エネルギーの数ぶん追加し、抵抗力に関係なくダメージを与えるワザ"
+        problems = _check_form(attack, what, damage="modified", modifier="+", cost_types=(self.energy_type,))
+        if EnergyType.COLORLESS in attack.cost:
+            problems.append("必要なエネルギーに無色の記号があるワザを、この型で登録している（どのエネルギーで払ったかの扱いが要る。HC4）")
+        return problems + _check_exact_text(attack, what, (WATER_SLASH_TEXT.format(ja=self.energy_type.ja, per=self.per),))
+
+
+EARTH_CRUSH_TEXT = ("コインを投げて「うら」なら、このワザは失敗する。「おもて」なら、おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、それぞれ{bench}ダメージ。"
+                    "このワザを使ったら、次の自分の番、このカードはワザを使うことができない。(「うら」の場合も、このワザを使ったことになる。)")
+
+
+@dataclass(frozen=True)
+class FailOnTailsSpreadBothThenSelfCannotAttack(AttackEffect):
+    """コインを投げて「うら」なら、このワザは失敗する。「おもて」なら相手の対戦ポケモンにダメージの目安の数字ぶん、おたがいの控えポケモン全員にも「弱点・抵抗力」に関係なく
+    それぞれ ``bench_damage``。このワザを使ったら（「うら」でも）、次の自分の番、このカードはワザを使えない（v0.83。ひかるハガネールの「アースクラッシュ」）。
+
+    - 要素は ``FailOnTails`` → ``Damage(OPP)`` → ``BenchDamage``（相手の控え）→ ``BenchDamage(own=True)``（自分の控え。v0.39 のじばくと同じ順）→ ``SelfCannotAttack(even_if_failed=True)``
+      （v0.79 のメタルクラッシュと同じく、ワザが失敗しても処理する要素）
+    - こんらんの「うら」・宣言の前の拒否では、ワザの要素を処理しないので、効果は与えない（コインの「うら」による失敗だけが説明の「「うら」の場合」）"""
+
+    bench_damage: int
+    implementation_id = "fail_on_tails_spread_both_then_self_cannot_attack"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで失敗し、おたがいの控えにもダメージを与え、次の自分の番にワザを使えなくなるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (EARTH_CRUSH_TEXT.format(bench=self.bench_damage),))
+
+
+FLASH_EYE_TEXT = "コインを3枚投げる。「おもて」が1枚なら相手を「ねむり」状態に、「おもて」が2枚なら相手を「こんらん」状態に、すべて「おもて」なら相手を「マヒ」状態にする。"
+
+
+@dataclass(frozen=True)
+class ThreeCoinsStatusByHeads(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。コインを 3 枚投げ、「おもて」が 1 枚ならねむり、2 枚ならこんらん、3 枚（すべて）ならマヒ。0 枚なら何もしない
+    （v0.83。ひかるヨルノズクの「フラッシュアイ」）。要素は ``Damage(OPP)`` → ``ReparalysisGuard`` → ``Coin(count=3)`` → ``Status(SLEEP, gate=Exactly(1))`` →
+    ``Status(CONFUSION, gate=Exactly(2))`` → ``Status(PARALYSIS, gate=Exactly(3))``。「おもて」の数で 1 つだけを与える（3 回それぞれ与えない。v0.31 の ``ThreeCoinPsychicPower`` とは
+    別の型）。"""
+
+    implementation_id = "three_coins_status_by_heads"
+    opponent_effect_elements = (SLEEP, CONFUSION, PARALYSIS)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "3 枚のコインの「おもて」の数で特殊状態が決まるワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (FLASH_EYE_TEXT,))
+
+
+FLASH_SEARCH_TEXT = "自分の山札の上からカードを{look}枚見る。その中から好きなカードを1枚選び出し、自分の手札に加える。その後、その山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class LookTopTakeOneThenShuffle(AttackEffect):
+    """自分の山札の上からカードを ``look`` 枚見る。その中から好きなカードを 1 枚選び出し、手札に加える。その後、その山札をよく切る（v0.83。ひかるミュウの「フラッシュサーチ」。
+    ダメージの目安なし）。要素 ``programs.LookTopTakeOne``（決定 ``TAKE_LOOKED_CARDS``。ちょうど 1 枚。種類を問わない。山札が ``look`` 枚より少なければ LT1）。"""
+
+    look: int = 3
+    implementation_id = "look_top_take_one_then_shuffle"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "山札の上を見て 1 枚を手札に加えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (FLASH_SEARCH_TEXT.format(look=self.look),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=TAKE_LOOKED_CARDS, player=use.player, choices=(1, 1),
+                              options=state.players[use.player].deck[:self.look])
+
+
+MYSTERY_FIRE_TEXT = "自分についている「{ja}」エネルギーカードを1枚トラッシュし、コインを投げる。「おもて」なら相手を「こんらん」状態に、「うら」なら相手を「ねむり」状態にする。(トラッシュできないとき、このワザは失敗する。)"
+
+
+@dataclass(frozen=True)
+class DiscardEnergyThenCoinConfuseElseSleep(AttackEffect):
+    """自分についている「``energy_type``」エネルギーカードを 1 枚トラッシュし、相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ、コインを投げて「おもて」ならこんらん、「うら」なら
+    ねむり。トラッシュできないとき、このワザは失敗する（v0.83。ひかるミュウの「ふしぎなほのお」）。要素は ``DiscardOwnEnergy(energy_type, when_lacking=LACKING_FAIL)`` →
+    ``Damage(OPP)`` → ``Status(CONFUSION, local_coin=HEADS, otherwise=SLEEP)``（1 枚のコインでどちらか一方。v0.34 の「くさいガス」と同じ要素）。トラッシュは RUL-ENERGY-DISCARD-ATTACKS の
+    範囲でワザの効果（v0.30 の ``DiscardEnergyThenDamage`` の「ダメージはなくなる」とは、トラッシュできないときの扱いが違う）。"""
+
+    energy_type: EnergyType
+    implementation_id = "discard_energy_then_coin_confuse_else_sleep"
+    opponent_effect_elements = (CONFUSION, SLEEP)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュし、コインでこんらんかねむりにするワザ"
+        return _check_form(attack, what, damage="fixed", cost_types=(self.energy_type,)) + _check_exact_text(
+            attack, what, (MYSTERY_FIRE_TEXT.format(ja=self.energy_type.ja),))
+
+
+RETURN_SUNLIGHT_TEXT = "自分の場の「{ja}」ポケモンを1匹選ぶ。その後、自分の手札にある「{ja}」エネルギーカードを{n}枚まで選び、選んだポケモンにつける。"
+
+
+@dataclass(frozen=True)
+class ChooseOwnTypeThenAttachFromHand(AttackEffect):
+    """自分の場の「``energy_type``」ポケモンを 1 匹選び、手札の「``energy_type``」エネルギーカードを ``max_cards`` 枚まで選んでつける（v0.83。やさしいキマワリの「ひざしをかえす」。
+    ダメージの目安なし）。要素 ``programs.AttachFromHandToChosen``（決定 ``SELECT_POKEMON`` → ``ATTACH_FROM_HAND``。0 枚は HC7。手札からつける通常の操作の回数に数えない）。"""
+
+    energy_type: EnergyType
+    max_cards: int
+    implementation_id = "choose_own_type_then_attach_from_hand"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分の場のポケモンを選んで手札のエネルギーカードをつけるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (RETURN_SUNLIGHT_TEXT.format(ja=self.energy_type.ja, n=self.max_cards),))
+
+
+EACH_PLAYER_RECOVERY_TEXTS = {
+    ("pokemon", 1, "hand", False): "おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュから「ポケモンのカード」を1枚選び出してよい。選び出したプレイヤーは、そのカードを"
+                                   "相手プレイヤーに見せてから、自分の手札に加える。",
+    ("any", 1, "hand", True): "コインを投げて「おもて」なら、おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュからカードを1枚選び出してよい。選び出したプレイヤーは、"
+                              "そのカードを相手プレイヤーに見せてから、自分の手札に加える。",
+    # やさしいヤドランの「すくいあげる」。kyuura の印刷の文面は最後が句点ではなく読点（「よく切る、」）。写しを書き換えず、その文面で照らす（kyuura への報告事項）
+    ("pokemon", 3, "deck", False): "おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュから「ポケモンのカード」を3枚まで選び出してよい。選び出したプレイヤーは、それらの"
+                                   "カードを相手プレイヤーに見せてから、自分の山札にもどす。その後、その山札をよく切る、",
+}
+
+
+@dataclass(frozen=True)
+class EachPlayerRecoverFromDiscard(AttackEffect):
+    """おたがいのプレイヤーは、それぞれ、のぞむなら、自分のトラッシュから ``category`` のカードを ``max_cards`` 枚まで選び出し、相手プレイヤーに見せてから ``destination`` に置く
+    （v0.83。やさしいモルフォンの「ふしぎなはばたき」・やさしいランターンの「あかりでてらす」（``coin``）・やさしいヤドランの「すくいあげる」。ダメージの目安なし）。要素
+    ``programs.EachPlayerRecoversFromDiscard``（ワザを使ったプレイヤー → 相手プレイヤーの順に、それぞれ自分で選ぶ。0 枚は選ばないこと。ポケモンタワーの場では手札に加える
+    効果は消える）。"""
+
+    category: str
+    max_cards: int
+    destination: str
+    coin: bool = False
+    implementation_id = "each_player_recover_from_discard"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいのプレイヤーがトラッシュからカードを選び出すワザ"
+        text = EACH_PLAYER_RECOVERY_TEXTS.get((self.category, self.max_cards, self.destination, self.coin))
+        if text is None:
+            return [f"選び出すカードの種類・枚数・行き先・コイン {(self.category, self.max_cards, self.destination, self.coin)} の説明がない"]
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (text,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _each_player_decision_problems(state, use, decision, RECOVER_POKEMON if self.destination == "hand" else DISCARD_TO_DECK)
+
+
+SYNCHRO_WAVE_TEXT = "自分と相手に、同じ枚数の「エネルギーカード」がついていないとき、このワザは失敗する。"
+
+
+@dataclass(frozen=True)
+class FailUnlessEqualEnergyCardsDamage(AttackEffect):
+    """自分と相手に同じ枚数の「エネルギーカード」がついていないとき、このワザは失敗する。そうでなければダメージの目安の数字ぶんのダメージ（v0.83。やさしいモルフォンの「シンクロ
+    ウェーブ」）。要素は ``FailUnlessEqualEnergyCards`` → ``Damage(OPP)``（カードの枚数で比べる）。"""
+
+    implementation_id = "fail_unless_equal_energy_cards_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードの枚数が同じでないと失敗するワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SYNCHRO_WAVE_TEXT,))
+
+
+EACH_PLAYER_LOOK_ENERGY_TEXT = ("おたがいのプレイヤーは、それぞれ、自分の山札の上からカードを{look}枚見る。その後、それぞれ、見た中にある「基本エネルギーカード」を好きなだけ選び出し、"
+                                "相手プレイヤーに見せてから、自分の手札に加える。山札を見たプレイヤーは、その山札をよく切る。")
+
+
+@dataclass(frozen=True)
+class EachPlayerLookTopTakeBasicEnergy(AttackEffect):
+    """おたがいのプレイヤーは、それぞれ、自分の山札の上からカードを ``look`` 枚見て、その中の基本エネルギーカードを好きなだけ見せてから手札に加え、山札を切る（v0.83。やさしい
+    ゴルダックの「みずかき」。ダメージの目安なし）。要素 ``programs.EachPlayerLooksTakesBasicEnergy``（決定 ``TAKE_LOOKED_CARDS``。見た 3 枚のうちの基本エネルギーカード。0 枚も
+    選べる。山札全体をさがさない。相手の山札の上は見ない。どちらかの山札が ``look`` 枚より少なければ LT1）。"""
+
+    look: int = 3
+    implementation_id = "each_player_look_top_take_basic_energy"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいのプレイヤーが山札の上を見て基本エネルギーカードを手札に加えるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (EACH_PLAYER_LOOK_ENERGY_TEXT.format(look=self.look),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _each_player_decision_problems(state, use, decision, TAKE_LOOKED_CARDS)
+
+
+CORE_BLAST_TEXT = "相手についている「特殊エネルギーカード」の枚数×{per}のダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class PlusDefenderSpecialEnergyCardsDamage(AttackEffect):
+    """ダメージの目安の数字 + 相手についている「特殊エネルギーカード」の枚数 × ``per``（v0.83。やさしいゴルダックの「コアブラスト」。p.321 の 1 段階）。"""
+
+    per: int
+    implementation_id = "plus_defender_special_energy_cards_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手の特殊エネルギーカードの枚数ぶん追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (CORE_BLAST_TEXT.format(per=self.per),))
+
+
+WASH_AWAY_TEXT = ("コインを投げて「おもて」なら、自分の控えポケモンを1匹選ぶ。その後、そのポケモンにのっているダメージカウンターを、すべてとりのぞき、そのポケモンについている"
+                  "「エネルギーカード」を、すべてトラッシュする。(自分に控えがいないとき、このワザは失敗する。)")
+
+
+@dataclass(frozen=True)
+class CoinWashChosenBench(AttackEffect):
+    """コインを投げて「おもて」なら、自分の控えポケモンを 1 匹選び、ダメージカウンターをすべてとりのぞき、ついているエネルギーカードをすべてトラッシュする。自分に控えがいないとき、
+    このワザは失敗する（v0.83。やさしいシャワーズの「あらいながす」。ダメージの目安なし）。要素 ``programs.WashOwnBench``。"""
+
+    implementation_id = "coin_wash_chosen_bench"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで控えを選び、回復してエネルギーカードをトラッシュするワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (WASH_AWAY_TEXT,))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_POKEMON, player=use.player, choices=(1, 1),
+                              options=(p.pokemon_id for p in state.players[use.player].bench))
+
+
+HYPNO_SHOWER_TEXT = "相手を「ねむり」状態にし、おたがいの控えポケモン全員にのっているダメージカウンターを、それぞれ{counters}個ずつとりのぞく。"
+
+
+@dataclass(frozen=True)
+class DamageSleepThenHealBothBench(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。相手をねむりにし、おたがいの控えポケモン全員からダメージカウンターをそれぞれ ``counters`` 個ずつとりのぞく（v0.83。
+    やさしいシャワーズの「ヒプノシャワー」）。要素は ``Damage(OPP)`` → ``Status(SLEEP)`` → ``HealCounters(counters, scope=HEAL_BOTH_BENCH)``（対戦ポケモンからはとりのぞかない。
+    相手の控えポケモンへの効果は、ポケモンごとに「ワザをうけない」状態・「とうめい」を評価する）。"""
+
+    counters: int
+    implementation_id = "damage_sleep_then_heal_both_bench"
+    opponent_effect_elements = (SLEEP, HEAL_ELEMENT)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ねむりにして、おたがいの控えのダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (HYPNO_SHOWER_TEXT.format(counters=self.counters),))
+
+
+WATER_PLAY_TEXT = "相手についている「エネルギー」の数が自分についている「エネルギー」の数より多いとき、{bonus}ダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class PlusIfDefenderMoreEnergyDamage(AttackEffect):
+    """ダメージの目安の数字。相手についている「エネルギー」の数が自分についている「エネルギー」の数より多いとき ``bonus`` を追加する（v0.83。やさしいヤドランの「みずあそび」。
+    エネルギーの個数で比べる。同じ数なら追加しない）。"""
+
+    bonus: int
+    implementation_id = "plus_if_defender_more_energy_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "相手のエネルギーが多いときに追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (WATER_PLAY_TEXT.format(bonus=self.bonus),))
+
+
+HEALING_LIGHT_TEXT = "自分の場のポケモン全員にのっているダメージカウンターを、それぞれ{counters}個ずつとりのぞく。"
+
+
+@dataclass(frozen=True)
+class HealOwnPokemonWithoutDamage(AttackEffect):
+    """自分の場のポケモン全員にのっているダメージカウンターを、それぞれ ``counters`` 個ずつとりのぞく（v0.83。やさしいハクリューの「いやしのひかり」。ダメージの目安なし）。要素は
+    ``HealCounters(counters, scope=HEAL_OWN_ALL)``（v0.41。ダメージの要素はない。0 ダメージのワザの型に入れない）。"""
+
+    counters: int
+    implementation_id = "heal_own_pokemon_without_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分の場のポケモン全員のダメージカウンターをとりのぞくワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (HEALING_LIGHT_TEXT.format(counters=self.counters),))
+
+
+_DRAGON_BOND_NAMES = ("ギャラドス", "わるいギャラドス", "ひかるギャラドス")
+_V0_83_MAGIKARP = (
+    _printed(EachPlayerMayDrawAttack(2), "きんいろのうろこ", EACH_PLAYER_DRAW_TEXT.format(n=2)),
+    _printed(RevealOneNamedPokemonFromDeck(_DRAGON_BOND_NAMES), "りゅうのきずな", DRAGON_BOND_TEXT.format(names="".join(f"「{n}」" for n in _DRAGON_BOND_NAMES))),
+)
+
+# v0.83 の 18 枚のポケモンのワザの登録（33）。ひかるコイキング（PRN-046）は neo3-022、ギャロップ（ES1-014）は QSG-011（v0.82）と同じデータ（下の SAME_DATA_CARDS_V0_83 で同じ
+# 登録の値にまとめる。記録は id ごと）。名前の同じほかの版とはまとめない
+V0_83_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ひかるコイキング（neo3-022・PRN-046）
+    **_v0_75_same_data(("neo3-022", "PRN-046"), _V0_83_MAGIKARP),
+    # ひかるギャラドス（neo3-023）
+    AttackKey("neo3-023", 0): _printed(FailOnTailsPlusOwnCounters(10), "げきりん", OUTRAGE_TEXT.format(per=10)),
+    AttackKey("neo3-023", 1): _printed(DiscardEnergyThenSpreadThenCoinDiscardEach(EnergyType.FIRE, 2, 10), "やきつくす",
+                                       BURN_UP_TEXT.format(ja="炎", count=2, bench=10)),
+    # ひかるセレビィ（neo4-013）
+    AttackKey("neo4-013", 0): _printed(HealChosenBenchByEnergy(EnergyType.WATER), "いやしのみず", HEALING_WATER_TEXT.format(ja="水")),
+    AttackKey("neo4-013", 1): _printed(CoinsPerDefenderEnergyChosenStatus(), "ミラクルリーフ", MIRACLE_LEAF_TEXT),
+    # ひかるライチュウ（neo4-047）
+    AttackKey("neo4-047", 0): _printed(ChooseBenchThenDamageAndEnergyBenchDamage(EnergyType.WATER, 10), "サンダースコール",
+                                       THUNDER_SQUALL_TEXT.format(ja="水", per=10)),
+    # ひかるミュウツー（neo4-068）
+    AttackKey("neo4-068", 0): _printed(SelfReflectShield(20), "リフレクトシールド", REFLECT_SHIELD_TEXT.format(amount=20)),
+    AttackKey("neo4-068", 1): _printed(DiscardEnergyThenPlusDefenderEnergyUnits(EnergyType.FIRE, 10), "サイコバースト", PSYCHO_BURST_TEXT.format(ja="炎", per=10)),
+    # ひかるカブトプス（neo4-080）
+    AttackKey("neo4-080", 0): _printed(CoinBonusAndBenchElseSelfDamage(10, 10, 10), "いなずまぎり", LIGHTNING_SLASH_TEXT.format(bonus=10, bench=10, self_damage=10)),
+    AttackKey("neo4-080", 1): _printed(ExcessEnergyDamageIgnoringResistance(EnergyType.WATER, 10), "ウォータースラッシュ", WATER_SLASH_TEXT.format(ja="水", per=10)),
+    # ひかるハガネール（neo4-084）
+    AttackKey("neo4-084", 0): _printed(FailOnTailsSpreadBothThenSelfCannotAttack(10), "アースクラッシュ", EARTH_CRUSH_TEXT.format(bench=10)),
+    # ひかるヨルノズク（neo4-098）
+    AttackKey("neo4-098", 0): _printed(ThreeCoinsStatusByHeads(), "フラッシュアイ", FLASH_EYE_TEXT),
+    # ひかるミュウ（PRN-044）
+    AttackKey("PRN-044", 0): _printed(LookTopTakeOneThenShuffle(3), "フラッシュサーチ", FLASH_SEARCH_TEXT.format(look=3)),
+    AttackKey("PRN-044", 1): _printed(DiscardEnergyThenCoinConfuseElseSleep(EnergyType.FIRE), "ふしぎなほのお", MYSTERY_FIRE_TEXT.format(ja="炎")),
+    # やさしいキマワリ（neo4-004）
+    AttackKey("neo4-004", 0): _printed(ChooseOwnTypeThenAttachFromHand(EnergyType.GRASS, 2), "ひざしをかえす", RETURN_SUNLIGHT_TEXT.format(ja="草", n=2)),
+    AttackKey("neo4-004", 1): AttackEntry(DAMAGE_ONLY, "ソーラービーム"),
+    # やさしいモルフォン（neo4-006）
+    AttackKey("neo4-006", 0): _printed(EachPlayerRecoverFromDiscard("pokemon", 1, "hand"), "ふしぎなはばたき", EACH_PLAYER_RECOVERY_TEXTS[("pokemon", 1, "hand", False)]),
+    AttackKey("neo4-006", 1): _printed(FailUnlessEqualEnergyCardsDamage(), "シンクロウェーブ", SYNCHRO_WAVE_TEXT),
+    # やさしいゴルダック（neo4-032）
+    AttackKey("neo4-032", 0): _printed(EachPlayerLookTopTakeBasicEnergy(3), "みずかき", EACH_PLAYER_LOOK_ENERGY_TEXT.format(look=3)),
+    AttackKey("neo4-032", 1): _printed(PlusDefenderSpecialEnergyCardsDamage(20), "コアブラスト", CORE_BLAST_TEXT.format(per=20)),
+    # やさしいシャワーズ（neo4-034）
+    AttackKey("neo4-034", 0): _printed(CoinWashChosenBench(), "あらいながす", WASH_AWAY_TEXT),
+    AttackKey("neo4-034", 1): _printed(DamageSleepThenHealBothBench(1), "ヒプノシャワー", HYPNO_SHOWER_TEXT.format(counters=1)),
+    # やさしいランターン（neo4-045）
+    AttackKey("neo4-045", 0): _printed(EachPlayerRecoverFromDiscard("any", 1, "hand", coin=True), "あかりでてらす", EACH_PLAYER_RECOVERY_TEXTS[("any", 1, "hand", True)]),
+    AttackKey("neo4-045", 1): _printed(DamageThenChosenBenchDamage(10), "スパーク", "相手の控えポケモンを1匹選び、そのポケモンにも、「弱点・抵抗力」に関係なく、10ダメージ。"),
+    # やさしいヤドラン（neo4-054）
+    AttackKey("neo4-054", 0): _printed(EachPlayerRecoverFromDiscard("pokemon", 3, "deck"), "すくいあげる", EACH_PLAYER_RECOVERY_TEXTS[("pokemon", 3, "deck", False)]),
+    AttackKey("neo4-054", 1): _printed(PlusIfDefenderMoreEnergyDamage(20), "みずあそび", WATER_PLAY_TEXT.format(bonus=20)),
+    # やさしいハクリュー（neo4-093）
+    AttackKey("neo4-093", 0): _printed(HealOwnPokemonWithoutDamage(1), "いやしのひかり", HEALING_LIGHT_TEXT.format(counters=1)),
+    AttackKey("neo4-093", 1): _printed(DamageThenSelfBarrierOnHeads(), "まもりのはどう", "コインを投げて「おもて」なら、次の相手の番、このカードはワザによるダメージや効果を受けない。"),
+    # ギャロップ（ES1-014。QSG-011 と同じデータ）
+    AttackKey("ES1-014", 0): _printed(OptionalDiscardEnergyBonusDamage(EnergyType.FIRE, 20, False, 2), "かえんじごく",
+                                      OPTIONAL_DISCARD_BONUS_TEXTS[(False, 2)].format(ja="炎", per=20, max=2)),
+    AttackKey("ES1-014", 1): _printed(DamageAndForceSwitch(), "けりとばす",
+                                      "相手の対戦ポケモンを控えポケモンと入れ替える。入れ替わるポケモンは相手が選ぶ。(相手に控えがいない時、入れ替えはおこらない)"),
+})
+
+SAME_DATA_CARDS_V0_83: Mapping[str, str] = MappingProxyType({
+    "PRN-046": "neo3-022",  # ひかるコイキング（プロモ）
+    "ES1-014": "QSG-011",  # ギャロップ（v0.82 の QSG-011 と同じデータ）
+})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_attacks(DEFAULT_EFFECTS, V0_83_ATTACKS), SAME_DATA_CARDS_V0_83)
