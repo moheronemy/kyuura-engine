@@ -501,6 +501,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.85: ［あばれんぼう］で山札の上からトラッシュしたカード（トラッシュは公開）・［ファイヤーブースト］で山札からつけた・［ファイヤーリチャージ］でトラッシュからつけた
+    # カード（場は公開）・ミラクルエネルギーのトラッシュ・ぎゃくりゅうでトラッシュから山札にもどしたカード（トラッシュは公開）
+    "power_discard_deck", "power_attach_from_deck", "power_attach_from_discard", "miracle_energy_discarded", "attack_discard_to_deck",
     # v0.82: 場からトラッシュに置かれて手札にもどしたエネルギーカード（場・トラッシュのカードは公開の情報）・のぞむならトラッシュしなかったこと
     "energy_returned_to_hand", "discard_energy_declined",
     # v0.83: おたがいのプレイヤーが選ぶワザ（引かなかった（山札の枚数は公開）・トラッシュから見せて手札に加えた・山札にもどした・選ばなかった（トラッシュは公開））と、

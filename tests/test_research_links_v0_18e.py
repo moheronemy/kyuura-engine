@@ -111,7 +111,9 @@ class ResearchLinksTest(unittest.TestCase):
                                  "UNRESOLVED_REFLECT_SHIELD_TIMING", "UNRESOLVED_ATTACK_DECK_TOP_SHORT",  # v0.83: RS1・LT1
                                  # v0.84: RF1・WD1・WD2（docs/light-powers-evolution-v0.84.md 7 章）
                                  "UNRESOLVED_REFLECT_SHIELD_OVERLAP", "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY",
-                                 "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN"})
+                                 "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",
+                             # v0.85: MEC1・MEW1（docs/entry-powers-energy-lifecycle-v0.85.md 7 章）
+                             "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE", "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND"})
         # v0.31〜v0.68 は、kyuura の一覧でコードのない行を指していた停止コード 8 件（T27・C34/C35・G40・P19・P32・Z9・DR8・DR13）に kyuura_index_engine_key を
         # 書いていた。v0.69 で kyuura が停止コードを書いたので外した（scripts/check_research_links.py が、kyuura の一覧のコードで照らす）
         self.assertEqual({code for code, entry in LINKS["stop_codes"].items() if "kyuura_index_engine_key" in entry}, set())

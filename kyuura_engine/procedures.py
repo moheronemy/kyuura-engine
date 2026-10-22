@@ -24,7 +24,7 @@ from .damage import calculate_confusion_damage
 from .effects import (
     DARKNESS_BONUS, DARKNESS_RECEIVED_POWER_CODE, PENALTY_DAMAGE, bench_guard_outside_attack_check, darkness_penalties, darkness_received_power_problem,
     energy_received_damage, energy_reduction_log, scram_watch, SCRAM_TIMING_CODE,
-    knocked_by_hp,
+    knocked_by_hp, discard_expiring_energy, miracle_turn_end_problem,
     EXPIRE_TO_HAND,
     TypeReadingsDiffer, attack_damage_modifiers, confusion_power_modifiers, definition_views, max_hp, poison_received_power_problem,
     same_for_type_readings, shift_duration_error, MAX_HP_DROP_CODE, state_stop_after, stadium_attack_damage_modifiers,
@@ -88,12 +88,20 @@ def expire_at_turn_end(state: GameState) -> bool:
             halt(state, Halt(code=code, message=f"番の終わりにまきちらせ!ベトベトガスの効果が消えると: {message}",
                              references=("GR-2000-P323-KNOCKOUT", "CR-POWER-BACK-AFTER-RECOVERY", "docs/energy-control-power-suppression-v0.59.md")))
             return False
+    miracle = miracle_turn_end_problem(state)
+    if miracle is not None:
+        # v0.85（MEW1）: ［きせきのかぜ］で効果の消えたミラクルエネルギーが、番の終わりに場にある（「つけた番の終わりにトラッシュする」が消えるか決まらない）。番の終わりは
+        # どの操作でも来るのでコマンドを拒否せず、期限の処理の前に止める
+        code, message = miracle
+        halt(state, Halt(code=code, message=message, references=("docs/entry-powers-energy-lifecycle-v0.85.md",)))
+        return False
     _expire_at_turn_end(state)
     return True
 
 
 def _expire_at_turn_end(state: GameState) -> None:
     discard_expired_attachments(state)
+    discard_expiring_energy(state)  # v0.85: ミラクルエネルギー（「つけた番の終わりにトラッシュする」）
     remove_expired_persistent_effects(state)
     for p in state.players:
         for pokemon in p.in_play():

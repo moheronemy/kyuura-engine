@@ -274,7 +274,9 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                        "PMCG6-023", "PMCG6-074",
                                                                        # v0.84: やさしいイノムーの［ふかふかなからだ］（自動的にはたらく）・やさしいカイリューの［きせきのかぜ］
                                                                        # （常にはたらく）
-                                                                       "neo4-041", "neo4-094"))})
+                                                                       "neo4-041", "neo4-094",
+                                                                   # v0.85: メガニウムの［おいしげる］（常にはたらく）・オーダイルの［あばれんぼう］（かならずはたらく）
+                                                                   "neo1-014", "neo1-033"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）

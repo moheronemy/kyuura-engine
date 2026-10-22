@@ -258,6 +258,8 @@ ALL_CODES = (
     "UNRESOLVED_REFLECT_SHIELD_OVERLAP",  # RF1（v0.84。tests/test_light_powers_evolution_v0_84.py）
     "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY",  # WD1（v0.84。同）
     "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",  # WD2（v0.84。同）
+    "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE",  # MEC1（v0.85。tests/test_entry_powers_energy_lifecycle_v0_85.py）
+    "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND",  # MEW1（v0.85。同）
 )
 TURN = 7
 

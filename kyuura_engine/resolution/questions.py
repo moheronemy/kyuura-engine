@@ -202,6 +202,10 @@ QUESTIONS: dict[str, Question] = {
         Question("rainbow_attach_type", "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE", ("RB2",), 10,
                  "山札・トラッシュ・手札のレインボーエネルギーを、「「○」エネルギーカード」をつけるワザの効果で、その色のエネルギーカードとして選べるかは、kyuura の記録から"
                  "決められない"),
+        # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）
+        Question("miracle_energy_type", "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE", ("MEC1",), 10,
+                 "場のミラクルエネルギー（「すべての「色(タイプ)」の「エネルギー」2個ぶんの「エネルギーカード」」）を、ワザの説明の「「○」エネルギー(カード)」として数える・選ぶか"
+                 "（［おいしげる］の「「草」エネルギーカード」を含む）は、印刷の文面・kyuura の記録から決められず、数える・選べるカードが変わる"),
         Question("rainbow_basic_energy_card", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", ("RB3",), 10,
                  "場のポケモンについているレインボーエネルギーを、説明の「基本エネルギーカード」として選べるかは、印刷の文面・kyuura の記録から決められない"),
         # v0.75（docs/search-energy-pokemon-v0.75.md 5 章）

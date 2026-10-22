@@ -1326,6 +1326,15 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.ReturnOwnBenchToDeckAttack,
     _effects.SwitchSelfThenStatusGuardAttack,
     _effects.ZeroDamageAtLeastNextTurn,
+    # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）
+    _effects.AttachFromDeckUpToNamedCount,
+    _effects.CoinChosenSideHealAttack,
+    _effects.CoinsPerOwnCountersBonusDamage,
+    _effects.DamageThenMillOwnDeck,
+    _effects.DamageThenStatusImmunityNextTurn,
+    _effects.DiscardEnergyCardsThenDamageNoneIfLacking,
+    _effects.DiscardFireThenDamageBothBenches,
+    _effects.PlusDiscardTypeCardsThenReturnToDeck,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2120,3 +2129,15 @@ V0_84_CARDS = (BREEDER_COUPLE, *V0_84_POKEMON)  # 写しの組 pool_v0_84 の並
 # 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
 LEDYBA_NEO1, VULPIX_NEO4, GROWLITHE_NEO4, SEEL_NEO4, MARILL_NEO1, SWINUB_NEO4 = "neo1-003", "neo4-014", "neo4-015", "neo4-027", "neo1-025", "neo4-029"
 MACHOP_NEO4, JIGGLYPUFF_NEO4, TOGEPI_NEO1 = "neo4-069", "neo4-085", "neo1-066"
+
+# v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: 進化したときの特殊能力・エネルギーを動かすポケモン 13 枚とミラクルエネルギー
+BAYLEEF_NEO1, MEGANIUM_NEO1, TYPHLOSION_NEO1, FERALIGATR_NEO1, MAREEP_NEO1 = "neo1-009", "neo1-014", "neo1-021", "neo1-033", "neo1-038"
+BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X, TYPHLOSION_PF1, CROCONAW_PF1 = "PF1-002", "PF1-003", "NIP1X-001", "PF1-006", "PF1-008"
+FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2 = "PF1-009", "NIP2X-001", "PF2-009"
+MIRACLE_ENERGY = "neo4-113"  # ミラクルエネルギー（特殊エネルギー。「ひかる」「やさしい」ポケモンにだけつけられ、つけた番の終わりにトラッシュする）
+V0_85_POKEMON = (BAYLEEF_NEO1, MEGANIUM_NEO1, TYPHLOSION_NEO1, FERALIGATR_NEO1, MAREEP_NEO1, BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X,
+                 TYPHLOSION_PF1, CROCONAW_PF1, FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2)
+V0_85_CARDS = (*V0_85_POKEMON[:5], BAYLEEF_PF1, MEGANIUM_PF1, MEGANIUM_NIP1X, TYPHLOSION_PF1, CROCONAW_PF1, FERALIGATR_PF1, FERALIGATR_NIP2X, CHARIZARD_PF2,
+               MIRACLE_ENERGY)  # 写しの組 pool_v0_85 の並び
+# 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
+CHIKORITA_NEO1, CYNDAQUIL_NEO1, QUILAVA_PF1, TOTODILE_NEO1, CHARMELEON_BASE = "neo1-002", "neo1-018", "PF1-005", "neo1-024", "PMCG1-017"

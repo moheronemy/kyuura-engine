@@ -156,7 +156,7 @@ from .persistent import (
     weakness_change,
     zero_damage_below,
     zero_damage_at_least,
-    status_immunity_while_active,
+    status_immunity_while_active, status_immunity_next_turn,
 )
 from .stadiums import bench_has_room, bench_limit, stadium_in_play
 from .state import (
@@ -176,6 +176,7 @@ from .zones import (
     reveal_face_down_bench, reveal_prizes, return_set_aside, set_aside_face_down_bench, set_aside_hand, set_aside_quiz_card,
     reveal_prize, look_at_prizes, prizes_to_deck, deck_top_to_prizes,
     place_face_down, designate_face_down,
+    attach_from_deck, attach_from_discard, discard_from_deck,
 )
 
 if TYPE_CHECKING:
@@ -6584,6 +6585,7 @@ class EvolveBasicToStage2(TrainerEffect):
         if (card, SKIP_EVOLUTION_OK) not in _selectable_skip_evolutions(state, use.player).get(target, []):
             raise RuntimeError(f"場のポケモン {target} にカード {card} を 1 進化を飛ばして重ねられない（決定の確認の漏れ。エンジンの不具合）")
         pokemon = state.find_pokemon(target)[1]
+        forced_entry_check(state, use.player, card)  # v0.85: かならずはたらく特殊能力を処理できないなら、重ねる前に止める（この答えを受け付けない）
         before_name = form_def(state, pokemon).name_ja
         place_evolution_card(state, use.player, pokemon, card, trainer=use.card)
         return_to = ("trainer", use.player, use.card, use.card_id)
@@ -7394,6 +7396,8 @@ class EnergyTransfer(PowerEffect):
         rainbow = use.energy in ambiguous_rainbow_cards(state, source, self.energy_type)
         if use.energy in converted_energy_cards(state, source, self.energy_type):
             raise converted_energy_error(source, self.energy_type, (use.energy,))  # v0.59: BZ2（「草」エネルギーとしてつけかえられるか）
+        if use.energy in ambiguous_miracle_cards(state, source, self.energy_type):
+            raise miracle_type_error(source, self.energy_type.ja, (use.energy,))  # v0.85: MEC1
         if not rainbow and (not definition.is_basic_energy or definition.provides is not self.energy_type):
             raise IllegalActionError(
                 "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつけかえる）"
@@ -8576,6 +8580,8 @@ def _energy_card_of_type(state: GameState, holder: PokemonInPlay, uid: int, ener
         raise rainbow_type_error(holder, energy_type, (uid,))
     if uid in converted_energy_cards(state, holder, energy_type):
         raise converted_energy_error(holder, energy_type, (uid,))  # v0.59: BZ2
+    if uid in ambiguous_miracle_cards(state, holder, energy_type):
+        raise miracle_type_error(holder, energy_type.ja, (uid,))  # v0.85: MEC1
     printed = definition.is_basic_energy and definition.provides is energy_type
     if (holder.pokemon_id, uid) not in state.energy_burn:
         return printed
@@ -8867,8 +8873,13 @@ class EntryPower(PowerEffect):
     # v0.84: 「手札からベンチに出してポケモンを進化させたとき」（やさしいカイリキーの［たすけだす］）。進化させたポケモンがベンチにいたときだけ機会がある（場所は場に出す処理が
     # 決定の続きの情報 ``entry_zone`` に持つ）
     bench_only: ClassVar[bool] = False
+    # v0.85: 「かならずはたらく」（オーダイルの［あばれんぼう］）。使うかを聞かず、場に出す処理のすぐあとにエンジンが処理する（``offer_entry_power``。使わない選択・あとで
+    # ``MAIN`` から使うことはない）。宣言しないので ``declared`` は偽。処理を決められない場合（``accept_problem``）は、場に出す前に止める（``forced_entry_check``）
+    forced: ClassVar[bool] = False
 
     def check_usable(self, state: GameState, use: PowerUse) -> None:
+        if self.forced:
+            raise IllegalActionError("POWER_NOT_DECLARABLE", "この特殊能力は、このカードを手札から出して進化させたときにかならずはたらく（使用を宣言しない）")
         raise IllegalActionError("POWER_NOT_USABLE_NOW", "この特殊能力は、このカードが場に出たときに 1 度だけ使える（そのときにエンジンが使うかを聞く）")
 
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
@@ -8926,12 +8937,35 @@ def offer_entry_power(state: GameState, owner: int, pokemon: PokemonInPlay, *, f
     definition = state.card_def(pokemon.card)
     use = PowerUse(owner, pokemon.pokemon_id, PowerKey(definition.id, index), return_to=return_to)
     problem = effect.accept_problem(state, use)
+    if effect.forced:
+        # v0.85: かならずはたらく特殊能力は聞かずに処理する（ログ ``pokemon_power`` の ``entry``・``forced``）。決められない場合は場に出す前に止めている（``forced_entry_check``）
+        if problem is not None:
+            raise RuntimeError(f"かならずはたらく特殊能力 {use.key} を処理できない（場に出す前の確かめ forced_entry_check の漏れ。エンジンの不具合）: {problem}")
+        state.add_event("pokemon_power", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=definition.powers[index].name_ja,
+                        power_index=index, entry="hand" if from_hand else "play", forced=True)
+        effect.resolve(state, use)
+        if state.decision is not None:
+            raise RuntimeError(f"かならずはたらく特殊能力 {use.key} が決定を出した（v0.85 の［あばれんぼう］は決定を出さない。エンジンの不具合）")
+        return False
     unresolved = {} if problem is None else {"unresolved_choices": (pokemon.pokemon_id,), "unresolved_code": problem.code,
                                               "unresolved_reason": problem.message}
     zone = (("entry_zone", "bench"),) if effect.bench_only else ()  # v0.84: 場所で機会が決まる特殊能力だけ書く（v0.83 までの決定の形は変えない）
     push_power_decision(state, use, kind=ENTRY_POWER, player=owner, options=(pokemon.pokemon_id,), context=(("entry", "hand" if from_hand else "play"),) + zone,
                         min_choices=0, max_choices=1, **unresolved)
     return True
+
+
+def forced_entry_check(state: GameState, owner: int, card: int, *, from_hand: bool = True) -> None:
+    """v0.85: 手札のカード ``card`` を場に出して進化させるとき、かならずはたらく特殊能力（``EntryPower.forced``）を処理できない（``accept_problem``）なら、場に出す前に
+    止める（``UnsupportedError``。進化の操作・答えを受け付けない）。かならずはたらくので使わない選択はなく、場に出してから止めると、答えのない状態になるため。
+    確かめる場の状態は、場に出す前の状態（［あばれんぼう］の山札の枚数は、進化・トキワシティジムの回復で変わらない）。"""
+    found = applicable_entry_power(state, card, from_hand=from_hand, on_bench=True) or applicable_entry_power(state, card, from_hand=from_hand, on_bench=False)
+    if found is None or not found[1].forced:
+        return
+    index, effect = found
+    problem = effect.accept_problem(state, PowerUse(owner, -1, PowerKey(state.card_def(card).id, index)))
+    if problem is not None:
+        raise problem
 
 
 SNEAK_ATTACK_TEXTS = (
@@ -9653,7 +9687,9 @@ DISCARD_BY_STADIUM = "stadium"  # スタジアムの効果（タマムシシテ�
 DISCARD_BY_RETREAT = "retreat"  # 「にげる」のエネルギー（p.311。ルール）
 DISCARD_BY_KNOCK_OUT = "knock_out"  # きぜつ（p.323。ルール。ワザの説明の効果ではない）
 DISCARD_BY_RULE = "rule"  # そのほかのルールの処理（なにかの化石・ピッピ人形をすてる・マチスの秘策のたねポケモンでないカード）
-DISCARD_CAUSES = frozenset({DISCARD_BY_ATTACK, DISCARD_BY_POWER, DISCARD_BY_TRAINER, DISCARD_BY_STADIUM, DISCARD_BY_RETREAT, DISCARD_BY_KNOCK_OUT, DISCARD_BY_RULE})
+DISCARD_BY_ENERGY = "energy"  # v0.85: 特殊エネルギーカード自身の効果（ミラクルエネルギーの番の終わり・つけているポケモンの条件）。エコロジムの原因ではない
+DISCARD_CAUSES = frozenset({DISCARD_BY_ATTACK, DISCARD_BY_POWER, DISCARD_BY_TRAINER, DISCARD_BY_STADIUM, DISCARD_BY_RETREAT, DISCARD_BY_KNOCK_OUT, DISCARD_BY_RULE,
+                            DISCARD_BY_ENERGY})
 # エコロジムの「相手の「ワザ・特殊能力」や「トレーナーカード」によって」。きぜつ・にげる・ルールの処理は当たらない（ワザの効果でない。GR-2000-P323-KNOCKOUT）
 ECOGYM_CAUSES = frozenset({DISCARD_BY_ATTACK, DISCARD_BY_POWER, DISCARD_BY_TRAINER})
 RETURN_RECYCLE = "recycle_energy"
@@ -9680,6 +9716,8 @@ def _not_colorless(state: GameState, holder: PokemonInPlay, uid: int) -> bool | 
     「無色」以外なので、色の選び方によらず「無色」以外（RB1 の問いに当たらない）。エナジーバーンの「炎」・［エネエネ］で決めた色も、出すエネルギーの色で決まる。
     ［へんしん］のメタモンの「どの色としても使える」が無色の特殊エネルギーにも当てはまるかで答えが変わる（TE2 と同じ問い）なら、決まらないので None（v0.83。止めるかは
     呼ぶ側が、結果が変わるかで決める）。"""
+    if _miracle_effect(state, uid) and not wind_neutralizes(state, uid):
+        return None  # v0.85: ミラクルエネルギーが「「無色」以外の「エネルギーカード」」に当たるかは決まらない（MEC1。``energy_discard_problem``）
     units = energy_units(state, holder, uid)
     colorless = [EnergyType.COLORLESS in unit for unit in units]
     if any(colorless) and not all(colorless):
@@ -9744,6 +9782,9 @@ def energy_discard_problem(state: GameState, holder: PokemonInPlay, uid: int, *,
         return None
     if _not_colorless(state, holder, uid) is not None:
         return None
+    if _miracle_effect(state, uid):
+        return (MIRACLE_TYPE_CODE, f"ポケモン {holder.pokemon_id} のミラクルエネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に当たるか: "
+                                   + MIRACLE_TYPE_REASON.format(type="無色」以外の「エネルギーカード"))
     return (TRANSFORM_SPECIAL_ENERGY_CODE, (f"ポケモン {holder.pokemon_id} の特殊エネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に当たるか"
                                             f"（手札にもどるかが変わる）: {TRANSFORM_SPECIAL_ENERGY_REASON}"))
 
@@ -9796,6 +9837,9 @@ def energy_units(state: GameState, pokemon: PokemonInPlay, uid: int) -> tuple[fr
         units = effect.units()
     if (pokemon.pokemon_id, uid) in state.energy_burn:
         return tuple(frozenset({EnergyType.FIRE}) for _ in units)
+    if (definition.is_basic_energy and definition.provides is EnergyType.GRASS) and _wild_growth_card(state, pokemon, uid) == "yes":
+        # v0.85: ［おいしげる］（「草」ポケモンについている「草」エネルギーカードは「草」2 個ぶん。1 枚のまま。決まらないカードは印刷のとおり数え、使う側が止める）
+        return (frozenset({EnergyType.GRASS}), frozenset({EnergyType.GRASS}))
     return units
 
 
@@ -9814,8 +9858,8 @@ def ambiguous_rainbow_cards(state: GameState, pokemon: PokemonInPlay, energy_typ
     決まらない。RB1）。エナジーバーンで「炎」になっているカードは「炎」1 色なので入らない（HC10 が別に扱う）。"""
     found = []
     for uid in pokemon.energy:
-        if state.card_def(uid).is_basic_energy:
-            continue
+        if state.card_def(uid).is_basic_energy or _miracle_effect(state, uid):
+            continue  # v0.85: ミラクルエネルギーは別の問い（MEC1。``ambiguous_miracle_cards``）
         units = energy_units(state, pokemon, uid)
         if any(energy_type in unit and unit != frozenset({energy_type}) for unit in units):
             found.append(uid)
@@ -9834,12 +9878,13 @@ def require_no_ambiguous_rainbow(state: GameState, pokemon: PokemonInPlay, energ
     converted = converted_energy_cards(state, pokemon, energy_type)  # v0.59: ［エネエネ］でその色のエネルギーになったカード（BZ2）
     if converted:
         raise converted_energy_error(pokemon, energy_type, converted)
+    require_no_ambiguous_miracle(state, pokemon, energy_type)  # v0.85: MEC1
 
 
 def rainbow_cards_attached(state: GameState, pokemons: Iterable[PokemonInPlay]) -> list[int]:
     """``pokemons`` についているレインボーエネルギー（どの色にもなる 1 個を出す特殊エネルギー。説明の「基本エネルギーカード」に当たるかが決まらない。RB3）。"""
     return [uid for pokemon in pokemons for uid in pokemon.energy
-            if not state.card_def(uid).is_basic_energy and any(len(unit) > 1 for unit in energy_units(state, pokemon, uid))]
+            if not state.card_def(uid).is_basic_energy and not _miracle_effect(state, uid) and any(len(unit) > 1 for unit in energy_units(state, pokemon, uid))]
 
 
 def rainbow_basic_error(cards: Iterable[int]) -> UnsupportedError:
@@ -9851,7 +9896,8 @@ def rainbow_cards_in(state: GameState, uids: Iterable[int]) -> list[int]:
     found = []
     for uid in uids:
         effect = special_energy_effect(state, uid) if state.card_def(uid).is_special_energy else None
-        if effect is not None and any(len(unit) > 1 for unit in effect.units()):
+        # v0.85: ミラクルエネルギーは場にないとき色がない（「場にあるかぎり」）ので、場にないカードの色の問い（RB2）に当たらない
+        if effect is not None and not getattr(effect, "miracle", False) and any(len(unit) > 1 for unit in effect.units()):
             found.append(uid)
     return found
 
@@ -9893,17 +9939,25 @@ def _energy_attach_power_triggers(state: GameState, pokemon: PokemonInPlay, ener
     return any(isinstance(slot.effect, HealOnEnergyAttach) and card.is_basic_energy and card.provides is slot.effect.energy_type for slot in powers_of(state, pokemon))
 
 
-def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay) -> tuple[list[frozenset[EnergyType]], ...]:
+def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay, *, wild: bool = False) -> tuple[list[frozenset[EnergyType]], ...]:
     """ワザに必要なエネルギーの支払いに使えるエネルギーの読み方（v0.58）。ふつうは 1 つ（``attached_units``）。［へんしん］がはたらいていれば、基本エネルギーカード
-    （とエナジーバーンのカード・レインボーエネルギー）の 1 個はどの色にもなり、無色の特殊エネルギーの 1 個がどの色にもなるか（TE2）で 2 つの読み方。"""
-    units = attached_units(state, pokemon)
+    （とエナジーバーンのカード・レインボーエネルギー）の 1 個はどの色にもなり、無色の特殊エネルギーの 1 個がどの色にもなるか（TE2）で 2 つの読み方。
+
+    v0.85: ``wild`` なら、［おいしげる］で 2 個になるかが決まらないカードを「草」2 個として数えた読み方（``wild_growth_alternative_units``）。"""
+    ambiguous = {uid for uid, _ in wild_growth_ambiguities(state, pokemon)} if wild else set()
+    grass = frozenset({EnergyType.GRASS})
+
+    def card_units(uid: int) -> tuple[frozenset[EnergyType], ...]:
+        return (grass, grass) if uid in ambiguous else energy_units(state, pokemon, uid)
+
+    units = [unit for uid in pokemon.energy for unit in card_units(uid)]
     if not any_color_energy(state, pokemon):
         return (units,)
     every = frozenset(EnergyType)
     all_colors = [every for _ in units]
     keep_special = []
     for uid in pokemon.energy:
-        for unit in energy_units(state, pokemon, uid):
+        for unit in card_units(uid):
             special_colorless = not state.card_def(uid).is_basic_energy and unit == COLORLESS_UNIT and (pokemon.pokemon_id, uid) not in state.energy_burn
             keep_special.append(unit if special_colorless else every)
     return (all_colors,) if keep_special == all_colors else (all_colors, keep_special)
@@ -12092,7 +12146,7 @@ def status_immunity(state: GameState, owner: int, pokemon: PokemonInPlay) -> Pow
     guard = status_immunity_while_active(pokemon)
     if guard is not None and state.players[owner].active is pokemon:
         return guard
-    return None
+    return status_immunity_next_turn(state, pokemon)  # v0.85: しんぴのこな（次の相手の番）
 
 
 def received_power_damage(state: GameState, owner: int, receiver: PokemonInPlay, source: PokemonInPlay, amount: int) -> tuple[int, tuple[DamageModifier, ...]]:
@@ -13816,11 +13870,20 @@ def attack_cost_payable(state: GameState, pokemon: PokemonInPlay, attack: Attack
     合わせて色を選べる 1 個）。［へんしん］のメタモンで、無色の特殊エネルギーをどの色としても使えるかで答えが変わる（TE2）なら、払えないとする（ワザの宣言では
     ``attack_cost_problem`` が止める）。"""
     readings = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon)}
+    if wild_growth_ambiguities(state, pokemon):  # v0.85: ［おいしげる］で 2 個になるかが決まらないカードの読み方でも払えるときだけ
+        readings |= {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon, wild=True)}
     return readings == {True}
 
 
 def attack_cost_problem(state: GameState, pokemon: PokemonInPlay, attack: Attack) -> UnsupportedError | None:
     """ワザに必要なエネルギーを払えるかが、［へんしん］のメタモンの無色の特殊エネルギーの読み方（TE2）で変わるなら、その止める理由（v0.58）。変わらなければ None。"""
+    ambiguities = wild_growth_ambiguities(state, pokemon)
+    if ambiguities:
+        # v0.85: ［おいしげる］で「草」2 個になるかが決まらないカードの読み方で、払えるかが変わるなら、そのカードの問いで止める（変わらなければ止めない）
+        base = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon)}
+        alt = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon, wild=True)}
+        if base != alt:
+            return wild_growth_error(state, pokemon, ambiguities, f"・ワザ「{attack.name_ja}」の支払い")
     readings = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon)}
     if len(readings) > 1:
         return UnsupportedError(TRANSFORM_SPECIAL_ENERGY_CODE, f"ポケモン {pokemon.pokemon_id} のワザ「{attack.name_ja}」: {TRANSFORM_SPECIAL_ENERGY_REASON}")
@@ -17424,7 +17487,7 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
     並びはプレイヤー 0 → 1、バトル場 → ベンチ。状態を変えず、乱数を使わない。"""
     from .continuous import power_suppressed  # continuous.py は effects.py を読み込むので、使うときに読み込む
 
-    problems: list[tuple[str, str]] = list(miraculous_wind_problems(state))  # v0.84: WD1・WD2
+    problems: list[tuple[str, str]] = list(miraculous_wind_problems(state)) + miracle_energy_problems(state)  # v0.84: WD1・WD2。v0.85: MEW1
     for owner, player in enumerate(state.players):
         for pokemon in player.in_play():
             if pokemon.disguise is not None:
@@ -31943,3 +32006,959 @@ V0_84_TRAINERS: Mapping[str, TrainerEntry] = MappingProxyType({
 
 DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_84_ATTACKS), V0_84_POWERS)
 DEFAULT_EFFECTS = _with_trainers(DEFAULT_EFFECTS, V0_84_TRAINERS)
+
+
+# ---------------------------------------------------------------- v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）
+
+MIRACLE_TYPE_CODE = "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE"
+MIRACLE_TYPE_REASON = (
+    "場のミラクルエネルギー（「すべての「色(タイプ)」の「エネルギー」2個ぶんの「エネルギーカード」として、あつかわれる」）を、ワザ・特殊能力・スタジアムの説明の"
+    "「「{type}」エネルギー(カード)」「「無色」以外のエネルギーカード」として数える・選ぶ・当てはめるかは、印刷の文面・kyuura の記録で決まらないので扱わない（MEC1。"
+    "ワザ・にげるの支払いに使える個数と色は決まっている）"
+)
+MIRACLE_WIND_CODE = "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND"
+MIRACLE_WIND_REASON = (
+    "［きせきのかぜ］（特殊エネルギーカードの「持っている効果は、すべて消える」）がはたらいている間に、ミラクルエネルギーの「つけた番の終わりにトラッシュする」「つけている"
+    "ポケモンが「ひかるポケモン」または「やさしいポケモン」でないとき、このカードをトラッシュする」の時が来る・つける場合に、その効果が消えるか（トラッシュしないで場に残るか、"
+    "あとで風が止んだときにトラッシュするか）は、印刷の文面・kyuura の記録で決まらないので扱わない（MEW1）"
+)
+SHINING_OR_LIGHT_PREFIXES = ("ひかる", "やさしい")
+ALL_COLOR_UNIT = frozenset(EnergyType) - {EnergyType.COLORLESS}
+
+
+def shining_or_light(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """場のポケモンが「ひかるポケモン」または「やさしいポケモン」か（v0.85。今の姿の名前が「ひかる」「やさしい」ではじまる。v0.82・v0.83 のカードの名前の決まり。
+    ［へんしん］・「ばける」の姿の名前で決める）。"""
+    return form_def(state, pokemon).name_ja.startswith(SHINING_OR_LIGHT_PREFIXES)
+
+
+@dataclass(frozen=True)
+class MiracleEnergy(SpecialEnergyEffect):
+    """ミラクルエネルギー（neo4-113。v0.85。kyuura の印刷の文面（日本語の説明。ポケモンWiki の転記）。docs 5 章）。
+
+    - 場にあるかぎり、すべての色（無色を除く 8 つ。悪・鋼を含む）のエネルギー 2 個ぶん（``units``。1 個ずつがどの色にもなる 2 個。基本エネルギーカードではない。レインボー
+      エネルギー・［エネエネ］の色を 8 色に広げない）。場にないとき（手札・山札・トラッシュ）は色がない（「場にあるかぎり」）
+    - つけてよいのは「ひかるポケモン」または「やさしいポケモン」だけ（``attach_targets_restricted``。どの経路でつけるときも ``energy_attach_target_check``）
+    - つけた番の終わりにトラッシュする（番の終わりの窓。``procedures.expire_at_turn_end`` の ``discard_expiring_energy``）。どの番に場に出ても、その番の終わりにトラッシュするので、
+      番の終わりを越えて場に残ることはない（つけた番の記録を状態に持たない。場のカードのつけ替えは「つける」ことではない（CR-ENERGY-TRANS-NOT-ATTACHMENT）が、どちらにしても
+      その番の終わりにトラッシュする）
+    - つけているポケモンが「ひかる」「やさしい」でなくなったらトラッシュする（コマンドの終わりに ``settle_miracle_energy``）。どちらのトラッシュも、このカード自身の効果
+      （原因 ``DISCARD_BY_ENERGY``。相手のワザ・特殊能力・トレーナーではないので、エコロジムは当たらない）
+    - 説明の「「X」エネルギー(カード)」として数える・選ぶかは決まらない（MEC1。``ambiguous_miracle_cards``）
+    - デッキに 1 枚までの制限は英語の文面だけにあり、日本語の文面にないので入れない
+    """
+
+    implementation_id: ClassVar[str] = "miracle_energy"
+    miracle: ClassVar[bool] = True
+    attach_targets_restricted: ClassVar[bool] = True
+
+    def units(self) -> tuple[frozenset[EnergyType], ...]:
+        return (ALL_COLOR_UNIT, ALL_COLOR_UNIT)
+
+    def check(self, definition: CardDefinition) -> list[str]:
+        if definition.energy_text_ja != MIRACLE_ENERGY_TEXT:
+            return [f"説明 {definition.energy_text_ja!r} が、ミラクルエネルギーの説明ではない"]
+        return []
+
+
+MIRACLE_ENERGY_TEXT = (
+    "このカードは、「ひかるポケモン」または「やさしいポケモン」につけることができ、つけた番の終わりにトラッシュする。このカードは、場にあるかぎり、すべての「色(タイプ)」の"
+    "「エネルギー」2個ぶんの「エネルギーカード」として、あつかわれる。このカードをつけているポケモンが、「ひかるポケモン」または「やさしいポケモン」でないとき、このカードを"
+    "トラッシュする。"
+)
+
+
+def _miracle_effect(state: GameState, uid: int) -> bool:
+    """カード ``uid`` が登録されたミラクルエネルギー（効果を持つ実装）か。場・手札・山札・トラッシュのどこでも、［きせきのかぜ］に関係なくカードの種類で答える。"""
+    definition = state.card_def(uid)
+    if not definition.is_special_energy or state.energy_role(uid) is not None:
+        return False
+    effect = state.effects.energy_effect(definition)
+    return effect is not None and getattr(effect, "miracle", False)
+
+
+def ambiguous_miracle_cards(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType | None = None) -> list[int]:
+    """``pokemon`` についているミラクルエネルギー（効果のあるもの。［きせきのかぜ］で消えていれば「無色」1 個なので入らない）。説明の「「X」エネルギー(カード)」に
+    当たるかが決まらない（MEC1）。"""
+    return [uid for uid in pokemon.energy if _miracle_effect(state, uid) and not wind_neutralizes(state, uid)]
+
+
+def miracle_type_error(pokemon: PokemonInPlay, what: str, cards: Iterable[int]) -> UnsupportedError:
+    return UnsupportedError(MIRACLE_TYPE_CODE, f"ポケモン {pokemon.pokemon_id} のミラクルエネルギー {list(cards)}: {MIRACLE_TYPE_REASON.format(type=what)}")
+
+
+def require_no_ambiguous_miracle(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> None:
+    cards = ambiguous_miracle_cards(state, pokemon, energy_type)
+    if cards:
+        raise miracle_type_error(pokemon, energy_type.ja, cards)
+
+
+def energy_attach_target_check(state: GameState, card: int, target: PokemonInPlay) -> None:
+    """v0.85: エネルギーカード ``card``（手札・山札・トラッシュのカード）を場のポケモン ``target`` につけてよいか（つける先の制限のある特殊エネルギー。ミラクルエネルギーの
+    「「ひかるポケモン」または「やさしいポケモン」につけることができ」）。だめなら ``IllegalActionError("ENERGY_TARGET_NOT_ALLOWED")``。［きせきのかぜ］がはたらいている間に
+    つけるなら、つけたあとの番の終わりのトラッシュが決まらないので MEW1（``UnsupportedError``）。手札のカードの効果は［きせきのかぜ］で消えない（場のカードだけ）。"""
+    if not _miracle_effect(state, card):
+        return
+    if not shining_or_light(state, target):
+        raise IllegalActionError("ENERGY_TARGET_NOT_ALLOWED",
+                                 f"ミラクルエネルギー {card} は「ひかるポケモン」または「やさしいポケモン」にだけつけられる（ポケモン {target.pokemon_id} はどちらでもない）")
+    if miraculous_wind_sources(state):
+        raise UnsupportedError(MIRACLE_WIND_CODE, f"ミラクルエネルギー {card} を［きせきのかぜ］がはたらいている間につける: {MIRACLE_WIND_REASON}")
+
+
+def energy_attach_target_allowed(state: GameState, card: int, target: PokemonInPlay) -> bool:
+    """``energy_attach_target_check`` を例外にせず答える（選べるカードを決めるとき。MEW1 は選べるとして、つけるときに止める）。"""
+    return not _miracle_effect(state, card) or shining_or_light(state, target)
+
+
+def miracle_cards_in_play(state: GameState) -> list[tuple[int, PokemonInPlay, int]]:
+    """場のポケモンについているミラクルエネルギー（(持ち主, つけているポケモン, カード)。場の並び・ついている順）。"""
+    return [(owner, pokemon, uid) for owner, side in enumerate(state.players) for pokemon in side.in_play() for uid in pokemon.energy if _miracle_effect(state, uid)]
+
+
+def miracle_energy_problems(state: GameState) -> list[tuple[str, str]]:
+    """v0.85（MEW1）: ［きせきのかぜ］がはたらいていて、「ひかるポケモン」「やさしいポケモン」でないポケモンにミラクルエネルギーがついている（トラッシュする効果が消えるかが
+    決まらない）なら (コード, 理由)。決められない状態として ``form_problems`` に入れる（その状態になる操作を受け付けない）。"""
+    if not miraculous_wind_sources(state):
+        return []
+    return [(MIRACLE_WIND_CODE, f"ポケモン {pokemon.pokemon_id} のミラクルエネルギー {uid}（つけているポケモンが「ひかる」「やさしい」でない）: {MIRACLE_WIND_REASON}")
+            for _, pokemon, uid in miracle_cards_in_play(state) if not _face_down_safe_light(state, pokemon)]
+
+
+def _face_down_safe_light(state: GameState, pokemon: PokemonInPlay) -> bool:
+    return state.is_face_down(pokemon.card) or shining_or_light(state, pokemon)
+
+
+def settle_miracle_energy(state: GameState) -> None:
+    """v0.85: つけているポケモンが「ひかるポケモン」「やさしいポケモン」でないミラクルエネルギーをトラッシュする（「このカードをつけているポケモンが、…でないとき、このカードを
+    トラッシュする」）。エンジンがコマンドの処理の終わり（決定を待っていないとき）に呼ぶ。［きせきのかぜ］がはたらいていれば効果が消えるかが決まらないので、ここでは動かさない
+    （``miracle_energy_problems`` がその状態を受け付けない）。ログ ``miracle_energy_discarded``（``reason`` ``not_shining_or_light``）。"""
+    if miraculous_wind_sources(state):
+        return
+    for owner, pokemon, uid in miracle_cards_in_play(state):
+        if _face_down_safe_light(state, pokemon):
+            continue
+        discard_energy_from_play(state, pokemon, (uid,), cause=DISCARD_BY_ENERGY, log=lambda p=pokemon, u=uid, o=owner: state.add_event(
+            "miracle_energy_discarded", player=o, card=u, pokemon=p.card, pokemon_id=p.pokemon_id, reason="not_shining_or_light"))
+
+
+def miracle_pending_problem(state: GameState) -> tuple[str, str] | None:
+    """v0.85: 決定を待っている間に、「ひかる」「やさしい」でないポケモンにミラクルエネルギーがついている（トラッシュする時が、効果の途中に来た）なら、エンジンの未対応
+    （``UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT``。決定の選べるもの・途中の計算がそのカードを使うかもしれないので、効果の途中で動かさない）。今の写しの効果の途中の決定では
+    起こらない（ミラクルエネルギーをつけ替える効果はどれも MEC1 で止まるか、決定のあとに動かす）。"""
+    if state.decision is None or miraculous_wind_sources(state):
+        return None
+    for _, pokemon, uid in miracle_cards_in_play(state):
+        if not _face_down_safe_light(state, pokemon):
+            return ("UNSUPPORTED_MIRACLE_ENERGY_DURING_EFFECT",
+                    f"ミラクルエネルギー {uid} をつけているポケモン {pokemon.pokemon_id} が、効果の途中の決定を待つ間に「ひかる」「やさしい」でなくなった（エンジンの未対応）")
+    return None
+
+
+def discard_expiring_energy(state: GameState) -> None:
+    """v0.85: 番の終わりの窓で、場のミラクルエネルギーをすべてトラッシュする（「つけた番の終わりにトラッシュする」。番の終わりを越えて場に残るカードはないので、場にあるカードは
+    どれもこの番につけたもの）。原因はこのカード自身の効果（``DISCARD_BY_ENERGY``）。ログ ``miracle_energy_discarded``（``reason`` ``end_of_turn``）。［きせきのかぜ］がはたらいて
+    いるときは呼ぶ前に止める（``procedures.expire_at_turn_end``。MEW1）。"""
+    for owner, pokemon, uid in miracle_cards_in_play(state):
+        discard_energy_from_play(state, pokemon, (uid,), cause=DISCARD_BY_ENERGY, log=lambda p=pokemon, u=uid, o=owner: state.add_event(
+            "miracle_energy_discarded", player=o, card=u, pokemon=p.card, pokemon_id=p.pokemon_id, reason="end_of_turn"))
+
+
+def miracle_turn_end_problem(state: GameState) -> tuple[str, str] | None:
+    """番の終わりに、［きせきのかぜ］で効果の消えたミラクルエネルギーが場にあるなら MEW1（番の終わりの期限の処理の前に、対戦を止める）。"""
+    if not miraculous_wind_sources(state):
+        return None
+    cards = [uid for _, _, uid in miracle_cards_in_play(state)]
+    if not cards:
+        return None
+    return MIRACLE_WIND_CODE, f"番の終わりの場のミラクルエネルギー {cards}: {MIRACLE_WIND_REASON}"
+
+
+# --- おいしげる（「草」エネルギーカードは「草」エネルギー2個ぶんとしてはたらく）
+
+
+WILD_GROWTH_TEXTS = (
+    ("このカードが場にいるかぎり、自分の場の「草」ポケモンについている「草」エネルギーカードは、「草」エネルギー2個ぶんとしてはたらく。"
+     "このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。"),
+)
+
+
+class DoubleTypeEnergyCards(ContinuousPower):
+    """このカードが場にいるかぎり、自分の場の「``energy_type``」ポケモンについている「``energy_type``」エネルギーカードは、「``energy_type``」エネルギー 2 個ぶんとして
+    はたらく。ねむり・マヒ・こんらんのとき、この力は使えない（v0.85。メガニウム（neo1-014）の［おいしげる］。kyuura の印刷の文面。docs 3 章）。
+
+    - 常にはたらく（v0.46 の ``ContinuousPower``。場所はどこでもよい。かがくへんかガス・まきちらせ!ベトベトガスで消える）。はたらいているかは問い合わせのたびに今の場から
+      求める（``energy_units`` が聞く。印・数え方の記録を状態に持たない。印刷の定義を書きかえない）
+    - 当てはまるのは、この特殊能力の持ち主の場の、今有効なタイプが「草」のポケモンについている「草」の基本エネルギーカード 1 枚ずつ（1 枚が「草」2 個。2 匹のメガニウムでも
+      2 個のまま。重ねない）。カードの枚数は 1 枚のまま（トラッシュする枚数・つける枚数・エネルギーカードの枚数を数える効果は 1 枚）
+    - 決まらない場合（``wild_growth_ambiguities``）: つけているポケモンの色が［へんしょく］で決まらない（VS1）・レインボーエネルギー（RB1）・［エネエネ］の「草」のカード（BZ2）・
+      ミラクルエネルギー（MEC1）。2 つの読み方で支払い・個数・結果が変わるときだけ止める。［きせきのかぜ］で「無色」1 個になった特殊エネルギーは「草」ではない
+    """
+
+    implementation_id = "double_type_energy_cards"
+    what: ClassVar[str] = "「草」エネルギーカードを「草」2 個ぶんにする特殊能力"
+    energy_type: ClassVar[EnergyType] = EnergyType.GRASS
+
+    def texts(self) -> tuple[str, ...]:
+        return WILD_GROWTH_TEXTS
+
+
+def _wild_growth_owners(state: GameState) -> frozenset[int]:
+    return frozenset(owner for owner, _, _, _ in continuous_powers(state, DoubleTypeEnergyCards))
+
+
+def _owner_of_in_play(state: GameState, pokemon: PokemonInPlay) -> int:
+    return state.cards[pokemon.card].owner
+
+
+def _wild_growth_card(state: GameState, pokemon: PokemonInPlay, uid: int) -> str | None:
+    """``pokemon`` についているカード ``uid`` が［おいしげる］の「「草」エネルギーカード」として 2 個になるか: ``"yes"``・``"no"``・決まらない理由の種類
+    （``"vs1"``・``"rb1"``・``"bz2"``・``"mc1"``）。［おいしげる］がはたらいていないなら ``"no"``。"""
+    definition = state.card_def(uid)
+    grass_basic = definition.is_basic_energy and definition.provides is EnergyType.GRASS
+    candidate = grass_basic
+    kind = None
+    if not grass_basic and definition.is_special_energy:
+        if wind_neutralizes(state, uid):
+            return "no"
+        role = state.energy_role(uid)
+        if role is not None:
+            if role.energy_type is EnergyType.GRASS:
+                kind = "bz2"
+        elif _miracle_effect(state, uid):
+            kind = "mc1"
+        else:
+            effect = state.effects.energy_effect(definition)
+            if effect is not None and any(EnergyType.GRASS in unit and len(unit) > 1 for unit in effect.units()):
+                kind = "rb1"
+        candidate = kind is not None
+    if not candidate:
+        return "no"
+    if _owner_of_in_play(state, pokemon) not in _wild_growth_owners(state):
+        return "no"
+    if state.is_face_down(pokemon.card):
+        return "no"
+    readings = type_readings(state, pokemon)
+    grass = [color is EnergyType.GRASS for color in readings]
+    if not any(grass):
+        return "no"
+    if (pokemon.pokemon_id, uid) in state.energy_burn:
+        raise RuntimeError(f"エナジーバーンで「炎」になったカード {uid} に［おいしげる］が当たる（今の写しでは起こらない。エンジンの不具合）")
+    if kind is not None:
+        return kind
+    return "yes" if all(grass) else "vs1"
+
+
+def wild_growth_ambiguities(state: GameState, pokemon: PokemonInPlay) -> list[tuple[int, str]]:
+    """``pokemon`` についているカードのうち、［おいしげる］で 2 個になるかが決まらないもの（(カード, 種類)）。"""
+    if not pokemon.energy:
+        return []
+    found = []
+    for uid in pokemon.energy:
+        answer = _wild_growth_card(state, pokemon, uid)
+        if answer not in ("yes", "no"):
+            found.append((uid, answer))
+    return found
+
+
+def wild_growth_error(state: GameState, pokemon: PokemonInPlay, ambiguities: list[tuple[int, str]], detail: str = "") -> UnsupportedError:
+    """決まらない理由の止める例外（最初のカードの種類のコード）。"""
+    uid, kind = ambiguities[0]
+    what = f"［おいしげる］（「草」エネルギーカードを「草」2 個ぶん）とポケモン {pokemon.pokemon_id} のカード {uid}{detail}"
+    if kind == "vs1":
+        return shift_duration_error(pokemon, what)
+    if kind == "rb1":
+        return rainbow_type_error(pokemon, EnergyType.GRASS, (uid,))
+    if kind == "bz2":
+        return converted_energy_error(pokemon, EnergyType.GRASS, (uid,))
+    return miracle_type_error(pokemon, f"草」エネルギーカード（{what}）の「草", (uid,))
+
+
+def wild_growth_alternative_units(state: GameState, pokemon: PokemonInPlay) -> list[frozenset[EnergyType]] | None:
+    """決まらないカードがあれば、それらをすべて「草」2 個として数えた読み方（``attached_units`` は決まらないカードを印刷のとおりに数える）。なければ None。
+    支払い・個数はカードごとに増えるほど払いやすく・多くなるので、すべてを数えない・数えるの 2 つの読み方で比べれば、組み合わせのどれかで結果が変わるかが分かる
+    （ミラクルエネルギーは色が「草」だけになるが、個数は同じで、すべての色の 2 個のほうが払いやすい）。"""
+    ambiguous = {uid for uid, _ in wild_growth_ambiguities(state, pokemon)}
+    if not ambiguous:
+        return None
+    grass = frozenset({EnergyType.GRASS})
+    units = []
+    for uid in pokemon.energy:
+        units.extend((grass, grass) if uid in ambiguous else energy_units(state, pokemon, uid))
+    return units
+
+
+def require_units_determined(state: GameState, pokemon: PokemonInPlay, detail: str = "") -> None:
+    """説明がエネルギーの個数・色を数えるとき、［おいしげる］で数え方が決まらないカードがあれば止める（個数はかならず変わるので、あれば止める）。"""
+    ambiguities = wild_growth_ambiguities(state, pokemon)
+    if ambiguities:
+        raise wild_growth_error(state, pokemon, ambiguities, detail)
+
+
+# --- 進化したときの特殊能力（あばれんぼう・ハーブのかおり・ファイヤーブースト）
+
+
+BERSERK_TEXTS = (
+    ("この力は、このカードを手札から場に出してポケモンを進化させたとき、かならずはたらく。コインを投げ、「おもて」なら相手の山札の上から、「うら」なら自分の山札の上から、"
+     "5枚のカードをトラッシュする。"),
+)
+DECK_SHORT_CODE = "UNRESOLVED_DISCARD_DECK_SHORT"
+DECK_SHORT_REASON = "山札の上から決まった枚数をトラッシュする効果で、山札の枚数が足りない場合の処理は、原典から決められない（HC6）"
+
+
+@dataclass(frozen=True)
+class CoinMillDeckOnEvolve(EntryPower):
+    """この力は、このカードを手札から場に出してポケモンを進化させたとき、かならずはたらく。コインを投げ、「おもて」なら相手の山札の上から、「うら」なら自分の山札の上から、
+    ``count`` 枚のカードをトラッシュする（v0.85。オーダイル（neo1-033）の［あばれんぼう］。kyuura の印刷の文面。docs 2 章）。
+
+    - かならずはたらく（``forced``）。使うかを聞かず、手札から重ねる進化（通常の進化・ポケモン育て屋さん）のすぐあとにエンジンが処理する（``offer_entry_power``。使わない選択・
+      あとで使うことはない）。山札から重ねる進化（しんかのうた・つきのちから）・「ばける」では、はたらかない（「手札から場に出して」）。かがくへんかガス・まきちらせ!ベトベトガス
+      で消える（特殊能力。消えていれば何もしない）。宣言しないので ``UsePokemonPower`` は ``POWER_NOT_DECLARABLE``
+    - コインは使ったプレイヤー（このカードの持ち主）。カードを引くことではない（山札が 0 枚になっても負けではない。p.312）。ログ ``power_discard_deck``（公開）
+    - どちらかの山札が ``count`` 枚より少ないときは、v0.31 の HC6 と同じ問い（コインの結果でトラッシュする山札が決まるので、コインの前に、どちらの山札も確かめる）。進化させる前に止める
+      （``forced_entry_check``。一部だけトラッシュしない）
+    """
+
+    count: int
+    implementation_id = "coin_mill_deck_on_evolve"
+    forced: ClassVar[bool] = True
+    declared: ClassVar[bool] = False
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札から進化させたときにかならずはたらき、山札の上をトラッシュする特殊能力", BERSERK_TEXTS)
+        if self.count != 5:
+            problems.append(f"説明は 5 枚（登録は {self.count}）")
+        return problems
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        short = [(player, len(state.players[player].deck)) for player in (use.player, 1 - use.player) if len(state.players[player].deck) < self.count]
+        if short:
+            return UnsupportedError(DECK_SHORT_CODE, f"［あばれんぼう］で山札の上から {self.count} 枚をトラッシュする（山札の枚数 {short}）: {DECK_SHORT_REASON}")
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        heads = _power_coin(state, use) is CoinSide.HEADS
+        target = 1 - use.player if heads else use.player
+        if len(state.players[target].deck) < self.count:
+            raise RuntimeError(f"［あばれんぼう］の山札が {self.count} 枚より少ない（進化の前の確かめの漏れ。エンジンの不具合）")
+        cards = discard_from_deck(state, target, self.count)
+        state.add_event("power_discard_deck", player=target, user=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), cards=cards)
+
+
+HERBAL_SCENT_TEXTS = (
+    ("この力は、このカードを手札から場に出したとき、1度だけ使える。コインを投げて、「おもて」なら、おたがいの場にいる「草」ポケモン全員にのっているダメージカウンターを、"
+     "すべてとりのぞく。"),
+    ("この力は、このカードを手札から場に出してポケモンを進化させたとき、1回だけ使うことができる。コインを投げて「おもて」なら、おたがいの場の「草」ポケモン全員にのっている"
+     "ダメージカウンターを、すべてとりのぞく。"),
+)
+
+
+@dataclass(frozen=True)
+class CoinHealTypePokemonOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき（NIP1X-001 は「手札から場に出してポケモンを進化させたとき」）、1 度だけ使える。コインを投げて「おもて」なら、おたがいの
+    場にいる「草」ポケモン全員にのっているダメージカウンターを、すべてとりのぞく（v0.85。メガニウム（PF1-003・NIP1X-001）の［ハーブのかおり］。kyuura の印刷の文面。docs 2 章）。
+
+    - 使うかは持ち主が決める（v0.43 の ``EntryPower``。手札から出したときだけ ``from_hand_only``）。2 つの版の違い（「手札から場に出したとき」と「手札から場に出してポケモンを
+      進化させたとき」）は、2 進化カードを手札から場に出すのは進化させるときだけなので、どの経路でも同じ機会になる。kyuura の other_products の再録の文面（``kind: clarify``）は
+      PF1-003 のエラッタとして当てはめない（それぞれのカードの印刷の文面にしたがう）
+    - コインは 1 枚（ポケモンごとに投げない）。「草」ポケモンは今有効なタイプ（v0.48 の ``type_readings``）。うらのカード（マチスの秘策）は全体に働く効果ではおもてにしない
+      （v0.67）ので数えない。ログはポケモンごとの ``remove_damage_counters``（``power``）
+    - ダメージカウンターがのっているポケモンの色が［へんしょく］で決まらないなら、使うを選ぶと止める（VS1。``accept_problem``）
+    """
+
+    implementation_id = "coin_heal_type_pokemon_on_entry"
+    energy_type: ClassVar[EnergyType] = EnergyType.GRASS
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "手札から場に出したときにコインで「草」ポケモン全員を回復する特殊能力", HERBAL_SCENT_TEXTS)
+
+    def _targets(self, state: GameState, user: int) -> list[tuple[int, PokemonInPlay]]:
+        found = []
+        for owner in (user, 1 - user):
+            for pokemon in state.players[owner].in_play():
+                if state.is_face_down(pokemon.card) or not pokemon.damage:
+                    continue
+                if type_readings(state, pokemon) == (self.energy_type,):
+                    found.append((owner, pokemon))
+        return found
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        for side in state.players:
+            for pokemon in side.in_play():
+                if state.is_face_down(pokemon.card) or not pokemon.damage:
+                    continue
+                readings = type_readings(state, pokemon)
+                if len(readings) > 1 and self.energy_type in readings:
+                    return shift_duration_error(pokemon, "［ハーブのかおり］の「草」ポケモン")
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        for owner, pokemon in self._targets(state, use.player):
+            before = pokemon.damage
+            counters = before // state.rules.damage_per_counter
+            pokemon.damage = 0
+            state.add_event("remove_damage_counters", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, counters=counters, total_damage=0,
+                            power=str(use.key), user=use.player)
+
+
+FIRE_BOOST_TEXTS = (
+    ("この力は、このカードを手札から場に出したとき、1度だけ使える。コインを投げて「おもて」なら、自分の山札から「炎」エネルギーカードを最大4枚選び出し、このカードにつける。"
+     "その後、その山札をよく切る。"),
+)
+
+
+@dataclass(frozen=True)
+class CoinAttachFromDeckOnEntry(EntryPower):
+    """この力は、このカードを手札から場に出したとき、1 度だけ使える。コインを投げて「おもて」なら、自分の山札から「``energy_type``」エネルギーカードを最大 ``max_cards`` 枚
+    選び出し、このカードにつける。その後、その山札をよく切る（v0.85。バクフーン（PF1-006）の［ファイヤーブースト］。kyuura の印刷の文面。docs 2 章）。
+
+    - 使うかは持ち主が決める（``from_hand_only``）。コインは決定の前に 1 回（再開で投げ直さない）。「うら」なら何もしない（山札を見ない・切らない）
+    - 「おもて」なら、山札の「炎」の基本エネルギーカードから選ぶ決定 ``ATTACH_FROM_DECK``（0〜``max_cards`` 枚。選べるものの数・最大の枚数を山札の中身で変えない。選べるカードが
+      なくても決定を出して答えを待つ。選べるもののある決定で 0 枚を選ぶのは PW3）。山札から直接つける（手札からつける通常の操作・特殊能力でつけた枚数に数えない。つけたときの
+      特殊エネルギーの効果は手札から出したときだけなので起こらない）。そのあと 1 回だけ山札を切る（ログ ``power_attach_from_deck``・``shuffle`` の ``power``）
+    - 山札のレインボーエネルギーを「「炎」エネルギーカード」として選べるかは RB2（使うを選ぶと止める。コインの前）
+    """
+
+    energy_type: EnergyType
+    max_cards: int
+    implementation_id = "coin_attach_from_deck_on_entry"
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札から場に出したときにコインで山札のエネルギーカードをつける特殊能力", FIRE_BOOST_TEXTS)
+        if (self.energy_type, self.max_cards) != (EnergyType.FIRE, 4):
+            problems.append(f"説明は「炎」エネルギーカードを最大4枚（登録は {self.energy_type.ja}・{self.max_cards} 枚）")
+        return problems
+
+    def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
+        rainbow = rainbow_cards_in(state, state.players[use.player].deck)
+        if rainbow:
+            return rainbow_attach_error(self.energy_type, rainbow)
+        return None
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        options = deck_energy_candidates(state, use.player, self.energy_type)
+        push_power_decision(state, use, kind=ATTACH_FROM_DECK, player=use.player, options=options, min_choices=0, max_choices=self.max_cards,
+                            context=(("stage", "fire_boost"),))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        options = deck_energy_candidates(state, use.player, self.energy_type)
+        if not choices and options:
+            raise _power_zero_cards(f"山札に「{self.energy_type.ja}」エネルギーカードがあるときに 0 枚を選んだ（「最大{self.max_cards}枚」）")
+        if len(set(choices)) != len(choices) or any(uid not in options for uid in choices):
+            raise RuntimeError(f"［ファイヤーブースト］で選んだカード {choices} が、山札の「{self.energy_type.ja}」エネルギーカードではない（エンジンの不具合）")
+        _, user = state.find_pokemon(use.pokemon_id)
+        cards = tuple(uid for uid in options if uid in choices)
+        for uid in cards:
+            attach_from_deck(state, use.player, uid, user)
+            state.add_event("power_attach_from_deck", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), card=uid)
+        for uid in cards:
+            after_energy_attached(state, use.player, user, uid)
+        shuffle_deck(state, use.player, power=str(use.key))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        return _power_decision_form(decision, use, kind=ATTACH_FROM_DECK, choices=(0, self.max_cards), options=deck_energy_candidates(state, use.player, self.energy_type))
+
+
+# --- エネルギーを動かす特殊能力（ファイヤーリチャージ・どしゃぶり・ファイヤーレイズ）
+
+
+FIRE_RECHARGE_TEXTS = (
+    ("この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分のトラッシュから「炎」エネルギーカードを1枚選び出し、自分の場の「炎」ポケモンにつける。"
+     "このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。"),
+)
+
+
+@dataclass(frozen=True)
+class CoinAttachFromDiscardToTypePokemon(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。コインを投げて「おもて」なら、自分のトラッシュから「``energy_type``」エネルギーカードを 1 枚選び出し、自分の場の
+    「``energy_type``」ポケモンにつける。ねむり・マヒ・こんらんのとき、この力は使えない（v0.85。バクフーン（neo1-021）の［ファイヤーリチャージ］。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。自分の番ごとに 1 回（``once_per_turn``。「うら」でも使ったことになる）。宣言のあとコイン（再開で投げ直さない）
+    - 「おもて」なら、トラッシュの「炎」の基本エネルギーカードを選ぶ決定（``ATTACH_FROM_DISCARD``。ちょうど 1 枚）→ つける自分の場の「炎」ポケモン（今有効なタイプ。この
+      カードもよい。ベンチもよい）を選ぶ決定（``SELECT_POKEMON``。ちょうど 1 匹）。トラッシュから直接つける（手札からつける通常の操作ではない。つけたときの特殊エネルギーの
+      効果は起こらない）。ログ ``power_attach_from_discard``
+    - つけられるカード・ポケモンがないとき（宣言の前に分かる）は PW3（コインの前）。エネルギーカードをつけられないポケモン（クリスタルビーム）は選べない。色が［へんしょく］で
+      決まらないポケモンは選べるが選ぶと止める（VS1）。トラッシュのレインボーエネルギーは選べるが選ぶと止める（RB2。レインボーエネルギーしかなければコインの前に止める）
+    - トラッシュからつける効果なので、ポケモンタワー（トラッシュから手札）では消えない
+    """
+
+    energy_type: EnergyType
+    implementation_id = "coin_attach_from_discard_to_type_pokemon"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "コインでトラッシュのエネルギーカードを自分の場のポケモンにつける特殊能力", FIRE_RECHARGE_TEXTS)
+        if self.energy_type is not EnergyType.FIRE:
+            problems.append(f"説明は「炎」エネルギーカード（登録は {self.energy_type.ja}）")
+        return problems
+
+    def _cards(self, state: GameState, player: int) -> tuple[list[int], list[int]]:
+        discard = state.players[player].discard
+        basic = [uid for uid in discard if state.card_def(uid).is_basic_energy and state.card_def(uid).provides is self.energy_type]
+        rainbow = rainbow_cards_in(state, discard)
+        return [uid for uid in discard if uid in basic or uid in rainbow], rainbow
+
+    def _targets(self, state: GameState, player: int) -> tuple[list[int], list[int]]:
+        options, unresolved = [], []
+        for pokemon in state.players[player].in_play():
+            if state.is_face_down(pokemon.card) or energy_attach_block(state, pokemon) is not None:
+                continue
+            readings = type_readings(state, pokemon)
+            if self.energy_type in readings:
+                options.append(pokemon.pokemon_id)
+                if len(readings) > 1:
+                    unresolved.append(pokemon.pokemon_id)
+        return options, unresolved
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        cards, rainbow = self._cards(state, use.player)
+        targets, unresolved = self._targets(state, use.player)
+        if not cards:
+            raise _power_zero_cards(f"自分のトラッシュに「{self.energy_type.ja}」エネルギーカードがない")
+        if not targets:
+            raise _power_zero_cards(f"自分の場に、エネルギーカードをつけられる「{self.energy_type.ja}」ポケモンがいない")
+        if len(rainbow) == len(cards):
+            raise rainbow_attach_error(self.energy_type, rainbow)
+        if len(unresolved) == len(targets):
+            _, pokemon = state.find_pokemon(unresolved[0])
+            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        if _power_coin(state, use) is not CoinSide.HEADS:
+            return
+        cards, rainbow = self._cards(state, use.player)
+        push_power_decision(state, use, kind=ATTACH_FROM_DISCARD, player=use.player, options=cards, min_choices=1, max_choices=1, context=(("stage", "card"),),
+                            unresolved_choices=rainbow, unresolved_code=RAINBOW_ATTACH_CODE,
+                            unresolved_reason=RAINBOW_ATTACH_REASON.format(type=self.energy_type.ja))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if decision.context_value("stage") == "card":
+            (card,) = choices
+            if card in rainbow_cards_in(state, (card,)):
+                raise rainbow_attach_error(self.energy_type, (card,))
+            targets, unresolved = self._targets(state, use.player)
+            push_power_decision(state, use, kind=SELECT_POKEMON, player=use.player, options=targets, min_choices=1, max_choices=1,
+                                context=(("stage", "target"), ("card", card)), unresolved_choices=unresolved, unresolved_code=SHIFT_DURATION_CODE,
+                                unresolved_reason=SHIFT_DURATION_REASON)
+            return
+        card = decision.context_value("card")
+        (target,) = choices
+        _, pokemon = state.find_pokemon(target)
+        if len(type_readings(state, pokemon)) > 1:
+            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン")
+        attach_from_discard(state, use.player, (card,), pokemon)
+        state.add_event("power_attach_from_discard", player=use.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=str(use.key), cards=(card,),
+                        user_pokemon_id=use.pokemon_id)
+        after_energy_attached(state, use.player, pokemon, card)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        if decision.context_value("stage") == "card":
+            cards, rainbow = self._cards(state, use.player)
+            return _power_decision_form(decision, use, kind=ATTACH_FROM_DISCARD, choices=(1, 1), options=cards, unresolved=rainbow)
+        if decision.context_value("stage") == "target":
+            targets, unresolved = self._targets(state, use.player)
+            return _power_decision_form(decision, use, kind=SELECT_POKEMON, choices=(1, 1), options=targets, unresolved=unresolved)
+        return [f"［ファイヤーリチャージ］の決定の段階 {decision.context_value('stage')!r} が正しくない"]
+
+
+DOWNPOUR_TEXTS = (
+    "この力は、自分の番の中で何度でも使える。自分の手札から「水」エネルギーカードを出して、トラッシュする。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+    ("この力は、自分の番の中で何回でも使うことができる。自分の手札にある「水」エネルギーカードを1枚選び、トラッシュする。このカードが「ねむり・マヒ・こんらん」状態のとき、"
+     "この力を使うことはできない。"),
+)
+
+
+@dataclass(frozen=True)
+class DiscardTypeEnergyFromHand(PowerEffect):
+    """この力は、自分の番の中で何度でも使える。自分の手札から「``energy_type``」エネルギーカードを（1 枚）出して、トラッシュする。ねむり・マヒ・こんらんのとき、この力は使えない
+    （v0.85。オーダイル（PF1-009・NIP2X-001）の［どしゃぶり］。kyuura の印刷の文面。docs 4 章）。
+
+    - 宣言して使う。回数は数えない（「何度でも」）。1 回の使用で 1 枚（NIP2X-001 の文面の「1枚選び」。PF1-009 の「出して」も 1 枚と読む。実装上の読み方）
+    - トラッシュするカードは ``UsePokemonPower`` の ``energy`` で指定する（手札の「水」の基本エネルギーカード。``source``・``target`` は使わない）。指定のない・手札にない・
+      「水」の基本エネルギーカードでないなら受け付けない（状態を変えずに何度でも使うことにはならない）。手札のレインボーエネルギーを「「水」エネルギーカード」として
+      出せるかは RB2 と同じ問い（場にないレインボーエネルギーを色のエネルギーカードとして選ぶか）
+    - 手札からのトラッシュ（``zones.discard_from_hand``。ログ ``discard_from_hand`` の ``power``）。場からトラッシュに置くのではないので、リサイクルエネルギー・エコロジムは当たらない
+    """
+
+    energy_type: EnergyType
+    implementation_id = "discard_type_energy_from_hand"
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "手札のエネルギーカードを何度でもトラッシュする特殊能力", DOWNPOUR_TEXTS)
+        if self.energy_type is not EnergyType.WATER:
+            problems.append(f"説明は「水」エネルギーカード（登録は {self.energy_type.ja}）")
+        return problems
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        if use.source is not None or use.target is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "この特殊能力は、トラッシュする手札のカード（energy）だけを指定する")
+        if use.energy is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", f"トラッシュする手札の「{self.energy_type.ja}」エネルギーカード（energy）を指定する")
+        if use.energy not in state.players[use.player].hand:
+            raise IllegalActionError("CARD_NOT_IN_HAND", f"カード {use.energy!r} は手札にない")
+        definition = state.card_def(use.energy)
+        if rainbow_cards_in(state, (use.energy,)):
+            raise rainbow_attach_error(self.energy_type, (use.energy,))
+        if not definition.is_basic_energy or definition.provides is not self.energy_type:
+            raise IllegalActionError("WRONG_ENERGY_TYPE", f"カード {use.energy} は「{self.energy_type.ja}」エネルギーカードではない")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        discard_from_hand(state, use.player, (use.energy,), power=str(use.key))
+
+
+FIRE_RAISE_TEXTS = (
+    ("この力は、自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを最大2枚まではがし、このカードにつけ替える。"
+     "このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。"),
+)
+
+
+@dataclass(frozen=True)
+class GatherTypeEnergyCardsToSelf(PowerEffect):
+    """この力は、自分の番ごとに 1 回使える。自分の場のポケモンについている「``energy_type``」エネルギーカードを最大 ``max_cards`` 枚まではがし、このカードにつけ替える。
+    ねむり・マヒ・こんらんのとき、この力は使えない（v0.85。リザードン（PF2-009）の［ファイヤーレイズ］。kyuura の印刷の文面。docs 4 章）。v0.43 のようぶんきゅうしゅう
+    （``TakeEnergiesToSelf``）とは文面が違うので、別の型にした（同じ扱いにした点は下）。
+
+    - 宣言して使う。自分の番ごとに 1 回。宣言のあと決定で選ぶ（``MOVE_ENERGY``。選べるものは、このカード以外の自分の場のポケモンについている「炎」のエネルギーカード（場の並び・
+      ついている順）。0〜``max_cards`` 枚）。このカードについているカードは選べない（はがしてこのカードにつけ替えても変わらない。ようぶんきゅうしゅうと同じ実装上の判断）
+    - 0 枚にする（選べるカードがない・0 枚を選ぶ）ときは PW3（ようぶんきゅうしゅうと同じ問い。選べるカードがなければ宣言の前に、0 枚の答えは決定を待ったまま止める）
+    - 当たるかが決まらないカード（エナジーバーン HC10・レインボーエネルギー RB1・ミラクルエネルギー MEC1・［エネエネ］BZ2）は選べるが、選ぶとそのカードの問いで止める。どれも
+      そうなら宣言の前に止める
+    - つけ替えは手札からつけることではない（ログ ``move_energy``）。このカードがクリスタルビームの効果を受けていれば CB1（v0.59。つけ替えが当たるかが決まらない）
+    """
+
+    energy_type: EnergyType
+    max_cards: int
+    implementation_id = "gather_type_energy_cards_to_self"
+    once_per_turn: ClassVar[bool] = True
+
+    def check(self, power: Power) -> list[str]:
+        problems = _check_power_text(power, "自分の場のエネルギーカードを最大N枚このカードにつけ替える特殊能力", FIRE_RAISE_TEXTS)
+        if (self.energy_type, self.max_cards) != (EnergyType.FIRE, 2):
+            problems.append(f"説明は「炎」エネルギーカードを最大2枚（登録は {self.energy_type.ja}・{self.max_cards} 枚）")
+        return problems
+
+    def _classify(self, state: GameState, holder: PokemonInPlay, uid: int) -> UnsupportedError | bool:
+        """カードが「炎」エネルギーカードか（真・偽）・決まらないならその例外。"""
+        if uid in ambiguous_miracle_cards(state, holder):
+            return miracle_type_error(holder, self.energy_type.ja, (uid,))
+        try:
+            matched = _energy_card_of_type(state, holder, uid, self.energy_type)
+        except UnsupportedError as error:
+            return error
+        if matched is None:
+            return _energy_burn_error(self.energy_type, f"エネルギー {uid}")
+        return matched
+
+    def _options(self, state: GameState, use: PowerUse) -> tuple[list[int], dict[int, UnsupportedError]]:
+        options, ambiguous = [], {}
+        for holder in state.players[use.player].in_play():
+            if holder.pokemon_id == use.pokemon_id:
+                continue
+            for uid in holder.energy:
+                answer = self._classify(state, holder, uid)
+                if answer is False:
+                    continue
+                options.append(uid)
+                if isinstance(answer, UnsupportedError):
+                    ambiguous[uid] = answer
+        return options, ambiguous
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        _require_no_choices(use)
+        require_power_not_used(state, use)
+        options, ambiguous = self._options(state, use)
+        if not options:
+            raise _power_zero_cards(f"このカード以外の自分の場のポケモンに「{self.energy_type.ja}」エネルギーカードがついていない")
+        if len(ambiguous) == len(options):
+            raise ambiguous[options[0]]
+        _require_user_attach_scope(state, use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        options, _ = self._options(state, use)
+        push_power_decision(state, use, kind=MOVE_ENERGY, player=use.player, options=options, min_choices=0, max_choices=min(self.max_cards, len(options)))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if not choices:
+            raise _power_zero_cards("つけ替えるエネルギーカードを 0 枚選んだ")
+        _, ambiguous = self._options(state, use)
+        for uid in choices:
+            if uid in ambiguous:
+                raise ambiguous[uid]
+        _move_energy_to_user(state, use, tuple(uid for uid in decision.options if uid in choices))
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        options, _ = self._options(state, use)
+        return _power_decision_form(decision, use, kind=MOVE_ENERGY, choices=(0, min(self.max_cards, len(options))), options=options)
+
+
+# --- v0.85 のワザ（docs/entry-powers-energy-lifecycle-v0.85.md 6 章）
+
+SWEET_SCENT_TEXT = ("コインを投げ、「おもて」なら自分の場から、「うら」なら相手の場から、ダメージカウンターののっているポケモンを1匹選ぶ。選んだポケモンから、ダメージカウンターを"
+                    "{counters}個、とりのぞく。")
+
+
+@dataclass(frozen=True)
+class CoinChosenSideHealAttack(AttackEffect):
+    """コインを投げ、「おもて」なら自分の場から、「うら」なら相手の場から、ダメージカウンターののっているポケモンを 1 匹選ぶ。選んだポケモンから、ダメージカウンターを
+    ``counters`` 個、とりのぞく（v0.85。ベイリーフ（neo1-009）の「あまいかおり」。ダメージの目安なし。kyuura の印刷の文面）。要素 ``programs.CoinChosenSideHeal``。
+
+    - 選ぶのはワザを使ったプレイヤー（どちらの場でも。決定 ``SELECT_POKEMON``）。その場にダメージカウンターののっているポケモンがいなければ、何もしない（p.309）
+    - のっている数が ``counters`` より少なければ、のっている数だけ（回復は、のっている数まで。GR-2000-P320-RECOVERY）。英語版の「(or 1 if it only has 1)」は使わない
+      （日本語の文面と同じ結果）
+    - 選んだポケモンへのワザの効果なので、とりのぞく前に「ワザをうけない」状態・「とうめい」を評価する（``reaches`` の ``heal``。自分のポケモンでも評価する。v0.41 と同じ）
+    """
+
+    counters: int
+    implementation_id = "coin_chosen_side_heal_attack"
+    opponent_effect_elements = (HEAL_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "コインで自分か相手の場のポケモンを選んで回復するワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what, (SWEET_SCENT_TEXT.format(counters=self.counters),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        if decision.player != use.player or decision.kind != SELECT_POKEMON or (decision.min_choices, decision.max_choices) != (1, 1):
+            return [f"「あまいかおり」の決定の形 {(decision.player, decision.kind, decision.min_choices, decision.max_choices)} が正しくない"]
+        sides = {state.find_pokemon(pid)[0] for pid in decision.options if state.find_pokemon(pid) is not None}
+        if len(sides) != 1 or not decision.options:
+            return [f"「あまいかおり」の選べるポケモン {decision.options} が、どちらか一方の場のポケモンではない"]
+        return []
+
+
+CHOMP_TEXT = "自分にのっているダメージカウンターの数ぶんコインを投げ、「おもて」の数×{per}ダメージを追加する。"
+
+
+@dataclass(frozen=True)
+class CoinsPerOwnCountersBonusDamage(AttackEffect):
+    """自分にのっているダメージカウンターの数ぶんコインを投げ、「おもて」の数 × ``per`` ダメージを追加する（v0.85。オーダイル（neo1-033）の「いかりのキバ」。ダメージの
+    目安「50+」。kyuura の印刷の文面）。要素 ``Damage(OPP, programs.PlusHeadsPerOwnCounters(per))``。
+
+    - コインの枚数は、ダメージの要素を処理する時点の自分（ワザを使ったポケモン）のダメージカウンターの数。0 個ならコインを投げず、目安の数字ぶん
+    - 目安 + 「おもて」の数 × ``per`` が p.321 の 1 段階（最終ダメージに直接足さない）。先読みは「おもて」の数でまとめる（``by_heads``）。ダメージを受けない相手には v0.4b の
+      ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.51 の「ふりこののろい」と同じ）
+    """
+
+    per: int
+    implementation_id = "coins_per_own_counters_bonus_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "自分のダメージカウンターの数だけコインを投げてダメージを追加するワザ"
+        return _check_form(attack, what, damage="modified", modifier="+") + _check_exact_text(attack, what, (CHOMP_TEXT.format(per=self.per),))
+
+
+POLLEN_SHIELD_TEXT = "次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない。"
+
+
+@dataclass(frozen=True)
+class DamageThenStatusImmunityNextTurn(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない（v0.85。ベイリーフ（PF1-002）の
+    「しんぴのこな」。kyuura の印刷の文面）。要素 ``SelfPersistent(StatusImmunityNextTurn)``（入れ替えない・期限は次の相手の番の終わり・すでにある特殊状態は回復しない。
+    v0.84 の「きらめきタッチ」とは別の効果）。"""
+
+    implementation_id = "damage_then_status_immunity_next_turn"
+
+    def guard_terms(self) -> tuple[type, ...]:
+        from .state import StatusImmunityNextTurn
+
+        return (StatusImmunityNextTurn,)
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、次の相手の番に特殊状態にならないワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (POLLEN_SHIELD_TEXT,))
+
+
+FLAME_WHEEL_TEXT = ("自分についている「炎」エネルギーカードを{count}枚トラッシュし、おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、{bench}ダメージ。"
+                    "「炎」エネルギーカードがトラッシュできないとき、このワザのダメージは、すべてなくなる。")
+
+
+@dataclass(frozen=True)
+class DiscardFireThenDamageBothBenches(AttackEffect):
+    """自分についている「炎」エネルギーカードを ``count`` 枚トラッシュし、おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、``bench`` ダメージ。トラッシュできない
+    とき、このワザのダメージは、すべてなくなる（v0.85。バクフーン（PF1-006）の「かえんぐるま」。kyuura の印刷の文面）。要素 ``DiscardOwnEnergy(炎, count, LACKING_NONE,
+    TIMING_EFFECT)`` → ``Damage(OPP, Printed(), requires)`` → 相手の控え・自分の控えへの ``BenchDamage(requires)``。
+
+    - トラッシュは炎エネルギーカードをトラッシュするワザなので、RUL-ENERGY-DISCARD-ATTACKS の範囲としてワザの効果（こんらんのコインのあと・ダメージの前）。選ぶのはワザを
+      使ったプレイヤー（ちょうど ``count`` 枚）。足りなければ 1 枚もトラッシュせず、相手・控えへのダメージはどれもなくなる（「すべてなくなる」）
+    - 控えへのダメージは弱点・抵抗力を計算しない。プラスパワーは変えない（p.257）。相手の控え → 自分の控えの順（v0.39 のじばくと同じ）
+    """
+
+    count: int
+    bench: int
+    implementation_id = "discard_fire_then_damage_both_benches"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "炎エネルギーカードをトラッシュしてダメージとおたがいの控えへのダメージを与えるワザ"
+        problems = _check_form(attack, what, damage="fixed", cost_types=(EnergyType.FIRE,))
+        return problems + _check_exact_text(attack, what, (FLAME_WHEEL_TEXT.format(count=self.count, bench=self.bench),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        return _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(self.count, self.count),
+                              options=_attached_energy_cards(state, attacker, EnergyType.FIRE))
+
+
+SWEEP_AWAY_TEXT = "自分の山札の上から、{count}枚のカードをトラッシュする。"
+
+
+@dataclass(frozen=True)
+class DamageThenMillOwnDeck(AttackEffect):
+    """相手の対戦ポケモンにダメージの目安の数字ぶんのダメージ。自分の山札の上から、``count`` 枚のカードをトラッシュする（v0.85。アリゲイツ（PF1-008）の「まきこむ」。
+    kyuura の印刷の文面）。要素 ``Damage(OPP, Printed())`` → ``MillOwnDeck(count)``（山札が足りなければ v0.31 の HC6。宣言の前に止める。カードを引くことではない）。"""
+
+    count: int
+    implementation_id = "damage_then_mill_own_deck"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "ダメージのあと、自分の山札の上をトラッシュするワザ"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SWEEP_AWAY_TEXT.format(count=self.count),))
+
+
+RIPTIDE_TEXT = ("自分のトラッシュにある「{type}」エネルギーカードの枚数×{per}のダメージを追加する。その後、自分のトラッシュにある「{type}」エネルギーカードをすべて山札にもどし、"
+                "その山札をよく切る。")
+RIPTIDE_NO_RETURN_NOTE = "(山札にカードをもどすことができないとき、ダメージは追加されない。)"
+
+
+@dataclass(frozen=True)
+class PlusDiscardTypeCardsThenReturnToDeck(AttackEffect):
+    """自分のトラッシュにある「``energy_type``」エネルギーカードの枚数 × ``per`` のダメージを追加する。その後、自分のトラッシュにある「``energy_type``」エネルギーカードを
+    すべて山札にもどし、その山札をよく切る（v0.85。オーダイル（PF1-009・NIP2X-001）の「ぎゃくりゅう」。ダメージの目安「10+」。kyuura の印刷の文面）。要素
+    ``Damage(OPP, programs.PlusDiscardTypeCards)`` → ``programs.ReturnDiscardTypeToDeck``。
+
+    - 数えるのは、ダメージの要素を処理する時点のトラッシュの「水」の基本エネルギーカードの枚数（カードの枚数）。目安 + 枚数 × ``per`` が p.321 の 1 段階
+    - その後、そのカード（トラッシュにある「水」エネルギーカードすべて）を山札にもどし、山札を 1 回切る（0 枚でも切る。実装上の読み方）。トラッシュから山札にもどす効果なので、
+      ポケモンタワー（トラッシュから手札）では消えない
+    - NIP2X-001 の「(山札にカードをもどすことができないとき、ダメージは追加されない。)」（``no_return_clause``）: 今の写しで、トラッシュの「水」エネルギーカードを山札に
+      もどせない場面はない（カードがなければ追加の量も 0）。どちらの版も同じ処理
+    - トラッシュのレインボーエネルギーを「「水」エネルギーカード」として数えるかは決まらない（RB2 と同じ問い。場にないレインボーエネルギーを色のエネルギーカードとして選ぶか）
+    """
+
+    energy_type: EnergyType
+    per: int
+    no_return_clause: bool = False
+    implementation_id = "plus_discard_type_cards_then_return_to_deck"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "トラッシュのエネルギーカードの枚数でダメージを追加し、山札にもどすワザ"
+        text = RIPTIDE_TEXT.format(type=self.energy_type.ja, per=self.per) + (RIPTIDE_NO_RETURN_NOTE if self.no_return_clause else "")
+        problems = _check_form(attack, what, damage="modified", modifier="+")
+        return problems + _check_exact_text(attack, what, (text,))
+
+
+SPIRAL_FLAME_TEXT = "自分についている「エネルギーカード」を{count}枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。"
+
+
+@dataclass(frozen=True)
+class DiscardEnergyCardsThenDamageNoneIfLacking(AttackEffect):
+    """自分についている「エネルギーカード」を ``count`` 枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる（v0.85。リザードン（PF2-009）の「ほのおのうず」。
+    kyuura の印刷の文面）。要素 ``DiscardOwnEnergy(None, count, LACKING_NONE, TIMING_EFFECT)`` → ``Damage(OPP, Printed(), requires)``。
+
+    - トラッシュするのはカードの枚数（どのタイプのエネルギーカードでもよい。特殊エネルギーも 1 枚）。選ぶのはワザを使ったプレイヤー（ちょうど ``count`` 枚）
+    - 説明がトラッシュできないときの処理を書いているので、トラッシュはワザの効果（こんらんのコインのあと・ダメージの前。v0.71 のプロモのリザードン（PR1-030）と同じ読み方）。
+      足りなければ 1 枚もトラッシュせず、このワザのダメージはなくなる（ダメージの要素を処理しない。PR1-030 の「0になる」（``DiscardEnergyCardsThenDamageZeroIfLacking``）とは
+      別の型）
+    """
+
+    count: int
+    implementation_id = "discard_energy_cards_then_damage_none_if_lacking"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "エネルギーカードをトラッシュしてダメージを与えるワザ（トラッシュできなければダメージはなくなる）"
+        return _check_form(attack, what, damage="fixed") + _check_exact_text(attack, what, (SPIRAL_FLAME_TEXT.format(count=self.count),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        return _decision_form(decision, _label(state, use), kind=DISCARD_ENERGY, player=use.player, choices=(self.count, self.count),
+                              options=_attached_energy_cards(state, attacker, None))
+
+
+STATIC_ELECTRICITY_TEXT = "おたがいの場にいる「{name}」の数以下の「{type}」エネルギーカードを自分の山札から選び出し、自分につける。その後、山札をよく切る。"
+
+
+@dataclass(frozen=True)
+class AttachFromDeckUpToNamedCount(AttackEffect):
+    """おたがいの場にいる「``name``」の数以下の「``energy_type``」エネルギーカードを自分の山札から選び出し、自分につける。その後、山札をよく切る（v0.85。メリープ
+    （neo1-038）の「せいでんき」。ダメージの目安なし。kyuura の印刷の文面）。要素 ``programs.AttachFromDeckUpToNamedCount``。
+
+    - 数は、おたがいの場のポケモンのうち、今の姿の名前が「メリープ」のもの（名前の完全一致。重なったカードを数えない。うらのカードは名前が見えないので数えない（数えると
+      本当のカードを使う））。数・カード・エネルギーの個数は別のもの（つけるのはカードで、最大の枚数がメリープの数）
+    - 「以下」なので 0 枚も選べる。選ぶのはワザを使ったプレイヤー（決定 ``ATTACH_FROM_DECK``。選べるものは山札の「雷」の基本エネルギーカード。最大の枚数はメリープの数で、
+      選べるものの数に合わせて変えない。選べるカードがなくても決定を出して答えを待つ（山札の中身を進み方で漏らさない。v0.84 の A3 と同じ））
+    - 山札から直接つける（手札からつける通常の操作ではない）。そのあと、どの場合も山札を 1 回切る。山札のレインボーエネルギーは RB2。ワザを使ったポケモンがクリスタルビームの
+      効果を受けていれば、つけない（山札は切る）
+    """
+
+    energy_type: EnergyType
+    name: str
+    implementation_id = "attach_from_deck_up_to_named_count"
+
+    def check(self, attack: Attack) -> list[str]:
+        what = "おたがいの場の決まった名前のポケモンの数まで山札のエネルギーカードを自分につけるワザ"
+        return _check_form(attack, what, damage="none") + _check_exact_text(attack, what,
+                                                                           (STATIC_ELECTRICITY_TEXT.format(name=self.name, type=self.energy_type.ja),))
+
+
+# v0.85 の 13 枚のポケモンのワザの登録（17）。処理に使う文面は kyuura の印刷の文面
+V0_85_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ベイリーフ（neo1-009）
+    AttackKey("neo1-009", 0): _printed(CoinChosenSideHealAttack(2), "あまいかおり", SWEET_SCENT_TEXT.format(counters=2)),
+    AttackKey("neo1-009", 1): _printed(CoinFlipDamage(coins=2, damage_per_heads=40), "ダブルはっぱカッター", "コインを2枚投げ、「おもて」の数×40のダメージ。"),
+    # メガニウム（neo1-014）
+    AttackKey("neo1-014", 0): _printed(SleepOpponent(), "アロマスリープ", "相手を「ねむり」状態にする。"),
+    # バクフーン（neo1-021）
+    AttackKey("neo1-021", 0): _printed(CoinBonusDamageAndSelfDamage(bonus=20, self_damage=20), "バーストフレイム",
+                                       "コインを投げて「おもて」なら、20ダメージを追加して、自分にも20ダメージ。"),
+    # オーダイル（neo1-033）
+    AttackKey("neo1-033", 0): _printed(CoinsPerOwnCountersBonusDamage(10), "いかりのキバ", CHOMP_TEXT.format(per=10)),
+    # メリープ（neo1-038）
+    AttackKey("neo1-038", 0): _printed(AttachFromDeckUpToNamedCount(EnergyType.LIGHTNING, "メリープ"), "せいでんき",
+                                       STATIC_ELECTRICITY_TEXT.format(name="メリープ", type="雷")),
+    AttackKey("neo1-038", 1): _printed(ParalyzeOnHeads(), "でんきショック", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    # ベイリーフ（PF1-002）
+    AttackKey("PF1-002", 0): _printed(PoisonOnHeads(), "どくのこな", "コインを投げて「おもて」なら、相手を「どく」状態にする。"),
+    AttackKey("PF1-002", 1): _printed(DamageThenStatusImmunityNextTurn(), "しんぴのこな", POLLEN_SHIELD_TEXT),
+    # メガニウム（PF1-003・NIP1X-001）
+    AttackKey("PF1-003", 0): _printed(ParalyzeOnHeads(), "のしかかり", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    AttackKey("NIP1X-001", 0): _printed(ParalyzeOnHeads(), "のしかかり", "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"),
+    # バクフーン（PF1-006）
+    AttackKey("PF1-006", 0): _printed(DiscardFireThenDamageBothBenches(3, 20), "かえんぐるま", FLAME_WHEEL_TEXT.format(count=3, bench=20)),
+    # アリゲイツ（PF1-008）
+    AttackKey("PF1-008", 0): AttackEntry(DAMAGE_ONLY, "たいあたり"),  # 説明文のないワザ（文面・出典を持たない）
+    AttackKey("PF1-008", 1): _printed(DamageThenMillOwnDeck(3), "まきこむ", SWEEP_AWAY_TEXT.format(count=3)),
+    # オーダイル（PF1-009・NIP2X-001）
+    AttackKey("PF1-009", 0): _printed(PlusDiscardTypeCardsThenReturnToDeck(EnergyType.WATER, 10), "ぎゃくりゅう", RIPTIDE_TEXT.format(type="水", per=10)),
+    AttackKey("NIP2X-001", 0): _printed(PlusDiscardTypeCardsThenReturnToDeck(EnergyType.WATER, 10, no_return_clause=True), "ぎゃくりゅう",
+                                        RIPTIDE_TEXT.format(type="水", per=10) + RIPTIDE_NO_RETURN_NOTE),
+    # リザードン（PF2-009）
+    AttackKey("PF2-009", 0): _printed(DiscardEnergyCardsThenDamageNoneIfLacking(2), "ほのおのうず", SPIRAL_FLAME_TEXT.format(count=2)),
+})
+
+# v0.85 の特殊能力の登録（9）。処理に使う文面は kyuura の印刷の文面
+V0_85_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo1-014", 0): PowerEntry(DoubleTypeEnergyCards(), "おいしげる", WILD_GROWTH_TEXTS[0], WILD_GROWTH_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("neo1-021", 0): PowerEntry(CoinAttachFromDiscardToTypePokemon(EnergyType.FIRE), "ファイヤーリチャージ", FIRE_RECHARGE_TEXTS[0], FIRE_RECHARGE_TEXTS[0],
+                                        _KYUURA_PRINTED_TEXT),
+    PowerKey("neo1-033", 0): PowerEntry(CoinMillDeckOnEvolve(5), "あばれんぼう", BERSERK_TEXTS[0], BERSERK_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("PF1-003", 0): PowerEntry(CoinHealTypePokemonOnEntry(), "ハーブのかおり", HERBAL_SCENT_TEXTS[0], HERBAL_SCENT_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("NIP1X-001", 0): PowerEntry(CoinHealTypePokemonOnEntry(), "ハーブのかおり", HERBAL_SCENT_TEXTS[1], HERBAL_SCENT_TEXTS[1], _KYUURA_PRINTED_TEXT),
+    PowerKey("PF1-006", 0): PowerEntry(CoinAttachFromDeckOnEntry(EnergyType.FIRE, 4), "ファイヤーブースト", FIRE_BOOST_TEXTS[0], FIRE_BOOST_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("PF1-009", 0): PowerEntry(DiscardTypeEnergyFromHand(EnergyType.WATER), "どしゃぶり", DOWNPOUR_TEXTS[0], DOWNPOUR_TEXTS[0], _KYUURA_PRINTED_TEXT),
+    PowerKey("NIP2X-001", 0): PowerEntry(DiscardTypeEnergyFromHand(EnergyType.WATER), "どしゃぶり", DOWNPOUR_TEXTS[1], DOWNPOUR_TEXTS[1], _KYUURA_PRINTED_TEXT),
+    PowerKey("PF2-009", 0): PowerEntry(GatherTypeEnergyCardsToSelf(EnergyType.FIRE, 2), "ファイヤーレイズ", FIRE_RAISE_TEXTS[0], FIRE_RAISE_TEXTS[0], _KYUURA_PRINTED_TEXT),
+})
+
+V0_85_ENERGIES: Mapping[str, EnergyEntry] = MappingProxyType({
+    "neo4-113": EnergyEntry(MiracleEnergy(), "ミラクルエネルギー", MIRACLE_ENERGY_TEXT, MIRACLE_ENERGY_TEXT, _KYUURA_PRINTED_TEXT),
+})
+
+DEFAULT_EFFECTS = _with_powers(_with_attacks(DEFAULT_EFFECTS, V0_85_ATTACKS), V0_85_POWERS)
+DEFAULT_EFFECTS = _with_energies(DEFAULT_EFFECTS, V0_85_ENERGIES)

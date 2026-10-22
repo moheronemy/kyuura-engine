@@ -25776,6 +25776,214 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。おくりもの=EachPlayerSearchToolOnEntry（手札から進化させたとき。おたがいのプレイヤーは、のぞむなら山札からポケモンのどうぐを 1 枚さがして手札に加える。見たときだけ切る）、てんしのキッス=DamageThenOpponentMayDraw（相手が 1 枚引くか選ぶ）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%88%E3%82%B2%E3%83%81%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo1-009": {
+      "basis": "kyuura_data",
+      "name_ja": "ベイリーフ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo1。kyuura data/engine_targets.json（7d3f4ca）の対象。あまいかおり=CoinChosenSideHealAttack(2)（コインで自分か相手の場を決め、ダメージカウンターののっているポケモンを 1 匹選んで 2 個（のっている数まで）とりのぞく）、ダブルはっぱカッター=CoinFlipDamage(2, 40)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://nazonobasho.com/neo01-009-bayleaf/ の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "neo1-014": {
+      "basis": "kyuura_data",
+      "name_ja": "メガニウム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo1。kyuura data/engine_targets.json（7d3f4ca）の対象。おいしげる=DoubleTypeEnergyCards（常にはたらく。自分の場の「草」ポケモンについている「草」の基本エネルギーカードは「草」2 個ぶん。カードは 1 枚のまま。決まらないカードは VS1・RB1・BZ2・MEC1）、アロマスリープ=SleepOpponent。kyuura data/rule_history.json の card_lists.poke_body（2002 年の分類）はこのカードを挙げるが、2000.02.14 版の基準の処理には使わない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://nazonobasho.com/neo01-014-meganium/ の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "neo1-021": {
+      "basis": "kyuura_data",
+      "name_ja": "バクフーン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo1。kyuura data/engine_targets.json（7d3f4ca）の対象。ファイヤーリチャージ=CoinAttachFromDiscardToTypePokemon（自分の番ごとに 1 回。コインの「おもて」でトラッシュの「炎」エネルギーカード 1 枚を自分の場の「炎」ポケモンにつける）、バーストフレイム=CoinBonusDamageAndSelfDamage(20, 20)（1 枚のコイン）。jp_print の remarks の修正版（「追加し、」）は同じ意味の書き方の違い。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://nazonobasho.com/neo01-021-bakphoon/ の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "neo1-033": {
+      "basis": "kyuura_data",
+      "name_ja": "オーダイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo1。kyuura data/engine_targets.json（7d3f4ca）の対象。あばれんぼう=CoinMillDeckOnEvolve(5)（手札から進化させたときにかならずはたらく。コインで相手か自分の山札の上 5 枚をトラッシュ。どちらかの山札が 5 枚より少なければ HC6 で進化させる前に止める）、いかりのキバ=CoinsPerOwnCountersBonusDamage(10)。kyuura data/rule_history.json の card_lists.poke_body（2002 年の分類）はこのカードを挙げるが、使わない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://nazonobasho.com/neo01-033-ordile/ の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "neo1-038": {
+      "basis": "kyuura_data",
+      "name_ja": "メリープ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo1。kyuura data/engine_targets.json（7d3f4ca）の対象。せいでんき=AttachFromDeckUpToNamedCount(雷, メリープ)（おたがいの場のメリープの数まで、山札の「雷」エネルギーカードを自分につけ、山札を切る）、でんきショック=ParalyzeOnHeads。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://nazonobasho.com/neo01-038-merriep/ の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF1-002": {
+      "basis": "kyuura_data",
+      "name_ja": "ベイリーフ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF1。kyuura data/engine_targets.json（7d3f4ca）の対象。どくのこな=PoisonOnHeads、しんぴのこな=DamageThenStatusImmunityNextTurn（次の相手の番、特殊状態にならない。持続する効果 StatusImmunityNextTurn）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf1002.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF1-003": {
+      "basis": "kyuura_data",
+      "name_ja": "メガニウム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF1。kyuura data/engine_targets.json（7d3f4ca）の対象。ハーブのかおり=CoinHealTypePokemonOnEntry（手札から場に出したとき 1 度だけ使える。コイン 1 枚の「おもて」で、おたがいの場の「草」ポケモン全員のダメージカウンターをすべてとりのぞく）、のしかかり=ParalyzeOnHeads。kyuura data/curation/other_products.json の reprint_text.メガニウム（kind: clarify。NIP1X-001 の文面の説明）は、このカードのエラッタとして当てはめない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf1003.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "NIP1X-001": {
+      "basis": "kyuura_data",
+      "name_ja": "メガニウム",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。NIP1X。kyuura data/engine_targets.json（7d3f4ca）の対象。ハーブのかおり=CoinHealTypePokemonOnEntry（この版の文面「手札から場に出してポケモンを進化させたとき、1回だけ」。2 進化カードを手札から場に出すのは進化させるときだけなので、PF1-003 と同じ機会）、のしかかり=ParalyzeOnHeads。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neointro1ex001.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF1-006": {
+      "basis": "kyuura_data",
+      "name_ja": "バクフーン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF1。kyuura data/engine_targets.json（7d3f4ca）の対象。ファイヤーブースト=CoinAttachFromDeckOnEntry(炎, 4)（手札から場に出したとき 1 度だけ使える。コインの「おもて」で山札の「炎」エネルギーカードを最大 4 枚このカードにつけ、山札を切る。0 枚は PW3）、かえんぐるま=DiscardFireThenDamageBothBenches(3, 20)（炎エネルギーカード 3 枚のトラッシュはワザの効果。RUL-ENERGY-DISCARD-ATTACKS の範囲。トラッシュできなければダメージはすべてなくなる）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf1006.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF1-008": {
+      "basis": "kyuura_data",
+      "name_ja": "アリゲイツ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF1。kyuura data/engine_targets.json（7d3f4ca）の対象。たいあたり=DamageOnly、まきこむ=DamageThenMillOwnDeck(3)（山札が足りなければ HC6）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf1008.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF1-009": {
+      "basis": "kyuura_data",
+      "name_ja": "オーダイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF1。kyuura data/engine_targets.json（7d3f4ca）の対象。どしゃぶり=DiscardTypeEnergyFromHand(水)（何度でも。1 回の使用で手札の「水」エネルギーカード 1 枚をトラッシュ。手札からのトラッシュなのでリサイクルエネルギー・エコロジムは当たらない）、ぎゃくりゅう=PlusDiscardTypeCardsThenReturnToDeck(水, 10)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf1009.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "NIP2X-001": {
+      "basis": "kyuura_data",
+      "name_ja": "オーダイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。NIP2X。kyuura data/engine_targets.json（7d3f4ca）の対象。どしゃぶり=DiscardTypeEnergyFromHand(水)（この版の「1枚選び」）、ぎゃくりゅう=PlusDiscardTypeCardsThenReturnToDeck(水, 10, no_return_clause)（「(山札にカードをもどすことができないとき、ダメージは追加されない。)」。今の写しではもどせない場面がないので PF1-009 と同じ処理）。kyuura data/curation/other_products.json の reprint_text.オーダイル（kind: clarify）は、この版の文面の説明。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neointro2ex001.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "PF2-009": {
+      "basis": "kyuura_data",
+      "name_ja": "リザードン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。PF2。kyuura data/engine_targets.json（7d3f4ca）の対象。ファイヤーレイズ=GatherTypeEnergyCardsToSelf(炎, 2)（自分の番ごとに 1 回。このカード以外の自分の場のポケモンの「炎」エネルギーカードを最大 2 枚このカードにつけ替える。0 枚は PW3。決まらないカードは選ぶと止める）、ほのおのうず=DiscardEnergyCardsThenDamageNoneIfLacking(2)（エネルギーカード 2 枚。トラッシュできなければダメージはなくなる。PR1-030 の「0になる」とは別の型）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/neo/neopf2009.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
+    },
+    "neo4-113": {
+      "basis": "kyuura_data",
+      "name_ja": "ミラクルエネルギー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "energy": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.85 で加えた（docs/entry-powers-energy-lifecycle-v0.85.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。特殊エネルギー。MiracleEnergy: 場にあるかぎり、すべての色（無色を除く 8 つ）のエネルギー 2 個（kyuura の energy.provides は空で、日本語の説明で決めた）。「ひかるポケモン」「やさしいポケモン」にだけつけられる（どの経路でも）。つけた番の終わりにトラッシュ（番の終わりを越えて場に残らないので、つけた番の記録を状態に持たない）。つけているポケモンが「ひかる」「やさしい」でなくなったらトラッシュ（コマンドの終わり）。どちらもこのカード自身の効果で、エコロジムの原因ではない。説明の「「X」エネルギー(カード)」として数える・選ぶかは MEC1。［きせきのかぜ］がはたらく間の番の終わり・条件・つけることは MEW1。デッキに 1 枚までの制限は英語の文面だけにあるので入れない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%83%9F%E3%83%A9%E3%82%AF%E3%83%AB%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT・サポーター）は持ち込まない"
     }
   }
 }

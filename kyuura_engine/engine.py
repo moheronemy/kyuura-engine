@@ -117,6 +117,7 @@ from .effects import (
     energy_unit_count,
     applicable_entry_power,
     offer_entry_power,
+    forced_entry_check, miracle_pending_problem, settle_miracle_energy, energy_attach_target_check, wild_growth_ambiguities, wild_growth_error,
     ko_prevention_power,
     retreat_cost,
     powers_of,
@@ -224,6 +225,7 @@ from .state import (
     BenchAttackDamageGuard,
     AttackEffectGuard,
     StatusImmunityWhileActive,
+    StatusImmunityNextTurn,
     MaxHpSet,
     TailsDamageGuard,
     ResistanceChange,
@@ -695,6 +697,14 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: 場のポケモンについていなくなったエネルギーとしての役割の記録（マルマインの［エネエネ］）を消す
         # （ついていないあいだは印刷のポケモンのカード。実装上の判断）
         new.energy_roles = tuple(role for role in new.energy_roles if new.energy_role(role.card) is not None)
+    if order_stop is None and new.phase not in (Phase.HALTED, Phase.GAME_OVER):
+        # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md 5 章）: つけているポケモンが「ひかる」「やさしい」でなくなったミラクルエネルギーをトラッシュする（コマンドの終わり。
+        # 効果の途中の決定を待つ間に起こるのはエンジンの未対応。［きせきのかぜ］がはたらいていれば動かさず、MEW1 の決められない状態として受け付けない）
+        pending = miracle_pending_problem(new)
+        if pending is not None:
+            raise UnsupportedError(*pending)
+        if new.decision is None:
+            settle_miracle_energy(new)
     # v0.49（docs/virtual-attacks-transformation-v0.49.md 5 章・7 章）: このコマンドで、決められない姿（TF1・TF2・DG1。``effects.form_problems``）が新しくできたら、
     # このコマンドを受け付けない。決定への答え・対戦準備の最後（ポケモンを表にする）で、どの答えでもできるなら、その前の状態で対戦を止める（``Phase.HALTED``。
     # 答えのない決定を残さない）
@@ -1115,6 +1125,8 @@ def _evolve_pokemon(state: GameState, cmd: EvolvePokemon) -> None:
 
     # 1〜5. 手札から出して見せ、進化するポケモンの上に置き、特殊状態・持続する効果・にげるの失敗の記録を消す（v0.25 から、
     # 1 進化を飛ばして進化させるトレーナーの効果と共通の ``evolution.place_evolution_card``。動き・ログは v0.24 と同じ）
+    # v0.85: かならずはたらく特殊能力（［あばれんぼう］）を処理できない（HC6）なら、場に出す前に止める
+    forced_entry_check(state, cmd.player, cmd.card)
     before_name = form_def(state, target).name_ja
     place_evolution_card(state, cmd.player, target, cmd.card)
     # v0.57: 場のトキワシティジム（自分の「サカキのポケモン」を進化させる時、のぞむならダメージカウンターを 2 つとりのぞいてよい）。答えたあと、場に出たときの特殊能力の
@@ -1162,6 +1174,8 @@ def _attach_energy(state: GameState, cmd: AttachEnergy, context: resolution.Cont
         raise IllegalActionError("TARGET_NOT_IN_PLAY", f"{cmd.target!r} は自分の場のポケモンではない")
     if cmd.energy2 is not None:
         double_attach_check(state, cmd.player, target, cards)
+    for card in cards:
+        energy_attach_target_check(state, card, target)  # v0.85: ミラクルエネルギーのつける先（「ひかる」「やさしい」）・［きせきのかぜ］の間（MEW1）
     if energy_attach_blocked(state, target) is not None:
         # v0.59: カスミのメノクラゲの「クリスタルビーム」を受けた（次の相手の番、エネルギーカードをつけることができない）。カードを動かす前
         raise IllegalActionError("ENERGY_ATTACH_PREVENTED", f"ポケモン {target.pokemon_id} には、この番はエネルギーカードをつけることができない（相手のワザの効果）")
@@ -1254,6 +1268,13 @@ def _retreat(state: GameState, cmd: Retreat, context: resolution.Context) -> Non
     # v0.58: トラッシュするエネルギーは、選んだカードの出すエネルギーの個数で数える（基本エネルギーカードは 1 枚 1 個。無色2個エネルギーは 1 枚で 2 個で、分けて
     # トラッシュできない。レインボーエネルギーは 1 個）。カードの枚数では数えない
     units = energy_unit_count(state, discard, active)
+    ambiguous = wild_growth_ambiguities(state, active)
+    if ambiguous and any(uid in discard for uid, _ in ambiguous):
+        # v0.85: トラッシュするカードに、［おいしげる］で「草」2 個になるかが決まらないカードがある。2 つの読み方でトラッシュしてよい数かが変わるなら止める（エネルギーの
+        # トラッシュ・コインの前）
+        alt = units + sum(2 - energy_unit_count(state, (uid,), active) for uid, _ in ambiguous if uid in discard)
+        if cost.allows(units) != cost.allows(alt):
+            raise wild_growth_error(state, active, [(uid, kind) for uid, kind in ambiguous if uid in discard], "・「にげる」のエネルギーの数")
     overpay = False
     if not cost.allows(units):
         # 余計なカードを除いても足りる選び方（どれか 1 枚を除いても正しい数以上になる）は誤り。どのカードを除いても足りなくなる選び方（無色2個エネルギーでにげる
@@ -2615,7 +2636,7 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_terms_problems(state, pokemon, effect, where, "doubled_terms", (DoubledDamage,)))  # v0.75
         if isinstance(effect, ZeroDamageAtLeast):
             problems.extend(_terms_problems(state, pokemon, effect, where, "threshold_terms", (ZeroDamageAtLeast, effect.threshold)))  # v0.84
-        if isinstance(effect, (BenchAttackDamageGuard, AttackEffectGuard, StatusImmunityWhileActive)):
+        if isinstance(effect, (BenchAttackDamageGuard, AttackEffectGuard, StatusImmunityWhileActive, StatusImmunityNextTurn)):
             problems.extend(_terms_problems(state, pokemon, effect, where, "guard_terms", (type(effect),)))  # v0.84
         if isinstance(effect, StatusImmunityWhileActive) and (effect.given_by not in state.cards or state.cards[effect.given_by].owner != player):
             problems.append(f"{where} {effect!r} を与えたカード {effect.given_by!r} が、持ち主（プレイヤー {player}）のカードではない")  # v0.84

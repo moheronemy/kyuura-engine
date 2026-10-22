@@ -662,7 +662,10 @@ class G37Test(unittest.TestCase):
             "DiscardEnergyThenSpreadThenCoinDiscardEach", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
             "DiscardEnergyThenCoinConfuseElseSleep", "DamageSleepThenHealBothBench",
         # v0.84: やさしいサンダースの「サンダーニードル」（「おもて」の数で相手をマヒ。docs/light-powers-evolution-v0.84.md）
-        "CoinsTimesDamageThenParalyzeIfAtLeast"]))
+        "CoinsTimesDamageThenParalyzeIfAtLeast",
+        # v0.85: ベイリーフの「あまいかおり」（「うら」なら相手の場のポケモンからダメージカウンターをとりのぞく。回復の要素。ダメージがないので G37 には当たらない。
+        # docs/entry-powers-energy-lifecycle-v0.85.md）
+        "CoinChosenSideHealAttack"]))
 
 
 class DecisionTest(unittest.TestCase):

@@ -29,7 +29,7 @@ from .. import effects as E
 from ..effects import (AttackKey, AttackUse, PowerKey, usable_ninja_tricks, attach_converted_energy, attack_rebellion_powers, counts_as_knockout, dormant_scram, max_hp,
                        received_modifiers_log, received_power_damage, retreat_trap_powers, stadium_attack_coin_available, status_at_attack_blocked)
 from ..errors import IllegalActionError, UnsupportedError
-from ..state import AttackEffectGuard, BenchAttackDamageGuard, GameState, Phase, ZeroDamageAtLeast
+from ..state import AttackEffectGuard, BenchAttackDamageGuard, GameState, Phase, StatusImmunityNextTurn, ZeroDamageAtLeast
 from ..history import close_probe, note_used
 from ..zones import face_up_fields, prize_left, promote_from_bench, return_in_play_to_deck, shuffle_deck
 
@@ -208,7 +208,7 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
     if any(isinstance(slot.effect, E.SleepDamageSourceOnHeads) for side in state.players for pokemon in side.in_play() for slot in E.powers_of(state, pokemon)):
         # v0.84: ［ふかふかなからだ］（ダメージの要素のあとのコインとねむり）。v0.13 の止める関数は知らない
         found.append("ふかふかなからだ")
-    v084 = (BenchAttackDamageGuard, AttackEffectGuard, ZeroDamageAtLeast)
+    v084 = (BenchAttackDamageGuard, AttackEffectGuard, ZeroDamageAtLeast, StatusImmunityNextTurn)  # v0.85: しんぴのこな
     if any(isinstance(effect, v084) for side in state.players for pokemon in side.in_play() for effect in pokemon.persistent_effects):
         # v0.84: こおりのはしら（控えへのワザのダメージを無効にする）・ひかりのはどう（効果の要素を無効にする）・パルスガード（8 段階）。v0.13 の止める関数は知らない
         found.append("v0.84 の持続する効果")

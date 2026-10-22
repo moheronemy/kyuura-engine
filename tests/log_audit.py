@@ -88,6 +88,10 @@ from kyuura_engine.effects import CoinWashChosenBench, DamageSleepThenHealBothBe
 from kyuura_engine.effects import HealOwnPokemonWithoutDamage, LookTopTakeOneThenShuffle  # v0.83
 from kyuura_engine.effects import BenchBabyOrBasicFromOwnDiscardAttack, DamageThenBubbleJump, ReturnOwnBenchToDeckAttack  # v0.84
 from kyuura_engine.effects import EachPlayerEvolutionSong, EachPlayerSearchToolOnEntry, HealActiveThenSwitchOnBenchEntry  # v0.84
+from kyuura_engine.effects import (  # v0.85
+    AttachFromDeckUpToNamedCount, CoinAttachFromDeckOnEntry, CoinAttachFromDiscardToTypePokemon, CoinChosenSideHealAttack, CoinHealTypePokemonOnEntry,
+    CoinMillDeckOnEvolve, DiscardTypeEnergyFromHand, GatherTypeEnergyCardsToSelf,
+)
 from kyuura_engine.effects import SleepDamageSourceOnHeads, SwitchOpponentChosenByOpponent  # v0.84
 from kyuura_engine.state import StatusImmunityWhileActive, ZeroDamageAtLeast  # v0.84
 from kyuura_engine.effects import BenchBasicFromOwnDiscardThenCounters  # v0.71
@@ -955,6 +959,12 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
         return kind == "tag_team_heal" and e.get("power") == key and e["player"] == player
     if isinstance(effect, EachPlayerSearchToolOnEntry):
         return kind in ("gift_declined", "reveal_from_deck", "gift_take_none") and e.get("power") == key
+    # v0.85: ［あばれんぼう］（かならずはたらく）・［ハーブのかおり］・［ファイヤーブースト］・［ファイヤーリチャージ］は持ち主のコイン、［どしゃぶり］は手札のトラッシュ
+    # （discard_from_hand の power）。［ファイヤーレイズ］のつけ替えは move_energy の分岐が確かめる
+    if isinstance(effect, (CoinMillDeckOnEvolve, CoinHealTypePokemonOnEntry, CoinAttachFromDeckOnEntry, CoinAttachFromDiscardToTypePokemon)):
+        return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    if isinstance(effect, DiscardTypeEnergyFromHand):
+        return kind == "discard_from_hand" and e.get("power") == key and e["player"] == player
     return False
 
 
@@ -1000,6 +1010,22 @@ def _power_coin_follows(state, coin: dict, e: dict) -> bool:
     if isinstance(effect, SleepDamageSourceOnHeads):
         # v0.84: ［ふかふかなからだ］。持ち主のコインのすぐあとに結果（power_sleep）
         return kind == "power_sleep" and e["power"] == coin["effect"] and e["result"] == coin["result"]
+    if isinstance(effect, CoinMillDeckOnEvolve):
+        # v0.85: ［あばれんぼう］。「おもて」なら相手の、「うら」なら自分の山札の上から（power_discard_deck）
+        side = 1 - coin["player"] if coin["result"] == "heads" else coin["player"]
+        return kind == "power_discard_deck" and e["power"] == coin["effect"] and e["player"] == side and e["user"] == coin["player"]
+    if isinstance(effect, CoinHealTypePokemonOnEntry):
+        # v0.85: ［ハーブのかおり］。「おもて」ならポケモンごとの remove_damage_counters（「草」ポケモンにダメージカウンターがなければ何もない）。「うら」なら何もしない
+        healed = kind == "remove_damage_counters" and e.get("power") == coin["effect"]
+        return True if coin["result"] == "heads" else not healed
+    if isinstance(effect, CoinAttachFromDeckOnEntry):
+        # v0.85: ［ファイヤーブースト］。「おもて」なら山札からつける（power_attach_from_deck）か、つけずに切る（shuffle。そのあいだに決定がある）。「うら」なら何もしない
+        mine = kind in ("power_attach_from_deck", "shuffle") and e.get("power") == coin["effect"]
+        return mine if coin["result"] == "heads" else not mine
+    if isinstance(effect, CoinAttachFromDiscardToTypePokemon):
+        # v0.85: ［ファイヤーリチャージ］。「おもて」ならトラッシュからつける（power_attach_from_discard。そのあいだに 2 つの決定がある）。「うら」なら何もしない
+        mine = kind == "power_attach_from_discard" and e.get("power") == coin["effect"]
+        return mine if coin["result"] == "heads" else not mine
     return kind in ("evade_check", "ko_prevented", "ko_prevention_failed")
 
 
@@ -1189,7 +1215,8 @@ def log_problems(state) -> list[str]:
                 problems.append(f"1 回のワザで同じポケモンからダメージカウンターをとりのぞく処理が 2 回以上 {dict(window)}")
             if window["return_in_play_to_deck"] > 2:
                 problems.append(f"1 回のワザで山札にもどす処理が {window['return_in_play_to_deck']} 回")  # v0.52: つれさるでも自分と相手の 2 回まで
-            if window["attack_energy_from_deck"] > (window_effect.max_cards if isinstance(window_effect, CoinAttachEnergyFromDeckToSelf) else 1):
+            if window["attack_energy_from_deck"] > (window_effect.max_cards if isinstance(window_effect, CoinAttachEnergyFromDeckToSelf)
+                                                     else 6 if isinstance(window_effect, AttachFromDeckUpToNamedCount) else 1):
                 # v0.41。v0.75: しおまねきは最大 3 枚（1 枚に 1 つの attach_energy_from_deck）
                 problems.append("1 回のワザで山札からエネルギーをつける処理（attach_energy_from_deck・attach_energy_from_deck_none）が多すぎる")
             if isinstance(window_effect, ReturnHandThenRevealBasicEnergy):
@@ -1336,6 +1363,7 @@ def log_problems(state) -> list[str]:
     batch_answered = False  # このきぜつの処理で答えがあった（そのあとにサイド・きぜつ・対戦の終わりはないはず）
     destiny_knocked: set[int] = set()  # v0.31: 「みちづれ」できぜつする相手の対戦ポケモン（HP 未満できぜつしてよい）
     shuffle_due: dict | None = None  # v0.32: 直前の bench_from_deck・bench_from_deck_none（すぐあとに同じプレイヤーの shuffle が続くはず）
+    static_attaches: set[int] = set()  # v0.85: せいでんきのつけるログ（続けてつけるあいだは山札を切らない）
     discard_entered: dict[int, int] = {}  # v0.51: トラッシュからベンチに出したポケモンの番号 → 出した番（状態の場に出た番と同じはず）
     revive_then_counters: tuple | None = None  # v0.71: ポケモンジム第1弾の元気のかけらで出したポケモン（番号・トレーナーのカード・番）。すぐあとにカウンターをのせる
     # v0.38: 直前の、山札を切らずにもどした return_in_play_to_deck（キョウのポッポの「でんれい」。かわりの対戦ポケモンを出してから山札をさがし、その
@@ -1970,6 +1998,10 @@ def log_problems(state) -> list[str]:
             # v0.43: てしたをよぶは、最大 2 枚を続けて出したあと（同じ特殊能力の bench_from_deck が続いたあと）に 1 回だけ切る
             shuffle_due["kind"] == "bench_from_deck" and kind == "bench_from_deck" and "power" in e and e["power"] == shuffle_due.get("power")
             and e["player"] == shuffle_due["player"]
+        ) and not (
+            # v0.85: せいでんきは、何枚もつけたあと（同じワザの attach_energy_from_deck が続いたあと）に 1 回だけ切る
+            shuffle_due.get("kind") == "attach_energy_from_deck" and kind == "attach_energy_from_deck" and id(shuffle_due) in static_attaches
+            and e["player"] == shuffle_due["player"] and e["pokemon_id"] == shuffle_due["pokemon_id"]
         ) and shuffle_due is not e:
             due_event, shuffle_due = shuffle_due, None
             if kind != "shuffle" or e["player"] != due_event["player"]:
@@ -2854,7 +2886,11 @@ def log_problems(state) -> list[str]:
                 problems.append(f"{e['turn']} 番の特殊能力の宣言 {e['power']!r} が、ポケモン {e['pokemon_id']} のいちばん上のカードの特殊能力ではない")
                 continue
             effect = state.effects.power_effect(definition.id, power)
-            if effect is not None and not effect.declared:
+            forced = isinstance(effect, EntryPower) and effect.forced
+            if forced != bool(e.get("forced")):
+                # v0.85: かならずはたらく場に出たときの特殊能力（［あばれんぼう］）は、ログ pokemon_power の forced（使う機会の答えではない）
+                problems.append(f"{e['turn']} 番の特殊能力「{power.name_ja}」の宣言の forced {e.get('forced')!r} が、かならずはたらく特殊能力かと合わない")
+            if effect is not None and not effect.declared and not forced:
                 problems.append(f"{e['turn']} 番に、常にはたらいていて宣言しない特殊能力「{power.name_ja}」の宣言がある")
             if ("entry" in e) != isinstance(effect, EntryPower):
                 # v0.43: 場に出たときの特殊能力は、使う機会の答えとしてだけ宣言する（番の中の宣言（UsePokemonPower）では使えない）
@@ -2964,13 +3000,13 @@ def log_problems(state) -> list[str]:
             if declared != (e["turn"], e["player"], e["pokemon_id"]) and not continuing:
                 problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']} の直前に、同じポケモンの特殊能力の宣言（pokemon_power）がない")
             declared = None  # 1 回の宣言で 1 枚（v0.5 のエナジートランス）
-            if isinstance(effect, (TakeEnergiesToSelf, ChargeBenchEnergyToSelf)):
+            if isinstance(effect, (TakeEnergiesToSelf, ChargeBenchEnergyToSelf, GatherTypeEnergyCardsToSelf)):
                 # v0.43: ようぶんきゅうしゅう（最大 2 枚）・エナジーチャージ（好きなだけ）は 1 回の宣言で何枚も（続けて move_energy）
                 moving = (e["turn"], e["player"], e["pokemon_id"], e.get("power"), moving[4] + 1 if continuing else 1)
-                if isinstance(effect, TakeEnergiesToSelf) and moving[4] > effect.max_cards:
+                if isinstance(effect, (TakeEnergiesToSelf, GatherTypeEnergyCardsToSelf)) and moving[4] > effect.max_cards:
                     problems.append(f"{e['turn']} 番のようぶんきゅうしゅう（ポケモン {e['pokemon_id']}）で、1 回に {moving[4]} 枚つけかえた")
             source, target = e["from_pokemon_id"], e["to_pokemon_id"]
-            if isinstance(effect, (TakeEnergyToSelf, TakeEnergiesToSelf, ChargeBenchEnergyToSelf)) and (
+            if isinstance(effect, (TakeEnergyToSelf, TakeEnergiesToSelf, ChargeBenchEnergyToSelf, GatherTypeEnergyCardsToSelf)) and (
                     target != e["pokemon_id"] or not state.printed_def(e["energy"]).is_basic_energy or state.printed_def(e["energy"]).provides is not effect.energy_type):
                 # v0.43: つける先は特殊能力を使ったポケモン（このカード）。つけかえるのは登録のタイプの基本エネルギーカード
                 problems.append(f"{e['turn']} 番のエネルギーの移動 {e['energy']}（{source} → {target}）が、特殊能力 {e.get('power')} のつけかえ（このカードに・"
@@ -3142,7 +3178,12 @@ def log_problems(state) -> list[str]:
             for uid in e["cards"]:
                 from_hand(e, e["player"], uid)
                 discard[e["player"]].append(uid)
-            if "power" in e:
+            if "power" in e and isinstance(_power_effect(state, e["power"]), DiscardTypeEnergyFromHand):
+                # v0.85: ［どしゃぶり］。手札の「水」の基本エネルギーカードを 1 枚トラッシュした（引かない）
+                definition = state.printed_def(e["cards"][0]) if len(e["cards"]) == 1 else None
+                if definition is None or not definition.is_basic_energy or definition.provides is not _power_effect(state, e["power"]).energy_type:
+                    problems.append(f"{e['turn']} 番の［どしゃぶり］でトラッシュした手札 {e['cards']} が、「水」エネルギーカード 1 枚ではない")
+            elif "power" in e:
                 # v0.42: 特殊能力（ぶっしつこうかん）で手札を 1 枚トラッシュした。すぐあとに 1 枚まで引く（トレーナーを使うためのトラッシュではない）
                 if len(e["cards"]) != 1 or not isinstance(_power_effect(state, e["power"]), DiscardThenDraw):
                     problems.append(f"{e['turn']} 番の特殊能力 {e['power']} でトラッシュした手札 {e['cards']} が、1 枚トラッシュする特殊能力の処理と合わない")
@@ -4142,6 +4183,9 @@ def log_problems(state) -> list[str]:
             elif isinstance(effect, (HealChosenBenchByEnergy, CoinWashChosenBench)):
                 # v0.83: いやしのみず・あらいながす。自分の控えポケモン 1 匹
                 allowed = pid in in_play and pokemon_owner.get(pid) == attack_window["player"] and pid != attack_window["pokemon_id"]
+            elif isinstance(effect, CoinChosenSideHealAttack):
+                # v0.85: あまいかおり。コインで決めたどちらかの場のポケモン 1 匹（自分の場ならワザを使ったポケモンも）
+                allowed = pid in in_play and e.get("attacker") == attack_window["player"]
             elif isinstance(effect, DamageSleepThenHealBothBench):
                 # v0.83: ヒプノシャワー。おたがいの控えポケモン全員（バトル場のポケモンは除く）
                 allowed = pid in in_play and pid != attack_window["pokemon_id"] and pid != active_of.get(1 - attack_window["player"])
@@ -4215,7 +4259,7 @@ def log_problems(state) -> list[str]:
             # v0.82: あたためる（ChooseBenchThenAttachFromDeck）も自分の控えポケモンにつける（控え → カードの順に選ぶ）
             to_bench = isinstance(effect, (AttachEnergyFromDeckToBench, ChooseBenchThenAttachFromDeck)) and kind != "attach_energy_from_deck_none"
             if not isinstance(effect, (AttachEnergyFromDeckToSelf, AttachEnergyFromDeckToSelfExactly, CoinAttachEnergyFromDeckToSelf, AttachEnergyFromDeckToBench,
-                                       ChooseBenchThenAttachFromDeck)) \
+                                       ChooseBenchThenAttachFromDeck, AttachFromDeckUpToNamedCount)) \
                     or (kind == "deck_energy_evaded") != (to_bench and kind == "deck_energy_evaded") \
                     or (pid == attack_window["pokemon_id"]) == to_bench or e["player"] != attack_window["player"] \
                     or to_bench and (pokemon_owner.get(pid) != e["player"] or pid not in in_play):
@@ -4232,7 +4276,10 @@ def log_problems(state) -> list[str]:
                 if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not state.printed_def(uid).is_basic_energy:
                     problems.append(f"{e['turn']} 番に山札からトラッシュに置いたカード {uid} が、プレイヤー {e['player']} の山札の基本エネルギーカードではない")
                 discard[e["player"]].append(uid)
-            if not isinstance(effect, CoinAttachEnergyFromDeckToSelf):
+            if isinstance(effect, AttachFromDeckUpToNamedCount) and kind == "attach_energy_from_deck":
+                static_attaches.add(id(e))  # v0.85: せいでんきは何枚もつけてから 1 回だけ切る（続くつけるログのあいだは待ち、最後のあとに shuffle を求める）
+                shuffle_due = e
+            elif not isinstance(effect, CoinAttachEnergyFromDeckToSelf):
                 shuffle_due = e  # v0.75: しおまねきは山札を切らない（説明に「よく切る」がない）
         elif kind == "evolve_from_deck_none":
             # v0.42: つきのちから（「おもて」）で、山札に重ねられる進化カードがなかった。すぐあとに山札を切る
@@ -4366,6 +4413,44 @@ def log_problems(state) -> list[str]:
                     problems.append(f"{e['turn']} 番に山札からトラッシュしたカード {uid} が、プレイヤー {e['player']} の山札のカードではない")
                     continue
                 discard[e["player"]].append(uid)
+        elif kind == "power_discard_deck":
+            # v0.85: ［あばれんぼう］で、相手か自分の山札の上から 5 枚をトラッシュした（山札は組み立て直さないので、持ち主・手札とトラッシュにないことで確かめる）
+            for uid in e["cards"]:
+                if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]]:
+                    problems.append(f"{e['turn']} 番に［あばれんぼう］で山札からトラッシュしたカード {uid} が、プレイヤー {e['player']} の山札のカードではない")
+                    continue
+                discard[e["player"]].append(uid)
+        elif kind == "power_attach_from_deck":
+            # v0.85: ［ファイヤーブースト］で、山札の「炎」の基本エネルギーカードを特殊能力を使ったポケモンにつけた（手札を通さない）
+            uid, pid = e["card"], e["pokemon_id"]
+            definition = state.printed_def(uid)
+            if owner.get(uid) != e["player"] or uid in hand[e["player"]] or uid in discard[e["player"]] or not definition.is_basic_energy or pid not in in_play:
+                problems.append(f"{e['turn']} 番に［ファイヤーブースト］でつけたカード {uid} が、プレイヤー {e['player']} の山札の基本エネルギーカードではない")
+            energy.setdefault(pid, []).append(uid)
+        elif kind == "power_attach_from_discard":
+            # v0.85: ［ファイヤーリチャージ］で、トラッシュの「炎」の基本エネルギーカードを自分の場の「炎」ポケモンにつけた
+            pid = e["pokemon_id"]
+            for uid in e["cards"]:
+                if uid not in discard[e["player"]] or not state.printed_def(uid).is_basic_energy or pokemon_owner.get(pid) != e["player"]:
+                    problems.append(f"{e['turn']} 番に［ファイヤーリチャージ］でつけたカード {uid} が、プレイヤー {e['player']} のトラッシュの基本エネルギーカードではない")
+                    continue
+                discard[e["player"]].remove(uid)
+                energy.setdefault(pid, []).append(uid)
+        elif kind == "attack_discard_to_deck":
+            # v0.85: ぎゃくりゅうで、トラッシュの「水」エネルギーカードをすべて山札にもどした（山札は組み立て直さない）
+            for uid in e["cards"]:
+                if uid not in discard[e["player"]]:
+                    problems.append(f"{e['turn']} 番にトラッシュから山札にもどしたカード {uid} が、ログから組み立てたプレイヤー {e['player']} のトラッシュにない")
+                    continue
+                discard[e["player"]].remove(uid)
+        elif kind == "miracle_energy_discarded":
+            # v0.85: ミラクルエネルギーを、つけているポケモンから持ち主のトラッシュに置いた（つけた番の終わり・つけているポケモンが「ひかる」「やさしい」でなくなった）
+            pid = e["pokemon_id"]
+            if e["card"] not in energy.get(pid, []) or state.printed_def(e["card"]).name_ja != "ミラクルエネルギー":
+                problems.append(f"{e['turn']} 番にトラッシュしたミラクルエネルギー {e['card']} が、ログから組み立てたポケモン {pid} についていない")
+            else:
+                energy[pid].remove(e["card"])
+                discard[owner[e["card"]]].append(e["card"])
         elif kind == "destiny_bond":
             # v0.31: 「みちづれ」の効果のポケモンがきぜつしたので、相手の対戦ポケモンもきぜつする（ダメージではない）
             if e["pokemon_id"] in in_play and damage[e["pokemon_id"]] < max_hp_now(e["pokemon_id"]):

@@ -910,6 +910,25 @@ class AttackEffectGuard:
 
 
 @dataclass(frozen=True)
+class StatusImmunityNextTurn:
+    """ワザによる「持続する効果」（v0.85）のうち、ベイリーフ（PF1-002）の「しんぴのこな」の「次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない。」
+    （kyuura の印刷の文面。docs/entry-powers-energy-lifecycle-v0.85.md 6 章）。
+
+    自分自身に与え、はたらく番は次の相手の番（期限はその番の終わり）。はたらく間、このポケモンを特殊状態にする処理は特殊状態にしない（``effects.status_immunity``。v0.46 の
+    ［めんえき］・v0.84 の「きらめきタッチ」と同じ入口）。すでにある特殊状態は回復しない。入れ替えはしない（「きらめきタッチ」とは別の効果）。ベンチにもどる・進化・きぜつで
+    消える（v0.4b の消える契機）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "status_immunity_next_turn"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -1066,7 +1085,8 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
                            ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
                            # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
-                           StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard)
+                           StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard,
+                           StatusImmunityNextTurn)  # v0.85: しんぴのこな
 
 
 @dataclass(frozen=True)

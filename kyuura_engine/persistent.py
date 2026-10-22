@@ -65,6 +65,7 @@ from .state import (
     ReflectShield,
     ResistanceChange,
     Retaliation,
+    StatusImmunityNextTurn,
     StatusImmunityWhileActive,
     TailsDamageGuard,
     WeaknessChange,
@@ -367,6 +368,11 @@ def bench_attack_damage_guard(state: GameState, pokemon: PokemonInPlay) -> Bench
 def zero_damage_at_least(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageAtLeast | None:
     """今の番に ``pokemon`` が受けるワザのダメージが決まった数以上なら 0 にする効果（v0.84。やさしいサンダースの「パルスガード」）がはたらいているなら、その効果。"""
     return _active(state, pokemon, ZeroDamageAtLeast)
+
+
+def status_immunity_next_turn(state: GameState, pokemon: PokemonInPlay) -> StatusImmunityNextTurn | None:
+    """今の番に ``pokemon`` が特殊状態にならない効果（v0.85。ベイリーフの「しんぴのこな」。次の相手の番）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, StatusImmunityNextTurn)
 
 
 def attack_effect_guard(state: GameState, pokemon: PokemonInPlay) -> AttackEffectGuard | None:

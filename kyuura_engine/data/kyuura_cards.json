@@ -1270,6 +1270,22 @@
     "neo4-094",
     "neo4-095"
   ],
+  "pool_v0_85": [
+    "neo1-009",
+    "neo1-014",
+    "neo1-021",
+    "neo1-033",
+    "neo1-038",
+    "PF1-002",
+    "PF1-003",
+    "NIP1X-001",
+    "PF1-006",
+    "PF1-008",
+    "PF1-009",
+    "NIP2X-001",
+    "PF2-009",
+    "neo4-113"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -92406,6 +92422,1418 @@
         "series": "闇、そして光へ...",
         "remarks": [],
         "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%88%E3%82%B2%E3%83%81%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-009",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベイリーフ",
+        "en": "Bayleef"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          153
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "チコリータ",
+          "en": "Chikorita"
+        },
+        "hp": 80,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あまいかおり",
+              "en": "Sweet Scent"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "コインを投げ、「おもて」なら自分の場から、「うら」なら相手の場から、ダメージカウンターののっているポケモンを1匹選ぶ。選んだポケモンから、ダメージカウンターを2個、とりのぞく。",
+              "en": "Flip a coin. If heads and if any of your Pokémon have any damage counters on them, then remove 2 damage counters from 1 of them (or 1 if it only has 1). If tails and if any of your opponent's Pokémon have any damage counters on them, choose 1 of them and remove 2 damage counters from it (or 1 if it only has 1)."
+            }
+          },
+          {
+            "name": {
+              "ja": "ダブルはっぱカッター",
+              "en": "Double Razor Leaf"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": "×",
+              "display": "40×"
+            },
+            "text": {
+              "ja": "コインを2枚投げ、「おもて」の数×40のダメージ。",
+              "en": "Flip 2 coins. This attack does 40 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-009",
+        "pokemontcg": [
+          "neo1-29"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-009-bayleaf/",
+      "jp_print": {
+        "level": 39,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-009-bayleaf/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-014",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "メガニウム",
+        "en": "Meganium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          154
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ベイリーフ",
+          "en": "Bayleef"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おいしげる",
+              "en": "Wild Growth"
+            },
+            "text": {
+              "ja": "このカードが場にいるかぎり、自分の場の「草」ポケモンについている「草」エネルギーカードは、「草」エネルギー2個ぶんとしてはたらく。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "As long as Meganium is in play each Grass Energy card attached to your Grass Pokémon instead provides GrassGrass. This power stops working while Meganium is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "アロマスリープ",
+              "en": "Soothing Scent"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "grass",
+              "grass"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手を「ねむり」状態にする。",
+              "en": "The Defending Pokémon is now Asleep."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-014",
+        "pokemontcg": [
+          "neo1-11"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-014-meganium/",
+      "jp_print": {
+        "level": 57,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-014-meganium/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-021",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "バクフーン",
+        "en": "Typhlosion"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          157
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "マグマラシ",
+          "en": "Quilava"
+        },
+        "hp": 100,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ファイヤーリチャージ",
+              "en": "Fire Recharge"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。コインを投げて「おもて」なら、自分のトラッシュから「炎」エネルギーカードを1枚選び出し、自分の場の「炎」ポケモンにつける。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "Once during your turn (before your attack), you may flip a coin. If heads, attach a Fire Energy card from your discard pile to 1 of your Fire Pokémon. This power can't be used if Typhlosion is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "バーストフレイム",
+              "en": "Flame Burst"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 60,
+              "modifier": "+",
+              "display": "60+"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、20ダメージを追加して、自分にも20ダメージ。",
+              "en": "Flip a coin. If heads, this attack does 60 damage plus 20 more damage and does 20 damage to Typhlosion. If tails, this attack does 60 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-021",
+        "pokemontcg": [
+          "neo1-17"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-021-bakphoon/",
+      "jp_print": {
+        "level": 55,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [
+          "修正版は「バーストフレイム」のダメージ60の隣に+が表記されている",
+          "修正版は「バーストフレイム」の説明文の一部が変更されている",
+          "修正前：20ダメージを追加して、自分にも20ダメージ。",
+          "修正後：20ダメージを追加し、自分にも20ダメージ。"
+        ],
+        "source": "https://nazonobasho.com/neo01-021-bakphoon/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-033",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "オーダイル",
+        "en": "Feraligatr"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          160
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "アリゲイツ",
+          "en": "Croconaw"
+        },
+        "hp": 100,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "あばれんぼう",
+              "en": "Berserk"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出してポケモンを進化させたとき、かならずはたらく。コインを投げ、「おもて」なら相手の山札の上から、「うら」なら自分の山札の上から、5枚のカードをトラッシュする。",
+              "en": "When you play Feraligatr from your hand, flip a coin. If heads, discard the top 5 cards from your opponent's deck. If tails, discard the top 5 cards from your deck."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "いかりのキバ",
+              "en": "Chomp"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 50,
+              "modifier": "+",
+              "display": "50+"
+            },
+            "text": {
+              "ja": "自分にのっているダメージカウンターの数ぶんコインを投げ、「おもて」の数×10ダメージを追加する。",
+              "en": "Flip a number of coins equal to the number of damage counters on Feraligatr. This attack does 50 damage plus 10 more damage for each heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-033",
+        "pokemontcg": [
+          "neo1-4"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-033-ordile/",
+      "jp_print": {
+        "level": 56,
+        "rarity": "★(R)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-033-ordile/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo1-038",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "メリープ",
+        "en": "Mareep"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          179
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "せいでんき",
+              "en": "Static Electricity"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいの場にいる「メリープ」の数以下の「雷」エネルギーカードを自分の山札から選び出し、自分につける。その後、山札をよく切る。",
+              "en": "For each Mareep in play, you may search your deck for a Lightning Energy card and attach it to Mareep. Shuffle your deck afterward."
+            }
+          },
+          {
+            "name": {
+              "ja": "でんきショック",
+              "en": "Thundershock"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-038",
+        "pokemontcg": [
+          "neo1-65"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-038-merriep/",
+      "jp_print": {
+        "level": 12,
+        "rarity": "●(C)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-038-merriep/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "PF1-002",
+      "jp_set": "PF1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ベイリーフ",
+        "en": "Bayleef"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          153
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "チコリータ",
+          "en": "Chikorita"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          },
+          {
+            "name": {
+              "ja": "しんぴのこな",
+              "en": "Pollen Shield"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "次の相手の番、このカードは「どく・ねむり・マヒ・こんらん」状態にならない。",
+              "en": "During your opponent's next turn, Bayleef can't become Asleep, Confused, Paralyzed, or Poisoned. (All other effects of attacks, Pokémon Powers and Trainer cards still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-28"
+        ],
+        "pcg_search": [
+          "neopf1002"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf1002.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf1002.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-28",
+        "pokemon.dex": "pokemontcg:neo1-28",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf1002",
+          "list_number": "002/009"
+        }
+      ]
+    },
+    {
+      "id": "PF1-003",
+      "jp_set": "PF1",
+      "category": "pokemon",
+      "name": {
+        "ja": "メガニウム",
+        "en": "Meganium"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          154
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ベイリーフ",
+          "en": "Bayleef"
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ハーブのかおり",
+              "en": "Herbal Scent"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1度だけ使える。コインを投げて、「おもて」なら、おたがいの場にいる「草」ポケモン全員にのっているダメージカウンターを、すべてとりのぞく。",
+              "en": "When you play Meganium from your hand, you may flip a coin. If heads, remove all damage counters from all Grass Pokémon in play."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": "Body Slam"
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-10"
+        ],
+        "pcg_search": [
+          "neopf1003"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf1003.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf1003.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PF1-003",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-10",
+        "pokemon.dex": "pokemontcg:neo1-10",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf1003",
+          "list_number": "003/009"
+        }
+      ]
+    },
+    {
+      "id": "NIP1X-001",
+      "jp_set": "NIP1X",
+      "category": "pokemon",
+      "name": {
+        "ja": "メガニウム",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "ベイリーフ",
+          "en": null
+        },
+        "hp": 100,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ハーブのかおり",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出してポケモンを進化させたとき、1回だけ使うことができる。コインを投げて「おもて」なら、おたがいの場の「草」ポケモン全員にのっているダメージカウンターを、すべてとりのぞく。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": null
+            },
+            "cost": [
+              "grass",
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro1ex001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro1ex001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "イントロパック★neo(チコリータデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro1ex001.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PF1-003",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neointro1ex001",
+          "list_number": "001/010"
+        }
+      ]
+    },
+    {
+      "id": "PF1-006",
+      "jp_set": "PF1",
+      "category": "pokemon",
+      "name": {
+        "ja": "バクフーン",
+        "en": "Typhlosion"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          157
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "マグマラシ",
+          "en": "Quilava"
+        },
+        "hp": 100,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ファイヤーブースト",
+              "en": "Fire Boost"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出したとき、1度だけ使える。コインを投げて「おもて」なら、自分の山札から「炎」エネルギーカードを最大4枚選び出し、このカードにつける。その後、その山札をよく切る。",
+              "en": "When you play Typhlosion from your hand, you may flip a coin. If heads, search your deck for up to 4 Fire Energy cards and attach them to Typhlosion. Shuffle your deck afterward."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "かえんぐるま",
+              "en": "Flame Wheel"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 80,
+              "modifier": null,
+              "display": "80"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを3枚トラッシュし、おたがいの控えポケモン全員にも、「弱点・抵抗力」に関係なく、20ダメージ。「炎」エネルギーカードがトラッシュできないとき、このワザのダメージは、すべてなくなる。",
+              "en": "Discard 3 Fire Energy cards attached to Typhlosion in order to use this attack. Do 20 damage to each Benched Pokémon (yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-18"
+        ],
+        "pcg_search": [
+          "neopf1006"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf1006.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf1006.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-18",
+        "pokemon.dex": "pokemontcg:neo1-18",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf1006",
+          "list_number": "006/009"
+        }
+      ]
+    },
+    {
+      "id": "PF1-008",
+      "jp_set": "PF1",
+      "category": "pokemon",
+      "name": {
+        "ja": "アリゲイツ",
+        "en": "Croconaw"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          159
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ワニノコ",
+          "en": "Totodile"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "たいあたり",
+              "en": "Tackle"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": null,
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "まきこむ",
+              "en": "Sweep Away"
+            },
+            "cost": [
+              "water",
+              "water",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分の山札の上から、3枚のカードをトラッシュする。",
+              "en": "Discard the top 3 cards from your deck."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-32"
+        ],
+        "pcg_search": [
+          "neopf1008"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf1008.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf1008.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-32",
+        "pokemon.dex": "pokemontcg:neo1-32",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf1008",
+          "list_number": "008/009"
+        }
+      ]
+    },
+    {
+      "id": "PF1-009",
+      "jp_set": "PF1",
+      "category": "pokemon",
+      "name": {
+        "ja": "オーダイル",
+        "en": "Feraligatr"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          160
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "アリゲイツ",
+          "en": "Croconaw"
+        },
+        "hp": 120,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "どしゃぶり",
+              "en": "Downpour"
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何度でも使える。自分の手札から「水」エネルギーカードを出して、トラッシュする。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "As often as you like during your turn (before your attack), you may discard a Water Energy card from your hand. This power can't be used if Feraligatr is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぎゃくりゅう",
+              "en": "Riptide"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分のトラッシュにある「水」エネルギーカードの枚数×10のダメージを追加する。その後、自分のトラッシュにある「水」エネルギーカードをすべて山札にもどし、その山札をよく切る。",
+              "en": "Does 10 damage plus 10 damage times the number of Water Energy cards in your discard pile. Then, shuffle all Water Energy cards from your discard pile into your deck."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo1-5"
+        ],
+        "pcg_search": [
+          "neopf1009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf1009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf1009.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PF1-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo1-5",
+        "pokemon.dex": "pokemontcg:neo1-5",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf1009",
+          "list_number": "009/009"
+        }
+      ]
+    },
+    {
+      "id": "NIP2X-001",
+      "jp_set": "NIP2X",
+      "category": "pokemon",
+      "name": {
+        "ja": "オーダイル",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "アリゲイツ",
+          "en": null
+        },
+        "hp": 120,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "どしゃぶり",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何回でも使うことができる。自分の手札にある「水」エネルギーカードを1枚選び、トラッシュする。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ぎゃくりゅう",
+              "en": null
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 10,
+              "modifier": "+",
+              "display": "10+"
+            },
+            "text": {
+              "ja": "自分のトラッシュにある「水」エネルギーカードの枚数×10のダメージを追加する。その後、自分のトラッシュにある「水」エネルギーカードをすべて山札にもどし、その山札をよく切る。(山札にカードをもどすことができないとき、ダメージは追加されない。)",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neointro2ex001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neointro2ex001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "イントロパック★neo(ワニノコデッキ：拡張カード)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neointro2ex001.php"
+      },
+      "product_group": "intro_pack",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-PF1-009",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neointro2ex001",
+          "list_number": "001/010"
+        }
+      ]
+    },
+    {
+      "id": "PF2-009",
+      "jp_set": "PF2",
+      "category": "pokemon",
+      "name": {
+        "ja": "リザードン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "リザード",
+          "en": null
+        },
+        "hp": 120,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ファイヤーレイズ",
+              "en": null
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使える。自分の場のポケモンについている「炎」エネルギーカードを最大2枚まではがし、このカードにつけ替える。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": null
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ほのおのうず",
+              "en": null
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 100,
+              "modifier": null,
+              "display": "100"
+            },
+            "text": {
+              "ja": "自分についている「エネルギーカード」を2枚トラッシュする。トラッシュできないとき、このワザのダメージはなくなる。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "neopf2009"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf2009.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プレミアムファイル2",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf2009.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "pokemon.evolves_from": "pcg_search_evolution_line"
+      },
+      "copies": [
+        {
+          "page": "neopf2009",
+          "list_number": "009/009"
+        }
+      ]
+    },
+    {
+      "id": "neo4-113",
+      "jp_set": "neo4",
+      "category": "energy",
+      "name": {
+        "ja": "ミラクルエネルギー",
+        "en": "Miracle Energy"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": null,
+      "energy": {
+        "kind": "special",
+        "provides": [],
+        "text": {
+          "ja": "このカードは、「ひかるポケモン」または「やさしいポケモン」につけることができ、つけた番の終わりにトラッシュする。このカードは、場にあるかぎり、すべての「色(タイプ)」の「エネルギー」2個ぶんの「エネルギーカード」として、あつかわれる。このカードをつけているポケモンが、「ひかるポケモン」または「やさしいポケモン」でないとき、このカードをトラッシュする。",
+          "en": "You can't have more than 1 Miracle Energy in your deck. Attach Miracle Energy to 1 of your Shining or Light Pokémon. At the end of your turn, discard Miracle Energy.\nWhile in play, Miracle Energy counts as every type of Energy but provides only 2 Energy at a time."
+        }
+      },
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-113",
+        "pokemontcg": [
+          "neo4-16"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9F%E3%83%A9%E3%82%AF%E3%83%AB%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC",
+      "jp_print": {
+        "level": null,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9F%E3%83%A9%E3%82%AF%E3%83%AB%E3%82%A8%E3%83%8D%E3%83%AB%E3%82%AE%E3%83%BC"
       },
       "product_group": "expansion_pack",
       "play_scope": "standard",

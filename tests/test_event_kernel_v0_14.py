@@ -647,7 +647,11 @@ class CatalogTest(unittest.TestCase):
                            "simplified_run_away",
                            # v0.84: やさしいカイリューの［きせきのかぜ］（場の特殊エネルギーの効果を問い合わせる ``effects.special_energy_effect`` が、その時点の場から
                            # 求める。窓の中の反応ではない。docs/light-powers-evolution-v0.84.md）
-                           "miraculous_wind")
+                           "miraculous_wind",
+                           # v0.85: メガニウムの［おいしげる］（エネルギーの単位を数える ``effects.energy_units`` が、その時点の場から求める）・オーダイルの
+                           # ［あばれんぼう］（かならずはたらく場に出たときの特殊能力。進化の処理のすぐあとに ``effects.offer_entry_power`` が処理する）。どちらも窓の中の反応ではない。
+                           # docs/entry-powers-energy-lifecycle-v0.85.md 2 章・3 章
+                           "double_type_energy_cards", "coin_mill_deck_on_evolve")
         for key in DEFAULT_EFFECTS.power_keys():
             effect = DEFAULT_EFFECTS.power_entry(key.card_id, key.power_index).effect
             definition = C.definition_for(effect, C.POWER_DEFINITIONS)
@@ -664,7 +668,8 @@ class CatalogTest(unittest.TestCase):
                          ["PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",
-                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0", "neo4-094@power0"])
+                          "PMCG6-033@power0", "PMCG6-049@power0", "PMCG6-053@power0", "PMCG6-074@power0", "neo1-014@power0", "neo1-033@power0",
+                          "neo4-094@power0"])
 
 
 # ---------------------------------------------------------------- 対戦（new_game から）: 再現性・ログの監査

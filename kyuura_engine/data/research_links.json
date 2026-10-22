@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 186,
-    "engine_stop_codes": 184,
+    "engine_unresolved_rulings": 188,
+    "engine_stop_codes": 186,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2151,6 +2151,28 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACLE_ENERGY_AS_TYPE": {
+      "engine_rulings": [
+        {
+          "version": "v0.85",
+          "document": "docs/entry-powers-energy-lifecycle-v0.85.md",
+          "ruling_id": "MEC1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACLE_ENERGY_UNDER_WIND": {
+      "engine_rulings": [
+        {
+          "version": "v0.85",
+          "document": "docs/entry-powers-energy-lifecycle-v0.85.md",
+          "ruling_id": "MEW1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3549,7 +3571,32 @@
       "neo4-041/power/0",
       "neo4-077/power/0",
       "neo4-094/power/0",
-      "neo4-095/power/0"
+      "neo4-095/power/0",
+      "neo1-009/attack/0",
+      "neo1-009/attack/1",
+      "neo1-014/attack/0",
+      "neo1-014/power/0",
+      "neo1-021/attack/0",
+      "neo1-021/power/0",
+      "neo1-033/attack/0",
+      "neo1-033/power/0",
+      "neo1-038/attack/0",
+      "neo1-038/attack/1",
+      "PF1-002/attack/0",
+      "PF1-002/attack/1",
+      "PF1-003/attack/0",
+      "PF1-003/power/0",
+      "NIP1X-001/attack/0",
+      "NIP1X-001/power/0",
+      "PF1-006/attack/0",
+      "PF1-006/power/0",
+      "PF1-008/attack/1",
+      "PF1-009/attack/0",
+      "PF1-009/power/0",
+      "NIP2X-001/attack/0",
+      "NIP2X-001/power/0",
+      "PF2-009/attack/0",
+      "PF2-009/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

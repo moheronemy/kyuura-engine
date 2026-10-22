@@ -1954,3 +1954,18 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
   `stop_codes` に `not_in_kyuura` で加えた。
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
+
+## v0.85: 進化したときの特殊能力・エネルギーを動かす特殊能力のポケモン 13 枚と、ミラクルエネルギー
+
+[entry-powers-energy-lifecycle-v0.85.md](entry-powers-energy-lifecycle-v0.85.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_85`（14 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.84 までの 1,039 枚の
+  記録は変わっていない。
+- 14 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-22・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  14 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 8 枚（PF・NIP の商品）・nazonobasho.com の転記 5 枚（neo1）・ポケモンWiki の転記 1 枚（neo4-113）。同じ所との照合は
+  独立した照合にならない（pcg-search.com の転記の 8 枚は、同じサイトを開き直しても外部照合にならない）。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ・特殊能力 25 を加えた。新しい停止コード 2 件（MEC1・MEW1）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: メガニウム PF1-003 の［ハーブのかおり］と other_products の再録の文面（`kind: clarify`）の書き方の違い。ミラクルエネルギーの「デッキに1枚まで」が英語の文面だけに
+  あることと、`energy.provides` が空であること。オーダイル NIP2X-001 のぎゃくりゅうの括弧書きが PF1-009 にないこと。メガニウム neo1-014 が card_lists.poke_body（2002 年の分類）に挙がること。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.85 の登録を写すと、14 枚の `engine_status` が `registered` になる。
