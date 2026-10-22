@@ -782,7 +782,10 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                         "どくばり", "どくばり", "どくばり", "スモッグ", "あんこく", "あんこく", "あやしいひかり", "まきつく", "あわ", "ねんりき",
                                         # v0.82: ライチュウ（neo3-025）の「でんきショック」（ParalyzeOnHeads。既存の型の登録だけなので、同じ T19b で止まる。
                                         # docs/energy-discard-return-v0.82.md）
-                                        "でんきショック"]))
+                                        "でんきショック",
+                                        # v0.84: やさしいマリルリの「あわ」・やさしいプクリンの「のしかかり」（ParalyzeOnHeads。既存の型の登録だけ。
+                                        # docs/light-powers-evolution-v0.84.md）
+                                        "あわ", "のしかかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

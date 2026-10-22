@@ -328,6 +328,10 @@ def _berry_view(state: GameState, order: tuple[int, int], skip: int) -> tuple:
             except UnsupportedError as error:
                 hp, form, powers = error.code, None, None
             view.append((pokemon.pokemon_id, hp, form, powers, triggers.get(pokemon.pokemon_id)))
+    # v0.84: はたらいている［きせきのかぜ］（場の特殊エネルギーカードの効果（悪エネルギーのポケモンチェックの効果など）が消えるか。きのみで特殊状態が回復すると、はたらき始める）
+    from .effects import miraculous_wind_sources
+
+    view.append(("miraculous_wind", miraculous_wind_sources(state)))
     return tuple(view)
 
 

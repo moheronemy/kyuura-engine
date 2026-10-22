@@ -821,6 +821,95 @@ class ReflectShield:
 
 
 @dataclass(frozen=True)
+class StatusImmunityWhileActive:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいレディアン（neo4-010）の「きらめきタッチ」の「このワザで新しく出てきたポケモンは、バトル場にいるかぎり、
+    「どく•ねむり•マヒ•こんらん」状態にならない」（kyuura の印刷の文面。docs/light-powers-evolution-v0.84.md 4 章）。
+
+    ワザを使ったポケモン（``given_by``。やさしいレディアンのカード）が、入れ替えで新しくバトル場に出た自分のポケモンに与える（受けるのはワザを使ったポケモンではない。
+    ``source_card`` は受けたポケモンのいちばん上のカード（発生源を確かめる不変条件と同じ形。v0.48 の ``MaxHpSet`` と同じ置き場所）。与えたときからはたらき、期限では
+    消えない（``lasting``）。バトル場をはなれる（ベンチにもどる・場をはなれる）・進化・退化・きぜつで消える（v0.4b の消える契機。「バトル場にいるかぎり」）。はたらく間、
+    このポケモンを特殊状態にする処理は特殊状態にしない（``effects.status_immunity``。v0.46 の［めんえき］と同じ入口）。すでにある特殊状態は回復しない。
+
+    - ``attack_index``: 効果を与えたワザの位置。``attack_card`` は効果を与えたワザを印刷したカードの id（``given_by`` のいちばん上のカードと違うときだけ）
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    attack_index: int
+    given_by: int
+    attack_card: str | None = None
+    kind: ClassVar[str] = "status_immunity_while_active"
+    turns_until_active: ClassVar[int] = 0
+    on_opponent: ClassVar[bool] = False
+    lasting: ClassVar[bool] = True
+
+    def __post_init__(self) -> None:
+        _check_attack_card(self.attack_card)
+        if type(self.attack_index) is not int or type(self.given_by) is not int:
+            raise ValueError(f"ワザの位置・効果を与えたカードは整数（{self.attack_index!r}・{self.given_by!r}）")
+
+
+@dataclass(frozen=True)
+class BenchAttackDamageGuard:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいジュゴン（neo4-033）の「こおりのはしら」の「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによる
+    ダメージを受けない(ダメージ以外の効果は受ける)。このカードがバトル場をはなれたとき、この効果は消える。」（kyuura の印刷の文面。docs 4 章）。
+
+    ワザを使ったポケモン自身（バトル場のやさしいジュゴン）に与え、はたらく番は次の相手の番（その前の自分の番の残りには、控えポケモンが受けるワザのダメージはない）。
+    はたらく間、持ち主の控えポケモン（受ける時点の控え。あとからベンチに出したポケモン・バトル場からベンチにもどったポケモンも）が受けるワザのダメージの要素を無効にする
+    （v0.56 の見えない壁と同じ窓・同じ処理。``resolution.catalog.ICE_PILLAR``）。効果の要素は無効にしない。このカードがバトル場をはなれる（ベンチにもどる・場をはなれる）・
+    進化・退化・きぜつで消える（効果をこのカードに持つので、v0.4b の消える契機と同じ）。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "bench_attack_damage_guard"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class ZeroDamageAtLeast:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいサンダース（neo4-043）の「パルスガード」の「次の相手の番、このカードがワザによって受けるダメージが「30」
+    以上なら、このカードはダメージを受けない（ダメージ以外の効果は受ける）。」（kyuura の印刷の文面。docs 4 章）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンがワザのダメージを受けるとき、p.321 の 8 段階（ワザを受けるポケモンの持っている効果）で、その段階の
+    ダメージが ``threshold`` 以上なら 0 にし、より小さければそのまま（``damage.ZERO_IF_AT_LEAST``。v0.46 の［なぞのかべ］と同じ計算。v0.45 の ``ZeroDamageBelow``（かたくなる）
+    と比べる向きが逆）。ワザでないダメージ（特殊能力・どく・トレーナー・特殊エネルギー）・ダメージ以外の効果には当てはめない。消える契機は ``ZeroDamageBelow`` と同じ。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    threshold: int
+    kind: ClassVar[str] = "zero_damage_at_least"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class AttackEffectGuard:
+    """ワザによる「持続する効果」（v0.84）のうち、やさしいカイリュー（neo4-094）の「ひかりのはどう」の「次の相手の番、このカードはワザによる「ダメージ以外の効果」を
+    受けない(ダメージは受ける)。」（kyuura の印刷の文面。docs 4 章）。
+
+    自分自身に与え、はたらく番は次の相手の番。その番に、このポケモンへのワザの効果の要素（ダメージの要素でないもの）を無効にする（v0.80 のエフェクトガードと同じ窓・同じ
+    処理。``resolution.catalog.LIGHT_PULSE``。ついているトレーナーではないので、エフェクトガードのカードとして扱わない）。ダメージの要素・ワザでない効果は無効にしない。
+    """
+
+    source_card: int
+    source_player: int
+    created_turn: int
+    active_turn: int
+    kind: ClassVar[str] = "attack_effect_guard"
+    turns_until_active: ClassVar[int] = 1
+    on_opponent: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
 class TypeShift:
     """特殊能力でポケモンの色（タイプ）を変えた記録（v0.48。モルフォン（PMCG2-015）の［へんしょく］の「このカード持ち主は、自分の番に1回、このカードの色を場にいる
     ポケモンのどれかの色に変えることができる。「ねむり・マヒ・こんらん」状態の時、この力は消える。」。kyuura の印刷の文面）。
@@ -975,7 +1064,9 @@ PERSISTENT_EFFECT_TYPES = (PreventDamage, PreventAttackDamage, Retaliation, Next
                            DoubledDamage,  # v0.75: DoubledDamage（もろばバサミ）
                            ReducedDamageToSourceNextTurn,  # v0.76: ReducedDamageToSourceNextTurn（なきごえ。期限が次の相手の番の終わり）
                            CannotAttackNextOwnTurn,  # v0.78: CannotAttackNextOwnTurn（メタルスラッシュ。次の自分の番にすべてのワザを使えない）
-                           ReflectShield)  # v0.83: ReflectShield（リフレクトシールド）
+                           ReflectShield,  # v0.83: ReflectShield（リフレクトシールド）
+                           # v0.84: きらめきタッチ・こおりのはしら・パルスガード・ひかりのはどう
+                           StatusImmunityWhileActive, BenchAttackDamageGuard, ZeroDamageAtLeast, AttackEffectGuard)
 
 
 @dataclass(frozen=True)

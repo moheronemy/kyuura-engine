@@ -391,7 +391,10 @@ class WebbingTest(unittest.TestCase):
         d = first.decision
         top = state.players[0].deck[:3]
         self.assertEqual((d.kind, d.player, d.options, d.min_choices, d.max_choices), (TAKE_LOOKED_CARDS, 0, (top[0], top[2]), 0, 2))  # 4 枚目の草は見ない
-        done = answer(first, (top[2],))
+        second = answer(first, (top[2],))
+        # v0.84（A3）: 相手の見た中に基本エネルギーカードがなくても、相手の決定（選べるものなし・0 枚だけが答え）を出して答えを待つ
+        self.assertEqual((second.decision.kind, second.decision.player, second.decision.options), (TAKE_LOOKED_CARDS, 1, ()))
+        done = answer(second, ())
         kinds = [(e["kind"], e["player"]) for e in new_events(state, done) if e["kind"] in ("look_at_deck_top", "reveal_from_deck", "shuffle", "deck_top_take_declined")]
         self.assertEqual(kinds, [("look_at_deck_top", 0), ("reveal_from_deck", 0), ("shuffle", 0), ("look_at_deck_top", 1), ("deck_top_take_declined", 1), ("shuffle", 1)])
         audited(self, done)
@@ -478,7 +481,7 @@ class ShiningRaichuTest(unittest.TestCase):
 class ShiningMewtwoTest(unittest.TestCase):
     def shielded(self, opponent, **extra):
         state = board(mon(H.SHINING_MEWTWO, (P, L)), opponent=opponent, **extra)
-        return apply_kernel(attack(state, 0), EndTurn(0)) if False else attack(state, 0)
+        return attack(state, 0)  # リフレクトシールド（ワザを使うと番が終わる）
 
     def test_heads_negates_and_returns_20(self):
         shielded = self.shielded(mon(H.HITMONCHAN, (FT, FT)))
@@ -665,13 +668,23 @@ class BoundaryTest(unittest.TestCase):
         audited(self, attack(plain, 0, (TL,)))
 
     def test_reflect_shield_lost_on_switch(self):
-        state = board(mon(H.SHINING_MEWTWO, (P, L)), hand=(H.SWITCH,))
+        # 次の相手の番に、相手が突風でひかるミュウツーをベンチにもどすと、効果は消える（v0.4b の消える契機。理由 switch）。v0.84 で、操作をしない確かめ（``if False``）を
+        # 実際の突風の操作に置きかえた（docs/light-powers-evolution-v0.84.md 2 章の A4）
+        state = board(mon(H.SHINING_MEWTWO, (P, L)), bench=(H.RATTATA,), opponent=mon(H.HITMONCHAN, (FT, FT)), opponent_hand=(H.GUST,))
         shielded = attack(state, 0)
-        self.assertIsNotNone(reflect_shield(apply_kernel(shielded, EndTurn(1)) if False else shielded, shielded.players[0].active))
-        mine = apply_kernel(apply_kernel(shielded, EndTurn(1)), EndTurn(0)) if False else None
-        self.assertIsNone(mine)
-        # 次の相手の番に、バトル場をはなれると消える（v0.4b の消える契機）。相手の番には自分がいれかえを使えないので、効果の値の消える契機を直接確かめる
-        self.assertEqual(ReflectShield.turns_until_active, 1)
+        mewtwo = shielded.players[0].active
+        self.assertIsNotNone(reflect_shield(shielded, mewtwo))
+        rattata = shielded.players[0].bench[0]
+        gusted = answer(play(shielded, H.GUST, player=1), (rattata.pokemon_id,))
+        self.assertIs(gusted.players[0].active.pokemon_id, rattata.pokemon_id)
+        benched = next(p for p in gusted.players[0].bench if p.pokemon_id == mewtwo.pokemon_id)
+        self.assertEqual([e for e in benched.persistent_effects if isinstance(e, ReflectShield)], [])
+        removed = new_events(shielded, gusted, "persistent_effect_removed")
+        self.assertEqual([(e["pokemon_id"], e["persistent_effect"], e["reason"]) for e in removed], [(mewtwo.pokemon_id, "reflect_shield", "switch")])
+        # ベンチにもどったポケモンの効果は、もどってきても復活しない。新しい対戦ポケモンへのワザにはコインを投げない
+        hit = attack(gusted, 0)
+        self.assertEqual(new_events(gusted, hit, "reflect_shield_check"), [])
+        audited(self, hit)
 
     def test_steelix_confusion_is_stopped_by_metal_energy(self):
         # こんらん状態のひかるハガネールは、必要な「鋼」エネルギー（鋼エネルギー。ダメージを変える特殊エネルギー）のために、こんらんのコインの前に v0.3c の問いで止まる。
@@ -730,8 +743,8 @@ class RegistryTest(unittest.TestCase):
         stripped = registry.without_attacks("without-v0.83", [E.AttackKey(card, index) for card, index in keys])
         pool = pool_from_extract(read_extract(), stripped)
         self.assertFalse(any(pool.definitions[c].supported for c in H.V0_83_POKEMON))
-        # 前の版の 1008 枚の対応は変わらない
-        self.assertEqual(sum(1 for c in pool.definitions.values() if c.supported), 1008)
+        # 前の版の 1008 枚の対応は変わらない（v0.84 から、あとの版の 13 枚（pool_v0_84）も対応）
+        self.assertEqual(sum(1 for c in pool.definitions.values() if c.supported), 1008 + len(read_extract()["pool_v0_84"]))
         pool = load_card_pool()
         self.assertTrue(all(pool.definitions[c].supported for c in H.V0_83_POKEMON))
 

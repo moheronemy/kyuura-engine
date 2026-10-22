@@ -22,7 +22,7 @@ from .. import effects as E
 from ..continuous import goop_gas_effects, suppressors_of
 from ..persistent import powers_use_prevented
 from ..decisions import BENCH_GUARD, KNOCK_OUT_POWER, KO_PREVENTION, POST_KNOCKOUT_POWER, REACTION_SWITCH
-from ..state import AttackBarrier, PreventDamage, Retaliation
+from ..state import AttackBarrier, AttackEffectGuard, BenchAttackDamageGuard, PreventDamage, Retaliation
 
 from .events import DamageClass, Window
 
@@ -185,6 +185,29 @@ EFFECT_GUARD = EffectDefinition(
     "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
 )
 
+# v0.84（docs/light-powers-evolution-v0.84.md 4 章）: やさしいジュゴンの「こおりのはしら」（「次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージを受けない
+# (ダメージ以外の効果は受ける)」）。見えない壁と同じ窓・同じ処理（受ける時点の控えポケモンへのワザのダメージの要素を無効にする）。効果はバトル場のやさしいジュゴンが持つ
+# 持続する効果（``state.BenchAttackDamageGuard``。はたらく番は次の相手の番。``active_now``）で、受けるポケモンは持ち主の控え（``instances`` が今の場で決める）
+ICE_PILLAR = EffectDefinition(
+    "ice_pillar", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_DAMAGE}), frozenset(), "now", False,
+    "receiving_element", "void_damage", frozenset({DamageClass.ATTACK}),
+)
+# v0.84（4 章）: やさしいカイリューの「ひかりのはどう」（「次の相手の番、このカードはワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)」）。エフェクトガードと同じ窓
+# （効果の要素の前だけ）。自分自身に与える持続する効果（``state.AttackEffectGuard``）。説明は「相手の」と書かないが、はたらく番は次の相手の番なので、受けるのは相手のワザ
+# （``by_opponent``。その番に自分のワザはない）
+LIGHT_PULSE = EffectDefinition(
+    "light_pulse", Origin.PERSISTENT_EFFECT, Mode.AUTOMATIC, Timing.VOID, frozenset({Window.BEFORE_EFFECT}), frozenset(), "now", False,
+    "receiving_element", "void_effect", frozenset({DamageClass.ATTACK}), True,
+)
+# v0.84（5 章）: やさしいイノムーの［ふかふかなからだ］（「相手の番の中で、このカードが、バトル場でワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しても)、
+# このカードの持ち主はコインを投げる。「おもて」なら、ダメージを与えたポケモンを「ねむり」状態にする。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態
+# だったなら、この力は、はたらかない」）。［ぼうぎょかふん］と同じ窓・同じ形の処理（``kernel.power_sleep_to_damage_source``）で、特殊状態の条件（受けるときの「すでに」）・
+# 相手の番（``opponent_turn_only``）・バトル場（``active_only``）・相手のワザ（``by_opponent``）がある
+FLUFFY_WOOL = EffectDefinition(
+    "fluffy_wool", Origin.PRINTED_POWER, Mode.AUTOMATIC, Timing.DEFER, frozenset({Window.DAMAGE_RECEIVING, Window.AFTER_DAMAGE_ELEMENTS}),
+    BLOCKING_CONDITIONS, "on_damage", True, "damage_source", "power_sleep_to_damage_source", frozenset({DamageClass.ATTACK}), True,
+    active_only=True, opponent_turn_only=True,
+)
 
 # v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: はんげきのツメ（ポケモンのどうぐ）。はんげきと同じ窓（受けるときに候補にし、そのワザのダメージの要素のあと・ダメージ以外の
 # 効果の前に処理する。CR-COUNTERATTACK-TIMING）で、処理は「持ち主がコインを投げ、「おもて」なら相手の対戦ポケモンにダメージカウンターを 2 個のせる。その後、このカードを
@@ -217,11 +240,13 @@ POWER_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (E.FleeAfterAttackDamage, FLEE),  # v0.65
     (E.TakeBenchDamageInstead, BENCH_GUARD_DEFINITION),  # v0.65
     (E.DiscardAttackerEnergyOnDamage, ENERGY_DRAIN),  # v0.68
+    (E.SleepDamageSourceOnHeads, FLUFFY_WOOL),  # v0.84
 )
 PERSISTENT_DEFINITIONS: tuple[tuple[type, EffectDefinition], ...] = (
     (PreventDamage, HARDEN),
     (Retaliation, RETALIATION),
     (AttackBarrier, BARRIER),  # v0.31
+    (AttackEffectGuard, LIGHT_PULSE),  # v0.84
 )
 
 
@@ -274,6 +299,12 @@ def instances(state: GameState, owner: int, pokemon: PokemonInPlay, table=None) 
     # v0.80: ついているエフェクトガード（効果の登録表の実装が ``blocks_attack_effects``。カード id で分けない）
     for card in E.effect_guards(state, pokemon):
         found.append(EffectInstance(EFFECT_GUARD, owner, pokemon.pokemon_id, pokemon.card, implementation=EffectGuardRecord(card)))
+    # v0.84: こおりのはしら（持ち主のバトル場のポケモンが持つ持続する効果。受けるポケモンが今、持ち主の控えなら）
+    side = state.players[owner]
+    if side.active is not None and side.active is not pokemon and any(b is pokemon for b in side.bench):
+        for effect in side.active.persistent_effects:
+            if isinstance(effect, BenchAttackDamageGuard):
+                found.append(EffectInstance(ICE_PILLAR, owner, pokemon.pokemon_id, pokemon.card, implementation=effect))
     # v0.81: ついているはんげきのツメ（ポケモンのどうぐ。効果の登録表の実装の型で探す）。実装は (ついているカード, 実装)
     claw = E.tool_effect_of(state, pokemon, E.CounterClaw)
     if claw is not None:

@@ -87,8 +87,10 @@ def _prevented(state: GameState, owner: int, pokemon: PokemonInPlay, condition: 
     key = status_immunity(state, owner, pokemon)
     if key is None:
         return False
+    # v0.84: 「きらめきタッチ」の効果（持続する効果）で防いだら、``power`` のかわりに ``persistent_effect``・``source_card``（効果を与えたポケモンのカード）
+    source = {"power": str(key)} if not hasattr(key, "kind") else {"persistent_effect": key.kind, "source_card": key.given_by}
     state.add_event("special_condition_prevented", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, condition=condition, **fields,
-                    effect=effect, power=str(key))
+                    effect=effect, **source)
     return True
 
 

@@ -255,6 +255,9 @@ ALL_CODES = (
     "UNRESOLVED_MAX_HP_SET_AND_INCREASE",  # MH2（v0.81a。tests/test_berry_maxhp_fixes_v0_81a.py）
     "UNRESOLVED_REFLECT_SHIELD_TIMING",  # RS1（v0.83。tests/test_shining_gentle_v0_83.py）
     "UNRESOLVED_ATTACK_DECK_TOP_SHORT",  # LT1（v0.83。tests/test_shining_gentle_v0_83.py）
+    "UNRESOLVED_REFLECT_SHIELD_OVERLAP",  # RF1（v0.84。tests/test_light_powers_evolution_v0_84.py）
+    "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY",  # WD1（v0.84。同）
+    "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN",  # WD2（v0.84。同）
 )
 TURN = 7
 

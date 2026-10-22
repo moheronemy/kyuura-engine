@@ -206,13 +206,13 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         registry = E.DEFAULT_EFFECTS
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
-        later = set(extract["pool_v0_74"]) | set(extract["pool_v0_75"]) | set(extract["pool_v0_76"]) | set(extract["pool_v0_77"]) | set(extract["pool_v0_78"]) | set(extract["pool_v0_79"]) | set(extract["pool_v0_80"]) | set(extract["pool_v0_81"]) | set(extract["pool_v0_82"]) | set(extract["pool_v0_83"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.74 の 13 枚（スタジアム）・v0.75 の 15 枚を除いて比べる
+        later = set(extract["pool_v0_74"]) | set(extract["pool_v0_75"]) | set(extract["pool_v0_76"]) | set(extract["pool_v0_77"]) | set(extract["pool_v0_78"]) | set(extract["pool_v0_79"]) | set(extract["pool_v0_80"]) | set(extract["pool_v0_81"]) | set(extract["pool_v0_82"]) | set(extract["pool_v0_83"]) | set(extract["pool_v0_84"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.74 の 13 枚（スタジアム）・v0.75 の 15 枚を除いて比べる
         playable = pool.playable_ids - later
         categories = [pool.get(c).category for c in playable]
         self.assertEqual((len(extract["cards"]) - len(later), len(playable)), (774, 774))
         self.assertEqual((categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (546, 198, 30))
         self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in later]), len(registry.energy_ids())),
-                         (1248, 74, 198, 18))  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックのポケモン 50 枚（ワザ 77）を加えた（トレーナー 2 枚はあとの版として除く）  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた
+                         (1267, 79, 198, 18))  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックのポケモン 50 枚（ワザ 77）を加えた（トレーナー 2 枚はあとの版として除く）  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     @unittest.skipUnless((ROOT.parent / "kyuura" / ".git").exists(), "../kyuura がない")
     def test_non_pack_unsupported_count(self):
@@ -226,7 +226,7 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         targets = show("data/engine_targets.json")["cards"]
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
-        later = set(extract["pool_v0_74"]) | set(extract["pool_v0_75"]) | set(extract["pool_v0_76"]) | set(extract["pool_v0_77"]) | set(extract["pool_v0_78"]) | set(extract["pool_v0_79"]) | set(extract["pool_v0_80"]) | set(extract["pool_v0_81"]) | set(extract["pool_v0_82"]) | set(extract["pool_v0_83"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.74 の 13 枚・v0.75 の 15 枚は未対応として数える（v0.73 の時点の数）
+        later = set(extract["pool_v0_74"]) | set(extract["pool_v0_75"]) | set(extract["pool_v0_76"]) | set(extract["pool_v0_77"]) | set(extract["pool_v0_78"]) | set(extract["pool_v0_79"]) | set(extract["pool_v0_80"]) | set(extract["pool_v0_81"]) | set(extract["pool_v0_82"]) | set(extract["pool_v0_83"]) | set(extract["pool_v0_84"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.74 の 13 枚・v0.75 の 15 枚は未対応として数える（v0.73 の時点の数）
         self.assertEqual(sum(1 for x in targets if groups[x["id"]] != "expansion_pack" and x["id"] not in pool.playable_ids - later), 280)
         self.assertTrue(all(groups[c] != "expansion_pack" for c in V0_73_CARDS))
 

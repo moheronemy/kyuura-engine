@@ -54,7 +54,7 @@ from ..effects import (
     type_readings,
     weakness_of,
 )
-from ..conditions import confuse
+from ..conditions import confuse, put_to_sleep
 from ..decisions import KNOCK_OUT_POWER, KO_PREVENTION, REACTION_SWITCH
 from ..persistent import RETURN_IN_PLAY_TO_DECK, effect_attack_card, expires_at_turn_start, reduced_damage_to_source, reflect_shield, remove_on_damage, remove_persistent_effects, tails_damage_guard
 from ..zones import designate_face_down, return_in_play_to_deck, shuffle_deck
@@ -651,6 +651,8 @@ def deal_damage(res: Resolution, fs: FrameState, target: str, base: int, *, log_
             raise res.question("damage_reduction_decision", f"ポケモン {attacker.pokemon_id}・{frame.kind.value} の枠のダメージ {need.value}") from None
     if target == SELF:
         trainer_self_bonus_question(res, attacker, receiver, base, modifiers, calc.final, weakness_resistance, orders, resistance)
+    if calc.final > 0 and defender_effects and receiver_player != frame.player:
+        reflect_shield_overlap(res, fs, receiver)
     if calc.final > 0 and defender_effects and not reaches(res, fs, receiver_player, receiver, DAMAGE_ELEMENT, amount=calc.final):
         fs.evaded[receiver.pokemon_id] = calc.final
         res.trace.record(DamageEvaded(frame.id, receiver.pokemon_id, calc.final))
@@ -807,15 +809,15 @@ def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: P
 
     - 「受けるとき」は、要素を無効にする効果（かたまる・バリアー）・「とうめい」・「かげぶんしん」で受けないと決まったあと、［ベンチガード］・ダメージをのせる前（呼ぶ側の順番）。
       最終ダメージが 0 なら「ダメージを受けなかった」（p.319・p.321）ので投げない
-    - 「かげぶんしん」と同じポケモンに重なることは、今の対応カードでは起こらない（ひかるミュウツーは「かげぶんしん」を使わない。［へんしん］で写すのは相手の姿で、受けている
-      効果は写さない）ので、重なったら ``RuntimeError``（順番を推測しない）
+    - 「かげぶんしん」・「とうめい」と同じポケモンに重なる（v0.84 の A2。ゆびをふるで両方のワザを写す）と、どちらのコインを先に投げるかが決まらないので、呼ぶ側が先に
+      ``reflect_shield_overlap``（RF1）で止める（コインの前。順番を推測しない）
     - 送る効果の ``received`` には、コインの時点のダメージを与えたポケモンのダメージを書く（与える時点までにそのポケモンのダメージが変わっていれば、20 を与える時点で結果が
       変わりうるので止める。``reflect_damage_to_damage_source``）"""
     shield = reflect_shield(res.state, pokemon)
     if shield is None:
         return False
     if tails_damage_guard(pokemon) is not None or pokemon.pokemon_id in fs.reception:
-        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「リフレクトシールド」と「かげぶんしん」・「とうめい」が重なった（今の対応カードでは起こらない。エンジンの不具合）")
+        raise RuntimeError(f"ポケモン {pokemon.pokemon_id} に「リフレクトシールド」と「かげぶんしん」・「とうめい」が重なった（``reflect_shield_overlap`` が先に止めるはず。エンジンの不具合）")
     state = res.state
     frame = fs.frame
     flips = flip_coins(state, owner, 1, source="persistent_effect", effect=str(frame.attack_key), card=pokemon.card, pokemon_id=pokemon.pokemon_id)
@@ -828,6 +830,22 @@ def reflect_shield_holds(res: Resolution, fs: FrameState, owner: int, pokemon: P
         fs.pending.append(Deferred(instance, frame.id, attacker.damage))
         res.trace.record(CandidateFound(Window.DAMAGE_RECEIVING, REFLECT_SHIELD_RETURN.name, pokemon.pokemon_id, frame.id))
     return held
+
+
+def reflect_shield_overlap(res: Resolution, fs: FrameState, pokemon: PokemonInPlay) -> None:
+    """v0.84（docs/light-powers-evolution-v0.84.md 2 章の A2）: 相手のワザによるダメージ（最終ダメージが 0 より大きい。呼ぶ側が確かめる）を受けるポケモンに、「リフレクトシールド」と、
+    受けるときにコインで受けないと決める効果（「かげぶんしん」の ``TailsDamageGuard``・はたらいている「とうめい」）が重なっていれば、どのコインも投げる前に問い
+    ``reflect_shield_overlap``（RF1）で止める。どちらかを優先する・片方を無視する形にしない（先のコインの結果で、あとのコインを投げるか・20 を返すかが変わる）。
+    「とうめい」と「かげぶんしん」の重なり（v0.60）・どちらか 1 つだけの場面は、今までどおり。"""
+    if reflect_shield(res.state, pokemon) is None:
+        return
+    others = []
+    if tails_damage_guard(pokemon) is not None:
+        others.append("かげぶんしん")
+    if pokemon.pokemon_id in fs.reception or E.evasion_power(res.state, pokemon) is not None:
+        others.append("とうめい")
+    if others:
+        raise res.question("reflect_shield_overlap", f"ポケモン {pokemon.pokemon_id}（リフレクトシールドと{'・'.join(others)}）")
 
 
 def reflect_damage_to_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
@@ -1152,12 +1170,24 @@ def restore_deferred(res: Resolution, fs: FrameState, entries) -> list[Deferred]
         located = res.state.find_pokemon(pokemon_id)
         if located is None or located[0] != owner:
             raise RuntimeError(f"運んだ送る効果 {name} の持ち主 {owner} のポケモン {pokemon_id} が場にいない（続きの情報の誤り）")
-        matches = [instance for instance in C.in_window(res.state, Window.DAMAGE_RECEIVING, owner, located[1], res.catalog)
-                   if instance.definition.name == name and instance.definition.timing is C.Timing.DEFER]
+        matches = carried_instances(res.state, owner, located[1], name, res.catalog)
         if len(matches) != 1:
             raise RuntimeError(f"運んだ送る効果 {name} が、ポケモン {pokemon_id} に {len(matches)} つある（続きの情報の誤り）")
         restored.append(Deferred(matches[0], fs.frame.id, received))
     return restored
+
+
+def carried_instances(state: GameState, owner: int, pokemon: PokemonInPlay, name: str, catalog: C.Catalog = C.DEFAULT_CATALOG) -> list[C.EffectInstance]:
+    """運んだ送る効果の名前 ``name`` に当たる、今の場のポケモン ``pokemon`` の効果（``restore_deferred`` と不変条件 ``engine._carried_deferred_problems`` が共通に使う）。
+
+    ふつうの送る効果は「ダメージを受けたとき」の窓（``DAMAGE_RECEIVING``）の候補から探す。v0.84（docs 2 章の A1）: 「リフレクトシールド」の「おもて」の 20（``REFLECT_SHIELD_RETURN``）は、
+    受けるときにコインを投げて「おもて」と決まったものだけが送る効果になり、窓の候補には入らない（候補にすると 2 回返す）ので、今そのポケモンにはたらいている
+    ``ReflectShield`` から作り直す（コインは投げ直さない。決定を待つ間は場が変わらないので、効果は同じポケモンにある）。"""
+    if name == REFLECT_SHIELD_RETURN.name:
+        shield = reflect_shield(state, pokemon)
+        return [] if shield is None else [C.EffectInstance(REFLECT_SHIELD_RETURN, owner, pokemon.pokemon_id, pokemon.card, implementation=shield)]
+    return [instance for instance in C.in_window(state, Window.DAMAGE_RECEIVING, owner, pokemon, catalog)
+            if instance.definition.name == name and instance.definition.timing is C.Timing.DEFER]
 
 
 def fire_pending(res: Resolution, fs: FrameState) -> None:
@@ -1321,6 +1351,39 @@ def power_confusion_to_damage_source(res: Resolution, fs: FrameState, deferred: 
         confuse(state, fs.frame.player, source, effect=str(instance.power_key))
 
 
+def power_sleep_to_damage_source(res: Resolution, fs: FrameState, deferred: Deferred) -> None:
+    """v0.84（docs/light-powers-evolution-v0.84.md 5 章）: やさしいイノムーの［ふかふかなからだ］。持ち主がコインを投げ、「おもて」なら、ダメージを与えたポケモンを「ねむり」状態に
+    する（［ぼうぎょかふん］の ``power_confusion_to_damage_source`` と同じ形。特殊能力の効果なので、ダメージを与えたポケモンの「ワザをうけない」状態・「とうめい」は評価しない。
+    ［めんえき］なら「ねむり」にならない（``conditions.put_to_sleep``））。
+
+    - このカードが同じダメージで HP 以上になっても処理する（「それによって、このカードが「きぜつ」しても」。窓はきぜつの処理の前）
+    - ダメージを与えたポケモンがすでに HP 以上なら、処理の対象がないので投げない（ログ ``power_sleep_skipped``。［ぼうぎょかふん］と同じ読み方）
+    - ログ ``power_sleep``（``result``・``asleep``）。ねむりにするのは ``conditions.put_to_sleep``（ログ ``special_condition`` の ``effect`` は特殊能力の識別子）"""
+    state = res.state
+    instance = deferred.instance
+    source = _damage_source(res, fs, "ねむり")
+    base = {
+        "player": instance.owner,
+        "pokemon": instance.card,
+        "pokemon_id": instance.pokemon_id,
+        "power": str(instance.power_key),
+        "attacker": fs.frame.player,
+        "attacker_pokemon": source.card,
+        "attacker_pokemon_id": source.pokemon_id,
+        "effect": str(fs.frame.attack_key),
+    }
+    if source.damage >= hp_of(state, source):
+        state.add_event("power_sleep_skipped", **base, reason=COUNTERATTACK_TARGET_KNOCKED_OUT)
+        return
+    if state.players[fs.frame.player].active is not source:
+        raise RuntimeError(f"ダメージを与えたポケモン {source.pokemon_id} がバトル場にいない（ねむり状態にできない。エンジンの不具合）")
+    flips = flip_coins(state, instance.owner, 1, source="power", effect=str(instance.power_key), card=instance.card, pokemon_id=instance.pokemon_id)
+    asleep = flips.results[0] is CoinSide.HEADS
+    state.add_event("power_sleep", **base, result=flips.results[0].value, asleep=asleep)
+    if asleep:
+        put_to_sleep(state, fs.frame.player, source, effect=str(instance.power_key))
+
+
 class EnergyDrainRequest(Exception):
     """v0.68: ［だつりょくえき］の「おもて」で、トラッシュするエネルギーカードを持ち主に選ばせる（呼ぶ側の ``programs.run_elements`` が決定 ``ENERGY_DRAIN_DISCARD`` を出し、
     答えのあとに ``apply_energy_drain`` で続ける）。コインはもう投げたので、答えのあとで投げ直さない。"""
@@ -1439,6 +1502,7 @@ ACTIONS: dict[str, Callable[[Resolution, FrameState, Deferred], None]] = {
     "drain_energy_from_damage_source": drain_energy_from_damage_source,  # v0.68
     "counters_to_damage_source_on_heads": counters_to_damage_source_on_heads,  # v0.81
     "reflect_damage_to_damage_source": reflect_damage_to_damage_source,  # v0.83
+    "power_sleep_to_damage_source": power_sleep_to_damage_source,  # v0.84
 }
 
 

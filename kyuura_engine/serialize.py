@@ -175,6 +175,10 @@ from .state import (
     MaxHpSet,
     TailsDamageGuard,
     ReflectShield,
+    StatusImmunityWhileActive,
+    ZeroDamageAtLeast,
+    BenchAttackDamageGuard,
+    AttackEffectGuard,
     NEXT_TURN_MULTIPLY,
     CannotUseAttack,
     CannotUseOwnAttack,
@@ -272,8 +276,13 @@ def _persistent_effect(state: GameState, effect) -> dict[str, Any]:
     elif isinstance(effect, ReflectShield):
         data["attack_index"] = effect.attack_index  # v0.83: 「リフレクトシールド」（相手に与えるダメージ）
         data["amount"] = effect.amount
+    elif isinstance(effect, StatusImmunityWhileActive):
+        data["attack_index"] = effect.attack_index  # v0.84: 「きらめきタッチ」（効果を与えたワザと、それを使ったポケモンのカード）
+        data["given_by"] = effect.given_by
+    elif isinstance(effect, ZeroDamageAtLeast):
+        data["threshold"] = effect.threshold  # v0.84: 「パルスガード」
     elif not isinstance(effect, (PreventDamage, DestinyBond, AttackBarrier, CannotAttack, CannotRetreat, CannotAttackWhileSourceActive, HalvedDamage,
-                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage)):
+                                         CannotUsePowers, CannotAttachEnergy, TailsDamageGuard, DoubledDamage, BenchAttackDamageGuard, AttackEffectGuard)):
         raise ValueError(f"書き出せない持続する効果 {effect!r}")
     # v0.49（形式 14）: ワザを印刷したカードの id（いちばん上のカードと違うときだけ。状態の書き出しの前に、形式 14 より古い形式では拒否している）
     for name in ("attack_card", "target_attack_card"):

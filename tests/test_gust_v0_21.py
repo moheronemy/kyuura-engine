@@ -110,7 +110,9 @@ class RegistrationTest(unittest.TestCase):
         # 突風の実装・ワザを使ったプレイヤーが相手の場を入れ替える呼び出しは、今もない
         expected_calls = {"programs.py": ["E._switch_active_with_bench(state, owner, choices[0], trainer=tricks[0])",
                                           "E._switch_active_with_bench(state, owner, choices[0], power=key)",
-                                          "E._switch_active_with_bench(run.state, run.player, choices[0], effect=str(run.key))"]}
+                                          "E._switch_active_with_bench(run.state, run.player, choices[0], effect=str(run.key))",
+                                          # v0.84: やさしいレディアンの「きらめきタッチ」（ワザを使ったプレイヤー自身の場の入れ替え。docs/light-powers-evolution-v0.84.md）
+                                          "E._switch_active_with_bench(state, run.player, choices[0], effect=str(run.key))"]}
         for path in [ROOT / "kyuura_engine" / "engine.py", *(ROOT / "kyuura_engine" / "resolution").glob("*.py")]:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8")

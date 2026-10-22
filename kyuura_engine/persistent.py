@@ -45,6 +45,8 @@ from .conditions import DEVOLVE, EVOLVE, FORCED_SWITCH, RETREAT, SWITCH
 from .state import (
     AttackBarrier,
     AttackCoinCheck,
+    AttackEffectGuard,
+    BenchAttackDamageGuard,
     CannotAttachEnergy,
     CannotAttack,
     CannotAttackWhileSourceActive,
@@ -63,8 +65,10 @@ from .state import (
     ReflectShield,
     ResistanceChange,
     Retaliation,
+    StatusImmunityWhileActive,
     TailsDamageGuard,
     WeaknessChange,
+    ZeroDamageAtLeast,
     ZeroDamageBelow,
 )
 
@@ -347,6 +351,27 @@ def attack_coin_checks(state: GameState, pokemon: PokemonInPlay) -> tuple[Attack
 def reflect_shield(state: GameState, pokemon: PokemonInPlay) -> ReflectShield | None:
     """``pokemon`` の今はたらいている「リフレクトシールド」の効果（v0.83。``ReflectShield``。はたらく番が今の番）。なければ None。"""
     return next((e for e in pokemon.persistent_effects if isinstance(e, ReflectShield) and e.active_turn == state.turn_number), None)
+
+
+def status_immunity_while_active(pokemon: PokemonInPlay) -> StatusImmunityWhileActive | None:
+    """``pokemon`` の「きらめきタッチ」で受けた「バトル場にいるかぎり、特殊状態にならない」効果（v0.84。``StatusImmunityWhileActive``）。与えたときからはたらき、期限はない
+    （バトル場をはなれると消える）。なければ None。"""
+    return next((e for e in pokemon.persistent_effects if isinstance(e, StatusImmunityWhileActive)), None)
+
+
+def bench_attack_damage_guard(state: GameState, pokemon: PokemonInPlay) -> BenchAttackDamageGuard | None:
+    """バトル場の ``pokemon`` の、今の番にはたらく「こおりのはしら」の効果（v0.84。``BenchAttackDamageGuard``。持ち主の控えポケモンが受けるワザのダメージを無効にする）。"""
+    return _active(state, pokemon, BenchAttackDamageGuard)
+
+
+def zero_damage_at_least(state: GameState, pokemon: PokemonInPlay) -> ZeroDamageAtLeast | None:
+    """今の番に ``pokemon`` が受けるワザのダメージが決まった数以上なら 0 にする効果（v0.84。やさしいサンダースの「パルスガード」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, ZeroDamageAtLeast)
+
+
+def attack_effect_guard(state: GameState, pokemon: PokemonInPlay) -> AttackEffectGuard | None:
+    """今の番に ``pokemon`` がワザによる「ダメージ以外の効果」を受けない効果（v0.84。やさしいカイリューの「ひかりのはどう」）がはたらいているなら、その効果。"""
+    return _active(state, pokemon, AttackEffectGuard)
 
 
 def tails_damage_guard(pokemon: PokemonInPlay) -> TailsDamageGuard | None:

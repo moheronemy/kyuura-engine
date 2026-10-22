@@ -660,7 +660,9 @@ class G37Test(unittest.TestCase):
             # v0.83（相手のエネルギーカードをトラッシュする「やきつくす」・選んだ特殊状態の「ミラクルリーフ」・「おもて」の数で特殊状態が決まる「フラッシュアイ」・
             # 1 枚のコインでこんらんかねむりの「ふしぎなほのお」・ねむりと控えの回復の「ヒプノシャワー」。docs/shining-gentle-pokemon-v0.83.md）
             "DiscardEnergyThenSpreadThenCoinDiscardEach", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
-            "DiscardEnergyThenCoinConfuseElseSleep", "DamageSleepThenHealBothBench"]))
+            "DiscardEnergyThenCoinConfuseElseSleep", "DamageSleepThenHealBothBench",
+        # v0.84: やさしいサンダースの「サンダーニードル」（「おもて」の数で相手をマヒ。docs/light-powers-evolution-v0.84.md）
+        "CoinsTimesDamageThenParalyzeIfAtLeast"]))
 
 
 class DecisionTest(unittest.TestCase):

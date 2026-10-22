@@ -220,6 +220,10 @@ from .state import (
     StadiumInPlay,
     TrainerUseLock,
     ZeroDamageBelow,
+    ZeroDamageAtLeast,
+    BenchAttackDamageGuard,
+    AttackEffectGuard,
+    StatusImmunityWhileActive,
     MaxHpSet,
     TailsDamageGuard,
     ResistanceChange,
@@ -2316,7 +2320,7 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
         problems.append(f"{where} の進化した番 {evolved} が、場に出た番 {played} より後・今の番 {state.turn_number} までではない")
     elif evolved <= 2:
         problems.append(f"{where} がおたがいの最初の番（{evolved} 番）に進化している（p.310）")
-    elif state.first_player in PLAYERS and turn_owner(state, evolved) != player:
+    elif state.first_player in PLAYERS and turn_owner(state, evolved) != player and not _evolved_by_opponent_attack(state, pokemon, evolved):
         problems.append(f"{where} が持ち主の番でない {evolved} 番に進化している")
     elif len(stack) >= 2 and state.first_player in PLAYERS:
         # 2 進化（v0.4c）: 1 進化した番は、場に出た番・2 番より後で、2 進化した番より前の持ち主の番（同じ番には進化できない）
@@ -2340,6 +2344,20 @@ def _evolution_problems(state: GameState, player: int, pokemon: PokemonInPlay, e
         if not applied_after:
             problems.append(f"{where} は今の番に進化したのに、進化の前の特殊状態 {pokemon.conditions.names()} が残っている（p.310・p.322）")
     return problems
+
+
+def _evolved_by_opponent_attack(state: GameState, pokemon, turn: int) -> bool:
+    """v0.84: 場のポケモンが ``turn`` 番（持ち主の番でない番）に、相手のワザの効果で進化したか（「しんかのうた」）。いちばん上のカードを重ねた進化のログ
+    ``evolve`` に、その番の ``effect`` があり、そのワザの登録された実装が ``evolves_opponent_pokemon`` のときだけ真（広げない）。"""
+    for event in state.log:
+        if (event["kind"] != "evolve" or event.get("pokemon_id") != pokemon.pokemon_id or event.get("turn") != turn
+                or event.get("to_card") != pokemon.card):
+            continue
+        card_id, _, index = str(event.get("effect", "")).partition("#")
+        entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
+        if entry is not None and getattr(entry.effect, "evolves_opponent_pokemon", False):
+            return True
+    return False
 
 
 def _evolution_permitted(state: GameState, pokemon_id: int, turn: int, before=None) -> bool:
@@ -2595,6 +2613,12 @@ def _persistent_effect_problems(state: GameState, player: int, p: PlayerState, p
             problems.extend(_halved_damage_problems(state, pokemon, effect, where))  # v0.46
         if isinstance(effect, DoubledDamage):
             problems.extend(_terms_problems(state, pokemon, effect, where, "doubled_terms", (DoubledDamage,)))  # v0.75
+        if isinstance(effect, ZeroDamageAtLeast):
+            problems.extend(_terms_problems(state, pokemon, effect, where, "threshold_terms", (ZeroDamageAtLeast, effect.threshold)))  # v0.84
+        if isinstance(effect, (BenchAttackDamageGuard, AttackEffectGuard, StatusImmunityWhileActive)):
+            problems.extend(_terms_problems(state, pokemon, effect, where, "guard_terms", (type(effect),)))  # v0.84
+        if isinstance(effect, StatusImmunityWhileActive) and (effect.given_by not in state.cards or state.cards[effect.given_by].owner != player):
+            problems.append(f"{where} {effect!r} を与えたカード {effect.given_by!r} が、持ち主（プレイヤー {player}）のカードではない")  # v0.84
         if effect.active_turn != effect.created_turn + effect.turns_until_active:
             what = "次の番（次の相手の番）" if effect.turns_until_active == 1 else f"{effect.turns_until_active} 番あと（次の自分の番）"
             problems.append(f"{where} {effect!r} のはたらく番が、効果を与えた番の{what}ではない")
@@ -3646,8 +3670,15 @@ def _entry_power_decision_problems(state: GameState, d, pokemon, effect, use: Po
     from_hand = "source_zone" not in last
     if route != ("hand" if from_hand else "play"):
         problems.append(f"使う機会の決定の経路 {route!r} が、進化のログ（{'手札から' if from_hand else last.get('source_zone')}）と合わない")
-    if applicable_entry_power(state, pokemon.card, from_hand=from_hand) is None:
-        problems.append(f"使う機会の決定（ポケモン {use.pokemon_id}）の特殊能力 {use.key} に、この経路で使う機会がない（経路・かがくへんかガス）")
+    on_bench = state.players[use.player].active is not pokemon
+    zone = d.context_value("entry_zone")
+    if zone is not None and (zone != "bench" or not on_bench or not effect.bench_only):
+        # v0.84: 場所で機会が決まる特殊能力（［たすけだす］）だけが ``entry_zone`` を持ち、機会の決定を待つ間はそのポケモンは同じ場所（ベンチ）にいる
+        problems.append(f"使う機会の決定の場所 {zone!r} が、ポケモン {use.pokemon_id} の場所（{'ベンチ' if on_bench else 'バトル場'}）・特殊能力と合わない")
+    if effect.bench_only and zone != "bench":
+        problems.append(f"ベンチで進化させたときに使う特殊能力 {use.key} の機会の決定に、場所（entry_zone）がない")
+    if applicable_entry_power(state, pokemon.card, from_hand=from_hand, on_bench=on_bench) is None:
+        problems.append(f"使う機会の決定（ポケモン {use.pokemon_id}）の特殊能力 {use.key} に、この経路で使う機会がない（経路・場所・かがくへんかガス）")
     if (d.player, d.options, d.min_choices, d.max_choices) != (use.player, (use.pokemon_id,), 0, 1):
         problems.append(f"使う機会の決定の形（{d.player}・{d.options}・{d.min_choices}〜{d.max_choices}）が、持ち主 {use.player}・({use.pokemon_id},)・0〜1 ではない")
     problem = effect.accept_problem(state, use)
@@ -4379,11 +4410,17 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
         event for event in _events_since_turn_start(state)
         if event["kind"] == "attack" and event.get("player") == player
     ]
-    if len(attacks) != 1 or attacks[0].get("pokemon") != attacker.card or attacks[0].get("attack_index") != attack_index:
+    declared_card = attacks[0].get("pokemon") if len(attacks) == 1 else None
+    # v0.84: ワザの途中で、ワザを使ったポケモン自身が山札から進化した（やさしいプクリンの「しんかのうた」の段階 0 で自分を進化させ、段階 1 の相手の決定を待つ）。宣言したカードは
+    # 重なりの下にあり、宣言のあとにそのポケモンの進化のログ（``effect`` がこのワザ）がある
+    evolved_in_attack = (declared_card is not None and declared_card != attacker.card and declared_card in attacker.cards() and any(
+        e["kind"] == "evolve" and e.get("pokemon_id") == pokemon_id and e.get("effect") is not None
+        for e in _events_since_turn_start(state)[:_events_since_turn_start(state).index(attacks[0])]))
+    if len(attacks) != 1 or (declared_card != attacker.card and not evolved_in_attack) or attacks[0].get("attack_index") != attack_index:
         return [f"ワザの決定の続き {use!r} に対応する、今の番のワザのログ attack がない（{len(attacks)} 回）"]
     # v0.49: 続きのカード id は、ワザを印刷したカード（ログ attack の ``card_id``。ワザの出どころがワザを使ったポケモンのいちばん上のカードと違うときだけ書く。
-    # なければいちばん上のカード）
-    expected = attacks[0].get("card_id", state.cards[attacker.card].card_id if attacker.card in state.cards else None)
+    # なければいちばん上のカード（v0.84: ワザの途中で進化したなら、宣言したカード））
+    expected = attacks[0].get("card_id", state.cards[declared_card].card_id if declared_card in state.cards else None)
     if card_id != expected:
         return [f"ワザの決定の続きのカード id {card_id} が、ワザを使ったポケモン {pokemon_id} の使ったワザのカード {expected} と違う"]
     problems = _carried_deferred_problems(state, d, player) + _carried_flee_problems(state, d)
@@ -4644,8 +4681,7 @@ def _carried_deferred_problems(state: GameState, d, player: int) -> list[str]:
     pending = dict(frame).get("pending", ())
     if not pending:
         return []
-    from .resolution import catalog as C
-    from .resolution.events import Window
+    from .resolution.kernel import REFLECT_SHIELD_RETURN, carried_instances
 
     problems: list[str] = []
     recent = _events_since_turn_start(state)  # 新しい順
@@ -4664,13 +4700,19 @@ def _carried_deferred_problems(state: GameState, d, player: int) -> list[str]:
             problems.append(f"運んだ送る効果 {name} の持ち主 {owner} のポケモン {pokemon_id} が場にいない")
             continue
         pokemon = located[1]
-        matches = [i for i in C.in_window(state, Window.DAMAGE_RECEIVING, owner, pokemon)
-                   if i.definition.name == name and i.definition.timing is C.Timing.DEFER]
+        matches = carried_instances(state, owner, pokemon, name)
         if len(matches) != 1:
             problems.append(f"運んだ送る効果 {name} が、ポケモン {pokemon_id} に {len(matches)} つある")
             continue
         if matches[0].definition.by_opponent and owner == player:
             problems.append(f"相手のワザで受ける送る効果 {name} の持ち主が、ワザを使ったプレイヤー {player}")
+        if name == REFLECT_SHIELD_RETURN.name:
+            # v0.84（A1）: 「リフレクトシールド」の「おもて」の 20。持ち主は受ける側（ワザを使ったプレイヤーでない）で、そのポケモンはダメージを受けていない。受けたダメージの
+            # かわりに、コインの時点のダメージを与えたポケモンのダメージ（0 でもよい。与える時点と違えば RS1）を運び、今の番のワザの宣言のあとに、そのポケモンの「おもて」のログがある
+            if owner == player or type(received) is not int or received < 0 or not any(
+                    e["kind"] == "reflect_shield_check" and e.get("pokemon_id") == pokemon_id and e.get("reflected") for e in since_attack):
+                problems.append(f"運んだ「リフレクトシールド」の 20（ポケモン {pokemon_id}・{received!r}）に対応する、今の番のワザの宣言のあとの「おもて」のログがない")
+            continue
         if not (type(received) is int and received > 0) or not any(
                 e["kind"] == "damage" and e.get("player") == owner and e.get("pokemon") == pokemon.card and e.get("amount") == received
                 for e in since_attack):

@@ -248,9 +248,9 @@ class RegistrationTest(unittest.TestCase):
         今の数は 943（695・213・35）、ワザ 1,182。"""
         pool = load_card_pool()
         categories = [pool.get(card).category for card in pool.playable_ids]
-        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (1026, 731, 259, 36))  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        self.assertEqual((len(categories), categories.count("pokemon"), categories.count("trainer"), categories.count("energy")), (1039, 743, 260, 36))  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1248, 74, 259))  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len(registry.trainer_ids())), (1267, 79, 260))  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_non_pack_unsupported_count(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象のうち、拡張パック以外の商品で対応していないカードは 228 枚（v0.75 は 252 枚）。"""
@@ -317,7 +317,7 @@ class RegistrationTest(unittest.TestCase):
                     key = f"attack/{index}"
                     self.assertEqual(key in record["play_text"], attack_def.text_ja is not None)
                     self.assertEqual(f"{card}/{key}" in adopted, attack_def.text_ja is not None)
-        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (181, 183))  # v0.83 で RS1・LT1 を加えた  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
+        self.assertEqual((links["counts"]["engine_stop_codes"], links["counts"]["engine_unresolved_rulings"]), (184, 186))  # v0.84 で RF1・WD1・WD2 を加えた  # v0.83 で RS1・LT1 を加えた  # v0.81a で MH2 を加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）・停止コード 9 件を加えた  # v0.79 で PK1 を加えた  # v0.78 で MT1・DE1 を加えた（v0.77 は 163・165）
 
     def test_state_type_and_expiry_are_explicit(self):
         """なきごえの状態は「なきつく」の部分型で、種類と期限だけが違う（「次の相手の番」= はたらく番の終わり）。なきつくの期限は変えない。"""

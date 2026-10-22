@@ -1255,6 +1255,21 @@
     "neo4-093",
     "ES1-014"
   ],
+  "pool_v0_84": [
+    "neo3-056",
+    "neo4-010",
+    "neo4-018",
+    "neo4-021",
+    "neo4-033",
+    "neo4-040",
+    "neo4-041",
+    "neo4-043",
+    "neo4-074",
+    "neo4-077",
+    "neo4-090",
+    "neo4-094",
+    "neo4-095"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -91194,6 +91209,1208 @@
           "list_number": "014/036"
         }
       ]
+    },
+    {
+      "id": "neo3-056",
+      "jp_set": "neo3",
+      "category": "trainer",
+      "name": {
+        "ja": "ポケモン育て屋夫婦",
+        "en": "Pokémon Breeder Fields"
+      },
+      "name_ja_confidence": "確実",
+      "pokemon": null,
+      "trainer": {
+        "kinds": [],
+        "text": {
+          "ja": "あなたの場の「たねポケモン」「1進化ポケモン」の中から、最大2匹までを選び、選んだポケモンそれぞれに対してコインを1枚ずつ投げる。「おもて」が出たポケモンから進化する「進化カード」を、あなたの山札からそれぞれ1枚ずつ選び出し、相手プレイヤーに見せてから、手札に加える。その後、その山札をよく切る。",
+          "en": "Flip a coin for 1 or 2 of your non-Baby Pokémon that can evolve. For each heads, search your deck for a later-Stage card that matches that Pokémon. Then put that card into your hand. Shuffle your deck afterward."
+        }
+      },
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-056",
+        "pokemontcg": [
+          "neo3-62"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E8%82%B2%E3%81%A6%E5%B1%8B%E5%A4%AB%E5%A9%A6",
+      "jp_print": {
+        "level": null,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E8%82%B2%E3%81%A6%E5%B1%8B%E5%A4%AB%E5%A9%A6"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-010",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいレディアン",
+        "en": "Light Ledian"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          166
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "レディバ",
+          "en": "Ledyba"
+        },
+        "hp": 70,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "きらめきタッチ",
+              "en": "Flash Touch"
+            },
+            "cost": [
+              "grass"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の控えポケモンを1匹選び、自分と入れ替える。このワザで新しく出てきたポケモンは、バトル場にいるかぎり、「どく•ねむり•マヒ•こんらん」状態にならない。(自分に控えがいないとき、このワザは失敗する。)",
+              "en": "If you have any Benched Pokémon, switch 1 of them with Light Ledian. As long as that Pokémon is your Active Pokémon, it can't become Asleep, Confused, Paralyzed, or Poisoned. (All other effects of attacks, Pokémon Powers, and Trainer cards still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "れんぞくパンチ",
+              "en": "Comet Punch"
+            },
+            "cost": [
+              "grass",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを4枚投げ、「おもて」の数×20のダメージ。",
+              "en": "Flip 4 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-010",
+        "pokemontcg": [
+          "neo4-24"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%AC%E3%83%87%E3%82%A3%E3%82%A2%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%AC%E3%83%87%E3%82%A3%E3%82%A2%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-018",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいキュウコン",
+        "en": "Light Ninetales"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          38
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ロコン",
+          "en": "Vulpix"
+        },
+        "hp": 90,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "むかえび",
+              "en": "Guiding Flame"
+            },
+            "cost": [
+              "fire"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分のトラッシュから「ベイビィポケモン」または「たねポケモン」を1枚選び出し、ベンチに出す。(自分のベンチに空きがないとき、このワザは失敗する。)",
+              "en": "Put a Baby Pokémon or a Basic Pokémon card from your discard pile onto your Bench. (You can't use this attack if your Bench is full.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "だいもんじ",
+              "en": "Fire Blast"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "fire"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "自分についている「炎」エネルギーカードを1枚トラッシュする。(トラッシュできないとき、このワザのダメージはなくなる。)",
+              "en": "Discard a Fire Energy card attached to Light Ninetales in order to use this attack."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-018",
+        "pokemontcg": [
+          "neo4-50"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 39,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-021",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいウインディ",
+        "en": "Light Arcanine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          59
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ガーディ",
+          "en": "Growlithe"
+        },
+        "hp": 100,
+        "types": [
+          "fire"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おいはらう",
+              "en": "Drive Off"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいるとき、自分の番ごとに1回使うことができる。相手の対戦ポケモンを、相手の控えポケモンと入れ替える。入れ替えるポケモンは相手プレイヤーが選ぶ。相手に控えがいないときや、このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。",
+              "en": "As long as Light Arcanine is your Active Pokémon, once during your turn (before your attack), if your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with the Defending Pokémon. This power can't be used while Light Arcanine is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やさしいほのお",
+              "en": "Gentle Flames"
+            },
+            "cost": [
+              "fire",
+              "fire",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "相手が「ベイビィポケモン」なら、このワザのダメージは「10」になり、「たねポケモン」なら、このワザのダメージは「30」になる。",
+              "en": "If the Defending Pokémon is a Baby Pokémon, this attack does 10 damage instead of 50. If the Defending Pokémon is a Basic Pokémon, this attack does 30 damage instead of 50."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-021",
+        "pokemontcg": [
+          "neo4-12"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A6%E3%82%A4%E3%83%B3%E3%83%87%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 47,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A6%E3%82%A4%E3%83%B3%E3%83%87%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-033",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいジュゴン",
+        "en": "Light Dewgong"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          87
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "パウワウ",
+          "en": "Seel"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "こごえるいき",
+              "en": "Freezing Breath"
+            },
+            "cost": [
+              "water",
+              "water"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。「うら」なら、相手を「ねむり」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, the Defending Pokémon is now Asleep."
+            }
+          },
+          {
+            "name": {
+              "ja": "こおりのはしら",
+              "en": "Ice Pillar"
+            },
+            "cost": [
+              "water",
+              "water",
+              "water"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の相手の番が終わるまで、自分の控えポケモン全員は、ワザによるダメージを受けない(ダメージ以外の効果は受ける)。このカードがバトル場をはなれたとき、この効果は消える。",
+              "en": "Until the end of your opponent's next turn, as long as Light Dewgong is your Active Pokémon, prevent all damage done by attacks to your Benched Pokémon. (Any other effects of attacks still happen.)"
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-033",
+        "pokemontcg": [
+          "neo4-45"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B8%E3%83%A5%E3%82%B4%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 40,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B8%E3%83%A5%E3%82%B4%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-040",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいマリルリ",
+        "en": "Light Azumarill"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          184
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "マリル",
+          "en": "Marill"
+        },
+        "hp": 80,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "lightning",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あわ",
+              "en": "Bubble"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          },
+          {
+            "name": {
+              "ja": "バブルジャンプ",
+              "en": "Bubble Jump"
+            },
+            "cost": [
+              "water",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、自分の控えポケモンを1匹選ぶ。その後、自分についている「エネルギーカード」を2枚はがし、選んだポケモンにつけ替える。つけ替えた場合、自分と自分についているすべてのカードを、自分の手札にもどす。(自分に控えがいないとき、このワザの効果はすべてなくなる。)",
+              "en": "If you have any Benched Pokémon, flip a coin. If heads, take 2 Energy cards attached to Light Azumarill and attach them to 1 of your Benched Pokémon. Then return Light Azumarill and all cards attached to it to your hand."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-040",
+        "pokemontcg": [
+          "neo4-13"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%9E%E3%83%AA%E3%83%AB%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%9E%E3%83%AA%E3%83%AB%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-041",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいイノムー",
+        "en": "Light Piloswine"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          221
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ウリムー",
+          "en": "Swinub"
+        },
+        "hp": 90,
+        "types": [
+          "water"
+        ],
+        "weaknesses": [
+          {
+            "type": "grass",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "lightning",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 3,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "ふかふかなからだ",
+              "en": "Fluffy Wool"
+            },
+            "text": {
+              "ja": "相手の番の中で、このカードが、バトル場でワザによるダメージを受けたとき(それによって、このカードが「きぜつ」しても)、このカードの持ち主はコインを投げる。「おもて」なら、ダメージを与えたポケモンを「ねむり」状態にする。ダメージを受けるとき、すでにこのカードが「ねむり・マヒ・こんらん」状態だったなら、この力は、はたらかない。",
+              "en": "During your opponent's turn, if Light Piloswine is your Active Pokémon and is damaged by your opponent's attack (even if it's Knocked Out), flip a coin. If heads, the attacking Pokémon is now Asleep. This power stops working if Light Piloswine is already Asleep, Confused, or Paralyzed when your opponent attacks."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "つきくずす",
+              "en": "Knock Over"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "のぞむなら、場にある「スタジアムカード」をトラッシュしてよい。",
+              "en": "If there is a Stadium card in play, you may discard it."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-041",
+        "pokemontcg": [
+          "neo4-26"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A4%E3%83%8E%E3%83%A0%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 43,
+        "rarity": null,
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A4%E3%83%8E%E3%83%A0%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-043",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいサンダース",
+        "en": "Light Jolteon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          135
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "イーブイ",
+          "en": "Eevee"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "パルスガード",
+              "en": "Pulse Guard"
+            },
+            "cost": [
+              "lightning"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "次の相手の番、このカードがワザによって受けるダメージが「30」以上なら、このカードはダメージを受けない（ダメージ以外の効果は受ける）。",
+              "en": "During your opponent's next turn, whenever 30 or more damage is done to Light Jolteon (after applying Weakness and Resistance), prevent that damage. (Any other effects of attacks still happen.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "サンダーニードル",
+              "en": "Thunder Needle"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて、「おもて」の数×20のダメージ。2枚以上「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip 3 coins. This attack does 20 damage times the number of heads. If you get 2 or more heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-043",
+        "pokemontcg": [
+          "neo4-48"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B5%E3%83%B3%E3%83%80%E3%83%BC%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B5%E3%83%B3%E3%83%80%E3%83%BC%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-074",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいゴーリキー",
+        "en": "Light Machoke"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          67
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ワンリキー",
+          "en": "Machop"
+        },
+        "hp": 80,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "やまにかえす",
+              "en": "Return Home"
+            },
+            "cost": [
+              "fighting"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分の控えポケモンを1匹選び、そのポケモンとそのポケモンについているすべてのカードを、自分の山札にもどす。その後、その山札をよく切る。(自分に控えがいないとき、このワザは失敗する。)",
+              "en": "If you have any Benched Pokémon, shuffle 1 of them and all cards attached to it into your deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "やさしいキック",
+              "en": "Gentle Kick"
+            },
+            "cost": [
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "相手にダメージカウンターがのっているとき、このワザのダメージは「20」になる。",
+              "en": "If the Defending Pokémon has no damage counters on it, this attack does 40 damage. If it has any, this attack does 20 damage."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-074",
+        "pokemontcg": [
+          "neo4-49"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%BC%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%BC%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-077",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいカイリキー",
+        "en": "Light Machamp"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          68
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "やさしいゴーリキー",
+          "en": "Light Machoke"
+        },
+        "hp": 100,
+        "types": [
+          "fighting"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "たすけだす",
+              "en": "Tag Team"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札からベンチに出してポケモンを進化させたとき、1回だけ使うことができる。自分の対戦ポケモンにのっているダメージカウンターを、3個とりのぞく。その後、自分の対戦ポケモンを、このカードと入れ替える。",
+              "en": "When you play Light Machamp from your hand, if it is on your Bench, remove 3 damage counters from your Active Pokémon. If it has fewer damage counters than that, remove all of them. Then, switch Light Machamp with your Active Pokémon."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "せいけんづき",
+              "en": "Beatdown"
+            },
+            "cost": [
+              "fighting",
+              "fighting",
+              "fighting"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 50,
+              "modifier": null,
+              "display": "50"
+            },
+            "text": {
+              "ja": "相手が「わるい」ポケモンまたは「悪」ポケモンなら、コインを投げる。「おもて」なら、このワザのダメージは「100」になる。",
+              "en": "If the Defending Pokémon has Dark in its name or is a Darkness Pokémon, flip a coin. If heads, this attack does 100 damage instead of 50."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-077",
+        "pokemontcg": [
+          "neo4-25"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 65,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-090",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいプクリン",
+        "en": "Light Wigglytuff"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          40
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "プリン",
+          "en": "Jigglypuff"
+        },
+        "hp": 80,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "しんかのうた",
+              "en": "Evolution Song"
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の場のポケモンを1匹選んでもよい。選んだプレイヤーは、自分の山札から、選んだポケモンから進化する「進化カード」を1枚選び出し、そのポケモンの上にのせ、進化させる。山札を見たプレイヤーは、その山札をよく切る。",
+              "en": "Your opponent may choose 1 of his or her Pokémon and search his or her deck for a card that evolves from that Pokémon. Your opponent attaches that card to that Pokémon. This counts as evolving that Pokémon. Either way, you may do the same, and then each player who searched shuffles his or her deck."
+            }
+          },
+          {
+            "name": {
+              "ja": "のしかかり",
+              "en": "Body Slam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-090",
+        "pokemontcg": [
+          "neo4-54"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%97%E3%82%AF%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "◆(U)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%97%E3%82%AF%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-094",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいカイリュー",
+        "en": "Light Dragonite"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          149
+        ],
+        "stage": "stage2",
+        "evolves_from": {
+          "ja": "やさしいハクリュー",
+          "en": "Light Dragonair"
+        },
+        "hp": 100,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "きせきのかぜ",
+              "en": "Miraculous Wind"
+            },
+            "text": {
+              "ja": "この力は、このカードがバトル場にいるかぎり、はたらく。おたがいの場の「特殊エネルギーカード」は、「無色」エネルギー1個ぶんの「エネルギーカード」になり、持っている効果は、すべて消える。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は、はたらかない。",
+              "en": "As long as Light Dragonite is your Active Pokémon, each Special Energy card provides Colorless Energy instead of its usual type and its other effects stop working. This power stops working while Light Dragonite is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "ひかりのはどう",
+              "en": "Light Wave"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 40,
+              "modifier": null,
+              "display": "40"
+            },
+            "text": {
+              "ja": "次の相手の番、このカードはワザによる「ダメージ以外の効果」を受けない(ダメージは受ける)。",
+              "en": "Prevent all effects of attacks, other than damage, done to Light Dragonite during your opponent's next turn."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-094",
+        "pokemontcg": [
+          "neo4-14"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 47,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo4-095",
+      "jp_set": "neo4",
+      "category": "pokemon",
+      "name": {
+        "ja": "やさしいトゲチック",
+        "en": "Light Togetic"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          176
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "トゲピー",
+          "en": "Togepi"
+        },
+        "hp": 60,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "おくりもの",
+              "en": "Gift"
+            },
+            "text": {
+              "ja": "この力は、このカードを手札から場に出してポケモンを進化させたとき、1回だけ使うことができる。おたがいのプレイヤーは、それぞれ、のぞむなら、自分の山札から「ポケモンのどうぐ」を1枚選び出してよい。選び出したプレイヤーは、そのカードを相手プレイヤーに見せてから、自分の手札に加える。山札を見たプレイヤーは、その山札をよく切る。",
+              "en": "When you play Light Togetic from your hand, your opponent may search his or her deck for a Pokémon Tool card, show that card to you, and put it into his or her hand. Either way, you may do the same, and then each player who searched shuffles his or her deck."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "てんしのキッス",
+              "en": "Sweet Kiss"
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "相手プレイヤーは、のぞむなら、山札からカードを1枚引いて、手札に加えてよい。",
+              "en": "Your opponent may draw a card."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo4-095",
+        "pokemontcg": [
+          "neo4-15"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%88%E3%82%B2%E3%83%81%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)",
+      "jp_print": {
+        "level": 32,
+        "rarity": "★(R)",
+        "series": "闇、そして光へ...",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%88%E3%82%B2%E3%83%81%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
     }
   ]
 }

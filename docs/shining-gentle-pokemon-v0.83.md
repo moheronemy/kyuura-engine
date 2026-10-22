@@ -85,9 +85,9 @@ v0.82 は、エコロジムの場で、相手の［へんしん］のメタモ�
 | カード | ワザ | 型（要素） | 処理 |
 |---|---|---|---|
 | ひかるコイキング | きんいろのうろこ | `EachPlayerMayDrawAttack(2)`（`EachPlayerDraws`） | おたがいのプレイヤーが、のぞむなら 0〜2 枚引く（決定 `select_draw_count`。0 はログ `attack_draw_declined`。山札が足りなければ引けるだけ） |
-| | りゅうのきずな | `RevealOneNamedPokemonFromDeck`（`RevealNamedPokemonFromDeck` の `exactly_one`） | 山札の「ギャラドス」「ひかるギャラドス」から 1 枚を見せて手札に加え、切る。選べるものがなければ見せずに切る |
+| | りゅうのきずな | `RevealOneNamedPokemonFromDeck`（`RevealNamedPokemonFromDeck` の `exactly_one`） | 山札の「ギャラドス」「わるいギャラドス」「ひかるギャラドス」（名前の完全一致。3 つ）から 1 枚を見せて手札に加え、切る。選べるものがなければ見せずに切る（v0.84 で訂正: v0.83 の文書は「わるいギャラドス」を落としていた。実装は v0.83 から 3 つ） |
 | ひかるギャラドス | げきりん | `FailOnTailsPlusOwnCounters(10)` | 「うら」で失敗。「おもて」なら自分のカウンター × 10 を 1 段階に加える |
-| | やきつくす | `DiscardEnergyThenSpreadThenCoinDiscardEach(炎, 2, 10)` | 炎エネルギーカード 2 枚をワザの効果としてトラッシュ → ダメージ → 相手の控え全員に 10（弱点・抵抗力に関係なく）→ 相手の場のポケモンごとにコイン 1 枚で「おもて」ならエネルギーカード 1 枚をトラッシュ |
+| | やきつくす | `DiscardEnergyThenSpreadThenCoinDiscardEach(炎, 2, 10)` | 炎エネルギーカード 2 枚をワザの効果としてトラッシュ → ダメージ → 相手の控え全員に 10（弱点・抵抗力に関係なく）→ コイン 1 枚（相手の場のポケモン全員で共通。ポケモンごとに投げ直さない）で「おもて」なら、相手の場のポケモンそれぞれからエネルギーカード 1 枚をトラッシュ（v0.84 で訂正: v0.83 の文書は「ポケモンごとにコイン 1 枚」と書いていた。実装は v0.83 から 1 枚） |
 | ひかるセレビィ | いやしのみず | `HealChosenBenchByEnergy(水)`（`HealChosenOwnBench`） | 控えを 1 匹選び、自分の「水」エネルギーの数（個数）ぶんのカウンターをとりのぞく。控えがいなければ失敗 |
 | | ミラクルリーフ | `CoinsPerDefenderEnergyChosenStatus`（`Coin.per_opponent_energy`・`ChosenStatus` の `gate`・`conditions`） | 相手のエネルギーの数（個数）ぶんコインを投げ、1 枚でも「おもて」なら、どく・ねむり・こんらんから 1 つを選んで与える |
 | ひかるライチュウ | サンダースコール | `ChooseBenchThenDamageAndEnergyBenchDamage(水, 10)`（`ChooseOpponentBench` → `Damage` → `ChosenTargetDamage`） | 先に相手の控えを選び、相手の対戦ポケモンにダメージ、選んだ控えに自分の「水」エネルギーの数 × 10（弱点・抵抗力に関係なく） |
@@ -122,7 +122,7 @@ v0.82 は、エコロジムの場で、相手の［へんしん］のメタモ�
 - 選んだ控え（`ChosenTarget`）は、決定をまたぐとき続きの情報の `chosen_targets` で運びます（`AttackRun.suspend`）。
 - 同じデータの 2 組（ひかるコイキング PRN-046 = neo3-022、ギャロップ ES1-014 = QSG-011）は `effects.SAME_DATA_CARDS_V0_83`（v0.70 の `_with_shared_entries`）で同じ登録の値に
   まとめます。名前の同じほかの版とはまとめていません。
-- 進化元は名前の完全一致です（やさしいモルフォン ← コンパン、ひかるカブトプス ← カブト など。段階は写しのまま）。
+- 進化元は名前の完全一致です（やさしいモルフォン ← コンパン など。段階は写しのまま）。ひかるカブトプスは写しの段階がたねポケモンで、進化元はありません（v0.84 で訂正: v0.83 の文書は「ひかるカブトプス ← カブト」と書いていた。実装は v0.83 から写しのとおりたねポケモン）。
 
 ## 6. リフレクトシールド
 

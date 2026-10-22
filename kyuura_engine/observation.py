@@ -80,6 +80,8 @@ from .decisions import (
     SELECT_DEVOLVE_COUNT,
     SELECT_DRAW_COUNT,
     TAKE_LOOKED_CARDS,
+    DISCARD_STADIUM,
+    EVOLUTION_SONG_POKEMON,
     OPPONENT_HAND_TO_DECK,
     SELECT_COUNTER_COUNT,
     ACCEPT_REQUEST,
@@ -148,6 +150,8 @@ OPTION_MEANINGS: dict[str, str] = {
     SECRET_PLAN_CARD: "card",
     # v0.80: カードめくりゲームで選ぶ相手のサイドの位置（裏のカード）・ポケモンギアで見た 7 枚から手札に加えるトレーナーカード
     SELECT_OPPONENT_PRIZE: "position", TAKE_LOOKED_TRAINER: "card",
+    # v0.84: つきくずすでトラッシュする場のスタジアム（公開）・しんかのうたで進化させる自分の場のポケモン（選べるものの数・止める選択は決めるプレイヤーだけ）
+    DISCARD_STADIUM: "card", EVOLUTION_SONG_POKEMON: "pokemon",
     # v0.81: 学習装置でつけ替える、きぜつする対戦ポケモンについているエネルギーカード（場のカード。公開）
     EXP_ALL_ENERGY: "card",
 }
@@ -175,7 +179,9 @@ HIDDEN_COUNT_KINDS = frozenset({CHALLENGE_BENCH, QUIZ_CARD, QUIZ_ATTACK, SEARCH_
                                 OPPONENT_HAND_TO_BENCH,
                                 # v0.83: 見た山札の上のカードから選ぶ決定（やさしいゴルダックの「みずかき」は見た 3 枚のうちの基本エネルギーカードの数が選べるもの・選ぶ数になる）。
                                 # カスミのいかり（v0.55。見た 7 枚から 2 枚）・ひかるミュウの「フラッシュサーチ」の数も、決めるプレイヤーでない人に見せなくなる（意図した変更）
-                                TAKE_LOOKED_CARDS})
+                                TAKE_LOOKED_CARDS,
+                                # v0.84: しんかのうたの進化させるポケモンの決定（選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まる）
+                                EVOLUTION_SONG_POKEMON})
 # v0.63: 選べるものがサイドの位置（決めるプレイヤーのサイド）の決定。おもてのサイド（ロケット団参上!）の位置には、カードの id を添える
 PRIZE_POSITION_KINDS = frozenset({TAKE_PRIZE, SELECT_PRIZE_CARD})
 # v0.55: 決めるプレイヤーが効果で見た相手の手札のカードを選べるものにする決定（ロケット団のおねーさん）。選べるもののカードは、決めるプレイヤーに見える（相手の手札を
@@ -467,7 +473,8 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
     "look_at_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（見る）
     "arrange_deck_top": (("cards",), _only_player),  # v0.47 のみらいよち（もどす並び）
     "take_deck_top": (("card",), _taken_deck_top),
-    "trainer_take_none": (("reason",), _only_player),  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
+    "trainer_take_none": (("reason",), _only_player),
+    "gift_take_none": (("reason",), _only_player),  # v0.84: ［おくりもの］で山札を見て選ばなかった理由（山札にどうぐがなかったか）は、山札の中身の情報  # v0.53: 山札をさがして選べるカードがなかったか・選ばなかったかは、山札の中身の情報
     "look_at_hand": (("cards",), _hand_looker_or_owner),  # v0.54: スパイ作戦（見たプレイヤーと持ち主だけ。観戦者には見せない）
     "looked_to_hand": (("cards",), _only_player),  # v0.55: カスミのいかり（見た山札の上のカードから手札に加えたカード）
     "opponent_hand_to_deck": (("card",), _hand_owner_or_looker),  # v0.55: ロケット団のおねーさん（持ち主と、見て選んだプレイヤーだけ）
@@ -499,6 +506,9 @@ PUBLIC_EVENTS = frozenset({
     # v0.83: おたがいのプレイヤーが選ぶワザ（引かなかった（山札の枚数は公開）・トラッシュから見せて手札に加えた・山札にもどした・選ばなかった（トラッシュは公開））と、
     # 「リフレクトシールド」（コイン・相手に与えたダメージ・与えなかった）
     "attack_draw_declined", "each_player_recover", "each_player_discard_to_deck", "each_player_declined",
+    # v0.84: ［ふかふかなからだ］（コインの結果）・［たすけだす］のとりのぞき・［おくりもの］で山札を見なかった・ポケモン育て屋夫婦のポケモンごとのコイン・つきくずすで
+    # トラッシュしなかった・バブルジャンプのつけ替え（場のカードの公開の情報）
+    "power_sleep", "power_sleep_skipped", "tag_team_heal", "gift_declined", "breeder_couple_coins", "stadium_discard_declined",
     "reflect_shield_check", "reflect_shield_damage", "reflect_shield_skipped",
     # v0.81: ポケモンのどうぐ（きのみのとりのぞき・きあいのハチマキ・はんげきのツメ・学習装置。どれも場のカード・コインの結果で公開）
     "tool_heal", "focus_band", "counter_claw", "tool_damage_counters", "exp_all_declined", "tool_move_energy",

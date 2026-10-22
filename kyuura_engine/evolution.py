@@ -82,6 +82,17 @@ def evolution_prevented(state: GameState) -> tuple[str, str] | None:
     return "EVOLUTION_PREVENTED", f"場のポケモン {holders} の特殊能力がはたらいているので、全てのポケモンは進化することができない"
 
 
+def evolves_directly(state: GameState, target: PokemonInPlay, definition: CardDefinition) -> bool:
+    """v0.84: 進化カード ``definition`` が、場のポケモン ``target`` から（1 進化を飛ばさずに）進化するカードか: 「○○○○から進化」が ``target`` のいちばん上のカードの名前と
+    同じで（名前の完全一致）、段階がちょうど 1 つ上（たねポケモン → 1 進化、1 進化 → 2 進化）。進化の制限（最初の番・その番に場に出した・進化を止める効果）は見ない
+    （ポケモン育て屋夫婦の「そのポケモンから進化する「進化カード」」をさがすとき。通常の進化の ``evolution_block`` と同じ名前・段階の比べ方）。"""
+    if definition.category != "pokemon" or not definition.is_evolution_pokemon:
+        return False
+    current = state.card_def(target.card)
+    below_stage = "basic" if definition.is_stage1_pokemon else "stage1"
+    return current.name_ja == definition.evolves_from and current.stage == below_stage
+
+
 def evolution_block(state: GameState, target: PokemonInPlay, definition: CardDefinition, *, from_deck: bool = False) -> tuple[str, str] | None:
     """進化カード ``definition`` を、自分の場のポケモン ``target`` に今重ねられない理由（コード, 理由の文）。重ねられるなら None（v0.42。v0.41 までの
     ``engine._evolve_pokemon`` の確認（番・名前・その番の最初から場にいたか・段階）を、同じ順番・同じコード・同じ文のまま関数にした。通常の操作

@@ -75,10 +75,12 @@ class DesignAssumptionTest(unittest.TestCase):
         v0.81（docs/pokemon-tools-stadiums-v0.81.md 5.2）: はんげきのツメ（ポケモンのどうぐ。``counters_to_damage_source_on_heads``）を同じ窓に加えた。持ち主のコインで、
         ダメージを与えたポケモンにダメージカウンターをのせる。決定を出さないので、この文書の前提は変わらない。効果の定義はついているトレーナーのもの（``C.COUNTER_CLAW``）。"""
         definitions = [d for _, d in C.POWER_DEFINITIONS + C.PERSISTENT_DEFINITIONS if d.timing is C.Timing.DEFER]
-        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "energy_drain", "restless_sleep", "retaliation", "strikes_back"])
+        # v0.84（docs/light-powers-evolution-v0.84.md）: やさしいイノムーの［ふかふかなからだ］（``power_sleep_to_damage_source``）を同じ窓に加えた。持ち主のコインで、ダメージを
+        # 与えたポケモンをねむりにする（「ぼうぎょかふん」と同じ形）。決定を出さないので、この文書の前提は変わらない
+        self.assertEqual(sorted(d.name for d in definitions), ["defensive_pollen", "energy_drain", "fluffy_wool", "restless_sleep", "retaliation", "strikes_back"])
         self.assertTrue(all(d.decision_kind is None for d in definitions))
         self.assertEqual(sorted(kernel.ACTIONS), ["attack_damage_to_damage_source", "counters_to_damage_source_on_heads", "drain_energy_from_damage_source",
-                                                  "power_confusion_to_damage_source", "power_damage_to_damage_source",
+                                                  "power_confusion_to_damage_source", "power_damage_to_damage_source", "power_sleep_to_damage_source",
                                                   # v0.83: リフレクトシールドの 20（効果の定義 REFLECT_SHIELD_RETURN。決定を出さない。docs/shining-gentle-pokemon-v0.83.md 6 章）
                                                   "reflect_damage_to_damage_source"])
         self.assertEqual(C.COUNTER_CLAW.timing, C.Timing.DEFER)

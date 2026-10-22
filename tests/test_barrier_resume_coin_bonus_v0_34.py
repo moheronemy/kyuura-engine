@@ -433,7 +433,10 @@ class BarrierCoinTest(unittest.TestCase):
                                     # v0.83: ひかるギャラドスの「げきりん」（FailOnTailsPlusOwnCounters。失敗のコインのあとはダメージだけ）・ひかるセレビィの「ミラクルリーフ」
                                     # （CoinsPerDefenderEnergyChosenStatus。コインは選んだ特殊状態だけを決める）・ひかるヨルノズクの「フラッシュアイ」（ThreeCoinsStatusByHeads。
                                     # 3 枚のコインは相手の特殊状態だけを決める。docs/shining-gentle-pokemon-v0.83.md）
-                                    "FailOnTailsPlusOwnCounters", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads"})
+                                    "FailOnTailsPlusOwnCounters", "CoinsPerDefenderEnergyChosenStatus", "ThreeCoinsStatusByHeads",
+                                    # v0.84: やさしいサンダースの「サンダーニードル」（3 枚のコインは相手へのダメージと相手のマヒだけを決める。
+                                    # docs/light-powers-evolution-v0.84.md）
+                                    "CoinsTimesDamageThenParalyzeIfAtLeast"})
         self.assertIn("CoinBonusOrSelfDamage", flipping)
         self.assertIn("SelfDamageInsteadOnTails", flipping)
 

@@ -146,12 +146,12 @@ class RegistrationTest(unittest.TestCase):
     def test_counts(self):
         pool = load_card_pool()
         categories = Counter(pool.get(c).category for c in pool.playable_ids)
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1026, 731, 259, 36))  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1248)  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
-        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 74)
+        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1039, 743, 260, 36))  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.attack_keys()), 1267)  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual(len(E.DEFAULT_EFFECTS.power_keys()), 79)  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた
         stadiums = [c for c in E.DEFAULT_EFFECTS.trainer_ids() if getattr(E.DEFAULT_EFFECTS.trainer_entry(c).effect, "is_stadium", False)]
         self.assertEqual(len(stadiums), 41)
-        self.assertEqual(len(read_extract()["cards"]), 1026)  # v0.83 でポケモン 18 枚（ワザ 33）を加えた
+        self.assertEqual(len(read_extract()["cards"]), 1039)  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
 
     def test_new_pokemon_names(self):
         pool = load_card_pool()
@@ -168,7 +168,7 @@ class RegistrationTest(unittest.TestCase):
         for card in H.V0_82_CARDS:
             with self.subTest(card=card):
                 self.assertNotIn(card, pool.playable_ids)
-        self.assertEqual(len(pool.playable_ids), 1006)  # v0.83 でポケモン 18 枚を加えた（v0.82 の時点は 988）
+        self.assertEqual(len(pool.playable_ids), 1019)  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.83 でポケモン 18 枚を加えた（v0.82 の時点は 988）
 
     def test_same_data_groups_share_entries(self):
         groups = {"PRN-007": CYNDAQUIL, "PRN-010": CYNDAQUIL, "QSG-010": PONYTA, "QSG-012": MAGMAR}

@@ -25582,6 +25582,200 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.83 で加えた（docs/shining-gentle-pokemon-v0.83.md）。ES1（expansion_sheet）。kyuura data/engine_targets.json（7d3f4ca）の対象。QSG-011（v0.82）と同じデータ（SAME_DATA_CARDS_V0_83 で同じ登録の値）。かえんじごく=OptionalDiscardEnergyBonusDamage(炎, 20, このカードだけ, 最大 2 枚)、けりとばす=DamageAndForceSwitch。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://pcg-search.com/card/1st/1stex1014.php の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（のちのひかるポケモンの規定・ポケボディーの分類）は持ち込まない"
+    },
+    "neo3-056": {
+      "basis": "kyuura_data",
+      "name_ja": "ポケモン育て屋夫婦",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "trainer": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo3。kyuura data/engine_targets.json（7d3f4ca）の対象。ポケモン育て屋夫婦=BreederCoupleSearch（選んだポケモンごとにコイン 1 枚。「おもて」なら、そのポケモンから進化する進化カードを山札から見せて手札に加える。同じカードを 2 度選ばない。最後に山札を切る。進化させない）。サポーター・2002 年の区分は持ち込まない。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3%E8%82%B2%E3%81%A6%E5%B1%8B%E5%A4%AB%E5%A9%A6 の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-010": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいレディアン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。きらめきタッチ=SwitchSelfThenStatusGuardAttack（入れ替えたあと、新しいバトルポケモンはバトル場にいるあいだ特殊状態にならない。控えがいなければワザは失敗）、れんぞくパンチ=CoinFlipDamage(4, 20)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%AC%E3%83%87%E3%82%A3%E3%82%A2%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-018": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいキュウコン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。むかえび=BenchBabyOrBasicFromOwnDiscardAttack（ベンチに空きがなければ失敗）、だいもんじ=DiscardEnergyThenDamage(炎)（RUL-ENERGY-DISCARD-ATTACKS の範囲）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AD%E3%83%A5%E3%82%A6%E3%82%B3%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-021": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいウインディ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。おいはらう=SwitchOpponentChosenByOpponent（相手が選ぶ。自分の番ごとに 1 回。バトル場にいるときだけ）、やさしいほのお=DamageByDefenderStage(10, 30)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A6%E3%82%A4%E3%83%B3%E3%83%87%E3%82%A3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-033": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいジュゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。こごえるいき=DamageThenStatusByCoin(マヒ, ねむり)、こおりのはしら=DamageThenBenchAttackDamageGuard（次の相手の番の終わりまで、自分の控えはワザのダメージを受けない。このポケモンがバトル場をはなれたら終わる）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B8%E3%83%A5%E3%82%B4%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-040": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいマリルリ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。あわ=ParalyzeOnHeads、バブルジャンプ=DamageThenBubbleJump（「おもて」なら控えを選び、エネルギーカード 2 枚をつけかえ、このポケモンとすべてのカードを手札にもどす。控えがいなければ効果はすべてなくなる（ダメージは与える））。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%9E%E3%83%AA%E3%83%AB%E3%83%AA_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-041": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいイノムー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。ふかふかなからだ=SleepDamageSourceOnHeads（宣言しない。相手の番にバトル場で相手のワザのダメージを受けたとき、コインで相手をねむりに。受けるときにねむり・マヒ・こんらんならはたらかない）、つきくずす=DamageThenOptionalDiscardStadium。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%A4%E3%83%8E%E3%83%A0%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-043": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいサンダース",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。パルスガード=ZeroDamageAtLeastNextTurn(30)、サンダーニードル=CoinsTimesDamageThenParalyzeIfAtLeast(3, 20, 2)（1 組の 3 枚のコイン）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B5%E3%83%B3%E3%83%80%E3%83%BC%E3%82%B9_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-074": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいゴーリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。やまにかえす=ReturnOwnBenchToDeckAttack（控えとすべてのカードを山札にもどして切る。控えがいなければ失敗）、やさしいキック=AmountIfDefenderDamagedDamage(20)。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%B4%E3%83%BC%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-077": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいカイリキー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。たすけだす=HealActiveThenSwitchOnBenchEntry(3)（手札から進化させたとき、このポケモンがベンチにいるなら使える。バトルポケモンのカウンターを 3 個までとりのぞき、入れ替える）、せいけんづき=CoinSetIfDefenderDarkDamage。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%82%AD%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-090": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいプクリン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。しんかのうた=EachPlayerEvolutionSong（ワザを使ったプレイヤー → 相手の順（実装上の順番）に、のぞむなら自分のポケモンを選び、山札から進化カードを選んで進化させる。見たときだけ山札を切る。進化の制限・H1・PW4・DV2・GV1 は既存の扱い）、のしかかり=ParalyzeOnHeads。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%97%E3%82%AF%E3%83%AA%E3%83%B3_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-094": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいカイリュー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。きせきのかぜ=MiraculousWind（バトル場にいるあいだ、場の特殊エネルギーはどれも「無色」1 個で、効果はすべてなくなる。場の外のカードは変えない。エネエネ・エナジーバーンの組み合わせは WD1・WD2）、ひかりのはどう=DamageThenAttackEffectGuard（次の相手の番、相手のワザのダメージ以外の効果を受けない）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%82%AB%E3%82%A4%E3%83%AA%E3%83%A5%E3%83%BC_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
+    },
+    "neo4-095": {
+      "basis": "kyuura_data",
+      "name_ja": "やさしいトゲチック",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-22",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.84 で加えた（docs/light-powers-evolution-v0.84.md）。neo4。kyuura data/engine_targets.json（7d3f4ca）の対象。おくりもの=EachPlayerSearchToolOnEntry（手札から進化させたとき。おたがいのプレイヤーは、のぞむなら山札からポケモンのどうぐを 1 枚さがして手札に加える。見たときだけ切る）、てんしのキッス=DamageThenOpponentMayDraw（相手が 1 枚引くか選ぶ）。kyuura の研究の基準のコミット（7d3f4ca）に、このカードを指す LD-・CC-・CR-・UQ-・エラッタはない。kyuura の日本語の文面は https://wiki.pokemonwiki.com/wiki/%E3%82%84%E3%81%95%E3%81%97%E3%81%84%E3%83%88%E3%82%B2%E3%83%81%E3%83%83%E3%82%AF_(%E9%97%87%E3%80%81%E3%81%9D%E3%81%97%E3%81%A6%E5%85%89%E3%81%B8...) の転記（ja_text_source）で、同じ転記元での照合は独立した照合にならない。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。公式ガイドブックは読んでいない。英語版の文面・現代のルール・後年の規定（サポーター・ポケボディーの分類・MIX-POWER-ERRATA）は持ち込まない"
     }
   }
 }

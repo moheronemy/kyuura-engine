@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 183,
-    "engine_stop_codes": 181,
+    "engine_unresolved_rulings": 186,
+    "engine_stop_codes": 184,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2118,6 +2118,39 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_REFLECT_SHIELD_OVERLAP": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "RF1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACULOUS_WIND_CONVERTED_ENERGY": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "WD1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_MIRACULOUS_WIND_ENERGY_BURN": {
+      "engine_rulings": [
+        {
+          "version": "v0.84",
+          "document": "docs/light-powers-evolution-v0.84.md",
+          "ruling_id": "WD2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3492,7 +3525,31 @@
       "neo4-093/attack/0",
       "neo4-093/attack/1",
       "ES1-014/attack/0",
-      "ES1-014/attack/1"
+      "ES1-014/attack/1",
+      "neo4-010/attack/0",
+      "neo4-010/attack/1",
+      "neo4-018/attack/0",
+      "neo4-018/attack/1",
+      "neo4-021/attack/0",
+      "neo4-033/attack/0",
+      "neo4-033/attack/1",
+      "neo4-040/attack/0",
+      "neo4-040/attack/1",
+      "neo4-041/attack/0",
+      "neo4-043/attack/0",
+      "neo4-043/attack/1",
+      "neo4-074/attack/0",
+      "neo4-074/attack/1",
+      "neo4-077/attack/0",
+      "neo4-090/attack/0",
+      "neo4-090/attack/1",
+      "neo4-094/attack/0",
+      "neo4-095/attack/0",
+      "neo4-021/power/0",
+      "neo4-041/power/0",
+      "neo4-077/power/0",
+      "neo4-094/power/0",
+      "neo4-095/power/0"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

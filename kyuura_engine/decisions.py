@@ -317,6 +317,13 @@ SELECT_OPPONENT_PRIZE = "select_opponent_prize"
 # ポケモンギアで、見た山札の上の 7 枚のうちのトレーナーカードから手札に加える 1 枚。決めるのは使ったプレイヤー（選べるものの数は山札の中身を漏らすので、ほかの人に見せない）
 TAKE_LOOKED_TRAINER = "take_looked_trainer"
 
+# v0.84（docs/light-powers-evolution-v0.84.md）。どれもワザの途中の決定（再開先は "attack"、段階は Phase.DECISION）
+# やさしいイノムーの「つきくずす」で、場のスタジアムをトラッシュするか。決めるのはワザを使ったプレイヤー。選べるものは場のスタジアムのカード 1 つ。0〜1 個（選ばない = トラッシュしない）
+DISCARD_STADIUM = "discard_stadium"
+# やさしいプクリンの「しんかのうた」で、進化させる自分の場のポケモン。決めるのはそれぞれのプレイヤー（``context`` の ``"stage"``）。選べるものはそのプレイヤーの場のポケモンの番号。
+# 0〜1 匹（0 は選ばない）。選ぶと止めるポケモン（``unresolved_choices``）が山札の中身で決まるので、選べるものの数・止める選択は決めるプレイヤーだけが見る（観測）
+EVOLUTION_SONG_POKEMON = "evolution_song_pokemon"
+
 _PHASE_FOR_KIND = {TAKE_PRIZE: Phase.TAKE_PRIZE, PROMOTE_ACTIVE: Phase.PROMOTE_ACTIVE}
 
 # 決定を待っている段階。並び（DECISION_PHASE_ORDER。段階の定義の順）は、決定への答えを拒否する理由の文（WRONG_PHASE）に書く順番。

@@ -1940,3 +1940,17 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: 「おたがいのプレイヤーは、それぞれ、…」のワザ（きんいろのうろこ・ふしぎなはばたき・あかりでてらす・すくいあげる・みずかき）の、プレイヤーの順番の記録がない
   （エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.83 の登録を写すと、18 枚の `engine_status` が `registered` になる。
+
+## v0.84: リフレクトシールド・みずかきの修正と、やさしいポケモン 12 枚・ポケモン育て屋夫婦
+
+[light-powers-evolution-v0.84.md](light-powers-evolution-v0.84.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_84`（13 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.83 までの 1,026 枚の
+  記録は変わっていない。
+- 13 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-22・外部照合なし・`kyuura_records` は空）。処理に使う文面は kyuura の印刷の文面。研究の基準のコミットに、
+  13 の id を指す LD-・CC-・CR-・UQ-・エラッタの記録はない。`card_verification.json` には加えていない。
+- kyuura の日本語の文面はポケモンWiki（neo3・neo4）の転記。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 研究の対応表の `adopted_printed_text` に説明文のあるワザ 19・特殊能力 5 を加えた（トレーナーの印刷の文面は、今までどおり対応表に挙げない）。新しい停止コード 3 件（RF1・WD1・WD2）を
+  `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
+- 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。

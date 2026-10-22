@@ -1310,6 +1310,22 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.RevealOneNamedPokemonFromDeck,
     _effects.SelfReflectShield,
     _effects.ThreeCoinsStatusByHeads,
+) + (
+    # v0.84: やさしいポケモンのワザの 14 の型（docs/light-powers-evolution-v0.84.md）
+    _effects.AmountIfDefenderDamagedDamage,
+    _effects.BenchBabyOrBasicFromOwnDiscardAttack,
+    _effects.CoinSetIfDefenderDarkDamage,
+    _effects.CoinsTimesDamageThenParalyzeIfAtLeast,
+    _effects.DamageByDefenderStage,
+    _effects.DamageThenAttackEffectGuard,
+    _effects.DamageThenBenchAttackDamageGuard,
+    _effects.DamageThenBubbleJump,
+    _effects.DamageThenOpponentMayDraw,
+    _effects.DamageThenOptionalDiscardStadium,
+    _effects.EachPlayerEvolutionSong,
+    _effects.ReturnOwnBenchToDeckAttack,
+    _effects.SwitchSelfThenStatusGuardAttack,
+    _effects.ZeroDamageAtLeastNextTurn,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2092,3 +2108,15 @@ V0_83_SHINING = (SHINING_MAGIKARP, SHINING_MAGIKARP_PRN, SHINING_GYARADOS, SHINI
                  SHINING_STEELIX, SHINING_NOCTOWL, SHINING_MEW)
 V0_83_POKEMON = (*V0_83_SHINING, LIGHT_SUNFLORA, LIGHT_VENOMOTH, LIGHT_GOLDUCK, LIGHT_VAPOREON, LIGHT_LANTURN, LIGHT_SLOWBRO, LIGHT_DRAGONAIR, RAPIDASH_ES1)
 V0_83_CARDS = V0_83_POKEMON
+
+# v0.84（docs/light-powers-evolution-v0.84.md）: やさしいポケモン 12 枚・ポケモン育て屋夫婦
+BREEDER_COUPLE = "neo3-056"  # ポケモン育て屋夫婦（トレーナー。最大 2 匹にコイン 1 枚ずつ。「おもて」のポケモンから進化するカードを山札からさがす）
+LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG = "neo4-010", "neo4-018", "neo4-021", "neo4-033"
+LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE = "neo4-040", "neo4-041", "neo4-043", "neo4-074"
+LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC = "neo4-077", "neo4-090", "neo4-094", "neo4-095"
+V0_84_POKEMON = (LIGHT_LEDIAN, LIGHT_NINETALES, LIGHT_ARCANINE, LIGHT_DEWGONG, LIGHT_AZUMARILL, LIGHT_PILOSWINE, LIGHT_JOLTEON, LIGHT_MACHOKE,
+                 LIGHT_MACHAMP, LIGHT_WIGGLYTUFF, LIGHT_DRAGONITE, LIGHT_TOGETIC)
+V0_84_CARDS = (BREEDER_COUPLE, *V0_84_POKEMON)  # 写しの組 pool_v0_84 の並び
+# 進化元（どれも前の版で対応済み。名前の完全一致で決まる）
+LEDYBA_NEO1, VULPIX_NEO4, GROWLITHE_NEO4, SEEL_NEO4, MARILL_NEO1, SWINUB_NEO4 = "neo1-003", "neo4-014", "neo4-015", "neo4-027", "neo1-025", "neo4-029"
+MACHOP_NEO4, JIGGLYPUFF_NEO4, TOGEPI_NEO1 = "neo4-069", "neo4-085", "neo1-066"
