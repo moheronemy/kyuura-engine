@@ -448,13 +448,6 @@ class RegistrationTest(unittest.TestCase):
                                  (definition.name_ja, definition.trainer_text_ja, definition.trainer_text_ja, "kyuura data/cards.json"))
                 self.assertEqual(entry.effect.check(definition), [])
 
-    def test_counts(self):
-        pool = load_card_pool()
-        supported = [d for d in pool.definitions.values() if d.supported]
-        self.assertEqual(len(supported), 1091)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        by_kind = {kind: sum(1 for d in supported if d.category == kind) for kind in ("pokemon", "trainer", "energy")}
-        self.assertEqual(by_kind, {"pokemon": 794, "trainer": 260, "energy": 37})  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
-        self.assertEqual(sum(1 for d in supported if E.STADIUM_KIND in d.trainer_kinds), 41)  # v0.82 でエコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた
 
     def test_unsupported_counts(self):
         """kyuura data/engine_targets.json（7d3f4ca）の対象 1,377 件から今の登録を差し引くと、未対応は全対象 404・neo 202・拡張パック以外 202（v0.79 は 434・227・207）。

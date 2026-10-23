@@ -33,7 +33,6 @@ from kyuura_engine import (
 from kyuura_engine.decisions import FORCED_SWITCH
 from kyuura_engine.effects import DEFAULT_EFFECTS, NO_BENCH, TARGET_KNOCKED_OUT, DamageAndForceSwitch
 from kyuura_engine.rng import rng_fingerprint
-from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import Phase as StatePhase
 
 from tests.helpers import (
@@ -468,7 +467,6 @@ class PendingDecisionStateTest(unittest.TestCase):
         表せる（新しい形式は要らない）。形式 1 はワザの途中の決定を表せないので ValueError（黙って落とさない）。v0.6 で加えた形式 9
         （あまごいで手札からつけた枚数）でも、決定の項目は同じ。"""
         d = self.state.decision
-        self.assertEqual(FORMAT_VERSIONS, (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23))  # 23 は v0.88（色を変える効果の記録）  # 22 は v0.67（うらのカード）  # 21 は v0.63（一時的に置いておくカード・おもてのサイド）。 19 は v0.59。18 は v0.58。17 は v0.57。16 は v0.56。 v0.4d では 8 まで。9 は v0.6、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
         self.assertEqual(state_to_dict(self.state, format_version=9)["decision"], full(self.state)["decision"])
         data = full(self.state)
         self.assertEqual(data["decision"], {

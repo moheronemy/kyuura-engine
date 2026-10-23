@@ -1037,7 +1037,6 @@ class ObservationAndSerializationTest(unittest.TestCase):
     def test_format_14_and_older_formats(self):
         """「ばける」でのせたカード・「思い出させる」の記録・ほかのカードのワザが与えた効果は形式 14 で書き出す。形式 1〜13 は書き出せない（``ValueError``。黙って落とさない）。
         どれもなければ形式 13 と同じ。v0.50 で形式 15（退化した番。``devolved_turn``）を加えた（退化していなければ None）。"""
-        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）  # v0.56 で 16（trainer_effects）、v0.57 で 17（stadium）、v0.58 で 18（trainer_stack）、v0.59 で 19（energy_roles）を加えた
         plain = ninetales_board()
         latest, older = state_to_dict(plain, format_version=14), state_to_dict(plain, format_version=13)
         self.assertEqual(latest["recalls"], [])

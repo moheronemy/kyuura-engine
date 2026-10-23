@@ -58,6 +58,7 @@ from kyuura_engine.effects import (
     PowerKey,
 )
 from kyuura_engine.rng import rng_fingerprint
+from kyuura_engine.serialize import FORMAT_VERSIONS
 from tests.helpers import (
     ALAKAZAM,
     BLASTOISE,
@@ -603,7 +604,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=24)  # v0.88 で 23 を加えた  # v0.67 で 22、v0.63 で 21、v0.56 で 16、v0.57 で 17、v0.58 で 18、v0.59 で 19 を加えた。v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
+            state_to_dict(new, format_version=max(FORMAT_VERSIONS) + 1)
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

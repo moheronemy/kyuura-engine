@@ -85,7 +85,7 @@ from tests.helpers import (
     build_test_state,
     expand_decklist,
 )
-from tests.log_audit import LATEST_FORMAT, observation_problems, serialization_problems
+from tests.log_audit import observation_problems, serialization_problems
 from tests.test_instant_trainers_v0_55 import (
     TURN,
     answer,
@@ -181,8 +181,6 @@ class CardDataTest(unittest.TestCase):
         for ruling, code in NEW_CODES.items():
             self.assertIn(ruling, text)
             self.assertIn(code, text)
-        self.assertEqual(LATEST_FORMAT, 23)  # v0.88 で 23（color_effects）  # v0.67 で 22  # v0.59 で 19（energy_roles）を加えた
-        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）
 
 
 class EnergyUnitsTest(unittest.TestCase):

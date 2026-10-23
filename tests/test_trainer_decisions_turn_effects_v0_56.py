@@ -96,7 +96,7 @@ from tests.helpers import (
     build_test_state,
     with_coin_results,
 )
-from tests.log_audit import LATEST_FORMAT, observation_problems, serialization_problems
+from tests.log_audit import observation_problems, serialization_problems
 from tests.test_instant_trainers_v0_55 import (
     answer,
     assert_answer_stops,
@@ -183,7 +183,6 @@ class RegistrationTest(unittest.TestCase):
                 self.assertFalse(entry.effect.may_knock_out or entry.effect.empties_active or entry.effect.enters_play or entry.effect.stays_in_play)
         extract = json.loads((ROOT / "kyuura_engine" / "data" / "kyuura_cards.json").read_text())
         self.assertEqual(extract["pool_v0_56"], list(V0_56_CARDS))
-        self.assertEqual(len(E.DEFAULT_EFFECTS.trainer_ids()), 260)  # v0.84 でポケモン 12 枚・ポケモン育て屋夫婦を加えた  # v0.82 でポケモン 18 枚（ワザ 33）・リサイクルエネルギー・エコロジムを加えた  # v0.81 でトレーナー 15 枚（ポケモンのどうぐ 11 枚・スタジアム 3 枚を含む）を加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚を含む）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.74 で拡張パック以外の商品のスタジアム 13 枚を加えた。v0.73 で拡張パック以外の商品の検索・回収・ドローのトレーナー 18 枚を加えた。v0.71 で拡張パック以外の商品の再録のトレーナー 67 枚を加えた。v0.69 で拡張パック以外の商品の同じカード 19 枚の写しを加えた。v0.67 でマチスの秘策を加えた。v0.66 で 3 枚を加えた。v0.65 で変わり身の術を加えた。v0.63 で 4 枚を加えた。 56（v0.55）+ 10。v0.57 でスタジアム 14 枚、v0.58 でサイキックコントロール、v0.59 で 3 枚を加えた、v0.61 でバトル場は穴だらけ!を加えた
         e = {card_id: E.DEFAULT_EFFECTS.trainer_entry(card_id).effect for card_id in V0_56_CARDS}
         self.assertEqual([c for c in V0_56_CARDS if e[c].may_end_turn], [ROCKET_GRUNT])
         self.assertEqual([c for c in V0_56_CARDS if e[c].takes_prizes], [LT_SURGES_TREATY])
@@ -725,7 +724,6 @@ class RocketsExperimentTest(unittest.TestCase):
 class SaveObservationTest(unittest.TestCase):
     def test_format_16_and_older_formats_reject(self):
         """期限のある効果（``trainer_effects``）・ロケット団の実験の禁止（``origin`` が trainer）は形式 16 で書き出し、形式 1〜15 は ``ValueError``（黙って落とさない）。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (23, 23))  # v0.88 で 23（color_effects）  # v0.67 で形式 22  # v0.63 で形式 21。 v0.57 で 17、v0.58 で 18、v0.59 で 19
         wall = use(board([INVISIBLE_WALL]), INVISIBLE_WALL)
         locked = use(board([ROCKETS_EXPERIMENT], deck=[G]), ROCKETS_EXPERIMENT, coins=(T,))
         for state in (wall, locked):

@@ -38,7 +38,6 @@ from kyuura_engine.conditions import poison
 from kyuura_engine.deck import deck_problems
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEntry, AttackKey, CoinFlipDamage, PoisonOnHeads, SelfDamageOnTails
 from kyuura_engine.rng import rng_fingerprint
-from kyuura_engine.serialize import FORMAT_VERSIONS
 from kyuura_engine.state import NO_SPECIAL_CONDITIONS, Halt
 
 from tests.helpers import (
@@ -518,7 +517,6 @@ class ThreeCardStructureTest(unittest.TestCase):
             with self.subTest(version=version):
                 with self.assertRaises(ValueError):
                     state_to_dict(state, format_version=version)
-        self.assertEqual(max(FORMAT_VERSIONS), 23)  # v0.88 で 23（color_effects）  # v0.67 で 22（face_down_cards）  # 19 は v0.59。18 は v0.58。17 は v0.57。16 は v0.56。v0.4c では 8。9 は v0.6（energy_attached_by_powers_this_turn）、10 は v0.31、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
 
     def test_attach_energy_to_a_card_below_is_rejected(self):
         """場のポケモンはいちばん上のカードの uid で指す（v0.1 からのコマンド）。下の 2 枚は場のポケモンではない。"""
