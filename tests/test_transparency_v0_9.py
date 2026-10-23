@@ -558,8 +558,7 @@ class DirectReceptionTest(unittest.TestCase):
     def test_each_haunter_flips_once_per_attack(self):
         """同じワザの同じポケモンは 1 回だけ（T4）。新しいワザ（新しい枠）では投げ直す。ゴースは投げない。
 
-        1 つのワザで 2 匹目の「とうめい」を評価すると、コインの順番が原典で決められない（T27。docs/transparency-v0.9.md・CLAUDE.md
-        「1 つのワザで複数の「とうめい」のポケモンが受ける場合のコインの順番（T27）は原典で決められません」）ので、解決の基盤は 2 匹目の前に
+        1 つのワザで 2 匹目の「とうめい」を評価すると、コインの順番が原典で決められない（T27。docs/transparency-v0.9.md）ので、解決の基盤は 2 匹目の前に
         止める（コードのない問い ``multiple_evasion``。今の対応カードでは起こらないので、コマンドの入口で ``RuntimeError``）。v0.16b: v0.15 までの
         補助関数（v0.13 の ``attack_reaches``）は 2 匹目も評価していた（対応カードでは起こらない）。解決の基盤の検出にそろえた。"""
         state = with_coin_results(self.board(), H, T, H)
