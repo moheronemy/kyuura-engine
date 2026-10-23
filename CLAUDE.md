@@ -124,7 +124,7 @@
 
 - テストの段階: A（速い単体テスト）と B（決まった seed の対戦・ログと書き出しの監査・前の版の参照データとの比較・小さなストレス実行）は `python3 -m unittest` に入っています。C（前の版との大きな比較・大規模なストレス実行）は、ふだんのテストで走らせないでください（`python3 tools/compare_engine_versions.py --base <コミット>`・`python3 tools/stress_engine.py`）。
 - ログの監査（tests/log_audit.py の `log_problems`）は、ログだけから場のポケモンのダメージ・エネルギー・トラッシュ・サイドを組み立て直して状態と比べます。ダメージ・エネルギー・トラッシュを変えるログのイベントを加えたら、組み立て直しにも加えてください。ログは記録で、状態の正本ではありません（エンジンはログから状態を決めない）。
-- 書き出しの監査（`serialization_problems`）は、形式 1〜22（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19、v0.62 から 20、v0.63 から 21、v0.67 から 22）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 22）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 23 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
+- 書き出しの監査（`serialization_problems`）は、形式 1〜23（v0.6 から 9、v0.31 から 10、v0.44 から 11、v0.47 から 12、v0.48 から 13、v0.49 から 14、v0.50 から 15、v0.56 から 16、v0.57 から 17、v0.58 から 18、v0.59 から 19、v0.62 から 20、v0.63 から 21、v0.67 から 22、v0.88 から 23）が表せる状態だけを書き出し、最新の形式（`LATEST_FORMAT` = 23）から後の項目を除いたものと同じになることを確かめます。状態の項目を加えたら `required_format`・`POKEMON_FIELDS_SINCE`・`TOP_FIELDS_SINCE` を更新してください。形式 24 を加えるときは、監査の `LATEST_FORMAT` と docs/architecture-v0.6.md 4 章を見直します。
 - 前の版との比較の駆動（tools/compat_driver.py）は、エンジンの公開の API だけを使い、版ごとに別のプロセス（`python3 -I`）で、指定した木の `kyuura_engine` だけを読み込みます。比べないのは効果の登録表の id（`effects`）だけです。ルールの動きに関わる状態・ログを比較から除かないでください。
 - tests/fixtures/compat_base_4bd97bf.json は、基準の版（v0.4d の `4bd97bf`）で駆動が作った記録の指紋です。今の版から作り直さないでください（作り直すと前の版との比較ではなくなる）。駆動を変えたら、ファイルの `how` の引数で基準の版から作り直します。
 - テストの盤面にポケモンについているトレーナーを置くときは、`build_test_state` の `"trainers"`（[(カード id, トラッシュする番), ...]）を使います。
@@ -148,7 +148,7 @@
 - 使用は `UsePokemonPower(player, pokemon, power, energy, source, target)` です。`pokemon`・`source`・`target` は場のポケモンの番号（`pokemon_id`）、`energy` はカードの uid。v0.4e までの 2 つの項目（`player`・`pokemon`）の辞書も読めるようにしてあります（壊さないでください）。番のプレイヤーの `Phase.MAIN` だけで受け付けます（決定を待つ間・ワザのあとは不可）。使っても番は終わりません（`_finish_attack` を呼ばない）。
 - どの特殊能力があるかは、いちばん上のカードの定義で決めます（進化前のカードの特殊能力は使えない。p.310）。v0.49 から、今の姿（［へんしん］・「ばける」）のカードの特殊能力と、それを印刷したカードの uid（`effects.powers_of` の `PowerSlot`）で決めます（「ばける」でのせたカードの下のタケシのキュウコンの「ばける」も持つ）。
 - 使う前の共通の確認は `engine._use_pokemon_power`、パワーごとの確認（使えない特殊状態・説明が選ばせるもの）は `PowerEffect.check_usable` で、どちらも状態を変える前に済ませます（拒否で状態・乱数・ログが変わらない）。原典で決められない場合は、成功を仮定せず `UnsupportedError`（`UNRESOLVED_…`）で止めます。特殊状態の制限はパワーの説明ごとです。ワザ・にげるの制限（`engine._require_not_asleep_or_paralyzed`・こんらんのコイン）を流用しないでください。
-- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）、v0.62 で形式 20（場のポケモンの `history`）、v0.63 で形式 21（最上位の `set_aside`・`face_up_prizes`）、v0.67 で形式 22（最上位の `face_down_cards`）を加えた。次の新しい形式は 23）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
+- 「何度でも使える」パワーの回数は数えません。回数の制限のあるパワー（「自分の番ごとに1回」など）を加えるときは、回数を状態に持ちます（ログから数えない。書き出しの新しい形式と不変条件が要る。v0.6 の `energy_attached_by_powers_this_turn` と同じ形。v0.31 のしぜんになおるは `power_uses_this_turn`（形式 10）で、同じ形のパワーは `PowerEffect.once_per_turn = True` にすればこの記録を使える。v0.42 から宣言のときに記録する。v0.44 で形式 11（場のポケモンの `attacks_used_once`・`evolution_permission_turn`）、v0.47 で形式 12（最上位の `trainer_locks`）、v0.48 で形式 13（場のポケモンの `type_shift`）、v0.49 で形式 14（場のポケモンの `disguise`・最上位の `recalls`）、v0.50 で形式 15（場のポケモンの `devolved_turn`）、v0.56 で形式 16（最上位の `trainer_effects`・トレーナーの使用の禁止の `origin`）、v0.57 で形式 17（最上位の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`）、v0.58 で形式 18（最上位の `trainer_stack`・`trainer_in_use.via`）、v0.59 で形式 19（最上位の `energy_roles`）、v0.62 で形式 20（場のポケモンの `history`）、v0.63 で形式 21（最上位の `set_aside`・`face_up_prizes`）、v0.67 で形式 22（最上位の `face_down_cards`）、v0.88 で形式 23（最上位の `color_effects`）を加えた。次の新しい形式は 24）。v0.50 から、記録は使ったカードで区別する（いちばん上のカードが進化・退化で変わる直前に (番号, 位置, 使ったカード) に置きかえる。`evolution.retag_power_uses`）。v0.5 のパワーは決定を出しません。決定を出すパワーは、ワザ（v0.4d）・トレーナー（v0.4e）と同じく `resume`・`decision_problems` と再開先（v0.42 の `"power"`）で扱います（下の「特殊能力の決定・再開・使用後の処理と 15 枚（v0.42）」）。自動的にはたらく・常にはたらくパワーは宣言しないので、`UsePokemonPower` の形では扱いません（どちらも `PowerEffect.declared = False`。常にはたらくパワーは下の「かがくへんかガス（v0.8）」・「常にはたらく特殊能力の共通の処理（v0.46）」、自動的にはたらくパワーは下の「とうめい（v0.9）」「はんげき（v0.10）」。docs/architecture-v0.5.md 9 章）。決められたときにしか使えない（宣言する）パワーは `declared = True` のまま `check_usable` で拒否し、決められたときにエンジンが決定で使うかを聞きます（下の「こんじょう（v0.11）」。場に出たときに 1 度だけ使えるパワーも同じ形で、`effects.EntryPower` と決定 `entry_power`。下の「宣言して使う特殊能力と場に出たときの特殊能力の入口（v0.43）」）。
 - エナジートランス（`EnergyTransfer`）は、同じ uid のエネルギーカードを移動元の `energy` から移動先の `energy` へ移すだけです（複製・トラッシュ・持ち主の変更をしない）。`energy_attachments_this_turn`（手札からつけた回数）は変えず（SUPPORTED。docs/venusaur-v0.5.md V10）、乱数を使いません。ログは宣言 `pokemon_power` のすぐあとに `move_energy` で、手札からつけた `attach_energy` と混同しないでください。1 回の使用で 1 枚は実装上の仮定です（ルールとして扱わない。docs/energy-transfer-v0.5.md 3 章）。特殊エネルギーを加えるときは、移せるエネルギーの判定（今は「草」の基本エネルギー）を見直してください。
 - ワザ・にげるに必要なエネルギーは、そのときついているエネルギーで決めます（つけかえの前の値を覚えておかない）。
 - やどりぎのタネ（`DamageAndRemoveCounters`）は `DamageResult.dealt` で「ダメージを与えたら」を判定し、メガドレインと同じ `effects._remove_attacker_counters`（ログ `drain_heal`）でとりのぞきます。フシギソウのどくのこな（`PoisonOpponent`）はコインを投げません。コインを投げる `PoisonOnHeads` を流用しないでください。
@@ -3629,4 +3629,88 @@
 - 検証用デッキ `M87`・`S87` と組 `PAIRINGS_V0_87`（`M87` 対 `S87`・`M87` 対 `R86`・`S87` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.87` です（前の版の組の結果は変わらない）。
   決定は `_v087_decision`、［マグネット］・［とおせんぼ］のある番の「にげる」は `_v087_step`、数えた結果は `v087_uses`。C18 は、相手の場にはたらく［ショックボム］があるときも場から確かめます
   （`_v087_shock_blast_on`）。
+- 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。
+
+## ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚（v0.88）
+
+### 対象と数
+
+- ランターン neo1-040（まぶしいひかり・［すいりょくはつでん］）・ランターン neo3-026（アクアフラッシュ・［せんすい］）・ポリゴン2 neo3-051（デルタビーム・［エナジーコンバーター］）・
+  エリカのナゾノクサ GD4-001（どくのこな・こうごうせい）・スターミー neo3-034（あやしいひかり・コアストリーム）・ミュウ SI-004（レインボーウェーブ）・ホウオウ PF3-007（レインボーバーン）・
+  レアコイル neo3-045（プラズマ・［でんじりょく］）・ポリゴン ES1-033／QSG-045（3Dアタック・テクスチャー2。同じデータで登録の値を共有。`SAME_DATA_CARDS_V0_88`）・かっこいいポリゴン PR1-023
+  （テクスチャーマジック・3Dアタック）の 11 枚（ワザ 15・特殊能力 5。写しの組 `pool_v0_88`）を、kyuura データの採用で登録しました。
+- 数の変化:
+
+  | | v0.87 | v0.88 |
+  |---|---|---|
+  | 写し・対応するカード | 1,080・1,080 | 1,091・1,091 |
+  | 対応ポケモン・トレーナー・エネルギー | 783・260・37 | 794・260・37 |
+  | ワザ・特殊能力の登録 | 1,312・114 | 1,327・119 |
+  | 未対応（全対象・neo・拡張パック以外） | 297・137・160 | 286・132・154 |
+  | 停止コード・未解決の裁定 | 197・199 | 200・202 |
+  | 書き出しの形式 | 22 | 23 |
+
+- 写しの元・研究の基準（kyuura `7d3f4ca`）・公開の API の呼び方は変えていません。カードごとの処理・根拠・検証は docs/type-energy-colors-v0.88.md。
+- 公式ガイドブックの新しいキャプチャ・OCR・読み直しは行っていません。11 枚の pcg-search.com・カードの画像との照合もしていません。英語の欄（レインボーウェーブの「other than Colorless」など）・
+  現代のルール・2002 年のポケパワー・ポケボディーの分類で補わないでください。
+- テストの定数は tests/helpers.py の `LANTURN_NEO1`〜`COOL_PORYGON`・`V0_88_POKEMON`・`V0_88_CARDS`。
+
+### 前段の修正
+
+- v0.85 の 6 か所（［おいしげる］・ミラクルエネルギーの場の確かめ・［ハーブのかおり］の対象 2・［ファイヤーリチャージ］のつける先・せいでんきの数）が `GameState.is_face_down` にカードの uid を
+  渡し、場にうらのカードがあると `AttributeError` になっていたのを直しました。`is_face_down` には場のポケモンを渡してください。
+- v0.87 の［ぶんれつ］の決定 `split_from_deck` を観測の `DECK_REVEALING_KINDS` に加えました（決めるプレイヤーが自分の山札をさがす）。監査の選べるものの数を隠す一覧にも加えました。
+- 直前のきぜつをログの終わりから読む確かめ（サイドの並び・「ふしちょう」の候補と決定）は、`engine._knockout_bookkeeping`（きぜつで消えた持続する効果・リサイクルエネルギーのもどし・
+  ［せんすい］の記録の `target_gone`）を読み飛ばします。v0.82〜v0.87 の「ふしちょう」の確かめはリサイクルエネルギーのもどしを読み飛ばさず、`StateIntegrityError` になりえました。
+  きぜつのあとに記録のログを加えるときは、この関数に加えてください。
+
+### 色の層
+
+- カードの印刷の種類と色（`printed_def`・`card_def`。書きかえない）・場でカードが出すエネルギーの今の色と個数（`effects.card_color_readings`・`energy_units`・`attached_units`・
+  `typed_unit_count`）・場のポケモンの今のタイプ（`effects.type_readings`）を分けます。呼ぶ所ごとに色の判定を書かないでください。
+- 説明の「「X」エネルギー」はエネルギーの今の色で数え（`typed_unit_count`。読み方で数が変われば CE1・CE2）、「「X」エネルギーカード」「基本エネルギーカード」の色はカードとしての色で、
+  色を変えたカードが当たるかで結果が変わるときだけ CE3（`color_changed_cards`。`programs.transform_energy_question` の `cards`）。エナジーバーンだけで変わったカードは今までどおり HC10。
+  カードの枚数とエネルギーの個数を混ぜないでください。
+- ワザに必要なエネルギーは読み方の組ごとに払えるかを比べ、変わるときだけ止めます（`special_energy_payment_readings`・`attack_cost_problem`）。組が 256 を超えたらエンジンの未対応
+  `UNSUPPORTED_COLOR_READINGS_LIMIT`（研究の対応表の停止コードに入れない）。組を省いたり上限を上げたりしないでください。
+- タイプの読み方が 2 つ以上になる理由は `type_reading_cause`（［へんしょく］の VS1・［せんすい］の CE1・CE2）で、止めるコードを理由ごとに選びます。VS1 と CE1 を混ぜないでください。
+- 色を変える効果を加えるときは、`_color_replacements`（エネルギー）か `_type_color_records`（タイプ）に加え、それぞれの読み方の問い合わせを通してください。
+
+### 色を変える効果の記録（形式 23）
+
+- ［せんすい］・［エナジーコンバーター］の「この番が終わるまで」は `GameState.color_effects`（`state.ColorEffect`。種類 `pokemon_type`・`energy`）だけに持ちます。こうごうせいは記録を
+  持たず今の場から求めます。場のポケモン・カードに印を付けないでください。
+- 消えるのは、番の終わりの窓（`procedures.remove_expired_color_effects`。`expired`）・発生源のねむり・マヒ・こんらん（`conditions._end_color_effects`。`special_condition`。回復しても
+  戻らない）・［せんすい］の発生源が場をはなれた・カードが変わった（コマンドの終わりの `effects.settle_color_effects`。`target_gone`）です。［エナジーコンバーター］のカードが場を
+  はなれたら `left_play` にし（もう一度ついたら CE1）、場のつけかえではカードを追います。
+- 続くかが決まらない（力が消えた・発生源が場をはなれた・カードが変わった・`left_play`）なら `ambiguous`（`effects.color_effect_status`）。不変条件は `engine._color_effect_problems`。
+- 書き出しの形式 23 = 形式 22 + 最上位の `color_effects`（形式 1〜22 は記録があると `ValueError`）。監査の `LATEST_FORMAT` は 23。次の新しい形式は 24。
+
+### 特殊能力とワザ
+
+- ［すいりょくはつでん］（`ExtraEnergyDamageWithAttack`）はワザの宣言といっしょに使います（`UseAttack.attack_power`。既定 False は辞書に書かない）。`UsePokemonPower` では使えません。
+  確かめるのは宣言のとき（`effects.attack_power_check`。`ATTACK_POWER_NOT_AVAILABLE`・特殊状態・`POWER_SUPPRESSED`・`POWER_USE_PREVENTED`・RB1・BZ2・MEC1・CE1・CE2）で、追加は p.321 の
+  2 段階（相手の対戦ポケモンへのダメージだけ。`kernel.attack_modifiers_of`）。ワザの途中に宣言する形にしないでください。v0.13 の止める関数はこの選択を知らないので使いません
+  （`flow.legacy_unknown_features`）。
+- ［エナジーコンバーター］（`ConvertBasicEnergyColor`）は基本エネルギーカードだけで、色は無色以外の 8 色（悪・鋼を含む）。カードの種類・印刷の色は変えず、つけ直しではありません。
+- こうごうせい（`TypeEnergyAsGrass`）は特殊状態では消えず（「必ずはたらく」）、個数を変えず、カードを基本エネルギーカードにしません。
+- ［でんじりょく］（`MoveEnergyAmongNamed`）は今の姿の名前の完全一致（「マチスのコイル」は入らない）で、1 回の使用で 1 枚。つけ直しではありません。CB1 は v0.59 のまま。
+- コアストリームは選んだ色のエネルギー（今の色）、レインボーウェーブは自分の基本エネルギーカードの印刷の色から選び、相手のポケモンの今のタイプでしぼります（要素 `ChooseColor`・
+  `Damage`/`BenchDamage` の `color_filter`。選んだ色は続きの情報の `chosen_colors`）。レインボーバーンは基本エネルギーカードの印刷の色の種類（`PlusPerBasicEnergyColor`）。
+- テクスチャー2（`ChangeOwnResistanceOptional`）・テクスチャーマジック（`ChangeWeaknessAndResistanceOptional`）は「変えてよい」（決定 `select_color` の 0 個）。v0.48 の型を広げていません。
+  決定の不変条件は、`resume` が `attack` で選ぶ数 0〜の `select_color` だけ、変えない（0 個）がいつも答えになる例外にしました（広げない）。並びに色を選ぶ要素が 2 つあるので、決定は
+  要素の位置（続きの情報 `element`）を運びます。不変条件 `_effective_value_effect_problems` は登録の `color_terms()` に効果の型があることを確かめます。
+- デルタビームは v0.41 の `DamageThenChosenStatusOnHeads` に選べる特殊状態の項目 `conditions` を加えた登録です（既定は 4 つのまま）。
+- 新しい型 5 は `ATTACK_TYPES_SINCE_V0_17` に加え、`v013_checks.VERIFIED` には入れていません。`engine.py`・`resolution/` にカード id の分岐を加えないでください。
+
+### 決められない場合
+
+- 新しい停止コードは CE1（`UNRESOLVED_COLOR_EFFECT_CONTINUATION`）・CE2（`UNRESOLVED_COLOR_REPLACEMENT_ORDER`）・CE3（`UNRESOLVED_COLOR_CHANGED_ENERGY_CARD`）の 3 件で、どれも
+  `not_in_kyuura`。読み方で結果が変わるときだけ止めます（一律に止めない）。CR-CHEMICAL-GAS-PRIOR-RESULTS・GR-2000-P325-SAME-TIMING・UQ-ENERGY-BURN-TRANSFER で決まったことにしないでください。
+
+### 検証用デッキ
+
+- 検証用デッキ `C88`・`R88` と組 `PAIRINGS_V0_88`（`C88` 対 `R88`・`C88` 対 `S87`・`R88` 対 `P31`）は tools/existing_effect_games.py の `--batch v0.88` です（前の版の組の結果は変わらない）。
+  決定は `_v088_decision`、［せんすい］・［エナジーコンバーター］・［でんじりょく］は `_v088_step`、［すいりょくはつでん］は `_v088_attack`（色を変える効果のある場では、支払いの問い合わせで
+  払えないワザを選ばない）、数えた結果は `v088_uses`。CE1〜CE3 は `V031_STOPS` で場から確かめます。
 - 公開の固定のデッキ・既存の変種には入れていません。勝敗で採用を判断しないでください。

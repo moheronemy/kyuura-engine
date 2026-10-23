@@ -657,7 +657,10 @@ class CatalogTest(unittest.TestCase):
                            "switch_opponent_on_type_energy_attach", "damage_on_opponent_hand_energy_attach",
                            # v0.87: フォレトスの［まきびし］・マグカルゴの［やけのこり］・わるいマグカルゴの［ヒートプレート］（場の移動の事実への反応。``movement`` の段で処理する）・
                            # カビゴンの［とおせんぼ］（「にげる」の禁止。``effects.retreat_guards`` が問い合わせる）。窓の中の反応ではない。docs/movement-damage-reactions-v0.87.md 4 章・7 章
-                           "damage_on_opponent_promotion", "move_type_energy_on_benching", "damage_on_hand_basic_while_active", "opponent_active_cannot_retreat")
+                           "damage_on_opponent_promotion", "move_type_energy_on_benching", "damage_on_hand_basic_while_active", "opponent_active_cannot_retreat",
+                           # v0.88: エリカのナゾノクサのこうごうせい（エネルギーの色を変える。エネルギーの単位・色を数える ``effects.energy_units`` が、その時点の場から
+                           # 求める。窓の中の反応ではない。docs/type-energy-colors-v0.88.md 5.4 節）
+                           "type_energy_as_grass")
         # v0.87: フリーザーの［オーロラヴェール］・ダグトリオの［もぐる］は窓の中の反応（要素を無効にする）だが、守るのは持ち主の控え・ベンチにいるこのカードなので、印刷した
         # ポケモンの効果の対応表（``POWER_DEFINITIONS``）ではなく ``catalog.instances`` が受けるポケモンについて作る（v0.84 のこおりのはしらと同じ形）
         built_by_instances = {"own_bench_attack_immunity_while_active": C.AURORA_VEIL, "bench_attack_damage_immunity": C.DIG_UNDER}
@@ -682,6 +685,7 @@ class CatalogTest(unittest.TestCase):
                           if DEFAULT_EFFECTS.power_entry(k.card_id, k.power_index).effect.implementation_id in outside_windows
                           and k.card_id not in V0_69_POWER_CARDS],
                          ["ES1-034@power0",  # v0.87
+                          "GD4-001@power0",  # v0.88
                           "PMCG2-027@power0", "PMCG2-040@power0", "PMCG2-047@power0", "PMCG3-015@power0", "PMCG3-035@power0", "PMCG3-041@power0",
                           "PMCG3-042@power0", "PMCG4-007@power0", "PMCG4-010@power0", "PMCG4-041@power0", "PMCG4-043@power0", "PMCG5-035@power0", "PMCG5-051@power0",
                           "PMCG5-063@power0", "PMCG6-010@power0",

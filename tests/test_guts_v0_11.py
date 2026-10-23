@@ -671,7 +671,9 @@ class G37Test(unittest.TestCase):
         "DamageThenParalyzeOrSleepByTwoCoins", "DamageThenStopDefenderPowers",
         # v0.87: カビゴンの「ねころぶ」（「おもて」なら相手もねむり）・フォレトスの「こうそくスピン」（相手の入れ替え）（docs/movement-damage-reactions-v0.87.md 3 章・8 章）。
         # ドガースの「ふしぎなガス」は相手プレイヤーの場に与える期限のある効果で、相手の対戦ポケモンへの要素ではない（宣言しない）
-        "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives"]))
+        "DamageThenSelfSleepThenSleepOpponentOnHeads", "DamageThenSwitchBothActives",
+        # v0.88: かっこいいポリゴンの「テクスチャーマジック」（相手の対戦ポケモンの弱点の色を変える。docs/type-energy-colors-v0.88.md 6.5 節）
+        "ChangeWeaknessAndResistanceOptional"]))
 
 
 class DecisionTest(unittest.TestCase):

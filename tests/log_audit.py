@@ -343,8 +343,9 @@ TOP_FIELDS_SINCE = {
     "format_version": 2, "effects": 2, "next_pokemon_id": 2, "next_decision_id": 2, "decision": 2, "trainer_in_use": 3,
     "energy_attached_by_powers_this_turn": 9, "power_uses_this_turn": 10, "energy_burn": 10, "trainer_locks": 12, "recalls": 14,
     "trainer_effects": 16, "stadium": 17, "stadium_uses_this_turn": 17, "trainer_stack": 18, "energy_roles": 19, "set_aside": 21, "face_up_prizes": 21, "face_down_cards": 22,
+    "color_effects": 23,
 }
-LATEST_FORMAT = 22
+LATEST_FORMAT = 23
 
 
 
@@ -427,6 +428,8 @@ def required_format(state) -> tuple[int, bool]:
         needed = max(needed, 21)  # v0.63: 一時的に置いておくカード・おもてのサイド
     if state.face_down_cards:
         needed = max(needed, 22)  # v0.67: うらにしてベンチに出したカード（マチスの秘策）
+    if state.color_effects:
+        needed = max(needed, 23)  # v0.88: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）
     d = state.decision
     not_v0_1 = d is not None and (
         d.context_value("then") is not None or d.resume in ("attack", "knock_out", "post_knockout", "power")  # v0.42: 特殊能力の途中の決定
@@ -455,7 +458,7 @@ def serialization_problems(state) -> list[str]:
             problems.append(f"形式 {version} の書き出しが、形式 {LATEST_FORMAT} から後の項目を除いたものと違う")
     try:
         state_to_dict(state, format_version=LATEST_FORMAT + 1)
-        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.67 では形式 {LATEST_FORMAT + 1} を加えない）")
+        problems.append(f"形式 {LATEST_FORMAT + 1} を書き出せた（v0.88 では形式 {LATEST_FORMAT + 1} を加えない）")
     except ValueError:
         pass
     return problems
@@ -992,6 +995,10 @@ def _follows_declaration(state, key: str, player: int, pid: int, e: dict) -> boo
     # v0.87: ［マグネット］・［やみのちから］は持ち主のコイン
     if isinstance(effect, (E.CoinBenchNamedFromDeck, E.CoinReturnOpponentPokemonToHandOnEntry)):
         return kind == "coin_flip" and e["source"] == "power" and e.get("effect") == key and e["player"] == player and e.get("pokemon_id") == pid
+    # v0.88: ［せんすい］・［エナジーコンバーター］は色を変える効果の記録（color_effect_added の power。［エナジーコンバーター］はそのあいだに色を選ぶ決定がある）。
+    # ［でんじりょく］のつけ替えは move_energy の分岐が確かめる
+    if isinstance(effect, (E.TypeChangeSelfUntilTurnEnd, E.ConvertBasicEnergyColor)):
+        return kind == "color_effect_added" and e.get("power") == key and e["player"] == player and e["pokemon_id"] == pid
     return False
 
 
@@ -1481,6 +1488,7 @@ def log_problems(state) -> list[str]:
     # v0.60: ログから組み立てた、はたらいている「まきちらせ!ベトベトガス」（使ったトレーナーのカード → 消える番）。v0.59 から特殊能力を消すが、「とうめい」・はんげきの
     # 確かめはかがくへんかガスしか見ていなかった（v0.59 の対戦では起こらなかった）
     goop_gases: dict[int, int] = {}
+    color_types: dict[int, dict] = {}  # v0.88: ［せんすい］の記録（対象のポケモンの番号 → 色・発生源のカード・特殊能力の位置）
 
     def power_defs(pid: int) -> list[tuple[object, int, object]]:
         """v0.49: ログから組み立てた今の場の、ポケモン ``pid`` が今持つ特殊能力（``effects.powers_of`` と同じ求め方）: [(印刷したカードの定義, 位置, 特殊能力)]。
@@ -1645,19 +1653,33 @@ def log_problems(state) -> list[str]:
     def type_readings_now(pid: int) -> tuple:
         """v0.48: ログから組み立てた、ポケモン ``pid`` の色の読み方（``effects.type_readings`` と同じ求め方。［へんしょく］の記録が、使った番のうちで、ベンチに
         もどっておらず、いちばん上のカードが同じで、この力が消えていない（ねむり・マヒ・こんらん・かがくへんかガス）なら変えた色だけ。記録があって決まらなければ
-        （VS1）変えた色と印刷の色の 2 つ）。"""
+        （VS1）変えた色と印刷の色の 2 つ）。
+
+        v0.88: ログから組み立てた［せんすい］の記録（``color_types``。color_effect_added・color_effect_removed）があり、発生源のカードが今のいちばん上のカード（か「ばける」で
+        のせたカード）なら、変えた色を先にする。力が消えている（ログから組み立てたかがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブ）なら続くかが決まらず
+        （CE1）、変える前の読み方も加える。［へんしょく］の記録といっしょにあれば（CE2）、変える前の読み方も加える。"""
         printed = form_def(pid).pokemon_type  # v0.49: 今の姿のカードの色
         shift = shifts.get(pid)
         if shift is None:
-            return (printed,)
-        works = False
-        for definition, _, power in power_defs(pid):
-            if isinstance(state.effects.power_effect(definition.id, power), ShiftColor):
-                works = pid not in exclusive and not [g for _, g in working_gases() if g.suppresses(power)]
-        determined = shift["turn"] == current_turn and not shift["returned"] and shift["source_card"] == top[pid] and works
-        if determined or shift["color"] is printed:
-            return (shift["color"],)
-        return (shift["color"], printed)
+            base: tuple = (printed,)
+        else:
+            works = False
+            for definition, _, power in power_defs(pid):
+                if isinstance(state.effects.power_effect(definition.id, power), ShiftColor):
+                    works = pid not in exclusive and not [g for _, g in working_gases() if g.suppresses(power)]
+            determined = shift["turn"] == current_turn and not shift["returned"] and shift["source_card"] == top[pid] and works
+            base = (shift["color"],) if determined or shift["color"] is printed else (shift["color"], printed)
+        record = color_types.get(pid)
+        if record is None or pid not in top or record["source_card"] not in (top[pid], disguised.get(pid)):
+            return base
+        power = state.in_play_def(record["source_card"]).powers[record["power_index"]]
+        stopped = bool([g for _, g in working_gases() if g.suppresses(power)]) or bool(goop_gases) \
+            or any(effect.get("effect_kind") == "opponent_power_suppression" and effect["player"] != pokemon_owner.get(pid) for effect in trainer_effects_log.values()) \
+            or any(effect_pid == pid and info["kind"] == PowersStopped.kind for (effect_pid, _), info in alive.items())
+        readings = [record["color"]]
+        if shift is not None or stopped:
+            readings += [color for color in base if color not in readings]
+        return tuple(readings)
 
     def retaliation_damage_problems(e: dict, ret: dict) -> list[str]:
         """「ほのおのかべ」のダメージのログ（v0.12）: 基本となるダメージが効果の量で、弱点・抵抗力は R団のファイヤーのタイプと、受けた
@@ -1853,10 +1875,20 @@ def log_problems(state) -> list[str]:
         expected = [x for x in continuous_expected(attacker_pid, receiver_pid, attack_window.get("status_at_attack"))
                     if not ended_early or x[0] <= 2]
         by_label = {f"{x[0]} {x[1]}": x for x in expected}
-        recorded = [(i, step) for i, step in enumerate(steps) if _v046_rank(str(step[0]).partition(" ")[2])]
         found = []
+        power = attack_window.get("attack_power") if not e.get("retaliation") else None
+        if power is not None and e.get("target", "opponent_active") == "opponent_active":
+            # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）の 2 段階の追加は、相手の対戦ポケモンへのダメージだけ。追加は 1 個につき登録の数の倍数（多い
+            # エネルギーがなければ記録はない）。ほかの常にはたらく特殊能力の記録と分けて確かめる
+            for i, step in enumerate(steps):
+                if str(step[0]) == f"2 {power[0]}" and (i == 0 or step[1] - steps[i - 1][1] <= 0 or (step[1] - steps[i - 1][1]) % power[1]):
+                    found.append(f"{where} の「{step[0]}」の追加 {step[1] - (steps[i - 1][1] if i else 0)} が、{power[1]} の正の倍数ではない")
+            steps_for_continuous = [step for step in steps if str(step[0]) != f"2 {power[0]}"]
+        else:
+            steps_for_continuous = steps
+        recorded = [(i, step) for i, step in enumerate(steps) if step in steps_for_continuous and _v046_rank(str(step[0]).partition(" ")[2])]
         if len(by_label) != len(expected) or sorted(str(step[0]) for _, step in recorded) != sorted(by_label):
-            return [f"{where} の記録 {[step[0] for _, step in recorded]} が、当てはまる効果 {sorted(by_label)} と合わない"]
+            return found + [f"{where} の記録 {[step[0] for _, step in recorded]} が、当てはまる効果 {sorted(by_label)} と合わない"]
         for i, step in recorded:
             stage, _, operation, threshold, amount, _ = by_label[str(step[0])]
             before = steps[i - 1][1]
@@ -1999,6 +2031,11 @@ def log_problems(state) -> list[str]:
                     or e["opponent"] != 1 - e["player"]:
                 problems.append(f"{e['turn']} 番のカスミの勝負のじゃんけん {e['hands']} の勝ち負け {e['winner']} が、手の組と合わない")
             duel_winner[e["trainer_card"]] = e["winner"]
+        if kind == "color_effect_added" and e["color_effect"] == "pokemon_type":
+            # v0.88: ［せんすい］の色の記録（番の終わり・ねむり・マヒ・こんらん・対象がいなくなったログ color_effect_removed で消える）
+            color_types[e["target"]] = {"color": EnergyType(e["color"]), "source_card": e["source_card"], "power_index": int(e["power"].rpartition("@power")[2])}
+        elif kind == "color_effect_removed" and e["color_effect"] == "pokemon_type":
+            color_types.pop(e["target"], None)
         if kind == "trainer_effect_added" and e["effect_kind"] == "power_suppression":
             goop_gases[e["trainer_card"]] = e["expires_turn"]
         elif kind == "trainer_effect_removed" and e.get("effect_kind") == "power_suppression":
@@ -2308,6 +2345,14 @@ def log_problems(state) -> list[str]:
                 # v0.46: ワザが使われた時（宣言）にねむり・マヒ・こんらん状態だった場のポケモン（［くつろぐかおり］の「ワザが使われた時、すでに」）
                 "status_at_attack": frozenset(exclusive),
             }
+        elif kind == "attack_power":
+            # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）。そのワザの宣言のすぐあとにあり、ワザを使ったポケモンが持ち、ワザの説明が名前を挙げるワザ
+            effect = _power_effect(state, f"{state.cards[e['card']].card_id}@power{e['power_index']}")
+            if attack_window is None or previous is None or previous["kind"] not in ("attack", "once_attack_recorded") or attack_window["pokemon_id"] != e["pokemon_id"] \
+                    or not isinstance(effect, E.ExtraEnergyDamageWithAttack) or attack_window["effect"] != e["effect"]:
+                problems.append(f"{e['turn']} 番のワザといっしょに使った特殊能力 {e['power']} が、そのワザの宣言のすぐあとの、そのポケモンの特殊能力ではない")
+            else:
+                attack_window["attack_power"] = (f"［{e['power']}］", effect.per)
         elif kind in ("turn_end", "game_end", "halted"):
             if attack_window is not None and attack_window["ko_offer"] is not None:
                 pid, result = attack_window["ko_offer"], attack_window["ko_result"]
@@ -3084,6 +3129,10 @@ def log_problems(state) -> list[str]:
                 if isinstance(effect, (TakeEnergiesToSelf, GatherTypeEnergyCardsToSelf)) and moving[4] > effect.max_cards:
                     problems.append(f"{e['turn']} 番のようぶんきゅうしゅう（ポケモン {e['pokemon_id']}）で、1 回に {moving[4]} 枚つけかえた")
             source, target = e["from_pokemon_id"], e["to_pokemon_id"]
+            if isinstance(effect, E.MoveEnergyAmongNamed) and source in top and target in top and (
+                    form_def(source).name_ja not in effect.names or form_def(target).name_ja not in effect.names):
+                # v0.88: ［でんじりょく］は、今の姿の名前が登録の名前のどれかと同じポケモンのあいだ
+                problems.append(f"{e['turn']} 番の［でんじりょく］のつけ替え {e['energy']}（{source} → {target}）が、名前の合うポケモンのあいだではない")
             if isinstance(effect, (TakeEnergyToSelf, TakeEnergiesToSelf, ChargeBenchEnergyToSelf, GatherTypeEnergyCardsToSelf)) and (
                     target != e["pokemon_id"] or not state.printed_def(e["energy"]).is_basic_energy or state.printed_def(e["energy"]).provides is not effect.energy_type):
                 # v0.43: つける先は特殊能力を使ったポケモン（このカード）。つけかえるのは登録のタイプの基本エネルギーカード
@@ -5108,6 +5157,22 @@ def _effective_from_state(state, pokemon) -> dict:
         readings = [shift.color]
     else:
         readings = [shift.color, definition.pokemon_type]
+    # v0.88: ［せんすい］の記録（``GameState.color_effects``）。発生源が使ったときのカードで場にいれば変えた色を先にし、力が消えている（CE1）・［へんしょく］の記録と
+    # いっしょにある（CE2）なら変える前の読み方も加える（エンジンの ``type_readings`` とは別に、状態の記録と ``continuous.power_suppressed`` から求める）
+    colors, stopped = [], []
+    for record in state.color_effects:
+        if record.kind != "pokemon_type" or record.target != pokemon.pokemon_id:
+            continue
+        found = state.find_pokemon(record.source)
+        if found is None or record.source_card not in (found[1].card, found[1].disguise):
+            continue
+        colors.append(record.color)
+        stopped.append(power_suppressed(state, state.definitions[state.cards[record.source_card].card_id].powers[record.power_index], found[1]))
+    if colors:
+        base = readings
+        readings = list(dict.fromkeys(colors))
+        if shift is not None or all(stopped):
+            readings += [color for color in base if color not in readings]
     weakness = effects[WeaknessChange].color if WeaknessChange in effects else definition.weakness
     resistance = effects[ResistanceChange].color if ResistanceChange in effects else definition.resistance
 
@@ -5262,7 +5327,8 @@ def observation_problems(state) -> list[str]:
                                       # v0.81: 手札（見た相手の手札）から種類でしぼったカードを選ぶ決定（docs/pokemon-tools-stadiums-v0.81.md 2 章）
                                       "return_to_deck", "select_evolution_card", "attach_from_hand", "hand_to_active", "discard_from_hand",
                                       "opponent_hand_to_deck", "opponent_hand_to_bench",
-                                      "take_looked_cards")  # v0.83: 見た山札の上のカードから選ぶ決定（docs/shining-gentle-pokemon-v0.83.md 3.1）
+                                      "take_looked_cards",  # v0.83: 見た山札の上のカードから選ぶ決定（docs/shining-gentle-pokemon-v0.83.md 3.1）
+                                      "split_from_deck")  # v0.88: v0.87 の［ぶんれつ］（観測の HIDDEN_COUNT_KINDS にあり、監査の一覧から漏れていた）
             if viewer != d.player and ("options" in dv or (dv != {"kind": d.kind, "player": d.player} if hidden_count else dv.get("option_count") != len(d.options))):
                 problems.append(f"観測（{viewer}）に、ほかのプレイヤー {d.player} の決定の選べるもの（の数）がある")
             if viewer == d.player and OPTION_MEANINGS[d.kind] == "card":

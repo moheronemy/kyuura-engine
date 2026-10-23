@@ -186,6 +186,18 @@ QUESTIONS: dict[str, Question] = {
         Question("shift_color_duration", "UNRESOLVED_SHIFT_COLOR_DURATION", ("VS1",), 10,
                  "モルフォンの［へんしょく］で変えた色が、使った番のあと・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん状態・"
                  "かがくへんかガス）あいだも続くかは、印刷の文面（効果の期限を書かない）・kyuura の記録から決められず、変えた色と印刷の色で結果が変わる"),
+        # v0.88（docs/type-energy-colors-v0.88.md 4 章）: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］）とこうごうせい
+        Question("color_effect_continuation", "UNRESOLVED_COLOR_EFFECT_CONTINUATION", ("CE1",), 10,
+                 "［せんすい］・［エナジーコンバーター］の「この番が終わるまで」の効果が、使ったあとに力が消えた・発生源が場をはなれた・発生源のカードが変わった・色を変えた"
+                 "エネルギーカードが場をはなれてもう一度ついたあとも続くかは、印刷の文面・kyuura の記録（CR-CHEMICAL-GAS-PRIOR-RESULTS は消える前にすませた結果のもの）から"
+                 "決められず、続く読み方と続かない読み方で結果が変わる"),
+        Question("color_replacement_order", "UNRESOLVED_COLOR_REPLACEMENT_ORDER", ("CE2",), 10,
+                 "同じエネルギー・同じポケモンの色を、続いてはたらく 2 つの効果が違う色にする（エナジーコンバーターとこうごうせい・エナジーバーン、こうごうせいと［きせきのかぜ］、"
+                 "［せんすい］と［へんしょく］）とき、どちらの色になるかは、印刷の文面・kyuura の記録（GR-2000-P325-SAME-TIMING は続いてはたらく置きかえの優先を決めない）から"
+                 "決められない"),
+        Question("color_changed_energy_card", "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD", ("CE3",), 10,
+                 "エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったエネルギーカードが、説明の「「○」エネルギーカード」（カードとしての色。「基本エネルギー"
+                 "カード」の色を含む）に当たるかは、印刷の文面・kyuura の記録（エナジーバーンの同じ問い UQ-ENERGY-BURN-TRANSFER も未解決）から決められない"),
         Question("change_absent_weakness_resistance", "UNRESOLVED_CHANGE_ABSENT_WEAKNESS_RESISTANCE", ("PG1",), 10,
                  "弱点（抵抗力）を持たないポケモンの弱点（抵抗力）を「好きな「色」にかえる」効果（ポリゴンの「テクスチャー1」「テクスチャー2」）で、弱点（抵抗力）を新しく"
                  "持たせるのか、何もしないのか（抵抗力なら引く数も）は、印刷の文面・kyuura の記録から決められない（英語版の「If the Defending Pokémon has a Weakness」は"

@@ -181,12 +181,12 @@ class TargetTest(unittest.TestCase):
         self.assertEqual(set(V0_71_POKEMON) | set(V0_71_TRAINERS), set(POOL_V0_71))
         self.assertEqual((len(V0_71_POKEMON), len(V0_71_TRAINERS)), (11, 67))
         self.assertEqual({k: v.original for k, v in E.REPRINT_CARDS.items()}, REQUESTED)
-        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key not in ("pool_v0_71", "pool_v0_72", "pool_v0_73", "pool_v0_74", "pool_v0_75", "pool_v0_76", "pool_v0_77", "pool_v0_78", "pool_v0_79", "pool_v0_80", "pool_v0_81", "pool_v0_82", "pool_v0_83", "pool_v0_84", "pool_v0_85", "pool_v0_86", "pool_v0_87") for c in pool}
+        earlier = {c for key, pool in EXTRACT.items() if key.startswith("pool_") and key not in ("pool_v0_71", "pool_v0_72", "pool_v0_73", "pool_v0_74", "pool_v0_75", "pool_v0_76", "pool_v0_77", "pool_v0_78", "pool_v0_79", "pool_v0_80", "pool_v0_81", "pool_v0_82", "pool_v0_83", "pool_v0_84", "pool_v0_85", "pool_v0_86", "pool_v0_87", "pool_v0_88") for c in pool}
         self.assertEqual(len(earlier), 635)
         self.assertFalse(set(POOL_V0_71) & earlier)
         self.assertTrue(set(REQUESTED.values()) <= earlier)
         self.assertFalse(set(POOL_V0_71) & set(E.EQUIVALENT_CARDS))
-        self.assertEqual(len(EXTRACT["cards"]) - len(EXTRACT["pool_v0_73"]) - len(EXTRACT["pool_v0_74"]) - len(EXTRACT["pool_v0_75"]) - len(EXTRACT["pool_v0_76"]) - len(EXTRACT["pool_v0_77"]) - len(EXTRACT["pool_v0_78"]) - len(EXTRACT["pool_v0_79"]) - len(EXTRACT["pool_v0_80"]) - len(EXTRACT["pool_v0_81"]) - len(EXTRACT["pool_v0_82"]) - len(EXTRACT["pool_v0_83"]) - len(EXTRACT["pool_v0_84"]) - len(EXTRACT["pool_v0_85"]) - len(EXTRACT["pool_v0_86"]) - len(EXTRACT["pool_v0_87"]), 756)  # v0.72 で 43 枚を加えた（v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
+        self.assertEqual(len(EXTRACT["cards"]) - len(EXTRACT["pool_v0_73"]) - len(EXTRACT["pool_v0_74"]) - len(EXTRACT["pool_v0_75"]) - len(EXTRACT["pool_v0_76"]) - len(EXTRACT["pool_v0_77"]) - len(EXTRACT["pool_v0_78"]) - len(EXTRACT["pool_v0_79"]) - len(EXTRACT["pool_v0_80"]) - len(EXTRACT["pool_v0_81"]) - len(EXTRACT["pool_v0_82"]) - len(EXTRACT["pool_v0_83"]) - len(EXTRACT["pool_v0_84"]) - len(EXTRACT["pool_v0_85"]) - len(EXTRACT["pool_v0_86"]) - len(EXTRACT["pool_v0_87"]) - len(EXTRACT["pool_v0_88"]), 756)  # v0.72 で 43 枚を加えた（v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
         targets = {c["id"]: c for c in EXTRACT["reprint_targets"]["cards"]}
         for new, original in REQUESTED.items():
             with self.subTest(card=new):
@@ -208,12 +208,12 @@ class TargetTest(unittest.TestCase):
 
     def test_counts_from_the_registry(self):
         pool = load_card_pool()
-        playable = pool.playable_ids - set(EXTRACT["pool_v0_73"]) - set(EXTRACT["pool_v0_74"]) - set(EXTRACT["pool_v0_75"]) - set(EXTRACT["pool_v0_76"]) - set(EXTRACT["pool_v0_77"]) - set(EXTRACT["pool_v0_78"]) - set(EXTRACT["pool_v0_79"]) - set(EXTRACT["pool_v0_80"]) - set(EXTRACT["pool_v0_81"]) - set(EXTRACT["pool_v0_82"]) - set(EXTRACT["pool_v0_83"]) - set(EXTRACT["pool_v0_84"]) - set(EXTRACT["pool_v0_85"]) - set(EXTRACT["pool_v0_86"]) - set(EXTRACT["pool_v0_87"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.75 の 15 枚も除く。 v0.73 の 18 枚・v0.74 の 13 枚（トレーナー）を除いて比べる
+        playable = pool.playable_ids - set(EXTRACT["pool_v0_73"]) - set(EXTRACT["pool_v0_74"]) - set(EXTRACT["pool_v0_75"]) - set(EXTRACT["pool_v0_76"]) - set(EXTRACT["pool_v0_77"]) - set(EXTRACT["pool_v0_78"]) - set(EXTRACT["pool_v0_79"]) - set(EXTRACT["pool_v0_80"]) - set(EXTRACT["pool_v0_81"]) - set(EXTRACT["pool_v0_82"]) - set(EXTRACT["pool_v0_83"]) - set(EXTRACT["pool_v0_84"]) - set(EXTRACT["pool_v0_85"]) - set(EXTRACT["pool_v0_86"]) - set(EXTRACT["pool_v0_87"]) - set(EXTRACT["pool_v0_88"])  # v0.78 の 13 枚も除く。 v0.76 の 24 枚も除く。 v0.75 の 15 枚も除く。 v0.73 の 18 枚・v0.74 の 13 枚（トレーナー）を除いて比べる
         self.assertEqual(len(playable), 756)  # v0.72 で拡張パック以外の商品のポケモン 43 枚（ワザ 77）を加えた
         counts = {k: sum(1 for c in playable if pool.get(c).category == k) for k in ("pokemon", "trainer", "energy")}
         self.assertEqual(counts, {"pokemon": 546, "trainer": 180, "energy": 30})
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in EXTRACT["pool_v0_73"] and c not in EXTRACT["pool_v0_74"] and c not in EXTRACT["pool_v0_77"] and c not in EXTRACT["pool_v0_80"] and c not in EXTRACT["pool_v0_81"] and c not in EXTRACT["pool_v0_82"] and c not in EXTRACT["pool_v0_83"] and c not in EXTRACT["pool_v0_84"] and c not in EXTRACT["pool_v0_85"] and c not in EXTRACT["pool_v0_86"]]), len(registry.energy_ids())), (1312, 114, 180, 19))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry.power_keys()), len([c for c in registry.trainer_ids() if c not in EXTRACT["pool_v0_73"] and c not in EXTRACT["pool_v0_74"] and c not in EXTRACT["pool_v0_77"] and c not in EXTRACT["pool_v0_80"] and c not in EXTRACT["pool_v0_81"] and c not in EXTRACT["pool_v0_82"] and c not in EXTRACT["pool_v0_83"] and c not in EXTRACT["pool_v0_84"] and c not in EXTRACT["pool_v0_85"] and c not in EXTRACT["pool_v0_86"]]), len(registry.energy_ids())), (1327, 119, 180, 19))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた  # v0.86 でポケモン 13 枚（ワザ 14・特殊能力 12）を加えた  # v0.85 でポケモン 13 枚（ワザ 17・特殊能力 9）・ミラクルエネルギーを加えた  # v0.80 でトレーナー 30 枚（スタジアム 4 枚）を加えた  # v0.79 でポケモン 52 枚（ワザ 94）を加えた  # v0.78 で悪・鋼エネルギー 5 枚とポケモン 8 枚（ワザ 16）を加えた  # v0.77 で neo 期の拡張パックの 52 枚（ポケモン 50・ワザ 77・トレーナー 2）を加えた  # v0.76 で拡張パック以外の商品のポケモン 24 枚（ワザ 48）を加えた  # v0.75 で拡張パック以外の商品のポケモン 15 枚（ワザ 30）を加えた  # v0.83 でポケモン 18 枚（ワザ 33）を加えた  # v0.84 でポケモン 12 枚（ワザ 19・特殊能力 5）・ポケモン育て屋夫婦を加えた
         self.assertTrue(all(pool.get(c).supported for c in POOL_V0_71))
 
     def test_new_type_is_a_kernel_program_outside_the_v013_contract(self):
@@ -312,7 +312,7 @@ class UnsupportedWithoutRegistrationTest(unittest.TestCase):
             .without_trainers("t", [c for c in registry.trainer_ids() if c in POOL_V0_71])
         pool = pool_from_extract(read_extract(), registry)
         self.assertEqual([c for c in POOL_V0_71 if pool.get(c).supported], [])
-        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"]) - set(EXTRACT["pool_v0_74"]) - set(EXTRACT["pool_v0_75"]) - set(EXTRACT["pool_v0_76"]) - set(EXTRACT["pool_v0_77"]) - set(EXTRACT["pool_v0_78"]) - set(EXTRACT["pool_v0_79"]) - set(EXTRACT["pool_v0_80"]) - set(EXTRACT["pool_v0_81"]) - set(EXTRACT["pool_v0_82"]) - set(EXTRACT["pool_v0_83"]) - set(EXTRACT["pool_v0_84"]) - set(EXTRACT["pool_v0_85"]) - set(EXTRACT["pool_v0_86"]) - set(EXTRACT["pool_v0_87"])), 678)  # v0.72 の 43 枚を含む（v0.71 の時点は 635。v0.73 の 18 枚・v0.74 の 13 枚は除いて比べる）
+        self.assertEqual(len(pool.playable_ids - set(EXTRACT["pool_v0_73"]) - set(EXTRACT["pool_v0_74"]) - set(EXTRACT["pool_v0_75"]) - set(EXTRACT["pool_v0_76"]) - set(EXTRACT["pool_v0_77"]) - set(EXTRACT["pool_v0_78"]) - set(EXTRACT["pool_v0_79"]) - set(EXTRACT["pool_v0_80"]) - set(EXTRACT["pool_v0_81"]) - set(EXTRACT["pool_v0_82"]) - set(EXTRACT["pool_v0_83"]) - set(EXTRACT["pool_v0_84"]) - set(EXTRACT["pool_v0_85"]) - set(EXTRACT["pool_v0_86"]) - set(EXTRACT["pool_v0_87"]) - set(EXTRACT["pool_v0_88"])), 678)  # v0.72 の 43 枚を含む（v0.71 の時点は 635。v0.73 の 18 枚・v0.74 の 13 枚は除いて比べる）
 
     def test_data_mismatch_makes_the_card_unsupported(self):
         def trainer_text(value):
@@ -802,7 +802,7 @@ class SecretPlanCandidatesTest(unittest.TestCase):
         pool = load_card_pool()
         candidates = engine_module._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).is_basic_pokemon]
-        v072 = set(EXTRACT["pool_v0_72"]) | set(EXTRACT["pool_v0_73"]) | set(EXTRACT["pool_v0_74"]) | set(EXTRACT["pool_v0_75"]) | set(EXTRACT["pool_v0_76"]) | set(EXTRACT["pool_v0_77"]) | set(EXTRACT["pool_v0_78"]) | set(EXTRACT["pool_v0_79"]) | set(EXTRACT["pool_v0_80"]) | set(EXTRACT["pool_v0_81"]) | set(EXTRACT["pool_v0_82"]) | set(EXTRACT["pool_v0_83"]) | set(EXTRACT["pool_v0_84"]) | set(EXTRACT["pool_v0_85"]) | set(EXTRACT["pool_v0_86"]) | set(EXTRACT["pool_v0_87"])  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
+        v072 = set(EXTRACT["pool_v0_72"]) | set(EXTRACT["pool_v0_73"]) | set(EXTRACT["pool_v0_74"]) | set(EXTRACT["pool_v0_75"]) | set(EXTRACT["pool_v0_76"]) | set(EXTRACT["pool_v0_77"]) | set(EXTRACT["pool_v0_78"]) | set(EXTRACT["pool_v0_79"]) | set(EXTRACT["pool_v0_80"]) | set(EXTRACT["pool_v0_81"]) | set(EXTRACT["pool_v0_82"]) | set(EXTRACT["pool_v0_83"]) | set(EXTRACT["pool_v0_84"]) | set(EXTRACT["pool_v0_85"]) | set(EXTRACT["pool_v0_86"]) | set(EXTRACT["pool_v0_87"]) | set(EXTRACT["pool_v0_88"])  # v0.76 の 24 枚も除く。 v0.72: 試すカードの数は固定しない（v0.72 の 43 枚・v0.73 の 18 枚・v0.74 の 13 枚を除いて比べる）
         self.assertEqual((len(set(candidates) - v072), len(set(basics) - v072)), (572, 245))
         self.assertEqual(engine_module._IDENTITY_TRIAL_LIMIT, 512)
         self.assertLessEqual(1 + len(basics) + 1, engine_module._IDENTITY_TRIAL_LIMIT)

@@ -725,7 +725,7 @@ class RocketsExperimentTest(unittest.TestCase):
 class SaveObservationTest(unittest.TestCase):
     def test_format_16_and_older_formats_reject(self):
         """期限のある効果（``trainer_effects``）・ロケット団の実験の禁止（``origin`` が trainer）は形式 16 で書き出し、形式 1〜15 は ``ValueError``（黙って落とさない）。"""
-        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (22, 22))  # v0.67 で形式 22  # v0.63 で形式 21。 v0.57 で 17、v0.58 で 18、v0.59 で 19
+        self.assertEqual((max(FORMAT_VERSIONS), LATEST_FORMAT), (23, 23))  # v0.88 で 23（color_effects）  # v0.67 で形式 22  # v0.63 で形式 21。 v0.57 で 17、v0.58 で 18、v0.59 で 19
         wall = use(board([INVISIBLE_WALL]), INVISIBLE_WALL)
         locked = use(board([ROCKETS_EXPERIMENT], deck=[G]), ROCKETS_EXPERIMENT, coins=(T,))
         for state in (wall, locked):

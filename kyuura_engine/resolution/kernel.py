@@ -139,6 +139,9 @@ class Resolution:
         # v0.57: このワザでクチバシティジムのコインを投げた結果（(スタジアムカード, 「おもて」か)。投げていなければ None）。ワザの宣言のあとに投げ（``flow._attack_body``）、
         # 決定をまたぐときは続きの情報の ``stadium_coin`` で運ぶ（投げ直さない）。「おもて」なら相手の対戦ポケモンへのダメージの要素に 6 段階の +10（``deal_damage``）
         self.stadium_coin: tuple[int, bool] | None = None
+        # v0.88: このワザといっしょに使った特殊能力（ランターンの［すいりょくはつでん］。使ったら真）。ワザの宣言で決め（``flow._attack_body``）、決定をまたぐときは続きの情報の
+        # ``attack_power`` で運ぶ。相手の対戦ポケモンへのワザのダメージの要素に 2 段階の追加（``attack_modifiers_of``）
+        self.attack_power: bool = False
         # v0.61: ［ずらかる］（``effects.ReturnToDeckAtRemainingHp``）。``dormant`` はコマンドの始めに、残りHPが「10」で力が消えていた場のポケモンの番号（SC2 の比べのもと。
         # 渡さなければ、この解決を作った時点の状態から求める。コマンドの途中で作る解決（特殊能力・トレーナー・にげるのあと）は、コマンドの入口の状態から求めて渡す）。
         # ``scram_touched`` は、この解決のダメージで、力がはたらいたまま残りHPが「10」になった場のポケモンの番号（ダメージの処理のまとまりの途中で「10」を通ったか。SC1）
@@ -205,7 +208,17 @@ def hp_of(state: GameState, pokemon: PokemonInPlay) -> int:
 
 def type_question(res: Resolution, error: TypeReadingsDiffer, what: str) -> OpenQuestion:
     """v0.48: 色の読み方（VS1。``effects.type_readings``）で結果が変わった。問い ``shift_color_duration`` で止める（先読みが集め、宣言の前に止まる）。"""
-    return res.question("shift_color_duration", f"{what}（ポケモン {[p.pokemon_id for p in error.pokemons]}）")
+    name = "shift_color_duration"
+    for pokemon in error.pokemons:  # v0.88: 色の読み方が 2 つ以上になる理由が［せんすい］なら CE1・CE2（VS1 は［へんしょく］の問いだけ）
+        cause = E.type_reading_cause(res.state, pokemon) if res.state.find_pokemon(pokemon.pokemon_id) is not None else None
+        if cause in ("ce1", "ce2"):
+            name = COLOR_QUESTIONS[cause]
+            break
+    return res.question(name, f"{what}（ポケモン {[p.pokemon_id for p in error.pokemons]}）")
+
+
+# v0.88: 色の読み方が決まらない理由の問い（``effects.type_reading_cause``・``card_color_cause``・``color_changed_cards``）
+COLOR_QUESTIONS = {"vs1": "shift_color_duration", "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card"}
 
 
 def track_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, before: int) -> None:
@@ -450,8 +463,14 @@ def attack_modifiers_of(res: Resolution, frame, attacker: PokemonInPlay, receive
     """ワザの分類のダメージの要素 1 つの、場の変更効果（p.321 の 2・5〜8 段階。クチバシティジムのコインを除く）（v0.64。``deal_damage`` から分けた。先読みの
     「うら」が出るまで投げるコインの組（``resolution.unbounded``）が同じ関数を使う）。状態を変えず、乱数を使わない。"""
     exclude = None if defender_effects else EXCLUDE_DEFENDER_HELD
-    return list(attack_damage_modifiers(res.state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS,
-                                        attack_status=res.attack_status, exclude=exclude))
+    modifiers = list(attack_damage_modifiers(res.state, attacker, receiver, attack=frame.attack_key, bench=target in BENCH_TARGETS,
+                                             attack_status=res.attack_status, exclude=exclude))
+    if res.attack_power and target == OPPONENT_ACTIVE and frame.kind is FrameKind.ATTACK:
+        # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］。p.321 の 2 段階。ワザを使うポケモンの効果）
+        extra = E.attack_power_modifier(res.state, attacker, frame.attack_key)
+        if extra is not None:
+            modifiers.append(extra)
+    return modifiers
 
 
 def with_stadium_coin(res: Resolution, frame, target: str, modifiers: list) -> list:

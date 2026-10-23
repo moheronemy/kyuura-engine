@@ -1346,6 +1346,12 @@ ATTACK_TYPES_SINCE_V0_17 = (
     _effects.DamageThenSelfSleepThenSleepOpponentOnHeads,
     _effects.DamageThenSuppressOpponentPowersOnHeads,
     _effects.DamageThenSwitchBothActives,
+    # v0.88（docs/type-energy-colors-v0.88.md 6 章）
+    _effects.ChosenColorEnergySpreadDamage,
+    _effects.OwnBasicColorTypeSpreadDamage,
+    _effects.PlusDistinctBasicEnergyColors,
+    _effects.ChangeOwnResistanceOptional,
+    _effects.ChangeWeaknessAndResistanceOptional,
 )
 
 # v0.29 まで、ヒトカゲ（PMCG1-014）の「ひのこ」は未対応で、「登録のないワザ」の例に使っていた。v0.30 で登録したので、その性質を確かめる
@@ -2171,6 +2177,15 @@ PINECO_NEO4, SLUGMA_NEO4 = "neo4-005", "neo4-017"  # 進化元（クヌギダマ
 V0_87_POKEMON = (FORRETRESS_NEO2, MAGCARGO_NEO3, DARK_MAGCARGO, LT_SURGES_ELECTRODE, KAKUNA_ES1, KOFFING_ES2, MAGNEMITE_ES2, MAGNEMITE_QSG, GENGAR_PR1,
                  ARTICUNO_ES2, ARTICUNO_QSG, DUGTRIO_PR1, SNORLAX_ES1, SNORLAX_QSG)
 V0_87_CARDS = V0_87_POKEMON
+
+# v0.88（docs/type-energy-colors-v0.88.md）: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザ、変えたカードをつけ替える特殊能力の 11 枚
+LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3 = "neo1-040", "neo3-026", "neo3-051"  # ランターン［すいりょくはつでん］・ランターン［せんすい］・ポリゴン2［エナジーコンバーター］
+ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI = "GD4-001", "neo3-034", "SI-004"  # エリカのナゾノクサ［こうごうせい］・スターミー（コアストリーム）・ミュウ（レインボーウェーブ）
+HO_OH_PF3, MAGNETON_NEO3 = "PF3-007", "neo3-045"  # ホウオウ（レインボーバーン）・レアコイル［でんじりょく］
+PORYGON_ES1, PORYGON_QSG, COOL_PORYGON = "ES1-033", "QSG-045", "PR1-023"  # ポリゴン（テクスチャー2）2 枚・かっこいいポリゴン（テクスチャーマジック）
+V0_88_POKEMON = (LANTURN_NEO1, LANTURN_NEO3, PORYGON2_NEO3, ERIKAS_ODDISH_GD4, STARMIE_NEO3, MEW_SI, HO_OH_PF3, MAGNETON_NEO3, PORYGON_ES1, PORYGON_QSG,
+                 COOL_PORYGON)
+V0_88_CARDS = V0_88_POKEMON  # 写しの組 pool_v0_88 の並び
 
 
 def _self_sleep_shape_only(attack):

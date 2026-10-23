@@ -12,8 +12,8 @@
   "card_data_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
   "engine_import_id": "ENGINE-46A3E2E",
   "counts": {
-    "engine_unresolved_rulings": 199,
-    "engine_stop_codes": 197,
+    "engine_unresolved_rulings": 202,
+    "engine_stop_codes": 200,
     "kyuura_issues": 71
   },
   "stop_codes": {
@@ -2294,6 +2294,39 @@
       ],
       "kyuura_issue": null,
       "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_EFFECT_CONTINUATION": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE1"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_REPLACEMENT_ORDER": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE2"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
+    },
+    "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD": {
+      "engine_rulings": [
+        {
+          "version": "v0.88",
+          "document": "docs/type-energy-colors-v0.88.md",
+          "ruling_id": "CE3"
+        }
+      ],
+      "kyuura_issue": null,
+      "kyuura_disposition": "not_in_kyuura"
     }
   },
   "codeless_questions": {
@@ -3767,7 +3800,27 @@
       "ES1-034/attack/0",
       "ES1-034/power/0",
       "QSG-046/attack/0",
-      "QSG-046/power/0"
+      "QSG-046/power/0",
+      "neo1-040/attack/0",
+      "neo1-040/power/0",
+      "neo3-026/attack/0",
+      "neo3-026/power/0",
+      "neo3-051/attack/0",
+      "neo3-051/power/0",
+      "GD4-001/attack/0",
+      "GD4-001/power/0",
+      "neo3-034/attack/0",
+      "neo3-034/attack/1",
+      "SI-004/attack/0",
+      "PF3-007/attack/0",
+      "neo3-045/attack/0",
+      "neo3-045/power/0",
+      "ES1-033/attack/0",
+      "ES1-033/attack/1",
+      "QSG-045/attack/0",
+      "QSG-045/attack/1",
+      "PR1-023/attack/0",
+      "PR1-023/attack/1"
     ],
     "errata_text": {
       "PMCG1-014/attack/1": "RUL-ENERGY-DISCARD-ATTACKS",

@@ -108,9 +108,9 @@ class RegistrationTest(unittest.TestCase):
         categories = {"pokemon": 0, "trainer": 0, "energy": 0}
         for card_id in pool.playable_ids:
             categories[pool.get(card_id).category] += 1
-        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1080, 783, 260, 37))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual((len(pool.playable_ids), categories["pokemon"], categories["trainer"], categories["energy"]), (1091, 794, 260, 37))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
         registry = E.DEFAULT_EFFECTS
-        self.assertEqual((len(registry.attack_keys()), len(registry._powers)), (1312, 114))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual((len(registry.attack_keys()), len(registry._powers)), (1327, 119))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
         stadiums = sum(1 for c in pool.playable_ids if pool.get(c).category == "trainer" and "stadium" in (pool.get(c).trainer_kinds or ()))
         self.assertEqual(stadiums, 41)
         self.assertEqual(tuple(read_extract()["pool_v0_86"]), H.V0_86_CARDS)
@@ -121,7 +121,7 @@ class RegistrationTest(unittest.TestCase):
         powers = {k: v for k, v in registry._powers.items() if k.card_id not in H.V0_86_CARDS}
         before = E.EffectRegistry(registry.id, attacks, registry._trainers, powers, registry._energies)
         pool = pool_from_extract(read_extract(), before)
-        self.assertEqual(len(pool.playable_ids), 1067)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual(len(pool.playable_ids), 1078)  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
         self.assertTrue(all(card not in pool.playable_ids for card in H.V0_86_CARDS))
         # 特殊能力を持つカードは、ワザだけの登録では対応にならない
         attacks_only = E.EffectRegistry(registry.id, registry._attacks, registry._trainers,
@@ -169,18 +169,18 @@ class RegistrationTest(unittest.TestCase):
         pool = load_card_pool()
         names = {pool.get(c).name_ja for c in pool.playable_ids if pool.get(c).category == "pokemon"}
         new_names = {"わるいクロバット", "わるいデンリュウ", "わるいモココ", "エンテイ", "スイクン", "ハピナス", "ライコウ"}
-        self.assertEqual(len(names), 415)  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual(len(names), 418)  # v0.88 で 3 つの名前（ランターン・ポリゴン2・かっこいいポリゴン）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
         self.assertTrue(new_names <= names)
         candidates = engine._identity_candidates(pool)
         basics = [c for c in candidates if pool.get(c).category == "pokemon" and pool.get(c).stage == "basic"]
-        self.assertEqual((len(candidates), len(basics)), (885, 401))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+        self.assertEqual((len(candidates), len(basics)), (895, 406))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
         kyuura = ROOT.parent / "kyuura"
         if (kyuura / ".git").exists():
             extract = read_extract()
             targets = json.loads(subprocess.check_output(["git", "-C", str(kyuura), "show", f"{extract['source']['commit']}:data/engine_targets.json"]))
             missing = [c for c in targets["cards"] if c["id"] not in pool.playable_ids]
             self.assertEqual((len(targets["cards"]), len(missing), sum(1 for c in missing if c["id"].startswith("neo")),
-                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 297, 137, 160))  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
+                              sum(1 for c in missing if c["product_group"] != "expansion_pack")), (1377, 286, 132, 154))  # v0.88 でポケモン 11 枚（ワザ 15・特殊能力 5）を加えた  # v0.87 でポケモン 14 枚（ワザ 14・特殊能力 14）を加えた
 
     def test_new_public_events_and_decisions(self):
         for kind in ("conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results",

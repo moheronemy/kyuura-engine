@@ -109,6 +109,7 @@ from .decisions import (
 from .effects import (
     JANKEN_HANDS,
     COLORS, attack_of, available_attacks, current_form, hand_revealed_by, max_hp, powers_of, resistance_of, type_readings, type_shift_determined, weakness_of,
+    attached_units, card_color_readings,
 )
 from .serialize import history_record
 from .state import GameState, PokemonInPlay
@@ -164,8 +165,10 @@ OPTION_MEANINGS: dict[str, str] = {
 }
 # 山札の中身を選べるものにする決定（決めるプレイヤーが、効果でその山札をさがす・見たカードを並べる）。選べるもののカードは、決めるプレイヤーに見える
 # v0.73: 化石の発掘（山札とトラッシュ）・マスターボール（見た山札の上の 7 枚）も、決めるプレイヤーが自分の山札を見る
+# v0.88: ［ぶんれつ］で出す山札のカード（SPLIT_FROM_DECK。決めるプレイヤーが自分の山札をさがす）も。v0.87 は入れておらず、決めるプレイヤーの観測の選べるものに、見えないカードの uid が
+# あることになっていた（docs/type-energy-colors-v0.88.md 1 章）
 DECK_REVEALING_KINDS = frozenset({SEARCH_DECK, BENCH_FROM_DECK, ATTACH_FROM_DECK, ARRANGE_DECK_TOP, TAKE_LOOKED_CARDS, CHALLENGE_BENCH, SEARCH_DECK_OR_DISCARD,
-                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER})
+                                  TAKE_LOOKED_POKEMON, TAKE_LOOKED_TRAINER, SPLIT_FROM_DECK})
 # v0.63: 決めるプレイヤーでない人に、選ぶ数・選べるものの数を見せない決定（たたきつけろ!挑戦状の山札から選ぶ決定は山札のたねポケモンの数、カツラのクイズ その3の置く
 # カード・伝えるワザの決定は手札のポケモンの数・置いたカードのワザの数を漏らすため。種類と決めるプレイヤーだけを見せる）
 # v0.73: 化石の発掘（山札とトラッシュの「なにかの化石」）・マスターボール（見た 7 枚のうちのポケモン）も、選べるものの数が山札の中身を漏らすので見せない
@@ -260,6 +263,10 @@ def _pokemon(state: GameState, pokemon: PokemonInPlay) -> dict[str, Any]:
         "evolution_stack": [_card(state, uid) for uid in pokemon.evolution_stack],
         "damage": pokemon.damage,
         "energy": [_card(state, uid) for uid in pokemon.energy],
+        # v0.88: ついているエネルギーが今出すエネルギー（1 個ずつ、使える色。エンジンの ``effects.attached_units`` と同じ値。こうごうせい・エナジーコンバーター・エナジーバーン・
+        # ［おいしげる］を当てはめた最初の読み方）。色の読み方が決まらないカード（CE1・CE2）があれば ``energy_units_determined`` が偽（エンジンは読み方で結果が変わる処理を止める）
+        "energy_units": [sorted(color.value for color in unit) for unit in attached_units(state, pokemon)],
+        "energy_units_determined": all(len(card_color_readings(state, pokemon, uid)) == 1 for uid in pokemon.energy),
         "trainers": [_card(state, t.card) for t in pokemon.trainers],
         "special_conditions": list(pokemon.conditions.names()),
         "persistent_effects": [effect.kind for effect in pokemon.persistent_effects],
@@ -427,6 +434,10 @@ def observe(state: GameState, viewer: int | None) -> dict[str, Any]:
         "stadium": None if state.stadium is None else {"owner": state.stadium.owner, "placed_turn": state.stadium.placed_turn,
                                                        **_card(state, state.stadium.card)},
         "stadium_uses_this_turn": [list(use) for use in state.stadium_uses_this_turn],
+        # v0.88: 特殊能力で色を変える効果（［せんすい］・［エナジーコンバーター］。公開の情報。書き出しの形式 23 と同じ項目）
+        "color_effects": [{"kind": e.kind, "player": e.player, "source": e.source, **_card(state, e.source_card), "power_index": e.power_index,
+                           "target": e.target, "color": e.color.value, "turn": e.turn, "left_play": e.left_play}
+                          for e in state.color_effects],
         "decision": _decision(state, viewer),
         "result": None if state.result is None else {"outcome": state.result.outcome, "winner": state.result.winner},
     }
@@ -508,6 +519,9 @@ PRIVATE_FIELDS: dict[str, tuple[tuple[str, ...], Callable[[Any, int | None], boo
 }
 # 見えない項目のないイベント（どの項目も全員に見える。公開のゾーン・場・コイン・決まった結果）
 PUBLIC_EVENTS = frozenset({
+    # v0.88: 色を変える効果の追加・消去（［せんすい］・［エナジーコンバーター］）・ワザといっしょに使った特殊能力（［すいりょくはつでん］）・ワザで選んだ色・色を選べなかった・
+    # テクスチャーで色を変えなかった（どれも場・公開の選択）
+    "color_effect_added", "color_effect_removed", "attack_power", "attack_color_chosen", "attack_color_none", "color_change_declined",
     # v0.86: ［かんでん］のダメージ・［いなびかり］がはたらかなかった（相手の控えなし）・反応の特殊能力を使わなかった・［はしりさる］のコインの結果とはたらかなかった・
     # ダークドレインのポケモンごとのコインの結果・［おたけび］の番の終わり（どれも場・コイン・公開の結果）
     "conductivity", "lightning_burst_skipped", "reaction_power_declined", "bolt_check", "bolt_skipped", "pokemon_coin_results", "power_turn_end",

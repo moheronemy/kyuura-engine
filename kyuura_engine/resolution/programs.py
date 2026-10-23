@@ -251,6 +251,8 @@ class AttackRun:
             self.fs.coins[name] = CoinFlips(tuple(CoinSide(side) for side in sides))
         for name, pid in carried.get("chosen_targets", ()):
             self.fs.results[name] = ChosenTarget(pid)  # v0.83
+        for name, color in carried.get("chosen_colors", ()):
+            self.fs.results[name] = ChosenColor(None if color is None else EnergyType(color))  # v0.88
         for name, values in carried.get("damage_results", ()):
             self.fs.results[name] = E.DamageResult(*values)  # v0.87
         frame = dict(carried.get("frame", ()))
@@ -281,6 +283,7 @@ class AttackRun:
         # v0.57: クチバシティジムのコインの結果（投げ直さない）
         coin = carried.get("stadium_coin")
         self.res.stadium_coin = None if coin is None else (coin[0], bool(coin[1]))
+        self.res.attack_power = bool(carried.get("attack_power", 0))  # v0.88
 
     def knocked_out(self, pokemon: PokemonInPlay) -> bool:
         """v0.67: おもてにしてトラッシュしたうらのカード（``res.secret_lost``）は、処理の対象がいない（効果を与えない・効果を決めるコインを投げない。HP 以上になった
@@ -360,6 +363,8 @@ class AttackRun:
         if self.res.stadium_coin is not None:
             # v0.57: クチバシティジムのコインの結果（(スタジアムカード, 「おもて」なら 1)）。投げていなければ書かない（v0.56 までの決定の形は変えない）
             extra += (("stadium_coin", (self.res.stadium_coin[0], int(self.res.stadium_coin[1]))),)
+        if self.res.attack_power:
+            extra += (("attack_power", 1),)  # v0.88: ワザといっしょに使った特殊能力（［すいりょくはつでん］）。使っていなければ書かない（v0.87 までの決定の形は変えない）
         # v0.61: HP 以上になったポケモンのきぜつの原因（［ファイナルビーム］の候補。``kernel.ko_cause``）。HP 以上のポケモンがなければ書かない
         ko_by = self._ko_by()
         # v0.65: ［にげこむ］のまだ聞いていない候補・入れ替えたポケモン。なければ書かない（v0.64 までの決定の形は変えない）
@@ -377,6 +382,10 @@ class AttackRun:
         if chosen:
             # v0.83: 先に選んだ控えポケモン（「サンダースコール」。``ChooseOpponentBench``）。あとのダメージの要素が順番の決定などで止まっても、選び直さない
             extra += (("chosen_targets", chosen),)
+        colors = tuple(sorted((name, None if result.color is None else result.color.value) for name, result in self.fs.results.items() if isinstance(result, ChosenColor)))
+        if colors:
+            # v0.88: 先に選んだ色（コアストリーム・レインボーウェーブ。``ChooseColor``）。あとのダメージの要素が順番の決定などで止まっても、選び直さない
+            extra += (("chosen_colors", colors),)
         boundary = dict(extra).get("boundary")
         if boundary is not None:
             # v0.87: 要素のあいだの決定（［ぶんれつ］・［だつりょくえき］など。``boundary`` は次に処理する要素の位置）のあとの要素が、前のダメージの要素の結果を
@@ -896,16 +905,19 @@ class HeadsOwnCounters:
         return counters * self.per if flips.results[0] is HEADS else 0
 
 
-def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType) -> None:
+def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType, *, cards: bool) -> None:
     """v0.49（TE1）: ワザの説明が ``pokemon`` についている ``energy_type`` のエネルギー（カード）を数える・トラッシュするとき、［へんしん］の「どの色のエネルギー
     としても使うことができる」が当てはまるかで、数える・選べるカードが変わるなら止める（``E.energy_type_readings`` が 2 つの読み方を返すとき）。［へんしん］が
-    はたらいていない・ついているエネルギーがどれも ``energy_type`` なら何もしない。必要なエネルギーの支払い（``E.attack_cost_payable``）とは別の問い。"""
+    はたらいていない・ついているエネルギーがどれも ``energy_type`` なら何もしない。必要なエネルギーの支払い（``E.attack_cost_payable``）とは別の問い。
+
+    v0.88（docs/type-energy-colors-v0.88.md 3 章）: ``cards`` は説明が数える・選ぶものの種類。真なら「「X」エネルギーカード」（カードとしての色）で、エナジーコンバーター・こうごうせいで
+    色が変わったカードが当たるかが決まらなければ止める（CE3）。偽なら「「X」エネルギー」（エネルギーの今の色。``E.typed_unit_count``）で、色の読み方（CE1・CE2）で数が変われば止める。"""
     if len(E.energy_type_readings(run.state, pokemon, energy_type)) > 1:
         raise run.res.question("transform_energy_count", f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギー")
     # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める
-    cards = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
-    if cards:
-        raise run.res.question("rainbow_energy_type", f"ポケモン {pokemon.pokemon_id} のレインボーエネルギー {cards}・「{energy_type.ja}」エネルギー")
+    rainbow = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
+    if rainbow:
+        raise run.res.question("rainbow_energy_type", f"ポケモン {pokemon.pokemon_id} のレインボーエネルギー {rainbow}・「{energy_type.ja}」エネルギー")
     # v0.59（BZ2）: ［エネエネ］でその色のエネルギーになったカードが、説明の「「X」エネルギー(カード)」に当たるかが決まらない
     converted = E.converted_energy_cards(run.state, pokemon, energy_type)
     if converted:
@@ -914,7 +926,20 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
     miracle = E.ambiguous_miracle_cards(run.state, pokemon, energy_type)
     if miracle:
         raise run.res.question("miracle_energy_type", f"ポケモン {pokemon.pokemon_id} のミラクルエネルギー {miracle}・「{energy_type.ja}」エネルギー")
+    if cards:
+        changed = E.color_changed_cards(run.state, pokemon, energy_type)
+        if changed:
+            raise run.res.question("color_changed_energy_card", f"ポケモン {pokemon.pokemon_id} のカード {changed}・「{energy_type.ja}」エネルギーカード",
+                                   E.color_card_error(pokemon, energy_type, changed))
+    else:
+        problem = E.typed_unit_count_problem(run.state, pokemon, energy_type)
+        if problem is not None:
+            raise run.res.question(COLOR_QUESTION_BY_CODE[problem.code], f"ポケモン {pokemon.pokemon_id}・「{energy_type.ja}」エネルギーの数", problem)
     wild_growth_question(run, pokemon)
+
+
+# v0.88: 色の読み方の止めるコード → 問い（``kernel.COLOR_QUESTIONS`` と同じ問い）
+COLOR_QUESTION_BY_CODE = {E.COLOR_CONTINUATION_CODE: "color_effect_continuation", E.COLOR_OVERLAP_CODE: "color_replacement_order", E.COLOR_CARD_CODE: "color_changed_energy_card"}
 
 
 def wild_growth_question(run: AttackRun, pokemon: PokemonInPlay | None) -> None:
@@ -926,7 +951,8 @@ def wild_growth_question(run: AttackRun, pokemon: PokemonInPlay | None) -> None:
     if not found:
         return
     uid, kind = found[0]
-    name = {"vs1": "shift_color_duration", "rb1": "rainbow_energy_type", "bz2": "buzzap_energy_type", "mc1": "miracle_energy_type"}[kind]
+    name = {"vs1": "shift_color_duration", "rb1": "rainbow_energy_type", "bz2": "buzzap_energy_type", "mc1": "miracle_energy_type",
+            "ce1": "color_effect_continuation", "ce2": "color_replacement_order", "ce3": "color_changed_energy_card"}[kind]  # v0.88: CE1〜CE3
     raise run.res.question(name, f"［おいしげる］（「草」エネルギーカードは「草」2 個ぶん）・ポケモン {pokemon.pokemon_id} のカード {uid}")
 
 
@@ -946,8 +972,9 @@ class ExtraEnergy:
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         attacker = run.attacker()
-        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
-        attached = sum(1 for uid in attacker.energy if run.state.card_def(uid).provides is self.energy_type)
+        transform_energy_question(run, attacker, self.energy_type, cards=False)  # v0.49: TE1
+        # v0.88: 説明の「「水」エネルギー」はエネルギーの今の色で数える（エナジーコンバーターで変わった色も。基本エネルギーカードだけの場では v0.87 までのカードの枚数と同じ）
+        attached = E.typed_unit_count(run.state, attacker, self.energy_type)
         return run.attack.damage + min(max(0, attached - len(run.attack.cost)), self.max_extra) * self.per
 
 
@@ -1086,7 +1113,7 @@ class Coin(Element):
     def run(self, run: AttackRun) -> bool:
         count = self.count
         if self.per_attached is not None:
-            transform_energy_question(run, run.attacker(), self.per_attached)  # v0.49: TE1
+            transform_energy_question(run, run.attacker(), self.per_attached, cards=True)  # v0.49: TE1
             count = len(E.attached_basic_energy(run.state, run.attacker(), self.per_attached))
         if self.per_opponent_energy:
             count = all_energy_units(run.state, run.opponent_active(), run)
@@ -1218,16 +1245,22 @@ class Damage(Element):
     # v0.60: False なら、相手の持っている「弱点・抵抗力・特殊能力・その他の効果」の影響を受けない（タケシのサンドパンの「スピードスター」。``kernel.deal_damage`` の
     # ``defender_effects``。相手の対戦ポケモンへのダメージだけ）
     defender_effects: bool = True
+    # v0.88: 受けるポケモンを、前の ``ChooseColor`` で選んだ色でしぼる（(``COLOR_BY_ENERGY`` か ``COLOR_BY_TYPE``, 選んだ色の結果の名前)。``color_filter_hit``）。None ならしぼらない
+    color_filter: tuple[str, str] | None = None
     phase: ClassVar[Phase] = Phase.DAMAGE
 
     def coin_receiver(self) -> str | None:
         return "damage" if self.target == OPP else None
 
     def has_target(self, run: AttackRun) -> bool:
-        if self.names is None:
+        if self.names is None and self.color_filter is None:
             return True
         _, receiver = receiver_of_target(run, self.target)
-        return E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
+        if receiver is None:
+            return False
+        if self.color_filter is not None and not color_filter_hit(run, receiver, self.color_filter):
+            return False
+        return self.names is None or E.form_def(run.state, receiver).name_ja in self.names  # v0.49: 今の姿の名前（［へんしん］・「ばける」）
 
     def decides(self, kind: str) -> bool:
         # v0.35: 同じ段階の変更効果の計算の順番の決定（``DAMAGE_STEP_ORDER``）。並びの中にダメージの要素が 2 つ以上あっても、続きの情報の
@@ -1947,7 +1980,7 @@ class DiscardOwnEnergy(Element):
         pokemon = run.attacker() if pokemon is None else pokemon
         if self.energy_type is None:
             return [uid for uid in pokemon.energy if run.state.card_def(uid).category == "energy"]
-        transform_energy_question(run, pokemon, self.energy_type)  # v0.49: TE1（トラッシュするカードの選べるもの）
+        transform_energy_question(run, pokemon, self.energy_type, cards=True)  # v0.49: TE1（トラッシュするカードの選べるもの）
         return E.attached_basic_energy(run.state, pokemon, self.energy_type)
 
     def _needed(self, run: AttackRun) -> int | None:
@@ -2283,7 +2316,7 @@ class ExtraEnergyMixed:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
+        transform_energy_question(run, run.attacker(), self.energy_type, cards=False)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
         units = E.attached_units(run.state, run.attacker())  # v0.58: 出すエネルギーの個数（無色2個エネルギーは 2 個）
         have = sum(1 for unit in units if unit == frozenset({self.energy_type}))
         others = len(units) - have
@@ -2322,6 +2355,7 @@ class BenchDamage(Element):
     # v0.40: 名前（いちばん上のカードの名前の完全一致）がこのどれかの控えポケモンだけ（わるいマタドガスの「みんなでばくはつ」）。None なら名前を見ない
     names: tuple[str, ...] | None = None
     requires: str | None = None  # v0.85: トラッシュの要素の名前。トラッシュできなかったら（「このワザのダメージは、すべてなくなる」。かえんぐるま）何もしない
+    color_filter: tuple[str, str] | None = None  # v0.88: ``Damage.color_filter`` と同じ（コアストリーム・レインボーウェーブ）
     phase: ClassVar[Phase] = Phase.DAMAGE
     guards_bench: ClassVar[bool] = True  # v0.65
 
@@ -2329,6 +2363,8 @@ class BenchDamage(Element):
         side = run.player if self.own else 1 - run.player
         bench = run.state.players[side].bench
         named = [p for p in bench if self.names is None or E.form_def(run.state, p).name_ja in self.names]  # v0.49: 今の姿の名前
+        if self.color_filter is not None:
+            named = [p for p in named if color_filter_hit(run, p, self.color_filter)]  # v0.88
         if self.pokemon_type is None and not self.same_type_as_opponent_active and self.exclude_type is None:
             return named
         # v0.48: タイプ（色）は今有効な色（``effects.type_readings``。［へんしょく］）。読み方（VS1）が 2 つあり、選ばれる控えが変わるなら止める
@@ -2989,7 +3025,7 @@ class OptionalDiscardBenchDamage(Element):
             run.state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                                 element="discard_energy", reason=E.EFFECT_TARGET_KNOCKED_OUT)
             return False
-        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1
+        transform_energy_question(run, attacker, self.energy_type, cards=True)  # v0.49: TE1
         candidates = E.attached_basic_energy(run.state, attacker, self.energy_type)
         if not candidates:
             return False
@@ -3336,7 +3372,7 @@ class PlusHeadsPerAttachedType:
 
     def coin_count(self, run: AttackRun) -> int:
         attacker = run.attacker()
-        transform_energy_question(run, attacker, self.energy_type)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
+        transform_energy_question(run, attacker, self.energy_type, cards=False)  # v0.49: TE1。v0.58: RB1（レインボーエネルギー）
         # v0.58: 出すエネルギーの個数で数える（無色2個エネルギーは「水」ではないので数えない。レインボーエネルギーは RB1 で止めている）
         return sum(1 for unit in E.attached_units(run.state, attacker) if unit == frozenset({self.energy_type}))
 
@@ -5752,7 +5788,7 @@ class PerAttachedEnergyCards:
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
-        transform_energy_question(run, run.attacker(), self.energy_type)  # v0.49: TE1
+        transform_energy_question(run, run.attacker(), self.energy_type, cards=True)  # v0.49: TE1
         return len(E.attached_basic_energy(run.state, run.attacker(), self.energy_type)) * self.per
 
 
@@ -6146,6 +6182,10 @@ class OpponentWeaknessColor(Element):
     - 選ぶ（決定 ``SELECT_COLOR``。選べるものは ``effects.NON_COLORLESS_CHOICES``）→ 前の効果を理由 ``replaced`` で消して与える（``replace_persistent_effect``）
     """
 
+    # v0.88: 「変えてよい」（変えないこともできる。決定の 0 個。かっこいいポリゴンの「テクスチャーマジック」）。``absent_skips`` は「相手に弱点があれば」（弱点がなければ何もしない。
+    # PG1 にしない）
+    optional: bool = False
+    absent_skips: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_COLOR
     opponent_element: ClassVar[str] = E.WEAKNESS_CHANGE_ELEMENT
@@ -6156,17 +6196,26 @@ class OpponentWeaknessColor(Element):
         if run.knocked_out(target):
             run.ko_prevention_conflict(target)
             return False
+        if self.absent_skips and E.weakness_of(run.state, target) is None:
+            return False  # v0.88: 「相手に弱点があれば」（弱点のないポケモンには何もしない。効果を受けるかの評価もしない）
         if not reaches(run.res, run.fs, opponent, target, E.WEAKNESS_CHANGE_ELEMENT):
             return False
         if E.weakness_of(run.state, target) is None:
             raise run.res.question("change_absent_weakness_resistance", f"相手の対戦ポケモン {target.pokemon_id} に弱点がない")
-        run.suspend(kind=SELECT_COLOR, player=run.player, options=E.NON_COLORLESS_CHOICES, extra=(("target", target.pokemon_id),), carry=True)
+        # v0.88: 「変えてよい」ワザは、並びに色を選ぶ要素が 2 つあることがある（テクスチャーマジック）ので、決定を出した要素の位置を運ぶ（v0.35 の "element"）
+        where = (("element", run.index),) if self.optional else ()
+        run.suspend(kind=SELECT_COLOR, player=run.player, options=E.NON_COLORLESS_CHOICES, extra=(("target", target.pokemon_id),) + where, carry=True,
+                    min_choices=0 if self.optional else 1)
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         target = run.opponent_active()
         if target is None or target.pokemon_id != run.carried.get("target"):
             raise RuntimeError(f"テクスチャー1の対象 {run.carried.get('target')} が相手のバトル場にいない（エンジンの不具合）")
+        if not choices and self.optional:
+            run.state.add_event("color_change_declined", player=run.player, pokemon=target.card, pokemon_id=target.pokemon_id, effect=str(run.key),
+                                change="weakness")  # v0.88
+            return
         color = _color_choice(run, choices)
         turn = run.state.turn_number
         effect = WeaknessChange(source_card=run.attacker().card, source_player=run.player, created_turn=turn, active_turn=turn, color=color)
@@ -6179,6 +6228,9 @@ class SelfResistanceColor(Element):
     ``ResistanceChange``。数は変えない）。自分自身への持続する効果（v0.31 の ``SelfPersistent`` と同じく、「とうめい」は評価しない。ポリゴン・まねるワザを持つポケモンは
     「とうめい」を持たない）。今有効な抵抗力がない（相手のワザとして使ったポケモン）なら決まらない（PG1）。"""
 
+    # v0.88: 「変えてよい」（ポリゴン ES1-033 の「テクスチャー2」・かっこいいポリゴンの「テクスチャーマジック」）。変えないこともできる（決定の 0 個）。抵抗力がないなら、色を選ぶと
+    # PG1（変えないことはできるので、宣言の前には止めない。``unresolved_choices``）
+    optional: bool = False
     phase: ClassVar[Phase] = Phase.EFFECT
     decision_kind: ClassVar[str] = SELECT_COLOR
 
@@ -6187,15 +6239,27 @@ class SelfResistanceColor(Element):
         if run.knocked_out(attacker):
             run.ko_prevention_conflict(attacker, run.player)
             return False
+        extra: tuple = (("target", attacker.pokemon_id),) + ((("element", run.index),) if self.optional else ())  # v0.88: 位置は ``OpponentWeaknessColor`` と同じ
         if E.resistance_of(run.state, attacker)[0] is None:
-            raise run.res.question("change_absent_weakness_resistance", f"ワザを使ったポケモン {attacker.pokemon_id} に抵抗力がない")
-        run.suspend(kind=SELECT_COLOR, player=run.player, options=E.NON_COLORLESS_CHOICES, extra=(("target", attacker.pokemon_id),), carry=True)
+            if not self.optional:
+                raise run.res.question("change_absent_weakness_resistance", f"ワザを使ったポケモン {attacker.pokemon_id} に抵抗力がない")
+            extra += (("unresolved_choices", E.NON_COLORLESS_CHOICES), ("unresolved_code", E.ABSENT_WEAKNESS_RESISTANCE_CODE),
+                      ("unresolved_reason", f"ワザを使ったポケモン {attacker.pokemon_id} に抵抗力がない: {E.ABSENT_WEAKNESS_RESISTANCE_REASON}"))
+        run.suspend(kind=SELECT_COLOR, player=run.player, options=E.NON_COLORLESS_CHOICES, extra=extra, carry=True, min_choices=0 if self.optional else 1)
         return True
+
+    def dry_choices(self, run: AttackRun, decision: PendingDecision) -> list[tuple[int, ...]]:
+        blocked = set(decision.context_value("unresolved_choices", ()))
+        return [answer for answer in all_answers(decision) if not blocked & set(answer)]
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         attacker = run.attacker()
         if attacker.pokemon_id != run.carried.get("target"):
             raise RuntimeError("テクスチャー2の対象がワザを使ったポケモンではない（エンジンの不具合）")
+        if not choices and self.optional:
+            run.state.add_event("color_change_declined", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
+                                change="resistance")  # v0.88
+            return
         color = _color_choice(run, choices)
         turn = run.state.turn_number
         effect = ResistanceChange(source_card=attacker.card, source_player=run.player, created_turn=turn, active_turn=turn, color=color)
@@ -6698,7 +6762,7 @@ class MoveOneEnergyToBench(Element):
             state.add_event("effect_skipped", player=run.player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, effect=str(run.key),
                             element="move_energy", reason=E.EFFECT_TARGET_KNOCKED_OUT)
             return False
-        transform_energy_question(run, attacker, self.energy_type)
+        transform_energy_question(run, attacker, self.energy_type, cards=True)
         candidates = E.attached_basic_energy(state, attacker, self.energy_type)
         if not candidates:
             return False
@@ -6891,7 +6955,7 @@ class OptionalDiscardForBonus(Element):
     def candidates(self, run: AttackRun) -> list[int]:
         found = []
         for pokemon in self.holders(run):
-            transform_energy_question(run, pokemon, self.energy_type)  # TE1・RB1・BZ2（どのポケモンのカードを数える・選ぶかが変わる）
+            transform_energy_question(run, pokemon, self.energy_type, cards=True)  # TE1・RB1・BZ2（どのポケモンのカードを数える・選ぶかが変わる）
             found += E.attached_basic_energy(run.state, pokemon, self.energy_type)
         return found
 
@@ -6954,7 +7018,7 @@ class OptionalDiscardAll(Element):
     decision_kind: ClassVar[str] = OPTIONAL_DISCARD_ALL
 
     def candidates(self, run: AttackRun) -> list[int]:
-        transform_energy_question(run, run.attacker(), self.energy_type)  # TE1・RB1・BZ2
+        transform_energy_question(run, run.attacker(), self.energy_type, cards=True)  # TE1・RB1・BZ2
         return E.attached_basic_energy(run.state, run.attacker(), self.energy_type)
 
     def run(self, run: AttackRun) -> bool:
@@ -7004,7 +7068,7 @@ class DiscardEachType(Element):
         return None  # 説明がトラッシュできないときの処理（ダメージはなくなる）を書いている
 
     def options(self, run: AttackRun, index: int) -> list[int]:
-        transform_energy_question(run, run.attacker(), self.types[index])  # TE1・RB1・BZ2
+        transform_energy_question(run, run.attacker(), self.types[index], cards=True)  # TE1・RB1・BZ2
         return E.attached_basic_energy(run.state, run.attacker(), self.types[index])
 
     def run(self, run: AttackRun) -> bool:
@@ -7107,7 +7171,7 @@ class ChosenTarget:
 def typed_energy_units(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType) -> int:
     """v0.83: ``pokemon`` についている「``energy_type``」エネルギーの数（エネルギーの個数。カードの枚数ではない。``effects.attached_units`` の 1 個ずつのうち、その色だけの
     もの）。［へんしん］のメタモン（TE1）・レインボーエネルギー（RB1）・［エネエネ］（BZ2）で数え方が決まらなければ止める（``transform_energy_question``）。"""
-    transform_energy_question(run, pokemon, energy_type)
+    transform_energy_question(run, pokemon, energy_type, cards=False)
     return sum(1 for unit in E.attached_units(run.state, pokemon) if unit == frozenset({energy_type}))
 
 
@@ -8351,7 +8415,7 @@ class AttachFromDeckUpToNamedCount(Element):
 
     def count(self, run: AttackRun) -> int:
         return sum(1 for side in run.state.players for p in side.in_play()
-                   if not run.state.is_face_down(p.card) and E.form_def(run.state, p).name_ja == self.name)
+                   if not run.state.is_face_down(p) and E.form_def(run.state, p).name_ja == self.name)
 
     def candidates(self, run: AttackRun) -> list[int]:
         rainbow_attach_question(run, run.state.players[run.player].deck, self.energy_type)  # v0.58: RB2
@@ -8667,7 +8731,7 @@ BUILDERS: dict[type, Any] = {
     ),
     # v0.70: ダメージのない「ぐるぐる」（ニョロゾ）。DamageThenStatusByCoin の Status と同じ
     E.StatusByCoinWithoutDamage: lambda e: (Status(e.heads, local_coin=HEADS, otherwise=e.tails, reparalysis_check=PARALYSIS in (e.heads, e.tails)),),
-    E.DamageThenChosenStatusOnHeads: lambda e: (Damage(OPP, Printed()), ChosenStatus()),
+    E.DamageThenChosenStatusOnHeads: lambda e: (Damage(OPP, Printed()), ChosenStatus(conditions=e.conditions)),  # v0.88: デルタビームの 3 つ
     E.CoinDamageAndConfuseElseSelfConfuse: lambda e: (
         Coin("coin"), Damage(OPP, Printed(), gate=("coin", HEADS)), Status(CONFUSION, gate=("coin", HEADS)),
         Status(CONFUSION, target=SELF, gate=("coin", TAILS)),
@@ -9084,4 +9148,116 @@ class OpponentPowerSuppression(Element):
 BUILDERS |= {
     E.DamageThenSwitchBothActives: lambda e: (Damage(OPP, Printed()), ForceSwitch(carry=True), SelfSwitch()),
     E.DamageThenSuppressOpponentPowersOnHeads: lambda e: (Damage(OPP, Printed()), OpponentPowerSuppression(local_coin=HEADS)),
+}
+
+
+# ---------------------------------------------------------------- v0.88（docs/type-energy-colors-v0.88.md）
+
+COLOR_ANY = "any"  # 無色以外の 8 色（コアストリーム）
+COLOR_OWN_BASIC = "own_basic"  # 自分についている「基本エネルギーカード」の色（レインボーウェーブ）
+COLOR_BY_ENERGY = "energy"  # その色の「エネルギー」がついているポケモン（``effects.energy_color_presence``）
+COLOR_BY_TYPE = "type"  # 今有効なタイプがその色のポケモン（``effects.type_readings``）
+# 止めるコード → 問い（色の数え方・タイプの読み方の問いを、解決の基盤の問いとして止める。先読みが集めて宣言の前に止める）
+QUESTION_BY_CODE = {question.code: key for key, question in QUESTIONS.items() if question.code is not None}
+
+
+@dataclass(frozen=True)
+class ChosenColor:
+    """v0.88: ``ChooseColor`` で選んだ色。``fs.results`` に置き、決定をまたぐときは続きの情報の ``chosen_colors`` で運ぶ（``AttackRun.suspend``）。選べる色がなかったなら None。"""
+
+    color: EnergyType | None
+
+
+def raise_color_problem(run: AttackRun, error: UnsupportedError, detail: str) -> None:
+    """v0.88: 色の数え方・タイプの読み方が決まらない理由（``UnsupportedError``）を、同じコードの問いとして止める。"""
+    raise run.res.question(QUESTION_BY_CODE[error.code], detail, error)
+
+
+@dataclass(frozen=True)
+class ChooseColor(Element):
+    """ワザを使ったプレイヤーが色を 1 つ選ぶ（v0.88。決定 ``SELECT_COLOR``）。``source`` が ``COLOR_ANY`` なら無色以外の 8 色（スターミーの「コアストリーム」）、``COLOR_OWN_BASIC`` なら
+    自分についている「基本エネルギーカード」の印刷の色（ミュウの「レインボーウェーブ」。``effects.basic_energy_card_colors``。色を変えたカード（CE3）・レインボーエネルギー（RB3）で
+    選べる色が変わるなら止める）。選べる色が 1 つでも決定を出す。選べる色がなければ選ばない（``ChosenColor(None)``。あとのダメージの要素の対象はない）。"""
+
+    source: str = COLOR_ANY
+    name: str = "color"
+    phase: ClassVar[Phase] = Phase.NEUTRAL
+    decision_kind: ClassVar[str] = SELECT_COLOR
+
+    def options(self, run: AttackRun) -> tuple[int, ...]:
+        if self.source == COLOR_ANY:
+            return E.NON_COLORLESS_CHOICES
+        readings, error = E.basic_energy_card_colors(run.state, run.attacker())
+        if len(set(readings)) > 1:
+            raise_color_problem(run, error, f"ワザ {run.key} で選べる「基本エネルギーカード」の色")
+        return tuple(sorted(E.COLORS.index(color) for color in readings[0]))
+
+    def run(self, run: AttackRun) -> bool:
+        options = self.options(run)
+        if not options:
+            run.fs.results[self.name] = ChosenColor(None)
+            run.state.add_event("attack_color_none", player=run.player, pokemon_id=run.attacker().pokemon_id, effect=str(run.key))
+            return False
+        run.suspend(kind=SELECT_COLOR, player=run.player, options=options, carry=True)
+        return True
+
+    def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        if len(choices) != 1 or choices[0] not in decision.options:
+            raise RuntimeError(f"色の決定の答え {choices!r} が、選べる色ではない（エンジンの不具合）")
+        color = E.COLORS[choices[0]]
+        run.fs.results[self.name] = ChosenColor(color)
+        run.state.add_event("attack_color_chosen", player=run.player, pokemon_id=run.attacker().pokemon_id, effect=str(run.key), color=color.value)
+
+
+def color_filter_hit(run: AttackRun, pokemon: PokemonInPlay, color_filter: tuple[str, str]) -> bool:
+    """v0.88: ``pokemon`` が、前の ``ChooseColor`` で選んだ色でしぼる条件に合うか。``COLOR_BY_ENERGY``: その色の「エネルギー」がついている（エネルギーの今の色。数え方が決まらなければ
+    止める）。``COLOR_BY_TYPE``: 今有効なタイプがその色（色の読み方で答えが変わるなら止める。VS1・CE1・CE2）。選んだ色がなければ合わない。"""
+    mode, result = color_filter
+    chosen = run.fs.results.get(result)
+    if chosen is None:
+        raise RuntimeError(f"色を選んだ結果 {result!r} がない（要素の並びの誤り。エンジンの不具合）")
+    if chosen.color is None:
+        return False
+    if mode == COLOR_BY_ENERGY:
+        answer, problem = E.energy_color_presence(run.state, pokemon, chosen.color)
+        if problem is not None and not answer:
+            raise_color_problem(run, problem, f"ワザ {run.key} の対象（「{chosen.color.ja}」のエネルギーのついているポケモン {pokemon.pokemon_id}）")
+        return answer
+    if mode == COLOR_BY_TYPE:
+        hits = {color is chosen.color for color in E.type_readings(run.state, pokemon)}
+        if len(hits) > 1:
+            raise type_question(run.res, E.TypeReadingsDiffer([pokemon]), f"ワザ {run.key} の対象（「{chosen.color.ja}」のポケモン）")
+        return hits.pop()
+    raise ValueError(f"色でしぼる条件 {mode!r} は未定義")
+
+
+@dataclass(frozen=True)
+class PlusPerBasicEnergyColor:
+    """ダメージの目安の数字 + 自分についている「基本エネルギーカード」の色の種類の数 × ``per``（v0.88。ホウオウの「レインボーバーン」。p.321 の 1 段階）。数えるのはカードの印刷の色
+    （``effects.basic_energy_card_colors``）。色を変えたカード（CE3）・レインボーエネルギー（RB3）で数が変わるなら止める。"""
+
+    per: int
+    local_coins: ClassVar[int] = 0
+
+    def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
+        readings, error = E.basic_energy_card_colors(run.state, run.attacker())
+        if len({len(colors) for colors in readings}) > 1:
+            raise_color_problem(run, error, f"ワザ {run.key} の「基本エネルギーカード」の色の数")
+        return run.attack.damage + len(readings[0]) * self.per
+
+
+BUILDERS |= {
+    E.ChosenColorEnergySpreadDamage: lambda e: (
+        ChooseColor(COLOR_ANY),
+        Damage(OPP, Fixed(e.amount), weakness_resistance=False, color_filter=(COLOR_BY_ENERGY, "color")),
+        BenchDamage(Fixed(e.amount), weakness_resistance=False, color_filter=(COLOR_BY_ENERGY, "color")),
+    ),
+    E.OwnBasicColorTypeSpreadDamage: lambda e: (
+        ChooseColor(COLOR_OWN_BASIC),
+        Damage(OPP, Fixed(e.amount), weakness_resistance=False, color_filter=(COLOR_BY_TYPE, "color")),
+        BenchDamage(Fixed(e.amount), weakness_resistance=False, color_filter=(COLOR_BY_TYPE, "color")),
+    ),
+    E.PlusDistinctBasicEnergyColors: lambda e: (Damage(OPP, PlusPerBasicEnergyColor(e.per)),),
+    E.ChangeOwnResistanceOptional: lambda e: (SelfResistanceColor(optional=True),),
+    E.ChangeWeaknessAndResistanceOptional: lambda e: (OpponentWeaknessColor(optional=True, absent_skips=True), SelfResistanceColor(optional=True)),
 }

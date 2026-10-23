@@ -1,4 +1,4 @@
-# 実装状況（v0.1〜v0.87）
+# 実装状況（v0.1〜v0.88）
 
 基準: 公式ルール 2000.02.14版（『ポケモンカードオフィシャルブック2000』pp.306〜326 [P43]）、kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3`（v0.69 から。v0.68 までは `ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691`）。項目ごとの根拠は [ルールの仕様](rules-2000-02-14.md) にあります。v0.2 の前のレビューの結果は [review-v0.1.md](review-v0.1.md)、公開 API の評価は [api-review.md](api-review.md) にあります。
 
@@ -3819,6 +3819,24 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 | 未対応の数（全対象 338・neo 154・拡張パック以外 184） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistryTest` |
 | 13 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 | ベイビィ・わるいバンギラス・ファイヤー ES2-005／QSG-055・怪電波マシーン・ミラクルエネルギー・アンノーン・GD5-007／IP2-032 のウィンディ | 未対応（今回の範囲の外） | — | — |
+
+## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
+
+[type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。
+
+| 項目 | 状態 | 根拠 | テスト |
+|---|---|---|---|
+| v0.85 の 6 か所の `is_face_down` の引数（場にうらのカードがあると `AttributeError`） | 実装済み・テスト済み | 不具合の修正 | test_type_energy_colors_v0_88.py `FaceDownArgumentRegressionTest` |
+| v0.87 の［ぶんれつ］の決定の観測（`DECK_REVEALING_KINDS`・監査の一覧） | 実装済み・テスト済み | 不具合の修正 | 同 `SplitObservationRegressionTest` |
+| きぜつのあとの記録を読み飛ばす確かめ（「ふしちょう」とリサイクルエネルギー・［せんすい］の `target_gone`） | 実装済み・テスト済み | 不具合の修正 | 同 `KnockOutBookkeepingRegressionTest` |
+| 色を変える効果の記録（`GameState.color_effects`。形式 23。番の終わり・ねむり・マヒ・こんらん・発生源がはなれたら消える） | 実装済み・テスト済み | 印刷の文面 | 同 `SubmergeTest`・`EnergyConverterTest`・`SerializationTest` |
+| 色の層（印刷の色・エネルギーの今の色と個数・今のタイプ。「「X」エネルギー」と「「X」エネルギーカード」） | 実装済み・テスト済み | 印刷の文面 | 同 `EnergyConverterTest`・`PhotosynthesisTest`・`RainbowBurnTest` |
+| ［すいりょくはつでん］（ワザの宣言といっしょ）・［せんすい］・［エナジーコンバーター］・こうごうせい・［でんじりょく］ | 実装済み・テスト済み | 印刷の文面 | 同 `HydroelectricTest`・`SubmergeTest`・`EnergyConverterTest`・`PhotosynthesisTest`・`MagneticForceTest` |
+| コアストリーム・レインボーウェーブ・レインボーバーン・テクスチャー2・テクスチャーマジック・デルタビーム・プラズマ・3Dアタック | 実装済み・テスト済み | 印刷の文面 | 同 `CoreStreamTest`・`RainbowWaveTest`・`RainbowBurnTest`・`TextureTest`・`OtherAttacksTest` |
+| CE1・CE2・CE3 | 裁定が未解決（読み方で結果が変わるときだけ止める） | — | 同 |
+| 色の読み方の組が 256 を超える支払い | エンジンの未対応（`UNSUPPORTED_COLOR_READINGS_LIMIT`） | — | — |
+| 未対応の数（全対象 286・neo 132・拡張パック以外 154） | 確かめた | kyuura data/engine_targets.json（7d3f4ca）から今の登録を差し引いた数 | 同 `RegistrationTest` |
+| 11 枚の外部照合（pcg-search.com・カードの画像） | 原典未確認 | していない | — |
 
 ## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
 

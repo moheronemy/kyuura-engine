@@ -158,6 +158,7 @@ FLEE = PowerKey("PMCG5-033", 0)  # v0.65: カスミのドククラゲの［に�
 BENCH_GUARD = PowerKey("PMCG5-055", 0)  # v0.65: タケシのサイドンの［ベンチガード］
 ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくのたいえき］・［とおせんぼ］・［ぶんれつ］・［オーロラヴェール］・［マグネット］・［ショックボム］
               PowerKey("ES1-005", 0), PowerKey("ES1-034", 0), PowerKey("ES2-003", 0), PowerKey("ES2-012", 0), PowerKey("ES2-014", 0), PowerKey("GD3-009", 0),
+              PowerKey("GD4-001", 0),  # v0.88（docs/type-energy-colors-v0.88.md）: こうごうせい
               # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md）: ［ハーブのかおり］（NIP1X-001）・［どしゃぶり］（NIP2X-001）・［ハーブのかおり］（PF1-003）・
               # ［ファイヤーブースト］・［どしゃぶり］（PF1-009）・［ファイヤーレイズ］（並びはカード id の順）
               PowerKey("NIP1X-001", 0), PowerKey("NIP2X-001", 0), PowerKey("PF1-003", 0), PowerKey("PF1-006", 0), PowerKey("PF1-009", 0),
@@ -174,9 +175,14 @@ ALL_POWERS = (# v0.87（docs/movement-damage-reactions-v0.87.md）: ［どくの
               PowerKey("QSG-023", 0), PowerKey("QSG-046", 0), PowerKey("QSG-057", 0),  # v0.87: ［マグネット］・［とおせんぼ］・［オーロラヴェール］（同じデータの組）
               # v0.85: ［おいしげる］・［ファイヤーリチャージ］・［あばれんぼう］
               PowerKey("neo1-014", 0), PowerKey("neo1-021", 0), PowerKey("neo1-033", 0),
+              PowerKey("neo1-040", 0),  # v0.88: ［すいりょくはつでん］
               # v0.86: ［エナジーしんか］（neo2-049）・［おたけび］・［クリスタルボディ］・［いなびかり］・［タマゴうみ］・［とつぜんかみつく］
               PowerKey("neo2-044", 0),  # v0.87: ［まきびし］（同じ行の下の neo3-009 は v0.87 の［やけのこり］）
-              PowerKey("neo2-049", 0), PowerKey("neo3-009", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0), PowerKey("neo3-029", 0), PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
+              PowerKey("neo2-049", 0), PowerKey("neo3-009", 0), PowerKey("neo3-010", 0), PowerKey("neo3-021", 0),
+              PowerKey("neo3-026", 0),  # v0.88: ［せんすい］
+              PowerKey("neo3-029", 0),
+              PowerKey("neo3-045", 0), PowerKey("neo3-051", 0),  # v0.88: ［でんじりょく］・［エナジーコンバーター］
+              PowerKey("neo3-052", 0), PowerKey("neo4-012", 0),
               # v0.84（docs/light-powers-evolution-v0.84.md）: ［おいはらう］・［ふかふかなからだ］・［たすけだす］・［きせきのかぜ］・［おくりもの］
               PowerKey("neo4-021", 0),
               PowerKey("neo4-023", 0),  # v0.87: ［ヒートプレート］
@@ -295,7 +301,7 @@ class PowerRegistryTest(unittest.TestCase):
         # v0.69 は 68（拡張パック以外の商品の同じカードの新しい id 10。tests/helpers.py の V0_69_POWER_CARDS）
         # v0.71 は 74（拡張パック以外の商品の再録のカード 6。tests/helpers.py の V0_71_POWER_CARDS）
         self.assertEqual(tuple(k.card_id for k in DEFAULT_EFFECTS.power_keys() if k not in ALL_POWERS), tuple(sorted(V0_69_POWER_CARDS + V0_71_POWER_CARDS)))
-        self.assertIn("114 powers", repr(DEFAULT_EFFECTS))  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
+        self.assertIn("119 powers", repr(DEFAULT_EFFECTS))  # v0.88 で 5 を加えた  # v0.87 で 14 を加えた  # v0.86 で 12 を加えた
 
     def test_power_is_not_an_attack(self):
         """ポケモンパワーはワザ（AttackEffect）の一種ではない。識別子もワザ（AttackKey）とは別で、同じカードの同じ位置のワザ
@@ -597,7 +603,7 @@ class AtomicityTest(unittest.TestCase):
         self.assertEqual(new.energy_attached_by_powers_this_turn, 0)
         self.assertEqual(state_to_dict(new, format_version=9), {**full(new), "format_version": 9, "energy_attached_by_powers_this_turn": 0})
         with self.assertRaises(ValueError):
-            state_to_dict(new, format_version=23)  # v0.67 で 22、v0.63 で 21、v0.56 で 16、v0.57 で 17、v0.58 で 18、v0.59 で 19 を加えた。v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
+            state_to_dict(new, format_version=24)  # v0.88 で 23 を加えた  # v0.67 で 22、v0.63 で 21、v0.56 で 16、v0.57 で 17、v0.58 で 18、v0.59 で 19 を加えた。v0.5 では 10 がなかった。10 は v0.31（1 番に 1 回の特殊能力の使用・エナジーバーン）、11 は v0.44、12 は v0.47、13 は v0.48、14 は v0.49、15 は v0.50
 
     def test_invalid_powers_never_use_randomness(self):
         """拒否した使用は乱数を使わない（変異: 不正なコマンドで乱数が進む、を見つける）。受け付けた使用も乱数を使わない。"""

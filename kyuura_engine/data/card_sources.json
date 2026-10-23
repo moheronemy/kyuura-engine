@@ -26385,6 +26385,169 @@
       "external_checks": [],
       "issues": [],
       "notes": "v0.87 で加えた（docs/movement-damage-reactions-v0.87.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。ES1-034 と同じゲーム用データ（同じ登録の値を共有する。SAME_DATA_CARDS_V0_87）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo1-040": {
+      "basis": "kyuura_data",
+      "name_ja": "ランターン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。すいりょくはつでん=ExtraEnergyDamageWithAttack(まぶしいひかり, 水, 10)（ワザの宣言といっしょに使う。UseAttack.attack_power。p.321 の 2 段階）、まぶしいひかり=ParalyzeOnHeads。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo3-026": {
+      "basis": "kyuura_data",
+      "name_ja": "ランターン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。せんすい=TypeChangeSelfUntilTurnEnd(水)（この番が終わるまでの色を変える効果 ColorEffect。番の終わり・ねむり・マヒ・こんらんで消える）、アクアフラッシュ=ConfuseOnHeads。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo3-051": {
+      "basis": "kyuura_data",
+      "name_ja": "ポリゴン2",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。エナジーコンバーター=ConvertBasicEnergyColor（基本エネルギーカード 1 枚のエネルギーの色をこの番が終わるまで変える。カードを追う）、デルタビーム=DamageThenChosenStatusOnHeads（ねむり・マヒ・こんらん）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "GD4-001": {
+      "basis": "kyuura_data",
+      "name_ja": "エリカのナゾノクサ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。こうごうせい=TypeEnergyAsGrass（常にはたらく。ついているすべてのエネルギーを「草」としてあつかう。特殊状態では消えない）、どくのこな=PoisonOnHeads。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo3-034": {
+      "basis": "kyuura_data",
+      "name_ja": "スターミー",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。あやしいひかり=ConfuseOnHeads、コアストリーム=ChosenColorEnergySpreadDamage(20)（選んだ色のエネルギーのついている相手のポケモン全員。エネルギーの今の色）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "SI-004": {
+      "basis": "kyuura_data",
+      "name_ja": "ミュウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。レインボーウェーブ=OwnBasicColorTypeSpreadDamage(20)（日本語の文面の「基本エネルギーカード」の色にしたがう。英語版の文面は持ち込まない）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "PF3-007": {
+      "basis": "kyuura_data",
+      "name_ja": "ホウオウ",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。レインボーバーン=PlusDistinctBasicEnergyColors(10)（基本エネルギーカードの印刷の色の種類。p.321 の 1 段階）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "neo3-045": {
+      "basis": "kyuura_data",
+      "name_ja": "レアコイル",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "power/0": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。でんじりょく=MoveEnergyAmongNamed(コイル, レアコイル, わるいレアコイル)（名前の完全一致。つけ直しではない）、プラズマ=DamageThenAttachEnergyFromDiscardToSelf(雷)。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "ES1-033": {
+      "basis": "kyuura_data",
+      "name_ja": "ポリゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。3Dアタック=CoinFlipDamage(3, 10)、テクスチャー2=ChangeOwnResistanceOptional（「変えてよい」。v0.48 の ChangeOwnResistance と別の型）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "QSG-045": {
+      "basis": "kyuura_data",
+      "name_ja": "ポリゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。ES1-033 と同じゲーム用データ（同じ登録の値を共有する。SAME_DATA_CARDS_V0_88）。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
+    },
+    "PR1-023": {
+      "basis": "kyuura_data",
+      "name_ja": "かっこいいポリゴン",
+      "status": "adopted",
+      "kyuura_commit": "7d3f4ca76c084774efb4ac6a1d3a943387e183c3",
+      "recorded_on": "2026-10-23",
+      "kyuura_records": [],
+      "play_text": {
+        "attack/0": "kyuura_printed_text",
+        "attack/1": "kyuura_printed_text"
+      },
+      "external_checks": [],
+      "issues": [],
+      "notes": "v0.88 で加えた（docs/type-energy-colors-v0.88.md）。kyuura data/engine_targets.json（7d3f4ca）の対象。テクスチャーマジック=ChangeWeaknessAndResistanceOptional（相手の弱点（あれば）と自分の抵抗力を、それぞれ変えてよい）、3Dアタック=CoinFlipDamage(3, 20)。新しい外部照合はしていない（外部照合なし。カードの画像は読んでいない）。英語版の文面・現代のルール・後年の規定（2002 年のポケパワー・ポケボディーの分類 MIX-POWER-SPLIT）は持ち込まない"
     }
   }
 }

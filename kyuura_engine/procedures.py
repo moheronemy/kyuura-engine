@@ -110,12 +110,24 @@ def _expire_at_turn_end(state: GameState) -> None:
             pokemon.evolution_permission_turn = None
     # v0.31: 「エナジーバーン」で「炎」エネルギーになったエネルギーは、自分の番の終わりにもとにもどる（TXT-CHARIZARD の最新の説明）
     state.energy_burn = ()
+    remove_expired_color_effects(state)  # v0.88: ［せんすい］・［エナジーコンバーター］の「この番が終わるまで」
     # v0.49: 「思い出させる」の「この番だけ」（docs/virtual-attacks-transformation-v0.49.md 6 章）。ログ ``recall`` の番で分かるので、消すログは出さない
     state.recalls = ()
     remove_expired_trainer_locks(state)  # v0.47
     remove_expired_trainer_effects(state)  # v0.56
     return_expired_set_aside(state)  # v0.63: くすぐりマシーンで置いておいたカード（「次の相手の番の終わりまで」）
     state.add_event("turn_end", player=state.current_player)
+
+
+def remove_expired_color_effects(state: GameState) -> None:
+    """v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で色を変える効果（``GameState.color_effects``。［せんすい］・［エナジーコンバーター］の「この番が終わるまで」）を
+    この番の終わりの窓で消す（番の終わり方によらない）。1 つにつきログ ``color_effect_removed``（``reason`` は ``expired``）。勝敗が決まった番は番の終わりが来ないので残る。"""
+    for record in state.color_effects:
+        if record.turn != state.turn_number:
+            raise RuntimeError(f"前の番の色を変える効果 {record} が残っている（番の終わりに消していない。エンジンの不具合）")
+        state.add_event("color_effect_removed", player=record.player, pokemon_id=record.source, color_effect=record.kind, target=record.target,
+                        color=record.color.value, reason="expired")
+    state.color_effects = ()
 
 
 def remove_expired_trainer_locks(state: GameState) -> None:
@@ -834,13 +846,13 @@ def confusion_damage_problem(state: GameState, pokemon: PokemonInPlay, attack_st
         # 変わるなら、コインを投げる前に止める（こんらん状態のモルフォンでは［へんしょく］の力が消えているので、変えた色が続くかが決まらない）
         same_for_type_readings(state, (pokemon,), lambda views: calculate_confusion_damage(views[0], state.rules, CONFUSION_DAMAGE))
     except TypeReadingsDiffer:
-        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージの弱点・抵抗力の計算")
+        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージの弱点・抵抗力の計算", state=state)
     try:
         # v0.81: 場のスタジアムの、ワザのダメージの変更効果（マダツボミのとう。「無色」ポケモンの使ったワザ）。こんらんの 20 が「ワザによるダメージ」かは決まらない
         # （プラスパワー・ディフェンダーと同じ問い）ので、当てはまりうるならコインの前に止める
         towered = same_for_type_readings(state, (pokemon,), lambda views: bool(stadium_attack_damage_modifiers(state, views[0])))
     except TypeReadingsDiffer:
-        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージに、スタジアムの効果（「無色」ポケモンの使ったワザ）を当てはめるか")
+        return shift_duration_error(pokemon, "こんらんしたワザで自分が受ける 20 ダメージに、スタジアムの効果（「無色」ポケモンの使ったワザ）を当てはめるか", state=state)
     if towered:
         return UnsupportedError(
             "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS",

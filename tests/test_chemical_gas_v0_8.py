@@ -283,7 +283,9 @@ class ChemicalGasRegistrationTest(unittest.TestCase):
                                                                    # v0.87: ［まきびし］・［やけのこり］・［ヒートプレート］・［ショックボム］・［どくのたいえき］（自動的にはたらく）・
                                                                    # ［オーロラヴェール］・［もぐる］・［とおせんぼ］（常にはたらく）。同じデータの組の QSG-057・QSG-046 も
                                                                    "neo2-044", "neo3-009", "neo4-023", "GD3-009", "ES1-005", "ES2-012", "QSG-057",
-                                                                   "PR1-046", "ES1-034", "QSG-046"))})
+                                                                   "PR1-046", "ES1-034", "QSG-046",
+                                                                   # v0.88: エリカのナゾノクサのこうごうせい（常にはたらく。docs/type-energy-colors-v0.88.md 5.4 節）
+                                                                   "GD4-001"))})
         self.assertTrue(PowerEffect.declared)
         self.assertEqual((entry.name_ja, entry.text_ja, entry.play_text_ja, entry.source), ("かがくへんかガス", GAS_PRINTED, GAS_LATEST, "P43 p.48"))
         self.assertEqual(DEFAULT_EFFECTS.id, "kyuura-engine-0.13")  # v0.9 でゴース・ゴースト、v0.10 でゴーリキー・カイリキー、v0.11 でサカキのワンリキー・ゴーリキー・カイリキー、v0.12 で R団のファイヤー、v0.13 で第4弾のゼニガメ・わるいカメールの登録を加えた（かがくへんかガスの登録は同じ）
@@ -702,7 +704,7 @@ class SaveRestoreTest(unittest.TestCase):
                     self.assertEqual(full(copied), full(state))
                     self.assertEqual([self.outcome(copied, c) for c in commands], expected)
                 self.assertEqual(serialization_problems(state), [])
-                self.assertEqual(LATEST_FORMAT, 22)  # v0.67 で 22  # 19 は v0.59（energy_roles）。18 は v0.58（trainer_stack・trainer_in_use の via）。17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
+                self.assertEqual(LATEST_FORMAT, 23)  # v0.88 で 23（color_effects）  # v0.67 で 22  # 19 は v0.59（energy_roles）。18 は v0.58（trainer_stack・trainer_in_use の via）。17 は v0.57（stadium・stadium_uses_this_turn・trainer_in_use の user）。16 は v0.56（trainer_effects・禁止の origin）。 v0.8 では 9。10 は v0.31（power_uses_this_turn・energy_burn）、11 は v0.44（attacks_used_once・evolution_permission_turn）、12 は v0.47（trainer_locks）、13 は v0.48（type_shift）、14 は v0.49（disguise・recalls）、15 は v0.50（devolved_turn）。どれもガスの項目ではない
                 self.assertFalse(any("gas" in key or "suppress" in key for key in full(state)))
 
     def test_r13_state(self):

@@ -1317,6 +1317,19 @@
     "ES1-034",
     "QSG-046"
   ],
+  "pool_v0_88": [
+    "neo1-040",
+    "neo3-026",
+    "neo3-051",
+    "GD4-001",
+    "neo3-034",
+    "SI-004",
+    "PF3-007",
+    "neo3-045",
+    "ES1-033",
+    "QSG-045",
+    "PR1-023"
+  ],
   "reference_only": [],
   "previous_source": {
     "commit": "ecb2d694e6280ec5dc9ddd2a8f709cea16a6b691",
@@ -96624,6 +96637,1131 @@
         {
           "page": "1stqsg046",
           "list_number": "046/058"
+        }
+      ]
+    },
+    {
+      "id": "neo1-040",
+      "jp_set": "neo1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ランターン",
+        "en": "Lanturn"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          171
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "チョンチー",
+          "en": "Chinchou"
+        },
+        "hp": 70,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "すいりょくはつでん",
+              "en": "Hydroelectric Power"
+            },
+            "text": {
+              "ja": "この力は、このカードが「まぶしいひかり」を使うとき、使える。このカードに、「まぶしいひかり」に必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき10ダメージが、このカードの「まぶしいひかり」のダメージに追加される。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。",
+              "en": "You may make Floodlight do 10 more damage for each Water Energy attached to Lanturn, but not used to pay for Floodlight's Energy cost. This power can't be used if Lanturn is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "まぶしいひかり",
+              "en": "Floodlight"
+            },
+            "cost": [
+              "lightning",
+              "lightning"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「マヒ」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo1-040",
+        "pokemontcg": [
+          "neo1-38"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://nazonobasho.com/neo01-040-lantern/",
+      "jp_print": {
+        "level": 26,
+        "rarity": "◆(U)",
+        "series": "金、銀、新世界へ...、スターターパック",
+        "remarks": [],
+        "source": "https://nazonobasho.com/neo01-040-lantern/"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-026",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ランターン",
+        "en": "Lanturn"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          171
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "チョンチー",
+          "en": "Chinchou"
+        },
+        "hp": 80,
+        "types": [
+          "lightning"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "せんすい",
+              "en": "Submerge"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。この番が終わるまで、このカードの「色(タイプ)」は「水」になる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできず、その効果も消える。",
+              "en": "Once during your turn (before your attack), you may change Lanturn's type to Water until the end of your turn. This power can't be used if Lanturn is Asleep, Confused, or Paralyzed. If Lanturn becomes Asleep, Confused, or Paralyzed after you have used this power, its type changes back to Lightning."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "アクアフラッシュ",
+              "en": "Blinding Light"
+            },
+            "cost": [
+              "lightning",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-026",
+        "pokemontcg": [
+          "neo3-32"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "◆(U)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%A9%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%B3_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "neo3-051",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン2",
+        "en": "Porygon2"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          233
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ポリゴン",
+          "en": "Porygon"
+        },
+        "hp": 70,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "エナジーコンバーター",
+              "en": "Energy Converter"
+            },
+            "text": {
+              "ja": "この力は、自分の番ごとに1回使うことができる。自分の場のポケモンについている「基本エネルギーカード」を1枚選び、好きな「色(タイプ)」(「無色」以外)を1つ選ぶ。この番が終わるまで、その「エネルギーカード」の「エネルギー」は、選んだ「色(タイプ)」の「エネルギー」としてあつかわれる。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできず、その効果も消える。",
+              "en": "Once during your turn (before your attack), you may choose 1 basic Energy card attached to 1 of your Pokémon and choose an Energy type. Treat that Energy card as that type until the end of your turn. This power can't be used if Porygon2 is Asleep, Confused, or Paralyzed. If Porygon2 becomes Asleep, Confused, or Paralyzed, the Energy card goes back to its original type."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "デルタビーム",
+              "en": "Delta Beam"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、「ねむり・マヒ・こんらん」の中から1つを選び、相手をその状態にする。",
+              "en": "Flip a coin. If heads, choose whether the Defending Pokémon becomes Asleep, Confused, or Paralyzed."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-051",
+        "pokemontcg": [
+          "neo3-12"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%83%AA%E3%82%B4%E3%83%B32_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 33,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%9D%E3%83%AA%E3%82%B4%E3%83%B32_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "GD4-001",
+      "jp_set": "GD4",
+      "category": "pokemon",
+      "name": {
+        "ja": "エリカのナゾノクサ",
+        "en": "Erika's Oddish"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          43
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "grass"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "こうごうせい",
+              "en": "Photosynthesis"
+            },
+            "text": {
+              "ja": "このカードについている限り、すべてのエネルギーは「草」エネルギーとしてあつかわれる。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。",
+              "en": "All Energy cards attached to Erika's Oddish provide Grass Energy instead of their usual type. This power works even while Erika's Oddish is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "どくのこな",
+              "en": "Poisonpowder"
+            },
+            "cost": [
+              "grass",
+              "grass"
+            ],
+            "cost_total": 2,
+            "damage": {
+              "base": 20,
+              "modifier": null,
+              "display": "20"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「どく」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "gym1-47"
+        ],
+        "pcg_search": [
+          "1stgymd4001"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stgymd4001.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "ポケモンジム第2弾「タマムシシティジム エリカ」",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stgymd4001.php"
+      },
+      "product_group": "gym_deck",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:gym1-47",
+        "pokemon.dex": "pokemontcg:gym1-47"
+      },
+      "copies": [
+        {
+          "page": "1stgymd4001",
+          "list_number": "001/028"
+        }
+      ]
+    },
+    {
+      "id": "neo3-034",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "スターミー",
+        "en": "Starmie"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          121
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "ヒトデマン",
+          "en": "Staryu"
+        },
+        "hp": 70,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "あやしいひかり",
+              "en": "Confuse Ray"
+            },
+            "cost": [
+              "water"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": null,
+              "display": "10"
+            },
+            "text": {
+              "ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+              "en": "Flip a coin. If heads, the Defending Pokémon is now Confused."
+            }
+          },
+          {
+            "name": {
+              "ja": "コアストリーム",
+              "en": "Core Stream"
+            },
+            "cost": [
+              "psychic",
+              "psychic",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "好きな「色(タイプ)」(「無色」以外)を1つ選び、その選んだ「色(タイプ)」の「エネルギー」のついている相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "Choose an Energy type other than Colorless. This attack does 20 damage to each of your opponent's Pokémon with any Energy cards of that type attached to it. Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-034",
+        "pokemontcg": [
+          "neo3-25"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%9F%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 31,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%82%B9%E3%82%BF%E3%83%BC%E3%83%9F%E3%83%BC_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "SI-004",
+      "jp_set": "SI",
+      "category": "pokemon",
+      "name": {
+        "ja": "ミュウ",
+        "en": "Mew"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          151
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 30,
+        "types": [
+          "psychic"
+        ],
+        "weaknesses": [
+          {
+            "type": "psychic",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "レインボーウェーブ",
+              "en": "Rainbow Wave"
+            },
+            "cost": [
+              "psychic"
+            ],
+            "cost_total": 1,
+            "damage": null,
+            "text": {
+              "ja": "自分についている「基本エネルギーカード」の色(タイプ)から、1つを選ぶ。相手と相手の控えポケモンのうち、選んだエネルギーと同じ色(タイプ)のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ20ダメージ。",
+              "en": "Choose a type of Energy other than Colorless attached to Mew. This attack does 20 damage to each of your opponent's Pokémon of that type (including Benched Pokémon). Don't apply Weakness and Resistance."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [
+        {
+          "kind": "text",
+          "summary": "ワザ レインボーウェーブ（Rainbow Wave）で選べるタイプ",
+          "ja": "「自分についている『基本エネルギーカード』の色(タイプ)から、1つを選ぶ」と、基本エネルギーに限っている",
+          "en": "「Choose a type of Energy other than Colorless attached to Mew」と、特殊エネルギー（レインボーエネルギー、neo の悪・鋼エネルギーなど）のタイプも選べる",
+          "confidence": "有力",
+          "sources": [
+            "N1",
+            "N3"
+          ]
+        }
+      ],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "si1-1"
+        ],
+        "pcg_search": [
+          "1stmv004"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stmv004.php",
+      "jp_print": {
+        "level": 5,
+        "rarity": "-(キラ)",
+        "series": "映画公開記念パック「サザンアイランド」",
+        "remarks": [
+          "レインボーアイランド 大空"
+        ],
+        "source": "https://pcg-search.com/card/1st/1stmv004.php"
+      },
+      "product_group": "southern_islands",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash",
+        "jp_print.level": "nazonobasho（サザンアイランド）",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:si1-1",
+        "pokemon.dex": "pokemontcg:si1-1"
+      },
+      "copies": [
+        {
+          "page": "1stmv004",
+          "list_number": "001/003"
+        }
+      ]
+    },
+    {
+      "id": "PF3-007",
+      "jp_set": "PF3",
+      "category": "pokemon",
+      "name": {
+        "ja": "ホウオウ",
+        "en": "Ho-oh"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          250
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 90,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "water",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "fighting",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "レインボーバーン",
+              "en": "Rainbow Burn"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 4,
+            "damage": {
+              "base": 30,
+              "modifier": "+",
+              "display": "30+"
+            },
+            "text": {
+              "ja": "自分についている「基本エネルギーカード」の「色(タイプ)」の数×10のダメージを追加する。(同じ「色(タイプ)」の「エネルギーカード」が2枚以上ついていても、その「色(タイプ)」の追加ぶんは、10ダメージ。)",
+              "en": "This attack does 30 damage plus 10 more damage for each type of Basic Energy card, if any, attached to Ho-Oh."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "neo3-18"
+        ],
+        "pcg_search": [
+          "neopf3007"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/neo/neopf3007.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "プレミアムファイル3",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/neo/neopf3007.php"
+      },
+      "product_group": "premium_file",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:neo3-18",
+        "pokemon.dex": "pokemontcg:neo3-18"
+      },
+      "copies": [
+        {
+          "page": "neopf3007",
+          "list_number": "007/009"
+        }
+      ]
+    },
+    {
+      "id": "neo3-045",
+      "jp_set": "neo3",
+      "category": "pokemon",
+      "name": {
+        "ja": "レアコイル",
+        "en": "Magneton"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          82
+        ],
+        "stage": "stage1",
+        "evolves_from": {
+          "ja": "コイル",
+          "en": "Magnemite"
+        },
+        "hp": 80,
+        "types": [
+          "metal"
+        ],
+        "weaknesses": [
+          {
+            "type": "fire",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "grass",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 2,
+        "rules_text": null,
+        "powers": [
+          {
+            "kind": "pokemon_power",
+            "name": {
+              "ja": "でんじりょく",
+              "en": "Electromagnetic Power"
+            },
+            "text": {
+              "ja": "この力は、自分の番の中で何回でも使うことができる。自分の場の「コイル」「レアコイル」「わるいレアコイル」についている「エネルギーカード」を、自分の場の別の「コイル」「レアコイル」「わるいレアコイル」につけ替える。このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。",
+              "en": "As often as you like during your turn (before your attack), you may take 1 Energy card attached to 1 of your Magnemites, Magnetons, or Dark Magnetons and attach it to a different 1 of your Magnemites, Magnetons, and Dark Magnetons. This power can't be used if Magneton is Asleep, Confused, or Paralyzed."
+            }
+          }
+        ],
+        "attacks": [
+          {
+            "name": {
+              "ja": "プラズマ",
+              "en": "Plasma"
+            },
+            "cost": [
+              "lightning",
+              "lightning",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 30,
+              "modifier": null,
+              "display": "30"
+            },
+            "text": {
+              "ja": "自分のトラッシュに「雷」エネルギーカードがあれば、1枚を選び出し、自分につける。",
+              "en": "If there are any Lightning Energy cards in your discard pile, attach 1 of them to Magneton."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": "neo3-045",
+        "pokemontcg": [
+          "neo3-10"
+        ],
+        "pcg_search": []
+      },
+      "ja_text_source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AC%E3%82%A2%E3%82%B3%E3%82%A4%E3%83%AB_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)",
+      "jp_print": {
+        "level": 37,
+        "rarity": "★(R)",
+        "series": "めざめる伝説",
+        "remarks": [],
+        "source": "https://wiki.pokemonwiki.com/wiki/%E3%83%AC%E3%82%A2%E3%82%B3%E3%82%A4%E3%83%AB_(%E3%82%81%E3%81%96%E3%82%81%E3%82%8B%E4%BC%9D%E8%AA%AC)"
+      },
+      "product_group": "expansion_pack",
+      "play_scope": "standard",
+      "data_gaps": [],
+      "same_card_group": null
+    },
+    {
+      "id": "ES1-033",
+      "jp_set": "ES1",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "3Dアタック",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて、「おもて」の数×10ダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "テクスチャー2",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "このカードの抵抗力を、好きな色(無色以外)に変えてよい。バトル場をはなれた時、このワザの効果は消える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stex1033"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stex1033.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "●",
+        "series": "拡張シート 第1弾(青版)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stex1033.php"
+      },
+      "product_group": "expansion_sheet",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-033",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stex1033",
+          "list_number": "033/036"
+        }
+      ]
+    },
+    {
+      "id": "QSG-045",
+      "jp_set": "QSG",
+      "category": "pokemon",
+      "name": {
+        "ja": "ポリゴン",
+        "en": null
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 40,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 0,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "3Dアタック",
+              "en": null
+            },
+            "cost": [
+              "colorless"
+            ],
+            "cost_total": 1,
+            "damage": {
+              "base": 10,
+              "modifier": "×",
+              "display": "10×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて、「おもて」の数×10ダメージ。",
+              "en": null
+            }
+          },
+          {
+            "name": {
+              "ja": "テクスチャー2",
+              "en": null
+            },
+            "cost": [
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 2,
+            "damage": null,
+            "text": {
+              "ja": "このカードの抵抗力を、好きな色(無色以外)に変えてよい。バトル場をはなれた時、このワザの効果は消える。",
+              "en": null
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [],
+        "pcg_search": [
+          "1stqsg045"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stqsg045.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-",
+        "series": "クイックスターターギフト",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stqsg045.php"
+      },
+      "product_group": "quick_starter_gift",
+      "play_scope": "standard",
+      "data_gaps": [
+        "pokemon.dex",
+        "jp_print.level"
+      ],
+      "same_card_group": "SC-ES1-033",
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search_page_dash"
+      },
+      "copies": [
+        {
+          "page": "1stqsg045",
+          "list_number": "045/058"
+        }
+      ]
+    },
+    {
+      "id": "PR1-023",
+      "jp_set": "PR1",
+      "category": "pokemon",
+      "name": {
+        "ja": "かっこいいポリゴン",
+        "en": "Cool Porygon"
+      },
+      "name_ja_confidence": "有力",
+      "pokemon": {
+        "dex": [
+          137
+        ],
+        "stage": "basic",
+        "evolves_from": null,
+        "hp": 50,
+        "types": [
+          "colorless"
+        ],
+        "weaknesses": [
+          {
+            "type": "fighting",
+            "operator": "×",
+            "value": 2
+          }
+        ],
+        "resistances": [
+          {
+            "type": "psychic",
+            "operator": "-",
+            "value": 30
+          }
+        ],
+        "retreat_cost": 1,
+        "rules_text": null,
+        "powers": [],
+        "attacks": [
+          {
+            "name": {
+              "ja": "テクスチャーマジック",
+              "en": "Texture Magic"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": null,
+            "text": {
+              "ja": "相手に弱点があれば、それを好きな色(無色以外)に変えてよい。自分の抵抗力も、好きな色(無色以外)に変えてよい。バトル場をはなれたポケモンからは、このワザの効果は消える。",
+              "en": "You may change Cool Porygon's Resistance to a type of your choice other than Colorless. If the Defending Pokémon has a Weakness, you may change it to a type of your choice other than Colorless. (Benching either Pokémon ends the effect on that Pokémon.)"
+            }
+          },
+          {
+            "name": {
+              "ja": "3Dアタック",
+              "en": "3-D Attack"
+            },
+            "cost": [
+              "colorless",
+              "colorless",
+              "colorless"
+            ],
+            "cost_total": 3,
+            "damage": {
+              "base": 20,
+              "modifier": "×",
+              "display": "20×"
+            },
+            "text": {
+              "ja": "コインを3枚投げて「おもて」の数×20のダメージ。",
+              "en": "Flip 3 coins. This attack does 20 damage times the number of heads."
+            }
+          }
+        ]
+      },
+      "trainer": null,
+      "energy": null,
+      "jp_en_differences": [],
+      "notes": [],
+      "source_ids": {
+        "tcgdex": null,
+        "pokemontcg": [
+          "basep-15"
+        ],
+        "pcg_search": [
+          "1stp023"
+        ]
+      },
+      "ja_text_source": "https://pcg-search.com/card/1st/1stp023.php",
+      "jp_print": {
+        "level": null,
+        "rarity": "-(キラ)",
+        "series": "プロモ(旧裏)",
+        "remarks": [],
+        "source": "https://pcg-search.com/card/1st/1stp023.php"
+      },
+      "product_group": "promo",
+      "play_scope": "standard",
+      "data_gaps": [
+        "jp_print.level"
+      ],
+      "same_card_group": null,
+      "field_sources": {
+        "name.ja": "pcg_search",
+        "pokemon.retreat_cost": "pcg_search",
+        "en_print": "other_products.en_prints",
+        "english_text": "pokemontcg:basep-15",
+        "pokemon.dex": "pokemontcg:basep-15"
+      },
+      "copies": [
+        {
+          "page": "1stp023",
+          "list_number": "-/-"
         }
       ]
     }

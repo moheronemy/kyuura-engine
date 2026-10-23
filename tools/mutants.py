@@ -141,9 +141,9 @@ MUTANTS: tuple[Mutant, ...] = (
            '        return (Contract(effect),)\n    return ()\n    raise UnsupportedError(',
            origin='v0.16e'),
     Mutant('R02', 'v0.13 の約束の実装を先読み derived で複製の上でも処理する', R + 'flow.py',
-           '    if is_contract(program):',
-           '    if False and is_contract(program):',
-           origin='v0.16e'),
+           '    if is_contract(program):\n        # v0.13 の約束で書いた実装（v0.16b のアダプタ',
+           '    if False and is_contract(program):\n        # v0.13 の約束で書いた実装（v0.16b のアダプタ',
+           origin='v0.16e'),  # v0.88: ワザといっしょに使う特殊能力の拒否に同じ条件の文が加わったので、置きかえる所をあとの行までにした（同じ誤りを入れる）
     Mutant('R03', 'アダプタが別の状態を受け付ける', R + 'contract.py',
            '        if state is not self.run.state:\n            raise RuntimeError(',
            '        if False:\n            raise RuntimeError(',

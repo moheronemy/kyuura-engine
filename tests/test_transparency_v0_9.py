@@ -683,7 +683,9 @@ EVOLUTIONS = {METAPOD: (CATERPIE,), KAKUNA: (WEEDLE,), DEWGONG: (SEEL,), STARMIE
               "PMCG5-050": ("PMCG5-043",),  # v0.60: タケシのサンドパン（タケシのサンドから）
               # v0.70: 拡張パック以外の商品の進化カード（ニョロゾ・カスミのスターミー・カメール・モココ・エーフィ）
               "ES1-017": ("ES1-016",), "QSG-015": ("QSG-014",), "GD2-014": ("GD2-013",), "IP2-003": ("IP2-016",), "NIP2-026": ("NIP2-018",),
-              "PF2-004": ("ES1-032",)}
+              "PF2-004": ("ES1-032",),
+              # v0.88: ランターン（neo1-040・neo3-026。チョンチー neo1-037 から）・スターミー（neo3-034。ヒトデマンから）
+              "neo1-040": ("neo1-037",), "neo3-026": ("neo1-037",), "neo3-034": (STARYU,)}
 
 
 class EvadedEffectCoinTest(unittest.TestCase):
@@ -793,7 +795,11 @@ class EvadedEffectCoinTest(unittest.TestCase):
                                     "のしかかり",
                                     # v0.87: フリーザー（ES2-012・QSG-057。同じデータの組）の「れいとうビーム」（ParalyzeOnHeads）。既存の型の登録だけなので、同じ T19b で止まる
                                     # （docs/movement-damage-reactions-v0.87.md 8 章）
-                                    "れいとうビーム", "れいとうビーム"]))
+                                    "れいとうビーム", "れいとうビーム",
+                                    # v0.88: エリカのナゾノクサ（GD4-001）の「どくのこな」（PoisonOnHeads）・ランターン（neo1-040）の「まぶしいひかり」（ParalyzeOnHeads）・
+                                    # ランターン（neo3-026）の「アクアフラッシュ」・スターミー（neo3-034）の「あやしいひかり」（ConfuseOnHeads）。既存の型の登録だけなので、
+                                    # 同じ T19b で止まる（docs/type-energy-colors-v0.88.md 6.6 節）
+                                    "どくのこな", "まぶしいひかり", "アクアフラッシュ", "あやしいひかり"]))
         for key in keys:
             for confused in (False, True):
                 attacker = {"card": key.card_id, "energy": energy_for(key.card_id, key.attack_index), **({"confusion": True} if confused else {})}

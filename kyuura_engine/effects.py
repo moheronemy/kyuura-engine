@@ -163,6 +163,7 @@ from .state import (
     ATTACK_DAMAGE_BONUS, BENCH_ATTACK_DAMAGE_PREVENTION, FIRE_DOUBLE_ATTACH, POWER_SUPPRESSION, NEXT_TURN_MULTIPLY, POISON_ON_ATTACK_DAMAGE, RETALIATION_FIXED, RETALIATION_RECEIVED, Retaliation,
     StadiumInPlay, TrainerTurnEffect, TrainerUseLock, mark_returned_to_bench, turn_owner, EVOLUTION_BAN,
     SET_ASIDE_FACE_DOWN_BENCH, SET_ASIDE_QUIZ, SetAsideCards, StatusImmunityWhileActive, OPPONENT_POWER_SUPPRESSION,
+    COLOR_ENERGY, COLOR_POKEMON_TYPE, ColorEffect,
 )
 from .zones import (
     attach_energy_from_hand, attach_trainer, bench_from_deck, bench_from_discard, discard_attached_cards, discard_from_hand, discard_hand, draw_cards, return_discard_to_hand,
@@ -662,7 +663,7 @@ def preview_attack_damage(state: GameState, use: AttackUse, target: str, base: i
             return same_for_type_readings(state, (attacker, receiver), lambda views: calculate_with_stadium(state,
                 base, views[0], views[1], modifiers, reduction=0, resistance=resistance).final)
     except TypeReadingsDiffer as differ:
-        raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算") from None
+        raise shift_duration_error(differ.pokemons[0], f"ワザ {use.key} のダメージの計算", state=state) from None
 
 
 # ワザを受けるときに自動的にはたらく特殊能力（v0.9。ゴーストの「とうめい」）で、受けなかった要素の種類（ログ attack_evaded の
@@ -1809,7 +1810,7 @@ class ExtraEnergyDamage(AttackEffect):
     def _base(self, state: GameState, use: AttackUse) -> int:
         _, attacker = state.find_pokemon(use.pokemon_id)
         attack = attack_of(state, use.key)  # v0.49: ワザを印刷したカード（use.key）
-        attached = sum(1 for uid in attacker.energy if state.card_def(uid).provides is self.energy_type)
+        attached = typed_unit_count(state, attacker, self.energy_type)  # v0.88: 説明の「「水」エネルギー」はエネルギーの今の色で数える（解決の基盤の ``ExtraEnergy`` と同じ）
         extra = min(max(0, attached - len(attack.cost)), self.max_extra)
         return attack.damage + extra * self.per_energy
 
@@ -5535,17 +5536,29 @@ class DamageThenChosenStatusOnHeads(AttackEffect):
       「ワザをうけない」状態なら HC3）
     """
 
+    # v0.88: 選べる特殊状態（None なら説明の「ねむり・マヒ・こんらん・どく」の 4 つ。ポリゴン2（neo3-051）の「デルタビーム」は「ねむり・マヒ・こんらん」。選べるものの番号は
+    # ``CHOSEN_CONDITIONS`` の番号のまま。v0.83 の ``ChosenStatus.conditions`` と同じ）
+    conditions: tuple[str, ...] | None = None
     implementation_id = "damage_then_chosen_status_on_heads"
-    opponent_effect_elements = CHOSEN_CONDITIONS
+
+    def __post_init__(self) -> None:
+        if self.conditions is not None and (not self.conditions or set(self.conditions) - set(CHOSEN_CONDITIONS)):
+            raise ValueError(f"選べる特殊状態 {self.conditions!r} が CHOSEN_CONDITIONS の中にない")
+
+    @property
+    def opponent_effect_elements(self) -> tuple[str, ...]:  # type: ignore[override]
+        return tuple(self.conditions or CHOSEN_CONDITIONS)
 
     def check(self, attack: Attack) -> list[str]:
-        expected = "コインを投げて「おもて」なら、「ねむり・マヒ・こんらん・どく」の中から1つを選び、相手をその状態にする。"
+        names = "・".join(_CONDITION_JA[c] for c in (self.conditions or CHOSEN_CONDITIONS))
+        expected = f"コインを投げて「おもて」なら、「{names}」の中から1つを選び、相手をその状態にする。"
         return _check_form(attack, "コインで相手を選んだ特殊状態にするワザ", damage="fixed") + _check_exact_text(
             attack, "コインで相手を選んだ特殊状態にするワザ", (expected,))
 
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        options = sorted(CHOSEN_CONDITIONS.index(c) for c in (self.conditions or CHOSEN_CONDITIONS))
         problems = _decision_form(decision, _label(state, use), kind=SELECT_SPECIAL_CONDITION, player=use.player, choices=(1, 1),
-                                  options=range(len(CHOSEN_CONDITIONS)))
+                                  options=options)
         target = state.players[1 - use.player].active
         if target is None or decision.context_value("target") != target.pokemon_id:
             problems.append(f"特殊状態を選ぶ決定の対象 {decision.context_value('target')!r} が相手の対戦ポケモンではない")
@@ -7478,6 +7491,10 @@ class EnergyTransfer(PowerEffect):
             raise converted_energy_error(source, self.energy_type, (use.energy,))  # v0.59: BZ2（「草」エネルギーとしてつけかえられるか）
         if use.energy in ambiguous_miracle_cards(state, source, self.energy_type):
             raise miracle_type_error(source, self.energy_type.ja, (use.energy,))  # v0.85: MEC1
+        if use.energy in color_changed_cards(state, source, self.energy_type):
+            # v0.88（CE3）: エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカード。「「草」エネルギーを…つけかえる」が、カードの種類か今のエネルギーの色かは
+            # 決められない（エナジーバーンの HC10 と同じ形の、別の問い）
+            raise color_card_error(source, self.energy_type, (use.energy,), "（エナジートランスでつけかえる）")
         if not rainbow and (not definition.is_basic_energy or definition.provides is not self.energy_type):
             raise IllegalActionError(
                 "WRONG_ENERGY_TYPE", f"エネルギー {use.energy} は「{self.energy_type.ja}」エネルギーではない（「{self.energy_type.ja}」だけをつけかえる）"
@@ -7571,7 +7588,7 @@ class AttachEnergyFromHand(PowerEffect):
         # v0.48: 「水」ポケモンかは今有効な色（``type_readings``。モルフォンの［へんしょく］で変えた色を含む）。読み方（VS1）で答えが変わるなら、エネルギーを動かす前に止める
         readings = {color is self.pokemon_type for color in type_readings(state, target)}
         if len(readings) > 1:
-            raise shift_duration_error(target, f"つける先 {use.target} が「{self.pokemon_type.ja}」ポケモンか")
+            raise shift_duration_error(target, f"つける先 {use.target} が「{self.pokemon_type.ja}」ポケモンか", state=state)
         if readings == {False}:
             raise IllegalActionError(
                 "WRONG_POKEMON_TYPE", f"場のポケモン {use.target} は「{self.pokemon_type.ja}」ポケモンではない（「{self.pokemon_type.ja}」ポケモンにだけつける）"
@@ -8687,6 +8704,8 @@ def _energy_card_of_type(state: GameState, holder: PokemonInPlay, uid: int, ener
         raise converted_energy_error(holder, energy_type, (uid,))  # v0.59: BZ2
     if uid in ambiguous_miracle_cards(state, holder, energy_type):
         raise miracle_type_error(holder, energy_type.ja, (uid,))  # v0.85: MEC1
+    if uid in color_changed_cards(state, holder, energy_type):
+        raise color_card_error(holder, energy_type, (uid,))  # v0.88: CE3（エナジーコンバーター・こうごうせいで色が変わったカード）
     printed = definition.is_basic_energy and definition.provides is energy_type
     if (holder.pokemon_id, uid) not in state.energy_burn:
         return printed
@@ -9636,7 +9655,7 @@ class MetalEnergy(SpecialEnergyEffect):
         if role == "attacker" and holder is attacker:
             readings = {color is EnergyType.METAL for color in type_readings(state, holder)}
             if len(readings) > 1:
-                raise shift_duration_error(holder, f"鋼エネルギー {card} の「このカードをつけているポケモンが「鋼」ポケモンでないなら」")
+                raise shift_duration_error(holder, f"鋼エネルギー {card} の「このカードをつけているポケモンが「鋼」ポケモンでないなら」", state=state)
             if readings == {False}:
                 return (DamageModifier(step=5, amount=-METAL_REDUCTION, label=label, source=card),)
         return ()
@@ -9725,7 +9744,7 @@ def darkness_exempt(state: GameState, pokemon: PokemonInPlay) -> bool:
         return True
     readings = {color is EnergyType.DARKNESS for color in type_readings(state, pokemon)}
     if len(readings) > 1:
-        raise shift_duration_error(pokemon, "悪エネルギーの「このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら」")
+        raise shift_duration_error(pokemon, "悪エネルギーの「このカードをつけているポケモンが「悪」または「わるい」ポケモンでないなら」", state=state)
     return readings == {True}
 
 
@@ -9824,6 +9843,12 @@ def _not_colorless(state: GameState, holder: PokemonInPlay, uid: int) -> bool | 
     呼ぶ側が、結果が変わるかで決める）。"""
     if _miracle_effect(state, uid) and not wind_neutralizes(state, uid):
         return None  # v0.85: ミラクルエネルギーが「「無色」以外の「エネルギーカード」」に当たるかは決まらない（MEC1。``energy_discard_problem``）
+    if {k for _, _, k in _color_replacements(state, holder, uid)} - {"burn"}:
+        # v0.88（CE3）: エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカード。「「無色」以外の「エネルギーカード」」かが、印刷の色と変わった色で違えば決まらない
+        printed = _printed_units(state, holder, uid)
+        answers = {not any(EnergyType.COLORLESS in unit for unit in reading) for reading in (printed, *card_color_readings(state, holder, uid))}
+        if len(answers) > 1:
+            return None
     units = energy_units(state, holder, uid)
     colorless = [EnergyType.COLORLESS in unit for unit in units]
     if any(colorless) and not all(colorless):
@@ -9891,6 +9916,8 @@ def energy_discard_problem(state: GameState, holder: PokemonInPlay, uid: int, *,
     if _miracle_effect(state, uid):
         return (MIRACLE_TYPE_CODE, f"ポケモン {holder.pokemon_id} のミラクルエネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に当たるか: "
                                    + MIRACLE_TYPE_REASON.format(type="無色」以外の「エネルギーカード"))
+    if {k for _, _, k in _color_replacements(state, holder, uid)} - {"burn"}:
+        return (COLOR_CARD_CODE, color_card_error(holder, None, (uid,), "（エコロジムの「「無色」以外の「エネルギーカード」」。手札にもどるかが変わる）").message)  # v0.88: CE3
     return (TRANSFORM_SPECIAL_ENERGY_CODE, (f"ポケモン {holder.pokemon_id} の特殊エネルギー {uid} が、エコロジムの「「無色」以外の「エネルギーカード」」に当たるか"
                                             f"（手札にもどるかが変わる）: {TRANSFORM_SPECIAL_ENERGY_REASON}"))
 
@@ -9928,21 +9955,259 @@ def discard_energy_from_play(state: GameState, holder: PokemonInPlay, cards: Ite
     return plan
 
 
+# ---------------------------------------------------------------- v0.88: 特殊能力で色を変える効果・こうごうせい（docs/type-energy-colors-v0.88.md 2 章・3 章）
+#
+# 色の層は 3 つを分ける: カードの印刷の種類と色（``printed_def``。書きかえない）・場でカードが出すエネルギーの今の色と個数（``energy_unit_readings``。説明の「「X」エネルギー」は
+# これで数える）・場のポケモンの今のタイプ（``type_readings``）。説明の「「X」エネルギーカード」「「基本エネルギーカード」の色」は、カードの色が変わったときに当たるかが決まらない
+# （CE3。``color_changed_cards``）。色を変える効果が続くか（CE1）・2 つの効果が違う色に変える（CE2）で読み方が 2 つ以上になるときは、読み方で結果が変わる処理だけが止める。
+
+COLOR_CONTINUATION_CODE = "UNRESOLVED_COLOR_EFFECT_CONTINUATION"  # CE1
+COLOR_CONTINUATION_REASON = (
+    "ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］の「この番が終わるまで」の効果が、使ったあとに力が消えた（かがくへんかガス・まきちらせ!ベトベトガスなど）・"
+    "発生源が場をはなれた・発生源のカードが変わった・色を変えたエネルギーカードが場をはなれてもう一度ついたあとも続くかは、印刷の文面（効果が消えると書くのは「ねむり・マヒ・"
+    "こんらん」状態のときと番の終わりだけ）・kyuura の記録（CR-CHEMICAL-GAS-PRIOR-RESULTS は消える前にすませた結果のもので、続く効果の扱いを決めない）から決められず、続く読み方と"
+    "続かない読み方で結果が変わる（CE1）"
+)
+COLOR_OVERLAP_CODE = "UNRESOLVED_COLOR_REPLACEMENT_ORDER"  # CE2
+COLOR_OVERLAP_REASON = (
+    "同じエネルギー・同じポケモンの色を、常にはたらく・番の終わりまで続く効果の 2 つが違う色にする（エナジーコンバーターとこうごうせい・エナジーバーン、こうごうせいと"
+    "［きせきのかぜ］、［せんすい］と［へんしょく］）とき、どちらの色になるかは、印刷の文面・kyuura の記録（GR-2000-P325-SAME-TIMING は同じ時に起こることの順番で、"
+    "続いてはたらく 2 つの置きかえの優先を決めない）から決められず、読み方で結果が変わる（CE2）"
+)
+COLOR_CARD_CODE = "UNRESOLVED_COLOR_CHANGED_ENERGY_CARD"  # CE3
+COLOR_CARD_REASON = (
+    "エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったエネルギーカードが、説明の「「{type}」エネルギーカード」（カードとしての色。「基本エネルギーカード」の色を"
+    "含む）に当たるかは、印刷の文面（「エネルギー」を「…エネルギー」としてあつかう。カードの種類は変えない）・kyuura の記録（エナジーバーンの同じ問い UQ-ENERGY-BURN-TRANSFER も"
+    "未解決。HC10 はエナジーバーンだけの問い）から決められず、印刷の色と変わった色で結果が変わる（CE3）"
+)
+COLOR_ACTIVE = "active"
+COLOR_AMBIGUOUS = "ambiguous"
+COLOR_INACTIVE = "inactive"
+COLOR_READINGS_LIMIT = 256  # 支払いの読み方の組の上限（色の読み方が 2 つ以上のカードの組。超えたらエンジンの未対応として止める。読み方を省かない）
+COLOR_READINGS_LIMIT_CODE = "UNSUPPORTED_COLOR_READINGS_LIMIT"
+
+
+def _color_source(state: GameState, record: ColorEffect) -> PokemonInPlay | None:
+    """色を変える効果の発生源が、使ったときと同じカードで場にいれば、その場のポケモン。場をはなれた・特殊能力を印刷したカードが今の姿のカードでなくなった（退化など）なら None。"""
+    found = state.find_pokemon(record.source)
+    if found is None:
+        return None
+    pokemon = found[1]
+    return pokemon if record.source_card in (pokemon.card, pokemon.disguise) else None
+
+
+def color_effect_power(state: GameState, record: ColorEffect):
+    """色を変える効果を与えた特殊能力の定義（発生源のカードの ``power_index`` 番目）。"""
+    return state.definitions[state.cards[record.source_card].card_id].powers[record.power_index]
+
+
+def energy_holder(state: GameState, uid: int) -> PokemonInPlay | None:
+    """エネルギーカード ``uid`` がついている場のポケモン。ついていなければ None。"""
+    for player in state.players:
+        for pokemon in player.in_play():
+            if uid in pokemon.energy:
+                return pokemon
+    return None
+
+
+def color_effect_status(state: GameState, record: ColorEffect) -> str:
+    """色を変える効果（``ColorEffect``）が今はたらいているか: ``COLOR_ACTIVE``（はたらく）・``COLOR_AMBIGUOUS``（続くかが決まらない。CE1）・``COLOR_INACTIVE``（変える対象が場にない）。
+
+    - ［せんすい］（``COLOR_POKEMON_TYPE``）: 発生源（このカード）が場をはなれた・カードが変わったら、対象がないので ``COLOR_INACTIVE``（コマンドの終わりに記録を消す）。力が消えて
+      いる（かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブ。``continuous.power_suppressed``）なら ``COLOR_AMBIGUOUS``。ベンチにもどっても続く（説明に書かれていない）
+    - ［エナジーコンバーター］（``COLOR_ENERGY``）: カードが場のポケモンについていなければ ``COLOR_INACTIVE``。使ったあとに場をはなれたことがある（``left_play``）・発生源が場をはなれた・
+      カードが変わった・力が消えているなら ``COLOR_AMBIGUOUS``。場のポケモンのあいだのつけかえでは続く（カードを追う）
+    - 発生源が「ねむり・マヒ・こんらん」になったときは、記録そのものを消している（``conditions``。回復しても戻らない）"""
+    # continuous.py は effects.py を読み込むので、使うときに読み込む
+    from .continuous import power_suppressed
+
+    source = _color_source(state, record)
+    if record.kind == COLOR_POKEMON_TYPE:
+        if source is None:
+            return COLOR_INACTIVE
+        return COLOR_AMBIGUOUS if power_suppressed(state, color_effect_power(state, record), source) else COLOR_ACTIVE
+    if energy_holder(state, record.target) is None:
+        return COLOR_INACTIVE
+    if record.left_play or source is None or power_suppressed(state, color_effect_power(state, record), source):
+        return COLOR_AMBIGUOUS
+    return COLOR_ACTIVE
+
+
+def settle_color_effects(state: GameState) -> None:
+    """コマンドの終わり（``engine._apply``）: ［せんすい］の対象が場にいなくなった記録を消し（ログ ``color_effect_removed`` の ``reason`` ``target_gone``）、［エナジーコンバーター］の
+    カードが場のポケモンについていなければ ``left_play`` にする（同じ番にもう一度ついたら CE1）。"""
+    if not state.color_effects:
+        return
+    kept = []
+    for record in state.color_effects:
+        if record.kind == COLOR_POKEMON_TYPE and _color_source(state, record) is None:
+            state.add_event("color_effect_removed", player=record.player, pokemon_id=record.source, color_effect=record.kind, target=record.target,
+                            color=record.color.value, reason="target_gone")
+            continue
+        if record.kind == COLOR_ENERGY and not record.left_play and energy_holder(state, record.target) is None:
+            record = _dataclass_replace(record, left_play=True)
+        kept.append(record)
+    state.color_effects = tuple(kept)
+
+
+def photosynthesis_on(state: GameState, pokemon: PokemonInPlay) -> bool:
+    """``pokemon`` 自身のこうごうせい（``TypeEnergyAsGrass``。「このカードについている限り」）が今はたらいているか（v0.88）。特殊状態では消えない（「必ずはたらく」）。
+    かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブでは消える（特殊能力の力が消える）。うらのカードは特殊能力を持たない。"""
+    if state.is_face_down(pokemon):
+        return False
+    if not state.card_def(pokemon.card).powers and pokemon.disguise is None:
+        return False
+    from .continuous import power_suppressed
+
+    for slot in powers_of(state, pokemon):
+        if isinstance(slot.effect, TypeEnergyAsGrass) and not power_suppressed(state, slot.power, pokemon):
+            return True
+    return False
+
+
+def _printed_units(state: GameState, pokemon: PokemonInPlay, uid: int) -> tuple[frozenset[EnergyType], ...]:
+    definition = state.card_def(uid)
+    if definition.is_basic_energy:
+        return (frozenset({definition.provides}),)
+    effect = special_energy_effect(state, uid)
+    if effect is None:
+        raise RuntimeError(f"エネルギーカードでないカード {uid} がポケモン {pokemon.pokemon_id} についている（エンジンの不具合）")
+    return effect.units()
+
+
+def _color_replacements(state: GameState, pokemon: PokemonInPlay, uid: int) -> list[tuple[EnergyType, bool, str]]:
+    """カード ``uid`` の「エネルギー」の色を変える効果（色, はたらくと決まっているか, 種類）。エナジーバーン（v0.31。そのポケモンについている間の (ポケモン, カード)）・
+    エナジーコンバーター（基本エネルギーカードだけ）・こうごうせい（ついているすべてのエネルギー）。［きせきのかぜ］で「無色」1 個になった特殊エネルギーは、こうごうせいと
+    いっしょにはたらくときだけ、同じ並びに入れる（どちらの色になるかが決まらない。CE2）。"""
+    found: list[tuple[EnergyType, bool, str]] = []
+    if (pokemon.pokemon_id, uid) in state.energy_burn:
+        found.append((EnergyType.FIRE, True, "burn"))
+    if state.color_effects and state.card_def(uid).is_basic_energy:
+        for record in state.color_effects:
+            if record.kind == COLOR_ENERGY and record.target == uid:
+                status = color_effect_status(state, record)
+                if status != COLOR_INACTIVE:
+                    found.append((record.color, status == COLOR_ACTIVE, "converter"))
+    if photosynthesis_on(state, pokemon):
+        found.append((EnergyType.GRASS, True, "photosynthesis"))
+        if state.card_def(uid).is_special_energy and wind_neutralizes(state, uid) and state.energy_role(uid) is None:
+            found.append((EnergyType.COLORLESS, True, "wind"))
+    return found
+
+
+def card_color_readings(state: GameState, pokemon: PokemonInPlay, uid: int) -> tuple[tuple[frozenset[EnergyType], ...], ...]:
+    """場のポケモン ``pokemon`` についているカード ``uid`` が出すエネルギーの色の読み方（［おいしげる］を当てはめる前。最初の読み方が決まった値か、決まらないときの最初の読み方）。
+
+    - 色を変える効果がなければ印刷のとおり（基本エネルギーは 1 個、特殊エネルギーは登録の ``units``）の 1 つ
+    - 決まって はたらく効果の色が 1 つなら、出す 1 個ずつがその色（個数は変えない。無色2個エネルギーは「草」2 個。こうごうせいでも基本エネルギーカードにはしない）
+    - 続くかが決まらない効果（CE1）は、はたらく・はたらかないの両方の読み方。違う色にする効果が 2 つ以上はたらく（CE2）なら、それぞれの色の読み方
+    """
+    printed = _printed_units(state, pokemon, uid)
+    replacements = _color_replacements(state, pokemon, uid)
+    if not replacements:
+        return (printed,)
+    definite = [color for color, sure, _ in replacements if sure]
+    maybe = sorted({color for color, sure, _ in replacements if not sure} - set(definite), key=list(EnergyType).index)
+    readings: list[tuple[frozenset[EnergyType], ...]] = []
+    for chosen in itertools.product((True, False), repeat=len(maybe)):
+        colors = set(definite) | {color for color, on in zip(maybe, chosen) if on}
+        options = [printed] if not colors else [tuple(frozenset({color}) for _ in printed) for color in sorted(colors, key=list(EnergyType).index)]
+        for reading in options:
+            if reading not in readings:
+                readings.append(reading)
+    return tuple(readings)
+
+
+def card_color_cause(state: GameState, pokemon: PokemonInPlay, uid: int) -> str | None:
+    """``card_color_readings`` が 2 つ以上になる理由: ``"ce2"``（違う色にする効果が同時にはたらく）・``"ce1"``（続くかが決まらない効果）。1 つなら None。"""
+    replacements = _color_replacements(state, pokemon, uid)
+    if len(card_color_readings(state, pokemon, uid)) <= 1:
+        return None
+    colors = {color for color, _, _ in replacements}
+    return "ce2" if len(colors) > 1 else "ce1"
+
+
+def color_cause_error(cause: str, what: str) -> UnsupportedError:
+    """CE1・CE2 の止める理由（``cause`` は ``card_color_cause``・``type_reading_cause`` の値）。"""
+    if cause == "ce2":
+        return UnsupportedError(COLOR_OVERLAP_CODE, f"{what}: {COLOR_OVERLAP_REASON}")
+    return UnsupportedError(COLOR_CONTINUATION_CODE, f"{what}: {COLOR_CONTINUATION_REASON}")
+
+
+def color_changed_cards(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> list[int]:
+    """``pokemon`` についているカードのうち、説明の「「``energy_type``」エネルギーカード」に当たるかが、カードの印刷（基本エネルギーカードの色）と、エナジーコンバーター・こうごうせいで
+    変わった「エネルギー」の色で違うもの（CE3）。エナジーバーンだけで変わったカードは入れない（HC10 が別に扱う）。レインボーエネルギー・［エネエネ］・ミラクルエネルギーは、それぞれの問い
+    （RB1・BZ2・MEC1）が先に扱う。"""
+    found = []
+    for uid in pokemon.energy:
+        kinds = {kind for _, _, kind in _color_replacements(state, pokemon, uid)}
+        if not kinds - {"burn"}:
+            continue
+        definition = state.card_def(uid)
+        printed = definition.is_basic_energy and definition.provides is energy_type
+        current = {all(unit == frozenset({energy_type}) for unit in reading) for reading in card_color_readings(state, pokemon, uid)}
+        if current != {printed}:
+            found.append(uid)
+    return found
+
+
+def color_card_error(pokemon: PokemonInPlay, energy_type: EnergyType | None, cards: Iterable[int], detail: str = "") -> UnsupportedError:
+    """CE3 の止める理由。``energy_type`` が None なら「基本エネルギーカード」の色（レインボーウェーブ・レインボーバーン・エコロジムの「「無色」以外」）。"""
+    what = "基本エネルギーカード」の色（「X" if energy_type is None else energy_type.ja
+    return UnsupportedError(COLOR_CARD_CODE, f"ポケモン {pokemon.pokemon_id} のカード {list(cards)}{detail}: {COLOR_CARD_REASON.format(type=what)}")
+
+
+def require_color_card_determined(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType, detail: str = "") -> None:
+    """説明が ``pokemon`` についている「「``energy_type``」エネルギーカード」を数える・選ぶとき、カードとしての色が決まらないカードがあれば止める（CE3）。"""
+    cards = color_changed_cards(state, pokemon, energy_type)
+    if cards:
+        raise color_card_error(pokemon, energy_type, cards, detail)
+
+
+def typed_unit_count(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> int:
+    """``pokemon`` についている「``energy_type``」エネルギーの個数（説明の「「X」エネルギー」。エネルギーの今の色で数える。カードの枚数ではない。最初の読み方の値）。"""
+    return sum(1 for unit in attached_units(state, pokemon) if unit == frozenset({energy_type}))
+
+
+def typed_unit_count_problem(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType, detail: str = "") -> UnsupportedError | None:
+    """``typed_unit_count`` が色の読み方（CE1・CE2）で変わるなら、その止める理由（カードごとに独立なので、どれか 1 枚の数が読み方で変われば合計も変わる）。変わらなければ None。"""
+    for uid in pokemon.energy:
+        counts = {sum(1 for unit in reading if unit == frozenset({energy_type})) for reading in card_color_readings(state, pokemon, uid)}
+        if len(counts) > 1:
+            return color_cause_error(card_color_cause(state, pokemon, uid), f"ポケモン {pokemon.pokemon_id} のカード {uid} の「{energy_type.ja}」エネルギーの数{detail}")
+    return None
+
+
+def color_reading_combinations(state: GameState, pokemon: PokemonInPlay) -> list[list[frozenset[EnergyType]]] | None:
+    """ついているエネルギーの色の読み方の組（``attached_units`` の並びの組。``card_color_readings`` のカードごとの組み合わせ）。どのカードも読み方が 1 つなら None。組が
+    ``COLOR_READINGS_LIMIT`` を超えたら、エンジンの未対応として止める（読み方を省かない）。"""
+    per_card = [card_color_readings(state, pokemon, uid) for uid in pokemon.energy]
+    if all(len(readings) == 1 for readings in per_card):
+        return None
+    total = 1
+    for readings in per_card:
+        total *= len(readings)
+    if total > COLOR_READINGS_LIMIT:
+        raise UnsupportedError(COLOR_READINGS_LIMIT_CODE, f"ポケモン {pokemon.pokemon_id} のエネルギーの色の読み方の組が {total} 通りで、上限 {COLOR_READINGS_LIMIT} を超える（エンジンの未対応）")
+    return [[unit for reading in combo for unit in reading] for combo in itertools.product(*per_card)]
+
+
+def color_reading_pokemon_cause(state: GameState, pokemon: PokemonInPlay) -> str | None:
+    """``pokemon`` についているカードの色の読み方が 2 つ以上になる理由（どれかが CE2 なら ``"ce2"``）。"""
+    causes = {card_color_cause(state, pokemon, uid) for uid in pokemon.energy} - {None}
+    if not causes:
+        return None
+    return "ce2" if "ce2" in causes else "ce1"
+
+
 def energy_units(state: GameState, pokemon: PokemonInPlay, uid: int) -> tuple[frozenset[EnergyType], ...]:
     """場のポケモン ``pokemon`` についているエネルギーカード ``uid`` が出すエネルギー（1 個ずつ、そのエネルギーとして使えるタイプの集まり。v0.58）。
 
     基本エネルギーカードは 1 個（印刷のタイプ）。特殊エネルギーは登録した実装の ``units``。エナジーバーン（v0.31。TXT-CHARIZARD「すべてのエネルギーは「炎」
     エネルギーになり」）で「炎」になったカードは、出す 1 個ずつが「炎」（個数は変えない。無色2個エネルギーは「炎」2 個。実装上の読み方）。"""
     definition = state.card_def(uid)
-    if definition.is_basic_energy:
-        units = (frozenset({definition.provides}),)
-    else:
-        effect = special_energy_effect(state, uid)
-        if effect is None:
-            raise RuntimeError(f"エネルギーカードでないカード {uid} がポケモン {pokemon.pokemon_id} についている（エンジンの不具合）")
-        units = effect.units()
-    if (pokemon.pokemon_id, uid) in state.energy_burn:
-        return tuple(frozenset({EnergyType.FIRE}) for _ in units)
+    # v0.88: 色を変える効果（エナジーバーン・エナジーコンバーター・こうごうせい）を当てはめた最初の読み方（``card_color_readings``。決まらないときは使う側が読み方を比べて止める）
+    units = card_color_readings(state, pokemon, uid)[0]
     if (definition.is_basic_energy and definition.provides is EnergyType.GRASS) and _wild_growth_card(state, pokemon, uid) == "yes":
         # v0.85: ［おいしげる］（「草」ポケモンについている「草」エネルギーカードは「草」2 個ぶん。1 枚のまま。決まらないカードは印刷のとおり数え、使う側が止める）
         return (frozenset({EnergyType.GRASS}), frozenset({EnergyType.GRASS}))
@@ -9989,8 +10254,9 @@ def require_no_ambiguous_rainbow(state: GameState, pokemon: PokemonInPlay, energ
 
 def rainbow_cards_attached(state: GameState, pokemons: Iterable[PokemonInPlay]) -> list[int]:
     """``pokemons`` についているレインボーエネルギー（どの色にもなる 1 個を出す特殊エネルギー。説明の「基本エネルギーカード」に当たるかが決まらない。RB3）。"""
+    # v0.88: カードの種類の問い（RB3）なので、色を変える効果の前の印刷の値で見る（こうごうせいで「草」になってもレインボーエネルギーのまま）
     return [uid for pokemon in pokemons for uid in pokemon.energy
-            if not state.card_def(uid).is_basic_energy and not _miracle_effect(state, uid) and any(len(unit) > 1 for unit in energy_units(state, pokemon, uid))]
+            if not state.card_def(uid).is_basic_energy and not _miracle_effect(state, uid) and any(len(unit) > 1 for unit in _printed_units(state, pokemon, uid))]
 
 
 def rainbow_basic_error(cards: Iterable[int]) -> UnsupportedError:
@@ -10053,7 +10319,17 @@ def special_energy_payment_readings(state: GameState, pokemon: PokemonInPlay, *,
 
     units = [unit for uid in pokemon.energy for unit in card_units(uid)]
     if not any_color_energy(state, pokemon):
-        return (units,)
+        # v0.88: 色を変える効果で色の読み方が 2 つ以上になるカード（CE1・CE2）は、読み方の組ごとの並び（［おいしげる］で 2 個にするカードはその読み方のまま）
+        options = [[(grass, grass)] if uid in ambiguous else list(card_color_readings(state, pokemon, uid)) for uid in pokemon.energy]
+        if all(len(option) == 1 for option in options):
+            return (units,)
+        total = 1
+        for option in options:
+            total *= len(option)
+        if total > COLOR_READINGS_LIMIT:
+            raise UnsupportedError(COLOR_READINGS_LIMIT_CODE, f"ポケモン {pokemon.pokemon_id} のエネルギーの色の読み方の組が {total} 通りで、上限 {COLOR_READINGS_LIMIT} を超える（エンジンの未対応）")
+        return tuple([unit for uid, option, card in zip(pokemon.energy, options, combo) for unit in (card if len(option) > 1 else card_units(uid))]
+                     for combo in itertools.product(*options))
     every = frozenset(EnergyType)
     all_colors = [every for _ in units]
     keep_special = []
@@ -12998,6 +13274,8 @@ NON_COLORLESS_CHOICES: tuple[int, ...] = tuple(i for i, color in enumerate(COLOR
 
 # VS1（docs 4 章）: モルフォンの［へんしょく］で変えた色が、いつまで続くか
 SHIFT_DURATION_CODE = "UNRESOLVED_SHIFT_COLOR_DURATION"
+# v0.88: 場のポケモンの色の読み方が 2 つ以上になる理由のコード（［へんしょく］の VS1・［せんすい］の CE1・CE2。``type_reading_cause``）
+TYPE_READING_CODES = frozenset({SHIFT_DURATION_CODE, "UNRESOLVED_COLOR_EFFECT_CONTINUATION", "UNRESOLVED_COLOR_REPLACEMENT_ORDER"})
 SHIFT_DURATION_REASON = (
     "モルフォンの［へんしょく］で変えた色が、使った番のあと（次の番以後）・バトル場からベンチにもどったあと・この力が消えている（ねむり・マヒ・こんらん状態・"
     "かがくへんかガス）あいだも続くかは、印刷の文面（効果の期限を書かない）・kyuura の記録（持続する効果の規定 GR-2000-P322-PERSISTENT-EFFECTS はワザの効果のもの。"
@@ -13201,10 +13479,45 @@ def type_readings(state: GameState, pokemon: PokemonInPlay) -> tuple[EnergyType 
     printed = form_def(state, pokemon).pokemon_type  # v0.49: 今の姿のカードのタイプ
     shift = pokemon.type_shift
     if shift is None:
-        return (printed,)
-    if type_shift_determined(state, pokemon) or shift.color is printed:
-        return (shift.color,)
-    return (shift.color, printed)
+        base: tuple[EnergyType | None, ...] = (printed,)
+    elif type_shift_determined(state, pokemon) or shift.color is printed:
+        base = (shift.color,)
+    else:
+        base = (shift.color, printed)
+    records = _type_color_records(state, pokemon)
+    if not records:
+        return base
+    # v0.88（docs/type-energy-colors-v0.88.md 3 章）: ［せんすい］の「この番が終わるまで、このカードの「色(タイプ)」は「水」になる」。続くかが決まらない（CE1）なら、変えた色と
+    # 変える前の色の両方。［へんしょく］の記録といっしょにある（CE2。どちらの色になるかが決まらない）なら、両方の色
+    readings: list[EnergyType | None] = []
+    for color in [record.color for record, _ in records]:
+        if color not in readings:
+            readings.append(color)
+    if shift is not None or all(status == COLOR_AMBIGUOUS for _, status in records):
+        readings += [color for color in base if color not in readings]
+    return tuple(readings)
+
+
+def _type_color_records(state: GameState, pokemon: PokemonInPlay) -> list[tuple[ColorEffect, str]]:
+    """``pokemon`` の色（タイプ）を変える効果（［せんすい］）のうち、対象が場にあるもの（記録, ``color_effect_status``）。"""
+    if not state.color_effects:
+        return []
+    found = []
+    for record in state.color_effects:
+        if record.kind == COLOR_POKEMON_TYPE and record.target == pokemon.pokemon_id:
+            status = color_effect_status(state, record)
+            if status != COLOR_INACTIVE:
+                found.append((record, status))
+    return found
+
+
+def type_reading_cause(state: GameState, pokemon: PokemonInPlay) -> str | None:
+    """``type_readings`` が 2 つ以上になる理由（v0.88）: ``"vs1"``（［へんしょく］の色の続き）・``"ce1"``（［せんすい］の続き）・``"ce2"``（［せんすい］と［へんしょく］）。1 つなら None。"""
+    if len(type_readings(state, pokemon)) <= 1:
+        return None
+    if not _type_color_records(state, pokemon):
+        return "vs1"
+    return "ce2" if pokemon.type_shift is not None else "ce1"
 
 
 def definition_views(state: GameState, pokemon: PokemonInPlay) -> tuple[CardDefinition, ...]:
@@ -13225,8 +13538,14 @@ def definition_views(state: GameState, pokemon: PokemonInPlay) -> tuple[CardDefi
     return tuple(views)
 
 
-def shift_duration_error(pokemon: PokemonInPlay, detail: str) -> UnsupportedError:
-    """VS1 の止める理由（v0.48）。解決の基盤の問い（``shift_color_duration``）と、ワザの外の確かめ（特殊能力の使用など）で同じ文。"""
+def shift_duration_error(pokemon: PokemonInPlay, detail: str, state: GameState | None = None) -> UnsupportedError:
+    """VS1 の止める理由（v0.48）。解決の基盤の問い（``shift_color_duration``）と、ワザの外の確かめ（特殊能力の使用など）で同じ文。
+
+    v0.88: ``state`` を渡したら、色の読み方が 2 つ以上になる理由（``type_reading_cause``）が［せんすい］なら CE1・CE2 の理由にする（VS1 は［へんしょく］の問いだけ）。"""
+    if state is not None:
+        cause = type_reading_cause(state, pokemon)
+        if cause in ("ce1", "ce2"):
+            return color_cause_error(cause, f"ポケモン {pokemon.pokemon_id} の色（タイプ）。{detail}")
     shift = pokemon.type_shift
     what = f"ポケモン {pokemon.pokemon_id} の［へんしょく］の色 {shift.color.ja}（{shift.turn} 番）" if shift is not None else f"ポケモン {pokemon.pokemon_id}"
     return UnsupportedError(SHIFT_DURATION_CODE, f"{what}。{detail}: {SHIFT_DURATION_REASON}")
@@ -13271,7 +13590,7 @@ def single_type(state: GameState, pokemon: PokemonInPlay, detail: str) -> Energy
     """色の読み方が 1 つならその色。2 つなら VS1 で止める（v0.48。読み方ごとに結果を比べられない処理が使う。今の対応カードでは、読み方ごとに比べる処理だけが使う）。"""
     readings = type_readings(state, pokemon)
     if len(readings) > 1:
-        raise shift_duration_error(pokemon, detail)
+        raise shift_duration_error(pokemon, detail, state=state)
     return readings[0]
 
 
@@ -13327,6 +13646,16 @@ def shift_color_options(state: GameState) -> tuple[frozenset[int], frozenset[int
     return frozenset(sure), frozenset(maybe - sure)
 
 
+def shift_color_maybe_error(state: GameState, user: PokemonInPlay) -> UnsupportedError:
+    """［へんしょく］で、読み方によって場にいる色を選んだときの止める理由（v0.48 の VS1。v0.88: その色の読み方が［せんすい］によるなら CE1・CE2）。"""
+    for player in state.players:
+        for pokemon in player.in_play():
+            cause = type_reading_cause(state, pokemon)
+            if cause in ("ce1", "ce2"):
+                return color_cause_error(cause, f"ポケモン {pokemon.pokemon_id} の色（タイプ）。選んだ色は、読み方によっては場にいない")
+    return shift_duration_error(user, "選んだ色は、読み方によっては場にいない")
+
+
 @dataclass(frozen=True)
 class ShiftColor(PowerEffect):
     """このカードの持ち主は、自分の番に 1 回、このカードの色を場にいるポケモンのどれかの色に変えることができる。ねむり・マヒ・こんらん状態の時、この力は消える（v0.48。
@@ -13356,13 +13685,14 @@ class ShiftColor(PowerEffect):
         sure, _ = shift_color_options(state)
         if not sure:
             _, user = state.find_pokemon(use.pokemon_id)
-            raise shift_duration_error(user, "決まって場にいる色がない（どの色も、読み方によっては場にいない）")
+            raise shift_duration_error(user, "決まって場にいる色がない（どの色も、読み方によっては場にいない）", state=state)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         sure, maybe = shift_color_options(state)
         _, user = state.find_pokemon(use.pokemon_id)
+        error = shift_color_maybe_error(state, user)
         push_power_decision(state, use, kind=SELECT_COLOR, player=use.player, options=sorted(sure | maybe), unresolved_choices=sorted(maybe),
-                            unresolved_code=SHIFT_DURATION_CODE, unresolved_reason=shift_duration_error(user, "選んだ色は、読み方によっては場にいない").message)
+                            unresolved_code=error.code, unresolved_reason=error.message)
 
     def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         from .state import TypeShift
@@ -13983,7 +14313,13 @@ def attack_cost_payable(state: GameState, pokemon: PokemonInPlay, attack: Attack
 
 
 def attack_cost_problem(state: GameState, pokemon: PokemonInPlay, attack: Attack) -> UnsupportedError | None:
-    """ワザに必要なエネルギーを払えるかが、［へんしん］のメタモンの無色の特殊エネルギーの読み方（TE2）で変わるなら、その止める理由（v0.58）。変わらなければ None。"""
+    """ワザに必要なエネルギーを払えるかが、［へんしん］のメタモンの無色の特殊エネルギーの読み方（TE2）で変わるなら、その止める理由（v0.58）。変わらなければ None。
+
+    v0.88: ［へんしん］がはたらいていないポケモンで、色を変える効果の読み方（CE1・CE2。``card_color_readings``）で払えるかが変わるなら、その理由（変わらなければ止めない）。"""
+    if not any_color_energy(state, pokemon):
+        colors = {can_pay_with_units(attack.cost, units) for units in special_energy_payment_readings(state, pokemon)}
+        if len(colors) > 1:
+            return color_cause_error(color_reading_pokemon_cause(state, pokemon) or "ce1", f"ポケモン {pokemon.pokemon_id} のワザ「{attack.name_ja}」の支払い")
     ambiguities = wild_growth_ambiguities(state, pokemon)
     if ambiguities:
         # v0.85: ［おいしげる］で「草」2 個になるかが決まらないカードの読み方で、払えるかが変わるなら、そのカードの問いで止める（変わらなければ止めない）
@@ -14182,7 +14518,8 @@ def _link_options(state: GameState, owner: int, pokemon: PokemonInPlay, form: Fo
         matches = [color in types for color in type_readings(state, supplier)]
         if not any(matches):
             continue
-        problem = None if all(matches) else (SHIFT_DURATION_CODE, shift_duration_error(supplier, "このポケモンが［サイコリンク］でワザを供給するか").message)
+        error = None if all(matches) else shift_duration_error(supplier, "このポケモンが［サイコリンク］でワザを供給するか", state=state)
+        problem = None if error is None else (error.code, error.message)
         supplier_form = current_form(state, supplier)
         definition = state.card_def(supplier_form.card)
         for attack in definition.attacks:
@@ -14213,7 +14550,7 @@ def held_attack_keys(state: GameState, pokemon: PokemonInPlay) -> tuple[list[tup
     order: list[AttackKey] = []
     problems: dict[AttackKey, tuple[str, str] | None] = {}
     for option in available_attacks(state, pokemon):
-        problem = option.problem if option.problem is not None and option.problem[0] == SHIFT_DURATION_CODE else None
+        problem = option.problem if option.problem is not None and option.problem[0] in TYPE_READING_CODES else None
         if option.key not in problems:
             order.append(option.key)
             problems[option.key] = problem
@@ -17653,6 +17990,10 @@ def form_problems(state: GameState) -> list[tuple[str, str]]:
                     # v0.59（BZ2）: ［エネエネ］で「超」エネルギーになったカードを、その色のエネルギーカードとして数えるかで最大HPが変わる
                     problems.append((BUZZAP_TYPE_CODE, f"プレイヤー {owner} のポケモン {pokemon.pokemon_id} の最大HP（［ガスのからだ］）・カード {converted}: "
                                      + BUZZAP_TYPE_REASON.format(type=effect.energy_type.ja)))
+                changed = color_changed_cards(state, pokemon, effect.energy_type)
+                if changed:
+                    # v0.88（CE3）: エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカードを「「超」エネルギーカード」として数えるかで最大HPが変わる
+                    problems.append((COLOR_CARD_CODE, color_card_error(pokemon, effect.energy_type, changed, f"（プレイヤー {owner} の最大HP。［ガスのからだ］）").message))
             defender = transform_defender(state, pokemon)
             if defender is None:
                 continue
@@ -17795,8 +18136,9 @@ class BeamOnKnockOut(PowerEffect):
         raise RuntimeError(f"特殊能力 {use.key} は UsePokemonPower では使わない（check_usable が拒否する。エンジンの不具合）")
 
     def energy_count(self, state: GameState, pokemon: PokemonInPlay) -> int:
-        """ついている ``energy_type`` の基本エネルギーカードの枚数（1 枚 1 個）。レインボーエネルギー・［エネエネ］のカードは数えない（``use_problem`` が止める）。"""
-        return sum(1 for uid in pokemon.energy if state.card_def(uid).provides is self.energy_type)
+        """ついている ``energy_type`` のエネルギーの数（説明の「「水」エネルギーの数」。v0.88 からエネルギーの今の色で数える ``typed_unit_count``。基本エネルギーカードだけの場では
+        カードの枚数と同じ）。レインボーエネルギー・［エネエネ］のカードは数えない（``use_problem`` が止める）。"""
+        return typed_unit_count(state, pokemon, self.energy_type)
 
     def use_problem(self, state: GameState, pokemon: PokemonInPlay, source: PokemonInPlay) -> tuple[str, str] | None:
         """使うを選んだときの処理が決められないなら (コード, 理由の文)（RB1・BZ2・Z9）。状態を変えない。"""
@@ -17806,6 +18148,9 @@ class BeamOnKnockOut(PowerEffect):
         converted = converted_energy_cards(state, pokemon, self.energy_type)
         if converted:
             return BUZZAP_TYPE_CODE, f"ポケモン {pokemon.pokemon_id} のカード {converted}: {BUZZAP_TYPE_REASON.format(type=self.energy_type.ja)}"
+        counted = typed_unit_count_problem(state, pokemon, self.energy_type, "（［ファイナルビーム］）")  # v0.88: CE1・CE2
+        if counted is not None:
+            return counted.code, counted.message
         if self.energy_count(state, pokemon) * self.per > 0:
             against = {weakness_of(state, source), resistance_of(state, source)[0]} - {None}
             if any(color in against for color in type_readings(state, pokemon)):
@@ -32285,7 +32630,7 @@ def miracle_energy_problems(state: GameState) -> list[tuple[str, str]]:
 
 
 def _face_down_safe_light(state: GameState, pokemon: PokemonInPlay) -> bool:
-    return state.is_face_down(pokemon.card) or shining_or_light(state, pokemon)
+    return state.is_face_down(pokemon) or shining_or_light(state, pokemon)
 
 
 def settle_miracle_energy(state: GameState) -> None:
@@ -32377,7 +32722,13 @@ def _wild_growth_card(state: GameState, pokemon: PokemonInPlay, uid: int) -> str
     grass_basic = definition.is_basic_energy and definition.provides is EnergyType.GRASS
     candidate = grass_basic
     kind = None
-    if not grass_basic and definition.is_special_energy:
+    changed = {k for _, _, k in _color_replacements(state, pokemon, uid)} - {"burn"}
+    if changed:
+        # v0.88（CE3）: エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカード。「「草」エネルギーカード」に当たるかが印刷と変わった色で違えば決まらない
+        grass_now = {all(unit == frozenset({EnergyType.GRASS}) for unit in reading) for reading in card_color_readings(state, pokemon, uid)}
+        if grass_now != {grass_basic}:
+            kind, candidate = "ce3", True
+    if kind is None and not grass_basic and definition.is_special_energy:
         if wind_neutralizes(state, uid):
             return "no"
         role = state.energy_role(uid)
@@ -32395,7 +32746,7 @@ def _wild_growth_card(state: GameState, pokemon: PokemonInPlay, uid: int) -> str
         return "no"
     if _owner_of_in_play(state, pokemon) not in _wild_growth_owners(state):
         return "no"
-    if state.is_face_down(pokemon.card):
+    if state.is_face_down(pokemon):
         return "no"
     readings = type_readings(state, pokemon)
     grass = [color is EnergyType.GRASS for color in readings]
@@ -32405,7 +32756,9 @@ def _wild_growth_card(state: GameState, pokemon: PokemonInPlay, uid: int) -> str
         raise RuntimeError(f"エナジーバーンで「炎」になったカード {uid} に［おいしげる］が当たる（今の写しでは起こらない。エンジンの不具合）")
     if kind is not None:
         return kind
-    return "yes" if all(grass) else "vs1"
+    if not all(grass):
+        return "vs1" if type_reading_cause(state, pokemon) == "vs1" else type_reading_cause(state, pokemon)  # v0.88: ［せんすい］の色の読み方（CE1・CE2）
+    return "yes"
 
 
 def wild_growth_ambiguities(state: GameState, pokemon: PokemonInPlay) -> list[tuple[int, str]]:
@@ -32425,7 +32778,11 @@ def wild_growth_error(state: GameState, pokemon: PokemonInPlay, ambiguities: lis
     uid, kind = ambiguities[0]
     what = f"［おいしげる］（「草」エネルギーカードを「草」2 個ぶん）とポケモン {pokemon.pokemon_id} のカード {uid}{detail}"
     if kind == "vs1":
-        return shift_duration_error(pokemon, what)
+        return shift_duration_error(pokemon, what, state=state)
+    if kind in ("ce1", "ce2"):
+        return color_cause_error(kind, f"ポケモン {pokemon.pokemon_id} の色（タイプ）。{what}")  # v0.88: ［せんすい］の色の読み方
+    if kind == "ce3":
+        return color_card_error(pokemon, EnergyType.GRASS, (uid,), f"（{what}）")  # v0.88
     if kind == "rb1":
         return rainbow_type_error(pokemon, EnergyType.GRASS, (uid,))
     if kind == "bz2":
@@ -32536,7 +32893,7 @@ class CoinHealTypePokemonOnEntry(EntryPower):
         found = []
         for owner in (user, 1 - user):
             for pokemon in state.players[owner].in_play():
-                if state.is_face_down(pokemon.card) or not pokemon.damage:
+                if state.is_face_down(pokemon) or not pokemon.damage:
                     continue
                 if type_readings(state, pokemon) == (self.energy_type,):
                     found.append((owner, pokemon))
@@ -32545,11 +32902,11 @@ class CoinHealTypePokemonOnEntry(EntryPower):
     def accept_problem(self, state: GameState, use: PowerUse) -> UnsupportedError | None:
         for side in state.players:
             for pokemon in side.in_play():
-                if state.is_face_down(pokemon.card) or not pokemon.damage:
+                if state.is_face_down(pokemon) or not pokemon.damage:
                     continue
                 readings = type_readings(state, pokemon)
                 if len(readings) > 1 and self.energy_type in readings:
-                    return shift_duration_error(pokemon, "［ハーブのかおり］の「草」ポケモン")
+                    return shift_duration_error(pokemon, "［ハーブのかおり］の「草」ポケモン", state=state)
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -32665,7 +33022,7 @@ class CoinAttachFromDiscardToTypePokemon(PowerEffect):
     def _targets(self, state: GameState, player: int) -> tuple[list[int], list[int]]:
         options, unresolved = [], []
         for pokemon in state.players[player].in_play():
-            if state.is_face_down(pokemon.card) or energy_attach_block(state, pokemon) is not None:
+            if state.is_face_down(pokemon) or energy_attach_block(state, pokemon) is not None:
                 continue
             readings = type_readings(state, pokemon)
             if self.energy_type in readings:
@@ -32688,7 +33045,7 @@ class CoinAttachFromDiscardToTypePokemon(PowerEffect):
             raise rainbow_attach_error(self.energy_type, rainbow)
         if len(unresolved) == len(targets):
             _, pokemon = state.find_pokemon(unresolved[0])
-            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン")
+            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン", state=state)
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
         if _power_coin(state, use) is not CoinSide.HEADS:
@@ -32712,7 +33069,7 @@ class CoinAttachFromDiscardToTypePokemon(PowerEffect):
         (target,) = choices
         _, pokemon = state.find_pokemon(target)
         if len(type_readings(state, pokemon)) > 1:
-            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン")
+            raise shift_duration_error(pokemon, f"［ファイヤーリチャージ］のつける先の「{self.energy_type.ja}」ポケモン", state=state)
         attach_from_discard(state, use.player, (card,), pokemon)
         state.add_event("power_attach_from_discard", player=use.player, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, power=str(use.key), cards=(card,),
                         user_pokemon_id=use.pokemon_id)
@@ -33742,7 +34099,7 @@ class DiscardDeckTopAttachTypeEnergyThenEndTurn(EntryPower):
             return UnsupportedError(MIRACLE_TYPE_CODE, f"［おたけび］でトラッシュするかもしれないミラクルエネルギー: {MIRACLE_TYPE_REASON.format(type=self.energy_type.ja)}")
         for pokemon in state.players[use.player].in_play():
             if not state.is_face_down(pokemon) and len({color is self.energy_type for color in type_readings(state, pokemon)}) > 1:
-                return shift_duration_error(pokemon, f"［おたけび］でつける自分の場の「{self.energy_type.ja}」ポケモン")
+                return shift_duration_error(pokemon, f"［おたけび］でつける自分の場の「{self.energy_type.ja}」ポケモン", state=state)
         return None
 
     def resolve(self, state: GameState, use: PowerUse) -> None:
@@ -34270,6 +34627,7 @@ def magma_candidates(state: GameState, holder: PokemonInPlay, energy_type: Energ
     rainbow = set(ambiguous_rainbow_cards(state, holder, energy_type))
     converted = set(converted_energy_cards(state, holder, energy_type))
     miracle = set(ambiguous_miracle_cards(state, holder, energy_type))
+    changed = set(color_changed_cards(state, holder, energy_type))  # v0.88
     for uid in holder.energy:
         if uid in converted:
             ambiguous.append((uid, converted_energy_error(holder, energy_type, (uid,))))
@@ -34277,6 +34635,8 @@ def magma_candidates(state: GameState, holder: PokemonInPlay, energy_type: Energ
             ambiguous.append((uid, rainbow_type_error(holder, energy_type, (uid,))))
         elif uid in miracle:
             ambiguous.append((uid, miracle_type_error(holder, energy_type.ja, (uid,))))
+        elif uid in changed:
+            ambiguous.append((uid, color_card_error(holder, energy_type, (uid,), "（［やけのこり］の「「炎」エネルギーカード」）")))  # v0.88: CE3
         elif (holder.pokemon_id, uid) in state.energy_burn:
             ambiguous.append((uid, UnsupportedError(
                 "UNRESOLVED_ENERGY_BURN_TRANSFER",
@@ -34415,3 +34775,563 @@ V0_87_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
 SAME_DATA_CARDS_V0_87: Mapping[str, str] = MappingProxyType({"QSG-023": "ES2-014", "QSG-057": "ES2-012", "QSG-046": "ES1-034"})
 
 DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_87_ATTACKS), V0_87_POWERS), SAME_DATA_CARDS_V0_87)
+
+
+# ---------------------------------------------------------------- v0.88（docs/type-energy-colors-v0.88.md）
+#
+# ポケモンのタイプとエネルギーの色を変える特殊能力（［せんすい］・［エナジーコンバーター］・こうごうせい）、色を選ぶ・数えるワザ（コアストリーム・レインボーウェーブ・
+# レインボーバーン）、変えたカードをつけ替える特殊能力（［でんじりょく］）、ワザといっしょに使う特殊能力（［すいりょくはつでん］）。色の層の共通の問い合わせは上の
+# 「v0.88: 特殊能力で色を変える効果・こうごうせい」（``card_color_readings``・``type_readings``・``color_changed_cards``）。
+
+TRANSFORM_ENERGY_COUNT_CODE = "UNRESOLVED_TRANSFORM_ENERGY_COUNT"
+HYDROELECTRIC_TEXT = (
+    "この力は、このカードが「{attack}」を使うとき、使える。このカードに、「{attack}」に必要なエネルギーよりも多く「{type}」エネルギーがついているとき、多い「{type}」エネルギー"
+    "1個につき{per}ダメージが、このカードの「{attack}」のダメージに追加される。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は使えない。"
+)
+
+
+@dataclass(frozen=True)
+class ExtraEnergyDamageWithAttack(PowerEffect):
+    """この力は、このカードが「(``attack_name``)」を使うとき、使える。このカードに、そのワザに必要なエネルギーよりも多く「(``energy_type``)」エネルギーがついているとき、多い
+    エネルギー 1 個につき ``per`` ダメージが、このカードのそのワザのダメージに追加される。ねむり・マヒ・こんらんのとき使えない（v0.88。ランターン（neo1-040）の［すいりょくはつでん］。
+    kyuura の印刷の文面。docs 5.1 節）。
+
+    - 「使える」は、使うかを持ち主が選ぶ（v0.11 の G1・v0.65 の［にげこむ］と同じ読み方。p.311 の特殊能力の使用）。使う時点はワザの宣言といっしょ（``UseAttack.attack_power``。
+      クチバシティジムのコインと同じ形。ワザの途中に宣言しない。p.309）。``UsePokemonPower`` では使えない（``POWER_NOT_USABLE_NOW``）
+    - 使えるのは、この特殊能力を持つポケモン（「このカード」）が、同じカードの「(``attack_name``)」を自分のワザとして使うときだけ（相手のワザとして使う・［サイコリンク］・
+      思い出させるでほかのポケモンが使うワザは当たらない。［へんしん］で写した特殊能力は TF1）
+    - 数えるのは説明の「「水」エネルギー」（エネルギーの今の色。``typed_unit_count``。カードの枚数ではない）。多いエネルギーは、そのワザに必要なエネルギーの支払いに使わなくて
+      よい「水」の数（「まぶしいひかり」は雷雷なので、ついている「水」エネルギーのすべて。kyuura の日英の違いの記録はない。英語版の「not used to pay」と同じ数）
+    - 追加するダメージは p.321 の 2 段階（ワザを使うポケモンの効果。GR-2000-P321-DAMAGE-ORDER）。受けるのは相手の対戦ポケモンへのダメージだけ
+    - ねむり・マヒ・こんらんなら使えない（こんらん状態でワザを使うときに選べない）。かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブ（力が消える）・
+      ショックアイ（使えない）でも使えない。数え方が決まらない（RB1・BZ2・MEC1・CE1・CE2）なら、使うを選ぶと止める
+    """
+
+    attack_name: str
+    energy_type: EnergyType
+    per: int
+    implementation_id = "extra_energy_damage_with_attack"
+    with_attack: ClassVar[bool] = True  # v0.88: ワザの宣言といっしょに使う（``UseAttack.attack_power``）
+
+    def check(self, power: Power) -> list[str]:
+        text = HYDROELECTRIC_TEXT.format(attack=self.attack_name, type=self.energy_type.ja, per=self.per)
+        return _check_power_text(power, "ワザといっしょに使い、多い色のエネルギーの数でダメージを追加する特殊能力", (text,))
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        raise IllegalActionError("POWER_NOT_USABLE_NOW", f"特殊能力 {use.key} は、「{self.attack_name}」を使うときに、ワザの宣言といっしょに使う（UseAttack の attack_power）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        raise RuntimeError(f"特殊能力 {use.key} は UsePokemonPower では使わない（check_usable が拒否する。エンジンの不具合）")
+
+    def extra_units(self, state: GameState, pokemon: PokemonInPlay, attack: Attack) -> int:
+        """多い「(``energy_type``)」エネルギーの数（ついている数 − そのワザの支払いに要る数。0 より小さくしない）。支払いに要る数は、その色の記号の数と、ほかの色のエネルギーで
+        払えない無色の記号の数。"""
+        units = attached_units(state, pokemon)
+        typed = sum(1 for unit in units if unit == frozenset({self.energy_type}))
+        colored_others = sum(1 for cost in attack.cost if cost not in (self.energy_type, EnergyType.COLORLESS))
+        colorless = sum(1 for cost in attack.cost if cost is EnergyType.COLORLESS)
+        spare_others = max(0, len(units) - typed - colored_others)
+        needed = sum(1 for cost in attack.cost if cost is self.energy_type) + max(0, colorless - spare_others)
+        return max(0, typed - needed)
+
+
+def attack_power_slot(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> PowerSlot | None:
+    """``attacker`` が ``key`` のワザを使うときにいっしょに使える特殊能力（``ExtraEnergyDamageWithAttack``。同じカードの、説明が名前を挙げるワザ）。なければ None（v0.88）。"""
+    for slot in powers_of(state, attacker):
+        effect = slot.effect
+        if isinstance(effect, ExtraEnergyDamageWithAttack) and slot.key.card_id == key.card_id and attack_of(state, key).name_ja == effect.attack_name:
+            return slot
+    return None
+
+
+def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> PowerSlot:
+    """ワザ ``key`` といっしょに特殊能力を使うことを選んだ（``UseAttack.attack_power``）ときの確かめ（v0.88。状態を変えない）。使えないなら ``IllegalActionError``、数え方が決まらないなら
+    ``UnsupportedError``。使えるならその特殊能力。"""
+    from .continuous import power_suppressed
+    from .persistent import powers_use_prevented
+
+    slot = attack_power_slot(state, attacker, key)
+    if slot is None:
+        raise IllegalActionError("ATTACK_POWER_NOT_AVAILABLE", f"ポケモン {attacker.pokemon_id} は、このワザといっしょに使える特殊能力を持っていない")
+    conditions = attacker.conditions
+    for blocked, code, name in ((conditions.asleep, "POKEMON_ASLEEP", "ねむり"), (conditions.paralyzed, "POKEMON_PARALYZED", "マヒ"),
+                                (conditions.confused, "POKEMON_CONFUSED", "こんらん")):
+        if blocked:
+            raise IllegalActionError(code, f"ポケモン {attacker.pokemon_id} は{name}状態なので、特殊能力「{slot.power.name_ja}」は使えない")
+    if power_suppressed(state, slot.power, attacker):
+        raise IllegalActionError("POWER_SUPPRESSED", f"特殊能力「{slot.power.name_ja}」は、ほかの効果で使えず、その力も消えている")
+    if powers_use_prevented(state, attacker) is not None:
+        raise IllegalActionError("POWER_USE_PREVENTED", f"ポケモン {attacker.pokemon_id} は、相手のワザの効果で特殊能力を使うことができない")
+    effect = slot.effect
+    for cards, error in ((ambiguous_rainbow_cards(state, attacker, effect.energy_type), rainbow_type_error),
+                         (converted_energy_cards(state, attacker, effect.energy_type), converted_energy_error)):
+        if cards:
+            raise error(attacker, effect.energy_type, cards)
+    require_no_ambiguous_miracle(state, attacker, effect.energy_type)
+    problem = typed_unit_count_problem(state, attacker, effect.energy_type, f"（［{slot.power.name_ja}］）")
+    if problem is not None:
+        raise problem
+    return slot
+
+
+def attack_power_modifier(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> DamageModifier | None:
+    """ワザ ``key`` といっしょに使った特殊能力の 2 段階の追加（0 なら None）（v0.88。``kernel.attack_modifiers_of`` が相手の対戦ポケモンへのダメージの要素ごとに加える）。"""
+    slot = attack_power_slot(state, attacker, key)
+    if slot is None:
+        raise RuntimeError(f"ワザ {key} といっしょに使った特殊能力が、ポケモン {attacker.pokemon_id} にない（宣言の確かめの漏れ。エンジンの不具合）")
+    extra = slot.effect.extra_units(state, attacker, attack_of(state, key))
+    if extra == 0:
+        return None
+    return DamageModifier(step=2, amount=extra * slot.effect.per, label=f"［{slot.power.name_ja}］", source=slot.card)
+
+
+SUBMERGE_TEXT = (
+    "この力は、自分の番ごとに1回使うことができる。この番が終わるまで、このカードの「色(タイプ)」は「{type}」になる。このカードが「ねむり・マヒ・こんらん」状態のとき、"
+    "この力を使うことはできず、その効果も消える。"
+)
+
+
+@dataclass(frozen=True)
+class TypeChangeSelfUntilTurnEnd(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。この番が終わるまで、このカードの「色(タイプ)」は「(``color``)」になる。ねむり・マヒ・こんらんのとき、この力を使うことは
+    できず、その効果も消える（v0.88。ランターン（neo3-026）の［せんすい］。kyuura の印刷の文面。docs 5.2 節）。
+
+    - 宣言して使う（``once_per_turn``）。色は選ばない（いつも「水」）。弱点・抵抗力・ワザに必要なエネルギーは変えない（タイプだけ）
+    - 効果は ``state.ColorEffect``（``COLOR_POKEMON_TYPE``。発生源と対象はこのカード）。番の終わりに消える。ねむり・マヒ・こんらんになったら効果も消える（``conditions``。回復しても
+      戻らない）。ベンチにもどっても続く（説明に書かれていない）。かがくへんかガスなどで力が消えたあとも続くかは CE1、［へんしょく］の記録といっしょなら CE2（``type_readings``）。
+      ［へんしょく］の VS1 とは別の型・別の問い
+    """
+
+    color: EnergyType
+    implementation_id = "type_change_self_until_turn_end"
+    once_per_turn: ClassVar[bool] = True
+    color_effect_kind: ClassVar[str] = COLOR_POKEMON_TYPE
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "この番が終わるまで自分のタイプを変える特殊能力", (SUBMERGE_TEXT.format(type=self.color.ja),))
+
+    def color_choices(self) -> tuple[EnergyType, ...]:
+        return (self.color,)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        require_power_not_used(state, use)
+        _require_no_choices(use)
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        card = use.card if use.card is not None else user.card
+        record = ColorEffect(COLOR_POKEMON_TYPE, use.player, user.pokemon_id, card, use.key.power_index, user.pokemon_id, self.color, state.turn_number)
+        state.color_effects = state.color_effects + (record,)
+        state.add_event("color_effect_added", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), color_effect=record.kind,
+                        target=record.target, color=self.color.value, source_card=card)
+
+
+ENERGY_CONVERTER_TEXT = (
+    "この力は、自分の番ごとに1回使うことができる。自分の場のポケモンについている「基本エネルギーカード」を1枚選び、好きな「色(タイプ)」(「無色」以外)を1つ選ぶ。この番が"
+    "終わるまで、その「エネルギーカード」の「エネルギー」は、選んだ「色(タイプ)」の「エネルギー」としてあつかわれる。このカードが「ねむり・マヒ・こんらん」状態のとき、"
+    "この力を使うことはできず、その効果も消える。"
+)
+
+
+@dataclass(frozen=True)
+class ConvertBasicEnergyColor(PowerEffect):
+    """この力は、自分の番ごとに 1 回使うことができる。自分の場のポケモンについている「基本エネルギーカード」を 1 枚選び、好きな色（無色以外）を 1 つ選ぶ。この番が終わるまで、
+    その「エネルギーカード」の「エネルギー」は、選んだ色の「エネルギー」としてあつかわれる。ねむり・マヒ・こんらんのとき、この力を使うことはできず、その効果も消える（v0.88。
+    ポリゴン2（neo3-051）の［エナジーコンバーター］。kyuura の印刷の文面。docs 5.3 節）。
+
+    - 宣言して使う（``once_per_turn``）。選ぶもの: ``energy``（カード）と ``source``（そのカードがついている自分の場のポケモン）。``target`` は使わない。そのあと色を選ぶ
+      （決定 ``SELECT_COLOR``。選べるものは無色以外の 8 色 ``NON_COLORLESS_CHOICES``。悪・鋼を含む。同じ色も選べる。レインボーエネルギー・［エネエネ］の 6 色・BZ3 とは別）
+    - 基本エネルギーカードだけ（特殊エネルギー・［エネエネ］の役割のカードは ``NOT_BASIC_ENERGY``）。相手のポケモン・手札・トラッシュのカードは選べない
+    - カードの種類（基本エネルギーカード）・印刷の色は変えない。変わるのは場でカードが出す「エネルギー」の色だけ（``card_color_readings``）。つけ直しではない（手札からつける回数・
+      つけたときの効果・［エナジーしんか］・［いなびかり］・［かんでん］ははたらかない）
+    - 効果は ``state.ColorEffect``（``COLOR_ENERGY``。カードを追う）。番の終わり・発生源のねむり・マヒ・こんらんで消える。発生源が場をはなれた・力が消えた・カードが場をはなれてもう一度
+      ついたあとは CE1、エナジーバーン・こうごうせいといっしょで色が違えば CE2。説明の「「X」エネルギーカード」に当たるかは CE3
+    """
+
+    implementation_id = "convert_basic_energy_color"
+    once_per_turn: ClassVar[bool] = True
+    color_effect_kind: ClassVar[str] = COLOR_ENERGY
+
+    def check(self, power: Power) -> list[str]:
+        return _check_power_text(power, "この番が終わるまで基本エネルギーカードのエネルギーの色を変える特殊能力", (ENERGY_CONVERTER_TEXT,))
+
+    def color_choices(self) -> tuple[EnergyType, ...]:
+        return tuple(COLORS[i] for i in NON_COLORLESS_CHOICES)
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        require_power_not_used(state, use)
+        if use.target is not None:
+            raise IllegalActionError("POWER_CHOICE_NOT_USED", "この特殊能力は、エネルギーカード（energy）とついているポケモン（source）だけを指定する")
+        if use.energy is None or use.source is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "色を変えるエネルギーカード（energy）と、それがついている自分の場のポケモン（source）を指定する")
+        source = _own_pokemon(state, use, use.source, "SOURCE")
+        if use.energy not in source.energy:
+            raise IllegalActionError("ENERGY_NOT_ATTACHED", f"エネルギー {use.energy!r} はポケモン {use.source} についていない")
+        if not state.card_def(use.energy).is_basic_energy:
+            raise IllegalActionError("NOT_BASIC_ENERGY", f"カード {use.energy} は基本エネルギーカードではない（特殊エネルギー・エネルギーとしての役割のカードは選べない）")
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        push_power_decision(state, use, kind=SELECT_COLOR, player=use.player, options=NON_COLORLESS_CHOICES, min_choices=1, max_choices=1,
+                            context=(("energy", use.energy), ("holder", use.source)))
+
+    def resume(self, state: GameState, use: PowerUse, decision: PendingDecision, choices: tuple[int, ...]) -> None:
+        (choice,) = choices
+        if choice not in NON_COLORLESS_CHOICES:
+            raise RuntimeError(f"エナジーコンバーターの色 {choice} が無色以外の色ではない（エンジンの不具合）")
+        _, user = state.find_pokemon(use.pokemon_id)
+        card = use.card if use.card is not None else user.card
+        uid = decision.context_value("energy")
+        record = ColorEffect(COLOR_ENERGY, use.player, user.pokemon_id, card, use.key.power_index, uid, COLORS[choice], state.turn_number)
+        state.color_effects = state.color_effects + (record,)
+        state.add_event("color_effect_added", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), color_effect=record.kind,
+                        target=uid, holder=decision.context_value("holder"), color=record.color.value, source_card=card)
+
+    def decision_problems(self, state: GameState, use: PowerUse, decision: PendingDecision) -> list[str]:
+        problems = _power_decision_form(decision, use, kind=SELECT_COLOR, choices=(1, 1), options=NON_COLORLESS_CHOICES)
+        holder = state.find_pokemon(decision.context_value("holder", -1))
+        uid = decision.context_value("energy")
+        if holder is None or holder[0] != use.player or uid not in holder[1].energy or not state.card_def(uid).is_basic_energy:
+            problems.append(f"エナジーコンバーターの決定のカード {uid!r} が、自分の場のポケモン {decision.context_value('holder')!r} についている基本エネルギーカードではない")
+        return problems
+
+
+PHOTOSYNTHESIS_TEXT = "このカードについている限り、すべてのエネルギーは「{type}」エネルギーとしてあつかわれる。この力は、このカードが「ねむり・マヒ・こんらん」状態でも、必ずはたらく。"
+
+
+@dataclass(frozen=True)
+class TypeEnergyAsGrass(ContinuousPower):
+    """このカードについている限り、すべてのエネルギーは「草」エネルギーとしてあつかわれる。ねむり・マヒ・こんらんでも、必ずはたらく（v0.88。エリカのナゾノクサ（GD4-001）の
+    こうごうせい。kyuura の印刷の文面。docs 5.4 節）。
+
+    - 常にはたらく（宣言しない）。特殊状態では消えない（``blocked_by_status`` が偽）。かがくへんかガス・まきちらせ!ベトベトガス・ふしぎなガス・スタンウェーブでは消える
+    - このカードについているすべてのエネルギー（あとからつけたカードも。基本・特殊・役割のカード）が出す 1 個ずつを「草」としてあつかう（個数は変えない。無色2個エネルギーは
+      「草」2 個、ミラクルエネルギーは「草」2 個）。カードを「基本「草」エネルギーカード」にはしない（種類・印刷の色は変えない。特殊エネルギーのほかの効果は残る）。ほかのポケモンに
+      つけかえたあとは当てはめない（``photosynthesis_on``・``card_color_readings``）
+    - ［きせきのかぜ］で「無色」1 個になった特殊エネルギー・エナジーコンバーターの色と違うときは CE2。説明の「「X」エネルギーカード」に当たるかは CE3
+    """
+
+    energy_type: EnergyType = EnergyType.GRASS
+    implementation_id = "type_energy_as_grass"
+    blocked_by_status: ClassVar[bool] = False
+    what: ClassVar[str] = "ついているエネルギーをすべて「草」エネルギーとしてあつかう特殊能力"
+
+    def __post_init__(self) -> None:
+        if self.energy_type is not EnergyType.GRASS:
+            raise ValueError("こうごうせいは「草」エネルギーとしてあつかう（ほかの色の写しはない）")
+
+    def texts(self) -> tuple[str, ...]:
+        return (PHOTOSYNTHESIS_TEXT.format(type=self.energy_type.ja),)
+
+
+MAGNETIC_FORCE_TEXT = (
+    "この力は、自分の番の中で何回でも使うことができる。自分の場の{names}についている「エネルギーカード」を、自分の場の別の{names}につけ替える。"
+    "このカードが「ねむり・マヒ・こんらん」状態のとき、この力を使うことはできない。"
+)
+
+
+@dataclass(frozen=True)
+class MoveEnergyAmongNamed(PowerEffect):
+    """この力は、自分の番の中で何回でも使うことができる。自分の場の (``names``) についている「エネルギーカード」を、自分の場の別の (``names``) につけ替える。ねむり・マヒ・こんらんの
+    とき、この力を使うことはできない（v0.88。レアコイル（neo3-045）の［でんじりょく］。kyuura の印刷の文面。docs 5.5 節）。
+
+    - 宣言して使う（何回でも。回数を数えない）。選ぶもの: ``energy``・``source``（ついているポケモン）・``target``（つけ替える先）。1 回の使用で 1 枚（v0.5 のエナジートランスと
+      同じ実装上の仮定。何回でも使えるので、何枚移しても 1 枚ずつ移した結果と同じ）
+    - ``source``・``target`` は自分の場の、今の姿の名前が ``names`` のどれかと完全に同じポケモン（「マチスのコイル」は入らない）で、別のポケモン
+    - エネルギーカードなら種類を問わない（基本・特殊・役割のカード。無色2個エネルギーも 1 枚）。同じ uid のカードを動かすだけ（つけ直しではない: 手札からつける回数・つけたときの
+      効果・つけたときにはたらく特殊能力・エコロジム・リサイクルエネルギーははたらかない。CR-ENERGY-TRANS-NOT-ATTACHMENT と同じ読み方）。ログ ``move_energy``
+    - エナジーコンバーターで色を変えたカードはカードを追うので、つけ替えても効果は続く。クリスタルビームを受けたポケモンへのつけ替えは CB1（v0.59）
+    """
+
+    names: tuple[str, ...]
+    implementation_id = "move_energy_among_named"
+
+    def check(self, power: Power) -> list[str]:
+        names = "「" + "」「".join(self.names) + "」"
+        return _check_power_text(power, "名前の決まったポケモンのあいだでエネルギーカードをつけ替える特殊能力", (MAGNETIC_FORCE_TEXT.format(names=names),))
+
+    def _named(self, state: GameState, pokemon: PokemonInPlay) -> bool:
+        return form_def(state, pokemon).name_ja in self.names
+
+    def check_usable(self, state: GameState, use: PowerUse) -> None:
+        _require_user_not_asleep_paralyzed_confused(state, use)
+        if use.energy is None or use.source is None or use.target is None:
+            raise IllegalActionError("POWER_CHOICE_MISSING", "つけ替えるエネルギーカード（energy）・ついているポケモン（source）・つけ替える先（target）を指定する")
+        source = _own_pokemon(state, use, use.source, "SOURCE")
+        target = _own_pokemon(state, use, use.target, "TARGET")
+        if use.source == use.target:
+            raise IllegalActionError("SAME_POKEMON", "エネルギーカードは、ついているポケモンとは別のポケモンにつけ替える（「別の」）")
+        for pokemon, role in ((source, "SOURCE"), (target, "TARGET")):
+            if not self._named(state, pokemon):
+                raise IllegalActionError(f"{role}_NOT_NAMED", f"ポケモン {pokemon.pokemon_id} は「{'」「'.join(self.names)}」ではない")
+        if use.energy not in source.energy:
+            raise IllegalActionError("ENERGY_NOT_ATTACHED", f"エネルギー {use.energy!r} はポケモン {use.source} についていない")
+        if energy_attach_block(state, target) is not None:
+            raise attach_block_scope_error(target, "［でんじりょく］でつけ替える先")  # v0.59: CB1
+
+    def resolve(self, state: GameState, use: PowerUse) -> None:
+        _, user = state.find_pokemon(use.pokemon_id)
+        _, source = state.find_pokemon(use.source)
+        _, target = state.find_pokemon(use.target)
+        source.energy.remove(use.energy)
+        target.energy.append(use.energy)
+        state.add_event("move_energy", player=use.player, pokemon=user.card, pokemon_id=user.pokemon_id, power=str(use.key), energy=use.energy,
+                        from_pokemon_id=source.pokemon_id, to_pokemon_id=target.pokemon_id)
+
+
+def energy_color_presence(state: GameState, pokemon: PokemonInPlay, color: EnergyType) -> tuple[bool, UnsupportedError | None]:
+    """``pokemon`` に「(``color``)」の「エネルギー」がついているか（v0.88。コアストリームの「その選んだ「色(タイプ)」の「エネルギー」のついている」。エネルギーの今の色で見る）。
+    (答え, 止める理由)。どれか 1 枚が決まってその色なら、ほかのカードによらず真（止めない）。決まってその色のカードがなく、その色かが決まらないカード（RB1・BZ2・MEC1・CE1・CE2）・
+    ［へんしん］のメタモン（TE1）があれば、その止める理由。"""
+    problem: UnsupportedError | None = None
+    for uid in pokemon.energy:
+        error = None
+        if uid in ambiguous_rainbow_cards(state, pokemon, color):
+            error = rainbow_type_error(pokemon, color, (uid,))
+        elif uid in converted_energy_cards(state, pokemon, color):
+            error = converted_energy_error(pokemon, color, (uid,))
+        elif uid in ambiguous_miracle_cards(state, pokemon, color):
+            error = miracle_type_error(pokemon, color.ja, (uid,))
+        else:
+            answers = {any(color in unit for unit in reading) for reading in card_color_readings(state, pokemon, uid)}
+            if answers == {True}:
+                return True, None
+            if answers != {False}:
+                error = color_cause_error(card_color_cause(state, pokemon, uid) or "ce1", f"ポケモン {pokemon.pokemon_id} のカード {uid} の「{color.ja}」エネルギー")
+        problem = problem or error
+    if problem is None and pokemon.energy and any_color_energy(state, pokemon):
+        problem = UnsupportedError(TRANSFORM_ENERGY_COUNT_CODE, f"ポケモン {pokemon.pokemon_id}・「{color.ja}」エネルギーがついているか（［へんしん］の「どの色のエネルギーとしても」）")
+    return False, problem
+
+
+def basic_energy_card_colors(state: GameState, pokemon: PokemonInPlay) -> tuple[list[frozenset[EnergyType]], UnsupportedError | None]:
+    """``pokemon`` についている「基本エネルギーカード」の色（タイプ）の集まりの読み方（v0.88。レインボーウェーブ・レインボーバーン）。最初が印刷の色の集まり（カードとしての色。特殊
+    エネルギーは入れない。［おいしげる］で個数が増えても色は増えない）。エナジーコンバーター・こうごうせいで「エネルギー」の色が変わったカードがあれば、その色を「カードの色」と読む
+    読み方（CE3）、レインボーエネルギーがついていれば、それを「基本エネルギーカード」と読む読み方（RB3。6 色のどれか）を加える。2 つ目の値は、読み方で結果が変わるときの止める理由。"""
+    cards = [uid for uid in pokemon.energy if state.card_def(uid).is_basic_energy]
+    per_card = []
+    changed = []
+    for uid in cards:
+        printed = state.card_def(uid).provides
+        colors = {printed}
+        if {k for _, _, k in _color_replacements(state, pokemon, uid)} - {"burn"}:
+            colors |= {color for reading in card_color_readings(state, pokemon, uid) for unit in reading for color in unit}
+        if colors != {printed}:
+            changed.append(uid)
+        per_card.append(sorted(colors, key=list(EnergyType).index))
+    base = frozenset(state.card_def(uid).provides for uid in cards)
+    readings = [base]
+    for combo in itertools.product(*per_card) if changed else ():
+        option = frozenset(combo)
+        if option not in readings:
+            readings.append(option)
+    error = color_card_error(pokemon, None, changed) if changed else None
+    rainbow = rainbow_cards_attached(state, [pokemon])
+    if rainbow:
+        extra = []
+        for option in readings:
+            for color in BASIC_ENERGY_COLORS:
+                candidate = option | {color}
+                if candidate not in readings and candidate not in extra:
+                    extra.append(candidate)
+        if extra:
+            readings += extra
+            error = error or rainbow_basic_error(rainbow)
+    return readings, error
+
+
+CORE_STREAM_TEXT = (
+    "好きな「色(タイプ)」(「無色」以外)を1つ選び、その選んだ「色(タイプ)」の「エネルギー」のついている相手の場のポケモン全員に、「弱点・抵抗力」に関係なく、それぞれ{amount}ダメージ。"
+)
+
+
+@dataclass(frozen=True)
+class ChosenColorEnergySpreadDamage(AttackEffect):
+    """好きな色（無色以外）を 1 つ選び、その色の「エネルギー」のついている相手の場のポケモン全員に、弱点・抵抗力に関係なく、それぞれ ``amount`` ダメージ（v0.88。スターミー（neo3-034）の
+    「コアストリーム」。kyuura の印刷の文面。docs 6.1 節）。要素は ``ChooseColor(any)`` → ``Damage(OPP, color_filter=energy)`` → ``BenchDamage(color_filter=energy)``。
+
+    - 選ぶのはワザを使ったプレイヤー（決定 ``SELECT_COLOR``。無色以外の 8 色）。受けるポケモンは選んだあとの場で決める（エネルギーの今の色。``energy_color_presence``）
+    - 相手の対戦ポケモンも控えポケモンも、受けるのは同じ要素の並びのダメージ（p.320 の (1)・(2)。控えへのダメージのプラスパワー・ディフェンダーの扱いは v0.33 と同じ）。
+      「ダメージを受けたとき」の効果・きぜつの判定はふつうの窓で処理する
+    """
+
+    amount: int
+    implementation_id = "chosen_color_energy_spread_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "色を選び、その色のエネルギーのついている相手のポケモン全員にダメージを与えるワザ", damage="none") + _check_exact_text(
+            attack, "色を選び、その色のエネルギーのついている相手のポケモン全員にダメージを与えるワザ", (CORE_STREAM_TEXT.format(amount=self.amount),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_COLOR, player=use.player, choices=(1, 1), options=NON_COLORLESS_CHOICES)
+
+
+RAINBOW_WAVE_TEXT = (
+    "自分についている「基本エネルギーカード」の色(タイプ)から、1つを選ぶ。相手と相手の控えポケモンのうち、選んだエネルギーと同じ色(タイプ)のポケモン全員に、「弱点・抵抗力」に"
+    "関係なく、それぞれ{amount}ダメージ。"
+)
+
+
+@dataclass(frozen=True)
+class OwnBasicColorTypeSpreadDamage(AttackEffect):
+    """自分についている「基本エネルギーカード」の色から 1 つを選ぶ。相手と相手の控えポケモンのうち、選んだエネルギーと同じ色のポケモン全員に、弱点・抵抗力に関係なく、それぞれ
+    ``amount`` ダメージ（v0.88。ミュウ（SI-004）の「レインボーウェーブ」。kyuura の印刷の文面。日本語は基本エネルギーカードに限る（kyuura の other_products の日英の違いの記録。英語版の
+    「other than Colorless」は持ち込まない）。docs 6.2 節）。要素は ``ChooseColor(own_basic)`` → ``Damage(OPP, color_filter=type)`` → ``BenchDamage(color_filter=type)``。
+
+    - 選べる色は自分についている基本エネルギーカードの印刷の色（``basic_energy_card_colors``。特殊エネルギーは入れない）。色を変えたカード（CE3）・レインボーエネルギー（RB3）で
+      選べる色が変わるなら止める。基本エネルギーカードがついていなければ選ばず、ダメージはない（p.309）
+    - 受けるのは、今有効なタイプ（``type_readings``）が選んだ色のポケモン。色の読み方で受けるかが変わるなら止める（VS1・CE1・CE2）
+    """
+
+    amount: int
+    implementation_id = "own_basic_color_type_spread_damage"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "自分の基本エネルギーカードの色を選び、その色の相手のポケモン全員にダメージを与えるワザ", damage="none") + _check_exact_text(
+            attack, "自分の基本エネルギーカードの色を選び、その色の相手のポケモン全員にダメージを与えるワザ", (RAINBOW_WAVE_TEXT.format(amount=self.amount),))
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        _, attacker = state.find_pokemon(use.pokemon_id)
+        readings, _ = basic_energy_card_colors(state, attacker)
+        options = sorted(COLORS.index(color) for color in readings[0])
+        return _decision_form(decision, _label(state, use), kind=SELECT_COLOR, player=use.player, choices=(1, 1), options=options)
+
+
+RAINBOW_BURN_TEXT = (
+    "自分についている「基本エネルギーカード」の「色(タイプ)」の数×{per}のダメージを追加する。(同じ「色(タイプ)」の「エネルギーカード」が2枚以上ついていても、その「色(タイプ)」の"
+    "追加ぶんは、{per}ダメージ。)"
+)
+
+
+@dataclass(frozen=True)
+class PlusDistinctBasicEnergyColors(AttackEffect):
+    """自分についている「基本エネルギーカード」の色の数 × ``per`` のダメージを追加する（同じ色のカードが 2 枚以上でも、その色の追加は ``per``）（v0.88。ホウオウ（PF3-007）の
+    「レインボーバーン」。kyuura の印刷の文面。docs 6.3 節）。要素は ``Damage(OPP, PlusPerBasicEnergyColor)``（p.321 の 1 段階）。
+
+    - 数えるのは基本エネルギーカードの印刷の色の種類（特殊エネルギーは入れない。［おいしげる］で個数が増えても色は増えない）。色を変えたカード（CE3）・レインボーエネルギー（RB3）で
+      数が変わるなら止める
+    """
+
+    per: int
+    implementation_id = "plus_distinct_basic_energy_colors"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "基本エネルギーカードの色の数でダメージを追加するワザ", damage="plus") + _check_exact_text(
+            attack, "基本エネルギーカードの色の数でダメージを追加するワザ", (RAINBOW_BURN_TEXT.format(per=self.per),))
+
+    def damage_profile(self, state: GameState, use: AttackUse) -> DamageProfile:
+        raise NotImplementedError("v0.88 の型は v0.13 の約束の先読みで扱わない（v013_checks.VERIFIED に入れない）")
+
+
+TEXTURE_TWO_OPTIONAL_TEXT = "このカードの抵抗力を、好きな色(無色以外)に変えてよい。バトル場をはなれた時、このワザの効果は消える。"
+TEXTURE_MAGIC_TEXT = "相手に弱点があれば、それを好きな色(無色以外)に変えてよい。自分の抵抗力も、好きな色(無色以外)に変えてよい。バトル場をはなれたポケモンからは、このワザの効果は消える。"
+
+
+@dataclass(frozen=True)
+class ChangeOwnResistanceOptional(AttackEffect):
+    """このカードの抵抗力を、好きな色（無色以外）に変えてよい。バトル場をはなれた時、このワザの効果は消える（v0.88。ポリゴン（ES1-033・QSG-045）の「テクスチャー2」。kyuura の印刷の
+    文面。docs 6.4 節）。要素は ``SelfResistanceColor(optional=True)``。
+
+    - 「変えてよい」なので変えないこともできる（決定 ``SELECT_COLOR`` の 0 個。ログ ``color_change_declined``）。v0.48 の ``ChangeOwnResistance``（「かえる」）の文面と違うので、その型を
+      広げない
+    - 自分に抵抗力がない（相手のワザとして使う）なら、色を選ぶと PG1（変えないことはできる。``unresolved_choices``）
+    """
+
+    implementation_id = "change_own_resistance_optional"
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "自分の抵抗力の色を変えてよいワザ", damage="none") + _check_exact_text(attack, "自分の抵抗力の色を変えてよいワザ", (TEXTURE_TWO_OPTIONAL_TEXT,))
+
+    def color_terms(self) -> tuple[type, ...]:
+        from .state import ResistanceChange
+
+        return (ResistanceChange,)
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_COLOR, player=use.player, choices=(0, 1), options=NON_COLORLESS_CHOICES)
+
+
+@dataclass(frozen=True)
+class ChangeWeaknessAndResistanceOptional(AttackEffect):
+    """相手に弱点があれば、それを好きな色（無色以外）に変えてよい。自分の抵抗力も、好きな色（無色以外）に変えてよい。バトル場をはなれたポケモンからは、このワザの効果は消える（v0.88。
+    かっこいいポリゴン（PR1-023）の「テクスチャーマジック」。kyuura の印刷の文面。docs 6.5 節）。要素は ``OpponentWeaknessColor(optional=True, absent_skips=True)`` →
+    ``SelfResistanceColor(optional=True)``。
+
+    - 相手の弱点（あれば。なければその部分は何もしない。PG1 にしない）と自分の抵抗力を、それぞれ変える・変えないを選ぶ（両方・片方・どちらも変えない）。相手への効果は「ワザを
+      うけない」状態・「とうめい」を評価する
+    - 効果はポケモンごとに、そのポケモンがバトル場をはなれたら消える（v0.48 の ``WeaknessChange``・``ResistanceChange``）。あとの決定への不正な答えは、前に受け付けた答えを取り消さない
+    """
+
+    implementation_id = "change_weakness_and_resistance_optional"
+    opponent_effect_elements = (WEAKNESS_CHANGE_ELEMENT,)
+
+    def check(self, attack: Attack) -> list[str]:
+        return _check_form(attack, "相手の弱点と自分の抵抗力の色を変えてよいワザ", damage="none") + _check_exact_text(attack, "相手の弱点と自分の抵抗力の色を変えてよいワザ", (TEXTURE_MAGIC_TEXT,))
+
+    def color_terms(self) -> tuple[type, ...]:
+        from .state import ResistanceChange, WeaknessChange
+
+        return (WeaknessChange, ResistanceChange)
+
+    def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
+        return _decision_form(decision, _label(state, use), kind=SELECT_COLOR, player=use.player, choices=(0, 1), options=NON_COLORLESS_CHOICES)
+
+
+THREE_D_ATTACK_TEXTS = ("コインを3枚投げて、「おもて」の数×10ダメージ。", "コインを3枚投げて「おもて」の数×20のダメージ。")
+FLOODLIGHT_TEXT = "コインを投げて「おもて」なら、相手を「マヒ」状態にする。"
+AQUA_FLASH_TEXT = "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"
+DELTA_BEAM_TEXT = "コインを投げて「おもて」なら、「ねむり・マヒ・こんらん」の中から1つを選び、相手をその状態にする。"
+POISON_POWDER_HEADS_TEXT = "コインを投げて「おもて」なら、相手を「どく」状態にする。"
+PLASMA_TEXT = "自分のトラッシュに「雷」エネルギーカードがあれば、1枚を選び出し、自分につける。"
+DELTA_BEAM_CONDITIONS = (SLEEP, PARALYSIS, CONFUSION)
+
+# v0.88 の 11 枚のポケモンのワザの登録（15）。ポリゴン（QSG-045）は ES1-033 と同じデータ（``SAME_DATA_CARDS_V0_88``）
+V0_88_ATTACKS: Mapping[AttackKey, AttackEntry] = MappingProxyType({
+    # ランターン（neo1-040）
+    AttackKey("neo1-040", 0): _printed(ParalyzeOnHeads(), "まぶしいひかり", FLOODLIGHT_TEXT),
+    # ランターン（neo3-026）
+    AttackKey("neo3-026", 0): _printed(ConfuseOnHeads(), "アクアフラッシュ", AQUA_FLASH_TEXT),
+    # ポリゴン2（neo3-051）
+    AttackKey("neo3-051", 0): _printed(DamageThenChosenStatusOnHeads(conditions=DELTA_BEAM_CONDITIONS), "デルタビーム", DELTA_BEAM_TEXT),
+    # エリカのナゾノクサ（GD4-001）
+    AttackKey("GD4-001", 0): _printed(PoisonOnHeads(), "どくのこな", POISON_POWDER_HEADS_TEXT),
+    # スターミー（neo3-034）
+    AttackKey("neo3-034", 0): _printed(ConfuseOnHeads(), "あやしいひかり", AQUA_FLASH_TEXT),
+    AttackKey("neo3-034", 1): _printed(ChosenColorEnergySpreadDamage(20), "コアストリーム", CORE_STREAM_TEXT.format(amount=20)),
+    # ミュウ（SI-004）
+    AttackKey("SI-004", 0): _printed(OwnBasicColorTypeSpreadDamage(20), "レインボーウェーブ", RAINBOW_WAVE_TEXT.format(amount=20)),
+    # ホウオウ（PF3-007）
+    AttackKey("PF3-007", 0): _printed(PlusDistinctBasicEnergyColors(10), "レインボーバーン", RAINBOW_BURN_TEXT.format(per=10)),
+    # レアコイル（neo3-045）
+    AttackKey("neo3-045", 0): _printed(DamageThenAttachEnergyFromDiscardToSelf(EnergyType.LIGHTNING), "プラズマ", PLASMA_TEXT),
+    # ポリゴン（ES1-033・QSG-045）
+    AttackKey("ES1-033", 0): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "3Dアタック", THREE_D_ATTACK_TEXTS[0]),
+    AttackKey("ES1-033", 1): _printed(ChangeOwnResistanceOptional(), "テクスチャー2", TEXTURE_TWO_OPTIONAL_TEXT),
+    AttackKey("QSG-045", 0): _printed(CoinFlipDamage(coins=3, damage_per_heads=10), "3Dアタック", THREE_D_ATTACK_TEXTS[0]),
+    AttackKey("QSG-045", 1): _printed(ChangeOwnResistanceOptional(), "テクスチャー2", TEXTURE_TWO_OPTIONAL_TEXT),
+    # かっこいいポリゴン（PR1-023）
+    AttackKey("PR1-023", 0): _printed(ChangeWeaknessAndResistanceOptional(), "テクスチャーマジック", TEXTURE_MAGIC_TEXT),
+    AttackKey("PR1-023", 1): _printed(CoinFlipDamage(coins=3, damage_per_heads=20), "3Dアタック", THREE_D_ATTACK_TEXTS[1]),
+})
+
+_V088_SOURCE = _KYUURA_PRINTED_TEXT
+_MAGNETIC_NAMES = ("コイル", "レアコイル", "わるいレアコイル")
+
+# v0.88 の 5 枚の特殊能力の登録（5）
+V0_88_POWERS: Mapping[PowerKey, PowerEntry] = MappingProxyType({
+    PowerKey("neo1-040", 0): PowerEntry(ExtraEnergyDamageWithAttack("まぶしいひかり", EnergyType.WATER, 10), "すいりょくはつでん",
+                                        HYDROELECTRIC_TEXT.format(attack="まぶしいひかり", type="水", per=10),
+                                        HYDROELECTRIC_TEXT.format(attack="まぶしいひかり", type="水", per=10), _V088_SOURCE),
+    PowerKey("neo3-026", 0): PowerEntry(TypeChangeSelfUntilTurnEnd(EnergyType.WATER), "せんすい", SUBMERGE_TEXT.format(type="水"), SUBMERGE_TEXT.format(type="水"),
+                                        _V088_SOURCE),
+    PowerKey("neo3-051", 0): PowerEntry(ConvertBasicEnergyColor(), "エナジーコンバーター", ENERGY_CONVERTER_TEXT, ENERGY_CONVERTER_TEXT, _V088_SOURCE),
+    PowerKey("GD4-001", 0): PowerEntry(TypeEnergyAsGrass(), "こうごうせい", PHOTOSYNTHESIS_TEXT.format(type="草"), PHOTOSYNTHESIS_TEXT.format(type="草"), _V088_SOURCE),
+    PowerKey("neo3-045", 0): PowerEntry(MoveEnergyAmongNamed(_MAGNETIC_NAMES), "でんじりょく", MAGNETIC_FORCE_TEXT.format(names="「コイル」「レアコイル」「わるいレアコイル」"),
+                                        MAGNETIC_FORCE_TEXT.format(names="「コイル」「レアコイル」「わるいレアコイル」"), _V088_SOURCE),
+})
+
+# 同じゲーム用データのカード（登録の値を共有する。ほかの同じ名前の版とはまとめない）
+SAME_DATA_CARDS_V0_88: Mapping[str, str] = MappingProxyType({"QSG-045": "ES1-033"})
+
+DEFAULT_EFFECTS = _with_shared_entries(_with_powers(_with_attacks(DEFAULT_EFFECTS, V0_88_ATTACKS), V0_88_POWERS), SAME_DATA_CARDS_V0_88)

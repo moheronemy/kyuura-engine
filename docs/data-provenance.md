@@ -1955,6 +1955,22 @@ kyuura への報告事項（kyuura のデータ・記録は変えていない）
 - 報告事項（kyuura の作業）: しんかのうた・おくりもの（「おたがいのプレイヤーは、それぞれ、…」）の、プレイヤーの順番の記録がない（エンジンはワザを使ったプレイヤー → 相手の順にした。実装上の順番）。
 - 報告事項（kyuura の作業）: kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写し。v0.84 の登録を写すと、13 枚の `engine_status` が `registered` になる。
 
+## v0.88: ポケモンのタイプとエネルギーの色を変える特殊能力、色を選ぶ・数えるワザの 11 枚
+
+[type-energy-colors-v0.88.md](type-energy-colors-v0.88.md)。
+
+- 写しの元・研究の基準は kyuura `7d3f4ca76c084774efb4ac6a1d3a943387e183c3` のまま。写しの組 `pool_v0_88`（11 枚）を加え、写しの作り直しの道具で作った（手で直していない）。v0.87 までの 1,080 枚の
+  記録は変わっていない。
+- 11 枚の採用の記録（`card_sources.json`。`kyuura_commit` 7d3f4ca・記録した日 2026-10-23・外部照合なし・`kyuura_records` は空）。研究の基準のコミットに、11 の id を指す LD-・CC-・CR-・UQ-・
+  エラッタの記録はない。`card_verification.json` には加えていない。
+- 処理に使う文面はどれも kyuura の印刷の文面（研究の対応表の `adopted_printed_text` に 20）。レインボーウェーブ（SI-004）は、日本語の文面（基本エネルギーカードに限る）にしたがい、英語版の
+  「other than Colorless」は持ち込んでいない（kyuura の other_products の日英の違いの記録）。
+- kyuura の日本語の文面（`ja_text_source`）は、pcg-search.com の転記 6 枚（GD4・SI・PF3・ES1・QSG・PR1 の商品）・ポケモンWiki の転記 4 枚（neo3-026・neo3-051・neo3-034・neo3-045）・
+  nazonobasho.com の転記 1 枚（neo1-040）。同じ所との照合は独立した照合にならない。外部照合はしていない。
+- 新しい停止コード 3 件（CE1・CE2・CE3）を `stop_codes` に `not_in_kyuura` で加えた。
+- 報告事項（kyuura の作業）: CE1・CE2・CE3 は kyuura の未解決の一覧にない論点。kyuura の engine_targets.json の `engine_reference` は v0.68 の登録の写しで、v0.88 の登録を写すと 11 枚の
+  `engine_status` が `registered` になる。
+
 ## v0.87: 場の移動・ダメージへの反応と、控えの保護・「にげる」の禁止のポケモン 14 枚
 
 [movement-damage-reactions-v0.87.md](movement-damage-reactions-v0.87.md)。

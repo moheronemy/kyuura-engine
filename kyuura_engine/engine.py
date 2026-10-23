@@ -54,6 +54,7 @@ from .commands import (
 from .decisions import (
     ACCEPT_REQUEST,
     BENCH_GUARD,
+    SELECT_COLOR,
     NINJA_TRICK,
     REACTION_SWITCH,
     ENERGY_DRAIN_DISCARD,
@@ -124,6 +125,7 @@ from .effects import (
     applicable_entry_power,
     offer_entry_power,
     forced_entry_check, miracle_pending_problem, settle_miracle_energy, energy_attach_target_check, wild_growth_ambiguities, wild_growth_error,
+    settle_color_effects,
     ko_prevention_power,
     retreat_cost,
     powers_of,
@@ -708,6 +710,9 @@ def _apply_once(state: GameState, command, context: resolution.Context | None, *
         # v0.59（docs/energy-control-power-suppression-v0.59.md 3 章）: 場のポケモンについていなくなったエネルギーとしての役割の記録（マルマインの［エネエネ］）を消す
         # （ついていないあいだは印刷のポケモンのカード。実装上の判断）
         new.energy_roles = tuple(role for role in new.energy_roles if new.energy_role(role.card) is not None)
+    if new.color_effects:
+        # v0.88（docs/type-energy-colors-v0.88.md 2 章）: ［せんすい］の対象が場にいなくなった記録を消し、［エナジーコンバーター］のカードが場をはなれたら印を付ける
+        settle_color_effects(new)
     if order_stop is None and new.phase not in (Phase.HALTED, Phase.GAME_OVER):
         # v0.85（docs/entry-powers-energy-lifecycle-v0.85.md 5 章）: つけているポケモンが「ひかる」「やさしい」でなくなったミラクルエネルギーをトラッシュする（コマンドの終わり。
         # 効果の途中の決定を待つ間に起こるのはエンジンの未対応。［きせきのかぜ］がはたらいていれば動かさず、MEW1 の決められない状態として受け付けない）
@@ -2400,6 +2405,7 @@ def check_invariants(state: GameState) -> list[str]:
     problems.extend(_trainer_lock_problems(state))  # v0.47
     problems.extend(_trainer_effect_problems(state))  # v0.56
     problems.extend(_energy_role_problems(state))  # v0.59
+    problems.extend(_color_effect_problems(state))  # v0.88
     problems.extend(_history_problems(state))  # v0.62
     problems.extend(_set_aside_problems(state))  # v0.63
     problems.extend(_face_up_prize_problems(state))  # v0.63
@@ -3149,7 +3155,7 @@ def _given_by_attack_problems(state: GameState, pokemon: PokemonInPlay, effect, 
 
 def _effective_value_effect_problems(state: GameState, pokemon: PokemonInPlay, effect, where: str) -> list[str]:
     """v0.48: 「テクスチャー1」（``WeaknessChange``）・「テクスチャー2」（``ResistanceChange``）・「きょだいか」（``MaxHpSet``）の持続する効果が、与えたワザ（ログ
-    ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは使ったワザ）の登録された実装（``color_terms``: (型,)・``max_hp_terms``: (型, 数)）と合い、
+    ``persistent_effect_added`` の ``effect``。相手のワザとして使ったときは使ったワザ）の登録された実装（``color_terms``: 与えうる型の並び・``max_hp_terms``: (型, 数)）と合い、
     ログに書いた色・数と同じか。色は無色以外（「「無色」にはできない」）。対応するログがなければ ``_persistent_effect_log_problems`` が見つける。"""
     if isinstance(effect, MaxHpSet):
         if type(effect.amount) is not int or effect.amount <= 0 or effect.amount % 10:
@@ -3165,7 +3171,9 @@ def _effective_value_effect_problems(state: GameState, pokemon: PokemonInPlay, e
     card_id, _, index = str(added.get("effect", "")).partition("#")
     entry = state.effects.attack_entry(card_id, int(index)) if index.isdigit() else None
     terms = getattr(entry.effect, attr, None) if entry is not None else None
-    if terms is None or terms() != expected or added.get(logged_key) != value:
+    # v0.88: ``color_terms`` は与えうる型の並び（かっこいいポリゴンの「テクスチャーマジック」は弱点と抵抗力の両方）。``max_hp_terms`` は (型, 数) の 1 組
+    matches = terms is not None and (expected[0] in terms() if attr == "color_terms" else terms() == expected)
+    if not matches or added.get(logged_key) != value:
         return [f"{where} {effect!r} が、効果を与えたワザ {added.get('effect')!r}（登録された実装・ログの {logged_key}）と合わない"]
     return []
 
@@ -3793,7 +3801,7 @@ def _post_knockout_candidate_problems(state: GameState, candidates) -> list[str]
             continue
         if kind == "knock_out":
             knocked.append(event.get("pokemon"))
-        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+        elif _knockout_bookkeeping(event):
             continue
         else:
             break
@@ -3851,7 +3859,7 @@ def _post_knockout_decision_problems(state: GameState, d) -> list[str]:
             continue
         if kind == "knock_out":
             knocked.append(event.get("pokemon"))
-        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
+        elif _knockout_bookkeeping(event):
             continue
         else:
             break
@@ -4127,6 +4135,62 @@ def _energy_role_problems(state: GameState) -> list[str]:
                      and e.get("units") == role.units and e["turn"] == role.turn for e in state.log)
         if not logged:
             problems.append(f"エネルギーとしての役割 {role!r} に対応するログ energy_conversion がない")
+    return problems
+
+
+def _color_effect_problems(state: GameState) -> list[str]:
+    """v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で色を変える効果の記録（``GameState.color_effects``。［せんすい］・［エナジーコンバーター］）。
+
+    - ``ColorEffect`` の値のタプルで、種類は ``COLOR_EFFECT_KINDS``、番は今の番（番の終わりに消すので、前の番の記録は残らない）、プレイヤーは 0・1
+    - 発生源のカードの ``power_index`` 番目の特殊能力の登録が、その種類の効果を与える実装（``color_effect_kind``）で、色はその実装の選べる色
+    - ［せんすい］は対象が発生源と同じで、発生源が使ったときと同じカードで場にいる（いなくなった記録はコマンドの終わりに消している）
+    - ［エナジーコンバーター］は対象が基本エネルギーカードで、場をはなれた印がなければ場のポケモンについている（印はコマンドの終わりに付けている）
+    - 今の番のログの ``color_effect_added`` の数から ``color_effect_removed`` の数を引いた数が、同じ (種類, 発生源, 対象, 色) の記録の数（ログから記録を決めない。食い違いだけを確かめる）"""
+    from .effects import color_effect_power, energy_holder
+    from .state import COLOR_EFFECT_KINDS, COLOR_ENERGY, COLOR_POKEMON_TYPE, ColorEffect
+
+    records = state.color_effects
+    if not isinstance(records, tuple) or any(type(r) is not ColorEffect for r in records):
+        return [f"色を変える効果の記録 {records!r} が ColorEffect の値のタプルではない"]
+    problems = []
+    for record in records:
+        where = f"色を変える効果 {record!r}"
+        if record.kind not in COLOR_EFFECT_KINDS or record.player not in (0, 1) or record.turn != state.turn_number or not isinstance(record.color, EnergyType):
+            problems.append(f"{where} の種類・プレイヤー・番・色が正しくない")
+            continue
+        if record.source_card not in state.cards:
+            problems.append(f"{where} の発生源のカードがこの対戦のカードではない")
+            continue
+        card_id = state.cards[record.source_card].card_id
+        powers = state.definitions[card_id].powers
+        entry = state.effects.power_entry(card_id, record.power_index) if record.power_index < len(powers) else None
+        if entry is None or getattr(entry.effect, "color_effect_kind", None) != record.kind or record.color not in entry.effect.color_choices():
+            problems.append(f"{where} の特殊能力の登録が、その種類・色の効果を与える実装ではない")
+        elif state.cards[record.source_card].owner != record.player:
+            problems.append(f"{where} の発生源のカードの持ち主が、使ったプレイヤーではない")
+        else:
+            color_effect_power(state, record)
+        found = state.find_pokemon(record.source)
+        if record.kind == COLOR_POKEMON_TYPE:
+            if record.target != record.source or found is None or record.source_card not in (found[1].card, found[1].disguise) or record.left_play:
+                problems.append(f"{where} の対象が、使ったときと同じカードで場にいる発生源ではない")
+        elif record.kind == COLOR_ENERGY:
+            if record.target not in state.cards or not state.printed_def(record.target).is_basic_energy:
+                problems.append(f"{where} の対象が基本エネルギーカードではない")
+            elif not record.left_play and energy_holder(state, record.target) is None:
+                problems.append(f"{where} の対象のカードが場をはなれたのに、場をはなれた印がない")
+    if records:
+        counts: dict = {}
+        for event in _events_since_turn_start(state):
+            if event["kind"] in ("color_effect_added", "color_effect_removed"):
+                key = (event.get("color_effect"), event.get("pokemon_id"), event.get("target"), event.get("color"))
+                counts[key] = counts.get(key, 0) + (1 if event["kind"] == "color_effect_added" else -1)
+        for record in records:
+            key = (record.kind, record.source, record.target, record.color.value)
+            expected = sum(1 for r in records if (r.kind, r.source, r.target, r.color.value) == key)
+            if counts.get(key, 0) != expected:
+                problems.append(f"色を変える効果 {record!r} の数が、今の番のログの color_effect_added・color_effect_removed と合わない")
+                break
     return problems
 
 
@@ -4523,8 +4587,11 @@ def _decision_problems(state: GameState) -> list[str]:
         # v0.67: マチスの秘策で出すカード（SECRET_PLAN_CARD。FD2 で出すと止める場合）も、出さない（0 個。「出してよい」）がいつも答えになる
         # v0.81: 学習装置（EXP_ALL_ENERGY。RB3・CB1 で選ぶと止める場合）も、つけ替えない（0 個）がいつも答えになる
         # v0.86: 反応の特殊能力の使う機会（REACTION_POWER。RB1・MEC1・DV2 で使うと止める場合）も、使わない（0 個）がいつも答えになる
+        # v0.88: 「変えてよい」色の決定（SELECT_COLOR の選ぶ数 0〜1。テクスチャー2・テクスチャーマジックの抵抗力。抵抗力のないポケモンが相手のワザとして使うと色を選ぶと PG1）も、
+        # 変えない（0 個）がいつも答えになる
         no_choice_answers = d.kind in (ENTRY_POWER, EVOLUTION_HEAL, USE_DISCARD_TRAINER, KNOCK_OUT_POWER, EXP_ALL_ENERGY, NINJA_TRICK, REACTION_SWITCH, BENCH_GUARD, ESP_REDO,
-                                       SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None)
+                                       SECRET_PLAN_CARD, reactions.REACTION_POWER) or (d.kind == ACCEPT_REQUEST and d.context_value("chaos") is not None) \
+            or (d.kind == SELECT_COLOR and d.resume == "attack" and d.min_choices == 0)
         needed = 0 if no_choice_answers and d.min_choices == 0 else max(d.min_choices, 1)
         if len(set(d.options) - set(unresolved)) < needed:
             problems.append(f"決定 {d.kind} に、扱いを決められる選択が足りない（答えられない）")
@@ -4635,6 +4702,16 @@ def _face_up_prize_problems(state: GameState) -> list[str]:
     return problems
 
 
+def _knockout_bookkeeping(event) -> bool:
+    """直前のきぜつをログの終わりから読むとき（サイドの並び・「ふしちょう」の候補）、きぜつのあとに続いてよい記録: きぜつで消えた持続する効果、v0.82 のきぜつでトラッシュに
+    置かれたリサイクルエネルギーを持ち主の手札にもどしたこと、v0.88 のきぜつで場をはなれた［せんすい］の発生源の記録をコマンドの終わり（``effects.settle_color_effects``）に
+    消したこと（``target_gone``）。v0.87 までの「ふしちょう」の確かめは、リサイクルエネルギーのもどしを読み飛ばしていなかった（docs/type-energy-colors-v0.88.md 8 章）。"""
+    kind = event["kind"]
+    return (kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT) \
+        or (kind == "energy_returned_to_hand" and event.get("cause") == "knock_out") \
+        or (kind == "color_effect_removed" and event.get("reason") == "target_gone")
+
+
 def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]:
     """サイドを取るプレイヤーの並び（決定するプレイヤーと残り。v0.4e）が、直前のきぜつから決まるか。
 
@@ -4656,12 +4733,10 @@ def _prize_queue_problems(state: GameState, queue: tuple[int, ...]) -> list[str]
             seen_knock_out = True
             if event.get("counted", True):  # v0.47: カウントされないきぜつ（なにかの化石・ピッピ人形）では、相手はサイドを取らない
                 knocked.append(event.get("player"))
-        elif kind == "persistent_effect_removed" and event.get("reason") == KNOCK_OUT:
-            continue
         elif kind == "energy_conversion" and not seen_knock_out:
             continue  # v0.59: ［エネエネ］できぜつしたマルマインのカードを、きぜつのすぐあと（サイドの前）にエネルギーとしてつけた
-        elif kind == "energy_returned_to_hand" and event.get("cause") == "knock_out":
-            continue  # v0.82: きぜつでトラッシュに置かれたリサイクルエネルギーを、すぐあとに持ち主の手札にもどした
+        elif _knockout_bookkeeping(event):
+            continue
         else:
             break
     if not knocked:
@@ -4749,6 +4824,16 @@ def _attack_decision_problems(state: GameState, d) -> list[str]:
     return problems + entry.effect.decision_problems(state, AttackUse(player, pokemon_id, AttackKey(card_id, attack_index)), d)
 
 
+def _with_attack_power(state: GameState, context: dict, attacker: PokemonInPlay, key: AttackKey, target: str, collected) -> tuple:
+    """v0.88: 決定の続きの情報に、ワザといっしょに使った特殊能力（［すいりょくはつでん］）があれば、相手の対戦ポケモンへのダメージの 2 段階の追加を加えた変更効果（``kernel.attack_modifiers_of`` と同じ）。"""
+    from .effects import OPPONENT_ACTIVE, attack_power_modifier
+
+    if not context.get("attack_power") or target != OPPONENT_ACTIVE:
+        return tuple(collected)
+    extra = attack_power_modifier(state, attacker, key)
+    return tuple(collected) + (() if extra is None else (extra,))
+
+
 def _damage_reduction_decision_problems(state: GameState, d, player: int, attacker: PokemonInPlay) -> list[str]:
     """v0.66（docs/optional-trainers-v0.66.md 2 章）: お上品攻撃の減らす量の決定（``DAMAGE_REDUCTION``）。決めるのはワザを使ったプレイヤー、選ぶのは 1 つ。受けるポケモンは
     相手の対戦ポケモンで、続きの情報の基本となるダメージ・前に選んだ順番から今の場で計算し直すと、減らす量の決定が要り（``damage.DamageReductionRequired``）、選べるものが
@@ -4779,6 +4864,7 @@ def _damage_reduction_decision_problems(state: GameState, d, player: int, attack
     key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
     orders = {k: tuple(v) for k, v in context.get("orders", ())}
     collected = attack_damage_modifiers(state, attacker, receiver, attack=key, attack_status=frozenset(context.get("attack_status", ())))
+    collected = _with_attack_power(state, context, attacker, key, target, collected)  # v0.88
     coin = context.get("stadium_coin")
     if coin is not None and coin[1]:
         collected = (*collected, stadium_coin_modifier(state, coin[0]))
@@ -4995,6 +5081,7 @@ def _damage_order_decision_problems(state: GameState, d, player: int, attacker: 
     key = AttackKey(*copied) if copied is not None else AttackKey(use[2], use[3])
     # v0.46: ワザが使われた時の特殊状態（くつろぐかおり）は、決定の続きの情報で運んだ値（書いていなければ空）
     collected = attack_damage_modifiers(state, attacker, receiver, attack=key, attack_status=frozenset(context.get("attack_status", ())))
+    collected = _with_attack_power(state, context, attacker, key, target, collected)  # v0.88
     at_step = tuple(m for m in collected if m.step == step)
     if tuple((m.label, m.source, m.operation, m.amount) for m in at_step) != modifiers:
         return [f"順番の決定の {step} 段階の変更効果 {modifiers!r} が、今の場で集めた効果と違う"]

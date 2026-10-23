@@ -1237,6 +1237,39 @@ class RecallEffect:
     trainer: int
 
 
+# v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果（``ColorEffect``）の種類
+COLOR_POKEMON_TYPE = "pokemon_type"  # せんすい（ランターン neo3-026）: この番が終わるまで、このカードの「色(タイプ)」は「水」になる
+COLOR_ENERGY = "energy"  # エナジーコンバーター（ポリゴン2 neo3-051）: この番が終わるまで、選んだ「基本エネルギーカード」の「エネルギー」は選んだ色の「エネルギー」としてあつかう
+COLOR_EFFECT_KINDS = (COLOR_POKEMON_TYPE, COLOR_ENERGY)
+
+
+@dataclass(frozen=True)
+class ColorEffect:
+    """v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果の記録（ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］）。
+
+    - ``kind``: ``COLOR_EFFECT_KINDS`` のどれか。``player``: 特殊能力を使ったプレイヤー。``source``: 特殊能力を使った場のポケモンの番号。``source_card``・``power_index``: 特殊能力を
+      印刷したカードの uid（使ったときの今の姿のカード）と、その特殊能力の位置
+    - ``target``: ``COLOR_POKEMON_TYPE`` なら色を変える場のポケモンの番号（このカード。``source`` と同じ）、``COLOR_ENERGY`` なら色を変えるエネルギーカードの uid（カードを追う。
+      場のポケモンのあいだのつけかえでは効果は続く。エナジーバーンの (ポケモン, カード) の記録とは違う）
+    - ``color``: 変えた色。``turn``: 使った番（その番の終わりに消す。``procedures.expire_at_turn_end``）
+    - ``left_play``: ``COLOR_ENERGY`` で、使ったあとにカードが場をはなれた（トラッシュ・手札など。コマンドの終わりに確かめる ``engine._apply``）。同じ uid のカードがもう一度場に
+      ついたときに効果が続くかは決まらない（CE1。``effects.color_effect_status``）
+    - 発生源が「ねむり・マヒ・こんらん」状態になったら、効果も消す（記録を消す。回復しても戻らない。``conditions`` の特殊状態にする処理）。かがくへんかガスなどで力が消えた・
+      発生源が場をはなれた・発生源のいちばん上のカードが変わったあとに効果が続くかは決まらない（CE1。記録は残し、読み方を 2 つにする）
+    - 場のポケモン・カードの定義には写さない（色は問い合わせのたびに ``effects`` が求める）。書き出しは形式 23 だけが表せる
+    """
+
+    kind: str
+    player: int
+    source: int
+    source_card: int
+    power_index: int
+    target: int
+    color: EnergyType
+    turn: int
+    left_play: bool = False
+
+
 # v0.63（docs/hidden-card-trainers-v0.63.md 2 章）: 一時的に置いておくカード（``SetAsideCards``）の種類。カードが物理的にある場所の名前で、手札・山札・ベンチ・場の
 # ポケモンのどれとも別の場所（見えないことだけを理由に、手札や山札と同じ場所として扱わない）
 SET_ASIDE_HAND = "hand_set_aside"  # くすぐりマシーン: 相手プレイヤーが手札をすべてうらにして置いておく（手札とはみなされない。期限の番の終わりに持ち主の手札にもどる）
@@ -1613,6 +1646,9 @@ class GameState:
     # カード（重なり・のせたカードはない）で、うらのあいだはカードの定義が「たねポケモン」としてあつかう定義（``FACE_DOWN_DEFINITION``。名前・HP・タイプなどは読めない）。
     # おもてにしたら並びから除く（``zones.reveal_face_down``）。書き出しは形式 22 だけが表せる（空でなければ形式 1〜21 は ``ValueError``）
     face_down_cards: tuple[int, ...] = ()
+    # v0.88（docs/type-energy-colors-v0.88.md 2 章）: 特殊能力で、この番が終わるまで色を変える効果（``ColorEffect`` の並び。使った順）。番の終わりに消す
+    # （``procedures.expire_at_turn_end``）。発生源が「ねむり・マヒ・こんらん」状態になったら、その発生源の効果を消す。書き出しは形式 23 だけが表せる（空でなければ形式 1〜22 は ``ValueError``）
+    color_effects: tuple[ColorEffect, ...] = ()
     # v0.87（docs/movement-damage-reactions-v0.87.md 3 章）: 場の移動（控え → バトル場・バトル場 → ベンチ・手札からの登場）の事実への、まだ処理していない反応の段（``movement``。
     # ``reactions`` の ``("same", …)`` の段の並び）。事実を起こした処理の流れが、同じコマンドの中で処理する（ワザの要素のあいだ・トレーナー・特殊能力を使い終える前・にげるのあと・
     # バトル場に出したあと）。コマンドの終わり・決定を待つ間は空（決定をまたぐ続きは決定の ``context`` に移す）。書き出さない（不変条件 ``engine._pending_moves_problems``）

@@ -91,6 +91,10 @@ class UseAttack:
     # 選ぶか（ワザの宣言といっしょに選ぶ）。False（既定。v0.56 までの形。辞書には書かない）なら投げない。場にクチバシティジムがない・ワザを使うのが「マチスのポケモン」
     # でないのに True なら、状態を変えずに ``STADIUM_COIN_NOT_AVAILABLE``
     stadium_coin: bool = False
+    # v0.88（docs/type-energy-colors-v0.88.md 5.1 節）: ワザといっしょに使える特殊能力（ランターン neo1-040 の［すいりょくはつでん］の「この力は、このカードが「まぶしいひかり」を
+    # 使うとき、使える」）を使うか（ワザの宣言といっしょに選ぶ）。False（既定。v0.87 までの形。辞書には書かない）なら使わない。ワザを使うポケモンがそのワザといっしょに使える
+    # 特殊能力を持たない・使えない状態なら、状態を変えずに拒否する
+    attack_power: bool = False
 
 
 @dataclass(frozen=True)
@@ -323,7 +327,7 @@ def check_command_fields(command) -> None:
 # v0.49: v0.48 までの形を変えないため、既定の値（None）のときは辞書に書かない項目（``UseAttack.card``・``UsePokemonPower.card``）
 _OMITTED_WHEN_NONE: dict[type, tuple[str, ...]] = {UseAttack: ("card",), UsePokemonPower: ("card",), AttachEnergy: ("energy2",)}  # v0.59: AttachEnergy.energy2
 # v0.57: 同じく、既定の値（False）のときは辞書に書かない項目（``UseAttack.stadium_coin``。v0.56 までの形を変えない）
-_OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin",)}
+_OMITTED_WHEN_FALSE: dict[type, tuple[str, ...]] = {UseAttack: ("stadium_coin", "attack_power")}  # v0.88: attack_power
 
 
 def command_to_dict(command) -> dict:

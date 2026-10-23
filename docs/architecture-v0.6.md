@@ -114,6 +114,19 @@ R13 で止めるには、「この番にあまごいでつけたか」を、通�
   `LATEST_FORMAT` は 15（`POKEMON_FIELDS_SINCE` に `devolved_turn`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま
   （v0.50 のカードを使わない対戦では退化した番はない）。次の新しい形式は 16。[mew-devolution-spray-v0.50.md](mew-devolution-spray-v0.50.md) 7 章。
 
+### 4.9 書き出しの形式 16〜22 と 23（v0.88）
+
+- 形式 16〜22 は、それぞれの版の文書に書いた（16 = v0.56 の `trainer_effects`・トレーナーの使用の禁止の `origin`、17 = v0.57 の `stadium`・`stadium_uses_this_turn`・`trainer_in_use.user`、
+  18 = v0.58 の `trainer_stack`・`trainer_in_use.via`、19 = v0.59 の `energy_roles`、20 = v0.62 の場のポケモンの `history`、21 = v0.63 の `set_aside`・`face_up_prizes`、22 = v0.67 の
+  `face_down_cards`）。
+- 形式 23 = 形式 22 に、最上位の `color_effects`（特殊能力で色を変える効果の記録。ランターンの［せんすい］・ポリゴン2の［エナジーコンバーター］の「この番が終わるまで」。
+  `{"kind", "player", "source", "source_card", "card_id", "power_index", "target", "color", "turn", "left_play"}` の並び。なければ `[]`）を加えたもの。記録は番の終わり・発生源の
+  ねむり・マヒ・こんらんで消え、［せんすい］の発生源が場をはなれたらコマンドの終わりに消える。今の色・エネルギーの個数・続くかが決まらないか（CE1・CE2）は、記録・場・特殊状態・
+  かがくへんかガスから求める値なので書かない（観測が書く）。
+- 形式 1〜22 は、記録がなければ今までどおり書き出せる。あれば `ValueError`（黙って落とさない）。ログの監査（tests/log_audit.py）の `LATEST_FORMAT` は 23（`TOP_FIELDS_SINCE` に
+  `color_effects`）。比較の駆動（tools/compat_driver.py）は形式 8、1 歩ごとの比較（tools/engine_lockstep.py）は形式 9 のまま（v0.88 の特殊能力を使わない対戦では記録はない）。
+  次の新しい形式は 24。[type-energy-colors-v0.88.md](type-energy-colors-v0.88.md) 2 章。
+
 ## 5. ログ
 
 ```text

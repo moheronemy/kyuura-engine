@@ -130,13 +130,21 @@ def _use_attack(ctx: Context, state, cmd: UseAttack) -> None:
         if contract_program:
             raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、クチバシティジムのコインを扱わない（エンジンの未対応）")
         coin_stadium = found[0].card
+    if cmd.attack_power:
+        # v0.88: ワザといっしょに使える特殊能力（［すいりょくはつでん］）を使うことを選んだ。持たない・使えない状態・数え方が決まらないなら、状態を変える前に拒否する。v0.13 の約束で
+        # 書いた実装（テスト専用）は扱わない
+        E.attack_power_check(state, attacker, key)
+        if is_contract(program):
+            raise UnsupportedError("UNSUPPORTED_ATTACK", "v0.13 の約束で書いたワザの実装では、ワザといっしょに使う特殊能力を扱わない（エンジンの未対応）")
 
     def body(res: Resolution) -> None:
-        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium)
+        _attack_body(res, cmd.player, res.state.find_pokemon(pid)[1], key, attack, program, once, option, coin_stadium, cmd.attack_power)
 
     # v0.67（docs/secret-plan-preflight-v0.67.md 8 章）: v0.13 の止める関数（``v013_checks``）が知らない選択・役割がある盤面。ワザの型が ``VERIFIED`` でも、それらの安全の
     # 根拠にならないので、v0.13 の止める関数で確かめる経路（上限を超えたあとのフォールバック・比べる方法 legacy・v0.13 の約束の実装）を使わない
     unknown = legacy_unknown_features(state, attacker)
+    if cmd.attack_power:
+        unknown = (*unknown, "ワザといっしょに使う特殊能力")  # v0.88: v0.13 の止める関数は［すいりょくはつでん］の追加を知らない
 
     def on_limit() -> None:
         """先読みで試す結果の数が上限を超えた（途中までの結果は使わない）。v0.13 の止める関数で確かめたワザの実装なら、それで確かめる
@@ -233,7 +241,7 @@ def legacy_unknown_features(state, attacker) -> tuple[str, ...]:
 
 
 def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack, program, once: bool = False, option=None,
-                 coin_stadium: int | None = None) -> None:
+                 coin_stadium: int | None = None, attack_power: bool = False) -> None:
     state = res.state
     if option is None or option.card == attacker.card:
         state.add_event("attack", player=player, pokemon=attacker.card, attack=attack.name_ja, attack_index=key.attack_index)
@@ -255,6 +263,12 @@ def _attack_body(res: Resolution, player: int, attacker, key: AttackKey, attack,
     # v0.62（docs/history-attacks-v0.62.md 2 章）: 使ったワザの記録（A）。宣言のとき（手順 4・5・ワザの要素より前）に置く（失敗・こんらんの「うら」でも使ったことになる）
     note_used(state, attacker, key)
     res.attack_declared = key
+    if attack_power:
+        # v0.88（docs/type-energy-colors-v0.88.md 5.1 節）: ワザといっしょに使う特殊能力の宣言（p.311 の手順 1。ワザの宣言と同じ時点。宣言の前に確かめた）。ログ ``attack_power``
+        slot = E.attack_power_slot(state, attacker, key)
+        state.add_event("attack_power", player=player, pokemon=attacker.card, pokemon_id=attacker.pokemon_id, power=slot.power.name_ja,
+                        power_index=slot.key.power_index, card=slot.card, effect=str(key))
+        res.attack_power = True
     use = (player, attacker.pokemon_id, key.card_id, key.attack_index)
     declare(program, res, player, attacker)  # v0.31: 宣言のあと・こんらんのコインの前の確認（トラッシュの時点が決まらないワザ。HC1）
     if usable_ninja_tricks(state, 1 - player) and (attack_coin_checks(state, attacker) or attack_rebellion_powers(state, attacker)
